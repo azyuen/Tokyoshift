@@ -40,10 +40,18 @@ export default class RaceScene extends Phaser.Scene {
     this.bg = this.add.graphics().setDepth(0);
     this.road = this.add.graphics().setDepth(1);
     this.worldG = this.add.graphics().setDepth(3);
-    this.playerG = this.add.graphics().setDepth(7);
-    this.opponentG = this.add.graphics().setDepth(6);
     this.fxG = this.add.graphics().setDepth(5);
     this.treeG = this.add.graphics().setDepth(20).setScrollFactor(0);
+
+    // Supplied car artwork: white = player, red = opponent.
+    this.opponentSprite = this.add.image(0, 0, 'tokyoShiftArt', 'opponent_1')
+      .setOrigin(0.5, 1)
+      .setScale(1.48)
+      .setDepth(6);
+    this.playerSprite = this.add.image(0, 0, 'tokyoShiftArt', 'player_1')
+      .setOrigin(0.5, 1)
+      .setScale(1.48)
+      .setDepth(7);
 
     // Explicit race trigger: nothing starts until the player taps this.
     this.startButton = this.add.rectangle(640, 44, 250, 54, 0x142235, 0.96)
@@ -179,7 +187,8 @@ export default class RaceScene extends Phaser.Scene {
   drawScene(pt, ot) {
     const W = 1280, H = 720;
     const targetPlayerX = W * 0.38;
-    const cameraPx = Math.max(0, pt.positionM * PX_PER_M - targetPlayerX);
+    // Keep the player around 38% across the screen from the very start.
+    const cameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     this.bg.clear();
     this.bg.fillStyle(0x070914, 1).fillRect(0, 0, W, H);
@@ -226,29 +235,29 @@ export default class RaceScene extends Phaser.Scene {
 
     const px = pt.positionM * PX_PER_M - cameraPx;
     const ox = ot.positionM * PX_PER_M - cameraPx;
-    this.drawCar(this.playerG, px, 396, 0x3ad2ff, pt, false);
-    this.drawCar(this.opponentG, ox, 322, 0xff4f9f, ot, true);
-    this.drawEffects(px, 396, pt, ox, 322, ot);
+    const playerY = 410;
+    const opponentY = 345;
+    this.updateCarSprite(this.playerSprite, px, playerY, pt, 'player');
+    this.updateCarSprite(this.opponentSprite, ox, opponentY, ot, 'opponent');
+    this.drawEffects(px, playerY, pt, ox, opponentY, ot);
     this.drawTree();
   }
 
-  drawCar(g, x, y, color, t, opponent) {
-    g.clear();
-    const suspensionSquat = Phaser.Math.Clamp(t.accelerationMps2 * 1.5, -4, 8);
-    const bodyY = y + suspensionSquat;
-    const wheelSpinPhase = (t.wheelRPM * this.raceClock * 0.001) % (Math.PI * 2);
+  updateCarSprite(sprite, x, y, t, prefix) {
+    let frame = 1;
 
-    g.fillStyle(color, 1).fillRect(x - 70, bodyY - 28, 140, 28);
-    g.fillStyle(color, 1).fillRect(x - 36, bodyY - 48, 68, 22);
-    g.fillStyle(0x111827, 1).fillRect(x - 27, bodyY - 44, 24, 14);
-    g.fillStyle(0x111827, 1).fillRect(x + 4, bodyY - 44, 20, 14);
-    g.fillStyle(0x090b0f, 1).fillCircle(x - 43, y + 4, 18).fillCircle(x + 43, y + 4, 18);
-    g.lineStyle(3, 0xaeb9c4, 1).beginPath().arc(x - 43, y + 4, 11, wheelSpinPhase, wheelSpinPhase + Math.PI * 1.2).strokePath();
-    g.lineStyle(3, 0xaeb9c4, 1).beginPath().arc(x + 43, y + 4, 11, wheelSpinPhase, wheelSpinPhase + Math.PI * 1.2).strokePath();
-    g.fillStyle(0xffe6a1, 1).fillRect(x + 69, bodyY - 18, 6, 6);
-    g.fillStyle(0xff436d, 1).fillRect(x - 75, bodyY - 18, 6, 7);
+    // Map the four supplied poses to live physics states.
+    if (t.nosActive || t.speedKmh > 120) {
+      frame = 4;
+    } else if (t.wheelspin && t.speedKmh < 45) {
+      frame = 2;
+    } else if (t.speedKmh > 10) {
+      frame = 3;
+    }
 
-    if (opponent) g.fillStyle(0xffffff, 0.5).fillRect(x - 30, bodyY - 52, 56, 2);
+    sprite
+      .setFrame(`${prefix}_${frame}`)
+      .setPosition(x, y + Phaser.Math.Clamp(t.accelerationMps2 * 1.4, -3, 6));
   }
 
   drawEffects(px, py, pt, ox, oy, ot) {
