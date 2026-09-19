@@ -6,8 +6,13 @@ export default class TouchControls {
     this.nos = false;
     this.pendingGearRequest = null;
     this.enabled = true;
-    this.clutchPointerId = null;
-    this.throttlePointerId = null;
+    this.clutchPointer = null;
+    this.throttlePointer = null;
+    this.clutchStartY = 0;
+    this.throttleStartY = 0;
+    this.clutchLatchedMax = false;
+    this.throttleLatchedMax = false;
+    this.pedalSwipePx = 64;
 
     scene.input.addPointer(5);
     this.keys = scene.input.keyboard.addKeys({
@@ -43,19 +48,31 @@ export default class TouchControls {
     this.addLabel(961, 625, '↑', 34);
     this.addLabel(1158, 454, 'THROTTLE', 16);
 
-    // Capture pedal touches at pointer-down so the pedal keeps following the
-    // same thumb even after that thumb slides outside the visible control.
+    // Pedals use RELATIVE swipe travel rather than absolute screen position.
+    // Start anywhere on a pedal, swipe up ~64 px, and that pedal latches at
+    // 100% until the same thumb is lifted. Once latched, drifting does not
+    // reduce the value.
     scene.input.on('pointerdown', pointer => {
-      if (this.clutchPointerId == null && this.layout.clutch.contains(pointer.x, pointer.y)) {
-        this.clutchPointerId = pointer.id;
-      } else if (this.throttlePointerId == null && this.layout.throttle.contains(pointer.x, pointer.y)) {
-        this.throttlePointerId = pointer.id;
+      if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
+        this.clutchPointer = pointer;
+        this.clutchStartY = pointer.y;
+        this.clutchLatchedMax = false;
+      } else if (!this.throttlePointer && this.layout.throttle.contains(pointer.x, pointer.y)) {
+        this.throttlePointer = pointer;
+        this.throttleStartY = pointer.y;
+        this.throttleLatchedMax = false;
       }
     });
 
     scene.input.on('pointerup', pointer => {
-      if (pointer.id === this.clutchPointerId) this.clutchPointerId = null;
-      if (pointer.id === this.throttlePointerId) this.throttlePointerId = null;
+      if (pointer === this.clutchPointer) {
+        this.clutchPointer = null;
+        this.clutchLatchedMax = false;
+      }
+      if (pointer === this.throttlePointer) {
+        this.throttlePointer = null;
+        this.throttleLatchedMax = false;
+      }
     });
 
     this.drawDynamic();
@@ -77,12 +94,6 @@ export default class TouchControls {
     return this.scene.input.manager.pointers.find(p => p.isDown && rect.contains(p.x, p.y));
   }
 
-  capturedPointer(pointerId) {
-    if (pointerId == null) return null;
-    const pointer = this.scene.input.manager.pointers.find(p => p.id === pointerId);
-    return pointer?.isDown ? pointer : null;
-  }
-
   update() {
     if (!this.enabled) return this.snapshot();
 
@@ -90,38 +101,35 @@ export default class TouchControls {
     const keyboardClutch = this.keys.clutch.isDown;
     const keyboardNos = this.keys.nos.isDown;
 
-    // Map thumb position to the VISIBLE inner pedal track, not the larger
-    // outer touch box. Top of the visible track = 100%; bottom = 0%.
-    // Going above/below simply clamps, while touch capture keeps ownership.
-    const pedalTop = 478;
-    const pedalBottom = 676;
-    const pedalHeight = pedalBottom - pedalTop;
-
-    let tp = this.capturedPointer(this.throttlePointerId);
-    if (!tp && this.throttlePointerId != null) this.throttlePointerId = null;
+    // Relative swipe pedals: a short upward movement reaches max, then max
+    // stays latched for as long as that thumb remains down.
+    if (this.throttlePointer && !this.throttlePointer.isDown) {
+      this.throttlePointer = null;
+      this.throttleLatchedMax = false;
+    }
     let touchThrottle = 0;
-    if (tp) {
-      touchThrottle = Phaser.Math.Clamp(
-        (pedalBottom - tp.y) / pedalHeight,
-        0,
-        1
-      );
+    if (this.throttlePointer) {
+      const travel = this.throttleStartY - this.throttlePointer.y;
+      if (travel >= this.pedalSwipePx) this.throttleLatchedMax = true;
+      touchThrottle = this.throttleLatchedMax
+        ? 1
+        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
     this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle);
 
-    let cp = this.capturedPointer(this.clutchPointerId);
-    if (!cp && this.clutchPointerId != null) this.clutchPointerId = null;
-    let touchClutch = null;
-    if (cp) {
-      touchClutch = Phaser.Math.Clamp(
-        (pedalBottom - cp.y) / pedalHeight,
-        0,
-        1
-      );
+    if (this.clutchPointer && !this.clutchPointer.isDown) {
+      this.clutchPointer = null;
+      this.clutchLatchedMax = false;
     }
-    // Releasing the thumb releases the clutch. While held, the captured
-    // pointer can travel outside the pedal and still controls it.
-    this.clutch = keyboardClutch ? 1 : (touchClutch ?? 0);
+    let touchClutch = 0;
+    if (this.clutchPointer) {
+      const travel = this.clutchStartY - this.clutchPointer.y;
+      if (travel >= this.pedalSwipePx) this.clutchLatchedMax = true;
+      touchClutch = this.clutchLatchedMax
+        ? 1
+        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
+    }
+    this.clutch = keyboardClutch ? 1 : touchClutch;
 
     this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
 
