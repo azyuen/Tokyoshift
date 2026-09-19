@@ -8,7 +8,7 @@ A clean-slate Phaser prototype focused on one thing: making manual launch + shif
 - Player + physics-driven AI opponent
 - Analogue touch throttle
 - Analogue touch clutch (`0% = engaged`, `100% = pedal down` in telemetry)
-- Manual 6-speed gated shifter
+- Manual 6-speed transmission with a large mobile upshift pad
 - Engine torque curve + RPM inertia
 - Clutch torque capacity + clutch slip
 - Wheelspin tied to available tyre traction
@@ -45,12 +45,14 @@ Open `http://localhost:8080`.
 
 ### Mobile controls
 
-- Left vertical slider — clutch
+- Large left pedal zone — analogue clutch
 - Left NOS button — hold NOS
-- Right vertical slider — throttle
-- Right gated shifter — gears 1–6
+- Large right pedal zone — analogue throttle
+- Large right-side SHIFT ↑ pad — neutral→1st and sequential upshifts
 
-The intended rhythm is: throttle → lift → clutch → shift → clutch out → throttle.
+The start tree waits until the player has the clutch depressed and 1st selected. The intended rhythm is: throttle → lift → clutch → SHIFT ↑ → clutch out → throttle.
+
+Desktop testing still supports direct gear selection with 1–6.
 
 ## Intentionally NOT implemented yet
 
