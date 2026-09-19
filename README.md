@@ -50,7 +50,7 @@ Open `http://localhost:8080`.
 - Large right pedal zone — analogue throttle
 - Large right-side SHIFT ↑ pad — neutral→1st and sequential upshifts
 
-The start tree waits until the player has the clutch depressed and 1st selected. The intended rhythm is: throttle → lift → clutch → SHIFT ↑ → clutch out → throttle.
+Tap **START RACE** to begin the drag-tree sequence. Before that, the tree is idle and movement is not judged as a false start. The intended rhythm is: throttle → lift → clutch → SHIFT ↑ → clutch out → throttle.
 
 Desktop testing still supports direct gear selection with 1–6.
 
