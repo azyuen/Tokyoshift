@@ -90,12 +90,19 @@ export default class TouchControls {
     const keyboardClutch = this.keys.clutch.isDown;
     const keyboardNos = this.keys.nos.isDown;
 
+    // Map thumb position to the VISIBLE inner pedal track, not the larger
+    // outer touch box. Top of the visible track = 100%; bottom = 0%.
+    // Going above/below simply clamps, while touch capture keeps ownership.
+    const pedalTop = 478;
+    const pedalBottom = 676;
+    const pedalHeight = pedalBottom - pedalTop;
+
     let tp = this.capturedPointer(this.throttlePointerId);
     if (!tp && this.throttlePointerId != null) this.throttlePointerId = null;
     let touchThrottle = 0;
     if (tp) {
       touchThrottle = Phaser.Math.Clamp(
-        (this.layout.throttle.bottom - tp.y) / this.layout.throttle.height,
+        (pedalBottom - tp.y) / pedalHeight,
         0,
         1
       );
@@ -107,7 +114,7 @@ export default class TouchControls {
     let touchClutch = null;
     if (cp) {
       touchClutch = Phaser.Math.Clamp(
-        (this.layout.clutch.bottom - cp.y) / this.layout.clutch.height,
+        (pedalBottom - cp.y) / pedalHeight,
         0,
         1
       );
