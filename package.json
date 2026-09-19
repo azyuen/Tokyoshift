@@ -1,0 +1,7 @@
+{
+  "name": "tokyo-shift-phase-1",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TOKYO SHIFT Phase 1 manual-drag-racing physics prototype"
+}
