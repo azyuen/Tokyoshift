@@ -5,7 +5,7 @@ export default class RaceHUD {
     this.text = scene.add.text(640, 605, '', {
       fontFamily: 'monospace', fontSize: '18px', color: '#eef8ff', align: 'center'
     }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-    this.gear = scene.add.text(640, 545, '1', {
+    this.gear = scene.add.text(640, 545, 'N', {
       fontFamily: 'monospace', fontSize: '46px', color: '#ffffff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
     this.status = scene.add.text(640, 74, '', {
@@ -32,7 +32,7 @@ export default class RaceHUD {
     this.g.fillStyle(0x152337, 0.9).fillRect(515, 688, 250, 10);
     this.g.fillStyle(0xff4ea3, 0.95).fillRect(515, 688, 250 * t.nosFraction, 10);
 
-    this.gear.setText(t.gear === 0 ? '—' : String(t.gear));
+    this.gear.setText(t.gear === 0 ? 'N' : String(t.gear));
     this.text.setText(`${Math.round(t.rpm)} RPM   ${t.speedKmh.toFixed(0)} km/h   BOOST ${t.boostBar.toFixed(2)} bar\nCL ${Math.round(t.clutch * 100)}%   TH ${Math.round(t.throttle * 100)}%   ${t.wheelspin ? 'WHEELSPIN' : ''}`);
     this.status.setText(raceStatus);
     this.split.setText(splitText);
