@@ -6,6 +6,8 @@ export default class TouchControls {
     this.nos = false;
     this.pendingGearRequest = null;
     this.enabled = true;
+    this.clutchPointerId = null;
+    this.throttlePointerId = null;
 
     scene.input.addPointer(5);
     this.keys = scene.input.keyboard.addKeys({
@@ -41,6 +43,21 @@ export default class TouchControls {
     this.addLabel(961, 625, '↑', 34);
     this.addLabel(1158, 454, 'THROTTLE', 16);
 
+    // Capture pedal touches at pointer-down so the pedal keeps following the
+    // same thumb even after that thumb slides outside the visible control.
+    scene.input.on('pointerdown', pointer => {
+      if (this.clutchPointerId == null && this.layout.clutch.contains(pointer.x, pointer.y)) {
+        this.clutchPointerId = pointer.id;
+      } else if (this.throttlePointerId == null && this.layout.throttle.contains(pointer.x, pointer.y)) {
+        this.throttlePointerId = pointer.id;
+      }
+    });
+
+    scene.input.on('pointerup', pointer => {
+      if (pointer.id === this.clutchPointerId) this.clutchPointerId = null;
+      if (pointer.id === this.throttlePointerId) this.throttlePointerId = null;
+    });
+
     this.drawDynamic();
   }
 
@@ -60,6 +77,12 @@ export default class TouchControls {
     return this.scene.input.manager.pointers.find(p => p.isDown && rect.contains(p.x, p.y));
   }
 
+  capturedPointer(pointerId) {
+    if (pointerId == null) return null;
+    const pointer = this.scene.input.manager.pointers.find(p => p.id === pointerId);
+    return pointer?.isDown ? pointer : null;
+  }
+
   update() {
     if (!this.enabled) return this.snapshot();
 
@@ -67,8 +90,9 @@ export default class TouchControls {
     const keyboardClutch = this.keys.clutch.isDown;
     const keyboardNos = this.keys.nos.isDown;
 
+    let tp = this.capturedPointer(this.throttlePointerId);
+    if (!tp && this.throttlePointerId != null) this.throttlePointerId = null;
     let touchThrottle = 0;
-    const tp = this.pointerIn(this.layout.throttle);
     if (tp) {
       touchThrottle = Phaser.Math.Clamp(
         (this.layout.throttle.bottom - tp.y) / this.layout.throttle.height,
@@ -78,8 +102,9 @@ export default class TouchControls {
     }
     this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle);
 
+    let cp = this.capturedPointer(this.clutchPointerId);
+    if (!cp && this.clutchPointerId != null) this.clutchPointerId = null;
     let touchClutch = null;
-    const cp = this.pointerIn(this.layout.clutch);
     if (cp) {
       touchClutch = Phaser.Math.Clamp(
         (this.layout.clutch.bottom - cp.y) / this.layout.clutch.height,
@@ -87,7 +112,8 @@ export default class TouchControls {
         1
       );
     }
-    // Releasing the thumb releases the clutch. Holding C fully depresses it.
+    // Releasing the thumb releases the clutch. While held, the captured
+    // pointer can travel outside the pedal and still controls it.
     this.clutch = keyboardClutch ? 1 : (touchClutch ?? 0);
 
     this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
