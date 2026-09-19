@@ -15,6 +15,11 @@ export default class RaceScene extends Phaser.Scene {
   create() {
     this.player = new Vehicle(cars.playerPrototype, engines[cars.playerPrototype.engine]);
     this.opponent = new Vehicle(cars.opponentPrototype, engines[cars.opponentPrototype.engine]);
+
+    // Player stages in neutral so idle torque cannot creep the car into a false start.
+    // The opponent remains preloaded in 1st with its clutch held by the AI.
+    this.player.transmission.currentGear = 0;
+    this.player.transmission.lastShiftQuality = 'NEUTRAL';
     this.ai = new DragRacingAI(this.opponent, { reactionSkill: 0.76, launchSkill: 0.70, shiftSkill: 0.74, aggression: 0.73 });
     this.controls = new TouchControls(this);
     this.hud = new RaceHUD(this);
@@ -39,7 +44,7 @@ export default class RaceScene extends Phaser.Scene {
     this.fxG = this.add.graphics().setDepth(5);
     this.treeG = this.add.graphics().setDepth(20).setScrollFactor(0);
     this.instructions = this.add.text(640, 150,
-      'LEFT: clutch + NOS     RIGHT: throttle → lift → shifter\nDesktop: W throttle · C clutch · 1–6 gears · SPACE NOS',
+      'START: hold clutch → select 1st → set RPM → release on GREEN\nLEFT: clutch + NOS     RIGHT: throttle → lift → shifter',
       { fontFamily: 'monospace', fontSize: '14px', color: '#9fb1c5', align: 'center' }
     ).setOrigin(0.5).setDepth(30).setScrollFactor(0);
     this.time.delayedCall(5000, () => this.instructions.setVisible(false));
