@@ -2,10 +2,11 @@ export default class TouchControls {
   constructor(scene) {
     this.scene = scene;
     this.throttle = 0;
-    this.clutch = 1;
+    this.clutch = 0;
     this.nos = false;
     this.pendingGearRequest = null;
     this.enabled = true;
+
     this.clutchPointer = null;
     this.throttlePointer = null;
     this.clutchStartY = 0;
@@ -31,27 +32,41 @@ export default class TouchControls {
     });
 
     this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
-    this.labels = [];
 
-    // Phase 1.1: large two-thumb zones. The shifter is deliberately a
-    // single large upshift pad on mobile; desktop keeps direct 1-6 keys.
+    // Large thumb zones. Artwork is smaller than the actual hit areas so the
+    // controls stay forgiving on a phone.
     this.layout = {
-      clutch: new Phaser.Geom.Rectangle(22, 430, 200, 266),
-      nos: new Phaser.Geom.Rectangle(242, 568, 132, 116),
-      shifter: new Phaser.Geom.Rectangle(884, 522, 154, 162),
-      throttle: new Phaser.Geom.Rectangle(1058, 430, 200, 266),
+      clutch: new Phaser.Geom.Rectangle(18, 425, 220, 275),
+      nos: new Phaser.Geom.Rectangle(250, 565, 126, 112),
+      shifter: new Phaser.Geom.Rectangle(878, 515, 170, 170),
+      throttle: new Phaser.Geom.Rectangle(1040, 425, 222, 275),
     };
 
-    this.addLabel(122, 454, 'CLUTCH', 16);
-    this.addLabel(308, 626, 'NOS', 22);
-    this.addLabel(961, 594, 'SHIFT', 18);
-    this.addLabel(961, 625, '↑', 34);
-    this.addLabel(1158, 454, 'THROTTLE', 16);
+    this.clutchSprite = scene.add.image(126, 558, 'tokyoShiftArt', 'clutch_pedal')
+      .setScale(1.52).setDepth(51).setScrollFactor(0);
 
-    // Pedals use RELATIVE swipe travel rather than absolute screen position.
-    // Start anywhere on a pedal, swipe up ~64 px, and that pedal latches at
-    // 100% until the same thumb is lifted. Once latched, drifting does not
-    // reduce the value.
+    this.throttleSprite = scene.add.image(1150, 558, 'tokyoShiftArt', 'throttle_pedal')
+      .setScale(1.48).setDepth(51).setScrollFactor(0);
+
+    this.shifterSprite = scene.add.image(962, 575, 'tokyoShiftArt', 'shifter_knob')
+      .setScale(1.30).setDepth(51).setScrollFactor(0);
+
+    this.shifterLabel = scene.add.text(962, 660, 'SHIFT', {
+      fontFamily: 'monospace',
+      fontSize: '15px',
+      color: '#c8efff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
+
+    this.nosLabel = scene.add.text(313, 621, 'NOS', {
+      fontFamily: 'monospace',
+      fontSize: '22px',
+      color: '#ffd7eb',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
+
+    // Relative swipe controls: touch anywhere in a pedal's large hit area,
+    // swipe up a short distance, and max stays latched until that thumb lifts.
     scene.input.on('pointerdown', pointer => {
       if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
         this.clutchPointer = pointer;
@@ -75,19 +90,7 @@ export default class TouchControls {
       }
     });
 
-    this.drawDynamic();
-  }
-
-  addLabel(x, y, text, size = 14) {
-    const t = this.scene.add.text(x, y, text, {
-      fontFamily: 'monospace',
-      fontSize: `${size}px`,
-      color: '#e8f4ff',
-      align: 'center',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(51).setScrollFactor(0);
-    this.labels.push(t);
-    return t;
+    this.drawDynamic(false);
   }
 
   pointerIn(rect) {
@@ -101,12 +104,11 @@ export default class TouchControls {
     const keyboardClutch = this.keys.clutch.isDown;
     const keyboardNos = this.keys.nos.isDown;
 
-    // Relative swipe pedals: a short upward movement reaches max, then max
-    // stays latched for as long as that thumb remains down.
     if (this.throttlePointer && !this.throttlePointer.isDown) {
       this.throttlePointer = null;
       this.throttleLatchedMax = false;
     }
+
     let touchThrottle = 0;
     if (this.throttlePointer) {
       const travel = this.throttleStartY - this.throttlePointer.y;
@@ -121,6 +123,7 @@ export default class TouchControls {
       this.clutchPointer = null;
       this.clutchLatchedMax = false;
     }
+
     let touchClutch = 0;
     if (this.clutchPointer) {
       const travel = this.clutchStartY - this.clutchPointer.y;
@@ -133,13 +136,13 @@ export default class TouchControls {
 
     this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
 
-    // Desktop keeps direct gear selection.
+    // Desktop keeps direct 1–6 gear selection.
     for (let g = 1; g <= 6; g++) {
       const key = this.keys[['one', 'two', 'three', 'four', 'five', 'six'][g - 1]];
       if (Phaser.Input.Keyboard.JustDown(key)) this.pendingGearRequest = g;
     }
 
-    // Mobile: one large short-throw upshift control.
+    // Mobile uses one big short-throw sequential shift control.
     const sp = this.pointerIn(this.layout.shifter);
     if (sp && !sp._tsShiftConsumed) {
       this.pendingGearRequest = 'UP';
@@ -150,55 +153,50 @@ export default class TouchControls {
       if (!p.isDown) p._tsShiftConsumed = false;
     }
 
-    this.drawDynamic();
+    this.drawDynamic(Boolean(sp));
     return this.snapshot();
   }
 
-  drawDynamic() {
+  drawDynamic(shiftPressed) {
     const g = this.graphics;
     g.clear();
 
-    // Pedal bodies.
-    g.fillStyle(0x0b111d, 0.90).lineStyle(3, 0x4a6078, 0.95);
-    g.fillRoundedRect(22, 430, 200, 266, 24).strokeRoundedRect(22, 430, 200, 266, 24);
-    g.fillRoundedRect(1058, 430, 200, 266, 24).strokeRoundedRect(1058, 430, 200, 266, 24);
+    // Very subtle outlines show the forgiving thumb areas without clutter.
+    g.lineStyle(2, this.clutch > 0 ? 0x63d7ff : 0x30475c, this.clutch > 0 ? 0.60 : 0.22)
+      .strokeRoundedRect(18, 425, 220, 275, 22);
 
-    // Inner tracks.
-    const innerTop = 478;
-    const innerBottom = 676;
-    const innerH = innerBottom - innerTop;
+    g.lineStyle(2, this.throttle > 0 ? 0xff4fa3 : 0x30475c, this.throttle > 0 ? 0.60 : 0.22)
+      .strokeRoundedRect(1040, 425, 222, 275, 22);
 
-    g.fillStyle(0x172231, 0.95);
-    g.fillRoundedRect(42, innerTop, 160, innerH, 16);
-    g.fillRoundedRect(1078, innerTop, 160, innerH, 16);
+    // Shifter base.
+    g.fillStyle(0x0b111d, 0.68)
+      .lineStyle(2, shiftPressed ? 0x8ae8ff : 0x40586d, shiftPressed ? 0.85 : 0.40)
+      .fillRoundedRect(878, 515, 170, 170, 24)
+      .strokeRoundedRect(878, 515, 170, 170, 24);
 
-    // Clutch bite band: visible without adding another text readout.
-    const biteTop = innerBottom - innerH * 0.62;
-    const biteBottom = innerBottom - innerH * 0.38;
-    g.fillStyle(0xffbd59, 0.28);
-    g.fillRect(42, biteTop, 160, biteBottom - biteTop);
+    // NOS remains a large hold button.
+    g.fillStyle(this.nos ? 0xff3f98 : 0x291128, this.nos ? 0.90 : 0.72)
+      .lineStyle(2, this.nos ? 0xffffff : 0xff4fa3, 0.82)
+      .fillRoundedRect(250, 565, 126, 112, 25)
+      .strokeRoundedRect(250, 565, 126, 112, 25);
 
-    // Analogue fills.
-    const clutchFill = innerH * this.clutch;
-    g.fillStyle(0x59d9ff, 0.55);
-    g.fillRoundedRect(42, innerBottom - clutchFill, 160, clutchFill, 14);
+    // Soft level glows beneath the pedal art.
+    if (this.clutch > 0) {
+      g.fillStyle(0x55d9ff, 0.14 + this.clutch * 0.18)
+        .fillRoundedRect(46, 655 - 185 * this.clutch, 160, 185 * this.clutch, 14);
+    }
+    if (this.throttle > 0) {
+      g.fillStyle(0xff4fa3, 0.14 + this.throttle * 0.18)
+        .fillRoundedRect(1070, 655 - 185 * this.throttle, 160, 185 * this.throttle, 14);
+    }
 
-    const throttleFill = innerH * this.throttle;
-    g.fillStyle(0xff4fa3, 0.58);
-    g.fillRoundedRect(1078, innerBottom - throttleFill, 160, throttleFill, 14);
+    this.clutchSprite.setScale(1.52 + this.clutch * 0.035);
+    this.throttleSprite.setScale(1.48 + this.throttle * 0.035);
+    this.shifterSprite
+      .setScale(shiftPressed ? 1.36 : 1.30)
+      .setY(shiftPressed ? 581 : 575);
 
-    // NOS.
-    g.fillStyle(0x291128, this.nos ? 1 : 0.92)
-      .lineStyle(3, this.nos ? 0xffffff : 0xff4fa3, 0.95);
-    g.fillRoundedRect(242, 568, 132, 116, 28)
-      .strokeRoundedRect(242, 568, 132, 116, 28);
-
-    // Shift pad.
-    const shiftPressed = Boolean(this.pointerIn(this.layout.shifter));
-    g.fillStyle(shiftPressed ? 0x254766 : 0x111a27, 0.96)
-      .lineStyle(3, shiftPressed ? 0x8ae8ff : 0x61788f, 0.98);
-    g.fillRoundedRect(884, 522, 154, 162, 28)
-      .strokeRoundedRect(884, 522, 154, 162, 28);
+    this.nosLabel.setColor(this.nos ? '#ffffff' : '#ffd7eb');
   }
 
   consumeGearRequest() {
