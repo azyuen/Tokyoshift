@@ -28,6 +28,7 @@ export default class RaceScene extends Phaser.Scene {
     this.raceClock = 0;
     this.countdownClock = 0;
     this.greenClock = null;
+    this.stageArmed = false;
     this.falseStart = false;
     this.finished = false;
     this.afterFinishTimer = 0;
@@ -43,14 +44,11 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentG = this.add.graphics().setDepth(6);
     this.fxG = this.add.graphics().setDepth(5);
     this.treeG = this.add.graphics().setDepth(20).setScrollFactor(0);
-    this.instructions = this.add.text(640, 150,
-      'START: hold clutch → select 1st → set RPM → release on GREEN\nLEFT: clutch + NOS     RIGHT: throttle → lift → shifter',
-      { fontFamily: 'monospace', fontSize: '14px', color: '#9fb1c5', align: 'center' }
-    ).setOrigin(0.5).setDepth(30).setScrollFactor(0);
-    this.time.delayedCall(5000, () => this.instructions.setVisible(false));
+
   }
 
   racePhase() {
+    if (!this.stageArmed) return 'READY';
     if (this.greenClock != null) return 'GREEN';
     if (this.countdownClock < 0.9) return 'PRE-STAGE';
     if (this.countdownClock < 1.8) return 'STAGE';
@@ -66,14 +64,34 @@ export default class RaceScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.restart();
 
-    if (this.greenClock == null) {
+    const controlState = this.controls.update();
+    const requestedGear = this.controls.consumeGearRequest();
+
+    if (requestedGear === 'UP') {
+      const tr = this.player.transmission;
+      if (tr.shiftTimer <= 0) {
+        const nextGear = tr.currentGear <= 0 ? 1 : tr.currentGear + 1;
+        if (nextGear <= this.player.config.gearRatios.length) {
+          this.player.requestGear(nextGear);
+        }
+      }
+    } else if (typeof requestedGear === 'number') {
+      this.player.requestGear(requestedGear);
+    }
+
+    // The tree only starts once the player has genuinely staged:
+    // clutch depressed and 1st gear selected.
+    if (!this.stageArmed &&
+        this.player.transmission.currentGear === 1 &&
+        controlState.clutch >= 0.65) {
+      this.stageArmed = true;
+      this.countdownClock = 0;
+    }
+
+    if (this.stageArmed && this.greenClock == null) {
       this.countdownClock += dt;
       if (this.countdownClock >= 3.3) this.greenClock = this.raceClock;
     }
-
-    const controlState = this.controls.update();
-    const requestedGear = this.controls.consumeGearRequest();
-    if (requestedGear) this.player.requestGear(requestedGear);
 
     const aiState = this.ai.update(dt, this.raceClock, this.greenClock);
     const playerT = this.player.update(dt, controlState);
@@ -82,9 +100,13 @@ export default class RaceScene extends Phaser.Scene {
     this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT);
 
-    const phase = this.falseStart ? 'RED LIGHT / FALSE START' : (this.greenClock == null ? this.racePhase() : 'GO');
-    const splitText = this.makeSplitText();
-    this.hud.update(playerT, phase, splitText);
+    let status = '';
+    if (this.falseStart) status = 'RED LIGHT';
+    else if (!this.stageArmed) status = 'CLUTCH + SHIFT';
+    else if (this.greenClock != null) status = 'GO!';
+    else if (this.countdownClock < 1.8) status = 'STAGED';
+
+    this.hud.update(playerT, status);
     this.debug.update(playerT);
 
     if (this.finished) {
@@ -103,8 +125,8 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   handleTiming(pt, ot) {
-    const moved = pt.positionM > 0.10 || pt.speedMps > 0.45;
-    if (moved && !this.startMoved) {
+    const moved = pt.positionM > 0.20 || pt.speedMps > 0.60;
+    if (this.stageArmed && moved && !this.startMoved) {
       this.startMoved = true;
       if (this.greenClock == null) {
         this.falseStart = true;
@@ -166,31 +188,31 @@ export default class RaceScene extends Phaser.Scene {
 
     // Wet road and lane reflections.
     this.road.clear();
-    this.road.fillStyle(0x11151e, 1).fillRect(0, 400, W, 320);
-    this.road.fillStyle(0x1a202b, 1).fillRect(0, 427, W, 180);
-    this.road.fillStyle(0x26303d, 1).fillRect(0, 483, W, 3);
+    this.road.fillStyle(0x11151e, 1).fillRect(0, 300, W, 260);
+    this.road.fillStyle(0x1a202b, 1).fillRect(0, 327, W, 180);
+    this.road.fillStyle(0x26303d, 1).fillRect(0, 383, W, 3);
     const stripeOffset = -cameraPx % 180;
     this.road.fillStyle(0xe9c46a, 0.38);
-    for (let i = -1; i < 10; i++) this.road.fillRect(stripeOffset + i * 180, 535, 90, 3);
-    this.road.fillStyle(0x2dc9ff, 0.10).fillRect(0, 490, W, 82);
-    this.road.fillStyle(0xff43a8, 0.07).fillRect(0, 560, W, 60);
+    for (let i = -1; i < 10; i++) this.road.fillRect(stripeOffset + i * 180, 435, 90, 3);
+    this.road.fillStyle(0x2dc9ff, 0.10).fillRect(0, 390, W, 72);
+    this.road.fillStyle(0xff43a8, 0.07).fillRect(0, 462, W, 58);
 
     this.worldG.clear();
     // Finish line.
     const finishX = TRACK_M * PX_PER_M - cameraPx;
     if (finishX > -60 && finishX < W + 60) {
-      for (let y = 395; y < 610; y += 20) {
+      for (let y = 295; y < 510; y += 20) {
         this.worldG.fillStyle(((y / 20) % 2) ? 0xffffff : 0x151515, 1).fillRect(finishX, y, 16, 20);
         this.worldG.fillStyle(((y / 20) % 2) ? 0x151515 : 0xffffff, 1).fillRect(finishX + 16, y, 16, 20);
       }
-      this.worldG.fillStyle(0xffffff, 0.8).fillRect(finishX - 2, 392, 3, 220);
+      this.worldG.fillStyle(0xffffff, 0.8).fillRect(finishX - 2, 292, 3, 220);
     }
 
     const px = pt.positionM * PX_PER_M - cameraPx;
     const ox = ot.positionM * PX_PER_M - cameraPx;
-    this.drawCar(this.playerG, px, 496, 0x3ad2ff, pt, false);
-    this.drawCar(this.opponentG, ox, 422, 0xff4f9f, ot, true);
-    this.drawEffects(px, 496, pt, ox, 422, ot);
+    this.drawCar(this.playerG, px, 396, 0x3ad2ff, pt, false);
+    this.drawCar(this.opponentG, ox, 322, 0xff4f9f, ot, true);
+    this.drawEffects(px, 396, pt, ox, 322, ot);
     this.drawTree();
   }
 
@@ -229,16 +251,16 @@ export default class RaceScene extends Phaser.Scene {
   drawTree() {
     const phase = this.racePhase();
     this.treeG.clear();
-    this.treeG.fillStyle(0x0b0f16, 0.9).fillRoundedRect(600, 165, 80, 230, 12);
+    this.treeG.fillStyle(0x0b0f16, 0.90).fillRoundedRect(612, 82, 56, 190, 10);
     const circles = [
-      { y: 205, on: phase === 'PRE-STAGE' || phase === 'STAGE' || phase.startsWith('AMBER') || phase === 'GREEN', c: 0xf5f3d5 },
-      { y: 240, on: phase === 'STAGE' || phase.startsWith('AMBER') || phase === 'GREEN', c: 0xf5f3d5 },
-      { y: 290, on: ['AMBER 1','AMBER 2','AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
-      { y: 325, on: ['AMBER 2','AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
-      { y: 360, on: ['AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
+      { y: 106, on: phase === 'PRE-STAGE' || phase === 'STAGE' || phase.startsWith('AMBER') || phase === 'GREEN', c: 0xf5f3d5 },
+      { y: 132, on: phase === 'STAGE' || phase.startsWith('AMBER') || phase === 'GREEN', c: 0xf5f3d5 },
+      { y: 171, on: ['AMBER 1','AMBER 2','AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
+      { y: 201, on: ['AMBER 2','AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
+      { y: 231, on: ['AMBER 3','GREEN'].includes(phase), c: 0xffb000 },
     ];
-    for (const l of circles) this.treeG.fillStyle(l.on ? l.c : 0x2a2f37, 1).fillCircle(640, l.y, 12);
-    this.treeG.fillStyle(phase === 'GREEN' && !this.falseStart ? 0x4dff77 : 0x24302a, 1).fillCircle(620, 390, 11);
-    this.treeG.fillStyle(this.falseStart ? 0xff355e : 0x30242a, 1).fillCircle(660, 390, 11);
+    for (const l of circles) this.treeG.fillStyle(l.on ? l.c : 0x2a2f37, 1).fillCircle(640, l.y, 10);
+    this.treeG.fillStyle(phase === 'GREEN' && !this.falseStart ? 0x4dff77 : 0x24302a, 1).fillCircle(627, 257, 9);
+    this.treeG.fillStyle(this.falseStart ? 0xff355e : 0x30242a, 1).fillCircle(653, 257, 9);
   }
 }
