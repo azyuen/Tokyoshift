@@ -28,7 +28,7 @@ export default class RaceScene extends Phaser.Scene {
     this.raceClock = 0;
     this.countdownClock = 0;
     this.greenClock = null;
-    this.stageArmed = false;
+    this.raceStarted = false;
     this.falseStart = false;
     this.finished = false;
     this.afterFinishTimer = 0;
@@ -45,10 +45,35 @@ export default class RaceScene extends Phaser.Scene {
     this.fxG = this.add.graphics().setDepth(5);
     this.treeG = this.add.graphics().setDepth(20).setScrollFactor(0);
 
+    // Explicit race trigger: nothing starts until the player taps this.
+    this.startButton = this.add.rectangle(640, 44, 250, 54, 0x142235, 0.96)
+      .setStrokeStyle(3, 0x63d7ff, 1)
+      .setDepth(45)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    this.startButtonText = this.add.text(640, 44, 'START RACE', {
+      fontFamily: 'monospace',
+      fontSize: '22px',
+      color: '#eef8ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
+
+    this.startButton.on('pointerdown', () => this.startRace());
+  }
+
+  startRace() {
+    if (this.raceStarted || this.finished) return;
+    this.raceStarted = true;
+    this.countdownClock = 0;
+    this.greenClock = null;
+    this.startMoved = false;
+    this.startButton.setVisible(false).disableInteractive();
+    this.startButtonText.setVisible(false);
   }
 
   racePhase() {
-    if (!this.stageArmed) return 'READY';
+    if (!this.raceStarted) return 'READY';
     if (this.greenClock != null) return 'GREEN';
     if (this.countdownClock < 0.9) return 'PRE-STAGE';
     if (this.countdownClock < 1.8) return 'STAGE';
@@ -79,16 +104,7 @@ export default class RaceScene extends Phaser.Scene {
       this.player.requestGear(requestedGear);
     }
 
-    // The tree only starts once the player has genuinely staged:
-    // clutch depressed and 1st gear selected.
-    if (!this.stageArmed &&
-        this.player.transmission.currentGear === 1 &&
-        controlState.clutch >= 0.65) {
-      this.stageArmed = true;
-      this.countdownClock = 0;
-    }
-
-    if (this.stageArmed && this.greenClock == null) {
+    if (this.raceStarted && this.greenClock == null) {
       this.countdownClock += dt;
       if (this.countdownClock >= 3.3) this.greenClock = this.raceClock;
     }
@@ -102,7 +118,7 @@ export default class RaceScene extends Phaser.Scene {
 
     let status = '';
     if (this.falseStart) status = 'RED LIGHT';
-    else if (!this.stageArmed) status = 'CLUTCH + SHIFT';
+    else if (!this.raceStarted) status = '';
     else if (this.greenClock != null) status = 'GO!';
     else if (this.countdownClock < 1.8) status = 'STAGED';
 
@@ -126,7 +142,7 @@ export default class RaceScene extends Phaser.Scene {
 
   handleTiming(pt, ot) {
     const moved = pt.positionM > 0.20 || pt.speedMps > 0.60;
-    if (this.stageArmed && moved && !this.startMoved) {
+    if (this.raceStarted && moved && !this.startMoved) {
       this.startMoved = true;
       if (this.greenClock == null) {
         this.falseStart = true;
