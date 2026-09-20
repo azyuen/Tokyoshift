@@ -1,7 +1,7 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-relayout3';
+import TouchControls from '../input/TouchControls.js?v=20260920-r4';
 import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-relayout3';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-r4';
 import DebugHUD from '../ui/DebugHUD.js';
 import { cars } from '../data/cars.js';
 import { engines } from '../data/engines.js';
@@ -44,12 +44,12 @@ export default class RaceScene extends Phaser.Scene {
     this.treeLightsG = this.add.graphics().setDepth(23).setScrollFactor(0);
 
     // Uniform scaling only: body sprites retain their native aspect ratio.
-    // At 0.132 the 2172px source car is ~287px wide on the 1560px game canvas.
+    // Foreground AE86 is deliberately larger than the background R32 for depth.
     this.playerVisual = this.createCarVisual({
       bodyKey: 'carAE86',
       wheelKey: 'wheel8Spoke',
-      bodyScale: 0.132,
-      wheelScale: 0.0315,
+      bodyScale: 0.165,
+      wheelScale: 0.039,
       rearOffsetX: -603,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -60,8 +60,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentVisual = this.createCarVisual({
       bodyKey: 'carR32',
       wheelKey: 'wheel5Spoke',
-      bodyScale: 0.132,
-      wheelScale: 0.0315,
+      bodyScale: 0.145,
+      wheelScale: 0.034,
       rearOffsetX: -619,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -265,8 +265,8 @@ export default class RaceScene extends Phaser.Scene {
     const ox = ot.positionM * PX_PER_M - cameraPx;
 
     // Smaller cars, higher on screen, matching the approved composition reference.
-    this.updateCarVisual(this.playerVisual, px, 350, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox + 28, 304, ot, dt);
+    this.updateCarVisual(this.playerVisual, px, 365, pt, dt);
+    this.updateCarVisual(this.opponentVisual, ox + 125, 305, ot, dt);
 
     this.drawEffects(pt, ot);
     this.drawTreeLights();
