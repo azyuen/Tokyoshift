@@ -1,12 +1,12 @@
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js?v=20260920-r6';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r26';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r27';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r26';
-import { engines } from '../data/engines.js?v=20260921-r26';
-import { characters } from '../data/characters.js?v=20260921-r26';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r27';
+import { engines } from '../data/engines.js?v=20260921-r27';
+import { characters } from '../data/characters.js?v=20260921-r27';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -48,6 +48,8 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    document.body.dataset.scene = 'race';
+
     const playerConfig = clone(cars[this.selectedCarId]);
     const opponentConfig = clone(cars[this.opponentCarId]);
 
