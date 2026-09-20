@@ -5,7 +5,7 @@ export default class RaceHUD {
     this.sourceW = 1473;
     this.sourceH = 452;
 
-    this.cluster = scene.add.image(640, 718, 'hudCluster')
+    this.cluster = scene.add.image(780, 718, 'hudCluster')
       .setOrigin(0.5, 1)
       .setScale(this.scale)
       .setDepth(39)
@@ -13,7 +13,7 @@ export default class RaceHUD {
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
-    this.status = scene.add.text(640, 474, '', {
+    this.status = scene.add.text(780, 474, '', {
       fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
@@ -59,12 +59,10 @@ export default class RaceHUD {
     const speed = this.sourcePoint(723, 267);
     const boost = this.sourcePoint(1048, 313);
 
-    // 4/5-circle sweep: zero begins at lower-left and rotates clockwise.
     this.drawNeedle(tach, t.rpm / 8500, 105 * this.scale, 145, 375, t.rpm > 7900 ? 0xff665a : 0xf7f7f2, 3);
     this.drawNeedle(speed, t.speedKmh / 180, 120 * this.scale, 140, 383, 0xf7f7f2, 3);
     this.drawNeedle(boost, (t.boostBar + 1.0) / 3.0, 74 * this.scale, 151, 393, 0xf7f7f2, 3);
 
-    // NOS bar: four static slots in the HUD, filled by Phaser.
     const nosStart = this.sourcePoint(1262, 354);
     const segW = 20 * this.scale;
     const segH = 36 * this.scale;
@@ -75,7 +73,6 @@ export default class RaceHUD {
         .fillRoundedRect(nosStart.x + i * (segW + segGap), nosStart.y, segW, segH, 2);
     }
 
-    // Traction warning only lights when the driven tyre is slipping.
     if (t.wheelspin) {
       const tr = this.sourcePoint(1201, 294);
       g.fillStyle(0xffa928, 0.24).fillRoundedRect(tr.x, tr.y, 170 * this.scale, 48 * this.scale, 4);
