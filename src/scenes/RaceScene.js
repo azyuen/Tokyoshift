@@ -1,7 +1,7 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-fine1';
+import TouchControls from '../input/TouchControls.js?v=20260920-relayout2';
 import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-fine1';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-relayout2';
 import DebugHUD from '../ui/DebugHUD.js';
 import { cars } from '../data/cars.js';
 import { engines } from '../data/engines.js';
@@ -44,12 +44,12 @@ export default class RaceScene extends Phaser.Scene {
     this.treeLightsG = this.add.graphics().setDepth(23).setScrollFactor(0);
 
     // Uniform scaling only: body sprites retain their native aspect ratio.
-    // At 0.118 the 2172px source car is ~256px wide on the 1560px game canvas.
+    // At 0.132 the 2172px source car is ~287px wide on the 1560px game canvas.
     this.playerVisual = this.createCarVisual({
       bodyKey: 'carAE86',
       wheelKey: 'wheel8Spoke',
-      bodyScale: 0.118,
-      wheelScale: 0.029,
+      bodyScale: 0.132,
+      wheelScale: 0.0315,
       rearOffsetX: -603,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -60,8 +60,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentVisual = this.createCarVisual({
       bodyKey: 'carR32',
       wheelKey: 'wheel5Spoke',
-      bodyScale: 0.118,
-      wheelScale: 0.029,
+      bodyScale: 0.132,
+      wheelScale: 0.0315,
       rearOffsetX: -619,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -69,8 +69,8 @@ export default class RaceScene extends Phaser.Scene {
       exhaustOffsetY: 165,
     }, 6);
 
-    this.treeSprite = this.add.image(780, 202, 'dragTree')
-      .setScale(0.112)
+    this.treeSprite = this.add.image(780, 192, 'dragTree')
+      .setScale(0.105)
       .setDepth(20)
       .setScrollFactor(0)
       .setAlpha(0.78);
@@ -218,7 +218,7 @@ export default class RaceScene extends Phaser.Scene {
 
   drawScene(pt, ot, dt) {
     const W = 1560;
-    const targetPlayerX = W * 0.25;
+    const targetPlayerX = W * 0.27;
     const cameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     this.bg.clear();
@@ -265,8 +265,8 @@ export default class RaceScene extends Phaser.Scene {
     const ox = ot.positionM * PX_PER_M - cameraPx;
 
     // Smaller cars, higher on screen, matching the approved composition reference.
-    this.updateCarVisual(this.playerVisual, px, 342, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox, 270, ot, dt);
+    this.updateCarVisual(this.playerVisual, px, 350, pt, dt);
+    this.updateCarVisual(this.opponentVisual, ox + 28, 304, ot, dt);
 
     this.drawEffects(pt, ot);
     this.drawTreeLights();
@@ -322,9 +322,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const sourceW = 1086;
     const sourceH = 1448;
-    const s = 0.112;
+    const s = 0.105;
     const left = 780 - sourceW * s / 2;
-    const top = 202 - sourceH * s / 2;
+    const top = 192 - sourceH * s / 2;
     const p = (x, y) => ({ x: left + x * s, y: top + y * s });
 
     const rows = [
