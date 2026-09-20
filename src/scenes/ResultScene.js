@@ -38,12 +38,12 @@ export default class ResultScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '34px', color: winner === 'WIN' ? '#70ff9b' : winner.includes('LOSS') ? '#ff5b7a' : '#7be0ff', fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.add.text(780, 585, 'Tap anywhere or press R to run again', {
+    this.add.text(780, 585, 'Tap anywhere or press R to return to garage', {
       fontFamily: 'monospace', fontSize: '15px', color: '#8c9db0'
     }).setOrigin(0.5);
 
-    this.input.once('pointerdown', () => this.scene.start('RaceScene'));
+    this.input.once('pointerdown', () => this.scene.start('GarageScene'));
     const r = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-    r.once('down', () => this.scene.start('RaceScene'));
+    r.once('down', () => this.scene.start('GarageScene'));
   }
 }
