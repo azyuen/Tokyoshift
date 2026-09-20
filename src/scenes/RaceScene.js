@@ -1,7 +1,7 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-relayout2';
+import TouchControls from '../input/TouchControls.js?v=20260920-relayout3';
 import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-relayout2';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-relayout3';
 import DebugHUD from '../ui/DebugHUD.js';
 import { cars } from '../data/cars.js';
 import { engines } from '../data/engines.js';
