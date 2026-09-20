@@ -33,12 +33,11 @@ export default class TouchControls {
 
     this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
 
-    // Large forgiving thumb zones; art is smaller than the hit boxes.
     this.layout = {
-      clutch: new Phaser.Geom.Rectangle(0, 490, 165, 230),
-      nos: new Phaser.Geom.Rectangle(168, 540, 122, 130),
-      shifter: new Phaser.Geom.Rectangle(910, 505, 180, 205),
-      throttle: new Phaser.Geom.Rectangle(1112, 485, 168, 235),
+      clutch: new Phaser.Geom.Rectangle(0, 480, 190, 240),
+      nos: new Phaser.Geom.Rectangle(180, 535, 145, 140),
+      shifter: new Phaser.Geom.Rectangle(1165, 500, 195, 210),
+      throttle: new Phaser.Geom.Rectangle(1370, 475, 190, 245),
     };
 
     this.clutchScale = 0.14;
@@ -46,15 +45,15 @@ export default class TouchControls {
     this.nosScale = 0.09;
     this.shifterScale = 0.11;
 
-    this.clutchSprite = scene.add.image(83, 610, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
-    this.nosSprite = scene.add.image(228, 608, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
-    this.shifterSprite = scene.add.image(1000, 608, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
-    this.throttleSprite = scene.add.image(1194, 605, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+    this.clutchSprite = scene.add.image(95, 608, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
+    this.nosSprite = scene.add.image(255, 608, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
+    this.shifterSprite = scene.add.image(1262, 608, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
+    this.throttleSprite = scene.add.image(1470, 603, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
-    this.plusLabel = scene.add.text(1000, 513, '+', {
+    this.plusLabel = scene.add.text(1262, 510, '+', {
       fontFamily: 'monospace', fontSize: '22px', color: '#c7d8df', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-    this.minusLabel = scene.add.text(1000, 701, '−', {
+    this.minusLabel = scene.add.text(1262, 701, '−', {
       fontFamily: 'monospace', fontSize: '22px', color: '#c7d8df', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
@@ -118,7 +117,6 @@ export default class TouchControls {
     this.clutch = keyboardClutch ? 1 : touchClutch;
     this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
 
-    // Desktop direct gears remain useful for testing.
     for (let g = 1; g <= 6; g++) {
       const key = this.keys[['one', 'two', 'three', 'four', 'five', 'six'][g - 1]];
       if (Phaser.Input.Keyboard.JustDown(key)) this.pendingGearRequest = g;
@@ -144,26 +142,22 @@ export default class TouchControls {
     const g = this.graphics;
     g.clear();
 
-    // Phaser fills are behind the art and show through the transparent bar windows.
-    const clutchBar = { x: 124.5, y: 567.8, w: 15.0, h: 124.6 };
-    const throttleBar = { x: 1225.4, y: 553.1, w: 17.6, h: 131.0 };
+    const clutchBar = { x: 136.5, y: 567.8, w: 15.0, h: 124.6 };
+    const throttleBar = { x: 1501.4, y: 553.1, w: 17.6, h: 131.0 };
 
     g.fillStyle(0x48c9e8, 0.92)
       .fillRoundedRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch, 3);
     g.fillStyle(0xe0b24e, 0.94)
       .fillRoundedRect(throttleBar.x, throttleBar.y + throttleBar.h * (1 - this.throttle), throttleBar.w, throttleBar.h * this.throttle, 3);
 
-    // Subtle hit-zone outlines while prototyping.
-    g.lineStyle(2, 0x476272, 0.18).strokeRoundedRect(this.layout.clutch.x, this.layout.clutch.y, this.layout.clutch.width, this.layout.clutch.height, 18);
-    g.lineStyle(2, 0x476272, 0.18).strokeRoundedRect(this.layout.throttle.x, this.layout.throttle.y, this.layout.throttle.width, this.layout.throttle.height, 18);
-    g.lineStyle(2, 0x476272, 0.20).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
+    g.lineStyle(2, 0x476272, 0.14).strokeRoundedRect(this.layout.clutch.x, this.layout.clutch.y, this.layout.clutch.width, this.layout.clutch.height, 18);
+    g.lineStyle(2, 0x476272, 0.14).strokeRoundedRect(this.layout.throttle.x, this.layout.throttle.y, this.layout.throttle.width, this.layout.throttle.height, 18);
+    g.lineStyle(2, 0x476272, 0.16).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
 
-    // The current art pack has a correct neutral/down pose. Up-shift works mechanically,
-    // but uses neutral art until the revised up-pose sprite is supplied.
     if (shiftState === 'down') {
-      this.shifterSprite.setTexture('shifterDown').setPosition(1000, 610).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterDown').setPosition(1262, 610).setScale(this.shifterScale);
     } else {
-      this.shifterSprite.setTexture('shifterNeutral').setPosition(1000, shiftState === 'up' ? 602 : 608).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(1262, shiftState === 'up' ? 602 : 608).setScale(this.shifterScale);
     }
 
     this.nosSprite.setScale(this.nos ? this.nosScale * 0.96 : this.nosScale);
