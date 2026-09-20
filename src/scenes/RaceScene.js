@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260920-r6';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260920-r6';
+import { cars, carOrder } from '../data/cars.js?v=20260920-r10';
 import { engines } from '../data/engines.js';
 
 const TRACK_M = 402.336;
