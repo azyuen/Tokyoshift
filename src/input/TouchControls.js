@@ -34,26 +34,26 @@ export default class TouchControls {
     this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
 
     this.layout = {
-      clutch: new Phaser.Geom.Rectangle(58, 454, 246, 266),
-      nos: new Phaser.Geom.Rectangle(334, 560, 118, 118),
-      shifter: new Phaser.Geom.Rectangle(1090, 468, 300, 252),
-      throttle: new Phaser.Geom.Rectangle(1262, 450, 238, 270),
+      clutch: new Phaser.Geom.Rectangle(52, 425, 220, 295),
+      nos: new Phaser.Geom.Rectangle(290, 555, 125, 130),
+      shifter: new Phaser.Geom.Rectangle(1080, 420, 250, 300),
+      throttle: new Phaser.Geom.Rectangle(1312, 410, 225, 310),
     };
 
-    this.clutchScale = 0.152;
-    this.throttleScale = 0.152;
+    this.clutchScale = 0.175;
+    this.throttleScale = 0.175;
     this.nosScale = 0.088;
-    this.shifterScale = 0.145;
+    this.shifterScale = 0.20;
 
-    this.clutchSprite = scene.add.image(168, 614, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
-    this.nosSprite = scene.add.image(392, 612, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
-    this.shifterSprite = scene.add.image(1228, 606, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
-    this.throttleSprite = scene.add.image(1384, 612, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+    this.clutchSprite = scene.add.image(150, 585, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
+    this.nosSprite = scene.add.image(352, 625, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
+    this.shifterSprite = scene.add.image(1200, 580, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
+    this.throttleSprite = scene.add.image(1430, 575, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
-    this.plusLabel = scene.add.text(1228, 494, '+', {
+    this.plusLabel = scene.add.text(1200, 438, '+', {
       fontFamily: 'monospace', fontSize: '21px', color: '#c7d8df', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-    this.minusLabel = scene.add.text(1228, 697, '−', {
+    this.minusLabel = scene.add.text(1200, 702, '−', {
       fontFamily: 'monospace', fontSize: '21px', color: '#c7d8df', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
@@ -142,8 +142,8 @@ export default class TouchControls {
     const g = this.graphics;
     g.clear();
 
-    const clutchBar = { x: 212.0, y: 557.0, w: 17.0, h: 136.0 };
-    const throttleBar = { x: 1413.0, y: 550.0, w: 18.0, h: 141.0 };
+    const clutchBar = { x: 201.5, y: 510.5, w: 19.5, h: 156.0 };
+    const throttleBar = { x: 1463.0, y: 496.0, w: 20.5, h: 165.0 };
 
     g.fillStyle(0x48c9e8, 0.92)
       .fillRoundedRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch, 3);
@@ -155,9 +155,9 @@ export default class TouchControls {
     g.lineStyle(2, 0x476272, 0.12).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
 
     if (shiftState === 'down') {
-      this.shifterSprite.setTexture('shifterDown').setPosition(1228, 612).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterDown').setPosition(1200, 590).setScale(this.shifterScale);
     } else {
-      this.shifterSprite.setTexture('shifterNeutral').setPosition(1228, shiftState === 'up' ? 598 : 606).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(1200, shiftState === 'up' ? 570 : 580).setScale(this.shifterScale);
     }
 
     this.nosSprite.setScale(this.nos ? this.nosScale * 0.965 : this.nosScale);
