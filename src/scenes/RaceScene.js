@@ -1,7 +1,7 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-195';
+import TouchControls from '../input/TouchControls.js?v=20260920-fine1';
 import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-195';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-fine1';
 import DebugHUD from '../ui/DebugHUD.js';
 import { cars } from '../data/cars.js';
 import { engines } from '../data/engines.js';
@@ -44,12 +44,12 @@ export default class RaceScene extends Phaser.Scene {
     this.treeLightsG = this.add.graphics().setDepth(23).setScrollFactor(0);
 
     // Uniform scaling only: body sprites retain their native aspect ratio.
-    // At 0.13 the 2172px source car is ~282px wide on the 1560px game canvas.
+    // At 0.118 the 2172px source car is ~256px wide on the 1560px game canvas.
     this.playerVisual = this.createCarVisual({
       bodyKey: 'carAE86',
       wheelKey: 'wheel8Spoke',
-      bodyScale: 0.13,
-      wheelScale: 0.032,
+      bodyScale: 0.118,
+      wheelScale: 0.029,
       rearOffsetX: -603,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -60,8 +60,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentVisual = this.createCarVisual({
       bodyKey: 'carR32',
       wheelKey: 'wheel5Spoke',
-      bodyScale: 0.13,
-      wheelScale: 0.032,
+      bodyScale: 0.118,
+      wheelScale: 0.029,
       rearOffsetX: -619,
       frontOffsetX: 594,
       wheelOffsetY: 138,
@@ -69,19 +69,19 @@ export default class RaceScene extends Phaser.Scene {
       exhaustOffsetY: 165,
     }, 6);
 
-    this.treeSprite = this.add.image(780, 193, 'dragTree')
-      .setScale(0.12)
+    this.treeSprite = this.add.image(780, 202, 'dragTree')
+      .setScale(0.112)
       .setDepth(20)
       .setScrollFactor(0)
       .setAlpha(0.78);
 
-    this.startButton = this.add.rectangle(780, 44, 250, 54, 0x142235, 0.96)
+    this.startButton = this.add.rectangle(780, 54, 250, 54, 0x142235, 0.96)
       .setStrokeStyle(3, 0x63d7ff, 1)
       .setDepth(45)
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.startButtonText = this.add.text(780, 44, 'START RACE', {
+    this.startButtonText = this.add.text(780, 54, 'START RACE', {
       fontFamily: 'monospace', fontSize: '22px', color: '#eef8ff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
@@ -218,44 +218,44 @@ export default class RaceScene extends Phaser.Scene {
 
   drawScene(pt, ot, dt) {
     const W = 1560;
-    const targetPlayerX = W * 0.30;
+    const targetPlayerX = W * 0.25;
     const cameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     this.bg.clear();
     this.bg.fillStyle(0x070914, 1).fillRect(0, 0, 1560, 720);
 
-    const slow = -(cameraPx * 0.12) % 240;
-    for (let i = -1; i < 8; i++) {
-      const x = slow + i * 240;
+    const slow = -(cameraPx * 0.12) % 260;
+    for (let i = -1; i < 9; i++) {
+      const x = slow + i * 260;
       const h = 70 + ((i * 37) % 110 + 110) % 110;
-      this.bg.fillStyle(i % 2 ? 0x11172b : 0x0d1324, 1).fillRect(x, 240 - h, 160, h);
+      this.bg.fillStyle(i % 2 ? 0x11172b : 0x0d1324, 1).fillRect(x, 236 - h, 175, h);
       this.bg.fillStyle(0x5ddcff, 0.25);
       for (let wy = 0; wy < 4; wy++) {
         for (let wx = 0; wx < 4; wx++) {
-          this.bg.fillRect(x + 18 + wx * 28, 190 - h + wy * 22, 7, 4);
+          this.bg.fillRect(x + 18 + wx * 31, 188 - h + wy * 22, 7, 4);
         }
       }
     }
 
-    const mid = -(cameraPx * 0.28) % 320;
-    this.bg.fillStyle(0x161b27, 1).fillRect(0, 250, 1560, 32);
+    const mid = -(cameraPx * 0.28) % 350;
+    this.bg.fillStyle(0x161b27, 1).fillRect(0, 242, 1560, 34);
     for (let i = -1; i < 6; i++) {
-      this.bg.fillStyle(0x202737, 1).fillRect(mid + i * 320, 282, 28, 125);
+      this.bg.fillStyle(0x202737, 1).fillRect(mid + i * 350, 276, 30, 135);
     }
 
     this.road.clear();
-    this.road.fillStyle(0x11151e, 1).fillRect(0, 280, 1560, 250);
-    this.road.fillStyle(0x1a202b, 1).fillRect(0, 318, 1560, 180);
+    this.road.fillStyle(0x11151e, 1).fillRect(0, 278, 1560, 250);
+    this.road.fillStyle(0x1a202b, 1).fillRect(0, 316, 1560, 180);
     this.road.fillStyle(0x26303d, 1).fillRect(0, 383, 1560, 3);
 
-    const stripeOffset = -cameraPx % 180;
+    const stripeOffset = -cameraPx % 220;
     this.road.fillStyle(0xe9c46a, 0.35);
-    for (let i = -1; i < 10; i++) this.road.fillRect(stripeOffset + i * 180, 438, 90, 3);
+    for (let i = -1; i < 10; i++) this.road.fillRect(stripeOffset + i * 220, 448, 100, 3);
 
     this.worldG.clear();
     const finishX = TRACK_M * PX_PER_M - cameraPx;
-    if (finishX > -60 && finishX < 1340) {
-      for (let y = 275; y < 500; y += 20) {
+    if (finishX > -60 && finishX < W + 60) {
+      for (let y = 272; y < 498; y += 20) {
         this.worldG.fillStyle(((y / 20) % 2) ? 0xffffff : 0x151515, 1).fillRect(finishX, y, 16, 20);
         this.worldG.fillStyle(((y / 20) % 2) ? 0x151515 : 0xffffff, 1).fillRect(finishX + 16, y, 16, 20);
       }
@@ -265,7 +265,7 @@ export default class RaceScene extends Phaser.Scene {
     const ox = ot.positionM * PX_PER_M - cameraPx;
 
     // Smaller cars, higher on screen, matching the approved composition reference.
-    this.updateCarVisual(this.playerVisual, px, 340, pt, dt);
+    this.updateCarVisual(this.playerVisual, px, 342, pt, dt);
     this.updateCarVisual(this.opponentVisual, ox, 270, ot, dt);
 
     this.drawEffects(pt, ot);
@@ -322,9 +322,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const sourceW = 1086;
     const sourceH = 1448;
-    const s = 0.12;
+    const s = 0.112;
     const left = 780 - sourceW * s / 2;
-    const top = 193 - sourceH * s / 2;
+    const top = 202 - sourceH * s / 2;
     const p = (x, y) => ({ x: left + x * s, y: top + y * s });
 
     const rows = [
