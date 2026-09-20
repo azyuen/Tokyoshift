@@ -1,4 +1,5 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r16';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r17';
+import { characters } from '../data/characters.js?v=20260921-r17';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -25,6 +26,16 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('shifterDown', 'assets/Controls/shifter_down.png');
 
     garageAssets.forEach(asset => this.load.image(asset.key, asset.path));
+
+    // Only load the two workshop characters at startup. The rest of the roster
+    // can be loaded when the meet/rival screens are added.
+    const workshopCharacters = [characters.renMizuno, characters.daichiSakamoto];
+    workshopCharacters.forEach(character => {
+      this.load.image(
+        character.visual.spriteKey,
+        character.visual.path + '?v=20260921-r17'
+      );
+    });
   }
 
   create() {
@@ -39,12 +50,14 @@ export default class BootScene extends Phaser.Scene {
     this.registry.set('wins', Number.isFinite(profile?.wins) ? profile.wins : 0);
     this.registry.set('losses', Number.isFinite(profile?.losses) ? profile.losses : 0);
     this.registry.set('cash', Number.isFinite(profile?.cash) ? profile.cash : 25000);
+    this.registry.set('playerCharacterId', profile?.playerCharacterId || 'renMizuno');
+    this.registry.set('workshopFriendId', 'daichiSakamoto');
 
     this.add.rectangle(780, 360, 1560, 720, 0x070914);
     this.add.text(780, 304, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 363, 'R16 // WORKSHOP', {
+    this.add.text(780, 363, 'R17 // REN + DAICHI', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
