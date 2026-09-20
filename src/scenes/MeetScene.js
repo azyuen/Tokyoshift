@@ -1,13 +1,13 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r28';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r28';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r28';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r29';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r29';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r29';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
-const STAGE = { x: 24, y: 74, w: 1138, h: 452 };
-const SIDE = { x: 1180, y: 74, w: 356, h: 628 };
-const CARDS = { x: 24, y: 544, w: 1138, h: 158 };
+const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
+const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
+const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 
 const MODE_DATA = {
   SINGLE: {
@@ -29,19 +29,20 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r28');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r29');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r28');
+        this.load.image(bg.key, bg.path + '?v=20260921-r29');
       }
     });
   }
 
   create() {
     document.body.dataset.scene = 'meet';
+    this.scale.resize(1560, 840);
 
     this.selectedMode = 'SINGLE';
     this.offers = [];
@@ -71,7 +72,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   drawBase() {
-    this.add.rectangle(780, 360, 1560, 720, 0x050912).setDepth(-30);
+    this.add.rectangle(780, 420, 1560, 840, 0x050912).setDepth(-30);
 
     this.add.rectangle(
       STAGE.x + STAGE.w / 2,
@@ -244,7 +245,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 536,
+      SIDE.y + 548,
       SIDE.w - 36,
       48,
       0x0b2826,
@@ -266,7 +267,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 612,
       SIDE.w - 36,
       48,
       0x24131a,
@@ -288,7 +289,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildBottomArea() {
-    this.add.text(CARDS.x + 18, CARDS.y + 8, 'RIVALS IN WANGAN', {
+    this.add.text(CARDS.x + 18, CARDS.y + 10, 'RIVALS IN WANGAN', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(33);
   }
@@ -369,13 +370,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r28'
+          character.visual.path + '?v=20260921-r29'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r28');
+      queueImage(bg.key, bg.path + '?v=20260921-r29');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -410,12 +411,12 @@ export default class MeetScene extends Phaser.Scene {
       {
         // Left foreground anchor. Its body AND wheels stay above the middle car.
         carX: 225,
-        carY: 390,
+        carY: 414,
         carW: 590,
         carDepth: 30,
         carFlipX: false,
         charX: 125,
-        charY: 520,
+        charY: 556,
         charH: 246,
         charDepth: 34,
         charFlipX: false,
@@ -423,12 +424,12 @@ export default class MeetScene extends Phaser.Scene {
       {
         // Middle rival is physically farther away: higher, smaller and behind.
         carX: 620,
-        carY: 344,
+        carY: 368,
         carW: 390,
         carDepth: 14,
         carFlipX: false,
         charX: 535,
-        charY: 432,
+        charY: 456,
         charH: 182,
         charDepth: 16,
         charFlipX: true,
@@ -436,12 +437,12 @@ export default class MeetScene extends Phaser.Scene {
       {
         // Right foreground car remains close and clipped by the stage edge.
         carX: 1110,
-        carY: 390,
+        carY: 414,
         carW: 640,
         carDepth: 24,
         carFlipX: true,
         charX: 875,
-        charY: 500,
+        charY: 536,
         charH: 255,
         charDepth: 19,
         charFlipX: true,
@@ -477,23 +478,33 @@ export default class MeetScene extends Phaser.Scene {
       sprite.setFlipX(placement.charFlipX);
       this.stageObjects.push(sprite);
 
-      const shadow = this.add.ellipse(
-        placement.charX,
-        placement.charY + 8,
-        Math.max(42, sprite.displayWidth * 0.62),
-        i === 0 ? 16 : 13,
+      const softShadow = this.add.ellipse(
+        placement.charX + 5,
+        placement.charY + 13,
+        Math.max(54, sprite.displayWidth * 0.76),
+        i === 0 ? 22 : 18,
         0x000000,
-        i === 0 ? 0.24 : 0.22
-      ).setDepth(placement.charDepth - 0.2)
+        0.34
+      ).setDepth(placement.carDepth - 0.85)
         .setMask(this.stageMask);
 
-      this.stageObjects.push(shadow);
+      const contactShadow = this.add.ellipse(
+        placement.charX,
+        placement.charY + 8,
+        Math.max(38, sprite.displayWidth * 0.52),
+        i === 0 ? 11 : 9,
+        0x000000,
+        0.48
+      ).setDepth(placement.carDepth - 0.75)
+        .setMask(this.stageMask);
+
+      this.stageObjects.push(softShadow, contactShadow);
     });
   }
 
   drawCards() {
     const xPositions = [215, 593, 971];
-    const cardY = 632;
+    const cardY = 742;
 
     this.offers.forEach((offer, i) => {
       const x = xPositions[i];
@@ -504,7 +515,7 @@ export default class MeetScene extends Phaser.Scene {
         x,
         cardY,
         350,
-        132,
+        148,
         0x0a1521,
         0.99
       ).setStrokeStyle(2, 0x2e4a61, 1)
@@ -731,20 +742,31 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    const shadow = this.add.ellipse(
-      x,
-      wheelY + Math.max(18, rearWheel.displayHeight * 0.52),
-      Math.max(100, targetWidth * 0.84),
-      Math.max(13, source.height * bodyScale * 0.16),
+    const shadowY = wheelY + Math.max(22, rearWheel.displayHeight * 0.62);
+
+    const softShadow = this.add.ellipse(
+      x + (flipX ? -8 : 8),
+      shadowY + 5,
+      Math.max(110, targetWidth * 0.88),
+      Math.max(18, source.height * bodyScale * 0.20),
       0x000000,
-      0.24
-    ).setDepth(depth - 0.6);
+      0.34
+    ).setDepth(depth - 0.75);
+
+    const contactShadow = this.add.ellipse(
+      x,
+      shadowY,
+      Math.max(90, targetWidth * 0.72),
+      Math.max(9, source.height * bodyScale * 0.10),
+      0x000000,
+      0.50
+    ).setDepth(depth - 0.65);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
       .setScale(bodyScale)
       .setFlipX(flipX)
       .setDepth(depth + 1);
 
-    return [rearBacking, frontBacking, shadow, rearWheel, frontWheel, body];
+    return [rearBacking, frontBacking, softShadow, contactShadow, rearWheel, frontWheel, body];
   }
 }
