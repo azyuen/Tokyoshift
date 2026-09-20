@@ -1,30 +1,31 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r18';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r18';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r20';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r20';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r20';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
+const STAGE = { x: 30, y: 84, w: 1120, h: 420 };
+const SIDE = { x: 1176, y: 84, w: 354, h: 520 };
+const CARDS = { x: 30, y: 522, w: 1120, h: 168 };
+
 const CATEGORY_DATA = {
   CHALLENGES: {
-    label: 'CHALLENGES',
     types: ['Street Sprint', 'Standing Start', 'Roll Race'],
     stakes: [2500, 5000, 7500, 10000],
     distances: ['2.4 km', '3.2 km', '4.8 km'],
   },
   COMPETITIONS: {
-    label: 'COMPETITIONS',
     types: ['Night Cup', 'Quarter Mile', 'Eliminator'],
     stakes: [10000, 15000, 20000],
     distances: ['1/4 mile', '5.0 km', '3 rounds'],
   },
   PINK_SLIP: {
-    label: 'PINK SLIP',
     types: ['Pink Slip', 'Winner Takes Car'],
     stakes: ['CAR', 'CAR'],
     distances: ['1/4 mile', '3.2 km'],
   },
   BET_RACE: {
-    label: 'BET RACE',
     types: ['Cash Run', 'High Stakes', 'Double Down'],
     stakes: [10000, 25000, 50000],
     distances: ['2.8 km', '4.0 km', '1/4 mile'],
@@ -35,15 +36,19 @@ export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
   preload() {
-    // The workshop already loads Ren + Daichi. Load the remaining character
-    // library here so the meet scene does not make initial boot unnecessarily heavy.
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
         this.load.image(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r18'
+          character.visual.path + '?v=20260921-r20'
         );
+      }
+    });
+
+    meetBackgrounds.forEach(bg => {
+      if (!this.textures.exists(bg.key)) {
+        this.load.image(bg.key, bg.path + '?v=20260921-r20');
       }
     });
   }
@@ -54,8 +59,10 @@ export default class MeetScene extends Phaser.Scene {
     this.offerObjects = [];
     this.selectedOfferIndex = 0;
     this.nextRefreshAt = Date.now() + 180000;
+    this.currentBackground = null;
+    this.backgroundMaskShape = null;
 
-    this.drawBackdrop();
+    this.drawBase();
     this.buildHeader();
     this.buildSidebar();
     this.buildBottomArea();
@@ -68,108 +75,106 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  drawBackdrop() {
-    this.add.rectangle(780, 360, 1560, 720, 0x050912).setDepth(-20);
+  drawBase() {
+    this.add.rectangle(780, 360, 1560, 720, 0x050912).setDepth(-30);
 
-    const g = this.add.graphics().setDepth(-10);
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x08121d,
+      1
+    ).setStrokeStyle(2, 0x24475f, 1).setDepth(-15);
 
-    // Night sky + distant city.
-    g.fillStyle(0x07111f, 1).fillRect(0, 62, 1210, 450);
-    const buildings = [
-      [20, 155, 110, 240], [145, 115, 120, 280], [280, 180, 92, 215],
-      [385, 125, 145, 270], [545, 165, 102, 230], [662, 105, 155, 290],
-      [832, 150, 108, 245], [952, 118, 145, 277], [1110, 175, 92, 220],
-    ];
-    buildings.forEach((b, i) => {
-      g.fillStyle(i % 2 ? 0x0b1b2c : 0x0e2134, 1).fillRect(b[0], b[1], b[2], b[3]);
-      for (let wx = b[0] + 14; wx < b[0] + b[2] - 8; wx += 24) {
-        for (let wy = b[1] + 20; wy < b[1] + b[3] - 14; wy += 31) {
-          const lit = ((wx + wy + i * 17) % 5) < 2;
-          if (lit) g.fillStyle((wy % 3) ? 0x6fc9e8 : 0xe1b05b, 0.55).fillRect(wx, wy, 5, 7);
-        }
-      }
-    });
+    this.add.rectangle(
+      CARDS.x + CARDS.w / 2,
+      CARDS.y + CARDS.h / 2,
+      CARDS.w,
+      CARDS.h,
+      0x07111d,
+      0.99
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
+  }
 
-    // Elevated road and underpass structure.
-    g.fillStyle(0x151c25, 1).fillRect(0, 116, 1210, 43);
-    g.fillStyle(0x25303a, 1).fillRect(0, 155, 1210, 8);
-    g.fillStyle(0x11171e, 1).fillRect(0, 175, 1210, 52);
-    g.fillStyle(0x2b3540, 1).fillRect(0, 220, 1210, 6);
+  setMeetBackground() {
+    if (this.currentBackground) this.currentBackground.destroy();
+    if (this.backgroundMaskShape) this.backgroundMaskShape.destroy();
 
-    [95, 430, 785, 1110].forEach(x => {
-      g.fillStyle(0x252d35, 1).fillRect(x, 62, 50, 355);
-      g.fillStyle(0x313a43, 1).fillRect(x + 5, 62, 6, 355);
-    });
+    const bg = Phaser.Utils.Array.GetRandom(meetBackgrounds);
+    const image = this.add.image(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      bg.key
+    ).setDepth(-10);
 
-    // Warm lamps.
-    [225, 590, 945].forEach(x => {
-      g.fillStyle(0x322919, 1).fillRect(x - 2, 168, 4, 21);
-      g.fillStyle(0xf0c46c, 0.95).fillRect(x - 18, 188, 36, 6);
-      g.fillStyle(0xf0c46c, 0.12).fillCircle(x, 197, 52);
-    });
+    const source = this.textures.get(bg.key).getSourceImage();
+    const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    image.setScale(coverScale);
 
-    // Fence / crowd line.
-    g.fillStyle(0x0a0d12, 0.80).fillRect(0, 326, 1210, 48);
-    g.lineStyle(2, 0x394957, 0.55);
-    for (let x = 0; x < 1210; x += 28) {
-      g.lineBetween(x, 326, x + 34, 374);
-      g.lineBetween(x + 34, 326, x, 374);
-    }
+    const maskShape = this.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
+    image.setMask(maskShape.createGeometryMask());
 
-    // Wet road.
-    g.fillStyle(0x131820, 1).fillRect(0, 374, 1210, 138);
-    g.fillStyle(0x252f39, 1).fillRect(0, 488, 1210, 3);
-    g.fillStyle(0xe5edf3, 0.16).fillRect(0, 438, 1210, 3);
-    for (let x = 20; x < 1200; x += 150) {
-      g.fillStyle(0x68d9ff, 0.06).fillRect(x, 382, 55, 110);
-      g.fillStyle(0xff4b62, 0.045).fillRect(x + 55, 382, 35, 110);
-    }
+    this.currentBackground = image;
+    this.backgroundMaskShape = maskShape;
+    this.locationText.setText(bg.label);
 
-    // Background label.
-    this.add.text(46, 103, 'TOKYO // NIGHT MEET', {
-      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#9eb6c7'
-    }).setDepth(-5);
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x03101b,
+      0.08
+    ).setDepth(-9);
   }
 
   buildHeader() {
-    this.add.rectangle(780, 32, 1560, 64, 0x07111d, 1)
+    this.add.rectangle(780, 42, 1500, 52, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.rectangle(130, 32, 220, 46, 0x0a1a2b, 1)
+    this.add.rectangle(150, 42, 220, 40, 0x0a1a2b, 1)
       .setStrokeStyle(2, 0x39d9ff, 1)
       .setDepth(41);
-    this.add.text(130, 32, 'MEET', {
-      fontFamily: PIXEL_FONT, fontSize: '21px', color: '#eefaff'
+    this.add.text(150, 42, 'MEET', {
+      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(42);
 
-    this.add.text(270, 32, 'TOKYO   >   NIGHT MEET   >   SHIBUYA', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
+    this.locationText = this.add.text(286, 42, 'TOKYO // NIGHT MEET', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 25000;
 
-    this.add.text(1110, 22, 'WINS ' + wins, {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#9ab7ca'
+    this.add.text(1095, 32, 'WINS  ' + wins, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1110, 43, 'LOSSES ' + losses, {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#9ab7ca'
+    this.add.text(1095, 51, 'LOSSES  ' + losses, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    this.add.text(1518, 32, '¥ ' + Number(cash).toLocaleString('en-US'), {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffe08a'
+    this.add.text(1505, 42, '¥ ' + Number(cash).toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
   }
 
   buildSidebar() {
-    this.add.rectangle(1382, 320, 334, 500, 0x07111d, 0.98)
-      .setStrokeStyle(2, 0x17354d, 1)
-      .setDepth(35);
+    this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      0.98
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(1235, 86, 'RACE TYPE', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8cc8ec'
+    this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE TYPE', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const buttons = [
@@ -181,15 +186,17 @@ export default class MeetScene extends Phaser.Scene {
 
     this.categoryButtons = [];
     buttons.forEach((row, i) => {
-      const y = 128 + i * 53;
-      const box = this.add.rectangle(1382, y, 294, 42, 0x0b1724, 1)
+      const y = SIDE.y + 62 + i * 52;
+      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 42, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
-      const label = this.add.text(1253, y, row[0], {
+
+      const label = this.add.text(SIDE.x + 30, y, row[0], {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
-      this.add.text(1510, y, '>', {
+
+      this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
         fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
@@ -197,67 +204,65 @@ export default class MeetScene extends Phaser.Scene {
         this.selectedCategory = row[1];
         this.rollOffers();
       });
+
       this.categoryButtons.push({ key: row[1], box, label });
     });
 
-    this.add.text(1235, 355, 'RIVALS TONIGHT', {
+    this.add.text(SIDE.x + 20, SIDE.y + 286, 'RIVALS TONIGHT', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalCountText = this.add.text(1510, 355, '3', {
+    this.rivalCountText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 286, '3', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffffff'
     }).setOrigin(1, 0).setDepth(37);
 
-    this.add.text(1235, 394, 'NEXT REFRESH', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#6f91a8'
+    this.add.text(SIDE.x + 20, SIDE.y + 322, 'NEXT REFRESH', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7898ad'
     }).setDepth(37);
 
-    this.refreshText = this.add.text(1510, 394, '03:00', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b7d6e8'
+    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 322, '03:00', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
     }).setOrigin(1, 0).setDepth(37);
 
-    this.selectedSummary = this.add.text(1235, 438, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 360, '', {
       fontFamily: BODY_FONT,
       fontSize: '16px',
       color: '#d8e7ef',
       lineSpacing: 5,
-      wordWrap: { width: 270 },
+      wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.raceButton = this.add.rectangle(1382, 523, 294, 52, 0x0b2826, 1)
+    this.raceButton = this.add.rectangle(SIDE.x + SIDE.w / 2, SIDE.y + 486, SIDE.w - 36, 48, 0x0b2826, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(38);
-    this.raceButtonLabel = this.add.text(1382, 523, 'RACE  >', {
-      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#f1fffb'
+
+    this.raceButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 486, 'RACE  >', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(39);
 
     this.raceButton.on('pointerdown', () => this.startSelectedRace());
   }
 
   buildBottomArea() {
-    this.add.rectangle(606, 617, 1208, 158, 0x07111d, 0.99)
-      .setStrokeStyle(2, 0x17354d, 1)
-      .setDepth(30);
-
-    this.add.text(28, 548, 'RIVALS IN SHIBUYA', {
+    this.add.text(CARDS.x + 18, CARDS.y + 12, 'RIVALS IN WANGAN', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(33);
 
-    const back = this.add.rectangle(112, 692, 180, 42, 0x24131a, 0.98)
+    const back = this.add.rectangle(130, 686, 196, 34, 0x24131a, 0.98)
       .setStrokeStyle(2, 0xff6177, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
-    this.add.text(112, 692, 'WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffdce1'
+    this.add.text(130, 686, 'WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffdce1'
     }).setOrigin(0.5).setDepth(41);
     back.on('pointerdown', () => this.scene.start('GarageScene'));
 
-    const refresh = this.add.rectangle(1096, 692, 170, 42, 0x0b1724, 0.98)
+    const refresh = this.add.rectangle(1052, 686, 196, 34, 0x0b1724, 0.98)
       .setStrokeStyle(1, 0x315470, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
-    this.add.text(1096, 692, 'REFRESH', {
+    this.add.text(1052, 686, 'REFRESH', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b7d6e8'
     }).setOrigin(0.5).setDepth(41);
     refresh.on('pointerdown', () => this.rollOffers());
@@ -265,6 +270,7 @@ export default class MeetScene extends Phaser.Scene {
 
   rollOffers() {
     this.clearOfferObjects();
+    this.setMeetBackground();
 
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
     const pool = characterOrder.filter(id =>
@@ -304,59 +310,63 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   drawOffers() {
-    const xPositions = [210, 600, 990];
-    const carY = 425;
-    const characterXOffset = -122;
+    const xPositions = [210, 590, 970];
 
     this.offers.forEach((offer, i) => {
       const x = xPositions[i];
       const car = cars[offer.carId];
       const character = characters[offer.characterId];
 
-      const carObjects = this.createCarDisplay(car, x + 35, carY, 300, 10);
+      const carObjects = this.createCarDisplay(car, x + 45, 403, 285, 10);
       this.offerObjects.push(...carObjects);
 
-      const charSprite = this.add.image(x + characterXOffset, 472, character.visual.spriteKey)
+      const charSprite = this.add.image(x - 112, 485, character.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(14);
       const charSource = this.textures.get(character.visual.spriteKey).getSourceImage();
-      charSprite.setScale(155 / charSource.height);
+      charSprite.setScale(145 / charSource.height);
       this.offerObjects.push(charSprite);
 
       const shadow = this.add.ellipse(
-        x + characterXOffset, 470,
-        Math.max(30, charSprite.displayWidth * 0.55), 9,
-        0x000000, 0.28
+        x - 112, 482,
+        Math.max(28, charSprite.displayWidth * 0.52), 8,
+        0x000000, 0.27
       ).setDepth(13);
       this.offerObjects.push(shadow);
 
-      const cardY = 616;
-      const card = this.add.rectangle(x, cardY, 360, 116, 0x0a1521, 0.99)
+      const cardY = 603;
+      const card = this.add.rectangle(x, cardY, 350, 116, 0x0a1521, 0.99)
         .setStrokeStyle(2, 0x2e4a61, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(34);
 
-      const name = this.add.text(x - 164, cardY - 42, character.name.toUpperCase(), {
+      const name = this.add.text(x - 158, cardY - 43, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffffff'
       }).setDepth(35);
 
-      const type = this.add.text(x - 164, cardY - 16, offer.raceType, {
+      const type = this.add.text(x - 158, cardY - 17, offer.raceType, {
         fontFamily: BODY_FONT, fontSize: '17px', color: '#8fd2f5', fontStyle: '600'
       }).setDepth(35);
 
-      const quote = this.add.text(x - 164, cardY + 9, '"' + offer.quote + '"', {
-        fontFamily: BODY_FONT, fontSize: '13px', color: '#9eb2c2',
-        wordWrap: { width: 220 },
+      const quote = this.add.text(x - 158, cardY + 8, '"' + offer.quote + '"', {
+        fontFamily: BODY_FONT, fontSize: '14px', color: '#a9bbc8',
+        wordWrap: { width: 210 },
       }).setDepth(35);
 
       const stakeText = typeof offer.stake === 'number'
         ? '¥ ' + offer.stake.toLocaleString('en-US')
         : offer.stake;
 
-      const footer = this.add.text(x + 160, cardY + 40,
-        car.shortName + '   •   ' + offer.distance + '   •   ' + stakeText, {
-          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c5d9e6'
-        }).setOrigin(1, 0.5).setDepth(35);
+      const footer = this.add.text(
+        x + 158,
+        cardY + 43,
+        car.shortName + '  •  ' + offer.distance + '  •  ' + stakeText,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: '#c5d9e6',
+        }
+      ).setOrigin(1, 0.5).setDepth(35);
 
       card.on('pointerdown', () => this.selectOffer(i));
 
@@ -409,6 +419,7 @@ export default class MeetScene extends Phaser.Scene {
       this.rollOffers();
       return;
     }
+
     const totalSeconds = Math.ceil(remaining / 1000);
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
@@ -442,21 +453,25 @@ export default class MeetScene extends Phaser.Scene {
 
     const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
       .setScale(wheelScale).setDepth(depth);
+
     const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
       .setScale(wheelScale).setDepth(depth);
 
     const rearBacking = this.add.circle(
       rearX, wheelY, Math.max(5, rearWheel.displayWidth * 0.50), 0x030507, 1
     ).setDepth(depth - 0.35);
+
     const frontBacking = this.add.circle(
       frontX, wheelY, Math.max(5, frontWheel.displayWidth * 0.50), 0x030507, 1
     ).setDepth(depth - 0.35);
 
     const shadow = this.add.ellipse(
-      x, wheelY + Math.max(6, rearWheel.displayHeight * 0.25),
+      x,
+      wheelY + Math.max(6, rearWheel.displayHeight * 0.25),
       Math.max(70, targetWidth * 0.78),
       Math.max(7, source.height * bodyScale * 0.10),
-      0x000000, 0.32
+      0x000000,
+      0.32
     ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
