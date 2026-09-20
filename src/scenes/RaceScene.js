@@ -1,11 +1,12 @@
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js?v=20260920-r6';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260920-r6';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r24';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r18';
-import { engines } from '../data/engines.js';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
+import { engines } from '../data/engines.js?v=20260921-r24';
+import { characters } from '../data/characters.js?v=20260921-r24';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -25,6 +26,11 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentCarId = rivals.includes(chosenOpponent)
       ? chosenOpponent
       : Phaser.Utils.Array.GetRandom(rivals);
+
+    this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
+    this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
+    this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
   }
 
   create() {
@@ -39,12 +45,14 @@ export default class RaceScene extends Phaser.Scene {
     this.opponent.transmission.currentGear = 1;
     this.opponent.transmission.lastShiftQuality = 'STAGED';
 
-    this.ai = new DragRacingAI(this.opponent, {
-      reactionSkill: 0.86,
-      launchSkill: 0.84,
-      shiftSkill: 0.84,
-      aggression: 0.82
-    });
+    const rivalCharacter = characters[this.opponentCharacterId];
+    const rivalAI = rivalCharacter?.skill?.ai ?? {
+      reactionSkill: 0.78,
+      launchSkill: 0.76,
+      shiftSkill: 0.78,
+      aggression: 0.78,
+    };
+    this.ai = new DragRacingAI(this.opponent, rivalAI);
 
     this.controls = new TouchControls(this);
     this.hud = new RaceHUD(this);
@@ -65,6 +73,7 @@ export default class RaceScene extends Phaser.Scene {
     this.playerFinishClock = null;
     this.resultsShown = false;
     this.firstFinishClock = null;
+    this.raceSettlement = null;
 
     this.environment = new TokyoExpresswayBackground(this);
     this.worldG = this.add.graphics().setDepth(4);
@@ -90,6 +99,17 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
+
+    const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
+    const moneyLabel = this.raceMode === 'COMPETITION'
+      ? 'PRIZE  ¥ ' + this.raceStake.toLocaleString('en-US')
+      : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
+
+    this.stakeText = this.add.text(1045, 54, rivalName.toUpperCase() + '  //  ' + moneyLabel, {
+      fontFamily: '"Silkscreen", monospace',
+      fontSize: '11px',
+      color: this.raceMode === 'COMPETITION' ? '#8fe7ff' : '#ffe08a',
+    }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.cancelButton = this.add.rectangle(135, 54, 210, 46, 0x24131a, 0.94)
       .setStrokeStyle(2, 0xff6b7a, 0.9)
@@ -327,7 +347,19 @@ export default class RaceScene extends Phaser.Scene {
       opponentWon = !playerWon;
       outcome = playerWon ? 'YOU WIN' : 'RIVAL WINS';
       outcomeColour = playerWon ? '#73f5a5' : '#ff6d8d';
+    } else if (this.playerFinishClock != null) {
+      playerWon = true;
+      outcome = 'YOU WIN';
+      outcomeColour = '#73f5a5';
+    } else if (this.opponentFinishClock != null) {
+      opponentWon = true;
+      outcome = 'RIVAL WINS';
+      outcomeColour = '#ff6d8d';
     }
+
+    const settlement = (playerWon || opponentWon)
+      ? this.settleRace(playerWon)
+      : null;
 
     // Dim the frozen race instead of leaving it for a separate result scene.
     this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.62)
@@ -412,6 +444,23 @@ export default class RaceScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
     });
 
+    if (settlement) {
+      const delta = settlement.cashDelta;
+      const moneyText = delta > 0
+        ? '+¥ ' + delta.toLocaleString('en-US')
+        : delta < 0
+          ? '-¥ ' + Math.abs(delta).toLocaleString('en-US')
+          : 'NO CASH CHANGE';
+
+      this.add.text(panelX, 449, moneyText + '   //   BALANCE ¥ ' + settlement.cash.toLocaleString('en-US'), {
+        fontFamily: dataFont,
+        fontSize: '17px',
+        color: delta > 0 ? '#73f5a5' : delta < 0 ? '#ff7d98' : '#aab9c6',
+        fontStyle: 'bold',
+        letterSpacing: 1,
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+    }
+
     const addButton = (x, label, stroke, onPress) => {
       const button = this.add.rectangle(x, 486, 190, 42, 0x0c1825, 0.98)
         .setStrokeStyle(2, stroke, 0.88)
@@ -430,8 +479,55 @@ export default class RaceScene extends Phaser.Scene {
       return { button, text };
     };
 
-    addButton(660, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
+    const currentCash = this.registry.get('cash') ?? 0;
+    const canRematch = this.raceMode !== 'SINGLE' || currentCash >= this.raceStake;
+
+    if (canRematch) {
+      addButton(660, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
+    } else {
+      addButton(660, 'LOW CASH', 0x7d5660, () => this.scene.start('MeetScene'));
+    }
     addButton(900, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
+  }
+
+  settleRace(playerWon) {
+    if (this.raceSettlement) return this.raceSettlement;
+
+    const wins = this.registry.get('wins') ?? 0;
+    const losses = this.registry.get('losses') ?? 0;
+    const oldCash = this.registry.get('cash') ?? 0;
+
+    this.registry.set('wins', wins + (playerWon ? 1 : 0));
+    this.registry.set('losses', losses + (playerWon ? 0 : 1));
+
+    let cashDelta = 0;
+    if (this.raceMode === 'SINGLE' && this.raceDeal === 'BET') {
+      cashDelta = playerWon ? this.raceStake : -this.raceStake;
+    } else if (this.raceMode === 'COMPETITION' && playerWon) {
+      cashDelta = this.raceStake;
+    }
+
+    const newCash = Math.max(0, oldCash + cashDelta);
+    this.registry.set('cash', newCash);
+
+    try {
+      localStorage.setItem('tokyoShiftProfile', JSON.stringify({
+        selectedCarId: this.registry.get('selectedCarId') || 'ae86',
+        wins: this.registry.get('wins') ?? 0,
+        losses: this.registry.get('losses') ?? 0,
+        cash: newCash,
+        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
+      }));
+    } catch (e) {
+      // Storage can be unavailable in some private-browser contexts.
+    }
+
+    this.raceSettlement = {
+      playerWon,
+      cashDelta: newCash - oldCash,
+      cash: newCash,
+    };
+    return this.raceSettlement;
   }
 
   drawScene(pt, ot, dt) {
