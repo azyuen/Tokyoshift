@@ -3,6 +3,7 @@ export default class Tyres {
     this.grip = config.tyreGrip;
     this.wheelRadius = config.wheelRadius;
     this.drivenAxleWeightFraction = config.drivenAxleWeightFraction ?? 0.54;
+    this.launchLoadMultiplier = config.launchLoadMultiplier ?? 1.0;
     this.spinVelocityMps = 0;
     this.slipRatio = 0;
     this.wheelRPM = 0;
@@ -11,8 +12,9 @@ export default class Tyres {
 
   update(dt, vehicleSpeedMps, demandedForceN, massKg) {
     const g = 9.81;
-    // Weight transfer under launch is approximated by a small static bonus for RWD prototypes.
-    const drivenNormalN = massKg * g * this.drivenAxleWeightFraction * 1.16;
+    // Drivetrain-specific launch loading: AWD can use nearly the full vehicle
+    // weight, RWD gains rear load under acceleration, and FWD loses some.
+    const drivenNormalN = massKg * g * this.drivenAxleWeightFraction * this.launchLoadMultiplier;
     const peakForce = drivenNormalN * this.grip;
     const absDemand = Math.abs(demandedForceN);
     const direction = Math.sign(demandedForceN || 1);
