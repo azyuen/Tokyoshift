@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r15';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r16';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -44,7 +44,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 304, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 363, 'R15 // WORKSHOP', {
+    this.add.text(780, 363, 'R16 // WORKSHOP', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
