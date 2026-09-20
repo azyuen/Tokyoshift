@@ -7,19 +7,46 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>TOKYO SHIFT — R21 Meet Staging</title>
+  <title>TOKYO SHIFT — R22 Static Meet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260921-r21" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-r22" />
 </head>
 <body>
   <div id="game-shell">
     <div id="game"></div>
-    <div id="build-stamp">R21</div>
+    <div id="build-stamp">R22</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
+  <script>
+    (async () => {
+      try {
+        const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+        const info = await response.json();
+        const current = localStorage.getItem('tokyoShiftBuild');
+
+        if (current && current !== info.build) {
+          localStorage.setItem('tokyoShiftBuild', info.build);
+          const url = new URL(location.href);
+          url.searchParams.set('build', info.build);
+          url.searchParams.set('_', Date.now().toString());
+          location.replace(url.toString());
+          return;
+        }
+
+        if (!current) localStorage.setItem('tokyoShiftBuild', info.build);
+      } catch (e) {}
+
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R22', { updateViaCache: 'none' });
+          reg.update();
+        } catch (e) {}
+      }
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260921-r21"></script>
+  <script type="module" src="./src/main.js?v=20260921-r22"></script>
 </body>
 </html>
