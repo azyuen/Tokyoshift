@@ -66,6 +66,10 @@ export default class DragRacingAI {
 
     throttle = 1;
     const launchElapsed = raceClock - this.goTime;
+
+    // Rivals use their finite NOS once they are cleanly launched. This keeps
+    // them competitive without giving them an artificial speed multiplier.
+    nos = launchElapsed > 0.85 && t.gear >= 1 && t.rpm > 3200 && v.nitrous.fraction > 0.05;
     if (launchElapsed < 0.9) {
       const releaseDuration = Phaser.Math.Linear(0.78, 0.36, this.launchSkill);
       clutch = Phaser.Math.Clamp(1 - launchElapsed / releaseDuration, 0, 1);
