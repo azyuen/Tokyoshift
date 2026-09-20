@@ -1,4 +1,4 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r17';
+import BootScene from './scenes/BootScene.js?v=20260921-r18';
 import GarageScene from './scenes/GarageScene.js?v=20260921-r18';\nimport MeetScene from './scenes/MeetScene.js?v=20260921-r18';
 import RaceScene from './scenes/RaceScene.js?v=20260921-r18';
 import ResultScene from './scenes/ResultScene.js?v=20260921-r18';
