@@ -1,11 +1,11 @@
 export default class RaceHUD {
   constructor(scene) {
     this.scene = scene;
-    this.scale = 0.44;
+    this.scale = 0.47;
     this.sourceW = 1473;
     this.sourceH = 452;
 
-    this.cluster = scene.add.image(780, 718, 'hudCluster')
+    this.cluster = scene.add.image(780, 675, 'hudCluster')
       .setOrigin(0.5, 1)
       .setScale(this.scale)
       .setDepth(39)
@@ -13,16 +13,16 @@ export default class RaceHUD {
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
-    this.status = scene.add.text(780, 500, '', {
+    this.status = scene.add.text(780, 452, '', {
       fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: 'monospace', fontSize: '29px', color: '#f7f7f2', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '31px', color: '#f7f7f2', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#dff6ff', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '23px', color: '#dff6ff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.layoutText();
