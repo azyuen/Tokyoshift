@@ -1,6 +1,7 @@
 export const characters = {
   renMizuno: {
     id: 'renMizuno',
+    skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.88, launchSkill: 0.86, shiftSkill: 0.88, aggression: 0.84 }, betRange: [9000, 14000], competitionPrize: 18000 },
     name: 'Ren Mizuno',
     age: 20,
     hometown: 'Saitama',
@@ -21,6 +22,7 @@ export const characters = {
 
   daichiSakamoto: {
     id: 'daichiSakamoto',
+    skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.84, launchSkill: 0.90, shiftSkill: 0.86, aggression: 0.80 }, betRange: [8000, 13000], competitionPrize: 17000 },
     name: 'Daichi Sakamoto',
     age: 22,
     hometown: 'Kawaguchi',
@@ -41,6 +43,7 @@ export const characters = {
 
   ayaKurose: {
     id: 'ayaKurose',
+    skill: { rating: 5, label: 'ELITE', ai: { reactionSkill: 0.92, launchSkill: 0.89, shiftSkill: 0.91, aggression: 0.88 }, betRange: [12000, 18000], competitionPrize: 24000 },
     name: 'Aya Kurose',
     age: 21,
     hometown: 'Yokohama',
@@ -61,6 +64,7 @@ export const characters = {
 
   kaitoFujimori: {
     id: 'kaitoFujimori',
+    skill: { rating: 5, label: 'ELITE', ai: { reactionSkill: 0.95, launchSkill: 0.93, shiftSkill: 0.95, aggression: 0.93 }, betRange: [15000, 22000], competitionPrize: 28000 },
     name: 'Kaito Fujimori',
     age: 23,
     hometown: 'Tokyo',
@@ -81,6 +85,7 @@ export const characters = {
 
   haruTachibana: {
     id: 'haruTachibana',
+    skill: { rating: 2, label: 'ROOKIE', ai: { reactionSkill: 0.58, launchSkill: 0.61, shiftSkill: 0.60, aggression: 0.72 }, betRange: [2000, 5000], competitionPrize: 8000 },
     name: 'Haru Tachibana',
     age: 19,
     hometown: 'Chiba',
@@ -101,6 +106,7 @@ export const characters = {
 
   reinaShibata: {
     id: 'reinaShibata',
+    skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.86, launchSkill: 0.88, shiftSkill: 0.91, aggression: 0.82 }, betRange: [9000, 14000], competitionPrize: 19000 },
     name: 'Reina Shibata',
     age: 22,
     hometown: 'Kawasaki',
@@ -121,6 +127,7 @@ export const characters = {
 
   rikuAkamine: {
     id: 'rikuAkamine',
+    skill: { rating: 3, label: 'SKILLED', ai: { reactionSkill: 0.80, launchSkill: 0.77, shiftSkill: 0.81, aggression: 0.91 }, betRange: [6000, 11000], competitionPrize: 15000 },
     name: 'Riku Akamine',
     age: 21,
     hometown: 'Shibuya',
@@ -141,6 +148,7 @@ export const characters = {
 
   emiKanzaki: {
     id: 'emiKanzaki',
+    skill: { rating: 3, label: 'SKILLED', ai: { reactionSkill: 0.76, launchSkill: 0.80, shiftSkill: 0.79, aggression: 0.83 }, betRange: [5000, 9000], competitionPrize: 13000 },
     name: 'Emi Kanzaki',
     age: 20,
     hometown: 'Setagaya',
