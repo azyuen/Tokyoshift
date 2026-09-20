@@ -1,7 +1,7 @@
 export default class RaceHUD {
   constructor(scene) {
     this.scene = scene;
-    this.scale = 0.39;
+    this.scale = 0.44;
     this.sourceW = 1473;
     this.sourceH = 452;
 
@@ -13,16 +13,16 @@ export default class RaceHUD {
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
-    this.status = scene.add.text(780, 456, '', {
+    this.status = scene.add.text(780, 500, '', {
       fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: 'monospace', fontSize: '26px', color: '#f7f7f2', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '29px', color: '#f7f7f2', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
-      fontFamily: 'monospace', fontSize: '20px', color: '#dff6ff', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '22px', color: '#dff6ff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.layoutText();
