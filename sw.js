@@ -13,7 +13,7 @@ self.addEventListener('fetch', event => {
 
   const freshCode =
     request.mode === 'navigate' ||
-    /\\.(?:js|css|json|html)$/.test(url.pathname) ||
+    /\.(?:js|css|json|html)$/.test(url.pathname) ||
     url.pathname.endsWith('/');
 
   if (!freshCode) return;
