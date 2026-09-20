@@ -1,26 +1,46 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-r5';
-import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-r5';
+import TouchControls from '../input/TouchControls.js?v=20260920-r6';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260920-r6';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
-import { cars } from '../data/cars.js';
+import { cars, carOrder } from '../data/cars.js?v=20260920-r6';
 import { engines } from '../data/engines.js';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
+const TREE_START_M = 4.72;
+
+const clone = value => JSON.parse(JSON.stringify(value));
 
 export default class RaceScene extends Phaser.Scene {
   constructor() { super('RaceScene'); }
 
+  init() {
+    this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
+    if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
+
+    const rivals = carOrder.filter(id => id !== this.selectedCarId);
+    this.opponentCarId = Phaser.Utils.Array.GetRandom(rivals);
+  }
+
   create() {
-    this.player = new Vehicle(cars.playerPrototype, engines[cars.playerPrototype.engine]);
-    this.opponent = new Vehicle(cars.opponentPrototype, engines[cars.opponentPrototype.engine]);
+    const playerConfig = clone(cars[this.selectedCarId]);
+    const opponentConfig = clone(cars[this.opponentCarId]);
+
+    this.player = new Vehicle(playerConfig, engines[playerConfig.engine]);
+    this.opponent = new Vehicle(opponentConfig, engines[opponentConfig.engine]);
 
     this.player.transmission.currentGear = 0;
     this.player.transmission.lastShiftQuality = 'NEUTRAL';
+    this.opponent.transmission.currentGear = 0;
+
     this.ai = new DragRacingAI(this.opponent, {
-      reactionSkill: 0.76, launchSkill: 0.70, shiftSkill: 0.74, aggression: 0.73
+      reactionSkill: 0.86,
+      launchSkill: 0.84,
+      shiftSkill: 0.84,
+      aggression: 0.82
     });
+
     this.controls = new TouchControls(this);
     this.hud = new RaceHUD(this);
     this.debug = new DebugHUD(this);
@@ -41,39 +61,15 @@ export default class RaceScene extends Phaser.Scene {
     this.road = this.add.graphics().setDepth(1);
     this.worldG = this.add.graphics().setDepth(3);
     this.fxG = this.add.graphics().setDepth(8);
-    this.treeLightsG = this.add.graphics().setDepth(23).setScrollFactor(0);
+    this.treeLightsG = this.add.graphics().setDepth(23);
 
-    // Uniform scaling only: body sprites retain their native aspect ratio.
-    // Foreground AE86 is deliberately larger than the background R32 for depth.
-    this.playerVisual = this.createCarVisual({
-      bodyKey: 'carAE86',
-      wheelKey: 'wheel8Spoke',
-      bodyScale: 0.165,
-      wheelScale: 0.039,
-      rearOffsetX: -603,
-      frontOffsetX: 594,
-      wheelOffsetY: 225,
-      exhaustOffsetX: -955,
-      exhaustOffsetY: 165,
-    }, 7);
-
-    this.opponentVisual = this.createCarVisual({
-      bodyKey: 'carR32',
-      wheelKey: 'wheel5Spoke',
-      bodyScale: 0.145,
-      wheelScale: 0.034,
-      rearOffsetX: -619,
-      frontOffsetX: 594,
-      wheelOffsetY: 228,
-      exhaustOffsetX: -955,
-      exhaustOffsetY: 165,
-    }, 6);
+    this.playerVisual = this.createCarVisual(cars[this.selectedCarId].visual, 7, 1.0);
+    this.opponentVisual = this.createCarVisual(cars[this.opponentCarId].visual, 6, 0.88);
 
     this.treeSprite = this.add.image(780, 192, 'dragTree')
       .setScale(0.105)
       .setDepth(20)
-      .setScrollFactor(0)
-      .setAlpha(0.78);
+      .setAlpha(0.94);
 
     this.startButton = this.add.rectangle(780, 54, 250, 54, 0x142235, 0.96)
       .setStrokeStyle(3, 0x63d7ff, 1)
@@ -86,15 +82,45 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
+
+    this.cancelButton = this.add.rectangle(135, 54, 210, 46, 0x24131a, 0.94)
+      .setStrokeStyle(2, 0xff6b7a, 0.9)
+      .setDepth(47)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    this.cancelButtonText = this.add.text(135, 54, 'CANCEL RACE', {
+      fontFamily: 'monospace', fontSize: '16px', color: '#ffd8dc', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
+
+    this.cancelButton.on('pointerdown', () => this.scene.start('GarageScene'));
   }
 
-  createCarVisual(cfg, depth) {
+  createCarVisual(cfg, depth, roleScale) {
+    const bodyScale = cfg.bodyScale * roleScale;
+    const wheelScale = cfg.wheelScale * roleScale;
+
+    const rearWheel = this.add.image(0, 0, cfg.wheelKey)
+      .setScale(wheelScale)
+      .setDepth(depth);
+
+    const frontWheel = this.add.image(0, 0, cfg.wheelKey)
+      .setScale(wheelScale)
+      .setDepth(depth);
+
+    const body = this.add.image(0, 0, cfg.bodyKey)
+      .setScale(bodyScale)
+      .setDepth(depth + 1);
+
     return {
       cfg,
-      rearWheel: this.add.image(0, 0, cfg.wheelKey).setScale(cfg.wheelScale).setDepth(depth),
-      frontWheel: this.add.image(0, 0, cfg.wheelKey).setScale(cfg.wheelScale).setDepth(depth),
-      body: this.add.image(0, 0, cfg.bodyKey).setScale(cfg.bodyScale).setDepth(depth + 1),
+      bodyScale,
+      wheelScale,
+      rearWheel,
+      frontWheel,
+      body,
       wheelAngle: 0,
+      noseOffsetPx: body.width * bodyScale * 0.5,
       rearX: 0,
       rearY: 0,
       frontX: 0,
@@ -130,7 +156,7 @@ export default class RaceScene extends Phaser.Scene {
     this.raceClock += dt;
 
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
-    if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.restart();
+    if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.start('GarageScene');
 
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
@@ -162,6 +188,7 @@ export default class RaceScene extends Phaser.Scene {
 
     let status = '';
     if (this.falseStart) status = 'RED LIGHT';
+    else if (!this.raceStarted) status = cars[this.selectedCarId].shortName + '  vs  ' + cars[this.opponentCarId].shortName;
     else if (this.greenClock != null) status = 'GO!';
     else if (this.raceStarted && this.countdownClock < 1.8) status = 'STAGED';
 
@@ -176,8 +203,8 @@ export default class RaceScene extends Phaser.Scene {
           falseStart: this.falseStart,
           playerFinishClock: this.playerFinishClock,
           opponentFinishClock: this.opponentFinishClock,
-          playerName: this.player.config.name,
-          opponentName: this.opponent.config.name,
+          playerName: cars[this.selectedCarId].name,
+          opponentName: cars[this.opponentCarId].name,
         });
       }
     }
@@ -262,15 +289,14 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const px = pt.positionM * PX_PER_M - cameraPx;
-    const ox = ot.positionM * PX_PER_M - cameraPx;
+    const rawOppX = ot.positionM * PX_PER_M - cameraPx;
+    const ox = rawOppX + this.playerVisual.noseOffsetPx - this.opponentVisual.noseOffsetPx;
 
-    // Foreground/background staging: the cars launch nose-to-nose.
-    // The white AE86 sits slightly lower because it occupies the nearer lane.
     this.updateCarVisual(this.playerVisual, px, 373, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox + 20, 306, ot, dt);
+    this.updateCarVisual(this.opponentVisual, ox, 306, ot, dt);
 
     this.drawEffects(pt, ot);
-    this.drawTreeLights();
+    this.drawTree(cameraPx);
   }
 
   updateCarVisual(v, x, y, t, dt) {
@@ -278,13 +304,10 @@ export default class RaceScene extends Phaser.Scene {
     const bodyY = y + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
     v.body.setPosition(x, bodyY);
 
-    const rearX = x + c.rearOffsetX * c.bodyScale;
-    const frontX = x + c.frontOffsetX * c.bodyScale;
-    const wheelY = bodyY + c.wheelOffsetY * c.bodyScale;
+    const rearX = x + c.rearOffsetX * v.bodyScale;
+    const frontX = x + c.frontOffsetX * v.bodyScale;
+    const wheelY = bodyY + c.wheelOffsetY * v.bodyScale;
 
-    // Actual tyre wheel RPM drives wheel rotation. PX_PER_M is calibrated to the
-    // displayed wheel radius, so road travel and wheel rotation now visually agree.
-    // During real wheelspin the tyre will still rotate faster than the road, as intended.
     v.wheelAngle += ((t.wheelRPM || 0) / 60) * Math.PI * 2 * dt;
     v.rearWheel.setPosition(rearX, wheelY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, wheelY).setRotation(v.wheelAngle);
@@ -293,8 +316,8 @@ export default class RaceScene extends Phaser.Scene {
     v.rearY = wheelY;
     v.frontX = frontX;
     v.frontY = wheelY;
-    v.exhaustX = x + c.exhaustOffsetX * c.bodyScale;
-    v.exhaustY = bodyY + c.exhaustOffsetY * c.bodyScale;
+    v.exhaustX = x + c.exhaustOffsetX * v.bodyScale;
+    v.exhaustY = bodyY + c.exhaustOffsetY * v.bodyScale;
   }
 
   drawEffects(pt, ot) {
@@ -318,37 +341,49 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
-  drawTreeLights() {
-    const phase = this.racePhase();
-    const g = this.treeLightsG;
-    g.clear();
+  drawTree(cameraPx) {
+    const treeX = TREE_START_M * PX_PER_M - cameraPx;
+    const treeY = 192;
+    const s = 0.105;
+    const visible = treeX > -100 && treeX < 1660;
 
+    this.treeSprite.setVisible(visible);
+    this.treeLightsG.clear();
+    if (!visible) return;
+
+    this.treeSprite.setPosition(treeX, treeY);
+
+    const phase = this.racePhase();
     const sourceW = 1086;
     const sourceH = 1448;
-    const s = 0.105;
-    const left = 780 - sourceW * s / 2;
-    const top = 192 - sourceH * s / 2;
-    const p = (x, y) => ({ x: left + x * s, y: top + y * s });
+    const left = treeX - sourceW * s / 2;
+    const top = treeY - sourceH * s / 2;
+    const point = (sx, sy) => ({ x: left + sx * s, y: top + sy * s });
 
-    const rows = [
-      { y: 128, on: this.raceStarted, color: 0xf4f1cd },
-      { y: 351, on: this.raceStarted, color: 0xf4f1cd },
-      { y: 574, on: ['AMBER 1','AMBER 2','AMBER 3','GREEN'].includes(phase), color: 0xffae18 },
-      { y: 789, on: ['AMBER 2','AMBER 3','GREEN'].includes(phase), color: 0xffae18 },
-      { y: 1004, on: ['AMBER 3','GREEN'].includes(phase), color: 0xffae18 },
-      { y: 1220, on: phase === 'GREEN' && !this.falseStart, color: 0x52ef72 },
-      { y: 1414, on: this.falseStart, color: 0xff3c4f },
+    const onlyGreen = phase === 'GREEN' && !this.falseStart;
+    const onlyRed = this.falseStart;
+
+    const lamps = [
+      { x: 411, y: 130, r: 43, on: !onlyGreen && !onlyRed && ['PRE-STAGE','STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 675, y: 130, r: 43, on: !onlyGreen && !onlyRed && ['PRE-STAGE','STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 411, y: 284, r: 44, on: !onlyGreen && !onlyRed && ['STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 675, y: 284, r: 44, on: !onlyGreen && !onlyRed && ['STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 433, y: 466, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 653, y: 466, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
+      { x: 432, y: 632, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 2','AMBER 3'].includes(phase) },
+      { x: 653, y: 632, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 2','AMBER 3'].includes(phase) },
+      { x: 432, y: 797, r: 52, on: !onlyGreen && !onlyRed && phase === 'AMBER 3' },
+      { x: 653, y: 797, r: 52, on: !onlyGreen && !onlyRed && phase === 'AMBER 3' },
+      { x: 429, y: 959, r: 55, on: onlyGreen },
+      { x: 657, y: 959, r: 55, on: onlyGreen },
+      { x: 429, y: 1119, r: 55, on: onlyRed },
+      { x: 656, y: 1119, r: 55, on: onlyRed },
     ];
 
-    for (const row of rows) {
-      for (const x of [374, 711]) {
-        const q = p(x, row.y);
-        g.fillStyle(0x090b0d, 0.78).fillCircle(q.x, q.y, 7.5);
-        if (row.on) {
-          g.fillStyle(row.color, 0.30).fillCircle(q.x, q.y, 11);
-          g.fillStyle(row.color, 1).fillCircle(q.x, q.y, 6.3);
-        }
-      }
+    for (const lamp of lamps) {
+      if (lamp.on) continue;
+      const p = point(lamp.x, lamp.y);
+      this.treeLightsG.fillStyle(0x05080d, 0.92).fillCircle(p.x, p.y, lamp.r * s);
     }
   }
 }
