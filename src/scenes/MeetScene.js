@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r24';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r24';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r25';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r25';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r25';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r24');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r25');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r24');
+        this.load.image(bg.key, bg.path + '?v=20260921-r25');
       }
     });
   }
@@ -56,6 +56,10 @@ export default class MeetScene extends Phaser.Scene {
     this.buildSidebar();
     this.buildBottomArea();
     this.rollOffers();
+
+    // Let the visible Meet render first, then quietly fetch the rest of the
+    // character/background library and the heavy race-control artwork.
+    this.time.delayedCall(120, () => this.prefetchDeferredAssets());
 
     this.time.addEvent({
       delay: 1000,
@@ -91,12 +95,15 @@ export default class MeetScene extends Phaser.Scene {
     this.stageMask = this.stageMaskShape.createGeometryMask();
   }
 
-  setMeetBackground() {
+  setMeetBackground(preferredKey = null) {
     if (this.currentBackground) this.currentBackground.destroy();
     if (this.backgroundMaskShape) this.backgroundMaskShape.destroy();
     if (this.backgroundTint) this.backgroundTint.destroy();
 
-    const bg = Phaser.Utils.Array.GetRandom(meetBackgrounds);
+    const available = meetBackgrounds.filter(bg => this.textures.exists(bg.key));
+    const bg = available.find(item => item.key === preferredKey)
+      || Phaser.Utils.Array.GetRandom(available)
+      || meetBackgrounds[0];
     const image = this.add.image(
       STAGE.x + STAGE.w / 2,
       STAGE.y + STAGE.h / 2,
@@ -287,12 +294,18 @@ export default class MeetScene extends Phaser.Scene {
   rollOffers() {
     this.clearCardObjects();
     this.clearStageObjects();
-    this.setMeetBackground();
+
+    const firstRoll = !this.initialRollUsed && this.initialRivalIds?.length === 3;
+    this.setMeetBackground(firstRoll ? this.initialBackgroundKey : null);
 
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const pool = characterOrder.filter(id =>
-      id !== playerCharacterId && id !== 'daichiSakamoto'
-    );
+    let pool = firstRoll
+      ? [...this.initialRivalIds]
+      : characterOrder.filter(id =>
+          id !== playerCharacterId &&
+          id !== 'daichiSakamoto' &&
+          this.textures.exists(characters[id]?.visual?.spriteKey)
+        );
     Phaser.Utils.Array.Shuffle(pool);
 
     const rivalCars = carOrder.filter(
@@ -336,11 +349,44 @@ export default class MeetScene extends Phaser.Scene {
 
     this.selectedOfferIndex = 0;
     this.nextRefreshAt = Date.now() + 180000;
+    this.initialRollUsed = true;
 
     this.drawStage();
     this.drawCards();
     this.updateModeButtons();
     this.selectOffer(0);
+  }
+
+  prefetchDeferredAssets() {
+    const queueImage = (key, path) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    };
+
+    characterOrder.forEach(id => {
+      const character = characters[id];
+      if (character) {
+        queueImage(
+          character.visual.spriteKey,
+          character.visual.path + '?v=20260921-r25'
+        );
+      }
+    });
+
+    meetBackgrounds.forEach(bg => {
+      queueImage(bg.key, bg.path + '?v=20260921-r25');
+    });
+
+    // These used to block the very first Workshop load. Fetch them while the
+    // player is choosing a rival instead.
+    queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    queueImage('dragTree', 'assets/Ui/drag_tree.png');
+    queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
+    queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
+    queueImage('nosButton', 'assets/Controls/nos_button.png');
+    queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
+    queueImage('shifterDown', 'assets/Controls/shifter_down.png');
+
+    if (this.load.list.size > 0) this.load.start();
   }
 
   clearCardObjects() {
