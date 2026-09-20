@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
-import { characters } from '../data/characters.js?v=20260921-r24';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r26';
+import { characters } from '../data/characters.js?v=20260921-r26';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -70,10 +70,9 @@ export default class GarageScene extends Phaser.Scene {
       0.06
     ).setDepth(-9);
 
-    // Ren and Daichi are deliberately smaller than the hero car; they now read
-    // as people standing on the garage floor rather than giant foreground art.
-    this.addGarageCharacter(characters.renMizuno, 235, 502, 300, 8);
-    this.addGarageCharacter(characters.daichiSakamoto, 1010, 502, 305, 8);
+    // Only show the selected protagonist in the workshop. Keeping this as a
+    // separate sprite lets us swap protagonists later without changing the art.
+    this.addGarageCharacter(characters.renMizuno, 305, 502, 320, 8);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -316,11 +315,11 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(7, rearWheel.displayHeight * 0.28),
-      Math.max(72, targetWidth * 0.78),
-      Math.max(7, source.height * bodyScale * 0.10),
+      wheelY + Math.max(9, rearWheel.displayHeight * 0.31),
+      Math.max(90, targetWidth * 0.82),
+      Math.max(10, source.height * bodyScale * 0.14),
       0x000000,
-      0.30
+      0.24
     ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
@@ -339,7 +338,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 382, 650, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 342, 650, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
