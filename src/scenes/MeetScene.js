@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r25';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r25';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r25';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r26';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r26';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r26';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r25');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r26');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r25');
+        this.load.image(bg.key, bg.path + '?v=20260921-r26');
       }
     });
   }
@@ -285,7 +285,7 @@ export default class MeetScene extends Phaser.Scene {
       .setDepth(40);
 
     this.add.text(1052, 686, 'REFRESH', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b7d6e8'
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
     }).setOrigin(0.5).setDepth(41);
 
     refresh.on('pointerdown', () => this.rollOffers());
@@ -367,13 +367,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r25'
+          character.visual.path + '?v=20260921-r26'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r25');
+      queueImage(bg.key, bg.path + '?v=20260921-r26');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -406,39 +406,37 @@ export default class MeetScene extends Phaser.Scene {
   drawStage() {
     const placements = [
       {
-        // Left car stays the big foreground anchor. It intentionally extends
-        // beyond the viewport and is clipped by the stage border.
+        // Left foreground anchor. Its body AND wheels stay above the middle car.
         carX: 225,
         carY: 414,
         carW: 570,
-        carDepth: 20,
+        carDepth: 30,
         carFlipX: false,
         charX: 125,
         charY: 494,
         charH: 246,
-        charDepth: 24,
+        charDepth: 34,
         charFlipX: false,
       },
       {
-        // Middle rival is now much closer to camera and the driver is taller.
+        // Middle rival is physically farther away: higher, smaller and behind.
         carX: 615,
-        carY: 414,
-        carW: 495,
-        carDepth: 19,
+        carY: 374,
+        carW: 410,
+        carDepth: 14,
         carFlipX: false,
-        charX: 478,
-        charY: 495,
-        charH: 260,
-        charDepth: 23,
+        charX: 530,
+        charY: 462,
+        charH: 190,
+        charDepth: 8,
         charFlipX: true,
       },
       {
-        // Right car is another close foreground object, mirrored so the bonnet
-        // points inward. Its rear is intentionally off-screen and clipped.
+        // Right foreground car remains close and clipped by the stage edge.
         carX: 1110,
         carY: 417,
         carW: 620,
-        carDepth: 22,
+        carDepth: 24,
         carFlipX: true,
         charX: 875,
         charY: 492,
@@ -525,19 +523,18 @@ export default class MeetScene extends Phaser.Scene {
       ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
 
       const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-      const cropY = Math.floor(source.height * 0.01);
-      const cropH = Math.max(1, Math.floor(source.height * 0.245));
 
       const portrait = this.add.image(
         portraitX,
-        portraitY + 22,
+        portraitY - 48,
         character.visual.spriteKey
-      ).setDepth(36);
+      ).setDepth(36)
+        .setOrigin(0.5, 0);
 
-      portrait.setCrop(0, cropY, source.width, cropH);
-      const portraitScale = Math.max(132 / source.width, 132 / cropH);
+      // Scale by full-body height, then let the square mask reveal the
+      // head/shoulders. This is more reliable on iOS than combining crop+mask.
+      const portraitScale = 305 / source.height;
       portrait.setScale(portraitScale);
-      portrait.setOrigin(0.5, 0.5);
 
       const portraitMaskShape = this.make.graphics({ add: false });
       portraitMaskShape.fillStyle(0xffffff, 1);
@@ -584,7 +581,7 @@ export default class MeetScene extends Phaser.Scene {
         car.shortName + '  •  ' + offer.distance + '  •  ' + stakeText,
         {
           fontFamily: PIXEL_FONT,
-          fontSize: '9px',
+          fontSize: '10px',
           color: '#c5d9e6',
         }
       ).setOrigin(1, 0.5).setDepth(35);
