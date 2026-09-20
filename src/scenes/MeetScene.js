@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r23';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r23';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r23';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r24';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r24';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r23');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r24');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r23');
+        this.load.image(bg.key, bg.path + '?v=20260921-r24');
       }
     });
   }
@@ -306,14 +306,21 @@ export default class MeetScene extends Phaser.Scene {
       const character = characters[characterId];
       const carId = rivalCars[i % rivalCars.length];
 
-      let raceDeal = 'COMPETITION';
-      let stake = 10000;
+      const skill = character.skill ?? {
+        rating: 3,
+        label: 'SKILLED',
+        betRange: [5000, 10000],
+        competitionPrize: 15000,
+      };
+
+      let raceDeal = 'PRIZE';
+      let stake = skill.competitionPrize ?? 15000;
+
       if (this.selectedMode === 'SINGLE') {
-        const pinkSlip = Phaser.Math.Between(0, 99) < 28;
-        raceDeal = pinkSlip ? 'PINK SLIP' : 'BET';
-        stake = pinkSlip
-          ? 'CAR'
-          : Phaser.Utils.Array.GetRandom([2500, 5000, 7500, 10000, 15000]);
+        raceDeal = 'BET';
+        const minBet = skill.betRange?.[0] ?? 5000;
+        const maxBet = skill.betRange?.[1] ?? 10000;
+        stake = Phaser.Math.Snap.To(Phaser.Math.Between(minBet, maxBet), 500);
       }
 
       return {
@@ -569,19 +576,32 @@ export default class MeetScene extends Phaser.Scene {
       : offer.stake;
 
     const dealLine = this.selectedMode === 'SINGLE'
-      ? offer.raceDeal + '  •  ' + stakeText
-      : 'COMPETITION  •  ' + offer.raceType;
+      ? 'BET  •  ' + stakeText
+      : 'PRIZE  •  ' + stakeText;
 
     this.selectedSummary.setText(
       character.name + '\n' +
-      character.archetype + '\n\n' +
+      character.archetype + '  •  ' + (character.skill?.label ?? 'SKILLED') + '\n\n' +
       dealLine + '\n' +
-      car.shortName + '  •  ' + offer.distance
+      car.shortName + '  •  ' + offer.raceType + '  •  ' + offer.distance
     );
 
-    this.raceButtonLabel.setText(
-      'RACE ' + character.name.split(' ')[0].toUpperCase() + '  >'
-    );
+    const cash = this.registry.get('cash') ?? 0;
+    const affordable = this.selectedMode !== 'SINGLE' || cash >= Number(offer.stake || 0);
+
+    if (affordable) {
+      this.raceButton.setFillStyle(0x0b2826, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1)
+        .setInteractive({ useHandCursor: true });
+      this.raceButtonLabel.setColor('#f1fffb').setText(
+        'RACE ' + character.name.split(' ')[0].toUpperCase() + '  >'
+      );
+    } else {
+      this.raceButton.setFillStyle(0x25151a, 1)
+        .setStrokeStyle(2, 0x8b4f5c, 1)
+        .disableInteractive();
+      this.raceButtonLabel.setColor('#c99aa4').setText('NEED ' + stakeText);
+    }
   }
 
   updateModeButtons() {
@@ -617,6 +637,9 @@ export default class MeetScene extends Phaser.Scene {
   startSelectedRace() {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer) return;
+
+    const cash = this.registry.get('cash') ?? 0;
+    if (this.selectedMode === 'SINGLE' && cash < Number(offer.stake || 0)) return;
 
     this.registry.set('selectedOpponentCarId', offer.carId);
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
