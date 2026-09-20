@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r21';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r21';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r21';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r22';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r22';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r22';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -9,26 +9,16 @@ const STAGE = { x: 30, y: 84, w: 1120, h: 420 };
 const SIDE = { x: 1176, y: 84, w: 354, h: 520 };
 const CARDS = { x: 30, y: 522, w: 1120, h: 168 };
 
-const CATEGORY_DATA = {
-  CHALLENGES: {
+const MODE_DATA = {
+  SINGLE: {
+    label: 'SINGLE RACE',
     types: ['Street Sprint', 'Standing Start', 'Roll Race'],
-    stakes: [2500, 5000, 7500, 10000],
     distances: ['2.4 km', '3.2 km', '4.8 km'],
   },
-  COMPETITIONS: {
+  COMPETITION: {
+    label: 'COMPETITION',
     types: ['Night Cup', 'Quarter Mile', 'Eliminator'],
-    stakes: [10000, 15000, 20000],
     distances: ['1/4 mile', '5.0 km', '3 rounds'],
-  },
-  PINK_SLIP: {
-    types: ['Pink Slip', 'Winner Takes Car'],
-    stakes: ['CAR', 'CAR'],
-    distances: ['1/4 mile', '3.2 km'],
-  },
-  BET_RACE: {
-    types: ['Cash Run', 'High Stakes', 'Double Down'],
-    stakes: [10000, 25000, 50000],
-    distances: ['2.8 km', '4.0 km', '1/4 mile'],
   },
 };
 
@@ -39,22 +29,19 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(
-          character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r21'
-        );
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r22');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r21');
+        this.load.image(bg.key, bg.path + '?v=20260921-r22');
       }
     });
   }
 
   create() {
-    this.selectedCategory = 'CHALLENGES';
+    this.selectedMode = 'SINGLE';
     this.offers = [];
     this.cardObjects = [];
     this.stageObjects = [];
@@ -130,7 +117,7 @@ export default class MeetScene extends Phaser.Scene {
       STAGE.w,
       STAGE.h,
       0x03101b,
-      0.05
+      0.035
     ).setDepth(-9);
   }
 
@@ -178,26 +165,23 @@ export default class MeetScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE TYPE', {
+    this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE MODE', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const buttons = [
-      ['CHALLENGES', 'CHALLENGES'],
-      ['COMPETITIONS', 'COMPETITIONS'],
-      ['PINK SLIP', 'PINK_SLIP'],
-      ['BET RACE', 'BET_RACE'],
+      ['SINGLE RACE', 'SINGLE'],
+      ['COMPETITION', 'COMPETITION'],
     ];
 
-    this.categoryButtons = [];
+    this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = SIDE.y + 62 + i * 52;
-
+      const y = SIDE.y + 65 + i * 58;
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        42,
+        46,
         0x0b1724,
         1
       ).setStrokeStyle(1, 0x315470, 1)
@@ -205,40 +189,40 @@ export default class MeetScene extends Phaser.Scene {
         .setDepth(37);
 
       const label = this.add.text(SIDE.x + 30, y, row[0], {
-        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#a9c7da'
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
 
       this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
-        fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cb6cf'
+        fontFamily: PIXEL_FONT, fontSize: '15px', color: '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
       box.on('pointerdown', () => {
-        this.selectedCategory = row[1];
+        this.selectedMode = row[1];
         this.rollOffers();
       });
 
-      this.categoryButtons.push({ key: row[1], box, label });
+      this.modeButtons.push({ key: row[1], box, label });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 286, 'RIVALS TONIGHT', {
+    this.add.text(SIDE.x + 20, SIDE.y + 214, 'RIVALS TONIGHT', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalCountText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 286, '3', {
+    this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 214, '3', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffffff'
     }).setOrigin(1, 0).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 322, 'NEXT REFRESH', {
+    this.add.text(SIDE.x + 20, SIDE.y + 250, 'NEXT REFRESH', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7898ad'
     }).setDepth(37);
 
-    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 322, '03:00', {
+    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 250, '03:00', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
     }).setOrigin(1, 0).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 360, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 294, '', {
       fontFamily: BODY_FONT,
-      fontSize: '17px',
+      fontSize: '18px',
       color: '#d8e7ef',
       lineSpacing: 5,
       wordWrap: { width: SIDE.w - 40 },
@@ -311,17 +295,28 @@ export default class MeetScene extends Phaser.Scene {
     );
     Phaser.Utils.Array.Shuffle(rivalCars);
 
-    const cfg = CATEGORY_DATA[this.selectedCategory];
+    const cfg = MODE_DATA[this.selectedMode];
 
     this.offers = pool.slice(0, 3).map((characterId, i) => {
       const character = characters[characterId];
       const carId = rivalCars[i % rivalCars.length];
 
+      let raceDeal = 'COMPETITION';
+      let stake = 10000;
+      if (this.selectedMode === 'SINGLE') {
+        const pinkSlip = Phaser.Math.Between(0, 99) < 28;
+        raceDeal = pinkSlip ? 'PINK SLIP' : 'BET';
+        stake = pinkSlip
+          ? 'CAR'
+          : Phaser.Utils.Array.GetRandom([2500, 5000, 7500, 10000, 15000]);
+      }
+
       return {
         characterId,
         carId,
         raceType: Phaser.Utils.Array.GetRandom(cfg.types),
-        stake: Phaser.Utils.Array.GetRandom(cfg.stakes),
+        raceDeal,
+        stake,
         distance: Phaser.Utils.Array.GetRandom(cfg.distances),
         quote: character.introQuote,
       };
@@ -330,9 +325,10 @@ export default class MeetScene extends Phaser.Scene {
     this.selectedOfferIndex = 0;
     this.nextRefreshAt = Date.now() + 180000;
 
+    this.drawStage();
     this.drawCards();
-    this.updateCategoryButtons();
-    this.selectOffer(0, true);
+    this.updateModeButtons();
+    this.selectOffer(0);
   }
 
   clearCardObjects() {
@@ -349,141 +345,45 @@ export default class MeetScene extends Phaser.Scene {
     this.stageObjects = [];
   }
 
-  drawCards() {
-    const xPositions = [210, 590, 970];
-    const cardY = 603;
-
-    this.offers.forEach((offer, i) => {
-      const x = xPositions[i];
-      const car = cars[offer.carId];
-      const character = characters[offer.characterId];
-
-      const card = this.add.rectangle(
-        x,
-        cardY,
-        350,
-        116,
-        0x0a1521,
-        0.99
-      ).setStrokeStyle(2, 0x2e4a61, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(34);
-
-      // Portrait panel: crop the top portion of the full-body transparent sprite
-      // into a close-up so opponents are readable on a phone.
-      const portraitBg = this.add.rectangle(
-        x - 122,
-        cardY,
-        92,
-        92,
-        0x0d1824,
-        1
-      ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
-
-      const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-      const cropH = Math.max(1, Math.floor(source.height * 0.42));
-      const portrait = this.add.image(
-        x - 122,
-        cardY + 1,
-        character.visual.spriteKey
-      ).setDepth(36);
-
-      portrait.setCrop(0, 0, source.width, cropH);
-      const portraitScale = Math.max(88 / source.width, 88 / cropH);
-      portrait.setScale(portraitScale);
-      portrait.setOrigin(0.5, 0.5);
-
-      const name = this.add.text(x - 63, cardY - 43, character.name.toUpperCase(), {
-        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffffff'
-      }).setDepth(35);
-
-      const type = this.add.text(x - 63, cardY - 17, offer.raceType, {
-        fontFamily: BODY_FONT,
-        fontSize: '18px',
-        color: '#8fd2f5',
-        fontStyle: '600'
-      }).setDepth(35);
-
-      const quote = this.add.text(x - 63, cardY + 8, '"' + offer.quote + '"', {
-        fontFamily: BODY_FONT,
-        fontSize: '14px',
-        color: '#a9bbc8',
-        wordWrap: { width: 146 },
-      }).setDepth(35);
-
-      const stakeText = typeof offer.stake === 'number'
-        ? '¥ ' + offer.stake.toLocaleString('en-US')
-        : offer.stake;
-
-      const footer = this.add.text(
-        x + 160,
-        cardY + 43,
-        car.shortName + '  •  ' + offer.distance + '  •  ' + stakeText,
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '9px',
-          color: '#c5d9e6',
-        }
-      ).setOrigin(1, 0.5).setDepth(35);
-
-      card.on('pointerdown', () => this.selectOffer(i));
-
-      this.cardObjects.push(card, portraitBg, portrait, name, type, quote, footer);
-      offer.card = card;
-    });
-  }
-
   drawStage() {
-    this.clearStageObjects();
-
-    if (!this.offers.length) return;
-
-    const selected = this.offers[this.selectedOfferIndex];
-    const otherIndices = [0, 1, 2].filter(i => i !== this.selectedOfferIndex);
-
-    // The selected rival is the foreground focal car. The other two are staged
-    // deeper into the scene. All cars remain pure side-view sprites.
     const placements = [
       {
-        offer: selected,
-        carX: 322,
-        carY: 409,
-        carW: 455,
+        carX: 235,
+        carY: 414,
+        carW: 540,
         carDepth: 18,
-        charX: 142,
+        charX: 125,
         charY: 494,
-        charH: 220,
+        charH: 240,
         charDepth: 22,
         flip: false,
       },
       {
-        offer: this.offers[otherIndices[0]],
-        carX: 700,
-        carY: 377,
-        carW: 255,
-        carDepth: 10,
-        charX: 585,
-        charY: 474,
-        charH: 170,
-        charDepth: 14,
+        carX: 620,
+        carY: 401,
+        carW: 385,
+        carDepth: 14,
+        charX: 500,
+        charY: 493,
+        charH: 218,
+        charDepth: 18,
         flip: true,
       },
       {
-        offer: this.offers[otherIndices[1]],
-        carX: 1000,
-        carY: 390,
-        carW: 250,
-        carDepth: 10,
-        charX: 1092,
-        charY: 482,
-        charH: 176,
-        charDepth: 14,
+        carX: 1010,
+        carY: 402,
+        carW: 365,
+        carDepth: 14,
+        charX: 1090,
+        charY: 493,
+        charH: 212,
+        charDepth: 18,
         flip: false,
       },
     ];
 
-    placements.forEach((placement, slotIndex) => {
-      const offer = placement.offer;
+    this.offers.forEach((offer, i) => {
+      const placement = placements[i];
       const car = cars[offer.carId];
       const character = characters[offer.characterId];
 
@@ -511,17 +411,108 @@ export default class MeetScene extends Phaser.Scene {
       const shadow = this.add.ellipse(
         placement.charX,
         placement.charY - 2,
-        Math.max(32, sprite.displayWidth * 0.52),
-        slotIndex === 0 ? 11 : 8,
+        Math.max(34, sprite.displayWidth * 0.52),
+        i === 0 ? 11 : 9,
         0x000000,
-        slotIndex === 0 ? 0.32 : 0.24
+        i === 0 ? 0.32 : 0.26
       ).setDepth(placement.charDepth - 0.2);
 
       this.stageObjects.push(shadow);
     });
   }
 
-  selectOffer(index, skipStageRedraw = false) {
+  drawCards() {
+    const xPositions = [210, 590, 970];
+    const cardY = 603;
+
+    this.offers.forEach((offer, i) => {
+      const x = xPositions[i];
+      const car = cars[offer.carId];
+      const character = characters[offer.characterId];
+
+      const card = this.add.rectangle(
+        x,
+        cardY,
+        350,
+        116,
+        0x0a1521,
+        0.99
+      ).setStrokeStyle(2, 0x2e4a61, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(34);
+
+      const portraitBg = this.add.rectangle(
+        x - 122,
+        cardY,
+        100,
+        100,
+        0x0d1824,
+        1
+      ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
+
+      const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+      const cropY = Math.floor(source.height * 0.02);
+      const cropH = Math.max(1, Math.floor(source.height * 0.29));
+
+      const portrait = this.add.image(
+        x - 122,
+        cardY + 13,
+        character.visual.spriteKey
+      ).setDepth(36);
+
+      portrait.setCrop(0, cropY, source.width, cropH);
+      const portraitScale = Math.max(116 / source.width, 116 / cropH);
+      portrait.setScale(portraitScale);
+      portrait.setOrigin(0.5, 0.5);
+
+      const name = this.add.text(x - 62, cardY - 44, character.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffffff'
+      }).setDepth(35);
+
+      const dealColor = offer.raceDeal === 'PINK SLIP' ? '#ff7894' : '#8fd2f5';
+      const deal = this.add.text(x - 62, cardY - 18, offer.raceDeal, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: dealColor
+      }).setDepth(35);
+
+      const type = this.add.text(x - 62, cardY + 4, offer.raceType, {
+        fontFamily: BODY_FONT,
+        fontSize: '17px',
+        color: '#d7e9f3',
+        fontStyle: '600'
+      }).setDepth(35);
+
+      const quote = this.add.text(x - 62, cardY + 28, '"' + offer.quote + '"', {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#9fb4c2',
+        wordWrap: { width: 145 },
+      }).setDepth(35);
+
+      const stakeText = typeof offer.stake === 'number'
+        ? '¥ ' + offer.stake.toLocaleString('en-US')
+        : offer.stake;
+
+      const footer = this.add.text(
+        x + 160,
+        cardY + 44,
+        car.shortName + '  •  ' + offer.distance + '  •  ' + stakeText,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: '#c5d9e6',
+        }
+      ).setOrigin(1, 0.5).setDepth(35);
+
+      card.on('pointerdown', () => this.selectOffer(i));
+
+      this.cardObjects.push(card, portraitBg, portrait, name, deal, type, quote, footer);
+      offer.card = card;
+    });
+  }
+
+  selectOffer(index) {
     this.selectedOfferIndex = index;
 
     this.offers.forEach((offer, i) => {
@@ -536,8 +527,6 @@ export default class MeetScene extends Phaser.Scene {
       );
     });
 
-    if (!skipStageRedraw) this.drawStage();
-
     const offer = this.offers[index];
     if (!offer) return;
 
@@ -548,23 +537,25 @@ export default class MeetScene extends Phaser.Scene {
       ? '¥ ' + offer.stake.toLocaleString('en-US')
       : offer.stake;
 
+    const dealLine = this.selectedMode === 'SINGLE'
+      ? offer.raceDeal + '  •  ' + stakeText
+      : 'COMPETITION  •  ' + offer.raceType;
+
     this.selectedSummary.setText(
       character.name + '\n' +
       character.archetype + '\n\n' +
-      car.shortName + '  •  ' + offer.raceType + '\n' +
-      offer.distance + '  •  ' + stakeText
+      dealLine + '\n' +
+      car.shortName + '  •  ' + offer.distance
     );
 
     this.raceButtonLabel.setText(
       'RACE ' + character.name.split(' ')[0].toUpperCase() + '  >'
     );
-
-    if (skipStageRedraw) this.drawStage();
   }
 
-  updateCategoryButtons() {
-    this.categoryButtons.forEach(item => {
-      const active = item.key === this.selectedCategory;
+  updateModeButtons() {
+    this.modeButtons.forEach(item => {
+      const active = item.key === this.selectedMode;
       item.box.setFillStyle(active ? 0x10283b : 0x0b1724, 1);
       item.box.setStrokeStyle(
         active ? 2 : 1,
@@ -598,8 +589,9 @@ export default class MeetScene extends Phaser.Scene {
 
     this.registry.set('selectedOpponentCarId', offer.carId);
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
-    this.registry.set('selectedRaceCategory', this.selectedCategory);
+    this.registry.set('selectedRaceCategory', this.selectedMode);
     this.registry.set('selectedRaceType', offer.raceType);
+    this.registry.set('selectedRaceDeal', offer.raceDeal);
     this.registry.set('selectedRaceStake', offer.stake);
 
     this.scene.start('RaceScene');
