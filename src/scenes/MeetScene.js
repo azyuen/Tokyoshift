@@ -222,7 +222,7 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 214, '3', {
+    this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 228, '3', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffffff'
     }).setOrigin(1, 0).setDepth(37);
 
@@ -230,7 +230,7 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7898ad'
     }).setDepth(37);
 
-    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 250, '03:00', {
+    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 268, '03:00', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
     }).setOrigin(1, 0).setDepth(37);
 
@@ -255,7 +255,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 486,
+      SIDE.y + 588,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
@@ -270,23 +270,23 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(33);
 
-    const back = this.add.rectangle(135, 697, 210, 36, 0x24131a, 0.98)
+    const back = this.add.rectangle(135, 702, 210, 30, 0x24131a, 0.98)
       .setStrokeStyle(2, 0xff6177, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(135, 697, 'WORKSHOP', {
+    this.add.text(135, 702, 'WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffdce1'
     }).setOrigin(0.5).setDepth(41);
 
     back.on('pointerdown', () => this.scene.start('GarageScene'));
 
-    const refresh = this.add.rectangle(1048, 697, 210, 36, 0x0b1724, 0.98)
+    const refresh = this.add.rectangle(1048, 702, 210, 30, 0x0b1724, 0.98)
       .setStrokeStyle(1, 0x315470, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(1048, 697, 'REFRESH', {
+    this.add.text(1048, 702, 'REFRESH', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
     }).setOrigin(0.5).setDepth(41);
 
