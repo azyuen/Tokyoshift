@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260920-r6';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260920-r12';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r18';
 import { engines } from '../data/engines.js';
 
 const TRACK_M = 402.336;
@@ -21,7 +21,10 @@ export default class RaceScene extends Phaser.Scene {
     if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
 
     const rivals = carOrder.filter(id => id !== this.selectedCarId);
-    this.opponentCarId = Phaser.Utils.Array.GetRandom(rivals);
+    const chosenOpponent = this.registry.get('selectedOpponentCarId');
+    this.opponentCarId = rivals.includes(chosenOpponent)
+      ? chosenOpponent
+      : Phaser.Utils.Array.GetRandom(rivals);
   }
 
   create() {
@@ -98,7 +101,7 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '16px', color: '#ffd8dc', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
-    this.cancelButton.on('pointerdown', () => this.scene.start('GarageScene'));
+    this.cancelButton.on('pointerdown', () => this.scene.start('MeetScene'));
   }
 
   createCarVisual(cfg, depth, roleScale) {
@@ -428,7 +431,7 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     addButton(660, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
-    addButton(900, 'GARAGE', 0xff4a8d, () => this.scene.start('GarageScene'));
+    addButton(900, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
   }
 
   drawScene(pt, ot, dt) {
