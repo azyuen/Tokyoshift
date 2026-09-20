@@ -1,0 +1,9 @@
+{
+  "name": "TOKYO SHIFT",
+  "short_name": "TOKYO SHIFT",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#05070d",
+  "theme_color": "#070914",
+  "orientation": "landscape"
+}
