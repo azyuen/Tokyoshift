@@ -1,8 +1,8 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r29';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r29';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r29';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r29';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r29';
+import BootScene from './scenes/BootScene.js?v=20260921-r30';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r30';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r30';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r30';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r30';
 
 
 // Phone readability pass: Workshop/Meet render into a 1560x840 logical canvas, so
@@ -16,7 +16,7 @@ Phaser.GameObjects.Text.prototype.setStyle = function(style = {}, updateText = t
     const numeric = typeof raw === 'number' ? raw : parseFloat(raw);
 
     if (Number.isFinite(numeric)) {
-      const boosted = Math.max(18, Math.round(numeric * 2.0));
+      const boosted = Math.max(20, Math.round(numeric * 2.35));
       next.fontSize = typeof raw === 'number' ? boosted : boosted + 'px';
     }
     return originalSetStyle.call(this, next, updateText);
