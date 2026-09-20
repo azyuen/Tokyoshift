@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r29';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r29';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r29';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r30';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r30';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r30';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r29');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r30');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r29');
+        this.load.image(bg.key, bg.path + '?v=20260921-r30');
       }
     });
   }
@@ -370,13 +370,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r29'
+          character.visual.path + '?v=20260921-r30'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r29');
+      queueImage(bg.key, bg.path + '?v=20260921-r30');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -411,25 +411,25 @@ export default class MeetScene extends Phaser.Scene {
       {
         // Left foreground anchor. Its body AND wheels stay above the middle car.
         carX: 225,
-        carY: 414,
+        carY: 440,
         carW: 590,
         carDepth: 30,
         carFlipX: false,
         charX: 125,
-        charY: 556,
-        charH: 246,
+        charY: 592,
+        charH: 278,
         charDepth: 34,
         charFlipX: false,
       },
       {
         // Middle rival is physically farther away: higher, smaller and behind.
         carX: 620,
-        carY: 368,
+        carY: 394,
         carW: 390,
         carDepth: 14,
         carFlipX: false,
         charX: 535,
-        charY: 456,
+        charY: 482,
         charH: 182,
         charDepth: 16,
         charFlipX: true,
@@ -437,13 +437,13 @@ export default class MeetScene extends Phaser.Scene {
       {
         // Right foreground car remains close and clipped by the stage edge.
         carX: 1110,
-        carY: 414,
-        carW: 640,
+        carY: 456,
+        carW: 705,
         carDepth: 24,
         carFlipX: true,
         charX: 875,
-        charY: 536,
-        charH: 255,
+        charY: 578,
+        charH: 248,
         charDepth: 19,
         charFlipX: true,
       },
@@ -481,20 +481,20 @@ export default class MeetScene extends Phaser.Scene {
       const softShadow = this.add.ellipse(
         placement.charX + 5,
         placement.charY + 13,
-        Math.max(54, sprite.displayWidth * 0.76),
-        i === 0 ? 22 : 18,
+        Math.max(60, sprite.displayWidth * 0.82),
+        i === 0 ? 26 : 21,
         0x000000,
-        0.34
+        0.48
       ).setDepth(placement.carDepth - 0.85)
         .setMask(this.stageMask);
 
       const contactShadow = this.add.ellipse(
         placement.charX,
         placement.charY + 8,
-        Math.max(38, sprite.displayWidth * 0.52),
-        i === 0 ? 11 : 9,
+        Math.max(42, sprite.displayWidth * 0.56),
+        i === 0 ? 14 : 11,
         0x000000,
-        0.48
+        0.64
       ).setDepth(placement.carDepth - 0.75)
         .setMask(this.stageMask);
 
@@ -747,19 +747,19 @@ export default class MeetScene extends Phaser.Scene {
     const softShadow = this.add.ellipse(
       x + (flipX ? -8 : 8),
       shadowY + 5,
-      Math.max(110, targetWidth * 0.88),
-      Math.max(18, source.height * bodyScale * 0.20),
+      Math.max(122, targetWidth * 0.92),
+      Math.max(20, source.height * bodyScale * 0.22),
       0x000000,
-      0.34
+      0.48
     ).setDepth(depth - 0.75);
 
     const contactShadow = this.add.ellipse(
       x,
       shadowY,
-      Math.max(90, targetWidth * 0.72),
-      Math.max(9, source.height * bodyScale * 0.10),
+      Math.max(98, targetWidth * 0.76),
+      Math.max(10, source.height * bodyScale * 0.11),
       0x000000,
-      0.50
+      0.66
     ).setDepth(depth - 0.65);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
