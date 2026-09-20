@@ -1,13 +1,13 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-r4';
+import TouchControls from '../input/TouchControls.js?v=20260920-r5';
 import DragRacingAI from '../ai/DragRacingAI.js';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-r4';
+import RaceHUD from '../ui/RaceHUD.js?v=20260920-r5';
 import DebugHUD from '../ui/DebugHUD.js';
 import { cars } from '../data/cars.js';
 import { engines } from '../data/engines.js';
 
 const TRACK_M = 402.336;
-const PX_PER_M = 8.0;
+const PX_PER_M = 76.0;
 
 export default class RaceScene extends Phaser.Scene {
   constructor() { super('RaceScene'); }
@@ -52,7 +52,7 @@ export default class RaceScene extends Phaser.Scene {
       wheelScale: 0.039,
       rearOffsetX: -603,
       frontOffsetX: 594,
-      wheelOffsetY: 138,
+      wheelOffsetY: 225,
       exhaustOffsetX: -955,
       exhaustOffsetY: 165,
     }, 7);
@@ -64,7 +64,7 @@ export default class RaceScene extends Phaser.Scene {
       wheelScale: 0.034,
       rearOffsetX: -619,
       frontOffsetX: 594,
-      wheelOffsetY: 138,
+      wheelOffsetY: 228,
       exhaustOffsetX: -955,
       exhaustOffsetY: 165,
     }, 6);
@@ -264,9 +264,10 @@ export default class RaceScene extends Phaser.Scene {
     const px = pt.positionM * PX_PER_M - cameraPx;
     const ox = ot.positionM * PX_PER_M - cameraPx;
 
-    // Smaller cars, higher on screen, matching the approved composition reference.
-    this.updateCarVisual(this.playerVisual, px, 365, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox + 125, 305, ot, dt);
+    // Foreground/background staging: the cars launch nose-to-nose.
+    // The white AE86 sits slightly lower because it occupies the nearer lane.
+    this.updateCarVisual(this.playerVisual, px, 373, pt, dt);
+    this.updateCarVisual(this.opponentVisual, ox + 20, 306, ot, dt);
 
     this.drawEffects(pt, ot);
     this.drawTreeLights();
@@ -281,7 +282,9 @@ export default class RaceScene extends Phaser.Scene {
     const frontX = x + c.frontOffsetX * c.bodyScale;
     const wheelY = bodyY + c.wheelOffsetY * c.bodyScale;
 
-    // Actual tyre wheel RPM drives the visible wheel rotation, including wheelspin.
+    // Actual tyre wheel RPM drives wheel rotation. PX_PER_M is calibrated to the
+    // displayed wheel radius, so road travel and wheel rotation now visually agree.
+    // During real wheelspin the tyre will still rotate faster than the road, as intended.
     v.wheelAngle += ((t.wheelRPM || 0) / 60) * Math.PI * 2 * dt;
     v.rearWheel.setPosition(rearX, wheelY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, wheelY).setRotation(v.wheelAngle);
