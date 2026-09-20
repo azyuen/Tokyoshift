@@ -1,115 +1,67 @@
 export default class RaceHUD {
   constructor(scene) {
     this.scene = scene;
+    this.scale = 0.34;
+    this.sourceW = 1448;
+    this.sourceH = 1086;
+    this.left = 640 - (this.sourceW * this.scale) / 2;
+    this.top = 720 - this.sourceH * this.scale;
 
-    this.tach = scene.add.image(640, 718, 'tokyoShiftArt', 'tach_shell')
+    this.console = scene.add.image(640, 720, 'hudConsole')
       .setOrigin(0.5, 1)
-      .setScale(1.55)
-      .setDepth(39)
-      .setScrollFactor(0);
-
-    this.gearPanel = scene.add.image(515, 505, 'tokyoShiftArt', 'gear_panel')
-      .setScale(0.92)
-      .setDepth(39)
-      .setScrollFactor(0);
-
-    this.speedPanel = scene.add.image(765, 505, 'tokyoShiftArt', 'speed_panel')
-      .setScale(0.92)
+      .setScale(this.scale)
       .setDepth(39)
       .setScrollFactor(0);
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
+    const p = (x, y) => ({ x: this.left + x * this.scale, y: this.top + y * this.scale });
+    this.anchor = {
+      speed: p(322, 522), rpm: p(1087, 522), boost: p(704, 790), gear: p(720, 305),
+      speedDigital: p(320, 684), rpmDigital: p(1087, 684),
+      nos: { x: this.left + 608 * this.scale, y: this.top + 455 * this.scale, w: 196 * this.scale, h: 34 * this.scale },
+      traction: { x: this.left + 604 * this.scale, y: this.top + 535 * this.scale, w: 204 * this.scale, h: 76 * this.scale },
+    };
 
-    this.status = scene.add.text(640, 38, '', {
-      fontFamily: 'monospace',
-      fontSize: '23px',
-      color: '#fff0b8',
-      fontStyle: 'bold',
-      align: 'center',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
+    this.status = scene.add.text(640, 38, '', { fontFamily: 'monospace', fontSize: '21px', color: '#fff0b8', fontStyle: 'bold' })
+      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
+    this.gear = scene.add.text(this.anchor.gear.x, this.anchor.gear.y, 'N', { fontFamily: 'monospace', fontSize: '28px', color: '#f5f7ef', fontStyle: 'bold' })
+      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
+    this.speedText = scene.add.text(this.anchor.speedDigital.x, this.anchor.speedDigital.y, '0', { fontFamily: 'monospace', fontSize: '13px', color: '#e9f8ff', fontStyle: 'bold' })
+      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
+    this.rpmText = scene.add.text(this.anchor.rpmDigital.x, this.anchor.rpmDigital.y, '900', { fontFamily: 'monospace', fontSize: '12px', color: '#e9f8ff', fontStyle: 'bold' })
+      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
+  }
 
-    this.gear = scene.add.text(515, 509, 'N', {
-      fontFamily: 'monospace',
-      fontSize: '32px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-
-    this.speed = scene.add.text(755, 503, '0', {
-      fontFamily: 'monospace',
-      fontSize: '27px',
-      color: '#ffffff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-
-    this.speedUnit = scene.add.text(808, 519, 'KM/H', {
-      fontFamily: 'monospace',
-      fontSize: '9px',
-      color: '#aeeaff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-
-    this.rpm = scene.add.text(640, 610, '', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#dff5ff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-
-    this.boostText = scene.add.text(552, 456, 'BOOST', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
-      color: '#7cddff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
-
-    this.nosText = scene.add.text(728, 456, 'NOS', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
-      color: '#ff82bc',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(41).setScrollFactor(0);
+  drawNeedle(center, fraction, length, color = 0xf4f5ed) {
+    const a = Phaser.Math.DegToRad(215 - 250 * Phaser.Math.Clamp(fraction, 0, 1));
+    this.g.lineStyle(3, color, 0.98).beginPath().moveTo(center.x, center.y)
+      .lineTo(center.x + Math.cos(a) * length, center.y + Math.sin(a) * length).strokePath();
+    this.g.fillStyle(0x171b1d, 1).fillCircle(center.x, center.y, 5);
   }
 
   update(t, raceStatus) {
     const g = this.g;
     g.clear();
+    this.drawNeedle(this.anchor.speed, t.speedKmh / 180, 48);
+    this.drawNeedle(this.anchor.rpm, t.rpm / 10000, 48, t.rpm > 8000 ? 0xff4e42 : 0xf4f5ed);
+    this.drawNeedle(this.anchor.boost, (t.boostBar + 1) / 2.5, 25);
 
-    // Tach needle over the supplied instrument artwork.
-    const cx = 640;
-    const cy = 684;
-    const rpmFrac = Phaser.Math.Clamp(t.rpm / 8500, 0, 1);
-    const needleA = Phaser.Math.DegToRad(200 + 140 * rpmFrac);
+    const n = this.anchor.nos;
+    g.fillStyle(0x071216, 0.92).fillRoundedRect(n.x, n.y, n.w, n.h, 3);
+    const nosW = n.w * Phaser.Math.Clamp(t.nosFraction, 0, 1);
+    if (nosW > 0) g.fillStyle(0x5bc7d8, 0.95).fillRoundedRect(n.x, n.y, nosW, n.h, 3);
 
-    g.lineStyle(4, t.rpm > 7900 ? 0xff5a78 : 0xf3fbff, 0.96)
-      .beginPath()
-      .moveTo(cx, cy)
-      .lineTo(cx + Math.cos(needleA) * 120, cy + Math.sin(needleA) * 120)
-      .strokePath();
-
-    g.fillStyle(0x08101d, 1).fillCircle(cx, cy, 9);
-    g.lineStyle(2, 0x56dfff, 0.8).strokeCircle(cx, cy, 9);
-
-    // Compact live boost + NOS bars. The physics/debug numbers stay out of
-    // the normal racing view.
-    g.fillStyle(0x111b2a, 0.95).fillRoundedRect(500, 468, 104, 9, 4);
-    g.fillStyle(0x42cfff, 0.95).fillRoundedRect(
-      500, 468, 104 * Phaser.Math.Clamp(t.boostBar / 1.2, 0, 1), 9, 4
-    );
-
-    g.fillStyle(0x111b2a, 0.95).fillRoundedRect(676, 468, 104, 9, 4);
-    g.fillStyle(0xff4fa3, 0.95).fillRoundedRect(
-      676, 468, 104 * Phaser.Math.Clamp(t.nosFraction, 0, 1), 9, 4
-    );
-
+    const tr = this.anchor.traction;
     if (t.wheelspin) {
-      g.lineStyle(2, 0xff5a8e, 0.90)
-        .strokeRoundedRect(590, 480, 100, 24, 8);
+      g.fillStyle(0xffa51f, 0.22).fillRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
+      g.lineStyle(2, 0xffa51f, 0.95).strokeRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
+    } else {
+      g.fillStyle(0x060809, 0.72).fillRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
     }
 
     this.status.setText(raceStatus);
     this.gear.setText(t.gear === 0 ? 'N' : String(t.gear));
-    this.speed.setText(String(Math.round(t.speedKmh)));
-    this.rpm.setText(`${Math.round(t.rpm)} RPM`);
+    this.speedText.setText(String(Math.round(t.speedKmh)));
+    this.rpmText.setText(String(Math.round(t.rpm)));
   }
 }
