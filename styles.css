@@ -36,19 +36,22 @@ body[data-scene="meet"] #game-shell {
 }
 
 /*
-  TOKYO SHIFT now uses a 1560x720 logical canvas (19.5:9 / 13:6),
-  matching a modern iPhone landscape viewport and the approved mockup.
-  Keeping the parent at exactly the same ratio means the canvas cannot
-  be stretched into a different shape.
+  Workshop and Meet use a taller 1560x840 logical canvas (13:7) to create
+  more vertical room for panels. Race switches back to 1560x720 (13:6).
 */
 #game {
   width: 100%;
-  max-width: 216.6667dvh;
-  aspect-ratio: 13 / 6;
+  max-width: 185.7143dvh;
+  aspect-ratio: 13 / 7;
   height: auto;
   max-height: 100%;
   display: grid;
   place-items: center;
+}
+
+body[data-scene="race"] #game {
+  max-width: 216.6667dvh;
+  aspect-ratio: 13 / 6;
 }
 
 canvas {
