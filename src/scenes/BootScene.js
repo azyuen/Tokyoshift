@@ -1,5 +1,5 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r26';
-import { characters } from '../data/characters.js?v=20260921-r26';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r27';
+import { characters } from '../data/characters.js?v=20260921-r27';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -29,12 +29,14 @@ export default class BootScene extends Phaser.Scene {
     workshopCharacters.forEach(character => {
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260921-r26'
+        character.visual.path + '?v=20260921-r27'
       );
     });
   }
 
   create() {
+    document.body.dataset.scene = 'garage';
+
     let profile = null;
     try {
       profile = JSON.parse(localStorage.getItem('tokyoShiftProfile') || 'null');
@@ -53,7 +55,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 304, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 363, 'R26 // SAFE UI', {
+    this.add.text(780, 363, 'R27 // LANDSCAPE UI', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
