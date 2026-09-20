@@ -1,8 +1,28 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r25';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r25';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r25';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r25';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r25';
+import BootScene from './scenes/BootScene.js?v=20260921-r26';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r26';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r26';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r26';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r26';
+
+
+// Phone readability pass: Phaser renders into a 1560x720 logical canvas, so
+// 10-12px logical text becomes extremely small on a landscape phone. Boost all
+// canvas text consistently while preserving relative hierarchy.
+const originalSetStyle = Phaser.GameObjects.Text.prototype.setStyle;
+Phaser.GameObjects.Text.prototype.setStyle = function(style = {}, updateText = true) {
+  if (style && style.fontSize != null) {
+    const next = { ...style };
+    const raw = next.fontSize;
+    const numeric = typeof raw === 'number' ? raw : parseFloat(raw);
+
+    if (Number.isFinite(numeric)) {
+      const boosted = Math.max(13, Math.round(numeric * 1.16));
+      next.fontSize = typeof raw === 'number' ? boosted : boosted + 'px';
+    }
+    return originalSetStyle.call(this, next, updateText);
+  }
+  return originalSetStyle.call(this, style, updateText);
+};
 
 const GAME_WIDTH = 1560;
 const GAME_HEIGHT = 720;
