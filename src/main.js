@@ -1,11 +1,11 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r28';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r28';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r28';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r28';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r28';
+import BootScene from './scenes/BootScene.js?v=20260921-r29';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r29';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r29';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r29';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r29';
 
 
-// Phone readability pass: Phaser renders into a 1560x720 logical canvas, so
+// Phone readability pass: Workshop/Meet render into a 1560x840 logical canvas, so
 // 10-12px logical text becomes extremely small on a landscape phone. Boost all
 // canvas text consistently while preserving relative hierarchy.
 const originalSetStyle = Phaser.GameObjects.Text.prototype.setStyle;
@@ -25,7 +25,7 @@ Phaser.GameObjects.Text.prototype.setStyle = function(style = {}, updateText = t
 };
 
 const GAME_WIDTH = 1560;
-const GAME_HEIGHT = 720;
+const GAME_HEIGHT = 840;
 
 const config = {
   type: Phaser.AUTO,
