@@ -1,4 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260920-r12';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r17';
+import { characters } from '../data/characters.js?v=20260921-r17';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -39,9 +40,32 @@ export default class GarageScene extends Phaser.Scene {
     // Very light tint keeps the UI readable without flattening the artwork.
     this.add.rectangle(780, 360, 1560, 720, 0x03101b, 0.08).setDepth(-9);
 
-    // Character slots are intentionally empty until final transparent PNG
-    // sprites are uploaded. Keeping characters separate lets us reuse the same
-    // assets in workshops and street meets without baking them into backgrounds.
+    // Character art stays separate from the workshop background so the same
+    // sprites can later be reused at car meets, rival screens and other garages.
+    this.addGarageCharacter(characters.renMizuno, 350, 540, 205, 8);
+    this.addGarageCharacter(characters.daichiSakamoto, 1030, 540, 195, 8);
+  }
+
+  addGarageCharacter(character, x, feetY, targetHeight, depth) {
+    const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+      .setOrigin(0.5, 1)
+      .setDepth(depth);
+
+    const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+    sprite.setScale(targetHeight / source.height);
+
+    // Small grounding shadow; it is generated in Phaser so the PNG remains
+    // completely reusable and transparent.
+    this.add.ellipse(
+      x,
+      feetY - 2,
+      Math.max(34, sprite.displayWidth * 0.55),
+      10,
+      0x000000,
+      0.26
+    ).setDepth(depth - 0.2);
+
+    return sprite;
   }
 
   buildHeader() {
@@ -307,6 +331,7 @@ export default class GarageScene extends Phaser.Scene {
         wins: this.registry.get('wins') ?? 0,
         losses: this.registry.get('losses') ?? 0,
         cash: this.registry.get('cash') ?? 25000,
+        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
       }));
     } catch (e) {
       // Storage can be unavailable in some private-browser contexts.
