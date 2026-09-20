@@ -13,7 +13,7 @@ export default class TouchControls {
     this.throttleStartY = 0;
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
-    this.pedalSwipePx = 64;
+    this.pedalSwipePx = 72;
 
     scene.input.addPointer(5);
     this.keys = scene.input.keyboard.addKeys({
@@ -31,20 +31,31 @@ export default class TouchControls {
       restart: Phaser.Input.Keyboard.KeyCodes.R,
     });
 
-    this.graphics = scene.add.graphics().setDepth(49).setScrollFactor(0);
+    this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
+
+    // Large forgiving thumb zones; art is smaller than the hit boxes.
     this.layout = {
-      clutch: new Phaser.Geom.Rectangle(0, 430, 250, 290),
-      nos: new Phaser.Geom.Rectangle(255, 570, 120, 105),
-      shifter: new Phaser.Geom.Rectangle(875, 500, 185, 205),
-      throttle: new Phaser.Geom.Rectangle(1030, 430, 250, 290),
+      clutch: new Phaser.Geom.Rectangle(0, 490, 165, 230),
+      nos: new Phaser.Geom.Rectangle(168, 540, 122, 130),
+      shifter: new Phaser.Geom.Rectangle(910, 505, 180, 205),
+      throttle: new Phaser.Geom.Rectangle(1112, 485, 168, 235),
     };
 
-    this.clutchSprite = scene.add.image(122, 565, 'clutchPedal').setScale(0.215).setDepth(51).setScrollFactor(0);
-    this.throttleSprite = scene.add.image(1156, 565, 'throttlePedal').setScale(0.215).setDepth(51).setScrollFactor(0);
-    this.shifterSprite = scene.add.image(966, 590, 'shifterUp').setScale(0.17).setDepth(51).setScrollFactor(0);
+    this.clutchScale = 0.14;
+    this.throttleScale = 0.14;
+    this.nosScale = 0.09;
+    this.shifterScale = 0.11;
 
-    this.nosLabel = scene.add.text(315, 620, 'NOS', {
-      fontFamily: 'monospace', fontSize: '21px', color: '#e8eef0', fontStyle: 'bold'
+    this.clutchSprite = scene.add.image(83, 610, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
+    this.nosSprite = scene.add.image(228, 608, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
+    this.shifterSprite = scene.add.image(1000, 608, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
+    this.throttleSprite = scene.add.image(1194, 605, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+
+    this.plusLabel = scene.add.text(1000, 513, '+', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#c7d8df', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
+    this.minusLabel = scene.add.text(1000, 701, '−', {
+      fontFamily: 'monospace', fontSize: '22px', color: '#c7d8df', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
     scene.input.on('pointerdown', pointer => {
@@ -78,6 +89,10 @@ export default class TouchControls {
   update() {
     if (!this.enabled) return this.snapshot();
 
+    const keyboardThrottle = this.keys.throttle.isDown || this.keys.throttleAlt.isDown;
+    const keyboardClutch = this.keys.clutch.isDown;
+    const keyboardNos = this.keys.nos.isDown;
+
     if (this.throttlePointer && !this.throttlePointer.isDown) {
       this.throttlePointer = null;
       this.throttleLatchedMax = false;
@@ -88,7 +103,7 @@ export default class TouchControls {
       if (travel >= this.pedalSwipePx) this.throttleLatchedMax = true;
       touchThrottle = this.throttleLatchedMax ? 1 : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
-    this.throttle = Math.max((this.keys.throttle.isDown || this.keys.throttleAlt.isDown) ? 1 : 0, touchThrottle);
+    this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle);
 
     if (this.clutchPointer && !this.clutchPointer.isDown) {
       this.clutchPointer = null;
@@ -100,41 +115,59 @@ export default class TouchControls {
       if (travel >= this.pedalSwipePx) this.clutchLatchedMax = true;
       touchClutch = this.clutchLatchedMax ? 1 : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
-    this.clutch = this.keys.clutch.isDown ? 1 : touchClutch;
-    this.nos = this.keys.nos.isDown || Boolean(this.pointerIn(this.layout.nos));
+    this.clutch = keyboardClutch ? 1 : touchClutch;
+    this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
 
+    // Desktop direct gears remain useful for testing.
     for (let g = 1; g <= 6; g++) {
       const key = this.keys[['one', 'two', 'three', 'four', 'five', 'six'][g - 1]];
       if (Phaser.Input.Keyboard.JustDown(key)) this.pendingGearRequest = g;
     }
 
     const sp = this.pointerIn(this.layout.shifter);
-    if (sp && !sp._tsShiftConsumed) {
-      this.pendingGearRequest = 'UP';
-      sp._tsShiftConsumed = true;
+    let shiftState = 'neutral';
+    if (sp) {
+      const upperHalf = sp.y < this.layout.shifter.centerY;
+      shiftState = upperHalf ? 'up' : 'down';
+      if (!sp._tsShiftConsumed) {
+        this.pendingGearRequest = upperHalf ? 'UP' : 'DOWN';
+        sp._tsShiftConsumed = true;
+      }
     }
     for (const p of this.scene.input.manager.pointers) if (!p.isDown) p._tsShiftConsumed = false;
 
-    this.drawDynamic(Boolean(sp));
+    this.drawDynamic(shiftState);
     return this.snapshot();
   }
 
-  drawDynamic(shiftPressed) {
+  drawDynamic(shiftState) {
     const g = this.graphics;
     g.clear();
 
-    const clutchBar = { x: 171, y: 500, w: 21, h: 151 };
-    const throttleBar = { x: 1196, y: 499, w: 22, h: 151 };
-    g.fillStyle(0x54b7c4, 0.85).fillRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch);
-    g.fillStyle(0xc6a84e, 0.88).fillRect(throttleBar.x, throttleBar.y + throttleBar.h * (1 - this.throttle), throttleBar.w, throttleBar.h * this.throttle);
+    // Phaser fills are behind the art and show through the transparent bar windows.
+    const clutchBar = { x: 124.5, y: 567.8, w: 15.0, h: 124.6 };
+    const throttleBar = { x: 1225.4, y: 553.1, w: 17.6, h: 131.0 };
 
-    g.fillStyle(this.nos ? 0x5db9c4 : 0x11171a, 0.88)
-      .lineStyle(2, this.nos ? 0xcffaff : 0x5b6a70, 0.9)
-      .fillRoundedRect(255, 570, 120, 105, 22)
-      .strokeRoundedRect(255, 570, 120, 105, 22);
+    g.fillStyle(0x48c9e8, 0.92)
+      .fillRoundedRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch, 3);
+    g.fillStyle(0xe0b24e, 0.94)
+      .fillRoundedRect(throttleBar.x, throttleBar.y + throttleBar.h * (1 - this.throttle), throttleBar.w, throttleBar.h * this.throttle, 3);
 
-    this.shifterSprite.setTexture(shiftPressed ? 'shifterDown' : 'shifterUp');
-    this.nosLabel.setColor(this.nos ? '#ffffff' : '#e8eef0');
+    // Subtle hit-zone outlines while prototyping.
+    g.lineStyle(2, 0x476272, 0.18).strokeRoundedRect(this.layout.clutch.x, this.layout.clutch.y, this.layout.clutch.width, this.layout.clutch.height, 18);
+    g.lineStyle(2, 0x476272, 0.18).strokeRoundedRect(this.layout.throttle.x, this.layout.throttle.y, this.layout.throttle.width, this.layout.throttle.height, 18);
+    g.lineStyle(2, 0x476272, 0.20).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
+
+    // The current art pack has a correct neutral/down pose. Up-shift works mechanically,
+    // but uses neutral art until the revised up-pose sprite is supplied.
+    if (shiftState === 'down') {
+      this.shifterSprite.setTexture('shifterDown').setPosition(1000, 610).setScale(this.shifterScale);
+    } else {
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(1000, shiftState === 'up' ? 602 : 608).setScale(this.shifterScale);
+    }
+
+    this.nosSprite.setScale(this.nos ? this.nosScale * 0.96 : this.nosScale);
+    this.nosSprite.setTint(this.nos ? 0xffffff : 0xe9eef1);
   }
 
   consumeGearRequest() {
