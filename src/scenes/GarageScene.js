@@ -29,24 +29,25 @@ export default class GarageScene extends Phaser.Scene {
   drawScene() {
     this.add.rectangle(780, 360, 1560, 720, 0x050a11).setDepth(-20);
 
-    this.add.image(608, 314, 'garageWorkshopBg')
-      .setDisplaySize(1216, 486)
-      .setDepth(-10);
+    // Workshop artwork is a replaceable full-screen layer. Preserve the source
+    // aspect ratio and crop only what falls outside the game canvas.
+    const workshop = this.add.image(780, 360, 'garageWorkshopBg').setDepth(-10);
+    const source = this.textures.get('garageWorkshopBg').getSourceImage();
+    const coverScale = Math.max(1560 / source.width, 720 / source.height);
+    workshop.setScale(coverScale);
 
-    this.add.rectangle(608, 314, 1216, 486, 0x07101a, 0.08)
-      .setDepth(-9);
+    // Very light tint keeps the UI readable without flattening the artwork.
+    this.add.rectangle(780, 360, 1560, 720, 0x03101b, 0.08).setDepth(-9);
 
-    this.add.image(264, 511, 'garageCharacterLeft')
+    this.add.image(300, 532, 'garageCharacterLeft')
       .setOrigin(0.5, 1)
       .setScale(1.02)
       .setDepth(4);
 
-    this.add.image(1060, 514, 'garageCharacterRight')
+    this.add.image(1030, 534, 'garageCharacterRight')
       .setOrigin(0.5, 1)
       .setScale(1.02)
       .setDepth(4);
-
-    this.add.rectangle(608, 553, 1216, 4, 0x203748, 1).setDepth(30);
   }
 
   buildHeader() {
@@ -225,25 +226,44 @@ export default class GarageScene extends Phaser.Scene {
     const source = this.textures.get(car.visual.bodyKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const ratio = car.visual.wheelScale / car.visual.bodyScale;
-    const wheelScale = bodyScale * ratio;
+    const wheelScale = bodyScale * ratio * 1.16;
 
-    const rearWheel = this.add.image(
-      x + car.visual.rearOffsetX * bodyScale,
-      y + car.visual.wheelOffsetY * bodyScale,
-      car.visual.wheelKey
-    ).setScale(wheelScale).setDepth(depth);
+    const rearX = x + car.visual.rearOffsetX * bodyScale;
+    const frontX = x + car.visual.frontOffsetX * bodyScale;
+    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
 
-    const frontWheel = this.add.image(
-      x + car.visual.frontOffsetX * bodyScale,
-      y + car.visual.wheelOffsetY * bodyScale,
-      car.visual.wheelKey
-    ).setScale(wheelScale).setDepth(depth);
+    const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
+      .setScale(wheelScale)
+      .setDepth(depth);
+
+    const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
+      .setScale(wheelScale)
+      .setDepth(depth);
+
+    // Match the race screen: black wheel-arch backing prevents the workshop
+    // background showing through the open rims/arches.
+    const rearWheelBacking = this.add.circle(
+      rearX, wheelY, Math.max(5, rearWheel.displayWidth * 0.50), 0x030507, 1
+    ).setDepth(depth - 0.35);
+
+    const frontWheelBacking = this.add.circle(
+      frontX, wheelY, Math.max(5, frontWheel.displayWidth * 0.50), 0x030507, 1
+    ).setDepth(depth - 0.35);
+
+    const roadShadow = this.add.ellipse(
+      x,
+      y + Math.max(12, source.height * bodyScale * 0.38),
+      Math.max(72, targetWidth * 0.78),
+      Math.max(7, source.height * bodyScale * 0.11),
+      0x000000,
+      0.30
+    ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
       .setScale(bodyScale)
       .setDepth(depth + 1);
 
-    return [rearWheel, frontWheel, body];
+    return [rearWheelBacking, frontWheelBacking, roadShadow, rearWheel, frontWheel, body];
   }
 
   selectCar(id) {
@@ -253,7 +273,7 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedCarId', id);
 
     for (const obj of this.selectedDisplay) obj.destroy();
-    this.selectedDisplay = this.createCarDisplay(cars[id], 663, 416, 650, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 665, 444, 480, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
