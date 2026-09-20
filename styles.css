@@ -24,6 +24,10 @@ body {
   height: 100dvh;
   display: grid;
   place-items: center;
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+  padding-top: max(4px, env(safe-area-inset-top));
+  padding-bottom: max(4px, env(safe-area-inset-bottom));
   background: #05070d;
 }
 
@@ -34,11 +38,11 @@ body {
   be stretched into a different shape.
 */
 #game {
-  width: 100vw;
+  width: 100%;
   max-width: 216.6667dvh;
   aspect-ratio: 13 / 6;
   height: auto;
-  max-height: 100dvh;
+  max-height: 100%;
   display: grid;
   place-items: center;
 }
