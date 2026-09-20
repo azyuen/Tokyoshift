@@ -6,7 +6,10 @@ export default class DragRacingAI {
     this.shiftSkill = skill.shiftSkill ?? 0.76;
     this.aggression = skill.aggression ?? 0.72;
     this.reactionDelay = Phaser.Math.Linear(0.48, 0.16, this.reactionSkill) + Phaser.Math.FloatBetween(-0.035, 0.045);
-    this.launchTargetRPM = Phaser.Math.Linear(3600, 4600, this.launchSkill) + Phaser.Math.Between(-120, 120);
+    const baseLaunchRPM = vehicle.config.launchRPM ?? 4400;
+    this.launchTargetRPM = baseLaunchRPM
+      * Phaser.Math.Linear(0.90, 1.02, this.launchSkill)
+      + Phaser.Math.Between(-100, 100);
     this.goTime = null;
     this.shiftState = 'none';
     this.shiftTimer = 0;
