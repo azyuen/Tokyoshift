@@ -23,8 +23,16 @@ export default class Engine {
     const idleAssist = this.rpm < this.config.idleRPM + 80 ? Math.max(0, 0.2 - throttle) * 0.5 : 0;
     const effectiveThrottle = Phaser.Math.Clamp(throttle + idleAssist, 0, 1);
     const base = this.baseTorqueAt(this.rpm) * effectiveThrottle;
-    const boosted = base * (1 + Math.max(0, boostBar) * 0.58);
-    return (boosted + nosTorque) * limiterCut;
+
+    const referenceBoost = this.config.referenceBoostBar ?? 0;
+    let boostScale = 1;
+    if (referenceBoost > 0) {
+      const spoolFraction = Phaser.Math.Clamp(Math.max(0, boostBar) / referenceBoost, 0, 1);
+      const offBoost = this.config.offBoostTorqueFraction ?? 0.55;
+      boostScale = Phaser.Math.Linear(offBoost, 1, spoolFraction);
+    }
+
+    return (base * boostScale + nosTorque) * limiterCut;
   }
 
   updateRPM(dt, netTorqueNm) {
