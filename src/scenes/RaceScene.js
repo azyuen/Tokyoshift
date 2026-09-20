@@ -1,12 +1,12 @@
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js?v=20260920-r6';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r24';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r25';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
-import { engines } from '../data/engines.js?v=20260921-r24';
-import { characters } from '../data/characters.js?v=20260921-r24';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r25';
+import { engines } from '../data/engines.js?v=20260921-r25';
+import { characters } from '../data/characters.js?v=20260921-r25';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -16,6 +16,20 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 export default class RaceScene extends Phaser.Scene {
   constructor() { super('RaceScene'); }
+
+  preload() {
+    const queueImage = (key, path) => {
+      if (!this.textures.exists(key)) this.load.image(key, path);
+    };
+
+    queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    queueImage('dragTree', 'assets/Ui/drag_tree.png');
+    queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
+    queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
+    queueImage('nosButton', 'assets/Controls/nos_button.png');
+    queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
+    queueImage('shifterDown', 'assets/Controls/shifter_down.png');
+  }
 
   init() {
     this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
