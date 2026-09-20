@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r17';
-import { characters } from '../data/characters.js?v=20260921-r17';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r18';
+import { characters } from '../data/characters.js?v=20260921-r18';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -229,14 +229,14 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(1385, 677, 'RACE  >', {
+    this.add.text(1385, 677, 'GO TO MEET  >', {
       fontFamily: PIXEL_FONT, fontSize: '17px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
     button.on('pointerdown', () => {
       this.registry.set('selectedCarId', this.selectedCarId);
       this.saveProfile();
-      this.scene.start('RaceScene');
+      this.scene.start('MeetScene');
     });
   }
 
