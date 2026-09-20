@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260920-r11';
+import { cars, carOrder } from '../data/cars.js?v=20260920-r12';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
