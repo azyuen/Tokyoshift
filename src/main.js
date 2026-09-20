@@ -1,12 +1,15 @@
-import BootScene from './scenes/BootScene.js';
-import RaceScene from './scenes/RaceScene.js';
-import ResultScene from './scenes/ResultScene.js';
+import BootScene from './scenes/BootScene.js?v=20260920-195';
+import RaceScene from './scenes/RaceScene.js?v=20260920-195';
+import ResultScene from './scenes/ResultScene.js?v=20260920-195';
+
+const GAME_WIDTH = 1560;
+const GAME_HEIGHT = 720;
 
 const config = {
   type: Phaser.AUTO,
   parent: 'game',
-  width: 1280,
-  height: 720,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
   backgroundColor: '#070914',
   pixelArt: true,
   roundPixels: true,
@@ -15,8 +18,8 @@ const config = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1280,
-    height: 720,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
   },
   scene: [BootScene, RaceScene, ResultScene],
 };
