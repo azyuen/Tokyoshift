@@ -7,6 +7,7 @@ export default class ResultScene extends Phaser.Scene {
 
   create() {
     document.body.dataset.scene = 'race';
+    this.scale.resize(1560, 720);
     const d = this.dataIn;
     this.add.rectangle(780, 360, 1560, 720, 0x070914);
     this.add.rectangle(780, 350, 610, 470, 0x0d1420).setStrokeStyle(2, 0x40536a);
