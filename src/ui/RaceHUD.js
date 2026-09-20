@@ -1,67 +1,89 @@
 export default class RaceHUD {
   constructor(scene) {
     this.scene = scene;
-    this.scale = 0.34;
-    this.sourceW = 1448;
-    this.sourceH = 1086;
-    this.left = 640 - (this.sourceW * this.scale) / 2;
-    this.top = 720 - this.sourceH * this.scale;
+    this.scale = 0.35;
+    this.sourceW = 1473;
+    this.sourceH = 452;
 
-    this.console = scene.add.image(640, 720, 'hudConsole')
+    this.cluster = scene.add.image(640, 718, 'hudCluster')
       .setOrigin(0.5, 1)
       .setScale(this.scale)
       .setDepth(39)
       .setScrollFactor(0);
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
-    const p = (x, y) => ({ x: this.left + x * this.scale, y: this.top + y * this.scale });
-    this.anchor = {
-      speed: p(322, 522), rpm: p(1087, 522), boost: p(704, 790), gear: p(720, 305),
-      speedDigital: p(320, 684), rpmDigital: p(1087, 684),
-      nos: { x: this.left + 608 * this.scale, y: this.top + 455 * this.scale, w: 196 * this.scale, h: 34 * this.scale },
-      traction: { x: this.left + 604 * this.scale, y: this.top + 535 * this.scale, w: 204 * this.scale, h: 76 * this.scale },
-    };
 
-    this.status = scene.add.text(640, 38, '', { fontFamily: 'monospace', fontSize: '21px', color: '#fff0b8', fontStyle: 'bold' })
-      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
-    this.gear = scene.add.text(this.anchor.gear.x, this.anchor.gear.y, 'N', { fontFamily: 'monospace', fontSize: '28px', color: '#f5f7ef', fontStyle: 'bold' })
-      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
-    this.speedText = scene.add.text(this.anchor.speedDigital.x, this.anchor.speedDigital.y, '0', { fontFamily: 'monospace', fontSize: '13px', color: '#e9f8ff', fontStyle: 'bold' })
-      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
-    this.rpmText = scene.add.text(this.anchor.rpmDigital.x, this.anchor.rpmDigital.y, '900', { fontFamily: 'monospace', fontSize: '12px', color: '#e9f8ff', fontStyle: 'bold' })
-      .setOrigin(0.5).setDepth(43).setScrollFactor(0);
+    this.status = scene.add.text(640, 474, '', {
+      fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
+
+    this.gearText = scene.add.text(0, 0, 'N', {
+      fontFamily: 'monospace', fontSize: '25px', color: '#f7f7f2', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
+
+    this.speedText = scene.add.text(0, 0, '0', {
+      fontFamily: 'monospace', fontSize: '19px', color: '#dff6ff', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
+
+    this.layoutText();
   }
 
-  drawNeedle(center, fraction, length, color = 0xf4f5ed) {
-    const a = Phaser.Math.DegToRad(215 - 250 * Phaser.Math.Clamp(fraction, 0, 1));
-    this.g.lineStyle(3, color, 0.98).beginPath().moveTo(center.x, center.y)
-      .lineTo(center.x + Math.cos(a) * length, center.y + Math.sin(a) * length).strokePath();
-    this.g.fillStyle(0x171b1d, 1).fillCircle(center.x, center.y, 5);
+  sourcePoint(px, py) {
+    const left = this.cluster.x - (this.sourceW * this.scale) / 2;
+    const top = this.cluster.y - this.sourceH * this.scale;
+    return { x: left + px * this.scale, y: top + py * this.scale };
+  }
+
+  layoutText() {
+    const gear = this.sourcePoint(1260, 229);
+    const speed = this.sourcePoint(723, 352);
+    this.gearText.setPosition(gear.x, gear.y);
+    this.speedText.setPosition(speed.x, speed.y);
+  }
+
+  drawNeedle(center, fraction, lengthPx, startDeg, endDeg, color = 0xf7f7f2, width = 3) {
+    const a = Phaser.Math.DegToRad(startDeg + (endDeg - startDeg) * Phaser.Math.Clamp(fraction, 0, 1));
+    this.g.lineStyle(width, color, 0.98)
+      .beginPath()
+      .moveTo(center.x, center.y)
+      .lineTo(center.x + Math.cos(a) * lengthPx, center.y + Math.sin(a) * lengthPx)
+      .strokePath();
+    this.g.fillStyle(0x111820, 1).fillCircle(center.x, center.y, 5);
   }
 
   update(t, raceStatus) {
     const g = this.g;
     g.clear();
-    this.drawNeedle(this.anchor.speed, t.speedKmh / 180, 48);
-    this.drawNeedle(this.anchor.rpm, t.rpm / 10000, 48, t.rpm > 8000 ? 0xff4e42 : 0xf4f5ed);
-    this.drawNeedle(this.anchor.boost, (t.boostBar + 1) / 2.5, 25);
 
-    const n = this.anchor.nos;
-    g.fillStyle(0x071216, 0.92).fillRoundedRect(n.x, n.y, n.w, n.h, 3);
-    const nosW = n.w * Phaser.Math.Clamp(t.nosFraction, 0, 1);
-    if (nosW > 0) g.fillStyle(0x5bc7d8, 0.95).fillRoundedRect(n.x, n.y, nosW, n.h, 3);
+    const tach = this.sourcePoint(337, 278);
+    const speed = this.sourcePoint(723, 267);
+    const boost = this.sourcePoint(1048, 313);
 
-    const tr = this.anchor.traction;
+    // 4/5-circle sweep: zero begins at lower-left and rotates clockwise.
+    this.drawNeedle(tach, t.rpm / 8500, 105 * this.scale, 145, 375, t.rpm > 7900 ? 0xff665a : 0xf7f7f2, 3);
+    this.drawNeedle(speed, t.speedKmh / 180, 120 * this.scale, 140, 383, 0xf7f7f2, 3);
+    this.drawNeedle(boost, (t.boostBar + 1.0) / 3.0, 74 * this.scale, 151, 393, 0xf7f7f2, 3);
+
+    // NOS bar: four static slots in the HUD, filled by Phaser.
+    const nosStart = this.sourcePoint(1262, 354);
+    const segW = 20 * this.scale;
+    const segH = 36 * this.scale;
+    const segGap = 7 * this.scale;
+    const filled = Math.ceil(Phaser.Math.Clamp(t.nosFraction, 0, 1) * 4 - 0.0001);
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(i < filled ? 0x4cc8ff : 0x071019, i < filled ? 0.92 : 0.68)
+        .fillRoundedRect(nosStart.x + i * (segW + segGap), nosStart.y, segW, segH, 2);
+    }
+
+    // Traction warning only lights when the driven tyre is slipping.
     if (t.wheelspin) {
-      g.fillStyle(0xffa51f, 0.22).fillRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
-      g.lineStyle(2, 0xffa51f, 0.95).strokeRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
-    } else {
-      g.fillStyle(0x060809, 0.72).fillRoundedRect(tr.x, tr.y, tr.w, tr.h, 4);
+      const tr = this.sourcePoint(1201, 294);
+      g.fillStyle(0xffa928, 0.24).fillRoundedRect(tr.x, tr.y, 170 * this.scale, 48 * this.scale, 4);
+      g.lineStyle(2, 0xffa928, 0.85).strokeRoundedRect(tr.x, tr.y, 170 * this.scale, 48 * this.scale, 4);
     }
 
     this.status.setText(raceStatus);
-    this.gear.setText(t.gear === 0 ? 'N' : String(t.gear));
+    this.gearText.setText(t.gear === 0 ? 'N' : String(t.gear));
     this.speedText.setText(String(Math.round(t.speedKmh)));
-    this.rpmText.setText(String(Math.round(t.rpm)));
   }
 }
