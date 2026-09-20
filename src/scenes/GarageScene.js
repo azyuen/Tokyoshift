@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r23';
-import { characters } from '../data/characters.js?v=20260921-r23';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r24';
+import { characters } from '../data/characters.js?v=20260921-r24';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -72,8 +72,8 @@ export default class GarageScene extends Phaser.Scene {
 
     // Ren and Daichi are deliberately smaller than the hero car; they now read
     // as people standing on the garage floor rather than giant foreground art.
-    this.addGarageCharacter(characters.renMizuno, 245, 500, 225, 8);
-    this.addGarageCharacter(characters.daichiSakamoto, 1015, 500, 230, 8);
+    this.addGarageCharacter(characters.renMizuno, 235, 502, 300, 8);
+    this.addGarageCharacter(characters.daichiSakamoto, 1010, 502, 305, 8);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -86,12 +86,21 @@ export default class GarageScene extends Phaser.Scene {
 
     this.add.ellipse(
       x,
-      feetY - 2,
-      Math.max(32, sprite.displayWidth * 0.52),
-      9,
+      feetY - 1,
+      Math.max(52, sprite.displayWidth * 0.78),
+      17,
       0x000000,
-      0.25
-    ).setDepth(depth - 0.2);
+      0.24
+    ).setDepth(depth - 0.25);
+
+    this.add.ellipse(
+      x,
+      feetY - 1,
+      Math.max(38, sprite.displayWidth * 0.58),
+      8,
+      0x000000,
+      0.30
+    ).setDepth(depth - 0.20);
 
     return sprite;
   }
