@@ -56,8 +56,12 @@ export default class RaceScene extends Phaser.Scene {
     this.afterFinishTimer = 0;
     this.startMoved = false;
     this.times = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
+    this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
+    this.opponentStartMoved = false;
     this.opponentFinishClock = null;
     this.playerFinishClock = null;
+    this.resultsShown = false;
+    this.firstFinishClock = null;
 
     this.environment = new TokyoExpresswayBackground(this);
     this.worldG = this.add.graphics().setDepth(4);
@@ -179,6 +183,9 @@ export default class RaceScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.start('GarageScene');
 
+    // Once the result card appears the exact finish frame stays on screen.
+    if (this.resultsShown) return;
+
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
 
@@ -218,22 +225,16 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.finished) {
       this.afterFinishTimer += dt;
-      if (this.afterFinishTimer > 2.0) {
-        this.scene.start('ResultScene', {
-          times: this.times,
-          falseStart: this.falseStart,
-          playerFinishClock: this.playerFinishClock,
-          opponentFinishClock: this.opponentFinishClock,
-          playerName: cars[this.selectedCarId].name,
-          opponentName: cars[this.opponentCarId].name,
-        });
+      // Give the finish line a brief beat, then freeze this exact race frame.
+      if (this.afterFinishTimer > 0.45 && !this.resultsShown) {
+        this.showResultsOverlay();
       }
     }
   }
 
   handleTiming(pt, ot) {
-    const moved = pt.positionM > 0.20 || pt.speedMps > 0.60;
-    if (this.raceStarted && moved && !this.startMoved) {
+    const playerMoved = pt.positionM > 0.20 || pt.speedMps > 0.60;
+    if (this.raceStarted && playerMoved && !this.startMoved) {
       this.startMoved = true;
       if (this.greenClock == null) {
         this.falseStart = true;
@@ -241,6 +242,12 @@ export default class RaceScene extends Phaser.Scene {
       } else {
         this.times.reaction = this.raceClock - this.greenClock;
       }
+    }
+
+    const opponentMoved = ot.positionM > 0.20 || ot.speedMps > 0.60;
+    if (this.greenClock != null && opponentMoved && !this.opponentStartMoved) {
+      this.opponentStartMoved = true;
+      this.opponentTimes.reaction = this.raceClock - this.greenClock;
     }
 
     if (this.greenClock != null && this.startMoved && !this.falseStart) {
@@ -254,14 +261,174 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
 
-    if (pt.positionM >= TRACK_M && this.playerFinishClock == null) this.playerFinishClock = this.raceClock;
-    if (ot.positionM >= TRACK_M && this.opponentFinishClock == null) this.opponentFinishClock = this.raceClock;
-
-    if (!this.finished && (this.playerFinishClock != null || (this.falseStart && this.greenClock != null))) {
-      if (this.falseStart || this.opponentFinishClock != null || this.raceClock - this.playerFinishClock > 1.0) {
-        this.finished = true;
+    if (this.greenClock != null && this.opponentStartMoved) {
+      const launchClock = this.greenClock + (this.opponentTimes.reaction ?? 0);
+      const elapsed = this.raceClock - launchClock;
+      if (this.opponentTimes.sixty == null && ot.positionM >= 18.288) this.opponentTimes.sixty = elapsed;
+      if (this.opponentTimes.eighth == null && ot.positionM >= 201.168) this.opponentTimes.eighth = elapsed;
+      if (this.opponentTimes.quarter == null && ot.positionM >= TRACK_M) {
+        this.opponentTimes.quarter = elapsed;
+        this.opponentTimes.trapKmh = ot.speedKmh;
       }
     }
+
+    if (pt.positionM >= TRACK_M && this.playerFinishClock == null) {
+      this.playerFinishClock = this.raceClock;
+      this.firstFinishClock ??= this.raceClock;
+    }
+    if (ot.positionM >= TRACK_M && this.opponentFinishClock == null) {
+      this.opponentFinishClock = this.raceClock;
+      this.firstFinishClock ??= this.raceClock;
+    }
+
+    if (!this.finished) {
+      const bothFinished = this.playerFinishClock != null && this.opponentFinishClock != null;
+      const dqComplete = this.falseStart && this.opponentFinishClock != null;
+      const finishTimeout = this.firstFinishClock != null && this.raceClock - this.firstFinishClock > 4.0;
+      if (bothFinished || dqComplete || finishTimeout) this.finished = true;
+    }
+  }
+
+  showResultsOverlay() {
+    this.resultsShown = true;
+    this.controls.enabled = false;
+    this.cancelButton?.disableInteractive();
+    this.startButton?.disableInteractive();
+
+    const depth = 100;
+    const panelX = 780;
+    const panelY = 300;
+    const panelW = 980;
+    const panelH = 430;
+    const leftX = 515;
+    const labelX = 780;
+    const rightX = 1045;
+
+    const titleFont = '"Teko", "Arial Narrow", sans-serif';
+    const dataFont = '"Rajdhani", "Arial", sans-serif';
+
+    const formatTime = value => value == null ? '—' : value.toFixed(3) + ' s';
+    const formatSpeed = value => value == null ? '—' : value.toFixed(1) + ' km/h';
+
+    let outcome = 'RACE COMPLETE';
+    let outcomeColour = '#78dcff';
+    let playerWon = false;
+    let opponentWon = false;
+
+    if (this.falseStart) {
+      outcome = 'RED LIGHT // DISQUALIFIED';
+      outcomeColour = '#ff5378';
+      opponentWon = true;
+    } else if (this.playerFinishClock != null && this.opponentFinishClock != null) {
+      playerWon = this.playerFinishClock <= this.opponentFinishClock;
+      opponentWon = !playerWon;
+      outcome = playerWon ? 'YOU WIN' : 'RIVAL WINS';
+      outcomeColour = playerWon ? '#73f5a5' : '#ff6d8d';
+    }
+
+    // Dim the frozen race instead of leaving it for a separate result scene.
+    this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.62)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    const panel = this.add.rectangle(panelX, panelY, panelW, panelH, 0x08111c, 0.97)
+      .setStrokeStyle(2, 0x4dd9ff, 0.78)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    // Accent rails: cyan player side, magenta rival side.
+    this.add.rectangle(panelX - panelW / 2 + 5, panelY, 5, panelH - 12, 0x45d7ff, 0.95)
+      .setDepth(depth + 2).setScrollFactor(0);
+    this.add.rectangle(panelX + panelW / 2 - 5, panelY, 5, panelH - 12, 0xff3f88, 0.88)
+      .setDepth(depth + 2).setScrollFactor(0);
+
+    this.add.text(panelX, 103, 'TOKYO SHIFT // RACE SLIP', {
+      fontFamily: titleFont, fontSize: '31px', color: '#eaf8ff', fontStyle: 'bold',
+      letterSpacing: 2
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+    this.add.text(panelX, 137, outcome, {
+      fontFamily: titleFont, fontSize: '24px', color: outcomeColour, fontStyle: 'bold',
+      letterSpacing: 1
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+    const addCarHeader = (x, role, carId, winner, accent) => {
+      this.add.text(x, 166, role, {
+        fontFamily: dataFont, fontSize: '13px', color: '#7f93aa', fontStyle: 'bold',
+        letterSpacing: 2
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+      this.add.text(x, 184, cars[carId].shortName, {
+        fontFamily: titleFont, fontSize: '28px', color: '#f5fbff', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+      if (winner) {
+        const badge = this.add.rectangle(x, 213, 96, 23, accent, 0.16)
+          .setStrokeStyle(1, accent, 0.9).setDepth(depth + 2).setScrollFactor(0);
+        this.add.text(x, 213, 'WINNER', {
+          fontFamily: dataFont, fontSize: '12px', color: '#ffffff',
+          fontStyle: 'bold', letterSpacing: 1
+        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+      }
+    };
+
+    addCarHeader(leftX, 'YOU', this.selectedCarId, playerWon, 0x45d7ff);
+    addCarHeader(rightX, 'RIVAL', this.opponentCarId, opponentWon, 0xff3f88);
+
+    // Centre labels and two clean data columns with generous row spacing.
+    const rows = [
+      ['REACTION', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
+      ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
+      ['1/8 MILE', this.falseStart ? '—' : formatTime(this.times.eighth), formatTime(this.opponentTimes.eighth)],
+      ['1/4 ET', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
+      ['TRAP', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
+    ];
+
+    const rowStartY = 244;
+    const rowGap = 40;
+
+    rows.forEach((row, i) => {
+      const y = rowStartY + i * rowGap;
+
+      if (i > 0) {
+        this.add.rectangle(panelX, y - 10, 760, 1, 0x5b7088, 0.16)
+          .setDepth(depth + 2).setScrollFactor(0);
+      }
+
+      this.add.text(labelX, y, row[0], {
+        fontFamily: dataFont, fontSize: '14px', color: '#7f93aa',
+        fontStyle: 'bold', letterSpacing: 1
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+      this.add.text(leftX, y, row[1], {
+        fontFamily: dataFont, fontSize: '19px', color: '#dff8ff', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+      this.add.text(rightX, y, row[2], {
+        fontFamily: dataFont, fontSize: '19px', color: '#ffe4ef', fontStyle: 'bold'
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+    });
+
+    const addButton = (x, label, stroke, onPress) => {
+      const button = this.add.rectangle(x, 486, 190, 42, 0x0c1825, 0.98)
+        .setStrokeStyle(2, stroke, 0.88)
+        .setDepth(depth + 3)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+
+      const text = this.add.text(x, 486, label, {
+        fontFamily: titleFont, fontSize: '21px', color: '#eef9ff',
+        fontStyle: 'bold', letterSpacing: 1
+      }).setOrigin(0.5).setDepth(depth + 4).setScrollFactor(0);
+
+      button.on('pointerover', () => button.setFillStyle(stroke, 0.16));
+      button.on('pointerout', () => button.setFillStyle(0x0c1825, 0.98));
+      button.on('pointerdown', onPress);
+      return { button, text };
+    };
+
+    addButton(660, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
+    addButton(900, 'GARAGE', 0xff4a8d, () => this.scene.start('GarageScene'));
   }
 
   drawScene(pt, ot, dt) {
