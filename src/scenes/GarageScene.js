@@ -1,8 +1,13 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r18';
-import { characters } from '../data/characters.js?v=20260921-r18';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r20';
+import { characters } from '../data/characters.js?v=20260921-r20';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
+
+const SAFE = 30;
+const STAGE = { x: 30, y: 84, w: 1120, h: 430 };
+const SIDE = { x: 1176, y: 84, w: 354, h: 608 };
+const STRIP = { x: 30, y: 530, w: 1120, h: 162 };
 
 export default class GarageScene extends Phaser.Scene {
   constructor() { super('GarageScene'); }
@@ -21,7 +26,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildCarLabel();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
-    this.buildRaceButton();
+    this.buildMeetButton();
 
     this.selectCar(this.selectedCarId);
     this.selectUpgrade('ENGINE');
@@ -30,20 +35,45 @@ export default class GarageScene extends Phaser.Scene {
   drawScene() {
     this.add.rectangle(780, 360, 1560, 720, 0x050a11).setDepth(-20);
 
-    // Workshop artwork is a replaceable full-screen layer. Preserve the source
-    // aspect ratio and crop only what falls outside the game canvas.
-    const workshop = this.add.image(780, 360, 'garageWorkshopBg').setDepth(-10);
+    // Framed workshop viewport: the artwork is now deliberately contained in
+    // the upper-left game panel instead of pretending to be the whole screen.
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x08121d,
+      1
+    ).setStrokeStyle(2, 0x24475f, 1).setDepth(-12);
+
+    const workshop = this.add.image(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      'garageWorkshopBg'
+    ).setDepth(-10);
+
     const source = this.textures.get('garageWorkshopBg').getSourceImage();
-    const coverScale = Math.max(1560 / source.width, 720 / source.height);
+    const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
     workshop.setScale(coverScale);
 
-    // Very light tint keeps the UI readable without flattening the artwork.
-    this.add.rectangle(780, 360, 1560, 720, 0x03101b, 0.08).setDepth(-9);
+    const maskShape = this.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
+    workshop.setMask(maskShape.createGeometryMask());
 
-    // Character art stays separate from the workshop background so the same
-    // sprites can later be reused at car meets, rival screens and other garages.
-    this.addGarageCharacter(characters.renMizuno, 350, 540, 205, 8);
-    this.addGarageCharacter(characters.daichiSakamoto, 1030, 540, 195, 8);
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x03101b,
+      0.06
+    ).setDepth(-9);
+
+    // Ren and Daichi are deliberately smaller than the hero car; they now read
+    // as people standing on the garage floor rather than giant foreground art.
+    this.addGarageCharacter(characters.renMizuno, 285, 492, 168, 8);
+    this.addGarageCharacter(characters.daichiSakamoto, 1010, 492, 172, 8);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -54,82 +84,78 @@ export default class GarageScene extends Phaser.Scene {
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
     sprite.setScale(targetHeight / source.height);
 
-    // Small grounding shadow; it is generated in Phaser so the PNG remains
-    // completely reusable and transparent.
     this.add.ellipse(
       x,
       feetY - 2,
-      Math.max(34, sprite.displayWidth * 0.55),
-      10,
+      Math.max(32, sprite.displayWidth * 0.52),
+      9,
       0x000000,
-      0.26
+      0.25
     ).setDepth(depth - 0.2);
 
     return sprite;
   }
 
   buildHeader() {
-    this.add.rectangle(780, 34, 1560, 68, 0x07111d, 1)
+    this.add.rectangle(780, 42, 1500, 52, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.rectangle(142, 34, 250, 48, 0x0a1a2b, 1)
+    this.add.rectangle(150, 42, 220, 40, 0x0a1a2b, 1)
       .setStrokeStyle(2, 0x39d9ff, 1)
       .setDepth(41);
-    this.add.text(142, 34, 'WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '21px', color: '#eefaff'
+    this.add.text(150, 42, 'WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(42);
 
-    this.add.text(307, 34, 'TUNE   >   UPGRADE   >   RACE', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8bbde0'
+    this.add.text(286, 42, 'TUNE   >   UPGRADE   >   MEET', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 25000;
 
-    this.add.text(1080, 24, 'WINS', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#85a6be'
+    this.add.text(1095, 32, 'WINS  ' + wins, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1093, 24, String(wins), {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffffff'
-    }).setOrigin(0, 0.5).setDepth(42);
-
-    this.add.text(1080, 46, 'LOSSES', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#85a6be'
+    this.add.text(1095, 51, 'LOSSES  ' + losses, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1093, 46, String(losses), {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffffff'
-    }).setOrigin(0, 0.5).setDepth(42);
 
-    this.add.rectangle(1435, 34, 210, 48, 0x0b1623, 1)
+    this.add.rectangle(1420, 42, 200, 40, 0x0b1623, 1)
       .setStrokeStyle(1, 0x274963, 1)
       .setDepth(41);
-    this.add.text(1530, 34, '¥ ' + Number(cash).toLocaleString('en-US'), {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffe08a'
+    this.add.text(1505, 42, '¥ ' + Number(cash).toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
   }
 
   buildCarLabel() {
-    this.add.rectangle(193, 509, 346, 72, 0x07111d, 0.94)
+    this.add.rectangle(206, 472, 330, 64, 0x07111d, 0.94)
       .setStrokeStyle(1, 0x26465e, 1)
       .setDepth(31);
 
-    this.carNameText = this.add.text(34, 492, '', {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffffff'
+    this.carNameText = this.add.text(52, 454, '', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#ffffff'
     }).setDepth(32);
 
-    this.carSubText = this.add.text(34, 520, '', {
-      fontFamily: BODY_FONT, fontSize: '17px', color: '#79bce3', fontStyle: '600'
+    this.carSubText = this.add.text(52, 480, '', {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#79bce3', fontStyle: '600'
     }).setDepth(32);
   }
 
   buildSpecsAndUpgrades() {
-    this.add.rectangle(1386, 340, 326, 536, 0x07111d, 0.98)
-      .setStrokeStyle(2, 0x17354d, 1)
-      .setDepth(35);
+    this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      0.98
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(1242, 88, 'CAR SPECS', {
+    this.add.text(SIDE.x + 20, SIDE.y + 18, 'CAR SPECS', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
@@ -142,33 +168,44 @@ export default class GarageScene extends Phaser.Scene {
 
     this.specValueTexts = {};
     rows.forEach((row, i) => {
-      const y = 127 + i * 38;
-      this.add.line(1385, y + 19, 1250, 0, 1520, 0, 0x27465d, 0.8).setDepth(36);
-      this.add.text(1250, y, row[0], {
+      const y = SIDE.y + 62 + i * 39;
+      this.add.line(
+        SIDE.x + SIDE.w / 2,
+        y + 19,
+        SIDE.x + 20,
+        0,
+        SIDE.x + SIDE.w - 20,
+        0,
+        0x27465d,
+        0.75
+      ).setDepth(36);
+
+      this.add.text(SIDE.x + 20, y, row[0], {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#9cc6df'
       }).setOrigin(0, 0.5).setDepth(37);
-      this.specValueTexts[row[1]] = this.add.text(1522, y, '', {
+
+      this.specValueTexts[row[1]] = this.add.text(SIDE.x + SIDE.w - 20, y, '', {
         fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(1242, 290, 'UPGRADES', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8cc8ec'
+    this.add.text(SIDE.x + 20, SIDE.y + 230, 'UPGRADES', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const categories = ['ENGINE', 'TURBO', 'TIRES', 'SUSPENSION', 'GEARBOX', 'NITROUS', 'COSMETICS'];
     categories.forEach((name, i) => {
-      const y = 329 + i * 43;
-      const box = this.add.rectangle(1385, y, 286, 37, 0x0b1724, 1)
+      const y = SIDE.y + 271 + i * 44;
+      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 38, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
 
-      const label = this.add.text(1262, y, name, {
+      const label = this.add.text(SIDE.x + 30, y, name, {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
 
-      const arrow = this.add.text(1512, y, '>', {
+      const arrow = this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
         fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
@@ -176,43 +213,45 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    this.upgradeHint = this.add.text(1242, 625, '', {
-      fontFamily: BODY_FONT, fontSize: '14px', color: '#6e91a9'
+    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 586, '', {
+      fontFamily: BODY_FONT, fontSize: '15px', color: '#7e9caf'
     }).setDepth(38);
   }
 
   buildGarageStrip() {
-    this.add.rectangle(612, 635, 1206, 150, 0x07111d, 0.99)
-      .setStrokeStyle(2, 0x17354d, 1)
-      .setDepth(30);
+    this.add.rectangle(
+      STRIP.x + STRIP.w / 2,
+      STRIP.y + STRIP.h / 2,
+      STRIP.w,
+      STRIP.h,
+      0x07111d,
+      0.99
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
 
-    this.add.rectangle(158, 568, 280, 28, 0x0a1724, 1)
-      .setStrokeStyle(1, 0x2c536e, 1)
-      .setDepth(31);
-
-    this.add.text(31, 568, 'MY GARAGE', {
+    this.add.text(STRIP.x + 18, STRIP.y + 14, 'MY GARAGE', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
-    }).setOrigin(0, 0.5).setDepth(32);
+    }).setDepth(32);
 
-    this.garageCountText = this.add.text(272, 568, '', {
+    this.garageCountText = this.add.text(STRIP.x + STRIP.w - 18, STRIP.y + 14, '', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#7fa6bd'
-    }).setOrigin(1, 0.5).setDepth(32);
+    }).setOrigin(1, 0).setDepth(32);
 
-    const startX = 109;
-    const gap = 194;
+    const cardW = 170;
+    const gap = 14;
+    const startX = STRIP.x + 15 + cardW / 2;
 
     carOrder.forEach((id, i) => {
-      const x = startX + i * gap;
-      const y = 635;
+      const x = startX + i * (cardW + gap);
+      const y = STRIP.y + 92;
 
-      const box = this.add.rectangle(x, y, 178, 112, 0x0b1724, 1)
+      const box = this.add.rectangle(x, y, cardW, 112, 0x0b1724, 1)
         .setStrokeStyle(2, 0x29465c, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(32);
 
-      const display = this.createCarDisplay(cars[id], x, y - 8, 142, 34);
+      const display = this.createCarDisplay(cars[id], x, y - 9, 132, 34);
 
-      const label = this.add.text(x, y + 42, cars[id].shortName, {
+      const label = this.add.text(x, y + 43, cars[id].shortName, {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b8cad7'
       }).setOrigin(0.5).setDepth(36);
 
@@ -223,14 +262,14 @@ export default class GarageScene extends Phaser.Scene {
     this.garageCountText.setText(carOrder.length + ' CARS');
   }
 
-  buildRaceButton() {
-    const button = this.add.rectangle(1385, 677, 306, 54, 0x0c2827, 1)
+  buildMeetButton() {
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 665, SIDE.w - 32, 48, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(1385, 677, 'GO TO MEET  >', {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#f1fffb'
+    this.add.text(SIDE.x + SIDE.w / 2, 665, 'GO TO MEET  >', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
     button.on('pointerdown', () => {
@@ -258,8 +297,6 @@ export default class GarageScene extends Phaser.Scene {
       .setScale(wheelScale)
       .setDepth(depth);
 
-    // Match the race screen: black wheel-arch backing prevents the workshop
-    // background showing through the open rims/arches.
     const rearWheelBacking = this.add.circle(
       rearX, wheelY, Math.max(5, rearWheel.displayWidth * 0.50), 0x030507, 1
     ).setDepth(depth - 0.35);
@@ -270,9 +307,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      y + Math.max(12, source.height * bodyScale * 0.38),
+      wheelY + Math.max(7, rearWheel.displayHeight * 0.28),
       Math.max(72, targetWidth * 0.78),
-      Math.max(7, source.height * bodyScale * 0.11),
+      Math.max(7, source.height * bodyScale * 0.10),
       0x000000,
       0.30
     ).setDepth(depth - 0.6);
@@ -291,7 +328,9 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedCarId', id);
 
     for (const obj of this.selectedDisplay) obj.destroy();
-    this.selectedDisplay = this.createCarDisplay(cars[id], 665, 444, 600, 10);
+
+    // Larger hero car inside the now-contained workshop viewport.
+    this.selectedDisplay = this.createCarDisplay(cars[id], 650, 407, 515, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
