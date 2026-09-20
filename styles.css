@@ -70,8 +70,8 @@ canvas {
 
 #build-stamp {
   position: fixed;
-  top: max(8px, env(safe-area-inset-top));
-  right: max(10px, env(safe-area-inset-right));
+  top: max(10px, env(safe-area-inset-top));
+  right: max(24px, env(safe-area-inset-right));
   z-index: 9999;
   padding: 3px 7px;
   border: 1px solid rgba(255,255,255,.35);
