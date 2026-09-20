@@ -1,7 +1,7 @@
-import BootScene from './scenes/BootScene.js?v=20260920-r14';
-import GarageScene from './scenes/GarageScene.js?v=20260920-r14';
-import RaceScene from './scenes/RaceScene.js?v=20260920-r14';
-import ResultScene from './scenes/ResultScene.js?v=20260920-r14';
+import BootScene from './scenes/BootScene.js?v=20260921-r15';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r15';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r15';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r15';
 
 const GAME_WIDTH = 1560;
 const GAME_HEIGHT = 720;
