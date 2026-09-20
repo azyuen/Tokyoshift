@@ -1,6 +1,7 @@
-import BootScene from './scenes/BootScene.js?v=20260920-r5';
-import RaceScene from './scenes/RaceScene.js?v=20260920-r5';
-import ResultScene from './scenes/ResultScene.js?v=20260920-r5';
+import BootScene from './scenes/BootScene.js?v=20260920-r6';
+import GarageScene from './scenes/GarageScene.js?v=20260920-r6';
+import RaceScene from './scenes/RaceScene.js?v=20260920-r6';
+import ResultScene from './scenes/ResultScene.js?v=20260920-r6';
 
 const GAME_WIDTH = 1560;
 const GAME_HEIGHT = 720;
@@ -21,7 +22,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, RaceScene, ResultScene],
+  scene: [BootScene, GarageScene, RaceScene, ResultScene],
 };
 
 window.TOKYO_SHIFT = new Phaser.Game(config);
