@@ -39,15 +39,9 @@ export default class GarageScene extends Phaser.Scene {
     // Very light tint keeps the UI readable without flattening the artwork.
     this.add.rectangle(780, 360, 1560, 720, 0x03101b, 0.08).setDepth(-9);
 
-    this.add.image(300, 532, 'garageCharacterLeft')
-      .setOrigin(0.5, 1)
-      .setScale(1.02)
-      .setDepth(4);
-
-    this.add.image(1030, 534, 'garageCharacterRight')
-      .setOrigin(0.5, 1)
-      .setScale(1.02)
-      .setDepth(4);
+    // Character slots are intentionally empty until final transparent PNG
+    // sprites are uploaded. Keeping characters separate lets us reuse the same
+    // assets in workshops and street meets without baking them into backgrounds.
   }
 
   buildHeader() {
@@ -273,7 +267,7 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedCarId', id);
 
     for (const obj of this.selectedDisplay) obj.destroy();
-    this.selectedDisplay = this.createCarDisplay(cars[id], 665, 444, 480, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 665, 444, 600, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
