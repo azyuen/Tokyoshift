@@ -74,6 +74,7 @@ export default class ResultScene extends Phaser.Scene {
         wins: this.registry.get('wins') ?? 0,
         losses: this.registry.get('losses') ?? 0,
         cash: this.registry.get('cash') ?? 25000,
+        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
       }));
     } catch (e) {
       // Ignore unavailable storage.
