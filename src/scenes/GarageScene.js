@@ -1,19 +1,20 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r28';
-import { characters } from '../data/characters.js?v=20260921-r28';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r29';
+import { characters } from '../data/characters.js?v=20260921-r29';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
 const SAFE = 24;
-const STAGE = { x: 24, y: 74, w: 1138, h: 452 };
-const SIDE = { x: 1180, y: 74, w: 356, h: 628 };
-const STRIP = { x: 24, y: 544, w: 1138, h: 158 };
+const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
+const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
+const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 
 export default class GarageScene extends Phaser.Scene {
   constructor() { super('GarageScene'); }
 
   create() {
     document.body.dataset.scene = 'garage';
+    this.scale.resize(1560, 840);
 
     this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
@@ -35,7 +36,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   drawScene() {
-    this.add.rectangle(780, 360, 1560, 720, 0x050a11).setDepth(-20);
+    this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
 
     // Framed workshop viewport: the artwork is now deliberately contained in
     // the upper-left game panel instead of pretending to be the whole screen.
@@ -74,7 +75,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
-    this.addGarageCharacter(characters.renMizuno, 330, 500, 360, 14);
+    this.addGarageCharacter(characters.renMizuno, 330, 558, 360, 14);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -142,15 +143,15 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildCarLabel() {
-    this.add.rectangle(206, 472, 330, 64, 0x07111d, 0.94)
+    this.add.rectangle(206, 566, 330, 72, 0x07111d, 0.94)
       .setStrokeStyle(1, 0x26465e, 1)
       .setDepth(31);
 
-    this.carNameText = this.add.text(52, 454, '', {
+    this.carNameText = this.add.text(52, 542, '', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#ffffff'
     }).setDepth(32);
 
-    this.carSubText = this.add.text(52, 480, '', {
+    this.carSubText = this.add.text(52, 575, '', {
       fontFamily: BODY_FONT, fontSize: '18px', color: '#79bce3', fontStyle: '600'
     }).setDepth(32);
   }
@@ -223,7 +224,7 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 598, '', {
+    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 676, '', {
       fontFamily: BODY_FONT, fontSize: '15px', color: '#7e9caf'
     }).setDepth(38);
   }
@@ -252,7 +253,7 @@ export default class GarageScene extends Phaser.Scene {
 
     carOrder.forEach((id, i) => {
       const x = startX + i * (cardW + gap);
-      const y = STRIP.y + 92;
+      const y = STRIP.y + 100;
 
       const box = this.add.rectangle(x, y, cardW, 112, 0x0b1724, 1)
         .setStrokeStyle(2, 0x29465c, 1)
@@ -273,12 +274,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMeetButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 674, SIDE.w - 32, 50, 0x0c2827, 1)
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 786, SIDE.w - 32, 54, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 674, 'GO TO MEET  >', {
+    this.add.text(SIDE.x + SIDE.w / 2, 786, 'GO TO MEET  >', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
@@ -340,7 +341,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 660, 326, 705, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 660, 386, 705, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
