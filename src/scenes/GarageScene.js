@@ -1,18 +1,20 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r26';
-import { characters } from '../data/characters.js?v=20260921-r26';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r27';
+import { characters } from '../data/characters.js?v=20260921-r27';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
-const SAFE = 30;
-const STAGE = { x: 30, y: 84, w: 1120, h: 430 };
-const SIDE = { x: 1176, y: 84, w: 354, h: 608 };
-const STRIP = { x: 30, y: 530, w: 1120, h: 162 };
+const SAFE = 24;
+const STAGE = { x: 24, y: 74, w: 1138, h: 452 };
+const SIDE = { x: 1180, y: 74, w: 356, h: 628 };
+const STRIP = { x: 24, y: 544, w: 1138, h: 158 };
 
 export default class GarageScene extends Phaser.Scene {
   constructor() { super('GarageScene'); }
 
   create() {
+    document.body.dataset.scene = 'garage';
+
     this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
 
@@ -72,7 +74,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
-    this.addGarageCharacter(characters.renMizuno, 305, 502, 320, 8);
+    this.addGarageCharacter(characters.renMizuno, 330, 518, 360, 8);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -105,18 +107,18 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildHeader() {
-    this.add.rectangle(780, 42, 1500, 52, 0x07111d, 1)
+    this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.rectangle(150, 42, 220, 40, 0x0a1a2b, 1)
+    this.add.rectangle(154, 35, 236, 48, 0x0a1a2b, 1)
       .setStrokeStyle(2, 0x39d9ff, 1)
       .setDepth(41);
-    this.add.text(150, 42, 'WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#eefaff'
+    this.add.text(154, 35, 'WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(42);
 
-    this.add.text(286, 42, 'TUNE   >   UPGRADE   >   MEET', {
+    this.add.text(300, 35, 'TUNE   >   UPGRADE   >   MEET', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
@@ -124,17 +126,17 @@ export default class GarageScene extends Phaser.Scene {
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 25000;
 
-    this.add.text(1095, 32, 'WINS  ' + wins, {
+    this.add.text(1105, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1095, 51, 'LOSSES  ' + losses, {
+    this.add.text(1105, 47, 'LOSSES  ' + losses, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    this.add.rectangle(1420, 42, 200, 40, 0x0b1623, 1)
+    this.add.rectangle(1420, 35, 216, 48, 0x0b1623, 1)
       .setStrokeStyle(1, 0x274963, 1)
       .setDepth(41);
-    this.add.text(1505, 42, '¥ ' + Number(cash).toLocaleString('en-US'), {
+    this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
   }
@@ -221,7 +223,7 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 586, '', {
+    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 598, '', {
       fontFamily: BODY_FONT, fontSize: '15px', color: '#7e9caf'
     }).setDepth(38);
   }
@@ -271,12 +273,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMeetButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 665, SIDE.w - 32, 48, 0x0c2827, 1)
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 674, SIDE.w - 32, 50, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 665, 'GO TO MEET  >', {
+    this.add.text(SIDE.x + SIDE.w / 2, 674, 'GO TO MEET  >', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
@@ -316,10 +318,10 @@ export default class GarageScene extends Phaser.Scene {
     const roadShadow = this.add.ellipse(
       x,
       wheelY + Math.max(9, rearWheel.displayHeight * 0.31),
-      Math.max(90, targetWidth * 0.82),
-      Math.max(10, source.height * bodyScale * 0.14),
+      Math.max(110, targetWidth * 0.86),
+      Math.max(13, source.height * bodyScale * 0.16),
       0x000000,
-      0.24
+      0.30
     ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
@@ -338,7 +340,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 342, 650, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 660, 322, 735, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
