@@ -1,3 +1,5 @@
+import { garageAssets } from '../data/garageAssets.js?v=20260920-r10';
+
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
 
@@ -21,19 +23,31 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('nosButton', 'assets/Controls/nos_button.png');
     this.load.image('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     this.load.image('shifterDown', 'assets/Controls/shifter_down.png');
+
+    garageAssets.forEach(asset => this.load.image(asset.key, asset.path));
   }
 
   create() {
-    if (!this.registry.get('selectedCarId')) this.registry.set('selectedCarId', 'ae86');
+    let profile = null;
+    try {
+      profile = JSON.parse(localStorage.getItem('tokyoShiftProfile') || 'null');
+    } catch (e) {
+      profile = null;
+    }
+
+    this.registry.set('selectedCarId', profile?.selectedCarId || this.registry.get('selectedCarId') || 'ae86');
+    this.registry.set('wins', Number.isFinite(profile?.wins) ? profile.wins : 0);
+    this.registry.set('losses', Number.isFinite(profile?.losses) ? profile.losses : 0);
+    this.registry.set('cash', Number.isFinite(profile?.cash) ? profile.cash : 25000);
 
     this.add.rectangle(780, 360, 1560, 720, 0x070914);
-    this.add.text(780, 305, 'TOKYO SHIFT', {
-      fontFamily: 'monospace', fontSize: '44px', color: '#e8f7ff', fontStyle: 'bold'
+    this.add.text(780, 304, 'TOKYO SHIFT', {
+      fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 363, 'R9 // RACE SLIP MODAL', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#62d8ff', letterSpacing: 2
+    this.add.text(780, 363, 'R10 // WORKSHOP', {
+      fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
-    this.time.delayedCall(300, () => this.scene.start('GarageScene'));
+    this.time.delayedCall(420, () => this.scene.start('GarageScene'));
   }
 }
