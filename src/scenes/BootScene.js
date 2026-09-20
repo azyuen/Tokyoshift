@@ -1,5 +1,5 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r24';
-import { characters } from '../data/characters.js?v=20260921-r24';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r25';
+import { characters } from '../data/characters.js?v=20260921-r25';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -17,15 +17,11 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('wheelMesh', 'assets/wheels/wheel_mesh.png');
     this.load.image('wheelDeepDish', 'assets/wheels/wheel_deepdish.png');
 
-    this.load.image('hudCluster', 'assets/Ui/hud_cluster.png');
-    this.load.image('dragTree', 'assets/Ui/drag_tree.png');
-    this.load.image('clutchPedal', 'assets/Controls/clutch_pedal.png');
-    this.load.image('throttlePedal', 'assets/Controls/throttle_pedal.png');
-    this.load.image('nosButton', 'assets/Controls/nos_button.png');
-    this.load.image('shifterNeutral', 'assets/Controls/shifter_neutral.png');
-    this.load.image('shifterDown', 'assets/Controls/shifter_down.png');
-
-    garageAssets.forEach(asset => this.load.image(asset.key, asset.path));
+    // Keep initial boot lean: race controls/UI are loaded later while the player
+    // is browsing the Meet screen. Only the current workshop background is needed.
+    garageAssets
+      .filter(asset => asset.key === 'garageWorkshopBg')
+      .forEach(asset => this.load.image(asset.key, asset.path));
 
     // Only load the two workshop characters at startup. The rest of the roster
     // can be loaded when the meet/rival screens are added.
@@ -33,7 +29,7 @@ export default class BootScene extends Phaser.Scene {
     workshopCharacters.forEach(character => {
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260921-r24'
+        character.visual.path + '?v=20260921-r25'
       );
     });
   }
@@ -57,10 +53,10 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 304, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 363, 'R24 // CASH + CAR BALANCE', {
+    this.add.text(780, 363, 'R25 // FAST LOAD', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
-    this.time.delayedCall(420, () => this.scene.start('GarageScene'));
+    this.time.delayedCall(90, () => this.scene.start('GarageScene'));
   }
 }
