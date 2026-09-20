@@ -33,7 +33,8 @@ export default class RaceScene extends Phaser.Scene {
 
     this.player.transmission.currentGear = 0;
     this.player.transmission.lastShiftQuality = 'NEUTRAL';
-    this.opponent.transmission.currentGear = 0;
+    this.opponent.transmission.currentGear = 1;
+    this.opponent.transmission.lastShiftQuality = 'STAGED';
 
     this.ai = new DragRacingAI(this.opponent, {
       reactionSkill: 0.86,
@@ -98,7 +99,7 @@ export default class RaceScene extends Phaser.Scene {
 
   createCarVisual(cfg, depth, roleScale) {
     const bodyScale = cfg.bodyScale * roleScale;
-    const wheelScale = cfg.wheelScale * roleScale;
+    const wheelScale = cfg.wheelScale * roleScale * 1.16;
 
     const rearWheel = this.add.image(0, 0, cfg.wheelKey)
       .setScale(wheelScale)
@@ -108,9 +109,26 @@ export default class RaceScene extends Phaser.Scene {
       .setScale(wheelScale)
       .setDepth(depth);
 
+    // The body PNGs have open wheel arches. A dark backing keeps the road from
+    // showing through the spinning rims and makes the tyres feel properly seated.
+    const rearWheelBacking = this.add.circle(
+      0, 0, Math.max(9, rearWheel.displayWidth * 0.50), 0x030507, 1
+    ).setDepth(depth - 0.35);
+
+    const frontWheelBacking = this.add.circle(
+      0, 0, Math.max(9, frontWheel.displayWidth * 0.50), 0x030507, 1
+    ).setDepth(depth - 0.35);
+
     const body = this.add.image(0, 0, cfg.bodyKey)
       .setScale(bodyScale)
       .setDepth(depth + 1);
+
+    const roadShadow = this.add.ellipse(
+      0, 0,
+      Math.max(120, body.displayWidth * 0.78),
+      Math.max(10, body.displayHeight * 0.12),
+      0x000000, 0.34
+    ).setDepth(depth - 0.6);
 
     return {
       cfg,
@@ -118,6 +136,9 @@ export default class RaceScene extends Phaser.Scene {
       wheelScale,
       rearWheel,
       frontWheel,
+      rearWheelBacking,
+      frontWheelBacking,
+      roadShadow,
       body,
       wheelAngle: 0,
       noseOffsetPx: body.width * bodyScale * 0.5,
@@ -263,8 +284,10 @@ export default class RaceScene extends Phaser.Scene {
     const rawOppX = ot.positionM * PX_PER_M - cameraPx;
     const ox = rawOppX + this.playerVisual.noseOffsetPx - this.opponentVisual.noseOffsetPx;
 
-    this.updateCarVisual(this.playerVisual, px, 373, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox, 306, ot, dt);
+    // R8: both lanes sit lower on the road. The previous top-lane position
+    // made the rival look like it was floating against the rear barrier.
+    this.updateCarVisual(this.playerVisual, px, 418, pt, dt);
+    this.updateCarVisual(this.opponentVisual, ox, 351, ot, dt);
 
     this.drawEffects(pt, ot);
     this.drawTree(cameraPx);
@@ -280,8 +303,11 @@ export default class RaceScene extends Phaser.Scene {
     const wheelY = bodyY + c.wheelOffsetY * v.bodyScale;
 
     v.wheelAngle += ((t.wheelRPM || 0) / 60) * Math.PI * 2 * dt;
+    v.rearWheelBacking.setPosition(rearX, wheelY);
+    v.frontWheelBacking.setPosition(frontX, wheelY);
     v.rearWheel.setPosition(rearX, wheelY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, wheelY).setRotation(v.wheelAngle);
+    v.roadShadow.setPosition(x, wheelY + Math.max(8, v.rearWheel.displayHeight * 0.30));
 
     v.rearX = rearX;
     v.rearY = wheelY;
