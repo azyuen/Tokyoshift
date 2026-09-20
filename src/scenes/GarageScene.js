@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r27';
-import { characters } from '../data/characters.js?v=20260921-r27';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r28';
+import { characters } from '../data/characters.js?v=20260921-r28';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -74,7 +74,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
-    this.addGarageCharacter(characters.renMizuno, 330, 518, 360, 8);
+    this.addGarageCharacter(characters.renMizuno, 330, 500, 360, 14);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -87,18 +87,18 @@ export default class GarageScene extends Phaser.Scene {
 
     this.add.ellipse(
       x,
-      feetY - 1,
-      Math.max(52, sprite.displayWidth * 0.78),
-      17,
+      feetY + 7,
+      Math.max(58, sprite.displayWidth * 0.82),
+      18,
       0x000000,
-      0.24
+      0.22
     ).setDepth(depth - 0.25);
 
     this.add.ellipse(
       x,
-      feetY - 1,
-      Math.max(38, sprite.displayWidth * 0.58),
-      8,
+      feetY + 4,
+      Math.max(42, sprite.displayWidth * 0.62),
+      9,
       0x000000,
       0.30
     ).setDepth(depth - 0.20);
@@ -317,11 +317,11 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(9, rearWheel.displayHeight * 0.31),
-      Math.max(110, targetWidth * 0.86),
-      Math.max(13, source.height * bodyScale * 0.16),
+      wheelY + Math.max(22, rearWheel.displayHeight * 0.58),
+      Math.max(112, targetWidth * 0.86),
+      Math.max(15, source.height * bodyScale * 0.18),
       0x000000,
-      0.30
+      0.26
     ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
@@ -340,7 +340,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 660, 322, 735, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 660, 326, 705, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
