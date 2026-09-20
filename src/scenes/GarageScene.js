@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r20';
-import { characters } from '../data/characters.js?v=20260921-r20';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r22';
+import { characters } from '../data/characters.js?v=20260921-r22';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -53,7 +53,7 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(-10);
 
     const source = this.textures.get('garageWorkshopBg').getSourceImage();
-    const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height) * 1.12;
     workshop.setScale(coverScale);
 
     const maskShape = this.make.graphics({ add: false });
@@ -72,8 +72,8 @@ export default class GarageScene extends Phaser.Scene {
 
     // Ren and Daichi are deliberately smaller than the hero car; they now read
     // as people standing on the garage floor rather than giant foreground art.
-    this.addGarageCharacter(characters.renMizuno, 285, 492, 168, 8);
-    this.addGarageCharacter(characters.daichiSakamoto, 1010, 492, 172, 8);
+    this.addGarageCharacter(characters.renMizuno, 245, 500, 225, 8);
+    this.addGarageCharacter(characters.daichiSakamoto, 1015, 500, 230, 8);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -252,7 +252,7 @@ export default class GarageScene extends Phaser.Scene {
       const display = this.createCarDisplay(cars[id], x, y - 9, 132, 34);
 
       const label = this.add.text(x, y + 43, cars[id].shortName, {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b8cad7'
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b8cad7'
       }).setOrigin(0.5).setDepth(36);
 
       box.on('pointerdown', () => this.selectCar(id));
@@ -330,7 +330,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 650, 407, 515, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 418, 650, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
