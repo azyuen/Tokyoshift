@@ -3,6 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20260920-r6';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260920-r6';
 import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
 import DebugHUD from '../ui/DebugHUD.js';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
 import { cars, carOrder } from '../data/cars.js?v=20260920-r6';
 import { engines } from '../data/engines.js';
 
@@ -57,9 +58,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentFinishClock = null;
     this.playerFinishClock = null;
 
-    this.bg = this.add.graphics().setDepth(0);
-    this.road = this.add.graphics().setDepth(1);
-    this.worldG = this.add.graphics().setDepth(3);
+    this.environment = new TokyoExpresswayBackground(this);
+    this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
     this.treeLightsG = this.add.graphics().setDepth(23);
 
@@ -248,36 +248,7 @@ export default class RaceScene extends Phaser.Scene {
     const targetPlayerX = W * 0.27;
     const cameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
-    this.bg.clear();
-    this.bg.fillStyle(0x070914, 1).fillRect(0, 0, 1560, 720);
-
-    const slow = -(cameraPx * 0.12) % 260;
-    for (let i = -1; i < 9; i++) {
-      const x = slow + i * 260;
-      const h = 70 + ((i * 37) % 110 + 110) % 110;
-      this.bg.fillStyle(i % 2 ? 0x11172b : 0x0d1324, 1).fillRect(x, 236 - h, 175, h);
-      this.bg.fillStyle(0x5ddcff, 0.25);
-      for (let wy = 0; wy < 4; wy++) {
-        for (let wx = 0; wx < 4; wx++) {
-          this.bg.fillRect(x + 18 + wx * 31, 188 - h + wy * 22, 7, 4);
-        }
-      }
-    }
-
-    const mid = -(cameraPx * 0.28) % 350;
-    this.bg.fillStyle(0x161b27, 1).fillRect(0, 242, 1560, 34);
-    for (let i = -1; i < 6; i++) {
-      this.bg.fillStyle(0x202737, 1).fillRect(mid + i * 350, 276, 30, 135);
-    }
-
-    this.road.clear();
-    this.road.fillStyle(0x11151e, 1).fillRect(0, 278, 1560, 250);
-    this.road.fillStyle(0x1a202b, 1).fillRect(0, 316, 1560, 180);
-    this.road.fillStyle(0x26303d, 1).fillRect(0, 383, 1560, 3);
-
-    const stripeOffset = -cameraPx % 220;
-    this.road.fillStyle(0xe9c46a, 0.35);
-    for (let i = -1; i < 10; i++) this.road.fillRect(stripeOffset + i * 220, 448, 100, 3);
+    this.environment.update(cameraPx, pt.speedKmh);
 
     this.worldG.clear();
     const finishX = TRACK_M * PX_PER_M - cameraPx;
