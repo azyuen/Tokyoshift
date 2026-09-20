@@ -1,7 +1,7 @@
 export default class RaceHUD {
   constructor(scene) {
     this.scene = scene;
-    this.scale = 0.33;
+    this.scale = 0.39;
     this.sourceW = 1473;
     this.sourceH = 452;
 
@@ -13,16 +13,16 @@ export default class RaceHUD {
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
-    this.status = scene.add.text(780, 468, '', {
+    this.status = scene.add.text(780, 456, '', {
       fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: 'monospace', fontSize: '23px', color: '#f7f7f2', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '26px', color: '#f7f7f2', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
-      fontFamily: 'monospace', fontSize: '18px', color: '#dff6ff', fontStyle: 'bold'
+      fontFamily: 'monospace', fontSize: '20px', color: '#dff6ff', fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.layoutText();
@@ -59,9 +59,9 @@ export default class RaceHUD {
     const speed = this.sourcePoint(723, 267);
     const boost = this.sourcePoint(1048, 313);
 
-    this.drawNeedle(tach, t.rpm / 8500, 103 * this.scale, 145, 375, t.rpm > 7900 ? 0xff665a : 0xf7f7f2, 3);
-    this.drawNeedle(speed, t.speedKmh / 180, 117 * this.scale, 140, 383, 0xf7f7f2, 3);
-    this.drawNeedle(boost, (t.boostBar + 1.0) / 3.0, 72 * this.scale, 151, 393, 0xf7f7f2, 3);
+    this.drawNeedle(tach, t.rpm / 8500, 105 * this.scale, 145, 375, t.rpm > 7900 ? 0xff665a : 0xf7f7f2, 3);
+    this.drawNeedle(speed, t.speedKmh / 180, 121 * this.scale, 140, 383, 0xf7f7f2, 3);
+    this.drawNeedle(boost, (t.boostBar + 1.0) / 3.0, 75 * this.scale, 151, 393, 0xf7f7f2, 3);
 
     const nosStart = this.sourcePoint(1262, 354);
     const segW = 20 * this.scale;
