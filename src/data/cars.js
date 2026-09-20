@@ -49,6 +49,7 @@ export const cars = {
     turboSize: 0,
     turboSpoolRate: 0,
     maximumBoost: 0,
+    launchRPM: 4800,
     visual: {
       bodyKey: 'carAE86',
       wheelKey: 'wheel8Spoke',
@@ -89,6 +90,7 @@ export const cars = {
     turboSize: 0.68,
     turboSpoolRate: 1.52,
     maximumBoost: 0.75,
+    launchRPM: 5000,
     visual: {
       bodyKey: 'carR32',
       wheelKey: 'wheel5Spoke',
@@ -129,6 +131,7 @@ export const cars = {
     turboSize: 0.57,
     turboSpoolRate: 1.75,
     maximumBoost: 0.85,
+    launchRPM: 5500,
     visual: {
       bodyKey: 'carEvoIII',
       wheelKey: 'wheelMesh',
@@ -169,6 +172,7 @@ export const cars = {
     turboSize: 0.55,
     turboSpoolRate: 1.60,
     maximumBoost: 0.70,
+    launchRPM: 4300,
     visual: {
       bodyKey: 'carFC3S',
       wheelKey: 'wheelDeepDish',
@@ -209,6 +213,7 @@ export const cars = {
     turboSize: 0.62,
     turboSpoolRate: 1.60,
     maximumBoost: 0.80,
+    launchRPM: 5200,
     visual: {
       bodyKey: 'carWRX22B',
       wheelKey: 'wheel5Spoke',
@@ -249,6 +254,7 @@ export const cars = {
     turboSize: 0,
     turboSpoolRate: 0,
     maximumBoost: 0,
+    launchRPM: 6000,
     visual: {
       bodyKey: 'carEK9',
       wheelKey: 'wheel8Spoke',
