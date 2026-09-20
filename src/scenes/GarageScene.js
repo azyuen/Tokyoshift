@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r22';
-import { characters } from '../data/characters.js?v=20260921-r22';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r23';
+import { characters } from '../data/characters.js?v=20260921-r23';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -330,7 +330,7 @@ export default class GarageScene extends Phaser.Scene {
     for (const obj of this.selectedDisplay) obj.destroy();
 
     // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 418, 650, 10);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 655, 382, 650, 10);
 
     const car = cars[id];
     this.carNameText.setText(car.name.toUpperCase());
