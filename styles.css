@@ -24,11 +24,15 @@ body {
   height: 100dvh;
   display: grid;
   place-items: center;
+  background: #05070d;
+}
+
+body[data-scene="garage"] #game-shell,
+body[data-scene="meet"] #game-shell {
   padding-left: max(8px, env(safe-area-inset-left));
   padding-right: max(8px, env(safe-area-inset-right));
   padding-top: max(4px, env(safe-area-inset-top));
   padding-bottom: max(4px, env(safe-area-inset-bottom));
-  background: #05070d;
 }
 
 /*
@@ -69,7 +73,17 @@ canvas {
 }
 
 @media (orientation: portrait) and (max-width: 900px) {
-  #rotate-message { display: grid; }
+  #game-shell {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 100dvh;
+    height: 100dvw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+  }
+
+  #rotate-message { display: none; }
 }
 
 #build-stamp {
