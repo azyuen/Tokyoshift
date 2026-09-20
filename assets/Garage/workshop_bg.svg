@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" shape-rendering="crispEdges">
+<rect width="1200" height="520" fill="#07101a"/>
+<rect x="0" y="0" width="1200" height="360" fill="#111924"/>
+<rect x="0" y="360" width="1200" height="160" fill="#1a222b"/>
+<rect x="0" y="356" width="1200" height="5" fill="#263846"/>
+<rect x="18" y="30" width="215" height="327" fill="#0b1420" stroke="#263b4c" stroke-width="4"/>
+<rect x="30" y="112" width="190" height="235" fill="#081524"/>
+<rect x="42" y="191" width="27" height="156" fill="#102338"/>
+<rect x="75" y="166" width="34" height="181" fill="#0d2034"/>
+<rect x="117" y="208" width="31" height="139" fill="#132941"/>
+<rect x="156" y="150" width="48" height="197" fill="#0f2136"/>
+<g fill="#5ad7ff">
+  <rect x="49" y="216" width="5" height="5"/><rect x="58" y="242" width="5" height="5"/>
+  <rect x="83" y="188" width="5" height="5"/><rect x="95" y="224" width="5" height="5"/>
+  <rect x="125" y="235" width="5" height="5"/><rect x="137" y="261" width="5" height="5"/>
+  <rect x="166" y="177" width="6" height="5"/><rect x="187" y="219" width="6" height="5"/>
+</g>
+<rect x="30" y="68" width="190" height="36" fill="#17202b"/>
+<text x="125" y="91" text-anchor="middle" font-family="monospace" font-size="22" font-weight="700" fill="#9ab3c7">TOKYO</text>
+<rect x="242" y="0" width="5" height="360" fill="#26343f"/>
+<rect x="264" y="22" width="5" height="210" fill="#202d38"/>
+<rect x="918" y="0" width="6" height="360" fill="#26343f"/>
+<rect x="1060" y="0" width="5" height="360" fill="#26343f"/>
+<rect x="340" y="46" width="250" height="62" fill="#080d14" stroke="#243748" stroke-width="3"/>
+<text x="465" y="84" text-anchor="middle" font-family="monospace" font-size="30" font-weight="700" fill="#a9b9c7">TOKYO SHIFT</text>
+<rect x="565" y="46" width="11" height="62" fill="#e14b42"/>
+<rect x="581" y="46" width="11" height="62" fill="#a72e35"/>
+<g>
+  <rect x="296" y="128" width="182" height="224" fill="#111821" stroke="#33414d" stroke-width="3"/>
+  <rect x="309" y="144" width="72" height="59" fill="#0a0f15"/>
+  <circle cx="345" cy="173" r="25" fill="#1d2630" stroke="#6b7780" stroke-width="5"/>
+  <circle cx="345" cy="173" r="8" fill="#0a1016"/>
+  <rect x="391" y="144" width="72" height="59" fill="#0a0f15"/>
+  <circle cx="427" cy="173" r="25" fill="#1d2630" stroke="#6b7780" stroke-width="5"/>
+  <circle cx="427" cy="173" r="8" fill="#0a1016"/>
+  <rect x="308" y="218" width="156" height="14" fill="#24303c"/>
+  <rect x="313" y="242" width="64" height="37" fill="#40342b"/>
+  <rect x="386" y="242" width="72" height="37" fill="#4b392d"/>
+  <rect x="313" y="290" width="145" height="49" fill="#171f28"/>
+  <rect x="324" y="301" width="22" height="26" fill="#253646"/>
+  <rect x="355" y="301" width="18" height="26" fill="#243341"/>
+  <rect x="384" y="301" width="27" height="26" fill="#283849"/>
+</g>
+<g>
+  <rect x="505" y="141" width="181" height="211" fill="#151b22" stroke="#33414d" stroke-width="3"/>
+  <rect x="520" y="157" width="151" height="72" fill="#872f30"/>
+  <g fill="#b74844">
+    <rect x="528" y="166" width="135" height="8"/><rect x="528" y="181" width="135" height="8"/>
+    <rect x="528" y="196" width="135" height="8"/><rect x="528" y="211" width="135" height="8"/>
+  </g>
+  <rect x="520" y="241" width="151" height="96" fill="#10161c"/>
+  <rect x="533" y="254" width="34" height="28" fill="#2d3a45"/>
+  <rect x="577" y="254" width="28" height="28" fill="#3b4650"/>
+  <rect x="615" y="254" width="40" height="28" fill="#283640"/>
+  <rect x="533" y="294" width="122" height="29" fill="#29353f"/>
+</g>
+<g>
+  <rect x="722" y="132" width="168" height="112" fill="#11171f" stroke="#3a4751" stroke-width="3"/>
+  <g stroke="#9aabb7" stroke-width="4">
+    <line x1="748" y1="153" x2="748" y2="206"/><line x1="778" y1="153" x2="778" y2="206"/>
+    <line x1="808" y1="153" x2="808" y2="206"/><line x1="838" y1="153" x2="838" y2="206"/>
+  </g>
+  <rect x="725" y="257" width="170" height="93" fill="#7b292c"/>
+  <g fill="#b53f3d"><rect x="735" y="267" width="150" height="11"/><rect x="735" y="287" width="150" height="11"/><rect x="735" y="307" width="150" height="11"/></g>
+</g>
+<g>
+  <rect x="952" y="78" width="196" height="116" fill="#d6d1c4"/>
+  <text x="1050" y="111" text-anchor="middle" font-family="monospace" font-size="18" font-weight="700" fill="#20242b">NO GOOD</text>
+  <text x="1050" y="137" text-anchor="middle" font-family="monospace" font-size="18" font-weight="700" fill="#20242b">RACING CLUB</text>
+  <rect x="984" y="155" width="132" height="7" fill="#bf3942"/>
+</g>
+<g fill="#151b22" stroke="#3b4750" stroke-width="3">
+  <rect x="970" y="218" width="54" height="132"/><rect x="1032" y="206" width="54" height="144"/><rect x="1094" y="228" width="54" height="122"/>
+</g>
+<g fill="#303941"><rect x="977" y="230" width="40" height="15"/><rect x="977" y="252" width="40" height="15"/><rect x="1039" y="218" width="40" height="15"/><rect x="1101" y="240" width="40" height="15"/></g>
+<g>
+  <rect x="649" y="310" width="60" height="18" fill="#343c42"/>
+  <rect x="670" y="326" width="17" height="42" fill="#5f2b2e"/>
+  <path d="M620 295h93v20h-93z" fill="#242b31"/>
+  <rect x="630" y="275" width="72" height="31" fill="#313a40"/>
+  <g fill="#151a1e"><rect x="638" y="280" width="12" height="18"/><rect x="654" y="278" width="13" height="21"/><rect x="672" y="282" width="12" height="17"/><rect x="689" y="279" width="9" height="20"/></g>
+</g>
+<g fill="#11161b" stroke="#4c5963" stroke-width="3">
+  <ellipse cx="1140" cy="327" rx="42" ry="17"/><ellipse cx="1140" cy="305" rx="42" ry="17"/><ellipse cx="1140" cy="283" rx="42" ry="17"/>
+</g>
+<rect x="0" y="385" width="1200" height="4" fill="#314251"/>
+<g stroke="#263542" stroke-width="2" opacity="0.7">
+  <line x1="0" y1="430" x2="1200" y2="430"/><line x1="0" y1="482" x2="1200" y2="482"/>
+  <line x1="140" y1="360" x2="75" y2="520"/><line x1="360" y1="360" x2="320" y2="520"/>
+  <line x1="600" y1="360" x2="600" y2="520"/><line x1="840" y1="360" x2="880" y2="520"/>
+  <line x1="1060" y1="360" x2="1120" y2="520"/>
+</g>
+<g fill="#f5d58a">
+  <rect x="326" y="15" width="214" height="8"/><rect x="680" y="15" width="214" height="8"/>
+</g>
+<g fill="#b07832"><rect x="344" y="23" width="6" height="20"/><rect x="516" y="23" width="6" height="20"/><rect x="698" y="23" width="6" height="20"/><rect x="870" y="23" width="6" height="20"/></g>
+<rect x="290" y="375" width="590" height="70" rx="28" fill="#58d9ff" opacity="0.06"/>
+</svg>
