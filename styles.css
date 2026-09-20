@@ -67,3 +67,17 @@ canvas {
 @media (orientation: portrait) and (max-width: 900px) {
   #rotate-message { display: grid; }
 }
+
+#build-stamp {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 9999;
+  padding: 3px 7px;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 5px;
+  background: rgba(0,0,0,.55);
+  color: rgba(255,255,255,.8);
+  font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  pointer-events: none;
+}
