@@ -961,10 +961,11 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[this.selectedCarId];
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
-    const preview = applyEngineTuning(car, engines[car.engine], {
+    const enginePreview = applyEngineTuning(car, engines[car.engine], {
       ...state,
       tuning: this.pendingEngineTuning,
     });
+    const preview = applySecondaryTuning(enginePreview.car, enginePreview.engine, state);
 
     this.engineInsetLevelText?.setText(
       engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase()
