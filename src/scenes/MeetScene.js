@@ -501,6 +501,29 @@ export default class MeetScene extends Phaser.Scene {
 
   updateWorkshopButton() {
     const cash = Number(this.registry.get('cash') || 0);
+
+    if (!this.hasCar) {
+      const enoughForTaxi = cash >= TAXI_TO_WORKSHOP_COST;
+      if (enoughForTaxi) {
+        this.workshopButton
+          ?.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x272019, 1)
+          .setStrokeStyle(2, 0xffc66d, 1);
+        this.workshopButtonLabel
+          ?.setColor('#ffe0a8')
+          .setText('TAXI TO WORKSHOP // ¥' + TAXI_TO_WORKSHOP_COST.toLocaleString('en-US'));
+      } else {
+        this.workshopButton
+          ?.disableInteractive()
+          .setFillStyle(0x171418, 1)
+          .setStrokeStyle(1, 0x5d5141, 1);
+        this.workshopButtonLabel
+          ?.setColor('#9d866e')
+          .setText('NEED ¥' + TAXI_TO_WORKSHOP_COST.toLocaleString('en-US') + ' FOR TAXI');
+      }
+      return;
+    }
+
     const enough = cash >= WORKSHOP_RETURN_COST;
 
     if (enough) {
@@ -524,9 +547,11 @@ export default class MeetScene extends Phaser.Scene {
 
   returnToWorkshop() {
     const cash = Number(this.registry.get('cash') || 0);
-    if (cash < WORKSHOP_RETURN_COST) return;
+    const cost = this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST;
+    if (cash < cost) return;
 
-    this.registry.set('cash', cash - WORKSHOP_RETURN_COST);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
     saveSessionState(this.registry);
     this.scene.start('GarageScene');
   }
@@ -700,6 +725,11 @@ export default class MeetScene extends Phaser.Scene {
       'RIVALS // ' + location.district + ' // ' + location.label + ' // ' + location.difficulty
     );
 
+    if (!this.hasCar) {
+      this.applyNoCarMeetState();
+      return;
+    }
+
     if (this.offers.length) {
       this.selectOffer(this.selectedOfferIndex);
     } else {
@@ -715,6 +745,32 @@ export default class MeetScene extends Phaser.Scene {
         .setStrokeStyle(1, 0x46545e, 1);
       this.raceButtonLabel.setColor('#72838f').setText('NO RACERS LEFT');
     }
+  }
+
+  applyNoCarMeetState() {
+    this.selectedSummary?.setText('NO CAR\nYOU CANNOT RACE');
+    this.rivalOfferText?.setText('—');
+
+    this.pinkSlipButton?.disableInteractive()
+      .setFillStyle(0x11161c, 1)
+      .setStrokeStyle(1, 0x46545e, 1);
+    this.pinkSlipButtonLabel?.setText('NO CAR').setColor('#72838f');
+    this.pinkResponseText?.setText('Your last car is gone.');
+
+    this.raceButton?.disableInteractive()
+      .setFillStyle(0x11161c, 1)
+      .setStrokeStyle(1, 0x46545e, 1);
+    this.raceButtonLabel?.setColor('#72838f').setText('NO CAR // CAN\'T RACE');
+
+    this.modeButtons?.forEach(item => {
+      item.box.disableInteractive()
+        .setFillStyle(0x0a1017, 1)
+        .setStrokeStyle(1, 0x29343d, 1);
+      item.label.setColor('#53626c');
+    });
+
+    this.rivalsTitleText?.setText('RIVALS // NO CAR // EVERYONE IS OUT OF REACH');
+    this.updateWorkshopButton();
   }
 
   prefetchDeferredAssets() {
@@ -819,7 +875,10 @@ export default class MeetScene extends Phaser.Scene {
         placement.carDepth,
         placement.carFlipX
       );
-      carObjects.forEach(obj => obj.setMask(this.stageMask));
+      carObjects.forEach(obj => {
+        obj.setMask(this.stageMask);
+        if (!this.hasCar) obj.setAlpha(0.28);
+      });
       this.stageObjects.push(...carObjects);
 
       const sprite = this.add.image(
@@ -833,6 +892,7 @@ export default class MeetScene extends Phaser.Scene {
       const charSource = this.textures.get(character.visual.spriteKey).getSourceImage();
       sprite.setScale(placement.charH / charSource.height);
       sprite.setFlipX(placement.charFlipX);
+      if (!this.hasCar) sprite.setAlpha(0.32);
       this.stageObjects.push(sprite);
 
       const softShadow = this.add.ellipse(
@@ -938,7 +998,18 @@ export default class MeetScene extends Phaser.Scene {
         lineSpacing: 1,
       }).setDepth(35);
 
-      card.on('pointerdown', () => this.selectOffer(i));
+      if (this.hasCar) {
+        card.on('pointerdown', () => this.selectOffer(i));
+      } else {
+        card.disableInteractive()
+          .setFillStyle(0x101317, 0.99)
+          .setStrokeStyle(1, 0x3b444a, 1);
+        portraitBg.setFillStyle(0x111418, 1).setStrokeStyle(1, 0x3b444a, 1);
+        portrait.setAlpha(0.34);
+        name.setColor('#68737a');
+        deal.setColor('#6e6961');
+        quote.setColor('#59636a');
+      }
 
       this.cardObjects.push(
         card,
@@ -1069,6 +1140,11 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   selectOffer(index) {
+    if (!this.hasCar) {
+      this.applyNoCarMeetState();
+      return;
+    }
+
     this.selectedOfferIndex = index;
     this.locationSelectedOfferIndex[this.selectedMeetLocation] = index;
 
@@ -1129,6 +1205,11 @@ export default class MeetScene extends Phaser.Scene {
 
   updateModeButtons() {
     this.modeButtons.forEach(item => {
+      if (!this.hasCar) {
+        item.box.setFillStyle(0x0a1017, 1).setStrokeStyle(1, 0x29343d, 1);
+        item.label.setColor('#53626c');
+        return;
+      }
       if (item.locked) {
         item.box.setFillStyle(0x0a1017, 1).setStrokeStyle(1, 0x29343d, 1);
         item.label.setColor('#53626c');
@@ -1239,6 +1320,11 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   startSelectedRace() {
+    if (!this.hasCar) {
+      this.applyNoCarMeetState();
+      return;
+    }
+
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer) return;
 
