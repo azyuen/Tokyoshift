@@ -9,8 +9,8 @@ export const garageAssets = [
   { key: 'stockEngine13BT', path: 'assets/Engines/13bt.png?v=20260921-r68' },
   { key: 'stockEngineEJ22G', path: 'assets/Engines/ej22g.png?v=20260921-r68' },
   { key: 'stockEngineB16B', path: 'assets/Engines/b16b.png?v=20260921-r68' },
-  { key: 'tuningCategoryEngine', path: 'assets/Tuning/Categories/tuning_engine.png?v=20260921-r77' },
-  { key: 'tuningCategoryDrivetrain', path: 'assets/Tuning/Categories/tuning_drivetrain.png?v=20260921-r77' },
-  { key: 'tuningCategoryChassis', path: 'assets/Tuning/Categories/tuning_chassis.png?v=20260921-r77' },
-  { key: 'tuningCategoryExhaustNos', path: 'assets/Tuning/Categories/tuning_exhaust_nos.png?v=20260921-r77' },
+  { key: 'tuningCategoryEngine', path: 'assets/Tuning/Categories/tuning_engine.webp?v=20260921-r78' },
+  { key: 'tuningCategoryDrivetrain', path: 'assets/Tuning/Categories/tuning_drivetrain.webp?v=20260921-r78' },
+  { key: 'tuningCategoryChassis', path: 'assets/Tuning/Categories/tuning_chassis.webp?v=20260921-r78' },
+  { key: 'tuningCategoryExhaustNos', path: 'assets/Tuning/Categories/tuning_exhaust_nos.webp?v=20260921-r78' },
 ];
