@@ -1,6 +1,8 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
+import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r54';
+import { getEngineTuning, getEngineTuningCount, applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r55';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r54';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
@@ -207,11 +209,11 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING // STOCK', {
+    this.tuningStatusText = this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING // STOCK', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
-    const categories = ['ENGINE', 'TURBO', 'TIRES', 'SUSPENSION', 'GEARBOX', 'NITROUS', 'COSMETICS'];
+    const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
     categories.forEach((name, i) => {
       const y = SIDE.y + 250 + i * 46;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
@@ -227,7 +229,15 @@ export default class GarageScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
-      box.on('pointerdown', () => this.selectUpgrade(name));
+      box.on('pointerdown', () => {
+        if (name === 'ENGINE') {
+          this.registry.set('selectedCarId', this.selectedCarId);
+          this.saveProfile();
+          this.scene.start('EngineTuningScene');
+          return;
+        }
+        this.selectUpgrade(name);
+      });
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
@@ -429,12 +439,28 @@ export default class GarageScene extends Phaser.Scene {
     this.selectedDisplay = this.createCarDisplay(cars[id], 708, heroBodyY, 690, 10);
 
     const car = cars[id];
+    const carStates = this.registry.get('carStates') || {};
+    const carState = carStates[id] || {};
+    const tunedBuild = applyEngineTuning(car, engines[car.engine], carState);
+    const engineTuning = getEngineTuning(carState);
+    const enginePartCount = getEngineTuningCount(engineTuning);
+
     this.headerCarText.setText(car.name.toUpperCase());
 
     this.specValueTexts.engine.setText(car.engineModel || '—');
-    this.specValueTexts.power.setText((car.powerKW ?? '—') + ' kW');
-    this.specValueTexts.torque.setText((car.torqueNm ?? '—') + ' Nm');
-    this.specValueTexts.weight.setText(car.vehicleMassKg + ' kg');
+    this.specValueTexts.power.setText((tunedBuild.car.powerKW ?? '—') + ' kW');
+    this.specValueTexts.torque.setText((tunedBuild.car.torqueNm ?? '—') + ' Nm');
+    this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
+
+    if (this.tuningStatusText) {
+      this.tuningStatusText.setText(
+        enginePartCount > 0
+          ? 'TUNING // ' + enginePartCount + ' ENGINE PART' + (enginePartCount === 1 ? '' : 'S')
+          : Number(carState.tuneLevel || 0) > 0
+            ? 'TUNING // BUILT'
+            : 'TUNING // STOCK'
+      );
+    }
 
     for (const item of this.thumbButtons) {
       const active = item.id === id;
