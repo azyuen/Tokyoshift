@@ -1,6 +1,6 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r43';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r47';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
