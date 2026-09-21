@@ -51,9 +51,7 @@ export const cars = {
     maximumBoost: 0,
     launchRPM: 4800,
     visual: {
-      bodyKey: 'carAE86',
-      paintKey: 'carAE86Paint',
-      overlayKey: 'carAE86Overlay',
+      assetStem: 'ae86',
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.165,
@@ -95,7 +93,7 @@ export const cars = {
     maximumBoost: 0.75,
     launchRPM: 5000,
     visual: {
-      bodyKey: 'carR32',
+      assetStem: 'r32',
       engineKey: 'stockEngineRB26DETT',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.165,
@@ -137,7 +135,7 @@ export const cars = {
     maximumBoost: 0.85,
     launchRPM: 5500,
     visual: {
-      bodyKey: 'carEvoIII',
+      assetStem: 'evo_iii',
       engineKey: 'stockEngine4G63T',
       wheelKey: 'wheelMesh',
       bodyScale: 0.198,
@@ -179,7 +177,7 @@ export const cars = {
     maximumBoost: 0.70,
     launchRPM: 4300,
     visual: {
-      bodyKey: 'carFC3S',
+      assetStem: 'fc3s',
       engineKey: 'stockEngine13BT',
       wheelKey: 'wheelDeepDish',
       bodyScale: 0.198,
@@ -221,7 +219,7 @@ export const cars = {
     maximumBoost: 0.80,
     launchRPM: 5200,
     visual: {
-      bodyKey: 'carWRX22B',
+      assetStem: 'wrx_22b',
       engineKey: 'stockEngineEJ22G',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.198,
@@ -263,7 +261,7 @@ export const cars = {
     maximumBoost: 0,
     launchRPM: 6000,
     visual: {
-      bodyKey: 'carEK9',
+      assetStem: 'civic_ek9',
       engineKey: 'stockEngineB16B',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.198,
