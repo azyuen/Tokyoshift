@@ -9,9 +9,9 @@ import {
   getTravelCost,
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260921-r54';
-import { playMusic } from '../audio/MusicManager.js?v=20260921-r56';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r56';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r56';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r57';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r57';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
