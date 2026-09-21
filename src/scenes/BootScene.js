@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r77';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r78';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r77';
 
@@ -59,7 +59,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R77' : 'NEW RUN // R77', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R78' : 'NEW RUN // R78', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
