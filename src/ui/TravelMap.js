@@ -17,10 +17,14 @@ export function showTravelMap(scene, {
   title = 'TOKYO AREA MAP',
   allowCurrentAction = false,
   actionVerb = 'DRIVE',
+  costResolver = null,
 } = {}) {
   if (scene.travelMapPopup?.active) return scene.travelMapPopup;
 
   const current = getMeetLocation(currentLocationId);
+  const resolveCost = targetId => costResolver
+    ? Number(costResolver(current.id, targetId) || 0)
+    : getTravelCost(current.id, targetId);
   let selectedId = current.id;
   const depth = 120;
   const objects = [];
@@ -103,7 +107,7 @@ export function showTravelMap(scene, {
         }
       ).setOrigin(0, 0.5).setDepth(depth + 4));
 
-      const cost = getTravelCost(current.id, locationId);
+      const cost = resolveCost(locationId);
       const costText = add(scene.add.text(cx + 190, y, cost === 0 ? 'HERE' : MONEY(cost), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -161,7 +165,7 @@ export function showTravelMap(scene, {
 
   const updateSelection = () => {
     const target = getMeetLocation(selectedId);
-    const cost = getTravelCost(current.id, selectedId);
+    const cost = resolveCost(selectedId);
     const cash = Number(scene.registry.get('cash') || 0);
     const enough = cash >= cost;
     const isCurrent = selectedId === current.id;
@@ -180,7 +184,7 @@ export function showTravelMap(scene, {
     detailText.setText(
       target.timeOfDay.toUpperCase() +
       '  •  ' + target.difficulty +
-      '  •  FUEL ' + (cost === 0 ? 'FREE' : MONEY(cost))
+      '  •  FUEL ' + MONEY(cost)
     );
 
     travelButton.removeAllListeners('pointerdown');
@@ -208,7 +212,7 @@ export function showTravelMap(scene, {
       .setFillStyle(0x0d2b29, 1)
       .setStrokeStyle(2, 0x62e8c7, 1);
     travelLabel.setColor('#f1fffb').setText(
-      actionVerb + '  •  ' + (cost === 0 ? 'FREE' : MONEY(cost))
+      actionVerb + '  •  ' + MONEY(cost)
     );
 
     travelButton.on('pointerdown', () => {
