@@ -8,6 +8,7 @@ import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r43';
+import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -55,6 +56,7 @@ export default class RaceScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'race';
     this.scale.resize(1560, 720);
+    playRaceMusic();
 
     const carStates = this.registry.get('carStates') || {};
     this.playerCarState = carStates[this.selectedCarId] || {
@@ -671,6 +673,9 @@ export default class RaceScene extends Phaser.Scene {
         fontFamily: dataFont, fontSize: '12px', color: '#ffe4ef', fontStyle: 'bold'
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
     });
+
+    if (playerWon) playVictorySting();
+    else stopMusic();
 
     if (settlement) {
       if (this.raceDeal === 'PINK_SLIP') {
