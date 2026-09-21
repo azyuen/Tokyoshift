@@ -8,12 +8,17 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260921-r60';
+} from '../data/meetAssets.js?v=20260921-r75';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r74';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r75';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r74';
-import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r74';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r75';
+import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r75';
+import {
+  getEncounterProfile,
+  getEncounterSkillLabel,
+  getEncounterAi,
+} from '../data/encounterProfiles.js?v=20260921-r75';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -83,7 +88,13 @@ export default class MeetScene extends Phaser.Scene {
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
+    const storedOffers = Object.values(storedRosters)
+      .filter(Array.isArray)
+      .flat();
+    const hasEncounterProgression = storedOffers.length > 0
+      && storedOffers.every(offer => Number.isFinite(offer?.encounterRating) && offer?.encounterAi);
     const hasStoredRound = storedRefreshAt > Date.now()
+      && hasEncounterProgression
       && ALL_MEET_LOCATION_IDS.some(id => Array.isArray(storedRosters[id]));
 
     if (hasStoredRound) {
@@ -597,6 +608,7 @@ export default class MeetScene extends Phaser.Scene {
 
   generateOffersForLocation(locationId) {
     const location = getMeetLocation(locationId);
+    const profile = getEncounterProfile(locationId, location.difficulty);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
 
     const eligible = characterOrder.filter(id =>
@@ -605,22 +617,12 @@ export default class MeetScene extends Phaser.Scene {
       this.textures.exists(characters[id]?.visual?.spriteKey)
     );
 
-    const targetRating = (location.minRating + location.maxRating) / 2;
-    const preferred = eligible.filter(id => {
-      const rating = Number(characters[id]?.skill?.rating || 3);
-      return rating >= location.minRating && rating <= location.maxRating;
-    });
-    Phaser.Utils.Array.Shuffle(preferred);
+    const availableCharacters = [...eligible];
+    Phaser.Utils.Array.Shuffle(availableCharacters);
 
-    const remainder = eligible
-      .filter(id => !preferred.includes(id))
-      .sort((a, b) => {
-        const ar = Number(characters[a]?.skill?.rating || 3);
-        const br = Number(characters[b]?.skill?.rating || 3);
-        return Math.abs(ar - targetRating) - Math.abs(br - targetRating);
-      });
+    const ratingSlots = [...profile.ratingSlots].slice(0, 3);
+    Phaser.Utils.Array.Shuffle(ratingSlots);
 
-    const pool = [...preferred, ...remainder].slice(0, 3);
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     const usedRivalCars = new Set();
@@ -633,11 +635,28 @@ export default class MeetScene extends Phaser.Scene {
       5: ['evo3', 'wrx22b', 'r32'],
     };
 
-    const chooseCarForSkill = rating => {
-      const band = carBands[Phaser.Math.Clamp(Number(rating) || 3, 1, 5)] || carBands[3];
+    const chooseCharacterForRating = rating => {
+      const sorted = [...availableCharacters].sort((a, b) => {
+        const ar = Number(characters[a]?.skill?.rating || 3);
+        const br = Number(characters[b]?.skill?.rating || 3);
+        return Math.abs(ar - rating) - Math.abs(br - rating);
+      });
+
+      const id = sorted[0] || Phaser.Utils.Array.GetRandom(eligible);
+      const index = availableCharacters.indexOf(id);
+      if (index >= 0) availableCharacters.splice(index, 1);
+      return id;
+    };
+
+    const chooseCarForEncounter = rating => {
+      const band = carBands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || carBands[3];
+      const likely = profile.likelyCars.filter(id => band.includes(id) && cars[id]);
+      const primary = likely.length ? likely : band.filter(id => cars[id]);
+
       const tiers = [
-        band.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
-        band.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
+        primary.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
+        primary.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
+        primary.filter(id => !usedRivalCars.has(id)),
         carOrder.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
         carOrder.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
         carOrder.filter(id => id !== selectedCarId),
@@ -651,31 +670,35 @@ export default class MeetScene extends Phaser.Scene {
 
     const cfg = MODE_DATA[this.selectedMode];
 
-    return pool.map(characterId => {
+    return ratingSlots.map(encounterRating => {
+      const characterId = chooseCharacterForRating(encounterRating);
       const character = characters[characterId];
-      const carId = chooseCarForSkill(character?.skill?.rating);
-      const skill = character.skill ?? {
-        rating: 3,
-        label: 'SKILLED',
-        betRange: [5000, 10000],
-        competitionPrize: 15000,
-      };
+      const carId = chooseCarForEncounter(encounterRating);
+      const encounterAi = getEncounterAi(encounterRating);
+      const skillLabel = getEncounterSkillLabel(encounterRating);
 
       let raceDeal = 'PRIZE';
-      let stake = skill.competitionPrize ?? 15000;
+      let stake = Phaser.Math.Snap.To(
+        Math.round(profile.stakeRange[1] * 1.8),
+        500
+      );
 
       if (this.selectedMode === 'SINGLE') {
         raceDeal = 'BET';
-        const minBet = skill.betRange?.[0] ?? 5000;
-        const maxBet = skill.betRange?.[1] ?? 10000;
-        const baseStake = Phaser.Math.Between(minBet, maxBet);
+        const minBet = Math.max(500, Number(profile.stakeRange?.[0] || 1000));
+        const maxBet = Math.max(minBet, Number(profile.stakeRange?.[1] || minBet));
         stake = Phaser.Math.Snap.To(
-          Math.round(baseStake * location.rewardMultiplier),
+          Phaser.Math.Between(minBet, maxBet),
           500
         );
       }
 
-      const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId);
+      const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId, {
+        encounterRating,
+        encounterAi,
+        difficulty: profile.difficulty,
+        pinkAcceptanceBase: profile.pinkAcceptanceBase,
+      });
 
       return {
         characterId,
@@ -685,7 +708,12 @@ export default class MeetScene extends Phaser.Scene {
         stake,
         distance: Phaser.Utils.Array.GetRandom(cfg.distances),
         quote: character.introQuote,
+        encounterRating,
+        encounterAi,
+        skillLabel,
+        difficulty: profile.difficulty,
         pinkAccepted: pinkDecision.accepted,
+        pinkAcceptanceChance: pinkDecision.chance,
         pinkReply: pinkDecision.reply,
         pinkChallenged: false,
         meetLocation: locationId,
@@ -1027,9 +1055,18 @@ export default class MeetScene extends Phaser.Scene {
     return powerToWeight * 0.72 + traction * 52 + forcedInduction + tune + nitrous;
   }
 
-  evaluatePinkSlipAcceptance(character, opponentCarId) {
-    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 3), 1, 5);
-    const aggression = Phaser.Math.Clamp(Number(character?.skill?.ai?.aggression || 0.76), 0.5, 1);
+  evaluatePinkSlipAcceptance(character, opponentCarId, encounter = {}) {
+    const rating = Phaser.Math.Clamp(
+      Number(encounter.encounterRating ?? character?.skill?.rating ?? 3),
+      1,
+      5
+    );
+    const encounterAi = encounter.encounterAi || getEncounterAi(rating);
+    const aggression = Phaser.Math.Clamp(
+      Number(encounterAi.aggression ?? character?.skill?.ai?.aggression ?? 0.76),
+      0.5,
+      1
+    );
 
     const playerCarId = this.registry.get('selectedCarId') || 'ae86';
     const carStates = this.registry.get('carStates') || {};
@@ -1051,18 +1088,28 @@ export default class MeetScene extends Phaser.Scene {
     const opponentCarValue = this.estimateCarThreat(opponentCarId, 0, false);
     const playerCarValue = this.estimateCarThreat(playerCarId, 0, false);
 
-    // Rivals care about both their chance of winning and what is actually at
-    // risk. A much more valuable car makes them more cautious, while a tempting
-    // player car can make the challenge more attractive. Their read is still
-    // imperfect, so sometimes they accept a matchup they have misjudged.
-    const riskPenalty = Math.max(0, opponentCarValue - playerCarValue) * 0.28;
-    const prizeTemptation = Math.max(0, playerCarValue - opponentCarValue) * 0.16;
-    const perceivedMargin = opponentThreat - playerThreat
-      - riskPenalty
-      + prizeTemptation
-      + Phaser.Math.FloatBetween(-20, 20);
-    const requiredMargin = Phaser.Math.Linear(10, -9, (aggression - 0.5) / 0.5);
-    const accepted = perceivedMargin >= requiredMargin;
+    // Pink slips are intentionally rare. Rivals need to feel confident, and
+    // risking a stronger/more valuable car makes them substantially more wary.
+    const advantage = opponentThreat - playerThreat;
+    const confidenceBonus = Phaser.Math.Clamp((advantage - 12) / 140, -0.04, 0.12);
+    const aggressionBonus = Phaser.Math.Clamp((aggression - 0.75) * 0.08, -0.025, 0.025);
+    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 250, 0, 0.04);
+    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 220, 0, 0.08);
+    const reputationPenalty = Phaser.Math.Clamp((playerWinRate - 0.55) * 0.10, 0, 0.04);
+
+    const baseChance = Number(encounter.pinkAcceptanceBase ?? 0.07);
+    const chance = Phaser.Math.Clamp(
+      baseChance
+        + confidenceBonus
+        + aggressionBonus
+        + temptationBonus
+        - riskPenalty
+        - reputationPenalty,
+      0.01,
+      0.28
+    );
+
+    const accepted = Phaser.Math.FloatBetween(0, 1) < chance;
 
     const yesReplies = [
       'All right. Keys for keys.',
@@ -1073,10 +1120,12 @@ export default class MeetScene extends Phaser.Scene {
       'No. Cash race only.',
       'Not risking the car tonight.',
       'Cash is enough.',
+      'Not for this matchup.',
     ];
 
     return {
       accepted,
+      chance,
       reply: Phaser.Utils.Array.GetRandom(accepted ? yesReplies : noReplies),
     };
   }
@@ -1194,7 +1243,7 @@ export default class MeetScene extends Phaser.Scene {
     this.selectedDeal = offer.pinkChallenged && offer.pinkAccepted ? 'PINK' : 'CASH';
 
     this.selectedSummary.setText(
-      (character.skill?.label ?? 'SKILLED') + '\n' +
+      (offer.skillLabel || character.skill?.label || 'SKILLED') + '\n' +
       car.shortName + '  •  ' + offer.raceType + '\n' +
       offer.distance
     );
@@ -1356,6 +1405,9 @@ export default class MeetScene extends Phaser.Scene {
 
     this.registry.set('selectedOpponentCarId', offer.carId);
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
+    this.registry.set('selectedOpponentEncounterRating', Number(offer.encounterRating || 3));
+    this.registry.set('selectedOpponentEncounterAi', offer.encounterAi || getEncounterAi(offer.encounterRating || 3));
+    this.registry.set('selectedOpponentDifficulty', offer.difficulty || getMeetLocation(this.selectedMeetLocation).difficulty);
     this.registry.set('selectedRaceCategory', this.selectedMode);
     this.registry.set('selectedRaceType', offer.raceType);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
