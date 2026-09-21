@@ -536,8 +536,32 @@ export default class EngineTuningScene extends Phaser.Scene {
     const g = this.engineGraphics;
     g.clear();
 
+    if (this.engineSpriteImage) {
+      this.engineSpriteImage.destroy();
+      this.engineSpriteImage = null;
+    }
+
+    const car = cars[this.selectedCarId];
+    const engineKey = car?.visual?.engineKey;
     const cx = SIDE.x + 196;
     const cy = SIDE.y + 112;
+
+    // Sprite hook for the bespoke engine art pipeline. Once a car defines
+    // visual.engineKey and BootScene has loaded that texture, it replaces the
+    // temporary schematic automatically.
+    if (engineKey && this.textures.exists(engineKey)) {
+      this.engineSpriteImage = this.add.image(cx, cy, engineKey)
+        .setDepth(35)
+        .setOrigin(0.5);
+
+      const source = this.textures.get(engineKey).getSourceImage();
+      const maxW = 205;
+      const maxH = 100;
+      const fit = Math.min(maxW / source.width, maxH / source.height);
+      this.engineSpriteImage.setScale(fit * (1 + level * 0.055));
+      return;
+    }
+
     const scale = 1 + level * 0.055;
 
     g.fillStyle(0x02070c, 0.55).fillEllipse(cx, cy + 34, 180 * scale, 24 * scale);
