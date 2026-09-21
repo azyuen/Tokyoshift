@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r68';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r79';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import {
@@ -35,6 +35,18 @@ import {
   getGarageCapacity,
   getWorkshopByLocationId,
 } from '../data/workshopProgression.js?v=20260921-r76';
+import {
+  PAINT_PRESETS,
+  getCarPaintColor,
+  paintColorToHex,
+  paintColorToRgb,
+  rgbToPaintColor,
+  normalisePaintColor,
+  hasLayeredPaintAssets,
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+  setCarBodyPaint,
+} from '../vehicles/CarAppearance.js?v=20260921-r79';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -76,6 +88,13 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryModalObjects = [];
     this.secondaryHelperObjects = [];
     this.secondaryHotspotObjects = [];
+
+    this.chassisMode = false;
+    this.chassisModeObjects = [];
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.currentPaintColor = 0xffffff;
+    this.pendingPaintColor = 0xffffff;
 
     this.garagePageSize = 4;
     this.garagePageObjects = [];
@@ -336,6 +355,10 @@ export default class GarageScene extends Phaser.Scene {
           this.enterSecondaryTuningMode('drivetrain');
           return;
         }
+        if (name === 'CHASSIS') {
+          this.enterChassisMode();
+          return;
+        }
         if (name === 'EXHAUST / NOS') {
           this.enterSecondaryTuningMode('exhaustNos');
           return;
@@ -413,7 +436,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Swipe anywhere across the garage strip to reveal the next four slots.
     this.input.on('pointerup', pointer => {
-      if (this.engineMode || this.secondaryMode) return;
+      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
 
       const downInside = pointer.downY >= STRIP.y && pointer.downY <= STRIP.y + STRIP.h;
       const upInside = pointer.y >= STRIP.y && pointer.y <= STRIP.y + STRIP.h;
@@ -517,7 +540,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   changeGaragePage(delta) {
-    if (this.engineMode || this.secondaryMode) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
 
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
     const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
@@ -535,7 +558,7 @@ export default class GarageScene extends Phaser.Scene {
   updateGarageNavState() {
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
     const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
-    const locked = Boolean(this.engineMode || this.secondaryMode);
+    const locked = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
     const canPrev = !locked && this.garagePage > 0;
     const canNext = !locked && this.garagePage < totalPages - 1;
 
@@ -643,7 +666,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getWheelBottomY(car, bodyY, targetWidth) {
-    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
     const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
@@ -653,7 +676,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
-    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
     const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
@@ -662,7 +685,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   createCarDisplay(car, x, y, targetWidth, depth) {
-    const source = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const ratio = car.visual.wheelScale / car.visual.bodyScale;
     const wheelScale = bodyScale * ratio * 1.16;
@@ -696,16 +719,29 @@ export default class GarageScene extends Phaser.Scene {
       0.82
     ).setDepth(depth - 0.12);
 
-    const body = this.add.image(x, y, car.visual.bodyKey)
-      .setScale(bodyScale)
-      .setDepth(depth + 1);
+    const carStates = this.registry.get('carStates') || {};
+    const paintColor = getCarPaintColor(carStates[car.id] || {});
+    const bodyLayers = createCarBodyLayers(this, car, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor,
+    });
 
-    return [rearWheelBacking, frontWheelBacking, roadShadow, rearWheel, frontWheel, body];
+    return [
+      rearWheelBacking,
+      frontWheelBacking,
+      roadShadow,
+      rearWheel,
+      frontWheel,
+      ...bodyLayers.objects,
+    ];
   }
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
-    if (this.engineMode || this.secondaryMode) {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) {
       if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
       return;
     }
@@ -719,7 +755,7 @@ export default class GarageScene extends Phaser.Scene {
     // never makes them jump vertically. AE86 defines the current visual baseline.
     const heroWheelBottomY = this.getWheelBottomY(cars.ae86, 386, 690);
     const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
-    const heroSource = this.textures.get(cars[id].visual.bodyKey).getSourceImage();
+    const heroSource = this.textures.get(getCarBodyTextureKey(this, cars[id])).getSourceImage();
     const heroBodyScale = 690 / heroSource.width;
     this.heroCarLayout = {
       x: 708,
@@ -801,7 +837,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   enterEngineMode() {
-    if (this.engineMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
     this.engineTransitioning = true;
 
     const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
@@ -831,7 +867,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   activateEngineMode() {
-    if (this.engineMode || !this.selectedCarId) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
     this.engineMode = true;
     this.updateGarageNavState();
 
@@ -1560,8 +1596,386 @@ export default class GarageScene extends Phaser.Scene {
     this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
 
+
+  enterChassisMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    this.engineTransitioning = true;
+
+    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+      .setDepth(165)
+      .setAlpha(0)
+      .setInteractive();
+
+    this.tweens.add({
+      targets: veil,
+      alpha: 1,
+      duration: 190,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.activateChassisMode();
+        this.tweens.add({
+          targets: veil,
+          alpha: 0,
+          duration: 260,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            veil.destroy();
+            this.engineTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
+  activateChassisMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
+
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+
+    this.chassisMode = true;
+    this.currentPaintColor = getCarPaintColor(state);
+    this.pendingPaintColor = this.currentPaintColor;
+    this.chassisModeObjects = [];
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.updateGarageNavState();
+
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
+    const add = obj => {
+      this.chassisModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 24, 'CHASSIS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '12px',
+      color: '#e9f8ff',
+    }).setDepth(73));
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 62, 'PAINT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#62dfff',
+    }).setDepth(73));
+
+    this.chassisPaintSwatch = add(this.add.rectangle(
+      SIDE.x + 70,
+      SIDE.y + 112,
+      76,
+      52,
+      this.pendingPaintColor,
+      1
+    ).setStrokeStyle(2, 0xd8f5ff, 1).setDepth(72));
+
+    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 101, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#e8f7ff',
+    }).setDepth(73));
+
+    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 126, '', {
+      fontFamily: BODY_FONT,
+      fontSize: '9px',
+      color: '#7fa4b7',
+      wordWrap: { width: 180 },
+    }).setDepth(73));
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 170, 'PRESET COLOURS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#91b9ce',
+    }).setDepth(73));
+
+    const presetStartX = SIDE.x + 55;
+    const presetStartY = SIDE.y + 214;
+    const presetGapX = 62;
+    const presetGapY = 54;
+
+    PAINT_PRESETS.forEach((preset, index) => {
+      const col = index % 5;
+      const row = Math.floor(index / 5);
+      const x = presetStartX + col * presetGapX;
+      const y = presetStartY + row * presetGapY;
+
+      const box = add(this.add.rectangle(x, y, 46, 32, preset.color, 1)
+        .setStrokeStyle(2, 0x42586a, 1)
+        .setDepth(72));
+
+      const hit = add(this.add.rectangle(x, y, 52, 40, 0x000000, 0)
+        .setDepth(74));
+
+      add(this.add.text(x, y + 25, preset.name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: '#9db8c7',
+      }).setOrigin(0.5).setDepth(73));
+
+      hit.setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', () => {
+        if (!hasLayeredPaintAssets(this, car)) return;
+        this.pendingPaintColor = preset.color;
+        this.refreshChassisMode();
+      });
+
+      this.chassisPresetButtons.push({ preset, box, hit });
+    });
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 322, 'CUSTOM RGB', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#91b9ce',
+    }).setDepth(73));
+
+    ['r', 'g', 'b'].forEach((channel, index) => {
+      const y = SIDE.y + 368 + index * 50;
+      const label = channel.toUpperCase();
+
+      add(this.add.text(SIDE.x + 32, y, label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff3ff',
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const minus = add(this.add.rectangle(SIDE.x + 112, y, 42, 34, 0x0b1724, 1)
+        .setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+      add(this.add.text(SIDE.x + 112, y, '−', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#bde9ff'
+      }).setOrigin(0.5).setDepth(73));
+
+      const valueText = add(this.add.text(SIDE.x + 180, y, '000', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(73));
+      this.chassisRgbLabels[channel] = valueText;
+
+      const plus = add(this.add.rectangle(SIDE.x + 248, y, 42, 34, 0x0b1724, 1)
+        .setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+      add(this.add.text(SIDE.x + 248, y, '+', {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#bde9ff'
+      }).setOrigin(0.5).setDepth(73));
+
+      minus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, -8));
+      plus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, 8));
+    });
+
+    this.chassisApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 594,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+
+    this.chassisApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 594,
+      'PAINT INSTALLED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    const backButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 654,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 654, '<  BACK TO WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(73));
+
+    backButton.on('pointerdown', () => this.leaveChassisMode(true));
+    this.refreshChassisMode();
+  }
+
+  adjustPendingPaintChannel(channel, delta) {
+    if (!this.chassisMode || !hasLayeredPaintAssets(this, cars[this.selectedCarId])) return;
+
+    const rgb = paintColorToRgb(this.pendingPaintColor);
+    rgb[channel] = Phaser.Math.Clamp(Number(rgb[channel] || 0) + Number(delta || 0), 0, 255);
+    this.pendingPaintColor = rgbToPaintColor(rgb.r, rgb.g, rgb.b);
+    this.refreshChassisMode();
+  }
+
+  refreshChassisMode() {
+    if (!this.chassisMode || !this.selectedCarId) return;
+
+    const car = cars[this.selectedCarId];
+    const ready = hasLayeredPaintAssets(this, car);
+    const color = normalisePaintColor(this.pendingPaintColor);
+    const rgb = paintColorToRgb(color);
+
+    this.chassisPaintSwatch?.setFillStyle(color, 1);
+    this.chassisHexText?.setText(paintColorToHex(color));
+    this.chassisRgbLabels.r?.setText(String(rgb.r).padStart(3, '0'));
+    this.chassisRgbLabels.g?.setText(String(rgb.g).padStart(3, '0'));
+    this.chassisRgbLabels.b?.setText(String(rgb.b).padStart(3, '0'));
+
+    this.chassisAssetStatusText?.setText(
+      ready
+        ? 'LIVE PREVIEW // PHASER TINT'
+        : this.selectedCarId === 'ae86'
+          ? 'UPLOAD ae86_body_paint.png + ae86_body_overlay.png TO ENABLE'
+          : 'PAINT LAYERS NOT BUILT FOR THIS CAR YET'
+    ).setColor(ready ? '#62e8c7' : '#ffbc71');
+
+    this.chassisPresetButtons.forEach(item => {
+      const active = item.preset.color === color;
+      item.box.setStrokeStyle(active ? 3 : 2, active ? 0xffffff : 0x42586a, active ? 1 : 0.85);
+      if (ready) item.hit.setInteractive({ useHandCursor: true });
+      else item.hit.disableInteractive();
+    });
+
+    if (ready) setCarBodyPaint(this.selectedDisplay, color);
+
+    this.chassisApplyButton?.removeAllListeners('pointerdown');
+
+    if (!ready) {
+      this.chassisApplyButton?.disableInteractive()
+        .setFillStyle(0x241b16, 1)
+        .setStrokeStyle(2, 0x79563a, 0.85);
+      this.chassisApplyText?.setText('PAINT ASSETS REQUIRED').setColor('#c99b74');
+      return;
+    }
+
+    if (color === this.currentPaintColor) {
+      this.chassisApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.chassisApplyText?.setText('PAINT INSTALLED').setColor('#758e94');
+      return;
+    }
+
+    this.chassisApplyButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1);
+    this.chassisApplyText?.setText('APPLY PAINT // TEST').setColor('#f1fffb');
+    this.chassisApplyButton?.on('pointerdown', () => this.applyPendingPaint());
+  }
+
+  applyPendingPaint() {
+    if (!this.chassisMode || !this.selectedCarId) return;
+    const car = cars[this.selectedCarId];
+    if (!hasLayeredPaintAssets(this, car)) {
+      this.showWorkshopToast('PAINT LAYERS NOT AVAILABLE');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const paintColor = normalisePaintColor(this.pendingPaintColor);
+
+    carStates[this.selectedCarId] = {
+      ...existing,
+      paintColor,
+    };
+
+    this.registry.set('carStates', carStates);
+    saveSessionState(this.registry);
+    this.currentPaintColor = paintColor;
+    this.pendingPaintColor = paintColor;
+
+    this.renderGaragePage();
+    setCarBodyPaint(this.selectedDisplay, paintColor);
+    this.refreshChassisMode();
+    this.showWorkshopToast('PAINT APPLIED // ' + paintColorToHex(paintColor));
+  }
+
+  leaveChassisMode(animate = true) {
+    if (!this.chassisMode) return;
+
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 180,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveChassisMode(false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 250,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
+    setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
+    this.chassisModeObjects.forEach(obj => obj?.destroy?.());
+    this.chassisModeObjects = [];
+    this.chassisPresetButtons = [];
+    this.chassisRgbLabels = {};
+    this.chassisMode = false;
+    this.updateGarageNavState();
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
+
+    this.refreshWorkshopSpecs();
+  }
+
   enterSecondaryTuningMode(mode) {
-    if (this.engineMode || this.secondaryMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
     this.engineTransitioning = true;
 
     const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
@@ -1591,7 +2005,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   activateSecondaryTuningMode(mode) {
-    if (this.engineMode || this.secondaryMode || !this.selectedCarId) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
 
     const isDrivetrain = mode === 'drivetrain';
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
