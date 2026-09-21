@@ -1,8 +1,8 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r47';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r48';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r47';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r48';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -74,7 +74,7 @@ export default class MeetScene extends Phaser.Scene {
 
     meetBackgrounds.forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r47');
+        this.load.image(bg.key, bg.path + '?v=20260921-r48');
       }
     });
   }
@@ -644,7 +644,7 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     meetBackgrounds.forEach(bg => {
-      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r47');
+      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r48');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
