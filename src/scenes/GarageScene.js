@@ -545,6 +545,10 @@ export default class GarageScene extends Phaser.Scene {
     if (this.engineMode || !this.selectedCarId) return;
     this.engineMode = true;
 
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
     const car = cars[this.selectedCarId];
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
@@ -699,6 +703,10 @@ export default class GarageScene extends Phaser.Scene {
     this.engineHelperObjects = [];
     this.engineMode = false;
     this.enginePartRows = {};
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
 
     if (refreshCar && this.selectedCarId) {
       const id = this.selectedCarId;
