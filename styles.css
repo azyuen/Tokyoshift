@@ -91,14 +91,20 @@ canvas {
 
 #build-stamp {
   position: fixed;
-  top: max(10px, env(safe-area-inset-top));
-  right: max(24px, env(safe-area-inset-right));
+  top: max(8px, env(safe-area-inset-top));
+  left: min(calc(100vw - 54px), calc(50% + 92.857dvh + 8px));
+  right: auto;
   z-index: 9999;
   padding: 3px 7px;
   border: 1px solid rgba(255,255,255,.35);
   border-radius: 5px;
-  background: rgba(0,0,0,.55);
+  background: rgba(0,0,0,.58);
   color: rgba(255,255,255,.8);
   font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  white-space: nowrap;
   pointer-events: none;
+}
+
+body[data-scene="race"] #build-stamp {
+  left: min(calc(100vw - 54px), calc(50% + 108.333dvh + 8px));
 }
