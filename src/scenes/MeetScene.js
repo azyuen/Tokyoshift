@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r42';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r42';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r42';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r43';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -30,13 +30,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r42');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r42');
+        this.load.image(bg.key, bg.path + '?v=20260921-r43');
       }
     });
   }
@@ -484,13 +484,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r42'
+          character.visual.path + '?v=20260921-r43'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r42');
+      queueImage(bg.key, bg.path + '?v=20260921-r43');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
