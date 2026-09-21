@@ -14,7 +14,7 @@ import {
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r59';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r60';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r61';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
