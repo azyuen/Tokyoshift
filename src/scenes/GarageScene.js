@@ -345,8 +345,6 @@ export default class GarageScene extends Phaser.Scene {
 
   }
 
-  }
-
   buildGarageStrip() {
     this.garageStripPanel = this.add.rectangle(
       STRIP.x + STRIP.w / 2,
@@ -919,7 +917,7 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(73));
     }
 
-    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
+    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
