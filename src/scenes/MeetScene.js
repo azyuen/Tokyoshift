@@ -10,7 +10,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260921-r54';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r54';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r55';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
