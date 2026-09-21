@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r32';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r32';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r32';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r33';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r33';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r33';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r32');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r33');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r32');
+        this.load.image(bg.key, bg.path + '?v=20260921-r33');
       }
     });
   }
@@ -256,7 +256,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 536,
+      SIDE.y + 548,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
@@ -278,7 +278,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 612,
       'WORKSHOP',
       {
         fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffdce1'
@@ -370,13 +370,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r32'
+          character.visual.path + '?v=20260921-r33'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r32');
+      queueImage(bg.key, bg.path + '?v=20260921-r33');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -565,19 +565,19 @@ export default class MeetScene extends Phaser.Scene {
 
       const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
-        fontSize: '10px',
+        fontSize: '9px',
         color: '#ffffff'
       }).setDepth(35);
 
       const deal = this.add.text(x + 160, cardY - 44, dealText, {
         fontFamily: PIXEL_FONT,
-        fontSize: '9px',
+        fontSize: '8px',
         color: this.selectedMode === 'SINGLE' ? '#8fd2f5' : '#8fe7ff',
       }).setOrigin(1, 0).setDepth(35);
 
       const quote = this.add.text(textX, cardY + 2, '"' + offer.quote + '"', {
         fontFamily: BODY_FONT,
-        fontSize: '10px',
+        fontSize: '11px',
         color: '#9fb4c2',
         wordWrap: { width: 214 },
         lineSpacing: 2,
