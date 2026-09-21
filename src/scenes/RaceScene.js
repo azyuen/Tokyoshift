@@ -14,7 +14,7 @@ import {
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
-import { characters } from '../data/characters.js?v=20260921-r43';
+import { characters } from '../data/characters.js?v=20260922-r85';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r76';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
@@ -64,6 +64,7 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.get('selectedOpponentPaintColor'),
       DEFAULT_PAINT_COLOR
     );
+    this.playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
     this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
     this.opponentEncounterRating = Phaser.Math.Clamp(
       Number(this.registry.get('selectedOpponentEncounterRating') || characters[this.opponentCharacterId]?.skill?.rating || 3),
@@ -151,6 +152,7 @@ export default class RaceScene extends Phaser.Scene {
     this.falseStart = false;
     this.finished = false;
     this.afterFinishTimer = 0;
+    this.finishCameraPx = null;
     this.startMoved = false;
     this.times = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
     this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
@@ -755,7 +757,11 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.finished) {
       this.afterFinishTimer += dt;
-      if (this.afterFinishTimer > 0.45 && !this.resultsShown) {
+      const cinematicElapsed = this.firstFinishClock == null
+        ? 0
+        : this.raceClock - this.firstFinishClock;
+
+      if (cinematicElapsed > 1.18 && !this.resultsShown) {
         this.showResultsOverlay();
       }
     }
@@ -836,13 +842,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const depth = 100;
     const panelX = 780;
-    const panelY = 300;
-    const panelW = 980;
-    const panelH = 430;
-    const leftX = 515;
-    const labelX = 780;
-    const rightX = 1045;
-
+    const panelY = 350;
+    const panelW = 1180;
+    const panelH = 600;
     const titleFont = PIXEL_FONT;
     const dataFont = BODY_FONT;
 
@@ -877,56 +879,177 @@ export default class RaceScene extends Phaser.Scene {
       ? this.settleRace(playerWon)
       : null;
 
-    // Dim the frozen race instead of leaving it for a separate result scene.
-    this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.62)
+    if (playerWon) playVictorySting();
+    else stopMusic();
+
+    const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
+    const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
+
+    const quoteFor = (character, won) => {
+      const quote = won ? character?.resultQuotes?.win : character?.resultQuotes?.loss;
+      if (quote) return quote;
+      return won ? 'That was clean.' : 'Next run will be different.';
+    };
+
+    const reward = (() => {
+      if (!settlement) return { primary: 'RACE COMPLETE', secondary: '' };
+
+      if (this.raceDeal === 'PINK_SLIP') {
+        if (playerWon) {
+          return {
+            primary: 'PINK SLIP WON',
+            secondary: cars[this.opponentCarId].shortName + ' ADDED TO GARAGE',
+          };
+        }
+
+        return {
+          primary: cars[this.selectedCarId].shortName + ' LOST',
+          secondary: settlement.gameOver
+            ? 'NO CARS LEFT'
+            : 'RIVAL TAKES THE CAR',
+        };
+      }
+
+      const delta = settlement.cashDelta;
+      return {
+        primary: (delta >= 0 ? '+¥ ' : '-¥ ') + Math.abs(delta).toLocaleString('en-US'),
+        secondary: 'BALANCE  ¥ ' + settlement.cash.toLocaleString('en-US'),
+      };
+    })();
+
+    // Freeze and dim the finish-line shot underneath the hero card.
+    this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.72)
       .setDepth(depth)
       .setScrollFactor(0);
 
-    const panel = this.add.rectangle(panelX, panelY, panelW, panelH, 0x08111c, 0.97)
-      .setStrokeStyle(2, 0x4dd9ff, 0.78)
+    const panel = this.add.rectangle(panelX, panelY, panelW, panelH, 0x07111c, 0.985)
+      .setStrokeStyle(2, outcomeColour, 0.88)
       .setDepth(depth + 1)
       .setScrollFactor(0);
 
-    // Accent rails: cyan player side, magenta rival side.
-    this.add.rectangle(panelX - panelW / 2 + 5, panelY, 5, panelH - 12, 0x45d7ff, 0.95)
-      .setDepth(depth + 2).setScrollFactor(0);
-    this.add.rectangle(panelX + panelW / 2 - 5, panelY, 5, panelH - 12, 0xff3f88, 0.88)
+    this.add.rectangle(panelX, 57, panelW - 12, 5, outcomeColour, 0.95)
       .setDepth(depth + 2).setScrollFactor(0);
 
-    this.add.text(panelX, 103, 'TOKYO SHIFT // RACE SLIP', {
-      fontFamily: titleFont, fontSize: '18px', color: '#eaf8ff', fontStyle: 'bold',
-      letterSpacing: 2
+    this.add.text(panelX, 82, 'TOKYO SHIFT // RACE RESULT', {
+      fontFamily: titleFont,
+      fontSize: '10px',
+      color: '#8ea9ba',
+      letterSpacing: 2,
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-    this.add.text(panelX, 137, outcome, {
-      fontFamily: titleFont, fontSize: '15px', color: outcomeColour, fontStyle: 'bold',
-      letterSpacing: 1
+    this.add.text(panelX, 119, outcome, {
+      fontFamily: titleFont,
+      fontSize: '19px',
+      color: outcomeColour,
+      fontStyle: 'bold',
+      letterSpacing: 1,
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-    const addCarHeader = (x, role, carId, winner, accent) => {
-      this.add.text(x, 166, role, {
-        fontFamily: dataFont, fontSize: '9px', color: '#7f93aa', fontStyle: 'bold',
-        letterSpacing: 2
+    // Hero reward block: this is the payoff, so it gets the strongest visual weight.
+    this.add.rectangle(panelX, 176, 430, 78, 0x0b1724, 1)
+      .setStrokeStyle(2, playerWon ? 0x62e8c7 : 0xff6d8d, 0.82)
+      .setDepth(depth + 2).setScrollFactor(0);
+
+    this.add.text(panelX, 163, reward.primary, {
+      fontFamily: titleFont,
+      fontSize: '17px',
+      color: playerWon ? '#f2fff9' : '#fff0f4',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+    this.add.text(panelX, 194, reward.secondary, {
+      fontFamily: dataFont,
+      fontSize: '9px',
+      color: '#9eb7c7',
+      fontStyle: '600',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+    const addPortrait = (character, won, x, accent, role) => {
+      const size = 184;
+      const y = 309;
+      const visual = character?.visual || {};
+      const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
+      const spriteKey = poseKey && this.textures.exists(poseKey)
+        ? poseKey
+        : visual.spriteKey;
+
+      this.add.text(x, 215, role, {
+        fontFamily: titleFont,
+        fontSize: '8px',
+        color: '#7f97a7',
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-      this.add.text(x, 184, cars[carId].shortName, {
-        fontFamily: titleFont, fontSize: '16px', color: '#f5fbff', fontStyle: 'bold'
+      this.add.text(x, 239, (character?.name || role).toUpperCase(), {
+        fontFamily: titleFont,
+        fontSize: '10px',
+        color: '#f4fbff',
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-      if (winner) {
-        const badge = this.add.rectangle(x, 213, 96, 23, accent, 0.16)
-          .setStrokeStyle(1, accent, 0.9).setDepth(depth + 2).setScrollFactor(0);
-        this.add.text(x, 213, 'WINNER', {
-          fontFamily: dataFont, fontSize: '9px', color: '#ffffff',
-          fontStyle: 'bold', letterSpacing: 1
-        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+      this.add.rectangle(x, y, size, size, 0x0c1824, 1)
+        .setDepth(depth + 2).setScrollFactor(0);
+
+      if (spriteKey && this.textures.exists(spriteKey)) {
+        const source = this.textures.get(spriteKey).getSourceImage();
+        const portrait = this.add.image(x, y - size / 2 - 4, spriteKey)
+          .setOrigin(0.5, 0)
+          .setDepth(depth + 3)
+          .setScrollFactor(0);
+
+        // Matches the close portrait crop used elsewhere in the game and leaves
+        // room for future dedicated win/loss pose sprites.
+        portrait.setScale((size * 3.9) / source.height);
+
+        const maskShape = this.make.graphics({ add: false });
+        maskShape.fillStyle(0xffffff, 1);
+        maskShape.fillRect(x - size / 2, y - size / 2, size, size);
+        portrait.setMask(maskShape.createGeometryMask());
       }
+
+      // Frame above the artwork so the portrait can never cover its outline.
+      this.add.rectangle(x, y, size, size, 0xffffff, 0)
+        .setStrokeStyle(3, accent, 0.95)
+        .setDepth(depth + 4)
+        .setScrollFactor(0);
+
+      const resultTag = won ? 'WINNER' : 'DEFEAT';
+      this.add.rectangle(x, y + size / 2 - 15, 104, 25, accent, 0.18)
+        .setStrokeStyle(1, accent, 0.85)
+        .setDepth(depth + 4)
+        .setScrollFactor(0);
+
+      this.add.text(x, y + size / 2 - 15, resultTag, {
+        fontFamily: titleFont,
+        fontSize: '7px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(depth + 5).setScrollFactor(0);
+
+      this.add.text(x, 431, '“' + quoteFor(character, won) + '”', {
+        fontFamily: dataFont,
+        fontSize: '10px',
+        color: '#c4d7e2',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 280 },
+        lineSpacing: 1,
+      }).setOrigin(0.5, 0).setDepth(depth + 3).setScrollFactor(0);
     };
 
-    addCarHeader(leftX, 'YOU', this.selectedCarId, playerWon, 0x45d7ff);
-    addCarHeader(rightX, 'RIVAL', this.opponentCarId, opponentWon, 0xff3f88);
+    addPortrait(playerCharacter, playerWon, 355, 0x45d7ff, 'YOU');
+    addPortrait(rivalCharacter, opponentWon, 1205, 0xff4f92, 'RIVAL');
 
-    // Centre labels and two clean data columns with generous row spacing.
+    // Compact centre race slip keeps the data without competing with the reward.
+    this.add.rectangle(780, 352, 480, 240, 0x091521, 0.96)
+      .setStrokeStyle(1, 0x2b4b61, 0.9)
+      .setDepth(depth + 2).setScrollFactor(0);
+
+    this.add.text(615, 252, cars[this.selectedCarId].shortName, {
+      fontFamily: titleFont, fontSize: '9px', color: '#8feaff'
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+    this.add.text(945, 252, cars[this.opponentCarId].shortName, {
+      fontFamily: titleFont, fontSize: '9px', color: '#ff94ba'
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
     const rows = [
       ['REACTION', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
       ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
@@ -935,73 +1058,48 @@ export default class RaceScene extends Phaser.Scene {
       ['TRAP', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
     ];
 
-    const rowStartY = 244;
-    const rowGap = 40;
-
     rows.forEach((row, i) => {
-      const y = rowStartY + i * rowGap;
+      const y = 287 + i * 38;
 
       if (i > 0) {
-        this.add.rectangle(panelX, y - 10, 760, 1, 0x5b7088, 0.16)
+        this.add.rectangle(780, y - 17, 430, 1, 0x4b6678, 0.20)
           .setDepth(depth + 2).setScrollFactor(0);
       }
 
-      this.add.text(labelX, y, row[0], {
-        fontFamily: dataFont, fontSize: '9px', color: '#7f93aa',
-        fontStyle: 'bold', letterSpacing: 1
+      this.add.text(780, y, row[0], {
+        fontFamily: dataFont,
+        fontSize: '8px',
+        color: '#788e9e',
+        fontStyle: '700',
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-      this.add.text(leftX, y, row[1], {
-        fontFamily: dataFont, fontSize: '12px', color: '#dff8ff', fontStyle: 'bold'
+      this.add.text(615, y, row[1], {
+        fontFamily: dataFont,
+        fontSize: '10px',
+        color: '#dff8ff',
+        fontStyle: '700',
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
-      this.add.text(rightX, y, row[2], {
-        fontFamily: dataFont, fontSize: '12px', color: '#ffe4ef', fontStyle: 'bold'
+      this.add.text(945, y, row[2], {
+        fontFamily: dataFont,
+        fontSize: '10px',
+        color: '#ffe4ef',
+        fontStyle: '700',
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
     });
 
-    if (playerWon) playVictorySting();
-    else stopMusic();
-
-    if (settlement) {
-      if (this.raceDeal === 'PINK_SLIP') {
-        this.add.text(panelX, 449, settlement.gameOver
-          ? settlement.pinkMessage + '   //   NO CARS LEFT'
-          : settlement.pinkMessage, {
-          fontFamily: dataFont,
-          fontSize: '11px',
-          color: settlement.playerWon ? '#73f5a5' : '#ff7d98',
-          fontStyle: 'bold',
-          letterSpacing: 1,
-        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
-      } else {
-        const delta = settlement.cashDelta;
-        const moneyText = delta > 0
-          ? '+¥ ' + delta.toLocaleString('en-US')
-          : delta < 0
-            ? '-¥ ' + Math.abs(delta).toLocaleString('en-US')
-            : 'NO CASH CHANGE';
-
-        this.add.text(panelX, 449, moneyText + '   //   BALANCE ¥ ' + settlement.cash.toLocaleString('en-US'), {
-          fontFamily: dataFont,
-          fontSize: '11px',
-          color: delta > 0 ? '#73f5a5' : delta < 0 ? '#ff7d98' : '#aab9c6',
-          fontStyle: 'bold',
-          letterSpacing: 1,
-        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
-      }
-    }
-
-    const addButton = (x, label, stroke, onPress) => {
-      const button = this.add.rectangle(x, 486, 190, 42, 0x0c1825, 0.98)
+    const addButton = (x, label, stroke, onPress, width = 210) => {
+      const button = this.add.rectangle(x, 602, width, 44, 0x0c1825, 0.98)
         .setStrokeStyle(2, stroke, 0.88)
         .setDepth(depth + 3)
         .setScrollFactor(0)
         .setInteractive({ useHandCursor: true });
 
-      const text = this.add.text(x, 486, label, {
-        fontFamily: titleFont, fontSize: '13px', color: '#eef9ff',
-        fontStyle: 'bold', letterSpacing: 1
+      const text = this.add.text(x, 602, label, {
+        fontFamily: titleFont,
+        fontSize: '8px',
+        color: '#eef9ff',
+        fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(depth + 4).setScrollFactor(0);
 
       button.on('pointerover', () => button.setFillStyle(stroke, 0.16));
@@ -1021,7 +1119,8 @@ export default class RaceScene extends Phaser.Scene {
           x,
           returnLabel + returnCost.toLocaleString('en-US'),
           stranded ? 0xffc66d : 0x45d7ff,
-          () => this.returnToWorkshop()
+          () => this.returnToWorkshop(),
+          250
         );
       }
 
@@ -1029,7 +1128,8 @@ export default class RaceScene extends Phaser.Scene {
         x,
         'NEED ¥' + returnCost.toLocaleString('en-US'),
         0x66535a,
-        () => {}
+        () => {},
+        250
       );
       control.button.disableInteractive().setFillStyle(0x17181d, 0.98);
       control.text.setColor('#927b83');
@@ -1039,17 +1139,17 @@ export default class RaceScene extends Phaser.Scene {
     if (settlement?.gameOver) {
       addButton(780, 'BACK TO MEET // NO CAR', 0xffb85f, () => {
         this.scene.start('MeetScene');
-      });
+      }, 300);
     } else {
       let saveControl = null;
-      saveControl = addButton(540, 'SAVE GAME', 0x62e8c7, () => {
+      saveControl = addButton(510, 'SAVE GAME', 0x62e8c7, () => {
         saveManualState(this.registry);
         saveControl.text.setText('SAVED');
         saveControl.button.disableInteractive().setFillStyle(0x12352e, 0.98);
       });
 
       addWorkshopButton(780);
-      addButton(1020, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
+      addButton(1050, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
     }
   }
 
@@ -1144,8 +1244,27 @@ export default class RaceScene extends Phaser.Scene {
 
   drawScene(pt, ot, dt) {
     const W = 1560;
-    const targetPlayerX = W * 0.27;
-    const cameraPx = pt.positionM * PX_PER_M - targetPlayerX;
+
+    // Keep the cars farther into frame so a faster car remains visible while
+    // it passes. With the current sprite widths, 34% puts the noses just shy
+    // of centre screen for most cars.
+    const targetPlayerX = W * 0.34;
+    const chaseCameraPx = pt.positionM * PX_PER_M - targetPlayerX;
+
+    // After the first car crosses the line, follow for a few more frames, then
+    // lock the scenery while the cars keep travelling. They visibly shoot out
+    // of the frozen finish-line frame before the result card arrives.
+    const finishElapsed = this.firstFinishClock == null
+      ? 0
+      : this.raceClock - this.firstFinishClock;
+
+    if (finishElapsed >= 0.30 && this.finishCameraPx == null) {
+      this.finishCameraPx = chaseCameraPx;
+    }
+
+    const cameraPx = this.finishCameraPx == null
+      ? chaseCameraPx
+      : this.finishCameraPx;
 
     this.environment.update(cameraPx, pt.speedKmh);
 
