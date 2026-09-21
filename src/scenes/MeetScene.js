@@ -299,11 +299,11 @@ export default class MeetScene extends Phaser.Scene {
       this.modeButtons.push({ key: row[1], box, label, arrow, locked });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 158, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, SIDE.y + 150, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 188, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 178, '', {
       fontFamily: BODY_FONT,
       fontSize: '13px',
       color: '#d8e7ef',
@@ -311,17 +311,17 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 258, 'RIVAL OFFER', {
+    this.add.text(SIDE.x + 20, SIDE.y + 250, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 258, '', {
+    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 250, '', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
     }).setOrigin(1, 0).setDepth(37);
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 306,
+      SIDE.y + 298,
       SIDE.w - 36,
       40,
       0x291620,
@@ -332,7 +332,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 306,
+      SIDE.y + 298,
       'PINK SLIPS?',
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
@@ -340,8 +340,8 @@ export default class MeetScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(38);
 
     this.pinkResponseText = this.add.text(
-      SIDE.x + 20,
-      SIDE.y + 336,
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 329,
       '',
       {
         fontFamily: BODY_FONT,
@@ -350,7 +350,7 @@ export default class MeetScene extends Phaser.Scene {
         wordWrap: { width: SIDE.w - 40 },
         align: 'center',
       }
-    ).setOrigin(0, 0).setDepth(38);
+    ).setOrigin(0.5, 0).setDepth(38);
 
     this.pinkSlipButton.on('pointerdown', () => this.challengePinkSlips());
 
@@ -771,10 +771,19 @@ export default class MeetScene extends Phaser.Scene {
       Boolean(playerState.nosInstalled)
     ) + 18 + playerWinRate * 14;
 
-    // Rivals judge the visible matchup, but imperfectly. Aggressive drivers
-    // accept thinner edges; uncertainty means they can occasionally misread it.
+    const opponentCarValue = this.estimateCarThreat(opponentCarId, 0, false);
+    const playerCarValue = this.estimateCarThreat(playerCarId, 0, false);
+
+    // Rivals care about both their chance of winning and what is actually at
+    // risk. A much more valuable car makes them more cautious, while a tempting
+    // player car can make the challenge more attractive. Their read is still
+    // imperfect, so sometimes they accept a matchup they have misjudged.
+    const riskPenalty = Math.max(0, opponentCarValue - playerCarValue) * 0.28;
+    const prizeTemptation = Math.max(0, playerCarValue - opponentCarValue) * 0.16;
     const perceivedMargin = opponentThreat - playerThreat
-      + Phaser.Math.FloatBetween(-18, 18);
+      - riskPenalty
+      + prizeTemptation
+      + Phaser.Math.FloatBetween(-20, 20);
     const requiredMargin = Phaser.Math.Linear(10, -9, (aggression - 0.5) / 0.5);
     const accepted = perceivedMargin >= requiredMargin;
 
