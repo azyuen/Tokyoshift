@@ -17,6 +17,60 @@ export const RIVAL_PAINT_COLORS = PAINT_PRESETS
   .filter(item => !['WHITE', 'SILVER', 'BLACK'].includes(item.name))
   .map(item => item.color);
 
+const cleanAssetStem = value => String(value || 'car')
+  .trim()
+  .replace(/[^a-zA-Z0-9_-]+/g, '_');
+
+export function getCarAssetStem(visualOrCar = {}) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
+  return cleanAssetStem(
+    visual.assetStem
+    || visualOrCar?.assetStem
+    || visualOrCar?.id
+    || 'car'
+  );
+}
+
+export function getCarTextureKeys(visualOrCar = {}) {
+  const stem = getCarAssetStem(visualOrCar);
+  return {
+    body: 'carBody_' + stem,
+    paint: 'carPaint_' + stem,
+    overlay: 'carOverlay_' + stem,
+  };
+}
+
+export function getCarAssetPaths(visualOrCar = {}, cacheBust = '') {
+  const stem = getCarAssetStem(visualOrCar);
+  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
+
+  return {
+    body: 'assets/Cars/' + stem + '_body.png' + suffix,
+    paint: 'assets/Cars/' + stem + '_body_paint.png' + suffix,
+    overlay: 'assets/Cars/' + stem + '_body_overlay.png' + suffix,
+  };
+}
+
+/**
+ * Every car automatically receives the same 3-file appearance convention:
+ *   <assetStem>_body.png          legacy/dev fallback
+ *   <assetStem>_body_paint.png    grayscale tint layer
+ *   <assetStem>_body_overlay.png  fixed windows/lights/trim/details
+ *
+ * New cars therefore need no bespoke loader code. Add the car to cars.js and
+ * provide the standard files. If assetStem is omitted, the car id is used.
+ */
+export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
+  Object.values(carMap || {}).forEach(car => {
+    const keys = getCarTextureKeys(car);
+    const paths = getCarAssetPaths(car, cacheBust);
+
+    scene.load.image(keys.body, paths.body);
+    scene.load.image(keys.paint, paths.paint);
+    scene.load.image(keys.overlay, paths.overlay);
+  });
+}
+
 export function normalisePaintColor(value, fallback = DEFAULT_PAINT_COLOR) {
   if (value == null || value === '') return fallback;
 
@@ -53,18 +107,16 @@ export function rgbToPaintColor(r, g, b) {
 }
 
 export function hasLayeredPaintAssets(scene, visualOrCar) {
-  const visual = visualOrCar?.visual || visualOrCar || {};
+  const keys = getCarTextureKeys(visualOrCar);
   return Boolean(
-    visual.paintKey &&
-    visual.overlayKey &&
-    scene?.textures?.exists?.(visual.paintKey) &&
-    scene?.textures?.exists?.(visual.overlayKey)
+    scene?.textures?.exists?.(keys.paint)
+    && scene?.textures?.exists?.(keys.overlay)
   );
 }
 
 export function getCarBodyTextureKey(scene, visualOrCar) {
-  const visual = visualOrCar?.visual || visualOrCar || {};
-  return hasLayeredPaintAssets(scene, visual) ? visual.paintKey : visual.bodyKey;
+  const keys = getCarTextureKeys(visualOrCar);
+  return hasLayeredPaintAssets(scene, visualOrCar) ? keys.paint : keys.body;
 }
 
 export function createCarBodyLayers(
@@ -79,17 +131,17 @@ export function createCarBodyLayers(
     paintColor = DEFAULT_PAINT_COLOR,
   } = {}
 ) {
-  const visual = visualOrCar?.visual || visualOrCar || {};
   const color = normalisePaintColor(paintColor);
+  const keys = getCarTextureKeys(visualOrCar);
 
-  if (hasLayeredPaintAssets(scene, visual)) {
-    const paint = scene.add.image(x, y, visual.paintKey)
+  if (hasLayeredPaintAssets(scene, visualOrCar)) {
+    const paint = scene.add.image(x, y, keys.paint)
       .setScale(scale)
       .setFlipX(flipX)
       .setTint(color)
       .setDepth(depth);
 
-    const overlay = scene.add.image(x, y, visual.overlayKey)
+    const overlay = scene.add.image(x, y, keys.overlay)
       .setScale(scale)
       .setFlipX(flipX)
       .setDepth(depth + 0.02);
@@ -106,7 +158,7 @@ export function createCarBodyLayers(
     };
   }
 
-  const body = scene.add.image(x, y, visual.bodyKey)
+  const body = scene.add.image(x, y, keys.body)
     .setScale(scale)
     .setFlipX(flipX)
     .setDepth(depth);
