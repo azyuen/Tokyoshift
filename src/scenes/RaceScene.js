@@ -1,4 +1,4 @@
-import Vehicle from '../vehicles/Vehicle.js?v=20260921-r65';
+import Vehicle from '../vehicles/Vehicle.js?v=20260921-r66';
 import TouchControls from '../input/TouchControls.js?v=20260921-r43';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
@@ -7,7 +7,7 @@ import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.
 import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r65';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r60';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r60';
