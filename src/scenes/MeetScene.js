@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r31';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r31';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r31';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r32';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r32';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r32';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r31');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r32');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r31');
+        this.load.image(bg.key, bg.path + '?v=20260921-r32');
       }
     });
   }
@@ -370,13 +370,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r31'
+          character.visual.path + '?v=20260921-r32'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r31');
+      queueImage(bg.key, bg.path + '?v=20260921-r32');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -522,9 +522,10 @@ export default class MeetScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .setDepth(34);
 
-      const portraitSize = 80;
-      const portraitX = x - 128;
-      const portraitY = cardY - 13;
+      // Nearly full-height profile square with even padding inside the card.
+      const portraitSize = 104;
+      const portraitX = x - 118;
+      const portraitY = cardY;
 
       const portraitBg = this.add.rectangle(
         portraitX,
@@ -538,12 +539,12 @@ export default class MeetScene extends Phaser.Scene {
       const source = this.textures.get(character.visual.spriteKey).getSourceImage();
       const portrait = this.add.image(
         portraitX,
-        portraitY - 42,
+        portraitY - 54,
         character.visual.spriteKey
       ).setDepth(36)
         .setOrigin(0.5, 0);
 
-      portrait.setScale(286 / source.height);
+      portrait.setScale(340 / source.height);
 
       const portraitMaskShape = this.make.graphics({ add: false });
       portraitMaskShape.fillStyle(0xffffff, 1);
@@ -560,23 +561,25 @@ export default class MeetScene extends Phaser.Scene {
         : offer.stake;
       const dealText = (this.selectedMode === 'SINGLE' ? 'BET  ' : 'PRIZE  ') + stakeText;
 
-      const name = this.add.text(x - 76, cardY - 46, character.name.toUpperCase(), {
+      const textX = x - 54;
+
+      const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '10px',
         color: '#ffffff'
       }).setDepth(35);
 
-      const deal = this.add.text(x + 160, cardY - 46, dealText, {
+      const deal = this.add.text(x + 160, cardY - 44, dealText, {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: this.selectedMode === 'SINGLE' ? '#8fd2f5' : '#8fe7ff',
       }).setOrigin(1, 0).setDepth(35);
 
-      const quote = this.add.text(x - 76, cardY - 4, '"' + offer.quote + '"', {
+      const quote = this.add.text(textX, cardY + 2, '"' + offer.quote + '"', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: '#9fb4c2',
-        wordWrap: { width: 222 },
+        wordWrap: { width: 214 },
         lineSpacing: 2,
       }).setDepth(35);
 
