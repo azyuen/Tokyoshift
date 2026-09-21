@@ -4,7 +4,7 @@ import {
   LOCATION_ORDER_BY_REGION,
   getMeetLocation,
   getTravelCost,
-} from '../data/meetAssets.js?v=20260921-r50';
+} from '../data/meetAssets.js?v=20260921-r51';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -38,7 +38,7 @@ export function showTravelMap(scene, {
     .setDepth(depth)
     .setInteractive());
 
-  const panel = add(scene.add.rectangle(780, 420, 1160, 650, 0x07111d, 0.995)
+  const panel = add(scene.add.rectangle(780, 420, 1320, 650, 0x07111d, 0.995)
     .setStrokeStyle(2, 0x46d7ff, 0.92)
     .setDepth(depth + 1));
 
@@ -54,22 +54,22 @@ export function showTravelMap(scene, {
     color: '#7f9caf',
   }).setOrigin(0.5).setDepth(depth + 2));
 
-  // Schematic expressway line between the two districts.
+  // Schematic expressway line linking the three districts.
   const highway = add(scene.add.graphics().setDepth(depth + 2));
   highway.lineStyle(4, 0x284f69, 0.8);
   highway.beginPath();
-  highway.moveTo(520, 356);
-  highway.lineTo(1040, 356);
+  highway.moveTo(340, 356);
+  highway.lineTo(1220, 356);
   highway.strokePath();
 
   const regionUi = {};
-  const regionCenters = { WANGAN: 470, DAIKOKU: 1090 };
+  const regionCenters = { WANGAN: 340, TATSUMI: 780, DAIKOKU: 1220 };
 
   Object.keys(MEET_REGIONS).forEach(regionId => {
     const cx = regionCenters[regionId];
     const region = MEET_REGIONS[regionId];
 
-    const regionBox = add(scene.add.rectangle(cx, 365, 500, 360, 0x091624, 0.98)
+    const regionBox = add(scene.add.rectangle(cx, 365, 360, 360, 0x091624, 0.98)
       .setStrokeStyle(2, 0x25465e, 1)
       .setDepth(depth + 2));
 
@@ -84,19 +84,19 @@ export function showTravelMap(scene, {
       const loc = MEET_LOCATIONS[locationId];
       const y = 280 + i * 88;
 
-      const row = add(scene.add.rectangle(cx, y, 432, 68, 0x0b1724, 1)
+      const row = add(scene.add.rectangle(cx, y, 320, 68, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(depth + 3));
 
-      const name = add(scene.add.text(cx - 190, y - 12, loc.label, {
+      const name = add(scene.add.text(cx - 138, y - 12, loc.label, {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: '#dff7ff',
       }).setOrigin(0, 0.5).setDepth(depth + 4));
 
       const meta = add(scene.add.text(
-        cx - 190,
+        cx - 138,
         y + 15,
         loc.timeOfDay.toUpperCase() + '  •  ' + loc.difficulty,
         {
@@ -108,7 +108,7 @@ export function showTravelMap(scene, {
       ).setOrigin(0, 0.5).setDepth(depth + 4));
 
       const cost = resolveCost(locationId);
-      const costText = add(scene.add.text(cx + 190, y, cost === 0 ? 'HERE' : MONEY(cost), {
+      const costText = add(scene.add.text(cx + 138, y, cost === 0 ? 'HERE' : MONEY(cost), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: cost === 0 ? '#62e8c7' : '#ffe08a',
@@ -125,23 +125,23 @@ export function showTravelMap(scene, {
     regionUi[regionId] = { regionBox, regionTitle, locationRows };
   });
 
-  const selectedText = add(scene.add.text(430, 594, '', {
+  const selectedText = add(scene.add.text(220, 594, '', {
     fontFamily: PIXEL_FONT,
     fontSize: '9px',
     color: '#dff7ff',
   }).setOrigin(0, 0.5).setDepth(depth + 4));
 
-  const detailText = add(scene.add.text(430, 624, '', {
+  const detailText = add(scene.add.text(220, 624, '', {
     fontFamily: BODY_FONT,
     fontSize: '10px',
     color: '#8aa3b4',
   }).setOrigin(0, 0.5).setDepth(depth + 4));
 
-  const travelButton = add(scene.add.rectangle(1000, 610, 340, 54, 0x0d2b29, 1)
+  const travelButton = add(scene.add.rectangle(1160, 610, 340, 54, 0x0d2b29, 1)
     .setStrokeStyle(2, 0x62e8c7, 1)
     .setDepth(depth + 4));
 
-  const travelLabel = add(scene.add.text(1000, 610, '', {
+  const travelLabel = add(scene.add.text(1160, 610, '', {
     fontFamily: PIXEL_FONT,
     fontSize: '9px',
     color: '#f1fffb',
