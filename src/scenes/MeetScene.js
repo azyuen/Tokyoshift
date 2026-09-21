@@ -356,7 +356,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 400,
+      SIDE.y + 384,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -367,7 +367,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 400,
+      SIDE.y + 384,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -378,7 +378,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 454,
+      SIDE.y + 438,
       SIDE.w - 36,
       42,
       0x24131a,
@@ -389,7 +389,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 454,
+      SIDE.y + 438,
       'WORKSHOP',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffdce1'
