@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r36';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r36';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r36';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r37';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r37';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r37';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -30,13 +30,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r36');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r37');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r36');
+        this.load.image(bg.key, bg.path + '?v=20260921-r37');
       }
     });
   }
@@ -143,15 +143,11 @@ export default class MeetScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.rectangle(154, 35, 236, 48, 0x0a1a2b, 1)
-      .setStrokeStyle(2, 0x39d9ff, 1)
-      .setDepth(41);
-
-    this.add.text(154, 35, 'MEET', {
+    this.add.text(52, 35, 'MEET', {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
-    }).setOrigin(0.5).setDepth(42);
+    }).setOrigin(0, 0.5).setDepth(42);
 
-    this.locationText = this.add.text(300, 35, 'TOKYO // NIGHT MEET', {
+    this.locationText = this.add.text(178, 35, 'TOKYO // NIGHT MEET', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
@@ -429,13 +425,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r36'
+          character.visual.path + '?v=20260921-r37'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r36');
+      queueImage(bg.key, bg.path + '?v=20260921-r37');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -538,23 +534,23 @@ export default class MeetScene extends Phaser.Scene {
       this.stageObjects.push(sprite);
 
       const softShadow = this.add.ellipse(
-        placement.charX + 4,
-        placement.charY + 5,
-        Math.max(62, sprite.displayWidth * 0.84),
-        i === 0 ? 25 : 20,
+        placement.charX + 2,
+        placement.charY - 2,
+        Math.max(58, sprite.displayWidth * 0.76),
+        i === 0 ? 11 : 9,
         0x000000,
-        0.54
-      ).setDepth(placement.charDepth - 0.70)
+        0.62
+      ).setDepth(placement.charDepth - 0.12)
         .setMask(this.stageMask);
 
       const contactShadow = this.add.ellipse(
         placement.charX,
-        placement.charY + 1,
-        Math.max(44, sprite.displayWidth * 0.58),
-        i === 0 ? 13 : 10,
+        placement.charY - 1,
+        Math.max(42, sprite.displayWidth * 0.56),
+        i === 0 ? 6 : 5,
         0x000000,
-        0.72
-      ).setDepth(placement.charDepth - 0.60)
+        0.84
+      ).setDepth(placement.charDepth - 0.08)
         .setMask(this.stageMask);
 
       this.stageObjects.push(softShadow, contactShadow);
@@ -777,25 +773,25 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    const shadowY = wheelY + Math.max(22, rearWheel.displayHeight * 0.62);
+    const shadowY = wheelY + Math.max(9, rearWheel.displayHeight * 0.24);
 
     const softShadow = this.add.ellipse(
-      x + (flipX ? -8 : 8),
-      shadowY + 5,
-      Math.max(122, targetWidth * 0.92),
-      Math.max(20, source.height * bodyScale * 0.22),
+      x + (flipX ? -5 : 5),
+      shadowY + 1,
+      Math.max(108, targetWidth * 0.86),
+      Math.max(10, source.height * bodyScale * 0.10),
       0x000000,
-      0.48
-    ).setDepth(depth - 0.75);
+      0.62
+    ).setDepth(depth - 0.12);
 
     const contactShadow = this.add.ellipse(
       x,
-      shadowY,
-      Math.max(98, targetWidth * 0.76),
-      Math.max(10, source.height * bodyScale * 0.11),
+      shadowY - 1,
+      Math.max(88, targetWidth * 0.70),
+      Math.max(5, source.height * bodyScale * 0.05),
       0x000000,
-      0.66
-    ).setDepth(depth - 0.65);
+      0.84
+    ).setDepth(depth - 0.08);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
       .setScale(bodyScale)
