@@ -51,10 +51,10 @@ export default class TouchControls {
     this.throttleSprite = scene.add.image(1405, 545, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
     this.plusLabel = scene.add.text(1218, 390, '+', {
-      fontFamily: 'monospace', fontSize: '21px', color: '#c7d8df', fontStyle: 'bold'
+      fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
     this.minusLabel = scene.add.text(1218, 697, '−', {
-      fontFamily: 'monospace', fontSize: '21px', color: '#c7d8df', fontStyle: 'bold'
+      fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
     scene.input.on('pointerdown', pointer => {
