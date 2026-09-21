@@ -338,9 +338,11 @@ export default class RaceScene extends Phaser.Scene {
 
       if (ownedCarIds.length) {
         this.registry.set('selectedCarId', ownedCarIds[0]);
+        this.registry.set('meetStranded', true);
         this.registry.set('gameOver', false);
       } else {
         this.registry.set('selectedCarId', null);
+        this.registry.set('meetStranded', false);
         this.registry.set('gameOver', true);
       }
 
