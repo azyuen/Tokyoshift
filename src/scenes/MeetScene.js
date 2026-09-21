@@ -1,4 +1,11 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r79';
+import {
+  DEFAULT_PAINT_COLOR,
+  RIVAL_PAINT_COLORS,
+  normalisePaintColor,
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+} from '../vehicles/CarAppearance.js?v=20260921-r79';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import {
   meetBackgrounds,
@@ -671,6 +678,8 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const cfg = MODE_DATA[this.selectedMode];
+    const paintPool = [...RIVAL_PAINT_COLORS];
+    Phaser.Utils.Array.Shuffle(paintPool);
 
     return ratingSlots.map(encounterRating => {
       const characterId = chooseCharacterForRating(encounterRating);
@@ -718,6 +727,7 @@ export default class MeetScene extends Phaser.Scene {
         pinkAcceptanceChance: pinkDecision.chance,
         pinkReply: pinkDecision.reply,
         pinkChallenged: false,
+        paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
       };
     });
@@ -917,7 +927,8 @@ export default class MeetScene extends Phaser.Scene {
         placement.carY,
         placement.carW,
         placement.carDepth,
-        placement.carFlipX
+        placement.carFlipX,
+        offer.paintColor
       );
       carObjects.forEach(obj => {
         obj.setMask(this.stageMask);
@@ -1419,6 +1430,7 @@ export default class MeetScene extends Phaser.Scene {
     if (this.selectedDeal === 'CASH' && cash < Number(offer.stake || 0)) return;
 
     this.registry.set('selectedOpponentCarId', offer.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(offer.paintColor, DEFAULT_PAINT_COLOR));
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
     this.registry.set('selectedOpponentEncounterRating', Number(offer.encounterRating || 3));
     this.registry.set('selectedOpponentEncounterAi', offer.encounterAi || getEncounterAi(offer.encounterRating || 3));
@@ -1437,8 +1449,16 @@ export default class MeetScene extends Phaser.Scene {
     this.scene.start('RaceScene');
   }
 
-  createCarDisplay(car, x, y, targetWidth, depth, flipX = false) {
-    const source = this.textures.get(car.visual.bodyKey).getSourceImage();
+  createCarDisplay(
+    car,
+    x,
+    y,
+    targetWidth,
+    depth,
+    flipX = false,
+    paintColor = DEFAULT_PAINT_COLOR
+  ) {
+    const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const ratio = car.visual.wheelScale / car.visual.bodyScale;
     const wheelScale = bodyScale * ratio * 1.16;
@@ -1494,11 +1514,23 @@ export default class MeetScene extends Phaser.Scene {
       0.88
     ).setDepth(depth - 0.08);
 
-    const body = this.add.image(x, y, car.visual.bodyKey)
-      .setScale(bodyScale)
-      .setFlipX(flipX)
-      .setDepth(depth + 1);
+    const bodyLayers = createCarBodyLayers(this, car, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1,
+      flipX,
+      paintColor,
+    });
 
-    return [rearBacking, frontBacking, softShadow, contactShadow, rearWheel, frontWheel, body];
+    return [
+      rearBacking,
+      frontBacking,
+      softShadow,
+      contactShadow,
+      rearWheel,
+      frontWheel,
+      ...bodyLayers.objects,
+    ];
   }
 }
