@@ -12,7 +12,7 @@ import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260921-r57';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r57';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r57';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r59';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r54';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
