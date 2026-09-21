@@ -1,11 +1,12 @@
 import {
   MEET_LOCATIONS,
   getMeetLocation,
-} from '../data/meetAssets.js?v=20260921-r75';
+} from '../data/meetAssets.js?v=20260921-r76';
 import {
   getWorkshopByLocationId,
+  getGarageCapacity,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260921-r75';
+} from '../data/workshopProgression.js?v=20260921-r76';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -14,7 +15,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260921-r75';
+} from '../data/travelRegions.js?v=20260921-r76';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -524,13 +525,17 @@ export function showTravelMap(scene, {
       row.label.setText(item.label);
       if (item.kind === 'garageUpgrade') {
         const unlocked = isWorkshopUnlocked(item.id, garageTier());
+        const totalCapacity = getGarageCapacity(Number(item.garageTier || 0));
         row.meta.setText(
-          (unlocked ? 'UNLOCKED' : 'UPGRADE') + '  •  ' +
-          Number(item.capacity || 0) + ' CARS  •  ' +
+          (unlocked ? 'UNLOCKED' : 'UPGRADE') + '  •  +' +
+          Number(item.capacity || 0) + ' SLOTS / ' + totalCapacity + ' TOTAL  •  ' +
           (unlocked ? 'OWNED' : MONEY(cost))
         );
       } else if (item.kind === 'home') {
-        row.meta.setText('HOME  •  ANY  •  ' + (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost)));
+        row.meta.setText(
+          'HOME  •  4 SLOTS  •  ' +
+          (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost))
+        );
       } else {
         row.meta.setText(
           item.difficulty + '  •  ' + time + '  •  ' +
