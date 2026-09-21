@@ -37,7 +37,7 @@ const mapPoint = node => ({
 export function showTravelMap(scene, {
   currentLocationId,
   onTravel,
-  title = 'TOKYO BAY GPS',
+  title = 'TOKYO REGION MAP',
   allowCurrentAction = false,
   actionVerb = 'DRIVE',
   costResolver = null,
@@ -76,11 +76,6 @@ export function showTravelMap(scene, {
     color: '#eefaff',
   }).setOrigin(0, 0.5).setDepth(depth + 4));
 
-  add(scene.add.text(325, 38, 'ODAIBA  //  TATSUMI  //  DAIKOKU', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#69cce9',
-  }).setOrigin(0, 0.5).setDepth(depth + 4));
 
   const cash = Number(scene.registry.get('cash') || 0);
   const headerCash = add(scene.add.text(1502, 38, MONEY(cash), {
@@ -313,35 +308,6 @@ export function showTravelMap(scene, {
     nodeUi[locationId] = { glow, ring, core, hit, pt };
   });
 
-  let selectedPriceBg = null;
-  let selectedPriceText = null;
-
-  const setPriceChip = (locationId, text, colour) => {
-    selectedPriceBg?.destroy?.();
-    selectedPriceText?.destroy?.();
-
-    const item = nodeUi[locationId];
-    if (!item) return;
-
-    const chipX = Phaser.Math.Clamp(item.pt.x + 58, MAP.x + 62, MAP.x + MAP.w - 62);
-    const chipY = Phaser.Math.Clamp(item.pt.y + 34, MAP.y + 22, MAP.y + MAP.h - 22);
-
-    selectedPriceBg = add(scene.add.rectangle(
-      chipX,
-      chipY,
-      118,
-      30,
-      0x06111c,
-      0.95
-    ).setStrokeStyle(1, colour, 0.95).setDepth(depth + 9));
-
-    selectedPriceText = add(scene.add.text(chipX, chipY, text, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#f3fbff',
-    }).setOrigin(0.5).setDepth(depth + 10));
-  };
-
   const updateSelection = () => {
     const target = getMeetLocation(selectedId);
     const cost = resolveCost(selectedId);
@@ -381,12 +347,6 @@ export function showTravelMap(scene, {
       .setColor(isCurrent && !allowCurrentAction ? '#62e8c7' : enough ? '#ffe08a' : '#ff8296');
 
     balanceText.setText('BALANCE  ' + MONEY(currentCash));
-
-    setPriceChip(
-      selectedId,
-      isCurrent && !allowCurrentAction ? 'HERE' : MONEY(cost),
-      isCurrent && !allowCurrentAction ? 0x62e8c7 : enough ? 0xff63c5 : 0x98535f
-    );
 
     travelButton.removeAllListeners('pointerdown');
 
