@@ -20,13 +20,30 @@ const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 
-const MAP = { x: 52, y: 128, w: 1038, h: 584 };
-const INFO = { x: 1110, y: 104, w: 400, h: 692 };
+// The map now owns the whole framed popup. Everything else floats over it.
+const MAP = { x: 26, y: 25, w: 1508, h: 790 };
+const INFO = { x: 952, y: 476, w: 556, h: 316 };
+const MAP_SOURCE = { w: 1672, h: 941 };
 
-const mapPoint = region => ({
-  x: MAP.x + MAP.w * region.mapX,
-  y: MAP.y + MAP.h * region.mapY,
-});
+function getMapArtBounds() {
+  const scale = Math.max(MAP.w / MAP_SOURCE.w, MAP.h / MAP_SOURCE.h);
+  const w = MAP_SOURCE.w * scale;
+  const h = MAP_SOURCE.h * scale;
+  return {
+    x: MAP.x + (MAP.w - w) / 2,
+    y: MAP.y + (MAP.h - h) / 2,
+    w,
+    h,
+  };
+}
+
+const mapPoint = region => {
+  const art = getMapArtBounds();
+  return {
+    x: art.x + art.w * region.mapX,
+    y: art.y + art.h * region.mapY,
+  };
+};
 
 function currentRegionFromLocation(locationId, fromWorkshop) {
   if (fromWorkshop) return HOME_REGION_ID;
@@ -36,9 +53,12 @@ function currentRegionFromLocation(locationId, fromWorkshop) {
   return regionIdForMeetLocation(locationId, 'ODAIBA');
 }
 
-function locationTimeLabel(locationId) {
-  const meet = MEET_LOCATIONS[locationId];
-  return meet?.timeOfDay ? meet.timeOfDay.toUpperCase() : null;
+function locationTimeLabel(location) {
+  const meet = MEET_LOCATIONS[location?.id];
+  if (meet?.timeOfDay) return meet.timeOfDay.toUpperCase();
+  if (location?.timeOfDay) return String(location.timeOfDay).toUpperCase();
+  if (location?.kind === 'home') return 'ANY';
+  return 'NIGHT';
 }
 
 export function showTravelMap(scene, {
@@ -58,16 +78,25 @@ export function showTravelMap(scene, {
   const tweens = [];
   const regionUi = {};
   const locationUi = [];
+  const panelObjects = [];
 
   const currentRegionId = currentRegionFromLocation(currentLocationId, fromWorkshop);
-  let selectedRegionId = currentRegionId;
-  let selectedLocationId = fromWorkshop
-    ? 'shinonomeWorkshop'
-    : (getTravelLocation(currentLocationId)?.id || currentLocationId || 'odaiba7eleven');
+  let selectedRegionId = null;
+  let selectedLocationId = null;
 
   const add = obj => {
     objects.push(obj);
     return obj;
+  };
+
+  const addPanel = obj => {
+    objects.push(obj);
+    panelObjects.push(obj);
+    return obj;
+  };
+
+  const setPanelVisible = visible => {
+    panelObjects.forEach(obj => obj?.setVisible?.(visible));
   };
 
   const dismiss = () => {
@@ -76,42 +105,20 @@ export function showTravelMap(scene, {
     scene.travelMapPopup = null;
   };
 
-  const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+  const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
     .setDepth(depth)
     .setInteractive());
 
-  const panel = add(scene.add.rectangle(780, 420, 1508, 790, 0x06101b, 0.995)
-    .setStrokeStyle(2, 0x46d7ff, 0.92)
-    .setInteractive()
-    .setDepth(depth + 1));
-
-  add(scene.add.text(58, 38, title, {
-    fontFamily: PIXEL_FONT,
-    fontSize: '15px',
-    color: '#eefaff',
-  }).setOrigin(0, 0.5).setDepth(depth + 4));
-
-  add(scene.add.text(58, 72, 'SELECT A REGION // THEN CHOOSE A MEET', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#6ca8c6',
-  }).setOrigin(0, 0.5).setDepth(depth + 4));
-
-  const cash = Number(scene.registry.get('cash') || 0);
-  const headerCash = add(scene.add.text(1502, 38, MONEY(cash), {
-    fontFamily: PIXEL_FONT,
-    fontSize: '11px',
-    color: '#ffe08a',
-  }).setOrigin(1, 0.5).setDepth(depth + 4));
-
-  add(scene.add.rectangle(
+  const frame = add(scene.add.rectangle(
     MAP.x + MAP.w / 2,
     MAP.y + MAP.h / 2,
-    MAP.w + 8,
-    MAP.h + 8,
-    0x07131f,
+    MAP.w,
+    MAP.h,
+    0x06101b,
     1
-  ).setStrokeStyle(2, 0x244d68, 1).setDepth(depth + 2));
+  ).setStrokeStyle(2, 0x46d7ff, 0.92)
+    .setInteractive()
+    .setDepth(depth + 1));
 
   const mapTexture = scene.textures.exists(REGION_MAP_TEXTURE)
     ? REGION_MAP_TEXTURE
@@ -119,12 +126,20 @@ export function showTravelMap(scene, {
       ? FALLBACK_MAP_TEXTURE
       : null;
 
+  const art = getMapArtBounds();
+
   if (mapTexture) {
-    add(scene.add.image(
-      MAP.x + MAP.w / 2,
-      MAP.y + MAP.h / 2,
+    const mapImage = add(scene.add.image(
+      art.x + art.w / 2,
+      art.y + art.h / 2,
       mapTexture
-    ).setDisplaySize(MAP.w, MAP.h).setDepth(depth + 2.2));
+    ).setDisplaySize(art.w, art.h).setDepth(depth + 2));
+
+    const maskShape = scene.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
+    mapImage.setMask(maskShape.createGeometryMask());
+    objects.push(maskShape);
   } else {
     add(scene.add.rectangle(
       MAP.x + MAP.w / 2,
@@ -133,7 +148,7 @@ export function showTravelMap(scene, {
       MAP.h,
       0x07111d,
       1
-    ).setDepth(depth + 2.2));
+    ).setDepth(depth + 2));
 
     add(scene.add.text(
       MAP.x + MAP.w / 2,
@@ -147,155 +162,126 @@ export function showTravelMap(scene, {
     ).setOrigin(0.5).setDepth(depth + 3));
   }
 
+  // Only a tiny tint: the new artwork should be the screen, not a small inset.
   add(scene.add.rectangle(
     MAP.x + MAP.w / 2,
     MAP.y + MAP.h / 2,
     MAP.w,
     MAP.h,
     0x020812,
-    0.08
-  ).setDepth(depth + 2.3));
+    0.035
+  ).setDepth(depth + 2.25));
 
+  // Title floats over the artwork with its own dark translucent backing.
   add(scene.add.rectangle(
+    MAP.x + 190,
+    MAP.y + 42,
+    340,
+    54,
+    0x030811,
+    0.82
+  ).setStrokeStyle(1, 0x315470, 0.78).setDepth(depth + 9));
+
+  add(scene.add.text(MAP.x + 36, MAP.y + 42, title, {
+    fontFamily: PIXEL_FONT,
+    fontSize: '13px',
+    color: '#eefaff',
+  }).setOrigin(0, 0.5).setDepth(depth + 10));
+
+  const closeButton = add(scene.add.rectangle(
+    MAP.x + MAP.w - 48,
+    MAP.y + 42,
+    64,
+    42,
+    0x07111d,
+    0.90
+  ).setStrokeStyle(1, 0x547489, 0.95)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(depth + 10));
+
+  add(scene.add.text(
+    MAP.x + MAP.w - 48,
+    MAP.y + 42,
+    'X',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#d8e7ef',
+    }
+  ).setOrigin(0.5).setDepth(depth + 11));
+
+  // Compact lower-right region/location panel.
+  const infoPanel = addPanel(scene.add.rectangle(
     INFO.x + INFO.w / 2,
     INFO.y + INFO.h / 2,
     INFO.w,
     INFO.h,
-    0x07111d,
-    0.99
-  ).setStrokeStyle(2, 0x244d68, 1).setDepth(depth + 2));
+    0x06101b,
+    0.94
+  ).setStrokeStyle(2, 0x46d7ff, 0.92).setDepth(depth + 10));
 
-  add(scene.add.text(INFO.x + 22, INFO.y + 18, 'REGION', {
+  const regionNameText = addPanel(scene.add.text(INFO.x + 22, INFO.y + 18, '', {
     fontFamily: PIXEL_FONT,
-    fontSize: '8px',
-    color: '#718fa3',
-  }).setDepth(depth + 4));
+    fontSize: '12px',
+    color: '#ffffff',
+  }).setDepth(depth + 12));
 
-  const regionNameText = add(scene.add.text(INFO.x + 22, INFO.y + 48, '', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '14px',
-    color: '#eefaff',
-  }).setDepth(depth + 4));
-
-  const regionMetaText = add(scene.add.text(INFO.x + 22, INFO.y + 82, '', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '8px',
-    color: '#65dffc',
-  }).setDepth(depth + 4));
-
-  const regionDescriptionText = add(scene.add.text(INFO.x + 22, INFO.y + 112, '', {
+  const regionLineText = addPanel(scene.add.text(INFO.x + 22, INFO.y + 48, '', {
     fontFamily: BODY_FONT,
-    fontSize: '10px',
-    color: '#8aa3b4',
+    fontSize: '9px',
+    color: '#a7c0ce',
     fontStyle: '600',
     wordWrap: { width: INFO.w - 44 },
-    lineSpacing: 1,
-  }).setDepth(depth + 4));
+  }).setDepth(depth + 12));
 
-  add(scene.add.rectangle(
-    INFO.x + INFO.w / 2,
-    INFO.y + 176,
-    INFO.w - 36,
-    1,
-    0x34536a,
-    0.75
-  ).setDepth(depth + 3));
-
-  add(scene.add.text(INFO.x + 22, INFO.y + 194, 'LOCATIONS', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '8px',
-    color: '#718fa3',
-  }).setDepth(depth + 4));
-
-  const locationStartY = INFO.y + 246;
-
+  const rowStartY = INFO.y + 92;
   for (let i = 0; i < 3; i++) {
-    const y = locationStartY + i * 72;
+    const y = rowStartY + i * 48;
 
-    const box = add(scene.add.rectangle(
+    const box = addPanel(scene.add.rectangle(
       INFO.x + INFO.w / 2,
       y,
-      INFO.w - 44,
-      60,
+      INFO.w - 36,
+      40,
       0x0b1724,
-      1
-    ).setStrokeStyle(1, 0x315470, 1).setDepth(depth + 4));
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(depth + 11));
 
-    const label = add(scene.add.text(INFO.x + 34, y - 13, '', {
+    const label = addPanel(scene.add.text(INFO.x + 24, y, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#dff3ff',
-    }).setOrigin(0, 0.5).setDepth(depth + 5));
+      fontSize: '8px',
+      color: '#e4f5ff',
+    }).setOrigin(0, 0.5).setDepth(depth + 12));
 
-    const meta = add(scene.add.text(INFO.x + 34, y + 14, '', {
+    const meta = addPanel(scene.add.text(INFO.x + INFO.w - 24, y, '', {
       fontFamily: BODY_FONT,
-      fontSize: '9px',
-      color: '#7d9bad',
+      fontSize: '8px',
+      color: '#8fa8b8',
       fontStyle: '600',
-    }).setOrigin(0, 0.5).setDepth(depth + 5));
+    }).setOrigin(1, 0.5).setDepth(depth + 12));
 
     locationUi.push({ box, label, meta, location: null });
   }
 
-  add(scene.add.rectangle(
+  const travelButton = addPanel(scene.add.rectangle(
     INFO.x + INFO.w / 2,
-    INFO.y + 466,
+    INFO.y + INFO.h - 34,
     INFO.w - 36,
-    1,
-    0x34536a,
-    0.75
-  ).setDepth(depth + 3));
-
-  const selectedDetail = add(scene.add.text(INFO.x + 22, INFO.y + 486, '', {
-    fontFamily: BODY_FONT,
-    fontSize: '10px',
-    color: '#9ab0bd',
-    fontStyle: '600',
-    wordWrap: { width: INFO.w - 44 },
-    lineSpacing: 1,
-  }).setDepth(depth + 4));
-
-  const travelButton = add(scene.add.rectangle(
-    INFO.x + INFO.w / 2,
-    INFO.y + 566,
-    INFO.w - 44,
-    58,
+    46,
     0x0d2b29,
     1
-  ).setStrokeStyle(2, 0x62e8c7, 1).setDepth(depth + 4));
+  ).setStrokeStyle(2, 0x62e8c7, 1).setDepth(depth + 11));
 
-  const travelLabel = add(scene.add.text(
+  const travelLabel = addPanel(scene.add.text(
     INFO.x + INFO.w / 2,
-    INFO.y + 566,
+    INFO.y + INFO.h - 34,
     '',
     {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#f1fffb',
     }
-  ).setOrigin(0.5).setDepth(depth + 5));
-
-  const closeButton = add(scene.add.rectangle(
-    INFO.x + INFO.w / 2,
-    INFO.y + 638,
-    INFO.w - 44,
-    42,
-    0x171c25,
-    1
-  ).setStrokeStyle(1, 0x516a7b, 1)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(depth + 4));
-
-  add(scene.add.text(
-    INFO.x + INFO.w / 2,
-    INFO.y + 638,
-    'CLOSE GPS',
-    {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#c7d5de',
-    }
-  ).setOrigin(0.5).setDepth(depth + 5));
+  ).setOrigin(0.5).setDepth(depth + 12));
 
   const getTargetCost = location => {
     if (!location) return 0;
@@ -321,83 +307,23 @@ export function showTravelMap(scene, {
         item.glow.setRadius(28)
           .setFillStyle(home ? 0x25dbff : 0xff4fbd, 0.15)
           .setStrokeStyle(3, home ? 0x5ceaff : 0xff63c5, 0.96);
-        item.ring.setRadius(18)
-          .setStrokeStyle(4, 0xffffff, 1);
-        item.core.setRadius(6)
-          .setFillStyle(home ? 0x60ecff : 0xff6bc9, 1);
+        item.ring.setRadius(18).setStrokeStyle(4, 0xffffff, 1);
+        item.core.setRadius(6).setFillStyle(home ? 0x60ecff : 0xff6bc9, 1);
       } else if (here) {
         item.glow.setRadius(25)
           .setFillStyle(0x35e8ff, 0.12)
           .setStrokeStyle(3, 0x55ecff, 0.9);
-        item.ring.setRadius(16)
-          .setStrokeStyle(3, 0xa9f7ff, 0.95);
-        item.core.setRadius(5)
-          .setFillStyle(0xcdfaff, 1);
+        item.ring.setRadius(16).setStrokeStyle(3, 0xa9f7ff, 0.95);
+        item.core.setRadius(5).setFillStyle(0xcdfaff, 1);
       } else {
-        item.glow.setRadius(21)
-          .setFillStyle(home ? 0x168aa0 : 0x86205f, 0.05)
-          .setStrokeStyle(2, home ? 0x4fa8b8 : 0x8a5274, 0.5);
-        item.ring.setRadius(14)
-          .setStrokeStyle(2, home ? 0x73b8c4 : 0xa66b8e, 0.68);
+        item.glow.setRadius(20)
+          .setFillStyle(home ? 0x168aa0 : 0x86205f, 0.04)
+          .setStrokeStyle(2, home ? 0x4fa8b8 : 0x8a5274, 0.46);
+        item.ring.setRadius(13)
+          .setStrokeStyle(2, home ? 0x73b8c4 : 0xa66b8e, 0.64);
         item.core.setRadius(4)
-          .setFillStyle(home ? 0x9dd9e4 : 0xd7a5c8, 0.82);
+          .setFillStyle(home ? 0x9dd9e4 : 0xd7a5c8, 0.80);
       }
-    });
-  };
-
-  const refreshLocationRows = region => {
-    region.locations.slice(0, 3).forEach((location, i) => {
-      const row = locationUi[i];
-      row.location = location;
-
-      const selected = selectedLocationId === location.id;
-      const isCurrent = !fromWorkshop && currentLocationId === location.id;
-      const cost = getTargetCost(location);
-      const available = Boolean(location.available);
-
-      row.label.setText(location.label);
-
-      if (location.kind === 'home') {
-        row.meta.setText(fromWorkshop
-          ? 'HOME BASE // HERE'
-          : 'HOME BASE // ' + MONEY(cost));
-      } else if (!available) {
-        row.meta.setText(location.difficulty + ' // COMING SOON');
-      } else if (isCurrent) {
-        row.meta.setText(location.difficulty + ' // HERE');
-      } else {
-        const time = locationTimeLabel(location.id);
-        row.meta.setText(
-          (time ? time + ' // ' : '') + location.difficulty + ' // ' + MONEY(cost)
-        );
-      }
-
-      row.box.removeAllListeners('pointerdown');
-
-      if (available || location.kind === 'home') {
-        row.box.setInteractive({ useHandCursor: true });
-        row.box.on('pointerdown', () => {
-          selectedLocationId = location.id;
-          refreshPanel();
-        });
-      } else {
-        row.box.disableInteractive();
-      }
-
-      row.box
-        .setFillStyle(selected ? 0x14263a : available || location.kind === 'home' ? 0x0b1724 : 0x0a1017, 1)
-        .setStrokeStyle(
-          selected ? 2 : 1,
-          selected ? 0x43dfff : available || location.kind === 'home' ? 0x315470 : 0x29343d,
-          1
-        );
-
-      row.label.setColor(
-        selected ? '#ffffff' : available || location.kind === 'home' ? '#dff3ff' : '#66747d'
-      );
-      row.meta.setColor(
-        available || location.kind === 'home' ? '#7d9bad' : '#53616b'
-      );
     });
   };
 
@@ -480,33 +406,58 @@ export function showTravelMap(scene, {
       if (!fromWorkshop && selectedRegionId === currentRegionId) {
         location = region.locations.find(item => item.id === currentLocationId);
       }
-      location = location || region.locations.find(item => item.available) || region.locations[0];
+
+      location = location
+        || region.locations.find(item => item.available)
+        || region.locations[0];
+
       selectedLocationId = location?.id || null;
     }
 
     regionNameText.setText(region.label);
-    regionMetaText.setText(
-      region.role + ' // ' + region.level +
-      (region.baseCost > 0 ? ' // FROM HOME ' + MONEY(region.baseCost) + '+' : '')
-    );
-    regionDescriptionText.setText(region.description);
+    regionLineText.setText(region.description);
 
-    refreshLocationRows(region);
+    region.locations.slice(0, 3).forEach((item, i) => {
+      const row = locationUi[i];
+      row.location = item;
+
+      const selected = selectedLocationId === item.id;
+      const isCurrent = !fromWorkshop && currentLocationId === item.id;
+      const cost = getTargetCost(item);
+      const available = Boolean(item.available) || item.kind === 'home';
+      const time = locationTimeLabel(item);
+
+      row.label.setText(item.label);
+      row.meta.setText(
+        item.difficulty + '  •  ' + time + '  •  ' +
+        (isCurrent ? 'HERE' : MONEY(cost))
+      );
+
+      row.box.removeAllListeners('pointerdown');
+
+      if (available) {
+        row.box.setInteractive({ useHandCursor: true });
+        row.box.on('pointerdown', () => {
+          selectedLocationId = item.id;
+          refreshPanel();
+        });
+      } else {
+        row.box.disableInteractive();
+      }
+
+      row.box
+        .setFillStyle(selected ? 0x14263a : available ? 0x0b1724 : 0x0a1017, 0.96)
+        .setStrokeStyle(
+          selected ? 2 : 1,
+          selected ? 0x43dfff : available ? 0x315470 : 0x29343d,
+          1
+        );
+
+      row.label.setColor(selected ? '#ffffff' : available ? '#dff3ff' : '#65737d');
+      row.meta.setColor(available ? '#8fa8b8' : '#53616b');
+    });
 
     const selectedLocation = region.locations.find(item => item.id === selectedLocationId) || null;
-    const cost = getTargetCost(selectedLocation);
-
-    if (selectedLocation) {
-      selectedDetail.setText(
-        selectedLocation.label + ' // ' + selectedLocation.note +
-        (selectedLocation.available && selectedLocation.kind !== 'home'
-          ? '\nTRAVEL ' + MONEY(cost) + '   •   BALANCE ' + MONEY(Number(scene.registry.get('cash') || 0))
-          : '')
-      );
-    } else {
-      selectedDetail.setText('');
-    }
-
     refreshAction(selectedLocation);
     updateRegionNodes();
   };
@@ -527,7 +478,7 @@ export function showTravelMap(scene, {
     const core = add(scene.add.circle(pt.x, pt.y, 4, home ? 0xcdfaff : 0xffb3e5, 0.95)
       .setDepth(depth + 7));
 
-    const hit = add(scene.add.circle(pt.x, pt.y, 37, 0x000000, 0.001)
+    const hit = add(scene.add.circle(pt.x, pt.y, 38, 0x000000, 0.001)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 8));
 
@@ -544,6 +495,7 @@ export function showTravelMap(scene, {
           || null;
       }
 
+      setPanelVisible(true);
       refreshPanel();
     });
 
@@ -566,11 +518,15 @@ export function showTravelMap(scene, {
 
   blocker.on('pointerdown', dismiss);
   closeButton.on('pointerdown', dismiss);
-  panel.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
+  frame.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
+  infoPanel.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
 
-  scene.travelMapPopup = panel;
-  refreshPanel();
-  headerCash.setText(MONEY(Number(scene.registry.get('cash') || 0)));
+  scene.travelMapPopup = frame;
 
-  return panel;
+  // Start with the map completely unobstructed. The compact panel appears
+  // only after the player taps a region.
+  setPanelVisible(false);
+  updateRegionNodes();
+
+  return frame;
 }
