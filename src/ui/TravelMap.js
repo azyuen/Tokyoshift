@@ -14,7 +14,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260921-r73';
+} from '../data/travelRegions.js?v=20260921-r74';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -433,10 +433,25 @@ export function showTravelMap(scene, {
     }
 
     if (isHome && fromWorkshop) {
-      travelButton.disableInteractive()
-        .setFillStyle(0x10202a, 1)
-        .setStrokeStyle(1, 0x4f788b, 1);
-      travelLabel.setColor('#7fcfe8').setText('YOU\'RE HOME');
+      const active = activeWorkshopId() === location.id;
+
+      if (active) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x10202a, 1)
+          .setStrokeStyle(1, 0x4f788b, 1);
+        travelLabel.setColor('#7fcfe8').setText('ACTIVE WORKSHOP');
+        return;
+      }
+
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102838, 1)
+        .setStrokeStyle(2, 0x55dfff, 1);
+      travelLabel.setColor('#f1fffb').setText('USE HOME WORKSHOP');
+      travelButton.on('pointerdown', () => {
+        dismiss();
+        onWorkshopUpgrade?.(location, 0, true);
+      });
       return;
     }
 
@@ -515,7 +530,7 @@ export function showTravelMap(scene, {
           (unlocked ? 'OWNED' : MONEY(cost))
         );
       } else if (item.kind === 'home') {
-        row.meta.setText('HOME  •  ANY  •  ' + (fromWorkshop ? 'HERE' : MONEY(cost)));
+        row.meta.setText('HOME  •  ANY  •  ' + (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost)));
       } else {
         row.meta.setText(
           item.difficulty + '  •  ' + time + '  •  ' +
