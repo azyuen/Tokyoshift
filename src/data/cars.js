@@ -52,6 +52,7 @@ export const cars = {
     launchRPM: 4800,
     visual: {
       bodyKey: 'carAE86',
+      engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.165,
       wheelScale: 0.039,
@@ -93,6 +94,7 @@ export const cars = {
     launchRPM: 5000,
     visual: {
       bodyKey: 'carR32',
+      engineKey: 'stockEngineRB26DETT',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.165,
       wheelScale: 0.039,
@@ -134,6 +136,7 @@ export const cars = {
     launchRPM: 5500,
     visual: {
       bodyKey: 'carEvoIII',
+      engineKey: 'stockEngine4G63T',
       wheelKey: 'wheelMesh',
       bodyScale: 0.198,
       wheelScale: 0.039,
@@ -175,6 +178,7 @@ export const cars = {
     launchRPM: 4300,
     visual: {
       bodyKey: 'carFC3S',
+      engineKey: 'stockEngine13BT',
       wheelKey: 'wheelDeepDish',
       bodyScale: 0.198,
       wheelScale: 0.039,
@@ -216,6 +220,7 @@ export const cars = {
     launchRPM: 5200,
     visual: {
       bodyKey: 'carWRX22B',
+      engineKey: 'stockEngineEJ22G',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.198,
       wheelScale: 0.039,
@@ -257,6 +262,7 @@ export const cars = {
     launchRPM: 6000,
     visual: {
       bodyKey: 'carEK9',
+      engineKey: 'stockEngineB16B',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.198,
       wheelScale: 0.039,
