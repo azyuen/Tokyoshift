@@ -12,7 +12,7 @@ import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260921-r55';
 import { saveSessionState } from '../state/GameState.js?v=20260921-r55';
-import { playMusic } from '../audio/MusicManager.js?v=20260921-r56';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
