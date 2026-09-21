@@ -4,7 +4,13 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r79';
+import {
+  DEFAULT_PAINT_COLOR,
+  getCarPaintColor,
+  normalisePaintColor,
+  createCarBodyLayers,
+} from '../vehicles/CarAppearance.js?v=20260921-r79';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
@@ -54,6 +60,10 @@ export default class RaceScene extends Phaser.Scene {
       ? chosenOpponent
       : Phaser.Utils.Array.GetRandom(rivals);
 
+    this.opponentPaintColor = normalisePaintColor(
+      this.registry.get('selectedOpponentPaintColor'),
+      DEFAULT_PAINT_COLOR
+    );
     this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
     this.opponentEncounterRating = Phaser.Math.Clamp(
       Number(this.registry.get('selectedOpponentEncounterRating') || characters[this.opponentCharacterId]?.skill?.rating || 3),
@@ -84,6 +94,7 @@ export default class RaceScene extends Phaser.Scene {
       tuneLevel: 0,
       acquiredVia: 'starter',
     };
+    this.playerPaintColor = getCarPaintColor(this.playerCarState);
 
     const rivalCharacter = characters[this.opponentCharacterId];
     const playerBaseCar = clone(cars[this.selectedCarId]);
@@ -160,8 +171,18 @@ export default class RaceScene extends Phaser.Scene {
     this.fxG = this.add.graphics().setDepth(8);
     this.treeLightsG = this.add.graphics().setDepth(23);
 
-    this.playerVisual = this.createCarVisual(cars[this.selectedCarId].visual, 7, 1.0);
-    this.opponentVisual = this.createCarVisual(cars[this.opponentCarId].visual, 6, 0.88);
+    this.playerVisual = this.createCarVisual(
+      cars[this.selectedCarId].visual,
+      7,
+      1.0,
+      this.playerPaintColor
+    );
+    this.opponentVisual = this.createCarVisual(
+      cars[this.opponentCarId].visual,
+      6,
+      0.88,
+      this.opponentPaintColor
+    );
 
     this.treeSprite = this.add.image(780, 192, 'dragTree')
       .setScale(0.105)
@@ -483,6 +504,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.opponentBuildState = {
       stock: buildRating <= 2,
+      paintColor: this.opponentPaintColor,
       nosInstalled: hasNitrous,
       nosPower: config.nosPower,
       nosCapacitySeconds: config.nosCapacitySeconds,
@@ -557,7 +579,7 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
-  createCarVisual(cfg, depth, roleScale) {
+  createCarVisual(cfg, depth, roleScale, paintColor = DEFAULT_PAINT_COLOR) {
     const bodyScale = cfg.bodyScale * roleScale;
     const wheelScale = cfg.wheelScale * roleScale * 1.16;
 
@@ -579,9 +601,14 @@ export default class RaceScene extends Phaser.Scene {
       0, 0, Math.max(9, frontWheel.displayWidth * 0.50), 0x030507, 1
     ).setDepth(depth - 0.35);
 
-    const body = this.add.image(0, 0, cfg.bodyKey)
-      .setScale(bodyScale)
-      .setDepth(depth + 1);
+    const bodyLayers = createCarBodyLayers(this, cfg, {
+      x: 0,
+      y: 0,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor,
+    });
+    const body = bodyLayers.primary;
 
     const roadShadow = this.add.ellipse(
       0, 0,
@@ -600,6 +627,9 @@ export default class RaceScene extends Phaser.Scene {
       frontWheelBacking,
       roadShadow,
       body,
+      bodyObjects: bodyLayers.objects,
+      paintBody: bodyLayers.paint,
+      bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
       noseOffsetPx: body.width * bodyScale * 0.5,
       rearX: 0,
@@ -1144,7 +1174,7 @@ export default class RaceScene extends Phaser.Scene {
   updateCarVisual(v, x, y, t, dt) {
     const c = v.cfg;
     const bodyY = y + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
-    v.body.setPosition(x, bodyY);
+    (v.bodyObjects || [v.body]).forEach(obj => obj.setPosition(x, bodyY));
 
     const rearX = x + c.rearOffsetX * v.bodyScale;
     const frontX = x + c.frontOffsetX * v.bodyScale;
