@@ -54,7 +54,6 @@ export default class MeetScene extends Phaser.Scene {
     this.cardObjects = [];
     this.stageObjects = [];
     this.selectedOfferIndex = 0;
-    this.selectedDeal = 'CASH';
     this.nextRefreshAt = Date.now() + 180000;
     this.currentBackground = null;
     this.backgroundMaskShape = null;
@@ -293,7 +292,6 @@ export default class MeetScene extends Phaser.Scene {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
           this.selectedMode = row[1];
-          this.selectedDeal = 'CASH';
           this.rollOffers();
         });
       }
@@ -301,11 +299,11 @@ export default class MeetScene extends Phaser.Scene {
       this.modeButtons.push({ key: row[1], box, label, arrow, locked });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 184, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, SIDE.y + 158, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 214, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 188, '', {
       fontFamily: BODY_FONT,
       fontSize: '13px',
       color: '#d8e7ef',
@@ -313,27 +311,48 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 292, 'STAKE', {
+    this.add.text(SIDE.x + 20, SIDE.y + 258, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.dealButtons = [];
-    const deals = [
-      { key: 'CASH', label: 'CASH BET', x: SIDE.x + 93 },
-      { key: 'PINK', label: 'PINK SLIP', x: SIDE.x + 263 },
-    ];
+    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 258, '', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
+    }).setOrigin(1, 0).setDepth(37);
 
-    deals.forEach(deal => {
-      const box = this.add.rectangle(deal.x, SIDE.y + 330, 146, 40, 0x0b1724, 1)
-        .setStrokeStyle(1, 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(37);
-      const label = this.add.text(deal.x, SIDE.y + 330, deal.label, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#a9c7da'
-      }).setOrigin(0.5).setDepth(38);
-      box.on('pointerdown', () => this.setDeal(deal.key));
-      this.dealButtons.push({ ...deal, box, label });
-    });
+    this.pinkSlipButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 306,
+      SIDE.w - 36,
+      40,
+      0x291620,
+      1
+    ).setStrokeStyle(2, 0xff5f93, 0.9)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(37);
+
+    this.pinkSlipButtonLabel = this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 306,
+      'PINK SLIPS?',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
+      }
+    ).setOrigin(0.5).setDepth(38);
+
+    this.pinkResponseText = this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 336,
+      '',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#91a9b7',
+        wordWrap: { width: SIDE.w - 40 },
+        align: 'center',
+      }
+    ).setOrigin(0, 0).setDepth(38);
+
+    this.pinkSlipButton.on('pointerdown', () => this.challengePinkSlips());
 
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
@@ -455,6 +474,8 @@ export default class MeetScene extends Phaser.Scene {
         stake = Phaser.Math.Snap.To(Phaser.Math.Between(minBet, maxBet), 500);
       }
 
+      const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId);
+
       return {
         characterId,
         carId,
@@ -463,6 +484,9 @@ export default class MeetScene extends Phaser.Scene {
         stake,
         distance: Phaser.Utils.Array.GetRandom(cfg.distances),
         quote: character.introQuote,
+        pinkAccepted: pinkDecision.accepted,
+        pinkReply: pinkDecision.reply,
+        pinkChallenged: false,
       };
     });
 
@@ -674,7 +698,7 @@ export default class MeetScene extends Phaser.Scene {
       const stakeText = typeof offer.stake === 'number'
         ? '¥ ' + offer.stake.toLocaleString('en-US')
         : offer.stake;
-      const dealText = this.selectedMode === 'SINGLE' ? 'BET' : 'PRIZE';
+      const dealText = this.selectedMode === 'SINGLE' ? stakeText : 'PRIZE ' + stakeText;
       const textX = x - 42;
 
       const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
@@ -686,7 +710,7 @@ export default class MeetScene extends Phaser.Scene {
       const deal = this.add.text(x + 160, cardY - 44, dealText, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
-        color: this.selectedMode === 'SINGLE' ? '#8fd2f5' : '#8fe7ff',
+        color: this.selectedMode === 'SINGLE' ? '#ffe08a' : '#8fe7ff',
       }).setOrigin(1, 0).setDepth(35);
 
       const quote = this.add.text(textX, cardY - 14, '"' + offer.quote + '"', {
@@ -712,19 +736,109 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  setDeal(key) {
-    this.selectedDeal = key === 'PINK' ? 'PINK' : 'CASH';
-    this.updateDealButtons();
-    this.selectOffer(this.selectedOfferIndex);
+  estimateCarThreat(carId, tuneLevel = 0, hasNitrous = false) {
+    const car = cars[carId];
+    if (!car) return 0;
+
+    const powerToWeight = (car.powerKW || 0) / Math.max(1, car.vehicleMassKg || 1) * 1000;
+    const traction = (car.tyreGrip || 1)
+      * Math.max(0.35, (car.drivenAxleWeightFraction || 0.54) * (car.launchLoadMultiplier || 1));
+    const forcedInduction = Math.max(0, car.maximumBoost || 0) * 7;
+    const tune = Phaser.Math.Clamp(Number(tuneLevel) || 0, 0, 5) * 4.5;
+    const nitrous = hasNitrous ? 9 : 0;
+
+    return powerToWeight * 0.72 + traction * 52 + forcedInduction + tune + nitrous;
   }
 
-  updateDealButtons() {
-    this.dealButtons?.forEach(item => {
-      const active = item.key === this.selectedDeal;
-      item.box.setFillStyle(active ? (item.key === 'PINK' ? 0x341623 : 0x10283b) : 0x0b1724, 1);
-      item.box.setStrokeStyle(2, active ? (item.key === 'PINK' ? 0xff5f93 : 0x43dfff) : 0x315470, 1);
-      item.label.setColor(active ? '#ffffff' : '#a9c7da');
+  evaluatePinkSlipAcceptance(character, opponentCarId) {
+    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 3), 1, 5);
+    const aggression = Phaser.Math.Clamp(Number(character?.skill?.ai?.aggression || 0.76), 0.5, 1);
+
+    const playerCarId = this.registry.get('selectedCarId') || 'ae86';
+    const carStates = this.registry.get('carStates') || {};
+    const playerState = carStates[playerCarId] || { tuneLevel: 0, nosInstalled: false };
+
+    const wins = Number(this.registry.get('wins') || 0);
+    const losses = Number(this.registry.get('losses') || 0);
+    const races = wins + losses;
+    const playerWinRate = races > 0 ? wins / races : 0.5;
+
+    const opponentThreat = this.estimateCarThreat(opponentCarId, rating, rating >= 4)
+      + rating * 9;
+    const playerThreat = this.estimateCarThreat(
+      playerCarId,
+      playerState.tuneLevel || 0,
+      Boolean(playerState.nosInstalled)
+    ) + 18 + playerWinRate * 14;
+
+    // Rivals judge the visible matchup, but imperfectly. Aggressive drivers
+    // accept thinner edges; uncertainty means they can occasionally misread it.
+    const perceivedMargin = opponentThreat - playerThreat
+      + Phaser.Math.FloatBetween(-18, 18);
+    const requiredMargin = Phaser.Math.Linear(10, -9, (aggression - 0.5) / 0.5);
+    const accepted = perceivedMargin >= requiredMargin;
+
+    const yesReplies = [
+      'All right. Keys for keys.',
+      'You\'re on. Pink slips.',
+      'Fine. Winner takes the car.',
+    ];
+    const noReplies = [
+      'No. Cash race only.',
+      'Not risking the car tonight.',
+      'Cash is enough.',
+    ];
+
+    return {
+      accepted,
+      reply: Phaser.Utils.Array.GetRandom(accepted ? yesReplies : noReplies),
+    };
+  }
+
+  challengePinkSlips() {
+    const offer = this.offers[this.selectedOfferIndex];
+    if (!offer || offer.pinkChallenged) return;
+
+    offer.pinkChallenged = true;
+    this.pinkSlipButton.disableInteractive();
+    this.pinkSlipButtonLabel.setText('THINKING...');
+    this.pinkResponseText.setText('They look over both cars...');
+
+    const selectedIndex = this.selectedOfferIndex;
+    this.time.delayedCall(420, () => {
+      if (!this.offers[selectedIndex]) return;
+      if (this.selectedOfferIndex === selectedIndex) this.selectOffer(selectedIndex);
     });
+  }
+
+  updatePinkSlipControl(offer) {
+    if (!offer) return;
+
+    if (!offer.pinkChallenged) {
+      this.pinkSlipButton
+        .setFillStyle(0x291620, 1)
+        .setStrokeStyle(2, 0xff5f93, 0.9)
+        .setInteractive({ useHandCursor: true });
+      this.pinkSlipButtonLabel.setText('PINK SLIPS?').setColor('#ffdce8');
+      this.pinkResponseText.setText('');
+      return;
+    }
+
+    this.pinkSlipButton.disableInteractive();
+
+    if (offer.pinkAccepted) {
+      this.pinkSlipButton
+        .setFillStyle(0x351724, 1)
+        .setStrokeStyle(2, 0xff6aa0, 1);
+      this.pinkSlipButtonLabel.setText('PINKS ACCEPTED').setColor('#ffffff');
+      this.pinkResponseText.setText('“' + offer.pinkReply + '”').setColor('#ffafca');
+    } else {
+      this.pinkSlipButton
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+      this.pinkSlipButtonLabel.setText('NO DEAL').setColor('#72838f');
+      this.pinkResponseText.setText('“' + offer.pinkReply + '”').setColor('#8799a5');
+    }
   }
 
   selectOffer(index) {
@@ -747,34 +861,35 @@ export default class MeetScene extends Phaser.Scene {
 
     const character = characters[offer.characterId];
     const car = cars[offer.carId];
-    const playerCar = cars[this.registry.get('selectedCarId') || 'ae86'];
 
     const stakeText = typeof offer.stake === 'number'
       ? '¥ ' + offer.stake.toLocaleString('en-US')
       : offer.stake;
 
-    const dealLine = this.selectedDeal === 'PINK'
-      ? 'PINK SLIP  •  ' + playerCar.shortName + ' vs ' + car.shortName
-      : 'BET  •  ' + stakeText;
+    this.selectedDeal = offer.pinkChallenged && offer.pinkAccepted ? 'PINK' : 'CASH';
 
     this.selectedSummary.setText(
       (character.skill?.label ?? 'SKILLED') + '\n' +
       car.shortName + '  •  ' + offer.raceType + '\n' +
-      offer.distance + '  •  ' + dealLine
+      offer.distance
     );
 
-    this.updateDealButtons();
+    this.rivalOfferText.setText(stakeText);
+    this.updatePinkSlipControl(offer);
 
     const cash = this.registry.get('cash') ?? 0;
     const affordable = this.selectedDeal === 'PINK' || cash >= Number(offer.stake || 0);
 
     if (affordable) {
-      this.raceButton.setFillStyle(this.selectedDeal === 'PINK' ? 0x32151f : 0x0b2826, 1)
+      this.raceButton
+        .setFillStyle(this.selectedDeal === 'PINK' ? 0x32151f : 0x0b2826, 1)
         .setStrokeStyle(2, this.selectedDeal === 'PINK' ? 0xff5f93 : 0x62e8c7, 1)
         .setInteractive({ useHandCursor: true });
+
       this.raceButtonLabel.setColor('#f1fffb').setText(
-        (this.selectedDeal === 'PINK' ? 'PINK SLIP // ' : 'RACE ') +
-        character.name.split(' ')[0].toUpperCase() + '  >'
+        this.selectedDeal === 'PINK'
+          ? 'RACE FOR PINKS  >'
+          : 'RACE FOR ' + stakeText + '  >'
       );
     } else {
       this.raceButton.setFillStyle(0x25151a, 1)
