@@ -1,6 +1,7 @@
 export default class TouchControls {
-  constructor(scene) {
+  constructor(scene, options = {}) {
     this.scene = scene;
+    this.nosEnabled = options.nosEnabled !== false;
     this.throttle = 0;
     this.clutch = 0;
     this.nos = false;
@@ -46,7 +47,7 @@ export default class TouchControls {
     this.shifterScale = 0.20;
 
     this.clutchSprite = scene.add.image(175, 545, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
-    this.nosSprite = scene.add.image(378, 570, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0);
+    this.nosSprite = scene.add.image(378, 570, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0).setVisible(this.nosEnabled);
     this.shifterSprite = scene.add.image(1218, 535, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
     this.throttleSprite = scene.add.image(1405, 545, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
@@ -90,7 +91,7 @@ export default class TouchControls {
 
     const keyboardThrottle = this.keys.throttle.isDown || this.keys.throttleAlt.isDown;
     const keyboardClutch = this.keys.clutch.isDown;
-    const keyboardNos = this.keys.nos.isDown;
+    const keyboardNos = this.nosEnabled && this.keys.nos.isDown;
 
     if (this.throttlePointer && !this.throttlePointer.isDown) {
       this.throttlePointer = null;
@@ -115,7 +116,7 @@ export default class TouchControls {
       touchClutch = this.clutchLatchedMax ? 1 : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
     this.clutch = keyboardClutch ? 1 : touchClutch;
-    this.nos = keyboardNos || Boolean(this.pointerIn(this.layout.nos));
+    this.nos = this.nosEnabled && (keyboardNos || Boolean(this.pointerIn(this.layout.nos)));
 
     for (let g = 1; g <= 6; g++) {
       const key = this.keys[['one', 'two', 'three', 'four', 'five', 'six'][g - 1]];
@@ -160,8 +161,10 @@ export default class TouchControls {
       this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, shiftState === 'up' ? 525 : 535).setScale(this.shifterScale);
     }
 
-    this.nosSprite.setScale(this.nos ? this.nosScale * 0.965 : this.nosScale);
-    this.nosSprite.setTint(this.nos ? 0xffffff : 0xe9eef1);
+    if (this.nosEnabled) {
+      this.nosSprite.setScale(this.nos ? this.nosScale * 0.965 : this.nosScale);
+      this.nosSprite.setTint(this.nos ? 0xffffff : 0xe9eef1);
+    }
   }
 
   consumeGearRequest() {
