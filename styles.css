@@ -27,6 +27,7 @@ body {
   background: #05070d;
 }
 
+body[data-scene="setup"] #game-shell,
 body[data-scene="garage"] #game-shell,
 body[data-scene="meet"] #game-shell {
   padding-left: max(8px, env(safe-area-inset-left));
