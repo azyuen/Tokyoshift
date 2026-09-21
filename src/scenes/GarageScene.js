@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r30';
-import { characters } from '../data/characters.js?v=20260921-r30';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r31';
+import { characters } from '../data/characters.js?v=20260921-r31';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -75,7 +75,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
-    this.addGarageCharacter(characters.renMizuno, 282, 558, 372, 14);
+    this.addGarageCharacter(characters.renMizuno, 282, 558, 350, 14);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -88,20 +88,20 @@ export default class GarageScene extends Phaser.Scene {
 
     this.add.ellipse(
       x,
-      feetY + 7,
-      Math.max(62, sprite.displayWidth * 0.84),
+      feetY + 3,
+      Math.max(62, sprite.displayWidth * 0.86),
       20,
       0x000000,
-      0.36
+      0.40
     ).setDepth(depth - 0.25);
 
     this.add.ellipse(
       x,
-      feetY + 4,
-      Math.max(46, sprite.displayWidth * 0.64),
+      feetY + 1,
+      Math.max(46, sprite.displayWidth * 0.66),
       10,
       0x000000,
-      0.48
+      0.54
     ).setDepth(depth - 0.20);
 
     return sprite;
@@ -318,11 +318,11 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(24, rearWheel.displayHeight * 0.62),
-      Math.max(120, targetWidth * 0.88),
-      Math.max(16, source.height * bodyScale * 0.19),
+      wheelY + Math.max(17, rearWheel.displayHeight * 0.46),
+      Math.max(132, targetWidth * 0.98),
+      Math.max(18, source.height * bodyScale * 0.22),
       0x000000,
-      0.42
+      0.46
     ).setDepth(depth - 0.6);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
