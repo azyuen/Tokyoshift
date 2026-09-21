@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r32';
-import { characters } from '../data/characters.js?v=20260921-r32';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r34';
+import { characters } from '../data/characters.js?v=20260921-r34';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -119,10 +119,6 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(42);
 
-    this.add.text(300, 35, 'TUNE   >   UPGRADE   >   MEET', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
-    }).setOrigin(0, 0.5).setDepth(42);
-
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 25000;
@@ -200,14 +196,14 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 230, 'TUNING', {
+    this.add.text(SIDE.x + 20, SIDE.y + 238, 'TUNING', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const categories = ['ENGINE', 'TURBO', 'TIRES', 'SUSPENSION', 'GEARBOX', 'NITROUS', 'COSMETICS'];
     categories.forEach((name, i) => {
-      const y = SIDE.y + 291 + i * 44;
-      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 38, 0x0b1724, 1)
+      const y = SIDE.y + 306 + i * 48;
+      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 42, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
@@ -224,9 +220,6 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 696, '', {
-      fontFamily: BODY_FONT, fontSize: '15px', color: '#7e9caf'
-    }).setDepth(38);
   }
 
   buildGarageStrip() {
@@ -371,7 +364,6 @@ export default class GarageScene extends Phaser.Scene {
       item.label.setColor(active ? '#ffffff' : '#a9c7da');
       item.arrow.setColor(active ? '#55e4ff' : '#8cb6cf');
     }
-    this.upgradeHint.setText(name + ' selected  //  parts slot ready');
   }
 
   saveProfile() {
