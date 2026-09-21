@@ -18,6 +18,11 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('wheelMesh', 'assets/wheels/wheel_mesh.png');
     this.load.image('wheelDeepDish', 'assets/wheels/wheel_deepdish.png');
 
+    this.load.image(
+      'travelMapTokyoBay',
+      'assets/Ui/tokyo_bay_travel_map.webp?v=20260921-r61'
+    );
+
     garageAssets
       .filter(asset => asset.key === 'garageWorkshopBg')
       .forEach(asset => this.load.image(asset.key, asset.path));
@@ -49,7 +54,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R60' : 'NEW RUN // R60', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R61' : 'NEW RUN // R61', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
