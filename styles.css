@@ -78,10 +78,8 @@ canvas {
 
 @media (orientation: portrait) and (max-width: 900px) {
   /*
-    iOS will not let a web app override the phone's system orientation lock.
-    When the device stays portrait, render a stable virtual-landscape viewport
-    instead. Explicitly fitting by HEIGHT avoids the stretched/squashed canvas
-    that occurred when a portrait-locked screen was rotated with width:100%.
+    Native orientation locking is inconsistent on mobile web, so portrait
+    viewports are presented as a virtual landscape canvas.
   */
   #game-shell {
     position: fixed;
@@ -109,7 +107,45 @@ canvas {
     aspect-ratio: 13 / 6;
   }
 
-  #build-stamp {
+  
+/*
+  JS fallback for browsers/PWAs whose orientation media query does not update
+  reliably while the OS rotation lock is enabled. The game still presents one
+  landscape coordinate system; only the outer shell is rotated.
+*/
+html.force-landscape #game-shell {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 100dvh;
+  height: 100dvw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+}
+
+html.force-landscape #game {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 13 / 7;
+}
+
+html.force-landscape body[data-scene="race"] #game {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 13 / 6;
+}
+
+html.force-landscape #build-stamp {
+  top: 8px;
+  right: 8px;
+  left: auto;
+}
+
+#build-stamp {
     top: 8px;
     right: 8px;
     left: auto;
