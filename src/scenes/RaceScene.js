@@ -7,8 +7,8 @@ import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r50';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r49';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r54';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r54';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r53';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r53';
 
@@ -211,7 +211,194 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
-    this.cancelButton.on('pointerdown', () => this.scene.start('MeetScene'));
+    this.cancelButton.on('pointerdown', () => this.confirmCancelRace());
+  }
+
+  confirmCancelRace() {
+    if (this.cancelConfirmPopup?.active || this.resultsShown) return;
+
+    const isPink = this.raceDeal === 'PINK_SLIP';
+    const cashPenalty = Math.ceil((this.raceStake * 0.5) / 250) * 250;
+    const penaltyText = isPink
+      ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
+      : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
+
+    const depth = 110;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.58)
+      .setDepth(depth)
+      .setScrollFactor(0)
+      .setInteractive());
+
+    const panel = add(this.add.rectangle(780, 350, 720, 280, 0x08131f, 0.995)
+      .setStrokeStyle(2, isPink ? 0xff5f93 : 0xffb45f, 0.95)
+      .setDepth(depth + 1)
+      .setScrollFactor(0));
+
+    add(this.add.text(780, 280, isPink ? 'CANCEL PINK SLIP?' : 'CANCEL RACE?', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#eefaff',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(780, 340, penaltyText, {
+      fontFamily: BODY_FONT,
+      fontSize: '14px',
+      color: isPink ? '#ffb4ca' : '#f1c99a',
+      align: 'center',
+      wordWrap: { width: 590 },
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(780, 382, 'This counts as a loss.', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#8799a5',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const forfeit = add(this.add.rectangle(665, 438, 200, 46, 0x30151d, 1)
+      .setStrokeStyle(2, 0xff667f, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    add(this.add.text(665, 438, 'FORFEIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffe2e8',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const keepRacing = add(this.add.rectangle(895, 438, 200, 46, 0x0d2b29, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    add(this.add.text(895, 438, 'KEEP RACING', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.cancelConfirmPopup = null;
+    };
+
+    blocker.on('pointerdown', dismiss);
+    keepRacing.on('pointerdown', dismiss);
+    forfeit.on('pointerdown', () => {
+      dismiss();
+      this.forfeitRace(cashPenalty);
+    });
+
+    this.cancelConfirmPopup = panel;
+  }
+
+  forfeitRace(cashPenalty = 0) {
+    if (this.resultsShown) return;
+
+    const losses = Number(this.registry.get('losses') || 0);
+    this.registry.set('losses', losses + 1);
+
+    if (this.raceDeal === 'PINK_SLIP') {
+      let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
+      const carStates = { ...(this.registry.get('carStates') || {}) };
+
+      ownedCarIds = ownedCarIds.filter(id => id !== this.selectedCarId);
+      delete carStates[this.selectedCarId];
+
+      this.registry.set('ownedCarIds', ownedCarIds);
+      this.registry.set('carStates', carStates);
+
+      if (ownedCarIds.length) {
+        this.registry.set('selectedCarId', ownedCarIds[0]);
+        this.registry.set('gameOver', false);
+        saveSessionState(this.registry);
+        this.scene.start('MeetScene');
+      } else {
+        this.registry.set('selectedCarId', null);
+        this.registry.set('gameOver', true);
+        saveSessionState(this.registry);
+        this.showForfeitGameOver();
+      }
+      return;
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    this.registry.set('cash', Math.max(0, cash - Math.max(0, cashPenalty)));
+    saveSessionState(this.registry);
+    this.scene.start('MeetScene');
+  }
+
+  showForfeitGameOver() {
+    this.resultsShown = true;
+    this.controls.enabled = false;
+    this.cancelButton?.disableInteractive();
+    this.startButton?.disableInteractive();
+    stopMusic();
+
+    const depth = 130;
+    this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.72)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    this.add.rectangle(780, 350, 760, 300, 0x08111c, 0.98)
+      .setStrokeStyle(2, 0xff5f93, 0.9)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.add.text(780, 278, 'PINK SLIP FORFEITED', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '17px',
+      color: '#ff8faf',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0);
+
+    this.add.text(780, 334, cars[this.selectedCarId]?.shortName
+      ? cars[this.selectedCarId].shortName + ' IS GONE'
+      : 'NO CARS LEFT', {
+      fontFamily: BODY_FONT,
+      fontSize: '14px',
+      color: '#d7e6ee',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0);
+
+    const addButton = (x, label, stroke, onPress) => {
+      const button = this.add.rectangle(x, 430, 220, 46, 0x0c1825, 0.98)
+        .setStrokeStyle(2, stroke, 0.9)
+        .setDepth(depth + 2)
+        .setScrollFactor(0)
+        .setInteractive({ useHandCursor: true });
+
+      this.add.text(x, 430, label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#eef9ff',
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+
+      button.on('pointerdown', onPress);
+    };
+
+    const hasManualSave = Boolean(readManualSave());
+    if (hasManualSave) {
+      addButton(650, 'RESTORE SAVE', 0x45d7ff, () => {
+        const restored = restoreManualSave(this.registry);
+        this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+      });
+    } else {
+      addButton(650, 'NEW RUN', 0x45d7ff, () => {
+        clearAllSaves();
+        this.scene.start('CharacterSelectScene');
+      });
+    }
+
+    addButton(910, 'NEW RUN', 0xff4a8d, () => {
+      clearAllSaves();
+      this.scene.start('CharacterSelectScene');
+    });
   }
 
   applyTuneLevel(config, tuneLevel = 0) {
@@ -797,18 +984,7 @@ export default class RaceScene extends Phaser.Scene {
         saveControl.button.disableInteractive().setFillStyle(0x12352e, 0.98);
       });
 
-      if (this.raceDeal === 'PINK_SLIP') {
-        addWorkshopButton(780);
-      } else {
-        const currentCash = this.registry.get('cash') ?? 0;
-        const canRematch = this.raceMode !== 'SINGLE' || currentCash >= this.raceStake;
-        if (canRematch) {
-          addButton(780, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
-        } else {
-          addWorkshopButton(780);
-        }
-      }
-
+      addWorkshopButton(780);
       addButton(1020, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
     }
   }
@@ -831,6 +1007,14 @@ export default class RaceScene extends Phaser.Scene {
 
     this.registry.set('wins', wins + (playerWon ? 1 : 0));
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+
+    if (playerWon) {
+      const locationId = this.registry.get('meetLocation') || '';
+      const rivalKey = locationId + ':' + this.opponentCharacterId;
+      const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
+      defeated.add(rivalKey);
+      this.registry.set('defeatedRivalKeys', [...defeated]);
+    }
 
     let cashDelta = 0;
     let pinkMessage = '';
