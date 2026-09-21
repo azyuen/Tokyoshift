@@ -3,6 +3,7 @@ export default class Transmission {
     this.gearRatios = config.gearRatios;
     this.finalDrive = config.finalDriveRatio;
     this.efficiency = config.drivetrainEfficiency;
+    this.shiftTimeScale = Math.max(0.45, Number(config.shiftTimeScale || 1));
     this.currentGear = 1;
     this.pendingGear = null;
     this.shiftTimer = 0;
@@ -26,7 +27,7 @@ export default class Transmission {
 
     const qualityPenalty = Phaser.Math.Clamp((0.90 - clutchPedal) * 1.7 + Math.max(0, throttle - 0.22) * 0.75, 0, 1);
     this.pendingGear = gear;
-    this.shiftTimer = 0.095 + qualityPenalty * 0.11;
+    this.shiftTimer = (0.095 + qualityPenalty * 0.11) * this.shiftTimeScale;
     this.lastShiftQuality = qualityPenalty < 0.22 ? 'CLEAN' : qualityPenalty < 0.55 ? 'ROUGH' : 'SLOW/ROUGH';
     this.shiftEvent = { type: 'accepted', severity: qualityPenalty };
     this.currentGear = 0;
