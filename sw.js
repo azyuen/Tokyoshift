@@ -1,11 +1,16 @@
-const BUILD = 'R41';
-const ASSET_CACHE = 'tokyoshift-assets-v1';
-const RUNTIME_CACHE = 'tokyoshift-runtime-v1';
+const BUILD = 'R42';
+const ASSET_CACHE = 'tokyoshift-assets-v2';
+const RUNTIME_CACHE = 'tokyoshift-runtime-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil((async () => {
+    const keep = new Set([ASSET_CACHE, RUNTIME_CACHE]);
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(key => key.startsWith('tokyoshift-') && !keep.has(key)).map(key => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 async function cacheFirst(request) {
