@@ -17,10 +17,28 @@ export const MEET_REGIONS = {
     mapX: 0.20,
     mapY: 0.48,
   },
+  SHINAGAWA: {
+    id: 'SHINAGAWA',
+    label: 'SHINAGAWA',
+    mapX: 0.32,
+    mapY: 0.48,
+  },
   TATSUMI: {
     id: 'TATSUMI',
     label: 'TATSUMI',
-    mapX: 0.50,
+    mapX: 0.44,
+    mapY: 0.48,
+  },
+  SHIBUYA: {
+    id: 'SHIBUYA',
+    label: 'SHIBUYA',
+    mapX: 0.56,
+    mapY: 0.48,
+  },
+  YOKOHAMA: {
+    id: 'YOKOHAMA',
+    label: 'YOKOHAMA',
+    mapX: 0.68,
     mapY: 0.48,
   },
   DAIKOKU: {
@@ -69,6 +87,46 @@ export const MEET_LOCATIONS = {
     bgKey: 'meetOdaibaMiraikanNight',
   },
 
+  shinagawaTennozu: {
+    id: 'shinagawaTennozu',
+    district: 'SHINAGAWA',
+    location: 'tennozu_isle',
+    label: 'TENNOZU ISLE',
+    timeOfDay: 'day',
+    difficulty: 'EASY',
+    minRating: 2,
+    maxRating: 3,
+    rewardMultiplier: 1.1,
+    bgKey: 'meetShinagawaTennozuIsleDay',
+    backgroundPath: 'assets/Meet/shinagawa_tennozu_isle_day.png',
+  },
+  shinagawaKonan: {
+    id: 'shinagawaKonan',
+    district: 'SHINAGAWA',
+    location: 'konan',
+    label: 'KONAN',
+    timeOfDay: 'night',
+    difficulty: 'MED',
+    minRating: 2,
+    maxRating: 3,
+    rewardMultiplier: 1.3,
+    bgKey: 'meetShinagawaKonanNight',
+    backgroundPath: 'assets/Meet/shinagawa_konan_night.png',
+  },
+  shinagawaOiWharf: {
+    id: 'shinagawaOiWharf',
+    district: 'SHINAGAWA',
+    location: 'oi_wharf',
+    label: 'OI WHARF',
+    timeOfDay: 'twilight',
+    difficulty: 'MED',
+    minRating: 3,
+    maxRating: 3,
+    rewardMultiplier: 1.4,
+    bgKey: 'meetShinagawaOiWharfTwilight',
+    backgroundPath: 'assets/Meet/shinagawa_oi_wharf_twilight.png',
+  },
+
   tatsumiBridgefrontPlaza: {
     id: 'tatsumiBridgefrontPlaza',
     district: 'TATSUMI',
@@ -104,6 +162,86 @@ export const MEET_LOCATIONS = {
     maxRating: 4,
     rewardMultiplier: 1.7,
     bgKey: 'meetTatsumiHarborLoopTwilight',
+  },
+
+  shibuyaScramble: {
+    id: 'shibuyaScramble',
+    district: 'SHIBUYA',
+    location: 'scramble',
+    label: 'SCRAMBLE',
+    timeOfDay: 'night',
+    difficulty: 'MED',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.55,
+    bgKey: 'meetShibuyaScrambleNight',
+    backgroundPath: 'assets/Meet/shibuya_scramble_night.png',
+  },
+  shibuyaDogenzaka: {
+    id: 'shibuyaDogenzaka',
+    district: 'SHIBUYA',
+    location: 'dogenzaka',
+    label: 'DOGENZAKA',
+    timeOfDay: 'day',
+    difficulty: 'HARD',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.75,
+    bgKey: 'meetShibuyaDogenzakaDay',
+    backgroundPath: 'assets/Meet/shibuya_dogenzaka_day.png',
+  },
+  shibuyaCenterGai: {
+    id: 'shibuyaCenterGai',
+    district: 'SHIBUYA',
+    location: 'center_gai',
+    label: 'CENTER-GAI',
+    timeOfDay: 'night',
+    difficulty: 'HARD',
+    minRating: 4,
+    maxRating: 4,
+    rewardMultiplier: 1.85,
+    bgKey: 'meetShibuyaCenterGaiNight',
+    backgroundPath: 'assets/Meet/shibuya_center_gai_night.png',
+  },
+
+  yokohamaRedBrick: {
+    id: 'yokohamaRedBrick',
+    district: 'YOKOHAMA',
+    location: 'red_brick',
+    label: 'RED BRICK',
+    timeOfDay: 'day',
+    difficulty: 'HARD',
+    minRating: 4,
+    maxRating: 4,
+    rewardMultiplier: 1.85,
+    bgKey: 'meetYokohamaRedBrickDay',
+    backgroundPath: 'assets/Meet/yokohama_red_brick_day.png',
+  },
+  yokohamaMinatoMirai: {
+    id: 'yokohamaMinatoMirai',
+    district: 'YOKOHAMA',
+    location: 'minato_mirai',
+    label: 'MINATO MIRAI',
+    timeOfDay: 'night',
+    difficulty: 'HARD',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 2.0,
+    bgKey: 'meetYokohamaMinatoMiraiNight',
+    backgroundPath: 'assets/Meet/yokohama_minato_mirai_night.PNG',
+  },
+  yokohamaBayBridge: {
+    id: 'yokohamaBayBridge',
+    district: 'YOKOHAMA',
+    location: 'bay_bridge',
+    label: 'BAY BRIDGE',
+    timeOfDay: 'night',
+    difficulty: 'ELITE',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 2.15,
+    bgKey: 'meetYokohamaBayBridgeNight',
+    backgroundPath: 'assets/Meet/yokohama_bay_bridge_night.PNG',
   },
 
   daikokuHarbor: {
@@ -146,15 +284,14 @@ export const MEET_LOCATIONS = {
 
 export const LOCATION_ORDER_BY_REGION = {
   ODAIBA: ['odaiba7eleven', 'odaibaGundamPlaza', 'odaibaMiraikan'],
+  SHINAGAWA: ['shinagawaTennozu', 'shinagawaKonan', 'shinagawaOiWharf'],
   TATSUMI: ['tatsumiBridgefrontPlaza', 'tatsumiSkylineVista', 'tatsumiHarborLoop'],
+  SHIBUYA: ['shibuyaScramble', 'shibuyaDogenzaka', 'shibuyaCenterGai'],
+  YOKOHAMA: ['yokohamaRedBrick', 'yokohamaMinatoMirai', 'yokohamaBayBridge'],
   DAIKOKU: ['daikokuPA', 'daikokuHarbor', 'daikokuOpenLot'],
 };
 
-export const ALL_MEET_LOCATION_IDS = [
-  ...LOCATION_ORDER_BY_REGION.ODAIBA,
-  ...LOCATION_ORDER_BY_REGION.TATSUMI,
-  ...LOCATION_ORDER_BY_REGION.DAIKOKU,
-];
+export const ALL_MEET_LOCATION_IDS = Object.values(LOCATION_ORDER_BY_REGION).flat();
 
 export function getMeetLocation(id) {
   return MEET_LOCATIONS[id] || MEET_LOCATIONS.odaiba7eleven;
@@ -182,7 +319,7 @@ export const meetBackgrounds = ALL_MEET_LOCATION_IDS.map(id => {
   return {
     ...item,
     key: item.bgKey,
-    path: meetBackgroundPath(item.district, item.location, item.timeOfDay),
+    path: item.backgroundPath || meetBackgroundPath(item.district, item.location, item.timeOfDay),
     label: `${item.district} // ${item.label}`,
   };
 });
