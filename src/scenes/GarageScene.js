@@ -1,6 +1,7 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r43';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -16,6 +17,7 @@ export default class GarageScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
+    playMusic('workshop');
 
     this.ownedCarIds = (this.registry.get('ownedCarIds') || ['ae86']).filter(id => cars[id]);
     if (!this.ownedCarIds.length) this.ownedCarIds = ['ae86'];
