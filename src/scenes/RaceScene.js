@@ -1,4 +1,4 @@
-import Vehicle from '../vehicles/Vehicle.js';
+import Vehicle from '../vehicles/Vehicle.js?v=20260921-r55';
 import TouchControls from '../input/TouchControls.js?v=20260921-r43';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
