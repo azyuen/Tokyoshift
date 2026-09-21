@@ -11,9 +11,9 @@ export function meetBackgroundPath(district, location, timeOfDay) {
 }
 
 export const MEET_REGIONS = {
-  WANGAN: {
-    id: 'WANGAN',
-    label: 'WANGAN',
+  ODAIBA: {
+    id: 'ODAIBA',
+    label: 'ODAIBA',
     mapX: 0.20,
     mapY: 0.48,
   },
@@ -32,9 +32,9 @@ export const MEET_REGIONS = {
 };
 
 export const MEET_LOCATIONS = {
-  wangan7eleven: {
-    id: 'wangan7eleven',
-    district: 'WANGAN',
+  odaiba7eleven: {
+    id: 'odaiba7eleven',
+    district: 'ODAIBA',
     location: '7eleven',
     label: '7-ELEVEN',
     timeOfDay: 'night',
@@ -42,31 +42,31 @@ export const MEET_LOCATIONS = {
     minRating: 2,
     maxRating: 3,
     rewardMultiplier: 1.0,
-    bgKey: 'meetWangan7ElevenNight',
+    bgKey: 'meetOdaiba7ElevenNight',
   },
-  wanganBayside: {
-    id: 'wanganBayside',
-    district: 'WANGAN',
-    location: 'bayside',
-    label: 'BAYSIDE',
+  odaibaGundamPlaza: {
+    id: 'odaibaGundamPlaza',
+    district: 'ODAIBA',
+    location: 'gundam_plaza',
+    label: 'GUNDAM PLAZA',
     timeOfDay: 'day',
     difficulty: 'MED',
     minRating: 3,
     maxRating: 4,
     rewardMultiplier: 1.35,
-    bgKey: 'meetWanganBaysideDay',
+    bgKey: 'meetOdaibaGundamPlazaDay',
   },
-  wanganBridge: {
-    id: 'wanganBridge',
-    district: 'WANGAN',
-    location: 'bridge',
-    label: 'BRIDGE',
+  odaibaMiraikan: {
+    id: 'odaibaMiraikan',
+    district: 'ODAIBA',
+    location: 'miraikan',
+    label: 'MIRAIKAN',
     timeOfDay: 'night',
     difficulty: 'HARD',
     minRating: 4,
     maxRating: 5,
     rewardMultiplier: 1.75,
-    bgKey: 'meetWanganBridgeNight',
+    bgKey: 'meetOdaibaMiraikanNight',
   },
 
   tatsumiBridgefrontPlaza: {
@@ -145,19 +145,19 @@ export const MEET_LOCATIONS = {
 };
 
 export const LOCATION_ORDER_BY_REGION = {
-  WANGAN: ['wangan7eleven', 'wanganBayside', 'wanganBridge'],
+  ODAIBA: ['odaiba7eleven', 'odaibaGundamPlaza', 'odaibaMiraikan'],
   TATSUMI: ['tatsumiBridgefrontPlaza', 'tatsumiSkylineVista', 'tatsumiHarborLoop'],
   DAIKOKU: ['daikokuHarbor', 'daikokuPA', 'daikokuOpenLot'],
 };
 
 export const ALL_MEET_LOCATION_IDS = [
-  ...LOCATION_ORDER_BY_REGION.WANGAN,
+  ...LOCATION_ORDER_BY_REGION.ODAIBA,
   ...LOCATION_ORDER_BY_REGION.TATSUMI,
   ...LOCATION_ORDER_BY_REGION.DAIKOKU,
 ];
 
 export function getMeetLocation(id) {
-  return MEET_LOCATIONS[id] || MEET_LOCATIONS.wangan7eleven;
+  return MEET_LOCATIONS[id] || MEET_LOCATIONS.odaiba7eleven;
 }
 
 export const LOCAL_TRAVEL_COST = 500;
