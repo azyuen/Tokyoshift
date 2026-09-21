@@ -378,6 +378,7 @@ class UpgradeAudioVoice {
       boostBar: 0,
       turboSpool: 0,
       gear: 0,
+      pendingGear: null,
       nosActive: false,
       wheelspin: false,
       rpm: 0,
@@ -636,6 +637,7 @@ class UpgradeAudioVoice {
     const boost = Math.max(0, Number(telemetry.boostBar) || 0);
     const spool = clamp01(telemetry.turboSpool);
     const gear = Number(telemetry.gear) || 0;
+    const pendingGear = telemetry.pendingGear == null ? null : Number(telemetry.pendingGear);
     const rpm = Math.max(0, Number(telemetry.rpm) || 0);
     const speed = Math.max(0, Number(telemetry.speedKmh) || 0);
     const wheelRPM = Math.max(0, Number(telemetry.wheelRPM) || 0);
@@ -665,11 +667,15 @@ class UpgradeAudioVoice {
       );
 
       const throttleLift = this.prev.throttle > 0.62 && throttle < 0.28;
-      const shifted = this.prev.gear > 0 && gear > 0 && gear !== this.prev.gear;
+      const shiftStarted =
+        this.prev.pendingGear == null &&
+        pendingGear != null &&
+        this.prev.gear > 0;
+
       if (
         this.cooldowns.bov <= 0 &&
         this.prev.boostBar > 0.10 &&
-        (throttleLift || shifted)
+        (throttleLift || shiftStarted)
       ) {
         this.playBov(this.levels.turbo);
         this.cooldowns.bov = 0.32;
@@ -752,6 +758,7 @@ class UpgradeAudioVoice {
       boostBar: boost,
       turboSpool: spool,
       gear,
+      pendingGear,
       nosActive,
       wheelspin,
       rpm,
