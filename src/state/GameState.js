@@ -2,7 +2,7 @@ import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
   inferWorkshopTier,
-} from '../data/workshopProgression.js?v=20260921-r74';
+} from '../data/workshopProgression.js?v=20260921-r75';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
