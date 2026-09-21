@@ -1,6 +1,6 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r47';
+import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r49';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
