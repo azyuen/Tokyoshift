@@ -20,12 +20,12 @@ export default class BootScene extends Phaser.Scene {
 
     this.load.image(
       'travelMapTokyoBay',
-      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r68'
+      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r71'
     );
 
     this.load.image(
       'travelMapTokyoRegion',
-      'assets/Ui/tokyo_region_map.png?v=20260921-r68'
+      'assets/Ui/tokyo_region_map.png?v=20260921-r71'
     );
 
     garageAssets
@@ -59,7 +59,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R70' : 'NEW RUN // R70', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R71' : 'NEW RUN // R71', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
