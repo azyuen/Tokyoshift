@@ -1,13 +1,13 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260921-r42';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r42';
-import RaceHUD from '../ui/RaceHUD.js?v=20260921-r42';
+import TouchControls from '../input/TouchControls.js?v=20260921-r43';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
+import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r42';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r42';
-import { engines } from '../data/engines.js?v=20260921-r42';
-import { characters } from '../data/characters.js?v=20260921-r42';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r42';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r43';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { engines } from '../data/engines.js?v=20260921-r43';
+import { characters } from '../data/characters.js?v=20260921-r43';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r43';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
