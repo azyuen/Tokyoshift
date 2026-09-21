@@ -312,5 +312,7 @@ export function showSettingsPanel(scene) {
     });
   });
 
-  blocker.on('pointerdown', close);
+  // The full-screen blocker only prevents clicks reaching the game beneath the
+  // modal. Do not close Settings when it is tapped: touch events from controls
+  // can also reach the blocker on mobile. Settings closes only via CLOSE.
 }
