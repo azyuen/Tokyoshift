@@ -313,9 +313,14 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.tuningStatusText = this.add.text(SIDE.x + 20, SIDE.y + 230, 'TUNING', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
-    }).setDepth(37);
+    this.tuningStatusText = this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 230,
+      'TUNING // ' + this.getActiveWorkshop().shortLabel,
+      {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
+      }
+    ).setDepth(37);
 
     const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
 
@@ -1454,7 +1459,11 @@ export default class GarageScene extends Phaser.Scene {
 
   getPendingEngineCost() {
     if (!this.currentEngineTuning || !this.pendingEngineTuning) return 0;
-    return getEngineTuningCartCost(this.currentEngineTuning, this.pendingEngineTuning);
+    const baseCost = getEngineTuningCartCost(
+      this.currentEngineTuning,
+      this.pendingEngineTuning
+    );
+    return this.getWorkshopAdjustedCost(baseCost);
   }
 
   refreshEngineMode() {
@@ -1678,8 +1687,13 @@ export default class GarageScene extends Phaser.Scene {
     part.levels.forEach((spec, index) => {
       const y = 250 + index * 104;
       const selected = this.pendingEngineTuning[partId] === spec.level;
-      const selectable = spec.level >= installed;
-      const pathCost = getUpgradePathCost(partId, installed, spec.level);
+      const availableHere =
+        spec.level <= installed ||
+        canInstallTuningLevel('engine', partId, spec.level, this.getActiveWorkshop().id);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        getUpgradePathCost(partId, installed, spec.level)
+      );
 
       const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
@@ -1702,7 +1716,11 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
-      if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + getWorkshopRequirementLabel('engine', partId, spec.level);
+      }
       if (spec.level < installed) price = 'INCLUDED';
 
       add(this.add.text(1330, y, price, {
@@ -1740,6 +1758,25 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   applyPendingEngineUpgrades() {
+    const blockedPart = ENGINE_PART_ORDER.find(partId =>
+      Number(this.pendingEngineTuning?.[partId] || 0) >
+        Number(this.currentEngineTuning?.[partId] || 0) &&
+      !canInstallTuningLevel(
+        'engine',
+        partId,
+        this.pendingEngineTuning?.[partId] || 0,
+        this.getActiveWorkshop().id
+      )
+    );
+
+    if (blockedPart) {
+      const targetLevel = this.pendingEngineTuning?.[blockedPart] || 0;
+      this.showWorkshopToast(
+        'NEEDS ' + getWorkshopRequirementLabel('engine', blockedPart, targetLevel)
+      );
+      return;
+    }
+
     const cost = this.getPendingEngineCost();
     if (cost <= 0) return;
 
@@ -2612,9 +2649,10 @@ export default class GarageScene extends Phaser.Scene {
 
   getPendingSecondaryCost() {
     if (!this.currentSecondaryTuning || !this.pendingSecondaryTuning || !this.secondaryMode) return 0;
-    return this.secondaryMode === 'drivetrain'
+    const baseCost = this.secondaryMode === 'drivetrain'
       ? getDrivetrainCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning)
       : getExhaustNosCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning);
+    return this.getWorkshopAdjustedCost(baseCost);
   }
 
   refreshSecondaryTuningMode() {
@@ -2742,10 +2780,16 @@ export default class GarageScene extends Phaser.Scene {
     part.levels.forEach((spec, index) => {
       const y = 250 + index * 104;
       const selected = this.pendingSecondaryTuning[partId] === spec.level;
-      const selectable = spec.level >= installed;
-      const pathCost = isDrivetrain
-        ? getDrivetrainUpgradePathCost(partId, installed, spec.level)
-        : getExhaustNosUpgradePathCost(partId, installed, spec.level);
+      const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
+      const availableHere =
+        spec.level <= installed ||
+        canInstallTuningLevel(category, partId, spec.level, this.getActiveWorkshop().id);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        isDrivetrain
+          ? getDrivetrainUpgradePathCost(partId, installed, spec.level)
+          : getExhaustNosUpgradePathCost(partId, installed, spec.level)
+      );
 
       const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
@@ -2768,7 +2812,11 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
-      if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + getWorkshopRequirementLabel(category, partId, spec.level);
+      }
       if (spec.level < installed) price = 'INCLUDED';
 
       add(this.add.text(1330, y, price, {
@@ -2806,8 +2854,33 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   applyPendingSecondaryUpgrades() {
+    if (!this.secondaryMode) return;
+
+    const category = this.secondaryMode === 'drivetrain' ? 'drivetrain' : 'exhaustNos';
+    const partOrder = this.secondaryMode === 'drivetrain'
+      ? DRIVETRAIN_PART_ORDER
+      : EXHAUST_NOS_PART_ORDER;
+    const blockedPart = partOrder.find(partId =>
+      Number(this.pendingSecondaryTuning?.[partId] || 0) >
+        Number(this.currentSecondaryTuning?.[partId] || 0) &&
+      !canInstallTuningLevel(
+        category,
+        partId,
+        this.pendingSecondaryTuning?.[partId] || 0,
+        this.getActiveWorkshop().id
+      )
+    );
+
+    if (blockedPart) {
+      const targetLevel = this.pendingSecondaryTuning?.[blockedPart] || 0;
+      this.showWorkshopToast(
+        'NEEDS ' + getWorkshopRequirementLabel(category, blockedPart, targetLevel)
+      );
+      return;
+    }
+
     const cost = this.getPendingSecondaryCost();
-    if (cost <= 0 || !this.secondaryMode) return;
+    if (cost <= 0) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < cost) {
