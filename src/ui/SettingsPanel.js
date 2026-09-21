@@ -4,6 +4,14 @@ import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=202609
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
+function escapeHtml(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
 function destroyObjects(objects = []) {
   objects.forEach(obj => {
     try { obj?.destroy?.(); } catch (e) {}
@@ -168,9 +176,9 @@ export function showSettingsPanel(scene) {
 
   const html = `
     <div style="width:620px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:Rajdhani,sans-serif;">
-      <input id="settingsFirstName" maxlength="16" placeholder="First name" value="${firstName.replace(/"/g, '&quot;')}"
+      <input id="settingsFirstName" maxlength="16" placeholder="First name" value="${escapeHtml(firstName)}"
         style="box-sizing:border-box;width:100%;height:46px;padding:0 14px;border:2px solid #315470;background:#07111d;color:#fff;font:700 17px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
-      <input id="settingsLastName" maxlength="16" placeholder="Last name" value="${lastName.replace(/"/g, '&quot;')}"
+      <input id="settingsLastName" maxlength="16" placeholder="Last name" value="${escapeHtml(lastName)}"
         style="box-sizing:border-box;width:100%;height:46px;padding:0 14px;border:2px solid #315470;background:#07111d;color:#fff;font:700 17px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
     </div>
   `;
