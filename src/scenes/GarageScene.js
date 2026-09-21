@@ -321,12 +321,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildSaveButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 716, SIDE.w - 32, 42, 0x102138, 1)
+    const button = this.saveButton = this.add.rectangle(SIDE.x + SIDE.w / 2, 716, SIDE.w - 32, 42, 0x102138, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    const label = this.add.text(SIDE.x + SIDE.w / 2, 716, 'SAVE GAME', {
+    const label = this.saveButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 716, 'SAVE GAME', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(41);
 
@@ -344,12 +344,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMeetButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 42, 0x0c2827, 1)
+    const button = this.meetButton = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 42, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MEET  >', {
+    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MEET  >', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
