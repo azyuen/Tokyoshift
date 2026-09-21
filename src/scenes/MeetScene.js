@@ -8,17 +8,17 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260921-r51';
+} from '../data/meetAssets.js?v=20260921-r54';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r49';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r51';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r54';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
 const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
-const GPS = { x: 1180, y: 92, w: 356, h: 220 };
-const SIDE = { x: 1180, y: 330, w: 356, h: 486 };
+const GPS = { x: 1180, y: 92, w: 356, h: 140 };
+const SIDE = { x: 1180, y: 248, w: 356, h: 568 };
 const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 
 const MODE_DATA = {
@@ -64,7 +64,6 @@ export default class MeetScene extends Phaser.Scene {
     this.cardObjects = [];
     this.stageObjects = [];
     this.selectedOfferIndex = 0;
-    this.nextRefreshAt = Date.now() + 180000;
     this.currentBackground = null;
     this.backgroundMaskShape = null;
     this.backgroundTint = null;
@@ -73,14 +72,38 @@ export default class MeetScene extends Phaser.Scene {
       : 'wangan7eleven';
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
-    this.gpsNodes = [];
+
+    const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
+    const storedRosters = this.registry.get('meetRosters') || {};
+    const hasStoredRound = storedRefreshAt > Date.now()
+      && ALL_MEET_LOCATION_IDS.some(id => Array.isArray(storedRosters[id]));
+
+    if (hasStoredRound) {
+      this.nextRefreshAt = storedRefreshAt;
+      const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
+
+      ALL_MEET_LOCATION_IDS.forEach(locationId => {
+        const stored = Array.isArray(storedRosters[locationId])
+          ? storedRosters[locationId]
+          : this.generateOffersForLocation(locationId);
+
+        this.locationOffers[locationId] = stored
+          .filter(offer => !defeated.has(locationId + ':' + offer.characterId))
+          .map(offer => ({ ...offer }));
+        this.locationSelectedOfferIndex[locationId] = 0;
+      });
+    } else {
+      this.nextRefreshAt = Date.now() + 180000;
+      this.registry.set('defeatedRivalKeys', []);
+      this.refreshAllLocationOffers({ resetTimer: false, persist: false });
+      this.persistMeetRound();
+    }
 
     this.drawBase();
     this.buildHeader();
     this.buildGpsPanel();
     this.buildSidebar();
     this.buildBottomArea();
-    this.refreshAllLocationOffers();
     this.rollOffers({ resetTimer: false });
 
     // Let the visible Meet render first, then quietly fetch the rest of the
@@ -190,7 +213,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildGpsPanel() {
-    const panel = this.add.rectangle(
+    this.gpsPanel = this.add.rectangle(
       GPS.x + GPS.w / 2,
       GPS.y + GPS.h / 2,
       GPS.w,
@@ -199,120 +222,65 @@ export default class MeetScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(GPS.x + 20, GPS.y + 16, 'GPS', {
+    this.add.text(GPS.x + 20, GPS.y + 14, 'GPS', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
-    const nodeY = GPS.y + 70;
-    const nodeXs = [GPS.x + 62, GPS.x + 178, GPS.x + 294];
-
-    const route = this.add.graphics().setDepth(36);
-    route.lineStyle(3, 0x2f91b8, 0.52);
-    route.beginPath();
-    route.moveTo(nodeXs[0], nodeY);
-    route.lineTo(nodeXs[2], nodeY);
-    route.strokePath();
-
-    nodeXs.forEach((x, i) => {
-      const dot = this.add.circle(x, nodeY, 6, 0x253b4b, 1)
-        .setStrokeStyle(2, 0x45647a, 0.9)
-        .setDepth(37);
-
-      const label = this.add.text(x, nodeY + 16, '', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '6px',
-        color: '#829aaa',
-      }).setOrigin(0.5, 0).setDepth(37);
-
-      const meta = this.add.text(x, nodeY + 36, '', {
-        fontFamily: BODY_FONT,
-        fontSize: '7px',
-        color: '#637f91',
-        fontStyle: '600',
-      }).setOrigin(0.5, 0).setDepth(37);
-
-      const cost = this.add.text(x, nodeY + 54, '', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '6px',
-        color: '#ffe08a',
-      }).setOrigin(0.5, 0).setDepth(37);
-
-      const hit = this.add.rectangle(x, nodeY + 26, 104, 92, 0x000000, 0)
-        .setDepth(39);
-
-      this.gpsNodes.push({ index: i, dot, label, meta, cost, hit });
-    });
-
-    this.districtButton = this.add.rectangle(
-      GPS.x + GPS.w / 2,
-      GPS.y + 184,
-      GPS.w - 40,
-      36,
-      0x0b1724,
-      0.96
-    ).setStrokeStyle(1, 0x27475e, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(36);
-
-    this.add.text(GPS.x + 28, GPS.y + 184, 'DISTRICT', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#718fa3'
-    }).setOrigin(0, 0.5).setDepth(37);
-
-    this.districtValueText = this.add.text(
-      GPS.x + GPS.w - 28,
-      GPS.y + 184,
-      getMeetLocation(this.selectedMeetLocation).district,
+    this.gpsLocationText = this.add.text(
+      GPS.x + GPS.w - 20,
+      GPS.y + 16,
+      '',
       {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#65dfff'
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff7ff',
       }
-    ).setOrigin(1, 0.5).setDepth(37);
+    ).setOrigin(1, 0).setDepth(37);
 
-    this.districtButton.on('pointerdown', () => this.showDistrictPopup());
-    this.gpsPanel = panel;
-    this.updateGpsNodes();
+    this.gpsMetaText = this.add.text(
+      GPS.x + 20,
+      GPS.y + 52,
+      '',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#7896a9',
+        fontStyle: '600',
+      }
+    ).setDepth(37);
+
+    this.gpsTravelButton = this.add.rectangle(
+      GPS.x + GPS.w / 2,
+      GPS.y + 105,
+      GPS.w - 40,
+      38,
+      0x0b1724,
+      1
+    ).setStrokeStyle(1, 0x315470, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(37);
+
+    this.add.text(
+      GPS.x + GPS.w / 2,
+      GPS.y + 105,
+      'GO SOMEWHERE ELSE  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff7ff',
+      }
+    ).setOrigin(0.5).setDepth(38);
+
+    this.gpsTravelButton.on('pointerdown', () => this.showDistrictPopup());
+    this.updateGpsPanel();
   }
 
-  updateGpsNodes() {
+  updateGpsPanel() {
     const current = getMeetLocation(this.selectedMeetLocation);
-    const locationIds = LOCATION_ORDER_BY_REGION[current.district] || [];
-    const cash = Number(this.registry.get('cash') || 0);
-
-    this.districtValueText?.setText(current.district);
-
-    this.gpsNodes?.forEach((node, i) => {
-      const locationId = locationIds[i];
-      const location = getMeetLocation(locationId);
-      const active = locationId === this.selectedMeetLocation;
-      const travelCost = getTravelCost(this.selectedMeetLocation, locationId);
-      const affordable = cash >= travelCost;
-
-      node.locationId = locationId;
-      node.dot
-        .setRadius(active ? 8 : 6)
-        .setFillStyle(active ? 0x42dfff : 0x253b4b, 1)
-        .setStrokeStyle(2, active ? 0xb8f3ff : 0x45647a, 0.9);
-
-      node.label
-        .setText(location.label)
-        .setColor(active ? '#e8fbff' : '#829aaa');
-
-      node.meta
-        .setText(location.timeOfDay.toUpperCase() + ' • ' + location.difficulty)
-        .setColor(active ? '#8fd7ef' : '#637f91');
-
-      node.cost
-        .setText(active ? 'HERE' : 'FUEL ¥' + travelCost.toLocaleString('en-US'))
-        .setColor(active ? '#62e8c7' : affordable ? '#ffe08a' : '#8b5964');
-
-      node.hit.removeAllListeners('pointerdown');
-      if (!active && affordable) {
-        node.hit
-          .setInteractive({ useHandCursor: true })
-          .on('pointerdown', () => this.confirmTravelToLocation(locationId));
-      } else {
-        node.hit.disableInteractive();
-      }
-    });
+    this.gpsLocationText?.setText(current.district + ' // ' + current.label);
+    this.gpsMetaText?.setText(
+      current.timeOfDay.toUpperCase() + '  •  ' + current.difficulty
+    );
   }
 
   travelToLocation(locationId, suppliedCost = null) {
@@ -332,97 +300,18 @@ export default class MeetScene extends Phaser.Scene {
       const destination = getMeetLocation(locationId);
       this.registry.set('meetLocation', locationId);
       this.registry.set('district', destination.district);
-      saveSessionState(this.registry);
 
       this.cashText?.setText('¥ ' + Number(cash - travelCost).toLocaleString('en-US'));
       this.updateWorkshopButton();
       this.showTravelNotice(destination, travelCost);
 
-      // Travel changes the location only. It never generates a fresh roster.
+      // Travel changes the location only. The current round stays intact.
       this.rollOffers({ resetTimer: false });
+      this.persistMeetRound();
     }
 
-    this.updateGpsNodes();
+    this.updateGpsPanel();
     return true;
-  }
-
-  confirmTravelToLocation(locationId) {
-    if (!MEET_LOCATIONS[locationId] || locationId === this.selectedMeetLocation) return;
-
-    const destination = getMeetLocation(locationId);
-    const travelCost = getTravelCost(this.selectedMeetLocation, locationId);
-    const cash = Number(this.registry.get('cash') || 0);
-    if (cash < travelCost) return;
-    if (this.travelConfirmPopup?.active) return;
-
-    const depth = 110;
-    const objects = [];
-
-    const add = obj => {
-      objects.push(obj);
-      return obj;
-    };
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.52)
-      .setDepth(depth)
-      .setInteractive());
-
-    const panel = add(this.add.rectangle(780, 410, 620, 250, 0x08131f, 0.995)
-      .setStrokeStyle(2, 0x46d7ff, 0.92)
-      .setDepth(depth + 1));
-
-    add(this.add.text(780, 344, destination.district + ' // ' + destination.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#eefaff',
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      780,
-      397,
-      '¥' + travelCost.toLocaleString('en-US') + ' fuel to drive there?',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '15px',
-        color: '#b7cedc',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const yes = add(this.add.rectangle(665, 470, 190, 44, 0x0d2b29, 1)
-      .setStrokeStyle(2, 0x62e8c7, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-
-    add(this.add.text(665, 470, 'DRIVE // ¥' + travelCost.toLocaleString('en-US'), {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#f1fffb',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const cancel = add(this.add.rectangle(895, 470, 190, 44, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-
-    add(this.add.text(895, 470, 'CANCEL', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#c7d5de',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
-      this.travelConfirmPopup = null;
-    };
-
-    blocker.on('pointerdown', dismiss);
-    cancel.on('pointerdown', dismiss);
-    yes.on('pointerdown', () => {
-      dismiss();
-      this.travelToLocation(locationId, travelCost);
-    });
-
-    this.travelConfirmPopup = panel;
   }
 
   showTravelNotice(destination, travelCost) {
@@ -461,7 +350,7 @@ export default class MeetScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE MODE', {
+    this.add.text(SIDE.x + 20, 266, 'RACE MODE', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
@@ -472,38 +361,32 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = SIDE.y + 68 + i * 54;
+      const y = 310 + i * 50;
       const locked = row[2];
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        42,
-        locked ? 0x0a1017 : 0x0b1724,
+        40,
+        locked ? 0x0a1017 : 0x10283b,
         1
-      ).setStrokeStyle(1, locked ? 0x29343d : 0x315470, 1)
+      ).setStrokeStyle(locked ? 1 : 2, locked ? 0x29343d : 0x43dfff, 1)
         .setDepth(37);
 
       const label = this.add.text(SIDE.x + 24, y, row[0], {
-        fontFamily: PIXEL_FONT, fontSize: locked ? '8px' : '10px',
-        color: locked ? '#53626c' : '#a9c7da'
+        fontFamily: PIXEL_FONT,
+        fontSize: locked ? '8px' : '10px',
+        color: locked ? '#53626c' : '#ffffff'
       }).setOrigin(0, 0.5).setDepth(38);
 
-      const arrow = this.add.text(SIDE.x + SIDE.w - 28, y, locked ? '—' : 'ON', {
-        fontFamily: PIXEL_FONT, fontSize: '11px', color: locked ? '#46525a' : '#8cb6cf'
-      }).setOrigin(0.5).setDepth(38);
-
-      // SINGLE RACE is the only available mode right now. It is deliberately
-      // non-interactive so tapping it cannot reroll the meet roster.
-
-      this.modeButtons.push({ key: row[1], box, label, arrow, locked });
+      this.modeButtons.push({ key: row[1], box, label, locked });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 160, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, 414, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 188, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, 442, '', {
       fontFamily: BODY_FONT,
       fontSize: '13px',
       color: '#d8e7ef',
@@ -511,17 +394,17 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 260, 'RIVAL OFFER', {
+    this.add.text(SIDE.x + 20, 520, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 260, '', {
+    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, 520, '', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
     }).setOrigin(1, 0).setDepth(37);
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 308,
+      568,
       SIDE.w - 36,
       40,
       0x291620,
@@ -532,7 +415,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 308,
+      568,
       'PINK SLIPS?',
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
@@ -541,7 +424,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkResponseText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 339,
+      599,
       '',
       {
         fontFamily: BODY_FONT,
@@ -554,9 +437,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButton.on('pointerdown', () => this.challengePinkSlips());
 
+    // Keep these two where they were before the GPS cleanup.
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 394,
+      724,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -567,7 +451,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 394,
+      724,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -578,7 +462,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 448,
+      778,
       SIDE.w - 36,
       42,
       0x24131a,
@@ -589,7 +473,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 448,
+      778,
       'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce1'
@@ -638,13 +522,36 @@ export default class MeetScene extends Phaser.Scene {
     }).setDepth(33);
   }
 
-  refreshAllLocationOffers() {
+  refreshAllLocationOffers({ resetTimer = true, persist = true } = {}) {
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
+    this.registry.set('defeatedRivalKeys', []);
+
     ALL_MEET_LOCATION_IDS.forEach(locationId => {
       this.locationOffers[locationId] = this.generateOffersForLocation(locationId);
       this.locationSelectedOfferIndex[locationId] = 0;
     });
+
+    if (resetTimer) this.nextRefreshAt = Date.now() + 180000;
+    if (persist) this.persistMeetRound();
+  }
+
+  persistMeetRound() {
+    const cleanRosters = {};
+
+    ALL_MEET_LOCATION_IDS.forEach(locationId => {
+      cleanRosters[locationId] = (this.locationOffers[locationId] || []).map(offer => {
+        const {
+          card,
+          ...plainOffer
+        } = offer;
+        return { ...plainOffer };
+      });
+    });
+
+    this.registry.set('meetRosters', cleanRosters);
+    this.registry.set('meetRefreshAt', this.nextRefreshAt);
+    saveSessionState(this.registry);
   }
 
   generateOffersForLocation(locationId) {
@@ -765,16 +672,34 @@ export default class MeetScene extends Phaser.Scene {
       location.district + ' // ' + location.label + ' // ' + location.timeOfDay.toUpperCase()
     );
 
-    if (resetTimer) this.nextRefreshAt = Date.now() + 180000;
+    if (resetTimer) {
+      this.nextRefreshAt = Date.now() + 180000;
+      this.persistMeetRound();
+    }
 
     this.drawStage();
     this.drawCards();
     this.updateModeButtons();
-    this.updateGpsNodes();
+    this.updateGpsPanel();
     this.rivalsTitleText?.setText(
       'RIVALS // ' + location.district + ' // ' + location.label + ' // ' + location.difficulty
     );
-    this.selectOffer(this.selectedOfferIndex);
+
+    if (this.offers.length) {
+      this.selectOffer(this.selectedOfferIndex);
+    } else {
+      this.selectedSummary.setText('NO RACERS LEFT\nWAIT FOR THE NEXT ROUND');
+      this.rivalOfferText.setText('—');
+      this.pinkSlipButton.disableInteractive()
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+      this.pinkSlipButtonLabel.setText('NO CHALLENGE').setColor('#72838f');
+      this.pinkResponseText.setText('');
+      this.raceButton.disableInteractive()
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+      this.raceButtonLabel.setColor('#72838f').setText('NO RACERS LEFT');
+    }
   }
 
   prefetchDeferredAssets() {
@@ -1086,6 +1011,7 @@ export default class MeetScene extends Phaser.Scene {
     if (!offer || offer.pinkChallenged) return;
 
     offer.pinkChallenged = true;
+    this.persistMeetRound();
     this.pinkSlipButton.disableInteractive();
     this.pinkSlipButtonLabel.setText('THINKING...');
     this.pinkResponseText.setText('They look over both cars...');
@@ -1191,7 +1117,6 @@ export default class MeetScene extends Phaser.Scene {
       if (item.locked) {
         item.box.setFillStyle(0x0a1017, 1).setStrokeStyle(1, 0x29343d, 1);
         item.label.setColor('#53626c');
-        item.arrow?.setColor('#46525a');
         return;
       }
 
@@ -1238,8 +1163,8 @@ export default class MeetScene extends Phaser.Scene {
       duration: 320,
       ease: 'Sine.easeInOut',
       onComplete: () => {
-        this.refreshAllLocationOffers();
-        this.rollOffers({ resetTimer: true });
+        this.refreshAllLocationOffers({ resetTimer: true, persist: true });
+        this.rollOffers({ resetTimer: false });
 
         const noteBg = this.add.rectangle(
           STAGE.x + STAGE.w - 200,
@@ -1316,6 +1241,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceTimeOfDay', location.timeOfDay);
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
+    this.persistMeetRound();
 
     this.scene.start('RaceScene');
   }
