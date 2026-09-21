@@ -53,7 +53,7 @@ export function readSessionState() {
 
 export function normaliseState(input = {}) {
   const base = createDefaultGameState();
-  const owned = Array.isArray(input.ownedCarIds) && input.ownedCarIds.length
+  const owned = Array.isArray(input.ownedCarIds)
     ? [...new Set(input.ownedCarIds)]
     : [...base.ownedCarIds];
 
