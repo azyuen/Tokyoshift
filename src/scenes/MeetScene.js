@@ -1,8 +1,8 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r43';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r47';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r43';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r47';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
