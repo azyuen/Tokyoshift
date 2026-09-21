@@ -5,7 +5,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260921-r74';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260922-r86';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -261,6 +261,14 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const state = createDefaultGameState();
     state.firstName = firstName;
     state.lastName = lastName;
+
+    const isDevProfile =
+      firstName.toLowerCase() === 'arkon' &&
+      lastName.toLowerCase() === 'den';
+    if (isDevProfile) {
+      state.cash = 1000000000;
+    }
+
     state.playerCharacterId = this.currentCharacterId;
     state.selectedCarId = 'ae86';
     state.ownedCarIds = ['ae86'];
