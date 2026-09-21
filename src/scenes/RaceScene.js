@@ -9,20 +9,21 @@ import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r75';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r75';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r76';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r76';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r70';
 import {
   getEncounterAi,
   boostAiForPinkSlip,
-} from '../data/encounterProfiles.js?v=20260921-r75';
+} from '../data/encounterProfiles.js?v=20260921-r76';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
 const TREE_START_M = 4.72;
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
+const TAXI_TO_WORKSHOP_COST = 1000;
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -979,18 +980,22 @@ export default class RaceScene extends Phaser.Scene {
 
     const addWorkshopButton = x => {
       const currentCash = Number(this.registry.get('cash') || 0);
-      if (currentCash >= WORKSHOP_RETURN_COST) {
+      const stranded = Boolean(this.registry.get('meetStranded'));
+      const returnCost = stranded ? TAXI_TO_WORKSHOP_COST : WORKSHOP_RETURN_COST;
+      const returnLabel = stranded ? 'TAXI HOME // ¥' : 'WORKSHOP // ¥';
+
+      if (currentCash >= returnCost) {
         return addButton(
           x,
-          'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
-          0x45d7ff,
+          returnLabel + returnCost.toLocaleString('en-US'),
+          stranded ? 0xffc66d : 0x45d7ff,
           () => this.returnToWorkshop()
         );
       }
 
       const control = addButton(
         x,
-        'NEED ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
+        'NEED ¥' + returnCost.toLocaleString('en-US'),
         0x66535a,
         () => {}
       );
@@ -1018,9 +1023,12 @@ export default class RaceScene extends Phaser.Scene {
 
   returnToWorkshop() {
     const cash = Number(this.registry.get('cash') || 0);
-    if (cash < WORKSHOP_RETURN_COST) return;
+    const stranded = Boolean(this.registry.get('meetStranded'));
+    const cost = stranded ? TAXI_TO_WORKSHOP_COST : WORKSHOP_RETURN_COST;
+    if (cash < cost) return;
 
-    this.registry.set('cash', cash - WORKSHOP_RETURN_COST);
+    this.registry.set('cash', cash - cost);
+    this.registry.set('meetStranded', false);
     saveSessionState(this.registry);
     this.scene.start('GarageScene');
   }
@@ -1069,12 +1077,15 @@ export default class RaceScene extends Phaser.Scene {
 
         if (ownedCarIds.length) {
           this.registry.set('selectedCarId', ownedCarIds[0]);
+          this.registry.set('meetStranded', true);
         } else {
           this.registry.set('selectedCarId', null);
+          this.registry.set('meetStranded', false);
           gameOver = true;
         }
       }
 
+      if (playerWon) this.registry.set('meetStranded', false);
       this.registry.set('ownedCarIds', ownedCarIds);
       this.registry.set('carStates', carStates);
       this.registry.set('gameOver', gameOver);
