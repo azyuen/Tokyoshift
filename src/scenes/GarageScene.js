@@ -446,6 +446,13 @@ export default class GarageScene extends Phaser.Scene {
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
 
+    const wasEngineMode = this.engineMode;
+    if (wasEngineMode && id !== this.selectedCarId && this.getPendingEngineCost() > 0) {
+      this.showWorkshopToast('APPLY OR DISCARD CURRENT PARTS FIRST');
+      return;
+    }
+    if (wasEngineMode) this.leaveEngineMode(false);
+
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
 
@@ -489,6 +496,549 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.saveProfile();
+
+    if (wasEngineMode) this.enterEngineMode();
+  }
+
+  showEmptyGarageState() {
+    this.headerCarText.setText('NO CAR');
+    this.specValueTexts.engine.setText('—');
+    this.specValueTexts.power.setText('—');
+    this.specValueTexts.torque.setText('—');
+    this.specValueTexts.weight.setText('—');
+    this.tuningStatusText?.setText('TUNING // NO CAR');
+
+    this.upgradeButtons.forEach(item => {
+      item.box.disableInteractive()
+        .setFillStyle(0x0a1017, 1)
+        .setStrokeStyle(1, 0x29343d, 1);
+      item.label.setColor('#53626c');
+      item.arrow.setColor('#46545e');
+    });
+
+    this.saveButton?.disableInteractive()
+      .setFillStyle(0x17181d, 1)
+      .setStrokeStyle(1, 0x514f55, 1);
+    this.saveButtonLabel?.setText('NO CAR TO SAVE').setColor('#817d84');
+
+    this.meetButton?.disableInteractive()
+      .setFillStyle(0x17181d, 1)
+      .setStrokeStyle(1, 0x514f55, 1);
+    this.meetButtonLabel?.setText('NO CAR').setColor('#817d84');
+
+    this.add.text(710, 330, 'GARAGE EMPTY', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#d9e8f0',
+    }).setOrigin(0.5).setDepth(20);
+
+    this.add.text(710, 382, 'You lost your last car. Restart from SETTINGS when you are ready for another run.', {
+      fontFamily: BODY_FONT,
+      fontSize: '13px',
+      color: '#8da5b4',
+      align: 'center',
+      wordWrap: { width: 620 },
+    }).setOrigin(0.5).setDepth(20);
+  }
+
+  enterEngineMode() {
+    if (this.engineMode || !this.selectedCarId) return;
+    this.engineMode = true;
+
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    this.currentEngineTuning = getEngineTuning(state);
+    this.pendingEngineTuning = { ...this.currentEngineTuning };
+
+    const add = obj => {
+      this.engineModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    add(this.add.text(SIDE.x + 20, SIDE.y + 18, 'ENGINE', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
+    }).setDepth(72));
+
+    this.engineModeSubtitle = add(this.add.text(SIDE.x + 20, SIDE.y + 48, car.engineModel, {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#4de1ff'
+    }).setDepth(72));
+
+    this.engineInset = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 125,
+      SIDE.w - 38,
+      118,
+      0x0b1724,
+      1
+    ).setStrokeStyle(2, 0x315470, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(71));
+
+    this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
+
+    this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
+
+    this.engineInsetLevelText = add(this.add.text(
+      SIDE.x + SIDE.w - 28,
+      SIDE.y + 82,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#eaf8ff',
+        align: 'right',
+      }
+    ).setOrigin(1, 0).setDepth(74));
+
+    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
+    this.enginePartRows = {};
+
+    listIds.forEach((partId, i) => {
+      const y = SIDE.y + 218 + i * 58;
+      const part = ENGINE_TUNING_PARTS[partId];
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        48,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff3ff'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+        fontFamily: BODY_FONT, fontSize: '9px', color: '#7d9bad', fontStyle: '600'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8db6cc'
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openEnginePartSelector(partId));
+      this.enginePartRows[partId] = { box, label, detail, level };
+    });
+
+    this.enginePreviewText = add(this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 515,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#91b6ca',
+        lineSpacing: 4,
+      }
+    ).setDepth(73));
+
+    this.engineApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 592,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+
+    this.engineApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 592,
+      'NO PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    const backButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 658,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 658, '<  BACK TO WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(73));
+
+    backButton.on('pointerdown', () => this.leaveEngineMode(true));
+
+    this.buildEngineHotspots();
+    this.addDaichiEngineHelper();
+    this.refreshEngineMode();
+  }
+
+  leaveEngineMode(refreshCar = true) {
+    this.closeEnginePartSelector();
+    this.engineModeObjects.forEach(obj => obj?.destroy?.());
+    this.engineHotspotObjects.forEach(obj => obj?.destroy?.());
+    this.engineHelperObjects.forEach(obj => obj?.destroy?.());
+
+    this.engineModeObjects = [];
+    this.engineHotspotObjects = [];
+    this.engineHelperObjects = [];
+    this.engineMode = false;
+    this.enginePartRows = {};
+
+    if (refreshCar && this.selectedCarId) {
+      const id = this.selectedCarId;
+      const car = cars[id];
+      const carStates = this.registry.get('carStates') || {};
+      const carState = carStates[id] || {};
+      const tunedBuild = applyEngineTuning(car, engines[car.engine], carState);
+      const enginePartCount = getEngineTuningCount(getEngineTuning(carState));
+      this.specValueTexts.power.setText(tunedBuild.car.powerKW + ' kW');
+      this.specValueTexts.torque.setText(tunedBuild.car.torqueNm + ' Nm');
+      this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
+      this.tuningStatusText?.setText(
+        enginePartCount > 0
+          ? 'TUNING // ' + enginePartCount + ' ENGINE PART' + (enginePartCount === 1 ? '' : 'S')
+          : 'TUNING // STOCK'
+      );
+    }
+  }
+
+  buildEngineHotspots() {
+    const hotspots = {
+      ecu: { x: 790, y: 324, lx: 746, ly: 282 },
+      intake: { x: 905, y: 345, lx: 932, ly: 302 },
+      turbo: { x: 850, y: 395, lx: 805, ly: 438 },
+      intercooler: { x: 1000, y: 435, lx: 965, ly: 482 },
+      exhaust: { x: 386, y: 438, lx: 430, ly: 488 },
+    };
+
+    Object.entries(hotspots).forEach(([partId, p]) => {
+      const part = ENGINE_TUNING_PARTS[partId];
+
+      const line = this.add.line(0, 0, p.x, p.y, p.lx, p.ly, 0x43dfff, 0.95)
+        .setOrigin(0, 0)
+        .setLineWidth(2)
+        .setDepth(74);
+
+      const dot = this.add.circle(p.x, p.y, 10, 0x07111d, 1)
+        .setStrokeStyle(3, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(75);
+
+      const width = Math.max(100, part.name.length * 12);
+      const box = this.add.rectangle(p.lx, p.ly, width, 30, 0x07111d, 0.97)
+        .setStrokeStyle(2, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(74);
+
+      const label = this.add.text(p.lx, p.ly, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#e7fbff'
+      }).setOrigin(0.5).setDepth(75);
+
+      const open = () => this.openEnginePartSelector(partId);
+      dot.on('pointerdown', open);
+      box.on('pointerdown', open);
+
+      this.engineHotspotObjects.push(line, dot, box, label);
+    });
+  }
+
+  addDaichiEngineHelper() {
+    const daichi = characters.daichiSakamoto;
+    if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
+
+    const x = 930;
+    const feetY = 482;
+    const targetHeight = 292;
+    const depth = 8.4;
+
+    const softShadow = this.add.ellipse(x + 6, feetY - 8, 74, 22, 0x000000, 0.55)
+      .setDepth(depth - 0.2);
+    const contactShadow = this.add.ellipse(x + 5, feetY - 5, 52, 13, 0x000000, 0.78)
+      .setDepth(depth - 0.1);
+
+    const sprite = this.add.image(x, feetY, daichi.visual.spriteKey)
+      .setOrigin(0.5, 1)
+      .setDepth(depth);
+
+    const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
+    sprite.setScale(targetHeight / source.height);
+
+    this.engineHelperObjects.push(softShadow, contactShadow, sprite);
+  }
+
+  drawInlineEngineSchematic(level = 0) {
+    const g = this.engineInsetGraphics;
+    if (!g) return;
+    g.clear();
+
+    if (this.inlineEngineSprite) {
+      this.inlineEngineSprite.destroy();
+      this.inlineEngineSprite = null;
+    }
+
+    const car = cars[this.selectedCarId];
+    const engineKey = car?.visual?.engineKey;
+    const cx = SIDE.x + 140;
+    const cy = SIDE.y + 125;
+
+    if (engineKey && this.textures.exists(engineKey)) {
+      this.inlineEngineSprite = this.add.image(cx, cy, engineKey)
+        .setDepth(74)
+        .setOrigin(0.5);
+      this.engineModeObjects.push(this.inlineEngineSprite);
+
+      const source = this.textures.get(engineKey).getSourceImage();
+      const fit = Math.min(190 / source.width, 92 / source.height);
+      this.inlineEngineSprite.setScale(fit * (1 + level * 0.045));
+      return;
+    }
+
+    const scale = 0.82 + level * 0.035;
+    g.fillStyle(0x02070c, 0.65).fillEllipse(cx, cy + 30, 165 * scale, 20 * scale);
+    g.fillStyle(0x8796a0, 1)
+      .fillRoundedRect(cx - 78 * scale, cy - 24 * scale, 156 * scale, 58 * scale, 7);
+    g.fillStyle(level >= 2 ? 0xbd3d49 : 0x9f2935, 1)
+      .fillRoundedRect(cx - 61 * scale, cy - 37 * scale, 122 * scale, 31 * scale, 5);
+    g.lineStyle(3, 0xd7e4ea, 0.76)
+      .strokeRoundedRect(cx - 78 * scale, cy - 24 * scale, 156 * scale, 58 * scale, 7);
+
+    for (let i = 0; i < 4; i++) {
+      g.fillStyle(0x222b34, 1)
+        .fillCircle(cx - 52 * scale + i * 34 * scale, cy + 14 * scale, 10 * scale);
+    }
+
+    g.fillStyle(0x171d25, 1)
+      .fillCircle(cx - 88 * scale, cy + 8 * scale, 16 * scale)
+      .fillCircle(cx + 89 * scale, cy + 6 * scale, 14 * scale);
+  }
+
+  getPendingEngineCost() {
+    if (!this.currentEngineTuning || !this.pendingEngineTuning) return 0;
+    return getEngineTuningCartCost(this.currentEngineTuning, this.pendingEngineTuning);
+  }
+
+  refreshEngineMode() {
+    if (!this.engineMode || !this.selectedCarId) return;
+
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const preview = applyEngineTuning(car, engines[car.engine], {
+      ...state,
+      tuning: this.pendingEngineTuning,
+    });
+
+    const engineSpec = ENGINE_TUNING_PARTS.engine.levels[this.pendingEngineTuning.engine];
+    this.engineInsetLevelText?.setText(
+      'LV.' + this.pendingEngineTuning.engine + '\n' + engineSpec.name.toUpperCase()
+    );
+    this.drawInlineEngineSchematic(this.pendingEngineTuning.engine);
+
+    Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentEngineTuning[partId];
+      const pending = this.pendingEngineTuning[partId];
+      const spec = ENGINE_TUNING_PARTS[partId].levels[pending];
+
+      row.level.setText(
+        pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending
+      );
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    this.enginePreviewText?.setText(
+      'POWER  ' + preview.car.powerKW + ' kW\n' +
+      'TORQUE ' + preview.car.torqueNm + ' Nm\n' +
+      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar'
+    );
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const cost = this.getPendingEngineCost();
+    this.engineApplyButton?.removeAllListeners('pointerdown');
+
+    if (cost <= 0) {
+      this.engineApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.engineApplyText?.setText('NO PARTS SELECTED').setColor('#758e94');
+      return;
+    }
+
+    const affordable = cash >= cost;
+    this.engineApplyButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+      .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+
+    this.engineApplyText?.setText(
+      affordable
+        ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US')
+        : 'NEED ¥ ' + cost.toLocaleString('en-US')
+    ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+
+    this.engineApplyButton?.on('pointerdown', () => this.applyPendingEngineUpgrades());
+  }
+
+  openEnginePartSelector(partId) {
+    this.closeEnginePartSelector();
+    const part = ENGINE_TUNING_PARTS[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.engineModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 500, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(430, 205, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eefaff'
+    }).setDepth(depth + 2));
+
+    const installed = this.currentEngineTuning[partId];
+
+    part.levels.forEach((spec, index) => {
+      const y = 275 + index * 82;
+      const selected = this.pendingEngineTuning[partId] === spec.level;
+      const selectable = spec.level >= installed;
+      const pathCost = getUpgradePathCost(partId, installed, spec.level);
+
+      const box = add(this.add.rectangle(780, y, 660, 64, selected ? 0x123047 : 0x0b1724, 1)
+        .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+        .setDepth(depth + 2));
+
+      add(this.add.text(470, y - 13, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(470, y + 14, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1090, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.pendingEngineTuning[partId] = spec.level;
+          this.closeEnginePartSelector();
+          this.refreshEngineMode();
+        });
+      }
+    });
+
+    const close = add(this.add.rectangle(1090, 205, 100, 38, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(1090, 205, 'CLOSE', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    close.on('pointerdown', () => this.closeEnginePartSelector());
+    blocker.on('pointerdown', () => this.closeEnginePartSelector());
+  }
+
+  closeEnginePartSelector() {
+    this.engineModalObjects.forEach(obj => obj?.destroy?.());
+    this.engineModalObjects = [];
+  }
+
+  applyPendingEngineUpgrades() {
+    const cost = this.getPendingEngineCost();
+    if (cost <= 0) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const tuning = normaliseEngineTuning(this.pendingEngineTuning);
+
+    carStates[this.selectedCarId] = {
+      stock: false,
+      nosInstalled: Boolean(existing.nosInstalled),
+      tuneLevel: Number(existing.tuneLevel || 0),
+      acquiredVia: existing.acquiredVia || 'garage',
+      ...existing,
+      tuning,
+      stock: getEngineTuningCount(tuning) === 0 && !existing.nosInstalled,
+    };
+
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentEngineTuning = getEngineTuning(carStates[this.selectedCarId]);
+    this.pendingEngineTuning = { ...this.currentEngineTuning };
+    this.refreshEngineMode();
+    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
+  }
+
+  showWorkshopToast(message) {
+    if (this.workshopToastObjects?.length) {
+      this.workshopToastObjects.forEach(obj => obj?.destroy?.());
+    }
+    this.workshopToastObjects = [];
+
+    const panel = this.add.rectangle(710, 600, 570, 44, 0x07131e, 0.98)
+      .setStrokeStyle(2, 0x43dfff, 0.92)
+      .setDepth(145);
+
+    const text = this.add.text(710, 600, message, {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eefaff'
+    }).setOrigin(0.5).setDepth(146);
+
+    this.workshopToastObjects.push(panel, text);
+    this.time.delayedCall(1450, () => {
+      this.workshopToastObjects?.forEach(obj => obj?.destroy?.());
+      this.workshopToastObjects = [];
+    });
   }
 
   selectUpgrade(name) {
