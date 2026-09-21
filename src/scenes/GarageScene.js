@@ -729,18 +729,30 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
     }).setDepth(73));
 
+    add(this.add.text(
+      SIDE.x + SIDE.w - 28,
+      SIDE.y + 66,
+      'CURRENT ENGINE',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#688ba0',
+        align: 'right',
+      }
+    ).setOrigin(1, 0).setDepth(74));
+
     this.engineInsetLevelText = add(this.add.text(
-      SIDE.x + 34,
-      SIDE.y + 72,
+      SIDE.x + SIDE.w - 28,
+      SIDE.y + 94,
       engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase(),
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: '#7fdfff',
-        align: 'left',
-        wordWrap: { width: 150 },
+        align: 'right',
+        wordWrap: { width: 152, useAdvancedWrap: true },
       }
-    ).setOrigin(0, 0).setDepth(74));
+    ).setOrigin(1, 0).setDepth(74));
 
     this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
 
@@ -825,14 +837,45 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(73));
 
-    backButton.on('pointerdown', () => this.leaveEngineMode(true));
+    backButton.on('pointerdown', () => this.leaveEngineMode(true, true));
 
     this.buildEngineHotspots();
     this.addDaichiEngineHelper();
     this.refreshEngineMode();
   }
 
-  leaveEngineMode(refreshCar = true) {
+  leaveEngineMode(refreshCar = true, animate = true) {
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 190,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveEngineMode(refreshCar, false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 280,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
     this.closeEnginePartSelector();
     this.engineModeObjects.forEach(obj => obj?.destroy?.());
     this.engineHotspotObjects.forEach(obj => obj?.destroy?.());
@@ -843,6 +886,8 @@ export default class GarageScene extends Phaser.Scene {
     this.engineHelperObjects = [];
     this.engineMode = false;
     this.enginePartRows = {};
+    this.inlineEngineSprite = null;
+    this.inlineEngineMask = null;
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
     this.thumbButtons.forEach(item => {
@@ -856,18 +901,7 @@ export default class GarageScene extends Phaser.Scene {
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
 
-    if (refreshCar && this.selectedCarId) {
-      const id = this.selectedCarId;
-      const car = cars[id];
-      const carStates = this.registry.get('carStates') || {};
-      const carState = carStates[id] || {};
-      const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
-      const tunedBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
-      this.specValueTexts.power.setText(tunedBuild.car.powerKW + ' kW');
-      this.specValueTexts.torque.setText(tunedBuild.car.torqueNm + ' Nm');
-      this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
-      this.tuningStatusText?.setText('TUNING');
-    }
+    if (refreshCar) this.refreshWorkshopSpecs();
   }
 
   buildEngineHotspots() {
@@ -894,7 +928,7 @@ export default class GarageScene extends Phaser.Scene {
         x: clampX(frontX - 118),
         y: wheelY - 38,
         lx: clampX(frontX - 178),
-        ly: wheelY - 58,
+        ly: wheelY + 30,
       },
       intake: {
         x: clampX(frontX + 78),
@@ -904,9 +938,9 @@ export default class GarageScene extends Phaser.Scene {
       },
       turbo: {
         x: clampX(frontX - 48),
-        y: wheelY - 102,
+        y: wheelY - 38,
         lx: clampX(frontX - 74),
-        ly: wheelY - 150,
+        ly: wheelY - 92,
       },
       intercooler: {
         x: clampX(carRight - 76),
@@ -986,11 +1020,19 @@ export default class GarageScene extends Phaser.Scene {
       this.inlineEngineSprite.destroy();
       this.inlineEngineSprite = null;
     }
+    if (this.inlineEngineMask) {
+      this.inlineEngineMask.destroy();
+      this.inlineEngineMask = null;
+    }
 
     const car = cars[this.selectedCarId];
     const engineKey = car?.visual?.engineKey;
-    const cx = SIDE.x + SIDE.w - 92;
-    const cy = SIDE.y + 104;
+    const insetLeft = SIDE.x + 18;
+    const insetTop = SIDE.y + 13;
+    const insetW = SIDE.w - 36;
+    const insetH = 178;
+    const cx = insetLeft + 88;
+    const cy = SIDE.y + 110;
 
     if (engineKey && this.textures.exists(engineKey)) {
       this.inlineEngineSprite = this.add.image(cx, cy, engineKey)
@@ -999,28 +1041,30 @@ export default class GarageScene extends Phaser.Scene {
       this.engineModeObjects.push(this.inlineEngineSprite);
 
       const source = this.textures.get(engineKey).getSourceImage();
-      const fit = Math.min(142 / source.width, 96 / source.height);
-      this.inlineEngineSprite.setScale(fit * (1 + level * 0.045));
+      const fit = Math.max(225 / source.width, 155 / source.height);
+      this.inlineEngineSprite.setScale(fit * (1 + level * 0.035));
+
+      this.inlineEngineMask = this.make.graphics({ add: false });
+      this.inlineEngineMask.fillStyle(0xffffff, 1);
+      this.inlineEngineMask.fillRect(insetLeft + 2, insetTop + 2, insetW - 4, insetH - 4);
+      this.inlineEngineSprite.setMask(this.inlineEngineMask.createGeometryMask());
+      this.engineModeObjects.push(this.inlineEngineMask);
       return;
     }
 
-    const scale = 0.82 + level * 0.035;
-    g.fillStyle(0x02070c, 0.65).fillEllipse(cx, cy + 30, 165 * scale, 20 * scale);
+    const scale = 1.06 + level * 0.04;
+    g.fillStyle(0x02070c, 0.65).fillEllipse(cx, cy + 32, 180 * scale, 22 * scale);
     g.fillStyle(0x8796a0, 1)
-      .fillRoundedRect(cx - 78 * scale, cy - 24 * scale, 156 * scale, 58 * scale, 7);
+      .fillRoundedRect(cx - 82 * scale, cy - 24 * scale, 164 * scale, 62 * scale, 7);
     g.fillStyle(level >= 2 ? 0xbd3d49 : 0x9f2935, 1)
-      .fillRoundedRect(cx - 61 * scale, cy - 37 * scale, 122 * scale, 31 * scale, 5);
+      .fillRoundedRect(cx - 64 * scale, cy - 39 * scale, 128 * scale, 33 * scale, 5);
     g.lineStyle(3, 0xd7e4ea, 0.76)
-      .strokeRoundedRect(cx - 78 * scale, cy - 24 * scale, 156 * scale, 58 * scale, 7);
+      .strokeRoundedRect(cx - 82 * scale, cy - 24 * scale, 164 * scale, 62 * scale, 7);
 
     for (let i = 0; i < 4; i++) {
       g.fillStyle(0x222b34, 1)
-        .fillCircle(cx - 52 * scale + i * 34 * scale, cy + 14 * scale, 10 * scale);
+        .fillCircle(cx - 54 * scale + i * 35 * scale, cy + 15 * scale, 10 * scale);
     }
-
-    g.fillStyle(0x171d25, 1)
-      .fillCircle(cx - 88 * scale, cy + 8 * scale, 16 * scale)
-      .fillCircle(cx + 89 * scale, cy + 6 * scale, 14 * scale);
   }
 
   getPendingEngineCost() {
@@ -1094,6 +1138,120 @@ export default class GarageScene extends Phaser.Scene {
     this.engineApplyButton?.on('pointerdown', () => this.applyPendingEngineUpgrades());
   }
 
+  addModificationModalVisual(add, {
+    textureKey = null,
+    title = '',
+    subtitle = '',
+    partName = '',
+    mode = 'engine',
+    depth = 120,
+  } = {}) {
+    const frameX = 360;
+    const frameY = 405;
+    const frameW = 330;
+    const frameH = 430;
+
+    add(this.add.rectangle(frameX, frameY, frameW, frameH, 0x07111d, 0.98)
+      .setStrokeStyle(2, 0x315470, 1)
+      .setDepth(depth + 2));
+
+    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, 'CURRENT SETUP', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#6f93a8',
+    }).setDepth(depth + 3));
+
+    let renderedSprite = false;
+    if (textureKey && this.textures.exists(textureKey)) {
+      const sprite = add(this.add.image(frameX, frameY - 36, textureKey)
+        .setDepth(depth + 3)
+        .setOrigin(0.5));
+      const source = this.textures.get(textureKey).getSourceImage();
+      const fit = Math.min(280 / source.width, 245 / source.height);
+      sprite.setScale(fit);
+      renderedSprite = true;
+    }
+
+    if (!renderedSprite) {
+      const g = add(this.add.graphics().setDepth(depth + 3));
+      g.lineStyle(5, 0x7f98a8, 0.92);
+
+      if (mode === 'drivetrain') {
+        g.strokeRoundedRect(frameX - 82, frameY - 95, 126, 70, 10);
+        g.lineBetween(frameX - 116, frameY - 60, frameX - 82, frameY - 60);
+        g.lineBetween(frameX + 44, frameY - 60, frameX + 112, frameY - 60);
+        g.strokeCircle(frameX - 120, frameY - 60, 22);
+        g.strokeCircle(frameX + 116, frameY - 60, 22);
+      } else if (mode === 'exhaustNos') {
+        g.lineBetween(frameX - 112, frameY - 48, frameX + 30, frameY - 48);
+        g.strokeRoundedRect(frameX + 30, frameY - 76, 90, 56, 10);
+        g.strokeRoundedRect(frameX - 88, frameY - 128, 38, 80, 10);
+      } else {
+        g.strokeRoundedRect(frameX - 102, frameY - 100, 204, 118, 12);
+        g.lineBetween(frameX - 92, frameY - 8, frameX + 92, frameY - 8);
+        for (let i = 0; i < 4; i++) {
+          g.strokeCircle(frameX - 72 + i * 48, frameY - 46, 14);
+        }
+      }
+
+      add(this.add.text(frameX, frameY + 38, 'SPRITE SLOT', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#526d7e',
+      }).setOrigin(0.5).setDepth(depth + 3));
+    }
+
+    add(this.add.text(frameX, frameY + 118, title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: frameW - 44, useAdvancedWrap: true },
+    }).setOrigin(0.5, 0).setDepth(depth + 3));
+
+    if (subtitle) {
+      add(this.add.text(frameX, frameY + 166, subtitle, {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#8da9ba',
+        align: 'center',
+        fontStyle: '600',
+        wordWrap: { width: frameW - 44, useAdvancedWrap: true },
+      }).setOrigin(0.5, 0).setDepth(depth + 3));
+    }
+
+    if (partName) {
+      add(this.add.text(frameX, frameY + 198, partName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#59dfff',
+        align: 'center',
+      }).setOrigin(0.5, 1).setDepth(depth + 3));
+    }
+  }
+
+  addUpgradeRowSprite(add, spec, x, y, depth = 120) {
+    const well = add(this.add.rectangle(x, y, 72, 58, 0x07111d, 0.96)
+      .setStrokeStyle(1, 0x29465c, 1)
+      .setDepth(depth + 3));
+
+    if (spec?.spriteKey && this.textures.exists(spec.spriteKey)) {
+      const sprite = add(this.add.image(x, y, spec.spriteKey)
+        .setDepth(depth + 4)
+        .setOrigin(0.5));
+      const source = this.textures.get(spec.spriteKey).getSourceImage();
+      sprite.setScale(Math.min(62 / source.width, 48 / source.height));
+    } else {
+      add(this.add.text(x, y, 'LV.' + Number(spec?.level || 0), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#658294',
+      }).setOrigin(0.5).setDepth(depth + 4));
+    }
+
+    return well;
+  }
+
   openEnginePartSelector(partId) {
     this.closeEnginePartSelector();
     const part = ENGINE_TUNING_PARTS[partId];
@@ -1104,49 +1262,70 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
+    const car = cars[this.selectedCarId];
+    const installed = this.currentEngineTuning[partId];
+    const currentSpec = part.levels[installed];
+    const currentEngineName =
+      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase();
 
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 760, 560, 0x08131f, 1)
+    add(this.add.rectangle(780, 420, 1240, 630, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(430, 205, part.name + ' // SELECT KIT', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eefaff'
+    add(this.add.text(190, 132, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
     }).setDepth(depth + 2));
 
-    const installed = this.currentEngineTuning[partId];
+    this.addModificationModalVisual(add, {
+      textureKey: partId === 'engine'
+        ? car?.visual?.engineKey
+        : currentSpec?.spriteKey || car?.visual?.engineKey,
+      title: partId === 'engine' ? currentEngineName : currentSpec?.name?.toUpperCase(),
+      subtitle: partId === 'engine'
+        ? 'FACTORY ENGINE // ' + car.shortName
+        : currentSpec?.benefit?.toUpperCase(),
+      partName: part.name,
+      mode: 'engine',
+      depth,
+    });
 
     part.levels.forEach((spec, index) => {
-      const y = 305 + index * 82;
+      const y = 250 + index * 104;
       const selected = this.pendingEngineTuning[partId] === spec.level;
       const selectable = spec.level >= installed;
       const pathCost = getUpgradePathCost(partId, installed, spec.level);
 
-      const box = add(this.add.rectangle(780, y, 660, 64, selected ? 0x123047 : 0x0b1724, 1)
+      const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
         .setDepth(depth + 2));
 
-      add(this.add.text(470, y - 13, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+      this.addUpgradeRowSprite(add, spec, 700, y, depth);
+
+      add(this.add.text(750, y - 18, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: selectable ? '#eaf8ff' : '#5a6d79',
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(470, y + 14, spec.benefit.toUpperCase(), {
+      add(this.add.text(750, y + 18, spec.benefit.toUpperCase(), {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: selectable ? '#8eafc1' : '#53636e',
         fontStyle: '600',
+        wordWrap: { width: 410, useAdvancedWrap: true },
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
       if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
       if (spec.level < installed) price = 'INCLUDED';
 
-      add(this.add.text(1090, y, price, {
+      add(this.add.text(1330, y, price, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
@@ -1162,12 +1341,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1090, 225, 100, 38, 0x151d28, 1)
+    const close = add(this.add.rectangle(1330, 145, 100, 38, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1090, 225, 'CLOSE', {
+    add(this.add.text(1330, 145, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
