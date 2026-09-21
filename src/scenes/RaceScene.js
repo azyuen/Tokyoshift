@@ -9,7 +9,8 @@ import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r50';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r49';
-import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r44';\nimport EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r52';
+import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r53';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r53';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -86,6 +87,9 @@ export default class RaceScene extends Phaser.Scene {
 
     this.player = new Vehicle(playerConfig, engines[playerConfig.engine]);
     this.opponent = new Vehicle(opponentConfig, engines[opponentConfig.engine]);
+    this.engineAudio = new EngineAudioSystem(playerConfig.engine, opponentConfig.engine);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.engineAudio?.destroy());
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => this.engineAudio?.destroy());
 
     // Stay staged and stationary until the player actually starts the race.
     // Roll-race speed is injected only when START ROLL is pressed.
@@ -470,6 +474,8 @@ export default class RaceScene extends Phaser.Scene {
       oppT = this.opponent.update(dt, aiState);
     }
 
+    this.engineAudio?.update(playerT, oppT, this.player.config, this.opponent.config);
+
     this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
 
@@ -560,6 +566,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   showResultsOverlay() {
+    this.engineAudio?.fadeOut();
     this.resultsShown = true;
     this.controls.enabled = false;
     this.cancelButton?.disableInteractive();
