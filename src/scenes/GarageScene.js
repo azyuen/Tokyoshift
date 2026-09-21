@@ -10,12 +10,12 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260921-r56';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r56';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r56';
+} from '../data/tuning.js?v=20260921-r57';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r57';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r57';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r54';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
-import { playMusic } from '../audio/MusicManager.js?v=20260921-r56';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
