@@ -22,6 +22,9 @@ export function createDefaultGameState() {
     cash: 50000,
     district: 'WANGAN',
     meetLocation: 'wangan7eleven',
+    meetRosters: {},
+    meetRefreshAt: 0,
+    defeatedRivalKeys: [],
     gameOver: false,
   };
 }
@@ -82,6 +85,13 @@ export function normaliseState(input = {}) {
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: Number.isFinite(input.cash) ? input.cash : base.cash,
+    meetRosters: input.meetRosters && typeof input.meetRosters === 'object'
+      ? input.meetRosters
+      : {},
+    meetRefreshAt: Number.isFinite(input.meetRefreshAt) ? input.meetRefreshAt : 0,
+    defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
+      ? [...new Set(input.defeatedRivalKeys)]
+      : [],
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
 }
@@ -106,6 +116,9 @@ export function snapshotRegistry(registry) {
     cash: registry.get('cash') ?? 50000,
     district: registry.get('district') || 'WANGAN',
     meetLocation: registry.get('meetLocation') || 'wangan7eleven',
+    meetRosters: registry.get('meetRosters') || {},
+    meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
+    defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
     gameOver: registry.get('gameOver') || false,
   });
 }
