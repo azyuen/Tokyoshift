@@ -445,6 +445,7 @@ export default class GarageScene extends Phaser.Scene {
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
+    if (this.engineMode && id === this.selectedCarId) return;
 
     const wasEngineMode = this.engineMode;
     if (wasEngineMode && id !== this.selectedCarId && this.getPendingEngineCost() > 0) {
