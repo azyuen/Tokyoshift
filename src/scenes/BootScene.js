@@ -1,5 +1,5 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260921-r42';
-import { characters } from '../data/characters.js?v=20260921-r42';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r42';
 import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r42';
 
 export default class BootScene extends Phaser.Scene {
@@ -22,8 +22,10 @@ export default class BootScene extends Phaser.Scene {
       .filter(asset => asset.key === 'garageWorkshopBg')
       .forEach(asset => this.load.image(asset.key, asset.path));
 
-    const workshopCharacters = [characters.renMizuno, characters.daichiSakamoto];
-    workshopCharacters.forEach(character => {
+    // A manual save can point at any chosen profile portrait, so every
+    // player-character sprite must be available before we skip setup on boot.
+    characterOrder.forEach(id => {
+      const character = characters[id];
       this.load.image(
         character.visual.spriteKey,
         character.visual.path + '?v=20260921-r42'
