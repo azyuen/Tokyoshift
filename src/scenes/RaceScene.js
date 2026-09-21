@@ -4,11 +4,12 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
 import { engines } from '../data/engines.js?v=20260921-r43';
+import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r54';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r54';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r55';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r53';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r53';
 
@@ -72,7 +73,13 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     const rivalCharacter = characters[this.opponentCharacterId];
-    const playerConfig = this.applyOwnedBuild(clone(cars[this.selectedCarId]), this.playerCarState);
+    const playerBaseCar = clone(cars[this.selectedCarId]);
+    const playerBuild = this.applyOwnedBuild(
+      playerBaseCar,
+      clone(engines[playerBaseCar.engine]),
+      this.playerCarState
+    );
+    const playerConfig = playerBuild.car;
     const opponentConfig = this.applyRivalBuild(clone(cars[this.opponentCarId]), rivalCharacter);
 
     this.playerCapabilities = {
@@ -85,8 +92,8 @@ export default class RaceScene extends Phaser.Scene {
       hasNitrous: (opponentConfig.nosPower || 0) > 0 && (opponentConfig.nosCapacitySeconds || 0) > 0,
     };
 
-    this.player = new Vehicle(playerConfig, engines[playerConfig.engine]);
-    this.opponent = new Vehicle(opponentConfig, engines[opponentConfig.engine]);
+    this.player = new Vehicle(playerConfig, playerBuild.engine);
+    this.opponent = new Vehicle(opponentConfig, clone(engines[opponentConfig.engine]));
     this.engineAudio = new EngineAudioSystem(playerConfig.engine, opponentConfig.engine);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.engineAudio?.destroy());
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.engineAudio?.destroy());
@@ -415,18 +422,21 @@ export default class RaceScene extends Phaser.Scene {
     return config;
   }
 
-  applyOwnedBuild(config, state = {}) {
+  applyOwnedBuild(config, engineConfig, state = {}) {
+    // Legacy pink-slip tune levels still modify grip/clutch/boost, while the new
+    // part-by-part engine system changes the actual torque curve and turbo setup.
     this.applyTuneLevel(config, state.tuneLevel || 0);
+    const tuned = applyEngineTuning(config, engineConfig, state);
 
     if (!state.nosInstalled) {
-      config.nosPower = 0;
-      config.nosCapacitySeconds = 0;
+      tuned.car.nosPower = 0;
+      tuned.car.nosCapacitySeconds = 0;
     } else {
-      config.nosPower = Number(state.nosPower || config.nosPower || 35);
-      config.nosCapacitySeconds = Number(state.nosCapacitySeconds || config.nosCapacitySeconds || 5);
+      tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
+      tuned.car.nosCapacitySeconds = Number(state.nosCapacitySeconds || tuned.car.nosCapacitySeconds || 5);
     }
 
-    return config;
+    return tuned;
   }
 
   applyRivalBuild(config, character) {
