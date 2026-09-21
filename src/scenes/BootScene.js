@@ -1,5 +1,6 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r40';
-import { characters } from '../data/characters.js?v=20260921-r40';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r42';
+import { characters } from '../data/characters.js?v=20260921-r42';
+import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r42';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -17,19 +18,15 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('wheelMesh', 'assets/wheels/wheel_mesh.png');
     this.load.image('wheelDeepDish', 'assets/wheels/wheel_deepdish.png');
 
-    // Keep initial boot lean: race controls/UI are loaded later while the player
-    // is browsing the Meet screen. Only the current workshop background is needed.
     garageAssets
       .filter(asset => asset.key === 'garageWorkshopBg')
       .forEach(asset => this.load.image(asset.key, asset.path));
 
-    // Only load the two workshop characters at startup. The rest of the roster
-    // can be loaded when the meet/rival screens are added.
     const workshopCharacters = [characters.renMizuno, characters.daichiSakamoto];
     workshopCharacters.forEach(character => {
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260921-r40'
+        character.visual.path + '?v=20260921-r42'
       );
     });
   }
@@ -38,28 +35,24 @@ export default class BootScene extends Phaser.Scene {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
 
-    let profile = null;
-    try {
-      profile = JSON.parse(localStorage.getItem('tokyoShiftProfile') || 'null');
-    } catch (e) {
-      profile = null;
-    }
+    const saved = readManualSave();
+    const state = applyStateToRegistry(
+      this.registry,
+      saved || createDefaultGameState()
+    );
 
-    this.registry.set('selectedCarId', profile?.selectedCarId || this.registry.get('selectedCarId') || 'ae86');
-    this.registry.set('wins', Number.isFinite(profile?.wins) ? profile.wins : 0);
-    this.registry.set('losses', Number.isFinite(profile?.losses) ? profile.losses : 0);
-    this.registry.set('cash', Number.isFinite(profile?.cash) ? profile.cash : 25000);
-    this.registry.set('playerCharacterId', profile?.playerCharacterId || 'renMizuno');
     this.registry.set('workshopFriendId', 'daichiSakamoto');
 
     this.add.rectangle(780, 420, 1560, 840, 0x070914);
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, 'R40 // WHEEL BASELINE', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R42' : 'NEW RUN // R42', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
-    this.time.delayedCall(90, () => this.scene.start('GarageScene'));
+    this.time.delayedCall(90, () => {
+      this.scene.start(saved && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+    });
   }
 }
