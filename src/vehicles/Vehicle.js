@@ -1,4 +1,4 @@
-import Engine from './Engine.js';
+import Engine from './Engine.js?v=20260921-r55';
 import Transmission from './Transmission.js';
 import Clutch from './Clutch.js';
 import Turbo from './Turbo.js';
