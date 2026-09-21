@@ -1557,21 +1557,56 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(73));
 
-    backButton.on('pointerdown', () => this.leaveSecondaryTuningMode());
+    backButton.on('pointerdown', () => this.leaveSecondaryTuningMode(true));
 
+    this.buildSecondaryHotspots(mode);
     this.addDaichiSecondaryHelper(mode);
     this.refreshSecondaryTuningMode();
   }
 
-  leaveSecondaryTuningMode() {
+  leaveSecondaryTuningMode(animate = true) {
+    if (animate) {
+      if (this.engineTransitioning) return;
+      this.engineTransitioning = true;
+
+      const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+        .setDepth(170)
+        .setAlpha(0)
+        .setInteractive();
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 1,
+        duration: 190,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          this.leaveSecondaryTuningMode(false);
+          this.tweens.add({
+            targets: veil,
+            alpha: 0,
+            duration: 280,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              veil.destroy();
+              this.engineTransitioning = false;
+            },
+          });
+        },
+      });
+      return;
+    }
+
     this.closeSecondaryPartSelector();
     this.secondaryModeObjects.forEach(obj => obj?.destroy?.());
     this.secondaryHelperObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryHotspotObjects.forEach(obj => obj?.destroy?.());
 
     this.secondaryModeObjects = [];
     this.secondaryHelperObjects = [];
+    this.secondaryHotspotObjects = [];
     this.secondaryMode = null;
     this.secondaryPartRows = {};
+    this.secondarySpriteImage = null;
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
     this.thumbButtons.forEach(item => {
@@ -1598,6 +1633,123 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.power.setText(fullBuild.car.powerKW + ' kW');
     this.specValueTexts.torque.setText(fullBuild.car.torqueNm + ' Nm');
     this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
+  }
+
+  buildSecondaryHotspots(mode) {
+    const isDrivetrain = mode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const layout = this.heroCarLayout || {
+      frontWheelX: 930,
+      rearWheelX: 500,
+      wheelY: 430,
+      left: 363,
+      right: 1053,
+    };
+
+    const frontX = layout.frontWheelX;
+    const rearX = layout.rearWheelX;
+    const wheelY = layout.wheelY;
+    const midX = (frontX + rearX) / 2;
+    const clampX = value => Phaser.Math.Clamp(value, layout.left + 48, layout.right - 48);
+
+    const hotspots = isDrivetrain
+      ? {
+          clutch: {
+            x: clampX(frontX - 64),
+            y: wheelY - 44,
+            lx: clampX(frontX - 94),
+            ly: wheelY - 112,
+          },
+          gearbox: {
+            x: clampX(frontX - 154),
+            y: wheelY - 14,
+            lx: clampX(frontX - 178),
+            ly: wheelY + 48,
+          },
+          differential: {
+            x: clampX(rearX + 42),
+            y: wheelY + 4,
+            lx: clampX(rearX + 34),
+            ly: wheelY + 66,
+          },
+          suspension: {
+            x: clampX(rearX - 34),
+            y: wheelY - 48,
+            lx: clampX(rearX - 94),
+            ly: wheelY - 108,
+          },
+          launchSetup: {
+            x: clampX(frontX + 34),
+            y: wheelY + 2,
+            lx: clampX(frontX + 92),
+            ly: wheelY + 62,
+          },
+        }
+      : {
+          headers: {
+            x: clampX(frontX - 80),
+            y: wheelY - 58,
+            lx: clampX(frontX - 116),
+            ly: wheelY - 122,
+          },
+          exhaust: {
+            x: clampX(midX),
+            y: wheelY + 14,
+            lx: clampX(midX + 8),
+            ly: wheelY + 70,
+          },
+          muffler: {
+            x: clampX(rearX - 92),
+            y: wheelY + 2,
+            lx: clampX(rearX - 56),
+            ly: wheelY + 58,
+          },
+          nosKit: {
+            x: clampX(midX - 72),
+            y: wheelY - 88,
+            lx: clampX(midX - 102),
+            ly: wheelY - 150,
+          },
+          nitrousShot: {
+            x: clampX(midX + 54),
+            y: wheelY - 62,
+            lx: clampX(midX + 92),
+            ly: wheelY - 120,
+          },
+        };
+
+    Object.entries(hotspots).forEach(([partId, p]) => {
+      const part = parts[partId];
+      if (!part) return;
+
+      const line = this.add.line(0, 0, p.x, p.y, p.lx, p.ly, 0x43dfff, 0.95)
+        .setOrigin(0, 0)
+        .setLineWidth(2)
+        .setDepth(74);
+
+      const dot = this.add.circle(p.x, p.y, 10, 0x07111d, 1)
+        .setStrokeStyle(3, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(75);
+
+      const width = Math.max(104, part.name.length * 12);
+      const box = this.add.rectangle(p.lx, p.ly, width, 30, 0x07111d, 0.97)
+        .setStrokeStyle(2, 0x43dfff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(74);
+
+      const label = this.add.text(p.lx, p.ly, part.name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#e7fbff',
+      }).setOrigin(0.5).setDepth(75);
+
+      const open = () => this.openSecondaryPartSelector(partId);
+      dot.on('pointerdown', open);
+      box.on('pointerdown', open);
+
+      this.secondaryHotspotObjects.push(line, dot, box, label);
+    });
   }
 
   addDaichiSecondaryHelper(mode) {
@@ -1771,51 +1923,69 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
+    const installed = this.currentSecondaryTuning[partId];
+    const currentSpec = part.levels[installed];
+    const car = cars[this.selectedCarId];
+    const contextTextureKey = isDrivetrain
+      ? car?.visual?.drivetrainKey
+      : car?.visual?.exhaustNosKey;
 
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 760, 560, 0x08131f, 1)
+    add(this.add.rectangle(780, 420, 1240, 630, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(430, 205, part.name + ' // SELECT KIT', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eefaff'
+    add(this.add.text(190, 132, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
     }).setDepth(depth + 2));
 
-    const installed = this.currentSecondaryTuning[partId];
+    this.addModificationModalVisual(add, {
+      textureKey: currentSpec?.spriteKey || contextTextureKey,
+      title: currentSpec?.name?.toUpperCase() || part.name,
+      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      partName: isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS',
+      mode: isDrivetrain ? 'drivetrain' : 'exhaustNos',
+      depth,
+    });
 
     part.levels.forEach((spec, index) => {
-      const y = 305 + index * 82;
+      const y = 250 + index * 104;
       const selected = this.pendingSecondaryTuning[partId] === spec.level;
       const selectable = spec.level >= installed;
       const pathCost = isDrivetrain
         ? getDrivetrainUpgradePathCost(partId, installed, spec.level)
         : getExhaustNosUpgradePathCost(partId, installed, spec.level);
 
-      const box = add(this.add.rectangle(780, y, 660, 64, selected ? 0x123047 : 0x0b1724, 1)
+      const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
         .setDepth(depth + 2));
 
-      add(this.add.text(470, y - 13, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+      this.addUpgradeRowSprite(add, spec, 700, y, depth);
+
+      add(this.add.text(750, y - 18, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: selectable ? '#eaf8ff' : '#5a6d79',
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(470, y + 14, spec.benefit.toUpperCase(), {
+      add(this.add.text(750, y + 18, spec.benefit.toUpperCase(), {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: selectable ? '#8eafc1' : '#53636e',
         fontStyle: '600',
+        wordWrap: { width: 410, useAdvancedWrap: true },
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
       if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
       if (spec.level < installed) price = 'INCLUDED';
 
-      add(this.add.text(1090, y, price, {
+      add(this.add.text(1330, y, price, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
@@ -1831,12 +2001,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1090, 225, 100, 38, 0x151d28, 1)
+    const close = add(this.add.rectangle(1330, 145, 100, 38, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1090, 225, 'CLOSE', {
+    add(this.add.text(1330, 145, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
