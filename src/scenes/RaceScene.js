@@ -1,16 +1,18 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260920-r6';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r29';
-import RaceHUD from '../ui/RaceHUD.js?v=20260920-r6';
+import TouchControls from '../input/TouchControls.js?v=20260921-r35';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r35';
+import RaceHUD from '../ui/RaceHUD.js?v=20260921-r35';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260920-r7';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r29';
-import { engines } from '../data/engines.js?v=20260921-r29';
-import { characters } from '../data/characters.js?v=20260921-r29';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r35';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r35';
+import { engines } from '../data/engines.js?v=20260921-r35';
+import { characters } from '../data/characters.js?v=20260921-r35';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
 const TREE_START_M = 4.72;
+const PIXEL_FONT = '"Silkscreen", monospace';
+const BODY_FONT = '"Rajdhani", monospace';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 
@@ -112,7 +114,7 @@ export default class RaceScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     this.startButtonText = this.add.text(780, 54, 'START RACE', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#eef8ff', fontStyle: 'bold'
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
@@ -122,11 +124,17 @@ export default class RaceScene extends Phaser.Scene {
       ? 'PRIZE  ¥ ' + this.raceStake.toLocaleString('en-US')
       : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
-    this.stakeText = this.add.text(1045, 54, rivalName.toUpperCase() + '  //  ' + moneyLabel, {
-      fontFamily: '"Silkscreen", monospace',
-      fontSize: '11px',
+    this.rivalText = this.add.text(1490, 39, rivalName.toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#d8edf8',
+    }).setOrigin(1, 0.5).setDepth(46).setScrollFactor(0);
+
+    this.stakeText = this.add.text(1490, 65, moneyLabel, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
       color: this.raceMode === 'COMPETITION' ? '#8fe7ff' : '#ffe08a',
-    }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
+    }).setOrigin(1, 0.5).setDepth(46).setScrollFactor(0);
 
     this.cancelButton = this.add.rectangle(135, 54, 210, 46, 0x24131a, 0.94)
       .setStrokeStyle(2, 0xff6b7a, 0.9)
@@ -135,7 +143,7 @@ export default class RaceScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     this.cancelButtonText = this.add.text(135, 54, 'CANCEL RACE', {
-      fontFamily: 'monospace', fontSize: '16px', color: '#ffd8dc', fontStyle: 'bold'
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
     this.cancelButton.on('pointerdown', () => this.scene.start('MeetScene'));
@@ -344,8 +352,8 @@ export default class RaceScene extends Phaser.Scene {
     const labelX = 780;
     const rightX = 1045;
 
-    const titleFont = '"Teko", "Arial Narrow", sans-serif';
-    const dataFont = '"Rajdhani", "Arial", sans-serif';
+    const titleFont = PIXEL_FONT;
+    const dataFont = BODY_FONT;
 
     const formatTime = value => value == null ? '—' : value.toFixed(3) + ' s';
     const formatSpeed = value => value == null ? '—' : value.toFixed(1) + ' km/h';
@@ -395,30 +403,30 @@ export default class RaceScene extends Phaser.Scene {
       .setDepth(depth + 2).setScrollFactor(0);
 
     this.add.text(panelX, 103, 'TOKYO SHIFT // RACE SLIP', {
-      fontFamily: titleFont, fontSize: '31px', color: '#eaf8ff', fontStyle: 'bold',
+      fontFamily: titleFont, fontSize: '18px', color: '#eaf8ff', fontStyle: 'bold',
       letterSpacing: 2
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
     this.add.text(panelX, 137, outcome, {
-      fontFamily: titleFont, fontSize: '24px', color: outcomeColour, fontStyle: 'bold',
+      fontFamily: titleFont, fontSize: '15px', color: outcomeColour, fontStyle: 'bold',
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
     const addCarHeader = (x, role, carId, winner, accent) => {
       this.add.text(x, 166, role, {
-        fontFamily: dataFont, fontSize: '13px', color: '#7f93aa', fontStyle: 'bold',
+        fontFamily: dataFont, fontSize: '9px', color: '#7f93aa', fontStyle: 'bold',
         letterSpacing: 2
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
       this.add.text(x, 184, cars[carId].shortName, {
-        fontFamily: titleFont, fontSize: '28px', color: '#f5fbff', fontStyle: 'bold'
+        fontFamily: titleFont, fontSize: '16px', color: '#f5fbff', fontStyle: 'bold'
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
       if (winner) {
         const badge = this.add.rectangle(x, 213, 96, 23, accent, 0.16)
           .setStrokeStyle(1, accent, 0.9).setDepth(depth + 2).setScrollFactor(0);
         this.add.text(x, 213, 'WINNER', {
-          fontFamily: dataFont, fontSize: '12px', color: '#ffffff',
+          fontFamily: dataFont, fontSize: '9px', color: '#ffffff',
           fontStyle: 'bold', letterSpacing: 1
         }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
       }
@@ -448,16 +456,16 @@ export default class RaceScene extends Phaser.Scene {
       }
 
       this.add.text(labelX, y, row[0], {
-        fontFamily: dataFont, fontSize: '14px', color: '#7f93aa',
+        fontFamily: dataFont, fontSize: '9px', color: '#7f93aa',
         fontStyle: 'bold', letterSpacing: 1
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
       this.add.text(leftX, y, row[1], {
-        fontFamily: dataFont, fontSize: '19px', color: '#dff8ff', fontStyle: 'bold'
+        fontFamily: dataFont, fontSize: '12px', color: '#dff8ff', fontStyle: 'bold'
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
 
       this.add.text(rightX, y, row[2], {
-        fontFamily: dataFont, fontSize: '19px', color: '#ffe4ef', fontStyle: 'bold'
+        fontFamily: dataFont, fontSize: '12px', color: '#ffe4ef', fontStyle: 'bold'
       }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
     });
 
@@ -471,7 +479,7 @@ export default class RaceScene extends Phaser.Scene {
 
       this.add.text(panelX, 449, moneyText + '   //   BALANCE ¥ ' + settlement.cash.toLocaleString('en-US'), {
         fontFamily: dataFont,
-        fontSize: '17px',
+        fontSize: '11px',
         color: delta > 0 ? '#73f5a5' : delta < 0 ? '#ff7d98' : '#aab9c6',
         fontStyle: 'bold',
         letterSpacing: 1,
@@ -486,7 +494,7 @@ export default class RaceScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       const text = this.add.text(x, 486, label, {
-        fontFamily: titleFont, fontSize: '21px', color: '#eef9ff',
+        fontFamily: titleFont, fontSize: '13px', color: '#eef9ff',
         fontStyle: 'bold', letterSpacing: 1
       }).setOrigin(0.5).setDepth(depth + 4).setScrollFactor(0);
 
