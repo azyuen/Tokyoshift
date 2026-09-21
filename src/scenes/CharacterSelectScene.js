@@ -1,4 +1,9 @@
-import { cars } from '../data/cars.js?v=20260921-r43';
+import { cars } from '../data/cars.js?v=20260921-r79';
+import {
+  DEFAULT_PAINT_COLOR,
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+} from '../vehicles/CarAppearance.js?v=20260921-r79';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260921-r74';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
@@ -262,6 +267,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     state.carStates = {
       ae86: {
         stock: true,
+        paintColor: DEFAULT_PAINT_COLOR,
         nosInstalled: false,
         tuneLevel: 0,
         acquiredVia: 'starter',
@@ -274,7 +280,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
 
   createCarDisplay(car, x, y, targetWidth, depth) {
-    const source = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
 
@@ -287,6 +293,13 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.add.circle(rearX, wheelY, Math.max(5, rear.displayWidth * 0.50), 0x030507, 1).setDepth(depth - 0.3);
     this.add.circle(frontX, wheelY, Math.max(5, front.displayWidth * 0.50), 0x030507, 1).setDepth(depth - 0.3);
     this.add.ellipse(x, wheelY + 19, targetWidth * 0.86, 22, 0x000000, 0.70).setDepth(depth - 0.1);
-    this.add.image(x, y, car.visual.bodyKey).setScale(bodyScale).setDepth(depth + 1);
+
+    createCarBodyLayers(this, car, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor: DEFAULT_PAINT_COLOR,
+    });
   }
 }
