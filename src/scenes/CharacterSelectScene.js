@@ -1,6 +1,7 @@
 import { cars } from '../data/cars.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260921-r43';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -20,6 +21,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'setup';
     this.scale.resize(1560, 840);
+    playMusic('title');
 
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(characterOrder);
     this.portraitObjects = [];
