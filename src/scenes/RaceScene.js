@@ -3,11 +3,11 @@ import TouchControls from '../input/TouchControls.js?v=20260921-r43';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r43';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r47';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r49';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const TRACK_M = 402.336;
@@ -51,6 +51,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isRollingStart = this.raceType === 'Roll Race';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
+    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || 'night';
+    this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'WANGAN';
+    this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
   }
 
   create() {
@@ -127,7 +130,7 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    this.environment = new TokyoExpresswayBackground(this);
+    this.environment = new TokyoExpresswayBackground(this, { timeOfDay: this.raceTimeOfDay });
     this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
     this.treeLightsG = this.add.graphics().setDepth(23);
@@ -160,6 +163,19 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
+
+    this.add.text(
+      780,
+      102,
+      this.raceDistrict + ' // ' + this.raceLocationLabel + ' // ' + this.raceTimeOfDay.toUpperCase(),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: this.raceTimeOfDay === 'day' ? '#d8f4ff' : '#9fc8de',
+        backgroundColor: '#07111daa',
+        padding: { x: 8, y: 4 },
+      }
+    ).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
     const moneyLabel = this.raceDeal === 'PINK_SLIP'
