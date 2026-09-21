@@ -214,7 +214,7 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 995, 35);
+    addSettingsButton(this, 955, 35);
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
@@ -376,7 +376,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = 310 + i * 50;
+      const y = 326 + i * 50;
       const locked = row[2];
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
@@ -397,11 +397,11 @@ export default class MeetScene extends Phaser.Scene {
       this.modeButtons.push({ key: row[1], box, label, locked });
     });
 
-    this.add.text(SIDE.x + 20, 414, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, 430, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, 442, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, 458, '', {
       fontFamily: BODY_FONT,
       fontSize: '13px',
       color: '#d8e7ef',
@@ -409,17 +409,17 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, 520, 'RIVAL OFFER', {
+    this.add.text(SIDE.x + 20, 536, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, 520, '', {
+    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, 536, '', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
     }).setOrigin(1, 0).setDepth(37);
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      568,
+      584,
       SIDE.w - 36,
       40,
       0x291620,
@@ -430,7 +430,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      568,
+      584,
       'PINK SLIPS?',
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
@@ -439,7 +439,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkResponseText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      599,
+      615,
       '',
       {
         fontFamily: BODY_FONT,
@@ -455,7 +455,7 @@ export default class MeetScene extends Phaser.Scene {
     // Keep these two where they were before the GPS cleanup.
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      724,
+      740,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -466,7 +466,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      724,
+      740,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -477,7 +477,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      778,
+      794,
       SIDE.w - 36,
       42,
       0x24131a,
@@ -488,7 +488,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      778,
+      794,
       'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce1'
