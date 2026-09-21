@@ -1726,12 +1726,6 @@ export default class GarageScene extends Phaser.Scene {
       const hit = add(this.add.rectangle(x, y, 52, 40, 0x000000, 0)
         .setDepth(74));
 
-      add(this.add.text(x, y + 25, preset.name, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '5px',
-        color: '#9db8c7',
-      }).setOrigin(0.5).setDepth(73));
-
       hit.setInteractive({ useHandCursor: true });
       hit.on('pointerdown', () => {
         if (!hasLayeredPaintAssets(this, car)) return;
@@ -1911,7 +1905,9 @@ export default class GarageScene extends Phaser.Scene {
     this.currentPaintColor = paintColor;
     this.pendingPaintColor = paintColor;
 
-    this.renderGaragePage();
+    this.thumbButtons.forEach(item => {
+      if (item.id === this.selectedCarId) setCarBodyPaint(item.display || [], paintColor);
+    });
     setCarBodyPaint(this.selectedDisplay, paintColor);
     this.refreshChassisMode();
     this.showWorkshopToast('PAINT APPLIED // ' + paintColorToHex(paintColor));
