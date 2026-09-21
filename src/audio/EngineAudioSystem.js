@@ -1,3 +1,5 @@
+import { getSfxVolume } from './AudioSettings.js?v=20260921-r56';
+
 // TOKYO SHIFT live vanilla engine audio
 // Purely tonal engine synthesis: no static/noise bed and deliberately NO turbo,
 // wastegate or blow-off audio. Forced-induction sounds belong to upgrade modules.
@@ -62,6 +64,13 @@ const DEFAULT_PROFILE = ENGINE_PROFILES['4age'];
 
 let ctx = null;
 let unlockInstalled = false;
+let sfxVolume = getSfxVolume();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('tokyo-shift-audio-settings', event => {
+    sfxVolume = Math.max(0, Math.min(1, Number(event.detail?.sfx) || 0));
+  });
+}
 
 function ensureContext() {
   if (!AudioCtx) return null;
@@ -331,7 +340,7 @@ export default class EngineAudioSystem {
   update(playerTelemetry, opponentTelemetry, playerConfig, opponentConfig) {
     if (this.destroyed) return;
 
-    this.player.update(playerTelemetry, playerConfig, 1.0);
+    this.player.update(playerTelemetry, playerConfig, sfxVolume);
 
     const separation = Math.abs(
       (playerTelemetry?.positionM || 0) - (opponentTelemetry?.positionM || 0)
@@ -341,7 +350,7 @@ export default class EngineAudioSystem {
     this.opponent.update(
       opponentTelemetry,
       opponentConfig,
-      opponentScale
+      opponentScale * sfxVolume
     );
   }
 
