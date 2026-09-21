@@ -164,7 +164,7 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 995, 35);
+    addSettingsButton(this, 955, 35);
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
@@ -208,7 +208,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.specValueTexts = {};
     rows.forEach((row, i) => {
-      const y = SIDE.y + 58 + i * 32;
+      const y = SIDE.y + 76 + i * 32;
       this.add.line(
         SIDE.x + SIDE.w / 2,
         y + 16,
@@ -229,13 +229,13 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.tuningStatusText = this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING // STOCK', {
+    this.tuningStatusText = this.add.text(SIDE.x + 20, SIDE.y + 230, 'TUNING', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
     categories.forEach((name, i) => {
-      const y = SIDE.y + 250 + i * 46;
+      const y = SIDE.y + 285 + i * 48;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
@@ -445,14 +445,10 @@ export default class GarageScene extends Phaser.Scene {
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
-    if (this.engineMode && id === this.selectedCarId) return;
-
-    const wasEngineMode = this.engineMode;
-    if (wasEngineMode && id !== this.selectedCarId && this.getPendingEngineCost() > 0) {
-      this.showWorkshopToast('APPLY OR DISCARD CURRENT PARTS FIRST');
+    if (this.engineMode) {
+      if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
       return;
     }
-    if (wasEngineMode) this.leaveEngineMode(false);
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
@@ -463,6 +459,19 @@ export default class GarageScene extends Phaser.Scene {
     // never makes them jump vertically. AE86 defines the current visual baseline.
     const heroWheelBottomY = this.getWheelBottomY(cars.ae86, 386, 690);
     const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
+    const heroSource = this.textures.get(cars[id].visual.bodyKey).getSourceImage();
+    const heroBodyScale = 690 / heroSource.width;
+    this.heroCarLayout = {
+      x: 708,
+      bodyY: heroBodyY,
+      targetWidth: 690,
+      bodyScale: heroBodyScale,
+      frontWheelX: 708 + cars[id].visual.frontOffsetX * heroBodyScale,
+      rearWheelX: 708 + cars[id].visual.rearOffsetX * heroBodyScale,
+      wheelY: heroBodyY + cars[id].visual.wheelOffsetY * heroBodyScale,
+      left: 708 - 345,
+      right: 708 + 345,
+    };
     this.selectedDisplay = this.createCarDisplay(cars[id], 708, heroBodyY, 690, 10);
 
     const car = cars[id];
@@ -479,15 +488,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.torque.setText((tunedBuild.car.torqueNm ?? '—') + ' Nm');
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
 
-    if (this.tuningStatusText) {
-      this.tuningStatusText.setText(
-        enginePartCount > 0
-          ? 'TUNING // ' + enginePartCount + ' ENGINE PART' + (enginePartCount === 1 ? '' : 'S')
-          : Number(carState.tuneLevel || 0) > 0
-            ? 'TUNING // BUILT'
-            : 'TUNING // STOCK'
-      );
-    }
+    if (this.tuningStatusText) this.tuningStatusText.setText('TUNING');
 
     for (const item of this.thumbButtons) {
       const active = item.id === id;
@@ -497,8 +498,6 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.saveProfile();
-
-    if (wasEngineMode) this.enterEngineMode();
   }
 
   showEmptyGarageState() {
@@ -507,7 +506,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
     this.specValueTexts.weight.setText('—');
-    this.tuningStatusText?.setText('TUNING // NO CAR');
+    this.tuningStatusText?.setText('TUNING');
 
     this.upgradeButtons.forEach(item => {
       item.box.disableInteractive()
@@ -543,6 +542,36 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   enterEngineMode() {
+    if (this.engineMode || this.engineTransitioning || !this.selectedCarId) return;
+    this.engineTransitioning = true;
+
+    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+      .setDepth(165)
+      .setAlpha(0)
+      .setInteractive();
+
+    this.tweens.add({
+      targets: veil,
+      alpha: 1,
+      duration: 210,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.activateEngineMode();
+        this.tweens.add({
+          targets: veil,
+          alpha: 0,
+          duration: 280,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            veil.destroy();
+            this.engineTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
+  activateEngineMode() {
     if (this.engineMode || !this.selectedCarId) return;
     this.engineMode = true;
 
@@ -594,16 +623,16 @@ export default class GarageScene extends Phaser.Scene {
     this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
 
     this.engineInsetLevelText = add(this.add.text(
-      SIDE.x + SIDE.w - 28,
-      SIDE.y + 82,
+      SIDE.x + 26,
+      SIDE.y + 88,
       '',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: '#eaf8ff',
-        align: 'right',
+        align: 'left',
       }
-    ).setOrigin(1, 0).setDepth(74));
+    ).setOrigin(0, 0).setDepth(74));
 
     const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
     this.enginePartRows = {};
@@ -641,7 +670,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.enginePreviewText = add(this.add.text(
       SIDE.x + 20,
-      SIDE.y + 515,
+      SIDE.y + 510,
       '',
       {
         fontFamily: PIXEL_FONT,
@@ -653,7 +682,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.engineApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 592,
+      SIDE.y + 624,
       SIDE.w - 36,
       44,
       0x102226,
@@ -662,7 +691,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.engineApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 592,
+      SIDE.y + 624,
       'NO PARTS SELECTED',
       {
         fontFamily: PIXEL_FONT,
@@ -673,7 +702,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const backButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 658,
+      SIDE.y + 678,
       SIDE.w - 36,
       44,
       0x102138,
@@ -682,7 +711,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(72));
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 658, '<  BACK TO WORKSHOP', {
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 678, '<  BACK TO WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(73));
 
@@ -719,21 +748,60 @@ export default class GarageScene extends Phaser.Scene {
       this.specValueTexts.power.setText(tunedBuild.car.powerKW + ' kW');
       this.specValueTexts.torque.setText(tunedBuild.car.torqueNm + ' Nm');
       this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
-      this.tuningStatusText?.setText(
-        enginePartCount > 0
-          ? 'TUNING // ' + enginePartCount + ' ENGINE PART' + (enginePartCount === 1 ? '' : 'S')
-          : 'TUNING // STOCK'
-      );
+      this.tuningStatusText?.setText('TUNING');
     }
   }
 
   buildEngineHotspots() {
+    const layout = this.heroCarLayout || {
+      frontWheelX: 930,
+      rearWheelX: 500,
+      wheelY: 430,
+      left: 363,
+      right: 1053,
+    };
+
+    const frontX = layout.frontWheelX;
+    const rearX = layout.rearWheelX;
+    const wheelY = layout.wheelY;
+    const carLeft = layout.left;
+    const carRight = layout.right;
+    const clampX = value => Phaser.Math.Clamp(value, carLeft + 42, carRight - 42);
+
+    // Anchor the mechanical points to the selected car's wheelbase rather than
+    // fixed screen coordinates. This keeps the markers on hatches, coupes and
+    // sedans even when the body proportions change.
     const hotspots = {
-      ecu: { x: 790, y: 324, lx: 746, ly: 282 },
-      intake: { x: 905, y: 345, lx: 932, ly: 302 },
-      turbo: { x: 850, y: 395, lx: 805, ly: 438 },
-      intercooler: { x: 1000, y: 435, lx: 965, ly: 482 },
-      exhaust: { x: 386, y: 438, lx: 430, ly: 488 },
+      ecu: {
+        x: clampX(frontX - 118),
+        y: wheelY - 42,
+        lx: clampX(frontX - 158),
+        ly: wheelY - 92,
+      },
+      intake: {
+        x: clampX(frontX + 18),
+        y: wheelY - 54,
+        lx: clampX(frontX + 62),
+        ly: wheelY - 102,
+      },
+      turbo: {
+        x: clampX(frontX - 28),
+        y: wheelY - 16,
+        lx: clampX(frontX - 92),
+        ly: wheelY + 28,
+      },
+      intercooler: {
+        x: clampX(carRight - 76),
+        y: wheelY + 4,
+        lx: clampX(carRight - 110),
+        ly: wheelY + 52,
+      },
+      exhaust: {
+        x: clampX(rearX - 92),
+        y: wheelY + 4,
+        lx: clampX(rearX - 54),
+        ly: wheelY + 54,
+      },
     };
 
     Object.entries(hotspots).forEach(([partId, p]) => {
@@ -771,7 +839,7 @@ export default class GarageScene extends Phaser.Scene {
     const daichi = characters.daichiSakamoto;
     if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
 
-    const x = 930;
+    const x = 875;
     const feetY = 482;
     const targetHeight = 292;
     const depth = 8.4;
@@ -803,7 +871,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const car = cars[this.selectedCarId];
     const engineKey = car?.visual?.engineKey;
-    const cx = SIDE.x + 140;
+    const cx = SIDE.x + SIDE.w - 92;
     const cy = SIDE.y + 125;
 
     if (engineKey && this.textures.exists(engineKey)) {
@@ -813,7 +881,7 @@ export default class GarageScene extends Phaser.Scene {
       this.engineModeObjects.push(this.inlineEngineSprite);
 
       const source = this.textures.get(engineKey).getSourceImage();
-      const fit = Math.min(190 / source.width, 92 / source.height);
+      const fit = Math.min(150 / source.width, 92 / source.height);
       this.inlineEngineSprite.setScale(fit * (1 + level * 0.045));
       return;
     }
@@ -923,7 +991,7 @@ export default class GarageScene extends Phaser.Scene {
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 760, 500, 0x08131f, 1)
+    add(this.add.rectangle(780, 420, 760, 560, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
@@ -934,7 +1002,7 @@ export default class GarageScene extends Phaser.Scene {
     const installed = this.currentEngineTuning[partId];
 
     part.levels.forEach((spec, index) => {
-      const y = 275 + index * 82;
+      const y = 305 + index * 82;
       const selected = this.pendingEngineTuning[partId] === spec.level;
       const selectable = spec.level >= installed;
       const pathCost = getUpgradePathCost(partId, installed, spec.level);
