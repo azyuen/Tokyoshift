@@ -1,6 +1,6 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r74';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r77';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r76';
+import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r77';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -20,16 +20,16 @@ export default class BootScene extends Phaser.Scene {
 
     this.load.image(
       'travelMapTokyoBay',
-      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r76'
+      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77'
     );
 
     this.load.image(
       'travelMapTokyoRegion',
-      'assets/Ui/tokyo_region_map.png?v=20260921-r76'
+      'assets/Ui/tokyo_region_map.png?v=20260921-r77'
     );
 
     garageAssets
-      .filter(asset => ['garageWorkshopBg', 'garageWorkshopTunerBg'].includes(asset.key) || asset.key.startsWith('stockEngine'))
+      .filter(asset => ['garageWorkshopBg', 'garageWorkshopTunerBg'].includes(asset.key) || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory'))
       .forEach(asset => this.load.image(asset.key, asset.path));
 
     // A manual save can point at any chosen profile portrait, so every
@@ -59,7 +59,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R76' : 'NEW RUN // R76', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R77' : 'NEW RUN // R77', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
