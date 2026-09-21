@@ -12,7 +12,7 @@ import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r60';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r60';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r57';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r69';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -95,7 +95,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.player = new Vehicle(playerConfig, playerBuild.engine);
     this.opponent = new Vehicle(opponentConfig, clone(engines[opponentConfig.engine]));
-    this.engineAudio = new EngineAudioSystem(playerConfig.engine, opponentConfig.engine);
+    this.engineAudio = new EngineAudioSystem(playerConfig.engine, opponentConfig.engine, this.playerCarState, this.opponentBuildState || {});
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.engineAudio?.destroy());
     this.events.once(Phaser.Scenes.Events.DESTROY, () => this.engineAudio?.destroy());
 
@@ -678,7 +678,7 @@ export default class RaceScene extends Phaser.Scene {
       oppT = this.opponent.update(dt, aiState);
     }
 
-    this.engineAudio?.update(playerT, oppT, this.player.config, this.opponent.config);
+    this.engineAudio?.update(playerT, oppT, this.player.config, this.opponent.config, dt);
 
     this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
