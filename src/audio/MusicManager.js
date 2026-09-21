@@ -36,9 +36,9 @@ const TRACKS = {
   title:        { bpm: 150, volume: 0.26, style: 'title', progression: PROGRESSION_A },
   workshop:     { bpm: 118, volume: 0.18, style: 'workshop', progression: PROGRESSION_A },
   meet:         { bpm: 132, volume: 0.21, style: 'meet', progression: PROGRESSION_A },
-  ignition:     { bpm: 160, volume: 0.29, style: 'race', variant: 'ignition', progression: PROGRESSION_A },
-  redline:      { bpm: 166, volume: 0.30, style: 'race', variant: 'redline', progression: PROGRESSION_REDLINE },
-  midnightApex: { bpm: 172, volume: 0.29, style: 'race', variant: 'apex', progression: PROGRESSION_A },
+  ignition:     { bpm: 160, volume: 0.19, style: 'race', variant: 'ignition', progression: PROGRESSION_A },
+  redline:      { bpm: 166, volume: 0.20, style: 'race', variant: 'redline', progression: PROGRESSION_REDLINE },
+  midnightApex: { bpm: 172, volume: 0.19, style: 'race', variant: 'apex', progression: PROGRESSION_A },
 };
 
 function midiToHz(m) {
