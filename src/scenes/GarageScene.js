@@ -848,6 +848,12 @@ export default class GarageScene extends Phaser.Scene {
           }
 
           this.registry.set('workshopLocationId', location.id);
+          const reassigned = normaliseCarGarageLocations(
+            this.ownedCarIds,
+            this.registry.get('carGarageLocations') || {},
+            Number(this.registry.get('garageTier') || 0)
+          );
+          this.registry.set('carGarageLocations', reassigned);
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
@@ -855,6 +861,11 @@ export default class GarageScene extends Phaser.Scene {
           this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
         },
         onTravel: (locationId, cost) => {
+          if (!this.selectedCarId) {
+            this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
+            return;
+          }
+
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
 
@@ -949,6 +960,7 @@ export default class GarageScene extends Phaser.Scene {
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
+    if (this.carGarageLocations?.[id] !== this.getActiveWorkshop().id) return;
     if (this.engineMode || this.secondaryMode || this.chassisMode) {
       if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
       return;
@@ -991,7 +1003,9 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.torque.setText((tunedBuild.car.torqueNm ?? '—') + ' Nm');
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
 
-    if (this.tuningStatusText) this.tuningStatusText.setText('TUNING');
+    if (this.tuningStatusText) {
+      this.tuningStatusText.setText('TUNING // ' + this.getActiveWorkshop().shortLabel);
+    }
 
     for (const item of this.thumbButtons) {
       const active = item.id === id;
@@ -1000,6 +1014,7 @@ export default class GarageScene extends Phaser.Scene {
       item.label.setColor(active ? '#ffffff' : '#b8cad7');
     }
 
+    this.updateMoveCarButtonState();
     this.saveProfile();
   }
 
@@ -1009,7 +1024,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
     this.specValueTexts.weight.setText('—');
-    this.tuningStatusText?.setText('TUNING');
+    this.tuningStatusText?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel);
 
     this.upgradeButtons.forEach(item => {
       item.box.disableInteractive()
@@ -1024,10 +1039,11 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x514f55, 1);
     this.saveButtonLabel?.setText('NO CAR TO SAVE').setColor('#817d84');
 
-    this.meetButton?.disableInteractive()
-      .setFillStyle(0x17181d, 1)
-      .setStrokeStyle(1, 0x514f55, 1);
-    this.meetButtonLabel?.setText('NO CAR').setColor('#817d84');
+    this.meetButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1);
+    this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#eef8ff');
+    this.updateMoveCarButtonState();
 
     this.add.text(710, 330, 'GARAGE EMPTY', {
       fontFamily: PIXEL_FONT,
