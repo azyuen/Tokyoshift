@@ -25,7 +25,7 @@ import {
   getDrivetrainCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260921-r65';
+} from '../data/secondaryTuning.js?v=20260921-r66';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r60';
