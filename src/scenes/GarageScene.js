@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r79';
+import { cars, carOrder } from '../data/cars.js?v=20260922-r83';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import {
@@ -46,7 +46,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260921-r79';
+} from '../vehicles/CarAppearance.js?v=20260922-r83';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
