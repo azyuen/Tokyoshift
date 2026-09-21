@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r39';
-import { characters } from '../data/characters.js?v=20260921-r39';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r40';
+import { characters } from '../data/characters.js?v=20260921-r40';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -86,8 +86,8 @@ export default class GarageScene extends Phaser.Scene {
     sprite.setScale(targetHeight / source.height);
 
     this.add.ellipse(
-      x,
-      feetY - 12,
+      x + 12,
+      feetY - 16,
       Math.max(60, sprite.displayWidth * 0.80),
       30,
       0x000000,
@@ -95,8 +95,8 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.12);
 
     this.add.ellipse(
-      x,
-      feetY - 8,
+      x + 9,
+      feetY - 11,
       Math.max(44, sprite.displayWidth * 0.60),
       18,
       0x000000,
@@ -250,7 +250,9 @@ export default class GarageScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .setDepth(32);
 
-      const display = this.createCarDisplay(cars[id], x, y - 9, 132, 34);
+      const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, 132);
+      const thumbBodyY = this.getBodyYForWheelBottom(cars[id], 132, thumbWheelBottomY);
+      const display = this.createCarDisplay(cars[id], x, thumbBodyY, 132, 34);
 
       const label = this.add.text(x, y + 38, cars[id].shortName, {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b8cad7'
@@ -278,6 +280,25 @@ export default class GarageScene extends Phaser.Scene {
       this.saveProfile();
       this.scene.start('MeetScene');
     });
+  }
+
+  getWheelBottomY(car, bodyY, targetWidth) {
+    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const bodyScale = targetWidth / bodySource.width;
+    const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
+    const wheelRadius = wheelSource.height * wheelScale * 0.5;
+    const wheelCenterY = bodyY + car.visual.wheelOffsetY * bodyScale;
+    return wheelCenterY + wheelRadius;
+  }
+
+  getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
+    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const bodyScale = targetWidth / bodySource.width;
+    const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
+    const wheelRadius = wheelSource.height * wheelScale * 0.5;
+    return wheelBottomY - wheelRadius - car.visual.wheelOffsetY * bodyScale;
   }
 
   createCarDisplay(car, x, y, targetWidth, depth) {
@@ -330,8 +351,11 @@ export default class GarageScene extends Phaser.Scene {
 
     for (const obj of this.selectedDisplay) obj.destroy();
 
-    // Larger hero car inside the now-contained workshop viewport.
-    this.selectedDisplay = this.createCarDisplay(cars[id], 708, 386, 690, 10);
+    // Anchor every selected car to the same lowest wheel point so swapping cars
+    // never makes them jump vertically. AE86 defines the current visual baseline.
+    const heroWheelBottomY = this.getWheelBottomY(cars.ae86, 386, 690);
+    const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
+    this.selectedDisplay = this.createCarDisplay(cars[id], 708, heroBodyY, 690, 10);
 
     const car = cars[id];
     this.headerCarText.setText(car.name.toUpperCase());
