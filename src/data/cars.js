@@ -51,7 +51,6 @@ export const cars = {
     maximumBoost: 0,
     launchRPM: 4800,
     visual: {
-      assetStem: 'ae86',
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.165,
@@ -93,7 +92,6 @@ export const cars = {
     maximumBoost: 0.75,
     launchRPM: 5000,
     visual: {
-      assetStem: 'r32',
       engineKey: 'stockEngineRB26DETT',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.165,
@@ -177,7 +175,6 @@ export const cars = {
     maximumBoost: 0.70,
     launchRPM: 4300,
     visual: {
-      assetStem: 'fc3s',
       engineKey: 'stockEngine13BT',
       wheelKey: 'wheelDeepDish',
       bodyScale: 0.198,
@@ -274,5 +271,15 @@ export const cars = {
     },
   },
 };
+
+// Appearance convention: future cars automatically use their car id as the
+// sprite filename stem. Only legacy filenames that differ from the id need an
+// explicit visual.assetStem override above.
+Object.values(cars).forEach(car => {
+  car.visual = {
+    ...(car.visual || {}),
+    assetStem: car.visual?.assetStem || car.id,
+  };
+});
 
 export const carOrder = ['ae86', 'r32', 'evo3', 'fc3s', 'wrx22b', 'ek9'];
