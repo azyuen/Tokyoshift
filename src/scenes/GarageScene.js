@@ -12,9 +12,9 @@ import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260921-r57';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r59';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r63';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r64';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -359,7 +359,7 @@ export default class GarageScene extends Phaser.Scene {
 
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
-        title: 'DRIVE TO MEET',
+        title: 'TOKYO REGION MAP',
         actionVerb: 'GO TO MEET',
         allowCurrentAction: true,
         costResolver: (currentLocationId, targetLocationId) =>
@@ -576,7 +576,14 @@ export default class GarageScene extends Phaser.Scene {
     this.engineMode = true;
 
     this.upgradeButtons.forEach(item => item.box.disableInteractive());
-    this.thumbButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
     this.saveButton?.disableInteractive();
     this.meetButton?.disableInteractive();
 
@@ -619,19 +626,20 @@ export default class GarageScene extends Phaser.Scene {
     });
     this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
 
-    add(this.add.text(SIDE.x + 24, SIDE.y + 28, 'ENGINE', {
+    add(this.add.text(SIDE.x + 34, SIDE.y + 28, 'ENGINE', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
     }).setDepth(73));
 
     this.engineInsetLevelText = add(this.add.text(
-      SIDE.x + 24,
+      SIDE.x + 34,
       SIDE.y + 72,
-      '',
+      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase(),
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: '#7fdfff',
         align: 'left',
+        wordWrap: { width: 150 },
       }
     ).setOrigin(0, 0).setDepth(74));
 
@@ -641,7 +649,7 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
-      const y = SIDE.y + 218 + i * 58;
+      const y = SIDE.y + 232 + i * 58;
       const part = ENGINE_TUNING_PARTS[partId];
 
       const box = add(this.add.rectangle(
@@ -738,7 +746,14 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePartRows = {};
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
-    this.thumbButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
 
@@ -789,10 +804,10 @@ export default class GarageScene extends Phaser.Scene {
         ly: wheelY - 98,
       },
       turbo: {
-        x: clampX(frontX - 18),
-        y: wheelY - 104,
-        lx: clampX(frontX - 78),
-        ly: wheelY - 142,
+        x: clampX(frontX - 58),
+        y: wheelY - 52,
+        lx: clampX(frontX - 104),
+        ly: wheelY - 98,
       },
       intercooler: {
         x: clampX(carRight - 76),
@@ -845,7 +860,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const x = 875;
     const feetY = 508;
-    const targetHeight = 268;
+    const targetHeight = 282;
     const depth = 8.4;
 
     const softShadow = this.add.ellipse(x + 6, feetY - 8, 74, 22, 0x000000, 0.55)
@@ -925,9 +940,8 @@ export default class GarageScene extends Phaser.Scene {
       tuning: this.pendingEngineTuning,
     });
 
-    const engineSpec = ENGINE_TUNING_PARTS.engine.levels[this.pendingEngineTuning.engine];
     this.engineInsetLevelText?.setText(
-      'LV.' + this.pendingEngineTuning.engine + '\n' + engineSpec.name.toUpperCase()
+      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase()
     );
     this.drawInlineEngineSchematic(this.pendingEngineTuning.engine);
 
