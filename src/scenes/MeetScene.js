@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r33';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r33';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r33';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r34';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r34';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r34';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -29,13 +29,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r33');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r34');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r33');
+        this.load.image(bg.key, bg.path + '?v=20260921-r34');
       }
     });
   }
@@ -181,7 +181,7 @@ export default class MeetScene extends Phaser.Scene {
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
     this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE MODE', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8cc8ec'
     }).setDepth(37);
 
     const buttons = [
@@ -191,24 +191,24 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = SIDE.y + 65 + i * 58;
+      const y = SIDE.y + 68 + i * 62;
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        46,
+        50,
         0x0b1724,
         1
       ).setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
 
-      const label = this.add.text(SIDE.x + 30, y, row[0], {
-        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a9c7da'
+      const label = this.add.text(SIDE.x + 24, y, row[0], {
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
 
-      this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
-        fontFamily: PIXEL_FONT, fontSize: '15px', color: '#8cb6cf'
+      this.add.text(SIDE.x + SIDE.w - 28, y, '>', {
+        fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
       box.on('pointerdown', () => {
@@ -219,35 +219,23 @@ export default class MeetScene extends Phaser.Scene {
       this.modeButtons.push({ key: row[1], box, label });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 228, 'RIVALS TONIGHT', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
+    this.add.text(SIDE.x + 20, SIDE.y + 224, 'SELECTED RIVAL', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 228, '3', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffffff'
-    }).setOrigin(1, 0).setDepth(37);
-
-    this.add.text(SIDE.x + 20, SIDE.y + 268, 'NEXT REFRESH', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7898ad'
-    }).setDepth(37);
-
-    this.refreshText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 268, '03:00', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b7d6e8'
-    }).setOrigin(1, 0).setDepth(37);
-
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 314, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 258, '', {
       fontFamily: BODY_FONT,
-      fontSize: '18px',
+      fontSize: '16px',
       color: '#d8e7ef',
-      lineSpacing: 5,
+      lineSpacing: 4,
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 548,
+      SIDE.y + 584,
       SIDE.w - 36,
-      48,
+      56,
       0x0b2826,
       1
     ).setStrokeStyle(2, 0x62e8c7, 1)
@@ -256,10 +244,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 548,
+      SIDE.y + 584,
       'RACE  >',
       {
-        fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#f1fffb'
       }
     ).setOrigin(0.5).setDepth(39);
 
@@ -267,9 +255,9 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 612,
+      SIDE.y + 654,
       SIDE.w - 36,
-      48,
+      56,
       0x24131a,
       1
     ).setStrokeStyle(2, 0xff6177, 1)
@@ -278,10 +266,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 612,
+      SIDE.y + 654,
       'WORKSHOP',
       {
-        fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffdce1'
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffdce1'
       }
     ).setOrigin(0.5).setDepth(39);
 
@@ -370,13 +358,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r33'
+          character.visual.path + '?v=20260921-r34'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r33');
+      queueImage(bg.key, bg.path + '?v=20260921-r34');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -504,7 +492,7 @@ export default class MeetScene extends Phaser.Scene {
 
   drawCards() {
     const xPositions = [215, 593, 971];
-    const cardY = 738;
+    const cardY = 746;
     const cardH = 124;
 
     this.offers.forEach((offer, i) => {
@@ -522,7 +510,6 @@ export default class MeetScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .setDepth(34);
 
-      // Nearly full-height profile square with even padding inside the card.
       const portraitSize = 104;
       const portraitX = x - 118;
       const portraitY = cardY;
@@ -560,7 +547,6 @@ export default class MeetScene extends Phaser.Scene {
         ? '¥ ' + offer.stake.toLocaleString('en-US')
         : offer.stake;
       const dealText = (this.selectedMode === 'SINGLE' ? 'BET  ' : 'PRIZE  ') + stakeText;
-
       const textX = x - 54;
 
       const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
@@ -575,12 +561,12 @@ export default class MeetScene extends Phaser.Scene {
         color: this.selectedMode === 'SINGLE' ? '#8fd2f5' : '#8fe7ff',
       }).setOrigin(1, 0).setDepth(35);
 
-      const quote = this.add.text(textX, cardY + 2, '"' + offer.quote + '"', {
+      const quote = this.add.text(textX, cardY - 2, '"' + offer.quote + '"', {
         fontFamily: BODY_FONT,
-        fontSize: '11px',
+        fontSize: '10px',
         color: '#9fb4c2',
         wordWrap: { width: 214 },
-        lineSpacing: 2,
+        lineSpacing: 1,
       }).setDepth(35);
 
       card.on('pointerdown', () => this.selectOffer(i));
@@ -629,9 +615,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.selectedSummary.setText(
       character.name + '\n' +
-      character.archetype + '  •  ' + (character.skill?.label ?? 'SKILLED') + '\n\n' +
-      dealLine + '\n' +
-      car.shortName + '  •  ' + offer.raceType + '  •  ' + offer.distance
+      (character.skill?.label ?? 'SKILLED') + '\n\n' +
+      car.shortName + '\n' +
+      offer.raceType + '  •  ' + offer.distance + '\n' +
+      dealLine
     );
 
     const cash = this.registry.get('cash') ?? 0;
@@ -666,20 +653,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
-    const remaining = Math.max(0, this.nextRefreshAt - Date.now());
-
-    if (remaining <= 0) {
-      this.rollOffers();
-      return;
-    }
-
-    const totalSeconds = Math.ceil(remaining / 1000);
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-
-    this.refreshText.setText(
-      String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
-    );
+    if (Date.now() >= this.nextRefreshAt) this.rollOffers();
   }
 
   startSelectedRace() {
