@@ -36,6 +36,7 @@ export function createDefaultGameState() {
     wins: 0,
     losses: 0,
     cash: 50000,
+    devMode: false,
     district: 'ODAIBA',
     meetLocation: 'odaiba7eleven',
     garageTier: 0,
@@ -113,6 +114,14 @@ export function normaliseState(input = {}) {
     input.carGarageLocations || {},
     garageTier
   );
+  const devName =
+    String(input.firstName || '').trim().toLowerCase() === 'arkon' &&
+    String(input.lastName || '').trim().toLowerCase() === 'den';
+  const devMode = Boolean(input.devMode || devName);
+  const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
+  const normalisedCash = devName && !input.devMode
+    ? Math.max(rawCash, 1000000000)
+    : rawCash;
 
   return {
     ...base,
@@ -130,7 +139,8 @@ export function normaliseState(input = {}) {
     },
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
-    cash: Number.isFinite(input.cash) ? input.cash : base.cash,
+    cash: normalisedCash,
+    devMode,
     meetRosters: input.meetRosters && typeof input.meetRosters === 'object'
       ? input.meetRosters
       : {},
@@ -161,6 +171,7 @@ export function snapshotRegistry(registry) {
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
+    devMode: Boolean(registry.get('devMode')),
     district: registry.get('district') || 'ODAIBA',
     meetLocation: registry.get('meetLocation') || 'odaiba7eleven',
     garageTier: Number(registry.get('garageTier') || 0),
@@ -192,6 +203,15 @@ export function saveManualState(registry) {
 
 
 export function saveIdentityState(registry) {
+  const devName =
+    String(registry.get('firstName') || '').trim().toLowerCase() === 'arkon' &&
+    String(registry.get('lastName') || '').trim().toLowerCase() === 'den';
+
+  if (devName && !registry.get('devMode')) {
+    registry.set('devMode', true);
+    registry.set('cash', 1000000000);
+  }
+
   const state = saveSessionState(registry);
   const manual = readManualSave();
 
