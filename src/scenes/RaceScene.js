@@ -7,6 +7,7 @@ import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.
 import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r65';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r60';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r60';
@@ -222,7 +223,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
-    if (this.cancelConfirmPopup?.active || this.resultsShown) return;
+    if (this.raceStarted || this.cancelConfirmPopup?.active || this.resultsShown) return;
 
     const isPink = this.raceDeal === 'PINK_SLIP';
     const cashPenalty = Math.ceil((this.raceStake * 0.5) / 250) * 250;
@@ -422,17 +423,23 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   applyOwnedBuild(config, engineConfig, state = {}) {
-    // Legacy pink-slip tune levels still modify grip/clutch/boost, while the new
-    // part-by-part engine system changes the actual torque curve and turbo setup.
+    // Legacy pink-slip tune levels remain compatible, then the newer workshop
+    // systems layer engine, drivetrain and exhaust/NOS parts onto the car.
     this.applyTuneLevel(config, state.tuneLevel || 0);
-    const tuned = applyEngineTuning(config, engineConfig, state);
+    const engineTuned = applyEngineTuning(config, engineConfig, state);
+    const tuned = applySecondaryTuning(engineTuned.car, engineTuned.engine, state);
 
-    if (!state.nosInstalled) {
-      tuned.car.nosPower = 0;
-      tuned.car.nosCapacitySeconds = 0;
-    } else {
-      tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
-      tuned.car.nosCapacitySeconds = Number(state.nosCapacitySeconds || tuned.car.nosCapacitySeconds || 5);
+    const exhaustNos = getExhaustNosTuning(state);
+    const hasWorkshopNos = exhaustNos.nosKit > 0;
+
+    if (!hasWorkshopNos) {
+      if (!state.nosInstalled) {
+        tuned.car.nosPower = 0;
+        tuned.car.nosCapacitySeconds = 0;
+      } else {
+        tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
+        tuned.car.nosCapacitySeconds = Number(state.nosCapacitySeconds || tuned.car.nosCapacitySeconds || 5);
+      }
     }
 
     return tuned;
@@ -587,6 +594,8 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentStartMoved = false;
     this.startButton.setVisible(false).disableInteractive();
     this.startButtonText.setVisible(false);
+    this.cancelButton?.setVisible(false).disableInteractive();
+    this.cancelButtonText?.setVisible(false);
 
     if (this.isRollingStart) {
       this.prepareRollingVehicle(this.player);
@@ -679,7 +688,9 @@ export default class RaceScene extends Phaser.Scene {
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' +
         cars[this.selectedCarId].shortName + ' vs ' + cars[this.opponentCarId].shortName;
-    } else if (this.greenClock != null) status = 'GO!';
+    } else if (this.greenClock != null) {
+      status = (this.raceClock - this.greenClock) < 0.70 ? 'GO!' : '';
+    }
     else if (this.isRollingStart) status = 'ROLLING 60 KM/H';
     else if (this.countdownClock < 1.8) status = 'STAGED';
 
