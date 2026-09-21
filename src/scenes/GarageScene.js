@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r31';
-import { characters } from '../data/characters.js?v=20260921-r31';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r32';
+import { characters } from '../data/characters.js?v=20260921-r32';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -200,13 +200,13 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 230, 'UPGRADES', {
+    this.add.text(SIDE.x + 20, SIDE.y + 230, 'TUNING', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const categories = ['ENGINE', 'TURBO', 'TIRES', 'SUSPENSION', 'GEARBOX', 'NITROUS', 'COSMETICS'];
     categories.forEach((name, i) => {
-      const y = SIDE.y + 271 + i * 44;
+      const y = SIDE.y + 291 + i * 44;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 38, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
@@ -224,7 +224,7 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
-    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 676, '', {
+    this.upgradeHint = this.add.text(SIDE.x + 20, SIDE.y + 696, '', {
       fontFamily: BODY_FONT, fontSize: '15px', color: '#7e9caf'
     }).setDepth(38);
   }
