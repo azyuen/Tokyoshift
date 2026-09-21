@@ -21,7 +21,7 @@ export function createDefaultGameState() {
     losses: 0,
     cash: 50000,
     district: 'WANGAN',
-    meetLocation: 'wangan711',
+    meetLocation: 'wangan7eleven',
     gameOver: false,
   };
 }
@@ -54,6 +54,13 @@ export function readSessionState() {
 
 export function normaliseState(input = {}) {
   const base = createDefaultGameState();
+  const locationAliases = {
+    wangan711: 'wangan7eleven',
+    wanganDocks: 'wanganBayside',
+  };
+  const normalisedLocation = locationAliases[input.meetLocation]
+    || input.meetLocation
+    || base.meetLocation;
   const owned = Array.isArray(input.ownedCarIds)
     ? [...new Set(input.ownedCarIds)]
     : [...base.ownedCarIds];
@@ -65,6 +72,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
+    meetLocation: normalisedLocation,
     selectedCarId,
     ownedCarIds: owned,
     carStates: {
@@ -97,7 +105,7 @@ export function snapshotRegistry(registry) {
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
     district: registry.get('district') || 'WANGAN',
-    meetLocation: registry.get('meetLocation') || 'wangan711',
+    meetLocation: registry.get('meetLocation') || 'wangan7eleven',
     gameOver: registry.get('gameOver') || false,
   });
 }
