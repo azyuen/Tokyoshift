@@ -1,12 +1,13 @@
 import Vehicle from '../vehicles/Vehicle.js';
-import TouchControls from '../input/TouchControls.js?v=20260921-r35';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r35';
-import RaceHUD from '../ui/RaceHUD.js?v=20260921-r35';
+import TouchControls from '../input/TouchControls.js?v=20260921-r42';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r42';
+import RaceHUD from '../ui/RaceHUD.js?v=20260921-r42';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r35';
-import { cars, carOrder } from '../data/cars.js?v=20260921-r35';
-import { engines } from '../data/engines.js?v=20260921-r35';
-import { characters } from '../data/characters.js?v=20260921-r35';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r42';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r42';
+import { engines } from '../data/engines.js?v=20260921-r42';
+import { characters } from '../data/characters.js?v=20260921-r42';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r42';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -45,6 +46,8 @@ export default class RaceScene extends Phaser.Scene {
 
     this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    this.raceType = this.registry.get('selectedRaceType') || 'Standing Start';
+    this.isRollingStart = this.raceType === 'Roll Race';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
   }
@@ -53,18 +56,41 @@ export default class RaceScene extends Phaser.Scene {
     document.body.dataset.scene = 'race';
     this.scale.resize(1560, 720);
 
-    const playerConfig = clone(cars[this.selectedCarId]);
-    const opponentConfig = clone(cars[this.opponentCarId]);
+    const carStates = this.registry.get('carStates') || {};
+    this.playerCarState = carStates[this.selectedCarId] || {
+      stock: true,
+      nosInstalled: false,
+      tuneLevel: 0,
+      acquiredVia: 'starter',
+    };
+
+    const rivalCharacter = characters[this.opponentCharacterId];
+    const playerConfig = this.applyOwnedBuild(clone(cars[this.selectedCarId]), this.playerCarState);
+    const opponentConfig = this.applyRivalBuild(clone(cars[this.opponentCarId]), rivalCharacter);
+
+    this.playerCapabilities = {
+      hasTurbo: (playerConfig.maximumBoost || 0) > 0.01,
+      hasNitrous: (playerConfig.nosPower || 0) > 0 && (playerConfig.nosCapacitySeconds || 0) > 0,
+    };
+
+    this.opponentCapabilities = {
+      hasTurbo: (opponentConfig.maximumBoost || 0) > 0.01,
+      hasNitrous: (opponentConfig.nosPower || 0) > 0 && (opponentConfig.nosCapacitySeconds || 0) > 0,
+    };
 
     this.player = new Vehicle(playerConfig, engines[playerConfig.engine]);
     this.opponent = new Vehicle(opponentConfig, engines[opponentConfig.engine]);
 
-    this.player.transmission.currentGear = 0;
-    this.player.transmission.lastShiftQuality = 'NEUTRAL';
-    this.opponent.transmission.currentGear = 1;
-    this.opponent.transmission.lastShiftQuality = 'STAGED';
+    if (this.isRollingStart) {
+      this.prepareRollingVehicle(this.player);
+      this.prepareRollingVehicle(this.opponent);
+    } else {
+      this.player.transmission.currentGear = 0;
+      this.player.transmission.lastShiftQuality = 'NEUTRAL';
+      this.opponent.transmission.currentGear = 1;
+      this.opponent.transmission.lastShiftQuality = 'STAGED';
+    }
 
-    const rivalCharacter = characters[this.opponentCharacterId];
     const rivalAI = rivalCharacter?.skill?.ai ?? {
       reactionSkill: 0.78,
       launchSkill: 0.76,
@@ -73,8 +99,11 @@ export default class RaceScene extends Phaser.Scene {
     };
     this.ai = new DragRacingAI(this.opponent, rivalAI);
 
-    this.controls = new TouchControls(this);
-    this.hud = new RaceHUD(this);
+    this.controls = new TouchControls(this, { nosEnabled: this.playerCapabilities.hasNitrous });
+    this.hud = new RaceHUD(this, {
+      hasTurbo: this.playerCapabilities.hasTurbo,
+      hasNitrous: this.playerCapabilities.hasNitrous,
+    });
     this.debug = new DebugHUD(this);
 
     this.raceClock = 0;
@@ -93,6 +122,11 @@ export default class RaceScene extends Phaser.Scene {
     this.resultsShown = false;
     this.firstFinishClock = null;
     this.raceSettlement = null;
+    this.raceStartPositionM = 0;
+    this.opponentRaceStartPositionM = 0;
+    this.finishTargetM = TRACK_M;
+    this.rollingSpeedMps = 60 / 3.6;
+    this.lastRollCountdownLabel = null;
 
     this.environment = new TokyoExpresswayBackground(this);
     this.worldG = this.add.graphics().setDepth(4);
@@ -105,7 +139,16 @@ export default class RaceScene extends Phaser.Scene {
     this.treeSprite = this.add.image(780, 192, 'dragTree')
       .setScale(0.105)
       .setDepth(20)
-      .setAlpha(0.94);
+      .setAlpha(0.94)
+      .setVisible(!this.isRollingStart);
+
+    this.rollCountdownText = this.add.text(780, 176, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '42px',
+      color: '#f4fbff',
+      stroke: '#07111d',
+      strokeThickness: 8,
+    }).setOrigin(0.5).setDepth(48).setScrollFactor(0).setVisible(false);
 
     this.startButton = this.add.rectangle(780, 54, 250, 54, 0x142235, 0.96)
       .setStrokeStyle(3, 0x63d7ff, 1)
@@ -113,16 +156,18 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.startButtonText = this.add.text(780, 54, 'START RACE', {
+    this.startButtonText = this.add.text(780, 54, this.isRollingStart ? 'START ROLL' : 'START RACE', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
 
     const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
-    const moneyLabel = this.raceMode === 'COMPETITION'
-      ? 'PRIZE  ¥ ' + this.raceStake.toLocaleString('en-US')
-      : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
+    const moneyLabel = this.raceDeal === 'PINK_SLIP'
+      ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
+      : this.raceMode === 'COMPETITION'
+        ? 'PRIZE  ¥ ' + this.raceStake.toLocaleString('en-US')
+        : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
     this.rivalText = this.add.text(1490, 39, rivalName.toUpperCase(), {
       fontFamily: PIXEL_FONT,
@@ -133,7 +178,7 @@ export default class RaceScene extends Phaser.Scene {
     this.stakeText = this.add.text(1490, 65, moneyLabel, {
       fontFamily: PIXEL_FONT,
       fontSize: '10px',
-      color: this.raceMode === 'COMPETITION' ? '#8fe7ff' : '#ffe08a',
+      color: this.raceDeal === 'PINK_SLIP' ? '#ff7cac' : this.raceMode === 'COMPETITION' ? '#8fe7ff' : '#ffe08a',
     }).setOrigin(1, 0.5).setDepth(46).setScrollFactor(0);
 
     this.cancelButton = this.add.rectangle(135, 54, 210, 46, 0x24131a, 0.94)
@@ -147,6 +192,121 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
     this.cancelButton.on('pointerdown', () => this.scene.start('MeetScene'));
+  }
+
+  applyTuneLevel(config, tuneLevel = 0) {
+    const rating = Phaser.Math.Clamp(Number(tuneLevel) || 0, 0, 5);
+    const tier = Math.max(0, rating - 2);
+
+    config.tyreGrip *= 1 + tier * 0.018;
+    config.clutchStrength *= 1 + tier * 0.055;
+
+    if ((config.maximumBoost || 0) > 0) {
+      config.maximumBoost *= 1 + tier * 0.035;
+      config.turboSpoolRate *= 1 + tier * 0.025;
+    }
+
+    return config;
+  }
+
+  applyOwnedBuild(config, state = {}) {
+    this.applyTuneLevel(config, state.tuneLevel || 0);
+
+    if (!state.nosInstalled) {
+      config.nosPower = 0;
+      config.nosCapacitySeconds = 0;
+    } else {
+      config.nosPower = Number(state.nosPower || config.nosPower || 35);
+      config.nosCapacitySeconds = Number(state.nosCapacitySeconds || config.nosCapacitySeconds || 5);
+    }
+
+    return config;
+  }
+
+  applyRivalBuild(config, character) {
+    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 3), 1, 5);
+    this.applyTuneLevel(config, rating);
+
+    // Rookie and Skilled drivers are still early in the build ladder. Expert
+    // and Elite rivals may carry a finite nitrous system.
+    const hasNitrous = rating >= 4;
+    config.nosPower = hasNitrous ? (rating >= 5 ? 55 : 35) : 0;
+    config.nosCapacitySeconds = hasNitrous ? (rating >= 5 ? 5.0 : 4.0) : 0;
+
+    this.opponentBuildState = {
+      stock: rating <= 2,
+      nosInstalled: hasNitrous,
+      nosPower: config.nosPower,
+      nosCapacitySeconds: config.nosCapacitySeconds,
+      tuneLevel: rating,
+      acquiredVia: 'pinkSlip',
+    };
+
+    return config;
+  }
+
+  prepareRollingVehicle(vehicle) {
+    const speed = 60 / 3.6;
+    vehicle.speedMps = speed;
+    vehicle.accelerationMps2 = 0;
+    vehicle.transmission.currentGear = Math.min(3, vehicle.config.gearRatios.length);
+    vehicle.transmission.pendingGear = null;
+    vehicle.transmission.shiftTimer = 0;
+    vehicle.transmission.lastShiftQuality = 'ROLLING';
+
+    const wheelRPM = speed / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;
+    vehicle.tyres.wheelRPM = wheelRPM;
+    vehicle.engine.rpm = Phaser.Math.Clamp(
+      wheelRPM * vehicle.transmission.ratio,
+      vehicle.config.engineIdleRPM || 850,
+      (vehicle.config.engineRedlineRPM || 7600) * 0.86
+    );
+    vehicle.clutch.pedal = 0;
+  }
+
+  advanceRollingVehicle(vehicle, dt) {
+    vehicle.speedMps = this.rollingSpeedMps;
+    vehicle.accelerationMps2 = 0;
+    vehicle.positionM += this.rollingSpeedMps * dt;
+
+    const wheelRPM = this.rollingSpeedMps / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;
+    vehicle.tyres.wheelRPM = wheelRPM;
+    vehicle.tyres.wheelspin = false;
+    vehicle.tyres.slipRatio = 0;
+    vehicle.engine.rpm = Phaser.Math.Clamp(
+      wheelRPM * vehicle.transmission.ratio,
+      vehicle.config.engineIdleRPM || 850,
+      (vehicle.config.engineRedlineRPM || 7600) * 0.86
+    );
+
+    return vehicle.telemetry;
+  }
+
+  showRollCountdown(label) {
+    if (this.lastRollCountdownLabel === label) return;
+    this.lastRollCountdownLabel = label;
+
+    this.rollCountdownText.setText(label).setVisible(true).setAlpha(1).setScale(0.55);
+    this.tweens.killTweensOf(this.rollCountdownText);
+    this.tweens.add({
+      targets: this.rollCountdownText,
+      scaleX: 1.18,
+      scaleY: 1.18,
+      duration: 150,
+      yoyo: true,
+      hold: 160,
+      ease: 'Back.Out',
+    });
+
+    if (label === 'GO!') {
+      this.tweens.add({
+        targets: this.rollCountdownText,
+        alpha: 0,
+        delay: 520,
+        duration: 220,
+        onComplete: () => this.rollCountdownText.setVisible(false),
+      });
+    }
   }
 
   createCarVisual(cfg, depth, roleScale) {
@@ -209,12 +369,20 @@ export default class RaceScene extends Phaser.Scene {
     this.countdownClock = 0;
     this.greenClock = null;
     this.startMoved = false;
+    this.opponentStartMoved = false;
     this.startButton.setVisible(false).disableInteractive();
     this.startButtonText.setVisible(false);
+
+    if (this.isRollingStart) {
+      this.prepareRollingVehicle(this.player);
+      this.prepareRollingVehicle(this.opponent);
+      this.showRollCountdown('3');
+    }
   }
 
   racePhase() {
     if (!this.raceStarted) return 'READY';
+    if (this.isRollingStart && this.greenClock == null) return 'ROLLING';
     if (this.greenClock != null) return 'GREEN';
     if (this.countdownClock < 0.9) return 'PRE-STAGE';
     if (this.countdownClock < 1.8) return 'STAGE';
@@ -231,49 +399,78 @@ export default class RaceScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.start('GarageScene');
 
-    // Once the result card appears the exact finish frame stays on screen.
     if (this.resultsShown) return;
 
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
 
-    if (requestedGear === 'UP') {
-      const tr = this.player.transmission;
-      if (tr.shiftTimer <= 0) {
-        const nextGear = tr.currentGear <= 0 ? 1 : tr.currentGear + 1;
-        if (nextGear <= this.player.config.gearRatios.length) this.player.requestGear(nextGear);
+    const rollingCountdown = this.isRollingStart && this.raceStarted && this.greenClock == null;
+
+    if (!rollingCountdown) {
+      if (requestedGear === 'UP') {
+        const tr = this.player.transmission;
+        if (tr.shiftTimer <= 0) {
+          const nextGear = tr.currentGear <= 0 ? 1 : tr.currentGear + 1;
+          if (nextGear <= this.player.config.gearRatios.length) this.player.requestGear(nextGear);
+        }
+      } else if (requestedGear === 'DOWN') {
+        const tr = this.player.transmission;
+        if (tr.shiftTimer <= 0 && tr.currentGear > 1) this.player.requestGear(tr.currentGear - 1);
+      } else if (typeof requestedGear === 'number') {
+        this.player.requestGear(requestedGear);
       }
-    } else if (requestedGear === 'DOWN') {
-      const tr = this.player.transmission;
-      if (tr.shiftTimer <= 0 && tr.currentGear > 1) this.player.requestGear(tr.currentGear - 1);
-    } else if (typeof requestedGear === 'number') {
-      this.player.requestGear(requestedGear);
     }
 
     if (this.raceStarted && this.greenClock == null) {
       this.countdownClock += dt;
-      if (this.countdownClock >= 3.3) this.greenClock = this.raceClock;
+
+      if (this.isRollingStart) {
+        if (this.countdownClock < 0.8) this.showRollCountdown('3');
+        else if (this.countdownClock < 1.6) this.showRollCountdown('2');
+        else if (this.countdownClock < 2.4) this.showRollCountdown('1');
+        else {
+          this.greenClock = this.raceClock;
+          this.raceStartPositionM = this.player.positionM;
+          this.opponentRaceStartPositionM = this.opponent.positionM;
+          this.finishTargetM = this.raceStartPositionM + TRACK_M;
+          this.startMoved = true;
+          this.opponentStartMoved = true;
+          this.showRollCountdown('GO!');
+        }
+      } else if (this.countdownClock >= 3.3) {
+        this.greenClock = this.raceClock;
+      }
     }
 
-    const aiState = this.ai.update(dt, this.raceClock, this.greenClock);
-    const playerT = this.player.update(dt, controlState);
-    const oppT = this.opponent.update(dt, aiState);
+    let playerT;
+    let oppT;
+
+    if (this.isRollingStart && this.raceStarted && this.greenClock == null) {
+      playerT = this.advanceRollingVehicle(this.player, dt);
+      oppT = this.advanceRollingVehicle(this.opponent, dt);
+    } else {
+      const aiState = this.ai.update(dt, this.raceClock, this.greenClock);
+      playerT = this.player.update(dt, controlState);
+      oppT = this.opponent.update(dt, aiState);
+    }
 
     this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
 
     let status = '';
     if (this.falseStart) status = 'RED LIGHT';
-    else if (!this.raceStarted) status = cars[this.selectedCarId].shortName + '  vs  ' + cars[this.opponentCarId].shortName;
-    else if (this.greenClock != null) status = 'GO!';
-    else if (this.raceStarted && this.countdownClock < 1.8) status = 'STAGED';
+    else if (!this.raceStarted) {
+      status = this.raceType.toUpperCase() + '  //  ' +
+        cars[this.selectedCarId].shortName + ' vs ' + cars[this.opponentCarId].shortName;
+    } else if (this.greenClock != null) status = 'GO!';
+    else if (this.isRollingStart) status = 'ROLLING 60 KM/H';
+    else if (this.countdownClock < 1.8) status = 'STAGED';
 
     this.hud.update(playerT, status);
     this.debug.update(playerT);
 
     if (this.finished) {
       this.afterFinishTimer += dt;
-      // Give the finish line a brief beat, then freeze this exact race frame.
       if (this.afterFinishTimer > 0.45 && !this.resultsShown) {
         this.showResultsOverlay();
       }
@@ -281,50 +478,59 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   handleTiming(pt, ot) {
-    const playerMoved = pt.positionM > 0.20 || pt.speedMps > 0.60;
-    if (this.raceStarted && playerMoved && !this.startMoved) {
-      this.startMoved = true;
-      if (this.greenClock == null) {
-        this.falseStart = true;
-        this.times.reaction = null;
-      } else {
-        this.times.reaction = this.raceClock - this.greenClock;
+    const playerDistance = Math.max(0, pt.positionM - this.raceStartPositionM);
+    const opponentDistance = Math.max(0, ot.positionM - this.opponentRaceStartPositionM);
+
+    if (!this.isRollingStart) {
+      const playerMoved = playerDistance > 0.20 || pt.speedMps > 0.60;
+      if (this.raceStarted && playerMoved && !this.startMoved) {
+        this.startMoved = true;
+        if (this.greenClock == null) {
+          this.falseStart = true;
+          this.times.reaction = null;
+        } else {
+          this.times.reaction = this.raceClock - this.greenClock;
+        }
+      }
+
+      const opponentMoved = opponentDistance > 0.20 || ot.speedMps > 0.60;
+      if (this.greenClock != null && opponentMoved && !this.opponentStartMoved) {
+        this.opponentStartMoved = true;
+        this.opponentTimes.reaction = this.raceClock - this.greenClock;
       }
     }
 
-    const opponentMoved = ot.positionM > 0.20 || ot.speedMps > 0.60;
-    if (this.greenClock != null && opponentMoved && !this.opponentStartMoved) {
-      this.opponentStartMoved = true;
-      this.opponentTimes.reaction = this.raceClock - this.greenClock;
-    }
-
     if (this.greenClock != null && this.startMoved && !this.falseStart) {
-      const launchClock = this.greenClock + (this.times.reaction ?? 0);
+      const launchClock = this.isRollingStart
+        ? this.greenClock
+        : this.greenClock + (this.times.reaction ?? 0);
       const elapsed = this.raceClock - launchClock;
-      if (this.times.sixty == null && pt.positionM >= 18.288) this.times.sixty = elapsed;
-      if (this.times.eighth == null && pt.positionM >= 201.168) this.times.eighth = elapsed;
-      if (this.times.quarter == null && pt.positionM >= TRACK_M) {
+      if (this.times.sixty == null && playerDistance >= 18.288) this.times.sixty = elapsed;
+      if (this.times.eighth == null && playerDistance >= 201.168) this.times.eighth = elapsed;
+      if (this.times.quarter == null && playerDistance >= TRACK_M) {
         this.times.quarter = elapsed;
         this.times.trapKmh = pt.speedKmh;
       }
     }
 
     if (this.greenClock != null && this.opponentStartMoved) {
-      const launchClock = this.greenClock + (this.opponentTimes.reaction ?? 0);
+      const launchClock = this.isRollingStart
+        ? this.greenClock
+        : this.greenClock + (this.opponentTimes.reaction ?? 0);
       const elapsed = this.raceClock - launchClock;
-      if (this.opponentTimes.sixty == null && ot.positionM >= 18.288) this.opponentTimes.sixty = elapsed;
-      if (this.opponentTimes.eighth == null && ot.positionM >= 201.168) this.opponentTimes.eighth = elapsed;
-      if (this.opponentTimes.quarter == null && ot.positionM >= TRACK_M) {
+      if (this.opponentTimes.sixty == null && opponentDistance >= 18.288) this.opponentTimes.sixty = elapsed;
+      if (this.opponentTimes.eighth == null && opponentDistance >= 201.168) this.opponentTimes.eighth = elapsed;
+      if (this.opponentTimes.quarter == null && opponentDistance >= TRACK_M) {
         this.opponentTimes.quarter = elapsed;
         this.opponentTimes.trapKmh = ot.speedKmh;
       }
     }
 
-    if (pt.positionM >= TRACK_M && this.playerFinishClock == null) {
+    if (this.greenClock != null && playerDistance >= TRACK_M && this.playerFinishClock == null) {
       this.playerFinishClock = this.raceClock;
       this.firstFinishClock ??= this.raceClock;
     }
-    if (ot.positionM >= TRACK_M && this.opponentFinishClock == null) {
+    if (this.greenClock != null && opponentDistance >= TRACK_M && this.opponentFinishClock == null) {
       this.opponentFinishClock = this.raceClock;
       this.firstFinishClock ??= this.raceClock;
     }
@@ -526,7 +732,41 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
 
     let cashDelta = 0;
-    if (this.raceMode === 'SINGLE' && this.raceDeal === 'BET') {
+    let pinkMessage = '';
+    let gameOver = false;
+
+    if (this.raceDeal === 'PINK_SLIP') {
+      let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
+      const carStates = { ...(this.registry.get('carStates') || {}) };
+
+      if (playerWon) {
+        if (!ownedCarIds.includes(this.opponentCarId)) {
+          ownedCarIds.push(this.opponentCarId);
+          carStates[this.opponentCarId] = {
+            ...this.opponentBuildState,
+            acquiredVia: 'pinkSlip',
+          };
+          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ADDED TO GARAGE';
+        } else {
+          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
+        }
+      } else {
+        ownedCarIds = ownedCarIds.filter(id => id !== this.selectedCarId);
+        delete carStates[this.selectedCarId];
+        pinkMessage = 'PINK SLIP LOST // ' + cars[this.selectedCarId].shortName + ' TAKEN';
+
+        if (ownedCarIds.length) {
+          this.registry.set('selectedCarId', ownedCarIds[0]);
+        } else {
+          this.registry.set('selectedCarId', null);
+          gameOver = true;
+        }
+      }
+
+      this.registry.set('ownedCarIds', ownedCarIds);
+      this.registry.set('carStates', carStates);
+      this.registry.set('gameOver', gameOver);
+    } else if (this.raceMode === 'SINGLE' && this.raceDeal === 'BET') {
       cashDelta = playerWon ? this.raceStake : -this.raceStake;
     } else if (this.raceMode === 'COMPETITION' && playerWon) {
       cashDelta = this.raceStake;
@@ -535,22 +775,14 @@ export default class RaceScene extends Phaser.Scene {
     const newCash = Math.max(0, oldCash + cashDelta);
     this.registry.set('cash', newCash);
 
-    try {
-      localStorage.setItem('tokyoShiftProfile', JSON.stringify({
-        selectedCarId: this.registry.get('selectedCarId') || 'ae86',
-        wins: this.registry.get('wins') ?? 0,
-        losses: this.registry.get('losses') ?? 0,
-        cash: newCash,
-        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
-      }));
-    } catch (e) {
-      // Storage can be unavailable in some private-browser contexts.
-    }
+    saveSessionState(this.registry);
 
     this.raceSettlement = {
       playerWon,
       cashDelta: newCash - oldCash,
       cash: newCash,
+      pinkMessage,
+      gameOver,
     };
     return this.raceSettlement;
   }
@@ -563,7 +795,7 @@ export default class RaceScene extends Phaser.Scene {
     this.environment.update(cameraPx, pt.speedKmh);
 
     this.worldG.clear();
-    const finishX = TRACK_M * PX_PER_M - cameraPx;
+    const finishX = this.finishTargetM * PX_PER_M - cameraPx;
     if (finishX > -60 && finishX < W + 60) {
       for (let y = 272; y < 498; y += 20) {
         this.worldG.fillStyle(((y / 20) % 2) ? 0xffffff : 0x151515, 1).fillRect(finishX, y, 16, 20);
@@ -630,6 +862,12 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   drawTree(cameraPx) {
+    if (this.isRollingStart) {
+      this.treeSprite.setVisible(false);
+      this.treeLightsG.clear();
+      return;
+    }
+
     const treeX = TREE_START_M * PX_PER_M - cameraPx;
     const treeY = 192;
     const s = 0.105;
