@@ -14,6 +14,10 @@ export const characters = {
     preferredCars: ['ae86', 'fc3s'],
     signatureRace: 'Street Sprint',
     introQuote: 'No drama. Just drive.',
+    resultQuotes: {
+      win: "Clean enough. That's all I needed.",
+      loss: "I know where I lost it.",
+    },
     visual: {
       spriteKey: 'characterRenMizuno',
       path: 'assets/Characters/ren_mizuno.png',
@@ -35,6 +39,10 @@ export const characters = {
     preferredCars: ['evo3', 'wrx22b'],
     signatureRace: 'Standing Start',
     introQuote: 'If I built it right, the car will do the talking.',
+    resultQuotes: {
+      win: "Good. The setup held together.",
+      loss: "Something's off. I'll find it.",
+    },
     visual: {
       spriteKey: 'characterDaichiSakamoto',
       path: 'assets/Characters/daichi_sakamoto.png',
@@ -56,6 +64,10 @@ export const characters = {
     preferredCars: ['r32', 'fc3s'],
     signatureRace: 'Wangan Run',
     introQuote: 'Keep up first. Talk later.',
+    resultQuotes: {
+      win: "You stayed close. Not close enough.",
+      loss: "Remember this one. I will.",
+    },
     visual: {
       spriteKey: 'characterAyaKurose',
       path: 'assets/Characters/aya_kurose.png',
@@ -77,6 +89,10 @@ export const characters = {
     preferredCars: ['r32', 'evo3'],
     signatureRace: 'Expressway Battle',
     introQuote: 'Speed is easy. Staying fast is the hard part.',
+    resultQuotes: {
+      win: "Fast is one thing. Finishing first is another.",
+      loss: "Good run. You earned that.",
+    },
     visual: {
       spriteKey: 'characterKaitoFujimori',
       path: 'assets/Characters/kaito_fujimori.png',
@@ -98,6 +114,10 @@ export const characters = {
     preferredCars: ['ek9', 'ae86'],
     signatureRace: 'Backstreet Dash',
     introQuote: 'Come on — one run. What’s the worst that could happen?',
+    resultQuotes: {
+      win: "No way—I actually got you!",
+      loss: "Okay... one more lesson learned.",
+    },
     visual: {
       spriteKey: 'characterHaruTachibana',
       path: 'assets/Characters/haru_tachibana.png',
@@ -119,6 +139,10 @@ export const characters = {
     preferredCars: ['wrx22b', 'evo3'],
     signatureRace: 'Technical Circuit',
     introQuote: 'Your setup is costing you more than your driving.',
+    resultQuotes: {
+      win: "The numbers were right.",
+      loss: "Fine. Back to the data.",
+    },
     visual: {
       spriteKey: 'characterReinaShibata',
       path: 'assets/Characters/reina_shibata.png',
@@ -140,6 +164,10 @@ export const characters = {
     preferredCars: ['fc3s', 'r32'],
     signatureRace: 'Bet Race',
     introQuote: 'Make it interesting and I’m in.',
+    resultQuotes: {
+      win: "Now that was worth the bet.",
+      loss: "All right. You got me this time.",
+    },
     visual: {
       spriteKey: 'characterRikuAkamine',
       path: 'assets/Characters/riku_akamine.png',
@@ -161,6 +189,10 @@ export const characters = {
     preferredCars: ['ek9', 'wrx22b'],
     signatureRace: 'Roll Race',
     introQuote: 'I only need one mistake.',
+    resultQuotes: {
+      win: "There. That hesitation.",
+      loss: "You didn't give me the mistake.",
+    },
     visual: {
       spriteKey: 'characterEmiKanzaki',
       path: 'assets/Characters/emi_kanzaki.png',
