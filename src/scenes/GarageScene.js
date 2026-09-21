@@ -750,7 +750,7 @@ export default class GarageScene extends Phaser.Scene {
         fontSize: '7px',
         color: '#7fdfff',
         align: 'right',
-        wordWrap: { width: 152, useAdvancedWrap: true },
+        wordWrap: { width: 126, useAdvancedWrap: true },
       }
     ).setOrigin(1, 0).setDepth(74));
 
@@ -1031,7 +1031,7 @@ export default class GarageScene extends Phaser.Scene {
     const insetTop = SIDE.y + 13;
     const insetW = SIDE.w - 36;
     const insetH = 178;
-    const cx = insetLeft + 88;
+    const cx = insetLeft + 70;
     const cy = SIDE.y + 110;
 
     if (engineKey && this.textures.exists(engineKey)) {
@@ -1041,7 +1041,7 @@ export default class GarageScene extends Phaser.Scene {
       this.engineModeObjects.push(this.inlineEngineSprite);
 
       const source = this.textures.get(engineKey).getSourceImage();
-      const fit = Math.max(225 / source.width, 155 / source.height);
+      const fit = Math.max(220 / source.width, 150 / source.height);
       this.inlineEngineSprite.setScale(fit * (1 + level * 0.035));
 
       this.inlineEngineMask = this.make.graphics({ add: false });
