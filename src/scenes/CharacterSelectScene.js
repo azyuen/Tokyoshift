@@ -65,8 +65,13 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.panel(x, 365, 370, 455, '1 // PROFILE');
 
     // Portrait gets its own padded block rather than touching the panel title/button.
-    this.add.rectangle(x, 328, 240, 240, 0x101b27, 1)
-      .setStrokeStyle(2, 0x4bdcff, 0.85);
+    this.add.rectangle(x, 328, 240, 240, 0x101b27, 1);
+
+    // Keep the cyan selection frame above the character artwork so hair/jacket
+    // pixels never cover the outline.
+    this.add.rectangle(x, 328, 240, 240, 0xffffff, 0)
+      .setStrokeStyle(2, 0x4bdcff, 0.95)
+      .setDepth(6);
 
     this.portraitMaskShape = this.make.graphics({ add: false });
     this.portraitMaskShape.fillStyle(0xffffff, 1);
