@@ -147,6 +147,22 @@ export function saveManualState(registry) {
   return state;
 }
 
+
+export function saveIdentityState(registry) {
+  const state = saveSessionState(registry);
+  const manual = readManualSave();
+
+  if (manual) {
+    writeJson(SAVE_KEY, {
+      ...manual,
+      firstName: state.firstName,
+      lastName: state.lastName,
+    });
+  }
+
+  return state;
+}
+
 export function restoreManualSave(registry) {
   const saved = readManualSave();
   if (!saved) return null;
