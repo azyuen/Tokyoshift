@@ -320,8 +320,473 @@ class EngineVoice {
   }
 }
 
+
+function clamp01(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function getUpgradeAudioLevels(state = {}) {
+  const engine = state.tuning || state.engineTuning || {};
+  const drivetrain = state.drivetrainTuning || {};
+  const exhaustNos = state.exhaustNosTuning || {};
+
+  return {
+    turbo: Math.max(0, Math.min(3, Number(engine.turbo) || 0)),
+    gearbox: Math.max(0, Math.min(3, Number(drivetrain.gearbox) || 0)),
+    exhaust: Math.max(
+      Number(engine.exhaust) || 0,
+      Number(exhaustNos.headers) || 0,
+      Number(exhaustNos.exhaust) || 0,
+      Number(exhaustNos.muffler) || 0
+    ),
+    nos: Math.max(
+      Number(exhaustNos.nosKit) || 0,
+      state.nosInstalled ? 1 : 0
+    ),
+    nitrousShot: Math.max(
+      Number(exhaustNos.nitrousShot) || 0,
+      state.nosInstalled ? 1 : 0
+    ),
+  };
+}
+
+function makeNoiseBuffer(duration = 0.5) {
+  const context = ensureContext();
+  if (!context) return null;
+
+  const length = Math.max(1, Math.floor(context.sampleRate * duration));
+  const buffer = context.createBuffer(1, length, context.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < length; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+
+  return buffer;
+}
+
+class UpgradeAudioVoice {
+  constructor(state = {}, { pan = -0.04, volume = 1 } = {}) {
+    this.ctx = ensureContext();
+    this.levels = getUpgradeAudioLevels(state);
+    this.pan = pan;
+    this.volume = volume;
+    this.destroyed = false;
+
+    this.prev = {
+      throttle: 0,
+      boostBar: 0,
+      turboSpool: 0,
+      gear: 0,
+      nosActive: false,
+      wheelspin: false,
+      rpm: 0,
+    };
+
+    this.cooldowns = {
+      bov: 0,
+      exhaust: 0,
+      wastegate: 0,
+      chirp: 0,
+    };
+
+    if (!this.ctx) return;
+
+    this.output = this.ctx.createGain();
+    this.output.gain.value = 1;
+
+    this.panner = this.ctx.createStereoPanner
+      ? this.ctx.createStereoPanner()
+      : this.ctx.createGain();
+
+    if ('pan' in this.panner) this.panner.pan.value = pan;
+
+    this.output.connect(this.panner);
+    this.panner.connect(this.ctx.destination);
+
+    this.turboOsc = this.ctx.createOscillator();
+    this.turboOsc.type = 'sine';
+    this.turboOsc.frequency.value = 900;
+    this.turboGain = this.ctx.createGain();
+    this.turboGain.gain.value = 0.0001;
+    this.turboOsc.connect(this.turboGain);
+    this.turboGain.connect(this.output);
+    this.turboOsc.start();
+
+    this.gearOsc = this.ctx.createOscillator();
+    this.gearOsc.type = 'sine';
+    this.gearOsc.frequency.value = 500;
+    this.gearGain = this.ctx.createGain();
+    this.gearGain.gain.value = 0.0001;
+    this.gearOsc.connect(this.gearGain);
+    this.gearGain.connect(this.output);
+    this.gearOsc.start();
+
+    this.gearUpperOsc = this.ctx.createOscillator();
+    this.gearUpperOsc.type = 'sine';
+    this.gearUpperOsc.frequency.value = 1000;
+    this.gearUpperGain = this.ctx.createGain();
+    this.gearUpperGain.gain.value = 0.0001;
+    this.gearUpperOsc.connect(this.gearUpperGain);
+    this.gearUpperGain.connect(this.output);
+    this.gearUpperOsc.start();
+
+    this.tyreOsc = this.ctx.createOscillator();
+    this.tyreOsc.type = 'sine';
+    this.tyreOsc.frequency.value = 1050;
+    this.tyreGain = this.ctx.createGain();
+    this.tyreGain.gain.value = 0.0001;
+    this.tyreOsc.connect(this.tyreGain);
+    this.tyreGain.connect(this.output);
+    this.tyreOsc.start();
+  }
+
+  playNoiseBurst({
+    duration = 0.35,
+    gain = 0.08,
+    filterType = 'bandpass',
+    frequency = 2200,
+    q = 0.8,
+    decay = 8,
+    delay = 0,
+  } = {}) {
+    if (!this.ctx || this.destroyed || sfxVolume <= 0) return;
+
+    const start = this.ctx.currentTime + delay;
+    const source = this.ctx.createBufferSource();
+    const filter = this.ctx.createBiquadFilter();
+    const amp = this.ctx.createGain();
+
+    source.buffer = makeNoiseBuffer(duration);
+    filter.type = filterType;
+    filter.frequency.value = frequency;
+    filter.Q.value = q;
+
+    amp.gain.setValueAtTime(Math.max(0.0001, gain * this.volume * sfxVolume), start);
+    amp.gain.exponentialRampToValueAtTime(0.0001, start + Math.max(0.05, duration / Math.max(1, decay / 4)));
+
+    source.connect(filter);
+    filter.connect(amp);
+    amp.connect(this.output);
+
+    source.start(start);
+    source.stop(start + duration);
+  }
+
+  playTone({
+    frequency = 800,
+    endFrequency = null,
+    duration = 0.18,
+    gain = 0.08,
+    type = 'sine',
+    delay = 0,
+  } = {}) {
+    if (!this.ctx || this.destroyed || sfxVolume <= 0) return;
+
+    const start = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const amp = this.ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(30, frequency), start);
+    if (endFrequency != null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(30, endFrequency), start + duration);
+    }
+
+    amp.gain.setValueAtTime(Math.max(0.0001, gain * this.volume * sfxVolume), start);
+    amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+    osc.connect(amp);
+    amp.connect(this.output);
+    osc.start(start);
+    osc.stop(start + duration + 0.02);
+  }
+
+  playBov(level) {
+    if (level >= 3) {
+      for (let i = 0; i < 5; i++) {
+        this.playNoiseBurst({
+          duration: 0.075,
+          gain: 0.055,
+          filterType: 'bandpass',
+          frequency: 1150 - i * 90,
+          q: 1.1,
+          decay: 12,
+          delay: i * 0.065,
+        });
+      }
+      this.playTone({
+        frequency: 900,
+        endFrequency: 560,
+        duration: 0.34,
+        gain: 0.035,
+      });
+      return;
+    }
+
+    const race = level >= 2;
+    this.playNoiseBurst({
+      duration: race ? 0.38 : 0.52,
+      gain: race ? 0.13 : 0.095,
+      filterType: 'highpass',
+      frequency: race ? 1350 : 900,
+      q: 0.7,
+      decay: race ? 11 : 8,
+    });
+
+    this.playTone({
+      frequency: race ? 2450 : 1700,
+      endFrequency: race ? 1200 : 820,
+      duration: race ? 0.26 : 0.38,
+      gain: race ? 0.035 : 0.025,
+    });
+  }
+
+  playWastegate() {
+    this.playNoiseBurst({
+      duration: 0.22,
+      gain: 0.085,
+      filterType: 'bandpass',
+      frequency: 760,
+      q: 0.9,
+      decay: 13,
+    });
+    this.playTone({
+      frequency: 110,
+      endFrequency: 82,
+      duration: 0.20,
+      gain: 0.045,
+      type: 'square',
+    });
+  }
+
+  playNitrousActivation(level) {
+    this.playTone({
+      frequency: 950,
+      endFrequency: 640,
+      duration: 0.035,
+      gain: 0.095,
+      type: 'square',
+    });
+
+    this.playNoiseBurst({
+      duration: 0.42,
+      gain: 0.075 + level * 0.012,
+      filterType: 'highpass',
+      frequency: 3200,
+      q: 0.5,
+      decay: 7,
+      delay: 0.012,
+    });
+  }
+
+  playExhaustPop(level) {
+    const race = level >= 3;
+    this.playTone({
+      frequency: race ? 82 : 100,
+      endFrequency: race ? 58 : 72,
+      duration: race ? 0.24 : 0.17,
+      gain: race ? 0.13 : 0.075,
+      type: 'sine',
+    });
+
+    this.playNoiseBurst({
+      duration: race ? 0.28 : 0.18,
+      gain: race ? 0.10 : 0.055,
+      filterType: 'bandpass',
+      frequency: race ? 1700 : 1250,
+      q: 0.7,
+      decay: race ? 14 : 16,
+    });
+
+    if (race) {
+      this.playTone({
+        frequency: 130,
+        endFrequency: 90,
+        duration: 0.13,
+        gain: 0.055,
+        type: 'square',
+        delay: 0.085,
+      });
+    }
+  }
+
+  playTyreChirp() {
+    this.playNoiseBurst({
+      duration: 0.18,
+      gain: 0.055,
+      filterType: 'bandpass',
+      frequency: 2300,
+      q: 1.0,
+      decay: 14,
+    });
+    this.playTone({
+      frequency: 1550,
+      endFrequency: 1020,
+      duration: 0.17,
+      gain: 0.045,
+    });
+  }
+
+  update(telemetry, config, dt = 1 / 60, volumeScale = 1) {
+    if (!this.ctx || this.destroyed || !telemetry) return;
+
+    const now = this.ctx.currentTime;
+    const throttle = clamp01(telemetry.throttle);
+    const boost = Math.max(0, Number(telemetry.boostBar) || 0);
+    const spool = clamp01(telemetry.turboSpool);
+    const gear = Number(telemetry.gear) || 0;
+    const rpm = Math.max(0, Number(telemetry.rpm) || 0);
+    const speed = Math.max(0, Number(telemetry.speedKmh) || 0);
+    const wheelRPM = Math.max(0, Number(telemetry.wheelRPM) || 0);
+    const slip = clamp01(telemetry.slipRatio);
+    const nosActive = Boolean(telemetry.nosActive);
+    const wheelspin = Boolean(telemetry.wheelspin);
+
+    Object.keys(this.cooldowns).forEach(key => {
+      this.cooldowns[key] = Math.max(0, this.cooldowns[key] - dt);
+    });
+
+    // TURBO: only workshop turbo upgrades generate turbo audio.
+    // Factory forced induction at turbo level 0 remains acoustically "vanilla".
+    if (this.levels.turbo > 0) {
+      const spoolRise = Math.max(0, spool - this.prev.turboSpool);
+      const boostRise = Math.max(0, boost - this.prev.boostBar);
+      const building = clamp01(spoolRise * 9 + boostRise * 5);
+      const turboSize = this.levels.turbo / 3;
+      const spoolFreq = 900 + spool * (3100 - turboSize * 900);
+
+      smoothParam(this.turboOsc.frequency, spoolFreq, now, 0.035);
+      smoothParam(
+        this.turboGain.gain,
+        Math.max(0.0001, building * (0.035 + this.levels.turbo * 0.009) * volumeScale * sfxVolume),
+        now,
+        0.045
+      );
+
+      const throttleLift = this.prev.throttle > 0.62 && throttle < 0.28;
+      const shifted = this.prev.gear > 0 && gear > 0 && gear !== this.prev.gear;
+      if (
+        this.cooldowns.bov <= 0 &&
+        this.prev.boostBar > 0.10 &&
+        (throttleLift || shifted)
+      ) {
+        this.playBov(this.levels.turbo);
+        this.cooldowns.bov = 0.32;
+      }
+
+      if (
+        this.levels.turbo >= 3 &&
+        this.cooldowns.wastegate <= 0 &&
+        throttle > 0.88 &&
+        boost > Math.max(0.30, Number(config?.maximumBoost || 0) * 0.88)
+      ) {
+        this.playWastegate();
+        this.cooldowns.wastegate = 0.95;
+      }
+    } else {
+      smoothParam(this.turboGain.gain, 0.0001, now, 0.04);
+    }
+
+    // GEARBOX: close-ratio gets a subtle whine; dog box is much more obvious.
+    if (this.levels.gearbox >= 2 && gear > 0 && speed > 8) {
+      const base = 440 + wheelRPM * 0.42 + gear * 55;
+      const intensity = this.levels.gearbox === 3 ? 1 : 0.42;
+      smoothParam(this.gearOsc.frequency, Math.max(420, base), now, 0.035);
+      smoothParam(this.gearUpperOsc.frequency, Math.max(840, base * 2.02), now, 0.035);
+      smoothParam(
+        this.gearGain.gain,
+        (0.010 + throttle * 0.010) * intensity * volumeScale * sfxVolume,
+        now,
+        0.05
+      );
+      smoothParam(
+        this.gearUpperGain.gain,
+        (0.0035 + throttle * 0.004) * intensity * volumeScale * sfxVolume,
+        now,
+        0.05
+      );
+    } else {
+      smoothParam(this.gearGain.gain, 0.0001, now, 0.05);
+      smoothParam(this.gearUpperGain.gain, 0.0001, now, 0.05);
+    }
+
+    // NOS: fire the activation hiss/click only on the leading edge.
+    if (this.levels.nos > 0 && this.levels.nitrousShot > 0 && nosActive && !this.prev.nosActive) {
+      this.playNitrousActivation(this.levels.nos);
+    }
+
+    // EXHAUST: freer systems pop on a hard lift at useful RPM.
+    const hardLift = this.prev.throttle > 0.58 && throttle < 0.22;
+    if (
+      this.levels.exhaust > 0 &&
+      this.cooldowns.exhaust <= 0 &&
+      hardLift &&
+      rpm > 3200
+    ) {
+      this.playExhaustPop(this.levels.exhaust);
+      this.cooldowns.exhaust = this.levels.exhaust >= 3 ? 0.26 : 0.42;
+    }
+
+    // TYRES: driven entirely from actual slip telemetry, independent of upgrades.
+    if (wheelspin && slip > 0.08 && speed > 1.5) {
+      const squealFreq = 980 + speed * 5.4 + slip * 520;
+      smoothParam(this.tyreOsc.frequency, squealFreq, now, 0.03);
+      smoothParam(
+        this.tyreGain.gain,
+        (0.012 + slip * 0.045) * volumeScale * sfxVolume,
+        now,
+        0.035
+      );
+
+      if (!this.prev.wheelspin && this.cooldowns.chirp <= 0) {
+        this.playTyreChirp();
+        this.cooldowns.chirp = 0.32;
+      }
+    } else {
+      smoothParam(this.tyreGain.gain, 0.0001, now, 0.04);
+    }
+
+    this.prev = {
+      throttle,
+      boostBar: boost,
+      turboSpool: spool,
+      gear,
+      nosActive,
+      wheelspin,
+      rpm,
+    };
+  }
+
+  fadeOut() {
+    if (!this.ctx || this.destroyed) return;
+    const now = this.ctx.currentTime;
+    [this.turboGain, this.gearGain, this.gearUpperGain, this.tyreGain].forEach(gain => {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setTargetAtTime(0.0001, now, 0.035);
+    });
+  }
+
+  destroy() {
+    if (!this.ctx || this.destroyed) return;
+    this.destroyed = true;
+
+    [this.turboOsc, this.gearOsc, this.gearUpperOsc, this.tyreOsc].forEach(osc => {
+      try { osc.stop(); } catch (e) {}
+      try { osc.disconnect(); } catch (e) {}
+    });
+
+    [this.turboGain, this.gearGain, this.gearUpperGain, this.tyreGain].forEach(gain => {
+      try { gain.disconnect(); } catch (e) {}
+    });
+
+    try { this.output.disconnect(); } catch (e) {}
+    try { this.panner.disconnect(); } catch (e) {}
+  }
+}
+
 export default class EngineAudioSystem {
-  constructor(playerEngineId, opponentEngineId) {
+  constructor(playerEngineId, opponentEngineId, playerState = {}, opponentState = {}) {
     this.ctx = ensureContext();
 
     this.player = new EngineVoice(playerEngineId, {
@@ -334,13 +799,24 @@ export default class EngineAudioSystem {
       pan: 0.22,
     });
 
+    this.playerUpgrades = new UpgradeAudioVoice(playerState, {
+      volume: 1.0,
+      pan: -0.04,
+    });
+
+    this.opponentUpgrades = new UpgradeAudioVoice(opponentState, {
+      volume: 0.58,
+      pan: 0.22,
+    });
+
     this.destroyed = false;
   }
 
-  update(playerTelemetry, opponentTelemetry, playerConfig, opponentConfig) {
+  update(playerTelemetry, opponentTelemetry, playerConfig, opponentConfig, dt = 1 / 60) {
     if (this.destroyed) return;
 
     this.player.update(playerTelemetry, playerConfig, sfxVolume);
+    this.playerUpgrades.update(playerTelemetry, playerConfig, dt, 1.0);
 
     const separation = Math.abs(
       (playerTelemetry?.positionM || 0) - (opponentTelemetry?.positionM || 0)
@@ -352,11 +828,19 @@ export default class EngineAudioSystem {
       opponentConfig,
       opponentScale * sfxVolume
     );
+    this.opponentUpgrades.update(
+      opponentTelemetry,
+      opponentConfig,
+      dt,
+      opponentScale
+    );
   }
 
   fadeOut() {
     this.player.fadeOut(0.16);
     this.opponent.fadeOut(0.16);
+    this.playerUpgrades.fadeOut();
+    this.opponentUpgrades.fadeOut();
   }
 
   destroy() {
@@ -364,5 +848,7 @@ export default class EngineAudioSystem {
     this.destroyed = true;
     this.player.destroy();
     this.opponent.destroy();
+    this.playerUpgrades.destroy();
+    this.opponentUpgrades.destroy();
   }
 }
