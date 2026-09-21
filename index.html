@@ -28,22 +28,42 @@
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
-    async function requestLandscapeMode() {
-      if (!screen.orientation?.lock) return false;
+    let landscapeLocked = false;
 
-      // Browsers may reject orientation locking when the OS rotation lock is on.
-      // Try the concrete landscape orientation first, then the generic mode.
+    function syncVirtualLandscape() {
+      const viewport = window.visualViewport;
+      const width = viewport?.width || window.innerWidth || document.documentElement.clientWidth;
+      const height = viewport?.height || window.innerHeight || document.documentElement.clientHeight;
+      document.documentElement.classList.toggle('force-landscape', height > width);
+    }
+
+    async function requestLandscapeMode() {
+      syncVirtualLandscape();
+      if (landscapeLocked || !screen.orientation?.lock) return false;
+
       for (const mode of ['landscape-primary', 'landscape']) {
         try {
           await screen.orientation.lock(mode);
+          landscapeLocked = true;
+          syncVirtualLandscape();
           return true;
         } catch (e) {}
       }
       return false;
     }
 
-    window.addEventListener('load', requestLandscapeMode);
-    document.addEventListener('pointerdown', requestLandscapeMode, { once: true });
+    syncVirtualLandscape();
+    window.addEventListener('load', () => {
+      syncVirtualLandscape();
+      requestLandscapeMode();
+    });
+    window.addEventListener('resize', syncVirtualLandscape);
+    window.addEventListener('orientationchange', () => setTimeout(syncVirtualLandscape, 80));
+    window.addEventListener('pageshow', syncVirtualLandscape);
+    window.visualViewport?.addEventListener('resize', syncVirtualLandscape);
+    document.addEventListener('pointerdown', () => {
+      if (!landscapeLocked) requestLandscapeMode();
+    }, { passive: true });
 
     (async () => {
       try {
