@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r38';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r38';
-import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r38';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r39';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r39';
+import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r39';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -30,13 +30,13 @@ export default class MeetScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r38');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r39');
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r38');
+        this.load.image(bg.key, bg.path + '?v=20260921-r39');
       }
     });
   }
@@ -425,13 +425,13 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r38'
+          character.visual.path + '?v=20260921-r39'
         );
       }
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r38');
+      queueImage(bg.key, bg.path + '?v=20260921-r39');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -535,21 +535,21 @@ export default class MeetScene extends Phaser.Scene {
 
       const softShadow = this.add.ellipse(
         placement.charX + 2,
-        placement.charY - 8,
+        placement.charY - 12,
         Math.max(60, sprite.displayWidth * 0.78),
-        i === 0 ? 18 : 15,
+        i === 0 ? 30 : 26,
         0x000000,
-        0.60
+        0.58
       ).setDepth(placement.charDepth - 0.12)
         .setMask(this.stageMask);
 
       const contactShadow = this.add.ellipse(
         placement.charX,
-        placement.charY - 6,
+        placement.charY - 8,
         Math.max(44, sprite.displayWidth * 0.58),
-        i === 0 ? 10 : 8,
+        i === 0 ? 18 : 15,
         0x000000,
-        0.86
+        0.84
       ).setDepth(placement.charDepth - 0.08)
         .setMask(this.stageMask);
 
@@ -773,22 +773,24 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    const shadowY = wheelY + Math.max(4, rearWheel.displayHeight * 0.12);
+    // Ground contact: place the ellipse low enough that only its upper edge
+    // overlaps the lower portion of the tyres.
+    const shadowY = wheelY + Math.max(16, rearWheel.displayHeight * 0.42);
 
     const softShadow = this.add.ellipse(
       x + (flipX ? -4 : 4),
-      shadowY + 6,
+      shadowY,
       Math.max(112, targetWidth * 0.88),
-      Math.max(16, source.height * bodyScale * 0.14),
+      Math.max(20, rearWheel.displayHeight * 0.34),
       0x000000,
       0.64
     ).setDepth(depth - 0.12);
 
     const contactShadow = this.add.ellipse(
       x,
-      shadowY + 3,
+      shadowY - 1,
       Math.max(92, targetWidth * 0.72),
-      Math.max(8, source.height * bodyScale * 0.07),
+      Math.max(10, rearWheel.displayHeight * 0.18),
       0x000000,
       0.88
     ).setDepth(depth - 0.08);
