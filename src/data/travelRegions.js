@@ -51,6 +51,7 @@ export const TRAVEL_REGIONS = {
         capacity: WORKSHOP_TIERS[2].capacity,
         note: 'A full warehouse tuning HQ with room for eight cars.',
       },
+    ],
   },
 
   ODAIBA: {
