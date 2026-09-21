@@ -4,20 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <meta name="theme-color" content="#070914" />
-  <link rel="manifest" href="./manifest.webmanifest?v=20260921-r38" />
+  <link rel="manifest" href="./manifest.webmanifest?v=20260921-r39" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>TOKYO SHIFT — R38 Grounding Shadows</title>
+  <title>TOKYO SHIFT — R39 Shadow Alignment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260921-r38" />
+  <link rel="stylesheet" href="./styles.css?v=20260921-r39" />
 </head>
 <body>
   <div id="game-shell">
     <div id="game"></div>
-    <div id="build-stamp">R38</div>
+    <div id="build-stamp">R39</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -50,13 +50,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R38', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R39', { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260921-r38"></script>
+  <script type="module" src="./src/main.js?v=20260921-r39"></script>
 </body>
 </html>
