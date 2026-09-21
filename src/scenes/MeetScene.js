@@ -8,11 +8,11 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260921-r54';
+} from '../data/meetAssets.js?v=20260921-r60';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r57';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r59';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r60';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -50,7 +50,7 @@ export default class MeetScene extends Phaser.Scene {
 
     meetBackgrounds.forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r54');
+        this.load.image(bg.key, bg.path + '?v=20260921-r60');
       }
     });
   }
@@ -76,7 +76,7 @@ export default class MeetScene extends Phaser.Scene {
     this.backgroundTint = null;
     this.selectedMeetLocation = MEET_LOCATIONS[this.registry.get('meetLocation')]
       ? this.registry.get('meetLocation')
-      : 'wangan7eleven';
+      : 'odaiba7eleven';
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
 
@@ -789,7 +789,7 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     meetBackgrounds.forEach(bg => {
-      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r54');
+      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r60');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
