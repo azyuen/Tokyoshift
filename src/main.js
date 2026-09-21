@@ -1,9 +1,9 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r82';
-import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260921-r82';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r82';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r82';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r82';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r82';
+import BootScene from './scenes/BootScene.js?v=20260922-r83';
+import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260922-r83';
+import GarageScene from './scenes/GarageScene.js?v=20260922-r83';
+import MeetScene from './scenes/MeetScene.js?v=20260922-r83';
+import RaceScene from './scenes/RaceScene.js?v=20260922-r83';
+import ResultScene from './scenes/ResultScene.js?v=20260922-r83';
 
 
 // Phone readability pass.
