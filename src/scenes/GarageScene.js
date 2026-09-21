@@ -26,16 +26,15 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260921-r66';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r74';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r75';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r74';
+import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r75';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r75';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import {
-  MAX_GARAGE_CAPACITY,
   getGarageCapacity,
   getWorkshopByLocationId,
-} from '../data/workshopProgression.js?v=20260921-r74';
+} from '../data/workshopProgression.js?v=20260921-r75';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -76,6 +75,11 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryModalObjects = [];
     this.secondaryHelperObjects = [];
     this.secondaryHotspotObjects = [];
+
+    this.garagePageSize = 4;
+    this.garagePageObjects = [];
+    const selectedGarageIndex = Math.max(0, this.ownedCarIds.indexOf(this.selectedCarId));
+    this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
 
     this.drawScene();
     this.buildHeader();
@@ -314,7 +318,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildGarageStrip() {
-    this.add.rectangle(
+    this.garageStripPanel = this.add.rectangle(
       STRIP.x + STRIP.w / 2,
       STRIP.y + STRIP.h / 2,
       STRIP.w,
@@ -331,72 +335,196 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7fa6bd'
     }).setOrigin(1, 0).setDepth(32);
 
+    const navY = STRIP.y + 100;
+    this.garagePrevButton = this.add.rectangle(
+      STRIP.x + 28,
+      navY,
+      38,
+      112,
+      0x0a1521,
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
+
+    this.garagePrevLabel = this.add.text(STRIP.x + 28, navY, '<', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#9edcf7',
+    }).setOrigin(0.5).setDepth(36);
+
+    this.garageNextButton = this.add.rectangle(
+      STRIP.x + STRIP.w - 28,
+      navY,
+      38,
+      112,
+      0x0a1521,
+      0.96
+    ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
+
+    this.garageNextLabel = this.add.text(STRIP.x + STRIP.w - 28, navY, '>', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#9edcf7',
+    }).setOrigin(0.5).setDepth(36);
+
+    this.garagePageText = this.add.text(
+      STRIP.x + STRIP.w / 2,
+      STRIP.y + 16,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#607f92',
+      }
+    ).setOrigin(0.5, 0).setDepth(32);
+
+    this.garagePrevButton.on('pointerdown', () => this.changeGaragePage(-1));
+    this.garageNextButton.on('pointerdown', () => this.changeGaragePage(1));
+
+    // Swipe anywhere across the garage strip to reveal the next four slots.
+    this.input.on('pointerup', pointer => {
+      if (this.engineMode || this.secondaryMode) return;
+
+      const downInside = pointer.downY >= STRIP.y && pointer.downY <= STRIP.y + STRIP.h;
+      const upInside = pointer.y >= STRIP.y && pointer.y <= STRIP.y + STRIP.h;
+      if (!downInside || !upInside) return;
+
+      const dx = pointer.x - pointer.downX;
+      const dy = pointer.y - pointer.downY;
+      if (Math.abs(dx) < 72 || Math.abs(dy) > 64) return;
+
+      this.changeGaragePage(dx < 0 ? 1 : -1);
+    });
+
+    this.renderGaragePage();
+  }
+
+  renderGaragePage() {
+    this.garagePageObjects.forEach(obj => obj?.destroy?.());
+    this.garagePageObjects = [];
+    this.thumbButtons = [];
+
+    const add = obj => {
+      this.garagePageObjects.push(obj);
+      return obj;
+    };
+
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
-    const slotCount = MAX_GARAGE_CAPACITY;
-    const gap = 8;
-    const cardW = (STRIP.w - 30 - gap * (slotCount - 1)) / slotCount;
-    const startX = STRIP.x + 15 + cardW / 2;
+    const pageSize = this.garagePageSize || 4;
+    const totalPages = Math.max(1, Math.ceil(capacity / pageSize));
+    this.garagePage = Phaser.Math.Clamp(Number(this.garagePage || 0), 0, totalPages - 1);
 
-    for (let i = 0; i < slotCount; i++) {
-      const id = this.ownedCarIds[i] || null;
-      const unlocked = i < capacity;
-      const x = startX + i * (cardW + gap);
-      const y = STRIP.y + 100;
+    const startIndex = this.garagePage * pageSize;
+    const gap = 12;
+    const usableLeft = STRIP.x + 58;
+    const usableRight = STRIP.x + STRIP.w - 58;
+    const usableWidth = usableRight - usableLeft;
+    const cardW = (usableWidth - gap * (pageSize - 1)) / pageSize;
+    const startX = usableLeft + cardW / 2;
+    const y = STRIP.y + 100;
 
-      const box = this.add.rectangle(
+    for (let localIndex = 0; localIndex < pageSize; localIndex++) {
+      const slotIndex = startIndex + localIndex;
+      if (slotIndex >= capacity) break;
+
+      const id = this.ownedCarIds[slotIndex] || null;
+      const x = startX + localIndex * (cardW + gap);
+      const active = id === this.selectedCarId;
+
+      const box = add(this.add.rectangle(
         x,
         y,
         cardW,
         112,
-        id ? 0x0b1724 : unlocked ? 0x07101a : 0x060b11,
+        id ? (active ? 0x10263a : 0x0b1724) : 0x07101a,
         1
       ).setStrokeStyle(
-        unlocked ? 2 : 1,
-        id ? 0x29465c : unlocked ? 0x1d3445 : 0x26323a,
-        unlocked ? 1 : 0.62
-      ).setDepth(32);
-
-      if (!unlocked) {
-        this.add.text(x, y - 10, 'LOCKED', {
-          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#53636e'
-        }).setOrigin(0.5).setDepth(34);
-        this.add.text(x, y + 20, 'UPGRADE\nWORKSHOP', {
-          fontFamily: PIXEL_FONT,
-          fontSize: '5px',
-          color: '#394b57',
-          align: 'center',
-          lineSpacing: 3,
-        }).setOrigin(0.5).setDepth(34);
-        continue;
-      }
+        active ? 3 : 2,
+        active ? 0x41dcff : id ? 0x29465c : 0x1d3445,
+        1
+      ).setDepth(32));
 
       if (!id) {
-        this.add.text(x, y - 8, 'EMPTY SLOT', {
-          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#526d7e'
-        }).setOrigin(0.5).setDepth(34);
-        this.add.text(x, y + 24, 'WIN ON PINK SLIP', {
-          fontFamily: PIXEL_FONT, fontSize: '5px', color: '#3f5665'
-        }).setOrigin(0.5).setDepth(34);
+        add(this.add.text(x, y - 8, 'EMPTY SLOT', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#526d7e'
+        }).setOrigin(0.5).setDepth(34));
+        add(this.add.text(x, y + 24, 'WIN ON PINK SLIP', {
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#3f5665'
+        }).setOrigin(0.5).setDepth(34));
         continue;
       }
 
       box.setInteractive({ useHandCursor: true });
-      const thumbWidth = Math.min(112, cardW - 12);
+      const thumbWidth = Math.min(190, cardW - 22);
       const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, thumbWidth);
       const thumbBodyY = this.getBodyYForWheelBottom(cars[id], thumbWidth, thumbWheelBottomY);
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 34);
+      display.forEach(obj => add(obj));
 
-      const label = this.add.text(x, y + 38, cars[id].shortName, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#b8cad7'
-      }).setOrigin(0.5).setDepth(36);
+      const label = add(this.add.text(x, y + 38, cars[id].shortName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: active ? '#ffffff' : '#b8cad7'
+      }).setOrigin(0.5).setDepth(36));
 
-      box.on('pointerdown', () => this.selectCar(id));
+      box.on('pointerup', pointer => {
+        const movedX = Math.abs(pointer.x - pointer.downX);
+        const movedY = Math.abs(pointer.y - pointer.downY);
+        if (movedX <= 20 && movedY <= 20) this.selectCar(id);
+      });
+
       this.thumbButtons.push({ id, box, label, display });
     }
 
-    this.garageCountText.setText(
-      this.ownedCarIds.length + ' / ' + capacity + ' CARS  //  MAX ' + MAX_GARAGE_CAPACITY
+    this.garageCountText.setText(this.ownedCarIds.length + ' / ' + capacity + ' CARS');
+    this.garagePageText.setText(
+      totalPages > 1
+        ? 'SLOTS ' + (startIndex + 1) + '-' + Math.min(startIndex + pageSize, capacity) + '  //  PAGE ' + (this.garagePage + 1) + '/' + totalPages
+        : '4-CAR HOME GARAGE'
     );
+
+    this.updateGarageNavState();
+  }
+
+  changeGaragePage(delta) {
+    if (this.engineMode || this.secondaryMode) return;
+
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
+    const nextPage = Phaser.Math.Clamp(
+      Number(this.garagePage || 0) + Number(delta || 0),
+      0,
+      totalPages - 1
+    );
+
+    if (nextPage === this.garagePage) return;
+    this.garagePage = nextPage;
+    this.renderGaragePage();
+  }
+
+  updateGarageNavState() {
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
+    const locked = Boolean(this.engineMode || this.secondaryMode);
+    const canPrev = !locked && this.garagePage > 0;
+    const canNext = !locked && this.garagePage < totalPages - 1;
+
+    const apply = (button, label, enabled) => {
+      if (!button || !label) return;
+      if (enabled) {
+        button.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0a1521, 0.96)
+          .setStrokeStyle(1, 0x315470, 1);
+        label.setColor('#9edcf7');
+      } else {
+        button.disableInteractive()
+          .setFillStyle(0x080e15, 0.84)
+          .setStrokeStyle(1, 0x263641, 0.70);
+        label.setColor('#465965');
+      }
+    };
+
+    apply(this.garagePrevButton, this.garagePrevLabel, canPrev);
+    apply(this.garageNextButton, this.garageNextLabel, canNext);
   }
 
   buildSaveButton() {
@@ -673,6 +801,7 @@ export default class GarageScene extends Phaser.Scene {
   activateEngineMode() {
     if (this.engineMode || !this.selectedCarId) return;
     this.engineMode = true;
+    this.updateGarageNavState();
 
     this.upgradeButtons.forEach(item => item.box.disableInteractive());
     this.thumbButtons.forEach(item => {
@@ -885,6 +1014,7 @@ export default class GarageScene extends Phaser.Scene {
     this.engineHotspotObjects = [];
     this.engineHelperObjects = [];
     this.engineMode = false;
+    this.updateGarageNavState();
     this.enginePartRows = {};
     this.inlineEngineSprite = null;
     this.inlineEngineMask = null;
@@ -1438,6 +1568,7 @@ export default class GarageScene extends Phaser.Scene {
     const state = carStates[this.selectedCarId] || {};
 
     this.secondaryMode = mode;
+    this.updateGarageNavState();
     this.currentSecondaryTuning = isDrivetrain
       ? getDrivetrainTuning(state)
       : getExhaustNosTuning(state);
@@ -1605,6 +1736,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryHelperObjects = [];
     this.secondaryHotspotObjects = [];
     this.secondaryMode = null;
+    this.updateGarageNavState();
     this.secondaryPartRows = {};
     this.secondarySpriteImage = null;
 
