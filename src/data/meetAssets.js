@@ -114,11 +114,21 @@ export function getMeetLocation(id) {
   return MEET_LOCATIONS[id] || MEET_LOCATIONS.wangan7eleven;
 }
 
+export const LOCAL_TRAVEL_COST = 500;
+export const DISTRICT_TRAVEL_COST = 2500;
+export const WORKSHOP_RETURN_COST = 500;
+
 export function getTravelCost(fromId, toId) {
   const from = getMeetLocation(fromId);
   const to = getMeetLocation(toId);
   if (from.id === to.id) return 0;
-  return from.district === to.district ? 500 : 2500;
+  return from.district === to.district ? LOCAL_TRAVEL_COST : DISTRICT_TRAVEL_COST;
+}
+
+export function getWorkshopDepartureCost(currentLocationId, toId) {
+  const current = getMeetLocation(currentLocationId);
+  const to = getMeetLocation(toId);
+  return current.district === to.district ? LOCAL_TRAVEL_COST : DISTRICT_TRAVEL_COST;
 }
 
 export const meetBackgrounds = ALL_MEET_LOCATION_IDS.map(id => {
