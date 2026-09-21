@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r43';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r68';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r60';
 
@@ -29,7 +29,7 @@ export default class BootScene extends Phaser.Scene {
     );
 
     garageAssets
-      .filter(asset => asset.key === 'garageWorkshopBg')
+      .filter(asset => asset.key === 'garageWorkshopBg' || asset.key.startsWith('stockEngine'))
       .forEach(asset => this.load.image(asset.key, asset.path));
 
     // A manual save can point at any chosen profile portrait, so every
@@ -59,7 +59,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R67' : 'NEW RUN // R67', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R68' : 'NEW RUN // R68', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
