@@ -17,10 +17,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r76';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r86';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r84';
-import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r76';
+import { getGarageCapacity } from '../data/workshopProgression.js?v=20260922-r86';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
