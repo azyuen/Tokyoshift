@@ -300,45 +300,19 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
-    const categories = [
-      { name: 'ENGINE', key: 'tuningCategoryEngine' },
-      { name: 'DRIVETRAIN', key: 'tuningCategoryDrivetrain' },
-      { name: 'CHASSIS', key: 'tuningCategoryChassis' },
-      { name: 'EXHAUST / NOS', key: 'tuningCategoryExhaustNos' },
-    ];
+    const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
 
-    categories.forEach((category, i) => {
-      const { name, key } = category;
+    categories.forEach((name, i) => {
       const y = SIDE.y + 285 + i * 48;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
 
-      let icon = null;
-      let labelX = SIDE.x + 30;
-
-      if (this.textures.exists(key)) {
-        icon = this.add.image(SIDE.x + 70, y, key)
-          .setOrigin(0.5)
-          .setDepth(38);
-
-        const source = this.textures.get(key).getSourceImage();
-        const cropH = Math.max(1, Math.floor(source.height * 0.72));
-        icon.setCrop(0, 0, source.width, cropH);
-
-        // The generated artwork includes its own title strip. In the narrow
-        // workshop category row we use only the illustrated upper section as
-        // the category emblem, while Phaser keeps the heading text readable.
-        const fit = Math.min(92 / source.width, 34 / cropH);
-        icon.setScale(fit);
-        labelX = SIDE.x + 126;
-      }
-
-      const label = this.add.text(labelX, y, name, {
+      const label = this.add.text(SIDE.x + 30, y, name, {
         fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#d4e9f6'
+        fontSize: '11px',
+        color: '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
 
       const arrow = this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
@@ -366,8 +340,10 @@ export default class GarageScene extends Phaser.Scene {
         this.selectUpgrade(name);
       });
 
-      this.upgradeButtons.push({ name, box, label, arrow, icon });
+      this.upgradeButtons.push({ name, box, label, arrow });
     });
+
+  }
 
   }
 
@@ -922,38 +898,28 @@ export default class GarageScene extends Phaser.Scene {
     });
     this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
 
-    add(this.add.text(SIDE.x + 34, SIDE.y + 28, 'ENGINE', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
-    }).setDepth(73));
+    if (this.textures.exists('tuningCategoryEngine')) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 102,
+        'tuningCategoryEngine'
+      ).setOrigin(0.5).setDepth(73));
 
-    add(this.add.text(
-      SIDE.x + SIDE.w - 28,
-      SIDE.y + 66,
-      'CURRENT ENGINE',
-      {
+      const source = this.textures.get('tuningCategoryEngine').getSourceImage();
+      const fit = Math.min(
+        (SIDE.w - 54) / source.width,
+        164 / source.height
+      );
+      logo.setScale(fit);
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 102, 'ENGINE', {
         fontFamily: PIXEL_FONT,
-        fontSize: '6px',
-        color: '#688ba0',
-        align: 'right',
-      }
-    ).setOrigin(1, 0).setDepth(74));
+        fontSize: '14px',
+        color: '#e9f8ff'
+      }).setOrigin(0.5).setDepth(73));
+    }
 
-    this.engineInsetLevelText = add(this.add.text(
-      SIDE.x + SIDE.w - 28,
-      SIDE.y + 94,
-      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase(),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#7fdfff',
-        align: 'right',
-        wordWrap: { width: 126, useAdvancedWrap: true },
-      }
-    ).setOrigin(1, 0).setDepth(74));
-
-    this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
-
-    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
+    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
@@ -1281,11 +1247,6 @@ export default class GarageScene extends Phaser.Scene {
       tuning: this.pendingEngineTuning,
     });
     const preview = applySecondaryTuning(enginePreview.car, enginePreview.engine, state);
-
-    this.engineInsetLevelText?.setText(
-      engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase()
-    );
-    this.drawInlineEngineSchematic(this.pendingEngineTuning.engine);
 
     Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
       const current = this.currentEngineTuning[partId];
