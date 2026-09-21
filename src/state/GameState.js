@@ -19,8 +19,9 @@ export function createDefaultGameState() {
     },
     wins: 0,
     losses: 0,
-    cash: 25000,
+    cash: 50000,
     district: 'WANGAN',
+    meetLocation: 'wangan711',
     gameOver: false,
   };
 }
@@ -94,8 +95,9 @@ export function snapshotRegistry(registry) {
     carStates: registry.get('carStates') || {},
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
-    cash: registry.get('cash') ?? 25000,
+    cash: registry.get('cash') ?? 50000,
     district: registry.get('district') || 'WANGAN',
+    meetLocation: registry.get('meetLocation') || 'wangan711',
     gameOver: registry.get('gameOver') || false,
   });
 }
