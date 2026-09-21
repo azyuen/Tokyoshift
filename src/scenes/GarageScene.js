@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r38';
-import { characters } from '../data/characters.js?v=20260921-r38';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r39';
+import { characters } from '../data/characters.js?v=20260921-r39';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -87,20 +87,20 @@ export default class GarageScene extends Phaser.Scene {
 
     this.add.ellipse(
       x,
-      feetY - 8,
+      feetY - 12,
       Math.max(60, sprite.displayWidth * 0.80),
-      18,
+      30,
       0x000000,
-      0.60
+      0.58
     ).setDepth(depth - 0.12);
 
     this.add.ellipse(
       x,
-      feetY - 6,
+      feetY - 8,
       Math.max(44, sprite.displayWidth * 0.60),
-      10,
+      18,
       0x000000,
-      0.86
+      0.84
     ).setDepth(depth - 0.08);
 
     return sprite;
@@ -308,9 +308,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(4, rearWheel.displayHeight * 0.12),
+      wheelY + Math.max(16, rearWheel.displayHeight * 0.42),
       Math.max(128, targetWidth * 0.96),
-      Math.max(16, source.height * bodyScale * 0.14),
+      Math.max(20, rearWheel.displayHeight * 0.34),
       0x000000,
       0.82
     ).setDepth(depth - 0.12);
