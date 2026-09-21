@@ -143,6 +143,28 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     this.nameDom = this.add.dom(780, 408).createFromHTML(html);
 
+    // Native text entry must win over Phaser keyboard shortcuts/captures.
+    // Clearing captures also fixes the stray "R" key issue seen on mobile keyboards.
+    this.input.keyboard?.clearCaptures?.();
+    const nameRoot = this.nameDom?.node;
+    const nameInputs = nameRoot?.querySelectorAll?.('input') || [];
+    nameInputs.forEach(input => {
+      input.setAttribute('inputmode', 'text');
+      input.setAttribute('autocapitalize', 'words');
+      input.setAttribute('spellcheck', 'false');
+
+      ['keydown', 'keyup', 'keypress'].forEach(type => {
+        input.addEventListener(type, event => event.stopPropagation());
+      });
+
+      input.addEventListener('focus', () => {
+        if (this.input.keyboard) this.input.keyboard.enabled = false;
+      });
+      input.addEventListener('blur', () => {
+        if (this.input.keyboard) this.input.keyboard.enabled = true;
+      });
+    });
+
     this.nameError = this.add.text(780, 510, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
