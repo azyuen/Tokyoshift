@@ -877,23 +877,17 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
 
+    // Invisible hit area: the category artwork already supplies its own visual frame.
     this.engineInset = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 102,
       SIDE.w - 36,
       178,
-      0x0b1724,
-      1
-    ).setStrokeStyle(2, 0x3b6f8d, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(71));
+      0x000000,
+      0
+    ).setInteractive({ useHandCursor: true })
+      .setDepth(74));
 
-    this.engineInset.on('pointerover', () => {
-      this.engineInset.setStrokeStyle(2, 0x43dfff, 1);
-    });
-    this.engineInset.on('pointerout', () => {
-      this.engineInset.setStrokeStyle(2, 0x3b6f8d, 1);
-    });
     this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
 
     if (this.textures.exists('tuningCategoryEngine')) {
@@ -1627,13 +1621,27 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 24, 'CHASSIS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#e9f8ff',
-    }).setDepth(73));
+    if (this.textures.exists('tuningCategoryChassis')) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 72,
+        'tuningCategoryChassis'
+      ).setOrigin(0.5).setDepth(73));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 62, 'PAINT', {
+      const source = this.textures.get('tuningCategoryChassis').getSourceImage();
+      logo.setScale(Math.min(
+        (SIDE.w - 54) / source.width,
+        126 / source.height
+      ));
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 72, 'CHASSIS', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '13px',
+        color: '#e9f8ff',
+      }).setOrigin(0.5).setDepth(73));
+    }
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 154, 'PAINT', {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#62dfff',
@@ -1641,34 +1649,34 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPaintSwatch = add(this.add.rectangle(
       SIDE.x + 70,
-      SIDE.y + 112,
+      SIDE.y + 198,
       76,
       52,
       this.pendingPaintColor,
       1
     ).setStrokeStyle(2, 0xd8f5ff, 1).setDepth(72));
 
-    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 101, '', {
+    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 187, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#e8f7ff',
     }).setDepth(73));
 
-    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 126, '', {
+    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 212, '', {
       fontFamily: BODY_FONT,
       fontSize: '9px',
       color: '#7fa4b7',
       wordWrap: { width: 180 },
     }).setDepth(73));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 170, 'PRESET COLOURS', {
+    add(this.add.text(SIDE.x + 28, SIDE.y + 254, 'PRESET COLOURS', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     const presetStartX = SIDE.x + 55;
-    const presetStartY = SIDE.y + 214;
+    const presetStartY = SIDE.y + 296;
     const presetGapX = 62;
     const presetGapY = 54;
 
@@ -1695,14 +1703,14 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPresetButtons.push({ preset, box, hit });
     });
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 322, 'CUSTOM RGB', {
+    add(this.add.text(SIDE.x + 28, SIDE.y + 398, 'CUSTOM RGB', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     ['r', 'g', 'b'].forEach((channel, index) => {
-      const y = SIDE.y + 368 + index * 50;
+      const y = SIDE.y + 442 + index * 46;
       const label = channel.toUpperCase();
 
       add(this.add.text(SIDE.x + 32, y, label, {
@@ -1740,7 +1748,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 604,
       SIDE.w - 36,
       44,
       0x102226,
@@ -1749,7 +1757,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 604,
       'PAINT INSTALLED',
       {
         fontFamily: PIXEL_FONT,
@@ -1760,7 +1768,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const backButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 654,
+      SIDE.y + 662,
       SIDE.w - 36,
       44,
       0x102138,
@@ -1769,7 +1777,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(72));
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 654, '<  BACK TO WORKSHOP', {
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 662, '<  BACK TO WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(73));
 
@@ -2001,14 +2009,30 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
 
-    add(this.add.text(SIDE.x + 34, SIDE.y + 28, isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: isDrivetrain ? '12px' : '11px',
-      color: '#e9f8ff',
-    }).setDepth(73));
+    const secondaryCategoryKey = isDrivetrain
+      ? 'tuningCategoryDrivetrain'
+      : 'tuningCategoryExhaustNos';
+    const secondaryCategoryName = isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS';
 
-    this.secondarySpriteGraphics = add(this.add.graphics().setDepth(73));
-    this.drawSecondarySchematic(mode);
+    if (this.textures.exists(secondaryCategoryKey)) {
+      const logo = add(this.add.image(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 102,
+        secondaryCategoryKey
+      ).setOrigin(0.5).setDepth(73));
+
+      const source = this.textures.get(secondaryCategoryKey).getSourceImage();
+      logo.setScale(Math.min(
+        (SIDE.w - 54) / source.width,
+        164 / source.height
+      ));
+    } else {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 102, secondaryCategoryName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '13px',
+        color: '#e9f8ff',
+      }).setOrigin(0.5).setDepth(73));
+    }
 
     this.secondaryPartRows = {};
     order.forEach((partId, i) => {
