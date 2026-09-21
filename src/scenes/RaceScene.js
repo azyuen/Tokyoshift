@@ -306,6 +306,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('losses', losses + 1);
 
     if (this.raceDeal === 'PINK_SLIP') {
+      const forfeitedCarName = cars[this.selectedCarId]?.shortName || 'YOUR CAR';
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
       const carStates = { ...(this.registry.get('carStates') || {}) };
 
@@ -324,7 +325,7 @@ export default class RaceScene extends Phaser.Scene {
         this.registry.set('selectedCarId', null);
         this.registry.set('gameOver', true);
         saveSessionState(this.registry);
-        this.showForfeitGameOver();
+        this.showForfeitGameOver(forfeitedCarName);
       }
       return;
     }
@@ -335,7 +336,7 @@ export default class RaceScene extends Phaser.Scene {
     this.scene.start('MeetScene');
   }
 
-  showForfeitGameOver() {
+  showForfeitGameOver(forfeitedCarName = 'YOUR CAR') {
     this.resultsShown = true;
     this.controls.enabled = false;
     this.cancelButton?.disableInteractive();
@@ -358,9 +359,7 @@ export default class RaceScene extends Phaser.Scene {
       color: '#ff8faf',
     }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0);
 
-    this.add.text(780, 334, cars[this.selectedCarId]?.shortName
-      ? cars[this.selectedCarId].shortName + ' IS GONE'
-      : 'NO CARS LEFT', {
+    this.add.text(780, 334, forfeitedCarName + ' IS GONE // NO CARS LEFT', {
       fontFamily: BODY_FONT,
       fontSize: '14px',
       color: '#d7e6ee',
@@ -388,17 +387,17 @@ export default class RaceScene extends Phaser.Scene {
         const restored = restoreManualSave(this.registry);
         this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'CharacterSelectScene');
       });
+
+      addButton(910, 'NEW RUN', 0xff4a8d, () => {
+        clearAllSaves();
+        this.scene.start('CharacterSelectScene');
+      });
     } else {
-      addButton(650, 'NEW RUN', 0x45d7ff, () => {
+      addButton(780, 'NEW RUN', 0xff4a8d, () => {
         clearAllSaves();
         this.scene.start('CharacterSelectScene');
       });
     }
-
-    addButton(910, 'NEW RUN', 0xff4a8d, () => {
-      clearAllSaves();
-      this.scene.start('CharacterSelectScene');
-    });
   }
 
   applyTuneLevel(config, tuneLevel = 0) {
