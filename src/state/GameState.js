@@ -3,7 +3,7 @@ export const SESSION_KEY = 'tokyoShiftProfile';
 
 export function createDefaultGameState() {
   return {
-    version: 2,
+    version: 3,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -28,8 +28,8 @@ export function createDefaultGameState() {
     wins: 0,
     losses: 0,
     cash: 50000,
-    district: 'WANGAN',
-    meetLocation: 'wangan7eleven',
+    district: 'ODAIBA',
+    meetLocation: 'odaiba7eleven',
     meetRosters: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
@@ -66,12 +66,21 @@ export function readSessionState() {
 export function normaliseState(input = {}) {
   const base = createDefaultGameState();
   const locationAliases = {
-    wangan711: 'wangan7eleven',
-    wanganDocks: 'wanganBayside',
+    wangan711: 'odaiba7eleven',
+    wangan7eleven: 'odaiba7eleven',
+    wanganDocks: 'odaibaGundamPlaza',
+    wanganBayside: 'odaibaGundamPlaza',
+    wanganBridge: 'odaibaMiraikan',
+  };
+  const districtAliases = {
+    WANGAN: 'ODAIBA',
   };
   const normalisedLocation = locationAliases[input.meetLocation]
     || input.meetLocation
     || base.meetLocation;
+  const normalisedDistrict = districtAliases[input.district]
+    || input.district
+    || (String(normalisedLocation).startsWith('odaiba') ? 'ODAIBA' : base.district);
   const owned = Array.isArray(input.ownedCarIds)
     ? [...new Set(input.ownedCarIds)]
     : [...base.ownedCarIds];
@@ -83,6 +92,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
+    district: normalisedDistrict,
     meetLocation: normalisedLocation,
     selectedCarId,
     ownedCarIds: owned,
@@ -112,7 +122,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 2,
+    version: 3,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -122,8 +132,8 @@ export function snapshotRegistry(registry) {
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
-    district: registry.get('district') || 'WANGAN',
-    meetLocation: registry.get('meetLocation') || 'wangan7eleven',
+    district: registry.get('district') || 'ODAIBA',
+    meetLocation: registry.get('meetLocation') || 'odaiba7eleven',
     meetRosters: registry.get('meetRosters') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
