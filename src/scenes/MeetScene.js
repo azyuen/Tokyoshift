@@ -8,10 +8,10 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260921-r50';
+} from '../data/meetAssets.js?v=20260921-r51';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 import { saveSessionState } from '../state/GameState.js?v=20260921-r49';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r50';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r51';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -47,7 +47,7 @@ export default class MeetScene extends Phaser.Scene {
 
     meetBackgrounds.forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r49');
+        this.load.image(bg.key, bg.path + '?v=20260921-r51');
       }
     });
   }
