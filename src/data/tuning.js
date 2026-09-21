@@ -130,11 +130,17 @@ export function applyEngineTuning(carConfig, engineConfig, carState = {}) {
     levels[id] = ENGINE_TUNING_PARTS[id].levels[tuning[id]];
   });
 
+  const baseBoost = Number(carConfig.maximumBoost || 0);
+  const turboLevel = tuning.turbo;
+  const turboSpec = levels.turbo;
+  const hasForcedInduction = baseBoost > 0.01 || turboLevel > 0;
+  const intercoolerScale = hasForcedInduction ? (levels.intercooler.torqueScale || 1) : 1;
+
   const mechanicalScale =
     (levels.engine.torqueScale || 1) *
     (levels.intake.torqueScale || 1) *
     (levels.ecu.torqueScale || 1) *
-    (levels.intercooler.torqueScale || 1) *
+    intercoolerScale *
     (levels.exhaust.torqueScale || 1);
 
   engine.torqueCurve = engine.torqueCurve.map(([rpm, torque]) => [rpm, torque * mechanicalScale]);
@@ -144,10 +150,6 @@ export function applyEngineTuning(carConfig, engineConfig, carState = {}) {
   engine.limiterRPM = Number(engine.limiterRPM || car.engineLimiterRPM || engine.redlineRPM + 200) + redlineAdd;
   car.engineRedlineRPM = Number(car.engineRedlineRPM || engine.redlineRPM) + redlineAdd;
   car.engineLimiterRPM = Number(car.engineLimiterRPM || engine.limiterRPM) + redlineAdd;
-
-  const baseBoost = Number(carConfig.maximumBoost || 0);
-  const turboLevel = tuning.turbo;
-  const turboSpec = levels.turbo;
 
   if (turboLevel > 0) {
     car.maximumBoost = baseBoost > 0
