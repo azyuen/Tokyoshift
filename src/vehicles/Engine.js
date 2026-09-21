@@ -25,11 +25,24 @@ export default class Engine {
     const base = this.baseTorqueAt(this.rpm) * effectiveThrottle;
 
     const referenceBoost = this.config.referenceBoostBar ?? 0;
+    const positiveBoost = Math.max(0, boostBar);
     let boostScale = 1;
+
     if (referenceBoost > 0) {
-      const spoolFraction = Phaser.Math.Clamp(Math.max(0, boostBar) / referenceBoost, 0, 1);
-      const offBoost = this.config.offBoostTorqueFraction ?? 0.55;
-      boostScale = Phaser.Math.Linear(offBoost, 1, spoolFraction);
+      if (positiveBoost <= referenceBoost) {
+        const spoolFraction = Phaser.Math.Clamp(positiveBoost / referenceBoost, 0, 1);
+        const offBoost = this.config.offBoostTorqueFraction ?? 0.55;
+        boostScale = Phaser.Math.Linear(offBoost, 1, spoolFraction);
+      } else {
+        // Above the factory reference boost, scale by absolute pressure ratio.
+        // At stock boost this remains exactly 1.0, so factory cars are unchanged.
+        boostScale = (1 + positiveBoost) / (1 + referenceBoost);
+      }
+    } else if (positiveBoost > 0) {
+      // Naturally aspirated engines can now respond to an aftermarket turbo.
+      // A small efficiency discount keeps bolt-on boost believable and leaves
+      // intercooler/ECU/engine upgrades meaningful.
+      boostScale = 1 + positiveBoost * 0.78;
     }
 
     return (base * boostScale + nosTorque) * limiterCut;
