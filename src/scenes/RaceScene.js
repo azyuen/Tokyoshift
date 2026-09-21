@@ -55,7 +55,7 @@ export default class RaceScene extends Phaser.Scene {
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
     this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || 'night';
-    this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'WANGAN';
+    this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
     this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
   }
 
