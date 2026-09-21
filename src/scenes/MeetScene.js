@@ -47,7 +47,7 @@ export default class MeetScene extends Phaser.Scene {
 
     meetBackgrounds.forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r51');
+        this.load.image(bg.key, bg.path + '?v=20260921-r54');
       }
     });
   }
@@ -718,7 +718,7 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     meetBackgrounds.forEach(bg => {
-      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r49');
+      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r54');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
