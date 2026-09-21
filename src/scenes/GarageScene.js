@@ -504,9 +504,8 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[id];
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[id] || {};
-    const tunedBuild = applyEngineTuning(car, engines[car.engine], carState);
-    const engineTuning = getEngineTuning(carState);
-    const enginePartCount = getEngineTuningCount(engineTuning);
+    const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
+    const tunedBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
 
     this.headerCarText.setText(car.name.toUpperCase());
 
@@ -789,8 +788,8 @@ export default class GarageScene extends Phaser.Scene {
       const car = cars[id];
       const carStates = this.registry.get('carStates') || {};
       const carState = carStates[id] || {};
-      const tunedBuild = applyEngineTuning(car, engines[car.engine], carState);
-      const enginePartCount = getEngineTuningCount(getEngineTuning(carState));
+      const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
+      const tunedBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
       this.specValueTexts.power.setText(tunedBuild.car.powerKW + ' kW');
       this.specValueTexts.torque.setText(tunedBuild.car.torqueNm + ' Nm');
       this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
@@ -1128,7 +1127,11 @@ export default class GarageScene extends Phaser.Scene {
       acquiredVia: existing.acquiredVia || 'garage',
       ...existing,
       tuning,
-      stock: getEngineTuningCount(tuning) === 0 && !existing.nosInstalled,
+      stock:
+        getEngineTuningCount(tuning) === 0 &&
+        !existing.nosInstalled &&
+        Object.values(existing.drivetrainTuning || {}).every(value => !Number(value)) &&
+        Object.values(existing.exhaustNosTuning || {}).every(value => !Number(value)),
     };
 
     this.registry.set('carStates', carStates);
