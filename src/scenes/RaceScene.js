@@ -552,9 +552,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       0, 0,
-      Math.max(120, body.displayWidth * 0.78),
-      Math.max(10, body.displayHeight * 0.12),
-      0x000000, 0.34
+      Math.max(150, body.displayWidth * 0.98),
+      Math.max(18, body.displayHeight * 0.18),
+      0x000000, 0.68
     ).setDepth(depth - 0.6);
 
     return {
@@ -1108,7 +1108,11 @@ export default class RaceScene extends Phaser.Scene {
     v.frontWheelBacking.setPosition(frontX, wheelY);
     v.rearWheel.setPosition(rearX, wheelY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, wheelY).setRotation(v.wheelAngle);
-    v.roadShadow.setPosition(x, wheelY + Math.max(8, v.rearWheel.displayHeight * 0.30));
+    const wheelBaseY = wheelY + v.rearWheel.displayHeight * 0.5;
+    const shadowHeight = v.roadShadow.displayHeight;
+    // Put the tyre contact point one-third of the way down into the shadow:
+    // the shadow's upper third overlaps the base of the wheels, grounding the car.
+    v.roadShadow.setPosition(x, wheelBaseY + shadowHeight / 6);
 
     v.rearX = rearX;
     v.rearY = wheelY;
