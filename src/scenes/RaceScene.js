@@ -7,6 +7,7 @@ import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r49';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r49';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
@@ -740,6 +741,28 @@ export default class RaceScene extends Phaser.Scene {
       return { button, text };
     };
 
+    const addWorkshopButton = x => {
+      const currentCash = Number(this.registry.get('cash') || 0);
+      if (currentCash >= WORKSHOP_RETURN_COST) {
+        return addButton(
+          x,
+          'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
+          0x45d7ff,
+          () => this.returnToWorkshop()
+        );
+      }
+
+      const control = addButton(
+        x,
+        'NEED ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
+        0x66535a,
+        () => {}
+      );
+      control.button.disableInteractive().setFillStyle(0x17181d, 0.98);
+      control.text.setColor('#927b83');
+      return control;
+    };
+
     if (settlement?.gameOver) {
       const hasManualSave = Boolean(readManualSave());
 
@@ -768,19 +791,28 @@ export default class RaceScene extends Phaser.Scene {
       });
 
       if (this.raceDeal === 'PINK_SLIP') {
-        addButton(780, 'WORKSHOP', 0x45d7ff, () => this.scene.start('GarageScene'));
+        addWorkshopButton(780);
       } else {
         const currentCash = this.registry.get('cash') ?? 0;
         const canRematch = this.raceMode !== 'SINGLE' || currentCash >= this.raceStake;
         if (canRematch) {
           addButton(780, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
         } else {
-          addButton(780, 'WORKSHOP', 0x45d7ff, () => this.scene.start('GarageScene'));
+          addWorkshopButton(780);
         }
       }
 
       addButton(1020, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
     }
+  }
+
+  returnToWorkshop() {
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < WORKSHOP_RETURN_COST) return;
+
+    this.registry.set('cash', cash - WORKSHOP_RETURN_COST);
+    saveSessionState(this.registry);
+    this.scene.start('GarageScene');
   }
 
   settleRace(playerWon) {
