@@ -1,6 +1,7 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r43';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -44,6 +45,7 @@ export default class MeetScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'meet';
     this.scale.resize(1560, 840);
+    playMusic('meet');
 
     this.selectedMode = 'SINGLE';
     this.selectedDeal = 'CASH';
