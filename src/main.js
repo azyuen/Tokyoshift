@@ -1,8 +1,9 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r40';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r40';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r40';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r40';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r40';
+import BootScene from './scenes/BootScene.js?v=20260921-r42';
+import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260921-r42';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r42';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r42';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r42';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r42';
 
 
 // Phone readability pass.
@@ -34,6 +35,7 @@ const config = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#070914',
+  dom: { createContainer: true },
   pixelArt: true,
   roundPixels: true,
   antialias: false,
@@ -44,7 +46,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, GarageScene, MeetScene, RaceScene, ResultScene],
+  scene: [BootScene, CharacterSelectScene, GarageScene, MeetScene, RaceScene, ResultScene],
 };
 
 window.TOKYO_SHIFT = new Phaser.Game(config);
