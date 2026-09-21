@@ -1,8 +1,18 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { getEngineTuning, getEngineTuningCount, applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r55';
+import {
+  ENGINE_PART_ORDER,
+  ENGINE_TUNING_PARTS,
+  normaliseEngineTuning,
+  getEngineTuning,
+  getEngineTuningCartCost,
+  getUpgradePathCost,
+  getEngineTuningCount,
+  applyEngineTuning,
+} from '../data/tuning.js?v=20260921-r56';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r56';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r56';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r54';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
@@ -23,12 +33,11 @@ export default class GarageScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
     playMusic('workshop');
 
-    this.ownedCarIds = (this.registry.get('ownedCarIds') || ['ae86']).filter(id => cars[id]);
-    if (!this.ownedCarIds.length) this.ownedCarIds = ['ae86'];
+    this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
 
-    this.selectedCarId = this.registry.get('selectedCarId') || this.ownedCarIds[0];
+    this.selectedCarId = this.registry.get('selectedCarId') || this.ownedCarIds[0] || null;
     if (!cars[this.selectedCarId] || !this.ownedCarIds.includes(this.selectedCarId)) {
-      this.selectedCarId = this.ownedCarIds[0];
+      this.selectedCarId = this.ownedCarIds[0] || null;
     }
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
@@ -37,6 +46,11 @@ export default class GarageScene extends Phaser.Scene {
     this.thumbButtons = [];
     this.upgradeButtons = [];
     this.selectedUpgrade = 'ENGINE';
+    this.engineMode = false;
+    this.engineModeObjects = [];
+    this.engineModalObjects = [];
+    this.engineHotspotObjects = [];
+    this.engineHelperObjects = [];
 
     this.drawScene();
     this.buildHeader();
@@ -45,8 +59,12 @@ export default class GarageScene extends Phaser.Scene {
     this.buildSaveButton();
     this.buildMeetButton();
 
-    this.selectCar(this.selectedCarId);
-    this.selectUpgrade('ENGINE');
+    if (this.selectedCarId) {
+      this.selectCar(this.selectedCarId);
+      this.selectUpgrade('ENGINE');
+    } else {
+      this.showEmptyGarageState();
+    }
   }
 
   drawScene() {
@@ -146,6 +164,8 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
+    addSettingsButton(this, 995, 35);
+
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
@@ -231,9 +251,8 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => {
         if (name === 'ENGINE') {
-          this.registry.set('selectedCarId', this.selectedCarId);
-          this.saveProfile();
-          this.scene.start('EngineTuningScene');
+          if (!this.selectedCarId) return;
+          this.enterEngineMode();
           return;
         }
         this.selectUpgrade(name);
