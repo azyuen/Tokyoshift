@@ -28,8 +28,8 @@ import {
 } from '../data/secondaryTuning.js?v=20260921-r66';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r64';
+import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r60';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r67';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -388,9 +388,8 @@ export default class GarageScene extends Phaser.Scene {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
         title: 'TOKYO REGION MAP',
         actionVerb: 'GO TO MEET',
+        fromWorkshop: true,
         allowCurrentAction: true,
-        costResolver: (currentLocationId, targetLocationId) =>
-          getWorkshopDepartureCost(currentLocationId, targetLocationId),
         onTravel: (locationId, cost) => {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
