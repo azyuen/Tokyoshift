@@ -1,7 +1,7 @@
 import {
   MEET_LOCATIONS,
   getMeetLocation,
-} from '../data/meetAssets.js?v=20260921-r76';
+} from '../data/meetAssets.js?v=20260922-r84';
 import {
   getWorkshopByLocationId,
   getGarageCapacity,
@@ -15,7 +15,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260921-r76';
+} from '../data/travelRegions.js?v=20260922-r84';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
