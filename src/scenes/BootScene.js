@@ -1,6 +1,6 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r42';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r42';
-import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r42';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r43';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
+import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r43';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -28,7 +28,7 @@ export default class BootScene extends Phaser.Scene {
       const character = characters[id];
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260921-r42'
+        character.visual.path + '?v=20260921-r43'
       );
     });
   }
