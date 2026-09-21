@@ -14,13 +14,19 @@ export const MEET_REGIONS = {
   WANGAN: {
     id: 'WANGAN',
     label: 'WANGAN',
-    mapX: 0.28,
+    mapX: 0.20,
+    mapY: 0.48,
+  },
+  TATSUMI: {
+    id: 'TATSUMI',
+    label: 'TATSUMI',
+    mapX: 0.50,
     mapY: 0.48,
   },
   DAIKOKU: {
     id: 'DAIKOKU',
     label: 'DAIKOKU',
-    mapX: 0.72,
+    mapX: 0.80,
     mapY: 0.48,
   },
 };
@@ -62,6 +68,44 @@ export const MEET_LOCATIONS = {
     rewardMultiplier: 1.75,
     bgKey: 'meetWanganBridgeNight',
   },
+
+  tatsumiBridgefrontPlaza: {
+    id: 'tatsumiBridgefrontPlaza',
+    district: 'TATSUMI',
+    location: 'bridgefront_plaza',
+    label: 'BRIDGEFRONT PLAZA',
+    timeOfDay: 'day',
+    difficulty: 'MED',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.4,
+    bgKey: 'meetTatsumiBridgefrontPlazaDay',
+  },
+  tatsumiSkylineVista: {
+    id: 'tatsumiSkylineVista',
+    district: 'TATSUMI',
+    location: 'skyline_vista',
+    label: 'SKYLINE VISTA',
+    timeOfDay: 'night',
+    difficulty: 'HARD',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 1.75,
+    bgKey: 'meetTatsumiSkylineVistaNight',
+  },
+  tatsumiHarborLoop: {
+    id: 'tatsumiHarborLoop',
+    district: 'TATSUMI',
+    location: 'harbor_loop',
+    label: 'HARBOR LOOP',
+    timeOfDay: 'twilight',
+    difficulty: 'ELITE',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 2.05,
+    bgKey: 'meetTatsumiHarborLoopTwilight',
+  },
+
   daikokuHarbor: {
     id: 'daikokuHarbor',
     district: 'DAIKOKU',
@@ -102,11 +146,13 @@ export const MEET_LOCATIONS = {
 
 export const LOCATION_ORDER_BY_REGION = {
   WANGAN: ['wangan7eleven', 'wanganBayside', 'wanganBridge'],
+  TATSUMI: ['tatsumiBridgefrontPlaza', 'tatsumiSkylineVista', 'tatsumiHarborLoop'],
   DAIKOKU: ['daikokuHarbor', 'daikokuPA', 'daikokuOpenLot'],
 };
 
 export const ALL_MEET_LOCATION_IDS = [
   ...LOCATION_ORDER_BY_REGION.WANGAN,
+  ...LOCATION_ORDER_BY_REGION.TATSUMI,
   ...LOCATION_ORDER_BY_REGION.DAIKOKU,
 ];
 
