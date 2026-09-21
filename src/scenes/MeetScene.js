@@ -9,8 +9,9 @@ import {
   getTravelCost,
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260921-r54';
-import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r55';
+import { playMusic } from '../audio/MusicManager.js?v=20260921-r56';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r56';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r56';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r54';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -20,6 +21,8 @@ const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
 const GPS = { x: 1180, y: 92, w: 356, h: 140 };
 const SIDE = { x: 1180, y: 248, w: 356, h: 568 };
 const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
+
+const TAXI_TO_WORKSHOP_COST = 1000;
 
 const MODE_DATA = {
   SINGLE: {
@@ -56,6 +59,10 @@ export default class MeetScene extends Phaser.Scene {
     document.body.dataset.scene = 'meet';
     this.scale.resize(1560, 840);
     playMusic('meet');
+
+    const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    const selectedCarId = this.registry.get('selectedCarId');
+    this.hasCar = ownedCarIds.length > 0 && Boolean(cars[selectedCarId]);
 
     this.selectedMode = 'SINGLE';
     this.selectedDeal = 'CASH';
@@ -207,6 +214,8 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
+    addSettingsButton(this, 995, 35);
+
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
@@ -263,7 +272,7 @@ export default class MeetScene extends Phaser.Scene {
     this.add.text(
       GPS.x + GPS.w / 2,
       GPS.y + 105,
-      'GO SOMEWHERE ELSE  >',
+      this.hasCar ? 'GO SOMEWHERE ELSE  >' : 'NO CAR // CAN\'T DRIVE',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -272,6 +281,11 @@ export default class MeetScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(38);
 
     this.gpsTravelButton.on('pointerdown', () => this.showDistrictPopup());
+    if (!this.hasCar) {
+      this.gpsTravelButton.disableInteractive()
+        .setFillStyle(0x10151b, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+    }
     this.updateGpsPanel();
   }
 
@@ -284,6 +298,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   travelToLocation(locationId, suppliedCost = null) {
+    if (!this.hasCar) return false;
     if (!MEET_LOCATIONS[locationId]) return false;
 
     const travelCost = suppliedCost == null
