@@ -12,7 +12,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import { saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r71';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r72';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
