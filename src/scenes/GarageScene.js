@@ -28,8 +28,8 @@ import {
 } from '../data/secondaryTuning.js?v=20260921-r66';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r76';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r76';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r76';
+import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import {
   getGarageCapacity,
