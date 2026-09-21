@@ -281,16 +281,45 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
-    const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
-    categories.forEach((name, i) => {
+    const categories = [
+      { name: 'ENGINE', key: 'tuningCategoryEngine' },
+      { name: 'DRIVETRAIN', key: 'tuningCategoryDrivetrain' },
+      { name: 'CHASSIS', key: 'tuningCategoryChassis' },
+      { name: 'EXHAUST / NOS', key: 'tuningCategoryExhaustNos' },
+    ];
+
+    categories.forEach((category, i) => {
+      const { name, key } = category;
       const y = SIDE.y + 285 + i * 48;
       const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
 
-      const label = this.add.text(SIDE.x + 30, y, name, {
-        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#a9c7da'
+      let icon = null;
+      let labelX = SIDE.x + 30;
+
+      if (this.textures.exists(key)) {
+        icon = this.add.image(SIDE.x + 70, y, key)
+          .setOrigin(0.5)
+          .setDepth(38);
+
+        const source = this.textures.get(key).getSourceImage();
+        const cropH = Math.max(1, Math.floor(source.height * 0.72));
+        icon.setCrop(0, 0, source.width, cropH);
+
+        // The generated artwork includes its own title strip. In the narrow
+        // workshop category row we use only the illustrated upper section as
+        // the category emblem, while Phaser keeps the heading text readable.
+        const fit = Math.min(92 / source.width, 34 / cropH);
+        icon.setScale(fit);
+        labelX = SIDE.x + 126;
+      }
+
+      const label = this.add.text(labelX, y, name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#d4e9f6'
       }).setOrigin(0, 0.5).setDepth(38);
 
       const arrow = this.add.text(SIDE.x + SIDE.w - 30, y, '>', {
@@ -313,7 +342,8 @@ export default class GarageScene extends Phaser.Scene {
         }
         this.selectUpgrade(name);
       });
-      this.upgradeButtons.push({ name, box, label, arrow });
+
+      this.upgradeButtons.push({ name, box, label, arrow, icon });
     });
 
   }
