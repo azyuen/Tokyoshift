@@ -1,3 +1,5 @@
+import { getMusicVolume } from './AudioSettings.js?v=20260921-r56';
+
 // TOKYO SHIFT procedural soundtrack
 // Original eurobeat-inspired score. Generated in-browser to keep the PWA light
 // and avoid shipping large PCM masters.
@@ -15,6 +17,21 @@ let activeNodes = new Set();
 let pendingTrack = null;
 let lastRaceTrack = null;
 let unlockInstalled = false;
+let musicVolume = getMusicVolume();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('tokyo-shift-audio-settings', event => {
+    musicVolume = Math.max(0, Math.min(1, Number(event.detail?.music) || 0));
+    if (!ctx || !master || !currentTrack || !TRACKS[currentTrack]) return;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setTargetAtTime(
+      Math.max(0.0001, TRACKS[currentTrack].volume * musicVolume),
+      now,
+      0.035
+    );
+  });
+}
 
 const PROGRESSION_A = [
   { chord: [57, 60, 64], root: 45 },
@@ -393,7 +410,10 @@ function startTrack(key) {
 
   master.gain.cancelScheduledValues(ctx.currentTime);
   master.gain.setValueAtTime(0.0001, ctx.currentTime);
-  master.gain.exponentialRampToValueAtTime(TRACKS[key].volume, ctx.currentTime + 0.28);
+  master.gain.exponentialRampToValueAtTime(
+    Math.max(0.0001, TRACKS[key].volume * musicVolume),
+    ctx.currentTime + 0.28
+  );
 
   runScheduler();
   scheduler = setInterval(runScheduler, 50);
@@ -446,7 +466,10 @@ export function playVictorySting() {
 
     master.gain.cancelScheduledValues(ctx.currentTime);
     master.gain.setValueAtTime(0.0001, ctx.currentTime);
-    master.gain.exponentialRampToValueAtTime(0.31, now + 0.08);
+    master.gain.exponentialRampToValueAtTime(
+      Math.max(0.0001, 0.31 * musicVolume),
+      now + 0.08
+    );
 
     [0, 1, 2, 3, 4, 5].forEach(b => kick(now + b * beat, b === 0 ? 0.33 : 0.25));
     [1, 3, 5].forEach(b => snare(now + b * beat, 0.08));
