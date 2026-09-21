@@ -1,3 +1,9 @@
+import {
+  WORKSHOP_TIERS,
+  getWorkshopByLocationId,
+  inferWorkshopTier,
+} from '../data/workshopProgression.js?v=20260921-r74';
+
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
 
@@ -30,6 +36,8 @@ export function createDefaultGameState() {
     cash: 50000,
     district: 'ODAIBA',
     meetLocation: 'odaiba7eleven',
+    garageTier: 0,
+    workshopLocationId: 'shinonomeWorkshop',
     meetRosters: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
@@ -89,11 +97,19 @@ export function normaliseState(input = {}) {
     ? input.selectedCarId
     : owned[0] || null;
 
+  const garageTier = inferWorkshopTier(owned.length, input.garageTier);
+  const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
+  const workshopLocationId = requestedWorkshop.tier <= garageTier
+    ? requestedWorkshop.id
+    : WORKSHOP_TIERS[garageTier].id;
+
   return {
     ...base,
     ...input,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
+    garageTier,
+    workshopLocationId,
     selectedCarId,
     ownedCarIds: owned,
     carStates: {
@@ -134,6 +150,8 @@ export function snapshotRegistry(registry) {
     cash: registry.get('cash') ?? 50000,
     district: registry.get('district') || 'ODAIBA',
     meetLocation: registry.get('meetLocation') || 'odaiba7eleven',
+    garageTier: Number(registry.get('garageTier') || 0),
+    workshopLocationId: registry.get('workshopLocationId') || 'shinonomeWorkshop',
     meetRosters: registry.get('meetRosters') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
