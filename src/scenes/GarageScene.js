@@ -1,6 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r42';
-import { characters } from '../data/characters.js?v=20260921-r42';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r42';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
+import { characters } from '../data/characters.js?v=20260921-r43';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r43';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
