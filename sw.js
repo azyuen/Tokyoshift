@@ -1,6 +1,6 @@
-const BUILD = 'R71';
-const ASSET_CACHE = 'tokyoshift-assets-v29';
-const RUNTIME_CACHE = 'tokyoshift-runtime-v29';
+const BUILD = 'R72';
+const ASSET_CACHE = 'tokyoshift-assets-v30';
+const RUNTIME_CACHE = 'tokyoshift-runtime-v30';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -50,7 +50,7 @@ self.addEventListener('fetch', event => {
   }
 
   if (/\.(?:js|css|json)$/i.test(url.pathname)) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(networkFirst(request));
     return;
   }
 
