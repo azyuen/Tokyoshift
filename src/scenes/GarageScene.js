@@ -26,15 +26,15 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260921-r66';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r75';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r76';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r75';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r75';
+import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r76';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r76';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import {
   getGarageCapacity,
   getWorkshopByLocationId,
-} from '../data/workshopProgression.js?v=20260921-r75';
+} from '../data/workshopProgression.js?v=20260921-r76';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -60,6 +60,7 @@ export default class GarageScene extends Phaser.Scene {
     }
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('meetStranded', false);
 
     this.selectedDisplay = [];
     this.thumbButtons = [];
@@ -601,6 +602,7 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('meetLocation', locationId);
           this.registry.set('district', destination.district);
           this.registry.set('selectedCarId', this.selectedCarId);
+          this.registry.set('meetStranded', false);
           saveSessionState(this.registry);
 
           this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
@@ -1068,9 +1070,9 @@ export default class GarageScene extends Phaser.Scene {
       },
       turbo: {
         x: clampX(frontX - 48),
-        y: wheelY - 38,
+        y: wheelY - 54,
         lx: clampX(frontX - 74),
-        ly: wheelY - 92,
+        ly: wheelY - 108,
       },
       intercooler: {
         x: clampX(carRight - 76),
@@ -1821,8 +1823,8 @@ export default class GarageScene extends Phaser.Scene {
           headers: {
             x: clampX(frontX - 80),
             y: wheelY - 58,
-            lx: clampX(frontX - 116),
-            ly: wheelY - 122,
+            lx: clampX(frontX - 168),
+            ly: wheelY - 136,
           },
           exhaust: {
             x: clampX(midX),
@@ -1845,8 +1847,8 @@ export default class GarageScene extends Phaser.Scene {
           nitrousShot: {
             x: clampX(midX + 54),
             y: wheelY - 62,
-            lx: clampX(midX + 92),
-            ly: wheelY - 120,
+            lx: clampX(midX + 152),
+            ly: wheelY - 106,
           },
         };
 
