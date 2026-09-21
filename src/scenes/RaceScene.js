@@ -9,10 +9,14 @@ import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r60';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r74';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r75';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r75';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r70';
+import {
+  getEncounterAi,
+  boostAiForPinkSlip,
+} from '../data/encounterProfiles.js?v=20260921-r75';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -50,6 +54,13 @@ export default class RaceScene extends Phaser.Scene {
       : Phaser.Utils.Array.GetRandom(rivals);
 
     this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
+    this.opponentEncounterRating = Phaser.Math.Clamp(
+      Number(this.registry.get('selectedOpponentEncounterRating') || characters[this.opponentCharacterId]?.skill?.rating || 3),
+      1,
+      5
+    );
+    this.opponentEncounterAi = this.registry.get('selectedOpponentEncounterAi')
+      || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
     this.raceType = this.registry.get('selectedRaceType') || 'Standing Start';
     this.isRollingStart = this.raceType === 'Roll Race';
@@ -106,12 +117,12 @@ export default class RaceScene extends Phaser.Scene {
     this.opponent.transmission.currentGear = 1;
     this.opponent.transmission.lastShiftQuality = 'STAGED';
 
-    const rivalAI = rivalCharacter?.skill?.ai ?? {
-      reactionSkill: 0.78,
-      launchSkill: 0.76,
-      shiftSkill: 0.78,
-      aggression: 0.78,
-    };
+    const baseRivalAI = this.opponentEncounterAi
+      || rivalCharacter?.skill?.ai
+      || getEncounterAi(this.opponentEncounterRating);
+    const rivalAI = this.raceDeal === 'PINK_SLIP'
+      ? boostAiForPinkSlip(baseRivalAI)
+      : { ...baseRivalAI };
     this.ai = new DragRacingAI(this.opponent, rivalAI);
 
     this.controls = new TouchControls(this, { nosEnabled: this.playerCapabilities.hasNitrous });
@@ -446,21 +457,33 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   applyRivalBuild(config, character) {
-    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 3), 1, 5);
-    this.applyTuneLevel(config, rating);
+    const rating = Phaser.Math.Clamp(
+      Number(this.opponentEncounterRating || character?.skill?.rating || 3),
+      1,
+      5
+    );
 
-    // Rookie and Skilled drivers are still early in the build ladder. Expert
-    // and Elite rivals may carry a finite nitrous system.
-    const hasNitrous = rating >= 4;
-    config.nosPower = hasNitrous ? (rating >= 5 ? 55 : 35) : 0;
-    config.nosCapacitySeconds = hasNitrous ? (rating >= 5 ? 5.0 : 4.0) : 0;
+    // A pink-slip rival protects their car by bringing a slightly sharper
+    // version of the same build. This is a modest tune bump, not a hidden
+    // speed multiplier, and the AI receives a separate small skill boost.
+    const buildRating = Phaser.Math.Clamp(
+      rating + (this.raceDeal === 'PINK_SLIP' ? 0.5 : 0),
+      1,
+      5
+    );
+
+    this.applyTuneLevel(config, buildRating);
+
+    const hasNitrous = buildRating >= 4;
+    config.nosPower = hasNitrous ? (buildRating >= 5 ? 55 : 35) : 0;
+    config.nosCapacitySeconds = hasNitrous ? (buildRating >= 5 ? 5.0 : 4.0) : 0;
 
     this.opponentBuildState = {
-      stock: rating <= 2,
+      stock: buildRating <= 2,
       nosInstalled: hasNitrous,
       nosPower: config.nosPower,
       nosCapacitySeconds: config.nosCapacitySeconds,
-      tuneLevel: rating,
+      tuneLevel: buildRating,
       acquiredVia: 'pinkSlip',
     };
 
