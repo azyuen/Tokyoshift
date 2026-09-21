@@ -6,7 +6,7 @@ import {
   getWorkshopByLocationId,
   getGarageCapacity,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260921-r76';
+} from '../data/workshopProgression.js?v=20260922-r86';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
