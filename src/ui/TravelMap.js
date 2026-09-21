@@ -4,7 +4,7 @@ import {
   LOCATION_ORDER_BY_REGION,
   getMeetLocation,
   getTravelCost,
-} from '../data/meetAssets.js?v=20260921-r54';
+} from '../data/meetAssets.js?v=20260921-r60';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -63,7 +63,7 @@ export function showTravelMap(scene, {
   highway.strokePath();
 
   const regionUi = {};
-  const regionCenters = { WANGAN: 340, TATSUMI: 780, DAIKOKU: 1220 };
+  const regionCenters = { ODAIBA: 340, TATSUMI: 780, DAIKOKU: 1220 };
 
   Object.keys(MEET_REGIONS).forEach(regionId => {
     const cx = regionCenters[regionId];
