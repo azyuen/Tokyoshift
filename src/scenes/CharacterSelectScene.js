@@ -26,16 +26,18 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(characterOrder);
     this.portraitObjects = [];
 
+    // Spacious title-screen frame. This scene needs more breathing room than
+    // the in-game panels because all Phaser text is globally enlarged for phone use.
     this.add.rectangle(780, 420, 1560, 840, 0x050912);
-    this.add.rectangle(780, 420, 1490, 770, 0x07111d, 0.98)
+    this.add.rectangle(780, 420, 1480, 770, 0x07111d, 0.98)
       .setStrokeStyle(2, 0x1f4964, 1);
 
     this.add.text(780, 58, 'TOKYO SHIFT', {
-      fontFamily: PIXEL_FONT, fontSize: '34px', color: '#effbff'
+      fontFamily: PIXEL_FONT, fontSize: '32px', color: '#effbff'
     }).setOrigin(0.5);
 
-    this.add.text(780, 108, 'YOUR NIGHT STARTS HERE', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#69dfff'
+    this.add.text(780, 112, 'YOUR NIGHT STARTS HERE', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#69dfff'
     }).setOrigin(0.5);
 
     this.buildProfilePanel();
@@ -52,28 +54,31 @@ export default class CharacterSelectScene extends Phaser.Scene {
   panel(x, y, w, h, title) {
     this.add.rectangle(x, y, w, h, 0x0a1521, 0.98)
       .setStrokeStyle(2, 0x294b63, 1);
-    this.add.text(x - w / 2 + 22, y - h / 2 + 18, title, {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8ed4f5'
+
+    this.add.text(x - w / 2 + 24, y - h / 2 + 22, title, {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8ed4f5'
     });
   }
 
   buildProfilePanel() {
-    this.panel(350, 360, 360, 420, '1 // PROFILE');
+    const x = 300;
+    this.panel(x, 365, 370, 455, '1 // PROFILE');
 
-    this.add.rectangle(350, 340, 254, 254, 0x101b27, 1)
+    // Portrait gets its own padded block rather than touching the panel title/button.
+    this.add.rectangle(x, 328, 240, 240, 0x101b27, 1)
       .setStrokeStyle(2, 0x4bdcff, 0.85);
 
     this.portraitMaskShape = this.make.graphics({ add: false });
     this.portraitMaskShape.fillStyle(0xffffff, 1);
-    this.portraitMaskShape.fillRect(223, 213, 254, 254);
+    this.portraitMaskShape.fillRect(x - 120, 208, 240, 240);
     this.portraitMask = this.portraitMaskShape.createGeometryMask();
 
-    const randomButton = this.add.rectangle(350, 520, 270, 44, 0x10283a, 1)
+    const randomButton = this.add.rectangle(x, 500, 270, 46, 0x10283a, 1)
       .setStrokeStyle(2, 0x47dfff, 1)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(350, 520, 'RANDOM PROFILE  >', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fbff'
+    this.add.text(x, 500, 'RANDOM PROFILE  >', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#f1fbff'
     }).setOrigin(0.5);
 
     randomButton.on('pointerdown', () => {
@@ -82,8 +87,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
       this.refreshPortrait();
     });
 
-    this.profileLabel = this.add.text(350, 560, '', {
-      fontFamily: BODY_FONT, fontSize: '14px', color: '#87a9bb', fontStyle: '600'
+    this.profileLabel = this.add.text(x, 552, '', {
+      fontFamily: BODY_FONT, fontSize: '12px', color: '#87a9bb', fontStyle: '600'
     }).setOrigin(0.5);
   }
 
@@ -93,86 +98,117 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     const character = characters[this.currentCharacterId];
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-    const portrait = this.add.image(350, 185, character.visual.spriteKey)
+    const portrait = this.add.image(300, 188, character.visual.spriteKey)
       .setOrigin(0.5, 0)
       .setDepth(4)
       .setMask(this.portraitMask);
 
-    portrait.setScale(720 / source.height);
+    portrait.setScale(690 / source.height);
     this.portraitObjects.push(portrait);
-    this.profileLabel.setText('PROFILE ' + (characterOrder.indexOf(this.currentCharacterId) + 1).toString().padStart(2, '0'));
+
+    this.profileLabel.setText(
+      'PROFILE ' +
+      (characterOrder.indexOf(this.currentCharacterId) + 1).toString().padStart(2, '0')
+    );
   }
 
   buildIdentityPanel() {
-    this.panel(780, 360, 430, 420, '2 // DRIVER');
+    this.panel(780, 365, 520, 455, '2 // DRIVER');
 
-    this.add.text(780, 238, 'ENTER YOUR NAME', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
+    this.add.text(780, 242, 'ENTER YOUR NAME', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffffff'
     }).setOrigin(0.5);
 
-    this.add.text(780, 284, 'This is the name rivals will know you by.', {
-      fontFamily: BODY_FONT, fontSize: '15px', color: '#91a9b7'
+    this.add.text(780, 294, 'This is the name rivals will know you by.', {
+      fontFamily: BODY_FONT,
+      fontSize: '12px',
+      color: '#91a9b7',
+      align: 'center',
+      wordWrap: { width: 390 },
     }).setOrigin(0.5);
 
     const html = `
-      <div style="width:360px;display:grid;gap:14px;font-family:Rajdhani,sans-serif;">
+      <div style="width:390px;display:grid;gap:18px;font-family:Rajdhani,sans-serif;">
         <input id="firstName" maxlength="16" autocomplete="given-name" placeholder="First name"
-          style="width:100%;height:50px;padding:0 16px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
+          style="box-sizing:border-box;width:100%;height:52px;padding:0 18px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
         <input id="lastName" maxlength="16" autocomplete="family-name" placeholder="Last name"
-          style="width:100%;height:50px;padding:0 16px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
+          style="box-sizing:border-box;width:100%;height:52px;padding:0 18px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
       </div>
     `;
 
-    this.nameDom = this.add.dom(780, 382).createFromHTML(html);
+    this.nameDom = this.add.dom(780, 408).createFromHTML(html);
 
-    this.nameError = this.add.text(780, 492, '', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ff748d'
+    this.nameError = this.add.text(780, 510, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#ff748d',
+      align: 'center',
+      wordWrap: { width: 400 },
     }).setOrigin(0.5);
   }
 
   buildStarterCarPanel() {
-    this.panel(1210, 360, 360, 420, '3 // FIRST CAR');
+    const x = 1260;
+    this.panel(x, 365, 370, 455, '3 // FIRST CAR');
 
-    this.add.text(1210, 232, 'STARTER CAR', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7e9caf'
+    this.add.text(x, 232, 'STARTER CAR', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7e9caf'
     }).setOrigin(0.5);
 
-    this.createCarDisplay(cars.ae86, 1210, 348, 300, 4);
+    this.createCarDisplay(cars.ae86, x, 350, 300, 4);
 
-    this.add.text(1210, 442, 'TOYOTA SPRINTER TRUENO', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
+    this.add.text(x, 454, 'TOYOTA SPRINTER TRUENO', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff'
     }).setOrigin(0.5);
 
-    this.add.text(1210, 478, 'AE86 // STOCK', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#69dfff'
+    this.add.text(x, 496, 'AE86 // STOCK', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#69dfff'
     }).setOrigin(0.5);
 
-    this.add.text(1210, 522, '96 kW  •  940 kg  •  NA', {
-      fontFamily: BODY_FONT, fontSize: '15px', color: '#91a9b7', fontStyle: '600'
+    this.add.text(x, 540, '96 kW   •   940 kg   •   NA', {
+      fontFamily: BODY_FONT, fontSize: '13px', color: '#91a9b7', fontStyle: '600'
     }).setOrigin(0.5);
   }
 
   buildExplanation() {
-    this.add.text(780, 610,
-      'RACE THE TOKYO NIGHT SCENE  •  SHIFT BY HAND  •  BUILD YOUR GARAGE  •  BET CASH OR PINK SLIPS', {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#a8c6d7', align: 'center'
-      }).setOrigin(0.5);
+    // Footer copy is deliberately split into three separate rows so enlarged
+    // phone text can never collide with adjacent panels or the CTA.
+    this.add.text(
+      780,
+      626,
+      'RACE THE TOKYO NIGHT SCENE   •   SHIFT BY HAND   •   BUILD YOUR GARAGE   •   BET CASH OR PINK SLIPS',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#a8c6d7',
+        align: 'center',
+        wordWrap: { width: 1260 },
+      }
+    ).setOrigin(0.5);
 
-    this.add.text(780, 646,
-      'Win cars. Tune them. Move through districts. Lose your last car on a pink slip and your run is over.', {
-        fontFamily: BODY_FONT, fontSize: '15px', color: '#849eae', align: 'center'
-      }).setOrigin(0.5);
+    this.add.text(
+      780,
+      667,
+      'Win cars. Tune them. Move through districts. Lose your last car on a pink slip and your run is over.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#849eae',
+        align: 'center',
+        wordWrap: { width: 1220 },
+      }
+    ).setOrigin(0.5);
 
-    this.add.text(780, 678, 'Save in the Workshop to create a restore point.', {
-      fontFamily: BODY_FONT, fontSize: '14px', color: '#ffe08a', fontStyle: '600'
+    this.add.text(780, 704, 'Save in the Workshop to create a restore point.', {
+      fontFamily: BODY_FONT, fontSize: '11px', color: '#ffe08a', fontStyle: '600'
     }).setOrigin(0.5);
 
-    const start = this.add.rectangle(780, 742, 390, 56, 0x0c2b29, 1)
+    const start = this.add.rectangle(780, 760, 390, 56, 0x0c2b29, 1)
       .setStrokeStyle(3, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true });
 
-    this.add.text(780, 742, 'START NIGHT  >', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f2fffb'
+    this.add.text(780, 760, 'START NIGHT  >', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#f2fffb'
     }).setOrigin(0.5);
 
     start.on('pointerdown', () => this.startNight());
