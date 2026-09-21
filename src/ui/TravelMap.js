@@ -10,7 +10,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260921-r72';
+} from '../data/travelRegions.js?v=20260921-r73';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -22,7 +22,7 @@ const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 
 // The map now owns the whole framed popup. Everything else floats over it.
 const MAP = { x: 26, y: 25, w: 1508, h: 790 };
-const INFO = { x: 952, y: 476, w: 556, h: 316 };
+const INFO = { x: 874, y: 418, w: 634, h: 374 };
 const MAP_SOURCE = { w: 1672, h: 941 };
 
 function getMapArtBounds() {
@@ -172,21 +172,27 @@ export function showTravelMap(scene, {
     0.035
   ).setDepth(depth + 2.25));
 
-  // Title floats over the artwork with its own dark translucent backing.
+  // Stack the title vertically so it stays clear of Shinjuku.
+  const stackedTitle = String(title || 'TOKYO REGION MAP')
+    .trim()
+    .split(/\s+/)
+    .join('\n');
+
   add(scene.add.rectangle(
-    MAP.x + 190,
-    MAP.y + 42,
-    340,
-    54,
+    MAP.x + 96,
+    MAP.y + 82,
+    148,
+    126,
     0x030811,
     0.82
   ).setStrokeStyle(1, 0x315470, 0.78).setDepth(depth + 9));
 
-  add(scene.add.text(MAP.x + 36, MAP.y + 42, title, {
+  add(scene.add.text(MAP.x + 38, MAP.y + 34, stackedTitle, {
     fontFamily: PIXEL_FONT,
     fontSize: '13px',
     color: '#eefaff',
-  }).setOrigin(0, 0.5).setDepth(depth + 10));
+    lineSpacing: 6,
+  }).setOrigin(0, 0).setDepth(depth + 10));
 
   const closeButton = add(scene.add.rectangle(
     MAP.x + MAP.w - 48,
@@ -220,42 +226,42 @@ export function showTravelMap(scene, {
     0.94
   ).setStrokeStyle(2, 0x46d7ff, 0.92).setDepth(depth + 10));
 
-  const regionNameText = addPanel(scene.add.text(INFO.x + 22, INFO.y + 18, '', {
+  const regionNameText = addPanel(scene.add.text(INFO.x + 28, INFO.y + 22, '', {
     fontFamily: PIXEL_FONT,
-    fontSize: '12px',
+    fontSize: '15px',
     color: '#ffffff',
   }).setDepth(depth + 12));
 
-  const regionLineText = addPanel(scene.add.text(INFO.x + 22, INFO.y + 48, '', {
+  const regionLineText = addPanel(scene.add.text(INFO.x + 28, INFO.y + 62, '', {
     fontFamily: BODY_FONT,
-    fontSize: '9px',
+    fontSize: '11px',
     color: '#a7c0ce',
     fontStyle: '600',
-    wordWrap: { width: INFO.w - 44 },
+    wordWrap: { width: INFO.w - 56 },
   }).setDepth(depth + 12));
 
-  const rowStartY = INFO.y + 92;
+  const rowStartY = INFO.y + 126;
   for (let i = 0; i < 3; i++) {
-    const y = rowStartY + i * 48;
+    const y = rowStartY + i * 58;
 
     const box = addPanel(scene.add.rectangle(
       INFO.x + INFO.w / 2,
       y,
-      INFO.w - 36,
-      40,
+      INFO.w - 40,
+      50,
       0x0b1724,
       0.96
     ).setStrokeStyle(1, 0x315470, 1).setDepth(depth + 11));
 
-    const label = addPanel(scene.add.text(INFO.x + 24, y, '', {
+    const label = addPanel(scene.add.text(INFO.x + 28, y, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '8px',
+      fontSize: '10px',
       color: '#e4f5ff',
     }).setOrigin(0, 0.5).setDepth(depth + 12));
 
-    const meta = addPanel(scene.add.text(INFO.x + INFO.w - 24, y, '', {
+    const meta = addPanel(scene.add.text(INFO.x + INFO.w - 28, y, '', {
       fontFamily: BODY_FONT,
-      fontSize: '8px',
+      fontSize: '10px',
       color: '#8fa8b8',
       fontStyle: '600',
     }).setOrigin(1, 0.5).setDepth(depth + 12));
@@ -266,8 +272,8 @@ export function showTravelMap(scene, {
   const travelButton = addPanel(scene.add.rectangle(
     INFO.x + INFO.w / 2,
     INFO.y + INFO.h - 34,
-    INFO.w - 36,
-    46,
+    INFO.w - 40,
+    52,
     0x0d2b29,
     1
   ).setStrokeStyle(2, 0x62e8c7, 1).setDepth(depth + 11));
@@ -278,7 +284,7 @@ export function showTravelMap(scene, {
     '',
     {
       fontFamily: PIXEL_FONT,
-      fontSize: '8px',
+      fontSize: '10px',
       color: '#f1fffb',
     }
   ).setOrigin(0.5).setDepth(depth + 12));
