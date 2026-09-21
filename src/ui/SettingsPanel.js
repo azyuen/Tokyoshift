@@ -1,5 +1,5 @@
-import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r56';
-import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=20260921-r56';
+import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
+import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
