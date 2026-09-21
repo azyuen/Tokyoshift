@@ -17,11 +17,11 @@ const ENGINE_PROFILES = {
   },
   rb26dett: {
     events: 3.0,
-    harmonics: [1.00, 0.43, 0.25, 0.15, 0.09, 0.055],
-    lowOrder: 0.16,
-    mechanical: 0.08,
-    brightness: 0.88,
-    roughness: 0.025,
+    harmonics: [1.00, 0.45, 0.24, 0.13, 0.065, 0.032],
+    lowOrder: 0.18,
+    mechanical: 0.065,
+    brightness: 0.72,
+    roughness: 0.022,
   },
   '4g63t': {
     events: 2.0,
@@ -414,6 +414,21 @@ class UpgradeAudioVoice {
     this.turboGain.connect(this.output);
     this.turboOsc.start();
 
+    this.turboNoise = this.ctx.createBufferSource();
+    this.turboNoise.buffer = makeNoiseBuffer(1.0);
+    this.turboNoise.loop = true;
+    this.turboNoiseFilter = this.ctx.createBiquadFilter();
+    this.turboNoiseFilter.type = 'bandpass';
+    this.turboNoiseFilter.frequency.value = 1050;
+    this.turboNoiseFilter.Q.value = 0.55;
+    this.turboNoiseGain = this.ctx.createGain();
+    this.turboNoiseGain.gain.value = 0.0001;
+    this.turboNoise.connect(this.turboNoiseFilter);
+    this.turboNoiseFilter.connect(this.turboNoiseGain);
+    this.turboNoiseGain.connect(this.output);
+    this.turboNoise.start();
+    this.spoolBurst = 0;
+
     this.gearOsc = this.ctx.createOscillator();
     this.gearOsc.type = 'sine';
     this.gearOsc.frequency.value = 500;
@@ -440,6 +455,20 @@ class UpgradeAudioVoice {
     this.tyreOsc.connect(this.tyreGain);
     this.tyreGain.connect(this.output);
     this.tyreOsc.start();
+
+    this.tyreNoise = this.ctx.createBufferSource();
+    this.tyreNoise.buffer = makeNoiseBuffer(1.0);
+    this.tyreNoise.loop = true;
+    this.tyreNoiseFilter = this.ctx.createBiquadFilter();
+    this.tyreNoiseFilter.type = 'bandpass';
+    this.tyreNoiseFilter.frequency.value = 720;
+    this.tyreNoiseFilter.Q.value = 0.55;
+    this.tyreNoiseGain = this.ctx.createGain();
+    this.tyreNoiseGain.gain.value = 0.0001;
+    this.tyreNoise.connect(this.tyreNoiseFilter);
+    this.tyreNoiseFilter.connect(this.tyreNoiseGain);
+    this.tyreNoiseGain.connect(this.output);
+    this.tyreNoise.start();
   }
 
   playNoiseBurst({
@@ -614,18 +643,21 @@ class UpgradeAudioVoice {
 
   playTyreChirp() {
     this.playNoiseBurst({
-      duration: 0.18,
-      gain: 0.055,
+      duration: 0.12,
+      gain: 0.075,
       filterType: 'bandpass',
-      frequency: 2300,
-      q: 1.0,
-      decay: 14,
+      frequency: 820,
+      q: 0.48,
+      decay: 18,
     });
-    this.playTone({
-      frequency: 1550,
-      endFrequency: 1020,
-      duration: 0.17,
-      gain: 0.045,
+    this.playNoiseBurst({
+      duration: 0.16,
+      gain: 0.050,
+      filterType: 'lowpass',
+      frequency: 1450,
+      q: 0.35,
+      decay: 15,
+      delay: 0.018,
     });
   }
 
@@ -654,16 +686,33 @@ class UpgradeAudioVoice {
     if (this.levels.turbo > 0) {
       const spoolRise = Math.max(0, spool - this.prev.turboSpool);
       const boostRise = Math.max(0, boost - this.prev.boostBar);
-      const building = clamp01(spoolRise * 9 + boostRise * 5);
-      const turboSize = this.levels.turbo / 3;
-      const spoolFreq = 900 + spool * (3100 - turboSize * 900);
+      const impulse = Math.max(0, clamp01(spoolRise * 18 + boostRise * 7) - 0.035);
+      this.spoolBurst = Math.max(this.spoolBurst * Math.exp(-dt * 7.5), impulse);
 
-      smoothParam(this.turboOsc.frequency, spoolFreq, now, 0.035);
+      const turboSize = this.levels.turbo / 3;
+      const spoolFreq = 420 + spool * (760 - turboSize * 160);
+      const airFreq = 900 + spool * (1150 - turboSize * 220);
+      const burst = this.spoolBurst;
+
+      smoothParam(this.turboOsc.frequency, spoolFreq, now, 0.03);
+      smoothParam(this.turboNoiseFilter.frequency, airFreq, now, 0.04);
+      smoothParam(
+        this.turboOsc.gain ? this.turboOsc.gain : this.turboGain.gain,
+        0.0001,
+        now,
+        0.02
+      );
       smoothParam(
         this.turboGain.gain,
-        Math.max(0.0001, building * (0.035 + this.levels.turbo * 0.009) * volumeScale * sfxVolume),
+        Math.max(0.0001, burst * 0.0035 * volumeScale * sfxVolume),
         now,
-        0.045
+        0.028
+      );
+      smoothParam(
+        this.turboNoiseGain.gain,
+        Math.max(0.0001, burst * (0.014 + this.levels.turbo * 0.0025) * volumeScale * sfxVolume),
+        now,
+        0.025
       );
 
       const throttleLift = this.prev.throttle > 0.62 && throttle < 0.28;
@@ -691,7 +740,9 @@ class UpgradeAudioVoice {
         this.cooldowns.wastegate = 0.95;
       }
     } else {
-      smoothParam(this.turboGain.gain, 0.0001, now, 0.04);
+      this.spoolBurst = 0;
+      smoothParam(this.turboGain.gain, 0.0001, now, 0.035);
+      smoothParam(this.turboNoiseGain.gain, 0.0001, now, 0.035);
     }
 
     // GEARBOX: close-ratio gets a subtle whine; dog box is much more obvious.
@@ -736,20 +787,22 @@ class UpgradeAudioVoice {
 
     // TYRES: driven entirely from actual slip telemetry, independent of upgrades.
     if (wheelspin && slip > 0.08 && speed > 1.5) {
-      const squealFreq = 980 + speed * 5.4 + slip * 520;
-      smoothParam(this.tyreOsc.frequency, squealFreq, now, 0.03);
+      const scrubFreq = 560 + Math.min(520, speed * 2.2 + slip * 260);
+      smoothParam(this.tyreNoiseFilter.frequency, scrubFreq, now, 0.04);
       smoothParam(
-        this.tyreGain.gain,
-        (0.012 + slip * 0.045) * volumeScale * sfxVolume,
+        this.tyreNoiseGain.gain,
+        (0.020 + slip * 0.050) * volumeScale * sfxVolume,
         now,
         0.035
       );
+      smoothParam(this.tyreGain.gain, 0.0001, now, 0.025);
 
       if (!this.prev.wheelspin && this.cooldowns.chirp <= 0) {
         this.playTyreChirp();
         this.cooldowns.chirp = 0.32;
       }
     } else {
+      smoothParam(this.tyreNoiseGain.gain, 0.0001, now, 0.04);
       smoothParam(this.tyreGain.gain, 0.0001, now, 0.04);
     }
 
@@ -768,7 +821,7 @@ class UpgradeAudioVoice {
   fadeOut() {
     if (!this.ctx || this.destroyed) return;
     const now = this.ctx.currentTime;
-    [this.turboGain, this.gearGain, this.gearUpperGain, this.tyreGain].forEach(gain => {
+    [this.turboGain, this.turboNoiseGain, this.gearGain, this.gearUpperGain, this.tyreGain, this.tyreNoiseGain].forEach(gain => {
       gain.gain.cancelScheduledValues(now);
       gain.gain.setTargetAtTime(0.0001, now, 0.035);
     });
@@ -778,15 +831,17 @@ class UpgradeAudioVoice {
     if (!this.ctx || this.destroyed) return;
     this.destroyed = true;
 
-    [this.turboOsc, this.gearOsc, this.gearUpperOsc, this.tyreOsc].forEach(osc => {
+    [this.turboOsc, this.turboNoise, this.gearOsc, this.gearUpperOsc, this.tyreOsc, this.tyreNoise].forEach(osc => {
       try { osc.stop(); } catch (e) {}
       try { osc.disconnect(); } catch (e) {}
     });
 
-    [this.turboGain, this.gearGain, this.gearUpperGain, this.tyreGain].forEach(gain => {
+    [this.turboGain, this.turboNoiseGain, this.gearGain, this.gearUpperGain, this.tyreGain, this.tyreNoiseGain].forEach(gain => {
       try { gain.disconnect(); } catch (e) {}
     });
 
+    try { this.turboNoiseFilter.disconnect(); } catch (e) {}
+    try { this.tyreNoiseFilter.disconnect(); } catch (e) {}
     try { this.output.disconnect(); } catch (e) {}
     try { this.panner.disconnect(); } catch (e) {}
   }
