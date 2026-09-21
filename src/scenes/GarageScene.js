@@ -576,6 +576,7 @@ export default class GarageScene extends Phaser.Scene {
     this.engineMode = true;
 
     this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => item.box.disableInteractive());
     this.saveButton?.disableInteractive();
     this.meetButton?.disableInteractive();
 
@@ -735,6 +736,7 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePartRows = {};
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
 
@@ -1044,12 +1046,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1090, 205, 100, 38, 0x151d28, 1)
+    const close = add(this.add.rectangle(1090, 225, 100, 38, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1090, 205, 'CLOSE', {
+    add(this.add.text(1090, 225, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
