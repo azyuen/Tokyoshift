@@ -11,6 +11,21 @@ import {
   getEngineTuningCount,
   applyEngineTuning,
 } from '../data/tuning.js?v=20260921-r57';
+import {
+  DRIVETRAIN_PART_ORDER,
+  EXHAUST_NOS_PART_ORDER,
+  DRIVETRAIN_TUNING_PARTS,
+  EXHAUST_NOS_TUNING_PARTS,
+  normaliseDrivetrainTuning,
+  normaliseExhaustNosTuning,
+  getDrivetrainTuning,
+  getExhaustNosTuning,
+  getDrivetrainUpgradePathCost,
+  getExhaustNosUpgradePathCost,
+  getDrivetrainCartCost,
+  getExhaustNosCartCost,
+  applySecondaryTuning,
+} from '../data/secondaryTuning.js?v=20260921-r65';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r60';
@@ -51,6 +66,10 @@ export default class GarageScene extends Phaser.Scene {
     this.engineModalObjects = [];
     this.engineHotspotObjects = [];
     this.engineHelperObjects = [];
+    this.secondaryMode = null;
+    this.secondaryModeObjects = [];
+    this.secondaryModalObjects = [];
+    this.secondaryHelperObjects = [];
 
     this.drawScene();
     this.buildHeader();
@@ -250,9 +269,17 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(38);
 
       box.on('pointerdown', () => {
+        if (!this.selectedCarId) return;
         if (name === 'ENGINE') {
-          if (!this.selectedCarId) return;
           this.enterEngineMode();
+          return;
+        }
+        if (name === 'DRIVETRAIN') {
+          this.enterSecondaryTuningMode('drivetrain');
+          return;
+        }
+        if (name === 'EXHAUST / NOS') {
+          this.enterSecondaryTuningMode('exhaustNos');
           return;
         }
         this.selectUpgrade(name);
@@ -445,7 +472,7 @@ export default class GarageScene extends Phaser.Scene {
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
-    if (this.engineMode) {
+    if (this.engineMode || this.secondaryMode) {
       if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
       return;
     }
@@ -793,21 +820,21 @@ export default class GarageScene extends Phaser.Scene {
     const hotspots = {
       ecu: {
         x: clampX(frontX - 118),
-        y: wheelY - 42,
-        lx: clampX(frontX - 158),
-        ly: wheelY - 92,
+        y: wheelY - 38,
+        lx: clampX(frontX - 178),
+        ly: wheelY - 58,
       },
       intake: {
-        x: clampX(frontX + 72),
-        y: wheelY - 52,
-        lx: clampX(frontX + 102),
-        ly: wheelY - 98,
+        x: clampX(frontX + 78),
+        y: wheelY - 48,
+        lx: clampX(frontX + 112),
+        ly: wheelY - 106,
       },
       turbo: {
-        x: clampX(frontX - 58),
-        y: wheelY - 52,
-        lx: clampX(frontX - 104),
-        ly: wheelY - 98,
+        x: clampX(frontX - 48),
+        y: wheelY - 102,
+        lx: clampX(frontX - 74),
+        ly: wheelY - 150,
       },
       intercooler: {
         x: clampX(carRight - 76),
@@ -859,7 +886,7 @@ export default class GarageScene extends Phaser.Scene {
     if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
 
     const x = 875;
-    const feetY = 508;
+    const feetY = 494;
     const targetHeight = 282;
     const depth = 8.4;
 
@@ -1112,6 +1139,505 @@ export default class GarageScene extends Phaser.Scene {
     this.currentEngineTuning = getEngineTuning(carStates[this.selectedCarId]);
     this.pendingEngineTuning = { ...this.currentEngineTuning };
     this.refreshEngineMode();
+    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
+  }
+
+  enterSecondaryTuningMode(mode) {
+    if (this.engineMode || this.secondaryMode || this.engineTransitioning || !this.selectedCarId) return;
+    this.engineTransitioning = true;
+
+    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
+      .setDepth(165)
+      .setAlpha(0)
+      .setInteractive();
+
+    this.tweens.add({
+      targets: veil,
+      alpha: 1,
+      duration: 210,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.activateSecondaryTuningMode(mode);
+        this.tweens.add({
+          targets: veil,
+          alpha: 0,
+          duration: 280,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            veil.destroy();
+            this.engineTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
+  activateSecondaryTuningMode(mode) {
+    if (this.engineMode || this.secondaryMode || !this.selectedCarId) return;
+
+    const isDrivetrain = mode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const order = isDrivetrain ? DRIVETRAIN_PART_ORDER : EXHAUST_NOS_PART_ORDER;
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+
+    this.secondaryMode = mode;
+    this.currentSecondaryTuning = isDrivetrain
+      ? getDrivetrainTuning(state)
+      : getExhaustNosTuning(state);
+    this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+
+    this.upgradeButtons.forEach(item => item.box.disableInteractive());
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.disableInteractive()
+        .setFillStyle(active ? 0x10263a : 0x080d12, 1)
+        .setStrokeStyle(active ? 3 : 1, active ? 0x41dcff : 0x29343d, active ? 1 : 0.65);
+      item.label.setColor(active ? '#ffffff' : '#56636b');
+      item.display?.forEach(obj => obj?.setAlpha?.(active ? 1 : 0.22));
+    });
+    this.saveButton?.disableInteractive();
+    this.meetButton?.disableInteractive();
+
+    const add = obj => {
+      this.secondaryModeObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      1
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
+
+    add(this.add.text(SIDE.x + 34, SIDE.y + 28, isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: isDrivetrain ? '12px' : '11px',
+      color: '#e9f8ff',
+    }).setDepth(73));
+
+    this.secondarySpriteGraphics = add(this.add.graphics().setDepth(73));
+    this.drawSecondarySchematic(mode);
+
+    this.secondaryPartRows = {};
+    order.forEach((partId, i) => {
+      const y = SIDE.y + 232 + i * 58;
+      const part = parts[partId];
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        48,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff3ff'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+        fontFamily: BODY_FONT, fontSize: '9px', color: '#7d9bad', fontStyle: '600'
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8db6cc'
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openSecondaryPartSelector(partId));
+      this.secondaryPartRows[partId] = { box, label, detail, level };
+    });
+
+    this.secondaryPreviewText = add(this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 510,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#91b6ca',
+        lineSpacing: 4,
+      }
+    ).setDepth(73));
+
+    this.secondaryApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      SIDE.w - 36,
+      44,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+
+    this.secondaryApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 624,
+      'NO PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    const backButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 678, '<  BACK TO WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(73));
+
+    backButton.on('pointerdown', () => this.leaveSecondaryTuningMode());
+
+    this.addDaichiSecondaryHelper(mode);
+    this.refreshSecondaryTuningMode();
+  }
+
+  leaveSecondaryTuningMode() {
+    this.closeSecondaryPartSelector();
+    this.secondaryModeObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryHelperObjects.forEach(obj => obj?.destroy?.());
+
+    this.secondaryModeObjects = [];
+    this.secondaryHelperObjects = [];
+    this.secondaryMode = null;
+    this.secondaryPartRows = {};
+
+    this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
+    this.thumbButtons.forEach(item => {
+      const active = item.id === this.selectedCarId;
+      item.box.setInteractive({ useHandCursor: true })
+        .setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+        .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+      item.label.setColor(active ? '#ffffff' : '#b8cad7');
+      item.display?.forEach(obj => obj?.setAlpha?.(1));
+    });
+    this.saveButton?.setInteractive({ useHandCursor: true });
+    this.meetButton?.setInteractive({ useHandCursor: true });
+
+    this.refreshWorkshopSpecs();
+  }
+
+  refreshWorkshopSpecs() {
+    if (!this.selectedCarId) return;
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const engineBuild = applyEngineTuning(car, engines[car.engine], state);
+    const fullBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+    this.specValueTexts.power.setText(fullBuild.car.powerKW + ' kW');
+    this.specValueTexts.torque.setText(fullBuild.car.torqueNm + ' Nm');
+    this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
+  }
+
+  addDaichiSecondaryHelper(mode) {
+    const daichi = characters.daichiSakamoto;
+    if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
+
+    const cfg = mode === 'drivetrain'
+      ? { x: 690, feetY: 506, targetHeight: 258 }
+      : { x: 520, feetY: 506, targetHeight: 258 };
+    const depth = 8.4;
+
+    const softShadow = this.add.ellipse(cfg.x + 6, cfg.feetY - 8, 72, 21, 0x000000, 0.55)
+      .setDepth(depth - 0.2);
+    const contactShadow = this.add.ellipse(cfg.x + 5, cfg.feetY - 5, 50, 13, 0x000000, 0.78)
+      .setDepth(depth - 0.1);
+
+    const sprite = this.add.image(cfg.x, cfg.feetY, daichi.visual.spriteKey)
+      .setOrigin(0.5, 1)
+      .setDepth(depth);
+
+    const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
+    sprite.setScale(cfg.targetHeight / source.height);
+
+    this.secondaryHelperObjects.push(softShadow, contactShadow, sprite);
+  }
+
+  drawSecondarySchematic(mode) {
+    const g = this.secondarySpriteGraphics;
+    if (!g) return;
+    g.clear();
+
+    if (this.secondarySpriteImage) {
+      this.secondarySpriteImage.destroy();
+      this.secondarySpriteImage = null;
+    }
+
+    const car = cars[this.selectedCarId];
+    const key = mode === 'drivetrain'
+      ? car?.visual?.drivetrainKey
+      : car?.visual?.exhaustNosKey;
+    const cx = SIDE.x + SIDE.w - 92;
+    const cy = SIDE.y + 105;
+
+    if (key && this.textures.exists(key)) {
+      this.secondarySpriteImage = this.add.image(cx, cy, key)
+        .setDepth(74)
+        .setOrigin(0.5);
+      this.secondaryModeObjects.push(this.secondarySpriteImage);
+
+      const source = this.textures.get(key).getSourceImage();
+      const fit = Math.min(150 / source.width, 100 / source.height);
+      this.secondarySpriteImage.setScale(fit);
+      return;
+    }
+
+    if (mode === 'drivetrain') {
+      g.lineStyle(5, 0x93aab8, 1);
+      g.strokeRoundedRect(cx - 62, cy - 26, 92, 52, 8);
+      g.lineBetween(cx - 86, cy, cx - 62, cy);
+      g.lineBetween(cx + 30, cy, cx + 78, cy);
+      g.fillStyle(0x5d6e79, 1).fillCircle(cx - 90, cy, 18);
+      g.fillStyle(0x5d6e79, 1).fillCircle(cx + 82, cy, 18);
+      g.fillStyle(0x263744, 1).fillCircle(cx + 4, cy, 18);
+    } else {
+      g.lineStyle(6, 0x8fa2ad, 1);
+      g.lineBetween(cx - 78, cy + 14, cx + 18, cy + 14);
+      g.strokeRoundedRect(cx + 18, cy - 7, 72, 42, 10);
+      g.lineStyle(3, 0x48bde8, 1);
+      g.strokeRoundedRect(cx - 62, cy - 48, 30, 62, 10);
+      g.fillStyle(0x2d6ea5, 1).fillRoundedRect(cx - 58, cy - 44, 22, 54, 8);
+      g.fillStyle(0xd6eef8, 1).fillRect(cx - 55, cy - 24, 16, 8);
+    }
+  }
+
+  getPendingSecondaryCost() {
+    if (!this.currentSecondaryTuning || !this.pendingSecondaryTuning || !this.secondaryMode) return 0;
+    return this.secondaryMode === 'drivetrain'
+      ? getDrivetrainCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning)
+      : getExhaustNosCartCost(this.currentSecondaryTuning, this.pendingSecondaryTuning);
+  }
+
+  refreshSecondaryTuningMode() {
+    if (!this.secondaryMode || !this.selectedCarId) return;
+
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const car = cars[this.selectedCarId];
+    const carStates = this.registry.get('carStates') || {};
+    const state = carStates[this.selectedCarId] || {};
+    const previewState = {
+      ...state,
+      ...(isDrivetrain
+        ? { drivetrainTuning: this.pendingSecondaryTuning }
+        : { exhaustNosTuning: this.pendingSecondaryTuning }),
+    };
+
+    const engineBuild = applyEngineTuning(car, engines[car.engine], previewState);
+    const preview = applySecondaryTuning(engineBuild.car, engineBuild.engine, previewState);
+
+    Object.entries(this.secondaryPartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentSecondaryTuning[partId];
+      const pending = this.pendingSecondaryTuning[partId];
+      const spec = parts[partId].levels[pending];
+
+      row.level.setText(pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending);
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    if (isDrivetrain) {
+      const base = cars[this.selectedCarId];
+      const launchGain = Math.round((preview.car.launchLoadMultiplier / Math.max(0.01, base.launchLoadMultiplier || 1) - 1) * 100);
+      const gripGain = Math.round((preview.car.tyreGrip / Math.max(0.01, base.tyreGrip || 1) - 1) * 100);
+      const clutchGain = Math.round((preview.car.clutchStrength / Math.max(1, base.clutchStrength || 1) - 1) * 100);
+      const shiftGain = Math.round((1 - (preview.car.shiftTimeScale || 1)) * 100);
+      this.secondaryPreviewText?.setText(
+        'LAUNCH   +' + Math.max(0, launchGain) + '%\n' +
+        'SHIFT    ' + Math.max(0, shiftGain) + '% FASTER\n' +
+        'GRIP     +' + Math.max(0, gripGain) + '%\n' +
+        'CLUTCH   +' + Math.max(0, clutchGain) + '%'
+      );
+    } else {
+      this.secondaryPreviewText?.setText(
+        'POWER    ' + preview.car.powerKW + ' kW\n' +
+        'NITROUS  ' + Number(preview.car.nosPower || 0) + ' hp\n' +
+        'CAPACITY ' + Number(preview.car.nosCapacitySeconds || 0).toFixed(1) + ' sec\n' +
+        'WEIGHT   ' + Math.round(preview.car.vehicleMassKg) + ' kg'
+      );
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const cost = this.getPendingSecondaryCost();
+    this.secondaryApplyButton?.removeAllListeners('pointerdown');
+
+    if (cost <= 0) {
+      this.secondaryApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.secondaryApplyText?.setText('NO PARTS SELECTED').setColor('#758e94');
+      return;
+    }
+
+    const affordable = cash >= cost;
+    this.secondaryApplyButton?.setInteractive({ useHandCursor: true })
+      .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+      .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+
+    this.secondaryApplyText?.setText(
+      affordable
+        ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US')
+        : 'NEED ¥ ' + cost.toLocaleString('en-US')
+    ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+
+    this.secondaryApplyButton?.on('pointerdown', () => this.applyPendingSecondaryUpgrades());
+  }
+
+  openSecondaryPartSelector(partId) {
+    this.closeSecondaryPartSelector();
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
+    const part = parts[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.secondaryModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 560, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(430, 205, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eefaff'
+    }).setDepth(depth + 2));
+
+    const installed = this.currentSecondaryTuning[partId];
+
+    part.levels.forEach((spec, index) => {
+      const y = 305 + index * 82;
+      const selected = this.pendingSecondaryTuning[partId] === spec.level;
+      const selectable = spec.level >= installed;
+      const pathCost = isDrivetrain
+        ? getDrivetrainUpgradePathCost(partId, installed, spec.level)
+        : getExhaustNosUpgradePathCost(partId, installed, spec.level);
+
+      const box = add(this.add.rectangle(780, y, 660, 64, selected ? 0x123047 : 0x0b1724, 1)
+        .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+        .setDepth(depth + 2));
+
+      add(this.add.text(470, y - 13, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(470, y + 14, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed) price = '¥ ' + pathCost.toLocaleString('en-US');
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1090, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.pendingSecondaryTuning[partId] = spec.level;
+          this.closeSecondaryPartSelector();
+          this.refreshSecondaryTuningMode();
+        });
+      }
+    });
+
+    const close = add(this.add.rectangle(1090, 225, 100, 38, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(1090, 225, 'CLOSE', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    close.on('pointerdown', () => this.closeSecondaryPartSelector());
+    blocker.on('pointerdown', () => this.closeSecondaryPartSelector());
+  }
+
+  closeSecondaryPartSelector() {
+    this.secondaryModalObjects.forEach(obj => obj?.destroy?.());
+    this.secondaryModalObjects = [];
+  }
+
+  applyPendingSecondaryUpgrades() {
+    const cost = this.getPendingSecondaryCost();
+    if (cost <= 0 || !this.secondaryMode) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const isDrivetrain = this.secondaryMode === 'drivetrain';
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const tuning = isDrivetrain
+      ? normaliseDrivetrainTuning(this.pendingSecondaryTuning)
+      : normaliseExhaustNosTuning(this.pendingSecondaryTuning);
+
+    const updated = {
+      ...existing,
+      stock: false,
+      acquiredVia: existing.acquiredVia || 'garage',
+      ...(isDrivetrain
+        ? { drivetrainTuning: tuning }
+        : { exhaustNosTuning: tuning }),
+    };
+
+    if (!isDrivetrain && tuning.nosKit > 0) {
+      const kit = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[tuning.nosKit];
+      const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[tuning.nitrousShot];
+      updated.nosInstalled = true;
+      updated.nosCapacitySeconds = Number(kit.capacitySeconds || 0);
+      updated.nosPower = Number(shot.powerHp || 0);
+    }
+
+    carStates[this.selectedCarId] = updated;
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentSecondaryTuning = isDrivetrain
+      ? getDrivetrainTuning(updated)
+      : getExhaustNosTuning(updated);
+    this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+    this.refreshSecondaryTuningMode();
     this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
 
