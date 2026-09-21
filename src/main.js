@@ -1,8 +1,8 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r33';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r33';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r33';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r33';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r33';
+import BootScene from './scenes/BootScene.js?v=20260921-r34';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r34';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r34';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r34';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r34';
 
 
 // Phone readability pass.
@@ -17,7 +17,7 @@ Phaser.GameObjects.GameObjectFactory.prototype.text = function(x, y, text, style
   if (raw != null) {
     const numeric = typeof raw === 'number' ? raw : parseFloat(raw);
     if (Number.isFinite(numeric)) {
-      const boosted = Math.max(18, Math.round(numeric * 2.0));
+      const boosted = Math.max(14, Math.round(numeric * 1.60));
       next.fontSize = typeof raw === 'number' ? boosted : boosted + 'px';
     }
   }
