@@ -1,5 +1,5 @@
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
-import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=20260921-r57';
+import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=20260921-r64';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -252,6 +252,19 @@ export function showSettingsPanel(scene) {
       return obj;
     };
 
+    // Phaser DOM inputs live above the canvas regardless of GameObject depth.
+    // Hide them while the restart confirmation is open so the modal truly covers Settings.
+    const settingsNameDom = scene._settingsNameDom;
+    try {
+      settingsNameDom?.node?.querySelectorAll?.('input')?.forEach?.(input => input.blur());
+      settingsNameDom?.setVisible?.(false);
+    } catch (e) {}
+
+    const closeConfirm = () => {
+      destroyObjects(confirmObjects);
+      try { settingsNameDom?.setVisible?.(true); } catch (e) {}
+    };
+
     addConfirm(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
       .setDepth(210)
       .setInteractive());
@@ -303,7 +316,7 @@ export function showSettingsPanel(scene) {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe2e8'
     }).setOrigin(0.5).setDepth(213));
 
-    cancel.on('pointerdown', () => destroyObjects(confirmObjects));
+    cancel.on('pointerdown', closeConfirm);
     confirm.on('pointerdown', () => {
       clearAllSaves();
       close();
