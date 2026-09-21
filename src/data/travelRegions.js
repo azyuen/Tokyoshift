@@ -1,3 +1,5 @@
+import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260921-r74';
+
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
 export const LOCAL_MOVE_COST = 200;
@@ -11,7 +13,7 @@ export const TRAVEL_REGIONS = {
     baseCost: 0,
     mapX: 0.722,
     mapY: 0.327,
-    description: 'Your home workshop on the bay side. Tune, save and manage your garage here.',
+    description: 'Your home workshop on the bay. Tune and manage your garage here.',
     locations: [
       {
         id: 'shinonomeWorkshop',
@@ -20,25 +22,35 @@ export const TRAVEL_REGIONS = {
         kind: 'home',
         costOffset: 0,
         available: true,
-        note: 'Tune cars, save your run and manage the garage.',
+        garageTier: 0,
+        capacity: WORKSHOP_TIERS[0].capacity,
+        note: 'Your original home workshop.',
       },
       {
         id: 'shinonomeCanalYard',
-        label: 'CANAL YARD',
-        difficulty: 'EASY',
+        label: 'CANAL YARD GARAGE',
+        difficulty: 'UPGRADE',
+        kind: 'garageUpgrade',
         costOffset: 0,
-        available: false,
-        note: 'Local Shinonome meet // coming soon.',
+        available: true,
+        garageTier: 1,
+        unlockCost: WORKSHOP_TIERS[1].unlockCost,
+        capacity: WORKSHOP_TIERS[1].capacity,
+        note: 'A larger waterside tuning bay with room for six cars.',
       },
       {
         id: 'shinonomeWarehouseStrip',
-        label: 'WAREHOUSE STRIP',
-        difficulty: 'EASY',
-        costOffset: 100,
-        available: false,
-        note: 'Warehouse-side local meet // coming soon.',
+        label: 'WAREHOUSE HQ',
+        difficulty: 'UPGRADE',
+        kind: 'garageUpgrade',
+        costOffset: 0,
+        available: true,
+        garageTier: 2,
+        requiresTier: 1,
+        unlockCost: WORKSHOP_TIERS[2].unlockCost,
+        capacity: WORKSHOP_TIERS[2].capacity,
+        note: 'A full warehouse tuning HQ with room for eight cars.',
       },
-    ],
   },
 
   ODAIBA: {
