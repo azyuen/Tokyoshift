@@ -676,20 +676,32 @@ export default class RaceScene extends Phaser.Scene {
     });
 
     if (settlement) {
-      const delta = settlement.cashDelta;
-      const moneyText = delta > 0
-        ? '+¥ ' + delta.toLocaleString('en-US')
-        : delta < 0
-          ? '-¥ ' + Math.abs(delta).toLocaleString('en-US')
-          : 'NO CASH CHANGE';
+      if (this.raceDeal === 'PINK_SLIP') {
+        this.add.text(panelX, 449, settlement.gameOver
+          ? settlement.pinkMessage + '   //   NO CARS LEFT'
+          : settlement.pinkMessage, {
+          fontFamily: dataFont,
+          fontSize: '11px',
+          color: settlement.playerWon ? '#73f5a5' : '#ff7d98',
+          fontStyle: 'bold',
+          letterSpacing: 1,
+        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+      } else {
+        const delta = settlement.cashDelta;
+        const moneyText = delta > 0
+          ? '+¥ ' + delta.toLocaleString('en-US')
+          : delta < 0
+            ? '-¥ ' + Math.abs(delta).toLocaleString('en-US')
+            : 'NO CASH CHANGE';
 
-      this.add.text(panelX, 449, moneyText + '   //   BALANCE ¥ ' + settlement.cash.toLocaleString('en-US'), {
-        fontFamily: dataFont,
-        fontSize: '11px',
-        color: delta > 0 ? '#73f5a5' : delta < 0 ? '#ff7d98' : '#aab9c6',
-        fontStyle: 'bold',
-        letterSpacing: 1,
-      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+        this.add.text(panelX, 449, moneyText + '   //   BALANCE ¥ ' + settlement.cash.toLocaleString('en-US'), {
+          fontFamily: dataFont,
+          fontSize: '11px',
+          color: delta > 0 ? '#73f5a5' : delta < 0 ? '#ff7d98' : '#aab9c6',
+          fontStyle: 'bold',
+          letterSpacing: 1,
+        }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0);
+      }
     }
 
     const addButton = (x, label, stroke, onPress) => {
@@ -710,15 +722,47 @@ export default class RaceScene extends Phaser.Scene {
       return { button, text };
     };
 
-    const currentCash = this.registry.get('cash') ?? 0;
-    const canRematch = this.raceMode !== 'SINGLE' || currentCash >= this.raceStake;
+    if (settlement?.gameOver) {
+      const hasManualSave = Boolean(readManualSave());
 
-    if (canRematch) {
-      addButton(660, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
+      if (hasManualSave) {
+        addButton(660, 'RESTORE SAVE', 0x45d7ff, () => {
+          const restored = restoreManualSave(this.registry);
+          this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+        });
+      } else {
+        addButton(660, 'NO SAVE', 0x7d5660, () => {
+          clearAllSaves();
+          this.scene.start('CharacterSelectScene');
+        });
+      }
+
+      addButton(900, 'NEW RUN', 0xff4a8d, () => {
+        clearAllSaves();
+        this.scene.start('CharacterSelectScene');
+      });
     } else {
-      addButton(660, 'LOW CASH', 0x7d5660, () => this.scene.start('MeetScene'));
+      let saveControl = null;
+      saveControl = addButton(540, 'SAVE GAME', 0x62e8c7, () => {
+        saveManualState(this.registry);
+        saveControl.text.setText('SAVED');
+        saveControl.button.disableInteractive().setFillStyle(0x12352e, 0.98);
+      });
+
+      if (this.raceDeal === 'PINK_SLIP') {
+        addButton(780, 'WORKSHOP', 0x45d7ff, () => this.scene.start('GarageScene'));
+      } else {
+        const currentCash = this.registry.get('cash') ?? 0;
+        const canRematch = this.raceMode !== 'SINGLE' || currentCash >= this.raceStake;
+        if (canRematch) {
+          addButton(780, 'RACE AGAIN', 0x45d7ff, () => this.scene.restart());
+        } else {
+          addButton(780, 'WORKSHOP', 0x45d7ff, () => this.scene.start('GarageScene'));
+        }
+      }
+
+      addButton(1020, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
     }
-    addButton(900, 'MEET', 0xff4a8d, () => this.scene.start('MeetScene'));
   }
 
   settleRace(playerWon) {
