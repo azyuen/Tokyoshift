@@ -600,40 +600,42 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(70));
 
-    add(this.add.text(SIDE.x + 20, SIDE.y + 18, 'ENGINE', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
-    }).setDepth(72));
-
-    this.engineModeSubtitle = add(this.add.text(SIDE.x + 20, SIDE.y + 48, car.engineModel, {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#4de1ff'
-    }).setDepth(72));
-
     this.engineInset = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 125,
-      SIDE.w - 38,
-      118,
+      SIDE.y + 102,
+      SIDE.w - 36,
+      178,
       0x0b1724,
       1
-    ).setStrokeStyle(2, 0x315470, 1)
+    ).setStrokeStyle(2, 0x3b6f8d, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(71));
 
+    this.engineInset.on('pointerover', () => {
+      this.engineInset.setStrokeStyle(2, 0x43dfff, 1);
+    });
+    this.engineInset.on('pointerout', () => {
+      this.engineInset.setStrokeStyle(2, 0x3b6f8d, 1);
+    });
     this.engineInset.on('pointerdown', () => this.openEnginePartSelector('engine'));
 
-    this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
+    add(this.add.text(SIDE.x + 24, SIDE.y + 28, 'ENGINE', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#e9f8ff'
+    }).setDepth(73));
 
     this.engineInsetLevelText = add(this.add.text(
-      SIDE.x + 26,
-      SIDE.y + 88,
+      SIDE.x + 24,
+      SIDE.y + 72,
       '',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
-        color: '#eaf8ff',
+        color: '#7fdfff',
         align: 'left',
       }
     ).setOrigin(0, 0).setDepth(74));
+
+    this.engineInsetGraphics = add(this.add.graphics().setDepth(73));
 
     const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
     this.enginePartRows = {};
@@ -781,22 +783,22 @@ export default class GarageScene extends Phaser.Scene {
         ly: wheelY - 92,
       },
       intake: {
-        x: clampX(frontX + 18),
-        y: wheelY - 54,
-        lx: clampX(frontX + 62),
-        ly: wheelY - 102,
+        x: clampX(frontX + 72),
+        y: wheelY - 52,
+        lx: clampX(frontX + 102),
+        ly: wheelY - 98,
       },
       turbo: {
-        x: clampX(frontX - 28),
-        y: wheelY - 16,
-        lx: clampX(frontX - 92),
-        ly: wheelY + 28,
+        x: clampX(frontX - 18),
+        y: wheelY - 104,
+        lx: clampX(frontX - 78),
+        ly: wheelY - 142,
       },
       intercooler: {
         x: clampX(carRight - 76),
-        y: wheelY + 4,
-        lx: clampX(carRight - 110),
-        ly: wheelY + 52,
+        y: wheelY - 14,
+        lx: clampX(carRight - 112),
+        ly: wheelY + 30,
       },
       exhaust: {
         x: clampX(rearX - 92),
@@ -842,8 +844,8 @@ export default class GarageScene extends Phaser.Scene {
     if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
 
     const x = 875;
-    const feetY = 482;
-    const targetHeight = 292;
+    const feetY = 508;
+    const targetHeight = 268;
     const depth = 8.4;
 
     const softShadow = this.add.ellipse(x + 6, feetY - 8, 74, 22, 0x000000, 0.55)
@@ -874,7 +876,7 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[this.selectedCarId];
     const engineKey = car?.visual?.engineKey;
     const cx = SIDE.x + SIDE.w - 92;
-    const cy = SIDE.y + 125;
+    const cy = SIDE.y + 104;
 
     if (engineKey && this.textures.exists(engineKey)) {
       this.inlineEngineSprite = this.add.image(cx, cy, engineKey)
@@ -883,7 +885,7 @@ export default class GarageScene extends Phaser.Scene {
       this.engineModeObjects.push(this.inlineEngineSprite);
 
       const source = this.textures.get(engineKey).getSourceImage();
-      const fit = Math.min(150 / source.width, 92 / source.height);
+      const fit = Math.min(142 / source.width, 96 / source.height);
       this.inlineEngineSprite.setScale(fit * (1 + level * 0.045));
       return;
     }
