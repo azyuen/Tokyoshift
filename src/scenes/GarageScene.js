@@ -115,7 +115,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.garagePageSize = 4;
     this.garagePageObjects = [];
-    const selectedGarageIndex = Math.max(0, this.ownedCarIds.indexOf(this.selectedCarId));
+    const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
     this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
 
     this.drawScene();
