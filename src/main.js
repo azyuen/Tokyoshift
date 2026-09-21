@@ -1,9 +1,10 @@
-import BootScene from './scenes/BootScene.js?v=20260921-r54';
-import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260921-r54';
-import GarageScene from './scenes/GarageScene.js?v=20260921-r54';
-import MeetScene from './scenes/MeetScene.js?v=20260921-r54';
-import RaceScene from './scenes/RaceScene.js?v=20260921-r54';
-import ResultScene from './scenes/ResultScene.js?v=20260921-r54';
+import BootScene from './scenes/BootScene.js?v=20260921-r55';
+import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260921-r55';
+import GarageScene from './scenes/GarageScene.js?v=20260921-r55';
+import EngineTuningScene from './scenes/EngineTuningScene.js?v=20260921-r55';
+import MeetScene from './scenes/MeetScene.js?v=20260921-r55';
+import RaceScene from './scenes/RaceScene.js?v=20260921-r55';
+import ResultScene from './scenes/ResultScene.js?v=20260921-r55';
 
 
 // Phone readability pass.
@@ -46,7 +47,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, CharacterSelectScene, GarageScene, MeetScene, RaceScene, ResultScene],
+  scene: [BootScene, CharacterSelectScene, GarageScene, EngineTuningScene, MeetScene, RaceScene, ResultScene],
 };
 
 window.TOKYO_SHIFT = new Phaser.Game(config);
