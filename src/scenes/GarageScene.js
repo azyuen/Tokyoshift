@@ -26,7 +26,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260921-r66';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r76';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r86';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r84';
@@ -34,7 +34,15 @@ import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import {
   getGarageCapacity,
   getWorkshopByLocationId,
-} from '../data/workshopProgression.js?v=20260921-r76';
+  getWorkshopStorageCapacity,
+  getUnlockedWorkshops,
+  getCarsInWorkshop,
+  getWorkshopUsage,
+  normaliseCarGarageLocations,
+  applyWorkshopServiceCost,
+  canInstallTuningLevel,
+  getWorkshopRequirementLabel,
+} from '../data/workshopProgression.js?v=20260922-r86';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -65,11 +73,20 @@ export default class GarageScene extends Phaser.Scene {
     playMusic('workshop');
 
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    this.activeWorkshopId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+    this.carGarageLocations = normaliseCarGarageLocations(
+      this.ownedCarIds,
+      this.registry.get('carGarageLocations') || {},
+      Number(this.registry.get('garageTier') || 0)
+    );
+    this.registry.set('carGarageLocations', this.carGarageLocations);
 
-    this.selectedCarId = this.registry.get('selectedCarId') || this.ownedCarIds[0] || null;
-    if (!cars[this.selectedCarId] || !this.ownedCarIds.includes(this.selectedCarId)) {
-      this.selectedCarId = this.ownedCarIds[0] || null;
-    }
+    const localCars = this.getCurrentWorkshopCars();
+    const requestedCarId = this.registry.get('selectedCarId');
+    this.selectedCarId = localCars.includes(requestedCarId)
+      ? requestedCarId
+      : localCars[0] || null;
+
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
     this.registry.set('meetStranded', false);
