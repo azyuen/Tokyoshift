@@ -40,7 +40,7 @@ export const MEET_LOCATIONS = {
     timeOfDay: 'night',
     difficulty: 'EASY',
     minRating: 2,
-    maxRating: 3,
+    maxRating: 2,
     rewardMultiplier: 1.0,
     bgKey: 'meetOdaiba7ElevenNight',
   },
@@ -50,10 +50,10 @@ export const MEET_LOCATIONS = {
     location: 'gundam_plaza',
     label: 'GUNDAM PLAZA',
     timeOfDay: 'day',
-    difficulty: 'MED',
-    minRating: 3,
-    maxRating: 4,
-    rewardMultiplier: 1.35,
+    difficulty: 'EASY',
+    minRating: 2,
+    maxRating: 3,
+    rewardMultiplier: 1.1,
     bgKey: 'meetOdaibaGundamPlazaDay',
   },
   odaibaMiraikan: {
@@ -62,10 +62,10 @@ export const MEET_LOCATIONS = {
     location: 'miraikan',
     label: 'MIRAIKAN',
     timeOfDay: 'night',
-    difficulty: 'HARD',
-    minRating: 4,
-    maxRating: 5,
-    rewardMultiplier: 1.75,
+    difficulty: 'MED',
+    minRating: 2,
+    maxRating: 3,
+    rewardMultiplier: 1.25,
     bgKey: 'meetOdaibaMiraikanNight',
   },
 
@@ -77,8 +77,8 @@ export const MEET_LOCATIONS = {
     timeOfDay: 'day',
     difficulty: 'MED',
     minRating: 3,
-    maxRating: 4,
-    rewardMultiplier: 1.4,
+    maxRating: 3,
+    rewardMultiplier: 1.35,
     bgKey: 'meetTatsumiBridgefrontPlazaDay',
   },
   tatsumiSkylineVista: {
@@ -87,10 +87,10 @@ export const MEET_LOCATIONS = {
     location: 'skyline_vista',
     label: 'SKYLINE VISTA',
     timeOfDay: 'night',
-    difficulty: 'HARD',
-    minRating: 4,
-    maxRating: 5,
-    rewardMultiplier: 1.75,
+    difficulty: 'MED',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.5,
     bgKey: 'meetTatsumiSkylineVistaNight',
   },
   tatsumiHarborLoop: {
@@ -99,10 +99,10 @@ export const MEET_LOCATIONS = {
     location: 'harbor_loop',
     label: 'HARBOR LOOP',
     timeOfDay: 'twilight',
-    difficulty: 'ELITE',
-    minRating: 4,
-    maxRating: 5,
-    rewardMultiplier: 2.05,
+    difficulty: 'HARD',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.7,
     bgKey: 'meetTatsumiHarborLoopTwilight',
   },
 
@@ -112,10 +112,10 @@ export const MEET_LOCATIONS = {
     location: 'harbor',
     label: 'HARBOR',
     timeOfDay: 'day',
-    difficulty: 'MED',
-    minRating: 3,
-    maxRating: 4,
-    rewardMultiplier: 1.4,
+    difficulty: 'ELITE',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 2.0,
     bgKey: 'meetDaikokuHarborDay',
   },
   daikokuPA: {
@@ -137,7 +137,7 @@ export const MEET_LOCATIONS = {
     label: 'OPEN LOT',
     timeOfDay: 'night',
     difficulty: 'ELITE',
-    minRating: 4,
+    minRating: 5,
     maxRating: 5,
     rewardMultiplier: 2.2,
     bgKey: 'meetDaikokuOpenLotNight',
@@ -147,7 +147,7 @@ export const MEET_LOCATIONS = {
 export const LOCATION_ORDER_BY_REGION = {
   ODAIBA: ['odaiba7eleven', 'odaibaGundamPlaza', 'odaibaMiraikan'],
   TATSUMI: ['tatsumiBridgefrontPlaza', 'tatsumiSkylineVista', 'tatsumiHarborLoop'],
-  DAIKOKU: ['daikokuHarbor', 'daikokuPA', 'daikokuOpenLot'],
+  DAIKOKU: ['daikokuPA', 'daikokuHarbor', 'daikokuOpenLot'],
 };
 
 export const ALL_MEET_LOCATION_IDS = [
@@ -160,8 +160,8 @@ export function getMeetLocation(id) {
   return MEET_LOCATIONS[id] || MEET_LOCATIONS.odaiba7eleven;
 }
 
-export const LOCAL_TRAVEL_COST = 500;
-export const DISTRICT_TRAVEL_COST = 2500;
+export const LOCAL_TRAVEL_COST = 200;
+export const DISTRICT_TRAVEL_COST = 1000;
 export const WORKSHOP_RETURN_COST = 500;
 
 export function getTravelCost(fromId, toId) {
