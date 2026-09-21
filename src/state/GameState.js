@@ -2,7 +2,7 @@ import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
   inferWorkshopTier,
-} from '../data/workshopProgression.js?v=20260921-r75';
+} from '../data/workshopProgression.js?v=20260921-r76';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -41,6 +41,7 @@ export function createDefaultGameState() {
     meetRosters: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
+    meetStranded: false,
     gameOver: false,
   };
 }
@@ -126,6 +127,7 @@ export function normaliseState(input = {}) {
     defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
       ? [...new Set(input.defeatedRivalKeys)]
       : [],
+    meetStranded: Boolean(input.meetStranded && owned.length > 0),
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
 }
@@ -155,6 +157,7 @@ export function snapshotRegistry(registry) {
     meetRosters: registry.get('meetRosters') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
+    meetStranded: Boolean(registry.get('meetStranded')),
     gameOver: registry.get('gameOver') || false,
   });
 }
