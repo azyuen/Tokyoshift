@@ -1,9 +1,11 @@
 export default class RaceHUD {
-  constructor(scene) {
+  constructor(scene, options = {}) {
     this.scene = scene;
     this.scale = 0.47;
     this.sourceW = 1473;
     this.sourceH = 452;
+    this.hasTurbo = Boolean(options.hasTurbo);
+    this.hasNitrous = Boolean(options.hasNitrous);
 
     this.cluster = scene.add.image(780, 675, 'hudCluster')
       .setOrigin(0.5, 1)
@@ -23,6 +25,13 @@ export default class RaceHUD {
 
     this.speedText = scene.add.text(0, 0, '0', {
       fontFamily: '"Rajdhani", monospace', fontSize: '16px', color: '#dff6ff', fontStyle: '700'
+    }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
+
+    const auxLabelPoint = this.sourcePoint(1048, 383);
+    this.auxLabel = scene.add.text(auxLabelPoint.x, auxLabelPoint.y, this.hasTurbo ? 'BOOST' : 'THR', {
+      fontFamily: '"Silkscreen", monospace',
+      fontSize: '7px',
+      color: '#95afbd',
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.layoutText();
@@ -57,20 +66,31 @@ export default class RaceHUD {
 
     const tach = this.sourcePoint(337, 278);
     const speed = this.sourcePoint(723, 267);
-    const boost = this.sourcePoint(1048, 313);
+    const aux = this.sourcePoint(1048, 313);
 
     this.drawNeedle(tach, t.rpm / 8500, 105 * this.scale, 145, 375, t.rpm > 7900 ? 0xff665a : 0xf7f7f2, 3);
     this.drawNeedle(speed, t.speedKmh / 180, 121 * this.scale, 140, 383, 0xf7f7f2, 3);
-    this.drawNeedle(boost, (t.boostBar + 1.0) / 3.0, 75 * this.scale, 151, 393, 0xf7f7f2, 3);
 
-    const nosStart = this.sourcePoint(1262, 354);
-    const segW = 20 * this.scale;
-    const segH = 36 * this.scale;
-    const segGap = 7 * this.scale;
-    const filled = Math.ceil(Phaser.Math.Clamp(t.nosFraction, 0, 1) * 4 - 0.0001);
-    for (let i = 0; i < 4; i++) {
-      g.fillStyle(i < filled ? 0x4cc8ff : 0x071019, i < filled ? 0.92 : 0.68)
-        .fillRoundedRect(nosStart.x + i * (segW + segGap), nosStart.y, segW, segH, 2);
+    if (this.hasTurbo) {
+      this.drawNeedle(aux, (t.boostBar + 1.0) / 3.0, 75 * this.scale, 151, 393, 0xf7f7f2, 3);
+    } else {
+      // A stock naturally aspirated car has no boost gauge. Re-purpose the
+      // small auxiliary dial as a throttle-position meter instead.
+      g.fillStyle(0x071019, 0.84).fillCircle(aux.x, aux.y, 79 * this.scale);
+      g.lineStyle(2, 0x415c6b, 0.78).strokeCircle(aux.x, aux.y, 70 * this.scale);
+      this.drawNeedle(aux, t.throttle, 62 * this.scale, 151, 393, 0x7fe5ff, 3);
+    }
+
+    if (this.hasNitrous) {
+      const nosStart = this.sourcePoint(1262, 354);
+      const segW = 20 * this.scale;
+      const segH = 36 * this.scale;
+      const segGap = 7 * this.scale;
+      const filled = Math.ceil(Phaser.Math.Clamp(t.nosFraction, 0, 1) * 4 - 0.0001);
+      for (let i = 0; i < 4; i++) {
+        g.fillStyle(i < filled ? 0x4cc8ff : 0x071019, i < filled ? 0.92 : 0.68)
+          .fillRoundedRect(nosStart.x + i * (segW + segGap), nosStart.y, segW, segH, 2);
+      }
     }
 
     if (t.wheelspin) {
