@@ -2,6 +2,8 @@
   color-scheme: dark;
   background: #05070d;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --ts-vw: 100vw;
+  --ts-vh: 100dvh;
 }
 
 * { box-sizing: border-box; }
@@ -37,8 +39,8 @@ body[data-scene="meet"] #game-shell {
 }
 
 /*
-  Workshop and Meet use a taller 1560x840 logical canvas (13:7) to create
-  more vertical room for panels. Race switches back to 1560x720 (13:6).
+  Workshop and Meet use a taller 1560x840 logical canvas (13:7).
+  Race switches to 1560x720 (13:6).
 */
 #game {
   width: 100%;
@@ -65,62 +67,24 @@ canvas {
 
 #rotate-message {
   display: none;
-  position: fixed;
-  inset: 0;
-  place-items: center;
-  padding: 2rem;
-  text-align: center;
-  background: #05070d;
-  color: #dcecff;
-  font-size: 1.1rem;
-  z-index: 10;
 }
 
-@media (orientation: portrait) and (max-width: 900px) {
-  /*
-    Native orientation locking is inconsistent on mobile web, so portrait
-    viewports are presented as a virtual landscape canvas.
-  */
-  #game-shell {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    width: 100svh;
-    height: 100svw;
-    transform: translate(-50%, -50%) rotate(90deg);
-    transform-origin: center center;
-  }
-
-  #game {
-    width: auto;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    aspect-ratio: 13 / 7;
-  }
-
-  body[data-scene="race"] #game {
-    width: auto;
-    height: 100%;
-    max-width: 100%;
-    max-height: 100%;
-    aspect-ratio: 13 / 6;
-  }
-
-  
 /*
-  JS fallback for browsers/PWAs whose orientation media query does not update
-  reliably while the OS rotation lock is enabled. The game still presents one
-  landscape coordinate system; only the outer shell is rotated.
+  iOS does not reliably honour Screen Orientation API locks for installed web
+  apps. When the viewport remains portrait, JS adds .force-landscape and the
+  whole game shell is given swapped viewport dimensions then rotated. These
+  rules deliberately live OUTSIDE an orientation media query so they still
+  work when iOS reports stale orientation state under portrait lock.
 */
 html.force-landscape #game-shell {
   position: fixed;
   left: 50%;
   top: 50%;
-  width: 100dvh;
-  height: 100dvw;
+  width: var(--ts-vh, 100svh);
+  height: var(--ts-vw, 100svw);
   transform: translate(-50%, -50%) rotate(90deg);
   transform-origin: center center;
+  padding: 0;
 }
 
 html.force-landscape #game {
@@ -145,13 +109,43 @@ html.force-landscape #build-stamp {
   left: auto;
 }
 
-#build-stamp {
+@media (orientation: portrait) and (max-width: 900px) {
+  /*
+    CSS-only fallback for browsers where JS is delayed. Once JS runs it applies
+    the same geometry through .force-landscape using exact visualViewport sizes.
+  */
+  html:not(.force-landscape) #game-shell {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 100svh;
+    height: 100svw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+    padding: 0;
+  }
+
+  html:not(.force-landscape) #game {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 13 / 7;
+  }
+
+  html:not(.force-landscape) body[data-scene="race"] #game {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 13 / 6;
+  }
+
+  #build-stamp {
     top: 8px;
     right: 8px;
     left: auto;
   }
-
-  #rotate-message { display: none; }
 }
 
 #build-stamp {
@@ -172,4 +166,9 @@ html.force-landscape #build-stamp {
 
 body[data-scene="race"] #build-stamp {
   left: min(calc(100vw - 54px), calc(50% + 108.333dvh + 8px));
+}
+
+html.force-landscape body[data-scene="race"] #build-stamp {
+  left: auto;
+  right: 8px;
 }
