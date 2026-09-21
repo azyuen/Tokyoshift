@@ -1,4 +1,4 @@
-import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260921-r75';
+import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260921-r76';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
@@ -36,7 +36,7 @@ export const TRAVEL_REGIONS = {
         garageTier: 1,
         unlockCost: WORKSHOP_TIERS[1].unlockCost,
         capacity: WORKSHOP_TIERS[1].capacity,
-        note: 'A larger waterside tuning bay with room for twelve cars.',
+        note: 'Adds twelve storage slots at Canal Yard.',
       },
       {
         id: 'shinonomeWarehouseStrip',
@@ -49,7 +49,7 @@ export const TRAVEL_REGIONS = {
         requiresTier: 1,
         unlockCost: WORKSHOP_TIERS[2].unlockCost,
         capacity: WORKSHOP_TIERS[2].capacity,
-        note: 'A full warehouse tuning HQ with room for twenty-four cars.',
+        note: 'Adds twenty-four storage slots at the Warehouse HQ.',
       },
     ],
   },
@@ -376,11 +376,15 @@ export function getRegionTravelCost({
     return fromWorkshop ? 0 : HOME_RETURN_COST;
   }
 
-  if (currentLocationId === targetLocationId) return 0;
-
+  // Once the player has driven home, the saved meetLocation still points
+  // at the last meet they visited. Leaving the workshop is a fresh journey,
+  // even when returning to that same meet, so workshop departure pricing must
+  // be resolved before the "same location" shortcut.
   if (fromWorkshop) {
     return target.region.baseCost + Number(target.costOffset || 0);
   }
+
+  if (currentLocationId === targetLocationId) return 0;
 
   const current = getTravelLocation(currentLocationId);
   if (current && current.regionId === target.regionId) {
