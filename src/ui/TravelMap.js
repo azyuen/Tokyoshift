@@ -1,11 +1,11 @@
 import {
   MEET_LOCATIONS,
   getMeetLocation,
-} from '../data/meetAssets.js?v=20260921-r60';
+} from '../data/meetAssets.js?v=20260921-r75';
 import {
   getWorkshopByLocationId,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260921-r74';
+} from '../data/workshopProgression.js?v=20260921-r75';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -14,7 +14,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260921-r74';
+} from '../data/travelRegions.js?v=20260921-r75';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -55,11 +55,11 @@ function currentRegionFromLocation(locationId, fromWorkshop) {
 }
 
 function locationTimeLabel(location) {
-  const meet = MEET_LOCATIONS[location?.id];
-  if (meet?.timeOfDay) return meet.timeOfDay.toUpperCase();
-  if (location?.timeOfDay) return String(location.timeOfDay).toUpperCase();
   if (location?.kind === 'home' || location?.kind === 'garageUpgrade') return 'ANY';
-  return 'NIGHT';
+
+  const meet = MEET_LOCATIONS[location?.id];
+  const raw = String(meet?.timeOfDay || location?.timeOfDay || 'night').toLowerCase();
+  return raw === 'day' ? 'DAY' : 'NIGHT';
 }
 
 export function showTravelMap(scene, {
