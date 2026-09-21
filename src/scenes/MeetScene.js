@@ -402,19 +402,39 @@ export default class MeetScene extends Phaser.Scene {
     Phaser.Utils.Array.Shuffle(pool);
 
     const ownedCars = this.registry.get('ownedCarIds') || [];
-    let rivalCars = carOrder.filter(
-      id => id !== (this.registry.get('selectedCarId') || 'ae86') && !ownedCars.includes(id)
-    );
-    if (!rivalCars.length) {
-      rivalCars = carOrder.filter(id => id !== (this.registry.get('selectedCarId') || 'ae86'));
-    }
-    Phaser.Utils.Array.Shuffle(rivalCars);
+    const selectedCarId = this.registry.get('selectedCarId') || 'ae86';
+    const usedRivalCars = new Set();
+
+    const carBands = {
+      1: ['ae86', 'ek9'],
+      2: ['ae86', 'ek9', 'fc3s'],
+      3: ['ek9', 'fc3s', 'evo3'],
+      4: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+      5: ['evo3', 'wrx22b', 'r32'],
+    };
+
+    const chooseCarForSkill = rating => {
+      const band = carBands[Phaser.Math.Clamp(Number(rating) || 3, 1, 5)] || carBands[3];
+
+      const tiers = [
+        band.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
+        band.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
+        carOrder.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
+        carOrder.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
+        carOrder.filter(id => id !== selectedCarId),
+      ];
+
+      const candidates = tiers.find(list => list.length) || ['ek9'];
+      const id = Phaser.Utils.Array.GetRandom(candidates);
+      usedRivalCars.add(id);
+      return id;
+    };
 
     const cfg = MODE_DATA[this.selectedMode];
 
     this.offers = pool.slice(0, 3).map((characterId, i) => {
       const character = characters[characterId];
-      const carId = rivalCars[i % rivalCars.length];
+      const carId = chooseCarForSkill(character?.skill?.rating);
 
       const skill = character.skill ?? {
         rating: 3,
