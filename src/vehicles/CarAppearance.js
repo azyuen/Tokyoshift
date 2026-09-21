@@ -18,6 +18,8 @@ export const RIVAL_PAINT_COLORS = PAINT_PRESETS
   .map(item => item.color);
 
 export function normalisePaintColor(value, fallback = DEFAULT_PAINT_COLOR) {
+  if (value == null || value === '') return fallback;
+
   if (typeof value === 'string') {
     const cleaned = value.trim().replace(/^#/, '');
     if (/^[0-9a-f]{6}$/i.test(cleaned)) return parseInt(cleaned, 16);
