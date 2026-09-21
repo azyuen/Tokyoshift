@@ -11,8 +11,8 @@ import {
 } from '../data/meetAssets.js?v=20260921-r60';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import { saveSessionState } from '../state/GameState.js?v=20260921-r60';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r59';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r63';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r64';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -452,10 +452,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButton.on('pointerdown', () => this.challengePinkSlips());
 
-    // Keep these two where they were before the GPS cleanup.
+    // Keep the action buttons aligned with the padded bottom margin.
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      740,
+      728,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -466,7 +466,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      740,
+      728,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -477,7 +477,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      794,
+      782,
       SIDE.w - 36,
       42,
       0x24131a,
@@ -488,7 +488,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      794,
+      782,
       'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce1'
@@ -972,10 +972,6 @@ export default class MeetScene extends Phaser.Scene {
       );
       portrait.setMask(portraitMaskShape.createGeometryMask());
 
-      const stakeText = typeof offer.stake === 'number'
-        ? '¥ ' + offer.stake.toLocaleString('en-US')
-        : offer.stake;
-      const dealText = this.selectedMode === 'SINGLE' ? stakeText : 'PRIZE ' + stakeText;
       const textX = x - 42;
 
       const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
@@ -983,12 +979,6 @@ export default class MeetScene extends Phaser.Scene {
         fontSize: '9px',
         color: '#ffffff'
       }).setDepth(35);
-
-      const deal = this.add.text(x + 160, cardY - 44, dealText, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: this.selectedMode === 'SINGLE' ? '#ffe08a' : '#8fe7ff',
-      }).setOrigin(1, 0).setDepth(35);
 
       const quote = this.add.text(textX, cardY - 14, '"' + offer.quote + '"', {
         fontFamily: BODY_FONT,
@@ -1007,7 +997,6 @@ export default class MeetScene extends Phaser.Scene {
         portraitBg.setFillStyle(0x111418, 1).setStrokeStyle(1, 0x3b444a, 1);
         portrait.setAlpha(0.34);
         name.setColor('#68737a');
-        deal.setColor('#6e6961');
         quote.setColor('#59636a');
       }
 
@@ -1017,7 +1006,6 @@ export default class MeetScene extends Phaser.Scene {
         portrait,
         portraitMaskShape,
         name,
-        deal,
         quote
       );
       offer.card = card;
