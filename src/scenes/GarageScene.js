@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r36';
-import { characters } from '../data/characters.js?v=20260921-r36';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r37';
+import { characters } from '../data/characters.js?v=20260921-r37';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -87,21 +87,21 @@ export default class GarageScene extends Phaser.Scene {
 
     this.add.ellipse(
       x,
-      feetY + 3,
-      Math.max(62, sprite.displayWidth * 0.86),
-      20,
+      feetY - 2,
+      Math.max(58, sprite.displayWidth * 0.78),
+      10,
       0x000000,
-      0.40
-    ).setDepth(depth - 0.25);
+      0.62
+    ).setDepth(depth - 0.12);
 
     this.add.ellipse(
       x,
-      feetY + 1,
-      Math.max(46, sprite.displayWidth * 0.66),
-      10,
+      feetY - 1,
+      Math.max(42, sprite.displayWidth * 0.58),
+      5,
       0x000000,
-      0.54
-    ).setDepth(depth - 0.20);
+      0.84
+    ).setDepth(depth - 0.08);
 
     return sprite;
   }
@@ -111,14 +111,11 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.rectangle(154, 35, 236, 48, 0x0a1a2b, 1)
-      .setStrokeStyle(2, 0x39d9ff, 1)
-      .setDepth(41);
-    this.add.text(154, 35, 'WORKSHOP', {
+    this.add.text(52, 35, 'WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
-    }).setOrigin(0.5).setDepth(42);
+    }).setOrigin(0, 0.5).setDepth(42);
 
-    this.headerCarText = this.add.text(300, 35, '', {
+    this.headerCarText = this.add.text(250, 35, '', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
@@ -255,7 +252,7 @@ export default class GarageScene extends Phaser.Scene {
 
       const display = this.createCarDisplay(cars[id], x, y - 9, 132, 34);
 
-      const label = this.add.text(x, y + 43, cars[id].shortName, {
+      const label = this.add.text(x, y + 38, cars[id].shortName, {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b8cad7'
       }).setOrigin(0.5).setDepth(36);
 
@@ -267,13 +264,13 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMeetButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 48, 0x0c2827, 1)
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 42, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
     this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MEET  >', {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
     button.on('pointerdown', () => {
@@ -311,12 +308,12 @@ export default class GarageScene extends Phaser.Scene {
 
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(17, rearWheel.displayHeight * 0.46),
-      Math.max(132, targetWidth * 0.98),
-      Math.max(18, source.height * bodyScale * 0.22),
+      wheelY + Math.max(9, rearWheel.displayHeight * 0.24),
+      Math.max(124, targetWidth * 0.94),
+      Math.max(8, source.height * bodyScale * 0.09),
       0x000000,
-      0.46
-    ).setDepth(depth - 0.6);
+      0.72
+    ).setDepth(depth - 0.12);
 
     const body = this.add.image(x, y, car.visual.bodyKey)
       .setScale(bodyScale)
