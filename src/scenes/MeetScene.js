@@ -2,6 +2,7 @@ import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { meetBackgrounds } from '../data/meetAssets.js?v=20260921-r43';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r43';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -24,6 +25,42 @@ const MODE_DATA = {
   },
 };
 
+const MEET_LOCATIONS = {
+  wangan711: {
+    id: 'wangan711',
+    label: '7-ELEVEN',
+    headerLabel: 'WANGAN // 7-ELEVEN',
+    bgKey: 'meetWangan711',
+    difficulty: 'EASY',
+    minRating: 2,
+    maxRating: 3,
+    rewardMultiplier: 1.0,
+  },
+  wanganDocks: {
+    id: 'wanganDocks',
+    label: 'DOCKS',
+    headerLabel: 'WANGAN // DOCKS',
+    bgKey: 'meetWanganDocks',
+    fallbackBgKey: 'meetWangan711',
+    difficulty: 'MED',
+    minRating: 3,
+    maxRating: 4,
+    rewardMultiplier: 1.35,
+  },
+  wanganBridge: {
+    id: 'wanganBridge',
+    label: 'BRIDGE',
+    headerLabel: 'WANGAN // BRIDGE',
+    bgKey: 'meetWanganBridge',
+    difficulty: 'HARD',
+    minRating: 4,
+    maxRating: 5,
+    rewardMultiplier: 1.75,
+  },
+};
+
+const LOCATION_ORDER = ['wangan711', 'wanganDocks', 'wanganBridge'];
+
 export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
@@ -36,8 +73,8 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     meetBackgrounds.forEach(bg => {
-      if (!this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260921-r43');
+      if (bg.path && !this.textures.exists(bg.key)) {
+        this.load.image(bg.key, bg.path + '?v=20260921-r47');
       }
     });
   }
@@ -58,13 +95,20 @@ export default class MeetScene extends Phaser.Scene {
     this.currentBackground = null;
     this.backgroundMaskShape = null;
     this.backgroundTint = null;
+    this.selectedMeetLocation = MEET_LOCATIONS[this.registry.get('meetLocation')]
+      ? this.registry.get('meetLocation')
+      : 'wangan711';
+    this.locationOffers = {};
+    this.locationSelectedOfferIndex = {};
+    this.gpsNodes = [];
 
     this.drawBase();
     this.buildHeader();
     this.buildGpsPanel();
     this.buildSidebar();
     this.buildBottomArea();
-    this.rollOffers();
+    this.refreshAllLocationOffers();
+    this.rollOffers({ resetTimer: false });
 
     // Let the visible Meet render first, then quietly fetch the rest of the
     // character/background library and the heavy race-control artwork.
@@ -104,15 +148,20 @@ export default class MeetScene extends Phaser.Scene {
     this.stageMask = this.stageMaskShape.createGeometryMask();
   }
 
-  setMeetBackground(preferredKey = null) {
+  setMeetBackground(preferredKey = null, fallbackKey = null, labelOverride = null) {
     if (this.currentBackground) this.currentBackground.destroy();
     if (this.backgroundMaskShape) this.backgroundMaskShape.destroy();
     if (this.backgroundTint) this.backgroundTint.destroy();
 
     const available = meetBackgrounds.filter(bg => this.textures.exists(bg.key));
-    const bg = available.find(item => item.key === preferredKey)
-      || Phaser.Utils.Array.GetRandom(available)
-      || meetBackgrounds[0];
+    const requested = available.find(item => item.key === preferredKey);
+    const fallback = available.find(item => item.key === fallbackKey)
+      || available.find(item => item.key === 'meetWangan711')
+      || available[0];
+
+    const bg = requested || fallback;
+    if (!bg) return;
+
     const image = this.add.image(
       STAGE.x + STAGE.w / 2,
       STAGE.y + STAGE.h / 2,
@@ -130,7 +179,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.currentBackground = image;
     this.backgroundMaskShape = maskShape;
-    this.locationText.setText(bg.label);
+    this.locationText.setText(labelOverride || bg.label);
 
     this.backgroundTint = this.add.rectangle(
       STAGE.x + STAGE.w / 2,
@@ -157,7 +206,7 @@ export default class MeetScene extends Phaser.Scene {
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
-    const cash = this.registry.get('cash') ?? 25000;
+    const cash = this.registry.get('cash') ?? 50000;
 
     this.add.text(1105, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
@@ -182,40 +231,53 @@ export default class MeetScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
+    // Match the RACE MODE heading size.
     this.add.text(GPS.x + 20, GPS.y + 16, 'GPS', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8cc8ec'
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.add.text(GPS.x + GPS.w - 20, GPS.y + 17, 'WANGAN', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#6f8798'
-    }).setOrigin(1, 0).setDepth(37);
+    const nodeY = GPS.y + 82;
+    const nodeXs = [GPS.x + 62, GPS.x + 178, GPS.x + 294];
 
     const route = this.add.graphics().setDepth(36);
     route.lineStyle(3, 0x2f91b8, 0.52);
     route.beginPath();
-    route.moveTo(GPS.x + 88, GPS.y + 108);
-    route.lineTo(GPS.x + 268, GPS.y + 108);
+    route.moveTo(nodeXs[0], nodeY);
+    route.lineTo(nodeXs[2], nodeY);
     route.strokePath();
 
-    const nodes = [
-      { x: GPS.x + 88, y: GPS.y + 108, label: '7-ELEVEN', active: true },
-      { x: GPS.x + 268, y: GPS.y + 108, label: 'BRIDGE', active: false },
-    ];
+    LOCATION_ORDER.forEach((locationId, i) => {
+      const location = MEET_LOCATIONS[locationId];
+      const x = nodeXs[i];
 
-    nodes.forEach(node => {
-      this.add.circle(
-        node.x,
-        node.y,
-        node.active ? 8 : 6,
-        node.active ? 0x42dfff : 0x253b4b,
-        1
-      ).setStrokeStyle(2, node.active ? 0xb8f3ff : 0x45647a, 0.9).setDepth(37);
+      const dot = this.add.circle(x, nodeY, 7, 0x253b4b, 1)
+        .setStrokeStyle(2, 0x45647a, 0.9)
+        .setDepth(37);
 
-      this.add.text(node.x, node.y + 18, node.label, {
+      const label = this.add.text(x, nodeY + 17, location.label, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
-        color: node.active ? '#e8fbff' : '#829aaa',
+        color: '#829aaa',
       }).setOrigin(0.5, 0).setDepth(37);
+
+      const difficulty = this.add.text(
+        x,
+        nodeY + 39,
+        location.difficulty + ' • x' + location.rewardMultiplier.toFixed(2),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '8px',
+          color: '#637f91',
+          fontStyle: '600',
+        }
+      ).setOrigin(0.5, 0).setDepth(37);
+
+      const hit = this.add.rectangle(x, nodeY + 18, 104, 82, 0x000000, 0)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(39);
+
+      hit.on('pointerdown', () => this.selectMeetLocation(locationId));
+      this.gpsNodes.push({ locationId, dot, label, difficulty, hit });
     });
 
     this.districtButton = this.add.rectangle(
@@ -244,6 +306,32 @@ export default class MeetScene extends Phaser.Scene {
 
     this.districtButton.on('pointerdown', () => this.showDistrictPopup());
     this.gpsPanel = panel;
+    this.updateGpsNodes();
+  }
+
+  updateGpsNodes() {
+    this.gpsNodes?.forEach(node => {
+      const active = node.locationId === this.selectedMeetLocation;
+      node.dot
+        .setRadius(active ? 8 : 6)
+        .setFillStyle(active ? 0x42dfff : 0x253b4b, 1)
+        .setStrokeStyle(2, active ? 0xb8f3ff : 0x45647a, 0.9);
+      node.label.setColor(active ? '#e8fbff' : '#829aaa');
+      node.difficulty.setColor(active ? '#8fd7ef' : '#637f91');
+    });
+  }
+
+  selectMeetLocation(locationId) {
+    if (!MEET_LOCATIONS[locationId] || locationId === this.selectedMeetLocation) return;
+
+    this.locationSelectedOfferIndex[this.selectedMeetLocation] = this.selectedOfferIndex;
+    this.selectedMeetLocation = locationId;
+    this.registry.set('meetLocation', locationId);
+    saveSessionState(this.registry);
+
+    // Location changes never reroll opponents. Every Wangan spot keeps its
+    // existing roster until the timed 15-minute refresh.
+    this.rollOffers({ resetTimer: false });
   }
 
   buildSidebar() {
@@ -284,26 +372,21 @@ export default class MeetScene extends Phaser.Scene {
         color: locked ? '#53626c' : '#a9c7da'
       }).setOrigin(0, 0.5).setDepth(38);
 
-      const arrow = this.add.text(SIDE.x + SIDE.w - 28, y, locked ? '—' : '>', {
+      const arrow = this.add.text(SIDE.x + SIDE.w - 28, y, locked ? '—' : 'ON', {
         fontFamily: PIXEL_FONT, fontSize: '11px', color: locked ? '#46525a' : '#8cb6cf'
       }).setOrigin(0.5).setDepth(38);
 
-      if (!locked) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => {
-          this.selectedMode = row[1];
-          this.rollOffers();
-        });
-      }
+      // SINGLE RACE is the only available mode right now. It is deliberately
+      // non-interactive so tapping it cannot reroll the meet roster.
 
       this.modeButtons.push({ key: row[1], box, label, arrow, locked });
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 150, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, SIDE.y + 160, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 178, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 188, '', {
       fontFamily: BODY_FONT,
       fontSize: '13px',
       color: '#d8e7ef',
@@ -311,17 +394,17 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 250, 'RIVAL OFFER', {
+    this.add.text(SIDE.x + 20, SIDE.y + 260, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
     }).setDepth(37);
 
-    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 250, '', {
+    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, SIDE.y + 260, '', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
     }).setOrigin(1, 0).setDepth(37);
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 298,
+      SIDE.y + 308,
       SIDE.w - 36,
       40,
       0x291620,
@@ -332,7 +415,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 298,
+      SIDE.y + 308,
       'PINK SLIPS?',
       {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
@@ -341,7 +424,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkResponseText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 329,
+      SIDE.y + 339,
       '',
       {
         fontFamily: BODY_FONT,
@@ -356,7 +439,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 384,
+      SIDE.y + 394,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -367,7 +450,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 384,
+      SIDE.y + 394,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -378,7 +461,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 438,
+      SIDE.y + 448,
       SIDE.w - 36,
       42,
       0x24131a,
@@ -389,7 +472,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 438,
+      SIDE.y + 448,
       'WORKSHOP',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffdce1'
@@ -400,28 +483,46 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildBottomArea() {
-    this.add.text(CARDS.x + 18, CARDS.y + 10, 'RIVALS // WANGAN', {
+    this.rivalsTitleText = this.add.text(CARDS.x + 18, CARDS.y + 10, 'RIVALS', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(33);
   }
 
-  rollOffers() {
-    this.clearCardObjects();
-    this.clearStageObjects();
+  refreshAllLocationOffers() {
+    this.locationOffers = {};
+    this.locationSelectedOfferIndex = {};
+    LOCATION_ORDER.forEach(locationId => {
+      this.locationOffers[locationId] = this.generateOffersForLocation(locationId);
+      this.locationSelectedOfferIndex[locationId] = 0;
+    });
+  }
 
-    const firstRoll = !this.initialRollUsed && this.initialRivalIds?.length === 3;
-    this.setMeetBackground(firstRoll ? this.initialBackgroundKey : null);
-
+  generateOffersForLocation(locationId) {
+    const location = MEET_LOCATIONS[locationId] || MEET_LOCATIONS.wangan711;
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    let pool = firstRoll
-      ? [...this.initialRivalIds]
-      : characterOrder.filter(id =>
-          id !== playerCharacterId &&
-          id !== 'daichiSakamoto' &&
-          this.textures.exists(characters[id]?.visual?.spriteKey)
-        );
-    Phaser.Utils.Array.Shuffle(pool);
 
+    const eligible = characterOrder.filter(id =>
+      id !== playerCharacterId &&
+      id !== 'daichiSakamoto' &&
+      this.textures.exists(characters[id]?.visual?.spriteKey)
+    );
+
+    const targetRating = (location.minRating + location.maxRating) / 2;
+    const preferred = eligible.filter(id => {
+      const rating = Number(characters[id]?.skill?.rating || 3);
+      return rating >= location.minRating && rating <= location.maxRating;
+    });
+    Phaser.Utils.Array.Shuffle(preferred);
+
+    const remainder = eligible
+      .filter(id => !preferred.includes(id))
+      .sort((a, b) => {
+        const ar = Number(characters[a]?.skill?.rating || 3);
+        const br = Number(characters[b]?.skill?.rating || 3);
+        return Math.abs(ar - targetRating) - Math.abs(br - targetRating);
+      });
+
+    const pool = [...preferred, ...remainder].slice(0, 3);
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     const usedRivalCars = new Set();
@@ -436,7 +537,6 @@ export default class MeetScene extends Phaser.Scene {
 
     const chooseCarForSkill = rating => {
       const band = carBands[Phaser.Math.Clamp(Number(rating) || 3, 1, 5)] || carBands[3];
-
       const tiers = [
         band.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
         band.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
@@ -453,10 +553,9 @@ export default class MeetScene extends Phaser.Scene {
 
     const cfg = MODE_DATA[this.selectedMode];
 
-    this.offers = pool.slice(0, 3).map((characterId, i) => {
+    return pool.map(characterId => {
       const character = characters[characterId];
       const carId = chooseCarForSkill(character?.skill?.rating);
-
       const skill = character.skill ?? {
         rating: 3,
         label: 'SKILLED',
@@ -471,7 +570,11 @@ export default class MeetScene extends Phaser.Scene {
         raceDeal = 'BET';
         const minBet = skill.betRange?.[0] ?? 5000;
         const maxBet = skill.betRange?.[1] ?? 10000;
-        stake = Phaser.Math.Snap.To(Phaser.Math.Between(minBet, maxBet), 500);
+        const baseStake = Phaser.Math.Between(minBet, maxBet);
+        stake = Phaser.Math.Snap.To(
+          Math.round(baseStake * location.rewardMultiplier),
+          500
+        );
       }
 
       const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId);
@@ -487,17 +590,42 @@ export default class MeetScene extends Phaser.Scene {
         pinkAccepted: pinkDecision.accepted,
         pinkReply: pinkDecision.reply,
         pinkChallenged: false,
+        meetLocation: locationId,
       };
     });
+  }
 
-    this.selectedOfferIndex = 0;
-    this.nextRefreshAt = Date.now() + 180000;
-    this.initialRollUsed = true;
+  rollOffers({ resetTimer = true } = {}) {
+    this.clearCardObjects();
+    this.clearStageObjects();
+
+    const location = MEET_LOCATIONS[this.selectedMeetLocation] || MEET_LOCATIONS.wangan711;
+    this.offers = this.locationOffers[this.selectedMeetLocation]
+      || this.generateOffersForLocation(this.selectedMeetLocation);
+    this.locationOffers[this.selectedMeetLocation] = this.offers;
+
+    this.selectedOfferIndex = Phaser.Math.Clamp(
+      Number(this.locationSelectedOfferIndex[this.selectedMeetLocation] || 0),
+      0,
+      Math.max(0, this.offers.length - 1)
+    );
+
+    this.setMeetBackground(
+      location.bgKey,
+      location.fallbackBgKey,
+      location.headerLabel
+    );
+
+    if (resetTimer) this.nextRefreshAt = Date.now() + 180000;
 
     this.drawStage();
     this.drawCards();
     this.updateModeButtons();
-    this.selectOffer(0);
+    this.updateGpsNodes();
+    this.rivalsTitleText?.setText(
+      'RIVALS // ' + location.label + ' // ' + location.difficulty
+    );
+    this.selectOffer(this.selectedOfferIndex);
   }
 
   prefetchDeferredAssets() {
@@ -516,7 +644,7 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     meetBackgrounds.forEach(bg => {
-      queueImage(bg.key, bg.path + '?v=20260921-r43');
+      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r47');
     });
 
     // These used to block the very first Workshop load. Fetch them while the
@@ -852,6 +980,7 @@ export default class MeetScene extends Phaser.Scene {
 
   selectOffer(index) {
     this.selectedOfferIndex = index;
+    this.locationSelectedOfferIndex[this.selectedMeetLocation] = index;
 
     this.offers.forEach((offer, i) => {
       if (!offer.card) return;
@@ -960,7 +1089,8 @@ export default class MeetScene extends Phaser.Scene {
       duration: 320,
       ease: 'Sine.easeInOut',
       onComplete: () => {
-        this.rollOffers();
+        this.refreshAllLocationOffers();
+        this.rollOffers({ resetTimer: true });
 
         const noteBg = this.add.rectangle(
           STAGE.x + STAGE.w - 200,
