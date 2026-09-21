@@ -1,7 +1,7 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r49';
-import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r49';
+import { getMeetLocation, getWorkshopDepartureCost } from '../data/meetAssets.js?v=20260921-r49';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r49';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
@@ -333,6 +333,8 @@ export default class GarageScene extends Phaser.Scene {
         title: 'DRIVE TO MEET',
         actionVerb: 'GO TO MEET',
         allowCurrentAction: true,
+        costResolver: (currentLocationId, targetLocationId) =>
+          getWorkshopDepartureCost(currentLocationId, targetLocationId),
         onTravel: (locationId, cost) => {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
