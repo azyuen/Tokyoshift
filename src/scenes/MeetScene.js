@@ -8,17 +8,17 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260921-r75';
+} from '../data/meetAssets.js?v=20260921-r76';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r75';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r76';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r75';
-import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r75';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r76';
+import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r76';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
   getEncounterAi,
-} from '../data/encounterProfiles.js?v=20260921-r75';
+} from '../data/encounterProfiles.js?v=20260921-r76';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -68,7 +68,8 @@ export default class MeetScene extends Phaser.Scene {
 
     const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
     const selectedCarId = this.registry.get('selectedCarId');
-    this.hasCar = ownedCarIds.length > 0 && Boolean(cars[selectedCarId]);
+    this.meetStranded = Boolean(this.registry.get('meetStranded'));
+    this.hasCar = !this.meetStranded && ownedCarIds.length > 0 && Boolean(cars[selectedCarId]);
 
     this.selectedMode = 'SINGLE';
     this.selectedDeal = 'CASH';
@@ -563,6 +564,7 @@ export default class MeetScene extends Phaser.Scene {
     if (cash < cost) return;
 
     this.registry.set('cash', cash - cost);
+    this.registry.set('meetStranded', false);
     this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
     saveSessionState(this.registry);
     this.scene.start('GarageScene');
@@ -777,14 +779,23 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   applyNoCarMeetState() {
-    this.selectedSummary?.setText('NO CAR\nYOU CANNOT RACE');
+    const stranded = Boolean(this.registry.get('meetStranded'));
+    this.selectedSummary?.setText(
+      stranded
+        ? 'CAR LOST\nTAKE A TAXI HOME FOR ANOTHER'
+        : 'NO CAR\nYOU CANNOT RACE'
+    );
     this.rivalOfferText?.setText('—');
 
     this.pinkSlipButton?.disableInteractive()
       .setFillStyle(0x11161c, 1)
       .setStrokeStyle(1, 0x46545e, 1);
     this.pinkSlipButtonLabel?.setText('NO CAR').setColor('#72838f');
-    this.pinkResponseText?.setText('Your last car is gone.');
+    this.pinkResponseText?.setText(
+      stranded
+        ? 'Your car was taken. Your other cars are back in Shinonome.'
+        : 'Your last car is gone.'
+    );
 
     this.raceButton?.disableInteractive()
       .setFillStyle(0x11161c, 1)
@@ -798,7 +809,11 @@ export default class MeetScene extends Phaser.Scene {
       item.label.setColor('#53626c');
     });
 
-    this.rivalsTitleText?.setText('RIVALS // NO CAR // EVERYONE IS OUT OF REACH');
+    this.rivalsTitleText?.setText(
+      this.registry.get('meetStranded')
+        ? 'RIVALS // CAR LOST // TAXI HOME TO SWITCH CARS'
+        : 'RIVALS // NO CAR // EVERYONE IS OUT OF REACH'
+    );
     this.updateWorkshopButton();
   }
 
