@@ -7,6 +7,7 @@ import {
   ALL_MEET_LOCATION_IDS,
   getMeetLocation,
   getTravelCost,
+  WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260921-r49';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 import { saveSessionState } from '../state/GameState.js?v=20260921-r49';
@@ -307,7 +308,7 @@ export default class MeetScene extends Phaser.Scene {
       if (!active && affordable) {
         node.hit
           .setInteractive({ useHandCursor: true })
-          .on('pointerdown', () => this.travelToLocation(locationId));
+          .on('pointerdown', () => this.confirmTravelToLocation(locationId));
       } else {
         node.hit.disableInteractive();
       }
@@ -334,6 +335,7 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
 
       this.cashText?.setText('¥ ' + Number(cash - travelCost).toLocaleString('en-US'));
+      this.updateWorkshopButton();
       this.showTravelNotice(destination, travelCost);
 
       // Travel changes the location only. It never generates a fresh roster.
@@ -342,6 +344,85 @@ export default class MeetScene extends Phaser.Scene {
 
     this.updateGpsNodes();
     return true;
+  }
+
+  confirmTravelToLocation(locationId) {
+    if (!MEET_LOCATIONS[locationId] || locationId === this.selectedMeetLocation) return;
+
+    const destination = getMeetLocation(locationId);
+    const travelCost = getTravelCost(this.selectedMeetLocation, locationId);
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < travelCost) return;
+    if (this.travelConfirmPopup?.active) return;
+
+    const depth = 110;
+    const objects = [];
+
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.52)
+      .setDepth(depth)
+      .setInteractive());
+
+    const panel = add(this.add.rectangle(780, 410, 620, 250, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x46d7ff, 0.92)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 344, destination.district + ' // ' + destination.label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '12px',
+      color: '#eefaff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      397,
+      '¥' + travelCost.toLocaleString('en-US') + ' fuel to drive there?',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '15px',
+        color: '#b7cedc',
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const yes = add(this.add.rectangle(665, 470, 190, 44, 0x0d2b29, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(665, 470, 'DRIVE // ¥' + travelCost.toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const cancel = add(this.add.rectangle(895, 470, 190, 44, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(895, 470, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c7d5de',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.travelConfirmPopup = null;
+    };
+
+    blocker.on('pointerdown', dismiss);
+    cancel.on('pointerdown', dismiss);
+    yes.on('pointerdown', () => {
+      dismiss();
+      this.travelToLocation(locationId, travelCost);
+    });
+
+    this.travelConfirmPopup = panel;
   }
 
   showTravelNotice(destination, travelCost) {
@@ -509,13 +590,46 @@ export default class MeetScene extends Phaser.Scene {
     this.workshopButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 448,
-      'WORKSHOP',
+      'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
       {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffdce1'
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce1'
       }
     ).setOrigin(0.5).setDepth(39);
 
-    this.workshopButton.on('pointerdown', () => this.scene.start('GarageScene'));
+    this.workshopButton.on('pointerdown', () => this.returnToWorkshop());
+    this.updateWorkshopButton();
+  }
+
+  updateWorkshopButton() {
+    const cash = Number(this.registry.get('cash') || 0);
+    const enough = cash >= WORKSHOP_RETURN_COST;
+
+    if (enough) {
+      this.workshopButton
+        ?.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x24131a, 1)
+        .setStrokeStyle(2, 0xff6177, 1);
+      this.workshopButtonLabel
+        ?.setColor('#ffdce1')
+        .setText('WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'));
+    } else {
+      this.workshopButton
+        ?.disableInteractive()
+        .setFillStyle(0x171418, 1)
+        .setStrokeStyle(1, 0x5d4148, 1);
+      this.workshopButtonLabel
+        ?.setColor('#9a7079')
+        .setText('NEED ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'));
+    }
+  }
+
+  returnToWorkshop() {
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < WORKSHOP_RETURN_COST) return;
+
+    this.registry.set('cash', cash - WORKSHOP_RETURN_COST);
+    saveSessionState(this.registry);
+    this.scene.start('GarageScene');
   }
 
   buildBottomArea() {
