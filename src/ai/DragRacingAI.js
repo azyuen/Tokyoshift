@@ -84,8 +84,10 @@ export default class DragRacingAI {
     }
 
     const redline = v.config.engineRedlineRPM ?? 7800;
-    const shiftRPM = redline * Phaser.Math.Linear(0.91, 0.985, this.aggression)
-      + Phaser.Math.Between(-70, 70);
+    const skillPenalty = Phaser.Math.Linear(0.965, 1.0, this.shiftSkill);
+    const shiftJitter = Phaser.Math.Linear(220, 55, this.shiftSkill);
+    const shiftRPM = redline * Phaser.Math.Linear(0.91, 0.985, this.aggression) * skillPenalty
+      + Phaser.Math.Between(-shiftJitter, shiftJitter);
     if (t.rpm >= shiftRPM && t.gear > 0 && t.gear < v.config.gearRatios.length) {
       this.nextGear = t.gear + 1;
       this.shiftState = 'lift';
