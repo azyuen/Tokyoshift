@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r34';
-import { characters } from '../data/characters.js?v=20260921-r34';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r35';
+import { characters } from '../data/characters.js?v=20260921-r35';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -26,7 +26,6 @@ export default class GarageScene extends Phaser.Scene {
 
     this.drawScene();
     this.buildHeader();
-    this.buildCarLabel();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     this.buildMeetButton();
@@ -118,6 +117,10 @@ export default class GarageScene extends Phaser.Scene {
     this.add.text(154, 35, 'WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(42);
+
+    this.headerCarText = this.add.text(300, 35, '', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
+    }).setOrigin(0, 0.5).setDepth(42);
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
@@ -337,8 +340,7 @@ export default class GarageScene extends Phaser.Scene {
     this.selectedDisplay = this.createCarDisplay(cars[id], 708, 386, 690, 10);
 
     const car = cars[id];
-    this.carNameText.setText(car.name.toUpperCase());
-    this.carSubText.setText(car.shortName + '  //  SELECTED CAR');
+    this.headerCarText.setText(car.name.toUpperCase());
 
     this.specValueTexts.engine.setText(car.engineModel || '—');
     this.specValueTexts.power.setText((car.powerKW ?? '—') + ' kW');
