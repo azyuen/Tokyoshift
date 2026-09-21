@@ -1,6 +1,6 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260921-r74';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r75';
+import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r76';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -20,12 +20,12 @@ export default class BootScene extends Phaser.Scene {
 
     this.load.image(
       'travelMapTokyoBay',
-      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r75'
+      'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r76'
     );
 
     this.load.image(
       'travelMapTokyoRegion',
-      'assets/Ui/tokyo_region_map.png?v=20260921-r75'
+      'assets/Ui/tokyo_region_map.png?v=20260921-r76'
     );
 
     garageAssets
@@ -59,7 +59,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R75' : 'NEW RUN // R75', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R76' : 'NEW RUN // R76', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
