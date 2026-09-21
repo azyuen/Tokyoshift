@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r35';
-import { characters } from '../data/characters.js?v=20260921-r35';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r36';
+import { characters } from '../data/characters.js?v=20260921-r36';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -133,9 +133,6 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    this.add.rectangle(1420, 35, 216, 48, 0x0b1623, 1)
-      .setStrokeStyle(1, 0x274963, 1)
-      .setDepth(41);
     this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
@@ -178,10 +175,10 @@ export default class GarageScene extends Phaser.Scene {
 
     this.specValueTexts = {};
     rows.forEach((row, i) => {
-      const y = SIDE.y + 62 + i * 39;
+      const y = SIDE.y + 58 + i * 32;
       this.add.line(
         SIDE.x + SIDE.w / 2,
-        y + 19,
+        y + 16,
         SIDE.x + 20,
         0,
         SIDE.x + SIDE.w - 20,
@@ -199,14 +196,14 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 238, 'TUNING', {
+    this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
     const categories = ['ENGINE', 'TURBO', 'TIRES', 'SUSPENSION', 'GEARBOX', 'NITROUS', 'COSMETICS'];
     categories.forEach((name, i) => {
-      const y = SIDE.y + 306 + i * 48;
-      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 42, 0x0b1724, 1)
+      const y = SIDE.y + 250 + i * 46;
+      const box = this.add.rectangle(SIDE.x + SIDE.w / 2, y, SIDE.w - 36, 40, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(37);
@@ -270,12 +267,12 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMeetButton() {
-    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 786, SIDE.w - 32, 54, 0x0c2827, 1)
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 770, SIDE.w - 32, 48, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 786, 'GO TO MEET  >', {
+    this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MEET  >', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
