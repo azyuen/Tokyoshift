@@ -1,6 +1,8 @@
 import { cars, carOrder } from '../data/cars.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r47';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r49';
+import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r49';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r49';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r44';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -133,7 +135,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
-    const cash = this.registry.get('cash') ?? 25000;
+    const cash = this.registry.get('cash') ?? 50000;
 
     this.add.text(1105, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
@@ -142,7 +144,7 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
+    this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
   }
@@ -325,7 +327,27 @@ export default class GarageScene extends Phaser.Scene {
     button.on('pointerdown', () => {
       this.registry.set('selectedCarId', this.selectedCarId);
       this.saveProfile();
-      this.scene.start('MeetScene');
+
+      showTravelMap(this, {
+        currentLocationId: this.registry.get('meetLocation') || 'wangan7eleven',
+        title: 'DRIVE TO MEET',
+        actionVerb: 'GO TO MEET',
+        allowCurrentAction: true,
+        onTravel: (locationId, cost) => {
+          const cash = Number(this.registry.get('cash') || 0);
+          if (cash < cost) return;
+
+          const destination = getMeetLocation(locationId);
+          this.registry.set('cash', cash - cost);
+          this.registry.set('meetLocation', locationId);
+          this.registry.set('district', destination.district);
+          this.registry.set('selectedCarId', this.selectedCarId);
+          saveSessionState(this.registry);
+
+          this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+          this.scene.start('MeetScene');
+        },
+      });
     });
   }
 
