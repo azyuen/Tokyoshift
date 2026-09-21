@@ -3,6 +3,10 @@ import {
   getMeetLocation,
 } from '../data/meetAssets.js?v=20260921-r60';
 import {
+  getWorkshopByLocationId,
+  isWorkshopUnlocked,
+} from '../data/workshopProgression.js?v=20260921-r74';
+import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
   TRAVEL_REGIONS,
@@ -25,10 +29,15 @@ const MAP = { x: 26, y: 25, w: 1508, h: 790 };
 const INFO = { x: 874, y: 418, w: 634, h: 374 };
 const MAP_SOURCE = { w: 1672, h: 941 };
 
-function getMapArtBounds() {
-  const scale = Math.max(MAP.w / MAP_SOURCE.w, MAP.h / MAP_SOURCE.h);
-  const w = MAP_SOURCE.w * scale;
-  const h = MAP_SOURCE.h * scale;
+function getMapArtBounds(scene, textureKey) {
+  const source = textureKey && scene.textures.exists(textureKey)
+    ? scene.textures.get(textureKey).getSourceImage()
+    : null;
+  const sourceW = Number(source?.width || MAP_SOURCE.w);
+  const sourceH = Number(source?.height || MAP_SOURCE.h);
+  const scale = Math.max(MAP.w / sourceW, MAP.h / sourceH);
+  const w = sourceW * scale;
+  const h = sourceH * scale;
   return {
     x: MAP.x + (MAP.w - w) / 2,
     y: MAP.y + (MAP.h - h) / 2,
@@ -36,14 +45,6 @@ function getMapArtBounds() {
     h,
   };
 }
-
-const mapPoint = region => {
-  const art = getMapArtBounds();
-  return {
-    x: art.x + art.w * region.mapX,
-    y: art.y + art.h * region.mapY,
-  };
-};
 
 function currentRegionFromLocation(locationId, fromWorkshop) {
   if (fromWorkshop) return HOME_REGION_ID;
@@ -57,7 +58,7 @@ function locationTimeLabel(location) {
   const meet = MEET_LOCATIONS[location?.id];
   if (meet?.timeOfDay) return meet.timeOfDay.toUpperCase();
   if (location?.timeOfDay) return String(location.timeOfDay).toUpperCase();
-  if (location?.kind === 'home') return 'ANY';
+  if (location?.kind === 'home' || location?.kind === 'garageUpgrade') return 'ANY';
   return 'NIGHT';
 }
 
@@ -65,6 +66,7 @@ export function showTravelMap(scene, {
   currentLocationId,
   onTravel,
   onHome = null,
+  onWorkshopUpgrade = null,
   title = 'TOKYO REGION MAP',
   fromWorkshop = false,
   allowCurrentAction = false,
@@ -83,6 +85,8 @@ export function showTravelMap(scene, {
   const currentRegionId = currentRegionFromLocation(currentLocationId, fromWorkshop);
   let selectedRegionId = null;
   let selectedLocationId = null;
+  const garageTier = () => Number(scene.registry.get('garageTier') || 0);
+  const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
 
   const add = obj => {
     objects.push(obj);
@@ -126,7 +130,11 @@ export function showTravelMap(scene, {
       ? FALLBACK_MAP_TEXTURE
       : null;
 
-  const art = getMapArtBounds();
+  const art = getMapArtBounds(scene, mapTexture);
+  const mapPoint = region => ({
+    x: art.x + art.w * region.mapX,
+    y: art.y + art.h * region.mapY,
+  });
 
   if (mapTexture) {
     const mapImage = add(scene.add.image(
@@ -271,7 +279,7 @@ export function showTravelMap(scene, {
 
   const travelButton = addPanel(scene.add.rectangle(
     INFO.x + INFO.w / 2,
-    INFO.y + INFO.h - 34,
+    INFO.y + INFO.h - 48,
     INFO.w - 40,
     52,
     0x0d2b29,
@@ -280,7 +288,7 @@ export function showTravelMap(scene, {
 
   const travelLabel = addPanel(scene.add.text(
     INFO.x + INFO.w / 2,
-    INFO.y + INFO.h - 34,
+    INFO.y + INFO.h - 48,
     '',
     {
       fontFamily: PIXEL_FONT,
@@ -294,6 +302,11 @@ export function showTravelMap(scene, {
 
     if (location.kind === 'home') {
       return fromWorkshop ? 0 : Number(homeCost ?? HOME_RETURN_COST);
+    }
+
+    if (location.kind === 'garageUpgrade') {
+      const unlocked = isWorkshopUnlocked(location.id, garageTier());
+      return unlocked ? 0 : Number(location.unlockCost || getWorkshopByLocationId(location.id).unlockCost || 0);
     }
 
     return getRegionTravelCost({
@@ -348,6 +361,66 @@ export function showTravelMap(scene, {
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
       travelLabel.setColor('#72838f').setText('SELECT A LOCATION');
+      return;
+    }
+
+    if (location.kind === 'garageUpgrade') {
+      const tier = garageTier();
+      const targetTier = Number(location.garageTier || getWorkshopByLocationId(location.id).tier || 0);
+      const unlocked = targetTier <= tier;
+      const active = activeWorkshopId() === location.id;
+      const prerequisite = Number(location.requiresTier || Math.max(0, targetTier - 1));
+      const cost = unlocked ? 0 : Number(location.unlockCost || getWorkshopByLocationId(location.id).unlockCost || 0);
+
+      travelButton.removeAllListeners('pointerdown');
+
+      if (!fromWorkshop) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x111820, 1)
+          .setStrokeStyle(1, 0x40515d, 1);
+        travelLabel.setColor('#72838f').setText('RETURN HOME TO UPGRADE');
+        return;
+      }
+
+      if (!unlocked && tier < prerequisite) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x111820, 1)
+          .setStrokeStyle(1, 0x40515d, 1);
+        travelLabel.setColor('#72838f').setText('UNLOCK PREVIOUS WORKSHOP FIRST');
+        return;
+      }
+
+      if (active) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x10202a, 1)
+          .setStrokeStyle(1, 0x4f788b, 1);
+        travelLabel.setColor('#7fcfe8').setText('ACTIVE WORKSHOP');
+        return;
+      }
+
+      if (!unlocked && currentCash < cost) {
+        travelButton.disableInteractive()
+          .setFillStyle(0x25151a, 1)
+          .setStrokeStyle(2, 0x8b4f5c, 1);
+        travelLabel.setColor('#c99aa4').setText('NEED ' + MONEY(cost));
+        return;
+      }
+
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(unlocked ? 0x102838 : 0x0d2b29, 1)
+        .setStrokeStyle(2, unlocked ? 0x55dfff : 0x62e8c7, 1);
+
+      travelLabel.setColor('#f1fffb').setText(
+        unlocked
+          ? 'USE THIS WORKSHOP'
+          : 'UNLOCK // ' + MONEY(cost)
+      );
+
+      travelButton.on('pointerdown', () => {
+        dismiss();
+        onWorkshopUpgrade?.(location, cost, unlocked);
+      });
       return;
     }
 
@@ -434,10 +507,21 @@ export function showTravelMap(scene, {
       const time = locationTimeLabel(item);
 
       row.label.setText(item.label);
-      row.meta.setText(
-        item.difficulty + '  •  ' + time + '  •  ' +
-        (isCurrent ? 'HERE' : MONEY(cost))
-      );
+      if (item.kind === 'garageUpgrade') {
+        const unlocked = isWorkshopUnlocked(item.id, garageTier());
+        row.meta.setText(
+          (unlocked ? 'UNLOCKED' : 'UPGRADE') + '  •  ' +
+          Number(item.capacity || 0) + ' CARS  •  ' +
+          (unlocked ? 'OWNED' : MONEY(cost))
+        );
+      } else if (item.kind === 'home') {
+        row.meta.setText('HOME  •  ANY  •  ' + (fromWorkshop ? 'HERE' : MONEY(cost)));
+      } else {
+        row.meta.setText(
+          item.difficulty + '  •  ' + time + '  •  ' +
+          (isCurrent ? 'HERE' : MONEY(cost))
+        );
+      }
 
       row.box.removeAllListeners('pointerdown');
 
@@ -494,7 +578,7 @@ export function showTravelMap(scene, {
       if (regionId === currentRegionId && !fromWorkshop) {
         selectedLocationId = currentLocationId;
       } else if (regionId === HOME_REGION_ID) {
-        selectedLocationId = 'shinonomeWorkshop';
+        selectedLocationId = fromWorkshop ? activeWorkshopId() : 'shinonomeWorkshop';
       } else {
         selectedLocationId = region.locations.find(item => item.available)?.id
           || region.locations[0]?.id
