@@ -4,7 +4,7 @@ import {
   LOCATION_ORDER_BY_REGION,
   getMeetLocation,
   getTravelCost,
-} from '../data/meetAssets.js?v=20260921-r49';
+} from '../data/meetAssets.js?v=20260921-r50';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
