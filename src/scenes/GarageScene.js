@@ -1,5 +1,6 @@
-import { cars, carOrder } from '../data/cars.js?v=20260921-r40';
-import { characters } from '../data/characters.js?v=20260921-r40';
+import { cars, carOrder } from '../data/cars.js?v=20260921-r42';
+import { characters } from '../data/characters.js?v=20260921-r42';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r42';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -16,8 +17,15 @@ export default class GarageScene extends Phaser.Scene {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
 
-    this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
-    if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
+    this.ownedCarIds = (this.registry.get('ownedCarIds') || ['ae86']).filter(id => cars[id]);
+    if (!this.ownedCarIds.length) this.ownedCarIds = ['ae86'];
+
+    this.selectedCarId = this.registry.get('selectedCarId') || this.ownedCarIds[0];
+    if (!cars[this.selectedCarId] || !this.ownedCarIds.includes(this.selectedCarId)) {
+      this.selectedCarId = this.ownedCarIds[0];
+    }
+    this.registry.set('ownedCarIds', this.ownedCarIds);
+    this.registry.set('selectedCarId', this.selectedCarId);
 
     this.selectedDisplay = [];
     this.thumbButtons = [];
@@ -28,6 +36,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildHeader();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
+    this.buildSaveButton();
     this.buildMeetButton();
 
     this.selectCar(this.selectedCarId);
@@ -74,7 +83,8 @@ export default class GarageScene extends Phaser.Scene {
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
-    this.addGarageCharacter(characters.renMizuno, 282, 558, 350, 14);
+    const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
+    this.addGarageCharacter(playerCharacter, 282, 558, 350, 14);
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -115,7 +125,7 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
     }).setOrigin(0, 0.5).setDepth(42);
 
-    this.headerCarText = this.add.text(250, 35, '', {
+    this.headerCarText = this.add.text(305, 35, '', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
@@ -193,7 +203,7 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(37);
     });
 
-    this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING', {
+    this.add.text(SIDE.x + 20, SIDE.y + 198, 'TUNING // STOCK', {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
     }).setDepth(37);
 
@@ -237,19 +247,31 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#7fa6bd'
     }).setOrigin(1, 0).setDepth(32);
 
+    const slotCount = 6;
     const cardW = 170;
     const gap = 14;
     const startX = STRIP.x + 15 + cardW / 2;
 
-    carOrder.forEach((id, i) => {
+    for (let i = 0; i < slotCount; i++) {
+      const id = this.ownedCarIds[i] || null;
       const x = startX + i * (cardW + gap);
       const y = STRIP.y + 100;
 
-      const box = this.add.rectangle(x, y, cardW, 112, 0x0b1724, 1)
-        .setStrokeStyle(2, 0x29465c, 1)
-        .setInteractive({ useHandCursor: true })
+      const box = this.add.rectangle(x, y, cardW, 112, id ? 0x0b1724 : 0x07101a, 1)
+        .setStrokeStyle(2, id ? 0x29465c : 0x1d3445, id ? 1 : 0.78)
         .setDepth(32);
 
+      if (!id) {
+        this.add.text(x, y - 8, 'EMPTY SLOT', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#526d7e'
+        }).setOrigin(0.5).setDepth(34);
+        this.add.text(x, y + 24, 'WIN ON PINK SLIP', {
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#3f5665'
+        }).setOrigin(0.5).setDepth(34);
+        continue;
+      }
+
+      box.setInteractive({ useHandCursor: true });
       const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, 132);
       const thumbBodyY = this.getBodyYForWheelBottom(cars[id], 132, thumbWheelBottomY);
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, 132, 34);
@@ -260,9 +282,32 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => this.selectCar(id));
       this.thumbButtons.push({ id, box, label, display });
-    });
+    }
 
-    this.garageCountText.setText(carOrder.length + ' CARS');
+    this.garageCountText.setText(this.ownedCarIds.length + ' / ' + slotCount + ' CARS');
+  }
+
+  buildSaveButton() {
+    const button = this.add.rectangle(SIDE.x + SIDE.w / 2, 716, SIDE.w - 32, 42, 0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+
+    const label = this.add.text(SIDE.x + SIDE.w / 2, 716, 'SAVE GAME', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => {
+      this.registry.set('selectedCarId', this.selectedCarId);
+      saveManualState(this.registry);
+      label.setText('SAVED // RESTORE POINT');
+      button.setFillStyle(0x0f302b, 1).setStrokeStyle(2, 0x62e8c7, 1);
+      this.time.delayedCall(1200, () => {
+        if (!label.active) return;
+        label.setText('SAVE GAME');
+        button.setFillStyle(0x102138, 1).setStrokeStyle(2, 0x55b8ff, 1);
+      });
+    });
   }
 
   buildMeetButton() {
@@ -344,7 +389,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   selectCar(id) {
-    if (!cars[id]) return;
+    if (!cars[id] || !this.ownedCarIds.includes(id)) return;
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
@@ -387,16 +432,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   saveProfile() {
-    try {
-      localStorage.setItem('tokyoShiftProfile', JSON.stringify({
-        selectedCarId: this.selectedCarId,
-        wins: this.registry.get('wins') ?? 0,
-        losses: this.registry.get('losses') ?? 0,
-        cash: this.registry.get('cash') ?? 25000,
-        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
-      }));
-    } catch (e) {
-      // Storage can be unavailable in some private-browser contexts.
-    }
+    this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('ownedCarIds', this.ownedCarIds);
+    saveSessionState(this.registry);
+
   }
 }
