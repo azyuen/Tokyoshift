@@ -10,9 +10,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260921-r60';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260921-r60';
+import { saveSessionState } from '../state/GameState.js?v=20260921-r74';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r73';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r74';
+import { getGarageCapacity } from '../data/workshopProgression.js?v=20260921-r74';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1084,6 +1085,20 @@ export default class MeetScene extends Phaser.Scene {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
 
+    const ownedCars = this.registry.get('ownedCarIds') || [];
+    const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    if (
+      ownedCars.length >= garageCapacity &&
+      !ownedCars.includes(offer.carId)
+    ) {
+      this.pinkSlipButton.disableInteractive();
+      this.pinkSlipButtonLabel.setText('GARAGE FULL').setColor('#72838f');
+      this.pinkResponseText
+        .setText('Upgrade your Shinonome workshop before racing for another car.')
+        .setColor('#8799a5');
+      return;
+    }
+
     offer.pinkChallenged = true;
     this.persistMeetRound();
     this.pinkSlipButton.disableInteractive();
@@ -1101,6 +1116,24 @@ export default class MeetScene extends Phaser.Scene {
     if (!offer) return;
 
     if (!offer.pinkChallenged) {
+      const ownedCars = this.registry.get('ownedCarIds') || [];
+      const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+      const garageFull =
+        ownedCars.length >= garageCapacity &&
+        !ownedCars.includes(offer.carId);
+
+      if (garageFull) {
+        this.pinkSlipButton
+          .setFillStyle(0x11161c, 1)
+          .setStrokeStyle(1, 0x46545e, 1)
+          .disableInteractive();
+        this.pinkSlipButtonLabel.setText('GARAGE FULL').setColor('#72838f');
+        this.pinkResponseText
+          .setText('Upgrade your Shinonome workshop to add another car.')
+          .setColor('#8799a5');
+        return;
+      }
+
       this.pinkSlipButton
         .setFillStyle(0x291620, 1)
         .setStrokeStyle(2, 0xff5f93, 0.9)
