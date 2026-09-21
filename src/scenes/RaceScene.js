@@ -10,8 +10,8 @@ import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r54';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r55';
-import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r53';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r53';
+import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r56';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r56';
 
 const TRACK_M = 402.336;
 const PX_PER_M = 76.0;
@@ -326,14 +326,13 @@ export default class RaceScene extends Phaser.Scene {
       if (ownedCarIds.length) {
         this.registry.set('selectedCarId', ownedCarIds[0]);
         this.registry.set('gameOver', false);
-        saveSessionState(this.registry);
-        this.scene.start('MeetScene');
       } else {
         this.registry.set('selectedCarId', null);
         this.registry.set('gameOver', true);
-        saveSessionState(this.registry);
-        this.showForfeitGameOver(forfeitedCarName);
       }
+
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');
       return;
     }
 
@@ -967,23 +966,8 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     if (settlement?.gameOver) {
-      const hasManualSave = Boolean(readManualSave());
-
-      if (hasManualSave) {
-        addButton(660, 'RESTORE SAVE', 0x45d7ff, () => {
-          const restored = restoreManualSave(this.registry);
-          this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'CharacterSelectScene');
-        });
-      } else {
-        addButton(660, 'NO SAVE', 0x7d5660, () => {
-          clearAllSaves();
-          this.scene.start('CharacterSelectScene');
-        });
-      }
-
-      addButton(900, 'NEW RUN', 0xff4a8d, () => {
-        clearAllSaves();
-        this.scene.start('CharacterSelectScene');
+      addButton(780, 'BACK TO MEET // NO CAR', 0xffb85f, () => {
+        this.scene.start('MeetScene');
       });
     } else {
       let saveControl = null;
