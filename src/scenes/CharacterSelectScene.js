@@ -1,6 +1,6 @@
-import { cars } from '../data/cars.js?v=20260921-r42';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r42';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260921-r42';
+import { cars } from '../data/cars.js?v=20260921-r43';
+import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260921-r43';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -12,7 +12,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r42');
+        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
       }
     });
   }
