@@ -26,11 +26,16 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260921-r66';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r74';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r73';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r74';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
+import {
+  MAX_GARAGE_CAPACITY,
+  getGarageCapacity,
+  getWorkshopByLocationId,
+} from '../data/workshopProgression.js?v=20260921-r74';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -70,6 +75,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryModeObjects = [];
     this.secondaryModalObjects = [];
     this.secondaryHelperObjects = [];
+    this.secondaryHotspotObjects = [];
 
     this.drawScene();
     this.buildHeader();
@@ -100,13 +106,20 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x24475f, 1).setDepth(-12);
 
+    const activeWorkshop = getWorkshopByLocationId(
+      this.registry.get('workshopLocationId') || 'shinonomeWorkshop'
+    );
+    const workshopTexture = this.textures.exists(activeWorkshop.textureKey)
+      ? activeWorkshop.textureKey
+      : 'garageWorkshopBg';
+
     const workshop = this.add.image(
       STAGE.x + STAGE.w / 2,
       STAGE.y + STAGE.h / 2,
-      'garageWorkshopBg'
+      workshopTexture
     ).setDepth(-10);
 
-    const source = this.textures.get('garageWorkshopBg').getSourceImage();
+    const source = this.textures.get(workshopTexture).getSourceImage();
     const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height) * 1.12;
     workshop.setScale(coverScale);
 
@@ -123,6 +136,17 @@ export default class GarageScene extends Phaser.Scene {
       0x03101b,
       0.06
     ).setDepth(-9);
+
+    if (activeWorkshop.tier > 0) {
+      this.add.rectangle(STAGE.x + 142, STAGE.y + 30, 238, 34, 0x06101b, 0.82)
+        .setStrokeStyle(1, 0x43dfff, 0.62)
+        .setDepth(18);
+      this.add.text(STAGE.x + 28, STAGE.y + 30, activeWorkshop.shortLabel, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#cbefff',
+      }).setOrigin(0, 0.5).setDepth(19);
+    }
 
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
@@ -304,47 +328,75 @@ export default class GarageScene extends Phaser.Scene {
     }).setDepth(32);
 
     this.garageCountText = this.add.text(STRIP.x + STRIP.w - 18, STRIP.y + 14, '', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#7fa6bd'
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7fa6bd'
     }).setOrigin(1, 0).setDepth(32);
 
-    const slotCount = 6;
-    const cardW = 170;
-    const gap = 14;
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const slotCount = MAX_GARAGE_CAPACITY;
+    const gap = 8;
+    const cardW = (STRIP.w - 30 - gap * (slotCount - 1)) / slotCount;
     const startX = STRIP.x + 15 + cardW / 2;
 
     for (let i = 0; i < slotCount; i++) {
       const id = this.ownedCarIds[i] || null;
+      const unlocked = i < capacity;
       const x = startX + i * (cardW + gap);
       const y = STRIP.y + 100;
 
-      const box = this.add.rectangle(x, y, cardW, 112, id ? 0x0b1724 : 0x07101a, 1)
-        .setStrokeStyle(2, id ? 0x29465c : 0x1d3445, id ? 1 : 0.78)
-        .setDepth(32);
+      const box = this.add.rectangle(
+        x,
+        y,
+        cardW,
+        112,
+        id ? 0x0b1724 : unlocked ? 0x07101a : 0x060b11,
+        1
+      ).setStrokeStyle(
+        unlocked ? 2 : 1,
+        id ? 0x29465c : unlocked ? 0x1d3445 : 0x26323a,
+        unlocked ? 1 : 0.62
+      ).setDepth(32);
+
+      if (!unlocked) {
+        this.add.text(x, y - 10, 'LOCKED', {
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#53636e'
+        }).setOrigin(0.5).setDepth(34);
+        this.add.text(x, y + 20, 'UPGRADE\nWORKSHOP', {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#394b57',
+          align: 'center',
+          lineSpacing: 3,
+        }).setOrigin(0.5).setDepth(34);
+        continue;
+      }
 
       if (!id) {
         this.add.text(x, y - 8, 'EMPTY SLOT', {
-          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#526d7e'
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#526d7e'
         }).setOrigin(0.5).setDepth(34);
         this.add.text(x, y + 24, 'WIN ON PINK SLIP', {
-          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#3f5665'
+          fontFamily: PIXEL_FONT, fontSize: '5px', color: '#3f5665'
         }).setOrigin(0.5).setDepth(34);
         continue;
       }
 
       box.setInteractive({ useHandCursor: true });
-      const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, 132);
-      const thumbBodyY = this.getBodyYForWheelBottom(cars[id], 132, thumbWheelBottomY);
-      const display = this.createCarDisplay(cars[id], x, thumbBodyY, 132, 34);
+      const thumbWidth = Math.min(112, cardW - 12);
+      const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, thumbWidth);
+      const thumbBodyY = this.getBodyYForWheelBottom(cars[id], thumbWidth, thumbWheelBottomY);
+      const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 34);
 
       const label = this.add.text(x, y + 38, cars[id].shortName, {
-        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b8cad7'
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#b8cad7'
       }).setOrigin(0.5).setDepth(36);
 
       box.on('pointerdown', () => this.selectCar(id));
       this.thumbButtons.push({ id, box, label, display });
     }
 
-    this.garageCountText.setText(this.ownedCarIds.length + ' / ' + slotCount + ' CARS');
+    this.garageCountText.setText(
+      this.ownedCarIds.length + ' / ' + capacity + ' CARS  //  MAX ' + MAX_GARAGE_CAPACITY
+    );
   }
 
   buildSaveButton() {
@@ -390,6 +442,28 @@ export default class GarageScene extends Phaser.Scene {
         actionVerb: 'GO TO MEET',
         fromWorkshop: true,
         allowCurrentAction: true,
+        onWorkshopUpgrade: (location, cost, alreadyUnlocked) => {
+          const cash = Number(this.registry.get('cash') || 0);
+          if (!alreadyUnlocked && cash < cost) return;
+
+          const nextCash = alreadyUnlocked ? cash : cash - cost;
+          const targetTier = Number(location.garageTier || 0);
+
+          if (!alreadyUnlocked) {
+            this.registry.set('garageTier', Math.max(
+              Number(this.registry.get('garageTier') || 0),
+              targetTier
+            ));
+            this.registry.set('cash', nextCash);
+          }
+
+          this.registry.set('workshopLocationId', location.id);
+          saveSessionState(this.registry);
+          this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
+
+          this.cameras.main.fadeOut(180, 2, 5, 11);
+          this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
+        },
         onTravel: (locationId, cost) => {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
