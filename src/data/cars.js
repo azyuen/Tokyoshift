@@ -52,6 +52,8 @@ export const cars = {
     launchRPM: 4800,
     visual: {
       bodyKey: 'carAE86',
+      paintKey: 'carAE86Paint',
+      overlayKey: 'carAE86Overlay',
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
       bodyScale: 0.165,
