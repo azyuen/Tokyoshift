@@ -1,9 +1,19 @@
 {
-  "name": "TOKYO SHIFT",
-  "short_name": "TOKYO SHIFT",
+  "name": "Tokyo SHIFT",
+  "short_name": "Tokyo SHIFT",
+  "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#05070d",
   "theme_color": "#070914",
-  "orientation": "landscape"
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "./app-icon.svg?v=20260921-r41",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
