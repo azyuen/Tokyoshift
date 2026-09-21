@@ -8,8 +8,8 @@ import { cars, carOrder } from '../data/cars.js?v=20260921-r55';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { characters } from '../data/characters.js?v=20260921-r43';
-import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r54';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r57';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260921-r60';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260921-r60';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r57';
 
