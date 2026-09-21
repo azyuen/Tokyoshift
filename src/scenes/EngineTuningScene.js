@@ -1,4 +1,9 @@
-import { cars } from '../data/cars.js?v=20260921-r55';
+import { cars } from '../data/cars.js?v=20260922-r83';
+import {
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+  getCarPaintColor,
+} from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import {
@@ -749,7 +754,7 @@ export default class EngineTuningScene extends Phaser.Scene {
   }
 
   getWheelBottomY(car, bodyY, targetWidth) {
-    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
     const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
@@ -759,7 +764,7 @@ export default class EngineTuningScene extends Phaser.Scene {
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
-    const bodySource = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
     const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
@@ -768,7 +773,7 @@ export default class EngineTuningScene extends Phaser.Scene {
   }
 
   createCarDisplay(car, x, y, targetWidth, depth) {
-    const source = this.textures.get(car.visual.bodyKey).getSourceImage();
+    const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const ratio = car.visual.wheelScale / car.visual.bodyScale;
     const wheelScale = bodyScale * ratio * 1.16;
@@ -802,10 +807,22 @@ export default class EngineTuningScene extends Phaser.Scene {
       0.82
     ).setDepth(depth - 0.12);
 
-    const body = this.add.image(x, y, car.visual.bodyKey)
-      .setScale(bodyScale)
-      .setDepth(depth + 1);
+    const paintColor = getCarPaintColor(this.carStates?.[car.id] || {});
+    const bodyLayers = createCarBodyLayers(this, car, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor,
+    });
 
-    return [rearWheelBacking, frontWheelBacking, roadShadow, rearWheel, frontWheel, body];
+    return [
+      rearWheelBacking,
+      frontWheelBacking,
+      roadShadow,
+      rearWheel,
+      frontWheel,
+      ...bodyLayers.objects,
+    ];
   }
 }
