@@ -18,6 +18,7 @@ export function createDefaultGameState() {
     carStates: {
       ae86: {
         stock: true,
+        paintColor: 0xffffff,
         nosInstalled: false,
         tuneLevel: 0,
         tuning: {
