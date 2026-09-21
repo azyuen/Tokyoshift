@@ -3,7 +3,7 @@ export const SESSION_KEY = 'tokyoShiftProfile';
 
 export function createDefaultGameState() {
   return {
-    version: 1,
+    version: 2,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -14,6 +14,14 @@ export function createDefaultGameState() {
         stock: true,
         nosInstalled: false,
         tuneLevel: 0,
+        tuning: {
+          engine: 0,
+          intake: 0,
+          ecu: 0,
+          turbo: 0,
+          intercooler: 0,
+          exhaust: 0,
+        },
         acquiredVia: 'starter',
       },
     },
@@ -104,7 +112,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 1,
+    version: 2,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
