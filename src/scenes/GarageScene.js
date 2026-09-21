@@ -29,7 +29,7 @@ import {
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260921-r60';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260921-r64';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260921-r60';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r68';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260921-r71';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
