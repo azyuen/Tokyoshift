@@ -14,15 +14,15 @@ export default class RaceHUD {
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
     this.status = scene.add.text(780, 452, '', {
-      fontFamily: 'monospace', fontSize: '17px', color: '#fff0b8', fontStyle: 'bold'
+      fontFamily: '"Silkscreen", monospace', fontSize: '11px', color: '#fff0b8'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: 'monospace', fontSize: '31px', color: '#f7f7f2', fontStyle: 'bold'
+      fontFamily: '"Rajdhani", monospace', fontSize: '22px', color: '#f7f7f2', fontStyle: '700'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
-      fontFamily: 'monospace', fontSize: '23px', color: '#dff6ff', fontStyle: 'bold'
+      fontFamily: '"Rajdhani", monospace', fontSize: '16px', color: '#dff6ff', fontStyle: '700'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.layoutText();
