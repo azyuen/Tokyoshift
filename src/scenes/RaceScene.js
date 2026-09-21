@@ -81,15 +81,12 @@ export default class RaceScene extends Phaser.Scene {
     this.player = new Vehicle(playerConfig, engines[playerConfig.engine]);
     this.opponent = new Vehicle(opponentConfig, engines[opponentConfig.engine]);
 
-    if (this.isRollingStart) {
-      this.prepareRollingVehicle(this.player);
-      this.prepareRollingVehicle(this.opponent);
-    } else {
-      this.player.transmission.currentGear = 0;
-      this.player.transmission.lastShiftQuality = 'NEUTRAL';
-      this.opponent.transmission.currentGear = 1;
-      this.opponent.transmission.lastShiftQuality = 'STAGED';
-    }
+    // Stay staged and stationary until the player actually starts the race.
+    // Roll-race speed is injected only when START ROLL is pressed.
+    this.player.transmission.currentGear = 0;
+    this.player.transmission.lastShiftQuality = 'NEUTRAL';
+    this.opponent.transmission.currentGear = 1;
+    this.opponent.transmission.lastShiftQuality = 'STAGED';
 
     const rivalAI = rivalCharacter?.skill?.ai ?? {
       reactionSkill: 0.78,
