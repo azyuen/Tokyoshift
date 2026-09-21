@@ -18,6 +18,7 @@ let pendingTrack = null;
 let lastRaceTrack = null;
 let unlockInstalled = false;
 let musicVolume = getMusicVolume();
+let stopToken = 0;
 
 if (typeof window !== 'undefined') {
   window.addEventListener('tokyo-shift-audio-settings', event => {
@@ -391,6 +392,7 @@ function runScheduler() {
 
 function startTrack(key) {
   if (!ensureAudio() || !TRACKS[key]) return;
+  stopToken++;
 
   if (ctx.state !== 'running') {
     pendingTrack = key;
@@ -436,6 +438,7 @@ export function playRaceMusic() {
 }
 
 export function stopMusic() {
+  const token = ++stopToken;
   pendingTrack = null;
   currentTrack = null;
 
@@ -447,7 +450,9 @@ export function stopMusic() {
   const now = ctx.currentTime;
   master.gain.cancelScheduledValues(now);
   master.gain.setTargetAtTime(0.0001, now, 0.035);
-  setTimeout(stopActiveNodes, 180);
+  setTimeout(() => {
+    if (token === stopToken) stopActiveNodes();
+  }, 180);
 }
 
 export function playVictorySting() {
