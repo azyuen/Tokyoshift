@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260921-r78';
+import { garageAssets } from '../data/garageAssets.js?v=20260921-r79';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
 import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260921-r77';
 
@@ -7,6 +7,10 @@ export default class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image('carAE86', 'assets/Cars/ae86_body.png');
+    // R79 paint test: these are optional until the user uploads the two PNGs.
+    // CarAppearance falls back to carAE86 automatically if either layer is missing.
+    this.load.image('carAE86Paint', 'assets/Cars/ae86_body_paint.png?v=20260921-r79');
+    this.load.image('carAE86Overlay', 'assets/Cars/ae86_body_overlay.png?v=20260921-r79');
     this.load.image('carR32', 'assets/Cars/r32_body.png');
     this.load.image('carEvoIII', 'assets/Cars/evo_iii_body.png');
     this.load.image('carFC3S', 'assets/Cars/fc3s_body.png');
@@ -59,7 +63,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R78' : 'NEW RUN // R78', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R79' : 'NEW RUN // R79', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
