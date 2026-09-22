@@ -1,8 +1,8 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
 import { cars } from '../data/cars.js?v=20260923-r137';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r134';
-import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r131';
+import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r140';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260923-r140';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures } from '../data/visualMods.js?v=20260923-r138';
 
@@ -76,11 +76,12 @@ export default class BootScene extends Phaser.Scene {
 
     // A manual save can point at any chosen profile portrait, so every
     // player-character sprite must be available before we skip setup on boot.
-    characterOrder.forEach(id => {
+    [...new Set([...playableCharacterOrder, 'daichiSakamoto'])].forEach(id => {
       const character = characters[id];
+      if (!character) return;
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260921-r43'
+        character.visual.path + '?v=20260923-r140'
       );
     });
 
