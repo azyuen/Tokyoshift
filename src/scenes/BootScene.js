@@ -1,8 +1,8 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r97';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r98';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r97';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r98';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -10,17 +10,21 @@ export default class BootScene extends Phaser.Scene {
   init(data = {}) {
     let internalReload = false;
     let reloadMessage = '';
+    let forceGarage = false;
 
     try {
       internalReload = sessionStorage.getItem('tokyoShiftInternalReload') === '1';
       reloadMessage = sessionStorage.getItem('tokyoShiftBootMessage') || '';
+      forceGarage = sessionStorage.getItem('tokyoShiftForceGarage') === '1';
       if (internalReload) {
         sessionStorage.removeItem('tokyoShiftInternalReload');
         sessionStorage.removeItem('tokyoShiftBootMessage');
+        sessionStorage.removeItem('tokyoShiftForceGarage');
       }
     } catch (e) {}
 
     this.internalReload = internalReload;
+    this.forceGarage = forceGarage;
     this.preserveRegistry = Boolean(data?.preserveRegistry);
     this.bootMessage = String(data?.bootMessage || reloadMessage || '');
   }
@@ -83,6 +87,10 @@ export default class BootScene extends Phaser.Scene {
       return;
     }
 
-    this.scene.start(saved && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+    this.scene.start(
+      saved && (this.forceGarage || !state.gameOver)
+        ? 'GarageScene'
+        : 'CharacterSelectScene'
+    );
   }
 }
