@@ -708,6 +708,14 @@ export default class MeetScene extends Phaser.Scene {
     if (this.hasCar) {
       this.gpsTravelButton?.setInteractive({ useHandCursor: true });
     }
+
+    this.modeButtons?.forEach(item => {
+      if (item.key === 'COMPETITION' && !item.locked) {
+        item.box.removeAllListeners('pointerdown');
+        item.box.setInteractive({ useHandCursor: true });
+        item.box.on('pointerdown', () => this.showCompetitionPopup());
+      }
+    });
   }
 
   showSpecialChallenger(challenger, animate = true) {
@@ -1935,7 +1943,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
-    if (this.specialChallengeActive) return;
+    if (this.specialChallengeActive || this.competitionPopup?.active) return;
     if (Date.now() >= this.nextRefreshAt) this.refreshOffersWithTransition();
   }
 
