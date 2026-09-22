@@ -2489,7 +2489,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
+      SIDE.y + 632,
       'PAINT INSTALLED',
       {
         fontFamily: PIXEL_FONT,
@@ -2509,7 +2509,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(72));
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 662, '<  BACK TO WORKSHOP', {
+    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 684, '<  BACK TO WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(73));
 
