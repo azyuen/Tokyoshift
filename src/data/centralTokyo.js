@@ -160,7 +160,8 @@ export function isArkonDen(source) {
   const devMode = Boolean(value(source, 'devMode', false));
   const first = String(value(source, 'firstName', '')).trim().toLowerCase();
   const last = String(value(source, 'lastName', '')).trim().toLowerCase();
-  return devMode || (first === 'arkon' && last === 'den');
+  const joined = (first + last).replace(/[^a-z0-9]/g, '');
+  return devMode || joined === 'arkonden';
 }
 
 export function getCentralTokyoAccess(source) {
