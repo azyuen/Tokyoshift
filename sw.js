@@ -44,6 +44,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Tuning-part artwork is iterated frequently during development. Prefer the
+  // network so replacing an icon at the same path is visible immediately,
+  // while still falling back to the cached copy if offline.
+  if (url.pathname.includes('/assets/Tuning/Parts/')) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
   if (/\.(?:png|jpg|jpeg|webp|svg)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(request));
     return;
