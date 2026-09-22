@@ -67,6 +67,14 @@ const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 export default class GarageScene extends Phaser.Scene {
   constructor() { super('GarageScene'); }
 
+  init(data = {}) {
+    // Pass the workshop explicitly when changing properties. This avoids
+    // depending on a re-entrant scene restart to preserve the new location.
+    if (data?.workshopLocationId) {
+      this.registry.set('workshopLocationId', data.workshopLocationId);
+    }
+  }
+
   create() {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
@@ -771,7 +779,9 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('selectedCarId', remaining[0] || null);
           saveSessionState(this.registry);
           close();
-          this.scene.restart();
+          this.scene.start('GarageScene', {
+            workshopLocationId: currentWorkshop.id,
+          });
         });
       }
     });
@@ -885,13 +895,11 @@ export default class GarageScene extends Phaser.Scene {
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
-          // Defer the restart until the current map pointer event has finished.
-          // Restarting synchronously while TravelMap is destroying its objects
-          // can stall Phaser's input/scene lifecycle on mobile.
-          this.workshopSwitchPending = true;
-          this.time.delayedCall(60, () => {
-            this.workshopSwitchPending = false;
-            this.scene.restart();
+          // Start a fresh GarageScene instead of restarting the active one.
+          // Phaser's restart path was leaving the scene/input lifecycle in a
+          // bad state on iOS after the GPS popup was destroyed.
+          this.scene.start('GarageScene', {
+            workshopLocationId: location.id,
           });
         },
         onTravel: (locationId, cost) => {
