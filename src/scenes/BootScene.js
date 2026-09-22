@@ -7,6 +7,11 @@ import { createDefaultGameState, readManualSave, applyStateToRegistry } from '..
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
 
+  init(data = {}) {
+    this.preserveRegistry = Boolean(data?.preserveRegistry);
+    this.bootMessage = String(data?.bootMessage || '');
+  }
+
   preload() {
     // Every car follows the same appearance convention. Adding a car to cars.js
     // automatically queues its legacy body + tintable paint + fixed overlay.
@@ -47,10 +52,12 @@ export default class BootScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
 
     const saved = readManualSave();
-    const state = applyStateToRegistry(
-      this.registry,
-      saved || createDefaultGameState()
-    );
+    const state = this.preserveRegistry
+      ? { gameOver: Boolean(this.registry.get('gameOver')) }
+      : applyStateToRegistry(
+          this.registry,
+          saved || createDefaultGameState()
+        );
 
     this.registry.set('workshopFriendId', 'daichiSakamoto');
 
@@ -58,11 +65,24 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R91' : 'NEW RUN // R91', {
-      fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
-    }).setOrigin(0.5);
+    this.add.text(
+      780,
+      425,
+      this.bootMessage
+        ? this.bootMessage + ' // R92'
+        : saved ? 'LOADING SAVE // R92' : 'NEW RUN // R92',
+      {
+        fontFamily: '"Silkscreen", monospace',
+        fontSize: '16px',
+        color: '#62d8ff'
+      }
+    ).setOrigin(0.5);
 
     this.time.delayedCall(90, () => {
+      if (this.preserveRegistry) {
+        this.scene.start('GarageScene');
+        return;
+      }
       this.scene.start(saved && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
     });
   }
