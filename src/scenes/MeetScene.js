@@ -93,6 +93,8 @@ export default class MeetScene extends Phaser.Scene {
       : 'odaiba7eleven';
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
+    this.specialChallengeActive = false;
+    this.specialChallengeObjects = [];
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
@@ -132,6 +134,15 @@ export default class MeetScene extends Phaser.Scene {
     this.buildSidebar();
     this.buildBottomArea();
     this.rollOffers({ resetTimer: false });
+
+    const activeChallenger = this.registry.get('specialChallenger');
+    if (
+      activeChallenger?.active &&
+      activeChallenger.locationId === this.selectedMeetLocation &&
+      this.hasCar
+    ) {
+      this.time.delayedCall(80, () => this.showSpecialChallenger(activeChallenger, false));
+    }
 
     // Let the visible Meet render first, then quietly fetch the rest of the
     // character/background library and the heavy race-control artwork.
@@ -389,9 +400,16 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
+    const competitionUnlocked =
+      this.hasCar && Number(this.registry.get('wins') || 0) >= 1;
+
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
-      ['COMPETITION // LOCKED', 'COMPETITION', true],
+      [
+        competitionUnlocked ? 'COMPETITION' : 'COMPETITION // WIN 1 RACE',
+        'COMPETITION',
+        !competitionUnlocked,
+      ],
     ];
 
     this.modeButtons = [];
@@ -410,9 +428,14 @@ export default class MeetScene extends Phaser.Scene {
 
       const label = this.add.text(SIDE.x + 24, y, row[0], {
         fontFamily: PIXEL_FONT,
-        fontSize: locked ? '8px' : '10px',
+        fontSize: locked ? '7px' : '10px',
         color: locked ? '#53626c' : '#ffffff'
       }).setOrigin(0, 0.5).setDepth(38);
+
+      if (!locked && row[1] === 'COMPETITION') {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => this.showCompetitionPopup());
+      }
 
       this.modeButtons.push({ key: row[1], box, label, locked });
     });
