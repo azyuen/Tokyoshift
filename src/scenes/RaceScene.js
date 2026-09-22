@@ -16,7 +16,12 @@ import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
-import { characters, playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
+import {
+  characters,
+  playableCharacterOrder,
+  rivalCharacterOrder,
+  getRivalCharacterOrderForRegion,
+} from '../data/characters.js?v=20260923-r140';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r128';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -85,6 +90,14 @@ export default class RaceScene extends Phaser.Scene {
       queueImage(asset.key, asset.path);
     });
 
+    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const opponentId = this.registry.get('selectedOpponentCharacterId');
+    [playerId, opponentId].filter(Boolean).forEach(id => {
+      const visual = characters[id]?.visual || {};
+      queueImage(visual.winSpriteKey, visual.winPath ? visual.winPath + '?v=20260923-r140' : null);
+      queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r140' : null);
+    });
+
     startSceneLoading(this, 'PREPARING RACE', queued);
   }
 
@@ -108,10 +121,16 @@ export default class RaceScene extends Phaser.Scene {
       : playableCharacterOrder[0];
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
+    const raceRegionForRivals = this.registry.get('raceDistrict')
+      || this.registry.get('district')
+      || 'ODAIBA';
+    const regionRivals = getRivalCharacterOrderForRegion(raceRegionForRivals);
     const fallbackOpponentCharacterId =
-      rivalCharacterOrder.find(id => id !== this.playerCharacterId) || rivalCharacterOrder[0];
+      regionRivals.find(id => id !== this.playerCharacterId)
+      || rivalCharacterOrder.find(id => id !== this.playerCharacterId)
+      || rivalCharacterOrder[0];
     this.opponentCharacterId =
-      rivalCharacterOrder.includes(storedOpponentCharacterId) &&
+      regionRivals.includes(storedOpponentCharacterId) &&
       storedOpponentCharacterId !== this.playerCharacterId
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
@@ -1576,6 +1595,74 @@ export default class RaceScene extends Phaser.Scene {
     this.scene.start('GarageScene');
   }
 
+  recordMeetRaceOutcome(playerWon) {
+    if (this.raceMode === 'COMPETITION') return;
+
+    const locationId = this.registry.get('meetLocation') || '';
+    if (!locationId || this.raceDistrict !== 'ODAIBA') return;
+
+    const snapshot = this.registry.get('selectedRaceMeetOffer') || {};
+    const rosters = { ...(this.registry.get('meetRosters') || {}) };
+    const current = Array.isArray(rosters[locationId])
+      ? rosters[locationId].map(offer => ({ ...offer }))
+      : [];
+
+    const resultState = playerWon ? 'PLAYER_WIN' : 'PLAYER_LOSS';
+    const isPinkSlip = this.raceDeal === 'PINK_SLIP';
+
+    const resultOffer = {
+      ...snapshot,
+      characterId: this.opponentCharacterId,
+      carId: snapshot.carId || this.opponentCarId,
+      paintColor: normalisePaintColor(
+        snapshot.paintColor ?? this.opponentPaintColor,
+        DEFAULT_PAINT_COLOR
+      ),
+      meetLocation: locationId,
+      locked: true,
+      resultState,
+      resultAt: Date.now(),
+      pinkSlipResult: isPinkSlip ? resultState : null,
+      displayCarId: isPinkSlip
+        ? (playerWon ? null : this.selectedCarId)
+        : (snapshot.carId || this.opponentCarId),
+      displayPaintColor: isPinkSlip && !playerWon
+        ? this.playerPaintColor
+        : normalisePaintColor(
+            snapshot.paintColor ?? this.opponentPaintColor,
+            DEFAULT_PAINT_COLOR
+          ),
+    };
+
+    let index = current.findIndex(
+      offer => offer?.characterId === this.opponentCharacterId
+    );
+
+    if (index < 0 && Number.isInteger(Number(snapshot.slotIndex))) {
+      const requested = Phaser.Math.Clamp(
+        Number(snapshot.slotIndex),
+        0,
+        Math.max(0, current.length - 1)
+      );
+      if (current.length) index = requested;
+    }
+
+    if (index >= 0) {
+      current[index] = {
+        ...current[index],
+        ...resultOffer,
+      };
+    } else {
+      current.push(resultOffer);
+    }
+
+    // The meet stage has three physical slots. A special challenger who was
+    // not already in the visible trio takes the final slot after the race so
+    // their win/loss pose and pink-slip outcome remain visible.
+    rosters[locationId] = current.slice(0, 3);
+    this.registry.set('meetRosters', rosters);
+  }
+
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
 
@@ -1743,6 +1830,7 @@ export default class RaceScene extends Phaser.Scene {
     const newCash = Math.max(0, oldCash + cashDelta);
     this.registry.set('cash', newCash);
 
+    this.recordMeetRaceOutcome(playerWon);
     saveSessionState(this.registry);
 
     this.raceSettlement = {
