@@ -148,6 +148,11 @@ export default class GarageScene extends Phaser.Scene {
     } else {
       this.showEmptyGarageState();
     }
+
+    window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => window.TOKYO_SHIFT_HIDE_SPLASH?.());
+    });
   }
 
   drawScene() {
