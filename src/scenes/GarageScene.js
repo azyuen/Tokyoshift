@@ -109,7 +109,7 @@ export default class GarageScene extends Phaser.Scene {
     this.selectedDisplay = [];
     this.thumbButtons = [];
     this.upgradeButtons = [];
-    this.selectedUpgrade = 'ENGINE';
+    this.selectedUpgrade = null;
     this.engineMode = false;
     this.engineModeObjects = [];
     this.engineModalObjects = [];
@@ -143,7 +143,7 @@ export default class GarageScene extends Phaser.Scene {
 
     if (this.selectedCarId) {
       this.selectCar(this.selectedCarId);
-      this.selectUpgrade('ENGINE');
+      this.selectUpgrade(null);
     } else {
       this.showEmptyGarageState();
     }
@@ -375,6 +375,7 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => {
         if (!this.selectedCarId) return;
+        this.selectUpgrade(name);
         if (name === 'ENGINE') {
           this.enterEngineMode();
           return;
@@ -1217,18 +1218,18 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(73));
     }
 
-    const listIds = ENGINE_PART_ORDER.filter(id => id !== 'engine');
+    const listIds = ENGINE_PART_ORDER;
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
-      const y = SIDE.y + 232 + i * 58;
+      const y = SIDE.y + 216 + i * 50;
       const part = ENGINE_TUNING_PARTS[partId];
 
       const box = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        48,
+        42,
         0x0b1724,
         1
       ).setStrokeStyle(1, 0x315470, 1)
@@ -1362,6 +1363,7 @@ export default class GarageScene extends Phaser.Scene {
     });
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
 
     if (refreshCar) this.refreshWorkshopSpecs();
   }
@@ -2271,6 +2273,7 @@ export default class GarageScene extends Phaser.Scene {
     });
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
 
     this.refreshWorkshopSpecs();
   }
@@ -2514,6 +2517,7 @@ export default class GarageScene extends Phaser.Scene {
     });
     this.saveButton?.setInteractive({ useHandCursor: true });
     this.meetButton?.setInteractive({ useHandCursor: true });
+    this.selectUpgrade(null);
 
     this.refreshWorkshopSpecs();
   }
@@ -2584,14 +2588,17 @@ export default class GarageScene extends Phaser.Scene {
           headers: {
             x: clampX(frontX - 80),
             y: wheelY - 58,
-            lx: clampX(frontX - 168),
-            ly: wheelY - 136,
+            // Header label takes the former nitrous-shot side to uncross the callouts.
+            lx: clampX(midX + 152),
+            ly: wheelY - 106,
           },
           exhaust: {
-            x: clampX(midX),
+            // Pull the mid-pipe marker toward the rear wheel, but keep its
+            // label to the wheel's right so it stays clear of MUFFLER.
+            x: clampX(rearX + 74),
             y: wheelY + 14,
-            lx: clampX(midX + 8),
-            ly: wheelY + 70,
+            lx: clampX(rearX + 122),
+            ly: wheelY + 74,
           },
           muffler: {
             x: clampX(rearX - 92),
@@ -2600,16 +2607,18 @@ export default class GarageScene extends Phaser.Scene {
             ly: wheelY + 58,
           },
           nosKit: {
-            x: clampX(midX - 72),
+            // Move the bottle marker distinctly left of its previous position.
+            x: clampX(midX - 132),
             y: wheelY - 88,
-            lx: clampX(midX - 102),
+            lx: clampX(midX - 164),
             ly: wheelY - 150,
           },
           nitrousShot: {
             x: clampX(midX + 54),
             y: wheelY - 62,
-            lx: clampX(midX + 152),
-            ly: wheelY - 106,
+            // Swap label side with HEADERS so the two leader lines no longer cross.
+            lx: clampX(frontX - 168),
+            ly: wheelY - 136,
           },
         };
 
