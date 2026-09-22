@@ -1014,7 +1014,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       proEvent: true,
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
-      difficulty: 'PRO',
+      difficulty: 'ELITE',
       playerCarId: build.carId,
       entryFee: event.entryFee,
       prizeType: 'CASH',
@@ -1033,7 +1033,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('selectedOpponentCharacterId', rounds[0].characterId);
     this.registry.set('selectedOpponentEncounterRating', rounds[0].encounterRating);
     this.registry.set('selectedOpponentEncounterAi', rounds[0].encounterAi);
-    this.registry.set('selectedOpponentDifficulty', 'PRO');
+    this.registry.set('selectedOpponentDifficulty', 'ELITE');
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', 'Standing Start');
     this.registry.set('selectedRaceDeal', 'COMPETITION');
