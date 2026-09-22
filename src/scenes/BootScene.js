@@ -2,14 +2,27 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r86';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, applyStateToRegistry } from '../state/GameState.js?v=20260922-r86';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r93';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
 
   init(data = {}) {
+    let internalReload = false;
+    let reloadMessage = '';
+
+    try {
+      internalReload = sessionStorage.getItem('tokyoShiftInternalReload') === '1';
+      reloadMessage = sessionStorage.getItem('tokyoShiftBootMessage') || '';
+      if (internalReload) {
+        sessionStorage.removeItem('tokyoShiftInternalReload');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      }
+    } catch (e) {}
+
+    this.internalReload = internalReload;
     this.preserveRegistry = Boolean(data?.preserveRegistry);
-    this.bootMessage = String(data?.bootMessage || '');
+    this.bootMessage = String(data?.bootMessage || reloadMessage || '');
   }
 
   preload() {
@@ -51,7 +64,9 @@ export default class BootScene extends Phaser.Scene {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
 
-    const saved = readManualSave();
+    const manualSave = readManualSave();
+    const sessionSave = this.internalReload ? readSessionState() : null;
+    const saved = sessionSave || manualSave;
     const state = this.preserveRegistry
       ? { gameOver: Boolean(this.registry.get('gameOver')) }
       : applyStateToRegistry(
