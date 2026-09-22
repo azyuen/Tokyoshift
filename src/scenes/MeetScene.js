@@ -563,10 +563,570 @@ export default class MeetScene extends Phaser.Scene {
     }).setDepth(33);
   }
 
+  getEventCarBand(rating = 3) {
+    const bands = {
+      1: ['ae86', 'ek9'],
+      2: ['ae86', 'ek9', 'fc3s'],
+      3: ['ek9', 'fc3s', 'evo3'],
+      4: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+      5: ['evo3', 'wrx22b', 'r32'],
+    };
+    return bands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || bands[3];
+  }
+
+  chooseEventCar(rating = 3, { preferUnowned = true, exclude = [] } = {}) {
+    const owned = this.registry.get('ownedCarIds') || [];
+    const selected = this.registry.get('selectedCarId');
+    const blocked = new Set(exclude);
+    const band = this.getEventCarBand(rating);
+
+    const tiers = [
+      preferUnowned
+        ? band.filter(id => cars[id] && id !== selected && !owned.includes(id) && !blocked.has(id))
+        : [],
+      band.filter(id => cars[id] && id !== selected && !blocked.has(id)),
+      carOrder.filter(id => cars[id] && id !== selected && !owned.includes(id) && !blocked.has(id)),
+      carOrder.filter(id => cars[id] && id !== selected && !blocked.has(id)),
+    ].filter(list => list.length);
+
+    return Phaser.Utils.Array.GetRandom(tiers[0] || ['ek9']);
+  }
+
+  chooseEventCharacter(rating = 3, exclude = []) {
+    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const blocked = new Set([playerId, 'daichiSakamoto', ...exclude]);
+
+    const candidates = characterOrder
+      .filter(id => !blocked.has(id) && characters[id])
+      .sort((a, b) => {
+        const ar = Number(characters[a]?.skill?.rating || 3);
+        const br = Number(characters[b]?.skill?.rating || 3);
+        return Math.abs(ar - rating) - Math.abs(br - rating);
+      });
+
+    const close = candidates.filter(id =>
+      Math.abs(Number(characters[id]?.skill?.rating || 3) - rating) <= 1
+    );
+
+    return Phaser.Utils.Array.GetRandom(close.length ? close : candidates);
+  }
+
+  getDisplayedSkillRange(rating = 3) {
+    const low = Phaser.Math.Clamp(Math.round(rating) - 1, 1, 5);
+    const high = Phaser.Math.Clamp(Math.round(rating) + 1, 1, 5);
+    return getEncounterSkillLabel(low) + ' – ' + getEncounterSkillLabel(high);
+  }
+
+  generateSpecialChallenger() {
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
+    const owned = this.registry.get('ownedCarIds') || [];
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+
+    // Do not offer a car the player cannot physically keep.
+    if (owned.length >= capacity) return null;
+
+    const encounterRating = Phaser.Utils.Array.GetRandom(profile.ratingSlots);
+    const characterId = this.chooseEventCharacter(encounterRating);
+    const carId = this.chooseEventCar(encounterRating, { preferUnowned: true });
+
+    return {
+      active: true,
+      locationId: this.selectedMeetLocation,
+      characterId,
+      carId,
+      paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+      encounterRating,
+      encounterAi: boostAiForPinkSlip(getEncounterAi(encounterRating)),
+      skillRange: this.getDisplayedSkillRange(encounterRating),
+      raceType: Phaser.Utils.Array.GetRandom(['Standing Start', 'Roll Race']),
+      difficulty: profile.difficulty,
+      quote: 'Keys for keys. Right now.',
+      createdAt: Date.now(),
+    };
+  }
+
+  maybeGenerateSpecialChallenger() {
+    if (!this.hasCar) return null;
+
+    const existing = this.registry.get('specialChallenger');
+    if (existing?.active) return existing;
+
+    let cooldown = Math.max(0, Number(this.registry.get('challengerCooldown') || 0));
+    let misses = Math.max(0, Number(this.registry.get('challengerMisses') || 0));
+
+    if (cooldown > 0) {
+      this.registry.set('challengerCooldown', cooldown - 1);
+      saveSessionState(this.registry);
+      return null;
+    }
+
+    // 24% base chance; each miss raises the odds. The fourth eligible refresh
+    // is guaranteed so the player can never go indefinitely without seeing one.
+    const chance = misses >= 3 ? 1 : 0.24 + misses * 0.12;
+    if (Phaser.Math.FloatBetween(0, 1) > chance) {
+      this.registry.set('challengerMisses', misses + 1);
+      saveSessionState(this.registry);
+      return null;
+    }
+
+    const challenger = this.generateSpecialChallenger();
+    if (!challenger) return null;
+
+    this.registry.set('specialChallenger', challenger);
+    this.registry.set('challengerMisses', 0);
+    this.registry.set('challengerCooldown', 2);
+    saveSessionState(this.registry);
+    return challenger;
+  }
+
+  clearSpecialChallengeObjects() {
+    (this.specialChallengeObjects || []).forEach(obj => obj?.destroy?.());
+    this.specialChallengeObjects = [];
+  }
+
+  restoreMeetActionListeners() {
+    this.pinkSlipButton?.removeAllListeners('pointerdown');
+    this.pinkSlipButton?.on('pointerdown', () => this.challengePinkSlips());
+
+    this.raceButton?.removeAllListeners('pointerdown');
+    this.raceButton?.on('pointerdown', () => this.startSelectedRace());
+
+    if (this.hasCar) {
+      this.gpsTravelButton?.setInteractive({ useHandCursor: true });
+    }
+  }
+
+  showSpecialChallenger(challenger, animate = true) {
+    if (!challenger || !this.hasCar) return;
+
+    this.specialChallengeActive = true;
+    this.clearCardObjects();
+    this.clearStageObjects();
+    this.clearSpecialChallengeObjects();
+    this.gpsTravelButton?.disableInteractive();
+
+    this.modeButtons?.forEach(item => item.box.disableInteractive());
+
+    const character = characters[challenger.characterId];
+    const car = cars[challenger.carId];
+    if (!character || !car) return;
+
+    const startX = animate ? STAGE.x + STAGE.w + 390 : 640;
+    const finalX = 640;
+    const carObjects = this.createCarDisplay(
+      car,
+      startX,
+      448,
+      690,
+      28,
+      false,
+      normalisePaintColor(challenger.paintColor, DEFAULT_PAINT_COLOR)
+    );
+
+    carObjects.forEach(obj => {
+      obj.setMask(this.stageMask);
+      this.specialChallengeObjects.push(obj);
+    });
+
+    if (animate) {
+      const dx = finalX - startX;
+      this.tweens.add({
+        targets: carObjects,
+        x: '+=' + dx,
+        duration: 760,
+        ease: 'Cubic.easeOut',
+      });
+    }
+
+    const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+    const driver = this.add.image(920, 590, character.visual.spriteKey)
+      .setOrigin(0.5, 1)
+      .setDepth(36)
+      .setMask(this.stageMask)
+      .setAlpha(animate ? 0 : 1);
+    driver.setScale(280 / source.height);
+    this.specialChallengeObjects.push(driver);
+
+    if (animate) {
+      this.time.delayedCall(360, () => {
+        this.tweens.add({
+          targets: driver,
+          alpha: 1,
+          duration: 360,
+          ease: 'Sine.easeOut',
+        });
+      });
+    }
+
+    const banner = this.add.text(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + 34,
+      'SPECIAL CHALLENGER // PINK SLIPS',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '12px',
+        color: '#fff1f7',
+        backgroundColor: '#431426e8',
+        padding: { x: 18, y: 10 },
+      }
+    ).setOrigin(0.5)
+      .setDepth(74)
+      .setMask(this.stageMask);
+    this.specialChallengeObjects.push(banner);
+
+    const card = this.add.rectangle(
+      CARDS.x + CARDS.w / 2,
+      CARDS.y + CARDS.h / 2,
+      CARDS.w - 36,
+      132,
+      0x130b14,
+      0.98
+    ).setStrokeStyle(3, 0xff5f93, 0.92).setDepth(34);
+
+    const portraitBg = this.add.rectangle(190, 746, 108, 108, 0x15101a, 1)
+      .setStrokeStyle(2, 0xff739e, 0.92).setDepth(35);
+
+    const portrait = this.add.image(190, 690, character.visual.spriteKey)
+      .setOrigin(0.5, 0)
+      .setDepth(36);
+    portrait.setScale(420 / source.height);
+
+    const portraitMask = this.make.graphics({ add: false });
+    portraitMask.fillStyle(0xffffff, 1);
+    portraitMask.fillRect(136, 692, 108, 108);
+    portrait.setMask(portraitMask.createGeometryMask());
+
+    const name = this.add.text(275, 705, character.name.toUpperCase(), {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
+    }).setDepth(36);
+
+    const details = this.add.text(
+      275,
+      739,
+      car.shortName + '  //  EST. ' + challenger.skillRange +
+        '\n“' + challenger.quote + '”',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#d8cad1',
+        lineSpacing: 5,
+      }
+    ).setDepth(36);
+
+    this.specialChallengeObjects.push(card, portraitBg, portrait, name, details);
+
+    this.selectedSummary.setText(
+      'PINK SLIP CHALLENGE\n' +
+      car.shortName + '  •  ' + challenger.raceType + '\n' +
+      'EST. ' + challenger.skillRange
+    );
+    this.rivalOfferText.setText('KEYS');
+
+    this.pinkSlipButton.removeAllListeners('pointerdown');
+    this.pinkSlipButton
+      .setInteractive({ useHandCursor: true })
+      .setFillStyle(0x161b22, 1)
+      .setStrokeStyle(2, 0x72818b, 1);
+    this.pinkSlipButtonLabel.setText('DECLINE').setColor('#d4dde2');
+    this.pinkResponseText
+      .setText('Winner takes the other car.')
+      .setColor('#ffabc4');
+    this.pinkSlipButton.on('pointerdown', () => this.declineSpecialChallenger());
+
+    this.raceButton.removeAllListeners('pointerdown');
+    this.raceButton
+      .setInteractive({ useHandCursor: true })
+      .setFillStyle(0x351522, 1)
+      .setStrokeStyle(3, 0xff5f93, 1);
+    this.raceButtonLabel.setText('ACCEPT PINKS  >').setColor('#fff4f8');
+    this.raceButton.on('pointerdown', () => this.startSpecialChallengerRace());
+
+    this.rivalsTitleText?.setText('SPECIAL CHALLENGER // PINK SLIPS');
+  }
+
+  declineSpecialChallenger() {
+    this.registry.set('specialChallenger', null);
+    saveSessionState(this.registry);
+    this.specialChallengeActive = false;
+    this.clearSpecialChallengeObjects();
+    this.restoreMeetActionListeners();
+    this.rollOffers({ resetTimer: false });
+  }
+
+  startSpecialChallengerRace() {
+    const challenger = this.registry.get('specialChallenger');
+    if (!challenger?.active || !this.hasCar) return;
+
+    this.registry.set('selectedOpponentCarId', challenger.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
+      challenger.paintColor,
+      DEFAULT_PAINT_COLOR
+    ));
+    this.registry.set('selectedOpponentCharacterId', challenger.characterId);
+    this.registry.set('selectedOpponentEncounterRating', challenger.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', challenger.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', challenger.difficulty);
+    this.registry.set('selectedRaceCategory', 'SINGLE');
+    this.registry.set('selectedRaceType', challenger.raceType);
+    this.registry.set('selectedRaceDeal', 'PINK_SLIP');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', true);
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceDistrict', location.district);
+    this.registry.set('raceLocationLabel', location.label);
+    saveSessionState(this.registry);
+
+    this.scene.start('RaceScene');
+  }
+
+  generateCompetitionOffer() {
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
+    const difficulty = profile.difficulty || 'MED';
+
+    const settings = {
+      EASY: { entryFee: 2500, cashPrize: 20000, ratings: [2, 2, 3] },
+      MED: { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] },
+      HARD: { entryFee: 6500, cashPrize: 48000, ratings: [3, 4, 5] },
+      ELITE: { entryFee: 9000, cashPrize: 70000, ratings: [4, 5, 5] },
+    }[difficulty] || { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] };
+
+    const owned = this.registry.get('ownedCarIds') || [];
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const canWinCar = owned.length < capacity;
+    const preferCarPrize = canWinCar && Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
+
+    const usedCharacters = [];
+    const usedCars = [];
+    const rounds = settings.ratings.map((rating, index) => {
+      const characterId = this.chooseEventCharacter(rating, usedCharacters);
+      usedCharacters.push(characterId);
+
+      const carId = this.chooseEventCar(rating, {
+        preferUnowned: index === 2,
+        exclude: usedCars,
+      });
+      usedCars.push(carId);
+
+      return {
+        characterId,
+        carId,
+        paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+        encounterRating: rating,
+        encounterAi: getEncounterAi(rating),
+        skillLabel: getEncounterSkillLabel(rating),
+        raceType: Phaser.Utils.Array.GetRandom(['Standing Start', 'Roll Race']),
+      };
+    });
+
+    let prizeType = 'CASH';
+    let prizeCarId = null;
+
+    if (preferCarPrize) {
+      const finalRating = settings.ratings[2];
+      const candidate = this.chooseEventCar(finalRating, { preferUnowned: true });
+      if (candidate && !owned.includes(candidate)) {
+        prizeType = 'CAR';
+        prizeCarId = candidate;
+        rounds[2].carId = candidate;
+      }
+    }
+
+    return {
+      id: this.selectedMeetLocation + ':' + Date.now(),
+      locationId: this.selectedMeetLocation,
+      difficulty,
+      entryFee: settings.entryFee,
+      prizeType,
+      prizeCash: settings.cashPrize,
+      prizeCarId,
+      rounds,
+    };
+  }
+
+  getCompetitionOffer() {
+    const offers = { ...(this.registry.get('competitionOffers') || {}) };
+    if (!offers[this.selectedMeetLocation]) {
+      offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
+      this.registry.set('competitionOffers', offers);
+      saveSessionState(this.registry);
+    }
+    return offers[this.selectedMeetLocation];
+  }
+
+  showCompetitionPopup() {
+    if (this.specialChallengeActive || !this.hasCar) return;
+    if (Number(this.registry.get('wins') || 0) < 1) return;
+    if (this.competitionPopup?.active) return;
+
+    const offer = this.getCompetitionOffer();
+    const cash = Number(this.registry.get('cash') || 0);
+    const enough = cash >= offer.entryFee;
+    const prizeText = offer.prizeType === 'CAR'
+      ? cars[offer.prizeCarId].shortName
+      : '¥' + offer.prizeCash.toLocaleString('en-US');
+
+    const depth = 120;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+      .setDepth(depth).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 420, 780, 540, 0x07111d, 0.995)
+      .setStrokeStyle(3, 0x45d7ff, 0.95).setDepth(depth + 1));
+
+    add(this.add.text(780, 192, 'COMPETITION // STREET THREE', {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#eefaff'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 235, 'WIN ALL THREE RACES IN A ROW', {
+      fontFamily: BODY_FONT, fontSize: '13px', color: '#8faabb', fontStyle: '600'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(535, 292, 'ENTRY', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(535, 326, '¥' + offer.entryFee.toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffe08a'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(1025, 292, 'GRAND PRIZE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(1025, 326, prizeText, {
+      fontFamily: PIXEL_FONT,
+      fontSize: offer.prizeType === 'CAR' ? '11px' : '13px',
+      color: offer.prizeType === 'CAR' ? '#ff9fc7' : '#73f5a5'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    offer.rounds.forEach((round, i) => {
+      const y = 395 + i * 54;
+      add(this.add.text(470, y, 'ROUND ' + (i + 1), {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#718fa3'
+      }).setOrigin(0, 0.5).setDepth(depth + 2));
+
+      add(this.add.text(650, y, round.skillLabel, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d9edf7'
+      }).setOrigin(0, 0.5).setDepth(depth + 2));
+
+      add(this.add.text(1040, y, cars[round.carId].shortName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: i === 2 && offer.prizeType === 'CAR' ? '#ff9fc7' : '#9db7c8'
+      }).setOrigin(1, 0.5).setDepth(depth + 2));
+    });
+
+    add(this.add.text(780, 565, 'NO TUNING OR CAR CHANGES BETWEEN ROUNDS', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8fa0aa'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const enter = add(this.add.rectangle(665, 625, 260, 48, enough ? 0x0d2b29 : 0x24161a, 1)
+      .setStrokeStyle(2, enough ? 0x62e8c7 : 0x7a4652, 1)
+      .setDepth(depth + 2));
+
+    const enterText = add(this.add.text(
+      665,
+      625,
+      enough ? 'ENTER // ¥' + offer.entryFee.toLocaleString('en-US') : 'NEED MORE CASH',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: enough ? '#f1fffb' : '#b1848f'
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    const close = add(this.add.rectangle(895, 625, 170, 48, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(895, 625, 'CLOSE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.competitionPopup = null;
+    };
+
+    blocker.on('pointerdown', dismiss);
+    close.on('pointerdown', dismiss);
+
+    if (enough) {
+      enter.setInteractive({ useHandCursor: true });
+      enter.on('pointerdown', () => {
+        dismiss();
+        this.startCompetition(offer);
+      });
+    }
+
+    this.competitionPopup = panel;
+  }
+
+  configureCompetitionRound(state, index) {
+    const round = state.rounds[index];
+    if (!round) return false;
+
+    this.registry.set('selectedCarId', state.playerCarId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
+      round.paintColor,
+      DEFAULT_PAINT_COLOR
+    ));
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', state.difficulty);
+    this.registry.set('selectedRaceCategory', 'COMPETITION');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDeal', 'COMPETITION');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+
+    const location = getMeetLocation(state.locationId);
+    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceDistrict', location.district);
+    this.registry.set('raceLocationLabel', location.label);
+    return true;
+  }
+
+  startCompetition(offer) {
+    if (!offer || !this.hasCar) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < offer.entryFee) return;
+
+    const state = {
+      active: true,
+      locationId: offer.locationId,
+      difficulty: offer.difficulty,
+      playerCarId: this.registry.get('selectedCarId'),
+      entryFee: offer.entryFee,
+      prizeType: offer.prizeType,
+      prizeCash: offer.prizeCash,
+      prizeCarId: offer.prizeCarId,
+      rounds: offer.rounds,
+      roundIndex: 0,
+    };
+
+    this.registry.set('cash', cash - offer.entryFee);
+    this.registry.set('competitionState', state);
+    this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
+
+    if (!this.configureCompetitionRound(state, 0)) return;
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
   refreshAllLocationOffers({ resetTimer = true, persist = true } = {}) {
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
     this.registry.set('defeatedRivalKeys', []);
+    this.registry.set('competitionOffers', {});
 
     ALL_MEET_LOCATION_IDS.forEach(locationId => {
       this.locationOffers[locationId] = this.generateOffersForLocation(locationId);
