@@ -290,10 +290,13 @@ export default class RaceScene extends Phaser.Scene {
     if (this.raceStarted || this.cancelConfirmPopup?.active || this.resultsShown) return;
 
     const isPink = this.raceDeal === 'PINK_SLIP';
+    const isCompetition = this.raceMode === 'COMPETITION';
     const cashPenalty = Math.ceil((this.raceStake * 0.5) / 250) * 250;
     const penaltyText = isPink
       ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
-      : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
+      : isCompetition
+        ? 'Your competition streak ends here. The entry fee is not refunded.'
+        : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
 
     const depth = 110;
     const objects = [];
@@ -377,6 +380,13 @@ export default class RaceScene extends Phaser.Scene {
     const losses = Number(this.registry.get('losses') || 0);
     this.registry.set('losses', losses + 1);
 
+    if (this.raceMode === 'COMPETITION') {
+      this.registry.set('competitionState', null);
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');
+      return;
+    }
+
     if (this.raceDeal === 'PINK_SLIP') {
       const forfeitedCarName = cars[this.selectedCarId]?.shortName || 'YOUR CAR';
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
@@ -396,6 +406,11 @@ export default class RaceScene extends Phaser.Scene {
         this.registry.set('selectedCarId', null);
         this.registry.set('meetStranded', false);
         this.registry.set('gameOver', true);
+      }
+
+      if (this.registry.get('selectedRaceSpecialChallenge')) {
+        this.registry.set('specialChallenger', null);
+        this.registry.set('selectedRaceSpecialChallenge', false);
       }
 
       saveSessionState(this.registry);
@@ -1164,6 +1179,39 @@ export default class RaceScene extends Phaser.Scene {
         return { primary: 'RACE COMPLETE', secondary: '' };
       }
 
+      if (settlement.competition) {
+        if (settlement.competitionFailed) {
+          return {
+            primary: 'STREAK BROKEN',
+            secondary: 'COMPETITION OVER // ROUND ' + settlement.roundNumber + '/3',
+          };
+        }
+
+        if (settlement.competitionContinues) {
+          return {
+            primary: 'ROUND ' + settlement.roundNumber + ' CLEARED',
+            secondary: (3 - settlement.roundNumber) + ' RACE' +
+              ((3 - settlement.roundNumber) === 1 ? '' : 'S') +
+              ' TO GRAND PRIZE',
+          };
+        }
+
+        if (settlement.competitionWon && settlement.prizeType === 'CAR') {
+          return {
+            primary: 'GRAND PRIZE WON',
+            secondary: cars[settlement.prizeCarId].shortName + ' ADDED TO GARAGE',
+          };
+        }
+
+        if (settlement.competitionWon) {
+          return {
+            primary: '+¥' + Number(settlement.prizeCash || 0).toLocaleString('en-US'),
+            secondary: 'COMPETITION CLEARED // BALANCE  ¥' +
+              Number(settlement.cash || 0).toLocaleString('en-US'),
+          };
+        }
+      }
+
       if (isPinkSlip) {
         if (playerWon) {
           return {
@@ -1379,7 +1427,11 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    const buttonText = this.add.text(780, 686, 'RETURN TO MEET  >', {
+    const actionLabel = settlement?.competitionContinues
+      ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
+      : 'RETURN TO MEET  >';
+
+    const buttonText = this.add.text(780, 686, actionLabel, {
       fontFamily: titleFont,
       fontSize: '9px',
       color: '#f5fbff',
@@ -1390,7 +1442,46 @@ export default class RaceScene extends Phaser.Scene {
 
     button.on('pointerover', () => button.setFillStyle(accent, 0.18));
     button.on('pointerout', () => button.setFillStyle(0x07111d, 0.97));
-    button.on('pointerdown', () => this.scene.start('MeetScene'));
+    button.on('pointerdown', () => {
+      if (settlement?.competitionContinues) {
+        this.startNextCompetitionRound();
+      } else {
+        this.scene.start('MeetScene');
+      }
+    });
+  }
+
+  startNextCompetitionRound() {
+    const state = this.registry.get('competitionState');
+    if (!state?.active) {
+      this.scene.start('MeetScene');
+      return;
+    }
+
+    const index = Number(state.roundIndex || 0);
+    const round = state.rounds?.[index];
+    if (!round) {
+      this.registry.set('competitionState', null);
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');
+      return;
+    }
+
+    this.registry.set('selectedCarId', state.playerCarId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', round.paintColor);
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', state.difficulty);
+    this.registry.set('selectedRaceCategory', 'COMPETITION');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDeal', 'COMPETITION');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    saveSessionState(this.registry);
+
+    this.scene.restart();
   }
 
   returnToWorkshop() {
@@ -1414,6 +1505,105 @@ export default class RaceScene extends Phaser.Scene {
 
     this.registry.set('wins', wins + (playerWon ? 1 : 0));
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+
+    const competitionState = this.registry.get('competitionState');
+
+    if (this.raceMode === 'COMPETITION' && competitionState?.active) {
+      const state = {
+        ...competitionState,
+        rounds: [...(competitionState.rounds || [])],
+      };
+      const roundIndex = Phaser.Math.Clamp(Number(state.roundIndex || 0), 0, 2);
+      const roundNumber = roundIndex + 1;
+
+      if (!playerWon) {
+        this.registry.set('competitionState', null);
+        saveSessionState(this.registry);
+
+        this.raceSettlement = {
+          playerWon: false,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          competition: true,
+          competitionFailed: true,
+          competitionContinues: false,
+          competitionWon: false,
+          roundNumber,
+        };
+        return this.raceSettlement;
+      }
+
+      if (roundIndex < 2) {
+        state.roundIndex = roundIndex + 1;
+        this.registry.set('competitionState', state);
+        saveSessionState(this.registry);
+
+        this.raceSettlement = {
+          playerWon: true,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          competition: true,
+          competitionFailed: false,
+          competitionContinues: true,
+          competitionWon: false,
+          roundNumber,
+        };
+        return this.raceSettlement;
+      }
+
+      let newCash = oldCash;
+      let prizeCash = 0;
+      let prizeCarId = null;
+
+      if (state.prizeType === 'CAR' && state.prizeCarId && cars[state.prizeCarId]) {
+        prizeCarId = state.prizeCarId;
+        const ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
+        const carStates = { ...(this.registry.get('carStates') || {}) };
+        const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+        if (!ownedCarIds.includes(prizeCarId)) {
+          ownedCarIds.push(prizeCarId);
+          carStates[prizeCarId] = {
+            ...this.opponentBuildState,
+            acquiredVia: 'competition',
+          };
+          carGarageLocations[prizeCarId] =
+            this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+
+          this.registry.set('ownedCarIds', ownedCarIds);
+          this.registry.set('carStates', carStates);
+          this.registry.set('carGarageLocations', carGarageLocations);
+        }
+      } else {
+        prizeCash = Number(state.prizeCash || 0);
+        newCash = oldCash + prizeCash;
+        this.registry.set('cash', newCash);
+      }
+
+      this.registry.set('competitionState', null);
+      saveSessionState(this.registry);
+
+      this.raceSettlement = {
+        playerWon: true,
+        cashDelta: newCash - oldCash,
+        cash: newCash,
+        pinkMessage: '',
+        gameOver: false,
+        competition: true,
+        competitionFailed: false,
+        competitionContinues: false,
+        competitionWon: true,
+        roundNumber: 3,
+        prizeType: state.prizeType,
+        prizeCash,
+        prizeCarId,
+      };
+      return this.raceSettlement;
+    }
 
     if (playerWon) {
       const locationId = this.registry.get('meetLocation') || '';
@@ -1461,10 +1651,13 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.set('ownedCarIds', ownedCarIds);
       this.registry.set('carStates', carStates);
       this.registry.set('gameOver', gameOver);
+
+      if (this.registry.get('selectedRaceSpecialChallenge')) {
+        this.registry.set('specialChallenger', null);
+        this.registry.set('selectedRaceSpecialChallenge', false);
+      }
     } else if (this.raceMode === 'SINGLE' && this.raceDeal === 'BET') {
       cashDelta = playerWon ? this.raceStake : -this.raceStake;
-    } else if (this.raceMode === 'COMPETITION' && playerWon) {
-      cashDelta = this.raceStake;
     }
 
     const newCash = Math.max(0, oldCash + cashDelta);
