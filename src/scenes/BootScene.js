@@ -1,6 +1,6 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
-import { cars } from '../data/cars.js?v=20260923-r132';
-import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r132';
+import { cars } from '../data/cars.js?v=20260923-r133';
+import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r133';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r131';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
