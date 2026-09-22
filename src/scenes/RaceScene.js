@@ -1187,11 +1187,10 @@ export default class RaceScene extends Phaser.Scene {
 
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
-    this.add.text(780, 258, reward.primary, {
+    this.add.text(780, 274, reward.primary, {
       fontFamily: titleFont,
       fontSize: isPinkSlip ? '20px' : '30px',
       color: playerWon ? '#f1ffff' : '#fff1f5',
-      fontStyle: 'bold',
       align: 'center',
     }).setOrigin(0.5).setDepth(depth + 9).setScrollFactor(0);
 
