@@ -17,7 +17,7 @@ import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuni
 import { characters } from '../data/characters.js?v=20260922-r85';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r86';
-import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260921-r57';
+import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import {
   getEncounterAi,
