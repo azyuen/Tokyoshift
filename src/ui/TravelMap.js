@@ -6,7 +6,7 @@ import {
   getWorkshopByLocationId,
   getGarageCapacity,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260922-r95';
+} from '../data/workshopProgression.js?v=20260922-r97';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -15,7 +15,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260922-r95';
+} from '../data/travelRegions.js?v=20260922-r97';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
