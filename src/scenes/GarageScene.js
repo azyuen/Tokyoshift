@@ -885,10 +885,14 @@ export default class GarageScene extends Phaser.Scene {
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
-          // Restart directly after saving the workshop switch. The old fade
-          // transition could leave the restarted camera permanently black on
-          // iOS/PWA builds.
-          this.scene.restart();
+          // Defer the restart until the current map pointer event has finished.
+          // Restarting synchronously while TravelMap is destroying its objects
+          // can stall Phaser's input/scene lifecycle on mobile.
+          this.workshopSwitchPending = true;
+          this.time.delayedCall(60, () => {
+            this.workshopSwitchPending = false;
+            this.scene.restart();
+          });
         },
         onTravel: (locationId, cost) => {
           if (!this.selectedCarId) {
