@@ -41,10 +41,10 @@ export const ENGINE_TUNING_PARTS = {
     name: 'TURBO',
     subtitle: 'FORCED INDUCTION',
     levels: [
-      { level: 0, name: 'Factory setup', cost: 0, naBoost: 0, factoryBoostAdd: 0, size: 0, spoolScale: 1.00, benefit: 'Stock aspiration' },
-      { level: 1, name: 'Street turbo kit', cost: 35000, naBoost: 0.28, factoryBoostAdd: 0.12, size: 0.42, spoolScale: 1.08, benefit: 'Fast-spool street boost' },
-      { level: 2, name: 'Ball-bearing turbo', cost: 70000, naBoost: 0.52, factoryBoostAdd: 0.25, size: 0.58, spoolScale: 1.00, benefit: 'Strong mid / top end' },
-      { level: 3, name: 'Big turbo', cost: 125000, naBoost: 0.82, factoryBoostAdd: 0.42, size: 0.74, spoolScale: 0.92, benefit: 'Maximum peak power' },
+      { level: 0, name: 'Factory setup', cost: 0, naBoost: 0, factoryBoostAdd: 0, size: 0, spoolScale: 1.00, spriteKey: 'tuningPartTurboL0', benefit: 'Stock aspiration' },
+      { level: 1, name: 'Street turbo kit', cost: 35000, naBoost: 0.28, factoryBoostAdd: 0.12, size: 0.42, spoolScale: 1.08, spriteKey: 'tuningPartTurboL1', benefit: 'Fast-spool street boost' },
+      { level: 2, name: 'Ball-bearing turbo', cost: 70000, naBoost: 0.52, factoryBoostAdd: 0.25, size: 0.58, spoolScale: 1.00, spriteKey: 'tuningPartTurboL2', benefit: 'Strong mid / top end' },
+      { level: 3, name: 'Big turbo', cost: 125000, naBoost: 0.82, factoryBoostAdd: 0.42, size: 0.74, spoolScale: 0.92, spriteKey: 'tuningPartTurboL3', benefit: 'Maximum peak power' },
     ],
   },
   intercooler: {
