@@ -1,8 +1,8 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r94';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r95';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r94';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r95';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -76,29 +76,13 @@ export default class BootScene extends Phaser.Scene {
 
     this.registry.set('workshopFriendId', 'daichiSakamoto');
 
-    this.add.rectangle(780, 420, 1560, 840, 0x070914);
-    this.add.text(780, 356, 'TOKYO SHIFT', {
-      fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
-    }).setOrigin(0.5);
-    this.add.text(
-      780,
-      425,
-      this.bootMessage
-        ? this.bootMessage + ' // R94'
-        : saved ? 'LOADING SAVE // R94' : 'NEW RUN // R94',
-      {
-        fontFamily: '"Silkscreen", monospace',
-        fontSize: '16px',
-        color: '#62d8ff'
-      }
-    ).setOrigin(0.5);
+    // BootScene is now preload/state plumbing only. Do not show a Tokyo SHIFT
+    // interstitial or pause between garage/map reloads.
+    if (this.preserveRegistry) {
+      this.scene.start('GarageScene');
+      return;
+    }
 
-    this.time.delayedCall(90, () => {
-      if (this.preserveRegistry) {
-        this.scene.start('GarageScene');
-        return;
-      }
-      this.scene.start(saved && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
-    });
+    this.scene.start(saved && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
   }
 }
