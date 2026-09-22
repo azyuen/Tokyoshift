@@ -84,8 +84,8 @@ export default class BootScene extends Phaser.Scene {
       780,
       425,
       this.bootMessage
-        ? this.bootMessage + ' // R92'
-        : saved ? 'LOADING SAVE // R92' : 'NEW RUN // R92',
+        ? this.bootMessage + ' // R93'
+        : saved ? 'LOADING SAVE // R93' : 'NEW RUN // R93',
       {
         fontFamily: '"Silkscreen", monospace',
         fontSize: '16px',
