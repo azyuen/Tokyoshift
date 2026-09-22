@@ -230,12 +230,23 @@ export default class MeetScene extends Phaser.Scene {
     this.rollOffers({ resetTimer: false });
 
     const activeChallenger = this.registry.get('specialChallenger');
+    const activeRegionRivals = getRivalCharacterOrderForRegion(
+      getMeetLocation(this.selectedMeetLocation).district
+    );
     if (
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
+      activeRegionRivals.includes(activeChallenger.characterId) &&
       this.hasCar
     ) {
       this.time.delayedCall(80, () => this.showSpecialChallenger(activeChallenger, false));
+    } else if (
+      activeChallenger?.active &&
+      activeChallenger.locationId === this.selectedMeetLocation &&
+      !activeRegionRivals.includes(activeChallenger.characterId)
+    ) {
+      this.registry.set('specialChallenger', null);
+      saveSessionState(this.registry);
     }
 
     // Let the visible Meet render first, then quietly fetch the rest of the
@@ -787,7 +798,15 @@ export default class MeetScene extends Phaser.Scene {
     if (!this.hasCar) return null;
 
     const existing = this.registry.get('specialChallenger');
-    if (existing?.active) return existing;
+    const allowedHere = new Set(
+      getRivalCharacterOrderForRegion(
+        getMeetLocation(this.selectedMeetLocation).district
+      )
+    );
+    if (existing?.active && allowedHere.has(existing.characterId)) return existing;
+    if (existing?.active && !allowedHere.has(existing.characterId)) {
+      this.registry.set('specialChallenger', null);
+    }
 
     let cooldown = Math.max(0, Number(this.registry.get('challengerCooldown') || 0));
     let misses = Math.max(0, Number(this.registry.get('challengerMisses') || 0));
@@ -1133,7 +1152,15 @@ export default class MeetScene extends Phaser.Scene {
   getCompetitionOffer() {
     const offers = { ...(this.registry.get('competitionOffers') || {}) };
     const current = offers[this.selectedMeetLocation];
-    const expired = !current || Number(current.refreshAt || 0) <= Date.now();
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const allowed = new Set(getRivalCharacterOrderForRegion(location.district));
+    const wrongRegion = Boolean(
+      current?.rounds?.some(round => !allowed.has(round?.characterId))
+    );
+    const expired =
+      !current ||
+      Number(current.refreshAt || 0) <= Date.now() ||
+      wrongRegion;
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -1895,6 +1922,7 @@ export default class MeetScene extends Phaser.Scene {
         lineSpacing: 1,
       }).setDepth(35);
 
+      let statusText = null;
       if (offer.locked) {
         const status = offer.pinkSlipResult === 'PLAYER_WIN'
           ? 'DEFEATED // CAR WON'
@@ -1904,7 +1932,7 @@ export default class MeetScene extends Phaser.Scene {
               ? 'DEFEATED'
               : 'WON THIS RUN';
 
-        this.add.text(textX, cardY + 39, status, {
+        statusText = this.add.text(textX, cardY + 39, status, {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',
@@ -1929,7 +1957,8 @@ export default class MeetScene extends Phaser.Scene {
         portrait,
         portraitMaskShape,
         name,
-        quote
+        quote,
+        statusText
       );
       offer.card = card;
     });
