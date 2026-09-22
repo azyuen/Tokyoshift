@@ -15,7 +15,8 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260922-r131';
+  isTravelRegionUnlocked,
+} from '../data/travelRegions.js?v=20260923-r139';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
@@ -27,8 +28,6 @@ const BODY_FONT = '"Rajdhani", monospace';
 const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
-const CENTRAL_TOKYO_OVERLAY_TEXTURE = 'travelMapCentralTokyoOverlay';
-const CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE = 'travelMapTokyoRegionCentralUnlocked';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 
 // The map now owns the whole framed popup. Everything else floats over it.
@@ -206,32 +205,7 @@ export function showTravelMap(scene, {
     mapImage.setMask(maskShape.createGeometryMask());
     objects.push(maskShape);
 
-    const centralTokyoUnlocked = Boolean(
-      TRAVEL_REGIONS.CENTRAL_TOKYO?.locations?.some(locationAvailable)
-    );
 
-    if (centralTokyoUnlocked) {
-      // Preferred behaviour: keep the original map pixel-for-pixel and reveal
-      // only the transparent yellow CENTRAL TOKYO tag/node over the old TOKYO label.
-      if (scene.textures.exists(CENTRAL_TOKYO_OVERLAY_TEXTURE)) {
-        const unlockOverlay = add(scene.add.image(
-          art.x + art.w / 2,
-          art.y + art.h / 2,
-          CENTRAL_TOKYO_OVERLAY_TEXTURE
-        ).setDisplaySize(art.w, art.h).setDepth(depth + 2.08));
-
-        const overlayMaskShape = scene.make.graphics({ add: false });
-        overlayMaskShape.fillStyle(0xffffff, 1);
-        overlayMaskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
-        unlockOverlay.setMask(overlayMaskShape.createGeometryMask());
-        objects.push(overlayMaskShape);
-      } else if (scene.textures.exists(CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE)) {
-        // Full-map file is kept only as a safety fallback if the overlay asset
-        // has not been uploaded yet.
-        mapImage.setTexture(CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE)
-          .setDisplaySize(art.w, art.h);
-      }
-    }
   } else {
     add(scene.add.rectangle(
       MAP.x + MAP.w / 2,
@@ -403,51 +377,111 @@ export function showTravelMap(scene, {
     });
   };
 
+  const drawRegionLabel = (item, {
+    visible,
+    active,
+    specialColor = null,
+  } = {}) => {
+    item.labelBg.clear();
+    item.labelText.setVisible(Boolean(visible));
+
+    if (!visible) return;
+
+    const accent = specialColor ?? (active ? 0xff57bd : 0x9aa9b4);
+    const fill = active
+      ? (specialColor === 0xffd600 ? 0x332b00 : specialColor === 0x35dfff ? 0x062a34 : 0x321126)
+      : (specialColor ? 0x0a1720 : 0x111820);
+    const textColor = specialColor === 0xffd600
+      ? '#ffe55c'
+      : specialColor === 0x35dfff
+        ? '#7cefff'
+        : active
+          ? '#ff8bd5'
+          : '#c7d1d7';
+
+    item.labelText.setColor(textColor);
+    const w = Math.max(88, item.labelText.width + 28);
+    const h = specialColor ? 34 : 30;
+    const x = item.pt.x - w / 2;
+    const y = item.pt.y - (specialColor ? 58 : 52) - h;
+
+    item.labelBg
+      .fillStyle(fill, active || specialColor ? 0.96 : 0.88)
+      .fillRoundedRect(x, y, w, h, 9)
+      .lineStyle(specialColor ? 2 : 1, accent, active || specialColor ? 0.95 : 0.72)
+      .strokeRoundedRect(x, y, w, h, 9)
+      .setVisible(true);
+  };
+
   const updateRegionNodes = () => {
     Object.entries(regionUi).forEach(([regionId, item]) => {
       const active = regionId === selectedRegionId;
-      const here = regionId === currentRegionId;
       const home = regionId === HOME_REGION_ID;
       const centralTokyo = regionId === 'CENTRAL_TOKYO';
+      const specialColor = centralTokyo ? 0xffd600 : home ? 0x35dfff : null;
 
-      // CENTRAL TOKYO's visible state is entirely baked into the unlock overlay.
-      // Keep Phaser's circles invisible so the reveal remains exactly the art
-      // supplied by the map asset. The transparent hit target stays active.
-      if (centralTokyo) {
+      if (!item.unlocked) {
+        item.hit.disableInteractive();
         item.glow.setVisible(false);
-        item.ring.setVisible(false);
         item.core.setVisible(false);
+        item.ring
+          .setVisible(true)
+          .setRadius(10)
+          .setFillStyle(0x4a545d, 0.86)
+          .setStrokeStyle(2, 0x7a858d, 0.78);
+        drawRegionLabel(item, { visible: false });
         return;
       }
 
-      if (!item.unlocked) {
-        item.glow.setRadius(active ? 24 : 20)
-          .setFillStyle(0x56616b, active ? 0.08 : 0.03)
-          .setStrokeStyle(active ? 3 : 2, active ? 0x96a6b2 : 0x65727c, active ? 0.90 : 0.50);
-        item.ring.setRadius(active ? 16 : 13)
-          .setStrokeStyle(active ? 3 : 2, active ? 0xbac5cc : 0x75818a, active ? 0.95 : 0.62);
-        item.core.setRadius(active ? 5 : 4).setFillStyle(0xaab4ba, active ? 0.92 : 0.70);
-      } else if (active) {
-        item.glow.setRadius(28)
-          .setFillStyle(centralTokyo ? 0xffd600 : (home ? 0x25dbff : 0xff4fbd), 0.15)
-          .setStrokeStyle(3, centralTokyo ? 0xffe34d : (home ? 0x5ceaff : 0xff63c5), 0.96);
-        item.ring.setRadius(18).setStrokeStyle(4, 0xffffff, 1);
-        item.core.setRadius(6).setFillStyle(centralTokyo ? 0xffe34d : (home ? 0x60ecff : 0xff6bc9), 1);
-      } else if (here) {
-        item.glow.setRadius(25)
-          .setFillStyle(0x35e8ff, 0.12)
-          .setStrokeStyle(3, 0x55ecff, 0.9);
-        item.ring.setRadius(16).setStrokeStyle(3, 0xa9f7ff, 0.95);
-        item.core.setRadius(5).setFillStyle(0xcdfaff, 1);
-      } else {
-        item.glow.setRadius(20)
-          .setFillStyle(home ? 0x168aa0 : 0x86205f, 0.04)
-          .setStrokeStyle(2, home ? 0x4fa8b8 : 0x8a5274, 0.46);
-        item.ring.setRadius(13)
-          .setStrokeStyle(2, home ? 0x73b8c4 : 0xa66b8e, 0.64);
-        item.core.setRadius(4)
-          .setFillStyle(home ? 0x9dd9e4 : 0xd7a5c8, 0.80);
+      item.hit.setInteractive({ useHandCursor: true });
+      item.glow.setVisible(true);
+      item.ring.setVisible(true);
+      item.core.setVisible(true);
+
+      if (specialColor) {
+        const selectedBoost = active ? 1 : 0;
+        item.glow
+          .setRadius(centralTokyo ? 27 + selectedBoost * 4 : 25 + selectedBoost * 4)
+          .setFillStyle(specialColor, active ? 0.18 : 0.10)
+          .setStrokeStyle(active ? 4 : 3, specialColor, active ? 1 : 0.88);
+        item.ring
+          .setRadius(centralTokyo ? 17 : 16)
+          .setFillStyle(0x07111d, 0.34)
+          .setStrokeStyle(active ? 4 : 3, specialColor, 1);
+        item.core
+          .setRadius(active ? 7 : 6)
+          .setFillStyle(specialColor, 1);
+        drawRegionLabel(item, { visible: true, active, specialColor });
+        return;
       }
+
+      if (active) {
+        item.glow
+          .setRadius(27)
+          .setFillStyle(0xff4fbd, 0.16)
+          .setStrokeStyle(3, 0xff63c5, 0.96);
+        item.ring
+          .setRadius(16)
+          .setFillStyle(0x07111d, 0.32)
+          .setStrokeStyle(3, 0xff78cc, 1);
+        item.core
+          .setRadius(6)
+          .setFillStyle(0xff63c5, 1);
+      } else {
+        item.glow
+          .setRadius(19)
+          .setFillStyle(0x82909a, 0.04)
+          .setStrokeStyle(2, 0x9aa9b4, 0.42);
+        item.ring
+          .setRadius(13)
+          .setFillStyle(0x111820, 0.45)
+          .setStrokeStyle(2, 0x9aa9b4, 0.82);
+        item.core
+          .setRadius(4)
+          .setFillStyle(0xc0c9cf, 0.92);
+      }
+
+      drawRegionLabel(item, { visible: true, active });
     });
   };
 
@@ -739,51 +773,38 @@ export function showTravelMap(scene, {
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const unlocked = home || region.locations.some(locationAvailable);
-    const activeColor = centralTokyo ? 0xffd600 : (home ? 0x29dcff : 0xff4fbd);
-    const strokeColor = centralTokyo ? 0xffe34d : (home ? 0x53dff8 : 0xff63c5);
-    const ringColor = centralTokyo ? 0xffef85 : (home ? 0x7cefff : 0xff8bd5);
-    const coreColor = centralTokyo ? 0xffe34d : (home ? 0xcdfaff : 0xffb3e5);
+    const unlocked = regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId);
 
-    const glow = add(scene.add.circle(
-      pt.x,
-      pt.y,
-      22,
-      unlocked ? activeColor : 0x56616b,
-      unlocked ? 0.05 : 0.03
-    ).setStrokeStyle(
-      2,
-      unlocked ? strokeColor : 0x65727c,
-      unlocked ? 0.45 : 0.50
-    ).setDepth(depth + 5));
+    const glow = add(scene.add.circle(pt.x, pt.y, 20, 0x82909a, 0.04)
+      .setStrokeStyle(2, 0x9aa9b4, 0.42)
+      .setDepth(depth + 5));
 
-    const ring = add(scene.add.circle(pt.x, pt.y, 14, 0x07111d, 0.22)
-      .setStrokeStyle(
-        unlocked ? 3 : 2,
-        unlocked ? ringColor : 0x75818a,
-        unlocked ? 0.82 : 0.62
-      )
+    const ring = add(scene.add.circle(pt.x, pt.y, 13, 0x111820, 0.45)
+      .setStrokeStyle(2, 0x9aa9b4, 0.82)
       .setDepth(depth + 6));
 
-    const core = add(scene.add.circle(
+    const core = add(scene.add.circle(pt.x, pt.y, 4, 0xc0c9cf, 0.92)
+      .setDepth(depth + 7));
+
+    const labelBg = add(scene.add.graphics().setDepth(depth + 6.6));
+    const labelText = add(scene.add.text(
+      pt.x,
+      pt.y - 54,
+      region.label,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: home || centralTokyo ? '9px' : '8px',
+        color: '#c7d1d7',
+      }
+    ).setOrigin(0.5, 1).setDepth(depth + 6.8));
+
+    const hit = add(scene.add.circle(
       pt.x,
       pt.y,
-      4,
-      unlocked ? coreColor : 0xaab4ba,
-      unlocked ? 0.95 : 0.70
-    ).setDepth(depth + 7));
-
-    if (centralTokyo) {
-      // Before unlock the original grey TOKYO text remains untouched.
-      // After unlock the transparent PNG supplies the yellow tag and marker.
-      glow.setVisible(false);
-      ring.setVisible(false);
-      core.setVisible(false);
-    }
-
-    const hit = add(scene.add.circle(pt.x, pt.y, centralTokyo ? 54 : 38, 0x000000, 0.001)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 8));
+      home || centralTokyo ? 48 : 38,
+      0x000000,
+      0.001
+    ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
       selectedRegionId = regionId;
@@ -810,22 +831,8 @@ export function showTravelMap(scene, {
       refreshPanel();
     });
 
-    regionUi[regionId] = { glow, ring, core, hit, pt, unlocked };
+    regionUi[regionId] = { glow, ring, core, hit, pt, unlocked, labelBg, labelText };
   });
-
-  const currentUi = regionUi[currentRegionId];
-  if (currentUi) {
-    tweens.push(scene.tweens.add({
-      targets: currentUi.glow,
-      scaleX: 1.24,
-      scaleY: 1.24,
-      alpha: 0.55,
-      duration: 760,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    }));
-  }
 
   blocker.on('pointerdown', dismiss);
   closeButton.on('pointerdown', dismiss);
