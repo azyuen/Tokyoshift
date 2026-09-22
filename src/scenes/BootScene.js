@@ -58,7 +58,7 @@ export default class BootScene extends Phaser.Scene {
     this.add.text(780, 356, 'TOKYO SHIFT', {
       fontFamily: '"Silkscreen", monospace', fontSize: '40px', color: '#e8f7ff'
     }).setOrigin(0.5);
-    this.add.text(780, 425, saved ? 'LOADING SAVE // R89' : 'NEW RUN // R89', {
+    this.add.text(780, 425, saved ? 'LOADING SAVE // R90' : 'NEW RUN // R90', {
       fontFamily: '"Silkscreen", monospace', fontSize: '16px', color: '#62d8ff'
     }).setOrigin(0.5);
 
