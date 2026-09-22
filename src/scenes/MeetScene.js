@@ -17,10 +17,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r95';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r97';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r96';
-import { getGarageCapacity, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r95';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
+import { getGarageCapacity, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r97';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -475,7 +475,7 @@ export default class MeetScene extends Phaser.Scene {
     // Keep the action buttons aligned with the padded bottom margin.
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      728,
+      782,
       SIDE.w - 36,
       42,
       0x0b2826,
@@ -486,7 +486,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      728,
+      782,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
@@ -495,74 +495,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButton.on('pointerdown', () => this.startSelectedRace());
 
-    this.workshopButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      782,
-      SIDE.w - 36,
-      42,
-      0x24131a,
-      1
-    ).setStrokeStyle(2, 0xff6177, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(38);
-
-    this.workshopButtonLabel = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      782,
-      'WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'),
-      {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce1'
-      }
-    ).setOrigin(0.5).setDepth(39);
-
-    this.workshopButton.on('pointerdown', () => this.returnToWorkshop());
-    this.updateWorkshopButton();
   }
 
   updateWorkshopButton() {
-    const cash = Number(this.registry.get('cash') || 0);
-
-    if (!this.hasCar) {
-      const enoughForTaxi = cash >= TAXI_TO_WORKSHOP_COST;
-      if (enoughForTaxi) {
-        this.workshopButton
-          ?.setInteractive({ useHandCursor: true })
-          .setFillStyle(0x272019, 1)
-          .setStrokeStyle(2, 0xffc66d, 1);
-        this.workshopButtonLabel
-          ?.setColor('#ffe0a8')
-          .setText('TAXI TO WORKSHOP // ¥' + TAXI_TO_WORKSHOP_COST.toLocaleString('en-US'));
-      } else {
-        this.workshopButton
-          ?.disableInteractive()
-          .setFillStyle(0x171418, 1)
-          .setStrokeStyle(1, 0x5d5141, 1);
-        this.workshopButtonLabel
-          ?.setColor('#9d866e')
-          .setText('NEED ¥' + TAXI_TO_WORKSHOP_COST.toLocaleString('en-US') + ' FOR TAXI');
-      }
-      return;
-    }
-
-    const enough = cash >= WORKSHOP_RETURN_COST;
-
-    if (enough) {
-      this.workshopButton
-        ?.setInteractive({ useHandCursor: true })
-        .setFillStyle(0x24131a, 1)
-        .setStrokeStyle(2, 0xff6177, 1);
-      this.workshopButtonLabel
-        ?.setColor('#ffdce1')
-        .setText('WORKSHOP // ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'));
-    } else {
-      this.workshopButton
-        ?.disableInteractive()
-        .setFillStyle(0x171418, 1)
-        .setStrokeStyle(1, 0x5d4148, 1);
-      this.workshopButtonLabel
-        ?.setColor('#9a7079')
-        .setText('NEED ¥' + WORKSHOP_RETURN_COST.toLocaleString('en-US'));
-    }
+    // Meet navigation is map-only. Kept as a no-op for older refresh paths.
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', requestedCost = null) {
@@ -585,9 +521,16 @@ export default class MeetScene extends Phaser.Scene {
     this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
     saveSessionState(this.registry);
 
-    // Pass the destination explicitly so GarageScene does not depend on stale
-    // workshop state during the transition.
-    this.scene.start('GarageScene', { workshopLocationId: destinationId });
+    // Meet -> Workshop proved unreliable as an in-Phaser scene handoff on
+    // iOS/PWA: GarageScene starts (music changes) while the GPS overlay can
+    // remain visually stuck. Persist the exact destination and perform a clean
+    // document reload instead. BootScene is invisible, so this feels direct.
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
   }
 
   buildBottomArea() {
