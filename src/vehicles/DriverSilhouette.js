@@ -1,20 +1,19 @@
 // Generic in-car driver silhouette.
 //
-// The system intentionally reuses the existing full-body character artwork.
-// We crop the upper portion, tint it almost black, and position it BEHIND the
-// car body. Cars with translucent windows then reveal only the head/upper-body
-// silhouette, so no bespoke driver art is required for each car/character pair.
+// Reuses the existing full-body character artwork: crop the upper portion,
+// tint it almost black, and position it BEHIND the car body. Cars with
+// translucent windows then reveal only a simple head/upper-body silhouette.
 //
-// Any car can override the automatic seat placement with:
+// Optional per-car override:
 // visual.driverSeat = { x, y, height, alpha, cropX, cropY, cropW, cropH }
-// x/y/height are expressed in the same source-pixel coordinate system used by
-// rearOffsetX/frontOffsetX/wheelOffsetY, so they scale with the car naturally.
+// x/y/height use the same source-pixel coordinate system as the wheel offsets.
+// crop values are normalised 0..1 fractions of the character texture.
 
 const DEFAULT_CROP = {
-  x: 0.18,
-  y: 0.00,
-  w: 0.64,
-  h: 0.40,
+  cropX: 0.18,
+  cropY: 0.00,
+  cropW: 0.64,
+  cropH: 0.40,
 };
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value)));
@@ -25,59 +24,40 @@ export function resolveDriverSeat(visualOrCar = {}) {
   const front = Number(visual.frontOffsetX || 520);
   const wheelY = Number(visual.wheelOffsetY || 170);
   const wheelbase = Math.max(500, Math.abs(front - rear));
-
-  const automatic = {
-    // Roughly 62% of the way from rear axle to front axle puts the driver in
-    // the front half of the cabin for the right-facing side-profile sprites.
-    x: rear + (front - rear) * 0.62,
-    // Place the head above the axle line in proportion to wheelbase.
-    y: wheelY - wheelbase * 0.22,
-    // Source-space target height for the cropped head/shoulders.
-    height: wheelbase * 0.235,
-    alpha: 0.66,
-    ...DEFAULT_CROP,
-  };
-
   const override = visual.driverSeat || {};
 
+  const fallbackX = rear + (front - rear) * 0.62;
+  const fallbackY = wheelY - wheelbase * 0.22;
+  const fallbackHeight = wheelbase * 0.235;
+
   return {
-    x: Number.isFinite(Number(override.x)) ? Number(override.x) : automatic.x,
-    y: Number.isFinite(Number(override.y)) ? Number(override.y) : automatic.y,
-    height: Number.isFinite(Number(override.height)) ? Number(override.height) : automatic.height,
+    x: Number.isFinite(Number(override.x)) ? Number(override.x) : fallbackX,
+    y: Number.isFinite(Number(override.y)) ? Number(override.y) : fallbackY,
+    height: Number.isFinite(Number(override.height)) ? Number(override.height) : fallbackHeight,
     alpha: clamp(
-      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : automatic.alpha,
+      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.66,
       0.05,
       1
     ),
     cropX: clamp(
-      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : automatic.x,
-      -100000,
-      100000
+      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : DEFAULT_CROP.cropX,
+      0,
+      0.90
     ),
     cropY: clamp(
-      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : automatic.y,
-      -100000,
-      100000
+      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : DEFAULT_CROP.cropY,
+      0,
+      0.90
     ),
     cropW: clamp(
-      Number.isFinite(Number(override.cropW)) ? Number(override.cropW) : automatic.w,
+      Number.isFinite(Number(override.cropW)) ? Number(override.cropW) : DEFAULT_CROP.cropW,
       0.05,
       1
     ),
     cropH: clamp(
-      Number.isFinite(Number(override.cropH)) ? Number(override.cropH) : automatic.h,
+      Number.isFinite(Number(override.cropH)) ? Number(override.cropH) : DEFAULT_CROP.cropH,
       0.05,
       1
-    ),
-    cropXRatio: clamp(
-      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : DEFAULT_CROP.x,
-      0,
-      0.9
-    ),
-    cropYRatio: clamp(
-      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : DEFAULT_CROP.y,
-      0,
-      0.9
     ),
   };
 }
@@ -96,23 +76,21 @@ export function createDriverSilhouette(
   } = {}
 ) {
   const spriteKey = character?.visual?.spriteKey;
-  if (!spriteKey || !scene?.textures?.exists?.(spriteKey)) {
-    return null;
-  }
+  if (!spriteKey || !scene?.textures?.exists?.(spriteKey)) return null;
 
   const source = scene.textures.get(spriteKey).getSourceImage();
   if (!source?.width || !source?.height) return null;
 
   const seat = resolveDriverSeat(visualOrCar);
-  const cropX = Math.round(source.width * seat.cropXRatio);
-  const cropY = Math.round(source.height * seat.cropYRatio);
+  const cropX = Math.round(source.width * seat.cropX);
+  const cropY = Math.round(source.height * seat.cropY);
   const cropW = Math.max(
     1,
-    Math.round(source.width * Math.min(seat.cropW, 1 - seat.cropXRatio))
+    Math.round(source.width * Math.min(seat.cropW, 1 - seat.cropX))
   );
   const cropH = Math.max(
     1,
-    Math.round(source.height * Math.min(seat.cropH, 1 - seat.cropYRatio))
+    Math.round(source.height * Math.min(seat.cropH, 1 - seat.cropY))
   );
 
   const targetHeight = Math.max(12, seat.height * bodyScale);
