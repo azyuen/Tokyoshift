@@ -52,6 +52,10 @@ const ACCESS = {
     differential: [0, 0, 1, 2],
     suspension: [0, 0, 1, 2],
   },
+  chassis: {
+    tyres: [0, 0, 1, 2],
+    weightReduction: [0, 0, 1, 2],
+  },
   exhaustNos: {
     headers: [0, 0, 1, 2],
     exhaust: [0, 0, 1, 2],
