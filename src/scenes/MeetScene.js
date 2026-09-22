@@ -6,7 +6,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
+import { characters, characterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
@@ -118,7 +118,10 @@ export default class MeetScene extends Phaser.Scene {
           : this.generateOffersForLocation(locationId);
 
         this.locationOffers[locationId] = stored
-          .filter(offer => !defeated.has(locationId + ':' + offer.characterId))
+          .filter(offer =>
+            rivalCharacterOrder.includes(offer?.characterId) &&
+            !defeated.has(locationId + ':' + offer.characterId)
+          )
           .map(offer => ({ ...offer }));
         this.locationSelectedOfferIndex[locationId] = 0;
       });
@@ -606,9 +609,9 @@ export default class MeetScene extends Phaser.Scene {
 
   chooseEventCharacter(rating = 3, exclude = []) {
     const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const blocked = new Set([playerId, 'daichiSakamoto', ...exclude]);
+    const blocked = new Set([playerId, ...exclude]);
 
-    const candidates = characterOrder
+    const candidates = rivalCharacterOrder
       .filter(id => !blocked.has(id) && characters[id])
       .sort((a, b) => {
         const ar = Number(characters[a]?.skill?.rating || 3);
@@ -1185,9 +1188,8 @@ export default class MeetScene extends Phaser.Scene {
     const profile = getEncounterProfile(locationId, location.difficulty);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
 
-    const eligible = characterOrder.filter(id =>
+    const eligible = rivalCharacterOrder.filter(id =>
       id !== playerCharacterId &&
-      id !== 'daichiSakamoto' &&
       this.textures.exists(characters[id]?.visual?.spriteKey)
     );
 
