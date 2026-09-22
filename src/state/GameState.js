@@ -1,3 +1,4 @@
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
@@ -128,6 +129,28 @@ export function normaliseState(input = {}) {
     ? Math.max(rawCash, 1000000000)
     : rawCash;
 
+  const playerCharacterId = playableCharacterOrder.includes(input.playerCharacterId)
+    ? input.playerCharacterId
+    : base.playerCharacterId;
+
+  const meetRosters = input.meetRosters && typeof input.meetRosters === 'object'
+    ? Object.fromEntries(
+        Object.entries(input.meetRosters).map(([locationId, offers]) => [
+          locationId,
+          Array.isArray(offers)
+            ? offers.filter(offer => rivalCharacterOrder.includes(offer?.characterId))
+            : [],
+        ])
+      )
+    : {};
+
+  const specialChallenger =
+    input.specialChallenger &&
+    typeof input.specialChallenger === 'object' &&
+    rivalCharacterOrder.includes(input.specialChallenger.characterId)
+      ? input.specialChallenger
+      : null;
+
   return {
     ...base,
     ...input,
@@ -136,6 +159,7 @@ export function normaliseState(input = {}) {
     garageTier,
     workshopLocationId,
     carGarageLocations,
+    playerCharacterId,
     selectedCarId,
     ownedCarIds: owned,
     carStates: {
@@ -146,16 +170,12 @@ export function normaliseState(input = {}) {
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
     devMode,
-    meetRosters: input.meetRosters && typeof input.meetRosters === 'object'
-      ? input.meetRosters
-      : {},
+    meetRosters,
     meetRefreshAt: Number.isFinite(input.meetRefreshAt) ? input.meetRefreshAt : 0,
     defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
       ? [...new Set(input.defeatedRivalKeys)]
       : [],
-    specialChallenger: input.specialChallenger && typeof input.specialChallenger === 'object'
-      ? input.specialChallenger
-      : null,
+    specialChallenger,
     challengerMisses: Math.max(0, Number(input.challengerMisses || 0)),
     challengerCooldown: Math.max(0, Number(input.challengerCooldown || 0)),
     competitionOffers: input.competitionOffers && typeof input.competitionOffers === 'object'
