@@ -5,7 +5,7 @@ import {
   getActiveProfileIndex,
   beginNewProfile,
   deleteProfileSlot,
-  activateProfile,
+  setActiveProfileIndex,
   saveSessionState,
 } from '../state/GameState.js?v=20260922-r115';
 
@@ -74,32 +74,23 @@ export function showSettingsPanel(scene) {
     scene._settingsOverlay = [];
   };
 
-  const handoff = (targetScene) => {
+  const reloadForProfile = (label = 'SWITCHING DRIVER') => {
     if (transitioning) return;
     transitioning = true;
 
-    // Profile changes themselves do not load assets, so never force the global
-    // loading screen here. The destination scene will show it automatically
-    // only if its preload() actually queues files.
     close();
 
-    // Clear any stale manual splash from older builds before changing scene.
-    try { window.TOKYO_SHIFT_HIDE_SPLASH?.(); } catch (e) {}
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftBootMessage', label);
+      sessionStorage.removeItem('tokyoShiftForceGarage');
+    } catch (e) {}
 
-    // Use the browser task queue rather than the source scene's Clock. Scene
-    // clocks can be paused/stopped during a hand-off; window.setTimeout cannot.
+    // Profile switching is intentionally a controlled app reload. Phaser scene
+    // instances carry input/tween/DOM state across restarts on iOS PWAs; Boot
+    // already knows how to restore the selected slot's session safely.
     window.setTimeout(() => {
-      try {
-        const currentScene = scene.sys?.settings?.key;
-        if (currentScene === targetScene) {
-          scene.scene.restart();
-        } else {
-          scene.scene.start(targetScene);
-        }
-      } catch (error) {
-        console.error('[Tokyo SHIFT] profile handoff failed', error);
-        transitioning = false;
-      }
+      window.location.reload();
     }, 0);
   };
 
@@ -278,7 +269,7 @@ export function showSettingsPanel(scene) {
 
       if (deletingActive) {
         beginNewProfile(slot.index);
-        handoff('CharacterSelectScene');
+        reloadForProfile('CREATING DRIVER');
       } else {
         showSettingsPanel(scene);
       }
@@ -328,7 +319,7 @@ export function showSettingsPanel(scene) {
         if (transitioning) return;
         saveSessionState(scene.registry);
         beginNewProfile(i);
-        handoff('CharacterSelectScene');
+        reloadForProfile('CREATING DRIVER');
       });
       return;
     }
@@ -400,8 +391,8 @@ export function showSettingsPanel(scene) {
       card.on('pointerdown', () => {
         if (transitioning) return;
         saveSessionState(scene.registry);
-        const state = activateProfile(scene.registry, i, true);
-        handoff(state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+        setActiveProfileIndex(i);
+        reloadForProfile('SWITCHING DRIVER');
       });
     }
 
