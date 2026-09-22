@@ -1,9 +1,9 @@
-import BootScene from './scenes/BootScene.js?v=20260922-r101';
-import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260922-r101';
-import GarageScene from './scenes/GarageScene.js?v=20260922-r101';
-import MeetScene from './scenes/MeetScene.js?v=20260922-r101';
-import RaceScene from './scenes/RaceScene.js?v=20260922-r101';
-import ResultScene from './scenes/ResultScene.js?v=20260922-r101';
+import BootScene from './scenes/BootScene.js?v=20260922-r102';
+import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260922-r102';
+import GarageScene from './scenes/GarageScene.js?v=20260922-r102';
+import MeetScene from './scenes/MeetScene.js?v=20260922-r102';
+import RaceScene from './scenes/RaceScene.js?v=20260922-r102';
+import ResultScene from './scenes/ResultScene.js?v=20260922-r102';
 
 
 // Phone readability pass.
@@ -28,6 +28,8 @@ Phaser.GameObjects.GameObjectFactory.prototype.text = function(x, y, text, style
 
 const GAME_WIDTH = 1560;
 const GAME_HEIGHT = 840;
+
+window.TOKYO_SHIFT_SET_LOADING?.(0.05, 'STARTING ENGINE');
 
 const config = {
   type: Phaser.AUTO,
