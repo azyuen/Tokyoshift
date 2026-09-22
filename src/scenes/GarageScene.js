@@ -2789,6 +2789,10 @@ export default class GarageScene extends Phaser.Scene {
       [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(false));
       row.box?.disableInteractive?.();
     });
+    Object.values(this.chassisVisualModRows || {}).forEach(row => {
+      [row.box, row.label, row.detail, row.arrow].forEach(obj => obj?.setVisible?.(false));
+      row.box?.disableInteractive?.();
+    });
 
     [
       this.chassisPaintMenuButton,
@@ -2797,12 +2801,15 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPaintMenuArrow,
       this.chassisPartsApplyButton,
       this.chassisPartsApplyText,
+      this.visualModsApplyButton,
+      this.visualModsApplyText,
       this.chassisMainBackButton,
       this.chassisMainBackText,
     ].forEach(obj => obj?.setVisible?.(false));
 
     this.chassisPaintMenuButton?.disableInteractive();
     this.chassisPartsApplyButton?.disableInteractive();
+    this.visualModsApplyButton?.disableInteractive();
     this.chassisMainBackButton?.disableInteractive();
 
     (this.chassisPaintObjects || []).forEach(obj => obj?.setVisible?.(true));
@@ -2831,6 +2838,10 @@ export default class GarageScene extends Phaser.Scene {
       [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(true));
       row.box?.setInteractive?.({ useHandCursor: true });
     });
+    Object.values(this.chassisVisualModRows || {}).forEach(row => {
+      [row.box, row.label, row.detail, row.arrow].forEach(obj => obj?.setVisible?.(true));
+      row.box?.setInteractive?.({ useHandCursor: true });
+    });
 
     [
       this.chassisPaintMenuButton,
@@ -2847,6 +2858,98 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisMainBackButton?.setInteractive({ useHandCursor: true });
 
     this.refreshChassisMode();
+  }
+
+  rebuildSelectedVisualModPreview() {
+    if (!this.selectedCarId || !this.heroCarLayout) return;
+
+    (this.selectedDisplay || []).forEach(obj => obj?.destroy?.());
+
+    const car = cars[this.selectedCarId];
+    const layout = this.heroCarLayout;
+    this.selectedDisplay = this.createCarDisplay(
+      car,
+      layout.x,
+      layout.bodyY,
+      layout.targetWidth,
+      10,
+      this.pendingVisualMods
+    );
+
+    setCarBodyPaint(
+      this.selectedDisplay,
+      normalisePaintColor(this.pendingPaintColor ?? this.currentPaintColor)
+    );
+  }
+
+  cyclePendingVisualMod(slotId) {
+    if (!this.chassisMode || !this.selectedCarId || this.chassisPaintPanelOpen) return;
+
+    const options = getVisualModOptions(this.selectedCarId, slotId);
+    if (options.length <= 1) return;
+
+    const currentId = this.pendingVisualMods?.[slotId] || 'stock';
+    const index = Math.max(0, options.findIndex(option => option.id === currentId));
+    const next = options[(index + 1) % options.length];
+
+    this.pendingVisualMods = {
+      ...(this.pendingVisualMods || {}),
+      [slotId]: next.id,
+    };
+
+    this.rebuildSelectedVisualModPreview();
+    this.refreshChassisMode();
+  }
+
+  applyPendingVisualMods() {
+    if (!this.chassisMode || !this.selectedCarId || !this.pendingVisualMods) return;
+
+    const cost = this.getWorkshopAdjustedCost(
+      getVisualModChangeCost(
+        this.selectedCarId,
+        this.currentVisualMods || {},
+        this.pendingVisualMods
+      )
+    );
+
+    const unchanged = VISUAL_MOD_SLOT_ORDER.every(
+      slotId =>
+        (this.currentVisualMods?.[slotId] || 'stock') ===
+        (this.pendingVisualMods?.[slotId] || 'stock')
+    );
+    if (unchanged) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const installed = normaliseVisualMods(this.selectedCarId, this.pendingVisualMods);
+
+    carStates[this.selectedCarId] = {
+      ...existing,
+      stock: false,
+      visualMods: installed,
+    };
+
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentVisualMods = { ...installed };
+    this.pendingVisualMods = { ...installed };
+
+    this.rebuildSelectedVisualModPreview();
+    this.refreshChassisMode();
+    this.showWorkshopToast(
+      cost > 0
+        ? 'VISUAL MODS INSTALLED // ¥ ' + cost.toLocaleString('en-US')
+        : 'VISUAL MODS UPDATED'
+    );
   }
 
   getPendingChassisCost() {
