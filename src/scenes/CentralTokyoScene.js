@@ -29,10 +29,11 @@ import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
-  GINZA_PLACEHOLDERS,
+  GINZA_LISTINGS,
   PRO_DRAG_EVENTS,
   getAutoMarketBuild,
   getAutoMarketSellPrice,
+  getGinzaCollectorState,
   isCentralTokyoLocationUnlocked,
   isArkonDen,
 } from '../data/centralTokyo.js?v=20260922-r131';
@@ -594,7 +595,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const selectedCarId = this.registry.get('selectedCarId');
     const ownedCars = this.registry.get('ownedCarIds') || [];
-    const canSell = Boolean(selectedCarId && cars[selectedCarId] && ownedCars.length > 1);
+    const selectedCar = cars[selectedCarId];
+    const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+    const collectorLocked = Boolean(selectedCar?.tuningLocked || selectedState.collector || selectedState.immutable);
+    const canSell = Boolean(
+      selectedCarId &&
+      selectedCar &&
+      ownedCars.length > 1 &&
+      !collectorLocked
+    );
     const sellPrice = canSell
       ? getAutoMarketSellPrice(
           selectedCarId,
@@ -616,7 +625,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       SIDE.y + 668,
       canSell
         ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
-        : 'KEEP AT LEAST ONE CAR',
+        : collectorLocked
+          ? 'GINZA COLLECTOR // NOT TRADED HERE'
+          : 'KEEP AT LEAST ONE CAR',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
@@ -703,91 +714,251 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawGinza() {
     this.drawNavigation(
       'SHOWROOM',
-      'PRIVATE COLLECTION // INVITATION STOCK // COLLECTOR GRADE'
+      'PRIVATE COLLECTION // SEALED HERO CARS // COLLECTOR GRADE'
     );
 
-    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'FEATURED // GINZA MOTOR GALLERY', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '11px',
-      color: '#8fe7ff',
-    }).setDepth(33));
+    const listings = GINZA_LISTINGS.filter(item => cars[item.carId]);
+    if (!listings.length) return;
 
-    GINZA_PLACEHOLDERS.forEach((item, index) => {
-      const car = cars[item.carId];
-      const x = STAGE.x + 240 + index * 330;
+    this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
+
+    const pageSize = 3;
+    const pageCount = Math.ceil(listings.length / pageSize);
+    const page = Math.floor(this.selectedIndex / pageSize);
+    const startIndex = page * pageSize;
+    const visible = listings.slice(startIndex, startIndex + pageSize);
+
+    visible.forEach((listing, localIndex) => {
+      const car = cars[listing.carId];
+      const x = STAGE.x + 240 + localIndex * 330;
       const objects = this.createCarDisplay(car, x, STAGE.y + 330, 270, 8);
       objects.forEach(obj => this.addContent(obj));
 
-      const cardX = CARDS.x + 190 + index * 365;
-      this.addContent(this.add.rectangle(
-        cardX,
+      this.addContent(this.add.text(x, STAGE.y + 438, money(listing.price), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffe08a',
+        backgroundColor: '#07111ddd',
+        padding: { x: 8, y: 5 },
+      }).setOrigin(0.5).setDepth(20));
+    });
+
+    this.addContent(this.add.text(
+      CARDS.x + 18,
+      CARDS.y + 14,
+      'GINZA HERO CARS // PAGE ' + (page + 1) + '/' + pageCount,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '11px',
+        color: '#8fe7ff',
+      }
+    ).setDepth(33));
+
+    visible.forEach((listing, localIndex) => {
+      const absoluteIndex = startIndex + localIndex;
+      const car = cars[listing.carId];
+      const x = CARDS.x + 190 + localIndex * 365;
+      const selected = absoluteIndex === this.selectedIndex;
+      const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+
+      const box = this.addContent(this.add.rectangle(
+        x,
         CARDS.y + 104,
         340,
         116,
-        0x0b1724,
+        selected ? 0x2a2032 : 0x0b1724,
         1
-      ).setStrokeStyle(1, 0x315470, 1).setDepth(32));
+      ).setStrokeStyle(selected ? 2 : 1, selected ? 0xff9fc7 : 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(32));
 
-      this.addContent(this.add.text(cardX - 145, CARDS.y + 70, item.slotLabel, {
+      this.addContent(this.add.text(x - 145, CARDS.y + 70, car.shortName, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#ffffff',
       }).setDepth(34));
 
-      this.addContent(this.add.text(cardX - 145, CARDS.y + 100, car.shortName + ' // PLACEHOLDER', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 99, listing.collectionLabel, {
         fontFamily: BODY_FONT,
         fontSize: '10px',
-        color: '#91a9b8',
+        color: '#c7a8bd',
         fontStyle: '600',
       }).setDepth(34));
 
-      this.addContent(this.add.text(cardX + 145, CARDS.y + 126, 'UNIQUE STOCK SOON', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#ff9fc7',
-      }).setOrigin(1, 0.5).setDepth(34));
+      this.addContent(this.add.text(
+        x + 145,
+        CARDS.y + 126,
+        owned ? 'OWNED' : money(listing.price),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: owned ? '#62e8c7' : '#ffe08a',
+        }
+      ).setOrigin(1, 0.5).setDepth(34));
+
+      box.on('pointerdown', () => {
+        this.selectedIndex = absoluteIndex;
+        this.renderLocation(this.activeLocationId);
+      });
     });
 
-    const y = SIDE.y + 330;
-    this.addContent(this.add.text(SIDE.x + 20, y, 'CURATING THE COLLECTION', {
+    if (pageCount > 1) {
+      const prev = this.addContent(this.add.text(CARDS.x + 34, CARDS.y + 105, '<', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '18px',
+        color: page > 0 ? '#8fe7ff' : '#394c59',
+      }).setOrigin(0.5).setDepth(36));
+
+      const next = this.addContent(this.add.text(CARDS.x + CARDS.w - 34, CARDS.y + 105, '>', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '18px',
+        color: page < pageCount - 1 ? '#8fe7ff' : '#394c59',
+      }).setOrigin(0.5).setDepth(36));
+
+      if (page > 0) {
+        prev.setInteractive({ useHandCursor: true });
+        prev.on('pointerdown', () => {
+          this.selectedIndex = Math.max(0, startIndex - pageSize);
+          this.renderLocation(this.activeLocationId);
+        });
+      }
+
+      if (page < pageCount - 1) {
+        next.setInteractive({ useHandCursor: true });
+        next.on('pointerdown', () => {
+          this.selectedIndex = Math.min(listings.length - 1, startIndex + pageSize);
+          this.renderLocation(this.activeLocationId);
+        });
+      }
+    }
+
+    this.drawGinzaSide(listings[this.selectedIndex]);
+  }
+
+  drawGinzaSide(listing) {
+    const car = cars[listing.carId];
+    const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+    const cash = Number(this.registry.get('cash') || 0);
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const ownedCount = (this.registry.get('ownedCarIds') || []).length;
+    const hasStorage = Boolean(this.findStorageForPurchase());
+    const canBuy = !owned && cash >= listing.price && ownedCount < capacity && hasStorage;
+
+    const y0 = SIDE.y + 310;
+
+    this.addContent(this.add.text(SIDE.x + 20, y0, listing.rarity + ' // GINZA', {
       fontFamily: PIXEL_FONT,
-      fontSize: '10px',
+      fontSize: '8px',
+      color: '#ff9fc7',
+    }).setDepth(34));
+
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 38, car.name.toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
       color: '#ffffff',
+      wordWrap: { width: SIDE.w - 40 },
     }).setDepth(34));
 
     this.addContent(this.add.text(
       SIDE.x + 20,
-      y + 52,
-      'These three cars are temporary display placeholders.\n\nThe final Ginza stock will be unique, invitation-only and permanently unmodifiable collector cars.',
+      y0 + 90,
+      listing.collectionLabel + '\n' +
+      car.engineModel + '\n' +
+      car.powerKW + ' kW  //  ' + car.torqueNm + ' Nm\n' +
+      Math.round(car.vehicleMassKg) + ' kg',
       {
         fontFamily: BODY_FONT,
-        fontSize: '11px',
+        fontSize: '10px',
         color: '#9ab0bd',
         fontStyle: '600',
+        lineSpacing: 4,
         wordWrap: { width: SIDE.w - 40 },
-        lineSpacing: 5,
       }
     ).setDepth(34));
 
-    this.addContent(this.add.rectangle(
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 190, 'ASKING  ' + money(listing.price), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#ffe08a',
+    }).setDepth(34));
+
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y0 + 230,
+      'SEALED COLLECTOR SPEC\nNO ENGINE / DRIVETRAIN / CHASSIS / NOS MODIFICATIONS',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#d6a9bc',
+        fontStyle: '600',
+        lineSpacing: 4,
+        wordWrap: { width: SIDE.w - 40 },
+      }
+    ).setDepth(34));
+
+    const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 646,
       SIDE.w - 36,
       48,
-      0x17181d,
+      canBuy ? 0x2b1422 : 0x17181d,
       1
-    ).setStrokeStyle(1, 0x514f55, 1).setDepth(33));
+    ).setStrokeStyle(2, canBuy ? 0xff7cac : 0x514f55, 1).setDepth(33));
+
+    const buyLabel = owned
+      ? 'IN YOUR COLLECTION'
+      : !hasStorage || ownedCount >= capacity
+        ? 'GARAGE FULL'
+        : cash < listing.price
+          ? 'NEED ' + money(listing.price)
+          : 'ACQUIRE // ' + money(listing.price);
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 646,
-      'UNIQUE STOCK COMING SOON',
+      buyLabel,
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#817d84',
+        fontSize: '7px',
+        color: canBuy ? '#ffe5ef' : '#817d84',
       }
     ).setOrigin(0.5).setDepth(34));
+
+    if (canBuy) {
+      buyButton.setInteractive({ useHandCursor: true });
+      buyButton.on('pointerdown', () => this.buyGinzaCar(listing));
+    }
+  }
+
+  buyGinzaCar(listing) {
+    const car = cars[listing?.carId];
+    if (!car?.ginzaExclusive) return;
+
+    const owned = [...(this.registry.get('ownedCarIds') || [])];
+    if (owned.includes(listing.carId)) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < Number(listing.price || 0)) return;
+
+    const storageId = this.findStorageForPurchase();
+    if (!storageId) return;
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    owned.push(listing.carId);
+    carStates[listing.carId] = getGinzaCollectorState(listing.carId);
+    locations[listing.carId] = storageId;
+
+    this.registry.set('ownedCarIds', owned);
+    this.registry.set('carStates', carStates);
+    this.registry.set('carGarageLocations', locations);
+    this.registry.set('selectedCarId', listing.carId);
+    this.registry.set('cash', cash - listing.price);
+    saveSessionState(this.registry);
+
+    this.cashText.setText(money(cash - listing.price));
+    this.renderLocation(this.activeLocationId);
   }
 
   getSelectedBuild() {
