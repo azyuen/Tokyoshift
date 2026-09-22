@@ -1,0 +1,1030 @@
+import { cars, carOrder } from '../data/cars.js?v=20260922-r83';
+import { engines } from '../data/engines.js?v=20260921-r43';
+import { characters, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
+import {
+  applyEngineTuning,
+} from '../data/tuning.js?v=20260922-r114';
+import {
+  applySecondaryTuning,
+} from '../data/secondaryTuning.js?v=20260922-r124';
+import {
+  DEFAULT_PAINT_COLOR,
+  getCarBodyTextureKey,
+  createCarBodyLayers,
+  getCarPaintColor,
+} from '../vehicles/CarAppearance.js?v=20260922-r83';
+import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r122';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
+import {
+  getGarageCapacity,
+  getUnlockedWorkshops,
+  getWorkshopStorageCapacity,
+  getWorkshopUsage,
+} from '../data/workshopProgression.js?v=20260922-r124';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import {
+  CENTRAL_TOKYO_LOCATIONS,
+  AUTO_MARKET_LISTINGS,
+  GINZA_PLACEHOLDERS,
+  PRO_DRAG_EVENTS,
+  getAutoMarketBuild,
+  getAutoMarketSellPrice,
+  isCentralTokyoLocationUnlocked,
+  isArkonDen,
+} from '../data/centralTokyo.js?v=20260922-r125';
+
+const PIXEL_FONT = '"Silkscreen", monospace';
+const BODY_FONT = '"Rajdhani", monospace';
+
+const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
+const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
+const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
+
+const LOCATION_BY_ID = Object.fromEntries(
+  Object.values(CENTRAL_TOKYO_LOCATIONS).map(item => [item.id, item])
+);
+
+function money(value) {
+  return '¥ ' + Number(value || 0).toLocaleString('en-US');
+}
+
+function clamp01(value) {
+  return Math.max(0, Math.min(0.99, Number(value) || 0));
+}
+
+export default class CentralTokyoScene extends Phaser.Scene {
+  constructor() {
+    super('CentralTokyoScene');
+  }
+
+  init(data = {}) {
+    this.requestedLocationId = data?.locationId || null;
+  }
+
+  preload() {
+    let queued = 0;
+    Object.values(CENTRAL_TOKYO_LOCATIONS).forEach(location => {
+      if (!this.textures.exists(location.backgroundKey)) {
+        this.load.image(
+          location.backgroundKey,
+          location.backgroundPath + '?v=20260922-r125'
+        );
+        queued += 1;
+      }
+    });
+
+    startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
+  }
+
+  create() {
+    document.body.dataset.scene = 'central-tokyo';
+    this.scale.resize(1560, 840);
+
+    const savedLocation =
+      this.requestedLocationId ||
+      this.registry.get('centralTokyoLocation') ||
+      CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
+
+    this.activeLocationId = isCentralTokyoLocationUnlocked(this.registry, savedLocation)
+      ? savedLocation
+      : CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
+
+    if (!isCentralTokyoLocationUnlocked(this.registry, this.activeLocationId)) {
+      this.activeLocationId = Object.values(CENTRAL_TOKYO_LOCATIONS)
+        .find(item => isCentralTokyoLocationUnlocked(this.registry, item.id))?.id
+        || CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
+    }
+
+    this.registry.set('centralTokyoLocation', this.activeLocationId);
+
+    this.contentObjects = [];
+    this.selectedIndex = 0;
+    this.selectedEventIndex = 0;
+
+    this.drawShell();
+    this.renderLocation(this.activeLocationId);
+
+    finishSceneLoading('CENTRAL TOKYO');
+  }
+
+  drawShell() {
+    this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
+
+    this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
+      .setStrokeStyle(2, 0x173249, 1)
+      .setDepth(40);
+
+    this.add.text(52, 35, 'CENTRAL TOKYO', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '20px',
+      color: '#eefaff',
+    }).setOrigin(0, 0.5).setDepth(42);
+
+    this.locationHeader = this.add.text(340, 35, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#7edfff',
+    }).setOrigin(0, 0.5).setDepth(42);
+
+    const wins = Number(this.registry.get('wins') || 0);
+    const losses = Number(this.registry.get('losses') || 0);
+    const cash = Number(this.registry.get('cash') || 0);
+
+    this.add.text(1120, 24, 'WINS  ' + wins, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#b4ccdb',
+    }).setOrigin(1, 0.5).setDepth(42);
+
+    this.add.text(1120, 47, 'LOSSES  ' + losses, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#b4ccdb',
+    }).setOrigin(1, 0.5).setDepth(42);
+
+    this.cashText = this.add.text(1510, 35, money(cash), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '15px',
+      color: '#ffe08a',
+    }).setOrigin(1, 0.5).setDepth(42);
+
+    this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x08121d,
+      1
+    ).setStrokeStyle(2, 0x24475f, 1).setDepth(-12);
+
+    this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + SIDE.h / 2,
+      SIDE.w,
+      SIDE.h,
+      0x07111d,
+      0.99
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
+
+    this.add.rectangle(
+      CARDS.x + CARDS.w / 2,
+      CARDS.y + CARDS.h / 2,
+      CARDS.w,
+      CARDS.h,
+      0x07111d,
+      0.99
+    ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
+  }
+
+  clearContent() {
+    this.contentObjects.forEach(obj => obj?.destroy?.());
+    this.contentObjects = [];
+  }
+
+  addContent(obj) {
+    this.contentObjects.push(obj);
+    return obj;
+  }
+
+  renderLocation(locationId) {
+    const location = LOCATION_BY_ID[locationId] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
+
+    if (!isCentralTokyoLocationUnlocked(this.registry, location.id)) {
+      return;
+    }
+
+    this.clearContent();
+    this.activeLocationId = location.id;
+    this.registry.set('centralTokyoLocation', location.id);
+    saveSessionState(this.registry);
+
+    this.locationHeader.setText(location.label + ' // NIGHT');
+    this.drawBackground(location);
+
+    if (location.kind === 'autoMarket') {
+      this.drawAutoMarket();
+      return;
+    }
+
+    if (location.kind === 'showroom') {
+      this.drawGinza();
+      return;
+    }
+
+    this.drawDragComplex();
+  }
+
+  drawBackground(location) {
+    if (this.textures.exists(location.backgroundKey)) {
+      const source = this.textures.get(location.backgroundKey).getSourceImage();
+      const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+      const image = this.addContent(this.add.image(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h / 2,
+        location.backgroundKey
+      ).setScale(scale).setDepth(-10));
+
+      const maskShape = this.addContent(this.make.graphics({ add: false }));
+      maskShape.fillStyle(0xffffff, 1);
+      maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
+      image.setMask(maskShape.createGeometryMask());
+    } else {
+      this.addContent(this.add.rectangle(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h / 2,
+        STAGE.w,
+        STAGE.h,
+        0x07101a,
+        1
+      ).setDepth(-10));
+
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h / 2,
+        'BACKGROUND READY FOR UPLOAD\n' + location.backgroundPath,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#547487',
+          align: 'center',
+        }
+      ).setOrigin(0.5).setDepth(2));
+    }
+
+    this.addContent(this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x020812,
+      0.08
+    ).setDepth(-8));
+  }
+
+  drawNavigation(title, subtitle) {
+    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 18, title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#8fe7ff',
+    }).setDepth(33));
+
+    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 54, subtitle, {
+      fontFamily: BODY_FONT,
+      fontSize: '10px',
+      color: '#93aebd',
+      fontStyle: '600',
+      wordWrap: { width: SIDE.w - 40 },
+    }).setDepth(33));
+
+    const mapButton = this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 112,
+      SIDE.w - 36,
+      42,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(33));
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 112,
+      'GO TO MAP  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(34));
+
+    mapButton.on('pointerdown', () => this.openMap());
+
+    const unlocked = Object.values(CENTRAL_TOKYO_LOCATIONS)
+      .filter(item => isCentralTokyoLocationUnlocked(this.registry, item.id));
+
+    unlocked.forEach((item, index) => {
+      const y = SIDE.y + 168 + index * 46;
+      const active = item.id === this.activeLocationId;
+
+      const button = this.addContent(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        36,
+        active ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(active ? 2 : 1, active ? 0x43dfff : 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(33));
+
+      this.addContent(this.add.text(
+        SIDE.x + 30,
+        y,
+        item.shortLabel,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: active ? '#ffffff' : '#9fc2d7',
+        }
+      ).setOrigin(0, 0.5).setDepth(34));
+
+      button.on('pointerdown', () => this.renderLocation(item.id));
+    });
+  }
+
+  openMap() {
+    showTravelMap(this, {
+      currentLocationId: this.activeLocationId,
+      title: 'TOKYO REGION MAP',
+      actionVerb: 'DRIVE',
+      allowCurrentAction: false,
+      onHome: (workshopLocationId, cost) => this.returnToWorkshop(workshopLocationId, cost),
+      onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
+    });
+  }
+
+  travelToLocation(locationId, cost = 0) {
+    const target = getTravelLocation(locationId);
+    if (!target) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < Number(cost || 0)) return;
+
+    this.registry.set('cash', cash - Number(cost || 0));
+    this.cashText?.setText(money(cash - Number(cost || 0)));
+
+    if (LOCATION_BY_ID[locationId]) {
+      this.renderLocation(locationId);
+      return;
+    }
+
+    this.registry.set('meetLocation', locationId);
+    this.registry.set('district', target.regionId);
+    saveSessionState(this.registry);
+    this.scene.start('MeetScene');
+  }
+
+  returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    const cash = Number(this.registry.get('cash') || 0);
+    const requested = Math.max(0, Number(cost || 0));
+    if (cash < requested) return;
+
+    this.registry.set('cash', cash - requested);
+    this.registry.set('workshopLocationId', workshopLocationId || 'shinonomeWorkshop');
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
+  }
+
+  createCarDisplay(car, x, y, targetWidth, depth, paintColor = DEFAULT_PAINT_COLOR) {
+    const bodyKey = getCarBodyTextureKey(this, car);
+    if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
+
+    const source = this.textures.get(bodyKey).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const bodyScale = targetWidth / source.width;
+    const ratio = car.visual.wheelScale / car.visual.bodyScale;
+    const wheelScale = bodyScale * ratio * 1.16;
+
+    const rearX = x + car.visual.rearOffsetX * bodyScale;
+    const frontX = x + car.visual.frontOffsetX * bodyScale;
+    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
+
+    const rearBacking = this.add.circle(rearX, wheelY, Math.max(5, wheelSource.height * wheelScale * 0.48), 0x030507, 1)
+      .setDepth(depth - 0.2);
+    const frontBacking = this.add.circle(frontX, wheelY, Math.max(5, wheelSource.height * wheelScale * 0.48), 0x030507, 1)
+      .setDepth(depth - 0.2);
+    const shadow = this.add.ellipse(x, wheelY + 24, targetWidth * 0.92, 28, 0x000000, 0.72)
+      .setDepth(depth - 0.1);
+    const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
+      .setScale(wheelScale).setDepth(depth);
+    const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
+      .setScale(wheelScale).setDepth(depth);
+    const bodyLayers = createCarBodyLayers(this, car, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1,
+      paintColor,
+    });
+
+    return [rearBacking, frontBacking, shadow, rearWheel, frontWheel, ...bodyLayers.objects];
+  }
+
+  drawAutoMarket() {
+    this.drawNavigation(
+      'DEALERSHIP',
+      'USED CARS // PRE-MODIFIED STREET BUILDS // BUY & SELL'
+    );
+
+    const listings = AUTO_MARKET_LISTINGS.slice(0, 3);
+    this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
+
+    listings.forEach((listing, index) => {
+      const car = cars[listing.carId];
+      const x = STAGE.x + 240 + index * 330;
+      const objects = this.createCarDisplay(car, x, STAGE.y + 330, 270, 8);
+      objects.forEach(obj => this.addContent(obj));
+
+      this.addContent(this.add.text(x, STAGE.y + 438, money(listing.price), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffe08a',
+        backgroundColor: '#07111ddd',
+        padding: { x: 8, y: 5 },
+      }).setOrigin(0.5).setDepth(20));
+    });
+
+    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'USED CARS // TOKYO AUTO MARKET', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#8fe7ff',
+    }).setDepth(33));
+
+    listings.forEach((listing, index) => {
+      const car = cars[listing.carId];
+      const x = CARDS.x + 190 + index * 365;
+      const selected = index === this.selectedIndex;
+      const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+
+      const box = this.addContent(this.add.rectangle(
+        x,
+        CARDS.y + 104,
+        340,
+        116,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(32));
+
+      this.addContent(this.add.text(x - 145, CARDS.y + 72, car.shortName, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#ffffff',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, listing.buildLabel, {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#91a9b8',
+        fontStyle: '600',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(x + 145, CARDS.y + 126, owned ? 'OWNED' : money(listing.price), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: owned ? '#62e8c7' : '#ffe08a',
+      }).setOrigin(1, 0.5).setDepth(34));
+
+      box.on('pointerdown', () => {
+        this.selectedIndex = index;
+        this.renderLocation(this.activeLocationId);
+      });
+    });
+
+    this.drawAutoMarketSide(listings[this.selectedIndex]);
+  }
+
+  drawAutoMarketSide(listing) {
+    const car = cars[listing.carId];
+    const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+    const cash = Number(this.registry.get('cash') || 0);
+    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const ownedCount = (this.registry.get('ownedCarIds') || []).length;
+    const canBuy = !owned && cash >= listing.price && ownedCount < capacity;
+
+    const y0 = SIDE.y + 328;
+
+    this.addContent(this.add.text(SIDE.x + 20, y0, 'SELECTED CAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#8cc8ec',
+    }).setDepth(34));
+
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 42, car.name.toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffffff',
+      wordWrap: { width: SIDE.w - 40 },
+    }).setDepth(34));
+
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y0 + 92,
+      listing.buildLabel + '\n' +
+      car.engineModel + '  //  ' + car.powerKW + ' kW\n' +
+      Math.round(car.vehicleMassKg) + ' kg',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#9ab0bd',
+        fontStyle: '600',
+        lineSpacing: 5,
+      }
+    ).setDepth(34));
+
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 184, 'ASKING  ' + money(listing.price), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#ffe08a',
+    }).setDepth(34));
+
+    const buyButton = this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 604,
+      SIDE.w - 36,
+      48,
+      canBuy ? 0x0d2b29 : 0x17181d,
+      1
+    ).setStrokeStyle(2, canBuy ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
+
+    const buyLabel = owned
+      ? 'ALREADY OWNED'
+      : ownedCount >= capacity
+        ? 'GARAGE FULL'
+        : cash < listing.price
+          ? 'NEED ' + money(listing.price)
+          : 'BUY // ' + money(listing.price);
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 604,
+      buyLabel,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: canBuy ? '#f1fffb' : '#817d84',
+      }
+    ).setOrigin(0.5).setDepth(34));
+
+    if (canBuy) {
+      buyButton.setInteractive({ useHandCursor: true });
+      buyButton.on('pointerdown', () => this.buyAutoMarketCar(listing));
+    }
+
+    const selectedCarId = this.registry.get('selectedCarId');
+    const ownedCars = this.registry.get('ownedCarIds') || [];
+    const canSell = Boolean(selectedCarId && cars[selectedCarId] && ownedCars.length > 1);
+    const sellPrice = canSell
+      ? getAutoMarketSellPrice(
+          selectedCarId,
+          (this.registry.get('carStates') || {})[selectedCarId] || {}
+        )
+      : 0;
+
+    const sellButton = this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 668,
+      SIDE.w - 36,
+      44,
+      canSell ? 0x261922 : 0x17181d,
+      1
+    ).setStrokeStyle(1, canSell ? 0xff7cac : 0x514f55, 1).setDepth(33));
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 668,
+      canSell
+        ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
+        : 'KEEP AT LEAST ONE CAR',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: canSell ? '#ffc0d7' : '#817d84',
+      }
+    ).setOrigin(0.5).setDepth(34));
+
+    if (canSell) {
+      sellButton.setInteractive({ useHandCursor: true });
+      sellButton.on('pointerdown', () => this.sellSelectedCar(selectedCarId, sellPrice));
+    }
+  }
+
+  findStorageForPurchase() {
+    const owned = this.registry.get('ownedCarIds') || [];
+    const locations = this.registry.get('carGarageLocations') || {};
+    const activeId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
+
+    const ordered = [
+      ...unlocked.filter(item => item.id === activeId),
+      ...unlocked.filter(item => item.id !== activeId),
+    ];
+
+    return ordered.find(workshop =>
+      getWorkshopUsage(owned, locations, workshop.id) < getWorkshopStorageCapacity(workshop.id)
+    )?.id || null;
+  }
+
+  buyAutoMarketCar(listing) {
+    const owned = [...(this.registry.get('ownedCarIds') || [])];
+    if (owned.includes(listing.carId)) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < listing.price) return;
+
+    const storageId = this.findStorageForPurchase();
+    if (!storageId) return;
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    owned.push(listing.carId);
+    carStates[listing.carId] = {
+      ...getAutoMarketBuild(listing.carId),
+      paintColor: DEFAULT_PAINT_COLOR,
+    };
+    locations[listing.carId] = storageId;
+
+    this.registry.set('ownedCarIds', owned);
+    this.registry.set('carStates', carStates);
+    this.registry.set('carGarageLocations', locations);
+    this.registry.set('selectedCarId', listing.carId);
+    this.registry.set('cash', cash - listing.price);
+    saveSessionState(this.registry);
+
+    this.cashText.setText(money(cash - listing.price));
+    this.renderLocation(this.activeLocationId);
+  }
+
+  sellSelectedCar(carId, salePrice) {
+    const owned = [...(this.registry.get('ownedCarIds') || [])];
+    if (owned.length <= 1 || !owned.includes(carId)) return;
+
+    const nextOwned = owned.filter(id => id !== carId);
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    delete carStates[carId];
+    delete locations[carId];
+
+    const cash = Number(this.registry.get('cash') || 0) + Number(salePrice || 0);
+    this.registry.set('ownedCarIds', nextOwned);
+    this.registry.set('carStates', carStates);
+    this.registry.set('carGarageLocations', locations);
+    this.registry.set('selectedCarId', nextOwned[0] || null);
+    this.registry.set('cash', cash);
+    saveSessionState(this.registry);
+
+    this.cashText.setText(money(cash));
+    this.renderLocation(this.activeLocationId);
+  }
+
+  drawGinza() {
+    this.drawNavigation(
+      'SHOWROOM',
+      'PRIVATE COLLECTION // INVITATION STOCK // COLLECTOR GRADE'
+    );
+
+    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'FEATURED // GINZA MOTOR GALLERY', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#8fe7ff',
+    }).setDepth(33));
+
+    GINZA_PLACEHOLDERS.forEach((item, index) => {
+      const car = cars[item.carId];
+      const x = STAGE.x + 240 + index * 330;
+      const objects = this.createCarDisplay(car, x, STAGE.y + 330, 270, 8);
+      objects.forEach(obj => this.addContent(obj));
+
+      const cardX = CARDS.x + 190 + index * 365;
+      this.addContent(this.add.rectangle(
+        cardX,
+        CARDS.y + 104,
+        340,
+        116,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1).setDepth(32));
+
+      this.addContent(this.add.text(cardX - 145, CARDS.y + 70, item.slotLabel, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(cardX - 145, CARDS.y + 100, car.shortName + ' // PLACEHOLDER', {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#91a9b8',
+        fontStyle: '600',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(cardX + 145, CARDS.y + 126, 'UNIQUE STOCK SOON', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#ff9fc7',
+      }).setOrigin(1, 0.5).setDepth(34));
+    });
+
+    const y = SIDE.y + 330;
+    this.addContent(this.add.text(SIDE.x + 20, y, 'CURATING THE COLLECTION', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#ffffff',
+    }).setDepth(34));
+
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y + 52,
+      'These three cars are temporary display placeholders.\n\nThe final Ginza stock will be unique, invitation-only and permanently unmodifiable collector cars.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#9ab0bd',
+        fontStyle: '600',
+        wordWrap: { width: SIDE.w - 40 },
+        lineSpacing: 5,
+      }
+    ).setDepth(34));
+
+    this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 646,
+      SIDE.w - 36,
+      48,
+      0x17181d,
+      1
+    ).setStrokeStyle(1, 0x514f55, 1).setDepth(33));
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 646,
+      'UNIQUE STOCK COMING SOON',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#817d84',
+      }
+    ).setOrigin(0.5).setDepth(34));
+  }
+
+  getSelectedBuild() {
+    const carId = this.registry.get('selectedCarId');
+    const car = cars[carId];
+    if (!car) return null;
+
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const engineBuild = applyEngineTuning(car, engines[car.engine], state);
+    const full = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+
+    return {
+      carId,
+      car: full.car,
+      engine: full.engine,
+      state,
+      nosInstalled:
+        Boolean(state.nosInstalled) ||
+        Number(state.exhaustNosTuning?.nosKit || 0) > 0,
+    };
+  }
+
+  drawDragComplex() {
+    this.drawNavigation(
+      'PRO DRAG RACING',
+      'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
+    );
+
+    const build = this.getSelectedBuild();
+    const selectedCar = build ? cars[build.carId] : null;
+
+    if (selectedCar) {
+      const carObjects = this.createCarDisplay(
+        selectedCar,
+        STAGE.x + 420,
+        STAGE.y + 350,
+        500,
+        8,
+        getCarPaintColor(build.state)
+      );
+      carObjects.forEach(obj => this.addContent(obj));
+    }
+
+    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'EVENTS // TOKYO DRAG COMPLEX', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#8fe7ff',
+    }).setDepth(33));
+
+    this.selectedEventIndex = Phaser.Math.Clamp(
+      this.selectedEventIndex,
+      0,
+      PRO_DRAG_EVENTS.length - 1
+    );
+
+    PRO_DRAG_EVENTS.forEach((event, index) => {
+      const x = CARDS.x + 190 + index * 365;
+      const selected = index === this.selectedEventIndex;
+      const wins = Number(this.registry.get('wins') || 0);
+      const unlocked = isArkonDen(this.registry) || wins >= event.requiredWins;
+
+      const box = this.addContent(this.add.rectangle(
+        x,
+        CARDS.y + 104,
+        340,
+        116,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(32));
+
+      this.addContent(this.add.text(x - 145, CARDS.y + 68, event.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: unlocked ? '#ffffff' : '#667780',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.subtitle + ' // 3 ROUNDS', {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: unlocked ? '#91a9b8' : '#5b6971',
+        fontStyle: '600',
+      }).setDepth(34));
+
+      this.addContent(this.add.text(
+        x + 145,
+        CARDS.y + 126,
+        unlocked ? 'ENTRY ' + money(event.entryFee) : event.requiredWins + ' WINS',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: unlocked ? '#ffe08a' : '#817d84',
+        }
+      ).setOrigin(1, 0.5).setDepth(34));
+
+      box.on('pointerdown', () => {
+        this.selectedEventIndex = index;
+        this.renderLocation(this.activeLocationId);
+      });
+    });
+
+    this.drawDragSide(PRO_DRAG_EVENTS[this.selectedEventIndex], build);
+  }
+
+  drawDragSide(event, build) {
+    const wins = Number(this.registry.get('wins') || 0);
+    const cash = Number(this.registry.get('cash') || 0);
+    const eventUnlocked = isArkonDen(this.registry) || wins >= event.requiredWins;
+    const power = Math.round(Number(build?.car?.powerKW || 0));
+    const passesPower = Boolean(build) && power <= event.maxPowerKW;
+    const passesNos = Boolean(build) && (!event.noNos || !build.nosInstalled);
+    const eligible = eventUnlocked && passesPower && passesNos && cash >= event.entryFee;
+
+    const y = SIDE.y + 326;
+
+    this.addContent(this.add.text(SIDE.x + 20, y, event.label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setDepth(34));
+
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y + 48,
+      'ENTRY  ' + money(event.entryFee) + '\n' +
+      'PURSE  ' + money(event.prizeCash) + '\n' +
+      'FORMAT  3-RACE BRACKET\n' +
+      'POWER LIMIT  ' + event.maxPowerKW + ' kW\n' +
+      'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#a4b7c3',
+        fontStyle: '600',
+        lineSpacing: 6,
+      }
+    ).setDepth(34));
+
+    const status = !eventUnlocked
+      ? 'LOCKED // ' + event.requiredWins + ' WINS'
+      : !build
+        ? 'NO CAR SELECTED'
+        : !passesPower
+          ? 'OVER POWER LIMIT // ' + power + ' kW'
+          : !passesNos
+            ? 'REMOVE NOS'
+            : cash < event.entryFee
+              ? 'NOT ENOUGH CASH'
+              : 'SCRUTINEERING PASSED';
+
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y + 210,
+      status,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: eligible ? '#62e8c7' : '#ff8d9b',
+        wordWrap: { width: SIDE.w - 40 },
+      }
+    ).setDepth(34));
+
+    const enter = this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 646,
+      SIDE.w - 36,
+      48,
+      eligible ? 0x0d2b29 : 0x17181d,
+      1
+    ).setStrokeStyle(2, eligible ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 646,
+      eligible ? 'ENTER BRACKET // ' + money(event.entryFee) : 'NOT ELIGIBLE',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: eligible ? '#f1fffb' : '#817d84',
+      }
+    ).setOrigin(0.5).setDepth(34));
+
+    if (eligible) {
+      enter.setInteractive({ useHandCursor: true });
+      enter.on('pointerdown', () => this.startProBracket(event, build));
+    }
+  }
+
+  startProBracket(event, build) {
+    const cash = Number(this.registry.get('cash') || 0);
+    if (!build || cash < event.entryFee) return;
+
+    const playerCharacterId = this.registry.get('playerCharacterId');
+    const rivals = rivalCharacterOrder
+      .filter(id => id !== playerCharacterId && characters[id])
+      .sort((a, b) =>
+        Number(characters[b]?.skill?.rating || 3) -
+        Number(characters[a]?.skill?.rating || 3)
+      )
+      .slice(0, 3);
+
+    const rounds = event.opponentRatings.map((rating, index) => {
+      const baseAi = getEncounterAi(rating);
+      const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
+
+      return {
+        characterId: rivals[index % rivals.length],
+        carId: event.opponentCars[index % event.opponentCars.length],
+        paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
+        encounterRating: rating,
+        encounterAi: {
+          reactionSkill: clamp01(baseAi.reactionSkill + eventBoost),
+          launchSkill: clamp01(baseAi.launchSkill + eventBoost),
+          shiftSkill: clamp01(baseAi.shiftSkill + eventBoost),
+          aggression: clamp01(baseAi.aggression + eventBoost),
+        },
+        raceType: 'Standing Start',
+      };
+    });
+
+    const state = {
+      active: true,
+      proEvent: true,
+      returnScene: 'CentralTokyoScene',
+      locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
+      difficulty: 'PRO',
+      playerCarId: build.carId,
+      entryFee: event.entryFee,
+      prizeType: 'CASH',
+      prizeCash: event.prizeCash,
+      prizeCarId: null,
+      rounds,
+      roundIndex: 0,
+    };
+
+    this.registry.set('cash', cash - event.entryFee);
+    this.registry.set('competitionState', state);
+    this.registry.set('raceReturnScene', 'CentralTokyoScene');
+    this.registry.set('selectedCarId', build.carId);
+    this.registry.set('selectedOpponentCarId', rounds[0].carId);
+    this.registry.set('selectedOpponentPaintColor', rounds[0].paintColor);
+    this.registry.set('selectedOpponentCharacterId', rounds[0].characterId);
+    this.registry.set('selectedOpponentEncounterRating', rounds[0].encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', rounds[0].encounterAi);
+    this.registry.set('selectedOpponentDifficulty', 'PRO');
+    this.registry.set('selectedRaceCategory', 'COMPETITION');
+    this.registry.set('selectedRaceType', 'Standing Start');
+    this.registry.set('selectedRaceDeal', 'COMPETITION');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('raceTimeOfDay', 'night');
+    this.registry.set('raceDistrict', 'CENTRAL TOKYO');
+    this.registry.set('raceLocationLabel', 'TOKYO DRAG COMPLEX');
+    saveSessionState(this.registry);
+
+    this.scene.start('RaceScene');
+  }
+}
