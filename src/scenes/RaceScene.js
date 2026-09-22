@@ -1134,9 +1134,14 @@ export default class RaceScene extends Phaser.Scene {
     else stopMusic();
 
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
-    const resultBackground = isPinkSlip
-      ? (playerWon ? RESULT_BACKGROUNDS.pinkWin : RESULT_BACKGROUNDS.pinkLoss)
-      : (playerWon ? RESULT_BACKGROUNDS.victory : RESULT_BACKGROUNDS.defeat);
+    const competitionCarPrizeWin = Boolean(
+      settlement?.competitionWon && settlement?.prizeType === 'CAR'
+    );
+    const resultBackground = competitionCarPrizeWin
+      ? RESULT_BACKGROUNDS.pinkWin
+      : isPinkSlip
+        ? (playerWon ? RESULT_BACKGROUNDS.pinkWin : RESULT_BACKGROUNDS.pinkLoss)
+        : (playerWon ? RESULT_BACKGROUNDS.victory : RESULT_BACKGROUNDS.defeat);
 
     const accent = playerWon ? 0x45d7ff : 0xff4f7d;
     const hasHeroBackground = this.addResultBackground(
@@ -1146,9 +1151,11 @@ export default class RaceScene extends Phaser.Scene {
     );
 
     if (!hasHeroBackground) {
-      const fallbackTitle = isPinkSlip
-        ? (playerWon ? 'PINK SLIP WON' : 'PINK SLIP LOST')
-        : (playerWon ? 'YOU WIN' : 'YOU LOSE');
+      const fallbackTitle = competitionCarPrizeWin
+        ? 'PINK SLIP WON'
+        : isPinkSlip
+          ? (playerWon ? 'PINK SLIP WON' : 'PINK SLIP LOST')
+          : (playerWon ? 'YOU WIN' : 'YOU LOSE');
 
       this.add.text(780, 116, fallbackTitle, {
         fontFamily: titleFont,
@@ -1193,14 +1200,14 @@ export default class RaceScene extends Phaser.Scene {
       if (settlement.competition) {
         if (settlement.competitionFailed) {
           return {
-            primary: 'STREAK BROKEN',
+            primary: 'STREAK\nBROKEN',
             secondary: 'COMPETITION OVER // ROUND ' + settlement.roundNumber + '/3',
           };
         }
 
         if (settlement.competitionContinues) {
           return {
-            primary: 'ROUND ' + settlement.roundNumber + ' CLEARED',
+            primary: 'ROUND ' + settlement.roundNumber + '\nCLEARED',
             secondary: (3 - settlement.roundNumber) + ' RACE' +
               ((3 - settlement.roundNumber) === 1 ? '' : 'S') +
               ' TO GRAND PRIZE',
@@ -1209,7 +1216,7 @@ export default class RaceScene extends Phaser.Scene {
 
         if (settlement.competitionWon && settlement.prizeType === 'CAR') {
           return {
-            primary: 'GRAND PRIZE WON',
+            primary: 'GRAND PRIZE\nWON',
             secondary: cars[settlement.prizeCarId].shortName + ' ADDED TO GARAGE',
           };
         }
@@ -1246,11 +1253,16 @@ export default class RaceScene extends Phaser.Scene {
 
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
-    this.add.text(780, 274, reward.primary, {
+    const competitionResultText = Boolean(settlement?.competition);
+    this.add.text(780, competitionResultText ? 266 : 274, reward.primary, {
       fontFamily: titleFont,
-      fontSize: isPinkSlip ? '20px' : '30px',
+      fontSize: competitionResultText
+        ? '15px'
+        : (isPinkSlip || competitionCarPrizeWin ? '20px' : '30px'),
       color: playerWon ? '#f1ffff' : '#fff1f5',
       align: 'center',
+      lineSpacing: 4,
+      wordWrap: { width: 500 },
     }).setOrigin(0.5).setDepth(depth + 9).setScrollFactor(0);
 
     this.add.text(780, 347, reward.secondary, {
@@ -1284,7 +1296,7 @@ export default class RaceScene extends Phaser.Scene {
       370,
       {
         flipX: true,
-        highlight: isPinkSlip && playerWon,
+        highlight: (isPinkSlip && playerWon) || competitionCarPrizeWin,
         depth: depth + 5,
         scaleMul: 1.38,
       }
@@ -1348,7 +1360,7 @@ export default class RaceScene extends Phaser.Scene {
       this.add.text(
         x,
         640,
-        role + ' // ' + String(displayName || character?.name || role).toUpperCase(),
+        String(displayName || character?.name || role).toUpperCase(),
         {
           fontFamily: titleFont,
           fontSize: '6px',
