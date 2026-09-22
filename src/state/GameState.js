@@ -321,7 +321,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 4,
+    version: 5,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
