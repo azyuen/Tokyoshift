@@ -10,7 +10,7 @@ import {
   characters,
   characterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260923-r140';
+} from '../data/characters.js?v=20260923-r141';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
@@ -21,7 +21,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
+import { saveSessionState } from '../state/GameState.js?v=20260923-r141';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r139';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
@@ -109,7 +109,7 @@ export default class MeetScene extends Phaser.Scene {
       if (!character) return;
       queueImage(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260923-r140'
+        character.visual.path + '?v=20260923-r141'
       );
     });
 
@@ -124,10 +124,11 @@ export default class MeetScene extends Phaser.Scene {
       if (!character || !offer?.resultState) return;
       const visual = character.visual || {};
       const won = offer.resultState === 'PLAYER_LOSS';
-      queueImage(
-        won ? visual.winSpriteKey : visual.lossSpriteKey,
-        (won ? visual.winPath : visual.lossPath) + '?v=20260923-r140'
-      );
+      const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
+      const posePath = won ? visual.winPath : visual.lossPath;
+      if (poseKey && posePath) {
+        queueImage(poseKey, posePath + '?v=20260923-r141');
+      }
     });
 
     meetBackgrounds.forEach(bg => {
@@ -1430,6 +1431,14 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const chooseCharacterForRating = rating => {
+      // Odaiba has a curated location rotation: the order itself carries the
+      // progression. A veteran or specialist can therefore occasionally show
+      // up at Miraikan while driving to that meet's encounter rating rather
+      // than being permanently excluded by their full skill rating.
+      if (location.district === 'ODAIBA') {
+        return availableCharacters.shift() || Phaser.Utils.Array.GetRandom(eligible);
+      }
+
       const sorted = [...availableCharacters].sort((a, b) => {
         const ar = Number(characters[a]?.skill?.rating || 3);
         const br = Number(characters[b]?.skill?.rating || 3);
@@ -1679,8 +1688,19 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260923-r140'
+          character.visual.path + '?v=20260923-r141'
         );
+      }
+    });
+
+    const currentRegion = getMeetLocation(this.selectedMeetLocation).district;
+    getRivalCharacterOrderForRegion(currentRegion).forEach(id => {
+      const visual = characters[id]?.visual || {};
+      if (visual.winSpriteKey && visual.winPath) {
+        queueImage(visual.winSpriteKey, visual.winPath + '?v=20260923-r141');
+      }
+      if (visual.lossSpriteKey && visual.lossPath) {
+        queueImage(visual.lossSpriteKey, visual.lossPath + '?v=20260923-r141');
       }
     });
 
