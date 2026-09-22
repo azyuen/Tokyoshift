@@ -10,7 +10,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260922-r106';
+} from '../data/tuning.js?v=20260922-r107';
 import {
   DRIVETRAIN_PART_ORDER,
   EXHAUST_NOS_PART_ORDER,
