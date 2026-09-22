@@ -31,4 +31,12 @@ export const garageAssets = [
   { key: 'tuningPartEcuL1', path: 'assets/Tuning/Parts/ecu_l1.png?v=20260922-r107' },
   { key: 'tuningPartEcuL2', path: 'assets/Tuning/Parts/ecu_l2.png?v=20260922-r107' },
   { key: 'tuningPartEcuL3', path: 'assets/Tuning/Parts/ecu_l3.png?v=20260922-r107' },
+  { key: 'tuningPartIntercoolerL0', path: 'assets/Tuning/Parts/intercooler_l0.png?v=20260922-r109' },
+  { key: 'tuningPartIntercoolerL1', path: 'assets/Tuning/Parts/intercooler_l1.png?v=20260922-r109' },
+  { key: 'tuningPartIntercoolerL2', path: 'assets/Tuning/Parts/intercooler_l2.png?v=20260922-r109' },
+  { key: 'tuningPartIntercoolerL3', path: 'assets/Tuning/Parts/intercooler_l3.png?v=20260922-r109' },
+  { key: 'tuningPartEngineExhaustL0', path: 'assets/Tuning/Parts/engine_exhaust_l0.png?v=20260922-r109' },
+  { key: 'tuningPartEngineExhaustL1', path: 'assets/Tuning/Parts/engine_exhaust_l1.png?v=20260922-r109' },
+  { key: 'tuningPartEngineExhaustL2', path: 'assets/Tuning/Parts/engine_exhaust_l2.png?v=20260922-r109' },
+  { key: 'tuningPartEngineExhaustL3', path: 'assets/Tuning/Parts/engine_exhaust_l3.png?v=20260922-r109' },
 ];
