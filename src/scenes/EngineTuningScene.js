@@ -1,10 +1,10 @@
-import { cars } from '../data/cars.js?v=20260922-r83';
+import { cars } from '../data/cars.js?v=20260923-r132';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260922-r83';
-import { engines } from '../data/engines.js?v=20260921-r43';
+} from '../vehicles/CarAppearance.js?v=20260923-r132';
+import { engines } from '../data/engines.js?v=20260923-r132';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import {
   ENGINE_PART_ORDER,
