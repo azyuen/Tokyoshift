@@ -2,8 +2,8 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r127';
-import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r125';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r128';
+import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -50,6 +50,11 @@ export default class BootScene extends Phaser.Scene {
     this.load.image(
       'travelMapTokyoRegion',
       'assets/Ui/tokyo_region_map.png?v=20260921-r77'
+    );
+
+    this.load.image(
+      'travelMapCentralTokyoOverlay',
+      'assets/Ui/tokyo_region_map_central_tokyo_overlay.png?v=20260922-r128'
     );
 
     garageAssets
