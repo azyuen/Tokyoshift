@@ -27,7 +27,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r114';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r115';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r118';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r119';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -1637,16 +1637,11 @@ export default class GarageScene extends Phaser.Scene {
         lx: clampX(carRight - 112),
         ly: wheelY + 30,
       },
-      exhaust: {
-        x: clampX(rearX - 92),
-        y: wheelY + 4,
-        lx: clampX(rearX - 54),
-        ly: wheelY + 54,
-      },
     };
 
     Object.entries(hotspots).forEach(([partId, p]) => {
       const part = ENGINE_TUNING_PARTS[partId];
+      if (!part) return;
 
       const line = this.add.line(0, 0, p.x, p.y, p.lx, p.ly, 0x43dfff, 0.95)
         .setOrigin(0, 0)
