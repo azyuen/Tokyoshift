@@ -110,6 +110,33 @@ export function showTravelMap(scene, {
     scene.travelMapPopup = null;
   };
 
+  // Workshop switching changes the active GarageScene. Do not destroy the GPS
+  // button/popup from inside its own pointerdown event before that transition.
+  // On iOS Phaser can stall the input loop when the object currently
+  // dispatching pointerdown is destroyed and the scene changes in the same
+  // stack. Leave the map intact for a frame; the scene transition will clean
+  // it up naturally.
+  let workshopActionPending = false;
+  const runWorkshopAction = (location, cost, unlocked) => {
+    if (workshopActionPending) return;
+    workshopActionPending = true;
+
+    travelButton.disableInteractive()
+      .setFillStyle(0x10202a, 1)
+      .setStrokeStyle(1, 0x4f788b, 1);
+    travelLabel.setColor('#7fcfe8').setText('OPENING WORKSHOP...');
+
+    scene.time.delayedCall(32, () => {
+      try {
+        onWorkshopUpgrade?.(location, cost, unlocked);
+      } catch (error) {
+        console.error('Workshop switch failed', error);
+        workshopActionPending = false;
+        refreshAction(location);
+      }
+    });
+  };
+
   const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
     .setDepth(depth)
     .setInteractive());
@@ -419,8 +446,7 @@ export function showTravelMap(scene, {
       );
 
       travelButton.on('pointerdown', () => {
-        dismiss();
-        onWorkshopUpgrade?.(location, cost, unlocked);
+        runWorkshopAction(location, cost, unlocked);
       });
       return;
     }
@@ -450,8 +476,7 @@ export function showTravelMap(scene, {
         .setStrokeStyle(2, 0x55dfff, 1);
       travelLabel.setColor('#f1fffb').setText('USE HOME WORKSHOP');
       travelButton.on('pointerdown', () => {
-        dismiss();
-        onWorkshopUpgrade?.(location, 0, true);
+        runWorkshopAction(location, 0, true);
       });
       return;
     }
