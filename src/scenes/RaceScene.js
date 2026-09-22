@@ -524,6 +524,15 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   applyOwnedBuild(config, engineConfig, state = {}) {
+    // Ginza collector cars are sealed complete builds. Their physics must stay
+    // exactly as authored in cars.js/engines.js even if an old or edited save
+    // contains tuning fields.
+    if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
+      config.nosPower = 0;
+      config.nosCapacitySeconds = 0;
+      return { car: config, engine: engineConfig };
+    }
+
     // Legacy pink-slip tune levels remain compatible, then the newer workshop
     // systems layer engine, drivetrain and exhaust/NOS parts onto the car.
     this.applyTuneLevel(config, state.tuneLevel || 0);
