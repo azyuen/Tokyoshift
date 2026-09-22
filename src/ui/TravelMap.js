@@ -19,7 +19,7 @@ import {
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20260922-r126';
+} from '../data/centralTokyo.js?v=20260922-r127';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
