@@ -287,9 +287,10 @@ export function normaliseState(input = {}) {
     input.carGarageLocations || {},
     garageTier
   );
-  const devName =
-    String(input.firstName || '').trim().toLowerCase() === 'arkon' &&
-    String(input.lastName || '').trim().toLowerCase() === 'den';
+  const devName = (
+    String(input.firstName || '').trim().toLowerCase() +
+    String(input.lastName || '').trim().toLowerCase()
+  ).replace(/[^a-z0-9]/g, '') === 'arkonden';
   const devMode = Boolean(input.devMode || devName);
   const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
   const normalisedCash = devName && !input.devMode
@@ -443,13 +444,14 @@ export function saveManualState(registry) {
 }
 
 export function saveIdentityState(registry) {
-  const devName =
-    String(registry.get('firstName') || '').trim().toLowerCase() === 'arkon' &&
-    String(registry.get('lastName') || '').trim().toLowerCase() === 'den';
+  const devName = (
+    String(registry.get('firstName') || '').trim().toLowerCase() +
+    String(registry.get('lastName') || '').trim().toLowerCase()
+  ).replace(/[^a-z0-9]/g, '') === 'arkonden';
 
   if (devName && !registry.get('devMode')) {
     registry.set('devMode', true);
-    registry.set('cash', 1000000000);
+    registry.set('cash', Math.max(1000000000, Number(registry.get('cash') || 0)));
   }
 
   return saveSessionState(registry);
