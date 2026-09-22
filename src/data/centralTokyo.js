@@ -102,11 +102,66 @@ export const AUTO_MARKET_LISTINGS = [
   { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
 ];
 
-export const GINZA_PLACEHOLDERS = [
-  { carId: 'r32', slotLabel: 'COLLECTOR SLOT A', price: 28000000 },
-  { carId: 'wrx22b', slotLabel: 'COLLECTOR SLOT B', price: 24000000 },
-  { carId: 'fc3s', slotLabel: 'COLLECTOR SLOT C', price: 19000000 },
+export const GINZA_LISTINGS = [
+  {
+    carId: 'amuseS2000Gt1',
+    price: 32000000,
+    collectionLabel: 'TUNER ICON',
+    rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'veilsideFortuneRx7',
+    price: 45000000,
+    collectionLabel: 'FORTUNE HERO CAR',
+    rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'minesR34',
+    price: 52000000,
+    collectionLabel: "MINE'S COMPLETE CAR",
+    rarity: 'RARE',
+  },
+  {
+    carId: 'topSecretSupra',
+    price: 58000000,
+    collectionLabel: 'TOP SECRET GT-300',
+    rarity: 'RARE',
+  },
+  {
+    carId: 'libertyWalkR35',
+    price: 68000000,
+    collectionLabel: 'LB-WORKS HERO CAR',
+    rarity: 'RARE',
+  },
+  {
+    carId: 'rwbStellaPorsche',
+    price: 82000000,
+    collectionLabel: 'RWB ONE-OFF',
+    rarity: 'ULTRA RARE',
+  },
+  {
+    carId: 'renownMazda787B',
+    price: 220000000,
+    collectionLabel: 'LE MANS LEGEND',
+    rarity: 'LEGENDARY',
+  },
 ];
+
+export function getGinzaCollectorState(carId) {
+  return {
+    stock: false,
+    acquiredVia: 'ginzaMotorGallery',
+    collector: true,
+    immutable: true,
+    tuningLocked: true,
+    nosInstalled: false,
+    tuneLevel: 0,
+    tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
+    drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },
+    chassisTuning: { tyres: 0, weightReduction: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 0, muffler: 0, nosKit: 0, nitrousShot: 0 },
+  };
+}
 
 export const PRO_DRAG_EVENTS = [
   {
