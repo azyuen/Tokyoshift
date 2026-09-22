@@ -54,7 +54,12 @@ export default class BootScene extends Phaser.Scene {
 
     this.load.image(
       'travelMapCentralTokyoOverlay',
-      'assets/Ui/tokyo_region_map_central_tokyo_overlay.png?v=20260922-r128'
+      'assets/Ui/central_tokyo_unlock_overlay.png?v=20260922-r130'
+    );
+
+    this.load.image(
+      'travelMapTokyoRegionCentralUnlocked',
+      'assets/Ui/tokyo_region_map_central_tokyo_unlocked.png?v=20260922-r130'
     );
 
     garageAssets
@@ -93,7 +98,10 @@ export default class BootScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
 
     const manualSave = readManualSave();
-    const sessionSave = this.internalReload ? readSessionState() : null;
+    // Session state is the player's latest autosaved progress. The manual save
+    // remains the explicit restore point, but normal launches should not roll
+    // back newer flags such as devMode or Central Tokyo unlocks.
+    const sessionSave = readSessionState();
     const saved = sessionSave || manualSave;
     const state = this.preserveRegistry
       ? { gameOver: Boolean(this.registry.get('gameOver')) }
