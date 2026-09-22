@@ -14,7 +14,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r122';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r125';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
 import {
@@ -24,6 +24,8 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260922-r124';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
+import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -81,6 +83,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'central-tokyo';
     this.scale.resize(1560, 840);
+    playMusic('meet');
 
     const savedLocation =
       this.requestedLocationId ||
@@ -149,6 +152,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       fontSize: '15px',
       color: '#ffe08a',
     }).setOrigin(1, 0.5).setDepth(42);
+
+    addSettingsButton(this, 955, 35);
 
     this.add.rectangle(
       STAGE.x + STAGE.w / 2,
@@ -421,13 +426,27 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return [rearBacking, frontBacking, shadow, rearWheel, frontWheel, ...bodyLayers.objects];
   }
 
+  getAutoMarketListings() {
+    const owned = new Set(this.registry.get('ownedCarIds') || []);
+    const pool = [...AUTO_MARKET_LISTINGS];
+    const offset = Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % pool.length;
+    const rotated = [...pool.slice(offset), ...pool.slice(0, offset)];
+
+    // Prefer cars the player does not own, but keep owned cars in the market
+    // so the dealership still feels populated when the collection grows.
+    return [
+      ...rotated.filter(item => !owned.has(item.carId)),
+      ...rotated.filter(item => owned.has(item.carId)),
+    ].slice(0, 3);
+  }
+
   drawAutoMarket() {
     this.drawNavigation(
       'DEALERSHIP',
       'USED CARS // PRE-MODIFIED STREET BUILDS // BUY & SELL'
     );
 
-    const listings = AUTO_MARKET_LISTINGS.slice(0, 3);
+    const listings = this.getAutoMarketListings();
     this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
 
     listings.forEach((listing, index) => {
