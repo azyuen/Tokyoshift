@@ -220,8 +220,8 @@ export const TRAVEL_REGIONS = {
     role: 'PRESTIGE HUB',
     level: 'SPECIAL',
     baseCost: 1200,
-    mapX: 0.430,
-    mapY: 0.215,
+    mapX: 0.396,
+    mapY: 0.123,
     description: 'Tokyo\'s high-end automotive district: used cars, collector stock and professional drag racing.',
     locations: [
       {
