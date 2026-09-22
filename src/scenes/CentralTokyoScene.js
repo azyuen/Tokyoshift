@@ -1,6 +1,6 @@
 import { cars, carOrder } from '../data/cars.js?v=20260923-r137';
 import { engines } from '../data/engines.js?v=20260923-r134';
-import { characters, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
+import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260923-r140';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260922-r114';
@@ -16,7 +16,7 @@ import {
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r131';
+import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r139';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 import {
@@ -1195,7 +1195,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!build || cash < event.entryFee) return;
 
     const playerCharacterId = this.registry.get('playerCharacterId');
-    const rivals = rivalCharacterOrder
+    const rivals = genericRivalCharacterOrder
       .filter(id => id !== playerCharacterId && characters[id])
       .sort((a, b) =>
         Number(characters[b]?.skill?.rating || 3) -
