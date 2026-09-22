@@ -1598,28 +1598,73 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
-  addDaichiEngineHelper() {
-    const daichi = characters.daichiSakamoto;
-    if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
+  addDaichiTuningHelper({
+    textureKey,
+    x,
+    feetY,
+    targetHeight = 282,
+    depth = 8.4,
+    anchorY = 1,
+    shadowWidth = 74,
+    shadowHeight = 22,
+    shadowOffsetX = 6,
+    shadowOffsetY = -8,
+    objectList,
+  }) {
+    if (!textureKey || !this.textures.exists(textureKey) || !objectList) return null;
 
-    const x = 875;
-    const feetY = 494;
-    const targetHeight = 282;
-    const depth = 8.4;
-
-    const softShadow = this.add.ellipse(x + 6, feetY - 8, 74, 22, 0x000000, 0.55)
-      .setDepth(depth - 0.2);
-    const contactShadow = this.add.ellipse(x + 5, feetY - 5, 52, 13, 0x000000, 0.78)
-      .setDepth(depth - 0.1);
-
-    const sprite = this.add.image(x, feetY, daichi.visual.spriteKey)
-      .setOrigin(0.5, 1)
+    const sprite = this.add.image(x, feetY, textureKey)
+      .setOrigin(0.5, anchorY)
       .setDepth(depth);
 
-    const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
+    const source = this.textures.get(textureKey).getSourceImage();
     sprite.setScale(targetHeight / source.height);
 
-    this.engineHelperObjects.push(softShadow, contactShadow, sprite);
+    const softShadow = this.add.ellipse(
+      x + shadowOffsetX,
+      feetY + shadowOffsetY,
+      shadowWidth,
+      shadowHeight,
+      0x000000,
+      0.55
+    ).setDepth(depth - 0.2);
+
+    const contactShadow = this.add.ellipse(
+      x + Math.round(shadowOffsetX * 0.72),
+      feetY + shadowOffsetY + 3,
+      Math.max(42, Math.round(shadowWidth * 0.70)),
+      Math.max(12, Math.round(shadowHeight * 0.60)),
+      0x000000,
+      0.80
+    ).setDepth(depth - 0.1);
+
+    objectList.push(softShadow, contactShadow, sprite);
+    return sprite;
+  }
+
+  addDaichiEngineHelper() {
+    const layout = this.heroCarLayout;
+    const car = cars[this.selectedCarId];
+    if (!layout || !car) return;
+
+    const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
+    const x = Math.min(STAGE.x + STAGE.w - 92, layout.frontWheelX + 145);
+
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiEngineInspect',
+      x,
+      feetY: wheelBottomY + 2,
+      targetHeight: 282,
+      depth: 8.4,
+      // The generated pose uses the shared 1024x1536 canvas but has extra
+      // transparent padding below the shoes. Anchor the visible feet instead.
+      anchorY: 1458 / 1536,
+      shadowWidth: 86,
+      shadowHeight: 22,
+      shadowOffsetX: 4,
+      shadowOffsetY: -7,
+      objectList: this.engineHelperObjects,
+    });
   }
 
   drawInlineEngineSchematic(level = 0) {
@@ -2299,6 +2344,7 @@ export default class GarageScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(73));
 
     backButton.on('pointerdown', () => this.leaveChassisMode(true));
+    this.addDaichiChassisHelper();
     this.refreshChassisMode();
   }
 
@@ -2835,26 +2881,73 @@ export default class GarageScene extends Phaser.Scene {
 
   addDaichiSecondaryHelper(mode) {
     const daichi = characters.daichiSakamoto;
-    if (!daichi || !this.textures.exists(daichi.visual.spriteKey)) return;
+    if (!daichi) return;
 
-    const cfg = mode === 'drivetrain'
-      ? { x: 690, feetY: 506, targetHeight: 258 }
-      : { x: 520, feetY: 506, targetHeight: 258 };
-    const depth = 8.4;
+    if (mode === 'drivetrain') {
+      // This is Daichi's original tuning pose and intentionally keeps the exact
+      // former engine-helper placement.
+      this.addDaichiTuningHelper({
+        textureKey: daichi.visual.spriteKey,
+        x: 875,
+        feetY: 494,
+        targetHeight: 282,
+        depth: 8.4,
+        anchorY: 1,
+        shadowWidth: 74,
+        shadowHeight: 22,
+        objectList: this.secondaryHelperObjects,
+      });
+      return;
+    }
 
-    const softShadow = this.add.ellipse(cfg.x + 6, cfg.feetY - 8, 72, 21, 0x000000, 0.55)
-      .setDepth(depth - 0.2);
-    const contactShadow = this.add.ellipse(cfg.x + 5, cfg.feetY - 5, 50, 13, 0x000000, 0.78)
-      .setDepth(depth - 0.1);
+    const layout = this.heroCarLayout;
+    const car = cars[this.selectedCarId];
+    if (!layout || !car) return;
 
-    const sprite = this.add.image(cfg.x, cfg.feetY, daichi.visual.spriteKey)
-      .setOrigin(0.5, 1)
-      .setDepth(depth);
+    const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
 
-    const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
-    sprite.setScale(cfg.targetHeight / source.height);
+    // Exhaust/NOS uses the crouching inspection pose in front of the side of
+    // the car. It is deliberately layered over the car, with its visible shoes
+    // just below the wheel baseline.
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiExhaustCrouch',
+      x: layout.x,
+      feetY: wheelBottomY + 14,
+      targetHeight: 282,
+      depth: 13.4,
+      anchorY: 1365 / 1536,
+      shadowWidth: 112,
+      shadowHeight: 27,
+      shadowOffsetX: 4,
+      shadowOffsetY: -7,
+      objectList: this.secondaryHelperObjects,
+    });
+  }
 
-    this.secondaryHelperObjects.push(softShadow, contactShadow, sprite);
+  addDaichiChassisHelper() {
+    const layout = this.heroCarLayout;
+    if (!layout) return;
+
+    const x = Phaser.Math.Clamp(
+      layout.frontWheelX + 92,
+      layout.x + 160,
+      STAGE.x + STAGE.w - 88
+    );
+
+    this.addDaichiTuningHelper({
+      textureKey: 'daichiChassisTools',
+      x,
+      // Match the normal workshop protagonist's floor/baseline.
+      feetY: 558,
+      targetHeight: 282,
+      depth: 13.6,
+      anchorY: 1517 / 1536,
+      shadowWidth: 78,
+      shadowHeight: 23,
+      shadowOffsetX: 5,
+      shadowOffsetY: -8,
+      objectList: this.chassisModeObjects,
+    });
   }
 
   drawSecondarySchematic(mode) {
