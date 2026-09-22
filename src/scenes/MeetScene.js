@@ -406,17 +406,31 @@ export default class MeetScene extends Phaser.Scene {
 
     const storedCompetition =
       (this.registry.get('competitionOffers') || {})[this.selectedMeetLocation];
-    const competitionUsed = Boolean(storedCompetition?.used);
+    const storedCompetitionExpired =
+      Boolean(storedCompetition) &&
+      Number(storedCompetition.refreshAt || 0) <= Date.now();
+    const competitionUsed =
+      Boolean(storedCompetition?.used) &&
+      !storedCompetitionExpired;
+    const competitionCooldownRemaining =
+      Math.max(
+        0,
+        Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
+      );
+    const competitionOnCooldown = competitionCooldownRemaining > 0;
     const competitionUnlocked =
       this.hasCar &&
       Number(this.registry.get('wins') || 0) >= 1 &&
-      !competitionUsed;
+      !competitionUsed &&
+      !competitionOnCooldown;
 
-    const competitionLabel = competitionUsed
-      ? 'COMPETITION // NEXT LINEUP'
-      : competitionUnlocked
-        ? 'COMPETITION'
-        : 'COMPETITION // WIN 1 RACE';
+    const competitionLabel = competitionOnCooldown
+      ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
+      : competitionUsed
+        ? 'COMPETITION // NEXT OFFER'
+        : competitionUnlocked
+          ? 'COMPETITION'
+          : 'COMPETITION // WIN 1 RACE';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
