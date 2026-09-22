@@ -942,7 +942,7 @@ export default class GarageScene extends Phaser.Scene {
     blocker.on('pointerdown', close);
   }
 
-  buildMoveCarButton() {  buildMoveCarButton() {
+  buildMoveCarButton() {
     const button = this.moveCarButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       662,
