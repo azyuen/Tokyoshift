@@ -2,8 +2,8 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r109';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r115';
-import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r122';
+import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r122';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -31,7 +31,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    startSceneLoading(this, 'LOADING TOKYO', 1);
+    startSceneLoading(this, this.bootMessage || 'LOADING TOKYO', 1);
 
     // Every car follows the same appearance convention. Adding a car to cars.js
     // automatically queues its legacy body + tintable paint + fixed overlay.
