@@ -129,4 +129,117 @@ export const engines = {
       [8600, 142],
     ],
   },
+
+  rb26_mines: {
+    id: 'rb26_mines',
+    name: "Mine's RB26DETT",
+    idleRPM: 900,
+    redlineRPM: 8000,
+    limiterRPM: 8200,
+    inertia: 0.22,
+    referenceBoostBar: 1.30,
+    offBoostTorqueFraction: 0.45,
+    torqueCurve: [
+      [1000, 180], [2000, 270], [3000, 420], [4000, 560],
+      [5000, 610], [6000, 605], [7000, 585], [7800, 540],
+      [8000, 515], [8200, 485],
+    ],
+  },
+
+  '2jz_topsecret': {
+    id: '2jz_topsecret',
+    name: 'Top Secret 2JZ-GTE',
+    idleRPM: 900,
+    redlineRPM: 8000,
+    limiterRPM: 8200,
+    inertia: 0.24,
+    referenceBoostBar: 1.45,
+    offBoostTorqueFraction: 0.38,
+    torqueCurve: [
+      [1000, 200], [2000, 300], [3000, 470], [4000, 680],
+      [5000, 790], [5800, 800], [6500, 790], [7500, 750],
+      [8000, 700], [8200, 665],
+    ],
+  },
+
+  vr38_lb: {
+    id: 'vr38_lb',
+    name: 'Liberty Walk VR38DETT',
+    idleRPM: 850,
+    redlineRPM: 7200,
+    limiterRPM: 7400,
+    inertia: 0.25,
+    referenceBoostBar: 1.20,
+    offBoostTorqueFraction: 0.48,
+    torqueCurve: [
+      [1000, 280], [1800, 430], [2500, 650], [3200, 820],
+      [4000, 900], [5000, 895], [6000, 880], [6500, 865],
+      [7200, 790], [7400, 750],
+    ],
+  },
+
+  '13brew_veilside': {
+    id: '13brew_veilside',
+    name: 'VeilSide 13B-REW',
+    idleRPM: 900,
+    redlineRPM: 8200,
+    limiterRPM: 8400,
+    inertia: 0.15,
+    referenceBoostBar: 1.00,
+    offBoostTorqueFraction: 0.48,
+    torqueCurve: [
+      [1000, 125], [2000, 180], [3000, 290], [4000, 410],
+      [5000, 470], [6000, 480], [7000, 455], [8000, 400],
+      [8200, 390], [8400, 375],
+    ],
+  },
+
+  flat6_rwb: {
+    id: 'flat6_rwb',
+    name: 'RWB 3.6L Flat-Six',
+    idleRPM: 900,
+    redlineRPM: 7200,
+    limiterRPM: 7400,
+    inertia: 0.19,
+    referenceBoostBar: 0,
+    offBoostTorqueFraction: 1,
+    torqueCurve: [
+      [1000, 180], [2000, 250], [3000, 330], [4000, 390],
+      [5000, 420], [6000, 415], [6800, 410], [7200, 390],
+      [7400, 365],
+    ],
+  },
+
+  r26b_787b: {
+    id: 'r26b_787b',
+    name: 'Mazda R26B 4-Rotor',
+    idleRPM: 1200,
+    redlineRPM: 9000,
+    limiterRPM: 9200,
+    inertia: 0.11,
+    referenceBoostBar: 0,
+    offBoostTorqueFraction: 1,
+    torqueCurve: [
+      [1500, 220], [3000, 390], [4500, 500], [6000, 585],
+      [6500, 608], [7500, 600], [8500, 580], [9000, 548],
+      [9200, 520],
+    ],
+  },
+
+  f20c_amuse: {
+    id: 'f20c_amuse',
+    name: 'Amuse F20C Turbo',
+    idleRPM: 950,
+    redlineRPM: 8500,
+    limiterRPM: 8700,
+    inertia: 0.14,
+    referenceBoostBar: 1.05,
+    offBoostTorqueFraction: 0.42,
+    torqueCurve: [
+      [1000, 120], [2000, 170], [3000, 260], [4000, 370],
+      [5000, 445], [6000, 480], [7000, 475], [8000, 466],
+      [8500, 430], [8700, 410],
+    ],
+  },
+
 };
