@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260922-r83';
-import { engines } from '../data/engines.js?v=20260921-r43';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r132';
+import { engines } from '../data/engines.js?v=20260923-r132';
 import { characters, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import {
   applyEngineTuning,
@@ -12,7 +12,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260922-r83';
+} from '../vehicles/CarAppearance.js?v=20260923-r132';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260922-r131';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r131';
@@ -36,7 +36,7 @@ import {
   getGinzaCollectorState,
   isCentralTokyoLocationUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260922-r131';
+} from '../data/centralTokyo.js?v=20260923-r132';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
