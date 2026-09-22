@@ -422,6 +422,10 @@ export default class GarageScene extends Phaser.Scene {
 
       box.on('pointerdown', () => {
         if (!this.selectedCarId) return;
+        if (this.isSelectedCarTuningLocked()) {
+          this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
+          return;
+        }
         this.selectUpgrade(name);
         if (name === 'ENGINE') {
           this.enterEngineMode();
@@ -445,6 +449,42 @@ export default class GarageScene extends Phaser.Scene {
       this.upgradeButtons.push({ name, box, label, arrow });
     });
 
+  }
+
+  isSelectedCarTuningLocked() {
+    const car = cars[this.selectedCarId];
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    return Boolean(car?.tuningLocked || state.tuningLocked || state.immutable || state.collector);
+  }
+
+  refreshTuningCategoryAvailability() {
+    const locked = Boolean(this.selectedCarId && this.isSelectedCarTuningLocked());
+
+    if (this.tuningStatusText) {
+      this.tuningStatusText
+        .setText(
+          locked
+            ? 'COLLECTOR SPEC // TUNING SEALED'
+            : 'TUNING // ' + this.getActiveWorkshop().shortLabel
+        )
+        .setColor(locked ? '#d7a0b8' : '#8cc8ec');
+    }
+
+    this.upgradeButtons.forEach(item => {
+      if (locked || !this.selectedCarId) {
+        item.box.disableInteractive()
+          .setFillStyle(0x111318, 1)
+          .setStrokeStyle(1, 0x4e4149, 1);
+        item.label.setColor('#756873');
+        item.arrow.setText('—').setColor('#655965');
+      } else {
+        item.box.setInteractive({ useHandCursor: true })
+          .setFillStyle(0x0b1724, 1)
+          .setStrokeStyle(1, 0x315470, 1);
+        item.label.setColor('#a9c7da');
+        item.arrow.setText('>').setColor('#8cb6cf');
+      }
+    });
   }
 
   getActiveWorkshop() {
@@ -1257,9 +1297,7 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.torque.setText((tunedBuild.car.torqueNm ?? '—') + ' Nm');
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
 
-    if (this.tuningStatusText) {
-      this.tuningStatusText.setText('TUNING // ' + this.getActiveWorkshop().shortLabel);
-    }
+    this.refreshTuningCategoryAvailability();
 
     for (const item of this.thumbButtons) {
       const active = item.id === id;
@@ -1278,7 +1316,9 @@ export default class GarageScene extends Phaser.Scene {
     this.specValueTexts.power.setText('—');
     this.specValueTexts.torque.setText('—');
     this.specValueTexts.weight.setText('—');
-    this.tuningStatusText?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel);
+    this.tuningStatusText
+      ?.setText('TUNING // ' + this.getActiveWorkshop().shortLabel)
+      .setColor('#8cc8ec');
 
     this.upgradeButtons.forEach(item => {
       item.box.disableInteractive()
@@ -1427,6 +1467,10 @@ export default class GarageScene extends Phaser.Scene {
 
   enterEngineMode() {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // ENGINE TUNING LOCKED');
+      return;
+    }
     this.runTuningTransition(() => this.activateEngineMode());
   }
 
@@ -2265,6 +2309,10 @@ export default class GarageScene extends Phaser.Scene {
 
   enterChassisMode() {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // CHASSIS & PAINT LOCKED');
+      return;
+    }
     this.runTuningTransition(() => this.activateChassisMode());
   }
 
@@ -3109,6 +3157,10 @@ export default class GarageScene extends Phaser.Scene {
 
   enterSecondaryTuningMode(mode) {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    if (this.isSelectedCarTuningLocked()) {
+      this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
+      return;
+    }
     this.runTuningTransition(() => this.activateSecondaryTuningMode(mode));
   }
 
