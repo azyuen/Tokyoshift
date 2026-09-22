@@ -39,7 +39,7 @@
       </div>
     </div>
     <div id="game"></div>
-    <div id="build-stamp">R114</div>
+    <div id="build-stamp">R115</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -56,15 +56,22 @@
       if (status && label) status.textContent = String(label).toUpperCase();
     };
 
+    window.TOKYO_SHIFT_SHOW_SPLASH = (label = 'LOADING') => {
+      const splash = document.getElementById('loading-screen');
+      if (!splash) return;
+      splash.classList.remove('is-hidden');
+      splash.removeAttribute('aria-hidden');
+      window.TOKYO_SHIFT_SET_LOADING?.(0.03, label);
+    };
+
     window.TOKYO_SHIFT_HIDE_SPLASH = () => {
       const splash = document.getElementById('loading-screen');
       if (!splash || splash.classList.contains('is-hidden')) return;
-      window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
       splash.classList.add('is-hidden');
-      window.setTimeout(() => splash.remove(), 650);
+      window.setTimeout(() => splash.setAttribute('aria-hidden', 'true'), 520);
     };
 
-    window.TOKYO_SHIFT_SET_LOADING?.(0.03, 'INITIALISING');
+    window.TOKYO_SHIFT_SHOW_SPLASH?.('INITIALISING');
 
     function syncVirtualLandscape() {
       const viewport = window.visualViewport;
@@ -146,13 +153,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R114', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R115', { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260922-r114"></script>
+  <script type="module" src="./src/main.js?v=20260922-r115"></script>
 </body>
 </html>
