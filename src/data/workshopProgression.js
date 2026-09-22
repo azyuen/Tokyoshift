@@ -51,7 +51,6 @@ const ACCESS = {
     gearbox: [0, 0, 1, 2],
     differential: [0, 0, 1, 2],
     suspension: [0, 0, 1, 2],
-    launchSetup: [0, 0, 1, 2],
   },
   exhaustNos: {
     headers: [0, 0, 1, 2],
