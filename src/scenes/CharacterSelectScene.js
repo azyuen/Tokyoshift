@@ -264,10 +264,11 @@ export default class CharacterSelectScene extends Phaser.Scene {
     state.firstName = firstName;
     state.lastName = lastName;
 
-    const isDevProfile =
-      firstName.toLowerCase() === 'arkon' &&
-      lastName.toLowerCase() === 'den';
+    const isDevProfile = (
+      firstName.toLowerCase() + lastName.toLowerCase()
+    ).replace(/[^a-z0-9]/g, '') === 'arkonden';
     if (isDevProfile) {
+      state.devMode = true;
       state.cash = 1000000000;
     }
 
