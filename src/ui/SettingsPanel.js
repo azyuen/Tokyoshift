@@ -90,7 +90,12 @@ export function showSettingsPanel(scene) {
     // clocks can be paused/stopped during a hand-off; window.setTimeout cannot.
     window.setTimeout(() => {
       try {
-        scene.scene.start(targetScene);
+        const currentScene = scene.sys?.settings?.key;
+        if (currentScene === targetScene) {
+          scene.scene.restart();
+        } else {
+          scene.scene.start(targetScene);
+        }
       } catch (error) {
         console.error('[Tokyo SHIFT] profile handoff failed', error);
         transitioning = false;
@@ -323,7 +328,7 @@ export function showSettingsPanel(scene) {
         if (transitioning) return;
         saveSessionState(scene.registry);
         beginNewProfile(i);
-        handoff('CharacterSelectScene', 'CREATING DRIVER');
+        handoff('CharacterSelectScene');
       });
       return;
     }
