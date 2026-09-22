@@ -33,9 +33,9 @@ export default class BootScene extends Phaser.Scene {
   preload() {
     startSceneLoading(this, this.bootMessage || 'LOADING TOKYO', 1);
 
-    // Every car follows the same appearance convention. Adding a car to cars.js
-    // automatically queues its legacy body + tintable paint + fixed overlay.
-    preloadCarAppearanceAssets(this, cars, '20260922-r83');
+    // Standard cars load body + tintable paint + overlay. Ginza hero cars set
+    // visual.singleBody and load only their finished one-off body PNG.
+    preloadCarAppearanceAssets(this, cars, '20260923-r133');
 
     this.load.image('wheel8Spoke', 'assets/wheels/wheel_8spoke.png');
     this.load.image('wheel5Spoke', 'assets/wheels/wheel_5spoke.png');
