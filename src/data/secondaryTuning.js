@@ -1,6 +1,6 @@
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 
-export const DRIVETRAIN_PART_ORDER = ['clutch', 'gearbox', 'differential', 'suspension', 'launchSetup'];
+export const DRIVETRAIN_PART_ORDER = ['clutch', 'gearbox', 'differential', 'suspension'];
 export const EXHAUST_NOS_PART_ORDER = ['headers', 'exhaust', 'muffler', 'nosKit', 'nitrousShot'];
 
 export const DRIVETRAIN_TUNING_PARTS = {
@@ -8,50 +8,40 @@ export const DRIVETRAIN_TUNING_PARTS = {
     id: 'clutch',
     name: 'CLUTCH',
     levels: [
-      { level: 0, name: 'Stock clutch', cost: 0, clutchScale: 1.00, benefit: 'Factory torque capacity' },
-      { level: 1, name: 'Sports clutch', cost: 8000, clutchScale: 1.15, benefit: '+15% torque capacity' },
-      { level: 2, name: 'Heavy-duty clutch', cost: 18000, clutchScale: 1.35, benefit: '+35% torque capacity' },
-      { level: 3, name: 'Twin-plate clutch', cost: 35000, clutchScale: 1.65, benefit: '+65% torque capacity' },
+      { level: 0, name: 'Stock clutch', cost: 0, clutchScale: 1.00, spriteKey: 'tuningPartClutchL0', benefit: 'Factory torque capacity' },
+      { level: 1, name: 'Sports clutch', cost: 8000, clutchScale: 1.15, spriteKey: 'tuningPartClutchL1', benefit: '+15% torque capacity' },
+      { level: 2, name: 'Heavy-duty clutch', cost: 18000, clutchScale: 1.35, spriteKey: 'tuningPartClutchL2', benefit: '+35% torque capacity' },
+      { level: 3, name: 'Twin-plate clutch', cost: 35000, clutchScale: 1.65, spriteKey: 'tuningPartClutchL3', benefit: '+65% torque capacity' },
     ],
   },
   gearbox: {
     id: 'gearbox',
     name: 'GEARBOX',
     levels: [
-      { level: 0, name: 'Stock gearbox', cost: 0, shiftScale: 1.00, efficiencyAdd: 0.00, benefit: 'Factory shift speed' },
-      { level: 1, name: 'Short-shift kit', cost: 15000, shiftScale: 0.90, efficiencyAdd: 0.01, benefit: '10% faster shifts' },
-      { level: 2, name: 'Close-ratio box', cost: 35000, shiftScale: 0.80, efficiencyAdd: 0.02, benefit: '20% faster shifts' },
-      { level: 3, name: 'Dog box', cost: 70000, shiftScale: 0.68, efficiencyAdd: 0.03, benefit: '32% faster shifts' },
+      { level: 0, name: 'Stock gearbox', cost: 0, shiftScale: 1.00, efficiencyAdd: 0.00, spriteKey: 'tuningPartGearboxL0', benefit: 'Factory shift speed' },
+      { level: 1, name: 'Short-shift kit', cost: 15000, shiftScale: 0.90, efficiencyAdd: 0.01, spriteKey: 'tuningPartGearboxL1', benefit: '10% faster shifts' },
+      { level: 2, name: 'Close-ratio box', cost: 35000, shiftScale: 0.80, efficiencyAdd: 0.02, spriteKey: 'tuningPartGearboxL2', benefit: '20% faster shifts' },
+      { level: 3, name: 'Dog box', cost: 70000, shiftScale: 0.68, efficiencyAdd: 0.03, spriteKey: 'tuningPartGearboxL3', benefit: '32% faster shifts' },
     ],
   },
   differential: {
     id: 'differential',
     name: 'DIFFERENTIAL',
     levels: [
-      { level: 0, name: 'Factory differential', cost: 0, gripScale: 1.00, launchScale: 1.00, benefit: 'Factory traction' },
-      { level: 1, name: 'Street LSD', cost: 12000, gripScale: 1.02, launchScale: 1.02, benefit: '+2% grip / launch' },
-      { level: 2, name: '1.5-way LSD', cost: 28000, gripScale: 1.04, launchScale: 1.04, benefit: '+4% grip / launch' },
-      { level: 3, name: 'Race LSD', cost: 55000, gripScale: 1.06, launchScale: 1.07, benefit: '+6% grip / +7% launch' },
+      { level: 0, name: 'Factory differential', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartDifferentialL0', benefit: 'Factory traction' },
+      { level: 1, name: 'Street LSD', cost: 12000, gripScale: 1.02, launchScale: 1.02, spriteKey: 'tuningPartDifferentialL1', benefit: '+2% grip / launch' },
+      { level: 2, name: '1.5-way LSD', cost: 28000, gripScale: 1.04, launchScale: 1.04, spriteKey: 'tuningPartDifferentialL2', benefit: '+4% grip / launch' },
+      { level: 3, name: 'Race LSD', cost: 55000, gripScale: 1.06, launchScale: 1.07, spriteKey: 'tuningPartDifferentialL3', benefit: '+6% grip / +7% launch' },
     ],
   },
   suspension: {
     id: 'suspension',
     name: 'SUSPENSION',
     levels: [
-      { level: 0, name: 'Stock suspension', cost: 0, gripScale: 1.00, launchScale: 1.00, benefit: 'Factory setup' },
-      { level: 1, name: 'Street suspension', cost: 10000, gripScale: 1.01, launchScale: 1.02, benefit: '+1% grip / +2% launch' },
-      { level: 2, name: 'Coilovers', cost: 25000, gripScale: 1.025, launchScale: 1.04, benefit: '+2.5% grip / +4% launch' },
-      { level: 3, name: 'Drag suspension', cost: 50000, gripScale: 1.04, launchScale: 1.07, benefit: '+4% grip / +7% launch' },
-    ],
-  },
-  launchSetup: {
-    id: 'launchSetup',
-    name: 'LAUNCH SETUP',
-    levels: [
-      { level: 0, name: 'Default setup', cost: 0, launchScale: 1.00, benefit: 'Factory launch behaviour' },
-      { level: 1, name: 'Street launch tune', cost: 8000, launchScale: 1.025, benefit: '+2.5% launch traction' },
-      { level: 2, name: 'Launch control', cost: 20000, launchScale: 1.05, benefit: '+5% launch traction' },
-      { level: 3, name: 'Pro launch setup', cost: 40000, launchScale: 1.08, benefit: '+8% launch traction' },
+      { level: 0, name: 'Stock suspension', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartSuspensionL0', benefit: 'Factory setup' },
+      { level: 1, name: 'Street suspension', cost: 10000, gripScale: 1.01, launchScale: 1.02, spriteKey: 'tuningPartSuspensionL1', benefit: '+1% grip / +2% launch' },
+      { level: 2, name: 'Coilovers', cost: 25000, gripScale: 1.025, launchScale: 1.04, spriteKey: 'tuningPartSuspensionL2', benefit: '+2.5% grip / +4% launch' },
+      { level: 3, name: 'Drag suspension', cost: 50000, gripScale: 1.04, launchScale: 1.07, spriteKey: 'tuningPartSuspensionL3', benefit: '+4% grip / +7% launch' },
     ],
   },
 };
@@ -203,8 +193,7 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
     * (dt.suspension.gripScale || 1);
   car.launchLoadMultiplier = Number(car.launchLoadMultiplier || 1)
     * (dt.differential.launchScale || 1)
-    * (dt.suspension.launchScale || 1)
-    * (dt.launchSetup.launchScale || 1);
+    * (dt.suspension.launchScale || 1);
 
   const exhaustNos = getExhaustNosTuning(carState);
   const ex = {};
