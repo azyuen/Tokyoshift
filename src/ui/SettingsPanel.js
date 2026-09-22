@@ -74,23 +74,28 @@ export function showSettingsPanel(scene) {
     scene._settingsOverlay = [];
   };
 
-  const handoff = (targetScene, loadingLabel = 'LOADING PROFILE') => {
+  const handoff = (targetScene) => {
     if (transitioning) return;
     transitioning = true;
 
-    // Tear down only the Settings controls. Do not disable the scene InputPlugin:
-    // Phaser reuses scene instances, so that disabled flag can survive a restart
-    // and make the next Garage / DOM UI appear dead.
+    // Profile changes themselves do not load assets, so never force the global
+    // loading screen here. The destination scene will show it automatically
+    // only if its preload() actually queues files.
     close();
 
-    window.TOKYO_SHIFT_SHOW_SPLASH?.(loadingLabel);
-    window.TOKYO_SHIFT_SET_LOADING?.(0.35, loadingLabel);
+    // Clear any stale manual splash from older builds before changing scene.
+    try { window.TOKYO_SHIFT_HIDE_SPLASH?.(); } catch (e) {}
 
-    // Let Phaser finish the pointer event and modal teardown before replacing
-    // the scene. This avoids the stale Settings blocker seen on iOS PWAs.
-    scene.time.delayedCall(1, () => {
-      scene.scene.start(targetScene);
-    });
+    // Use the browser task queue rather than the source scene's Clock. Scene
+    // clocks can be paused/stopped during a hand-off; window.setTimeout cannot.
+    window.setTimeout(() => {
+      try {
+        scene.scene.start(targetScene);
+      } catch (error) {
+        console.error('[Tokyo SHIFT] profile handoff failed', error);
+        transitioning = false;
+      }
+    }, 0);
   };
 
   add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.74)
@@ -268,7 +273,7 @@ export function showSettingsPanel(scene) {
 
       if (deletingActive) {
         beginNewProfile(slot.index);
-        handoff('CharacterSelectScene', 'CREATING DRIVER');
+        handoff('CharacterSelectScene');
       } else {
         showSettingsPanel(scene);
       }
@@ -391,10 +396,7 @@ export function showSettingsPanel(scene) {
         if (transitioning) return;
         saveSessionState(scene.registry);
         const state = activateProfile(scene.registry, i, true);
-        handoff(
-          state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene',
-          'SWITCHING DRIVER'
-        );
+        handoff(state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
       });
     }
 
