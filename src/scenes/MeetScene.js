@@ -1,11 +1,11 @@
-import { cars, carOrder } from '../data/cars.js?v=20260922-r83';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r132';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
   normalisePaintColor,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260922-r83';
+} from '../vehicles/CarAppearance.js?v=20260923-r132';
 import { characters, characterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import {
   meetBackgrounds,
