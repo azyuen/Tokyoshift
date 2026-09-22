@@ -12,8 +12,8 @@ export const TRAVEL_REGIONS = {
     level: 'HOME',
     unlockWins: 0,
     baseCost: 0,
-    mapX: 0.722,
-    mapY: 0.327,
+    mapX: 0.715,
+    mapY: 0.285,
     description: 'Home base for garages, storage and tuning.',
     locations: [
       {
@@ -62,8 +62,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 1-2',
     unlockWins: 0,
     baseCost: 200,
-    mapX: 0.568,
-    mapY: 0.405,
+    mapX: 0.555,
+    mapY: 0.365,
     description: 'Beginner-friendly bayfront meets. Cheap to reach and the best place to start.',
     locations: [
       {
@@ -104,7 +104,7 @@ export const TRAVEL_REGIONS = {
     unlockWins: 3,
     baseCost: 500,
     mapX: 0.335,
-    mapY: 0.395,
+    mapY: 0.345,
     description: 'An early-game alternative with city roads, canals and industrial waterfront.',
     locations: [
       {
@@ -144,8 +144,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 2-3',
     unlockWins: 6,
     baseCost: 650,
-    mapX: 0.859,
-    mapY: 0.199,
+    mapX: 0.825,
+    mapY: 0.165,
     description: 'Expressway-side meets with quicker cars and more serious rivals.',
     locations: [
       {
@@ -185,8 +185,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 3-4',
     unlockWins: 10,
     baseCost: 900,
-    mapX: 0.171,
-    mapY: 0.278,
+    mapX: 0.190,
+    mapY: 0.220,
     description: 'Dense city streets, flashy tuner builds and increasingly aggressive rivals.',
     locations: [
       {
@@ -226,8 +226,8 @@ export const TRAVEL_REGIONS = {
     level: 'SPECIAL',
     unlockWins: 12,
     baseCost: 1200,
-    mapX: 0.396,
-    mapY: 0.123,
+    mapX: 0.405,
+    mapY: 0.105,
     description: 'Tokyo\'s high-end automotive district: used cars, collector stock and professional drag racing.',
     locations: [
       {
@@ -273,8 +273,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 4-5',
     unlockWins: 30,
     baseCost: 1100,
-    mapX: 0.223,
-    mapY: 0.110,
+    mapX: 0.230,
+    mapY: 0.075,
     description: 'Late-night downtown meets with strong urban crews and high stakes.',
     locations: [
       {
@@ -314,8 +314,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 4-5',
     unlockWins: 16,
     baseCost: 1300,
-    mapX: 0.115,
-    mapY: 0.743,
+    mapX: 0.130,
+    mapY: 0.675,
     description: 'A longer drive south for harbor-city cruising and powerful late-game builds.',
     locations: [
       {
@@ -355,8 +355,8 @@ export const TRAVEL_REGIONS = {
     level: 'LV 5+',
     unlockWins: 22,
     baseCost: 1600,
-    mapX: 0.322,
-    mapY: 0.681,
+    mapX: 0.315,
+    mapY: 0.585,
     description: 'High-stakes meets, big bets and rare pink slips.',
     locations: [
       {
