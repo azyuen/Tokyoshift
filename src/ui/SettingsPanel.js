@@ -64,12 +64,33 @@ export function showSettingsPanel(scene) {
 
   scene._settingsOverlay = objects;
 
+  let transitioning = false;
+
   const close = () => {
     masks.forEach(maskShape => {
       try { maskShape?.destroy?.(); } catch (e) {}
     });
     destroyObjects(objects);
     scene._settingsOverlay = [];
+  };
+
+  const handoff = (targetScene, loadingLabel = 'LOADING PROFILE') => {
+    if (transitioning) return;
+    transitioning = true;
+
+    // Disable the current scene's input before destroying the modal. This stops
+    // the original pointerdown from falling through into objects underneath.
+    try { scene.input.enabled = false; } catch (e) {}
+    close();
+
+    window.TOKYO_SHIFT_SHOW_SPLASH?.(loadingLabel);
+    window.TOKYO_SHIFT_SET_LOADING?.(0.35, loadingLabel);
+
+    // Let Phaser finish the pointer event and modal teardown before replacing
+    // the scene. This avoids the stale Settings blocker seen on iOS PWAs.
+    scene.time.delayedCall(1, () => {
+      scene.scene.start(targetScene);
+    });
   };
 
   add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.74)
@@ -247,9 +268,7 @@ export function showSettingsPanel(scene) {
 
       if (deletingActive) {
         beginNewProfile(slot.index);
-        window.TOKYO_SHIFT_SHOW_SPLASH?.('CREATING DRIVER');
-        window.TOKYO_SHIFT_SET_LOADING?.(0.45, 'CREATING DRIVER');
-        scene.scene.start('CharacterSelectScene');
+        handoff('CharacterSelectScene', 'CREATING DRIVER');
       } else {
         showSettingsPanel(scene);
       }
@@ -296,12 +315,10 @@ export function showSettingsPanel(scene) {
       }).setOrigin(0.5).setDepth(185));
 
       card.on('pointerdown', () => {
+        if (transitioning) return;
         saveSessionState(scene.registry);
         beginNewProfile(i);
-        close();
-        window.TOKYO_SHIFT_SHOW_SPLASH?.('CREATING DRIVER');
-        window.TOKYO_SHIFT_SET_LOADING?.(0.45, 'CREATING DRIVER');
-        scene.scene.start('CharacterSelectScene');
+        handoff('CharacterSelectScene', 'CREATING DRIVER');
       });
       return;
     }
@@ -371,12 +388,13 @@ export function showSettingsPanel(scene) {
       }).setOrigin(0.5).setDepth(185));
 
       card.on('pointerdown', () => {
+        if (transitioning) return;
         saveSessionState(scene.registry);
         const state = activateProfile(scene.registry, i, true);
-        close();
-        window.TOKYO_SHIFT_SHOW_SPLASH?.('SWITCHING DRIVER');
-        window.TOKYO_SHIFT_SET_LOADING?.(0.62, 'LOADING PROFILE');
-        scene.scene.start(state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+        handoff(
+          state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene',
+          'SWITCHING DRIVER'
+        );
       });
     }
 
