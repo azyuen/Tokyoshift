@@ -4,7 +4,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
-import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
+import { characters, playableCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260922-r108';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
@@ -15,7 +15,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
   constructor() { super('CharacterSelectScene'); }
 
   preload() {
-    characterOrder.forEach(id => {
+    playableCharacterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
         this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
@@ -28,7 +28,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
     playMusic('title');
 
-    this.currentCharacterId = Phaser.Utils.Array.GetRandom(characterOrder);
+    this.currentCharacterId = Phaser.Utils.Array.GetRandom(playableCharacterOrder);
     this.portraitObjects = [];
 
     // Spacious title-screen frame. This scene needs more breathing room than
@@ -97,7 +97,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     randomButton.on('pointerdown', () => {
-      const pool = characterOrder.filter(id => id !== this.currentCharacterId);
+      const pool = playableCharacterOrder.filter(id => id !== this.currentCharacterId);
       this.currentCharacterId = Phaser.Utils.Array.GetRandom(pool);
       this.refreshPortrait();
     });
@@ -123,7 +123,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     this.profileLabel.setText(
       'PROFILE ' +
-      (characterOrder.indexOf(this.currentCharacterId) + 1).toString().padStart(2, '0')
+      (playableCharacterOrder.indexOf(this.currentCharacterId) + 1).toString().padStart(2, '0')
     );
   }
 
@@ -274,7 +274,9 @@ export default class CharacterSelectScene extends Phaser.Scene {
       state.cash = 1000000000;
     }
 
-    state.playerCharacterId = this.currentCharacterId;
+    state.playerCharacterId = playableCharacterOrder.includes(this.currentCharacterId)
+      ? this.currentCharacterId
+      : playableCharacterOrder[0];
     state.selectedCarId = 'ae86';
     state.ownedCarIds = ['ae86'];
     state.carStates = {
