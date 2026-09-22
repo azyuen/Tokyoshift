@@ -1253,10 +1253,11 @@ export default class RaceScene extends Phaser.Scene {
 
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
-    const competitionResultText = Boolean(settlement?.competition);
-    this.add.text(780, competitionResultText ? 266 : 274, reward.primary, {
+    const competitionMultilineText =
+      Boolean(settlement?.competition) && reward.primary.includes('\n');
+    this.add.text(780, competitionMultilineText ? 266 : 274, reward.primary, {
       fontFamily: titleFont,
-      fontSize: competitionResultText
+      fontSize: competitionMultilineText
         ? '15px'
         : (isPinkSlip || competitionCarPrizeWin ? '20px' : '30px'),
       color: playerWon ? '#f1ffff' : '#fff1f5',
