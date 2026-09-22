@@ -14,7 +14,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r125';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r126';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
 import {
@@ -35,7 +35,7 @@ import {
   getAutoMarketSellPrice,
   isCentralTokyoLocationUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260922-r125';
+} from '../data/centralTokyo.js?v=20260922-r126';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
