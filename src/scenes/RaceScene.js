@@ -12,6 +12,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -222,18 +223,20 @@ export default class RaceScene extends Phaser.Scene {
     this.treeLightsG = this.add.graphics().setDepth(23);
 
     this.playerVisual = this.createCarVisual(
-      cars[this.selectedCarId].visual,
+      cars[this.selectedCarId],
       7,
       1.0,
       this.playerPaintColor,
-      characters[this.playerCharacterId]
+      characters[this.playerCharacterId],
+      this.playerCarState
     );
     this.opponentVisual = this.createCarVisual(
-      cars[this.opponentCarId].visual,
+      cars[this.opponentCarId],
       6,
       0.88,
       this.opponentPaintColor,
-      characters[this.opponentCharacterId]
+      characters[this.opponentCharacterId],
+      {}
     );
 
     this.treeSprite = this.add.image(780, 192, 'dragTree')
@@ -658,12 +661,14 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   createCarVisual(
-    cfg,
+    car,
     depth,
     roleScale,
     paintColor = DEFAULT_PAINT_COLOR,
-    driverCharacter = null
+    driverCharacter = null,
+    carState = {}
   ) {
+    const cfg = car.visual;
     const bodyScale = cfg.bodyScale * roleScale;
     const wheelScale = cfg.wheelScale * roleScale * 1.16;
 
@@ -701,6 +706,14 @@ export default class RaceScene extends Phaser.Scene {
       depth: depth + 1,
       paintColor,
     });
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      x: 0,
+      y: 0,
+      scale: bodyScale,
+      depth: depth + 1.005,
+      paintColor,
+      bodyLayers,
+    });
     const body = bodyLayers.primary;
 
     const roadShadow = this.add.ellipse(
@@ -720,7 +733,7 @@ export default class RaceScene extends Phaser.Scene {
       frontWheelBacking,
       roadShadow,
       body,
-      bodyObjects: bodyLayers.objects,
+      bodyObjects: [...bodyLayers.objects, ...visualModObjects],
       driverSilhouette: driver?.image || null,
       driverOffsetX: driver?.offsetX || 0,
       driverOffsetY: driver?.offsetY || 0,
