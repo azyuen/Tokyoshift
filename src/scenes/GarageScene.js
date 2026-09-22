@@ -27,7 +27,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r114';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r115';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r117';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r118';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -79,6 +79,11 @@ export default class GarageScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
+
+    // Defensive reset for profile switches. GarageScene is a reused Phaser
+    // scene instance, so never inherit a disabled input state.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
 
     // A workshop switch used to restart the scene from inside a completed
     // camera fade. On some mobile/PWA runs the restarted camera inherited the
@@ -1264,8 +1269,51 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(20);
   }
 
-  enterEngineMode() {
-    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+  recoverTuningTransition(error = null) {
+    if (error) console.error('[Tokyo SHIFT] tuning transition failed', error);
+
+    const lists = [
+      'engineModeObjects',
+      'engineModalObjects',
+      'engineHotspotObjects',
+      'engineHelperObjects',
+      'secondaryModeObjects',
+      'secondaryModalObjects',
+      'secondaryHotspotObjects',
+      'secondaryHelperObjects',
+      'chassisModeObjects',
+    ];
+
+    lists.forEach(key => {
+      (this[key] || []).forEach(obj => {
+        try { obj?.destroy?.(); } catch (e) {}
+      });
+      this[key] = [];
+    });
+
+    this.engineMode = false;
+    this.secondaryMode = null;
+    this.chassisMode = false;
+    this.engineTransitioning = false;
+
+    try { this.updateGarageNavState(); } catch (e) {}
+    this.upgradeButtons?.forEach(item => {
+      try { item.box.setInteractive({ useHandCursor: true }); } catch (e) {}
+    });
+    this.thumbButtons?.forEach(item => {
+      try { item.box.setInteractive({ useHandCursor: true }); } catch (e) {}
+    });
+    try { this.saveButton?.setInteractive({ useHandCursor: true }); } catch (e) {}
+    try { this.meetButton?.setInteractive({ useHandCursor: true }); } catch (e) {}
+    try { this.selectUpgrade(null); } catch (e) {}
+
+    try {
+      this.showWorkshopToast('TUNING SCREEN RECOVERED // TRY AGAIN');
+    } catch (e) {}
+  }
+
+  runTuningTransition(activate) {
+    if (this.engineTransitioning) return;
     this.engineTransitioning = true;
 
     const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
@@ -1273,25 +1321,55 @@ export default class GarageScene extends Phaser.Scene {
       .setAlpha(0)
       .setInteractive();
 
+    let finished = false;
+    const clearVeil = () => {
+      if (finished) return;
+      finished = true;
+
+      const finish = () => {
+        try { veil.destroy(); } catch (e) {}
+        this.engineTransitioning = false;
+      };
+
+      if (!veil?.active) {
+        finish();
+        return;
+      }
+
+      this.tweens.add({
+        targets: veil,
+        alpha: 0,
+        duration: 180,
+        ease: 'Sine.easeOut',
+        onComplete: finish,
+      });
+    };
+
+    // Never go fully black. More importantly, always clear the veil even when
+    // a tuning component throws during activation.
     this.tweens.add({
       targets: veil,
-      alpha: 1,
-      duration: 210,
+      alpha: 0.72,
+      duration: 120,
       ease: 'Sine.easeInOut',
       onComplete: () => {
-        this.activateEngineMode();
-        this.tweens.add({
-          targets: veil,
-          alpha: 0,
-          duration: 280,
-          ease: 'Sine.easeInOut',
-          onComplete: () => {
-            veil.destroy();
-            this.engineTransitioning = false;
-          },
-        });
+        try {
+          activate();
+        } catch (error) {
+          this.recoverTuningTransition(error);
+        } finally {
+          clearVeil();
+        }
       },
     });
+
+    // Last-resort guard for interrupted tweens / iOS lifecycle edge cases.
+    this.time.delayedCall(900, clearVeil);
+  }
+
+  enterEngineMode() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
+    this.runTuningTransition(() => this.activateEngineMode());
   }
 
   activateEngineMode() {
@@ -2133,32 +2211,7 @@ export default class GarageScene extends Phaser.Scene {
 
   enterChassisMode() {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
-    this.engineTransitioning = true;
-
-    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
-      .setDepth(165)
-      .setAlpha(0)
-      .setInteractive();
-
-    this.tweens.add({
-      targets: veil,
-      alpha: 1,
-      duration: 190,
-      ease: 'Sine.easeInOut',
-      onComplete: () => {
-        this.activateChassisMode();
-        this.tweens.add({
-          targets: veil,
-          alpha: 0,
-          duration: 260,
-          ease: 'Sine.easeInOut',
-          onComplete: () => {
-            veil.destroy();
-            this.engineTransitioning = false;
-          },
-        });
-      },
-    });
+    this.runTuningTransition(() => this.activateChassisMode());
   }
 
   activateChassisMode() {
@@ -2522,32 +2575,7 @@ export default class GarageScene extends Phaser.Scene {
 
   enterSecondaryTuningMode(mode) {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
-    this.engineTransitioning = true;
-
-    const veil = this.add.rectangle(780, 420, 1560, 840, 0x02050b, 1)
-      .setDepth(165)
-      .setAlpha(0)
-      .setInteractive();
-
-    this.tweens.add({
-      targets: veil,
-      alpha: 1,
-      duration: 210,
-      ease: 'Sine.easeInOut',
-      onComplete: () => {
-        this.activateSecondaryTuningMode(mode);
-        this.tweens.add({
-          targets: veil,
-          alpha: 0,
-          duration: 280,
-          ease: 'Sine.easeInOut',
-          onComplete: () => {
-            veil.destroy();
-            this.engineTransitioning = false;
-          },
-        });
-      },
-    });
+    this.runTuningTransition(() => this.activateSecondaryTuningMode(mode));
   }
 
   activateSecondaryTuningMode(mode) {
