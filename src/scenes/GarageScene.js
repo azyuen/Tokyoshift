@@ -27,7 +27,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r114';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r115';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r119';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r120';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -155,9 +155,14 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => window.TOKYO_SHIFT_HIDE_SPLASH?.());
-    });
+    let splashHidden = false;
+    const hideSplash = () => {
+      if (splashHidden) return;
+      splashHidden = true;
+      window.TOKYO_SHIFT_HIDE_SPLASH?.();
+    };
+    requestAnimationFrame(() => requestAnimationFrame(hideSplash));
+    window.setTimeout(hideSplash, 120);
   }
 
   drawScene() {
