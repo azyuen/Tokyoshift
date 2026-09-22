@@ -192,6 +192,7 @@ body[data-scene="meet"] #game-shell {
   Race switches to 1560x720 (13:6).
 */
 #game {
+  position: relative;
   width: 100%;
   max-width: 185.7143dvh;
   aspect-ratio: 13 / 7;
@@ -199,6 +200,58 @@ body[data-scene="meet"] #game-shell {
   max-height: 100%;
   display: grid;
   place-items: center;
+}
+
+#driver-name-overlay {
+  position: absolute;
+  left: 50%;
+  top: 48.6%;
+  z-index: 9000;
+  width: 25%;
+  transform: translate(-50%, -50%);
+  display: none;
+  gap: clamp(10px, 1.9vh, 18px);
+  pointer-events: auto;
+  touch-action: auto;
+}
+
+#driver-name-overlay.is-visible {
+  display: grid;
+}
+
+.driver-name-input {
+  width: 100%;
+  height: clamp(38px, 6.2vh, 52px);
+  padding: 0 clamp(12px, 1.1vw, 18px);
+  border: 2px solid #315470;
+  border-radius: 2px;
+  outline: none;
+  background: #07111d;
+  color: #ffffff;
+  font-family: "Rajdhani", sans-serif;
+  font-size: clamp(14px, 1.2vw, 18px);
+  font-weight: 700;
+  line-height: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  touch-action: manipulation;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.driver-name-input::placeholder {
+  color: #728895;
+  opacity: 1;
+}
+
+.driver-name-input:focus {
+  border-color: #4bdcff;
+  box-shadow: 0 0 0 1px rgba(75, 220, 255, .25);
+}
+
+body:not([data-scene="setup"]) #driver-name-overlay {
+  display: none !important;
 }
 
 body[data-scene="race"] #game {
