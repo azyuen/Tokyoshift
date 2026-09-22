@@ -69,12 +69,12 @@ export const EXHAUST_NOS_TUNING_PARTS = {
   },
   exhaust: {
     id: 'exhaust',
-    name: 'EXHAUST',
+    name: 'EXHAUST SYSTEM',
     levels: [
-      { level: 0, name: 'Stock mid-pipe', cost: 0, torqueScale: 1.00, massDelta: 0, benefit: 'Factory exhaust flow' },
-      { level: 1, name: 'High-flow exhaust', cost: 10000, torqueScale: 1.015, massDelta: -1, benefit: '+1.5% output / -1 kg' },
-      { level: 2, name: 'Performance system', cost: 22000, torqueScale: 1.03, massDelta: -3, benefit: '+3% output / -3 kg' },
-      { level: 3, name: 'Race system', cost: 45000, torqueScale: 1.05, massDelta: -5, benefit: '+5% output / -5 kg' },
+      { level: 0, name: 'Stock exhaust', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartEngineExhaustL0', benefit: 'Factory exhaust flow' },
+      { level: 1, name: 'Axle-back system', cost: 10000, torqueScale: 1.015, massDelta: -1, spriteKey: 'tuningPartEngineExhaustL1', benefit: '+1.5% output / -1 kg' },
+      { level: 2, name: 'Cat-back system', cost: 22000, torqueScale: 1.03, massDelta: -3, spriteKey: 'tuningPartEngineExhaustL2', benefit: '+3% output / -3 kg' },
+      { level: 3, name: 'Race exhaust', cost: 45000, torqueScale: 1.05, massDelta: -5, spriteKey: 'tuningPartEngineExhaustL3', benefit: '+5% output / -5 kg' },
     ],
   },
   muffler: {
@@ -147,7 +147,16 @@ export function getDrivetrainTuning(carState = {}) {
 }
 
 export function getExhaustNosTuning(carState = {}) {
-  return normaliseExhaustNosTuning(carState.exhaustNosTuning || {});
+  const current = carState.exhaustNosTuning || {};
+  const legacyEngineExhaust = carState.tuning?.exhaust ?? carState.engineTuning?.exhaust;
+
+  // R114 migration: the old Engine > Exhaust category was removed. Preserve
+  // any level the player already bought by treating it as Exhaust System
+  // unless a newer exhaustNosTuning.exhaust value already exists.
+  return normaliseExhaustNosTuning({
+    ...current,
+    exhaust: current.exhaust ?? legacyEngineExhaust ?? 0,
+  });
 }
 
 export function getDrivetrainUpgradePathCost(partId, fromLevel, toLevel) {
