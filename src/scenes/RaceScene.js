@@ -34,19 +34,19 @@ const TAXI_TO_WORKSHOP_COST = 1000;
 const RESULT_BACKGROUNDS = {
   victory: {
     key: 'raceResultVictoryBg',
-    path: 'assets/Race/Results/victory_background.png?v=20260922-r100',
+    path: 'assets/Race/Results/victory_background.png?v=20260922-r101',
   },
   defeat: {
     key: 'raceResultDefeatBg',
-    path: 'assets/Race/Results/defeat_background.png?v=20260922-r100',
+    path: 'assets/Race/Results/defeat_background.png?v=20260922-r101',
   },
   pinkWin: {
     key: 'raceResultPinkWinBg',
-    path: 'assets/Race/Results/pink_slip_won_background.png?v=20260922-r100',
+    path: 'assets/Race/Results/pink_slip_won_background.png?v=20260922-r101',
   },
   pinkLoss: {
     key: 'raceResultPinkLossBg',
-    path: 'assets/Race/Results/pink_slip_lost_background.png?v=20260922-r100',
+    path: 'assets/Race/Results/pink_slip_lost_background.png?v=20260922-r101',
   },
 };
 
