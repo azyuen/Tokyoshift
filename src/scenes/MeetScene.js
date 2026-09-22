@@ -17,9 +17,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r115';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r125';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r123';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r98';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r98';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import {
@@ -342,13 +343,27 @@ export default class MeetScene extends Phaser.Scene {
 
   travelToLocation(locationId, suppliedCost = null) {
     if (!this.hasCar) return false;
-    if (!MEET_LOCATIONS[locationId]) return false;
+
+    const travelTarget = getTravelLocation(locationId);
+    if (!travelTarget) return false;
 
     const travelCost = suppliedCost == null
       ? getTravelCost(this.selectedMeetLocation, locationId)
       : Number(suppliedCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < travelCost) return false;
+
+    if (travelTarget.regionId === 'CENTRAL_TOKYO') {
+      this.registry.set('cash', cash - travelCost);
+      this.registry.set('centralTokyoLocation', locationId);
+      this.registry.set('district', 'CENTRAL_TOKYO');
+      this.registry.set('meetStranded', false);
+      saveSessionState(this.registry);
+      this.scene.start('CentralTokyoScene', { locationId });
+      return true;
+    }
+
+    if (!MEET_LOCATIONS[locationId]) return false;
 
     if (locationId !== this.selectedMeetLocation) {
       this.locationSelectedOfferIndex[this.selectedMeetLocation] = this.selectedOfferIndex;
@@ -1205,6 +1220,7 @@ export default class MeetScene extends Phaser.Scene {
       Date.now() + this.getCompetitionCooldownMs()
     );
     this.registry.set('competitionState', state);
+    this.registry.set('raceReturnScene', 'MeetScene');
     this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
 
     if (!this.configureCompetitionRound(state, 0)) return;
@@ -2130,6 +2146,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceType', offer.raceType);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
     this.registry.set('selectedRaceStake', this.selectedDeal === 'PINK' ? 0 : offer.stake);
+    this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
     this.registry.set('raceTimeOfDay', location.timeOfDay);
