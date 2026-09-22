@@ -14,7 +14,7 @@ export const MAX_PROFILES = 3;
 
 export function createDefaultGameState() {
   return {
-    version: 4,
+    version: 5,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -57,6 +57,13 @@ export function createDefaultGameState() {
     competitionOffers: {},
     competitionState: null,
     competitionCooldownUntil: 0,
+    centralTokyoLocation: 'tokyoAutoMarket',
+    tokyoInvitesSeen: {
+      autoMarket: false,
+      ginza: false,
+      drag: false,
+    },
+    raceReturnScene: 'MeetScene',
     meetStranded: false,
     gameOver: false,
   };
@@ -346,6 +353,12 @@ export function normaliseState(input = {}) {
       ? input.competitionState
       : null,
     competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
+    centralTokyoLocation: String(input.centralTokyoLocation || base.centralTokyoLocation),
+    tokyoInvitesSeen: {
+      ...base.tokyoInvitesSeen,
+      ...(input.tokyoInvitesSeen || {}),
+    },
+    raceReturnScene: String(input.raceReturnScene || 'MeetScene'),
     meetStranded: Boolean(input.meetStranded && owned.length > 0),
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
@@ -359,7 +372,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 4,
+    version: 5,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -384,6 +397,9 @@ export function snapshotRegistry(registry) {
     competitionOffers: registry.get('competitionOffers') || {},
     competitionState: registry.get('competitionState') || null,
     competitionCooldownUntil: Number(registry.get('competitionCooldownUntil') || 0),
+    centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
+    tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
+    raceReturnScene: registry.get('raceReturnScene') || 'MeetScene',
     meetStranded: Boolean(registry.get('meetStranded')),
     gameOver: registry.get('gameOver') || false,
   });
