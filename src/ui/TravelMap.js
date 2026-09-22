@@ -19,7 +19,7 @@ import {
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20260922-r127';
+} from '../data/centralTokyo.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -27,6 +27,7 @@ const BODY_FONT = '"Rajdhani", monospace';
 const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
+const CENTRAL_TOKYO_OVERLAY_TEXTURE = 'travelMapCentralTokyoOverlay';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 
 // The map now owns the whole framed popup. Everything else floats over it.
@@ -203,6 +204,26 @@ export function showTravelMap(scene, {
     maskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
     mapImage.setMask(maskShape.createGeometryMask());
     objects.push(maskShape);
+
+    const centralTokyoUnlocked = Boolean(
+      TRAVEL_REGIONS.CENTRAL_TOKYO?.locations?.some(locationAvailable)
+    );
+    if (
+      centralTokyoUnlocked &&
+      scene.textures.exists(CENTRAL_TOKYO_OVERLAY_TEXTURE)
+    ) {
+      const unlockOverlay = add(scene.add.image(
+        art.x + art.w / 2,
+        art.y + art.h / 2,
+        CENTRAL_TOKYO_OVERLAY_TEXTURE
+      ).setDisplaySize(art.w, art.h).setDepth(depth + 2.08));
+
+      const overlayMaskShape = scene.make.graphics({ add: false });
+      overlayMaskShape.fillStyle(0xffffff, 1);
+      overlayMaskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
+      unlockOverlay.setMask(overlayMaskShape.createGeometryMask());
+      objects.push(overlayMaskShape);
+    }
   } else {
     add(scene.add.rectangle(
       MAP.x + MAP.w / 2,
@@ -389,10 +410,10 @@ export function showTravelMap(scene, {
         item.core.setRadius(active ? 5 : 4).setFillStyle(0xaab4ba, active ? 0.92 : 0.70);
       } else if (active) {
         item.glow.setRadius(28)
-          .setFillStyle(home ? 0x25dbff : 0xff4fbd, 0.15)
-          .setStrokeStyle(3, home ? 0x5ceaff : 0xff63c5, 0.96);
+          .setFillStyle(centralTokyo ? 0xffd600 : (home ? 0x25dbff : 0xff4fbd), 0.15)
+          .setStrokeStyle(3, centralTokyo ? 0xffe34d : (home ? 0x5ceaff : 0xff63c5), 0.96);
         item.ring.setRadius(18).setStrokeStyle(4, 0xffffff, 1);
-        item.core.setRadius(6).setFillStyle(home ? 0x60ecff : 0xff6bc9, 1);
+        item.core.setRadius(6).setFillStyle(centralTokyo ? 0xffe34d : (home ? 0x60ecff : 0xff6bc9), 1);
       } else if (here) {
         item.glow.setRadius(25)
           .setFillStyle(0x35e8ff, 0.12)
@@ -698,24 +719,29 @@ export function showTravelMap(scene, {
     const region = TRAVEL_REGIONS[regionId];
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
+    const centralTokyo = regionId === 'CENTRAL_TOKYO';
     const unlocked = home || region.locations.some(locationAvailable);
+    const activeColor = centralTokyo ? 0xffd600 : (home ? 0x29dcff : 0xff4fbd);
+    const strokeColor = centralTokyo ? 0xffe34d : (home ? 0x53dff8 : 0xff63c5);
+    const ringColor = centralTokyo ? 0xffef85 : (home ? 0x7cefff : 0xff8bd5);
+    const coreColor = centralTokyo ? 0xffe34d : (home ? 0xcdfaff : 0xffb3e5);
 
     const glow = add(scene.add.circle(
       pt.x,
       pt.y,
       22,
-      unlocked ? (home ? 0x29dcff : 0xff4fbd) : 0x56616b,
+      unlocked ? activeColor : 0x56616b,
       unlocked ? 0.05 : 0.03
     ).setStrokeStyle(
       2,
-      unlocked ? (home ? 0x53dff8 : 0xff63c5) : 0x65727c,
+      unlocked ? strokeColor : 0x65727c,
       unlocked ? 0.45 : 0.50
     ).setDepth(depth + 5));
 
     const ring = add(scene.add.circle(pt.x, pt.y, 14, 0x07111d, 0.22)
       .setStrokeStyle(
         unlocked ? 3 : 2,
-        unlocked ? (home ? 0x7cefff : 0xff8bd5) : 0x75818a,
+        unlocked ? ringColor : 0x75818a,
         unlocked ? 0.82 : 0.62
       )
       .setDepth(depth + 6));
@@ -724,7 +750,7 @@ export function showTravelMap(scene, {
       pt.x,
       pt.y,
       4,
-      unlocked ? (home ? 0xcdfaff : 0xffb3e5) : 0xaab4ba,
+      unlocked ? coreColor : 0xaab4ba,
       unlocked ? 0.95 : 0.70
     ).setDepth(depth + 7));
 
