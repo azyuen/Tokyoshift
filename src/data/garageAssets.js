@@ -23,4 +23,12 @@ export const garageAssets = [
   { key: 'tuningPartTurboL1', path: 'assets/Tuning/Parts/turbo_l1.png?v=20260922-r106' },
   { key: 'tuningPartTurboL2', path: 'assets/Tuning/Parts/turbo_l2.png?v=20260922-r106' },
   { key: 'tuningPartTurboL3', path: 'assets/Tuning/Parts/turbo_l3.png?v=20260922-r106' },
+  { key: 'tuningPartIntakeL0', path: 'assets/Tuning/Parts/intake_l0.png?v=20260922-r107' },
+  { key: 'tuningPartIntakeL1', path: 'assets/Tuning/Parts/intake_l1.png?v=20260922-r107' },
+  { key: 'tuningPartIntakeL2', path: 'assets/Tuning/Parts/intake_l2.png?v=20260922-r107' },
+  { key: 'tuningPartIntakeL3', path: 'assets/Tuning/Parts/intake_l3.png?v=20260922-r107' },
+  { key: 'tuningPartEcuL0', path: 'assets/Tuning/Parts/ecu_l0.png?v=20260922-r107' },
+  { key: 'tuningPartEcuL1', path: 'assets/Tuning/Parts/ecu_l1.png?v=20260922-r107' },
+  { key: 'tuningPartEcuL2', path: 'assets/Tuning/Parts/ecu_l2.png?v=20260922-r107' },
+  { key: 'tuningPartEcuL3', path: 'assets/Tuning/Parts/ecu_l3.png?v=20260922-r107' },
 ];
