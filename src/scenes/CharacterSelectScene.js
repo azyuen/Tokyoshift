@@ -5,7 +5,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260922-r86';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260922-r106';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
