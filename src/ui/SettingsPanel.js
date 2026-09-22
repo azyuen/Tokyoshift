@@ -74,7 +74,7 @@ export function showSettingsPanel(scene) {
     scene._settingsOverlay = [];
   };
 
-  const reloadForProfile = (label = 'SWITCHING DRIVER') => {
+  const reloadForProfile = (label = 'SWITCHING DRIVER', reopenSettings = false) => {
     if (transitioning) return;
     transitioning = true;
 
@@ -84,6 +84,11 @@ export function showSettingsPanel(scene) {
       sessionStorage.setItem('tokyoShiftInternalReload', '1');
       sessionStorage.setItem('tokyoShiftBootMessage', label);
       sessionStorage.removeItem('tokyoShiftForceGarage');
+      if (reopenSettings) {
+        sessionStorage.setItem('tokyoShiftOpenSettingsAfterReload', '1');
+      } else {
+        sessionStorage.removeItem('tokyoShiftOpenSettingsAfterReload');
+      }
     } catch (e) {}
 
     // Profile switching is intentionally a controlled app reload. Phaser scene
@@ -202,7 +207,14 @@ export function showSettingsPanel(scene) {
 
   const slots = getProfileSlots();
   const activeIndex = getActiveProfileIndex();
+  const activeSlotOccupied = Boolean(slots[activeIndex]?.occupied);
   const cardXs = [535, 780, 1025];
+
+  if (!activeSlotOccupied) {
+    closeButton.disableInteractive()
+      .setFillStyle(0x10161d, 1)
+      .setStrokeStyle(1, 0x344754, 1);
+  }
 
   const showDeleteConfirm = (slot) => {
     const confirmObjects = [];
@@ -265,21 +277,34 @@ export function showSettingsPanel(scene) {
       const deletingActive = slot.index === getActiveProfileIndex();
       deleteProfileSlot(slot.index);
       dismiss();
-      close();
 
-      if (deletingActive) {
-        beginNewProfile(slot.index);
-        reloadForProfile('CREATING DRIVER');
-      } else {
+      if (!deletingActive) {
+        close();
         showSettingsPanel(scene);
+        return;
       }
+
+      const remaining = getProfileSlots().filter(profile => profile.occupied);
+
+      if (remaining.length > 0) {
+        // Move the active pointer to an existing driver, reload safely, then
+        // reopen this same selection panel so the deleted slot is visibly empty.
+        setActiveProfileIndex(remaining[0].index);
+        reloadForProfile('DRIVER DELETED', true);
+        return;
+      }
+
+      // Last driver deleted: stay on the selection panel with three empty
+      // slots. Do not force character creation.
+      close();
+      showSettingsPanel(scene);
     });
   };
 
   slots.forEach((slot, i) => {
     const x = cardXs[i];
     const occupied = slot.occupied;
-    const active = i === activeIndex;
+    const active = occupied && i === activeIndex;
 
     const card = add(scene.add.rectangle(x, 455, 210, 285, active ? 0x10283a : 0x0a1723, 1)
       .setStrokeStyle(active ? 3 : 2, active ? 0x48dfff : 0x29485e, 1)
@@ -317,7 +342,15 @@ export function showSettingsPanel(scene) {
 
       card.on('pointerdown', () => {
         if (transitioning) return;
-        saveSessionState(scene.registry);
+
+        // If the currently active slot was just deleted, do not save the stale
+        // in-memory driver back into that empty slot.
+        const currentSlots = getProfileSlots();
+        const currentActive = getActiveProfileIndex();
+        if (currentSlots[currentActive]?.occupied) {
+          saveSessionState(scene.registry);
+        }
+
         beginNewProfile(i);
         reloadForProfile('CREATING DRIVER');
       });
