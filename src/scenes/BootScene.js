@@ -75,6 +75,22 @@ export default class BootScene extends Phaser.Scene {
         character.visual.path + '?v=20260921-r43'
       );
     });
+
+    // Workshop-only Daichi poses. Keeping these separate from the canonical
+    // character sprite lets each tuning category reuse the same mechanic while
+    // changing only his working pose.
+    this.load.image(
+      'daichiEngineInspect',
+      'assets/Characters/daichi_engine_inspect.png?v=20260922-r110'
+    );
+    this.load.image(
+      'daichiChassisTools',
+      'assets/Characters/daichi_chassis_tools.png?v=20260922-r110'
+    );
+    this.load.image(
+      'daichiExhaustCrouch',
+      'assets/Characters/daichi_exhaust_crouch.png?v=20260922-r110'
+    );
   }
 
   create() {
