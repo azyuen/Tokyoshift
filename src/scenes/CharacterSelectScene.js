@@ -7,7 +7,7 @@ import {
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r115';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r119';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
