@@ -47,6 +47,11 @@ export function createDefaultGameState() {
     meetRosters: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
+    specialChallenger: null,
+    challengerMisses: 0,
+    challengerCooldown: 0,
+    competitionOffers: {},
+    competitionState: null,
     meetStranded: false,
     gameOver: false,
   };
@@ -148,6 +153,17 @@ export function normaliseState(input = {}) {
     defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
       ? [...new Set(input.defeatedRivalKeys)]
       : [],
+    specialChallenger: input.specialChallenger && typeof input.specialChallenger === 'object'
+      ? input.specialChallenger
+      : null,
+    challengerMisses: Math.max(0, Number(input.challengerMisses || 0)),
+    challengerCooldown: Math.max(0, Number(input.challengerCooldown || 0)),
+    competitionOffers: input.competitionOffers && typeof input.competitionOffers === 'object'
+      ? input.competitionOffers
+      : {},
+    competitionState: input.competitionState && typeof input.competitionState === 'object'
+      ? input.competitionState
+      : null,
     meetStranded: Boolean(input.meetStranded && owned.length > 0),
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
@@ -180,6 +196,11 @@ export function snapshotRegistry(registry) {
     meetRosters: registry.get('meetRosters') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
+    specialChallenger: registry.get('specialChallenger') || null,
+    challengerMisses: Number(registry.get('challengerMisses') || 0),
+    challengerCooldown: Number(registry.get('challengerCooldown') || 0),
+    competitionOffers: registry.get('competitionOffers') || {},
+    competitionState: registry.get('competitionState') || null,
     meetStranded: Boolean(registry.get('meetStranded')),
     gameOver: registry.get('gameOver') || false,
   });
