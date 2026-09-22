@@ -11,7 +11,7 @@ import {
   normalisePaintColor,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
-import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r135';
+import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r136';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -690,7 +690,7 @@ export default class RaceScene extends Phaser.Scene {
           bodyX: 0,
           bodyY: 0,
           bodyScale,
-          depth: depth + 0.55,
+          depth: depth + 1.01,
         })
       : null;
 
