@@ -35,7 +35,7 @@ export function resolveDriverSeat(visualOrCar = {}) {
     y: Number.isFinite(Number(override.y)) ? Number(override.y) : fallbackY,
     height: Number.isFinite(Number(override.height)) ? Number(override.height) : fallbackHeight,
     alpha: clamp(
-      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.66,
+      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.46,
       0.05,
       1
     ),
