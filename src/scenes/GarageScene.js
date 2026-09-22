@@ -779,10 +779,11 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('selectedCarId', remaining[0] || null);
           saveSessionState(this.registry);
           close();
-          this.scene.start('BootScene', {
-            preserveRegistry: true,
-            bootMessage: 'MOVING CAR',
-          });
+          try {
+            sessionStorage.setItem('tokyoShiftInternalReload', '1');
+            sessionStorage.setItem('tokyoShiftBootMessage', 'MOVING CAR');
+          } catch (e) {}
+          window.location.reload();
         });
       }
     });
@@ -896,13 +897,15 @@ export default class GarageScene extends Phaser.Scene {
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
-          // Never transition GarageScene directly to itself. That path has
-          // proven unstable on mobile Phaser/PWA builds. Route through BootScene,
-          // preserving the live registry, then BootScene opens a clean GarageScene.
-          this.scene.start('BootScene', {
-            preserveRegistry: true,
-            bootMessage: 'OPENING WORKSHOP',
-          });
+          // Workshop changes are rare, high-level actions. On iOS/PWA the
+          // Phaser scene/input lifecycle has repeatedly stalled while switching
+          // from the GPS overlay. Persist the live session and perform a clean
+          // browser reload instead of another Phaser scene transition.
+          try {
+            sessionStorage.setItem('tokyoShiftInternalReload', '1');
+            sessionStorage.setItem('tokyoShiftBootMessage', 'OPENING WORKSHOP');
+          } catch (e) {}
+          window.location.reload();
         },
         onTravel: (locationId, cost) => {
           if (!this.selectedCarId) {
