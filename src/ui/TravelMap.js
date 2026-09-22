@@ -15,11 +15,11 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260922-r125';
+} from '../data/travelRegions.js?v=20260922-r130';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20260922-r128';
+} from '../data/centralTokyo.js?v=20260922-r130';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
