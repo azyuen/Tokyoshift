@@ -527,6 +527,7 @@ export default class MeetScene extends Phaser.Scene {
     // document reload instead. BootScene is invisible, so this feels direct.
     try {
       sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
       sessionStorage.removeItem('tokyoShiftBootMessage');
     } catch (e) {}
 
