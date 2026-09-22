@@ -67,17 +67,7 @@ export default class BootScene extends Phaser.Scene {
 
     this.load.image(
       'travelMapTokyoRegion',
-      'assets/Ui/tokyo_region_map.png?v=20260921-r77'
-    );
-
-    this.load.image(
-      'travelMapCentralTokyoOverlay',
-      'assets/Ui/central_tokyo_unlock_overlay.png?v=20260922-r131'
-    );
-
-    this.load.image(
-      'travelMapTokyoRegionCentralUnlocked',
-      'assets/Ui/tokyo_region_map_central_tokyo_unlocked.png?v=20260922-r131'
+      'assets/Ui/tokyo_region_map_base.png?v=20260923-r139'
     );
 
     garageAssets
