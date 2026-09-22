@@ -287,12 +287,14 @@ export function normaliseState(input = {}) {
     input.carGarageLocations || {},
     garageTier
   );
-  const devName = (
+  const joinedDevName = (
     String(input.firstName || '').trim().toLowerCase() +
     String(input.lastName || '').trim().toLowerCase()
-  ).replace(/[^a-z0-9]/g, '') === 'arkonden';
-  const devMode = Boolean(input.devMode || devName);
+  ).replace(/[^a-z0-9]/g, '');
   const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
+  const devName = joinedDevName.includes('arkonden');
+  const legacyDevCash = rawCash >= 900000000;
+  const devMode = Boolean(input.devMode || devName || legacyDevCash);
   const normalisedCash = devName && !input.devMode
     ? Math.max(rawCash, 1000000000)
     : rawCash;
