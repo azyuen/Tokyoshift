@@ -25,6 +25,7 @@ import {
   getEncounterProfile,
   getEncounterSkillLabel,
   getEncounterAi,
+  boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260921-r76';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1918,6 +1919,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
+    if (this.specialChallengeActive) return;
     if (Date.now() >= this.nextRefreshAt) this.refreshOffersWithTransition();
   }
 
@@ -1950,25 +1952,33 @@ export default class MeetScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
       onComplete: () => {
         this.refreshAllLocationOffers({ resetTimer: true, persist: true });
-        this.rollOffers({ resetTimer: false });
+        const challenger = this.maybeGenerateSpecialChallenger();
+
+        if (challenger) {
+          this.showSpecialChallenger(challenger, true);
+        } else {
+          this.rollOffers({ resetTimer: false });
+        }
 
         const noteBg = this.add.rectangle(
           STAGE.x + STAGE.w - 200,
           STAGE.y + 32,
           370,
           44,
-          0x07111d,
+          challenger ? 0x351522 : 0x07111d,
           0.94
-        ).setStrokeStyle(1, 0x4bdcff, 0.8).setDepth(84);
+        ).setStrokeStyle(1, challenger ? 0xff5f93 : 0x4bdcff, 0.8).setDepth(84);
 
         const note = this.add.text(
           STAGE.x + STAGE.w - 24,
           STAGE.y + 32,
-          '15 MINUTES LATER // NEW RACERS',
+          challenger
+            ? '15 MINUTES LATER // SOMEONE PULLED IN'
+            : '15 MINUTES LATER // NEW RACERS',
           {
             fontFamily: PIXEL_FONT,
             fontSize: '8px',
-            color: '#dff8ff',
+            color: challenger ? '#ffe4ee' : '#dff8ff',
           }
         ).setOrigin(1, 0.5).setDepth(85);
 
