@@ -28,6 +28,7 @@ const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
 const CENTRAL_TOKYO_OVERLAY_TEXTURE = 'travelMapCentralTokyoOverlay';
+const CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE = 'travelMapTokyoRegionCentralUnlocked';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 
 // The map now owns the whole framed popup. Everything else floats over it.
@@ -208,21 +209,28 @@ export function showTravelMap(scene, {
     const centralTokyoUnlocked = Boolean(
       TRAVEL_REGIONS.CENTRAL_TOKYO?.locations?.some(locationAvailable)
     );
-    if (
-      centralTokyoUnlocked &&
-      scene.textures.exists(CENTRAL_TOKYO_OVERLAY_TEXTURE)
-    ) {
-      const unlockOverlay = add(scene.add.image(
-        art.x + art.w / 2,
-        art.y + art.h / 2,
-        CENTRAL_TOKYO_OVERLAY_TEXTURE
-      ).setDisplaySize(art.w, art.h).setDepth(depth + 2.08));
 
-      const overlayMaskShape = scene.make.graphics({ add: false });
-      overlayMaskShape.fillStyle(0xffffff, 1);
-      overlayMaskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
-      unlockOverlay.setMask(overlayMaskShape.createGeometryMask());
-      objects.push(overlayMaskShape);
+    if (centralTokyoUnlocked) {
+      // Preferred behaviour: keep the original map pixel-for-pixel and reveal
+      // only the transparent yellow CENTRAL TOKYO tag/node over the old TOKYO label.
+      if (scene.textures.exists(CENTRAL_TOKYO_OVERLAY_TEXTURE)) {
+        const unlockOverlay = add(scene.add.image(
+          art.x + art.w / 2,
+          art.y + art.h / 2,
+          CENTRAL_TOKYO_OVERLAY_TEXTURE
+        ).setDisplaySize(art.w, art.h).setDepth(depth + 2.08));
+
+        const overlayMaskShape = scene.make.graphics({ add: false });
+        overlayMaskShape.fillStyle(0xffffff, 1);
+        overlayMaskShape.fillRect(MAP.x, MAP.y, MAP.w, MAP.h);
+        unlockOverlay.setMask(overlayMaskShape.createGeometryMask());
+        objects.push(overlayMaskShape);
+      } else if (scene.textures.exists(CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE)) {
+        // Full-map file is kept only as a safety fallback if the overlay asset
+        // has not been uploaded yet.
+        mapImage.setTexture(CENTRAL_TOKYO_UNLOCKED_MAP_TEXTURE)
+          .setDisplaySize(art.w, art.h);
+      }
     }
   } else {
     add(scene.add.rectangle(
@@ -400,6 +408,17 @@ export function showTravelMap(scene, {
       const active = regionId === selectedRegionId;
       const here = regionId === currentRegionId;
       const home = regionId === HOME_REGION_ID;
+      const centralTokyo = regionId === 'CENTRAL_TOKYO';
+
+      // CENTRAL TOKYO's visible state is entirely baked into the unlock overlay.
+      // Keep Phaser's circles invisible so the reveal remains exactly the art
+      // supplied by the map asset. The transparent hit target stays active.
+      if (centralTokyo) {
+        item.glow.setVisible(false);
+        item.ring.setVisible(false);
+        item.core.setVisible(false);
+        return;
+      }
 
       if (!item.unlocked) {
         item.glow.setRadius(active ? 24 : 20)
@@ -754,7 +773,15 @@ export function showTravelMap(scene, {
       unlocked ? 0.95 : 0.70
     ).setDepth(depth + 7));
 
-    const hit = add(scene.add.circle(pt.x, pt.y, 38, 0x000000, 0.001)
+    if (centralTokyo) {
+      // Before unlock the original grey TOKYO text remains untouched.
+      // After unlock the transparent PNG supplies the yellow tag and marker.
+      glow.setVisible(false);
+      ring.setVisible(false);
+      core.setVisible(false);
+    }
+
+    const hit = add(scene.add.circle(pt.x, pt.y, centralTokyo ? 54 : 38, 0x000000, 0.001)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 8));
 
