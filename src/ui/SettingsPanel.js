@@ -1,16 +1,16 @@
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
-import { saveIdentityState, clearAllSaves } from '../state/GameState.js?v=20260922-r86';
+import { characters } from '../data/characters.js?v=20260922-r111';
+import {
+  getProfileSlots,
+  getActiveProfileIndex,
+  beginNewProfile,
+  deleteProfileSlot,
+  activateProfile,
+  saveSessionState,
+} from '../state/GameState.js?v=20260922-r115';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
-
-function escapeHtml(value = '') {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
-}
 
 function destroyObjects(objects = []) {
   objects.forEach(obj => {
@@ -26,11 +26,12 @@ function drawCog(scene, x, y, depth = 44) {
 
   for (let i = 0; i < 8; i++) {
     const a = i * Math.PI / 4;
-    const x1 = x + Math.cos(a) * 11;
-    const y1 = y + Math.sin(a) * 11;
-    const x2 = x + Math.cos(a) * 15;
-    const y2 = y + Math.sin(a) * 15;
-    g.lineBetween(x1, y1, x2, y2);
+    g.lineBetween(
+      x + Math.cos(a) * 11,
+      y + Math.sin(a) * 11,
+      x + Math.cos(a) * 15,
+      y + Math.sin(a) * 15
+    );
   }
 
   return g;
@@ -55,39 +56,42 @@ export function showSettingsPanel(scene) {
   if (scene._settingsOverlay?.length) return;
 
   const objects = [];
+  const masks = [];
   const add = obj => {
     objects.push(obj);
     return obj;
   };
+
   scene._settingsOverlay = objects;
 
   const close = () => {
-    try { scene._settingsNameDom?.destroy?.(); } catch (e) {}
-    scene._settingsNameDom = null;
+    masks.forEach(maskShape => {
+      try { maskShape?.destroy?.(); } catch (e) {}
+    });
     destroyObjects(objects);
     scene._settingsOverlay = [];
   };
 
-  const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.74)
     .setDepth(180)
     .setInteractive());
 
-  const panel = add(scene.add.rectangle(780, 420, 760, 650, 0x08131f, 0.995)
+  add(scene.add.rectangle(780, 420, 850, 700, 0x08131f, 0.995)
     .setStrokeStyle(2, 0x43dfff, 0.92)
     .setDepth(181));
 
-  add(scene.add.text(430, 122, 'SETTINGS', {
+  add(scene.add.text(390, 95, 'SETTINGS', {
     fontFamily: PIXEL_FONT,
     fontSize: '15px',
     color: '#eefaff',
   }).setDepth(183));
 
-  const closeButton = add(scene.add.rectangle(1095, 126, 100, 38, 0x141d28, 1)
+  const closeButton = add(scene.add.rectangle(1130, 100, 100, 38, 0x141d28, 1)
     .setStrokeStyle(1, 0x678192, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(183));
 
-  add(scene.add.text(1095, 126, 'CLOSE', {
+  add(scene.add.text(1130, 100, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#cbdce6',
@@ -98,22 +102,22 @@ export function showSettingsPanel(scene) {
   let settings = getAudioSettings();
 
   const buildVolumeRow = (label, y, key) => {
-    add(scene.add.text(450, y, label, {
+    add(scene.add.text(410, y, label, {
       fontFamily: PIXEL_FONT,
-      fontSize: '9px',
+      fontSize: '8px',
       color: '#a8d4ec',
     }).setOrigin(0, 0.5).setDepth(183));
 
-    const percentText = add(scene.add.text(1090, y, '', {
+    const percentText = add(scene.add.text(1145, y, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '8px',
+      fontSize: '7px',
       color: '#ffffff',
     }).setOrigin(1, 0.5).setDepth(183));
 
     const segments = [];
     for (let i = 0; i < 10; i++) {
-      const x = 650 + i * 38;
-      const seg = add(scene.add.rectangle(x, y, 28, 22, 0x102233, 1)
+      const x = 640 + i * 40;
+      const seg = add(scene.add.rectangle(x, y, 29, 22, 0x102233, 1)
         .setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(183));
@@ -128,22 +132,19 @@ export function showSettingsPanel(scene) {
       });
     }
 
-    const mute = add(scene.add.rectangle(594, y, 70, 28, 0x151b23, 1)
+    const mute = add(scene.add.rectangle(570, y, 76, 28, 0x151b23, 1)
       .setStrokeStyle(1, 0x526978, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(183));
 
-    add(scene.add.text(594, y, 'MUTE', {
+    add(scene.add.text(570, y, 'MUTE', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#aabac4',
     }).setOrigin(0.5).setDepth(184));
 
     mute.on('pointerdown', () => {
-      settings = setAudioSettings({
-        ...settings,
-        [key]: 0,
-      });
+      settings = setAudioSettings({ ...settings, [key]: 0 });
       refresh();
     });
 
@@ -160,129 +161,54 @@ export function showSettingsPanel(scene) {
     refresh();
   };
 
-  buildVolumeRow('MUSIC', 205, 'music');
-  buildVolumeRow('SOUND FX', 265, 'sfx');
+  buildVolumeRow('MUSIC', 165, 'music');
+  buildVolumeRow('SOUND FX', 220, 'sfx');
 
-  add(scene.add.line(780, 316, 430, 0, 1130, 0, 0x315470, 0.9).setDepth(182));
+  add(scene.add.line(780, 266, 390, 0, 1170, 0, 0x315470, 0.9).setDepth(182));
 
-  add(scene.add.text(450, 345, 'DRIVER NAME', {
+  add(scene.add.text(410, 292, 'DRIVER PROFILES', {
     fontFamily: PIXEL_FONT,
     fontSize: '9px',
     color: '#a8d4ec',
   }).setDepth(183));
 
-  const firstName = String(scene.registry.get('firstName') || '');
-  const lastName = String(scene.registry.get('lastName') || '');
-
-  const html = `
-    <div style="width:620px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:Rajdhani,sans-serif;">
-      <input id="settingsFirstName" maxlength="16" placeholder="First name" value="${escapeHtml(firstName)}"
-        style="box-sizing:border-box;width:100%;height:46px;padding:0 14px;border:2px solid #315470;background:#07111d;color:#fff;font:700 17px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
-      <input id="settingsLastName" maxlength="16" placeholder="Last name" value="${escapeHtml(lastName)}"
-        style="box-sizing:border-box;width:100%;height:46px;padding:0 14px;border:2px solid #315470;background:#07111d;color:#fff;font:700 17px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
-    </div>
-  `;
-
-  scene._settingsNameDom = scene.add.dom(780, 405)
-    .createFromHTML(html)
-    .setDepth(184);
-
-  const nameStatus = add(scene.add.text(780, 452, '', {
-    fontFamily: BODY_FONT,
-    fontSize: '9px',
-    color: '#7fcbe9',
-  }).setOrigin(0.5).setDepth(184));
-
-  const saveName = add(scene.add.rectangle(780, 493, 270, 42, 0x0c2827, 1)
-    .setStrokeStyle(2, 0x62e8c7, 1)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(183));
-
-  add(scene.add.text(780, 493, 'SAVE NAME', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '8px',
-    color: '#f1fffb',
-  }).setOrigin(0.5).setDepth(184));
-
-  saveName.on('pointerdown', () => {
-    const root = scene._settingsNameDom?.node;
-    const first = (root?.querySelector?.('#settingsFirstName')?.value || '').trim();
-    const last = (root?.querySelector?.('#settingsLastName')?.value || '').trim();
-
-    if (!first || !last) {
-      nameStatus.setText('ENTER A FIRST AND LAST NAME').setColor('#ff7f91');
-      return;
-    }
-
-    scene.registry.set('firstName', first);
-    scene.registry.set('lastName', last);
-    saveIdentityState(scene.registry);
-    nameStatus.setText('NAME UPDATED').setColor('#73e7c8');
-  });
-
-  add(scene.add.line(780, 542, 430, 0, 1130, 0, 0x315470, 0.9).setDepth(182));
-
-  add(scene.add.text(450, 568, 'NEW GAME', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '9px',
-    color: '#ff9aaa',
-  }).setDepth(183));
-
-  add(scene.add.text(450, 600, 'Restart from the beginning and erase this run.', {
+  add(scene.add.text(1150, 294, '3 SLOTS', {
     fontFamily: BODY_FONT,
     fontSize: '10px',
-    color: '#8299a7',
-  }).setDepth(183));
+    color: '#718a99',
+  }).setOrigin(1, 0).setDepth(183));
 
-  const restart = add(scene.add.rectangle(955, 594, 310, 46, 0x2b151c, 1)
-    .setStrokeStyle(2, 0xff657d, 1)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(183));
+  const slots = getProfileSlots();
+  const activeIndex = getActiveProfileIndex();
+  const cardXs = [535, 780, 1025];
 
-  add(scene.add.text(955, 594, 'RESTART GAME', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '8px',
-    color: '#ffe2e8',
-  }).setOrigin(0.5).setDepth(184));
-
-  restart.on('pointerdown', () => {
+  const showDeleteConfirm = (slot) => {
     const confirmObjects = [];
     const addConfirm = obj => {
       confirmObjects.push(obj);
       return obj;
     };
 
-    // Phaser DOM inputs live above the canvas regardless of GameObject depth.
-    // Hide them while the restart confirmation is open so the modal truly covers Settings.
-    const settingsNameDom = scene._settingsNameDom;
-    try {
-      settingsNameDom?.node?.querySelectorAll?.('input')?.forEach?.(input => input.blur());
-      settingsNameDom?.setVisible?.(false);
-    } catch (e) {}
+    const fullName = [slot.firstName, slot.lastName].filter(Boolean).join(' ') || 'THIS DRIVER';
 
-    const closeConfirm = () => {
-      destroyObjects(confirmObjects);
-      try { settingsNameDom?.setVisible?.(true); } catch (e) {}
-    };
-
-    addConfirm(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
-      .setDepth(210)
+    addConfirm(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.86)
+      .setDepth(220)
       .setInteractive());
 
     addConfirm(scene.add.rectangle(780, 420, 650, 330, 0x09121d, 1)
       .setStrokeStyle(2, 0xff657d, 1)
-      .setDepth(211));
+      .setDepth(221));
 
-    addConfirm(scene.add.text(780, 325, 'RESTART THIS RUN?', {
+    addConfirm(scene.add.text(780, 322, 'DELETE PROFILE?', {
       fontFamily: PIXEL_FONT,
       fontSize: '13px',
       color: '#fff2f4',
-    }).setOrigin(0.5).setDepth(212));
+    }).setOrigin(0.5).setDepth(222));
 
     addConfirm(scene.add.text(
       780,
       385,
-      'This permanently deletes your cash, cars, tuning, wins, losses and restore point.',
+      fullName.toUpperCase() + '\nCars, cash, tuning and save data in this slot will be permanently deleted.',
       {
         fontFamily: BODY_FONT,
         fontSize: '11px',
@@ -290,42 +216,195 @@ export function showSettingsPanel(scene) {
         align: 'center',
         wordWrap: { width: 520 },
       }
-    ).setOrigin(0.5).setDepth(212));
-
-    addConfirm(scene.add.text(780, 437, 'THIS CANNOT BE UNDONE.', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#ff7188',
-    }).setOrigin(0.5).setDepth(212));
+    ).setOrigin(0.5).setDepth(222));
 
     const cancel = addConfirm(scene.add.rectangle(665, 505, 190, 44, 0x10202a, 1)
       .setStrokeStyle(1, 0x617987, 1)
       .setInteractive({ useHandCursor: true })
-      .setDepth(212));
+      .setDepth(222));
 
     addConfirm(scene.add.text(665, 505, 'CANCEL', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d9e7ef'
-    }).setOrigin(0.5).setDepth(213));
+    }).setOrigin(0.5).setDepth(223));
 
     const confirm = addConfirm(scene.add.rectangle(895, 505, 190, 44, 0x32151e, 1)
       .setStrokeStyle(2, 0xff657d, 1)
       .setInteractive({ useHandCursor: true })
-      .setDepth(212));
+      .setDepth(222));
 
-    addConfirm(scene.add.text(895, 505, 'YES, RESTART', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe2e8'
-    }).setOrigin(0.5).setDepth(213));
+    addConfirm(scene.add.text(895, 505, 'DELETE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe2e8'
+    }).setOrigin(0.5).setDepth(223));
 
-    cancel.on('pointerdown', closeConfirm);
+    const dismiss = () => destroyObjects(confirmObjects);
+    cancel.on('pointerdown', dismiss);
+
     confirm.on('pointerdown', () => {
-      clearAllSaves();
+      const deletingActive = slot.index === getActiveProfileIndex();
+      deleteProfileSlot(slot.index);
+      dismiss();
       close();
-      destroyObjects(confirmObjects);
-      scene.scene.start('CharacterSelectScene');
+
+      if (deletingActive) {
+        beginNewProfile(slot.index);
+        window.TOKYO_SHIFT_SHOW_SPLASH?.('CREATING DRIVER');
+        window.TOKYO_SHIFT_SET_LOADING?.(0.45, 'CREATING DRIVER');
+        scene.scene.start('CharacterSelectScene');
+      } else {
+        showSettingsPanel(scene);
+      }
     });
+  };
+
+  slots.forEach((slot, i) => {
+    const x = cardXs[i];
+    const occupied = slot.occupied;
+    const active = i === activeIndex;
+
+    const card = add(scene.add.rectangle(x, 455, 210, 285, active ? 0x10283a : 0x0a1723, 1)
+      .setStrokeStyle(active ? 3 : 2, active ? 0x48dfff : 0x29485e, 1)
+      .setDepth(183)
+      .setInteractive({ useHandCursor: true }));
+
+    add(scene.add.text(x - 88, 329, 'SLOT ' + (i + 1), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: active ? '#65e4ff' : '#7894a5',
+    }).setDepth(184));
+
+    if (!occupied) {
+      add(scene.add.rectangle(x, 414, 112, 112, 0x0b1119, 1)
+        .setStrokeStyle(2, 0x37556a, 1)
+        .setDepth(184));
+
+      add(scene.add.text(x, 410, '+', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '30px',
+        color: '#55dfff',
+      }).setOrigin(0.5).setDepth(185));
+
+      add(scene.add.text(x, 495, 'NEW DRIVER', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff9ff',
+      }).setOrigin(0.5).setDepth(185));
+
+      add(scene.add.text(x, 530, 'Tap to start', {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#78909e',
+      }).setOrigin(0.5).setDepth(185));
+
+      card.on('pointerdown', () => {
+        saveSessionState(scene.registry);
+        beginNewProfile(i);
+        close();
+        window.TOKYO_SHIFT_SHOW_SPLASH?.('CREATING DRIVER');
+        window.TOKYO_SHIFT_SET_LOADING?.(0.45, 'CREATING DRIVER');
+        scene.scene.start('CharacterSelectScene');
+      });
+      return;
+    }
+
+    const character = characters[slot.playerCharacterId] || characters.renMizuno;
+    const portraitX = x;
+    const portraitY = 414;
+    const portraitSize = 112;
+
+    add(scene.add.rectangle(portraitX, portraitY, portraitSize, portraitSize, 0x101b27, 1)
+      .setStrokeStyle(1, active ? 0x49dfff : 0x315470, 1)
+      .setDepth(184));
+
+    if (scene.textures.exists(character.visual.spriteKey)) {
+      const source = scene.textures.get(character.visual.spriteKey).getSourceImage();
+      const maskShape = scene.make.graphics({ add: false });
+      maskShape.fillStyle(0xffffff, 1);
+      maskShape.fillRect(
+        portraitX - portraitSize / 2,
+        portraitY - portraitSize / 2,
+        portraitSize,
+        portraitSize
+      );
+      masks.push(maskShape);
+
+      const portrait = add(scene.add.image(
+        portraitX,
+        portraitY - portraitSize / 2 - 8,
+        character.visual.spriteKey
+      ).setOrigin(0.5, 0).setDepth(185));
+
+      portrait.setScale(330 / source.height);
+      portrait.setMask(maskShape.createGeometryMask());
+    }
+
+    const name = [slot.firstName, slot.lastName].filter(Boolean).join(' ') || character.name;
+    add(scene.add.text(x, 492, name.toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: 180 },
+    }).setOrigin(0.5).setDepth(185));
+
+    add(scene.add.text(
+      x,
+      526,
+      slot.carCount + ' CAR' + (slot.carCount === 1 ? '' : 'S') + '  •  ¥' + slot.cash.toLocaleString('en-US'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#88a4b4',
+      }
+    ).setOrigin(0.5).setDepth(185));
+
+    if (active) {
+      add(scene.add.text(x, 556, 'ACTIVE', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#64e5ff',
+      }).setOrigin(0.5).setDepth(185));
+    } else {
+      add(scene.add.text(x, 556, 'TAP TO SWITCH', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#9ac5d9',
+      }).setOrigin(0.5).setDepth(185));
+
+      card.on('pointerdown', () => {
+        saveSessionState(scene.registry);
+        const state = activateProfile(scene.registry, i, true);
+        close();
+        window.TOKYO_SHIFT_SHOW_SPLASH?.('SWITCHING DRIVER');
+        window.TOKYO_SHIFT_SET_LOADING?.(0.62, 'LOADING PROFILE');
+        scene.scene.start(state && !state.gameOver ? 'GarageScene' : 'CharacterSelectScene');
+      });
+    }
+
+    const deleteButton = add(scene.add.rectangle(x, 587, 116, 28, 0x25141a, 1)
+      .setStrokeStyle(1, 0x965266, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(188));
+
+    add(scene.add.text(x, 587, 'DELETE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#ffafbd',
+    }).setOrigin(0.5).setDepth(189));
+
+    deleteButton.on('pointerdown', () => showDeleteConfirm(slot));
   });
 
-  // The full-screen blocker only prevents clicks reaching the game beneath the
-  // modal. Do not close Settings when it is tapped: touch events from controls
-  // can also reach the blocker on mobile. Settings closes only via CLOSE.
+  add(scene.add.line(780, 625, 390, 0, 1170, 0, 0x315470, 0.9).setDepth(182));
+
+  add(scene.add.text(780, 656, 'Driver names are set when a profile is created.', {
+    fontFamily: BODY_FONT,
+    fontSize: '10px',
+    color: '#8099a8',
+  }).setOrigin(0.5).setDepth(183));
+
+  add(scene.add.text(780, 690, 'Each profile keeps its own cars, cash, tuning and Workshop save.', {
+    fontFamily: BODY_FONT,
+    fontSize: '10px',
+    color: '#8099a8',
+  }).setOrigin(0.5).setDepth(183));
 }
