@@ -40,6 +40,7 @@ import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r130';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getPendingCentralTokyoInvite,
+  isArkonDen,
 } from '../data/centralTokyo.js?v=20260922-r130';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
@@ -1041,6 +1042,14 @@ export default class GarageScene extends Phaser.Scene {
 
     button.on('pointerdown', () => {
       this.registry.set('selectedCarId', this.selectedCarId);
+
+      // Old Arkon Den profiles pre-date the persisted devMode flag. Promote the
+      // live registry before the workshop map evaluates unlocks so dev access
+      // is identical whether the map is opened from Garage or Meet.
+      if (isArkonDen(this.registry)) {
+        this.registry.set('devMode', true);
+      }
+
       this.saveProfile();
 
       showTravelMap(this, {
