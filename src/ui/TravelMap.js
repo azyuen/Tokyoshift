@@ -120,13 +120,9 @@ export function showTravelMap(scene, {
   const runWorkshopAction = (location, cost, unlocked) => {
     if (workshopActionPending) return;
     workshopActionPending = true;
-
-    travelButton.disableInteractive()
-      .setFillStyle(0x10202a, 1)
-      .setStrokeStyle(1, 0x4f788b, 1);
     travelLabel.setColor('#7fcfe8').setText('OPENING WORKSHOP...');
 
-    scene.time.delayedCall(32, () => {
+    window.setTimeout(() => {
       try {
         onWorkshopUpgrade?.(location, cost, unlocked);
       } catch (error) {
@@ -134,7 +130,7 @@ export function showTravelMap(scene, {
         workshopActionPending = false;
         refreshAction(location);
       }
-    });
+    }, 0);
   };
 
   const blocker = add(scene.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
