@@ -7,7 +7,7 @@ import {
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r115';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r118';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -30,6 +30,19 @@ export default class CharacterSelectScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'setup';
     this.scale.resize(1560, 840);
+
+    // Scene instances and the shared Phaser DOM container are reused. Always
+    // restore both when entering driver creation from Settings.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
+    const domContainer = this.sys?.game?.domContainer;
+    if (domContainer?.style) {
+      domContainer.style.display = 'block';
+      domContainer.style.visibility = 'visible';
+      domContainer.style.opacity = '1';
+      domContainer.style.pointerEvents = 'auto';
+    }
+
     playMusic('title');
 
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(playableCharacterOrder);
@@ -152,7 +165,20 @@ export default class CharacterSelectScene extends Phaser.Scene {
       </div>
     `;
 
-    this.nameDom = this.add.dom(780, 408).createFromHTML(html);
+    this.nameDom = this.add.dom(780, 408)
+      .createFromHTML(html)
+      .setDepth(30)
+      .setVisible(true)
+      .setAlpha(1);
+
+    // iOS PWA safeguard: Phaser's shared DOM container can retain stale scene
+    // visibility after switching profiles. Re-assert visibility after creation.
+    if (this.nameDom?.node?.style) {
+      this.nameDom.node.style.display = 'block';
+      this.nameDom.node.style.visibility = 'visible';
+      this.nameDom.node.style.opacity = '1';
+      this.nameDom.node.style.pointerEvents = 'auto';
+    }
 
     // Native text entry must win over Phaser keyboard shortcuts/captures.
     // Clearing captures also fixes the stray "R" key issue seen on mobile keyboards.
