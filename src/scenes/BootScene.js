@@ -42,6 +42,23 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('wheelMesh', 'assets/wheels/wheel_mesh.png');
     this.load.image('wheelDeepDish', 'assets/wheels/wheel_deepdish.png');
 
+    // Hero/collector cars can ship their own wheel sprite. Keeping the path in
+    // cars.js means each one automatically works in the workshop, meets,
+    // racing and result screens without scene-specific wheel code.
+    Object.values(cars).forEach(car => {
+      const visual = car?.visual || {};
+      if (
+        visual.wheelKey &&
+        visual.wheelPath &&
+        !this.textures.exists(visual.wheelKey)
+      ) {
+        this.load.image(
+          visual.wheelKey,
+          visual.wheelPath + '?v=20260923-r134'
+        );
+      }
+    });
+
     this.load.image(
       'travelMapTokyoBay',
       'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77'
