@@ -933,6 +933,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'PINK_SLIP');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', true);
+    this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
     this.registry.set('raceTimeOfDay', location.timeOfDay);
