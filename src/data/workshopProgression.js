@@ -108,6 +108,19 @@ export function isWorkshopUnlocked(locationId, tier = 0) {
   return getWorkshopByLocationId(locationId).tier <= clampWorkshopTier(tier);
 }
 
+export function getWorkshopTransferCost(fromLocationId, toLocationId) {
+  const from = getWorkshopByLocationId(fromLocationId);
+  const to = getWorkshopByLocationId(toLocationId);
+  if (!from || !to || from.id === to.id) return 0;
+
+  const tierDistance = Math.abs(Number(from.tier || 0) - Number(to.tier || 0));
+  const furthestTier = Math.max(Number(from.tier || 0), Number(to.tier || 0));
+
+  // Local vehicle transport between Shinonome properties: meaningful enough
+  // to discourage constant shuffling, but far cheaper than buying/upgrading.
+  return Math.max(0, Math.round((2500 + tierDistance * 1500 + furthestTier * 500) / 500) * 500);
+}
+
 export function getWorkshopServiceMultiplier(locationOrTier = 0) {
   const workshop = typeof locationOrTier === 'string'
     ? getWorkshopByLocationId(locationOrTier)
