@@ -53,6 +53,7 @@ export function createDefaultGameState() {
     challengerCooldown: 0,
     competitionOffers: {},
     competitionState: null,
+    competitionCooldownUntil: 0,
     meetStranded: false,
     gameOver: false,
   };
@@ -184,6 +185,7 @@ export function normaliseState(input = {}) {
     competitionState: input.competitionState && typeof input.competitionState === 'object'
       ? input.competitionState
       : null,
+    competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
     meetStranded: Boolean(input.meetStranded && owned.length > 0),
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
@@ -221,6 +223,7 @@ export function snapshotRegistry(registry) {
     challengerCooldown: Number(registry.get('challengerCooldown') || 0),
     competitionOffers: registry.get('competitionOffers') || {},
     competitionState: registry.get('competitionState') || null,
+    competitionCooldownUntil: Number(registry.get('competitionCooldownUntil') || 0),
     meetStranded: Boolean(registry.get('meetStranded')),
     gameOver: registry.get('gameOver') || false,
   });
