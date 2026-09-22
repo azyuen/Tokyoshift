@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r109';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r124';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
