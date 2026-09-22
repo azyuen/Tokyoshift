@@ -1,8 +1,8 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r86';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r94';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r93';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r94';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -84,8 +84,8 @@ export default class BootScene extends Phaser.Scene {
       780,
       425,
       this.bootMessage
-        ? this.bootMessage + ' // R93'
-        : saved ? 'LOADING SAVE // R93' : 'NEW RUN // R93',
+        ? this.bootMessage + ' // R94'
+        : saved ? 'LOADING SAVE // R94' : 'NEW RUN // R94',
       {
         fontFamily: '"Silkscreen", monospace',
         fontSize: '16px',
