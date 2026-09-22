@@ -54,6 +54,11 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.nameDom?.destroy();
     });
+
+    window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => window.TOKYO_SHIFT_HIDE_SPLASH?.());
+    });
   }
 
   panel(x, y, w, h, title) {
