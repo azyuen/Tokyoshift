@@ -17,10 +17,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r97';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r98';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
-import { getGarageCapacity, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r97';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r98';
+import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r98';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -744,6 +744,34 @@ export default class MeetScene extends Phaser.Scene {
     }
   }
 
+  getTaxiWorkshopDestination() {
+    const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    const locations = this.registry.get('carGarageLocations') || {};
+    const tier = Number(this.registry.get('garageTier') || 0);
+    const unlocked = getUnlockedWorkshops(tier);
+    const activeId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+
+    // Prefer the currently active garage when it still contains another car.
+    if (
+      isWorkshopUnlocked(activeId, tier) &&
+      getCarsInWorkshop(ownedCarIds, locations, activeId).length > 0
+    ) {
+      return activeId;
+    }
+
+    // Otherwise take the player straight to the first unlocked property where
+    // one of their remaining cars is actually stored.
+    const withCar = unlocked.find(workshop =>
+      getCarsInWorkshop(ownedCarIds, locations, workshop.id).length > 0
+    );
+    if (withCar) return withCar.id;
+
+    // If no cars remain, still return to a valid home property.
+    return isWorkshopUnlocked(activeId, tier)
+      ? activeId
+      : 'shinonomeWorkshop';
+  }
+
   applyNoCarMeetState() {
     const stranded = Boolean(this.registry.get('meetStranded'));
     this.selectedSummary?.setText(
@@ -759,14 +787,40 @@ export default class MeetScene extends Phaser.Scene {
     this.pinkSlipButtonLabel?.setText('NO CAR').setColor('#72838f');
     this.pinkResponseText?.setText(
       stranded
-        ? 'Your car was taken. Your other cars are back in Shinonome.'
+        ? 'Your car was taken. Pay for a taxi below to get back to your garage.'
         : 'Your last car is gone.'
     );
 
-    this.raceButton?.disableInteractive()
-      .setFillStyle(0x11161c, 1)
-      .setStrokeStyle(1, 0x46545e, 1);
-    this.raceButtonLabel?.setColor('#72838f').setText('NO CAR // CAN\'T RACE');
+    const taxiCost = TAXI_TO_WORKSHOP_COST;
+    const cash = Number(this.registry.get('cash') || 0);
+    const canAffordTaxi = cash >= taxiCost;
+    const taxiDestinationId = this.getTaxiWorkshopDestination();
+
+    this.raceButton?.removeAllListeners('pointerdown');
+
+    if (canAffordTaxi) {
+      this.raceButton
+        ?.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x272019, 1)
+        .setStrokeStyle(2, 0xffc66d, 1);
+
+      this.raceButtonLabel
+        ?.setColor('#ffe0a8')
+        .setText('TAXI HOME // ¥' + taxiCost.toLocaleString('en-US'));
+
+      this.raceButton?.on('pointerdown', () => {
+        this.returnToWorkshop(taxiDestinationId, taxiCost);
+      });
+    } else {
+      this.raceButton
+        ?.disableInteractive()
+        .setFillStyle(0x171418, 1)
+        .setStrokeStyle(1, 0x5d5141, 1);
+
+      this.raceButtonLabel
+        ?.setColor('#9d866e')
+        .setText('NEED ¥' + taxiCost.toLocaleString('en-US') + ' FOR TAXI');
+    }
 
     this.modeButtons?.forEach(item => {
       item.box.disableInteractive()
