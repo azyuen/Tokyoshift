@@ -4010,6 +4010,12 @@ export default class GarageScene extends Phaser.Scene {
 
   selectUpgrade(name) {
     this.selectedUpgrade = name;
+
+    if (this.selectedCarId && this.isSelectedCarTuningLocked()) {
+      this.refreshTuningCategoryAvailability();
+      return;
+    }
+
     for (const item of this.upgradeButtons) {
       const active = item.name === name;
       item.box.setFillStyle(active ? 0x10283b : 0x0b1724, 1);
