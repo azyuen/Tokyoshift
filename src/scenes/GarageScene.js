@@ -68,6 +68,15 @@ import {
   createCarBodyLayers,
   setCarBodyPaint,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
+import {
+  VISUAL_MOD_SLOT_ORDER,
+  getVisualModCatalog,
+  getVisualModOptions,
+  getVisualModOption,
+  normaliseVisualMods,
+  getVisualModChangeCost,
+  createVisualModLayers,
+} from '../data/visualMods.js?v=20260923-r138';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1197,7 +1206,7 @@ export default class GarageScene extends Phaser.Scene {
     return wheelBottomY - wheelRadius - car.visual.wheelOffsetY * bodyScale;
   }
 
-  createCarDisplay(car, x, y, targetWidth, depth) {
+  createCarDisplay(car, x, y, targetWidth, depth, visualModsOverride = null) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const ratio = car.visual.wheelScale / car.visual.bodyScale;
@@ -1233,13 +1242,24 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.12);
 
     const carStates = this.registry.get('carStates') || {};
-    const paintColor = getCarPaintColor(carStates[car.id] || {});
+    const carState = carStates[car.id] || {};
+    const paintColor = getCarPaintColor(carState);
     const bodyLayers = createCarBodyLayers(this, car, {
       x,
       y,
       scale: bodyScale,
       depth: depth + 1,
       paintColor,
+    });
+
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1.005,
+      paintColor,
+      visualMods: visualModsOverride,
+      bodyLayers,
     });
 
     return [
@@ -1249,6 +1269,7 @@ export default class GarageScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       ...bodyLayers.objects,
+      ...visualModObjects,
     ];
   }
 
@@ -2328,6 +2349,8 @@ export default class GarageScene extends Phaser.Scene {
     this.pendingPaintColor = this.currentPaintColor;
     this.currentChassisTuning = getChassisTuning(state);
     this.pendingChassisTuning = { ...this.currentChassisTuning };
+    this.currentVisualMods = normaliseVisualMods(this.selectedCarId, state);
+    this.pendingVisualMods = { ...this.currentVisualMods };
     this.chassisModeObjects = [];
     this.chassisModalObjects = [];
     this.chassisPaintObjects = [];
@@ -2335,6 +2358,7 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
     this.chassisPaintChannelButtons = [];
+    this.chassisVisualModRows = {};
     this.chassisPaintPanelOpen = false;
     this.updateGarageNavState();
 
