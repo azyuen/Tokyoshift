@@ -21,7 +21,7 @@ import { saveSessionState } from '../state/GameState.js?v=20260922-r115';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r115';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r98';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r98';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r116';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
