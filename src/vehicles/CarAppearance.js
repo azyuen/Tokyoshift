@@ -52,13 +52,13 @@ export function getCarAssetPaths(visualOrCar = {}, cacheBust = '') {
 }
 
 /**
- * Every car automatically receives the same 3-file appearance convention:
+ * Standard cars use the 3-file appearance convention:
  *   <assetStem>_body.png          legacy/dev fallback
  *   <assetStem>_body_paint.png    grayscale tint layer
  *   <assetStem>_body_overlay.png  fixed windows/lights/trim/details
  *
- * New cars therefore need no bespoke loader code. Add the car to cars.js and
- * provide the standard files. If assetStem is omitted, the car id is used.
+ * Unique hero cars can set visual.singleBody = true and provide only the
+ * finished <assetStem>_body.png.
  */
 export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
   Object.values(carMap || {}).forEach(car => {
@@ -66,6 +66,11 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
     const paths = getCarAssetPaths(car, cacheBust);
 
     scene.load.image(keys.body, paths.body);
+
+    // Ginza hero cars are deliberately fixed one-off builds. They ship as one
+    // finished body PNG and must never request paint/overlay layers.
+    if (car?.visual?.singleBody) return;
+
     scene.load.image(keys.paint, paths.paint);
     scene.load.image(keys.overlay, paths.overlay);
   });
@@ -107,6 +112,9 @@ export function rgbToPaintColor(r, g, b) {
 }
 
 export function hasLayeredPaintAssets(scene, visualOrCar) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
+  if (visual.singleBody) return false;
+
   const keys = getCarTextureKeys(visualOrCar);
   return Boolean(
     scene?.textures?.exists?.(keys.paint)
