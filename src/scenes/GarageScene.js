@@ -27,7 +27,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r124';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r125';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r123';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
