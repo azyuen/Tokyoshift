@@ -52,10 +52,10 @@ export const ENGINE_TUNING_PARTS = {
     name: 'INTERCOOLER',
     subtitle: 'CHARGE COOLING',
     levels: [
-      { level: 0, name: 'Factory cooling', cost: 0, torqueScale: 1.00, spoolScale: 1.00, benefit: 'Stock charge cooling' },
-      { level: 1, name: 'Upgraded core', cost: 12000, torqueScale: 1.01, spoolScale: 1.01, benefit: '+1% output / consistency' },
-      { level: 2, name: 'Front-mount kit', cost: 26000, torqueScale: 1.025, spoolScale: 1.03, benefit: '+2.5% output / response' },
-      { level: 3, name: 'Race intercooler', cost: 50000, torqueScale: 1.04, spoolScale: 1.05, benefit: '+4% output / response' },
+      { level: 0, name: 'Factory cooling', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntercoolerL0', benefit: 'Stock charge cooling' },
+      { level: 1, name: 'Upgraded core', cost: 12000, torqueScale: 1.01, spoolScale: 1.01, spriteKey: 'tuningPartIntercoolerL1', benefit: '+1% output / consistency' },
+      { level: 2, name: 'Front-mount kit', cost: 26000, torqueScale: 1.025, spoolScale: 1.03, spriteKey: 'tuningPartIntercoolerL2', benefit: '+2.5% output / response' },
+      { level: 3, name: 'Race intercooler', cost: 50000, torqueScale: 1.04, spoolScale: 1.05, spriteKey: 'tuningPartIntercoolerL3', benefit: '+4% output / response' },
     ],
   },
   exhaust: {
@@ -63,10 +63,10 @@ export const ENGINE_TUNING_PARTS = {
     name: 'EXHAUST',
     subtitle: 'FLOW',
     levels: [
-      { level: 0, name: 'Stock exhaust', cost: 0, torqueScale: 1.00, massDelta: 0, benefit: 'Factory exhaust' },
-      { level: 1, name: 'Axle-back', cost: 9000, torqueScale: 1.015, massDelta: -2, benefit: '+1.5% output / -2 kg' },
-      { level: 2, name: 'Cat-back system', cost: 20000, torqueScale: 1.035, massDelta: -4, benefit: '+3.5% output / -4 kg' },
-      { level: 3, name: 'Race exhaust', cost: 42000, torqueScale: 1.06, massDelta: -7, benefit: '+6% output / -7 kg' },
+      { level: 0, name: 'Stock exhaust', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartEngineExhaustL0', benefit: 'Factory exhaust' },
+      { level: 1, name: 'Axle-back', cost: 9000, torqueScale: 1.015, massDelta: -2, spriteKey: 'tuningPartEngineExhaustL1', benefit: '+1.5% output / -2 kg' },
+      { level: 2, name: 'Cat-back system', cost: 20000, torqueScale: 1.035, massDelta: -4, spriteKey: 'tuningPartEngineExhaustL2', benefit: '+3.5% output / -4 kg' },
+      { level: 3, name: 'Race exhaust', cost: 42000, torqueScale: 1.06, massDelta: -7, spriteKey: 'tuningPartEngineExhaustL3', benefit: '+6% output / -7 kg' },
     ],
   },
 };
