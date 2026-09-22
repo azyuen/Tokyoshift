@@ -2166,12 +2166,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
+    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1360, 112, 'CLOSE', {
+    add(this.add.text(1360, 124, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
@@ -2263,9 +2263,11 @@ export default class GarageScene extends Phaser.Scene {
     this.pendingChassisTuning = { ...this.currentChassisTuning };
     this.chassisModeObjects = [];
     this.chassisModalObjects = [];
+    this.chassisPaintObjects = [];
     this.chassisPartRows = {};
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
+    this.chassisPaintPanelOpen = false;
     this.updateGarageNavState();
 
     this.upgradeButtons.forEach(item => item.box.disableInteractive());
@@ -2282,6 +2284,12 @@ export default class GarageScene extends Phaser.Scene {
 
     const add = obj => {
       this.chassisModeObjects.push(obj);
+      return obj;
+    };
+    const addPaint = obj => {
+      this.chassisModeObjects.push(obj);
+      this.chassisPaintObjects.push(obj);
+      obj.setVisible(false);
       return obj;
     };
 
@@ -2317,26 +2325,26 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPartRows = {};
     CHASSIS_PART_ORDER.forEach((partId, index) => {
       const part = CHASSIS_TUNING_PARTS[partId];
-      const y = SIDE.y + 150 + index * 58;
+      const y = SIDE.y + 170 + index * 66;
 
       const box = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        48,
+        52,
         0x0b1724,
         1
       ).setStrokeStyle(1, 0x315470, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(72));
 
-      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+      const label = add(this.add.text(SIDE.x + 24, y - 9, part.name, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#dff3ff',
       }).setOrigin(0, 0.5).setDepth(73));
 
-      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+      const detail = add(this.add.text(SIDE.x + 24, y + 13, '', {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: '#7d9bad',
@@ -2353,64 +2361,132 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPartRows[partId] = { box, label, detail, level };
     });
 
+    const paintY = SIDE.y + 302;
+    this.chassisPaintMenuButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      paintY,
+      SIDE.w - 36,
+      52,
+      0x0b1724,
+      1
+    ).setStrokeStyle(1, 0x315470, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    this.chassisPaintMenuLabel = add(this.add.text(SIDE.x + 24, paintY - 9, 'PAINT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#dff3ff',
+    }).setOrigin(0, 0.5).setDepth(73));
+
+    this.chassisPaintMenuDetail = add(this.add.text(
+      SIDE.x + 24,
+      paintY + 13,
+      'CUSTOM COLOUR // ¥ ' + this.getPaintJobCost().toLocaleString('en-US'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#7d9bad',
+        fontStyle: '600',
+      }
+    ).setOrigin(0, 0.5).setDepth(73));
+
+    this.chassisPaintMenuArrow = add(this.add.text(
+      SIDE.x + SIDE.w - 28,
+      paintY,
+      '>',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#8db6cc',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    this.chassisPaintMenuButton.on('pointerdown', () => this.openChassisPaintPanel());
+
     this.chassisPartsApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 262,
+      SIDE.y + 594,
       SIDE.w - 36,
-      34,
+      44,
       0x102226,
       1
     ).setStrokeStyle(2, 0x3e7f78, 0.7).setDepth(72));
 
     this.chassisPartsApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 262,
+      SIDE.y + 594,
       'NO CHASSIS PARTS SELECTED',
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '6px',
+        fontSize: '7px',
         color: '#758e94',
       }
     ).setOrigin(0.5).setDepth(73));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 300, 'PAINT', {
+    this.chassisMainBackButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 658,
+      SIDE.w - 36,
+      44,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(72));
+
+    this.chassisMainBackText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 658,
+      '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    this.chassisMainBackButton.on('pointerdown', () => this.leaveChassisMode(true));
+
+    // Paint sub-panel: same controls as before, hidden until PAINT is selected.
+    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 154, 'PAINT', {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#62dfff',
     }).setDepth(73));
 
-    this.chassisPaintSwatch = add(this.add.rectangle(
+    this.chassisPaintSwatch = addPaint(this.add.rectangle(
       SIDE.x + 70,
-      SIDE.y + 335,
+      SIDE.y + 198,
       76,
       52,
       this.pendingPaintColor,
       1
     ).setStrokeStyle(2, 0xd8f5ff, 1).setDepth(72));
 
-    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 324, '', {
+    this.chassisHexText = addPaint(this.add.text(SIDE.x + 126, SIDE.y + 187, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#e8f7ff',
     }).setDepth(73));
 
-    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 349, '', {
+    this.chassisAssetStatusText = addPaint(this.add.text(SIDE.x + 126, SIDE.y + 212, '', {
       fontFamily: BODY_FONT,
       fontSize: '9px',
       color: '#7fa4b7',
       wordWrap: { width: 180 },
     }).setDepth(73));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 390, 'PRESET COLOURS', {
+    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 254, 'PRESET COLOURS', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     const presetStartX = SIDE.x + 55;
-    const presetStartY = SIDE.y + 425;
+    const presetStartY = SIDE.y + 296;
     const presetGapX = 62;
-    const presetGapY = 42;
+    const presetGapY = 54;
 
     PAINT_PRESETS.forEach((preset, index) => {
       const col = index % 5;
@@ -2418,14 +2494,14 @@ export default class GarageScene extends Phaser.Scene {
       const x = presetStartX + col * presetGapX;
       const y = presetStartY + row * presetGapY;
 
-      const box = add(this.add.rectangle(x, y, 46, 32, preset.color, 1)
+      const box = addPaint(this.add.rectangle(x, y, 46, 32, preset.color, 1)
         .setStrokeStyle(2, 0x42586a, 1)
         .setDepth(72));
 
-      const hit = add(this.add.rectangle(x, y, 52, 40, 0x000000, 0)
+      const hit = addPaint(this.add.rectangle(x, y, 52, 40, 0x000000, 0)
         .setDepth(74));
 
-      hit.setInteractive({ useHandCursor: true });
+      hit.disableInteractive();
       hit.on('pointerdown', () => {
         if (!hasLayeredPaintAssets(this, car)) return;
         this.pendingPaintColor = preset.color;
@@ -2435,61 +2511,71 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPresetButtons.push({ preset, box, hit });
     });
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 495, 'CUSTOM RGB', {
+    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 398, 'CUSTOM RGB', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     ['r', 'g', 'b'].forEach((channel, index) => {
-      const y = SIDE.y + 530 + index * 38;
+      const y = SIDE.y + 442 + index * 46;
       const label = channel.toUpperCase();
 
-      add(this.add.text(SIDE.x + 32, y, label, {
+      addPaint(this.add.text(SIDE.x + 32, y, label, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#dff3ff',
       }).setOrigin(0, 0.5).setDepth(73));
 
-      const minus = add(this.add.rectangle(SIDE.x + 112, y, 42, 34, 0x0b1724, 1)
+      const minus = addPaint(this.add.rectangle(SIDE.x + 112, y, 42, 34, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
         .setDepth(72));
-      add(this.add.text(SIDE.x + 112, y, '−', {
-        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#bde9ff'
+      minus.disableInteractive();
+
+      addPaint(this.add.text(SIDE.x + 112, y, '−', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '12px',
+        color: '#bde9ff',
       }).setOrigin(0.5).setDepth(73));
 
-      const valueText = add(this.add.text(SIDE.x + 180, y, '000', {
+      const valueText = addPaint(this.add.text(SIDE.x + 180, y, '000', {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(73));
       this.chassisRgbLabels[channel] = valueText;
 
-      const plus = add(this.add.rectangle(SIDE.x + 248, y, 42, 34, 0x0b1724, 1)
+      const plus = addPaint(this.add.rectangle(SIDE.x + 248, y, 42, 34, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
         .setDepth(72));
-      add(this.add.text(SIDE.x + 248, y, '+', {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#bde9ff'
+      plus.disableInteractive();
+
+      addPaint(this.add.text(SIDE.x + 248, y, '+', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#bde9ff',
       }).setOrigin(0.5).setDepth(73));
 
       minus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, -8));
       plus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, 8));
+
+      this.chassisPaintChannelButtons = this.chassisPaintChannelButtons || [];
+      this.chassisPaintChannelButtons.push(minus, plus);
     });
 
-    this.chassisApplyButton = add(this.add.rectangle(
+    this.chassisApplyButton = addPaint(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 632,
+      SIDE.y + 604,
       SIDE.w - 36,
       44,
       0x102226,
       1
     ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
+    this.chassisApplyButton.disableInteractive();
 
-    this.chassisApplyText = add(this.add.text(
+    this.chassisApplyText = addPaint(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 632,
+      SIDE.y + 604,
       'PAINT INSTALLED',
       {
         fontFamily: PIXEL_FONT,
@@ -2498,23 +2584,104 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(73));
 
-    const backButton = add(this.add.rectangle(
+    this.chassisPaintBackButton = addPaint(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 684,
+      SIDE.y + 662,
       SIDE.w - 36,
       44,
       0x102138,
       1
-    ).setStrokeStyle(2, 0x55b8ff, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(72));
+    ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(72));
+    this.chassisPaintBackButton.disableInteractive();
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 684, '<  BACK TO WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
-    }).setOrigin(0.5).setDepth(73));
+    this.chassisPaintBackText = addPaint(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 662,
+      '<  BACK TO CHASSIS',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(73));
 
-    backButton.on('pointerdown', () => this.leaveChassisMode(true));
+    this.chassisPaintBackButton.on('pointerdown', () => this.closeChassisPaintPanel());
+
     this.addDaichiChassisHelper();
+    this.refreshChassisMode();
+  }
+
+  getPaintJobCost() {
+    return this.getWorkshopAdjustedCost(8000);
+  }
+
+  openChassisPaintPanel() {
+    if (!this.chassisMode || this.chassisPaintPanelOpen) return;
+
+    this.chassisPaintPanelOpen = true;
+    this.pendingPaintColor = this.currentPaintColor;
+
+    Object.values(this.chassisPartRows || {}).forEach(row => {
+      [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(false));
+      row.box?.disableInteractive?.();
+    });
+
+    [
+      this.chassisPaintMenuButton,
+      this.chassisPaintMenuLabel,
+      this.chassisPaintMenuDetail,
+      this.chassisPaintMenuArrow,
+      this.chassisPartsApplyButton,
+      this.chassisPartsApplyText,
+      this.chassisMainBackButton,
+      this.chassisMainBackText,
+    ].forEach(obj => obj?.setVisible?.(false));
+
+    this.chassisPaintMenuButton?.disableInteractive();
+    this.chassisPartsApplyButton?.disableInteractive();
+    this.chassisMainBackButton?.disableInteractive();
+
+    (this.chassisPaintObjects || []).forEach(obj => obj?.setVisible?.(true));
+    this.chassisPaintBackButton?.setInteractive({ useHandCursor: true });
+    (this.chassisPaintChannelButtons || []).forEach(button =>
+      button?.setInteractive?.({ useHandCursor: true })
+    );
+
+    this.refreshChassisMode();
+  }
+
+  closeChassisPaintPanel() {
+    if (!this.chassisMode || !this.chassisPaintPanelOpen) return;
+
+    this.chassisPaintPanelOpen = false;
+    this.pendingPaintColor = this.currentPaintColor;
+    setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
+
+    (this.chassisPaintObjects || []).forEach(obj => obj?.setVisible?.(false));
+    this.chassisPresetButtons.forEach(item => item.hit?.disableInteractive?.());
+    (this.chassisPaintChannelButtons || []).forEach(button => button?.disableInteractive?.());
+    this.chassisApplyButton?.disableInteractive();
+    this.chassisPaintBackButton?.disableInteractive();
+
+    Object.values(this.chassisPartRows || {}).forEach(row => {
+      [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(true));
+      row.box?.setInteractive?.({ useHandCursor: true });
+    });
+
+    [
+      this.chassisPaintMenuButton,
+      this.chassisPaintMenuLabel,
+      this.chassisPaintMenuDetail,
+      this.chassisPaintMenuArrow,
+      this.chassisPartsApplyButton,
+      this.chassisPartsApplyText,
+      this.chassisMainBackButton,
+      this.chassisMainBackText,
+    ].forEach(obj => obj?.setVisible?.(true));
+
+    this.chassisPaintMenuButton?.setInteractive({ useHandCursor: true });
+    this.chassisMainBackButton?.setInteractive({ useHandCursor: true });
+
     this.refreshChassisMode();
   }
 
@@ -2622,12 +2789,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
+    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1360, 112, 'CLOSE', {
+    add(this.add.text(1360, 124, 'CLOSE', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
@@ -2769,11 +2936,11 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPresetButtons.forEach(item => {
       const active = item.preset.color === color;
       item.box.setStrokeStyle(active ? 3 : 2, active ? 0xffffff : 0x42586a, active ? 1 : 0.85);
-      if (ready) item.hit.setInteractive({ useHandCursor: true });
+      if (ready && this.chassisPaintPanelOpen) item.hit.setInteractive({ useHandCursor: true });
       else item.hit.disableInteractive();
     });
 
-    if (ready) setCarBodyPaint(this.selectedDisplay, color);
+    if (ready && this.chassisPaintPanelOpen) setCarBodyPaint(this.selectedDisplay, color);
 
     this.chassisApplyButton?.removeAllListeners('pointerdown');
 
@@ -2793,24 +2960,45 @@ export default class GarageScene extends Phaser.Scene {
       return;
     }
 
-    this.chassisApplyButton?.setInteractive({ useHandCursor: true })
-      .setFillStyle(0x0c2827, 1)
-      .setStrokeStyle(2, 0x62e8c7, 1);
-    this.chassisApplyText?.setText('APPLY PAINT // TEST').setColor('#f1fffb');
-    this.chassisApplyButton?.on('pointerdown', () => this.applyPendingPaint());
+    const paintCost = this.getPaintJobCost();
+    const affordablePaint = Number(this.registry.get('cash') || 0) >= paintCost;
+    if (this.chassisPaintPanelOpen) {
+      this.chassisApplyButton?.setInteractive({ useHandCursor: true })
+        .setFillStyle(affordablePaint ? 0x0c2827 : 0x2a171b, 1)
+        .setStrokeStyle(2, affordablePaint ? 0x62e8c7 : 0xff6f7d, 1);
+    } else {
+      this.chassisApplyButton?.disableInteractive();
+    }
+    this.chassisApplyText?.setText(
+      affordablePaint
+        ? 'PAINT CAR // ¥ ' + paintCost.toLocaleString('en-US')
+        : 'NEED ¥ ' + paintCost.toLocaleString('en-US')
+    ).setColor(affordablePaint ? '#f1fffb' : '#ffc0c6');
+    if (this.chassisPaintPanelOpen) {
+      this.chassisApplyButton?.on('pointerdown', () => this.applyPendingPaint());
+    }
   }
 
   applyPendingPaint() {
-    if (!this.chassisMode || !this.selectedCarId) return;
+    if (!this.chassisMode || !this.selectedCarId || !this.chassisPaintPanelOpen) return;
     const car = cars[this.selectedCarId];
     if (!hasLayeredPaintAssets(this, car)) {
       this.showWorkshopToast('PAINT LAYERS NOT AVAILABLE');
       return;
     }
 
+    const paintColor = normalisePaintColor(this.pendingPaintColor);
+    if (paintColor === this.currentPaintColor) return;
+
+    const cost = this.getPaintJobCost();
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const existing = carStates[this.selectedCarId] || {};
-    const paintColor = normalisePaintColor(this.pendingPaintColor);
 
     carStates[this.selectedCarId] = {
       ...existing,
@@ -2818,6 +3006,8 @@ export default class GarageScene extends Phaser.Scene {
     };
 
     this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
     saveSessionState(this.registry);
     this.currentPaintColor = paintColor;
     this.pendingPaintColor = paintColor;
@@ -2827,7 +3017,9 @@ export default class GarageScene extends Phaser.Scene {
     });
     setCarBodyPaint(this.selectedDisplay, paintColor);
     this.refreshChassisMode();
-    this.showWorkshopToast('PAINT APPLIED // ' + paintColorToHex(paintColor));
+    this.showWorkshopToast(
+      'PAINT APPLIED // ' + paintColorToHex(paintColor) + ' // ¥ ' + cost.toLocaleString('en-US')
+    );
   }
 
   leaveChassisMode(animate = true) {
@@ -2871,6 +3063,9 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
     this.chassisPartRows = {};
+    this.chassisPaintObjects = [];
+    this.chassisPaintChannelButtons = [];
+    this.chassisPaintPanelOpen = false;
     this.currentChassisTuning = null;
     this.pendingChassisTuning = null;
     this.chassisMode = false;
@@ -3545,12 +3740,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
+    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1360, 112, 'CLOSE', {
+    add(this.add.text(1360, 124, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
