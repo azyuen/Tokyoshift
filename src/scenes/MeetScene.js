@@ -17,10 +17,11 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r112';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r115';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r115';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r98';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r98';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r115';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -55,18 +56,23 @@ export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
   preload() {
+    let queued = 0;
     characterOrder.forEach(id => {
       const character = characters[id];
       if (!this.textures.exists(character.visual.spriteKey)) {
         this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
+        queued += 1;
       }
     });
 
     meetBackgrounds.forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
         this.load.image(bg.key, bg.path + '?v=20260922-r84');
+        queued += 1;
       }
     });
+
+    startSceneLoading(this, 'LOADING MEET', queued);
   }
 
   create() {
@@ -157,6 +163,8 @@ export default class MeetScene extends Phaser.Scene {
       loop: true,
       callback: () => this.updateRefreshTimer(),
     });
+
+    finishSceneLoading('READY');
   }
 
   drawBase() {
