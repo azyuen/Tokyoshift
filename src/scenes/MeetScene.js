@@ -906,6 +906,33 @@ export default class MeetScene extends Phaser.Scene {
     this.scene.start('RaceScene');
   }
 
+  getCompetitionOfferLifetimeMs() {
+    return this.registry.get('devMode')
+      ? 15 * 60 * 1000
+      : 3 * 60 * 60 * 1000;
+  }
+
+  getCompetitionCooldownMs() {
+    return this.registry.get('devMode')
+      ? 15 * 60 * 1000
+      : 2 * 60 * 60 * 1000;
+  }
+
+  getCompetitionCooldownRemainingMs() {
+    return Math.max(
+      0,
+      Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
+    );
+  }
+
+  formatCompetitionCooldown(ms = 0) {
+    const totalMinutes = Math.max(1, Math.ceil(ms / 60000));
+    if (totalMinutes < 60) return totalMinutes + 'M';
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return hours + 'H' + (minutes ? ' ' + minutes + 'M' : '');
+  }
+
   generateCompetitionOffer() {
     const location = getMeetLocation(this.selectedMeetLocation);
     const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
@@ -968,16 +995,22 @@ export default class MeetScene extends Phaser.Scene {
       prizeCash: settings.cashPrize,
       prizeCarId,
       rounds,
+      refreshAt: Date.now() + this.getCompetitionOfferLifetimeMs(),
+      used: false,
     };
   }
 
   getCompetitionOffer() {
     const offers = { ...(this.registry.get('competitionOffers') || {}) };
-    if (!offers[this.selectedMeetLocation]) {
+    const current = offers[this.selectedMeetLocation];
+    const expired = !current || Number(current.refreshAt || 0) <= Date.now();
+
+    if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
       this.registry.set('competitionOffers', offers);
       saveSessionState(this.registry);
     }
+
     return offers[this.selectedMeetLocation];
   }
 
@@ -987,6 +1020,9 @@ export default class MeetScene extends Phaser.Scene {
     if (this.competitionPopup?.active) return;
 
     const offer = this.getCompetitionOffer();
+    const cooldownRemaining = this.getCompetitionCooldownRemainingMs();
+    if (cooldownRemaining > 0 || offer.used) return;
+
     const cash = Number(this.registry.get('cash') || 0);
     const enough = cash >= offer.entryFee;
     const prizeText = offer.prizeType === 'CAR'
@@ -1142,6 +1178,10 @@ export default class MeetScene extends Phaser.Scene {
 
     this.registry.set('cash', cash - offer.entryFee);
     this.registry.set('competitionOffers', competitionOffers);
+    this.registry.set(
+      'competitionCooldownUntil',
+      Date.now() + this.getCompetitionCooldownMs()
+    );
     this.registry.set('competitionState', state);
     this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
 
@@ -1154,7 +1194,6 @@ export default class MeetScene extends Phaser.Scene {
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
     this.registry.set('defeatedRivalKeys', []);
-    this.registry.set('competitionOffers', {});
 
     ALL_MEET_LOCATION_IDS.forEach(locationId => {
       this.locationOffers[locationId] = this.generateOffersForLocation(locationId);
