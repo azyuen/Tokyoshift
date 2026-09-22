@@ -15,7 +15,7 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260922-r86';
+} from '../data/travelRegions.js?v=20260922-r95';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
