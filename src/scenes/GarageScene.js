@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r133';
-import { engines } from '../data/engines.js?v=20260923-r133';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r134';
+import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters } from '../data/characters.js?v=20260922-r111';
 import {
   ENGINE_PART_ORDER,
@@ -67,7 +67,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260923-r133';
+} from '../vehicles/CarAppearance.js?v=20260923-r134';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
