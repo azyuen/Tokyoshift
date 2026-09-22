@@ -10,7 +10,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260922-r109';
+} from '../data/tuning.js?v=20260922-r114';
 import {
   DRIVETRAIN_PART_ORDER,
   EXHAUST_NOS_PART_ORDER,
@@ -25,7 +25,7 @@ import {
   getDrivetrainCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260921-r66';
+} from '../data/secondaryTuning.js?v=20260922-r114';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r112';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -1369,14 +1369,14 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
-      const y = SIDE.y + 216 + i * 50;
+      const y = SIDE.y + 216 + i * 56;
       const part = ENGINE_TUNING_PARTS[partId];
 
       const box = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 36,
-        42,
+        44,
         0x0b1724,
         1
       ).setStrokeStyle(1, 0x315470, 1)
@@ -2116,7 +2116,7 @@ export default class GarageScene extends Phaser.Scene {
         getEngineTuningCount(tuning) === 0 &&
         !existing.nosInstalled &&
         Object.values(existing.drivetrainTuning || {}).every(value => !Number(value)) &&
-        Object.values(existing.exhaustNosTuning || {}).every(value => !Number(value)),
+        Object.values(getExhaustNosTuning(existing)).every(value => !Number(value)),
     };
 
     this.registry.set('carStates', carStates);
