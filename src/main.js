@@ -1,8 +1,9 @@
 import BootScene from './scenes/BootScene.js?v=20260922-r124';
 import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260922-r120';
-import GarageScene from './scenes/GarageScene.js?v=20260922-r124';
-import MeetScene from './scenes/MeetScene.js?v=20260922-r123';
-import RaceScene from './scenes/RaceScene.js?v=20260922-r124';
+import GarageScene from './scenes/GarageScene.js?v=20260922-r125';
+import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260922-r125';
+import MeetScene from './scenes/MeetScene.js?v=20260922-r125';
+import RaceScene from './scenes/RaceScene.js?v=20260922-r125';
 import ResultScene from './scenes/ResultScene.js?v=20260922-r112';
 
 
@@ -48,7 +49,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, CharacterSelectScene, GarageScene, MeetScene, RaceScene, ResultScene],
+  scene: [BootScene, CharacterSelectScene, GarageScene, CentralTokyoScene, MeetScene, RaceScene, ResultScene],
 };
 
 window.TOKYO_SHIFT = new Phaser.Game(config);
