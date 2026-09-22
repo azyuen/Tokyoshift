@@ -17,10 +17,10 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
-import { saveSessionState } from '../state/GameState.js?v=20260922-r86';
+import { saveSessionState } from '../state/GameState.js?v=20260922-r95';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r93';
-import { getGarageCapacity } from '../data/workshopProgression.js?v=20260922-r86';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r96';
+import { getGarageCapacity, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r95';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -565,16 +565,29 @@ export default class MeetScene extends Phaser.Scene {
     }
   }
 
-  returnToWorkshop() {
+  returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', requestedCost = null) {
+    const garageTier = Number(this.registry.get('garageTier') || 0);
+    const destinationId = isWorkshopUnlocked(workshopLocationId, garageTier)
+      ? workshopLocationId
+      : 'shinonomeWorkshop';
+
     const cash = Number(this.registry.get('cash') || 0);
-    const cost = this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST;
+    const fallbackCost = this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST;
+    const cost = Number.isFinite(Number(requestedCost))
+      ? Math.max(0, Number(requestedCost))
+      : fallbackCost;
+
     if (cash < cost) return;
 
     this.registry.set('cash', cash - cost);
     this.registry.set('meetStranded', false);
+    this.registry.set('workshopLocationId', destinationId);
     this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
     saveSessionState(this.registry);
-    this.scene.start('GarageScene');
+
+    // Pass the destination explicitly so GarageScene does not depend on stale
+    // workshop state during the transition.
+    this.scene.start('GarageScene', { workshopLocationId: destinationId });
   }
 
   buildBottomArea() {
@@ -1412,7 +1425,7 @@ export default class MeetScene extends Phaser.Scene {
       actionVerb: 'DRIVE',
       allowCurrentAction: false,
       homeCost: this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST,
-      onHome: () => this.returnToWorkshop(),
+      onHome: (workshopLocationId, cost) => this.returnToWorkshop(workshopLocationId, cost),
       onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
     });
   }
