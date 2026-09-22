@@ -1,6 +1,7 @@
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 
 export const DRIVETRAIN_PART_ORDER = ['clutch', 'gearbox', 'differential', 'suspension'];
+export const CHASSIS_PART_ORDER = ['tyres', 'weightReduction'];
 export const EXHAUST_NOS_PART_ORDER = ['headers', 'exhaust', 'muffler', 'nosKit', 'nitrousShot'];
 
 export const DRIVETRAIN_TUNING_PARTS = {
@@ -42,6 +43,29 @@ export const DRIVETRAIN_TUNING_PARTS = {
       { level: 1, name: 'Street suspension', cost: 10000, gripScale: 1.01, launchScale: 1.02, spriteKey: 'tuningPartSuspensionL1', benefit: '+1% grip / +2% launch' },
       { level: 2, name: 'Coilovers', cost: 25000, gripScale: 1.025, launchScale: 1.04, spriteKey: 'tuningPartSuspensionL2', benefit: '+2.5% grip / +4% launch' },
       { level: 3, name: 'Drag suspension', cost: 50000, gripScale: 1.04, launchScale: 1.07, spriteKey: 'tuningPartSuspensionL3', benefit: '+4% grip / +7% launch' },
+    ],
+  },
+};
+
+export const CHASSIS_TUNING_PARTS = {
+  tyres: {
+    id: 'tyres',
+    name: 'TYRES',
+    levels: [
+      { level: 0, name: 'Stock street tyres', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartTyresL0', benefit: 'Factory road tyre grip' },
+      { level: 1, name: 'Performance tyres', cost: 9000, gripScale: 1.025, launchScale: 1.01, spriteKey: 'tuningPartTyresL1', benefit: '+2.5% grip / +1% launch' },
+      { level: 2, name: 'Drag radials', cost: 22000, gripScale: 1.06, launchScale: 1.04, spriteKey: 'tuningPartTyresL2', benefit: '+6% grip / +4% launch' },
+      { level: 3, name: 'Slicks', cost: 45000, gripScale: 1.10, launchScale: 1.08, spriteKey: 'tuningPartTyresL3', benefit: '+10% grip / +8% launch' },
+    ],
+  },
+  weightReduction: {
+    id: 'weightReduction',
+    name: 'WEIGHT REDUCTION',
+    levels: [
+      { level: 0, name: 'Stock interior', cost: 0, massDelta: 0, spriteKey: 'tuningPartWeightReductionL0', benefit: 'Full factory interior' },
+      { level: 1, name: 'Lightweight interior', cost: 12000, massDelta: -18, spriteKey: 'tuningPartWeightReductionL1', benefit: '-18 kg' },
+      { level: 2, name: 'Stripped interior', cost: 30000, massDelta: -42, spriteKey: 'tuningPartWeightReductionL2', benefit: '-42 kg' },
+      { level: 3, name: 'Race-lightweight setup', cost: 60000, massDelta: -75, spriteKey: 'tuningPartWeightReductionL3', benefit: '-75 kg' },
     ],
   },
 };
@@ -128,12 +152,20 @@ export function normaliseDrivetrainTuning(input = {}) {
   return normalise(DRIVETRAIN_PART_ORDER, input);
 }
 
+export function normaliseChassisTuning(input = {}) {
+  return normalise(CHASSIS_PART_ORDER, input);
+}
+
 export function normaliseExhaustNosTuning(input = {}) {
   return normalise(EXHAUST_NOS_PART_ORDER, input);
 }
 
 export function getDrivetrainTuning(carState = {}) {
   return normaliseDrivetrainTuning(carState.drivetrainTuning || {});
+}
+
+export function getChassisTuning(carState = {}) {
+  return normaliseChassisTuning(carState.chassisTuning || {});
 }
 
 export function getExhaustNosTuning(carState = {}) {
@@ -153,12 +185,20 @@ export function getDrivetrainUpgradePathCost(partId, fromLevel, toLevel) {
   return getPathCost(DRIVETRAIN_TUNING_PARTS, partId, fromLevel, toLevel);
 }
 
+export function getChassisUpgradePathCost(partId, fromLevel, toLevel) {
+  return getPathCost(CHASSIS_TUNING_PARTS, partId, fromLevel, toLevel);
+}
+
 export function getExhaustNosUpgradePathCost(partId, fromLevel, toLevel) {
   return getPathCost(EXHAUST_NOS_TUNING_PARTS, partId, fromLevel, toLevel);
 }
 
 export function getDrivetrainCartCost(currentInput = {}, pendingInput = {}) {
   return cartCost(DRIVETRAIN_PART_ORDER, DRIVETRAIN_TUNING_PARTS, currentInput, pendingInput);
+}
+
+export function getChassisCartCost(currentInput = {}, pendingInput = {}) {
+  return cartCost(CHASSIS_PART_ORDER, CHASSIS_TUNING_PARTS, currentInput, pendingInput);
 }
 
 export function getExhaustNosCartCost(currentInput = {}, pendingInput = {}) {
@@ -195,6 +235,15 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
     * (dt.differential.launchScale || 1)
     * (dt.suspension.launchScale || 1);
 
+  const chassis = getChassisTuning(carState);
+  const ch = {};
+  CHASSIS_PART_ORDER.forEach(id => {
+    ch[id] = CHASSIS_TUNING_PARTS[id].levels[chassis[id]];
+  });
+
+  car.tyreGrip *= ch.tyres.gripScale || 1;
+  car.launchLoadMultiplier *= ch.tyres.launchScale || 1;
+
   const exhaustNos = getExhaustNosTuning(carState);
   const ex = {};
   EXHAUST_NOS_PART_ORDER.forEach(id => {
@@ -215,6 +264,7 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
       + Number(ex.headers.massDelta || 0)
       + Number(ex.exhaust.massDelta || 0)
       + Number(ex.muffler.massDelta || 0)
+      + Number(ch.weightReduction.massDelta || 0)
   );
 
   if (exhaustNos.nosKit > 0) {
@@ -222,5 +272,5 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
     car.nosPower = Number(ex.nitrousShot.powerHp || 0);
   }
 
-  return { car, engine, drivetrain, exhaustNos, exhaustScale };
+  return { car, engine, drivetrain, chassis, exhaustNos, exhaustScale };
 }
