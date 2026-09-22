@@ -11,6 +11,7 @@ import {
   normalisePaintColor,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
+import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r135';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -224,13 +225,15 @@ export default class RaceScene extends Phaser.Scene {
       cars[this.selectedCarId].visual,
       7,
       1.0,
-      this.playerPaintColor
+      this.playerPaintColor,
+      characters[this.playerCharacterId]
     );
     this.opponentVisual = this.createCarVisual(
       cars[this.opponentCarId].visual,
       6,
       0.88,
-      this.opponentPaintColor
+      this.opponentPaintColor,
+      characters[this.opponentCharacterId]
     );
 
     this.treeSprite = this.add.image(780, 192, 'dragTree')
@@ -654,7 +657,13 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
-  createCarVisual(cfg, depth, roleScale, paintColor = DEFAULT_PAINT_COLOR) {
+  createCarVisual(
+    cfg,
+    depth,
+    roleScale,
+    paintColor = DEFAULT_PAINT_COLOR,
+    driverCharacter = null
+  ) {
     const bodyScale = cfg.bodyScale * roleScale;
     const wheelScale = cfg.wheelScale * roleScale * 1.16;
 
@@ -675,6 +684,15 @@ export default class RaceScene extends Phaser.Scene {
     const frontWheelBacking = this.add.circle(
       0, 0, Math.max(9, frontWheel.displayWidth * 0.50), 0x030507, 1
     ).setDepth(depth - 0.35);
+
+    const driver = driverCharacter
+      ? createDriverSilhouette(this, cfg, driverCharacter, {
+          bodyX: 0,
+          bodyY: 0,
+          bodyScale,
+          depth: depth + 0.55,
+        })
+      : null;
 
     const bodyLayers = createCarBodyLayers(this, cfg, {
       x: 0,
@@ -703,6 +721,9 @@ export default class RaceScene extends Phaser.Scene {
       roadShadow,
       body,
       bodyObjects: bodyLayers.objects,
+      driverSilhouette: driver?.image || null,
+      driverOffsetX: driver?.offsetX || 0,
+      driverOffsetY: driver?.offsetY || 0,
       paintBody: bodyLayers.paint,
       bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
@@ -1773,6 +1794,12 @@ export default class RaceScene extends Phaser.Scene {
     const c = v.cfg;
     const bodyY = y + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
     (v.bodyObjects || [v.body]).forEach(obj => obj.setPosition(x, bodyY));
+    if (v.driverSilhouette) {
+      v.driverSilhouette.setPosition(
+        x + v.driverOffsetX,
+        bodyY + v.driverOffsetY
+      );
+    }
 
     const rearX = x + c.rearOffsetX * v.bodyScale;
     const frontX = x + c.frontOffsetX * v.bodyScale;
