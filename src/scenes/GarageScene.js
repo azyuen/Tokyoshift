@@ -1609,6 +1609,7 @@ export default class GarageScene extends Phaser.Scene {
     shadowHeight = 22,
     shadowOffsetX = 6,
     shadowOffsetY = -8,
+    useGarageCharacterShadow = false,
     objectList,
   }) {
     if (!textureKey || !this.textures.exists(textureKey) || !objectList) return null;
@@ -1620,23 +1621,41 @@ export default class GarageScene extends Phaser.Scene {
     const source = this.textures.get(textureKey).getSourceImage();
     sprite.setScale(targetHeight / source.height);
 
-    const softShadow = this.add.ellipse(
-      x + shadowOffsetX,
-      feetY + shadowOffsetY,
-      shadowWidth,
-      shadowHeight,
-      0x000000,
-      0.55
-    ).setDepth(depth - 0.2);
+    const softShadow = useGarageCharacterShadow
+      ? this.add.ellipse(
+          x + 12,
+          feetY - 16,
+          Math.max(60, sprite.displayWidth * 0.80),
+          30,
+          0x000000,
+          0.58
+        ).setDepth(depth - 0.12)
+      : this.add.ellipse(
+          x + shadowOffsetX,
+          feetY + shadowOffsetY,
+          shadowWidth,
+          shadowHeight,
+          0x000000,
+          0.55
+        ).setDepth(depth - 0.2);
 
-    const contactShadow = this.add.ellipse(
-      x + Math.round(shadowOffsetX * 0.72),
-      feetY + shadowOffsetY + 3,
-      Math.max(42, Math.round(shadowWidth * 0.70)),
-      Math.max(12, Math.round(shadowHeight * 0.60)),
-      0x000000,
-      0.80
-    ).setDepth(depth - 0.1);
+    const contactShadow = useGarageCharacterShadow
+      ? this.add.ellipse(
+          x + 9,
+          feetY - 11,
+          Math.max(44, sprite.displayWidth * 0.60),
+          18,
+          0x000000,
+          0.84
+        ).setDepth(depth - 0.08)
+      : this.add.ellipse(
+          x + Math.round(shadowOffsetX * 0.72),
+          feetY + shadowOffsetY + 3,
+          Math.max(42, Math.round(shadowWidth * 0.70)),
+          Math.max(12, Math.round(shadowHeight * 0.60)),
+          0x000000,
+          0.80
+        ).setDepth(depth - 0.1);
 
     objectList.push(softShadow, contactShadow, sprite);
     return sprite;
@@ -1648,20 +1667,20 @@ export default class GarageScene extends Phaser.Scene {
     if (!layout || !car) return;
 
     const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
-    const x = Math.min(STAGE.x + STAGE.w - 92, layout.frontWheelX + 145);
+    const x = Math.min(STAGE.x + STAGE.w - 80, layout.frontWheelX + 160);
 
     this.addDaichiTuningHelper({
       textureKey: 'daichiEngineInspect',
       x,
       feetY: wheelBottomY + 2,
-      targetHeight: 282,
+      targetHeight: 320,
       depth: 8.4,
       // The generated pose uses the shared 1024x1536 canvas but has extra
       // transparent padding below the shoes. Anchor the visible feet instead.
       anchorY: 1458 / 1536,
-      shadowWidth: 86,
-      shadowHeight: 22,
-      shadowOffsetX: 4,
+      shadowWidth: 116,
+      shadowHeight: 25,
+      shadowOffsetX: 13,
       shadowOffsetY: -7,
       objectList: this.engineHelperObjects,
     });
@@ -2912,7 +2931,7 @@ export default class GarageScene extends Phaser.Scene {
     this.addDaichiTuningHelper({
       textureKey: 'daichiExhaustCrouch',
       x: layout.x,
-      feetY: wheelBottomY + 14,
+      feetY: wheelBottomY + 22,
       targetHeight: 282,
       depth: 13.4,
       anchorY: 1365 / 1536,
@@ -2939,13 +2958,10 @@ export default class GarageScene extends Phaser.Scene {
       x,
       // Match the normal workshop protagonist's floor/baseline.
       feetY: 558,
-      targetHeight: 282,
+      targetHeight: 350,
       depth: 13.6,
       anchorY: 1517 / 1536,
-      shadowWidth: 78,
-      shadowHeight: 23,
-      shadowOffsetX: 5,
-      shadowOffsetY: -8,
+      useGarageCharacterShadow: true,
       objectList: this.chassisModeObjects,
     });
   }
