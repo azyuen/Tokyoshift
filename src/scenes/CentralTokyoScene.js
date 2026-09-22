@@ -13,7 +13,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
-import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r135';
+import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r136';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260922-r131';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r131';
@@ -430,7 +430,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           bodyX: x,
           bodyY: y,
           bodyScale,
-          depth: depth + 0.55,
+          depth: depth + 1.01,
         })
       : null;
 
