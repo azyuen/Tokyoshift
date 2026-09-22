@@ -2,7 +2,8 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r109';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r112';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r115';
+import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r115';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -30,18 +31,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING ASSETS');
-
-    this.load.on('progress', value => {
-      window.TOKYO_SHIFT_SET_LOADING?.(
-        0.08 + (Math.max(0, Math.min(1, value)) * 0.84),
-        'LOADING ASSETS'
-      );
-    });
-
-    this.load.once('complete', () => {
-      window.TOKYO_SHIFT_SET_LOADING?.(0.96, 'OPENING TOKYO');
-    });
+    startSceneLoading(this, 'LOADING TOKYO', 1);
 
     // Every car follows the same appearance convention. Adding a car to cars.js
     // automatically queues its legacy body + tintable paint + fixed overlay.
