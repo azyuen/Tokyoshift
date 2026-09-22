@@ -1,8 +1,8 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r96';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r97';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r96';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r97';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
