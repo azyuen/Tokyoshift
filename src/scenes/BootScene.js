@@ -4,6 +4,7 @@ import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r131';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { ensureVisualModTextures } from '../data/visualMods.js?v=20260923-r138';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -111,6 +112,7 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create() {
+    ensureVisualModTextures(this);
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
 
