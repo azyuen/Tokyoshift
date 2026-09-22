@@ -26,10 +26,15 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r124';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r115';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r125';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r123';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260922-r125';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r125';
+import {
+  CENTRAL_TOKYO_LOCATIONS,
+  getPendingCentralTokyoInvite,
+} from '../data/centralTokyo.js?v=20260922-r125';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getGarageCapacity,
@@ -172,6 +177,8 @@ export default class GarageScene extends Phaser.Scene {
 
     if (reopenSettings) {
       this.time.delayedCall(80, () => showSettingsPanel(this));
+    } else {
+      this.time.delayedCall(260, () => this.showCentralTokyoInvitationIfNeeded());
     }
   }
 
@@ -1080,12 +1087,23 @@ export default class GarageScene extends Phaser.Scene {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
 
-          const destination = getMeetLocation(locationId);
+          const travelTarget = getTravelLocation(locationId);
           this.registry.set('cash', cash - cost);
-          this.registry.set('meetLocation', locationId);
-          this.registry.set('district', destination.district);
           this.registry.set('selectedCarId', this.selectedCarId);
           this.registry.set('meetStranded', false);
+
+          if (travelTarget?.regionId === 'CENTRAL_TOKYO') {
+            this.registry.set('centralTokyoLocation', locationId);
+            this.registry.set('district', 'CENTRAL_TOKYO');
+            saveSessionState(this.registry);
+            this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+            this.scene.start('CentralTokyoScene', { locationId });
+            return;
+          }
+
+          const destination = getMeetLocation(locationId);
+          this.registry.set('meetLocation', locationId);
+          this.registry.set('district', destination.district);
           saveSessionState(this.registry);
 
           this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
@@ -3346,6 +3364,90 @@ export default class GarageScene extends Phaser.Scene {
       this.workshopToastObjects?.forEach(obj => obj?.destroy?.());
       this.workshopToastObjects = [];
     });
+  }
+
+  showCentralTokyoInvitationIfNeeded() {
+    const inviteKey = getPendingCentralTokyoInvite(this.registry);
+    if (!inviteKey) return;
+    if (this.centralTokyoInviteObjects?.length) return;
+
+    const config = inviteKey === 'autoMarket'
+      ? {
+          title: 'CENTRAL TOKYO UNLOCKED',
+          location: CENTRAL_TOKYO_LOCATIONS.autoMarket,
+          body: 'Your reputation is getting around. Tokyo Auto Market is now open for used cars, pre-modified builds and trade-ins.',
+        }
+      : inviteKey === 'ginza'
+        ? {
+            title: 'PRIVATE INVITATION',
+            location: CENTRAL_TOKYO_LOCATIONS.ginza,
+            body: 'Your garage and track record have earned attention. Ginza Motor Gallery has invited you to view its collector stock.',
+          }
+        : {
+            title: 'PRO CIRCUIT INVITATION',
+            location: CENTRAL_TOKYO_LOCATIONS.drag,
+            body: 'Tokyo Drag Complex wants you on the professional grid. Three-round brackets, stricter limits and elite drivers are waiting.',
+          };
+
+    const seen = {
+      ...(this.registry.get('tokyoInvitesSeen') || {}),
+      [inviteKey]: true,
+    };
+    this.registry.set('tokyoInvitesSeen', seen);
+    saveSessionState(this.registry);
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.centralTokyoInviteObjects = [];
+      this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setInteractive()
+      .setDepth(depth));
+
+    add(this.add.rectangle(780, 420, 820, 470, 0x07111d, 0.995)
+      .setStrokeStyle(3, 0x43dfff, 0.95)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 250, config.title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#eefaff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 310, config.location.label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#55e4ff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 405, config.body, {
+      fontFamily: BODY_FONT,
+      fontSize: '14px',
+      color: '#a8bfcc',
+      fontStyle: '600',
+      align: 'center',
+      wordWrap: { width: 680 },
+      lineSpacing: 7,
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const button = add(this.add.rectangle(780, 565, 300, 54, 0x102838, 1)
+      .setStrokeStyle(2, 0x55dfff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 565, 'INVITATION RECEIVED', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    button.on('pointerdown', close);
+    this.centralTokyoInviteObjects = objects;
   }
 
   selectUpgrade(name) {
