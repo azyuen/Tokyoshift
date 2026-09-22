@@ -1,4 +1,4 @@
-import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260922-r86';
+import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260922-r95';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
@@ -13,7 +13,7 @@ export const TRAVEL_REGIONS = {
     baseCost: 0,
     mapX: 0.722,
     mapY: 0.327,
-    description: 'Your Shinonome home base. Expand storage and manage your workshop here.',
+    description: 'Home base for garages, storage and tuning.',
     locations: [
       {
         id: 'shinonomeWorkshop',
@@ -302,7 +302,7 @@ export const TRAVEL_REGIONS = {
     baseCost: 1600,
     mapX: 0.322,
     mapY: 0.681,
-    description: 'Prestige meets with the strongest current cars, biggest bets and rare pink-slip opportunities.',
+    description: 'High-stakes meets, big bets and rare pink slips.',
     locations: [
       {
         id: 'daikokuPA',
