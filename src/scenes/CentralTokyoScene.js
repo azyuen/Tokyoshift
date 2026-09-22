@@ -14,6 +14,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260922-r131';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r131';
@@ -442,6 +443,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
       paintColor,
     });
 
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      x,
+      y,
+      scale: bodyScale,
+      depth: depth + 1.005,
+      paintColor,
+      bodyLayers,
+    });
+
     return [
       rearBacking,
       frontBacking,
@@ -450,6 +461,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       frontWheel,
       ...(driver?.image ? [driver.image] : []),
       ...bodyLayers.objects,
+      ...visualModObjects,
     ];
   }
 
