@@ -423,7 +423,13 @@ export function showSettingsPanel(scene) {
 
       card.on('pointerdown', () => {
         if (transitioning) return;
-        saveSessionState(scene.registry);
+
+        const currentSlots = getProfileSlots();
+        const currentActive = getActiveProfileIndex();
+        if (currentSlots[currentActive]?.occupied) {
+          saveSessionState(scene.registry);
+        }
+
         setActiveProfileIndex(i);
         reloadForProfile('SWITCHING DRIVER');
       });
