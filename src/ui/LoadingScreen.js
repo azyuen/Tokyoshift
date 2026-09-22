@@ -21,9 +21,15 @@ export function startSceneLoading(scene, label = 'LOADING ASSETS', queuedCount =
 export function finishSceneLoading(label = 'READY') {
   window.TOKYO_SHIFT_SET_LOADING?.(1, label);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      window.TOKYO_SHIFT_HIDE_SPLASH?.();
-    });
-  });
+  // Hide on the next paint, with a short timeout fallback for iOS PWAs where
+  // requestAnimationFrame can be throttled during a scene hand-off.
+  let hidden = false;
+  const hide = () => {
+    if (hidden) return;
+    hidden = true;
+    window.TOKYO_SHIFT_HIDE_SPLASH?.();
+  };
+
+  requestAnimationFrame(() => requestAnimationFrame(hide));
+  window.setTimeout(hide, 120);
 }
