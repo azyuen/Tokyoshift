@@ -7,7 +7,7 @@ import {
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r115';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r118';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r119';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -31,17 +31,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
     document.body.dataset.scene = 'setup';
     this.scale.resize(1560, 840);
 
-    // Scene instances and the shared Phaser DOM container are reused. Always
-    // restore both when entering driver creation from Settings.
     try { this.input.enabled = true; } catch (e) {}
     try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
-    const domContainer = this.sys?.game?.domContainer;
-    if (domContainer?.style) {
-      domContainer.style.display = 'block';
-      domContainer.style.visibility = 'visible';
-      domContainer.style.opacity = '1';
-      domContainer.style.pointerEvents = 'auto';
-    }
 
     playMusic('title');
 
@@ -69,7 +60,10 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.refreshPortrait();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.nameDom?.destroy();
+      const form = document.getElementById('driver-name-overlay');
+      form?.classList.remove('is-visible');
+      form?.setAttribute('aria-hidden', 'true');
+      try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
     });
 
     finishSceneLoading('READY');
@@ -156,50 +150,28 @@ export default class CharacterSelectScene extends Phaser.Scene {
       wordWrap: { width: 390 },
     }).setOrigin(0.5);
 
-    const html = `
-      <div style="width:390px;display:grid;gap:18px;font-family:Rajdhani,sans-serif;">
-        <input id="firstName" maxlength="16" autocomplete="given-name" placeholder="First name"
-          style="box-sizing:border-box;width:100%;height:52px;padding:0 18px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
-        <input id="lastName" maxlength="16" autocomplete="family-name" placeholder="Last name"
-          style="box-sizing:border-box;width:100%;height:52px;padding:0 18px;border:2px solid #315470;background:#07111d;color:#fff;font:700 18px Rajdhani,sans-serif;outline:none;border-radius:2px;" />
-      </div>
-    `;
+    const form = document.getElementById('driver-name-overlay');
+    const firstInput = document.getElementById('driverFirstName');
+    const lastInput = document.getElementById('driverLastName');
 
-    this.nameDom = this.add.dom(780, 408)
-      .createFromHTML(html)
-      .setDepth(30)
-      .setVisible(true)
-      .setAlpha(1);
+    if (firstInput) firstInput.value = '';
+    if (lastInput) lastInput.value = '';
 
-    // iOS PWA safeguard: Phaser's shared DOM container can retain stale scene
-    // visibility after switching profiles. Re-assert visibility after creation.
-    if (this.nameDom?.node?.style) {
-      this.nameDom.node.style.display = 'block';
-      this.nameDom.node.style.visibility = 'visible';
-      this.nameDom.node.style.opacity = '1';
-      this.nameDom.node.style.pointerEvents = 'auto';
-    }
+    form?.classList.add('is-visible');
+    form?.setAttribute('aria-hidden', 'false');
 
-    // Native text entry must win over Phaser keyboard shortcuts/captures.
-    // Clearing captures also fixes the stray "R" key issue seen on mobile keyboards.
     this.input.keyboard?.clearCaptures?.();
-    const nameRoot = this.nameDom?.node;
-    const nameInputs = nameRoot?.querySelectorAll?.('input') || [];
-    nameInputs.forEach(input => {
-      input.setAttribute('inputmode', 'text');
-      input.setAttribute('autocapitalize', 'words');
-      input.setAttribute('spellcheck', 'false');
 
-      ['keydown', 'keyup', 'keypress'].forEach(type => {
-        input.addEventListener(type, event => event.stopPropagation());
-      });
-
-      input.addEventListener('focus', () => {
+    [firstInput, lastInput].filter(Boolean).forEach(input => {
+      input.onkeydown = event => event.stopPropagation();
+      input.onkeyup = event => event.stopPropagation();
+      input.onkeypress = event => event.stopPropagation();
+      input.onfocus = () => {
         if (this.input.keyboard) this.input.keyboard.enabled = false;
-      });
-      input.addEventListener('blur', () => {
+      };
+      input.onblur = () => {
         if (this.input.keyboard) this.input.keyboard.enabled = true;
-      });
+      };
     });
 
     this.nameError = this.add.text(780, 510, '', {
@@ -210,7 +182,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
       wordWrap: { width: 400 },
     }).setOrigin(0.5);
   }
-
   buildStarterCarPanel() {
     const x = 1260;
     this.panel(x, 365, 370, 455, '3 // FIRST CAR');
@@ -279,9 +250,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
 
   startNight() {
-    const root = this.nameDom?.node || this.nameDom?.getChildByID?.('firstName')?.parentElement;
-    const firstInput = root?.querySelector?.('#firstName');
-    const lastInput = root?.querySelector?.('#lastName');
+    const firstInput = document.getElementById('driverFirstName');
+    const lastInput = document.getElementById('driverLastName');
     const firstName = (firstInput?.value || '').trim();
     const lastName = (lastInput?.value || '').trim();
 
@@ -312,15 +282,27 @@ export default class CharacterSelectScene extends Phaser.Scene {
         paintColor: DEFAULT_PAINT_COLOR,
         nosInstalled: false,
         tuneLevel: 0,
+        tuning: {
+          engine: 0,
+          intake: 0,
+          ecu: 0,
+          turbo: 0,
+          intercooler: 0,
+        },
+        drivetrainTuning: {},
+        exhaustNosTuning: {},
         acquiredVia: 'starter',
       },
     };
+
+    const form = document.getElementById('driver-name-overlay');
+    form?.classList.remove('is-visible');
+    form?.setAttribute('aria-hidden', 'true');
 
     applyStateToRegistry(this.registry, state);
     saveManualState(this.registry);
     this.scene.start('GarageScene');
   }
-
   createCarDisplay(car, x, y, targetWidth, depth) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
