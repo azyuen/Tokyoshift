@@ -2178,8 +2178,7 @@ export default class MeetScene extends Phaser.Scene {
           ? 'PINK SLIP LOST // ' + (resultCar?.shortName || 'YOUR CAR') + ' NOW WITH RIVAL'
           : (resultCar?.shortName || car?.shortName || 'RIVAL') + '  •  ' + offer.raceType;
 
-      this.selectedSummary.setText(headline + '
-' + detail);
+      this.selectedSummary.setText(headline + '\n' + detail);
       this.rivalOfferText.setText('DONE');
 
       this.pinkSlipButton
@@ -2206,10 +2205,8 @@ export default class MeetScene extends Phaser.Scene {
     this.selectedDeal = offer.pinkChallenged && offer.pinkAccepted ? 'PINK' : 'CASH';
 
     this.selectedSummary.setText(
-      (offer.skillLabel || character.skill?.label || 'SKILLED') + '
-' +
-      car.shortName + '  •  ' + offer.raceType + '
-' +
+      (offer.skillLabel || character.skill?.label || 'SKILLED') + '\n' +
+      car.shortName + '  •  ' + offer.raceType + '\n' +
       offer.distance
     );
 
