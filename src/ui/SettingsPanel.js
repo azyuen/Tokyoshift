@@ -78,9 +78,9 @@ export function showSettingsPanel(scene) {
     if (transitioning) return;
     transitioning = true;
 
-    // Disable the current scene's input before destroying the modal. This stops
-    // the original pointerdown from falling through into objects underneath.
-    try { scene.input.enabled = false; } catch (e) {}
+    // Tear down only the Settings controls. Do not disable the scene InputPlugin:
+    // Phaser reuses scene instances, so that disabled flag can survive a restart
+    // and make the next Garage / DOM UI appear dead.
     close();
 
     window.TOKYO_SHIFT_SHOW_SPLASH?.(loadingLabel);
