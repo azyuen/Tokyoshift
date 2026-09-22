@@ -9,9 +9,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Tokyo SHIFT" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="./app-icon.svg?v=20260922-r109" />
-  <link rel="icon" href="./app-icon.svg?v=20260922-r109" type="image/svg+xml" />
-  <link rel="manifest" href="./manifest.webmanifest?v=20260922-r109" />
+  <link rel="apple-touch-icon" href="./app-icon.svg?v=20260922-r112" />
+  <link rel="icon" href="./app-icon.svg?v=20260922-r112" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.webmanifest?v=20260922-r112" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -19,14 +19,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260922-r109" />
+  <link rel="stylesheet" href="./styles.css?v=20260922-r112" />
 </head>
 <body>
   <div id="game-shell">
     <div id="loading-screen" role="status" aria-live="polite" aria-label="Tokyo SHIFT loading">
       <div class="loading-atmosphere" aria-hidden="true"></div>
       <div class="loading-panel">
-        <img class="loading-logo" src="./app-icon.svg?v=20260922-r109" alt="" />
+        <img class="loading-logo" src="./app-icon.svg?v=20260922-r112" alt="" />
         <div class="loading-title">TOKYO <strong>SHIFT</strong></div>
         <div class="loading-kicker">TOKYO AFTER DARK</div>
         <div class="loading-track" aria-hidden="true">
@@ -39,7 +39,7 @@
       </div>
     </div>
     <div id="game"></div>
-    <div id="build-stamp">R109</div>
+    <div id="build-stamp">R112</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -146,13 +146,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R111', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R112', { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260922-r111"></script>
+  <script type="module" src="./src/main.js?v=20260922-r112"></script>
 </body>
 </html>
