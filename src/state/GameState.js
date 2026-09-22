@@ -1,4 +1,4 @@
-import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260923-r140';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
@@ -64,6 +64,7 @@ export function createDefaultGameState() {
       drag: false,
     },
     raceReturnScene: 'MeetScene',
+    selectedRaceMeetOffer: null,
     meetStranded: false,
     gameOver: false,
   };
@@ -362,6 +363,9 @@ export function normaliseState(input = {}) {
       ...(input.tokyoInvitesSeen || {}),
     },
     raceReturnScene: String(input.raceReturnScene || 'MeetScene'),
+    selectedRaceMeetOffer: input.selectedRaceMeetOffer && typeof input.selectedRaceMeetOffer === 'object'
+      ? input.selectedRaceMeetOffer
+      : null,
     meetStranded: Boolean(input.meetStranded && owned.length > 0),
     gameOver: Boolean(input.gameOver || owned.length === 0),
   };
@@ -403,6 +407,7 @@ export function snapshotRegistry(registry) {
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
     raceReturnScene: registry.get('raceReturnScene') || 'MeetScene',
+    selectedRaceMeetOffer: registry.get('selectedRaceMeetOffer') || null,
     meetStranded: Boolean(registry.get('meetStranded')),
     gameOver: registry.get('gameOver') || false,
   });
