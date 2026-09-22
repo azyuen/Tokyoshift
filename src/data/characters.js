@@ -31,7 +31,10 @@ export const characters = {
     age: 22,
     hometown: 'Kawaguchi',
     archetype: 'The Builder',
-    roleTags: ['protagonist', 'teammate', 'rival'],
+    roleTags: ['workshop', 'mechanic'],
+    selectable: false,
+    rivalEligible: false,
+    workshopNpc: true,
     personality: 'Practical, loyal and quietly confident; happiest with grease on his hands.',
     bio: 'Daichi understands cars before he understands people. He has spent years repairing friends’ machines in cramped garages and knows exactly which upgrades matter and which ones are just noise. In a team he becomes the dependable technical backbone.',
     drivingStyle: 'Launch-focused and consistent; strong under pressure and hard to surprise.',
@@ -211,7 +214,20 @@ export const characterOrder = [
   'emiKanzaki',
 ];
 
+// Keep the complete roster available for asset loading and workshop NPC use,
+ // but expose explicit gameplay pools so non-driving characters can never
+ // accidentally leak into profile selection or rival generation.
+export const playableCharacterOrder = characterOrder.filter(
+  id => characters[id]?.selectable !== false
+);
+
+export const rivalCharacterOrder = characterOrder.filter(
+  id => characters[id]?.rivalEligible !== false
+);
+
 export const characterList = characterOrder.map((id) => characters[id]);
+export const playableCharacterList = playableCharacterOrder.map((id) => characters[id]);
+export const rivalCharacterList = rivalCharacterOrder.map((id) => characters[id]);
 
 export function getCharacter(id) {
   return characters[id] ?? null;
