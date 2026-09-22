@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r98';
+import { garageAssets } from '../data/garageAssets.js?v=20260922-r100';
 import { cars } from '../data/cars.js?v=20260922-r83';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, characterOrder } from '../data/characters.js?v=20260921-r43';
@@ -50,7 +50,7 @@ export default class BootScene extends Phaser.Scene {
     );
 
     garageAssets
-      .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory'))
+      .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory') || asset.key.startsWith('tuningPart'))
       .forEach(asset => this.load.image(asset.key, asset.path));
 
     // A manual save can point at any chosen profile portrait, so every
