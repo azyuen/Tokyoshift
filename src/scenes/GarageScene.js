@@ -30,7 +30,7 @@ import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r86';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r97';
-import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
+import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getGarageCapacity,
   getWorkshopByLocationId,
