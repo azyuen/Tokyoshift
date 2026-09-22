@@ -1,5 +1,5 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
-import { cars } from '../data/cars.js?v=20260923-r134';
+import { cars } from '../data/cars.js?v=20260923-r137';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { characters, characterOrder } from '../data/characters.js?v=20260922-r111';
 import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260922-r131';
@@ -36,7 +36,7 @@ export default class BootScene extends Phaser.Scene {
 
     // Standard cars load body + tintable paint + overlay. Ginza hero cars set
     // visual.singleBody and load only their finished one-off body PNG.
-    preloadCarAppearanceAssets(this, cars, '20260923-r134');
+    preloadCarAppearanceAssets(this, cars, '20260923-r138');
 
     this.load.image('wheel8Spoke', 'assets/wheels/wheel_8spoke.png');
     this.load.image('wheel5Spoke', 'assets/wheels/wheel_5spoke.png');
