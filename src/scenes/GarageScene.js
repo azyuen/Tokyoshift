@@ -13,19 +13,25 @@ import {
 } from '../data/tuning.js?v=20260922-r114';
 import {
   DRIVETRAIN_PART_ORDER,
+  CHASSIS_PART_ORDER,
   EXHAUST_NOS_PART_ORDER,
   DRIVETRAIN_TUNING_PARTS,
+  CHASSIS_TUNING_PARTS,
   EXHAUST_NOS_TUNING_PARTS,
   normaliseDrivetrainTuning,
+  normaliseChassisTuning,
   normaliseExhaustNosTuning,
   getDrivetrainTuning,
+  getChassisTuning,
   getExhaustNosTuning,
   getDrivetrainUpgradePathCost,
+  getChassisUpgradePathCost,
   getExhaustNosUpgradePathCost,
   getDrivetrainCartCost,
+  getChassisCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260922-r124';
+} from '../data/secondaryTuning.js?v=20260922-r128';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r127';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -48,7 +54,7 @@ import {
   applyWorkshopServiceCost,
   canInstallTuningLevel,
   getWorkshopRequirementLabel,
-} from '../data/workshopProgression.js?v=20260922-r124';
+} from '../data/workshopProgression.js?v=20260922-r128';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -2222,6 +2228,7 @@ export default class GarageScene extends Phaser.Scene {
         getEngineTuningCount(tuning) === 0 &&
         !existing.nosInstalled &&
         Object.values(existing.drivetrainTuning || {}).every(value => !Number(value)) &&
+        Object.values(existing.chassisTuning || {}).every(value => !Number(value)) &&
         Object.values(getExhaustNosTuning(existing)).every(value => !Number(value)),
     };
 
@@ -2252,7 +2259,11 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisMode = true;
     this.currentPaintColor = getCarPaintColor(state);
     this.pendingPaintColor = this.currentPaintColor;
+    this.currentChassisTuning = getChassisTuning(state);
+    this.pendingChassisTuning = { ...this.currentChassisTuning };
     this.chassisModeObjects = [];
+    this.chassisModalObjects = [];
+    this.chassisPartRows = {};
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
     this.updateGarageNavState();
@@ -2303,7 +2314,66 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(73));
     }
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 154, 'PAINT', {
+    this.chassisPartRows = {};
+    CHASSIS_PART_ORDER.forEach((partId, index) => {
+      const part = CHASSIS_TUNING_PARTS[partId];
+      const y = SIDE.y + 150 + index * 58;
+
+      const box = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        48,
+        0x0b1724,
+        1
+      ).setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(72));
+
+      const label = add(this.add.text(SIDE.x + 24, y - 8, part.name, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#dff3ff',
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const detail = add(this.add.text(SIDE.x + 24, y + 12, '', {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#7d9bad',
+        fontStyle: '600',
+      }).setOrigin(0, 0.5).setDepth(73));
+
+      const level = add(this.add.text(SIDE.x + SIDE.w - 26, y, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#8db6cc',
+      }).setOrigin(1, 0.5).setDepth(73));
+
+      box.on('pointerdown', () => this.openChassisPartSelector(partId));
+      this.chassisPartRows[partId] = { box, label, detail, level };
+    });
+
+    this.chassisPartsApplyButton = add(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 262,
+      SIDE.w - 36,
+      34,
+      0x102226,
+      1
+    ).setStrokeStyle(2, 0x3e7f78, 0.7).setDepth(72));
+
+    this.chassisPartsApplyText = add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 262,
+      'NO CHASSIS PARTS SELECTED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#758e94',
+      }
+    ).setOrigin(0.5).setDepth(73));
+
+    add(this.add.text(SIDE.x + 28, SIDE.y + 300, 'PAINT', {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#62dfff',
@@ -2311,36 +2381,36 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPaintSwatch = add(this.add.rectangle(
       SIDE.x + 70,
-      SIDE.y + 198,
+      SIDE.y + 335,
       76,
       52,
       this.pendingPaintColor,
       1
     ).setStrokeStyle(2, 0xd8f5ff, 1).setDepth(72));
 
-    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 187, '', {
+    this.chassisHexText = add(this.add.text(SIDE.x + 126, SIDE.y + 324, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#e8f7ff',
     }).setDepth(73));
 
-    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 212, '', {
+    this.chassisAssetStatusText = add(this.add.text(SIDE.x + 126, SIDE.y + 349, '', {
       fontFamily: BODY_FONT,
       fontSize: '9px',
       color: '#7fa4b7',
       wordWrap: { width: 180 },
     }).setDepth(73));
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 254, 'PRESET COLOURS', {
+    add(this.add.text(SIDE.x + 28, SIDE.y + 390, 'PRESET COLOURS', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     const presetStartX = SIDE.x + 55;
-    const presetStartY = SIDE.y + 296;
+    const presetStartY = SIDE.y + 425;
     const presetGapX = 62;
-    const presetGapY = 54;
+    const presetGapY = 42;
 
     PAINT_PRESETS.forEach((preset, index) => {
       const col = index % 5;
@@ -2365,14 +2435,14 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPresetButtons.push({ preset, box, hit });
     });
 
-    add(this.add.text(SIDE.x + 28, SIDE.y + 398, 'CUSTOM RGB', {
+    add(this.add.text(SIDE.x + 28, SIDE.y + 495, 'CUSTOM RGB', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#91b9ce',
     }).setDepth(73));
 
     ['r', 'g', 'b'].forEach((channel, index) => {
-      const y = SIDE.y + 442 + index * 46;
+      const y = SIDE.y + 530 + index * 38;
       const label = channel.toUpperCase();
 
       add(this.add.text(SIDE.x + 32, y, label, {
@@ -2410,7 +2480,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
+      SIDE.y + 632,
       SIDE.w - 36,
       44,
       0x102226,
@@ -2430,7 +2500,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const backButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 662,
+      SIDE.y + 684,
       SIDE.w - 36,
       44,
       0x102138,
@@ -2446,6 +2516,186 @@ export default class GarageScene extends Phaser.Scene {
     backButton.on('pointerdown', () => this.leaveChassisMode(true));
     this.addDaichiChassisHelper();
     this.refreshChassisMode();
+  }
+
+  getPendingChassisCost() {
+    if (!this.currentChassisTuning || !this.pendingChassisTuning) return 0;
+    return this.getWorkshopAdjustedCost(
+      getChassisCartCost(this.currentChassisTuning, this.pendingChassisTuning)
+    );
+  }
+
+  openChassisPartSelector(partId) {
+    this.closeChassisPartSelector();
+    const part = CHASSIS_TUNING_PARTS[partId];
+    if (!part) return;
+
+    const add = obj => {
+      this.chassisModalObjects.push(obj);
+      return obj;
+    };
+    const depth = 120;
+    const installed = this.currentChassisTuning[partId];
+    const currentSpec = part.levels[installed];
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    this.addModificationModalVisual(add, {
+      textureKey: currentSpec?.spriteKey,
+      title: currentSpec?.name?.toUpperCase() || part.name,
+      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      partName: 'CHASSIS',
+      mode: 'chassis',
+      depth,
+    });
+
+    part.levels.forEach((spec, index) => {
+      const y = 230 + index * 120;
+      const selected = this.pendingChassisTuning[partId] === spec.level;
+      const availableHere =
+        spec.level <= installed ||
+        canInstallTuningLevel('chassis', partId, spec.level, this.getActiveWorkshop().id);
+      const selectable = spec.level >= installed && availableHere;
+      const pathCost = this.getWorkshopAdjustedCost(
+        getChassisUpgradePathCost(partId, installed, spec.level)
+      );
+
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+        .setDepth(depth + 2));
+
+      this.addUpgradeRowSprite(add, spec, 745, y, depth);
+
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectable ? '#eaf8ff' : '#5a6d79',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: selectable ? '#8eafc1' : '#53636e',
+        fontStyle: '600',
+        wordWrap: { width: 390, useAdvancedWrap: true },
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      let price = 'INSTALLED';
+      if (spec.level > installed && availableHere) {
+        price = '¥ ' + pathCost.toLocaleString('en-US');
+      } else if (spec.level > installed && !availableHere) {
+        price = 'NEEDS ' + getWorkshopRequirementLabel('chassis', partId, spec.level);
+      }
+      if (spec.level < installed) price = 'INCLUDED';
+
+      add(this.add.text(1365, y, price, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (selectable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.pendingChassisTuning[partId] = spec.level;
+          this.closeChassisPartSelector();
+          this.refreshChassisMode();
+        });
+      }
+    });
+
+    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(1360, 112, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    close.on('pointerdown', () => this.closeChassisPartSelector());
+    blocker.on('pointerdown', () => this.closeChassisPartSelector());
+  }
+
+  closeChassisPartSelector() {
+    (this.chassisModalObjects || []).forEach(obj => obj?.destroy?.());
+    this.chassisModalObjects = [];
+  }
+
+  applyPendingChassisUpgrades() {
+    const blockedPart = CHASSIS_PART_ORDER.find(partId =>
+      Number(this.pendingChassisTuning?.[partId] || 0) >
+        Number(this.currentChassisTuning?.[partId] || 0) &&
+      !canInstallTuningLevel(
+        'chassis',
+        partId,
+        this.pendingChassisTuning?.[partId] || 0,
+        this.getActiveWorkshop().id
+      )
+    );
+
+    if (blockedPart) {
+      this.showWorkshopToast(
+        'NEEDS ' + getWorkshopRequirementLabel(
+          'chassis',
+          blockedPart,
+          this.pendingChassisTuning?.[blockedPart] || 0
+        )
+      );
+      return;
+    }
+
+    const cost = this.getPendingChassisCost();
+    if (cost <= 0) return;
+
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) {
+      this.showWorkshopToast('NOT ENOUGH CASH');
+      return;
+    }
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const existing = carStates[this.selectedCarId] || {};
+    const chassisTuning = normaliseChassisTuning(this.pendingChassisTuning);
+
+    const updated = {
+      ...existing,
+      stock: false,
+      acquiredVia: existing.acquiredVia || 'garage',
+      chassisTuning,
+    };
+
+    carStates[this.selectedCarId] = updated;
+    this.registry.set('carStates', carStates);
+    this.registry.set('cash', cash - cost);
+    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.currentChassisTuning = getChassisTuning(updated);
+    this.pendingChassisTuning = { ...this.currentChassisTuning };
+    this.refreshChassisMode();
+    this.refreshWorkshopSpecs();
+    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
 
   adjustPendingPaintChannel(channel, delta) {
@@ -2464,6 +2714,43 @@ export default class GarageScene extends Phaser.Scene {
     const ready = hasLayeredPaintAssets(this, car);
     const color = normalisePaintColor(this.pendingPaintColor);
     const rgb = paintColorToRgb(color);
+
+    Object.entries(this.chassisPartRows || {}).forEach(([partId, row]) => {
+      const current = this.currentChassisTuning?.[partId] || 0;
+      const pending = this.pendingChassisTuning?.[partId] || 0;
+      const spec = CHASSIS_TUNING_PARTS[partId].levels[pending];
+
+      row.level.setText(pending === current ? 'LV.' + current : 'LV.' + current + ' > ' + pending);
+      row.level.setColor(pending > current ? '#55e4ff' : '#8db6cc');
+      row.detail.setText(spec.name.toUpperCase());
+      row.box.setStrokeStyle(
+        pending > current ? 2 : 1,
+        pending > current ? 0x43dfff : 0x315470,
+        1
+      );
+    });
+
+    const chassisCost = this.getPendingChassisCost();
+    const cash = Number(this.registry.get('cash') || 0);
+    this.chassisPartsApplyButton?.removeAllListeners('pointerdown');
+
+    if (chassisCost <= 0) {
+      this.chassisPartsApplyButton?.disableInteractive()
+        .setFillStyle(0x102226, 1)
+        .setStrokeStyle(2, 0x3e7f78, 0.7);
+      this.chassisPartsApplyText?.setText('NO CHASSIS PARTS SELECTED').setColor('#758e94');
+    } else {
+      const affordable = cash >= chassisCost;
+      this.chassisPartsApplyButton?.setInteractive({ useHandCursor: true })
+        .setFillStyle(affordable ? 0x0c2827 : 0x2a171b, 1)
+        .setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1);
+      this.chassisPartsApplyText?.setText(
+        affordable
+          ? 'INSTALL PARTS // ¥ ' + chassisCost.toLocaleString('en-US')
+          : 'NEED ¥ ' + chassisCost.toLocaleString('en-US')
+      ).setColor(affordable ? '#f1fffb' : '#ffc0c6');
+      this.chassisPartsApplyButton?.on('pointerdown', () => this.applyPendingChassisUpgrades());
+    }
 
     this.chassisPaintSwatch?.setFillStyle(color, 1);
     this.chassisHexText?.setText(paintColorToHex(color));
@@ -2577,11 +2864,15 @@ export default class GarageScene extends Phaser.Scene {
       return;
     }
 
+    this.closeChassisPartSelector();
     setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
     this.chassisModeObjects.forEach(obj => obj?.destroy?.());
     this.chassisModeObjects = [];
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
+    this.chassisPartRows = {};
+    this.currentChassisTuning = null;
+    this.pendingChassisTuning = null;
     this.chassisMode = false;
     this.updateGarageNavState();
 
