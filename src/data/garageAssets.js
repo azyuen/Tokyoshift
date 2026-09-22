@@ -15,4 +15,8 @@ export const garageAssets = [
   { key: 'tuningCategoryDrivetrain', path: 'assets/Tuning/Categories/tuning_drivetrain.png?v=20260922-r94' },
   { key: 'tuningCategoryChassis', path: 'assets/Tuning/Categories/tuning_chassis.png?v=20260922-r94' },
   { key: 'tuningCategoryExhaustNos', path: 'assets/Tuning/Categories/tuning_exhaust_nos.png?v=20260922-r94' },
+  { key: 'tuningPartTurboL0', path: 'assets/Tuning/Parts/turbo_l0.png?v=20260922-r100' },
+  { key: 'tuningPartTurboL1', path: 'assets/Tuning/Parts/turbo_l1.png?v=20260922-r100' },
+  { key: 'tuningPartTurboL2', path: 'assets/Tuning/Parts/turbo_l2.png?v=20260922-r100' },
+  { key: 'tuningPartTurboL3', path: 'assets/Tuning/Parts/turbo_l3.png?v=20260922-r100' },
 ];
