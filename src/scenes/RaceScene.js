@@ -14,7 +14,7 @@ import {
 import { engines } from '../data/engines.js?v=20260921-r43';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
-import { characters } from '../data/characters.js?v=20260922-r85';
+import { characters, playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r108';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -93,8 +93,19 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.get('selectedOpponentPaintColor'),
       DEFAULT_PAINT_COLOR
     );
-    this.playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    this.opponentCharacterId = this.registry.get('selectedOpponentCharacterId') || 'kaitoFujimori';
+    const storedPlayerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    this.playerCharacterId = playableCharacterOrder.includes(storedPlayerCharacterId)
+      ? storedPlayerCharacterId
+      : playableCharacterOrder[0];
+
+    const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
+    const fallbackOpponentCharacterId =
+      rivalCharacterOrder.find(id => id !== this.playerCharacterId) || rivalCharacterOrder[0];
+    this.opponentCharacterId =
+      rivalCharacterOrder.includes(storedOpponentCharacterId) &&
+      storedOpponentCharacterId !== this.playerCharacterId
+        ? storedOpponentCharacterId
+        : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
       Number(this.registry.get('selectedOpponentEncounterRating') || characters[this.opponentCharacterId]?.skill?.rating || 3),
       1,
