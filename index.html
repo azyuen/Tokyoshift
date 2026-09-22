@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260922-r112" />
+  <link rel="stylesheet" href="./styles.css?v=20260922-r119" />
 </head>
 <body>
   <div id="game-shell">
@@ -38,8 +38,33 @@
         </div>
       </div>
     </div>
-    <div id="game"></div>
-    <div id="build-stamp">R118</div>
+    <div id="game">
+      <div id="driver-name-overlay" aria-hidden="true">
+        <input
+          id="driverFirstName"
+          class="driver-name-input"
+          maxlength="16"
+          autocomplete="given-name"
+          inputmode="text"
+          autocapitalize="words"
+          spellcheck="false"
+          placeholder="First name"
+          aria-label="First name"
+        />
+        <input
+          id="driverLastName"
+          class="driver-name-input"
+          maxlength="16"
+          autocomplete="family-name"
+          inputmode="text"
+          autocapitalize="words"
+          spellcheck="false"
+          placeholder="Last name"
+          aria-label="Last name"
+        />
+      </div>
+    </div>
+    <div id="build-stamp">R119</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -153,13 +178,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R118', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R119', { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260922-r118"></script>
+  <script type="module" src="./src/main.js?v=20260922-r119"></script>
 </body>
 </html>
