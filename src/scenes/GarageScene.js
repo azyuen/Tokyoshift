@@ -779,8 +779,9 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('selectedCarId', remaining[0] || null);
           saveSessionState(this.registry);
           close();
-          this.scene.start('GarageScene', {
-            workshopLocationId: currentWorkshop.id,
+          this.scene.start('BootScene', {
+            preserveRegistry: true,
+            bootMessage: 'MOVING CAR',
           });
         });
       }
@@ -895,11 +896,12 @@ export default class GarageScene extends Phaser.Scene {
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
-          // Start a fresh GarageScene instead of restarting the active one.
-          // Phaser's restart path was leaving the scene/input lifecycle in a
-          // bad state on iOS after the GPS popup was destroyed.
-          this.scene.start('GarageScene', {
-            workshopLocationId: location.id,
+          // Never transition GarageScene directly to itself. That path has
+          // proven unstable on mobile Phaser/PWA builds. Route through BootScene,
+          // preserving the live registry, then BootScene opens a clean GarageScene.
+          this.scene.start('BootScene', {
+            preserveRegistry: true,
+            bootMessage: 'OPENING WORKSHOP',
           });
         },
         onTravel: (locationId, cost) => {
