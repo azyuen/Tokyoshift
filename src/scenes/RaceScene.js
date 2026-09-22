@@ -16,9 +16,10 @@ import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260921-r66';
 import { characters, playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r112';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r115';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r115';
 import {
   getEncounterAi,
   boostAiForPinkSlip,
@@ -62,8 +63,12 @@ export default class RaceScene extends Phaser.Scene {
   constructor() { super('RaceScene'); }
 
   preload() {
+    let queued = 0;
     const queueImage = (key, path) => {
-      if (!this.textures.exists(key)) this.load.image(key, path);
+      if (!this.textures.exists(key)) {
+        this.load.image(key, path);
+        queued += 1;
+      }
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
@@ -77,6 +82,8 @@ export default class RaceScene extends Phaser.Scene {
     Object.values(RESULT_BACKGROUNDS).forEach(asset => {
       queueImage(asset.key, asset.path);
     });
+
+    startSceneLoading(this, 'PREPARING RACE', queued);
   }
 
   init() {
@@ -295,6 +302,8 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
     this.cancelButton.on('pointerdown', () => this.confirmCancelRace());
+
+    finishSceneLoading('READY TO RACE');
   }
 
   confirmCancelRace() {
