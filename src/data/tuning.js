@@ -19,10 +19,10 @@ export const ENGINE_TUNING_PARTS = {
     name: 'INTAKE',
     subtitle: 'AIRFLOW',
     levels: [
-      { level: 0, name: 'Stock airbox', cost: 0, torqueScale: 1.00, spoolScale: 1.00, benefit: 'Factory airflow' },
-      { level: 1, name: 'High-flow intake', cost: 7000, torqueScale: 1.02, spoolScale: 1.02, benefit: '+2% output / response' },
-      { level: 2, name: 'Cold-air intake', cost: 15000, torqueScale: 1.04, spoolScale: 1.04, benefit: '+4% output / response' },
-      { level: 3, name: 'Race intake', cost: 30000, torqueScale: 1.07, spoolScale: 1.06, benefit: '+7% output / response' },
+      { level: 0, name: 'Stock airbox', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntakeL0', benefit: 'Factory airflow' },
+      { level: 1, name: 'High-flow intake', cost: 7000, torqueScale: 1.02, spoolScale: 1.02, spriteKey: 'tuningPartIntakeL1', benefit: '+2% output / response' },
+      { level: 2, name: 'Cold-air intake', cost: 15000, torqueScale: 1.04, spoolScale: 1.04, spriteKey: 'tuningPartIntakeL2', benefit: '+4% output / response' },
+      { level: 3, name: 'Race intake', cost: 30000, torqueScale: 1.07, spoolScale: 1.06, spriteKey: 'tuningPartIntakeL3', benefit: '+7% output / response' },
     ],
   },
   ecu: {
@@ -30,10 +30,10 @@ export const ENGINE_TUNING_PARTS = {
     name: 'ECU',
     subtitle: 'ENGINE CONTROL',
     levels: [
-      { level: 0, name: 'Stock ECU', cost: 0, torqueScale: 1.00, redlineAdd: 0, boostAdd: 0, benefit: 'Factory calibration' },
-      { level: 1, name: 'Street reflash', cost: 10000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.04, benefit: '+3% output / sharper tune' },
-      { level: 2, name: 'Dyno tune', cost: 22000, torqueScale: 1.06, redlineAdd: 125, boostAdd: 0.08, benefit: '+6% output / more boost' },
-      { level: 3, name: 'Motorsport ECU', cost: 45000, torqueScale: 1.10, redlineAdd: 225, boostAdd: 0.12, benefit: '+10% output / full control' },
+      { level: 0, name: 'Stock ECU', cost: 0, torqueScale: 1.00, redlineAdd: 0, boostAdd: 0, spriteKey: 'tuningPartEcuL0', benefit: 'Factory calibration' },
+      { level: 1, name: 'Street reflash', cost: 10000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.04, spriteKey: 'tuningPartEcuL1', benefit: '+3% output / sharper tune' },
+      { level: 2, name: 'Dyno tune', cost: 22000, torqueScale: 1.06, redlineAdd: 125, boostAdd: 0.08, spriteKey: 'tuningPartEcuL2', benefit: '+6% output / more boost' },
+      { level: 3, name: 'Motorsport ECU', cost: 45000, torqueScale: 1.10, redlineAdd: 225, boostAdd: 0.12, spriteKey: 'tuningPartEcuL3', benefit: '+10% output / full control' },
     ],
   },
   turbo: {
