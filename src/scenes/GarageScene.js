@@ -38,11 +38,12 @@ import {
   getUnlockedWorkshops,
   getCarsInWorkshop,
   getWorkshopUsage,
+  getWorkshopTransferCost,
   normaliseCarGarageLocations,
   applyWorkshopServiceCost,
   canInstallTuningLevel,
   getWorkshopRequirementLabel,
-} from '../data/workshopProgression.js?v=20260922-r86';
+} from '../data/workshopProgression.js?v=20260922-r95';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -440,7 +441,7 @@ export default class GarageScene extends Phaser.Scene {
       0.99
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
 
-    this.add.text(STRIP.x + 18, STRIP.y + 14, 'MY GARAGE', {
+    this.add.text(STRIP.x + 18, STRIP.y + 7, 'MY GARAGE', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(32);
 
@@ -551,20 +552,20 @@ export default class GarageScene extends Phaser.Scene {
         y,
         cardW,
         112,
-        id ? (active ? 0x10263a : 0x0b1724) : 0x07101a,
-        1
+        id ? (active ? 0x10263a : 0x0b1724) : 0x050a10,
+        id ? 1 : 0.56
       ).setStrokeStyle(
-        active ? 3 : 2,
-        active ? 0x41dcff : id ? 0x29465c : 0x1d3445,
-        1
+        active ? 3 : id ? 2 : 1,
+        active ? 0x41dcff : id ? 0x29465c : 0x26333d,
+        id ? 1 : 0.46
       ).setDepth(32));
 
       if (!id) {
         add(this.add.text(x, y - 8, 'EMPTY SLOT', {
-          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#526d7e'
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#40515d'
         }).setOrigin(0.5).setDepth(34));
         add(this.add.text(x, y + 24, 'MOVE OR WIN A CAR', {
-          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#3f5665'
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#31414c'
         }).setOrigin(0.5).setDepth(34));
         continue;
       }
@@ -701,25 +702,169 @@ export default class GarageScene extends Phaser.Scene {
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 760, 500, 0x08131f, 0.99)
+    add(this.add.rectangle(780, 420, 840, 570, 0x08131f, 0.99)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(430, 205, 'MOVE ' + cars[this.selectedCarId].shortName, {
+    add(this.add.text(405, 175, 'MOVE ' + cars[this.selectedCarId].shortName, {
       fontFamily: PIXEL_FONT,
-      fontSize: '13px',
+      fontSize: '14px',
       color: '#eefaff',
     }).setDepth(depth + 2));
 
-    add(this.add.text(430, 245, 'Choose which unlocked Shinonome garage stores this car.', {
+    add(this.add.text(405, 220, 'Choose a destination garage. Transport is charged before the car is moved.', {
       fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#8fa8b8',
+      fontSize: '12px',
+      color: '#a7bdca',
       fontStyle: '600',
+      wordWrap: { width: 660 },
     }).setDepth(depth + 2));
 
+    const performTransfer = (workshop, transferCost, confirmObjects = []) => {
+      const movedCarId = this.selectedCarId;
+      const cash = Number(this.registry.get('cash') || 0);
+
+      this.syncGarageAssignments();
+      const liveSourceId = this.carGarageLocations?.[movedCarId];
+      if (liveSourceId !== currentWorkshop.id) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('CAR LOCATION CHANGED // REOPEN MOVE CAR');
+        return;
+      }
+
+      const destinationUsage = getWorkshopUsage(
+        this.ownedCarIds,
+        this.carGarageLocations || {},
+        workshop.id
+      );
+      if (destinationUsage >= getWorkshopStorageCapacity(workshop.id)) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('DESTINATION GARAGE IS FULL');
+        return;
+      }
+
+      if (cash < transferCost) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('NOT ENOUGH CASH FOR TRANSPORT');
+        return;
+      }
+
+      const requestedLocations = {
+        ...(this.carGarageLocations || {}),
+        [movedCarId]: workshop.id,
+      };
+      const validatedLocations = normaliseCarGarageLocations(
+        this.ownedCarIds,
+        requestedLocations,
+        Number(this.registry.get('garageTier') || 0)
+      );
+
+      if (validatedLocations?.[movedCarId] !== workshop.id) {
+        confirmObjects.forEach(obj => obj?.destroy?.());
+        close();
+        this.showWorkshopToast('TRANSFER FAILED // GARAGE ASSIGNMENT NOT SAVED');
+        return;
+      }
+
+      this.carGarageLocations = validatedLocations;
+      this.registry.set('carGarageLocations', validatedLocations);
+      this.registry.set('cash', cash - transferCost);
+
+      // Open the destination garage with the moved car selected. This makes
+      // the transfer immediately visible instead of making the car appear to vanish.
+      this.registry.set('workshopLocationId', workshop.id);
+      this.registry.set('selectedCarId', movedCarId);
+      saveSessionState(this.registry);
+
+      this.cashText?.setText('¥ ' + Number(cash - transferCost).toLocaleString('en-US'));
+
+      confirmObjects.forEach(obj => obj?.destroy?.());
+      close();
+
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+      window.location.reload();
+    };
+
+    const openConfirmation = (workshop, transferCost) => {
+      const confirmObjects = [];
+      const addConfirm = obj => {
+        confirmObjects.push(obj);
+        return obj;
+      };
+      const closeConfirm = () => confirmObjects.forEach(obj => obj?.destroy?.());
+      const cash = Number(this.registry.get('cash') || 0);
+
+      addConfirm(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.50)
+        .setDepth(depth + 10)
+        .setInteractive());
+
+      addConfirm(this.add.rectangle(780, 420, 660, 360, 0x091520, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1)
+        .setDepth(depth + 11));
+
+      addConfirm(this.add.text(780, 315, 'CONFIRM TRANSFER', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '14px',
+        color: '#f0fbff',
+      }).setOrigin(0.5).setDepth(depth + 12));
+
+      addConfirm(this.add.text(
+        780,
+        382,
+        cars[this.selectedCarId].shortName + '  →  ' + workshop.label,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '10px',
+          color: '#8eeaff',
+          align: 'center',
+        }
+      ).setOrigin(0.5).setDepth(depth + 12));
+
+      addConfirm(this.add.text(
+        780,
+        430,
+        'TRANSPORT  ¥ ' + transferCost.toLocaleString('en-US') +
+          '   //   CASH AFTER  ¥ ' + Math.max(0, cash - transferCost).toLocaleString('en-US'),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '11px',
+          color: '#b8cbd7',
+          fontStyle: '600',
+        }
+      ).setOrigin(0.5).setDepth(depth + 12));
+
+      const cancel = addConfirm(this.add.rectangle(650, 510, 210, 56, 0x151d28, 1)
+        .setStrokeStyle(1, 0x657d8c, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 12));
+      addConfirm(this.add.text(650, 510, 'CANCEL', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#c4d5df',
+      }).setOrigin(0.5).setDepth(depth + 13));
+
+      const confirm = addConfirm(this.add.rectangle(910, 510, 250, 56, 0x0c2827, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 12));
+      addConfirm(this.add.text(910, 510, 'MOVE CAR  //  ¥ ' + transferCost.toLocaleString('en-US'), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#f1fffb',
+      }).setOrigin(0.5).setDepth(depth + 13));
+
+      cancel.on('pointerdown', closeConfirm);
+      confirm.on('pointerdown', () => performTransfer(workshop, transferCost, confirmObjects));
+    };
+
     unlocked.forEach((workshop, index) => {
-      const y = 315 + index * 86;
+      const y = 305 + index * 100;
       const usage = getWorkshopUsage(
         this.ownedCarIds,
         this.carGarageLocations || {},
@@ -728,75 +873,68 @@ export default class GarageScene extends Phaser.Scene {
       const capacity = getWorkshopStorageCapacity(workshop.id);
       const isCurrent = workshop.id === currentWorkshop.id;
       const full = usage >= capacity;
-      const enabled = !isCurrent && !full;
+      const transferCost = getWorkshopTransferCost(currentWorkshop.id, workshop.id);
+      const cash = Number(this.registry.get('cash') || 0);
+      const affordable = cash >= transferCost;
+      const enabled = !isCurrent && !full && affordable;
 
       const box = add(this.add.rectangle(
         780,
         y,
-        650,
-        66,
+        700,
+        78,
         enabled ? 0x0b1724 : 0x090f16,
         1
       ).setStrokeStyle(
         isCurrent ? 2 : 1,
-        isCurrent ? 0x43dfff : full ? 0x5e4247 : 0x315470,
+        isCurrent ? 0x43dfff : full ? 0x5e4247 : affordable ? 0x315470 : 0x65424a,
         1
       ).setDepth(depth + 2));
 
-      add(this.add.text(485, y - 10, workshop.label, {
+      add(this.add.text(455, y - 16, workshop.label, {
         fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: enabled || isCurrent ? '#eaf8ff' : '#6d767c',
+        fontSize: '10px',
+        color: enabled || isCurrent ? '#eaf8ff' : '#707c84',
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(485, y + 17, usage + ' / ' + capacity + ' CARS', {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: '#819aaa',
-        fontStyle: '600',
-      }).setOrigin(0, 0.5).setDepth(depth + 3));
+      add(this.add.text(
+        455,
+        y + 18,
+        usage + ' / ' + capacity + ' CARS' +
+          (isCurrent ? '  //  CURRENT GARAGE' : '  //  TRANSPORT ¥ ' + transferCost.toLocaleString('en-US')),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '10px',
+          color: '#91a9b8',
+          fontStyle: '600',
+        }
+      ).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(1065, y, isCurrent ? 'CURRENT' : full ? 'FULL' : 'MOVE >', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: isCurrent ? '#55e4ff' : full ? '#8f626a' : '#62e8c7',
-      }).setOrigin(1, 0.5).setDepth(depth + 3));
+      add(this.add.text(
+        1110,
+        y,
+        isCurrent ? 'CURRENT' : full ? 'FULL' : !affordable ? 'NEED ¥' + transferCost.toLocaleString('en-US') : 'SELECT  >',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: isCurrent ? '#55e4ff' : full ? '#8f626a' : affordable ? '#62e8c7' : '#c9828d',
+        }
+      ).setOrigin(1, 0.5).setDepth(depth + 3));
 
       if (enabled) {
         box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => {
-          const movedCarId = this.selectedCarId;
-          this.carGarageLocations = {
-            ...(this.carGarageLocations || {}),
-            [movedCarId]: workshop.id,
-          };
-          this.registry.set('carGarageLocations', this.carGarageLocations);
-
-          const remaining = getCarsInWorkshop(
-            this.ownedCarIds,
-            this.carGarageLocations,
-            currentWorkshop.id
-          );
-          this.registry.set('selectedCarId', remaining[0] || null);
-          saveSessionState(this.registry);
-          close();
-          try {
-            sessionStorage.setItem('tokyoShiftInternalReload', '1');
-            sessionStorage.setItem('tokyoShiftBootMessage', 'MOVING CAR');
-          } catch (e) {}
-          window.location.reload();
-        });
+        box.on('pointerdown', () => openConfirmation(workshop, transferCost));
       }
     });
 
-    const closeButton = add(this.add.rectangle(1100, 615, 150, 42, 0x151d28, 1)
+    const closeButton = add(this.add.rectangle(1025, 645, 170, 48, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1100, 615, 'CLOSE', {
+    add(this.add.text(1025, 645, 'CLOSE', {
       fontFamily: PIXEL_FONT,
-      fontSize: '8px',
+      fontSize: '9px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
@@ -804,7 +942,7 @@ export default class GarageScene extends Phaser.Scene {
     blocker.on('pointerdown', close);
   }
 
-  buildMoveCarButton() {
+  buildMoveCarButton() {  buildMoveCarButton() {
     const button = this.moveCarButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       662,
@@ -904,7 +1042,7 @@ export default class GarageScene extends Phaser.Scene {
           // browser reload instead of another Phaser scene transition.
           try {
             sessionStorage.setItem('tokyoShiftInternalReload', '1');
-            sessionStorage.setItem('tokyoShiftBootMessage', 'OPENING WORKSHOP');
+            sessionStorage.removeItem('tokyoShiftBootMessage');
           } catch (e) {}
           window.location.reload();
         },
@@ -1095,10 +1233,14 @@ export default class GarageScene extends Phaser.Scene {
 
     const ownsCarsElsewhere = this.ownedCarIds.length > 0;
 
-    this.add.text(710, 330, ownsCarsElsewhere ? 'NO CARS STORED HERE' : 'GARAGE EMPTY', {
+    this.add.rectangle(710, 360, 720, 148, 0x050b12, 0.78)
+      .setStrokeStyle(1, 0x315470, 0.64)
+      .setDepth(19);
+
+    this.add.text(710, 326, ownsCarsElsewhere ? 'NO CARS STORED HERE' : 'GARAGE EMPTY', {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
-      color: '#d9e8f0',
+      color: '#edf8ff',
     }).setOrigin(0.5).setDepth(20);
 
     this.add.text(
@@ -1110,9 +1252,9 @@ export default class GarageScene extends Phaser.Scene {
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
-        color: '#8da5b4',
+        color: '#b8cbd7',
         align: 'center',
-        wordWrap: { width: 620 },
+        wordWrap: { width: 640 },
       }
     ).setOrigin(0.5).setDepth(20);
   }
@@ -1609,10 +1751,10 @@ export default class GarageScene extends Phaser.Scene {
     mode = 'engine',
     depth = 120,
   } = {}) {
-    const frameX = 360;
-    const frameY = 405;
-    const frameW = 330;
-    const frameH = 430;
+    const frameX = 390;
+    const frameY = 420;
+    const frameW = 410;
+    const frameH = 500;
 
     add(this.add.rectangle(frameX, frameY, frameW, frameH, 0x07111d, 0.98)
       .setStrokeStyle(2, 0x315470, 1)
@@ -1626,11 +1768,11 @@ export default class GarageScene extends Phaser.Scene {
 
     let renderedSprite = false;
     if (textureKey && this.textures.exists(textureKey)) {
-      const sprite = add(this.add.image(frameX, frameY - 36, textureKey)
+      const sprite = add(this.add.image(frameX, frameY - 48, textureKey)
         .setDepth(depth + 3)
         .setOrigin(0.5));
       const source = this.textures.get(textureKey).getSourceImage();
-      const fit = Math.min(280 / source.width, 245 / source.height);
+      const fit = Math.min(350 / source.width, 300 / source.height);
       sprite.setScale(fit);
       renderedSprite = true;
     }
@@ -1664,7 +1806,7 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(depth + 3));
     }
 
-    add(this.add.text(frameX, frameY + 118, title, {
+    add(this.add.text(frameX, frameY + 142, title, {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
       color: '#ffffff',
@@ -1673,7 +1815,7 @@ export default class GarageScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(depth + 3));
 
     if (subtitle) {
-      add(this.add.text(frameX, frameY + 166, subtitle, {
+      add(this.add.text(frameX, frameY + 192, subtitle, {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: '#8da9ba',
@@ -1684,7 +1826,7 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     if (partName) {
-      add(this.add.text(frameX, frameY + 198, partName, {
+      add(this.add.text(frameX, frameY + 232, partName, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: '#59dfff',
@@ -1694,7 +1836,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   addUpgradeRowSprite(add, spec, x, y, depth = 120) {
-    const well = add(this.add.rectangle(x, y, 72, 58, 0x07111d, 0.96)
+    const well = add(this.add.rectangle(x, y, 88, 74, 0x07111d, 0.96)
       .setStrokeStyle(1, 0x29465c, 1)
       .setDepth(depth + 3));
 
@@ -1703,7 +1845,7 @@ export default class GarageScene extends Phaser.Scene {
         .setDepth(depth + 4)
         .setOrigin(0.5));
       const source = this.textures.get(spec.spriteKey).getSourceImage();
-      sprite.setScale(Math.min(62 / source.width, 48 / source.height));
+      sprite.setScale(Math.min(76 / source.width, 62 / source.height));
     } else {
       add(this.add.text(x, y, 'LV.' + Number(spec?.level || 0), {
         fontFamily: PIXEL_FONT,
@@ -1735,11 +1877,11 @@ export default class GarageScene extends Phaser.Scene {
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 1240, 630, 0x08131f, 1)
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(190, 132, part.name + ' // SELECT KIT', {
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
       fontFamily: PIXEL_FONT,
       fontSize: '13px',
       color: '#eefaff',
@@ -1759,7 +1901,7 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     part.levels.forEach((spec, index) => {
-      const y = 250 + index * 104;
+      const y = 230 + index * 120;
       const selected = this.pendingEngineTuning[partId] === spec.level;
       const availableHere =
         spec.level <= installed ||
@@ -1769,24 +1911,24 @@ export default class GarageScene extends Phaser.Scene {
         getUpgradePathCost(partId, installed, spec.level)
       );
 
-      const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
+      const box = add(this.add.rectangle(1040, y, 720, 100, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
         .setDepth(depth + 2));
 
-      this.addUpgradeRowSprite(add, spec, 700, y, depth);
+      this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
-      add(this.add.text(750, y - 18, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: selectable ? '#eaf8ff' : '#5a6d79',
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(750, y + 18, spec.benefit.toUpperCase(), {
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: selectable ? '#8eafc1' : '#53636e',
         fontStyle: '600',
-        wordWrap: { width: 410, useAdvancedWrap: true },
+        wordWrap: { width: 390, useAdvancedWrap: true },
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
@@ -1797,7 +1939,7 @@ export default class GarageScene extends Phaser.Scene {
       }
       if (spec.level < installed) price = 'INCLUDED';
 
-      add(this.add.text(1330, y, price, {
+      add(this.add.text(1365, y, price, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
@@ -1813,12 +1955,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1330, 145, 100, 38, 0x151d28, 1)
+    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1330, 145, 'CLOSE', {
+    add(this.add.text(1360, 112, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
@@ -2839,11 +2981,11 @@ export default class GarageScene extends Phaser.Scene {
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 1240, 630, 0x08131f, 1)
+    add(this.add.rectangle(780, 420, 1320, 680, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(190, 132, part.name + ' // SELECT KIT', {
+    add(this.add.text(150, 112, part.name + ' // SELECT KIT', {
       fontFamily: PIXEL_FONT,
       fontSize: '13px',
       color: '#eefaff',
@@ -2859,7 +3001,7 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     part.levels.forEach((spec, index) => {
-      const y = 250 + index * 104;
+      const y = 230 + index * 120;
       const selected = this.pendingSecondaryTuning[partId] === spec.level;
       const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
       const availableHere =
@@ -2872,24 +3014,24 @@ export default class GarageScene extends Phaser.Scene {
           : getExhaustNosUpgradePathCost(partId, installed, spec.level)
       );
 
-      const box = add(this.add.rectangle(1010, y, 700, 86, selected ? 0x123047 : 0x0b1724, 1)
+      const box = add(this.add.rectangle(1040, y, 720, 100, selected ? 0x123047 : 0x0b1724, 1)
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
         .setDepth(depth + 2));
 
-      this.addUpgradeRowSprite(add, spec, 700, y, depth);
+      this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
-      add(this.add.text(750, y - 18, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
+      add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: selectable ? '#eaf8ff' : '#5a6d79',
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
-      add(this.add.text(750, y + 18, spec.benefit.toUpperCase(), {
+      add(this.add.text(805, y + 24, spec.benefit.toUpperCase(), {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: selectable ? '#8eafc1' : '#53636e',
         fontStyle: '600',
-        wordWrap: { width: 410, useAdvancedWrap: true },
+        wordWrap: { width: 390, useAdvancedWrap: true },
       }).setOrigin(0, 0.5).setDepth(depth + 3));
 
       let price = 'INSTALLED';
@@ -2900,7 +3042,7 @@ export default class GarageScene extends Phaser.Scene {
       }
       if (spec.level < installed) price = 'INCLUDED';
 
-      add(this.add.text(1330, y, price, {
+      add(this.add.text(1365, y, price, {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
         color: selected ? '#55e4ff' : selectable ? '#ffe08a' : '#61717b',
@@ -2916,12 +3058,12 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const close = add(this.add.rectangle(1330, 145, 100, 38, 0x151d28, 1)
+    const close = add(this.add.rectangle(1360, 112, 120, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(1330, 145, 'CLOSE', {
+    add(this.add.text(1360, 112, 'CLOSE', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
     }).setOrigin(0.5).setDepth(depth + 3));
 
