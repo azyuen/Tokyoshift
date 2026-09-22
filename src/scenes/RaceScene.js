@@ -16,7 +16,7 @@ import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r124';
 import { characters, playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r115';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260922-r125';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -1460,9 +1460,13 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
+    const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
+    const returnLabel = returnScene === 'CentralTokyoScene'
+      ? 'RETURN TO CENTRAL TOKYO  >'
+      : 'RETURN TO MEET  >';
     const actionLabel = settlement?.competitionContinues
       ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
-      : 'RETURN TO MEET  >';
+      : returnLabel;
 
     const buttonText = this.add.text(780, 686, actionLabel, {
       fontFamily: titleFont,
@@ -1479,7 +1483,7 @@ export default class RaceScene extends Phaser.Scene {
       if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
-        this.scene.start('MeetScene');
+        this.scene.start(returnScene);
       }
     });
   }
@@ -1487,7 +1491,7 @@ export default class RaceScene extends Phaser.Scene {
   startNextCompetitionRound() {
     const state = this.registry.get('competitionState');
     if (!state?.active) {
-      this.scene.start('MeetScene');
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
       return;
     }
 
@@ -1496,7 +1500,7 @@ export default class RaceScene extends Phaser.Scene {
     if (!round) {
       this.registry.set('competitionState', null);
       saveSessionState(this.registry);
-      this.scene.start('MeetScene');
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
       return;
     }
 
