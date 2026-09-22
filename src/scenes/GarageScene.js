@@ -122,6 +122,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildHeader();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
+    this.buildMoveCarButton();
     this.buildSaveButton();
     this.buildMeetButton();
 
@@ -161,8 +162,24 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(-10);
 
     const source = this.textures.get(workshopTexture).getSourceImage();
-    const coverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height) * 1.12;
-    workshop.setScale(coverScale);
+    const naturalCoverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const isUpgradedWorkshop = activeWorkshop.tier > 0;
+
+    // The original home artwork was composed around the existing 1.12 crop.
+    // The generated Canal Yard / Warehouse art is taller, so applying the same
+    // zoom makes the room look oversized relative to the fixed car/character
+    // anchors. Keep their native aspect ratio, fill the stage once, and anchor
+    // the floor to the bottom of the viewport.
+    const workshopScale = naturalCoverScale * (isUpgradedWorkshop ? 1 : 1.12);
+    workshop.setScale(workshopScale);
+
+    if (isUpgradedWorkshop) {
+      const scaledHeight = source.height * workshopScale;
+      workshop.setPosition(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h - scaledHeight / 2
+      );
+    }
 
     const maskShape = this.make.graphics({ add: false });
     maskShape.fillStyle(0xffffff, 1);
@@ -411,28 +428,6 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(32);
 
-    this.moveCarButton = this.add.rectangle(
-      STRIP.x + STRIP.w - 288,
-      STRIP.y + 18,
-      154,
-      28,
-      0x0b1724,
-      1
-    ).setStrokeStyle(1, 0x315470, 1).setDepth(33);
-
-    this.moveCarLabel = this.add.text(
-      STRIP.x + STRIP.w - 288,
-      STRIP.y + 18,
-      'MOVE CAR',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#9edcf7',
-      }
-    ).setOrigin(0.5).setDepth(34);
-
-    this.moveCarButton.on('pointerdown', () => this.showMoveCarPopup());
-
     this.garageCountText = this.add.text(STRIP.x + STRIP.w - 18, STRIP.y + 14, '', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#7fa6bd'
     }).setOrigin(1, 0).setDepth(32);
@@ -660,15 +655,15 @@ export default class GarageScene extends Phaser.Scene {
     if (enabled) {
       this.moveCarButton
         .setInteractive({ useHandCursor: true })
-        .setFillStyle(0x0b1724, 1)
-        .setStrokeStyle(1, 0x43dfff, 1);
-      this.moveCarLabel.setColor('#bfefff').setText('MOVE CAR');
+        .setFillStyle(0x102138, 1)
+        .setStrokeStyle(2, 0x55b8ff, 1);
+      this.moveCarLabel.setColor('#eef8ff').setText('MOVE CAR  >');
     } else {
       this.moveCarButton
         .disableInteractive()
-        .setFillStyle(0x080e15, 0.84)
-        .setStrokeStyle(1, 0x263641, 0.70);
-      this.moveCarLabel.setColor('#53636e').setText('MOVE CAR');
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.moveCarLabel.setColor('#817d84').setText('MOVE CAR');
     }
   }
 
@@ -789,6 +784,32 @@ export default class GarageScene extends Phaser.Scene {
     blocker.on('pointerdown', close);
   }
 
+  buildMoveCarButton() {
+    const button = this.moveCarButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      662,
+      SIDE.w - 32,
+      42,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setDepth(40);
+
+    this.moveCarLabel = this.add.text(
+      SIDE.x + SIDE.w / 2,
+      662,
+      'MOVE CAR  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#eef8ff',
+      }
+    ).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => this.showMoveCarPopup());
+    this.updateMoveCarButtonState();
+  }
+
   buildSaveButton() {
     const button = this.saveButton = this.add.rectangle(SIDE.x + SIDE.w / 2, 716, SIDE.w - 32, 42, 0x102138, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
@@ -818,7 +839,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(40);
 
-    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MEET  >', {
+    this.meetButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 770, 'GO TO MAP  >', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
     }).setOrigin(0.5).setDepth(41);
 
@@ -829,7 +850,7 @@ export default class GarageScene extends Phaser.Scene {
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
         title: 'TOKYO REGION MAP',
-        actionVerb: 'GO TO MEET',
+        actionVerb: 'DRIVE',
         fromWorkshop: true,
         allowCurrentAction: true,
         onWorkshopUpgrade: (location, cost, alreadyUnlocked) => {
