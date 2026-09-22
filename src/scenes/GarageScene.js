@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r134';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r137';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters } from '../data/characters.js?v=20260922-r111';
 import {
@@ -67,7 +67,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260923-r134';
+} from '../vehicles/CarAppearance.js?v=20260923-r138';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
