@@ -30,6 +30,19 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING ASSETS');
+
+    this.load.on('progress', value => {
+      window.TOKYO_SHIFT_SET_LOADING?.(
+        0.08 + (Math.max(0, Math.min(1, value)) * 0.84),
+        'LOADING ASSETS'
+      );
+    });
+
+    this.load.once('complete', () => {
+      window.TOKYO_SHIFT_SET_LOADING?.(0.96, 'OPENING TOKYO');
+    });
+
     // Every car follows the same appearance convention. Adding a car to cars.js
     // automatically queues its legacy body + tintable paint + fixed overlay.
     preloadCarAppearanceAssets(this, cars, '20260922-r83');
