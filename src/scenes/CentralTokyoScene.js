@@ -13,6 +13,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
+import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r135';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260922-r131';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260922-r131';
@@ -392,7 +393,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     window.location.reload();
   }
 
-  createCarDisplay(car, x, y, targetWidth, depth, paintColor = DEFAULT_PAINT_COLOR) {
+  createCarDisplay(
+    car,
+    x,
+    y,
+    targetWidth,
+    depth,
+    paintColor = DEFAULT_PAINT_COLOR,
+    driverCharacter = null
+  ) {
     const bodyKey = getCarBodyTextureKey(this, car);
     if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
 
@@ -416,6 +425,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       .setScale(wheelScale).setDepth(depth);
     const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
       .setScale(wheelScale).setDepth(depth);
+    const driver = driverCharacter
+      ? createDriverSilhouette(this, car, driverCharacter, {
+          bodyX: x,
+          bodyY: y,
+          bodyScale,
+          depth: depth + 0.55,
+        })
+      : null;
+
     const bodyLayers = createCarBodyLayers(this, car, {
       x,
       y,
@@ -424,7 +442,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       paintColor,
     });
 
-    return [rearBacking, frontBacking, shadow, rearWheel, frontWheel, ...bodyLayers.objects];
+    return [
+      rearBacking,
+      frontBacking,
+      shadow,
+      rearWheel,
+      frontWheel,
+      ...(driver?.image ? [driver.image] : []),
+      ...bodyLayers.objects,
+    ];
   }
 
   getAutoMarketListings() {
@@ -991,13 +1017,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedCar = build ? cars[build.carId] : null;
 
     if (selectedCar) {
+      const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+      const playerCharacter = characters[playerCharacterId] || characters.renMizuno;
+
       const carObjects = this.createCarDisplay(
         selectedCar,
         STAGE.x + 420,
         STAGE.y + 350,
         500,
         8,
-        getCarPaintColor(build.state)
+        getCarPaintColor(build.state),
+        playerCharacter
       );
       carObjects.forEach(obj => this.addContent(obj));
     }
