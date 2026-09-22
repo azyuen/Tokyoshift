@@ -15,7 +15,11 @@ import {
   getTravelLocation,
   regionIdForMeetLocation,
   getRegionTravelCost,
-} from '../data/travelRegions.js?v=20260922-r97';
+} from '../data/travelRegions.js?v=20260922-r125';
+import {
+  isCentralTokyoLocationUnlocked,
+  getCentralTokyoUnlockLabel,
+} from '../data/centralTokyo.js?v=20260922-r125';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -88,6 +92,13 @@ export function showTravelMap(scene, {
   let selectedLocationId = null;
   const garageTier = () => Number(scene.registry.get('garageTier') || 0);
   const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+  const locationAvailable = location => {
+    if (!location) return false;
+    if (location.centralTokyoUnlock) {
+      return isCentralTokyoLocationUnlocked(scene.registry, location.id);
+    }
+    return Boolean(location.available) || location.kind === 'home';
+  };
 
   const add = obj => {
     objects.push(obj);
@@ -369,7 +380,14 @@ export function showTravelMap(scene, {
       const here = regionId === currentRegionId;
       const home = regionId === HOME_REGION_ID;
 
-      if (active) {
+      if (!item.unlocked) {
+        item.glow.setRadius(active ? 24 : 20)
+          .setFillStyle(0x56616b, active ? 0.08 : 0.03)
+          .setStrokeStyle(active ? 3 : 2, active ? 0x96a6b2 : 0x65727c, active ? 0.90 : 0.50);
+        item.ring.setRadius(active ? 16 : 13)
+          .setStrokeStyle(active ? 3 : 2, active ? 0xbac5cc : 0x75818a, active ? 0.95 : 0.62);
+        item.core.setRadius(active ? 5 : 4).setFillStyle(0xaab4ba, active ? 0.92 : 0.70);
+      } else if (active) {
         item.glow.setRadius(28)
           .setFillStyle(home ? 0x25dbff : 0xff4fbd, 0.15)
           .setStrokeStyle(3, home ? 0x5ceaff : 0xff63c5, 0.96);
@@ -398,7 +416,7 @@ export function showTravelMap(scene, {
     const cost = getTargetCost(location);
     const isCurrent = !fromWorkshop && location?.id === currentLocationId;
     const isHome = location?.kind === 'home';
-    const available = Boolean(location?.available) || isHome;
+    const available = locationAvailable(location) || isHome;
     const enough = currentCash >= cost;
 
     travelButton.removeAllListeners('pointerdown');
@@ -499,7 +517,11 @@ export function showTravelMap(scene, {
       travelButton.disableInteractive()
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
-      travelLabel.setColor('#72838f').setText('COMING SOON');
+      travelLabel.setColor('#72838f').setText(
+        location?.centralTokyoUnlock
+          ? getCentralTokyoUnlockLabel(scene.registry, location.id)
+          : 'COMING SOON'
+      );
       return;
     }
 
@@ -585,7 +607,7 @@ export function showTravelMap(scene, {
 
       location = location
         || visibleLocations.find(item => item.id === activeWorkshopId())
-        || visibleLocations.find(item => item.available)
+        || visibleLocations.find(item => locationAvailable(item))
         || visibleLocations[0];
 
       selectedLocationId = location?.id || null;
@@ -613,7 +635,7 @@ export function showTravelMap(scene, {
       const selected = selectedLocationId === item.id;
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
-      const available = Boolean(item.available) || item.kind === 'home';
+      const available = locationAvailable(item) || item.kind === 'home';
       const time = locationTimeLabel(item);
 
       row.label.setText(item.label);
@@ -632,6 +654,10 @@ export function showTravelMap(scene, {
           'HOME  •  4 SLOTS  •  ' +
           (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost))
         );
+      } else if (item.centralTokyoUnlock && !available) {
+        row.meta.setText(
+          item.difficulty + '  •  ' + getCentralTokyoUnlockLabel(scene.registry, item.id)
+        );
       } else {
         row.meta.setText(
           item.difficulty + '  •  ' + time + '  •  ' +
@@ -641,7 +667,7 @@ export function showTravelMap(scene, {
 
       row.box.removeAllListeners('pointerdown');
 
-      if (available) {
+      if (available || item.centralTokyoUnlock) {
         row.box.setInteractive({ useHandCursor: true });
         row.box.on('pointerdown', () => {
           selectedLocationId = item.id;
@@ -672,17 +698,35 @@ export function showTravelMap(scene, {
     const region = TRAVEL_REGIONS[regionId];
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
+    const unlocked = home || region.locations.some(locationAvailable);
 
-    const glow = add(scene.add.circle(pt.x, pt.y, 22, home ? 0x29dcff : 0xff4fbd, 0.05)
-      .setStrokeStyle(2, home ? 0x53dff8 : 0xff63c5, 0.45)
-      .setDepth(depth + 5));
+    const glow = add(scene.add.circle(
+      pt.x,
+      pt.y,
+      22,
+      unlocked ? (home ? 0x29dcff : 0xff4fbd) : 0x56616b,
+      unlocked ? 0.05 : 0.03
+    ).setStrokeStyle(
+      2,
+      unlocked ? (home ? 0x53dff8 : 0xff63c5) : 0x65727c,
+      unlocked ? 0.45 : 0.50
+    ).setDepth(depth + 5));
 
     const ring = add(scene.add.circle(pt.x, pt.y, 14, 0x07111d, 0.22)
-      .setStrokeStyle(3, home ? 0x7cefff : 0xff8bd5, 0.82)
+      .setStrokeStyle(
+        unlocked ? 3 : 2,
+        unlocked ? (home ? 0x7cefff : 0xff8bd5) : 0x75818a,
+        unlocked ? 0.82 : 0.62
+      )
       .setDepth(depth + 6));
 
-    const core = add(scene.add.circle(pt.x, pt.y, 4, home ? 0xcdfaff : 0xffb3e5, 0.95)
-      .setDepth(depth + 7));
+    const core = add(scene.add.circle(
+      pt.x,
+      pt.y,
+      4,
+      unlocked ? (home ? 0xcdfaff : 0xffb3e5) : 0xaab4ba,
+      unlocked ? 0.95 : 0.70
+    ).setDepth(depth + 7));
 
     const hit = add(scene.add.circle(pt.x, pt.y, 38, 0x000000, 0.001)
       .setInteractive({ useHandCursor: true })
@@ -704,7 +748,7 @@ export function showTravelMap(scene, {
             ? activeWorkshopId()
             : unlockedHomeLocations[0]?.id || 'shinonomeWorkshop';
       } else {
-        selectedLocationId = region.locations.find(item => item.available)?.id
+        selectedLocationId = region.locations.find(item => locationAvailable(item))?.id
           || region.locations[0]?.id
           || null;
       }
@@ -713,7 +757,7 @@ export function showTravelMap(scene, {
       refreshPanel();
     });
 
-    regionUi[regionId] = { glow, ring, core, hit, pt };
+    regionUi[regionId] = { glow, ring, core, hit, pt, unlocked };
   });
 
   const currentUi = regionUi[currentRegionId];
