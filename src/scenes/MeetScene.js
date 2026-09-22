@@ -1928,11 +1928,11 @@ export default class MeetScene extends Phaser.Scene {
         color: '#ffffff'
       }).setDepth(35);
 
-      const quoteText = offer.locked
-        ? (offer.resultState === 'PLAYER_WIN'
-            ? (character.resultQuotes?.loss || 'You got me.')
-            : (character.resultQuotes?.win || 'That run was mine.'))
-        : offer.quote;
+      const quoteText = offer.resultState === 'PLAYER_WIN'
+        ? (character.resultQuotes?.loss || 'You got me.')
+        : offer.resultState === 'PLAYER_LOSS'
+          ? (character.resultQuotes?.win || 'That run was mine.')
+          : offer.quote;
 
       const quote = this.add.text(textX, cardY - 14, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
@@ -1943,14 +1943,14 @@ export default class MeetScene extends Phaser.Scene {
       }).setDepth(35);
 
       let statusText = null;
-      if (offer.locked) {
+      if (offer.resultState) {
         const status = offer.pinkSlipResult === 'PLAYER_WIN'
           ? 'DEFEATED // CAR WON'
           : offer.pinkSlipResult === 'PLAYER_LOSS'
             ? 'WINNER // TOOK YOUR CAR'
             : offer.resultState === 'PLAYER_WIN'
               ? 'DEFEATED'
-              : 'WON THIS RUN';
+              : 'WON LAST RUN // REMATCH';
 
         statusText = this.add.text(textX, cardY + 39, status, {
           fontFamily: PIXEL_FONT,
@@ -2079,9 +2079,10 @@ export default class MeetScene extends Phaser.Scene {
 
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const displayCarId = this.getOfferDisplayCar(offer)?.carId || offer.carId;
     if (
       ownedCars.length >= garageCapacity &&
-      !ownedCars.includes(offer.carId)
+      !ownedCars.includes(displayCarId)
     ) {
       this.pinkSlipButton.disableInteractive();
       this.pinkSlipButtonLabel.setText('GARAGE FULL').setColor('#72838f');
@@ -2110,9 +2111,10 @@ export default class MeetScene extends Phaser.Scene {
     if (!offer.pinkChallenged) {
       const ownedCars = this.registry.get('ownedCarIds') || [];
       const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+      const displayCarId = this.getOfferDisplayCar(offer)?.carId || offer.carId;
       const garageFull =
         ownedCars.length >= garageCapacity &&
-        !ownedCars.includes(offer.carId);
+        !ownedCars.includes(displayCarId);
 
       if (garageFull) {
         this.pinkSlipButton
@@ -2180,7 +2182,8 @@ export default class MeetScene extends Phaser.Scene {
     if (!offer) return;
 
     const character = characters[offer.characterId];
-    const car = cars[offer.carId];
+    const displayCar = this.getOfferDisplayCar(offer);
+    const car = displayCar?.carId ? cars[displayCar.carId] : cars[offer.carId];
 
     if (offer.locked) {
       this.selectedDeal = 'LOCKED';
@@ -2207,7 +2210,7 @@ export default class MeetScene extends Phaser.Scene {
         .setStrokeStyle(1, 0x46545e, 1);
       this.pinkSlipButtonLabel.setText('RACE COMPLETE').setColor('#72838f');
       this.pinkResponseText
-        .setText('This rival will rotate out with the next meet refresh.')
+        .setText('You beat this rival. They stay here in their loss pose until the next meet refresh.')
         .setColor('#7d8d98');
 
       this.raceButton
@@ -2394,8 +2397,15 @@ export default class MeetScene extends Phaser.Scene {
     const cash = this.registry.get('cash') ?? 0;
     if (this.selectedDeal === 'CASH' && cash < Number(offer.stake || 0)) return;
 
-    this.registry.set('selectedOpponentCarId', offer.carId);
-    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(offer.paintColor, DEFAULT_PAINT_COLOR));
+    const displayCar = this.getOfferDisplayCar(offer);
+    const opponentCarId = displayCar?.carId || offer.carId;
+    const opponentPaintColor = displayCar?.paintColor ?? normalisePaintColor(
+      offer.paintColor,
+      DEFAULT_PAINT_COLOR
+    );
+
+    this.registry.set('selectedOpponentCarId', opponentCarId);
+    this.registry.set('selectedOpponentPaintColor', opponentPaintColor);
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
     this.registry.set('selectedOpponentEncounterRating', Number(offer.encounterRating || 3));
     this.registry.set('selectedOpponentEncounterAi', offer.encounterAi || getEncounterAi(offer.encounterRating || 3));
@@ -2407,6 +2417,10 @@ export default class MeetScene extends Phaser.Scene {
     const { card, ...plainOffer } = offer;
     this.registry.set('selectedRaceMeetOffer', {
       ...plainOffer,
+      carId: opponentCarId,
+      paintColor: opponentPaintColor,
+      displayCarId: opponentCarId,
+      displayPaintColor: opponentPaintColor,
       meetLocation: this.selectedMeetLocation,
       slotIndex: this.selectedOfferIndex,
     });

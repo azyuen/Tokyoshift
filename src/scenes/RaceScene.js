@@ -1619,7 +1619,7 @@ export default class RaceScene extends Phaser.Scene {
         DEFAULT_PAINT_COLOR
       ),
       meetLocation: locationId,
-      locked: true,
+      locked: Boolean(playerWon),
       resultState,
       resultAt: Date.now(),
       pinkSlipResult: isPinkSlip ? resultState : null,
@@ -1788,6 +1788,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.raceDeal === 'PINK_SLIP') {
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
       const carStates = { ...(this.registry.get('carStates') || {}) };
+      const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
 
       if (playerWon) {
         if (!ownedCarIds.includes(this.opponentCarId)) {
@@ -1796,6 +1797,8 @@ export default class RaceScene extends Phaser.Scene {
             ...this.opponentBuildState,
             acquiredVia: 'pinkSlip',
           };
+          carGarageLocations[this.opponentCarId] =
+            this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
           pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ADDED TO GARAGE';
         } else {
           pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
@@ -1803,6 +1806,7 @@ export default class RaceScene extends Phaser.Scene {
       } else {
         ownedCarIds = ownedCarIds.filter(id => id !== this.selectedCarId);
         delete carStates[this.selectedCarId];
+        delete carGarageLocations[this.selectedCarId];
         pinkMessage = 'PINK SLIP LOST // ' + cars[this.selectedCarId].shortName + ' TAKEN';
 
         if (ownedCarIds.length) {
@@ -1818,6 +1822,7 @@ export default class RaceScene extends Phaser.Scene {
       if (playerWon) this.registry.set('meetStranded', false);
       this.registry.set('ownedCarIds', ownedCarIds);
       this.registry.set('carStates', carStates);
+      this.registry.set('carGarageLocations', carGarageLocations);
       this.registry.set('gameOver', gameOver);
 
       if (this.registry.get('selectedRaceSpecialChallenge')) {
