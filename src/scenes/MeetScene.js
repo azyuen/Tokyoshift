@@ -401,13 +401,24 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
     }).setDepth(37);
 
+    const storedCompetition =
+      (this.registry.get('competitionOffers') || {})[this.selectedMeetLocation];
+    const competitionUsed = Boolean(storedCompetition?.used);
     const competitionUnlocked =
-      this.hasCar && Number(this.registry.get('wins') || 0) >= 1;
+      this.hasCar &&
+      Number(this.registry.get('wins') || 0) >= 1 &&
+      !competitionUsed;
+
+    const competitionLabel = competitionUsed
+      ? 'COMPETITION // NEXT LINEUP'
+      : competitionUnlocked
+        ? 'COMPETITION'
+        : 'COMPETITION // WIN 1 RACE';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
       [
-        competitionUnlocked ? 'COMPETITION' : 'COMPETITION // WIN 1 RACE',
+        competitionLabel,
         'COMPETITION',
         !competitionUnlocked,
       ],
@@ -613,9 +624,10 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   getDisplayedSkillRange(rating = 3) {
-    const low = Phaser.Math.Clamp(Math.round(rating) - 1, 1, 5);
-    const high = Phaser.Math.Clamp(Math.round(rating) + 1, 1, 5);
-    return getEncounterSkillLabel(low) + ' – ' + getEncounterSkillLabel(high);
+    const rounded = Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5);
+    if (rounded <= 2) return 'ROOKIE – SKILLED';
+    if (rounded === 3) return 'SKILLED – EXPERT';
+    return 'EXPERT – ELITE';
   }
 
   generateSpecialChallenger() {
@@ -1114,7 +1126,11 @@ export default class MeetScene extends Phaser.Scene {
       roundIndex: 0,
     };
 
+    const competitionOffers = { ...(this.registry.get('competitionOffers') || {}) };
+    competitionOffers[offer.locationId] = { ...offer, used: true };
+
     this.registry.set('cash', cash - offer.entryFee);
+    this.registry.set('competitionOffers', competitionOffers);
     this.registry.set('competitionState', state);
     this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
 
