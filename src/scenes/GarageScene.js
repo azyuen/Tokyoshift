@@ -3164,6 +3164,59 @@ export default class GarageScene extends Phaser.Scene {
       );
     });
 
+    Object.entries(this.chassisVisualModRows || {}).forEach(([slotId, row]) => {
+      const currentId = this.currentVisualMods?.[slotId] || 'stock';
+      const pendingId = this.pendingVisualMods?.[slotId] || 'stock';
+      const option = getVisualModOption(this.selectedCarId, slotId, pendingId);
+      const changed = currentId !== pendingId;
+
+      row.detail.setText(
+        (option?.name || 'STOCK').toUpperCase() +
+        (option?.price ? ' // ¥ ' + Number(option.price).toLocaleString('en-US') : '')
+      );
+      row.detail.setColor(changed ? '#7fe6ff' : '#7d9bad');
+      row.box.setStrokeStyle(changed ? 2 : 1, changed ? 0x43dfff : 0x315470, 1);
+      row.arrow.setColor(changed ? '#55e4ff' : '#8db6cc');
+    });
+
+    if (this.visualModsApplyButton && this.visualModsApplyText) {
+      const visualUnchanged = VISUAL_MOD_SLOT_ORDER.every(
+        slotId =>
+          (this.currentVisualMods?.[slotId] || 'stock') ===
+          (this.pendingVisualMods?.[slotId] || 'stock')
+      );
+      const visualCost = this.getWorkshopAdjustedCost(
+        getVisualModChangeCost(
+          this.selectedCarId,
+          this.currentVisualMods || {},
+          this.pendingVisualMods || {}
+        )
+      );
+      const visualAffordable = Number(this.registry.get('cash') || 0) >= visualCost;
+
+      this.visualModsApplyButton.removeAllListeners('pointerdown');
+
+      if (visualUnchanged) {
+        this.visualModsApplyButton.disableInteractive()
+          .setFillStyle(0x102226, 1)
+          .setStrokeStyle(2, 0x3e7f78, 0.7);
+        this.visualModsApplyText
+          .setText('VISUAL MODS INSTALLED')
+          .setColor('#758e94');
+      } else {
+        this.visualModsApplyButton.setInteractive({ useHandCursor: true })
+          .setFillStyle(visualAffordable ? 0x0c2827 : 0x2a171b, 1)
+          .setStrokeStyle(2, visualAffordable ? 0x62e8c7 : 0xff6f7d, 1);
+        this.visualModsApplyText.setText(
+          visualAffordable
+            ? 'INSTALL VISUAL MODS // ¥ ' + visualCost.toLocaleString('en-US')
+            : 'NEED ¥ ' + visualCost.toLocaleString('en-US')
+        ).setColor(visualAffordable ? '#f1fffb' : '#ffc0c6');
+
+        this.visualModsApplyButton.on('pointerdown', () => this.applyPendingVisualMods());
+      }
+    }
+
     const chassisCost = this.getPendingChassisCost();
     const cash = Number(this.registry.get('cash') || 0);
     this.chassisPartsApplyButton?.removeAllListeners('pointerdown');
@@ -3324,17 +3377,25 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.closeChassisPartSelector();
+    this.pendingPaintColor = this.currentPaintColor;
+    this.pendingVisualMods = { ...(this.currentVisualMods || {}) };
+    this.rebuildSelectedVisualModPreview();
     setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
     this.chassisModeObjects.forEach(obj => obj?.destroy?.());
     this.chassisModeObjects = [];
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
     this.chassisPartRows = {};
+    this.chassisVisualModRows = {};
     this.chassisPaintObjects = [];
     this.chassisPaintChannelButtons = [];
     this.chassisPaintPanelOpen = false;
     this.currentChassisTuning = null;
     this.pendingChassisTuning = null;
+    this.currentVisualMods = null;
+    this.pendingVisualMods = null;
+    this.visualModsApplyButton = null;
+    this.visualModsApplyText = null;
     this.chassisMode = false;
     this.updateGarageNavState();
 
