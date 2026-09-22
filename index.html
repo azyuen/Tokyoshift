@@ -39,7 +39,7 @@
       </div>
     </div>
     <div id="game"></div>
-    <div id="build-stamp">R112</div>
+    <div id="build-stamp">R114</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -146,13 +146,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R113', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=R114', { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260922-r113"></script>
+  <script type="module" src="./src/main.js?v=20260922-r114"></script>
 </body>
 </html>
