@@ -56,4 +56,13 @@ export const garageAssets = [
   { key: 'tuningPartSuspensionL1', path: 'assets/Tuning/Parts/suspension_l1.png?v=20260922-r124' },
   { key: 'tuningPartSuspensionL2', path: 'assets/Tuning/Parts/suspension_l2.png?v=20260922-r124' },
   { key: 'tuningPartSuspensionL3', path: 'assets/Tuning/Parts/suspension_l3.png?v=20260922-r124' },
+  // Shared chassis upgrade sprites.
+  { key: 'tuningPartTyresL0', path: 'assets/Tuning/Parts/tyres_l0.png?v=20260922-r128' },
+  { key: 'tuningPartTyresL1', path: 'assets/Tuning/Parts/tyres_l1.png?v=20260922-r128' },
+  { key: 'tuningPartTyresL2', path: 'assets/Tuning/Parts/tyres_l2.png?v=20260922-r128' },
+  { key: 'tuningPartTyresL3', path: 'assets/Tuning/Parts/tyres_l3.png?v=20260922-r128' },
+  { key: 'tuningPartWeightReductionL0', path: 'assets/Tuning/Parts/weight_reduction_l0.png?v=20260922-r128' },
+  { key: 'tuningPartWeightReductionL1', path: 'assets/Tuning/Parts/weight_reduction_l1.png?v=20260922-r128' },
+  { key: 'tuningPartWeightReductionL2', path: 'assets/Tuning/Parts/weight_reduction_l2.png?v=20260922-r128' },
+  { key: 'tuningPartWeightReductionL3', path: 'assets/Tuning/Parts/weight_reduction_l3.png?v=20260922-r128' },
 ];
