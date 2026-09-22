@@ -21,6 +21,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterRenMizuno',
       path: 'assets/Characters/ren_mizuno.png',
+      winSpriteKey: 'characterRenMizunoWin',
+      winPath: 'assets/Characters/ren_mizuno_win.png',
+      lossSpriteKey: 'characterRenMizunoLoss',
+      lossPath: 'assets/Characters/ren_mizuno_loss.png',
     },
   },
 
@@ -74,6 +78,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterAyaKurose',
       path: 'assets/Characters/aya_kurose.png',
+      winSpriteKey: 'characterAyaKuroseWin',
+      winPath: 'assets/Characters/aya_kurose_win.png',
+      lossSpriteKey: 'characterAyaKuroseLoss',
+      lossPath: 'assets/Characters/aya_kurose_loss.png',
     },
   },
 
@@ -99,6 +107,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterKaitoFujimori',
       path: 'assets/Characters/kaito_fujimori.png',
+      winSpriteKey: 'characterKaitoFujimoriWin',
+      winPath: 'assets/Characters/kaito_fujimori_win.png',
+      lossSpriteKey: 'characterKaitoFujimoriLoss',
+      lossPath: 'assets/Characters/kaito_fujimori_loss.png',
     },
   },
 
@@ -124,6 +136,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterHaruTachibana',
       path: 'assets/Characters/haru_tachibana.png',
+      winSpriteKey: 'characterHaruTachibanaWin',
+      winPath: 'assets/Characters/haru_tachibana_win.png',
+      lossSpriteKey: 'characterHaruTachibanaLoss',
+      lossPath: 'assets/Characters/haru_tachibana_loss.png',
     },
   },
 
@@ -149,6 +165,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterReinaShibata',
       path: 'assets/Characters/reina_shibata.png',
+      winSpriteKey: 'characterReinaShibataWin',
+      winPath: 'assets/Characters/reina_shibata_win.png',
+      lossSpriteKey: 'characterReinaShibataLoss',
+      lossPath: 'assets/Characters/reina_shibata_loss.png',
     },
   },
 
@@ -174,6 +194,10 @@ export const characters = {
     visual: {
       spriteKey: 'characterRikuAkamine',
       path: 'assets/Characters/riku_akamine.png',
+      winSpriteKey: 'characterRikuAkamineWin',
+      winPath: 'assets/Characters/riku_akamine_win.png',
+      lossSpriteKey: 'characterRikuAkamineLoss',
+      lossPath: 'assets/Characters/riku_akamine_loss.png',
     },
   },
 
@@ -184,7 +208,10 @@ export const characters = {
     age: 20,
     hometown: 'Setagaya',
     archetype: 'The Momentum',
-    roleTags: ['protagonist', 'teammate', 'rival'],
+    roleTags: ['protagonist', 'teammate', 'rival', 'odaiba'],
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'ace',
     personality: 'Bright, competitive and fearless, with a talent for reading other drivers.',
     bio: 'Emi races by rhythm. She watches where opponents hesitate, where they shift, and where their car unsettles, then attacks exactly there. She brings energy to a team and makes a dangerous rival because she improves while the race is still happening.',
     drivingStyle: 'Momentum-based and reactive; strong braking, quick corrections and clever overtakes.',
@@ -198,7 +225,215 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterEmiKanzaki',
-      path: 'assets/Characters/emi_kanzaki.png',
+      path: 'assets/Characters/Odaiba/emi_kanzaki_idle.png',
+      winSpriteKey: 'characterEmiKanzakiWin',
+      winPath: 'assets/Characters/Odaiba/emi_kanzaki_win.png',
+      lossSpriteKey: 'characterEmiKanzakiLoss',
+      lossPath: 'assets/Characters/Odaiba/emi_kanzaki_loss.png',
+    },
+  },
+
+  aoiShindou: {
+    id: 'aoiShindou',
+    skill: { rating: 2, label: 'ROOKIE', ai: { reactionSkill: 0.67, launchSkill: 0.70, shiftSkill: 0.68, aggression: 0.75 }, betRange: [3000, 6000], competitionPrize: 9000 },
+    name: 'Aoi Shindou',
+    age: 26,
+    hometown: 'Odaiba',
+    archetype: 'The Spark',
+    roleTags: ['rival', 'odaiba', 'team'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'core',
+    personality: 'Upbeat, social and quick to turn any meet into a friendly challenge.',
+    bio: 'Aoi is one of the most visible faces of the Odaiba crew. She is still developing as a racer, but her confidence and ability to read a crowd make her a natural early rival.',
+    drivingStyle: 'Light-footed and reactive, with strong starts and simple, clean lines.',
+    tuningFocus: 'Tyres, braking and responsive naturally aspirated setups.',
+    preferredCars: ['ek9', 'ae86'],
+    signatureRace: 'Standing Start',
+    introQuote: 'You came all the way out here. We may as well run.',
+    resultQuotes: {
+      win: 'That was fun. You nearly had me.',
+      loss: 'Okay, okay — that one was yours.',
+    },
+    visual: {
+      spriteKey: 'characterAoiShindou',
+      path: 'assets/Characters/Odaiba/aoi_shindou_idle.png',
+      winSpriteKey: 'characterAoiShindouWin',
+      winPath: 'assets/Characters/Odaiba/aoi_shindou_win.png',
+      lossSpriteKey: 'characterAoiShindouLoss',
+      lossPath: 'assets/Characters/Odaiba/aoi_shindou_loss.png',
+    },
+  },
+
+  yutoAsakura: {
+    id: 'yutoAsakura',
+    skill: { rating: 3, label: 'SKILLED', ai: { reactionSkill: 0.79, launchSkill: 0.81, shiftSkill: 0.82, aggression: 0.72 }, betRange: [5000, 9000], competitionPrize: 13000 },
+    name: 'Yuto Asakura',
+    age: 32,
+    hometown: 'Koto',
+    archetype: 'The Meter',
+    roleTags: ['rival', 'odaiba', 'team'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'core',
+    personality: 'Disciplined, understated and methodical; rarely wastes a launch.',
+    bio: 'Yuto treats street races like controlled tests. He has been around longer than most of Odaiba’s younger crowd and is usually the one quietly setting the benchmark.',
+    drivingStyle: 'Consistent launches, measured shifts and very few unforced mistakes.',
+    tuningFocus: 'Gearing, launch traction and repeatable power delivery.',
+    preferredCars: ['fc3s', 'evo3'],
+    signatureRace: 'Quarter Mile',
+    introQuote: 'One clean run. No excuses.',
+    resultQuotes: {
+      win: 'Consistency wins more races than noise.',
+      loss: 'Good. Now I have something to measure against.',
+    },
+    visual: {
+      spriteKey: 'characterYutoAsakura',
+      path: 'assets/Characters/Odaiba/yuto_asakura_idle.png',
+      winSpriteKey: 'characterYutoAsakuraWin',
+      winPath: 'assets/Characters/Odaiba/yuto_asakura_win.png',
+      lossSpriteKey: 'characterYutoAsakuraLoss',
+      lossPath: 'assets/Characters/Odaiba/yuto_asakura_loss.png',
+    },
+  },
+
+  mikaHoshino: {
+    id: 'mikaHoshino',
+    skill: { rating: 3, label: 'SKILLED', ai: { reactionSkill: 0.77, launchSkill: 0.84, shiftSkill: 0.85, aggression: 0.76 }, betRange: [5000, 9500], competitionPrize: 14000 },
+    name: 'Mika Hoshino',
+    age: 35,
+    hometown: 'Shin-Kiba',
+    archetype: 'The Calibrator',
+    roleTags: ['rival', 'odaiba', 'team', 'tuner'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'tuner-driver',
+    personality: 'Dryly funny, mechanically obsessive and always testing a new setup.',
+    bio: 'Mika is the driver who arrives with a different setup every few nights. She races because data from the road tells her more than another hour in the garage.',
+    drivingStyle: 'Grip-focused and technical with strong mid-run corrections.',
+    tuningFocus: 'Suspension, boost control and chassis balance.',
+    preferredCars: ['wrx22b', 'evo3'],
+    signatureRace: 'Roll Race',
+    introQuote: 'I changed three things. Let’s see if any of them mattered.',
+    resultQuotes: {
+      win: 'That setup stays.',
+      loss: 'Fine. Back on the alignment rack.',
+    },
+    visual: {
+      spriteKey: 'characterMikaHoshino',
+      path: 'assets/Characters/Odaiba/mika_hoshino_idle.png',
+      winSpriteKey: 'characterMikaHoshinoWin',
+      winPath: 'assets/Characters/Odaiba/mika_hoshino_win.png',
+      lossSpriteKey: 'characterMikaHoshinoLoss',
+      lossPath: 'assets/Characters/Odaiba/mika_hoshino_loss.png',
+    },
+  },
+
+  kaoriNishimura: {
+    id: 'kaoriNishimura',
+    skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.88, launchSkill: 0.90, shiftSkill: 0.91, aggression: 0.78 }, betRange: [8500, 13500], competitionPrize: 19000 },
+    name: 'Kaori Nishimura',
+    age: 44,
+    hometown: 'Minato',
+    archetype: 'The Veteran',
+    roleTags: ['rival', 'odaiba', 'team', 'veteran'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'veteran',
+    personality: 'Polished, calm and quietly authoritative; she has nothing left to prove.',
+    bio: 'Kaori was racing around the bay before most of the current Odaiba crew had licences. She now acts as the team’s mentor, but still races when someone interesting turns up.',
+    drivingStyle: 'Smooth, deceptively fast and extremely difficult to unsettle.',
+    tuningFocus: 'Balanced high-speed builds and reliability.',
+    preferredCars: ['r32', 'fc3s'],
+    signatureRace: 'Night Cup',
+    introQuote: 'If you want to learn something, stay beside me.',
+    resultQuotes: {
+      win: 'Experience still counts for something.',
+      loss: 'Excellent. That was worth coming out for.',
+    },
+    visual: {
+      spriteKey: 'characterKaoriNishimura',
+      path: 'assets/Characters/Odaiba/kaori_nishimura_idle.png',
+      winSpriteKey: 'characterKaoriNishimuraWin',
+      winPath: 'assets/Characters/Odaiba/kaori_nishimura_win.png',
+      lossSpriteKey: 'characterKaoriNishimuraLoss',
+      lossPath: 'assets/Characters/Odaiba/kaori_nishimura_loss.png',
+    },
+  },
+
+  shunAmamiya: {
+    id: 'shunAmamiya',
+    skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.91, launchSkill: 0.86, shiftSkill: 0.92, aggression: 0.92 }, betRange: [9000, 14500], competitionPrize: 20000 },
+    name: 'Shun Amamiya',
+    age: 25,
+    hometown: 'Ariake',
+    archetype: 'The Wildcard',
+    roleTags: ['rival', 'odaiba', 'team', 'specialist'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'wildcard',
+    personality: 'Flashy, inventive and unpredictable, but far more technical than he first appears.',
+    bio: 'Shun is Odaiba’s specialist. He experiments with unusual setups and will happily choose the harder line just to see if he can make it work.',
+    drivingStyle: 'Aggressive, adaptive and difficult to read.',
+    tuningFocus: 'Boost response, electronics and unconventional combinations.',
+    preferredCars: ['evo3', 'r32'],
+    signatureRace: 'Eliminator',
+    introQuote: 'Normal is boring. Show me something strange.',
+    resultQuotes: {
+      win: 'See? Weird works.',
+      loss: 'Huh. I need a new trick.',
+    },
+    visual: {
+      spriteKey: 'characterShunAmamiya',
+      path: 'assets/Characters/Odaiba/shun_amamiya_idle.png',
+      winSpriteKey: 'characterShunAmamiyaWin',
+      winPath: 'assets/Characters/Odaiba/shun_amamiya_win.png',
+      lossSpriteKey: 'characterShunAmamiyaLoss',
+      lossPath: 'assets/Characters/Odaiba/shun_amamiya_loss.png',
+    },
+  },
+
+  takumiSerizawa: {
+    id: 'takumiSerizawa',
+    skill: { rating: 2, label: 'ROOKIE', ai: { reactionSkill: 0.71, launchSkill: 0.78, shiftSkill: 0.80, aggression: 0.62 }, betRange: [3000, 6500], competitionPrize: 10000 },
+    name: 'Takumi Serizawa',
+    age: 49,
+    hometown: 'Toyosu',
+    archetype: 'The Crew Chief',
+    roleTags: ['rival', 'odaiba', 'team', 'mechanic'],
+    selectable: false,
+    rivalEligible: true,
+    regionId: 'ODAIBA',
+    regionExclusive: true,
+    teamRole: 'support-mechanic',
+    personality: 'Patient, good-humoured and practical; he usually has a tool in one hand and coffee in the other.',
+    bio: 'Takumi keeps Odaiba’s cars running and has decades of mechanical experience. He does not chase reputation, but he can still put together a very tidy quarter mile when someone talks him into driving.',
+    drivingStyle: 'Conservative, clean and launch-focused.',
+    tuningFocus: 'Reliability, cooling, traction and practical fixes.',
+    preferredCars: ['ae86', 'wrx22b'],
+    signatureRace: 'Standing Start',
+    introQuote: 'All right. One run, then I’m checking your tyre pressures.',
+    resultQuotes: {
+      win: 'Old hands still work.',
+      loss: 'Fair enough. Your car sounded healthy, at least.',
+    },
+    visual: {
+      spriteKey: 'characterTakumiSerizawa',
+      path: 'assets/Characters/Odaiba/takumi_serizawa_idle.png',
+      winSpriteKey: 'characterTakumiSerizawaWin',
+      winPath: 'assets/Characters/Odaiba/takumi_serizawa_win.png',
+      lossSpriteKey: 'characterTakumiSerizawaLoss',
+      lossPath: 'assets/Characters/Odaiba/takumi_serizawa_loss.png',
     },
   },
 };
@@ -212,6 +447,12 @@ export const characterOrder = [
   'reinaShibata',
   'rikuAkamine',
   'emiKanzaki',
+  'aoiShindou',
+  'yutoAsakura',
+  'mikaHoshino',
+  'kaoriNishimura',
+  'shunAmamiya',
+  'takumiSerizawa',
 ];
 
 // Keep the complete roster available for asset loading and workshop NPC use,
@@ -224,6 +465,31 @@ export const playableCharacterOrder = characterOrder.filter(
 export const rivalCharacterOrder = characterOrder.filter(
   id => characters[id]?.rivalEligible !== false
 );
+
+export const REGION_TEAM_CHARACTER_IDS = {
+  ODAIBA: [
+    'emiKanzaki',
+    'aoiShindou',
+    'yutoAsakura',
+    'mikaHoshino',
+    'kaoriNishimura',
+    'shunAmamiya',
+    'takumiSerizawa',
+  ],
+};
+
+export const genericRivalCharacterOrder = rivalCharacterOrder.filter(
+  id => !characters[id]?.regionExclusive
+);
+
+export function getRivalCharacterOrderForRegion(regionId) {
+  const key = String(regionId || '').trim().toUpperCase();
+  const regional = REGION_TEAM_CHARACTER_IDS[key];
+  if (Array.isArray(regional) && regional.length) {
+    return regional.filter(id => characters[id]?.rivalEligible !== false);
+  }
+  return [...genericRivalCharacterOrder];
+}
 
 export const characterList = characterOrder.map((id) => characters[id]);
 export const playableCharacterList = playableCharacterOrder.map((id) => characters[id]);
