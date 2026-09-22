@@ -161,7 +161,11 @@ export function isArkonDen(source) {
   const first = String(value(source, 'firstName', '')).trim().toLowerCase();
   const last = String(value(source, 'lastName', '')).trim().toLowerCase();
   const joined = (first + last).replace(/[^a-z0-9]/g, '');
-  return devMode || joined === 'arkonden';
+  const legacyDevCash = Number(value(source, 'cash', 0) || 0) >= 900000000;
+
+  // Accept the canonical split name, combined display-name variants, and old
+  // dev saves that were created before the explicit devMode flag was stored.
+  return devMode || joined.includes('arkonden') || legacyDevCash;
 }
 
 export function getCentralTokyoAccess(source) {
