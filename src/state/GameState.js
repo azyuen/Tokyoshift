@@ -8,10 +8,13 @@ import {
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
+export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
+export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
+export const MAX_PROFILES = 3;
 
 export function createDefaultGameState() {
   return {
-    version: 3,
+    version: 4,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -77,12 +80,168 @@ function writeJson(key, value) {
   }
 }
 
+function removeKey(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {}
+}
+
+function emptyProfileStore() {
+  return {
+    version: 1,
+    slots: Array(MAX_PROFILES).fill(null),
+  };
+}
+
+function normaliseSlot(slot) {
+  if (!slot || typeof slot !== 'object') return null;
+  const manual = slot.manual && typeof slot.manual === 'object' ? slot.manual : null;
+  const session = slot.session && typeof slot.session === 'object' ? slot.session : null;
+  if (!manual && !session) return null;
+
+  return {
+    manual,
+    session,
+    createdAt: slot.createdAt || manual?.savedAt || session?.savedAt || new Date().toISOString(),
+    updatedAt: slot.updatedAt || manual?.savedAt || session?.savedAt || new Date().toISOString(),
+  };
+}
+
+function ensureProfileStore() {
+  const existing = readJson(PROFILE_STORE_KEY);
+  if (existing?.slots && Array.isArray(existing.slots)) {
+    const slots = Array.from({ length: MAX_PROFILES }, (_, index) =>
+      normaliseSlot(existing.slots[index])
+    );
+    const store = { version: 1, slots };
+    writeJson(PROFILE_STORE_KEY, store);
+    return store;
+  }
+
+  // One-time migration from the original single-profile save format.
+  const legacyManual = readJson(SAVE_KEY);
+  const legacySession = readJson(SESSION_KEY);
+  const store = emptyProfileStore();
+
+  if (legacyManual || legacySession) {
+    store.slots[0] = {
+      manual: legacyManual || null,
+      session: legacySession || legacyManual || null,
+      createdAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
+      updatedAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
+    };
+    writeJson(ACTIVE_PROFILE_KEY, 0);
+  }
+
+  writeJson(PROFILE_STORE_KEY, store);
+  return store;
+}
+
+function writeProfileStore(store) {
+  const safe = {
+    version: 1,
+    slots: Array.from({ length: MAX_PROFILES }, (_, index) =>
+      normaliseSlot(store?.slots?.[index])
+    ),
+  };
+  writeJson(PROFILE_STORE_KEY, safe);
+  return safe;
+}
+
+export function getActiveProfileIndex() {
+  const raw = Number(readJson(ACTIVE_PROFILE_KEY));
+  if (Number.isInteger(raw) && raw >= 0 && raw < MAX_PROFILES) return raw;
+  writeJson(ACTIVE_PROFILE_KEY, 0);
+  return 0;
+}
+
+function mirrorActiveProfile(slot) {
+  const manual = slot?.manual || null;
+  const session = slot?.session || manual || null;
+
+  if (manual) writeJson(SAVE_KEY, manual);
+  else removeKey(SAVE_KEY);
+
+  if (session) writeJson(SESSION_KEY, session);
+  else removeKey(SESSION_KEY);
+}
+
+export function setActiveProfileIndex(index) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  writeJson(ACTIVE_PROFILE_KEY, slotIndex);
+  const store = ensureProfileStore();
+  mirrorActiveProfile(store.slots[slotIndex]);
+  return slotIndex;
+}
+
+export function getProfileSlots() {
+  const store = ensureProfileStore();
+  const activeIndex = getActiveProfileIndex();
+
+  return store.slots.map((slot, index) => {
+    const state = slot?.session || slot?.manual || null;
+    return {
+      index,
+      occupied: Boolean(state),
+      active: index === activeIndex,
+      firstName: String(state?.firstName || ''),
+      lastName: String(state?.lastName || ''),
+      playerCharacterId: state?.playerCharacterId || null,
+      cash: Number(state?.cash || 0),
+      carCount: Array.isArray(state?.ownedCarIds) ? state.ownedCarIds.length : 0,
+      wins: Number(state?.wins || 0),
+      losses: Number(state?.losses || 0),
+      updatedAt: slot?.updatedAt || null,
+    };
+  });
+}
+
+export function beginNewProfile(index) {
+  const slotIndex = setActiveProfileIndex(index);
+  const store = ensureProfileStore();
+  store.slots[slotIndex] = null;
+  writeProfileStore(store);
+  mirrorActiveProfile(null);
+  return slotIndex;
+}
+
+export function deleteProfileSlot(index) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const store = ensureProfileStore();
+  store.slots[slotIndex] = null;
+  writeProfileStore(store);
+
+  if (slotIndex === getActiveProfileIndex()) {
+    mirrorActiveProfile(null);
+  }
+
+  return getProfileSlots();
+}
+
+export function getProfileState(index, preferSession = true) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const slot = ensureProfileStore().slots[slotIndex];
+  if (!slot) return null;
+  return preferSession
+    ? (slot.session || slot.manual || null)
+    : (slot.manual || slot.session || null);
+}
+
+export function activateProfile(registry, index, preferSession = true) {
+  const slotIndex = setActiveProfileIndex(index);
+  const state = getProfileState(slotIndex, preferSession);
+  if (!state) return null;
+  return applyStateToRegistry(registry, state);
+}
+
 export function readManualSave() {
-  return readJson(SAVE_KEY);
+  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
+  return slot?.manual || null;
 }
 
 export function readSessionState() {
-  return readJson(SESSION_KEY);
+  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
+  return slot?.session || slot?.manual || null;
 }
 
 export function normaliseState(input = {}) {
@@ -155,6 +314,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
+    version: 4,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -199,7 +359,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 3,
+    version: 4,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -229,9 +389,31 @@ export function snapshotRegistry(registry) {
   });
 }
 
+function writeActiveSlot(update) {
+  const activeIndex = getActiveProfileIndex();
+  const store = ensureProfileStore();
+  const existing = store.slots[activeIndex] || {
+    manual: null,
+    session: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  store.slots[activeIndex] = {
+    ...existing,
+    ...update,
+    createdAt: existing.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  writeProfileStore(store);
+  mirrorActiveProfile(store.slots[activeIndex]);
+  return store.slots[activeIndex];
+}
+
 export function saveSessionState(registry) {
   const state = snapshotRegistry(registry);
-  writeJson(SESSION_KEY, state);
+  writeActiveSlot({ session: state });
   return state;
 }
 
@@ -240,11 +422,9 @@ export function saveManualState(registry) {
     ...snapshotRegistry(registry),
     savedAt: new Date().toISOString(),
   };
-  writeJson(SAVE_KEY, state);
-  writeJson(SESSION_KEY, state);
+  writeActiveSlot({ manual: state, session: state });
   return state;
 }
-
 
 export function saveIdentityState(registry) {
   const devName =
@@ -256,33 +436,23 @@ export function saveIdentityState(registry) {
     registry.set('cash', 1000000000);
   }
 
-  const state = saveSessionState(registry);
-  const manual = readManualSave();
-
-  if (manual) {
-    writeJson(SAVE_KEY, {
-      ...manual,
-      firstName: state.firstName,
-      lastName: state.lastName,
-    });
-  }
-
-  return state;
+  return saveSessionState(registry);
 }
 
 export function restoreManualSave(registry) {
   const saved = readManualSave();
   if (!saved) return null;
   const state = applyStateToRegistry(registry, saved);
-  writeJson(SESSION_KEY, state);
+  writeActiveSlot({ session: state });
   return state;
 }
 
+// Kept for existing game-over/new-run callers. In multi-profile mode this now
+// clears only the active character slot, never the other two profiles.
 export function clearAllSaves() {
-  try {
-    localStorage.removeItem(SAVE_KEY);
-    localStorage.removeItem(SESSION_KEY);
-  } catch (e) {
-    // Storage can be unavailable in some private-browser contexts.
-  }
+  const activeIndex = getActiveProfileIndex();
+  const store = ensureProfileStore();
+  store.slots[activeIndex] = null;
+  writeProfileStore(store);
+  mirrorActiveProfile(null);
 }
