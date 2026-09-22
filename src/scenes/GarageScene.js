@@ -2496,6 +2496,78 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPaintMenuButton.on('pointerdown', () => this.openChassisPaintPanel());
 
+    // Generic visual-mod slots. Evo III is the first proof-of-concept car.
+    // Each row cycles independently through STOCK and the available options.
+    const visualCatalog = getVisualModCatalog(this.selectedCarId);
+    if (visualCatalog) {
+      VISUAL_MOD_SLOT_ORDER.forEach((slotId, index) => {
+        const slot = visualCatalog.slots[slotId];
+        const y = SIDE.y + 366 + index * 56;
+
+        const box = add(this.add.rectangle(
+          SIDE.x + SIDE.w / 2,
+          y,
+          SIDE.w - 36,
+          46,
+          0x0b1724,
+          1
+        ).setStrokeStyle(1, 0x315470, 1)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(72));
+
+        const label = add(this.add.text(SIDE.x + 24, y - 8, slot.label, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#dff3ff',
+        }).setOrigin(0, 0.5).setDepth(73));
+
+        const detail = add(this.add.text(SIDE.x + 24, y + 11, '', {
+          fontFamily: BODY_FONT,
+          fontSize: '9px',
+          color: '#7d9bad',
+          fontStyle: '600',
+        }).setOrigin(0, 0.5).setDepth(73));
+
+        const arrow = add(this.add.text(SIDE.x + SIDE.w - 28, y, '>', {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: '#8db6cc',
+        }).setOrigin(0.5).setDepth(73));
+
+        box.on('pointerdown', () => this.cyclePendingVisualMod(slotId));
+        this.chassisVisualModRows[slotId] = { box, label, detail, arrow };
+      });
+
+      this.visualModsApplyButton = add(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 548,
+        SIDE.w - 36,
+        38,
+        0x102226,
+        1
+      ).setStrokeStyle(2, 0x3e7f78, 0.7).setDepth(72));
+
+      this.visualModsApplyText = add(this.add.text(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 548,
+        'VISUAL MODS INSTALLED',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#758e94',
+        }
+      ).setOrigin(0.5).setDepth(73));
+    } else {
+      const y = SIDE.y + 390;
+      add(this.add.text(SIDE.x + 24, y, 'VISUAL MODS // NOT AVAILABLE FOR THIS CAR YET', {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#607887',
+        fontStyle: '600',
+        wordWrap: { width: SIDE.w - 48 },
+      }).setDepth(73));
+    }
+
     this.chassisPartsApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 594,
