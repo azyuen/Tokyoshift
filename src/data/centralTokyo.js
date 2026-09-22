@@ -221,7 +221,8 @@ export function getPendingCentralTokyoInvite(source) {
   const access = getCentralTokyoAccess(source);
   const seen = value(source, 'tokyoInvitesSeen', {}) || {};
 
-  if (access.autoMarket && !seen.autoMarket) return 'autoMarket';
+  // The Auto Market simply opens once the player has enough wins. The two
+  // prestige destinations are the ones that arrive as explicit invitations.
   if (access.ginza && !seen.ginza) return 'ginza';
   if (access.drag && !seen.drag) return 'drag';
   return null;
