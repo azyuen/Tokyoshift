@@ -10,7 +10,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260922-r100';
+} from '../data/tuning.js?v=20260922-r106';
 import {
   DRIVETRAIN_PART_ORDER,
   EXHAUST_NOS_PART_ORDER,
@@ -1840,16 +1840,39 @@ export default class GarageScene extends Phaser.Scene {
     }
   }
 
-  addUpgradeRowSprite(add, spec, x, y, depth = 120) {
+  resolveEnginePartSpriteKey(partId, spec, car) {
+    if (partId === 'engine') {
+      return car?.visual?.engineKey || null;
+    }
+
+    if (partId === 'turbo') {
+      const level = Math.max(0, Math.min(3, Number(spec?.level || 0)));
+
+      if (level === 0) {
+        const factoryTurbo = Number(car?.maximumBoost || 0) > 0.01;
+        return factoryTurbo
+          ? 'tuningPartTurboL0Stock'
+          : 'tuningPartTurboL0NA';
+      }
+
+      return 'tuningPartTurboL' + level;
+    }
+
+    return spec?.spriteKey || null;
+  }
+
+  addUpgradeRowSprite(add, spec, x, y, depth = 120, spriteKeyOverride = null) {
     const well = add(this.add.rectangle(x, y, 88, 74, 0x07111d, 0.96)
       .setStrokeStyle(1, 0x29465c, 1)
       .setDepth(depth + 3));
 
-    if (spec?.spriteKey && this.textures.exists(spec.spriteKey)) {
-      const sprite = add(this.add.image(x, y, spec.spriteKey)
+    const spriteKey = spriteKeyOverride || spec?.spriteKey || null;
+
+    if (spriteKey && this.textures.exists(spriteKey)) {
+      const sprite = add(this.add.image(x, y, spriteKey)
         .setDepth(depth + 4)
         .setOrigin(0.5));
-      const source = this.textures.get(spec.spriteKey).getSourceImage();
+      const source = this.textures.get(spriteKey).getSourceImage();
       sprite.setScale(Math.min(76 / source.width, 62 / source.height));
     } else {
       add(this.add.text(x, y, 'LV.' + Number(spec?.level || 0), {
@@ -1892,10 +1915,10 @@ export default class GarageScene extends Phaser.Scene {
       color: '#eefaff',
     }).setDepth(depth + 2));
 
+    const currentSpriteKey = this.resolveEnginePartSpriteKey(partId, currentSpec, car);
+
     this.addModificationModalVisual(add, {
-      textureKey: partId === 'engine'
-        ? car?.visual?.engineKey
-        : currentSpec?.spriteKey || car?.visual?.engineKey,
+      textureKey: currentSpriteKey || car?.visual?.engineKey,
       title: partId === 'engine' ? currentEngineName : currentSpec?.name?.toUpperCase(),
       subtitle: partId === 'engine'
         ? 'FACTORY ENGINE // ' + car.shortName
@@ -1920,7 +1943,14 @@ export default class GarageScene extends Phaser.Scene {
         .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
         .setDepth(depth + 2));
 
-      this.addUpgradeRowSprite(add, spec, 745, y, depth);
+      this.addUpgradeRowSprite(
+        add,
+        spec,
+        745,
+        y,
+        depth,
+        this.resolveEnginePartSpriteKey(partId, spec, car)
+      );
 
       add(this.add.text(805, y - 22, 'LV.' + spec.level + '  ' + spec.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
