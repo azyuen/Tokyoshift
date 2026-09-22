@@ -25,7 +25,7 @@ import {
   getDrivetrainCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260922-r114';
+} from '../data/secondaryTuning.js?v=20260922-r124';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r115';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r123';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -43,7 +43,7 @@ import {
   applyWorkshopServiceCost,
   canInstallTuningLevel,
   getWorkshopRequirementLabel,
-} from '../data/workshopProgression.js?v=20260922-r95';
+} from '../data/workshopProgression.js?v=20260922-r124';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -2656,8 +2656,10 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.secondaryPartRows = {};
+    const rowStartY = isDrivetrain ? SIDE.y + 244 : SIDE.y + 232;
+    const rowGap = isDrivetrain ? 68 : 58;
     order.forEach((partId, i) => {
-      const y = SIDE.y + 232 + i * 58;
+      const y = rowStartY + i * rowGap;
       const part = parts[partId];
 
       const box = add(this.add.rectangle(
@@ -2856,12 +2858,6 @@ export default class GarageScene extends Phaser.Scene {
             y: wheelY - 48,
             lx: clampX(rearX - 94),
             ly: wheelY - 108,
-          },
-          launchSetup: {
-            x: clampX(frontX + 34),
-            y: wheelY + 2,
-            lx: clampX(frontX + 92),
-            ly: wheelY + 62,
           },
         }
       : {
