@@ -1,19 +1,21 @@
 // Generic in-car driver silhouette.
 //
-// Reuses the existing full-body character artwork: crop the upper portion,
-// tint it almost black, and position it BEHIND the car body. Cars with
-// translucent windows then reveal only a simple head/upper-body silhouette.
+// Scalability rule:
+//   - each CAR may define visual.driverSeat once
+//   - each CHARACTER may define visual.driverHead once
+// Any car + character combination then works without pair-specific artwork.
 //
-// Optional per-car override:
-// visual.driverSeat = { x, y, height, alpha, cropX, cropY, cropW, cropH }
-// x/y/height use the same source-pixel coordinate system as the wheel offsets.
-// crop values are normalised 0..1 fractions of the character texture.
+// The character crop is tinted almost black and positioned BEHIND every body
+// layer. It is only visible through transparent/translucent glass in the car PNG.
 
-const DEFAULT_CROP = {
+const DEFAULT_HEAD = {
   cropX: 0.18,
   cropY: 0.00,
   cropW: 0.64,
   cropH: 0.40,
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
 };
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value)));
@@ -26,6 +28,8 @@ export function resolveDriverSeat(visualOrCar = {}) {
   const wheelbase = Math.max(500, Math.abs(front - rear));
   const override = visual.driverSeat || {};
 
+  // Automatic baseline. Most road cars land close enough that only unusual
+  // cabins need a small driverSeat override in cars.js.
   const fallbackX = rear + (front - rear) * 0.62;
   const fallbackY = wheelY - wheelbase * 0.22;
   const fallbackHeight = wheelbase * 0.235;
@@ -35,29 +39,42 @@ export function resolveDriverSeat(visualOrCar = {}) {
     y: Number.isFinite(Number(override.y)) ? Number(override.y) : fallbackY,
     height: Number.isFinite(Number(override.height)) ? Number(override.height) : fallbackHeight,
     alpha: clamp(
-      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.46,
+      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.50,
       0.05,
       1
     ),
+  };
+}
+
+export function resolveDriverHead(character = {}) {
+  const override = character?.visual?.driverHead || {};
+  return {
     cropX: clamp(
-      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : DEFAULT_CROP.cropX,
+      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : DEFAULT_HEAD.cropX,
       0,
       0.90
     ),
     cropY: clamp(
-      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : DEFAULT_CROP.cropY,
+      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : DEFAULT_HEAD.cropY,
       0,
       0.90
     ),
     cropW: clamp(
-      Number.isFinite(Number(override.cropW)) ? Number(override.cropW) : DEFAULT_CROP.cropW,
+      Number.isFinite(Number(override.cropW)) ? Number(override.cropW) : DEFAULT_HEAD.cropW,
       0.05,
       1
     ),
     cropH: clamp(
-      Number.isFinite(Number(override.cropH)) ? Number(override.cropH) : DEFAULT_CROP.cropH,
+      Number.isFinite(Number(override.cropH)) ? Number(override.cropH) : DEFAULT_HEAD.cropH,
       0.05,
       1
+    ),
+    offsetX: Number.isFinite(Number(override.offsetX)) ? Number(override.offsetX) : 0,
+    offsetY: Number.isFinite(Number(override.offsetY)) ? Number(override.offsetY) : 0,
+    scale: clamp(
+      Number.isFinite(Number(override.scale)) ? Number(override.scale) : 1,
+      0.50,
+      1.75
     ),
   };
 }
@@ -82,21 +99,32 @@ export function createDriverSilhouette(
   if (!source?.width || !source?.height) return null;
 
   const seat = resolveDriverSeat(visualOrCar);
-  const cropX = Math.round(source.width * seat.cropX);
-  const cropY = Math.round(source.height * seat.cropY);
+  const head = resolveDriverHead(character);
+
+  const cropX = Math.round(source.width * head.cropX);
+  const cropY = Math.round(source.height * head.cropY);
   const cropW = Math.max(
     1,
-    Math.round(source.width * Math.min(seat.cropW, 1 - seat.cropX))
+    Math.round(source.width * Math.min(head.cropW, 1 - head.cropX))
   );
   const cropH = Math.max(
     1,
-    Math.round(source.height * Math.min(seat.cropH, 1 - seat.cropY))
+    Math.round(source.height * Math.min(head.cropH, 1 - head.cropY))
   );
 
-  const targetHeight = Math.max(12, seat.height * bodyScale);
+  const targetHeight = Math.max(12, seat.height * bodyScale * head.scale);
   const silhouetteScale = targetHeight / cropH;
-  const centreX = bodyX + seat.x * bodyScale;
-  const centreY = bodyY + seat.y * bodyScale;
+
+  const centreX =
+    bodyX +
+    seat.x * bodyScale +
+    head.offsetX * targetHeight;
+
+  const centreY =
+    bodyY +
+    seat.y * bodyScale +
+    head.offsetY * targetHeight;
+
   const topY = centreY - targetHeight * 0.52;
 
   const image = scene.add.image(centreX, topY, spriteKey)
@@ -109,14 +137,18 @@ export function createDriverSilhouette(
     .setDepth(depth);
 
   image.setData('driverSilhouette', true);
-  image.setData('driverSeatOffsetX', seat.x * bodyScale);
-  image.setData('driverSeatOffsetY', seat.y * bodyScale - targetHeight * 0.52);
+
+  const offsetX = centreX - bodyX;
+  const offsetY = topY - bodyY;
+  image.setData('driverSeatOffsetX', offsetX);
+  image.setData('driverSeatOffsetY', offsetY);
 
   return {
     image,
     seat,
+    head,
     targetHeight,
-    offsetX: seat.x * bodyScale,
-    offsetY: seat.y * bodyScale - targetHeight * 0.52,
+    offsetX,
+    offsetY,
   };
 }
