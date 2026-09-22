@@ -6,7 +6,7 @@ import {
 } from '../data/tuning.js?v=20260922-r114';
 import {
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260922-r124';
+} from '../data/secondaryTuning.js?v=20260922-r128';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
@@ -22,7 +22,7 @@ import {
   getUnlockedWorkshops,
   getWorkshopStorageCapacity,
   getWorkshopUsage,
-} from '../data/workshopProgression.js?v=20260922-r124';
+} from '../data/workshopProgression.js?v=20260922-r128';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
