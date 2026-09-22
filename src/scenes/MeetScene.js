@@ -6,7 +6,11 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
-import { characters, characterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260922-r111';
+import {
+  characters,
+  characterOrder,
+  getRivalCharacterOrderForRegion,
+} from '../data/characters.js?v=20260923-r140';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
@@ -53,17 +57,77 @@ const MODE_DATA = {
   },
 };
 
+const ODAIBA_LOCATION_RIVAL_ROTATION = {
+  odaiba7eleven: [
+    'aoiShindou',
+    'takumiSerizawa',
+    'emiKanzaki',
+    'yutoAsakura',
+    'mikaHoshino',
+  ],
+  odaibaGundamPlaza: [
+    'emiKanzaki',
+    'aoiShindou',
+    'yutoAsakura',
+    'mikaHoshino',
+    'shunAmamiya',
+    'takumiSerizawa',
+  ],
+  odaibaMiraikan: [
+    'yutoAsakura',
+    'mikaHoshino',
+    'kaoriNishimura',
+    'shunAmamiya',
+    'emiKanzaki',
+    'aoiShindou',
+  ],
+};
+
 export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
   preload() {
     let queued = 0;
-    characterOrder.forEach(id => {
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    const initialLocationId = MEET_LOCATIONS[this.registry.get('meetLocation')]
+      ? this.registry.get('meetLocation')
+      : 'odaiba7eleven';
+    const initialLocation = getMeetLocation(initialLocationId);
+    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const initialIds = new Set([
+      playerId,
+      ...getRivalCharacterOrderForRegion(initialLocation.district),
+    ]);
+
+    initialIds.forEach(id => {
       const character = characters[id];
-      if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
-        queued += 1;
-      }
+      if (!character) return;
+      queueImage(
+        character.visual.spriteKey,
+        character.visual.path + '?v=20260923-r140'
+      );
+    });
+
+    // If the player reloads after a completed race but before the meet rotates,
+    // preload the result pose needed by the locked rival.
+    const storedRosters = this.registry.get('meetRosters') || {};
+    const storedCurrent = Array.isArray(storedRosters[initialLocationId])
+      ? storedRosters[initialLocationId]
+      : [];
+    storedCurrent.forEach(offer => {
+      const character = characters[offer?.characterId];
+      if (!character || !offer?.resultState) return;
+      const visual = character.visual || {};
+      const won = offer.resultState === 'PLAYER_LOSS';
+      queueImage(
+        won ? visual.winSpriteKey : visual.lossSpriteKey,
+        (won ? visual.winPath : visual.lossPath) + '?v=20260923-r140'
+      );
     });
 
     meetBackgrounds.forEach(bg => {
@@ -120,14 +184,33 @@ export default class MeetScene extends Phaser.Scene {
       const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
 
       ALL_MEET_LOCATION_IDS.forEach(locationId => {
+        const location = getMeetLocation(locationId);
+        const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+        const allowed = new Set(
+          getRivalCharacterOrderForRegion(location.district)
+            .filter(id => id !== playerId)
+        );
+
         const stored = Array.isArray(storedRosters[locationId])
           ? storedRosters[locationId]
           : this.generateOffersForLocation(locationId);
 
-        this.locationOffers[locationId] = stored
+        const regionValid = stored.filter(offer =>
+          allowed.has(offer?.characterId)
+        );
+
+        // Existing saves may contain the old global rival pool in Odaiba.
+        // Regenerate that location once so only the Odaiba crew appears.
+        const baseOffers =
+          location.district === 'ODAIBA' && regionValid.length !== stored.length
+            ? this.generateOffersForLocation(locationId)
+            : regionValid;
+
+        this.locationOffers[locationId] = baseOffers
           .filter(offer =>
-            rivalCharacterOrder.includes(offer?.characterId) &&
-            !defeated.has(locationId + ':' + offer.characterId)
+            location.district === 'ODAIBA'
+              ? true
+              : !defeated.has(locationId + ':' + offer.characterId)
           )
           .map(offer => ({ ...offer }));
         this.locationSelectedOfferIndex[locationId] = 0;
@@ -647,8 +730,9 @@ export default class MeetScene extends Phaser.Scene {
   chooseEventCharacter(rating = 3, exclude = []) {
     const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
     const blocked = new Set([playerId, ...exclude]);
+    const location = getMeetLocation(this.selectedMeetLocation);
 
-    const candidates = rivalCharacterOrder
+    const candidates = getRivalCharacterOrderForRegion(location.district)
       .filter(id => !blocked.has(id) && characters[id])
       .sort((a, b) => {
         const ar = Number(characters[a]?.skill?.rating || 3);
@@ -933,6 +1017,14 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'PINK_SLIP');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', true);
+    this.registry.set('selectedRaceMeetOffer', {
+      ...challenger,
+      raceDeal: 'PINK_SLIP',
+      stake: 0,
+      distance: '1/4 mile',
+      meetLocation: this.selectedMeetLocation,
+      slotIndex: Math.min(2, Math.max(0, (this.locationOffers[this.selectedMeetLocation] || []).length - 1)),
+    });
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
@@ -1184,6 +1276,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
 
     const location = getMeetLocation(state.locationId);
     this.registry.set('raceTimeOfDay', location.timeOfDay);
@@ -1266,13 +1359,33 @@ export default class MeetScene extends Phaser.Scene {
     const profile = getEncounterProfile(locationId, location.difficulty);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
 
-    const eligible = rivalCharacterOrder.filter(id =>
+    const regionalPool = getRivalCharacterOrderForRegion(location.district);
+    const configuredOrder = location.district === 'ODAIBA'
+      ? (ODAIBA_LOCATION_RIVAL_ROTATION[locationId] || regionalPool)
+      : regionalPool;
+
+    // Rotate the local crew every meet refresh instead of drawing three
+    // completely random faces. That keeps each Odaiba location recognisable
+    // while still cycling the seven-person team through the scene.
+    const refreshBasis = Number(this.nextRefreshAt || Date.now());
+    const cycle = Math.floor(refreshBasis / 180000);
+    const locationOffset = Math.max(0, ALL_MEET_LOCATION_IDS.indexOf(locationId));
+    const shift = configuredOrder.length
+      ? (cycle + locationOffset) % configuredOrder.length
+      : 0;
+    const rotatedOrder = configuredOrder.length
+      ? configuredOrder.slice(shift).concat(configuredOrder.slice(0, shift))
+      : [];
+
+    const eligible = rotatedOrder.filter(id =>
       id !== playerCharacterId &&
-      this.textures.exists(characters[id]?.visual?.spriteKey)
+      characters[id]
     );
 
     const availableCharacters = [...eligible];
-    Phaser.Utils.Array.Shuffle(availableCharacters);
+    if (location.district !== 'ODAIBA') {
+      Phaser.Utils.Array.Shuffle(availableCharacters);
+    }
 
     const ratingSlots = [...profile.ratingSlots].slice(0, 3);
     Phaser.Utils.Array.Shuffle(ratingSlots);
@@ -1374,6 +1487,9 @@ export default class MeetScene extends Phaser.Scene {
         pinkChallenged: false,
         paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
+        locked: false,
+        resultState: null,
+        pinkSlipResult: null,
       };
     });
   }
@@ -1536,7 +1652,7 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260921-r43'
+          character.visual.path + '?v=20260923-r140'
         );
       }
     });
@@ -1572,10 +1688,38 @@ export default class MeetScene extends Phaser.Scene {
     this.stageObjects = [];
   }
 
+  getOfferCharacterSpriteKey(offer) {
+    const character = characters[offer?.characterId];
+    const visual = character?.visual || {};
+
+    if (offer?.resultState === 'PLAYER_WIN' && visual.lossSpriteKey && this.textures.exists(visual.lossSpriteKey)) {
+      return visual.lossSpriteKey;
+    }
+    if (offer?.resultState === 'PLAYER_LOSS' && visual.winSpriteKey && this.textures.exists(visual.winSpriteKey)) {
+      return visual.winSpriteKey;
+    }
+    return visual.spriteKey;
+  }
+
+  getOfferDisplayCar(offer) {
+    if (offer?.pinkSlipResult === 'PLAYER_WIN') return null;
+
+    const carId = offer?.pinkSlipResult === 'PLAYER_LOSS'
+      ? offer.displayCarId
+      : offer?.carId;
+    if (!carId || !cars[carId]) return null;
+
+    return {
+      carId,
+      paintColor: offer?.pinkSlipResult === 'PLAYER_LOSS'
+        ? normalisePaintColor(offer.displayPaintColor, DEFAULT_PAINT_COLOR)
+        : normalisePaintColor(offer.paintColor, DEFAULT_PAINT_COLOR),
+    };
+  }
+
   drawStage() {
     const placements = [
       {
-        // Left foreground anchor. Its body AND wheels stay above the middle car.
         carX: 225,
         carY: 440,
         carW: 590,
@@ -1588,7 +1732,6 @@ export default class MeetScene extends Phaser.Scene {
         charFlipX: false,
       },
       {
-        // Middle rival is physically farther away: higher, smaller and behind.
         carX: 620,
         carY: 394,
         carW: 390,
@@ -1601,7 +1744,6 @@ export default class MeetScene extends Phaser.Scene {
         charFlipX: true,
       },
       {
-        // Right foreground car remains close and clipped by the stage edge.
         carX: 1110,
         carY: 456,
         carW: 705,
@@ -1617,33 +1759,37 @@ export default class MeetScene extends Phaser.Scene {
 
     this.offers.forEach((offer, i) => {
       const placement = placements[i];
-      const car = cars[offer.carId];
       const character = characters[offer.characterId];
+      const displayCar = this.getOfferDisplayCar(offer);
 
-      const carObjects = this.createCarDisplay(
-        car,
-        placement.carX,
-        placement.carY,
-        placement.carW,
-        placement.carDepth,
-        placement.carFlipX,
-        offer.paintColor
-      );
-      carObjects.forEach(obj => {
-        obj.setMask(this.stageMask);
-        if (!this.hasCar) obj.setAlpha(0.28);
-      });
-      this.stageObjects.push(...carObjects);
+      if (displayCar) {
+        const car = cars[displayCar.carId];
+        const carObjects = this.createCarDisplay(
+          car,
+          placement.carX,
+          placement.carY,
+          placement.carW,
+          placement.carDepth,
+          placement.carFlipX,
+          displayCar.paintColor
+        );
+        carObjects.forEach(obj => {
+          obj.setMask(this.stageMask);
+          if (!this.hasCar) obj.setAlpha(0.28);
+        });
+        this.stageObjects.push(...carObjects);
+      }
 
+      const spriteKey = this.getOfferCharacterSpriteKey(offer);
       const sprite = this.add.image(
         placement.charX,
         placement.charY,
-        character.visual.spriteKey
+        spriteKey
       ).setOrigin(0.5, 1)
         .setDepth(placement.charDepth)
         .setMask(this.stageMask);
 
-      const charSource = this.textures.get(character.visual.spriteKey).getSourceImage();
+      const charSource = this.textures.get(spriteKey).getSourceImage();
       sprite.setScale(placement.charH / charSource.height);
       sprite.setFlipX(placement.charFlipX);
       if (!this.hasCar) sprite.setAlpha(0.32);
@@ -1687,9 +1833,9 @@ export default class MeetScene extends Phaser.Scene {
         cardY,
         350,
         cardH,
-        0x0a1521,
+        offer.locked ? 0x111820 : 0x0a1521,
         0.99
-      ).setStrokeStyle(2, 0x2e4a61, 1)
+      ).setStrokeStyle(2, offer.locked ? 0x56646d : 0x2e4a61, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(34);
 
@@ -1706,11 +1852,12 @@ export default class MeetScene extends Phaser.Scene {
         1
       ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
 
-      const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+      const spriteKey = this.getOfferCharacterSpriteKey(offer);
+      const source = this.textures.get(spriteKey).getSourceImage();
       const portrait = this.add.image(
         portraitX,
         portraitY - 54,
-        character.visual.spriteKey
+        spriteKey
       ).setDepth(36)
         .setOrigin(0.5, 0);
 
@@ -1734,13 +1881,35 @@ export default class MeetScene extends Phaser.Scene {
         color: '#ffffff'
       }).setDepth(35);
 
-      const quote = this.add.text(textX, cardY - 14, '"' + offer.quote + '"', {
+      const quoteText = offer.locked
+        ? (offer.resultState === 'PLAYER_WIN'
+            ? (character.resultQuotes?.loss || 'You got me.')
+            : (character.resultQuotes?.win || 'That run was mine.'))
+        : offer.quote;
+
+      const quote = this.add.text(textX, cardY - 14, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
         fontSize: '12px',
-        color: '#9fb4c2',
+        color: offer.locked ? '#8f9da6' : '#9fb4c2',
         wordWrap: { width: 214 },
         lineSpacing: 1,
       }).setDepth(35);
+
+      if (offer.locked) {
+        const status = offer.pinkSlipResult === 'PLAYER_WIN'
+          ? 'DEFEATED // CAR WON'
+          : offer.pinkSlipResult === 'PLAYER_LOSS'
+            ? 'WINNER // TOOK YOUR CAR'
+            : offer.resultState === 'PLAYER_WIN'
+              ? 'DEFEATED'
+              : 'WON THIS RUN';
+
+        this.add.text(textX, cardY + 39, status, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',
+        }).setDepth(36);
+      }
 
       if (this.hasCar) {
         card.on('pointerdown', () => this.selectOffer(i));
@@ -1947,10 +2116,13 @@ export default class MeetScene extends Phaser.Scene {
       if (!offer.card) return;
 
       const active = i === index;
-      offer.card.setFillStyle(active ? 0x10263a : 0x0a1521, 0.99);
+      offer.card.setFillStyle(
+        active ? (offer.locked ? 0x20252b : 0x10263a) : (offer.locked ? 0x111820 : 0x0a1521),
+        0.99
+      );
       offer.card.setStrokeStyle(
         active ? 3 : 2,
-        active ? 0x41dcff : 0x2e4a61,
+        active ? (offer.locked ? 0x76858e : 0x41dcff) : (offer.locked ? 0x56646d : 0x2e4a61),
         1
       );
     });
@@ -1961,6 +2133,43 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[offer.characterId];
     const car = cars[offer.carId];
 
+    if (offer.locked) {
+      this.selectedDeal = 'LOCKED';
+      const resultCar = offer.displayCarId && cars[offer.displayCarId]
+        ? cars[offer.displayCarId]
+        : car;
+
+      const headline = offer.resultState === 'PLAYER_WIN'
+        ? 'RACE COMPLETE // DEFEATED'
+        : 'RACE COMPLETE // RIVAL WON';
+
+      const detail = offer.pinkSlipResult === 'PLAYER_WIN'
+        ? 'PINK SLIP WON // THEIR CAR IS YOURS'
+        : offer.pinkSlipResult === 'PLAYER_LOSS'
+          ? 'PINK SLIP LOST // ' + (resultCar?.shortName || 'YOUR CAR') + ' NOW WITH RIVAL'
+          : (resultCar?.shortName || car?.shortName || 'RIVAL') + '  •  ' + offer.raceType;
+
+      this.selectedSummary.setText(headline + '
+' + detail);
+      this.rivalOfferText.setText('DONE');
+
+      this.pinkSlipButton
+        .disableInteractive()
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+      this.pinkSlipButtonLabel.setText('RACE COMPLETE').setColor('#72838f');
+      this.pinkResponseText
+        .setText('This rival will rotate out with the next meet refresh.')
+        .setColor('#7d8d98');
+
+      this.raceButton
+        .disableInteractive()
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1);
+      this.raceButtonLabel.setColor('#72838f').setText('ALREADY RACED');
+      return;
+    }
+
     const stakeText = typeof offer.stake === 'number'
       ? '¥ ' + offer.stake.toLocaleString('en-US')
       : offer.stake;
@@ -1968,8 +2177,10 @@ export default class MeetScene extends Phaser.Scene {
     this.selectedDeal = offer.pinkChallenged && offer.pinkAccepted ? 'PINK' : 'CASH';
 
     this.selectedSummary.setText(
-      (offer.skillLabel || character.skill?.label || 'SKILLED') + '\n' +
-      car.shortName + '  •  ' + offer.raceType + '\n' +
+      (offer.skillLabel || character.skill?.label || 'SKILLED') + '
+' +
+      car.shortName + '  •  ' + offer.raceType + '
+' +
       offer.distance
     );
 
@@ -2147,6 +2358,12 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceType', offer.raceType);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
     this.registry.set('selectedRaceStake', this.selectedDeal === 'PINK' ? 0 : offer.stake);
+    const { card, ...plainOffer } = offer;
+    this.registry.set('selectedRaceMeetOffer', {
+      ...plainOffer,
+      meetLocation: this.selectedMeetLocation,
+      slotIndex: this.selectedOfferIndex,
+    });
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
