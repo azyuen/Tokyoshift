@@ -2267,6 +2267,7 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPartRows = {};
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
+    this.chassisPaintChannelButtons = [];
     this.chassisPaintPanelOpen = false;
     this.updateGarageNavState();
 
