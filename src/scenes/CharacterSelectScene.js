@@ -5,7 +5,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260922-r83';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260922-r111';
-import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r115';
+import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r125';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
