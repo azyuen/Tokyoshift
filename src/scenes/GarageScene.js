@@ -105,6 +105,13 @@ export default class GarageScene extends Phaser.Scene {
 
     playMusic('workshop');
 
+    // Promote legacy Arkon Den saves immediately on GarageScene entry so every
+    // workshop-side system sees the same dev flags as MeetScene.
+    if (isArkonDen(this.registry)) {
+      this.registry.set('devMode', true);
+      saveSessionState(this.registry);
+    }
+
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
     this.activeWorkshopId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
     this.carGarageLocations = normaliseCarGarageLocations(
@@ -1094,15 +1101,18 @@ export default class GarageScene extends Phaser.Scene {
           window.location.reload();
         },
         onTravel: (locationId, cost) => {
-          if (!this.selectedCarId) {
+          const travelTarget = getTravelLocation(locationId);
+
+          // Central Tokyo contains a dealership and showroom, so the player can
+          // visit it even when the current physical workshop has no car stored.
+          // Normal street meets still require a local car to drive out with.
+          if (!this.selectedCarId && travelTarget?.regionId !== 'CENTRAL_TOKYO') {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
           }
 
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
-
-          const travelTarget = getTravelLocation(locationId);
           this.registry.set('cash', cash - cost);
           this.registry.set('selectedCarId', this.selectedCarId);
           this.registry.set('meetStranded', false);
