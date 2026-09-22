@@ -1,6 +1,6 @@
 import { cars, carOrder } from '../data/cars.js?v=20260923-r137';
 import { engines } from '../data/engines.js?v=20260923-r134';
-import { characters } from '../data/characters.js?v=20260922-r111';
+import { characters } from '../data/characters.js?v=20260923-r140';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -32,7 +32,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260922-r128';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260922-r131';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
