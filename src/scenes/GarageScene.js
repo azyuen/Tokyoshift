@@ -70,6 +70,13 @@ export default class GarageScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
+
+    // A workshop switch used to restart the scene from inside a completed
+    // camera fade. On some mobile/PWA runs the restarted camera inherited the
+    // fully black fade overlay. Always begin GarageScene with camera FX reset.
+    this.cameras.main.resetFX?.();
+    this.cameras.main.setAlpha(1);
+
     playMusic('workshop');
 
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
@@ -878,8 +885,10 @@ export default class GarageScene extends Phaser.Scene {
           saveSessionState(this.registry);
           this.cashText?.setText('¥ ' + Number(nextCash).toLocaleString('en-US'));
 
-          this.cameras.main.fadeOut(180, 2, 5, 11);
-          this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart());
+          // Restart directly after saving the workshop switch. The old fade
+          // transition could leave the restarted camera permanently black on
+          // iOS/PWA builds.
+          this.scene.restart();
         },
         onTravel: (locationId, cost) => {
           if (!this.selectedCarId) {
@@ -1066,19 +1075,28 @@ export default class GarageScene extends Phaser.Scene {
     this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#eef8ff');
     this.updateMoveCarButtonState();
 
-    this.add.text(710, 330, 'GARAGE EMPTY', {
+    const ownsCarsElsewhere = this.ownedCarIds.length > 0;
+
+    this.add.text(710, 330, ownsCarsElsewhere ? 'NO CARS STORED HERE' : 'GARAGE EMPTY', {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
       color: '#d9e8f0',
     }).setOrigin(0.5).setDepth(20);
 
-    this.add.text(710, 382, 'You lost your last car. Restart from SETTINGS when you are ready for another run.', {
-      fontFamily: BODY_FONT,
-      fontSize: '13px',
-      color: '#8da5b4',
-      align: 'center',
-      wordWrap: { width: 620 },
-    }).setOrigin(0.5).setDepth(20);
+    this.add.text(
+      710,
+      382,
+      ownsCarsElsewhere
+        ? 'Your cars are stored at another Shinonome workshop. Use GO TO MAP to switch garage, then MOVE CAR to transfer one here.'
+        : 'You lost your last car. Restart from SETTINGS when you are ready for another run.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#8da5b4',
+        align: 'center',
+        wordWrap: { width: 620 },
+      }
+    ).setOrigin(0.5).setDepth(20);
   }
 
   enterEngineMode() {
