@@ -1021,7 +1021,9 @@ export default class MeetScene extends Phaser.Scene {
     const car = cars[challenger.carId];
     if (!character || !car) return;
 
-    const startX = animate ? STAGE.x + STAGE.w + 390 : 640;
+    // The challenger car now rolls naturally into the meet from the left.
+    // Start fully outside the masked stage, then coast to its parking position.
+    const startX = animate ? STAGE.x - 390 : 640;
     const finalX = 640;
     const carObjects = this.createCarDisplay(
       car,
@@ -1040,11 +1042,25 @@ export default class MeetScene extends Phaser.Scene {
 
     if (animate) {
       const dx = finalX - startX;
+      const rollDuration = 1900;
+      const rollEase = 'Sine.easeOut';
+
       this.tweens.add({
         targets: carObjects,
         x: '+=' + dx,
-        duration: 760,
-        ease: 'Cubic.easeOut',
+        duration: rollDuration,
+        ease: rollEase,
+      });
+
+      // createCarDisplay returns the two wheel sprites at indexes 4 and 5.
+      // Match their rotation easing to the car's translation so it reads as a
+      // slow roll-in rather than a sliding entrance.
+      const rollingWheels = [carObjects[4], carObjects[5]].filter(Boolean);
+      this.tweens.add({
+        targets: rollingWheels,
+        angle: '+=1260',
+        duration: rollDuration,
+        ease: rollEase,
       });
     }
 
@@ -1055,20 +1071,34 @@ export default class MeetScene extends Phaser.Scene {
       .setMask(this.stageMask)
       .setAlpha(animate ? 0 : 1);
 
-    // Special challengers should read as people standing beside the car, not
-    // small portrait sprites. The source canvases include transparent breathing
-    // room, so a taller canvas target makes the visible car roughly two-thirds
-    // of the challenger's apparent height.
-    const specialDriverCanvasHeight = 410;
+    // Back the challenger down slightly from the previous pass. This target
+    // makes the displayed car read at roughly three-quarters of the character
+    // canvas height while preserving the full-body silhouette.
+    const specialDriverCanvasHeight = 365;
     driver.setScale(specialDriverCanvasHeight / source.height);
-    this.specialChallengeObjects.push(driver);
+
+    // Ground shadow begins at the heel/contact point and trails away across the
+    // pavement instead of floating symmetrically underneath the sprite.
+    const driverShadow = this.add.ellipse(
+      922,
+      586,
+      126,
+      18,
+      0x000000,
+      0.52
+    ).setOrigin(0, 0.5)
+      .setDepth(27.8)
+      .setMask(this.stageMask)
+      .setAlpha(animate ? 0 : 1);
+
+    this.specialChallengeObjects.push(driverShadow, driver);
 
     if (animate) {
-      this.time.delayedCall(360, () => {
+      this.time.delayedCall(1180, () => {
         this.tweens.add({
-          targets: driver,
+          targets: [driverShadow, driver],
           alpha: 1,
-          duration: 360,
+          duration: 420,
           ease: 'Sine.easeOut',
         });
       });
