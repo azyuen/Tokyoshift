@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r150';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r152';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters } from '../data/characters.js?v=20260923-r145';
 import {
@@ -77,7 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r150';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
