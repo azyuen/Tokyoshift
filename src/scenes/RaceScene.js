@@ -13,7 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -695,6 +695,40 @@ export default class RaceScene extends Phaser.Scene {
     const wheelFit = getWheelPairFit(cfg, bodyScale, false, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
 
+    // Keep unique collector cars on the same road contact line as the normal
+    // AE86 reference. Hero PNG trims differ, so renderOffsetY alone otherwise
+    // makes some cars float high or sit low even when their tyres are correct.
+    let groundCorrectionY = 0;
+    if (cfg.singleBody && cars.ae86) {
+      const reference = cars.ae86.visual;
+      const referenceBodyScale = reference.bodyScale * roleScale;
+      const referenceWheelSource = this.textures.get(reference.wheelKey).getSourceImage();
+      const referenceFit = getWheelPairFit(
+        reference,
+        referenceBodyScale,
+        false,
+        referenceWheelSource
+      );
+      const referenceGroundOffset =
+        Number(reference.renderOffsetY || 0) * referenceBodyScale +
+        Math.max(
+          referenceFit.rear.offsetY +
+            getWheelContactOffsetY(referenceWheelSource, referenceFit.rear.wheelScale),
+          referenceFit.front.offsetY +
+            getWheelContactOffsetY(referenceWheelSource, referenceFit.front.wheelScale)
+        );
+      const heroGroundOffset =
+        renderOffsetY +
+        Math.max(
+          wheelFit.rear.offsetY +
+            getWheelContactOffsetY(wheelSource, wheelFit.rear.wheelScale),
+          wheelFit.front.offsetY +
+            getWheelContactOffsetY(wheelSource, wheelFit.front.wheelScale)
+        );
+
+      groundCorrectionY = referenceGroundOffset - heroGroundOffset;
+    }
+
     const rearWheel = this.add.image(0, 0, cfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
       .setDepth(depth);
@@ -758,6 +792,7 @@ export default class RaceScene extends Phaser.Scene {
       cfg,
       bodyScale,
       renderOffsetY,
+      groundCorrectionY,
       wheelFit,
       wheelScale: (wheelFit.rear.wheelScale + wheelFit.front.wheelScale) / 2,
       rearWheel,
@@ -1082,7 +1117,38 @@ export default class RaceScene extends Phaser.Scene {
     const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
     const wheelFit = getWheelPairFit(cfg, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
-    const displayY = y + renderOffsetY;
+
+    let groundCorrectionY = 0;
+    if (cfg.singleBody && cars.ae86) {
+      const reference = cars.ae86.visual;
+      const referenceBodyScale = reference.bodyScale * baseScale;
+      const referenceWheelSource = this.textures.get(reference.wheelKey).getSourceImage();
+      const referenceFit = getWheelPairFit(
+        reference,
+        referenceBodyScale,
+        flipX,
+        referenceWheelSource
+      );
+      const referenceGroundOffset =
+        Number(reference.renderOffsetY || 0) * referenceBodyScale +
+        Math.max(
+          referenceFit.rear.offsetY +
+            getWheelContactOffsetY(referenceWheelSource, referenceFit.rear.wheelScale),
+          referenceFit.front.offsetY +
+            getWheelContactOffsetY(referenceWheelSource, referenceFit.front.wheelScale)
+        );
+      const heroGroundOffset =
+        renderOffsetY +
+        Math.max(
+          wheelFit.rear.offsetY +
+            getWheelContactOffsetY(wheelSource, wheelFit.rear.wheelScale),
+          wheelFit.front.offsetY +
+            getWheelContactOffsetY(wheelSource, wheelFit.front.wheelScale)
+        );
+      groundCorrectionY = referenceGroundOffset - heroGroundOffset;
+    }
+
+    const displayY = y + renderOffsetY + groundCorrectionY;
 
     const shadow = this.add.ellipse(
       x,
@@ -1109,8 +1175,8 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0);
 
     const resultTyreBottom = Math.max(
-      rearY + rearWheel.displayHeight * 0.5,
-      frontY + frontWheel.displayHeight * 0.5
+      rearY + getWheelContactOffsetY(wheelSource, wheelFit.rear.wheelScale),
+      frontY + getWheelContactOffsetY(wheelSource, wheelFit.front.wheelScale)
     );
     const resultShadowHeight = shadow.displayHeight;
     shadow.setPosition(x, resultTyreBottom + resultShadowHeight / 6);
@@ -1951,7 +2017,11 @@ export default class RaceScene extends Phaser.Scene {
 
   updateCarVisual(v, x, y, t, dt) {
     const c = v.cfg;
-    const bodyY = y + (v.renderOffsetY || 0) + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
+    const bodyY =
+      y +
+      (v.renderOffsetY || 0) +
+      (v.groundCorrectionY || 0) +
+      Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
     (v.bodyObjects || [v.body]).forEach(obj => obj.setPosition(x, bodyY));
     if (v.driverSilhouette) {
       v.driverSilhouette.setPosition(
@@ -1970,9 +2040,10 @@ export default class RaceScene extends Phaser.Scene {
     v.frontWheelBacking.setPosition(frontX, frontY);
     v.rearWheel.setPosition(rearX, rearY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, frontY).setRotation(v.wheelAngle);
+    const wheelSource = this.textures.get(c.wheelKey).getSourceImage();
     const wheelBaseY = Math.max(
-      rearY + v.rearWheel.displayHeight * 0.5,
-      frontY + v.frontWheel.displayHeight * 0.5
+      rearY + getWheelContactOffsetY(wheelSource, v.wheelFit.rear.wheelScale),
+      frontY + getWheelContactOffsetY(wheelSource, v.wheelFit.front.wheelScale)
     );
     const shadowHeight = v.roadShadow.displayHeight;
     // Put the tyre contact point one-third of the way down into the shadow:
