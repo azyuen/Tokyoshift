@@ -1,8 +1,8 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
 import { cars } from '../data/cars.js?v=20260923-r137';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r134';
-import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r141';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260923-r141';
+import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260923-r145';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures } from '../data/visualMods.js?v=20260923-r138';
 
@@ -81,7 +81,7 @@ export default class BootScene extends Phaser.Scene {
       if (!character) return;
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260923-r141'
+        character.visual.path + '?v=20260923-r145'
       );
     });
 
