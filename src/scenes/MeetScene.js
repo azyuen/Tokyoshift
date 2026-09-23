@@ -258,6 +258,7 @@ export default class MeetScene extends Phaser.Scene {
     this.buildGpsPanel();
     this.buildSidebar();
     this.buildBottomArea();
+    this.buildDevControls();
     this.rollOffers({ resetTimer: false });
 
     const activeChallenger = this.registry.get('specialChallenger');
@@ -388,6 +389,119 @@ export default class MeetScene extends Phaser.Scene {
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
+  }
+
+  buildDevControls() {
+    if (!this.registry.get('devMode')) return;
+
+    const makeButton = (y, labelText, fill, stroke, onPress) => {
+      const box = this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        y,
+        SIDE.w - 36,
+        30,
+        fill,
+        0.98
+      ).setStrokeStyle(1, stroke, 0.95)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(43);
+
+      const label = this.add.text(
+        SIDE.x + SIDE.w / 2,
+        y,
+        labelText,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#f4fbff',
+        }
+      ).setOrigin(0.5).setDepth(44);
+
+      box.on('pointerdown', onPress);
+      return { box, label, defaultText: labelText };
+    };
+
+    this.devForceChallengerControl = makeButton(
+      684,
+      'DEV // FORCE SPECIAL CHALLENGER',
+      0x25101a,
+      0xff5f93,
+      () => this.forceDevSpecialChallenger()
+    );
+
+    this.devRefreshChallengesControl = makeButton(
+      724,
+      'DEV // REFRESH ALL MEET CHALLENGES',
+      0x0b1c28,
+      0x43dfff,
+      () => this.devRefreshAllChallenges()
+    );
+  }
+
+  flashDevControl(control, message, color = '#f4fbff') {
+    if (!control?.label?.active) return;
+    control.label.setText(message).setColor(color);
+    this.time.delayedCall(1100, () => {
+      if (!control?.label?.active) return;
+      control.label.setText(control.defaultText).setColor('#f4fbff');
+    });
+  }
+
+  forceDevSpecialChallenger() {
+    if (!this.registry.get('devMode')) return;
+
+    if (!this.hasCar) {
+      this.flashDevControl(
+        this.devForceChallengerControl,
+        'DEV // NO CAR AVAILABLE',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    const challenger = this.generateSpecialChallenger();
+    if (!challenger) {
+      this.flashDevControl(
+        this.devForceChallengerControl,
+        'DEV // GARAGE FULL',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    this.registry.set('specialChallenger', challenger);
+    this.registry.set('challengerMisses', 0);
+    this.registry.set('challengerCooldown', 2);
+    saveSessionState(this.registry);
+
+    this.showSpecialChallenger(challenger, true);
+    this.flashDevControl(
+      this.devForceChallengerControl,
+      'DEV // SPECIAL DEPLOYED',
+      '#ffb4c8'
+    );
+  }
+
+  devRefreshAllChallenges() {
+    if (!this.registry.get('devMode')) return;
+
+    this.registry.set('specialChallenger', null);
+    this.registry.set('challengerMisses', 0);
+    this.registry.set('challengerCooldown', 0);
+
+    this.specialChallengeActive = false;
+    this.clearSpecialChallengeObjects();
+    this.restoreMeetActionListeners();
+
+    this.refreshAllLocationOffers({ resetTimer: true, persist: false });
+    this.persistMeetRound();
+    this.rollOffers({ resetTimer: false });
+
+    this.flashDevControl(
+      this.devRefreshChallengesControl,
+      'DEV // ALL MEETS REFRESHED',
+      '#8fe7ff'
+    );
   }
 
   buildGpsPanel() {
@@ -935,12 +1049,18 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-    const driver = this.add.image(920, 590, character.visual.spriteKey)
+    const driver = this.add.image(930, 590, character.visual.spriteKey)
       .setOrigin(0.5, 1)
       .setDepth(36)
       .setMask(this.stageMask)
       .setAlpha(animate ? 0 : 1);
-    driver.setScale(280 / source.height);
+
+    // Special challengers should read as people standing beside the car, not
+    // small portrait sprites. The source canvases include transparent breathing
+    // room, so a taller canvas target makes the visible car roughly two-thirds
+    // of the challenger's apparent height.
+    const specialDriverCanvasHeight = 410;
+    driver.setScale(specialDriverCanvasHeight / source.height);
     this.specialChallengeObjects.push(driver);
 
     if (animate) {
@@ -956,30 +1076,33 @@ export default class MeetScene extends Phaser.Scene {
 
     const banner = this.add.text(
       STAGE.x + STAGE.w / 2,
-      STAGE.y + 34,
+      STAGE.y + 42,
       'SPECIAL CHALLENGER // PINK SLIPS',
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '12px',
-        color: '#fff1f7',
-        backgroundColor: '#431426e8',
-        padding: { x: 18, y: 10 },
+        fontSize: '14px',
+        color: '#fff7fa',
+        backgroundColor: '#651832f2',
+        padding: { x: 26, y: 12 },
       }
     ).setOrigin(0.5)
       .setDepth(74)
       .setMask(this.stageMask);
     this.specialChallengeObjects.push(banner);
 
+    // Keep the profile card below the section heading with explicit top/bottom
+    // padding. The old card began underneath the heading and the enlarged phone
+    // text caused the border, portrait and copy to collide.
     const card = this.add.rectangle(
       CARDS.x + CARDS.w / 2,
-      CARDS.y + CARDS.h / 2,
+      742,
       CARDS.w - 36,
-      132,
+      128,
       0x130b14,
       0.98
     ).setStrokeStyle(3, 0xff5f93, 0.92).setDepth(34);
 
-    const portraitBg = this.add.rectangle(190, 746, 108, 108, 0x15101a, 1)
+    const portraitBg = this.add.rectangle(190, 742, 104, 104, 0x15101a, 1)
       .setStrokeStyle(2, 0xff739e, 0.92).setDepth(35);
 
     const portrait = this.add.image(190, 690, character.visual.spriteKey)
@@ -989,16 +1112,16 @@ export default class MeetScene extends Phaser.Scene {
 
     const portraitMask = this.make.graphics({ add: false });
     portraitMask.fillStyle(0xffffff, 1);
-    portraitMask.fillRect(136, 692, 108, 108);
+    portraitMask.fillRect(138, 690, 104, 104);
     portrait.setMask(portraitMask.createGeometryMask());
 
-    const name = this.add.text(275, 705, character.name.toUpperCase(), {
+    const name = this.add.text(270, 690, character.name.toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
     }).setDepth(36);
 
     const details = this.add.text(
-      275,
-      739,
+      270,
+      726,
       car.shortName + '  //  EST. ' + challenger.skillRange +
         '\n“' + challenger.quote + '”',
       {
@@ -1006,6 +1129,7 @@ export default class MeetScene extends Phaser.Scene {
         fontSize: '13px',
         color: '#d8cad1',
         lineSpacing: 5,
+        wordWrap: { width: CARDS.w - 330 },
       }
     ).setDepth(36);
 
