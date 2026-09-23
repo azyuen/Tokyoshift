@@ -241,5 +241,69 @@ export const engines = {
       [8500, 430], [8700, 410],
     ],
   },
+  b18c_spoon: {
+    id: 'b18c_spoon',
+    name: 'Spoon B18C 1.8L VTEC',
+    idleRPM: 950,
+    redlineRPM: 9000,
+    limiterRPM: 9200,
+    inertia: 0.13,
+    referenceBoostBar: 0,
+    offBoostTorqueFraction: 1,
+    torqueCurve: [
+      [1000, 95], [2000, 120], [3000, 145], [4000, 165],
+      [5500, 190], [6500, 210], [7500, 220], [8500, 214],
+      [9000, 203], [9200, 192],
+    ],
+  },
+
+  '13brew_amemiya': {
+    id: '13brew_amemiya',
+    name: 'RE Amemiya 13B-REW',
+    idleRPM: 950,
+    redlineRPM: 8500,
+    limiterRPM: 8700,
+    inertia: 0.13,
+    referenceBoostBar: 1.30,
+    offBoostTorqueFraction: 0.42,
+    torqueCurve: [
+      [1000, 120], [2000, 180], [3000, 300], [4000, 420],
+      [5000, 495], [5500, 500], [6500, 485], [7500, 470],
+      [8000, 440], [8500, 410], [8700, 395],
+    ],
+  },
+
+  '4g63_jun_hyper_lemon': {
+    id: '4g63_jun_hyper_lemon',
+    name: 'JUN 2.2L 4G63',
+    idleRPM: 950,
+    redlineRPM: 7800,
+    limiterRPM: 8000,
+    inertia: 0.18,
+    referenceBoostBar: 1.90,
+    offBoostTorqueFraction: 0.38,
+    torqueCurve: [
+      [1000, 170], [2000, 260], [3000, 400], [4000, 540],
+      [5000, 620], [5500, 632], [6500, 610], [7200, 561],
+      [7800, 520], [8000, 500],
+    ],
+  },
+
+  c30a_esprit: {
+    id: 'c30a_esprit',
+    name: 'ESPRIT C30A 3.2L Twin Turbo',
+    idleRPM: 1000,
+    redlineRPM: 8200,
+    limiterRPM: 8400,
+    inertia: 0.18,
+    referenceBoostBar: 1.60,
+    offBoostTorqueFraction: 0.40,
+    torqueCurve: [
+      [1000, 180], [2000, 280], [3000, 450], [4000, 650],
+      [5000, 790], [6000, 850], [7000, 835], [7400, 807],
+      [8000, 750], [8200, 720], [8400, 690],
+    ],
+  },
+
 
 };
