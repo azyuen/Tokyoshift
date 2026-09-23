@@ -1,10 +1,11 @@
-import { cars } from '../data/cars.js?v=20260923-r134';
+import { cars } from '../data/cars.js?v=20260923-r150';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { engines } from '../data/engines.js?v=20260923-r134';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r150';
 import { characters } from '../data/characters.js?v=20260921-r43';
 import {
   ENGINE_PART_ORDER,
@@ -757,50 +758,66 @@ export default class EngineTuningScene extends Phaser.Scene {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
-    const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
-    const wheelRadius = wheelSource.height * wheelScale * 0.5;
-    const wheelCenterY = bodyY + car.visual.wheelOffsetY * bodyScale;
-    return wheelCenterY + wheelRadius;
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+
+    const rearBottom = bodyY + fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
+    const frontBottom = bodyY + fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
+    return Math.max(rearBottom, frontBottom);
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
-    const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
-    const wheelRadius = wheelSource.height * wheelScale * 0.5;
-    return wheelBottomY - wheelRadius - car.visual.wheelOffsetY * bodyScale;
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+
+    const rearBottomOffset = fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
+    const frontBottomOffset = fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
+    return wheelBottomY - Math.max(rearBottomOffset, frontBottomOffset);
   }
 
   createCarDisplay(car, x, y, targetWidth, depth) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const ratio = car.visual.wheelScale / car.visual.bodyScale;
-    const wheelScale = bodyScale * ratio * 1.16;
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
-    const rearX = x + car.visual.rearOffsetX * bodyScale;
-    const frontX = x + car.visual.frontOffsetX * bodyScale;
-    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
+    const rearX = x + fit.rear.offsetX;
+    const frontX = x + fit.front.offsetX;
+    const rearY = y + fit.rear.offsetY;
+    const frontY = y + fit.front.offsetY;
 
-    const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale)
+    const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
+      .setScale(fit.rear.wheelScale)
       .setDepth(depth);
 
-    const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale)
+    const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
+      .setScale(fit.front.wheelScale)
       .setDepth(depth);
 
     const rearWheelBacking = this.add.circle(
-      rearX, wheelY, Math.max(5, rearWheel.displayWidth * 0.50), 0x030507, 1
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rearWheel.displayWidth * 0.50),
+      0x020304,
+      1
     ).setDepth(depth - 0.35);
 
     const frontWheelBacking = this.add.circle(
-      frontX, wheelY, Math.max(5, frontWheel.displayWidth * 0.50), 0x030507, 1
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, frontWheel.displayWidth * 0.50),
+      0x020304,
+      1
     ).setDepth(depth - 0.35);
 
+    const tyreBottom = Math.max(
+      rearY + rearWheel.displayHeight * 0.5,
+      frontY + frontWheel.displayHeight * 0.5
+    );
     const roadShadow = this.add.ellipse(
       x,
-      wheelY + Math.max(16, rearWheel.displayHeight * 0.42),
+      tyreBottom + Math.max(8, rearWheel.displayHeight * 0.08),
       Math.max(128, targetWidth * 0.96),
       Math.max(20, rearWheel.displayHeight * 0.34),
       0x000000,
