@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r159';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -34,7 +34,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260921-r76';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1926,7 +1926,15 @@ export default class MeetScene extends Phaser.Scene {
     if (offer?.resultState === 'PLAYER_WIN' && visual.lossSpriteKey && this.textures.exists(visual.lossSpriteKey)) {
       return visual.lossSpriteKey;
     }
-    if (offer?.resultState === 'PLAYER_LOSS' && visual.winSpriteKey && this.textures.exists(visual.winSpriteKey)) {
+    const pinkLossCelebration = (this.offers || []).some(
+      item => item?.pinkSlipResult === 'PLAYER_LOSS'
+    );
+
+    if (
+      (offer?.resultState === 'PLAYER_LOSS' || pinkLossCelebration) &&
+      visual.winSpriteKey &&
+      this.textures.exists(visual.winSpriteKey)
+    ) {
       return visual.winSpriteKey;
     }
     return visual.spriteKey;
@@ -1958,7 +1966,7 @@ export default class MeetScene extends Phaser.Scene {
         carFlipX: false,
         charX: 125,
         charY: 592,
-        charH: 278,
+        charH: 300,
         charDepth: 34,
         charFlipX: false,
       },
@@ -1988,6 +1996,10 @@ export default class MeetScene extends Phaser.Scene {
       },
     ];
 
+    const pinkLossCelebration = this.offers.some(
+      offer => offer?.pinkSlipResult === 'PLAYER_LOSS'
+    );
+
     this.offers.forEach((offer, i) => {
       const placement = placements[i];
       const character = characters[offer.characterId];
@@ -2006,7 +2018,7 @@ export default class MeetScene extends Phaser.Scene {
         );
         carObjects.forEach(obj => {
           obj.setMask(this.stageMask);
-          if (!this.hasCar) obj.setAlpha(0.28);
+          if (!this.hasCar && !pinkLossCelebration) obj.setAlpha(0.28);
         });
         this.stageObjects.push(...carObjects);
       }
@@ -2023,7 +2035,7 @@ export default class MeetScene extends Phaser.Scene {
       const charSource = this.textures.get(spriteKey).getSourceImage();
       sprite.setScale(placement.charH / charSource.height);
       sprite.setFlipX(placement.charFlipX);
-      if (!this.hasCar) sprite.setAlpha(0.32);
+      if (!this.hasCar && !pinkLossCelebration) sprite.setAlpha(0.32);
       this.stageObjects.push(sprite);
 
       const softShadow = this.add.ellipse(
@@ -2131,7 +2143,7 @@ export default class MeetScene extends Phaser.Scene {
         const status = offer.pinkSlipResult === 'PLAYER_WIN'
           ? 'DEFEATED // CAR WON'
           : offer.pinkSlipResult === 'PLAYER_LOSS'
-            ? 'WINNER // TOOK YOUR CAR'
+            ? 'WON YOUR CAR'
             : offer.resultState === 'PLAYER_WIN'
               ? 'DEFEATED'
               : 'WON LAST RUN // REMATCH';
@@ -2146,13 +2158,19 @@ export default class MeetScene extends Phaser.Scene {
       if (this.hasCar) {
         card.on('pointerdown', () => this.selectOffer(i));
       } else {
-        card.disableInteractive()
-          .setFillStyle(0x101317, 0.99)
-          .setStrokeStyle(1, 0x3b444a, 1);
-        portraitBg.setFillStyle(0x111418, 1).setStrokeStyle(1, 0x3b444a, 1);
-        portrait.setAlpha(0.34);
-        name.setColor('#68737a');
-        quote.setColor('#59636a');
+        card.disableInteractive();
+
+        // A pink-slip loss is staged as the winner's victory moment: keep the
+        // meet crowd, cars and character cards fully visible instead of washing
+        // the whole scene out just because the player is temporarily stranded.
+        if (!pinkLossCelebration) {
+          card.setFillStyle(0x101317, 0.99)
+            .setStrokeStyle(1, 0x3b444a, 1);
+          portraitBg.setFillStyle(0x111418, 1).setStrokeStyle(1, 0x3b444a, 1);
+          portrait.setAlpha(0.34);
+          name.setColor('#68737a');
+          quote.setColor('#59636a');
+        }
       }
 
       this.cardObjects.push(
