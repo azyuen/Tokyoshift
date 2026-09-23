@@ -10,7 +10,8 @@ import {
   characters,
   characterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260923-r141';
+  hasRegionalTeam,
+} from '../data/characters.js?v=20260923-r145';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
@@ -21,7 +22,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260923-r141';
+import { saveSessionState } from '../state/GameState.js?v=20260923-r145';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
@@ -57,30 +58,57 @@ const MODE_DATA = {
   },
 };
 
-const ODAIBA_LOCATION_RIVAL_ROTATION = {
-  odaiba7eleven: [
-    'aoiShindou',
-    'takumiSerizawa',
-    'emiKanzaki',
-    'yutoAsakura',
-    'mikaHoshino',
-  ],
-  odaibaGundamPlaza: [
-    'emiKanzaki',
-    'aoiShindou',
-    'yutoAsakura',
-    'mikaHoshino',
-    'shunAmamiya',
-    'takumiSerizawa',
-  ],
-  odaibaMiraikan: [
-    'yutoAsakura',
-    'mikaHoshino',
-    'kaoriNishimura',
-    'shunAmamiya',
-    'emiKanzaki',
-    'aoiShindou',
-  ],
+const REGION_LOCATION_RIVAL_ROTATION = {
+  ODAIBA: {
+    odaiba7eleven: [
+      'aoiShindou',
+      'takumiSerizawa',
+      'emiKanzaki',
+      'yutoAsakura',
+      'mikaHoshino',
+    ],
+    odaibaGundamPlaza: [
+      'emiKanzaki',
+      'aoiShindou',
+      'yutoAsakura',
+      'mikaHoshino',
+      'shunAmamiya',
+      'takumiSerizawa',
+    ],
+    odaibaMiraikan: [
+      'yutoAsakura',
+      'mikaHoshino',
+      'kaoriNishimura',
+      'shunAmamiya',
+      'emiKanzaki',
+      'aoiShindou',
+    ],
+  },
+  SHINAGAWA: {
+    shinagawaTennozu: [
+      'akiraShimizu',
+      'natsumiKagawa',
+      'renMizuno',
+      'reiTakamura',
+      'goroNakajima',
+    ],
+    shinagawaKonan: [
+      'renMizuno',
+      'akiraShimizu',
+      'reiTakamura',
+      'natsumiKagawa',
+      'sayakaFujieda',
+      'goroNakajima',
+    ],
+    shinagawaOiWharf: [
+      'goroNakajima',
+      'reiTakamura',
+      'tetsuyaKanda',
+      'sayakaFujieda',
+      'renMizuno',
+      'akiraShimizu',
+    ],
+  },
 };
 
 export default class MeetScene extends Phaser.Scene {
@@ -109,7 +137,7 @@ export default class MeetScene extends Phaser.Scene {
       if (!character) return;
       queueImage(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260923-r141'
+        character.visual.path + '?v=20260923-r145'
       );
     });
 
@@ -127,7 +155,7 @@ export default class MeetScene extends Phaser.Scene {
       const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
       const posePath = won ? visual.winPath : visual.lossPath;
       if (poseKey && posePath) {
-        queueImage(poseKey, posePath + '?v=20260923-r141');
+        queueImage(poseKey, posePath + '?v=20260923-r145');
       }
     });
 
@@ -200,16 +228,17 @@ export default class MeetScene extends Phaser.Scene {
           allowed.has(offer?.characterId)
         );
 
-        // Existing saves may contain the old global rival pool in Odaiba.
-        // Regenerate that location once so only the Odaiba crew appears.
+        // Existing saves may contain the pre-team global rival pool.
+        // Regenerate regional-team locations once so only their local crew appears.
+        const regionalTeam = hasRegionalTeam(location.district);
         const baseOffers =
-          location.district === 'ODAIBA' && regionValid.length !== stored.length
+          regionalTeam && regionValid.length !== stored.length
             ? this.generateOffersForLocation(locationId)
             : regionValid;
 
         this.locationOffers[locationId] = baseOffers
           .filter(offer =>
-            location.district === 'ODAIBA'
+            regionalTeam
               ? true
               : !defeated.has(locationId + ':' + offer.characterId)
           )
@@ -1388,13 +1417,14 @@ export default class MeetScene extends Phaser.Scene {
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
 
     const regionalPool = getRivalCharacterOrderForRegion(location.district);
-    const configuredOrder = location.district === 'ODAIBA'
-      ? (ODAIBA_LOCATION_RIVAL_ROTATION[locationId] || regionalPool)
-      : regionalPool;
+    const regionalTeam = hasRegionalTeam(location.district);
+    const configuredOrder =
+      REGION_LOCATION_RIVAL_ROTATION[location.district]?.[locationId]
+      || regionalPool;
 
-    // Rotate the local crew every meet refresh instead of drawing three
-    // completely random faces. That keeps each Odaiba location recognisable
-    // while still cycling the seven-person team through the scene.
+    // Rotate local crews every meet refresh instead of drawing three completely
+    // random faces. Each regional location keeps its own character flavour while
+    // the wider team still cycles through over time.
     const refreshBasis = Number(this.nextRefreshAt || Date.now());
     const cycle = Math.floor(refreshBasis / 180000);
     const locationOffset = Math.max(0, ALL_MEET_LOCATION_IDS.indexOf(locationId));
@@ -1411,7 +1441,7 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     const availableCharacters = [...eligible];
-    if (location.district !== 'ODAIBA') {
+    if (!regionalTeam) {
       Phaser.Utils.Array.Shuffle(availableCharacters);
     }
 
@@ -1431,11 +1461,10 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const chooseCharacterForRating = rating => {
-      // Odaiba has a curated location rotation: the order itself carries the
-      // progression. A veteran or specialist can therefore occasionally show
-      // up at Miraikan while driving to that meet's encounter rating rather
-      // than being permanently excluded by their full skill rating.
-      if (location.district === 'ODAIBA') {
+      // Regional crews use their curated location order as progression. A
+      // veteran or specialist can therefore appear at the appropriate local
+      // meet while driving to that meet's encounter rating.
+      if (regionalTeam) {
         return availableCharacters.shift() || Phaser.Utils.Array.GetRandom(eligible);
       }
 
@@ -1688,7 +1717,7 @@ export default class MeetScene extends Phaser.Scene {
       if (character) {
         queueImage(
           character.visual.spriteKey,
-          character.visual.path + '?v=20260923-r141'
+          character.visual.path + '?v=20260923-r145'
         );
       }
     });
@@ -1697,10 +1726,10 @@ export default class MeetScene extends Phaser.Scene {
     getRivalCharacterOrderForRegion(currentRegion).forEach(id => {
       const visual = characters[id]?.visual || {};
       if (visual.winSpriteKey && visual.winPath) {
-        queueImage(visual.winSpriteKey, visual.winPath + '?v=20260923-r141');
+        queueImage(visual.winSpriteKey, visual.winPath + '?v=20260923-r145');
       }
       if (visual.lossSpriteKey && visual.lossPath) {
-        queueImage(visual.lossSpriteKey, visual.lossPath + '?v=20260923-r141');
+        queueImage(visual.lossSpriteKey, visual.lossPath + '?v=20260923-r145');
       }
     });
 
