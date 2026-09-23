@@ -15,7 +15,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r148';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
@@ -382,14 +382,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
     targetWidth,
     depth,
     paintColor = DEFAULT_PAINT_COLOR,
-    driverCharacter = null
+    driverCharacter = null,
+    flipX = false
   ) {
     const bodyKey = getCarBodyTextureKey(this, car);
     if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
 
     const source = this.textures.get(bodyKey).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const fit = getWheelPairFit(car.visual, bodyScale);
+    const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
 
     const rearX = x + fit.rear.offsetX;
     const frontX = x + fit.front.offsetX;
@@ -397,9 +399,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const frontY = y + fit.front.offsetY;
 
     const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
-      .setScale(fit.rear.wheelScale).setDepth(depth);
+      .setScale(fit.rear.wheelScale)
+      .setFlipX(flipX)
+      .setData('carWheel', true)
+      .setDepth(depth);
     const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
-      .setScale(fit.front.wheelScale).setDepth(depth);
+      .setScale(fit.front.wheelScale)
+      .setFlipX(flipX)
+      .setData('carWheel', true)
+      .setDepth(depth);
 
     const rearBacking = this.add.circle(
       rearX,
@@ -420,8 +428,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
       rearY + rearWheel.displayHeight * 0.5,
       frontY + frontWheel.displayHeight * 0.5
     );
-    const shadow = this.add.ellipse(x, tyreBottom + 8, targetWidth * 0.92, 28, 0x000000, 0.72)
-      .setDepth(depth - 0.1);
+    const shadowHeight = Math.max(
+      26,
+      Math.max(rearWheel.displayHeight, frontWheel.displayHeight) * 0.36
+    );
+    const shadow = this.add.ellipse(
+      x,
+      tyreBottom + shadowHeight / 6,
+      targetWidth * 0.92,
+      shadowHeight,
+      0x000000,
+      0.72
+    ).setDepth(depth - 0.1);
     const driver = driverCharacter
       ? createDriverSilhouette(this, car, driverCharacter, {
           bodyX: x,
@@ -436,6 +454,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       y,
       scale: bodyScale,
       depth: depth + 1,
+      flipX,
       paintColor,
     });
 
@@ -739,12 +758,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   getGinzaListings() {
     const pool = GINZA_LISTINGS.filter(item => cars[item.carId]);
-    if (pool.length <= 3) return pool;
+    if (pool.length <= 3) {
+      return [...pool].sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    }
 
-    // Ginza is curated rather than constantly changing: three collector cars
-    // rotate together every six hours.
+    // Ginza rotates a curated trio every six hours. Within that trio, the
+    // highest-value car is presented as the front/hero position.
     const rotation = Math.floor(Date.now() / (6 * 60 * 60 * 1000)) % pool.length;
-    return [...pool.slice(rotation), ...pool.slice(0, rotation)].slice(0, 3);
+    return [...pool.slice(rotation), ...pool.slice(0, rotation)]
+      .slice(0, 3)
+      .sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
   }
 
   animateGinzaCarIn(objects) {
@@ -753,18 +776,60 @@ export default class CentralTokyoScene extends Phaser.Scene {
       typeof obj.x === 'number' &&
       typeof obj.setPosition === 'function'
     );
+    const wheels = movable.filter(obj => obj.getData?.('carWheel'));
 
     movable.forEach(obj => {
       const targetX = obj.x;
-      obj.x = targetX - 520;
-      obj.setAlpha?.(0.96);
+      obj.x = targetX - 760;
 
       this.tweens.add({
         targets: obj,
         x: targetX,
-        duration: 680,
-        ease: 'Cubic.easeOut',
+        duration: 1550,
+        ease: 'Sine.easeOut',
       });
+    });
+
+    // The dealer is physically rolling the car out, so the tyre sprites rotate
+    // while every layer moves together into its final display position.
+    wheels.forEach(wheel => {
+      wheel.angle = 0;
+    });
+    this.tweens.add({
+      targets: wheels,
+      angle: 900,
+      duration: 1550,
+      ease: 'Sine.easeOut',
+    });
+  }
+
+  runGinzaFade(onBlack) {
+    if (this.ginzaTransitioning) return;
+    this.ginzaTransitioning = true;
+
+    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
+      .setDepth(120)
+      .setInteractive();
+
+    this.tweens.add({
+      targets: fade,
+      alpha: 0.95,
+      duration: 200,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        onBlack?.();
+
+        this.tweens.add({
+          targets: fade,
+          alpha: 0,
+          duration: 300,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            fade.destroy();
+            this.ginzaTransitioning = false;
+          },
+        });
+      },
     });
   }
 
@@ -774,36 +839,26 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const listings = this.getGinzaListings();
     if (!listings[index]) return;
 
-    this.ginzaTransitioning = true;
+    if (this.ginzaShowcaseActive && this.selectedIndex === index) {
+      this.deselectGinzaCar();
+      return;
+    }
 
-    // Use a simple display overlay instead of a camera transition. It gives the
-    // showroom a dramatic cut without touching Phaser's scene lifecycle.
-    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
-      .setDepth(120)
-      .setInteractive();
+    this.runGinzaFade(() => {
+      this.selectedIndex = index;
+      this.ginzaShowcaseActive = true;
+      this.ginzaAnimateShowcase = true;
+      this.renderLocation(this.activeLocationId);
+    });
+  }
 
-    this.tweens.add({
-      targets: fade,
-      alpha: 0.94,
-      duration: 180,
-      ease: 'Quad.easeIn',
-      onComplete: () => {
-        this.selectedIndex = index;
-        this.ginzaShowcaseActive = true;
-        this.ginzaAnimateShowcase = true;
-        this.renderLocation(this.activeLocationId);
+  deselectGinzaCar() {
+    if (this.ginzaTransitioning || !this.ginzaShowcaseActive) return;
 
-        this.tweens.add({
-          targets: fade,
-          alpha: 0,
-          duration: 260,
-          ease: 'Quad.easeOut',
-          onComplete: () => {
-            fade.destroy();
-            this.ginzaTransitioning = false;
-          },
-        });
-      },
+    this.runGinzaFade(() => {
+      this.ginzaShowcaseActive = false;
+      this.ginzaAnimateShowcase = false;
+      this.renderLocation(this.activeLocationId);
     });
   }
 
@@ -824,21 +879,80 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const objects = this.createCarDisplay(
         car,
         STAGE.x + STAGE.w * 0.51,
-        STAGE.y + 400,
-        680,
-        8
+        STAGE.y + 315,
+        690,
+        10
       );
       objects.forEach(obj => this.addContent(obj));
+
+      const backButton = this.addContent(this.add.rectangle(
+        STAGE.x + 150,
+        STAGE.y + 38,
+        250,
+        40,
+        0x101821,
+        0.94
+      ).setStrokeStyle(2, 0xff9fc7, 0.92)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(25));
+
+      this.addContent(this.add.text(
+        STAGE.x + 150,
+        STAGE.y + 38,
+        '<  BACK TO COLLECTION',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#ffd4e5',
+        }
+      ).setOrigin(0.5).setDepth(26));
+
+      backButton.on('pointerdown', () => this.deselectGinzaCar());
 
       if (this.ginzaAnimateShowcase) {
         this.ginzaAnimateShowcase = false;
         this.animateGinzaCarIn(objects);
       }
     } else {
+      const layouts = [
+        // Highest-price car: larger, lower and highest depth — visually up front.
+        {
+          x: STAGE.x + STAGE.w * 0.52,
+          y: STAGE.y + 340,
+          width: 445,
+          depth: 12,
+          flipX: false,
+        },
+        // The other two sit slightly higher/back and face in different directions.
+        {
+          x: STAGE.x + 220,
+          y: STAGE.y + 286,
+          width: 330,
+          depth: 8,
+          flipX: true,
+        },
+        {
+          x: STAGE.x + 925,
+          y: STAGE.y + 304,
+          width: 345,
+          depth: 9,
+          flipX: false,
+        },
+      ];
+
       listings.forEach((listing, index) => {
         const car = cars[listing.carId];
-        const x = STAGE.x + 190 + index * 378;
-        const objects = this.createCarDisplay(car, x, STAGE.y + 390, 345, 8);
+        const layout = layouts[index] || layouts[layouts.length - 1];
+        const objects = this.createCarDisplay(
+          car,
+          layout.x,
+          layout.y,
+          layout.width,
+          layout.depth,
+          DEFAULT_PAINT_COLOR,
+          null,
+          layout.flipX
+        );
         objects.forEach(obj => this.addContent(obj));
       });
     }
@@ -846,7 +960,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.addContent(this.add.text(
       CARDS.x + 18,
       CARDS.y + 14,
-      'GINZA HERO CARS // 3 AVAILABLE // ROTATES 6H',
+      this.ginzaShowcaseActive
+        ? 'GINZA HERO CAR // TAP SELECTED CAR AGAIN TO RETURN'
+        : 'GINZA HERO CARS // 3 AVAILABLE // ROTATES 6H',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '11px',
@@ -857,7 +973,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     listings.forEach((listing, index) => {
       const car = cars[listing.carId];
       const x = CARDS.x + 190 + index * 365;
-      const selected = index === this.selectedIndex;
+      const selected = this.ginzaShowcaseActive && index === this.selectedIndex;
       const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
 
       const box = this.addContent(this.add.rectangle(
