@@ -298,5 +298,10 @@ export function getAutoMarketBuild(carId) {
 export function getAutoMarketSellPrice(carId, carState = {}) {
   const base = Number(MARKET_BASE_PRICES[carId] || 1000000);
   const modified = carState && carState.stock === false;
-  return Math.round(base * (modified ? 0.82 : 0.74) / 10000) * 10000;
+
+  // Auto Market is a wholesale exit, not full retail liquidity. A won or
+  // modified car is still a meaningful windfall, but selling it should not
+  // instantly convert its full market value into endgame tuning money.
+  const resaleRate = modified ? 0.65 : 0.60;
+  return Math.round(base * resaleRate / 10000) * 10000;
 }

@@ -39,7 +39,7 @@ import {
   getGinzaCollectorState,
   isCentralTokyoLocationUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260923-r134';
+} from '../data/centralTokyo.js?v=20260924-r163';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

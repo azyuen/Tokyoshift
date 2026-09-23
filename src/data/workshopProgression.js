@@ -37,6 +37,8 @@ export const WORKSHOP_TIERS = [
 export const MAX_GARAGE_CAPACITY = WORKSHOP_TIERS
   .reduce((total, workshop) => total + Number(workshop.capacity || 0), 0);
 
+export const TUNING_WIN_REQUIREMENTS = [0, 0, 12, 30];
+
 const ACCESS = {
   engine: {
     engine: [0, 1, 1, 2],
@@ -146,14 +148,54 @@ export function getRequiredWorkshopTier(category, partId, level = 0) {
   return clampWorkshopTier(levels[safeLevel] || 0);
 }
 
-export function canInstallTuningLevel(category, partId, level, workshopLocationId) {
+export function getTuningWinRequirement(level = 0) {
+  const safeLevel = Math.max(
+    0,
+    Math.min(TUNING_WIN_REQUIREMENTS.length - 1, Math.round(Number(level) || 0))
+  );
+  return Number(TUNING_WIN_REQUIREMENTS[safeLevel] || 0);
+}
+
+export function canInstallTuningLevel(
+  category,
+  partId,
+  level,
+  workshopLocationId,
+  wins = Infinity,
+  bypassProgression = false
+) {
   const activeTier = getWorkshopByLocationId(workshopLocationId).tier;
-  return activeTier >= getRequiredWorkshopTier(category, partId, level);
+  const workshopReady = activeTier >= getRequiredWorkshopTier(category, partId, level);
+  if (!workshopReady) return false;
+  if (bypassProgression) return true;
+  return Number(wins) >= getTuningWinRequirement(level);
 }
 
 export function getWorkshopRequirementLabel(category, partId, level = 0) {
   const requiredTier = getRequiredWorkshopTier(category, partId, level);
   return WORKSHOP_TIERS[requiredTier]?.shortLabel || WORKSHOP_TIERS[0].shortLabel;
+}
+
+export function getTuningRequirementLabel(
+  category,
+  partId,
+  level,
+  workshopLocationId,
+  wins = Infinity,
+  bypassProgression = false
+) {
+  const activeTier = getWorkshopByLocationId(workshopLocationId).tier;
+  const requiredTier = getRequiredWorkshopTier(category, partId, level);
+  if (activeTier < requiredTier) {
+    return getWorkshopRequirementLabel(category, partId, level);
+  }
+
+  if (!bypassProgression) {
+    const requiredWins = getTuningWinRequirement(level);
+    if (Number(wins) < requiredWins) return requiredWins + ' WINS';
+  }
+
+  return 'AVAILABLE';
 }
 
 export function normaliseCarGarageLocations(

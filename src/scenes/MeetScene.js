@@ -1,4 +1,7 @@
 import { cars, carOrder } from '../data/cars.js?v=20260923-r160';
+import { engines } from '../data/engines.js?v=20260923-r134';
+import { applyEngineTuning } from '../data/tuning.js?v=20260922-r114';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -26,7 +29,7 @@ import { saveSessionState } from '../state/GameState.js?v=20260923-r145';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
-import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260922-r98';
+import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260924-r163';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import {
   getEncounterProfile,
@@ -1600,11 +1603,24 @@ export default class MeetScene extends Phaser.Scene {
       Phaser.Utils.Array.Shuffle(availableCharacters);
     }
 
-    const ratingSlots = [...profile.ratingSlots].slice(0, 3);
-    Phaser.Utils.Array.Shuffle(ratingSlots);
-
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCarId = this.registry.get('selectedCarId') || 'ae86';
+    const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+    const playerThreat = this.estimateOwnedCarThreat(selectedCarId, selectedState);
+    const progressionFloor =
+      playerThreat >= 275 ? 5 :
+      playerThreat >= 225 ? 4 :
+      playerThreat >= 175 ? 3 :
+      1;
+
+    const ratingSlots = [...profile.ratingSlots]
+      .slice(0, 3)
+      .map(baseRating => {
+        const base = Phaser.Math.Clamp(Math.round(Number(baseRating) || 3), 1, 5);
+        return Math.min(5, Math.max(base, Math.min(base + 1, progressionFloor)));
+      });
+    Phaser.Utils.Array.Shuffle(ratingSlots);
+
     const usedRivalCars = new Set();
 
     const carBands = {
@@ -1689,13 +1705,18 @@ export default class MeetScene extends Phaser.Scene {
         pinkAcceptanceBase: profile.pinkAcceptanceBase,
       });
 
+      const raceType = Phaser.Utils.Array.GetRandom(cfg.types);
+      const distance = raceType === 'Roll Race'
+        ? '1/2 mile'
+        : Phaser.Utils.Array.GetRandom(cfg.distances);
+
       return {
         characterId,
         carId,
-        raceType: Phaser.Utils.Array.GetRandom(cfg.types),
+        raceType,
         raceDeal,
         stake,
-        distance: Phaser.Utils.Array.GetRandom(cfg.distances),
+        distance,
         quote: character.introQuote,
         encounterRating,
         encounterAi,
@@ -2189,8 +2210,8 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  estimateCarThreat(carId, tuneLevel = 0, hasNitrous = false) {
-    const car = cars[carId];
+  estimateCarThreat(carId, tuneLevel = 0, hasNitrous = false, configOverride = null) {
+    const car = configOverride || cars[carId];
     if (!car) return 0;
 
     const powerToWeight = (car.powerKW || 0) / Math.max(1, car.vehicleMassKg || 1) * 1000;
@@ -2201,6 +2222,51 @@ export default class MeetScene extends Phaser.Scene {
     const nitrous = hasNitrous ? 9 : 0;
 
     return powerToWeight * 0.72 + traction * 52 + forcedInduction + tune + nitrous;
+  }
+
+  getOwnedPerformanceConfig(carId, state = {}) {
+    const source = cars[carId];
+    if (!source) return null;
+
+    const car = JSON.parse(JSON.stringify(source));
+    if (car.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
+      return car;
+    }
+
+    // Match RaceScene's legacy pink-slip tune before applying modern workshop
+    // parts so meet matchmaking sees the same effective build the race sees.
+    const rating = Phaser.Math.Clamp(Number(state.tuneLevel) || 0, 0, 5);
+    const tier = Math.max(0, rating - 2);
+    car.tyreGrip *= 1 + tier * 0.018;
+    car.clutchStrength *= 1 + tier * 0.055;
+    if ((car.maximumBoost || 0) > 0) {
+      car.maximumBoost *= 1 + tier * 0.035;
+      car.turboSpoolRate *= 1 + tier * 0.025;
+    }
+
+    const engineBuild = applyEngineTuning(car, engines[car.engine], state);
+    const tuned = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+    const exhaustNos = getExhaustNosTuning(state);
+    const workshopNos = exhaustNos.nosKit > 0;
+
+    if (!workshopNos && !state.nosInstalled) {
+      tuned.car.nosPower = 0;
+      tuned.car.nosCapacitySeconds = 0;
+    }
+
+    return tuned.car;
+  }
+
+  estimateOwnedCarThreat(carId, state = {}) {
+    const config = this.getOwnedPerformanceConfig(carId, state);
+    if (!config) return 0;
+
+    const exhaustNos = getExhaustNosTuning(state);
+    const hasNitrous =
+      exhaustNos.nosKit > 0 ||
+      Boolean(state.nosInstalled);
+
+    return this.estimateCarThreat(carId, 0, hasNitrous, config);
   }
 
   evaluatePinkSlipAcceptance(character, opponentCarId, encounter = {}) {
@@ -2227,37 +2293,12 @@ export default class MeetScene extends Phaser.Scene {
 
     const opponentThreat = this.estimateCarThreat(opponentCarId, rating, rating >= 4)
       + rating * 9;
-    const playerThreat = this.estimateCarThreat(
-      playerCarId,
-      playerState.tuneLevel || 0,
-      Boolean(playerState.nosInstalled)
-    ) + 18 + playerWinRate * 14;
+    const playerThreat = this.estimateOwnedCarThreat(playerCarId, playerState)
+      + 18 + playerWinRate * 14;
 
     const opponentCarValue = this.estimateCarThreat(opponentCarId, 0, false);
     const playerCarValue = this.estimateCarThreat(playerCarId, 0, false);
-
-    // Pink slips are intentionally rare. Rivals need to feel confident, and
-    // risking a stronger/more valuable car makes them substantially more wary.
-    const advantage = opponentThreat - playerThreat;
-    const confidenceBonus = Phaser.Math.Clamp((advantage - 12) / 140, -0.04, 0.12);
-    const aggressionBonus = Phaser.Math.Clamp((aggression - 0.75) * 0.08, -0.025, 0.025);
-    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 250, 0, 0.04);
-    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 220, 0, 0.08);
-    const reputationPenalty = Phaser.Math.Clamp((playerWinRate - 0.55) * 0.10, 0, 0.04);
-
-    const baseChance = Number(encounter.pinkAcceptanceBase ?? 0.07);
-    const chance = Phaser.Math.Clamp(
-      baseChance
-        + confidenceBonus
-        + aggressionBonus
-        + temptationBonus
-        - riskPenalty
-        - reputationPenalty,
-      0.01,
-      0.28
-    );
-
-    const accepted = Phaser.Math.FloatBetween(0, 1) < chance;
+    const strengthRatio = playerThreat / Math.max(1, opponentThreat);
 
     const yesReplies = [
       'All right. Keys for keys.',
@@ -2270,6 +2311,43 @@ export default class MeetScene extends Phaser.Scene {
       'Cash is enough.',
       'Not for this matchup.',
     ];
+
+    // A clearly outmatched rival will not stake a car just because the RNG
+    // rolled kindly. This is the anti-farming guard for heavily built cars.
+    if (strengthRatio >= 1.18) {
+      return {
+        accepted: false,
+        chance: 0,
+        reply: Phaser.Utils.Array.GetRandom([
+          'Not against that build.',
+          'No chance. Your car is in another league.',
+          'Cash race only. I know what that thing can do.',
+        ]),
+      };
+    }
+
+    const advantage = opponentThreat - playerThreat;
+    const confidenceBonus = Phaser.Math.Clamp((advantage - 8) / 130, -0.05, 0.13);
+    const aggressionBonus = Phaser.Math.Clamp((aggression - 0.75) * 0.09, -0.025, 0.03);
+    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 260, 0, 0.04);
+    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 220, 0, 0.08);
+    const mismatchPenalty = Phaser.Math.Clamp((strengthRatio - 1.0) * 0.28, 0, 0.07);
+    const reputationPenalty = Phaser.Math.Clamp((playerWinRate - 0.55) * 0.12, 0, 0.05);
+
+    const baseChance = Number(encounter.pinkAcceptanceBase ?? 0.07);
+    const chance = Phaser.Math.Clamp(
+      baseChance
+        + confidenceBonus
+        + aggressionBonus
+        + temptationBonus
+        - riskPenalty
+        - mismatchPenalty
+        - reputationPenalty,
+      0,
+      0.26
+    );
+
+    const accepted = Phaser.Math.FloatBetween(0, 1) < chance;
 
     return {
       accepted,
@@ -2297,6 +2375,19 @@ export default class MeetScene extends Phaser.Scene {
       return;
     }
 
+    const character = characters[offer.characterId];
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
+    const pinkDecision = this.evaluatePinkSlipAcceptance(character, displayCarId, {
+      encounterRating: offer.encounterRating,
+      encounterAi: offer.encounterAi,
+      difficulty: offer.difficulty || profile.difficulty,
+      pinkAcceptanceBase: profile.pinkAcceptanceBase,
+    });
+
+    offer.pinkAccepted = pinkDecision.accepted;
+    offer.pinkAcceptanceChance = pinkDecision.chance;
+    offer.pinkReply = pinkDecision.reply;
     offer.pinkChallenged = true;
     this.persistMeetRound();
     this.pinkSlipButton.disableInteractive();
