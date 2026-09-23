@@ -1,5 +1,5 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
-import { cars } from '../data/cars.js?v=20260923-r150';
+import { cars } from '../data/cars.js?v=20260923-r152';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260923-r145';
