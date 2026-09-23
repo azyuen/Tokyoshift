@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r159';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -13,7 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -1378,7 +1378,10 @@ export default class RaceScene extends Phaser.Scene {
       370,
       {
         flipX: false,
-        lost: isPinkSlip && !playerWon,
+        // Pink-slip losses keep both cars fully present for the handover
+        // tableau; the winner celebration tells the story instead of fading
+        // the player's car out.
+        lost: false,
         depth: depth + 5,
         scaleMul: 1.38,
       }
@@ -1413,7 +1416,15 @@ export default class RaceScene extends Phaser.Scene {
       return won ? 'That was clean.' : 'Next run will be different.';
     };
 
-    const addPortrait = (character, won, x, accentColour, role, displayName) => {
+    const addPortrait = (
+      character,
+      won,
+      x,
+      accentColour,
+      role,
+      displayName,
+      footerOverride = null
+    ) => {
       const size = 188;
       const y = 532;
       const visual = character?.visual || {};
@@ -1466,10 +1477,11 @@ export default class RaceScene extends Phaser.Scene {
         .setDepth(depth + 14)
         .setScrollFactor(0);
 
-      this.add.text(x, 665, '“' + quoteFor(character, won) + '”', {
-        fontFamily: dataFont,
-        fontSize: '8px',
-        color: '#d9e7ee',
+      const footerText = footerOverride || ('“' + quoteFor(character, won) + '”');
+      this.add.text(x, 665, footerText, {
+        fontFamily: footerOverride ? titleFont : dataFont,
+        fontSize: footerOverride ? '9px' : '8px',
+        color: footerOverride ? '#ff8fb7' : '#d9e7ee',
         backgroundColor: '#06101dcc',
         padding: { x: 7, y: 4 },
         align: 'center',
@@ -1479,8 +1491,25 @@ export default class RaceScene extends Phaser.Scene {
         .setScrollFactor(0);
     };
 
-    addPortrait(playerCharacter, playerWon, 315, 0x45d7ff, 'YOU', playerDisplayName);
-    addPortrait(rivalCharacter, opponentWon, 1245, 0xff4f92, 'RIVAL', rivalDisplayName);
+    const pinkLossCelebration = isPinkSlip && !playerWon;
+
+    addPortrait(
+      playerCharacter,
+      pinkLossCelebration ? true : playerWon,
+      315,
+      0x45d7ff,
+      'YOU',
+      playerDisplayName
+    );
+    addPortrait(
+      rivalCharacter,
+      pinkLossCelebration ? true : opponentWon,
+      1245,
+      0xff4f92,
+      'RIVAL',
+      rivalDisplayName,
+      pinkLossCelebration ? 'WON YOUR CAR' : null
+    );
 
     // Larger timing slip with more breathing room between every row.
     this.add.rectangle(780, 520, 520, 230, 0x06111d, 0.91)
