@@ -34,6 +34,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260921-r76';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -2475,41 +2476,42 @@ export default class MeetScene extends Phaser.Scene {
   ) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const ratio = car.visual.wheelScale / car.visual.bodyScale;
-    const wheelScale = bodyScale * ratio * 1.16;
-    const dir = flipX ? -1 : 1;
+    const fit = getWheelPairFit(car.visual, bodyScale, flipX);
 
-    const rearX = x + car.visual.rearOffsetX * bodyScale * dir;
-    const frontX = x + car.visual.frontOffsetX * bodyScale * dir;
-    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
+    const rearX = x + fit.rear.offsetX;
+    const frontX = x + fit.front.offsetX;
+    const rearY = y + fit.rear.offsetY;
+    const frontY = y + fit.front.offsetY;
 
-    const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale)
+    const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
+      .setScale(fit.rear.wheelScale)
       .setDepth(depth);
 
-    const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale)
+    const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
+      .setScale(fit.front.wheelScale)
       .setDepth(depth);
 
     const rearBacking = this.add.circle(
       rearX,
-      wheelY,
-      Math.max(5, rearWheel.displayWidth * 0.50),
-      0x030507,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rearWheel.displayWidth * 0.50),
+      0x020304,
       1
     ).setDepth(depth - 0.35);
 
     const frontBacking = this.add.circle(
       frontX,
-      wheelY,
-      Math.max(5, frontWheel.displayWidth * 0.50),
-      0x030507,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, frontWheel.displayWidth * 0.50),
+      0x020304,
       1
     ).setDepth(depth - 0.35);
 
-    // Ground contact: place the ellipse low enough that only its upper edge
-    // overlaps the lower portion of the tyres.
-    const shadowY = wheelY + Math.max(16, rearWheel.displayHeight * 0.42);
+    // Ground contact follows whichever tyre sits lowest.
+    const shadowY = Math.max(
+      rearY + rearWheel.displayHeight * 0.5,
+      frontY + frontWheel.displayHeight * 0.5
+    ) + Math.max(8, rearWheel.displayHeight * 0.08);
 
     const softShadow = this.add.ellipse(
       x + (flipX ? -4 : 4),
