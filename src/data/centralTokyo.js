@@ -104,10 +104,22 @@ export const AUTO_MARKET_LISTINGS = [
 
 export const GINZA_LISTINGS = [
   {
+    carId: 'spoonEk9',
+    price: 28000000,
+    collectionLabel: 'SPOON RACE EK9',
+    rarity: 'COLLECTOR',
+  },
+  {
     carId: 'amuseS2000Gt1',
     price: 32000000,
     collectionLabel: 'TUNER ICON',
     rarity: 'COLLECTOR',
+  },
+  {
+    carId: 'reAmemiyaRx7',
+    price: 48000000,
+    collectionLabel: 'RE AMEMIYA TIME ATTACK',
+    rarity: 'RARE',
   },
   {
     carId: 'veilsideFortuneRx7',
@@ -134,10 +146,22 @@ export const GINZA_LISTINGS = [
     rarity: 'RARE',
   },
   {
+    carId: 'junHyperLemonEvo5',
+    price: 76000000,
+    collectionLabel: 'HYPER LEMON EVO V',
+    rarity: 'ULTRA RARE',
+  },
+  {
     carId: 'rwbStellaPorsche',
     price: 82000000,
     collectionLabel: 'RWB ONE-OFF',
     rarity: 'ULTRA RARE',
+  },
+  {
+    carId: 'espritNsx',
+    price: 145000000,
+    collectionLabel: 'ESPRIT TIME ATTACK NSX',
+    rarity: 'LEGENDARY',
   },
   {
     carId: 'renownMazda787B',
