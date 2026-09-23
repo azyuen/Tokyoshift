@@ -86,6 +86,11 @@ function getVisibleWheelMetrics(wheelSource) {
     const metrics = {
       visibleWidth,
       visibleHeight,
+      // Distance from Phaser's default image origin (canvas centre) to the
+      // lowest visible tyre pixel. This lets different wheel PNGs share a true
+      // visual ground line even when their transparent canvas padding differs.
+      visibleBottomFromCenter:
+        ((maxY + 1) / sampleScale) - sourceHeight * 0.5,
       // Wheels are circular artwork; using the larger visible axis prevents an
       // export that is one or two pixels taller/wider from under-sizing the tyre.
       visibleDiameter: Math.max(visibleWidth, visibleHeight),
@@ -191,6 +196,20 @@ export function getAxleWheelFit(
   };
 }
 
+export function getWheelContactOffsetY(wheelSource, wheelScale = 1) {
+  const scale = numberOr(wheelScale, 1);
+  const sourceHeight = numberOr(
+    wheelSource?.naturalHeight ?? wheelSource?.height,
+    0
+  );
+  const metrics = getVisibleWheelMetrics(wheelSource);
+  const visibleBottomFromCenter = Number.isFinite(metrics?.visibleBottomFromCenter)
+    ? metrics.visibleBottomFromCenter
+    : sourceHeight * 0.5;
+
+  return visibleBottomFromCenter * scale;
+}
+
 export function getWheelPairFit(
   visual = {},
   bodyScale = null,
@@ -214,9 +233,11 @@ export function getWheelPairFit(
 
     if (sourceHeight > 0) {
       const rearBottom =
-        fit.rear.offsetY + sourceHeight * fit.rear.wheelScale * 0.5;
+        fit.rear.offsetY +
+        getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
       const frontBottom =
-        fit.front.offsetY + sourceHeight * fit.front.wheelScale * 0.5;
+        fit.front.offsetY +
+        getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
       const sharedBottom = (rearBottom + frontBottom) * 0.5;
 
       fit.rear.offsetY += sharedBottom - rearBottom;
