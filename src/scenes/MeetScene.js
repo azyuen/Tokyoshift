@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r150';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r152';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -34,7 +34,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260921-r76';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r150';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
