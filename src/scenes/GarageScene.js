@@ -1,5 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r160';
-import { engines } from '../data/engines.js?v=20260923-r134';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r164';
+import { engines } from '../data/engines.js?v=20260924-r164';
 import { characters } from '../data/characters.js?v=20260923-r145';
 import {
   ENGINE_PART_ORDER,
@@ -41,7 +41,7 @@ import {
   CENTRAL_TOKYO_LOCATIONS,
   getPendingCentralTokyoInvite,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260922-r131';
+} from '../data/centralTokyo.js?v=20260924-r164';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getGarageCapacity,
