@@ -772,53 +772,47 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   animateGinzaCarIn(objects) {
     const movable = objects.filter(obj =>
-      obj &&
-      typeof obj.x === 'number' &&
-      typeof obj.setPosition === 'function'
+      obj && typeof obj.x === 'number' && typeof obj.setPosition === 'function'
     );
-    const wheels = movable.filter(obj => obj.getData?.('carWheel'));
 
     movable.forEach(obj => {
       const targetX = obj.x;
-      obj.x = targetX - 760;
-
-      this.tweens.add({
-        targets: obj,
-        x: targetX,
-        duration: 2200,
-        ease: 'Sine.easeOut',
-      });
-    });
-
-    // The dealer is physically rolling the car out, so the tyre sprites rotate
-    // while every layer moves together into its final display position.
-    wheels.forEach(wheel => {
-      wheel.angle = 0;
-    });
-    this.tweens.add({
-      targets: wheels,
-      angle: 720,
-      duration: 2200,
-      ease: 'Sine.easeOut',
+      obj.x = targetX - 650;
+      obj.setAlpha?.(1);
+      this.tweens.add({ targets: obj, x: targetX, duration: 1850, ease: 'Sine.easeOut' });
+      if (obj.getData?.('ginzaWheel')) {
+        this.tweens.add({
+          targets: obj,
+          angle: obj.angle + 720,
+          duration: 1850,
+          ease: 'Sine.easeOut',
+        });
+      }
     });
   }
 
-  runGinzaFade(onBlack) {
+  transitionGinzaView(nextIndex = null) {
     if (this.ginzaTransitioning) return;
     this.ginzaTransitioning = true;
 
     const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
-      .setDepth(120)
-      .setInteractive();
+      .setDepth(120).setInteractive();
 
     this.tweens.add({
       targets: fade,
-      alpha: 0.95,
-      duration: 200,
+      alpha: 0.96,
+      duration: 220,
       ease: 'Quad.easeIn',
       onComplete: () => {
-        onBlack?.();
-
+        if (nextIndex === null) {
+          this.ginzaShowcaseActive = false;
+          this.ginzaAnimateShowcase = false;
+        } else {
+          this.selectedIndex = nextIndex;
+          this.ginzaShowcaseActive = true;
+          this.ginzaAnimateShowcase = true;
+        }
+        this.renderLocation(this.activeLocationId);
         this.tweens.add({
           targets: fade,
           alpha: 0,
@@ -834,140 +828,71 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   selectGinzaCar(index) {
-    if (this.ginzaTransitioning) return;
-
     const listings = this.getGinzaListings();
     if (!listings[index]) return;
-
     if (this.ginzaShowcaseActive && this.selectedIndex === index) {
-      this.deselectGinzaCar();
+      this.transitionGinzaView(null);
       return;
     }
-
-    this.runGinzaFade(() => {
-      this.selectedIndex = index;
-      this.ginzaShowcaseActive = true;
-      this.ginzaAnimateShowcase = true;
-      this.renderLocation(this.activeLocationId);
-    });
-  }
-
-  deselectGinzaCar() {
-    if (this.ginzaTransitioning || !this.ginzaShowcaseActive) return;
-
-    this.runGinzaFade(() => {
-      this.ginzaShowcaseActive = false;
-      this.ginzaAnimateShowcase = false;
-      this.renderLocation(this.activeLocationId);
-    });
+    this.transitionGinzaView(index);
   }
 
   drawGinza() {
-    this.drawNavigation(
-      'SHOWROOM',
-      'PRIVATE COLLECTION // SEALED HERO CARS // COLLECTOR GRADE'
-    );
+    this.drawNavigation('SHOWROOM', 'PRIVATE COLLECTION // SEALED HERO CARS // COLLECTOR GRADE');
 
     const listings = this.getGinzaListings();
     if (!listings.length) return;
-
     this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
 
     if (this.ginzaShowcaseActive) {
       const listing = listings[this.selectedIndex];
       const car = cars[listing.carId];
       const objects = this.createCarDisplay(
-        car,
-        STAGE.x + STAGE.w * 0.51,
-        STAGE.y + 285,
-        690,
-        10
+        car, STAGE.x + STAGE.w * 0.51, STAGE.y + 350, 700, 8
       );
+      objects.slice(3, 5).forEach(obj => obj?.setData?.('ginzaWheel', true));
       objects.forEach(obj => this.addContent(obj));
-
-      const backButton = this.addContent(this.add.rectangle(
-        STAGE.x + 150,
-        STAGE.y + 38,
-        250,
-        40,
-        0x101821,
-        0.94
-      ).setStrokeStyle(2, 0xff9fc7, 0.92)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(25));
-
-      this.addContent(this.add.text(
-        STAGE.x + 150,
-        STAGE.y + 38,
-        '<  BACK TO COLLECTION',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: '#ffd4e5',
-        }
-      ).setOrigin(0.5).setDepth(26));
-
-      backButton.on('pointerdown', () => this.deselectGinzaCar());
 
       if (this.ginzaAnimateShowcase) {
         this.ginzaAnimateShowcase = false;
         this.animateGinzaCarIn(objects);
       }
+
+      const dismiss = this.addContent(this.add.text(
+        STAGE.x + STAGE.w - 24, STAGE.y + 24, '×  BACK TO COLLECTION',
+        {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d8e7ef',
+          backgroundColor: '#07111bcc', padding: { x: 12, y: 9 },
+        }
+      ).setOrigin(1, 0).setDepth(40).setInteractive({ useHandCursor: true }));
+      dismiss.on('pointerdown', () => this.transitionGinzaView(null));
     } else {
-      const layouts = [
-        // Highest-price car: larger, lower and highest depth — visually up front.
-        {
-          x: STAGE.x + STAGE.w * 0.52,
-          y: STAGE.y + 320,
-          width: 445,
-          depth: 12,
-          flipX: false,
-        },
-        // The other two sit slightly higher/back and face in different directions.
-        {
-          x: STAGE.x + 220,
-          y: STAGE.y + 265,
-          width: 330,
-          depth: 8,
-          flipX: true,
-        },
-        {
-          x: STAGE.x + 925,
-          y: STAGE.y + 283,
-          width: 345,
-          depth: 9,
-          flipX: false,
-        },
+      const ranked = listings.map((listing, index) => ({ listing, index }))
+        .sort((left, right) => right.listing.price - left.listing.price);
+      const poses = [
+        { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 405, w: 390, depth: 11, flip: false },
+        { x: STAGE.x + STAGE.w * 0.24, y: STAGE.y + 315, w: 310, depth: 9, flip: true },
+        { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 292, w: 292, depth: 8, flip: false },
       ];
 
-      listings.forEach((listing, index) => {
+      ranked.forEach(({ listing, index }, rank) => {
         const car = cars[listing.carId];
-        const layout = layouts[index] || layouts[layouts.length - 1];
-        const objects = this.createCarDisplay(
-          car,
-          layout.x,
-          layout.y,
-          layout.width,
-          layout.depth,
-          DEFAULT_PAINT_COLOR,
-          null,
-          layout.flipX
-        );
-        objects.forEach(obj => this.addContent(obj));
+        const pose = poses[rank];
+        const objects = this.createCarDisplay(car, pose.x, pose.y, pose.w, pose.depth);
+        objects.forEach(obj => {
+          if (pose.flip && typeof obj.setFlipX === 'function') obj.setFlipX(true);
+          this.addContent(obj);
+        });
+        const hit = this.addContent(this.add.rectangle(
+          pose.x, pose.y, pose.w, Math.max(105, pose.w * 0.34), 0x000000, 0
+        ).setDepth(30).setInteractive({ useHandCursor: true }));
+        hit.on('pointerdown', () => this.selectGinzaCar(index));
       });
     }
 
     this.addContent(this.add.text(
-      CARDS.x + 18,
-      CARDS.y + 14,
-      this.ginzaShowcaseActive
-        ? 'GINZA HERO CAR // TAP SELECTED CAR AGAIN TO RETURN'
-        : 'GINZA HERO CARS // 3 AVAILABLE // ROTATES 6H',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '11px',
-        color: '#8fe7ff',
-      }
+      CARDS.x + 18, CARDS.y + 14, 'GINZA HERO CARS // 3 AVAILABLE // ROTATES 6H',
+      { fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8fe7ff' }
     ).setDepth(33));
 
     listings.forEach((listing, index) => {
@@ -975,42 +900,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const x = CARDS.x + 190 + index * 365;
       const selected = this.ginzaShowcaseActive && index === this.selectedIndex;
       const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
-
       const box = this.addContent(this.add.rectangle(
-        x,
-        CARDS.y + 104,
-        340,
-        116,
-        selected ? 0x2a2032 : 0x0b1724,
-        1
+        x, CARDS.y + 104, 340, 116, selected ? 0x2a2032 : 0x0b1724, 1
       ).setStrokeStyle(selected ? 2 : 1, selected ? 0xff9fc7 : 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(32));
+        .setInteractive({ useHandCursor: true }).setDepth(32));
 
       this.addContent(this.add.text(x - 145, CARDS.y + 70, car.shortName, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffffff',
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
       }).setDepth(34));
-
       this.addContent(this.add.text(x - 145, CARDS.y + 99, listing.collectionLabel, {
-        fontFamily: BODY_FONT,
-        fontSize: '10px',
-        color: '#c7a8bd',
-        fontStyle: '600',
+        fontFamily: BODY_FONT, fontSize: '10px', color: '#c7a8bd', fontStyle: '600',
       }).setDepth(34));
-
       this.addContent(this.add.text(
-        x + 145,
-        CARDS.y + 126,
-        owned ? 'OWNED' : money(listing.price),
+        x + 145, CARDS.y + 126, owned ? 'OWNED' : money(listing.price),
         {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
+          fontFamily: PIXEL_FONT, fontSize: '7px',
           color: owned ? '#62e8c7' : '#ffe08a',
         }
       ).setOrigin(1, 0.5).setDepth(34));
-
       box.on('pointerdown', () => this.selectGinzaCar(index));
     });
 
