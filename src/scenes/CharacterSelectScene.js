@@ -1,9 +1,9 @@
-import { cars } from '../data/cars.js?v=20260923-r152';
+import { cars } from '../data/cars.js?v=20260923-r154';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260923-r134';
+} from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r128';
