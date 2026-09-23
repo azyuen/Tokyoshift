@@ -9,7 +9,13 @@
 
 export const WHEEL_RENDER_BOOST = 1.16;
 
-export function getAxleWheelFit(visual = {}, axle = 'rear', bodyScale = null, flipX = false) {
+export function getAxleWheelFit(
+  visual = {},
+  axle = 'rear',
+  bodyScale = null,
+  flipX = false,
+  wheelSource = null
+) {
   const isFront = axle === 'front';
   const prefix = isFront ? 'front' : 'rear';
   const authoredBodyScale = Number(visual.bodyScale || 1);
@@ -37,12 +43,29 @@ export function getAxleWheelFit(visual = {}, axle = 'rear', bodyScale = null, fl
     ? renderBodyScale / authoredBodyScale
     : 1;
 
+  const wheelSourceDiameter = Math.max(
+    Number(wheelSource?.width || wheelSource?.naturalWidth || 0),
+    Number(wheelSource?.height || wheelSource?.naturalHeight || 0)
+  );
+
+  // Hero cars have measured wheel-well radii in body-source pixels. Size their
+  // wheel sprite from the actual wheel image dimensions instead of relying on
+  // hand-authored wheelScale guesses. This keeps the tyre filling the arch at
+  // every render size and fixes the inconsistent hero-car wheel sizes.
+  const measuredWheelScale =
+    wellRadiusSource > 0 && wheelSourceDiameter > 0
+      ? (
+          wellRadiusSource *
+          2 *
+          renderBodyScale *
+          Number(visual[prefix + 'WheelFill'] ?? visual.wheelFill ?? 1.035)
+        ) / wheelSourceDiameter
+      : null;
+
   return {
     offsetX: (flipX ? -offsetX : offsetX) * renderBodyScale,
     offsetY: offsetY * renderBodyScale,
-    wheelScale: baseWheelScale * scaleRatio * WHEEL_RENDER_BOOST,
-    // The backing should fill the cavity, while the tyre itself is authored
-    // about 5% larger so it tucks naturally under the fender lip.
+    wheelScale: measuredWheelScale ?? (baseWheelScale * scaleRatio * WHEEL_RENDER_BOOST),
     backingRadius: wellRadiusSource > 0
       ? Math.max(5, wellRadiusSource * renderBodyScale * 1.01)
       : null,
@@ -50,9 +73,14 @@ export function getAxleWheelFit(visual = {}, axle = 'rear', bodyScale = null, fl
   };
 }
 
-export function getWheelPairFit(visual = {}, bodyScale = null, flipX = false) {
+export function getWheelPairFit(
+  visual = {},
+  bodyScale = null,
+  flipX = false,
+  wheelSource = null
+) {
   return {
-    rear: getAxleWheelFit(visual, 'rear', bodyScale, flipX),
-    front: getAxleWheelFit(visual, 'front', bodyScale, flipX),
+    rear: getAxleWheelFit(visual, 'rear', bodyScale, flipX, wheelSource),
+    front: getAxleWheelFit(visual, 'front', bodyScale, flipX, wheelSource),
   };
 }
