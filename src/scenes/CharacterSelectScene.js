@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260923-r134';
+import { cars } from '../data/cars.js?v=20260923-r146';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
