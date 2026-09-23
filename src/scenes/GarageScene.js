@@ -77,7 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r148';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1192,7 +1192,7 @@ export default class GarageScene extends Phaser.Scene {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
-    const fit = getWheelPairFit(car.visual, bodyScale);
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
     const rearBottom = bodyY + fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
     const frontBottom = bodyY + fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
@@ -1203,7 +1203,7 @@ export default class GarageScene extends Phaser.Scene {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
-    const fit = getWheelPairFit(car.visual, bodyScale);
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
     const rearBottomOffset = fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
     const frontBottomOffset = fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
@@ -1212,8 +1212,9 @@ export default class GarageScene extends Phaser.Scene {
 
   createCarDisplay(car, x, y, targetWidth, depth, visualModsOverride = null) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const fit = getWheelPairFit(car.visual, bodyScale);
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
     const rearX = x + fit.rear.offsetX;
     const frontX = x + fit.front.offsetX;
@@ -1244,14 +1245,19 @@ export default class GarageScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
+    const tyreBottom = Math.max(
+      rearY + rearWheel.displayHeight * 0.5,
+      frontY + frontWheel.displayHeight * 0.5
+    );
+    const shadowHeight = Math.max(
+      20,
+      Math.max(rearWheel.displayHeight, frontWheel.displayHeight) * 0.34
+    );
     const roadShadow = this.add.ellipse(
       x,
-      Math.max(
-        rearY + rearWheel.displayHeight * 0.5,
-        frontY + frontWheel.displayHeight * 0.5
-      ) + Math.max(8, rearWheel.displayHeight * 0.08),
+      tyreBottom + shadowHeight / 6,
       Math.max(128, targetWidth * 0.96),
-      Math.max(20, rearWheel.displayHeight * 0.34),
+      shadowHeight,
       0x000000,
       0.82
     ).setDepth(depth - 0.12);
