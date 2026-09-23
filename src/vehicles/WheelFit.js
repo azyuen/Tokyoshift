@@ -1,75 +1,91 @@
 // Shared wheel-placement helper.
 //
-// Normal cars keep the legacy single wheelScale / wheelOffsetY values.
-// Cars with asymmetric arches (notably the Ginza hero cars) may provide
-// independent rear/front wheel scales, vertical offsets and well radii.
+// Wheel fit is authored per axle.  Every car may specify independent front/rear
+// X, Y and scale values.  That is important because the source sprites do not
+// have identical wheel arches, and some wheel PNGs include different amounts
+// of transparent padding.
 //
-// Values are authored in the body PNG's source-pixel coordinate space so the
-// fit remains identical in the garage, meet scenes, races and result cards.
+// Normal cars historically used wheelScale with a global 1.16 visual correction.
+// We preserve that ONLY as a fallback for old/unconverted configs.  Once a car
+// has rearWheelScale/frontWheelScale, those values are the final authored scales
+// at visual.bodyScale and no global hero/normal multiplier is applied.
+//
+// Wheel-well radii are used only for the dark cavity backing.  They MUST NOT be
+// used to derive tyre size: image-canvas dimensions are not the visible tyre
+// diameter and were the cause of the hero-car sizing regression.
 
-export const WHEEL_RENDER_BOOST = 1.0;
+export const LEGACY_WHEEL_RENDER_BOOST = 1.16;
+// Kept for compatibility with any external/debug code that imports this name.
+export const WHEEL_RENDER_BOOST = LEGACY_WHEEL_RENDER_BOOST;
+
+function numberOr(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 
 export function getAxleWheelFit(
   visual = {},
   axle = 'rear',
   bodyScale = null,
   flipX = false,
-  wheelSource = null
+  _wheelSource = null
 ) {
   const isFront = axle === 'front';
   const prefix = isFront ? 'front' : 'rear';
-  const authoredBodyScale = Number(visual.bodyScale || 1);
+
+  const authoredBodyScale = numberOr(visual.bodyScale, 1) || 1;
   const renderBodyScale = Number.isFinite(Number(bodyScale))
     ? Number(bodyScale)
     : authoredBodyScale;
-
-  const baseWheelScale = Number(
-    visual[prefix + 'WheelScale'] ?? visual.wheelScale ?? 0.039
-  );
-
-  const offsetX = Number(
-    isFront ? visual.frontOffsetX ?? 0 : visual.rearOffsetX ?? 0
-  );
-
-  const offsetY = Number(
-    visual[prefix + 'WheelOffsetY'] ?? visual.wheelOffsetY ?? 0
-  );
-
-  const wellRadiusSource = Number(
-    visual[prefix + 'WheelWellRadius'] ?? 0
-  );
-
   const scaleRatio = authoredBodyScale > 0
     ? renderBodyScale / authoredBodyScale
     : 1;
 
-  const wheelSourceDiameter = Math.max(
-    Number(wheelSource?.width || wheelSource?.naturalWidth || 0),
-    Number(wheelSource?.height || wheelSource?.naturalHeight || 0)
+  const explicitScaleRaw = visual[prefix + 'WheelScale'];
+  const hasExplicitAxleScale =
+    explicitScaleRaw !== undefined &&
+    explicitScaleRaw !== null &&
+    Number.isFinite(Number(explicitScaleRaw));
+
+  const baseWheelScale = hasExplicitAxleScale
+    ? Number(explicitScaleRaw)
+    : numberOr(visual.wheelScale, 0.039);
+
+  // Explicit axle scales are already calibrated.  The old 1.16 boost is used
+  // only for legacy configs that still expose a single wheelScale.
+  const defaultBoost = hasExplicitAxleScale ? 1 : LEGACY_WHEEL_RENDER_BOOST;
+  const renderBoost = numberOr(
+    visual[prefix + 'WheelRenderBoost'] ?? visual.wheelRenderBoost,
+    defaultBoost
   );
 
-  // Hero cars have measured wheel-well radii in body-source pixels. Size their
-  // wheel sprite from the actual wheel image dimensions instead of relying on
-  // hand-authored wheelScale guesses. This keeps the tyre filling the arch at
-  // every render size and fixes the inconsistent hero-car wheel sizes.
-  const measuredWheelScale =
-    wellRadiusSource > 0 && wheelSourceDiameter > 0
-      ? (
-          wellRadiusSource *
-          2 *
-          renderBodyScale *
-          Number(visual[prefix + 'WheelFill'] ?? visual.wheelFill ?? 1.035)
-        ) / wheelSourceDiameter
-      : null;
+  const legacyOffsetX = isFront
+    ? numberOr(visual.frontOffsetX, 0)
+    : numberOr(visual.rearOffsetX, 0);
+
+  const offsetXSource = numberOr(
+    visual[prefix + 'WheelOffsetX'],
+    legacyOffsetX
+  );
+
+  const offsetYSource = numberOr(
+    visual[prefix + 'WheelOffsetY'],
+    numberOr(visual.wheelOffsetY, 0)
+  );
+
+  const backingRadiusSource = numberOr(
+    visual[prefix + 'WheelBackingRadius'],
+    numberOr(visual[prefix + 'WheelWellRadius'], 0)
+  );
 
   return {
-    offsetX: (flipX ? -offsetX : offsetX) * renderBodyScale,
-    offsetY: offsetY * renderBodyScale,
-    wheelScale: measuredWheelScale ?? (baseWheelScale * scaleRatio * WHEEL_RENDER_BOOST),
-    backingRadius: wellRadiusSource > 0
-      ? Math.max(5, wellRadiusSource * renderBodyScale * 1.01)
+    offsetX: (flipX ? -offsetXSource : offsetXSource) * renderBodyScale,
+    offsetY: offsetYSource * renderBodyScale,
+    wheelScale: baseWheelScale * scaleRatio * renderBoost,
+    backingRadius: backingRadiusSource > 0
+      ? Math.max(5, backingRadiusSource * renderBodyScale * 1.01)
       : null,
-    wellRadiusSource,
+    wellRadiusSource: backingRadiusSource,
   };
 }
 
