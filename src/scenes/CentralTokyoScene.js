@@ -785,7 +785,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.tweens.add({
         targets: obj,
         x: targetX,
-        duration: 1550,
+        duration: 2200,
         ease: 'Sine.easeOut',
       });
     });
@@ -797,8 +797,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
     this.tweens.add({
       targets: wheels,
-      angle: 900,
-      duration: 1550,
+      angle: 720,
+      duration: 2200,
       ease: 'Sine.easeOut',
     });
   }
@@ -879,7 +879,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const objects = this.createCarDisplay(
         car,
         STAGE.x + STAGE.w * 0.51,
-        STAGE.y + 315,
+        STAGE.y + 285,
         690,
         10
       );
@@ -918,7 +918,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         // Highest-price car: larger, lower and highest depth — visually up front.
         {
           x: STAGE.x + STAGE.w * 0.52,
-          y: STAGE.y + 340,
+          y: STAGE.y + 320,
           width: 445,
           depth: 12,
           flipX: false,
@@ -926,14 +926,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
         // The other two sit slightly higher/back and face in different directions.
         {
           x: STAGE.x + 220,
-          y: STAGE.y + 286,
+          y: STAGE.y + 265,
           width: 330,
           depth: 8,
           flipX: true,
         },
         {
           x: STAGE.x + 925,
-          y: STAGE.y + 304,
+          y: STAGE.y + 283,
           width: 345,
           depth: 9,
           flipX: false,
