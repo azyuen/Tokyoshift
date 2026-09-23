@@ -17,7 +17,7 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r139';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r142';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 import {
   getGarageCapacity,
