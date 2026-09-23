@@ -360,6 +360,10 @@ export const cars = {
       // Same authored scale convention as the working normal-car templates.
       bodyScale: 0.198,
 
+      // Presentation-only vertical correction for the regenerated template asset.
+      // Source pixels, multiplied by the live body render scale.
+      renderOffsetY: 24,
+
       // Independent measured axle centres in body-source pixels.
       rearOffsetX: -484,
       frontOffsetX: 500,
