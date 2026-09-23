@@ -1329,6 +1329,7 @@ export default class GarageScene extends Phaser.Scene {
     const heroWheelSource = this.textures.get(cars[id].visual.wheelKey).getSourceImage();
     const heroBodyScale = 690 / heroSource.width;
     const heroWheelFit = getWheelPairFit(cars[id].visual, heroBodyScale, false, heroWheelSource);
+    const heroRenderOffsetY = Number(cars[id].visual.renderOffsetY || 0) * heroBodyScale;
     this.heroCarLayout = {
       x: 708,
       bodyY: heroBodyY,
@@ -1336,9 +1337,9 @@ export default class GarageScene extends Phaser.Scene {
       bodyScale: heroBodyScale,
       frontWheelX: 708 + heroWheelFit.front.offsetX,
       rearWheelX: 708 + heroWheelFit.rear.offsetX,
-      rearWheelY: heroBodyY + heroWheelFit.rear.offsetY,
-      frontWheelY: heroBodyY + heroWheelFit.front.offsetY,
-      wheelY: heroBodyY + (
+      rearWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.rear.offsetY,
+      frontWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.front.offsetY,
+      wheelY: heroBodyY + heroRenderOffsetY + (
         heroWheelFit.rear.offsetY +
         heroWheelFit.front.offsetY
       ) / 2,
