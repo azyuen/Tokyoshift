@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r155';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
