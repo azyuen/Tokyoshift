@@ -13,6 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -690,24 +691,32 @@ export default class RaceScene extends Phaser.Scene {
   ) {
     const cfg = car.visual;
     const bodyScale = cfg.bodyScale * roleScale;
-    const wheelScale = cfg.wheelScale * roleScale * 1.16;
+    const wheelFit = getWheelPairFit(cfg, bodyScale);
 
     const rearWheel = this.add.image(0, 0, cfg.wheelKey)
-      .setScale(wheelScale)
+      .setScale(wheelFit.rear.wheelScale)
       .setDepth(depth);
 
     const frontWheel = this.add.image(0, 0, cfg.wheelKey)
-      .setScale(wheelScale)
+      .setScale(wheelFit.front.wheelScale)
       .setDepth(depth);
 
-    // The body PNGs have open wheel arches. A dark backing keeps the road from
-    // showing through the spinning rims and makes the tyres feel properly seated.
+    // Fill the complete wheel cavity with black behind the tyre. Hero cars have
+    // measured well radii; normal cars fall back to the old wheel-sized backing.
     const rearWheelBacking = this.add.circle(
-      0, 0, Math.max(9, rearWheel.displayWidth * 0.50), 0x030507, 1
+      0,
+      0,
+      wheelFit.rear.backingRadius ?? Math.max(9, rearWheel.displayWidth * 0.50),
+      0x020304,
+      1
     ).setDepth(depth - 0.35);
 
     const frontWheelBacking = this.add.circle(
-      0, 0, Math.max(9, frontWheel.displayWidth * 0.50), 0x030507, 1
+      0,
+      0,
+      wheelFit.front.backingRadius ?? Math.max(9, frontWheel.displayWidth * 0.50),
+      0x020304,
+      1
     ).setDepth(depth - 0.35);
 
     const driver = driverCharacter
@@ -746,7 +755,8 @@ export default class RaceScene extends Phaser.Scene {
     return {
       cfg,
       bodyScale,
-      wheelScale,
+      wheelFit,
+      wheelScale: (wheelFit.rear.wheelScale + wheelFit.front.wheelScale) / 2,
       rearWheel,
       frontWheel,
       rearWheelBacking,
@@ -1066,7 +1076,7 @@ export default class RaceScene extends Phaser.Scene {
     const cfg = car.visual;
     const baseScale = 0.98 * scaleMul;
     const bodyScale = cfg.bodyScale * baseScale;
-    const wheelScale = cfg.wheelScale * 1.16 * baseScale;
+    const wheelFit = getWheelPairFit(cfg, bodyScale, flipX);
 
     const shadow = this.add.ellipse(
       x,
@@ -1077,37 +1087,36 @@ export default class RaceScene extends Phaser.Scene {
       0.50
     ).setDepth(depth - 2).setScrollFactor(0);
 
-    const rearOffset = (flipX ? -cfg.rearOffsetX : cfg.rearOffsetX) * bodyScale;
-    const frontOffset = (flipX ? -cfg.frontOffsetX : cfg.frontOffsetX) * bodyScale;
-    const wheelY = y + cfg.wheelOffsetY * bodyScale;
+    const rearX = x + wheelFit.rear.offsetX;
+    const frontX = x + wheelFit.front.offsetX;
+    const rearY = y + wheelFit.rear.offsetY;
+    const frontY = y + wheelFit.front.offsetY;
 
-    const wheelBackingRadius = 25 * scaleMul;
+    const rearWheel = this.add.image(rearX, rearY, cfg.wheelKey)
+      .setScale(wheelFit.rear.wheelScale)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    const frontWheel = this.add.image(frontX, frontY, cfg.wheelKey)
+      .setScale(wheelFit.front.wheelScale)
+      .setDepth(depth)
+      .setScrollFactor(0);
 
     const rearBacking = this.add.circle(
-      x + rearOffset,
-      wheelY,
-      wheelBackingRadius,
-      0x020406,
+      rearX,
+      rearY,
+      wheelFit.rear.backingRadius ?? Math.max(9, rearWheel.displayWidth * 0.50),
+      0x020304,
       1
     ).setDepth(depth - 0.4).setScrollFactor(0);
 
     const frontBacking = this.add.circle(
-      x + frontOffset,
-      wheelY,
-      wheelBackingRadius,
-      0x020406,
+      frontX,
+      frontY,
+      wheelFit.front.backingRadius ?? Math.max(9, frontWheel.displayWidth * 0.50),
+      0x020304,
       1
     ).setDepth(depth - 0.4).setScrollFactor(0);
-
-    const rearWheel = this.add.image(x + rearOffset, wheelY, cfg.wheelKey)
-      .setScale(wheelScale)
-      .setDepth(depth)
-      .setScrollFactor(0);
-
-    const frontWheel = this.add.image(x + frontOffset, wheelY, cfg.wheelKey)
-      .setScale(wheelScale)
-      .setDepth(depth)
-      .setScrollFactor(0);
 
     const bodyLayers = createCarBodyLayers(this, cfg, {
       x,
@@ -1909,25 +1918,29 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    const rearX = x + c.rearOffsetX * v.bodyScale;
-    const frontX = x + c.frontOffsetX * v.bodyScale;
-    const wheelY = bodyY + c.wheelOffsetY * v.bodyScale;
+    const rearX = x + v.wheelFit.rear.offsetX;
+    const frontX = x + v.wheelFit.front.offsetX;
+    const rearY = bodyY + v.wheelFit.rear.offsetY;
+    const frontY = bodyY + v.wheelFit.front.offsetY;
 
     v.wheelAngle += ((t.wheelRPM || 0) / 60) * Math.PI * 2 * dt;
-    v.rearWheelBacking.setPosition(rearX, wheelY);
-    v.frontWheelBacking.setPosition(frontX, wheelY);
-    v.rearWheel.setPosition(rearX, wheelY).setRotation(v.wheelAngle);
-    v.frontWheel.setPosition(frontX, wheelY).setRotation(v.wheelAngle);
-    const wheelBaseY = wheelY + v.rearWheel.displayHeight * 0.5;
+    v.rearWheelBacking.setPosition(rearX, rearY);
+    v.frontWheelBacking.setPosition(frontX, frontY);
+    v.rearWheel.setPosition(rearX, rearY).setRotation(v.wheelAngle);
+    v.frontWheel.setPosition(frontX, frontY).setRotation(v.wheelAngle);
+    const wheelBaseY = Math.max(
+      rearY + v.rearWheel.displayHeight * 0.5,
+      frontY + v.frontWheel.displayHeight * 0.5
+    );
     const shadowHeight = v.roadShadow.displayHeight;
     // Put the tyre contact point one-third of the way down into the shadow:
     // the shadow's upper third overlaps the base of the wheels, grounding the car.
     v.roadShadow.setPosition(x, wheelBaseY + shadowHeight / 6);
 
     v.rearX = rearX;
-    v.rearY = wheelY;
+    v.rearY = rearY;
     v.frontX = frontX;
-    v.frontY = wheelY;
+    v.frontY = frontY;
     v.exhaustX = x + c.exhaustOffsetX * v.bodyScale;
     v.exhaustY = bodyY + c.exhaustOffsetY * v.bodyScale;
   }
