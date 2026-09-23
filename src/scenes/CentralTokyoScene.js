@@ -1176,15 +1176,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
       const playerCharacter = characters[playerCharacterId] || characters.renMizuno;
 
-      this.addContent(this.add.ellipse(
-        STAGE.x + 420,
-        STAGE.y + 420,
-        520,
-        42,
-        0x000000,
-        0.62
-      ).setDepth(7.5));
-
       const carObjects = this.createCarDisplay(
         selectedCar,
         STAGE.x + 420,
