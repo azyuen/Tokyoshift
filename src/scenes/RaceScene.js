@@ -1,6 +1,6 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20260921-r66';
 import TouchControls from '../input/TouchControls.js?v=20260921-r43';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
@@ -32,9 +32,10 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import {
   getEncounterAi,
   boostAiForPinkSlip,
-} from '../data/encounterProfiles.js?v=20260921-r76';
+} from '../data/encounterProfiles.js?v=20260923-r162';
 
-const TRACK_M = 402.336;
+const QUARTER_M = 402.336;
+const HALF_MILE_M = 804.672;
 const PX_PER_M = 76.0;
 const TREE_START_M = 4.72;
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -146,6 +147,15 @@ export default class RaceScene extends Phaser.Scene {
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
     this.raceType = this.registry.get('selectedRaceType') || 'Standing Start';
     this.isRollingStart = this.raceType === 'Roll Race';
+    const configuredRaceDistanceM = Number(this.registry.get('selectedRaceDistanceM') || 0);
+    this.raceDistanceM = configuredRaceDistanceM > 100
+      ? configuredRaceDistanceM
+      : (this.isRollingStart ? HALF_MILE_M : QUARTER_M);
+    this.raceDistanceLabel = Math.abs(this.raceDistanceM - QUARTER_M) < 1
+      ? '1/4 MILE'
+      : Math.abs(this.raceDistanceM - HALF_MILE_M) < 1
+        ? '1/2 MILE'
+        : Math.round(this.raceDistanceM) + ' M';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
     this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || 'night';
@@ -206,7 +216,7 @@ export default class RaceScene extends Phaser.Scene {
     const rivalAI = this.raceDeal === 'PINK_SLIP'
       ? boostAiForPinkSlip(baseRivalAI)
       : { ...baseRivalAI };
-    this.ai = new DragRacingAI(this.opponent, rivalAI);
+    this.ai = new DragRacingAI(this.opponent, rivalAI, { rollingStart: this.isRollingStart });
 
     this.controls = new TouchControls(this, { nosEnabled: this.playerCapabilities.hasNitrous });
     this.hud = new RaceHUD(this, {
@@ -224,8 +234,8 @@ export default class RaceScene extends Phaser.Scene {
     this.afterFinishTimer = 0;
     this.finishCameraPx = null;
     this.startMoved = false;
-    this.times = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
-    this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, trapKmh: null };
+    this.times = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
+    this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
     this.opponentStartMoved = false;
     this.opponentFinishClock = null;
     this.playerFinishClock = null;
@@ -234,7 +244,7 @@ export default class RaceScene extends Phaser.Scene {
     this.raceSettlement = null;
     this.raceStartPositionM = 0;
     this.opponentRaceStartPositionM = 0;
-    this.finishTargetM = TRACK_M;
+    this.finishTargetM = this.raceDistanceM;
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
@@ -617,22 +627,82 @@ export default class RaceScene extends Phaser.Scene {
     return config;
   }
 
-  prepareRollingVehicle(vehicle) {
-    const speed = 60 / 3.6;
-    vehicle.speedMps = speed;
-    vehicle.accelerationMps2 = 0;
-    vehicle.transmission.currentGear = Math.min(3, vehicle.config.gearRatios.length);
+  rollingGearRPM(vehicle, gear) {
+    const ratio = Number(vehicle.config.gearRatios?.[gear - 1] || 0)
+      * Number(vehicle.config.finalDriveRatio || 0);
+    if (ratio <= 0) return 0;
+
+    const wheelRPM = this.rollingSpeedMps / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;
+    return wheelRPM * ratio;
+  }
+
+  chooseRollingStartGear(vehicle) {
+    const redline = Number(
+      vehicle.config.engineRedlineRPM
+      || vehicle.engine?.config?.redlineRPM
+      || 7600
+    );
+    const targetRPM = redline * 0.63;
+    let bestGear = Math.min(2, vehicle.config.gearRatios.length);
+    let bestScore = Infinity;
+
+    for (let gear = 1; gear <= vehicle.config.gearRatios.length; gear++) {
+      const rpm = this.rollingGearRPM(vehicle, gear);
+      if (rpm <= 0 || rpm > redline * 0.86) continue;
+
+      let score = Math.abs(rpm - targetRPM);
+      if (rpm > redline * 0.76) score += (rpm - redline * 0.76) * 1.5;
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestGear = gear;
+      }
+    }
+
+    return bestGear;
+  }
+
+  setRollingGear(vehicle, gear) {
+    const nextGear = Math.round(Phaser.Math.Clamp(
+      Number(gear) || 1,
+      1,
+      vehicle.config.gearRatios.length
+    ));
+    const rpm = this.rollingGearRPM(vehicle, nextGear);
+    const limiter = Number(
+      vehicle.config.engineLimiterRPM
+      || vehicle.engine?.config?.limiterRPM
+      || 7800
+    );
+
+    if (rpm >= limiter * 0.97) {
+      vehicle.transmission.lastShiftQuality = 'TOO LOW @ 60';
+      return false;
+    }
+
+    vehicle.transmission.currentGear = nextGear;
     vehicle.transmission.pendingGear = null;
     vehicle.transmission.shiftTimer = 0;
-    vehicle.transmission.lastShiftQuality = 'ROLLING';
-
-    const wheelRPM = speed / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;
-    vehicle.tyres.wheelRPM = wheelRPM;
+    vehicle.transmission.lastShiftQuality = 'ROLLING MATCH';
     vehicle.engine.rpm = Phaser.Math.Clamp(
-      wheelRPM * vehicle.transmission.ratio,
+      rpm,
       vehicle.config.engineIdleRPM || 850,
-      (vehicle.config.engineRedlineRPM || 7600) * 0.86
+      limiter * 0.94
     );
+    return true;
+  }
+
+  prepareRollingVehicle(vehicle) {
+    vehicle.speedMps = this.rollingSpeedMps;
+    vehicle.accelerationMps2 = 0;
+    vehicle.transmission.pendingGear = null;
+    vehicle.transmission.shiftTimer = 0;
+
+    const wheelRPM = this.rollingSpeedMps / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;
+    vehicle.tyres.wheelRPM = wheelRPM;
+    vehicle.tyres.wheelspin = false;
+    vehicle.tyres.slipRatio = 0;
+    this.setRollingGear(vehicle, this.chooseRollingStartGear(vehicle));
     vehicle.clutch.pedal = 0;
   }
 
@@ -645,11 +715,14 @@ export default class RaceScene extends Phaser.Scene {
     vehicle.tyres.wheelRPM = wheelRPM;
     vehicle.tyres.wheelspin = false;
     vehicle.tyres.slipRatio = 0;
-    vehicle.engine.rpm = Phaser.Math.Clamp(
-      wheelRPM * vehicle.transmission.ratio,
-      vehicle.config.engineIdleRPM || 850,
-      (vehicle.config.engineRedlineRPM || 7600) * 0.86
-    );
+
+    if (vehicle.transmission.currentGear > 0) {
+      vehicle.engine.rpm = Phaser.Math.Clamp(
+        this.rollingGearRPM(vehicle, vehicle.transmission.currentGear),
+        vehicle.config.engineIdleRPM || 850,
+        (vehicle.config.engineLimiterRPM || 7800) * 0.94
+      );
+    }
 
     return vehicle.telemetry;
   }
@@ -863,7 +936,20 @@ export default class RaceScene extends Phaser.Scene {
 
     const rollingCountdown = this.isRollingStart && this.raceStarted && this.greenClock == null;
 
-    if (!rollingCountdown) {
+    if (rollingCountdown && requestedGear != null) {
+      const tr = this.player.transmission;
+      let nextGear = null;
+
+      if (requestedGear === 'UP') {
+        nextGear = Math.min(this.player.config.gearRatios.length, Math.max(1, tr.currentGear + 1));
+      } else if (requestedGear === 'DOWN') {
+        nextGear = Math.max(1, tr.currentGear - 1);
+      } else if (typeof requestedGear === 'number') {
+        nextGear = requestedGear;
+      }
+
+      if (nextGear != null) this.setRollingGear(this.player, nextGear);
+    } else if (!rollingCountdown) {
       if (requestedGear === 'UP') {
         const tr = this.player.transmission;
         if (tr.shiftTimer <= 0) {
@@ -889,7 +975,7 @@ export default class RaceScene extends Phaser.Scene {
           this.greenClock = this.raceClock;
           this.raceStartPositionM = this.player.positionM;
           this.opponentRaceStartPositionM = this.opponent.positionM;
-          this.finishTargetM = this.raceStartPositionM + TRACK_M;
+          this.finishTargetM = this.raceStartPositionM + this.raceDistanceM;
           this.startMoved = true;
           this.opponentStartMoved = true;
           this.showRollCountdown('GO!');
@@ -919,12 +1005,12 @@ export default class RaceScene extends Phaser.Scene {
     let status = '';
     if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
-      status = this.raceType.toUpperCase() + '  //  ' +
+      status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
         cars[this.selectedCarId].shortName + ' vs ' + cars[this.opponentCarId].shortName;
     } else if (this.greenClock != null) {
       status = (this.raceClock - this.greenClock) < 0.70 ? 'GO!' : '';
     }
-    else if (this.isRollingStart) status = 'ROLLING 60 KM/H';
+    else if (this.isRollingStart) status = 'ROLLING 60 KM/H  //  ' + this.raceDistanceLabel + '  //  SELECT GEAR';
     else if (this.countdownClock < 1.8) status = 'STAGED';
 
     this.hud.update(playerT, status);
@@ -972,8 +1058,11 @@ export default class RaceScene extends Phaser.Scene {
       const elapsed = this.raceClock - launchClock;
       if (this.times.sixty == null && playerDistance >= 18.288) this.times.sixty = elapsed;
       if (this.times.eighth == null && playerDistance >= 201.168) this.times.eighth = elapsed;
-      if (this.times.quarter == null && playerDistance >= TRACK_M) {
+      if (this.times.quarter == null && playerDistance >= QUARTER_M) {
         this.times.quarter = elapsed;
+      }
+      if (this.times.finish == null && playerDistance >= this.raceDistanceM) {
+        this.times.finish = elapsed;
         this.times.trapKmh = pt.speedKmh;
       }
     }
@@ -985,17 +1074,20 @@ export default class RaceScene extends Phaser.Scene {
       const elapsed = this.raceClock - launchClock;
       if (this.opponentTimes.sixty == null && opponentDistance >= 18.288) this.opponentTimes.sixty = elapsed;
       if (this.opponentTimes.eighth == null && opponentDistance >= 201.168) this.opponentTimes.eighth = elapsed;
-      if (this.opponentTimes.quarter == null && opponentDistance >= TRACK_M) {
+      if (this.opponentTimes.quarter == null && opponentDistance >= QUARTER_M) {
         this.opponentTimes.quarter = elapsed;
+      }
+      if (this.opponentTimes.finish == null && opponentDistance >= this.raceDistanceM) {
+        this.opponentTimes.finish = elapsed;
         this.opponentTimes.trapKmh = ot.speedKmh;
       }
     }
 
-    if (this.greenClock != null && playerDistance >= TRACK_M && this.playerFinishClock == null) {
+    if (this.greenClock != null && playerDistance >= this.raceDistanceM && this.playerFinishClock == null) {
       this.playerFinishClock = this.raceClock;
       this.firstFinishClock ??= this.raceClock;
     }
-    if (this.greenClock != null && opponentDistance >= TRACK_M && this.opponentFinishClock == null) {
+    if (this.greenClock != null && opponentDistance >= this.raceDistanceM && this.opponentFinishClock == null) {
       this.opponentFinishClock = this.raceClock;
       this.firstFinishClock ??= this.raceClock;
     }
@@ -1595,12 +1687,19 @@ export default class RaceScene extends Phaser.Scene {
       color: '#ff94ba',
     }).setOrigin(0.5).setDepth(depth + 12).setScrollFactor(0);
 
-    const rows = [
-      ['REACTION', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
-      ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
-      ['1/4 MILE', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
-      ['TRAP KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
-    ];
+    const rows = this.isRollingStart
+      ? [
+          ['1/8 SPLIT', this.falseStart ? '—' : formatTime(this.times.eighth), formatTime(this.opponentTimes.eighth)],
+          ['1/4 SPLIT', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
+          [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
+          ['TRAP KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
+        ]
+      : [
+          ['REACTION', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
+          ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
+          [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
+          ['TRAP KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
+        ];
 
     rows.forEach((row, i) => {
       const y = 463 + i * 49;

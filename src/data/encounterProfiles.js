@@ -194,11 +194,11 @@ export function getEncounterAi(rating = 3) {
   const rounded = Math.max(1, Math.min(5, Math.round(Number(rating) || 3)));
 
   const table = {
-    1: { reactionSkill: 0.50, launchSkill: 0.54, shiftSkill: 0.54, aggression: 0.62 },
-    2: { reactionSkill: 0.58, launchSkill: 0.62, shiftSkill: 0.62, aggression: 0.68 },
-    3: { reactionSkill: 0.73, launchSkill: 0.75, shiftSkill: 0.76, aggression: 0.78 },
-    4: { reactionSkill: 0.84, launchSkill: 0.85, shiftSkill: 0.87, aggression: 0.84 },
-    5: { reactionSkill: 0.92, launchSkill: 0.91, shiftSkill: 0.94, aggression: 0.90 },
+    1: { reactionSkill: 0.55, launchSkill: 0.68, shiftSkill: 0.70, aggression: 0.64 },
+    2: { reactionSkill: 0.63, launchSkill: 0.74, shiftSkill: 0.77, aggression: 0.70 },
+    3: { reactionSkill: 0.75, launchSkill: 0.82, shiftSkill: 0.84, aggression: 0.80 },
+    4: { reactionSkill: 0.86, launchSkill: 0.89, shiftSkill: 0.91, aggression: 0.86 },
+    5: { reactionSkill: 0.93, launchSkill: 0.94, shiftSkill: 0.96, aggression: 0.92 },
   };
 
   return { ...table[rounded] };

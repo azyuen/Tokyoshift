@@ -1356,9 +1356,18 @@ export default class GarageScene extends Phaser.Scene {
 
     this.headerCarText.setText(car.name.toUpperCase());
 
+    const tunedPower = Number(tunedBuild.car.powerKW ?? 0);
+    const tunedTorque = Number(tunedBuild.car.torqueNm ?? 0);
+    const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
+    const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
+
     this.specValueTexts.engine.setText(car.engineModel || '—');
-    this.specValueTexts.power.setText((tunedBuild.car.powerKW ?? '—') + ' kW');
-    this.specValueTexts.torque.setText((tunedBuild.car.torqueNm ?? '—') + ' Nm');
+    this.specValueTexts.power.setText(
+      Math.round(tunedPower) + ' kW' + (powerGain > 0 ? '  (+' + powerGain + ')' : '')
+    );
+    this.specValueTexts.torque.setText(
+      Math.round(tunedTorque) + ' Nm' + (torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+    );
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
 
     this.refreshTuningCategoryAvailability();

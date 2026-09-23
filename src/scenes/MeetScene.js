@@ -33,7 +33,7 @@ import {
   getEncounterSkillLabel,
   getEncounterAi,
   boostAiForPinkSlip,
-} from '../data/encounterProfiles.js?v=20260921-r76';
+} from '../data/encounterProfiles.js?v=20260923-r162';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
