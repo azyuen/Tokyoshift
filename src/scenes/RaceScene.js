@@ -21,9 +21,10 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260923-r141';
+  hasRegionalTeam,
+} from '../data/characters.js?v=20260923-r145';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260923-r141';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260923-r145';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -94,8 +95,8 @@ export default class RaceScene extends Phaser.Scene {
     const opponentId = this.registry.get('selectedOpponentCharacterId');
     [playerId, opponentId].filter(Boolean).forEach(id => {
       const visual = characters[id]?.visual || {};
-      queueImage(visual.winSpriteKey, visual.winPath ? visual.winPath + '?v=20260923-r141' : null);
-      queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r141' : null);
+      queueImage(visual.winSpriteKey, visual.winPath ? visual.winPath + '?v=20260923-r145' : null);
+      queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null);
     });
 
     startSceneLoading(this, 'PREPARING RACE', queued);
@@ -1599,7 +1600,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.raceMode === 'COMPETITION') return;
 
     const locationId = this.registry.get('meetLocation') || '';
-    if (!locationId || this.raceDistrict !== 'ODAIBA') return;
+    if (!locationId || !hasRegionalTeam(this.raceDistrict)) return;
 
     const snapshot = this.registry.get('selectedRaceMeetOffer') || {};
     const rosters = { ...(this.registry.get('meetRosters') || {}) };
