@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260923-r155';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
