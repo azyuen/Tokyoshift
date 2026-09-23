@@ -122,7 +122,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.text(52, 35, 'CENTRAL TOKYO', {
+    this.add.text(52, 35, 'CENTRAL', {
       fontFamily: PIXEL_FONT,
       fontSize: '20px',
       color: '#eefaff',
