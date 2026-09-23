@@ -7,7 +7,7 @@
 // Values are authored in the body PNG's source-pixel coordinate space so the
 // fit remains identical in the garage, meet scenes, races and result cards.
 
-export const WHEEL_RENDER_BOOST = 1.16;
+export const WHEEL_RENDER_BOOST = 1.0;
 
 export function getAxleWheelFit(
   visual = {},
