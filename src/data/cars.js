@@ -695,8 +695,11 @@ export const cars = {
       wheelOffsetY: 166,
       rearWheelOffsetX: -524,
       frontWheelOffsetX: 510,
-      rearWheelOffsetY: 152,
-      frontWheelOffsetY: 179,
+      // R159: tuck both tyres further into the 787B body. WheelFit then
+      // levels the two contact patches, so the car sits flat without the
+      // oversized/low front-wheel look.
+      rearWheelOffsetY: 134,
+      frontWheelOffsetY: 161,
 
       wheelScale: 0.05028,
       rearWheelScale: 0.04837,
