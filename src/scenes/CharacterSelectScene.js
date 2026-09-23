@@ -1,9 +1,10 @@
-import { cars } from '../data/cars.js?v=20260923-r146';
+import { cars } from '../data/cars.js?v=20260923-r150';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r150';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260922-r128';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -306,18 +307,43 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
   createCarDisplay(car, x, y, targetWidth, depth) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const wheelScale = bodyScale * (car.visual.wheelScale / car.visual.bodyScale) * 1.16;
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
-    const rearX = x + car.visual.rearOffsetX * bodyScale;
-    const frontX = x + car.visual.frontOffsetX * bodyScale;
-    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
+    const rearX = x + fit.rear.offsetX;
+    const frontX = x + fit.front.offsetX;
+    const rearY = y + fit.rear.offsetY;
+    const frontY = y + fit.front.offsetY;
 
-    const rear = this.add.image(rearX, wheelY, car.visual.wheelKey).setScale(wheelScale).setDepth(depth);
-    const front = this.add.image(frontX, wheelY, car.visual.wheelKey).setScale(wheelScale).setDepth(depth);
-    this.add.circle(rearX, wheelY, Math.max(5, rear.displayWidth * 0.50), 0x030507, 1).setDepth(depth - 0.3);
-    this.add.circle(frontX, wheelY, Math.max(5, front.displayWidth * 0.50), 0x030507, 1).setDepth(depth - 0.3);
-    this.add.ellipse(x, wheelY + 19, targetWidth * 0.86, 22, 0x000000, 0.70).setDepth(depth - 0.1);
+    const rear = this.add.image(rearX, rearY, car.visual.wheelKey)
+      .setScale(fit.rear.wheelScale)
+      .setDepth(depth);
+    const front = this.add.image(frontX, frontY, car.visual.wheelKey)
+      .setScale(fit.front.wheelScale)
+      .setDepth(depth);
+
+    this.add.circle(
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rear.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.3);
+    this.add.circle(
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, front.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.3);
+
+    const tyreBottom = Math.max(
+      rearY + rear.displayHeight * 0.5,
+      frontY + front.displayHeight * 0.5
+    );
+    this.add.ellipse(x, tyreBottom + 7, targetWidth * 0.86, 22, 0x000000, 0.70)
+      .setDepth(depth - 0.1);
 
     createCarBodyLayers(this, car, {
       x,
