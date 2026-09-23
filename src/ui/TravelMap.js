@@ -383,7 +383,9 @@ export function showTravelMap(scene, {
     specialColor = null,
   } = {}) => {
     item.labelBg.clear();
-    item.labelText.setVisible(true);
+    item.labelText
+      .setVisible(true)
+      .setScale(active ? 1.14 : 1);
 
     const regularPink = 0xff57bd;
     const accent = specialColor ?? (unlocked ? regularPink : 0x9ca8b0);
@@ -407,15 +409,25 @@ export function showTravelMap(scene, {
 
     // The global phone-readability pass enlarges all Phaser text, so measure
     // the final rendered text first and build the rounded box around that.
-    const w = Math.max(specialColor ? 116 : 92, item.labelText.width + 28);
-    const h = Math.max(34, item.labelText.height + 14);
+    const w = Math.max(
+      specialColor ? 116 : 92,
+      item.labelText.displayWidth + (active ? 34 : 28)
+    );
+    const h = Math.max(
+      active ? 40 : 34,
+      item.labelText.displayHeight + (active ? 18 : 14)
+    );
     const edge = 10;
 
     // Prefer labels above their dial. For the two northern nodes (and any
     // future edge node), automatically flip below the dial rather than clipping
     // the label out of the map.
-    let centerY = item.pt.y - 42 - h / 2;
-    if (centerY - h / 2 < MAP.y + edge) {
+    const forceBelow = item.regionId === 'SHIBUYA';
+    let centerY = forceBelow
+      ? item.pt.y + 42 + h / 2
+      : item.pt.y - 42 - h / 2;
+
+    if (!forceBelow && centerY - h / 2 < MAP.y + edge) {
       centerY = item.pt.y + 42 + h / 2;
     }
     if (centerY + h / 2 > MAP.y + MAP.h - edge) {
@@ -433,7 +445,11 @@ export function showTravelMap(scene, {
     item.labelBg
       .fillStyle(fill, unlocked || specialColor ? 0.94 : 0.88)
       .fillRoundedRect(x, y, w, h, 9)
-      .lineStyle(specialColor ? 2 : unlocked ? 2 : 1, accent, unlocked || specialColor ? 0.96 : 0.82)
+      .lineStyle(
+        active ? 3 : specialColor ? 2 : unlocked ? 2 : 1,
+        accent,
+        unlocked || specialColor ? 0.96 : 0.82
+      )
       .strokeRoundedRect(x, y, w, h, 9)
       .setVisible(true);
 
@@ -507,16 +523,30 @@ export function showTravelMap(scene, {
       // All unlocked regular areas are pink all the time. Central Tokyo and
       // Shinonome retain their special yellow/blue identities.
       item.glow
-        .setRadius(specialColor ? 23 : 20)
-        .setFillStyle(accent, active ? 0.12 : 0.055)
-        .setStrokeStyle(active ? 3 : 2, accent, active ? 0.94 : 0.64);
+        .setRadius(
+          active
+            ? (specialColor ? 34 : 30)
+            : (specialColor ? 23 : 20)
+        )
+        .setFillStyle(accent, active ? 0.20 : 0.055)
+        .setStrokeStyle(active ? 4 : 2, accent, active ? 1 : 0.64);
       item.ring
-        .setRadius(specialColor ? 16 : 14)
+        .setRadius(
+          active
+            ? (specialColor ? 21 : 19)
+            : (specialColor ? 16 : 14)
+        )
         .setFillStyle(0x07111d, 0.38)
-        .setStrokeStyle(active ? 4 : 3, accent, 1);
+        .setStrokeStyle(active ? 5 : 3, accent, 1);
       item.core
-        .setRadius(active ? 7 : specialColor ? 6 : 5)
+        .setRadius(
+          active
+            ? (specialColor ? 9 : 8)
+            : (specialColor ? 6 : 5)
+        )
         .setFillStyle(accent, 1);
+
+      item.pulse.setRadius(active ? (specialColor ? 28 : 25) : 20);
 
       drawRegionLabel(item, {
         unlocked: true,
@@ -856,10 +886,10 @@ export function showTravelMap(scene, {
 
     const pulseTween = scene.tweens.add({
       targets: pulse,
-      scaleX: 1.55,
-      scaleY: 1.55,
-      alpha: { from: 0.92, to: 0 },
-      duration: 760,
+      scaleX: 1.72,
+      scaleY: 1.72,
+      alpha: { from: 1, to: 0 },
+      duration: 720,
       repeat: -1,
       ease: 'Sine.easeOut',
       paused: true,
@@ -908,6 +938,7 @@ export function showTravelMap(scene, {
       pulseActive: false,
       hit,
       pt,
+      regionId,
       unlocked,
       labelBg,
       labelText,
