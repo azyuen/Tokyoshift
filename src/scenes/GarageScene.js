@@ -1,6 +1,6 @@
 import { cars, carOrder } from '../data/cars.js?v=20260923-r137';
 import { engines } from '../data/engines.js?v=20260923-r134';
-import { characters } from '../data/characters.js?v=20260923-r140';
+import { characters } from '../data/characters.js?v=20260923-r145';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
