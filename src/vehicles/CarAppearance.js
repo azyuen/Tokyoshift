@@ -41,11 +41,14 @@ export function getCarTextureKeys(visualOrCar = {}) {
 }
 
 export function getCarAssetPaths(visualOrCar = {}, cacheBust = '') {
+  const visual = visualOrCar?.visual || visualOrCar || {};
   const stem = getCarAssetStem(visualOrCar);
   const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
 
   return {
-    body: 'assets/Cars/' + stem + '_body.png' + suffix,
+    // Hero/template assets may provide an exact case-sensitive path. This is
+    // important on GitHub Pages, where .PNG and .png are different files.
+    body: (visual.bodyPath || ('assets/Cars/' + stem + '_body.png')) + suffix,
     paint: 'assets/Cars/' + stem + '_body_paint.png' + suffix,
     overlay: 'assets/Cars/' + stem + '_body_overlay.png' + suffix,
   };
