@@ -878,11 +878,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ranked.forEach(({ listing, index }, rank) => {
         const car = cars[listing.carId];
         const pose = poses[rank];
-        const objects = this.createCarDisplay(car, pose.x, pose.y, pose.w, pose.depth);
-        objects.forEach(obj => {
-          if (pose.flip && typeof obj.setFlipX === 'function') obj.setFlipX(true);
-          this.addContent(obj);
-        });
+        const objects = this.createCarDisplay(
+          car,
+          pose.x,
+          pose.y,
+          pose.w,
+          pose.depth,
+          DEFAULT_PAINT_COLOR,
+          null,
+          pose.flip
+        );
+        objects.forEach(obj => this.addContent(obj));
         const hit = this.addContent(this.add.rectangle(
           pose.x, pose.y, pose.w, Math.max(105, pose.w * 0.34), 0x000000, 0
         ).setDepth(30).setInteractive({ useHandCursor: true }));
