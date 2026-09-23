@@ -1194,8 +1194,9 @@ export default class GarageScene extends Phaser.Scene {
     const bodyScale = targetWidth / bodySource.width;
     const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
-    const rearBottom = bodyY + fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
-    const frontBottom = bodyY + fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const rearBottom = bodyY + renderOffsetY + fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
+    const frontBottom = bodyY + renderOffsetY + fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
     return Math.max(rearBottom, frontBottom);
   }
 
@@ -1215,11 +1216,13 @@ export default class GarageScene extends Phaser.Scene {
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
     const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const displayY = y + renderOffsetY;
 
     const rearX = x + fit.rear.offsetX;
     const frontX = x + fit.front.offsetX;
-    const rearY = y + fit.rear.offsetY;
-    const frontY = y + fit.front.offsetY;
+    const rearY = displayY + fit.rear.offsetY;
+    const frontY = displayY + fit.front.offsetY;
 
     const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
       .setScale(fit.rear.wheelScale)
@@ -1267,7 +1270,7 @@ export default class GarageScene extends Phaser.Scene {
     const paintColor = getCarPaintColor(carState);
     const bodyLayers = createCarBodyLayers(this, car, {
       x,
-      y,
+      y: displayY,
       scale: bodyScale,
       depth: depth + 1,
       paintColor,
@@ -1275,7 +1278,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const visualModObjects = createVisualModLayers(this, car, carState, {
       x,
-      y,
+      y: displayY,
       scale: bodyScale,
       depth: depth + 1.005,
       paintColor,
