@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260923-r155';
+import { cars } from '../data/cars.js?v=20260923-r158';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
