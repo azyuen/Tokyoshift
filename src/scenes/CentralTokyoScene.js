@@ -15,6 +15,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
@@ -407,25 +408,40 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
 
     const source = this.textures.get(bodyKey).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const ratio = car.visual.wheelScale / car.visual.bodyScale;
-    const wheelScale = bodyScale * ratio * 1.16;
+    const fit = getWheelPairFit(car.visual, bodyScale);
 
-    const rearX = x + car.visual.rearOffsetX * bodyScale;
-    const frontX = x + car.visual.frontOffsetX * bodyScale;
-    const wheelY = y + car.visual.wheelOffsetY * bodyScale;
+    const rearX = x + fit.rear.offsetX;
+    const frontX = x + fit.front.offsetX;
+    const rearY = y + fit.rear.offsetY;
+    const frontY = y + fit.front.offsetY;
 
-    const rearBacking = this.add.circle(rearX, wheelY, Math.max(5, wheelSource.height * wheelScale * 0.48), 0x030507, 1)
-      .setDepth(depth - 0.2);
-    const frontBacking = this.add.circle(frontX, wheelY, Math.max(5, wheelSource.height * wheelScale * 0.48), 0x030507, 1)
-      .setDepth(depth - 0.2);
-    const shadow = this.add.ellipse(x, wheelY + 24, targetWidth * 0.92, 28, 0x000000, 0.72)
+    const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
+      .setScale(fit.rear.wheelScale).setDepth(depth);
+    const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
+      .setScale(fit.front.wheelScale).setDepth(depth);
+
+    const rearBacking = this.add.circle(
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rearWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.2);
+    const frontBacking = this.add.circle(
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, frontWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.2);
+
+    const tyreBottom = Math.max(
+      rearY + rearWheel.displayHeight * 0.5,
+      frontY + frontWheel.displayHeight * 0.5
+    );
+    const shadow = this.add.ellipse(x, tyreBottom + 8, targetWidth * 0.92, 28, 0x000000, 0.72)
       .setDepth(depth - 0.1);
-    const rearWheel = this.add.image(rearX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale).setDepth(depth);
-    const frontWheel = this.add.image(frontX, wheelY, car.visual.wheelKey)
-      .setScale(wheelScale).setDepth(depth);
     const driver = driverCharacter
       ? createDriverSilhouette(this, car, driverCharacter, {
           bodyX: x,
