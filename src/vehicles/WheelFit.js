@@ -197,8 +197,32 @@ export function getWheelPairFit(
   flipX = false,
   wheelSource = null
 ) {
-  return {
+  const fit = {
     rear: getAxleWheelFit(visual, 'rear', bodyScale, flipX, wheelSource),
     front: getAxleWheelFit(visual, 'front', bodyScale, flipX, wheelSource),
   };
+
+  // Unique/hero cars use independently-sized front and rear wheel artwork.
+  // Flatten their stance by matching the tyre contact points rather than the
+  // wheel centres. Split the correction between both axles so the body keeps
+  // its authored ride height while neither end looks visibly nose-up/down.
+  if (visual.singleBody && wheelSource) {
+    const sourceHeight = numberOr(
+      wheelSource.naturalHeight ?? wheelSource.height,
+      0
+    );
+
+    if (sourceHeight > 0) {
+      const rearBottom =
+        fit.rear.offsetY + sourceHeight * fit.rear.wheelScale * 0.5;
+      const frontBottom =
+        fit.front.offsetY + sourceHeight * fit.front.wheelScale * 0.5;
+      const sharedBottom = (rearBottom + frontBottom) * 0.5;
+
+      fit.rear.offsetY += sharedBottom - rearBottom;
+      fit.front.offsetY += sharedBottom - frontBottom;
+    }
+  }
+
+  return fit;
 }
