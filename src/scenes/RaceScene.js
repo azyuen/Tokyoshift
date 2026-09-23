@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260921-r43';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260923-r154';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r155';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -693,6 +693,7 @@ export default class RaceScene extends Phaser.Scene {
     const bodyScale = cfg.bodyScale * roleScale;
     const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
     const wheelFit = getWheelPairFit(cfg, bodyScale, false, wheelSource);
+    const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
 
     const rearWheel = this.add.image(0, 0, cfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
@@ -756,6 +757,7 @@ export default class RaceScene extends Phaser.Scene {
     return {
       cfg,
       bodyScale,
+      renderOffsetY,
       wheelFit,
       wheelScale: (wheelFit.rear.wheelScale + wheelFit.front.wheelScale) / 2,
       rearWheel,
@@ -1079,10 +1081,12 @@ export default class RaceScene extends Phaser.Scene {
     const bodyScale = cfg.bodyScale * baseScale;
     const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
     const wheelFit = getWheelPairFit(cfg, bodyScale, flipX, wheelSource);
+    const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
+    const displayY = y + renderOffsetY;
 
     const shadow = this.add.ellipse(
       x,
-      y,
+      displayY,
       300 * scaleMul,
       24 * scaleMul,
       0x000000,
@@ -1091,8 +1095,8 @@ export default class RaceScene extends Phaser.Scene {
 
     const rearX = x + wheelFit.rear.offsetX;
     const frontX = x + wheelFit.front.offsetX;
-    const rearY = y + wheelFit.rear.offsetY;
-    const frontY = y + wheelFit.front.offsetY;
+    const rearY = displayY + wheelFit.rear.offsetY;
+    const frontY = displayY + wheelFit.front.offsetY;
 
     const rearWheel = this.add.image(rearX, rearY, cfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
@@ -1129,7 +1133,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const bodyLayers = createCarBodyLayers(this, cfg, {
       x,
-      y,
+      y: displayY,
       scale: bodyScale,
       depth: depth + 1,
       flipX,
@@ -1918,7 +1922,7 @@ export default class RaceScene extends Phaser.Scene {
 
   updateCarVisual(v, x, y, t, dt) {
     const c = v.cfg;
-    const bodyY = y + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
+    const bodyY = y + (v.renderOffsetY || 0) + Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
     (v.bodyObjects || [v.body]).forEach(obj => obj.setPosition(x, bodyY));
     if (v.driverSilhouette) {
       v.driverSilhouette.setPosition(
