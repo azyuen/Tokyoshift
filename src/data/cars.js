@@ -685,31 +685,29 @@ export const cars = {
       wheelKey: 'heroWheelRenown787B',
       wheelPath: 'assets/wheels/renown_mazda_787b_hero_wheel.png',
 
-      // R158: regenerated template-style hero asset, calibrated directly from
-      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
-      bodyScale: 0.194,
-      renderOffsetY: 33,
+      // R165: recalibrated directly from the regenerated, right-facing
+      // 1736x906 Renown body shell. The rear wheel opening is intentionally
+      // larger than the front, matching the new artwork.
+      bodyScale: 0.198,
+      renderOffsetY: 54,
 
-      rearOffsetX: -524,
-      frontOffsetX: 510,
-      wheelOffsetY: 166,
-      rearWheelOffsetX: -524,
-      frontWheelOffsetX: 510,
-      // R159: tuck both tyres further into the 787B body. WheelFit then
-      // levels the two contact patches, so the car sits flat without the
-      // oversized/low front-wheel look.
-      rearWheelOffsetY: 134,
-      frontWheelOffsetY: 161,
+      rearOffsetX: -521,
+      frontOffsetX: 497,
+      wheelOffsetY: 129,
+      rearWheelOffsetX: -521,
+      frontWheelOffsetX: 497,
+      rearWheelOffsetY: 137,
+      frontWheelOffsetY: 121,
 
-      wheelScale: 0.05028,
-      rearWheelScale: 0.04837,
-      frontWheelScale: 0.05218,
+      wheelScale: 0.04815,
+      rearWheelScale: 0.05082,
+      frontWheelScale: 0.04547,
 
-      rearWheelWellRadius: 132,
-      frontWheelWellRadius: 142,
+      rearWheelWellRadius: 133,
+      frontWheelWellRadius: 119,
 
-      exhaustOffsetX: -955,
-      exhaustOffsetY: 175,
+      exhaustOffsetX: -815,
+      exhaustOffsetY: 205,
     }
   },
 
