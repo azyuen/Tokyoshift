@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r159';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
@@ -393,7 +393,54 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const bodyScale = targetWidth / source.width;
     const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
-    const displayY = y + renderOffsetY;
+
+    // Ginza hero assets are authored on slightly different vertical trims.
+    // Treat the incoming y as a common presentation position and solve each
+    // hero body's origin against the AE86 tyre-contact baseline at the same
+    // width. This removes the up/down jump when cycling collector cars.
+    let groundedBodyY = y;
+    if (car.visual.singleBody && cars.ae86 && car.id !== 'ae86') {
+      const reference = cars.ae86;
+      const referenceBodyKey = getCarBodyTextureKey(this, reference);
+      if (
+        this.textures.exists(referenceBodyKey) &&
+        this.textures.exists(reference.visual.wheelKey)
+      ) {
+        const referenceSource = this.textures.get(referenceBodyKey).getSourceImage();
+        const referenceWheelSource = this.textures.get(reference.visual.wheelKey).getSourceImage();
+        const referenceBodyScale = targetWidth / referenceSource.width;
+        const referenceFit = getWheelPairFit(
+          reference.visual,
+          referenceBodyScale,
+          flipX,
+          referenceWheelSource
+        );
+        const referenceRenderOffsetY =
+          Number(reference.visual.renderOffsetY || 0) * referenceBodyScale;
+        const referenceRearBottom =
+          referenceFit.rear.offsetY +
+          referenceWheelSource.height * referenceFit.rear.wheelScale * 0.5;
+        const referenceFrontBottom =
+          referenceFit.front.offsetY +
+          referenceWheelSource.height * referenceFit.front.wheelScale * 0.5;
+        const targetWheelBottom =
+          y +
+          referenceRenderOffsetY +
+          Math.max(referenceRearBottom, referenceFrontBottom);
+
+        const rearBottomOffset =
+          fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
+        const frontBottomOffset =
+          fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
+
+        groundedBodyY =
+          targetWheelBottom -
+          renderOffsetY -
+          Math.max(rearBottomOffset, frontBottomOffset);
+      }
+    }
+
+    const displayY = groundedBodyY + renderOffsetY;
 
     const rearX = x + fit.rear.offsetX;
     const frontX = x + fit.front.offsetX;
