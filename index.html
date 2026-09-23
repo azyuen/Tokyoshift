@@ -64,7 +64,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R149</div>
+    <div id="build-stamp">R153</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -141,9 +141,13 @@
     }, { passive: true });
 
     (async () => {
+      let resolvedBuild = 'R153';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
+        resolvedBuild = String(info?.build || resolvedBuild);
+        const stamp = document.getElementById('build-stamp');
+        if (stamp) stamp.textContent = resolvedBuild;
         const current = localStorage.getItem('tokyoShiftBuild');
 
         if (current && current !== info.build) {
@@ -178,13 +182,13 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=R149', { updateViaCache: 'none' });
+          const reg = await navigator.serviceWorker.register('./sw.js?v=' + encodeURIComponent(resolvedBuild), { updateViaCache: 'none' });
           reg.update();
         } catch (e) {}
       }
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260923-r152"></script>
+  <script type="module" src="./src/main.js?v=20260923-r153"></script>
 </body>
 </html>
