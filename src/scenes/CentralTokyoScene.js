@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r152';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r154';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import {
@@ -12,7 +12,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260923-r134';
+} from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
