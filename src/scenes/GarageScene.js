@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r158';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r159';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters } from '../data/characters.js?v=20260923-r145';
 import {
@@ -77,7 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1206,9 +1206,14 @@ export default class GarageScene extends Phaser.Scene {
     const bodyScale = targetWidth / bodySource.width;
     const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
 
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset = fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
     const frontBottomOffset = fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
-    return wheelBottomY - Math.max(rearBottomOffset, frontBottomOffset);
+
+    // Account for per-asset body trim when solving the body origin. Without
+    // this, hero cars with larger renderOffsetY values sat visibly lower even
+    // though the garage was trying to share one tyre-contact baseline.
+    return wheelBottomY - renderOffsetY - Math.max(rearBottomOffset, frontBottomOffset);
   }
 
   createCarDisplay(car, x, y, targetWidth, depth, visualModsOverride = null) {
@@ -1258,7 +1263,7 @@ export default class GarageScene extends Phaser.Scene {
     );
     const roadShadow = this.add.ellipse(
       x,
-      tyreBottom + shadowHeight / 6,
+      tyreBottom - shadowHeight / 8,
       Math.max(128, targetWidth * 0.96),
       shadowHeight,
       0x000000,
