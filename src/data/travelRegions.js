@@ -228,7 +228,7 @@ export const TRAVEL_REGIONS = {
     baseCost: 1200,
     mapX: 0.405,
     mapY: 0.105,
-    description: 'Tokyo\'s high-end automotive district: used cars, collector stock and professional drag racing.',
+    description: 'Used cars, collector cars and pro drag racing.',
     locations: [
       {
         id: 'tokyoAutoMarket',
