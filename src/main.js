@@ -1,9 +1,9 @@
 import BootScene from './scenes/BootScene.js?v=20260923-r158';
 import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260923-r158';
-import GarageScene from './scenes/GarageScene.js?v=20260923-r158';
-import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260923-r158';
-import MeetScene from './scenes/MeetScene.js?v=20260923-r158';
-import RaceScene from './scenes/RaceScene.js?v=20260923-r158';
+import GarageScene from './scenes/GarageScene.js?v=20260923-r159';
+import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260923-r159';
+import MeetScene from './scenes/MeetScene.js?v=20260923-r159';
+import RaceScene from './scenes/RaceScene.js?v=20260923-r159';
 import ResultScene from './scenes/ResultScene.js?v=20260922-r112';
 
 
