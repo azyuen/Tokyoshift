@@ -378,39 +378,91 @@ export function showTravelMap(scene, {
   };
 
   const drawRegionLabel = (item, {
-    visible,
+    unlocked,
     active,
     specialColor = null,
   } = {}) => {
     item.labelBg.clear();
-    item.labelText.setVisible(Boolean(visible));
+    item.labelText.setVisible(true);
 
-    if (!visible) return;
-
-    const accent = specialColor ?? (active ? 0xff57bd : 0x9aa9b4);
-    const fill = active
-      ? (specialColor === 0xffd600 ? 0x332b00 : specialColor === 0x35dfff ? 0x062a34 : 0x321126)
-      : (specialColor ? 0x0a1720 : 0x111820);
+    const regularPink = 0xff57bd;
+    const accent = specialColor ?? (unlocked ? regularPink : 0x9ca8b0);
     const textColor = specialColor === 0xffd600
       ? '#ffe55c'
       : specialColor === 0x35dfff
         ? '#7cefff'
-        : active
+        : unlocked
           ? '#ff8bd5'
-          : '#c7d1d7';
+          : '#aab4bb';
+
+    const fill = specialColor === 0xffd600
+      ? 0x2d2804
+      : specialColor === 0x35dfff
+        ? 0x062731
+        : unlocked
+          ? 0x2a1022
+          : 0x141b21;
 
     item.labelText.setColor(textColor);
-    const w = Math.max(88, item.labelText.width + 28);
-    const h = specialColor ? 34 : 30;
-    const x = item.pt.x - w / 2;
-    const y = item.pt.y - (specialColor ? 58 : 52) - h;
+
+    // The global phone-readability pass enlarges all Phaser text, so measure
+    // the final rendered text first and build the rounded box around that.
+    const w = Math.max(specialColor ? 116 : 92, item.labelText.width + 28);
+    const h = Math.max(34, item.labelText.height + 14);
+    const edge = 10;
+
+    // Prefer labels above their dial. For the two northern nodes (and any
+    // future edge node), automatically flip below the dial rather than clipping
+    // the label out of the map.
+    let centerY = item.pt.y - 42 - h / 2;
+    if (centerY - h / 2 < MAP.y + edge) {
+      centerY = item.pt.y + 42 + h / 2;
+    }
+    if (centerY + h / 2 > MAP.y + MAP.h - edge) {
+      centerY = item.pt.y - 42 - h / 2;
+    }
+
+    // Clamp horizontally so future regions can sit near either map edge without
+    // their name spilling off-screen.
+    const minCenterX = MAP.x + edge + w / 2;
+    const maxCenterX = MAP.x + MAP.w - edge - w / 2;
+    const centerX = Phaser.Math.Clamp(item.pt.x, minCenterX, maxCenterX);
+    const x = centerX - w / 2;
+    const y = centerY - h / 2;
 
     item.labelBg
-      .fillStyle(fill, active || specialColor ? 0.96 : 0.88)
+      .fillStyle(fill, unlocked || specialColor ? 0.94 : 0.88)
       .fillRoundedRect(x, y, w, h, 9)
-      .lineStyle(specialColor ? 2 : 1, accent, active || specialColor ? 0.95 : 0.72)
+      .lineStyle(specialColor ? 2 : unlocked ? 2 : 1, accent, unlocked || specialColor ? 0.96 : 0.82)
       .strokeRoundedRect(x, y, w, h, 9)
       .setVisible(true);
+
+    // Centre the actual text inside the rounded rectangle. Previously its
+    // baseline was anchored to the region point, which made the text appear
+    // noticeably high/left inside the box.
+    item.labelText
+      .setPosition(centerX, centerY)
+      .setOrigin(0.5, 0.5);
+  };
+
+  const setSelectionPulse = (item, active, color) => {
+    if (active) {
+      item.pulse
+        .setVisible(true)
+        .setStrokeStyle(3, color, 0.95)
+        .setScale(1)
+        .setAlpha(0.92);
+
+      if (!item.pulseActive) {
+        item.pulseActive = true;
+        item.pulseTween.restart();
+      }
+      return;
+    }
+
+    item.pulseActive = false;
+    item.pulseTween.pause();
+    item.pulse.setVisible(false).setScale(1).setAlpha(0);
   };
 
   const updateRegionNodes = () => {
@@ -419,17 +471,31 @@ export function showTravelMap(scene, {
       const home = regionId === HOME_REGION_ID;
       const centralTokyo = regionId === 'CENTRAL_TOKYO';
       const specialColor = centralTokyo ? 0xffd600 : home ? 0x35dfff : null;
+      const regularPink = 0xff57bd;
+      const accent = specialColor ?? regularPink;
 
       if (!item.unlocked) {
         item.hit.disableInteractive();
-        item.glow.setVisible(false);
-        item.core.setVisible(false);
+
+        // Locked places are visible discoveries, but clearly unavailable:
+        // stronger grey dial + grey name, with no hover/click target.
+        item.glow
+          .setVisible(true)
+          .setRadius(18)
+          .setFillStyle(0x73808a, 0.06)
+          .setStrokeStyle(2, 0x8f9aa2, 0.48);
         item.ring
           .setVisible(true)
-          .setRadius(10)
-          .setFillStyle(0x4a545d, 0.86)
-          .setStrokeStyle(2, 0x7a858d, 0.78);
-        drawRegionLabel(item, { visible: false });
+          .setRadius(13)
+          .setFillStyle(0x263039, 0.88)
+          .setStrokeStyle(2, 0xa1abb2, 0.92);
+        item.core
+          .setVisible(true)
+          .setRadius(5)
+          .setFillStyle(0x9aa4ab, 0.94);
+
+        drawRegionLabel(item, { unlocked: false, active: false });
+        setSelectionPulse(item, false, 0x9aa4ab);
         return;
       }
 
@@ -438,50 +504,29 @@ export function showTravelMap(scene, {
       item.ring.setVisible(true);
       item.core.setVisible(true);
 
-      if (specialColor) {
-        const selectedBoost = active ? 1 : 0;
-        item.glow
-          .setRadius(centralTokyo ? 27 + selectedBoost * 4 : 25 + selectedBoost * 4)
-          .setFillStyle(specialColor, active ? 0.18 : 0.10)
-          .setStrokeStyle(active ? 4 : 3, specialColor, active ? 1 : 0.88);
-        item.ring
-          .setRadius(centralTokyo ? 17 : 16)
-          .setFillStyle(0x07111d, 0.34)
-          .setStrokeStyle(active ? 4 : 3, specialColor, 1);
-        item.core
-          .setRadius(active ? 7 : 6)
-          .setFillStyle(specialColor, 1);
-        drawRegionLabel(item, { visible: true, active, specialColor });
-        return;
-      }
+      // All unlocked regular areas are pink all the time. Central Tokyo and
+      // Shinonome retain their special yellow/blue identities.
+      item.glow
+        .setRadius(specialColor ? 23 : 20)
+        .setFillStyle(accent, active ? 0.12 : 0.055)
+        .setStrokeStyle(active ? 3 : 2, accent, active ? 0.94 : 0.64);
+      item.ring
+        .setRadius(specialColor ? 16 : 14)
+        .setFillStyle(0x07111d, 0.38)
+        .setStrokeStyle(active ? 4 : 3, accent, 1);
+      item.core
+        .setRadius(active ? 7 : specialColor ? 6 : 5)
+        .setFillStyle(accent, 1);
 
-      if (active) {
-        item.glow
-          .setRadius(27)
-          .setFillStyle(0xff4fbd, 0.16)
-          .setStrokeStyle(3, 0xff63c5, 0.96);
-        item.ring
-          .setRadius(16)
-          .setFillStyle(0x07111d, 0.32)
-          .setStrokeStyle(3, 0xff78cc, 1);
-        item.core
-          .setRadius(6)
-          .setFillStyle(0xff63c5, 1);
-      } else {
-        item.glow
-          .setRadius(19)
-          .setFillStyle(0x82909a, 0.04)
-          .setStrokeStyle(2, 0x9aa9b4, 0.42);
-        item.ring
-          .setRadius(13)
-          .setFillStyle(0x111820, 0.45)
-          .setStrokeStyle(2, 0x9aa9b4, 0.82);
-        item.core
-          .setRadius(4)
-          .setFillStyle(0xc0c9cf, 0.92);
-      }
+      drawRegionLabel(item, {
+        unlocked: true,
+        active,
+        specialColor,
+      });
 
-      drawRegionLabel(item, { visible: true, active });
+      // Selection is communicated by an animated outer dial rather than
+      // changing the unlocked colour scheme.
+      setSelectionPulse(item, active, accent);
     });
   };
 
@@ -795,8 +840,31 @@ export function showTravelMap(scene, {
         fontFamily: PIXEL_FONT,
         fontSize: home || centralTokyo ? '9px' : '8px',
         color: '#c7d1d7',
+        align: 'center',
       }
-    ).setOrigin(0.5, 1).setDepth(depth + 6.8));
+    ).setOrigin(0.5).setDepth(depth + 6.8));
+
+    const pulse = add(scene.add.circle(
+      pt.x,
+      pt.y,
+      home || centralTokyo ? 23 : 20,
+      0x000000,
+      0
+    ).setStrokeStyle(3, 0xff57bd, 0.95)
+      .setVisible(false)
+      .setDepth(depth + 7.4));
+
+    const pulseTween = scene.tweens.add({
+      targets: pulse,
+      scaleX: 1.55,
+      scaleY: 1.55,
+      alpha: { from: 0.92, to: 0 },
+      duration: 760,
+      repeat: -1,
+      ease: 'Sine.easeOut',
+      paused: true,
+    });
+    tweens.push(pulseTween);
 
     const hit = add(scene.add.circle(
       pt.x,
@@ -831,7 +899,19 @@ export function showTravelMap(scene, {
       refreshPanel();
     });
 
-    regionUi[regionId] = { glow, ring, core, hit, pt, unlocked, labelBg, labelText };
+    regionUi[regionId] = {
+      glow,
+      ring,
+      core,
+      pulse,
+      pulseTween,
+      pulseActive: false,
+      hit,
+      pt,
+      unlocked,
+      labelBg,
+      labelText,
+    };
   });
 
   blocker.on('pointerdown', dismiss);
