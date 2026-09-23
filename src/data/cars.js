@@ -423,29 +423,33 @@ export const cars = {
       assetStem: 'top_secret_supra_hero',
       singleBody: true,
       engineKey: 'stockEngineRB26DETT',
+      bodyPath: 'assets/Cars/top_secret_supra_hero_body.png',
       wheelKey: 'heroWheelTopSecretSupra',
       wheelPath: 'assets/wheels/top_secret_supra_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.060,
-      frontWheelFill: 1.060,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
       bodyScale: 0.198,
-      wheelScale: 0.0336,
-      rearOffsetX: -517,
-      frontOffsetX: 513,
-      rearWheelOffsetX: -517,
-      frontWheelOffsetX: 513,
-      wheelOffsetY: 126,
-      rearWheelScale: 0.03967,
-      frontWheelScale: 0.03816,
-      rearWheelOffsetY: 119,
-      frontWheelOffsetY: 126,
-      rearWheelWellRadius: 117,
-      frontWheelWellRadius: 113,
+      renderOffsetY: 63,
+
+      rearOffsetX: -489,
+      frontOffsetX: 505,
+      wheelOffsetY: 147,
+      rearWheelOffsetX: -489,
+      frontWheelOffsetX: 505,
+      rearWheelOffsetY: 148,
+      frontWheelOffsetY: 145,
+
+      wheelScale: 0.04992,
+      rearWheelScale: 0.05205,
+      frontWheelScale: 0.04780,
+
+      rearWheelWellRadius: 136,
+      frontWheelWellRadius: 125,
+
       exhaustOffsetX: -955,
       exhaustOffsetY: 190,
-    },
+    }
   },
 
   libertyWalkR35: {
@@ -484,29 +488,33 @@ export const cars = {
       assetStem: 'liberty_walk_r35_hero',
       singleBody: true,
       engineKey: 'stockEngineRB26DETT',
+      bodyPath: 'assets/Cars/liberty_walk_r35_hero_body.png',
       wheelKey: 'heroWheelLibertyWalkR35',
       wheelPath: 'assets/wheels/liberty_walk_r35_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.060,
-      frontWheelFill: 1.060,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
       bodyScale: 0.198,
-      wheelScale: 0.0375,
-      rearOffsetX: -494,
-      frontOffsetX: 551,
-      rearWheelOffsetX: -494,
-      frontWheelOffsetX: 551,
-      wheelOffsetY: 138,
-      rearWheelScale: 0.04501,
-      frontWheelScale: 0.04211,
-      rearWheelOffsetY: 136,
-      frontWheelOffsetY: 133,
-      rearWheelWellRadius: 130,
-      frontWheelWellRadius: 122,
+      renderOffsetY: 26,
+
+      rearOffsetX: -488,
+      frontOffsetX: 539,
+      wheelOffsetY: 176,
+      rearWheelOffsetX: -488,
+      frontWheelOffsetX: 539,
+      rearWheelOffsetY: 174,
+      frontWheelOffsetY: 178,
+
+      wheelScale: 0.05399,
+      rearWheelScale: 0.05559,
+      frontWheelScale: 0.05239,
+
+      rearWheelWellRadius: 147,
+      frontWheelWellRadius: 139,
+
       exhaustOffsetX: -955,
       exhaustOffsetY: 190,
-    },
+    }
   },
 
   veilsideFortuneRx7: {
@@ -544,29 +552,33 @@ export const cars = {
       assetStem: 'veilside_fortune_rx7_hero',
       singleBody: true,
       engineKey: 'stockEngine13BT',
+      bodyPath: 'assets/Cars/veilside_fortune_rx7_hero_body.png',
       wheelKey: 'heroWheelVeilsideFortuneRx7',
       wheelPath: 'assets/wheels/veilside_fortune_rx7_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.025,
-      frontWheelFill: 1.025,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
       bodyScale: 0.198,
-      wheelScale: 0.0364,
-      rearOffsetX: -488,
-      frontOffsetX: 549,
-      rearWheelOffsetX: -488,
-      frontWheelOffsetX: 549,
-      wheelOffsetY: 112,
-      rearWheelScale: 0.04304,
-      frontWheelScale: 0.04130,
-      rearWheelOffsetY: 102,
-      frontWheelOffsetY: 117,
-      rearWheelWellRadius: 121,
-      frontWheelWellRadius: 116,
+      renderOffsetY: 48,
+
+      rearOffsetX: -489,
+      frontOffsetX: 519,
+      wheelOffsetY: 151,
+      rearWheelOffsetX: -489,
+      frontWheelOffsetX: 519,
+      rearWheelOffsetY: 137,
+      frontWheelOffsetY: 165,
+
+      wheelScale: 0.05070,
+      rearWheelScale: 0.05056,
+      frontWheelScale: 0.05083,
+
+      rearWheelWellRadius: 134,
+      frontWheelWellRadius: 135,
+
       exhaustOffsetX: -960,
       exhaustOffsetY: 190,
-    },
+    }
   },
 
   rwbStellaPorsche: {
@@ -604,29 +616,33 @@ export const cars = {
       assetStem: 'rwb_stella_artois_porsche_hero',
       singleBody: true,
       engineKey: 'stockEngine4AGE',
+      bodyPath: 'assets/Cars/rwb_stella_artois_porsche_hero_body.png',
       wheelKey: 'heroWheelRwbStella',
       wheelPath: 'assets/wheels/rwb_stella_artois_porsche_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.075,
-      frontWheelFill: 1.075,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
       bodyScale: 0.198,
-      wheelScale: 0.0335,
-      rearOffsetX: -435,
-      frontOffsetX: 518,
-      rearWheelOffsetX: -435,
-      frontWheelOffsetX: 518,
-      wheelOffsetY: 128,
-      rearWheelScale: 0.04095,
-      frontWheelScale: 0.03666,
-      rearWheelOffsetY: 127,
-      frontWheelOffsetY: 122,
-      rearWheelWellRadius: 118,
-      frontWheelWellRadius: 105,
+      renderOffsetY: 70,
+
+      rearOffsetX: -462,
+      frontOffsetX: 504,
+      wheelOffsetY: 145,
+      rearWheelOffsetX: -462,
+      frontWheelOffsetX: 504,
+      rearWheelOffsetY: 136,
+      frontWheelOffsetY: 154,
+
+      wheelScale: 0.04395,
+      rearWheelScale: 0.04363,
+      frontWheelScale: 0.04427,
+
+      rearWheelWellRadius: 121,
+      frontWheelWellRadius: 123,
+
       exhaustOffsetX: -960,
       exhaustOffsetY: 195,
-    },
+    }
   },
 
   renownMazda787B: {
@@ -665,29 +681,33 @@ export const cars = {
       assetStem: 'renown_mazda_787b_hero',
       singleBody: true,
       engineKey: 'stockEngine13BT',
+      bodyPath: 'assets/Cars/renown_mazda_787b_hero_body.png',
       wheelKey: 'heroWheelRenown787B',
       wheelPath: 'assets/wheels/renown_mazda_787b_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.015,
-      frontWheelFill: 1.015,
-      bodyScale: 0.198,
-      wheelScale: 0.0324,
-      rearOffsetX: -506,
-      frontOffsetX: 541,
-      rearWheelOffsetX: -506,
-      frontWheelOffsetX: 541,
-      wheelOffsetY: 105,
-      rearWheelScale: 0.04118,
-      frontWheelScale: 0.03410,
-      rearWheelOffsetY: 105,
-      frontWheelOffsetY: 98,
-      rearWheelWellRadius: 121,
-      frontWheelWellRadius: 100,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.194,
+      renderOffsetY: 33,
+
+      rearOffsetX: -524,
+      frontOffsetX: 510,
+      wheelOffsetY: 166,
+      rearWheelOffsetX: -524,
+      frontWheelOffsetX: 510,
+      rearWheelOffsetY: 152,
+      frontWheelOffsetY: 179,
+
+      wheelScale: 0.05028,
+      rearWheelScale: 0.04837,
+      frontWheelScale: 0.05218,
+
+      rearWheelWellRadius: 132,
+      frontWheelWellRadius: 142,
+
       exhaustOffsetX: -955,
       exhaustOffsetY: 175,
-    },
+    }
   },
 
   amuseS2000Gt1: {
@@ -725,30 +745,34 @@ export const cars = {
       assetStem: 'amuse_s2000_gt1_hero',
       singleBody: true,
       engineKey: 'stockEngineB16B',
+      bodyPath: 'assets/Cars/amuse_s2000_gt1_hero_body.png',
       wheelKey: 'heroWheelAmuseS2000Gt1',
       wheelPath: 'assets/wheels/amuse_s2000_gt1_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.060,
-      frontWheelFill: 1.060,
-      bodyScale: 0.198,
-      wheelScale: 0.0373,
-      rearOffsetX: -495,
-      frontOffsetX: 545,
-      rearWheelOffsetX: -495,
-      frontWheelOffsetX: 545,
-      wheelOffsetY: 106,
-      rearWheelScale: 0.04489,
-      frontWheelScale: 0.04164,
-      rearWheelOffsetY: 105,
-      frontWheelOffsetY: 101,
-      rearWheelWellRadius: 130,
-      frontWheelWellRadius: 121,
+
+      // R158: regenerated template-style hero asset, calibrated directly from
+      // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
+      bodyScale: 0.194,
+      renderOffsetY: 32,
+
+      rearOffsetX: -468,
+      frontOffsetX: 526,
+      wheelOffsetY: 177,
+      rearWheelOffsetX: -468,
+      frontWheelOffsetX: 526,
+      rearWheelOffsetY: 179,
+      frontWheelOffsetY: 175,
+
+      wheelScale: 0.05116,
+      rearWheelScale: 0.05253,
+      frontWheelScale: 0.04979,
+
+      rearWheelWellRadius: 144,
+      frontWheelWellRadius: 136,
+
       driverSeat: { x: 104, y: -44, height: 248, alpha: 0.50 },
       exhaustOffsetX: -955,
       exhaustOffsetY: 190,
-    },
+    }
   },
 
 };
