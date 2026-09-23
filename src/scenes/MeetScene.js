@@ -34,7 +34,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260921-r76';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r148';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -2475,8 +2475,9 @@ export default class MeetScene extends Phaser.Scene {
     paintColor = DEFAULT_PAINT_COLOR
   ) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const fit = getWheelPairFit(car.visual, bodyScale, flipX);
+    const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
 
     const rearX = x + fit.rear.offsetX;
     const frontX = x + fit.front.offsetX;
@@ -2507,24 +2508,30 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    // Ground contact follows whichever tyre sits lowest.
-    const shadowY = Math.max(
+    // Put the tyre contact point one-third of the way down into the soft
+    // shadow so the car feels planted instead of floating above it.
+    const tyreBottom = Math.max(
       rearY + rearWheel.displayHeight * 0.5,
       frontY + frontWheel.displayHeight * 0.5
-    ) + Math.max(8, rearWheel.displayHeight * 0.08);
+    );
+    const softShadowHeight = Math.max(
+      20,
+      Math.max(rearWheel.displayHeight, frontWheel.displayHeight) * 0.34
+    );
+    const shadowY = tyreBottom + softShadowHeight / 6;
 
     const softShadow = this.add.ellipse(
       x + (flipX ? -4 : 4),
       shadowY,
       Math.max(112, targetWidth * 0.88),
-      Math.max(20, rearWheel.displayHeight * 0.34),
+      softShadowHeight,
       0x000000,
       0.64
     ).setDepth(depth - 0.12);
 
     const contactShadow = this.add.ellipse(
       x,
-      shadowY - 1,
+      tyreBottom + Math.max(2, softShadowHeight * 0.08),
       Math.max(92, targetWidth * 0.72),
       Math.max(10, rearWheel.displayHeight * 0.18),
       0x000000,
