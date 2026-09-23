@@ -2066,6 +2066,9 @@ export default class MeetScene extends Phaser.Scene {
     const xPositions = [215, 593, 971];
     const cardY = 746;
     const cardH = 124;
+    const pinkLossCelebration = this.offers.some(
+      offer => offer?.pinkSlipResult === 'PLAYER_LOSS'
+    );
 
     this.offers.forEach((offer, i) => {
       const x = xPositions[i];
