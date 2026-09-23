@@ -349,29 +349,39 @@ export const cars = {
       assetStem: 'mines_r34_hero',
       singleBody: true,
       engineKey: 'stockEngineRB26DETT',
+
+      // R154 template-compatible Mine's asset pair.
+      // These paths intentionally match the uppercase .PNG files uploaded to
+      // GitHub. GitHub Pages is case-sensitive.
+      bodyPath: 'assets/Cars/mines_r34_hero_body.PNG',
       wheelKey: 'heroWheelMinesR34',
-      wheelPath: 'assets/wheels/mines_r34_hero_wheel.png',
-      // Hero-only wheel fitting: measure visible tyre pixels inside the PNG,
-      // then fit independently to the front/rear arch.
-      wheelFitMode: 'visible-well',
-      rearWheelFill: 1.040,
-      frontWheelFill: 1.040,
+      wheelPath: 'assets/wheels/mines_r34_hero_wheel.PNG',
+
+      // Same authored scale convention as the working normal-car templates.
       bodyScale: 0.198,
-      wheelScale: 0.0374,
-      rearOffsetX: -508,
-      frontOffsetX: 520,
-      rearWheelOffsetX: -508,
-      frontWheelOffsetX: 520,
-      wheelOffsetY: 168,
-      rearWheelScale: 0.04350,
-      frontWheelScale: 0.04327,
-      rearWheelOffsetY: 164,
-      frontWheelOffsetY: 165,
-      rearWheelWellRadius: 128,
-      frontWheelWellRadius: 127,
-      exhaustOffsetX: -955,
-      exhaustOffsetY: 190,
-    },
+
+      // Independent measured axle centres in body-source pixels.
+      rearOffsetX: -484,
+      frontOffsetX: 500,
+      wheelOffsetY: 195,
+      rearWheelOffsetX: -484,
+      frontWheelOffsetX: 500,
+      rearWheelOffsetY: 192,
+      frontWheelOffsetY: 197,
+
+      // Explicit scale for the newly generated 1254×1254 wheel canvas.
+      // No hero auto-fit / PNG-canvas inference is used for this car.
+      wheelScale: 0.0483,
+      rearWheelScale: 0.0481,
+      frontWheelScale: 0.0486,
+
+      // Dark backing follows the measured arch cavity only.
+      rearWheelWellRadius: 130,
+      frontWheelWellRadius: 131,
+
+      exhaustOffsetX: -820,
+      exhaustOffsetY: 205,
+    }
   },
 
   topSecretSupra: {
