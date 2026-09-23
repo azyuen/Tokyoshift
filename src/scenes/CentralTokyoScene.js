@@ -15,7 +15,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r154';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r159';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
@@ -419,19 +419,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
           Number(reference.visual.renderOffsetY || 0) * referenceBodyScale;
         const referenceRearBottom =
           referenceFit.rear.offsetY +
-          referenceWheelSource.height * referenceFit.rear.wheelScale * 0.5;
+          getWheelContactOffsetY(referenceWheelSource, referenceFit.rear.wheelScale);
         const referenceFrontBottom =
           referenceFit.front.offsetY +
-          referenceWheelSource.height * referenceFit.front.wheelScale * 0.5;
+          getWheelContactOffsetY(referenceWheelSource, referenceFit.front.wheelScale);
         const targetWheelBottom =
           y +
           referenceRenderOffsetY +
           Math.max(referenceRearBottom, referenceFrontBottom);
 
         const rearBottomOffset =
-          fit.rear.offsetY + wheelSource.height * fit.rear.wheelScale * 0.5;
+          fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
         const frontBottomOffset =
-          fit.front.offsetY + wheelSource.height * fit.front.wheelScale * 0.5;
+          fit.front.offsetY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
 
         groundedBodyY =
           targetWheelBottom -
@@ -474,8 +474,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setDepth(depth - 0.2);
 
     const tyreBottom = Math.max(
-      rearY + rearWheel.displayHeight * 0.5,
-      frontY + frontWheel.displayHeight * 0.5
+      rearY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale),
+      frontY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale)
     );
     const shadowHeight = Math.max(
       26,
