@@ -13,7 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260923-r134';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r146';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r148';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260922-r128';
@@ -691,7 +691,8 @@ export default class RaceScene extends Phaser.Scene {
   ) {
     const cfg = car.visual;
     const bodyScale = cfg.bodyScale * roleScale;
-    const wheelFit = getWheelPairFit(cfg, bodyScale);
+    const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
+    const wheelFit = getWheelPairFit(cfg, bodyScale, false, wheelSource);
 
     const rearWheel = this.add.image(0, 0, cfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
@@ -1076,11 +1077,12 @@ export default class RaceScene extends Phaser.Scene {
     const cfg = car.visual;
     const baseScale = 0.98 * scaleMul;
     const bodyScale = cfg.bodyScale * baseScale;
-    const wheelFit = getWheelPairFit(cfg, bodyScale, flipX);
+    const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
+    const wheelFit = getWheelPairFit(cfg, bodyScale, flipX, wheelSource);
 
     const shadow = this.add.ellipse(
       x,
-      y + 26,
+      y,
       300 * scaleMul,
       24 * scaleMul,
       0x000000,
@@ -1101,6 +1103,13 @@ export default class RaceScene extends Phaser.Scene {
       .setScale(wheelFit.front.wheelScale)
       .setDepth(depth)
       .setScrollFactor(0);
+
+    const resultTyreBottom = Math.max(
+      rearY + rearWheel.displayHeight * 0.5,
+      frontY + frontWheel.displayHeight * 0.5
+    );
+    const resultShadowHeight = shadow.displayHeight;
+    shadow.setPosition(x, resultTyreBottom + resultShadowHeight / 6);
 
     const rearBacking = this.add.circle(
       rearX,
