@@ -18,7 +18,7 @@ import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r140';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r166';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import {
   getGarageCapacity,
@@ -112,6 +112,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.ginzaTransitioning = false;
+    this.devCentralRefreshOffsets = {
+      autoMarket: 0,
+      showroom: 0,
+      proDrag: 0,
+    };
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
@@ -322,6 +327,63 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(34));
 
     mapButton.on('pointerdown', () => this.openMap());
+
+    if (isArkonDen(this.registry)) {
+      const location = LOCATION_BY_ID[this.activeLocationId];
+      const kind = location?.kind || 'autoMarket';
+      const devY = mapY + 56;
+      const labels = {
+        autoMarket: 'DEV // REFRESH AUTO MARKET',
+        showroom: 'DEV // REFRESH COLLECTORS',
+        proDrag: 'DEV // REFRESH DRAG EVENTS',
+      };
+
+      const devButton = this.addContent(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        devY,
+        SIDE.w - 36,
+        34,
+        0x261629,
+        1
+      ).setStrokeStyle(1, 0xd875ff, 0.95)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(33));
+
+      this.addContent(this.add.text(
+        SIDE.x + SIDE.w / 2,
+        devY,
+        labels[kind] || 'DEV // REFRESH LOCATION',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#f0c8ff',
+        }
+      ).setOrigin(0.5).setDepth(34));
+
+      devButton.on('pointerdown', () => this.devRefreshCentralLocation());
+    }
+  }
+
+  devRefreshCentralLocation() {
+    if (!isArkonDen(this.registry)) return;
+
+    const location = LOCATION_BY_ID[this.activeLocationId];
+    const kind = location?.kind || 'autoMarket';
+    const key = kind === 'showroom' ? 'showroom' : kind === 'proDrag' ? 'proDrag' : 'autoMarket';
+    const lengths = {
+      autoMarket: Math.max(1, AUTO_MARKET_LISTINGS.length),
+      showroom: Math.max(1, GINZA_LISTINGS.length),
+      proDrag: Math.max(1, PRO_DRAG_EVENTS.length),
+    };
+
+    this.devCentralRefreshOffsets[key] =
+      (Number(this.devCentralRefreshOffsets[key] || 0) + 1) % lengths[key];
+
+    this.selectedIndex = 0;
+    this.selectedEventIndex = 0;
+    this.ginzaShowcaseActive = false;
+    this.ginzaAnimateShowcase = false;
+    this.renderLocation(this.activeLocationId);
   }
 
   openMap() {
@@ -331,6 +393,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       actionVerb: 'DRIVE',
       allowCurrentAction: false,
       onHome: (workshopLocationId, cost) => this.returnToWorkshop(workshopLocationId, cost),
+      onWorkshopUpgrade: (location, cost, alreadyUnlocked) =>
+        this.upgradeWorkshopFromMap(location, cost, alreadyUnlocked),
       onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
     });
   }
@@ -354,6 +418,50 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('district', target.regionId);
     saveSessionState(this.registry);
     this.scene.start('MeetScene');
+  }
+
+  upgradeWorkshopFromMap(location, cost = 0, alreadyUnlocked = false) {
+    if (!location) return;
+
+    if (alreadyUnlocked) {
+      this.returnToWorkshop(location.id, 0);
+      return;
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    const targetTier = Number(location.garageTier || 0);
+    const selectedCarId = this.registry.get('selectedCarId');
+    const ownedCarIds = this.registry.get('ownedCarIds') || [];
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    this.registry.set(
+      'garageTier',
+      Math.max(Number(this.registry.get('garageTier') || 0), targetTier)
+    );
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', location.id);
+
+    // Buying a workshop is a physical move: the player arrives there in the
+    // car they were driving, so store that current car at the new property.
+    if (selectedCarId && ownedCarIds.includes(selectedCarId)) {
+      locations[selectedCarId] = location.id;
+      this.registry.set('carGarageLocations', locations);
+    }
+
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+    this.cashText?.setText(money(cash - price));
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
@@ -532,7 +640,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getAutoMarketListings() {
     const owned = new Set(this.registry.get('ownedCarIds') || []);
     const pool = [...AUTO_MARKET_LISTINGS];
-    const offset = Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % pool.length;
+    const clockOffset = Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % pool.length;
+    const offset = (clockOffset + Number(this.devCentralRefreshOffsets?.autoMarket || 0)) % pool.length;
     const rotated = [...pool.slice(offset), ...pool.slice(0, offset)];
 
     // Prefer cars the player does not own, but keep owned cars in the market
@@ -813,7 +922,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     // Ginza rotates a curated trio every six hours. Within that trio, the
     // highest-value car is presented as the front/hero position.
-    const rotation = Math.floor(Date.now() / (6 * 60 * 60 * 1000)) % pool.length;
+    const clockRotation = Math.floor(Date.now() / (6 * 60 * 60 * 1000)) % pool.length;
+    const rotation = (clockRotation + Number(this.devCentralRefreshOffsets?.showroom || 0)) % pool.length;
     return [...pool.slice(rotation), ...pool.slice(0, rotation)]
       .slice(0, 3)
       .sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
@@ -1125,12 +1235,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
     };
   }
 
+  getProDragEvents() {
+    const events = [...PRO_DRAG_EVENTS];
+    if (!events.length) return events;
+
+    const offset = Number(this.devCentralRefreshOffsets?.proDrag || 0) % events.length;
+    return [...events.slice(offset), ...events.slice(0, offset)];
+  }
+
   drawDragComplex() {
     this.drawNavigation(
       'PRO DRAG RACING',
       'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
     );
 
+    const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
     const selectedCar = build ? cars[build.carId] : null;
 
@@ -1159,10 +1278,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.selectedEventIndex = Phaser.Math.Clamp(
       this.selectedEventIndex,
       0,
-      PRO_DRAG_EVENTS.length - 1
+      events.length - 1
     );
 
-    PRO_DRAG_EVENTS.forEach((event, index) => {
+    events.forEach((event, index) => {
       const x = CARDS.x + 190 + index * 365;
       const selected = index === this.selectedEventIndex;
       const wins = Number(this.registry.get('wins') || 0);
@@ -1209,7 +1328,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     });
 
-    this.drawDragSide(PRO_DRAG_EVENTS[this.selectedEventIndex], build);
+    this.drawDragSide(events[this.selectedEventIndex], build);
   }
 
   drawDragSide(event, build) {

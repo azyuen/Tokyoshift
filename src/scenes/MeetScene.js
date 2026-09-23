@@ -27,7 +27,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260923-r145';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r166';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260924-r163';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -816,6 +816,50 @@ export default class MeetScene extends Phaser.Scene {
 
   updateWorkshopButton() {
     // Meet navigation is map-only. Kept as a no-op for older refresh paths.
+  }
+
+  upgradeWorkshopFromMap(location, cost = 0, alreadyUnlocked = false) {
+    if (!location) return;
+
+    if (alreadyUnlocked) {
+      this.returnToWorkshop(location.id, 0);
+      return;
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    const targetTier = Number(location.garageTier || 0);
+    const selectedCarId = this.registry.get('selectedCarId');
+    const ownedCarIds = this.registry.get('ownedCarIds') || [];
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    this.registry.set(
+      'garageTier',
+      Math.max(Number(this.registry.get('garageTier') || 0), targetTier)
+    );
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', location.id);
+
+    // A newly purchased garage becomes home immediately, and the car the
+    // player drove there occupies one of its fresh storage slots.
+    if (selectedCarId && ownedCarIds.includes(selectedCarId)) {
+      locations[selectedCarId] = location.id;
+      this.registry.set('carGarageLocations', locations);
+    }
+
+    this.registry.set('meetStranded', false);
+    this.cashText?.setText('¥ ' + Number(cash - price).toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', requestedCost = null) {
@@ -2677,6 +2721,8 @@ export default class MeetScene extends Phaser.Scene {
       allowCurrentAction: false,
       homeCost: this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST,
       onHome: (workshopLocationId, cost) => this.returnToWorkshop(workshopLocationId, cost),
+      onWorkshopUpgrade: (location, cost, alreadyUnlocked) =>
+        this.upgradeWorkshopFromMap(location, cost, alreadyUnlocked),
       onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
     });
   }

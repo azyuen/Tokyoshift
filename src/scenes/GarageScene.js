@@ -36,7 +36,7 @@ import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260923-r144';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r166';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getPendingCentralTokyoInvite,
@@ -1153,9 +1153,25 @@ export default class GarageScene extends Phaser.Scene {
           }
 
           this.registry.set('workshopLocationId', location.id);
+
+          const requestedLocations = {
+            ...(this.registry.get('carGarageLocations') || {}),
+          };
+
+          // Purchasing a new workshop physically moves the player and their
+          // current car into the new property. Switching between workshops that
+          // are already owned does not silently relocate stored cars.
+          if (
+            !alreadyUnlocked &&
+            this.selectedCarId &&
+            this.ownedCarIds.includes(this.selectedCarId)
+          ) {
+            requestedLocations[this.selectedCarId] = location.id;
+          }
+
           const reassigned = normaliseCarGarageLocations(
             this.ownedCarIds,
-            this.registry.get('carGarageLocations') || {},
+            requestedLocations,
             Number(this.registry.get('garageTier') || 0)
           );
           this.registry.set('carGarageLocations', reassigned);
