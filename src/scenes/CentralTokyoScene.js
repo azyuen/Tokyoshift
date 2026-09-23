@@ -109,6 +109,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.contentObjects = [];
     this.selectedIndex = 0;
     this.selectedEventIndex = 0;
+    this.ginzaShowcaseActive = false;
+    this.ginzaAnimateShowcase = false;
+    this.ginzaTransitioning = false;
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
@@ -204,6 +207,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       return;
     }
 
+    const previousLocationId = this.activeLocationId;
+    if (location.kind !== 'showroom' || previousLocationId !== location.id) {
+      this.ginzaShowcaseActive = false;
+      this.ginzaAnimateShowcase = false;
+    }
+
     this.clearContent();
     this.activeLocationId = location.id;
     this.registry.set('centralTokyoLocation', location.id);
@@ -287,9 +296,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(33));
 
+    // Central destinations are intentionally reached through the region map.
+    // There are no shortcut buttons between Auto Market, Ginza and Drag.
+    const mapY = SIDE.y + 142;
     const mapButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 112,
+      mapY,
       SIDE.w - 36,
       42,
       0x102138,
@@ -300,7 +312,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 112,
+      mapY,
       'GO TO MAP  >',
       {
         fontFamily: PIXEL_FONT,
@@ -310,38 +322,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(34));
 
     mapButton.on('pointerdown', () => this.openMap());
-
-    const unlocked = Object.values(CENTRAL_TOKYO_LOCATIONS)
-      .filter(item => isCentralTokyoLocationUnlocked(this.registry, item.id));
-
-    unlocked.forEach((item, index) => {
-      const y = SIDE.y + 168 + index * 46;
-      const active = item.id === this.activeLocationId;
-
-      const button = this.addContent(this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
-        y,
-        SIDE.w - 36,
-        36,
-        active ? 0x123047 : 0x0b1724,
-        1
-      ).setStrokeStyle(active ? 2 : 1, active ? 0x43dfff : 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(33));
-
-      this.addContent(this.add.text(
-        SIDE.x + 30,
-        y,
-        item.shortLabel,
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '8px',
-          color: active ? '#ffffff' : '#9fc2d7',
-        }
-      ).setOrigin(0, 0.5).setDepth(34));
-
-      button.on('pointerdown', () => this.renderLocation(item.id));
-    });
   }
 
   openMap() {
@@ -506,17 +486,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     listings.forEach((listing, index) => {
       const car = cars[listing.carId];
-      const x = STAGE.x + 240 + index * 330;
-      const objects = this.createCarDisplay(car, x, STAGE.y + 330, 270, 8);
+      const x = STAGE.x + 200 + index * 370;
+      const objects = this.createCarDisplay(car, x, STAGE.y + 390, 315, 8);
       objects.forEach(obj => this.addContent(obj));
-
-      this.addContent(this.add.text(x, STAGE.y + 438, money(listing.price), {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffe08a',
-        backgroundColor: '#07111ddd',
-        padding: { x: 8, y: 5 },
-      }).setOrigin(0.5).setDepth(20));
     });
 
     this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'USED CARS // TOKYO AUTO MARKET', {
@@ -680,7 +652,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       canSell
         ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
         : collectorLocked
-          ? 'GINZA COLLECTOR // NOT TRADED HERE'
+          ? 'COLLECTOR CAR NOT TRADED HERE'
           : 'KEEP AT LEAST ONE CAR',
       {
         fontFamily: PIXEL_FONT,
@@ -765,42 +737,116 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.renderLocation(this.activeLocationId);
   }
 
+  getGinzaListings() {
+    const pool = GINZA_LISTINGS.filter(item => cars[item.carId]);
+    if (pool.length <= 3) return pool;
+
+    // Ginza is curated rather than constantly changing: three collector cars
+    // rotate together every six hours.
+    const rotation = Math.floor(Date.now() / (6 * 60 * 60 * 1000)) % pool.length;
+    return [...pool.slice(rotation), ...pool.slice(0, rotation)].slice(0, 3);
+  }
+
+  animateGinzaCarIn(objects) {
+    const movable = objects.filter(obj =>
+      obj &&
+      typeof obj.x === 'number' &&
+      typeof obj.setPosition === 'function'
+    );
+
+    movable.forEach(obj => {
+      const targetX = obj.x;
+      obj.x = targetX - 520;
+      obj.setAlpha?.(0.96);
+
+      this.tweens.add({
+        targets: obj,
+        x: targetX,
+        duration: 680,
+        ease: 'Cubic.easeOut',
+      });
+    });
+  }
+
+  selectGinzaCar(index) {
+    if (this.ginzaTransitioning) return;
+
+    const listings = this.getGinzaListings();
+    if (!listings[index]) return;
+
+    this.ginzaTransitioning = true;
+
+    // Use a simple display overlay instead of a camera transition. It gives the
+    // showroom a dramatic cut without touching Phaser's scene lifecycle.
+    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
+      .setDepth(120)
+      .setInteractive();
+
+    this.tweens.add({
+      targets: fade,
+      alpha: 0.94,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        this.selectedIndex = index;
+        this.ginzaShowcaseActive = true;
+        this.ginzaAnimateShowcase = true;
+        this.renderLocation(this.activeLocationId);
+
+        this.tweens.add({
+          targets: fade,
+          alpha: 0,
+          duration: 260,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            fade.destroy();
+            this.ginzaTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
   drawGinza() {
     this.drawNavigation(
       'SHOWROOM',
       'PRIVATE COLLECTION // SEALED HERO CARS // COLLECTOR GRADE'
     );
 
-    const listings = GINZA_LISTINGS.filter(item => cars[item.carId]);
+    const listings = this.getGinzaListings();
     if (!listings.length) return;
 
     this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
 
-    const pageSize = 3;
-    const pageCount = Math.ceil(listings.length / pageSize);
-    const page = Math.floor(this.selectedIndex / pageSize);
-    const startIndex = page * pageSize;
-    const visible = listings.slice(startIndex, startIndex + pageSize);
-
-    visible.forEach((listing, localIndex) => {
+    if (this.ginzaShowcaseActive) {
+      const listing = listings[this.selectedIndex];
       const car = cars[listing.carId];
-      const x = STAGE.x + 240 + localIndex * 330;
-      const objects = this.createCarDisplay(car, x, STAGE.y + 330, 270, 8);
+      const objects = this.createCarDisplay(
+        car,
+        STAGE.x + STAGE.w * 0.51,
+        STAGE.y + 400,
+        680,
+        8
+      );
       objects.forEach(obj => this.addContent(obj));
 
-      this.addContent(this.add.text(x, STAGE.y + 438, money(listing.price), {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffe08a',
-        backgroundColor: '#07111ddd',
-        padding: { x: 8, y: 5 },
-      }).setOrigin(0.5).setDepth(20));
-    });
+      if (this.ginzaAnimateShowcase) {
+        this.ginzaAnimateShowcase = false;
+        this.animateGinzaCarIn(objects);
+      }
+    } else {
+      listings.forEach((listing, index) => {
+        const car = cars[listing.carId];
+        const x = STAGE.x + 190 + index * 378;
+        const objects = this.createCarDisplay(car, x, STAGE.y + 390, 345, 8);
+        objects.forEach(obj => this.addContent(obj));
+      });
+    }
 
     this.addContent(this.add.text(
       CARDS.x + 18,
       CARDS.y + 14,
-      'GINZA HERO CARS // PAGE ' + (page + 1) + '/' + pageCount,
+      'GINZA HERO CARS // 3 AVAILABLE // ROTATES 6H',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '11px',
@@ -808,11 +854,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     ).setDepth(33));
 
-    visible.forEach((listing, localIndex) => {
-      const absoluteIndex = startIndex + localIndex;
+    listings.forEach((listing, index) => {
       const car = cars[listing.carId];
-      const x = CARDS.x + 190 + localIndex * 365;
-      const selected = absoluteIndex === this.selectedIndex;
+      const x = CARDS.x + 190 + index * 365;
+      const selected = index === this.selectedIndex;
       const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
 
       const box = this.addContent(this.add.rectangle(
@@ -850,41 +895,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }
       ).setOrigin(1, 0.5).setDepth(34));
 
-      box.on('pointerdown', () => {
-        this.selectedIndex = absoluteIndex;
-        this.renderLocation(this.activeLocationId);
-      });
+      box.on('pointerdown', () => this.selectGinzaCar(index));
     });
-
-    if (pageCount > 1) {
-      const prev = this.addContent(this.add.text(CARDS.x + 34, CARDS.y + 105, '<', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '18px',
-        color: page > 0 ? '#8fe7ff' : '#394c59',
-      }).setOrigin(0.5).setDepth(36));
-
-      const next = this.addContent(this.add.text(CARDS.x + CARDS.w - 34, CARDS.y + 105, '>', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '18px',
-        color: page < pageCount - 1 ? '#8fe7ff' : '#394c59',
-      }).setOrigin(0.5).setDepth(36));
-
-      if (page > 0) {
-        prev.setInteractive({ useHandCursor: true });
-        prev.on('pointerdown', () => {
-          this.selectedIndex = Math.max(0, startIndex - pageSize);
-          this.renderLocation(this.activeLocationId);
-        });
-      }
-
-      if (page < pageCount - 1) {
-        next.setInteractive({ useHandCursor: true });
-        next.on('pointerdown', () => {
-          this.selectedIndex = Math.min(listings.length - 1, startIndex + pageSize);
-          this.renderLocation(this.activeLocationId);
-        });
-      }
-    }
 
     this.drawGinzaSide(listings[this.selectedIndex]);
   }
@@ -952,7 +964,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 646,
+      SIDE.y + 676,
       SIDE.w - 36,
       48,
       canBuy ? 0x2b1422 : 0x17181d,
@@ -969,7 +981,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 646,
+      SIDE.y + 676,
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
@@ -1047,6 +1059,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (selectedCar) {
       const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
       const playerCharacter = characters[playerCharacterId] || characters.renMizuno;
+
+      this.addContent(this.add.ellipse(
+        STAGE.x + 420,
+        STAGE.y + 420,
+        520,
+        42,
+        0x000000,
+        0.62
+      ).setDepth(7.5));
 
       const carObjects = this.createCarDisplay(
         selectedCar,
