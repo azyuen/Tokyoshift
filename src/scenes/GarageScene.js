@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260923-r146';
+import { cars, carOrder } from '../data/cars.js?v=20260923-r150';
 import { engines } from '../data/engines.js?v=20260923-r134';
 import { characters } from '../data/characters.js?v=20260923-r145';
 import {
@@ -77,7 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260923-r138';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r148';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r150';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1312,19 +1312,21 @@ export default class GarageScene extends Phaser.Scene {
     const heroWheelBottomY = this.getWheelBottomY(cars.ae86, 386, 690);
     const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
     const heroSource = this.textures.get(getCarBodyTextureKey(this, cars[id])).getSourceImage();
+    const heroWheelSource = this.textures.get(cars[id].visual.wheelKey).getSourceImage();
     const heroBodyScale = 690 / heroSource.width;
+    const heroWheelFit = getWheelPairFit(cars[id].visual, heroBodyScale, false, heroWheelSource);
     this.heroCarLayout = {
       x: 708,
       bodyY: heroBodyY,
       targetWidth: 690,
       bodyScale: heroBodyScale,
-      frontWheelX: 708 + cars[id].visual.frontOffsetX * heroBodyScale,
-      rearWheelX: 708 + cars[id].visual.rearOffsetX * heroBodyScale,
-      rearWheelY: heroBodyY + getWheelPairFit(cars[id].visual, heroBodyScale).rear.offsetY,
-      frontWheelY: heroBodyY + getWheelPairFit(cars[id].visual, heroBodyScale).front.offsetY,
+      frontWheelX: 708 + heroWheelFit.front.offsetX,
+      rearWheelX: 708 + heroWheelFit.rear.offsetX,
+      rearWheelY: heroBodyY + heroWheelFit.rear.offsetY,
+      frontWheelY: heroBodyY + heroWheelFit.front.offsetY,
       wheelY: heroBodyY + (
-        getWheelPairFit(cars[id].visual, heroBodyScale).rear.offsetY +
-        getWheelPairFit(cars[id].visual, heroBodyScale).front.offsetY
+        heroWheelFit.rear.offsetY +
+        heroWheelFit.front.offsetY
       ) / 2,
       left: 708 - 345,
       right: 708 + 345,
