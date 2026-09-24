@@ -211,13 +211,15 @@ function createMangaPointer(scene, x, y, speaker, depth) {
   if (speaker !== 'left' && speaker !== 'right') return null;
 
   const g = scene.add.graphics().setDepth(depth).setScrollFactor(0);
-  g.fillStyle(0x111111, 1);
+  g.fillStyle(0xfffcf1, 1);
   g.lineStyle(4, 0x111111, 1);
 
   if (speaker === 'left') {
     g.fillTriangle(x - 300, y - 72, x - 354, y - 36, x - 296, y - 22);
+    g.strokeTriangle(x - 300, y - 72, x - 354, y - 36, x - 296, y - 22);
   } else {
     g.fillTriangle(x + 300, y - 72, x + 354, y - 36, x + 296, y - 22);
+    g.strokeTriangle(x + 300, y - 72, x + 354, y - 36, x + 296, y - 22);
   }
 
   return g;
@@ -444,7 +446,7 @@ function drawDialogue(controller, page) {
     interpolate(page.text || '', context.variables),
     {
       fontFamily: BODY_FONT,
-      fontSize: page.emphasis ? '17px' : '16px',
+      fontSize: page.emphasis ? '14px' : '13px',
       color: '#111111',
       fontStyle: page.emphasis ? '800' : '700',
       lineSpacing: 5,
@@ -759,7 +761,7 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
   controller.skip = () => controller.finish('skip');
 
   skip.on('pointerdown', () => controller.skip());
-  blocker.on('pointerdown', () => {});
+  blocker.on('pointerdown', () => controller.advance());
 
   controller.shutdownHandler = () => {
     finaliseController(controller, {
