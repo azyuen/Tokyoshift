@@ -53,20 +53,34 @@ export const cars = {
     visual: {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
-      bodyScale: 0.165,
+
+      // R169 modular AE86. All appearance pieces share the same 1774×887
+      // canvas/origin inside a per-car folder, so stock and future replacement
+      // aero can stack without scene-specific offsets.
+      modularAssetRoot: 'assets/Cars/ae86',
+      modularAssetStem: 'ae86_car',
+      bodyPath: 'assets/Cars/ae86/ae86_preview_full.png',
+      stockBodyKitId: '0',
+      stockSpoilerId: '0',
+
+      // Re-authored against the new modular canvas. This preserves roughly the
+      // same on-screen footprint as the previous 2172px-wide AE86 while moving
+      // the wheel centres onto the measured new arch centres.
+      bodyScale: 0.202,
       wheelScale: 0.039,
-      rearOffsetX: -603,
-      frontOffsetX: 594,
-      wheelOffsetY: 180,
-      // Explicit axle fit. 0.04524 preserves the legacy 0.039 × 1.16 look.
-      rearWheelOffsetX: -603,
-      frontWheelOffsetX: 594,
-      rearWheelOffsetY: 180,
-      frontWheelOffsetY: 180,
+      rearOffsetX: -495,
+      frontOffsetX: 479,
+      wheelOffsetY: 143,
+      rearWheelOffsetX: -495,
+      frontWheelOffsetX: 479,
+      rearWheelOffsetY: 143,
+      frontWheelOffsetY: 143,
       rearWheelScale: 0.04524,
       frontWheelScale: 0.04524,
-      exhaustOffsetX: -955,
-      exhaustOffsetY: 165,
+      rearWheelBackingRadius: 130,
+      frontWheelBackingRadius: 130,
+      exhaustOffsetX: -792,
+      exhaustOffsetY: 130,
     },
   },
 
