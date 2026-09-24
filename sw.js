@@ -1,6 +1,6 @@
-const BUILD = 'R174';
-const ASSET_CACHE = 'tokyoshift-assets-v119';
-const RUNTIME_CACHE = 'tokyoshift-runtime-v119';
+const BUILD = 'R175';
+const ASSET_CACHE = 'tokyoshift-assets-v120';
+const RUNTIME_CACHE = 'tokyoshift-runtime-v120';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -49,7 +49,8 @@ self.addEventListener('fetch', event => {
   // while still falling back to the cached copy if offline.
   if (
     url.pathname.includes('/assets/Tuning/Parts/') ||
-    url.pathname.includes('/assets/Decals/')
+    url.pathname.includes('/assets/Decals/') ||
+    url.pathname.includes('/assets/Cars/ae86/')
   ) {
     event.respondWith(networkFirst(request));
     return;
