@@ -1902,7 +1902,7 @@ export default class RaceScene extends Phaser.Scene {
       if (profile) {
         profile.image.setScrollFactor(0);
         add(profile.image);
-        this.competitionIntermissionObjects?.push?.(profile.maskShape);
+        objects.push(profile.maskShape);
       }
     } else {
       add(this.add.text(portraitBoxX, portraitBoxY, '#' + nextNumber, {
