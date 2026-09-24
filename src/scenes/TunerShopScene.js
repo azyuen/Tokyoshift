@@ -337,32 +337,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const hero = cars[this.shop.heroCarId];
     if (hero) {
       this.drawCarOnStage(hero.id, 720, 650, 770, 10, true);
-      this.setStageLabel((hero.shortName || hero.name) + ' // HERO BUILD');
-    } else {
-      this.setStageLabel('HERO BUILD');
     }
-
-    this.addDynamic(this.add.text(
-      STAGE.x + 48,
-      STAGE.y + 92,
-      'SIGNATURE BUILD',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#f0be70',
-      }
-    ).setDepth(20));
-
-    this.addDynamic(this.add.text(
-      STAGE.x + 48,
-      STAGE.y + 128,
-      hero?.name || this.shop.label + ' HERO CAR',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '13px',
-        color: '#ffffff',
-      }
-    ).setDepth(20));
 
     const currentCarId = this.getCurrentCarId();
     const owned = this.registry.get('ownedCarIds') || [];
@@ -394,7 +369,7 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     ));
 
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 392, money(cost), {
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 394, money(cost), {
       fontFamily: PIXEL_FONT,
       fontSize: '10px',
       color: '#f3c77b',
@@ -420,9 +395,10 @@ export default class TunerShopScene extends Phaser.Scene {
       enabled = false;
     }
 
+    const buildY = SIDE.y + 482;
     const buildButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 446,
+      buildY,
       SIDE.w - 56,
       64,
       enabled ? 0x2a2115 : 0x17191b,
@@ -435,7 +411,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const buildText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 446,
+      buildY,
       label,
       {
         fontFamily: PIXEL_FONT,
@@ -456,7 +432,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 496,
+      SIDE.y + 536,
       'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
       {
         fontFamily: BODY_FONT,
