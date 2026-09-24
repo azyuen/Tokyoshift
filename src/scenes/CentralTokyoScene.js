@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260924-r165';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r169';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import {
@@ -12,9 +12,9 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260923-r154';
+} from '../vehicles/CarAppearance.js?v=20260924-r169';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r169';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
