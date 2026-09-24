@@ -71,12 +71,13 @@ import {
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
+  getVisualModSlotIds,
   getVisualModOptions,
   getVisualModOption,
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260924-r170';
+} from '../data/visualMods.js?v=20260924-r175';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r173';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
@@ -2595,11 +2596,12 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPaintMenuButton.on('pointerdown', () => this.openChassisPaintPanel());
 
-    // Generic visual-mod slots. Evo III is the first proof-of-concept car.
-    // Each row cycles independently through STOCK and the available options.
+    // Generic visual-mod slots. AE86 now uses production PNG body-kit/spoiler
+    // layers; Evo III keeps the earlier proof-of-concept generated assets.
+    // Each available row cycles independently through STOCK and its options.
     const visualCatalog = getVisualModCatalog(this.selectedCarId);
     if (visualCatalog) {
-      VISUAL_MOD_SLOT_ORDER.forEach((slotId, index) => {
+      getVisualModSlotIds(this.selectedCarId).forEach((slotId, index) => {
         const slot = visualCatalog.slots[slotId];
         const y = SIDE.y + 366 + index * 56;
 
