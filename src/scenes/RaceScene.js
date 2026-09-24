@@ -13,7 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260924-r170';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r170';
-import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r172';
+import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r173';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';

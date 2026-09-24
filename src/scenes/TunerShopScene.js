@@ -23,7 +23,8 @@ import {
   carHasShopTune,
   createTunerDecalObject,
   createTunerDecalLayers,
-} from '../vehicles/TunerDecals.js?v=20260924-r172';
+  setTunerDecalObjectColor,
+} from '../vehicles/TunerDecals.js?v=20260924-r173';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r172';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 
@@ -143,31 +144,8 @@ export default class TunerShopScene extends Phaser.Scene {
         }
       ).setOrigin(0.5).setDepth(-8);
     }
-
-    this.stageLabelBox = this.add.rectangle(
-      STAGE.x + 190,
-      STAGE.y + 33,
-      340,
-      42,
-      0x100f0c,
-      0.84
-    ).setStrokeStyle(1, 0xe6b66a, 0.72).setDepth(18);
-
-    this.stageLabelText = this.add.text(
-      STAGE.x + 30,
-      STAGE.y + 33,
-      '',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffe1ac',
-      }
-    ).setOrigin(0, 0.5).setDepth(19);
   }
 
-  setStageLabel(label = '') {
-    this.stageLabelText?.setText(String(label || '').toUpperCase());
-  }
 
   drawHeader() {
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
@@ -359,32 +337,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const hero = cars[this.shop.heroCarId];
     if (hero) {
       this.drawCarOnStage(hero.id, 720, 650, 770, 10, true);
-      this.setStageLabel((hero.shortName || hero.name) + ' // HERO BUILD');
-    } else {
-      this.setStageLabel('HERO BUILD');
     }
-
-    this.addDynamic(this.add.text(
-      STAGE.x + 48,
-      STAGE.y + 92,
-      'SIGNATURE BUILD',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#f0be70',
-      }
-    ).setDepth(20));
-
-    this.addDynamic(this.add.text(
-      STAGE.x + 48,
-      STAGE.y + 128,
-      hero?.name || this.shop.label + ' HERO CAR',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '13px',
-        color: '#ffffff',
-      }
-    ).setDepth(20));
 
     const currentCarId = this.getCurrentCarId();
     const owned = this.registry.get('ownedCarIds') || [];
@@ -416,7 +369,7 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     ));
 
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 392, money(cost), {
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 394, money(cost), {
       fontFamily: PIXEL_FONT,
       fontSize: '10px',
       color: '#f3c77b',
@@ -442,9 +395,10 @@ export default class TunerShopScene extends Phaser.Scene {
       enabled = false;
     }
 
+    const buildY = SIDE.y + 482;
     const buildButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 446,
+      buildY,
       SIDE.w - 56,
       64,
       enabled ? 0x2a2115 : 0x17191b,
@@ -457,7 +411,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const buildText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 446,
+      buildY,
       label,
       {
         fontFamily: PIXEL_FONT,
@@ -478,7 +432,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 496,
+      SIDE.y + 536,
       'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
       {
         fontFamily: BODY_FONT,
@@ -509,8 +463,6 @@ export default class TunerShopScene extends Phaser.Scene {
     const carId = this.getCurrentTunableCarId();
     if (!carId) {
       const currentId = this.getCurrentCarId();
-      const label = currentId ? (cars[currentId]?.shortName || currentId) : 'NO CAR';
-      this.setStageLabel(label + ' // CURRENT CAR');
 
       this.addDynamic(this.add.text(
         STAGE.x + STAGE.w / 2,
@@ -526,12 +478,13 @@ export default class TunerShopScene extends Phaser.Scene {
 
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 314,
+        SIDE.y + 330,
         currentId ? 'THIS CAR IS NOT TUNABLE HERE' : 'NO CURRENT CAR',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
           color: '#79868c',
+          wordWrap: { width: SIDE.w - 72 },
         }
       ));
       return;
@@ -541,57 +494,15 @@ export default class TunerShopScene extends Phaser.Scene {
     const carState = (this.registry.get('carStates') || {})[carId] || {};
 
     this.drawCarOnStage(carId, 720, 650, 730, 10, true);
-    this.setStageLabel((car.shortName || car.name) + ' // CURRENT CAR');
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SPECIALIST TUNING', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#72d8d1',
-    }).setDepth(20));
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 132, car.name, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#ffffff',
-    }).setDepth(20));
-
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#78999a',
-    }));
-
-    const carPanel = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 334,
-      SIDE.w - 56,
-      50,
-      0x102024,
-      1
-    ).setStrokeStyle(1, 0x4d767a, 1);
-
-    const carName = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 334,
-      car.shortName,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#e7ffff',
-        align: 'center',
-        wordWrap: { width: SIDE.w - 92 },
-      }
-    ).setOrigin(0.5);
-
-    this.sideContent.add(carPanel);
-    this.sideContent.add(carName);
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
-    const startY = SIDE.y + 410;
+    const startY = SIDE.y + 344;
+    const cardHeight = 108;
+    const cardStep = 116;
 
     options.forEach((option, index) => {
-      const y = startY + index * 92;
+      const y = startY + index * cardStep;
       const isInstalled = installed.has(option.id);
       const requirementsMet = areTunerOptionRequirementsMet(carState, option);
       const affordable = Number(this.registry.get('cash') || 0) >= Number(option.cost || 0);
@@ -601,7 +512,7 @@ export default class TunerShopScene extends Phaser.Scene {
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 56,
-        80,
+        cardHeight,
         isInstalled ? 0x15241d : enabled ? 0x10262a : 0x151a1c,
         1
       ).setStrokeStyle(
@@ -612,7 +523,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const name = this.add.text(
         SIDE.x + 30,
-        y - 31,
+        y - 37,
         option.shortName || option.name,
         {
           fontFamily: PIXEL_FONT,
@@ -624,13 +535,14 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const benefit = this.add.text(
         SIDE.x + 30,
-        y - 10,
+        y - 7,
         option.benefit,
         {
           fontFamily: BODY_FONT,
           fontSize: '8px',
           color: '#91adb0',
           fontStyle: '700',
+          wordWrap: { width: SIDE.w - 92 },
         }
       );
 
@@ -641,7 +553,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const meta = this.add.text(
         SIDE.x + 30,
-        y + 15,
+        y + 25,
         metaText,
         {
           fontFamily: PIXEL_FONT,
@@ -655,9 +567,131 @@ export default class TunerShopScene extends Phaser.Scene {
 
       if (enabled) {
         box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => this.installSpecialistTune(carId, option));
+        box.on('pointerdown', () => this.showTuneConfirmation(carId, option));
       }
     });
+  }
+
+  showTuneConfirmation(carId, option) {
+    if (!carId || !option) return;
+
+    const car = cars[carId];
+    const carState = (this.registry.get('carStates') || {})[carId] || {};
+    const installed = getInstalledSpecialistTuning(carState);
+    if (installed.includes(option.id)) return;
+    if (!areTunerOptionRequirementsMet(carState, option)) return;
+
+    const cost = Math.max(0, Number(option.cost || 0));
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) return;
+
+    this.clearPopup();
+
+    const shade = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      1560,
+      840,
+      0x020304,
+      0.74
+    ).setDepth(150).setInteractive());
+
+    const panel = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      700,
+      356,
+      0x091119,
+      0.995
+    ).setStrokeStyle(2, 0x65cfc8, 1).setDepth(151));
+
+    this.addPopup(this.add.text(780, 305, 'CONFIRM SPECIALIST TUNE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#e9fffb',
+    }).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      352,
+      (car?.shortName || car?.name || carId) + '  //  ' + (option.shortName || option.name),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+        align: 'center',
+        wordWrap: { width: 590 },
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      408,
+      option.description || option.benefit,
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#aebfc5',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 560 },
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      466,
+      option.benefit + '     ' + money(cost),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#d8c17f',
+        align: 'center',
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    const cancel = this.addPopup(this.add.rectangle(
+      640,
+      535,
+      230,
+      54,
+      0x171d21,
+      1
+    ).setStrokeStyle(1, 0x68747a, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(152));
+
+    const apply = this.addPopup(this.add.rectangle(
+      920,
+      535,
+      230,
+      54,
+      0x10292b,
+      1
+    ).setStrokeStyle(2, 0x65cfc8, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(152));
+
+    this.addPopup(this.add.text(640, 535, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#cbd5d9',
+    }).setOrigin(0.5).setDepth(153));
+
+    this.addPopup(this.add.text(920, 535, 'YES // APPLY', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#e9fffb',
+    }).setOrigin(0.5).setDepth(153));
+
+    cancel.on('pointerdown', () => this.clearPopup());
+    apply.on('pointerdown', () => {
+      this.clearPopup();
+      this.installSpecialistTune(carId, option);
+    });
+
+    shade.on('pointerdown', () => {});
+    panel.setInteractive();
   }
 
   showDecalMode() {
@@ -669,10 +703,9 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const carId = this.getCurrentTunableCarId();
     if (!carId) {
-      this.setStageLabel('NO CAR // DECAL');
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 314,
+        SIDE.y + 330,
         'BRING A TUNABLE CAR HERE FIRST',
         {
           fontFamily: PIXEL_FONT,
@@ -684,7 +717,6 @@ export default class TunerShopScene extends Phaser.Scene {
       return;
     }
 
-    const car = cars[carId];
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[carId] || {};
     const eligible = carHasShopTune(carState, this.shop);
@@ -699,41 +731,10 @@ export default class TunerShopScene extends Phaser.Scene {
       { showDecals: false }
     );
 
-    this.setStageLabel((car.shortName || car.name) + ' // ' + this.shop.decalLabel + ' DECAL');
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SHOP DECAL', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: eligible ? '#f0c96f' : '#7f8588',
-    }).setDepth(20));
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 132, car.name, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#ffffff',
-    }).setDepth(20));
-
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#8d9699',
-    }));
-
-    this.sideContent.add(this.add.text(
-      SIDE.x + 30,
-      SIDE.y + 324,
-      car.shortName,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#eff7f7',
-      }
-    ));
-
     if (!eligible) {
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 382,
+        SIDE.y + 336,
         'DECAL LOCKED\n\nUSE AT LEAST ONE ' + this.shop.label + '\nSPECIALIST TUNE ON THIS CAR.',
         {
           fontFamily: PIXEL_FONT,
@@ -755,6 +756,7 @@ export default class TunerShopScene extends Phaser.Scene {
       y: Number(existing?.y ?? -0.01),
       scale: Number(existing?.scale ?? 0.13),
       rotation: Number(existing?.rotation ?? 0),
+      color: String(existing?.color || '#FFFFFF').toUpperCase(),
     };
 
     const createPreview = () => {
@@ -787,26 +789,115 @@ export default class TunerShopScene extends Phaser.Scene {
       const rawWidth = Math.max(1, Number(preview.width || 1));
       preview.setScale((geometry.displayWidth * placement.scale) / rawWidth);
       preview.setAngle(placement.rotation);
+      setTunerDecalObjectColor(preview, placement.color);
     };
 
-    const makeControl = (x, y, width, label, handler) => {
-      const box = this.add.rectangle(x, y, width, 42, 0x171d20, 1)
-        .setStrokeStyle(1, 0x667176, 1)
-        .setInteractive({ useHandCursor: true });
+    const makeControl = (x, y, width, label, handler, options = {}) => {
+      const box = this.add.rectangle(
+        x,
+        y,
+        width,
+        Number(options.height || 42),
+        Number(options.fill ?? 0x171d20),
+        1
+      ).setStrokeStyle(
+        Number(options.strokeWidth || 1),
+        Number(options.stroke ?? 0x667176),
+        1
+      ).setInteractive({ useHandCursor: true });
+
       const text = this.add.text(x, y, label, {
         fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#dbe4e7',
+        fontSize: options.fontSize || '7px',
+        color: options.textColor || '#dbe4e7',
+        align: 'center',
       }).setOrigin(0.5);
+
       box.on('pointerdown', handler);
       this.sideContent.add(box);
       this.sideContent.add(text);
-      return box;
+      return { box, text };
     };
+
+    const colourTitleY = SIDE.y + 304;
+    this.sideContent.add(this.add.text(
+      SIDE.x + 30,
+      colourTitleY,
+      'DECAL COLOUR',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#d5bb76',
+      }
+    ));
+
+    const swatch = this.add.rectangle(
+      SIDE.x + SIDE.w - 42,
+      colourTitleY + 7,
+      26,
+      18,
+      Number.parseInt(placement.color.slice(1), 16),
+      1
+    ).setStrokeStyle(1, 0x96a2a7, 1);
+    this.sideContent.add(swatch);
+
+    const whiteControl = makeControl(
+      SIDE.x + 72,
+      SIDE.y + 350,
+      78,
+      'WHITE',
+      () => {
+        placement.color = '#FFFFFF';
+        setTunerDecalObjectColor(preview, placement.color);
+        refreshColourControls();
+      },
+      { fill: 0xf4f4f4, stroke: 0xbfc8cc, textColor: '#111111' }
+    );
+
+    const blackControl = makeControl(
+      SIDE.x + 160,
+      SIDE.y + 350,
+      78,
+      'BLACK',
+      () => {
+        placement.color = '#000000';
+        setTunerDecalObjectColor(preview, placement.color);
+        refreshColourControls();
+      },
+      { fill: 0x050505, stroke: 0x69757b, textColor: '#ffffff' }
+    );
+
+    const customControl = makeControl(
+      SIDE.x + 270,
+      SIDE.y + 350,
+      112,
+      'CUSTOM',
+      () => {
+        this.openDecalColourPicker(placement.color, color => {
+          placement.color = color;
+          setTunerDecalObjectColor(preview, placement.color);
+          refreshColourControls();
+        });
+      },
+      { fill: 0x171d20, stroke: 0x8a7750, textColor: '#f1dfb2' }
+    );
+
+    const refreshColourControls = () => {
+      const isWhite = placement.color === '#FFFFFF';
+      const isBlack = placement.color === '#000000';
+      const isCustom = !isWhite && !isBlack;
+
+      whiteControl.box.setStrokeStyle(isWhite ? 3 : 1, isWhite ? 0xe6c365 : 0xbfc8cc, 1);
+      blackControl.box.setStrokeStyle(isBlack ? 3 : 1, isBlack ? 0xe6c365 : 0x69757b, 1);
+      customControl.box.setStrokeStyle(isCustom ? 3 : 1, isCustom ? 0xe6c365 : 0x8a7750, 1);
+      swatch.setFillStyle(Number.parseInt(placement.color.slice(1), 16), 1);
+    };
+
+    refreshColourControls();
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 374,
+      SIDE.y + 394,
       'DRAG THE DECAL ONTO THE BODY',
       {
         fontFamily: PIXEL_FONT,
@@ -815,21 +906,21 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     ));
 
-    makeControl(SIDE.x + 76, SIDE.y + 430, 82, 'SIZE -', () => {
+    makeControl(SIDE.x + 76, SIDE.y + 440, 82, 'SIZE -', () => {
       placement.scale = Phaser.Math.Clamp(placement.scale - 0.015, 0.055, 0.24);
       resizePreview();
     });
-    makeControl(SIDE.x + 174, SIDE.y + 430, 82, 'SIZE +', () => {
+    makeControl(SIDE.x + 174, SIDE.y + 440, 82, 'SIZE +', () => {
       placement.scale = Phaser.Math.Clamp(placement.scale + 0.015, 0.055, 0.24);
       resizePreview();
     });
-    makeControl(SIDE.x + 272, SIDE.y + 430, 82, 'ROTATE', () => {
+    makeControl(SIDE.x + 272, SIDE.y + 440, 82, 'ROTATE', () => {
       placement.rotation += 10;
       if (placement.rotation > 30) placement.rotation = -30;
       resizePreview();
     });
 
-    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 490, SIDE.w - 56, 'SAVE DECAL', () => {
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 502, SIDE.w - 56, 'SAVE DECAL', () => {
       placement.x = (preview.x - geometry.x) / geometry.displayWidth;
       placement.y = (preview.y - geometry.displayY) / geometry.displayHeight;
 
@@ -841,7 +932,7 @@ export default class TunerShopScene extends Phaser.Scene {
       this.showDecalMode();
     });
 
-    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 548, SIDE.w - 56, 'REMOVE DECAL', () => {
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 560, SIDE.w - 56, 'REMOVE DECAL', () => {
       const nextStates = { ...(this.registry.get('carStates') || {}) };
       nextStates[carId] = withTunerDecal(nextStates[carId] || {}, this.shop.decalId, null);
       this.registry.set('carStates', nextStates);
@@ -852,16 +943,62 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 594,
-      'A simple wordmark is used until the final\ntransparent shop-logo PNG is supplied.',
+      SIDE.y + 607,
+      'CUSTOM OPENS YOUR DEVICE COLOUR PICKER.',
       {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: '#78868c',
         fontStyle: '600',
-        lineSpacing: 4,
       }
     ));
+  }
+
+  openDecalColourPicker(initialColor = '#FFFFFF', onPick = null) {
+    try {
+      this.decalColourInput?.remove?.();
+
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = /^#[0-9A-F]{6}$/i.test(initialColor)
+        ? initialColor
+        : '#FFFFFF';
+      input.setAttribute('aria-label', 'Choose decal colour');
+      Object.assign(input.style, {
+        position: 'fixed',
+        left: '-20px',
+        bottom: '-20px',
+        width: '1px',
+        height: '1px',
+        opacity: '0',
+        pointerEvents: 'none',
+      });
+
+      document.body.appendChild(input);
+      this.decalColourInput = input;
+
+      const emit = () => {
+        const value = String(input.value || '#FFFFFF').toUpperCase();
+        onPick?.(value);
+      };
+
+      const cleanup = () => {
+        if (this.decalColourInput === input) this.decalColourInput = null;
+        input.remove();
+      };
+
+      input.addEventListener('input', emit);
+      input.addEventListener('change', () => {
+        emit();
+        window.setTimeout(cleanup, 0);
+      }, { once: true });
+      input.click();
+      window.setTimeout(() => {
+        if (document.body.contains(input)) cleanup();
+      }, 60000);
+    } catch (error) {
+      console.warn('Unable to open decal colour picker', error);
+    }
   }
 
   installSpecialistTune(carId, option) {

@@ -77,7 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260924-r170';
-import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r172';
+import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r173';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
