@@ -596,7 +596,7 @@ function finaliseController(controller, {
   }
 }
 
-function beginOverlay(scene, definition, context, historyId) {
+function beginOverlay(scene, definition, context, historyId, existingFreezeState = null) {
   if (sceneCutsceneActive(scene)) {
     return { played: false, reason: 'active', active: false };
   }
@@ -628,7 +628,7 @@ function beginOverlay(scene, definition, context, historyId) {
   };
 
   scene._mangaCutscene = controller;
-  controller.freezeState = freezeScene(scene);
+  controller.freezeState = existingFreezeState || freezeScene(scene);
 
   const width = Number(scene.scale.width || 1560);
   const height = Number(scene.scale.height || 840);
@@ -809,18 +809,39 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     active: true,
     pending: true,
     reason: 'loading',
+    freezeState: freezeScene(scene),
+    shutdownHandler: null,
     cancel: () => {
-      if (scene._mangaCutscene === pending) scene._mangaCutscene = null;
+      if (!pending.active) return;
       pending.active = false;
+      restoreScene(scene, pending.freezeState);
+      pending.freezeState = null;
+      if (scene._mangaCutscene === pending) scene._mangaCutscene = null;
+      try {
+        scene.events.off(Phaser.Scenes.Events.SHUTDOWN, pending.shutdownHandler);
+        scene.events.off(Phaser.Scenes.Events.DESTROY, pending.shutdownHandler);
+      } catch (e) {}
     },
   };
   scene._mangaCutscene = pending;
 
+  pending.shutdownHandler = () => pending.cancel();
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, pending.shutdownHandler);
+  scene.events.once(Phaser.Scenes.Events.DESTROY, pending.shutdownHandler);
+
   const onComplete = () => {
     if (!pending.active || scene._mangaCutscene !== pending) return;
+
+    try {
+      scene.events.off(Phaser.Scenes.Events.SHUTDOWN, pending.shutdownHandler);
+      scene.events.off(Phaser.Scenes.Events.DESTROY, pending.shutdownHandler);
+    } catch (e) {}
+
+    const freezeState = pending.freezeState;
+    pending.freezeState = null;
     scene._mangaCutscene = null;
     pending.active = false;
-    beginOverlay(scene, definition, context, historyId);
+    beginOverlay(scene, definition, context, historyId, freezeState);
   };
 
   scene.load.once(Phaser.Loader.Events.COMPLETE, onComplete);
