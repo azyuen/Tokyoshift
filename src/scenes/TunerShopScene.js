@@ -23,7 +23,8 @@ import {
   carHasShopTune,
   createTunerDecalObject,
   createTunerDecalLayers,
-} from '../vehicles/TunerDecals.js?v=20260924-r172';
+  setTunerDecalObjectColor,
+} from '../vehicles/TunerDecals.js?v=20260924-r173';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r172';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 
@@ -143,31 +144,8 @@ export default class TunerShopScene extends Phaser.Scene {
         }
       ).setOrigin(0.5).setDepth(-8);
     }
-
-    this.stageLabelBox = this.add.rectangle(
-      STAGE.x + 190,
-      STAGE.y + 33,
-      340,
-      42,
-      0x100f0c,
-      0.84
-    ).setStrokeStyle(1, 0xe6b66a, 0.72).setDepth(18);
-
-    this.stageLabelText = this.add.text(
-      STAGE.x + 30,
-      STAGE.y + 33,
-      '',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffe1ac',
-      }
-    ).setOrigin(0, 0.5).setDepth(19);
   }
 
-  setStageLabel(label = '') {
-    this.stageLabelText?.setText(String(label || '').toUpperCase());
-  }
 
   drawHeader() {
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
