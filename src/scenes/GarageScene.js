@@ -67,7 +67,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260924-r170';
+} from '../vehicles/CarAppearance.js?v=20260925-r181';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -77,7 +77,7 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260924-r177';
+} from '../data/visualMods.js?v=20260925-r181';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
