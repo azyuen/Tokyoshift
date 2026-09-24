@@ -84,6 +84,92 @@ export const VISUAL_MOD_CATALOG = {
         ],
       },
     },
+  },,
+
+  ae86: {
+    // Production PNG assets. Each file is authored on the same 1774×887
+    // canvas as the modular AE86, so Phaser can swap the stock slot without
+    // per-scene positioning.
+    slots: {
+      spoiler: {
+        label: 'SPOILER',
+        options: [
+          { id: 'stock', name: 'STOCK WING', price: 0, layers: [] },
+          {
+            id: 'gtWing',
+            name: 'TIME ATTACK GT WING',
+            price: 35000,
+            layers: [
+              {
+                textureKey: 'visualMod_ae86_spoiler_1_paint',
+                path: 'assets/Cars/ae86/ae86_car_spoiler_1_paint.png',
+                paintMode: 'body',
+              },
+              {
+                textureKey: 'visualMod_ae86_spoiler_1_detail',
+                path: 'assets/Cars/ae86/ae86_car_spoiler_1.png',
+                paintMode: 'fixed',
+              },
+            ],
+          },
+          {
+            id: 'ducktail',
+            name: 'EXTENDED DUCKTAIL',
+            price: 28000,
+            // The paint PNG for option 2 already contains the complete
+            // outlined ducktail artwork. Tinting preserves its dark pixels
+            // while colouring the light painted faces.
+            layers: [
+              {
+                textureKey: 'visualMod_ae86_spoiler_2_paint',
+                path: 'assets/Cars/ae86/ae86_car_spoiler_2_paint.png',
+                paintMode: 'body',
+              },
+            ],
+          },
+        ],
+      },
+      bodyKit: {
+        label: 'BODY KIT',
+        options: [
+          { id: 'stock', name: 'STOCK AERO', price: 0, layers: [] },
+          {
+            id: 'rivetWidebody',
+            name: 'RIVET WIDEBODY',
+            price: 65000,
+            layers: [
+              {
+                textureKey: 'visualMod_ae86_bodykit_1_paint',
+                path: 'assets/Cars/ae86/ae86_car_bodykit_1_paint.png',
+                paintMode: 'body',
+              },
+              {
+                textureKey: 'visualMod_ae86_bodykit_1_detail',
+                path: 'assets/Cars/ae86/ae86_car_bodykit_1.png',
+                paintMode: 'fixed',
+              },
+            ],
+          },
+          {
+            id: 'aeroWidebody',
+            name: 'AERO WIDEBODY',
+            price: 90000,
+            layers: [
+              {
+                textureKey: 'visualMod_ae86_bodykit_2_paint',
+                path: 'assets/Cars/ae86/ae86_car_bodykit_2_paint.png',
+                paintMode: 'body',
+              },
+              {
+                textureKey: 'visualMod_ae86_bodykit_2_detail',
+                path: 'assets/Cars/ae86/ae86_car_bodykit_2.png',
+                paintMode: 'fixed',
+              },
+            ],
+          },
+        ],
+      },
+    },
   },
 };
 
@@ -93,6 +179,29 @@ export function getVisualModCatalog(carId) {
 
 export function hasVisualMods(carId) {
   return Boolean(getVisualModCatalog(carId));
+}
+
+export function getVisualModSlotIds(carId) {
+  const catalog = getVisualModCatalog(carId);
+  return VISUAL_MOD_SLOT_ORDER.filter(slotId => Boolean(catalog?.slots?.[slotId]));
+}
+
+export function preloadVisualModAssets(scene, cacheBust = '') {
+  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
+  const queued = new Set();
+
+  Object.values(VISUAL_MOD_CATALOG).forEach(catalog => {
+    Object.values(catalog?.slots || {}).forEach(slot => {
+      (slot?.options || []).forEach(option => {
+        (option?.layers || []).forEach(layer => {
+          if (!layer?.path || !layer?.textureKey) return;
+          if (queued.has(layer.textureKey) || scene.textures.exists(layer.textureKey)) return;
+          queued.add(layer.textureKey);
+          scene.load.image(layer.textureKey, layer.path + suffix);
+        });
+      });
+    });
+  });
 }
 
 export function getVisualModOptions(carId, slotId) {
@@ -129,7 +238,7 @@ export function getVisualModChangeCost(carId, currentSource = {}, pendingSource 
   const current = normaliseVisualMods(carId, currentSource);
   const pending = normaliseVisualMods(carId, pendingSource);
 
-  return VISUAL_MOD_SLOT_ORDER.reduce((sum, slotId) => {
+  return getVisualModSlotIds(carId).reduce((sum, slotId) => {
     if (current[slotId] === pending[slotId]) return sum;
     const option = getVisualModOption(carId, slotId, pending[slotId]);
     return sum + Math.max(0, Number(option?.price || 0));
@@ -332,23 +441,31 @@ export function createVisualModLayers(
     paintColor = 0xffffff,
     visualMods = null,
     bodyLayers = null,
+    flipX = false,
   } = {}
 ) {
   const catalog = getVisualModCatalog(car?.id);
   if (!catalog) return [];
 
   const selected = normaliseVisualMods(car.id, visualMods || state);
-  const active = VISUAL_MOD_SLOT_ORDER.some(slotId => selected[slotId] !== 'stock');
+  const slotIds = getVisualModSlotIds(car.id);
+  const active = slotIds.some(slotId => selected[slotId] !== 'stock');
   if (!active) return [];
 
   const objects = [];
 
-  VISUAL_MOD_SLOT_ORDER.forEach((slotId, slotIndex) => {
+  slotIds.forEach((slotId, slotIndex) => {
     const option = getVisualModOption(car.id, slotId, selected[slotId]);
     (option?.layers || []).forEach((layer, layerIndex) => {
       if (!scene.textures.exists(layer.textureKey)) return;
-      const image = scene.add.image(x, y, layer.textureKey)
-        .setScale(scale)
+      const layerScaleX = Number(layer.scaleX ?? 1);
+      const layerScaleY = Number(layer.scaleY ?? 1);
+      const offsetX = Number(layer.offsetX ?? 0) * scale * (flipX ? -1 : 1);
+      const offsetY = Number(layer.offsetY ?? 0) * scale;
+
+      const image = scene.add.image(x + offsetX, y + offsetY, layer.textureKey)
+        .setScale(scale * layerScaleX, scale * layerScaleY)
+        .setFlipX(flipX)
         .setDepth(depth + slotIndex * 0.002 + layerIndex * 0.0005);
 
       if (layer.paintMode === 'body') {
