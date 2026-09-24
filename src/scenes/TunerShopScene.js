@@ -64,14 +64,22 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   unlockShopDecal() {
-    if (!this.shop?.decalId) return;
+    const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
+    progress[this.shop.id] = {
+      ...(progress[this.shop.id] || {}),
+      discovered: true,
+      visited: true,
+      visitedAt: progress[this.shop.id]?.visitedAt || Date.now(),
+    };
+    this.registry.set('tunerShopProgress', progress);
 
-    const current = new Set(this.registry.get('tunerDecalsUnlocked') || []);
-    if (!current.has(this.shop.decalId)) {
+    if (this.shop?.decalId) {
+      const current = new Set(this.registry.get('tunerDecalsUnlocked') || []);
       current.add(this.shop.decalId);
       this.registry.set('tunerDecalsUnlocked', [...current]);
-      saveSessionState(this.registry);
     }
+
+    saveSessionState(this.registry);
   }
 
   drawBase() {
