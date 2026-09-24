@@ -24,7 +24,7 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20260923-r145';
+} from '../data/characters.js?v=20260925-r182';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260924-r178';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -40,6 +40,7 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260924-r178';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r182';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1647,18 +1648,18 @@ export default class RaceScene extends Phaser.Scene {
         .setScrollFactor(0);
 
       if (spriteKey && this.textures.exists(spriteKey)) {
-        const source = this.textures.get(spriteKey).getSourceImage();
-        const portrait = this.add.image(x, y - size / 2 - 3, spriteKey)
-          .setOrigin(0.5, 0)
-          .setDepth(depth + 12)
-          .setScrollFactor(0);
-
-        portrait.setScale((size * 3.8) / source.height);
-
-        const maskShape = this.make.graphics({ add: false });
-        maskShape.fillStyle(0xffffff, 1);
-        maskShape.fillRect(x - size / 2, y - size / 2, size, size);
-        portrait.setMask(maskShape.createGeometryMask());
+        const profile = createCharacterProfile(this, {
+          characterId: character.id,
+          pose: won ? 'win' : 'loss',
+          x,
+          y,
+          frameWidth: size,
+          frameHeight: size,
+          side: x < 780 ? 'left' : 'right',
+          depth: depth + 12,
+          flipInward: true,
+        });
+        profile?.image?.setScrollFactor(0);
       }
 
       this.add.rectangle(x, y, size, size, 0xffffff, 0)
@@ -1887,17 +1888,22 @@ export default class RaceScene extends Phaser.Scene {
 
     const textureKey = rival?.visual?.spriteKey;
     if (textureKey && this.textures.exists(textureKey)) {
-      const source = this.textures.get(textureKey).getSourceImage();
-      const portrait = add(this.add.image(portraitBoxX, portraitBoxY + 112, textureKey)
-        .setOrigin(0.5, 1)
-        .setDepth(depth + 3)
-        .setScrollFactor(0));
-      portrait.setScale(Math.min(205 / source.width, 225 / source.height));
-
-      const maskShape = this.make.graphics({ add: false });
-      maskShape.fillStyle(0xffffff, 1);
-      maskShape.fillRect(portraitBoxX - 112, portraitBoxY - 122, 224, 242);
-      portrait.setMask(maskShape.createGeometryMask());
+      const profile = createCharacterProfile(this, {
+        characterId: round.characterId,
+        pose: 'idle',
+        x: portraitBoxX,
+        y: portraitBoxY,
+        frameWidth: 224,
+        frameHeight: 242,
+        side: 'left',
+        depth: depth + 3,
+        flipInward: true,
+      });
+      if (profile) {
+        profile.image.setScrollFactor(0);
+        add(profile.image);
+        objects.push(profile.maskShape);
+      }
     } else {
       add(this.add.text(portraitBoxX, portraitBoxY, '#' + nextNumber, {
         fontFamily: PIXEL_FONT,

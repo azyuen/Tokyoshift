@@ -14,7 +14,7 @@ import {
   characterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20260923-r145';
+} from '../data/characters.js?v=20260925-r182';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
@@ -50,6 +50,7 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r182';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -360,10 +361,17 @@ export default class MeetScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 2));
 
     if (mechanic?.visual?.spriteKey && this.textures.exists(mechanic.visual.spriteKey)) {
-      const source = this.textures.get(mechanic.visual.spriteKey).getSourceImage();
-      const portrait = add(this.add.image(545, 380, mechanic.visual.spriteKey)
-        .setOrigin(0.5).setDepth(depth + 2));
-      portrait.setScale(Math.min(210 / source.width, 250 / source.height));
+      const profile = createCharacterProfile(this, {
+        characterId: shop.mechanicId,
+        pose: 'idle',
+        x: 545,
+        y: 395,
+        frameWidth: 210,
+        frameHeight: 250,
+        side: 'left',
+        depth: depth + 2,
+      });
+      if (profile) objects.push(profile.image, profile.maskShape);
     }
 
     const speaker = mechanic?.name || (shop.label + ' ENGINEER');
@@ -514,11 +522,18 @@ export default class MeetScene extends Phaser.Scene {
       ).setDepth(depth + 2));
 
       if (textureKey && this.textures.exists(textureKey)) {
-        const source = this.textures.get(textureKey).getSourceImage();
-        const portrait = add(this.add.image(x, portraitY - 6, textureKey)
-          .setOrigin(0.5).setDepth(depth + 3));
-        portrait.setScale(Math.min(72 / source.width, 82 / source.height));
-        if (defeated) portrait.setTint(0x5d6469).setAlpha(0.55);
+        const profile = createCharacterProfile(this, {
+          characterId: round.characterId,
+          pose: 'idle',
+          x,
+          y: portraitY - 3,
+          frameWidth: 78,
+          frameHeight: 90,
+          side: 'center',
+          depth: depth + 3,
+          dimmed: defeated,
+        });
+        if (profile) objects.push(profile.image, profile.maskShape);
       } else {
         add(this.add.text(x, portraitY - 6, String(index + 1), {
           fontFamily: PIXEL_FONT, fontSize: '14px',
@@ -1554,15 +1569,16 @@ export default class MeetScene extends Phaser.Scene {
     const portraitBg = this.add.rectangle(190, 742, 104, 104, 0x15101a, 1)
       .setStrokeStyle(2, 0xff739e, 0.92).setDepth(35);
 
-    const portrait = this.add.image(190, 690, character.visual.spriteKey)
-      .setOrigin(0.5, 0)
-      .setDepth(36);
-    portrait.setScale(420 / source.height);
-
-    const portraitMask = this.make.graphics({ add: false });
-    portraitMask.fillStyle(0xffffff, 1);
-    portraitMask.fillRect(138, 690, 104, 104);
-    portrait.setMask(portraitMask.createGeometryMask());
+    const portraitProfile = createCharacterProfile(this, {
+      characterId: challenger.characterId,
+      pose: 'idle',
+      x: 190,
+      y: 742,
+      frameWidth: 104,
+      frameHeight: 104,
+      side: 'left',
+      depth: 36,
+    });
 
     const name = this.add.text(270, 690, character.name.toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
@@ -1582,7 +1598,14 @@ export default class MeetScene extends Phaser.Scene {
       }
     ).setDepth(36);
 
-    this.specialChallengeObjects.push(card, portraitBg, portrait, name, details);
+    this.specialChallengeObjects.push(
+      card,
+      portraitBg,
+      portraitProfile?.image,
+      portraitProfile?.maskShape,
+      name,
+      details
+    );
 
     this.selectedSummary.setText(
       'PINK SLIP CHALLENGE\n' +
@@ -2538,25 +2561,21 @@ export default class MeetScene extends Phaser.Scene {
       ).setStrokeStyle(1, 0x315470, 1).setDepth(35);
 
       const spriteKey = this.getOfferCharacterSpriteKey(offer);
-      const source = this.textures.get(spriteKey).getSourceImage();
-      const portrait = this.add.image(
-        portraitX,
-        portraitY - 54,
-        spriteKey
-      ).setDepth(36)
-        .setOrigin(0.5, 0);
-
-      portrait.setScale(405 / source.height);
-
-      const portraitMaskShape = this.make.graphics({ add: false });
-      portraitMaskShape.fillStyle(0xffffff, 1);
-      portraitMaskShape.fillRect(
-        portraitX - portraitSize / 2,
-        portraitY - portraitSize / 2,
-        portraitSize,
-        portraitSize
-      );
-      portrait.setMask(portraitMaskShape.createGeometryMask());
+      const pose = offer?.resultState === 'PLAYER_WIN'
+        ? 'loss'
+        : (offer?.resultState === 'PLAYER_LOSS' || pinkLossCelebration)
+          ? 'win'
+          : 'idle';
+      const portraitProfile = createCharacterProfile(this, {
+        characterId: offer.characterId,
+        pose,
+        x: portraitX,
+        y: portraitY,
+        frameWidth: portraitSize,
+        frameHeight: portraitSize,
+        side: 'left',
+        depth: 36,
+      });
 
       const textX = x - 42;
 
@@ -2609,7 +2628,7 @@ export default class MeetScene extends Phaser.Scene {
           card.setFillStyle(0x101317, 0.99)
             .setStrokeStyle(1, 0x3b444a, 1);
           portraitBg.setFillStyle(0x111418, 1).setStrokeStyle(1, 0x3b444a, 1);
-          portrait.setAlpha(0.34);
+          portraitProfile?.setAlpha(0.34);
           name.setColor('#68737a');
           quote.setColor('#59636a');
         }
@@ -2618,8 +2637,8 @@ export default class MeetScene extends Phaser.Scene {
       this.cardObjects.push(
         card,
         portraitBg,
-        portrait,
-        portraitMaskShape,
+        portraitProfile?.image,
+        portraitProfile?.maskShape,
         name,
         quote,
         statusText

@@ -1,3 +1,10 @@
+export const DEFAULT_CHARACTER_PROFILE = Object.freeze({
+  scale: 1,
+  offsetX: 0,
+  offsetY: 0,
+  poses: Object.freeze({}),
+});
+
 export const characters = {
   renMizuno: {
     id: 'renMizuno',
@@ -644,6 +651,19 @@ export const characters = {
     },
   },
 };
+
+// Profile framing is deliberately separate from standing/world alignment.
+// Every character receives the same canonical defaults at runtime; only genuine
+// visual outliers should declare visual.profile overrides in the roster data.
+for (const character of Object.values(characters)) {
+  if (!character?.visual) continue;
+  const profile = character.visual.profile || {};
+  character.visual.profile = {
+    ...DEFAULT_CHARACTER_PROFILE,
+    ...profile,
+    poses: { ...(profile.poses || {}) },
+  };
+}
 
 export const characterOrder = [
   'renMizuno',
