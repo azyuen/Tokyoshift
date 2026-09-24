@@ -447,9 +447,21 @@ export function createVisualModLayers(
       const offsetY = Number(layer.offsetY ?? 0) * scale;
 
       const image = scene.add.image(x + offsetX, y + offsetY, layer.textureKey)
-        .setScale(scale * layerScaleX, scale * layerScaleY)
         .setFlipX(flipX)
         .setDepth(depth + slotIndex * 0.002 + layerIndex * 0.0005);
+
+      // Full-canvas modular parts are registered to the base car canvas.
+      // Size them to the rendered base rather than trusting the source PNG
+      // dimensions. This keeps overlays pixel-registered even if an export
+      // accidentally changed the PNG canvas resolution.
+      if (car?.visual?.singleLayerModular && bodyLayers?.primary) {
+        image.setDisplaySize(
+          bodyLayers.primary.displayWidth * layerScaleX,
+          bodyLayers.primary.displayHeight * layerScaleY
+        );
+      } else {
+        image.setScale(scale * layerScaleX, scale * layerScaleY);
+      }
 
       if (layer.paintMode === 'body') {
         image.setTint(paintColor);
