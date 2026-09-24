@@ -502,31 +502,46 @@ export default class TunerShopScene extends Phaser.Scene {
   showTuningMode() {
     if (this.conversionInProgress) return;
     this.mode = 'TUNING';
-    this.setTabStyle();
     this.clearDynamic();
+    this.setTabStyle();
     this.drawMechanic();
 
-    const tunable = this.getTunableCarIds();
-    if (!tunable.length) {
+    const carId = this.getCurrentTunableCarId();
+    if (!carId) {
+      const currentId = this.getCurrentCarId();
+      const label = currentId ? (cars[currentId]?.shortName || currentId) : 'NO CAR';
+      this.setStageLabel(label + ' // CURRENT CAR');
+
       this.addDynamic(this.add.text(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,
-        'NO TUNABLE CAR AVAILABLE',
+        currentId ? 'CURRENT CAR CANNOT USE SPECIALIST TUNING' : 'BRING A CAR TO THE TUNER SHOP',
         {
           fontFamily: PIXEL_FONT,
-          fontSize: '12px',
+          fontSize: '11px',
           color: '#a7b6bd',
+          align: 'center',
         }
       ).setOrigin(0.5).setDepth(20));
+
+      this.sideContent.add(this.add.text(
+        SIDE.x + 30,
+        SIDE.y + 314,
+        currentId ? 'THIS CAR IS NOT TUNABLE HERE' : 'NO CURRENT CAR',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#79868c',
+        }
+      ));
       return;
     }
 
-    this.tuningCarIndex = Phaser.Math.Wrap(this.tuningCarIndex, 0, tunable.length);
-    const carId = tunable[this.tuningCarIndex];
     const car = cars[carId];
     const carState = (this.registry.get('carStates') || {})[carId] || {};
 
     this.drawCarOnStage(carId, 720, 650, 730, 10, true);
+    this.setStageLabel((car.shortName || car.name) + ' // CURRENT CAR');
 
     this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SPECIALIST TUNING', {
       fontFamily: PIXEL_FONT,
@@ -540,73 +555,40 @@ export default class TunerShopScene extends Phaser.Scene {
       color: '#ffffff',
     }).setDepth(20));
 
-    this.sideContent.add(this.add.text(SIDE.x + 24, SIDE.y + 226, 'CURRENT CAR', {
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#78999a',
     }));
 
-    const prev = this.add.rectangle(
-      SIDE.x + 46,
-      SIDE.y + 272,
-      44,
-      46,
-      0x102024,
-      1
-    ).setStrokeStyle(1, 0x4d767a, 1);
-
-    const next = this.add.rectangle(
-      SIDE.x + SIDE.w - 46,
-      SIDE.y + 272,
-      44,
-      46,
+    const carPanel = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 334,
+      SIDE.w - 56,
+      50,
       0x102024,
       1
     ).setStrokeStyle(1, 0x4d767a, 1);
 
     const carName = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 272,
+      SIDE.y + 334,
       car.shortName,
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#e7ffff',
         align: 'center',
-        wordWrap: { width: 220 },
+        wordWrap: { width: SIDE.w - 92 },
       }
     ).setOrigin(0.5);
 
-    const prevText = this.add.text(SIDE.x + 46, SIDE.y + 272, '<', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#c9eeef',
-    }).setOrigin(0.5);
-
-    const nextText = this.add.text(SIDE.x + SIDE.w - 46, SIDE.y + 272, '>', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#c9eeef',
-    }).setOrigin(0.5);
-
-    [prev, next, carName, prevText, nextText].forEach(obj => this.sideContent.add(obj));
-
-    if (tunable.length > 1) {
-      prev.setInteractive({ useHandCursor: true });
-      next.setInteractive({ useHandCursor: true });
-      prev.on('pointerdown', () => {
-        this.tuningCarIndex = Phaser.Math.Wrap(this.tuningCarIndex - 1, 0, tunable.length);
-        this.showTuningMode();
-      });
-      next.on('pointerdown', () => {
-        this.tuningCarIndex = Phaser.Math.Wrap(this.tuningCarIndex + 1, 0, tunable.length);
-        this.showTuningMode();
-      });
-    }
+    this.sideContent.add(carPanel);
+    this.sideContent.add(carName);
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
-    const startY = SIDE.y + 338;
+    const startY = SIDE.y + 410;
 
     options.forEach((option, index) => {
       const y = startY + index * 92;
@@ -618,7 +600,7 @@ export default class TunerShopScene extends Phaser.Scene {
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         y,
-        SIDE.w - 40,
+        SIDE.w - 56,
         80,
         isInstalled ? 0x15241d : enabled ? 0x10262a : 0x151a1c,
         1
@@ -629,23 +611,24 @@ export default class TunerShopScene extends Phaser.Scene {
       );
 
       const name = this.add.text(
-        SIDE.x + 24,
-        y - 27,
+        SIDE.x + 30,
+        y - 31,
         option.shortName || option.name,
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
           color: isInstalled ? '#a9e4bd' : enabled ? '#e9fffb' : '#879296',
+          wordWrap: { width: SIDE.w - 92 },
         }
       );
 
       const benefit = this.add.text(
-        SIDE.x + 24,
-        y - 3,
+        SIDE.x + 30,
+        y - 10,
         option.benefit,
         {
           fontFamily: BODY_FONT,
-          fontSize: '9px',
+          fontSize: '8px',
           color: '#91adb0',
           fontStyle: '700',
         }
@@ -657,14 +640,14 @@ export default class TunerShopScene extends Phaser.Scene {
       else if (!affordable) metaText = 'NEED ' + money(option.cost);
 
       const meta = this.add.text(
-        SIDE.x + 24,
-        y + 22,
+        SIDE.x + 30,
+        y + 15,
         metaText,
         {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: isInstalled ? '#8dd0a4' : enabled ? '#d9b66f' : '#717d82',
-          wordWrap: { width: SIDE.w - 74 },
+          wordWrap: { width: SIDE.w - 94 },
         }
       );
 
@@ -675,6 +658,210 @@ export default class TunerShopScene extends Phaser.Scene {
         box.on('pointerdown', () => this.installSpecialistTune(carId, option));
       }
     });
+  }
+
+  showDecalMode() {
+    if (this.conversionInProgress) return;
+    this.mode = 'DECAL';
+    this.clearDynamic();
+    this.setTabStyle();
+    this.drawMechanic();
+
+    const carId = this.getCurrentTunableCarId();
+    if (!carId) {
+      this.setStageLabel('NO CAR // DECAL');
+      this.sideContent.add(this.add.text(
+        SIDE.x + 30,
+        SIDE.y + 314,
+        'BRING A TUNABLE CAR HERE FIRST',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#78858a',
+          wordWrap: { width: SIDE.w - 70 },
+        }
+      ));
+      return;
+    }
+
+    const car = cars[carId];
+    const carStates = this.registry.get('carStates') || {};
+    const carState = carStates[carId] || {};
+    const eligible = carHasShopTune(carState, this.shop);
+
+    const carObjects = this.drawCarOnStage(
+      carId,
+      720,
+      650,
+      730,
+      10,
+      true,
+      { showDecals: false }
+    );
+
+    this.setStageLabel((car.shortName || car.name) + ' // ' + this.shop.decalLabel + ' DECAL');
+
+    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SHOP DECAL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: eligible ? '#f0c96f' : '#7f8588',
+    }).setDepth(20));
+
+    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 132, car.name, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '12px',
+      color: '#ffffff',
+    }).setDepth(20));
+
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#8d9699',
+    }));
+
+    this.sideContent.add(this.add.text(
+      SIDE.x + 30,
+      SIDE.y + 324,
+      car.shortName,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#eff7f7',
+      }
+    ));
+
+    if (!eligible) {
+      this.sideContent.add(this.add.text(
+        SIDE.x + 30,
+        SIDE.y + 382,
+        'DECAL LOCKED\n\nUSE AT LEAST ONE ' + this.shop.label + '\nSPECIALIST TUNE ON THIS CAR.',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#817d70',
+          lineSpacing: 5,
+          wordWrap: { width: SIDE.w - 74 },
+        }
+      ));
+      return;
+    }
+
+    const geometry = carObjects.geometry;
+    if (!geometry) return;
+
+    const existing = normaliseTunerDecals(carState)[this.shop.decalId];
+    const placement = {
+      x: Number(existing?.x ?? 0.06),
+      y: Number(existing?.y ?? -0.01),
+      scale: Number(existing?.scale ?? 0.13),
+      rotation: Number(existing?.rotation ?? 0),
+    };
+
+    const createPreview = () => {
+      const preview = createTunerDecalObject(this, this.shop.decalId, {
+        x: geometry.x + placement.x * geometry.displayWidth,
+        y: geometry.displayY + placement.y * geometry.displayHeight,
+        displayWidth: geometry.displayWidth,
+        depth: 22,
+        placement,
+      });
+      preview.setInteractive({ useHandCursor: true, draggable: true });
+      this.input.setDraggable(preview);
+      this.addDynamic(preview);
+
+      preview.on('drag', (pointer, dragX, dragY) => {
+        const minX = geometry.x - geometry.displayWidth * 0.34;
+        const maxX = geometry.x + geometry.displayWidth * 0.34;
+        const minY = geometry.displayY - geometry.displayHeight * 0.13;
+        const maxY = geometry.displayY + geometry.displayHeight * 0.15;
+        preview.x = Phaser.Math.Clamp(dragX, minX, maxX);
+        preview.y = Phaser.Math.Clamp(dragY, minY, maxY);
+      });
+
+      return preview;
+    };
+
+    let preview = createPreview();
+
+    const resizePreview = () => {
+      const rawWidth = Math.max(1, Number(preview.width || 1));
+      preview.setScale((geometry.displayWidth * placement.scale) / rawWidth);
+      preview.setAngle(placement.rotation);
+    };
+
+    const makeControl = (x, y, width, label, handler) => {
+      const box = this.add.rectangle(x, y, width, 42, 0x171d20, 1)
+        .setStrokeStyle(1, 0x667176, 1)
+        .setInteractive({ useHandCursor: true });
+      const text = this.add.text(x, y, label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#dbe4e7',
+      }).setOrigin(0.5);
+      box.on('pointerdown', handler);
+      this.sideContent.add(box);
+      this.sideContent.add(text);
+      return box;
+    };
+
+    this.sideContent.add(this.add.text(
+      SIDE.x + 30,
+      SIDE.y + 374,
+      'DRAG THE DECAL ONTO THE BODY',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#d5bb76',
+      }
+    ));
+
+    makeControl(SIDE.x + 76, SIDE.y + 430, 82, 'SIZE -', () => {
+      placement.scale = Phaser.Math.Clamp(placement.scale - 0.015, 0.055, 0.24);
+      resizePreview();
+    });
+    makeControl(SIDE.x + 174, SIDE.y + 430, 82, 'SIZE +', () => {
+      placement.scale = Phaser.Math.Clamp(placement.scale + 0.015, 0.055, 0.24);
+      resizePreview();
+    });
+    makeControl(SIDE.x + 272, SIDE.y + 430, 82, 'ROTATE', () => {
+      placement.rotation += 10;
+      if (placement.rotation > 30) placement.rotation = -30;
+      resizePreview();
+    });
+
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 490, SIDE.w - 56, 'SAVE DECAL', () => {
+      placement.x = (preview.x - geometry.x) / geometry.displayWidth;
+      placement.y = (preview.y - geometry.displayY) / geometry.displayHeight;
+
+      const nextStates = { ...(this.registry.get('carStates') || {}) };
+      nextStates[carId] = withTunerDecal(nextStates[carId] || {}, this.shop.decalId, placement);
+      this.registry.set('carStates', nextStates);
+      saveSessionState(this.registry);
+      this.showToast(this.shop.decalLabel + ' DECAL SAVED');
+      this.showDecalMode();
+    });
+
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 548, SIDE.w - 56, 'REMOVE DECAL', () => {
+      const nextStates = { ...(this.registry.get('carStates') || {}) };
+      nextStates[carId] = withTunerDecal(nextStates[carId] || {}, this.shop.decalId, null);
+      this.registry.set('carStates', nextStates);
+      saveSessionState(this.registry);
+      this.showToast(this.shop.decalLabel + ' DECAL REMOVED');
+      this.showDecalMode();
+    });
+
+    this.sideContent.add(this.add.text(
+      SIDE.x + 30,
+      SIDE.y + 594,
+      'A simple wordmark is used until the final\ntransparent shop-logo PNG is supplied.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#78868c',
+        fontStyle: '600',
+        lineSpacing: 4,
+      }
+    ));
   }
 
   installSpecialistTune(carId, option) {
