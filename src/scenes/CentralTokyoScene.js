@@ -17,8 +17,8 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r177';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r176';
+import { saveSessionState } from '../state/GameState.js?v=20260924-r178';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import {
   getGarageCapacity,
