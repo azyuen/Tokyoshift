@@ -84,7 +84,7 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
       return rect;
     };
 
-    button(92, 38, 110, 'BACK', () => this.scene.start('GarageScene'), 0x56646d);
+    button(1450, 38, 120, 'BACK', () => this.scene.start('GarageScene'), 0x56646d);
 
     button(1068, 330, 170, '< CHARACTER', () => {
       this.currentIndex = (this.currentIndex - 1 + characterOrder.length) % characterOrder.length;
