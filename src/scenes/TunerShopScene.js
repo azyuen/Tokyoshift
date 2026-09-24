@@ -5,7 +5,7 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20260924-r168';
+} from '../data/tunerShops.js?v=20260924-r172';
 import { saveSessionState } from '../state/GameState.js?v=20260924-r172';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
