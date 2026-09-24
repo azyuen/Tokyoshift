@@ -117,6 +117,11 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
     // finished body PNG and must never request paint/overlay layers.
     if (car?.visual?.singleBody) return;
 
+    // Single-layer modular cars use one complete base PNG plus independently
+    // tintable visual-mod PNGs on the same canvas. No legacy paint/overlay or
+    // stock aero textures are required.
+    if (car?.visual?.singleLayerModular) return;
+
     // Some foldered cars use their coherent full preview as the geometry
     // authority and derive their stock modular textures from it at boot. This
     // guarantees every stock layer shares exactly the same source pixels.
@@ -304,7 +309,7 @@ export function rgbToPaintColor(r, g, b) {
 
 export function hasLayeredPaintAssets(scene, visualOrCar) {
   const visual = visualOrCar?.visual || visualOrCar || {};
-  if (visual.singleBody) return false;
+  if (visual.singleBody || visual.singleLayerModular) return false;
 
   const keys = getCarTextureKeys(visualOrCar);
   return Boolean(
