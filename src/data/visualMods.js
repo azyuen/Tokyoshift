@@ -87,9 +87,10 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // Production PNG assets. Each file is authored on the same 1774×887
-    // canvas as the modular AE86, so Phaser can swap the stock slot without
-    // per-scene positioning.
+    // R177 production experiment: one transparent PNG per option.
+    // White/light-grey pixels receive the Phaser body tint; black/dark
+    // linework remains dark because tinting is multiplicative.
+    // All assets share the exact 1774×887 AE86 master canvas.
     slots: {
       spoiler: {
         label: 'SPOILER',
@@ -101,14 +102,9 @@ export const VISUAL_MOD_CATALOG = {
             price: 35000,
             layers: [
               {
-                textureKey: 'visualMod_ae86_spoiler_1_paint',
-                path: 'assets/Cars/ae86/ae86_car_spoiler_1_paint.png',
-                paintMode: 'body',
-              },
-              {
-                textureKey: 'visualMod_ae86_spoiler_1_detail',
+                textureKey: 'visualMod_ae86_spoiler_1',
                 path: 'assets/Cars/ae86/ae86_car_spoiler_1.png',
-                paintMode: 'fixed',
+                paintMode: 'body',
               },
             ],
           },
@@ -116,13 +112,10 @@ export const VISUAL_MOD_CATALOG = {
             id: 'ducktail',
             name: 'EXTENDED DUCKTAIL',
             price: 28000,
-            // The paint PNG for option 2 already contains the complete
-            // outlined ducktail artwork. Tinting preserves its dark pixels
-            // while colouring the light painted faces.
             layers: [
               {
-                textureKey: 'visualMod_ae86_spoiler_2_paint',
-                path: 'assets/Cars/ae86/ae86_car_spoiler_2_paint.png',
+                textureKey: 'visualMod_ae86_spoiler_2',
+                path: 'assets/Cars/ae86/ae86_car_spoiler_2.png',
                 paintMode: 'body',
               },
             ],
@@ -139,14 +132,9 @@ export const VISUAL_MOD_CATALOG = {
             price: 65000,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_1_paint',
-                path: 'assets/Cars/ae86/ae86_car_bodykit_1_paint.png',
-                paintMode: 'body',
-              },
-              {
-                textureKey: 'visualMod_ae86_bodykit_1_detail',
+                textureKey: 'visualMod_ae86_bodykit_1',
                 path: 'assets/Cars/ae86/ae86_car_bodykit_1.png',
-                paintMode: 'fixed',
+                paintMode: 'body',
               },
             ],
           },
@@ -156,14 +144,9 @@ export const VISUAL_MOD_CATALOG = {
             price: 90000,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_2_paint',
-                path: 'assets/Cars/ae86/ae86_car_bodykit_2_paint.png',
-                paintMode: 'body',
-              },
-              {
-                textureKey: 'visualMod_ae86_bodykit_2_detail',
+                textureKey: 'visualMod_ae86_bodykit_2',
                 path: 'assets/Cars/ae86/ae86_car_bodykit_2.png',
-                paintMode: 'fixed',
+                paintMode: 'body',
               },
             ],
           },
