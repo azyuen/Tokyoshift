@@ -1,11 +1,11 @@
-import BootScene from './scenes/BootScene.js?v=20260924-r167';
+import BootScene from './scenes/BootScene.js?v=20260924-r168';
 import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260924-r165';
-import GarageScene from './scenes/GarageScene.js?v=20260924-r167';
-import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260924-r167';
-import MeetScene from './scenes/MeetScene.js?v=20260924-r167';
-import RaceScene from './scenes/RaceScene.js?v=20260924-r167';
+import GarageScene from './scenes/GarageScene.js?v=20260924-r168';
+import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260924-r168';
+import MeetScene from './scenes/MeetScene.js?v=20260924-r168';
+import RaceScene from './scenes/RaceScene.js?v=20260924-r168';
 import ResultScene from './scenes/ResultScene.js?v=20260922-r112';
-import TunerShopScene from './scenes/TunerShopScene.js?v=20260924-r167';
+import TunerShopScene from './scenes/TunerShopScene.js?v=20260924-r168';
 
 
 // Phone readability pass.

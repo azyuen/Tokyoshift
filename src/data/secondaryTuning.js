@@ -1,4 +1,4 @@
-import { applySpecialistTuning } from './tunerShops.js?v=20260924-r167';
+import { applySpecialistTuning } from './tunerShops.js?v=20260924-r168';
 
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 

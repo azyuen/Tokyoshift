@@ -5,8 +5,8 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20260924-r167';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r167';
+} from '../data/tunerShops.js?v=20260924-r168';
+import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -412,7 +412,7 @@ export default class TunerShopScene extends Phaser.Scene {
     let enabled = true;
 
     if (!donorExists) {
-      label = 'STOCK NSX DONOR NOT YET IN CATALOGUE';
+      label = 'STOCK ' + this.shop.donorLabel + ' NOT YET IN CATALOGUE';
       enabled = false;
     } else if (heroOwned) {
       label = 'HERO ALREADY OWNED';
