@@ -173,7 +173,7 @@ function deriveModularTexturesFromPreview(scene, car) {
     const paint = new Uint8ClampedArray(src.length);
     const overlay = new Uint8ClampedArray(src.length);
     const bodyKitPaint = new Uint8ClampedArray(src.length);
-    const bodyKit = new Uint8ClampedArray(src.length);
+    const bodyKitPixels = new Uint8ClampedArray(src.length);
     const spoilerPaint = new Uint8ClampedArray(src.length);
     const spoiler = new Uint8ClampedArray(src.length);
 
@@ -193,7 +193,7 @@ function deriveModularTexturesFromPreview(scene, car) {
       xMin: 0.045, xMax: 0.106,
       yMin: 0.390, yMax: 0.470,
     };
-    const bodyKit = split.bodyKit || {
+    const bodyKitConfig = split.bodyKit || {
       allBelowY: 0.560,
       darkFromY: 0.505,
       darkMax: 165,
@@ -228,15 +228,15 @@ function deriveModularTexturesFromPreview(scene, car) {
 
         const coloured = saturationSpan > 55 && maxC > 60;
         const inBodyKit = (
-          yn >= bodyKit.allBelowY ||
-          (yn >= bodyKit.darkFromY && (maxC < bodyKit.darkMax || coloured))
+          yn >= bodyKitConfig.allBelowY ||
+          (yn >= bodyKitConfig.darkFromY && (maxC < bodyKitConfig.darkMax || coloured))
         );
 
         if (inBodyKit) {
           // Stock AE86 lower aero is black/charcoal plastic in the master.
           // Keep the paint layer empty for stock; later aftermarket kits may
           // provide their own tintable bodyKitPaint PNG.
-          copyPixel(bodyKit, i);
+          copyPixel(bodyKitPixels, i);
           continue;
         }
 
@@ -249,7 +249,7 @@ function deriveModularTexturesFromPreview(scene, car) {
     createCanvasTextureFromPixels(scene, keys.paint, width, height, paint);
     createCanvasTextureFromPixels(scene, keys.overlay, width, height, overlay);
     createCanvasTextureFromPixels(scene, keys.bodyKitPaint, width, height, bodyKitPaint);
-    createCanvasTextureFromPixels(scene, keys.bodyKit, width, height, bodyKit);
+    createCanvasTextureFromPixels(scene, keys.bodyKit, width, height, bodyKitPixels);
     createCanvasTextureFromPixels(scene, keys.spoilerPaint, width, height, spoilerPaint);
     createCanvasTextureFromPixels(scene, keys.spoiler, width, height, spoiler);
     return true;
