@@ -1,3 +1,8 @@
+import {
+  getTunerTeamChallengeState,
+  getTunerTeamChallengeLabel,
+} from './tunerChallenges.js?v=20260924-r178';
+
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
     const value = source.get(key);
@@ -27,7 +32,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'HONDA NSX NA1',
     buildCost: 22000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopOdaibaEspritBg',
     backgroundPath: 'assets/Locations/TunerShops/odaiba_esprit_workshop.png',
@@ -108,7 +113,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'HONDA S2000 AP1',
     buildCost: 9500000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopShibuyaAmuseBg',
     backgroundPath: 'assets/Locations/TunerShops/shibuya_amuse_workshop.png',
@@ -189,7 +194,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'TOYOTA SUPRA A80',
     buildCost: 18000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopShinjukuTopSecretBg',
     backgroundPath: 'assets/Locations/TunerShops/shinjuku_top_secret_workshop.png',
@@ -270,7 +275,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'NISSAN SKYLINE GT-R R34',
     buildCost: 16000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopYokohamaMinesBg',
     backgroundPath: 'assets/Locations/TunerShops/yokohama_mines_workshop.png',
@@ -353,7 +358,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'MAZDA RX-7 FD3S',
     buildCost: 13000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopDaikokuReAmemiyaBg',
     backgroundPath: 'assets/Locations/TunerShops/daikoku_re_amemiya_workshop.png',
@@ -434,7 +439,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'HONDA CIVIC TYPE R EK9',
     buildCost: 7000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopShinagawaSpoonBg',
     backgroundPath: 'assets/Locations/TunerShops/shinagawa_spoon_workshop.png',
@@ -521,7 +526,7 @@ export const TUNER_SHOPS = {
     donorLabel: 'MITSUBISHI LANCER EVO V',
     buildCost: 12000000,
 
-    unlockRegionWins: 5,
+    unlockRegionWins: 7,
 
     backgroundKey: 'tunerShopTatsumiJunBg',
     backgroundPath: 'assets/Locations/TunerShops/tatsumi_jun_workshop.png',
@@ -648,17 +653,23 @@ export function isTunerShopUnlocked(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return false;
   if (isTunerDevProfile(source)) return true;
-  return getRegionWinCount(source, shop.regionId) >= Number(shop.unlockRegionWins || 0);
+
+  // Preserve access for players who already entered a tuner shop before the
+  // team-challenge progression was introduced.
+  const legacyProgress = sourceValue(source, 'tunerShopProgress', {}) || {};
+  const legacyShop = legacyProgress[shop.id] || {};
+  if (legacyShop.visited || legacyShop.discovered || legacyShop.unlockedByChallenge) {
+    return true;
+  }
+
+  return getTunerTeamChallengeState(source, shop.regionId).completed;
 }
 
 export function getTunerShopUnlockLabel(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return '';
   if (isTunerShopUnlocked(source, regionId)) return 'UNLOCKED';
-
-  const wins = getRegionWinCount(source, regionId);
-  const target = Math.max(0, Number(shop.unlockRegionWins || 0));
-  return wins + ' / ' + target + ' REGION WINS';
+  return getTunerTeamChallengeLabel(source, regionId);
 }
 
 export function getInstalledSpecialistTuning(carState = {}) {
