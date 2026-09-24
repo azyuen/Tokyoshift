@@ -58,18 +58,11 @@ export const cars = {
       // canvas/origin inside a per-car folder, so stock and future replacement
       // aero can stack without scene-specific offsets.
       modularAssetRoot: 'assets/Cars/ae86',
-      modularAssetStem: 'ae86_car',
-      bodyPath: 'assets/Cars/ae86/ae86_preview_full.png',
-      deriveModularFromPreview: true,
-      derivedModularSplit: {
-        bodyKit: {
-          allBelowY: 0.598,
-          darkFromY: 0.505,
-          darkMax: 165,
-        },
-      },
-      stockBodyKitId: '0',
-      stockSpoilerId: '0',
+      modularAssetStem: 'ae86',
+      bodyPath: 'assets/Cars/ae86/ae86_base.png',
+      singleLayerModular: true,
+      stockBodyKit: false,
+      stockSpoiler: false,
 
       // Re-authored against the new modular canvas. This preserves roughly the
       // same on-screen footprint as the previous 2172px-wide AE86 while moving
