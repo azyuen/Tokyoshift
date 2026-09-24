@@ -14,7 +14,7 @@ export const MAX_PROFILES = 3;
 
 export function createDefaultGameState() {
   return {
-    version: 6,
+    version: 7,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -43,6 +43,8 @@ export function createDefaultGameState() {
     devMode: false,
     regionWins: {},
     tunerShopProgress: {},
+    tunerTeamChallenges: {},
+    tunerChallengeRevealPending: null,
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
     district: 'ODAIBA',
@@ -329,7 +331,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 6,
+    version: 7,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -358,6 +360,14 @@ export function normaliseState(input = {}) {
       input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
         ? input.tunerShopProgress
         : {},
+    tunerTeamChallenges:
+      input.tunerTeamChallenges && typeof input.tunerTeamChallenges === 'object'
+        ? input.tunerTeamChallenges
+        : {},
+    tunerChallengeRevealPending:
+      input.tunerChallengeRevealPending
+        ? String(input.tunerChallengeRevealPending).toUpperCase()
+        : null,
     tunerDecalsUnlocked: Array.isArray(input.tunerDecalsUnlocked)
       ? [...new Set(input.tunerDecalsUnlocked.map(String).filter(Boolean))]
       : [],
@@ -402,7 +412,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 6,
+    version: 7,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -415,6 +425,8 @@ export function snapshotRegistry(registry) {
     devMode: Boolean(registry.get('devMode')),
     regionWins: registry.get('regionWins') || {},
     tunerShopProgress: registry.get('tunerShopProgress') || {},
+    tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
+    tunerChallengeRevealPending: registry.get('tunerChallengeRevealPending') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
     district: registry.get('district') || 'ODAIBA',
