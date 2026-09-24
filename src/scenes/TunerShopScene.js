@@ -497,7 +497,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
-    const startY = SIDE.y + 350;
+    const startY = SIDE.y + 338;
     const cardHeight = 116;
     const cardStep = 124;
 
