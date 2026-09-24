@@ -1,6 +1,6 @@
-const BUILD = 'R172';
-const ASSET_CACHE = 'tokyoshift-assets-v117';
-const RUNTIME_CACHE = 'tokyoshift-runtime-v117';
+const BUILD = 'R173';
+const ASSET_CACHE = 'tokyoshift-assets-v118';
+const RUNTIME_CACHE = 'tokyoshift-runtime-v118';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -47,7 +47,10 @@ self.addEventListener('fetch', event => {
   // Tuning-part artwork is iterated frequently during development. Prefer the
   // network so replacing an icon at the same path is visible immediately,
   // while still falling back to the cached copy if offline.
-  if (url.pathname.includes('/assets/Tuning/Parts/')) {
+  if (
+    url.pathname.includes('/assets/Tuning/Parts/') ||
+    url.pathname.includes('/assets/Decals/')
+  ) {
     event.respondWith(networkFirst(request));
     return;
   }
