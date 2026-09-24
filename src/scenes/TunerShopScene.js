@@ -5,7 +5,7 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20260924-r176';
+} from '../data/tunerShops.js?v=20260924-r178';
 import { saveSessionState } from '../state/GameState.js?v=20260924-r176';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
@@ -26,7 +26,7 @@ import {
   createTunerDecalLayers,
   setTunerDecalObjectColor,
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r176';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
