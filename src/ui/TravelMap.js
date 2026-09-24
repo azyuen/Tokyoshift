@@ -21,6 +21,10 @@ import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
 } from '../data/centralTokyo.js?v=20260922-r131';
+import {
+  getTunerShopForRegion,
+  isTunerShopUnlocked,
+} from '../data/tunerShops.js?v=20260924-r167';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -33,6 +37,7 @@ const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 // The map now owns the whole framed popup. Everything else floats over it.
 const MAP = { x: 26, y: 25, w: 1508, h: 790 };
 const INFO = { x: 874, y: 418, w: 634, h: 374 };
+const TUNER_BADGE = { x: 1174, y: 330, w: 334, h: 76 };
 const MAP_SOURCE = { w: 1672, h: 941 };
 
 function getMapArtBounds(scene, textureKey) {
@@ -326,6 +331,71 @@ export function showTravelMap(scene, {
     fontStyle: '600',
     wordWrap: { width: INFO.w - 56 },
   }).setDepth(depth + 12));
+
+  // Regional tuner shops are deliberately kept outside the normal three-row
+  // destination list. They only appear once discovered, in a compact badge
+  // above the region panel so the map does not become another cluster of pins.
+  const tunerBadge = addPanel(scene.add.rectangle(
+    TUNER_BADGE.x + TUNER_BADGE.w / 2,
+    TUNER_BADGE.y + TUNER_BADGE.h / 2,
+    TUNER_BADGE.w,
+    TUNER_BADGE.h,
+    0x16120d,
+    0.97
+  ).setStrokeStyle(2, 0xe4b660, 0.98).setDepth(depth + 11));
+
+  const tunerKicker = addPanel(scene.add.text(
+    TUNER_BADGE.x + 20,
+    TUNER_BADGE.y + 17,
+    'TUNER SHOP',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c99a4e',
+    }
+  ).setDepth(depth + 12));
+
+  const tunerName = addPanel(scene.add.text(
+    TUNER_BADGE.x + 20,
+    TUNER_BADGE.y + 43,
+    '',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '11px',
+      color: '#fff1d3',
+    }
+  ).setOrigin(0, 0.5).setDepth(depth + 12));
+
+  const tunerSpecialty = addPanel(scene.add.text(
+    TUNER_BADGE.x + TUNER_BADGE.w - 22,
+    TUNER_BADGE.y + 43,
+    '',
+    {
+      fontFamily: BODY_FONT,
+      fontSize: '9px',
+      color: '#c8b58e',
+      fontStyle: '700',
+    }
+  ).setOrigin(1, 0.5).setDepth(depth + 12));
+
+  const tunerArrow = addPanel(scene.add.text(
+    TUNER_BADGE.x + TUNER_BADGE.w - 18,
+    TUNER_BADGE.y + 17,
+    '>',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#e9bd6d',
+    }
+  ).setOrigin(1, 0).setDepth(depth + 12));
+
+  const tunerPanelObjects = [
+    tunerBadge,
+    tunerKicker,
+    tunerName,
+    tunerSpecialty,
+    tunerArrow,
+  ];
 
   const rowStartY = INFO.y + 126;
   for (let i = 0; i < 3; i++) {
@@ -786,6 +856,36 @@ export function showTravelMap(scene, {
 
     regionNameText.setText(region.label);
     regionLineText.setText(region.description);
+
+    const tunerShop = getTunerShopForRegion(selectedRegionId);
+    const tunerUnlocked = Boolean(
+      tunerShop && isTunerShopUnlocked(scene.registry, selectedRegionId)
+    );
+
+    tunerPanelObjects.forEach(obj => obj.setVisible(tunerUnlocked));
+    tunerBadge.removeAllListeners('pointerdown');
+
+    if (tunerUnlocked) {
+      tunerName.setText(tunerShop.label);
+      tunerSpecialty.setText(tunerShop.specialty);
+      tunerBadge
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x17130d, 0.97)
+        .setStrokeStyle(2, 0xe4b660, 0.98);
+
+      tunerBadge.on('pointerdown', () => {
+        const returnScene = scene.sys?.settings?.key || 'GarageScene';
+        dismiss();
+        scene.scene.start('TunerShopScene', {
+          regionId: selectedRegionId,
+          returnScene,
+          returnLocationId: currentLocationId,
+          fromWorkshop,
+        });
+      });
+    } else {
+      tunerBadge.disableInteractive();
+    }
 
     locationUi.forEach((row, i) => {
       const item = visibleLocations[i] || null;
