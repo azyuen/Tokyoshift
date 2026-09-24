@@ -84,7 +84,7 @@ export const VISUAL_MOD_CATALOG = {
         ],
       },
     },
-  },,
+  },
 
   ae86: {
     // Production PNG assets. Each file is authored on the same 1774×887
