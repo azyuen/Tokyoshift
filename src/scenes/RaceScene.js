@@ -1795,7 +1795,7 @@ export default class RaceScene extends Phaser.Scene {
       ? 'RETURN TO CENTRAL TOKYO  >'
       : 'RETURN TO MEET  >';
     const actionLabel = settlement?.teamChallengeContinues
-      ? 'NEXT CHALLENGER // ' + (settlement.progress + 1) + '/7  >'
+      ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
       : settlement?.competitionContinues
         ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
         : returnLabel;
@@ -1813,7 +1813,7 @@ export default class RaceScene extends Phaser.Scene {
     button.on('pointerout', () => button.setFillStyle(0x07111d, 0.97));
     button.on('pointerdown', () => {
       if (settlement?.teamChallengeContinues) {
-        this.startNextTunerChallengeRound();
+        this.showNextTunerChallengeBriefing();
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
@@ -1822,12 +1822,194 @@ export default class RaceScene extends Phaser.Scene {
     });
   }
 
-  startNextTunerChallengeRound() {
+  getNextTunerChallengeRound() {
     const regionId = String(
       this.registry.get('raceDistrict') || this.registry.get('district') || ''
     ).toUpperCase();
     const state = getTunerTeamChallengeState(this.registry, regionId);
-    const round = state.rounds?.[state.stage];
+    const round = state.rounds?.[state.stage] || null;
+    return { regionId, state, round };
+  }
+
+  showNextTunerChallengeBriefing() {
+    if (this.tunerChallengeBriefing?.active) return;
+
+    const { regionId, state, round } = this.getNextTunerChallengeRound();
+    if (!state.activeSession || !round) {
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+
+    const nextNumber = state.stage + 1;
+    const rival = characters[round.characterId] || null;
+    const rivalCar = cars[round.carId] || null;
+    const distanceLabel = Math.abs(Number(round.distanceM || 0) - QUARTER_M) < 1
+      ? '1/4 MILE'
+      : Math.abs(Number(round.distanceM || 0) - HALF_MILE_M) < 1
+        ? '1/2 MILE'
+        : Math.round(Number(round.distanceM || 0)) + ' M';
+    const isRoll = round.raceType === 'Roll Race';
+    const startAdvice = isRoll
+      ? 'ROLLING START // CHOOSE YOUR GEAR BEFORE THE COUNTDOWN ENDS'
+      : 'STANDING START // CLUTCH + THROTTLE // WATCH THE TREE';
+    const depth = 210;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.90)
+      .setDepth(depth)
+      .setScrollFactor(0)
+      .setInteractive());
+
+    const panel = add(this.add.rectangle(780, 360, 900, 590, 0x07111d, 0.998)
+      .setStrokeStyle(3, 0xff5f93, 0.98)
+      .setDepth(depth + 1)
+      .setScrollFactor(0));
+
+    add(this.add.text(780, 104, regionId + ' // TEAM CHALLENGE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#ff91b6',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(780, 149, 'CHALLENGER ' + nextNumber + ' / 7', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '20px',
+      color: '#fff4f8',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const portraitBoxX = 515;
+    const portraitBoxY = 314;
+    add(this.add.rectangle(portraitBoxX, portraitBoxY, 230, 250, 0x06101a, 1)
+      .setStrokeStyle(2, 0x315b73, 1)
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    const textureKey = rival?.visual?.spriteKey;
+    if (textureKey && this.textures.exists(textureKey)) {
+      const source = this.textures.get(textureKey).getSourceImage();
+      const portrait = add(this.add.image(portraitBoxX, portraitBoxY + 112, textureKey)
+        .setOrigin(0.5, 1)
+        .setDepth(depth + 3)
+        .setScrollFactor(0));
+      portrait.setScale(Math.min(205 / source.width, 225 / source.height));
+
+      const maskShape = this.make.graphics({ add: false });
+      maskShape.fillStyle(0xffffff, 1);
+      maskShape.fillRect(portraitBoxX - 112, portraitBoxY - 122, 224, 242);
+      portrait.setMask(maskShape.createGeometryMask());
+    } else {
+      add(this.add.text(portraitBoxX, portraitBoxY, '#' + nextNumber, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '30px',
+        color: '#718fa3',
+      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+    }
+
+    add(this.add.text(portraitBoxX, 464, String(rival?.name || 'RIVAL').toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#e8f6fc',
+      align: 'center',
+      wordWrap: { width: 240 },
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const infoX = 785;
+    const infoStartY = 235;
+    const labelStyle = {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#718fa3',
+    };
+    const valueStyle = {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#eefaff',
+    };
+
+    const rows = [
+      ['CAR', rivalCar?.shortName || round.carId],
+      ['RACE', String(round.raceType || 'Standing Start').toUpperCase()],
+      ['DISTANCE', distanceLabel],
+      ['DIFFICULTY', String(round.difficulty || 'HARD').toUpperCase()],
+    ];
+
+    rows.forEach((row, index) => {
+      const y = infoStartY + index * 62;
+      add(this.add.text(infoX, y, row[0], labelStyle)
+        .setDepth(depth + 2).setScrollFactor(0));
+      add(this.add.text(infoX, y + 25, row[1], valueStyle)
+        .setDepth(depth + 2).setScrollFactor(0));
+    });
+
+    add(this.add.rectangle(780, 512, 720, 74, isRoll ? 0x10283b : 0x10281e, 0.96)
+      .setStrokeStyle(2, isRoll ? 0x45d7ff : 0x62e8c7, 0.95)
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    add(this.add.text(780, 500, 'START PROCEDURE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: isRoll ? '#8fe7ff' : '#8ff0c2',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    add(this.add.text(780, 529, startAdvice, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#f3fbff',
+      align: 'center',
+      wordWrap: { width: 670 },
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    if (rival?.introQuote) {
+      add(this.add.text(780, 575, '“' + rival.introQuote + '”', {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#a7bac5',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 700 },
+      }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+    }
+
+    add(this.add.text(
+      510,
+      631,
+      state.stage + ' / 7 DEFEATED' +
+        (state.perfectEligible !== false ? '  //  PERFECT RUN ACTIVE' : ''),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: state.perfectEligible !== false ? '#ffe08a' : '#8fa0aa',
+      }
+    ).setOrigin(0, 0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const ready = add(this.add.rectangle(1040, 630, 260, 50, 0x321522, 1)
+      .setStrokeStyle(2, 0xff5f93, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    add(this.add.text(1040, 630, 'READY // RACE ' + nextNumber, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#fff4f8',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    blocker.on('pointerdown', () => {});
+    ready.on('pointerover', () => ready.setFillStyle(0x5b2036, 1));
+    ready.on('pointerout', () => ready.setFillStyle(0x321522, 1));
+    ready.on('pointerdown', () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.tunerChallengeBriefing = null;
+      this.startNextTunerChallengeRound();
+    });
+
+    this.tunerChallengeBriefing = panel;
+  }
+
+  startNextTunerChallengeRound() {
+    const { regionId, state, round } = this.getNextTunerChallengeRound();
 
     if (!state.activeSession || !round) {
       this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
