@@ -151,9 +151,32 @@ export function createCharacterProfile(scene, {
     mask: geometryMask,
     profile,
     frame: { x: centreX, y: centreY, width, height, side },
-    setDimmed(value = true) {
+    setDimmed(value = true, options = {}) {
       isDimmed = Boolean(value);
-      applyVisualState();
+      const duration = Math.max(0, Number(options?.duration || 0));
+
+      if (externalTint != null) {
+        image.setTint(externalTint);
+      } else if (isDimmed) {
+        image.setTint(0x76808a);
+      } else {
+        image.clearTint();
+      }
+
+      const targetAlpha = externalAlpha * (isDimmed ? 0.72 : 1);
+      if (duration > 0 && scene?.tweens) {
+        scene.tweens.killTweensOf(image);
+        scene.tweens.add({
+          targets: image,
+          alpha: targetAlpha,
+          duration,
+          ease: options?.ease || 'Sine.easeOut',
+          onComplete: options?.onComplete,
+        });
+      } else {
+        image.setAlpha(targetAlpha);
+        options?.onComplete?.();
+      }
       return api;
     },
     setAlpha(value = 1) {

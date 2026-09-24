@@ -41,6 +41,7 @@ export function createDefaultGameState() {
     losses: 0,
     cash: 50000,
     devMode: false,
+    cutscenesSeen: [],
     regionWins: {},
     tunerShopProgress: {},
     tunerTeamChallenges: {},
@@ -348,6 +349,9 @@ export function normaliseState(input = {}) {
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
     devMode,
+    cutscenesSeen: Array.isArray(input.cutscenesSeen)
+      ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
+      : [],
     regionWins: input.regionWins && typeof input.regionWins === 'object'
       ? Object.fromEntries(
           Object.entries(input.regionWins).map(([regionId, value]) => [
@@ -423,6 +427,7 @@ export function snapshotRegistry(registry) {
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
     devMode: Boolean(registry.get('devMode')),
+    cutscenesSeen: registry.get('cutscenesSeen') || [],
     regionWins: registry.get('regionWins') || {},
     tunerShopProgress: registry.get('tunerShopProgress') || {},
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},

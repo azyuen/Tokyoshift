@@ -1,6 +1,10 @@
 import { cars, carOrder } from '../data/cars.js?v=20260925-r183';
 import { engines } from '../data/engines.js?v=20260924-r164';
-import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260925-r182';
+import {
+  characters,
+  genericRivalCharacterOrder,
+  getRivalCharacterOrderForRegion,
+} from '../data/characters.js?v=20260925-r182';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260922-r114';
@@ -17,7 +21,7 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r177';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r178';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import {
@@ -27,7 +31,8 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260922-r128';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r184';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r184';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -179,70 +184,33 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   showTunerTeamCallout(regionId) {
-    const shop = getTunerShopForRegion(regionId);
+    const key = String(regionId || '').toUpperCase();
+    const shop = getTunerShopForRegion(key);
     if (!shop) return;
 
-    const depth = 175;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
+    const regionalRivals = getRivalCharacterOrderForRegion(key);
+    const npcId = characters[shop.mechanicId]
+      ? shop.mechanicId
+      : (regionalRivals[0] || genericRivalCharacterOrder[0] || null);
+    const npcName = characters[npcId]?.name || (key + ' CREW');
 
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
-      .setDepth(depth).setInteractive());
-
-    add(this.add.rectangle(780, 420, 820, 470, 0x07111d, 0.997)
-      .setStrokeStyle(3, 0xff5f93, 0.97).setDepth(depth + 1));
-
-    add(this.add.text(780, 235, 'UNEXPECTED CALL-OUT', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#fff2f7'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(780, 285, regionId + ' CREW', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ff91b6'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    const locationText = this.activeLocationId === 'tokyoDragComplex'
-      ? 'Someone from the crew finds you at the Drag Complex.'
-      : 'Someone from the crew spots you at the Auto Market.';
-
-    add(this.add.text(
-      780,
-      382,
-      locationText + '\n\n' +
-      '“You’ve been making a lot of noise.\n' +
-      'Beat all seven of us, and ' + shop.label + ' will hear about it.”',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '14px',
-        color: '#d7e6ed',
-        fontStyle: '600',
-        align: 'center',
-        lineSpacing: 7,
-        wordWrap: { width: 650 },
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(780, 500, 'TEAM CHALLENGE ADDED TO ' + regionId, {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e4b660'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    const mark = add(this.add.rectangle(675, 575, 300, 50, 0x321522, 1)
-      .setStrokeStyle(2, 0xff5f93, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(675, 575, 'ACCEPT CALL-OUT', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff4f8'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const later = add(this.add.rectangle(945, 575, 180, 50, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(945, 575, 'LATER', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => objects.forEach(obj => obj?.destroy?.());
-    mark.on('pointerdown', dismiss);
-    later.on('pointerdown', dismiss);
-    blocker.on('pointerdown', () => {});
+    playMangaCutscene(this, 'tunerTeamCallout', {
+      historyId: 'tunerTeamCallout:' + key,
+      characterOverrides: {
+        NPC: npcId,
+      },
+      variables: {
+        REGION: key,
+        SHOP: shop.label,
+        NPC_NAME: npcName.toUpperCase(),
+        NPC_SUBTITLE: (shop.label + ' // CREW CALL-OUT').toUpperCase(),
+      },
+      onComplete: () => {
+        // Invitation state was persisted before the presentation begins.
+        // Accept/skip here changes no Central Tokyo progression; the challenge
+        // remains available in its home region exactly as before.
+      },
+    });
   }
 
   drawShell() {

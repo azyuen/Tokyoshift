@@ -6,7 +6,7 @@ import {
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
 } from '../data/tunerShops.js?v=20260924-r178';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r176';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -28,6 +28,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r184';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -170,6 +171,8 @@ export default class TunerShopScene extends Phaser.Scene {
       fontSize: '11px',
       color: '#f0dfbf',
     }).setOrigin(1, 0.5).setDepth(42);
+
+    addSettingsButton(this, 1210, 35);
   }
 
   drawSidePanel() {

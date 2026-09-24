@@ -7,7 +7,8 @@ import {
   deleteProfileSlot,
   setActiveProfileIndex,
   saveSessionState,
-} from '../state/GameState.js?v=20260922-r128';
+} from '../state/GameState.js?v=20260925-r184';
+import { addDevCutsceneButton } from './CutsceneTester.js?v=20260925-r184';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -49,7 +50,8 @@ export function addSettingsButton(scene, x = 995, y = 35) {
   button.on('pointerout', () => button.setStrokeStyle(1, 0x315470, 1));
   button.on('pointerdown', () => showSettingsPanel(scene));
 
-  return { button, cog };
+  const devCutscenes = addDevCutsceneButton(scene, x - 115, y);
+  return { button, cog, devCutscenes };
 }
 
 export function showSettingsPanel(scene) {
