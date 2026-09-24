@@ -87,9 +87,93 @@ export const TUNER_SHOPS = {
       },
     ],
   },
+
+  TATSUMI: {
+    id: 'tatsumiJun',
+    enabled: true,
+    regionId: 'TATSUMI',
+    mapLabel: 'TUNER SHOP',
+    label: 'JUN',
+    fullName: 'JUN AUTO MECHANIC',
+    specialty: 'ENGINE INTERNALS',
+
+    // Tatsumi's dedicated crew mechanic asset has not been added to the
+    // current catalogue yet. Keep the slot intentionally empty rather than
+    // borrowing another region's engineer; the scene safely renders without
+    // a mechanic until that character is supplied.
+    mechanicId: 'tatsumiJunEngineer',
+    heroCarId: 'junHyperLemonEvo5',
+
+    // The hero is an Evo V, so do not let an Evo III act as a fake donor.
+    // Once the stock Evo V enters the normal-car catalogue this build path
+    // becomes live automatically.
+    donorCarId: 'evo5',
+    donorLabel: 'MITSUBISHI LANCER EVO V',
+    buildCost: 12000000,
+
+    unlockRegionWins: 5,
+
+    backgroundKey: 'tunerShopTatsumiJunBg',
+    backgroundPath: 'assets/Locations/TunerShops/tatsumi_jun_workshop.png',
+
+    decalId: 'jun',
+    decalLabel: 'JUN',
+
+    tuningOptions: [
+      {
+        id: 'junBottomEndBlueprint',
+        name: 'BOTTOM-END BLUEPRINT',
+        shortName: 'BLUEPRINTED BOTTOM END',
+        cost: 72000,
+        description: 'Balance and blueprint an already-forged long block for harder sustained use.',
+        requirementLabel: 'REQUIRES ENGINE LV 2',
+        requirements: {
+          engine: { engine: 2 },
+        },
+        effect: {
+          outputScale: 1.025,
+          redlineAdd: 100,
+        },
+        benefit: '+2.5% OUTPUT / +100 RPM',
+      },
+      {
+        id: 'junHeadCamPackage',
+        name: 'HEAD & CAM PACKAGE',
+        shortName: 'HEAD / CAM PACKAGE',
+        cost: 88000,
+        description: 'JUN headwork and cam timing for stronger high-rpm breathing.',
+        requirementLabel: 'REQUIRES ENGINE LV 3 + ECU LV 2',
+        requirements: {
+          engine: { engine: 3, ecu: 2 },
+        },
+        effect: {
+          outputScale: 1.035,
+          redlineAdd: 150,
+        },
+        benefit: '+3.5% OUTPUT / +150 RPM',
+      },
+      {
+        id: 'junCompleteEngineSetup',
+        name: 'JUN COMPLETE ENGINE SETUP',
+        shortName: 'COMPLETE ENGINE SETUP',
+        cost: 110000,
+        description: 'Final dyno and mechanical refinement once both JUN engine programs are complete.',
+        requirementLabel: 'REQUIRES BOTH JUN ENGINE TUNES',
+        requirements: {
+          specialist: ['junBottomEndBlueprint', 'junHeadCamPackage'],
+        },
+        effect: {
+          outputScale: 1.02,
+          efficiencyAdd: 0.01,
+          redlineAdd: 100,
+        },
+        benefit: '+2% OUTPUT / +100 RPM / +1% EFF.',
+      },
+    ],
+  },
 };
 
-export const TUNER_SHOP_ORDER = ['ODAIBA'];
+export const TUNER_SHOP_ORDER = ['ODAIBA', 'TATSUMI'];
 
 export const TUNER_SHOP_BY_ID = Object.fromEntries(
   Object.values(TUNER_SHOPS).map(shop => [shop.id, shop])
@@ -256,6 +340,14 @@ export function applySpecialistTuning(carConfig, engineConfig, carState = {}) {
       engine.torqueCurve = (engine.torqueCurve || []).map(
         ([rpm, torque]) => [rpm, torque * scale]
       );
+    }
+
+    if (effect.redlineAdd != null) {
+      const add = Number(effect.redlineAdd || 0);
+      car.engineRedlineRPM = Number(car.engineRedlineRPM || engine.redlineRPM || 7600) + add;
+      car.engineLimiterRPM = Number(car.engineLimiterRPM || engine.limiterRPM || car.engineRedlineRPM + 200) + add;
+      engine.redlineRPM = Number(engine.redlineRPM || car.engineRedlineRPM || 7600) + add;
+      engine.limiterRPM = Number(engine.limiterRPM || car.engineLimiterRPM || engine.redlineRPM + 200) + add;
     }
   });
 
