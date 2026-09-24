@@ -90,7 +90,7 @@ export function createCharacterProfile(scene, {
   const height = Math.max(1, Number(frameHeight) || 1);
   const centreX = Number(x) || 0;
   const centreY = Number(y) || 0;
-  const profile = resolveCharacterProfile(characterId, pose, profileOverride);
+  const profile = resolveCharacterProfile(characterId, actualPose, profileOverride);
   const texture = scene.textures.get(spriteKey);
   texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   const source = texture.getSourceImage();
