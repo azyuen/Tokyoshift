@@ -14,7 +14,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260924-r170';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r170';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r175';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
@@ -623,6 +623,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       depth: depth + 1.005,
       paintColor,
       bodyLayers,
+      flipX,
     });
 
     return [
