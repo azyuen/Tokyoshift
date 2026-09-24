@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260924-r167';
+import { cars } from '../data/cars.js?v=20260924-r169';
 import { characters } from '../data/characters.js?v=20260924-r167';
 import {
   getTunerShopForRegion,
@@ -12,7 +12,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260923-r154';
+} from '../vehicles/CarAppearance.js?v=20260924-r169';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
