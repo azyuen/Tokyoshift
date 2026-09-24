@@ -24,7 +24,10 @@ import {
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260924-r176';
+} from '../data/tunerShops.js?v=20260924-r178';
+import {
+  getTunerTeamChallengeState,
+} from '../data/tunerChallenges.js?v=20260924-r178';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -861,13 +864,22 @@ export function showTravelMap(scene, {
     const tunerUnlocked = Boolean(
       tunerShop && isTunerShopUnlocked(scene.registry, selectedRegionId)
     );
+    const tunerChallenge = getTunerTeamChallengeState(scene.registry, selectedRegionId);
+    const challengeVisible = Boolean(
+      tunerShop &&
+      !tunerUnlocked &&
+      (tunerChallenge.invited || tunerChallenge.stage > 0)
+    );
+    const showTunerPanel = tunerUnlocked || challengeVisible;
 
-    tunerPanelObjects.forEach(obj => obj.setVisible(tunerUnlocked));
+    tunerPanelObjects.forEach(obj => obj.setVisible(showTunerPanel));
     tunerBadge.removeAllListeners('pointerdown');
 
     if (tunerUnlocked) {
-      tunerName.setText(tunerShop.label);
-      tunerSpecialty.setText(tunerShop.specialty);
+      tunerKicker.setText('TUNER SHOP').setColor('#c99a4e');
+      tunerName.setText(tunerShop.label).setColor('#fff1d3');
+      tunerSpecialty.setText(tunerShop.specialty).setColor('#c8b58e');
+      tunerArrow.setText('>').setVisible(true);
       tunerBadge
         .setInteractive({ useHandCursor: true })
         .setFillStyle(0x17130d, 0.97)
@@ -883,6 +895,15 @@ export function showTravelMap(scene, {
           fromWorkshop,
         });
       });
+    } else if (challengeVisible) {
+      tunerKicker.setText('TEAM CHALLENGE').setColor('#ff91b6');
+      tunerName.setText(tunerChallenge.stage + ' / 7 DEFEATED').setColor('#fff2f7');
+      tunerSpecialty.setText('VISIT A ' + selectedRegionId + ' MEET').setColor('#b4c7d1');
+      tunerArrow.setText('').setVisible(false);
+      tunerBadge
+        .disableInteractive()
+        .setFillStyle(0x21121a, 0.97)
+        .setStrokeStyle(2, 0xff5f93, 0.96);
     } else {
       tunerBadge.disableInteractive();
     }
