@@ -37,6 +37,7 @@ export const CUTSCENES = {
     pages: [
       {
         speaker: 'left',
+        speakerLabel: '{NPC_NAME}',
         pose: 'idle',
         text: "You've been making a lot of noise around {REGION}.",
       },
@@ -47,6 +48,7 @@ export const CUTSCENES = {
       },
       {
         speaker: 'left',
+        speakerLabel: '{NPC_NAME}',
         pose: 'win',
         text: 'Seven drivers. Beat the whole team. Then {SHOP} will hear about it.',
         emphasis: true,
@@ -83,16 +85,19 @@ export const CUTSCENES = {
     pages: [
       {
         speaker: 'left',
+        speakerLabel: '{MECHANIC_NAME}',
         pose: 'idle',
         text: 'You beat all seven of them.',
       },
       {
         speaker: 'left',
+        speakerLabel: '{MECHANIC_NAME}',
         pose: 'win',
         text: "I've seen enough.",
       },
       {
         speaker: 'left',
+        speakerLabel: '{MECHANIC_NAME}',
         pose: 'idle',
         text: 'Bring your car to my workshop.',
         emphasis: true,
@@ -128,11 +133,13 @@ export const CUTSCENES = {
     pages: [
       {
         speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
         pose: 'idle',
         text: "I've been looking for you.",
       },
       {
         speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
         pose: 'win',
         text: 'Keys for keys.',
         emphasis: true,
