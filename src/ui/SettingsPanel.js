@@ -7,7 +7,8 @@ import {
   deleteProfileSlot,
   setActiveProfileIndex,
   saveSessionState,
-} from '../state/GameState.js?v=20260922-r128';
+} from '../state/GameState.js?v=20260925-r184';
+import { addDevCutsceneButton } from './MangaCutscene.js?v=20260925-r184';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -49,7 +50,16 @@ export function addSettingsButton(scene, x = 995, y = 35) {
   button.on('pointerout', () => button.setStrokeStyle(1, 0x315470, 1));
   button.on('pointerdown', () => showSettingsPanel(scene));
 
-  return { button, cog };
+  // Dev profiles get a global cutscene preview control beside Settings.
+  // The helper is idempotent, so scenes may also request it explicitly.
+  const cutscenes = addDevCutsceneButton(scene, x - 90, y, {
+    width: 120,
+    height: 38,
+    depth: 43,
+    label: 'SCENES',
+  });
+
+  return { button, cog, cutscenes };
 }
 
 export function showSettingsPanel(scene) {
