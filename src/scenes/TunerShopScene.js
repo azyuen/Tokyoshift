@@ -497,9 +497,9 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
-    const startY = SIDE.y + 344;
-    const cardHeight = 108;
-    const cardStep = 116;
+    const startY = SIDE.y + 338;
+    const cardHeight = 116;
+    const cardStep = 124;
 
     options.forEach((option, index) => {
       const y = startY + index * cardStep;
@@ -521,28 +521,30 @@ export default class TunerShopScene extends Phaser.Scene {
         1
       );
 
+      const cardTop = y - cardHeight / 2;
+      const contentX = SIDE.x + 42;
       const name = this.add.text(
-        SIDE.x + 30,
-        y - 37,
+        contentX,
+        cardTop + 14,
         option.shortName || option.name,
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
           color: isInstalled ? '#a9e4bd' : enabled ? '#e9fffb' : '#879296',
-          wordWrap: { width: SIDE.w - 92 },
+          wordWrap: { width: SIDE.w - 106 },
         }
       );
 
       const benefit = this.add.text(
-        SIDE.x + 30,
-        y - 7,
+        contentX,
+        cardTop + 44,
         option.benefit,
         {
           fontFamily: BODY_FONT,
           fontSize: '8px',
           color: '#91adb0',
           fontStyle: '700',
-          wordWrap: { width: SIDE.w - 92 },
+          wordWrap: { width: SIDE.w - 106 },
         }
       );
 
@@ -552,14 +554,14 @@ export default class TunerShopScene extends Phaser.Scene {
       else if (!affordable) metaText = 'NEED ' + money(option.cost);
 
       const meta = this.add.text(
-        SIDE.x + 30,
-        y + 25,
+        contentX,
+        cardTop + 78,
         metaText,
         {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: isInstalled ? '#8dd0a4' : enabled ? '#d9b66f' : '#717d82',
-          wordWrap: { width: SIDE.w - 94 },
+          wordWrap: { width: SIDE.w - 108 },
         }
       );
 
@@ -955,50 +957,92 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   openDecalColourPicker(initialColor = '#FFFFFF', onPick = null) {
-    try {
-      this.decalColourInput?.remove?.();
+    this.clearPopup();
 
-      const input = document.createElement('input');
-      input.type = 'color';
-      input.value = /^#[0-9A-F]{6}$/i.test(initialColor)
-        ? initialColor
-        : '#FFFFFF';
-      input.setAttribute('aria-label', 'Choose decal colour');
-      Object.assign(input.style, {
-        position: 'fixed',
-        left: '-20px',
-        bottom: '-20px',
-        width: '1px',
-        height: '1px',
-        opacity: '0',
-        pointerEvents: 'none',
+    const shade = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      1560,
+      840,
+      0x020304,
+      0.74
+    ).setDepth(170).setInteractive());
+
+    const panel = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      720,
+      430,
+      0x091119,
+      0.995
+    ).setStrokeStyle(2, 0xe6c365, 1).setDepth(171));
+
+    this.addPopup(this.add.text(780, 260, 'CHOOSE DECAL COLOUR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#fff1d5',
+    }).setOrigin(0.5).setDepth(172));
+
+    const colours = [
+      '#FFFFFF', '#D8D8D8', '#8C8C8C', '#000000',
+      '#FF3B30', '#FF9500', '#FFD60A', '#34C759',
+      '#00C7BE', '#32ADE6', '#007AFF', '#5856D6',
+      '#AF52DE', '#FF2D55', '#7A4B2A', '#C8A46A',
+      '#A8E6CF', '#64D2FF', '#5E5CE6', '#BF5AF2',
+      '#FF6482', '#E6E6FA', '#F5F0DC', '#C7FF00',
+    ];
+
+    const cols = 6;
+    const cellW = 88;
+    const cellH = 62;
+    const startX = 780 - ((cols - 1) * cellW) / 2;
+    const startY = 325;
+
+    colours.forEach((color, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      const x = startX + col * cellW;
+      const y = startY + row * cellH;
+      const tint = Number.parseInt(color.slice(1), 16);
+      const selected = color.toUpperCase() === String(initialColor || '').toUpperCase();
+
+      const swatch = this.addPopup(this.add.rectangle(
+        x,
+        y,
+        60,
+        40,
+        tint,
+        1
+      ).setStrokeStyle(selected ? 4 : 2, selected ? 0xe6c365 : 0x707b80, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(172));
+
+      swatch.on('pointerdown', () => {
+        onPick?.(color);
+        this.clearPopup();
       });
+    });
 
-      document.body.appendChild(input);
-      this.decalColourInput = input;
+    const cancel = this.addPopup(this.add.rectangle(
+      780,
+      590,
+      270,
+      48,
+      0x171d21,
+      1
+    ).setStrokeStyle(1, 0x68747a, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(172));
 
-      const emit = () => {
-        const value = String(input.value || '#FFFFFF').toUpperCase();
-        onPick?.(value);
-      };
+    this.addPopup(this.add.text(780, 590, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#d7e1e5',
+    }).setOrigin(0.5).setDepth(173));
 
-      const cleanup = () => {
-        if (this.decalColourInput === input) this.decalColourInput = null;
-        input.remove();
-      };
-
-      input.addEventListener('input', emit);
-      input.addEventListener('change', () => {
-        emit();
-        window.setTimeout(cleanup, 0);
-      }, { once: true });
-      input.click();
-      window.setTimeout(() => {
-        if (document.body.contains(input)) cleanup();
-      }, 60000);
-    } catch (error) {
-      console.warn('Unable to open decal colour picker', error);
-    }
+    cancel.on('pointerdown', () => this.clearPopup());
+    shade.on('pointerdown', () => {});
+    panel.setInteractive();
   }
 
   installSpecialistTune(carId, option) {
@@ -1102,21 +1146,10 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   getStageWheelFit(car, bodyScale, wheelSource) {
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
-
-    // Normal cars use the legacy/general wheel artwork. In the tuner-house
-    // scene they were reading visibly undersized against the larger display
-    // body. Hero cars already use their individually calibrated fit and must
-    // not be boosted.
-    if (!car.visual.singleBody) {
-      const boost = 1.14;
-      fit.rear.wheelScale *= boost;
-      fit.front.wheelScale *= boost;
-      if (fit.rear.backingRadius) fit.rear.backingRadius *= boost;
-      if (fit.front.backingRadius) fit.front.backingRadius *= boost;
-    }
-
-    return fit;
+    // Match GarageScene exactly for normal cars: sizing and placement come
+    // straight from the car's canonical WheelFit calibration. Hero cars keep
+    // their own per-asset visual settings through the same helper.
+    return getWheelPairFit(car.visual, bodyScale, false, wheelSource);
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {

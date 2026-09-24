@@ -91,7 +91,7 @@ export default class BootScene extends Phaser.Scene {
         if (shop.decalTextureKey && shop.decalPath) {
           this.load.image(
             shop.decalTextureKey,
-            shop.decalPath + '?v=20260924-r173'
+            shop.decalPath + '?v=20260924-r174'
           );
         }
 
