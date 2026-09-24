@@ -1113,10 +1113,14 @@ export default class TunerShopScene extends Phaser.Scene {
     if (this.conversionInProgress) return;
 
     const donor = cars[this.shop.donorCarId];
-    const owned = this.registry.get('ownedCarIds') || [];
-    const donorState = (this.registry.get('carStates') || {})[this.shop.donorCarId] || {};
+    const currentCarId = this.getCurrentCarId();
+    const donorState = (this.registry.get('carStates') || {})[currentCarId] || {};
 
-    if (!donor || !owned.includes(this.shop.donorCarId) || donorState.stock === false) return;
+    if (
+      !donor ||
+      currentCarId !== this.shop.donorCarId ||
+      donorState.stock === false
+    ) return;
 
     this.conversionInProgress = true;
     this.clearDynamic();
@@ -1387,20 +1391,112 @@ export default class TunerShopScene extends Phaser.Scene {
     });
   }
 
-  leaveWorkshop() {
-    saveSessionState(this.registry);
+  openMap() {
+    const district = String(this.registry.get('district') || '').toUpperCase();
+    const currentLocationId =
+      this.returnLocationId ||
+      (district === 'CENTRAL_TOKYO'
+        ? this.registry.get('centralTokyoLocation')
+        : this.registry.get('meetLocation')) ||
+      'odaiba7eleven';
 
-    if (this.returnScene === 'MeetScene') {
-      this.scene.start('MeetScene');
-      return;
-    }
+    showTravelMap(this, {
+      currentLocationId,
+      title: 'TOKYO REGION MAP',
+      actionVerb: 'DRIVE',
+      allowCurrentAction: false,
+      fromWorkshop: false,
+      onHome: (workshopLocationId, cost) =>
+        this.returnToWorkshop(workshopLocationId, cost),
+      onWorkshopUpgrade: (location, cost, alreadyUnlocked) =>
+        this.upgradeWorkshopFromMap(location, cost, alreadyUnlocked),
+      onTravel: (locationId, cost) => this.travelToLocation(locationId, cost),
+    });
+  }
 
-    if (this.returnScene === 'CentralTokyoScene') {
-      const locationId = this.registry.get('centralTokyoLocation') || this.returnLocationId;
+  travelToLocation(locationId, cost = 0) {
+    const target = getTravelLocation(locationId);
+    if (!target) return;
+
+    const price = Math.max(0, Number(cost || 0));
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < price) return;
+
+    this.registry.set('cash', cash - price);
+    this.cashText?.setText(money(cash - price));
+    this.registry.set('meetStranded', false);
+
+    if (String(target.regionId || '').toUpperCase() === 'CENTRAL_TOKYO') {
+      this.registry.set('centralTokyoLocation', locationId);
+      this.registry.set('district', 'CENTRAL_TOKYO');
+      saveSessionState(this.registry);
       this.scene.start('CentralTokyoScene', { locationId });
       return;
     }
 
-    this.scene.start('GarageScene');
+    this.registry.set('meetLocation', locationId);
+    this.registry.set('district', target.regionId);
+    saveSessionState(this.registry);
+    this.scene.start('MeetScene');
+  }
+
+  upgradeWorkshopFromMap(location, cost = 0, alreadyUnlocked = false) {
+    if (!location) return;
+
+    if (alreadyUnlocked) {
+      this.returnToWorkshop(location.id, 0);
+      return;
+    }
+
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    const targetTier = Number(location.garageTier || 0);
+    const selectedCarId = this.registry.get('selectedCarId');
+    const ownedCarIds = this.registry.get('ownedCarIds') || [];
+    const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    this.registry.set(
+      'garageTier',
+      Math.max(Number(this.registry.get('garageTier') || 0), targetTier)
+    );
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', location.id);
+
+    if (selectedCarId && ownedCarIds.includes(selectedCarId)) {
+      locations[selectedCarId] = location.id;
+      this.registry.set('carGarageLocations', locations);
+    }
+
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
+  }
+
+  returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    const cash = Number(this.registry.get('cash') || 0);
+    const price = Math.max(0, Number(cost || 0));
+    if (cash < price) return;
+
+    this.registry.set('cash', cash - price);
+    this.registry.set('workshopLocationId', workshopLocationId || 'shinonomeWorkshop');
+    this.registry.set('meetStranded', false);
+    saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
+    window.location.reload();
   }
 }
