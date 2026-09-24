@@ -25,8 +25,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r178';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r184';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260924-r163';
@@ -50,7 +50,8 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r182';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r184';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -341,76 +342,35 @@ export default class MeetScene extends Phaser.Scene {
       return false;
     }
 
-    const mechanic = characters[shop.mechanicId] || null;
-    const depth = 170;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
+    const mechanicId = characters[shop.mechanicId] ? shop.mechanicId : null;
+    const mechanicName = mechanicId
+      ? characters[mechanicId].name
+      : (shop.label + ' ENGINEER');
 
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
-      .setDepth(depth).setInteractive());
-    add(this.add.rectangle(780, 420, 850, 500, 0x07111d, 0.995)
-      .setStrokeStyle(3, 0xe4b660, 0.98).setDepth(depth + 1));
-
-    add(this.add.text(780, 218, 'TEAM CLEARED', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8faabb'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(780, 262, shop.fullName + ' DISCOVERED', {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffe2a4',
-      align: 'center', wordWrap: { width: 700 }
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    if (mechanic?.visual?.spriteKey && this.textures.exists(mechanic.visual.spriteKey)) {
-      const profile = createCharacterProfile(this, {
-        characterId: shop.mechanicId,
-        pose: 'idle',
-        x: 545,
-        y: 395,
-        frameWidth: 210,
-        frameHeight: 250,
-        side: 'left',
-        depth: depth + 2,
-      });
-      if (profile) objects.push(profile.image, profile.maskShape);
-    }
-
-    const speaker = mechanic?.name || (shop.label + ' ENGINEER');
-    add(this.add.text(850, 355, speaker.toUpperCase(), {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7edfff'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      850,
-      420,
-      '“I’ve seen enough. Come by the shop sometime.”\n\n' +
-      shop.label + ' is now available from the ' + pending + ' map panel.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#d7e5ec',
-        align: 'center',
-        fontStyle: '600',
-        lineSpacing: 8,
-        wordWrap: { width: 500 },
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const close = add(this.add.rectangle(780, 600, 310, 50, 0x241d12, 1)
-      .setStrokeStyle(2, 0xe4b660, 1).setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-    add(this.add.text(780, 600, 'OPEN TOKYO MAP LATER', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff3d7'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
+    const dismissReveal = () => {
       this.registry.set('tunerChallengeRevealPending', null);
       saveSessionState(this.registry);
     };
 
-    close.on('pointerdown', dismiss);
-    blocker.on('pointerdown', () => {});
-    return true;
+    const result = playMangaCutscene(this, 'tunerShopDiscovery', {
+      historyId: 'tunerShopDiscovery:' + pending,
+      characterOverrides: {
+        MECHANIC: mechanicId,
+      },
+      variables: {
+        SHOP: shop.label,
+        MECHANIC_NAME: mechanicName.toUpperCase(),
+        MECHANIC_SUBTITLE: (shop.fullName + ' ENGINEER').toUpperCase(),
+      },
+      onComplete: dismissReveal,
+    });
+
+    if (!result.played && result.reason === 'seen') {
+      dismissReveal();
+      return false;
+    }
+
+    return Boolean(result.played);
   }
 
   maybeShowTunerTeamChallenge() {
@@ -465,6 +425,45 @@ export default class MeetScene extends Phaser.Scene {
       rounds,
     });
     saveSessionState(this.registry);
+
+    // First invitation uses the reusable manga overlay. If the player skips it,
+    // the invitation remains active and the legacy challenge card can be used
+    // on the next visit to preserve the existing LATER/RESUME progression path.
+    if (state.stage <= 0 && !state.activeSession) {
+      const npcId = characters[shop.mechanicId]
+        ? shop.mechanicId
+        : (rounds[0]?.characterId || null);
+      const npcName = characters[npcId]?.name || (key + ' CREW');
+
+      const cutscene = playMangaCutscene(this, 'tunerTeamCallout', {
+        historyId: 'tunerTeamCallout:' + key,
+        characterOverrides: {
+          NPC: npcId,
+        },
+        variables: {
+          REGION: key,
+          SHOP: shop.label,
+          NPC_NAME: npcName.toUpperCase(),
+          NPC_SUBTITLE: (shop.label + ' // CREW CALL-OUT').toUpperCase(),
+        },
+        onComplete: ({ reason }) => {
+          if (reason !== 'action') return;
+
+          const nextState = getTunerTeamChallengeState(this.registry, key);
+          this.setTunerChallengeState(key, {
+            ...nextState,
+            invited: true,
+            activeSession: true,
+            playerCarId: this.registry.get('selectedCarId') || '',
+            rounds,
+          });
+          saveSessionState(this.registry);
+          this.startTunerTeamChallengeRound(key);
+        },
+      });
+
+      if (cutscene.played) return;
+    }
 
     const depth = 160;
     const objects = [];
