@@ -31,12 +31,12 @@ import {
   getChassisCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260924-r167';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260924-r167';
+} from '../data/secondaryTuning.js?v=20260924-r168';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260924-r168';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260922-r125';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r167';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r168';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getPendingCentralTokyoInvite,
