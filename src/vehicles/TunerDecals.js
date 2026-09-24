@@ -20,6 +20,41 @@ export const TUNER_DECAL_STYLES = {
     textureKey: 'tunerDecalJun',
     suggestedPath: 'assets/Decals/jun.png',
   },
+  amuse: {
+    id: 'amuse',
+    label: 'AMUSE',
+    color: '#FFFFFF',
+    textureKey: 'tunerDecalAmuse',
+    suggestedPath: 'assets/Decals/amuse.png',
+  },
+  topSecret: {
+    id: 'topSecret',
+    label: 'TOP SECRET',
+    color: '#FFFFFF',
+    textureKey: 'tunerDecalTopSecret',
+    suggestedPath: 'assets/Decals/top_secret.png',
+  },
+  mines: {
+    id: 'mines',
+    label: "MINE'S",
+    color: '#FFFFFF',
+    textureKey: 'tunerDecalMines',
+    suggestedPath: 'assets/Decals/mines.png',
+  },
+  reAmemiya: {
+    id: 'reAmemiya',
+    label: 'RE AMEMIYA',
+    color: '#FFFFFF',
+    textureKey: 'tunerDecalReAmemiya',
+    suggestedPath: 'assets/Decals/re_amemiya.png',
+  },
+  spoon: {
+    id: 'spoon',
+    label: 'SPOON',
+    color: '#FFFFFF',
+    textureKey: 'tunerDecalSpoon',
+    suggestedPath: 'assets/Decals/spoon.png',
+  },
 };
 
 const clamp = (value, min, max) =>
