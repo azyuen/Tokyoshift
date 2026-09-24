@@ -463,8 +463,6 @@ export default class TunerShopScene extends Phaser.Scene {
     const carId = this.getCurrentTunableCarId();
     if (!carId) {
       const currentId = this.getCurrentCarId();
-      const label = currentId ? (cars[currentId]?.shortName || currentId) : 'NO CAR';
-      this.setStageLabel(label + ' // CURRENT CAR');
 
       this.addDynamic(this.add.text(
         STAGE.x + STAGE.w / 2,
@@ -480,12 +478,13 @@ export default class TunerShopScene extends Phaser.Scene {
 
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 314,
+        SIDE.y + 330,
         currentId ? 'THIS CAR IS NOT TUNABLE HERE' : 'NO CURRENT CAR',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
           color: '#79868c',
+          wordWrap: { width: SIDE.w - 72 },
         }
       ));
       return;
@@ -495,57 +494,15 @@ export default class TunerShopScene extends Phaser.Scene {
     const carState = (this.registry.get('carStates') || {})[carId] || {};
 
     this.drawCarOnStage(carId, 720, 650, 730, 10, true);
-    this.setStageLabel((car.shortName || car.name) + ' // CURRENT CAR');
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SPECIALIST TUNING', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#72d8d1',
-    }).setDepth(20));
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 132, car.name, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#ffffff',
-    }).setDepth(20));
-
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#78999a',
-    }));
-
-    const carPanel = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 334,
-      SIDE.w - 56,
-      50,
-      0x102024,
-      1
-    ).setStrokeStyle(1, 0x4d767a, 1);
-
-    const carName = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 334,
-      car.shortName,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#e7ffff',
-        align: 'center',
-        wordWrap: { width: SIDE.w - 92 },
-      }
-    ).setOrigin(0.5);
-
-    this.sideContent.add(carPanel);
-    this.sideContent.add(carName);
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
-    const startY = SIDE.y + 410;
+    const startY = SIDE.y + 344;
+    const cardHeight = 108;
+    const cardStep = 116;
 
     options.forEach((option, index) => {
-      const y = startY + index * 92;
+      const y = startY + index * cardStep;
       const isInstalled = installed.has(option.id);
       const requirementsMet = areTunerOptionRequirementsMet(carState, option);
       const affordable = Number(this.registry.get('cash') || 0) >= Number(option.cost || 0);
@@ -555,7 +512,7 @@ export default class TunerShopScene extends Phaser.Scene {
         SIDE.x + SIDE.w / 2,
         y,
         SIDE.w - 56,
-        80,
+        cardHeight,
         isInstalled ? 0x15241d : enabled ? 0x10262a : 0x151a1c,
         1
       ).setStrokeStyle(
@@ -566,7 +523,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const name = this.add.text(
         SIDE.x + 30,
-        y - 31,
+        y - 37,
         option.shortName || option.name,
         {
           fontFamily: PIXEL_FONT,
@@ -578,13 +535,14 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const benefit = this.add.text(
         SIDE.x + 30,
-        y - 10,
+        y - 7,
         option.benefit,
         {
           fontFamily: BODY_FONT,
           fontSize: '8px',
           color: '#91adb0',
           fontStyle: '700',
+          wordWrap: { width: SIDE.w - 92 },
         }
       );
 
@@ -595,7 +553,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
       const meta = this.add.text(
         SIDE.x + 30,
-        y + 15,
+        y + 25,
         metaText,
         {
           fontFamily: PIXEL_FONT,
@@ -609,9 +567,131 @@ export default class TunerShopScene extends Phaser.Scene {
 
       if (enabled) {
         box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => this.installSpecialistTune(carId, option));
+        box.on('pointerdown', () => this.showTuneConfirmation(carId, option));
       }
     });
+  }
+
+  showTuneConfirmation(carId, option) {
+    if (!carId || !option) return;
+
+    const car = cars[carId];
+    const carState = (this.registry.get('carStates') || {})[carId] || {};
+    const installed = getInstalledSpecialistTuning(carState);
+    if (installed.includes(option.id)) return;
+    if (!areTunerOptionRequirementsMet(carState, option)) return;
+
+    const cost = Math.max(0, Number(option.cost || 0));
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < cost) return;
+
+    this.clearPopup();
+
+    const shade = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      1560,
+      840,
+      0x020304,
+      0.74
+    ).setDepth(150).setInteractive());
+
+    const panel = this.addPopup(this.add.rectangle(
+      780,
+      420,
+      700,
+      356,
+      0x091119,
+      0.995
+    ).setStrokeStyle(2, 0x65cfc8, 1).setDepth(151));
+
+    this.addPopup(this.add.text(780, 305, 'CONFIRM SPECIALIST TUNE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#e9fffb',
+    }).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      352,
+      (car?.shortName || car?.name || carId) + '  //  ' + (option.shortName || option.name),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+        align: 'center',
+        wordWrap: { width: 590 },
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      408,
+      option.description || option.benefit,
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#aebfc5',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 560 },
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    this.addPopup(this.add.text(
+      780,
+      466,
+      option.benefit + '     ' + money(cost),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#d8c17f',
+        align: 'center',
+      }
+    ).setOrigin(0.5).setDepth(152));
+
+    const cancel = this.addPopup(this.add.rectangle(
+      640,
+      535,
+      230,
+      54,
+      0x171d21,
+      1
+    ).setStrokeStyle(1, 0x68747a, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(152));
+
+    const apply = this.addPopup(this.add.rectangle(
+      920,
+      535,
+      230,
+      54,
+      0x10292b,
+      1
+    ).setStrokeStyle(2, 0x65cfc8, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(152));
+
+    this.addPopup(this.add.text(640, 535, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#cbd5d9',
+    }).setOrigin(0.5).setDepth(153));
+
+    this.addPopup(this.add.text(920, 535, 'YES // APPLY', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#e9fffb',
+    }).setOrigin(0.5).setDepth(153));
+
+    cancel.on('pointerdown', () => this.clearPopup());
+    apply.on('pointerdown', () => {
+      this.clearPopup();
+      this.installSpecialistTune(carId, option);
+    });
+
+    shade.on('pointerdown', () => {});
+    panel.setInteractive();
   }
 
   showDecalMode() {
