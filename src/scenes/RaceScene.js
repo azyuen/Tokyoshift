@@ -34,7 +34,12 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260923-r162';
-import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260924-r176';
+import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260924-r178';
+import {
+  TUNER_TEAM_CHALLENGE_STAGES,
+  TUNER_TEAM_PERFECT_REWARD,
+  getTunerTeamChallengeState,
+} from '../data/tunerChallenges.js?v=20260924-r178';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1470,6 +1475,31 @@ export default class RaceScene extends Phaser.Scene {
         return { primary: 'RACE COMPLETE', secondary: '' };
       }
 
+      if (settlement.teamChallenge) {
+        if (settlement.teamChallengeFailed) {
+          return {
+            primary: 'CHALLENGE\nPAUSED',
+            secondary: settlement.progress + ' / 7 DEFEATED // YOU CAN RESUME LATER',
+          };
+        }
+
+        if (settlement.teamChallengeContinues) {
+          return {
+            primary: 'RACER ' + settlement.stageNumber + '\nDEFEATED',
+            secondary: settlement.progress + ' / 7 CLEARED // NEXT CHALLENGER READY',
+          };
+        }
+
+        if (settlement.teamChallengeCompleted) {
+          return {
+            primary: settlement.teamChallengePerfect
+              ? 'PERFECT 7–0\n+¥' + Number(settlement.perfectReward || 0).toLocaleString('en-US')
+              : 'TEAM\nCLEARED',
+            secondary: (settlement.shopLabel || 'TUNER SHOP') + ' ACCESS UNLOCKED',
+          };
+        }
+      }
+
       if (settlement.competition) {
         if (settlement.competitionFailed) {
           return {
@@ -1527,7 +1557,7 @@ export default class RaceScene extends Phaser.Scene {
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
     const competitionMultilineText =
-      Boolean(settlement?.competition) && reward.primary.includes('\n');
+      Boolean(settlement?.competition || settlement?.teamChallenge) && reward.primary.includes('\n');
     this.add.text(780, competitionMultilineText ? 266 : 274, reward.primary, {
       fontFamily: titleFont,
       fontSize: competitionMultilineText
@@ -1764,9 +1794,11 @@ export default class RaceScene extends Phaser.Scene {
     const returnLabel = returnScene === 'CentralTokyoScene'
       ? 'RETURN TO CENTRAL TOKYO  >'
       : 'RETURN TO MEET  >';
-    const actionLabel = settlement?.competitionContinues
-      ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
-      : returnLabel;
+    const actionLabel = settlement?.teamChallengeContinues
+      ? 'NEXT CHALLENGER // ' + (settlement.progress + 1) + '/7  >'
+      : settlement?.competitionContinues
+        ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
+        : returnLabel;
 
     const buttonText = this.add.text(780, 686, actionLabel, {
       fontFamily: titleFont,
@@ -1780,12 +1812,50 @@ export default class RaceScene extends Phaser.Scene {
     button.on('pointerover', () => button.setFillStyle(accent, 0.18));
     button.on('pointerout', () => button.setFillStyle(0x07111d, 0.97));
     button.on('pointerdown', () => {
-      if (settlement?.competitionContinues) {
+      if (settlement?.teamChallengeContinues) {
+        this.startNextTunerChallengeRound();
+      } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
         this.scene.start(returnScene);
       }
     });
+  }
+
+  startNextTunerChallengeRound() {
+    const regionId = String(
+      this.registry.get('raceDistrict') || this.registry.get('district') || ''
+    ).toUpperCase();
+    const state = getTunerTeamChallengeState(this.registry, regionId);
+    const round = state.rounds?.[state.stage];
+
+    if (!state.activeSession || !round) {
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+
+    this.registry.set('selectedCarId', state.playerCarId || this.selectedCarId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
+      round.paintColor,
+      DEFAULT_PAINT_COLOR
+    ));
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedRaceCategory', 'TUNER_TEAM');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', round.distanceM);
+    this.registry.set('selectedRaceDeal', 'TUNER_TEAM');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceDistrict', regionId);
+    this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
+
+    saveSessionState(this.registry);
+    this.scene.restart();
   }
 
   startNextCompetitionRound() {
@@ -1925,6 +1995,127 @@ export default class RaceScene extends Phaser.Scene {
         regionWins[regionId] = Math.max(0, Number(regionWins[regionId] || 0)) + 1;
         this.registry.set('regionWins', regionWins);
       }
+    }
+
+    if (this.raceMode === 'TUNER_TEAM') {
+      const regionId = String(
+        this.registry.get('raceDistrict') || this.registry.get('district') || ''
+      ).toUpperCase();
+      const store = { ...(this.registry.get('tunerTeamChallenges') || {}) };
+      const current = getTunerTeamChallengeState(this.registry, regionId);
+      const stageIndex = Math.max(
+        0,
+        Math.min(TUNER_TEAM_CHALLENGE_STAGES - 1, Number(current.stage || 0))
+      );
+      const stageNumber = stageIndex + 1;
+
+      if (!playerWon) {
+        store[regionId] = {
+          ...current,
+          invited: true,
+          activeSession: false,
+          perfectEligible: false,
+          retryNotBefore: Date.now() + 60000,
+        };
+        this.registry.set('tunerTeamChallenges', store);
+        saveSessionState(this.registry);
+
+        this.raceSettlement = {
+          playerWon: false,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          teamChallenge: true,
+          teamChallengeFailed: true,
+          teamChallengeContinues: false,
+          teamChallengeCompleted: false,
+          regionId,
+          stageNumber,
+          progress: stageIndex,
+        };
+        return this.raceSettlement;
+      }
+
+      const nextStage = stageIndex + 1;
+
+      if (nextStage < TUNER_TEAM_CHALLENGE_STAGES) {
+        store[regionId] = {
+          ...current,
+          invited: true,
+          activeSession: true,
+          stage: nextStage,
+          retryNotBefore: 0,
+        };
+        this.registry.set('tunerTeamChallenges', store);
+        saveSessionState(this.registry);
+
+        this.raceSettlement = {
+          playerWon: true,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          teamChallenge: true,
+          teamChallengeFailed: false,
+          teamChallengeContinues: true,
+          teamChallengeCompleted: false,
+          regionId,
+          stageNumber,
+          progress: nextStage,
+        };
+        return this.raceSettlement;
+      }
+
+      const perfect = current.perfectEligible !== false;
+      const perfectReward = perfect ? TUNER_TEAM_PERFECT_REWARD : 0;
+      const newCash = oldCash + perfectReward;
+      const shop = getTunerShopForRegion(regionId);
+
+      store[regionId] = {
+        ...current,
+        invited: true,
+        activeSession: false,
+        completed: true,
+        stage: TUNER_TEAM_CHALLENGE_STAGES,
+        completedAt: Date.now(),
+        retryNotBefore: 0,
+      };
+      this.registry.set('tunerTeamChallenges', store);
+      this.registry.set('cash', newCash);
+      this.registry.set('tunerChallengeRevealPending', regionId);
+
+      if (shop) {
+        const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
+        progress[shop.id] = {
+          ...(progress[shop.id] || {}),
+          discovered: true,
+          unlockedByChallenge: true,
+          unlockedAt: Date.now(),
+        };
+        this.registry.set('tunerShopProgress', progress);
+      }
+
+      saveSessionState(this.registry);
+
+      this.raceSettlement = {
+        playerWon: true,
+        cashDelta: perfectReward,
+        cash: newCash,
+        pinkMessage: '',
+        gameOver: false,
+        teamChallenge: true,
+        teamChallengeFailed: false,
+        teamChallengeContinues: false,
+        teamChallengeCompleted: true,
+        teamChallengePerfect: perfect,
+        perfectReward,
+        regionId,
+        stageNumber: TUNER_TEAM_CHALLENGE_STAGES,
+        progress: TUNER_TEAM_CHALLENGE_STAGES,
+        shopLabel: shop?.label || 'TUNER SHOP',
+      };
+      return this.raceSettlement;
     }
 
     const competitionState = this.registry.get('competitionState');
