@@ -14,7 +14,7 @@ export const MAX_PROFILES = 3;
 
 export function createDefaultGameState() {
   return {
-    version: 7,
+    version: 8,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -45,6 +45,7 @@ export function createDefaultGameState() {
     tunerShopProgress: {},
     tunerTeamChallenges: {},
     tunerChallengeRevealPending: null,
+    cutscenesSeen: [],
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
     district: 'ODAIBA',
@@ -331,7 +332,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 7,
+    version: 8,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -368,6 +369,9 @@ export function normaliseState(input = {}) {
       input.tunerChallengeRevealPending
         ? String(input.tunerChallengeRevealPending).toUpperCase()
         : null,
+    cutscenesSeen: Array.isArray(input.cutscenesSeen)
+      ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
+      : [],
     tunerDecalsUnlocked: Array.isArray(input.tunerDecalsUnlocked)
       ? [...new Set(input.tunerDecalsUnlocked.map(String).filter(Boolean))]
       : [],
@@ -412,7 +416,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 7,
+    version: 8,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -427,6 +431,7 @@ export function snapshotRegistry(registry) {
     tunerShopProgress: registry.get('tunerShopProgress') || {},
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
     tunerChallengeRevealPending: registry.get('tunerChallengeRevealPending') || null,
+    cutscenesSeen: registry.get('cutscenesSeen') || [],
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
     district: registry.get('district') || 'ODAIBA',
