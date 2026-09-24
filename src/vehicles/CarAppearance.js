@@ -152,6 +152,47 @@ function createCanvasTextureFromPixels(scene, key, width, height, pixels) {
   return texture;
 }
 
+function restoreSingleLayerDarkDetails(scene, car) {
+  const visual = car?.visual || {};
+  if (!visual.singleLayerModular) return false;
+  const keys = getCarTextureKeys(car);
+  if (!scene.textures.exists(keys.body)) return false;
+
+  const source = scene.textures.get(keys.body).getSourceImage();
+  const width = Number(source?.naturalWidth || source?.width || 0);
+  const height = Number(source?.naturalHeight || source?.height || 0);
+  if (!width || !height || typeof document === 'undefined') return false;
+
+  // Do not chroma-key black. PNG alpha is authoritative. This pass exists
+  // specifically to ensure Phaser never derives transparency from RGB value.
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const px = imageData.data;
+    for (let i = 0; i < px.length; i += 4) {
+      // Preserve all authored opaque/semitransparent pixels exactly,
+      // including RGB 0/0/0. Never infer alpha from colour.
+      if (px[i + 3] > 0) px[i + 3] = Math.max(px[i + 3], 1);
+    }
+    ctx.putImageData(imageData, 0, 0);
+    const texture = scene.textures.createCanvas(keys.body + '_rgbaSafe', width, height);
+    const tctx = texture.getContext();
+    tctx.clearRect(0, 0, width, height);
+    tctx.drawImage(canvas, 0, 0);
+    texture.refresh();
+    visual.runtimeBodyTextureKey = keys.body + '_rgbaSafe';
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function deriveModularTexturesFromPreview(scene, car) {
   const visual = car?.visual || {};
   if (!visual.deriveModularFromPreview) return false;
@@ -323,7 +364,9 @@ export function hasLayeredPaintAssets(scene, visualOrCar) {
 }
 
 export function getCarBodyTextureKey(scene, visualOrCar) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
   const keys = getCarTextureKeys(visualOrCar);
+  if (visual.singleLayerModular) return visual.runtimeBodyTextureKey || keys.body;
   return hasLayeredPaintAssets(scene, visualOrCar) ? keys.paint : keys.body;
 }
 
@@ -341,9 +384,11 @@ export function createCarBodyLayers(
 ) {
   const color = normalisePaintColor(paintColor);
   const keys = getCarTextureKeys(visualOrCar);
+  const visual = visualOrCar?.visual || visualOrCar || {};
 
-  if (visualOrCar?.visual?.singleLayerModular || visualOrCar?.singleLayerModular) {
-    const body = scene.add.image(x, y, keys.body)
+  if (visual.singleLayerModular || visualOrCar?.singleLayerModular) {
+    const bodyKey = visual.runtimeBodyTextureKey || keys.body;
+    const body = scene.add.image(x, y, bodyKey)
       .setScale(scale)
       .setFlipX(flipX)
       .setDepth(depth)
