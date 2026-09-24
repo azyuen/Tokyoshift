@@ -103,7 +103,7 @@ export const VISUAL_MOD_CATALOG = {
             layers: [
               {
                 textureKey: 'visualMod_ae86_spoiler_1',
-                path: 'assets/Cars/ae86/ae86_car_spoiler_1.png',
+                path: 'assets/Cars/ae86/ae86_spoiler_1.png',
                 paintMode: 'body',
               },
             ],
@@ -115,7 +115,7 @@ export const VISUAL_MOD_CATALOG = {
             layers: [
               {
                 textureKey: 'visualMod_ae86_spoiler_2',
-                path: 'assets/Cars/ae86/ae86_car_spoiler_2.png',
+                path: 'assets/Cars/ae86/ae86_spoiler_2.png',
                 paintMode: 'body',
               },
             ],
@@ -133,7 +133,7 @@ export const VISUAL_MOD_CATALOG = {
             layers: [
               {
                 textureKey: 'visualMod_ae86_bodykit_1',
-                path: 'assets/Cars/ae86/ae86_car_bodykit_1.png',
+                path: 'assets/Cars/ae86/ae86_bodykit_1.png',
                 paintMode: 'body',
               },
             ],
@@ -145,7 +145,7 @@ export const VISUAL_MOD_CATALOG = {
             layers: [
               {
                 textureKey: 'visualMod_ae86_bodykit_2',
-                path: 'assets/Cars/ae86/ae86_car_bodykit_2.png',
+                path: 'assets/Cars/ae86/ae86_bodykit_2.png',
                 paintMode: 'body',
               },
             ],
