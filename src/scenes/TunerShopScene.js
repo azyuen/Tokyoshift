@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260924-r171';
+import { cars } from '../data/cars.js?v=20260925-r183';
 import { characters } from '../data/characters.js?v=20260925-r182';
 import {
   getTunerShopForRegion,
