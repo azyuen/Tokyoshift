@@ -145,6 +145,19 @@ function queueCharacterAssets(scene, characterIds) {
 function freezeScene(scene) {
   const world = scene.physics?.world;
   const keyboard = scene.input?.keyboard;
+  const pausedTweens = [];
+  try {
+    const existingTweens = scene.tweens?.getTweens?.() || [];
+    existingTweens.forEach(tween => {
+      const playing = typeof tween?.isPlaying === 'function'
+        ? tween.isPlaying()
+        : false;
+      if (!playing) return;
+      tween.pause?.();
+      pausedTweens.push(tween);
+    });
+  } catch (e) {}
+
   const state = {
     clockPaused: Boolean(scene.time?.paused),
     keyboardEnabled: keyboard ? keyboard.enabled !== false : null,
@@ -152,6 +165,7 @@ function freezeScene(scene) {
     controlsEnabled: scene.controls && 'enabled' in scene.controls
       ? Boolean(scene.controls.enabled)
       : null,
+    pausedTweens,
   };
 
   if (scene.time) scene.time.paused = true;
@@ -178,6 +192,10 @@ function restoreScene(scene, state) {
   if (scene.controls && state.controlsEnabled != null && 'enabled' in scene.controls) {
     scene.controls.enabled = state.controlsEnabled;
   }
+
+  (state.pausedTweens || []).forEach(tween => {
+    try { tween?.resume?.(); } catch (e) {}
+  });
 }
 
 function frameFor(scene, side) {
