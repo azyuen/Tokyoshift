@@ -307,6 +307,9 @@ function deriveModularTexturesFromPreview(scene, car) {
 
 export function ensureDerivedModularCarTextures(scene, carMap = {}) {
   Object.values(carMap || {}).forEach(car => {
+    if (car?.visual?.singleLayerModular) {
+      restoreSingleLayerDarkDetails(scene, car);
+    }
     if (car?.visual?.deriveModularFromPreview) {
       deriveModularTexturesFromPreview(scene, car);
     }
