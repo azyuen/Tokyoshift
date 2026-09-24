@@ -13,6 +13,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260924-r170';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r175';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -1247,6 +1248,15 @@ export default class TunerShopScene extends Phaser.Scene {
       paintColor: getCarPaintColor(carState),
     });
 
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      x,
+      y: displayY,
+      scale: bodyScale,
+      depth: depth + 1.005,
+      paintColor: getCarPaintColor(carState),
+      bodyLayers,
+    });
+
     const decalObjects = showDecals
       ? createTunerDecalLayers(this, carState, {
           x,
@@ -1264,6 +1274,7 @@ export default class TunerShopScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       ...bodyLayers.objects,
+      ...visualModObjects,
       ...decalObjects,
     ];
 
