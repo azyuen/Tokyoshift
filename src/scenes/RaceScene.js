@@ -4,15 +4,15 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260924-r165';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r169';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
   normalisePaintColor,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260923-r154';
+} from '../vehicles/CarAppearance.js?v=20260924-r169';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260923-r138';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r169';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
