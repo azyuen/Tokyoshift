@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260924-r170';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r171';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { characters, genericRivalCharacterOrder } from '../data/characters.js?v=20260923-r145';
 import {
