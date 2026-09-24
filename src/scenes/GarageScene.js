@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260924-r169';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r170';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { characters } from '../data/characters.js?v=20260923-r145';
 import {
@@ -67,7 +67,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260924-r169';
+} from '../vehicles/CarAppearance.js?v=20260924-r170';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -76,7 +76,7 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260924-r169';
+} from '../data/visualMods.js?v=20260924-r170';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
