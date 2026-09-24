@@ -6,6 +6,7 @@ import MeetScene from './scenes/MeetScene.js?v=20260924-r178';
 import RaceScene from './scenes/RaceScene.js?v=20260924-r179';
 import ResultScene from './scenes/ResultScene.js?v=20260924-r171';
 import TunerShopScene from './scenes/TunerShopScene.js?v=20260924-r178';
+import ProfileCalibrationScene from './scenes/ProfileCalibrationScene.js?v=20260925-r182';
 
 
 // Phone readability pass.
@@ -50,7 +51,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, CharacterSelectScene, GarageScene, CentralTokyoScene, MeetScene, RaceScene, ResultScene, TunerShopScene],
+  scene: [BootScene, CharacterSelectScene, GarageScene, CentralTokyoScene, MeetScene, RaceScene, ResultScene, TunerShopScene, ProfileCalibrationScene],
 };
 
 window.TOKYO_SHIFT = new Phaser.Game(config);
