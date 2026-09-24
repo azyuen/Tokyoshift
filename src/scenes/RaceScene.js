@@ -26,7 +26,7 @@ import {
   hasRegionalTeam,
 } from '../data/characters.js?v=20260925-r182';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260924-r178';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260925-r184';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -40,7 +40,9 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260924-r178';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r182';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r184';
+import { sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260925-r184';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -347,6 +349,10 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
     this.cancelButton.on('pointerdown', () => this.confirmCancelRace());
+
+    // Safe dev-only cutscene preview while staged. It is hidden during an
+    // active race and raised above the result tableau only after the race ends.
+    this.devCutsceneControl = addDevCutsceneButton(this, 350, 54, { depth: 90 });
 
     finishSceneLoading('READY TO RACE');
   }
@@ -909,6 +915,7 @@ export default class RaceScene extends Phaser.Scene {
   startRace() {
     if (this.raceStarted || this.finished) return;
     this.raceStarted = true;
+    this.devCutsceneControl?.setVisible(false);
     this.countdownClock = 0;
     this.greenClock = null;
     this.startMoved = false;
@@ -938,6 +945,8 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   update(_, deltaMs) {
+    if (sceneCutsceneActive(this)) return;
+
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     this.raceClock += dt;
 
@@ -1382,6 +1391,12 @@ export default class RaceScene extends Phaser.Scene {
     this.engineAudio?.fadeOut();
     this.resultsShown = true;
     this.controls.enabled = false;
+
+    if (this.devCutsceneControl) {
+      this.devCutsceneControl.button.setDepth(160);
+      this.devCutsceneControl.label.setDepth(161);
+      this.devCutsceneControl.setVisible(true);
+    }
     this.cancelButton?.disableInteractive();
     this.startButton?.disableInteractive();
 
