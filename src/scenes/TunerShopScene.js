@@ -703,10 +703,9 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const carId = this.getCurrentTunableCarId();
     if (!carId) {
-      this.setStageLabel('NO CAR // DECAL');
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 314,
+        SIDE.y + 330,
         'BRING A TUNABLE CAR HERE FIRST',
         {
           fontFamily: PIXEL_FONT,
@@ -718,7 +717,6 @@ export default class TunerShopScene extends Phaser.Scene {
       return;
     }
 
-    const car = cars[carId];
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[carId] || {};
     const eligible = carHasShopTune(carState, this.shop);
@@ -733,41 +731,10 @@ export default class TunerShopScene extends Phaser.Scene {
       { showDecals: false }
     );
 
-    this.setStageLabel((car.shortName || car.name) + ' // ' + this.shop.decalLabel + ' DECAL');
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 94, 'SHOP DECAL', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: eligible ? '#f0c96f' : '#7f8588',
-    }).setDepth(20));
-
-    this.addDynamic(this.add.text(STAGE.x + 48, STAGE.y + 132, car.name, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#ffffff',
-    }).setDepth(20));
-
-    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 292, 'CURRENT CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#8d9699',
-    }));
-
-    this.sideContent.add(this.add.text(
-      SIDE.x + 30,
-      SIDE.y + 324,
-      car.shortName,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#eff7f7',
-      }
-    ));
-
     if (!eligible) {
       this.sideContent.add(this.add.text(
         SIDE.x + 30,
-        SIDE.y + 382,
+        SIDE.y + 336,
         'DECAL LOCKED\n\nUSE AT LEAST ONE ' + this.shop.label + '\nSPECIALIST TUNE ON THIS CAR.',
         {
           fontFamily: PIXEL_FONT,
@@ -789,6 +756,7 @@ export default class TunerShopScene extends Phaser.Scene {
       y: Number(existing?.y ?? -0.01),
       scale: Number(existing?.scale ?? 0.13),
       rotation: Number(existing?.rotation ?? 0),
+      color: String(existing?.color || '#FFFFFF').toUpperCase(),
     };
 
     const createPreview = () => {
@@ -821,26 +789,115 @@ export default class TunerShopScene extends Phaser.Scene {
       const rawWidth = Math.max(1, Number(preview.width || 1));
       preview.setScale((geometry.displayWidth * placement.scale) / rawWidth);
       preview.setAngle(placement.rotation);
+      setTunerDecalObjectColor(preview, placement.color);
     };
 
-    const makeControl = (x, y, width, label, handler) => {
-      const box = this.add.rectangle(x, y, width, 42, 0x171d20, 1)
-        .setStrokeStyle(1, 0x667176, 1)
-        .setInteractive({ useHandCursor: true });
+    const makeControl = (x, y, width, label, handler, options = {}) => {
+      const box = this.add.rectangle(
+        x,
+        y,
+        width,
+        Number(options.height || 42),
+        Number(options.fill ?? 0x171d20),
+        1
+      ).setStrokeStyle(
+        Number(options.strokeWidth || 1),
+        Number(options.stroke ?? 0x667176),
+        1
+      ).setInteractive({ useHandCursor: true });
+
       const text = this.add.text(x, y, label, {
         fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#dbe4e7',
+        fontSize: options.fontSize || '7px',
+        color: options.textColor || '#dbe4e7',
+        align: 'center',
       }).setOrigin(0.5);
+
       box.on('pointerdown', handler);
       this.sideContent.add(box);
       this.sideContent.add(text);
-      return box;
+      return { box, text };
     };
+
+    const colourTitleY = SIDE.y + 304;
+    this.sideContent.add(this.add.text(
+      SIDE.x + 30,
+      colourTitleY,
+      'DECAL COLOUR',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#d5bb76',
+      }
+    ));
+
+    const swatch = this.add.rectangle(
+      SIDE.x + SIDE.w - 42,
+      colourTitleY + 7,
+      26,
+      18,
+      Number.parseInt(placement.color.slice(1), 16),
+      1
+    ).setStrokeStyle(1, 0x96a2a7, 1);
+    this.sideContent.add(swatch);
+
+    const whiteControl = makeControl(
+      SIDE.x + 72,
+      SIDE.y + 350,
+      78,
+      'WHITE',
+      () => {
+        placement.color = '#FFFFFF';
+        setTunerDecalObjectColor(preview, placement.color);
+        refreshColourControls();
+      },
+      { fill: 0xf4f4f4, stroke: 0xbfc8cc, textColor: '#111111' }
+    );
+
+    const blackControl = makeControl(
+      SIDE.x + 160,
+      SIDE.y + 350,
+      78,
+      'BLACK',
+      () => {
+        placement.color = '#000000';
+        setTunerDecalObjectColor(preview, placement.color);
+        refreshColourControls();
+      },
+      { fill: 0x050505, stroke: 0x69757b, textColor: '#ffffff' }
+    );
+
+    const customControl = makeControl(
+      SIDE.x + 270,
+      SIDE.y + 350,
+      112,
+      'CUSTOM',
+      () => {
+        this.openDecalColourPicker(placement.color, color => {
+          placement.color = color;
+          setTunerDecalObjectColor(preview, placement.color);
+          refreshColourControls();
+        });
+      },
+      { fill: 0x171d20, stroke: 0x8a7750, textColor: '#f1dfb2' }
+    );
+
+    const refreshColourControls = () => {
+      const isWhite = placement.color === '#FFFFFF';
+      const isBlack = placement.color === '#000000';
+      const isCustom = !isWhite && !isBlack;
+
+      whiteControl.box.setStrokeStyle(isWhite ? 3 : 1, isWhite ? 0xe6c365 : 0xbfc8cc, 1);
+      blackControl.box.setStrokeStyle(isBlack ? 3 : 1, isBlack ? 0xe6c365 : 0x69757b, 1);
+      customControl.box.setStrokeStyle(isCustom ? 3 : 1, isCustom ? 0xe6c365 : 0x8a7750, 1);
+      swatch.setFillStyle(Number.parseInt(placement.color.slice(1), 16), 1);
+    };
+
+    refreshColourControls();
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 374,
+      SIDE.y + 394,
       'DRAG THE DECAL ONTO THE BODY',
       {
         fontFamily: PIXEL_FONT,
@@ -849,21 +906,21 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     ));
 
-    makeControl(SIDE.x + 76, SIDE.y + 430, 82, 'SIZE -', () => {
+    makeControl(SIDE.x + 76, SIDE.y + 440, 82, 'SIZE -', () => {
       placement.scale = Phaser.Math.Clamp(placement.scale - 0.015, 0.055, 0.24);
       resizePreview();
     });
-    makeControl(SIDE.x + 174, SIDE.y + 430, 82, 'SIZE +', () => {
+    makeControl(SIDE.x + 174, SIDE.y + 440, 82, 'SIZE +', () => {
       placement.scale = Phaser.Math.Clamp(placement.scale + 0.015, 0.055, 0.24);
       resizePreview();
     });
-    makeControl(SIDE.x + 272, SIDE.y + 430, 82, 'ROTATE', () => {
+    makeControl(SIDE.x + 272, SIDE.y + 440, 82, 'ROTATE', () => {
       placement.rotation += 10;
       if (placement.rotation > 30) placement.rotation = -30;
       resizePreview();
     });
 
-    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 490, SIDE.w - 56, 'SAVE DECAL', () => {
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 502, SIDE.w - 56, 'SAVE DECAL', () => {
       placement.x = (preview.x - geometry.x) / geometry.displayWidth;
       placement.y = (preview.y - geometry.displayY) / geometry.displayHeight;
 
@@ -875,7 +932,7 @@ export default class TunerShopScene extends Phaser.Scene {
       this.showDecalMode();
     });
 
-    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 548, SIDE.w - 56, 'REMOVE DECAL', () => {
+    makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 560, SIDE.w - 56, 'REMOVE DECAL', () => {
       const nextStates = { ...(this.registry.get('carStates') || {}) };
       nextStates[carId] = withTunerDecal(nextStates[carId] || {}, this.shop.decalId, null);
       this.registry.set('carStates', nextStates);
@@ -886,16 +943,66 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
-      SIDE.y + 594,
-      'A simple wordmark is used until the final\ntransparent shop-logo PNG is supplied.',
+      SIDE.y + 607,
+      'CUSTOM OPENS YOUR DEVICE COLOUR PICKER.',
       {
         fontFamily: BODY_FONT,
         fontSize: '9px',
         color: '#78868c',
         fontStyle: '600',
-        lineSpacing: 4,
       }
     ));
+  }
+
+  openDecalColourPicker(initialColor = '#FFFFFF', onPick = null) {
+    try {
+      this.decalColourInput?.remove?.();
+
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = /^#[0-9A-F]{6}$/i.test(initialColor)
+        ? initialColor
+        : '#FFFFFF';
+      input.setAttribute('aria-label', 'Choose decal colour');
+      Object.assign(input.style, {
+        position: 'fixed',
+        left: '-20px',
+        bottom: '-20px',
+        width: '1px',
+        height: '1px',
+        opacity: '0',
+        pointerEvents: 'none',
+      });
+
+      document.body.appendChild(input);
+      this.decalColourInput = input;
+
+      const emit = () => {
+        const value = String(input.value || '#FFFFFF').toUpperCase();
+        onPick?.(value);
+      };
+
+      const cleanup = () => {
+        if (this.decalColourInput === input) this.decalColourInput = null;
+        input.remove();
+      };
+
+      input.addEventListener('input', emit);
+      input.addEventListener('change', () => {
+        emit();
+        window.setTimeout(cleanup, 0);
+      }, { once: true });
+      input.addEventListener('blur', () => {
+        window.setTimeout(cleanup, 120);
+      }, { once: true });
+
+      input.click();
+      window.setTimeout(() => {
+        if (document.body.contains(input)) cleanup();
+      }, 60000);
+    } catch (error) {
+      console.warn('Unable to open decal colour picker', error);
+    }
   }
 
   installSpecialistTune(carId, option) {
