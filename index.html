@@ -64,7 +64,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R175</div>
+    <div id="build-stamp">R176</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -141,7 +141,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R175';
+      let resolvedBuild = 'R176';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -189,6 +189,6 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260924-r175"></script>
+  <script type="module" src="./src/main.js?v=20260924-r176"></script>
 </body>
 </html>

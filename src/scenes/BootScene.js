@@ -2,10 +2,10 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
 import { cars } from '../data/cars.js?v=20260924-r171';
 import { preloadCarAppearanceAssets, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260924-r170';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260924-r172';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260924-r176';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260924-r175';
-import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r172';
+import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r176';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -85,14 +85,14 @@ export default class BootScene extends Phaser.Scene {
         if (shop.backgroundKey && shop.backgroundPath) {
           this.load.image(
             shop.backgroundKey,
-            shop.backgroundPath + '?v=20260924-r172'
+            shop.backgroundPath + '?v=20260924-r176'
           );
         }
 
         if (shop.decalTextureKey && shop.decalPath) {
           this.load.image(
             shop.decalTextureKey,
-            shop.decalPath + '?v=20260924-r174'
+            shop.decalPath + '?v=20260924-r176'
           );
         }
 
@@ -100,7 +100,7 @@ export default class BootScene extends Phaser.Scene {
         if (mechanic?.visual?.spriteKey && mechanic?.visual?.path) {
           this.load.image(
             mechanic.visual.spriteKey,
-            mechanic.visual.path + '?v=20260924-r172'
+            mechanic.visual.path + '?v=20260924-r176'
           );
         }
       });
