@@ -1,5 +1,5 @@
 import { cars } from '../data/cars.js?v=20260924-r171';
-import { characters } from '../data/characters.js?v=20260924-r167';
+import { characters } from '../data/characters.js?v=20260925-r182';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
