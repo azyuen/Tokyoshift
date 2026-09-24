@@ -351,14 +351,17 @@ export default class TunerShopScene extends Phaser.Scene {
   showHeroMode() {
     if (this.conversionInProgress) return;
     this.mode = 'HERO';
-    this.setTabStyle();
     this.clearDynamic();
+    this.setTabStyle();
 
     this.drawMechanic();
 
     const hero = cars[this.shop.heroCarId];
     if (hero) {
       this.drawCarOnStage(hero.id, 720, 650, 770, 10, true);
+      this.setStageLabel((hero.shortName || hero.name) + ' // HERO BUILD');
+    } else {
+      this.setStageLabel('HERO BUILD');
     }
 
     this.addDynamic(this.add.text(
@@ -383,37 +386,39 @@ export default class TunerShopScene extends Phaser.Scene {
       }
     ).setDepth(20));
 
+    const currentCarId = this.getCurrentCarId();
     const owned = this.registry.get('ownedCarIds') || [];
+    const carStates = this.registry.get('carStates') || {};
     const donorExists = Boolean(cars[this.shop.donorCarId]);
-    const donorOwned = owned.includes(this.shop.donorCarId);
+    const currentIsDonor = currentCarId === this.shop.donorCarId;
+    const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
+    const donorStock = currentIsDonor && donorState.stock !== false;
     const heroOwned = owned.includes(this.shop.heroCarId);
-    const donorState = (this.registry.get('carStates') || {})[this.shop.donorCarId] || {};
-    const donorStock = donorOwned && donorState.stock !== false;
     const cost = Number(this.shop.buildCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
 
-    this.sideContent.add(this.add.text(SIDE.x + 24, SIDE.y + 230, 'BUILD PROGRAM', {
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 300, 'BUILD PROGRAM', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#d6aa68',
     }));
 
     this.sideContent.add(this.add.text(
-      SIDE.x + 24,
-      SIDE.y + 264,
+      SIDE.x + 30,
+      SIDE.y + 334,
       this.shop.donorLabel + '\n→ ' + (hero?.shortName || this.shop.label + ' HERO'),
       {
         fontFamily: BODY_FONT,
-        fontSize: '13px',
+        fontSize: '12px',
         color: '#e4edf0',
         fontStyle: '700',
-        lineSpacing: 8,
+        lineSpacing: 7,
       }
     ));
 
-    this.sideContent.add(this.add.text(SIDE.x + 24, SIDE.y + 332, money(cost), {
+    this.sideContent.add(this.add.text(SIDE.x + 30, SIDE.y + 392, money(cost), {
       fontFamily: PIXEL_FONT,
-      fontSize: '11px',
+      fontSize: '10px',
       color: '#f3c77b',
     }));
 
@@ -426,11 +431,11 @@ export default class TunerShopScene extends Phaser.Scene {
     } else if (heroOwned) {
       label = 'HERO ALREADY OWNED';
       enabled = false;
-    } else if (!donorOwned) {
-      label = 'REQUIRES STOCK ' + this.shop.donorLabel;
+    } else if (!currentIsDonor) {
+      label = 'BRING YOUR STOCK ' + this.shop.donorLabel;
       enabled = false;
     } else if (!donorStock) {
-      label = 'DONOR MUST BE STOCK';
+      label = 'CURRENT DONOR MUST BE STOCK';
       enabled = false;
     } else if (cash < cost) {
       label = 'NEED ' + money(cost);
@@ -439,8 +444,8 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const buildButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 400,
-      SIDE.w - 40,
+      SIDE.y + 446,
+      SIDE.w - 56,
       64,
       enabled ? 0x2a2115 : 0x17191b,
       1
@@ -452,14 +457,14 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const buildText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 400,
+      SIDE.y + 446,
       label,
       {
         fontFamily: PIXEL_FONT,
-        fontSize: enabled ? '9px' : '7px',
+        fontSize: enabled ? '8px' : '7px',
         color: enabled ? '#fff1d5' : '#768087',
         align: 'center',
-        wordWrap: { width: SIDE.w - 78 },
+        wordWrap: { width: SIDE.w - 96 },
       }
     ).setOrigin(0.5);
 
@@ -472,15 +477,15 @@ export default class TunerShopScene extends Phaser.Scene {
     }
 
     this.sideContent.add(this.add.text(
-      SIDE.x + 24,
-      SIDE.y + 458,
-      'A stock donor is consumed by the build.\nThe finished car becomes the sealed\n' + this.shop.label + ' hero specification.',
+      SIDE.x + 30,
+      SIDE.y + 496,
+      'The build only accepts the car you actually\nbrought here. Your stock donor rolls in, is\nconverted, then becomes the sealed hero car.',
       {
         fontFamily: BODY_FONT,
-        fontSize: '10px',
+        fontSize: '9px',
         color: '#83939b',
         fontStyle: '600',
-        lineSpacing: 5,
+        lineSpacing: 4,
       }
     ));
   }
