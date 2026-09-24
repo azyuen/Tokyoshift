@@ -605,6 +605,7 @@ function beginOverlay(scene, definition, context, historyId) {
     active: true,
     played: true,
     cleaned: false,
+    finishing: false,
     scene,
     definition,
     context,
@@ -705,7 +706,7 @@ function beginOverlay(scene, definition, context, historyId) {
   });
 
   controller.advance = () => {
-    if (!controller.active || controller.cleaned) return;
+    if (!controller.active || controller.cleaned || controller.finishing) return;
     const now = Date.now();
     if (now - controller.lastAdvanceAt < PAGE_DEBOUNCE_MS) return;
     controller.lastAdvanceAt = now;
@@ -721,8 +722,8 @@ function beginOverlay(scene, definition, context, historyId) {
   };
 
   controller.finish = (reason = 'complete') => {
-    if (!controller.active || controller.cleaned) return;
-    controller.active = false;
+    if (!controller.active || controller.cleaned || controller.finishing) return;
+    controller.finishing = true;
 
     clearDialogue(controller);
     controller.introObjects.forEach(obj => {
@@ -740,8 +741,6 @@ function beginOverlay(scene, definition, context, historyId) {
         .map(actor => actor?.profile?.image)
         .filter(Boolean),
     ].filter(obj => obj?.active !== false);
-
-    blocker.disableInteractive();
 
     if (!fadeTargets.length) {
       finaliseController(controller, { reason });
