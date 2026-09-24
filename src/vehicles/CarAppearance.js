@@ -117,6 +117,11 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
     // finished body PNG and must never request paint/overlay layers.
     if (car?.visual?.singleBody) return;
 
+    // Some foldered cars use their coherent full preview as the geometry
+    // authority and derive their stock modular textures from it at boot. This
+    // guarantees every stock layer shares exactly the same source pixels.
+    if (car?.visual?.deriveModularFromPreview) return;
+
     loadIfPresent(keys.paint, paths.paint);
     loadIfPresent(keys.overlay, paths.overlay);
 
@@ -127,6 +132,138 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
     loadIfPresent(keys.bodyKit, paths.bodyKit);
     loadIfPresent(keys.spoilerPaint, paths.spoilerPaint);
     loadIfPresent(keys.spoiler, paths.spoiler);
+  });
+}
+
+function createCanvasTextureFromPixels(scene, key, width, height, pixels) {
+  if (scene.textures.exists(key)) scene.textures.remove(key);
+
+  const texture = scene.textures.createCanvas(key, width, height);
+  const ctx = texture.getContext();
+  const imageData = ctx.createImageData(width, height);
+  imageData.data.set(pixels);
+  ctx.putImageData(imageData, 0, 0);
+  texture.refresh();
+  return texture;
+}
+
+function deriveModularTexturesFromPreview(scene, car) {
+  const visual = car?.visual || {};
+  if (!visual.deriveModularFromPreview) return false;
+
+  const keys = getCarTextureKeys(car);
+  if (!scene.textures.exists(keys.body)) return false;
+
+  const source = scene.textures.get(keys.body).getSourceImage();
+  const width = Number(source?.naturalWidth || source?.width || 0);
+  const height = Number(source?.naturalHeight || source?.height || 0);
+  if (!width || !height || typeof document === 'undefined') return false;
+
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
+    const src = ctx.getImageData(0, 0, width, height).data;
+
+    const paint = new Uint8ClampedArray(src.length);
+    const overlay = new Uint8ClampedArray(src.length);
+    const bodyKitPaint = new Uint8ClampedArray(src.length);
+    const bodyKit = new Uint8ClampedArray(src.length);
+    const spoilerPaint = new Uint8ClampedArray(src.length);
+    const spoiler = new Uint8ClampedArray(src.length);
+
+    const copyPixel = (target, index) => {
+      target[index] = src[index];
+      target[index + 1] = src[index + 1];
+      target[index + 2] = src[index + 2];
+      target[index + 3] = src[index + 3];
+    };
+
+    // The AE86 master is a coherent completed sprite. We partition those exact
+    // pixels rather than trying to line up independently-generated artwork.
+    // Normalised geometry keeps the split stable if this master is re-exported
+    // at another resolution with the same framing.
+    const split = visual.derivedModularSplit || {};
+    const spoilerBox = split.spoilerBox || {
+      xMin: 0.045, xMax: 0.106,
+      yMin: 0.390, yMax: 0.470,
+    };
+    const bodyKit = split.bodyKit || {
+      allBelowY: 0.560,
+      darkFromY: 0.505,
+      darkMax: 165,
+    };
+
+    for (let y = 0; y < height; y += 1) {
+      const yn = y / height;
+      for (let x = 0; x < width; x += 1) {
+        const i = (y * width + x) * 4;
+        const a = src[i + 3];
+        if (!a) continue;
+
+        const r = src[i];
+        const g = src[i + 1];
+        const b = src[i + 2];
+        const maxC = Math.max(r, g, b);
+        const minC = Math.min(r, g, b);
+        const saturationSpan = maxC - minC;
+        const xn = x / width;
+
+        const inSpoiler = (
+          xn >= spoilerBox.xMin && xn <= spoilerBox.xMax &&
+          yn >= spoilerBox.yMin && yn <= spoilerBox.yMax
+        );
+
+        if (inSpoiler) {
+          // White/light-grey spoiler faces are tintable; the dark lip/outline is fixed.
+          if (saturationSpan < 55 && maxC > 120) copyPixel(spoilerPaint, i);
+          else copyPixel(spoiler, i);
+          continue;
+        }
+
+        const coloured = saturationSpan > 55 && maxC > 60;
+        const inBodyKit = (
+          yn >= bodyKit.allBelowY ||
+          (yn >= bodyKit.darkFromY && (maxC < bodyKit.darkMax || coloured))
+        );
+
+        if (inBodyKit) {
+          // Stock AE86 lower aero is black/charcoal plastic in the master.
+          // Keep the paint layer empty for stock; later aftermarket kits may
+          // provide their own tintable bodyKitPaint PNG.
+          copyPixel(bodyKit, i);
+          continue;
+        }
+
+        const paintLike = saturationSpan < 42 && maxC > 105;
+        if (paintLike) copyPixel(paint, i);
+        else copyPixel(overlay, i);
+      }
+    }
+
+    createCanvasTextureFromPixels(scene, keys.paint, width, height, paint);
+    createCanvasTextureFromPixels(scene, keys.overlay, width, height, overlay);
+    createCanvasTextureFromPixels(scene, keys.bodyKitPaint, width, height, bodyKitPaint);
+    createCanvasTextureFromPixels(scene, keys.bodyKit, width, height, bodyKit);
+    createCanvasTextureFromPixels(scene, keys.spoilerPaint, width, height, spoilerPaint);
+    createCanvasTextureFromPixels(scene, keys.spoiler, width, height, spoiler);
+    return true;
+  } catch (error) {
+    console.warn('Could not derive modular car textures', car?.id, error);
+    return false;
+  }
+}
+
+export function ensureDerivedModularCarTextures(scene, carMap = {}) {
+  Object.values(carMap || {}).forEach(car => {
+    if (car?.visual?.deriveModularFromPreview) {
+      deriveModularTexturesFromPreview(scene, car);
+    }
   });
 }
 
