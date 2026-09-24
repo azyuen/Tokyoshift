@@ -34,6 +34,8 @@ export const TUNER_SHOPS = {
 
     decalId: 'esprit',
     decalLabel: 'ESPRIT',
+    decalTextureKey: 'tunerDecalEsprit',
+    decalPath: 'assets/Decals/esprit.png',
 
     tuningOptions: [
       {
@@ -118,6 +120,8 @@ export const TUNER_SHOPS = {
 
     decalId: 'jun',
     decalLabel: 'JUN',
+    decalTextureKey: 'tunerDecalJun',
+    decalPath: 'assets/Decals/jun.png',
 
     tuningOptions: [
       {
