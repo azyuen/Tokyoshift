@@ -33,6 +33,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260923-r162';
+import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260924-r167';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1890,6 +1891,21 @@ export default class RaceScene extends Phaser.Scene {
 
     this.registry.set('wins', wins + (playerWon ? 1 : 0));
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+
+    // Regional tuner shops progress from wins earned in that region rather than
+    // from the global win total. Only regions with an active shop are tracked,
+    // so Central Tokyo and future placeholder areas do not pollute save data.
+    if (playerWon) {
+      const regionId = String(
+        this.registry.get('raceDistrict') || this.registry.get('district') || ''
+      ).toUpperCase();
+
+      if (getTunerShopForRegion(regionId)) {
+        const regionWins = { ...(this.registry.get('regionWins') || {}) };
+        regionWins[regionId] = Math.max(0, Number(regionWins[regionId] || 0)) + 1;
+        this.registry.set('regionWins', regionWins);
+      }
+    }
 
     const competitionState = this.registry.get('competitionState');
 
