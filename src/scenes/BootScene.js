@@ -84,7 +84,7 @@ export default class BootScene extends Phaser.Scene {
         if (shop.backgroundKey && shop.backgroundPath) {
           this.load.image(
             shop.backgroundKey,
-            shop.backgroundPath + '?v=20260924-r167'
+            shop.backgroundPath + '?v=20260924-r168'
           );
         }
 
@@ -92,7 +92,7 @@ export default class BootScene extends Phaser.Scene {
         if (mechanic?.visual?.spriteKey && mechanic?.visual?.path) {
           this.load.image(
             mechanic.visual.spriteKey,
-            mechanic.visual.path + '?v=20260924-r167'
+            mechanic.visual.path + '?v=20260924-r168'
           );
         }
       });
