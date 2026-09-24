@@ -54,12 +54,13 @@ export const cars = {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
 
-      // R169 modular AE86. All appearance pieces share the same 1774×887
+      // R170 modular AE86. All appearance pieces share the same 1774×887
       // canvas/origin inside a per-car folder, so stock and future replacement
       // aero can stack without scene-specific offsets.
       modularAssetRoot: 'assets/Cars/ae86',
       modularAssetStem: 'ae86_car',
       bodyPath: 'assets/Cars/ae86/ae86_preview_full.png',
+      deriveModularFromPreview: true,
       stockBodyKitId: '0',
       stockSpoilerId: '0',
 
