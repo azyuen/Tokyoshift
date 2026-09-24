@@ -25,9 +25,9 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
+import { saveSessionState } from '../state/GameState.js?v=20260924-r178';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260922-r125';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r176';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260924-r163';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -38,6 +38,18 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260923-r162';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
+import {
+  TUNER_TEAM_CHALLENGE_STAGES,
+  TUNER_TEAM_INVITE_CHANCE,
+  TUNER_TEAM_PITY_ARRIVALS,
+  getTunerTeamChallengeState,
+  isTunerTeamChallengeEligible,
+  buildTunerTeamChallengeRounds,
+} from '../data/tunerChallenges.js?v=20260924-r178';
+import {
+  getTunerShopForRegion,
+  isTunerShopUnlocked,
+} from '../data/tunerShops.js?v=20260924-r178';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -284,6 +296,11 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
+    const revealShown = this.maybeShowTunerChallengeReveal();
+    if (!revealShown) {
+      this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+    }
+
     // Let the visible Meet render first, then quietly fetch the rest of the
     // character/background library and the heavy race-control artwork.
     this.time.delayedCall(120, () => this.prefetchDeferredAssets());
@@ -295,6 +312,313 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  getTunerChallengeStore() {
+    return { ...(this.registry.get('tunerTeamChallenges') || {}) };
+  }
+
+  setTunerChallengeState(regionId, next) {
+    const key = String(regionId || '').toUpperCase();
+    const store = this.getTunerChallengeStore();
+    store[key] = { ...(store[key] || {}), ...next, regionId: key };
+    this.registry.set('tunerTeamChallenges', store);
+    return store[key];
+  }
+
+  maybeShowTunerChallengeReveal() {
+    const pending = String(this.registry.get('tunerChallengeRevealPending') || '').toUpperCase();
+    if (!pending) return false;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    if (String(location?.district || '').toUpperCase() !== pending) return false;
+
+    const shop = getTunerShopForRegion(pending);
+    if (!shop) {
+      this.registry.set('tunerChallengeRevealPending', null);
+      saveSessionState(this.registry);
+      return false;
+    }
+
+    const mechanic = characters[shop.mechanicId] || null;
+    const depth = 170;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+    add(this.add.rectangle(780, 420, 850, 500, 0x07111d, 0.995)
+      .setStrokeStyle(3, 0xe4b660, 0.98).setDepth(depth + 1));
+
+    add(this.add.text(780, 218, 'TEAM CLEARED', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8faabb'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 262, shop.fullName + ' DISCOVERED', {
+      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffe2a4',
+      align: 'center', wordWrap: { width: 700 }
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    if (mechanic?.visual?.spriteKey && this.textures.exists(mechanic.visual.spriteKey)) {
+      const source = this.textures.get(mechanic.visual.spriteKey).getSourceImage();
+      const portrait = add(this.add.image(545, 380, mechanic.visual.spriteKey)
+        .setOrigin(0.5).setDepth(depth + 2));
+      portrait.setScale(Math.min(210 / source.width, 250 / source.height));
+    }
+
+    const speaker = mechanic?.name || (shop.label + ' ENGINEER');
+    add(this.add.text(850, 355, speaker.toUpperCase(), {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7edfff'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      850,
+      420,
+      '“I’ve seen enough. Come by the shop sometime.”\n\n' +
+      shop.label + ' is now available from the ' + pending + ' map panel.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#d7e5ec',
+        align: 'center',
+        fontStyle: '600',
+        lineSpacing: 8,
+        wordWrap: { width: 500 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const close = add(this.add.rectangle(780, 600, 310, 50, 0x241d12, 1)
+      .setStrokeStyle(2, 0xe4b660, 1).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(780, 600, 'OPEN TOKYO MAP LATER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff3d7'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.registry.set('tunerChallengeRevealPending', null);
+      saveSessionState(this.registry);
+    };
+
+    close.on('pointerdown', dismiss);
+    blocker.on('pointerdown', () => {});
+    return true;
+  }
+
+  maybeShowTunerTeamChallenge() {
+    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    const shop = getTunerShopForRegion(regionId);
+    if (!shop || isTunerShopUnlocked(this.registry, regionId)) return;
+
+    let state = getTunerTeamChallengeState(this.registry, regionId);
+    const eligible = isTunerTeamChallengeEligible(this.registry, regionId);
+    if (!eligible && !state.invited && state.stage <= 0) return;
+    if (state.retryNotBefore > Date.now()) return;
+
+    if (!state.invited) {
+      const misses = state.misses + 1;
+      const trigger =
+        Math.random() < TUNER_TEAM_INVITE_CHANCE ||
+        misses >= TUNER_TEAM_PITY_ARRIVALS;
+
+      state = this.setTunerChallengeState(regionId, {
+        ...state,
+        misses: trigger ? 0 : misses,
+        invited: trigger,
+        offeredAt: trigger ? 'REGION' : state.offeredAt,
+      });
+      saveSessionState(this.registry);
+
+      if (!trigger) return;
+    }
+
+    this.showTunerTeamChallengePopup(regionId);
+  }
+
+  showTunerTeamChallengePopup(regionId) {
+    if (this.tunerChallengePopup?.active || !this.hasCar) return;
+
+    const key = String(regionId || '').toUpperCase();
+    const shop = getTunerShopForRegion(key);
+    if (!shop) return;
+
+    let state = getTunerTeamChallengeState(this.registry, key);
+    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const rounds = state.rounds.length === TUNER_TEAM_CHALLENGE_STAGES
+      ? state.rounds
+      : buildTunerTeamChallengeRounds(key, playerCharacterId);
+
+    state = this.setTunerChallengeState(key, {
+      ...state,
+      invited: true,
+      rounds,
+    });
+    saveSessionState(this.registry);
+
+    const depth = 160;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 420, 950, 590, 0x07111d, 0.997)
+      .setStrokeStyle(3, 0xff5f93, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 164, key + ' // TEAM CHALLENGE', {
+      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#fff3f7'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 207, 'BEAT THE WHOLE CREW // 7 RACERS', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ff94b8'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const remaining = Math.max(0, TUNER_TEAM_CHALLENGE_STAGES - state.stage);
+    add(this.add.text(
+      780,
+      246,
+      state.stage > 0
+        ? state.stage + ' DEFEATED // ' + remaining + ' REMAIN'
+        : 'THEY CAME LOOKING FOR YOU.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#aac0cd',
+        fontStyle: '600',
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const portraitY = 350;
+    const startX = 438;
+    const gap = 114;
+
+    rounds.forEach((round, index) => {
+      const x = startX + index * gap;
+      const defeated = index < state.stage;
+      const current = index === state.stage;
+      const character = characters[round.characterId];
+      const visual = character?.visual || {};
+      const textureKey = visual.spriteKey;
+
+      add(this.add.rectangle(
+        x, portraitY, 86, 102,
+        defeated ? 0x0b0d10 : 0x081522,
+        1
+      ).setStrokeStyle(
+        current ? 3 : 1,
+        current ? 0xff6f9c : defeated ? 0x4e565c : 0x315b73,
+        1
+      ).setDepth(depth + 2));
+
+      if (textureKey && this.textures.exists(textureKey)) {
+        const source = this.textures.get(textureKey).getSourceImage();
+        const portrait = add(this.add.image(x, portraitY - 6, textureKey)
+          .setOrigin(0.5).setDepth(depth + 3));
+        portrait.setScale(Math.min(72 / source.width, 82 / source.height));
+        if (defeated) portrait.setTint(0x5d6469).setAlpha(0.55);
+      } else {
+        add(this.add.text(x, portraitY - 6, String(index + 1), {
+          fontFamily: PIXEL_FONT, fontSize: '14px',
+          color: defeated ? '#5d6469' : '#d8e8ef'
+        }).setOrigin(0.5).setDepth(depth + 3));
+      }
+
+      add(this.add.text(x, portraitY + 67, defeated ? 'DEFEATED' : ('#' + (index + 1)), {
+        fontFamily: PIXEL_FONT,
+        fontSize: defeated ? '5px' : '6px',
+        color: defeated ? '#7d858a' : current ? '#ff91b6' : '#8095a2',
+      }).setOrigin(0.5).setDepth(depth + 3));
+    });
+
+    add(this.add.text(
+      780,
+      458,
+      'Progress is permanent. Lose a race and the challenge ends for tonight,\n' +
+      'but next time you resume from the racer who beat you.\n' +
+      'Clear all seven without a loss for a ¥750,000 perfect-run bonus.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#a6b9c4',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 5,
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const accept = add(this.add.rectangle(660, 620, 300, 54, 0x321522, 1)
+      .setStrokeStyle(2, 0xff5f93, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(660, 620, state.stage > 0 ? 'RESUME CHALLENGE' : 'ACCEPT CHALLENGE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff4f8'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const later = add(this.add.rectangle(930, 620, 190, 54, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(930, 620, 'LATER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.tunerChallengePopup = null;
+    };
+
+    later.on('pointerdown', dismiss);
+    blocker.on('pointerdown', () => {});
+    accept.on('pointerdown', () => {
+      dismiss();
+      const nextState = getTunerTeamChallengeState(this.registry, key);
+      this.setTunerChallengeState(key, {
+        ...nextState,
+        invited: true,
+        activeSession: true,
+        playerCarId: this.registry.get('selectedCarId') || '',
+        rounds,
+      });
+      saveSessionState(this.registry);
+      this.startTunerTeamChallengeRound(key);
+    });
+
+    this.tunerChallengePopup = panel;
+  }
+
+  startTunerTeamChallengeRound(regionId) {
+    const key = String(regionId || '').toUpperCase();
+    const state = getTunerTeamChallengeState(this.registry, key);
+    const round = state.rounds[state.stage];
+    if (!round || !this.hasCar) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+
+    this.registry.set('selectedCarId', state.playerCarId || this.registry.get('selectedCarId'));
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
+      round.paintColor,
+      DEFAULT_PAINT_COLOR
+    ));
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedRaceCategory', 'TUNER_TEAM');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', round.distanceM);
+    this.registry.set('selectedRaceDeal', 'TUNER_TEAM');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'MeetScene');
+    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceDistrict', key);
+    this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
+
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
   }
 
   drawBase() {
@@ -424,6 +748,14 @@ export default class MeetScene extends Phaser.Scene {
       return { box, label, defaultText: labelText };
     };
 
+    this.devForceTeamChallengeControl = makeButton(
+      644,
+      'DEV // FORCE TUNER TEAM CHALLENGE',
+      0x261a0d,
+      0xe4b660,
+      () => this.forceDevTunerTeamChallenge()
+    );
+
     this.devForceChallengerControl = makeButton(
       684,
       'DEV // FORCE SPECIAL CHALLENGER',
@@ -448,6 +780,46 @@ export default class MeetScene extends Phaser.Scene {
       if (!control?.label?.active) return;
       control.label.setText(control.defaultText).setColor('#f4fbff');
     });
+  }
+
+  forceDevTunerTeamChallenge() {
+    if (!this.registry.get('devMode') || !this.hasCar) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    const shop = getTunerShopForRegion(regionId);
+
+    if (!shop) {
+      this.flashDevControl(
+        this.devForceTeamChallengeControl,
+        'DEV // NO TUNER IN THIS REGION',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const rounds = buildTunerTeamChallengeRounds(regionId, playerCharacterId);
+    this.setTunerChallengeState(regionId, {
+      invited: true,
+      completed: false,
+      stage: 0,
+      misses: 0,
+      perfectEligible: true,
+      activeSession: false,
+      retryNotBefore: 0,
+      rounds,
+      offeredAt: 'DEV',
+      completedAt: 0,
+    });
+    saveSessionState(this.registry);
+
+    this.showTunerTeamChallengePopup(regionId);
+    this.flashDevControl(
+      this.devForceTeamChallengeControl,
+      'DEV // TEAM CHALLENGE READY',
+      '#ffe2a4'
+    );
   }
 
   forceDevSpecialChallenger() {
@@ -1265,6 +1637,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', challenger.difficulty);
     this.registry.set('selectedRaceCategory', 'SINGLE');
     this.registry.set('selectedRaceType', challenger.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', 'PINK_SLIP');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', true);
@@ -1532,6 +1905,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', state.difficulty);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
@@ -2754,6 +3128,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', offer.difficulty || getMeetLocation(this.selectedMeetLocation).difficulty);
     this.registry.set('selectedRaceCategory', this.selectedMode);
     this.registry.set('selectedRaceType', offer.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
     this.registry.set('selectedRaceStake', this.selectedDeal === 'PINK' ? 0 : offer.stake);
     const { card, ...plainOffer } = offer;
