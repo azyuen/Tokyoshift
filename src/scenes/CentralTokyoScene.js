@@ -40,6 +40,17 @@ import {
   isCentralTokyoLocationUnlocked,
   isArkonDen,
 } from '../data/centralTokyo.js?v=20260924-r164';
+import {
+  TUNER_TEAM_INVITE_CHANCE,
+  TUNER_TEAM_PITY_ARRIVALS,
+  getTunerTeamChallengeState,
+  isTunerTeamChallengeEligible,
+} from '../data/tunerChallenges.js?v=20260924-r178';
+import {
+  TUNER_SHOP_ORDER,
+  getTunerShopForRegion,
+  isTunerShopUnlocked,
+} from '../data/tunerShops.js?v=20260924-r178';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -121,7 +132,117 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawShell();
     this.renderLocation(this.activeLocationId);
 
+    if (
+      this.activeLocationId === 'tokyoAutoMarket' ||
+      this.activeLocationId === 'tokyoDragComplex'
+    ) {
+      this.time.delayedCall(220, () => this.maybeShowTunerTeamCallout());
+    }
+
     finishSceneLoading('CENTRAL TOKYO');
+  }
+
+  maybeShowTunerTeamCallout() {
+    const candidates = TUNER_SHOP_ORDER
+      .filter(regionId =>
+        !isTunerShopUnlocked(this.registry, regionId) &&
+        isTunerTeamChallengeEligible(this.registry, regionId)
+      )
+      .map(regionId => ({
+        regionId,
+        state: getTunerTeamChallengeState(this.registry, regionId),
+        wins: Number((this.registry.get('regionWins') || {})[regionId] || 0),
+      }))
+      .filter(item => !item.state.invited && item.state.retryNotBefore <= Date.now())
+      .sort((a, b) => b.wins - a.wins);
+
+    if (!candidates.length) return;
+
+    const candidate = candidates[0];
+    const nextMisses = candidate.state.misses + 1;
+    const chance = Math.max(0.18, TUNER_TEAM_INVITE_CHANCE - 0.08);
+    const trigger =
+      Math.random() < chance ||
+      nextMisses >= TUNER_TEAM_PITY_ARRIVALS;
+
+    const store = { ...(this.registry.get('tunerTeamChallenges') || {}) };
+    store[candidate.regionId] = {
+      ...candidate.state,
+      invited: trigger,
+      misses: trigger ? 0 : nextMisses,
+      offeredAt: trigger ? this.activeLocationId : candidate.state.offeredAt,
+    };
+    this.registry.set('tunerTeamChallenges', store);
+    saveSessionState(this.registry);
+
+    if (trigger) this.showTunerTeamCallout(candidate.regionId);
+  }
+
+  showTunerTeamCallout(regionId) {
+    const shop = getTunerShopForRegion(regionId);
+    if (!shop) return;
+
+    const depth = 175;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 820, 470, 0x07111d, 0.997)
+      .setStrokeStyle(3, 0xff5f93, 0.97).setDepth(depth + 1));
+
+    add(this.add.text(780, 235, 'UNEXPECTED CALL-OUT', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#fff2f7'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 285, regionId + ' CREW', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ff91b6'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const locationText = this.activeLocationId === 'tokyoDragComplex'
+      ? 'Someone from the crew finds you at the Drag Complex.'
+      : 'Someone from the crew spots you at the Auto Market.';
+
+    add(this.add.text(
+      780,
+      382,
+      locationText + '\n\n' +
+      '“You’ve been making a lot of noise.\n' +
+      'Beat all seven of us, and ' + shop.label + ' will hear about it.”',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '14px',
+        color: '#d7e6ed',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 7,
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 500, 'TEAM CHALLENGE ADDED TO ' + regionId, {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e4b660'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const mark = add(this.add.rectangle(675, 575, 300, 50, 0x321522, 1)
+      .setStrokeStyle(2, 0xff5f93, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(675, 575, 'ACCEPT CALL-OUT', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff4f8'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const later = add(this.add.rectangle(945, 575, 180, 50, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(945, 575, 'LATER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => objects.forEach(obj => obj?.destroy?.());
+    mark.on('pointerdown', dismiss);
+    later.on('pointerdown', dismiss);
+    blocker.on('pointerdown', () => {});
   }
 
   drawShell() {
