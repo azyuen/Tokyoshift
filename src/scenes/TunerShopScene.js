@@ -975,6 +975,8 @@ export default class TunerShopScene extends Phaser.Scene {
       const boost = 1.14;
       fit.rear.wheelScale *= boost;
       fit.front.wheelScale *= boost;
+      if (fit.rear.backingRadius) fit.rear.backingRadius *= boost;
+      if (fit.front.backingRadius) fit.front.backingRadius *= boost;
     }
 
     return fit;
