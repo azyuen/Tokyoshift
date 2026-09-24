@@ -885,6 +885,16 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.registry.set('carStates', carStates);
     this.registry.set('cash', cash - cost);
+
+    // The decal is earned by using this tuner's work on this specific car.
+    // Keep the legacy global entitlement for save compatibility, but actual
+    // placement is still checked per-car via specialistTuning.
+    if (this.shop?.decalId) {
+      const unlocked = new Set(this.registry.get('tunerDecalsUnlocked') || []);
+      unlocked.add(this.shop.decalId);
+      this.registry.set('tunerDecalsUnlocked', [...unlocked]);
+    }
+
     this.cashText.setText(money(cash - cost));
     saveSessionState(this.registry);
 
