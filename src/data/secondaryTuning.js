@@ -1,3 +1,5 @@
+import { applySpecialistTuning } from './tunerShops.js?v=20260924-r167';
+
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 
 export const DRIVETRAIN_PART_ORDER = ['clutch', 'gearbox', 'differential', 'suspension'];
@@ -272,5 +274,18 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
     car.nosPower = Number(ex.nitrousShot.powerHp || 0);
   }
 
-  return { car, engine, drivetrain, chassis, exhaustNos, exhaustScale };
+  // Regional tuner-house work is a final refinement layered over the normal
+  // parts tree. This means the same specialist tune is respected by garage
+  // specs, AI threat calculations and race physics without scene-specific math.
+  const specialist = applySpecialistTuning(car, engine, carState);
+
+  return {
+    car: specialist.car,
+    engine: specialist.engine,
+    drivetrain,
+    chassis,
+    exhaustNos,
+    exhaustScale,
+    specialistTuning: specialist.installed,
+  };
 }

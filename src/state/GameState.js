@@ -14,7 +14,7 @@ export const MAX_PROFILES = 3;
 
 export function createDefaultGameState() {
   return {
-    version: 5,
+    version: 6,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -41,6 +41,10 @@ export function createDefaultGameState() {
     losses: 0,
     cash: 50000,
     devMode: false,
+    regionWins: {},
+    tunerShopProgress: {},
+    tunerDecalsUnlocked: [],
+    tunerDecalPlacements: {},
     district: 'ODAIBA',
     meetLocation: 'odaiba7eleven',
     garageTier: 0,
@@ -325,7 +329,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 5,
+    version: 6,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -342,6 +346,25 @@ export function normaliseState(input = {}) {
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
     devMode,
+    regionWins: input.regionWins && typeof input.regionWins === 'object'
+      ? Object.fromEntries(
+          Object.entries(input.regionWins).map(([regionId, value]) => [
+            String(regionId).toUpperCase(),
+            Math.max(0, Number(value || 0)),
+          ])
+        )
+      : {},
+    tunerShopProgress:
+      input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
+        ? input.tunerShopProgress
+        : {},
+    tunerDecalsUnlocked: Array.isArray(input.tunerDecalsUnlocked)
+      ? [...new Set(input.tunerDecalsUnlocked.map(String).filter(Boolean))]
+      : [],
+    tunerDecalPlacements:
+      input.tunerDecalPlacements && typeof input.tunerDecalPlacements === 'object'
+        ? input.tunerDecalPlacements
+        : {},
     meetRosters,
     meetRefreshAt: Number.isFinite(input.meetRefreshAt) ? input.meetRefreshAt : 0,
     defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
@@ -379,7 +402,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 5,
+    version: 6,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -390,6 +413,10 @@ export function snapshotRegistry(registry) {
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
     devMode: Boolean(registry.get('devMode')),
+    regionWins: registry.get('regionWins') || {},
+    tunerShopProgress: registry.get('tunerShopProgress') || {},
+    tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
+    tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
     district: registry.get('district') || 'ODAIBA',
     meetLocation: registry.get('meetLocation') || 'odaiba7eleven',
     garageTier: Number(registry.get('garageTier') || 0),

@@ -2,9 +2,10 @@ import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
 import { cars } from '../data/cars.js?v=20260924-r165';
 import { preloadCarAppearanceAssets } from '../vehicles/CarAppearance.js?v=20260923-r158';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260923-r145';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260923-r145';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260924-r167';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures } from '../data/visualMods.js?v=20260923-r138';
+import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r167';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }
@@ -73,6 +74,28 @@ export default class BootScene extends Phaser.Scene {
     garageAssets
       .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory') || asset.key.startsWith('tuningPart'))
       .forEach(asset => this.load.image(asset.key, asset.path));
+
+    // Tuner-shop art is data-driven by region. A missing background is safe:
+    // TunerShopScene falls back to the normal garage art while the final asset
+    // is being uploaded at the configured path.
+    Object.values(TUNER_SHOPS)
+      .filter(shop => shop.enabled)
+      .forEach(shop => {
+        if (shop.backgroundKey && shop.backgroundPath) {
+          this.load.image(
+            shop.backgroundKey,
+            shop.backgroundPath + '?v=20260924-r167'
+          );
+        }
+
+        const mechanic = characters[shop.mechanicId];
+        if (mechanic?.visual?.spriteKey && mechanic?.visual?.path) {
+          this.load.image(
+            mechanic.visual.spriteKey,
+            mechanic.visual.path + '?v=20260924-r167'
+          );
+        }
+      });
 
     // A manual save can point at any chosen profile portrait, so every
     // player-character sprite must be available before we skip setup on boot.
