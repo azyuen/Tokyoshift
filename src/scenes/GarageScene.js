@@ -1,6 +1,6 @@
 import { cars, carOrder } from '../data/cars.js?v=20260924-r171';
 import { engines } from '../data/engines.js?v=20260924-r164';
-import { characters } from '../data/characters.js?v=20260923-r145';
+import { characters } from '../data/characters.js?v=20260925-r182';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -172,6 +172,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.drawScene();
     this.buildHeader();
+    this.buildProfileCalibrationButton();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     this.buildMoveCarButton();
@@ -344,6 +345,28 @@ export default class GarageScene extends Phaser.Scene {
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
+  }
+
+  buildProfileCalibrationButton() {
+    if (!this.registry.get('devMode') && !isArkonDen(this.registry)) return;
+
+    const x = 1328;
+    const y = 77;
+    const width = 328;
+    const button = this.add.rectangle(x, y, width, 28, 0x111825, 0.98)
+      .setStrokeStyle(1, 0xff78aa, 0.9)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(46);
+
+    this.add.text(x, y, 'DEV // PROFILE CALIBRATION', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#ffb1cb',
+    }).setOrigin(0.5).setDepth(47);
+
+    button.on('pointerover', () => button.setFillStyle(0x2b1420, 1));
+    button.on('pointerout', () => button.setFillStyle(0x111825, 0.98));
+    button.on('pointerdown', () => this.scene.start('ProfileCalibrationScene'));
   }
 
   buildCarLabel() {
