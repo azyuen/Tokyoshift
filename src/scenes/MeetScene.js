@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260924-r169';
+import { cars, carOrder } from '../data/cars.js?v=20260924-r170';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { applyEngineTuning } from '../data/tuning.js?v=20260922-r114';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260924-r168';
@@ -8,7 +8,7 @@ import {
   normalisePaintColor,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260924-r169';
+} from '../vehicles/CarAppearance.js?v=20260924-r170';
 import {
   characters,
   characterOrder,
