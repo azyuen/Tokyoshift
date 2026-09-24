@@ -1637,6 +1637,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', challenger.difficulty);
     this.registry.set('selectedRaceCategory', 'SINGLE');
     this.registry.set('selectedRaceType', challenger.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', 'PINK_SLIP');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', true);
@@ -1904,6 +1905,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', state.difficulty);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
@@ -3126,6 +3128,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentDifficulty', offer.difficulty || getMeetLocation(this.selectedMeetLocation).difficulty);
     this.registry.set('selectedRaceCategory', this.selectedMode);
     this.registry.set('selectedRaceType', offer.raceType);
+    this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
     this.registry.set('selectedRaceStake', this.selectedDeal === 'PINK' ? 0 : offer.stake);
     const { card, ...plainOffer } = offer;
