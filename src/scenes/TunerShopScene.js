@@ -992,10 +992,6 @@ export default class TunerShopScene extends Phaser.Scene {
         emit();
         window.setTimeout(cleanup, 0);
       }, { once: true });
-      input.addEventListener('blur', () => {
-        window.setTimeout(cleanup, 120);
-      }, { once: true });
-
       input.click();
       window.setTimeout(() => {
         if (document.body.contains(input)) cleanup();
