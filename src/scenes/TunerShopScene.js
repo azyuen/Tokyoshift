@@ -170,7 +170,9 @@ export default class TunerShopScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
       color: '#f0dfbf',
-    }).setOrigin(1, 0.5).setDepth(42);\n\n    addSettingsButton(this, 1210, 35);
+    }).setOrigin(1, 0.5).setDepth(42);
+
+    addSettingsButton(this, 1210, 35);
   }
 
   drawSidePanel() {
