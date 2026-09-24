@@ -45,6 +45,8 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
       this.registry.get('playerCharacterId') || 'renMizuno'
     ));
     this.pose = 'idle';
+    this.side = 'left';
+    this.dimmed = false;
     this.largeFrame = false;
     this.temp = { scale: 0, offsetX: 0, offsetY: 0 };
     this.previewObjects = [];
@@ -98,11 +100,19 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
     button(1065, 390, 105, 'IDLE', () => { this.pose = 'idle'; this.resetTemp(false); });
     button(1190, 390, 105, 'WIN', () => { this.pose = 'win'; this.resetTemp(false); });
     button(1315, 390, 105, 'LOSS', () => { this.pose = 'loss'; this.resetTemp(false); });
+    button(1440, 390, 105, 'SIDE L/R', () => {
+      this.side = this.side === 'left' ? 'right' : 'left';
+      this.renderPreview();
+    });
 
     button(1080, 470, 130, 'X -', () => this.adjust('offsetX', -2));
     button(1240, 470, 130, 'X +', () => this.adjust('offsetX', 2));
     button(1080, 525, 130, 'Y -', () => this.adjust('offsetY', -2));
     button(1240, 525, 130, 'Y +', () => this.adjust('offsetY', 2));
+    button(1410, 525, 150, 'DIM ON/OFF', () => {
+      this.dimmed = !this.dimmed;
+      this.renderPreview();
+    });
     button(1080, 580, 130, 'SCALE -', () => this.adjust('scale', -0.02));
     button(1240, 580, 130, 'SCALE +', () => this.adjust('scale', 0.02));
 
@@ -172,9 +182,10 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
       y: frame.y,
       frameWidth: frame.w,
       frameHeight: frame.h,
-      side: 'left',
+      side: this.side,
       depth: 4,
       flipInward: true,
+      dimmed: this.dimmed,
       profileOverride: adjusted,
     });
 
@@ -208,6 +219,8 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
       character.name + '  //  ' + characterId +
       '\nPOSE: ' + this.pose.toUpperCase() + (fallback ? '  (IDLE FALLBACK)' : '') +
       '\nFRAME: ' + frame.w + ' × ' + frame.h +
+      '\nSIDE: ' + this.side.toUpperCase() + ' // INWARD' +
+      '\nDIMMED: ' + (this.dimmed ? 'YES' : 'NO') +
       '\n\nprofile.scale: ' + adjusted.scale.toFixed(2) +
       '\nprofile.offsetX: ' + adjusted.offsetX.toFixed(0) +
       '\nprofile.offsetY: ' + adjusted.offsetY.toFixed(0) +
