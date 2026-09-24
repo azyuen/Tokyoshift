@@ -964,6 +964,22 @@ export default class TunerShopScene extends Phaser.Scene {
     return { sprite, shadow };
   }
 
+  getStageWheelFit(car, bodyScale, wheelSource) {
+    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+
+    // Normal cars use the legacy/general wheel artwork. In the tuner-house
+    // scene they were reading visibly undersized against the larger display
+    // body. Hero cars already use their individually calibrated fit and must
+    // not be boosted.
+    if (!car.visual.singleBody) {
+      const boost = 1.14;
+      fit.rear.wheelScale *= boost;
+      fit.front.wheelScale *= boost;
+    }
+
+    return fit;
+  }
+
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
     const bodyKey = getCarBodyTextureKey(this, car);
     if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) {
@@ -973,7 +989,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const bodySource = this.textures.get(bodyKey).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / bodySource.width;
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
       fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
@@ -983,7 +999,15 @@ export default class TunerShopScene extends Phaser.Scene {
     return wheelBottomY - renderOffsetY - Math.max(rearBottomOffset, frontBottomOffset);
   }
 
-  drawCarOnStage(carId, x, wheelBottomY, targetWidth, depth, track = false) {
+  drawCarOnStage(
+    carId,
+    x,
+    wheelBottomY,
+    targetWidth,
+    depth,
+    track = false,
+    { showDecals = true } = {}
+  ) {
     const car = cars[carId];
     if (!car) return [];
 
@@ -996,30 +1020,51 @@ export default class TunerShopScene extends Phaser.Scene {
     const source = this.textures.get(bodyKey).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
     const bodyScale = targetWidth / source.width;
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = bodyY + renderOffsetY;
 
+    const rearX = x + fit.rear.offsetX;
+    const rearY = displayY + fit.rear.offsetY;
+    const frontX = x + fit.front.offsetX;
+    const frontY = displayY + fit.front.offsetY;
+
     const shadow = this.add.ellipse(
       x,
-      wheelBottomY - 12,
-      targetWidth * 0.72,
-      Math.max(34, targetWidth * 0.065),
+      wheelBottomY + 5,
+      targetWidth * 0.92,
+      Math.max(40, targetWidth * 0.062),
       0x000000,
-      0.48
-    ).setDepth(depth - 0.2);
+      0.68
+    ).setDepth(depth - 0.32);
 
     const rearWheel = this.add.image(
-      x + fit.rear.offsetX,
-      displayY + fit.rear.offsetY,
+      rearX,
+      rearY,
       car.visual.wheelKey
     ).setScale(fit.rear.wheelScale).setDepth(depth);
 
     const frontWheel = this.add.image(
-      x + fit.front.offsetX,
-      displayY + fit.front.offsetY,
+      frontX,
+      frontY,
       car.visual.wheelKey
     ).setScale(fit.front.wheelScale).setDepth(depth);
+
+    const rearBacking = this.add.circle(
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, rearWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.2);
+
+    const frontBacking = this.add.circle(
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, frontWheel.displayWidth * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.2);
 
     const carState = (this.registry.get('carStates') || {})[carId] || {};
     const bodyLayers = createCarBodyLayers(this, car, {
@@ -1030,7 +1075,36 @@ export default class TunerShopScene extends Phaser.Scene {
       paintColor: getCarPaintColor(carState),
     });
 
-    const objects = [shadow, rearWheel, frontWheel, ...bodyLayers.objects];
+    const decalObjects = showDecals
+      ? createTunerDecalLayers(this, carState, {
+          x,
+          y: displayY,
+          displayWidth: bodyLayers.primary.displayWidth,
+          displayHeight: bodyLayers.primary.displayHeight,
+          depth: depth + 1.04,
+        })
+      : [];
+
+    const objects = [
+      shadow,
+      rearBacking,
+      frontBacking,
+      rearWheel,
+      frontWheel,
+      ...bodyLayers.objects,
+      ...decalObjects,
+    ];
+
+    objects.geometry = {
+      x,
+      displayY,
+      displayWidth: bodyLayers.primary.displayWidth,
+      displayHeight: bodyLayers.primary.displayHeight,
+      bodyScale,
+      wheelBottomY,
+      targetWidth,
+    };
+
     if (track) objects.forEach(obj => this.addDynamic(obj));
     return objects;
   }
