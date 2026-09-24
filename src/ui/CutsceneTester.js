@@ -34,20 +34,21 @@ function resolvePreviewCharacter(scene, definition, side) {
   return characters[token]?.name || token;
 }
 
-export function addDevCutsceneButton(scene, x = 840, y = 35) {
+export function addDevCutsceneButton(scene, x = 840, y = 35, options = {}) {
   if (!scene?.registry?.get('devMode')) return null;
 
+  const depth = Number(options.depth || 43);
   const button = scene.add.rectangle(x, y, 166, 38, 0x15131c, 1)
     .setStrokeStyle(1, 0xff72a6, 0.95)
     .setInteractive({ useHandCursor: true })
-    .setDepth(43)
+    .setDepth(depth)
     .setScrollFactor(0);
 
   const label = scene.add.text(x, y, 'DEV // SCENES', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#ffc0d6',
-  }).setOrigin(0.5).setDepth(44).setScrollFactor(0);
+  }).setOrigin(0.5).setDepth(depth + 1).setScrollFactor(0);
 
   button.on('pointerover', () => button.setStrokeStyle(2, 0xff9fc1, 1));
   button.on('pointerout', () => button.setStrokeStyle(1, 0xff72a6, 0.95));
