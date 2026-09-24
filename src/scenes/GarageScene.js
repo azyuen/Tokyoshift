@@ -77,6 +77,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
 } from '../data/visualMods.js?v=20260924-r170';
+import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r172';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1335,6 +1336,14 @@ export default class GarageScene extends Phaser.Scene {
       bodyLayers,
     });
 
+    const decalObjects = createTunerDecalLayers(this, carState, {
+      x,
+      y: displayY,
+      displayWidth: bodyLayers.primary.displayWidth,
+      displayHeight: bodyLayers.primary.displayHeight,
+      depth: depth + 1.04,
+    });
+
     return [
       rearWheelBacking,
       frontWheelBacking,
@@ -1343,6 +1352,7 @@ export default class GarageScene extends Phaser.Scene {
       frontWheel,
       ...bodyLayers.objects,
       ...visualModObjects,
+      ...decalObjects,
     ];
   }
 

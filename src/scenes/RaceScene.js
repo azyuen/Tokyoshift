@@ -13,6 +13,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260924-r170';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r170';
+import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r172';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { applyEngineTuning } from '../data/tuning.js?v=20260921-r55';
@@ -853,6 +854,13 @@ export default class RaceScene extends Phaser.Scene {
       paintColor,
       bodyLayers,
     });
+    const decalObjects = createTunerDecalLayers(this, carState, {
+      x: 0,
+      y: 0,
+      displayWidth: bodyLayers.primary.displayWidth,
+      displayHeight: bodyLayers.primary.displayHeight,
+      depth: depth + 1.04,
+    });
     const body = bodyLayers.primary;
 
     const roadShadow = this.add.ellipse(
@@ -875,7 +883,7 @@ export default class RaceScene extends Phaser.Scene {
       frontWheelBacking,
       roadShadow,
       body,
-      bodyObjects: [...bodyLayers.objects, ...visualModObjects],
+      bodyObjects: [...bodyLayers.objects, ...visualModObjects, ...decalObjects],
       driverSilhouette: driver?.image || null,
       driverOffsetX: driver?.offsetX || 0,
       driverOffsetY: driver?.offsetY || 0,
@@ -1299,6 +1307,17 @@ export default class RaceScene extends Phaser.Scene {
       paintColor,
     });
 
+    const decalObjects = carId === this.selectedCarId
+      ? createTunerDecalLayers(this, this.playerCarState || {}, {
+          x,
+          y: displayY,
+          displayWidth: bodyLayers.primary.displayWidth,
+          displayHeight: bodyLayers.primary.displayHeight,
+          depth: depth + 1.04,
+          flipX,
+        })
+      : [];
+
     const carObjects = [
       shadow,
       rearBacking,
@@ -1306,6 +1325,7 @@ export default class RaceScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       ...bodyLayers.objects,
+      ...decalObjects,
     ];
 
     carObjects.forEach(obj => {
@@ -1314,7 +1334,7 @@ export default class RaceScene extends Phaser.Scene {
     });
 
     if (lost) {
-      const faded = [rearWheel, frontWheel, ...bodyLayers.objects];
+      const faded = [rearWheel, frontWheel, ...bodyLayers.objects, ...decalObjects];
       faded.forEach(obj => obj.setTint(0x696d74).setAlpha(0.42));
       shadow.setAlpha(0.24);
 
