@@ -61,6 +61,13 @@ export const cars = {
       modularAssetStem: 'ae86_car',
       bodyPath: 'assets/Cars/ae86/ae86_preview_full.png',
       deriveModularFromPreview: true,
+      derivedModularSplit: {
+        bodyKit: {
+          allBelowY: 0.598,
+          darkFromY: 0.505,
+          darkMax: 165,
+        },
+      },
       stockBodyKitId: '0',
       stockSpoilerId: '0',
 
@@ -71,11 +78,11 @@ export const cars = {
       wheelScale: 0.039,
       rearOffsetX: -495,
       frontOffsetX: 479,
-      wheelOffsetY: 143,
+      wheelOffsetY: 159,
       rearWheelOffsetX: -495,
       frontWheelOffsetX: 479,
-      rearWheelOffsetY: 143,
-      frontWheelOffsetY: 143,
+      rearWheelOffsetY: 159,
+      frontWheelOffsetY: 159,
       rearWheelScale: 0.04524,
       frontWheelScale: 0.04524,
       rearWheelBackingRadius: 130,
