@@ -54,9 +54,8 @@ export const cars = {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
 
-      // R170 modular AE86. All appearance pieces share the same 1774×887
-      // canvas/origin inside a per-car folder, so stock and future replacement
-      // aero can stack without scene-specific offsets.
+      // Modular AE86. Base, kits and spoilers share the same 2172×724
+      // canvas/origin so they stack at identical x/y/scale in every scene.
       modularAssetRoot: 'assets/Cars/ae86',
       modularAssetStem: 'ae86',
       bodyPath: 'assets/Cars/ae86/ae86_base.png',
@@ -64,24 +63,24 @@ export const cars = {
       stockBodyKit: false,
       stockSpoiler: false,
 
-      // Re-authored against the new modular canvas. This preserves roughly the
-      // same on-screen footprint as the previous 2172px-wide AE86 while moving
-      // the wheel centres onto the measured new arch centres.
-      bodyScale: 0.202,
+      // R183 calibration for the current 2172×724 AE86 master.
+      // Preserve the old on-screen footprint while authoring wheel geometry
+      // directly against this master so every scene shares one calibration.
+      bodyScale: 0.165,
       wheelScale: 0.039,
-      rearOffsetX: -495,
-      frontOffsetX: 479,
-      wheelOffsetY: 159,
-      rearWheelOffsetX: -495,
-      frontWheelOffsetX: 479,
-      rearWheelOffsetY: 159,
-      frontWheelOffsetY: 159,
+      rearOffsetX: -600,
+      frontOffsetX: 583,
+      wheelOffsetY: 184,
+      rearWheelOffsetX: -600,
+      frontWheelOffsetX: 583,
+      rearWheelOffsetY: 184,
+      frontWheelOffsetY: 184,
       rearWheelScale: 0.04524,
       frontWheelScale: 0.04524,
-      rearWheelBackingRadius: 130,
-      frontWheelBackingRadius: 130,
-      exhaustOffsetX: -792,
-      exhaustOffsetY: 130,
+      rearWheelBackingRadius: 160,
+      frontWheelBackingRadius: 160,
+      exhaustOffsetX: -970,
+      exhaustOffsetY: 159,
     },
   },
 
