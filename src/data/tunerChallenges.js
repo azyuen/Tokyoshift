@@ -128,6 +128,7 @@ export function getTunerTeamChallengeState(source, regionId) {
     retryNotBefore: Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds) ? raw.rounds : [],
     offeredAt: String(raw.offeredAt || ''),
+    playerCarId: String(raw.playerCarId || ''),
     completedAt: Math.max(0, Number(raw.completedAt || 0)),
   };
 }
