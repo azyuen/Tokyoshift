@@ -360,6 +360,13 @@ export function createVisualModLayers(
     });
   });
 
+  // Foldered modular cars expose their stock aero as named slots. Hide only
+  // the stock slot being replaced, leaving the permanent shell/overlay intact.
+  // This makes future AE86 body-kit/spoiler PNGs true drop-in replacements.
+  Object.entries(bodyLayers?.stockSlots || {}).forEach(([slotId, slotObjects]) => {
+    const replacingStock = selected?.[slotId] && selected[slotId] !== 'stock';
+    (slotObjects || []).forEach(obj => obj?.setVisible?.(!replacingStock));
+  });
   // The normal overlay contains some stock bumper/skirt artwork that would
   // fight the body kit. While visual mods are active, swap it for a protected
   // detail layer containing only glass, lights, mirror and handles.
