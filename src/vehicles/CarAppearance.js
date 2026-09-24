@@ -309,7 +309,11 @@ export function rgbToPaintColor(r, g, b) {
 
 export function hasLayeredPaintAssets(scene, visualOrCar) {
   const visual = visualOrCar?.visual || visualOrCar || {};
-  if (visual.singleBody || visual.singleLayerModular) return false;
+  if (visual.singleBody) return false;
+  if (visual.singleLayerModular) {
+    const keys = getCarTextureKeys(visualOrCar);
+    return Boolean(scene?.textures?.exists?.(keys.body));
+  }
 
   const keys = getCarTextureKeys(visualOrCar);
   return Boolean(
@@ -337,6 +341,28 @@ export function createCarBodyLayers(
 ) {
   const color = normalisePaintColor(paintColor);
   const keys = getCarTextureKeys(visualOrCar);
+
+  if (visualOrCar?.visual?.singleLayerModular || visualOrCar?.singleLayerModular) {
+    const body = scene.add.image(x, y, keys.body)
+      .setScale(scale)
+      .setFlipX(flipX)
+      .setDepth(depth)
+      .setTint(color);
+    body.setData('carPaintLayer', true);
+    body.setData('carBasePaintLayer', true);
+    return {
+      layered: true,
+      primary: body,
+      paint: body,
+      overlay: null,
+      bodyKitPaint: null,
+      bodyKit: null,
+      spoilerPaint: null,
+      spoiler: null,
+      stockSlots: { bodyKit: [], spoiler: [] },
+      objects: [body],
+    };
+  }
 
   if (hasLayeredPaintAssets(scene, visualOrCar)) {
     const addLayer = (key, depthOffset, { tint = false, dataKey = null, slot = null } = {}) => {
