@@ -6,7 +6,7 @@ import {
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
 } from '../data/tunerShops.js?v=20260924-r168';
-import { saveSessionState } from '../state/GameState.js?v=20260924-r168';
+import { saveSessionState } from '../state/GameState.js?v=20260924-r172';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -17,6 +17,15 @@ import {
   getWheelPairFit,
   getWheelContactOffsetY,
 } from '../vehicles/WheelFit.js?v=20260923-r160';
+import {
+  normaliseTunerDecals,
+  withTunerDecal,
+  carHasShopTune,
+  createTunerDecalObject,
+  createTunerDecalLayers,
+} from '../vehicles/TunerDecals.js?v=20260924-r172';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r172';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -53,17 +62,16 @@ export default class TunerShopScene extends Phaser.Scene {
     this.mode = 'HERO';
     this.dynamicObjects = [];
     this.popupObjects = [];
-    this.tuningCarIndex = 0;
     this.conversionInProgress = false;
 
-    this.unlockShopDecal();
+    this.recordShopVisit();
     this.drawBase();
     this.drawHeader();
     this.drawSidePanel();
     this.showHeroMode();
   }
 
-  unlockShopDecal() {
+  recordShopVisit() {
     const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
     progress[this.shop.id] = {
       ...(progress[this.shop.id] || {}),
@@ -72,13 +80,6 @@ export default class TunerShopScene extends Phaser.Scene {
       visitedAt: progress[this.shop.id]?.visitedAt || Date.now(),
     };
     this.registry.set('tunerShopProgress', progress);
-
-    if (this.shop?.decalId) {
-      const current = new Set(this.registry.get('tunerDecalsUnlocked') || []);
-      current.add(this.shop.decalId);
-      this.registry.set('tunerDecalsUnlocked', [...current]);
-    }
-
     saveSessionState(this.registry);
   }
 
@@ -143,25 +144,29 @@ export default class TunerShopScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(-8);
     }
 
-    this.add.rectangle(
-      STAGE.x + 145,
+    this.stageLabelBox = this.add.rectangle(
+      STAGE.x + 190,
       STAGE.y + 33,
-      250,
+      340,
       42,
       0x100f0c,
       0.84
     ).setStrokeStyle(1, 0xe6b66a, 0.72).setDepth(18);
 
-    this.add.text(
+    this.stageLabelText = this.add.text(
       STAGE.x + 30,
       STAGE.y + 33,
-      this.shop.label + ' // ' + this.shop.specialty,
+      '',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#ffe1ac',
       }
     ).setOrigin(0, 0.5).setDepth(19);
+  }
+
+  setStageLabel(label = '') {
+    this.stageLabelText?.setText(String(label || '').toUpperCase());
   }
 
   drawHeader() {
@@ -198,109 +203,85 @@ export default class TunerShopScene extends Phaser.Scene {
       0.97
     ).setStrokeStyle(2, 0x59462c, 1).setDepth(30);
 
-    this.add.text(SIDE.x + 24, SIDE.y + 24, this.shop.label, {
+    this.add.text(SIDE.x + 26, SIDE.y + 24, this.shop.label, {
       fontFamily: PIXEL_FONT,
       fontSize: '15px',
       color: '#fff2dc',
     }).setDepth(32);
 
-    this.add.text(SIDE.x + 24, SIDE.y + 58, this.shop.specialty, {
+    this.add.text(SIDE.x + 26, SIDE.y + 58, this.shop.specialty, {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#d6aa68',
     }).setDepth(32);
 
-    const heroButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 118,
-      SIDE.w - 40,
-      52,
-      0x241c12,
-      1
-    ).setStrokeStyle(2, 0xe2b464, 0.95)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(31);
+    const makeTab = (y, label, fill, stroke, fontSize = '9px') => {
+      const box = this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + y,
+        SIDE.w - 56,
+        50,
+        fill,
+        1
+      ).setStrokeStyle(2, stroke, 0.95)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(31);
 
-    const heroText = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 118,
-      'HERO BUILD',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#fff2da',
-      }
-    ).setOrigin(0.5).setDepth(32);
+      const text = this.add.text(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + y,
+        label,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize,
+          color: '#e7f0f2',
+          align: 'center',
+        }
+      ).setOrigin(0.5).setDepth(32);
 
-    const tuneButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 180,
-      SIDE.w - 40,
-      52,
-      0x101d22,
-      1
-    ).setStrokeStyle(2, 0x4f8b91, 0.9)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(31);
+      return { box, text };
+    };
 
-    const tuneText = this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 180,
-      'SPECIALIST TUNING',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#d8f5f2',
-      }
-    ).setOrigin(0.5).setDepth(32);
+    this.heroTab = makeTab(118, 'HERO BUILD', 0x241c12, 0xe2b464, '9px');
+    this.tuneTab = makeTab(180, 'SPECIALIST TUNING', 0x101d22, 0x4f8b91, '8px');
+    this.decalTab = makeTab(242, 'SHOP DECAL', 0x15191d, 0x59646a, '8px');
 
-    heroButton.on('pointerdown', () => this.showHeroMode());
-    tuneButton.on('pointerdown', () => this.showTuningMode());
-
-    this.heroTab = { box: heroButton, text: heroText };
-    this.tuneTab = { box: tuneButton, text: tuneText };
+    this.heroTab.box.on('pointerdown', () => this.showHeroMode());
+    this.tuneTab.box.on('pointerdown', () => this.showTuningMode());
+    this.decalTab.box.on('pointerdown', () => this.showDecalMode());
 
     this.sideContent = this.add.container(0, 0).setDepth(33);
 
-    this.add.text(SIDE.x + 24, SIDE.y + SIDE.h - 102, 'DECAL UNLOCKED', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#847d72',
-    }).setDepth(32);
-
-    this.add.text(SIDE.x + 24, SIDE.y + SIDE.h - 76, this.shop.decalLabel, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#efc378',
-    }).setDepth(32);
-
-    const exit = this.add.rectangle(
+    const mapY = SIDE.y + SIDE.h - 48;
+    const mapButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + SIDE.h - 32,
-      SIDE.w - 40,
-      46,
+      mapY,
+      SIDE.w - 56,
+      44,
       0x111920,
       1
-    ).setStrokeStyle(1, 0x54636c, 1)
+    ).setStrokeStyle(1, 0x62727b, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31);
 
     this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + SIDE.h - 32,
-      'LEAVE WORKSHOP',
+      mapY,
+      'GO TO MAP  >',
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#d5e0e5',
+        fontSize: '8px',
+        color: '#dce8ed',
       }
     ).setOrigin(0.5).setDepth(32);
 
-    exit.on('pointerdown', () => this.leaveWorkshop());
+    mapButton.on('pointerdown', () => this.openMap());
   }
 
   setTabStyle() {
     const heroActive = this.mode === 'HERO';
+    const tuneActive = this.mode === 'TUNING';
+    const decalActive = this.mode === 'DECAL';
 
     this.heroTab.box
       .setFillStyle(heroActive ? 0x2b2114 : 0x171814, 1)
@@ -308,9 +289,37 @@ export default class TunerShopScene extends Phaser.Scene {
     this.heroTab.text.setColor(heroActive ? '#fff2da' : '#948875');
 
     this.tuneTab.box
-      .setFillStyle(!heroActive ? 0x10292b : 0x10191d, 1)
-      .setStrokeStyle(!heroActive ? 2 : 1, !heroActive ? 0x65cfc8 : 0x405258, 1);
-    this.tuneTab.text.setColor(!heroActive ? '#e9fffb' : '#789094');
+      .setFillStyle(tuneActive ? 0x10292b : 0x10191d, 1)
+      .setStrokeStyle(tuneActive ? 2 : 1, tuneActive ? 0x65cfc8 : 0x405258, 1);
+    this.tuneTab.text.setColor(tuneActive ? '#e9fffb' : '#789094');
+
+    const currentId = this.getCurrentCarId();
+    const currentState = (this.registry.get('carStates') || {})[currentId] || {};
+    const decalEligible = carHasShopTune(currentState, this.shop);
+
+    this.decalTab.box
+      .setFillStyle(decalActive ? 0x292414 : 0x15191d, 1)
+      .setStrokeStyle(
+        decalActive ? 2 : 1,
+        decalActive ? 0xe6c365 : decalEligible ? 0x8e7a3e : 0x485056,
+        1
+      );
+    this.decalTab.text.setColor(
+      decalActive ? '#fff3c8' : decalEligible ? '#d9c687' : '#707a7f'
+    );
+  }
+
+  getCurrentCarId() {
+    const carId = this.registry.get('selectedCarId');
+    const owned = this.registry.get('ownedCarIds') || [];
+    return carId && owned.includes(carId) && cars[carId] ? carId : null;
+  }
+
+  getCurrentTunableCarId() {
+    const carId = this.getCurrentCarId();
+    const car = carId ? cars[carId] : null;
+    if (!car || car.collector || car.tuningLocked) return null;
+    return carId;
   }
 
   clearDynamic() {
