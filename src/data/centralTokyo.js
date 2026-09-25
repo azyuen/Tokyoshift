@@ -305,8 +305,9 @@ export function getPendingCentralTokyoInvite(source) {
   const access = getCentralTokyoAccess(source);
   const seen = value(source, 'tokyoInvitesSeen', {}) || {};
 
-  // The Auto Market simply opens once the player has enough wins. The two
-  // prestige destinations are the ones that arrive as explicit invitations.
+  // Story rollout: the first Central Tokyo access now gets a short Daichi
+  // introduction, followed later by explicit Ginza and Drag Complex invites.
+  if (access.autoMarket && !seen.autoMarket) return 'autoMarket';
   if (access.ginza && !seen.ginza) return 'ginza';
   if (access.drag && !seen.drag) return 'drag';
   return null;
