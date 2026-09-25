@@ -1,13 +1,13 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { cars } from '../data/cars.js?v=20260925-r193';
-import { characters } from '../data/characters.js?v=20260925-r182';
+import { characters } from '../data/characters.js?v=20260925-r195';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
 } from '../data/tunerShops.js?v=20260924-r178';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
