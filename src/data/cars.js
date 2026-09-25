@@ -95,11 +95,20 @@ export const cars = {
       layeredMasterGeometry: {
         bodyScale: 0.170,
         canvasDisplayScale: 1.1380,
-        rearOffsetX: -471,
-        frontOffsetX: 776,
+
+        // Keep the wheel stance that already reads well in Workshop, then move
+        // the complete 2400x1000 body stack down onto those wheels. Offsets are
+        // authored in source pixels and therefore scale consistently everywhere.
+        bodyRenderOffsetX: 0,
+        bodyRenderOffsetY: 40,
+
+        // Small X-only axle corrections align the wheel centres to the actual
+        // stock arch centres without disturbing the existing ground line.
+        rearOffsetX: -479,
+        frontOffsetX: 793,
         wheelOffsetY: 364,
-        rearWheelOffsetX: -471,
-        frontWheelOffsetX: 776,
+        rearWheelOffsetX: -479,
+        frontWheelOffsetX: 793,
         rearWheelOffsetY: 360,
         frontWheelOffsetY: 368,
         rearWheelScale: 0.04524,
