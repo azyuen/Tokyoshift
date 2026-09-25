@@ -455,6 +455,9 @@ export function createVisualModLayers(
   if (!active) return [];
 
   const objects = [];
+  const visual = car?.visual || {};
+  const bodyOffsetX = Number(visual.bodyRenderOffsetX || 0) * scale * (flipX ? -1 : 1);
+  const bodyOffsetY = Number(visual.bodyRenderOffsetY || 0) * scale;
 
   slotIds.forEach((slotId, slotIndex) => {
     const option = getVisualModOption(car.id, slotId, selected[slotId]);
@@ -466,7 +469,11 @@ export function createVisualModLayers(
       const offsetY = Number(layer.offsetY ?? 0) * scale;
 
       const aboveOverlayDepth = layer.aboveOverlay ? 0.030 : 0;
-      const image = scene.add.image(x + offsetX, y + offsetY, layer.textureKey)
+      const image = scene.add.image(
+        x + bodyOffsetX + offsetX,
+        y + bodyOffsetY + offsetY,
+        layer.textureKey
+      )
         .setFlipX(flipX)
         .setDepth(
           depth +
@@ -521,7 +528,11 @@ export function createVisualModLayers(
     scene.textures.exists(catalog.protectedTextureKey)
   ) {
     bodyLayers.overlay.setVisible(false);
-    const protectedDetails = scene.add.image(x, y, catalog.protectedTextureKey)
+    const protectedDetails = scene.add.image(
+      x + bodyOffsetX,
+      y + bodyOffsetY,
+      catalog.protectedTextureKey
+    )
       .setScale(scale)
       .setFlipX(flipX)
       .setDepth(depth + 0.020);
