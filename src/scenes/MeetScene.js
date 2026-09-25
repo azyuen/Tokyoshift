@@ -1,4 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260925-r183';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r189';
+import { cars, carOrder } from '../data/cars.js?v=20260925-r189';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { applyEngineTuning } from '../data/tuning.js?v=20260922-r114';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260924-r176';
@@ -8,7 +9,7 @@ import {
   normalisePaintColor,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260924-r170';
+} from '../vehicles/CarAppearance.js?v=20260925-r189';
 import {
   characters,
   characterOrder,
@@ -3272,7 +3273,7 @@ export default class MeetScene extends Phaser.Scene {
   ) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
-    const bodyScale = targetWidth / source.width;
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = y + renderOffsetY;
