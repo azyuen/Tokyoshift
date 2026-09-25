@@ -146,7 +146,7 @@ export const CUTSCENES = {
       },
     ],
     finalActionLabel: 'RACE',
-  },,
+  },
 
   firstPinkSlipChallenge: {
     id: 'firstPinkSlipChallenge',
