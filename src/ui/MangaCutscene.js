@@ -434,14 +434,19 @@ function drawDialogue(controller, page) {
     .setInteractive({ useHandCursor: true });
 
   const labelWidth = Math.min(330, cardWidth * 0.30);
+  const labelHeight = 36;
+  const cardTop = y - cardHeight / 2;
+  // Speaker name sits outside the dialogue field like a tab. A tiny overlap
+  // keeps the tab visually attached to the card border without covering text.
+  const labelY = cardTop - labelHeight / 2 + 3;
   const labelX = speaker === 'right'
     ? x + cardWidth / 2 - labelWidth / 2 - 18
     : x - cardWidth / 2 + labelWidth / 2 + 18;
   const labelBox = scene.add.rectangle(
     labelX,
-    y - cardHeight / 2 + 20,
+    labelY,
     labelWidth,
-    38,
+    labelHeight,
     0x111111,
     1
   ).setDepth(BASE_DEPTH + 31).setScrollFactor(0);
@@ -450,7 +455,7 @@ function drawDialogue(controller, page) {
     speaker === 'right'
       ? labelX + labelWidth / 2 - 16
       : labelX - labelWidth / 2 + 16,
-    y - cardHeight / 2 + 20,
+    labelY,
     label,
     {
       fontFamily: PIXEL_FONT,

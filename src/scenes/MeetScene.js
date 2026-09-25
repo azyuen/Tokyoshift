@@ -53,7 +53,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r204';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r205';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,

@@ -43,8 +43,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r203';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r188';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r204';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r205';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r205';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
