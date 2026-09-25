@@ -28,7 +28,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r185';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r186';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
