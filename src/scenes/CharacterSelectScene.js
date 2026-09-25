@@ -1,10 +1,10 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r190';
-import { cars } from '../data/cars.js?v=20260925-r190';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r191';
+import { cars } from '../data/cars.js?v=20260925-r191';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260925-r190';
+} from '../vehicles/CarAppearance.js?v=20260925-r191';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260925-r182';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260925-r184';
