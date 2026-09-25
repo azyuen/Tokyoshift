@@ -1,4 +1,5 @@
-import { cars, carOrder } from '../data/cars.js?v=20260925-r183';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r189';
+import { cars, carOrder } from '../data/cars.js?v=20260925-r189';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import {
   characters,
@@ -16,9 +17,9 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260924-r170';
+} from '../vehicles/CarAppearance.js?v=20260925-r189';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r177';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r189';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
@@ -587,7 +588,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const source = this.textures.get(bodyKey).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
-    const bodyScale = targetWidth / source.width;
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
 
