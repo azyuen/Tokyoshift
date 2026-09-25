@@ -1,10 +1,10 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r189';
-import { cars } from '../data/cars.js?v=20260925-r189';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r190';
+import { cars } from '../data/cars.js?v=20260925-r190';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260925-r189';
+} from '../vehicles/CarAppearance.js?v=20260925-r190';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
 import { characters } from '../data/characters.js?v=20260921-r43';
