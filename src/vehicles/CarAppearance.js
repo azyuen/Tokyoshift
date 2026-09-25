@@ -413,10 +413,14 @@ export function createCarBodyLayers(
   const color = normalisePaintColor(paintColor);
   const keys = getCarTextureKeys(visualOrCar);
   const visual = visualOrCar?.visual || visualOrCar || {};
+  const bodyOffsetX = Number(visual.bodyRenderOffsetX || 0) * scale * (flipX ? -1 : 1);
+  const bodyOffsetY = Number(visual.bodyRenderOffsetY || 0) * scale;
+  const bodyX = x + bodyOffsetX;
+  const bodyY = y + bodyOffsetY;
 
   if (visual.singleLayerModular || visualOrCar?.singleLayerModular) {
     const bodyKey = visual.runtimeBodyTextureKey || keys.body;
-    const body = scene.add.image(x, y, bodyKey)
+    const body = scene.add.image(bodyX, bodyY, bodyKey)
       .setScale(scale)
       .setFlipX(flipX)
       .setDepth(depth)
@@ -441,7 +445,7 @@ export function createCarBodyLayers(
     const addLayer = (key, depthOffset, { tint = false, dataKey = null, slot = null } = {}) => {
       if (!scene?.textures?.exists?.(key)) return null;
 
-      const image = scene.add.image(x, y, key)
+      const image = scene.add.image(bodyX, bodyY, key)
         .setScale(scale)
         .setFlipX(flipX)
         .setDepth(depth + depthOffset);
@@ -500,7 +504,7 @@ export function createCarBodyLayers(
     };
   }
 
-  const body = scene.add.image(x, y, keys.body)
+  const body = scene.add.image(bodyX, bodyY, keys.body)
     .setScale(scale)
     .setFlipX(flipX)
     .setDepth(depth);
