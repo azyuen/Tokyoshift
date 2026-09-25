@@ -37,8 +37,8 @@ export default class BootScene extends Phaser.Scene {
 
     // Standard cars load body + tintable paint + overlay. Ginza hero cars set
     // visual.singleBody and load only their finished one-off body PNG.
-    preloadCarAppearanceAssets(this, cars, '20260925-r183');
-    preloadVisualModAssets(this, '20260925-r183');
+    preloadCarAppearanceAssets(this, cars, '20260925-r189');
+    preloadVisualModAssets(this, '20260925-r189');
 
     this.load.image('wheel8Spoke', 'assets/wheels/wheel_8spoke.png');
     this.load.image('wheel5Spoke', 'assets/wheels/wheel_5spoke.png');
