@@ -35,6 +35,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r195';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r195';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -88,17 +89,44 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   preload() {
     let queued = 0;
-    Object.values(CENTRAL_TOKYO_LOCATIONS).forEach(location => {
-      if (!this.textures.exists(location.backgroundKey)) {
-        this.load.image(
-          location.backgroundKey,
-          location.backgroundPath + '?v=20260922-r125'
-        );
-        queued += 1;
-      }
-    });
+    const requested = this.requestedLocationId || this.registry.get('centralTokyoLocation');
+    const location = LOCATION_BY_ID[requested] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
+    queued += this.queueLocationAssets(location);
 
     startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
+  }
+
+  queueLocationAssets(location) {
+    let queued = 0;
+    if (location?.backgroundPath && !this.textures.exists(location.backgroundKey)) {
+      this.load.image(location.backgroundKey, location.backgroundPath + '?v=20260922-r125');
+      queued += 1;
+    }
+    if (location?.kind === 'showroom') {
+      GINZA_LISTINGS.forEach(listing => {
+        const car = cars[listing.carId];
+        if (!car) return;
+        queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260925-r193');
+        queued += preloadCarWheel(this, car);
+      });
+    }
+    if (location?.kind === 'proDrag') {
+      const playerId = this.registry.get('playerCharacterId');
+      const rivalIds = genericRivalCharacterOrder
+        .filter(id => id !== playerId && characters[id])
+        .sort((a, b) =>
+          Number(characters[b]?.skill?.rating || 3) -
+          Number(characters[a]?.skill?.rating || 3)
+        )
+        .slice(0, 3);
+      new Set([...rivalIds, 'tetsuyaKanda']).forEach(id => {
+        const visual = characters[id]?.visual;
+        if (!visual || this.textures.exists(visual.spriteKey)) return;
+        this.load.image(visual.spriteKey, visual.path + '?v=20260923-r145');
+        queued += 1;
+      });
+    }
+    return queued;
   }
 
   create() {
@@ -295,11 +323,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return obj;
   }
 
-  renderLocation(locationId) {
+  renderLocation(locationId, assetsAttempted = false) {
     const location = LOCATION_BY_ID[locationId] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
 
     if (!isCentralTokyoLocationUnlocked(this.registry, location.id)) {
       return;
+    }
+
+    if (!assetsAttempted) {
+      const queued = this.queueLocationAssets(location);
+      if (queued) {
+        startSceneLoading(this, 'LOADING ' + location.label, queued);
+        this.load.once('complete', () => {
+          this.renderLocation(location.id, true);
+          finishSceneLoading('CENTRAL TOKYO');
+        });
+        this.load.start();
+        return;
+      }
     }
 
     const previousLocationId = this.activeLocationId;

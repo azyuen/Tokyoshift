@@ -12,7 +12,6 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import {
   characters,
-  characterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
 } from '../data/characters.js?v=20260925-r195';
@@ -168,7 +167,9 @@ export default class MeetScene extends Phaser.Scene {
       : [];
     storedCurrent.forEach(offer => {
       const character = characters[offer?.characterId];
-      if (!character || !offer?.resultState) return;
+      if (!character) return;
+      queueImage(character.visual.spriteKey, character.visual.path + '?v=20260923-r145');
+      if (!offer?.resultState) return;
       const visual = character.visual || {};
       const won = offer.resultState === 'PLAYER_LOSS';
       const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
@@ -178,7 +179,7 @@ export default class MeetScene extends Phaser.Scene {
       }
     });
 
-    meetBackgrounds.forEach(bg => {
+    meetBackgrounds.filter(bg => bg.district === initialLocation.district).forEach(bg => {
       if (bg.path && !this.textures.exists(bg.key)) {
         this.load.image(bg.key, bg.path + '?v=20260922-r84');
         queued += 1;
@@ -312,8 +313,7 @@ export default class MeetScene extends Phaser.Scene {
       }
     }
 
-    // Let the visible Meet render first, then quietly fetch the rest of the
-    // character/background library and the heavy race-control artwork.
+    // Fetch race controls after the meet renders. Other regions load on travel.
     this.time.delayedCall(120, () => this.prefetchDeferredAssets());
 
     this.time.addEvent({
@@ -1040,13 +1040,40 @@ export default class MeetScene extends Phaser.Scene {
       this.registry.set('meetLocation', locationId);
       this.registry.set('district', destination.district);
 
-      this.cashText?.setText('¥ ' + Number(cash - travelCost).toLocaleString('en-US'));
-      this.updateWorkshopButton();
-      this.showTravelNotice(destination, travelCost);
+      const finishTravel = () => {
+        this.cashText?.setText('¥ ' + Number(cash - travelCost).toLocaleString('en-US'));
+        this.updateWorkshopButton();
+        this.showTravelNotice(destination, travelCost);
 
-      // Travel changes the location only. The current round stays intact.
-      this.rollOffers({ resetTimer: false });
-      this.persistMeetRound();
+        // Travel changes the location only. The current round stays intact.
+        this.rollOffers({ resetTimer: false });
+        this.persistMeetRound();
+        this.updateGpsPanel();
+      };
+
+      let queued = 0;
+      const queueImage = (key, path) => {
+        if (!key || !path || this.textures.exists(key)) return;
+        this.load.image(key, path);
+        queued += 1;
+      };
+      getRivalCharacterOrderForRegion(destination.district).forEach(id => {
+        const visual = characters[id]?.visual;
+        if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260923-r145');
+      });
+      meetBackgrounds.filter(bg => bg.district === destination.district).forEach(bg => {
+        queueImage(bg.key, bg.path + '?v=20260922-r84');
+      });
+      if (queued) {
+        startSceneLoading(this, 'LOADING ' + destination.district, queued);
+        this.load.once('complete', () => {
+          finishTravel();
+          finishSceneLoading('READY');
+        });
+        this.load.start();
+        return true;
+      }
+      finishTravel();
     }
 
     this.updateGpsPanel();
@@ -2410,16 +2437,7 @@ export default class MeetScene extends Phaser.Scene {
       if (!this.textures.exists(key)) this.load.image(key, path);
     };
 
-    characterOrder.forEach(id => {
-      const character = characters[id];
-      if (character) {
-        queueImage(
-          character.visual.spriteKey,
-          character.visual.path + '?v=20260923-r145'
-        );
-      }
-    });
-
+    // Only the current region is active. Other rosters load on travel.
     const currentRegion = getMeetLocation(this.selectedMeetLocation).district;
     getRivalCharacterOrderForRegion(currentRegion).forEach(id => {
       const visual = characters[id]?.visual || {};
@@ -2429,10 +2447,6 @@ export default class MeetScene extends Phaser.Scene {
       if (visual.lossSpriteKey && visual.lossPath) {
         queueImage(visual.lossSpriteKey, visual.lossPath + '?v=20260923-r145');
       }
-    });
-
-    meetBackgrounds.forEach(bg => {
-      if (bg.path) queueImage(bg.key, bg.path + '?v=20260921-r60');
     });
 
     // These used to block the very first Workshop load. Fetch them while the

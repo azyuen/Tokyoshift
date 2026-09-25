@@ -1,7 +1,7 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { cars } from '../data/cars.js?v=20260925-r193';
-import { preloadCarAppearanceAssets, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { characters, playableCharacterOrder } from '../data/characters.js?v=20260925-r195';
+import { cars, carOrder } from '../data/cars.js?v=20260925-r193';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260926-r202';
+import { characters } from '../data/characters.js?v=20260925-r195';
 import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260925-r195';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r201';
@@ -35,9 +35,14 @@ export default class BootScene extends Phaser.Scene {
   preload() {
     startSceneLoading(this, this.bootMessage || 'LOADING TOKYO', 1);
 
-    // Standard cars load body + tintable paint + overlay. Ginza hero cars set
-    // visual.singleBody and load only their finished one-off body PNG.
-    preloadCarAppearanceAssets(this, cars, '20260925-r193');
+    // Core rivals appear at any meet. Collector art loads at Ginza, except for
+    // cars already owned in a saved game, which the garage must show at entry.
+    const saved = readSessionState() || readManualSave();
+    const owned = new Set(saved?.ownedCarIds || []);
+    const initialCars = Object.fromEntries(
+      Object.entries(cars).filter(([id]) => carOrder.includes(id) || owned.has(id))
+    );
+    preloadCarAppearanceAssets(this, initialCars, '20260925-r193');
     preloadVisualModAssets(this, '20260926-r201');
 
     this.load.image('wheel8Spoke', 'assets/wheels/wheel_8spoke.png');
@@ -45,22 +50,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('wheelMesh', 'assets/wheels/wheel_mesh.png');
     this.load.image('wheelDeepDish', 'assets/wheels/wheel_deepdish.png');
 
-    // Hero/collector cars can ship their own wheel sprite. Keeping the path in
-    // cars.js means each one automatically works in the workshop, meets,
-    // racing and result screens without scene-specific wheel code.
-    Object.values(cars).forEach(car => {
-      const visual = car?.visual || {};
-      if (
-        visual.wheelKey &&
-        visual.wheelPath &&
-        !this.textures.exists(visual.wheelKey)
-      ) {
-        this.load.image(
-          visual.wheelKey,
-          visual.wheelPath + '?v=20260924-r165'
-        );
-      }
-    });
+    Object.values(initialCars).forEach(car => preloadCarWheel(this, car));
 
     this.load.image(
       'travelMapTokyoBay',
@@ -76,38 +66,17 @@ export default class BootScene extends Phaser.Scene {
       .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory') || asset.key.startsWith('tuningPart'))
       .forEach(asset => this.load.image(asset.key, asset.path));
 
-    // Tuner-shop art is data-driven by region. A missing background is safe:
-    // TunerShopScene falls back to the normal garage art while the final asset
-    // is being uploaded at the configured path.
-    Object.values(TUNER_SHOPS)
-      .filter(shop => shop.enabled)
-      .forEach(shop => {
-        if (shop.backgroundKey && shop.backgroundPath) {
-          this.load.image(
-            shop.backgroundKey,
-            shop.backgroundPath + '?v=20260924-r176'
-          );
-        }
+    // Decals can appear on owned cars in any scene; workshop backdrops and
+    // mechanics are deferred until their own shop is entered.
+    Object.values(TUNER_SHOPS).filter(shop => shop.enabled).forEach(shop => {
+      if (shop.decalTextureKey && shop.decalPath) {
+        this.load.image(shop.decalTextureKey, shop.decalPath + '?v=20260924-r176');
+      }
+    });
 
-        if (shop.decalTextureKey && shop.decalPath) {
-          this.load.image(
-            shop.decalTextureKey,
-            shop.decalPath + '?v=20260924-r176'
-          );
-        }
-
-        const mechanic = characters[shop.mechanicId];
-        if (mechanic?.visual?.spriteKey && mechanic?.visual?.path) {
-          this.load.image(
-            mechanic.visual.spriteKey,
-            mechanic.visual.path + '?v=20260924-r176'
-          );
-        }
-      });
-
-    // A manual save can point at any chosen profile portrait, so every
-    // player-character sprite must be available before we skip setup on boot.
-    [...new Set([...playableCharacterOrder, 'daichiSakamoto'])].forEach(id => {
+    // New profiles load the full selection on the character-select screen.
+    // Existing profiles only need their chosen driver and Daichi at boot.
+    [...new Set([saved?.playerCharacterId || (saved ? 'renMizuno' : null), 'daichiSakamoto'])].forEach(id => {
       const character = characters[id];
       if (!character) return;
       this.load.image(
@@ -134,7 +103,9 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create() {
-    ensureDerivedModularCarTextures(this, cars);
+    ensureDerivedModularCarTextures(this, Object.fromEntries(
+      Object.entries(cars).filter(([id]) => this.textures.exists('carBody_' + cars[id].visual.assetStem))
+    ));
     ensureVisualModTextures(this);
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);

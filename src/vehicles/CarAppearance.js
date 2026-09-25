@@ -109,11 +109,15 @@ export function getCarAssetPaths(visualOrCar = {}, cacheBust = '') {
  * finished <assetStem>_body.png.
  */
 export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
+  let queued = 0;
   Object.values(carMap || {}).forEach(car => {
     const keys = getCarTextureKeys(car);
     const paths = getCarAssetPaths(car, cacheBust);
     const loadIfPresent = (key, path) => {
-      if (path) scene.load.image(key, path);
+      if (path && !scene.textures.exists(key)) {
+        scene.load.image(key, path);
+        queued += 1;
+      }
     };
 
     loadIfPresent(keys.body, paths.body);
@@ -143,6 +147,14 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
     loadIfPresent(keys.spoilerPaint, paths.spoilerPaint);
     loadIfPresent(keys.spoiler, paths.spoiler);
   });
+  return queued;
+}
+
+export function preloadCarWheel(scene, car) {
+  const { wheelKey, wheelPath } = car?.visual || {};
+  if (!wheelKey || !wheelPath || scene.textures.exists(wheelKey)) return 0;
+  scene.load.image(wheelKey, wheelPath + '?v=20260924-r165');
+  return 1;
 }
 
 function createCanvasTextureFromPixels(scene, key, width, height, pixels) {

@@ -30,6 +30,8 @@ import {
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r195';
+import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -49,6 +51,27 @@ export default class TunerShopScene extends Phaser.Scene {
     this.returnScene = String(data.returnScene || 'GarageScene');
     this.returnLocationId = data.returnLocationId || null;
     this.returnFromWorkshop = Boolean(data.fromWorkshop);
+  }
+
+  preload() {
+    const shop = getTunerShopForRegion(this.regionId);
+    if (!shop || !isTunerShopUnlocked(this.registry, this.regionId)) return;
+    let queued = 0;
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path + '?v=20260924-r176');
+      queued += 1;
+    };
+    queueImage(shop.backgroundKey, shop.backgroundPath);
+    queueImage(shop.decalTextureKey, shop.decalPath);
+    const mechanic = characters[shop.mechanicId]?.visual;
+    if (mechanic) queueImage(mechanic.spriteKey, mechanic.path);
+    const hero = cars[shop.heroCarId];
+    if (hero) {
+      queued += preloadCarAppearanceAssets(this, { [shop.heroCarId]: hero }, '20260925-r193');
+      queued += preloadCarWheel(this, hero);
+    }
+    startSceneLoading(this, 'LOADING TUNER SHOP', queued);
   }
 
   create() {
@@ -73,6 +96,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.drawHeader();
     this.drawSidePanel();
     this.showHeroMode();
+    finishSceneLoading('TUNER SHOP');
   }
 
   recordShopVisit() {
