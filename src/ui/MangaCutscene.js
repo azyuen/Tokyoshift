@@ -3,11 +3,11 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20260925-r184';
+} from '../data/cutscenes.js?v=20260925-r185';
 import {
   createCharacterProfile,
-} from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
+} from '../characters/CharacterProfileRenderer.js?v=20260925-r185';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r185';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -345,6 +345,10 @@ function replaceActorProfile(controller, side, characterId, pose, dimmed, firstP
     depth: BASE_DEPTH + (side === 'center' ? 18 : 15),
     flipInward: true,
     dimmed,
+    // Manga characters are staged as full silhouettes. Profile cards keep
+    // their rectangular masks; cutscenes intentionally let hair/arms/poses
+    // extend sideways and disappear naturally behind the dialogue gutter.
+    mask: false,
   });
 
   if (!profile) {
@@ -401,18 +405,16 @@ function drawDialogue(controller, page) {
   const width = Number(scene.scale.width || 1560);
   const height = Number(scene.scale.height || 840);
   const speaker = page.speaker || 'system';
-  const cardWidth = Math.min(780, width - 180);
-  const cardHeight = clamp(height * 0.21, 142, 174);
-  const x = clamp(
-    speaker === 'left'
-      ? width * 0.43
-      : speaker === 'right'
-        ? width * 0.57
-        : width * 0.50,
-    cardWidth / 2 + 54,
-    width - cardWidth / 2 - 54
-  );
-  const y = height - cardHeight / 2 - 34;
+
+  // Full-width manga gutter: this becomes the intentional lower crop line for
+  // the unmasked character silhouettes and avoids making shorter sprites feel
+  // undersized beside taller characters.
+  const safeX = Math.max(18, Math.round(width * 0.025));
+  const bottomSafe = Math.max(20, Math.round(height * 0.035));
+  const cardWidth = width - safeX * 2;
+  const cardHeight = clamp(height * 0.19, 132, 158);
+  const x = width / 2;
+  const y = height - bottomSafe - cardHeight / 2;
 
   const characterId = SIDES.includes(speaker)
     ? controller.actors[speaker]?.characterId
@@ -427,17 +429,12 @@ function drawDialogue(controller, page) {
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
 
-  const pointer = createMangaPointer(
-    scene,
-    x,
-    y,
-    speaker,
-    BASE_DEPTH + 29
-  );
-
-  const labelWidth = Math.min(330, cardWidth * 0.46);
+  const labelWidth = Math.min(330, cardWidth * 0.30);
+  const labelX = speaker === 'right'
+    ? x + cardWidth / 2 - labelWidth / 2 - 18
+    : x - cardWidth / 2 + labelWidth / 2 + 18;
   const labelBox = scene.add.rectangle(
-    x - cardWidth / 2 + labelWidth / 2 + 18,
+    labelX,
     y - cardHeight / 2 + 20,
     labelWidth,
     38,
@@ -446,21 +443,24 @@ function drawDialogue(controller, page) {
   ).setDepth(BASE_DEPTH + 31).setScrollFactor(0);
 
   const labelText = scene.add.text(
-    x - cardWidth / 2 + 34,
+    speaker === 'right'
+      ? labelX + labelWidth / 2 - 16
+      : labelX - labelWidth / 2 + 16,
     y - cardHeight / 2 + 20,
     label,
     {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#ffffff',
+      align: speaker === 'right' ? 'right' : 'left',
     }
-  ).setOrigin(0, 0.5)
+  ).setOrigin(speaker === 'right' ? 1 : 0, 0.5)
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
 
   const body = scene.add.text(
     x - cardWidth / 2 + 38,
-    y - 18,
+    y - 12,
     interpolate(page.text || '', context.variables),
     {
       fontFamily: BODY_FONT,
@@ -468,7 +468,7 @@ function drawDialogue(controller, page) {
       color: '#111111',
       fontStyle: page.emphasis ? '800' : '700',
       lineSpacing: 5,
-      wordWrap: { width: cardWidth - 78 },
+      wordWrap: { width: cardWidth - 76 },
     }
   ).setOrigin(0, 0.5)
     .setDepth(BASE_DEPTH + 32)
@@ -479,11 +479,14 @@ function drawDialogue(controller, page) {
     ? (definition.finalActionLabel || 'CONTINUE')
     : 'NEXT';
   const actionLabel = interpolate(rawAction, context.variables) + '  >';
+  const actionWidth = Math.min(300, Math.max(230, cardWidth * 0.22));
+  const actionX = x + cardWidth / 2 - actionWidth / 2 - 18;
+  const footerY = y + cardHeight / 2 - 23;
 
   const actionBox = scene.add.rectangle(
-    x + cardWidth / 2 - 150,
-    y + cardHeight / 2 - 24,
-    270,
+    actionX,
+    footerY,
+    actionWidth,
     42,
     0x111111,
     1
@@ -492,8 +495,8 @@ function drawDialogue(controller, page) {
     .setInteractive({ useHandCursor: true });
 
   const actionText = scene.add.text(
-    x + cardWidth / 2 - 150,
-    y + cardHeight / 2 - 24,
+    actionX,
+    footerY,
     actionLabel,
     {
       fontFamily: PIXEL_FONT,
@@ -508,7 +511,7 @@ function drawDialogue(controller, page) {
   const pageCount = Math.max(1, definition.pages?.length || 0);
   const counter = scene.add.text(
     x - cardWidth / 2 + 34,
-    y + cardHeight / 2 - 24,
+    footerY,
     String(controller.pageIndex + 1).padStart(2, '0') + ' / ' +
       String(pageCount).padStart(2, '0'),
     {
@@ -520,7 +523,7 @@ function drawDialogue(controller, page) {
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
 
-  const objects = [card, pointer, labelBox, labelText, body, actionBox, actionText, counter]
+  const objects = [card, labelBox, labelText, body, actionBox, actionText, counter]
     .filter(Boolean);
   objects.forEach(obj => obj.setAlpha?.(0));
   controller.dialogueObjects.push(...objects);
