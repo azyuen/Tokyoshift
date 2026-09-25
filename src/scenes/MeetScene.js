@@ -26,7 +26,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r188';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
@@ -46,13 +46,13 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20260924-r178';
+} from '../data/tunerChallenges.js?v=20260925-r195';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r188';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r195';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
