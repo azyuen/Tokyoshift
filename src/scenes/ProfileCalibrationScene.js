@@ -9,7 +9,7 @@ import {
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_EYE_TARGET_RATIO,
   PROFILE_TORSO_CROP_RATIO,
-} from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
+} from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
