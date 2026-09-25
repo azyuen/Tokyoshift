@@ -87,30 +87,15 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // Full-body AE86 master variants. Each option is a complete matched
-    // paint/body pair. No spoiler/body-kit overlay composition is used.
+    // AE86 body kits are complete matched body variants: each purchase swaps
+    // the stock paint + outline pair for a new paint + outline pair on the same
+    // canonical master canvas. Spoilers/scoops are intentionally bundled into
+    // the variant artwork so there is only one registration-critical choice.
     slots: {
       bodyKit: {
         label: 'BODY KIT',
         options: [
-          {
-            id: 'stock',
-            name: 'STOCK BODY',
-            price: 0,
-            replacementBody: true,
-            layers: [
-              {
-                textureKey: 'visualMod_ae86_stock_paint',
-                path: 'assets/Cars/ae86/ae86_stock_paint.png',
-                paintMode: 'body',
-              },
-              {
-                textureKey: 'visualMod_ae86_stock_body',
-                path: 'assets/Cars/ae86/ae86_stock_body.png',
-                paintMode: 'fixed',
-              },
-            ],
-          },
+          { id: 'stock', name: 'STOCK BODY', price: 0, layers: [] },
           {
             id: 'street',
             name: 'STREET KIT',
@@ -118,14 +103,22 @@ export const VISUAL_MOD_CATALOG = {
             replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_subdued_paint',
-                path: 'assets/Cars/ae86/ae86_subdued_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_street_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_street_paint.png',
                 paintMode: 'body',
+                // The generated paint/outline pair is 1942×809 while the
+                // canonical AE86 master is 2400×1000. Runtime canonicalisation
+                // expands both to the master canvas; a tiny paint underlay
+                // inset prevents the fill edge peeking outside its outline.
+                scaleX: 0.985,
+                scaleY: 0.985,
+                aboveOverlay: true,
               },
               {
-                textureKey: 'visualMod_ae86_subdued_body',
-                path: 'assets/Cars/ae86/ae86_subdued_body.png',
+                textureKey: 'visualMod_ae86_bodykit_street_outline',
+                path: 'assets/Cars/ae86/ae86_bodykit_street_outline.png',
                 paintMode: 'fixed',
+                aboveOverlay: true,
               },
             ],
           },
@@ -136,14 +129,18 @@ export const VISUAL_MOD_CATALOG = {
             replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_rocket_paint',
-                path: 'assets/Cars/ae86/ae86_rocket_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_rocket_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_rocket_paint.png',
                 paintMode: 'body',
+                scaleX: 0.985,
+                scaleY: 0.985,
+                aboveOverlay: true,
               },
               {
-                textureKey: 'visualMod_ae86_rocket_body',
-                path: 'assets/Cars/ae86/ae86_rocket_body.png',
+                textureKey: 'visualMod_ae86_bodykit_rocket_outline',
+                path: 'assets/Cars/ae86/ae86_bodykit_rocket_outline.png',
                 paintMode: 'fixed',
+                aboveOverlay: true,
               },
             ],
           },
@@ -386,6 +383,8 @@ function ensureEvoProtectedTexture(scene, width, height) {
 }
 
 export function ensureVisualModTextures(scene) {
+  ensureAe86CanonicalModTextures(scene);
+  ensureAe86ProtectedTexture(scene);
 
   const sourceKey = 'carOverlay_evo_iii';
   if (!scene.textures.exists(sourceKey)) return;
@@ -537,10 +536,7 @@ export function createVisualModLayers(
 
   const selected = normaliseVisualMods(car.id, visualMods || state);
   const slotIds = getVisualModSlotIds(car.id);
-  const active = slotIds.some(slotId => {
-    const option = getVisualModOption(car.id, slotId, selected[slotId]);
-    return selected[slotId] !== 'stock' || Boolean(option?.replacementBody);
-  });
+  const active = slotIds.some(slotId => selected[slotId] !== 'stock');
   if (!active) return [];
 
   const objects = [];
@@ -552,7 +548,7 @@ export function createVisualModLayers(
   // full-body variants that ship as matched paint + outline PNGs.
   const replacementBodyActive = slotIds.some(slotId => {
     const option = getVisualModOption(car.id, slotId, selected[slotId]);
-    return Boolean(option?.replacementBody);
+    return selected[slotId] !== 'stock' && Boolean(option?.replacementBody);
   });
 
   if (replacementBodyActive) {
@@ -574,7 +570,12 @@ export function createVisualModLayers(
       const registeredToBase = Boolean(
         car?.visual?.modularAssetRoot && bodyLayers?.primary
       );
-      const sourceTextureKey = layer.textureKey;
+      const sourceTextureKey = (
+        car?.id === 'ae86'
+        && scene.textures.exists(getAe86CanonicalModTextureKey(layer.textureKey))
+      )
+        ? getAe86CanonicalModTextureKey(layer.textureKey)
+        : layer.textureKey;
 
       // Registration-critical modular layers inherit the exact transform of the
       // already-rendered base paint layer. Never reconstruct its placement from
