@@ -1,4 +1,5 @@
-import { cars } from '../data/cars.js?v=20260925-r183';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r189';
+import { cars } from '../data/cars.js?v=20260925-r189';
 import { characters } from '../data/characters.js?v=20260925-r182';
 import {
   getTunerShopForRegion,
@@ -12,8 +13,8 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260924-r170';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260924-r177';
+} from '../vehicles/CarAppearance.js?v=20260925-r189';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r189';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -1164,7 +1165,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const bodySource = this.textures.get(bodyKey).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
-    const bodyScale = targetWidth / bodySource.width;
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
@@ -1195,7 +1196,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const bodyY = this.getBodyYForWheelBottom(car, targetWidth, wheelBottomY);
     const source = this.textures.get(bodyKey).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
-    const bodyScale = targetWidth / source.width;
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = bodyY + renderOffsetY;
