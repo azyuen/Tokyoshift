@@ -58,25 +58,30 @@ export function getCarAssetPaths(visualOrCar = {}, cacheBust = '') {
   if (modularRoot) {
     const hasBodyKit = visual.stockBodyKit !== false;
     const hasSpoiler = visual.stockSpoiler !== false;
+    const hasOwn = key => Object.prototype.hasOwnProperty.call(visual, key);
+    const withSuffix = value => value ? String(value) + suffix : null;
+    const exactOr = (key, fallback) => hasOwn(key)
+      ? withSuffix(visual[key])
+      : withSuffix(fallback);
 
     return {
-      // Foldered modular cars keep every appearance layer together. The body
-      // path remains a complete preview/fallback; normal rendering uses the
-      // paint/overlay/aero layers below.
-      body: (visual.bodyPath || (modularRoot + '/' + stem + '_preview_full.png')) + suffix,
-      paint: modularRoot + '/' + modularStem + '_paint.png' + suffix,
-      overlay: modularRoot + '/' + modularStem + '_overlay.png' + suffix,
+      // Modular cars may use the conventional generated names or pin exact
+      // paths. Exact paths let the 2400×1000 master template keep simple,
+      // human-readable filenames while every layer still shares one origin.
+      body: withSuffix(visual.bodyPath || (modularRoot + '/' + stem + '_preview_full.png')),
+      paint: exactOr('paintPath', modularRoot + '/' + modularStem + '_paint.png'),
+      overlay: exactOr('overlayPath', modularRoot + '/' + modularStem + '_overlay.png'),
       bodyKitPaint: hasBodyKit && visual.stockBodyKitPaint !== false
-        ? modularRoot + '/' + modularStem + '_bodykit_' + bodyKitId + '_paint.png' + suffix
+        ? exactOr('bodyKitPaintPath', modularRoot + '/' + modularStem + '_bodykit_' + bodyKitId + '_paint.png')
         : null,
       bodyKit: hasBodyKit
-        ? modularRoot + '/' + modularStem + '_bodykit_' + bodyKitId + '.png' + suffix
+        ? exactOr('bodyKitPath', modularRoot + '/' + modularStem + '_bodykit_' + bodyKitId + '.png')
         : null,
       spoilerPaint: hasSpoiler && visual.stockSpoilerPaint !== false
-        ? modularRoot + '/' + modularStem + '_spoiler_' + spoilerId + '_paint.png' + suffix
+        ? exactOr('spoilerPaintPath', modularRoot + '/' + modularStem + '_spoiler_' + spoilerId + '_paint.png')
         : null,
       spoiler: hasSpoiler
-        ? modularRoot + '/' + modularStem + '_spoiler_' + spoilerId + '.png' + suffix
+        ? exactOr('spoilerPath', modularRoot + '/' + modularStem + '_spoiler_' + spoilerId + '.png')
         : null,
     };
   }
@@ -313,6 +318,13 @@ export function ensureDerivedModularCarTextures(scene, carMap = {}) {
     if (car?.visual?.deriveModularFromPreview) {
       deriveModularTexturesFromPreview(scene, car);
     }
+
+    // A padded master canvas changes the source-space wheel/anchor geometry.
+    // Only switch to that calibration when both authored paint + overlay layers
+    // are genuinely present; otherwise keep the legacy fallback geometry.
+    if (car?.visual?.layeredMasterGeometry && hasLayeredPaintAssets(scene, car)) {
+      Object.assign(car.visual, car.visual.layeredMasterGeometry);
+    }
   });
 }
 
@@ -371,6 +383,19 @@ export function getCarBodyTextureKey(scene, visualOrCar) {
   const keys = getCarTextureKeys(visualOrCar);
   if (visual.singleLayerModular) return visual.runtimeBodyTextureKey || keys.body;
   return hasLayeredPaintAssets(scene, visualOrCar) ? keys.paint : keys.body;
+}
+
+export function getCarBodyScaleForWidth(scene, visualOrCar, targetWidth) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
+  const key = getCarBodyTextureKey(scene, visualOrCar);
+  if (!scene?.textures?.exists?.(key)) return 1;
+
+  const source = scene.textures.get(key).getSourceImage();
+  const sourceWidth = Number(source?.naturalWidth || source?.width || 1);
+  const width = Math.max(1, Number(targetWidth) || 1);
+  const paddingCompensation = Number(visual.canvasDisplayScale || 1);
+
+  return (width * paddingCompensation) / Math.max(1, sourceWidth);
 }
 
 export function createCarBodyLayers(
@@ -433,12 +458,21 @@ export function createCarBodyLayers(
     // Paint first, then permanent linework, then the stock aero detail layers.
     // The paintable aero layers share the body tint but remain individually
     // addressable so a later aftermarket option can hide only that stock slot.
+    const aeroAboveOverlay = Boolean(visual.aeroAboveOverlay);
     const paint = addLayer(keys.paint, 0, { tint: true, dataKey: 'carBasePaintLayer' });
-    const bodyKitPaint = addLayer(keys.bodyKitPaint, 0.003, { tint: true, slot: 'bodyKit' });
-    const spoilerPaint = addLayer(keys.spoilerPaint, 0.004, { tint: true, slot: 'spoiler' });
+    const bodyKitPaint = addLayer(
+      keys.bodyKitPaint,
+      aeroAboveOverlay ? 0.030 : 0.003,
+      { tint: true, slot: 'bodyKit' }
+    );
+    const spoilerPaint = addLayer(
+      keys.spoilerPaint,
+      aeroAboveOverlay ? 0.034 : 0.004,
+      { tint: true, slot: 'spoiler' }
+    );
     const overlay = addLayer(keys.overlay, 0.020, { dataKey: 'carOverlayLayer' });
-    const bodyKit = addLayer(keys.bodyKit, 0.024, { slot: 'bodyKit' });
-    const spoiler = addLayer(keys.spoiler, 0.026, { slot: 'spoiler' });
+    const bodyKit = addLayer(keys.bodyKit, aeroAboveOverlay ? 0.032 : 0.024, { slot: 'bodyKit' });
+    const spoiler = addLayer(keys.spoiler, aeroAboveOverlay ? 0.036 : 0.026, { slot: 'spoiler' });
 
     const objects = [
       paint,
