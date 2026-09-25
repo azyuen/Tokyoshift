@@ -87,44 +87,51 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // Canonical 2400×1000 modular master. Every option is authored on the same
-    // transparent rectangle and is rendered at the same origin/scale.
-    protectedTextureKey: 'visualMod_ae86_protected_details',
-    protectedSourceKey: 'carOverlay_ae86',
-    protectWhenSlots: ['bodyKit'],
+    // AE86 body kits are complete matched body variants: each purchase swaps
+    // the stock paint + outline pair for a new paint + outline pair on the same
+    // canonical master canvas. Spoilers/scoops are intentionally bundled into
+    // the variant artwork so there is only one registration-critical choice.
     slots: {
-      spoiler: {
-        label: 'SPOILER',
+      bodyKit: {
+        label: 'BODY KIT',
         options: [
-          { id: 'stock', name: 'NO SPOILER', price: 0, layers: [] },
+          { id: 'stock', name: 'STOCK BODY', price: 0, layers: [] },
           {
-            id: 'stockWing',
-            name: 'STOCK SPOILER',
-            price: 0,
+            id: 'street',
+            name: 'STREET KIT',
+            price: 65000,
+            replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_spoiler_0_paint',
-                path: 'assets/Cars/ae86/ae86_spoiler_0_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_street_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_street_paint.png',
                 paintMode: 'body',
+                aboveOverlay: true,
+              },
+              {
+                textureKey: 'visualMod_ae86_bodykit_street_outline',
+                path: 'assets/Cars/ae86/ae86_bodykit_street_outline.png',
+                paintMode: 'fixed',
                 aboveOverlay: true,
               },
             ],
           },
-        ],
-      },
-      bodyKit: {
-        label: 'BODY KIT',
-        options: [
-          { id: 'stock', name: 'STOCK AERO', price: 0, layers: [] },
           {
-            id: 'rivetWidebody',
-            name: 'RIVET WIDEBODY',
-            price: 65000,
+            id: 'rocketBunny',
+            name: 'ROCKET BUNNY',
+            price: 120000,
+            replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_1_paint',
-                path: 'assets/Cars/ae86/ae86_bodykit_1_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_rocket_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_rocket_paint.png',
                 paintMode: 'body',
+                aboveOverlay: true,
+              },
+              {
+                textureKey: 'visualMod_ae86_bodykit_rocket_outline',
+                path: 'assets/Cars/ae86/ae86_bodykit_rocket_outline.png',
+                paintMode: 'fixed',
                 aboveOverlay: true,
               },
             ],
@@ -527,6 +534,19 @@ export function createVisualModLayers(
 
   const objects = [];
   const visual = car?.visual || {};
+
+  // A complete-body option replaces the stock AE86 paint/outline/aero pair,
+  // rather than stacking accessory art over it. Wheels remain separate and
+  // therefore stay visible. This is the master-template path for future
+  // full-body variants that ship as matched paint + outline PNGs.
+  const replacementBodyActive = slotIds.some(slotId => {
+    const option = getVisualModOption(car.id, slotId, selected[slotId]);
+    return selected[slotId] !== 'stock' && Boolean(option?.replacementBody);
+  });
+
+  if (replacementBodyActive) {
+    (bodyLayers?.objects || []).forEach(obj => obj?.setVisible?.(false));
+  }
   const bodyOffsetX = Number(visual.bodyRenderOffsetX || 0) * scale * (flipX ? -1 : 1);
   const bodyOffsetY = Number(visual.bodyRenderOffsetY || 0) * scale;
 
