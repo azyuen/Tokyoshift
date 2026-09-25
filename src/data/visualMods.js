@@ -87,13 +87,29 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // R189 canonical 2400×1000 modular master. Every option is authored on the
-    // same transparent rectangle, so visual mods require no positional nudges.
+    // Canonical 2400×1000 modular master. Every option is authored on the same
+    // transparent rectangle and is rendered at the same origin/scale.
+    protectedTextureKey: 'visualMod_ae86_protected_details',
+    protectedSourceKey: 'carOverlay_ae86',
+    protectWhenSlots: ['bodyKit'],
     slots: {
       spoiler: {
         label: 'SPOILER',
         options: [
-          { id: 'stock', name: 'STOCK WING', price: 0, layers: [] },
+          { id: 'stock', name: 'NO SPOILER', price: 0, layers: [] },
+          {
+            id: 'stockWing',
+            name: 'STOCK SPOILER',
+            price: 0,
+            layers: [
+              {
+                textureKey: 'visualMod_ae86_spoiler_0_paint',
+                path: 'assets/Cars/ae86/ae86_spoiler_0_paint.png',
+                paintMode: 'body',
+                aboveOverlay: true,
+              },
+            ],
+          },
         ],
       },
       bodyKit: {
@@ -209,6 +225,44 @@ function linePoly(g, colour, alpha, width, points, close = false) {
   g.strokePoints(points.map(([x, y]) => new Phaser.Geom.Point(x, y)), close);
 }
 
+function ensureAe86ProtectedTexture(scene) {
+  const catalog = VISUAL_MOD_CATALOG.ae86;
+  const targetKey = catalog?.protectedTextureKey;
+  const sourceKey = catalog?.protectedSourceKey;
+  if (!targetKey || !sourceKey || scene.textures.exists(targetKey)) return;
+  if (!scene.textures.exists(sourceKey)) return;
+
+  const source = scene.textures.get(sourceKey).getSourceImage();
+  const width = Number(source?.naturalWidth || source?.width || 0);
+  const height = Number(source?.naturalHeight || source?.height || 0);
+  if (!width || !height) return;
+
+  const texture = scene.textures.createCanvas(targetKey, width, height);
+  const ctx = texture.getContext();
+  ctx.clearRect(0, 0, width, height);
+
+  // Keep only details that must remain above an aftermarket body kit:
+  // glass/frames, mirror, handles/lock and lights. Stock wheel-arch, sill and
+  // bumper linework is intentionally omitted so it cannot double up against
+  // the replacement widebody geometry.
+  const regions = [
+    [0.145, 0.315, 0.500, 0.265], // glass, pillars + mirror
+    [0.135, 0.505, 0.095, 0.165], // rear lamp / hatch edge
+    [0.755, 0.505, 0.230, 0.175], // front lamps / nose detail
+    [0.300, 0.505, 0.215, 0.135], // fuel flap + door handle/lock
+  ];
+
+  regions.forEach(([rx, ry, rw, rh]) => {
+    const sx = Math.round(width * rx);
+    const sy = Math.round(height * ry);
+    const sw = Math.round(width * rw);
+    const sh = Math.round(height * rh);
+    ctx.drawImage(source, sx, sy, sw, sh, sx, sy, sw, sh);
+  });
+
+  texture.refresh();
+}
+
 function ensureEvoProtectedTexture(scene, width, height) {
   const catalog = VISUAL_MOD_CATALOG.evo3;
   const targetKey = catalog.protectedTextureKey;
@@ -245,6 +299,8 @@ function ensureEvoProtectedTexture(scene, width, height) {
 }
 
 export function ensureVisualModTextures(scene) {
+  ensureAe86ProtectedTexture(scene);
+
   const sourceKey = 'carOverlay_evo_iii';
   if (!scene.textures.exists(sourceKey)) return;
 
@@ -451,7 +507,15 @@ export function createVisualModLayers(
   // The normal overlay contains some stock bumper/skirt artwork that would
   // fight the body kit. While visual mods are active, swap it for a protected
   // detail layer containing only glass, lights, mirror and handles.
+  const protectWhenSlots = Array.isArray(catalog.protectWhenSlots)
+    ? catalog.protectWhenSlots
+    : slotIds;
+  const needsProtectedOverlay = protectWhenSlots.some(
+    slotId => selected?.[slotId] && selected[slotId] !== 'stock'
+  );
+
   if (
+    needsProtectedOverlay &&
     bodyLayers?.overlay &&
     catalog.protectedTextureKey &&
     scene.textures.exists(catalog.protectedTextureKey)
@@ -459,7 +523,8 @@ export function createVisualModLayers(
     bodyLayers.overlay.setVisible(false);
     const protectedDetails = scene.add.image(x, y, catalog.protectedTextureKey)
       .setScale(scale)
-      .setDepth(depth + 0.02);
+      .setFlipX(flipX)
+      .setDepth(depth + 0.020);
     protectedDetails.setData('visualModProtectedLayer', true);
     objects.push(protectedDetails);
   }
