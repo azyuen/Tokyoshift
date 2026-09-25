@@ -410,13 +410,13 @@ function drawDialogue(controller, page) {
   const height = Number(scene.scale.height || 840);
   const speaker = page.speaker || 'system';
 
-  // Full-width manga gutter: this becomes the intentional lower crop line for
-  // the unmasked character silhouettes and avoids making shorter sprites feel
-  // undersized beside taller characters.
-  const safeX = Math.max(18, Math.round(width * 0.025));
-  const bottomSafe = Math.max(20, Math.round(height * 0.035));
-  const cardWidth = width - safeX * 2;
-  const cardHeight = clamp(height * 0.19, 132, 158);
+  // Compact manga card: with the actors now smaller and staged higher, the
+  // dialogue no longer needs to act as a full-width character crop. Keep it
+  // broad enough for 2–3 readable lines on phone landscape while revealing
+  // more of the frozen game and character silhouettes around it.
+  const bottomSafe = Math.max(18, Math.round(height * 0.03));
+  const cardWidth = clamp(width * 0.68, 760, 1060);
+  const cardHeight = clamp(height * 0.155, 112, 132);
   const x = width / 2;
   const y = height - bottomSafe - cardHeight / 2;
 
