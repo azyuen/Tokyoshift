@@ -1,4 +1,4 @@
-import { characters } from '../data/characters.js?v=20260925-r182';
+import { characters } from '../data/characters.js?v=20260925-r195';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
