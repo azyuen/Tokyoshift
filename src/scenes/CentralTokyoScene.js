@@ -22,7 +22,7 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r194';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import {
@@ -33,7 +33,7 @@ import {
 } from '../data/workshopProgression.js?v=20260922-r128';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r188';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r188';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r195';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -51,7 +51,7 @@ import {
   TUNER_TEAM_PITY_ARRIVALS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
-} from '../data/tunerChallenges.js?v=20260924-r178';
+} from '../data/tunerChallenges.js?v=20260925-r195';
 import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
