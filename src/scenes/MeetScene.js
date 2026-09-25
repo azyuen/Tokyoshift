@@ -15,7 +15,7 @@ import {
   characterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20260925-r182';
+} from '../data/characters.js?v=20260925-r195';
 import {
   meetBackgrounds,
   MEET_LOCATIONS,
