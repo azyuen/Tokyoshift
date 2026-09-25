@@ -106,6 +106,12 @@ export const VISUAL_MOD_CATALOG = {
                 textureKey: 'visualMod_ae86_bodykit_street_paint',
                 path: 'assets/Cars/ae86/ae86_bodykit_street_paint.png',
                 paintMode: 'body',
+                // The generated paint/outline pair is 1942×809 while the
+                // canonical AE86 master is 2400×1000. Runtime canonicalisation
+                // expands both to the master canvas; a tiny paint underlay
+                // inset prevents the fill edge peeking outside its outline.
+                scaleX: 0.985,
+                scaleY: 0.985,
                 aboveOverlay: true,
               },
               {
@@ -126,6 +132,8 @@ export const VISUAL_MOD_CATALOG = {
                 textureKey: 'visualMod_ae86_bodykit_rocket_paint',
                 path: 'assets/Cars/ae86/ae86_bodykit_rocket_paint.png',
                 paintMode: 'body',
+                scaleX: 0.985,
+                scaleY: 0.985,
                 aboveOverlay: true,
               },
               {
@@ -259,16 +267,15 @@ function ensureAe86CanonicalModTexture(scene, sourceKey) {
     ctx.clearRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = false;
 
-    // User-authored visual-mod PNGs are allowed to arrive at a different
-    // export resolution, but their whole-canvas registration is authoritative.
-    // Resample the complete source rectangle into the canonical AE86 master
-    // rectangle before Phaser ever positions it. This makes 1942×809 exports,
-    // 2400×1000 exports, etc. share the exact same in-game coordinate system.
-    ctx.drawImage(
-      source,
-      0, 0, sourceWidth, sourceHeight,
-      0, 0, width, height
-    );
+    // The base AE86 paint + outline are true 2400×1000 masters, while the
+    // newly generated body variants were exported at 1942×809. Treat the
+    // complete source rectangle as the same normalised master canvas and
+    // resample it ONCE into 2400×1000 here. Every downstream scene then sees
+    // exactly the same source dimensions, origin and registration.
+    //
+    // Do not let individual scenes size these PNGs from their native files.
+    // That was the source of the R198 mismatch.
+    ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight, 0, 0, width, height);
 
     // These are replacement body panels, not translucent decals. Some image
     // exporters leave low-alpha pixels inside otherwise solid white/grey parts.
