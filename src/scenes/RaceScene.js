@@ -41,8 +41,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r186';
-import { sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260925-r187';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r188';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260925-r188';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1836,6 +1836,34 @@ export default class RaceScene extends Phaser.Scene {
         this.scene.start(returnScene);
       }
     });
+
+    // First-time manga reactions sit over the completed result tableau. Race
+    // settlement has already been saved, so these scenes are presentation only.
+    if (isPinkSlip && settlement) {
+      const rivalName = String(rivalCharacter?.name || 'RIVAL').toUpperCase();
+      const carName = String(
+        playerWon
+          ? (cars[this.opponentCarId]?.shortName || 'CAR')
+          : (cars[this.selectedCarId]?.shortName || 'CAR')
+      ).toUpperCase();
+
+      playMangaCutscene(
+        this,
+        playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss',
+        {
+          characterOverrides: { RIVAL: this.opponentCharacterId },
+          variables: {
+            RIVAL_NAME: rivalName,
+            CAR: carName,
+          },
+        }
+      );
+    } else if (settlement?.competitionWon) {
+      playMangaCutscene(this, 'competitionChampion', {
+        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
+        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+      });
+    }
   }
 
   getNextTunerChallengeRound() {

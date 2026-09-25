@@ -26,7 +26,7 @@ import {
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260925-r184';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r186';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r188';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260924-r163';
@@ -51,7 +51,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r187';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r188';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -282,12 +282,14 @@ export default class MeetScene extends Phaser.Scene {
     const activeRegionRivals = getRivalCharacterOrderForRegion(
       getMeetLocation(this.selectedMeetLocation).district
     );
+    let specialChallengerShown = false;
     if (
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       activeRegionRivals.includes(activeChallenger.characterId) &&
       this.hasCar
     ) {
+      specialChallengerShown = true;
       this.time.delayedCall(80, () => this.showSpecialChallenger(activeChallenger, false));
     } else if (
       activeChallenger?.active &&
@@ -298,9 +300,15 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
-    const revealShown = this.maybeShowTunerChallengeReveal();
-    if (!revealShown) {
-      this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+    if (!specialChallengerShown) {
+      const revealShown = this.maybeShowTunerChallengeReveal();
+      if (!revealShown) {
+        this.time.delayedCall(180, () => {
+          if (!this.maybeShowRegionalCrewIntroduction()) {
+            this.maybeShowTunerTeamChallenge();
+          }
+        });
+      }
     }
 
     // Let the visible Meet render first, then quietly fetch the rest of the
@@ -326,6 +334,35 @@ export default class MeetScene extends Phaser.Scene {
     store[key] = { ...(store[key] || {}), ...next, regionId: key };
     this.registry.set('tunerTeamChallenges', store);
     return store[key];
+  }
+
+  maybeShowRegionalCrewIntroduction() {
+    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
+      return false;
+    }
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (!hasRegionalTeam(regionId)) return false;
+
+    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const npcId = getRivalCharacterOrderForRegion(regionId)
+      .find(id => id !== playerCharacterId && characters[id]);
+    if (!npcId) return false;
+
+    const result = playMangaCutscene(this, 'regionalCrewIntroduction', {
+      historyId: 'regionalCrewIntroduction:' + regionId,
+      characterOverrides: { NPC: npcId },
+      variables: {
+        REGION: regionId,
+        NPC_NAME: String(characters[npcId]?.name || 'LOCAL DRIVER').toUpperCase(),
+      },
+      onComplete: () => {
+        this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+      },
+    });
+
+    return Boolean(result.played);
   }
 
   maybeShowTunerChallengeReveal() {
@@ -1228,6 +1265,15 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('cash', cash - price);
     this.registry.set('workshopLocationId', location.id);
 
+    const storyId = targetTier >= 2
+      ? 'warehouseHqUnlocked'
+      : targetTier >= 1
+        ? 'canalYardUnlocked'
+        : null;
+    if (storyId) {
+      try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
+    }
+
     // A newly purchased garage becomes home immediately, and the car the
     // player drove there occupies one of its fresh storage slots.
     if (selectedCarId && ownedCarIds.includes(selectedCarId)) {
@@ -1633,6 +1679,22 @@ export default class MeetScene extends Phaser.Scene {
     this.raceButton.on('pointerdown', () => this.startSpecialChallengerRace());
 
     this.rivalsTitleText?.setText('SPECIAL CHALLENGER // PINK SLIPS');
+
+    const introDelay = animate ? 1500 : 180;
+    this.time.delayedCall(introDelay, () => {
+      if (!this.specialChallengeActive) return;
+      const live = this.registry.get('specialChallenger');
+      if (!live?.active || live.createdAt !== challenger.createdAt) return;
+
+      playMangaCutscene(this, 'specialChallengerIntroduction', {
+        historyId: 'specialChallengerIntroduction:' + String(challenger.createdAt || 0),
+        characterOverrides: { RIVAL: challenger.characterId },
+        variables: {
+          RIVAL_NAME: character.name.toUpperCase(),
+          RIVAL_SUBTITLE: 'SPECIAL CHALLENGER',
+        },
+      });
+    });
   }
 
   declineSpecialChallenger() {
@@ -1644,9 +1706,19 @@ export default class MeetScene extends Phaser.Scene {
     this.rollOffers({ resetTimer: false });
   }
 
-  startSpecialChallengerRace() {
+  startSpecialChallengerRace(storyConfirmed = false) {
     const challenger = this.registry.get('specialChallenger');
     if (!challenger?.active || !this.hasCar) return;
+
+    if (!storyConfirmed) {
+      const rivalName = String(characters[challenger.characterId]?.name || 'RIVAL').toUpperCase();
+      const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
+        characterOverrides: { RIVAL: challenger.characterId },
+        variables: { RIVAL_NAME: rivalName },
+        onComplete: () => this.startSpecialChallengerRace(true),
+      });
+      if (story.played) return;
+    }
 
     this.registry.set('selectedOpponentCarId', challenger.carId);
     this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
@@ -1798,8 +1870,17 @@ export default class MeetScene extends Phaser.Scene {
     return offers[this.selectedMeetLocation];
   }
 
-  showCompetitionPopup() {
+  showCompetitionPopup(storyConfirmed = false) {
     if (this.specialChallengeActive || !this.hasCar) return;
+
+    if (!storyConfirmed) {
+      const story = playMangaCutscene(this, 'competitionIntroduction', {
+        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
+        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+        onComplete: () => this.showCompetitionPopup(true),
+      });
+      if (story.played) return;
+    }
     if (Number(this.registry.get('wins') || 0) < 1) return;
     if (this.competitionPopup?.active) return;
 
@@ -3119,7 +3200,7 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  startSelectedRace() {
+  startSelectedRace(storyConfirmed = false) {
     if (!this.hasCar) {
       this.applyNoCarMeetState();
       return;
@@ -3127,6 +3208,16 @@ export default class MeetScene extends Phaser.Scene {
 
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer) return;
+
+    if (this.selectedDeal === 'PINK' && !storyConfirmed) {
+      const rivalName = String(characters[offer.characterId]?.name || 'RIVAL').toUpperCase();
+      const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
+        characterOverrides: { RIVAL: offer.characterId },
+        variables: { RIVAL_NAME: rivalName },
+        onComplete: () => this.startSelectedRace(true),
+      });
+      if (story.played) return;
+    }
 
     const cash = this.registry.get('cash') ?? 0;
     if (this.selectedDeal === 'CASH' && cash < Number(offer.stake || 0)) return;
