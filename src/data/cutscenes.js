@@ -57,6 +57,39 @@ export const CUTSCENES = {
     finalActionLabel: 'ACCEPT CHALLENGE',
   },
 
+  regionalCrewIntroduction: {
+    id: 'regionalCrewIntroduction',
+    category: 'REGION / INTRO',
+    testerLabel: 'Region — First Crew Contact',
+    title: '{REGION} // FIRST CONTACT',
+    once: true,
+    characters: { left: '$NPC', right: '$PLAYER' },
+    preview: {
+      characterOverrides: { NPC: 'natsumiKagawa' },
+      variables: { REGION: 'SHINAGAWA', NPC_NAME: 'NATSUMI KAGAWA' },
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{NPC_NAME}',
+        pose: 'idle',
+        text: "You're new around {REGION}.",
+      },
+      {
+        speaker: 'right',
+        pose: 'idle',
+        text: 'Just passing through.',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{NPC_NAME}',
+        pose: 'win',
+        text: 'Nobody just passes through here. Show us what the car can do.',
+      },
+    ],
+    finalActionLabel: 'DRIVE',
+  },
+
   tunerShopDiscovery: {
     id: 'tunerShopDiscovery',
     category: 'TUNER / STORY',
@@ -462,6 +495,7 @@ export const CUTSCENES = {
 
 export const CUTSCENE_ORDER = [
   'tunerTeamCallout',
+  'regionalCrewIntroduction',
   'tunerShopDiscovery',
   'specialChallengerIntroduction',
   'firstPinkSlipChallenge',
