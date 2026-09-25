@@ -43,8 +43,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r203';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r205';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r205';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r206';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r206';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1104,6 +1104,19 @@ export default class RaceScene extends Phaser.Scene {
       const cinematicElapsed = this.firstFinishClock == null
         ? 0
         : this.raceClock - this.firstFinishClock;
+
+      if (
+        this.isTutorial &&
+        cinematicElapsed > 0.42 &&
+        !this.tutorialReturnStarted
+      ) {
+        this.tutorialReturnStarted = true;
+        this.controls.enabled = false;
+        this.engineAudio?.fadeOut();
+        saveSessionState(this.registry);
+        this.scene.start('GarageScene');
+        return;
+      }
 
       if (cinematicElapsed > 1.18 && !this.resultsShown) {
         this.showResultsOverlay();

@@ -6,16 +6,21 @@ import {
 } from '../data/cutscenes.js?v=20260926-r204';
 import {
   createCharacterProfile,
+  getCharacterProfileTexture,
+  resolveCharacterProfile,
+  PROFILE_REFERENCE_HEIGHT,
+  PROFILE_HEAD_SAFE_RATIO,
+  PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
 import { saveSessionState } from '../state/GameState.js?v=20260926-r204';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const BASE_DEPTH = 900;
-const PAGE_DEBOUNCE_MS = 200;
+const PAGE_DEBOUNCE_MS = 110;
 const CHARACTER_FADE_MS = 230;
-const POSE_CROSSFADE_MS = 170;
-const SPEAKER_DIM_MS = 130;
+const POSE_CROSSFADE_MS = 100;
+const SPEAKER_DIM_MS = 70;
 
 const SIDES = ['left', 'right', 'center'];
 
@@ -311,15 +316,67 @@ function desiredDimmed(speaker, side) {
   return false;
 }
 
+function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
+  const profile = actor?.profile;
+  const image = profile?.image;
+  const frame = profile?.frame;
+  const character = characters[characterId];
+  if (!profile || !image || !frame || !character?.visual) return false;
+
+  const requestedPose = pose === 'win' || pose === 'loss' ? pose : 'idle';
+  const textureInfo = getCharacterProfileTexture(characterId, requestedPose);
+
+  let spriteKey = textureInfo?.key;
+  let actualPose = textureInfo?.pose || 'idle';
+  let poseFallback = Boolean(textureInfo?.fallback);
+
+  if (!spriteKey || !scene.textures.exists(spriteKey)) {
+    spriteKey = character.visual.spriteKey;
+    actualPose = 'idle';
+    poseFallback = requestedPose !== 'idle';
+  }
+  if (!spriteKey || !scene.textures.exists(spriteKey)) return false;
+
+  const resolved = resolveCharacterProfile(characterId, actualPose);
+  const texture = scene.textures.get(spriteKey);
+  texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+  const source = texture.getSourceImage();
+
+  const inwardFlip = side === 'right';
+  const offsetScale = frame.height / PROFILE_REFERENCE_HEIGHT;
+  const signedOffsetX = resolved.offsetX * offsetScale * (inwardFlip ? -1 : 1);
+  const topY = frame.y - frame.height / 2;
+  const baseScale = (frame.height * PROFILE_DEFAULT_ZOOM) / Math.max(1, source.height);
+
+  image
+    .setTexture(spriteKey)
+    .setPosition(
+      Math.round(frame.x + signedOffsetX),
+      Math.round(topY + frame.height * PROFILE_HEAD_SAFE_RATIO + resolved.offsetY * offsetScale)
+    )
+    .setScale(baseScale * resolved.scale)
+    .setFlipX(inwardFlip);
+
+  profile.requestedPose = requestedPose;
+  profile.actualPose = actualPose;
+  profile.poseFallback = poseFallback;
+  profile.spriteKey = spriteKey;
+  profile.profile = resolved;
+  actor.pose = requestedPose;
+  return true;
+}
+
 function replaceActorProfile(controller, side, characterId, pose, dimmed, firstPage = false) {
   const { scene } = controller;
   const previous = controller.actors[side];
 
   if (
     previous?.characterId === characterId &&
-    previous?.pose === pose &&
     previous?.profile
   ) {
+    if (previous.pose !== pose) {
+      updateActorPoseInPlace(scene, previous, side, characterId, pose);
+    }
     previous.profile.setDimmed(dimmed, { duration: SPEAKER_DIM_MS });
     return previous;
   }
@@ -540,7 +597,7 @@ function drawDialogue(controller, page) {
   scene.tweens.add({
     targets: objects,
     alpha: 1,
-    duration: 150,
+    duration: 70,
     ease: 'Sine.easeOut',
   });
 
