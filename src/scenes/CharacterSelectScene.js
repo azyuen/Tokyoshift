@@ -7,7 +7,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260925-r195';
-import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260925-r195';
+import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260926-r203';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
@@ -39,7 +39,9 @@ export default class CharacterSelectScene extends Phaser.Scene {
     playMusic('title');
 
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(playableCharacterOrder);
+    this.currentStarterCarId = 'ae86';
     this.portraitObjects = [];
+    this.starterDisplayObjects = [];
 
     // Spacious title-screen frame. This scene needs more breathing room than
     // the in-game panels because all Phaser text is globally enlarged for phone use.
@@ -188,23 +190,84 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const x = 1260;
     this.panel(x, 365, 370, 455, '3 // FIRST CAR');
 
-    this.add.text(x, 232, 'STARTER CAR', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7e9caf'
+    this.add.text(x, 205, 'CHOOSE YOUR STARTER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#7e9caf'
     }).setOrigin(0.5);
 
-    this.createCarDisplay(cars.ae86, x, 350, 300, 4);
-
-    this.add.text(x, 454, 'TOYOTA SPRINTER TRUENO', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff'
+    this.starterCarNameText = this.add.text(x, 432, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#ffffff',
+      align: 'center',
+      wordWrap: { width: 320 },
     }).setOrigin(0.5);
 
-    this.add.text(x, 496, 'AE86 // STOCK', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#69dfff'
+    this.starterCarSpecText = this.add.text(x, 474, '', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#91a9b7',
+      fontStyle: '600',
+      align: 'center',
     }).setOrigin(0.5);
 
-    this.add.text(x, 540, '96 kW   •   940 kg   •   NA', {
-      fontFamily: BODY_FONT, fontSize: '13px', color: '#91a9b7', fontStyle: '600'
+    this.starterCarTraitText = this.add.text(x, 510, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#69dfff',
+      align: 'center',
+      wordWrap: { width: 320 },
     }).setOrigin(0.5);
+
+    this.starterButtons = [
+      { id: 'ae86', label: 'AE86', x: x - 82 },
+      { id: 'ek9', label: 'EK9', x: x + 82 },
+    ].map(item => {
+      const box = this.add.rectangle(item.x, 558, 146, 38, 0x0b1724, 1)
+        .setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add.text(item.x, 558, item.label, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#b8d4e3'
+      }).setOrigin(0.5);
+
+      box.on('pointerdown', () => {
+        this.currentStarterCarId = item.id;
+        this.refreshStarterCar();
+      });
+
+      return { ...item, box, label };
+    });
+
+    this.refreshStarterCar();
+  }
+
+  refreshStarterCar() {
+    this.starterDisplayObjects.forEach(obj => obj?.destroy?.());
+    this.starterDisplayObjects = [];
+
+    const id = this.currentStarterCarId === 'ek9' ? 'ek9' : 'ae86';
+    const car = cars[id];
+    const meta = id === 'ek9'
+      ? {
+          spec: '136 kW   •   1090 kg   •   FWD / NA',
+          trait: 'ROLLING START FOCUS // HIGH-REV PACE',
+        }
+      : {
+          spec: '96 kW   •   940 kg   •   RWD / NA',
+          trait: 'STANDING START FOCUS // LIGHTWEIGHT',
+        };
+
+    this.starterDisplayObjects = this.createCarDisplay(car, 1260, 330, 280, 4);
+    this.starterCarNameText.setText(car.name.toUpperCase());
+    this.starterCarSpecText.setText(meta.spec);
+    this.starterCarTraitText.setText(meta.trait);
+
+    this.starterButtons.forEach(item => {
+      const active = item.id === id;
+      item.box
+        .setFillStyle(active ? 0x123047 : 0x0b1724, 1)
+        .setStrokeStyle(active ? 2 : 1, active ? 0x43dfff : 0x315470, 1);
+      item.label.setColor(active ? '#ffffff' : '#8aa8b8');
+    });
   }
 
   buildExplanation() {
@@ -262,7 +325,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
       return;
     }
 
-    const state = createDefaultGameState();
+    const starterCarId = this.currentStarterCarId === 'ek9' ? 'ek9' : 'ae86';
+    const state = createDefaultGameState({ starterCarId });
     state.firstName = firstName;
     state.lastName = lastName;
 
@@ -277,27 +341,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
     state.playerCharacterId = playableCharacterOrder.includes(this.currentCharacterId)
       ? this.currentCharacterId
       : playableCharacterOrder[0];
-    state.selectedCarId = 'ae86';
-    state.ownedCarIds = ['ae86'];
-    state.carStates = {
-      ae86: {
-        stock: true,
-        paintColor: DEFAULT_PAINT_COLOR,
-        nosInstalled: false,
-        tuneLevel: 0,
-        tuning: {
-          engine: 0,
-          intake: 0,
-          ecu: 0,
-          turbo: 0,
-          intercooler: 0,
-        },
-        drivetrainTuning: {},
-        exhaustNosTuning: {},
-        acquiredVia: 'starter',
-      },
-    };
-
     const form = document.getElementById('driver-name-overlay');
     form?.classList.remove('is-visible');
     form?.setAttribute('aria-hidden', 'true');
@@ -319,6 +362,21 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
+    const rearBacking = this.add.circle(
+      rearX,
+      rearY,
+      fit.rear.backingRadius ?? Math.max(5, wheelSource.width * fit.rear.wheelScale * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.3);
+    const frontBacking = this.add.circle(
+      frontX,
+      frontY,
+      fit.front.backingRadius ?? Math.max(5, wheelSource.width * fit.front.wheelScale * 0.50),
+      0x020304,
+      1
+    ).setDepth(depth - 0.3);
+
     const rear = this.add.image(rearX, rearY, car.visual.wheelKey)
       .setScale(fit.rear.wheelScale)
       .setDepth(depth);
@@ -326,34 +384,21 @@ export default class CharacterSelectScene extends Phaser.Scene {
       .setScale(fit.front.wheelScale)
       .setDepth(depth);
 
-    this.add.circle(
-      rearX,
-      rearY,
-      fit.rear.backingRadius ?? Math.max(5, rear.displayWidth * 0.50),
-      0x020304,
-      1
-    ).setDepth(depth - 0.3);
-    this.add.circle(
-      frontX,
-      frontY,
-      fit.front.backingRadius ?? Math.max(5, front.displayWidth * 0.50),
-      0x020304,
-      1
-    ).setDepth(depth - 0.3);
-
     const tyreBottom = Math.max(
       rearY + rear.displayHeight * 0.5,
       frontY + front.displayHeight * 0.5
     );
-    this.add.ellipse(x, tyreBottom + 7, targetWidth * 0.86, 22, 0x000000, 0.70)
+    const shadow = this.add.ellipse(x, tyreBottom + 7, targetWidth * 0.86, 22, 0x000000, 0.70)
       .setDepth(depth - 0.1);
 
-    createCarBodyLayers(this, car, {
+    const bodyLayers = createCarBodyLayers(this, car, {
       x,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1,
       paintColor: DEFAULT_PAINT_COLOR,
     });
+
+    return [rearBacking, frontBacking, shadow, rear, front, ...bodyLayers.objects];
   }
 }

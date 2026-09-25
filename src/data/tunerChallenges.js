@@ -5,11 +5,15 @@ import {
 } from './characters.js?v=20260925-r195';
 import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
 
-export const TUNER_TEAM_CHALLENGE_WINS = 7;
+export const TUNER_TEAM_CHALLENGE_WINS = 10;
+export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 12;
+export const TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER = 1;
 export const TUNER_TEAM_CHALLENGE_STAGES = 7;
 export const TUNER_TEAM_PERFECT_REWARD = 750000;
 export const TUNER_TEAM_INVITE_CHANCE = 0.30;
 export const TUNER_TEAM_PITY_ARRIVALS = 4;
+export const TUNER_TEAM_REOFFER_MIN_VISITS = 5;
+export const TUNER_TEAM_REOFFER_MAX_VISITS = 10;
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
@@ -120,6 +124,8 @@ export function getTunerTeamChallengeState(source, regionId) {
   return {
     regionId: key,
     invited: Boolean(raw.invited),
+    offeredOnce: Boolean(raw.offeredOnce || raw.invited || Number(raw.stage || 0) > 0),
+    reofferVisitsRemaining: Math.max(0, Number(raw.reofferVisitsRemaining || 0)),
     completed: Boolean(raw.completed),
     stage: Math.max(0, Math.min(TUNER_TEAM_CHALLENGE_STAGES, Number(raw.stage || 0))),
     misses: Math.max(0, Number(raw.misses || 0)),
@@ -139,7 +145,12 @@ export function isTunerTeamChallengeEligible(source, regionId) {
 
   const regionWins = sourceValue(source, 'regionWins', {}) || {};
   const wins = Math.max(0, Number(regionWins[state.regionId] || 0));
-  return wins >= TUNER_TEAM_CHALLENGE_WINS;
+  const totalWins = Math.max(0, Number(sourceValue(source, 'wins', 0) || 0));
+  const garageTier = Math.max(0, Number(sourceValue(source, 'garageTier', 0) || 0));
+
+  return wins >= TUNER_TEAM_CHALLENGE_WINS
+    && totalWins >= TUNER_TEAM_CHALLENGE_TOTAL_WINS
+    && garageTier >= TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER;
 }
 
 export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
@@ -235,6 +246,21 @@ export function getTunerTeamChallengeLabel(source, regionId) {
 
   const regionWins = sourceValue(source, 'regionWins', {}) || {};
   const wins = Math.max(0, Number(regionWins[state.regionId] || 0));
-  return Math.min(wins, TUNER_TEAM_CHALLENGE_WINS) + ' / ' +
-    TUNER_TEAM_CHALLENGE_WINS + ' REGION REP';
+  if (wins < TUNER_TEAM_CHALLENGE_WINS) {
+    return Math.min(wins, TUNER_TEAM_CHALLENGE_WINS) + ' / ' +
+      TUNER_TEAM_CHALLENGE_WINS + ' REGION REP';
+  }
+
+  const totalWins = Math.max(0, Number(sourceValue(source, 'wins', 0) || 0));
+  if (totalWins < TUNER_TEAM_CHALLENGE_TOTAL_WINS) {
+    return Math.min(totalWins, TUNER_TEAM_CHALLENGE_TOTAL_WINS) + ' / ' +
+      TUNER_TEAM_CHALLENGE_TOTAL_WINS + ' TOTAL WINS';
+  }
+
+  const garageTier = Math.max(0, Number(sourceValue(source, 'garageTier', 0) || 0));
+  if (garageTier < TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER) {
+    return 'CANAL YARD REQUIRED';
+  }
+
+  return 'CREW CHALLENGE READY';
 }

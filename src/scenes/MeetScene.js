@@ -25,7 +25,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
+import { saveSessionState } from '../state/GameState.js?v=20260926-r203';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r195';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
@@ -42,16 +42,18 @@ import {
   TUNER_TEAM_CHALLENGE_STAGES,
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
+  TUNER_TEAM_REOFFER_MIN_VISITS,
+  TUNER_TEAM_REOFFER_MAX_VISITS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20260925-r195';
+} from '../data/tunerChallenges.js?v=20260926-r203';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r195';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r203';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -126,6 +128,44 @@ const REGION_LOCATION_RIVAL_ROTATION = {
       'renMizuno',
       'akiraShimizu',
     ],
+  },
+};
+
+const REGIONAL_INTRO_COPY = {
+  ODAIBA: {
+    greeting: "First night in Odaiba? Everyone says they're only here to look.",
+    reply: "I'm not here to look.",
+    sendoff: 'Good. The waterfront gets boring without fresh competition.',
+  },
+  SHINAGAWA: {
+    greeting: "Shinagawa doesn't care how loud your car is. We care what the timing board says.",
+    reply: "Then let's get a number.",
+    sendoff: 'Clean run first. Reputation comes after.',
+  },
+  TATSUMI: {
+    greeting: "Tatsumi isn't where you learn which pedal is which. Keep your line clean.",
+    reply: 'I can keep up.',
+    sendoff: "We'll find out before the next interchange.",
+  },
+  SHIBUYA: {
+    greeting: 'New car, new face. Shibuya notices both.',
+    reply: 'Which one matters more?',
+    sendoff: "Whichever people are still talking about tomorrow.",
+  },
+  SHINJUKU: {
+    greeting: 'Plenty of drivers arrive in Shinjuku with a reputation.',
+    reply: 'And leave with?',
+    sendoff: 'Usually a smaller one. Show us yours is real.',
+  },
+  YOKOHAMA: {
+    greeting: 'Tokyo teaches launches. Yokohama tells you whether the car can keep pulling.',
+    reply: 'How long a road do you need?',
+    sendoff: 'Long enough to run out of excuses.',
+  },
+  DAIKOKU: {
+    greeting: "If you've made it to Daikoku, nobody needs to ask whether you've raced before.",
+    reply: 'Good. Saves time.',
+    sendoff: 'Exactly. Park up, pick someone, and prove why you came.',
   },
 };
 
@@ -337,14 +377,15 @@ export default class MeetScene extends Phaser.Scene {
     return store[key];
   }
 
-  maybeShowRegionalCrewIntroduction() {
+  maybeShowRegionalCrewIntroduction({ countChallengeVisit = false } = {}) {
     if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
       return false;
     }
 
     const location = getMeetLocation(this.selectedMeetLocation);
     const regionId = String(location?.district || '').toUpperCase();
-    if (!hasRegionalTeam(regionId)) return false;
+    const copy = REGIONAL_INTRO_COPY[regionId];
+    if (!copy) return false;
 
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
     const npcId = getRivalCharacterOrderForRegion(regionId)
@@ -357,9 +398,14 @@ export default class MeetScene extends Phaser.Scene {
       variables: {
         REGION: regionId,
         NPC_NAME: String(characters[npcId]?.name || 'LOCAL DRIVER').toUpperCase(),
+        REGION_GREETING: copy.greeting,
+        PLAYER_REPLY: copy.reply,
+        REGION_SENDOFF: copy.sendoff,
       },
       onComplete: () => {
-        this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+        this.time.delayedCall(120, () =>
+          this.maybeShowTunerTeamChallenge({ countReofferVisit: countChallengeVisit })
+        );
       },
     });
 
@@ -411,22 +457,38 @@ export default class MeetScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  maybeShowTunerTeamChallenge() {
-    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return;
+  maybeShowTunerTeamChallenge({ countReofferVisit = false } = {}) {
+    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return false;
 
     const location = getMeetLocation(this.selectedMeetLocation);
     const regionId = String(location?.district || '').toUpperCase();
     const shop = getTunerShopForRegion(regionId);
-    if (!shop || isTunerShopUnlocked(this.registry, regionId)) return;
+    if (!shop || isTunerShopUnlocked(this.registry, regionId)) return false;
 
     let state = getTunerTeamChallengeState(this.registry, regionId);
     const eligible = isTunerTeamChallengeEligible(this.registry, regionId);
-    if (!eligible && !state.invited && state.stage <= 0) return;
-    if (state.retryNotBefore > Date.now()) return;
+    if (!eligible && !state.invited && state.stage <= 0) return false;
+    if (state.retryNotBefore > Date.now()) return false;
+
+    // "NOT YET" is a real refusal now. Only actual travel/arrival calls consume
+    // the hidden 5–10 visit cooldown; race-result scene reloads do not.
+    if (!state.invited && state.reofferVisitsRemaining > 0) {
+      if (!countReofferVisit) return false;
+
+      const remaining = Math.max(0, state.reofferVisitsRemaining - 1);
+      state = this.setTunerChallengeState(regionId, {
+        ...state,
+        reofferVisitsRemaining: remaining,
+      });
+      saveSessionState(this.registry);
+
+      if (remaining > 0) return false;
+    }
 
     if (!state.invited) {
-      const misses = state.misses + 1;
-      const trigger =
+      const isReturningOffer = state.offeredOnce && state.reofferVisitsRemaining <= 0;
+      const misses = isReturningOffer ? 0 : state.misses + 1;
+      const trigger = isReturningOffer ||
         Math.random() < TUNER_TEAM_INVITE_CHANCE ||
         misses >= TUNER_TEAM_PITY_ARRIVALS;
 
@@ -434,17 +496,20 @@ export default class MeetScene extends Phaser.Scene {
         ...state,
         misses: trigger ? 0 : misses,
         invited: trigger,
-        offeredAt: trigger ? 'REGION' : state.offeredAt,
+        offeredOnce: state.offeredOnce || trigger,
+        reofferVisitsRemaining: trigger ? 0 : state.reofferVisitsRemaining,
+        offeredAt: trigger ? (isReturningOffer ? 'RETURN' : 'REGION') : state.offeredAt,
       });
       saveSessionState(this.registry);
 
-      if (!trigger) return;
+      if (!trigger) return false;
     }
 
     this.showTunerTeamChallengePopup(regionId);
+    return true;
   }
 
-  showTunerTeamChallengePopup(regionId) {
+  showTunerTeamChallengePopup(regionId, { skipCallout = false } = {}) {
     if (this.tunerChallengePopup?.active || !this.hasCar) return;
 
     const key = String(regionId || '').toUpperCase();
@@ -460,6 +525,7 @@ export default class MeetScene extends Phaser.Scene {
     state = this.setTunerChallengeState(key, {
       ...state,
       invited: true,
+      offeredOnce: true,
       rounds,
     });
     saveSessionState(this.registry);
@@ -467,7 +533,7 @@ export default class MeetScene extends Phaser.Scene {
     // First invitation uses the reusable manga overlay. If the player skips it,
     // the invitation remains active and the legacy challenge card can be used
     // on the next visit to preserve the existing LATER/RESUME progression path.
-    if (state.stage <= 0 && !state.activeSession) {
+    if (state.stage <= 0 && !state.activeSession && !skipCallout) {
       const npcId = characters[shop.mechanicId]
         ? shop.mechanicId
         : (rounds[0]?.characterId || null);
@@ -485,18 +551,10 @@ export default class MeetScene extends Phaser.Scene {
           NPC_SUBTITLE: (shop.label + ' // CREW CALL-OUT').toUpperCase(),
         },
         onComplete: ({ reason }) => {
-          if (reason !== 'action') return;
-
-          const nextState = getTunerTeamChallengeState(this.registry, key);
-          this.setTunerChallengeState(key, {
-            ...nextState,
-            invited: true,
-            activeSession: true,
-            playerCarId: this.registry.get('selectedCarId') || '',
-            rounds,
-          });
-          saveSessionState(this.registry);
-          this.startTunerTeamChallengeRound(key);
+          if (reason !== 'action' && reason !== 'skip') return;
+          this.time.delayedCall(80, () =>
+            this.showTunerTeamChallengePopup(key, { skipCallout: true })
+          );
         },
       });
 
@@ -611,7 +669,7 @@ export default class MeetScene extends Phaser.Scene {
     const later = add(this.add.rectangle(930, 620, 190, 54, 0x171c25, 1)
       .setStrokeStyle(1, 0x516a7b, 1)
       .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(930, 620, 'LATER', {
+    add(this.add.text(930, 620, 'NOT YET', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
     }).setOrigin(0.5).setDepth(depth + 3));
 
@@ -620,7 +678,24 @@ export default class MeetScene extends Phaser.Scene {
       this.tunerChallengePopup = null;
     };
 
-    later.on('pointerdown', dismiss);
+    later.on('pointerdown', () => {
+      const visits = Phaser.Math.Between(
+        TUNER_TEAM_REOFFER_MIN_VISITS,
+        TUNER_TEAM_REOFFER_MAX_VISITS
+      );
+      const nextState = getTunerTeamChallengeState(this.registry, key);
+      this.setTunerChallengeState(key, {
+        ...nextState,
+        invited: false,
+        offeredOnce: true,
+        activeSession: false,
+        misses: 0,
+        reofferVisitsRemaining: visits,
+        rounds,
+      });
+      saveSessionState(this.registry);
+      dismiss();
+    });
     blocker.on('pointerdown', () => {});
     accept.on('pointerdown', () => {
       dismiss();
@@ -628,6 +703,8 @@ export default class MeetScene extends Phaser.Scene {
       this.setTunerChallengeState(key, {
         ...nextState,
         invited: true,
+        offeredOnce: true,
+        reofferVisitsRemaining: 0,
         activeSession: true,
         playerCarId: this.registry.get('selectedCarId') || '',
         rounds,
@@ -854,6 +931,8 @@ export default class MeetScene extends Phaser.Scene {
     const rounds = buildTunerTeamChallengeRounds(regionId, playerCharacterId);
     this.setTunerChallengeState(regionId, {
       invited: true,
+      offeredOnce: true,
+      reofferVisitsRemaining: 0,
       completed: false,
       stage: 0,
       misses: 0,
@@ -1049,6 +1128,15 @@ export default class MeetScene extends Phaser.Scene {
         this.rollOffers({ resetTimer: false });
         this.persistMeetRound();
         this.updateGpsPanel();
+
+        this.time.delayedCall(60, () => {
+          const introShown = this.maybeShowRegionalCrewIntroduction({
+            countChallengeVisit: true,
+          });
+          if (!introShown) {
+            this.maybeShowTunerTeamChallenge({ countReofferVisit: true });
+          }
+        });
       };
 
       let queued = 0;
@@ -3215,7 +3303,66 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  startSelectedRace(storyConfirmed = false) {
+  showLastCarPinkSlipWarning(onConfirm) {
+    if (this.lastCarPinkWarning?.active) return;
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth).setInteractive());
+    const panel = add(this.add.rectangle(780, 420, 760, 330, 0x08111c, 0.995)
+      .setStrokeStyle(3, 0xff5f93, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 325, 'LAST CAR AT RISK', {
+      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#ff9aba'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      392,
+      'Lose this pink-slip race and your current run ends.\nYou can restart with the same driver or restore a Workshop save.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#dce9ef',
+        align: 'center',
+        lineSpacing: 6,
+        wordWrap: { width: 640 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 510, 220, 48, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(650, 510, 'CANCEL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const race = add(this.add.rectangle(910, 510, 250, 48, 0x321522, 1)
+      .setStrokeStyle(2, 0xff5f93, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(910, 510, 'RACE FOR PINKS', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff4f8'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.lastCarPinkWarning = null;
+    };
+
+    blocker.on('pointerdown', () => {});
+    cancel.on('pointerdown', dismiss);
+    race.on('pointerdown', () => {
+      dismiss();
+      onConfirm?.();
+    });
+
+    this.lastCarPinkWarning = panel;
+  }
+
+  startSelectedRace(storyConfirmed = false, lastCarConfirmed = false) {
     if (!this.hasCar) {
       this.applyNoCarMeetState();
       return;
@@ -3229,9 +3376,18 @@ export default class MeetScene extends Phaser.Scene {
       const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
         characterOverrides: { RIVAL: offer.characterId },
         variables: { RIVAL_NAME: rivalName },
-        onComplete: () => this.startSelectedRace(true),
+        onComplete: () => this.startSelectedRace(true, lastCarConfirmed),
       });
       if (story.played) return;
+    }
+
+    if (
+      this.selectedDeal === 'PINK' &&
+      !lastCarConfirmed &&
+      (this.registry.get('ownedCarIds') || []).length <= 1
+    ) {
+      this.showLastCarPinkSlipWarning(() => this.startSelectedRace(true, true));
+      return;
     }
 
     const cash = this.registry.get('cash') ?? 0;

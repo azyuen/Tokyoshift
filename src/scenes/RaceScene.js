@@ -26,7 +26,7 @@ import {
   hasRegionalTeam,
 } from '../data/characters.js?v=20260925-r195';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260925-r195';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r203';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -39,10 +39,10 @@ import {
   TUNER_TEAM_CHALLENGE_STAGES,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260925-r195';
+} from '../data/tunerChallenges.js?v=20260926-r203';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r188';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260925-r195';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r203';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -485,7 +485,7 @@ export default class RaceScene extends Phaser.Scene {
       }
 
       saveSessionState(this.registry);
-      this.scene.start('MeetScene');
+      this.scene.start(ownedCarIds.length ? 'MeetScene' : 'RunOverScene');
       return;
     }
 
@@ -1810,11 +1810,13 @@ export default class RaceScene extends Phaser.Scene {
     const returnLabel = returnScene === 'CentralTokyoScene'
       ? 'RETURN TO CENTRAL TOKYO  >'
       : 'RETURN TO MEET  >';
-    const actionLabel = settlement?.teamChallengeContinues
-      ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
-      : settlement?.competitionContinues
-        ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
-        : returnLabel;
+    const actionLabel = settlement?.gameOver
+      ? 'RUN OVER // OPTIONS  >'
+      : settlement?.teamChallengeContinues
+        ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
+        : settlement?.competitionContinues
+          ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
+          : returnLabel;
 
     const buttonText = this.add.text(780, 686, actionLabel, {
       fontFamily: titleFont,
@@ -1828,7 +1830,9 @@ export default class RaceScene extends Phaser.Scene {
     button.on('pointerover', () => button.setFillStyle(accent, 0.18));
     button.on('pointerout', () => button.setFillStyle(0x07111d, 0.97));
     button.on('pointerdown', () => {
-      if (settlement?.teamChallengeContinues) {
+      if (settlement?.gameOver) {
+        this.scene.start('RunOverScene');
+      } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();

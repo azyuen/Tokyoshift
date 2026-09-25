@@ -22,7 +22,7 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260926-r201';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
+import { saveSessionState } from '../state/GameState.js?v=20260926-r203';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import {
@@ -933,6 +933,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedCar = cars[selectedCarId];
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
     const collectorLocked = Boolean(selectedCar?.tuningLocked || selectedState.collector || selectedState.immutable);
+    const starterOnly = Boolean(
+      ownedCars.length === 1 &&
+      selectedCarId &&
+      selectedCarId === this.registry.get('starterCarId')
+    );
     const canSell = Boolean(
       selectedCarId &&
       selectedCar &&
@@ -962,7 +967,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
         : collectorLocked
           ? 'COLLECTOR CAR NOT TRADED HERE'
-          : 'KEEP AT LEAST ONE CAR',
+          : starterOnly
+            ? 'STARTER CAR // ONLY CAR NOT FOR SALE'
+            : 'KEEP AT LEAST ONE CAR',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
@@ -1025,7 +1032,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   sellSelectedCar(carId, salePrice) {
     const owned = [...(this.registry.get('ownedCarIds') || [])];
-    if (owned.length <= 1 || !owned.includes(carId)) return;
+    const starterCarId = this.registry.get('starterCarId');
+    if (!owned.includes(carId)) return;
+    if (owned.length <= 1) return;
+    if (owned.length === 1 && carId === starterCarId) return;
 
     const nextOwned = owned.filter(id => id !== carId);
     const carStates = { ...(this.registry.get('carStates') || {}) };

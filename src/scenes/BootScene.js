@@ -2,7 +2,7 @@ import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { cars, carOrder } from '../data/cars.js?v=20260925-r193';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { characters } from '../data/characters.js?v=20260925-r195';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260925-r195';
+import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260926-r203';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r201';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
@@ -128,14 +128,15 @@ export default class BootScene extends Phaser.Scene {
     // BootScene is now preload/state plumbing only. Do not show a Tokyo SHIFT
     // interstitial or pause between garage/map reloads.
     if (this.preserveRegistry) {
-      this.scene.start('GarageScene');
+      this.scene.start(state.gameOver ? 'RunOverScene' : 'GarageScene');
       return;
     }
 
-    this.scene.start(
-      saved && (this.forceGarage || !state.gameOver)
-        ? 'GarageScene'
-        : 'CharacterSelectScene'
-    );
+    if (!saved) {
+      this.scene.start('CharacterSelectScene');
+      return;
+    }
+
+    this.scene.start(state.gameOver ? 'RunOverScene' : 'GarageScene');
   }
 }

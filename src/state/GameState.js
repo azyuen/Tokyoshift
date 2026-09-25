@@ -12,30 +12,45 @@ export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
 
-export function createDefaultGameState() {
+export const STARTER_CAR_IDS = ['ae86', 'ek9'];
+
+export function normaliseStarterCarId(value = 'ae86') {
+  return STARTER_CAR_IDS.includes(String(value || '')) ? String(value) : 'ae86';
+}
+
+export function createStarterCarState() {
   return {
-    version: 7,
+    stock: true,
+    paintColor: 0xffffff,
+    nosInstalled: false,
+    tuneLevel: 0,
+    tuning: {
+      engine: 0,
+      intake: 0,
+      ecu: 0,
+      turbo: 0,
+      intercooler: 0,
+      exhaust: 0,
+    },
+    drivetrainTuning: {},
+    exhaustNosTuning: {},
+    acquiredVia: 'starter',
+  };
+}
+
+export function createDefaultGameState(options = {}) {
+  const starterCarId = normaliseStarterCarId(options?.starterCarId);
+
+  return {
+    version: 8,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
-    selectedCarId: 'ae86',
-    ownedCarIds: ['ae86'],
+    starterCarId,
+    selectedCarId: starterCarId,
+    ownedCarIds: [starterCarId],
     carStates: {
-      ae86: {
-        stock: true,
-        paintColor: 0xffffff,
-        nosInstalled: false,
-        tuneLevel: 0,
-        tuning: {
-          engine: 0,
-          intake: 0,
-          ecu: 0,
-          turbo: 0,
-          intercooler: 0,
-          exhaust: 0,
-        },
-        acquiredVia: 'starter',
-      },
+      [starterCarId]: createStarterCarState(),
     },
     wins: 0,
     losses: 0,
@@ -53,7 +68,7 @@ export function createDefaultGameState() {
     garageTier: 0,
     workshopLocationId: 'shinonomeWorkshop',
     carGarageLocations: {
-      ae86: 'shinonomeWorkshop',
+      [starterCarId]: 'shinonomeWorkshop',
     },
     meetRosters: {},
     meetRefreshAt: 0,
@@ -75,6 +90,19 @@ export function createDefaultGameState() {
     meetStranded: false,
     gameOver: false,
   };
+}
+
+export function createFreshRunStateFromRegistry(registry) {
+  const starterCarId = normaliseStarterCarId(registry?.get?.('starterCarId'));
+  const state = createDefaultGameState({ starterCarId });
+
+  state.firstName = String(registry?.get?.('firstName') || '');
+  state.lastName = String(registry?.get?.('lastName') || '');
+  state.playerCharacterId = registry?.get?.('playerCharacterId') || state.playerCharacterId;
+  state.devMode = Boolean(registry?.get?.('devMode'));
+  if (state.devMode) state.cash = 1000000000;
+
+  return state;
 }
 
 function readJson(key) {
@@ -260,7 +288,14 @@ export function readSessionState() {
 }
 
 export function normaliseState(input = {}) {
-  const base = createDefaultGameState();
+  const requestedStarterCarId =
+    input.starterCarId ||
+    Object.entries(input.carStates || {}).find(
+      ([carId, carState]) =>
+        STARTER_CAR_IDS.includes(carId) && carState?.acquiredVia === 'starter'
+    )?.[0] ||
+    'ae86';
+  const base = createDefaultGameState({ starterCarId: requestedStarterCarId });
   const locationAliases = {
     wangan711: 'odaiba7eleven',
     wangan7eleven: 'odaiba7eleven',
@@ -280,6 +315,8 @@ export function normaliseState(input = {}) {
   const owned = Array.isArray(input.ownedCarIds)
     ? [...new Set(input.ownedCarIds)]
     : [...base.ownedCarIds];
+
+  const starterCarId = base.starterCarId;
 
   const selectedCarId = owned.includes(input.selectedCarId)
     ? input.selectedCarId
@@ -332,13 +369,14 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 7,
+    version: 8,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
     workshopLocationId,
     carGarageLocations,
     playerCharacterId,
+    starterCarId,
     selectedCarId,
     ownedCarIds: owned,
     carStates: {
@@ -416,10 +454,11 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 7,
+    version: 8,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
+    starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     selectedCarId: registry.get('selectedCarId') || null,
     ownedCarIds: registry.get('ownedCarIds') || [],
     carStates: registry.get('carStates') || {},
