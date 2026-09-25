@@ -201,9 +201,13 @@ function restoreScene(scene, state) {
 function frameFor(scene, side) {
   const width = Number(scene.scale.width || scene.cameras.main.width || 1560);
   const height = Number(scene.scale.height || scene.cameras.main.height || 840);
-  const frameHeight = Math.min(720, Math.max(520, height * 0.88));
-  const frameWidth = Math.min(620, Math.max(470, width * 0.40));
-  const y = height * 0.49;
+  // Cutscene-only staging: keep the canonical profile metadata, but give
+  // silhouettes more breathing room above the manga gutter. The smaller
+  // target frame reduces actor scale uniformly; the higher centre lifts both
+  // short and tall characters without introducing per-character hacks.
+  const frameHeight = Math.min(620, Math.max(450, height * 0.76));
+  const frameWidth = Math.min(550, Math.max(410, width * 0.35));
+  const y = height * 0.42;
 
   if (side === 'left') {
     return { x: width * 0.28, y, frameWidth, frameHeight };
