@@ -54,18 +54,24 @@ export const cars = {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
 
-      // Modular AE86. Base, kits and spoilers share the same 2172×724
-      // canvas/origin so they stack at identical x/y/scale in every scene.
+      // Canonical Tokyo SHIFT modular-car template.
+      // Every authored layer is a 2400×1000 transparent PNG using the exact
+      // same bottom-right registration. Phaser draws all layers at one x/y/scale.
       modularAssetRoot: 'assets/Cars/ae86',
       modularAssetStem: 'ae86',
-      bodyPath: 'assets/Cars/ae86/ae86_base.png',
-      singleLayerModular: true,
+      bodyPath: 'assets/Cars/ae86/ae86_base.png', // legacy fallback until new layers load
+      paintPath: 'assets/Cars/ae86/ae86_body_paint.png',
+      overlayPath: 'assets/Cars/ae86/ae86_body_outline.png',
+      spoilerPaintPath: 'assets/Cars/ae86/ae86_spoiler_0_paint.png',
+      spoilerPath: null,
+      singleLayerModular: false,
       stockBodyKit: false,
-      stockSpoiler: false,
+      stockSpoiler: true,
+      stockSpoilerPaint: true,
+      aeroAboveOverlay: true,
 
-      // R183 calibration for the current 2172×724 AE86 master.
-      // Preserve the old on-screen footprint while authoring wheel geometry
-      // directly against this master so every scene shares one calibration.
+      // Keep the current base-PNG calibration as a safe fallback. Boot switches
+      // to layeredMasterGeometry only when the new paint + outline assets exist.
       bodyScale: 0.165,
       wheelScale: 0.039,
       rearOffsetX: -600,
@@ -81,6 +87,27 @@ export const cars = {
       frontWheelBackingRadius: 160,
       exhaustOffsetX: -970,
       exhaustOffsetY: 159,
+
+      // Source-space geometry measured from the 2400×1000 master. The artwork
+      // itself came from the 2109px source and was padded left/up, so the width
+      // compensation preserves its previous visible size in target-width views.
+      layeredMasterGeometry: {
+        bodyScale: 0.170,
+        canvasDisplayScale: 1.1380,
+        rearOffsetX: -471,
+        frontOffsetX: 776,
+        wheelOffsetY: 364,
+        rearWheelOffsetX: -471,
+        frontWheelOffsetX: 776,
+        rearWheelOffsetY: 360,
+        frontWheelOffsetY: 368,
+        rearWheelScale: 0.04524,
+        frontWheelScale: 0.04524,
+        rearWheelBackingRadius: 156,
+        frontWheelBackingRadius: 156,
+        exhaustOffsetX: -835,
+        exhaustOffsetY: 330,
+      },
     },
   },
 
