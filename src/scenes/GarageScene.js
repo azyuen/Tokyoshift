@@ -1,5 +1,5 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r191';
-import { cars, carOrder } from '../data/cars.js?v=20260925-r191';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
+import { cars, carOrder } from '../data/cars.js?v=20260925-r193';
 import { engines } from '../data/engines.js?v=20260924-r164';
 import { characters } from '../data/characters.js?v=20260925-r182';
 import {
@@ -69,7 +69,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260925-r191';
+} from '../vehicles/CarAppearance.js?v=20260925-r193';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -79,7 +79,7 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260925-r191';
+} from '../data/visualMods.js?v=20260925-r193';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
@@ -3387,7 +3387,7 @@ export default class GarageScene extends Phaser.Scene {
       ready
         ? 'LIVE PREVIEW // PHASER TINT'
         : this.selectedCarId === 'ae86'
-          ? 'UPLOAD ae86_body_paint.png + ae86_body_overlay.png TO ENABLE'
+          ? 'UPLOAD ae86_body_paint.png + ae86_body_outline.png TO ENABLE'
           : 'PAINT LAYERS NOT BUILT FOR THIS CAR YET'
     ).setColor(ready ? '#62e8c7' : '#ffbc71');
 
