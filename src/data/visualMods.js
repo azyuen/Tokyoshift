@@ -225,6 +225,76 @@ function linePoly(g, colour, alpha, width, points, close = false) {
   g.strokePoints(points.map(([x, y]) => new Phaser.Geom.Point(x, y)), close);
 }
 
+const AE86_CANONICAL_MOD_CANVAS = Object.freeze({ width: 2400, height: 1000 });
+
+function getAe86CanonicalModTextureKey(sourceKey) {
+  return sourceKey + '__canonicalOpaque';
+}
+
+function ensureAe86CanonicalModTexture(scene, sourceKey) {
+  if (!sourceKey || !scene?.textures?.exists?.(sourceKey)) return sourceKey;
+
+  const targetKey = getAe86CanonicalModTextureKey(sourceKey);
+  if (scene.textures.exists(targetKey)) return targetKey;
+  if (typeof document === 'undefined') return sourceKey;
+
+  const source = scene.textures.get(sourceKey).getSourceImage();
+  const sourceWidth = Number(source?.naturalWidth || source?.width || 0);
+  const sourceHeight = Number(source?.naturalHeight || source?.height || 0);
+  if (!sourceWidth || !sourceHeight) return sourceKey;
+
+  try {
+    const width = AE86_CANONICAL_MOD_CANVAS.width;
+    const height = AE86_CANONICAL_MOD_CANVAS.height;
+    const texture = scene.textures.createCanvas(targetKey, width, height);
+    const ctx = texture.getContext();
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.imageSmoothingEnabled = false;
+
+    // User-authored visual-mod PNGs are allowed to arrive at a different
+    // export resolution, but their whole-canvas registration is authoritative.
+    // Resample the complete source rectangle into the canonical AE86 master
+    // rectangle before Phaser ever positions it. This makes 1942×809 exports,
+    // 2400×1000 exports, etc. share the exact same in-game coordinate system.
+    ctx.drawImage(
+      source,
+      0, 0, sourceWidth, sourceHeight,
+      0, 0, width, height
+    );
+
+    // These are replacement body panels, not translucent decals. Some image
+    // exporters leave low-alpha pixels inside otherwise solid white/grey parts.
+    // Convert every meaningful authored pixel to fully opaque while retaining
+    // true transparent background pixels. A tiny threshold also removes faint
+    // anti-alias halos around the isolated part.
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const alpha = pixels[i + 3];
+      pixels[i + 3] = alpha >= 8 ? 255 : 0;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    texture.refresh();
+    return targetKey;
+  } catch (error) {
+    console.warn('Could not canonicalise AE86 visual-mod texture', sourceKey, error);
+    if (scene.textures.exists(targetKey)) scene.textures.remove(targetKey);
+    return sourceKey;
+  }
+}
+
+function ensureAe86CanonicalModTextures(scene) {
+  const catalog = VISUAL_MOD_CATALOG.ae86;
+  Object.values(catalog?.slots || {}).forEach(slot => {
+    (slot?.options || []).forEach(option => {
+      (option?.layers || []).forEach(layer => {
+        if (layer?.textureKey) ensureAe86CanonicalModTexture(scene, layer.textureKey);
+      });
+    });
+  });
+}
+
 function ensureAe86ProtectedTexture(scene) {
   const catalog = VISUAL_MOD_CATALOG.ae86;
   const targetKey = catalog?.protectedTextureKey;
@@ -299,6 +369,7 @@ function ensureEvoProtectedTexture(scene, width, height) {
 }
 
 export function ensureVisualModTextures(scene) {
+  ensureAe86CanonicalModTextures(scene);
   ensureAe86ProtectedTexture(scene);
 
   const sourceKey = 'carOverlay_evo_iii';
@@ -469,31 +540,47 @@ export function createVisualModLayers(
       const offsetY = Number(layer.offsetY ?? 0) * scale;
 
       const aboveOverlayDepth = layer.aboveOverlay ? 0.030 : 0;
-      const image = scene.add.image(
-        x + bodyOffsetX + offsetX,
-        y + bodyOffsetY + offsetY,
-        layer.textureKey
+      const registeredToBase = Boolean(
+        car?.visual?.modularAssetRoot && bodyLayers?.primary
+      );
+      const sourceTextureKey = (
+        car?.id === 'ae86'
+        && scene.textures.exists(getAe86CanonicalModTextureKey(layer.textureKey))
       )
-        .setFlipX(flipX)
+        ? getAe86CanonicalModTextureKey(layer.textureKey)
+        : layer.textureKey;
+
+      // Registration-critical modular layers inherit the exact transform of the
+      // already-rendered base paint layer. Never reconstruct its placement from
+      // x/y/scale independently: that can introduce sub-pixel drift between
+      // the body, spoiler and body kit in different scenes.
+      const base = bodyLayers?.primary;
+      const imageX = registeredToBase ? base.x + offsetX : x + bodyOffsetX + offsetX;
+      const imageY = registeredToBase ? base.y + offsetY : y + bodyOffsetY + offsetY;
+      const image = scene.add.image(imageX, imageY, sourceTextureKey)
         .setDepth(
           depth +
           aboveOverlayDepth +
           slotIndex * 0.002 +
           layerIndex * 0.0005
-        );
+        )
+        .setAlpha(1)
+        .setBlendMode(Phaser.BlendModes.NORMAL);
 
-      // Full-canvas modular parts are registered to the base car canvas.
-      // For any foldered modular car, bind replacement-part display dimensions
-      // to the rendered base layer. This is especially important for the AE86
-      // canonical 2400×1000 master: body, paint, spoiler and body kit must share
-      // exactly one on-screen rectangle with no independent scale drift.
-      if (car?.visual?.modularAssetRoot && bodyLayers?.primary) {
-        image.setDisplaySize(
-          bodyLayers.primary.displayWidth * layerScaleX,
-          bodyLayers.primary.displayHeight * layerScaleY
-        );
+      if (registeredToBase) {
+        image
+          .setOrigin(base.originX, base.originY)
+          .setRotation(base.rotation)
+          .setFlipX(base.flipX)
+          .setFlipY(base.flipY)
+          .setDisplaySize(
+            base.displayWidth * layerScaleX,
+            base.displayHeight * layerScaleY
+          );
       } else {
-        image.setScale(scale * layerScaleX, scale * layerScaleY);
+        image
+          .setFlipX(flipX)
+          .setScale(scale * layerScaleX, scale * layerScaleY);
       }
 
       if (layer.paintMode === 'body') {
@@ -501,6 +588,7 @@ export function createVisualModLayers(
         image.setData('carPaintLayer', true);
       }
 
+      image.setData('visualModCanonicalRegistered', registeredToBase);
       objects.push(image);
     });
   });
@@ -529,21 +617,30 @@ export function createVisualModLayers(
     scene.textures.exists(catalog.protectedTextureKey)
   ) {
     bodyLayers.overlay.setVisible(false);
+    const protectedBase = bodyLayers?.primary;
     const protectedDetails = scene.add.image(
-      x + bodyOffsetX,
-      y + bodyOffsetY,
+      car?.visual?.modularAssetRoot && protectedBase ? protectedBase.x : x + bodyOffsetX,
+      car?.visual?.modularAssetRoot && protectedBase ? protectedBase.y : y + bodyOffsetY,
       catalog.protectedTextureKey
     )
-      .setFlipX(flipX)
-      .setDepth(depth + 0.020);
+      .setDepth(depth + 0.020)
+      .setAlpha(1)
+      .setBlendMode(Phaser.BlendModes.NORMAL);
 
-    if (car?.visual?.modularAssetRoot && bodyLayers?.primary) {
-      protectedDetails.setDisplaySize(
-        bodyLayers.primary.displayWidth,
-        bodyLayers.primary.displayHeight
-      );
+    if (car?.visual?.modularAssetRoot && protectedBase) {
+      protectedDetails
+        .setOrigin(protectedBase.originX, protectedBase.originY)
+        .setRotation(protectedBase.rotation)
+        .setFlipX(protectedBase.flipX)
+        .setFlipY(protectedBase.flipY)
+        .setDisplaySize(
+          protectedBase.displayWidth,
+          protectedBase.displayHeight
+        );
     } else {
-      protectedDetails.setScale(scale);
+      protectedDetails
+        .setFlipX(flipX)
+        .setScale(scale);
     }
     protectedDetails.setData('visualModProtectedLayer', true);
     objects.push(protectedDetails);
