@@ -51,7 +51,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r184';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r185';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r186';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
