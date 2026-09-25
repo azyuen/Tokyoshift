@@ -6,7 +6,7 @@ import {
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20260925-r184';
+} from './MangaCutscene.js?v=20260925-r185';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -189,14 +189,14 @@ export function showCutsceneTester(scene) {
 
     pageIds.forEach((id, index) => {
       const definition = CUTSCENES[id];
-      const y = 205 + index * 96;
-      const row = addRow(scene.add.rectangle(width / 2, y, 900, 78, 0x101923, 1)
+      const y = 215 + index * 110;
+      const row = addRow(scene.add.rectangle(width / 2, y, 900, 94, 0x101923, 1)
         .setStrokeStyle(2, 0x304b5d, 1)
         .setDepth(DEPTH + 2)
         .setScrollFactor(0)
         .setInteractive({ useHandCursor: true }));
 
-      addRow(scene.add.text(width / 2 - 425, y - 23,
+      addRow(scene.add.text(width / 2 - 425, y - 30,
         String(definition.testerLabel || definition.title || id).toUpperCase(),
         {
           fontFamily: PIXEL_FONT,
@@ -209,7 +209,7 @@ export function showCutsceneTester(scene) {
       const left = resolvePreviewCharacter(scene, definition, 'left');
       const right = resolvePreviewCharacter(scene, definition, 'right');
 
-      addRow(scene.add.text(width / 2 - 425, y + 12,
+      addRow(scene.add.text(width / 2 - 425, y + 8,
         definition.category + '  //  ' + id +
         '\n' + pages + ' PAGES  //  LEFT: ' + left + '  //  RIGHT: ' + right,
         {
