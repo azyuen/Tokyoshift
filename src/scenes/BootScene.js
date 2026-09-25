@@ -1,4 +1,4 @@
-import { garageAssets } from '../data/garageAssets.js?v=20260922-r128';
+import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { cars } from '../data/cars.js?v=20260925-r191';
 import { preloadCarAppearanceAssets, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260925-r191';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260925-r182';
