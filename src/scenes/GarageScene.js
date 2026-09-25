@@ -32,7 +32,7 @@ import {
   getChassisCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260924-r176';
+} from '../data/secondaryTuning.js?v=20260925-r192';
 import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260925-r184';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260925-r188';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r188';
