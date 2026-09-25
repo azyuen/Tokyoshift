@@ -303,7 +303,11 @@ export default class MeetScene extends Phaser.Scene {
     if (!specialChallengerShown) {
       const revealShown = this.maybeShowTunerChallengeReveal();
       if (!revealShown) {
-        this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+        this.time.delayedCall(180, () => {
+          if (!this.maybeShowRegionalCrewIntroduction()) {
+            this.maybeShowTunerTeamChallenge();
+          }
+        });
       }
     }
 
@@ -330,6 +334,35 @@ export default class MeetScene extends Phaser.Scene {
     store[key] = { ...(store[key] || {}), ...next, regionId: key };
     this.registry.set('tunerTeamChallenges', store);
     return store[key];
+  }
+
+  maybeShowRegionalCrewIntroduction() {
+    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
+      return false;
+    }
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (!hasRegionalTeam(regionId)) return false;
+
+    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const npcId = getRivalCharacterOrderForRegion(regionId)
+      .find(id => id !== playerCharacterId && characters[id]);
+    if (!npcId) return false;
+
+    const result = playMangaCutscene(this, 'regionalCrewIntroduction', {
+      historyId: 'regionalCrewIntroduction:' + regionId,
+      characterOverrides: { NPC: npcId },
+      variables: {
+        REGION: regionId,
+        NPC_NAME: String(characters[npcId]?.name || 'LOCAL DRIVER').toUpperCase(),
+      },
+      onComplete: () => {
+        this.time.delayedCall(180, () => this.maybeShowTunerTeamChallenge());
+      },
+    });
+
+    return Boolean(result.played);
   }
 
   maybeShowTunerChallengeReveal() {
