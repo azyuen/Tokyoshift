@@ -14,7 +14,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r199';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260926-r200';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
