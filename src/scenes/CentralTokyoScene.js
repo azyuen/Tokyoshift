@@ -32,7 +32,7 @@ import {
 } from '../data/workshopProgression.js?v=20260922-r128';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r186';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r187';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r188';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -1076,13 +1076,29 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
   }
 
-  selectGinzaCar(index) {
+  selectGinzaCar(index, storyConfirmed = false) {
     const listings = this.getGinzaListings();
-    if (!listings[index]) return;
+    const listing = listings[index] || null;
+    if (!listing) return;
+
     if (this.ginzaShowcaseActive && this.selectedIndex === index) {
       this.transitionGinzaView(null);
       return;
     }
+
+    if (!storyConfirmed) {
+      const carName = cars[listing.carId]?.shortName || listing.carId || 'COLLECTOR CAR';
+      const story = playMangaCutscene(this, 'ginzaHeroCarReveal', {
+        characterOverrides: { HOST: 'sayakaFujieda' },
+        variables: {
+          HOST_NAME: 'SAYAKA FUJIEDA',
+          CAR: String(carName).toUpperCase(),
+        },
+        onComplete: () => this.selectGinzaCar(index, true),
+      });
+      if (story.played) return;
+    }
+
     this.transitionGinzaView(index);
   }
 
@@ -1505,9 +1521,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
   }
 
-  startProBracket(event, build) {
+  startProBracket(event, build, storyConfirmed = false) {
     const cash = Number(this.registry.get('cash') || 0);
     if (!build || cash < event.entryFee) return;
+
+    if (!storyConfirmed) {
+      const story = playMangaCutscene(this, 'competitionIntroduction', {
+        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
+        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+        onComplete: () => this.startProBracket(event, build, true),
+      });
+      if (story.played) return;
+    }
 
     const playerCharacterId = this.registry.get('playerCharacterId');
     const rivals = genericRivalCharacterOrder
