@@ -1,5 +1,5 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r190';
-import { cars } from '../data/cars.js?v=20260925-r190';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r191';
+import { cars } from '../data/cars.js?v=20260925-r191';
 import { characters } from '../data/characters.js?v=20260925-r182';
 import {
   getTunerShopForRegion,
@@ -13,8 +13,8 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260925-r190';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r190';
+} from '../vehicles/CarAppearance.js?v=20260925-r191';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260925-r191';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
