@@ -483,10 +483,11 @@ export function createVisualModLayers(
         );
 
       // Full-canvas modular parts are registered to the base car canvas.
-      // Size them to the rendered base rather than trusting the source PNG
-      // dimensions. This keeps overlays pixel-registered even if an export
-      // accidentally changed the PNG canvas resolution.
-      if (car?.visual?.singleLayerModular && bodyLayers?.primary) {
+      // For any foldered modular car, bind replacement-part display dimensions
+      // to the rendered base layer. This is especially important for the AE86
+      // canonical 2400×1000 master: body, paint, spoiler and body kit must share
+      // exactly one on-screen rectangle with no independent scale drift.
+      if (car?.visual?.modularAssetRoot && bodyLayers?.primary) {
         image.setDisplaySize(
           bodyLayers.primary.displayWidth * layerScaleX,
           bodyLayers.primary.displayHeight * layerScaleY
@@ -533,9 +534,17 @@ export function createVisualModLayers(
       y + bodyOffsetY,
       catalog.protectedTextureKey
     )
-      .setScale(scale)
       .setFlipX(flipX)
       .setDepth(depth + 0.020);
+
+    if (car?.visual?.modularAssetRoot && bodyLayers?.primary) {
+      protectedDetails.setDisplaySize(
+        bodyLayers.primary.displayWidth,
+        bodyLayers.primary.displayHeight
+      );
+    } else {
+      protectedDetails.setScale(scale);
+    }
     protectedDetails.setData('visualModProtectedLayer', true);
     objects.push(protectedDetails);
   }
