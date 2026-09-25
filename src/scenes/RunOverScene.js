@@ -6,7 +6,7 @@ import {
   readManualSave,
   restoreManualSave,
   saveManualState,
-} from '../state/GameState.js?v=20260926-r203';
+} from '../state/GameState.js?v=20260926-r204';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

@@ -42,7 +42,7 @@ export function createDefaultGameState(options = {}) {
   const starterCarId = normaliseStarterCarId(options?.starterCarId);
 
   return {
-    version: 8,
+    version: 9,
     firstName: '',
     lastName: '',
     playerCharacterId: 'renMizuno',
@@ -79,12 +79,19 @@ export function createDefaultGameState(options = {}) {
     competitionOffers: {},
     competitionState: null,
     competitionCooldownUntil: 0,
+    carCoupons: {},
     centralTokyoLocation: 'tokyoAutoMarket',
+    centralTokyoUnlocks: {
+      autoMarket: false,
+      ginza: false,
+      drag: false,
+    },
     tokyoInvitesSeen: {
       autoMarket: false,
       ginza: false,
       drag: false,
     },
+    introTutorialChoiceDone: false,
     raceReturnScene: 'MeetScene',
     selectedRaceMeetOffer: null,
     meetStranded: false,
@@ -100,6 +107,17 @@ export function createFreshRunStateFromRegistry(registry) {
   state.lastName = String(registry?.get?.('lastName') || '');
   state.playerCharacterId = registry?.get?.('playerCharacterId') || state.playerCharacterId;
   state.devMode = Boolean(registry?.get?.('devMode'));
+
+  // Restart Night is a fresh progression run, not a forced replay of onboarding.
+  const previousSeen = Array.isArray(registry?.get?.('cutscenesSeen'))
+    ? registry.get('cutscenesSeen')
+    : [];
+  const onboardingIds = ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide'];
+  state.cutscenesSeen = previousSeen.filter(id => onboardingIds.includes(String(id)));
+  state.introTutorialChoiceDone = Boolean(
+    registry?.get?.('introTutorialChoiceDone') || state.cutscenesSeen.length
+  );
+
   if (state.devMode) state.cash = 1000000000;
 
   return state;
@@ -369,7 +387,7 @@ export function normaliseState(input = {}) {
   return {
     ...base,
     ...input,
-    version: 8,
+    version: 9,
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -432,11 +450,27 @@ export function normaliseState(input = {}) {
       ? input.competitionState
       : null,
     competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
+    carCoupons:
+      input.carCoupons && typeof input.carCoupons === 'object'
+        ? Object.fromEntries(
+            Object.entries(input.carCoupons)
+              .map(([carId, count]) => [String(carId), Math.max(0, Math.floor(Number(count || 0)))])
+              .filter(([, count]) => count > 0)
+          )
+        : {},
     centralTokyoLocation: String(input.centralTokyoLocation || base.centralTokyoLocation),
+    centralTokyoUnlocks: {
+      ...base.centralTokyoUnlocks,
+      // R203 and earlier used "invite seen" as de-facto access. Preserve that
+      // access during migration so existing profiles are never re-locked.
+      ...(input.tokyoInvitesSeen || {}),
+      ...(input.centralTokyoUnlocks || {}),
+    },
     tokyoInvitesSeen: {
       ...base.tokyoInvitesSeen,
       ...(input.tokyoInvitesSeen || {}),
     },
+    introTutorialChoiceDone: Boolean(input.introTutorialChoiceDone),
     raceReturnScene: String(input.raceReturnScene || 'MeetScene'),
     selectedRaceMeetOffer: input.selectedRaceMeetOffer && typeof input.selectedRaceMeetOffer === 'object'
       ? input.selectedRaceMeetOffer
@@ -454,7 +488,7 @@ export function applyStateToRegistry(registry, input) {
 
 export function snapshotRegistry(registry) {
   return normaliseState({
-    version: 8,
+    version: 9,
     firstName: registry.get('firstName') || '',
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
@@ -487,8 +521,11 @@ export function snapshotRegistry(registry) {
     competitionOffers: registry.get('competitionOffers') || {},
     competitionState: registry.get('competitionState') || null,
     competitionCooldownUntil: Number(registry.get('competitionCooldownUntil') || 0),
+    carCoupons: registry.get('carCoupons') || {},
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
+    centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
+    introTutorialChoiceDone: Boolean(registry.get('introTutorialChoiceDone')),
     raceReturnScene: registry.get('raceReturnScene') || 'MeetScene',
     selectedRaceMeetOffer: registry.get('selectedRaceMeetOffer') || null,
     meetStranded: Boolean(registry.get('meetStranded')),

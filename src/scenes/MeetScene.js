@@ -25,7 +25,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260926-r203';
+import { saveSessionState } from '../state/GameState.js?v=20260926-r204';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r195';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
@@ -36,7 +36,7 @@ import {
   getEncounterSkillLabel,
   getEncounterAi,
   boostAiForPinkSlip,
-} from '../data/encounterProfiles.js?v=20260923-r162';
+} from '../data/encounterProfiles.js?v=20260926-r204';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -53,7 +53,13 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260924-r178';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r203';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r204';
+import {
+  getPendingCentralTokyoInvite,
+  markCentralTokyoUnlocked,
+  getCarCouponRequirement,
+  getCarCouponCount,
+} from '../data/centralTokyo.js?v=20260926-r204';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -343,13 +349,16 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     if (!specialChallengerShown) {
-      const revealShown = this.maybeShowTunerChallengeReveal();
-      if (!revealShown) {
-        this.time.delayedCall(180, () => {
-          if (!this.maybeShowRegionalCrewIntroduction()) {
-            this.maybeShowTunerTeamChallenge();
-          }
-        });
+      const centralInviteShown = this.maybeShowRemoteCentralTokyoInvitation();
+      if (!centralInviteShown) {
+        const revealShown = this.maybeShowTunerChallengeReveal();
+        if (!revealShown) {
+          this.time.delayedCall(180, () => {
+            if (!this.maybeShowRegionalCrewIntroduction()) {
+              this.maybeShowTunerTeamChallenge();
+            }
+          });
+        }
       }
     }
 
@@ -363,6 +372,41 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  maybeShowRemoteCentralTokyoInvitation() {
+    const inviteKey = getPendingCentralTokyoInvite(this.registry);
+    if (inviteKey !== 'ginza' && inviteKey !== 'drag') return false;
+
+    const completeInvite = () => {
+      markCentralTokyoUnlocked(this.registry, inviteKey);
+      saveSessionState(this.registry);
+    };
+
+    const options = inviteKey === 'ginza'
+      ? {
+          characterOverrides: { HOST: 'sayakaFujieda' },
+          variables: { HOST_NAME: 'SAYAKA FUJIEDA' },
+          onComplete: completeInvite,
+        }
+      : {
+          characterOverrides: { PROMOTER: 'tetsuyaKanda' },
+          variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+          onComplete: completeInvite,
+        };
+
+    const result = playMangaCutscene(
+      this,
+      inviteKey === 'ginza' ? 'ginzaInvitation' : 'dragComplexInvitation',
+      options
+    );
+
+    if (!result.played && result.reason === 'seen') {
+      completeInvite();
+      return false;
+    }
+
+    return Boolean(result.played);
   }
 
   getTunerChallengeStore() {
@@ -1910,9 +1954,7 @@ export default class MeetScene extends Phaser.Scene {
     }[difficulty] || { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] };
 
     const owned = this.registry.get('ownedCarIds') || [];
-    const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
-    const canWinCar = owned.length < capacity;
-    const preferCarPrize = canWinCar && Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
+    const preferCouponPrize = Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
 
     const usedCharacters = [];
     const usedCars = [];
@@ -1940,11 +1982,11 @@ export default class MeetScene extends Phaser.Scene {
     let prizeType = 'CASH';
     let prizeCarId = null;
 
-    if (preferCarPrize) {
+    if (preferCouponPrize) {
       const finalRating = settings.ratings[2];
       const candidate = this.chooseEventCar(finalRating, { preferUnowned: true });
       if (candidate && !owned.includes(candidate)) {
-        prizeType = 'CAR';
+        prizeType = 'COUPON';
         prizeCarId = candidate;
         rounds[2].carId = candidate;
       }
@@ -1972,10 +2014,12 @@ export default class MeetScene extends Phaser.Scene {
     const wrongRegion = Boolean(
       current?.rounds?.some(round => !allowed.has(round?.characterId))
     );
+    const legacyDirectCarPrize = current?.prizeType === 'CAR';
     const expired =
       !current ||
       Number(current.refreshAt || 0) <= Date.now() ||
-      wrongRegion;
+      wrongRegion ||
+      legacyDirectCarPrize;
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -2006,8 +2050,15 @@ export default class MeetScene extends Phaser.Scene {
 
     const cash = Number(this.registry.get('cash') || 0);
     const enough = cash >= offer.entryFee;
-    const prizeText = offer.prizeType === 'CAR'
-      ? cars[offer.prizeCarId].shortName
+    const couponRequired = offer.prizeCarId
+      ? getCarCouponRequirement(offer.prizeCarId)
+      : 0;
+    const couponOwned = offer.prizeCarId
+      ? getCarCouponCount(this.registry, offer.prizeCarId)
+      : 0;
+    const prizeText = offer.prizeType === 'COUPON'
+      ? cars[offer.prizeCarId].shortName + ' COUPON\n' +
+        couponOwned + '/' + couponRequired + ' OWNED'
       : '¥' + offer.prizeCash.toLocaleString('en-US');
 
     const depth = 120;
@@ -2042,8 +2093,10 @@ export default class MeetScene extends Phaser.Scene {
 
     add(this.add.text(1025, 326, prizeText, {
       fontFamily: PIXEL_FONT,
-      fontSize: offer.prizeType === 'CAR' ? '11px' : '13px',
-      color: offer.prizeType === 'CAR' ? '#ff9fc7' : '#73f5a5'
+      fontSize: offer.prizeType === 'COUPON' ? '9px' : '13px',
+      color: offer.prizeType === 'COUPON' ? '#ff9fc7' : '#73f5a5',
+      align: 'center',
+      lineSpacing: 4,
     }).setOrigin(0.5).setDepth(depth + 2));
 
     offer.rounds.forEach((round, i) => {
@@ -2059,7 +2112,7 @@ export default class MeetScene extends Phaser.Scene {
       add(this.add.text(1040, y, cars[round.carId].shortName, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
-        color: i === 2 && offer.prizeType === 'CAR' ? '#ff9fc7' : '#9db7c8'
+        color: i === 2 && offer.prizeType === 'COUPON' ? '#ff9fc7' : '#9db7c8'
       }).setOrigin(1, 0.5).setDepth(depth + 2));
     });
 

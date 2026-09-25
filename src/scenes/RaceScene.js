@@ -26,14 +26,16 @@ import {
   hasRegionalTeam,
 } from '../data/characters.js?v=20260925-r195';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r203';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r204';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import {
   getEncounterAi,
   boostAiForPinkSlip,
-} from '../data/encounterProfiles.js?v=20260923-r162';
+  boostAiForStandingStart,
+} from '../data/encounterProfiles.js?v=20260926-r204';
+import { getCarCouponRequirement } from '../data/centralTokyo.js?v=20260926-r204';
 import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260924-r178';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -42,7 +44,7 @@ import {
 } from '../data/tunerChallenges.js?v=20260926-r203';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260925-r188';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r203';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r204';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -118,11 +120,11 @@ export default class RaceScene extends Phaser.Scene {
     this.selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     if (!cars[this.selectedCarId]) this.selectedCarId = 'ae86';
 
-    const rivals = carOrder.filter(id => id !== this.selectedCarId);
     const chosenOpponent = this.registry.get('selectedOpponentCarId');
-    this.opponentCarId = rivals.includes(chosenOpponent)
+    const fallbackRivals = carOrder.filter(id => id !== this.selectedCarId && cars[id]);
+    this.opponentCarId = cars[chosenOpponent]
       ? chosenOpponent
-      : Phaser.Utils.Array.GetRandom(rivals);
+      : Phaser.Utils.Array.GetRandom(fallbackRivals.length ? fallbackRivals : carOrder);
 
     this.opponentPaintColor = normalisePaintColor(
       this.registry.get('selectedOpponentPaintColor'),
@@ -155,6 +157,7 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentEncounterAi = this.registry.get('selectedOpponentEncounterAi')
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    this.isTutorial = this.raceMode === 'TUTORIAL';
     this.raceType = this.registry.get('selectedRaceType') || 'Standing Start';
     this.isRollingStart = this.raceType === 'Roll Race';
     const configuredRaceDistanceM = Number(this.registry.get('selectedRaceDistanceM') || 0);
@@ -223,9 +226,14 @@ export default class RaceScene extends Phaser.Scene {
     const baseRivalAI = this.opponentEncounterAi
       || rivalCharacter?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
-    const rivalAI = this.raceDeal === 'PINK_SLIP'
+    let rivalAI = this.raceDeal === 'PINK_SLIP'
       ? boostAiForPinkSlip(baseRivalAI)
       : { ...baseRivalAI };
+
+    if (!this.isRollingStart && !this.isTutorial) {
+      rivalAI = boostAiForStandingStart(rivalAI, this.opponentEncounterRating);
+    }
+
     this.ai = new DragRacingAI(this.opponent, rivalAI, { rollingStart: this.isRollingStart });
 
     this.controls = new TouchControls(this, { nosEnabled: this.playerCapabilities.hasNitrous });
@@ -320,11 +328,13 @@ export default class RaceScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
-    const moneyLabel = this.raceDeal === 'PINK_SLIP'
-      ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
-      : this.raceMode === 'COMPETITION'
-        ? 'PRIZE  ¥ ' + this.raceStake.toLocaleString('en-US')
-        : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
+    const moneyLabel = this.isTutorial
+      ? 'PRACTICE RUN // NO STAKES'
+      : this.raceDeal === 'PINK_SLIP'
+        ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
+        : this.raceMode === 'COMPETITION'
+          ? 'COMPETITION ROUND'
+          : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
     this.rivalText = this.add.text(1490, 39, rivalName.toUpperCase(), {
       fontFamily: PIXEL_FONT,
@@ -344,11 +354,34 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.cancelButtonText = this.add.text(135, 54, 'CANCEL RACE', {
+    this.cancelButtonText = this.add.text(135, 54, this.isTutorial ? 'EXIT TUTORIAL' : 'CANCEL RACE', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
-    this.cancelButton.on('pointerdown', () => this.confirmCancelRace());
+    this.cancelButton.on('pointerdown', () => {
+      if (this.isTutorial) {
+        this.scene.start('GarageScene');
+        return;
+      }
+      this.confirmCancelRace();
+    });
+
+    if (this.isTutorial) {
+      this.tutorialHintText = this.add.text(
+        780,
+        646,
+        'PRACTICE // HOLD CLUTCH • SELECT 1ST • ADD THROTTLE • PRESS START RACE',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#f2fbff',
+          backgroundColor: '#07111dee',
+          padding: { x: 16, y: 10 },
+          align: 'center',
+          wordWrap: { width: 1040 },
+        }
+      ).setOrigin(0.5).setDepth(70).setScrollFactor(0);
+    }
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -912,6 +945,31 @@ export default class RaceScene extends Phaser.Scene {
     };
   }
 
+  updateTutorialHint(telemetry = {}) {
+    if (!this.isTutorial || !this.tutorialHintText) return;
+
+    let message = 'PRACTICE // HOLD CLUTCH • SELECT 1ST • ADD THROTTLE • PRESS START RACE';
+
+    if (this.raceStarted && this.greenClock == null) {
+      message = 'STAGE // CLUTCH IN • 1ST GEAR • BUILD REVS • WAIT FOR GREEN';
+    } else if (this.greenClock != null) {
+      const gear = Number(telemetry.gear || this.player?.transmission?.currentGear || 0);
+      const speed = Number(telemetry.speedKmh || 0);
+
+      if (speed < 20) {
+        message = 'LAUNCH // RELEASE CLUTCH SMOOTHLY • FEED FULL THROTTLE';
+      } else if (gear <= 1) {
+        message = 'ACCELERATE // WATCH THE TACH • SHIFT UP NEAR REDLINE';
+      } else if (gear <= 3) {
+        message = 'SHIFTING // CLEAN UP-SHIFTS KEEP THE CAR PULLING';
+      } else {
+        message = 'FINISH THE RUN // STAY ON THROTTLE AND KEEP SHIFTING CLEANLY';
+      }
+    }
+
+    this.tutorialHintText.setText(message);
+  }
+
   startRace() {
     if (this.raceStarted || this.finished) return;
     this.raceStarted = true;
@@ -1039,6 +1097,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.hud.update(playerT, status);
     this.debug.update(playerT);
+    this.updateTutorialHint(playerT);
 
     if (this.finished) {
       this.afterFinishTimer += dt;
@@ -1428,9 +1487,7 @@ export default class RaceScene extends Phaser.Scene {
     else stopMusic();
 
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
-    const competitionCarPrizeWin = Boolean(
-      settlement?.competitionWon && settlement?.prizeType === 'CAR'
-    );
+    const competitionCarPrizeWin = false;
     const resultBackground = competitionCarPrizeWin
       ? RESULT_BACKGROUNDS.pinkWin
       : isPinkSlip
@@ -1491,6 +1548,13 @@ export default class RaceScene extends Phaser.Scene {
         return { primary: 'RACE COMPLETE', secondary: '' };
       }
 
+      if (settlement.tutorial) {
+        return {
+          primary: 'PRACTICE\nCOMPLETE',
+          secondary: 'NO CASH // NO RECORD // RETURN TO THE WORKSHOP WHEN READY',
+        };
+      }
+
       if (settlement.teamChallenge) {
         if (settlement.teamChallengeFailed) {
           return {
@@ -1533,10 +1597,12 @@ export default class RaceScene extends Phaser.Scene {
           };
         }
 
-        if (settlement.competitionWon && settlement.prizeType === 'CAR') {
+        if (settlement.competitionWon && settlement.prizeType === 'COUPON') {
           return {
-            primary: 'GRAND PRIZE\nWON',
-            secondary: cars[settlement.prizeCarId].shortName + ' ADDED TO GARAGE',
+            primary: cars[settlement.prizeCouponCarId].shortName + '\nCOUPON WON',
+            secondary:
+              settlement.couponCount + ' / ' + settlement.couponRequired +
+              ' COUPONS // REDEEM AT TOKYO AUTO MARKET',
           };
         }
 
@@ -1809,7 +1875,9 @@ export default class RaceScene extends Phaser.Scene {
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
     const returnLabel = returnScene === 'CentralTokyoScene'
       ? 'RETURN TO CENTRAL TOKYO  >'
-      : 'RETURN TO MEET  >';
+      : returnScene === 'GarageScene'
+        ? 'RETURN TO WORKSHOP  >'
+        : 'RETURN TO MEET  >';
     const actionLabel = settlement?.gameOver
       ? 'RUN OVER // OPTIONS  >'
       : settlement?.teamChallengeContinues
@@ -2214,6 +2282,19 @@ export default class RaceScene extends Phaser.Scene {
     const losses = this.registry.get('losses') ?? 0;
     const oldCash = this.registry.get('cash') ?? 0;
 
+    if (this.isTutorial) {
+      saveSessionState(this.registry);
+      this.raceSettlement = {
+        playerWon,
+        cashDelta: 0,
+        cash: oldCash,
+        pinkMessage: '',
+        gameOver: false,
+        tutorial: true,
+      };
+      return this.raceSettlement;
+    }
+
     this.registry.set('wins', wins + (playerWon ? 1 : 0));
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
 
@@ -2405,26 +2486,23 @@ export default class RaceScene extends Phaser.Scene {
       let newCash = oldCash;
       let prizeCash = 0;
       let prizeCarId = null;
+      let prizeCouponCarId = null;
+      let couponCount = 0;
+      let couponRequired = 0;
 
-      if (state.prizeType === 'CAR' && state.prizeCarId && cars[state.prizeCarId]) {
-        prizeCarId = state.prizeCarId;
-        const ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
-        const carStates = { ...(this.registry.get('carStates') || {}) };
-        const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+      const couponPrize = (
+        state.prizeType === 'COUPON' ||
+        state.prizeType === 'CAR'
+      ) && state.prizeCarId && cars[state.prizeCarId];
 
-        if (!ownedCarIds.includes(prizeCarId)) {
-          ownedCarIds.push(prizeCarId);
-          carStates[prizeCarId] = {
-            ...this.opponentBuildState,
-            acquiredVia: 'competition',
-          };
-          carGarageLocations[prizeCarId] =
-            this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+      if (couponPrize) {
+        prizeCouponCarId = state.prizeCarId;
+        couponRequired = getCarCouponRequirement(prizeCouponCarId);
 
-          this.registry.set('ownedCarIds', ownedCarIds);
-          this.registry.set('carStates', carStates);
-          this.registry.set('carGarageLocations', carGarageLocations);
-        }
+        const coupons = { ...(this.registry.get('carCoupons') || {}) };
+        couponCount = Math.max(0, Number(coupons[prizeCouponCarId] || 0)) + 1;
+        coupons[prizeCouponCarId] = couponCount;
+        this.registry.set('carCoupons', coupons);
       } else {
         prizeCash = Number(state.prizeCash || 0);
         newCash = oldCash + prizeCash;
@@ -2445,9 +2523,12 @@ export default class RaceScene extends Phaser.Scene {
         competitionContinues: false,
         competitionWon: true,
         roundNumber: 3,
-        prizeType: state.prizeType,
+        prizeType: couponPrize ? 'COUPON' : state.prizeType,
         prizeCash,
         prizeCarId,
+        prizeCouponCarId,
+        couponCount,
+        couponRequired,
       };
       return this.raceSettlement;
     }

@@ -33,17 +33,18 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260925-r192';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260925-r195';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260926-r204';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260925-r195';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260925-r195';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r204';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r144';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getPendingCentralTokyoInvite,
+  markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260925-r188';
+} from '../data/centralTokyo.js?v=20260926-r204';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getGarageCapacity,
@@ -209,7 +210,7 @@ export default class GarageScene extends Phaser.Scene {
     } else {
       this.time.delayedCall(260, () => {
         if (!this.showPendingWorkshopCutscene()) {
-          this.showCentralTokyoInvitationIfNeeded();
+          this.continueGarageStoryFlow();
         }
       });
     }
@@ -4321,6 +4322,160 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  hasSeenStoryCutscene(id) {
+    return (this.registry.get('cutscenesSeen') || []).map(String).includes(String(id));
+  }
+
+  continueGarageStoryFlow() {
+    if (this.runOpeningStoryIfNeeded()) return true;
+    return this.showCentralTokyoInvitationIfNeeded();
+  }
+
+  runOpeningStoryIfNeeded() {
+    // Only introduce the origin story on a fresh run. Existing progressed
+    // profiles are not interrupted by a retroactive tutorial.
+    const racesRun =
+      Number(this.registry.get('wins') || 0) +
+      Number(this.registry.get('losses') || 0);
+    const hasStartedOpening =
+      this.hasSeenStoryCutscene('openingDaichiStory') ||
+      Boolean(this.registry.get('introTutorialChoiceDone'));
+
+    if (racesRun > 0 && !hasStartedOpening) return false;
+
+    if (!this.hasSeenStoryCutscene('openingDaichiStory')) {
+      const result = playMangaCutscene(this, 'openingDaichiStory', {
+        onComplete: () => {
+          this.time.delayedCall(120, () => this.showOpeningTutorialChoice());
+        },
+      });
+      return Boolean(result.played);
+    }
+
+    if (!this.registry.get('introTutorialChoiceDone')) {
+      this.showOpeningTutorialChoice();
+      return true;
+    }
+
+    if (!this.hasSeenStoryCutscene('openingRaceRules')) {
+      const result = playMangaCutscene(this, 'openingRaceRules', {
+        onComplete: () => {
+          this.time.delayedCall(140, () => this.runOpeningStoryIfNeeded());
+        },
+      });
+      return Boolean(result.played);
+    }
+
+    if (!this.hasSeenStoryCutscene('openingWorkshopGuide')) {
+      const result = playMangaCutscene(this, 'openingWorkshopGuide', {
+        onComplete: () => {
+          this.time.delayedCall(160, () => this.showCentralTokyoInvitationIfNeeded());
+        },
+      });
+      return Boolean(result.played);
+    }
+
+    return false;
+  }
+
+  showOpeningTutorialChoice() {
+    if (this.openingTutorialPopup?.active) return;
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.74)
+      .setDepth(depth).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 420, 800, 360, 0x08131f, 0.995)
+      .setStrokeStyle(3, 0x45d7ff, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 305, 'LEARN THE START?', {
+      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#eefaff'
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      375,
+      'Run a consequence-free standing-start practice.\nDaichi will guide clutch, first gear, launch RPM and shifting on-screen.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#bcd3df',
+        align: 'center',
+        lineSpacing: 6,
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const practice = add(this.add.rectangle(650, 510, 250, 50, 0x0d2b29, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(650, 510, 'PRACTICE RUN', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#effffb'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const skip = add(this.add.rectangle(910, 510, 250, 50, 0x171c25, 1)
+      .setStrokeStyle(1, 0x61798a, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(910, 510, 'SKIP TUTORIAL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d0dde5'
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.openingTutorialPopup = null;
+    };
+
+    practice.on('pointerdown', () => {
+      dismiss();
+      this.registry.set('introTutorialChoiceDone', true);
+      saveSessionState(this.registry);
+      this.startOpeningDrivingTutorial();
+    });
+
+    skip.on('pointerdown', () => {
+      dismiss();
+      this.registry.set('introTutorialChoiceDone', true);
+      saveSessionState(this.registry);
+      this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
+    });
+
+    this.openingTutorialPopup = panel;
+  }
+
+  startOpeningDrivingTutorial() {
+    const playerCarId =
+      this.selectedCarId ||
+      this.registry.get('selectedCarId') ||
+      this.registry.get('starterCarId') ||
+      'ae86';
+
+    this.registry.set('selectedCarId', playerCarId);
+    // Same-model practice is deliberate and also regression-tests that the race
+    // handoff no longer substitutes a random rival car.
+    this.registry.set('selectedOpponentCarId', playerCarId);
+    this.registry.set('selectedOpponentPaintColor', 0xffffff);
+    this.registry.set('selectedOpponentCharacterId', 'emiKanzaki');
+    this.registry.set('selectedOpponentEncounterRating', 2);
+    this.registry.set('selectedOpponentEncounterAi', null);
+    this.registry.set('selectedOpponentDifficulty', 'EASY');
+    this.registry.set('selectedRaceCategory', 'TUTORIAL');
+    this.registry.set('selectedRaceType', 'Standing Start');
+    this.registry.set('selectedRaceDistanceM', 402.336);
+    this.registry.set('selectedRaceDeal', 'TUTORIAL');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'GarageScene');
+    this.registry.set('raceTimeOfDay', 'night');
+    this.registry.set('raceDistrict', 'ODAIBA');
+    this.registry.set('raceLocationLabel', 'DAICHI PRACTICE RUN');
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
   showPendingWorkshopCutscene() {
     let cutsceneId = null;
     try {
@@ -4335,12 +4490,12 @@ export default class GarageScene extends Phaser.Scene {
 
     const result = playMangaCutscene(this, cutsceneId, {
       onComplete: () => {
-        this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
+        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
       },
     });
 
     if (!result.played) {
-      this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
+      this.time.delayedCall(180, () => this.continueGarageStoryFlow());
     }
     return Boolean(result.played);
   }
@@ -4349,40 +4504,39 @@ export default class GarageScene extends Phaser.Scene {
     const inviteKey = getPendingCentralTokyoInvite(this.registry);
     if (!inviteKey) return false;
 
-    const markInviteSeen = () => {
-      const seen = {
-        ...(this.registry.get('tokyoInvitesSeen') || {}),
-        [inviteKey]: true,
-      };
-      this.registry.set('tokyoInvitesSeen', seen);
+    const unlockInvite = () => {
+      markCentralTokyoUnlocked(this.registry, inviteKey);
       saveSessionState(this.registry);
       this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
     };
 
     let result = null;
     if (inviteKey === 'autoMarket') {
+      // Central Tokyo itself is intentionally Workshop-gated: reaching the
+      // win requirement only makes Daichi's conversation eligible.
       result = playMangaCutscene(this, 'centralTokyoUnlocked', {
-        onComplete: markInviteSeen,
+        onComplete: unlockInvite,
       });
     } else if (inviteKey === 'ginza') {
       result = playMangaCutscene(this, 'ginzaInvitation', {
         characterOverrides: { HOST: 'sayakaFujieda' },
         variables: { HOST_NAME: 'SAYAKA FUJIEDA' },
-        onComplete: markInviteSeen,
+        onComplete: unlockInvite,
       });
     } else if (inviteKey === 'drag') {
       result = playMangaCutscene(this, 'dragComplexInvitation', {
         characterOverrides: { PROMOTER: 'tetsuyaKanda' },
         variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
-        onComplete: markInviteSeen,
+        onComplete: unlockInvite,
       });
     }
 
-    if (!result?.played) {
-      markInviteSeen();
+    if (!result?.played && result?.reason === 'seen') {
+      unlockInvite();
       return false;
     }
-    return true;
+
+    return Boolean(result?.played);
   }
 
   selectUpgrade(name) {

@@ -204,6 +204,24 @@ export function getEncounterAi(rating = 3) {
   return { ...table[rounded] };
 }
 
+export function boostAiForStandingStart(ai = {}, rating = 3) {
+  const rounded = Math.max(1, Math.min(5, Math.round(Number(rating) || 3)));
+  if (rounded <= 2) return { ...ai };
+
+  const bump = rounded === 3
+    ? { reaction: 0.015, launch: 0.025, shift: 0.015, aggression: 0.010 }
+    : rounded === 4
+      ? { reaction: 0.025, launch: 0.035, shift: 0.020, aggression: 0.015 }
+      : { reaction: 0.020, launch: 0.025, shift: 0.015, aggression: 0.010 };
+
+  return {
+    reactionSkill: Math.min(0.99, Number(ai.reactionSkill || 0.75) + bump.reaction),
+    launchSkill: Math.min(0.99, Number(ai.launchSkill || 0.75) + bump.launch),
+    shiftSkill: Math.min(0.99, Number(ai.shiftSkill || 0.75) + bump.shift),
+    aggression: Math.min(0.99, Number(ai.aggression || 0.75) + bump.aggression),
+  };
+}
+
 export function boostAiForPinkSlip(ai = {}) {
   return {
     reactionSkill: Math.min(0.99, Number(ai.reactionSkill || 0.75) + 0.06),

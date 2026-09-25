@@ -8,6 +8,59 @@ const sourceValue = (source, key, fallback = null) => {
 };
 
 export const CUTSCENES = {
+  openingDaichiStory: {
+    id: 'openingDaichiStory',
+    category: 'OPENING / STORY',
+    testerLabel: 'Opening — Daichi & Tokyo Scene',
+    title: 'TOKYO SHIFT // FIRST NIGHT',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "So this is the car your family gave you. After all those years talking about driving, you've finally got one of your own." },
+      { speaker: 'right', pose: 'idle', text: "And I've finally moved close enough to actually use it." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Your father would've had a list of things to change already. Professional racers never really switch that part of their brain off." },
+      { speaker: 'right', pose: 'idle', text: "Watching him race is why I've always wanted to do this." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Good thing your childhood friend happens to know which end of a spanner to hold." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Tokyo has a whole drag scene after dark. Odaiba, Shinagawa, Tatsumi, Shibuya, Shinjuku, Yokohama, Daikoku — every region has its own crowd." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Some run as teams. Others just appear when you're cruising between meets. You'll keep finding new people and new cars as your name gets around." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Most racers drive whatever they can get access to, but everyone has one car they're really known for. Their best car. Remember that when you learn who you're racing." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "First thing first: learn to launch this one without embarrassing either of us.", emphasis: true },
+    ],
+    finalActionLabel: 'LEARN THE CAR',
+  },
+
+  openingRaceRules: {
+    id: 'openingRaceRules',
+    category: 'OPENING / SYSTEMS',
+    testerLabel: 'Opening — Bets, Pinks & Competitions',
+    title: 'THE STREET // WHAT IS AT STAKE',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Most races are simple cash bets. Agree on the money, line up, winner gets paid." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Pink slips are different. Keys for keys. Lose and that car is gone. If it's your last car, your run is over.", emphasis: true },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You'll also see three-race competitions. Same car through the bracket, no tuning between rounds. Lose once and the streak is finished." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Some competition prizes are vehicle coupons. Two matching coupons can claim most cars for free at the Auto Market." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "The R32 is different. That thing is worth too much to hand out easily — you'll need three R32 coupons." },
+    ],
+    finalActionLabel: 'GOT IT',
+  },
+
+  openingWorkshopGuide: {
+    id: 'openingWorkshopGuide',
+    category: 'OPENING / WORKSHOP',
+    testerLabel: 'Opening — Daichi Workshop Guide',
+    title: 'HOME GARAGE // START SMALL',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "I can help you modify the car here — engine, drivetrain, chassis, exhaust, nitrous. But this is still a home garage." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Better parts need better tools, more space and proper equipment. When you can afford a stronger workshop, we'll move up." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "For now, race smart. Learn what the car is good at. And don't put the keys on the line unless you're ready to lose them.", emphasis: true },
+    ],
+    finalActionLabel: 'START THE NIGHT',
+  },
+
   tunerTeamCallout: {
     id: 'tunerTeamCallout',
     category: 'REGION / STORY',
@@ -330,20 +383,12 @@ export const CUTSCENES = {
     once: true,
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
-      {
-        speaker: 'left',
-        speakerLabel: 'DAICHI SAKAMOTO',
-        pose: 'idle',
-        text: "You've got enough of a name now. Central Tokyo is open.",
-      },
-      {
-        speaker: 'left',
-        speakerLabel: 'DAICHI SAKAMOTO',
-        pose: 'idle',
-        text: 'Auto Market first. Useful cars. Questionable history.',
-      },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You've made enough noise that people have started passing your name around." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "There's another side of the scene in Central Tokyo. Less standing around at meets, more cars and money changing hands." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "The Auto Market sells used street cars — some stock, some already modified. If you win a car you don't want, they'll buy it from you too." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Competition coupons get redeemed there as well. I've added Central Tokyo to your map.", emphasis: true },
     ],
-    finalActionLabel: 'OPEN TOKYO MAP',
+    finalActionLabel: 'UNLOCK CENTRAL TOKYO',
   },
 
   ginzaInvitation: {
@@ -353,25 +398,31 @@ export const CUTSCENES = {
     title: 'GINZA // PRIVATE INVITATION',
     once: true,
     characters: { left: '$HOST', right: '$PLAYER' },
-    preview: {
-      characterOverrides: { HOST: 'sayakaFujieda' },
-      variables: { HOST_NAME: 'SAYAKA FUJIEDA' },
-    },
+    preview: { characterOverrides: { HOST: 'sayakaFujieda' }, variables: { HOST_NAME: 'SAYAKA FUJIEDA' } },
     pages: [
-      {
-        speaker: 'left',
-        speakerLabel: '{HOST_NAME}',
-        pose: 'idle',
-        text: "Ginza doesn't advertise the cars worth seeing.",
-      },
-      {
-        speaker: 'left',
-        speakerLabel: '{HOST_NAME}',
-        pose: 'win',
-        text: "Your garage has earned a private look. Don't mistake access for ownership.",
-      },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'idle', text: "Your name came up tonight. That doesn't happen often with the people I'm calling for." },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'idle', text: "There's a private collection in Ginza. Complete tuner builds, competition cars, and cars with histories that don't appear in normal listings." },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'idle', text: "The gallery isn't open to the public. You've been invited to see the collection — and if you can afford one, you can buy it." },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'win', text: "One rule: collector cars stay complete. You buy the finished car, not a project to tear apart.", emphasis: true },
     ],
-    finalActionLabel: 'ENTER GINZA',
+    finalActionLabel: 'UNLOCK GINZA',
+  },
+
+  dragComplexInvitation: {
+    id: 'dragComplexInvitation',
+    category: 'CENTRAL TOKYO / STORY',
+    testerLabel: 'Drag Complex — Invitation',
+    title: 'TOKYO DRAG COMPLEX // INVITED',
+    once: true,
+    characters: { left: '$PROMOTER', right: '$PLAYER' },
+    preview: { characterOverrides: { PROMOTER: 'tetsuyaKanda' }, variables: { PROMOTER_NAME: 'TETSUYA KANDA' } },
+    pages: [
+      { speaker: 'left', speakerLabel: '{PROMOTER_NAME}', pose: 'idle', text: "Your street record got their attention. The Drag Complex wants you on a proper timing board." },
+      { speaker: 'left', speakerLabel: '{PROMOTER_NAME}', pose: 'idle', text: "These are organised three-race brackets with entry fees and serious prize money. No casual rematches halfway through." },
+      { speaker: 'left', speakerLabel: '{PROMOTER_NAME}', pose: 'idle', text: "Some events cap power. Some ban nitrous. Others let you bring whatever you've built. Read the rules before you enter." },
+      { speaker: 'left', speakerLabel: '{PROMOTER_NAME}', pose: 'win', text: "Win there and nobody can write your street record off as luck. Your invitation is active.", emphasis: true },
+    ],
+    finalActionLabel: 'UNLOCK DRAG COMPLEX',
   },
 
   ginzaHeroCarReveal: {
@@ -452,7 +503,7 @@ export const CUTSCENES = {
         speaker: 'left',
         speakerLabel: '{PROMOTER_NAME}',
         pose: 'win',
-        text: 'Win all three and the grand prize is yours.',
+        text: 'Win all three and the grand prize is yours. Vehicle prizes come as car-specific coupons — collect enough and the Auto Market will hand over the car.',
       },
     ],
     finalActionLabel: 'VIEW BRACKET',
@@ -494,6 +545,9 @@ export const CUTSCENES = {
 };
 
 export const CUTSCENE_ORDER = [
+  'openingDaichiStory',
+  'openingRaceRules',
+  'openingWorkshopGuide',
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'tunerShopDiscovery',

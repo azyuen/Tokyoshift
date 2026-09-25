@@ -3,11 +3,11 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20260926-r203';
+} from '../data/cutscenes.js?v=20260926-r204';
 import {
   createCharacterProfile,
 } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
+import { saveSessionState } from '../state/GameState.js?v=20260926-r204';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

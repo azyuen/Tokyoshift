@@ -18,8 +18,8 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     kind: 'showroom',
     backgroundKey: 'centralTokyoGinzaBg',
     backgroundPath: 'assets/CentralTokyo/ginza_motor_gallery_at_night.png',
-    winsRequired: 25,
-    garageTierRequired: 1,
+    winsRequired: 50,
+    garageTierRequired: 2,
   },
   drag: {
     id: 'tokyoDragComplex',
@@ -28,7 +28,7 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     kind: 'proDrag',
     backgroundKey: 'centralTokyoDragBg',
     backgroundPath: 'assets/CentralTokyo/tokyo_drag_strip_at_night.png',
-    winsRequired: 40,
+    winsRequired: 60,
     garageTierRequired: 2,
   },
 };
@@ -247,7 +247,7 @@ export function isArkonDen(source) {
   return devMode || joined.includes('arkonden') || legacyDevCash;
 }
 
-export function getCentralTokyoAccess(source) {
+export function getCentralTokyoEligibility(source) {
   if (isArkonDen(source)) {
     return { autoMarket: true, ginza: true, drag: true };
   }
@@ -266,6 +266,19 @@ export function getCentralTokyoAccess(source) {
   };
 }
 
+export function getCentralTokyoAccess(source) {
+  if (isArkonDen(source)) {
+    return { autoMarket: true, ginza: true, drag: true };
+  }
+
+  const unlocked = value(source, 'centralTokyoUnlocks', {}) || {};
+  return {
+    autoMarket: Boolean(unlocked.autoMarket),
+    ginza: Boolean(unlocked.ginza),
+    drag: Boolean(unlocked.drag),
+  };
+}
+
 export function getCentralTokyoAccessKey(locationId) {
   if (locationId === CENTRAL_TOKYO_LOCATIONS.autoMarket.id) return 'autoMarket';
   if (locationId === CENTRAL_TOKYO_LOCATIONS.ginza.id) return 'ginza';
@@ -277,6 +290,24 @@ export function isCentralTokyoLocationUnlocked(source, locationId) {
   const key = getCentralTokyoAccessKey(locationId);
   if (!key) return true;
   return Boolean(getCentralTokyoAccess(source)[key]);
+}
+
+export function markCentralTokyoUnlocked(registry, key) {
+  if (!registry || typeof registry.set !== 'function') return false;
+  if (!['autoMarket', 'ginza', 'drag'].includes(String(key))) return false;
+
+  const unlocks = {
+    ...(registry.get('centralTokyoUnlocks') || {}),
+    [key]: true,
+  };
+  const seen = {
+    ...(registry.get('tokyoInvitesSeen') || {}),
+    [key]: true,
+  };
+
+  registry.set('centralTokyoUnlocks', unlocks);
+  registry.set('tokyoInvitesSeen', seen);
+  return true;
 }
 
 export function getCentralTokyoUnlockLabel(source, locationId) {
@@ -302,15 +333,35 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
 export function getPendingCentralTokyoInvite(source) {
   if (isArkonDen(source)) return null;
 
+  const eligible = getCentralTokyoEligibility(source);
   const access = getCentralTokyoAccess(source);
-  const seen = value(source, 'tokyoInvitesSeen', {}) || {};
 
-  // Story rollout: the first Central Tokyo access now gets a short Daichi
-  // introduction, followed later by explicit Ginza and Drag Complex invites.
-  if (access.autoMarket && !seen.autoMarket) return 'autoMarket';
-  if (access.ginza && !seen.ginza) return 'ginza';
-  if (access.drag && !seen.drag) return 'drag';
+  if (eligible.autoMarket && !access.autoMarket) return 'autoMarket';
+  if (eligible.ginza && !access.ginza) return 'ginza';
+  if (eligible.drag && !access.drag) return 'drag';
   return null;
+}
+
+export const CAR_COUPON_REQUIREMENTS = {
+  ae86: 2,
+  ek9: 2,
+  fc3s: 2,
+  evo3: 2,
+  wrx22b: 2,
+  r32: 3,
+};
+
+export function getCarCouponRequirement(carId) {
+  return Math.max(1, Number(CAR_COUPON_REQUIREMENTS[String(carId)] || 2));
+}
+
+export function getCarCouponCount(source, carId) {
+  const coupons = value(source, 'carCoupons', {}) || {};
+  return Math.max(0, Math.floor(Number(coupons[String(carId)] || 0)));
+}
+
+export function canRedeemCarCoupon(source, carId) {
+  return getCarCouponCount(source, carId) >= getCarCouponRequirement(carId);
 }
 
 export function getAutoMarketBuild(carId) {
