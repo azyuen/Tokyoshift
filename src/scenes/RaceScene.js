@@ -279,14 +279,16 @@ export default class RaceScene extends Phaser.Scene {
       characters[this.playerCharacterId],
       this.playerCarState
     );
-    this.opponentVisual = this.createCarVisual(
-      cars[this.opponentCarId],
-      6,
-      0.88,
-      this.opponentPaintColor,
-      characters[this.opponentCharacterId],
-      {}
-    );
+    this.opponentVisual = this.isTutorial
+      ? null
+      : this.createCarVisual(
+          cars[this.opponentCarId],
+          6,
+          0.88,
+          this.opponentPaintColor,
+          characters[this.opponentCharacterId],
+          {}
+        );
 
     this.treeSprite = this.add.image(780, 192, 'dragTree')
       .setScale(0.105)
@@ -314,6 +316,12 @@ export default class RaceScene extends Phaser.Scene {
 
     this.startButton.on('pointerdown', () => this.startRace());
 
+    if (this.isTutorial) {
+      this.startButton.setVisible(false).disableInteractive();
+      this.startButtonText.setVisible(false);
+      this.finishTargetM = 999999;
+    }
+
     this.add.text(
       780,
       102,
@@ -329,18 +337,23 @@ export default class RaceScene extends Phaser.Scene {
 
     const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
     const moneyLabel = this.isTutorial
-      ? 'PRACTICE RUN // NO STAKES'
+      ? 'CONTROLS // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
           ? 'COMPETITION ROUND'
           : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
-    this.rivalText = this.add.text(1490, 39, rivalName.toUpperCase(), {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#d8edf8',
-    }).setOrigin(1, 0.5).setDepth(46).setScrollFactor(0);
+    this.rivalText = this.add.text(
+      1490,
+      39,
+      this.isTutorial ? 'SOLO DRIVING LESSON' : rivalName.toUpperCase(),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: this.isTutorial ? '#8fe7ff' : '#d8edf8',
+      }
+    ).setOrigin(1, 0.5).setDepth(46).setScrollFactor(0);
 
     this.stakeText = this.add.text(1490, 65, moneyLabel, {
       fontFamily: PIXEL_FONT,
@@ -367,20 +380,7 @@ export default class RaceScene extends Phaser.Scene {
     });
 
     if (this.isTutorial) {
-      this.tutorialHintText = this.add.text(
-        780,
-        646,
-        'PRACTICE // HOLD CLUTCH • SELECT 1ST • ADD THROTTLE • PRESS START RACE',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '8px',
-          color: '#f2fbff',
-          backgroundColor: '#07111dee',
-          padding: { x: 16, y: 10 },
-          align: 'center',
-          wordWrap: { width: 1040 },
-        }
-      ).setOrigin(0.5).setDepth(70).setScrollFactor(0);
+      this.setupDrivingTutorial();
     }
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
@@ -945,30 +945,476 @@ export default class RaceScene extends Phaser.Scene {
     };
   }
 
-  updateTutorialHint(telemetry = {}) {
-    if (!this.isTutorial || !this.tutorialHintText) return;
+  setupDrivingTutorial() {
+    this.tutorialStep = 'FIRST_GEAR';
+    this.tutorialShiftReady = false;
+    this.tutorialCountdownStarted = false;
+    this.tutorialComplete = false;
+    this.tutorialFeedback = '';
+    this.tutorialHighlightObjects = [];
+    this.tutorialHighlightTweens = [];
 
-    let message = 'PRACTICE // HOLD CLUTCH • SELECT 1ST • ADD THROTTLE • PRESS START RACE';
+    this.tutorialPanel = this.add.rectangle(780, 150, 790, 118, 0x06111d, 0.97)
+      .setStrokeStyle(3, 0x45d7ff, 0.96)
+      .setDepth(82)
+      .setScrollFactor(0);
 
-    if (this.raceStarted && this.greenClock == null) {
-      message = 'STAGE // CLUTCH IN • 1ST GEAR • BUILD REVS • WAIT FOR GREEN';
-    } else if (this.greenClock != null) {
-      const gear = Number(telemetry.gear || this.player?.transmission?.currentGear || 0);
-      const speed = Number(telemetry.speedKmh || 0);
+    this.tutorialStepText = this.add.text(410, 111, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#8fe7ff',
+    }).setDepth(83).setScrollFactor(0);
 
-      if (speed < 20) {
-        message = 'LAUNCH // RELEASE CLUTCH SMOOTHLY • FEED FULL THROTTLE';
-      } else if (gear <= 1) {
-        message = 'ACCELERATE // WATCH THE TACH • SHIFT UP NEAR REDLINE';
-      } else if (gear <= 3) {
-        message = 'SHIFTING // CLEAN UP-SHIFTS KEEP THE CAR PULLING';
-      } else {
-        message = 'FINISH THE RUN // STAY ON THROTTLE AND KEEP SHIFTING CLEANLY';
-      }
+    this.tutorialTitleText = this.add.text(410, 137, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#f4fbff',
+    }).setDepth(83).setScrollFactor(0);
+
+    this.tutorialBodyText = this.add.text(410, 165, '', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#d5e6ef',
+      fontStyle: '700',
+      lineSpacing: 4,
+      wordWrap: { width: 730 },
+    }).setDepth(83).setScrollFactor(0);
+
+    this.tutorialPromptText = this.add.text(780, 224, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#ffe08a',
+      backgroundColor: '#07111ddd',
+      padding: { x: 12, y: 7 },
+      align: 'center',
+    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
+
+    this.renderDrivingTutorialStep();
+  }
+
+  tutorialStepNumber() {
+    const order = [
+      'FIRST_GEAR',
+      'LAUNCH_PREP',
+      'LAUNCH',
+      'GEAR_2',
+      'POWER_2',
+      'GEAR_3',
+      'POWER_3',
+      'GEAR_4',
+    ];
+    return Math.max(1, order.indexOf(this.tutorialStep) + 1);
+  }
+
+  clearTutorialHighlights() {
+    (this.tutorialHighlightTweens || []).forEach(tween => {
+      try { tween?.stop?.(); } catch (e) {}
+    });
+    this.tutorialHighlightTweens = [];
+
+    (this.tutorialHighlightObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.tutorialHighlightObjects = [];
+  }
+
+  tutorialTargetRect(key) {
+    if (key === 'clutch') return this.controls.layout.clutch;
+    if (key === 'throttle') return this.controls.layout.throttle;
+    if (key === 'shifter') return this.controls.layout.shifter;
+
+    if (key === 'gear') {
+      return new Phaser.Geom.Rectangle(
+        this.hud.gearText.x - 52,
+        this.hud.gearText.y - 42,
+        104,
+        84
+      );
     }
 
-    this.tutorialHintText.setText(message);
+    if (key === 'tach') {
+      const p = this.hud.sourcePoint(337, 278);
+      return new Phaser.Geom.Rectangle(p.x - 82, p.y - 82, 164, 164);
+    }
+
+    if (key === 'tree') {
+      const tx = Number(this.treeSprite?.x || 880);
+      return new Phaser.Geom.Rectangle(tx - 70, 72, 140, 245);
+    }
+
+    return null;
   }
+
+  addTutorialHighlight(key, label, colour = 0x45d7ff) {
+    const rect = this.tutorialTargetRect(key);
+    if (!rect) return;
+
+    const box = this.add.rectangle(
+      rect.centerX,
+      rect.centerY,
+      rect.width,
+      rect.height,
+      colour,
+      0.055
+    ).setStrokeStyle(4, colour, 0.98)
+      .setDepth(78)
+      .setScrollFactor(0);
+
+    const tagY = Math.max(254, rect.y - 16);
+    const tag = this.add.text(rect.centerX, tagY, label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#ffffff',
+      backgroundColor: '#07111dee',
+      padding: { x: 8, y: 5 },
+    }).setOrigin(0.5, 1)
+      .setDepth(79)
+      .setScrollFactor(0);
+
+    const arrow = this.add.graphics().setDepth(79).setScrollFactor(0);
+    arrow.fillStyle(colour, 1);
+    arrow.fillTriangle(
+      rect.centerX - 8,
+      rect.y - 10,
+      rect.centerX + 8,
+      rect.y - 10,
+      rect.centerX,
+      rect.y + 2
+    );
+
+    this.tutorialHighlightObjects.push(box, tag, arrow);
+    const tween = this.tweens.add({
+      targets: box,
+      alpha: { from: 0.55, to: 1 },
+      duration: 480,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    this.tutorialHighlightTweens.push(tween);
+  }
+
+  setTutorialStep(step, { shiftReady = false, feedback = '' } = {}) {
+    if (!this.isTutorial || this.tutorialComplete) return;
+    this.tutorialStep = step;
+    this.tutorialShiftReady = Boolean(shiftReady);
+    this.tutorialFeedback = feedback;
+    this.renderDrivingTutorialStep();
+  }
+
+  setTutorialFeedback(message = '') {
+    if (!this.isTutorial || this.tutorialComplete) return;
+    const next = String(message || '');
+    if (this.tutorialFeedback === next) return;
+    this.tutorialFeedback = next;
+    this.renderDrivingTutorialStep();
+  }
+
+  renderDrivingTutorialStep() {
+    if (!this.isTutorial || !this.tutorialPanel || this.tutorialComplete) return;
+
+    this.clearTutorialHighlights();
+
+    const stepNo = this.tutorialStepNumber();
+    let title = '';
+    let body = '';
+    let prompt = '';
+    let targets = [];
+
+    if (this.tutorialStep === 'FIRST_GEAR') {
+      title = 'CLUTCH + FIRST GEAR';
+      body = 'Press and HOLD the clutch pedal. Keep holding it, then swipe UP on the shifter to select 1st gear. The gear display shows which gear you are in.';
+      prompt = 'YOUR TURN // HOLD CLUTCH + SHIFT UP';
+      targets = [
+        ['clutch', 'HOLD CLUTCH', 0x45d7ff],
+        ['shifter', 'SWIPE UP', 0x62e8c7],
+        ['gear', 'GEAR DISPLAY', 0xffe08a],
+      ];
+    } else if (this.tutorialStep === 'LAUNCH_PREP') {
+      title = 'BUILD REVS + WAIT FOR GREEN';
+      body = this.tutorialCountdownStarted
+        ? 'Good. Keep the clutch fully held and keep the accelerator high. Do NOT release the clutch until the tree turns green.'
+        : 'Keep the clutch held. Push the accelerator high and hold it there. Once you are ready, the start lights will begin.';
+      prompt = this.tutorialCountdownStarted
+        ? 'HOLD BOTH // WAIT FOR GREEN'
+        : 'YOUR TURN // CLUTCH HELD + ACCELERATOR HIGH';
+      targets = [
+        ['clutch', 'KEEP HELD', 0x45d7ff],
+        ['throttle', 'HOLD HIGH', 0xffc857],
+      ];
+      if (this.tutorialCountdownStarted) {
+        targets.push(['tree', 'WAIT FOR GREEN', 0x62e8c7]);
+      }
+    } else if (this.tutorialStep === 'LAUNCH') {
+      title = 'LAUNCH';
+      body = 'GREEN. Release the clutch quickly and stay on the accelerator. The car should pull away cleanly.';
+      prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
+      targets = [
+        ['clutch', 'RELEASE', 0x62e8c7],
+        ['throttle', 'ACCELERATE', 0xffc857],
+      ];
+    } else if (this.tutorialStep === 'GEAR_2' || this.tutorialStep === 'GEAR_3' || this.tutorialStep === 'GEAR_4') {
+      const targetGear = Number(this.tutorialStep.slice(-1));
+      title = 'SHIFT TO ' + targetGear + (targetGear === 2 ? 'ND' : targetGear === 3 ? 'RD' : 'TH') + ' GEAR';
+
+      if (!this.tutorialShiftReady) {
+        body = 'Keep accelerating and watch the tachometer. Wait until the revs are high before you change gear.';
+        prompt = 'YOUR TURN // LET THE REVS CLIMB';
+        targets = [
+          ['throttle', 'KEEP ACCELERATING', 0xffc857],
+          ['tach', 'WATCH REVS', 0xffe08a],
+        ];
+      } else {
+        body = 'Lift off the accelerator, press and HOLD the clutch, then swipe the shifter UP. Watch the gear display change to ' + targetGear + '.';
+        prompt = 'YOUR TURN // LIFT THROTTLE + CLUTCH + SHIFT UP';
+        targets = [
+          ['throttle', 'LIFT OFF', 0xffc857],
+          ['clutch', 'PRESS CLUTCH', 0x45d7ff],
+          ['shifter', 'SWIPE UP', 0x62e8c7],
+          ['gear', 'GEAR ' + targetGear, 0xffe08a],
+        ];
+      }
+    } else if (this.tutorialStep === 'POWER_2' || this.tutorialStep === 'POWER_3') {
+      const gear = Number(this.tutorialStep.slice(-1));
+      title = 'BACK ON THE POWER';
+      body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + ' gear. Quickly release the clutch and get back on the accelerator. Then let the revs build again.';
+      prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
+      targets = [
+        ['clutch', 'RELEASE', 0x62e8c7],
+        ['throttle', 'ACCELERATE', 0xffc857],
+        ['gear', 'GEAR ' + gear, 0xffe08a],
+      ];
+    }
+
+    this.tutorialStepText.setText('DRIVING LESSON // STEP ' + stepNo + ' / 8');
+    this.tutorialTitleText.setText(title);
+    this.tutorialBodyText.setText(body);
+    this.tutorialPromptText.setText(this.tutorialFeedback || prompt);
+    targets.forEach(target => this.addTutorialHighlight(...target));
+  }
+
+  tutorialExpectedShiftGear() {
+    if (this.tutorialStep === 'FIRST_GEAR') return 1;
+    if (this.tutorialStep === 'GEAR_2' && this.tutorialShiftReady) return 2;
+    if (this.tutorialStep === 'GEAR_3' && this.tutorialShiftReady) return 3;
+    if (this.tutorialStep === 'GEAR_4' && this.tutorialShiftReady) return 4;
+    return null;
+  }
+
+  handleTutorialGearRequest(requestedGear, controlState) {
+    if (!this.isTutorial || requestedGear == null || this.tutorialComplete) return;
+
+    const expected = this.tutorialExpectedShiftGear();
+    const transmission = this.player.transmission;
+    const currentOrPending = Number(
+      transmission.pendingGear || transmission.currentGear || 0
+    );
+
+    let desired = null;
+    if (requestedGear === 'UP') {
+      desired = Math.max(1, currentOrPending + 1);
+    } else if (requestedGear === 'DOWN') {
+      desired = Math.max(1, currentOrPending - 1);
+    } else if (typeof requestedGear === 'number') {
+      desired = requestedGear;
+    }
+
+    if (expected == null || desired !== expected) {
+      if (
+        this.tutorialStep === 'GEAR_2' ||
+        this.tutorialStep === 'GEAR_3' ||
+        this.tutorialStep === 'GEAR_4'
+      ) {
+        this.setTutorialFeedback('WAIT // LET THE REVS GET HIGHER FIRST');
+      }
+      return;
+    }
+
+    if (Number(controlState.clutch || 0) < 0.68) {
+      this.setTutorialFeedback('CLUTCH FIRST // PRESS AND HOLD THE CLUTCH');
+      return;
+    }
+
+    if (expected > 1 && Number(controlState.throttle || 0) > 0.45) {
+      this.setTutorialFeedback('LIFT OFF THE ACCELERATOR // THEN SHIFT');
+      return;
+    }
+
+    if (transmission.shiftTimer > 0 || transmission.pendingGear) return;
+
+    // Use the player's current pedal position immediately rather than waiting
+    // one physics frame, so a correct clutch + shifter gesture is recognised.
+    this.player.clutch.pedal = Number(controlState.clutch || 0);
+    this.player.throttle = Number(controlState.throttle || 0);
+
+    const accepted = this.player.requestGear(expected);
+    if (accepted) {
+      this.setTutorialFeedback('GOOD // KEEP THE CLUTCH HELD UNTIL THE GEAR ENGAGES');
+    }
+  }
+
+  tutorialShiftRPM() {
+    const limiter = Number(
+      this.player?.config?.engineLimiterRPM ||
+      this.player?.config?.engineRedlineRPM ||
+      7800
+    );
+    return limiter * 0.78;
+  }
+
+  updateDrivingTutorial(controlState, telemetry = {}) {
+    if (!this.isTutorial || this.tutorialComplete) return;
+
+    const clutch = Number(controlState.clutch || 0);
+    const throttle = Number(controlState.throttle || 0);
+    const gear = Number(telemetry.gear || this.player.transmission.currentGear || 0);
+    const pending = Number(this.player.transmission.pendingGear || 0);
+    const rpm = Number(telemetry.rpm || 0);
+    const speed = Number(telemetry.speedKmh || 0);
+
+    if (this.tutorialStep === 'FIRST_GEAR') {
+      if ((gear === 1 || pending === 1) && clutch >= 0.68) {
+        if (gear === 1) this.setTutorialStep('LAUNCH_PREP');
+      } else if (clutch >= 0.68) {
+        this.setTutorialFeedback('GOOD // KEEP HOLDING THE CLUTCH, THEN SWIPE THE SHIFTER UP');
+      }
+      return;
+    }
+
+    if (this.tutorialStep === 'LAUNCH_PREP') {
+      if (!this.tutorialCountdownStarted) {
+        if (clutch >= 0.68 && throttle >= 0.72 && gear === 1) {
+          this.tutorialCountdownStarted = true;
+          this.tutorialFeedback = '';
+          this.startRace();
+          this.renderDrivingTutorialStep();
+        }
+        return;
+      }
+
+      if (this.greenClock != null) {
+        this.setTutorialStep('LAUNCH');
+      } else if (clutch < 0.68) {
+        this.setTutorialFeedback('CLUTCH BACK IN // THE LIGHTS PAUSE UNTIL YOU HOLD IT');
+      } else if (throttle < 0.62) {
+        this.setTutorialFeedback('MORE THROTTLE // HOLD THE ACCELERATOR HIGH');
+      } else if (this.tutorialFeedback) {
+        this.tutorialFeedback = '';
+        this.renderDrivingTutorialStep();
+      }
+      return;
+    }
+
+    if (this.tutorialStep === 'LAUNCH') {
+      if (clutch <= 0.35 && throttle >= 0.60 && speed >= 3) {
+        this.setTutorialStep('GEAR_2');
+      }
+      return;
+    }
+
+    if (this.tutorialStep === 'GEAR_2' || this.tutorialStep === 'GEAR_3' || this.tutorialStep === 'GEAR_4') {
+      const targetGear = Number(this.tutorialStep.slice(-1));
+      const previousGear = targetGear - 1;
+
+      if (!this.tutorialShiftReady && gear === previousGear && rpm >= this.tutorialShiftRPM()) {
+        this.tutorialShiftReady = true;
+        this.tutorialFeedback = '';
+        this.renderDrivingTutorialStep();
+        return;
+      }
+
+      if (gear === targetGear) {
+        if (targetGear >= 4) {
+          this.showTutorialCompletePopup();
+        } else {
+          this.setTutorialStep('POWER_' + targetGear);
+        }
+      }
+      return;
+    }
+
+    if (this.tutorialStep === 'POWER_2' || this.tutorialStep === 'POWER_3') {
+      const currentGear = Number(this.tutorialStep.slice(-1));
+      if (gear === currentGear && clutch <= 0.35 && throttle >= 0.60) {
+        this.setTutorialStep('GEAR_' + (currentGear + 1));
+      }
+    }
+  }
+
+  showTutorialCompletePopup() {
+    if (!this.isTutorial || this.tutorialComplete || this.tutorialCompletePopup?.active) return;
+
+    this.tutorialComplete = true;
+    this.clearTutorialHighlights();
+    this.controls.enabled = false;
+    this.controls.throttle = 0;
+    this.controls.clutch = 1;
+
+    const depth = 150;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+
+    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.72)
+      .setDepth(depth).setScrollFactor(0).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 360, 760, 350, 0x07111d, 0.995)
+      .setStrokeStyle(3, 0x62e8c7, 0.98)
+      .setDepth(depth + 1).setScrollFactor(0));
+
+    add(this.add.text(780, 258, 'YOU\'VE GOT IT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(
+      780,
+      330,
+      'You launched from a standing start and worked through 1st, 2nd and 3rd gear.\nWould you like to practise the controls again?',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#cfe2e9',
+        fontStyle: '700',
+        align: 'center',
+        lineSpacing: 6,
+        wordWrap: { width: 640 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const again = add(this.add.rectangle(650, 452, 250, 50, 0x0d2b29, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(650, 452, 'TRY AGAIN', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#effffb',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const continueButton = add(this.add.rectangle(910, 452, 250, 50, 0x142235, 1)
+      .setStrokeStyle(2, 0x45d7ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(910, 452, 'CONTINUE WITH DAICHI', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#eefaff',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    blocker.on('pointerdown', () => {});
+    again.on('pointerdown', () => {
+      saveSessionState(this.registry);
+      this.scene.restart();
+    });
+    continueButton.on('pointerdown', () => {
+      saveSessionState(this.registry);
+      this.scene.start('GarageScene');
+    });
+
+    this.tutorialCompletePopup = panel;
+  }
+
 
   startRace() {
     if (this.raceStarted || this.finished) return;
@@ -980,8 +1426,10 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentStartMoved = false;
     this.startButton.setVisible(false).disableInteractive();
     this.startButtonText.setVisible(false);
-    this.cancelButton?.setVisible(false).disableInteractive();
-    this.cancelButtonText?.setVisible(false);
+    if (!this.isTutorial) {
+      this.cancelButton?.setVisible(false).disableInteractive();
+      this.cancelButtonText?.setVisible(false);
+    }
 
     if (this.isRollingStart) {
       this.prepareRollingVehicle(this.player);
@@ -1018,7 +1466,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const rollingCountdown = this.isRollingStart && this.raceStarted && this.greenClock == null;
 
-    if (rollingCountdown && requestedGear != null) {
+    if (this.isTutorial) {
+      this.handleTutorialGearRequest(requestedGear, controlState);
+    } else if (rollingCountdown && requestedGear != null) {
       const tr = this.player.transmission;
       let nextGear = null;
 
@@ -1047,7 +1497,13 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     if (this.raceStarted && this.greenClock == null) {
-      this.countdownClock += dt;
+      const tutorialCanAdvanceTree = !this.isTutorial || (
+        this.tutorialStep === 'LAUNCH_PREP' &&
+        Number(controlState.clutch || 0) >= 0.68 &&
+        Number(controlState.throttle || 0) >= 0.62
+      );
+
+      if (tutorialCanAdvanceTree) this.countdownClock += dt;
 
       if (this.isRollingStart) {
         if (this.countdownClock < 0.8) this.showRollCountdown('3');
@@ -1070,7 +1526,17 @@ export default class RaceScene extends Phaser.Scene {
     let playerT;
     let oppT;
 
-    if (this.isRollingStart && this.raceStarted && this.greenClock == null) {
+    if (this.isTutorial) {
+      const tutorialControls = {
+        ...controlState,
+        // Before green the tutorial keeps the drivetrain safely disconnected.
+        // The visible lesson still requires the player to hold the real clutch.
+        clutch: this.greenClock == null ? 1 : controlState.clutch,
+        nos: false,
+      };
+      playerT = this.player.update(dt, tutorialControls);
+      oppT = null;
+    } else if (this.isRollingStart && this.raceStarted && this.greenClock == null) {
       playerT = this.advanceRollingVehicle(this.player, dt);
       oppT = this.advanceRollingVehicle(this.opponent, dt);
     } else {
@@ -1079,13 +1545,21 @@ export default class RaceScene extends Phaser.Scene {
       oppT = this.opponent.update(dt, aiState);
     }
 
-    this.engineAudio?.update(playerT, oppT, this.player.config, this.opponent.config, dt);
+    this.engineAudio?.update(
+      playerT,
+      this.isTutorial ? null : oppT,
+      this.player.config,
+      this.opponent.config,
+      dt
+    );
 
-    this.handleTiming(playerT, oppT);
+    if (!this.isTutorial) this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
 
     let status = '';
-    if (this.falseStart) status = 'RED LIGHT';
+    if (this.isTutorial) {
+      status = 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
+    } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
         cars[this.selectedCarId].shortName + ' vs ' + cars[this.opponentCarId].shortName;
@@ -1097,26 +1571,13 @@ export default class RaceScene extends Phaser.Scene {
 
     this.hud.update(playerT, status);
     this.debug.update(playerT);
-    this.updateTutorialHint(playerT);
+    this.updateDrivingTutorial(controlState, playerT);
 
     if (this.finished) {
       this.afterFinishTimer += dt;
       const cinematicElapsed = this.firstFinishClock == null
         ? 0
         : this.raceClock - this.firstFinishClock;
-
-      if (
-        this.isTutorial &&
-        cinematicElapsed > 0.42 &&
-        !this.tutorialReturnStarted
-      ) {
-        this.tutorialReturnStarted = true;
-        this.controls.enabled = false;
-        this.engineAudio?.fadeOut();
-        saveSessionState(this.registry);
-        this.scene.start('GarageScene');
-        return;
-      }
 
       if (cinematicElapsed > 1.18 && !this.resultsShown) {
         this.showResultsOverlay();
@@ -2625,10 +3086,9 @@ export default class RaceScene extends Phaser.Scene {
   drawScene(pt, ot, dt) {
     const W = 1560;
 
-    // Keep the cars farther into frame so a faster car remains visible while
-    // it passes. With the current sprite widths, 34% puts the noses just shy
-    // of centre screen for most cars.
-    const targetPlayerX = W * 0.34;
+    // The solo tutorial centres the player's car more prominently. Normal
+    // races keep the two-car chase composition.
+    const targetPlayerX = W * (this.isTutorial ? 0.46 : 0.34);
     const chaseCameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     // After the first car crosses the line, follow for a few more frames, then
@@ -2658,15 +3118,19 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const px = pt.positionM * PX_PER_M - cameraPx;
-    const rawOppX = ot.positionM * PX_PER_M - cameraPx;
-    const ox = rawOppX + this.playerVisual.noseOffsetPx - this.opponentVisual.noseOffsetPx;
 
-    // R8: both lanes sit lower on the road. The previous top-lane position
-    // made the rival look like it was floating against the rear barrier.
     this.updateCarVisual(this.playerVisual, px, 418, pt, dt);
-    this.updateCarVisual(this.opponentVisual, ox, 351, ot, dt);
 
-    this.drawEffects(pt, ot);
+    if (!this.isTutorial && this.opponentVisual && ot) {
+      const rawOppX = ot.positionM * PX_PER_M - cameraPx;
+      const ox = rawOppX + this.playerVisual.noseOffsetPx - this.opponentVisual.noseOffsetPx;
+
+      // R8: both lanes sit lower on the road. The previous top-lane position
+      // made the rival look like it was floating against the rear barrier.
+      this.updateCarVisual(this.opponentVisual, ox, 351, ot, dt);
+    }
+
+    this.drawEffects(pt, this.isTutorial ? null : ot);
     this.drawTree(cameraPx);
   }
 
@@ -2724,7 +3188,9 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     if (pt.wheelspin) smoke(this.playerVisual, Phaser.Math.Clamp(pt.slipRatio, 0, 1));
-    if (ot.wheelspin) smoke(this.opponentVisual, Phaser.Math.Clamp(ot.slipRatio, 0, 1));
+    if (ot?.wheelspin && this.opponentVisual) {
+      smoke(this.opponentVisual, Phaser.Math.Clamp(ot.slipRatio, 0, 1));
+    }
 
     if (pt.nosActive) {
       const x = this.playerVisual.exhaustX;
