@@ -87,39 +87,13 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // R177 production experiment: one transparent PNG per option.
-    // White/light-grey pixels receive the Phaser body tint; black/dark
-    // linework remains dark because tinting is multiplicative.
-    // All assets share the exact 1774×887 AE86 master canvas.
+    // R189 canonical 2400×1000 modular master. Every option is authored on the
+    // same transparent rectangle, so visual mods require no positional nudges.
     slots: {
       spoiler: {
         label: 'SPOILER',
         options: [
           { id: 'stock', name: 'STOCK WING', price: 0, layers: [] },
-          {
-            id: 'gtWing',
-            name: 'TIME ATTACK GT WING',
-            price: 35000,
-            layers: [
-              {
-                textureKey: 'visualMod_ae86_spoiler_1',
-                path: 'assets/Cars/ae86/ae86_spoiler_1.png',
-                paintMode: 'body',
-              },
-            ],
-          },
-          {
-            id: 'ducktail',
-            name: 'EXTENDED DUCKTAIL',
-            price: 28000,
-            layers: [
-              {
-                textureKey: 'visualMod_ae86_spoiler_2',
-                path: 'assets/Cars/ae86/ae86_spoiler_2.png',
-                paintMode: 'body',
-              },
-            ],
-          },
         ],
       },
       bodyKit: {
@@ -132,21 +106,10 @@ export const VISUAL_MOD_CATALOG = {
             price: 65000,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_1',
-                path: 'assets/Cars/ae86/ae86_bodykit_1.png',
+                textureKey: 'visualMod_ae86_bodykit_1_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_1_paint.png',
                 paintMode: 'body',
-              },
-            ],
-          },
-          {
-            id: 'aeroWidebody',
-            name: 'AERO WIDEBODY',
-            price: 90000,
-            layers: [
-              {
-                textureKey: 'visualMod_ae86_bodykit_2',
-                path: 'assets/Cars/ae86/ae86_bodykit_2.png',
-                paintMode: 'body',
+                aboveOverlay: true,
               },
             ],
           },
@@ -446,9 +409,15 @@ export function createVisualModLayers(
       const offsetX = Number(layer.offsetX ?? 0) * scale * (flipX ? -1 : 1);
       const offsetY = Number(layer.offsetY ?? 0) * scale;
 
+      const aboveOverlayDepth = layer.aboveOverlay ? 0.030 : 0;
       const image = scene.add.image(x + offsetX, y + offsetY, layer.textureKey)
         .setFlipX(flipX)
-        .setDepth(depth + slotIndex * 0.002 + layerIndex * 0.0005);
+        .setDepth(
+          depth +
+          aboveOverlayDepth +
+          slotIndex * 0.002 +
+          layerIndex * 0.0005
+        );
 
       // Full-canvas modular parts are registered to the base car canvas.
       // Size them to the rendered base rather than trusting the source PNG
