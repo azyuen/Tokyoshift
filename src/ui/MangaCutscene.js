@@ -1,4 +1,4 @@
-import { characters } from '../data/characters.js?v=20260925-r182';
+import { characters } from '../data/characters.js?v=20260925-r195';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -6,8 +6,8 @@ import {
 } from '../data/cutscenes.js?v=20260925-r188';
 import {
   createCharacterProfile,
-} from '../characters/CharacterProfileRenderer.js?v=20260925-r185';
-import { saveSessionState } from '../state/GameState.js?v=20260925-r185';
+} from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
+import { saveSessionState } from '../state/GameState.js?v=20260925-r195';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
