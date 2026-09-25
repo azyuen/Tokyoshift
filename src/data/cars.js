@@ -66,8 +66,9 @@ export const cars = {
       spoilerPath: null,
       singleLayerModular: false,
       stockBodyKit: false,
-      stockSpoiler: true,
-      stockSpoilerPaint: true,
+      // Spoiler is now a true selectable slot. The base shell itself is clean.
+      stockSpoiler: false,
+      stockSpoilerPaint: false,
       aeroAboveOverlay: true,
 
       // Keep the current base-PNG calibration as a safe fallback. Boot switches
