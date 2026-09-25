@@ -5,7 +5,7 @@ import {
   characters,
   genericRivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260925-r182';
+} from '../data/characters.js?v=20260925-r195';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260922-r114';
