@@ -59,7 +59,7 @@ export const cars = {
       // same bottom-right registration. Phaser draws all layers at one x/y/scale.
       modularAssetRoot: 'assets/Cars/ae86',
       modularAssetStem: 'ae86',
-      bodyPath: 'assets/Cars/ae86/ae86_base.png', // legacy fallback until new layers load
+      bodyPath: 'assets/Cars/ae86/ae86_body_outline.png', // existing-file fallback; layered paint + outline is authoritative
       paintPath: 'assets/Cars/ae86/ae86_body_paint.png',
       overlayPath: 'assets/Cars/ae86/ae86_body_outline.png',
       spoilerPaintPath: 'assets/Cars/ae86/ae86_spoiler_0_paint.png',
@@ -93,31 +93,31 @@ export const cars = {
       // itself came from the 2109px source and was padded left/up, so the width
       // compensation preserves its previous visible size in target-width views.
       layeredMasterGeometry: {
-        bodyScale: 0.170,
-        canvasDisplayScale: 1.1380,
+        // R193: geometry measured directly from the canonical 2400×1000 master
+        // now uploaded in assets/Cars/ae86. The wheel-well circles are centred
+        // at approximately (753,809) rear and (1920,812) front in source pixels.
+        bodyScale: 0.1784,
+        canvasDisplayScale: 1.1946,
 
-        // Keep the wheel stance that already reads well in Workshop, then move
-        // the complete 2400x1000 body stack down onto those wheels. Offsets are
-        // authored in source pixels and therefore scale consistently everywhere.
+        // All four authored PNGs share one origin. Do not compensate individual
+        // layers; move the wheel fit to the master instead.
         bodyRenderOffsetX: 0,
-        bodyRenderOffsetY: 40,
+        bodyRenderOffsetY: 0,
 
-        // Small X-only axle corrections align the wheel centres to the actual
-        // stock arch centres without disturbing the existing ground line.
-        rearOffsetX: -479,
-        frontOffsetX: 793,
-        wheelOffsetY: 364,
-        rearWheelOffsetX: -479,
-        frontWheelOffsetX: 793,
-        rearWheelOffsetY: 360,
-        frontWheelOffsetY: 368,
+        rearOffsetX: -447,
+        frontOffsetX: 720,
+        wheelOffsetY: 311,
+        rearWheelOffsetX: -447,
+        frontWheelOffsetX: 720,
+        rearWheelOffsetY: 309,
+        frontWheelOffsetY: 312,
         rearWheelScale: 0.04524,
         frontWheelScale: 0.04524,
         rearWheelBackingRadius: 156,
-        frontWheelBackingRadius: 156,
-        exhaustOffsetX: -835,
-        exhaustOffsetY: 330,
-      },
+        frontWheelBackingRadius: 160,
+        exhaustOffsetX: -820,
+        exhaustOffsetY: 314,
+      }
     },
   },
 
