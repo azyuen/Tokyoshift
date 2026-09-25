@@ -1,7 +1,7 @@
 import {
   characters,
   characterOrder,
-} from '../data/characters.js?v=20260925-r182';
+} from '../data/characters.js?v=20260925-r195';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
