@@ -1,5 +1,5 @@
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
-import { characters } from '../data/characters.js?v=20260922-r111';
+import { characters } from '../data/characters.js?v=20260925-r195';
 import {
   getProfileSlots,
   getActiveProfileIndex,
@@ -7,8 +7,8 @@ import {
   deleteProfileSlot,
   setActiveProfileIndex,
   saveSessionState,
-} from '../state/GameState.js?v=20260925-r184';
-import { addDevCutsceneButton } from './CutsceneTester.js?v=20260925-r188';
+} from '../state/GameState.js?v=20260925-r195';
+import { addDevCutsceneButton } from './CutsceneTester.js?v=20260925-r195';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
