@@ -3167,7 +3167,7 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  startSelectedRace() {
+  startSelectedRace(storyConfirmed = false) {
     if (!this.hasCar) {
       this.applyNoCarMeetState();
       return;
@@ -3175,6 +3175,16 @@ export default class MeetScene extends Phaser.Scene {
 
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer) return;
+
+    if (this.selectedDeal === 'PINK' && !storyConfirmed) {
+      const rivalName = String(characters[offer.characterId]?.name || 'RIVAL').toUpperCase();
+      const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
+        characterOverrides: { RIVAL: offer.characterId },
+        variables: { RIVAL_NAME: rivalName },
+        onComplete: () => this.startSelectedRace(true),
+      });
+      if (story.played) return;
+    }
 
     const cash = this.registry.get('cash') ?? 0;
     if (this.selectedDeal === 'CASH' && cash < Number(offer.stake || 0)) return;
