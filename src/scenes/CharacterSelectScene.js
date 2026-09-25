@@ -1,9 +1,10 @@
-import { cars } from '../data/cars.js?v=20260925-r183';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r189';
+import { cars } from '../data/cars.js?v=20260925-r189';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260924-r170';
+} from '../vehicles/CarAppearance.js?v=20260925-r189';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260925-r182';
 import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260925-r184';
@@ -308,7 +309,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
   createCarDisplay(car, x, y, targetWidth, depth) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
-    const bodyScale = targetWidth / source.width;
+    const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = y + renderOffsetY;
