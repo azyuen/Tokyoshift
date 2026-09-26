@@ -54,15 +54,15 @@ export const cars = {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
 
-      // Canonical Tokyo SHIFT modular-car template.
-      // Every authored layer is a 2400×1000 transparent PNG using the exact
-      // same bottom-right registration. Phaser draws all layers at one x/y/scale.
+      // AE86 production body set. Stock, Body Kit 1 and Body Kit 2 are authored
+      // on the same 1942×809 transparent canvas, so Phaser can swap the matched
+      // paint/details pair without per-layer offsets.
       modularAssetRoot: 'assets/Cars/ae86',
       modularAssetStem: 'ae86',
-      bodyPath: 'assets/Cars/ae86/ae86_body_outline.png', // existing-file fallback; layered paint + outline is authoritative
-      paintPath: 'assets/Cars/ae86/ae86_body_paint.png',
-      overlayPath: 'assets/Cars/ae86/ae86_body_outline.png',
-      spoilerPaintPath: 'assets/Cars/ae86/ae86_spoiler_0_paint.png',
+      bodyPath: 'assets/Cars/ae86/ae86_stock_body.png', // complete-body fallback; stock paint + details is authoritative
+      paintPath: 'assets/Cars/ae86/ae86_stock_paint.png',
+      overlayPath: 'assets/Cars/ae86/ae86_stock_details.png',
+      spoilerPaintPath: null,
       spoilerPath: null,
       singleLayerModular: false,
       stockBodyKit: false,
@@ -71,8 +71,8 @@ export const cars = {
       stockSpoilerPaint: false,
       aeroAboveOverlay: true,
 
-      // Keep the current base-PNG calibration as a safe fallback. Boot switches
-      // to layeredMasterGeometry only when the new paint + outline assets exist.
+      // Keep the legacy complete-body calibration as a safe fallback. Boot switches
+      // to layeredMasterGeometry when the new stock paint + details pair is loaded.
       bodyScale: 0.165,
       wheelScale: 0.039,
       rearOffsetX: -600,
@@ -89,34 +89,30 @@ export const cars = {
       exhaustOffsetX: -970,
       exhaustOffsetY: 159,
 
-      // Source-space geometry measured from the 2400×1000 master. The artwork
-      // itself came from the 2109px source and was padded left/up, so the width
-      // compensation preserves its previous visible size in target-width views.
+      // Source-space geometry converted from the previous 2400×1000 master to
+      // the new 1942×809 authored canvas. canvasDisplayScale preserves the
+      // same visible car width while the wheel centres remain registered to
+      // the new stock artwork.
       layeredMasterGeometry: {
-        // R193: geometry measured directly from the canonical 2400×1000 master
-        // now uploaded in assets/Cars/ae86. The wheel-well circles are centred
-        // at approximately (753,809) rear and (1920,812) front in source pixels.
-        bodyScale: 0.1784,
+        bodyScale: 0.22047,
         canvasDisplayScale: 1.1946,
 
-        // All four authored PNGs share one origin. Do not compensate individual
-        // layers; move the wheel fit to the master instead.
         bodyRenderOffsetX: 0,
         bodyRenderOffsetY: 0,
 
-        rearOffsetX: -447,
-        frontOffsetX: 720,
-        wheelOffsetY: 311,
-        rearWheelOffsetX: -447,
-        frontWheelOffsetX: 720,
-        rearWheelOffsetY: 309,
-        frontWheelOffsetY: 312,
+        rearOffsetX: -362,
+        frontOffsetX: 583,
+        wheelOffsetY: 252,
+        rearWheelOffsetX: -362,
+        frontWheelOffsetX: 583,
+        rearWheelOffsetY: 250,
+        frontWheelOffsetY: 252,
         rearWheelScale: 0.04524,
         frontWheelScale: 0.04524,
-        rearWheelBackingRadius: 156,
-        frontWheelBackingRadius: 160,
-        exhaustOffsetX: -820,
-        exhaustOffsetY: 314,
+        rearWheelBackingRadius: 126,
+        frontWheelBackingRadius: 129,
+        exhaustOffsetX: -664,
+        exhaustOffsetY: 254,
       }
     },
   },
