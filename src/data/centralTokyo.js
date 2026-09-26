@@ -1,3 +1,20 @@
+import {
+  ENGINE_PART_ORDER,
+  ENGINE_TUNING_PARTS,
+  getEngineTuning,
+} from './tuning.js?v=20260926-r211';
+import {
+  DRIVETRAIN_PART_ORDER,
+  CHASSIS_PART_ORDER,
+  EXHAUST_NOS_PART_ORDER,
+  DRIVETRAIN_TUNING_PARTS,
+  CHASSIS_TUNING_PARTS,
+  EXHAUST_NOS_TUNING_PARTS,
+  getDrivetrainTuning,
+  getChassisTuning,
+  getExhaustNosTuning,
+} from './secondaryTuning.js?v=20260926-r211';
+
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
 export const CENTRAL_TOKYO_LOCATIONS = {
@@ -371,13 +388,55 @@ export function getAutoMarketBuild(carId) {
   }));
 }
 
+function installedPartsCost(order, catalog, levels = {}) {
+  return order.reduce((total, partId) => {
+    const installed = Math.max(0, Math.min(3, Math.floor(Number(levels?.[partId] || 0))));
+    const part = catalog[partId];
+    if (!part || installed <= 0) return total;
+
+    let partTotal = 0;
+    for (let level = 1; level <= installed; level++) {
+      partTotal += Number(part.levels?.[level]?.cost || 0);
+    }
+    return total + partTotal;
+  }, 0);
+}
+
+function getInstalledPerformanceInvestment(carState = {}) {
+  return (
+    installedPartsCost(
+      ENGINE_PART_ORDER,
+      ENGINE_TUNING_PARTS,
+      getEngineTuning(carState)
+    ) +
+    installedPartsCost(
+      DRIVETRAIN_PART_ORDER,
+      DRIVETRAIN_TUNING_PARTS,
+      getDrivetrainTuning(carState)
+    ) +
+    installedPartsCost(
+      CHASSIS_PART_ORDER,
+      CHASSIS_TUNING_PARTS,
+      getChassisTuning(carState)
+    ) +
+    installedPartsCost(
+      EXHAUST_NOS_PART_ORDER,
+      EXHAUST_NOS_TUNING_PARTS,
+      getExhaustNosTuning(carState)
+    )
+  );
+}
+
 export function getAutoMarketSellPrice(carId, carState = {}) {
   const base = Number(MARKET_BASE_PRICES[carId] || 1000000);
-  const modified = carState && carState.stock === false;
 
-  // Auto Market is a wholesale exit, not full retail liquidity. A won or
-  // modified car is still a meaningful windfall, but selling it should not
-  // instantly convert its full market value into endgame tuning money.
-  const resaleRate = modified ? 0.65 : 0.60;
-  return Math.round(base * resaleRate / 10000) * 10000;
+  // The dealership pays wholesale for the shell, then only a fraction of the
+  // money sunk into performance parts. This prevents a cheap cosmetic flag or
+  // one small modification from magically increasing the value by 5% of the
+  // whole car, while still rewarding a genuinely developed build.
+  const baseResale = base * 0.50;
+  const partsInvestment = getInstalledPerformanceInvestment(carState);
+  const partsRecovery = Math.min(base * 0.05, partsInvestment * 0.25);
+
+  return Math.round((baseResale + partsRecovery) / 10000) * 10000;
 }

@@ -6,7 +6,7 @@ import {
   getWorkshopByLocationId,
   getGarageCapacity,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260924-r166';
+} from '../data/workshopProgression.js?v=20260926-r211';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -16,11 +16,11 @@ import {
   regionIdForMeetLocation,
   getRegionTravelCost,
   isTravelRegionUnlocked,
-} from '../data/travelRegions.js?v=20260923-r139';
+} from '../data/travelRegions.js?v=20260926-r211';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20260926-r204';
+} from '../data/centralTokyo.js?v=20260926-r211';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,

@@ -12,9 +12,9 @@ export const DRIVETRAIN_TUNING_PARTS = {
     name: 'CLUTCH',
     levels: [
       { level: 0, name: 'Stock clutch', cost: 0, clutchScale: 1.00, spriteKey: 'tuningPartClutchL0', benefit: 'Factory torque capacity' },
-      { level: 1, name: 'Sports clutch', cost: 8000, clutchScale: 1.15, spriteKey: 'tuningPartClutchL1', benefit: '+15% torque capacity' },
-      { level: 2, name: 'Heavy-duty clutch', cost: 18000, clutchScale: 1.35, spriteKey: 'tuningPartClutchL2', benefit: '+35% torque capacity' },
-      { level: 3, name: 'Twin-plate clutch', cost: 35000, clutchScale: 1.65, spriteKey: 'tuningPartClutchL3', benefit: '+65% torque capacity' },
+      { level: 1, name: 'Sports clutch', cost: 10000, clutchScale: 1.15, spriteKey: 'tuningPartClutchL1', benefit: '+15% torque capacity' },
+      { level: 2, name: 'Heavy-duty clutch', cost: 28000, clutchScale: 1.35, spriteKey: 'tuningPartClutchL2', benefit: '+35% torque capacity' },
+      { level: 3, name: 'Twin-plate clutch', cost: 65000, clutchScale: 1.65, spriteKey: 'tuningPartClutchL3', benefit: '+65% torque capacity' },
     ],
   },
   gearbox: {
@@ -22,9 +22,9 @@ export const DRIVETRAIN_TUNING_PARTS = {
     name: 'GEARBOX',
     levels: [
       { level: 0, name: 'Stock gearbox', cost: 0, shiftScale: 1.00, efficiencyAdd: 0.00, spriteKey: 'tuningPartGearboxL0', benefit: 'Factory shift speed' },
-      { level: 1, name: 'Short-shift kit', cost: 15000, shiftScale: 0.90, efficiencyAdd: 0.01, spriteKey: 'tuningPartGearboxL1', benefit: '10% faster shifts' },
-      { level: 2, name: 'Close-ratio box', cost: 35000, shiftScale: 0.80, efficiencyAdd: 0.02, spriteKey: 'tuningPartGearboxL2', benefit: '20% faster shifts' },
-      { level: 3, name: 'Dog box', cost: 70000, shiftScale: 0.68, efficiencyAdd: 0.03, spriteKey: 'tuningPartGearboxL3', benefit: '32% faster shifts' },
+      { level: 1, name: 'Short-shift kit', cost: 18000, shiftScale: 0.90, efficiencyAdd: 0.01, spriteKey: 'tuningPartGearboxL1', benefit: '10% faster shifts' },
+      { level: 2, name: 'Close-ratio box', cost: 52000, shiftScale: 0.80, efficiencyAdd: 0.02, spriteKey: 'tuningPartGearboxL2', benefit: '20% faster shifts' },
+      { level: 3, name: 'Dog box', cost: 130000, shiftScale: 0.68, efficiencyAdd: 0.03, spriteKey: 'tuningPartGearboxL3', benefit: '32% faster shifts' },
     ],
   },
   differential: {
@@ -32,9 +32,9 @@ export const DRIVETRAIN_TUNING_PARTS = {
     name: 'DIFFERENTIAL',
     levels: [
       { level: 0, name: 'Factory differential', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartDifferentialL0', benefit: 'Factory traction' },
-      { level: 1, name: 'Street LSD', cost: 12000, gripScale: 1.02, launchScale: 1.02, spriteKey: 'tuningPartDifferentialL1', benefit: '+2% grip / launch' },
-      { level: 2, name: '1.5-way LSD', cost: 28000, gripScale: 1.04, launchScale: 1.04, spriteKey: 'tuningPartDifferentialL2', benefit: '+4% grip / launch' },
-      { level: 3, name: 'Race LSD', cost: 55000, gripScale: 1.06, launchScale: 1.07, spriteKey: 'tuningPartDifferentialL3', benefit: '+6% grip / +7% launch' },
+      { level: 1, name: 'Street LSD', cost: 15000, gripScale: 1.02, launchScale: 1.02, spriteKey: 'tuningPartDifferentialL1', benefit: '+2% grip / launch' },
+      { level: 2, name: '1.5-way LSD', cost: 42000, gripScale: 1.04, launchScale: 1.04, spriteKey: 'tuningPartDifferentialL2', benefit: '+4% grip / launch' },
+      { level: 3, name: 'Race LSD', cost: 100000, gripScale: 1.06, launchScale: 1.07, spriteKey: 'tuningPartDifferentialL3', benefit: '+6% grip / +7% launch' },
     ],
   },
   suspension: {
@@ -42,9 +42,9 @@ export const DRIVETRAIN_TUNING_PARTS = {
     name: 'SUSPENSION',
     levels: [
       { level: 0, name: 'Stock suspension', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartSuspensionL0', benefit: 'Factory setup' },
-      { level: 1, name: 'Street suspension', cost: 10000, gripScale: 1.01, launchScale: 1.02, spriteKey: 'tuningPartSuspensionL1', benefit: '+1% grip / +2% launch' },
-      { level: 2, name: 'Coilovers', cost: 25000, gripScale: 1.025, launchScale: 1.04, spriteKey: 'tuningPartSuspensionL2', benefit: '+2.5% grip / +4% launch' },
-      { level: 3, name: 'Drag suspension', cost: 50000, gripScale: 1.04, launchScale: 1.07, spriteKey: 'tuningPartSuspensionL3', benefit: '+4% grip / +7% launch' },
+      { level: 1, name: 'Street suspension', cost: 12000, gripScale: 1.01, launchScale: 1.02, spriteKey: 'tuningPartSuspensionL1', benefit: '+1% grip / +2% launch' },
+      { level: 2, name: 'Coilovers', cost: 38000, gripScale: 1.025, launchScale: 1.04, spriteKey: 'tuningPartSuspensionL2', benefit: '+2.5% grip / +4% launch' },
+      { level: 3, name: 'Drag suspension', cost: 90000, gripScale: 1.04, launchScale: 1.07, spriteKey: 'tuningPartSuspensionL3', benefit: '+4% grip / +7% launch' },
     ],
   },
 };
@@ -55,9 +55,9 @@ export const CHASSIS_TUNING_PARTS = {
     name: 'TYRES',
     levels: [
       { level: 0, name: 'Stock street tyres', cost: 0, gripScale: 1.00, launchScale: 1.00, spriteKey: 'tuningPartTyresL0', benefit: 'Factory road tyre grip' },
-      { level: 1, name: 'Performance tyres', cost: 9000, gripScale: 1.025, launchScale: 1.01, spriteKey: 'tuningPartTyresL1', benefit: '+2.5% grip / +1% launch' },
-      { level: 2, name: 'Drag radials', cost: 22000, gripScale: 1.06, launchScale: 1.04, spriteKey: 'tuningPartTyresL2', benefit: '+6% grip / +4% launch' },
-      { level: 3, name: 'Slicks', cost: 45000, gripScale: 1.10, launchScale: 1.08, spriteKey: 'tuningPartTyresL3', benefit: '+10% grip / +8% launch' },
+      { level: 1, name: 'Performance tyres', cost: 11000, gripScale: 1.025, launchScale: 1.01, spriteKey: 'tuningPartTyresL1', benefit: '+2.5% grip / +1% launch' },
+      { level: 2, name: 'Drag radials', cost: 34000, gripScale: 1.06, launchScale: 1.04, spriteKey: 'tuningPartTyresL2', benefit: '+6% grip / +4% launch' },
+      { level: 3, name: 'Slicks', cost: 80000, gripScale: 1.10, launchScale: 1.08, spriteKey: 'tuningPartTyresL3', benefit: '+10% grip / +8% launch' },
     ],
   },
   weightReduction: {
@@ -65,9 +65,9 @@ export const CHASSIS_TUNING_PARTS = {
     name: 'WEIGHT REDUCTION',
     levels: [
       { level: 0, name: 'Stock interior', cost: 0, massDelta: 0, spriteKey: 'tuningPartWeightReductionL0', benefit: 'Full factory interior' },
-      { level: 1, name: 'Lightweight interior', cost: 12000, massDelta: -18, spriteKey: 'tuningPartWeightReductionL1', benefit: '-18 kg' },
-      { level: 2, name: 'Stripped interior', cost: 30000, massDelta: -42, spriteKey: 'tuningPartWeightReductionL2', benefit: '-42 kg' },
-      { level: 3, name: 'Race-lightweight setup', cost: 60000, massDelta: -75, spriteKey: 'tuningPartWeightReductionL3', benefit: '-75 kg' },
+      { level: 1, name: 'Lightweight interior', cost: 15000, massDelta: -18, spriteKey: 'tuningPartWeightReductionL1', benefit: '-18 kg' },
+      { level: 2, name: 'Stripped interior', cost: 45000, massDelta: -42, spriteKey: 'tuningPartWeightReductionL2', benefit: '-42 kg' },
+      { level: 3, name: 'Race-lightweight setup', cost: 110000, massDelta: -75, spriteKey: 'tuningPartWeightReductionL3', benefit: '-75 kg' },
     ],
   },
 };
@@ -78,9 +78,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'HEADERS',
     levels: [
       { level: 0, name: 'Stock manifold', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartHeadersL0', benefit: 'Factory exhaust manifold' },
-      { level: 1, name: 'Street headers', cost: 8000, torqueScale: 1.015, massDelta: 0, spriteKey: 'tuningPartHeadersL1', benefit: '+1.5% engine output' },
-      { level: 2, name: 'Equal-length headers', cost: 18000, torqueScale: 1.03, massDelta: -1, spriteKey: 'tuningPartHeadersL2', benefit: '+3% output / -1 kg' },
-      { level: 3, name: 'Race headers', cost: 36000, torqueScale: 1.05, massDelta: -2, spriteKey: 'tuningPartHeadersL3', benefit: '+5% output / -2 kg' },
+      { level: 1, name: 'Street headers', cost: 10000, torqueScale: 1.015, massDelta: 0, spriteKey: 'tuningPartHeadersL1', benefit: '+1.5% engine output' },
+      { level: 2, name: 'Equal-length headers', cost: 28000, torqueScale: 1.03, massDelta: -1, spriteKey: 'tuningPartHeadersL2', benefit: '+3% output / -1 kg' },
+      { level: 3, name: 'Race headers', cost: 65000, torqueScale: 1.05, massDelta: -2, spriteKey: 'tuningPartHeadersL3', benefit: '+5% output / -2 kg' },
     ],
   },
   exhaust: {
@@ -88,9 +88,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'EXHAUST SYSTEM',
     levels: [
       { level: 0, name: 'Stock exhaust', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartEngineExhaustL0', benefit: 'Factory exhaust flow' },
-      { level: 1, name: 'Axle-back system', cost: 10000, torqueScale: 1.015, massDelta: -1, spriteKey: 'tuningPartEngineExhaustL1', benefit: '+1.5% output / -1 kg' },
-      { level: 2, name: 'Cat-back system', cost: 22000, torqueScale: 1.03, massDelta: -3, spriteKey: 'tuningPartEngineExhaustL2', benefit: '+3% output / -3 kg' },
-      { level: 3, name: 'Race exhaust', cost: 45000, torqueScale: 1.05, massDelta: -5, spriteKey: 'tuningPartEngineExhaustL3', benefit: '+5% output / -5 kg' },
+      { level: 1, name: 'Axle-back system', cost: 12000, torqueScale: 1.015, massDelta: -1, spriteKey: 'tuningPartEngineExhaustL1', benefit: '+1.5% output / -1 kg' },
+      { level: 2, name: 'Cat-back system', cost: 34000, torqueScale: 1.03, massDelta: -3, spriteKey: 'tuningPartEngineExhaustL2', benefit: '+3% output / -3 kg' },
+      { level: 3, name: 'Race exhaust', cost: 80000, torqueScale: 1.05, massDelta: -5, spriteKey: 'tuningPartEngineExhaustL3', benefit: '+5% output / -5 kg' },
     ],
   },
   muffler: {
@@ -98,9 +98,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'MUFFLER',
     levels: [
       { level: 0, name: 'Stock muffler', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartMufflerL0', benefit: 'Factory rear section' },
-      { level: 1, name: 'Sports muffler', cost: 5000, torqueScale: 1.005, massDelta: -1, spriteKey: 'tuningPartMufflerL1', benefit: '+0.5% output / -1 kg' },
-      { level: 2, name: 'Straight-through', cost: 12000, torqueScale: 1.012, massDelta: -2, spriteKey: 'tuningPartMufflerL2', benefit: '+1.2% output / -2 kg' },
-      { level: 3, name: 'Race muffler', cost: 25000, torqueScale: 1.02, massDelta: -3, spriteKey: 'tuningPartMufflerL3', benefit: '+2% output / -3 kg' },
+      { level: 1, name: 'Sports muffler', cost: 6000, torqueScale: 1.005, massDelta: -1, spriteKey: 'tuningPartMufflerL1', benefit: '+0.5% output / -1 kg' },
+      { level: 2, name: 'Straight-through', cost: 18000, torqueScale: 1.012, massDelta: -2, spriteKey: 'tuningPartMufflerL2', benefit: '+1.2% output / -2 kg' },
+      { level: 3, name: 'Race muffler', cost: 45000, torqueScale: 1.02, massDelta: -3, spriteKey: 'tuningPartMufflerL3', benefit: '+2% output / -3 kg' },
     ],
   },
   nosKit: {
@@ -108,9 +108,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'NOS KIT',
     levels: [
       { level: 0, name: 'No nitrous system', cost: 0, capacitySeconds: 0, spriteKey: 'tuningPartNosKitL0', benefit: 'No nitrous installed' },
-      { level: 1, name: 'Street bottle', cost: 18000, capacitySeconds: 3.0, spriteKey: 'tuningPartNosKitL1', benefit: '3.0 sec nitrous capacity' },
-      { level: 2, name: 'Wet kit', cost: 38000, capacitySeconds: 5.0, spriteKey: 'tuningPartNosKitL2', benefit: '5.0 sec nitrous capacity' },
-      { level: 3, name: 'Race twin-bottle', cost: 70000, capacitySeconds: 7.0, spriteKey: 'tuningPartNosKitL3', benefit: '7.0 sec nitrous capacity' },
+      { level: 1, name: 'Street bottle', cost: 22000, capacitySeconds: 3.0, spriteKey: 'tuningPartNosKitL1', benefit: '3.0 sec nitrous capacity' },
+      { level: 2, name: 'Wet kit', cost: 55000, capacitySeconds: 5.0, spriteKey: 'tuningPartNosKitL2', benefit: '5.0 sec nitrous capacity' },
+      { level: 3, name: 'Race twin-bottle', cost: 130000, capacitySeconds: 7.0, spriteKey: 'tuningPartNosKitL3', benefit: '7.0 sec nitrous capacity' },
     ],
   },
   nitrousShot: {
@@ -118,9 +118,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'NITROUS SHOT',
     levels: [
       { level: 0, name: 'No shot', cost: 0, powerHp: 0, spriteKey: 'tuningPartNitrousShotL0', benefit: '0 hp nitrous shot' },
-      { level: 1, name: '35 hp shot', cost: 10000, powerHp: 35, spriteKey: 'tuningPartNitrousShotL1', benefit: '+35 hp while NOS is active' },
-      { level: 2, name: '50 hp shot', cost: 20000, powerHp: 50, spriteKey: 'tuningPartNitrousShotL2', benefit: '+50 hp while NOS is active' },
-      { level: 3, name: '75 hp shot', cost: 40000, powerHp: 75, spriteKey: 'tuningPartNitrousShotL3', benefit: '+75 hp while NOS is active' },
+      { level: 1, name: '35 hp shot', cost: 12000, powerHp: 35, spriteKey: 'tuningPartNitrousShotL1', benefit: '+35 hp while NOS is active' },
+      { level: 2, name: '50 hp shot', cost: 30000, powerHp: 50, spriteKey: 'tuningPartNitrousShotL2', benefit: '+50 hp while NOS is active' },
+      { level: 3, name: '75 hp shot', cost: 75000, powerHp: 75, spriteKey: 'tuningPartNitrousShotL3', benefit: '+75 hp while NOS is active' },
     ],
   },
 };

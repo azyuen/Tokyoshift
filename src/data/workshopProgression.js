@@ -16,9 +16,9 @@ export const WORKSHOP_TIERS = [
     label: 'CANAL YARD GARAGE',
     shortLabel: 'CANAL YARD',
     capacity: 12,
-    unlockCost: 180000,
+    unlockCost: 250000,
     textureKey: 'garageWorkshopCanalYard',
-    serviceMultiplier: 1.08,
+    serviceMultiplier: 1.15,
     description: 'An old-school local mechanic workshop with twelve more slots and serious performance work.',
   },
   {
@@ -27,9 +27,9 @@ export const WORKSHOP_TIERS = [
     label: 'WAREHOUSE HQ',
     shortLabel: 'WAREHOUSE HQ',
     capacity: 24,
-    unlockCost: 450000,
+    unlockCost: 750000,
     textureKey: 'garageWorkshopWarehouseHQ',
-    serviceMultiplier: 1.15,
+    serviceMultiplier: 1.25,
     description: 'A professional tuning headquarters with twenty-four more slots and unrestricted race parts.',
   },
 ];
@@ -37,7 +37,7 @@ export const WORKSHOP_TIERS = [
 export const MAX_GARAGE_CAPACITY = WORKSHOP_TIERS
   .reduce((total, workshop) => total + Number(workshop.capacity || 0), 0);
 
-export const TUNING_WIN_REQUIREMENTS = [0, 0, 12, 30];
+export const TUNING_WIN_REQUIREMENTS = [0, 0, 12, 40];
 
 const ACCESS = {
   engine: {

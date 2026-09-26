@@ -1,4 +1,4 @@
-import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260922-r95';
+import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260926-r211';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;

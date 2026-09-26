@@ -9,9 +9,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'LONG BLOCK',
     levels: [
       { level: 0, name: 'Stock engine', cost: 0, torqueScale: 1.00, redlineAdd: 0, massDelta: 0, benefit: 'Factory long block' },
-      { level: 1, name: 'Street build', cost: 25000, torqueScale: 1.06, redlineAdd: 100, massDelta: 2, benefit: '+6% engine output' },
-      { level: 2, name: 'Forged long block', cost: 55000, torqueScale: 1.13, redlineAdd: 200, massDelta: 4, benefit: '+13% engine output' },
-      { level: 3, name: 'Stroker / big-bore', cost: 105000, torqueScale: 1.22, redlineAdd: 300, massDelta: 7, benefit: '+22% engine output' },
+      { level: 1, name: 'Street build', cost: 30000, torqueScale: 1.06, redlineAdd: 100, massDelta: 2, benefit: '+6% engine output' },
+      { level: 2, name: 'Forged long block', cost: 85000, torqueScale: 1.10, redlineAdd: 200, massDelta: 4, benefit: '+10% engine output' },
+      { level: 3, name: 'Stroker / big-bore', cost: 190000, torqueScale: 1.18, redlineAdd: 300, massDelta: 7, benefit: '+18% engine output' },
     ],
   },
   intake: {
@@ -20,9 +20,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'AIRFLOW',
     levels: [
       { level: 0, name: 'Stock airbox', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntakeL0', benefit: 'Factory airflow' },
-      { level: 1, name: 'High-flow intake', cost: 7000, torqueScale: 1.02, spoolScale: 1.02, spriteKey: 'tuningPartIntakeL1', benefit: '+2% output / response' },
-      { level: 2, name: 'Cold-air intake', cost: 15000, torqueScale: 1.04, spoolScale: 1.04, spriteKey: 'tuningPartIntakeL2', benefit: '+4% output / response' },
-      { level: 3, name: 'Race intake', cost: 30000, torqueScale: 1.07, spoolScale: 1.06, spriteKey: 'tuningPartIntakeL3', benefit: '+7% output / response' },
+      { level: 1, name: 'High-flow intake', cost: 8000, torqueScale: 1.02, spoolScale: 1.02, spriteKey: 'tuningPartIntakeL1', benefit: '+2% output / response' },
+      { level: 2, name: 'Cold-air intake', cost: 22000, torqueScale: 1.03, spoolScale: 1.035, spriteKey: 'tuningPartIntakeL2', benefit: '+3% output / response' },
+      { level: 3, name: 'Race intake', cost: 55000, torqueScale: 1.05, spoolScale: 1.05, spriteKey: 'tuningPartIntakeL3', benefit: '+5% output / response' },
     ],
   },
   ecu: {
@@ -31,9 +31,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'ENGINE CONTROL',
     levels: [
       { level: 0, name: 'Stock ECU', cost: 0, torqueScale: 1.00, redlineAdd: 0, boostAdd: 0, spriteKey: 'tuningPartEcuL0', benefit: 'Factory calibration' },
-      { level: 1, name: 'Street reflash', cost: 10000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.04, spriteKey: 'tuningPartEcuL1', benefit: '+3% output / sharper tune' },
-      { level: 2, name: 'Dyno tune', cost: 22000, torqueScale: 1.06, redlineAdd: 125, boostAdd: 0.08, spriteKey: 'tuningPartEcuL2', benefit: '+6% output / more boost' },
-      { level: 3, name: 'Motorsport ECU', cost: 45000, torqueScale: 1.10, redlineAdd: 225, boostAdd: 0.12, spriteKey: 'tuningPartEcuL3', benefit: '+10% output / full control' },
+      { level: 1, name: 'Street reflash', cost: 12000, torqueScale: 1.03, redlineAdd: 50, boostAdd: 0.03, spriteKey: 'tuningPartEcuL1', benefit: '+3% output / sharper tune' },
+      { level: 2, name: 'Dyno tune', cost: 35000, torqueScale: 1.04, redlineAdd: 125, boostAdd: 0.05, spriteKey: 'tuningPartEcuL2', benefit: '+4% output / more boost' },
+      { level: 3, name: 'Motorsport ECU', cost: 85000, torqueScale: 1.07, redlineAdd: 225, boostAdd: 0.10, spriteKey: 'tuningPartEcuL3', benefit: '+7% output / full control' },
     ],
   },
   turbo: {
@@ -42,9 +42,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'FORCED INDUCTION',
     levels: [
       { level: 0, name: 'Factory setup', cost: 0, naBoost: 0, factoryBoostAdd: 0, size: 0, spoolScale: 1.00, benefit: 'Stock aspiration' },
-      { level: 1, name: 'Street turbo kit', cost: 35000, naBoost: 0.28, factoryBoostAdd: 0.12, size: 0.42, spoolScale: 1.08, spriteKey: 'tuningPartTurboL1', benefit: 'Fast-spool street boost' },
-      { level: 2, name: 'Ball-bearing turbo', cost: 70000, naBoost: 0.52, factoryBoostAdd: 0.25, size: 0.58, spoolScale: 1.00, spriteKey: 'tuningPartTurboL2', benefit: 'Strong mid / top end' },
-      { level: 3, name: 'Big turbo', cost: 125000, naBoost: 0.82, factoryBoostAdd: 0.42, size: 0.74, spoolScale: 0.92, spriteKey: 'tuningPartTurboL3', benefit: 'Maximum peak power' },
+      { level: 1, name: 'Street turbo kit', cost: 40000, naBoost: 0.25, factoryBoostAdd: 0.10, size: 0.42, spoolScale: 1.08, spriteKey: 'tuningPartTurboL1', benefit: 'Fast-spool street boost' },
+      { level: 2, name: 'Ball-bearing turbo', cost: 110000, naBoost: 0.45, factoryBoostAdd: 0.18, size: 0.58, spoolScale: 1.00, spriteKey: 'tuningPartTurboL2', benefit: 'Strong mid / top end' },
+      { level: 3, name: 'Big turbo', cost: 230000, naBoost: 0.75, factoryBoostAdd: 0.36, size: 0.74, spoolScale: 0.92, spriteKey: 'tuningPartTurboL3', benefit: 'Maximum peak power' },
     ],
   },
   intercooler: {
@@ -53,9 +53,9 @@ export const ENGINE_TUNING_PARTS = {
     subtitle: 'CHARGE COOLING',
     levels: [
       { level: 0, name: 'Factory cooling', cost: 0, torqueScale: 1.00, spoolScale: 1.00, spriteKey: 'tuningPartIntercoolerL0', benefit: 'Stock charge cooling' },
-      { level: 1, name: 'Upgraded core', cost: 12000, torqueScale: 1.01, spoolScale: 1.01, spriteKey: 'tuningPartIntercoolerL1', benefit: '+1% output / consistency' },
-      { level: 2, name: 'Front-mount kit', cost: 26000, torqueScale: 1.025, spoolScale: 1.03, spriteKey: 'tuningPartIntercoolerL2', benefit: '+2.5% output / response' },
-      { level: 3, name: 'Race intercooler', cost: 50000, torqueScale: 1.04, spoolScale: 1.05, spriteKey: 'tuningPartIntercoolerL3', benefit: '+4% output / response' },
+      { level: 1, name: 'Upgraded core', cost: 15000, torqueScale: 1.01, spoolScale: 1.01, spriteKey: 'tuningPartIntercoolerL1', benefit: '+1% output / consistency' },
+      { level: 2, name: 'Front-mount kit', cost: 40000, torqueScale: 1.02, spoolScale: 1.03, spriteKey: 'tuningPartIntercoolerL2', benefit: '+2% output / response' },
+      { level: 3, name: 'Race intercooler', cost: 90000, torqueScale: 1.035, spoolScale: 1.05, spriteKey: 'tuningPartIntercoolerL3', benefit: '+3.5% output / response' },
     ],
   },
 };
