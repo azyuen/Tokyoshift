@@ -58,9 +58,17 @@ export const CENTRAL_TOKYO_LOCATION_ORDER = [
 
 const MARKET_BASE_PRICES = {
   ae86: 950000,
+  ef: 1150000,
   ek9: 1450000,
+  rx7fb: 1500000,
   fc3s: 1850000,
+  rx8: 2050000,
+  gr86: 3200000,
+  rx7fd: 4200000,
   evo3: 2800000,
+  evo5: 3900000,
+  evo6: 4500000,
+  evo9: 5600000,
   wrx22b: 6200000,
   r32: 7200000,
 };
@@ -110,11 +118,31 @@ const MARKET_BUILDS = {
   },
 };
 
+// New dealership entries use the matching drivetrain's street build recipe.
+Object.assign(MARKET_BUILDS, {
+  ef: MARKET_BUILDS.ek9,
+  rx7fb: MARKET_BUILDS.fc3s,
+  rx7fd: MARKET_BUILDS.fc3s,
+  rx8: MARKET_BUILDS.fc3s,
+  gr86: MARKET_BUILDS.ae86,
+  evo5: MARKET_BUILDS.evo3,
+  evo6: MARKET_BUILDS.evo3,
+  evo9: MARKET_BUILDS.evo3,
+});
+
 export const AUTO_MARKET_LISTINGS = [
   { carId: 'ae86', price: 1150000, buildLabel: 'LIGHT STREET BUILD' },
+  { carId: 'ef', price: 1400000, buildLabel: 'VTEC STREET BUILD' },
   { carId: 'ek9', price: 1750000, buildLabel: 'STAGE 1 STREET BUILD' },
+  { carId: 'rx7fb', price: 1900000, buildLabel: 'ROTARY STREET BUILD' },
   { carId: 'fc3s', price: 2350000, buildLabel: 'TURBO STREET BUILD' },
+  { carId: 'rx8', price: 2600000, buildLabel: 'ROTARY STREET BUILD' },
   { carId: 'evo3', price: 3450000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'gr86', price: 3850000, buildLabel: 'FR STREET BUILD' },
+  { carId: 'rx7fd', price: 4900000, buildLabel: 'TWIN TURBO BUILD' },
+  { carId: 'evo5', price: 4700000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'evo6', price: 5400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'evo9', price: 6700000, buildLabel: 'MIVEC STREET BUILD' },
   { carId: 'wrx22b', price: 7200000, buildLabel: 'PERFORMANCE BUILD' },
   { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
 ];
@@ -361,9 +389,17 @@ export function getPendingCentralTokyoInvite(source) {
 
 export const CAR_COUPON_REQUIREMENTS = {
   ae86: 2,
+  ef: 2,
   ek9: 2,
+  rx7fb: 2,
   fc3s: 2,
+  rx8: 2,
+  gr86: 2,
+  rx7fd: 3,
   evo3: 2,
+  evo5: 3,
+  evo6: 3,
+  evo9: 3,
   wrx22b: 2,
   r32: 3,
 };

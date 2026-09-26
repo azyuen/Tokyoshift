@@ -1,6 +1,6 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
-import { engines } from '../data/engines.js?v=20260924-r164';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { engines } from '../data/engines.js?v=20260927-r216';
 import {
   characters,
   genericRivalCharacterOrder,
@@ -17,9 +17,9 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260925-r193';
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260926-r209';
+import { createVisualModLayers } from '../data/visualMods.js?v=20260927-r216';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -39,7 +39,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r215';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
+import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,

@@ -1,6 +1,6 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
-import { engines } from '../data/engines.js?v=20260924-r164';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { engines } from '../data/engines.js?v=20260927-r216';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   ENGINE_PART_ORDER,
@@ -70,7 +70,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
-} from '../vehicles/CarAppearance.js?v=20260925-r193';
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -80,7 +80,7 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260926-r209';
+} from '../data/visualMods.js?v=20260927-r216';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 
@@ -2629,9 +2629,8 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPaintMenuButton.on('pointerdown', () => this.openChassisPaintPanel());
 
-    // Generic visual-mod slots. AE86 now uses production PNG body-kit/spoiler
-    // layers; Evo III keeps the earlier proof-of-concept generated assets.
-    // Each available row cycles independently through STOCK and its options.
+    // Authored full-body kit pairs share the stock canvas and paint tint.
+    // Each available row cycles through STOCK and its two options.
     const visualCatalog = getVisualModCatalog(this.selectedCarId);
     if (visualCatalog) {
       getVisualModSlotIds(this.selectedCarId).forEach((slotId, index) => {
@@ -3381,9 +3380,7 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisAssetStatusText?.setText(
       ready
         ? 'LIVE PREVIEW // PHASER TINT'
-        : this.selectedCarId === 'ae86'
-          ? 'UPLOAD ae86_body_paint.png + ae86_body_outline.png TO ENABLE'
-          : 'PAINT LAYERS NOT BUILT FOR THIS CAR YET'
+        : 'PAINT LAYERS NOT AVAILABLE FOR THIS CAR'
     ).setColor(ready ? '#62e8c7' : '#ffbc71');
 
     this.chassisPresetButtons.forEach(item => {

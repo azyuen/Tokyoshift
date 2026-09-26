@@ -1,6 +1,6 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
-import { engines } from '../data/engines.js?v=20260924-r164';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { engines } from '../data/engines.js?v=20260927-r216';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 import {
@@ -9,7 +9,7 @@ import {
   normalisePaintColor,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260925-r193';
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import {
   characters,
   getRivalCharacterOrderForRegion,
@@ -1585,11 +1585,11 @@ export default class MeetScene extends Phaser.Scene {
 
   getEventCarBand(rating = 3) {
     const bands = {
-      1: ['ae86', 'ek9'],
-      2: ['ae86', 'ek9', 'fc3s'],
-      3: ['ek9', 'fc3s', 'evo3'],
-      4: ['fc3s', 'evo3', 'wrx22b', 'r32'],
-      5: ['evo3', 'wrx22b', 'r32'],
+      1: ['ae86', 'ef', 'ek9', 'rx7fb'],
+      2: ['ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx8'],
+      3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
+      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32'],
+      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32'],
     };
     return bands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || bands[3];
   }
@@ -2404,11 +2404,11 @@ export default class MeetScene extends Phaser.Scene {
     const usedRivalCars = new Set();
 
     const carBands = {
-      1: ['ae86', 'ek9'],
-      2: ['ae86', 'ek9', 'fc3s'],
-      3: ['ek9', 'fc3s', 'evo3'],
-      4: ['fc3s', 'evo3', 'wrx22b', 'r32'],
-      5: ['evo3', 'wrx22b', 'r32'],
+      1: ['ae86', 'ef', 'ek9', 'rx7fb'],
+      2: ['ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx8'],
+      3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
+      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32'],
+      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32'],
     };
 
     const chooseCharacterForRating = rating => {
@@ -2434,7 +2434,7 @@ export default class MeetScene extends Phaser.Scene {
     const chooseCarForEncounter = rating => {
       const band = carBands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || carBands[3];
       const likely = profile.likelyCars.filter(id => band.includes(id) && cars[id]);
-      const primary = likely.length ? likely : band.filter(id => cars[id]);
+      const primary = [...new Set([...likely, ...band.filter(id => cars[id])])];
 
       const tiers = [
         primary.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),

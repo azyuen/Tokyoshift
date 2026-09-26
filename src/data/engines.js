@@ -1,4 +1,53 @@
 export const engines = {
+  '12a': {
+    id: '12a', name: 'Mazda 12A Rotary', idleRPM: 900, redlineRPM: 7000,
+    limiterRPM: 7200, inertia: 0.14, referenceBoostBar: 0,
+    offBoostTorqueFraction: 1,
+    torqueCurve: [[1000, 78], [2000, 105], [3000, 128], [4000, 147],
+      [5000, 152], [6000, 145], [7000, 125], [7200, 115]],
+  },
+  '13brew': {
+    id: '13brew', name: 'Mazda 13B-REW Twin Turbo', idleRPM: 850,
+    redlineRPM: 8000, limiterRPM: 8200, inertia: 0.15,
+    referenceBoostBar: 0.85, offBoostTorqueFraction: 0.54,
+    torqueCurve: [[1000, 110], [2000, 160], [3000, 235], [4500, 294],
+      [5500, 290], [6500, 280], [8000, 245], [8200, 228]],
+  },
+  '13b_msp': {
+    id: '13b_msp', name: 'Mazda 13B-MSP RENESIS', idleRPM: 900,
+    redlineRPM: 9000, limiterRPM: 9200, inertia: 0.14,
+    referenceBoostBar: 0, offBoostTorqueFraction: 1,
+    torqueCurve: [[1000, 100], [2000, 130], [3000, 160], [4000, 190],
+      [5500, 211], [7000, 205], [8200, 198], [9000, 178], [9200, 165]],
+  },
+  'b16a': {
+    id: 'b16a', name: 'Honda B16A VTEC', idleRPM: 850,
+    redlineRPM: 8000, limiterRPM: 8200, inertia: 0.16,
+    referenceBoostBar: 0, offBoostTorqueFraction: 1,
+    torqueCurve: [[1000, 78], [2000, 96], [3000, 112], [4000, 124],
+      [5500, 139], [6500, 150], [7500, 147], [8000, 137], [8200, 126]],
+  },
+  'fa24': {
+    id: 'fa24', name: 'Toyota FA24 Boxer', idleRPM: 850,
+    redlineRPM: 7400, limiterRPM: 7600, inertia: 0.20,
+    referenceBoostBar: 0, offBoostTorqueFraction: 1,
+    torqueCurve: [[1000, 155], [2000, 200], [3000, 230], [4000, 245],
+      [5000, 250], [6000, 238], [7000, 228], [7400, 210], [7600, 196]],
+  },
+  '4g63t_late': {
+    id: '4g63t_late', name: 'Mitsubishi 4G63T Evolution', idleRPM: 850,
+    redlineRPM: 7500, limiterRPM: 7700, inertia: 0.20,
+    referenceBoostBar: 0.92, offBoostTorqueFraction: 0.5,
+    torqueCurve: [[1000, 145], [2000, 220], [3000, 335], [3500, 373],
+      [4500, 370], [5500, 345], [6500, 300], [7500, 250], [7700, 230]],
+  },
+  '4g63t_evo9': {
+    id: '4g63t_evo9', name: 'Mitsubishi 4G63T MIVEC', idleRPM: 850,
+    redlineRPM: 7500, limiterRPM: 7700, inertia: 0.20,
+    referenceBoostBar: 1.0, offBoostTorqueFraction: 0.5,
+    torqueCurve: [[1000, 150], [2000, 240], [3000, 350], [3500, 392],
+      [4500, 380], [5500, 350], [6500, 305], [7500, 250], [7700, 230]],
+  },
   '4age': {
     id: '4age',
     name: 'Toyota 4A-GE 1.6L DOHC',

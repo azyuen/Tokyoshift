@@ -54,26 +54,7 @@ export const cars = {
       engineKey: 'stockEngine4AGE',
       wheelKey: 'wheel8Spoke',
 
-      // AE86 production body set. Stock, Body Kit 1 and Body Kit 2 are authored
-      // on the same 1942×809 transparent canvas, so Phaser can swap the matched
-      // paint/details pair without per-layer offsets.
-      modularAssetRoot: 'assets/Cars/ae86',
-      modularAssetStem: 'ae86',
-      bodyPath: 'assets/Cars/ae86/ae86_stock_body.png', // complete-body fallback; stock paint + details is authoritative
-      paintPath: 'assets/Cars/ae86/ae86_stock_paint.png',
-      overlayPath: 'assets/Cars/ae86/ae86_stock_details.png',
-      spoilerPaintPath: null,
-      spoilerPath: null,
-      singleLayerModular: false,
-      stockBodyKit: false,
-      // Spoiler is now a true selectable slot. The base shell itself is clean.
-      stockSpoiler: false,
-      stockSpoilerPaint: false,
-      aeroAboveOverlay: true,
-
-      // Keep the legacy complete-body calibration as a safe fallback. Boot switches
-      // to layeredMasterGeometry when the new stock paint + details pair is loaded.
-      bodyScale: 0.2205,
+      bodyScale: 0.36,
       wheelScale: 0.039,
       rearOffsetX: -365,
       frontOffsetX: 583,
@@ -89,30 +70,6 @@ export const cars = {
       exhaustOffsetX: -650,
       exhaustOffsetY: 244,
 
-      // Source-space geometry measured directly from the new 1942×809 stock
-      // paint/details pair. canvasDisplayScale compensates only for transparent
-      // side padding so a requested display width matches the visible car.
-      layeredMasterGeometry: {
-        bodyScale: 0.2205,
-        canvasDisplayScale: 1.0446,
-
-        bodyRenderOffsetX: 0,
-        bodyRenderOffsetY: 0,
-
-        rearOffsetX: -365,
-        frontOffsetX: 583,
-        wheelOffsetY: 246,
-        rearWheelOffsetX: -365,
-        frontWheelOffsetX: 583,
-        rearWheelOffsetY: 244,
-        frontWheelOffsetY: 247,
-        rearWheelScale: 0.04524,
-        frontWheelScale: 0.04524,
-        rearWheelBackingRadius: 126,
-        frontWheelBackingRadius: 129,
-        exhaustOffsetX: -650,
-        exhaustOffsetY: 244,
-      }
     },
   },
 
@@ -399,7 +356,7 @@ export const cars = {
       // R154 template-compatible Mine's asset pair.
       // These paths intentionally match the uppercase .PNG files uploaded to
       // GitHub. GitHub Pages is case-sensitive.
-      bodyPath: 'assets/Cars/mines_r34_hero_body.PNG',
+      bodyPath: 'assets/Cars/mines_r34_hero_body.png',
       wheelKey: 'heroWheelMinesR34',
       wheelPath: 'assets/wheels/mines_r34_hero_wheel.PNG',
 
@@ -1079,9 +1036,124 @@ export const cars = {
 
 };
 
-// Appearance convention: standard cars use the layered paint system. Unique
-// Ginza collector cars opt into visual.singleBody and load only their fixed
-// one-off body PNG. Future normal cars still default to their car id as stem.
+// Extend the regular roster without changing existing IDs or saved ownership.
+// Physics starts from the closest existing drivetrain; each model then supplies
+// its own mass, engine curve and factory outputs below.
+function addRegularCar(id, templateId, spec) {
+  const template = cars[templateId];
+  cars[id] = {
+    ...template,
+    ...spec,
+    id,
+    visual: { ...template.visual, ...spec.visual },
+  };
+}
+
+addRegularCar('rx7fb', 'fc3s', {
+  shortName: 'RX-7 FB', name: 'Mazda RX-7 FB', description: 'A light, early rotary that rewards clean shifts.',
+  engine: '12a', engineModel: '12A', powerKW: 85, torqueNm: 152, vehicleMassKg: 1080,
+  engineRedlineRPM: 7000, engineLimiterRPM: 7200, turboSize: 0, turboSpoolRate: 0,
+  maximumBoost: 0, launchRPM: 4600, clutchStrength: 330,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+addRegularCar('rx7fd', 'fc3s', {
+  shortName: 'RX-7 FD', name: 'Mazda RX-7 FD3S', description: 'Twin turbo rotary with a sharp, light chassis.',
+  engine: '13brew', engineModel: '13B-REW', powerKW: 206, torqueNm: 294, vehicleMassKg: 1280,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, maximumBoost: 0.85,
+  launchRPM: 5100, visual: { wheelKey: 'wheelDeepDish' },
+});
+addRegularCar('ef', 'ek9', {
+  shortName: 'CIVIC EF', name: 'Honda Civic SiR EF', description: 'A featherweight VTEC hatch for close racing.',
+  engine: 'b16a', engineModel: 'B16A', powerKW: 118, torqueNm: 150, vehicleMassKg: 1010,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5700,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+for (const [id, numeral, powerKW, torqueNm, mass] of [
+  ['evo5', 'V', 206, 373, 1360],
+  ['evo6', 'VI', 206, 373, 1360],
+  ['evo9', 'IX', 206, 392, 1410],
+]) {
+  addRegularCar(id, 'evo3', {
+    shortName: 'EVO ' + numeral,
+    name: 'Mitsubishi Lancer Evolution ' + numeral,
+    description: 'Later generation 4G63T AWD grip and turbo punch.',
+    powerKW, torqueNm, vehicleMassKg: mass,
+    engine: id === 'evo9' ? '4g63t_evo9' : '4g63t_late',
+    engineModel: '4G63T', maximumBoost: id === 'evo9' ? 1.0 : 0.92,
+    visual: { wheelKey: 'wheelMesh' },
+  });
+}
+addRegularCar('gr86', 'ae86', {
+  shortName: 'GR86', name: 'Toyota GR86', description: 'Modern naturally aspirated balance and rear drive.',
+  engine: 'fa24', engineModel: 'FA24', powerKW: 174, torqueNm: 250, vehicleMassKg: 1270,
+  engineRedlineRPM: 7400, engineLimiterRPM: 7600, launchRPM: 4700,
+  gearRatios: [3.626, 2.188, 1.541, 1.213, 1.000, 0.767],
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('rx8', 'fc3s', {
+  shortName: 'RX-8', name: 'Mazda RX-8', description: 'High revving RENESIS rotary with a broad chassis.',
+  engine: '13b_msp', engineModel: '13B-MSP', powerKW: 170, torqueNm: 211, vehicleMassKg: 1370,
+  engineRedlineRPM: 9000, engineLimiterRPM: 9200, turboSize: 0,
+  turboSpoolRate: 0, maximumBoost: 0, launchRPM: 5600,
+  gearRatios: [3.760, 2.269, 1.645, 1.187, 1.000, 0.843],
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+
+// Coordinates refer to the actual 1200 px stock PNG, relative to its centre.
+// Heights differ by model, so the wheel Y values cannot be shared globally.
+// The same source geometry is used by stock and both complete body kit pairs.
+const REGULAR_ASSETS = {
+  ae86: ['ae86', 500, 270, 946, 390, 91],
+  r32: ['r32', 400, 255, 927, 328, 92],
+  evo3: ['evo3', 400, 280, 947, 323, 92],
+  fc3s: ['rx7fc', 600, 262, 926, 447, 103],
+  wrx22b: ['22b', 400, 307, 928, 314, 91],
+  ek9: ['ek9', 500, 198, 933, 394, 99],
+  rx7fb: ['rx7fb', 600, 292, 958, 437, 103],
+  rx7fd: ['rx7fd', 600, 270, 974, 438, 105],
+  ef: ['ef', 500, 232, 960, 391, 103],
+  evo5: ['evo5', 400, 279, 918, 325, 91],
+  evo6: ['evo6', 400, 258, 905, 323, 91],
+  evo9: ['evo9', 400, 235, 916, 324, 92],
+  gr86: ['gr86', 500, 248, 936, 393, 98],
+  rx8: ['rx8', 400, 245, 943, 326, 97],
+};
+
+Object.entries(REGULAR_ASSETS).forEach(([id, [stem, height, rearX, frontX, axleY, radius]]) => {
+  const visual = cars[id].visual;
+  const rearOffsetX = rearX - 600;
+  const frontOffsetX = frontX - 600;
+  const wheelOffsetY = axleY - height / 2;
+  Object.assign(visual, {
+    assetStem: stem,
+    modularAssetRoot: 'assets/Cars',
+    modularAssetStem: stem,
+    bodyPath: `assets/Cars/${stem}_stock_body.png`,
+    paintPath: `assets/Cars/${stem}_stock_paint.png`,
+    overlayPath: `assets/Cars/${stem}_stock_body.png`,
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: 1,
+    bodyScale: 0.36,
+    wheelFitMode: 'visible-well',
+    rearOffsetX, frontOffsetX, wheelOffsetY,
+    rearWheelOffsetX: rearOffsetX,
+    frontWheelOffsetX: frontOffsetX,
+    rearWheelOffsetY: wheelOffsetY,
+    frontWheelOffsetY: wheelOffsetY,
+    rearWheelWellRadius: radius,
+    frontWheelWellRadius: radius,
+    rearWheelBackingRadius: radius,
+    frontWheelBackingRadius: radius,
+    exhaustOffsetX: -540,
+    exhaustOffsetY: wheelOffsetY + radius * 0.75,
+  });
+});
+
+// Unique collector cars keep their existing fixed body and wheel assets.
 Object.values(cars).forEach(car => {
   car.visual = {
     ...(car.visual || {}),
@@ -1089,4 +1161,7 @@ Object.values(cars).forEach(car => {
   };
 });
 
-export const carOrder = ['ae86', 'r32', 'evo3', 'fc3s', 'wrx22b', 'ek9'];
+export const carOrder = [
+  'ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx7fd', 'rx8', 'gr86',
+  'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32',
+];

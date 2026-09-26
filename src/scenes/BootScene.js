@@ -1,6 +1,6 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260926-r202';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   createDefaultGameState,
@@ -9,7 +9,7 @@ import {
   getProfileSlots,
 } from '../state/GameState.js?v=20260926-r214';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r209';
+import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260927-r216';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
 
 export default class BootScene extends Phaser.Scene {
@@ -47,8 +47,8 @@ export default class BootScene extends Phaser.Scene {
     const initialCars = Object.fromEntries(
       Object.entries(cars).filter(([id]) => carOrder.includes(id) || owned.has(id))
     );
-    preloadCarAppearanceAssets(this, initialCars, '20260925-r193');
-    preloadVisualModAssets(this, '20260926-r201');
+    preloadCarAppearanceAssets(this, initialCars, '20260927-r216');
+    preloadVisualModAssets(this, '20260927-r216');
 
     this.load.image('wheel8Spoke', 'assets/wheels/wheel_8spoke.png');
     this.load.image('wheel5Spoke', 'assets/wheels/wheel_5spoke.png');
