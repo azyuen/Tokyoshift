@@ -246,50 +246,10 @@ function getAe86CanonicalModTextureKey(sourceKey) {
 }
 
 function ensureAe86CanonicalModTexture(scene, sourceKey) {
-  if (!sourceKey || !scene?.textures?.exists?.(sourceKey)) return sourceKey;
-
-  const targetKey = getAe86CanonicalModTextureKey(sourceKey);
-  if (scene.textures.exists(targetKey)) return targetKey;
-  if (typeof document === 'undefined') return sourceKey;
-
-  const source = scene.textures.get(sourceKey).getSourceImage();
-  const sourceWidth = Number(source?.naturalWidth || source?.width || 0);
-  const sourceHeight = Number(source?.naturalHeight || source?.height || 0);
-  if (!sourceWidth || !sourceHeight) return sourceKey;
-
-  try {
-    const width = AE86_CANONICAL_MOD_CANVAS.width;
-    const height = AE86_CANONICAL_MOD_CANVAS.height;
-    const texture = scene.textures.createCanvas(targetKey, width, height);
-    const ctx = texture.getContext();
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.imageSmoothingEnabled = false;
-
-    // The production AE86 stock/body-kit pairs are all authored on the same
-    // 1942×809 canvas. Canonicalise to that exact canvas once so every scene
-    // receives identical dimensions, origin and registration.
-    ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight, 0, 0, width, height);
-
-    // These are replacement body panels, not translucent decals. Some image
-    // exporters leave low-alpha pixels inside otherwise solid white/grey parts.
-    // Convert every meaningful authored pixel to fully opaque while retaining
-    // true transparent background pixels. A tiny threshold also removes faint
-    // anti-alias halos around the isolated part.
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const pixels = imageData.data;
-    for (let i = 0; i < pixels.length; i += 4) {
-      const alpha = pixels[i + 3];
-      pixels[i + 3] = alpha >= 8 ? 255 : 0;
-    }
-    ctx.putImageData(imageData, 0, 0);
-    texture.refresh();
-    return targetKey;
-  } catch (error) {
-    console.warn('Could not canonicalise AE86 visual-mod texture', sourceKey, error);
-    if (scene.textures.exists(targetKey)) scene.textures.remove(targetKey);
-    return sourceKey;
-  }
+  // R208: the stock/body-kit paint and details files are now authored on the
+  // exact same 1942×809 canvas. Use the uploaded PNG pixels directly: no
+  // resampling, alpha hardening, inset scaling or runtime geometry correction.
+  return sourceKey;
 }
 
 function ensureAe86CanonicalModTextures(scene) {
