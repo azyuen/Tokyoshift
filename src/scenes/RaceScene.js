@@ -24,9 +24,9 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20260925-r195';
+} from '../data/characters.js?v=20260926-r213';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r209';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r213';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -42,10 +42,10 @@ import {
   TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260926-r212';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
+} from '../data/tunerChallenges.js?v=20260926-r213';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r206';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r206';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r213';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
