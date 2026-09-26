@@ -24,10 +24,10 @@ import {
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260924-r178';
+} from '../data/tunerShops.js?v=20260926-r212';
 import {
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260924-r178';
+} from '../data/tunerChallenges.js?v=20260926-r212';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -876,9 +876,23 @@ export function showTravelMap(scene, {
     tunerBadge.removeAllListeners('pointerdown');
 
     if (tunerUnlocked) {
-      tunerKicker.setText('TUNER SHOP').setColor('#c99a4e');
+      tunerKicker
+        .setText(
+          tunerChallenge.perfectEarned
+            ? 'REGIONAL CHAMPION ★'
+            : tunerChallenge.championEarned
+              ? 'REGIONAL CHAMPION'
+              : 'TUNER SHOP'
+        )
+        .setColor(tunerChallenge.championEarned ? '#ffe08a' : '#c99a4e');
       tunerName.setText(tunerShop.label).setColor('#fff1d3');
-      tunerSpecialty.setText(tunerShop.specialty).setColor('#c8b58e');
+      tunerSpecialty
+        .setText(
+          tunerChallenge.championEarned && !tunerChallenge.perfectEarned
+            ? 'PERFECT SWEEP AVAILABLE // VISIT MEET'
+            : tunerShop.specialty
+        )
+        .setColor(tunerChallenge.championEarned ? '#f2d899' : '#c8b58e');
       tunerArrow.setText('>').setVisible(true);
       tunerBadge
         .setInteractive({ useHandCursor: true })

@@ -9,7 +9,8 @@ export const TUNER_TEAM_CHALLENGE_WINS = 10;
 export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 12;
 export const TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER = 1;
 export const TUNER_TEAM_CHALLENGE_STAGES = 7;
-export const TUNER_TEAM_PERFECT_REWARD = 750000;
+export const TUNER_TEAM_COMPLETION_REWARD = 250000;
+export const TUNER_TEAM_PERFECT_REWARD = 250000;
 export const TUNER_TEAM_INVITE_CHANCE = 0.30;
 export const TUNER_TEAM_PITY_ARRIVALS = 4;
 export const TUNER_TEAM_REOFFER_MIN_VISITS = 5;
@@ -121,12 +122,34 @@ export function getTunerTeamChallengeState(source, regionId) {
   const all = sourceValue(source, 'tunerTeamChallenges', {}) || {};
   const raw = all[key] && typeof all[key] === 'object' ? all[key] : {};
 
+  const legacyCompleted = Boolean(raw.completed);
+  const hasNewRewardState =
+    raw.championEarned != null ||
+    raw.perfectEarned != null ||
+    raw.championRewardClaimed != null ||
+    raw.perfectRewardClaimed != null;
+  const championEarned = Boolean(raw.championEarned || legacyCompleted);
+  const legacyPerfect =
+    !hasNewRewardState &&
+    legacyCompleted &&
+    raw.perfectEligible !== false;
+  const perfectEarned = Boolean(raw.perfectEarned || legacyPerfect);
+
   return {
     regionId: key,
     invited: Boolean(raw.invited),
     offeredOnce: Boolean(raw.offeredOnce || raw.invited || Number(raw.stage || 0) > 0),
     reofferVisitsRemaining: Math.max(0, Number(raw.reofferVisitsRemaining || 0)),
-    completed: Boolean(raw.completed),
+    completed: legacyCompleted || championEarned,
+    championEarned,
+    perfectEarned,
+    championRewardClaimed: raw.championRewardClaimed == null
+      ? (!hasNewRewardState && legacyCompleted && legacyPerfect)
+      : Boolean(raw.championRewardClaimed),
+    perfectRewardClaimed: raw.perfectRewardClaimed == null
+      ? legacyPerfect
+      : Boolean(raw.perfectRewardClaimed),
+    perfectAttempt: Boolean(raw.perfectAttempt),
     stage: Math.max(0, Math.min(TUNER_TEAM_CHALLENGE_STAGES, Number(raw.stage || 0))),
     misses: Math.max(0, Number(raw.misses || 0)),
     perfectEligible: raw.perfectEligible !== false,
@@ -136,12 +159,14 @@ export function getTunerTeamChallengeState(source, regionId) {
     offeredAt: String(raw.offeredAt || ''),
     playerCarId: String(raw.playerCarId || ''),
     completedAt: Math.max(0, Number(raw.completedAt || 0)),
+    perfectAt: Math.max(0, Number(raw.perfectAt || 0)),
   };
 }
 
 export function isTunerTeamChallengeEligible(source, regionId) {
   const state = getTunerTeamChallengeState(source, regionId);
-  if (state.completed) return false;
+
+  if (state.championEarned) return !state.perfectEarned;
 
   const regionWins = sourceValue(source, 'regionWins', {}) || {};
   const wins = Math.max(0, Number(regionWins[state.regionId] || 0));
@@ -239,7 +264,11 @@ export function buildTunerTeamChallengeRounds(regionId, playerCharacterId = '') 
 
 export function getTunerTeamChallengeLabel(source, regionId) {
   const state = getTunerTeamChallengeState(source, regionId);
-  if (state.completed) return 'UNLOCKED';
+  if (state.perfectEarned) return 'REGIONAL CHAMPION ★';
+  if (state.championEarned && state.perfectAttempt) {
+    return 'PERFECT SWEEP // ' + state.stage + ' / ' + TUNER_TEAM_CHALLENGE_STAGES;
+  }
+  if (state.championEarned) return 'REGIONAL CHAMPION';
   if (state.invited || state.stage > 0) {
     return 'TEAM CHALLENGE // ' + state.stage + ' / ' + TUNER_TEAM_CHALLENGE_STAGES;
   }

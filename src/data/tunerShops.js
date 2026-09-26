@@ -1,7 +1,7 @@
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
-} from './tunerChallenges.js?v=20260926-r203';
+} from './tunerChallenges.js?v=20260926-r212';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {

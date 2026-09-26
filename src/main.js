@@ -1,12 +1,12 @@
 import BootScene from './scenes/BootScene.js?v=20260926-r209';
 import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260926-r204';
-import GarageScene from './scenes/GarageScene.js?v=20260926-r211';
-import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260926-r211';
-import MeetScene from './scenes/MeetScene.js?v=20260926-r211';
-import RaceScene from './scenes/RaceScene.js?v=20260926-r211';
+import GarageScene from './scenes/GarageScene.js?v=20260926-r212';
+import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260926-r212';
+import MeetScene from './scenes/MeetScene.js?v=20260926-r212';
+import RaceScene from './scenes/RaceScene.js?v=20260926-r212';
 import RunOverScene from './scenes/RunOverScene.js?v=20260926-r204';
 import ResultScene from './scenes/ResultScene.js?v=20260924-r171';
-import TunerShopScene from './scenes/TunerShopScene.js?v=20260926-r211';
+import TunerShopScene from './scenes/TunerShopScene.js?v=20260926-r212';
 import ProfileCalibrationScene from './scenes/ProfileCalibrationScene.js?v=20260925-r195';
 
 

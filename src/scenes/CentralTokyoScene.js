@@ -23,7 +23,7 @@ import { createVisualModLayers } from '../data/visualMods.js?v=20260926-r209';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import { saveSessionState } from '../state/GameState.js?v=20260926-r204';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r211';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
   getGarageCapacity,
@@ -60,7 +60,7 @@ import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260924-r178';
+} from '../data/tunerShops.js?v=20260926-r212';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

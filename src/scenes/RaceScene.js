@@ -36,12 +36,13 @@ import {
   boostAiForStandingStart,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { getCarCouponRequirement } from '../data/centralTokyo.js?v=20260926-r211';
-import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260924-r178';
+import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260926-r212';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
+  TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260926-r203';
+} from '../data/tunerChallenges.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r206';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r206';
@@ -2163,10 +2164,15 @@ export default class RaceScene extends Phaser.Scene {
 
       if (settlement.teamChallenge) {
         if (settlement.teamChallengeFailed) {
-          return {
-            primary: 'CHALLENGE\nPAUSED',
-            secondary: settlement.progress + ' / 7 DEFEATED // YOU CAN RESUME LATER',
-          };
+          return settlement.teamChallengePerfectAttempt
+            ? {
+                primary: 'PERFECT SWEEP\nRESET',
+                secondary: 'REGIONAL CHAMPION BADGE KEPT // START AGAIN AT 0 / 7',
+              }
+            : {
+                primary: 'CHALLENGE\nPAUSED',
+                secondary: settlement.progress + ' / 7 DEFEATED // YOU CAN RESUME LATER',
+              };
         }
 
         if (settlement.teamChallengeContinues) {
@@ -2177,11 +2183,26 @@ export default class RaceScene extends Phaser.Scene {
         }
 
         if (settlement.teamChallengeCompleted) {
+          const donor = String(settlement.donorLabel || 'DONOR CAR').toUpperCase();
+          const couponText = settlement.couponAwards > 0
+            ? donor + ' COUPON ' +
+              settlement.couponCount + ' / ' + settlement.couponRequired
+            : donor + ' COUPON ALREADY CLAIMED';
+
+          if (settlement.teamChallengePerfect) {
+            return {
+              primary: 'PERFECT 7–0 ★\n+¥' +
+                Number(settlement.totalReward || 0).toLocaleString('en-US'),
+              secondary:
+                'REGIONAL CHAMPION ★ // ' + couponText,
+            };
+          }
+
           return {
-            primary: settlement.teamChallengePerfect
-              ? 'PERFECT 7–0\n+¥' + Number(settlement.perfectReward || 0).toLocaleString('en-US')
-              : 'TEAM\nCLEARED',
-            secondary: (settlement.shopLabel || 'TUNER SHOP') + ' ACCESS UNLOCKED',
+            primary: 'REGIONAL CHAMPION\n+¥' +
+              Number(settlement.completionReward || 0).toLocaleString('en-US'),
+            secondary:
+              'CHAMPION BADGE EARNED // ' + couponText,
           };
         }
       }
@@ -2932,11 +2953,20 @@ export default class RaceScene extends Phaser.Scene {
       const stageNumber = stageIndex + 1;
 
       if (!playerWon) {
+        const perfectAttempt = Boolean(
+          current.perfectAttempt ||
+          (current.championEarned && !current.perfectEarned)
+        );
+
         store[regionId] = {
           ...current,
           invited: true,
           activeSession: false,
-          perfectEligible: false,
+          // Normal first-clear progress remains permanent. A post-champion
+          // perfect-sweep attempt is a true streak, so a loss restarts it at 0.
+          stage: perfectAttempt ? 0 : stageIndex,
+          perfectAttempt: false,
+          perfectEligible: perfectAttempt ? true : false,
           retryNotBefore: Date.now() + 60000,
         };
         this.registry.set('tunerTeamChallenges', store);
@@ -2952,9 +2982,10 @@ export default class RaceScene extends Phaser.Scene {
           teamChallengeFailed: true,
           teamChallengeContinues: false,
           teamChallengeCompleted: false,
+          teamChallengePerfectAttempt: perfectAttempt,
           regionId,
           stageNumber,
-          progress: stageIndex,
+          progress: perfectAttempt ? 0 : stageIndex,
         };
         return this.raceSettlement;
       }
@@ -2990,22 +3021,67 @@ export default class RaceScene extends Phaser.Scene {
       }
 
       const perfect = current.perfectEligible !== false;
-      const perfectReward = perfect ? TUNER_TEAM_PERFECT_REWARD : 0;
-      const newCash = oldCash + perfectReward;
+      const wasChampion = Boolean(current.championEarned);
+      const completionReward = current.championRewardClaimed
+        ? 0
+        : TUNER_TEAM_COMPLETION_REWARD;
+      const perfectReward = perfect && !current.perfectRewardClaimed
+        ? TUNER_TEAM_PERFECT_REWARD
+        : 0;
+      const totalReward = completionReward + perfectReward;
+      const newCash = oldCash + totalReward;
       const shop = getTunerShopForRegion(regionId);
+
+      const donorCarId = String(shop?.donorCarId || '');
+      const donorLabel = String(shop?.donorLabel || donorCarId || 'REGIONAL DONOR CAR');
+      const couponAwards =
+        (completionReward > 0 ? 1 : 0) +
+        (perfectReward > 0 ? 1 : 0);
+      let couponCount = 0;
+      let couponRequired = donorCarId ? getCarCouponRequirement(donorCarId) : 0;
+
+      if (donorCarId && couponAwards > 0) {
+        const coupons = { ...(this.registry.get('carCoupons') || {}) };
+        couponCount = Math.max(0, Number(coupons[donorCarId] || 0)) + couponAwards;
+        coupons[donorCarId] = couponCount;
+        this.registry.set('carCoupons', coupons);
+      } else if (donorCarId) {
+        couponCount = Math.max(
+          0,
+          Number((this.registry.get('carCoupons') || {})[donorCarId] || 0)
+        );
+      }
 
       store[regionId] = {
         ...current,
-        invited: true,
+        invited: false,
         activeSession: false,
         completed: true,
+        championEarned: true,
+        perfectEarned: Boolean(current.perfectEarned || perfect),
+        championRewardClaimed: Boolean(
+          current.championRewardClaimed || completionReward > 0
+        ),
+        perfectRewardClaimed: Boolean(
+          current.perfectRewardClaimed || perfectReward > 0
+        ),
+        perfectAttempt: false,
         stage: TUNER_TEAM_CHALLENGE_STAGES,
-        completedAt: Date.now(),
+        completedAt: current.completedAt || Date.now(),
+        perfectAt: perfect
+          ? (current.perfectAt || Date.now())
+          : Number(current.perfectAt || 0),
+        // After an imperfect first clear, offer the optional perfect sweep again
+        // after the player actually leaves and returns to the region.
+        reofferVisitsRemaining: perfect ? 0 : 1,
         retryNotBefore: 0,
       };
       this.registry.set('tunerTeamChallenges', store);
       this.registry.set('cash', newCash);
-      this.registry.set('tunerChallengeRevealPending', regionId);
+
+      if (!wasChampion) {
+        this.registry.set('tunerChallengeRevealPending', regionId);
+      }
 
       if (shop) {
         const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
@@ -3013,7 +3089,7 @@ export default class RaceScene extends Phaser.Scene {
           ...(progress[shop.id] || {}),
           discovered: true,
           unlockedByChallenge: true,
-          unlockedAt: Date.now(),
+          unlockedAt: progress[shop.id]?.unlockedAt || Date.now(),
         };
         this.registry.set('tunerShopProgress', progress);
       }
@@ -3022,7 +3098,7 @@ export default class RaceScene extends Phaser.Scene {
 
       this.raceSettlement = {
         playerWon: true,
-        cashDelta: perfectReward,
+        cashDelta: totalReward,
         cash: newCash,
         pinkMessage: '',
         gameOver: false,
@@ -3030,8 +3106,17 @@ export default class RaceScene extends Phaser.Scene {
         teamChallengeFailed: false,
         teamChallengeContinues: false,
         teamChallengeCompleted: true,
+        teamChallengeFirstClear: !wasChampion,
         teamChallengePerfect: perfect,
+        completionReward,
         perfectReward,
+        totalReward,
+        couponAwards,
+        donorCarId,
+        donorLabel,
+        couponCount,
+        couponRequired,
+        badgeLabel: perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION',
         regionId,
         stageNumber: TUNER_TEAM_CHALLENGE_STAGES,
         progress: TUNER_TEAM_CHALLENGE_STAGES,
