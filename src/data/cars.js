@@ -73,46 +73,45 @@ export const cars = {
 
       // Keep the legacy complete-body calibration as a safe fallback. Boot switches
       // to layeredMasterGeometry when the new stock paint + details pair is loaded.
-      bodyScale: 0.165,
+      bodyScale: 0.2205,
       wheelScale: 0.039,
-      rearOffsetX: -600,
+      rearOffsetX: -365,
       frontOffsetX: 583,
-      wheelOffsetY: 184,
-      rearWheelOffsetX: -600,
+      wheelOffsetY: 246,
+      rearWheelOffsetX: -365,
       frontWheelOffsetX: 583,
-      rearWheelOffsetY: 184,
-      frontWheelOffsetY: 184,
+      rearWheelOffsetY: 244,
+      frontWheelOffsetY: 247,
       rearWheelScale: 0.04524,
       frontWheelScale: 0.04524,
-      rearWheelBackingRadius: 160,
-      frontWheelBackingRadius: 160,
-      exhaustOffsetX: -970,
-      exhaustOffsetY: 159,
+      rearWheelBackingRadius: 126,
+      frontWheelBackingRadius: 129,
+      exhaustOffsetX: -650,
+      exhaustOffsetY: 244,
 
-      // Source-space geometry converted from the previous 2400×1000 master to
-      // the new 1942×809 authored canvas. canvasDisplayScale preserves the
-      // same visible car width while the wheel centres remain registered to
-      // the new stock artwork.
+      // Source-space geometry measured directly from the new 1942×809 stock
+      // paint/details pair. canvasDisplayScale compensates only for transparent
+      // side padding so a requested display width matches the visible car.
       layeredMasterGeometry: {
-        bodyScale: 0.22047,
-        canvasDisplayScale: 1.1946,
+        bodyScale: 0.2205,
+        canvasDisplayScale: 1.0446,
 
         bodyRenderOffsetX: 0,
         bodyRenderOffsetY: 0,
 
-        rearOffsetX: -362,
+        rearOffsetX: -365,
         frontOffsetX: 583,
-        wheelOffsetY: 252,
-        rearWheelOffsetX: -362,
+        wheelOffsetY: 246,
+        rearWheelOffsetX: -365,
         frontWheelOffsetX: 583,
-        rearWheelOffsetY: 250,
-        frontWheelOffsetY: 252,
+        rearWheelOffsetY: 244,
+        frontWheelOffsetY: 247,
         rearWheelScale: 0.04524,
         frontWheelScale: 0.04524,
         rearWheelBackingRadius: 126,
         frontWheelBackingRadius: 129,
-        exhaustOffsetX: -664,
-        exhaustOffsetY: 254,
+        exhaustOffsetX: -650,
+        exhaustOffsetY: 244,
       }
     },
   },
