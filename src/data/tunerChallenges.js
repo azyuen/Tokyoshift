@@ -2,7 +2,7 @@ import {
   characters,
   REGION_TEAM_CHARACTER_IDS,
   genericRivalCharacterOrder,
-} from './characters.js?v=20260925-r195';
+} from './characters.js?v=20260926-r213';
 import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
 
 export const TUNER_TEAM_CHALLENGE_WINS = 10;
@@ -32,7 +32,7 @@ const REGION_OFFSETS = {
   SHIBUYA: 3,
   SHINJUKU: 4,
   YOKOHAMA: 5,
-  DAIKOKU: 6,
+  DAIKOKU: 0,
 };
 
 const REGION_CARS = {
