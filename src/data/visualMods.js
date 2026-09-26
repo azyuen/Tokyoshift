@@ -97,7 +97,7 @@ export const VISUAL_MOD_CATALOG = {
           { id: 'stock', name: 'STOCK BODY', price: 0, layers: [] },
           {
             id: 'street',
-            name: 'STREET KIT',
+            name: 'BODY KIT 1',
             price: 65000,
             replacementBody: true,
             layers: [
@@ -121,7 +121,7 @@ export const VISUAL_MOD_CATALOG = {
           },
           {
             id: 'rocketBunny',
-            name: 'ROCKET BUNNY',
+            name: 'BODY KIT 2',
             price: 120000,
             replacementBody: true,
             layers: [
