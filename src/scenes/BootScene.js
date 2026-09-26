@@ -1,5 +1,5 @@
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { cars, carOrder } from '../data/cars.js?v=20260925-r193';
+import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { characters } from '../data/characters.js?v=20260925-r195';
 import {
@@ -10,7 +10,7 @@ import {
   getProfileSlots,
 } from '../state/GameState.js?v=20260926-r209';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r201';
+import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r209';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
 
 export default class BootScene extends Phaser.Scene {
