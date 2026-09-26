@@ -55,7 +55,7 @@ import {
   TUNER_TEAM_PITY_ARRIVALS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
-} from '../data/tunerChallenges.js?v=20260925-r195';
+} from '../data/tunerChallenges.js?v=20260926-r213';
 import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
