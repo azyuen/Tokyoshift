@@ -87,10 +87,9 @@ export const VISUAL_MOD_CATALOG = {
   },
 
   ae86: {
-    // AE86 body kits are complete matched body variants: each purchase swaps
-    // the stock paint + outline pair for a new paint + outline pair on the same
-    // canonical master canvas. Spoilers/scoops are intentionally bundled into
-    // the variant artwork so there is only one registration-critical choice.
+    // AE86 body-kit choices are complete matched body variants. All three
+    // variants use the same 1942×809 canvas/origin: stock paint + details are
+    // the base car, while each body-kit option replaces that pair wholesale.
     slots: {
       bodyKit: {
         label: 'BODY KIT',
@@ -103,21 +102,19 @@ export const VISUAL_MOD_CATALOG = {
             replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_street_paint',
-                path: 'assets/Cars/ae86/ae86_bodykit_street_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_1_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_1_paint.png',
                 paintMode: 'body',
-                // The generated paint/outline pair is 1942×809 while the
-                // canonical AE86 master is 2400×1000. Runtime canonicalisation
-                // expands both to the master canvas; a tiny paint underlay
-                // inset prevents the fill edge peeking outside its outline.
-                scaleX: 0.985,
-                scaleY: 0.985,
+                scaleX: 1,
+                scaleY: 1,
                 aboveOverlay: true,
               },
               {
-                textureKey: 'visualMod_ae86_bodykit_street_outline',
-                path: 'assets/Cars/ae86/ae86_bodykit_street_outline.png',
+                textureKey: 'visualMod_ae86_bodykit_1_details',
+                path: 'assets/Cars/ae86/ae86_bodykit_1_details.png',
                 paintMode: 'fixed',
+                scaleX: 1,
+                scaleY: 1,
                 aboveOverlay: true,
               },
             ],
@@ -129,17 +126,19 @@ export const VISUAL_MOD_CATALOG = {
             replacementBody: true,
             layers: [
               {
-                textureKey: 'visualMod_ae86_bodykit_rocket_paint',
-                path: 'assets/Cars/ae86/ae86_bodykit_rocket_paint.png',
+                textureKey: 'visualMod_ae86_bodykit_2_paint',
+                path: 'assets/Cars/ae86/ae86_bodykit_2_paint.png',
                 paintMode: 'body',
-                scaleX: 0.985,
-                scaleY: 0.985,
+                scaleX: 1,
+                scaleY: 1,
                 aboveOverlay: true,
               },
               {
-                textureKey: 'visualMod_ae86_bodykit_rocket_outline',
-                path: 'assets/Cars/ae86/ae86_bodykit_rocket_outline.png',
+                textureKey: 'visualMod_ae86_bodykit_2_details',
+                path: 'assets/Cars/ae86/ae86_bodykit_2_details.png',
                 paintMode: 'fixed',
+                scaleX: 1,
+                scaleY: 1,
                 aboveOverlay: true,
               },
             ],
@@ -240,7 +239,7 @@ function linePoly(g, colour, alpha, width, points, close = false) {
   g.strokePoints(points.map(([x, y]) => new Phaser.Geom.Point(x, y)), close);
 }
 
-const AE86_CANONICAL_MOD_CANVAS = Object.freeze({ width: 2400, height: 1000 });
+const AE86_CANONICAL_MOD_CANVAS = Object.freeze({ width: 1942, height: 809 });
 
 function getAe86CanonicalModTextureKey(sourceKey) {
   return sourceKey + '__canonicalOpaque';
@@ -267,14 +266,9 @@ function ensureAe86CanonicalModTexture(scene, sourceKey) {
     ctx.clearRect(0, 0, width, height);
     ctx.imageSmoothingEnabled = false;
 
-    // The base AE86 paint + outline are true 2400×1000 masters, while the
-    // newly generated body variants were exported at 1942×809. Treat the
-    // complete source rectangle as the same normalised master canvas and
-    // resample it ONCE into 2400×1000 here. Every downstream scene then sees
-    // exactly the same source dimensions, origin and registration.
-    //
-    // Do not let individual scenes size these PNGs from their native files.
-    // That was the source of the R198 mismatch.
+    // The production AE86 stock/body-kit pairs are all authored on the same
+    // 1942×809 canvas. Canonicalise to that exact canvas once so every scene
+    // receives identical dimensions, origin and registration.
     ctx.drawImage(source, 0, 0, sourceWidth, sourceHeight, 0, 0, width, height);
 
     // These are replacement body panels, not translucent decals. Some image
