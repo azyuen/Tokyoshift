@@ -81,7 +81,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
   getVisualModWheelVisual,
-} from '../data/visualMods.js?v=20260927-r218';
+} from '../data/visualMods.js?v=20260927-r219';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
 

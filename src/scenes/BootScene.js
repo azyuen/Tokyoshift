@@ -9,7 +9,7 @@ import {
   getProfileSlots,
 } from '../state/GameState.js?v=20260926-r214';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260927-r218';
+import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260927-r219';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
 
 export default class BootScene extends Phaser.Scene {

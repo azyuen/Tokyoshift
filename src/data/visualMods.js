@@ -20,6 +20,11 @@ const KIT_ALIGNMENT = {
   wrx22b: [{ scaleX: 0.9734, scaleY: 1.0117, offsetX: -2, offsetY: 6.2 }, { scaleX: 0.6861, scaleY: 0.6892, offsetX: 24.4, offsetY: 26.5 }],
 };
 
+// These cars have been authored around their stock-paint canvas. Every kit
+// layer must inherit that stock layer's complete render transform verbatim.
+// Add models here as their assets are normalised to the same convention.
+const STOCK_CANVAS_KIT_CARS = new Set(['rx7fd']);
+
 // The corrected RX-7 FD kit artwork is registered to rx7fd_stock_paint.png.
 // Only its wheel arches change between stock and kit canvases.
 const KIT_WHEEL_GEOMETRY = {
@@ -60,7 +65,10 @@ export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
     name: 'BODY KIT ' + number,
     price,
     replacementBody: true,
-    transform: KIT_ALIGNMENT[carId]?.[number - 1] || null,
+    layoutMode: STOCK_CANVAS_KIT_CARS.has(carId) ? 'stock-canvas' : 'legacy-calibrated',
+    transform: STOCK_CANVAS_KIT_CARS.has(carId)
+      ? null
+      : (KIT_ALIGNMENT[carId]?.[number - 1] || null),
     wheelGeometry: KIT_WHEEL_GEOMETRY[carId]?.[number - 1] || null,
     layers: [
       {
@@ -194,7 +202,9 @@ export function createVisualModLayers(
 
   const base = bodyLayers.primary;
   const makeLayer = (layer, depthOffset) => {
-    const transform = option.transform;
+    // A stock-canvas kit is not permitted to introduce any independent image
+    // transform. This includes offsets, scale, origin, rotation and flipping.
+    const transform = option.layoutMode === 'stock-canvas' ? null : option.transform;
     const unit = base.displayWidth / 1200;
     const source = scene.textures.get(layer.textureKey).getSourceImage();
     const width = transform
