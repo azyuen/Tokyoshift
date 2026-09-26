@@ -1099,31 +1099,40 @@ addRegularCar('rx8', 'fc3s', {
   visual: { wheelKey: 'wheel5Spoke' },
 });
 
-// Coordinates refer to the actual 1200 px stock PNG, relative to its centre.
-// Heights differ by model, so the wheel Y values cannot be shared globally.
-// The same source geometry is used by stock and both complete body kit pairs.
+// Stock arch centres and radii measured from the combined paint/body alpha.
+// Visible widths are measured from that pair; target widths keep hatchbacks,
+// coupes and sedans in a consistent relative size in both race and garage views.
+// Kit artwork is registered to these stock arches in visualMods.js.
 const REGULAR_ASSETS = {
-  ae86: ['ae86', 500, 270, 946, 390, 91],
-  r32: ['r32', 400, 255, 927, 328, 92],
-  evo3: ['evo3', 400, 280, 947, 323, 92],
-  fc3s: ['rx7fc', 600, 262, 926, 447, 103],
-  wrx22b: ['22b', 400, 307, 928, 314, 91],
-  ek9: ['ek9', 500, 198, 933, 394, 99],
-  rx7fb: ['rx7fb', 600, 292, 958, 437, 103],
-  rx7fd: ['rx7fd', 600, 270, 974, 438, 105],
-  ef: ['ef', 500, 232, 960, 391, 103],
-  evo5: ['evo5', 400, 279, 918, 325, 91],
-  evo6: ['evo6', 400, 258, 905, 323, 91],
-  evo9: ['evo9', 400, 235, 916, 324, 92],
-  gr86: ['gr86', 500, 248, 936, 393, 98],
-  rx8: ['rx8', 400, 245, 943, 326, 97],
+  // id: stem, canvas H, rear X/Y/R, front X/Y/R, visible W, target W
+  ae86: ['ae86', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
+  ef: ['ef', 500, 230, 362, 99, 961, 365, 98, 1141, 400],
+  ek9: ['ek9', 500, 194, 368, 97, 932, 371, 100, 1159, 420],
+  rx7fb: ['rx7fb', 600, 292, 439, 107, 958, 431, 103, 1161, 430],
+  fc3s: ['rx7fc', 600, 261, 415, 100, 926, 422, 100, 1162, 430],
+  rx7fd: ['rx7fd', 600, 266, 399, 99, 972, 400, 95, 1184, 430],
+  rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
+  gr86: ['gr86', 500, 248, 376, 101, 944, 370, 93, 1155, 430],
+  evo3: ['evo3', 400, 280, 333, 92, 947, 335, 94, 1137, 430],
+  evo5: ['evo5', 400, 280, 347, 85, 924, 347, 88, 1090, 440],
+  evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
+  evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
+  wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
+  r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
 };
 
-Object.entries(REGULAR_ASSETS).forEach(([id, [stem, height, rearX, frontX, axleY, radius]]) => {
+Object.entries(REGULAR_ASSETS).forEach(([id, [
+  stem, height,
+  rearX, rearY, rearRadius,
+  frontX, frontY, frontRadius,
+  visibleWidth, targetWidth,
+]]) => {
   const visual = cars[id].visual;
   const rearOffsetX = rearX - 600;
   const frontOffsetX = frontX - 600;
-  const wheelOffsetY = axleY - height / 2;
+  const rearWheelOffsetY = rearY - height / 2;
+  const frontWheelOffsetY = frontY - height / 2;
+  const bodyScale = targetWidth / visibleWidth;
   Object.assign(visual, {
     assetStem: stem,
     modularAssetRoot: 'assets/Cars',
@@ -1136,20 +1145,22 @@ Object.entries(REGULAR_ASSETS).forEach(([id, [stem, height, rearX, frontX, axleY
     singleLayerModular: false,
     deriveModularFromPreview: false,
     layeredMasterGeometry: null,
-    canvasDisplayScale: 1,
-    bodyScale: 0.36,
+    canvasDisplayScale: bodyScale / 0.36,
+    bodyScale,
     wheelFitMode: 'visible-well',
-    rearOffsetX, frontOffsetX, wheelOffsetY,
+    levelWheelContact: true,
+    rearOffsetX, frontOffsetX,
+    wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
     rearWheelOffsetX: rearOffsetX,
     frontWheelOffsetX: frontOffsetX,
-    rearWheelOffsetY: wheelOffsetY,
-    frontWheelOffsetY: wheelOffsetY,
-    rearWheelWellRadius: radius,
-    frontWheelWellRadius: radius,
-    rearWheelBackingRadius: radius,
-    frontWheelBackingRadius: radius,
+    rearWheelOffsetY,
+    frontWheelOffsetY,
+    rearWheelWellRadius: rearRadius,
+    frontWheelWellRadius: frontRadius,
+    rearWheelBackingRadius: rearRadius,
+    frontWheelBackingRadius: frontRadius,
     exhaustOffsetX: -540,
-    exhaustOffsetY: wheelOffsetY + radius * 0.75,
+    exhaustOffsetY: rearWheelOffsetY + rearRadius * 0.75,
   });
 });
 

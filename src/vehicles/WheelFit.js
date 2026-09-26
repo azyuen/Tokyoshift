@@ -3,8 +3,8 @@
 // Every car may specify independent front/rear X, Y and scale values.
 //
 // NORMAL CARS:
-//   Keep explicit per-axle calibration (or the legacy 1.16 fallback). They never
-//   use the hero wheel-well auto-fit path.
+//   Keep explicit per-axle calibration (or the legacy 1.16 fallback). The new
+//   layered roster opts into visible-well sizing and a shared tyre contact line.
 //
 // HERO CARS:
 //   visual.wheelFitMode === 'visible-well' sizes the *visible tyre artwork*
@@ -167,7 +167,7 @@ export function getAxleWheelFit(
 
   let wheelScale = baseWheelScale * scaleRatio * renderBoost;
 
-  // HERO-ONLY auto-fit. The target is the measured body-source wheel well, but
+  // Opt-in auto-fit. The target is the measured body-source wheel well, but
   // the divisor is the actual visible wheel artwork rather than the PNG canvas.
   if (visual.wheelFitMode === 'visible-well' && wellRadiusSource > 0) {
     const metrics = getVisibleWheelMetrics(wheelSource);
@@ -221,11 +221,11 @@ export function getWheelPairFit(
     front: getAxleWheelFit(visual, 'front', bodyScale, flipX, wheelSource),
   };
 
-  // Unique/hero cars use independently-sized front and rear wheel artwork.
-  // Flatten their stance by matching the tyre contact points rather than the
+  // Hero cars and the calibrated layered roster can have different front and
+  // rear wheel wells. Flatten their stance by matching tyre contact points rather than the
   // wheel centres. Split the correction between both axles so the body keeps
   // its authored ride height while neither end looks visibly nose-up/down.
-  if (visual.singleBody && wheelSource) {
+  if ((visual.singleBody || visual.levelWheelContact) && wheelSource) {
     const sourceHeight = numberOr(
       wheelSource.naturalHeight ?? wheelSource.height,
       0

@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r217';
 import { engines } from '../data/engines.js?v=20260927-r216';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
@@ -80,9 +80,9 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260927-r216';
+} from '../data/visualMods.js?v=20260927-r217';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

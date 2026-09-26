@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r217';
 import { engines } from '../data/engines.js?v=20260927-r216';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
@@ -37,7 +37,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260927-r217';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
   TUNER_TEAM_COMPLETION_REWARD,
