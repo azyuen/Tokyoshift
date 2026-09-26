@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260927-r217';
+import { cars, carOrder } from './cars.js?v=20260927-r218';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -11,7 +11,6 @@ const KIT_ALIGNMENT = {
   ek9: [{ scaleX: 0.9986, scaleY: 1.0423, offsetX: -0.5, offsetY: 2.8 }, { scaleX: 1.0041, scaleY: 1.0314, offsetX: -1.4, offsetY: 11.2 }],
   rx7fb: [{ scaleX: 1.023, scaleY: 1.0294, offsetX: 21.4, offsetY: 2.7 }, { scaleX: 1.0215, scaleY: 1.0294, offsetX: 37.3, offsetY: -15.3 }],
   fc3s: [{ scaleX: 0.9925, scaleY: 0.9852, offsetX: 0.4, offsetY: 17 }, { scaleX: 0.9881, scaleY: 0.9615, offsetX: 7.8, offsetY: 9.8 }],
-  rx7fd: [{ scaleX: 1.0522, scaleY: 1.0265, offsetX: 8, offsetY: -13.9 }, { scaleX: 1.0247, scaleY: 1.1345, offsetX: 13.4, offsetY: 10.4 }],
   rx8: [{ scaleX: 0.9749, scaleY: 1.0328, offsetX: -1.1, offsetY: -5.7 }, { scaleX: 0.9831, scaleY: 1.0053, offsetX: -4, offsetY: 6.4 }],
   gr86: [{ scaleX: 0.9886, scaleY: 0.9652, offsetX: -3, offsetY: -4.4 }, { scaleX: 1.0388, scaleY: 0.9898, offsetX: -3, offsetY: -3.2 }],
   evo3: [{ scaleX: 0.9695, scaleY: 1.0814, offsetX: -5.9, offsetY: 1.5 }, { scaleX: 1.0325, scaleY: 1.0814, offsetX: -14.4, offsetY: 0.4 }],
@@ -19,6 +18,39 @@ const KIT_ALIGNMENT = {
   evo6: [{ scaleX: 0.9848, scaleY: 0.9831, offsetX: -7.2, offsetY: -2.9 }, { scaleX: 0.9804, scaleY: 1.0419, offsetX: -12.6, offsetY: -4.3 }],
   evo9: [{ scaleX: 1, scaleY: 0.9653, offsetX: 2, offsetY: 2.5 }, { scaleX: 1.0284, scaleY: 0.9543, offsetX: -9.1, offsetY: 1.3 }],
   wrx22b: [{ scaleX: 0.9734, scaleY: 1.0117, offsetX: -2, offsetY: 6.2 }, { scaleX: 0.6861, scaleY: 0.6892, offsetX: 24.4, offsetY: 26.5 }],
+};
+
+// The corrected RX-7 FD kit artwork is registered to rx7fd_stock_paint.png.
+// Only its wheel arches change between stock and kit canvases.
+const KIT_WHEEL_GEOMETRY = {
+  rx7fd: [
+    {
+      levelWheelContact: false,
+      rearOffsetX: -331,
+      frontOffsetX: 354,
+      rearWheelOffsetX: -331,
+      frontWheelOffsetX: 354,
+      rearWheelOffsetY: 105,
+      frontWheelOffsetY: 111,
+      rearWheelWellRadius: 101,
+      frontWheelWellRadius: 99,
+      rearWheelBackingRadius: 101,
+      frontWheelBackingRadius: 99,
+    },
+    {
+      levelWheelContact: false,
+      rearOffsetX: -332,
+      frontOffsetX: 358,
+      rearWheelOffsetX: -332,
+      frontWheelOffsetX: 358,
+      rearWheelOffsetY: 90,
+      frontWheelOffsetY: 101,
+      rearWheelWellRadius: 97,
+      frontWheelWellRadius: 96,
+      rearWheelBackingRadius: 97,
+      frontWheelBackingRadius: 96,
+    },
+  ],
 };
 const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32');
 export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
@@ -29,6 +61,7 @@ export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
     price,
     replacementBody: true,
     transform: KIT_ALIGNMENT[carId]?.[number - 1] || null,
+    wheelGeometry: KIT_WHEEL_GEOMETRY[carId]?.[number - 1] || null,
     layers: [
       {
         textureKey: 'visualMod_' + stem + '_bodykit' + number + '_paint',
@@ -116,6 +149,17 @@ export function normaliseVisualMods(carId, source = {}) {
 export function hasNonStockVisualMods(carId, source = {}) {
   const mods = normaliseVisualMods(carId, source);
   return getVisualModSlotIds(carId).some(slotId => mods[slotId] !== 'stock');
+}
+
+// Resolve wheel geometry from the same body-kit selection used by the body
+// renderer. Cars without a kit-specific calibration keep their stock visual.
+export function getVisualModWheelVisual(car, source = {}) {
+  const visual = car?.visual || {};
+  const selected = normaliseVisualMods(car?.id, source);
+  const option = getVisualModOption(car?.id, 'bodyKit', selected.bodyKit);
+  return option?.wheelGeometry
+    ? { ...visual, ...option.wheelGeometry }
+    : visual;
 }
 
 export function getVisualModChangeCost(carId, currentSource = {}, pendingSource = {}) {

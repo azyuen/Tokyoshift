@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260927-r217';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r218';
 import { engines } from '../data/engines.js?v=20260927-r216';
 import {
   characters,
@@ -19,7 +19,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260927-r217';
+import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260927-r218';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -635,9 +635,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
 
     const source = this.textures.get(bodyKey).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
 
     // Ginza hero assets are authored on slightly different vertical trims.
@@ -693,12 +695,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
-    const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
+    const rearWheel = this.add.image(rearX, rearY, wheelVisual.wheelKey)
       .setScale(fit.rear.wheelScale)
       .setFlipX(flipX)
       .setData('carWheel', true)
       .setDepth(depth);
-    const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
+    const frontWheel = this.add.image(frontX, frontY, wheelVisual.wheelKey)
       .setScale(fit.front.wheelScale)
       .setFlipX(flipX)
       .setData('carWheel', true)
@@ -753,7 +755,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       paintColor,
     });
 
-    const carState = (this.registry.get('carStates') || {})[car.id] || {};
     const visualModObjects = createVisualModLayers(this, car, carState, {
       x,
       y: displayY,

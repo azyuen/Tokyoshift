@@ -4,7 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
-import { cars, carOrder } from '../data/cars.js?v=20260927-r217';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r218';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -12,7 +12,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260927-r217';
+import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260927-r218';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
 import { engines } from '../data/engines.js?v=20260927-r216';
@@ -968,9 +968,10 @@ export default class RaceScene extends Phaser.Scene {
     carState = {}
   ) {
     const cfg = car.visual;
+    const wheelCfg = getVisualModWheelVisual(car, carState);
     const bodyScale = cfg.bodyScale * roleScale;
-    const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
-    const wheelFit = getWheelPairFit(cfg, bodyScale, false, wheelSource);
+    const wheelSource = this.textures.get(wheelCfg.wheelKey).getSourceImage();
+    const wheelFit = getWheelPairFit(wheelCfg, bodyScale, false, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
 
     // Keep unique collector cars on the same road contact line as the normal
@@ -1007,11 +1008,11 @@ export default class RaceScene extends Phaser.Scene {
       groundCorrectionY = referenceGroundOffset - heroGroundOffset;
     }
 
-    const rearWheel = this.add.image(0, 0, cfg.wheelKey)
+    const rearWheel = this.add.image(0, 0, wheelCfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
       .setDepth(depth);
 
-    const frontWheel = this.add.image(0, 0, cfg.wheelKey)
+    const frontWheel = this.add.image(0, 0, wheelCfg.wheelKey)
       .setScale(wheelFit.front.wheelScale)
       .setDepth(depth);
 
@@ -1885,10 +1886,12 @@ export default class RaceScene extends Phaser.Scene {
     if (!car?.visual) return null;
 
     const cfg = car.visual;
+    const carState = carId === this.selectedCarId ? (this.playerCarState || {}) : {};
+    const wheelCfg = getVisualModWheelVisual(car, carState);
     const baseScale = 0.98 * scaleMul;
     const bodyScale = cfg.bodyScale * baseScale;
-    const wheelSource = this.textures.get(cfg.wheelKey).getSourceImage();
-    const wheelFit = getWheelPairFit(cfg, bodyScale, flipX, wheelSource);
+    const wheelSource = this.textures.get(wheelCfg.wheelKey).getSourceImage();
+    const wheelFit = getWheelPairFit(wheelCfg, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
 
     let groundCorrectionY = 0;
@@ -1937,12 +1940,12 @@ export default class RaceScene extends Phaser.Scene {
     const rearY = displayY + wheelFit.rear.offsetY;
     const frontY = displayY + wheelFit.front.offsetY;
 
-    const rearWheel = this.add.image(rearX, rearY, cfg.wheelKey)
+    const rearWheel = this.add.image(rearX, rearY, wheelCfg.wheelKey)
       .setScale(wheelFit.rear.wheelScale)
       .setDepth(depth)
       .setScrollFactor(0);
 
-    const frontWheel = this.add.image(frontX, frontY, cfg.wheelKey)
+    const frontWheel = this.add.image(frontX, frontY, wheelCfg.wheelKey)
       .setScale(wheelFit.front.wheelScale)
       .setDepth(depth)
       .setScrollFactor(0);
@@ -1979,6 +1982,12 @@ export default class RaceScene extends Phaser.Scene {
       paintColor,
     });
 
+    const visualModObjects = createVisualModLayers(this, car, carState, {
+      depth: depth + 1.005,
+      paintColor,
+      bodyLayers,
+    });
+
     const decalObjects = carId === this.selectedCarId
       ? createTunerDecalLayers(this, this.playerCarState || {}, {
           x,
@@ -1997,6 +2006,7 @@ export default class RaceScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       ...bodyLayers.objects,
+      ...visualModObjects,
       ...decalObjects,
     ];
 
@@ -2006,7 +2016,7 @@ export default class RaceScene extends Phaser.Scene {
     });
 
     if (lost) {
-      const faded = [rearWheel, frontWheel, ...bodyLayers.objects, ...decalObjects];
+      const faded = [rearWheel, frontWheel, ...bodyLayers.objects, ...visualModObjects, ...decalObjects];
       faded.forEach(obj => obj.setTint(0x696d74).setAlpha(0.42));
       shadow.setAlpha(0.24);
 

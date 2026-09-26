@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260927-r217';
+import { cars, carOrder } from '../data/cars.js?v=20260927-r218';
 import { engines } from '../data/engines.js?v=20260927-r216';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
@@ -80,7 +80,8 @@ import {
   normaliseVisualMods,
   getVisualModChangeCost,
   createVisualModLayers,
-} from '../data/visualMods.js?v=20260927-r217';
+  getVisualModWheelVisual,
+} from '../data/visualMods.js?v=20260927-r218';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
 
@@ -1266,11 +1267,13 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
-  getWheelBottomY(car, bodyY, targetWidth) {
+  getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottom =
@@ -1282,11 +1285,13 @@ export default class GarageScene extends Phaser.Scene {
     return Math.max(rearBottom, frontBottom);
   }
 
-  getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
+  getBodyYForWheelBottom(car, targetWidth, wheelBottomY, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
@@ -1302,9 +1307,12 @@ export default class GarageScene extends Phaser.Scene {
 
   createCarDisplay(car, x, y, targetWidth, depth, visualModsOverride = null) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const carStates = this.registry.get('carStates') || {};
+    const carState = carStates[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+    const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = y + renderOffsetY;
 
@@ -1313,11 +1321,11 @@ export default class GarageScene extends Phaser.Scene {
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
-    const rearWheel = this.add.image(rearX, rearY, car.visual.wheelKey)
+    const rearWheel = this.add.image(rearX, rearY, wheelVisual.wheelKey)
       .setScale(fit.rear.wheelScale)
       .setDepth(depth);
 
-    const frontWheel = this.add.image(frontX, frontY, car.visual.wheelKey)
+    const frontWheel = this.add.image(frontX, frontY, wheelVisual.wheelKey)
       .setScale(fit.front.wheelScale)
       .setDepth(depth);
 
@@ -1354,8 +1362,6 @@ export default class GarageScene extends Phaser.Scene {
       0.82
     ).setDepth(depth - 0.12);
 
-    const carStates = this.registry.get('carStates') || {};
-    const carState = carStates[car.id] || {};
     const paintColor = getCarPaintColor(carState);
     const bodyLayers = createCarBodyLayers(this, car, {
       x,
