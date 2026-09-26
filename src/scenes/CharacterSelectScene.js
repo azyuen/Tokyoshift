@@ -7,7 +7,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260926-r213';
-import { createDefaultGameState, applyStateToRegistry, saveManualState } from '../state/GameState.js?v=20260926-r213';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
@@ -299,8 +299,8 @@ export default class CharacterSelectScene extends Phaser.Scene {
       }
     ).setOrigin(0.5);
 
-    this.add.text(780, 704, 'Save in the Workshop to create a restore point.', {
-      fontFamily: BODY_FONT, fontSize: '11px', color: '#ffe08a', fontStyle: '600'
+    this.add.text(780, 704, 'Progress autosaves after races, purchases, tuning and other meaningful actions.', {
+      fontFamily: BODY_FONT, fontSize: '11px', color: '#78ddc8', fontStyle: '600'
     }).setOrigin(0.5);
 
     const start = this.add.rectangle(780, 760, 390, 56, 0x0c2b29, 1)
@@ -346,7 +346,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     form?.setAttribute('aria-hidden', 'true');
 
     applyStateToRegistry(this.registry, state);
-    saveManualState(this.registry);
+    saveSessionState(this.registry);
     this.scene.start('GarageScene');
   }
   createCarDisplay(car, x, y, targetWidth, depth) {

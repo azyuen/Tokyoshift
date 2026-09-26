@@ -3,10 +3,8 @@ import {
   applyStateToRegistry,
   clearAllSaves,
   createFreshRunStateFromRegistry,
-  readManualSave,
-  restoreManualSave,
-  saveManualState,
-} from '../state/GameState.js?v=20260926-r204';
+  saveSessionState,
+} from '../state/GameState.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -54,8 +52,8 @@ export default class RunOverScene extends Phaser.Scene {
     this.add.text(
       780,
       360,
-      'Pink slips still have teeth. Start the night again with the same driver and your chosen ' +
-        starter.shortName + ', restore a Workshop save, or begin with a new driver.',
+      'Pink slips still have teeth. The loss has already been autosaved. Start the night again with ' +
+        'the same driver and your chosen ' + starter.shortName + ', switch profiles, or begin with a new driver.',
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -89,25 +87,16 @@ export default class RunOverScene extends Phaser.Scene {
       () => this.restartNight()
     );
 
-    const manual = readManualSave();
-    const canRestore = Boolean(
-      manual &&
-      manual.gameOver !== true &&
-      Array.isArray(manual.ownedCarIds) &&
-      manual.ownedCarIds.length > 0
-    );
-
     addButton(
       574,
-      canRestore ? 'RESTORE WORKSHOP SAVE' : 'NO WORKSHOP SAVE AVAILABLE',
+      'DRIVER PROFILES',
       0x45d7ff,
-      () => this.restoreSave(),
-      canRestore
+      () => this.scene.start('ProfileSelectScene')
     );
 
     addButton(
       648,
-      'NEW DRIVER',
+      'NEW DRIVER // RESET THIS SLOT',
       0xff5f93,
       () => {
         clearAllSaves();
@@ -126,12 +115,7 @@ export default class RunOverScene extends Phaser.Scene {
   restartNight() {
     const fresh = createFreshRunStateFromRegistry(this.registry);
     applyStateToRegistry(this.registry, fresh);
-    saveManualState(this.registry);
+    saveSessionState(this.registry);
     this.scene.start('GarageScene');
-  }
-
-  restoreSave() {
-    const restored = restoreManualSave(this.registry);
-    this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'RunOverScene');
   }
 }

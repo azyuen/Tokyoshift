@@ -26,7 +26,12 @@ import {
   hasRegionalTeam,
 } from '../data/characters.js?v=20260926-r213';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r213';
+import {
+  saveSessionState,
+  clearAllSaves,
+  recordCarAcquisition,
+  recordCarDeparture,
+} from '../state/GameState.js?v=20260926-r214';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -44,8 +49,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r213';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r206';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r213';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r214';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r214';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -585,23 +590,9 @@ export default class RaceScene extends Phaser.Scene {
       button.on('pointerdown', onPress);
     };
 
-    const hasManualSave = Boolean(readManualSave());
-    if (hasManualSave) {
-      addButton(650, 'RESTORE SAVE', 0x45d7ff, () => {
-        const restored = restoreManualSave(this.registry);
-        this.scene.start(restored && !restored.gameOver ? 'GarageScene' : 'CharacterSelectScene');
-      });
-
-      addButton(910, 'NEW RUN', 0xff4a8d, () => {
-        clearAllSaves();
-        this.scene.start('CharacterSelectScene');
-      });
-    } else {
-      addButton(780, 'NEW RUN', 0xff4a8d, () => {
-        clearAllSaves();
-        this.scene.start('CharacterSelectScene');
-      });
-    }
+    addButton(780, 'RUN OVER // OPTIONS', 0xff4a8d, () => {
+      this.scene.start('RunOverScene');
+    });
   }
 
   applyTuneLevel(config, tuneLevel = 0) {
@@ -2557,6 +2548,25 @@ export default class RaceScene extends Phaser.Scene {
           },
         }
       );
+    } else if (settlement?.teamChallengeCompleted) {
+      const perfect = Boolean(settlement.teamChallengePerfect);
+      const cutsceneId = perfect
+        ? 'regionalPerfectVictory'
+        : 'regionalChampionVictory';
+      const rivalName = String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase();
+
+      playMangaCutscene(this, cutsceneId, {
+        historyId: cutsceneId + ':' + String(settlement.regionId || 'REGION'),
+        characterOverrides: { RIVAL: this.opponentCharacterId },
+        variables: {
+          REGION: String(settlement.regionId || 'REGION').toUpperCase(),
+          RIVAL_NAME: rivalName,
+          CASH_REWARD: Number(settlement.totalReward || 0).toLocaleString('en-US'),
+          DONOR: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
+          COUPON_AWARDS: String(Number(settlement.couponAwards || 0)),
+          BADGE: String(settlement.badgeLabel || (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')),
+        },
+      });
     } else if (settlement?.competitionWon) {
       playMangaCutscene(this, 'competitionChampion', {
         characterOverrides: { PROMOTER: 'tetsuyaKanda' },
@@ -3237,12 +3247,14 @@ export default class RaceScene extends Phaser.Scene {
     let gameOver = false;
 
     if (this.raceDeal === 'PINK_SLIP') {
+      let pinkCarNewlyWon = false;
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
       const carStates = { ...(this.registry.get('carStates') || {}) };
       const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
 
       if (playerWon) {
         if (!ownedCarIds.includes(this.opponentCarId)) {
+          pinkCarNewlyWon = true;
           ownedCarIds.push(this.opponentCarId);
           carStates[this.opponentCarId] = {
             ...this.opponentBuildState,
@@ -3255,6 +3267,9 @@ export default class RaceScene extends Phaser.Scene {
           pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
         }
       } else {
+        recordCarDeparture(this.registry, this.selectedCarId, 'pink-slip-lost', {
+          opponentCarId: this.opponentCarId,
+        });
         ownedCarIds = ownedCarIds.filter(id => id !== this.selectedCarId);
         delete carStates[this.selectedCarId];
         delete carGarageLocations[this.selectedCarId];
@@ -3275,6 +3290,12 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.set('carStates', carStates);
       this.registry.set('carGarageLocations', carGarageLocations);
       this.registry.set('gameOver', gameOver);
+
+      if (playerWon && pinkCarNewlyWon) {
+        recordCarAcquisition(this.registry, this.opponentCarId, {
+          acquiredVia: 'pinkSlip',
+        });
+      }
 
       if (this.registry.get('selectedRaceSpecialChallenge')) {
         this.registry.set('specialChallenger', null);

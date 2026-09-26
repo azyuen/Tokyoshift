@@ -22,7 +22,11 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers } from '../data/visualMods.js?v=20260926-r209';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { saveSessionState } from '../state/GameState.js?v=20260926-r213';
+import {
+  saveSessionState,
+  recordCarAcquisition,
+  recordCarDeparture,
+} from '../state/GameState.js?v=20260926-r214';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
@@ -32,8 +36,8 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r213';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r213';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r214';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import {
@@ -1072,6 +1076,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('carStates', carStates);
     this.registry.set('carGarageLocations', locations);
     this.registry.set('selectedCarId', listing.carId);
+    recordCarAcquisition(this.registry, listing.carId, {
+      acquiredVia: useCoupons ? 'competitionCoupon' : 'tokyoAutoMarket',
+    });
     saveSessionState(this.registry);
 
     this.cashText.setText(money(nextCash));
@@ -1088,6 +1095,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const nextOwned = owned.filter(id => id !== carId);
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+
+    recordCarDeparture(this.registry, carId, 'sold', {
+      salePrice: Number(salePrice || 0),
+    });
 
     delete carStates[carId];
     delete locations[carId];
@@ -1415,6 +1426,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('carGarageLocations', locations);
     this.registry.set('selectedCarId', listing.carId);
     this.registry.set('cash', cash - listing.price);
+    recordCarAcquisition(this.registry, listing.carId, {
+      acquiredVia: 'ginzaMotorGallery',
+    });
     saveSessionState(this.registry);
 
     this.cashText.setText(money(cash - listing.price));

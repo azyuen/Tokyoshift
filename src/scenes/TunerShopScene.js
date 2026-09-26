@@ -7,7 +7,11 @@ import {
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
 } from '../data/tunerShops.js?v=20260926-r203';
-import { saveSessionState } from '../state/GameState.js?v=20260926-r213';
+import {
+  saveSessionState,
+  recordCarAcquisition,
+  recordCarDeparture,
+} from '../state/GameState.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -29,7 +33,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r213';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r214';
 import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
@@ -1538,6 +1542,10 @@ export default class TunerShopScene extends Phaser.Scene {
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
     const donorLocation = locations[donorId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
 
+    recordCarDeparture(this.registry, donorId, 'converted', {
+      convertedTo: heroId,
+    });
+
     owned.splice(donorIndex, 1, heroId);
     delete carStates[donorId];
     carStates[heroId] = {
@@ -1570,6 +1578,10 @@ export default class TunerShopScene extends Phaser.Scene {
     this.registry.set('tunerShopProgress', progress);
     this.registry.set('cash', cash - cost);
     this.registry.set('gameOver', false);
+    recordCarAcquisition(this.registry, heroId, {
+      acquiredVia: 'tuner-shop',
+      convertedFrom: donorId,
+    });
     saveSessionState(this.registry);
 
     return true;

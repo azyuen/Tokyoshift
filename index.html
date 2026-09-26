@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260922-r119" />
+  <link rel="stylesheet" href="./styles.css?v=20260926-r214" />
 </head>
 <body>
   <div id="game-shell">
@@ -64,7 +64,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R212</div>
+    <div id="build-stamp">R214</div>
     <div id="rotate-message">Rotate your phone to landscape to race.</div>
   </div>
   <script>
@@ -141,7 +141,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R212';
+      let resolvedBuild = 'R214';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -189,6 +189,6 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260926-r213"></script>
+  <script type="module" src="./src/main.js?v=20260926-r214"></script>
 </body>
 </html>

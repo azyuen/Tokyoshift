@@ -33,9 +33,10 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260926-r213';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r213';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r213';
+import { saveSessionState } from '../state/GameState.js?v=20260926-r214';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r214';
+import { addCarHistoryButton } from '../ui/CarHistoryPanel.js?v=20260926-r214';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r214';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
@@ -179,7 +180,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     this.buildMoveCarButton();
-    this.buildSaveButton();
+    this.buildAutosaveStatus();
     this.buildMeetButton();
 
     if (this.selectedCarId) {
@@ -352,7 +353,8 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 955, 35);
+    addCarHistoryButton(this, 690, 35);
+    addSettingsButton(this, 980, 35);
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
@@ -1123,27 +1125,21 @@ export default class GarageScene extends Phaser.Scene {
     this.updateMoveCarButtonState();
   }
 
-  buildSaveButton() {
-    const button = this.saveButton = this.add.rectangle(SIDE.x + SIDE.w / 2, 716, SIDE.w - 32, 42, 0x102138, 1)
-      .setStrokeStyle(2, 0x55b8ff, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(40);
+  buildAutosaveStatus() {
+    this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      716,
+      SIDE.w - 32,
+      36,
+      0x091a1d,
+      0.92
+    ).setStrokeStyle(1, 0x2c655f, 0.85).setDepth(40);
 
-    const label = this.saveButtonLabel = this.add.text(SIDE.x + SIDE.w / 2, 716, 'SAVE GAME', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#eef8ff'
+    this.add.text(SIDE.x + SIDE.w / 2, 716, 'AUTOSAVE  //  ACTIVE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#78ddc8',
     }).setOrigin(0.5).setDepth(41);
-
-    button.on('pointerdown', () => {
-      this.registry.set('selectedCarId', this.selectedCarId);
-      saveManualState(this.registry);
-      label.setText('SAVED // RESTORE POINT');
-      button.setFillStyle(0x0f302b, 1).setStrokeStyle(2, 0x62e8c7, 1);
-      this.time.delayedCall(1200, () => {
-        if (!label.active) return;
-        label.setText('SAVE GAME');
-        button.setFillStyle(0x102138, 1).setStrokeStyle(2, 0x55b8ff, 1);
-      });
-    });
   }
 
   buildMeetButton() {
@@ -1493,11 +1489,6 @@ export default class GarageScene extends Phaser.Scene {
       item.label.setColor('#53626c');
       item.arrow.setColor('#46545e');
     });
-
-    this.saveButton?.disableInteractive()
-      .setFillStyle(0x17181d, 1)
-      .setStrokeStyle(1, 0x514f55, 1);
-    this.saveButtonLabel?.setText('NO CAR TO SAVE').setColor('#817d84');
 
     this.meetButton?.setInteractive({ useHandCursor: true })
       .setFillStyle(0x102138, 1)

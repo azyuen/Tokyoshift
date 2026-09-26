@@ -192,6 +192,106 @@ export const CUTSCENES = {
     finalActionLabel: '{SHOP} DISCOVERED',
   },
 
+  regionalChampionVictory: {
+    id: 'regionalChampionVictory',
+    category: 'REGION / VICTORY',
+    testerLabel: 'Region — Champion Victory',
+    title: '{REGION} // CHAMPION',
+    once: true,
+    characters: {
+      left: '$RIVAL',
+      right: '$PLAYER',
+    },
+    preview: {
+      characterOverrides: { RIVAL: 'natsumiKagawa' },
+      variables: {
+        REGION: 'SHINAGAWA',
+        RIVAL_NAME: 'NATSUMI KAGAWA',
+        CASH_REWARD: '250,000',
+        DONOR: 'HONDA CIVIC TYPE R EK9',
+        COUPON_AWARDS: '1',
+        BADGE: 'REGIONAL CHAMPION',
+      },
+    },
+    introCard: {
+      character: 'left',
+      name: '{RIVAL_NAME}',
+      subtitle: '{REGION} // FINAL RIVAL',
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'loss',
+        text: 'You made it through all seven. It was not perfect, but it counts.',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: 'From tonight, you are the {REGION} Champion.',
+        emphasis: true,
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'win',
+        text: 'Prize is ¥{CASH_REWARD}. You also earned {COUPON_AWARDS} × {DONOR} coupon and the {BADGE} badge.',
+      },
+    ],
+    finalActionLabel: 'CLAIM CHAMPION REWARDS',
+  },
+
+  regionalPerfectVictory: {
+    id: 'regionalPerfectVictory',
+    category: 'REGION / VICTORY',
+    testerLabel: 'Region — Perfect 7–0 Victory',
+    title: '{REGION} // PERFECT 7–0',
+    once: true,
+    characters: {
+      left: '$RIVAL',
+      right: '$PLAYER',
+    },
+    preview: {
+      characterOverrides: { RIVAL: 'natsumiKagawa' },
+      variables: {
+        REGION: 'SHINAGAWA',
+        RIVAL_NAME: 'NATSUMI KAGAWA',
+        CASH_REWARD: '500,000',
+        DONOR: 'HONDA CIVIC TYPE R EK9',
+        COUPON_AWARDS: '2',
+        BADGE: 'REGIONAL CHAMPION ★',
+      },
+    },
+    introCard: {
+      character: 'left',
+      name: '{RIVAL_NAME}',
+      subtitle: '{REGION} // FINAL RIVAL',
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'loss',
+        text: 'Seven races. No losses. Nobody in {REGION} can argue with that.',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: 'That is a perfect sweep. Your Champion badge gets the star.',
+        emphasis: true,
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'win',
+        text: 'The sweep pays ¥{CASH_REWARD} and {COUPON_AWARDS} × {DONOR} coupon. Badge: {BADGE}.',
+      },
+    ],
+    finalActionLabel: 'REGIONAL CHAMPION ★',
+  },
+
   specialChallengerIntroduction: {
     id: 'specialChallengerIntroduction',
     category: 'STREET / EVENT',
@@ -551,6 +651,8 @@ export const CUTSCENE_ORDER = [
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'tunerShopDiscovery',
+  'regionalChampionVictory',
+  'regionalPerfectVictory',
   'specialChallengerIntroduction',
   'firstPinkSlipChallenge',
   'firstPinkSlipWin',

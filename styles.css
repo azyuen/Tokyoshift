@@ -254,6 +254,17 @@ body:not([data-scene="setup"]) #driver-name-overlay {
   display: none !important;
 }
 
+#driver-name-overlay.is-settings-edit {
+  top: 48%;
+  width: 30%;
+  max-width: 470px;
+  z-index: 13000;
+}
+
+body:not([data-scene="setup"]) #driver-name-overlay.is-settings-edit {
+  display: grid !important;
+}
+
 body[data-scene="race"] #game {
   max-width: 216.6667dvh;
   aspect-ratio: 13 / 6;

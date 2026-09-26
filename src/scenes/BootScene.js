@@ -4,11 +4,10 @@ import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTex
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   createDefaultGameState,
-  readManualSave,
   readSessionState,
   applyStateToRegistry,
   getProfileSlots,
-} from '../state/GameState.js?v=20260926-r213';
+} from '../state/GameState.js?v=20260926-r214';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r209';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
@@ -43,7 +42,7 @@ export default class BootScene extends Phaser.Scene {
 
     // Core rivals appear at any meet. Collector art loads at Ginza, except for
     // cars already owned in a saved game, which the garage must show at entry.
-    const saved = readSessionState() || readManualSave();
+    const saved = readSessionState();
     const owned = new Set(saved?.ownedCarIds || []);
     const initialCars = Object.fromEntries(
       Object.entries(cars).filter(([id]) => carOrder.includes(id) || owned.has(id))
@@ -127,12 +126,10 @@ export default class BootScene extends Phaser.Scene {
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
 
-    const manualSave = readManualSave();
-    // Session state is the player's latest autosaved progress. The manual save
-    // remains the explicit restore point, but normal launches should not roll
-    // back newer flags such as devMode or Central Tokyo unlocks.
-    const sessionSave = readSessionState();
-    const saved = sessionSave || manualSave;
+    // Session state is the authoritative autosave. readSessionState() still
+    // falls back to a legacy manual record for old profiles, but new gameplay
+    // no longer exposes restore points that could undo race consequences.
+    const saved = readSessionState();
     const state = this.preserveRegistry
       ? { gameOver: Boolean(this.registry.get('gameOver')) }
       : applyStateToRegistry(
@@ -146,6 +143,16 @@ export default class BootScene extends Phaser.Scene {
     // interstitial or pause between garage/map reloads.
     if (this.preserveRegistry) {
       this.scene.start(state.gameOver ? 'RunOverScene' : 'GarageScene');
+      return;
+    }
+
+    const hasProfiles = getProfileSlots().some(slot => slot.occupied);
+
+    // A normal app launch/refresh starts at the driver board. Controlled
+    // internal reloads (workshop changes, profile switches, tutorial handoff)
+    // bypass it so those transitions remain immediate and deterministic.
+    if (!this.internalReload && !this.forceGarage && hasProfiles) {
+      this.scene.start('ProfileSelectScene');
       return;
     }
 

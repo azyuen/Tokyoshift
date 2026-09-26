@@ -52,6 +52,7 @@ export function createDefaultGameState(options = {}) {
     carStates: {
       [starterCarId]: createStarterCarState(),
     },
+    carHistory: [],
     wins: 0,
     losses: 0,
     cash: 50000,
@@ -252,6 +253,20 @@ export function getProfileSlots() {
       carCount: Array.isArray(state?.ownedCarIds) ? state.ownedCarIds.length : 0,
       wins: Number(state?.wins || 0),
       losses: Number(state?.losses || 0),
+      selectedCarId: state?.selectedCarId || null,
+      district: String(state?.district || 'ODAIBA'),
+      garageTier: Math.max(0, Number(state?.garageTier || 0)),
+      championCount: Object.values(state?.tunerTeamChallenges || {})
+        .filter(item => Boolean(item?.championEarned || item?.completed)).length,
+      perfectCount: Object.values(state?.tunerTeamChallenges || {})
+        .filter(item => Boolean(
+          item?.perfectEarned ||
+          (
+            item?.completed &&
+            item?.perfectEligible !== false &&
+            item?.perfectRewardClaimed == null
+          )
+        )).length,
       updatedAt: slot?.updatedAt || null,
     };
   });
@@ -303,6 +318,166 @@ export function readManualSave() {
 export function readSessionState() {
   const slot = ensureProfileStore().slots[getActiveProfileIndex()];
   return slot?.session || slot?.manual || null;
+}
+
+function clonePlain(value, fallback = {}) {
+  try {
+    return JSON.parse(JSON.stringify(value ?? fallback));
+  } catch (e) {
+    return JSON.parse(JSON.stringify(fallback));
+  }
+}
+
+function normaliseCarHistory(input = [], ownedCarIds = [], carStates = {}) {
+  const history = Array.isArray(input)
+    ? input
+        .filter(entry => entry && typeof entry === 'object' && entry.carId)
+        .map((entry, index) => ({
+          id: String(entry.id || (entry.carId + ':' + Number(entry.acquiredAt || 0) + ':' + index)),
+          carId: String(entry.carId),
+          acquiredAt: Math.max(0, Number(entry.acquiredAt || 0)),
+          acquiredVia: String(entry.acquiredVia || 'legacy'),
+          status: String(entry.status || 'OWNED').toUpperCase(),
+          departedAt: Math.max(0, Number(entry.departedAt || 0)),
+          departureReason: entry.departureReason ? String(entry.departureReason) : null,
+          salePrice: Math.max(0, Number(entry.salePrice || 0)),
+          convertedTo: entry.convertedTo ? String(entry.convertedTo) : null,
+          lastState: entry.lastState && typeof entry.lastState === 'object'
+            ? clonePlain(entry.lastState)
+            : null,
+        }))
+    : [];
+
+  const owned = new Set((ownedCarIds || []).map(String));
+  const now = Date.now();
+
+  // Repair stale "OWNED" entries first. This should only matter for old saves
+  // created before the history ledger existed or a build interrupted mid-write.
+  history.forEach(entry => {
+    if (entry.status === 'OWNED' && !owned.has(entry.carId)) {
+      entry.status = 'ARCHIVED';
+      entry.departedAt = entry.departedAt || now;
+      entry.departureReason = entry.departureReason || 'legacy';
+      entry.lastState = entry.lastState || clonePlain(carStates?.[entry.carId] || {});
+    }
+  });
+
+  // Existing profiles pre-date Car History. Seed every car currently in the
+  // garage exactly once so the ledger becomes useful without resetting saves.
+  (ownedCarIds || []).forEach((carId, index) => {
+    const id = String(carId);
+    const alreadyTracked = history.some(entry =>
+      entry.carId === id && entry.status === 'OWNED'
+    );
+    if (alreadyTracked) return;
+
+    const state = carStates?.[id] || {};
+    history.push({
+      id: id + ':legacy:' + (now + index),
+      carId: id,
+      acquiredAt: now + index,
+      acquiredVia: String(state.acquiredVia || 'legacy'),
+      status: 'OWNED',
+      departedAt: 0,
+      departureReason: null,
+      salePrice: 0,
+      convertedTo: null,
+      lastState: null,
+    });
+  });
+
+  return history;
+}
+
+export function recordCarAcquisition(registry, carId, metadata = {}) {
+  if (!registry || !carId) return null;
+
+  const id = String(carId);
+  const owned = registry.get('ownedCarIds') || [];
+  const carStates = registry.get('carStates') || {};
+  const history = normaliseCarHistory(
+    registry.get('carHistory') || [],
+    owned,
+    carStates
+  );
+
+  const existing = [...history].reverse().find(entry =>
+    entry.carId === id && entry.status === 'OWNED'
+  );
+  if (existing) return existing;
+
+  const acquiredAt = Math.max(1, Number(metadata.acquiredAt || Date.now()));
+  const entry = {
+    id: id + ':' + acquiredAt + ':' + history.length,
+    carId: id,
+    acquiredAt,
+    acquiredVia: String(
+      metadata.acquiredVia ||
+      carStates?.[id]?.acquiredVia ||
+      'garage'
+    ),
+    status: 'OWNED',
+    departedAt: 0,
+    departureReason: null,
+    salePrice: 0,
+    convertedTo: null,
+    lastState: null,
+  };
+
+  history.push(entry);
+  registry.set('carHistory', history);
+  return entry;
+}
+
+export function recordCarDeparture(registry, carId, reason = 'archived', metadata = {}) {
+  if (!registry || !carId) return null;
+
+  const id = String(carId);
+  const owned = registry.get('ownedCarIds') || [];
+  const carStates = registry.get('carStates') || {};
+  const history = normaliseCarHistory(
+    registry.get('carHistory') || [],
+    owned,
+    carStates
+  );
+
+  let entryIndex = -1;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].carId === id && history[i].status === 'OWNED') {
+      entryIndex = i;
+      break;
+    }
+  }
+
+  if (entryIndex < 0) {
+    history.push({
+      id: id + ':legacy:' + Date.now() + ':' + history.length,
+      carId: id,
+      acquiredAt: Date.now(),
+      acquiredVia: String(carStates?.[id]?.acquiredVia || 'legacy'),
+      status: 'OWNED',
+      departedAt: 0,
+      departureReason: null,
+      salePrice: 0,
+      convertedTo: null,
+      lastState: null,
+    });
+    entryIndex = history.length - 1;
+  }
+
+  const status = String(reason || 'archived').toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+  history[entryIndex] = {
+    ...history[entryIndex],
+    status,
+    departedAt: Math.max(1, Number(metadata.departedAt || Date.now())),
+    departureReason: String(reason || 'archived'),
+    salePrice: Math.max(0, Number(metadata.salePrice || 0)),
+    convertedTo: metadata.convertedTo ? String(metadata.convertedTo) : null,
+    lastState: clonePlain(carStates?.[id] || {}),
+  };
+
+  registry.set('carHistory', history);
+  return history[entryIndex];
 }
 
 export function normaliseState(input = {}) {
@@ -366,6 +541,38 @@ export function normaliseState(input = {}) {
     ? input.playerCharacterId
     : base.playerCharacterId;
 
+  const mergedCarStates = {
+    ...base.carStates,
+    ...(input.carStates || {}),
+  };
+  const carHistory = normaliseCarHistory(
+    input.carHistory || [],
+    owned,
+    mergedCarStates
+  );
+
+  // We can prove an old profile owned its starter even if that car was sold or
+  // lost before the ledger existed. The exact old sale build cannot be
+  // reconstructed, so mark it clearly as a pre-history archive rather than
+  // inventing a sale price or tuned specification.
+  if (
+    !owned.includes(starterCarId) &&
+    !carHistory.some(entry => entry.carId === starterCarId)
+  ) {
+    carHistory.unshift({
+      id: starterCarId + ':pre-history',
+      carId: starterCarId,
+      acquiredAt: 0,
+      acquiredVia: 'starter',
+      status: 'LEGACY_ARCHIVED',
+      departedAt: 0,
+      departureReason: 'pre-history',
+      salePrice: 0,
+      convertedTo: null,
+      lastState: clonePlain(mergedCarStates?.[starterCarId] || {}),
+    });
+  }
+
   const meetRosters = input.meetRosters && typeof input.meetRosters === 'object'
     ? Object.fromEntries(
         Object.entries(input.meetRosters).map(([locationId, offers]) => [
@@ -397,10 +604,8 @@ export function normaliseState(input = {}) {
     starterCarId,
     selectedCarId,
     ownedCarIds: owned,
-    carStates: {
-      ...base.carStates,
-      ...(input.carStates || {}),
-    },
+    carStates: mergedCarStates,
+    carHistory,
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
@@ -496,6 +701,7 @@ export function snapshotRegistry(registry) {
     selectedCarId: registry.get('selectedCarId') || null,
     ownedCarIds: registry.get('ownedCarIds') || [],
     carStates: registry.get('carStates') || {},
+    carHistory: registry.get('carHistory') || [],
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
