@@ -200,13 +200,18 @@ export default class GarageScene extends Phaser.Scene {
     window.setTimeout(hideSplash, 120);
 
     let reopenSettings = false;
+    let tutorialJustCompleted = false;
     try {
       reopenSettings = sessionStorage.getItem('tokyoShiftOpenSettingsAfterReload') === '1';
+      tutorialJustCompleted = sessionStorage.getItem('tokyoShiftTutorialComplete') === '1';
       if (reopenSettings) sessionStorage.removeItem('tokyoShiftOpenSettingsAfterReload');
+      if (tutorialJustCompleted) sessionStorage.removeItem('tokyoShiftTutorialComplete');
     } catch (e) {}
 
     if (reopenSettings) {
       this.time.delayedCall(80, () => showSettingsPanel(this));
+    } else if (tutorialJustCompleted) {
+      this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
     } else {
       this.time.delayedCall(260, () => {
         if (!this.showPendingWorkshopCutscene()) {
@@ -4320,6 +4325,88 @@ export default class GarageScene extends Phaser.Scene {
       this.workshopToastObjects?.forEach(obj => obj?.destroy?.());
       this.workshopToastObjects = [];
     });
+  }
+
+  showTutorialCompletionChoice() {
+    if (this.tutorialCompletionPopup?.active) return true;
+
+    const depth = 190;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.70)
+      .setDepth(depth)
+      .setInteractive());
+
+    const panel = add(this.add.rectangle(780, 410, 780, 380, 0xf8f7f2, 1)
+      .setStrokeStyle(3, 0x18222b, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 292, 'YOU\'VE GOT IT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#101820',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      370,
+      'You launched cleanly and shifted through 1st, 2nd and 3rd into 4th gear.\nWould you like to practise the controls again?',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#202a31',
+        fontStyle: '700',
+        align: 'center',
+        lineSpacing: 7,
+        wordWrap: { width: 640 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const again = add(this.add.rectangle(650, 510, 250, 56, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2f8f78, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(650, 510, 'TRY AGAIN', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#15372f',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const continueButton = add(this.add.rectangle(910, 510, 250, 56, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2b7898, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(910, 510, 'CONTINUE WITH DAICHI', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#173849',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.tutorialCompletionPopup = null;
+    };
+
+    blocker.on('pointerdown', () => {});
+
+    again.on('pointerdown', () => {
+      dismiss();
+      this.time.delayedCall(80, () => this.startOpeningDrivingTutorial());
+    });
+
+    continueButton.on('pointerdown', () => {
+      dismiss();
+      this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
+    });
+
+    this.tutorialCompletionPopup = panel;
+    return true;
   }
 
   hasSeenStoryCutscene(id) {

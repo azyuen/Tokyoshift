@@ -1331,7 +1331,7 @@ export default class RaceScene extends Phaser.Scene {
 
       if (gear === targetGear) {
         if (targetGear >= 4) {
-          this.queueTutorialCompletePopup();
+          this.completeTutorialToWorkshop();
         } else {
           this.setTutorialStep('POWER_' + targetGear);
         }
@@ -1347,139 +1347,37 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
-  queueTutorialCompletePopup() {
-    if (
-      !this.isTutorial ||
-      this.tutorialComplete ||
-      this.tutorialCompletionQueued ||
-      this.tutorialCompletePopup?.active
-    ) return;
-
-    this.tutorialCompletionQueued = true;
-    this.clearTutorialHighlights();
-    this.tutorialPromptText?.setText('GOOD // RELEASE THE CONTROLS');
-
-    let releaseChecks = 0;
-    const waitForRelease = () => {
-      if (!this.tutorialCompletionQueued || this.tutorialComplete) return;
-
-      releaseChecks += 1;
-      const pointerStillDown = (this.input?.manager?.pointers || [])
-        .some(pointer => pointer?.isDown);
-
-      if (pointerStillDown && releaseChecks < 8) {
-        this.time.delayedCall(60, waitForRelease);
-        return;
-      }
-
-      this.tutorialCompletionQueued = false;
-      this.showTutorialCompletePopup();
-    };
-
-    // Do not create a new interactive popup in the same touch gesture that
-    // shifted into 4th; iOS/PWA pointer capture can otherwise strand the overlay.
-    this.time.delayedCall(140, waitForRelease);
-  }
-
-  finishTutorialChoice(retry = false) {
-    if (this.tutorialTransitioning) return;
-    this.tutorialTransitioning = true;
-
-    try { this.input.enabled = true; } catch (e) {}
-    this.controls.enabled = false;
-    this.engineAudio?.fadeOut();
-    saveSessionState(this.registry);
-
-    this.time.delayedCall(70, () => {
-      if (retry) {
-        this.scene.restart();
-      } else {
-        this.scene.start('GarageScene');
-      }
-    });
-  }
-
-  showTutorialCompletePopup() {
-    if (!this.isTutorial || this.tutorialComplete || this.tutorialCompletePopup?.active) return;
+  completeTutorialToWorkshop() {
+    if (!this.isTutorial || this.tutorialComplete || this.tutorialTransitioning) return;
 
     this.tutorialComplete = true;
-    this.tutorialCompletionQueued = false;
+    this.tutorialTransitioning = true;
     this.clearTutorialHighlights();
+
     this.controls.enabled = false;
     this.controls.throttle = 0;
     this.controls.clutch = 1;
-    try { this.input.enabled = true; } catch (e) {}
+    this.engineAudio?.fadeOut();
 
-    [
-      this.tutorialPanel,
-      this.tutorialStepText,
-      this.tutorialTitleText,
-      this.tutorialBodyText,
-      this.tutorialPromptBox,
-      this.tutorialPromptText,
-    ].forEach(obj => obj?.setVisible?.(false));
+    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DAICHI');
+    saveSessionState(this.registry);
 
-    const depth = 150;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
+    // RaceScene has repeatedly proven fragile when it tears down controls,
+    // audio and touch capture while also constructing an interactive popup on
+    // iOS. Finish the lesson with the same controlled reload used elsewhere in
+    // the app, then show the completion choice safely inside GarageScene.
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftBootMessage', 'RETURNING TO WORKSHOP');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.setItem('tokyoShiftTutorialComplete', '1');
+    } catch (e) {}
 
-    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.72)
-      .setDepth(depth).setScrollFactor(0).setInteractive());
+    window.TOKYO_SHIFT_SHOW_SPLASH?.('RETURNING TO WORKSHOP');
 
-    const panel = add(this.add.rectangle(780, 360, 780, 370, 0xf8f7f2, 1)
-      .setStrokeStyle(3, 0x18222b, 1)
-      .setDepth(depth + 1).setScrollFactor(0));
-
-    add(this.add.text(780, 258, 'YOU\'VE GOT IT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '18px',
-      color: '#101820',
-    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    add(this.add.text(
-      780,
-      330,
-      'You launched cleanly and shifted through 1st, 2nd and 3rd into 4th gear.\nWould you like to practise the controls again?',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#202a31',
-        fontStyle: '700',
-        align: 'center',
-        lineSpacing: 6,
-        wordWrap: { width: 640 },
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    const again = add(this.add.rectangle(650, 470, 250, 54, 0xffffff, 1)
-      .setStrokeStyle(3, 0x2f8f78, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(650, 470, 'TRY AGAIN', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#15372f',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    const continueButton = add(this.add.rectangle(910, 470, 250, 54, 0xffffff, 1)
-      .setStrokeStyle(3, 0x2b7898, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(910, 470, 'CONTINUE WITH DAICHI', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#173849',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    blocker.on('pointerdown', () => {});
-    const retryTutorial = () => this.finishTutorialChoice(true);
-    const continueTutorial = () => this.finishTutorialChoice(false);
-    again.on('pointerdown', retryTutorial);
-    again.on('pointerup', retryTutorial);
-    continueButton.on('pointerdown', continueTutorial);
-    continueButton.on('pointerup', continueTutorial);
-
-    this.tutorialCompletePopup = panel;
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 90);
   }
 
 
@@ -1527,6 +1425,7 @@ export default class RaceScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) this.scene.start('GarageScene');
 
     if (this.resultsShown) return;
+    if (this.isTutorial && this.tutorialComplete) return;
 
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
