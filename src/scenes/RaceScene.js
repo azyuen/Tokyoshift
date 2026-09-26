@@ -1,5 +1,5 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20260921-r66';
-import TouchControls from '../input/TouchControls.js?v=20260921-r43';
+import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
@@ -26,7 +26,7 @@ import {
   hasRegionalTeam,
 } from '../data/characters.js?v=20260925-r195';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
-import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r204';
+import { saveSessionState, saveManualState, restoreManualSave, readManualSave, clearAllSaves } from '../state/GameState.js?v=20260926-r209';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -460,7 +460,7 @@ export default class RaceScene extends Phaser.Scene {
     add(this.add.text(895, 438, 'KEEP RACING', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
-      color: '#f1fffb',
+      color: '#101820',
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
     const dismiss = () => {
@@ -954,39 +954,45 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHighlightObjects = [];
     this.tutorialHighlightTweens = [];
 
-    this.tutorialPanel = this.add.rectangle(780, 150, 790, 118, 0x06111d, 0.97)
-      .setStrokeStyle(3, 0x45d7ff, 0.96)
+    // Keep the lesson card in the top-left so it never covers the drag tree,
+    // HUD or the controls the player is being asked to use.
+    this.tutorialPanel = this.add.rectangle(360, 200, 640, 250, 0xf8f7f2, 0.995)
+      .setStrokeStyle(3, 0x18222b, 1)
       .setDepth(82)
       .setScrollFactor(0);
 
-    this.tutorialStepText = this.add.text(410, 111, '', {
+    this.tutorialStepText = this.add.text(78, 96, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#8fe7ff',
+      fontSize: '8px',
+      color: '#2a708d',
     }).setDepth(83).setScrollFactor(0);
 
-    this.tutorialTitleText = this.add.text(410, 137, '', {
+    this.tutorialTitleText = this.add.text(78, 130, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#f4fbff',
+      fontSize: '12px',
+      color: '#101820',
     }).setDepth(83).setScrollFactor(0);
 
-    this.tutorialBodyText = this.add.text(410, 165, '', {
+    this.tutorialBodyText = this.add.text(78, 168, '', {
       fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#d5e6ef',
+      fontSize: '12px',
+      color: '#202a31',
       fontStyle: '700',
-      lineSpacing: 4,
-      wordWrap: { width: 730 },
+      lineSpacing: 5,
+      wordWrap: { width: 565 },
     }).setDepth(83).setScrollFactor(0);
 
-    this.tutorialPromptText = this.add.text(780, 224, '', {
+    this.tutorialPromptBox = this.add.rectangle(360, 292, 570, 46, 0xffffff, 1)
+      .setStrokeStyle(2, 0x315470, 1)
+      .setDepth(83)
+      .setScrollFactor(0);
+
+    this.tutorialPromptText = this.add.text(360, 292, '', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#ffe08a',
-      backgroundColor: '#07111ddd',
-      padding: { x: 12, y: 7 },
+      fontSize: '8px',
+      color: '#17232c',
       align: 'center',
+      wordWrap: { width: 530 },
     }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
 
     this.renderDrivingTutorialStep();
@@ -1064,9 +1070,9 @@ export default class RaceScene extends Phaser.Scene {
     const tag = this.add.text(rect.centerX, tagY, label, {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
-      color: '#ffffff',
-      backgroundColor: '#07111dee',
-      padding: { x: 8, y: 5 },
+      color: '#101820',
+      backgroundColor: '#ffffff',
+      padding: { x: 10, y: 6 },
     }).setOrigin(0.5, 1)
       .setDepth(79)
       .setScrollFactor(0);
@@ -1123,7 +1129,7 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.tutorialStep === 'FIRST_GEAR') {
       title = 'CLUTCH + FIRST GEAR';
-      body = 'Press and HOLD the clutch pedal. Keep holding it, then swipe UP on the shifter to select 1st gear. The gear display shows which gear you are in.';
+      body = 'Hold the CLUTCH. While holding it, SWIPE UP on the shifter to select 1st. Watch the gear display change.';
       prompt = 'YOUR TURN // HOLD CLUTCH + SHIFT UP';
       targets = [
         ['clutch', 'HOLD CLUTCH', 0x45d7ff],
@@ -1133,8 +1139,8 @@ export default class RaceScene extends Phaser.Scene {
     } else if (this.tutorialStep === 'LAUNCH_PREP') {
       title = 'BUILD REVS + WAIT FOR GREEN';
       body = this.tutorialCountdownStarted
-        ? 'Good. Keep the clutch fully held and keep the accelerator high. Do NOT release the clutch until the tree turns green.'
-        : 'Keep the clutch held. Push the accelerator high and hold it there. Once you are ready, the start lights will begin.';
+        ? 'Keep the clutch held and the accelerator high. Do NOT release the clutch until the tree turns green.'
+        : 'Keep the clutch held. Push the accelerator high and hold it. The start lights will begin when you are ready.';
       prompt = this.tutorialCountdownStarted
         ? 'HOLD BOTH // WAIT FOR GREEN'
         : 'YOUR TURN // CLUTCH HELD + ACCELERATOR HIGH';
@@ -1147,7 +1153,7 @@ export default class RaceScene extends Phaser.Scene {
       }
     } else if (this.tutorialStep === 'LAUNCH') {
       title = 'LAUNCH';
-      body = 'GREEN. Release the clutch quickly and stay on the accelerator. The car should pull away cleanly.';
+      body = 'GREEN. Release the clutch quickly and keep the accelerator up. Let the car pull away.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1158,14 +1164,14 @@ export default class RaceScene extends Phaser.Scene {
       title = 'SHIFT TO ' + targetGear + (targetGear === 2 ? 'ND' : targetGear === 3 ? 'RD' : 'TH') + ' GEAR';
 
       if (!this.tutorialShiftReady) {
-        body = 'Keep accelerating and watch the tachometer. Wait until the revs are high before you change gear.';
+        body = 'Keep accelerating and watch the tachometer. Wait until the revs are high before shifting.';
         prompt = 'YOUR TURN // LET THE REVS CLIMB';
         targets = [
           ['throttle', 'KEEP ACCELERATING', 0xffc857],
           ['tach', 'WATCH REVS', 0xffe08a],
         ];
       } else {
-        body = 'Lift off the accelerator, press and HOLD the clutch, then swipe the shifter UP. Watch the gear display change to ' + targetGear + '.';
+        body = 'Lift off the accelerator, hold the clutch, then SWIPE UP on the shifter. Watch the gear display change to ' + targetGear + '.';
         prompt = 'YOUR TURN // LIFT THROTTLE + CLUTCH + SHIFT UP';
         targets = [
           ['throttle', 'LIFT OFF', 0xffc857],
@@ -1177,7 +1183,7 @@ export default class RaceScene extends Phaser.Scene {
     } else if (this.tutorialStep === 'POWER_2' || this.tutorialStep === 'POWER_3') {
       const gear = Number(this.tutorialStep.slice(-1));
       title = 'BACK ON THE POWER';
-      body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + ' gear. Quickly release the clutch and get back on the accelerator. Then let the revs build again.';
+      body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + '. Release the clutch quickly, get back on the accelerator, then build the revs again.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1325,7 +1331,7 @@ export default class RaceScene extends Phaser.Scene {
 
       if (gear === targetGear) {
         if (targetGear >= 4) {
-          this.showTutorialCompletePopup();
+          this.queueTutorialCompletePopup();
         } else {
           this.setTutorialStep('POWER_' + targetGear);
         }
@@ -1341,14 +1347,77 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
+  queueTutorialCompletePopup() {
+    if (
+      !this.isTutorial ||
+      this.tutorialComplete ||
+      this.tutorialCompletionQueued ||
+      this.tutorialCompletePopup?.active
+    ) return;
+
+    this.tutorialCompletionQueued = true;
+    this.clearTutorialHighlights();
+    this.tutorialPromptText?.setText('GOOD // RELEASE THE CONTROLS');
+
+    let releaseChecks = 0;
+    const waitForRelease = () => {
+      if (!this.tutorialCompletionQueued || this.tutorialComplete) return;
+
+      releaseChecks += 1;
+      const pointerStillDown = (this.input?.manager?.pointers || [])
+        .some(pointer => pointer?.isDown);
+
+      if (pointerStillDown && releaseChecks < 8) {
+        this.time.delayedCall(60, waitForRelease);
+        return;
+      }
+
+      this.tutorialCompletionQueued = false;
+      this.showTutorialCompletePopup();
+    };
+
+    // Do not create a new interactive popup in the same touch gesture that
+    // shifted into 4th; iOS/PWA pointer capture can otherwise strand the overlay.
+    this.time.delayedCall(140, waitForRelease);
+  }
+
+  finishTutorialChoice(retry = false) {
+    if (this.tutorialTransitioning) return;
+    this.tutorialTransitioning = true;
+
+    try { this.input.enabled = true; } catch (e) {}
+    this.controls.enabled = false;
+    this.engineAudio?.fadeOut();
+    saveSessionState(this.registry);
+
+    this.time.delayedCall(70, () => {
+      if (retry) {
+        this.scene.restart();
+      } else {
+        this.scene.start('GarageScene');
+      }
+    });
+  }
+
   showTutorialCompletePopup() {
     if (!this.isTutorial || this.tutorialComplete || this.tutorialCompletePopup?.active) return;
 
     this.tutorialComplete = true;
+    this.tutorialCompletionQueued = false;
     this.clearTutorialHighlights();
     this.controls.enabled = false;
     this.controls.throttle = 0;
     this.controls.clutch = 1;
+    try { this.input.enabled = true; } catch (e) {}
+
+    [
+      this.tutorialPanel,
+      this.tutorialStepText,
+      this.tutorialTitleText,
+      this.tutorialBodyText,
+      this.tutorialPromptBox,
+      this.tutorialPromptText,
+    ].forEach(obj => obj?.setVisible?.(false));
 
     const depth = 150;
     const objects = [];
@@ -1357,24 +1426,24 @@ export default class RaceScene extends Phaser.Scene {
     const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.72)
       .setDepth(depth).setScrollFactor(0).setInteractive());
 
-    const panel = add(this.add.rectangle(780, 360, 760, 350, 0x07111d, 0.995)
-      .setStrokeStyle(3, 0x62e8c7, 0.98)
+    const panel = add(this.add.rectangle(780, 360, 780, 370, 0xf8f7f2, 1)
+      .setStrokeStyle(3, 0x18222b, 1)
       .setDepth(depth + 1).setScrollFactor(0));
 
     add(this.add.text(780, 258, 'YOU\'VE GOT IT', {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
-      color: '#f1fffb',
+      color: '#101820',
     }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
     add(this.add.text(
       780,
       330,
-      'You launched from a standing start and worked through 1st, 2nd and 3rd gear.\nWould you like to practise the controls again?',
+      'You launched cleanly and shifted through 1st, 2nd and 3rd into 4th gear.\nWould you like to practise the controls again?',
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
-        color: '#cfe2e9',
+        color: '#202a31',
         fontStyle: '700',
         align: 'center',
         lineSpacing: 6,
@@ -1382,35 +1451,33 @@ export default class RaceScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
-    const again = add(this.add.rectangle(650, 452, 250, 50, 0x0d2b29, 1)
-      .setStrokeStyle(2, 0x62e8c7, 1)
+    const again = add(this.add.rectangle(650, 470, 250, 54, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2f8f78, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(650, 452, 'TRY AGAIN', {
+    add(this.add.text(650, 470, 'TRY AGAIN', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
-      color: '#effffb',
+      color: '#15372f',
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
-    const continueButton = add(this.add.rectangle(910, 452, 250, 50, 0x142235, 1)
-      .setStrokeStyle(2, 0x45d7ff, 1)
+    const continueButton = add(this.add.rectangle(910, 470, 250, 54, 0xffffff, 1)
+      .setStrokeStyle(3, 0x2b7898, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(910, 452, 'CONTINUE WITH DAICHI', {
+    add(this.add.text(910, 470, 'CONTINUE WITH DAICHI', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
-      color: '#eefaff',
+      color: '#173849',
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
     blocker.on('pointerdown', () => {});
-    again.on('pointerdown', () => {
-      saveSessionState(this.registry);
-      this.scene.restart();
-    });
-    continueButton.on('pointerdown', () => {
-      saveSessionState(this.registry);
-      this.scene.start('GarageScene');
-    });
+    const retryTutorial = () => this.finishTutorialChoice(true);
+    const continueTutorial = () => this.finishTutorialChoice(false);
+    again.on('pointerdown', retryTutorial);
+    again.on('pointerup', retryTutorial);
+    continueButton.on('pointerdown', continueTutorial);
+    continueButton.on('pointerup', continueTutorial);
 
     this.tutorialCompletePopup = panel;
   }

@@ -29,7 +29,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260924-r178';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260923-r139';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260925-r195';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r209';
 import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 

@@ -10,11 +10,16 @@ export default class TouchControls {
 
     this.clutchPointer = null;
     this.throttlePointer = null;
+    this.shifterPointer = null;
     this.clutchStartY = 0;
     this.throttleStartY = 0;
+    this.shifterStartY = 0;
+    this.shifterSwipeDirection = 'neutral';
+    this.shifterSwipeConsumed = false;
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
+    this.shifterSwipePx = 54;
 
     scene.input.addPointer(5);
     this.keys = scene.input.keyboard.addKeys({
@@ -51,10 +56,10 @@ export default class TouchControls {
     this.shifterSprite = scene.add.image(1218, 535, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
     this.throttleSprite = scene.add.image(1405, 545, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
-    this.plusLabel = scene.add.text(1218, 390, '+', {
+    this.plusLabel = scene.add.text(1218, 390, '↑', {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-    this.minusLabel = scene.add.text(1218, 697, '−', {
+    this.minusLabel = scene.add.text(1218, 697, '↓', {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
@@ -67,6 +72,25 @@ export default class TouchControls {
         this.throttlePointer = pointer;
         this.throttleStartY = pointer.y;
         this.throttleLatchedMax = false;
+      } else if (!this.shifterPointer && this.layout.shifter.contains(pointer.x, pointer.y)) {
+        this.shifterPointer = pointer;
+        this.shifterStartY = pointer.y;
+        this.shifterSwipeDirection = 'neutral';
+        this.shifterSwipeConsumed = false;
+      }
+    });
+
+    scene.input.on('pointermove', pointer => {
+      if (pointer !== this.shifterPointer || !pointer.isDown) return;
+
+      const deltaY = pointer.y - this.shifterStartY;
+      if (Math.abs(deltaY) >= 18) {
+        this.shifterSwipeDirection = deltaY < 0 ? 'up' : 'down';
+      }
+
+      if (!this.shifterSwipeConsumed && Math.abs(deltaY) >= this.shifterSwipePx) {
+        this.pendingGearRequest = deltaY < 0 ? 'UP' : 'DOWN';
+        this.shifterSwipeConsumed = true;
       }
     });
 
@@ -78,6 +102,11 @@ export default class TouchControls {
       if (pointer === this.throttlePointer) {
         this.throttlePointer = null;
         this.throttleLatchedMax = false;
+      }
+      if (pointer === this.shifterPointer) {
+        this.shifterPointer = null;
+        this.shifterSwipeDirection = 'neutral';
+        this.shifterSwipeConsumed = false;
       }
     });
   }
@@ -123,19 +152,13 @@ export default class TouchControls {
       if (Phaser.Input.Keyboard.JustDown(key)) this.pendingGearRequest = g;
     }
 
-    const sp = this.pointerIn(this.layout.shifter);
-    let shiftState = 'neutral';
-    if (sp) {
-      const upperHalf = sp.y < this.layout.shifter.centerY;
-      shiftState = upperHalf ? 'up' : 'down';
-      if (!sp._tsShiftConsumed) {
-        this.pendingGearRequest = upperHalf ? 'UP' : 'DOWN';
-        sp._tsShiftConsumed = true;
-      }
+    if (this.shifterPointer && !this.shifterPointer.isDown) {
+      this.shifterPointer = null;
+      this.shifterSwipeDirection = 'neutral';
+      this.shifterSwipeConsumed = false;
     }
-    for (const p of this.scene.input.manager.pointers) if (!p.isDown) p._tsShiftConsumed = false;
 
-    this.drawDynamic(shiftState);
+    this.drawDynamic(this.shifterSwipeDirection || 'neutral');
     return this.snapshot();
   }
 

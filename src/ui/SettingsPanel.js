@@ -7,8 +7,9 @@ import {
   deleteProfileSlot,
   setActiveProfileIndex,
   saveSessionState,
-} from '../state/GameState.js?v=20260925-r195';
+} from '../state/GameState.js?v=20260926-r209';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260925-r195';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r209';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -368,26 +369,28 @@ export function showSettingsPanel(scene) {
       .setStrokeStyle(1, active ? 0x49dfff : 0x315470, 1)
       .setDepth(184));
 
-    if (scene.textures.exists(character.visual.spriteKey)) {
-      const source = scene.textures.get(character.visual.spriteKey).getSourceImage();
-      const maskShape = scene.make.graphics({ add: false });
-      maskShape.fillStyle(0xffffff, 1);
-      maskShape.fillRect(
-        portraitX - portraitSize / 2,
-        portraitY - portraitSize / 2,
-        portraitSize,
-        portraitSize
-      );
-      masks.push(maskShape);
+    const profile = createCharacterProfile(scene, {
+      characterId: character.id,
+      pose: 'idle',
+      x: portraitX,
+      y: portraitY,
+      frameWidth: portraitSize,
+      frameHeight: portraitSize,
+      side: 'center',
+      depth: 185,
+      flipInward: false,
+      mask: true,
+    });
 
-      const portrait = add(scene.add.image(
-        portraitX,
-        portraitY - portraitSize / 2 - 8,
-        character.visual.spriteKey
-      ).setOrigin(0.5, 0).setDepth(185));
-
-      portrait.setScale(330 / source.height);
-      portrait.setMask(maskShape.createGeometryMask());
+    if (profile) {
+      add(profile.image);
+      if (profile.maskShape) masks.push(profile.maskShape);
+    } else {
+      add(scene.add.text(portraitX, portraitY, '?', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '18px',
+        color: '#688396',
+      }).setOrigin(0.5).setDepth(185));
     }
 
     const name = [slot.firstName, slot.lastName].filter(Boolean).join(' ') || character.name;

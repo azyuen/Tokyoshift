@@ -2,7 +2,13 @@ import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { cars, carOrder } from '../data/cars.js?v=20260925-r193';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { characters } from '../data/characters.js?v=20260925-r195';
-import { createDefaultGameState, readManualSave, readSessionState, applyStateToRegistry } from '../state/GameState.js?v=20260926-r204';
+import {
+  createDefaultGameState,
+  readManualSave,
+  readSessionState,
+  applyStateToRegistry,
+  getProfileSlots,
+} from '../state/GameState.js?v=20260926-r209';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { ensureVisualModTextures, preloadVisualModAssets } from '../data/visualMods.js?v=20260926-r201';
 import { TUNER_SHOPS } from '../data/tunerShops.js?v=20260924-r178';
@@ -74,11 +80,22 @@ export default class BootScene extends Phaser.Scene {
       }
     });
 
-    // New profiles load the full selection on the character-select screen.
-    // Existing profiles only need their chosen driver and Daichi at boot.
-    [...new Set([saved?.playerCharacterId || (saved ? 'renMizuno' : null), 'daichiSakamoto'])].forEach(id => {
+    // Settings can show all three saved driver profiles from any scene.
+    // Preload only the drivers actually used by occupied slots, plus the active
+    // driver and Daichi, so profile portraits never render as blank boxes.
+    const profileDriverIds = getProfileSlots()
+      .filter(slot => slot.occupied && slot.playerCharacterId)
+      .map(slot => slot.playerCharacterId);
+
+    [...new Set([
+      ...profileDriverIds,
+      saved?.playerCharacterId || (saved ? 'renMizuno' : null),
+      'daichiSakamoto',
+    ])].filter(Boolean).forEach(id => {
       const character = characters[id];
-      if (!character) return;
+      if (!character?.visual?.spriteKey || !character?.visual?.path) return;
+      if (this.textures.exists(character.visual.spriteKey)) return;
+
       this.load.image(
         character.visual.spriteKey,
         character.visual.path + '?v=20260923-r145'
