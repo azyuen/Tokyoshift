@@ -1,4 +1,4 @@
-import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260925-r195';
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260926-r213';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
