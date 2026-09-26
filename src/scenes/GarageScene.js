@@ -1,7 +1,7 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { cars, carOrder } from '../data/cars.js?v=20260926-r209';
 import { engines } from '../data/engines.js?v=20260924-r164';
-import { characters } from '../data/characters.js?v=20260925-r195';
+import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -33,9 +33,9 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260926-r204';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r209';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r206';
+import { saveManualState, saveSessionState } from '../state/GameState.js?v=20260926-r213';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r213';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r213';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
