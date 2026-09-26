@@ -1,7 +1,7 @@
 import {
   characters,
   DEFAULT_CHARACTER_PROFILE,
-} from '../data/characters.js?v=20260925-r195';
+} from '../data/characters.js?v=20260926-r213';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
