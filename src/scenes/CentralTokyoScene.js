@@ -36,7 +36,7 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r214';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r215';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r214';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';

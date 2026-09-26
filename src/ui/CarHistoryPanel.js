@@ -164,12 +164,12 @@ export function showCarHistoryPanel(scene) {
     }
   ).setOrigin(1, 0.5).setDepth(263));
 
-  const closeButton = add(scene.add.rectangle(1280, 160, 150, 38, 0x141d28, 1)
+  const closeButton = add(scene.add.rectangle(1235, 160, 150, 38, 0x141d28, 1)
     .setStrokeStyle(1, 0x678192, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(263));
 
-  add(scene.add.text(1280, 160, 'CLOSE', {
+  add(scene.add.text(1235, 160, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#d1e2eb',
@@ -263,7 +263,7 @@ export function showCarHistoryPanel(scene) {
         .setStrokeStyle(1, owned ? 0x2e6883 : 0x293f4e, 1)
         .setDepth(262));
 
-      addRow(scene.add.text(315, y - 18, car.name.toUpperCase(), {
+      addRow(scene.add.text(315, y - 24, car.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#ffffff',
@@ -271,7 +271,7 @@ export function showCarHistoryPanel(scene) {
 
       addRow(scene.add.text(
         315,
-        y + 14,
+        y + 8,
         acquisitionLabel(entry.acquiredVia) +
           (dateLabel(entry.acquiredAt) ? '  //  ' + dateLabel(entry.acquiredAt) : ''),
         {
@@ -284,7 +284,7 @@ export function showCarHistoryPanel(scene) {
 
       addRow(scene.add.text(
         860,
-        y - 17,
+        y - 23,
         entry.status === 'LEGACY_ARCHIVED'
           ? 'PRE-HISTORY BUILD NOT RECORDED'
           : stats
@@ -299,7 +299,7 @@ export function showCarHistoryPanel(scene) {
 
       addRow(scene.add.text(
         1260,
-        y + 13,
+        y + 7,
         statusLabel(entry),
         {
           fontFamily: PIXEL_FONT,

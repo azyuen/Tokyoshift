@@ -11,6 +11,7 @@ import {
 } from '../state/GameState.js?v=20260926-r214';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
+import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -240,6 +241,19 @@ export function showSettingsPanel(scene) {
 
   closeButton.on('pointerdown', close);
 
+  const historyButton = add(scene.add.rectangle(1020, 72, 190, 40, 0x102138, 1)
+    .setStrokeStyle(1, 0x45a8cc, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(183));
+
+  add(scene.add.text(1020, 72, 'CAR HISTORY', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '6px',
+    color: '#c6efff',
+  }).setOrigin(0.5).setDepth(184));
+
+  historyButton.on('pointerdown', () => showCarHistoryPanel(scene));
+
   let settings = getAudioSettings();
 
   const buildVolumeRow = (label, y, key) => {
@@ -322,7 +336,60 @@ export function showSettingsPanel(scene) {
   const slots = getProfileSlots();
   const activeIndex = getActiveProfileIndex();
   const activeSlotOccupied = Boolean(slots[activeIndex]?.occupied);
+  let selectedProfileIndex = activeSlotOccupied
+    ? activeIndex
+    : Math.max(0, slots.findIndex(slot => slot.occupied));
   const cardXs = [500, 780, 1060];
+  const profileCards = [];
+  const selectionFrames = [];
+  let profileActionButton = null;
+  let profileActionLabel = null;
+
+  const refreshProfileSelection = () => {
+    selectionFrames.forEach((frame, index) => {
+      frame?.setVisible(index === selectedProfileIndex);
+    });
+
+    profileCards.forEach((card, index) => {
+      if (!card) return;
+      const slot = slots[index];
+      const active = Boolean(slot?.occupied && index === activeIndex);
+      const selected = index === selectedProfileIndex;
+
+      card
+        .setFillStyle(selected ? 0x102536 : active ? 0x10283a : 0x0a1723, 1)
+        .setStrokeStyle(
+          selected ? 2 : active ? 3 : 2,
+          selected ? 0x55dfff : active ? 0x48dfff : 0x29485e,
+          1
+        );
+    });
+
+    const selectedSlot = slots[selectedProfileIndex];
+    if (!profileActionLabel) return;
+
+    if (!selectedSlot?.occupied) {
+      profileActionLabel.setText('CREATE PROFILE ' + (selectedProfileIndex + 1) + '  >');
+      profileActionButton
+        ?.setFillStyle(0x0c2b29, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1);
+      return;
+    }
+
+    const selectedName = [selectedSlot.firstName, selectedSlot.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .toUpperCase() || 'DRIVER';
+
+    profileActionLabel.setText(
+      selectedProfileIndex === activeIndex
+        ? 'RETURN TO ' + selectedName + '  >'
+        : 'SWITCH TO ' + selectedName + '  >'
+    );
+    profileActionButton
+      ?.setFillStyle(0x102638, 1)
+      .setStrokeStyle(2, 0x45c9ed, 1);
+  };
 
   if (!activeSlotOccupied) {
     closeButton.disableInteractive()
@@ -425,6 +492,12 @@ export function showSettingsPanel(scene) {
       .setDepth(183)
       .setInteractive({ useHandCursor: true }));
 
+    profileCards[i] = card;
+    selectionFrames[i] = add(scene.add.rectangle(x, 475, 250, 350, 0xffffff, 0)
+      .setStrokeStyle(3, 0x62e8c7, 1)
+      .setDepth(187)
+      .setVisible(false));
+
     add(scene.add.text(x - 100, 320, 'SLOT ' + (i + 1), {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
@@ -456,17 +529,8 @@ export function showSettingsPanel(scene) {
 
       card.on('pointerdown', () => {
         if (transitioning) return;
-
-        // If the currently active slot was just deleted, do not save the stale
-        // in-memory driver back into that empty slot.
-        const currentSlots = getProfileSlots();
-        const currentActive = getActiveProfileIndex();
-        if (currentSlots[currentActive]?.occupied) {
-          saveSessionState(scene.registry);
-        }
-
-        beginNewProfile(i);
-        reloadForProfile('CREATING DRIVER');
+        selectedProfileIndex = i;
+        refreshProfileSelection();
       });
       return;
     }
@@ -543,25 +607,18 @@ export function showSettingsPanel(scene) {
         color: '#64e5ff',
       }).setOrigin(0.5).setDepth(185));
     } else {
-      add(scene.add.text(x, 585, 'TAP TO SWITCH', {
+      add(scene.add.text(x, 585, 'TAP TO SELECT', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: '#9ac5d9',
       }).setOrigin(0.5).setDepth(185));
-
-      card.on('pointerdown', () => {
-        if (transitioning) return;
-
-        const currentSlots = getProfileSlots();
-        const currentActive = getActiveProfileIndex();
-        if (currentSlots[currentActive]?.occupied) {
-          saveSessionState(scene.registry);
-        }
-
-        setActiveProfileIndex(i);
-        reloadForProfile('SWITCHING DRIVER');
-      });
     }
+
+    card.on('pointerdown', () => {
+      if (transitioning) return;
+      selectedProfileIndex = i;
+      refreshProfileSelection();
+    });
 
     if (active) {
       const renameButton = add(scene.add.rectangle(x - 56, 625, 100, 30, 0x102638, 1)
@@ -610,17 +667,55 @@ export function showSettingsPanel(scene) {
     }
   });
 
-  add(scene.add.line(780, 665, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
+  profileActionButton = add(scene.add.rectangle(780, 690, 390, 44, 0x102638, 1)
+    .setStrokeStyle(2, 0x45c9ed, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(188));
 
-  add(scene.add.text(780, 700, 'Rename the active driver at any time. Profile progress is autosaved.', {
+  profileActionLabel = add(scene.add.text(780, 690, '', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '7px',
+    color: '#effbff',
+  }).setOrigin(0.5).setDepth(189));
+
+  profileActionButton.on('pointerdown', () => {
+    if (transitioning) return;
+
+    const selectedSlot = slots[selectedProfileIndex];
+    if (selectedProfileIndex === activeIndex && selectedSlot?.occupied) {
+      close();
+      return;
+    }
+
+    const currentSlots = getProfileSlots();
+    const currentActive = getActiveProfileIndex();
+    if (currentSlots[currentActive]?.occupied) {
+      saveSessionState(scene.registry);
+    }
+
+    if (!selectedSlot?.occupied) {
+      beginNewProfile(selectedProfileIndex);
+      reloadForProfile('CREATING DRIVER');
+      return;
+    }
+
+    setActiveProfileIndex(selectedProfileIndex);
+    reloadForProfile('SWITCHING DRIVER');
+  });
+
+  refreshProfileSelection();
+
+  add(scene.add.line(780, 724, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
+
+  add(scene.add.text(780, 752, 'Tap a profile to select it, then use the button above to open it.', {
     fontFamily: BODY_FONT,
-    fontSize: '10px',
+    fontSize: '9px',
     color: '#8099a8',
   }).setOrigin(0.5).setDepth(183));
 
-  add(scene.add.text(780, 738, 'Each profile keeps its own cars, cash, tuning, history and race record.', {
+  add(scene.add.text(780, 780, 'Each profile autosaves its own cars, cash, tuning, history and race record.', {
     fontFamily: BODY_FONT,
-    fontSize: '10px',
+    fontSize: '9px',
     color: '#8099a8',
   }).setOrigin(0.5).setDepth(183));
 }

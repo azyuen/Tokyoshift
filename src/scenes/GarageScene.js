@@ -34,8 +34,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20260926-r214';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r214';
-import { addCarHistoryButton } from '../ui/CarHistoryPanel.js?v=20260926-r214';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r215';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260926-r214';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
@@ -346,15 +345,14 @@ export default class GarageScene extends Phaser.Scene {
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 50000;
 
-    this.add.text(1105, 25, 'WINS  ' + wins, {
+    this.add.text(1210, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1105, 47, 'LOSSES  ' + losses, {
+    this.add.text(1210, 47, 'LOSSES  ' + losses, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addCarHistoryButton(this, 690, 35);
-    addSettingsButton(this, 980, 35);
+    addSettingsButton(this, 1030, 35);
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
