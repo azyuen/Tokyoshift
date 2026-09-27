@@ -83,7 +83,7 @@ import {
   getVisualModWheelVisual,
 } from '../data/visualMods.js?v=20260928-r230';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
