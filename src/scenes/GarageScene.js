@@ -180,7 +180,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     this.buildMoveCarButton();
-    this.buildAutosaveStatus();
+    this.buildWorkshopJumpButton();
     this.buildMeetButton();
 
     if (this.selectedCarId) {
@@ -929,10 +929,16 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('carGarageLocations', validatedLocations);
       this.registry.set('cash', cash - transferCost);
 
-      // Open the destination garage with the moved car selected. This makes
-      // the transfer immediately visible instead of making the car appear to vanish.
-      this.registry.set('workshopLocationId', workshop.id);
-      this.registry.set('selectedCarId', movedCarId);
+      // Moving a car is a storage/logistics action only. Keep the player in the
+      // current workshop and update the assignment in-place.
+      const remainingLocalCars = getCarsInWorkshop(
+        this.ownedCarIds,
+        validatedLocations,
+        currentWorkshop.id
+      );
+      const nextSelectedCarId = remainingLocalCars[0] || null;
+      this.selectedCarId = nextSelectedCarId;
+      this.registry.set('selectedCarId', nextSelectedCarId);
       saveSessionState(this.registry);
 
       this.cashText?.setText('¥ ' + Number(cash - transferCost).toLocaleString('en-US'));
@@ -940,11 +946,9 @@ export default class GarageScene extends Phaser.Scene {
       confirmObjects.forEach(obj => obj?.destroy?.());
       close();
 
-      try {
-        sessionStorage.setItem('tokyoShiftInternalReload', '1');
-        sessionStorage.removeItem('tokyoShiftBootMessage');
-      } catch (e) {}
-      window.location.reload();
+      // Refresh the same workshop scene so the transferred car disappears from
+      // the local strip without teleporting the player to its destination.
+      this.scene.restart({ workshopLocationId: currentWorkshop.id });
     };
 
     const openConfirmation = (workshop, transferCost) => {
@@ -1124,21 +1128,129 @@ export default class GarageScene extends Phaser.Scene {
     this.updateMoveCarButtonState();
   }
 
-  buildAutosaveStatus() {
-    this.add.rectangle(
+  buildWorkshopJumpButton() {
+    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
+    const enabled = unlocked.length > 1;
+
+    const button = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       716,
       SIDE.w - 32,
-      36,
-      0x091a1d,
-      0.92
-    ).setStrokeStyle(1, 0x2c655f, 0.85).setDepth(40);
+      40,
+      enabled ? 0x122331 : 0x17181d,
+      1
+    ).setStrokeStyle(1, enabled ? 0x55b8ff : 0x514f55, 1).setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 716, 'AUTOSAVE  //  ACTIVE', {
+    this.add.text(SIDE.x + SIDE.w / 2, 716, enabled ? 'OTHER WORKSHOP  >' : 'OTHER WORKSHOP // LOCKED', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
-      color: '#78ddc8',
+      color: enabled ? '#bfeaff' : '#817d84',
     }).setOrigin(0.5).setDepth(41);
+
+    if (enabled) {
+      button.setInteractive({ useHandCursor: true });
+      button.on('pointerdown', () => this.showWorkshopJumpPopup());
+    }
+  }
+
+  showWorkshopJumpPopup() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+    this.syncGarageAssignments();
+    const current = this.getActiveWorkshop();
+    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
+    const depth = 150;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 500, 0x08131f, 0.99)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(440, 205, 'GO TO OTHER WORKSHOP', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(440, 248, 'Jump between your unlocked garages. Stored cars stay where they are.', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#a7bdca',
+      fontStyle: '600',
+      wordWrap: { width: 650 },
+    }).setDepth(depth + 2));
+
+    unlocked.forEach((workshop, index) => {
+      const y = 330 + index * 82;
+      const isCurrent = workshop.id === current.id;
+      const usage = getWorkshopUsage(
+        this.ownedCarIds,
+        this.carGarageLocations || {},
+        workshop.id
+      );
+      const capacity = getWorkshopStorageCapacity(workshop.id);
+      const box = add(this.add.rectangle(
+        780,
+        y,
+        650,
+        62,
+        isCurrent ? 0x152a2a : 0x102138,
+        1
+      ).setStrokeStyle(2, isCurrent ? 0x62e8c7 : 0x55b8ff, 1)
+        .setDepth(depth + 2));
+
+      add(this.add.text(485, y - 10, workshop.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#eef8ff',
+      }).setDepth(depth + 3));
+
+      add(this.add.text(1075, y + 12, usage + ' / ' + capacity + ' CARS' + (isCurrent ? '  //  HERE' : ''), {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: isCurrent ? '#78ddc8' : '#9fc7db',
+        fontStyle: '700',
+      }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+      if (!isCurrent) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.registry.set('workshopLocationId', workshop.id);
+          const localCars = getCarsInWorkshop(
+            this.ownedCarIds,
+            this.carGarageLocations || {},
+            workshop.id
+          );
+          this.registry.set('selectedCarId', localCars[0] || null);
+          saveSessionState(this.registry);
+          close();
+          this.scene.restart({ workshopLocationId: workshop.id });
+        });
+      }
+    });
+
+    const closeButton = add(this.add.rectangle(780, 620, 190, 46, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 620, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    closeButton.on('pointerdown', close);
+    blocker.on('pointerdown', close);
   }
 
   buildMeetButton() {
