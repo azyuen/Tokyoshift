@@ -449,7 +449,7 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(37);
 
-    const categories = ['ENGINE', 'DRIVETRAIN', 'CHASSIS', 'EXHAUST / NOS'];
+    const categories = ['ENGINE', 'DRIVETRAIN', 'EXHAUST / NOS', 'CHASSIS'];
 
     categories.forEach((name, i) => {
       const y = SIDE.y + 285 + i * 48;
@@ -3962,12 +3962,17 @@ export default class GarageScene extends Phaser.Scene {
     this.addDaichiTuningHelper({
       textureKey: 'daichiChassisTools',
       x,
-      // Match the normal workshop protagonist's floor/baseline.
-      feetY: 558,
-      targetHeight: 350,
-      depth: 13.6,
+      // Chassis work reads better with Daichi behind the car rather than
+      // standing over the foreground. Lift and shrink him so the car remains
+      // the main subject while his tools/pose are still visible.
+      feetY: 510,
+      targetHeight: 282,
+      depth: 9.4,
       anchorY: 1517 / 1536,
-      useGarageCharacterShadow: true,
+      useGarageCharacterShadow: false,
+      shadowWidth: 86,
+      shadowHeight: 20,
+      shadowOffsetY: -6,
       objectList: this.chassisModeObjects,
     });
   }
