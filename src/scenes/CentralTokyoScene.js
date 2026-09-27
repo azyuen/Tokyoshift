@@ -20,7 +20,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r230';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260927-r217';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
