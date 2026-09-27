@@ -17,13 +17,12 @@ const KIT_ALIGNMENT = {
   evo5: [{ scaleX: 1.0142, scaleY: 1.0359, offsetX: 2.5, offsetY: 21.1 }, { scaleX: 1.0047, scaleY: 1.0359, offsetX: -0.5, offsetY: 46.5 }],
   evo6: [{ scaleX: 0.9848, scaleY: 0.9831, offsetX: -7.2, offsetY: -2.9 }, { scaleX: 0.9804, scaleY: 1.0419, offsetX: -12.6, offsetY: -4.3 }],
   evo9: [{ scaleX: 1, scaleY: 0.9653, offsetX: 2, offsetY: 2.5 }, { scaleX: 1.0284, scaleY: 0.9543, offsetX: -9.1, offsetY: 1.3 }],
-  wrx22b: [{ scaleX: 0.9734, scaleY: 1.0117, offsetX: -2, offsetY: 6.2 }, { scaleX: 0.6861, scaleY: 0.6892, offsetX: 24.4, offsetY: 26.5 }],
 };
 
 // These cars have been authored around their stock-paint canvas. Every kit
 // layer must inherit that stock layer's complete render transform verbatim.
 // Add models here as their assets are normalised to the same convention.
-const STOCK_CANVAS_KIT_CARS = new Set(['rx7fd']);
+const STOCK_CANVAS_KIT_CARS = new Set(['rx7fd', 'wrx22b']);
 
 // SpriteR-authored RX-7 FD stock/body-kit layers now share one canvas,
 // origin and floor reference. Do not reintroduce per-kit geometry compensation:
