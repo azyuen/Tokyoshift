@@ -67,6 +67,9 @@ export default class BootScene extends Phaser.Scene {
       'assets/Ui/tokyo_region_map_base.png?v=20260923-r139'
     );
 
+    // Workshop UI is needed immediately on entry. Keep it in the boot preload
+    // so GarageScene remains synchronous; the service worker makes repeat
+    // launches cheap once these assets have been cached.
     garageAssets
       .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory') || asset.key.startsWith('tuningPart'))
       .forEach(asset => this.load.image(asset.key, asset.path));

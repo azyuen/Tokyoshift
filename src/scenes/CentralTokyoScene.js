@@ -442,7 +442,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Central destinations are intentionally reached through the region map.
     // There are no shortcut buttons between Auto Market, Ginza and Drag.
     // Keep navigation as the final action in the side panel.
-    const mapY = SIDE.y + 696;
+    const mapY = SIDE.y + 674;
     const mapButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       mapY,
