@@ -289,6 +289,9 @@ canvas {
   rules deliberately live OUTSIDE an orientation media query so they still
   work when iOS reports stale orientation state under portrait lock.
 */
+/* Portrait is intentionally blocked instead of virtually rotating the canvas.
+   iOS portrait-lock can report a portrait viewport even when Screen Orientation
+   lock is unavailable; rotating the shell there caused the 13:7 frame to crop. */
 html.force-landscape #game-shell {
   position: fixed;
   left: 50%;
@@ -384,4 +387,48 @@ body[data-scene="race"] #build-stamp {
 html.force-landscape body[data-scene="race"] #build-stamp {
   left: auto;
   right: 8px;
+}
+
+
+/* R221 portrait safety: never crop/zoom the game to fake landscape. */
+html.force-landscape #game-shell,
+@media (orientation: portrait) and (max-width: 900px) {
+}
+
+html.force-landscape #game-shell {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100vw;
+  height: 100dvh;
+  transform: none;
+}
+
+html.force-landscape #game,
+html.force-landscape body[data-scene="race"] #game {
+  visibility: hidden;
+}
+
+html.force-landscape #loading-screen {
+  display: none;
+}
+
+html.force-landscape #rotate-message {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: #05070d;
+  color: #eef8ff;
+  font-family: "Silkscreen", ui-monospace, monospace;
+  font-size: clamp(14px, 4vw, 22px);
+  line-height: 1.65;
+  letter-spacing: .04em;
+  text-align: center;
+}
+
+html.force-landscape #build-stamp {
+  display: none;
 }
