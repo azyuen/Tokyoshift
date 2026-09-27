@@ -1141,28 +1141,42 @@ addRegularCar('nsx', 'ae86', {
 // Kit artwork is registered to these stock arches in visualMods.js.
 const REGULAR_ASSETS = {
   // id: stem, canvas H, rear X/Y/R, front X/Y/R, visible W, target W
-  // R229 wheel audit: axle X values were rechecked against the current stock
-  // PNGs rather than inherited from older art. Y/radius values remain authored
-  // per model; SpriteR canvas alignment does not imply shared axle geometry.
-  ae86: ['ae86', 500, 282, 390, 91, 1044, 391, 92, 1161, 420],
-  ef: ['ef', 500, 248, 362, 99, 1028, 365, 98, 1141, 400],
-  ek9: ['ek9', 500, 218, 368, 97, 1020, 371, 100, 1159, 420],
-  rx7fb: ['rx7fb', 600, 276, 439, 107, 1010, 431, 103, 1161, 430],
-  fc3s: ['rx7fc', 600, 274, 415, 100, 996, 422, 100, 1162, 430],
-  rx7fd: ['rx7fd', 500, 270, 403, 102, 996, 403, 97, 1184, 430],
-  rx8: ['rx8', 400, 250, 305, 92, 1000, 316, 97, 1167, 440],
+  //
+  // R230: wheel centres are body-arch coordinates, not "visual right edge"
+  // coordinates. R229 accidentally pushed many front wheels too far right.
+  // Preserve the older measured geometry for unchanged art, and only update
+  // cars whose PNGs were actually re-authored through SpriteR.
+  ae86: ['ae86', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
+  ef: ['ef', 500, 230, 362, 99, 961, 365, 98, 1141, 400],
+  ek9: ['ek9', 500, 194, 368, 97, 932, 371, 100, 1159, 420],
+  rx7fb: ['rx7fb', 600, 292, 439, 107, 958, 431, 103, 1161, 430],
+
+  // Re-authored FC now uses a 1200x500 stock canvas. Its old 600px height
+  // caused both wheels to render too high relative to the new body.
+  fc3s: ['rx7fc', 500, 274, 395, 100, 930, 398, 100, 1162, 430],
+
+  rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
+  rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
+
+  // Re-aligned SpriteR GR86.
   gr86: ['gr86', 500, 286, 390, 101, 980, 391, 93, 1155, 430],
-  evo3: ['evo3', 500, 316, 390, 92, 954, 392, 94, 1137, 430],
-  evo5: ['evo5', 500, 286, 410, 85, 976, 410, 88, 1090, 440],
-  s2000: ['s2000', 500, 282, 400, 91, 990, 400, 92, 1161, 430],
-  a60: ['a60', 500, 286, 397, 91, 978, 397, 92, 1161, 430],
-  ej1: ['ej1', 500, 276, 395, 91, 1008, 395, 92, 1161, 420],
-  jza80: ['jza80', 500, 300, 405, 91, 978, 405, 92, 1161, 450],
-  nsx: ['nsx', 500, 276, 397, 91, 1008, 397, 92, 1161, 445],
-  evo6: ['evo6', 400, 292, 318, 87, 974, 314, 87, 1139, 440],
-  evo9: ['evo9', 400, 288, 317, 86, 994, 308, 81, 1188, 450],
-  wrx22b: ['22b', 400, 304, 316, 85, 986, 319, 88, 1106, 435],
-  r32: ['r32', 400, 286, 306, 93, 960, 305, 92, 1163, 455],
+
+  // Re-authored Evo III / V use 500px canvases. X follows the new wheel
+  // openings; Y retains the old axle relationship after the +50px canvas shift.
+  evo3: ['evo3', 500, 316, 383, 92, 954, 385, 94, 1137, 430],
+  evo5: ['evo5', 500, 286, 397, 88, 976, 397, 90, 1090, 440],
+
+  // New SpriteR cars: model-specific arch centres/radii.
+  s2000: ['s2000', 500, 282, 398, 99, 990, 398, 99, 1161, 430],
+  a60: ['a60', 500, 286, 392, 101, 978, 392, 103, 1161, 430],
+  ej1: ['ej1', 500, 276, 392, 97, 1008, 392, 98, 1161, 420],
+  jza80: ['jza80', 500, 300, 400, 101, 978, 400, 99, 1161, 450],
+  nsx: ['nsx', 500, 276, 395, 98, 1008, 395, 97, 1161, 445],
+
+  evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
+  evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
+  wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
+  r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
 };
 
 Object.entries(REGULAR_ASSETS).forEach(([id, [
@@ -1192,10 +1206,14 @@ Object.entries(REGULAR_ASSETS).forEach(([id, [
     canvasDisplayScale: bodyScale / 0.36,
     bodyScale,
     wheelFitMode: 'visible-well',
-    // Current wheel art is fitted to the measured opening at 1:1 rather than
-    // the old 3.5% oversize, which made tyres look slightly off across cars.
+    // Match the visible tyre to the measured opening exactly.
     wheelFill: 1.0,
-    levelWheelContact: true,
+
+    // Preserve the authored wheel centres. Flattening rear/front tyre contact
+    // by moving each axle independently makes a correctly measured wheel look
+    // vertically off-centre inside its arch. The whole car is already placed
+    // against the shared AE86 floor baseline by Garage/Race staging.
+    levelWheelContact: false,
     rearOffsetX, frontOffsetX,
     wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
     rearWheelOffsetX: rearOffsetX,

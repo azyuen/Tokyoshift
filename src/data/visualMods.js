@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260928-r229';
+import { cars, carOrder } from './cars.js?v=20260928-r230';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -11,7 +11,6 @@ const KIT_ALIGNMENT = {
   ek9: [{ scaleX: 0.9986, scaleY: 1.0423, offsetX: -0.5, offsetY: 2.8 }, { scaleX: 1.0041, scaleY: 1.0314, offsetX: -1.4, offsetY: 11.2 }],
   rx7fb: [{ scaleX: 1.023, scaleY: 1.0294, offsetX: 21.4, offsetY: 2.7 }, { scaleX: 1.0215, scaleY: 1.0294, offsetX: 37.3, offsetY: -15.3 }],
   rx8: [{ scaleX: 0.9749, scaleY: 1.0328, offsetX: -1.1, offsetY: -5.7 }, { scaleX: 0.9831, scaleY: 1.0053, offsetX: -4, offsetY: 6.4 }],
-  gr86: [{ scaleX: 0.9886, scaleY: 0.9652, offsetX: -3, offsetY: -4.4 }, { scaleX: 1.0388, scaleY: 0.9898, offsetX: -3, offsetY: -3.2 }],
   evo3: [{ scaleX: 0.9695, scaleY: 1.0814, offsetX: -5.9, offsetY: 1.5 }, { scaleX: 1.0325, scaleY: 1.0814, offsetX: -14.4, offsetY: 0.4 }],
   evo5: [{ scaleX: 1.0142, scaleY: 1.0359, offsetX: 2.5, offsetY: 21.1 }, { scaleX: 1.0047, scaleY: 1.0359, offsetX: -0.5, offsetY: 46.5 }],
   evo6: [{ scaleX: 0.9848, scaleY: 0.9831, offsetX: -7.2, offsetY: -2.9 }, { scaleX: 0.9804, scaleY: 1.0419, offsetX: -12.6, offsetY: -4.3 }],
@@ -21,7 +20,7 @@ const KIT_ALIGNMENT = {
 // These cars have been authored around their stock-paint canvas. Every kit
 // layer must inherit that stock layer's complete render transform verbatim.
 // Add models here as their assets are normalised to the same convention.
-const STOCK_CANVAS_KIT_CARS = new Set(['fc3s', 'rx7fd', 'wrx22b', 'evo3', 'evo5', 's2000', 'a60', 'ej1', 'jza80', 'nsx']);
+const STOCK_CANVAS_KIT_CARS = new Set(['fc3s', 'rx7fd', 'wrx22b', 'gr86', 'evo3', 'evo5', 's2000', 'a60', 'ej1', 'jza80', 'nsx']);
 
 // SpriteR-authored replacement cars share each model's stock canvas across
 // stock/body-kit layers. Do not reintroduce per-kit scaling or offsets: the
