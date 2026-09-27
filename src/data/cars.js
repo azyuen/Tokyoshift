@@ -1113,14 +1113,16 @@ const REGULAR_ASSETS = {
   // SpriteR re-authored FD assets use the AE86 500px canvas/floor convention.
   // Preserve FD-specific wheel X/radii, but interpret vertical geometry on the
   // shared 500px master canvas rather than the legacy 600px source.
-  rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
+  rx7fd: ['rx7fd', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
   rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
   gr86: ['gr86', 500, 248, 376, 101, 944, 370, 93, 1155, 430],
   evo3: ['evo3', 400, 280, 333, 92, 947, 335, 94, 1137, 430],
   evo5: ['evo5', 400, 280, 347, 85, 924, 347, 88, 1090, 440],
   evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
   evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
-  wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
+  // SpriteR re-authored 22B assets now use the same 500px master canvas,
+  // floor reference and wheel anchors as the AE86.
+  wrx22b: ['22b', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
   r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
 };
 
