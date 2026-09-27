@@ -1110,7 +1110,10 @@ const REGULAR_ASSETS = {
   ek9: ['ek9', 500, 194, 368, 97, 932, 371, 100, 1159, 420],
   rx7fb: ['rx7fb', 600, 292, 439, 107, 958, 431, 103, 1161, 430],
   fc3s: ['rx7fc', 600, 261, 415, 100, 926, 422, 100, 1162, 430],
-  rx7fd: ['rx7fd', 600, 264, 403, 102, 970, 403, 97, 1184, 430],
+  // SpriteR re-authored FD assets use the AE86 500px canvas/floor convention.
+  // Preserve FD-specific wheel X/radii, but interpret vertical geometry on the
+  // shared 500px master canvas rather than the legacy 600px source.
+  rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
   rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
   gr86: ['gr86', 500, 248, 376, 101, 944, 370, 93, 1155, 430],
   evo3: ['evo3', 400, 280, 333, 92, 947, 335, 94, 1137, 430],
