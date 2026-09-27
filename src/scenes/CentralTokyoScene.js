@@ -441,7 +441,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     // Central destinations are intentionally reached through the region map.
     // There are no shortcut buttons between Auto Market, Ginza and Drag.
-    const mapY = SIDE.y + 142;
+    // Keep navigation as the final action in the side panel.
+    const mapY = SIDE.y + 696;
     const mapButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       mapY,
@@ -469,7 +470,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (isArkonDen(this.registry)) {
       const location = LOCATION_BY_ID[this.activeLocationId];
       const kind = location?.kind || 'autoMarket';
-      const devY = mapY + 56;
+      // Dev refresh stays near the header so GO TO MAP remains the bottom-most action.
+      const devY = SIDE.y + 196;
       const labels = {
         autoMarket: 'DEV // REFRESH AUTO MARKET',
         showroom: 'DEV // REFRESH COLLECTORS',
@@ -932,7 +934,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
+      SIDE.y + 638,
       SIDE.w - 36,
       48,
       canBuy ? 0x0d2b29 : 0x17181d,
@@ -951,7 +953,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
+      SIDE.y + 638,
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
@@ -962,7 +964,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (canBuy) {
       buyButton.setInteractive({ useHandCursor: true });
-      buyButton.on('pointerdown', () => this.buyAutoMarketCar(listing));
+      buyButton.on('pointerdown', () => {
+        const carName = cars[listing.carId]?.shortName || cars[listing.carId]?.name || 'this car';
+        const couponRequired = getCarCouponRequirement(listing.carId);
+        const couponCount = getCarCouponCount(this.registry, listing.carId);
+        const useCoupons = couponCount >= couponRequired;
+        this.showTransactionConfirm({
+          title: useCoupons ? 'CONFIRM CLAIM' : 'CONFIRM PURCHASE',
+          message: useCoupons
+            ? 'Claim ' + carName + ' using ' + couponRequired + ' car coupons?'
+            : 'Buy ' + carName + ' for ' + money(listing.price) + '?',
+          confirmLabel: useCoupons ? 'CLAIM CAR' : 'BUY CAR',
+          accent: 0x62e8c7,
+          onConfirm: () => this.buyAutoMarketCar(listing),
+        });
+      });
     }
 
     const selectedCarId = this.registry.get('selectedCarId');
@@ -990,7 +1006,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const sellButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 668,
+      SIDE.y + 580,
       SIDE.w - 36,
       44,
       canSell ? 0x261922 : 0x17181d,
@@ -999,7 +1015,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 668,
+      SIDE.y + 580,
       canSell
         ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
         : collectorLocked
@@ -1016,8 +1032,91 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (canSell) {
       sellButton.setInteractive({ useHandCursor: true });
-      sellButton.on('pointerdown', () => this.sellSelectedCar(selectedCarId, sellPrice));
+      sellButton.on('pointerdown', () => {
+        const carName = cars[selectedCarId]?.shortName || cars[selectedCarId]?.name || 'this car';
+        this.showTransactionConfirm({
+          title: 'CONFIRM SALE',
+          message: 'Sell ' + carName + ' for ' + money(sellPrice) + '?\n\nThis car will leave your garage.',
+          confirmLabel: 'SELL CAR',
+          accent: 0xff7cac,
+          onConfirm: () => this.sellSelectedCar(selectedCarId, sellPrice),
+        });
+      });
     }
+  }
+
+  showTransactionConfirm({
+    title = 'CONFIRM',
+    message = '',
+    confirmLabel = 'CONFIRM',
+    accent = 0x62e8c7,
+    onConfirm = null,
+  } = {}) {
+    if (this.transactionConfirmOpen) return;
+    this.transactionConfirmOpen = true;
+
+    const depth = 240;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.transactionConfirmOpen = false;
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 620, 330, 0x09131d, 1)
+      .setStrokeStyle(3, accent, 0.95)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 318, String(title).toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffffff',
+      align: 'center',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 392, message, {
+      fontFamily: BODY_FONT,
+      fontSize: '15px',
+      color: '#c9d8df',
+      fontStyle: '600',
+      align: 'center',
+      lineSpacing: 6,
+      wordWrap: { width: 520 },
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(640, 512, 230, 52, 0x151c25, 1)
+      .setStrokeStyle(2, 0x657783, 1)
+      .setDepth(depth + 2)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(640, 512, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#d9e6ec',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(920, 512, 230, 52, 0x102822, 1)
+      .setStrokeStyle(2, accent, 1)
+      .setDepth(depth + 2)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(920, 512, String(confirmLabel).toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    blocker.on('pointerdown', () => {});
+    cancel.on('pointerdown', close);
+    confirm.on('pointerdown', () => {
+      close();
+      onConfirm?.();
+    });
   }
 
   findStorageForPurchase() {
@@ -1370,7 +1469,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 676,
+      SIDE.y + 638,
       SIDE.w - 36,
       48,
       canBuy ? 0x2b1422 : 0x17181d,
@@ -1387,7 +1486,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 676,
+      SIDE.y + 638,
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
@@ -1398,7 +1497,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (canBuy) {
       buyButton.setInteractive({ useHandCursor: true });
-      buyButton.on('pointerdown', () => this.buyGinzaCar(listing));
+      buyButton.on('pointerdown', () => {
+        const carName = cars[listing.carId]?.shortName || cars[listing.carId]?.name || 'this collector car';
+        this.showTransactionConfirm({
+          title: 'CONFIRM PURCHASE',
+          message: 'Acquire ' + carName + ' for ' + money(listing.price) + '?\n\nGINZA collector cars are sealed and cannot be modified.',
+          confirmLabel: 'ACQUIRE CAR',
+          accent: 0xff7cac,
+          onConfirm: () => this.buyGinzaCar(listing),
+        });
+      });
     }
   }
 
