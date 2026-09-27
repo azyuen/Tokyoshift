@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260927-r227';
+import { cars, carOrder } from './cars.js?v=20260928-r228';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -21,10 +21,10 @@ const KIT_ALIGNMENT = {
 // These cars have been authored around their stock-paint canvas. Every kit
 // layer must inherit that stock layer's complete render transform verbatim.
 // Add models here as their assets are normalised to the same convention.
-const STOCK_CANVAS_KIT_CARS = new Set(['fc3s', 'rx7fd', 'wrx22b']);
+const STOCK_CANVAS_KIT_CARS = new Set(['fc3s', 'rx7fd', 'wrx22b', 'evo3', 'evo5', 's2000', 'a60', 'ej1', 'jza80', 'nsx']);
 
-// SpriteR-authored FC, FD and 22B stock/body-kit layers share their model's
-// stock canvas. Do not reintroduce per-kit geometry compensation: each model's
+// SpriteR-authored replacement cars share each model's stock canvas across
+// stock/body-kit layers. Do not reintroduce per-kit scaling or offsets: the
 // stock body transform and model-specific wheel geometry are the source of truth.
 const KIT_WHEEL_GEOMETRY = {};
 const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32');
