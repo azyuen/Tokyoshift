@@ -282,44 +282,7 @@ canvas {
   display: none;
 }
 
-/*
-  iOS does not reliably honour Screen Orientation API locks for installed web
-  apps. When the viewport remains portrait, JS adds .force-landscape and the
-  whole game shell is given swapped viewport dimensions then rotated. These
-  rules deliberately live OUTSIDE an orientation media query so they still
-  work when iOS reports stale orientation state under portrait lock.
-*/
-/* Portrait is intentionally blocked instead of virtually rotating the canvas.
-   iOS portrait-lock can report a portrait viewport even when Screen Orientation
-   lock is unavailable; rotating the shell there caused the 13:7 frame to crop. */
-html.force-landscape #game-shell {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  width: var(--ts-vh, 100svh);
-  height: var(--ts-vw, 100svw);
-  transform: translate(-50%, -50%) rotate(90deg);
-  transform-origin: center center;
-  padding: 0;
-}
-
-html.force-landscape #game {
-  width: auto;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 13 / 7;
-}
-
-html.force-landscape body[data-scene="race"] #game {
-  width: auto;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 13 / 6;
-}
-
-html.force-landscape #build-stamp {
+#build-stamp {
   top: 8px;
   right: 8px;
   left: auto;
@@ -390,22 +353,10 @@ html.force-landscape body[data-scene="race"] #build-stamp {
 }
 
 
-/* R221 portrait safety: never crop/zoom the game to fake landscape. */
-html.force-landscape #game-shell,
-@media (orientation: portrait) and (max-width: 900px) {
-}
-
-html.force-landscape #game-shell {
-  position: relative;
-  left: auto;
-  top: auto;
-  width: 100vw;
-  height: 100dvh;
-  transform: none;
-}
-
-html.force-landscape #game,
-html.force-landscape body[data-scene="race"] #game {
+/* R221 portrait safety: iOS cannot reliably force an installed PWA out of
+   portrait lock. Keep the game at its correct aspect ratio and gate portrait
+   rather than rotating/zooming the canvas, which caused cropping. */
+html.force-landscape #game {
   visibility: hidden;
 }
 
