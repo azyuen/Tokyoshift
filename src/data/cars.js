@@ -1099,6 +1099,42 @@ addRegularCar('rx8', 'fc3s', {
   visual: { wheelKey: 'wheel5Spoke' },
 });
 
+addRegularCar('s2000', 'ae86', {
+  shortName: 'S2000', name: 'Honda S2000 AP1', description: 'High-revving roadster with sharp rear-drive balance.',
+  engine: 'f20c', engineModel: 'F20C', powerKW: 184, torqueNm: 208, vehicleMassKg: 1260,
+  engineRedlineRPM: 8800, engineLimiterRPM: 9000, launchRPM: 5600,
+  gearRatios: [3.133, 2.045, 1.481, 1.161, 0.970, 0.810], finalDriveRatio: 4.10,
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('a60', 'ae86', {
+  shortName: 'SUPRA A60', name: 'Toyota Celica Supra A60', description: 'Classic straight-six grand tourer with rear-drive balance.',
+  engine: '5mge', engineModel: '5M-GE', powerKW: 118, torqueNm: 221, vehicleMassKg: 1360,
+  engineRedlineRPM: 6500, engineLimiterRPM: 6800, launchRPM: 4300,
+  gearRatios: [3.285, 1.894, 1.275, 1.000, 0.783], finalDriveRatio: 4.10,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+addRegularCar('ej1', 'ek9', {
+  shortName: 'CIVIC EJ1', name: 'Honda Civic Coupe EJ1', description: 'Light front-drive coupe with a strong tuning platform.',
+  engine: 'd16z6', engineModel: 'D16Z6', powerKW: 93, torqueNm: 144, vehicleMassKg: 1040,
+  engineRedlineRPM: 7200, engineLimiterRPM: 7400, launchRPM: 5200,
+  gearRatios: [3.250, 1.900, 1.250, 0.909, 0.702], finalDriveRatio: 4.25,
+  visual: { wheelKey: 'wheel8Spoke' },
+});
+addRegularCar('jza80', 'r32', {
+  shortName: 'SUPRA JZA80', name: 'Toyota Supra JZA80', description: 'Twin-turbo straight-six coupe with enormous tuning headroom.',
+  engine: '2jzgte', engineModel: '2JZ-GTE', powerKW: 206, torqueNm: 435, vehicleMassKg: 1510,
+  engineRedlineRPM: 6800, engineLimiterRPM: 7200, maximumBoost: 0.80, launchRPM: 4700,
+  gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793], finalDriveRatio: 3.27,
+  drivenAxleWeightFraction: 0.48, visual: { wheelKey: 'wheelDeepDish' },
+});
+addRegularCar('nsx', 'ae86', {
+  shortName: 'NSX', name: 'Honda NSX NA1', description: 'Mid-engine aluminium sports car with precise naturally aspirated response.',
+  engine: 'c30a', engineModel: 'C30A', powerKW: 206, torqueNm: 294, vehicleMassKg: 1350,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5000,
+  gearRatios: [3.071, 1.727, 1.230, 0.967, 0.771], finalDriveRatio: 4.06,
+  drivenAxleWeightFraction: 0.62, visual: { wheelKey: 'wheel5Spoke' },
+});
+
 // Stock arch centres and radii measured from the combined paint/body alpha.
 // Visible widths are measured from that pair; target widths keep hatchbacks,
 // coupes and sedans in a consistent relative size in both race and garage views.
@@ -1116,8 +1152,15 @@ const REGULAR_ASSETS = {
   rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
   rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
   gr86: ['gr86', 500, 248, 376, 101, 944, 370, 93, 1155, 430],
+  // SpriteR replacements use the shared stock-canvas convention. Start from
+  // model-specific legacy wheel geometry; canvas alignment is independent.
   evo3: ['evo3', 400, 280, 333, 92, 947, 335, 94, 1137, 430],
   evo5: ['evo5', 400, 280, 347, 85, 924, 347, 88, 1090, 440],
+  s2000: ['s2000', 500, 270, 390, 91, 944, 391, 92, 1161, 430],
+  a60: ['a60', 500, 270, 390, 91, 944, 391, 92, 1161, 430],
+  ej1: ['ej1', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
+  jza80: ['jza80', 500, 270, 390, 91, 944, 391, 92, 1161, 450],
+  nsx: ['nsx', 500, 270, 390, 91, 944, 391, 92, 1161, 445],
   evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
   evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
   // Keep the 22B's measured body width and axle geometry. SpriteR alignment
@@ -1180,4 +1223,5 @@ Object.values(cars).forEach(car => {
 export const carOrder = [
   'ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx7fd', 'rx8', 'gr86',
   'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32',
+  's2000', 'a60', 'ej1', 'jza80', 'nsx',
 ];
