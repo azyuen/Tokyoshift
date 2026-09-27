@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260928-r228';
+import { cars, carOrder } from './cars.js?v=20260928-r229';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
