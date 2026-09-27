@@ -67,11 +67,11 @@ export default class BootScene extends Phaser.Scene {
       'assets/Ui/tokyo_region_map_base.png?v=20260923-r139'
     );
 
-    // Boot only needs the active workshop backdrop and category art. Individual
-    // tuning-part sprites are loaded by GarageScene when the workshop needs
-    // them, so first launch does not download the entire parts catalogue.
+    // Workshop UI is needed immediately on entry. Keep it in the boot preload
+    // so GarageScene remains synchronous; the service worker makes repeat
+    // launches cheap once these assets have been cached.
     garageAssets
-      .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('tuningCategory'))
+      .filter(asset => asset.key.startsWith('garageWorkshop') || asset.key.startsWith('stockEngine') || asset.key.startsWith('tuningCategory') || asset.key.startsWith('tuningPart'))
       .forEach(asset => this.load.image(asset.key, asset.path));
 
     // Decals can appear on owned cars in any scene; workshop backdrops and
@@ -104,7 +104,21 @@ export default class BootScene extends Phaser.Scene {
       );
     });
 
-    // Workshop-only Daichi poses are deferred to GarageScene.
+    // Workshop-only Daichi poses. Keeping these separate from the canonical
+    // character sprite lets each tuning category reuse the same mechanic while
+    // changing only his working pose.
+    this.load.image(
+      'daichiEngineInspect',
+      'assets/Characters/daichi_engine_inspect.png?v=20260922-r110'
+    );
+    this.load.image(
+      'daichiChassisTools',
+      'assets/Characters/daichi_chassis_tools.png?v=20260922-r110'
+    );
+    this.load.image(
+      'daichiExhaustCrouch',
+      'assets/Characters/daichi_exhaust_crouch.png?v=20260922-r110'
+    );
   }
 
   create() {
