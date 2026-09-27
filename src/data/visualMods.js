@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260927-r218';
+import { cars, carOrder } from './cars.js?v=20260927-r224';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -25,38 +25,10 @@ const KIT_ALIGNMENT = {
 // Add models here as their assets are normalised to the same convention.
 const STOCK_CANVAS_KIT_CARS = new Set(['rx7fd']);
 
-// The corrected RX-7 FD kit artwork is registered to rx7fd_stock_paint.png.
-// Only its wheel arches change between stock and kit canvases.
-const KIT_WHEEL_GEOMETRY = {
-  rx7fd: [
-    {
-      levelWheelContact: false,
-      rearOffsetX: -331,
-      frontOffsetX: 354,
-      rearWheelOffsetX: -331,
-      frontWheelOffsetX: 354,
-      rearWheelOffsetY: 105,
-      frontWheelOffsetY: 111,
-      rearWheelWellRadius: 101,
-      frontWheelWellRadius: 99,
-      rearWheelBackingRadius: 101,
-      frontWheelBackingRadius: 99,
-    },
-    {
-      levelWheelContact: false,
-      rearOffsetX: -332,
-      frontOffsetX: 358,
-      rearWheelOffsetX: -332,
-      frontWheelOffsetX: 358,
-      rearWheelOffsetY: 90,
-      frontWheelOffsetY: 101,
-      rearWheelWellRadius: 97,
-      frontWheelWellRadius: 96,
-      rearWheelBackingRadius: 97,
-      frontWheelBackingRadius: 96,
-    },
-  ],
-};
+// SpriteR-authored RX-7 FD stock/body-kit layers now share one canvas,
+// origin and floor reference. Do not reintroduce per-kit geometry compensation:
+// the stock FD wheel geometry is the single source of truth for every FD body.
+const KIT_WHEEL_GEOMETRY = {};
 const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32');
 export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
   const stem = cars[carId].visual.assetStem;

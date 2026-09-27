@@ -1148,7 +1148,7 @@ Object.entries(REGULAR_ASSETS).forEach(([id, [
     canvasDisplayScale: bodyScale / 0.36,
     bodyScale,
     wheelFitMode: 'visible-well',
-    levelWheelContact: id !== 'rx7fd',
+    levelWheelContact: true,
     rearOffsetX, frontOffsetX,
     wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
     rearWheelOffsetX: rearOffsetX,
