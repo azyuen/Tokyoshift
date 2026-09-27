@@ -1224,6 +1224,10 @@ export default class GarageScene extends Phaser.Scene {
       if (!isCurrent) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
+          // Persist first, then use the same clean reload path as workshop
+          // changes from the map. Restarting this already-running Phaser scene
+          // from inside a modal pointer handler can leave stale display/input
+          // objects alive on iOS and crash the PWA.
           this.registry.set('workshopLocationId', workshop.id);
           const localCars = getCarsInWorkshop(
             this.ownedCarIds,
@@ -1232,8 +1236,14 @@ export default class GarageScene extends Phaser.Scene {
           );
           this.registry.set('selectedCarId', localCars[0] || null);
           saveSessionState(this.registry);
-          close();
-          this.scene.restart({ workshopLocationId: workshop.id });
+
+          try {
+            sessionStorage.setItem('tokyoShiftInternalReload', '1');
+            sessionStorage.setItem('tokyoShiftForceGarage', '1');
+            sessionStorage.removeItem('tokyoShiftBootMessage');
+          } catch (e) {}
+
+          window.location.reload();
         });
       }
     });
