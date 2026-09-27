@@ -37,7 +37,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260927-r217';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r231';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
   TUNER_TEAM_COMPLETION_REWARD,

@@ -221,11 +221,11 @@ export function getWheelPairFit(
     front: getAxleWheelFit(visual, 'front', bodyScale, flipX, wheelSource),
   };
 
-  // Hero cars and the calibrated layered roster can have different front and
-  // rear wheel wells. Flatten their stance by matching tyre contact points rather than the
-  // wheel centres. Split the correction between both axles so the body keeps
-  // its authored ride height while neither end looks visibly nose-up/down.
-  if ((visual.singleBody || visual.levelWheelContact) && wheelSource) {
+  // Preserve authored wheel centres by default. Older code automatically
+  // flattened every single-layer hero car by moving each axle vertically, which
+  // made otherwise-correct wheels look off-centre inside their arches.
+  // Contact levelling is now opt-in only for assets that explicitly request it.
+  if (visual.levelWheelContact === true && wheelSource) {
     const sourceHeight = numberOr(
       wheelSource.naturalHeight ?? wheelSource.height,
       0
