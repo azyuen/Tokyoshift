@@ -71,6 +71,11 @@ const MARKET_BASE_PRICES = {
   evo9: 5600000,
   wrx22b: 6200000,
   r32: 7200000,
+  ej1: 1350000,
+  a60: 2100000,
+  s2000: 4100000,
+  jza80: 6800000,
+  nsx: 9000000,
 };
 
 const MARKET_BUILDS = {
@@ -128,6 +133,11 @@ Object.assign(MARKET_BUILDS, {
   evo5: MARKET_BUILDS.evo3,
   evo6: MARKET_BUILDS.evo3,
   evo9: MARKET_BUILDS.evo3,
+  ej1: MARKET_BUILDS.ek9,
+  a60: MARKET_BUILDS.ae86,
+  s2000: MARKET_BUILDS.ae86,
+  jza80: MARKET_BUILDS.r32,
+  nsx: MARKET_BUILDS.ae86,
 });
 
 export const AUTO_MARKET_LISTINGS = [
@@ -145,6 +155,11 @@ export const AUTO_MARKET_LISTINGS = [
   { carId: 'evo9', price: 6700000, buildLabel: 'MIVEC STREET BUILD' },
   { carId: 'wrx22b', price: 7200000, buildLabel: 'PERFORMANCE BUILD' },
   { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
+  { carId: 'ej1', price: 1650000, buildLabel: 'VTEC COUPE BUILD' },
+  { carId: 'a60', price: 2550000, buildLabel: 'CLASSIC FR BUILD' },
+  { carId: 's2000', price: 4950000, buildLabel: 'HIGH-REV FR BUILD' },
+  { carId: 'jza80', price: 8100000, buildLabel: 'TWIN TURBO BUILD' },
+  { carId: 'nsx', price: 10800000, buildLabel: 'MID-ENGINE BUILD' },
 ];
 
 export const GINZA_LISTINGS = [
@@ -402,6 +417,11 @@ export const CAR_COUPON_REQUIREMENTS = {
   evo9: 3,
   wrx22b: 2,
   r32: 3,
+  ej1: 2,
+  a60: 2,
+  s2000: 3,
+  jza80: 3,
+  nsx: 3,
 };
 
 export function getCarCouponRequirement(carId) {
