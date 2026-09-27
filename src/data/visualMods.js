@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20260927-r226';
+import { cars, carOrder } from './cars.js?v=20260927-r227';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -10,7 +10,6 @@ const KIT_ALIGNMENT = {
   ef: [{ scaleX: 0.9905, scaleY: 1, offsetX: -1.5, offsetY: -3 }, { scaleX: 1.0055, scaleY: 1, offsetX: 4, offsetY: -1 }],
   ek9: [{ scaleX: 0.9986, scaleY: 1.0423, offsetX: -0.5, offsetY: 2.8 }, { scaleX: 1.0041, scaleY: 1.0314, offsetX: -1.4, offsetY: 11.2 }],
   rx7fb: [{ scaleX: 1.023, scaleY: 1.0294, offsetX: 21.4, offsetY: 2.7 }, { scaleX: 1.0215, scaleY: 1.0294, offsetX: 37.3, offsetY: -15.3 }],
-  fc3s: [{ scaleX: 0.9925, scaleY: 0.9852, offsetX: 0.4, offsetY: 17 }, { scaleX: 0.9881, scaleY: 0.9615, offsetX: 7.8, offsetY: 9.8 }],
   rx8: [{ scaleX: 0.9749, scaleY: 1.0328, offsetX: -1.1, offsetY: -5.7 }, { scaleX: 0.9831, scaleY: 1.0053, offsetX: -4, offsetY: 6.4 }],
   gr86: [{ scaleX: 0.9886, scaleY: 0.9652, offsetX: -3, offsetY: -4.4 }, { scaleX: 1.0388, scaleY: 0.9898, offsetX: -3, offsetY: -3.2 }],
   evo3: [{ scaleX: 0.9695, scaleY: 1.0814, offsetX: -5.9, offsetY: 1.5 }, { scaleX: 1.0325, scaleY: 1.0814, offsetX: -14.4, offsetY: 0.4 }],
@@ -22,11 +21,11 @@ const KIT_ALIGNMENT = {
 // These cars have been authored around their stock-paint canvas. Every kit
 // layer must inherit that stock layer's complete render transform verbatim.
 // Add models here as their assets are normalised to the same convention.
-const STOCK_CANVAS_KIT_CARS = new Set(['rx7fd', 'wrx22b']);
+const STOCK_CANVAS_KIT_CARS = new Set(['fc3s', 'rx7fd', 'wrx22b']);
 
-// SpriteR-authored RX-7 FD stock/body-kit layers now share one canvas,
-// origin and floor reference. Do not reintroduce per-kit geometry compensation:
-// the stock FD wheel geometry is the single source of truth for every FD body.
+// SpriteR-authored FC, FD and 22B stock/body-kit layers share their model's
+// stock canvas. Do not reintroduce per-kit geometry compensation: each model's
+// stock body transform and model-specific wheel geometry are the source of truth.
 const KIT_WHEEL_GEOMETRY = {};
 const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32');
 export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
