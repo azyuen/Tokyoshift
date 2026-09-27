@@ -64,7 +64,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R221</div>
+    <div id="build-stamp">R222</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -141,7 +141,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R220';
+      let resolvedBuild = 'R222';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
