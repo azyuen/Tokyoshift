@@ -471,7 +471,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const location = LOCATION_BY_ID[this.activeLocationId];
       const kind = location?.kind || 'autoMarket';
       // Dev refresh stays near the header so GO TO MAP remains the bottom-most action.
-      const devY = SIDE.y + 196;
+      const devY = SIDE.y + 176;
       const labels = {
         autoMarket: 'DEV // REFRESH AUTO MARKET',
         showroom: 'DEV // REFRESH COLLECTORS',
@@ -884,7 +884,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const canClaimWithCoupons = !owned && couponReady && hasStorage;
     const canBuy = canBuyWithCash || canClaimWithCoupons;
 
-    const y0 = SIDE.y + 328;
+    const y0 = SIDE.y + 250;
 
     this.addContent(this.add.text(SIDE.x + 20, y0, 'SELECTED CAR', {
       fontFamily: PIXEL_FONT,
@@ -934,7 +934,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 638,
+      SIDE.y + 608,
       SIDE.w - 36,
       48,
       canBuy ? 0x0d2b29 : 0x17181d,
@@ -953,7 +953,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 638,
+      SIDE.y + 608,
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
@@ -1006,7 +1006,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const sellButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 580,
+      SIDE.y + 548,
       SIDE.w - 36,
       44,
       canSell ? 0x261922 : 0x17181d,
@@ -1015,7 +1015,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 580,
+      SIDE.y + 548,
       canSell
         ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
         : collectorLocked
@@ -1345,13 +1345,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
     } else {
       const ranked = listings.map((listing, index) => ({ listing, index }))
         .sort((left, right) => right.listing.price - left.listing.price);
+      // Display order is left → centre → right. Keep this same order for the
+      // selection cards below so each button sits under the car it controls.
+      const screenOrder = [ranked[1], ranked[0], ranked[2]].filter(Boolean);
       const poses = [
-        { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 405, w: 390, depth: 11, flip: false },
         { x: STAGE.x + STAGE.w * 0.24, y: STAGE.y + 315, w: 310, depth: 9, flip: true },
+        { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 405, w: 390, depth: 11, flip: false },
         { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 292, w: 292, depth: 8, flip: false },
       ];
 
-      ranked.forEach(({ listing, index }, rank) => {
+      screenOrder.forEach(({ listing, index }, rank) => {
         const car = cars[listing.carId];
         const pose = poses[rank];
         const objects = this.createCarDisplay(
@@ -1377,9 +1380,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
       { fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8fe7ff' }
     ).setDepth(33));
 
-    listings.forEach((listing, index) => {
+    const ginzaRanked = listings.map((listing, index) => ({ listing, index }))
+      .sort((left, right) => right.listing.price - left.listing.price);
+    const ginzaScreenOrder = [ginzaRanked[1], ginzaRanked[0], ginzaRanked[2]].filter(Boolean);
+
+    ginzaScreenOrder.forEach(({ listing, index }, displayIndex) => {
       const car = cars[listing.carId];
-      const x = CARDS.x + 190 + index * 365;
+      const x = CARDS.x + 190 + displayIndex * 365;
       const selected = this.ginzaShowcaseActive && index === this.selectedIndex;
       const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
       const box = this.addContent(this.add.rectangle(
@@ -1415,7 +1422,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const hasStorage = Boolean(this.findStorageForPurchase());
     const canBuy = !owned && cash >= listing.price && ownedCount < capacity && hasStorage;
 
-    const y0 = SIDE.y + 310;
+    const y0 = SIDE.y + 238;
 
     this.addContent(this.add.text(SIDE.x + 20, y0, listing.rarity + ' // GINZA', {
       fontFamily: PIXEL_FONT,
@@ -1469,7 +1476,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 638,
+      SIDE.y + 608,
       SIDE.w - 36,
       48,
       canBuy ? 0x2b1422 : 0x17181d,
@@ -1486,7 +1493,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 638,
+      SIDE.y + 608,
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
