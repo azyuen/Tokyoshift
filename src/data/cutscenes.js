@@ -108,6 +108,7 @@ export const CUTSCENES = {
       },
     ],
     finalActionLabel: 'ACCEPT CHALLENGE',
+    secondaryFinalActionLabel: 'MAYBE LATER',
   },
 
   regionalCrewIntroduction: {

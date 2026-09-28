@@ -2867,6 +2867,14 @@ export default class RaceScene extends Phaser.Scene {
 
     const resultState = playerWon ? 'PLAYER_WIN' : 'PLAYER_LOSS';
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
+    const isCashRematchLoss = !playerWon && this.raceDeal === 'BET';
+    const previousStake = Math.max(0, Number(snapshot.stake || 0));
+    const rematchStake = isCashRematchLoss && previousStake > 0
+      ? Math.max(1, Math.floor(previousStake * 0.5))
+      : previousStake;
+    const rematchLosses = isCashRematchLoss
+      ? Math.max(0, Number(snapshot.rematchLosses || 0)) + 1
+      : Math.max(0, Number(snapshot.rematchLosses || 0));
 
     const resultOffer = {
       ...snapshot,
@@ -2878,6 +2886,8 @@ export default class RaceScene extends Phaser.Scene {
       ),
       meetLocation: locationId,
       locked: Boolean(playerWon),
+      stake: rematchStake,
+      rematchLosses,
       resultState,
       resultAt: Date.now(),
       pinkSlipResult: isPinkSlip ? resultState : null,

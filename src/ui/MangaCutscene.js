@@ -3,7 +3,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20260926-r214';
+} from '../data/cutscenes.js?v=20260928-r233';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -545,7 +545,17 @@ function drawDialogue(controller, page) {
     ? (definition.finalActionLabel || 'CONTINUE')
     : 'NEXT';
   const actionLabel = interpolate(rawAction, context.variables) + '  >';
-  const actionWidth = Math.min(300, Math.max(230, cardWidth * 0.22));
+  const secondaryRaw = finalPage ? definition.secondaryFinalActionLabel : null;
+  const secondaryLabel = secondaryRaw
+    ? interpolate(secondaryRaw, context.variables)
+    : '';
+  const hasSecondaryAction = Boolean(secondaryLabel);
+  const actionWidth = hasSecondaryAction
+    ? Math.min(270, Math.max(220, cardWidth * 0.20))
+    : Math.min(300, Math.max(230, cardWidth * 0.22));
+  const secondaryWidth = hasSecondaryAction
+    ? Math.min(220, Math.max(180, cardWidth * 0.16))
+    : 0;
   const actionX = x + cardWidth / 2 - actionWidth / 2 - 18;
   const footerY = y + cardHeight / 2 - 23;
 
@@ -574,6 +584,37 @@ function drawDialogue(controller, page) {
     .setDepth(BASE_DEPTH + 34)
     .setScrollFactor(0);
 
+  let secondaryBox = null;
+  let secondaryText = null;
+  if (hasSecondaryAction) {
+    const secondaryX = actionX - actionWidth / 2 - 14 - secondaryWidth / 2;
+    secondaryBox = scene.add.rectangle(
+      secondaryX,
+      footerY,
+      secondaryWidth,
+      42,
+      0xfffcf1,
+      1
+    ).setStrokeStyle(3, 0x111111, 1)
+      .setDepth(BASE_DEPTH + 33)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    secondaryText = scene.add.text(
+      secondaryX,
+      footerY,
+      secondaryLabel,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#111111',
+        align: 'center',
+      }
+    ).setOrigin(0.5)
+      .setDepth(BASE_DEPTH + 34)
+      .setScrollFactor(0);
+  }
+
   const pageCount = Math.max(1, definition.pages?.length || 0);
   const counter = scene.add.text(
     x - cardWidth / 2 + 34,
@@ -589,8 +630,17 @@ function drawDialogue(controller, page) {
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
 
-  const objects = [card, labelBox, labelText, body, actionBox, actionText, counter]
-    .filter(Boolean);
+  const objects = [
+    card,
+    labelBox,
+    labelText,
+    body,
+    actionBox,
+    actionText,
+    secondaryBox,
+    secondaryText,
+    counter,
+  ].filter(Boolean);
   objects.forEach(obj => obj.setAlpha?.(0));
   controller.dialogueObjects.push(...objects);
 
@@ -603,6 +653,7 @@ function drawDialogue(controller, page) {
 
   card.on('pointerdown', () => controller.advance());
   actionBox.on('pointerdown', () => controller.advance());
+  secondaryBox?.on('pointerdown', () => controller.finish('secondary'));
 }
 
 function renderPage(controller, pageIndex, firstPage = false) {
