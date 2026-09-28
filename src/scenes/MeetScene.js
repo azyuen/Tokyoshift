@@ -2601,7 +2601,12 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     if (batch.queued <= 0) {
-      finish();
+      ensureDerivedModularCarTextures(
+        this,
+        Object.fromEntries(
+          batch.carIds.filter(id => cars[id]).map(id => [id, cars[id]])
+        )
+      );
       return false;
     }
 
@@ -2942,23 +2947,26 @@ export default class MeetScene extends Phaser.Scene {
 
   prefetchDeferredAssets() {
     const queueImage = (key, path) => {
-      if (!this.textures.exists(key)) this.load.image(key, path);
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
     };
 
-    // Only the current region is active. Other rosters load on travel.
-    const currentRegion = getMeetLocation(this.selectedMeetLocation).district;
-    getRivalCharacterOrderForRegion(currentRegion).forEach(id => {
-      const visual = characters[id]?.visual || {};
-      if (visual.winSpriteKey && visual.winPath) {
-        queueImage(visual.winSpriteKey, visual.winPath + '?v=20260923-r145');
-      }
-      if (visual.lossSpriteKey && visual.lossPath) {
-        queueImage(visual.lossSpriteKey, visual.lossPath + '?v=20260923-r145');
-      }
+    // Only prepare result poses for the three racers actually on screen.
+    // Loading every win/loss pose in a seven-person regional crew caused a
+    // large texture-memory spike immediately after Meet opened.
+    (this.offers || []).forEach(offer => {
+      const visual = characters[offer?.characterId]?.visual || {};
+      queueImage(
+        visual.winSpriteKey,
+        visual.winPath ? visual.winPath + '?v=20260923-r145' : null
+      );
+      queueImage(
+        visual.lossSpriteKey,
+        visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null
+      );
     });
 
-    // These used to block the very first Workshop load. Fetch them while the
-    // player is choosing a rival instead.
+    // Race controls are small and useful to warm after the Meet is interactive.
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     queueImage('dragTree', 'assets/Ui/drag_tree.png');
     queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
@@ -2967,7 +2975,7 @@ export default class MeetScene extends Phaser.Scene {
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
 
-    if (this.load.list.size > 0) this.load.start();
+    if (this.load.list.size > 0 && !this.load.isLoading()) this.load.start();
   }
 
   clearCardObjects() {

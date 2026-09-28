@@ -19,7 +19,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r232';
+import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -27,7 +27,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260926-r214';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
   getGarageCapacity,
