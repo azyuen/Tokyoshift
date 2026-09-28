@@ -1,9 +1,10 @@
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
 export default class TokyoExpresswayBackground {
-  constructor(scene, { timeOfDay = 'night' } = {}) {
+  constructor(scene, { timeOfDay = 'night', skylineKey = null } = {}) {
     this.scene = scene;
     this.width = 1560;
+    this.skylineKey = skylineKey;
     this.timeOfDay = ['day', 'twilight', 'night'].includes(timeOfDay)
       ? timeOfDay
       : 'night';
@@ -388,6 +389,17 @@ export default class TokyoExpresswayBackground {
       .setOrigin(0, 0)
       .setDepth(0);
 
+    // Regional far-background panorama. Keep the procedural backdrop as a
+    // fallback for regions/phases that do not yet have authored skyline art.
+    this.skyline = null;
+    if (this.skylineKey && this.scene.textures.exists(this.skylineKey)) {
+      this.backdrop.setVisible(false);
+      this.skyline = this.scene.add.image(0, 0, this.skylineKey)
+        .setOrigin(0, 0)
+        .setDisplaySize(2048, 341)
+        .setDepth(0);
+    }
+
     this.road = this.scene.add.tileSprite(0, 278, this.width, 270, this.keys.road)
       .setOrigin(0, 0)
       .setDepth(1);
@@ -406,7 +418,13 @@ export default class TokyoExpresswayBackground {
   }
 
   update(cameraPx, speedKmh = 0) {
-    this.backdrop.tilePositionX = cameraPx * 0.24;
+    if (this.skyline) {
+      // 0.0131 gives ~400 px of far-background travel over a 1/4 mile at
+      // Tokyo SHIFT's 76 px/m world scale: distant enough to feel enormous.
+      this.skyline.x = -cameraPx * 0.0131;
+    } else {
+      this.backdrop.tilePositionX = cameraPx * 0.24;
+    }
     this.rearBarrier.tilePositionX = cameraPx * 0.90;
     this.road.tilePositionX = cameraPx;
     this.foreground.tilePositionX = cameraPx * 1.16;
