@@ -298,7 +298,14 @@ export default class MeetScene extends Phaser.Scene {
 
     if (hasStoredRound) {
       this.nextRefreshAt = storedRefreshAt;
-      const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
+
+      // Legacy builds removed defeated rivals from the saved three-person Meet
+      // roster via defeatedRivalKeys. The current design keeps all three racers
+      // physically present until the Meet refreshes, using their result pose and
+      // locked card to show who has already been beaten.
+      if ((this.registry.get('defeatedRivalKeys') || []).length) {
+        this.registry.set('defeatedRivalKeys', []);
+      }
 
       ALL_MEET_LOCATION_IDS.forEach(locationId => {
         const location = getMeetLocation(locationId);
@@ -325,11 +332,6 @@ export default class MeetScene extends Phaser.Scene {
             : regionValid;
 
         this.locationOffers[locationId] = baseOffers
-          .filter(offer =>
-            regionalTeam
-              ? true
-              : !defeated.has(locationId + ':' + offer.characterId)
-          )
           .map(offer => ({ ...offer }));
         this.locationSelectedOfferIndex[locationId] = 0;
       });
