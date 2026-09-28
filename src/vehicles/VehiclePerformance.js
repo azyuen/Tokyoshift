@@ -2,7 +2,7 @@ import { cars } from '../data/cars.js?v=20260928-r232';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r234';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r236';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -85,6 +85,47 @@ function torqueBandFactor(engine = {}, car = {}) {
   return clamp(average / peak, 0.68, 1.02);
 }
 
+function standingEngineResponseFactor(car = {}, engine = {}) {
+  const cfg = PROGRESSION_BALANCE.performance;
+  const inertia = Math.max(
+    0.05,
+    Number(engine.inertia || car.engineInertia || cfg.referenceEngineInertia || 0.18)
+  );
+  const inertiaFactor = clamp(
+    Math.pow(
+      Math.max(0.05, Number(cfg.referenceEngineInertia || 0.18)) / inertia,
+      Number(cfg.engineInertiaExponent || 0.10)
+    ),
+    0.95,
+    1.04
+  );
+
+  let turboLaunchFactor = 1;
+  if (Number(car.maximumBoost || 0) > 0.01) {
+    // Turbo.js begins producing meaningful boost above ~1800 rpm. Estimate how
+    // much of that window the car has already reached at its authored launch RPM
+    // and blend in the engine's true off-boost torque fraction.
+    const launchRPM = Math.max(1800, Number(car.launchRPM || 4400));
+    const rpmWindow = clamp((launchRPM - 1800) / 4300, 0, 1);
+    const spoolWindow = Math.pow(rpmWindow, 1.18);
+    const offBoost = clamp(Number(engine.offBoostTorqueFraction ?? 0.55), 0.35, 1);
+
+    turboLaunchFactor = clamp(
+      Number(cfg.turboLaunchBase || 0.90) +
+      spoolWindow * Number(cfg.turboLaunchSpoolWeight || 0.08) +
+      offBoost * Number(cfg.turboLaunchOffBoostWeight || 0.06),
+      0.94,
+      1.02
+    );
+  }
+
+  return {
+    inertiaFactor,
+    turboLaunchFactor,
+    combined: inertiaFactor * turboLaunchFactor,
+  };
+}
+
 function gearingFactor(car = {}, rolling = false) {
   const ratios = Array.isArray(car.gearRatios) ? car.gearRatios : [];
   if (!ratios.length) return 1;
@@ -108,7 +149,12 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const powerToWeight = power / mass * 1000;
   const torqueToWeight = torque / mass * 1000;
   const efficiency = clamp(Number(car.drivetrainEfficiency || 0.86) / 0.88, 0.82, 1.13);
-  const shiftFactor = clamp(1 / Math.max(0.55, Number(car.shiftTimeScale || 1)), 0.90, 1.28);
+  const rawShiftAdvantage = 1 / Math.max(0.55, Number(car.shiftTimeScale || 1));
+  const shiftFactor = clamp(
+    1 + (rawShiftAdvantage - 1) * Number(cfg.gearboxPerformanceWeight || 0.22),
+    0.96,
+    1.12
+  );
   const bandFactor = torqueBandFactor(engine, car);
   const clutchFactor = clamp(Number(car.clutchStrength || torque) / Math.max(torque, 1), 0.82, 1.10);
 
@@ -128,6 +174,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
 
   const launchGearing = gearingFactor(car, false);
   const rollGearing = gearingFactor(car, true);
+  const standingEngineResponse = standingEngineResponseFactor(car, engine);
   const aeroLoad = Math.max(0.45, Number(car.dragCoefficient || 0.34) * Number(car.frontalAreaM2 || 1.85));
   const aeroFactor = clamp(Math.sqrt(0.64 / aeroLoad), 0.86, 1.12);
 
@@ -150,7 +197,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const standing = Math.max(1,
     100 * standingCore *
     standingTraction * clutchUsability * efficiency * launchGearing *
-    shiftFactor * standingBand * boostResponse +
+    shiftFactor * standingBand * boostResponse * standingEngineResponse.combined +
     100 * nosPerMass * nosAvailability * cfg.nosStandingUse
   );
 
@@ -179,6 +226,9 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
       traction: tractionRaw,
       drivetrainEfficiency: Number(car.drivetrainEfficiency || 0),
       boostBar: boost,
+      engineInertia: Number(engine.inertia || car.engineInertia || 0),
+      engineResponse: standingEngineResponse.combined,
+      turboLaunchResponse: standingEngineResponse.turboLaunchFactor,
       nosPowerHp: Math.max(0, Number(car.nosPower || 0)),
     },
   };

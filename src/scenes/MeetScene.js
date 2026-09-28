@@ -34,10 +34,10 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r235';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r235';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r236';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r236';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r231';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -282,6 +282,7 @@ export default class MeetScene extends Phaser.Scene {
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
+        offer?.matchmakingVersion === 'R236' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -2494,6 +2495,7 @@ export default class MeetScene extends Phaser.Scene {
         usedCarIds: [...usedRivalCars],
         preferredCars: profile.likelyCars,
         raceType,
+        difficulty: profile.difficulty,
         locationId,
         refreshSeed: refreshBasis,
         slotIndex,
@@ -2548,6 +2550,11 @@ export default class MeetScene extends Phaser.Scene {
         encounterAi,
         skillLabel,
         driverSkillSource: 'LOCATION',
+
+        // Matchmaking generation version forces pre-R236 saved Meet rosters to
+        // reroll once so the new regional vehicle difficulty takes effect.
+        matchmakingVersion: 'R236',
+        vehicleDifficultyProfile: profile.difficulty,
 
         // Vehicle development: intentionally independent from driver ability.
         opponentBuildRating: match.buildRating,

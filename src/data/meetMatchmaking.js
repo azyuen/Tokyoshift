@@ -1,7 +1,7 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r235';
+import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r236';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 
 function weightedChoice(entries, random = Math.random) {
   const total = entries.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight || 0)), 0);
@@ -21,15 +21,43 @@ export function rollMeetDriverRating(random = Math.random) {
   ) || 3);
 }
 
-function getPerformanceBands(raceType = 'Standing Start') {
+function getDifficultyVehicleProfile(difficulty = 'MED') {
+  const profiles = PROGRESSION_BALANCE.meetMatchmaking.difficultyVehicleProfiles || {};
+  const key = String(difficulty || 'MED').toUpperCase();
+  return profiles[key] || profiles.MED || null;
+}
+
+function getPerformanceBands(raceType = 'Standing Start', difficulty = 'MED') {
   const configured = PROGRESSION_BALANCE.meetMatchmaking.performanceBands || {};
   const rolling = String(raceType || '').toLowerCase().includes('roll');
   const selected = rolling ? configured.rolling : configured.standing;
-  return selected || configured.standing || configured;
+  const base = selected || configured.standing || configured;
+  const profile = getDifficultyVehicleProfile(difficulty);
+  const weights = profile?.bandWeights || {};
+  const comparableTarget = rolling
+    ? Number(profile?.rollingComparableTarget)
+    : Number(profile?.standingComparableTarget);
+
+  return Object.fromEntries(
+    Object.entries(base).map(([key, value]) => [
+      key,
+      {
+        ...value,
+        weight: Number.isFinite(Number(weights[key])) ? Number(weights[key]) : value.weight,
+        targetRatio: key === 'comparable' && Number.isFinite(comparableTarget)
+          ? comparableTarget
+          : value.targetRatio,
+      },
+    ])
+  );
 }
 
-export function rollMeetPerformanceBand(random = Math.random, raceType = 'Standing Start') {
-  const bands = getPerformanceBands(raceType);
+export function rollMeetPerformanceBand(
+  random = Math.random,
+  raceType = 'Standing Start',
+  difficulty = 'MED'
+) {
+  const bands = getPerformanceBands(raceType, difficulty);
   return weightedChoice(
     Object.entries(bands).map(([key, value]) => ({ value: key, weight: value.weight })),
     random
@@ -41,7 +69,10 @@ function candidateWeight(candidate, context) {
   const preferred = new Set(context.preferredCars || []);
   const owned = new Set(context.ownedCarIds || []);
   const used = new Set(context.usedCarIds || []);
-  const bands = context.performanceBands || getPerformanceBands(context.raceType);
+  const bands = context.performanceBands || getPerformanceBands(
+    context.raceType,
+    context.difficulty
+  );
   const band = bands[context.bandId] || bands.comparable;
 
   let weight = 1;
@@ -76,8 +107,12 @@ export function createMeetOpponentMatch(options = {}) {
   if (!playerPerformance) return null;
 
   const playerIndex = Math.max(1, Number(playerPerformance.index.selected || playerPerformance.index.overall || 1));
-  const performanceBands = getPerformanceBands(options.raceType);
-  const bandId = options.bandId || rollMeetPerformanceBand(random, options.raceType);
+  const performanceBands = getPerformanceBands(options.raceType, options.difficulty);
+  const bandId = options.bandId || rollMeetPerformanceBand(
+    random,
+    options.raceType,
+    options.difficulty
+  );
   const band = performanceBands[bandId] || performanceBands.comparable;
   const candidates = [];
 
