@@ -9,7 +9,7 @@ export default class TokyoExpresswayBackground {
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r248_' + this.timeOfDay;
+    const suffix = 'r249_' + this.timeOfDay;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -386,7 +386,7 @@ export default class TokyoExpresswayBackground {
 
       ctx.fillStyle = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.78 : 0.56;
-      for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 106, 92, 4);
+      for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 132, 92, 4);
       ctx.globalAlpha = 1;
 
       // Sparse highway furniture: repaired asphalt, cats-eyes and drain grates.
@@ -401,7 +401,7 @@ export default class TokyoExpresswayBackground {
 
       ctx.fillStyle = this.timeOfDay === 'day' ? '#d9d8c6' : '#c8c59d';
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.52 : 0.72;
-      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 108, 4, 2);
+      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 134, 4, 2);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = p.roadDark;
