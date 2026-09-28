@@ -60,7 +60,6 @@ const MARKET_BASE_PRICES = {
   ae86: 950000,
   ef: 1150000,
   ek9: 1450000,
-  rx7fb: 1500000,
   fc3s: 1850000,
   rx8: 2050000,
   gr86: 3200000,
@@ -73,9 +72,10 @@ const MARKET_BASE_PRICES = {
   r32: 7200000,
   ej1: 1350000,
   a60: 2100000,
-  s2000: 4100000,
   jza80: 6800000,
   nsx: 9000000,
+  r34: 8500000,
+  '3000gt': 4900000,
 };
 
 const MARKET_BUILDS = {
@@ -126,7 +126,6 @@ const MARKET_BUILDS = {
 // New dealership entries use the matching drivetrain's street build recipe.
 Object.assign(MARKET_BUILDS, {
   ef: MARKET_BUILDS.ek9,
-  rx7fb: MARKET_BUILDS.fc3s,
   rx7fd: MARKET_BUILDS.fc3s,
   rx8: MARKET_BUILDS.fc3s,
   gr86: MARKET_BUILDS.ae86,
@@ -135,16 +134,16 @@ Object.assign(MARKET_BUILDS, {
   evo9: MARKET_BUILDS.evo3,
   ej1: MARKET_BUILDS.ek9,
   a60: MARKET_BUILDS.ae86,
-  s2000: MARKET_BUILDS.ae86,
   jza80: MARKET_BUILDS.r32,
   nsx: MARKET_BUILDS.ae86,
+  r34: MARKET_BUILDS.r32,
+  '3000gt': MARKET_BUILDS.r32,
 });
 
 export const AUTO_MARKET_LISTINGS = [
   { carId: 'ae86', price: 1150000, buildLabel: 'LIGHT STREET BUILD' },
   { carId: 'ef', price: 1400000, buildLabel: 'VTEC STREET BUILD' },
   { carId: 'ek9', price: 1750000, buildLabel: 'STAGE 1 STREET BUILD' },
-  { carId: 'rx7fb', price: 1900000, buildLabel: 'ROTARY STREET BUILD' },
   { carId: 'fc3s', price: 2350000, buildLabel: 'TURBO STREET BUILD' },
   { carId: 'rx8', price: 2600000, buildLabel: 'ROTARY STREET BUILD' },
   { carId: 'evo3', price: 3450000, buildLabel: 'AWD STREET BUILD' },
@@ -157,9 +156,10 @@ export const AUTO_MARKET_LISTINGS = [
   { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
   { carId: 'ej1', price: 1650000, buildLabel: 'VTEC COUPE BUILD' },
   { carId: 'a60', price: 2550000, buildLabel: 'CLASSIC FR BUILD' },
-  { carId: 's2000', price: 4950000, buildLabel: 'HIGH-REV FR BUILD' },
   { carId: 'jza80', price: 8100000, buildLabel: 'TWIN TURBO BUILD' },
   { carId: 'nsx', price: 10800000, buildLabel: 'MID-ENGINE BUILD' },
+  { carId: 'r34', price: 10200000, buildLabel: 'GT-R STREET BUILD' },
+  { carId: '3000gt', price: 5900000, buildLabel: 'TWIN TURBO AWD BUILD' },
 ];
 
 export const GINZA_LISTINGS = [
@@ -406,7 +406,6 @@ export const CAR_COUPON_REQUIREMENTS = {
   ae86: 2,
   ef: 2,
   ek9: 2,
-  rx7fb: 2,
   fc3s: 2,
   rx8: 2,
   gr86: 2,
@@ -419,9 +418,10 @@ export const CAR_COUPON_REQUIREMENTS = {
   r32: 3,
   ej1: 2,
   a60: 2,
-  s2000: 3,
   jza80: 3,
   nsx: 3,
+  r34: 3,
+  '3000gt': 3,
 };
 
 export function getCarCouponRequirement(carId) {

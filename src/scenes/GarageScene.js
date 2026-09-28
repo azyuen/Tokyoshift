@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r230';
-import { engines } from '../data/engines.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { engines } from '../data/engines.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   ENGINE_PART_ORDER,
@@ -44,7 +44,7 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260926-r211';
+} from '../data/centralTokyo.js?v=20260928-r232';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getGarageCapacity,
@@ -81,7 +81,7 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
   getVisualModWheelVisual,
-} from '../data/visualMods.js?v=20260928-r230';
+} from '../data/visualMods.js?v=20260928-r232';
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 

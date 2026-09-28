@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r230';
-import { engines } from '../data/engines.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { engines } from '../data/engines.js?v=20260928-r232';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 import {
@@ -60,7 +60,7 @@ import {
   markCentralTokyoUnlocked,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20260926-r211';
+} from '../data/centralTokyo.js?v=20260928-r232';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1585,11 +1585,11 @@ export default class MeetScene extends Phaser.Scene {
 
   getEventCarBand(rating = 3) {
     const bands = {
-      1: ['ae86', 'ef', 'ek9', 'rx7fb'],
-      2: ['ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx8'],
+      1: ['ae86', 'ef', 'ek9', 'ej1'],
+      2: ['ae86', 'ef', 'ek9', 'ej1', 'fc3s', 'rx8', 'a60'],
       3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
-      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32'],
-      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32'],
+      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', '3000gt'],
+      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
     };
     return bands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || bands[3];
   }
@@ -2404,11 +2404,11 @@ export default class MeetScene extends Phaser.Scene {
     const usedRivalCars = new Set();
 
     const carBands = {
-      1: ['ae86', 'ef', 'ek9', 'rx7fb'],
-      2: ['ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx8'],
+      1: ['ae86', 'ef', 'ek9', 'ej1'],
+      2: ['ae86', 'ef', 'ek9', 'ej1', 'fc3s', 'rx8', 'a60'],
       3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
-      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32'],
-      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32'],
+      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', '3000gt'],
+      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
     };
 
     const chooseCharacterForRating = rating => {

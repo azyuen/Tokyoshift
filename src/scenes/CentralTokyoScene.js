@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r230';
-import { engines } from '../data/engines.js?v=20260927-r216';
+import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { engines } from '../data/engines.js?v=20260928-r232';
 import {
   characters,
   genericRivalCharacterOrder,
@@ -19,7 +19,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r230';
+import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r232';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -53,7 +53,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260926-r211';
+} from '../data/centralTokyo.js?v=20260928-r232';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,

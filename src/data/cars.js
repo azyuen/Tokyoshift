@@ -1049,13 +1049,6 @@ function addRegularCar(id, templateId, spec) {
   };
 }
 
-addRegularCar('rx7fb', 'fc3s', {
-  shortName: 'RX-7 FB', name: 'Mazda RX-7 FB', description: 'A light, early rotary that rewards clean shifts.',
-  engine: '12a', engineModel: '12A', powerKW: 85, torqueNm: 152, vehicleMassKg: 1080,
-  engineRedlineRPM: 7000, engineLimiterRPM: 7200, turboSize: 0, turboSpoolRate: 0,
-  maximumBoost: 0, launchRPM: 4600, clutchStrength: 330,
-  visual: { wheelKey: 'wheel8Spoke' },
-});
 addRegularCar('rx7fd', 'fc3s', {
   shortName: 'RX-7 FD', name: 'Mazda RX-7 FD3S', description: 'Twin turbo rotary with a sharp, light chassis.',
   engine: '13brew', engineModel: '13B-REW', powerKW: 206, torqueNm: 294, vehicleMassKg: 1280,
@@ -1068,18 +1061,22 @@ addRegularCar('ef', 'ek9', {
   engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5700,
   visual: { wheelKey: 'wheel8Spoke' },
 });
-for (const [id, numeral, powerKW, torqueNm, mass] of [
-  ['evo5', 'V', 206, 373, 1360],
-  ['evo6', 'VI', 206, 373, 1360],
-  ['evo9', 'IX', 206, 392, 1410],
+for (const [id, numeral, powerKW, torqueNm, mass, engine, boost, finalDrive, spool] of [
+  ['evo5', 'V', 206, 373, 1360, '4g63t_evo5', 0.92, 4.529, 1.68],
+  ['evo6', 'VI', 206, 373, 1360, '4g63t_evo6', 0.96, 4.529, 1.74],
+  ['evo9', 'IX', 206, 392, 1410, '4g63t_evo9', 1.00, 4.529, 1.85],
 ]) {
   addRegularCar(id, 'evo3', {
     shortName: 'EVO ' + numeral,
     name: 'Mitsubishi Lancer Evolution ' + numeral,
     description: 'Later generation 4G63T AWD grip and turbo punch.',
     powerKW, torqueNm, vehicleMassKg: mass,
-    engine: id === 'evo9' ? '4g63t_evo9' : '4g63t_late',
-    engineModel: '4G63T', maximumBoost: id === 'evo9' ? 1.0 : 0.92,
+    engine, engineModel: id === 'evo9' ? '4G63T MIVEC' : '4G63T',
+    maximumBoost: boost, finalDriveRatio: finalDrive, turboSpoolRate: spool,
+    gearRatios: id === 'evo9'
+      ? [2.928, 1.950, 1.407, 1.031, 0.761, 0.599]
+      : [2.785, 1.950, 1.407, 1.031, 0.761],
+    dragCoefficient: id === 'evo9' ? 0.34 : 0.36,
     visual: { wheelKey: 'wheelMesh' },
   });
 }
@@ -1088,6 +1085,9 @@ addRegularCar('gr86', 'ae86', {
   engine: 'fa24', engineModel: 'FA24', powerKW: 174, torqueNm: 250, vehicleMassKg: 1270,
   engineRedlineRPM: 7400, engineLimiterRPM: 7600, launchRPM: 4700,
   gearRatios: [3.626, 2.188, 1.541, 1.213, 1.000, 0.767],
+  finalDriveRatio: 4.10, drivenAxleWeightFraction: 0.53,
+  engineInertia: 0.20, clutchStrength: 420, tyreGrip: 1.04,
+  dragCoefficient: 0.30, frontalAreaM2: 1.91,
   visual: { wheelKey: 'wheel5Spoke' },
 });
 addRegularCar('rx8', 'fc3s', {
@@ -1096,21 +1096,21 @@ addRegularCar('rx8', 'fc3s', {
   engineRedlineRPM: 9000, engineLimiterRPM: 9200, turboSize: 0,
   turboSpoolRate: 0, maximumBoost: 0, launchRPM: 5600,
   gearRatios: [3.760, 2.269, 1.645, 1.187, 1.000, 0.843],
+  finalDriveRatio: 4.444, engineInertia: 0.14,
+  drivenAxleWeightFraction: 0.51, tyreGrip: 1.02,
+  clutchStrength: 380, dragCoefficient: 0.31, frontalAreaM2: 1.93,
   visual: { wheelKey: 'wheel5Spoke' },
 });
 
-addRegularCar('s2000', 'ae86', {
-  shortName: 'S2000', name: 'Honda S2000 AP1', description: 'High-revving roadster with sharp rear-drive balance.',
-  engine: 'f20c', engineModel: 'F20C', powerKW: 184, torqueNm: 208, vehicleMassKg: 1260,
-  engineRedlineRPM: 8800, engineLimiterRPM: 9000, launchRPM: 5600,
-  gearRatios: [3.133, 2.045, 1.481, 1.161, 0.970, 0.810], finalDriveRatio: 4.10,
-  visual: { wheelKey: 'wheel5Spoke' },
-});
 addRegularCar('a60', 'ae86', {
   shortName: 'SUPRA A60', name: 'Toyota Celica Supra A60', description: 'Classic straight-six grand tourer with rear-drive balance.',
   engine: '5mge', engineModel: '5M-GE', powerKW: 118, torqueNm: 221, vehicleMassKg: 1360,
   engineRedlineRPM: 6500, engineLimiterRPM: 6800, launchRPM: 4300,
   gearRatios: [3.285, 1.894, 1.275, 1.000, 0.783], finalDriveRatio: 4.10,
+  engineIdleRPM: 800, engineInertia: 0.27, drivetrainEfficiency: 0.87,
+  drivenAxleWeightFraction: 0.49, tyreGrip: 0.98, clutchStrength: 390,
+  dragCoefficient: 0.38, frontalAreaM2: 1.91, turboSize: 0,
+  turboSpoolRate: 0, maximumBoost: 0,
   visual: { wheelKey: 'wheel8Spoke' },
 });
 addRegularCar('ej1', 'ek9', {
@@ -1118,6 +1118,9 @@ addRegularCar('ej1', 'ek9', {
   engine: 'd16z6', engineModel: 'D16Z6', powerKW: 93, torqueNm: 144, vehicleMassKg: 1040,
   engineRedlineRPM: 7200, engineLimiterRPM: 7400, launchRPM: 5200,
   gearRatios: [3.250, 1.900, 1.250, 0.909, 0.702], finalDriveRatio: 4.25,
+  engineInertia: 0.17, drivetrainEfficiency: 0.90,
+  drivenAxleWeightFraction: 0.61, clutchStrength: 310,
+  dragCoefficient: 0.32, frontalAreaM2: 1.86,
   visual: { wheelKey: 'wheel8Spoke' },
 });
 addRegularCar('jza80', 'r32', {
@@ -1125,14 +1128,48 @@ addRegularCar('jza80', 'r32', {
   engine: '2jzgte', engineModel: '2JZ-GTE', powerKW: 206, torqueNm: 435, vehicleMassKg: 1510,
   engineRedlineRPM: 6800, engineLimiterRPM: 7200, maximumBoost: 0.80, launchRPM: 4700,
   gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793], finalDriveRatio: 3.27,
-  drivenAxleWeightFraction: 0.48, visual: { wheelKey: 'wheelDeepDish' },
+  engineIdleRPM: 800, engineInertia: 0.27, drivetrainEfficiency: 0.87,
+  drivenAxleWeightFraction: 0.48, launchLoadMultiplier: 1.22,
+  tyreGrip: 1.03, clutchStrength: 590, dragCoefficient: 0.31,
+  frontalAreaM2: 1.93, turboSize: 0.67, turboSpoolRate: 1.42,
+  visual: { wheelKey: 'wheelDeepDish' },
 });
 addRegularCar('nsx', 'ae86', {
   shortName: 'NSX', name: 'Honda NSX NA1', description: 'Mid-engine aluminium sports car with precise naturally aspirated response.',
   engine: 'c30a', engineModel: 'C30A', powerKW: 206, torqueNm: 294, vehicleMassKg: 1350,
   engineRedlineRPM: 8000, engineLimiterRPM: 8200, launchRPM: 5000,
   gearRatios: [3.071, 1.727, 1.230, 0.967, 0.771], finalDriveRatio: 4.06,
-  drivenAxleWeightFraction: 0.62, visual: { wheelKey: 'wheel5Spoke' },
+  engineInertia: 0.19, drivetrainEfficiency: 0.90,
+  drivenAxleWeightFraction: 0.62, launchLoadMultiplier: 1.18,
+  tyreGrip: 1.08, clutchStrength: 440, dragCoefficient: 0.32,
+  frontalAreaM2: 1.79, visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('3000gt', 'r32', {
+  shortName: '3000GT VR-4', name: 'Mitsubishi 3000GT VR-4',
+  description: 'Heavy twin-turbo V6 grand tourer with full-time AWD traction.',
+  engine: '6g72tt', engineModel: '6G72TT', powerKW: 235, torqueNm: 427,
+  vehicleMassKg: 1710, engineIdleRPM: 800, engineRedlineRPM: 7000,
+  engineLimiterRPM: 7200, engineInertia: 0.28,
+  gearRatios: [3.083, 1.684, 1.115, 0.833, 0.666, 0.536],
+  finalDriveRatio: 4.153, drivetrainEfficiency: 0.82,
+  drivenAxleWeightFraction: 1, launchLoadMultiplier: 1.04,
+  tyreGrip: 1.03, clutchStrength: 620, dragCoefficient: 0.33,
+  frontalAreaM2: 2.03, turboSize: 0.63, turboSpoolRate: 1.48,
+  maximumBoost: 0.75, launchRPM: 4300,
+  visual: { wheelKey: 'wheel5Spoke' },
+});
+addRegularCar('r34', 'r32', {
+  shortName: 'R34', name: 'Nissan Skyline GT-R R34',
+  description: 'RB26 twin-turbo AWD coupe with a long-legged six-speed gearbox.',
+  engine: 'rb26dett_r34', engineModel: 'RB26DETT', powerKW: 206,
+  torqueNm: 392, vehicleMassKg: 1560, engineIdleRPM: 850,
+  engineRedlineRPM: 8000, engineLimiterRPM: 8200,
+  gearRatios: [3.827, 2.360, 1.685, 1.312, 1.000, 0.793],
+  finalDriveRatio: 3.545, drivetrainEfficiency: 0.84,
+  drivenAxleWeightFraction: 1, tyreGrip: 1.05,
+  clutchStrength: 580, dragCoefficient: 0.35, frontalAreaM2: 2.02,
+  turboSize: 0.68, turboSpoolRate: 1.58, maximumBoost: 0.82,
+  launchRPM: 5000, visual: { wheelKey: 'wheel5Spoke' },
 });
 
 // Stock arch centres and radii measured from the combined paint/body alpha.
@@ -1149,34 +1186,34 @@ const REGULAR_ASSETS = {
   ae86: ['ae86', 500, 270, 390, 91, 944, 391, 92, 1161, 420],
   ef: ['ef', 500, 230, 362, 99, 961, 365, 98, 1141, 400],
   ek9: ['ek9', 500, 194, 368, 97, 932, 371, 100, 1159, 420],
-  rx7fb: ['rx7fb', 600, 292, 439, 107, 958, 431, 103, 1161, 430],
 
   // Re-authored FC now uses a 1200x500 stock canvas. Its old 600px height
   // caused both wheels to render too high relative to the new body.
   fc3s: ['rx7fc', 500, 274, 395, 100, 930, 398, 100, 1162, 430],
 
   rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
-  rx8: ['rx8', 400, 244, 305, 92, 943, 316, 97, 1167, 440],
+  rx8: ['rx8', 400, 241, 310, 98, 945, 310, 101, 1165, 440],
 
   // Re-aligned SpriteR GR86.
-  gr86: ['gr86', 500, 286, 390, 101, 980, 391, 93, 1155, 430],
+  gr86: ['gr86', 500, 245, 383, 101, 949, 383, 101, 1155, 430],
 
   // Re-authored Evo III / V use 500px canvases. X follows the new wheel
   // openings; Y retains the old axle relationship after the +50px canvas shift.
-  evo3: ['evo3', 500, 316, 383, 92, 954, 385, 94, 1137, 430],
-  evo5: ['evo5', 500, 286, 397, 88, 976, 397, 90, 1090, 440],
+  evo3: ['evo3', 500, 291, 390, 88, 909, 390, 89, 1137, 430],
+  evo5: ['evo5', 500, 268, 389, 88, 931, 389, 90, 1090, 440],
 
   // New SpriteR cars: model-specific arch centres/radii.
-  s2000: ['s2000', 500, 282, 398, 99, 990, 398, 99, 1161, 430],
-  a60: ['a60', 500, 286, 392, 101, 978, 392, 103, 1161, 430],
-  ej1: ['ej1', 500, 276, 392, 97, 1008, 392, 98, 1161, 420],
-  jza80: ['jza80', 500, 300, 400, 101, 978, 400, 99, 1161, 450],
-  nsx: ['nsx', 500, 276, 395, 98, 1008, 395, 97, 1161, 445],
+  a60: ['a60', 500, 273, 370, 96, 945, 370, 96, 1161, 430],
+  ej1: ['ej1', 500, 236, 362, 98, 962, 362, 100, 1161, 420],
+  jza80: ['jza80', 500, 271, 380, 96, 944, 380, 97, 1161, 450],
+  nsx: ['nsx', 500, 251, 383, 97, 930, 383, 97, 1161, 445],
 
   evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
   evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
   wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
   r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
+  '3000gt': ['3000gt', 500, 273, 339, 100, 926, 339, 100, 1165, 455],
+  r34: ['r34', 500, 278, 375, 92, 952, 375, 92, 1168, 455],
 };
 
 Object.entries(REGULAR_ASSETS).forEach(([id, [
@@ -1238,7 +1275,7 @@ Object.values(cars).forEach(car => {
 });
 
 export const carOrder = [
-  'ae86', 'ef', 'ek9', 'rx7fb', 'fc3s', 'rx7fd', 'rx8', 'gr86',
-  'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32',
-  's2000', 'a60', 'ej1', 'jza80', 'nsx',
+  'ae86', 'ef', 'ek9', 'fc3s', 'rx7fd', 'rx8', 'gr86',
+  'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34',
+  '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
 ];

@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260925-r193';
+import { cars } from '../data/cars.js?v=20260928-r232';
 import {
   applyStateToRegistry,
   clearAllSaves,
