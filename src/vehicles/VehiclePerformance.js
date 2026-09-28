@@ -85,6 +85,47 @@ function torqueBandFactor(engine = {}, car = {}) {
   return clamp(average / peak, 0.68, 1.02);
 }
 
+function standingEngineResponseFactor(car = {}, engine = {}) {
+  const cfg = PROGRESSION_BALANCE.performance;
+  const inertia = Math.max(
+    0.05,
+    Number(engine.inertia || car.engineInertia || cfg.referenceEngineInertia || 0.18)
+  );
+  const inertiaFactor = clamp(
+    Math.pow(
+      Math.max(0.05, Number(cfg.referenceEngineInertia || 0.18)) / inertia,
+      Number(cfg.engineInertiaExponent || 0.10)
+    ),
+    0.95,
+    1.04
+  );
+
+  let turboLaunchFactor = 1;
+  if (Number(car.maximumBoost || 0) > 0.01) {
+    // Turbo.js begins producing meaningful boost above ~1800 rpm. Estimate how
+    // much of that window the car has already reached at its authored launch RPM
+    // and blend in the engine's true off-boost torque fraction.
+    const launchRPM = Math.max(1800, Number(car.launchRPM || 4400));
+    const rpmWindow = clamp((launchRPM - 1800) / 4300, 0, 1);
+    const spoolWindow = Math.pow(rpmWindow, 1.18);
+    const offBoost = clamp(Number(engine.offBoostTorqueFraction ?? 0.55), 0.35, 1);
+
+    turboLaunchFactor = clamp(
+      Number(cfg.turboLaunchBase || 0.90) +
+      spoolWindow * Number(cfg.turboLaunchSpoolWeight || 0.08) +
+      offBoost * Number(cfg.turboLaunchOffBoostWeight || 0.06),
+      0.94,
+      1.02
+    );
+  }
+
+  return {
+    inertiaFactor,
+    turboLaunchFactor,
+    combined: inertiaFactor * turboLaunchFactor,
+  };
+}
+
 function gearingFactor(car = {}, rolling = false) {
   const ratios = Array.isArray(car.gearRatios) ? car.gearRatios : [];
   if (!ratios.length) return 1;
@@ -128,6 +169,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
 
   const launchGearing = gearingFactor(car, false);
   const rollGearing = gearingFactor(car, true);
+  const standingEngineResponse = standingEngineResponseFactor(car, engine);
   const aeroLoad = Math.max(0.45, Number(car.dragCoefficient || 0.34) * Number(car.frontalAreaM2 || 1.85));
   const aeroFactor = clamp(Math.sqrt(0.64 / aeroLoad), 0.86, 1.12);
 
@@ -150,7 +192,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const standing = Math.max(1,
     100 * standingCore *
     standingTraction * clutchUsability * efficiency * launchGearing *
-    shiftFactor * standingBand * boostResponse +
+    shiftFactor * standingBand * boostResponse * standingEngineResponse.combined +
     100 * nosPerMass * nosAvailability * cfg.nosStandingUse
   );
 
@@ -179,6 +221,9 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
       traction: tractionRaw,
       drivetrainEfficiency: Number(car.drivetrainEfficiency || 0),
       boostBar: boost,
+      engineInertia: Number(engine.inertia || car.engineInertia || 0),
+      engineResponse: standingEngineResponse.combined,
+      turboLaunchResponse: standingEngineResponse.turboLaunchFactor,
       nosPowerHp: Math.max(0, Number(car.nosPower || 0)),
     },
   };
