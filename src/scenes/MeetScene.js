@@ -23,7 +23,7 @@ import {
 } from '../data/meetAssets.js?v=20260922-r84';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260928-r234';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r215';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r233';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
@@ -1712,7 +1712,15 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeGenerateSpecialChallenger() {
-    if (!this.hasCar) return null;
+    const meetObscured = Boolean(
+      this.travelMapPopup?.active ||
+      this._settingsOverlay?.length ||
+      this.tunerChallengePopup?.active ||
+      this.competitionPopup?.active ||
+      this.lastCarPinkWarning?.active ||
+      sceneCutsceneActive(this)
+    );
+    if (!this.hasCar || meetObscured) return null;
 
     const existing = this.registry.get('specialChallenger');
     const allowedHere = new Set(
