@@ -23,7 +23,6 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-  hasRegionalTeam,
 } from '../data/characters.js?v=20260926-r213';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
