@@ -2257,11 +2257,9 @@ export default class RaceScene extends Phaser.Scene {
         .setScrollFactor(0);
     };
 
-    const pinkLossCelebration = isPinkSlip && !playerWon;
-
     addPortrait(
       playerCharacter,
-      pinkLossCelebration ? true : playerWon,
+      playerWon,
       315,
       0x45d7ff,
       'YOU',
@@ -2269,7 +2267,7 @@ export default class RaceScene extends Phaser.Scene {
     );
     addPortrait(
       rivalCharacter,
-      pinkLossCelebration ? true : opponentWon,
+      opponentWon,
       1245,
       0xff4f92,
       'RIVAL',
@@ -2403,7 +2401,11 @@ export default class RaceScene extends Phaser.Scene {
           historyId: wasSpecialChallenge
             ? 'specialChallengerResult:' + Date.now() + ':' + (playerWon ? 'W' : 'L')
             : undefined,
-          characterOverrides: { RIVAL: this.opponentCharacterId },
+          characterOverrides: {
+            RIVAL: this.opponentCharacterId,
+            WINNER: playerWon ? this.playerCharacterId : this.opponentCharacterId,
+            LOSER: playerWon ? this.opponentCharacterId : this.playerCharacterId,
+          },
           variables: {
             RIVAL_NAME: rivalName,
             CAR: carName,
@@ -3137,14 +3139,9 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
-    if (playerWon) {
-      const locationId = this.registry.get('meetLocation') || '';
-      const rivalKey = locationId + ':' + this.opponentCharacterId;
-      const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
-      defeated.add(rivalKey);
-      this.registry.set('defeatedRivalKeys', [...defeated]);
-    }
-
+    // Do not remove defeated drivers from a Meet. recordMeetRaceOutcome() locks
+    // the saved offer and preserves its PLAYER_WIN state so the rival remains
+    // on the stage in a loss pose until the normal Meet refresh.
     let cashDelta = 0;
     let pinkMessage = '';
     let gameOver = false;
