@@ -149,7 +149,12 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const powerToWeight = power / mass * 1000;
   const torqueToWeight = torque / mass * 1000;
   const efficiency = clamp(Number(car.drivetrainEfficiency || 0.86) / 0.88, 0.82, 1.13);
-  const shiftFactor = clamp(1 / Math.max(0.55, Number(car.shiftTimeScale || 1)), 0.90, 1.28);
+  const rawShiftAdvantage = 1 / Math.max(0.55, Number(car.shiftTimeScale || 1));
+  const shiftFactor = clamp(
+    1 + (rawShiftAdvantage - 1) * Number(cfg.gearboxPerformanceWeight || 0.22),
+    0.96,
+    1.12
+  );
   const bandFactor = torqueBandFactor(engine, car);
   const clutchFactor = clamp(Number(car.clutchStrength || torque) / Math.max(torque, 1), 0.82, 1.10);
 
