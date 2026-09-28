@@ -12,10 +12,15 @@ export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
 
-export const STARTER_CAR_IDS = ['ae86', 'ek9'];
+export const STARTER_CAR_IDS = ['ae86', 'ef'];
+
+// Existing profiles may legitimately have started with the old EK9 option.
+// Keep it save-compatible without exposing it as a starter for new games.
+const SAVE_COMPATIBLE_STARTER_CAR_IDS = ['ae86', 'ef', 'ek9'];
 
 export function normaliseStarterCarId(value = 'ae86') {
-  return STARTER_CAR_IDS.includes(String(value || '')) ? String(value) : 'ae86';
+  const id = String(value || '');
+  return SAVE_COMPATIBLE_STARTER_CAR_IDS.includes(id) ? id : 'ae86';
 }
 
 export function createStarterCarState() {
@@ -485,7 +490,7 @@ export function normaliseState(input = {}) {
     input.starterCarId ||
     Object.entries(input.carStates || {}).find(
       ([carId, carState]) =>
-        STARTER_CAR_IDS.includes(carId) && carState?.acquiredVia === 'starter'
+        SAVE_COMPATIBLE_STARTER_CAR_IDS.includes(carId) && carState?.acquiredVia === 'starter'
     )?.[0] ||
     'ae86';
   const base = createDefaultGameState({ starterCarId: requestedStarterCarId });
