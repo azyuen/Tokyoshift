@@ -1,23 +1,22 @@
 // Shared wheel-placement helper.
 //
-// Every car may specify independent front/rear X, Y and scale values.
+// R244 wheel standard:
+//   Every wheel PNG is a centred 384×384 transparent canvas with a consistent
+//   visible tyre footprint. Cars with measured wheel wells size the visible tyre
+//   directly to the authored rear/front arches, so generic and hero wheels now
+//   follow the same geometry rules.
 //
-// NORMAL CARS:
-//   Keep explicit per-axle calibration (or the legacy 1.16 fallback). The new
-//   layered roster opts into visible-well sizing and a shared tyre contact line.
+// Legacy scale values remain supported for cars without measured wheel wells.
+// Those values were calibrated against the old 1254×1254 canvases, so the
+// renderer automatically compensates when it sees a standard 384×384 wheel.
 //
-// HERO CARS:
-//   visual.wheelFitMode === 'visible-well' sizes the *visible tyre artwork*
-//   against the measured wheel arch. Hero wheel PNGs have different transparent
-//   padding, so using the full PNG canvas as the diameter makes some wheels look
-//   much smaller than others. We scan alpha once per wheel source, cache the
-//   visible diameter, and fit that diameter to the independently authored rear
-//   and front wheel wells.
-//
-// If alpha measurement is unavailable for any reason, the explicit axle scale
-// remains the safe fallback.
+// Alpha scanning is cached once per texture and is also used for true tyre
+// contact height. If measurement is unavailable, the explicit scale fallback
+// remains deterministic.
 
 export const LEGACY_WHEEL_RENDER_BOOST = 1.16;
+export const LEGACY_WHEEL_CANVAS_SIZE = 1254;
+export const STANDARD_WHEEL_CANVAS_SIZE = 384;
 // Compatibility export for older/debug code.
 export const WHEEL_RENDER_BOOST = LEGACY_WHEEL_RENDER_BOOST;
 
@@ -165,16 +164,55 @@ export function getAxleWheelFit(
     wellRadiusSource
   );
 
-  let wheelScale = baseWheelScale * scaleRatio * renderBoost;
+  const sourceWidth = numberOr(
+    wheelSource?.naturalWidth ?? wheelSource?.width,
+    0
+  );
+  const sourceHeight = numberOr(
+    wheelSource?.naturalHeight ?? wheelSource?.height,
+    0
+  );
+  const sourceCanvasSize = Math.max(sourceWidth, sourceHeight);
+  const isStandardWheelCanvas =
+    sourceWidth > 0 &&
+    sourceHeight > 0 &&
+    Math.abs(sourceWidth - STANDARD_WHEEL_CANVAS_SIZE) <= 2 &&
+    Math.abs(sourceHeight - STANDARD_WHEEL_CANVAS_SIZE) <= 2;
 
-  // Opt-in auto-fit. The target is the measured body-source wheel well, but
-  // the divisor is the actual visible wheel artwork rather than the PNG canvas.
-  if (visual.wheelFitMode === 'visible-well' && wellRadiusSource > 0) {
+  // Explicit legacy wheelScale values were authored while every wheel PNG used
+  // a 1254×1254 canvas. If a car has no measured wheel-well radius, preserve
+  // the same rendered physical size after the asset was reduced to 384×384.
+  const scaleReferenceSize = numberOr(
+    visual[prefix + 'WheelScaleReferenceSize'] ?? visual.wheelScaleReferenceSize,
+    LEGACY_WHEEL_CANVAS_SIZE
+  );
+  const canvasCompensation =
+    sourceCanvasSize > 0 && isStandardWheelCanvas
+      ? scaleReferenceSize / sourceCanvasSize
+      : 1;
+
+  let wheelScale = baseWheelScale * scaleRatio * renderBoost * canvasCompensation;
+
+  // R244 wheel standard:
+  // All 384×384 wheel assets have the tyre centred and normalised to the same
+  // footprint. Any car with a measured wheel arch can therefore size the tyre
+  // from visible artwork instead of depending on old per-PNG padding/scale.
+  //
+  // Older/non-standard wheel assets keep the explicit opt-in behaviour so this
+  // remains backward compatible if an unconverted asset is ever encountered.
+  const useVisibleWellFit =
+    wellRadiusSource > 0 &&
+    (
+      visual.wheelFitMode === 'visible-well' ||
+      isStandardWheelCanvas
+    );
+
+  if (useVisibleWellFit) {
     const metrics = getVisibleWheelMetrics(wheelSource);
     if (metrics?.visibleDiameter > 0) {
       const fill = numberOr(
         visual[prefix + 'WheelFill'] ?? visual.wheelFill,
-        1.035
+        isStandardWheelCanvas ? 1.0 : 1.035
       );
       wheelScale = (
         wellRadiusSource *

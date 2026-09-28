@@ -166,7 +166,7 @@ export function preloadCarWheel(scene, car) {
   // repeat a wheelPath in every car config. Hero cars still use their explicit
   // per-car wheelPath. This keeps wheel loading lazy while guaranteeing the
   // requested wheel exists before wheel geometry or garage thumbnails render.
-  scene.load.image(wheelKey, resolvedPath + '?v=20260928-r243');
+  scene.load.image(wheelKey, resolvedPath + '?v=20260928-r244');
   return 1;
 }
 

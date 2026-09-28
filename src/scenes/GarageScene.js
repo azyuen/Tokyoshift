@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r243';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20260928-r232';
@@ -76,7 +76,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260928-r243';
+} from '../vehicles/CarAppearance.js?v=20260928-r244';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -91,7 +91,7 @@ import {
   preloadVisualModSelectionAssets,
 } from '../data/visualMods.js?v=20260928-r242';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
