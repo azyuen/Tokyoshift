@@ -79,6 +79,7 @@ export function createMeetOpponentMatch(options = {}) {
     for (const buildRating of cfg.candidateBuildRatings) {
       const seed = [
         options.locationId || 'meet',
+        options.refreshSeed || '',
         options.slotIndex || 0,
         options.raceType || 'street',
         carId,
@@ -93,7 +94,6 @@ export function createMeetOpponentMatch(options = {}) {
       if (!performance) continue;
       const opponentIndex = Math.max(1, Number(performance.index.selected || performance.index.overall || 1));
       const ratio = opponentIndex / playerIndex;
-      if (ratio < cfg.fallbackRatioFloor || ratio > cfg.fallbackRatioCeiling) continue;
 
       candidates.push({
         carId,
@@ -108,16 +108,21 @@ export function createMeetOpponentMatch(options = {}) {
 
   if (!candidates.length) return null;
 
+  const boundedCandidates = candidates.filter(candidate =>
+    candidate.ratio >= cfg.fallbackRatioFloor && candidate.ratio <= cfg.fallbackRatioCeiling
+  );
+  const availableCandidates = boundedCandidates.length ? boundedCandidates : candidates;
+
   let pool = bandId === 'wildcard'
-    ? chooseWildcard(candidates, random)
-    : candidates.filter(candidate => candidate.ratio >= band.minRatio && candidate.ratio <= band.maxRatio);
+    ? chooseWildcard(availableCandidates, random)
+    : availableCandidates.filter(candidate => candidate.ratio >= band.minRatio && candidate.ratio <= band.maxRatio);
 
   // Sparse edges (very slow or very fast builds) fall back to the closest
   // physically-generated option rather than inventing a hidden multiplier.
   if (!pool.length) {
-    pool = [...candidates]
+    pool = [...availableCandidates]
       .sort((a, b) => Math.abs(a.ratio - band.targetRatio) - Math.abs(b.ratio - band.targetRatio))
-      .slice(0, Math.min(12, candidates.length));
+      .slice(0, Math.min(12, availableCandidates.length));
   }
 
   const weighted = pool.map(candidate => ({
