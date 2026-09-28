@@ -53,21 +53,29 @@ export const PROGRESSION_BALANCE = {
         bandWeights: { comparable: 0.60, weaker: 0.30, stronger: 0.08, wildcard: 0.02 },
         standingComparableTarget: 0.98,
         rollingComparableTarget: 0.98,
+        normalBuildRatings: [1, 2],
+        wildcardBuildRatings: [3],
       },
       MED: {
         bandWeights: { comparable: 0.55, weaker: 0.12, stronger: 0.27, wildcard: 0.06 },
         standingComparableTarget: 1.03,
         rollingComparableTarget: 1.03,
+        normalBuildRatings: [1, 2, 3],
+        wildcardBuildRatings: [4],
       },
       HARD: {
         bandWeights: { comparable: 0.50, weaker: 0.08, stronger: 0.34, wildcard: 0.08 },
         standingComparableTarget: 1.07,
         rollingComparableTarget: 1.05,
+        normalBuildRatings: [2, 3, 4],
+        wildcardBuildRatings: [5],
       },
       ELITE: {
         bandWeights: { comparable: 0.35, weaker: 0.03, stronger: 0.47, wildcard: 0.15 },
         standingComparableTarget: 1.11,
         rollingComparableTarget: 1.07,
+        normalBuildRatings: [3, 4, 5],
+        wildcardBuildRatings: [5],
       },
     },
 
@@ -75,6 +83,8 @@ export const PROGRESSION_BALANCE = {
     preferredRegionalModelWeight: 2.35,
     unownedCarWeight: 1.20,
     sameModelWeight: 0.58,
+    // Fallback only. Normal Meet generation takes its build pool from the
+    // location difficulty profile above so easy districts retain a real ceiling.
     candidateBuildRatings: [1, 2, 3, 4, 5],
     fallbackRatioFloor: 0.45,
     fallbackRatioCeiling: 1.95,

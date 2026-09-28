@@ -1,4 +1,4 @@
-import { PROGRESSION_BALANCE, RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260928-r236';
+import { PROGRESSION_BALANCE, RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260928-r239';
 
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 

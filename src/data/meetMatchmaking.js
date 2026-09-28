@@ -1,5 +1,5 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r236';
+import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r239';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 
@@ -25,6 +25,19 @@ function getDifficultyVehicleProfile(difficulty = 'MED') {
   const profiles = PROGRESSION_BALANCE.meetMatchmaking.difficultyVehicleProfiles || {};
   const key = String(difficulty || 'MED').toUpperCase();
   return profiles[key] || profiles.MED || null;
+}
+
+function getAllowedBuildRatings(difficulty = 'MED', bandId = 'comparable') {
+  const profile = getDifficultyVehicleProfile(difficulty);
+  const configured = bandId === 'wildcard'
+    ? profile?.wildcardBuildRatings
+    : profile?.normalBuildRatings;
+  const fallback = PROGRESSION_BALANCE.meetMatchmaking.candidateBuildRatings || [1, 2, 3, 4, 5];
+  const source = Array.isArray(configured) && configured.length ? configured : fallback;
+
+  return [...new Set(source
+    .map(value => Math.max(1, Math.min(5, Math.round(Number(value) || 1))))
+  )].sort((a, b) => a - b);
 }
 
 function getPerformanceBands(raceType = 'Standing Start', difficulty = 'MED') {
@@ -114,13 +127,14 @@ export function createMeetOpponentMatch(options = {}) {
     options.difficulty
   );
   const band = performanceBands[bandId] || performanceBands.comparable;
+  const allowedBuildRatings = getAllowedBuildRatings(options.difficulty, bandId);
   const candidates = [];
 
   for (const carId of carOrder) {
     const car = cars[carId];
     if (!car || car.collector || car.tuningLocked) continue;
 
-    for (const buildRating of cfg.candidateBuildRatings) {
+    for (const buildRating of allowedBuildRatings) {
       const seed = [
         options.locationId || 'meet',
         options.refreshSeed || '',
@@ -161,8 +175,9 @@ export function createMeetOpponentMatch(options = {}) {
     ? chooseWildcard(availableCandidates, random, performanceBands)
     : availableCandidates.filter(candidate => candidate.ratio >= band.minRatio && candidate.ratio <= band.maxRatio);
 
-  // Sparse edges (very slow or very fast builds) fall back to the closest
-  // physically-generated option rather than inventing a hidden multiplier.
+  // Sparse edges (very slow or very fast player builds) fall back to the
+  // closest opponent that ACTUALLY belongs in this difficulty's build pool.
+  // Never escape the local build ceiling just to manufacture an equal race.
   if (!pool.length) {
     pool = [...availableCandidates]
       .sort((a, b) => Math.abs(a.ratio - band.targetRatio) - Math.abs(b.ratio - band.targetRatio))
@@ -184,5 +199,7 @@ export function createMeetOpponentMatch(options = {}) {
     performanceBand: bandId,
     playerPerformanceIndex: playerIndex,
     opponentPerformanceIndex: chosen.performance.index.selected,
+    allowedBuildRatings,
+    buildCeiling: Math.max(...allowedBuildRatings),
   };
 }
