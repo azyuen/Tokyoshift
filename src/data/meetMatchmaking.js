@@ -1,7 +1,7 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r235';
+import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r236';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 
 function weightedChoice(entries, random = Math.random) {
   const total = entries.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight || 0)), 0);
