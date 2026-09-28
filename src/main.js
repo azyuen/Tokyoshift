@@ -1,13 +1,13 @@
 import BootScene from './scenes/BootScene.js?v=20260928-r242';
-import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260928-r242';
+import CharacterSelectScene from './scenes/CharacterSelectScene.js?v=20260928-r243';
 import ProfileSelectScene from './scenes/ProfileSelectScene.js?v=20260928-r237';
-import GarageScene from './scenes/GarageScene.js?v=20260928-r242';
-import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260928-r242';
-import MeetScene from './scenes/MeetScene.js?v=20260928-r242';
-import RaceScene from './scenes/RaceScene.js?v=20260928-r242';
+import GarageScene from './scenes/GarageScene.js?v=20260928-r243';
+import CentralTokyoScene from './scenes/CentralTokyoScene.js?v=20260928-r243';
+import MeetScene from './scenes/MeetScene.js?v=20260928-r243';
+import RaceScene from './scenes/RaceScene.js?v=20260928-r243';
 import RunOverScene from './scenes/RunOverScene.js?v=20260928-r237';
 import ResultScene from './scenes/ResultScene.js?v=20260924-r171';
-import TunerShopScene from './scenes/TunerShopScene.js?v=20260928-r242';
+import TunerShopScene from './scenes/TunerShopScene.js?v=20260928-r243';
 import ProfileCalibrationScene from './scenes/ProfileCalibrationScene.js?v=20260925-r195';
 
 
@@ -56,4 +56,30 @@ const config = {
   scene: [BootScene, ProfileSelectScene, CharacterSelectScene, GarageScene, CentralTokyoScene, MeetScene, RaceScene, RunOverScene, ResultScene, TunerShopScene, ProfileCalibrationScene],
 };
 
-window.TOKYO_SHIFT = new Phaser.Game(config);
+async function waitForTokyoShiftFonts() {
+  if (!document.fonts?.load) return;
+
+  window.TOKYO_SHIFT_SET_LOADING?.(0.06, 'LOADING FONTS');
+
+  const fontLoad = Promise.all([
+    document.fonts.load('400 16px "Silkscreen"'),
+    document.fonts.load('700 16px "Silkscreen"'),
+    document.fonts.load('500 16px "Rajdhani"'),
+    document.fonts.load('600 16px "Rajdhani"'),
+    document.fonts.load('600 16px "Teko"'),
+  ]).then(() => document.fonts.ready);
+
+  // Do not block startup indefinitely if the font CDN is unavailable.
+  const timeout = new Promise(resolve => window.setTimeout(resolve, 2200));
+
+  try {
+    await Promise.race([fontLoad, timeout]);
+  } catch (e) {}
+}
+
+async function startTokyoShift() {
+  await waitForTokyoShiftFonts();
+  window.TOKYO_SHIFT = new Phaser.Game(config);
+}
+
+startTokyoShift();

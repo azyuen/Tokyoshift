@@ -150,10 +150,23 @@ export function preloadCarAppearanceAssets(scene, carMap = {}, cacheBust = '') {
   return queued;
 }
 
+const SHARED_WHEEL_PATHS = {
+  wheel8Spoke: 'assets/wheels/wheel_8spoke.png',
+  wheel5Spoke: 'assets/wheels/wheel_5spoke.png',
+  wheelMesh: 'assets/wheels/wheel_mesh.png',
+  wheelDeepDish: 'assets/wheels/wheel_deepdish.png',
+};
+
 export function preloadCarWheel(scene, car) {
   const { wheelKey, wheelPath } = car?.visual || {};
-  if (!wheelKey || !wheelPath || scene.textures.exists(wheelKey)) return 0;
-  scene.load.image(wheelKey, wheelPath + '?v=20260924-r165');
+  const resolvedPath = wheelPath || SHARED_WHEEL_PATHS[wheelKey] || null;
+  if (!wheelKey || !resolvedPath || scene.textures.exists(wheelKey)) return 0;
+
+  // Normal catalogue cars share one of four generic wheel textures and do not
+  // repeat a wheelPath in every car config. Hero cars still use their explicit
+  // per-car wheelPath. This keeps wheel loading lazy while guaranteeing the
+  // requested wheel exists before wheel geometry or garage thumbnails render.
+  scene.load.image(wheelKey, resolvedPath + '?v=20260928-r243');
   return 1;
 }
 

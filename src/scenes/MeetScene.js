@@ -3,7 +3,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260927-r216';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
   DEFAULT_PAINT_COLOR,
@@ -11,7 +11,7 @@ import {
   normalisePaintColor,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260927-r216';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import {
   characters,
   getRivalCharacterOrderForRegion,

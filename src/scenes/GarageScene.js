@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20260928-r232';
@@ -76,7 +76,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260927-r216';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,

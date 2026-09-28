@@ -3,13 +3,13 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260927-r216';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260925-r193';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r152';
 import { characters } from '../data/characters.js?v=20260921-r43';
