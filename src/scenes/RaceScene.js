@@ -23,7 +23,6 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-  hasRegionalTeam,
 } from '../data/characters.js?v=20260926-r213';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
@@ -49,8 +48,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r213';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r214';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r235';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -2257,11 +2256,9 @@ export default class RaceScene extends Phaser.Scene {
         .setScrollFactor(0);
     };
 
-    const pinkLossCelebration = isPinkSlip && !playerWon;
-
     addPortrait(
       playerCharacter,
-      pinkLossCelebration ? true : playerWon,
+      playerWon,
       315,
       0x45d7ff,
       'YOU',
@@ -2269,7 +2266,7 @@ export default class RaceScene extends Phaser.Scene {
     );
     addPortrait(
       rivalCharacter,
-      pinkLossCelebration ? true : opponentWon,
+      opponentWon,
       1245,
       0xff4f92,
       'RIVAL',
@@ -2403,7 +2400,11 @@ export default class RaceScene extends Phaser.Scene {
           historyId: wasSpecialChallenge
             ? 'specialChallengerResult:' + Date.now() + ':' + (playerWon ? 'W' : 'L')
             : undefined,
-          characterOverrides: { RIVAL: this.opponentCharacterId },
+          characterOverrides: {
+            RIVAL: this.opponentCharacterId,
+            WINNER: playerWon ? this.playerCharacterId : this.opponentCharacterId,
+            LOSER: playerWon ? this.opponentCharacterId : this.playerCharacterId,
+          },
           variables: {
             RIVAL_NAME: rivalName,
             CAR: carName,
@@ -2709,9 +2710,19 @@ export default class RaceScene extends Phaser.Scene {
     if (this.raceMode === 'COMPETITION') return;
 
     const locationId = this.registry.get('meetLocation') || '';
-    if (!locationId || !hasRegionalTeam(this.raceDistrict)) return;
-
     const snapshot = this.registry.get('selectedRaceMeetOffer') || {};
+
+    // Persist results for every actual Meet race, not only districts that have
+    // a regional team. Older code gated this on hasRegionalTeam(), which meant
+    // wins in other Meets were removed from view without ever gaining a saved
+    // loss pose/locked card.
+    const isMeetRace = Boolean(
+      locationId &&
+      snapshot &&
+      typeof snapshot === 'object' &&
+      (snapshot.characterId || this.registry.get('selectedRaceSpecialChallenge'))
+    );
+    if (!isMeetRace) return;
     const rosters = { ...(this.registry.get('meetRosters') || {}) };
     const current = Array.isArray(rosters[locationId])
       ? rosters[locationId].map(offer => ({ ...offer }))
@@ -3137,14 +3148,9 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
-    if (playerWon) {
-      const locationId = this.registry.get('meetLocation') || '';
-      const rivalKey = locationId + ':' + this.opponentCharacterId;
-      const defeated = new Set(this.registry.get('defeatedRivalKeys') || []);
-      defeated.add(rivalKey);
-      this.registry.set('defeatedRivalKeys', [...defeated]);
-    }
-
+    // Do not remove defeated drivers from a Meet. recordMeetRaceOutcome() locks
+    // the saved offer and preserves its PLAYER_WIN state so the rival remains
+    // on the stage in a loss pose until the normal Meet refresh.
     let cashDelta = 0;
     let pinkMessage = '';
     let gameOver = false;

@@ -341,9 +341,13 @@ export const CUTSCENES = {
     testerLabel: 'Special Challenger — Win',
     title: 'SPECIAL CHALLENGER // DEFEATED',
     once: false,
-    characters: { left: '$RIVAL', right: '$PLAYER' },
+    characters: { left: '$LOSER', right: '$WINNER' },
     preview: {
-      characterOverrides: { RIVAL: 'rikuAkamine' },
+      characterOverrides: {
+        RIVAL: 'rikuAkamine',
+        LOSER: 'rikuAkamine',
+        WINNER: 'renMizuno',
+      },
       variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'SKYLINE' },
     },
     pages: [
@@ -370,9 +374,13 @@ export const CUTSCENES = {
     testerLabel: 'Special Challenger — Loss',
     title: 'SPECIAL CHALLENGER // LOST',
     once: false,
-    characters: { left: '$RIVAL', right: '$PLAYER' },
+    characters: { left: '$WINNER', right: '$LOSER' },
     preview: {
-      characterOverrides: { RIVAL: 'rikuAkamine' },
+      characterOverrides: {
+        RIVAL: 'rikuAkamine',
+        WINNER: 'rikuAkamine',
+        LOSER: 'renMizuno',
+      },
       variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'AE86' },
     },
     pages: [
@@ -434,9 +442,13 @@ export const CUTSCENES = {
     testerLabel: 'First Pink Slip — Win',
     title: 'PINK SLIP // WON',
     once: true,
-    characters: { left: '$RIVAL', right: '$PLAYER' },
+    characters: { left: '$LOSER', right: '$WINNER' },
     preview: {
-      characterOverrides: { RIVAL: 'rikuAkamine' },
+      characterOverrides: {
+        RIVAL: 'rikuAkamine',
+        LOSER: 'rikuAkamine',
+        WINNER: 'renMizuno',
+      },
       variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'SKYLINE' },
     },
     pages: [
@@ -463,9 +475,13 @@ export const CUTSCENES = {
     testerLabel: 'First Pink Slip — Loss',
     title: 'PINK SLIP // LOST',
     once: true,
-    characters: { left: '$RIVAL', right: '$PLAYER' },
+    characters: { left: '$WINNER', right: '$LOSER' },
     preview: {
-      characterOverrides: { RIVAL: 'rikuAkamine' },
+      characterOverrides: {
+        RIVAL: 'rikuAkamine',
+        WINNER: 'rikuAkamine',
+        LOSER: 'renMizuno',
+      },
       variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'AE86' },
     },
     pages: [
