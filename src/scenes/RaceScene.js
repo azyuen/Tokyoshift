@@ -3,7 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r249';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r250';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
@@ -351,9 +351,15 @@ export default class RaceScene extends Phaser.Scene {
     const skylineKey = this.raceDistrict === 'ODAIBA'
       ? (this.raceTimeOfDay === 'day' ? 'raceSkylineOdaibaDay' : 'raceSkylineOdaibaNight')
       : null;
+    // Keep regional skyline identity stable but vary the expressway furniture
+    // from race to race. A session counter makes the sequence deterministic.
+    const roadVariantCounter = Number(this.registry.get('raceRoadVariantCounter') || 0) + 1;
+    this.registry.set('raceRoadVariantCounter', roadVariantCounter);
+    const roadVariant = roadVariantCounter % 4;
     this.environment = new TokyoExpresswayBackground(this, {
       timeOfDay: this.raceTimeOfDay,
       skylineKey,
+      roadVariant,
     });
     this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
