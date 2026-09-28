@@ -10,7 +10,7 @@ export default class TokyoExpresswayBackground {
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r250_' + this.timeOfDay + '_v' + this.roadVariant;
+    const suffix = 'r251_' + this.timeOfDay + '_v' + this.roadVariant;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -271,8 +271,9 @@ export default class TokyoExpresswayBackground {
       ctx.clearRect(0, 0, w, h);
 
       // Per-race infrastructure variant: the regional skyline stays fixed,
-      // while the expressway itself can feel like a different stretch each race.
+      // while the expressway itself can feel like a genuinely different stretch.
       const fenceMode = this.roadVariant % 4;
+      const accentShift = fenceMode * 22;
 
       // Open chain-link / anti-throw safety fence: no opaque backing, so authored
       // regional skylines remain visible through the mesh.
@@ -281,7 +282,11 @@ export default class TokyoExpresswayBackground {
       ctx.lineWidth = 1;
       const meshStep = fenceMode === 1 ? 18 : fenceMode === 2 ? 30 : 24;
       const meshBottom = fenceMode === 1 ? 34 : 33;
+      // Variant 3 deliberately has a long open/no-mesh run.
+      const meshCutStart = fenceMode === 3 ? 420 : -1;
+      const meshCutEnd = fenceMode === 3 ? 940 : -1;
       for (let x = -36; x < w + 36; x += meshStep) {
+        if (x >= meshCutStart && x <= meshCutEnd) continue;
         ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x + meshStep + 8, meshBottom); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(x + meshStep + 8, 2); ctx.lineTo(x, meshBottom); ctx.stroke();
       }
@@ -321,7 +326,7 @@ export default class TokyoExpresswayBackground {
       }
 
       // Reflectors and occasional expressway service/inspection plates.
-      let markerX = 92;
+      let markerX = 92 + accentShift;
       while (markerX < w) {
         ctx.fillStyle = this.timeOfDay === 'day' ? '#d2aa54' : '#ffc24d';
         ctx.globalAlpha = this.timeOfDay === 'day' ? 0.62 : 1;
@@ -348,26 +353,35 @@ export default class TokyoExpresswayBackground {
       // solid/no-mesh maintenance bay, or a denser post section. These are
       // intentionally sparse so the skyline remains the hero.
       if (fenceMode === 1) {
+        // Tall anti-throw / anti-climb panel.
         ctx.fillStyle = p.fence;
-        for (const x of [690, 696, 702]) ctx.fillRect(x, 0, 2, 35);
+        ctx.fillRect(612, 0, 8, 35);
+        ctx.fillRect(858, 0, 8, 35);
         ctx.fillStyle = p.fenceBright;
-        ctx.fillRect(650, 5, 110, 2);
+        ctx.fillRect(620, 4, 238, 3);
+        ctx.fillRect(620, 29, 238, 3);
+        for (let x = 628; x < 852; x += 16) ctx.fillRect(x, 5, 1, 24);
       } else if (fenceMode === 2) {
+        // Solid acoustic/maintenance panel section.
         ctx.fillStyle = p.barrierDark;
-        ctx.globalAlpha = 0.88;
-        ctx.fillRect(770, 0, 138, 35);
+        ctx.globalAlpha = 0.94;
+        ctx.fillRect(620, 0, 360, 35);
         ctx.globalAlpha = 1;
         ctx.fillStyle = p.barrierTop;
-        ctx.fillRect(782, 10, 92, 3);
-        ctx.fillRect(782, 18, 62, 2);
+        ctx.fillRect(648, 9, 250, 3);
+        ctx.fillRect(648, 19, 188, 2);
       } else if (fenceMode === 3) {
+        // Open maintenance span with heavier portal posts and route plate.
         ctx.fillStyle = p.fence;
-        ctx.fillRect(520, 0, 7, 35);
-        ctx.fillRect(1040, 0, 7, 35);
+        ctx.fillRect(410, 0, 9, 35);
+        ctx.fillRect(950, 0, 9, 35);
         ctx.fillStyle = this.timeOfDay === 'day' ? '#355d66' : '#173a45';
-        ctx.fillRect(532, 8, 70, 19);
+        ctx.fillRect(660, 7, 116, 21);
         ctx.strokeStyle = p.fenceBright;
-        ctx.strokeRect(533, 9, 68, 17);
+        ctx.strokeRect(661, 8, 114, 19);
+        ctx.fillStyle = p.fenceBright;
+        ctx.fillRect(674, 13, 70, 2);
+        ctx.fillRect(674, 19, 44, 2);
       }
 
       // Restrained grime/drainage streaks along the lower wall.
@@ -386,14 +400,14 @@ export default class TokyoExpresswayBackground {
     const p = this.palette();
 
     this.canvasTexture(this.keys.road, 1024, 260, (ctx, w, h) => {
-      const rnd = this.seededRandom(this.timeOfDay === 'day' ? 87 : 86);
+      const rnd = this.seededRandom((this.timeOfDay === 'day' ? 25101 : 25102) + this.roadVariant * 97);
 
       ctx.fillStyle = p.road;
       ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = p.roadAlt;
       ctx.fillRect(0, 16, w, 190);
       ctx.fillStyle = p.roadDark;
-      ctx.fillRect(0, 207, w, 53);
+      ctx.fillRect(0, 224, w, 36);
 
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.20 : 0.34;
       for (let i = 0; i < 150; i++) {
@@ -420,7 +434,7 @@ export default class TokyoExpresswayBackground {
 
       ctx.fillStyle = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.78 : 0.56;
-      for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 132, 92, 4);
+      for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 154, 92, 4);
       ctx.globalAlpha = 1;
 
       // Sparse highway furniture: repaired asphalt, cats-eyes and drain grates.
@@ -435,7 +449,7 @@ export default class TokyoExpresswayBackground {
 
       ctx.fillStyle = this.timeOfDay === 'day' ? '#d9d8c6' : '#c8c59d';
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.52 : 0.72;
-      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 134, 4, 2);
+      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 156, 4, 2);
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = p.roadDark;
@@ -446,8 +460,14 @@ export default class TokyoExpresswayBackground {
         ctx.fillStyle = p.roadDark;
       }
 
+      // Lower lane edge: sit below the player-car tyres, then transition into
+      // a darker shoulder band on the far side so the lane reads correctly.
       ctx.fillStyle = p.barrierTop;
-      ctx.fillRect(0, 202, w, 3);
+      ctx.globalAlpha = 0.72;
+      ctx.fillRect(0, 219, w, 3);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = p.roadDark;
+      ctx.fillRect(0, 224, w, 36);
     });
   }
 
