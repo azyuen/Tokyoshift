@@ -10,10 +10,13 @@ import {
   getCarPaintColor,
   normalisePaintColor,
   createCarBodyLayers,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r232';
-import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
@@ -92,10 +95,9 @@ export default class RaceScene extends Phaser.Scene {
   preload() {
     let queued = 0;
     const queueImage = (key, path) => {
-      if (!this.textures.exists(key)) {
-        this.load.image(key, path);
-        queued += 1;
-      }
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
@@ -106,7 +108,11 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
 
-    Object.values(RESULT_BACKGROUNDS).forEach(asset => {
+    const resultKeys = this.raceDeal === 'PINK_SLIP'
+      ? ['pinkWin', 'pinkLoss']
+      : ['victory', 'defeat'];
+    resultKeys.forEach(key => {
+      const asset = RESULT_BACKGROUNDS[key];
       queueImage(asset.key, asset.path);
     });
 
@@ -117,6 +123,22 @@ export default class RaceScene extends Phaser.Scene {
       queueImage(visual.winSpriteKey, visual.winPath ? visual.winPath + '?v=20260923-r145' : null);
       queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null);
     });
+
+    const raceCarIds = [...new Set([this.selectedCarId, this.opponentCarId])]
+      .filter(id => cars[id]);
+    raceCarIds.forEach(id => {
+      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
+      queued += preloadCarWheel(this, cars[id]);
+    });
+
+    const playerState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    queued += preloadVisualModSelectionAssets(
+      this,
+      this.selectedCarId,
+      playerState,
+      '20260928-r242'
+    );
+    queued += preloadTunerDecalAssets(this, playerState, '20260928-r242');
 
     startSceneLoading(this, 'PREPARING RACE', queued);
   }
@@ -201,6 +223,12 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    ensureDerivedModularCarTextures(this, Object.fromEntries(
+      [...new Set([this.selectedCarId, this.opponentCarId])]
+        .filter(id => cars[id])
+        .map(id => [id, cars[id]])
+    ));
+
     document.body.dataset.scene = 'race';
     this.scale.resize(1560, 720);
     playRaceMusic();

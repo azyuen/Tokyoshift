@@ -18,7 +18,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
-import { createVisualModLayers } from '../data/visualMods.js?v=20260928-r232';
+import { createVisualModLayers, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -30,11 +30,12 @@ import {
   createTunerDecalObject,
   createTunerDecalLayers,
   setTunerDecalObjectColor,
-} from '../vehicles/TunerDecals.js?v=20260924-r176';
+  preloadTunerDecalAssets,
+} from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
-import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -60,25 +61,59 @@ export default class TunerShopScene extends Phaser.Scene {
   preload() {
     const shop = getTunerShopForRegion(this.regionId);
     if (!shop || !isTunerShopUnlocked(this.registry, this.regionId)) return;
+
     let queued = 0;
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
       this.load.image(key, path + '?v=20260924-r176');
       queued += 1;
     };
+
     queueImage(shop.backgroundKey, shop.backgroundPath);
     queueImage(shop.decalTextureKey, shop.decalPath);
+
     const mechanic = characters[shop.mechanicId]?.visual;
     if (mechanic) queueImage(mechanic.spriteKey, mechanic.path);
-    const hero = cars[shop.heroCarId];
-    if (hero) {
-      queued += preloadCarAppearanceAssets(this, { [shop.heroCarId]: hero }, '20260925-r193');
-      queued += preloadCarWheel(this, hero);
+
+    const currentCarId = this.registry.get('selectedCarId');
+    const owned = this.registry.get('ownedCarIds') || [];
+    const carStates = this.registry.get('carStates') || {};
+    const carIds = [...new Set([
+      shop.heroCarId,
+      owned.includes(currentCarId) ? currentCarId : null,
+    ])].filter(id => cars[id]);
+
+    carIds.forEach(id => {
+      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
+      queued += preloadCarWheel(this, cars[id]);
+    });
+
+    if (currentCarId && cars[currentCarId]) {
+      queued += preloadVisualModSelectionAssets(
+        this,
+        currentCarId,
+        carStates[currentCarId] || {},
+        '20260928-r242'
+      );
+      queued += preloadTunerDecalAssets(
+        this,
+        carStates[currentCarId] || {},
+        '20260928-r242'
+      );
     }
+
     startSceneLoading(this, 'LOADING TUNER SHOP', queued);
   }
 
   create() {
+    const shopForAssets = getTunerShopForRegion(this.regionId);
+    const currentCarIdForAssets = this.registry.get('selectedCarId');
+    ensureDerivedModularCarTextures(this, Object.fromEntries(
+      [...new Set([shopForAssets?.heroCarId, currentCarIdForAssets])]
+        .filter(id => cars[id])
+        .map(id => [id, cars[id]])
+    ));
+
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
     playMusic('workshop');

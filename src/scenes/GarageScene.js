@@ -1,5 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
@@ -72,6 +73,9 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   setCarBodyPaint,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import {
   VISUAL_MOD_SLOT_ORDER,
@@ -83,9 +87,12 @@ import {
   getVisualModChangeCost,
   createVisualModLayers,
   getVisualModWheelVisual,
-} from '../data/visualMods.js?v=20260928-r232';
-import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
+  preloadVisualModAssets,
+  preloadVisualModSelectionAssets,
+} from '../data/visualMods.js?v=20260928-r242';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -104,6 +111,52 @@ export default class GarageScene extends Phaser.Scene {
     if (data?.workshopLocationId) {
       this.registry.set('workshopLocationId', data.workshopLocationId);
     }
+  }
+
+  preload() {
+    let queued = 0;
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    const activeWorkshopId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+    const assignments = normaliseCarGarageLocations(
+      ownedCarIds,
+      this.registry.get('carGarageLocations') || {},
+      Number(this.registry.get('garageTier') || 0)
+    );
+    const localCars = getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId);
+    const carStates = this.registry.get('carStates') || {};
+
+    // Only the active workshop and a safe home fallback are needed at entry.
+    const activeWorkshop = getWorkshopByLocationId(activeWorkshopId);
+    [activeWorkshop.textureKey, 'garageWorkshopBg'].forEach(key => {
+      const asset = garageAssets.find(item => item.key === key);
+      if (asset) queueImage(asset.key, asset.path);
+    });
+
+    // Garage characters shown immediately.
+    [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']
+      .forEach(id => {
+        const visual = characters[id]?.visual;
+        if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260926-r213');
+      });
+
+    // A workshop can show and switch between its local cars without another
+    // network round trip. Cars stored at other workshops stay unloaded.
+    localCars.forEach(id => {
+      const car = cars[id];
+      if (!car) return;
+      queued += preloadCarAppearanceAssets(this, { [id]: car }, '20260928-r242');
+      queued += preloadCarWheel(this, car);
+      queued += preloadVisualModSelectionAssets(this, id, carStates[id] || {}, '20260928-r242');
+      queued += preloadTunerDecalAssets(this, carStates[id] || {}, '20260928-r242');
+    });
+
+    startSceneLoading(this, 'LOADING WORKSHOP', queued);
   }
 
   create() {
@@ -148,6 +201,11 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
     this.registry.set('meetStranded', false);
+
+    ensureDerivedModularCarTextures(
+      this,
+      Object.fromEntries(localCars.filter(id => cars[id]).map(id => [id, cars[id]]))
+    );
 
     this.selectedDisplay = [];
     this.thumbButtons = [];
@@ -1893,6 +1951,55 @@ export default class GarageScene extends Phaser.Scene {
     } catch (e) {}
   }
 
+  ensureGarageTuningAssets(onReady, { includeVisualMods = false } = {}) {
+    if (this._garageTuningAssetLoading) return;
+
+    let queued = 0;
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    // Tuning illustrations are large and never needed by players who simply
+    // enter the garage and race, so defer them until the first tuning action.
+    garageAssets
+      .filter(asset =>
+        asset.key.startsWith('stockEngine') ||
+        asset.key.startsWith('tuningCategory') ||
+        asset.key.startsWith('tuningPart')
+      )
+      .forEach(asset => queueImage(asset.key, asset.path));
+
+    [
+      ['daichiEngineInspect', 'assets/Characters/daichi_engine_inspect.png?v=20260922-r110'],
+      ['daichiChassisTools', 'assets/Characters/daichi_chassis_tools.png?v=20260922-r110'],
+      ['daichiExhaustCrouch', 'assets/Characters/daichi_exhaust_crouch.png?v=20260922-r110'],
+    ].forEach(([key, path]) => queueImage(key, path));
+
+    if (includeVisualMods && this.selectedCarId) {
+      queued += preloadVisualModAssets(
+        this,
+        '20260928-r242',
+        [this.selectedCarId]
+      );
+    }
+
+    if (queued <= 0) {
+      onReady?.();
+      return;
+    }
+
+    this._garageTuningAssetLoading = true;
+    startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    this.load.once('complete', () => {
+      this._garageTuningAssetLoading = false;
+      onReady?.();
+      finishSceneLoading('TUNING READY');
+    });
+    if (!this.load.isLoading()) this.load.start();
+  }
+
   runTuningTransition(activate) {
     if (this.engineTransitioning) return;
     this.engineTransitioning = true;
@@ -1954,7 +2061,9 @@ export default class GarageScene extends Phaser.Scene {
       this.showWorkshopToast('COLLECTOR CAR // ENGINE TUNING LOCKED');
       return;
     }
-    this.runTuningTransition(() => this.activateEngineMode());
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateEngineMode())
+    );
   }
 
   activateEngineMode() {
@@ -2795,7 +2904,10 @@ export default class GarageScene extends Phaser.Scene {
       this.showWorkshopToast('COLLECTOR CAR // CHASSIS & PAINT LOCKED');
       return;
     }
-    this.runTuningTransition(() => this.activateChassisMode());
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateChassisMode()),
+      { includeVisualMods: true }
+    );
   }
 
   activateChassisMode() {
@@ -3879,7 +3991,9 @@ export default class GarageScene extends Phaser.Scene {
       this.showWorkshopToast('COLLECTOR CAR // TUNING SEALED');
       return;
     }
-    this.runTuningTransition(() => this.activateSecondaryTuningMode(mode));
+    this.ensureGarageTuningAssets(
+      () => this.runTuningTransition(() => this.activateSecondaryTuningMode(mode))
+    );
   }
 
   activateSecondaryTuningMode(mode) {

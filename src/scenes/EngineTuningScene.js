@@ -1,4 +1,9 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
+import {
+  getCarBodyScaleForWidth,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import {
   getCarBodyTextureKey,
@@ -20,6 +25,8 @@ import {
 } from '../data/tuning.js?v=20260921-r55';
 import { saveSessionState } from '../state/GameState.js?v=20260922-r115';
 import { playMusic } from '../audio/MusicManager.js?v=20260921-r57';
+import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
+import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -39,7 +46,42 @@ const HOTSPOTS = {
 export default class EngineTuningScene extends Phaser.Scene {
   constructor() { super('EngineTuningScene'); }
 
+  preload() {
+    let queued = 0;
+    const owned = (this.registry.get('ownedCarIds') || ['ae86']).filter(id => cars[id]);
+    const carIds = owned.length ? owned : ['ae86'];
+
+    carIds.forEach(id => {
+      if (!cars[id]) return;
+      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
+      queued += preloadCarWheel(this, cars[id]);
+    });
+
+    garageAssets
+      .filter(asset =>
+        asset.key.startsWith('stockEngine') ||
+        asset.key.startsWith('tuningCategory') ||
+        asset.key.startsWith('tuningPart')
+      )
+      .forEach(asset => {
+        if (this.textures.exists(asset.key)) return;
+        this.load.image(asset.key, asset.path);
+        queued += 1;
+      });
+
+    startSceneLoading(this, 'LOADING ENGINE BAY', queued);
+  }
+
   create() {
+    ensureDerivedModularCarTextures(
+      this,
+      Object.fromEntries(
+        (this.registry.get('ownedCarIds') || ['ae86'])
+          .filter(id => cars[id])
+          .map(id => [id, cars[id]])
+      )
+    );
+
     document.body.dataset.scene = 'garage';
     this.scale.resize(1560, 840);
     playMusic('workshop');

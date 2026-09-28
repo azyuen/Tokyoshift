@@ -38,8 +38,8 @@ const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
 const TRAVEL_MAP_ASSETS = [
-  { key: REGION_MAP_TEXTURE, path: 'assets/Map/Tokyo_region_map.png?v=20260922-r84' },
-  { key: FALLBACK_MAP_TEXTURE, path: 'assets/Map/Tokyo_bay_map.png?v=20260922-r84' },
+  { key: REGION_MAP_TEXTURE, path: 'assets/Ui/tokyo_region_map_base.png?v=20260923-r139' },
+  { key: FALLBACK_MAP_TEXTURE, path: 'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77' },
 ];
 
 // The map now owns the whole framed popup. Everything else floats over it.
