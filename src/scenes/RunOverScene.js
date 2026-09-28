@@ -142,10 +142,13 @@ export default class RunOverScene extends Phaser.Scene {
     if (!this.setTransitioning(label)) return;
 
     try {
-      if (internal) sessionStorage.setItem('tokyoShiftInternalReload', '1');
-      else sessionStorage.removeItem('tokyoShiftInternalReload');
-
-      sessionStorage.setItem('tokyoShiftBootMessage', label);
+      if (internal) {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftBootMessage', label);
+      } else {
+        sessionStorage.removeItem('tokyoShiftInternalReload');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      }
 
       if (forceGarage) sessionStorage.setItem('tokyoShiftForceGarage', '1');
       else sessionStorage.removeItem('tokyoShiftForceGarage');
