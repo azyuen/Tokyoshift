@@ -50,7 +50,7 @@ import {
 } from '../data/tunerChallenges.js?v=20260926-r213';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r214';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r214';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r235';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
