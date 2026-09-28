@@ -29,7 +29,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260928-r234';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -186,67 +186,45 @@ export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
   preload() {
-    let queued = 0;
-    const queueImage = (key, path) => {
-      if (!key || !path || this.textures.exists(key)) return;
-      this.load.image(key, path);
-      queued += 1;
-    };
-
     const initialLocationId = MEET_LOCATIONS[this.registry.get('meetLocation')]
       ? this.registry.get('meetLocation')
       : 'odaiba7eleven';
-    const initialLocation = getMeetLocation(initialLocationId);
-    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const initialIds = new Set([
-      playerId,
-      ...getRivalCharacterOrderForRegion(initialLocation.district),
-    ]);
-    const storedChallenges = this.registry.get('tunerTeamChallenges') || {};
-    const initialChallenge = storedChallenges[
-      String(initialLocation.district || '').toUpperCase()
-    ];
-    (initialChallenge?.rounds || []).forEach(round => {
-      if (round?.characterId) initialIds.add(round.characterId);
-    });
 
-    initialIds.forEach(id => {
-      const character = characters[id];
-      if (!character) return;
-      queueImage(
-        character.visual.spriteKey,
-        character.visual.path + '?v=20260923-r145'
-      );
-    });
-
-    // If the player reloads after a completed race but before the meet rotates,
-    // preload the result pose needed by the locked rival.
+    // Generate/restore only the roster that can actually be seen on entry.
+    // Other location rosters remain data-only until the player travels there.
+    const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
     const storedCurrent = Array.isArray(storedRosters[initialLocationId])
       ? storedRosters[initialLocationId]
       : [];
-    storedCurrent.forEach(offer => {
-      const character = characters[offer?.characterId];
-      if (!character) return;
-      queueImage(character.visual.spriteKey, character.visual.path + '?v=20260923-r145');
-      if (!offer?.resultState) return;
-      const visual = character.visual || {};
-      const won = offer.resultState === 'PLAYER_LOSS';
-      const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
-      const posePath = won ? visual.winPath : visual.lossPath;
-      if (poseKey && posePath) {
-        queueImage(poseKey, posePath + '?v=20260923-r145');
-      }
-    });
+    const storedCurrentValid =
+      storedRefreshAt > Date.now() &&
+      storedCurrent.length > 0 &&
+      storedCurrent.every(offer =>
+        Number.isFinite(offer?.encounterRating) &&
+        offer?.encounterAi &&
+        offer?.driverSkillSource === 'LOCATION' &&
+        offer?.matchmakingVersion === 'R239' &&
+        Number.isFinite(Number(offer?.opponentBuildRating)) &&
+        offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
+      );
 
-    meetBackgrounds.filter(bg => bg.district === initialLocation.district).forEach(bg => {
-      if (bg.path && !this.textures.exists(bg.key)) {
-        this.load.image(bg.key, bg.path + '?v=20260922-r84');
-        queued += 1;
-      }
-    });
+    this.selectedMode = 'SINGLE';
+    this.nextRefreshAt = storedCurrentValid
+      ? storedRefreshAt
+      : Date.now() + 180000;
+    this.preloadedInitialLocationId = initialLocationId;
+    this.preloadedInitialOffers = storedCurrentValid
+      ? storedCurrent.map(offer => ({ ...offer }))
+      : this.generateOffersForLocation(initialLocationId);
 
-    startSceneLoading(this, 'LOADING MEET', queued);
+    const batch = this.queueMeetRosterAssets(
+      this.preloadedInitialOffers,
+      initialLocationId
+    );
+    this.preloadedInitialCarIds = batch.carIds;
+
+    startSceneLoading(this, 'LOADING MEET', batch.queued);
   }
 
   create() {
@@ -296,6 +274,12 @@ export default class MeetScene extends Phaser.Scene {
       && hasEncounterProgression
       && ALL_MEET_LOCATION_IDS.some(id => Array.isArray(storedRosters[id]));
 
+    // Preload may have generated the visible three-car roster before create().
+    // Keep that exact roster so the assets we just loaded are the ones rendered.
+    const preloadedInitialOffers = Array.isArray(this.preloadedInitialOffers)
+      ? this.preloadedInitialOffers.map(offer => ({ ...offer }))
+      : null;
+
     if (hasStoredRound) {
       this.nextRefreshAt = storedRefreshAt;
 
@@ -341,6 +325,24 @@ export default class MeetScene extends Phaser.Scene {
       this.refreshAllLocationOffers({ resetTimer: false, persist: false });
       this.persistMeetRound();
     }
+
+    if (
+      preloadedInitialOffers &&
+      this.preloadedInitialLocationId === this.selectedMeetLocation
+    ) {
+      this.locationOffers[this.selectedMeetLocation] = preloadedInitialOffers;
+      this.locationSelectedOfferIndex[this.selectedMeetLocation] = 0;
+      this.persistMeetRound();
+    }
+
+    ensureDerivedModularCarTextures(
+      this,
+      Object.fromEntries(
+        (this.preloadedInitialCarIds || [])
+          .filter(id => cars[id])
+          .map(id => [id, cars[id]])
+      )
+    );
 
     this.drawBase();
     this.buildHeader();
@@ -1325,26 +1327,16 @@ export default class MeetScene extends Phaser.Scene {
         });
       };
 
-      let queued = 0;
-      const queueImage = (key, path) => {
-        if (!key || !path || this.textures.exists(key)) return;
-        this.load.image(key, path);
-        queued += 1;
-      };
-      getRivalCharacterOrderForRegion(destination.district).forEach(id => {
-        const visual = characters[id]?.visual;
-        if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260923-r145');
-      });
-      meetBackgrounds.filter(bg => bg.district === destination.district).forEach(bg => {
-        queueImage(bg.key, bg.path + '?v=20260922-r84');
-      });
-      if (queued) {
-        startSceneLoading(this, 'LOADING ' + destination.district, queued);
-        this.load.once('complete', () => {
-          finishTravel();
-          finishSceneLoading('READY');
-        });
-        this.load.start();
+      const destinationOffers = this.locationOffers[locationId]
+        || this.generateOffersForLocation(locationId);
+      this.locationOffers[locationId] = destinationOffers;
+
+      if (this.ensureMeetRosterAssets(
+        destinationOffers,
+        locationId,
+        'LOADING ' + destination.district,
+        finishTravel
+      )) {
         return true;
       }
       finishTravel();
@@ -2551,6 +2543,77 @@ export default class MeetScene extends Phaser.Scene {
     saveSessionState(this.registry);
   }
 
+  queueMeetRosterAssets(offers = [], locationId = this.selectedMeetLocation) {
+    let queued = 0;
+    const carIds = new Set();
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return;
+      this.load.image(key, path);
+      queued += 1;
+    };
+
+    const location = getMeetLocation(locationId);
+    const background = meetBackgrounds.find(bg => bg.key === location.bgKey);
+    if (background?.path) {
+      queueImage(background.key, background.path + '?v=20260922-r84');
+    }
+
+    (offers || []).forEach(offer => {
+      const visual = characters[offer?.characterId]?.visual || {};
+      queueImage(visual.spriteKey, visual.path ? visual.path + '?v=20260923-r145' : null);
+
+      if (offer?.resultState) {
+        const won = offer.resultState === 'PLAYER_LOSS';
+        const poseKey = won ? visual.winSpriteKey : visual.lossSpriteKey;
+        const posePath = won ? visual.winPath : visual.lossPath;
+        queueImage(poseKey, posePath ? posePath + '?v=20260923-r145' : null);
+      }
+
+      const displayCarId = offer?.pinkSlipResult === 'PLAYER_LOSS'
+        ? (offer.displayCarId || offer.carId)
+        : offer?.carId;
+      if (displayCarId && cars[displayCarId]) carIds.add(displayCarId);
+    });
+
+    carIds.forEach(id => {
+      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
+      queued += preloadCarWheel(this, cars[id]);
+    });
+
+    return { queued, carIds: [...carIds] };
+  }
+
+  ensureMeetRosterAssets(
+    offers,
+    locationId,
+    label = 'LOADING RACERS',
+    onReady = null
+  ) {
+    const batch = this.queueMeetRosterAssets(offers, locationId);
+    const finish = () => {
+      ensureDerivedModularCarTextures(
+        this,
+        Object.fromEntries(
+          batch.carIds.filter(id => cars[id]).map(id => [id, cars[id]])
+        )
+      );
+      onReady?.();
+    };
+
+    if (batch.queued <= 0) {
+      finish();
+      return false;
+    }
+
+    startSceneLoading(this, label, batch.queued);
+    this.load.once('complete', () => {
+      finish();
+      finishSceneLoading('READY');
+    });
+    if (!this.load.isLoading()) this.load.start();
+    return true;
+  }
+
   generateOffersForLocation(locationId) {
     const location = getMeetLocation(locationId);
     const profile = getEncounterProfile(locationId, location.difficulty);
@@ -3563,13 +3626,14 @@ export default class MeetScene extends Phaser.Scene {
         this.refreshAllLocationOffers({ resetTimer: true, persist: true });
         const challenger = this.maybeGenerateSpecialChallenger();
 
-        if (challenger) {
-          this.showSpecialChallenger(challenger, true);
-        } else {
-          this.rollOffers({ resetTimer: false });
-        }
+        const finishRefresh = () => {
+          if (challenger) {
+            this.showSpecialChallenger(challenger, true);
+          } else {
+            this.rollOffers({ resetTimer: false });
+          }
 
-        const noteBg = this.add.rectangle(
+          const noteBg = this.add.rectangle(
           STAGE.x + STAGE.w - 200,
           STAGE.y + 32,
           370,
@@ -3603,17 +3667,28 @@ export default class MeetScene extends Phaser.Scene {
           },
         });
 
-        this.time.delayedCall(2200, () => {
-          this.tweens.add({
-            targets: [noteBg, note],
-            alpha: 0,
-            duration: 300,
-            onComplete: () => {
-              noteBg.destroy();
-              note.destroy();
-            },
+          this.time.delayedCall(2200, () => {
+            this.tweens.add({
+              targets: [noteBg, note],
+              alpha: 0,
+              duration: 300,
+              onComplete: () => {
+                noteBg.destroy();
+                note.destroy();
+              },
+            });
           });
-        });
+        };
+
+        const currentOffers = this.locationOffers[this.selectedMeetLocation] || [];
+        if (!this.ensureMeetRosterAssets(
+          currentOffers,
+          this.selectedMeetLocation,
+          'LOADING NEW RACERS',
+          finishRefresh
+        )) {
+          finishRefresh();
+        }
       },
     });
   }
