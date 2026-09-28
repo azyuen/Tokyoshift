@@ -131,6 +131,10 @@ function allocateDevelopment(state, archetype, points, config) {
     const partId = priority[cursor % priority.length];
     cursor += 1;
 
+    // Factory-NA cars stay NA unless the owner specifically rolls the turbo/
+    // roll archetype. High build rating alone must not turbo-convert every car.
+    if (partId === 'engine.turbo' && !factoryTurbo && archetype.id !== 'turboRoll') continue;
+
     if (partId === 'engine.intercooler') {
       const turboLevel = getPartLevel(state, 'engine.turbo');
       if (!factoryTurbo && turboLevel <= 0) continue;
