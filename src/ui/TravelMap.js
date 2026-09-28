@@ -885,8 +885,13 @@ export function showTravelMap(scene, {
               : 'TUNER SHOP'
         )
         .setColor(tunerChallenge.championEarned ? '#ffe08a' : '#c99a4e');
-      tunerName.setText(tunerShop.label).setColor('#fff1d3');
+      tunerName
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 43)
+        .setText(tunerShop.label)
+        .setColor('#fff1d3');
       tunerSpecialty
+        .setPosition(TUNER_BADGE.x + TUNER_BADGE.w - 22, TUNER_BADGE.y + 43)
+        .setOrigin(1, 0.5)
         .setText(
           tunerChallenge.championEarned && !tunerChallenge.perfectEarned
             ? 'PERFECT SWEEP AVAILABLE // VISIT MEET'
@@ -911,8 +916,15 @@ export function showTravelMap(scene, {
       });
     } else if (challengeVisible) {
       tunerKicker.setText('TEAM CHALLENGE').setColor('#ff91b6');
-      tunerName.setText(tunerChallenge.stage + ' / 7 DEFEATED').setColor('#fff2f7');
-      tunerSpecialty.setText('VISIT A ' + selectedRegionId + ' MEET').setColor('#b4c7d1');
+      tunerName
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 36)
+        .setText(tunerChallenge.stage + ' / 7 DEFEATED')
+        .setColor('#fff2f7');
+      tunerSpecialty
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 60)
+        .setOrigin(0, 0.5)
+        .setText('RACE MORE FOR A CHANCE TO CONTINUE')
+        .setColor('#b4c7d1');
       tunerArrow.setText('').setVisible(false);
       tunerBadge
         .disableInteractive()
