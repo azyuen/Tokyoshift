@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import {
@@ -17,7 +17,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260927-r216';
+} from '../vehicles/CarAppearance.js?v=20260928-r243';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
@@ -39,7 +39,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260928-r243';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
