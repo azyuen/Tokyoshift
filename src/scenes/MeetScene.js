@@ -196,6 +196,13 @@ export default class MeetScene extends Phaser.Scene {
       playerId,
       ...getRivalCharacterOrderForRegion(initialLocation.district),
     ]);
+    const storedChallenges = this.registry.get('tunerTeamChallenges') || {};
+    const initialChallenge = storedChallenges[
+      String(initialLocation.district || '').toUpperCase()
+    ];
+    (initialChallenge?.rounds || []).forEach(round => {
+      if (round?.characterId) initialIds.add(round.characterId);
+    });
 
     initialIds.forEach(id => {
       const character = characters[id];
@@ -605,9 +612,17 @@ export default class MeetScene extends Phaser.Scene {
     let state = getTunerTeamChallengeState(this.registry, key);
     const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const rounds = state.rounds.length === TUNER_TEAM_CHALLENGE_STAGES
-      ? state.rounds
-      : buildTunerTeamChallengeRounds(key, playerCharacterId);
+    const generatedRounds = buildTunerTeamChallengeRounds(key, playerCharacterId);
+    const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
+    const rounds = Array.from(
+      { length: TUNER_TEAM_CHALLENGE_STAGES },
+      (_, index) => {
+        const stored = storedRounds[index];
+        return stored?.characterId && characters[stored.characterId]
+          ? stored
+          : generatedRounds[index];
+      }
+    );
 
     state = this.setTunerChallengeState(key, {
       ...state,
@@ -638,6 +653,24 @@ export default class MeetScene extends Phaser.Scene {
           NPC_SUBTITLE: (shop.label + ' // CREW CALL-OUT').toUpperCase(),
         },
         onComplete: ({ reason }) => {
+          if (reason === 'secondary') {
+            const visits = Phaser.Math.Between(
+              TUNER_TEAM_REOFFER_MIN_VISITS,
+              TUNER_TEAM_REOFFER_MAX_VISITS
+            );
+            const nextState = getTunerTeamChallengeState(this.registry, key);
+            this.setTunerChallengeState(key, {
+              ...nextState,
+              invited: false,
+              offeredOnce: true,
+              activeSession: false,
+              misses: 0,
+              reofferVisitsRemaining: visits,
+              rounds,
+            });
+            saveSessionState(this.registry);
+            return;
+          }
           if (reason !== 'action' && reason !== 'skip') return;
           this.time.delayedCall(80, () =>
             this.showTunerTeamChallengePopup(key, { skipCallout: true })
@@ -2905,19 +2938,22 @@ export default class MeetScene extends Phaser.Scene {
 
       const textX = x - 42;
 
-      const name = this.add.text(textX, cardY - 44, character.name.toUpperCase(), {
+      const name = this.add.text(textX, cardY - 49, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: '#ffffff'
       }).setDepth(35);
 
+      const normalCashLoss = offer.resultState === 'PLAYER_LOSS' && !offer.pinkSlipResult;
       const quoteText = offer.resultState === 'PLAYER_WIN'
         ? (character.resultQuotes?.loss || 'You got me.')
-        : offer.resultState === 'PLAYER_LOSS'
-          ? (character.resultQuotes?.win || 'That run was mine.')
-          : offer.quote;
+        : normalCashLoss
+          ? 'You lost last run.'
+          : offer.resultState === 'PLAYER_LOSS'
+            ? (character.resultQuotes?.win || 'That run was mine.')
+            : offer.quote;
 
-      const quote = this.add.text(textX, cardY - 14, '"' + quoteText + '"', {
+      const quote = this.add.text(textX, cardY - 20, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
         fontSize: '12px',
         color: offer.locked ? '#8f9da6' : '#9fb4c2',
@@ -2926,16 +2962,14 @@ export default class MeetScene extends Phaser.Scene {
       }).setDepth(35);
 
       let statusText = null;
-      if (offer.resultState) {
+      if (offer.resultState && !normalCashLoss) {
         const status = offer.pinkSlipResult === 'PLAYER_WIN'
           ? 'DEFEATED // CAR WON'
           : offer.pinkSlipResult === 'PLAYER_LOSS'
             ? 'WON YOUR CAR'
-            : offer.resultState === 'PLAYER_WIN'
-              ? 'DEFEATED'
-              : 'WON LAST RUN // REMATCH';
+            : 'DEFEATED';
 
-        statusText = this.add.text(textX, cardY + 39, status, {
+        statusText = this.add.text(textX, cardY + 31, status, {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',
