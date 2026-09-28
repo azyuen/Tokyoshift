@@ -31,9 +31,9 @@ import {
   createTunerDecalLayers,
   setTunerDecalObjectColor,
 } from '../vehicles/TunerDecals.js?v=20260924-r176';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260926-r215';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260926-r202';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
