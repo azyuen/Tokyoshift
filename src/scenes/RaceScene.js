@@ -16,8 +16,8 @@ import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMo
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { engines } from '../data/engines.js?v=20260928-r232';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,
   playableCharacterOrder,
@@ -31,7 +31,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260926-r214';
+} from '../state/GameState.js?v=20260928-r234';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -177,6 +177,25 @@ export default class RaceScene extends Phaser.Scene {
         : Math.round(this.raceDistanceM) + ' M';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
+    const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
+    const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
+    const storedOfferCarId = storedMeetOffer?.displayCarId || storedMeetOffer?.carId;
+    const isRandomMeetBuild =
+      this.raceMode === 'SINGLE' &&
+      !this.registry.get('selectedRaceSpecialChallenge') &&
+      storedMeetOffer &&
+      storedOfferCarId === this.opponentCarId &&
+      storedBuildState && typeof storedBuildState === 'object';
+
+    // Only ordinary random Meets carry a performance-matched build into the
+    // race. Team ladders, special challengers and competitions stay authored.
+    this.explicitOpponentBuildState = isRandomMeetBuild ? clone(storedBuildState) : null;
+    this.opponentBuildRating = isRandomMeetBuild
+      ? Phaser.Math.Clamp(Number(this.registry.get('selectedOpponentBuildRating') || storedMeetOffer?.opponentBuildRating || storedBuildState?.buildRating || 1), 1, 5)
+      : this.opponentEncounterRating;
+    this.opponentBuildArchetype = isRandomMeetBuild
+      ? (this.registry.get('selectedOpponentBuildArchetype') || storedMeetOffer?.opponentBuildArchetype || storedBuildState?.buildArchetype || null)
+      : null;
     this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || 'night';
     this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
     this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
@@ -595,231 +614,56 @@ export default class RaceScene extends Phaser.Scene {
     });
   }
 
-  applyTuneLevel(config, tuneLevel = 0) {
-    const rating = Phaser.Math.Clamp(Number(tuneLevel) || 0, 0, 5);
-    const tier = Math.max(0, rating - 2);
-
-    config.tyreGrip *= 1 + tier * 0.018;
-    config.clutchStrength *= 1 + tier * 0.055;
-
-    if ((config.maximumBoost || 0) > 0) {
-      config.maximumBoost *= 1 + tier * 0.035;
-      config.turboSpoolRate *= 1 + tier * 0.025;
-    }
-
-    return config;
-  }
-
-  hasExplicitWorkshopTuning(state = {}) {
-    const groups = [
-      state.tuning,
-      state.engineTuning,
-      state.drivetrainTuning,
-      state.chassisTuning,
-      state.exhaustNosTuning,
-    ];
-
-    return groups.some(group =>
-      group && typeof group === 'object' &&
-      Object.values(group).some(value => Number(value || 0) > 0)
-    );
-  }
-
   applyOwnedBuild(config, engineConfig, state = {}) {
-    // Ginza collector cars are sealed complete builds. Their physics must stay
-    // exactly as authored in cars.js/engines.js even if an old or edited save
-    // contains tuning fields.
-    if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
-      config.nosPower = 0;
-      config.nosCapacitySeconds = 0;
-      return { car: config, engine: engineConfig };
-    }
-
-    // Very old pink-slip saves used an invisible tuneLevel multiplier. Preserve
-    // it only for untouched legacy cars. Once real workshop parts exist, those
-    // authored parts become the single source of truth instead of stacking on
-    // top of an unseen rival bonus.
-    if (!this.hasExplicitWorkshopTuning(state)) {
-      this.applyTuneLevel(config, state.tuneLevel || 0);
-    }
-
-    const engineTuned = applyEngineTuning(config, engineConfig, state);
-    const tuned = applySecondaryTuning(engineTuned.car, engineTuned.engine, state);
-
-    const exhaustNos = getExhaustNosTuning(state);
-    const hasWorkshopNos = exhaustNos.nosKit > 0;
-
-    if (!hasWorkshopNos) {
-      if (!state.nosInstalled) {
-        tuned.car.nosPower = 0;
-        tuned.car.nosCapacitySeconds = 0;
-      } else {
-        tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
-        tuned.car.nosCapacitySeconds = Number(state.nosCapacitySeconds || tuned.car.nosCapacitySeconds || 5);
-      }
-    }
-
-    return tuned;
+    return buildCarFromState(config, engineConfig, state);
   }
 
   getRivalBuildState(config, rating = 3) {
-    const r = Math.max(1, Math.min(5, Math.round(Number(rating) || 3)));
-    const factoryTurbo = Number(config.maximumBoost || 0) > 0.01;
-    const lateGame = Number(this.registry.get('wins') || 0) >= 40;
-
-    const state = {
-      stock: r <= 1,
-      paintColor: this.opponentPaintColor,
-      nosInstalled: false,
-      tuneLevel: 0,
-      acquiredVia: 'rivalBuild',
-      tuning: {
-        engine: 0,
-        intake: 0,
-        ecu: 0,
-        turbo: 0,
-        intercooler: 0,
-      },
-      drivetrainTuning: {
-        clutch: 0,
-        gearbox: 0,
-        differential: 0,
-        suspension: 0,
-      },
-      chassisTuning: {
-        tyres: 0,
-        weightReduction: 0,
-      },
-      exhaustNosTuning: {
-        headers: 0,
-        exhaust: 0,
-        muffler: 0,
-        nosKit: 0,
-        nitrousShot: 0,
-      },
-    };
-
-    if (r === 2) {
-      state.tuning.intake = 1;
-      state.tuning.ecu = 1;
-      state.drivetrainTuning.clutch = 1;
-      state.chassisTuning.tyres = 1;
-      state.exhaustNosTuning.muffler = 1;
-    } else if (r === 3) {
-      Object.assign(state.tuning, {
-        engine: 1,
-        intake: 1,
-        ecu: 1,
-        turbo: factoryTurbo ? 1 : 0,
-        intercooler: factoryTurbo ? 1 : 0,
-      });
-      Object.assign(state.drivetrainTuning, {
-        clutch: 1,
-        gearbox: 1,
-        differential: 1,
-        suspension: 1,
-      });
-      Object.assign(state.chassisTuning, {
-        tyres: 1,
-        weightReduction: 1,
-      });
-      Object.assign(state.exhaustNosTuning, {
-        headers: 1,
-        exhaust: 1,
-        muffler: 1,
-      });
-    } else if (r === 4) {
-      Object.assign(state.tuning, {
-        engine: 1,
-        intake: 2,
-        ecu: 2,
-        turbo: factoryTurbo ? 2 : 1,
-        intercooler: 2,
-      });
-      Object.assign(state.drivetrainTuning, {
-        clutch: 2,
-        gearbox: 1,
-        differential: 2,
-        suspension: 2,
-      });
-      Object.assign(state.chassisTuning, {
-        tyres: 2,
-        weightReduction: 1,
-      });
-      Object.assign(state.exhaustNosTuning, {
-        headers: 1,
-        exhaust: 2,
-        muffler: 1,
-        nosKit: 1,
-        nitrousShot: 1,
-      });
-    } else if (r >= 5) {
-      Object.assign(state.tuning, lateGame
-        ? {
-            engine: 2,
-            intake: 3,
-            ecu: 3,
-            turbo: factoryTurbo ? 3 : 2,
-            intercooler: 3,
-          }
-        : {
-            engine: 2,
-            intake: 2,
-            ecu: 3,
-            turbo: factoryTurbo ? 2 : 2,
-            intercooler: 2,
-          }
-      );
-      Object.assign(state.drivetrainTuning, lateGame
-        ? {
-            clutch: 3,
-            gearbox: 2,
-            differential: 3,
-            suspension: 3,
-          }
-        : {
-            clutch: 2,
-            gearbox: 2,
-            differential: 2,
-            suspension: 2,
-          }
-      );
-      Object.assign(state.chassisTuning, {
-        tyres: lateGame ? 3 : 2,
-        weightReduction: 2,
-      });
-      Object.assign(state.exhaustNosTuning, {
-        headers: 2,
-        exhaust: lateGame ? 3 : 2,
-        muffler: 2,
-        nosKit: 2,
-        nitrousShot: 2,
-      });
-    }
-
-    // Pink-slip opponents protect the car with extra supporting hardware rather
-    // than a hidden power multiplier. The underlying engine build stays visible
-    // and transferable if the player wins the car.
-    if (this.raceDeal === 'PINK_SLIP' && r >= 3) {
-      state.drivetrainTuning.clutch = Math.min(3, state.drivetrainTuning.clutch + 1);
-      state.drivetrainTuning.differential = Math.min(3, state.drivetrainTuning.differential + 1);
-      state.chassisTuning.tyres = Math.min(3, state.chassisTuning.tyres + 1);
-    }
-
-    state.nosInstalled = state.exhaustNosTuning.nosKit > 0;
-    return state;
-  }
-
-  applyRivalBuild(config, engineConfig, character) {
-    const rating = Phaser.Math.Clamp(
-      Number(this.opponentEncounterRating || character?.skill?.rating || 3),
+    const buildRating = Phaser.Math.Clamp(
+      Number(this.opponentBuildRating || rating || 3),
       1,
       5
     );
 
-    const state = this.getRivalBuildState(config, rating);
-    const engineTuned = applyEngineTuning(config, engineConfig, state);
-    const tuned = applySecondaryTuning(engineTuned.car, engineTuned.engine, state);
+    let state = this.explicitOpponentBuildState
+      ? clone(this.explicitOpponentBuildState)
+      : createRivalBuildState(config, buildRating, {
+          raceType: this.raceType,
+          paintColor: this.opponentPaintColor,
+          seed: [
+            this.raceMode,
+            this.raceDistrict,
+            this.opponentCharacterId,
+            this.opponentCarId,
+            this.raceType,
+            buildRating,
+          ].join(':'),
+        });
+
+    // Pink-slip hardware remains real player-accessible parts. Applying it here
+    // means the exact race build is also the exact build inherited on victory.
+    if (this.raceDeal === 'PINK_SLIP') {
+      state = addPinkSlipSupport(state, buildRating);
+    }
+
+    state.buildRating = Number(state.buildRating || buildRating);
+    state.buildArchetype = state.buildArchetype || this.opponentBuildArchetype || 'balancedStreet';
+    state.paintColor = this.opponentPaintColor;
+    state.nosInstalled = Boolean(
+      state.nosInstalled ||
+      Number(state.exhaustNosTuning?.nosKit || 0) > 0
+    );
+    return state;
+  }
+
+  applyRivalBuild(config, engineConfig, character) {
+    const fallbackRating = Phaser.Math.Clamp(
+      Number(this.opponentEncounterRating || character?.skill?.rating || 3),
+      1,
+      5
+    );
+    const state = this.getRivalBuildState(config, fallbackRating);
+    const tuned = buildCarFromState(config, engineConfig, state);
 
     this.opponentBuildState = {
       ...state,

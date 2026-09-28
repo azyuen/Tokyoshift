@@ -7,7 +7,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260926-r213';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260926-r214';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260928-r234';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
@@ -220,7 +220,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     this.starterButtons = [
       { id: 'ae86', label: 'AE86', x: x - 82 },
-      { id: 'ek9', label: 'EK9', x: x + 82 },
+      { id: 'ef', label: 'CIVIC EF', x: x + 82 },
     ].map(item => {
       const box = this.add.rectangle(item.x, 558, 146, 38, 0x0b1724, 1)
         .setStrokeStyle(1, 0x315470, 1)
@@ -244,16 +244,16 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.starterDisplayObjects.forEach(obj => obj?.destroy?.());
     this.starterDisplayObjects = [];
 
-    const id = this.currentStarterCarId === 'ek9' ? 'ek9' : 'ae86';
+    const id = this.currentStarterCarId === 'ef' ? 'ef' : 'ae86';
     const car = cars[id];
-    const meta = id === 'ek9'
+    const meta = id === 'ef'
       ? {
-          spec: '136 kW   •   1090 kg   •   FWD / NA',
-          trait: 'ROLLING START FOCUS // HIGH-REV PACE',
+          spec: '118 kW   •   1010 kg   •   FWD / NA',
+          trait: 'VTEC // LIGHTWEIGHT // FRONT-DRIVE TRACTION',
         }
       : {
           spec: '96 kW   •   940 kg   •   RWD / NA',
-          trait: 'STANDING START FOCUS // LIGHTWEIGHT',
+          trait: 'MOMENTUM // LIGHTWEIGHT // REAR-DRIVE TECHNIQUE',
         };
 
     this.starterDisplayObjects = this.createCarDisplay(car, 1260, 330, 280, 4);
