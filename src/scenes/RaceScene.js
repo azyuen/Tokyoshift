@@ -109,6 +109,15 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
 
+    // First authored regional race panorama. Other regions/phases continue to
+    // use the procedural far background until their skyline assets arrive.
+    if (this.raceDistrict === 'ODAIBA' && this.raceTimeOfDay === 'day') {
+      queueImage(
+        'raceSkylineOdaibaDay',
+        'assets/Race/Skylines/skyline_odaiba_day.png?v=20260929-r247'
+      );
+    }
+
     const resultKeys = this.raceDeal === 'PINK_SLIP'
       ? ['pinkWin', 'pinkLoss']
       : ['victory', 'defeat'];
@@ -333,7 +342,13 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    this.environment = new TokyoExpresswayBackground(this, { timeOfDay: this.raceTimeOfDay });
+    const skylineKey = this.raceDistrict === 'ODAIBA' && this.raceTimeOfDay === 'day'
+      ? 'raceSkylineOdaibaDay'
+      : null;
+    this.environment = new TokyoExpresswayBackground(this, {
+      timeOfDay: this.raceTimeOfDay,
+      skylineKey,
+    });
     this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
     this.treeLightsG = this.add.graphics().setDepth(23);
