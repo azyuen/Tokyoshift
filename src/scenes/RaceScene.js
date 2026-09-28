@@ -3,7 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r250';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r251';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
