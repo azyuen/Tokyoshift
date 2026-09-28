@@ -13,7 +13,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260928-r243';
+} from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
