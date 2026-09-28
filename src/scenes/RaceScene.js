@@ -50,7 +50,7 @@ import {
 } from '../data/tunerChallenges.js?v=20260926-r213';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260926-r214';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260926-r214';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r235';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -1931,6 +1931,9 @@ export default class RaceScene extends Phaser.Scene {
       opponentWon = true;
     }
 
+    // settleRace consumes the active special-challenger flag when a pink-slip
+    // result is committed, so snapshot it first for the result presentation.
+    const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
       ? this.settleRace(playerWon)
       : null;
@@ -2393,8 +2396,13 @@ export default class RaceScene extends Phaser.Scene {
 
       playMangaCutscene(
         this,
-        playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss',
+        wasSpecialChallenge
+          ? (playerWon ? 'specialChallengerWin' : 'specialChallengerLoss')
+          : (playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss'),
         {
+          historyId: wasSpecialChallenge
+            ? 'specialChallengerResult:' + Date.now() + ':' + (playerWon ? 'W' : 'L')
+            : undefined,
           characterOverrides: { RIVAL: this.opponentCharacterId },
           variables: {
             RIVAL_NAME: rivalName,
@@ -2798,6 +2806,37 @@ export default class RaceScene extends Phaser.Scene {
 
     this.registry.set('wins', wins + (playerWon ? 1 : 0));
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+
+    // A declined regional team call-out is re-offered after 5–10 meaningful
+    // regional activities. Travel already counts in MeetScene; completed normal
+    // Meet races now count too, so staying and racing in one place cannot stall
+    // the re-challenge forever.
+    if (
+      this.raceMode === 'SINGLE' &&
+      (this.registry.get('raceReturnScene') || 'MeetScene') === 'MeetScene'
+    ) {
+      const regionId = String(
+        this.registry.get('raceDistrict') || this.registry.get('district') || ''
+      ).toUpperCase();
+      const challenges = { ...(this.registry.get('tunerTeamChallenges') || {}) };
+      const raw = challenges[regionId];
+
+      if (
+        raw &&
+        raw.offeredOnce &&
+        !raw.invited &&
+        Number(raw.reofferVisitsRemaining || 0) > 0
+      ) {
+        challenges[regionId] = {
+          ...raw,
+          reofferVisitsRemaining: Math.max(
+            0,
+            Number(raw.reofferVisitsRemaining || 0) - 1
+          ),
+        };
+        this.registry.set('tunerTeamChallenges', challenges);
+      }
+    }
 
     // Regional tuner shops progress from wins earned in that region rather than
     // from the global win total. Only regions with an active shop are tracked,

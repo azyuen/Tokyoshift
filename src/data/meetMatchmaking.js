@@ -1,5 +1,5 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r234';
+import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r235';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
 
@@ -21,8 +21,15 @@ export function rollMeetDriverRating(random = Math.random) {
   ) || 3);
 }
 
-export function rollMeetPerformanceBand(random = Math.random) {
-  const bands = PROGRESSION_BALANCE.meetMatchmaking.performanceBands;
+function getPerformanceBands(raceType = 'Standing Start') {
+  const configured = PROGRESSION_BALANCE.meetMatchmaking.performanceBands || {};
+  const rolling = String(raceType || '').toLowerCase().includes('roll');
+  const selected = rolling ? configured.rolling : configured.standing;
+  return selected || configured.standing || configured;
+}
+
+export function rollMeetPerformanceBand(random = Math.random, raceType = 'Standing Start') {
+  const bands = getPerformanceBands(raceType);
   return weightedChoice(
     Object.entries(bands).map(([key, value]) => ({ value: key, weight: value.weight })),
     random
@@ -34,7 +41,8 @@ function candidateWeight(candidate, context) {
   const preferred = new Set(context.preferredCars || []);
   const owned = new Set(context.ownedCarIds || []);
   const used = new Set(context.usedCarIds || []);
-  const band = cfg.performanceBands[context.bandId] || cfg.performanceBands.comparable;
+  const bands = context.performanceBands || getPerformanceBands(context.raceType);
+  const band = bands[context.bandId] || bands.comparable;
 
   let weight = 1;
   if (preferred.has(candidate.carId)) weight *= cfg.preferredRegionalModelWeight;
@@ -47,10 +55,10 @@ function candidateWeight(candidate, context) {
   return weight;
 }
 
-function chooseWildcard(candidates, random) {
+function chooseWildcard(candidates, random, bands) {
   const cfg = PROGRESSION_BALANCE.meetMatchmaking;
-  const stronger = candidates.filter(candidate => candidate.ratio >= cfg.performanceBands.stronger.maxRatio);
-  const weaker = candidates.filter(candidate => candidate.ratio <= cfg.performanceBands.weaker.minRatio);
+  const stronger = candidates.filter(candidate => candidate.ratio >= bands.stronger.maxRatio);
+  const weaker = candidates.filter(candidate => candidate.ratio <= bands.weaker.minRatio);
   const wantStrong = random() < cfg.wildcardStrongBias;
   if (wantStrong && stronger.length) return stronger;
   if (!wantStrong && weaker.length) return weaker;
@@ -68,8 +76,9 @@ export function createMeetOpponentMatch(options = {}) {
   if (!playerPerformance) return null;
 
   const playerIndex = Math.max(1, Number(playerPerformance.index.selected || playerPerformance.index.overall || 1));
-  const bandId = options.bandId || rollMeetPerformanceBand(random);
-  const band = cfg.performanceBands[bandId] || cfg.performanceBands.comparable;
+  const performanceBands = getPerformanceBands(options.raceType);
+  const bandId = options.bandId || rollMeetPerformanceBand(random, options.raceType);
+  const band = performanceBands[bandId] || performanceBands.comparable;
   const candidates = [];
 
   for (const carId of carOrder) {
@@ -114,7 +123,7 @@ export function createMeetOpponentMatch(options = {}) {
   const availableCandidates = boundedCandidates.length ? boundedCandidates : candidates;
 
   let pool = bandId === 'wildcard'
-    ? chooseWildcard(availableCandidates, random)
+    ? chooseWildcard(availableCandidates, random, performanceBands)
     : availableCandidates.filter(candidate => candidate.ratio >= band.minRatio && candidate.ratio <= band.maxRatio);
 
   // Sparse edges (very slow or very fast builds) fall back to the closest
@@ -130,6 +139,7 @@ export function createMeetOpponentMatch(options = {}) {
     weight: candidateWeight(candidate, {
       ...options,
       bandId,
+      performanceBands,
     }),
   }));
   const chosen = weightedChoice(weighted, random) || pool[0];

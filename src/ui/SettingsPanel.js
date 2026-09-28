@@ -167,6 +167,147 @@ function showRenameDriverPanel(scene, onSaved = null) {
   window.setTimeout(() => firstInput.focus(), 60);
 }
 
+function showControlsPanel(scene) {
+  if (scene._controlsOverlay?.length) return;
+
+  const objects = [];
+  const add = obj => {
+    objects.push(obj);
+    return obj;
+  };
+  scene._controlsOverlay = objects;
+
+  const close = () => {
+    destroyObjects(objects);
+    scene._controlsOverlay = [];
+  };
+
+  const depth = 230;
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x010309, 0.82)
+    .setDepth(depth)
+    .setInteractive());
+
+  add(scene.add.rectangle(780, 420, 1040, 620, 0x08131f, 0.998)
+    .setStrokeStyle(2, 0x43dfff, 0.96)
+    .setDepth(depth + 1));
+
+  add(scene.add.text(300, 140, 'RACE CONTROLS', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '15px',
+    color: '#eefaff',
+  }).setDepth(depth + 2));
+
+  const closeButton = add(scene.add.rectangle(1210, 146, 96, 40, 0x141d28, 1)
+    .setStrokeStyle(1, 0x678192, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(depth + 2));
+  add(scene.add.text(1210, 146, 'CLOSE', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '7px',
+    color: '#cbdce6',
+  }).setOrigin(0.5).setDepth(depth + 3));
+  closeButton.on('pointerdown', close);
+
+  add(scene.add.line(790, 435, 0, -230, 0, 245, 0x315470, 0.9)
+    .setDepth(depth + 2));
+
+  add(scene.add.text(520, 205, 'MOBILE // TOUCH', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '10px',
+    color: '#8fe8ff',
+  }).setOrigin(0.5).setDepth(depth + 2));
+
+  // A simplified race-screen diagram using the same physical layout as
+  // TouchControls: clutch left, NOS inside-left, shifter inside-right,
+  // throttle right.
+  add(scene.add.rectangle(520, 440, 430, 390, 0x06101b, 1)
+    .setStrokeStyle(1, 0x315470, 1)
+    .setDepth(depth + 2));
+
+  const mobileZone = (x, y, w, h, label, hint, accent = 0x315470) => {
+    add(scene.add.rectangle(x, y, w, h, 0x0b1724, 0.98)
+      .setStrokeStyle(2, accent, 1)
+      .setDepth(depth + 3));
+    add(scene.add.text(x, y - 10, label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#eaf8ff',
+      align: 'center',
+    }).setOrigin(0.5).setDepth(depth + 4));
+    add(scene.add.text(x, y + 21, hint, {
+      fontFamily: BODY_FONT,
+      fontSize: '8px',
+      color: '#91a9b7',
+      align: 'center',
+      wordWrap: { width: w - 12 },
+    }).setOrigin(0.5).setDepth(depth + 4));
+  };
+
+  mobileZone(370, 475, 92, 220, 'CLUTCH', 'SWIPE UP', 0x48c9e8);
+  mobileZone(466, 505, 74, 90, 'NOS', 'PRESS / HOLD', 0x9d5be8);
+  mobileZone(616, 475, 104, 220, 'SHIFTER', 'SWIPE UP / DOWN', 0xe0b24e);
+  mobileZone(704, 475, 72, 220, 'THROTTLE', 'SWIPE UP', 0xe0b24e);
+
+  add(scene.add.text(
+    520,
+    664,
+    'Pedals respond progressively as you swipe upward.\nShifter: UP = next gear • DOWN = lower gear.',
+    {
+      fontFamily: BODY_FONT,
+      fontSize: '9px',
+      color: '#9eb4c1',
+      align: 'center',
+      lineSpacing: 4,
+      wordWrap: { width: 420 },
+    }
+  ).setOrigin(0.5).setDepth(depth + 3));
+
+  add(scene.add.text(1035, 205, 'COMPUTER // KEYBOARD', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '10px',
+    color: '#8fe8ff',
+  }).setOrigin(0.5).setDepth(depth + 2));
+
+  const keyboardRows = [
+    ['W  /  ↑', 'THROTTLE'],
+    ['C', 'CLUTCH'],
+    ['1 – 6', 'SELECT GEAR DIRECTLY'],
+    ['SPACE', 'NOS'],
+  ];
+
+  keyboardRows.forEach((row, index) => {
+    const y = 292 + index * 88;
+    add(scene.add.rectangle(930, y, 170, 50, 0x0b1724, 1)
+      .setStrokeStyle(1, 0x45a8cc, 1)
+      .setDepth(depth + 2));
+    add(scene.add.text(930, y, row[0], {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#f2fbff',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    add(scene.add.text(1040, y, row[1], {
+      fontFamily: BODY_FONT,
+      fontSize: '10px',
+      color: '#a8bfcc',
+      fontStyle: '700',
+    }).setOrigin(0, 0.5).setDepth(depth + 3));
+  });
+
+  add(scene.add.text(
+    1035,
+    660,
+    'Keyboard shifting currently uses the number keys directly.\nThe on-screen shifter remains the mobile up/down control.',
+    {
+      fontFamily: BODY_FONT,
+      fontSize: '9px',
+      color: '#8099a8',
+      align: 'center',
+      lineSpacing: 4,
+      wordWrap: { width: 410 },
+    }
+  ).setOrigin(0.5).setDepth(depth + 2));
+}
+
 export function showSettingsPanel(scene) {
   if (scene._settingsOverlay?.length) return;
 
@@ -241,12 +382,25 @@ export function showSettingsPanel(scene) {
 
   closeButton.on('pointerdown', close);
 
-  const historyButton = add(scene.add.rectangle(1020, 72, 190, 40, 0x102138, 1)
+  const controlsButton = add(scene.add.rectangle(810, 72, 170, 40, 0x102138, 1)
     .setStrokeStyle(1, 0x45a8cc, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(183));
 
-  add(scene.add.text(1020, 72, 'CAR HISTORY', {
+  add(scene.add.text(810, 72, 'CONTROLS', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '6px',
+    color: '#c6efff',
+  }).setOrigin(0.5).setDepth(184));
+
+  controlsButton.on('pointerdown', () => showControlsPanel(scene));
+
+  const historyButton = add(scene.add.rectangle(1010, 72, 190, 40, 0x102138, 1)
+    .setStrokeStyle(1, 0x45a8cc, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(183));
+
+  add(scene.add.text(1010, 72, 'CAR HISTORY', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#c6efff',
@@ -319,15 +473,15 @@ export function showSettingsPanel(scene) {
   buildVolumeRow('MUSIC', 150, 'music');
   buildVolumeRow('SOUND FX', 212, 'sfx');
 
-  add(scene.add.line(780, 260, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
+  add(scene.add.line(780, 242, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
 
-  add(scene.add.text(340, 282, 'DRIVER PROFILES', {
+  add(scene.add.text(340, 250, 'DRIVER PROFILES', {
     fontFamily: PIXEL_FONT,
     fontSize: '9px',
     color: '#a8d4ec',
   }).setDepth(183));
 
-  add(scene.add.text(1220, 284, '3 SLOTS', {
+  add(scene.add.text(1220, 252, '3 SLOTS', {
     fontFamily: BODY_FONT,
     fontSize: '10px',
     color: '#718a99',

@@ -877,6 +877,7 @@ export function showTravelMap(scene, {
 
     if (tunerUnlocked) {
       tunerKicker
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 17)
         .setText(
           tunerChallenge.perfectEarned
             ? 'REGIONAL CHAMPION ★'
@@ -915,9 +916,12 @@ export function showTravelMap(scene, {
         });
       });
     } else if (challengeVisible) {
-      tunerKicker.setText('TEAM CHALLENGE').setColor('#ff91b6');
+      tunerKicker
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 7)
+        .setText('TEAM CHALLENGE')
+        .setColor('#ff91b6');
       tunerName
-        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 36)
+        .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 39)
         .setText(tunerChallenge.stage + ' / 7 DEFEATED')
         .setColor('#fff2f7');
       tunerSpecialty
