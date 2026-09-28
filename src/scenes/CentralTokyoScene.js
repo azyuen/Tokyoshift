@@ -32,8 +32,8 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260929-r246';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
   getGarageCapacity,
