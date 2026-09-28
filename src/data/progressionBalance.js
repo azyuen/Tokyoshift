@@ -16,11 +16,22 @@ export const PROGRESSION_BALANCE = {
 
   meetMatchmaking: {
     offerCount: 3,
+    // Standing starts leave more room for launch/clutch execution to overcome
+    // a modest vehicle mismatch. Roll races are much more power-deterministic,
+    // so "comparable" is deliberately tighter on the strong side.
     performanceBands: {
-      comparable: { weight: 0.60, minRatio: 0.86, maxRatio: 1.17, targetRatio: 1.00 },
-      weaker: { weight: 0.20, minRatio: 0.66, maxRatio: 0.86, targetRatio: 0.78 },
-      stronger: { weight: 0.15, minRatio: 1.17, maxRatio: 1.42, targetRatio: 1.27 },
-      wildcard: { weight: 0.05, minRatio: 0.48, maxRatio: 1.85, targetRatio: 1.48 },
+      standing: {
+        comparable: { weight: 0.60, minRatio: 0.86, maxRatio: 1.15, targetRatio: 1.00 },
+        weaker: { weight: 0.20, minRatio: 0.66, maxRatio: 0.86, targetRatio: 0.78 },
+        stronger: { weight: 0.15, minRatio: 1.15, maxRatio: 1.40, targetRatio: 1.25 },
+        wildcard: { weight: 0.05, minRatio: 0.48, maxRatio: 1.82, targetRatio: 1.45 },
+      },
+      rolling: {
+        comparable: { weight: 0.60, minRatio: 0.90, maxRatio: 1.08, targetRatio: 1.00 },
+        weaker: { weight: 0.20, minRatio: 0.70, maxRatio: 0.90, targetRatio: 0.82 },
+        stronger: { weight: 0.15, minRatio: 1.08, maxRatio: 1.30, targetRatio: 1.17 },
+        wildcard: { weight: 0.05, minRatio: 0.52, maxRatio: 1.70, targetRatio: 1.34 },
+      },
     },
     wildcardStrongBias: 0.72,
     preferredRegionalModelWeight: 2.35,
@@ -30,7 +41,9 @@ export const PROGRESSION_BALANCE = {
     fallbackRatioFloor: 0.45,
     fallbackRatioCeiling: 1.95,
 
-    // Driver skill is deliberately independent from vehicle/build performance.
+    // Fallback only. Normal Meets use the location's authored ratingSlots from
+    // encounterProfiles so driver culture/difficulty belongs to the location,
+    // never to player progression or the matched car.
     driverRatings: [
       { rating: 2, weight: 0.38 },
       { rating: 3, weight: 0.34 },
