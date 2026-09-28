@@ -2867,7 +2867,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const resultState = playerWon ? 'PLAYER_WIN' : 'PLAYER_LOSS';
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
-    const isCashRematchLoss = !playerWon && !isPinkSlip;
+    const isCashRematchLoss = !playerWon && this.raceDeal === 'BET';
     const previousStake = Math.max(0, Number(snapshot.stake || 0));
     const rematchStake = isCashRematchLoss
       ? Math.max(100, Math.floor(previousStake * 0.5))
