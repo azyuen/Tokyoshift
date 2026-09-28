@@ -16,7 +16,7 @@ import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMo
 import { createTunerDecalLayers } from '../vehicles/TunerDecals.js?v=20260924-r176';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { engines } from '../data/engines.js?v=20260928-r232';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,
