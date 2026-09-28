@@ -19,13 +19,14 @@ import {
 } from '../data/characters.js?v=20260926-r213';
 import {
   meetBackgrounds,
+  getMeetBackgroundForPhase,
   MEET_LOCATIONS,
   LOCATION_ORDER_BY_REGION,
   ALL_MEET_LOCATION_IDS,
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260922-r84';
+} from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260928-r234';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
@@ -33,6 +34,7 @@ import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -189,6 +191,7 @@ export default class MeetScene extends Phaser.Scene {
     const initialLocationId = MEET_LOCATIONS[this.registry.get('meetLocation')]
       ? this.registry.get('meetLocation')
       : 'odaiba7eleven';
+    this.worldPhase = getWorldPhase();
 
     // Generate/restore only the roster that can actually be seen on entry.
     // Other location rosters remain data-only until the player travels there.
@@ -930,7 +933,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'MeetScene');
-    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', key);
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
@@ -965,13 +968,17 @@ export default class MeetScene extends Phaser.Scene {
     this.stageMask = this.stageMaskShape.createGeometryMask();
   }
 
-  setMeetBackground(preferredKey = null, labelOverride = null) {
+  setMeetBackground(preferredKey = null, labelOverride = null, fallbackKey = null) {
     if (this.currentBackground) this.currentBackground.destroy();
     if (this.backgroundMaskShape) this.backgroundMaskShape.destroy();
     if (this.backgroundTint) this.backgroundTint.destroy();
 
     const available = meetBackgrounds.filter(bg => this.textures.exists(bg.key));
-    const bg = available.find(item => item.key === preferredKey) || available[0];
+    const bg = preferredKey && this.textures.exists(preferredKey)
+      ? { key: preferredKey, label: labelOverride || '' }
+      : available.find(item => item.key === fallbackKey)
+        || available.find(item => item.key === preferredKey)
+        || available[0];
     if (!bg) return;
 
     const image = this.add.image(
@@ -2187,7 +2194,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
-    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     saveSessionState(this.registry);
@@ -2204,7 +2211,7 @@ export default class MeetScene extends Phaser.Scene {
   getCompetitionCooldownMs() {
     return this.registry.get('devMode')
       ? 15 * 60 * 1000
-      : 2 * 60 * 60 * 1000;
+      : 30 * 60 * 1000;
   }
 
   getCompetitionCooldownRemainingMs() {
@@ -2468,7 +2475,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceMeetOffer', null);
 
     const location = getMeetLocation(state.locationId);
-    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     return true;
@@ -2553,9 +2560,19 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const location = getMeetLocation(locationId);
-    const background = meetBackgrounds.find(bg => bg.key === location.bgKey);
-    if (background?.path) {
-      queueImage(background.key, background.path + '?v=20260922-r84');
+    const phaseBackground = getMeetBackgroundForPhase(
+      location.id,
+      this.worldPhase || getWorldPhase()
+    );
+    if (phaseBackground?.path) {
+      queueImage(phaseBackground.key, phaseBackground.path + '?v=20260928-r245');
+    }
+
+    // Keep the authored legacy texture as a fail-safe without changing the
+    // existing cover-scale, stage mask, or foreground perspective.
+    const fallbackBackground = meetBackgrounds.find(bg => bg.key === location.bgKey);
+    if (fallbackBackground?.path) {
+      queueImage(fallbackBackground.key, fallbackBackground.path + '?v=20260928-r245');
     }
 
     (offers || []).forEach(offer => {
@@ -2812,9 +2829,12 @@ export default class MeetScene extends Phaser.Scene {
       Math.max(0, this.offers.length - 1)
     );
 
+    const worldPhase = this.worldPhase || getWorldPhase();
+    const phaseBackground = getMeetBackgroundForPhase(location.id, worldPhase);
     this.setMeetBackground(
-      location.bgKey,
-      location.district + ' // ' + location.label + ' // ' + location.timeOfDay.toUpperCase()
+      phaseBackground?.key || location.bgKey,
+      location.district + ' // ' + location.label + ' // ' + worldPhase.toUpperCase(),
+      location.bgKey
     );
 
     if (resetTimer) {
@@ -2950,6 +2970,15 @@ export default class MeetScene extends Phaser.Scene {
       if (!key || !path || this.textures.exists(key)) return;
       this.load.image(key, path);
     };
+
+    // Warm the opposite phase only after the Meet is interactive, avoiding a
+    // doubled initial background load while making later phase flips instant.
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const oppositePhase = (this.worldPhase || getWorldPhase()) === 'day' ? 'night' : 'day';
+    const oppositeBackground = getMeetBackgroundForPhase(location.id, oppositePhase);
+    if (oppositeBackground?.path) {
+      queueImage(oppositeBackground.key, oppositeBackground.path + '?v=20260928-r245');
+    }
 
     // Only prepare result poses for the three racers actually on screen.
     // Loading every win/loss pose in a seven-person regional crew caused a
@@ -3589,6 +3618,18 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
+    const nextWorldPhase = getWorldPhase();
+    if (nextWorldPhase !== this.worldPhase) {
+      this.worldPhase = nextWorldPhase;
+      const location = getMeetLocation(this.selectedMeetLocation);
+      const phaseBackground = getMeetBackgroundForPhase(location.id, nextWorldPhase);
+      this.setMeetBackground(
+        phaseBackground?.key || location.bgKey,
+        location.district + ' // ' + location.label + ' // ' + nextWorldPhase.toUpperCase(),
+        location.bgKey
+      );
+    }
+
     // Never let a timed challenger or Meet refresh spawn underneath another
     // screen. Once the overlay closes, this 1-second timer naturally retries.
     const meetObscured = Boolean(
@@ -3840,7 +3881,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'MeetScene');
 
     const location = getMeetLocation(this.selectedMeetLocation);
-    this.registry.set('raceTimeOfDay', location.timeOfDay);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', location.district);
     this.registry.set('raceLocationLabel', location.label);
     this.persistMeetRound();

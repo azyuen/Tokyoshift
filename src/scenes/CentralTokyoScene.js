@@ -27,7 +27,8 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260926-r214';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
   getGarageCapacity,
@@ -1847,7 +1848,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
-    this.registry.set('raceTimeOfDay', 'night');
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', 'CENTRAL TOKYO');
     this.registry.set('raceLocationLabel', 'TOKYO DRAG COMPLEX');
     saveSessionState(this.registry);

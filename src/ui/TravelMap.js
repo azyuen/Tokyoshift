@@ -1,7 +1,7 @@
 import {
   MEET_LOCATIONS,
   getMeetLocation,
-} from '../data/meetAssets.js?v=20260922-r84';
+} from '../data/meetAssets.js?v=20260928-r245';
 import {
   getWorkshopByLocationId,
   getGarageCapacity,
@@ -29,18 +29,30 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r212';
 import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js?v=20260922-r128';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
 const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
-const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
+const REGION_MAP_ASSETS = {
+  night: {
+    key: 'travelMapTokyoRegionNight',
+    path: 'assets/Ui/tokyo_region_map_base.png?v=20260928-r245',
+  },
+  day: {
+    key: 'travelMapTokyoRegionDay',
+    // Placeholder is a copy of the current night map. Replace this file with
+    // daytime art later; the selector already points at it.
+    path: 'assets/Ui/tokyo_region_map_day.png?v=20260928-r245',
+  },
+};
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
-const TRAVEL_MAP_ASSETS = [
-  { key: REGION_MAP_TEXTURE, path: 'assets/Ui/tokyo_region_map_base.png?v=20260923-r139' },
-  { key: FALLBACK_MAP_TEXTURE, path: 'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77' },
-];
+const FALLBACK_MAP_ASSET = {
+  key: FALLBACK_MAP_TEXTURE,
+  path: 'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77',
+};
 
 // The map now owns the whole framed popup. Everything else floats over it.
 const MAP = { x: 26, y: 25, w: 1508, h: 790 };
@@ -73,12 +85,9 @@ function currentRegionFromLocation(locationId, fromWorkshop) {
   return regionIdForMeetLocation(locationId, 'ODAIBA');
 }
 
-function locationTimeLabel(location) {
+function locationTimeLabel(location, worldPhase) {
   if (location?.kind === 'home' || location?.kind === 'garageUpgrade') return 'ANY';
-
-  const meet = MEET_LOCATIONS[location?.id];
-  const raw = String(meet?.timeOfDay || location?.timeOfDay || 'night').toLowerCase();
-  return raw === 'day' ? 'DAY' : 'NIGHT';
+  return worldPhase === 'day' ? 'DAY' : 'NIGHT';
 }
 
 export function showTravelMap(scene, options = {}) {
@@ -94,16 +103,21 @@ export function showTravelMap(scene, options = {}) {
     homeCost = HOME_RETURN_COST,
   } = options;
 
-  // The 1672px map textures are only needed after the player opens GPS.
-  if (!scene.textures.exists(REGION_MAP_TEXTURE) && !scene._travelMapAssetAttempted) {
+  const worldPhase = getWorldPhase();
+  const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
+  const mapAttemptKey = '_travelMapAssetAttempted_' + worldPhase;
+
+  // Load only the active map phase plus the existing fallback so day/night
+  // support does not double the GPS loading cost.
+  if (!scene.textures.exists(preferredMapAsset.key) && !scene[mapAttemptKey]) {
     let queued = 0;
-    TRAVEL_MAP_ASSETS.forEach(asset => {
+    [preferredMapAsset, FALLBACK_MAP_ASSET].forEach(asset => {
       if (scene.textures.exists(asset.key)) return;
       scene.load.image(asset.key, asset.path);
       queued += 1;
     });
 
-    scene._travelMapAssetAttempted = true;
+    scene[mapAttemptKey] = true;
     if (queued > 0) {
       startSceneLoading(scene, 'LOADING TOKYO MAP', queued);
       scene.load.once('complete', () => {
@@ -238,11 +252,16 @@ export function showTravelMap(scene, options = {}) {
     .setInteractive()
     .setDepth(depth + 1));
 
-  const mapTexture = scene.textures.exists(REGION_MAP_TEXTURE)
-    ? REGION_MAP_TEXTURE
-    : scene.textures.exists(FALLBACK_MAP_TEXTURE)
-      ? FALLBACK_MAP_TEXTURE
-      : null;
+  const alternateMapAsset = worldPhase === 'day'
+    ? REGION_MAP_ASSETS.night
+    : REGION_MAP_ASSETS.day;
+  const mapTexture = scene.textures.exists(preferredMapAsset.key)
+    ? preferredMapAsset.key
+    : scene.textures.exists(alternateMapAsset.key)
+      ? alternateMapAsset.key
+      : scene.textures.exists(FALLBACK_MAP_TEXTURE)
+        ? FALLBACK_MAP_TEXTURE
+        : null;
 
   const art = getMapArtBounds(scene, mapTexture);
   const mapPoint = region => ({
@@ -987,7 +1006,7 @@ export function showTravelMap(scene, options = {}) {
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
       const available = locationAvailable(item) || item.kind === 'home';
-      const time = locationTimeLabel(item);
+      const time = locationTimeLabel(item, worldPhase);
 
       row.label.setText(item.label);
       if (item.kind === 'garageUpgrade') {

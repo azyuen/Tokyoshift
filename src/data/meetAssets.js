@@ -1,4 +1,5 @@
 const BACKGROUND_ROOT = 'assets/Meet/Backgrounds';
+const CYCLE_BACKGROUND_ROOT = 'assets/Meet';
 
 const slug = value => String(value || '')
   .trim()
@@ -8,6 +9,28 @@ const slug = value => String(value || '')
 
 export function meetBackgroundPath(district, location, timeOfDay) {
   return `${BACKGROUND_ROOT}/${slug(district)}_${slug(location)}_${slug(timeOfDay)}.png`;
+}
+
+export function getMeetBackgroundForPhase(locationId, phase = 'night') {
+  const item = MEET_LOCATIONS[locationId];
+  if (!item) return null;
+
+  const worldPhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
+  const folder = worldPhase === 'day' ? 'Day' : 'Night';
+
+  // The daytime Tatsumi upload uses "district_loop" while the playable
+  // location remains Skyline Vista. Bridge only that filename mismatch.
+  const filename = locationId === 'tatsumiSkylineVista' && worldPhase === 'day'
+    ? 'tatsumi_district_loop_day.png'
+    : `${slug(item.district)}_${slug(item.location)}_${worldPhase}.png`;
+
+  return {
+    ...item,
+    key: `meetCycle_${item.id}_${worldPhase}`,
+    path: `${CYCLE_BACKGROUND_ROOT}/${folder}/${filename}`,
+    timeOfDay: worldPhase,
+    label: `${item.district} // ${item.label}`,
+  };
 }
 
 export const MEET_REGIONS = {

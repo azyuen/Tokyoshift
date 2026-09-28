@@ -4,6 +4,7 @@ import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260921-r49';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
   DEFAULT_PAINT_COLOR,
@@ -217,7 +218,7 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentBuildArchetype = isRandomMeetBuild
       ? (this.registry.get('selectedOpponentBuildArchetype') || storedMeetOffer?.opponentBuildArchetype || storedBuildState?.buildArchetype || null)
       : null;
-    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || 'night';
+    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getWorldPhase();
     this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
     this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
   }
