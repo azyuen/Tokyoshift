@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r243';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
@@ -17,7 +17,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260928-r243';
+} from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { createVisualModLayers, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
 import {
   getWheelPairFit,
@@ -35,7 +35,7 @@ import {
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260928-r243';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
