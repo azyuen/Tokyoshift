@@ -1,15 +1,16 @@
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
 export default class TokyoExpresswayBackground {
-  constructor(scene, { timeOfDay = 'night', skylineKey = null } = {}) {
+  constructor(scene, { timeOfDay = 'night', skylineKey = null, roadVariant = 0 } = {}) {
     this.scene = scene;
     this.width = 1560;
     this.skylineKey = skylineKey;
+    this.roadVariant = Math.abs(Math.floor(Number(roadVariant) || 0)) % 4;
     this.timeOfDay = ['day', 'twilight', 'night'].includes(timeOfDay)
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r249_' + this.timeOfDay;
+    const suffix = 'r250_' + this.timeOfDay + '_v' + this.roadVariant;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -266,17 +267,23 @@ export default class TokyoExpresswayBackground {
     const p = this.palette();
 
     this.canvasTexture(this.keys.rearBarrier, 1536, 118, (ctx, w, h) => {
-      const rnd = this.seededRandom(this.timeOfDay === 'day' ? 24801 : 24802);
+      const rnd = this.seededRandom((this.timeOfDay === 'day' ? 25001 : 25002) + this.roadVariant * 101);
       ctx.clearRect(0, 0, w, h);
 
-      // Open chain-link safety fence: no opaque backing, so authored regional
-      // skylines remain visible through the mesh.
+      // Per-race infrastructure variant: the regional skyline stays fixed,
+      // while the expressway itself can feel like a different stretch each race.
+      const fenceMode = this.roadVariant % 4;
+
+      // Open chain-link / anti-throw safety fence: no opaque backing, so authored
+      // regional skylines remain visible through the mesh.
       ctx.strokeStyle = p.fenceBright;
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.72 : 0.82;
       ctx.lineWidth = 1;
-      for (let x = -30; x < w + 30; x += 24) {
-        ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x + 32, 33); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x + 32, 2); ctx.lineTo(x, 33); ctx.stroke();
+      const meshStep = fenceMode === 1 ? 18 : fenceMode === 2 ? 30 : 24;
+      const meshBottom = fenceMode === 1 ? 34 : 33;
+      for (let x = -36; x < w + 36; x += meshStep) {
+        ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x + meshStep + 8, meshBottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + meshStep + 8, 2); ctx.lineTo(x, meshBottom); ctx.stroke();
       }
       ctx.globalAlpha = 1;
 
@@ -284,7 +291,8 @@ export default class TokyoExpresswayBackground {
       ctx.fillStyle = p.fenceBright;
       ctx.fillRect(0, 0, w, 2);
       ctx.fillRect(0, 32, w, 3);
-      for (let x = 74; x < w; x += 236) {
+      const postSpacing = fenceMode === 2 ? 190 : fenceMode === 3 ? 286 : 236;
+      for (let x = 74 + fenceMode * 17; x < w; x += postSpacing) {
         ctx.fillStyle = p.fence;
         ctx.fillRect(x, 0, 5, 35);
         ctx.fillStyle = p.fenceBright;
@@ -322,7 +330,7 @@ export default class TokyoExpresswayBackground {
         markerX += 178 + Math.floor(rnd() * 130);
       }
 
-      const plates = [438, 1188];
+      const plates = fenceMode === 0 ? [438, 1188] : fenceMode === 1 ? [285, 1015] : fenceMode === 2 ? [566, 1320] : [350, 920, 1430];
       for (const x of plates) {
         ctx.fillStyle = p.barrierDark;
         ctx.globalAlpha = 0.68;
@@ -334,6 +342,32 @@ export default class TokyoExpresswayBackground {
         ctx.fillStyle = p.barrierTop;
         ctx.fillRect(x + 8, 83, 25, 2);
         ctx.fillRect(x + 8, 89, 16, 2);
+      }
+
+      // Occasional structural changes: a taller anti-throw frame, a short
+      // solid/no-mesh maintenance bay, or a denser post section. These are
+      // intentionally sparse so the skyline remains the hero.
+      if (fenceMode === 1) {
+        ctx.fillStyle = p.fence;
+        for (const x of [690, 696, 702]) ctx.fillRect(x, 0, 2, 35);
+        ctx.fillStyle = p.fenceBright;
+        ctx.fillRect(650, 5, 110, 2);
+      } else if (fenceMode === 2) {
+        ctx.fillStyle = p.barrierDark;
+        ctx.globalAlpha = 0.88;
+        ctx.fillRect(770, 0, 138, 35);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = p.barrierTop;
+        ctx.fillRect(782, 10, 92, 3);
+        ctx.fillRect(782, 18, 62, 2);
+      } else if (fenceMode === 3) {
+        ctx.fillStyle = p.fence;
+        ctx.fillRect(520, 0, 7, 35);
+        ctx.fillRect(1040, 0, 7, 35);
+        ctx.fillStyle = this.timeOfDay === 'day' ? '#355d66' : '#173a45';
+        ctx.fillRect(532, 8, 70, 19);
+        ctx.strokeStyle = p.fenceBright;
+        ctx.strokeRect(533, 9, 68, 17);
       }
 
       // Restrained grime/drainage streaks along the lower wall.
