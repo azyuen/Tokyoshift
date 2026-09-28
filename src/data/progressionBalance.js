@@ -12,6 +12,15 @@ export const PROGRESSION_BALANCE = {
     rollingWeight: 0.42,
     nosStandingUse: 0.42,
     nosRollingUse: 0.58,
+
+    // Matchmaking PI should follow the same things the live standing-start
+    // physics care about: engine response and boost availability. These are
+    // intentionally mild refinements, not hidden car buffs/nerfs.
+    referenceEngineInertia: 0.18,
+    engineInertiaExponent: 0.10,
+    turboLaunchBase: 0.90,
+    turboLaunchSpoolWeight: 0.08,
+    turboLaunchOffBoostWeight: 0.06,
   },
 
   meetMatchmaking: {
@@ -33,6 +42,31 @@ export const PROGRESSION_BALANCE = {
         wildcard: { weight: 0.05, minRatio: 0.52, maxRatio: 1.70, targetRatio: 1.34 },
       },
     },
+    // Location difficulty affects how favourable the VEHICLE match is while
+    // still matching only against the car/build the player brought.
+    difficultyVehicleProfiles: {
+      EASY: {
+        bandWeights: { comparable: 0.60, weaker: 0.30, stronger: 0.08, wildcard: 0.02 },
+        standingComparableTarget: 0.98,
+        rollingComparableTarget: 0.98,
+      },
+      MED: {
+        bandWeights: { comparable: 0.55, weaker: 0.12, stronger: 0.27, wildcard: 0.06 },
+        standingComparableTarget: 1.03,
+        rollingComparableTarget: 1.03,
+      },
+      HARD: {
+        bandWeights: { comparable: 0.50, weaker: 0.08, stronger: 0.34, wildcard: 0.08 },
+        standingComparableTarget: 1.07,
+        rollingComparableTarget: 1.05,
+      },
+      ELITE: {
+        bandWeights: { comparable: 0.35, weaker: 0.03, stronger: 0.47, wildcard: 0.15 },
+        standingComparableTarget: 1.11,
+        rollingComparableTarget: 1.07,
+      },
+    },
+
     wildcardStrongBias: 0.72,
     preferredRegionalModelWeight: 2.35,
     unownedCarWeight: 1.20,
