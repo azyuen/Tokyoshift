@@ -34,7 +34,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20260926-r214';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260926-r215';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r233';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
@@ -355,13 +355,14 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 995, 35);
+    // Keep utility buttons clear of the enlarged W/L record on phone layouts.
+    addSettingsButton(this, 925, 35);
 
-    const couponsButton = this.add.rectangle(1090, 35, 112, 38, 0x0b1724, 1)
+    const couponsButton = this.add.rectangle(1020, 35, 112, 38, 0x0b1724, 1)
       .setStrokeStyle(1, 0x315470, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(43);
-    this.add.text(1090, 35, 'COUPONS', {
+    this.add.text(1020, 35, 'COUPONS', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#bfeaff',
@@ -4104,8 +4105,20 @@ export default class GarageScene extends Phaser.Scene {
     const state = carStates[this.selectedCarId] || {};
     const engineBuild = applyEngineTuning(car, engines[car.engine], state);
     const fullBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
-    this.specValueTexts.power.setText(fullBuild.car.powerKW + ' kW');
-    this.specValueTexts.torque.setText(fullBuild.car.torqueNm + ' Nm');
+
+    const tunedPower = Number(fullBuild.car.powerKW ?? 0);
+    const tunedTorque = Number(fullBuild.car.torqueNm ?? 0);
+    const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
+    const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
+
+    // Match selectCar(): exiting a tuning screen must not silently drop the
+    // visible gain brackets even though the underlying tuned stats are correct.
+    this.specValueTexts.power.setText(
+      Math.round(tunedPower) + ' kW' + (powerGain > 0 ? '  (+' + powerGain + ')' : '')
+    );
+    this.specValueTexts.torque.setText(
+      Math.round(tunedTorque) + ' Nm' + (torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+    );
     this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
   }
 
