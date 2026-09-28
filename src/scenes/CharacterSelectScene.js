@@ -10,7 +10,7 @@ import {
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260928-r243';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260926-r213';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260928-r237';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
