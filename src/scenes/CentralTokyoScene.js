@@ -19,7 +19,7 @@ import {
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r232';
+import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r231';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -27,7 +27,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260926-r214';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r242';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
   getGarageCapacity,
@@ -39,7 +39,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { preloadCarAppearanceAssets, preloadCarWheel } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -109,6 +109,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.load.image(location.backgroundKey, location.backgroundPath + '?v=20260922-r125');
       queued += 1;
     }
+    if (location?.kind === 'autoMarket') {
+      this.getAutoMarketListings().forEach(listing => {
+        const car = cars[listing.carId];
+        if (!car) return;
+        queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260928-r242');
+        queued += preloadCarWheel(this, car);
+      });
+    }
     if (location?.kind === 'showroom') {
       GINZA_LISTINGS.forEach(listing => {
         const car = cars[listing.carId];
@@ -157,6 +165,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.registry.set('centralTokyoLocation', this.activeLocationId);
+
+    ensureDerivedModularCarTextures(
+      this,
+      Object.fromEntries(
+        Object.entries(cars).filter(([, car]) =>
+          car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
+        )
+      )
+    );
 
     this.contentObjects = [];
     this.selectedIndex = 0;
@@ -342,6 +359,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if (queued) {
         startSceneLoading(this, 'LOADING ' + location.label, queued);
         this.load.once('complete', () => {
+          ensureDerivedModularCarTextures(
+            this,
+            Object.fromEntries(
+              Object.entries(cars).filter(([, car]) =>
+                car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
+              )
+            )
+          );
           this.renderLocation(location.id, true);
           finishSceneLoading('CENTRAL TOKYO');
         });

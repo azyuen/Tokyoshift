@@ -1,4 +1,9 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260925-r193';
+import {
+  getCarBodyScaleForWidth,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import {
   DEFAULT_PAINT_COLOR,
@@ -20,13 +25,21 @@ export default class CharacterSelectScene extends Phaser.Scene {
   preload() {
     let queued = 0;
     playableCharacterOrder.forEach(id => {
-      const character = characters[id];
-      if (!this.textures.exists(character.visual.spriteKey)) {
-        this.load.image(character.visual.spriteKey, character.visual.path + '?v=20260921-r43');
-        queued += 1;
-      }
+      const visual = characters[id]?.visual;
+      if (!visual || this.textures.exists(visual.spriteKey)) return;
+      this.load.image(visual.spriteKey, visual.path + '?v=20260923-r145');
+      queued += 1;
     });
-    startSceneLoading(this, 'LOADING DRIVERS', queued);
+
+    const starterCars = Object.fromEntries(
+      ['ae86', 'ef'].filter(id => cars[id]).map(id => [id, cars[id]])
+    );
+    queued += preloadCarAppearanceAssets(this, starterCars, '20260928-r242');
+    Object.values(starterCars).forEach(car => {
+      queued += preloadCarWheel(this, car);
+    });
+
+    startSceneLoading(this, 'LOADING DRIVER SELECT', queued);
   }
 
   create() {
@@ -37,6 +50,10 @@ export default class CharacterSelectScene extends Phaser.Scene {
     try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
 
     playMusic('title');
+
+    ensureDerivedModularCarTextures(this, Object.fromEntries(
+      ['ae86', 'ef'].filter(id => cars[id]).map(id => [id, cars[id]])
+    ));
 
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(playableCharacterOrder);
     this.currentStarterCarId = 'ae86';

@@ -77,10 +77,15 @@ export function getVisualModSlotIds(carId) {
   return VISUAL_MOD_SLOT_ORDER.filter(id => Boolean(slots[id]));
 }
 
-export function preloadVisualModAssets(scene, cacheBust = '') {
+export function preloadVisualModAssets(scene, cacheBust = '', carIds = null) {
   const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
   const queued = new Set();
-  Object.values(VISUAL_MOD_CATALOG).forEach(catalog => {
+  const allowed = Array.isArray(carIds) && carIds.length
+    ? new Set(carIds.map(String))
+    : null;
+
+  Object.entries(VISUAL_MOD_CATALOG).forEach(([carId, catalog]) => {
+    if (allowed && !allowed.has(carId)) return;
     Object.values(catalog.slots).forEach(slot => {
       slot.options.forEach(option => {
         option.layers.forEach(layer => {
@@ -91,6 +96,31 @@ export function preloadVisualModAssets(scene, cacheBust = '') {
       });
     });
   });
+
+  return queued.size;
+}
+
+export function preloadVisualModSelectionAssets(
+  scene,
+  carId,
+  source = {},
+  cacheBust = ''
+) {
+  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
+  const selected = normaliseVisualMods(carId, source);
+  const queued = new Set();
+
+  getVisualModSlotIds(carId).forEach(slotId => {
+    const option = getVisualModOption(carId, slotId, selected[slotId]);
+    (option?.layers || []).forEach(layer => {
+      if (!layer?.textureKey || !layer?.path) return;
+      if (scene.textures.exists(layer.textureKey) || queued.has(layer.textureKey)) return;
+      queued.add(layer.textureKey);
+      scene.load.image(layer.textureKey, layer.path + suffix);
+    });
+  });
+
+  return queued.size;
 }
 
 export function getVisualModOptions(carId, slotId) {

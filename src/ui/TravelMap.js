@@ -28,6 +28,7 @@ import {
 import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r212';
+import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -36,6 +37,10 @@ const MONEY = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
 const REGION_MAP_TEXTURE = 'travelMapTokyoRegion';
 const FALLBACK_MAP_TEXTURE = 'travelMapTokyoBay';
+const TRAVEL_MAP_ASSETS = [
+  { key: REGION_MAP_TEXTURE, path: 'assets/Ui/tokyo_region_map_base.png?v=20260923-r139' },
+  { key: FALLBACK_MAP_TEXTURE, path: 'assets/Ui/tokyo_bay_travel_map.png?v=20260921-r77' },
+];
 
 // The map now owns the whole framed popup. Everything else floats over it.
 const MAP = { x: 26, y: 25, w: 1508, h: 790 };
@@ -76,17 +81,41 @@ function locationTimeLabel(location) {
   return raw === 'day' ? 'DAY' : 'NIGHT';
 }
 
-export function showTravelMap(scene, {
-  currentLocationId,
-  onTravel,
-  onHome = null,
-  onWorkshopUpgrade = null,
-  title = 'TOKYO REGION MAP',
-  fromWorkshop = false,
-  allowCurrentAction = false,
-  actionVerb = 'DRIVE',
-  homeCost = HOME_RETURN_COST,
-} = {}) {
+export function showTravelMap(scene, options = {}) {
+  const {
+    currentLocationId,
+    onTravel,
+    onHome = null,
+    onWorkshopUpgrade = null,
+    title = 'TOKYO REGION MAP',
+    fromWorkshop = false,
+    allowCurrentAction = false,
+    actionVerb = 'DRIVE',
+    homeCost = HOME_RETURN_COST,
+  } = options;
+
+  // The 1672px map textures are only needed after the player opens GPS.
+  if (!scene.textures.exists(REGION_MAP_TEXTURE) && !scene._travelMapAssetAttempted) {
+    let queued = 0;
+    TRAVEL_MAP_ASSETS.forEach(asset => {
+      if (scene.textures.exists(asset.key)) return;
+      scene.load.image(asset.key, asset.path);
+      queued += 1;
+    });
+
+    scene._travelMapAssetAttempted = true;
+    if (queued > 0) {
+      startSceneLoading(scene, 'LOADING TOKYO MAP', queued);
+      scene.load.once('complete', () => {
+        scene._travelMapAssetLoading = false;
+        showTravelMap(scene, options);
+        finishSceneLoading('MAP READY');
+      });
+      scene._travelMapAssetLoading = true;
+      if (!scene.load.isLoading()) scene.load.start();
+      return null;
+    }
+  }
   if (scene.travelMapPopup?.active) return scene.travelMapPopup;
 
   const depth = 120;
