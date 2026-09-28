@@ -29,7 +29,10 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260926-r212';
 import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js?v=20260922-r128';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
+import {
+  getWorldPhase,
+  toggleWorldPhaseOverride,
+} from '../environment/WorldClock.js?v=20260929-r247';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -336,6 +339,40 @@ export function showTravelMap(scene, options = {}) {
     color: '#eefaff',
     lineSpacing: 6,
   }).setOrigin(0, 0).setDepth(depth + 10));
+
+  // Arkon Den / dev profiles can flip the global world phase instantly so
+  // day/night art can be checked without waiting for the normal 15-min cycle.
+  if (scene.registry.get('devMode')) {
+    const nextPhase = worldPhase === 'day' ? 'NIGHT' : 'DAY';
+    const devPhaseButton = add(scene.add.rectangle(
+      MAP.x + MAP.w - 202,
+      MAP.y + 42,
+      220,
+      42,
+      0x10263a,
+      0.96
+    ).setStrokeStyle(1, 0x63d7ff, 0.95)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 10));
+
+    add(scene.add.text(
+      MAP.x + MAP.w - 202,
+      MAP.y + 42,
+      'DEV: ' + worldPhase.toUpperCase() + ' → ' + nextPhase,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#bdefff',
+      }
+    ).setOrigin(0.5).setDepth(depth + 11));
+
+    devPhaseButton.on('pointerdown', (_pointer, _lx, _ly, event) => {
+      event?.stopPropagation?.();
+      toggleWorldPhaseOverride();
+      dismiss();
+      window.setTimeout(() => showTravelMap(scene, options), 0);
+    });
+  }
 
   const closeButton = add(scene.add.rectangle(
     MAP.x + MAP.w - 48,
