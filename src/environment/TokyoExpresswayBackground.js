@@ -9,7 +9,7 @@ export default class TokyoExpresswayBackground {
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r49_' + this.timeOfDay;
+    const suffix = 'r248_' + this.timeOfDay;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -265,26 +265,35 @@ export default class TokyoExpresswayBackground {
   createRearBarrierTexture() {
     const p = this.palette();
 
-    this.canvasTexture(this.keys.rearBarrier, 1024, 118, (ctx, w, h) => {
+    this.canvasTexture(this.keys.rearBarrier, 1536, 118, (ctx, w, h) => {
+      const rnd = this.seededRandom(this.timeOfDay === 'day' ? 24801 : 24802);
       ctx.clearRect(0, 0, w, h);
 
-      ctx.fillStyle = p.fence;
-      ctx.fillRect(0, 0, w, 34);
+      // Open chain-link safety fence: no opaque backing, so authored regional
+      // skylines remain visible through the mesh.
       ctx.strokeStyle = p.fenceBright;
-      ctx.lineWidth = 2;
-      for (let x = -34; x < w + 34; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x, 2);
-        ctx.lineTo(x + 34, 34);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x + 34, 2);
-        ctx.lineTo(x, 34);
-        ctx.stroke();
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.72 : 0.82;
+      ctx.lineWidth = 1;
+      for (let x = -30; x < w + 30; x += 24) {
+        ctx.beginPath(); ctx.moveTo(x, 2); ctx.lineTo(x + 32, 33); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + 32, 2); ctx.lineTo(x, 33); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // Fence rails and upright posts give the mesh real structure.
+      ctx.fillStyle = p.fenceBright;
+      ctx.fillRect(0, 0, w, 2);
+      ctx.fillRect(0, 32, w, 3);
+      for (let x = 74; x < w; x += 236) {
+        ctx.fillStyle = p.fence;
+        ctx.fillRect(x, 0, 5, 35);
+        ctx.fillStyle = p.fenceBright;
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(x + 1, 0, 1, 35);
+        ctx.globalAlpha = 1;
       }
 
-      ctx.fillStyle = p.fenceBright;
-      ctx.fillRect(0, 32, w, 3);
+      // Concrete crash wall.
       ctx.fillStyle = p.barrier;
       ctx.fillRect(0, 35, w, 79);
       ctx.fillStyle = p.barrierTop;
@@ -292,17 +301,50 @@ export default class TokyoExpresswayBackground {
       ctx.fillStyle = p.barrierDark;
       ctx.fillRect(0, 111, w, 7);
 
-      for (let x = 0; x < w; x += 128) {
+      // Expansion joints are deliberately irregular so the wall doesn't read
+      // like a short repeating texture at race speed.
+      let jointX = 35;
+      while (jointX < w) {
         ctx.fillStyle = p.barrierDark;
-        ctx.fillRect(x, 39, 2, 72);
+        ctx.globalAlpha = 0.72;
+        ctx.fillRect(Math.floor(jointX), 40, 2, 71);
+        ctx.globalAlpha = 1;
+        jointX += 116 + Math.floor(rnd() * 74);
       }
 
-      for (let x = 55; x < w; x += 205) {
+      // Reflectors and occasional expressway service/inspection plates.
+      let markerX = 92;
+      while (markerX < w) {
         ctx.fillStyle = this.timeOfDay === 'day' ? '#d2aa54' : '#ffc24d';
-        ctx.globalAlpha = this.timeOfDay === 'day' ? 0.55 : 1;
-        ctx.fillRect(x, 61, 11, 6);
+        ctx.globalAlpha = this.timeOfDay === 'day' ? 0.62 : 1;
+        ctx.fillRect(Math.floor(markerX), 60, 11, 6);
         ctx.globalAlpha = 1;
+        markerX += 178 + Math.floor(rnd() * 130);
       }
+
+      const plates = [438, 1188];
+      for (const x of plates) {
+        ctx.fillStyle = p.barrierDark;
+        ctx.globalAlpha = 0.68;
+        ctx.fillRect(x, 76, 42, 22);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = p.barrierTop;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 1, 77, 40, 20);
+        ctx.fillStyle = p.barrierTop;
+        ctx.fillRect(x + 8, 83, 25, 2);
+        ctx.fillRect(x + 8, 89, 16, 2);
+      }
+
+      // Restrained grime/drainage streaks along the lower wall.
+      ctx.fillStyle = p.barrierDark;
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.14 : 0.22;
+      for (let i = 0; i < 22; i++) {
+        const x = Math.floor(rnd() * w);
+        const streakH = 4 + Math.floor(rnd() * 17);
+        ctx.fillRect(x, 107 - streakH, 1 + Math.floor(rnd() * 2), streakH);
+      }
+      ctx.globalAlpha = 1;
     });
   }
 
@@ -346,6 +388,29 @@ export default class TokyoExpresswayBackground {
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.78 : 0.56;
       for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 106, 92, 4);
       ctx.globalAlpha = 1;
+
+      // Sparse highway furniture: repaired asphalt, cats-eyes and drain grates.
+      // These stay subtle so cars remain the visual focus.
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.16 : 0.24;
+      ctx.fillStyle = p.roadDark;
+      for (const [px, py, pw] of [[142, 42, 92], [612, 171, 128], [845, 67, 74]]) {
+        ctx.fillRect(px, py, pw, 2);
+        ctx.fillRect(px + 9, py + 2, Math.max(18, pw - 28), 1);
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = this.timeOfDay === 'day' ? '#d9d8c6' : '#c8c59d';
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.52 : 0.72;
+      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 108, 4, 2);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = p.roadDark;
+      for (const x of [332, 934]) {
+        ctx.fillRect(x, 194, 48, 7);
+        ctx.fillStyle = p.roadTexture;
+        for (let gx = x + 4; gx < x + 45; gx += 7) ctx.fillRect(gx, 195, 2, 5);
+        ctx.fillStyle = p.roadDark;
+      }
 
       ctx.fillStyle = p.barrierTop;
       ctx.fillRect(0, 202, w, 3);
@@ -398,6 +463,7 @@ export default class TokyoExpresswayBackground {
         .setOrigin(0, 0)
         .setDisplaySize(2048, 341)
         .setDepth(0);
+      this.skylineMaxTravel = Math.max(0, this.skyline.displayWidth - this.width);
     }
 
     this.road = this.scene.add.tileSprite(0, 278, this.width, 270, this.keys.road)
@@ -421,7 +487,9 @@ export default class TokyoExpresswayBackground {
     if (this.skyline) {
       // 0.0131 gives ~400 px of far-background travel over a 1/4 mile at
       // Tokyo SHIFT's 76 px/m world scale: distant enough to feel enormous.
-      this.skyline.x = -cameraPx * 0.0131;
+      const desiredTravel = cameraPx * 0.0131;
+      const travel = Math.min(desiredTravel, this.skylineMaxTravel || 0);
+      this.skyline.x = -travel;
     } else {
       this.backdrop.tilePositionX = cameraPx * 0.24;
     }
