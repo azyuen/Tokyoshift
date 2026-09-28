@@ -319,12 +319,12 @@ export default class ProfileSelectScene extends Phaser.Scene {
   }
 
   buildContinueButton() {
-    this.continueButton = this.add.rectangle(780, 744, 470, 54, 0x0c2b29, 1)
+    this.continueButton = this.add.rectangle(780, 762, 470, 54, 0x0c2b29, 1)
       .setStrokeStyle(3, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(20);
 
-    this.continueLabel = this.add.text(780, 744, '', {
+    this.continueLabel = this.add.text(780, 762, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#f2fffb',

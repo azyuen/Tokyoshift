@@ -1,4 +1,4 @@
-export const WORLD_PHASE_DURATION_MS = 30 * 60 * 1000;
+export const WORLD_PHASE_DURATION_MS = 15 * 60 * 1000;
 
 const WORLD_CYCLE_EPOCH_KEY = 'tokyoShiftWorldCycleEpochV1';
 const WORLD_PHASES = ['night', 'day'];

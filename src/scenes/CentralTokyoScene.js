@@ -1120,9 +1120,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   getMarketBayPoses() {
     return [
-      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 314, w: 255, depth: 9, flip: false },
-      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 314, w: 255, depth: 10, flip: false },
-      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 314, w: 255, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 288, w: 255, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 288, w: 255, depth: 10, flip: false },
+      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 288, w: 255, depth: 9, flip: false },
     ];
   }
 
@@ -1168,7 +1168,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const objects = this.createCarDisplay(
         car,
         STAGE.x + STAGE.w * 0.52,
-        STAGE.y + 412,
+        STAGE.y + 386,
         650,
         16,
         listing.paintColor,
@@ -1712,7 +1712,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const carObjects = this.createCarDisplay(
         car,
         STAGE.x + STAGE.w * 0.52,
-        STAGE.y + 414,
+        STAGE.y + 388,
         660,
         16,
         getCarPaintColor(carState),
@@ -1741,33 +1741,24 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setOrigin(1, 0).setDepth(42).setInteractive({ useHandCursor: true }));
       back.on('pointerdown', () => this.transitionWheelPreview(null));
     } else {
+      // These centres correspond to the ten illustrated display boxes in the
+      // authored wheel-shop background: five across, two rows. Keep the wall
+      // visually clean; item name/price appears only after selection.
+      const wheelSlots = [
+        [0.115, 0.205], [0.307, 0.205], [0.500, 0.205], [0.693, 0.205], [0.885, 0.205],
+        [0.115, 0.485], [0.307, 0.485], [0.500, 0.485], [0.693, 0.485], [0.885, 0.485],
+      ];
+
       listings.forEach((option, index) => {
-        const col = index % 5;
-        const row = Math.floor(index / 5);
-        const x = STAGE.x + 126 + col * 222;
-        const y = STAGE.y + 138 + row * 164;
+        const slot = wheelSlots[index] || [0.5, 0.35];
+        const x = STAGE.x + STAGE.w * slot[0];
+        const y = STAGE.y + STAGE.h * slot[1];
         const wheel = this.addContent(this.add.image(
           x, y, option.textureKey
-        ).setDisplaySize(94, 94).setDepth(18).setInteractive({ useHandCursor: true }));
+        ).setDisplaySize(104, 104).setDepth(18).setInteractive({ useHandCursor: true }));
 
-        const tierColor = option.tier === 'HERO'
-          ? '#ff9fc7'
-          : option.tier === 'TUNER'
-            ? '#ffe08a'
-            : '#9fdcff';
-        this.addContent(this.add.text(
-          x,
-          y + 60,
-          option.label,
-          {
-            fontFamily: PIXEL_FONT,
-            fontSize: '5px',
-            color: tierColor,
-            backgroundColor: '#06101bcc',
-            padding: { x: 5, y: 3 },
-            align: 'center',
-          }
-        ).setOrigin(0.5, 0).setDepth(20));
+        wheel.on('pointerover', () => wheel.setScale(wheel.scaleX * 1.06));
+        wheel.on('pointerout', () => wheel.setDisplaySize(104, 104));
         wheel.on('pointerdown', () => this.transitionWheelPreview(index));
       });
     }

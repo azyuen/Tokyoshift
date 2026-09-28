@@ -3219,7 +3219,7 @@ export default class MeetScene extends Phaser.Scene {
 
       const textX = x - 42;
 
-      const name = this.add.text(textX, cardY - 49, character.name.toUpperCase(), {
+      const name = this.add.text(textX, cardY - 63, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: '#ffffff'
@@ -3232,7 +3232,7 @@ export default class MeetScene extends Phaser.Scene {
           ? (character.resultQuotes?.win || 'That run was mine.')
           : offer.quote;
 
-      const quote = this.add.text(textX, cardY - 20, '"' + quoteText + '"', {
+      const quote = this.add.text(textX, cardY - 35, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
         fontSize: '12px',
         color: offer.locked ? '#8f9da6' : '#9fb4c2',

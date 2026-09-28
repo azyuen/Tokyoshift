@@ -311,6 +311,57 @@ export function getProfileState(index, preferSession = true) {
     : (slot.manual || slot.session || null);
 }
 
+export function exportProfileBackup(index, build = 'R247') {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const state = getProfileState(slotIndex, true);
+  if (!state) return null;
+
+  return {
+    format: 'TOKYO_SHIFT_PROFILE_BACKUP',
+    formatVersion: 1,
+    gameBuild: String(build || 'UNKNOWN'),
+    exportedAt: new Date().toISOString(),
+    slot: slotIndex + 1,
+    state: clonePlain(normaliseState(state)),
+  };
+}
+
+export function importProfileBackup(index, payload) {
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('INVALID BACKUP FILE');
+  }
+  if (String(payload.format || '') !== 'TOKYO_SHIFT_PROFILE_BACKUP') {
+    throw new Error('NOT A TOKYO SHIFT PROFILE BACKUP');
+  }
+  if (Number(payload.formatVersion || 0) !== 1) {
+    throw new Error('UNSUPPORTED BACKUP VERSION');
+  }
+  if (!payload.state || typeof payload.state !== 'object') {
+    throw new Error('BACKUP HAS NO PROFILE DATA');
+  }
+
+  const state = {
+    ...normaliseState(payload.state),
+    savedAt: new Date().toISOString(),
+  };
+  const store = ensureProfileStore();
+  const existing = store.slots[slotIndex];
+  store.slots[slotIndex] = {
+    manual: clonePlain(state),
+    session: clonePlain(state),
+    createdAt: existing?.createdAt || payload.exportedAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  writeProfileStore(store);
+
+  if (slotIndex === getActiveProfileIndex()) {
+    mirrorActiveProfile(store.slots[slotIndex]);
+  }
+
+  return clonePlain(state);
+}
+
 export function activateProfile(registry, index, preferSession = true) {
   const slotIndex = setActiveProfileIndex(index);
   const state = getProfileState(slotIndex, preferSession);

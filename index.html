@@ -9,9 +9,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Tokyo SHIFT" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="./app-icon.svg?v=20260922-r112" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180.png?v=20260929-r247" />
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./app-icon-180.png?v=20260929-r247" />
   <link rel="icon" href="./app-icon.svg?v=20260922-r112" type="image/svg+xml" />
-  <link rel="manifest" href="./manifest.webmanifest?v=20260922-r112" />
+  <link rel="manifest" href="./manifest.webmanifest?v=20260929-r247" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -64,7 +65,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R246</div>
+    <div id="build-stamp">R247</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -141,7 +142,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R246';
+      let resolvedBuild = 'R247';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -189,6 +190,6 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260929-r246"></script>
+  <script type="module" src="./src/main.js?v=20260929-r247"></script>
 </body>
 </html>

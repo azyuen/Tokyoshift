@@ -10,7 +10,13 @@
   "orientation": "landscape-primary",
   "icons": [
     {
-      "src": "./app-icon.svg?v=20260921-r41",
+      "src": "./app-icon-180.png?v=20260929-r247",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./app-icon.svg?v=20260929-r247",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

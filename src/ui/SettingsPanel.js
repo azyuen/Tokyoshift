@@ -8,7 +8,9 @@ import {
   setActiveProfileIndex,
   saveSessionState,
   saveIdentityState,
-} from '../state/GameState.js?v=20260926-r214';
+  exportProfileBackup,
+  importProfileBackup,
+} from '../state/GameState.js?v=20260929-r247';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
@@ -165,6 +167,139 @@ function showRenameDriverPanel(scene, onSaved = null) {
   });
 
   window.setTimeout(() => firstInput.focus(), 60);
+}
+
+function safeBackupFilenamePart(value = 'driver') {
+  return String(value || 'driver')
+    .trim()
+    .replace(/[^a-z0-9_-]+/gi, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40) || 'driver';
+}
+
+function downloadProfileBackup(scene, profileIndex) {
+  const build = String(document.getElementById('build-stamp')?.textContent || 'R247');
+  const payload = exportProfileBackup(profileIndex, build);
+  if (!payload) return false;
+
+  const state = payload.state || {};
+  const driver = safeBackupFilenamePart(
+    [state.firstName, state.lastName].filter(Boolean).join('_') || ('profile_' + (profileIndex + 1))
+  );
+  const date = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = 'TokyoSHIFT_' + driver + '_' + date + '.json';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+  return true;
+}
+
+function chooseProfileBackupFile() {
+  return new Promise(resolve => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+
+    const cleanup = () => {
+      try { input.remove(); } catch (e) {}
+    };
+
+    input.addEventListener('change', async () => {
+      const file = input.files?.[0];
+      if (!file) {
+        cleanup();
+        resolve(null);
+        return;
+      }
+
+      try {
+        const raw = await file.text();
+        resolve(JSON.parse(raw));
+      } catch (e) {
+        resolve({ __parseError: true });
+      } finally {
+        cleanup();
+      }
+    }, { once: true });
+
+    input.click();
+  });
+}
+
+function showBackupImportConfirm(scene, profileIndex, payload, onConfirm) {
+  const objects = [];
+  const add = obj => {
+    objects.push(obj);
+    return obj;
+  };
+  const close = () => destroyObjects(objects);
+
+  const state = payload?.state || {};
+  const name = [state.firstName, state.lastName].filter(Boolean).join(' ') || 'UNKNOWN DRIVER';
+  const carCount = Array.isArray(state.ownedCarIds) ? state.ownedCarIds.length : 0;
+  const exported = payload?.exportedAt
+    ? new Date(payload.exportedAt).toLocaleString()
+    : 'UNKNOWN DATE';
+
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x010309, 0.86)
+    .setDepth(250)
+    .setInteractive());
+  add(scene.add.rectangle(780, 420, 720, 390, 0x09141f, 1)
+    .setStrokeStyle(2, 0xffc760, 1)
+    .setDepth(251));
+
+  add(scene.add.text(780, 292, 'IMPORT PROFILE BACKUP?', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '13px',
+    color: '#fff5dc',
+  }).setOrigin(0.5).setDepth(252));
+
+  add(scene.add.text(
+    780,
+    380,
+    'SLOT ' + (profileIndex + 1) + ' WILL BE OVERWRITTEN\n\n' +
+      name.toUpperCase() + '\n' +
+      carCount + ' CARS  •  ¥' + Number(state.cash || 0).toLocaleString('en-US') + '\n' +
+      'BACKUP: ' + exported,
+    {
+      fontFamily: BODY_FONT,
+      fontSize: '12px',
+      color: '#c8d5dc',
+      align: 'center',
+      lineSpacing: 5,
+      wordWrap: { width: 570 },
+    }
+  ).setOrigin(0.5).setDepth(252));
+
+  const cancel = add(scene.add.rectangle(655, 555, 200, 48, 0x131c27, 1)
+    .setStrokeStyle(1, 0x617987, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(252));
+  add(scene.add.text(655, 555, 'CANCEL', {
+    fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d7e5ed',
+  }).setOrigin(0.5).setDepth(253));
+
+  const confirm = add(scene.add.rectangle(905, 555, 200, 48, 0x302619, 1)
+    .setStrokeStyle(2, 0xffc760, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(252));
+  add(scene.add.text(905, 555, 'OVERWRITE', {
+    fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff5dc',
+  }).setOrigin(0.5).setDepth(253));
+
+  cancel.on('pointerdown', close);
+  confirm.on('pointerdown', () => {
+    close();
+    onConfirm?.();
+  });
 }
 
 function showControlsPanel(scene) {
@@ -382,6 +517,22 @@ export function showSettingsPanel(scene) {
 
   closeButton.on('pointerdown', close);
 
+  if (scene.registry.get('devMode')) {
+    const wheelFitButton = add(scene.add.rectangle(610, 72, 150, 40, 0x182138, 1)
+      .setStrokeStyle(1, 0xc59652, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(183));
+    add(scene.add.text(610, 72, 'WHEEL FIT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#ffe1a6',
+    }).setOrigin(0.5).setDepth(184));
+    wheelFitButton.on('pointerdown', () => {
+      close();
+      scene.scene.start('WheelCalibrationScene');
+    });
+  }
+
   const controlsButton = add(scene.add.rectangle(810, 72, 170, 40, 0x102138, 1)
     .setStrokeStyle(1, 0x45a8cc, 1)
     .setInteractive({ useHandCursor: true })
@@ -473,15 +624,13 @@ export function showSettingsPanel(scene) {
   buildVolumeRow('MUSIC', 150, 'music');
   buildVolumeRow('SOUND FX', 212, 'sfx');
 
-  add(scene.add.line(780, 242, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
-
-  add(scene.add.text(340, 250, 'DRIVER PROFILES', {
+  add(scene.add.text(340, 270, 'DRIVER PROFILES', {
     fontFamily: PIXEL_FONT,
     fontSize: '9px',
     color: '#a8d4ec',
   }).setDepth(183));
 
-  add(scene.add.text(1220, 252, '3 SLOTS', {
+  add(scene.add.text(1220, 272, '3 SLOTS', {
     fontFamily: BODY_FONT,
     fontSize: '10px',
     color: '#718a99',
@@ -859,17 +1008,79 @@ export function showSettingsPanel(scene) {
 
   refreshProfileSelection();
 
-  add(scene.add.line(780, 724, 320, 0, 1240, 0, 0x315470, 0.9).setDepth(182));
-
-  add(scene.add.text(780, 752, 'Tap a profile to select it, then use the button above to open it.', {
+  add(scene.add.text(650, 738, 'Tap a profile to select it, then use the button above to open it.', {
     fontFamily: BODY_FONT,
     fontSize: '9px',
     color: '#8099a8',
   }).setOrigin(0.5).setDepth(183));
 
-  add(scene.add.text(780, 780, 'Each profile autosaves its own cars, cash, tuning, history and race record.', {
-    fontFamily: BODY_FONT,
-    fontSize: '9px',
-    color: '#8099a8',
-  }).setOrigin(0.5).setDepth(183));
+  add(scene.add.text(942, 781, 'PROFILE BACKUP', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '5px',
+    color: '#536b79',
+  }).setOrigin(1, 0.5).setDepth(183));
+
+  const exportBackupButton = add(scene.add.rectangle(1040, 781, 170, 28, 0x0d1720, 1)
+    .setStrokeStyle(1, 0x395467, 1)
+    .setDepth(183));
+  const exportBackupLabel = add(scene.add.text(1040, 781, 'EXPORT', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '5px',
+    color: '#8da7b5',
+  }).setOrigin(0.5).setDepth(184));
+
+  const importBackupButton = add(scene.add.rectangle(1210, 781, 150, 28, 0x0d1720, 1)
+    .setStrokeStyle(1, 0x395467, 1)
+    .setDepth(183));
+  const importBackupLabel = add(scene.add.text(1210, 781, 'IMPORT', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '5px',
+    color: '#8da7b5',
+  }).setOrigin(0.5).setDepth(184));
+
+  const selectedSlotForBackup = slots[selectedProfileIndex];
+  if (selectedSlotForBackup?.occupied) {
+    exportBackupButton.setInteractive({ useHandCursor: true });
+    exportBackupButton.on('pointerdown', () => downloadProfileBackup(scene, selectedProfileIndex));
+  } else {
+    exportBackupLabel.setColor('#4f5b63');
+  }
+
+  importBackupButton.setInteractive({ useHandCursor: true });
+  importBackupButton.on('pointerdown', async () => {
+    if (transitioning) return;
+    const payload = await chooseProfileBackupFile();
+    if (!payload) return;
+
+    if (
+      payload.__parseError ||
+      payload.format !== 'TOKYO_SHIFT_PROFILE_BACKUP' ||
+      Number(payload.formatVersion || 0) !== 1 ||
+      !payload.state ||
+      typeof payload.state !== 'object'
+    ) {
+      importBackupLabel.setText('INVALID FILE').setColor('#ff8fa3');
+      window.setTimeout(() => {
+        if (importBackupLabel?.active) importBackupLabel.setText('IMPORT').setColor('#8da7b5');
+      }, 1800);
+      return;
+    }
+
+    showBackupImportConfirm(scene, selectedProfileIndex, payload, () => {
+      try {
+        importProfileBackup(selectedProfileIndex, payload);
+      } catch (e) {
+        importBackupLabel.setText('IMPORT FAILED').setColor('#ff8fa3');
+        return;
+      }
+
+      if (selectedProfileIndex === getActiveProfileIndex()) {
+        reloadForProfile('RESTORING BACKUP');
+        return;
+      }
+
+      close();
+      showSettingsPanel(scene);
+    });
+  });
 }
