@@ -35,7 +35,7 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r234';
-import { createMeetOpponentMatch, rollMeetDriverRating } from '../data/meetMatchmaking.js?v=20260928-r234';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r235';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r231';
@@ -55,7 +55,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r233';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r235';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
@@ -281,6 +281,7 @@ export default class MeetScene extends Phaser.Scene {
       && storedOffers.every(offer =>
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
+        offer?.driverSkillSource === 'LOCATION' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -2455,6 +2456,13 @@ export default class MeetScene extends Phaser.Scene {
     Phaser.Utils.Array.Shuffle(paintPool);
     const offerCount = Math.max(1, Number(PROGRESSION_BALANCE.meetMatchmaking.offerCount || 3));
 
+    // The location owns driver difficulty. Use its authored three rating slots
+    // as the Meet population (shuffled only to avoid a fixed card order).
+    const locationDriverRatings = Array.isArray(profile.ratingSlots) && profile.ratingSlots.length
+      ? [...profile.ratingSlots]
+      : [2, 3, 3];
+    Phaser.Utils.Array.Shuffle(locationDriverRatings);
+
     return Array.from({ length: offerCount }, (_, slotIndex) => {
       // Race context is chosen before vehicle matching because standing and
       // rolling performance are deliberately evaluated differently.
@@ -2463,8 +2471,11 @@ export default class MeetScene extends Phaser.Scene {
         ? '1/2 mile'
         : Phaser.Utils.Array.GetRandom(cfg.distances);
 
-      // DRIVER skill is rolled independently from the vehicle/build match.
-      const encounterRating = rollMeetDriverRating();
+      // DRIVER skill is independent from vehicle/build performance, but it is
+      // not global: the current location's authored population supplies it.
+      const encounterRating = Number(
+        locationDriverRatings[slotIndex % locationDriverRatings.length] || 3
+      );
       const characterId = chooseCharacterForRating(encounterRating);
       const character = characters[characterId];
 
@@ -2528,6 +2539,7 @@ export default class MeetScene extends Phaser.Scene {
         encounterRating,
         encounterAi,
         skillLabel,
+        driverSkillSource: 'LOCATION',
 
         // Vehicle development: intentionally independent from driver ability.
         opponentBuildRating: match.buildRating,
@@ -2951,11 +2963,9 @@ export default class MeetScene extends Phaser.Scene {
       const normalCashLoss = offer.resultState === 'PLAYER_LOSS' && !offer.pinkSlipResult;
       const quoteText = offer.resultState === 'PLAYER_WIN'
         ? (character.resultQuotes?.loss || 'You got me.')
-        : normalCashLoss
-          ? 'You lost last run.'
-          : offer.resultState === 'PLAYER_LOSS'
-            ? (character.resultQuotes?.win || 'That run was mine.')
-            : offer.quote;
+        : offer.resultState === 'PLAYER_LOSS'
+          ? (character.resultQuotes?.win || 'That run was mine.')
+          : offer.quote;
 
       const quote = this.add.text(textX, cardY - 20, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
@@ -2966,12 +2976,14 @@ export default class MeetScene extends Phaser.Scene {
       }).setDepth(35);
 
       let statusText = null;
-      if (offer.resultState && !normalCashLoss) {
-        const status = offer.pinkSlipResult === 'PLAYER_WIN'
-          ? 'DEFEATED // CAR WON'
-          : offer.pinkSlipResult === 'PLAYER_LOSS'
-            ? 'WON YOUR CAR'
-            : 'DEFEATED';
+      if (offer.resultState) {
+        const status = normalCashLoss
+          ? 'You lost the last run'
+          : offer.pinkSlipResult === 'PLAYER_WIN'
+            ? 'DEFEATED // CAR WON'
+            : offer.pinkSlipResult === 'PLAYER_LOSS'
+              ? 'WON YOUR CAR'
+              : 'DEFEATED';
 
         statusText = this.add.text(textX, cardY + 31, status, {
           fontFamily: PIXEL_FONT,
@@ -3341,7 +3353,17 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
-    if (this.specialChallengeActive || this.competitionPopup?.active) return;
+    // Never let a timed challenger or Meet refresh spawn underneath another
+    // screen. Once the overlay closes, this 1-second timer naturally retries.
+    const meetObscured = Boolean(
+      this.travelMapPopup?.active ||
+      this._settingsOverlay?.length ||
+      this.tunerChallengePopup?.active ||
+      this.competitionPopup?.active ||
+      this.lastCarPinkWarning?.active ||
+      sceneCutsceneActive(this)
+    );
+    if (this.specialChallengeActive || meetObscured) return;
     if (Date.now() >= this.nextRefreshAt) this.refreshOffersWithTransition();
   }
 
