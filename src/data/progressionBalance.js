@@ -21,6 +21,10 @@ export const PROGRESSION_BALANCE = {
     turboLaunchBase: 0.90,
     turboLaunchSpoolWeight: 0.08,
     turboLaunchOffBoostWeight: 0.06,
+
+    // A gearbox upgrade shortens only the brief shift interruption; it must not
+    // multiply the whole car's acceleration by 1 / shiftTimeScale.
+    gearboxPerformanceWeight: 0.22,
   },
 
   meetMatchmaking: {
