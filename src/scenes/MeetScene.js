@@ -34,10 +34,10 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r235';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r235';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r236';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r236';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r231';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
