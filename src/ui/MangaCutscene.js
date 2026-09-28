@@ -3,7 +3,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20260926-r214';
+} from '../data/cutscenes.js?v=20260928-r233';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
