@@ -3,7 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r248';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r249';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
@@ -111,10 +111,16 @@ export default class RaceScene extends Phaser.Scene {
 
     // First authored regional race panorama. Other regions/phases continue to
     // use the procedural far background until their skyline assets arrive.
-    if (this.raceDistrict === 'ODAIBA' && this.raceTimeOfDay === 'day') {
+    if (this.raceDistrict === 'ODAIBA') {
+      const odaibaSkylineKey = this.raceTimeOfDay === 'day'
+        ? 'raceSkylineOdaibaDay'
+        : 'raceSkylineOdaibaNight';
+      const odaibaSkylineFile = this.raceTimeOfDay === 'day'
+        ? 'skyline_odaiba_day.png'
+        : 'skyline_odaiba_night.png';
       queueImage(
-        'raceSkylineOdaibaDay',
-        'assets/Race/Skylines/skyline_odaiba_day.png?v=20260929-r247'
+        odaibaSkylineKey,
+        'assets/Race/Skylines/' + odaibaSkylineFile + '?v=20260929-r249'
       );
     }
 
@@ -342,8 +348,8 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    const skylineKey = this.raceDistrict === 'ODAIBA' && this.raceTimeOfDay === 'day'
-      ? 'raceSkylineOdaibaDay'
+    const skylineKey = this.raceDistrict === 'ODAIBA'
+      ? (this.raceTimeOfDay === 'day' ? 'raceSkylineOdaibaDay' : 'raceSkylineOdaibaNight')
       : null;
     this.environment = new TokyoExpresswayBackground(this, {
       timeOfDay: this.raceTimeOfDay,
