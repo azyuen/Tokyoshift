@@ -3115,7 +3115,7 @@ export default class MeetScene extends Phaser.Scene {
     };
   }
 
-  challengePinkSlips() {  challengePinkSlips() {
+  challengePinkSlips() {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
 
