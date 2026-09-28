@@ -2271,7 +2271,7 @@ export default class RaceScene extends Phaser.Scene {
       0xff4f92,
       'RIVAL',
       rivalDisplayName,
-      pinkLossCelebration ? 'WON YOUR CAR' : null
+      (isPinkSlip && !playerWon) ? 'WON YOUR CAR' : null
     );
 
     // Larger timing slip with more breathing room between every row.
