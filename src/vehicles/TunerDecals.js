@@ -95,6 +95,22 @@ export function normaliseTunerDecals(carState = {}) {
   return result;
 }
 
+export function preloadTunerDecalAssets(scene, carState = {}, cacheBust = '') {
+  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
+  const decals = normaliseTunerDecals(carState);
+  let queued = 0;
+
+  Object.keys(decals).forEach(decalId => {
+    const style = TUNER_DECAL_STYLES[decalId];
+    if (!style?.textureKey || !style?.suggestedPath) return;
+    if (scene.textures.exists(style.textureKey)) return;
+    scene.load.image(style.textureKey, style.suggestedPath + suffix);
+    queued += 1;
+  });
+
+  return queued;
+}
+
 export function hasTunerDecal(carState = {}, decalId) {
   return Boolean(normaliseTunerDecals(carState)[decalId]);
 }
