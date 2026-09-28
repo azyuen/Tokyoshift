@@ -1,21 +1,18 @@
 // Shared wheel-placement helper.
 //
-// Every car may specify independent front/rear X, Y and scale values.
+// R244 wheel standard:
+//   Every wheel PNG is a centred 384×384 transparent canvas with a consistent
+//   visible tyre footprint. Cars with measured wheel wells size the visible tyre
+//   directly to the authored rear/front arches, so generic and hero wheels now
+//   follow the same geometry rules.
 //
-// NORMAL CARS:
-//   Keep explicit per-axle calibration (or the legacy 1.16 fallback). The new
-//   layered roster opts into visible-well sizing and a shared tyre contact line.
+// Legacy scale values remain supported for cars without measured wheel wells.
+// Those values were calibrated against the old 1254×1254 canvases, so the
+// renderer automatically compensates when it sees a standard 384×384 wheel.
 //
-// HERO CARS:
-//   visual.wheelFitMode === 'visible-well' sizes the *visible tyre artwork*
-//   against the measured wheel arch. Hero wheel PNGs have different transparent
-//   padding, so using the full PNG canvas as the diameter makes some wheels look
-//   much smaller than others. We scan alpha once per wheel source, cache the
-//   visible diameter, and fit that diameter to the independently authored rear
-//   and front wheel wells.
-//
-// If alpha measurement is unavailable for any reason, the explicit axle scale
-// remains the safe fallback.
+// Alpha scanning is cached once per texture and is also used for true tyre
+// contact height. If measurement is unavailable, the explicit scale fallback
+// remains deterministic.
 
 export const LEGACY_WHEEL_RENDER_BOOST = 1.16;
 export const LEGACY_WHEEL_CANVAS_SIZE = 1254;
