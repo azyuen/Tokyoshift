@@ -282,6 +282,7 @@ export default class MeetScene extends Phaser.Scene {
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
+        offer?.matchmakingVersion === 'R236' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -2549,6 +2550,11 @@ export default class MeetScene extends Phaser.Scene {
         encounterAi,
         skillLabel,
         driverSkillSource: 'LOCATION',
+
+        // Matchmaking generation version forces pre-R236 saved Meet rosters to
+        // reroll once so the new regional vehicle difficulty takes effect.
+        matchmakingVersion: 'R236',
+        vehicleDifficultyProfile: profile.difficulty,
 
         // Vehicle development: intentionally independent from driver ability.
         opponentBuildRating: match.buildRating,
