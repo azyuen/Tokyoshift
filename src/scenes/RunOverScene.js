@@ -1,10 +1,12 @@
 import { cars } from '../data/cars.js?v=20260928-r232';
 import {
   applyStateToRegistry,
-  clearAllSaves,
+  beginNewProfile,
   createFreshRunStateFromRegistry,
+  getActiveProfileIndex,
+  normaliseStarterCarId,
   saveSessionState,
-} from '../state/GameState.js?v=20260926-r214';
+} from '../state/GameState.js?v=20260928-r237';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -16,12 +18,22 @@ export default class RunOverScene extends Phaser.Scene {
   create() {
     document.body.dataset.scene = 'setup';
     this.scale.resize(1560, 840);
+
+    // Race/cutscene teardown can leave input plugins in a disabled state. The
+    // run-over screen must always be actionable because it is the only recovery
+    // path after the last car is lost.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
+    try { this.time.paused = false; } catch (e) {}
+
+    this.transitioning = false;
+    this.runOverButtons = [];
     playMusic('title');
 
     const firstName = String(this.registry.get('firstName') || '').trim();
     const lastName = String(this.registry.get('lastName') || '').trim();
     const driverName = [firstName, lastName].filter(Boolean).join(' ') || 'DRIVER';
-    const starterCarId = this.registry.get('starterCarId') === 'ek9' ? 'ek9' : 'ae86';
+    const starterCarId = normaliseStarterCarId(this.registry.get('starterCarId'));
     const starter = cars[starterCarId] || cars.ae86;
     const wins = Number(this.registry.get('wins') || 0);
     const losses = Number(this.registry.get('losses') || 0);
@@ -75,9 +87,14 @@ export default class RunOverScene extends Phaser.Scene {
 
       if (enabled) {
         box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', onPress);
+        box.on('pointerdown', () => {
+          if (this.transitioning) return;
+          onPress();
+        });
       }
-      return { box, text };
+      const button = { box, text };
+      this.runOverButtons.push(button);
+      return button;
     };
 
     addButton(
@@ -91,17 +108,14 @@ export default class RunOverScene extends Phaser.Scene {
       574,
       'DRIVER PROFILES',
       0x45d7ff,
-      () => this.scene.start('ProfileSelectScene')
+      () => this.openDriverProfiles()
     );
 
     addButton(
       648,
       'NEW DRIVER // RESET THIS SLOT',
       0xff5f93,
-      () => {
-        clearAllSaves();
-        this.scene.start('CharacterSelectScene');
-      }
+      () => this.startNewDriver()
     );
 
     this.add.text(780, 718, 'Restart Night resets this run but keeps your name, character and starter choice.', {
@@ -112,10 +126,69 @@ export default class RunOverScene extends Phaser.Scene {
     }).setOrigin(0.5);
   }
 
+  setTransitioning(label = '') {
+    if (this.transitioning) return false;
+    this.transitioning = true;
+
+    this.runOverButtons.forEach(({ box }) => {
+      try { box?.disableInteractive?.(); } catch (e) {}
+    });
+
+    if (label) window.TOKYO_SHIFT_SHOW_SPLASH?.(label);
+    return true;
+  }
+
+  reloadApp({ label = 'LOADING', internal = false, forceGarage = false } = {}) {
+    if (!this.setTransitioning(label)) return;
+
+    try {
+      if (internal) {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftBootMessage', label);
+      } else {
+        sessionStorage.removeItem('tokyoShiftInternalReload');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      }
+
+      if (forceGarage) sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      else sessionStorage.removeItem('tokyoShiftForceGarage');
+    } catch (e) {}
+
+    window.setTimeout(() => window.location.reload(), 60);
+  }
+
   restartNight() {
     const fresh = createFreshRunStateFromRegistry(this.registry);
     applyStateToRegistry(this.registry, fresh);
     saveSessionState(this.registry);
-    this.scene.start('GarageScene');
+
+    // Reload through BootScene instead of crossing directly out of the
+    // game-over scene. This clears any stale race/cutscene input state.
+    this.reloadApp({
+      label: 'RESTARTING NIGHT',
+      internal: true,
+      forceGarage: true,
+    });
+  }
+
+  openDriverProfiles() {
+    // A normal reload intentionally lands on ProfileSelectScene when any
+    // occupied profile exists, including this completed run.
+    this.reloadApp({
+      label: 'DRIVER PROFILES',
+      internal: false,
+      forceGarage: false,
+    });
+  }
+
+  startNewDriver() {
+    // Reset only the active slot, preserve the user's other profiles, then use
+    // an internal reload so BootScene goes straight to CharacterSelectScene.
+    beginNewProfile(getActiveProfileIndex());
+    this.reloadApp({
+      label: 'CREATING DRIVER',
+      internal: true,
+      forceGarage: false,
+    });
   }
 }

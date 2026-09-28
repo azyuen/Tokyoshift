@@ -7,7 +7,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260925-r193';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260923-r160';
 import { characters, playableCharacterOrder } from '../data/characters.js?v=20260926-r213';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260928-r234';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260928-r237';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
@@ -325,7 +325,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
       return;
     }
 
-    const starterCarId = this.currentStarterCarId === 'ek9' ? 'ek9' : 'ae86';
+    const starterCarId = this.currentStarterCarId === 'ef' ? 'ef' : 'ae86';
     const state = createDefaultGameState({ starterCarId });
     state.firstName = firstName;
     state.lastName = lastName;
