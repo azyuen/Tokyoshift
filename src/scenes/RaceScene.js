@@ -2711,9 +2711,19 @@ export default class RaceScene extends Phaser.Scene {
     if (this.raceMode === 'COMPETITION') return;
 
     const locationId = this.registry.get('meetLocation') || '';
-    if (!locationId || !hasRegionalTeam(this.raceDistrict)) return;
-
     const snapshot = this.registry.get('selectedRaceMeetOffer') || {};
+
+    // Persist results for every actual Meet race, not only districts that have
+    // a regional team. Older code gated this on hasRegionalTeam(), which meant
+    // wins in other Meets were removed from view without ever gaining a saved
+    // loss pose/locked card.
+    const isMeetRace = Boolean(
+      locationId &&
+      snapshot &&
+      typeof snapshot === 'object' &&
+      (snapshot.characterId || this.registry.get('selectedRaceSpecialChallenge'))
+    );
+    if (!isMeetRace) return;
     const rosters = { ...(this.registry.get('meetRosters') || {}) };
     const current = Array.isArray(rosters[locationId])
       ? rosters[locationId].map(offer => ({ ...offer }))
