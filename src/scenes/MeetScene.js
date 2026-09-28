@@ -1939,6 +1939,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons?.forEach(item => item.box.disableInteractive());
 
+    try {
     // The challenger car now rolls naturally into the meet from the left.
     // Start fully outside the masked stage, then coast to its parking position.
     const startX = animate ? STAGE.x - 390 : 640;
@@ -2134,6 +2135,10 @@ export default class MeetScene extends Phaser.Scene {
         },
       });
     });
+    } catch (error) {
+      console.warn('Special challenger render recovered', error);
+      this.recoverSpecialChallengerView();
+    }
   }
 
   declineSpecialChallenger() {
