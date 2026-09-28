@@ -24,7 +24,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260928-r234';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r233';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r235';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -34,7 +34,7 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r234';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r235';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r235';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
