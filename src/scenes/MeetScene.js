@@ -1,4 +1,9 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
+import {
+  getCarBodyScaleForWidth,
+  preloadCarAppearanceAssets,
+  preloadCarWheel,
+  ensureDerivedModularCarTextures,
+} from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
   DEFAULT_PAINT_COLOR,
@@ -270,6 +275,7 @@ export default class MeetScene extends Phaser.Scene {
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
     this.specialChallengeActive = false;
+    this.specialChallengePreparing = false;
     this.specialChallengeObjects = [];
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
@@ -1767,6 +1773,125 @@ export default class MeetScene extends Phaser.Scene {
     this.specialChallengeObjects = [];
   }
 
+  specialChallengerAssetsReady(challenger) {
+    const character = characters[challenger?.characterId];
+    const car = cars[challenger?.carId];
+    if (!character || !car) return false;
+
+    try {
+      ensureDerivedModularCarTextures(this, { [challenger.carId]: car });
+    } catch (e) {}
+
+    const characterKey = character.visual?.spriteKey;
+    const bodyKey = getCarBodyTextureKey(this, car);
+    const wheelKey = car.visual?.wheelKey;
+
+    return Boolean(
+      characterKey &&
+      bodyKey &&
+      wheelKey &&
+      this.textures.exists(characterKey) &&
+      this.textures.exists(bodyKey) &&
+      this.textures.exists(wheelKey)
+    );
+  }
+
+  recoverSpecialChallengerView({ clearChallenger = false } = {}) {
+    this.specialChallengePreparing = false;
+    this.specialChallengeActive = false;
+    this.clearSpecialChallengeObjects();
+
+    if (clearChallenger) {
+      this.registry.set('specialChallenger', null);
+      saveSessionState(this.registry);
+    }
+
+    this.restoreMeetActionListeners();
+    this.rollOffers({ resetTimer: false, force: true });
+  }
+
+  prepareSpecialChallengerAssets(challenger, animate = true) {
+    if (this.specialChallengePreparing) return false;
+
+    const character = characters[challenger?.characterId];
+    const car = cars[challenger?.carId];
+    if (!character || !car) {
+      this.recoverSpecialChallengerView({ clearChallenger: true });
+      return false;
+    }
+
+    try {
+      ensureDerivedModularCarTextures(this, { [challenger.carId]: car });
+    } catch (e) {}
+
+    if (this.specialChallengerAssetsReady(challenger)) return true;
+
+    this.specialChallengePreparing = true;
+
+    // Keep the normal meet visible until every challenger asset is ready.
+    // This prevents the old failure mode where the three rivals were cleared
+    // first and an iOS loading hiccup left only the persistent action buttons.
+    (this.offers || []).forEach(offer => offer?.card?.disableInteractive?.());
+    this.raceButton?.disableInteractive();
+    this.pinkSlipButton?.disableInteractive();
+    this.gpsTravelButton?.disableInteractive();
+    this.modeButtons?.forEach(item => item.box.disableInteractive());
+
+    if (
+      character.visual?.spriteKey &&
+      character.visual?.path &&
+      !this.textures.exists(character.visual.spriteKey)
+    ) {
+      this.load.image(
+        character.visual.spriteKey,
+        character.visual.path + '?v=20260923-r145'
+      );
+    }
+
+    preloadCarAppearanceAssets(
+      this,
+      { [challenger.carId]: car },
+      '20260928-r232'
+    );
+    preloadCarWheel(this, car);
+
+    const retry = () => {
+      this.specialChallengePreparing = false;
+
+      try {
+        ensureDerivedModularCarTextures(this, { [challenger.carId]: car });
+      } catch (e) {}
+
+      const live = this.registry.get('specialChallenger');
+      const stillCurrent = Boolean(
+        live?.active &&
+        live.createdAt === challenger.createdAt &&
+        live.locationId === this.selectedMeetLocation
+      );
+
+      if (stillCurrent && this.specialChallengerAssetsReady(challenger)) {
+        this.showSpecialChallenger(challenger, animate);
+        return;
+      }
+
+      this.recoverSpecialChallengerView({
+        clearChallenger: stillCurrent && !this.specialChallengerAssetsReady(challenger),
+      });
+    };
+
+    const loaderBusy = Boolean(this.load.isLoading?.());
+    const hasQueued = Number(this.load.list?.size || 0) > 0;
+
+    if (loaderBusy || hasQueued) {
+      this.load.once('complete', retry);
+      if (!loaderBusy) this.load.start();
+    } else {
+      retry();
+    }
+
+    return false;
+  }
+
   restoreMeetActionListeners() {
     this.pinkSlipButton?.removeAllListeners('pointerdown');
     this.pinkSlipButton?.on('pointerdown', () => this.challengePinkSlips());
@@ -1790,6 +1915,22 @@ export default class MeetScene extends Phaser.Scene {
   showSpecialChallenger(challenger, animate = true) {
     if (!challenger || !this.hasCar) return;
 
+    const character = characters[challenger.characterId];
+    const car = cars[challenger.carId];
+
+    // Validate definitions and textures before clearing the ordinary meet.
+    // On slower iPhones a challenger could previously arrive while an asset
+    // was still loading, leaving the stage/cards blank after they were removed.
+    if (!character || !car) {
+      this.recoverSpecialChallengerView({ clearChallenger: true });
+      return;
+    }
+    if (!this.specialChallengerAssetsReady(challenger)) {
+      this.prepareSpecialChallengerAssets(challenger, animate);
+      return;
+    }
+
+    this.specialChallengePreparing = false;
     this.specialChallengeActive = true;
     this.clearCardObjects();
     this.clearStageObjects();
@@ -1798,10 +1939,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons?.forEach(item => item.box.disableInteractive());
 
-    const character = characters[challenger.characterId];
-    const car = cars[challenger.carId];
-    if (!character || !car) return;
-
+    try {
     // The challenger car now rolls naturally into the meet from the left.
     // Start fully outside the masked stage, then coast to its parking position.
     const startX = animate ? STAGE.x - 390 : 640;
@@ -1811,7 +1949,7 @@ export default class MeetScene extends Phaser.Scene {
       startX,
       448,
       690,
-      28,
+      48,
       false,
       normalisePaintColor(challenger.paintColor, DEFAULT_PAINT_COLOR)
     );
@@ -1848,7 +1986,7 @@ export default class MeetScene extends Phaser.Scene {
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
     const driver = this.add.image(930, 590, character.visual.spriteKey)
       .setOrigin(0.5, 1)
-      .setDepth(36)
+      .setDepth(56)
       .setMask(this.stageMask)
       .setAlpha(animate ? 0 : 1);
 
@@ -1868,7 +2006,7 @@ export default class MeetScene extends Phaser.Scene {
       0x000000,
       0.52
     ).setOrigin(0, 0.5)
-      .setDepth(27.8)
+      .setDepth(47.8)
       .setMask(this.stageMask)
       .setAlpha(animate ? 0 : 1);
 
@@ -1911,10 +2049,10 @@ export default class MeetScene extends Phaser.Scene {
       128,
       0x130b14,
       0.98
-    ).setStrokeStyle(3, 0xff5f93, 0.92).setDepth(34);
+    ).setStrokeStyle(3, 0xff5f93, 0.92).setDepth(64);
 
     const portraitBg = this.add.rectangle(190, 742, 104, 104, 0x15101a, 1)
-      .setStrokeStyle(2, 0xff739e, 0.92).setDepth(35);
+      .setStrokeStyle(2, 0xff739e, 0.92).setDepth(65);
 
     const portraitProfile = createCharacterProfile(this, {
       characterId: challenger.characterId,
@@ -1924,12 +2062,12 @@ export default class MeetScene extends Phaser.Scene {
       frameWidth: 104,
       frameHeight: 104,
       side: 'left',
-      depth: 36,
+      depth: 66,
     });
 
     const name = this.add.text(270, 690, character.name.toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
-    }).setDepth(36);
+    }).setDepth(66);
 
     const details = this.add.text(
       270,
@@ -1943,7 +2081,7 @@ export default class MeetScene extends Phaser.Scene {
         lineSpacing: 5,
         wordWrap: { width: CARDS.w - 330 },
       }
-    ).setDepth(36);
+    ).setDepth(66);
 
     this.specialChallengeObjects.push(
       card,
@@ -1997,6 +2135,10 @@ export default class MeetScene extends Phaser.Scene {
         },
       });
     });
+    } catch (error) {
+      console.warn('Special challenger render recovered', error);
+      this.recoverSpecialChallengerView();
+    }
   }
 
   declineSpecialChallenger() {
@@ -2579,7 +2721,11 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  rollOffers({ resetTimer = true } = {}) {
+  rollOffers({ resetTimer = true, force = false } = {}) {
+    if (!force && (this.specialChallengeActive || this.specialChallengePreparing)) {
+      return;
+    }
+
     this.clearCardObjects();
     this.clearStageObjects();
 
@@ -3378,7 +3524,7 @@ export default class MeetScene extends Phaser.Scene {
       this.lastCarPinkWarning?.active ||
       sceneCutsceneActive(this)
     );
-    if (this.specialChallengeActive || meetObscured) return;
+    if (this.specialChallengeActive || this.specialChallengePreparing || meetObscured) return;
     if (Date.now() >= this.nextRefreshAt) this.refreshOffersWithTransition();
   }
 
