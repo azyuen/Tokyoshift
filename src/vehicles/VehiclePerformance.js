@@ -133,8 +133,14 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
 
   const basePower = powerToWeight / cfg.referencePowerToWeight;
   const baseTorque = torqueToWeight / cfg.referenceTorqueToWeight;
-  const standingCore = (basePower * 0.74 + baseTorque * 0.26);
-  const rollingCore = (basePower * 0.84 + baseTorque * 0.16);
+  const standingCore = (basePower * 0.82 + baseTorque * 0.18);
+  const rollingCore = (basePower * 0.90 + baseTorque * 0.10);
+  // Traction/torque shape matter, but should refine—not erase—the real
+  // power-to-weight difference between otherwise dissimilar cars.
+  const standingTraction = 0.72 + tractionFactor * 0.28;
+  const clutchUsability = 0.65 + clutchFactor * 0.35;
+  const standingBand = 0.70 + bandFactor * 0.30;
+  const rollingBand = 0.78 + bandFactor * 0.22;
 
   const nosPowerKw = Math.max(0, Number(car.nosPower || 0)) * 0.7457;
   const nosCapacity = Math.max(0, Number(car.nosCapacitySeconds || 0));
@@ -143,15 +149,15 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
 
   const standing = Math.max(1,
     100 * standingCore *
-    tractionFactor * clutchFactor * efficiency * launchGearing *
-    shiftFactor * bandFactor * boostResponse +
+    standingTraction * clutchUsability * efficiency * launchGearing *
+    shiftFactor * standingBand * boostResponse +
     100 * nosPerMass * nosAvailability * cfg.nosStandingUse
   );
 
   const rolling = Math.max(1,
     100 * rollingCore *
     efficiency * rollGearing * shiftFactor *
-    bandFactor * boostResponse * aeroFactor +
+    rollingBand * boostResponse * aeroFactor +
     100 * nosPerMass * nosAvailability * cfg.nosRollingUse
   );
 
