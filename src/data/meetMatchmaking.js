@@ -1,5 +1,5 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r234';
+import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r235';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
 
