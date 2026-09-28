@@ -14,9 +14,9 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
+} from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260929-r246';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { engines } from '../data/engines.js?v=20260928-r232';
@@ -34,7 +34,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260928-r234';
+} from '../state/GameState.js?v=20260929-r246';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -125,14 +125,17 @@ export default class RaceScene extends Phaser.Scene {
       queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null);
     });
 
+    const playerState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
     const raceCarIds = [...new Set([this.selectedCarId, this.opponentCarId])]
       .filter(id => cars[id]);
     raceCarIds.forEach(id => {
-      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
-      queued += preloadCarWheel(this, cars[id]);
+      queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260929-r246');
+      queued += preloadCarWheel(
+        this,
+        cars[id],
+        id === this.selectedCarId ? playerState : {}
+      );
     });
-
-    const playerState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
     queued += preloadVisualModSelectionAssets(
       this,
       this.selectedCarId,

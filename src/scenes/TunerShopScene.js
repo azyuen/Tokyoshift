@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r244';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
@@ -11,14 +11,14 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260926-r214';
+} from '../state/GameState.js?v=20260929-r246';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { createVisualModLayers, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260928-r242';
+} from '../vehicles/CarAppearance.js?v=20260929-r246';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260929-r246';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -35,7 +35,7 @@ import {
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260928-r244';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -85,7 +85,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     carIds.forEach(id => {
       queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');
-      queued += preloadCarWheel(this, cars[id]);
+      queued += preloadCarWheel(this, cars[id], id === currentCarId ? (carStates[id] || {}) : {});
     });
 
     if (currentCarId && cars[currentCarId]) {
@@ -1213,23 +1213,25 @@ export default class TunerShopScene extends Phaser.Scene {
     return { sprite, shadow };
   }
 
-  getStageWheelFit(car, bodyScale, wheelSource) {
-    // Match GarageScene exactly for normal cars: sizing and placement come
-    // straight from the car's canonical WheelFit calibration. Hero cars keep
-    // their own per-asset visual settings through the same helper.
-    return getWheelPairFit(car.visual, bodyScale, false, wheelSource);
+  getStageWheelFit(wheelVisual, bodyScale, wheelSource) {
+    return getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
   }
 
-  getBodyYForWheelBottom(car, targetWidth, wheelBottomY) {
+  getBodyYForWheelBottom(car, targetWidth, wheelBottomY, carState = {}) {
     const bodyKey = getCarBodyTextureKey(this, car);
-    if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) {
+    const wheelVisual = getVisualModWheelVisual(car, carState);
+    if (
+      !this.textures.exists(bodyKey) ||
+      !wheelVisual?.wheelKey ||
+      !this.textures.exists(wheelVisual.wheelKey)
+    ) {
       return wheelBottomY - 120;
     }
 
     const bodySource = this.textures.get(bodyKey).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
+    const fit = this.getStageWheelFit(wheelVisual, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
       fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
@@ -1252,15 +1254,21 @@ export default class TunerShopScene extends Phaser.Scene {
     if (!car) return [];
 
     const bodyKey = getCarBodyTextureKey(this, car);
-    if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) {
+    const carState = (this.registry.get('carStates') || {})[carId] || {};
+    const wheelVisual = getVisualModWheelVisual(car, carState);
+    if (
+      !this.textures.exists(bodyKey) ||
+      !wheelVisual?.wheelKey ||
+      !this.textures.exists(wheelVisual.wheelKey)
+    ) {
       return [];
     }
 
-    const bodyY = this.getBodyYForWheelBottom(car, targetWidth, wheelBottomY);
+    const bodyY = this.getBodyYForWheelBottom(car, targetWidth, wheelBottomY, carState);
     const source = this.textures.get(bodyKey).getSourceImage();
-    const wheelSource = this.textures.get(car.visual.wheelKey).getSourceImage();
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
-    const fit = this.getStageWheelFit(car, bodyScale, wheelSource);
+    const fit = this.getStageWheelFit(wheelVisual, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = bodyY + renderOffsetY;
 
@@ -1281,13 +1289,13 @@ export default class TunerShopScene extends Phaser.Scene {
     const rearWheel = this.add.image(
       rearX,
       rearY,
-      car.visual.wheelKey
+      wheelVisual.wheelKey
     ).setScale(fit.rear.wheelScale).setDepth(depth);
 
     const frontWheel = this.add.image(
       frontX,
       frontY,
-      car.visual.wheelKey
+      wheelVisual.wheelKey
     ).setScale(fit.front.wheelScale).setDepth(depth);
 
     const rearBacking = this.add.circle(
@@ -1306,7 +1314,6 @@ export default class TunerShopScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.2);
 
-    const carState = (this.registry.get('carStates') || {})[carId] || {};
     const bodyLayers = createCarBodyLayers(this, car, {
       x,
       y: displayY,

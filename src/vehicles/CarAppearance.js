@@ -1,3 +1,5 @@
+import { getWheelOption } from '../data/wheels.js?v=20260929-r246';
+
 export const DEFAULT_PAINT_COLOR = 0xffffff;
 
 export const PAINT_PRESETS = [
@@ -157,17 +159,32 @@ const SHARED_WHEEL_PATHS = {
   wheelDeepDish: 'assets/wheels/wheel_deepdish.png',
 };
 
-export function preloadCarWheel(scene, car) {
+export function preloadCarWheel(scene, car, carState = {}) {
+  let queued = 0;
   const { wheelKey, wheelPath } = car?.visual || {};
   const resolvedPath = wheelPath || SHARED_WHEEL_PATHS[wheelKey] || null;
-  if (!wheelKey || !resolvedPath || scene.textures.exists(wheelKey)) return 0;
 
-  // Normal catalogue cars share one of four generic wheel textures and do not
-  // repeat a wheelPath in every car config. Hero cars still use their explicit
-  // per-car wheelPath. This keeps wheel loading lazy while guaranteeing the
-  // requested wheel exists before wheel geometry or garage thumbnails render.
-  scene.load.image(wheelKey, resolvedPath + '?v=20260928-r244');
-  return 1;
+  if (wheelKey && resolvedPath && !scene.textures.exists(wheelKey)) {
+    // Keep the stock wheel available as an immediate fallback even when this
+    // particular owned car has an aftermarket set installed.
+    scene.load.image(wheelKey, resolvedPath + '?v=20260929-r246');
+    queued += 1;
+  }
+
+  const customWheel = getWheelOption(carState?.customWheelId);
+  if (
+    customWheel?.textureKey &&
+    customWheel?.path &&
+    !scene.textures.exists(customWheel.textureKey)
+  ) {
+    scene.load.image(
+      customWheel.textureKey,
+      customWheel.path + '?v=20260929-r246'
+    );
+    queued += 1;
+  }
+
+  return queued;
 }
 
 function createCanvasTextureFromPixels(scene, key, width, height, pixels) {

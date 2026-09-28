@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r244';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20260928-r232';
@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20260926-r214';
+import { saveSessionState } from '../state/GameState.js?v=20260929-r246';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -77,7 +77,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
+} from '../vehicles/CarAppearance.js?v=20260929-r246';
 import {
   VISUAL_MOD_SLOT_ORDER,
   getVisualModCatalog,
@@ -90,7 +90,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20260928-r242';
+} from '../data/visualMods.js?v=20260929-r246';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
@@ -152,7 +152,7 @@ export default class GarageScene extends Phaser.Scene {
       const car = cars[id];
       if (!car) return;
       queued += preloadCarAppearanceAssets(this, { [id]: car }, '20260928-r242');
-      queued += preloadCarWheel(this, car);
+      queued += preloadCarWheel(this, car, carStates[id] || {});
       queued += preloadVisualModSelectionAssets(this, id, carStates[id] || {}, '20260928-r242');
       queued += preloadTunerDecalAssets(this, carStates[id] || {}, '20260928-r242');
     });

@@ -1,4 +1,4 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260928-r244';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import {
@@ -14,19 +14,24 @@ import {
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import {
   DEFAULT_PAINT_COLOR,
+  RIVAL_PAINT_COLORS,
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
+} from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual } from '../data/visualMods.js?v=20260928-r242';
+import {
+  createVisualModLayers,
+  getVisualModWheelVisual,
+  preloadVisualModSelectionAssets,
+} from '../data/visualMods.js?v=20260929-r246';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260926-r214';
+} from '../state/GameState.js?v=20260929-r246';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260928-r245';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
@@ -40,13 +45,15 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260928-r244';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
   GINZA_LISTINGS,
   PRO_DRAG_EVENTS,
   getAutoMarketBuild,
+  getAutoMarketBasePrice,
+  getNewCarState,
   getAutoMarketSellPrice,
   getGinzaCollectorState,
   isCentralTokyoLocationUnlocked,
@@ -54,7 +61,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260928-r232';
+} from '../data/centralTokyo.js?v=20260929-r246';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -66,6 +73,12 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
+import {
+  WHEEL_CATALOG,
+  getWheelOption,
+  getOwnedWheelIds,
+  preloadWheelOption,
+} from '../data/wheels.js?v=20260929-r246';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -93,6 +106,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   init(data = {}) {
     this.requestedLocationId = data?.locationId || null;
+    const requestedRoom = String(
+      data?.autoMarketRoom || this.registry.get('autoMarketRoom') || 'used'
+    );
+    this.autoMarketRoom = ['new', 'used', 'wheels'].includes(requestedRoom)
+      ? requestedRoom
+      : 'used';
   }
 
   preload() {
@@ -104,28 +123,80 @@ export default class CentralTokyoScene extends Phaser.Scene {
     startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
   }
 
+  getLocationBackgroundConfig(location) {
+    if (location?.kind === 'autoMarket') {
+      const room = ['new', 'used', 'wheels'].includes(this.autoMarketRoom)
+        ? this.autoMarketRoom
+        : 'used';
+      return location.marketBackgrounds?.[room] || {
+        key: location.backgroundKey,
+        path: location.backgroundPath,
+      };
+    }
+    return {
+      key: location?.backgroundKey,
+      path: location?.backgroundPath,
+    };
+  }
+
   queueLocationAssets(location) {
     let queued = 0;
-    if (location?.backgroundPath && !this.textures.exists(location.backgroundKey)) {
-      this.load.image(location.backgroundKey, location.backgroundPath + '?v=20260922-r125');
+    const background = this.getLocationBackgroundConfig(location);
+
+    if (background?.path && background?.key && !this.textures.exists(background.key)) {
+      this.load.image(background.key, background.path + '?v=20260929-r246');
       queued += 1;
     }
+
     if (location?.kind === 'autoMarket') {
-      this.getAutoMarketListings().forEach(listing => {
-        const car = cars[listing.carId];
-        if (!car) return;
-        queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260928-r242');
-        queued += preloadCarWheel(this, car);
-      });
+      if (this.autoMarketRoom === 'wheels') {
+        const selectedCarId = this.registry.get('selectedCarId');
+        const selectedCar = cars[selectedCarId];
+        const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+
+        if (selectedCar) {
+          queued += preloadCarAppearanceAssets(this, { [selectedCarId]: selectedCar }, '20260929-r246');
+          queued += preloadCarWheel(this, selectedCar, selectedState);
+          queued += preloadVisualModSelectionAssets(
+            this,
+            selectedCarId,
+            selectedState,
+            '20260929-r246'
+          );
+        }
+
+        this.getWheelShopListings().forEach(option => {
+          queued += preloadWheelOption(this, option, '20260929-r246');
+        });
+      } else {
+        const listings = this.autoMarketRoom === 'new'
+          ? this.getNewCarListings()
+          : this.getUsedCarListings();
+
+        listings.forEach(listing => {
+          const car = cars[listing.carId];
+          if (!car) return;
+          queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260929-r246');
+          queued += preloadCarWheel(this, car, listing.previewState || {});
+          queued += preloadVisualModSelectionAssets(
+            this,
+            listing.carId,
+            listing.previewState || {},
+            '20260929-r246'
+          );
+        });
+      }
     }
+
     if (location?.kind === 'showroom') {
       GINZA_LISTINGS.forEach(listing => {
         const car = cars[listing.carId];
         if (!car) return;
-        queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260925-r193');
+        queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260929-r246');
         queued += preloadCarWheel(this, car);
       });
     }
+
     if (location?.kind === 'proDrag') {
       const playerId = this.registry.get('playerCharacterId');
       const rivalIds = genericRivalCharacterOrder
@@ -142,6 +213,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += 1;
       });
     }
+
     return queued;
   }
 
@@ -179,6 +251,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.contentObjects = [];
     this.selectedIndex = 0;
     this.selectedEventIndex = 0;
+    this.autoMarketShowcaseActive = false;
+    this.autoMarketAnimateShowcase = false;
+    this.autoMarketTransitioning = false;
+    this.wheelPreviewActive = false;
+    this.wheelAnimatePreview = false;
+    this.selectedWheelIndex = 0;
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.ginzaTransitioning = false;
@@ -381,13 +459,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.ginzaShowcaseActive = false;
       this.ginzaAnimateShowcase = false;
     }
+    if (location.kind !== 'autoMarket' || previousLocationId !== location.id) {
+      this.autoMarketShowcaseActive = false;
+      this.autoMarketAnimateShowcase = false;
+      this.wheelPreviewActive = false;
+      this.wheelAnimatePreview = false;
+    }
 
     this.clearContent();
     this.activeLocationId = location.id;
     this.registry.set('centralTokyoLocation', location.id);
     saveSessionState(this.registry);
 
-    this.locationHeader.setText(location.label + ' // NIGHT');
+    const marketRoomLabel = this.autoMarketRoom === 'new'
+      ? 'NEW CARS'
+      : this.autoMarketRoom === 'wheels'
+        ? 'WHEEL SHOP'
+        : 'USED CARS';
+    this.locationHeader.setText(
+      location.kind === 'autoMarket'
+        ? location.label + ' // ' + marketRoomLabel
+        : location.label + ' // NIGHT'
+    );
     this.drawBackground(location);
 
     if (location.kind === 'autoMarket') {
@@ -404,13 +497,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawBackground(location) {
-    if (this.textures.exists(location.backgroundKey)) {
-      const source = this.textures.get(location.backgroundKey).getSourceImage();
-      const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const background = this.getLocationBackgroundConfig(location);
+    const textureKey = background?.key;
+
+    this.addContent(this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x050b12,
+      1
+    ).setDepth(-11));
+
+    if (textureKey && this.textures.exists(textureKey)) {
+      const source = this.textures.get(textureKey).getSourceImage();
+      const scale = location?.kind === 'autoMarket'
+        ? Math.min(STAGE.w / source.width, STAGE.h / source.height)
+        : Math.max(STAGE.w / source.width, STAGE.h / source.height);
+
       const image = this.addContent(this.add.image(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,
-        location.backgroundKey
+        textureKey
       ).setScale(scale).setDepth(-10));
 
       const maskShape = this.addContent(this.make.graphics({ add: false }));
@@ -418,19 +526,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
       image.setMask(maskShape.createGeometryMask());
     } else {
-      this.addContent(this.add.rectangle(
-        STAGE.x + STAGE.w / 2,
-        STAGE.y + STAGE.h / 2,
-        STAGE.w,
-        STAGE.h,
-        0x07101a,
-        1
-      ).setDepth(-10));
-
       this.addContent(this.add.text(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,
-        'BACKGROUND READY FOR UPLOAD\n' + location.backgroundPath,
+        'BACKGROUND READY FOR UPLOAD\n' + (background?.path || ''),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
@@ -446,7 +545,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       STAGE.w,
       STAGE.h,
       0x020812,
-      0.08
+      location?.kind === 'autoMarket' ? 0.035 : 0.08
     ).setDepth(-8));
   }
 
@@ -547,6 +646,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.selectedIndex = 0;
     this.selectedEventIndex = 0;
+    this.autoMarketShowcaseActive = false;
+    this.autoMarketAnimateShowcase = false;
+    this.wheelPreviewActive = false;
+    this.wheelAnimatePreview = false;
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.renderLocation(this.activeLocationId);
@@ -657,14 +760,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
     depth,
     paintColor = DEFAULT_PAINT_COLOR,
     driverCharacter = null,
-    flipX = false
+    flipX = false,
+    appearanceStateOverride = null
   ) {
     const bodyKey = getCarBodyTextureKey(this, car);
-    if (!this.textures.exists(bodyKey) || !this.textures.exists(car.visual.wheelKey)) return [];
+    const carState = appearanceStateOverride && typeof appearanceStateOverride === 'object'
+      ? appearanceStateOverride
+      : ((this.registry.get('carStates') || {})[car.id] || {});
+    const wheelVisual = getVisualModWheelVisual(car, carState);
+
+    if (
+      !this.textures.exists(bodyKey) ||
+      !wheelVisual?.wheelKey ||
+      !this.textures.exists(wheelVisual.wheelKey)
+    ) return [];
 
     const source = this.textures.get(bodyKey).getSourceImage();
-    const carState = (this.registry.get('carStates') || {})[car.id] || {};
-    const wheelVisual = getVisualModWheelVisual(car, carState);
     const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = getWheelPairFit(wheelVisual, bodyScale, flipX, wheelSource);
@@ -805,15 +916,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ];
   }
 
-  getAutoMarketListings() {
-    const owned = new Set(this.registry.get('ownedCarIds') || []);
-    const pool = [...AUTO_MARKET_LISTINGS];
-    const clockOffset = Math.floor(Date.now() / (3 * 60 * 60 * 1000)) % pool.length;
-    const offset = (clockOffset + Number(this.devCentralRefreshOffsets?.autoMarket || 0)) % pool.length;
-    const rotated = [...pool.slice(offset), ...pool.slice(0, offset)];
+  getAutoMarketCycle() {
+    return Math.floor(Date.now() / (3 * 60 * 60 * 1000));
+  }
 
-    // Completed coupon sets should be redeemable immediately instead of
-    // disappearing behind the market's time rotation. Then prefer unowned cars.
+  marketHash(value) {
+    const text = String(value || '');
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i += 1) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  rotateMarketPool(pool = [], salt = 0) {
+    if (!pool.length) return [];
+    const cycle = this.getAutoMarketCycle();
+    const dev = Number(this.devCentralRefreshOffsets?.autoMarket || 0);
+    const offset = (cycle * 3 + salt + dev) % pool.length;
+    return [...pool.slice(offset), ...pool.slice(0, offset)];
+  }
+
+  getNewCarListings() {
+    const owned = new Set(this.registry.get('ownedCarIds') || []);
+    const pool = AUTO_MARKET_LISTINGS.filter(item => cars[item.carId]);
+    const rotated = this.rotateMarketPool(pool, 0);
     const claimable = rotated.filter(item =>
       !owned.has(item.carId) && canRedeemCarCoupon(this.registry, item.carId)
     );
@@ -821,42 +949,267 @@ export default class CentralTokyoScene extends Phaser.Scene {
       !owned.has(item.carId) && !claimable.includes(item)
     );
     const alreadyOwned = rotated.filter(item => owned.has(item.carId));
+    const neutrals = [0xffffff, 0x30343a, 0x8d939a];
 
-    return [
-      ...claimable,
-      ...unowned,
-      ...alreadyOwned,
-    ].slice(0, 3);
+    return [...claimable, ...unowned, ...alreadyOwned]
+      .slice(0, 3)
+      .map(item => {
+        const paintColor = neutrals[
+          this.marketHash(this.getAutoMarketCycle() + ':' + item.carId + ':new') % neutrals.length
+        ];
+        const price = getAutoMarketBasePrice(item.carId);
+        return {
+          ...item,
+          marketType: 'new',
+          buildLabel: 'FACTORY STOCK',
+          price,
+          listPrice: price,
+          paintColor,
+          previewState: getNewCarState(item.carId, paintColor),
+          conditionLabel: 'NEW // FACTORY STOCK',
+        };
+      });
+  }
+
+  getHaggleRecord(key) {
+    return (this.registry.get('autoMarketHaggles') || {})[String(key || '')] || null;
+  }
+
+  getUsedCarListings() {
+    const owned = new Set(this.registry.get('ownedCarIds') || []);
+    const pool = AUTO_MARKET_LISTINGS.filter(item => cars[item.carId]);
+    const rotated = this.rotateMarketPool(pool, 7);
+    const unowned = rotated.filter(item => !owned.has(item.carId));
+    const alreadyOwned = rotated.filter(item => owned.has(item.carId));
+    const colours = [...RIVAL_PAINT_COLORS, 0xffffff, 0x25292f, 0xa3a8ad];
+    const conditionLabels = [
+      'CLEAN STREET CAR',
+      'WEEKEND BUILD',
+      'SHOP DEMO',
+      'ONE OWNER',
+      'STREET TUNED',
+      'QUICK SALE',
+    ];
+
+    return [...unowned, ...alreadyOwned]
+      .slice(0, 3)
+      .map((item, index) => {
+        const cycle = this.getAutoMarketCycle();
+        const seed = this.marketHash(cycle + ':' + item.carId + ':used');
+        const isDeal = ((cycle + index + (seed % 3)) % 7) === 0;
+        const percent = isDeal
+          ? 74 + ((seed >>> 8) % 9)
+          : 88 + ((seed >>> 8) % 23);
+        const listPrice = Math.max(
+          100000,
+          Math.round(
+            (Number(item.price || getAutoMarketBasePrice(item.carId)) * percent / 100) / 10000
+          ) * 10000
+        );
+        const paintColor = colours[seed % colours.length];
+        const kitRoll = (seed >>> 16) % 4;
+        const visualMods = kitRoll === 0
+          ? { bodyKit: 'stock' }
+          : { bodyKit: kitRoll % 2 ? 'bodykit1' : 'bodykit2' };
+        const previewState = {
+          ...getAutoMarketBuild(item.carId),
+          paintColor,
+          visualMods,
+          acquiredVia: 'tokyoAutoMarketUsed',
+        };
+        const haggleKey = cycle + ':' + item.carId;
+        const haggle = this.getHaggleRecord(haggleKey);
+
+        return {
+          ...item,
+          marketType: 'used',
+          listPrice,
+          price: Math.max(0, Number(haggle?.price || listPrice)),
+          paintColor,
+          previewState,
+          haggleKey,
+          haggle,
+          isDeal,
+          conditionLabel: isDeal
+            ? 'QUICK SALE // GOOD DEAL'
+            : conditionLabels[(seed >>> 12) % conditionLabels.length],
+        };
+      });
+  }
+
+  getAutoMarketListings() {
+    return this.autoMarketRoom === 'new'
+      ? this.getNewCarListings()
+      : this.getUsedCarListings();
+  }
+
+  getWheelShopListings() {
+    const pool = WHEEL_CATALOG.filter(Boolean);
+    if (pool.length <= 10) return [...pool];
+    const cycle = this.getAutoMarketCycle();
+    const dev = Number(this.devCentralRefreshOffsets?.autoMarket || 0);
+    const offset = (cycle * 5 + dev) % pool.length;
+    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, 10);
+  }
+
+  drawAutoMarketRoomTabs() {
+    const tabs = [
+      { id: 'new', label: 'NEW' },
+      { id: 'used', label: 'USED' },
+      { id: 'wheels', label: 'WHEELS' },
+    ];
+    const startX = SIDE.x + 26;
+    const width = 96;
+    const gap = 8;
+    const y = SIDE.y + 128;
+
+    tabs.forEach((tab, index) => {
+      const active = tab.id === this.autoMarketRoom;
+      const x = startX + width / 2 + index * (width + gap);
+      const box = this.addContent(this.add.rectangle(
+        x, y, width, 38, active ? 0x123047 : 0x0c1823, 1
+      ).setStrokeStyle(
+        active ? 2 : 1,
+        active ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(35).setInteractive({ useHandCursor: true }));
+
+      this.addContent(this.add.text(x, y, tab.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: active ? '#ffffff' : '#95adbb',
+      }).setOrigin(0.5).setDepth(36));
+
+      box.on('pointerdown', () => this.selectAutoMarketRoom(tab.id));
+    });
+  }
+
+  selectAutoMarketRoom(room) {
+    if (!['new', 'used', 'wheels'].includes(room)) return;
+    if (this.autoMarketTransitioning) return;
+
+    this.autoMarketRoom = room;
+    this.registry.set('autoMarketRoom', room);
+    this.selectedIndex = 0;
+    this.selectedWheelIndex = 0;
+    this.autoMarketShowcaseActive = false;
+    this.autoMarketAnimateShowcase = false;
+    this.wheelPreviewActive = false;
+    this.wheelAnimatePreview = false;
+    saveSessionState(this.registry);
+    this.renderLocation(this.activeLocationId);
   }
 
   drawAutoMarket() {
-    this.drawNavigation(
-      'DEALERSHIP',
-      'USED CARS // PRE-MODIFIED STREET BUILDS // BUY & SELL'
-    );
+    const subtitles = {
+      new: 'FACTORY STOCK // STANDARD PRICE // WHITE · BLACK · GREY',
+      used: 'MODIFIED CARS // MIXED PRICES // ONE OFFER PER LISTING',
+      wheels: 'CUSTOM RIMS // STANDARD · TUNER · HERO // TRY BEFORE YOU BUY',
+    };
 
-    const listings = this.getAutoMarketListings();
+    this.drawNavigation('TOKYO AUTO MARKET', subtitles[this.autoMarketRoom]);
+    this.drawAutoMarketRoomTabs();
+
+    if (this.autoMarketRoom === 'wheels') {
+      this.drawWheelShop();
+      return;
+    }
+
+    this.drawMarketCarRoom(this.autoMarketRoom);
+  }
+
+  getMarketBayPoses() {
+    return [
+      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 314, w: 255, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 314, w: 255, depth: 10, flip: false },
+      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 314, w: 255, depth: 9, flip: false },
+    ];
+  }
+
+  drawMarketCarRoom(room) {
+    const listings = room === 'new' ? this.getNewCarListings() : this.getUsedCarListings();
+    if (!listings.length) return;
+
     this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
+    const poses = this.getMarketBayPoses();
 
     listings.forEach((listing, index) => {
+      if (this.autoMarketShowcaseActive && index === this.selectedIndex) return;
+
       const car = cars[listing.carId];
-      const x = STAGE.x + 200 + index * 370;
-      const objects = this.createCarDisplay(car, x, STAGE.y + 390, 315, 8);
+      const pose = poses[index];
+      const objects = this.createCarDisplay(
+        car,
+        pose.x,
+        pose.y,
+        pose.w,
+        pose.depth,
+        listing.paintColor,
+        null,
+        pose.flip,
+        listing.previewState
+      );
       objects.forEach(obj => this.addContent(obj));
+
+      const hit = this.addContent(this.add.rectangle(
+        pose.x,
+        pose.y,
+        pose.w,
+        Math.max(104, pose.w * 0.38),
+        0x000000,
+        0.001
+      ).setDepth(31).setInteractive({ useHandCursor: true }));
+      hit.on('pointerdown', () => this.transitionAutoMarketCar(index));
     });
 
-    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'USED CARS // TOKYO AUTO MARKET', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '11px',
-      color: '#8fe7ff',
-    }).setDepth(33));
+    if (this.autoMarketShowcaseActive) {
+      const listing = listings[this.selectedIndex];
+      const car = cars[listing.carId];
+      const objects = this.createCarDisplay(
+        car,
+        STAGE.x + STAGE.w * 0.52,
+        STAGE.y + 412,
+        650,
+        16,
+        listing.paintColor,
+        null,
+        false,
+        listing.previewState
+      );
+      objects.forEach(obj => this.addContent(obj));
+
+      if (this.autoMarketAnimateShowcase) {
+        this.autoMarketAnimateShowcase = false;
+        this.animateMarketCarIn(objects);
+      }
+
+      const dismiss = this.addContent(this.add.text(
+        STAGE.x + STAGE.w - 22,
+        STAGE.y + 22,
+        '×  BACK TO ' + (room === 'new' ? 'NEW CARS' : 'USED CARS'),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#e4f2f8',
+          backgroundColor: '#07111bdd',
+          padding: { x: 11, y: 8 },
+        }
+      ).setOrigin(1, 0).setDepth(42).setInteractive({ useHandCursor: true }));
+      dismiss.on('pointerdown', () => this.transitionAutoMarketCar(null));
+    }
+
+    this.addContent(this.add.text(
+      CARDS.x + 18,
+      CARDS.y + 14,
+      (room === 'new' ? 'NEW CARS' : 'USED CARS') + ' // 3 AVAILABLE // ROTATES 3H',
+      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8fe7ff' }
+    ).setDepth(33));
 
     listings.forEach((listing, index) => {
       const car = cars[listing.carId];
       const x = CARDS.x + 190 + index * 365;
-      const selected = index === this.selectedIndex;
+      const selected = this.autoMarketShowcaseActive && index === this.selectedIndex;
       const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
-
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
@@ -865,60 +1218,144 @@ export default class CentralTokyoScene extends Phaser.Scene {
         selected ? 0x123047 : 0x0b1724,
         1
       ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(32));
+        .setInteractive({ useHandCursor: true }).setDepth(32));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 72, car.shortName, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#ffffff',
+      this.addContent(this.add.text(x - 145, CARDS.y + 70, car.shortName, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, listing.buildLabel, {
-        fontFamily: BODY_FONT,
-        fontSize: '10px',
-        color: '#91a9b8',
-        fontStyle: '600',
-      }).setDepth(34));
+      this.addContent(this.add.text(
+        x - 145,
+        CARDS.y + 98,
+        room === 'new' ? 'FACTORY STOCK' : listing.conditionLabel,
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '9px',
+          color: room === 'used' && listing.isDeal ? '#83efc8' : '#91a9b8',
+          fontStyle: '600',
+        }
+      ).setDepth(34));
 
-      this.addContent(this.add.text(x + 145, CARDS.y + 126, owned ? 'OWNED' : money(listing.price), {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: owned ? '#62e8c7' : '#ffe08a',
-      }).setOrigin(1, 0.5).setDepth(34));
+      this.addContent(this.add.text(
+        x + 145,
+        CARDS.y + 126,
+        owned ? 'OWNED' : money(listing.price),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: owned ? '#62e8c7' : '#ffe08a',
+        }
+      ).setOrigin(1, 0.5).setDepth(34));
 
-      box.on('pointerdown', () => {
-        this.selectedIndex = index;
-        this.renderLocation(this.activeLocationId);
-      });
+      box.on('pointerdown', () => this.transitionAutoMarketCar(index));
     });
 
-    this.drawAutoMarketSide(listings[this.selectedIndex]);
+    this.drawAutoMarketSide(listings[this.selectedIndex], room);
   }
 
-  drawAutoMarketSide(listing) {
+  animateMarketCarIn(objects = []) {
+    const movable = objects.filter(obj =>
+      obj && typeof obj.x === 'number' && typeof obj.setPosition === 'function'
+    );
+
+    movable.forEach(obj => {
+      const targetX = obj.x;
+      obj.x = targetX - 620;
+      obj.setAlpha?.(1);
+      this.tweens.add({ targets: obj, x: targetX, duration: 1500, ease: 'Sine.easeOut' });
+
+      if (obj.getData?.('carWheel')) {
+        this.tweens.add({
+          targets: obj,
+          angle: obj.angle + 620,
+          duration: 1500,
+          ease: 'Sine.easeOut',
+        });
+      }
+    });
+  }
+
+  transitionAutoMarketCar(nextIndex = null) {
+    if (this.autoMarketTransitioning) return;
+    this.autoMarketTransitioning = true;
+
+    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
+      .setDepth(180).setInteractive();
+
+    this.tweens.add({
+      targets: fade,
+      alpha: 0.97,
+      duration: 210,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (nextIndex === null) {
+          this.autoMarketShowcaseActive = false;
+          this.autoMarketAnimateShowcase = false;
+        } else {
+          this.selectedIndex = nextIndex;
+          this.autoMarketShowcaseActive = true;
+          this.autoMarketAnimateShowcase = true;
+        }
+
+        this.renderLocation(this.activeLocationId);
+
+        this.tweens.add({
+          targets: fade,
+          alpha: 0,
+          duration: 280,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            fade.destroy();
+            this.autoMarketTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
+  drawAutoMarketSide(listing, room) {
     const car = cars[listing.carId];
+    const displaySpec = (() => {
+      if (room !== 'used') return car;
+      const engineBuild = applyEngineTuning(
+        car,
+        engines[car.engine],
+        listing.previewState || {}
+      );
+      return applySecondaryTuning(
+        engineBuild.car,
+        engineBuild.engine,
+        listing.previewState || {}
+      ).car;
+    })();
     const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
     const cash = Number(this.registry.get('cash') || 0);
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
     const ownedCount = (this.registry.get('ownedCarIds') || []).length;
+    const hasStorage = Boolean(this.findStorageForPurchase());
+
     const couponRequired = getCarCouponRequirement(listing.carId);
     const couponCount = getCarCouponCount(this.registry, listing.carId);
-    const couponReady = canRedeemCarCoupon(this.registry, listing.carId);
-    const hasStorage = ownedCount < capacity;
-    const canBuyWithCash = !owned && cash >= listing.price && hasStorage;
-    const canClaimWithCoupons = !owned && couponReady && hasStorage;
+    const couponReady = room === 'new' && canRedeemCarCoupon(this.registry, listing.carId);
+    const canBuyWithCash = !owned && cash >= listing.price && ownedCount < capacity && hasStorage;
+    const canClaimWithCoupons = !owned && couponReady && ownedCount < capacity && hasStorage;
     const canBuy = canBuyWithCash || canClaimWithCoupons;
 
-    const y0 = SIDE.y + 250;
+    const y0 = SIDE.y + 224;
 
-    this.addContent(this.add.text(SIDE.x + 20, y0, 'SELECTED CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#8cc8ec',
-    }).setDepth(34));
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y0,
+      room === 'new' ? 'NEW CAR // FACTORY STOCK' : 'USED CAR // ' + listing.conditionLabel,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: room === 'used' && listing.isDeal ? '#62e8c7' : '#8cc8ec',
+        wordWrap: { width: SIDE.w - 40 },
+      }
+    ).setDepth(34));
 
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 42, car.name.toUpperCase(), {
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 38, car.name.toUpperCase(), {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#ffffff',
@@ -927,36 +1364,91 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + 20,
-      y0 + 92,
-      listing.buildLabel + '\n' +
-      car.engineModel + '  //  ' + car.powerKW + ' kW\n' +
-      Math.round(car.vehicleMassKg) + ' kg',
+      y0 + 84,
+      (room === 'new' ? 'STOCK SPEC' : listing.buildLabel) + '\n' +
+      car.engineModel + '\n' +
+      Math.round(displaySpec.powerKW) + ' kW  //  ' +
+      Math.round(displaySpec.torqueNm) + ' Nm\n' +
+      Math.round(displaySpec.vehicleMassKg) + ' kg',
       {
         fontFamily: BODY_FONT,
-        fontSize: '11px',
+        fontSize: '10px',
         color: '#9ab0bd',
         fontStyle: '600',
-        lineSpacing: 5,
+        lineSpacing: 3,
+        wordWrap: { width: SIDE.w - 40 },
       }
     ).setDepth(34));
-
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 184, 'ASKING  ' + money(listing.price), {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#ffe08a',
-    }).setDepth(34));
 
     this.addContent(this.add.text(
       SIDE.x + 20,
-      y0 + 222,
-      'CAR COUPONS  ' + couponCount + ' / ' + couponRequired +
-        (couponReady ? '  //  READY TO CLAIM' : ''),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: couponReady ? '#62e8c7' : '#8cc8ec',
-      }
+      y0 + 172,
+      (room === 'new' ? 'STANDARD PRICE  ' : 'ASKING  ') + money(listing.price),
+      { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe08a' }
     ).setDepth(34));
+
+    if (room === 'new') {
+      this.addContent(this.add.text(
+        SIDE.x + 20,
+        y0 + 208,
+        'CAR COUPONS  ' + couponCount + ' / ' + couponRequired +
+          (couponReady ? '  //  READY' : ''),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: couponReady ? '#62e8c7' : '#8cc8ec',
+        }
+      ).setDepth(34));
+    } else {
+      const haggle = listing.haggle;
+      const haggleText = haggle
+        ? haggle.status === 'accepted'
+          ? 'OFFER ACCEPTED // ' + money(haggle.price)
+          : haggle.status === 'countered'
+            ? 'SELLER COUNTER // ' + money(haggle.price)
+            : 'OFFER REJECTED // PRICE FIRM'
+        : 'ONE BARGAIN ATTEMPT AVAILABLE';
+
+      this.addContent(this.add.text(
+        SIDE.x + 20,
+        y0 + 208,
+        haggleText,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: haggle?.status === 'rejected' ? '#ff9aa8' : '#83efc8',
+          wordWrap: { width: SIDE.w - 40 },
+        }
+      ).setDepth(34));
+
+      const offerAvailable = !owned && !haggle;
+      const offerButton = this.addContent(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 488,
+        SIDE.w - 36,
+        40,
+        offerAvailable ? 0x1f2435 : 0x17181d,
+        1
+      ).setStrokeStyle(1, offerAvailable ? 0xa58cff : 0x514f55, 1).setDepth(33));
+
+      this.addContent(this.add.text(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 488,
+        offerAvailable ? 'MAKE OFFER' : haggle ? 'BARGAIN USED' : 'NO OFFER',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: offerAvailable ? '#e8ddff' : '#817d84',
+        }
+      ).setOrigin(0.5).setDepth(34));
+
+      if (offerAvailable) {
+        offerButton.setInteractive({ useHandCursor: true });
+        offerButton.on('pointerdown', () => this.showHaggleDialog(listing));
+      }
+
+      this.drawUsedSellButton();
+    }
 
     const buyButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
@@ -969,7 +1461,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buyLabel = owned
       ? 'ALREADY OWNED'
-      : !hasStorage
+      : !hasStorage || ownedCount >= capacity
         ? 'GARAGE FULL'
         : canClaimWithCoupons
           ? 'CLAIM // ' + couponRequired + ' COUPONS'
@@ -983,7 +1475,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       buyLabel,
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '8px',
+        fontSize: '7px',
         color: canBuy ? '#f1fffb' : '#817d84',
       }
     ).setOrigin(0.5).setDepth(34));
@@ -991,10 +1483,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (canBuy) {
       buyButton.setInteractive({ useHandCursor: true });
       buyButton.on('pointerdown', () => {
-        const carName = cars[listing.carId]?.shortName || cars[listing.carId]?.name || 'this car';
-        const couponRequired = getCarCouponRequirement(listing.carId);
-        const couponCount = getCarCouponCount(this.registry, listing.carId);
-        const useCoupons = couponCount >= couponRequired;
+        const carName = car?.shortName || car?.name || 'this car';
+        const useCoupons = canClaimWithCoupons;
         this.showTransactionConfirm({
           title: useCoupons ? 'CONFIRM CLAIM' : 'CONFIRM PURCHASE',
           message: useCoupons
@@ -1006,35 +1496,31 @@ export default class CentralTokyoScene extends Phaser.Scene {
         });
       });
     }
+  }
 
+  drawUsedSellButton() {
     const selectedCarId = this.registry.get('selectedCarId');
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCar = cars[selectedCarId];
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
-    const collectorLocked = Boolean(selectedCar?.tuningLocked || selectedState.collector || selectedState.immutable);
+    const collectorLocked = Boolean(
+      selectedCar?.tuningLocked || selectedState.collector || selectedState.immutable
+    );
     const starterOnly = Boolean(
       ownedCars.length === 1 &&
       selectedCarId &&
       selectedCarId === this.registry.get('starterCarId')
     );
     const canSell = Boolean(
-      selectedCarId &&
-      selectedCar &&
-      ownedCars.length > 1 &&
-      !collectorLocked
+      selectedCarId && selectedCar && ownedCars.length > 1 && !collectorLocked
     );
-    const sellPrice = canSell
-      ? getAutoMarketSellPrice(
-          selectedCarId,
-          (this.registry.get('carStates') || {})[selectedCarId] || {}
-        )
-      : 0;
+    const sellPrice = canSell ? getAutoMarketSellPrice(selectedCarId, selectedState) : 0;
 
     const sellButton = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + 548,
       SIDE.w - 36,
-      44,
+      40,
       canSell ? 0x261922 : 0x17181d,
       1
     ).setStrokeStyle(1, canSell ? 0xff7cac : 0x514f55, 1).setDepth(33));
@@ -1043,15 +1529,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       SIDE.x + SIDE.w / 2,
       SIDE.y + 548,
       canSell
-        ? 'SELL ' + cars[selectedCarId].shortName + ' // ' + money(sellPrice)
+        ? 'SELL ' + selectedCar.shortName + ' // ' + money(sellPrice)
         : collectorLocked
-          ? 'COLLECTOR CAR NOT TRADED HERE'
+          ? 'COLLECTOR CAR NOT TRADED'
           : starterOnly
-            ? 'STARTER CAR // ONLY CAR NOT FOR SALE'
+            ? 'ONLY CAR // NOT FOR SALE'
             : 'KEEP AT LEAST ONE CAR',
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '7px',
+        fontSize: '6px',
         color: canSell ? '#ffc0d7' : '#817d84',
       }
     ).setOrigin(0.5).setDepth(34));
@@ -1059,10 +1545,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (canSell) {
       sellButton.setInteractive({ useHandCursor: true });
       sellButton.on('pointerdown', () => {
-        const carName = cars[selectedCarId]?.shortName || cars[selectedCarId]?.name || 'this car';
+        const carName = selectedCar.shortName || selectedCar.name || 'this car';
         this.showTransactionConfirm({
           title: 'CONFIRM SALE',
-          message: 'Sell ' + carName + ' for ' + money(sellPrice) + '?\n\nThis car will leave your garage.',
+          message: 'Sell ' + carName + ' for ' + money(sellPrice) +
+            '?\n\nPurchased wheel designs remain in your wheel collection.',
           confirmLabel: 'SELL CAR',
           accent: 0xff7cac,
           onConfirm: () => this.sellSelectedCar(selectedCarId, sellPrice),
@@ -1070,6 +1557,483 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
   }
+
+  showHaggleDialog(listing) {
+    if (!listing?.haggleKey || this.getHaggleRecord(listing.haggleKey)) return;
+    if (this.transactionConfirmOpen) return;
+    this.transactionConfirmOpen = true;
+
+    const depth = 245;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.transactionConfirmOpen = false;
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
+      .setDepth(depth).setInteractive());
+    add(this.add.rectangle(780, 420, 760, 390, 0x09131d, 1)
+      .setStrokeStyle(3, 0xa58cff, 0.95).setDepth(depth + 1));
+    add(this.add.text(780, 292, 'MAKE AN OFFER', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+    add(this.add.text(
+      780,
+      342,
+      cars[listing.carId].shortName + ' // ASKING ' + money(listing.listPrice) +
+        '\nOne attempt. A rejected offer makes the listed price firm.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#bfd0da',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 5,
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const offers = [
+      { label: 'SAFE  -5%', discount: 0.05, accept: 0.80, counter: 0.15 },
+      { label: 'PUSH  -10%', discount: 0.10, accept: 0.48, counter: 0.35 },
+      { label: 'LOWBALL  -15%', discount: 0.15, accept: 0.22, counter: 0.38 },
+    ];
+
+    offers.forEach((offer, index) => {
+      const x = 545 + index * 235;
+      const button = add(this.add.rectangle(
+        x, 462, 205, 64, 0x151d2c, 1
+      ).setStrokeStyle(
+        2,
+        index === 0 ? 0x62e8c7 : index === 1 ? 0xffd06a : 0xff7cac,
+        1
+      ).setDepth(depth + 2).setInteractive({ useHandCursor: true }));
+
+      add(this.add.text(x, 462, offer.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(depth + 3));
+
+      button.on('pointerdown', () => {
+        const roll = Math.random();
+        let status = 'rejected';
+        let finalPrice = listing.listPrice;
+
+        if (roll < offer.accept) {
+          status = 'accepted';
+          finalPrice = Math.round(
+            listing.listPrice * (1 - offer.discount) / 10000
+          ) * 10000;
+        } else if (roll < offer.accept + offer.counter) {
+          status = 'countered';
+          finalPrice = Math.round(
+            listing.listPrice * (1 - offer.discount * 0.5) / 10000
+          ) * 10000;
+        }
+
+        const current = { ...(this.registry.get('autoMarketHaggles') || {}) };
+        current[listing.haggleKey] = {
+          status,
+          price: finalPrice,
+          attemptedAt: Date.now(),
+        };
+
+        const entries = Object.entries(current)
+          .sort((a, b) =>
+            Number(b[1]?.attemptedAt || 0) - Number(a[1]?.attemptedAt || 0)
+          )
+          .slice(0, 18);
+        this.registry.set('autoMarketHaggles', Object.fromEntries(entries));
+        saveSessionState(this.registry);
+        close();
+        this.renderLocation(this.activeLocationId);
+
+        const title = status === 'accepted'
+          ? 'OFFER ACCEPTED'
+          : status === 'countered'
+            ? 'COUNTER OFFER'
+            : 'OFFER REJECTED';
+        const message = status === 'rejected'
+          ? 'Seller stays at ' + money(listing.listPrice) + '. The price is now firm.'
+          : 'New price: ' + money(finalPrice);
+
+        this.showTransactionConfirm({
+          title,
+          message,
+          confirmLabel: 'OK',
+          accent: status === 'rejected' ? 0xff7cac : 0x62e8c7,
+          onConfirm: () => {},
+        });
+      });
+    });
+
+    const cancel = add(this.add.text(780, 548, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#9fb0ba',
+      backgroundColor: '#121820',
+      padding: { x: 18, y: 9 },
+    }).setOrigin(0.5).setDepth(depth + 3).setInteractive({ useHandCursor: true }));
+    cancel.on('pointerdown', close);
+  }
+
+  drawWheelShop() {
+    const listings = this.getWheelShopListings();
+    const selectedCarId = this.registry.get('selectedCarId');
+    const car = cars[selectedCarId];
+    const carState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+    const locked = Boolean(car?.tuningLocked || carState.collector || carState.immutable);
+
+    if (!car) {
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h / 2,
+        'NO CAR SELECTED',
+        { fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8aa0ad' }
+      ).setOrigin(0.5).setDepth(20));
+      return;
+    }
+
+    this.selectedWheelIndex = Phaser.Math.Clamp(
+      this.selectedWheelIndex,
+      0,
+      Math.max(0, listings.length - 1)
+    );
+
+    if (this.wheelPreviewActive && listings.length) {
+      const option = listings[this.selectedWheelIndex];
+      const previewState = { ...carState, customWheelId: option.id };
+      const carObjects = this.createCarDisplay(
+        car,
+        STAGE.x + STAGE.w * 0.52,
+        STAGE.y + 414,
+        660,
+        16,
+        getCarPaintColor(carState),
+        null,
+        false,
+        previewState
+      );
+      carObjects.forEach(obj => this.addContent(obj));
+
+      if (this.wheelAnimatePreview) {
+        this.wheelAnimatePreview = false;
+        this.animateMarketCarIn(carObjects);
+      }
+
+      const back = this.addContent(this.add.text(
+        STAGE.x + STAGE.w - 22,
+        STAGE.y + 22,
+        '×  BACK TO WHEEL WALL',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#e4f2f8',
+          backgroundColor: '#07111bdd',
+          padding: { x: 11, y: 8 },
+        }
+      ).setOrigin(1, 0).setDepth(42).setInteractive({ useHandCursor: true }));
+      back.on('pointerdown', () => this.transitionWheelPreview(null));
+    } else {
+      listings.forEach((option, index) => {
+        const col = index % 5;
+        const row = Math.floor(index / 5);
+        const x = STAGE.x + 126 + col * 222;
+        const y = STAGE.y + 138 + row * 164;
+        const wheel = this.addContent(this.add.image(
+          x, y, option.textureKey
+        ).setDisplaySize(94, 94).setDepth(18).setInteractive({ useHandCursor: true }));
+
+        const tierColor = option.tier === 'HERO'
+          ? '#ff9fc7'
+          : option.tier === 'TUNER'
+            ? '#ffe08a'
+            : '#9fdcff';
+        this.addContent(this.add.text(
+          x,
+          y + 60,
+          option.label,
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '5px',
+            color: tierColor,
+            backgroundColor: '#06101bcc',
+            padding: { x: 5, y: 3 },
+            align: 'center',
+          }
+        ).setOrigin(0.5, 0).setDepth(20));
+        wheel.on('pointerdown', () => this.transitionWheelPreview(index));
+      });
+    }
+
+    this.addContent(this.add.text(
+      CARDS.x + 18,
+      CARDS.y + 16,
+      'WHEEL WALL // 10 AVAILABLE // ROTATES 3H',
+      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8fe7ff' }
+    ).setDepth(33));
+
+    this.addContent(this.add.text(
+      CARDS.x + 18,
+      CARDS.y + 58,
+      'STANDARD  •  TUNER SHOP  •  HERO CAR\n' +
+      'Tap a wheel to fade into a live preview on your current car.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#9ab0bd',
+        fontStyle: '600',
+        lineSpacing: 5,
+      }
+    ).setDepth(33));
+
+    this.addContent(this.add.text(
+      CARDS.x + 18,
+      CARDS.y + 126,
+      'CURRENT CAR  //  ' + car.shortName +
+        (locked ? '  //  COLLECTOR SPEC — WHEELS LOCKED' : ''),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: locked ? '#ff9aa8' : '#62e8c7',
+      }
+    ).setDepth(33));
+
+    this.drawWheelShopSide(
+      this.wheelPreviewActive ? listings[this.selectedWheelIndex] : null,
+      car,
+      carState,
+      locked
+    );
+  }
+
+  transitionWheelPreview(nextIndex = null) {
+    if (this.autoMarketTransitioning) return;
+    this.autoMarketTransitioning = true;
+
+    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
+      .setDepth(180).setInteractive();
+
+    this.tweens.add({
+      targets: fade,
+      alpha: 0.97,
+      duration: 210,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (nextIndex === null) {
+          this.wheelPreviewActive = false;
+          this.wheelAnimatePreview = false;
+        } else {
+          this.selectedWheelIndex = nextIndex;
+          this.wheelPreviewActive = true;
+          this.wheelAnimatePreview = true;
+        }
+
+        this.renderLocation(this.activeLocationId);
+
+        this.tweens.add({
+          targets: fade,
+          alpha: 0,
+          duration: 280,
+          ease: 'Quad.easeOut',
+          onComplete: () => {
+            fade.destroy();
+            this.autoMarketTransitioning = false;
+          },
+        });
+      },
+    });
+  }
+
+  drawWheelShopSide(option, car, carState, locked) {
+    const y0 = SIDE.y + 224;
+    const ownedWheels = new Set(getOwnedWheelIds(this.registry));
+
+    if (!option) {
+      this.addContent(this.add.text(SIDE.x + 20, y0, 'WHEEL SHOP', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#8cc8ec',
+      }).setDepth(34));
+      this.addContent(this.add.text(
+        SIDE.x + 20,
+        y0 + 46,
+        'Select one of the ten wheels on the wall to try it on ' +
+          car.shortName + '.\n\nNothing changes until you buy or install.',
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '11px',
+          color: '#9ab0bd',
+          fontStyle: '600',
+          lineSpacing: 5,
+          wordWrap: { width: SIDE.w - 40 },
+        }
+      ).setDepth(34));
+      return;
+    }
+
+    const alreadyOwned = ownedWheels.has(option.id);
+    const installed = carState.customWheelId === option.id;
+    const cash = Number(this.registry.get('cash') || 0);
+    const canApply = !locked && (alreadyOwned || cash >= option.price);
+    const tierColor = option.tier === 'HERO'
+      ? '#ff9fc7'
+      : option.tier === 'TUNER'
+        ? '#ffe08a'
+        : '#8fe7ff';
+
+    this.addContent(this.add.text(SIDE.x + 20, y0, option.tier + ' WHEEL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: tierColor,
+    }).setDepth(34));
+    this.addContent(this.add.text(SIDE.x + 20, y0 + 38, option.label, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffffff',
+      wordWrap: { width: SIDE.w - 40 },
+    }).setDepth(34));
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y0 + 86,
+      option.source + '\n384 × 384 STANDARD FIT\n' +
+      (alreadyOwned ? 'IN YOUR WHEEL COLLECTION' : 'NOT YET OWNED'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '10px',
+        color: '#9ab0bd',
+        fontStyle: '600',
+        lineSpacing: 5,
+      }
+    ).setDepth(34));
+    this.addContent(this.add.text(
+      SIDE.x + 20,
+      y0 + 178,
+      alreadyOwned ? 'OWNED // FREE TO INSTALL' : 'PRICE  ' + money(option.price),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: alreadyOwned ? '#62e8c7' : '#ffe08a',
+      }
+    ).setDepth(34));
+
+    if (carState.customWheelId) {
+      const stockButton = this.addContent(this.add.rectangle(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 548,
+        SIDE.w - 36,
+        40,
+        locked ? 0x17181d : 0x1b2028,
+        1
+      ).setStrokeStyle(1, locked ? 0x514f55 : 0x8aa0ad, 1).setDepth(33));
+      this.addContent(this.add.text(
+        SIDE.x + SIDE.w / 2,
+        SIDE.y + 548,
+        locked ? 'COLLECTOR WHEELS LOCKED' : 'RESTORE STOCK WHEELS',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: locked ? '#817d84' : '#d5e1e7',
+        }
+      ).setOrigin(0.5).setDepth(34));
+      if (!locked) {
+        stockButton.setInteractive({ useHandCursor: true });
+        stockButton.on('pointerdown', () => this.restoreStockWheels(car.id));
+      }
+    }
+
+    const apply = this.addContent(this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 608,
+      SIDE.w - 36,
+      48,
+      canApply && !installed ? 0x0d2b29 : 0x17181d,
+      1
+    ).setStrokeStyle(2, canApply && !installed ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
+
+    const label = locked
+      ? 'COLLECTOR CAR // LOCKED'
+      : installed
+        ? 'CURRENTLY INSTALLED'
+        : alreadyOwned
+          ? 'INSTALL'
+          : cash < option.price
+            ? 'NEED ' + money(option.price)
+            : 'BUY & INSTALL // ' + money(option.price);
+
+    this.addContent(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 608,
+      label,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: canApply && !installed ? '#f1fffb' : '#817d84',
+      }
+    ).setOrigin(0.5).setDepth(34));
+
+    if (canApply && !installed) {
+      apply.setInteractive({ useHandCursor: true });
+      apply.on('pointerdown', () => {
+        this.showTransactionConfirm({
+          title: alreadyOwned ? 'INSTALL WHEELS' : 'BUY WHEELS',
+          message: alreadyOwned
+            ? 'Install ' + option.label + ' on ' + car.shortName + '?'
+            : 'Buy ' + option.label + ' for ' + money(option.price) +
+              ' and install them on ' + car.shortName + '?',
+          confirmLabel: alreadyOwned ? 'INSTALL' : 'BUY & INSTALL',
+          accent: 0x62e8c7,
+          onConfirm: () => this.buyOrInstallWheel(option, car.id),
+        });
+      });
+    }
+  }
+
+  buyOrInstallWheel(option, carId) {
+    const wheel = getWheelOption(option?.id);
+    const car = cars[carId];
+    if (!wheel || !car) return;
+
+    const states = { ...(this.registry.get('carStates') || {}) };
+    const state = { ...(states[carId] || {}) };
+    if (car.tuningLocked || state.collector || state.immutable) return;
+
+    const ownedWheelIds = getOwnedWheelIds(this.registry);
+    const alreadyOwned = ownedWheelIds.includes(wheel.id);
+    const cash = Number(this.registry.get('cash') || 0);
+    if (!alreadyOwned && cash < wheel.price) return;
+
+    if (!alreadyOwned) {
+      ownedWheelIds.push(wheel.id);
+      this.registry.set('ownedWheelIds', ownedWheelIds);
+      this.registry.set('cash', cash - wheel.price);
+      this.cashText?.setText(money(cash - wheel.price));
+    }
+
+    state.customWheelId = wheel.id;
+    states[carId] = state;
+    this.registry.set('carStates', states);
+    saveSessionState(this.registry);
+    this.renderLocation(this.activeLocationId);
+  }
+
+  restoreStockWheels(carId) {
+    const car = cars[carId];
+    const states = { ...(this.registry.get('carStates') || {}) };
+    const state = { ...(states[carId] || {}) };
+    if (!car || car.tuningLocked || state.collector || state.immutable) return;
+
+    delete state.customWheelId;
+    states[carId] = state;
+    this.registry.set('carStates', states);
+    saveSessionState(this.registry);
+    this.renderLocation(this.activeLocationId);
+  }
+
 
   showTransactionConfirm({
     title = 'CONFIRM',
@@ -1163,14 +2127,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   buyAutoMarketCar(listing) {
     const owned = [...(this.registry.get('ownedCarIds') || [])];
-    if (owned.includes(listing.carId)) return;
+    if (!listing?.carId || owned.includes(listing.carId)) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     const couponRequired = getCarCouponRequirement(listing.carId);
     const couponCount = getCarCouponCount(this.registry, listing.carId);
-    const useCoupons = couponCount >= couponRequired;
+    const useCoupons = listing.marketType === 'new' && couponCount >= couponRequired;
 
-    if (!useCoupons && cash < listing.price) return;
+    if (!useCoupons && cash < Number(listing.price || 0)) return;
 
     const storageId = this.findStorageForPurchase();
     if (!storageId) return;
@@ -1179,12 +2143,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
     const coupons = { ...(this.registry.get('carCoupons') || {}) };
 
+    const purchasedState = listing.marketType === 'new'
+      ? getNewCarState(listing.carId, listing.paintColor)
+      : {
+          ...(listing.previewState || getAutoMarketBuild(listing.carId)),
+          paintColor: listing.paintColor,
+          acquiredVia: 'tokyoAutoMarketUsed',
+        };
+
     owned.push(listing.carId);
-    carStates[listing.carId] = {
-      ...getAutoMarketBuild(listing.carId),
-      paintColor: DEFAULT_PAINT_COLOR,
-      acquiredVia: useCoupons ? 'competitionCoupon' : 'tokyoAutoMarket',
-    };
+    carStates[listing.carId] = purchasedState;
     locations[listing.carId] = storageId;
 
     let nextCash = cash;
@@ -1194,7 +2162,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       else delete coupons[listing.carId];
       this.registry.set('carCoupons', coupons);
     } else {
-      nextCash = cash - listing.price;
+      nextCash = cash - Number(listing.price || 0);
       this.registry.set('cash', nextCash);
     }
 
@@ -1203,11 +2171,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('carGarageLocations', locations);
     this.registry.set('selectedCarId', listing.carId);
     recordCarAcquisition(this.registry, listing.carId, {
-      acquiredVia: useCoupons ? 'competitionCoupon' : 'tokyoAutoMarket',
+      acquiredVia: useCoupons
+        ? 'competitionCoupon'
+        : listing.marketType === 'new'
+          ? 'tokyoAutoMarketNew'
+          : 'tokyoAutoMarketUsed',
     });
     saveSessionState(this.registry);
 
     this.cashText.setText(money(nextCash));
+    this.autoMarketShowcaseActive = false;
     this.renderLocation(this.activeLocationId);
   }
 

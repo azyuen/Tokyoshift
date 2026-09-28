@@ -23,8 +23,24 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     label: 'TOKYO AUTO MARKET',
     shortLabel: 'AUTO MARKET',
     kind: 'autoMarket',
-    backgroundKey: 'centralTokyoAutoMarketBg',
-    backgroundPath: 'assets/CentralTokyo/tokyo_auto_market_after_dark.png',
+    // Used is the default so existing saves land in the closest equivalent to
+    // the original pre-modified Auto Market. Each room is loaded lazily.
+    backgroundKey: 'centralTokyoAutoMarketUsedBg',
+    backgroundPath: 'assets/CentralTokyo/tokyo_auto_market_used.png',
+    marketBackgrounds: {
+      new: {
+        key: 'centralTokyoAutoMarketNewBg',
+        path: 'assets/CentralTokyo/tokyo_auto_market_new.png',
+      },
+      used: {
+        key: 'centralTokyoAutoMarketUsedBg',
+        path: 'assets/CentralTokyo/tokyo_auto_market_used.png',
+      },
+      wheels: {
+        key: 'centralTokyoAutoMarketWheelsBg',
+        path: 'assets/CentralTokyo/tokyo_auto_market_wheels.png',
+      },
+    },
     winsRequired: 12,
     garageTierRequired: 0,
   },
@@ -56,7 +72,7 @@ export const CENTRAL_TOKYO_LOCATION_ORDER = [
   'tokyoDragComplex',
 ];
 
-const MARKET_BASE_PRICES = {
+export const MARKET_BASE_PRICES = {
   ae86: 950000,
   ef: 1150000,
   ek9: 1450000,
@@ -442,6 +458,25 @@ export function getAutoMarketBuild(carId) {
     stock: true,
     acquiredVia: 'tokyoAutoMarket',
   }));
+}
+
+export function getAutoMarketBasePrice(carId) {
+  return Math.max(100000, Number(MARKET_BASE_PRICES[String(carId)] || 1000000));
+}
+
+export function getNewCarState(carId, paintColor = 0xffffff) {
+  return {
+    stock: true,
+    paintColor,
+    nosInstalled: false,
+    tuneLevel: 0,
+    tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
+    drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0, launchSetup: 0 },
+    chassisTuning: { tyres: 0, weightReduction: 0 },
+    exhaustNosTuning: { headers: 0, exhaust: 0, muffler: 0, nosKit: 0, nitrousShot: 0 },
+    visualMods: {},
+    acquiredVia: 'tokyoAutoMarketNew',
+  };
 }
 
 function installedPartsCost(order, catalog, levels = {}) {

@@ -76,6 +76,9 @@ export function createDefaultGameState(options = {}) {
     carGarageLocations: {
       [starterCarId]: 'shinonomeWorkshop',
     },
+    ownedWheelIds: [],
+    autoMarketRoom: 'used',
+    autoMarketHaggles: {},
     meetRosters: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
@@ -605,6 +608,16 @@ export function normaliseState(input = {}) {
     garageTier,
     workshopLocationId,
     carGarageLocations,
+    ownedWheelIds: Array.isArray(input.ownedWheelIds)
+      ? [...new Set(input.ownedWheelIds.map(String).filter(Boolean))]
+      : [],
+    autoMarketRoom: ['new', 'used', 'wheels'].includes(String(input.autoMarketRoom))
+      ? String(input.autoMarketRoom)
+      : 'used',
+    autoMarketHaggles:
+      input.autoMarketHaggles && typeof input.autoMarketHaggles === 'object'
+        ? input.autoMarketHaggles
+        : {},
     playerCharacterId,
     starterCarId,
     selectedCarId,
@@ -723,6 +736,9 @@ export function snapshotRegistry(registry) {
     garageTier: Number(registry.get('garageTier') || 0),
     workshopLocationId: registry.get('workshopLocationId') || 'shinonomeWorkshop',
     carGarageLocations: registry.get('carGarageLocations') || {},
+    ownedWheelIds: registry.get('ownedWheelIds') || [],
+    autoMarketRoom: registry.get('autoMarketRoom') || 'used',
+    autoMarketHaggles: registry.get('autoMarketHaggles') || {},
     meetRosters: registry.get('meetRosters') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],

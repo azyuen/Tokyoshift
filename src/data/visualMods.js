@@ -1,4 +1,5 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
+import { getWheelOption } from './wheels.js?v=20260929-r246';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock
 // canvas and inherit the stock paint image's exact transform in every scene.
@@ -162,9 +163,18 @@ export function getVisualModWheelVisual(car, source = {}) {
   const visual = car?.visual || {};
   const selected = normaliseVisualMods(car?.id, source);
   const option = getVisualModOption(car?.id, 'bodyKit', selected.bodyKit);
-  return option?.wheelGeometry
+  const geometry = option?.wheelGeometry
     ? { ...visual, ...option.wheelGeometry }
-    : visual;
+    : { ...visual };
+  const customWheel = getWheelOption(source?.customWheelId);
+
+  return customWheel
+    ? {
+        ...geometry,
+        wheelKey: customWheel.textureKey,
+        wheelPath: customWheel.path,
+      }
+    : geometry;
 }
 
 export function getVisualModChangeCost(carId, currentSource = {}, pendingSource = {}) {
