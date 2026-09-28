@@ -3555,6 +3555,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedRaceType', offer.raceType);
     this.registry.set('selectedRaceDistanceM', 0);
     this.registry.set('selectedRaceDeal', this.selectedDeal === 'PINK' ? 'PINK_SLIP' : 'BET');
+    this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceStake', this.selectedDeal === 'PINK' ? 0 : offer.stake);
     const { card, ...plainOffer } = offer;
     this.registry.set('selectedRaceMeetOffer', {
