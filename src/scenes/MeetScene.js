@@ -1,8 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260927-r216';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
-import { engines } from '../data/engines.js?v=20260928-r232';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -37,6 +34,10 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r234';
+import { createMeetOpponentMatch, rollMeetDriverRating } from '../data/meetMatchmaking.js?v=20260928-r234';
+import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r234';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r231';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -277,7 +278,12 @@ export default class MeetScene extends Phaser.Scene {
       .filter(Array.isArray)
       .flat();
     const hasEncounterProgression = storedOffers.length > 0
-      && storedOffers.every(offer => Number.isFinite(offer?.encounterRating) && offer?.encounterAi);
+      && storedOffers.every(offer =>
+        Number.isFinite(offer?.encounterRating) &&
+        offer?.encounterAi &&
+        Number.isFinite(Number(offer?.opponentBuildRating)) &&
+        offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
+      );
     const hasStoredRound = storedRefreshAt > Date.now()
       && hasEncounterProgression
       && ALL_MEET_LOCATION_IDS.some(id => Array.isArray(storedRosters[id]));
@@ -901,6 +907,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedOpponentBuildRating', null);
+    this.registry.set('selectedOpponentBuildArchetype', null);
+    this.registry.set('selectedOpponentBuildState', null);
     this.registry.set('selectedRaceCategory', 'TUNER_TEAM');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDistanceM', round.distanceM);
@@ -2012,6 +2021,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', challenger.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', challenger.encounterAi);
     this.registry.set('selectedOpponentDifficulty', challenger.difficulty);
+    this.registry.set('selectedOpponentBuildRating', null);
+    this.registry.set('selectedOpponentBuildArchetype', null);
+    this.registry.set('selectedOpponentBuildState', null);
     this.registry.set('selectedRaceCategory', 'SINGLE');
     this.registry.set('selectedRaceType', challenger.raceType);
     this.registry.set('selectedRaceDistanceM', 0);
@@ -2298,6 +2310,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', state.difficulty);
+    this.registry.set('selectedOpponentBuildRating', null);
+    this.registry.set('selectedOpponentBuildArchetype', null);
+    this.registry.set('selectedOpponentBuildState', null);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDistanceM', 0);
@@ -2393,9 +2408,8 @@ export default class MeetScene extends Phaser.Scene {
       REGION_LOCATION_RIVAL_ROTATION[location.district]?.[locationId]
       || regionalPool;
 
-    // Rotate local crews every meet refresh instead of drawing three completely
-    // random faces. Each regional location keeps its own character flavour while
-    // the wider team still cycles through over time.
+    // Preserve authored regional character rotation. Region affects who and
+    // what tends to appear, but never replaces current-car performance matching.
     const refreshBasis = Number(this.nextRefreshAt || Date.now());
     const cycle = Math.floor(refreshBasis / 180000);
     const locationOffset = Math.max(0, ALL_MEET_LOCATION_IDS.indexOf(locationId));
@@ -2412,42 +2426,14 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     const availableCharacters = [...eligible];
-    if (!regionalTeam) {
-      Phaser.Utils.Array.Shuffle(availableCharacters);
-    }
+    if (!regionalTeam) Phaser.Utils.Array.Shuffle(availableCharacters);
 
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const selectedCarId = this.registry.get('selectedCarId') || 'ae86';
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
-    const playerThreat = this.estimateOwnedCarThreat(selectedCarId, selectedState);
-    const progressionFloor =
-      playerThreat >= 275 ? 5 :
-      playerThreat >= 225 ? 4 :
-      playerThreat >= 175 ? 3 :
-      1;
-
-    const ratingSlots = [...profile.ratingSlots]
-      .slice(0, 3)
-      .map(baseRating => {
-        const base = Phaser.Math.Clamp(Math.round(Number(baseRating) || 3), 1, 5);
-        return Math.min(5, Math.max(base, Math.min(base + 1, progressionFloor)));
-      });
-    Phaser.Utils.Array.Shuffle(ratingSlots);
-
     const usedRivalCars = new Set();
 
-    const carBands = {
-      1: ['ae86', 'ef', 'ek9', 'ej1'],
-      2: ['ae86', 'ef', 'ek9', 'ej1', 'fc3s', 'rx8', 'a60'],
-      3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
-      4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', '3000gt'],
-      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
-    };
-
     const chooseCharacterForRating = rating => {
-      // Regional crews use their curated location order as progression. A
-      // veteran or specialist can therefore appear at the appropriate local
-      // meet while driving to that meet's encounter rating.
       if (regionalTeam) {
         return availableCharacters.shift() || Phaser.Utils.Array.GetRandom(eligible);
       }
@@ -2464,34 +2450,42 @@ export default class MeetScene extends Phaser.Scene {
       return id;
     };
 
-    const chooseCarForEncounter = rating => {
-      const band = carBands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || carBands[3];
-      const likely = profile.likelyCars.filter(id => band.includes(id) && cars[id]);
-      const primary = [...new Set([...likely, ...band.filter(id => cars[id])])];
-
-      const tiers = [
-        primary.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
-        primary.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
-        primary.filter(id => !usedRivalCars.has(id)),
-        carOrder.filter(id => id !== selectedCarId && !ownedCars.includes(id) && !usedRivalCars.has(id)),
-        carOrder.filter(id => id !== selectedCarId && !usedRivalCars.has(id)),
-        carOrder.filter(id => id !== selectedCarId),
-      ];
-
-      const candidates = tiers.find(list => list.length) || ['ek9'];
-      const id = Phaser.Utils.Array.GetRandom(candidates);
-      usedRivalCars.add(id);
-      return id;
-    };
-
     const cfg = MODE_DATA[this.selectedMode];
     const paintPool = [...RIVAL_PAINT_COLORS];
     Phaser.Utils.Array.Shuffle(paintPool);
+    const offerCount = Math.max(1, Number(PROGRESSION_BALANCE.meetMatchmaking.offerCount || 3));
 
-    return ratingSlots.map(encounterRating => {
+    return Array.from({ length: offerCount }, (_, slotIndex) => {
+      // Race context is chosen before vehicle matching because standing and
+      // rolling performance are deliberately evaluated differently.
+      const raceType = Phaser.Utils.Array.GetRandom(cfg.types);
+      const distance = raceType === 'Roll Race'
+        ? '1/2 mile'
+        : Phaser.Utils.Array.GetRandom(cfg.distances);
+
+      // DRIVER skill is rolled independently from the vehicle/build match.
+      const encounterRating = rollMeetDriverRating();
       const characterId = chooseCharacterForRating(encounterRating);
       const character = characters[characterId];
-      const carId = chooseCarForEncounter(encounterRating);
+
+      const match = createMeetOpponentMatch({
+        playerCarId: selectedCarId,
+        playerState: selectedState,
+        ownedCarIds: ownedCars,
+        usedCarIds: [...usedRivalCars],
+        preferredCars: profile.likelyCars,
+        raceType,
+        locationId,
+        refreshSeed: refreshBasis,
+        slotIndex,
+      });
+
+      if (!match) {
+        throw new Error('Unable to generate a physical Meet opponent for ' + selectedCarId);
+      }
+
+      const carId = match.carId;
+      usedRivalCars.add(carId);
       const encounterAi = getEncounterAi(encounterRating);
       const skillLabel = getEncounterSkillLabel(encounterRating);
 
@@ -2514,14 +2508,12 @@ export default class MeetScene extends Phaser.Scene {
       const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId, {
         encounterRating,
         encounterAi,
+        opponentBuildRating: match.buildRating,
+        opponentBuildState: match.buildState,
+        raceType,
         difficulty: profile.difficulty,
         pinkAcceptanceBase: profile.pinkAcceptanceBase,
       });
-
-      const raceType = Phaser.Utils.Array.GetRandom(cfg.types);
-      const distance = raceType === 'Roll Race'
-        ? '1/2 mile'
-        : Phaser.Utils.Array.GetRandom(cfg.distances);
 
       return {
         characterId,
@@ -2531,9 +2523,21 @@ export default class MeetScene extends Phaser.Scene {
         stake,
         distance,
         quote: character.introQuote,
+
+        // Driver ability.
         encounterRating,
         encounterAi,
         skillLabel,
+
+        // Vehicle development: intentionally independent from driver ability.
+        opponentBuildRating: match.buildRating,
+        opponentBuildArchetype: match.buildArchetype,
+        opponentBuildState: match.buildState,
+        performanceBand: match.performanceBand,
+        performanceRatio: match.ratio,
+        playerPerformanceIndex: match.playerPerformanceIndex,
+        opponentPerformanceIndex: match.opponentPerformanceIndex,
+
         difficulty: profile.difficulty,
         pinkAccepted: pinkDecision.accepted,
         pinkAcceptanceChance: pinkDecision.chance,
@@ -3007,65 +3011,6 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
-  estimateCarThreat(carId, tuneLevel = 0, hasNitrous = false, configOverride = null) {
-    const car = configOverride || cars[carId];
-    if (!car) return 0;
-
-    const powerToWeight = (car.powerKW || 0) / Math.max(1, car.vehicleMassKg || 1) * 1000;
-    const traction = (car.tyreGrip || 1)
-      * Math.max(0.35, (car.drivenAxleWeightFraction || 0.54) * (car.launchLoadMultiplier || 1));
-    const forcedInduction = Math.max(0, car.maximumBoost || 0) * 7;
-    const tune = Phaser.Math.Clamp(Number(tuneLevel) || 0, 0, 5) * 4.5;
-    const nitrous = hasNitrous ? 9 : 0;
-
-    return powerToWeight * 0.72 + traction * 52 + forcedInduction + tune + nitrous;
-  }
-
-  getOwnedPerformanceConfig(carId, state = {}) {
-    const source = cars[carId];
-    if (!source) return null;
-
-    const car = JSON.parse(JSON.stringify(source));
-    if (car.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
-      return car;
-    }
-
-    // Match RaceScene's legacy pink-slip tune before applying modern workshop
-    // parts so meet matchmaking sees the same effective build the race sees.
-    const rating = Phaser.Math.Clamp(Number(state.tuneLevel) || 0, 0, 5);
-    const tier = Math.max(0, rating - 2);
-    car.tyreGrip *= 1 + tier * 0.018;
-    car.clutchStrength *= 1 + tier * 0.055;
-    if ((car.maximumBoost || 0) > 0) {
-      car.maximumBoost *= 1 + tier * 0.035;
-      car.turboSpoolRate *= 1 + tier * 0.025;
-    }
-
-    const engineBuild = applyEngineTuning(car, engines[car.engine], state);
-    const tuned = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
-    const exhaustNos = getExhaustNosTuning(state);
-    const workshopNos = exhaustNos.nosKit > 0;
-
-    if (!workshopNos && !state.nosInstalled) {
-      tuned.car.nosPower = 0;
-      tuned.car.nosCapacitySeconds = 0;
-    }
-
-    return tuned.car;
-  }
-
-  estimateOwnedCarThreat(carId, state = {}) {
-    const config = this.getOwnedPerformanceConfig(carId, state);
-    if (!config) return 0;
-
-    const exhaustNos = getExhaustNosTuning(state);
-    const hasNitrous =
-      exhaustNos.nosKit > 0 ||
-      Boolean(state.nosInstalled);
-
-    return this.estimateCarThreat(carId, 0, hasNitrous, config);
-  }
-
   evaluatePinkSlipAcceptance(character, opponentCarId, encounter = {}) {
     const rating = Phaser.Math.Clamp(
       Number(encounter.encounterRating ?? character?.skill?.rating ?? 3),
@@ -3082,20 +3027,37 @@ export default class MeetScene extends Phaser.Scene {
     const playerCarId = this.registry.get('selectedCarId') || 'ae86';
     const carStates = this.registry.get('carStates') || {};
     const playerState = carStates[playerCarId] || { tuneLevel: 0, nosInstalled: false };
+    const raceType = encounter.raceType || 'Standing Start';
+
+    const buildRating = Phaser.Math.Clamp(
+      Number(encounter.opponentBuildRating ?? encounter.encounterRating ?? 3),
+      1,
+      5
+    );
+    const opponentState = encounter.opponentBuildState || createRivalBuildState(
+      cars[opponentCarId] || {},
+      buildRating,
+      {
+        raceType,
+        seed: 'pink-eval:' + opponentCarId + ':' + buildRating + ':' + raceType,
+      }
+    );
+
+    const opponentPerformance = getVehiclePerformance(opponentCarId, opponentState, { raceType });
+    const playerPerformance = getVehiclePerformance(playerCarId, playerState, { raceType });
+    const opponentStock = getVehiclePerformance(opponentCarId, {}, {});
+    const playerStock = getVehiclePerformance(playerCarId, {}, {});
+
+    const opponentThreat = Number(opponentPerformance?.index?.selected || 1);
+    const playerThreat = Number(playerPerformance?.index?.selected || 1);
+    const opponentCarValue = Number(opponentStock?.index?.overall || opponentThreat);
+    const playerCarValue = Number(playerStock?.index?.overall || playerThreat);
+    const strengthRatio = playerThreat / Math.max(1, opponentThreat);
 
     const wins = Number(this.registry.get('wins') || 0);
     const losses = Number(this.registry.get('losses') || 0);
     const races = wins + losses;
     const playerWinRate = races > 0 ? wins / races : 0.5;
-
-    const opponentThreat = this.estimateCarThreat(opponentCarId, rating, rating >= 4)
-      + rating * 9;
-    const playerThreat = this.estimateOwnedCarThreat(playerCarId, playerState)
-      + 18 + playerWinRate * 14;
-
-    const opponentCarValue = this.estimateCarThreat(opponentCarId, 0, false);
-    const playerCarValue = this.estimateCarThreat(playerCarId, 0, false);
-    const strengthRatio = playerThreat / Math.max(1, opponentThreat);
 
     const yesReplies = [
       'All right. Keys for keys.',
@@ -3109,8 +3071,8 @@ export default class MeetScene extends Phaser.Scene {
       'Not for this matchup.',
     ];
 
-    // A clearly outmatched rival will not stake a car just because the RNG
-    // rolled kindly. This is the anti-farming guard for heavily built cars.
+    // Pink-slip acceptance can account for risk/reputation, but the opponent
+    // vehicle itself is never selected from player wins or progression.
     if (strengthRatio >= 1.18) {
       return {
         accepted: false,
@@ -3124,10 +3086,10 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const advantage = opponentThreat - playerThreat;
-    const confidenceBonus = Phaser.Math.Clamp((advantage - 8) / 130, -0.05, 0.13);
+    const confidenceBonus = Phaser.Math.Clamp((advantage - 5) / 115, -0.05, 0.13);
     const aggressionBonus = Phaser.Math.Clamp((aggression - 0.75) * 0.09, -0.025, 0.03);
-    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 260, 0, 0.04);
-    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 220, 0, 0.08);
+    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 220, 0, 0.04);
+    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 190, 0, 0.08);
     const mismatchPenalty = Phaser.Math.Clamp((strengthRatio - 1.0) * 0.28, 0, 0.07);
     const reputationPenalty = Phaser.Math.Clamp((playerWinRate - 0.55) * 0.12, 0, 0.05);
 
@@ -3153,7 +3115,7 @@ export default class MeetScene extends Phaser.Scene {
     };
   }
 
-  challengePinkSlips() {
+  challengePinkSlips() {  challengePinkSlips() {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
 
@@ -3178,6 +3140,9 @@ export default class MeetScene extends Phaser.Scene {
     const pinkDecision = this.evaluatePinkSlipAcceptance(character, displayCarId, {
       encounterRating: offer.encounterRating,
       encounterAi: offer.encounterAi,
+      opponentBuildRating: offer.opponentBuildRating,
+      opponentBuildState: offer.opponentBuildState,
+      raceType: offer.raceType,
       difficulty: offer.difficulty || profile.difficulty,
       pinkAcceptanceBase: profile.pinkAcceptanceBase,
     });
@@ -3582,6 +3547,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentCharacterId', offer.characterId);
     this.registry.set('selectedOpponentEncounterRating', Number(offer.encounterRating || 3));
     this.registry.set('selectedOpponentEncounterAi', offer.encounterAi || getEncounterAi(offer.encounterRating || 3));
+    this.registry.set('selectedOpponentBuildRating', Number(offer.opponentBuildRating || 1));
+    this.registry.set('selectedOpponentBuildArchetype', offer.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', offer.opponentBuildState || null);
     this.registry.set('selectedOpponentDifficulty', offer.difficulty || getMeetLocation(this.selectedMeetLocation).difficulty);
     this.registry.set('selectedRaceCategory', this.selectedMode);
     this.registry.set('selectedRaceType', offer.raceType);
