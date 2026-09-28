@@ -41,12 +41,14 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260926-r212';
 import {
   CENTRAL_TOKYO_LOCATIONS,
+  getCarCouponRequirement,
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
 } from '../data/centralTokyo.js?v=20260928-r232';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
+  WORKSHOP_TIERS,
   getGarageCapacity,
   getWorkshopByLocationId,
   getWorkshopStorageCapacity,
@@ -346,18 +348,127 @@ export default class GarageScene extends Phaser.Scene {
     const losses = this.registry.get('losses') ?? 0;
     const cash = this.registry.get('cash') ?? 50000;
 
-    this.add.text(1210, 25, 'WINS  ' + wins, {
+    this.add.text(1250, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
-    this.add.text(1210, 47, 'LOSSES  ' + losses, {
+    this.add.text(1250, 47, 'LOSSES  ' + losses, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 1030, 35);
+    addSettingsButton(this, 995, 35);
+
+    const couponsButton = this.add.rectangle(1090, 35, 112, 38, 0x0b1724, 1)
+      .setStrokeStyle(1, 0x315470, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(43);
+    this.add.text(1090, 35, 'COUPONS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#bfeaff',
+    }).setOrigin(0.5).setDepth(44);
+    couponsButton.on('pointerover', () => couponsButton.setStrokeStyle(2, 0x43dfff, 1));
+    couponsButton.on('pointerout', () => couponsButton.setStrokeStyle(1, 0x315470, 1));
+    couponsButton.on('pointerdown', () => this.showCouponsPopup());
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(42);
+  }
+
+  showCouponsPopup() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+    const coupons = this.registry.get('carCoupons') || {};
+    const entries = carOrder
+      .filter(carId => cars[carId] && Number(coupons[carId] || 0) > 0)
+      .map(carId => ({
+        carId,
+        count: Math.max(0, Math.floor(Number(coupons[carId] || 0))),
+        required: Math.max(1, Number(getCarCouponRequirement(carId) || 2)),
+      }));
+
+    const depth = 170;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 700, 570, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(470, 170, 'CAR COUPONS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(470, 212, 'Only coupon cars you have discovered are shown here.', {
+      fontFamily: BODY_FONT,
+      fontSize: '11px',
+      color: '#a7bdca',
+      fontStyle: '600',
+    }).setDepth(depth + 2));
+
+    if (!entries.length) {
+      add(this.add.text(780, 390, 'NO CAR COUPONS YET', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#708694',
+      }).setOrigin(0.5).setDepth(depth + 2));
+    } else {
+      entries.slice(0, 7).forEach((entry, index) => {
+        const y = 275 + index * 48;
+        const complete = entry.count >= entry.required;
+
+        add(this.add.rectangle(
+          780,
+          y,
+          610,
+          38,
+          complete ? 0x112a26 : 0x0d1b29,
+          1
+        ).setStrokeStyle(1, complete ? 0x62e8c7 : 0x315470, 1)
+          .setDepth(depth + 2));
+
+        add(this.add.text(500, y, cars[entry.carId].shortName, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#eef8ff',
+        }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+        add(this.add.text(
+          1060,
+          y,
+          entry.count + ' / ' + entry.required + (complete ? '  //  READY' : ''),
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '7px',
+            color: complete ? '#86efd7' : '#a7c6d8',
+          }
+        ).setOrigin(1, 0.5).setDepth(depth + 3));
+      });
+    }
+
+    const closeButton = add(this.add.rectangle(780, 650, 190, 46, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 650, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    closeButton.on('pointerdown', close);
+    blocker.on('pointerdown', close);
   }
 
   buildProfileCalibrationButton() {
@@ -1129,28 +1240,24 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildWorkshopJumpButton() {
-    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
-    const enabled = unlocked.length > 1;
-
     const button = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       716,
       SIDE.w - 32,
       40,
-      enabled ? 0x122331 : 0x17181d,
+      0x122331,
       1
-    ).setStrokeStyle(1, enabled ? 0x55b8ff : 0x514f55, 1).setDepth(40);
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
 
-    this.add.text(SIDE.x + SIDE.w / 2, 716, enabled ? 'OTHER WORKSHOP  >' : 'OTHER WORKSHOP // LOCKED', {
+    this.add.text(SIDE.x + SIDE.w / 2, 716, 'OTHER WORKSHOP  >', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: enabled ? '#bfeaff' : '#817d84',
+      fontSize: '10px',
+      color: '#eef8ff',
     }).setOrigin(0.5).setDepth(41);
 
-    if (enabled) {
-      button.setInteractive({ useHandCursor: true });
-      button.on('pointerdown', () => this.showWorkshopJumpPopup());
-    }
+    button.on('pointerdown', () => this.showWorkshopJumpPopup());
   }
 
   showWorkshopJumpPopup() {
@@ -1158,7 +1265,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.syncGarageAssignments();
     const current = this.getActiveWorkshop();
-    const unlocked = getUnlockedWorkshops(this.registry.get('garageTier') || 0);
+    const ownedTier = Math.max(0, Number(this.registry.get('garageTier') || 0));
     const depth = 150;
     const objects = [];
     const add = obj => {
@@ -1166,6 +1273,72 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const reloadIntoWorkshop = workshop => {
+      this.registry.set('workshopLocationId', workshop.id);
+      const localCars = getCarsInWorkshop(
+        this.ownedCarIds,
+        this.registry.get('carGarageLocations') || this.carGarageLocations || {},
+        workshop.id
+      );
+      this.registry.set('selectedCarId', localCars[0] || null);
+      saveSessionState(this.registry);
+
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+
+      window.location.reload();
+    };
+
+    const unlockWorkshop = workshop => {
+      const liveTier = Math.max(0, Number(this.registry.get('garageTier') || 0));
+      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+      const cost = Math.max(0, Number(workshop.unlockCost || 0));
+
+      if (workshop.tier !== liveTier + 1 || cash < cost) return;
+
+      this.registry.set('garageTier', workshop.tier);
+      this.registry.set('cash', cash - cost);
+      this.registry.set('workshopLocationId', workshop.id);
+
+      const requestedLocations = {
+        ...(this.registry.get('carGarageLocations') || this.carGarageLocations || {}),
+      };
+      if (this.selectedCarId && this.ownedCarIds.includes(this.selectedCarId)) {
+        requestedLocations[this.selectedCarId] = workshop.id;
+      }
+
+      const reassigned = normaliseCarGarageLocations(
+        this.ownedCarIds,
+        requestedLocations,
+        workshop.tier
+      );
+      this.carGarageLocations = reassigned;
+      this.registry.set('carGarageLocations', reassigned);
+
+      const storyId = workshop.tier >= 2
+        ? 'warehouseHqUnlocked'
+        : workshop.tier >= 1
+          ? 'canalYardUnlocked'
+          : null;
+      if (storyId) {
+        try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
+      }
+
+      saveSessionState(this.registry);
+      this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+
+      window.location.reload();
+    };
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
       .setDepth(depth)
@@ -1175,76 +1348,102 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x43dfff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(440, 205, 'GO TO OTHER WORKSHOP', {
+    add(this.add.text(440, 205, 'WORKSHOPS', {
       fontFamily: PIXEL_FONT,
       fontSize: '14px',
       color: '#eefaff',
     }).setDepth(depth + 2));
 
-    add(this.add.text(440, 248, 'Jump between your unlocked garages. Stored cars stay where they are.', {
-      fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#a7bdca',
-      fontStyle: '600',
-      wordWrap: { width: 650 },
-    }).setDepth(depth + 2));
+    add(this.add.text(
+      440,
+      248,
+      'Jump between owned garages or unlock the next workshop here.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#a7bdca',
+        fontStyle: '600',
+        wordWrap: { width: 650 },
+      }
+    ).setDepth(depth + 2));
 
-    unlocked.forEach((workshop, index) => {
+    WORKSHOP_TIERS.forEach((workshop, index) => {
       const y = 330 + index * 82;
-      const isCurrent = workshop.id === current.id;
-      const usage = getWorkshopUsage(
-        this.ownedCarIds,
-        this.carGarageLocations || {},
-        workshop.id
-      );
+      const isUnlocked = workshop.tier <= ownedTier;
+      const isCurrent = isUnlocked && workshop.id === current.id;
+      const isNextUnlock = workshop.tier === ownedTier + 1;
+      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+      const cost = Math.max(0, Number(workshop.unlockCost || 0));
+      const affordable = cash >= cost;
+      const usage = isUnlocked
+        ? getWorkshopUsage(
+            this.ownedCarIds,
+            this.carGarageLocations || {},
+            workshop.id
+          )
+        : 0;
       const capacity = getWorkshopStorageCapacity(workshop.id);
+
+      const fill = isCurrent
+        ? 0x152a2a
+        : isUnlocked
+          ? 0x102138
+          : isNextUnlock
+            ? 0x211a12
+            : 0x15171c;
+      const stroke = isCurrent
+        ? 0x62e8c7
+        : isUnlocked
+          ? 0x55b8ff
+          : isNextUnlock
+            ? 0xe4b660
+            : 0x514f55;
+
       const box = add(this.add.rectangle(
         780,
         y,
         650,
         62,
-        isCurrent ? 0x152a2a : 0x102138,
+        fill,
         1
-      ).setStrokeStyle(2, isCurrent ? 0x62e8c7 : 0x55b8ff, 1)
+      ).setStrokeStyle(2, stroke, 1)
         .setDepth(depth + 2));
 
       add(this.add.text(485, y - 10, workshop.label, {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
-        color: '#eef8ff',
+        color: isUnlocked || isNextUnlock ? '#eef8ff' : '#817d84',
       }).setDepth(depth + 3));
 
-      add(this.add.text(1075, y + 12, usage + ' / ' + capacity + ' CARS' + (isCurrent ? '  //  HERE' : ''), {
+      let meta = '';
+      let metaColor = '#9fc7db';
+      if (isCurrent) {
+        meta = usage + ' / ' + capacity + ' CARS  //  HERE';
+        metaColor = '#78ddc8';
+      } else if (isUnlocked) {
+        meta = usage + ' / ' + capacity + ' CARS  //  GO >';
+      } else if (isNextUnlock) {
+        meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
+          '¥ ' + Number(cost).toLocaleString('en-US');
+        metaColor = affordable ? '#f2d899' : '#c99aa4';
+      } else {
+        meta = 'LOCKED // UNLOCK PREVIOUS WORKSHOP';
+        metaColor = '#817d84';
+      }
+
+      add(this.add.text(1075, y + 12, meta, {
         fontFamily: BODY_FONT,
         fontSize: '9px',
-        color: isCurrent ? '#78ddc8' : '#9fc7db',
+        color: metaColor,
         fontStyle: '700',
       }).setOrigin(1, 0.5).setDepth(depth + 3));
 
-      if (!isCurrent) {
+      if (isUnlocked && !isCurrent) {
         box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => {
-          // Persist first, then use the same clean reload path as workshop
-          // changes from the map. Restarting this already-running Phaser scene
-          // from inside a modal pointer handler can leave stale display/input
-          // objects alive on iOS and crash the PWA.
-          this.registry.set('workshopLocationId', workshop.id);
-          const localCars = getCarsInWorkshop(
-            this.ownedCarIds,
-            this.carGarageLocations || {},
-            workshop.id
-          );
-          this.registry.set('selectedCarId', localCars[0] || null);
-          saveSessionState(this.registry);
-
-          try {
-            sessionStorage.setItem('tokyoShiftInternalReload', '1');
-            sessionStorage.setItem('tokyoShiftForceGarage', '1');
-            sessionStorage.removeItem('tokyoShiftBootMessage');
-          } catch (e) {}
-
-          window.location.reload();
-        });
+        box.on('pointerdown', () => reloadIntoWorkshop(workshop));
+      } else if (!isUnlocked && isNextUnlock && affordable) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => unlockWorkshop(workshop));
       }
     });
 
