@@ -335,6 +335,65 @@ export const CUTSCENES = {
     finalActionLabel: 'RACE',
   },
 
+  specialChallengerWin: {
+    id: 'specialChallengerWin',
+    category: 'STREET / EVENT RESULT',
+    testerLabel: 'Special Challenger — Win',
+    title: 'SPECIAL CHALLENGER // DEFEATED',
+    once: false,
+    characters: { left: '$RIVAL', right: '$PLAYER' },
+    preview: {
+      characterOverrides: { RIVAL: 'rikuAkamine' },
+      variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'SKYLINE' },
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        leftPose: 'loss',
+        rightPose: 'win',
+        text: 'You earned it. The {CAR} is yours.',
+      },
+      {
+        speaker: 'right',
+        leftPose: 'loss',
+        rightPose: 'win',
+        text: 'That was worth answering.',
+      },
+    ],
+    finalActionLabel: 'TAKE THE KEYS',
+  },
+
+  specialChallengerLoss: {
+    id: 'specialChallengerLoss',
+    category: 'STREET / EVENT RESULT',
+    testerLabel: 'Special Challenger — Loss',
+    title: 'SPECIAL CHALLENGER // LOST',
+    once: false,
+    characters: { left: '$RIVAL', right: '$PLAYER' },
+    preview: {
+      characterOverrides: { RIVAL: 'rikuAkamine' },
+      variables: { RIVAL_NAME: 'RIKU AKAMINE', CAR: 'AE86' },
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        leftPose: 'win',
+        rightPose: 'loss',
+        text: 'That was the deal. The {CAR} comes with me.',
+        emphasis: true,
+      },
+      {
+        speaker: 'right',
+        leftPose: 'win',
+        rightPose: 'loss',
+        text: 'A deal is a deal.',
+      },
+    ],
+    finalActionLabel: 'CONTINUE',
+  },
+
   firstPinkSlipChallenge: {
     id: 'firstPinkSlipChallenge',
     category: 'STREET / STAKES',
@@ -655,6 +714,8 @@ export const CUTSCENE_ORDER = [
   'regionalChampionVictory',
   'regionalPerfectVictory',
   'specialChallengerIntroduction',
+  'specialChallengerWin',
+  'specialChallengerLoss',
   'firstPinkSlipChallenge',
   'firstPinkSlipWin',
   'firstPinkSlipLoss',
