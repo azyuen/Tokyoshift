@@ -8,6 +8,7 @@ const sourceValue = (source, key, fallback = null) => {
 };
 
 export const EASY_CASH_WIN_MULTIPLIER = 1.30;
+export const EASY_MIN_CASH_WIN = 2000;
 export const EASY_NEW_CAR_PRICE_MULTIPLIER = 0.85;
 export const EASY_USED_CAR_PRICE_MULTIPLIER = 0.90;
 export const EASY_COUPON_WIN_INTERVAL = 20;
@@ -173,9 +174,12 @@ export function getCareerLocationStatus(source, regionId, locationIndex = 0) {
 
 export function applyEasyCashWinBonus(source, amount = 0) {
   const base = Math.max(0, Number(amount || 0));
+  if (!isEasyDifficulty(source)) return Math.round(base);
+  if (base <= 0) return 0;
+
   return Math.max(
-    0,
-    Math.round(base * (isEasyDifficulty(source) ? EASY_CASH_WIN_MULTIPLIER : 1))
+    EASY_MIN_CASH_WIN,
+    Math.round(base * EASY_CASH_WIN_MULTIPLIER)
   );
 }
 
