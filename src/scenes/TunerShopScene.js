@@ -32,7 +32,7 @@ import {
   createTunerDecalLayers,
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
-} from '../vehicles/TunerDecals.js?v=20260928-r242';
+} from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r280';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
@@ -894,13 +894,51 @@ export default class TunerShopScene extends Phaser.Scene {
     const geometry = carObjects.geometry;
     if (!geometry) return;
 
-    const existing = normaliseTunerDecals(carState)[this.shop.decalId];
+    const allDecals = normaliseTunerDecals(carState);
+    const existing = allDecals[this.shop.decalId];
+
+    // Keep decals earned at other tuner houses visible while editing this
+    // shop's decal. Only the active decal is replaced by the draggable preview.
+    const otherDecals = { ...allDecals };
+    delete otherDecals[this.shop.decalId];
+    const otherDecalObjects = createTunerDecalLayers(
+      this,
+      { ...carState, tunerDecals: otherDecals },
+      {
+        x: geometry.x,
+        y: geometry.displayY,
+        displayWidth: geometry.displayWidth,
+        displayHeight: geometry.displayHeight,
+        depth: 21.7,
+      }
+    );
+    otherDecalObjects.forEach(obj => this.addDynamic(obj));
+
     const placement = {
       x: Number(existing?.x ?? 0.06),
       y: Number(existing?.y ?? -0.01),
       scale: Number(existing?.scale ?? 0.13),
       rotation: Number(existing?.rotation ?? 0),
       color: String(existing?.color || '#FFFFFF').toUpperCase(),
+    };
+
+    const clampPlacement = () => {
+      placement.x = Phaser.Math.Clamp(Number(placement.x || 0), -0.42, 0.42);
+      placement.y = Phaser.Math.Clamp(Number(placement.y || 0), -0.30, 0.30);
+    };
+
+    const syncPlacementFromPreview = previewObject => {
+      placement.x = (previewObject.x - geometry.x) / geometry.displayWidth;
+      placement.y = (previewObject.y - geometry.displayY) / geometry.displayHeight;
+      clampPlacement();
+    };
+
+    const positionPreviewFromPlacement = previewObject => {
+      clampPlacement();
+      previewObject.setPosition(
+        geometry.x + placement.x * geometry.displayWidth,
+        geometry.displayY + placement.y * geometry.displayHeight
+      );
     };
 
     const createPreview = () => {
@@ -915,13 +953,14 @@ export default class TunerShopScene extends Phaser.Scene {
       this.input.setDraggable(preview);
       this.addDynamic(preview);
 
-      preview.on('drag', (pointer, dragX, dragY) => {
-        const minX = geometry.x - geometry.displayWidth * 0.34;
-        const maxX = geometry.x + geometry.displayWidth * 0.34;
-        const minY = geometry.displayY - geometry.displayHeight * 0.13;
-        const maxY = geometry.displayY + geometry.displayHeight * 0.15;
+      preview.on('drag', (_pointer, dragX, dragY) => {
+        const minX = geometry.x - geometry.displayWidth * 0.42;
+        const maxX = geometry.x + geometry.displayWidth * 0.42;
+        const minY = geometry.displayY - geometry.displayHeight * 0.30;
+        const maxY = geometry.displayY + geometry.displayHeight * 0.30;
         preview.x = Phaser.Math.Clamp(dragX, minX, maxX);
         preview.y = Phaser.Math.Clamp(dragY, minY, maxY);
+        syncPlacementFromPreview(preview);
       });
 
       return preview;
@@ -934,6 +973,7 @@ export default class TunerShopScene extends Phaser.Scene {
       preview.setScale((geometry.displayWidth * placement.scale) / rawWidth);
       preview.setAngle(placement.rotation);
       setTunerDecalObjectColor(preview, placement.color);
+      positionPreviewFromPlacement(preview);
     };
 
     const makeControl = (x, y, width, label, handler, options = {}) => {
@@ -1042,13 +1082,51 @@ export default class TunerShopScene extends Phaser.Scene {
     this.sideContent.add(this.add.text(
       SIDE.x + 30,
       SIDE.y + 394,
-      'DRAG THE DECAL ONTO THE BODY',
+      'DRAG TO PLACE // FINE ARROWS ON DISPLAY',
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '7px',
+        fontSize: '6px',
         color: '#d5bb76',
       }
     ));
+
+    // Touch dragging is intentionally coarse on a small decal. Give the player
+    // a separate on-stage D-pad for predictable micro-adjustments.
+    const nudgeX = STAGE.x + STAGE.w - 114;
+    const nudgeY = STAGE.y + 138;
+    const nudgeStepPx = 4;
+
+    this.addDynamic(this.add.text(nudgeX, nudgeY - 66, 'FINE MOVE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#f4dfaa',
+      backgroundColor: '#081018cc',
+      padding: { x: 8, y: 5 },
+    }).setOrigin(0.5).setDepth(26));
+
+    const addNudge = (x, y, label, dxPx, dyPx, width = 58) => {
+      const box = this.addDynamic(this.add.rectangle(
+        x, y, width, 34, 0x0b1720, 0.96
+      ).setStrokeStyle(1, 0xd2aa60, 0.95)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(26));
+      this.addDynamic(this.add.text(x, y, label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#fff3ce',
+      }).setOrigin(0.5).setDepth(27));
+
+      box.on('pointerdown', () => {
+        placement.x += dxPx / geometry.displayWidth;
+        placement.y += dyPx / geometry.displayHeight;
+        positionPreviewFromPlacement(preview);
+      });
+    };
+
+    addNudge(nudgeX, nudgeY - 34, 'UP', 0, -nudgeStepPx, 52);
+    addNudge(nudgeX - 50, nudgeY + 4, 'LEFT', -nudgeStepPx, 0, 70);
+    addNudge(nudgeX + 50, nudgeY + 4, 'RIGHT', nudgeStepPx, 0, 70);
+    addNudge(nudgeX, nudgeY + 42, 'DOWN', 0, nudgeStepPx, 60);
 
     makeControl(SIDE.x + 76, SIDE.y + 440, 82, 'SIZE -', () => {
       placement.scale = Phaser.Math.Clamp(placement.scale - 0.015, 0.055, 0.24);
@@ -1065,8 +1143,7 @@ export default class TunerShopScene extends Phaser.Scene {
     });
 
     makeControl(SIDE.x + SIDE.w / 2, SIDE.y + 502, SIDE.w - 56, 'SAVE DECAL', () => {
-      placement.x = (preview.x - geometry.x) / geometry.displayWidth;
-      placement.y = (preview.y - geometry.displayY) / geometry.displayHeight;
+      syncPlacementFromPreview(preview);
 
       const nextStates = { ...(this.registry.get('carStates') || {}) };
       nextStates[carId] = withTunerDecal(nextStates[carId] || {}, this.shop.decalId, placement);
