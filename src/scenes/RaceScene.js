@@ -5,7 +5,7 @@ import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
-} from '../data/playerDifficulty.js?v=20260929-r268';
+} from '../data/playerDifficulty.js?v=20260929-r271';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r253';
