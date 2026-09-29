@@ -1,6 +1,11 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20260921-r66';
 import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
+import {
+  applyDifficultyToPlayerCarConfig,
+  applyDifficultyToRivalAi,
+  normalisePlayerDifficulty,
+} from '../data/playerDifficulty.js?v=20260929-r268';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r253';
@@ -270,7 +275,13 @@ export default class RaceScene extends Phaser.Scene {
       clone(engines[playerBaseCar.engine]),
       this.playerCarState
     );
-    const playerConfig = playerBuild.car;
+    this.playerDifficulty = normalisePlayerDifficulty(
+      this.registry.get('playerDifficulty')
+    );
+    const playerConfig = applyDifficultyToPlayerCarConfig(
+      playerBuild.car,
+      this.playerDifficulty
+    );
     const opponentBaseCar = clone(cars[this.opponentCarId]);
     const opponentBuild = this.applyRivalBuild(
       opponentBaseCar,
@@ -316,6 +327,14 @@ export default class RaceScene extends Phaser.Scene {
 
     if (!this.isRollingStart && !this.isTutorial) {
       rivalAI = boostAiForStandingStart(rivalAI, this.opponentEncounterRating);
+    }
+
+    if (!this.isTutorial) {
+      rivalAI = applyDifficultyToRivalAi(
+        rivalAI,
+        this.playerDifficulty,
+        { rollingStart: this.isRollingStart }
+      );
     }
 
     this.ai = new DragRacingAI(this.opponent, rivalAI, { rollingStart: this.isRollingStart });
