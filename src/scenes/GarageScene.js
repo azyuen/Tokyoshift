@@ -96,8 +96,8 @@ import {
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r277';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r277';
+import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r278';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -179,11 +179,11 @@ export default class GarageScene extends Phaser.Scene {
     const magazineIssue = getActiveMagazineIssue(this.registry);
     queueImage(
       magazineIssue?.coverKey,
-      magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r277' : null
+      magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r278' : null
     );
     queueImage(
       magazineIssue?.insetKey,
-      magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r277' : null
+      magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r278' : null
     );
 
     // Garage characters shown immediately.
@@ -522,7 +522,7 @@ export default class GarageScene extends Phaser.Scene {
     // Physical magazine lives on the lower-left of the workshop scene. Keep it
     // separate from the garage strip so it reads as an object inside the room.
     const x = STAGE.x + 82;
-    const y = STAGE.y + STAGE.h - 78;
+    const y = STAGE.y + STAGE.h - 98;
     const angle = -9;
     const displayW = 92;
     const displayH = 122;
