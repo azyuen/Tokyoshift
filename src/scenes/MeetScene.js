@@ -622,7 +622,10 @@ export default class MeetScene extends Phaser.Scene {
     return true;
   }
 
-  showTunerTeamChallengePopup(regionId, { skipCallout = false } = {}) {
+  showTunerTeamChallengePopup(
+    regionId,
+    { skipCallout = false, portraitsReady = false } = {}
+  ) {
     if (this.tunerChallengePopup?.active || !this.hasCar) return;
 
     const key = String(regionId || '').toUpperCase();
@@ -699,6 +702,40 @@ export default class MeetScene extends Phaser.Scene {
       });
 
       if (cutscene.played) return;
+    }
+
+    // The legacy pink challenge panel used to render immediately and substitute
+    // racer numbers whenever a profile texture was still lazy-loading. Hold the
+    // panel for one loader pass instead so all seven crew portraits arrive
+    // together and the popup never flashes the numeric fallback.
+    if (!portraitsReady) {
+      if (this.tunerChallengePortraitLoading) return;
+
+      let queuedPortraits = 0;
+
+      rounds.forEach(round => {
+        const character = characters[round.characterId];
+        const key = character?.visual?.spriteKey;
+        const path = character?.visual?.path;
+        if (!key || !path || this.textures.exists(key)) return;
+        this.load.image(key, path + '?v=20260929-r261');
+        queuedPortraits += 1;
+      });
+
+      if (queuedPortraits > 0) {
+        this.tunerChallengePortraitLoading = true;
+
+        this.load.once('complete', () => {
+          this.tunerChallengePortraitLoading = false;
+          this.showTunerTeamChallengePopup(key, {
+            skipCallout: true,
+            portraitsReady: true,
+          });
+        });
+
+        if (!this.load.isLoading()) this.load.start();
+        return;
+      }
     }
 
     const depth = 160;
@@ -1980,7 +2017,7 @@ export default class MeetScene extends Phaser.Scene {
     const carObjects = this.createCarDisplay(
       car,
       startX,
-      448,
+      430,
       690,
       48,
       false,
@@ -2026,19 +2063,19 @@ export default class MeetScene extends Phaser.Scene {
     // Back the challenger down slightly from the previous pass. This target
     // makes the displayed car read at roughly three-quarters of the character
     // canvas height while preserving the full-body silhouette.
-    const specialDriverCanvasHeight = 365;
+    const specialDriverCanvasHeight = 340;
     driver.setScale(specialDriverCanvasHeight / source.height);
 
-    // Ground shadow begins at the heel/contact point and trails away across the
-    // pavement instead of floating symmetrically underneath the sprite.
+    // Centre a wider contact shadow directly beneath the driver's feet so the
+    // character feels planted without the shadow drifting off to one side.
     const driverShadow = this.add.ellipse(
-      922,
-      586,
-      126,
+      930,
+      588,
+      164,
       18,
       0x000000,
       0.52
-    ).setOrigin(0, 0.5)
+    ).setOrigin(0.5)
       .setDepth(47.8)
       .setMask(this.stageMask)
       .setAlpha(animate ? 0 : 1);
@@ -3283,7 +3320,7 @@ export default class MeetScene extends Phaser.Scene {
               ? 'WON YOUR CAR'
               : 'DEFEATED';
 
-        statusText = this.add.text(textX, cardY + 48, status, {
+        statusText = this.add.text(textX, cardY + 40, status, {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',

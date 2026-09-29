@@ -3319,10 +3319,32 @@ export default class RaceScene extends Phaser.Scene {
 
     this.worldG.clear();
     const finishX = this.finishTargetM * PX_PER_M - cameraPx;
-    if (finishX > -60 && finishX < W + 60) {
-      for (let y = 272; y < 498; y += 20) {
-        this.worldG.fillStyle(((y / 20) % 2) ? 0xffffff : 0x151515, 1).fillRect(finishX, y, 16, 20);
-        this.worldG.fillStyle(((y / 20) % 2) ? 0x151515 : 0xffffff, 1).fillRect(finishX + 16, y, 16, 20);
+
+    // Odaiba is the visual test bed for the authored race scenes. Keep the
+    // finish mark on the asphalt only: no rear barrier / fence extension.
+    // Centre the thinner checker on the actual timing line so the car nose
+    // crosses the middle of the painted stripe.
+    if (
+      this.raceDistrict === 'ODAIBA' &&
+      finishX > -40 &&
+      finishX < W + 40
+    ) {
+      const roadTop = 364;
+      const roadBottom = 496;
+      const cellW = 9;
+      const cellH = 11;
+      const startX = Math.round(finishX - cellW);
+      const light = 0xaeb4b8;
+      const dark = 0x181a1d;
+
+      for (let row = 0, y = roadTop; y < roadBottom; row++, y += cellH) {
+        const h = Math.min(cellH, roadBottom - y);
+        this.worldG
+          .fillStyle(row % 2 === 0 ? light : dark, 0.92)
+          .fillRect(startX, y, cellW, h);
+        this.worldG
+          .fillStyle(row % 2 === 0 ? dark : light, 0.92)
+          .fillRect(startX + cellW, y, cellW, h);
       }
     }
 
