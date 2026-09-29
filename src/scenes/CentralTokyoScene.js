@@ -118,7 +118,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   preload() {
     let queued = 0;
-    const requested = this.requestedLocationId || this.registry.get('centralTokyoLocation');
+    const requested = this.requestedLocationId || CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
     const location = LOCATION_BY_ID[requested] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
     queued += this.queueLocationAssets(location);
 
@@ -131,7 +131,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (location?.kind === 'autoMarket') {
       const room = ['new', 'used', 'wheels'].includes(this.autoMarketRoom)
         ? this.autoMarketRoom
-        : 'used';
+        : 'new';
       const roomConfig = location.marketBackgrounds?.[room];
       return roomConfig?.phases?.[safePhase] || roomConfig || {
         key: location.backgroundKey,
@@ -254,7 +254,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const savedLocation =
       this.requestedLocationId ||
-      this.registry.get('centralTokyoLocation') ||
       CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
 
     this.activeLocationId = isCentralTokyoLocationUnlocked(this.registry, savedLocation)
