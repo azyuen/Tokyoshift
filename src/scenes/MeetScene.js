@@ -1113,6 +1113,114 @@ export default class MeetScene extends Phaser.Scene {
     );
   }
 
+  flashDevControl(control, message, color = '#f4fbff') {
+    if (!control?.label?.active) return;
+    control.label.setText(message).setColor(color);
+    this.time.delayedCall(1100, () => {
+      if (!control?.label?.active) return;
+      control.label.setText(control.defaultText).setColor('#f4fbff');
+    });
+  }
+
+  forceDevTunerTeamChallenge() {
+    if (!this.registry.get('devMode') || !this.hasCar) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    const shop = getTunerShopForRegion(regionId);
+
+    if (!shop) {
+      this.flashDevControl(
+        this.devForceTeamChallengeControl,
+        'DEV // NO TUNER IN THIS REGION',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const rounds = buildTunerTeamChallengeRounds(regionId, playerCharacterId);
+    this.setTunerChallengeState(regionId, {
+      invited: true,
+      offeredOnce: true,
+      reofferVisitsRemaining: 0,
+      completed: false,
+      stage: 0,
+      misses: 0,
+      perfectEligible: true,
+      activeSession: false,
+      retryNotBefore: 0,
+      rounds,
+      offeredAt: 'DEV',
+      completedAt: 0,
+    });
+    saveSessionState(this.registry);
+
+    this.showTunerTeamChallengePopup(regionId);
+    this.flashDevControl(
+      this.devForceTeamChallengeControl,
+      'DEV // TEAM CHALLENGE READY',
+      '#ffe2a4'
+    );
+  }
+
+  forceDevSpecialChallenger() {
+    if (!this.registry.get('devMode')) return;
+
+    if (!this.hasCar) {
+      this.flashDevControl(
+        this.devForceChallengerControl,
+        'DEV // NO CAR AVAILABLE',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    const challenger = this.generateSpecialChallenger();
+    if (!challenger) {
+      this.flashDevControl(
+        this.devForceChallengerControl,
+        'DEV // GARAGE FULL',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    this.registry.set('specialChallenger', challenger);
+    this.registry.set('challengerMisses', 0);
+    this.registry.set('challengerCooldown', 2);
+    saveSessionState(this.registry);
+
+    this.showSpecialChallenger(challenger, true);
+    this.flashDevControl(
+      this.devForceChallengerControl,
+      'DEV // SPECIAL DEPLOYED',
+      '#ffb4c8'
+    );
+  }
+
+  devRefreshAllChallenges() {
+    if (!this.registry.get('devMode')) return;
+
+    this.registry.set('specialChallenger', null);
+    this.registry.set('challengerMisses', 0);
+    this.registry.set('challengerCooldown', 0);
+
+    this.specialChallengeActive = false;
+    this.clearSpecialChallengeObjects();
+    this.restoreMeetActionListeners();
+
+    this.refreshAllLocationOffers({ resetTimer: true, persist: false });
+    this.persistMeetRound();
+    this.rollOffers({ resetTimer: false });
+
+    this.flashDevControl(
+      this.devRefreshChallengesControl,
+      'DEV // ALL MEETS REFRESHED',
+      '#8fe7ff'
+    );
+  }
+
   buildGpsPanel() {
     // Navigation now lives in the full-height race sidebar.
   }
