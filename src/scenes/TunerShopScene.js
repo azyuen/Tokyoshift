@@ -34,7 +34,7 @@ import {
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r280';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r283';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
