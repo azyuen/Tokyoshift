@@ -31,7 +31,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r273';
+} from '../state/GameState.js?v=20260929-r274';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r272';
 import {
   getGarageDeliveryOptions,
@@ -54,7 +54,7 @@ import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r272';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r273';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
