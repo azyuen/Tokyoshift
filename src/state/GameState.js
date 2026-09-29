@@ -378,8 +378,22 @@ export function importProfileBackup(index, payload) {
   };
   writeProfileStore(store);
 
+  // Import is destructive, so do not claim success unless the profile really
+  // survived a round-trip through localStorage. This catches quota/private
+  // storage failures before Settings reloads the app and hides the error.
+  const writtenSlot = ensureProfileStore().slots[slotIndex];
+  const writtenState = writtenSlot?.session || writtenSlot?.manual || null;
+  if (!writtenState || JSON.stringify(writtenState) !== JSON.stringify(state)) {
+    throw new Error('BACKUP COULD NOT BE SAVED');
+  }
+
   if (slotIndex === getActiveProfileIndex()) {
-    mirrorActiveProfile(store.slots[slotIndex]);
+    mirrorActiveProfile(writtenSlot);
+
+    const mirroredSession = readJson(SESSION_KEY);
+    if (!mirroredSession || JSON.stringify(mirroredSession) !== JSON.stringify(state)) {
+      throw new Error('ACTIVE PROFILE COULD NOT BE RESTORED');
+    }
   }
 
   return clonePlain(state);
