@@ -1257,7 +1257,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const paintLayer = objects[objects.length - 2];
     const outlineLayer = objects[objects.length - 1];
-    if (!paintLayer?.setPosition || !outlineLayer?.setPosition) return;
+    if (
+      !paintLayer?.setPosition ||
+      !outlineLayer?.setPosition ||
+      !paintLayer?.getData?.('carPaintLayer') ||
+      paintLayer.visible === false ||
+      outlineLayer.visible === false
+    ) return;
 
     outlineLayer
       .setPosition(paintLayer.x, paintLayer.y)
