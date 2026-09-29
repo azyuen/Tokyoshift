@@ -10,7 +10,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20260929-r272';
+} from '../state/GameState.js?v=20260929-r283';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
@@ -182,16 +182,33 @@ function safeBackupFilenamePart(value = 'driver') {
 }
 
 function downloadProfileBackup(scene, profileIndex) {
-  const build = String(document.getElementById('build-stamp')?.textContent || 'R247');
+  // Export the exact state currently on screen, not merely the last action
+  // that happened to trigger an autosave. This matters on iPad where the PWA
+  // may be reloaded or evicted immediately after the backup is made.
+  if (profileIndex === getActiveProfileIndex()) {
+    saveSessionState(scene.registry);
+  }
+
+  const build = String(document.getElementById('build-stamp')?.textContent || 'UNKNOWN');
   const payload = exportProfileBackup(profileIndex, build);
   if (!payload) return false;
+
+  // Make sure the payload itself survives JSON serialisation before offering
+  // it to the browser as a downloadable file.
+  let serialised = '';
+  try {
+    serialised = JSON.stringify(payload, null, 2);
+    JSON.parse(serialised);
+  } catch (e) {
+    return false;
+  }
 
   const state = payload.state || {};
   const driver = safeBackupFilenamePart(
     [state.firstName, state.lastName].filter(Boolean).join('_') || ('profile_' + (profileIndex + 1))
   );
   const date = new Date().toISOString().slice(0, 10);
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const blob = new Blob([serialised], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -201,6 +218,27 @@ function downloadProfileBackup(scene, profileIndex) {
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 1200);
   return true;
+}
+
+function readProfileBackupFile(file) {
+  if (!file) return Promise.resolve(null);
+
+  if (typeof file.text === 'function') {
+    return file.text();
+  }
+
+  // Older iPad Safari builds do not expose Blob.text(). FileReader is slower
+  // but widely supported and keeps old devices able to restore backups.
+  return new Promise((resolve, reject) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('FILE READ FAILED'));
+      reader.readAsText(file);
+    } catch (e) {
+      reject(e);
+    }
+  });
 }
 
 function chooseProfileBackupFile() {
@@ -238,7 +276,7 @@ function chooseProfileBackupFile() {
       }
 
       try {
-        const raw = await file.text();
+        const raw = await readProfileBackupFile(file);
         finish(JSON.parse(raw));
       } catch (e) {
         finish({ __parseError: true });
@@ -1120,7 +1158,17 @@ export function showSettingsPanel(scene) {
   const selectedSlotForBackup = slots[selectedProfileIndex];
   if (selectedSlotForBackup?.occupied) {
     exportBackupButton.setInteractive({ useHandCursor: true });
-    exportBackupButton.on('pointerdown', () => downloadProfileBackup(scene, selectedProfileIndex));
+    exportBackupButton.on('pointerdown', () => {
+      const ok = downloadProfileBackup(scene, selectedProfileIndex);
+      if (ok) {
+        exportBackupLabel.setText('EXPORTED').setColor('#62e8c7');
+      } else {
+        exportBackupLabel.setText('EXPORT FAILED').setColor('#ff8fa3');
+      }
+      window.setTimeout(() => {
+        if (exportBackupLabel?.active) exportBackupLabel.setText('EXPORT').setColor('#8da7b5');
+      }, 1800);
+    });
   } else {
     exportBackupLabel.setColor('#4f5b63');
   }
