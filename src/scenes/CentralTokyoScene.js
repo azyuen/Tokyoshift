@@ -1938,7 +1938,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         STAGE.x + STAGE.w * 0.51,
         STAGE.y + 350,
         700,
-        16,
+        24,
         getCarPaintColor(carState),
         null,
         false,
