@@ -1584,9 +1584,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const haggle = listing.haggle;
       const haggleText = haggle
         ? haggle.status === 'accepted'
-          ? 'OFFER ACCEPTED // ' + money(haggle.price)
+          ? 'OFFER ACCEPTED // ' + money(listing.price)
           : haggle.status === 'countered'
-            ? 'SELLER COUNTER // ' + money(haggle.price)
+            ? 'SELLER COUNTER // ' + money(listing.price)
             : 'OFFER REJECTED // PRICE FIRM'
         : 'ONE BARGAIN ATTEMPT AVAILABLE';
 
@@ -1777,7 +1777,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       780,
       342,
       cars[listing.carId].shortName + ' // ASKING ' + money(listing.price) +
-        '\nOne attempt. Easy driver discount remains after bargaining.',
+        '\nOne attempt. ' +
+        (getMarketPriceMultiplier(this.registry, 'used') < 1
+          ? 'Easy driver discount remains after bargaining.'
+          : 'A rejected offer makes the listed price firm.'),
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
