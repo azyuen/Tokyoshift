@@ -1410,13 +1410,17 @@ export default class MeetScene extends Phaser.Scene {
       color: '#8cc8ec',
     }).setDepth(37);
 
+    const competitionCooldownRemaining = this.getCompetitionCooldownRemainingMs();
     const competitionUnlocked =
       this.hasCar &&
-      Number(this.registry.get('wins') || 0) >= 1;
+      Number(this.registry.get('wins') || 0) >= 1 &&
+      competitionCooldownRemaining <= 0;
 
-    const competitionLabel = competitionUnlocked
-      ? 'COMPETITION'
-      : 'COMPETITION // WIN 1 RACE';
+    const competitionLabel = Number(this.registry.get('wins') || 0) < 1
+      ? 'COMPETITION // WIN 1 RACE'
+      : competitionCooldownRemaining > 0
+        ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
+        : 'COMPETITION';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
@@ -2312,6 +2316,50 @@ export default class MeetScene extends Phaser.Scene {
       : 3 * 60 * 60 * 1000;
   }
 
+  getCompetitionCooldownMs() {
+    return 30 * 60 * 1000;
+  }
+
+  getCompetitionCooldownRemainingMs() {
+    return Math.max(
+      0,
+      Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
+    );
+  }
+
+  formatCompetitionCooldown(ms = 0) {
+    const totalMinutes = Math.max(1, Math.ceil(ms / 60000));
+    return totalMinutes + 'M';
+  }
+
+  updateCompetitionCooldownButton() {
+    const item = this.modeButtons?.find(button => button.key === 'COMPETITION');
+    if (!item) return;
+
+    const wins = Number(this.registry.get('wins') || 0);
+    const remaining = this.getCompetitionCooldownRemainingMs();
+    const unlocked = this.hasCar && wins >= 1 && remaining <= 0;
+
+    item.locked = !unlocked;
+    item.label.setText(
+      wins < 1
+        ? 'COMPETITION // WIN 1 RACE'
+        : remaining > 0
+          ? 'COOLDOWN // ' + this.formatCompetitionCooldown(remaining)
+          : 'COMPETITION'
+    );
+
+    item.box.removeAllListeners('pointerdown');
+    if (unlocked) {
+      item.box.setInteractive({ useHandCursor: true });
+      item.box.on('pointerdown', () => this.showCompetitionPopup());
+    } else {
+      item.box.disableInteractive();
+    }
+
+    this.updateModeButtons();
+  }
+
   generateCompetitionOffer() {
     const location = getMeetLocation(this.selectedMeetLocation);
     const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
@@ -2405,6 +2453,7 @@ export default class MeetScene extends Phaser.Scene {
       Number(current.refreshAt || 0) <= Date.now() ||
       wrongRegion ||
       legacyDirectCarPrize ||
+      Boolean(current?.used) ||
       current?.balanceVersion !== 'R273';
 
     if (expired) {
@@ -2418,6 +2467,7 @@ export default class MeetScene extends Phaser.Scene {
 
   showCompetitionPopup(storyConfirmed = false) {
     if (this.specialChallengeActive || !this.hasCar) return;
+    if (this.getCompetitionCooldownRemainingMs() > 0) return;
 
     if (!storyConfirmed) {
       const story = playMangaCutscene(this, 'competitionIntroduction', {
@@ -2623,11 +2673,14 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const competitionOffers = { ...(this.registry.get('competitionOffers') || {}) };
-    competitionOffers[offer.locationId] = this.generateCompetitionOffer();
+    delete competitionOffers[offer.locationId];
 
     this.registry.set('cash', cash - offer.entryFee);
     this.registry.set('competitionOffers', competitionOffers);
-    this.registry.set('competitionCooldownUntil', 0);
+    this.registry.set(
+      'competitionCooldownUntil',
+      Date.now() + this.getCompetitionCooldownMs()
+    );
     this.registry.set('competitionState', state);
     this.registry.set('raceReturnScene', 'MeetScene');
     this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
@@ -3756,6 +3809,8 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   updateRefreshTimer() {
+    this.updateCompetitionCooldownButton();
+
     const nextWorldPhase = getWorldPhase();
     if (nextWorldPhase !== this.worldPhase) {
       this.worldPhase = nextWorldPhase;
