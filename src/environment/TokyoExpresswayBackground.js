@@ -12,7 +12,7 @@ export default class TokyoExpresswayBackground {
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r252_' + this.timeOfDay + '_v' + this.roadVariant;
+    const suffix = 'r253_' + this.timeOfDay + '_v' + this.roadVariant;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -409,7 +409,7 @@ export default class TokyoExpresswayBackground {
       ctx.fillStyle = p.roadAlt;
       ctx.fillRect(0, 16, w, 190);
       ctx.fillStyle = p.roadDark;
-      ctx.fillRect(0, 224, w, 36);
+      ctx.fillRect(0, 241, w, 19);
 
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.20 : 0.34;
       for (let i = 0; i < 150; i++) {
@@ -466,7 +466,7 @@ export default class TokyoExpresswayBackground {
       // a darker shoulder band on the far side so the lane reads correctly.
       ctx.fillStyle = p.barrierTop;
       ctx.globalAlpha = 0.72;
-      ctx.fillRect(0, 219, w, 3);
+      ctx.fillRect(0, 236, w, 3);
       ctx.globalAlpha = 1;
       ctx.fillStyle = p.roadDark;
       ctx.fillRect(0, 224, w, 36);
