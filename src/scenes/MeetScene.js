@@ -709,6 +709,8 @@ export default class MeetScene extends Phaser.Scene {
     // panel for one loader pass instead so all seven crew portraits arrive
     // together and the popup never flashes the numeric fallback.
     if (!portraitsReady) {
+      if (this.tunerChallengePortraitLoading) return;
+
       let queuedPortraits = 0;
 
       rounds.forEach(round => {
@@ -721,7 +723,6 @@ export default class MeetScene extends Phaser.Scene {
       });
 
       if (queuedPortraits > 0) {
-        if (this.tunerChallengePortraitLoading) return;
         this.tunerChallengePortraitLoading = true;
 
         this.load.once('complete', () => {
@@ -2065,8 +2066,8 @@ export default class MeetScene extends Phaser.Scene {
     const specialDriverCanvasHeight = 340;
     driver.setScale(specialDriverCanvasHeight / source.height);
 
-    // Ground shadow begins at the heel/contact point and trails away across the
-    // pavement instead of floating symmetrically underneath the sprite.
+    // Centre a wider contact shadow directly beneath the driver's feet so the
+    // character feels planted without the shadow drifting off to one side.
     const driverShadow = this.add.ellipse(
       930,
       588,
