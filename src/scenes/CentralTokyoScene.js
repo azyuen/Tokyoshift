@@ -31,7 +31,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r246';
+} from '../state/GameState.js?v=20260929-r268';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import {
   getGarageDeliveryOptions,
