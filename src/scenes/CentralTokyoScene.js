@@ -1316,7 +1316,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         pose.flip,
         listing.previewState
       );
-      const artworkShiftY = room === 'new' ? 14 : -10;
+      const artworkShiftY = room === 'new' ? 14 : 12;
       if (room === 'used') {
         this.alignUsedMarketReplacementLayers(objects, listing);
       }
@@ -1911,8 +1911,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Keep all ten rack wheels visible even while a wheel is being tried on.
     // The authored wall is part of the room, not a separate browse screen.
     const wheelSlots = [
-      [0.276, 0.280], [0.391, 0.280], [0.500, 0.280], [0.606, 0.280], [0.713, 0.280],
-      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.606, 0.452], [0.713, 0.452],
+      [0.276, 0.296], [0.391, 0.296], [0.500, 0.296], [0.611, 0.296], [0.728, 0.296],
+      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.611, 0.452], [0.728, 0.452],
     ];
 
     listings.forEach((option, index) => {
