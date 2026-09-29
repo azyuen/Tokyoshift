@@ -92,11 +92,13 @@ import {
   preloadVisualModSelectionAssets,
 } from '../data/visualMods.js?v=20260929-r246';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r257';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
+const WORKSHOP_HERO_AE86_BODY_Y = 342;
+const WORKSHOP_THUMB_AE86_OFFSET_Y = -24;
 
 const SAFE = 24;
 const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
@@ -907,7 +909,11 @@ export default class GarageScene extends Phaser.Scene {
 
       box.setInteractive({ useHandCursor: true });
       const thumbWidth = Math.min(190, cardW - 22);
-      const thumbWheelBottomY = this.getWheelBottomY(cars.ae86, y - 9, thumbWidth);
+      const thumbWheelBottomY = this.getWheelBottomY(
+        cars.ae86,
+        y + WORKSHOP_THUMB_AE86_OFFSET_Y,
+        thumbWidth
+      );
       const thumbBodyY = this.getBodyYForWheelBottom(cars[id], thumbWidth, thumbWheelBottomY);
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 34);
       display.forEach(obj => add(obj));
@@ -1656,6 +1662,12 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  getWorkshopWheelContactOffset(wheelSource, axleFit) {
+    const authoredRadius = Number(axleFit?.backingRadius || 0);
+    if (authoredRadius > 0) return authoredRadius;
+    return getWheelContactOffsetY(wheelSource, axleFit?.wheelScale);
+  }
+
   getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
@@ -1667,10 +1679,10 @@ export default class GarageScene extends Phaser.Scene {
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottom =
       bodyY + renderOffsetY + fit.rear.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottom =
       bodyY + renderOffsetY + fit.front.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.front);
     return Math.max(rearBottom, frontBottom);
   }
 
@@ -1684,9 +1696,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
-      fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      fit.rear.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottomOffset =
-      fit.front.offsetY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      fit.front.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.front);
 
     // Account for per-asset body trim when solving the body origin. Without
     // this, hero cars with larger renderOffsetY values sat visibly lower even
@@ -1735,8 +1747,8 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.35);
 
     const tyreBottom = Math.max(
-      rearY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale),
-      frontY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale)
+      rearY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear),
+      frontY + this.getWorkshopWheelContactOffset(wheelSource, fit.front)
     );
     const shadowHeight = Math.max(
       20,
@@ -1805,7 +1817,11 @@ export default class GarageScene extends Phaser.Scene {
 
     // Anchor every selected car to the same lowest wheel point so swapping cars
     // never makes them jump vertically. AE86 defines the current visual baseline.
-    const heroWheelBottomY = this.getWheelBottomY(cars.ae86, 386, 690);
+    const heroWheelBottomY = this.getWheelBottomY(
+      cars.ae86,
+      WORKSHOP_HERO_AE86_BODY_Y,
+      690
+    );
     const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
     const heroSource = this.textures.get(getCarBodyTextureKey(this, cars[id])).getSourceImage();
     const heroWheelSource = this.textures.get(cars[id].visual.wheelKey).getSourceImage();
