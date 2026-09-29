@@ -204,33 +204,56 @@ function chooseProfileBackupFile() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json,application/json';
-    input.style.position = 'fixed';
-    input.style.left = '-9999px';
+
+    // iOS Safari/PWA is more reliable when the file input is technically
+    // on-screen rather than positioned thousands of pixels away.
+    Object.assign(input.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: '1px',
+      height: '1px',
+      opacity: '0.001',
+      zIndex: '99999',
+    });
     document.body.appendChild(input);
 
-    const cleanup = () => {
+    let settled = false;
+    const finish = value => {
+      if (settled) return;
+      settled = true;
       try { input.remove(); } catch (e) {}
+      resolve(value);
     };
 
     input.addEventListener('change', async () => {
       const file = input.files?.[0];
       if (!file) {
-        cleanup();
-        resolve(null);
+        finish(null);
         return;
       }
 
       try {
         const raw = await file.text();
-        resolve(JSON.parse(raw));
+        finish(JSON.parse(raw));
       } catch (e) {
-        resolve({ __parseError: true });
-      } finally {
-        cleanup();
+        finish({ __parseError: true });
       }
     }, { once: true });
 
-    input.click();
+    input.addEventListener('cancel', () => finish(null), { once: true });
+
+    // showPicker() keeps the user-activation chain explicit on newer Safari.
+    // Fall back to click() for older iPadOS versions.
+    try {
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      } else {
+        input.click();
+      }
+    } catch (e) {
+      try { input.click(); } catch (inner) { finish(null); }
+    }
   });
 }
 
@@ -342,9 +365,6 @@ function showControlsPanel(scene) {
     color: '#cbdce6',
   }).setOrigin(0.5).setDepth(depth + 3));
   closeButton.on('pointerdown', close);
-
-  add(scene.add.line(790, 435, 0, -230, 0, 245, 0x315470, 0.9)
-    .setDepth(depth + 2));
 
   add(scene.add.text(520, 205, 'MOBILE // TOUCH', {
     fontFamily: PIXEL_FONT,
@@ -1014,25 +1034,25 @@ export function showSettingsPanel(scene) {
     color: '#8099a8',
   }).setOrigin(0.5).setDepth(183));
 
-  add(scene.add.text(942, 781, 'PROFILE BACKUP', {
+  add(scene.add.text(780, 758, 'PROFILE BACKUP', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#536b79',
-  }).setOrigin(1, 0.5).setDepth(183));
+  }).setOrigin(0.5).setDepth(183));
 
-  const exportBackupButton = add(scene.add.rectangle(1040, 781, 170, 28, 0x0d1720, 1)
+  const exportBackupButton = add(scene.add.rectangle(690, 786, 160, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const exportBackupLabel = add(scene.add.text(1040, 781, 'EXPORT', {
+  const exportBackupLabel = add(scene.add.text(690, 786, 'EXPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
   }).setOrigin(0.5).setDepth(184));
 
-  const importBackupButton = add(scene.add.rectangle(1210, 781, 150, 28, 0x0d1720, 1)
+  const importBackupButton = add(scene.add.rectangle(870, 786, 160, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const importBackupLabel = add(scene.add.text(1210, 781, 'IMPORT', {
+  const importBackupLabel = add(scene.add.text(870, 786, 'IMPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
