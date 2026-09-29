@@ -22,7 +22,7 @@ const REGION_GATES = Object.freeze({
   YOKOHAMA: Object.freeze({ minWins: 30, minGarageTier: 1, minCompetitionWins: 1 }),
   SHINJUKU: Object.freeze({ minWins: 50, minChampionships: 1 }),
   DAIKOKU: Object.freeze({ minWins: 75, minChampionships: 2 }),
-  CENTRAL_TOKYO: Object.freeze({ minGarageTier: 2, minChampionships: 2 }),
+  CENTRAL_TOKYO: Object.freeze({ minWins: 3 }),
 });
 
 export function isEasyDifficulty(source) {
