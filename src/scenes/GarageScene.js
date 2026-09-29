@@ -35,7 +35,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20260929-r246';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r256';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r257';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
@@ -92,7 +92,7 @@ import {
   preloadVisualModSelectionAssets,
 } from '../data/visualMods.js?v=20260929-r246';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r257';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1656,12 +1656,6 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
-  getWorkshopWheelContactOffset(wheelSource, axleFit) {
-    const authoredRadius = Number(axleFit?.backingRadius || 0);
-    if (authoredRadius > 0) return authoredRadius;
-    return getWheelContactOffsetY(wheelSource, axleFit?.wheelScale);
-  }
-
   getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
@@ -1673,10 +1667,10 @@ export default class GarageScene extends Phaser.Scene {
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottom =
       bodyY + renderOffsetY + fit.rear.offsetY +
-      this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
+      getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
     const frontBottom =
       bodyY + renderOffsetY + fit.front.offsetY +
-      this.getWorkshopWheelContactOffset(wheelSource, fit.front);
+      getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
     return Math.max(rearBottom, frontBottom);
   }
 
@@ -1690,9 +1684,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
-      fit.rear.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
+      fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
     const frontBottomOffset =
-      fit.front.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.front);
+      fit.front.offsetY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
 
     // Account for per-asset body trim when solving the body origin. Without
     // this, hero cars with larger renderOffsetY values sat visibly lower even
@@ -1741,8 +1735,8 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.35);
 
     const tyreBottom = Math.max(
-      rearY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear),
-      frontY + this.getWorkshopWheelContactOffset(wheelSource, fit.front)
+      rearY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale),
+      frontY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale)
     );
     const shadowHeight = Math.max(
       20,
@@ -2873,22 +2867,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1200, 124, 'CANCEL', {
+    add(this.add.text(1160, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1350,
+      1320,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
@@ -2899,7 +2893,6 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(depth + 3));
 
     cancel.on('pointerdown', () => this.closeEnginePartSelector());
-    blocker.on('pointerdown', () => this.closeEnginePartSelector());
     confirm.on('pointerdown', () => {
       this.pendingEngineTuning[partId] = draftLevel;
       this.closeEnginePartSelector();
@@ -3710,22 +3703,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1200, 124, 'CANCEL', {
+    add(this.add.text(1160, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1350,
+      1320,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
@@ -3736,7 +3729,6 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(depth + 3));
 
     cancel.on('pointerdown', () => this.closeChassisPartSelector());
-    blocker.on('pointerdown', () => this.closeChassisPartSelector());
     confirm.on('pointerdown', () => {
       this.pendingChassisTuning[partId] = draftLevel;
       this.closeChassisPartSelector();
@@ -4775,22 +4767,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1200, 124, 'CANCEL', {
+    add(this.add.text(1160, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1320, 124, 150, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1350,
+      1320,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
@@ -4801,7 +4793,6 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0.5).setDepth(depth + 3));
 
     cancel.on('pointerdown', () => this.closeSecondaryPartSelector());
-    blocker.on('pointerdown', () => this.closeSecondaryPartSelector());
     confirm.on('pointerdown', () => {
       this.pendingSecondaryTuning[partId] = draftLevel;
       this.closeSecondaryPartSelector();
