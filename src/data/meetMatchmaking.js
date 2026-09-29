@@ -2,6 +2,7 @@ import { cars, carOrder } from './cars.js?v=20260928-r232';
 import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260928-r239';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
+import { applyDifficultyToMeetBands } from './playerDifficulty.js?v=20260929-r268';
 
 function weightedChoice(entries, random = Math.random) {
   const total = entries.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight || 0)), 0);
@@ -40,7 +41,11 @@ function getAllowedBuildRatings(difficulty = 'MED', bandId = 'comparable') {
   )].sort((a, b) => a - b);
 }
 
-function getPerformanceBands(raceType = 'Standing Start', difficulty = 'MED') {
+function getPerformanceBands(
+  raceType = 'Standing Start',
+  difficulty = 'MED',
+  playerDifficulty = 'STANDARD'
+) {
   const configured = PROGRESSION_BALANCE.meetMatchmaking.performanceBands || {};
   const rolling = String(raceType || '').toLowerCase().includes('roll');
   const selected = rolling ? configured.rolling : configured.standing;
@@ -51,7 +56,7 @@ function getPerformanceBands(raceType = 'Standing Start', difficulty = 'MED') {
     ? Number(profile?.rollingComparableTarget)
     : Number(profile?.standingComparableTarget);
 
-  return Object.fromEntries(
+  const regionalBands = Object.fromEntries(
     Object.entries(base).map(([key, value]) => [
       key,
       {
@@ -63,14 +68,21 @@ function getPerformanceBands(raceType = 'Standing Start', difficulty = 'MED') {
       },
     ])
   );
+
+  return applyDifficultyToMeetBands(
+    regionalBands,
+    playerDifficulty,
+    { rollingStart: rolling }
+  );
 }
 
 export function rollMeetPerformanceBand(
   random = Math.random,
   raceType = 'Standing Start',
-  difficulty = 'MED'
+  difficulty = 'MED',
+  playerDifficulty = 'STANDARD'
 ) {
-  const bands = getPerformanceBands(raceType, difficulty);
+  const bands = getPerformanceBands(raceType, difficulty, playerDifficulty);
   return weightedChoice(
     Object.entries(bands).map(([key, value]) => ({ value: key, weight: value.weight })),
     random
@@ -84,7 +96,8 @@ function candidateWeight(candidate, context) {
   const used = new Set(context.usedCarIds || []);
   const bands = context.performanceBands || getPerformanceBands(
     context.raceType,
-    context.difficulty
+    context.difficulty,
+    context.playerDifficulty
   );
   const band = bands[context.bandId] || bands.comparable;
 
@@ -120,11 +133,16 @@ export function createMeetOpponentMatch(options = {}) {
   if (!playerPerformance) return null;
 
   const playerIndex = Math.max(1, Number(playerPerformance.index.selected || playerPerformance.index.overall || 1));
-  const performanceBands = getPerformanceBands(options.raceType, options.difficulty);
+  const performanceBands = getPerformanceBands(
+    options.raceType,
+    options.difficulty,
+    options.playerDifficulty
+  );
   const bandId = options.bandId || rollMeetPerformanceBand(
     random,
     options.raceType,
-    options.difficulty
+    options.difficulty,
+    options.playerDifficulty
   );
   const band = performanceBands[bandId] || performanceBands.comparable;
   const allowedBuildRatings = getAllowedBuildRatings(options.difficulty, bandId);

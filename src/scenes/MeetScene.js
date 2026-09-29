@@ -28,8 +28,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260928-r234';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
+import { saveSessionState } from '../state/GameState.js?v=20260929-r268';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r268';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
@@ -42,7 +42,7 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260928-r239';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260929-r268';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
@@ -2794,6 +2794,7 @@ export default class MeetScene extends Phaser.Scene {
         preferredCars: profile.likelyCars,
         raceType,
         difficulty: profile.difficulty,
+        playerDifficulty: this.registry.get('playerDifficulty') || 'STANDARD',
         locationId,
         refreshSeed: refreshBasis,
         slotIndex,
