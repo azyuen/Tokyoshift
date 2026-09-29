@@ -2873,22 +2873,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1195, 124, 150, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1195, 124, 'CANCEL', {
+    add(this.add.text(1200, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1360, 124, 170, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1360,
+      1350,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
@@ -3710,22 +3710,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1195, 124, 150, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1195, 124, 'CANCEL', {
+    add(this.add.text(1200, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1360, 124, 170, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1360,
+      1350,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
@@ -4775,22 +4775,22 @@ export default class GarageScene extends Phaser.Scene {
       }
     });
 
-    const cancel = add(this.add.rectangle(1195, 124, 150, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1195, 124, 'CANCEL', {
+    add(this.add.text(1200, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const confirm = add(this.add.rectangle(1360, 124, 170, 44, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
     add(this.add.text(
-      1360,
+      1350,
       124,
       draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
       {
