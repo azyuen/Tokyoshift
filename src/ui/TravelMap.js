@@ -16,7 +16,10 @@ import {
   regionIdForMeetLocation,
   getRegionTravelCost,
   isTravelRegionUnlocked,
-} from '../data/travelRegions.js?v=20260926-r211';
+  getTravelRegionUnlockLabel,
+  isTravelLocationUnlocked,
+  getTravelLocationUnlockLabel,
+} from '../data/travelRegions.js?v=20260929-r272';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
@@ -168,7 +171,19 @@ export function showTravelMap(scene, options = {}) {
     if (location.centralTokyoUnlock) {
       return isCentralTokyoLocationUnlocked(scene.registry, location.id);
     }
-    return Boolean(location.available) || location.kind === 'home';
+
+    if (location.kind === 'home' || location.kind === 'garageUpgrade') {
+      return true;
+    }
+
+    const target = getTravelLocation(location.id);
+    const currentRegionException = target?.regionId === currentRegionId;
+    const regionOpen = currentRegionException ||
+      (target?.regionId ? isTravelRegionUnlocked(scene.registry, target.regionId) : true);
+
+    return Boolean(location.available) &&
+      regionOpen &&
+      isTravelLocationUnlocked(scene.registry, location.id);
   };
 
   const visibleLocationsForRegion = region => {
@@ -688,7 +703,7 @@ export function showTravelMap(scene, options = {}) {
       const accent = specialColor ?? regularPink;
 
       if (!item.unlocked) {
-        item.hit.disableInteractive();
+        item.hit.setInteractive({ useHandCursor: true });
 
         // Locked places are visible discoveries, but clearly unavailable:
         // stronger grey dial + grey name, with no hover/click target.
@@ -873,7 +888,7 @@ export function showTravelMap(scene, options = {}) {
       travelLabel.setColor('#72838f').setText(
         location?.centralTokyoUnlock
           ? getCentralTokyoUnlockLabel(scene.registry, location.id)
-          : 'COMING SOON'
+          : getTravelLocationUnlockLabel(scene.registry, location.id)
       );
       return;
     }
@@ -960,8 +975,16 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
+    const regionOpen = selectedRegionId === currentRegionId ||
+      isTravelRegionUnlocked(scene.registry, selectedRegionId);
+
     regionNameText.setText(region.label);
-    regionLineText.setText(region.description);
+    regionLineText.setText(
+      regionOpen
+        ? region.description
+        : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId) +
+          '\n' + region.description
+    );
 
     const tunerShop = getTunerShopForRegion(selectedRegionId);
     const tunerUnlocked = Boolean(
@@ -1083,6 +1106,10 @@ export function showTravelMap(scene, options = {}) {
         row.meta.setText(
           item.difficulty + '  •  ' + getCentralTokyoUnlockLabel(scene.registry, item.id)
         );
+      } else if (!available) {
+        row.meta.setText(
+          item.difficulty + '  •  ' + getTravelLocationUnlockLabel(scene.registry, item.id)
+        );
       } else {
         row.meta.setText(
           item.difficulty + '  •  ' + time + '  •  ' +
@@ -1092,7 +1119,7 @@ export function showTravelMap(scene, options = {}) {
 
       row.box.removeAllListeners('pointerdown');
 
-      if (available || item.centralTokyoUnlock) {
+      if (available || item.centralTokyoUnlock || item.available !== false) {
         row.box.setInteractive({ useHandCursor: true });
         row.box.on('pointerdown', () => {
           selectedLocationId = item.id;
