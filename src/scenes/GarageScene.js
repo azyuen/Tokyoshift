@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20260929-r273';
+import { saveSessionState } from '../state/GameState.js?v=20260929-r274';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r272';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -96,7 +96,7 @@ import {
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r273';
+import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r274';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
