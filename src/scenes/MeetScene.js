@@ -1755,7 +1755,7 @@ export default class MeetScene extends Phaser.Scene {
     ].filter(list => list.length);
 
     const fallback = carOrder.filter(id => cars[id] && carMatchesCompetitionRestriction(id, restriction));
-    return Phaser.Utils.Array.GetRandom(tiers[0] || fallback || ['ek9']);
+    return Phaser.Utils.Array.GetRandom(tiers[0] || (fallback.length ? fallback : ['ek9']));
   }
 
   getCompetitionRestriction(difficulty = 'MED') {
