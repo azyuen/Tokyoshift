@@ -594,6 +594,9 @@ export function showSettingsPanel(scene) {
   let activeDifficulty = normalisePlayerDifficulty(
     scene.registry.get('playerDifficulty')
   );
+  const difficultyProfileAvailable = Boolean(
+    getProfileSlots()[getActiveProfileIndex()]?.occupied
+  );
   const difficultyButtons = [];
   const difficultyXs = [735, 865, 995];
 
@@ -625,12 +628,17 @@ export function showSettingsPanel(scene) {
       color: '#7895a5',
     }).setOrigin(0.5).setDepth(184));
 
-    box.on('pointerdown', () => {
-      activeDifficulty = id;
-      scene.registry.set('playerDifficulty', id);
-      saveSessionState(scene.registry);
-      refreshDifficulty();
-    });
+    if (difficultyProfileAvailable) {
+      box.on('pointerdown', () => {
+        activeDifficulty = id;
+        scene.registry.set('playerDifficulty', id);
+        saveSessionState(scene.registry);
+        refreshDifficulty();
+      });
+    } else {
+      box.disableInteractive();
+      label.setColor('#4e5c65');
+    }
 
     difficultyButtons.push({ id, box, label });
   });
