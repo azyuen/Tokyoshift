@@ -109,16 +109,16 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
 
-    // First authored regional race panorama. Other regions/phases continue to
-    // use the procedural far background until their skyline assets arrive.
-    if (this.raceDistrict === 'ODAIBA') {
-      const odaibaSkylineKey = this.raceTimeOfDay === 'day'
-        ? 'raceSkylineOdaibaDay'
-        : 'raceSkylineOdaibaNight';
-      const odaibaSkylineFile = 'skyline_odaiba_' + this.raceTimeOfDay + '.webp';
+    // Authored regional panoramas share one naming/loading convention.
+    // Adding a region only requires day/night WebPs named skyline_<region>_<phase>.webp.
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI']);
+    if (skylineRegions.has(this.raceDistrict)) {
+      const regionSlug = this.raceDistrict.toLowerCase();
+      const skylineKey = 'raceSkyline_' + regionSlug + '_' + this.raceTimeOfDay;
+      const skylineFile = 'skyline_' + regionSlug + '_' + this.raceTimeOfDay + '.webp';
       queueImage(
-        odaibaSkylineKey,
-        'assets/Race/Skylines/' + odaibaSkylineFile + '?v=20260929-r253'
+        skylineKey,
+        'assets/Race/Skylines/' + skylineFile + '?v=20260929-r262'
       );
     }
 
@@ -346,8 +346,9 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    const skylineKey = this.raceDistrict === 'ODAIBA'
-      ? (this.raceTimeOfDay === 'day' ? 'raceSkylineOdaibaDay' : 'raceSkylineOdaibaNight')
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI']);
+    const skylineKey = skylineRegions.has(this.raceDistrict)
+      ? 'raceSkyline_' + this.raceDistrict.toLowerCase() + '_' + this.raceTimeOfDay
       : null;
     // Keep regional skyline identity stable but vary the expressway furniture
     // from race to race. A session counter makes the sequence deterministic.
