@@ -33,7 +33,7 @@ import {
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
