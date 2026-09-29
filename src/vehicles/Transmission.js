@@ -47,7 +47,7 @@ export default class Transmission {
 
     const qualityPenalty = Phaser.Math.Clamp(
       (
-        Math.max(0, this.clutchTarget - clutchPedal) * 1.7
+        (this.clutchTarget - clutchPedal) * 1.7
         + Math.max(0, throttle - this.throttleGrace) * 0.75
       ) * this.shiftPenaltyMultiplier,
       0,
