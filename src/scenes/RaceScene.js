@@ -39,7 +39,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r268';
+} from '../state/GameState.js?v=20260929-r272';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -48,7 +48,15 @@ import {
   boostAiForPinkSlip,
   boostAiForStandingStart,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { getCarCouponRequirement } from '../data/centralTokyo.js?v=20260928-r232';
+import {
+  AUTO_MARKET_LISTINGS,
+  getCarCouponRequirement,
+  getCarCouponCount,
+} from '../data/centralTokyo.js?v=20260929-r272';
+import {
+  applyEasyCashWinBonus,
+  getEasyCouponMilestoneForWins,
+} from '../data/careerProgression.js?v=20260929-r272';
 import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260926-r212';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -2083,7 +2091,7 @@ export default class RaceScene extends Phaser.Scene {
       }
     ).setOrigin(1, 0).setDepth(depth + 8).setScrollFactor(0);
 
-    const reward = (() => {
+    let reward = (() => {
       if (!settlement) {
         return { primary: 'RACE COMPLETE', secondary: '' };
       }
@@ -2195,6 +2203,20 @@ export default class RaceScene extends Phaser.Scene {
         secondary: 'BALANCE  ¥' + settlement.cash.toLocaleString('en-US'),
       };
     })();
+
+    if (this.lastEasyCouponAward?.carId && cars[this.lastEasyCouponAward.carId]) {
+      const award = this.lastEasyCouponAward;
+      const couponLine =
+        'EASY 20-WIN BONUS // ' +
+        cars[award.carId].shortName +
+        ' COUPON ' + award.count + '/' + award.required;
+      reward = {
+        ...reward,
+        secondary: reward.secondary
+          ? reward.secondary + ' // ' + couponLine
+          : couponLine,
+      };
+    }
 
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
@@ -2912,6 +2934,61 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceMeetOffer', null);
   }
 
+  processEasyCouponMilestone(newWins = 0) {
+    const milestone = getEasyCouponMilestoneForWins(newWins);
+    const processed = Math.max(
+      0,
+      Number(this.registry.get('easyCouponLastMilestone') || 0)
+    );
+
+    if (milestone <= processed) return null;
+
+    // Crossing a 20-win mark on Standard/Hard consumes that milestone without
+    // awarding it. This keeps the reward strictly tied to wins earned on Easy.
+    this.registry.set('easyCouponLastMilestone', milestone);
+    if (this.playerDifficulty !== 'EASY') return null;
+
+    const owned = new Set((this.registry.get('ownedCarIds') || []).map(String));
+    const priceCap = newWins < 40
+      ? 4000000
+      : newWins < 80
+        ? 7500000
+        : Infinity;
+
+    const incomplete = AUTO_MARKET_LISTINGS.filter(item => {
+      if (!cars[item.carId]) return false;
+      if (Number(item.price || 0) > priceCap) return false;
+      return getCarCouponCount(this.registry, item.carId) <
+        getCarCouponRequirement(item.carId);
+    });
+
+    const fallback = AUTO_MARKET_LISTINGS.filter(item => {
+      if (!cars[item.carId]) return false;
+      return getCarCouponCount(this.registry, item.carId) <
+        getCarCouponRequirement(item.carId);
+    });
+
+    const eligible = incomplete.length ? incomplete : fallback;
+    if (!eligible.length) return null;
+
+    const preferred = eligible.filter(item => !owned.has(String(item.carId)));
+    const pool = preferred.length ? preferred : eligible;
+    const selected = Phaser.Utils.Array.GetRandom(pool);
+    if (!selected) return null;
+
+    const coupons = { ...(this.registry.get('carCoupons') || {}) };
+    const nextCount = Math.max(0, Number(coupons[selected.carId] || 0)) + 1;
+    coupons[selected.carId] = nextCount;
+    this.registry.set('carCoupons', coupons);
+
+    return {
+      carId: selected.carId,
+      milestone,
+      count: nextCount,
+      required: getCarCouponRequirement(selected.carId),
+    };
+  }
+
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
 
@@ -2932,8 +3009,12 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
-    this.registry.set('wins', wins + (playerWon ? 1 : 0));
+    const newWins = wins + (playerWon ? 1 : 0);
+    this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+    this.lastEasyCouponAward = playerWon
+      ? this.processEasyCouponMilestone(newWins)
+      : null;
 
     // A declined regional team call-out is re-offered after 5–10 meaningful
     // regional activities. Travel already counts in MeetScene; completed normal
@@ -3236,11 +3317,18 @@ export default class RaceScene extends Phaser.Scene {
         coupons[prizeCouponCarId] = couponCount;
         this.registry.set('carCoupons', coupons);
       } else {
-        prizeCash = Number(state.prizeCash || 0);
+        prizeCash = applyEasyCashWinBonus(
+          this.registry,
+          Number(state.prizeCash || 0)
+        );
         newCash = oldCash + prizeCash;
         this.registry.set('cash', newCash);
       }
 
+      this.registry.set(
+        'competitionWins',
+        Math.max(0, Number(this.registry.get('competitionWins') || 0)) + 1
+      );
       this.registry.set('competitionState', null);
       saveSessionState(this.registry);
 
@@ -3333,7 +3421,9 @@ export default class RaceScene extends Phaser.Scene {
         this.registry.set('selectedRaceSpecialChallenge', false);
       }
     } else if (this.raceMode === 'SINGLE' && this.raceDeal === 'BET') {
-      cashDelta = playerWon ? this.raceStake : -this.raceStake;
+      cashDelta = playerWon
+        ? applyEasyCashWinBonus(this.registry, this.raceStake)
+        : -this.raceStake;
     }
 
     const newCash = Math.max(0, oldCash + cashDelta);
