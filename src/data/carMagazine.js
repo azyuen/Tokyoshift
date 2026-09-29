@@ -1,5 +1,22 @@
 import { cars } from './cars.js?v=20260928-r232';
 
+export const MAGAZINE_ISSUES = Object.freeze({
+  1: Object.freeze({
+    id: 1,
+    label: 'ISSUE 01',
+    coverKey: 'magazineCover01',
+    coverPath: 'assets/Ui/magazine_cover_01.webp',
+    insetKey: 'magazineInset01',
+    insetPath: 'assets/Ui/magazine_inset_01.webp',
+  }),
+});
+
+// Issue selection deliberately stays simple for R277. Future progression can
+// switch this resolver without changing GarageScene or the magazine renderer.
+export function getActiveMagazineIssue(source = null) {
+  return MAGAZINE_ISSUES[1];
+}
+
 export const CAR_MAGAZINE_META = Object.freeze({
   ae86: { year: 1983, drivetrain: 'RWD', fact: 'The AE86 became a cult lightweight because balance and momentum mattered more than outright power.' },
   ef: { year: 1989, drivetrain: 'FWD', fact: 'The EF-era Civic paired low mass with simple mechanicals, making it a natural grassroots tuning platform.' },
