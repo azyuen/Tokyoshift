@@ -8,7 +8,7 @@ import {
 } from '../data/playerDifficulty.js?v=20260929-r271';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r253';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r287';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
@@ -414,6 +414,9 @@ export default class RaceScene extends Phaser.Scene {
       roadVariant,
       skylineStartRatio,
       skylineTravelPx,
+      roadsideRegion: this.raceDistrict,
+      roadsideSeed: roadVariantCounter,
+      worldPxPerM: PX_PER_M,
     });
     this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
