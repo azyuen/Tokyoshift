@@ -28,7 +28,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260929-r283';
+import { saveSessionState } from '../state/GameState.js?v=20260929-r285';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r283';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r280';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
@@ -207,9 +207,10 @@ export default class MeetScene extends Phaser.Scene {
     // Other location rosters remain data-only until the player travels there.
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
-    const storedCurrent = Array.isArray(storedRosters[initialLocationId])
+    const rawStoredCurrent = Array.isArray(storedRosters[initialLocationId])
       ? storedRosters[initialLocationId]
       : [];
+    const storedCurrent = this.applyMeetRaceResults(initialLocationId, rawStoredCurrent);
     const storedCurrentUnique =
       new Set(storedCurrent.map(offer => offer?.characterId).filter(Boolean)).size ===
       storedCurrent.length;
@@ -233,7 +234,10 @@ export default class MeetScene extends Phaser.Scene {
     this.preloadedInitialLocationId = initialLocationId;
     this.preloadedInitialOffers = storedCurrentValid
       ? storedCurrent.map(offer => ({ ...offer }))
-      : this.generateOffersForLocation(initialLocationId);
+      : this.applyMeetRaceResults(
+          initialLocationId,
+          this.generateOffersForLocation(initialLocationId)
+        );
 
     const batch = this.queueMeetRosterAssets(
       this.preloadedInitialOffers,
@@ -287,9 +291,12 @@ export default class MeetScene extends Phaser.Scene {
     // gate validated every stored location at once, so a stale/unvisited Meet
     // elsewhere in Tokyo could force a global reroll and erase the DEFEATED
     // state from the race that just finished.
-    const selectedStoredOffers = Array.isArray(storedRosters[this.selectedMeetLocation])
-      ? storedRosters[this.selectedMeetLocation]
-      : [];
+    const selectedStoredOffers = this.applyMeetRaceResults(
+      this.selectedMeetLocation,
+      Array.isArray(storedRosters[this.selectedMeetLocation])
+        ? storedRosters[this.selectedMeetLocation]
+        : []
+    );
     const hasStoredRound =
       storedRefreshAt > Date.now() &&
       selectedStoredOffers.length > 0 &&
@@ -340,8 +347,10 @@ export default class MeetScene extends Phaser.Scene {
             ? this.generateOffersForLocation(locationId)
             : regionValid;
 
-        this.locationOffers[locationId] = baseOffers
-          .map(offer => ({ ...offer }));
+        this.locationOffers[locationId] = this.applyMeetRaceResults(
+          locationId,
+          baseOffers
+        ).map(offer => ({ ...offer }));
         this.locationSelectedOfferIndex[locationId] = 0;
       });
     } else {
@@ -422,6 +431,32 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  getMeetRaceResults(locationId) {
+    const store = this.registry.get('meetRaceResults') || {};
+    return Array.isArray(store[locationId]) ? store[locationId] : [];
+  }
+
+  applyMeetRaceResults(locationId, offers = []) {
+    const merged = (Array.isArray(offers) ? offers : [])
+      .slice(0, 3)
+      .map(offer => ({ ...offer }));
+
+    this.getMeetRaceResults(locationId).forEach(result => {
+      const slotIndex = Phaser.Math.Clamp(
+        Math.floor(Number(result?.slotIndex || 0)),
+        0,
+        2
+      );
+      const savedOffer = result?.offer;
+      if (!savedOffer || typeof savedOffer !== 'object' || !savedOffer.characterId) return;
+
+      while (merged.length <= slotIndex) merged.push(null);
+      merged[slotIndex] = { ...savedOffer };
+    });
+
+    return merged.filter(Boolean).slice(0, 3);
   }
 
   maybeShowRemoteCentralTokyoInvitation() {
@@ -2694,6 +2729,10 @@ export default class MeetScene extends Phaser.Scene {
     this.locationOffers = {};
     this.locationSelectedOfferIndex = {};
     this.registry.set('defeatedRivalKeys', []);
+    // This is the one authoritative point at which completed-race overlays are
+    // retired. Until a real Meet refresh occurs, returning from a race must
+    // preserve the exact rival/result in its original physical slot.
+    this.registry.set('meetRaceResults', {});
 
     ALL_MEET_LOCATION_IDS.forEach(locationId => {
       this.locationOffers[locationId] = this.generateOffersForLocation(locationId);
@@ -2708,7 +2747,10 @@ export default class MeetScene extends Phaser.Scene {
     const cleanRosters = {};
 
     ALL_MEET_LOCATION_IDS.forEach(locationId => {
-      cleanRosters[locationId] = (this.locationOffers[locationId] || []).map(offer => {
+      cleanRosters[locationId] = this.applyMeetRaceResults(
+        locationId,
+        this.locationOffers[locationId] || []
+      ).map(offer => {
         const {
           card,
           ...plainOffer
