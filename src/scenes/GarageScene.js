@@ -3605,7 +3605,7 @@ export default class GarageScene extends Phaser.Scene {
     );
   }
 
-  openChassisPartSelector(partId) {
+  openChassisPartSelector(partId, previewLevel = null) {
     this.closeChassisPartSelector();
     const part = CHASSIS_TUNING_PARTS[partId];
     if (!part) return;
@@ -3615,8 +3615,14 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
-    const installed = this.currentChassisTuning[partId];
-    const currentSpec = part.levels[installed];
+    const installed = Number(this.currentChassisTuning[partId] || 0);
+    const pending = Number(this.pendingChassisTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
@@ -3633,17 +3639,18 @@ export default class GarageScene extends Phaser.Scene {
     }).setDepth(depth + 2));
 
     this.addModificationModalVisual(add, {
-      textureKey: currentSpec?.spriteKey,
-      title: currentSpec?.name?.toUpperCase() || part.name,
-      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      textureKey: previewSpec?.spriteKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
       partName: 'CHASSIS',
+      frameLabel: 'PREVIEW',
       mode: 'chassis',
       depth,
     });
 
     part.levels.forEach((spec, index) => {
       const y = 230 + index * 120;
-      const selected = this.pendingChassisTuning[partId] === spec.level;
+      const selected = draftLevel === spec.level;
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade('chassis', partId, spec.level);
@@ -3659,8 +3666,11 @@ export default class GarageScene extends Phaser.Scene {
         100,
         selected ? 0x123047 : 0x0b1724,
         1
-      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setDepth(depth + 2));
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
 
       this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
@@ -3695,26 +3705,43 @@ export default class GarageScene extends Phaser.Scene {
       if (selectable) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
-          this.pendingChassisTuning[partId] = spec.level;
-          this.closeChassisPartSelector();
-          this.refreshChassisMode();
+          this.openChassisPartSelector(partId, spec.level);
         });
       }
     });
 
-    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1195, 124, 150, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-
-    add(this.add.text(1360, 124, 'CLOSE', {
+    add(this.add.text(1195, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    close.on('pointerdown', () => this.closeChassisPartSelector());
+    const confirm = add(this.add.rectangle(1360, 124, 170, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1360,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeChassisPartSelector());
     blocker.on('pointerdown', () => this.closeChassisPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingChassisTuning[partId] = draftLevel;
+      this.closeChassisPartSelector();
+      this.refreshChassisMode();
+    });
   }
 
   closeChassisPartSelector() {
