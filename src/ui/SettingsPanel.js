@@ -1028,31 +1028,25 @@ export function showSettingsPanel(scene) {
 
   refreshProfileSelection();
 
-  add(scene.add.text(650, 738, 'Tap a profile to select it, then use the button above to open it.', {
-    fontFamily: BODY_FONT,
-    fontSize: '9px',
-    color: '#8099a8',
-  }).setOrigin(0.5).setDepth(183));
-
-  add(scene.add.text(780, 758, 'PROFILE BACKUP', {
+  add(scene.add.text(780, 735, 'PROFILE BACKUP', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#536b79',
   }).setOrigin(0.5).setDepth(183));
 
-  const exportBackupButton = add(scene.add.rectangle(690, 786, 160, 28, 0x0d1720, 1)
+  const exportBackupButton = add(scene.add.rectangle(690, 765, 160, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const exportBackupLabel = add(scene.add.text(690, 786, 'EXPORT', {
+  const exportBackupLabel = add(scene.add.text(690, 765, 'EXPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
   }).setOrigin(0.5).setDepth(184));
 
-  const importBackupButton = add(scene.add.rectangle(870, 786, 160, 28, 0x0d1720, 1)
+  const importBackupButton = add(scene.add.rectangle(870, 765, 160, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const importBackupLabel = add(scene.add.text(870, 786, 'IMPORT', {
+  const importBackupLabel = add(scene.add.text(870, 765, 'IMPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
