@@ -154,6 +154,8 @@ export function getTunerTeamChallengeState(source, regionId) {
     misses: Math.max(0, Number(raw.misses || 0)),
     perfectEligible: raw.perfectEligible !== false,
     activeSession: Boolean(raw.activeSession),
+    paused: Boolean(raw.paused),
+    pausedAt: Math.max(0, Number(raw.pausedAt || 0)),
     retryNotBefore: Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds) ? raw.rounds : [],
     offeredAt: String(raw.offeredAt || ''),
