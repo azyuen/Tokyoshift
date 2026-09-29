@@ -64,7 +64,7 @@ import {
   canInstallTuningLevel,
   getTuningRequirementLabel,
 } from '../data/workshopProgression.js?v=20260929-r263';
-import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r266';
+import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -1003,7 +1003,9 @@ export default class GarageScene extends Phaser.Scene {
       const thumbBodyY = y + THUMB_CFG.bodyYOffset;
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 42);
       display.forEach(obj => {
-        obj?.setVisible?.(true);
+        // Do NOT force every returned object visible here. Replacement body
+        // kits intentionally hide the stock body layers inside createCarDisplay.
+        // Re-enabling them produced the doubled/misaligned garage thumbnails.
         obj?.setAlpha?.(1);
         add(obj);
       });
@@ -1898,6 +1900,54 @@ export default class GarageScene extends Phaser.Scene {
     ];
   }
 
+  buildWorkshopHeroLayout(car, visualModsOverride = null) {
+    if (!car) return null;
+
+    const tyreContactY = Number(HERO_CFG.tyreContactY || 500);
+    const bodyY = this.getBodyYForWheelBottom(
+      car,
+      HERO_CFG.targetWidth,
+      tyreContactY,
+      visualModsOverride
+    );
+    const carState = (this.registry.get('carStates') || {})[car.id] || {};
+    const wheelVisual = getVisualModWheelVisual(
+      car,
+      visualModsOverride || carState
+    );
+    const wheelSource = this.textures.get(wheelVisual.wheelKey).getSourceImage();
+    const bodyScale = getCarBodyScaleForWidth(
+      this,
+      car,
+      HERO_CFG.targetWidth
+    );
+    const wheelFit = getWheelPairFit(
+      wheelVisual,
+      bodyScale,
+      false,
+      wheelSource
+    );
+    const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+
+    return {
+      x: HERO_CFG.x,
+      bodyY,
+      targetWidth: HERO_CFG.targetWidth,
+      bodyScale,
+      tyreContactY,
+      frontWheelX: HERO_CFG.x + wheelFit.front.offsetX,
+      rearWheelX: HERO_CFG.x + wheelFit.rear.offsetX,
+      rearWheelY: bodyY + renderOffsetY + wheelFit.rear.offsetY,
+      frontWheelY: bodyY + renderOffsetY + wheelFit.front.offsetY,
+      wheelY: bodyY + renderOffsetY + (
+        wheelFit.rear.offsetY +
+        wheelFit.front.offsetY
+      ) / 2,
+      left: HERO_CFG.x - HERO_CFG.targetWidth / 2,
+      right: HERO_CFG.x + HERO_CFG.targetWidth / 2,
+    };
+  }
+
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
     if (this.carGarageLocations?.[id] !== this.getActiveWorkshop().id) return;
@@ -1911,55 +1961,15 @@ export default class GarageScene extends Phaser.Scene {
 
     for (const obj of this.selectedDisplay) obj.destroy();
 
-    // Anchor every selected car to the same lowest wheel point so swapping cars
-    // never makes them jump vertically. AE86 defines the current visual baseline.
-    // Keep the proven R259/R264 floor contact line even though the visible car
-    // is now smaller. This shrinks the car upward from the tyres instead of
-    // making it jump to a different depth in the workshop.
-    const baselineCar = cars[HERO_CFG.baselineReferenceCarId] || cars.ae86;
-    const heroWheelBottomY = this.getWheelBottomY(
-      baselineCar,
-      HERO_CFG.baselineReferenceBodyY,
-      HERO_CFG.baselineReferenceWidth
-    ) + Number(HERO_CFG.baselineOffsetY || 0);
-    const heroBodyY = this.getBodyYForWheelBottom(
-      cars[id],
-      HERO_CFG.targetWidth,
-      heroWheelBottomY
-    );
-    const heroWheelVisual = getVisualModWheelVisual(
-      cars[id],
-      (this.registry.get('carStates') || {})[id] || {}
-    );
-    const heroWheelSource = this.textures.get(heroWheelVisual.wheelKey).getSourceImage();
-    const heroBodyScale = getCarBodyScaleForWidth(
-      this,
-      cars[id],
-      HERO_CFG.targetWidth
-    );
-    const heroWheelFit = getWheelPairFit(heroWheelVisual, heroBodyScale, false, heroWheelSource);
-    const heroRenderOffsetY = Number(cars[id].visual.renderOffsetY || 0) * heroBodyScale;
-    this.heroCarLayout = {
-      x: HERO_CFG.x,
-      bodyY: heroBodyY,
-      targetWidth: HERO_CFG.targetWidth,
-      bodyScale: heroBodyScale,
-      frontWheelX: HERO_CFG.x + heroWheelFit.front.offsetX,
-      rearWheelX: HERO_CFG.x + heroWheelFit.rear.offsetX,
-      rearWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.rear.offsetY,
-      frontWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.front.offsetY,
-      wheelY: heroBodyY + heroRenderOffsetY + (
-        heroWheelFit.rear.offsetY +
-        heroWheelFit.front.offsetY
-      ) / 2,
-      left: HERO_CFG.x - HERO_CFG.targetWidth / 2,
-      right: HERO_CFG.x + HERO_CFG.targetWidth / 2,
-    };
+    // One canonical workshop layout path for initial load, car switching,
+    // purchased cars and tuning previews.
+    this.heroCarLayout = this.buildWorkshopHeroLayout(cars[id]);
+    if (!this.heroCarLayout) return;
     this.selectedDisplay = this.createCarDisplay(
       cars[id],
-      HERO_CFG.x,
-      heroBodyY,
-      HERO_CFG.targetWidth,
+      this.heroCarLayout.x,
+      this.heroCarLayout.bodyY,
+      this.heroCarLayout.targetWidth,
       10
     );
 
@@ -3648,7 +3658,9 @@ export default class GarageScene extends Phaser.Scene {
     (this.selectedDisplay || []).forEach(obj => obj?.destroy?.());
 
     const car = cars[this.selectedCarId];
-    const layout = this.heroCarLayout;
+    const layout = this.buildWorkshopHeroLayout(car, this.pendingVisualMods);
+    if (!layout) return;
+    this.heroCarLayout = layout;
     this.selectedDisplay = this.createCarDisplay(
       car,
       layout.x,
