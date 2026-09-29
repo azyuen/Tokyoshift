@@ -5,6 +5,7 @@ import {
   inferWorkshopTier,
   normaliseCarGarageLocations,
 } from '../data/workshopProgression.js?v=20260922-r86';
+import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r268';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -61,6 +62,7 @@ export function createDefaultGameState(options = {}) {
     wins: 0,
     losses: 0,
     cash: 50000,
+    playerDifficulty: 'STANDARD',
     devMode: false,
     cutscenesSeen: [],
     regionWins: {},
@@ -115,6 +117,9 @@ export function createFreshRunStateFromRegistry(registry) {
   state.firstName = String(registry?.get?.('firstName') || '');
   state.lastName = String(registry?.get?.('lastName') || '');
   state.playerCharacterId = registry?.get?.('playerCharacterId') || state.playerCharacterId;
+  state.playerDifficulty = normalisePlayerDifficulty(
+    registry?.get?.('playerDifficulty') || state.playerDifficulty
+  );
   state.devMode = Boolean(registry?.get?.('devMode'));
 
   // Restart Night is a fresh progression run, not a forced replay of onboarding.
@@ -258,6 +263,7 @@ export function getProfileSlots() {
       lastName: String(state?.lastName || ''),
       playerCharacterId: state?.playerCharacterId || null,
       cash: Number(state?.cash || 0),
+      playerDifficulty: normalisePlayerDifficulty(state?.playerDifficulty),
       carCount: Array.isArray(state?.ownedCarIds) ? state.ownedCarIds.length : 0,
       wins: Number(state?.wins || 0),
       losses: Number(state?.losses || 0),
@@ -678,6 +684,7 @@ export function normaliseState(input = {}) {
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
+    playerDifficulty: normalisePlayerDifficulty(input.playerDifficulty),
     devMode,
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
       ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
@@ -774,6 +781,7 @@ export function snapshotRegistry(registry) {
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
     cash: registry.get('cash') ?? 50000,
+    playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
     cutscenesSeen: registry.get('cutscenesSeen') || [],
     regionWins: registry.get('regionWins') || {},
