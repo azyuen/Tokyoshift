@@ -25,7 +25,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
 } from '../data/visualMods.js?v=20260929-r246';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r257';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,

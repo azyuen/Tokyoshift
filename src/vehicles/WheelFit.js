@@ -17,14 +17,6 @@
 export const LEGACY_WHEEL_RENDER_BOOST = 1.16;
 export const LEGACY_WHEEL_CANVAS_SIZE = 1254;
 export const STANDARD_WHEEL_CANVAS_SIZE = 384;
-
-// R244/R246 wheel exports were normalized onto the same 384px canvas and
-// approximately the same visible tyre footprint. Keep a deterministic fallback
-// for older Safari/iPadOS builds where canvas pixel reads can fail even for
-// same-origin images. Modern browsers still use the measured alpha bounds.
-const STANDARD_WHEEL_VISIBLE_DIAMETER = 332;
-const STANDARD_WHEEL_VISIBLE_BOTTOM_FROM_CENTER = 164;
-
 // Compatibility export for older/debug code.
 export const WHEEL_RENDER_BOOST = LEGACY_WHEEL_RENDER_BOOST;
 
@@ -33,23 +25,6 @@ const visibleWheelMetricCache = new WeakMap();
 function numberOr(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
-}
-
-function getStandardWheelFallbackMetrics(sourceWidth, sourceHeight) {
-  const isStandardWheelCanvas =
-    sourceWidth > 0 &&
-    sourceHeight > 0 &&
-    Math.abs(sourceWidth - STANDARD_WHEEL_CANVAS_SIZE) <= 2 &&
-    Math.abs(sourceHeight - STANDARD_WHEEL_CANVAS_SIZE) <= 2;
-
-  if (!isStandardWheelCanvas) return null;
-
-  return {
-    visibleWidth: STANDARD_WHEEL_VISIBLE_DIAMETER,
-    visibleHeight: STANDARD_WHEEL_VISIBLE_DIAMETER,
-    visibleBottomFromCenter: STANDARD_WHEEL_VISIBLE_BOTTOM_FROM_CENTER,
-    visibleDiameter: STANDARD_WHEEL_VISIBLE_DIAMETER,
-  };
 }
 
 function getVisibleWheelMetrics(wheelSource) {
@@ -62,25 +37,9 @@ function getVisibleWheelMetrics(wheelSource) {
 
   const sourceWidth = numberOr(wheelSource.naturalWidth ?? wheelSource.width, 0);
   const sourceHeight = numberOr(wheelSource.naturalHeight ?? wheelSource.height, 0);
-  if (sourceWidth <= 0 || sourceHeight <= 0) return null;
-
-  const standardFallback = getStandardWheelFallbackMetrics(sourceWidth, sourceHeight);
-
-  // iPadOS can identify as either iPad or MacIntel. The 384px wheel catalogue
-  // is deliberately normalized, so use its authored footprint directly there
-  // instead of depending on Safari canvas readback for layout-critical geometry.
-  const isIpadLike =
-    typeof navigator !== 'undefined' &&
-    (
-      /iPad/i.test(String(navigator.userAgent || '')) ||
-      (
-        navigator.platform === 'MacIntel' &&
-        Number(navigator.maxTouchPoints || 0) > 1
-      )
-    );
-
-  if (standardFallback && isIpadLike) return standardFallback;
-  if (typeof document === 'undefined') return standardFallback;
+  if (sourceWidth <= 0 || sourceHeight <= 0 || typeof document === 'undefined') {
+    return null;
+  }
 
   try {
     // Downsample large wheel assets before scanning alpha. The result is mapped
@@ -94,7 +53,7 @@ function getVisibleWheelMetrics(wheelSource) {
     canvas.width = scanWidth;
     canvas.height = scanHeight;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return standardFallback;
+    if (!ctx) return null;
 
     ctx.clearRect(0, 0, scanWidth, scanHeight);
     ctx.drawImage(wheelSource, 0, 0, scanWidth, scanHeight);
@@ -119,7 +78,7 @@ function getVisibleWheelMetrics(wheelSource) {
       }
     }
 
-    if (maxX < minX || maxY < minY) return standardFallback;
+    if (maxX < minX || maxY < minY) return null;
 
     const visibleWidth = (maxX - minX + 1) / sampleScale;
     const visibleHeight = (maxY - minY + 1) / sampleScale;
@@ -139,10 +98,9 @@ function getVisibleWheelMetrics(wheelSource) {
     visibleWheelMetricCache.set(wheelSource, metrics);
     return metrics;
   } catch (error) {
-    // Older iPadOS Safari can reject canvas pixel reads for an otherwise valid
-    // same-origin image. Standard 384px wheels are normalized, so use their
-    // known footprint rather than falling back to the old 1254px-era scale.
-    return standardFallback;
+    // Same-origin game assets should be readable, but keep the hand-authored
+    // calibration as a deterministic fallback if canvas pixel access ever fails.
+    return null;
   }
 }
 
