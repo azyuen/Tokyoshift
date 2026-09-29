@@ -12,7 +12,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r268';
+} from '../state/GameState.js?v=20260929-r272';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -33,9 +33,9 @@ import {
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r269';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r272';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r269';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
