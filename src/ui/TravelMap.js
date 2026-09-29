@@ -30,12 +30,12 @@ import {
 } from '../data/tunerShops.js?v=20260926-r212';
 import {
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260926-r212';
+} from '../data/tunerChallenges.js?v=20260929-r286';
 import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js?v=20260922-r128';
 import {
   getWorldPhase,
   toggleWorldPhaseOverride,
-} from '../environment/WorldClock.js?v=20260929-r247';
+} from '../environment/WorldClock.js?v=20260929-r286';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1058,7 +1058,7 @@ export function showTravelMap(scene, options = {}) {
     } else if (challengeVisible) {
       tunerKicker
         .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 7)
-        .setText('TEAM CHALLENGE')
+        .setText(tunerChallenge.paused ? 'TEAM CHALLENGE // PAUSED' : 'TEAM CHALLENGE')
         .setColor('#ff91b6');
       tunerName
         .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 39)
@@ -1067,7 +1067,11 @@ export function showTravelMap(scene, options = {}) {
       tunerSpecialty
         .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 60)
         .setOrigin(0, 0.5)
-        .setText('RACE MORE FOR A CHANCE TO CONTINUE')
+        .setText(
+          tunerChallenge.paused
+            ? 'RETURN TO THE REGION MEET TO RESUME'
+            : 'RACE MORE FOR A CHANCE TO CONTINUE'
+        )
         .setColor('#b4c7d1');
       tunerArrow.setText('').setVisible(false);
       tunerBadge
