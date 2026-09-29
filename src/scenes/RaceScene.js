@@ -22,7 +22,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260929-r266';
-import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20260928-r232';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
@@ -2963,6 +2963,17 @@ export default class RaceScene extends Phaser.Scene {
     // their win/loss pose and pink-slip outcome remain visible.
     rosters[locationId] = current.slice(0, 3);
     this.registry.set('meetRosters', rosters);
+
+    // A race can outlast the Meet roster timer if the player spends time on
+    // staging/results. Give the just-completed roster a fresh visibility window
+    // so returning to the Meet always shows the DEFEATED / LAST RUN state
+    // instead of immediately generating a replacement driver.
+    const resultViewUntil = Date.now() + 180000;
+    this.registry.set(
+      'meetRefreshAt',
+      Math.max(Number(this.registry.get('meetRefreshAt') || 0), resultViewUntil)
+    );
+
     this.registry.set('selectedRaceMeetOffer', null);
   }
 
@@ -3558,7 +3569,15 @@ export default class RaceScene extends Phaser.Scene {
       (v.renderOffsetY || 0) +
       (v.groundCorrectionY || 0) +
       Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
-    (v.bodyObjects || [v.body]).forEach(obj => obj.setPosition(x, bodyY));
+    (v.bodyObjects || [v.body]).forEach(obj => {
+      if (obj?.getData?.('tunerDecalLayer')) {
+        const offsetX = Number(obj.getData('tunerDecalOffsetX') || 0);
+        const offsetY = Number(obj.getData('tunerDecalOffsetY') || 0);
+        obj.setPosition(x + offsetX, bodyY + offsetY);
+      } else {
+        obj.setPosition(x, bodyY);
+      }
+    });
     if (v.driverSilhouette) {
       v.driverSilhouette.setPosition(
         x + v.driverOffsetX,
