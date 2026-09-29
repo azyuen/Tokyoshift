@@ -3,7 +3,7 @@ import {
   isCareerRegionUnlocked,
   getCareerRegionUnlockLabel,
   getCareerLocationStatus,
-} from './careerProgression.js?v=20260929-r272';
+} from './careerProgression.js?v=20260929-r279';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
