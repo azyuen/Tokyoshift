@@ -39,6 +39,7 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r272';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r273';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -165,6 +166,13 @@ export default class TunerShopScene extends Phaser.Scene {
       visitedAt: progress[this.shop.id]?.visitedAt || Date.now(),
     };
     this.registry.set('tunerShopProgress', progress);
+    if (this.shop.heroCarId) {
+      recordCarMagazineSightings(this.registry, [{
+        carId: this.shop.heroCarId,
+        label: this.shop.fullName + ' // ' + (this.shop.donorLabel || 'HERO CAR'),
+        source: 'tuner-shop',
+      }], 'tuner-shop');
+    }
     saveSessionState(this.registry);
   }
 
