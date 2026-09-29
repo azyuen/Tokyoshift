@@ -1410,32 +1410,13 @@ export default class MeetScene extends Phaser.Scene {
       color: '#8cc8ec',
     }).setDepth(37);
 
-    const storedCompetition =
-      (this.registry.get('competitionOffers') || {})[this.selectedMeetLocation];
-    const storedCompetitionExpired =
-      Boolean(storedCompetition) &&
-      Number(storedCompetition.refreshAt || 0) <= Date.now();
-    const competitionUsed =
-      Boolean(storedCompetition?.used) &&
-      !storedCompetitionExpired;
-    const competitionCooldownRemaining = Math.max(
-      0,
-      Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
-    );
-    const competitionOnCooldown = competitionCooldownRemaining > 0;
     const competitionUnlocked =
       this.hasCar &&
-      Number(this.registry.get('wins') || 0) >= 1 &&
-      !competitionUsed &&
-      !competitionOnCooldown;
+      Number(this.registry.get('wins') || 0) >= 1;
 
-    const competitionLabel = competitionOnCooldown
-      ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
-      : competitionUsed
-        ? 'COMPETITION // NEXT OFFER'
-        : competitionUnlocked
-          ? 'COMPETITION'
-          : 'COMPETITION // WIN 1 RACE';
+    const competitionLabel = competitionUnlocked
+      ? 'COMPETITION'
+      : 'COMPETITION // WIN 1 RACE';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
@@ -2331,27 +2312,6 @@ export default class MeetScene extends Phaser.Scene {
       : 3 * 60 * 60 * 1000;
   }
 
-  getCompetitionCooldownMs() {
-    return this.registry.get('devMode')
-      ? 15 * 60 * 1000
-      : 30 * 60 * 1000;
-  }
-
-  getCompetitionCooldownRemainingMs() {
-    return Math.max(
-      0,
-      Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
-    );
-  }
-
-  formatCompetitionCooldown(ms = 0) {
-    const totalMinutes = Math.max(1, Math.ceil(ms / 60000));
-    if (totalMinutes < 60) return totalMinutes + 'M';
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return hours + 'H' + (minutes ? ' ' + minutes + 'M' : '');
-  }
-
   generateCompetitionOffer() {
     const location = getMeetLocation(this.selectedMeetLocation);
     const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
@@ -2428,7 +2388,6 @@ export default class MeetScene extends Phaser.Scene {
       rounds,
       balanceVersion: 'R273',
       refreshAt: Date.now() + this.getCompetitionOfferLifetimeMs(),
-      used: false,
     };
   }
 
@@ -2472,8 +2431,6 @@ export default class MeetScene extends Phaser.Scene {
     if (this.competitionPopup?.active) return;
 
     const offer = this.getCompetitionOffer();
-    const cooldownRemaining = this.getCompetitionCooldownRemainingMs();
-    if (cooldownRemaining > 0 || offer.used) return;
 
     recordCarMagazineSightings(
       this.registry,
@@ -2666,14 +2623,11 @@ export default class MeetScene extends Phaser.Scene {
     };
 
     const competitionOffers = { ...(this.registry.get('competitionOffers') || {}) };
-    competitionOffers[offer.locationId] = { ...offer, used: true };
+    competitionOffers[offer.locationId] = this.generateCompetitionOffer();
 
     this.registry.set('cash', cash - offer.entryFee);
     this.registry.set('competitionOffers', competitionOffers);
-    this.registry.set(
-      'competitionCooldownUntil',
-      Date.now() + this.getCompetitionCooldownMs()
-    );
+    this.registry.set('competitionCooldownUntil', 0);
     this.registry.set('competitionState', state);
     this.registry.set('raceReturnScene', 'MeetScene');
     this.cashText?.setText('¥ ' + Number(cash - offer.entryFee).toLocaleString('en-US'));
@@ -3434,7 +3388,7 @@ export default class MeetScene extends Phaser.Scene {
               ? 'WON YOUR CAR'
               : 'DEFEATED';
 
-        statusText = this.add.text(textX, cardY + 40, status, {
+        statusText = this.add.text(textX, cardY + 34, status, {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',
