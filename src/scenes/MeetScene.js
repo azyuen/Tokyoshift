@@ -36,6 +36,11 @@ import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopU
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import {
+  recordCarMagazineSightings,
+  carMatchesCompetitionRestriction,
+  getCompetitionRestrictionPool,
+} from '../data/carMagazine.js?v=20260929-r273';
+import {
   getEncounterProfile,
   getEncounterSkillLabel,
   getEncounterAi,
@@ -1236,6 +1241,7 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     this.registry.set('specialChallenger', challenger);
+    recordCarMagazineSightings(this.registry, [{ carId: challenger.carId, source: 'pink-slip' }], 'pink-slip');
     this.registry.set('challengerMisses', 0);
     this.registry.set('challengerCooldown', 2);
     saveSessionState(this.registry);
@@ -1728,22 +1734,51 @@ export default class MeetScene extends Phaser.Scene {
     return bands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || bands[3];
   }
 
-  chooseEventCar(rating = 3, { preferUnowned = true, exclude = [] } = {}) {
+  chooseEventCar(rating = 3, { preferUnowned = true, exclude = [], restriction = null } = {}) {
     const owned = this.registry.get('ownedCarIds') || [];
     const selected = this.registry.get('selectedCarId');
     const blocked = new Set(exclude);
     const band = this.getEventCarBand(rating);
+    const allowed = id =>
+      cars[id] &&
+      id !== selected &&
+      !blocked.has(id) &&
+      carMatchesCompetitionRestriction(id, restriction);
 
     const tiers = [
       preferUnowned
-        ? band.filter(id => cars[id] && id !== selected && !owned.includes(id) && !blocked.has(id))
+        ? band.filter(id => allowed(id) && !owned.includes(id))
         : [],
-      band.filter(id => cars[id] && id !== selected && !blocked.has(id)),
-      carOrder.filter(id => cars[id] && id !== selected && !owned.includes(id) && !blocked.has(id)),
-      carOrder.filter(id => cars[id] && id !== selected && !blocked.has(id)),
+      band.filter(allowed),
+      carOrder.filter(id => allowed(id) && !owned.includes(id)),
+      carOrder.filter(allowed),
     ].filter(list => list.length);
 
-    return Phaser.Utils.Array.GetRandom(tiers[0] || ['ek9']);
+    const fallback = carOrder.filter(id => cars[id] && carMatchesCompetitionRestriction(id, restriction));
+    return Phaser.Utils.Array.GetRandom(tiers[0] || fallback || ['ek9']);
+  }
+
+  getCompetitionRestriction(difficulty = 'MED') {
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const pool = getCompetitionRestrictionPool(location.district, difficulty);
+    if (!pool.length) return null;
+
+    const owned = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    const possible = pool.filter(restriction =>
+      owned.some(id => carMatchesCompetitionRestriction(id, restriction))
+    );
+    if (!possible.length) return null;
+
+    const region = String(location.district || '').toUpperCase();
+    const level = String(difficulty || '').toUpperCase();
+    let chance = 0.40;
+    if (region === 'SHINJUKU') chance = 0.58;
+    if (region === 'DAIKOKU') chance = 0.72;
+    if (level === 'HARD') chance = Math.max(chance, 0.55);
+    if (level === 'ELITE') chance = Math.max(chance, 0.72);
+
+    if (Phaser.Math.FloatBetween(0, 1) > chance) return null;
+    return Phaser.Utils.Array.GetRandom(possible);
   }
 
   chooseEventCharacter(rating = 3, exclude = []) {
@@ -2325,6 +2360,7 @@ export default class MeetScene extends Phaser.Scene {
     }[difficulty] || { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] };
 
     const owned = this.registry.get('ownedCarIds') || [];
+    const restriction = this.getCompetitionRestriction(difficulty);
     const preferCouponPrize = Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
 
     const usedCharacters = [];
@@ -2336,6 +2372,7 @@ export default class MeetScene extends Phaser.Scene {
       const carId = this.chooseEventCar(rating, {
         preferUnowned: index === 2,
         exclude: usedCars,
+        restriction,
       });
       usedCars.push(carId);
 
@@ -2366,7 +2403,7 @@ export default class MeetScene extends Phaser.Scene {
 
     if (preferCouponPrize) {
       const finalRating = settings.ratings[2];
-      const candidate = this.chooseEventCar(finalRating, { preferUnowned: true });
+      const candidate = this.chooseEventCar(finalRating, { preferUnowned: true, restriction });
       if (candidate && !owned.includes(candidate)) {
         prizeType = 'COUPON';
         prizeCarId = candidate;
@@ -2382,8 +2419,9 @@ export default class MeetScene extends Phaser.Scene {
       prizeType,
       prizeCash: adjustedCashPrize,
       prizeCarId,
+      restriction,
       rounds,
-      balanceVersion: 'R271',
+      balanceVersion: 'R273',
       refreshAt: Date.now() + this.getCompetitionOfferLifetimeMs(),
       used: false,
     };
@@ -2403,7 +2441,7 @@ export default class MeetScene extends Phaser.Scene {
       Number(current.refreshAt || 0) <= Date.now() ||
       wrongRegion ||
       legacyDirectCarPrize ||
-      current?.balanceVersion !== 'R271';
+      current?.balanceVersion !== 'R273';
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -2432,8 +2470,17 @@ export default class MeetScene extends Phaser.Scene {
     const cooldownRemaining = this.getCompetitionCooldownRemainingMs();
     if (cooldownRemaining > 0 || offer.used) return;
 
+    recordCarMagazineSightings(
+      this.registry,
+      (offer.rounds || []).map(round => ({ carId: round.carId, source: 'competition' })),
+      'competition'
+    );
+
     const cash = Number(this.registry.get('cash') || 0);
-    const enough = cash >= offer.entryFee;
+    const enoughCash = cash >= offer.entryFee;
+    const selectedCarId = this.registry.get('selectedCarId');
+    const eligibleCar = carMatchesCompetitionRestriction(selectedCarId, offer.restriction);
+    const enough = enoughCash && eligibleCar;
     const couponRequired = offer.prizeCarId
       ? getCarCouponRequirement(offer.prizeCarId)
       : 0;
@@ -2459,9 +2506,20 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(depth + 2));
 
-    add(this.add.text(780, 235, 'WIN ALL THREE RACES IN A ROW', {
-      fontFamily: BODY_FONT, fontSize: '13px', color: '#8faabb', fontStyle: '600'
-    }).setOrigin(0.5).setDepth(depth + 2));
+    add(this.add.text(
+      780,
+      235,
+      'WIN ALL THREE RACES IN A ROW' +
+        (offer.restriction ? '\\nCLASS // ' + offer.restriction.label : '\\nCLASS // OPEN'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#8faabb',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 4,
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
 
     add(this.add.text(535, 292, 'ENTRY', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
@@ -2511,7 +2569,11 @@ export default class MeetScene extends Phaser.Scene {
     const enterText = add(this.add.text(
       665,
       625,
-      enough ? 'ENTER // ¥' + offer.entryFee.toLocaleString('en-US') : 'NEED MORE CASH',
+      enough
+        ? 'ENTER // ¥' + offer.entryFee.toLocaleString('en-US')
+        : !eligibleCar
+          ? 'NEED ' + offer.restriction.label
+          : 'NEED MORE CASH',
       {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: enough ? '#f1fffb' : '#b1848f'
       }
@@ -2579,6 +2641,7 @@ export default class MeetScene extends Phaser.Scene {
 
   startCompetition(offer) {
     if (!offer || !this.hasCar) return;
+    if (!carMatchesCompetitionRestriction(this.registry.get('selectedCarId'), offer.restriction)) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < offer.entryFee) return;
@@ -2592,6 +2655,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeType: offer.prizeType,
       prizeCash: offer.prizeCash,
       prizeCarId: offer.prizeCarId,
+      restriction: offer.restriction || null,
       rounds: offer.rounds,
       roundIndex: 0,
     };
@@ -2640,6 +2704,14 @@ export default class MeetScene extends Phaser.Scene {
         return { ...plainOffer };
       });
     });
+
+    const visibleSightings = (cleanRosters[this.selectedMeetLocation] || [])
+      .map(offer => ({
+        carId: offer.displayCarId || offer.carId,
+        source: 'street',
+      }))
+      .filter(item => item.carId);
+    recordCarMagazineSightings(this.registry, visibleSightings, 'street');
 
     this.registry.set('meetRosters', cleanRosters);
     this.registry.set('meetRefreshAt', this.nextRefreshAt);
