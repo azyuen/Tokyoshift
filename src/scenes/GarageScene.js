@@ -99,7 +99,12 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WORKSHOP_HERO_X = 708;
-const WORKSHOP_HERO_TARGET_WIDTH = 690;
+// R264 made the workshop car geometry uniform, but retained the old 690px
+// hero width. On the newer authored workshop backgrounds that fills too much
+// of the bay. Render the car smaller while preserving the established tyre
+// contact line independently below.
+const WORKSHOP_HERO_TARGET_WIDTH = 620;
+const WORKSHOP_HERO_BASELINE_REFERENCE_WIDTH = 690;
 const WORKSHOP_HERO_AE86_BODY_Y = 306;
 const WORKSHOP_THUMB_BODY_Y_OFFSET = -15;
 const WORKSHOP_THUMB_WIDTH = 176;
@@ -1907,10 +1912,13 @@ export default class GarageScene extends Phaser.Scene {
 
     // Anchor every selected car to the same lowest wheel point so swapping cars
     // never makes them jump vertically. AE86 defines the current visual baseline.
+    // Keep the proven R259/R264 floor contact line even though the visible car
+    // is now smaller. This shrinks the car upward from the tyres instead of
+    // making it jump to a different depth in the workshop.
     const heroWheelBottomY = this.getWheelBottomY(
       cars.ae86,
       WORKSHOP_HERO_AE86_BODY_Y,
-      WORKSHOP_HERO_TARGET_WIDTH
+      WORKSHOP_HERO_BASELINE_REFERENCE_WIDTH
     );
     const heroBodyY = this.getBodyYForWheelBottom(
       cars[id],
@@ -2590,13 +2598,15 @@ export default class GarageScene extends Phaser.Scene {
     if (!layout || !car) return;
 
     const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
-    const x = Math.min(STAGE.x + STAGE.w - 80, layout.frontWheelX + 160);
+    // The older helper offset was authored around the oversized 690px car and
+    // pushed Daichi into the right wall. Keep him beside the engine bay instead.
+    const x = Math.min(STAGE.x + STAGE.w - 110, layout.frontWheelX + 100);
 
     this.addDaichiTuningHelper({
       textureKey: 'daichiEngineInspect',
       x,
-      feetY: wheelBottomY + 2,
-      targetHeight: 320,
+      feetY: wheelBottomY + 4,
+      targetHeight: 292,
       depth: 8.4,
       // The generated pose uses the shared 1024x1536 canvas but has extra
       // transparent padding below the shoes. Anchor the visible feet instead.
