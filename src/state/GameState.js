@@ -5,7 +5,8 @@ import {
   inferWorkshopTier,
   normaliseCarGarageLocations,
 } from '../data/workshopProgression.js?v=20260922-r86';
-import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r268';
+import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
+import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -90,7 +91,9 @@ export function createDefaultGameState(options = {}) {
     competitionOffers: {},
     competitionState: null,
     competitionCooldownUntil: 0,
+    competitionWins: 0,
     carCoupons: {},
+    easyCouponLastMilestone: 0,
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
       autoMarket: false,
@@ -684,6 +687,10 @@ export function normaliseState(input = {}) {
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
+    competitionWins: Math.max(0, Math.floor(Number(input.competitionWins || 0))),
+    easyCouponLastMilestone: Number.isFinite(input.easyCouponLastMilestone)
+      ? Math.max(0, Math.floor(Number(input.easyCouponLastMilestone || 0)))
+      : getEasyCouponMilestoneForWins(Number.isFinite(input.wins) ? input.wins : base.wins),
     playerDifficulty: normalisePlayerDifficulty(input.playerDifficulty),
     devMode,
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
@@ -807,7 +814,9 @@ export function snapshotRegistry(registry) {
     competitionOffers: registry.get('competitionOffers') || {},
     competitionState: registry.get('competitionState') || null,
     competitionCooldownUntil: Number(registry.get('competitionCooldownUntil') || 0),
+    competitionWins: Number(registry.get('competitionWins') || 0),
     carCoupons: registry.get('carCoupons') || {},
+    easyCouponLastMilestone: Number(registry.get('easyCouponLastMilestone') || 0),
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
