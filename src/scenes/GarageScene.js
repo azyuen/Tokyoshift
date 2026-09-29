@@ -96,7 +96,8 @@ import {
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r274';
+import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r277';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r277';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -172,6 +173,18 @@ export default class GarageScene extends Phaser.Scene {
           path: 'assets/Ui/tokyo_region_map_base.png?v=20260928-r245',
         };
     queueImage(workshopMapAsset.key, workshopMapAsset.path);
+
+    // Street File issue art is lightweight and belongs to the workshop UI.
+    // Load the current cover + intro together so opening the magazine is instant.
+    const magazineIssue = getActiveMagazineIssue(this.registry);
+    queueImage(
+      magazineIssue?.coverKey,
+      magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r277' : null
+    );
+    queueImage(
+      magazineIssue?.insetKey,
+      magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r277' : null
+    );
 
     // Garage characters shown immediately.
     [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']
@@ -503,47 +516,41 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildMagazineProp() {
-    const x = STAGE.x + STAGE.w - 70;
-    const y = STAGE.y + STAGE.h - 92;
-    const angle = -6;
+    const issue = getActiveMagazineIssue(this.registry);
+    if (!issue?.coverKey || !this.textures.exists(issue.coverKey)) return;
 
-    this.add.rectangle(x + 7, y + 8, 92, 122, 0x000000, 0.42)
-      .setAngle(angle)
-      .setDepth(24);
+    // Physical magazine lives on the lower-left of the workshop scene. Keep it
+    // separate from the garage strip so it reads as an object inside the room.
+    const x = STAGE.x + 82;
+    const y = STAGE.y + STAGE.h - 78;
+    const angle = -9;
+    const displayW = 92;
+    const displayH = 122;
 
-    const cover = this.add.rectangle(x, y, 92, 122, 0xe8dcc1, 1)
-      .setStrokeStyle(3, 0x9e2f24, 1)
+    this.add.rectangle(
+      x + 7,
+      y + 9,
+      displayW + 6,
+      displayH + 6,
+      0x000000,
+      0.46
+    ).setAngle(angle).setDepth(23);
+
+    const cover = this.add.image(x, y, issue.coverKey)
+      .setDisplaySize(displayW, displayH)
       .setAngle(angle)
       .setInteractive({ useHandCursor: true })
       .setDepth(25);
 
-    this.add.rectangle(x, y - 37, 82, 30, 0x9e2f24, 1)
-      .setAngle(angle)
-      .setDepth(26);
+    const baseScaleX = cover.scaleX;
+    const baseScaleY = cover.scaleY;
 
-    this.add.text(x, y - 38, 'TOKYO SHIFT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#fff4df',
-      align: 'center',
-    }).setOrigin(0.5).setAngle(angle).setDepth(27);
-
-    this.add.text(x, y + 3, 'STREET\nFILE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#1e1a16',
-      align: 'center',
-      lineSpacing: 4,
-    }).setOrigin(0.5).setAngle(angle).setDepth(27);
-
-    this.add.text(x, y + 47, 'MAGAZINE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '5px',
-      color: '#755f49',
-    }).setOrigin(0.5).setAngle(angle).setDepth(27);
-
-    cover.on('pointerover', () => cover.setStrokeStyle(4, 0xffcc79, 1));
-    cover.on('pointerout', () => cover.setStrokeStyle(3, 0x9e2f24, 1));
+    cover.on('pointerover', () => {
+      cover.setScale(baseScaleX * 1.045, baseScaleY * 1.045);
+    });
+    cover.on('pointerout', () => {
+      cover.setScale(baseScaleX, baseScaleY);
+    });
     cover.on('pointerdown', () => showCarHistoryPanel(this));
   }
 
