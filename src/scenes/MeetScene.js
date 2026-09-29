@@ -1034,7 +1034,7 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    const settingsUi = addSettingsButton(this, 900, 35);
+    const settingsUi = addSettingsButton(this, 930, 35);
     settingsUi?.devCutscenes?.destroy?.();
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
@@ -1384,7 +1384,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = SIDE.y + 64 + i * 50;
+      const y = SIDE.y + 78 + i * 50;
       const locked = row[2];
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
@@ -1415,31 +1415,45 @@ export default class MeetScene extends Phaser.Scene {
 
     const selectedCarId = this.registry.get('selectedCarId');
     const selectedCar = cars[selectedCarId];
+    const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
+    const selectedPerformance = selectedCarId
+      ? getVehiclePerformance(selectedCarId, selectedState)
+      : null;
+    const selectedPower = Math.round(
+      Number(selectedPerformance?.car?.powerKW ?? selectedCar?.powerKW ?? 0)
+    );
+    const selectedTorque = Math.round(
+      Number(selectedPerformance?.car?.torqueNm ?? selectedCar?.torqueNm ?? 0)
+    );
 
-    this.add.text(SIDE.x + 20, SIDE.y + 174, 'YOUR CAR', {
+    this.add.text(SIDE.x + 20, SIDE.y + 168, 'YOUR CAR', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#8cc8ec',
     }).setDepth(37);
 
     this.currentCarText = this.add.text(
-      SIDE.x + SIDE.w - 20,
-      SIDE.y + 174,
-      selectedCar?.shortName || 'NO CAR',
+      SIDE.x + 20,
+      SIDE.y + 194,
+      selectedCar
+        ? selectedCar.shortName + '\n' + selectedPower + ' kW  •  ' + selectedTorque + ' Nm'
+        : 'NO CAR',
       {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: selectedCar ? '#dff7ff' : '#72838f',
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: selectedCar ? '#d8e7ef' : '#72838f',
+        lineSpacing: -2,
+        wordWrap: { width: SIDE.w - 40 },
       }
-    ).setOrigin(1, 0).setDepth(37);
+    ).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 218, 'SELECTED RIVAL', {
+    this.add.text(SIDE.x + 20, SIDE.y + 268, 'SELECTED RIVAL', {
       fontFamily: PIXEL_FONT,
       fontSize: '9px',
       color: '#8cc8ec',
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 246, '', {
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 296, '', {
       fontFamily: BODY_FONT,
       fontSize: '12px',
       color: '#d8e7ef',
@@ -1447,7 +1461,7 @@ export default class MeetScene extends Phaser.Scene {
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 352, 'RIVAL OFFER', {
+    this.add.text(SIDE.x + 20, SIDE.y + 404, 'RIVAL OFFER', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#8cc8ec',
@@ -1455,7 +1469,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.rivalOfferText = this.add.text(
       SIDE.x + SIDE.w - 20,
-      SIDE.y + 352,
+      SIDE.y + 404,
       '',
       {
         fontFamily: PIXEL_FONT,
@@ -1531,7 +1545,7 @@ export default class MeetScene extends Phaser.Scene {
     // bottom-right action, including when the player is stranded.
     this.mapButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + SIDE.h - 34,
+      770,
       SIDE.w - 32,
       42,
       0x102138,
@@ -1542,7 +1556,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.mapButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + SIDE.h - 34,
+      770,
       'GO TO MAP  >',
       {
         fontFamily: PIXEL_FONT,
