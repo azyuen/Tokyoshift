@@ -22,7 +22,7 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
-} from '../vehicles/WheelFit.js?v=20260928-r244';
+} from '../vehicles/WheelFit.js?v=20260929-r257';
 import {
   normaliseTunerDecals,
   withTunerDecal,
@@ -34,7 +34,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260928-r235';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
