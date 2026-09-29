@@ -142,7 +142,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R287';
+      let resolvedBuild = 'R288';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -190,6 +190,6 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260930-r287"></script>
+  <script type="module" src="./src/main.js?v=20260930-r288"></script>
 </body>
 </html>
