@@ -36,7 +36,7 @@ import {
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r268';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
