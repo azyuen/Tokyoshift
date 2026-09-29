@@ -33,7 +33,7 @@ import {
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
@@ -294,12 +294,6 @@ export default class TunerShopScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT,
       fontSize: '18px',
       color: '#fff4df',
-    }).setOrigin(0, 0.5).setDepth(42);
-
-    this.add.text(465, 35, this.shop.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#e8b969',
     }).setOrigin(0, 0.5).setDepth(42);
 
     this.cashText = this.add.text(1510, 35, money(this.registry.get('cash') || 0), {

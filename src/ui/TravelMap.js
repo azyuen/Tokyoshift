@@ -344,9 +344,11 @@ export function showTravelMap(scene, options = {}) {
   // day/night art can be checked without waiting for the normal 15-min cycle.
   if (scene.registry.get('devMode')) {
     const nextPhase = worldPhase === 'day' ? 'NIGHT' : 'DAY';
+    const devPhaseX = MAP.x + 142;
+    const devPhaseY = MAP.y + MAP.h - 42;
     const devPhaseButton = add(scene.add.rectangle(
-      MAP.x + MAP.w - 202,
-      MAP.y + 42,
+      devPhaseX,
+      devPhaseY,
       220,
       42,
       0x10263a,
@@ -356,8 +358,8 @@ export function showTravelMap(scene, options = {}) {
       .setDepth(depth + 10));
 
     add(scene.add.text(
-      MAP.x + MAP.w - 202,
-      MAP.y + 42,
+      devPhaseX,
+      devPhaseY,
       'DEV: ' + worldPhase.toUpperCase() + ' → ' + nextPhase,
       {
         fontFamily: PIXEL_FONT,

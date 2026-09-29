@@ -39,7 +39,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r247';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -98,6 +98,8 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
+const WORKSHOP_HERO_X = 708;
+const WORKSHOP_HERO_TARGET_WIDTH = 690;
 const WORKSHOP_HERO_AE86_BODY_Y = 306;
 const WORKSHOP_THUMB_BODY_Y_OFFSET = -15;
 const WORKSHOP_THUMB_WIDTH = 176;
@@ -1213,9 +1215,15 @@ export default class GarageScene extends Phaser.Scene {
       confirmObjects.forEach(obj => obj?.destroy?.());
       close();
 
-      // Refresh the same workshop scene so the transferred car disappears from
-      // the local strip without teleporting the player to its destination.
-      this.scene.restart({ workshopLocationId: currentWorkshop.id });
+      // iOS/PWA can stall a re-entrant Phaser scene restart after its loader
+      // reaches 97%. Use the same clean reload path as workshop switching.
+      this.registry.set('workshopLocationId', currentWorkshop.id);
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+      } catch (e) {}
+      window.location.reload();
     };
 
     const openConfirmation = (workshop, transferCost) => {
@@ -1902,31 +1910,48 @@ export default class GarageScene extends Phaser.Scene {
     const heroWheelBottomY = this.getWheelBottomY(
       cars.ae86,
       WORKSHOP_HERO_AE86_BODY_Y,
-      690
+      WORKSHOP_HERO_TARGET_WIDTH
     );
-    const heroBodyY = this.getBodyYForWheelBottom(cars[id], 690, heroWheelBottomY);
-    const heroSource = this.textures.get(getCarBodyTextureKey(this, cars[id])).getSourceImage();
-    const heroWheelSource = this.textures.get(cars[id].visual.wheelKey).getSourceImage();
-    const heroBodyScale = 690 / heroSource.width;
-    const heroWheelFit = getWheelPairFit(cars[id].visual, heroBodyScale, false, heroWheelSource);
+    const heroBodyY = this.getBodyYForWheelBottom(
+      cars[id],
+      WORKSHOP_HERO_TARGET_WIDTH,
+      heroWheelBottomY
+    );
+    const heroWheelVisual = getVisualModWheelVisual(
+      cars[id],
+      (this.registry.get('carStates') || {})[id] || {}
+    );
+    const heroWheelSource = this.textures.get(heroWheelVisual.wheelKey).getSourceImage();
+    const heroBodyScale = getCarBodyScaleForWidth(
+      this,
+      cars[id],
+      WORKSHOP_HERO_TARGET_WIDTH
+    );
+    const heroWheelFit = getWheelPairFit(heroWheelVisual, heroBodyScale, false, heroWheelSource);
     const heroRenderOffsetY = Number(cars[id].visual.renderOffsetY || 0) * heroBodyScale;
     this.heroCarLayout = {
-      x: 708,
+      x: WORKSHOP_HERO_X,
       bodyY: heroBodyY,
-      targetWidth: 690,
+      targetWidth: WORKSHOP_HERO_TARGET_WIDTH,
       bodyScale: heroBodyScale,
-      frontWheelX: 708 + heroWheelFit.front.offsetX,
-      rearWheelX: 708 + heroWheelFit.rear.offsetX,
+      frontWheelX: WORKSHOP_HERO_X + heroWheelFit.front.offsetX,
+      rearWheelX: WORKSHOP_HERO_X + heroWheelFit.rear.offsetX,
       rearWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.rear.offsetY,
       frontWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.front.offsetY,
       wheelY: heroBodyY + heroRenderOffsetY + (
         heroWheelFit.rear.offsetY +
         heroWheelFit.front.offsetY
       ) / 2,
-      left: 708 - 345,
-      right: 708 + 345,
+      left: WORKSHOP_HERO_X - WORKSHOP_HERO_TARGET_WIDTH / 2,
+      right: WORKSHOP_HERO_X + WORKSHOP_HERO_TARGET_WIDTH / 2,
     };
-    this.selectedDisplay = this.createCarDisplay(cars[id], 708, heroBodyY, 690, 10);
+    this.selectedDisplay = this.createCarDisplay(
+      cars[id],
+      WORKSHOP_HERO_X,
+      heroBodyY,
+      WORKSHOP_HERO_TARGET_WIDTH,
+      10
+    );
 
     const car = cars[id];
     const carStates = this.registry.get('carStates') || {};
@@ -1981,13 +2006,17 @@ export default class GarageScene extends Phaser.Scene {
       item.arrow.setColor('#46545e');
     });
 
-    this.meetButton?.setInteractive({ useHandCursor: true })
-      .setFillStyle(0x102138, 1)
-      .setStrokeStyle(2, 0x55b8ff, 1);
-    this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#eef8ff');
-    this.updateMoveCarButtonState();
-
     const ownsCarsElsewhere = this.ownedCarIds.length > 0;
+
+    // A driver cannot leave an empty workshop without a car. OTHER WORKSHOP
+    // remains available so cars stored elsewhere can still be retrieved.
+    this.meetButton?.disableInteractive()
+      .setFillStyle(0x17181d, 1)
+      .setStrokeStyle(1, 0x514f55, 1);
+    this.meetButtonLabel
+      ?.setText(ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
+      .setColor('#817d84');
+    this.updateMoveCarButtonState();
 
     this.add.rectangle(710, 360, 720, 148, 0x050b12, 0.78)
       .setStrokeStyle(1, 0x315470, 0.64)
@@ -2003,7 +2032,7 @@ export default class GarageScene extends Phaser.Scene {
       710,
       382,
       ownsCarsElsewhere
-        ? 'Your cars are stored at another Shinonome workshop. Use GO TO MAP to switch garage, then MOVE CAR to transfer one here.'
+        ? 'Your cars are stored at another Shinonome workshop. Use OTHER WORKSHOP to switch garages and collect one.'
         : 'You lost your last car. Restart from SETTINGS when you are ready for another run.',
       {
         fontFamily: BODY_FONT,

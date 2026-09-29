@@ -54,6 +54,10 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
+import {
+  getGarageDeliveryOptions,
+  showGarageDeliveryPicker,
+} from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -2454,7 +2458,13 @@ export default class RaceScene extends Phaser.Scene {
           : (cars[this.selectedCarId]?.shortName || 'CAR')
       ).toUpperCase();
 
-      playMangaCutscene(
+      const showDelivery = () => {
+        if (settlement?.acquiredCarId) {
+          this.showAcquiredCarDelivery(settlement.acquiredCarId);
+        }
+      };
+
+      const resultCutscene = playMangaCutscene(
         this,
         wasSpecialChallenge
           ? (playerWon ? 'specialChallengerWin' : 'specialChallengerLoss')
@@ -2472,8 +2482,10 @@ export default class RaceScene extends Phaser.Scene {
             RIVAL_NAME: rivalName,
             CAR: carName,
           },
+          onComplete: showDelivery,
         }
       );
+      if (!resultCutscene?.played) showDelivery();
     } else if (settlement?.teamChallengeCompleted) {
       const perfect = Boolean(settlement.teamChallengePerfect);
       const cutsceneId = perfect
@@ -2499,6 +2511,29 @@ export default class RaceScene extends Phaser.Scene {
         variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
       });
     }
+  }
+
+  showAcquiredCarDelivery(carId) {
+    if (!carId || !cars[carId] || this._deliveryPromptCarId === carId) return;
+    this._deliveryPromptCarId = carId;
+
+    const picker = showGarageDeliveryPicker(this, {
+      carId,
+      carName: cars[carId].shortName || cars[carId].name || carId,
+      title: 'CAR WON // DELIVERY',
+      message: 'Choose which garage should receive your new car.',
+      allowCancel: false,
+      onSelect: workshopId => {
+        const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+        locations[carId] = workshopId;
+        this.registry.set('carGarageLocations', locations);
+        saveSessionState(this.registry);
+      },
+    });
+
+    // If every garage is full, retain the race's provisional assignment and do
+    // not trap the player behind an impossible modal.
+    if (!picker) this._deliveryPromptCarId = null;
   }
 
   getNextTunerChallengeRound() {
@@ -3217,6 +3252,7 @@ export default class RaceScene extends Phaser.Scene {
     let cashDelta = 0;
     let pinkMessage = '';
     let gameOver = false;
+    let acquiredCarId = null;
 
     if (this.raceDeal === 'PINK_SLIP') {
       let pinkCarNewlyWon = false;
@@ -3227,14 +3263,18 @@ export default class RaceScene extends Phaser.Scene {
       if (playerWon) {
         if (!ownedCarIds.includes(this.opponentCarId)) {
           pinkCarNewlyWon = true;
+          acquiredCarId = this.opponentCarId;
           ownedCarIds.push(this.opponentCarId);
           carStates[this.opponentCarId] = {
             ...this.opponentBuildState,
             acquiredVia: 'pinkSlip',
           };
-          carGarageLocations[this.opponentCarId] =
-            this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
-          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ADDED TO GARAGE';
+          const provisionalGarageId = getGarageDeliveryOptions(this, this.opponentCarId)
+            .find(option => option.available)?.id
+            || this.registry.get('workshopLocationId')
+            || 'shinonomeWorkshop';
+          carGarageLocations[this.opponentCarId] = provisionalGarageId;
+          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' // CHOOSE DELIVERY GARAGE';
         } else {
           pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
         }
@@ -3289,6 +3329,7 @@ export default class RaceScene extends Phaser.Scene {
       cash: newCash,
       pinkMessage,
       gameOver,
+      acquiredCarId,
     };
     return this.raceSettlement;
   }

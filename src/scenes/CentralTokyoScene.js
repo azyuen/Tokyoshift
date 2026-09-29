@@ -32,7 +32,11 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260929-r246';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r247';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
+import {
+  getGarageDeliveryOptions,
+  showGarageDeliveryPicker,
+} from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import {
@@ -1584,7 +1588,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
             : 'Buy ' + carName + ' for ' + money(listing.price) + '?',
           confirmLabel: useCoupons ? 'CLAIM CAR' : 'BUY CAR',
           accent: 0x62e8c7,
-          onConfirm: () => this.buyAutoMarketCar(listing),
+          onConfirm: () => {
+            const carName = car?.shortName || car?.name || listing.carId;
+            showGarageDeliveryPicker(this, {
+              carId: listing.carId,
+              carName,
+              title: useCoupons ? 'CHOOSE CLAIM DELIVERY' : 'CHOOSE PURCHASE DELIVERY',
+              message: 'Select the garage where this car should be delivered.',
+              onSelect: workshopId => this.buyAutoMarketCar(listing, workshopId),
+            });
+          },
         });
       });
     }
@@ -2208,7 +2221,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     )?.id || null;
   }
 
-  buyAutoMarketCar(listing) {
+  buyAutoMarketCar(listing, storageId = null) {
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     if (!listing?.carId || owned.includes(listing.carId)) return;
 
@@ -2219,8 +2232,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (!useCoupons && cash < Number(listing.price || 0)) return;
 
-    const storageId = this.findStorageForPurchase();
-    if (!storageId) return;
+    const delivery = getGarageDeliveryOptions(this, listing.carId)
+      .find(option => option.id === storageId && option.available);
+    if (!delivery) return;
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
@@ -2252,7 +2266,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('ownedCarIds', owned);
     this.registry.set('carStates', carStates);
     this.registry.set('carGarageLocations', locations);
-    this.registry.set('selectedCarId', listing.carId);
+    // Buying a car does not teleport the driver out of the car they arrived in.
+    // The purchased vehicle simply appears in the selected delivery garage.
     recordCarAcquisition(this.registry, listing.carId, {
       acquiredVia: useCoupons
         ? 'competitionCoupon'
@@ -2593,15 +2608,26 @@ export default class CentralTokyoScene extends Phaser.Scene {
           message: 'Acquire ' + carName + ' for ' + money(listing.price) + '?\n\nGINZA collector cars are sealed and cannot be modified.',
           confirmLabel: 'ACQUIRE CAR',
           accent: 0xff7cac,
-          onConfirm: () => this.buyGinzaCar(listing),
+          onConfirm: () => {
+            showGarageDeliveryPicker(this, {
+              carId: listing.carId,
+              carName,
+              title: 'GINZA DELIVERY',
+              message: 'Select the garage where this sealed collector car should be delivered.',
+              onSelect: workshopId => this.buyGinzaCar(listing, workshopId),
+            });
+          },
         });
       });
     }
   }
 
-  buyGinzaCar(listing) {
+  buyGinzaCar(listing, storageId = null) {
     const car = cars[listing?.carId];
-    if (!car?.ginzaExclusive) return;
+    const isCuratedGinzaListing = GINZA_LISTINGS.some(
+      item => item?.carId === listing?.carId
+    );
+    if (!car || !isCuratedGinzaListing) return;
 
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     if (owned.includes(listing.carId)) return;
@@ -2609,8 +2635,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < Number(listing.price || 0)) return;
 
-    const storageId = this.findStorageForPurchase();
-    if (!storageId) return;
+    const delivery = getGarageDeliveryOptions(this, listing.carId)
+      .find(option => option.id === storageId && option.available);
+    if (!delivery) return;
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
@@ -2622,7 +2649,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('ownedCarIds', owned);
     this.registry.set('carStates', carStates);
     this.registry.set('carGarageLocations', locations);
-    this.registry.set('selectedCarId', listing.carId);
     this.registry.set('cash', cash - listing.price);
     recordCarAcquisition(this.registry, listing.carId, {
       acquiredVia: 'ginzaMotorGallery',
@@ -2809,7 +2835,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const enter = this.addContent(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 646,
+      SIDE.y + 590,
       SIDE.w - 36,
       48,
       eligible ? 0x0d2b29 : 0x17181d,
@@ -2818,7 +2844,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 646,
+      SIDE.y + 590,
       eligible ? 'ENTER BRACKET // ' + money(event.entryFee) : 'NOT ELIGIBLE',
       {
         fontFamily: PIXEL_FONT,
