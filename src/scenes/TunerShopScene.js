@@ -3,10 +3,11 @@ import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   getTunerShopForRegion,
+  getTunerShopPhaseBackground,
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20260926-r203';
+} from '../data/tunerShops.js?v=20260929-r263';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -33,6 +34,7 @@ import {
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260928-r245';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -69,6 +71,14 @@ export default class TunerShopScene extends Phaser.Scene {
       queued += 1;
     };
 
+    ['day', 'night'].forEach(phase => {
+      const background = getTunerShopPhaseBackground(shop, phase);
+      if (background?.key && background?.path) {
+        queueImage(background.key, background.path);
+      }
+    });
+
+    // Legacy background remains a hard fallback only.
     queueImage(shop.backgroundKey, shop.backgroundPath);
     queueImage(shop.decalTextureKey, shop.decalPath);
 
@@ -129,9 +139,17 @@ export default class TunerShopScene extends Phaser.Scene {
     this.dynamicObjects = [];
     this.popupObjects = [];
     this.conversionInProgress = false;
+    this.worldPhase = getWorldPhase();
+    this.tunerBackgroundImage = null;
 
     this.recordShopVisit();
     this.drawBase();
+
+    this.time.addEvent({
+      delay: 5000,
+      loop: true,
+      callback: () => this.syncWorldPhaseBackground(),
+    });
     this.drawHeader();
     this.drawSidePanel();
     this.showHeroMode();
@@ -150,6 +168,58 @@ export default class TunerShopScene extends Phaser.Scene {
     saveSessionState(this.registry);
   }
 
+  applyTunerBackgroundTexture(image, textureKey) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+    const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+
+    // Preserve the existing R262 tuner-shop geometry exactly: cover the whole
+    // stage and pin the floor edge to the bottom of the viewport.
+    const scaledHeight = source.height * scale;
+    image
+      .setScale(scale)
+      .setPosition(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h - scaledHeight / 2
+      );
+
+    return true;
+  }
+
+  syncWorldPhaseBackground() {
+    const nextPhase = getWorldPhase();
+    if (nextPhase === this.worldPhase) return;
+    this.worldPhase = nextPhase;
+
+    const background = getTunerShopPhaseBackground(this.shop, nextPhase);
+    if (
+      !this.tunerBackgroundImage?.active ||
+      !background?.key ||
+      !this.textures.exists(background.key)
+    ) return;
+
+    const image = this.tunerBackgroundImage;
+    this.tweens.killTweensOf(image);
+    this.tweens.add({
+      targets: image,
+      alpha: 0,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (!image?.active) return;
+        this.applyTunerBackgroundTexture(image, background.key);
+        this.tweens.add({
+          targets: image,
+          alpha: 1,
+          duration: 260,
+          ease: 'Quad.easeOut',
+        });
+      },
+    });
+  }
+
   drawBase() {
     this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
 
@@ -162,9 +232,17 @@ export default class TunerShopScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x4b4035, 1).setDepth(-12);
 
-    let textureKey = this.shop.backgroundKey;
-    if (!this.textures.exists(textureKey)) {
-      textureKey = this.textures.exists('garageWorkshopBg') ? 'garageWorkshopBg' : null;
+    const phaseBackground = getTunerShopPhaseBackground(
+      this.shop,
+      this.worldPhase || getWorldPhase()
+    );
+    let textureKey = phaseBackground?.key;
+    if (!textureKey || !this.textures.exists(textureKey)) {
+      textureKey = this.textures.exists(this.shop.backgroundKey)
+        ? this.shop.backgroundKey
+        : this.textures.exists('garageWorkshopBg')
+          ? 'garageWorkshopBg'
+          : null;
     }
 
     if (textureKey) {
@@ -174,15 +252,8 @@ export default class TunerShopScene extends Phaser.Scene {
         textureKey
       ).setDepth(-10);
 
-      const source = this.textures.get(textureKey).getSourceImage();
-      const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
-      image.setScale(scale);
-
-      const scaledHeight = source.height * scale;
-      image.setPosition(
-        STAGE.x + STAGE.w / 2,
-        STAGE.y + STAGE.h - scaledHeight / 2
-      );
+      this.applyTunerBackgroundTexture(image, textureKey);
+      this.tunerBackgroundImage = image;
 
       const maskShape = this.make.graphics({ add: false });
       maskShape.fillStyle(0xffffff, 1);
@@ -198,10 +269,11 @@ export default class TunerShopScene extends Phaser.Scene {
         0.10
       ).setDepth(-9);
     } else {
+      this.tunerBackgroundImage = null;
       this.add.text(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,
-        'BACKGROUND ASSET PENDING\n' + this.shop.backgroundPath,
+        'BACKGROUND ASSET PENDING\n' + (phaseBackground?.path || this.shop.backgroundPath),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '10px',

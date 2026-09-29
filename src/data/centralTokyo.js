@@ -31,14 +31,26 @@ export const CENTRAL_TOKYO_LOCATIONS = {
       new: {
         key: 'centralTokyoAutoMarketNewBg',
         path: 'assets/CentralTokyo/tokyo_auto_market_new.png',
+        phases: {
+          day: { key: 'centralTokyoAutoMarketNewDayBg', path: 'assets/CentralTokyo/tokyo_new_day.png' },
+          night: { key: 'centralTokyoAutoMarketNewNightBg', path: 'assets/CentralTokyo/tokyo_new_night.png' },
+        },
       },
       used: {
         key: 'centralTokyoAutoMarketUsedBg',
         path: 'assets/CentralTokyo/tokyo_auto_market_used.png',
+        phases: {
+          day: { key: 'centralTokyoAutoMarketUsedDayBg', path: 'assets/CentralTokyo/tokyo_used_day.png' },
+          night: { key: 'centralTokyoAutoMarketUsedNightBg', path: 'assets/CentralTokyo/tokyo_used_night.png' },
+        },
       },
       wheels: {
         key: 'centralTokyoAutoMarketWheelsBg',
         path: 'assets/CentralTokyo/tokyo_auto_market_wheels.png',
+        phases: {
+          day: { key: 'centralTokyoAutoMarketWheelsDayBg', path: 'assets/CentralTokyo/tokyo_wheels_day.png' },
+          night: { key: 'centralTokyoAutoMarketWheelsNightBg', path: 'assets/CentralTokyo/tokyo_wheels_night.png' },
+        },
       },
     },
     winsRequired: 12,
@@ -51,6 +63,10 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     kind: 'showroom',
     backgroundKey: 'centralTokyoGinzaBg',
     backgroundPath: 'assets/CentralTokyo/ginza_motor_gallery_at_night.png',
+    phaseBackgrounds: {
+      day: { key: 'centralTokyoGinzaDayBg', path: 'assets/CentralTokyo/tokyo_ginza_day.png' },
+      night: { key: 'centralTokyoGinzaNightBg', path: 'assets/CentralTokyo/tokyo_ginza_night.png' },
+    },
     winsRequired: 50,
     garageTierRequired: 2,
   },
@@ -61,6 +77,10 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     kind: 'proDrag',
     backgroundKey: 'centralTokyoDragBg',
     backgroundPath: 'assets/CentralTokyo/tokyo_drag_strip_at_night.png',
+    phaseBackgrounds: {
+      day: { key: 'centralTokyoDragDayBg', path: 'assets/CentralTokyo/tokyo_dragstrip_day.png' },
+      night: { key: 'centralTokyoDragNightBg', path: 'assets/CentralTokyo/tokyo_dragstrip_night.png' },
+    },
     winsRequired: 60,
     garageTierRequired: 2,
   },

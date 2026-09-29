@@ -36,6 +36,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopOdaibaEspritBg',
     backgroundPath: 'assets/Locations/TunerShops/odaiba_esprit_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopOdaibaEspritBgDay', path: 'assets/Locations/TunerShops/odaiba_esprit_day.png' },
+      night: { key: 'tunerShopOdaibaEspritBgNight', path: 'assets/Locations/TunerShops/odaiba_esprit_night.png' },
+    },
 
     decalId: 'esprit',
     decalLabel: 'ESPRIT',
@@ -117,6 +121,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopShibuyaAmuseBg',
     backgroundPath: 'assets/Locations/TunerShops/shibuya_amuse_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopShibuyaAmuseBgDay', path: 'assets/Locations/TunerShops/shibuya_amuse_day.png' },
+      night: { key: 'tunerShopShibuyaAmuseBgNight', path: 'assets/Locations/TunerShops/shibuya_amuse_night.png' },
+    },
 
     decalId: 'amuse',
     decalLabel: 'AMUSE',
@@ -198,6 +206,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopShinjukuTopSecretBg',
     backgroundPath: 'assets/Locations/TunerShops/shinjuku_top_secret_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopShinjukuTopSecretBgDay', path: 'assets/Locations/TunerShops/shinjuku_topsecret_day.png' },
+      night: { key: 'tunerShopShinjukuTopSecretBgNight', path: 'assets/Locations/TunerShops/shinjuku_topsecret_night.png' },
+    },
 
     decalId: 'topSecret',
     decalLabel: 'TOP SECRET',
@@ -279,6 +291,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopYokohamaMinesBg',
     backgroundPath: 'assets/Locations/TunerShops/yokohama_mines_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopYokohamaMinesBgDay', path: 'assets/Locations/TunerShops/yokohama_mines_day.png' },
+      night: { key: 'tunerShopYokohamaMinesBgNight', path: 'assets/Locations/TunerShops/yokohama_mines_night.png' },
+    },
 
     decalId: 'mines',
     decalLabel: "MINE'S",
@@ -362,6 +378,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopDaikokuReAmemiyaBg',
     backgroundPath: 'assets/Locations/TunerShops/daikoku_re_amemiya_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopDaikokuReAmemiyaBgDay', path: 'assets/Locations/TunerShops/daikoku_reamemiya_day.png' },
+      night: { key: 'tunerShopDaikokuReAmemiyaBgNight', path: 'assets/Locations/TunerShops/daikoku_reamemiya_night.png' },
+    },
 
     decalId: 'reAmemiya',
     decalLabel: 'RE AMEMIYA',
@@ -443,6 +463,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopShinagawaSpoonBg',
     backgroundPath: 'assets/Locations/TunerShops/shinagawa_spoon_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopShinagawaSpoonBgDay', path: 'assets/Locations/TunerShops/shinagawa_spoon_day.png' },
+      night: { key: 'tunerShopShinagawaSpoonBgNight', path: 'assets/Locations/TunerShops/shinagawa_spoon_night.png' },
+    },
 
     decalId: 'spoon',
     decalLabel: 'SPOON',
@@ -530,6 +554,10 @@ export const TUNER_SHOPS = {
 
     backgroundKey: 'tunerShopTatsumiJunBg',
     backgroundPath: 'assets/Locations/TunerShops/tatsumi_jun_workshop.png',
+    phaseBackgrounds: {
+      day: { key: 'tunerShopTatsumiJunBgDay', path: 'assets/Locations/TunerShops/tatsumi_jun_day.png' },
+      night: { key: 'tunerShopTatsumiJunBgNight', path: 'assets/Locations/TunerShops/tatsumi_jun_night.png' },
+    },
 
     decalId: 'jun',
     decalLabel: 'JUN',
@@ -618,6 +646,18 @@ export const TUNER_OPTION_BY_ID = Object.fromEntries(
     ])
   )
 );
+
+export function getTunerShopPhaseBackground(shopOrRegion, phase = 'night') {
+  const shop = typeof shopOrRegion === 'string'
+    ? TUNER_SHOPS[String(shopOrRegion).toUpperCase()]
+    : shopOrRegion;
+  if (!shop) return null;
+  const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
+  return shop.phaseBackgrounds?.[safePhase] || {
+    key: shop.backgroundKey,
+    path: shop.backgroundPath,
+  };
+}
 
 export function getTunerShopForRegion(regionId) {
   const shop = TUNER_SHOPS[String(regionId || '').toUpperCase()];

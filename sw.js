@@ -1,6 +1,6 @@
-const BUILD = 'R262';
-const ASSET_CACHE = 'tokyoshift-assets-v201';
-const RUNTIME_CACHE = 'tokyoshift-runtime-v201';
+const BUILD = 'R263';
+const ASSET_CACHE = 'tokyoshift-assets-v202';
+const RUNTIME_CACHE = 'tokyoshift-runtime-v202';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -53,6 +53,8 @@ self.addEventListener('fetch', event => {
     url.pathname.includes('/assets/Cars/') ||
     url.pathname.includes('/assets/wheels/') ||
     url.pathname.includes('/assets/CentralTokyo/') ||
+    url.pathname.includes('/assets/Garage/') ||
+    url.pathname.includes('/assets/Locations/TunerShops/') ||
     url.pathname.includes('/app-icon-') ||
     url.pathname.includes('/assets/Meet/Day/') ||
     url.pathname.includes('/assets/Meet/Night/') ||

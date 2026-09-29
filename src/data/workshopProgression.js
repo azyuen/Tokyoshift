@@ -7,6 +7,10 @@ export const WORKSHOP_TIERS = [
     capacity: 4,
     unlockCost: 0,
     textureKey: 'garageWorkshopBg',
+    phaseBackgrounds: {
+      day: { key: 'garageWorkshopHomeDayBg', path: 'assets/Garage/shinonome_workshop_day.png' },
+      night: { key: 'garageWorkshopHomeNightBg', path: 'assets/Garage/shinonome_workshop_night.png' },
+    },
     serviceMultiplier: 1.00,
     description: 'Your original bay-side workshop with four storage slots and basic street tuning.',
   },
@@ -18,6 +22,10 @@ export const WORKSHOP_TIERS = [
     capacity: 12,
     unlockCost: 250000,
     textureKey: 'garageWorkshopCanalYard',
+    phaseBackgrounds: {
+      day: { key: 'garageWorkshopCanalYardDayBg', path: 'assets/Garage/shinonome_canalyard_day.png' },
+      night: { key: 'garageWorkshopCanalYardNightBg', path: 'assets/Garage/shinonome_canalyard_night.png' },
+    },
     serviceMultiplier: 1.15,
     description: 'An old-school local mechanic workshop with twelve more slots and serious performance work.',
   },
@@ -29,6 +37,10 @@ export const WORKSHOP_TIERS = [
     capacity: 24,
     unlockCost: 750000,
     textureKey: 'garageWorkshopWarehouseHQ',
+    phaseBackgrounds: {
+      day: { key: 'garageWorkshopWarehouseDayBg', path: 'assets/Garage/shinonome_warehouse_day.png' },
+      night: { key: 'garageWorkshopWarehouseNightBg', path: 'assets/Garage/shinonome_warehouse_night.png' },
+    },
     serviceMultiplier: 1.25,
     description: 'A professional tuning headquarters with twenty-four more slots and unrestricted race parts.',
   },
@@ -77,6 +89,17 @@ export function getWorkshopTier(value = 0) {
 
 export function getWorkshopByLocationId(locationId) {
   return WORKSHOP_TIERS.find(item => item.id === locationId) || WORKSHOP_TIERS[0];
+}
+
+export function getWorkshopPhaseBackground(locationOrWorkshop, phase = 'night') {
+  const workshop = typeof locationOrWorkshop === 'string'
+    ? getWorkshopByLocationId(locationOrWorkshop)
+    : (locationOrWorkshop || WORKSHOP_TIERS[0]);
+  const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
+  return workshop.phaseBackgrounds?.[safePhase] || {
+    key: workshop.textureKey,
+    path: null,
+  };
 }
 
 export function getWorkshopStorageCapacity(locationId = 'shinonomeWorkshop') {

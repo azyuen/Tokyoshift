@@ -40,7 +40,7 @@ import {
   getUnlockedWorkshops,
   getWorkshopStorageCapacity,
   getWorkshopUsage,
-} from '../data/workshopProgression.js?v=20260926-r211';
+} from '../data/workshopProgression.js?v=20260929-r263';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
@@ -61,7 +61,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260929-r246';
+} from '../data/centralTokyo.js?v=20260929-r263';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -123,30 +123,51 @@ export default class CentralTokyoScene extends Phaser.Scene {
     startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
   }
 
-  getLocationBackgroundConfig(location) {
+  getLocationBackgroundConfig(location, phase = this.worldPhase || getWorldPhase()) {
+    const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
+
     if (location?.kind === 'autoMarket') {
       const room = ['new', 'used', 'wheels'].includes(this.autoMarketRoom)
         ? this.autoMarketRoom
         : 'used';
-      return location.marketBackgrounds?.[room] || {
+      const roomConfig = location.marketBackgrounds?.[room];
+      return roomConfig?.phases?.[safePhase] || roomConfig || {
         key: location.backgroundKey,
         path: location.backgroundPath,
       };
     }
-    return {
+
+    return location?.phaseBackgrounds?.[safePhase] || {
       key: location?.backgroundKey,
       path: location?.backgroundPath,
     };
   }
 
+  getLocationBackgroundConfigs(location) {
+    const configs = [
+      this.getLocationBackgroundConfig(location, 'day'),
+      this.getLocationBackgroundConfig(location, 'night'),
+    ];
+    const seen = new Set();
+    return configs.filter(config => {
+      if (!config?.key || seen.has(config.key)) return false;
+      seen.add(config.key);
+      return true;
+    });
+  }
+
   queueLocationAssets(location) {
     let queued = 0;
-    const background = this.getLocationBackgroundConfig(location);
 
-    if (background?.path && background?.key && !this.textures.exists(background.key)) {
-      this.load.image(background.key, background.path + '?v=20260929-r246');
-      queued += 1;
-    }
+    // Load both lighting variants only for the currently visited Central Tokyo
+    // location/room. This keeps transitions instant without loading every
+    // Central Tokyo background at boot.
+    this.getLocationBackgroundConfigs(location).forEach(background => {
+      if (background?.path && background?.key && !this.textures.exists(background.key)) {
+        this.load.image(background.key, background.path + '?v=20260929-r263');
+        queued += 1;
+      }
+    });
 
     if (location?.kind === 'autoMarket') {
       if (this.autoMarketRoom === 'wheels') {
@@ -265,9 +286,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
       showroom: 0,
       proDrag: 0,
     };
+    this.worldPhase = getWorldPhase();
+    this.centralBackgroundImage = null;
+    this.centralBackgroundLocation = null;
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
+
+    this.time.addEvent({
+      delay: 5000,
+      loop: true,
+      callback: () => this.syncWorldPhaseBackground(),
+    });
 
     if (
       this.activeLocationId === 'tokyoAutoMarket' ||
@@ -471,16 +501,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('centralTokyoLocation', location.id);
     saveSessionState(this.registry);
 
-    const marketRoomLabel = this.autoMarketRoom === 'new'
-      ? 'NEW CARS'
-      : this.autoMarketRoom === 'wheels'
-        ? 'WHEEL SHOP'
-        : 'USED CARS';
-    this.locationHeader.setText(
-      location.kind === 'autoMarket'
-        ? location.label + ' // ' + marketRoomLabel
-        : location.label + ' // NIGHT'
-    );
+    this.updateLocationHeaderForPhase(location);
     this.drawBackground(location);
 
     if (location.kind === 'autoMarket') {
@@ -494,6 +515,76 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.drawDragComplex();
+  }
+
+  updateLocationHeaderForPhase(location) {
+    const marketRoomLabel = this.autoMarketRoom === 'new'
+      ? 'NEW CARS'
+      : this.autoMarketRoom === 'wheels'
+        ? 'WHEEL SHOP'
+        : 'USED CARS';
+    const phaseLabel = (this.worldPhase || getWorldPhase()).toUpperCase();
+
+    this.locationHeader?.setText(
+      location?.kind === 'autoMarket'
+        ? location.label + ' // ' + marketRoomLabel + ' // ' + phaseLabel
+        : location.label + ' // ' + phaseLabel
+    );
+  }
+
+  applyCentralBackgroundTexture(image, textureKey, location) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+
+    // Preserve the exact existing perspective rules: Auto Market art is
+    // contained to show the full authored panel; Ginza and Drag keep the
+    // original cover crop. Day/night changes only the texture.
+    const scale = location?.kind === 'autoMarket'
+      ? Math.min(STAGE.w / source.width, STAGE.h / source.height)
+      : Math.max(STAGE.w / source.width, STAGE.h / source.height);
+
+    image
+      .setScale(scale)
+      .setPosition(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2);
+
+    return true;
+  }
+
+  syncWorldPhaseBackground() {
+    const nextPhase = getWorldPhase();
+    if (nextPhase === this.worldPhase) return;
+
+    this.worldPhase = nextPhase;
+    const location = LOCATION_BY_ID[this.activeLocationId] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
+    const background = this.getLocationBackgroundConfig(location, nextPhase);
+    this.updateLocationHeaderForPhase(location);
+
+    if (
+      !this.centralBackgroundImage?.active ||
+      !background?.key ||
+      !this.textures.exists(background.key)
+    ) return;
+
+    const image = this.centralBackgroundImage;
+    this.tweens.killTweensOf(image);
+    this.tweens.add({
+      targets: image,
+      alpha: 0,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (!image?.active) return;
+        this.applyCentralBackgroundTexture(image, background.key, location);
+        this.tweens.add({
+          targets: image,
+          alpha: 1,
+          duration: 260,
+          ease: 'Quad.easeOut',
+        });
+      },
+    });
   }
 
   drawBackground(location) {
@@ -510,22 +601,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setDepth(-11));
 
     if (textureKey && this.textures.exists(textureKey)) {
-      const source = this.textures.get(textureKey).getSourceImage();
-      const scale = location?.kind === 'autoMarket'
-        ? Math.min(STAGE.w / source.width, STAGE.h / source.height)
-        : Math.max(STAGE.w / source.width, STAGE.h / source.height);
-
       const image = this.addContent(this.add.image(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,
         textureKey
-      ).setScale(scale).setDepth(-10));
+      ).setDepth(-10));
+
+      this.applyCentralBackgroundTexture(image, textureKey, location);
+      this.centralBackgroundImage = image;
+      this.centralBackgroundLocation = location.id;
 
       const maskShape = this.addContent(this.make.graphics({ add: false }));
       maskShape.fillStyle(0xffffff, 1);
       maskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
       image.setMask(maskShape.createGeometryMask());
     } else {
+      this.centralBackgroundImage = null;
+      this.centralBackgroundLocation = null;
       this.addContent(this.add.text(
         STAGE.x + STAGE.w / 2,
         STAGE.y + STAGE.h / 2,

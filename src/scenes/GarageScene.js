@@ -53,6 +53,7 @@ import {
   WORKSHOP_TIERS,
   getGarageCapacity,
   getWorkshopByLocationId,
+  getWorkshopPhaseBackground,
   getWorkshopStorageCapacity,
   getUnlockedWorkshops,
   getCarsInWorkshop,
@@ -62,7 +63,7 @@ import {
   applyWorkshopServiceCost,
   canInstallTuningLevel,
   getTuningRequirementLabel,
-} from '../data/workshopProgression.js?v=20260926-r211';
+} from '../data/workshopProgression.js?v=20260929-r263';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -140,8 +141,18 @@ export default class GarageScene extends Phaser.Scene {
     const localCars = getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId);
     const carStates = this.registry.get('carStates') || {};
 
-    // Only the active workshop and a safe home fallback are needed at entry.
+    // Load both day/night variants only for the active workshop so the global
+    // phase can flip instantly without increasing boot cost across all garages.
     const activeWorkshop = getWorkshopByLocationId(activeWorkshopId);
+    ['day', 'night'].forEach(phase => {
+      const background = getWorkshopPhaseBackground(activeWorkshop, phase);
+      if (background?.key && background?.path) {
+        queueImage(background.key, background.path + '?v=20260929-r263');
+      }
+    });
+
+    // Keep the legacy active texture and home texture available as hard
+    // fallbacks for old saves or a missing uploaded phase file.
     [activeWorkshop.textureKey, 'garageWorkshopBg'].forEach(key => {
       const asset = garageAssets.find(item => item.key === key);
       if (asset) queueImage(asset.key, asset.path);
@@ -242,8 +253,17 @@ export default class GarageScene extends Phaser.Scene {
     this.garagePageObjects = [];
     const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
     this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
+    this.worldPhase = getWorldPhase();
+    this.workshopBackgroundImage = null;
+    this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
+
+    this.time.addEvent({
+      delay: 5000,
+      loop: true,
+      callback: () => this.syncWorldPhaseBackground(),
+    });
     this.buildHeader();
     this.buildProfileCalibrationButton();
     this.buildSpecsAndUpgrades();
@@ -302,6 +322,68 @@ export default class GarageScene extends Phaser.Scene {
     }
   }
 
+  applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+    const naturalCoverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const isUpgradedWorkshop = Number(activeWorkshop?.tier || 0) > 0;
+
+    // Preserve the exact R262 geometry: the home workshop keeps its 1.12 crop,
+    // while Canal Yard / Warehouse retain their bottom-anchored native cover.
+    const workshopScale = naturalCoverScale * (isUpgradedWorkshop ? 1 : 1.12);
+    image
+      .setScale(workshopScale)
+      .setPosition(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2);
+
+    if (isUpgradedWorkshop) {
+      const scaledHeight = source.height * workshopScale;
+      image.setPosition(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + STAGE.h - scaledHeight / 2
+      );
+    }
+
+    return true;
+  }
+
+  syncWorldPhaseBackground() {
+    const nextPhase = getWorldPhase();
+    if (nextPhase === this.worldPhase) return;
+    this.worldPhase = nextPhase;
+
+    const activeWorkshop = getWorkshopByLocationId(
+      this.registry.get('workshopLocationId') || this.activeWorkshopId || 'shinonomeWorkshop'
+    );
+    const background = getWorkshopPhaseBackground(activeWorkshop, nextPhase);
+    if (
+      !this.workshopBackgroundImage?.active ||
+      !background?.key ||
+      !this.textures.exists(background.key)
+    ) return;
+
+    const image = this.workshopBackgroundImage;
+    this.tweens.killTweensOf(image);
+    this.tweens.add({
+      targets: image,
+      alpha: 0,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        if (!image?.active) return;
+        this.applyWorkshopBackgroundTexture(image, background.key, activeWorkshop);
+        this.workshopBackgroundWorkshop = activeWorkshop;
+        this.tweens.add({
+          targets: image,
+          alpha: 1,
+          duration: 260,
+          ease: 'Quad.easeOut',
+        });
+      },
+    });
+  }
+
   drawScene() {
     this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
 
@@ -319,9 +401,15 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = getWorkshopByLocationId(
       this.registry.get('workshopLocationId') || 'shinonomeWorkshop'
     );
-    const workshopTexture = this.textures.exists(activeWorkshop.textureKey)
-      ? activeWorkshop.textureKey
-      : 'garageWorkshopBg';
+    const phaseBackground = getWorkshopPhaseBackground(
+      activeWorkshop,
+      this.worldPhase || getWorldPhase()
+    );
+    const workshopTexture = phaseBackground?.key && this.textures.exists(phaseBackground.key)
+      ? phaseBackground.key
+      : this.textures.exists(activeWorkshop.textureKey)
+        ? activeWorkshop.textureKey
+        : 'garageWorkshopBg';
 
     const workshop = this.add.image(
       STAGE.x + STAGE.w / 2,
@@ -329,25 +417,9 @@ export default class GarageScene extends Phaser.Scene {
       workshopTexture
     ).setDepth(-10);
 
-    const source = this.textures.get(workshopTexture).getSourceImage();
-    const naturalCoverScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
-    const isUpgradedWorkshop = activeWorkshop.tier > 0;
-
-    // The original home artwork was composed around the existing 1.12 crop.
-    // The generated Canal Yard / Warehouse art is taller, so applying the same
-    // zoom makes the room look oversized relative to the fixed car/character
-    // anchors. Keep their native aspect ratio, fill the stage once, and anchor
-    // the floor to the bottom of the viewport.
-    const workshopScale = naturalCoverScale * (isUpgradedWorkshop ? 1 : 1.12);
-    workshop.setScale(workshopScale);
-
-    if (isUpgradedWorkshop) {
-      const scaledHeight = source.height * workshopScale;
-      workshop.setPosition(
-        STAGE.x + STAGE.w / 2,
-        STAGE.y + STAGE.h - scaledHeight / 2
-      );
-    }
+    this.applyWorkshopBackgroundTexture(workshop, workshopTexture, activeWorkshop);
+    this.workshopBackgroundImage = workshop;
+    this.workshopBackgroundWorkshop = activeWorkshop;
 
     const maskShape = this.make.graphics({ add: false });
     maskShape.fillStyle(0xffffff, 1);
