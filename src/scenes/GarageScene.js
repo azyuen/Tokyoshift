@@ -96,7 +96,7 @@ import {
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
-import { addCarHistoryButton } from '../ui/CarHistoryPanel.js?v=20260929-r273';
+import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r273';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -273,6 +273,7 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
+    this.buildMagazineProp();
 
     this.time.addEvent({
       delay: 5000,
@@ -501,6 +502,51 @@ export default class GarageScene extends Phaser.Scene {
     return sprite;
   }
 
+  buildMagazineProp() {
+    const x = STAGE.x + STAGE.w - 70;
+    const y = STAGE.y + STAGE.h - 92;
+    const angle = -6;
+
+    this.add.rectangle(x + 7, y + 8, 92, 122, 0x000000, 0.42)
+      .setAngle(angle)
+      .setDepth(24);
+
+    const cover = this.add.rectangle(x, y, 92, 122, 0xe8dcc1, 1)
+      .setStrokeStyle(3, 0x9e2f24, 1)
+      .setAngle(angle)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(25);
+
+    this.add.rectangle(x, y - 37, 82, 30, 0x9e2f24, 1)
+      .setAngle(angle)
+      .setDepth(26);
+
+    this.add.text(x, y - 38, 'TOKYO SHIFT', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#fff4df',
+      align: 'center',
+    }).setOrigin(0.5).setAngle(angle).setDepth(27);
+
+    this.add.text(x, y + 3, 'STREET\nFILE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#1e1a16',
+      align: 'center',
+      lineSpacing: 4,
+    }).setOrigin(0.5).setAngle(angle).setDepth(27);
+
+    this.add.text(x, y + 47, 'MAGAZINE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#755f49',
+    }).setOrigin(0.5).setAngle(angle).setDepth(27);
+
+    cover.on('pointerover', () => cover.setStrokeStyle(4, 0xffcc79, 1));
+    cover.on('pointerout', () => cover.setStrokeStyle(3, 0x9e2f24, 1));
+    cover.on('pointerdown', () => showCarHistoryPanel(this));
+  }
+
   buildHeader() {
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 1)
       .setStrokeStyle(2, 0x173249, 1)
@@ -526,7 +572,6 @@ export default class GarageScene extends Phaser.Scene {
     }).setOrigin(1, 0.5).setDepth(42);
 
     // Keep utility buttons clear of the enlarged W/L record on phone layouts.
-    addCarHistoryButton(this, 820, 35);
     addSettingsButton(this, 925, 35);
 
     const couponsButton = this.add.rectangle(1020, 35, 112, 38, 0x0b1724, 1)
