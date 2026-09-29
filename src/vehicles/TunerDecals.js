@@ -234,10 +234,12 @@ export function createTunerDecalLayers(
   const decals = normaliseTunerDecals(carState);
 
   return Object.entries(decals).map(([decalId, placement]) => {
-    const px = x + (flipX ? -placement.x : placement.x) * displayWidth;
-    const py = y + placement.y * displayHeight;
+    const offsetX = (flipX ? -placement.x : placement.x) * displayWidth;
+    const offsetY = placement.y * displayHeight;
+    const px = x + offsetX;
+    const py = y + offsetY;
 
-    return createTunerDecalObject(scene, decalId, {
+    const object = createTunerDecalObject(scene, decalId, {
       x: px,
       y: py,
       displayWidth,
@@ -245,5 +247,15 @@ export function createTunerDecalLayers(
       placement,
       flipX,
     });
+
+    // Keep the decal's body-relative offset attached to the render object.
+    // Animated scenes such as RaceScene move the whole car every frame and
+    // must preserve this offset rather than snapping the decal to body centre.
+    object.setData?.('tunerDecalLayer', true);
+    object.setData?.('tunerDecalOffsetX', offsetX);
+    object.setData?.('tunerDecalOffsetY', offsetY);
+    object.setData?.('tunerDecalId', decalId);
+
+    return object;
   });
 }
