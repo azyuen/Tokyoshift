@@ -35,7 +35,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20260929-r246';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260928-r235';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r256';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
@@ -261,6 +261,16 @@ export default class GarageScene extends Phaser.Scene {
     requestAnimationFrame(() => requestAnimationFrame(hideSplash));
     window.setTimeout(hideSplash, 120);
 
+    // Warm the tuning bay in the background once the workshop itself is
+    // visible. This keeps initial garage entry quick, but removes the visible
+    // first-tap lazy-load when the player opens Engine/Drivetrain/etc.
+    this.time.delayedCall(140, () => {
+      this.ensureGarageTuningAssets(null, {
+        includeVisualMods: true,
+        silent: true,
+      });
+    });
+
     let reopenSettings = false;
     let tutorialJustCompleted = false;
     try {
@@ -436,8 +446,6 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showCouponsPopup() {
-    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-
     const coupons = this.registry.get('carCoupons') || {};
     const entries = carOrder
       .filter(carId => cars[carId] && Number(coupons[carId] || 0) > 0)
@@ -1648,6 +1656,12 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  getWorkshopWheelContactOffset(wheelSource, axleFit) {
+    const authoredRadius = Number(axleFit?.backingRadius || 0);
+    if (authoredRadius > 0) return authoredRadius;
+    return getWheelContactOffsetY(wheelSource, axleFit?.wheelScale);
+  }
+
   getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
@@ -1659,10 +1673,10 @@ export default class GarageScene extends Phaser.Scene {
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottom =
       bodyY + renderOffsetY + fit.rear.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottom =
       bodyY + renderOffsetY + fit.front.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.front);
     return Math.max(rearBottom, frontBottom);
   }
 
@@ -1676,9 +1690,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
-      fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      fit.rear.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottomOffset =
-      fit.front.offsetY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      fit.front.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.front);
 
     // Account for per-asset body trim when solving the body origin. Without
     // this, hero cars with larger renderOffsetY values sat visibly lower even
@@ -1727,8 +1741,8 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.35);
 
     const tyreBottom = Math.max(
-      rearY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale),
-      frontY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale)
+      rearY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear),
+      frontY + this.getWorkshopWheelContactOffset(wheelSource, fit.front)
     );
     const shadowHeight = Math.max(
       20,
@@ -1952,7 +1966,15 @@ export default class GarageScene extends Phaser.Scene {
     } catch (e) {}
   }
 
-  ensureGarageTuningAssets(onReady, { includeVisualMods = false } = {}) {
+  ensureGarageTuningAssets(
+    onReady,
+    { includeVisualMods = false, silent = false } = {}
+  ) {
+    this._garageTuningAssetCallbacks = this._garageTuningAssetCallbacks || [];
+    if (typeof onReady === 'function') {
+      this._garageTuningAssetCallbacks.push(onReady);
+    }
+
     if (this._garageTuningAssetLoading) return;
 
     let queued = 0;
@@ -1962,8 +1984,6 @@ export default class GarageScene extends Phaser.Scene {
       queued += 1;
     };
 
-    // Tuning illustrations are large and never needed by players who simply
-    // enter the garage and race, so defer them until the first tuning action.
     garageAssets
       .filter(asset =>
         asset.key.startsWith('stockEngine') ||
@@ -1986,18 +2006,32 @@ export default class GarageScene extends Phaser.Scene {
       );
     }
 
+    const flushCallbacks = () => {
+      const callbacks = [...(this._garageTuningAssetCallbacks || [])];
+      this._garageTuningAssetCallbacks = [];
+      callbacks.forEach(callback => {
+        try { callback?.(); } catch (error) {
+          this.recoverTuningTransition(error);
+        }
+      });
+    };
+
     if (queued <= 0) {
-      onReady?.();
+      flushCallbacks();
       return;
     }
 
     this._garageTuningAssetLoading = true;
-    startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    if (!silent) {
+      startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    }
+
     this.load.once('complete', () => {
       this._garageTuningAssetLoading = false;
-      onReady?.();
-      finishSceneLoading('TUNING READY');
+      flushCallbacks();
+      if (!silent) finishSceneLoading('TUNING READY');
     });
+
     if (!this.load.isLoading()) this.load.start();
   }
 
@@ -2585,6 +2619,7 @@ export default class GarageScene extends Phaser.Scene {
     title = '',
     subtitle = '',
     partName = '',
+    frameLabel = 'CURRENT SETUP',
     mode = 'engine',
     depth = 120,
   } = {}) {
@@ -2597,7 +2632,7 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x315470, 1)
       .setDepth(depth + 2));
 
-    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, 'CURRENT SETUP', {
+    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, frameLabel, {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#6f93a8',
@@ -2717,7 +2752,7 @@ export default class GarageScene extends Phaser.Scene {
     return well;
   }
 
-  openEnginePartSelector(partId) {
+  openEnginePartSelector(partId, previewLevel = null) {
     this.closeEnginePartSelector();
     const part = ENGINE_TUNING_PARTS[partId];
     if (!part) return;
@@ -2728,8 +2763,14 @@ export default class GarageScene extends Phaser.Scene {
     };
     const depth = 120;
     const car = cars[this.selectedCarId];
-    const installed = this.currentEngineTuning[partId];
-    const currentSpec = part.levels[installed];
+    const installed = Number(this.currentEngineTuning[partId] || 0);
+    const pending = Number(this.pendingEngineTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
     const currentEngineName =
       engines[car.engine]?.name || car.engineModel || String(car.engine || '').toUpperCase();
 
@@ -2747,22 +2788,25 @@ export default class GarageScene extends Phaser.Scene {
       color: '#eefaff',
     }).setDepth(depth + 2));
 
-    const currentSpriteKey = this.resolveEnginePartSpriteKey(partId, currentSpec, car);
-
     this.addModificationModalVisual(add, {
-      textureKey: currentSpriteKey || car?.visual?.engineKey,
-      title: partId === 'engine' ? currentEngineName : currentSpec?.name?.toUpperCase(),
-      subtitle: partId === 'engine'
-        ? 'FACTORY ENGINE // ' + car.shortName
-        : currentSpec?.benefit?.toUpperCase(),
+      textureKey: this.resolveEnginePartSpriteKey(partId, previewSpec, car) || car?.visual?.engineKey,
+      title:
+        partId === 'engine' && draftLevel === installed && installed === 0
+          ? currentEngineName
+          : previewSpec?.name?.toUpperCase(),
+      subtitle:
+        partId === 'engine' && draftLevel === 0
+          ? 'FACTORY ENGINE // ' + car.shortName
+          : previewSpec?.benefit?.toUpperCase(),
       partName: part.name,
+      frameLabel: 'PREVIEW',
       mode: 'engine',
       depth,
     });
 
     part.levels.forEach((spec, index) => {
       const y = 230 + index * 120;
-      const selected = this.pendingEngineTuning[partId] === spec.level;
+      const selected = draftLevel === spec.level;
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade('engine', partId, spec.level);
@@ -2771,9 +2815,18 @@ export default class GarageScene extends Phaser.Scene {
         getUpgradePathCost(partId, installed, spec.level)
       );
 
-      const box = add(this.add.rectangle(1040, y, 720, 100, selected ? 0x123047 : 0x0b1724, 1)
-        .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setDepth(depth + 2));
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
 
       this.addUpgradeRowSprite(
         add,
@@ -2815,24 +2868,43 @@ export default class GarageScene extends Phaser.Scene {
       if (selectable) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
-          this.pendingEngineTuning[partId] = spec.level;
-          this.closeEnginePartSelector();
-          this.refreshEngineMode();
+          this.openEnginePartSelector(partId, spec.level);
         });
       }
     });
 
-    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-
-    add(this.add.text(1360, 124, 'CLOSE', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
+    add(this.add.text(1200, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    close.on('pointerdown', () => this.closeEnginePartSelector());
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1350,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeEnginePartSelector());
     blocker.on('pointerdown', () => this.closeEnginePartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingEngineTuning[partId] = draftLevel;
+      this.closeEnginePartSelector();
+      this.refreshEngineMode();
+    });
   }
 
   closeEnginePartSelector() {
@@ -3533,7 +3605,7 @@ export default class GarageScene extends Phaser.Scene {
     );
   }
 
-  openChassisPartSelector(partId) {
+  openChassisPartSelector(partId, previewLevel = null) {
     this.closeChassisPartSelector();
     const part = CHASSIS_TUNING_PARTS[partId];
     if (!part) return;
@@ -3543,8 +3615,14 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
-    const installed = this.currentChassisTuning[partId];
-    const currentSpec = part.levels[installed];
+    const installed = Number(this.currentChassisTuning[partId] || 0);
+    const pending = Number(this.pendingChassisTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
@@ -3561,17 +3639,18 @@ export default class GarageScene extends Phaser.Scene {
     }).setDepth(depth + 2));
 
     this.addModificationModalVisual(add, {
-      textureKey: currentSpec?.spriteKey,
-      title: currentSpec?.name?.toUpperCase() || part.name,
-      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      textureKey: previewSpec?.spriteKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
       partName: 'CHASSIS',
+      frameLabel: 'PREVIEW',
       mode: 'chassis',
       depth,
     });
 
     part.levels.forEach((spec, index) => {
       const y = 230 + index * 120;
-      const selected = this.pendingChassisTuning[partId] === spec.level;
+      const selected = draftLevel === spec.level;
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade('chassis', partId, spec.level);
@@ -3587,8 +3666,11 @@ export default class GarageScene extends Phaser.Scene {
         100,
         selected ? 0x123047 : 0x0b1724,
         1
-      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setDepth(depth + 2));
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
 
       this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
@@ -3623,26 +3705,43 @@ export default class GarageScene extends Phaser.Scene {
       if (selectable) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
-          this.pendingChassisTuning[partId] = spec.level;
-          this.closeChassisPartSelector();
-          this.refreshChassisMode();
+          this.openChassisPartSelector(partId, spec.level);
         });
       }
     });
 
-    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-
-    add(this.add.text(1360, 124, 'CLOSE', {
+    add(this.add.text(1200, 124, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    close.on('pointerdown', () => this.closeChassisPartSelector());
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1350,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeChassisPartSelector());
     blocker.on('pointerdown', () => this.closeChassisPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingChassisTuning[partId] = draftLevel;
+      this.closeChassisPartSelector();
+      this.refreshChassisMode();
+    });
   }
 
   closeChassisPartSelector() {
@@ -4562,7 +4661,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryApplyButton?.on('pointerdown', () => this.applyPendingSecondaryUpgrades());
   }
 
-  openSecondaryPartSelector(partId) {
+  openSecondaryPartSelector(partId, previewLevel = null) {
     this.closeSecondaryPartSelector();
     const isDrivetrain = this.secondaryMode === 'drivetrain';
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
@@ -4574,12 +4673,19 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
-    const installed = this.currentSecondaryTuning[partId];
-    const currentSpec = part.levels[installed];
+    const installed = Number(this.currentSecondaryTuning[partId] || 0);
+    const pending = Number(this.pendingSecondaryTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
     const car = cars[this.selectedCarId];
     const contextTextureKey = isDrivetrain
       ? car?.visual?.drivetrainKey
       : car?.visual?.exhaustNosKey;
+    const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
@@ -4596,18 +4702,18 @@ export default class GarageScene extends Phaser.Scene {
     }).setDepth(depth + 2));
 
     this.addModificationModalVisual(add, {
-      textureKey: currentSpec?.spriteKey || contextTextureKey,
-      title: currentSpec?.name?.toUpperCase() || part.name,
-      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      textureKey: previewSpec?.spriteKey || contextTextureKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
       partName: isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS',
+      frameLabel: 'PREVIEW',
       mode: isDrivetrain ? 'drivetrain' : 'exhaustNos',
       depth,
     });
 
     part.levels.forEach((spec, index) => {
       const y = 230 + index * 120;
-      const selected = this.pendingSecondaryTuning[partId] === spec.level;
-      const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
+      const selected = draftLevel === spec.level;
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade(category, partId, spec.level);
@@ -4618,9 +4724,18 @@ export default class GarageScene extends Phaser.Scene {
           : getExhaustNosUpgradePathCost(partId, installed, spec.level)
       );
 
-      const box = add(this.add.rectangle(1040, y, 720, 100, selected ? 0x123047 : 0x0b1724, 1)
-        .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setDepth(depth + 2));
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
 
       this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
@@ -4655,24 +4770,43 @@ export default class GarageScene extends Phaser.Scene {
       if (selectable) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
-          this.pendingSecondaryTuning[partId] = spec.level;
-          this.closeSecondaryPartSelector();
-          this.refreshSecondaryTuningMode();
+          this.openSecondaryPartSelector(partId, spec.level);
         });
       }
     });
 
-    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1200, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-
-    add(this.add.text(1360, 124, 'CLOSE', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
+    add(this.add.text(1200, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    close.on('pointerdown', () => this.closeSecondaryPartSelector());
+    const confirm = add(this.add.rectangle(1350, 124, 160, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1350,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeSecondaryPartSelector());
     blocker.on('pointerdown', () => this.closeSecondaryPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingSecondaryTuning[partId] = draftLevel;
+      this.closeSecondaryPartSelector();
+      this.refreshSecondaryTuningMode();
+    });
   }
 
   closeSecondaryPartSelector() {
