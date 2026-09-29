@@ -40,7 +40,7 @@ import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260929-r275';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r280';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getCarCouponRequirement,
