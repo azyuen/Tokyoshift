@@ -66,6 +66,10 @@ import {
 } from '../data/workshopProgression.js?v=20260929-r263';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
+  DYNO_WAREHOUSE_ID,
+  getDynoStage,
+} from '../data/dyno.js?v=20260930-r288';
+import {
   PAINT_PRESETS,
   getCarPaintColor,
   paintColorToHex,
@@ -298,6 +302,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildGarageStrip();
     this.buildMoveCarButton();
     this.buildWorkshopJumpButton();
+    this.buildDynoButton();
     this.buildMeetButton();
 
     if (this.selectedCarId) {
@@ -1675,6 +1680,190 @@ export default class GarageScene extends Phaser.Scene {
 
     closeButton.on('pointerdown', close);
     blocker.on('pointerdown', close);
+  }
+
+  buildDynoButton() {
+    if (this.getActiveWorkshop().id !== DYNO_WAREHOUSE_ID) return;
+
+    const stageOne = getDynoStage(1);
+    const x = SIDE.x + SIDE.w / 2;
+    const y = 662;
+
+    this.dynoButton = this.add.rectangle(
+      x,
+      y,
+      SIDE.w - 32,
+      40,
+      0x102138,
+      1
+    ).setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+
+    this.dynoButtonLabel = this.add.text(x, y, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+
+    this.refreshDynoButton = () => {
+      if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
+      const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
+      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+      const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
+      const hasLocalCar = Boolean(this.selectedCarId);
+
+      if (tier < 1) {
+        const affordable = cash >= Number(stageOne.installCost || 0);
+        this.dynoButtonLabel
+          .setText(
+            affordable
+              ? 'INSTALL DYNO // ¥ ' + Number(stageOne.installCost || 0).toLocaleString('en-US')
+              : 'DYNO // NEED ¥ ' + Number(stageOne.installCost || 0).toLocaleString('en-US')
+          )
+          .setColor(affordable ? '#ffe7a5' : '#c99aa4');
+        this.dynoButton
+          .setFillStyle(affordable ? 0x211a12 : 0x1b1418, 1)
+          .setStrokeStyle(2, affordable ? 0xe4b660 : 0x79515a, 1);
+      } else {
+        this.dynoButtonLabel
+          .setText(hasLocalCar ? 'DYNO // STAGE I  >' : 'DYNO // MOVE CAR HERE')
+          .setColor(hasLocalCar ? '#f1fffb' : '#817d84');
+        this.dynoButton
+          .setFillStyle(hasLocalCar ? 0x0c2827 : 0x17181d, 1)
+          .setStrokeStyle(2, hasLocalCar ? 0x62e8c7 : 0x514f55, 1);
+      }
+
+      if (lockedByTuning) this.dynoButton.disableInteractive();
+      else this.dynoButton.setInteractive({ useHandCursor: true });
+    };
+
+    this.dynoButton.on('pointerdown', () => {
+      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+      const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
+      if (tier < 1) {
+        this.showDynoInstallPopup();
+        return;
+      }
+      if (!this.selectedCarId) {
+        this.showWorkshopToast('MOVE A CAR TO WAREHOUSE HQ FIRST');
+        return;
+      }
+
+      this.registry.set('selectedCarId', this.selectedCarId);
+      this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
+      saveSessionState(this.registry);
+      this.scene.start('DynoScene');
+    });
+
+    this.refreshDynoButton();
+  }
+
+  showDynoInstallPopup() {
+    if (this.getActiveWorkshop().id !== DYNO_WAREHOUSE_ID) return;
+    const stage = getDynoStage(1);
+    const cost = Math.max(0, Number(stage.installCost || 0));
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    const affordable = cash >= cost;
+    const depth = 160;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 430, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x43dfff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(440, 250, 'INSTALL AWD ROLLER DYNO', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(
+      440,
+      302,
+      'Build the Warehouse HQ dyno cell. Stage I maps real power and torque curves, live boost and RPM, and gives you three pulls per session.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#b8cbd7',
+        fontStyle: '600',
+        wordWrap: { width: 670 },
+        lineSpacing: 4,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      440,
+      400,
+      'INSTALLATION  ¥ ' + cost.toLocaleString('en-US') +
+        '\nSESSION  ¥ ' + Number(stage.sessionCost || 0).toLocaleString('en-US') + '  //  3 PULLS',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: affordable ? '#ffe08a' : '#c99aa4',
+        lineSpacing: 8,
+      }
+    ).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 540, 220, 54, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 540, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(
+      920,
+      540,
+      280,
+      54,
+      affordable ? 0x0c2827 : 0x2a171b,
+      1
+    ).setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1)
+      .setDepth(depth + 2));
+    const confirmText = add(this.add.text(
+      920,
+      540,
+      affordable ? 'INSTALL // ¥ ' + cost.toLocaleString('en-US') : 'NOT ENOUGH CASH',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: affordable ? '#f1fffb' : '#ffc0c6',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+
+    if (affordable) {
+      confirm.setInteractive({ useHandCursor: true });
+      confirm.on('pointerdown', () => {
+        const liveCash = Math.max(0, Number(this.registry.get('cash') || 0));
+        if (liveCash < cost) {
+          confirm.disableInteractive();
+          confirmText.setText('NOT ENOUGH CASH').setColor('#ffc0c6');
+          return;
+        }
+        this.registry.set('cash', liveCash - cost);
+        this.registry.set('dynoFacilityTier', 1);
+        this.cashText?.setText('¥ ' + Number(liveCash - cost).toLocaleString('en-US'));
+        saveSessionState(this.registry);
+        close();
+        this.refreshDynoButton?.();
+        this.showWorkshopToast('AWD ROLLER DYNO INSTALLED // STAGE I READY');
+      });
+    }
   }
 
   buildMeetButton() {
