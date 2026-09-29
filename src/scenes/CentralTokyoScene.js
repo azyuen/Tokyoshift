@@ -25,7 +25,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
 } from '../data/visualMods.js?v=20260929-r246';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260928-r244';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r257';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
@@ -42,7 +42,7 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r256';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r257';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
