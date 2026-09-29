@@ -1481,7 +1481,7 @@ export default class MeetScene extends Phaser.Scene {
     // Primary action now sits where the old pink-slip button lived.
     this.raceButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 456,
+      SIDE.y + 472,
       SIDE.w - 36,
       44,
       0x0b2826,
@@ -1492,7 +1492,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.raceButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 456,
+      SIDE.y + 472,
       'RACE  >',
       {
         fontFamily: PIXEL_FONT,
@@ -1505,7 +1505,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 516,
+      SIDE.y + 532,
       SIDE.w - 36,
       40,
       0x291620,
@@ -1516,7 +1516,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 516,
+      SIDE.y + 532,
       'PINK SLIPS?',
       {
         fontFamily: PIXEL_FONT,
@@ -1527,7 +1527,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkResponseText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 548,
+      SIDE.y + 564,
       '',
       {
         fontFamily: BODY_FONT,
