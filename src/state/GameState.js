@@ -60,6 +60,7 @@ export function createDefaultGameState(options = {}) {
       [starterCarId]: createStarterCarState(),
     },
     carHistory: [],
+    carMagazineSightings: {},
     wins: 0,
     losses: 0,
     cash: 50000,
@@ -94,6 +95,11 @@ export function createDefaultGameState(options = {}) {
     competitionWins: 0,
     carCoupons: {},
     easyCouponLastMilestone: 0,
+    surpriseRewardState: {
+      winsSinceReward: 0,
+      total: 0,
+      lastAtWin: 0,
+    },
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
       autoMarket: false,
@@ -684,6 +690,10 @@ export function normaliseState(input = {}) {
     ownedCarIds: owned,
     carStates: mergedCarStates,
     carHistory,
+    carMagazineSightings:
+      input.carMagazineSightings && typeof input.carMagazineSightings === 'object'
+        ? input.carMagazineSightings
+        : {},
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     cash: normalisedCash,
@@ -691,6 +701,11 @@ export function normaliseState(input = {}) {
     easyCouponLastMilestone: Number.isFinite(input.easyCouponLastMilestone)
       ? Math.max(0, Math.floor(Number(input.easyCouponLastMilestone || 0)))
       : getEasyCouponMilestoneForWins(Number.isFinite(input.wins) ? input.wins : base.wins),
+    surpriseRewardState: {
+      winsSinceReward: Math.max(0, Math.floor(Number(input.surpriseRewardState?.winsSinceReward || 0))),
+      total: Math.max(0, Math.floor(Number(input.surpriseRewardState?.total || 0))),
+      lastAtWin: Math.max(0, Math.floor(Number(input.surpriseRewardState?.lastAtWin || 0))),
+    },
     playerDifficulty: normalisePlayerDifficulty(input.playerDifficulty),
     devMode,
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
