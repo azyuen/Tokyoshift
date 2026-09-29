@@ -9,7 +9,7 @@ import {
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r253';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
   DEFAULT_PAINT_COLOR,
@@ -63,7 +63,7 @@ import {
   TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260926-r213';
+} from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
@@ -2754,7 +2754,7 @@ export default class RaceScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
     if (rival?.introQuote) {
-      add(this.add.text(780, 575, '“' + rival.introQuote + '”', {
+      add(this.add.text(780, 558, '“' + rival.introQuote + '”', {
         fontFamily: BODY_FONT,
         fontSize: '11px',
         color: '#a7bac5',
@@ -2765,8 +2765,8 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     add(this.add.text(
-      510,
-      631,
+      780,
+      594,
       state.stage + ' / 7 DEFEATED' +
         (state.perfectEligible !== false ? '  //  PERFECT RUN ACTIVE' : ''),
       {
@@ -2774,21 +2774,152 @@ export default class RaceScene extends Phaser.Scene {
         fontSize: '7px',
         color: state.perfectEligible !== false ? '#ffe08a' : '#8fa0aa',
       }
-    ).setOrigin(0, 0.5).setDepth(depth + 2).setScrollFactor(0));
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
-    const ready = add(this.add.rectangle(1040, 630, 260, 50, 0x321522, 1)
+    const pause = add(this.add.rectangle(625, 630, 230, 50, 0x171c25, 1)
+      .setStrokeStyle(1, 0x70818d, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2)
+      .setScrollFactor(0));
+
+    add(this.add.text(625, 630, 'PAUSE CHALLENGE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#d7e2e8',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const ready = add(this.add.rectangle(955, 630, 300, 50, 0x321522, 1)
       .setStrokeStyle(2, 0xff5f93, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2)
       .setScrollFactor(0));
 
-    add(this.add.text(1040, 630, 'READY // RACE ' + nextNumber, {
+    add(this.add.text(955, 630, 'READY // RACE ' + nextNumber, {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#fff4f8',
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
+    const performPause = () => {
+      const store = { ...(this.registry.get('tunerTeamChallenges') || {}) };
+      const current = getTunerTeamChallengeState(this.registry, regionId);
+      const perfectSweep = Boolean(
+        current.perfectAttempt ||
+        (current.championEarned && !current.perfectEarned)
+      );
+
+      store[regionId] = {
+        ...(store[regionId] || {}),
+        ...current,
+        invited: true,
+        activeSession: false,
+        paused: true,
+        pausedAt: Date.now(),
+        // First-clear challenge progress is permanent, but leaving the event
+        // breaks the 7-0 streak. A post-champion Perfect Sweep has no partial
+        // progress to preserve, so pausing restarts that sweep from racer one.
+        stage: perfectSweep ? 0 : current.stage,
+        perfectAttempt: false,
+        perfectEligible: perfectSweep ? true : false,
+        retryNotBefore: 0,
+      };
+      this.registry.set('tunerTeamChallenges', store);
+      saveSessionState(this.registry);
+
+      objects.forEach(obj => obj?.destroy?.());
+      this.tunerChallengeBriefing = null;
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+    };
+
+    const showPauseWarning = () => {
+      const warningObjects = [];
+      const addWarning = obj => { warningObjects.push(obj); return obj; };
+      const warningDepth = depth + 20;
+      const perfectSweep = Boolean(
+        state.perfectAttempt ||
+        (state.championEarned && !state.perfectEarned)
+      );
+
+      const warningBlocker = addWarning(this.add.rectangle(
+        780, 360, 1560, 720, 0x02050b, 0.82
+      ).setDepth(warningDepth).setScrollFactor(0).setInteractive());
+
+      addWarning(this.add.rectangle(
+        780, 360, 760, 300, 0x09111a, 0.998
+      ).setStrokeStyle(3, 0xffc65c, 0.98)
+        .setDepth(warningDepth + 1)
+        .setScrollFactor(0));
+
+      addWarning(this.add.text(780, 275, 'PAUSE REGIONAL CHALLENGE?', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '14px',
+        color: '#ffe09a',
+      }).setOrigin(0.5).setDepth(warningDepth + 2).setScrollFactor(0));
+
+      addWarning(this.add.text(
+        780,
+        350,
+        perfectSweep
+          ? 'Pausing ends this Perfect Sweep streak.\nYour next Perfect Sweep will restart from challenger 1.'
+          : 'Your ' + state.stage + '-win streak will end.\nChallenge progress is saved, but ★ Perfect will no longer be available on this run.',
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '13px',
+          color: '#e4edf2',
+          align: 'center',
+          lineSpacing: 7,
+          wordWrap: { width: 650 },
+        }
+      ).setOrigin(0.5).setDepth(warningDepth + 2).setScrollFactor(0));
+
+      const keep = addWarning(this.add.rectangle(
+        650, 448, 220, 48, 0x17242a, 1
+      ).setStrokeStyle(1, 0x6d8796, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(warningDepth + 2)
+        .setScrollFactor(0));
+
+      addWarning(this.add.text(650, 448, 'KEEP RACING', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#dcebf2',
+      }).setOrigin(0.5).setDepth(warningDepth + 3).setScrollFactor(0));
+
+      const confirm = addWarning(this.add.rectangle(
+        910, 448, 230, 48, 0x3a2710, 1
+      ).setStrokeStyle(2, 0xffc65c, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(warningDepth + 2)
+        .setScrollFactor(0));
+
+      addWarning(this.add.text(910, 448, 'PAUSE ANYWAY', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#fff1c7',
+      }).setOrigin(0.5).setDepth(warningDepth + 3).setScrollFactor(0));
+
+      const dismissWarning = () => warningObjects.forEach(obj => obj?.destroy?.());
+      warningBlocker.on('pointerdown', () => {});
+      keep.on('pointerdown', dismissWarning);
+      confirm.on('pointerdown', () => {
+        dismissWarning();
+        performPause();
+      });
+    };
+
     blocker.on('pointerdown', () => {});
+    pause.on('pointerover', () => pause.setFillStyle(0x25323b, 1));
+    pause.on('pointerout', () => pause.setFillStyle(0x171c25, 1));
+    pause.on('pointerdown', () => {
+      const onPerfectStreak = Boolean(
+        state.perfectEligible !== false ||
+        state.perfectAttempt ||
+        (state.championEarned && !state.perfectEarned)
+      );
+      if (onPerfectStreak) showPauseWarning();
+      else performPause();
+    });
+
     ready.on('pointerover', () => ready.setFillStyle(0x5b2036, 1));
     ready.on('pointerout', () => ready.setFillStyle(0x321522, 1));
     ready.on('pointerdown', () => {
