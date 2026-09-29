@@ -314,9 +314,8 @@ export default class MeetScene extends Phaser.Scene {
           allowed.has(offer?.characterId)
         );
 
-        // Existing saves may contain the pre-team global rival pool.
-        // Regenerate regional-team locations once so only their local crew appears.
-        const regionalTeam = hasRegionalTeam(location.district);
+        // Existing saves may contain an old/global roster or duplicate drivers.
+        // Regenerate only that location while preserving the wider Meet refresh.
         const uniqueCharacterCount = new Set(
           regionValid.map(offer => offer?.characterId).filter(Boolean)
         ).size;
