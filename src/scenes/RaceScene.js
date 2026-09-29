@@ -3,7 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20260926-r209';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r251';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260929-r252';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import {
@@ -116,11 +116,11 @@ export default class RaceScene extends Phaser.Scene {
         ? 'raceSkylineOdaibaDay'
         : 'raceSkylineOdaibaNight';
       const odaibaSkylineFile = this.raceTimeOfDay === 'day'
-        ? 'skyline_odaiba_day.png'
+        ? 'skyline_odaiba_day.webp'
         : 'skyline_odaiba_night.png';
       queueImage(
         odaibaSkylineKey,
-        'assets/Race/Skylines/' + odaibaSkylineFile + '?v=20260929-r249'
+        'assets/Race/Skylines/' + odaibaSkylineFile + '?v=20260929-r252'
       );
     }
 
@@ -356,10 +356,15 @@ export default class RaceScene extends Phaser.Scene {
     const roadVariantCounter = Number(this.registry.get('raceRoadVariantCounter') || 0) + 1;
     this.registry.set('raceRoadVariantCounter', roadVariantCounter);
     const roadVariant = roadVariantCounter % 4;
+    const startWindow = this.raceDistanceM <= QUARTER_M + 1 ? 0.78 : 0.42;
+    const skylineStartRatio = ((roadVariantCounter * 0.61803398875) % 1) * startWindow;
+    const skylineTravelPx = this.raceDistanceM <= QUARTER_M + 1 ? 430 : (this.raceDistanceM <= HALF_MILE_M + 1 ? 760 : 1000);
     this.environment = new TokyoExpresswayBackground(this, {
       timeOfDay: this.raceTimeOfDay,
       skylineKey,
       roadVariant,
+      skylineStartRatio,
+      skylineTravelPx,
     });
     this.worldG = this.add.graphics().setDepth(4);
     this.fxG = this.add.graphics().setDepth(8);
