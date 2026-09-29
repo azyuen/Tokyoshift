@@ -3,6 +3,7 @@ import { engines } from '../data/engines.js?v=20260928-r232';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
+import { applySpecialistTuning } from '../data/tunerShops.js?v=20260930-r288';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -50,6 +51,9 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
 
   const engineTuned = applyEngineTuning(config, engine, state);
   const tuned = applySecondaryTuning(engineTuned.car, engineTuned.engine, state);
+  // Specialist tuner-house work is part of the physical build, so it must be
+  // applied in the same canonical pipeline used by races, matchmaking and dyno.
+  applySpecialistTuning(tuned.car, tuned.engine, state);
   const exhaustNos = getExhaustNosTuning(state);
 
   if (exhaustNos.nosKit <= 0) {
