@@ -41,8 +41,8 @@ import {
   getEncounterAi,
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260929-r268';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260929-r271';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
@@ -92,6 +92,11 @@ const MODE_DATA = {
     distances: ['1/4 mile', '5.0 km', '3 rounds'],
   },
 };
+
+function chooseWeightedRaceType(rollingChance = 0.20) {
+  const chance = Phaser.Math.Clamp(Number(rollingChance) || 0, 0, 1);
+  return Phaser.Math.FloatBetween(0, 1) < chance ? 'Roll Race' : 'Standing Start';
+}
 
 const REGION_LOCATION_RIVAL_ROTATION = {
   ODAIBA: {
@@ -211,7 +216,7 @@ export default class MeetScene extends Phaser.Scene {
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
-        offer?.matchmakingVersion === 'R239' &&
+        offer?.matchmakingVersion === 'R271' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -273,7 +278,7 @@ export default class MeetScene extends Phaser.Scene {
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
-        offer?.matchmakingVersion === 'R239' &&
+        offer?.matchmakingVersion === 'R271' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -1790,7 +1795,9 @@ export default class MeetScene extends Phaser.Scene {
       encounterRating,
       encounterAi: boostAiForPinkSlip(getEncounterAi(encounterRating)),
       skillRange: this.getDisplayedSkillRange(encounterRating),
-      raceType: Phaser.Utils.Array.GetRandom(['Standing Start', 'Roll Race']),
+      raceType: chooseWeightedRaceType(
+        PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.pinkSlipRolling ?? 0.12
+      ),
       difficulty: profile.difficulty,
       quote: 'Keys for keys. Right now.',
       createdAt: Date.now(),
@@ -2339,9 +2346,20 @@ export default class MeetScene extends Phaser.Scene {
         encounterRating: rating,
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
-        raceType: Phaser.Utils.Array.GetRandom(['Standing Start', 'Roll Race']),
+        raceType: chooseWeightedRaceType(
+          PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.competitionRolling ?? 0.20
+        ),
       };
     });
+
+    const rollingRoundCount = rounds.filter(round => round.raceType === 'Roll Race').length;
+    const rollingPrizeBonusPerRound = Number(
+      PROGRESSION_BALANCE.meetMatchmaking.competitionRollingPrizeBonusPerRound ?? 0.10
+    );
+    const adjustedCashPrize = Phaser.Math.Snap.To(
+      Math.round(settings.cashPrize * (1 + rollingRoundCount * rollingPrizeBonusPerRound)),
+      500
+    );
 
     let prizeType = 'CASH';
     let prizeCarId = null;
@@ -2362,9 +2380,10 @@ export default class MeetScene extends Phaser.Scene {
       difficulty,
       entryFee: settings.entryFee,
       prizeType,
-      prizeCash: settings.cashPrize,
+      prizeCash: adjustedCashPrize,
       prizeCarId,
       rounds,
+      balanceVersion: 'R271',
       refreshAt: Date.now() + this.getCompetitionOfferLifetimeMs(),
       used: false,
     };
@@ -2383,7 +2402,8 @@ export default class MeetScene extends Phaser.Scene {
       !current ||
       Number(current.refreshAt || 0) <= Date.now() ||
       wrongRegion ||
-      legacyDirectCarPrize;
+      legacyDirectCarPrize ||
+      current?.balanceVersion !== 'R271';
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -2780,7 +2800,9 @@ export default class MeetScene extends Phaser.Scene {
     return Array.from({ length: offerCount }, (_, slotIndex) => {
       // Race context is chosen before vehicle matching because standing and
       // rolling performance are deliberately evaluated differently.
-      const raceType = Phaser.Utils.Array.GetRandom(cfg.types);
+      const raceType = chooseWeightedRaceType(
+        PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.meetRolling ?? 0.20
+      );
       const distance = raceType === 'Roll Race'
         ? '1/2 mile'
         : Phaser.Utils.Array.GetRandom(cfg.distances);
@@ -2830,6 +2852,13 @@ export default class MeetScene extends Phaser.Scene {
           Phaser.Math.Between(minBet, maxBet),
           500
         );
+
+        if (raceType === 'Roll Race') {
+          const rollMultiplier = Number(
+            PROGRESSION_BALANCE.meetMatchmaking.rollingCashStakeMultiplier ?? 1.30
+          );
+          stake = Phaser.Math.Snap.To(Math.round(stake * rollMultiplier), 500);
+        }
       }
 
       const pinkDecision = this.evaluatePinkSlipAcceptance(character, carId, {
@@ -2857,9 +2886,9 @@ export default class MeetScene extends Phaser.Scene {
         skillLabel,
         driverSkillSource: 'LOCATION',
 
-        // Matchmaking generation version forces pre-R239 saved Meet rosters to
+        // Matchmaking generation version forces pre-R271 saved Meet rosters to
         // reroll once so regional build ceilings take effect immediately.
-        matchmakingVersion: 'R239',
+        matchmakingVersion: 'R271',
         vehicleDifficultyProfile: profile.difficulty,
         allowedBuildRatings: match.allowedBuildRatings,
         buildCeiling: match.buildCeiling,
