@@ -1,4 +1,9 @@
 import { WORKSHOP_TIERS } from './workshopProgression.js?v=20260926-r211';
+import {
+  isCareerRegionUnlocked,
+  getCareerRegionUnlockLabel,
+  getCareerLocationStatus,
+} from './careerProgression.js?v=20260929-r272';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
@@ -434,8 +439,12 @@ export function isTravelRegionUnlocked(source, regionId) {
   const hasPlayableDestination = region.locations.some(location => location.available !== false);
   if (!hasPlayableDestination) return false;
 
-  const wins = Math.max(0, Number(sourceValue(source, 'wins', 0) || 0));
-  return wins >= Math.max(0, Number(region.unlockWins || 0));
+  return isCareerRegionUnlocked(source, regionId);
+}
+
+export function getTravelRegionUnlockLabel(source, regionId) {
+  if (isDevTravelProfile(source)) return 'OPEN';
+  return getCareerRegionUnlockLabel(source, regionId);
 }
 
 export function getTravelRegionUnlockWins(regionId) {
@@ -458,6 +467,35 @@ export function getTravelLocation(locationId) {
 export function regionIdForMeetLocation(locationId, fallback = 'ODAIBA') {
   const found = getTravelLocation(locationId);
   return found?.regionId || fallback;
+}
+
+export function isTravelLocationUnlocked(source, locationId) {
+  const found = getTravelLocation(locationId);
+  if (!found) return false;
+  if (isDevTravelProfile(source)) return true;
+
+  if (found.regionId === HOME_REGION_ID) {
+    return found.kind === 'home' || found.kind === 'garageUpgrade';
+  }
+
+  if (found.regionId === 'CENTRAL_TOKYO') {
+    return isTravelRegionUnlocked(source, found.regionId);
+  }
+
+  if (found.available === false) return false;
+
+  const locationIndex = found.region.locations.findIndex(item => item.id === found.id);
+  return getCareerLocationStatus(source, found.regionId, locationIndex).unlocked;
+}
+
+export function getTravelLocationUnlockLabel(source, locationId) {
+  const found = getTravelLocation(locationId);
+  if (!found) return 'LOCKED';
+  if (isDevTravelProfile(source)) return 'OPEN';
+  if (found.available === false) return 'COMING SOON';
+
+  const locationIndex = found.region.locations.findIndex(item => item.id === found.id);
+  return getCareerLocationStatus(source, found.regionId, locationIndex).label;
 }
 
 export function getRegionTravelCost({
