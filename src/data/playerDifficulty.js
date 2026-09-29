@@ -85,7 +85,10 @@ export function applyDifficultyToRivalAi(
   difficulty = 'STANDARD',
   { rollingStart = false } = {}
 ) {
-  const cfg = getPlayerDifficultyConfig(difficulty);
+  const id = normalisePlayerDifficulty(difficulty);
+  if (id === 'STANDARD') return { ...ai };
+
+  const cfg = getPlayerDifficultyConfig(id);
   const multiplier = Number(cfg.aiSkillMultiplier || 1)
     * (rollingStart ? Number(cfg.rollingAiMultiplier || 1) : 1);
   const clamp = value => Math.max(0.30, Math.min(0.99, Number(value || 0) * multiplier));
