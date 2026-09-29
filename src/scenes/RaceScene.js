@@ -54,7 +54,10 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
-import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
+import {
+  getGarageDeliveryOptions,
+  showGarageDeliveryPicker,
+} from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -3266,9 +3269,12 @@ export default class RaceScene extends Phaser.Scene {
             ...this.opponentBuildState,
             acquiredVia: 'pinkSlip',
           };
-          carGarageLocations[this.opponentCarId] =
-            this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
-          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ADDED TO GARAGE';
+          const provisionalGarageId = getGarageDeliveryOptions(this, this.opponentCarId)
+            .find(option => option.available)?.id
+            || this.registry.get('workshopLocationId')
+            || 'shinonomeWorkshop';
+          carGarageLocations[this.opponentCarId] = provisionalGarageId;
+          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' // CHOOSE DELIVERY GARAGE';
         } else {
           pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
         }
