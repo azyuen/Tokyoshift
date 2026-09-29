@@ -74,7 +74,7 @@ import {
   markCentralTokyoUnlocked,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20260929-r272';
+} from '../data/centralTokyo.js?v=20260929-r279';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -275,21 +275,25 @@ export default class MeetScene extends Phaser.Scene {
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
-    const storedOffers = Object.values(storedRosters)
-      .filter(Array.isArray)
-      .flat();
-    const hasEncounterProgression = storedOffers.length > 0
-      && storedOffers.every(offer =>
-        Number.isFinite(offer?.encounterRating) &&
-        offer?.encounterAi &&
-        offer?.driverSkillSource === 'LOCATION' &&
-        offer?.matchmakingVersion === 'R271' &&
-        Number.isFinite(Number(offer?.opponentBuildRating)) &&
-        offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
-      );
-    const hasStoredRound = storedRefreshAt > Date.now()
-      && hasEncounterProgression
-      && ALL_MEET_LOCATION_IDS.some(id => Array.isArray(storedRosters[id]));
+    const isCurrentMeetOffer = offer =>
+      Number.isFinite(offer?.encounterRating) &&
+      offer?.encounterAi &&
+      offer?.driverSkillSource === 'LOCATION' &&
+      offer?.matchmakingVersion === 'R271' &&
+      Number.isFinite(Number(offer?.opponentBuildRating)) &&
+      offer?.opponentBuildState && typeof offer.opponentBuildState === 'object';
+
+    // Preserve the meet the player is actually returning to. Previously this
+    // gate validated every stored location at once, so a stale/unvisited Meet
+    // elsewhere in Tokyo could force a global reroll and erase the DEFEATED
+    // state from the race that just finished.
+    const selectedStoredOffers = Array.isArray(storedRosters[this.selectedMeetLocation])
+      ? storedRosters[this.selectedMeetLocation]
+      : [];
+    const hasStoredRound =
+      storedRefreshAt > Date.now() &&
+      selectedStoredOffers.length > 0 &&
+      selectedStoredOffers.every(isCurrentMeetOffer);
 
     // Preload may have generated the visible three-car roster before create().
     // Keep that exact roster so the assets we just loaded are the ones rendered.
@@ -321,11 +325,12 @@ export default class MeetScene extends Phaser.Scene {
           : this.generateOffersForLocation(locationId);
 
         const regionValid = stored.filter(offer =>
-          allowed.has(offer?.characterId)
+          allowed.has(offer?.characterId) && isCurrentMeetOffer(offer)
         );
 
-        // Existing saves may contain an old/global roster or duplicate drivers.
-        // Regenerate only that location while preserving the wider Meet refresh.
+        // Existing saves may contain an old/global roster, stale matchmaking
+        // data or duplicate drivers. Regenerate only that specific location;
+        // never wipe the result state from a different valid Meet.
         const uniqueCharacterCount = new Set(
           regionValid.map(offer => offer?.characterId).filter(Boolean)
         ).size;
