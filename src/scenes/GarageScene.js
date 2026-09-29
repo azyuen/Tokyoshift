@@ -64,6 +64,7 @@ import {
   canInstallTuningLevel,
   getTuningRequirementLabel,
 } from '../data/workshopProgression.js?v=20260929-r263';
+import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r266';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -98,16 +99,10 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
-const WORKSHOP_HERO_X = 708;
-// R264 made the workshop car geometry uniform, but retained the old 690px
-// hero width. On the newer authored workshop backgrounds that fills too much
-// of the bay. Render the car smaller while preserving the established tyre
-// contact line independently below.
-const WORKSHOP_HERO_TARGET_WIDTH = 620;
-const WORKSHOP_HERO_BASELINE_REFERENCE_WIDTH = 690;
-const WORKSHOP_HERO_AE86_BODY_Y = 306;
-const WORKSHOP_THUMB_BODY_Y_OFFSET = -15;
-const WORKSHOP_THUMB_WIDTH = 176;
+const HERO_CFG = WORKSHOP_PRESENTATION.heroCar;
+const THUMB_CFG = WORKSHOP_PRESENTATION.thumbnail;
+const PLAYER_CFG = WORKSHOP_PRESENTATION.player;
+const DAICHI_CFG = WORKSHOP_PRESENTATION.daichi;
 
 const TUNING_CATEGORY_LOGO_Y_OFFSET = 94;
 const TUNING_CATEGORY_LOGO_MAX_HEIGHT = 164;
@@ -456,7 +451,13 @@ export default class GarageScene extends Phaser.Scene {
     // Only show the selected protagonist in the workshop. Keeping this as a
     // separate sprite lets us swap protagonists later without changing the art.
     const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
-    this.addGarageCharacter(playerCharacter, 282, 558, 350, 14);
+    this.addGarageCharacter(
+      playerCharacter,
+      PLAYER_CFG.x,
+      PLAYER_CFG.feetY,
+      PLAYER_CFG.targetHeight,
+      14
+    );
   }
 
   addGarageCharacter(character, x, feetY, targetHeight, depth) {
@@ -994,12 +995,12 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       box.setInteractive({ useHandCursor: true });
-      const thumbWidth = Math.min(WORKSHOP_THUMB_WIDTH, cardW - 30);
+      const thumbWidth = Math.min(THUMB_CFG.targetWidth, cardW - 30);
 
       // Workshop thumbnails used to be visually stable for many revisions.
       // Keep their whole car canvas on an authored card-local origin instead
       // of solving a second tyre-contact baseline at tiny scale.
-      const thumbBodyY = y + WORKSHOP_THUMB_BODY_Y_OFFSET;
+      const thumbBodyY = y + THUMB_CFG.bodyYOffset;
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 42);
       display.forEach(obj => {
         obj?.setVisible?.(true);
@@ -1915,14 +1916,15 @@ export default class GarageScene extends Phaser.Scene {
     // Keep the proven R259/R264 floor contact line even though the visible car
     // is now smaller. This shrinks the car upward from the tyres instead of
     // making it jump to a different depth in the workshop.
+    const baselineCar = cars[HERO_CFG.baselineReferenceCarId] || cars.ae86;
     const heroWheelBottomY = this.getWheelBottomY(
-      cars.ae86,
-      WORKSHOP_HERO_AE86_BODY_Y,
-      WORKSHOP_HERO_BASELINE_REFERENCE_WIDTH
-    );
+      baselineCar,
+      HERO_CFG.baselineReferenceBodyY,
+      HERO_CFG.baselineReferenceWidth
+    ) + Number(HERO_CFG.baselineOffsetY || 0);
     const heroBodyY = this.getBodyYForWheelBottom(
       cars[id],
-      WORKSHOP_HERO_TARGET_WIDTH,
+      HERO_CFG.targetWidth,
       heroWheelBottomY
     );
     const heroWheelVisual = getVisualModWheelVisual(
@@ -1933,31 +1935,31 @@ export default class GarageScene extends Phaser.Scene {
     const heroBodyScale = getCarBodyScaleForWidth(
       this,
       cars[id],
-      WORKSHOP_HERO_TARGET_WIDTH
+      HERO_CFG.targetWidth
     );
     const heroWheelFit = getWheelPairFit(heroWheelVisual, heroBodyScale, false, heroWheelSource);
     const heroRenderOffsetY = Number(cars[id].visual.renderOffsetY || 0) * heroBodyScale;
     this.heroCarLayout = {
-      x: WORKSHOP_HERO_X,
+      x: HERO_CFG.x,
       bodyY: heroBodyY,
-      targetWidth: WORKSHOP_HERO_TARGET_WIDTH,
+      targetWidth: HERO_CFG.targetWidth,
       bodyScale: heroBodyScale,
-      frontWheelX: WORKSHOP_HERO_X + heroWheelFit.front.offsetX,
-      rearWheelX: WORKSHOP_HERO_X + heroWheelFit.rear.offsetX,
+      frontWheelX: HERO_CFG.x + heroWheelFit.front.offsetX,
+      rearWheelX: HERO_CFG.x + heroWheelFit.rear.offsetX,
       rearWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.rear.offsetY,
       frontWheelY: heroBodyY + heroRenderOffsetY + heroWheelFit.front.offsetY,
       wheelY: heroBodyY + heroRenderOffsetY + (
         heroWheelFit.rear.offsetY +
         heroWheelFit.front.offsetY
       ) / 2,
-      left: WORKSHOP_HERO_X - WORKSHOP_HERO_TARGET_WIDTH / 2,
-      right: WORKSHOP_HERO_X + WORKSHOP_HERO_TARGET_WIDTH / 2,
+      left: HERO_CFG.x - HERO_CFG.targetWidth / 2,
+      right: HERO_CFG.x + HERO_CFG.targetWidth / 2,
     };
     this.selectedDisplay = this.createCarDisplay(
       cars[id],
-      WORKSHOP_HERO_X,
+      HERO_CFG.x,
       heroBodyY,
-      WORKSHOP_HERO_TARGET_WIDTH,
+      HERO_CFG.targetWidth,
       10
     );
 
@@ -2600,13 +2602,17 @@ export default class GarageScene extends Phaser.Scene {
     const wheelBottomY = this.getWheelBottomY(car, layout.bodyY, layout.targetWidth);
     // The older helper offset was authored around the oversized 690px car and
     // pushed Daichi into the right wall. Keep him beside the engine bay instead.
-    const x = Math.min(STAGE.x + STAGE.w - 110, layout.frontWheelX + 100);
+    const engineCfg = DAICHI_CFG.engine;
+    const x = Math.min(
+      STAGE.x + STAGE.w - engineCfg.rightInset,
+      layout.frontWheelX + engineCfg.frontWheelOffsetX
+    );
 
     this.addDaichiTuningHelper({
       textureKey: 'daichiEngineInspect',
       x,
-      feetY: wheelBottomY + 4,
-      targetHeight: 292,
+      feetY: wheelBottomY + engineCfg.feetOffsetY,
+      targetHeight: engineCfg.targetHeight,
       depth: 8.4,
       // The generated pose uses the shared 1024x1536 canvas but has extra
       // transparent padding below the shoes. Anchor the visible feet instead.
@@ -4588,11 +4594,12 @@ export default class GarageScene extends Phaser.Scene {
     if (mode === 'drivetrain') {
       // This is Daichi's original tuning pose and intentionally keeps the exact
       // former engine-helper placement.
+      const drivetrainCfg = DAICHI_CFG.drivetrain;
       this.addDaichiTuningHelper({
         textureKey: daichi.visual.spriteKey,
-        x: 875,
-        feetY: 494,
-        targetHeight: 282,
+        x: drivetrainCfg.x,
+        feetY: drivetrainCfg.feetY,
+        targetHeight: drivetrainCfg.targetHeight,
         depth: 8.4,
         anchorY: 1,
         shadowWidth: 74,
@@ -4611,11 +4618,12 @@ export default class GarageScene extends Phaser.Scene {
     // Exhaust/NOS uses the crouching inspection pose in front of the side of
     // the car. It is deliberately layered over the car, with its visible shoes
     // just below the wheel baseline.
+    const exhaustCfg = DAICHI_CFG.exhaustNos;
     this.addDaichiTuningHelper({
       textureKey: 'daichiExhaustCrouch',
       x: layout.x,
-      feetY: wheelBottomY + 22,
-      targetHeight: 282,
+      feetY: wheelBottomY + exhaustCfg.feetOffsetY,
+      targetHeight: exhaustCfg.targetHeight,
       depth: 13.4,
       anchorY: 1365 / 1536,
       shadowWidth: 112,
@@ -4630,10 +4638,11 @@ export default class GarageScene extends Phaser.Scene {
     const layout = this.heroCarLayout;
     if (!layout) return;
 
+    const chassisCfg = DAICHI_CFG.chassis;
     const x = Phaser.Math.Clamp(
-      layout.frontWheelX + 92,
-      layout.x + 160,
-      STAGE.x + STAGE.w - 88
+      layout.frontWheelX + chassisCfg.frontWheelOffsetX,
+      layout.x + chassisCfg.minFromCarCentre,
+      STAGE.x + STAGE.w - chassisCfg.rightInset
     );
 
     this.addDaichiTuningHelper({
@@ -4642,8 +4651,8 @@ export default class GarageScene extends Phaser.Scene {
       // Chassis work reads better with Daichi behind the car rather than
       // standing over the foreground. Lift and shrink him so the car remains
       // the main subject while his tools/pose are still visible.
-      feetY: 510,
-      targetHeight: 282,
+      feetY: chassisCfg.feetY,
+      targetHeight: chassisCfg.targetHeight,
       depth: 9.4,
       anchorY: 1517 / 1536,
       useGarageCharacterShadow: false,
