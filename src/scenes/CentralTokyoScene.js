@@ -32,7 +32,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260929-r274';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r272';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r279';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
