@@ -70,7 +70,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260929-r272';
+} from '../data/centralTokyo.js?v=20260929-r279';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -1250,11 +1250,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const y = room === 'new'
       ? STAGE.y + 300
       : STAGE.y + 318;
+    const rightX = room === 'used' ? 0.795 : 0.78;
 
     return [
       { x: STAGE.x + STAGE.w * 0.22, y, w: 242, depth: 9, flip: false },
       { x: STAGE.x + STAGE.w * 0.50, y, w: 242, depth: 10, flip: false },
-      { x: STAGE.x + STAGE.w * 0.78, y, w: 242, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * rightX, y, w: 242, depth: 9, flip: false },
     ];
   }
 
@@ -1315,16 +1316,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         pose.flip,
         listing.previewState
       );
+      const artworkShiftY = room === 'new' ? 14 : -10;
       if (room === 'used') {
         this.alignUsedMarketReplacementLayers(objects, listing);
-        this.shiftMarketCarArtwork(objects, 18);
       }
+      this.shiftMarketCarArtwork(objects, artworkShiftY);
 
       objects.forEach(obj => this.addContent(obj));
 
       const hit = this.addContent(this.add.rectangle(
         pose.x,
-        pose.y + (room === 'used' ? 18 : 0),
+        pose.y + artworkShiftY,
         pose.w,
         Math.max(104, pose.w * 0.38),
         0x000000,
@@ -1906,6 +1908,28 @@ export default class CentralTokyoScene extends Phaser.Scene {
       Math.max(0, listings.length - 1)
     );
 
+    // Keep all ten rack wheels visible even while a wheel is being tried on.
+    // The authored wall is part of the room, not a separate browse screen.
+    const wheelSlots = [
+      [0.276, 0.280], [0.391, 0.280], [0.500, 0.280], [0.606, 0.280], [0.713, 0.280],
+      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.606, 0.452], [0.713, 0.452],
+    ];
+
+    listings.forEach((option, index) => {
+      const slot = wheelSlots[index] || [0.5, 0.35];
+      const x = STAGE.x + STAGE.w * slot[0];
+      const y = STAGE.y + STAGE.h * slot[1];
+      const wheel = this.addContent(this.add.image(
+        x, y, option.textureKey
+      ).setDisplaySize(78, 78).setDepth(18).setInteractive({ useHandCursor: true }));
+
+      const baseScaleX = wheel.scaleX;
+      const baseScaleY = wheel.scaleY;
+      wheel.on('pointerover', () => wheel.setScale(baseScaleX * 1.06, baseScaleY * 1.06));
+      wheel.on('pointerout', () => wheel.setScale(baseScaleX, baseScaleY));
+      wheel.on('pointerdown', () => this.transitionWheelPreview(index));
+    });
+
     if (this.wheelPreviewActive && listings.length) {
       const option = listings[this.selectedWheelIndex];
       const previewState = { ...carState, customWheelId: option.id };
@@ -1940,27 +1964,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }
       ).setOrigin(1, 0).setDepth(42).setInteractive({ useHandCursor: true }));
       back.on('pointerdown', () => this.transitionWheelPreview(null));
-    } else {
-      // These centres correspond to the ten illustrated display boxes in the
-      // authored wheel-shop background: five across, two rows. Keep the wall
-      // visually clean; item name/price appears only after selection.
-      const wheelSlots = [
-        [0.276, 0.280], [0.391, 0.280], [0.506, 0.280], [0.622, 0.280], [0.738, 0.280],
-        [0.276, 0.452], [0.391, 0.452], [0.506, 0.452], [0.622, 0.452], [0.738, 0.452],
-      ];
-
-      listings.forEach((option, index) => {
-        const slot = wheelSlots[index] || [0.5, 0.35];
-        const x = STAGE.x + STAGE.w * slot[0];
-        const y = STAGE.y + STAGE.h * slot[1];
-        const wheel = this.addContent(this.add.image(
-          x, y, option.textureKey
-        ).setDisplaySize(86, 86).setDepth(18).setInteractive({ useHandCursor: true }));
-
-        wheel.on('pointerover', () => wheel.setScale(wheel.scaleX * 1.06));
-        wheel.on('pointerout', () => wheel.setDisplaySize(86, 86));
-        wheel.on('pointerdown', () => this.transitionWheelPreview(index));
-      });
     }
 
     this.addContent(this.add.text(
