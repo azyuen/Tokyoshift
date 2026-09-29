@@ -2794,6 +2794,7 @@ export default class MeetScene extends Phaser.Scene {
         preferredCars: profile.likelyCars,
         raceType,
         difficulty: profile.difficulty,
+        playerDifficulty: this.registry.get('playerDifficulty') || 'STANDARD',
         locationId,
         refreshSeed: refreshBasis,
         slotIndex,
