@@ -211,8 +211,7 @@ function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 function prepareMagazineAssets(scene, features, onReady) {
   const ids = features
     .map(feature => feature.carId)
-    .filter((id, index, list) => cars[id] && list.indexOf(id) === index)
-    .slice(0, 12);
+    .filter((id, index, list) => cars[id] && list.indexOf(id) === index);
   const states = scene.registry.get('carStates') || {};
   let queued = 0;
 
