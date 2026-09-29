@@ -34,7 +34,7 @@ import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r280';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   recordCarMagazineSightings,
   carMatchesCompetitionRestriction,
@@ -61,7 +61,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20260926-r213';
+} from '../data/tunerChallenges.js?v=20260929-r286';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
@@ -634,6 +634,13 @@ export default class MeetScene extends Phaser.Scene {
 
     const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
 
+    // Returning from the briefing after choosing PAUSE should actually return
+    // the player to the Meet, not immediately reopen the same challenge card.
+    // On any later visit/scene entry the saved challenge can be resumed.
+    if (state.paused && Date.now() - Number(state.pausedAt || 0) < 8000) {
+      return false;
+    }
+
     if (!shop || (isTunerShopUnlocked(this.registry, regionId) && !perfectRematch)) {
       return false;
     }
@@ -986,6 +993,8 @@ export default class MeetScene extends Phaser.Scene {
         offeredOnce: true,
         reofferVisitsRemaining: 0,
         activeSession: true,
+        paused: false,
+        pausedAt: 0,
         stage: startingPerfectRematch ? 0 : nextState.stage,
         perfectAttempt: perfectRematch ? true : nextState.perfectAttempt,
         perfectEligible: startingPerfectRematch ? true : nextState.perfectEligible,
