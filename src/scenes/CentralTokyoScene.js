@@ -32,7 +32,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20260929-r268';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r269';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -46,7 +46,7 @@ import {
   getWorkshopUsage,
 } from '../data/workshopProgression.js?v=20260929-r263';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r268';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r269';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
