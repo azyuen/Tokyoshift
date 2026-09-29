@@ -52,7 +52,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20260929-r272';
+} from '../data/centralTokyo.js?v=20260929-r279';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
