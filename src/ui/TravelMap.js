@@ -445,6 +445,18 @@ export function showTravelMap(scene, options = {}) {
     color: '#ffffff',
   }).setDepth(depth + 12));
 
+  const regionLockText = addPanel(scene.add.text(
+    INFO.x + INFO.w - 28,
+    INFO.y + 27,
+    '',
+    {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#87939b',
+      align: 'right',
+    }
+  ).setOrigin(1, 0.5).setDepth(depth + 12));
+
   const regionLineText = addPanel(scene.add.text(INFO.x + 28, INFO.y + 62, '', {
     fontFamily: BODY_FONT,
     fontSize: '11px',
@@ -979,12 +991,14 @@ export function showTravelMap(scene, options = {}) {
       isTravelRegionUnlocked(scene.registry, selectedRegionId);
 
     regionNameText.setText(region.label);
-    regionLineText.setText(
-      regionOpen
-        ? region.description
-        : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId) +
-          '\n' + region.description
-    );
+    regionLockText
+      .setText(
+        regionOpen
+          ? ''
+          : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
+      )
+      .setVisible(!regionOpen);
+    regionLineText.setText(region.description);
 
     const tunerShop = getTunerShopForRegion(selectedRegionId);
     const tunerUnlocked = Boolean(
