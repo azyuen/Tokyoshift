@@ -67,6 +67,8 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r273';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r273';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -275,6 +277,19 @@ export default class RaceScene extends Phaser.Scene {
       acquiredVia: 'starter',
     };
     this.playerPaintColor = getCarPaintColor(this.playerCarState);
+
+    if (!this.isTutorial && this.opponentCarId) {
+      recordCarMagazineSightings(this.registry, [{
+        carId: this.opponentCarId,
+        source: this.raceMode === 'TUNER_TEAM'
+          ? 'team-challenge'
+          : this.raceMode === 'COMPETITION'
+            ? 'competition'
+            : this.raceDeal === 'PINK_SLIP'
+              ? 'pink-slip'
+              : 'street',
+      }]);
+    }
 
     const rivalCharacter = characters[this.opponentCharacterId];
     const playerBaseCar = clone(cars[this.selectedCarId]);
@@ -2218,6 +2233,19 @@ export default class RaceScene extends Phaser.Scene {
       };
     }
 
+    if (this.lastSurpriseReward) {
+      const bonus = this.lastSurpriseReward;
+      const bonusLine = bonus.type === 'WHEEL'
+        ? 'BONUS FIND // ' + bonus.label
+        : 'BONUS FIND // ' + bonus.label + ' COUPON ' + bonus.count + '/' + bonus.required;
+      reward = {
+        ...reward,
+        secondary: reward.secondary
+          ? reward.secondary + ' // ' + bonusLine
+          : bonusLine,
+      };
+    }
+
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
     const competitionMultilineText =
@@ -3014,6 +3042,9 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
     this.lastEasyCouponAward = playerWon
       ? this.processEasyCouponMilestone(newWins)
+      : null;
+    this.lastSurpriseReward = playerWon && !this.lastEasyCouponAward
+      ? maybeAwardSurpriseReward(this.registry, { playerWon: true })
       : null;
 
     // A declined regional team call-out is re-offered after 5–10 meaningful
