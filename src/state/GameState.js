@@ -1,4 +1,4 @@
-import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260926-r213';
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20260929-r275';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
@@ -264,13 +264,21 @@ export function getProfileSlots() {
 
   return store.slots.map((slot, index) => {
     const state = slot?.session || slot?.manual || null;
+    const profileNameKey = (
+      String(state?.firstName || '').trim().toLowerCase() +
+      String(state?.lastName || '').trim().toLowerCase()
+    ).replace(/[^a-z0-9]/g, '');
+    const profileCharacterId = profileNameKey.includes('arkonden')
+      ? 'arkonDen'
+      : (state?.playerCharacterId || null);
+
     return {
       index,
       occupied: Boolean(state),
       active: index === activeIndex,
       firstName: String(state?.firstName || ''),
       lastName: String(state?.lastName || ''),
-      playerCharacterId: state?.playerCharacterId || null,
+      playerCharacterId: profileCharacterId,
       cash: Number(state?.cash || 0),
       playerDifficulty: normalisePlayerDifficulty(state?.playerDifficulty),
       carCount: Array.isArray(state?.ownedCarIds) ? state.ownedCarIds.length : 0,
@@ -611,9 +619,13 @@ export function normaliseState(input = {}) {
     ? Math.max(rawCash, 1000000000)
     : rawCash;
 
-  const playerCharacterId = playableCharacterOrder.includes(input.playerCharacterId)
-    ? input.playerCharacterId
-    : base.playerCharacterId;
+  // A profile literally named Arkon Den is the developer avatar. Keep Arkon
+  // out of the normal playable pool while still migrating existing dev saves.
+  const playerCharacterId = devName
+    ? 'arkonDen'
+    : playableCharacterOrder.includes(input.playerCharacterId)
+      ? input.playerCharacterId
+      : base.playerCharacterId;
 
   const mergedCarStates = {
     ...base.carStates,
@@ -891,6 +903,10 @@ export function saveIdentityState(registry) {
     String(registry.get('firstName') || '').trim().toLowerCase() +
     String(registry.get('lastName') || '').trim().toLowerCase()
   ).replace(/[^a-z0-9]/g, '') === 'arkonden';
+
+  if (devName) {
+    registry.set('playerCharacterId', 'arkonDen');
+  }
 
   if (devName && !registry.get('devMode')) {
     registry.set('devMode', true);

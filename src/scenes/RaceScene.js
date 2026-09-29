@@ -32,14 +32,14 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260926-r213';
+} from '../data/characters.js?v=20260929-r275';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r274';
+} from '../state/GameState.js?v=20260929-r275';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -194,9 +194,13 @@ export default class RaceScene extends Phaser.Scene {
       DEFAULT_PAINT_COLOR
     );
     const storedPlayerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    this.playerCharacterId = playableCharacterOrder.includes(storedPlayerCharacterId)
-      ? storedPlayerCharacterId
-      : playableCharacterOrder[0];
+    const developerAvatar =
+      Boolean(this.registry.get('devMode')) &&
+      storedPlayerCharacterId === 'arkonDen';
+    this.playerCharacterId =
+      developerAvatar || playableCharacterOrder.includes(storedPlayerCharacterId)
+        ? storedPlayerCharacterId
+        : playableCharacterOrder[0];
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')

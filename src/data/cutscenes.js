@@ -29,6 +29,36 @@ export const CUTSCENES = {
     finalActionLabel: 'LEARN THE CAR',
   },
 
+  ethanYuenEfCompensation: {
+    id: 'ethanYuenEfCompensation',
+    category: 'DEV / SPECIAL REWARD',
+    testerLabel: 'Special — Ethan Yuen EF Compensation',
+    title: 'ARKON DEN // FAIR IS FAIR',
+    once: true,
+    characters: { left: 'arkonDen', right: '$PLAYER' },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: 'ARKON DEN',
+        pose: 'idle',
+        text: 'Hi there, I heard about you missing out on a winnable pink slip. That’s not fair, is it?',
+      },
+      {
+        speaker: 'right',
+        pose: 'idle',
+        text: 'Yes! It was meant to be a Honda Civic EF!',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: 'ARKON DEN',
+        pose: 'win',
+        text: 'Fair enough, well here’s some coupons to make it up to you.',
+        emphasis: true,
+      },
+    ],
+    finalActionLabel: 'TAKE THE COUPONS',
+  },
+
   openingRaceRules: {
     id: 'openingRaceRules',
     category: 'OPENING / SYSTEMS',

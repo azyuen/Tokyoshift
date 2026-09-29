@@ -2,7 +2,7 @@ import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929
 import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20260928-r232';
-import { characters } from '../data/characters.js?v=20260926-r213';
+import { characters } from '../data/characters.js?v=20260929-r275';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -34,9 +34,9 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20260929-r274';
+import { saveSessionState } from '../state/GameState.js?v=20260929-r275';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r272';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260929-r275';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r272';
@@ -5181,7 +5181,35 @@ export default class GarageScene extends Phaser.Scene {
     return (this.registry.get('cutscenesSeen') || []).map(String).includes(String(id));
   }
 
+  isEthanYuenProfile() {
+    const profileNameKey = (
+      String(this.registry.get('firstName') || '').trim().toLowerCase() +
+      String(this.registry.get('lastName') || '').trim().toLowerCase()
+    ).replace(/[^a-z0-9]/g, '');
+    return profileNameKey === 'ethanyuen';
+  }
+
+  showEthanYuenRewardIfNeeded() {
+    const cutsceneId = 'ethanYuenEfCompensation';
+    if (!this.isEthanYuenProfile() || this.hasSeenStoryCutscene(cutsceneId)) {
+      return false;
+    }
+
+    const result = playMangaCutscene(this, cutsceneId, {
+      onComplete: () => {
+        const coupons = { ...(this.registry.get('carCoupons') || {}) };
+        coupons.ef = Math.max(0, Math.floor(Number(coupons.ef || 0))) + 2;
+        this.registry.set('carCoupons', coupons);
+        saveSessionState(this.registry);
+        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+      },
+    });
+
+    return Boolean(result.played);
+  }
+
   continueGarageStoryFlow() {
+    if (this.showEthanYuenRewardIfNeeded()) return true;
     if (this.runOpeningStoryIfNeeded()) return true;
     return this.showCentralTokyoInvitationIfNeeded();
   }

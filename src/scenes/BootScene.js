@@ -1,10 +1,10 @@
-import { characters } from '../data/characters.js?v=20260926-r213';
+import { characters } from '../data/characters.js?v=20260929-r275';
 import {
   createDefaultGameState,
   readSessionState,
   applyStateToRegistry,
   getProfileSlots,
-} from '../state/GameState.js?v=20260929-r272';
+} from '../state/GameState.js?v=20260929-r275';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 
 export default class BootScene extends Phaser.Scene {
@@ -53,7 +53,7 @@ export default class BootScene extends Phaser.Scene {
 
     profileIds.forEach(id => {
       const visual = characters[id]?.visual;
-      if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260926-r213');
+      if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260929-r275');
     });
 
     startSceneLoading(this, 'LOADING TOKYO SHIFT', queued);

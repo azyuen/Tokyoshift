@@ -1254,6 +1254,29 @@ export const characters = {
     },
   },
 
+
+  arkonDen: {
+    id: 'arkonDen',
+    name: 'Arkon Den',
+    archetype: 'Developer',
+    roleTags: ['developer'],
+    selectable: false,
+    rivalEligible: false,
+    personality: 'The developer behind the curtain.',
+    resultQuotes: {
+      win: 'All according to plan.',
+      loss: 'That one needs another pass.',
+    },
+    visual: {
+      spriteKey: 'characterArkonDen',
+      path: 'assets/Characters/arkon_den_idle.png',
+      winSpriteKey: 'characterArkonDenWin',
+      winPath: 'assets/Characters/arkon_den_win.png',
+      lossSpriteKey: 'characterArkonDenLoss',
+      lossPath: 'assets/Characters/arkon_den_loss.png',
+    },
+  },
+
 };
 
 // Profile framing is deliberately separate from standing/world alignment.

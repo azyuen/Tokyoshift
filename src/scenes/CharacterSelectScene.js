@@ -11,8 +11,8 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
-import { characters, playableCharacterOrder } from '../data/characters.js?v=20260926-r213';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260929-r272';
+import { characters, playableCharacterOrder } from '../data/characters.js?v=20260929-r275';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20260929-r275';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
@@ -355,9 +355,11 @@ export default class CharacterSelectScene extends Phaser.Scene {
       state.cash = 1000000000;
     }
 
-    state.playerCharacterId = playableCharacterOrder.includes(this.currentCharacterId)
-      ? this.currentCharacterId
-      : playableCharacterOrder[0];
+    state.playerCharacterId = isDevProfile
+      ? 'arkonDen'
+      : playableCharacterOrder.includes(this.currentCharacterId)
+        ? this.currentCharacterId
+        : playableCharacterOrder[0];
     const form = document.getElementById('driver-name-overlay');
     form?.classList.remove('is-visible');
     form?.setAttribute('aria-hidden', 'true');
