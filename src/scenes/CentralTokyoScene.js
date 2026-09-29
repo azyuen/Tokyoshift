@@ -37,7 +37,7 @@ import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import {
   applyMarketPriceDifficulty,
@@ -76,7 +76,7 @@ import {
   TUNER_TEAM_PITY_ARRIVALS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
-} from '../data/tunerChallenges.js?v=20260926-r213';
+} from '../data/tunerChallenges.js?v=20260929-r286';
 import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
