@@ -343,7 +343,9 @@ export default class MeetScene extends Phaser.Scene {
         ).size;
         const duplicateCharacters = uniqueCharacterCount !== regionValid.length;
         const baseOffers =
-          regionValid.length !== stored.length || duplicateCharacters
+          stored.length === 0 ||
+          regionValid.length !== stored.length ||
+          duplicateCharacters
             ? this.generateOffersForLocation(locationId)
             : regionValid;
 
