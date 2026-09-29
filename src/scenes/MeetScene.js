@@ -200,9 +200,13 @@ export default class MeetScene extends Phaser.Scene {
     const storedCurrent = Array.isArray(storedRosters[initialLocationId])
       ? storedRosters[initialLocationId]
       : [];
+    const storedCurrentUnique =
+      new Set(storedCurrent.map(offer => offer?.characterId).filter(Boolean)).size ===
+      storedCurrent.length;
     const storedCurrentValid =
       storedRefreshAt > Date.now() &&
       storedCurrent.length > 0 &&
+      storedCurrentUnique &&
       storedCurrent.every(offer =>
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
@@ -313,8 +317,12 @@ export default class MeetScene extends Phaser.Scene {
         // Existing saves may contain the pre-team global rival pool.
         // Regenerate regional-team locations once so only their local crew appears.
         const regionalTeam = hasRegionalTeam(location.district);
+        const uniqueCharacterCount = new Set(
+          regionValid.map(offer => offer?.characterId).filter(Boolean)
+        ).size;
+        const duplicateCharacters = uniqueCharacterCount !== regionValid.length;
         const baseOffers =
-          regionalTeam && regionValid.length !== stored.length
+          regionValid.length !== stored.length || duplicateCharacters
             ? this.generateOffersForLocation(locationId)
             : regionValid;
 
@@ -2728,10 +2736,10 @@ export default class MeetScene extends Phaser.Scene {
       ? configuredOrder.slice(shift).concat(configuredOrder.slice(0, shift))
       : [];
 
-    const eligible = rotatedOrder.filter(id =>
+    const eligible = [...new Set(rotatedOrder.filter(id =>
       id !== playerCharacterId &&
       characters[id]
-    );
+    ))];
 
     const availableCharacters = [...eligible];
     if (!regionalTeam) Phaser.Utils.Array.Shuffle(availableCharacters);
