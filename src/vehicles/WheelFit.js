@@ -65,6 +65,21 @@ function getVisibleWheelMetrics(wheelSource) {
   if (sourceWidth <= 0 || sourceHeight <= 0) return null;
 
   const standardFallback = getStandardWheelFallbackMetrics(sourceWidth, sourceHeight);
+
+  // iPadOS can identify as either iPad or MacIntel. The 384px wheel catalogue
+  // is deliberately normalized, so use its authored footprint directly there
+  // instead of depending on Safari canvas readback for layout-critical geometry.
+  const isIpadLike =
+    typeof navigator !== 'undefined' &&
+    (
+      /iPad/i.test(String(navigator.userAgent || '')) ||
+      (
+        navigator.platform === 'MacIntel' &&
+        Number(navigator.maxTouchPoints || 0) > 1
+      )
+    );
+
+  if (standardFallback && isIpadLike) return standardFallback;
   if (typeof document === 'undefined') return standardFallback;
 
   try {
