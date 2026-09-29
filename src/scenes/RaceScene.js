@@ -2912,7 +2912,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const resultOffer = {
       ...snapshot,
-      characterId: this.opponentCharacterId,
+      characterId: snapshot.characterId || this.opponentCharacterId,
       carId: snapshot.carId || this.opponentCarId,
       paintColor: normalisePaintColor(
         snapshot.paintColor ?? this.opponentPaintColor,
@@ -2937,7 +2937,7 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     let index = current.findIndex(
-      offer => offer?.characterId === this.opponentCharacterId
+      offer => offer?.characterId === (snapshot.characterId || this.opponentCharacterId)
     );
 
     if (index < 0 && Number.isInteger(Number(snapshot.slotIndex))) {
