@@ -1,13 +1,31 @@
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
 export default class TokyoExpresswayBackground {
-  constructor(scene, { timeOfDay = 'night', skylineKey = null, roadVariant = 0, skylineStartRatio = 0, skylineTravelPx = null } = {}) {
+  constructor(scene, {
+    timeOfDay = 'night',
+    skylineKey = null,
+    roadVariant = 0,
+    skylineStartRatio = 0,
+    skylineTravelPx = null,
+    roadsideRegion = '',
+    roadsideSeed = 1,
+    worldPxPerM = 76,
+  } = {}) {
     this.scene = scene;
     this.width = 1560;
     this.skylineKey = skylineKey;
     this.roadVariant = Math.abs(Math.floor(Number(roadVariant) || 0)) % 4;
     this.skylineStartRatio = Phaser.Math.Clamp(Number(skylineStartRatio) || 0, 0, 1);
     this.skylineTravelPx = Number.isFinite(Number(skylineTravelPx)) ? Math.max(0, Number(skylineTravelPx)) : null;
+    this.roadsideRegion = String(roadsideRegion || '').trim().toUpperCase();
+    this.roadsideSeed = Math.max(1, Math.floor(Number(roadsideSeed) || 1));
+    this.worldPxPerM = Math.max(1, Number(worldPxPerM) || 76);
+    this.roadsideSegmentM = 100;
+    this.roadsideParallax = 0.90;
+    this.roadsidePlan = [];
+    this.roadsideRng = this.seededRandom(
+      0x5f3759df ^ (this.roadsideSeed * 2654435761) ^ (this.roadVariant * 1013)
+    );
     this.timeOfDay = ['day', 'twilight', 'night'].includes(timeOfDay)
       ? timeOfDay
       : 'night';
@@ -131,7 +149,6 @@ export default class TokyoExpresswayBackground {
 
   createTextures() {
     this.createBackdropTexture();
-    this.createRearBarrierTexture();
     this.createRoadTexture();
     this.createForegroundTexture();
   }
@@ -503,6 +520,246 @@ export default class TokyoExpresswayBackground {
     });
   }
 
+  roadsideWeights() {
+    const profiles = {
+      ODAIBA:    { wbeam: 44, thrie: 22, foliage: 18, ridge: 10, concrete: 6 },
+      YOKOHAMA:  { wbeam: 42, thrie: 24, foliage: 16, ridge: 10, concrete: 8 },
+      TATSUMI:   { wbeam: 34, thrie: 18, foliage: 28, ridge: 12, concrete: 8 },
+      DAIKOKU:   { wbeam: 34, thrie: 18, foliage: 27, ridge: 13, concrete: 8 },
+      SHINAGAWA: { wbeam: 36, thrie: 20, foliage: 15, ridge: 14, concrete: 15 },
+      SHIBUYA:   { wbeam: 30, thrie: 15, foliage: 10, ridge: 15, concrete: 30 },
+      SHINJUKU:  { wbeam: 28, thrie: 14, foliage: 8,  ridge: 15, concrete: 35 },
+    };
+
+    return profiles[this.roadsideRegion] || {
+      wbeam: 40,
+      thrie: 20,
+      foliage: 15,
+      ridge: 15,
+      concrete: 10,
+    };
+  }
+
+  pickRoadsideStyle(previous = null) {
+    const weights = this.roadsideWeights();
+
+    // Let a stretch continue into the next 100 m block sometimes, so the road
+    // feels authored rather than changing furniture at every exact interval.
+    if (previous && this.roadsideRng() < 0.28) return previous;
+
+    const entries = Object.entries(weights);
+    const total = entries.reduce((sum, [, weight]) => sum + Number(weight || 0), 0);
+    let roll = this.roadsideRng() * total;
+
+    for (const [key, weight] of entries) {
+      roll -= Number(weight || 0);
+      if (roll <= 0) return key;
+    }
+
+    return entries[0]?.[0] || 'wbeam';
+  }
+
+  ensureRoadsidePlan(index) {
+    const target = Math.max(0, Math.floor(Number(index) || 0));
+    while (this.roadsidePlan.length <= target) {
+      const previous = this.roadsidePlan.length
+        ? this.roadsidePlan[this.roadsidePlan.length - 1]
+        : null;
+      this.roadsidePlan.push(this.pickRoadsideStyle(previous));
+    }
+  }
+
+  drawWBeam(g, x1, x2, segmentIndex) {
+    const p = this.palette();
+    const baseY = 354;
+    const postTop = 309;
+    const spacing = 96;
+    const start = Math.floor((x1 - 30) / spacing) * spacing;
+
+    g.fillStyle(0x12171c, this.timeOfDay === 'day' ? 0.18 : 0.34);
+    g.fillRect(x1, baseY - 1, x2 - x1, 4);
+
+    for (let x = start; x < x2 + spacing; x += spacing) {
+      if (x < x1 - 8) continue;
+      g.fillStyle(Phaser.Display.Color.HexStringToColor(p.fence).color, 1);
+      g.fillRect(x, postTop, 5, baseY - postTop + 1);
+      g.fillStyle(Phaser.Display.Color.HexStringToColor(p.fenceBright).color, 0.52);
+      g.fillRect(x + 1, postTop, 1, baseY - postTop);
+    }
+
+    const rail = Phaser.Display.Color.HexStringToColor(
+      this.timeOfDay === 'day' ? '#b6c0c7' : '#76828c'
+    ).color;
+    const dark = Phaser.Display.Color.HexStringToColor(
+      this.timeOfDay === 'day' ? '#7c878f' : '#3d4852'
+    ).color;
+
+    g.fillStyle(dark, 1);
+    g.fillRect(x1, 313, x2 - x1, 11);
+    g.fillStyle(rail, 1);
+    g.fillRect(x1, 311, x2 - x1, 5);
+    g.fillRect(x1, 320, x2 - x1, 5);
+    g.fillStyle(dark, 0.72);
+    g.fillRect(x1, 316, x2 - x1, 2);
+    g.fillRect(x1, 325, x2 - x1, 2);
+
+    // Sparse reflectors add movement without turning the barrier into noise.
+    const markerStep = 286;
+    const markerOffset = (segmentIndex * 53) % markerStep;
+    for (let x = x1 - markerOffset; x < x2; x += markerStep) {
+      g.fillStyle(this.timeOfDay === 'day' ? 0xd8bd72 : 0xffc85b, 0.9);
+      g.fillRect(x, 312, 8, 4);
+    }
+  }
+
+  drawThrieBeam(g, x1, x2, segmentIndex) {
+    this.drawWBeam(g, x1, x2, segmentIndex);
+
+    const rail = this.timeOfDay === 'day' ? 0xc1c9ce : 0x84909a;
+    const dark = this.timeOfDay === 'day' ? 0x7f8990 : 0x414b54;
+
+    g.fillStyle(dark, 1);
+    g.fillRect(x1, 301, x2 - x1, 10);
+    g.fillStyle(rail, 1);
+    g.fillRect(x1, 299, x2 - x1, 5);
+    g.fillStyle(dark, 0.7);
+    g.fillRect(x1, 304, x2 - x1, 2);
+  }
+
+  drawLowRidge(g, x1, x2, segmentIndex) {
+    const p = this.palette();
+    const top = 332;
+    const bottom = 357;
+    const concrete = Phaser.Display.Color.HexStringToColor(p.barrier).color;
+    const bright = Phaser.Display.Color.HexStringToColor(p.barrierTop).color;
+    const dark = Phaser.Display.Color.HexStringToColor(p.barrierDark).color;
+
+    g.fillStyle(concrete, 1);
+    g.fillRect(x1, top, x2 - x1, bottom - top);
+    g.fillStyle(bright, 1);
+    g.fillRect(x1, top, x2 - x1, 4);
+    g.fillStyle(dark, 1);
+    g.fillRect(x1, bottom - 4, x2 - x1, 4);
+
+    const jointStep = 210;
+    const offset = (segmentIndex * 37) % jointStep;
+    for (let x = x1 - offset; x < x2; x += jointStep) {
+      g.fillStyle(dark, 0.55);
+      g.fillRect(x, top + 4, 2, bottom - top - 8);
+    }
+  }
+
+  drawFoliage(g, x1, x2, segmentIndex) {
+    this.drawLowRidge(g, x1, x2, segmentIndex);
+
+    const dark = this.timeOfDay === 'day' ? 0x315b39 : 0x173322;
+    const mid = this.timeOfDay === 'day' ? 0x48784c : 0x245039;
+    const light = this.timeOfDay === 'day' ? 0x659665 : 0x35694a;
+    const step = 44;
+    const offset = (segmentIndex * 19) % step;
+    const first = Math.floor((x1 - offset) / step) * step + offset;
+
+    for (let x = first; x < x2 + step; x += step) {
+      if (x < x1 - 30) continue;
+      const variant = Math.abs(Math.floor((x + segmentIndex * 17) / step)) % 4;
+      const h = 16 + variant * 3;
+      const w = 34 + (variant % 3) * 7;
+
+      g.fillStyle(dark, 1);
+      g.fillCircle(x + 8, 334 - h * 0.35, Math.max(7, h * 0.55));
+      g.fillCircle(x + 22, 336 - h * 0.45, Math.max(8, h * 0.62));
+      g.fillStyle(mid, 1);
+      g.fillCircle(x + 13, 330 - h * 0.42, Math.max(6, h * 0.48));
+      g.fillCircle(x + Math.floor(w * 0.65), 332 - h * 0.38, Math.max(6, h * 0.46));
+      g.fillStyle(light, this.timeOfDay === 'day' ? 0.72 : 0.48);
+      g.fillRect(x + 7, 320 - variant, 7, 5);
+      g.fillRect(x + 22, 325 - variant, 6, 4);
+    }
+  }
+
+  drawConcreteBarrier(g, x1, x2, segmentIndex) {
+    const p = this.palette();
+    const top = 286;
+    const bottom = 360;
+    const concrete = Phaser.Display.Color.HexStringToColor(p.barrier).color;
+    const bright = Phaser.Display.Color.HexStringToColor(p.barrierTop).color;
+    const dark = Phaser.Display.Color.HexStringToColor(p.barrierDark).color;
+
+    g.fillStyle(concrete, 1);
+    g.fillRect(x1, top, x2 - x1, bottom - top);
+    g.fillStyle(bright, 1);
+    g.fillRect(x1, top, x2 - x1, 5);
+    g.fillStyle(dark, 1);
+    g.fillRect(x1, bottom - 7, x2 - x1, 7);
+
+    const jointStep = 154;
+    const offset = (segmentIndex * 61) % jointStep;
+    for (let x = x1 - offset; x < x2; x += jointStep) {
+      g.fillStyle(dark, 0.68);
+      g.fillRect(x, top + 6, 2, bottom - top - 13);
+    }
+
+    const markerStep = 270;
+    for (let x = x1 + ((segmentIndex * 83) % markerStep); x < x2; x += markerStep) {
+      g.fillStyle(this.timeOfDay === 'day' ? 0xd3ae62 : 0xffc24d, 0.9);
+      g.fillRect(x, top + 22, 10, 6);
+    }
+  }
+
+  drawRoadside(cameraPx = 0) {
+    if (!this.roadside) return;
+
+    const g = this.roadside;
+    g.clear();
+
+    const segmentPx =
+      this.worldPxPerM *
+      this.roadsideSegmentM *
+      this.roadsideParallax;
+    const scrollPx = Number(cameraPx || 0) * this.roadsideParallax;
+
+    // Start two complete blocks before the race origin so staging at x<0 never
+    // reveals an empty left edge.
+    const virtualScroll = scrollPx + segmentPx * 2;
+    const firstIndex = Math.max(0, Math.floor(virtualScroll / segmentPx) - 1);
+    const lastIndex = firstIndex + Math.ceil(this.width / segmentPx) + 3;
+
+    this.ensureRoadsidePlan(lastIndex);
+
+    for (let index = firstIndex; index <= lastIndex; index++) {
+      const worldX1 = index * segmentPx;
+      const worldX2 = worldX1 + segmentPx;
+      const screenX1 = worldX1 - virtualScroll;
+      const screenX2 = worldX2 - virtualScroll;
+
+      if (screenX2 < -20 || screenX1 > this.width + 20) continue;
+
+      const x1 = Math.max(-24, screenX1);
+      const x2 = Math.min(this.width + 24, screenX2);
+      if (x2 <= x1) continue;
+
+      const style = this.roadsidePlan[index] || 'wbeam';
+
+      if (style === 'thrie') {
+        this.drawThrieBeam(g, x1, x2, index);
+      } else if (style === 'foliage') {
+        this.drawFoliage(g, x1, x2, index);
+      } else if (style === 'ridge') {
+        this.drawLowRidge(g, x1, x2, index);
+      } else if (style === 'concrete') {
+        this.drawConcreteBarrier(g, x1, x2, index);
+      } else {
+        this.drawWBeam(g, x1, x2, index);
+      }
+
+      // Small end post / seam makes a material change feel physically joined.
+      if (screenX2 > 0 && screenX2 < this.width) {
+        g.fillStyle(0x202830, 0.72);
+        g.fillRect(Math.floor(screenX2) - 2, 300, 4, 58);
+      }
+    }
+  }
+
   createLayers() {
     const p = this.palette();
 
@@ -542,9 +799,13 @@ export default class TokyoExpresswayBackground {
       .setOrigin(0, 0)
       .setDepth(1);
 
-    this.rearBarrier = this.scene.add.tileSprite(0, 242, this.width, 118, this.keys.rearBarrier)
-      .setOrigin(0, 0)
-      .setDepth(2);
+    // Roadside infrastructure is drawn as long 100 m world-space segments.
+    // This replaces the old full-height repeating concrete wall and lets the
+    // skyline remain visible through open guardrail / foliage stretches.
+    this.roadside = this.scene.add.graphics()
+      .setDepth(2)
+      .setScrollFactor(0);
+    this.drawRoadside(0);
 
     this.foreground = this.scene.add.tileSprite(0, 500, this.width, 94, this.keys.foreground)
       .setOrigin(0, 0)
@@ -565,7 +826,7 @@ export default class TokyoExpresswayBackground {
     } else {
       this.backdrop.tilePositionX = cameraPx * 0.24;
     }
-    this.rearBarrier.tilePositionX = cameraPx * 0.90;
+    this.drawRoadside(cameraPx);
     this.road.tilePositionX = cameraPx;
     this.foreground.tilePositionX = cameraPx * 1.16;
 
