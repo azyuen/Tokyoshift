@@ -14,6 +14,9 @@ import {
   getChassisTuning,
   getExhaustNosTuning,
 } from './secondaryTuning.js?v=20260926-r211';
+import {
+  getRegionalChampionshipCount,
+} from './careerProgression.js?v=20260929-r272';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -53,8 +56,9 @@ export const CENTRAL_TOKYO_LOCATIONS = {
         },
       },
     },
-    winsRequired: 12,
-    garageTierRequired: 0,
+    winsRequired: 0,
+    championshipsRequired: 2,
+    garageTierRequired: 2,
   },
   ginza: {
     id: 'ginzaMotorGallery',
@@ -67,7 +71,8 @@ export const CENTRAL_TOKYO_LOCATIONS = {
       day: { key: 'centralTokyoGinzaDayBg', path: 'assets/CentralTokyo/tokyo_ginza_day.png' },
       night: { key: 'centralTokyoGinzaNightBg', path: 'assets/CentralTokyo/tokyo_ginza_night.png' },
     },
-    winsRequired: 50,
+    winsRequired: 0,
+    championshipsRequired: 3,
     garageTierRequired: 2,
   },
   drag: {
@@ -81,7 +86,8 @@ export const CENTRAL_TOKYO_LOCATIONS = {
       day: { key: 'centralTokyoDragDayBg', path: 'assets/CentralTokyo/tokyo_dragstrip_day.png' },
       night: { key: 'centralTokyoDragNightBg', path: 'assets/CentralTokyo/tokyo_dragstrip_night.png' },
     },
-    winsRequired: 60,
+    winsRequired: 100,
+    championshipsRequired: 3,
     garageTierRequired: 2,
   },
 };
@@ -350,14 +356,18 @@ export function getCentralTokyoEligibility(source) {
 
   const wins = Number(value(source, 'wins', 0) || 0);
   const garageTier = Number(value(source, 'garageTier', 0) || 0);
+  const championships = getRegionalChampionshipCount(source);
 
   return {
-    autoMarket: wins >= CENTRAL_TOKYO_LOCATIONS.autoMarket.winsRequired,
+    autoMarket:
+      championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
+      garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
     ginza:
-      wins >= CENTRAL_TOKYO_LOCATIONS.ginza.winsRequired &&
+      championships >= Number(CENTRAL_TOKYO_LOCATIONS.ginza.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.ginza.garageTierRequired,
     drag:
       wins >= CENTRAL_TOKYO_LOCATIONS.drag.winsRequired &&
+      championships >= Number(CENTRAL_TOKYO_LOCATIONS.drag.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.drag.garageTierRequired,
   };
 }
@@ -368,10 +378,11 @@ export function getCentralTokyoAccess(source) {
   }
 
   const unlocked = value(source, 'centralTokyoUnlocks', {}) || {};
+  const eligible = getCentralTokyoEligibility(source);
   return {
-    autoMarket: Boolean(unlocked.autoMarket),
-    ginza: Boolean(unlocked.ginza),
-    drag: Boolean(unlocked.drag),
+    autoMarket: Boolean(unlocked.autoMarket && eligible.autoMarket),
+    ginza: Boolean(unlocked.ginza && eligible.ginza),
+    drag: Boolean(unlocked.drag && eligible.drag),
   };
 }
 
@@ -414,6 +425,14 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
   const cfg = CENTRAL_TOKYO_LOCATIONS[key];
   const wins = Number(value(source, 'wins', 0) || 0);
   const garageTier = Number(value(source, 'garageTier', 0) || 0);
+  const championships = getRegionalChampionshipCount(source);
+  const championshipsRequired = Number(cfg.championshipsRequired || 0);
+
+  if (championships < championshipsRequired) {
+    return championshipsRequired === 1
+      ? 'WIN A REGIONAL CHAMPIONSHIP'
+      : championshipsRequired + ' REGIONAL CHAMPIONSHIPS REQUIRED';
+  }
 
   if (wins < cfg.winsRequired) {
     return cfg.winsRequired + ' WINS REQUIRED';
