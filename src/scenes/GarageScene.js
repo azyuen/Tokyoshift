@@ -68,6 +68,7 @@ import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=2026092
 import {
   DYNO_WAREHOUSE_ID,
   getDynoStage,
+  buildDynoCar,
 } from '../data/dyno.js?v=20260930-r288';
 import {
   PAINT_PRESETS,
@@ -2208,8 +2209,10 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[id];
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[id] || {};
-    const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
-    const tunedBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
+    const tunedBuild = buildDynoCar(id, carState) || (() => {
+      const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
+      return applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
+    })();
 
     this.headerCarText.setText(car.name.toUpperCase());
 
@@ -4699,8 +4702,10 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[this.selectedCarId];
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
-    const engineBuild = applyEngineTuning(car, engines[car.engine], state);
-    const fullBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+    const fullBuild = buildDynoCar(this.selectedCarId, state) || (() => {
+      const engineBuild = applyEngineTuning(car, engines[car.engine], state);
+      return applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+    })();
 
     const tunedPower = Number(fullBuild.car.powerKW ?? 0);
     const tunedTorque = Number(fullBuild.car.torqueNm ?? 0);
