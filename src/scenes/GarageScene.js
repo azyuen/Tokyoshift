@@ -4634,7 +4634,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryApplyButton?.on('pointerdown', () => this.applyPendingSecondaryUpgrades());
   }
 
-  openSecondaryPartSelector(partId) {
+  openSecondaryPartSelector(partId, previewLevel = null) {
     this.closeSecondaryPartSelector();
     const isDrivetrain = this.secondaryMode === 'drivetrain';
     const parts = isDrivetrain ? DRIVETRAIN_TUNING_PARTS : EXHAUST_NOS_TUNING_PARTS;
@@ -4646,12 +4646,19 @@ export default class GarageScene extends Phaser.Scene {
       return obj;
     };
     const depth = 120;
-    const installed = this.currentSecondaryTuning[partId];
-    const currentSpec = part.levels[installed];
+    const installed = Number(this.currentSecondaryTuning[partId] || 0);
+    const pending = Number(this.pendingSecondaryTuning[partId] ?? installed);
+    const draftLevel = Phaser.Math.Clamp(
+      previewLevel == null ? pending : Number(previewLevel),
+      installed,
+      Math.max(installed, part.levels.length - 1)
+    );
+    const previewSpec = part.levels[draftLevel] || part.levels[installed];
     const car = cars[this.selectedCarId];
     const contextTextureKey = isDrivetrain
       ? car?.visual?.drivetrainKey
       : car?.visual?.exhaustNosKey;
+    const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
 
     const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
       .setDepth(depth)
@@ -4668,18 +4675,18 @@ export default class GarageScene extends Phaser.Scene {
     }).setDepth(depth + 2));
 
     this.addModificationModalVisual(add, {
-      textureKey: currentSpec?.spriteKey || contextTextureKey,
-      title: currentSpec?.name?.toUpperCase() || part.name,
-      subtitle: currentSpec?.benefit?.toUpperCase() || '',
+      textureKey: previewSpec?.spriteKey || contextTextureKey,
+      title: previewSpec?.name?.toUpperCase() || part.name,
+      subtitle: previewSpec?.benefit?.toUpperCase() || '',
       partName: isDrivetrain ? 'DRIVETRAIN' : 'EXHAUST / NOS',
+      frameLabel: 'PREVIEW',
       mode: isDrivetrain ? 'drivetrain' : 'exhaustNos',
       depth,
     });
 
     part.levels.forEach((spec, index) => {
       const y = 230 + index * 120;
-      const selected = this.pendingSecondaryTuning[partId] === spec.level;
-      const category = isDrivetrain ? 'drivetrain' : 'exhaustNos';
+      const selected = draftLevel === spec.level;
       const availableHere =
         spec.level <= installed ||
         this.canInstallCurrentUpgrade(category, partId, spec.level);
@@ -4690,9 +4697,18 @@ export default class GarageScene extends Phaser.Scene {
           : getExhaustNosUpgradePathCost(partId, installed, spec.level)
       );
 
-      const box = add(this.add.rectangle(1040, y, 720, 100, selected ? 0x123047 : 0x0b1724, 1)
-        .setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
-        .setDepth(depth + 2));
+      const box = add(this.add.rectangle(
+        1040,
+        y,
+        720,
+        100,
+        selected ? 0x123047 : 0x0b1724,
+        1
+      ).setStrokeStyle(
+        selected ? 2 : 1,
+        selected ? 0x43dfff : 0x315470,
+        1
+      ).setDepth(depth + 2));
 
       this.addUpgradeRowSprite(add, spec, 745, y, depth);
 
@@ -4727,24 +4743,43 @@ export default class GarageScene extends Phaser.Scene {
       if (selectable) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => {
-          this.pendingSecondaryTuning[partId] = spec.level;
-          this.closeSecondaryPartSelector();
-          this.refreshSecondaryTuningMode();
+          this.openSecondaryPartSelector(partId, spec.level);
         });
       }
     });
 
-    const close = add(this.add.rectangle(1360, 124, 120, 44, 0x151d28, 1)
+    const cancel = add(this.add.rectangle(1195, 124, 150, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-
-    add(this.add.text(1360, 124, 'CLOSE', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#c4d5df'
+    add(this.add.text(1195, 124, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c4d5df',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    close.on('pointerdown', () => this.closeSecondaryPartSelector());
+    const confirm = add(this.add.rectangle(1360, 124, 170, 44, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(
+      1360,
+      124,
+      draftLevel === installed ? 'KEEP CURRENT' : 'ADD TO LIST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', () => this.closeSecondaryPartSelector());
     blocker.on('pointerdown', () => this.closeSecondaryPartSelector());
+    confirm.on('pointerdown', () => {
+      this.pendingSecondaryTuning[partId] = draftLevel;
+      this.closeSecondaryPartSelector();
+      this.refreshSecondaryTuningMode();
+    });
   }
 
   closeSecondaryPartSelector() {
