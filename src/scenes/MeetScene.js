@@ -29,8 +29,8 @@ import {
 } from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20260929-r268';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r268';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r269';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r269';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
 import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -200,9 +200,13 @@ export default class MeetScene extends Phaser.Scene {
     const storedCurrent = Array.isArray(storedRosters[initialLocationId])
       ? storedRosters[initialLocationId]
       : [];
+    const storedCurrentUnique =
+      new Set(storedCurrent.map(offer => offer?.characterId).filter(Boolean)).size ===
+      storedCurrent.length;
     const storedCurrentValid =
       storedRefreshAt > Date.now() &&
       storedCurrent.length > 0 &&
+      storedCurrentUnique &&
       storedCurrent.every(offer =>
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
@@ -310,11 +314,14 @@ export default class MeetScene extends Phaser.Scene {
           allowed.has(offer?.characterId)
         );
 
-        // Existing saves may contain the pre-team global rival pool.
-        // Regenerate regional-team locations once so only their local crew appears.
-        const regionalTeam = hasRegionalTeam(location.district);
+        // Existing saves may contain an old/global roster or duplicate drivers.
+        // Regenerate only that location while preserving the wider Meet refresh.
+        const uniqueCharacterCount = new Set(
+          regionValid.map(offer => offer?.characterId).filter(Boolean)
+        ).size;
+        const duplicateCharacters = uniqueCharacterCount !== regionValid.length;
         const baseOffers =
-          regionalTeam && regionValid.length !== stored.length
+          regionValid.length !== stored.length || duplicateCharacters
             ? this.generateOffersForLocation(locationId)
             : regionValid;
 
@@ -2728,10 +2735,10 @@ export default class MeetScene extends Phaser.Scene {
       ? configuredOrder.slice(shift).concat(configuredOrder.slice(0, shift))
       : [];
 
-    const eligible = rotatedOrder.filter(id =>
+    const eligible = [...new Set(rotatedOrder.filter(id =>
       id !== playerCharacterId &&
       characters[id]
-    );
+    ))];
 
     const availableCharacters = [...eligible];
     if (!regionalTeam) Phaser.Utils.Array.Shuffle(availableCharacters);

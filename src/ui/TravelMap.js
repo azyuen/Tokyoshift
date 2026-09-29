@@ -110,6 +110,22 @@ export function showTravelMap(scene, options = {}) {
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
   const mapAttemptKey = '_travelMapAssetAttempted_' + worldPhase;
 
+  const mapTextureReady =
+    scene.textures.exists(preferredMapAsset.key) ||
+    scene.textures.exists(FALLBACK_MAP_TEXTURE);
+
+  // A second tap/callback can arrive while Phaser is still decoding the map.
+  // Do not construct a texture-less popup during that window.
+  if (scene._travelMapAssetLoading && !mapTextureReady) {
+    return null;
+  }
+
+  // If an earlier load attempt ended without producing either texture, allow
+  // the next real open to retry instead of permanently trusting a stale flag.
+  if (!mapTextureReady && scene[mapAttemptKey] && !scene._travelMapAssetLoading) {
+    scene[mapAttemptKey] = false;
+  }
+
   // Load only the active map phase plus the existing fallback so day/night
   // support does not double the GPS loading cost.
   if (!scene.textures.exists(preferredMapAsset.key) && !scene[mapAttemptKey]) {

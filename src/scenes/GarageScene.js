@@ -35,11 +35,11 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20260929-r268';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r268';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r269';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r264';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r269';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -160,6 +160,18 @@ export default class GarageScene extends Phaser.Scene {
       if (asset) queueImage(asset.key, asset.path);
     });
 
+    const mapPhase = getWorldPhase() === 'day' ? 'day' : 'night';
+    const workshopMapAsset = mapPhase === 'day'
+      ? {
+          key: 'travelMapTokyoRegionDay',
+          path: 'assets/Ui/tokyo_region_map_day.png?v=20260928-r245',
+        }
+      : {
+          key: 'travelMapTokyoRegionNight',
+          path: 'assets/Ui/tokyo_region_map_base.png?v=20260928-r245',
+        };
+    queueImage(workshopMapAsset.key, workshopMapAsset.path);
+
     // Garage characters shown immediately.
     [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']
       .forEach(id => {
@@ -267,7 +279,6 @@ export default class GarageScene extends Phaser.Scene {
       callback: () => this.syncWorldPhaseBackground(),
     });
     this.buildHeader();
-    this.buildProfileCalibrationButton();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     this.buildMoveCarButton();
@@ -628,28 +639,6 @@ export default class GarageScene extends Phaser.Scene {
     blocker.on('pointerdown', close);
   }
 
-  buildProfileCalibrationButton() {
-    if (!this.registry.get('devMode') && !isArkonDen(this.registry)) return;
-
-    const x = 1328;
-    const y = 77;
-    const width = 328;
-    const button = this.add.rectangle(x, y, width, 28, 0x111825, 0.98)
-      .setStrokeStyle(1, 0xff78aa, 0.9)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(46);
-
-    this.add.text(x, y, 'DEV // PROFILE CALIBRATION', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#ffb1cb',
-    }).setOrigin(0.5).setDepth(47);
-
-    button.on('pointerover', () => button.setFillStyle(0x2b1420, 1));
-    button.on('pointerout', () => button.setFillStyle(0x111825, 0.98));
-    button.on('pointerdown', () => this.scene.start('ProfileCalibrationScene'));
-  }
-
   buildCarLabel() {
     this.add.rectangle(206, 566, 330, 72, 0x07111d, 0.94)
       .setStrokeStyle(1, 0x26465e, 1)
@@ -780,7 +769,7 @@ export default class GarageScene extends Phaser.Scene {
       this.tuningStatusText
         .setText(
           locked
-            ? 'COLLECTOR SPEC // TUNING SEALED'
+            ? 'COLLECTOR SPEC (TUNING SEALED)'
             : 'TUNING // ' + this.getActiveWorkshop().shortLabel
         )
         .setColor(locked ? '#d7a0b8' : '#8cc8ec');
@@ -1986,7 +1975,10 @@ export default class GarageScene extends Phaser.Scene {
     const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
     const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
 
-    this.specValueTexts.engine.setText(car.engineModel || '—');
+    const engineLabel = this.isSelectedCarTuningLocked()
+      ? String(car.engineModel || '—').split('//')[0].trim()
+      : (car.engineModel || '—');
+    this.specValueTexts.engine.setText(engineLabel);
     this.specValueTexts.power.setText(
       Math.round(tunedPower) + ' kW' + (powerGain > 0 ? '  (+' + powerGain + ')' : '')
     );
