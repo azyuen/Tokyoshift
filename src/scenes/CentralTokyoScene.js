@@ -1228,12 +1228,44 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawMarketCarRoom(this.autoMarketRoom);
   }
 
-  getMarketBayPoses() {
+  getMarketBayPoses(room = 'new') {
+    const y = room === 'new'
+      ? STAGE.y + 300
+      : STAGE.y + 318;
+
     return [
-      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 318, w: 242, depth: 9, flip: false },
-      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 318, w: 242, depth: 10, flip: false },
-      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 318, w: 242, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.22, y, w: 242, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.50, y, w: 242, depth: 10, flip: false },
+      { x: STAGE.x + STAGE.w * 0.78, y, w: 242, depth: 9, flip: false },
     ];
+  }
+
+  shiftMarketCarArtwork(objects = [], deltaY = 0) {
+    if (!deltaY) return;
+
+    objects.forEach((object, index) => {
+      // createCarDisplay returns the ground shadow at index 2. Keep that
+      // exactly where it is while moving the actual parked car downward.
+      if (index === 2) return;
+      if (object && Number.isFinite(object.y)) object.y += deltaY;
+    });
+  }
+
+  alignUsedMarketReplacementLayers(objects = [], listing = null) {
+    const bodyKit = String(listing?.previewState?.visualMods?.bodyKit || 'stock');
+    if (bodyKit === 'stock' || objects.length < 2) return;
+
+    const paintLayer = objects[objects.length - 2];
+    const outlineLayer = objects[objects.length - 1];
+    if (!paintLayer?.setPosition || !outlineLayer?.setPosition) return;
+
+    outlineLayer
+      .setPosition(paintLayer.x, paintLayer.y)
+      .setOrigin(paintLayer.originX, paintLayer.originY)
+      .setRotation(paintLayer.rotation)
+      .setFlipX(paintLayer.flipX)
+      .setFlipY(paintLayer.flipY)
+      .setDisplaySize(paintLayer.displayWidth, paintLayer.displayHeight);
   }
 
   drawMarketCarRoom(room) {
@@ -1241,7 +1273,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!listings.length) return;
 
     this.selectedIndex = Phaser.Math.Clamp(this.selectedIndex, 0, listings.length - 1);
-    const poses = this.getMarketBayPoses();
+    const poses = this.getMarketBayPoses(room);
 
     listings.forEach((listing, index) => {
       if (this.autoMarketShowcaseActive && index === this.selectedIndex) return;
@@ -1259,11 +1291,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
         pose.flip,
         listing.previewState
       );
+      if (room === 'used') {
+        this.alignUsedMarketReplacementLayers(objects, listing);
+        this.shiftMarketCarArtwork(objects, 18);
+      }
+
       objects.forEach(obj => this.addContent(obj));
 
       const hit = this.addContent(this.add.rectangle(
         pose.x,
-        pose.y,
+        pose.y + (room === 'used' ? 18 : 0),
         pose.w,
         Math.max(104, pose.w * 0.38),
         0x000000,
@@ -1830,9 +1867,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const previewState = { ...carState, customWheelId: option.id };
       const carObjects = this.createCarDisplay(
         car,
-        STAGE.x + STAGE.w * 0.52,
-        STAGE.y + 388,
-        660,
+        STAGE.x + STAGE.w * 0.51,
+        STAGE.y + 350,
+        700,
         16,
         getCarPaintColor(carState),
         null,
@@ -1864,8 +1901,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // authored wheel-shop background: five across, two rows. Keep the wall
       // visually clean; item name/price appears only after selection.
       const wheelSlots = [
-        [0.115, 0.205], [0.307, 0.205], [0.500, 0.205], [0.693, 0.205], [0.885, 0.205],
-        [0.115, 0.485], [0.307, 0.485], [0.500, 0.485], [0.693, 0.485], [0.885, 0.485],
+        [0.276, 0.280], [0.391, 0.280], [0.506, 0.280], [0.622, 0.280], [0.738, 0.280],
+        [0.276, 0.452], [0.391, 0.452], [0.506, 0.452], [0.622, 0.452], [0.738, 0.452],
       ];
 
       listings.forEach((option, index) => {
@@ -1874,10 +1911,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const y = STAGE.y + STAGE.h * slot[1];
         const wheel = this.addContent(this.add.image(
           x, y, option.textureKey
-        ).setDisplaySize(104, 104).setDepth(18).setInteractive({ useHandCursor: true }));
+        ).setDisplaySize(86, 86).setDepth(18).setInteractive({ useHandCursor: true }));
 
         wheel.on('pointerover', () => wheel.setScale(wheel.scaleX * 1.06));
-        wheel.on('pointerout', () => wheel.setDisplaySize(104, 104));
+        wheel.on('pointerout', () => wheel.setDisplaySize(86, 86));
         wheel.on('pointerdown', () => this.transitionWheelPreview(index));
       });
     }
