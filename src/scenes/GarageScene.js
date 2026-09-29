@@ -96,6 +96,7 @@ import {
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { addCarHistoryButton } from '../ui/CarHistoryPanel.js?v=20260929-r273';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -525,6 +526,7 @@ export default class GarageScene extends Phaser.Scene {
     }).setOrigin(1, 0.5).setDepth(42);
 
     // Keep utility buttons clear of the enlarged W/L record on phone layouts.
+    addCarHistoryButton(this, 820, 35);
     addSettingsButton(this, 925, 35);
 
     const couponsButton = this.add.rectangle(1020, 35, 112, 38, 0x0b1724, 1)
