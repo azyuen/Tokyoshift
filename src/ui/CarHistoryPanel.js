@@ -6,7 +6,7 @@ import {
   getCarMagazineMeta,
   getCarMagazineSightings,
   getActiveMagazineIssue,
-} from '../data/carMagazine.js?v=20260929-r277';
+} from '../data/carMagazine.js?v=20260929-r278';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
@@ -219,7 +219,7 @@ function prepareMagazineAssets(scene, features, onReady) {
 
   const queueIssueImage = (key, path) => {
     if (!key || !path || scene.textures.exists(key)) return;
-    scene.load.image(key, path + '?v=20260929-r277');
+    scene.load.image(key, path + '?v=20260929-r278');
     queued += 1;
   };
 
@@ -285,78 +285,219 @@ function showMagazine(scene, features) {
   if (scene._carHistoryOverlay?.length) return;
 
   const objects = [];
-  let pageObjects = [];
-  const add = obj => { objects.push(obj); return obj; };
-  const addPage = obj => {
+  const add = obj => {
     objects.push(obj);
-    pageObjects.push(obj);
     return obj;
   };
 
   scene._carHistoryOverlay = objects;
   const issue = getActiveMagazineIssue(scene.registry);
-  const spreadCount = Math.max(1, 1 + Math.ceil(features.length / 2));
-  let spread = 0;
+
+  const insetSource =
+    issue?.insetKey && scene.textures.exists(issue.insetKey)
+      ? scene.textures.get(issue.insetKey).getSourceImage()
+      : { width: 512, height: 644 };
+  const coverSource =
+    issue?.coverKey && scene.textures.exists(issue.coverKey)
+      ? scene.textures.get(issue.coverKey).getSourceImage()
+      : { width: 512, height: 679 };
+
+  // The authored inset defines the exact physical page proportion. Every
+  // Phaser-generated page uses this same size so the magazine never changes
+  // shape as the player turns through it.
+  const PAGE_H = 650;
+  const PAGE_W = PAGE_H * (insetSource.width / Math.max(1, insetSource.height));
+  const PAGE_TOP = 420 - PAGE_H / 2;
+  const SPINE_X = 780;
+  const LEFT_X = SPINE_X - PAGE_W;
+  const RIGHT_X = SPINE_X;
+  const COVER_H = 650;
+  const COVER_W = COVER_H * (coverSource.width / Math.max(1, coverSource.height));
+  const COVER_LEFT = 780 - COVER_W / 2;
+
+  const featureSpreadCount = Math.ceil(features.length / 2);
+  const totalViews = 2 + featureSpreadCount; // cover + intro + feature spreads
+  let viewIndex = 0;
+  let currentView = null;
   let flipping = false;
 
+  const destroyView = view => {
+    if (!view) return;
+    [view.cover, view.left, view.right].forEach(container => {
+      try { container?.destroy?.(true); } catch (e) {}
+    });
+  };
+
   const closeMagazine = () => {
+    destroyView(currentView);
     destroyObjects(objects);
     scene._carHistoryOverlay = [];
   };
 
-  add(scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.84)
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.90)
     .setInteractive()
     .setDepth(260));
 
-  add(scene.add.rectangle(780, 420, 1215, 718, 0x1a1510, 1)
-    .setStrokeStyle(4, 0x8d6d45, 1)
-    .setDepth(261));
+  const spreadShadow = add(scene.add.rectangle(
+    SPINE_X,
+    420 + 7,
+    PAGE_W * 2 + 18,
+    PAGE_H + 18,
+    0x000000,
+    0.48
+  ).setDepth(261));
 
-  add(scene.add.rectangle(780, 420, 1170, 680, 0xeee5d1, 1)
-    .setStrokeStyle(2, 0xcbbd9c, 1)
-    .setDepth(262));
+  const seam = add(scene.add.rectangle(
+    SPINE_X,
+    420,
+    2,
+    PAGE_H,
+    0x6f604d,
+    0.82
+  ).setDepth(290));
 
-  add(scene.add.rectangle(780, 420, 5, 674, 0x8b7d66, 0.55).setDepth(264));
-
-  const close = add(scene.add.rectangle(1320, 108, 116, 38, 0x1f1b17, 1)
-    .setStrokeStyle(1, 0x9d896b, 1)
+  const close = add(scene.add.rectangle(1492, 82, 108, 42, 0x17130f, 1)
+    .setStrokeStyle(1, 0xa89170, 1)
     .setInteractive({ useHandCursor: true })
-    .setDepth(270));
-  add(scene.add.text(1320, 108, 'CLOSE', {
+    .setDepth(295));
+  const closeText = add(scene.add.text(1492, 82, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
-    color: '#f5e8cf',
-  }).setOrigin(0.5).setDepth(271));
+    color: '#f6e8ce',
+  }).setOrigin(0.5).setDepth(296));
   close.on('pointerdown', closeMagazine);
 
-  const prev = add(scene.add.rectangle(420, 748, 150, 42, 0x211a13, 1)
-    .setStrokeStyle(1, 0xb59668, 1)
-    .setDepth(270));
-  const prevText = add(scene.add.text(420, 748, '<  PREV', {
+  const prev = add(scene.add.rectangle(82, 420, 118, 48, 0x17130f, 1)
+    .setStrokeStyle(1, 0xa89170, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(295));
+  const prevText = add(scene.add.text(82, 420, '<  PREV', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
-    color: '#f6e4c6',
-  }).setOrigin(0.5).setDepth(271));
+    color: '#f6e8ce',
+  }).setOrigin(0.5).setDepth(296));
 
-  const next = add(scene.add.rectangle(1140, 748, 150, 42, 0x211a13, 1)
-    .setStrokeStyle(1, 0xb59668, 1)
-    .setDepth(270));
-  const nextText = add(scene.add.text(1140, 748, 'NEXT  >', {
+  const next = add(scene.add.rectangle(1478, 420, 118, 48, 0x17130f, 1)
+    .setStrokeStyle(1, 0xa89170, 1)
+    .setInteractive({ useHandCursor: true })
+    .setDepth(295));
+  const nextText = add(scene.add.text(1478, 420, 'NEXT  >', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
-    color: '#f6e4c6',
-  }).setOrigin(0.5).setDepth(271));
+    color: '#f6e8ce',
+  }).setOrigin(0.5).setDepth(296));
 
-  const folio = add(scene.add.text(780, 749, '', {
+  const folio = add(scene.add.text(780, 790, '', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
-    color: '#8a7961',
-  }).setOrigin(0.5).setDepth(271));
+    color: '#9d8b73',
+  }).setOrigin(0.5).setDepth(295));
 
-  const renderFeature = (feature, leftPage) => {
-    const pageX = leftPage ? 226 : 795;
-    const pageW = 540;
-    const centerX = pageX + pageW / 2;
+  const addTo = (container, obj) => {
+    container.add(obj);
+    return obj;
+  };
+
+  const addPaper = (container, side, fill = 0xeee4cf) => {
+    const pageX = side === 'left' ? -PAGE_W : 0;
+    addTo(container, scene.add.rectangle(
+      pageX + PAGE_W / 2,
+      PAGE_H / 2,
+      PAGE_W,
+      PAGE_H,
+      fill,
+      1
+    ));
+    return pageX;
+  };
+
+  const buildCoverView = () => {
+    const cover = scene.add.container(COVER_LEFT, 420 - COVER_H / 2)
+      .setDepth(270);
+
+    addTo(cover, scene.add.rectangle(
+      COVER_W / 2 + 7,
+      COVER_H / 2 + 9,
+      COVER_W + 12,
+      COVER_H + 12,
+      0x000000,
+      0.46
+    ));
+
+    if (issue?.coverKey && scene.textures.exists(issue.coverKey)) {
+      addTo(cover, scene.add.image(COVER_W / 2, COVER_H / 2, issue.coverKey)
+        .setDisplaySize(COVER_W, COVER_H));
+    } else {
+      addTo(cover, scene.add.rectangle(
+        COVER_W / 2,
+        COVER_H / 2,
+        COVER_W,
+        COVER_H,
+        0xeadfc8,
+        1
+      ));
+      addTo(cover, scene.add.text(COVER_W / 2, COVER_H / 2, issue?.label || 'ISSUE 01', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '20px',
+        color: '#7f291f',
+      }).setOrigin(0.5));
+    }
+
+    return { cover, left: null, right: null };
+  };
+
+  const buildIntroSpread = () => {
+    const left = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
+    const right = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
+
+    const leftPageX = addPaper(left, 'left');
+
+    addTo(left, scene.add.text(
+      leftPageX + PAGE_W / 2,
+      PAGE_H / 2,
+      issue?.label || 'ISSUE 01',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '26px',
+        color: '#8f2f23',
+        align: 'center',
+      }
+    ).setOrigin(0.5));
+
+    if (issue?.insetKey && scene.textures.exists(issue.insetKey)) {
+      addTo(right, scene.add.image(PAGE_W / 2, PAGE_H / 2, issue.insetKey)
+        .setDisplaySize(PAGE_W, PAGE_H));
+    } else {
+      addPaper(right, 'right');
+      addTo(right, scene.add.text(PAGE_W / 2, PAGE_H / 2, 'INTRO PAGE', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '16px',
+        color: '#8a7961',
+      }).setOrigin(0.5));
+    }
+
+    return { cover: null, left, right };
+  };
+
+  const buildFeaturePage = (feature, side) => {
+    const container = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
+    const pageX = addPaper(container, side);
+    const pad = 28;
+    const contentX = pageX + pad;
+    const contentW = PAGE_W - pad * 2;
+    const centerX = pageX + PAGE_W / 2;
+
+    if (!feature) {
+      addTo(container, scene.add.text(centerX, PAGE_H / 2, 'NEXT FEATURE\nPENDING', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '13px',
+        color: '#998a74',
+        align: 'center',
+        lineSpacing: 7,
+      }).setOrigin(0.5));
+      return container;
+    }
+
     const meta = getCarMagazineMeta(feature.carId);
     const car = cars[feature.carId];
     const owned = feature.kind === 'OWNED';
@@ -365,25 +506,30 @@ function showMagazine(scene, features) {
     const entry = feature.entry || {};
     const stats = car ? tunedStats(feature.carId, feature.state || {}) : null;
 
-    addPage(scene.add.text(pageX + 28, 127, owned ? 'GARAGE FEATURE' : archived ? 'FROM THE ARCHIVE' : 'SPOTTED IN TOKYO', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: owned ? '#8a301f' : '#536477',
-    }).setDepth(267));
+    addTo(container, scene.add.text(
+      contentX,
+      32,
+      owned ? 'GARAGE FEATURE' : archived ? 'FROM THE ARCHIVE' : 'SPOTTED IN TOKYO',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: owned ? '#9c3728' : '#5d6c79',
+      }
+    ));
 
-    addPage(scene.add.text(pageX + 28, 155, meta.shortName, {
+    addTo(container, scene.add.text(contentX, 62, meta.shortName, {
       fontFamily: PIXEL_FONT,
-      fontSize: '20px',
+      fontSize: '18px',
       color: '#171512',
-    }).setDepth(267));
+    }));
 
-    addPage(scene.add.text(pageX + 28, 190, meta.name.toUpperCase(), {
+    addTo(container, scene.add.text(contentX, 94, meta.name.toUpperCase(), {
       fontFamily: BODY_FONT,
-      fontSize: '13px',
+      fontSize: '12px',
       color: '#3b342c',
       fontStyle: '700',
-      wordWrap: { width: 480 },
-    }).setDepth(267));
+      wordWrap: { width: contentW },
+    }));
 
     const specLine = [
       meta.year ? String(meta.year) : null,
@@ -392,44 +538,55 @@ function showMagazine(scene, features) {
       stats ? stats.weight + ' kg' : null,
     ].filter(Boolean).join('  //  ');
 
-    addPage(scene.add.text(pageX + 28, 228, specLine || 'SPECIAL FEATURE', {
+    addTo(container, scene.add.text(contentX, 128, specLine || 'SPECIAL FEATURE', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#745f49',
-    }).setDepth(267));
+      fontSize: '6px',
+      color: '#765f49',
+      wordWrap: { width: contentW },
+    }));
 
-    const photoFrame = addPage(scene.add.rectangle(centerX, 370, 478, 238, 0xd8cdb6, 1)
-      .setStrokeStyle(1, 0xaa9b7e, 1)
-      .setDepth(265));
+    addTo(container, scene.add.rectangle(
+      centerX,
+      282,
+      contentW,
+      226,
+      0xd8cdb6,
+      1
+    ).setStrokeStyle(1, 0xaa9b7e, 1));
 
     const photoRendered = renderCarPhoto(
       scene,
       feature,
       centerX,
-      362,
-      420,
-      266,
-      addPage
+      276,
+      Math.min(425, PAGE_W - 78),
+      0,
+      obj => addTo(container, obj)
     );
 
     if (!photoRendered) {
-      addPage(scene.add.text(centerX, 365, meta.isHero ? 'HERO CAR\nFEATURE FILE' : 'PHOTO ARCHIVE', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '12px',
-        color: '#887860',
-        align: 'center',
-        lineSpacing: 8,
-      }).setOrigin(0.5).setDepth(267));
+      addTo(container, scene.add.text(
+        centerX,
+        280,
+        meta.isHero ? 'HERO CAR\nFEATURE FILE' : 'PHOTO ARCHIVE',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '11px',
+          color: '#887860',
+          align: 'center',
+          lineSpacing: 7,
+        }
+      ).setOrigin(0.5));
     }
 
-    addPage(scene.add.text(pageX + 28, 510, meta.fact, {
+    addTo(container, scene.add.text(contentX, 414, meta.fact, {
       fontFamily: BODY_FONT,
-      fontSize: '12px',
+      fontSize: '11px',
       color: '#26221d',
       fontStyle: '600',
-      wordWrap: { width: 480 },
-      lineSpacing: 3,
-    }).setDepth(267));
+      wordWrap: { width: contentW },
+      lineSpacing: 2,
+    }));
 
     let footer = '';
     if (owned || archived) {
@@ -446,140 +603,135 @@ function showMagazine(scene, features) {
         (dateLabel(sighting.firstSeenAt) ? '  //  ' + dateLabel(sighting.firstSeenAt) : '');
     }
 
-    addPage(scene.add.text(pageX + 28, 660, footer, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '6px',
-      color: '#766752',
-      wordWrap: { width: 480 },
-    }).setDepth(267));
+    addTo(container, scene.add.rectangle(
+      centerX,
+      PAGE_H - 54,
+      contentW,
+      1,
+      0xb7a68b,
+      0.7
+    ));
 
-    photoFrame.setData('magazinePhoto', true);
+    addTo(container, scene.add.text(contentX, PAGE_H - 38, footer, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#766752',
+      wordWrap: { width: contentW },
+    }));
+
+    return container;
   };
 
-  const renderIssueIntro = () => {
-    const addIssuePage = (textureKey, centerX, maxWidth, maxHeight) => {
-      if (!textureKey || !scene.textures.exists(textureKey)) return false;
+  const buildFeatureSpread = featureSpreadIndex => {
+    const featureIndex = featureSpreadIndex * 2;
+    const left = buildFeaturePage(features[featureIndex], 'left');
+    const right = buildFeaturePage(features[featureIndex + 1], 'right');
+    return { cover: null, left, right };
+  };
 
-      const source = scene.textures.get(textureKey).getSourceImage();
-      const scale = Math.min(
-        maxWidth / Math.max(1, source.width),
-        maxHeight / Math.max(1, source.height)
+  const buildView = index => {
+    if (index === 0) return buildCoverView();
+    if (index === 1) return buildIntroSpread();
+    return buildFeatureSpread(index - 2);
+  };
+
+  const updateControls = () => {
+    const canPrev = viewIndex > 0;
+    const canNext = viewIndex < totalViews - 1;
+
+    prev.setFillStyle(canPrev ? 0x17130f : 0x0d0b09, 1);
+    next.setFillStyle(canNext ? 0x17130f : 0x0d0b09, 1);
+    prevText.setColor(canPrev ? '#f6e8ce' : '#665d52');
+    nextText.setColor(canNext ? '#f6e8ce' : '#665d52');
+
+    spreadShadow.setVisible(viewIndex > 0);
+    seam.setVisible(viewIndex > 0);
+
+    if (viewIndex === 0) {
+      folio.setText((issue?.label || 'ISSUE 01') + ' // COVER');
+    } else if (viewIndex === 1) {
+      folio.setText((issue?.label || 'ISSUE 01') + ' // INTRO');
+    } else {
+      const featureNumber = viewIndex - 1;
+      folio.setText(
+        'FEATURE SPREAD ' + featureNumber + ' / ' + Math.max(1, featureSpreadCount)
       );
+    }
+  };
 
-      const image = scene.add.image(centerX, 420, textureKey)
-        .setScale(scale)
-        .setDepth(267);
+  const flipTo = direction => {
+    if (flipping) return;
 
-      addPage(scene.add.rectangle(
-        centerX + 5,
-        425,
-        image.displayWidth + 10,
-        image.displayHeight + 10,
-        0x2b2118,
-        0.18
-      ).setDepth(265));
+    const nextIndex = viewIndex + direction;
+    if (nextIndex < 0 || nextIndex >= totalViews) return;
 
-      addPage(image);
-      return true;
+    flipping = true;
+
+    // Forward: the current right-hand page folds into the spine, then the
+    // newly revealed left page opens out to the left. Previous does the mirror
+    // image of that motion.
+    const outgoing = direction > 0
+      ? (currentView?.right || currentView?.cover || currentView?.left)
+      : (currentView?.left || currentView?.cover || currentView?.right);
+
+    const finishSwap = () => {
+      destroyView(currentView);
+      viewIndex = nextIndex;
+      currentView = buildView(viewIndex);
+
+      const incoming = direction > 0
+        ? (currentView?.left || currentView?.cover || currentView?.right)
+        : (currentView?.right || currentView?.cover || currentView?.left);
+
+      if (!incoming) {
+        updateControls();
+        flipping = false;
+        return;
+      }
+
+      incoming.scaleX = 0;
+      updateControls();
+
+      scene.tweens.add({
+        targets: incoming,
+        scaleX: 1,
+        duration: 220,
+        ease: 'Sine.easeOut',
+        onComplete: () => {
+          flipping = false;
+        },
+      });
     };
 
-    const coverReady = addIssuePage(issue?.coverKey, 496, 525, 650);
-    const insetReady = addIssuePage(issue?.insetKey, 1065, 535, 650);
-
-    if (!coverReady) {
-      addPage(scene.add.text(496, 420, 'STREET FILE\nISSUE 01', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '18px',
-        color: '#8a301f',
-        align: 'center',
-        lineSpacing: 8,
-      }).setOrigin(0.5).setDepth(267));
-    }
-
-    if (!insetReady) {
-      addPage(scene.add.text(1065, 420, 'INTRO PAGE\nLOADING', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '14px',
-        color: '#745f49',
-        align: 'center',
-        lineSpacing: 8,
-      }).setOrigin(0.5).setDepth(267));
-    }
-  };
-
-  const render = () => {
-    destroyObjects(pageObjects);
-    pageObjects = [];
-    folio.setText(
-      spread === 0
-        ? (issue?.label || 'ISSUE 01') + ' // INTRO'
-        : 'SPREAD ' + (spread + 1) + ' / ' + spreadCount
-    );
-
-    const canPrev = spread > 0;
-    const canNext = spread < spreadCount - 1;
-    prev.setFillStyle(canPrev ? 0x211a13 : 0x16120f, 1);
-    next.setFillStyle(canNext ? 0x211a13 : 0x16120f, 1);
-    prevText.setColor(canPrev ? '#f6e4c6' : '#695f52');
-    nextText.setColor(canNext ? '#f6e4c6' : '#695f52');
-
-    if (spread === 0) {
-      renderIssueIntro();
+    if (!outgoing) {
+      finishSwap();
       return;
     }
 
-    const index = (spread - 1) * 2;
-    const left = features[index];
-    const right = features[index + 1];
-    if (left) renderFeature(left, true);
-    if (right) {
-      renderFeature(right, false);
-    } else {
-      addPage(scene.add.text(1065, 375, 'NEXT FEATURE\nPENDING', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '14px',
-        color: '#968872',
-        align: 'center',
-        lineSpacing: 8,
-      }).setOrigin(0.5).setDepth(267));
-    }
-  };
-
-  const flipTo = nextSpread => {
-    if (flipping || nextSpread < 0 || nextSpread >= spreadCount || nextSpread === spread) return;
-    flipping = true;
-    const direction = nextSpread > spread ? 1 : -1;
-    const target = pageObjects.filter(obj => obj?.active);
     scene.tweens.add({
-      targets: target,
-      alpha: 0,
-      x: '+=' + (direction * -24),
-      duration: 110,
-      ease: 'Quad.easeIn',
-      onComplete: () => {
-        spread = nextSpread;
-        render();
-        pageObjects.forEach(obj => {
-          if (!obj?.active) return;
-          obj.setAlpha?.(0);
-          if (typeof obj.x === 'number') obj.x += direction * 24;
-        });
-        scene.tweens.add({
-          targets: pageObjects.filter(obj => obj?.active),
-          alpha: 1,
-          x: '-=' + (direction * 24),
-          duration: 150,
-          ease: 'Quad.easeOut',
-          onComplete: () => { flipping = false; },
-        });
-      },
+      targets: outgoing,
+      scaleX: 0,
+      duration: 190,
+      ease: 'Sine.easeIn',
+      onComplete: finishSwap,
     });
   };
 
-  prev.setInteractive({ useHandCursor: true });
-  next.setInteractive({ useHandCursor: true });
-  prev.on('pointerdown', () => flipTo(spread - 1));
-  next.on('pointerdown', () => flipTo(spread + 1));
+  prev.on('pointerover', () => {
+    if (viewIndex > 0) prev.setStrokeStyle(2, 0xe0c38f, 1);
+  });
+  prev.on('pointerout', () => prev.setStrokeStyle(1, 0xa89170, 1));
+  next.on('pointerover', () => {
+    if (viewIndex < totalViews - 1) next.setStrokeStyle(2, 0xe0c38f, 1);
+  });
+  next.on('pointerout', () => next.setStrokeStyle(1, 0xa89170, 1));
+  close.on('pointerover', () => close.setStrokeStyle(2, 0xe0c38f, 1));
+  close.on('pointerout', () => close.setStrokeStyle(1, 0xa89170, 1));
 
-  render();
+  prev.on('pointerdown', () => flipTo(-1));
+  next.on('pointerdown', () => flipTo(1));
+
+  currentView = buildView(viewIndex);
+  updateControls();
 }
+
