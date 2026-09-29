@@ -261,6 +261,16 @@ export default class GarageScene extends Phaser.Scene {
     requestAnimationFrame(() => requestAnimationFrame(hideSplash));
     window.setTimeout(hideSplash, 120);
 
+    // Warm the tuning bay in the background once the workshop itself is
+    // visible. This keeps initial garage entry quick, but removes the visible
+    // first-tap lazy-load when the player opens Engine/Drivetrain/etc.
+    this.time.delayedCall(140, () => {
+      this.ensureGarageTuningAssets(null, {
+        includeVisualMods: true,
+        silent: true,
+      });
+    });
+
     let reopenSettings = false;
     let tutorialJustCompleted = false;
     try {
@@ -436,8 +446,6 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showCouponsPopup() {
-    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-
     const coupons = this.registry.get('carCoupons') || {};
     const entries = carOrder
       .filter(carId => cars[carId] && Number(coupons[carId] || 0) > 0)
@@ -1648,6 +1656,12 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  getWorkshopWheelContactOffset(wheelSource, axleFit) {
+    const authoredRadius = Number(axleFit?.backingRadius || 0);
+    if (authoredRadius > 0) return authoredRadius;
+    return getWheelContactOffsetY(wheelSource, axleFit?.wheelScale);
+  }
+
   getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
@@ -1659,10 +1673,10 @@ export default class GarageScene extends Phaser.Scene {
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottom =
       bodyY + renderOffsetY + fit.rear.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottom =
       bodyY + renderOffsetY + fit.front.offsetY +
-      getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      this.getWorkshopWheelContactOffset(wheelSource, fit.front);
     return Math.max(rearBottom, frontBottom);
   }
 
@@ -1676,9 +1690,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const rearBottomOffset =
-      fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
+      fit.rear.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear);
     const frontBottomOffset =
-      fit.front.offsetY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale);
+      fit.front.offsetY + this.getWorkshopWheelContactOffset(wheelSource, fit.front);
 
     // Account for per-asset body trim when solving the body origin. Without
     // this, hero cars with larger renderOffsetY values sat visibly lower even
@@ -1727,8 +1741,8 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.35);
 
     const tyreBottom = Math.max(
-      rearY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale),
-      frontY + getWheelContactOffsetY(wheelSource, fit.front.wheelScale)
+      rearY + this.getWorkshopWheelContactOffset(wheelSource, fit.rear),
+      frontY + this.getWorkshopWheelContactOffset(wheelSource, fit.front)
     );
     const shadowHeight = Math.max(
       20,
@@ -1952,7 +1966,15 @@ export default class GarageScene extends Phaser.Scene {
     } catch (e) {}
   }
 
-  ensureGarageTuningAssets(onReady, { includeVisualMods = false } = {}) {
+  ensureGarageTuningAssets(
+    onReady,
+    { includeVisualMods = false, silent = false } = {}
+  ) {
+    this._garageTuningAssetCallbacks = this._garageTuningAssetCallbacks || [];
+    if (typeof onReady === 'function') {
+      this._garageTuningAssetCallbacks.push(onReady);
+    }
+
     if (this._garageTuningAssetLoading) return;
 
     let queued = 0;
@@ -1962,8 +1984,6 @@ export default class GarageScene extends Phaser.Scene {
       queued += 1;
     };
 
-    // Tuning illustrations are large and never needed by players who simply
-    // enter the garage and race, so defer them until the first tuning action.
     garageAssets
       .filter(asset =>
         asset.key.startsWith('stockEngine') ||
@@ -1986,18 +2006,32 @@ export default class GarageScene extends Phaser.Scene {
       );
     }
 
+    const flushCallbacks = () => {
+      const callbacks = [...(this._garageTuningAssetCallbacks || [])];
+      this._garageTuningAssetCallbacks = [];
+      callbacks.forEach(callback => {
+        try { callback?.(); } catch (error) {
+          this.recoverTuningTransition(error);
+        }
+      });
+    };
+
     if (queued <= 0) {
-      onReady?.();
+      flushCallbacks();
       return;
     }
 
     this._garageTuningAssetLoading = true;
-    startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    if (!silent) {
+      startSceneLoading(this, 'LOADING TUNING BAY', queued);
+    }
+
     this.load.once('complete', () => {
       this._garageTuningAssetLoading = false;
-      onReady?.();
-      finishSceneLoading('TUNING READY');
+      flushCallbacks();
+      if (!silent) finishSceneLoading('TUNING READY');
     });
+
     if (!this.load.isLoading()) this.load.start();
   }
 
