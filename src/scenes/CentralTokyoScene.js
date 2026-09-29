@@ -110,12 +110,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   init(data = {}) {
     this.requestedLocationId = data?.locationId || null;
-    const requestedRoom = String(
-      data?.autoMarketRoom || this.registry.get('autoMarketRoom') || 'used'
-    );
+    const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used', 'wheels'].includes(requestedRoom)
       ? requestedRoom
-      : 'used';
+      : 'new';
   }
 
   preload() {
@@ -219,6 +217,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if (!car) return;
         queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20260929-r246');
         queued += preloadCarWheel(this, car);
+      });
+
+      ['sayakaFujieda', 'reinaShibata'].forEach(id => {
+        const visual = characters[id]?.visual;
+        if (!visual || this.textures.exists(visual.spriteKey)) return;
+        this.load.image(visual.spriteKey, visual.path + '?v=20260929-r269');
+        queued += 1;
       });
     }
 
@@ -462,6 +467,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   renderLocation(locationId, assetsAttempted = false) {
     const location = LOCATION_BY_ID[locationId] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
+
+    if (
+      location.kind === 'autoMarket' &&
+      this.activeLocationId &&
+      this.activeLocationId !== location.id &&
+      !assetsAttempted
+    ) {
+      this.autoMarketRoom = 'new';
+      this.registry.set('autoMarketRoom', 'new');
+    }
 
     if (!isCentralTokyoLocationUnlocked(this.registry, location.id)) {
       return;
@@ -1216,9 +1231,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   getMarketBayPoses() {
     return [
-      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 288, w: 255, depth: 9, flip: false },
-      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 288, w: 255, depth: 10, flip: false },
-      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 288, w: 255, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.22, y: STAGE.y + 318, w: 242, depth: 9, flip: false },
+      { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 318, w: 242, depth: 10, flip: false },
+      { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 318, w: 242, depth: 9, flip: false },
     ];
   }
 
@@ -1263,9 +1278,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const car = cars[listing.carId];
       const objects = this.createCarDisplay(
         car,
-        STAGE.x + STAGE.w * 0.52,
-        STAGE.y + 386,
-        650,
+        STAGE.x + STAGE.w * 0.51,
+        STAGE.y + 350,
+        700,
         16,
         listing.paintColor,
         null,
@@ -2446,9 +2461,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // selection cards below so each button sits under the car it controls.
       const screenOrder = [ranked[1], ranked[0], ranked[2]].filter(Boolean);
       const poses = [
-        { x: STAGE.x + STAGE.w * 0.24, y: STAGE.y + 315, w: 310, depth: 9, flip: true },
-        { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 405, w: 390, depth: 11, flip: false },
-        { x: STAGE.x + STAGE.w * 0.78, y: STAGE.y + 292, w: 292, depth: 8, flip: false },
+        { x: STAGE.x + STAGE.w * 0.17, y: STAGE.y + 332, w: 350, depth: 9, flip: true },
+        { x: STAGE.x + STAGE.w * 0.50, y: STAGE.y + 332, w: 380, depth: 11, flip: false },
+        { x: STAGE.x + STAGE.w * 0.83, y: STAGE.y + 332, w: 350, depth: 9, flip: false },
       ];
 
       screenOrder.forEach(({ listing, index }, rank) => {
@@ -2469,6 +2484,33 @@ export default class CentralTokyoScene extends Phaser.Scene {
           pose.x, pose.y, pose.w, Math.max(105, pose.w * 0.34), 0x000000, 0
         ).setDepth(30).setInteractive({ useHandCursor: true }));
         hit.on('pointerdown', () => this.selectGinzaCar(index));
+      });
+
+      const ginzaGuests = [
+        { id: 'sayakaFujieda', x: STAGE.x + 118, feetY: STAGE.y + 492, height: 255, flip: false },
+        { id: 'reinaShibata', x: STAGE.x + STAGE.w - 108, feetY: STAGE.y + 492, height: 245, flip: true },
+      ];
+
+      ginzaGuests.forEach((guest, guestIndex) => {
+        const character = characters[guest.id];
+        const key = character?.visual?.spriteKey;
+        if (!key || !this.textures.exists(key)) return;
+
+        const source = this.textures.get(key).getSourceImage();
+        const shadow = this.addContent(this.add.ellipse(
+          guest.x,
+          guest.feetY - 8,
+          102,
+          20,
+          0x000000,
+          0.52
+        ).setDepth(20 + guestIndex * 0.02));
+
+        const sprite = this.addContent(this.add.image(guest.x, guest.feetY, key)
+          .setOrigin(0.5, 1)
+          .setScale(guest.height / Math.max(1, source.height))
+          .setFlipX(guest.flip)
+          .setDepth(21 + guestIndex * 0.02));
       });
     }
 
