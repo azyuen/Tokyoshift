@@ -5,7 +5,8 @@ import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211
 import {
   getCarMagazineMeta,
   getCarMagazineSightings,
-} from '../data/carMagazine.js?v=20260929-r274';
+  getActiveMagazineIssue,
+} from '../data/carMagazine.js?v=20260929-r277';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
@@ -213,7 +214,17 @@ function prepareMagazineAssets(scene, features, onReady) {
     .map(feature => feature.carId)
     .filter((id, index, list) => cars[id] && list.indexOf(id) === index);
   const states = scene.registry.get('carStates') || {};
+  const issue = getActiveMagazineIssue(scene.registry);
   let queued = 0;
+
+  const queueIssueImage = (key, path) => {
+    if (!key || !path || scene.textures.exists(key)) return;
+    scene.load.image(key, path + '?v=20260929-r277');
+    queued += 1;
+  };
+
+  queueIssueImage(issue?.coverKey, issue?.coverPath);
+  queueIssueImage(issue?.insetKey, issue?.insetPath);
 
   ids.forEach(id => {
     queued += preloadCarAppearanceAssets(scene, { [id]: cars[id] }, '20260929-r273');
@@ -283,6 +294,7 @@ function showMagazine(scene, features) {
   };
 
   scene._carHistoryOverlay = objects;
+  const issue = getActiveMagazineIssue(scene.registry);
   const spreadCount = Math.max(1, 1 + Math.ceil(features.length / 2));
   let spread = 0;
   let flipping = false;
@@ -444,86 +456,65 @@ function showMagazine(scene, features) {
     photoFrame.setData('magazinePhoto', true);
   };
 
-  const renderCover = () => {
-    addPage(scene.add.text(262, 152, 'TOKYO', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '34px',
-      color: '#16130f',
-    }).setDepth(267));
-    addPage(scene.add.text(262, 205, 'SHIFT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '44px',
-      color: '#a72e1d',
-    }).setDepth(267));
-    addPage(scene.add.text(262, 276, 'STREET FILE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '14px',
-      color: '#493d30',
-    }).setDepth(267));
+  const renderIssueIntro = () => {
+    const addIssuePage = (textureKey, centerX, maxWidth, maxHeight) => {
+      if (!textureKey || !scene.textures.exists(textureKey)) return false;
 
-    addPage(scene.add.rectangle(510, 470, 420, 275, 0x241f19, 1).setDepth(265));
-    addPage(scene.add.text(510, 470, 'YOUR GARAGE.\nYOUR RIVALS.\nYOUR TOKYO.', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '18px',
-      color: '#f0dfbd',
-      align: 'center',
-      lineSpacing: 12,
-    }).setOrigin(0.5).setDepth(267));
+      const source = scene.textures.get(textureKey).getSourceImage();
+      const scale = Math.min(
+        maxWidth / Math.max(1, source.width),
+        maxHeight / Math.max(1, source.height)
+      );
 
-    const owned = (scene.registry.get('ownedCarIds') || []).length;
-    const seen = Object.keys(getCarMagazineSightings(scene.registry)).length;
-    const history = (scene.registry.get('carHistory') || []).length;
+      const image = scene.add.image(centerX, 420, textureKey)
+        .setScale(scale)
+        .setDepth(267);
 
-    addPage(scene.add.text(825, 165, 'ISSUE // LIVE SAVE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#8a301f',
-    }).setDepth(267));
-    addPage(scene.add.text(825, 220, 'THIS ISSUE EVOLVES\nAS YOU PLAY.', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '18px',
-      color: '#181510',
-      lineSpacing: 10,
-    }).setDepth(267));
+      addPage(scene.add.rectangle(
+        centerX + 5,
+        425,
+        image.displayWidth + 10,
+        image.displayHeight + 10,
+        0x2b2118,
+        0.18
+      ).setDepth(265));
 
-    addPage(scene.add.text(825, 335,
-      owned + ' CARS IN GARAGE\n' +
-      seen + ' MODELS SPOTTED\n' +
-      history + ' GARAGE RECORDS',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '20px',
-        color: '#433a30',
-        fontStyle: '700',
-        lineSpacing: 12,
-      }
-    ).setDepth(267));
+      addPage(image);
+      return true;
+    };
 
-    addPage(scene.add.text(825, 535,
-      features.length
-        ? 'Flip through the cars that have become part of this run.'
-        : 'The first issue is still thin. Race, collect and explore Tokyo to fill it.',
-      {
-        fontFamily: BODY_FONT,
+    const coverReady = addIssuePage(issue?.coverKey, 496, 525, 650);
+    const insetReady = addIssuePage(issue?.insetKey, 1065, 535, 650);
+
+    if (!coverReady) {
+      addPage(scene.add.text(496, 420, 'STREET FILE\nISSUE 01', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '18px',
+        color: '#8a301f',
+        align: 'center',
+        lineSpacing: 8,
+      }).setOrigin(0.5).setDepth(267));
+    }
+
+    if (!insetReady) {
+      addPage(scene.add.text(1065, 420, 'INTRO PAGE\nLOADING', {
+        fontFamily: PIXEL_FONT,
         fontSize: '14px',
-        color: '#5e5142',
-        fontStyle: '600',
-        wordWrap: { width: 470 },
-        lineSpacing: 4,
-      }
-    ).setDepth(267));
-
-    addPage(scene.add.text(825, 660, 'TOKYO SHIFT // GARAGE EDITION', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#8a7961',
-    }).setDepth(267));
+        color: '#745f49',
+        align: 'center',
+        lineSpacing: 8,
+      }).setOrigin(0.5).setDepth(267));
+    }
   };
 
   const render = () => {
     destroyObjects(pageObjects);
     pageObjects = [];
-    folio.setText('SPREAD ' + (spread + 1) + ' / ' + spreadCount);
+    folio.setText(
+      spread === 0
+        ? (issue?.label || 'ISSUE 01') + ' // INTRO'
+        : 'SPREAD ' + (spread + 1) + ' / ' + spreadCount
+    );
 
     const canPrev = spread > 0;
     const canNext = spread < spreadCount - 1;
@@ -533,7 +524,7 @@ function showMagazine(scene, features) {
     nextText.setColor(canNext ? '#f6e4c6' : '#695f52');
 
     if (spread === 0) {
-      renderCover();
+      renderIssueIntro();
       return;
     }
 
