@@ -39,7 +39,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r283';
+} from '../state/GameState.js?v=20260929-r285';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -2963,6 +2963,28 @@ export default class RaceScene extends Phaser.Scene {
     // their win/loss pose and pink-slip outcome remain visible.
     rosters[locationId] = current.slice(0, 3);
     this.registry.set('meetRosters', rosters);
+
+    // Keep a second, slot-bound result record. MeetScene reapplies these on
+    // entry even if the generated roster was rebuilt for some unrelated
+    // reason. Normal Meet refresh is the only thing that clears them.
+    const resultStore = { ...(this.registry.get('meetRaceResults') || {}) };
+    const locationResults = Array.isArray(resultStore[locationId])
+      ? resultStore[locationId].map(result => ({
+          slotIndex: Math.max(0, Number(result?.slotIndex || 0)),
+          offer: { ...(result?.offer || {}) },
+        }))
+      : [];
+    const resultSlot = Number.isInteger(Number(snapshot.slotIndex))
+      ? Math.max(0, Math.min(2, Number(snapshot.slotIndex)))
+      : Math.max(0, Math.min(2, index >= 0 ? index : 0));
+    const existingResultIndex = locationResults.findIndex(result =>
+      Number(result?.slotIndex) === resultSlot
+    );
+    const storedResult = { slotIndex: resultSlot, offer: { ...resultOffer } };
+    if (existingResultIndex >= 0) locationResults[existingResultIndex] = storedResult;
+    else locationResults.push(storedResult);
+    resultStore[locationId] = locationResults.slice(0, 3);
+    this.registry.set('meetRaceResults', resultStore);
 
     // A race can outlast the Meet roster timer if the player spends time on
     // staging/results. Give the just-completed roster a fresh visibility window
