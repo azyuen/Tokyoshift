@@ -128,16 +128,16 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
 
-    // Authored regional panoramas share one naming/loading convention.
-    // Adding a region only requires day/night WebPs named skyline_<region>_<phase>.webp.
-    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI']);
+    // All street-race regions now use authored day/night panoramas.
+    // Assets follow skyline_<region>_<phase>.webp and share one renderer.
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'YOKOHAMA']);
     if (skylineRegions.has(this.raceDistrict)) {
       const regionSlug = this.raceDistrict.toLowerCase();
       const skylineKey = 'raceSkyline_' + regionSlug + '_' + this.raceTimeOfDay;
       const skylineFile = 'skyline_' + regionSlug + '_' + this.raceTimeOfDay + '.webp';
       queueImage(
         skylineKey,
-        'assets/Race/Skylines/' + skylineFile + '?v=20260929-r262'
+        'assets/Race/Skylines/' + skylineFile + '?v=20260929-r276'
       );
     }
 
@@ -396,7 +396,7 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI']);
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'YOKOHAMA']);
     const skylineKey = skylineRegions.has(this.raceDistrict)
       ? 'raceSkyline_' + this.raceDistrict.toLowerCase() + '_' + this.raceTimeOfDay
       : null;
