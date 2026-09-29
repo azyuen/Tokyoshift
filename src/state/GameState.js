@@ -76,6 +76,7 @@ export function createDefaultGameState(options = {}) {
     district: 'ODAIBA',
     meetLocation: 'odaiba7eleven',
     garageTier: 0,
+    dynoFacilityTier: 0,
     workshopLocationId: 'shinonomeWorkshop',
     carGarageLocations: {
       [starterCarId]: 'shinonomeWorkshop',
@@ -699,6 +700,7 @@ export function normaliseState(input = {}) {
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
+    dynoFacilityTier: Math.max(0, Math.min(3, Math.floor(Number(input.dynoFacilityTier || 0)))),
     workshopLocationId,
     carGarageLocations,
     ownedWheelIds: Array.isArray(input.ownedWheelIds)
@@ -863,6 +865,7 @@ export function snapshotRegistry(registry) {
     district: registry.get('district') || 'ODAIBA',
     meetLocation: registry.get('meetLocation') || 'odaiba7eleven',
     garageTier: Number(registry.get('garageTier') || 0),
+    dynoFacilityTier: Math.max(0, Math.min(3, Math.floor(Number(registry.get('dynoFacilityTier') || 0)))),
     workshopLocationId: registry.get('workshopLocationId') || 'shinonomeWorkshop',
     carGarageLocations: registry.get('carGarageLocations') || {},
     ownedWheelIds: registry.get('ownedWheelIds') || [],
