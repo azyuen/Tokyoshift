@@ -2956,6 +2956,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', regionId);
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
@@ -2991,6 +2992,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     saveSessionState(this.registry);
 
     this.scene.restart();
