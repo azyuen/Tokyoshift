@@ -10,7 +10,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20260929-r283';
+} from '../state/GameState.js?v=20260929-r285';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
