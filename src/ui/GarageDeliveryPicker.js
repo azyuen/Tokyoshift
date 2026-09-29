@@ -49,7 +49,7 @@ export function showGarageDeliveryPicker(scene, {
   }
 
   const options = getGarageDeliveryOptions(scene, carId);
-  if (!options.length) return null;
+  if (!options.length || !options.some(option => option.available)) return null;
 
   const objects = [];
   const add = obj => {
