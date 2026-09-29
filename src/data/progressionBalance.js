@@ -29,6 +29,16 @@ export const PROGRESSION_BALANCE = {
 
   meetMatchmaking: {
     offerCount: 3,
+
+    // Rolling starts are deliberately less common than standing starts. They
+    // are more power-band/gearing dependent, so they pay more when they appear.
+    raceTypeChances: {
+      meetRolling: 0.20,
+      competitionRolling: 0.20,
+      pinkSlipRolling: 0.12,
+    },
+    rollingCashStakeMultiplier: 1.30,
+    competitionRollingPrizeBonusPerRound: 0.10,
     // Standing starts leave more room for launch/clutch execution to overcome
     // a modest vehicle mismatch. Roll races are much more power-deterministic,
     // so "comparable" is deliberately tighter on the strong side.
