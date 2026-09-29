@@ -56,9 +56,9 @@ export const CENTRAL_TOKYO_LOCATIONS = {
         },
       },
     },
-    winsRequired: 0,
-    championshipsRequired: 2,
-    garageTierRequired: 2,
+    winsRequired: 3,
+    championshipsRequired: 0,
+    garageTierRequired: 0,
   },
   ginza: {
     id: 'ginzaMotorGallery',
@@ -360,6 +360,7 @@ export function getCentralTokyoEligibility(source) {
 
   return {
     autoMarket:
+      wins >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.winsRequired || 0) &&
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
     ginza:
