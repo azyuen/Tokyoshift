@@ -5,7 +5,7 @@ export const PLAYER_DIFFICULTY_CONFIG = Object.freeze({
     id: 'EASY',
     label: 'EASY',
     aiSkillMultiplier: 0.84,
-    rollingAiMultiplier: 0.95,
+    rollingAiMultiplier: 0.92,
     transmission: Object.freeze({
       clutchRejectThreshold: 0.46,
       clutchTarget: 0.82,
@@ -14,7 +14,7 @@ export const PLAYER_DIFFICULTY_CONFIG = Object.freeze({
     }),
     matchmaking: Object.freeze({
       comparableTargetOffsetStanding: 0,
-      comparableTargetOffsetRolling: 0,
+      comparableTargetOffsetRolling: -0.02,
       bandWeightMultipliers: Object.freeze({
         comparable: 1,
         weaker: 1,
