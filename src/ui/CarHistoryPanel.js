@@ -5,7 +5,7 @@ import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211
 import {
   getCarMagazineMeta,
   getCarMagazineSightings,
-} from '../data/carMagazine.js?v=20260929-r273';
+} from '../data/carMagazine.js?v=20260929-r274';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
