@@ -296,12 +296,6 @@ export default class TunerShopScene extends Phaser.Scene {
       color: '#fff4df',
     }).setOrigin(0, 0.5).setDepth(42);
 
-    this.add.text(465, 35, this.shop.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#e8b969',
-    }).setOrigin(0, 0.5).setDepth(42);
-
     this.cashText = this.add.text(1510, 35, money(this.registry.get('cash') || 0), {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
