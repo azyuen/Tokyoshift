@@ -84,6 +84,7 @@ export function createDefaultGameState(options = {}) {
     autoMarketRoom: 'used',
     autoMarketHaggles: {},
     meetRosters: {},
+    meetRaceResults: {},
     meetRefreshAt: 0,
     defeatedRivalKeys: [],
     specialChallenger: null,
@@ -765,6 +766,26 @@ export function normaliseState(input = {}) {
         ? input.tunerDecalPlacements
         : {},
     meetRosters,
+    meetRaceResults:
+      input.meetRaceResults && typeof input.meetRaceResults === 'object'
+        ? Object.fromEntries(
+            Object.entries(input.meetRaceResults).map(([locationId, results]) => [
+              locationId,
+              Array.isArray(results)
+                ? results
+                    .filter(result =>
+                      result &&
+                      typeof result === 'object' &&
+                      rivalCharacterOrder.includes(result?.offer?.characterId)
+                    )
+                    .map(result => ({
+                      slotIndex: Math.max(0, Math.floor(Number(result.slotIndex || 0))),
+                      offer: { ...(result.offer || {}) },
+                    }))
+                : [],
+            ])
+          )
+        : {},
     meetRefreshAt: Number.isFinite(input.meetRefreshAt) ? input.meetRefreshAt : 0,
     defeatedRivalKeys: Array.isArray(input.defeatedRivalKeys)
       ? [...new Set(input.defeatedRivalKeys)]
@@ -848,6 +869,7 @@ export function snapshotRegistry(registry) {
     autoMarketRoom: registry.get('autoMarketRoom') || 'used',
     autoMarketHaggles: registry.get('autoMarketHaggles') || {},
     meetRosters: registry.get('meetRosters') || {},
+    meetRaceResults: registry.get('meetRaceResults') || {},
     meetRefreshAt: Number(registry.get('meetRefreshAt') || 0),
     defeatedRivalKeys: registry.get('defeatedRivalKeys') || [],
     specialChallenger: registry.get('specialChallenger') || null,
