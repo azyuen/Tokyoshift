@@ -97,8 +97,8 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
-const WORKSHOP_HERO_AE86_BODY_Y = 342;
-const WORKSHOP_THUMB_AE86_OFFSET_Y = -24;
+const WORKSHOP_HERO_AE86_BODY_Y = 306;
+const WORKSHOP_THUMB_BODY_Y_OFFSET = -18;
 
 const SAFE = 24;
 const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
@@ -248,6 +248,7 @@ export default class GarageScene extends Phaser.Scene {
 
     if (this.selectedCarId) {
       this.selectCar(this.selectedCarId);
+      this.renderGaragePage();
       this.selectUpgrade(null);
     } else {
       this.showEmptyGarageState();
@@ -909,20 +910,23 @@ export default class GarageScene extends Phaser.Scene {
 
       box.setInteractive({ useHandCursor: true });
       const thumbWidth = Math.min(190, cardW - 22);
-      const thumbWheelBottomY = this.getWheelBottomY(
-        cars.ae86,
-        y + WORKSHOP_THUMB_AE86_OFFSET_Y,
-        thumbWidth
-      );
-      const thumbBodyY = this.getBodyYForWheelBottom(cars[id], thumbWidth, thumbWheelBottomY);
-      const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 34);
-      display.forEach(obj => add(obj));
+
+      // Workshop thumbnails used to be visually stable for many revisions.
+      // Keep their whole car canvas on an authored card-local origin instead
+      // of solving a second tyre-contact baseline at tiny scale.
+      const thumbBodyY = y + WORKSHOP_THUMB_BODY_Y_OFFSET;
+      const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 42);
+      display.forEach(obj => {
+        obj?.setVisible?.(true);
+        obj?.setAlpha?.(1);
+        add(obj);
+      });
 
       const label = add(this.add.text(x, y + 38, cars[id].shortName, {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: active ? '#ffffff' : '#b8cad7'
-      }).setOrigin(0.5).setDepth(36));
+      }).setOrigin(0.5).setDepth(48));
 
       box.on('pointerup', pointer => {
         const movedX = Math.abs(pointer.x - pointer.downX);
