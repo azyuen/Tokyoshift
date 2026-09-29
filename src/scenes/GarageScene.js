@@ -2619,6 +2619,7 @@ export default class GarageScene extends Phaser.Scene {
     title = '',
     subtitle = '',
     partName = '',
+    frameLabel = 'CURRENT SETUP',
     mode = 'engine',
     depth = 120,
   } = {}) {
@@ -2631,7 +2632,7 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x315470, 1)
       .setDepth(depth + 2));
 
-    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, 'CURRENT SETUP', {
+    add(this.add.text(frameX - frameW / 2 + 22, frameY - frameH / 2 + 24, frameLabel, {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#6f93a8',
