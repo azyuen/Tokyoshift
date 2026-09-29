@@ -42,7 +42,7 @@ export function getCarMagazineMeta(carId) {
     shortName: car?.shortName || HERO_LABELS[id] || id.toUpperCase(),
     year: Number(meta.year || 0),
     drivetrain: meta.drivetrain || 'SPECIAL',
-    fact: meta.fact || 'A noteworthy build spotted during this Tokyo SHIFT save.',
+    fact: meta.fact || car?.description || 'A noteworthy build spotted during this Tokyo SHIFT save.',
     isHero: !car && Boolean(HERO_LABELS[id]),
   };
 }
