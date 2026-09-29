@@ -1,16 +1,18 @@
 const clamp01 = v => Math.max(0, Math.min(1, v));
 
 export default class TokyoExpresswayBackground {
-  constructor(scene, { timeOfDay = 'night', skylineKey = null, roadVariant = 0 } = {}) {
+  constructor(scene, { timeOfDay = 'night', skylineKey = null, roadVariant = 0, skylineStartRatio = 0, skylineTravelPx = null } = {}) {
     this.scene = scene;
     this.width = 1560;
     this.skylineKey = skylineKey;
     this.roadVariant = Math.abs(Math.floor(Number(roadVariant) || 0)) % 4;
+    this.skylineStartRatio = Phaser.Math.Clamp(Number(skylineStartRatio) || 0, 0, 1);
+    this.skylineTravelPx = Number.isFinite(Number(skylineTravelPx)) ? Math.max(0, Number(skylineTravelPx)) : null;
     this.timeOfDay = ['day', 'twilight', 'night'].includes(timeOfDay)
       ? timeOfDay
       : 'night';
 
-    const suffix = 'r251_' + this.timeOfDay + '_v' + this.roadVariant;
+    const suffix = 'r252_' + this.timeOfDay + '_v' + this.roadVariant;
     this.keys = {
       backdrop: 'ts_bg_backdrop_' + suffix,
       rearBarrier: 'ts_bg_rear_barrier_' + suffix,
@@ -515,9 +517,25 @@ export default class TokyoExpresswayBackground {
       this.backdrop.setVisible(false);
       this.skyline = this.scene.add.image(0, 0, this.skylineKey)
         .setOrigin(0, 0)
-        .setDisplaySize(2048, 341)
         .setDepth(0);
+
+      // Preserve the authored panorama aspect ratio at the established 341px
+      // display height. A 4096x512 source therefore becomes ~2728px wide.
+      const source = this.scene.textures.get(this.skylineKey)?.getSourceImage?.();
+      const sourceW = Number(source?.width || 3072);
+      const sourceH = Number(source?.height || 512);
+      const displayH = 341;
+      const displayW = displayH * (sourceW / Math.max(1, sourceH));
+      this.skyline.setDisplaySize(displayW, displayH);
+
       this.skylineMaxTravel = Math.max(0, this.skyline.displayWidth - this.width);
+      const desiredTravel = this.skylineTravelPx == null
+        ? Math.min(820, this.skylineMaxTravel)
+        : Math.min(this.skylineTravelPx, this.skylineMaxTravel);
+      const spareForStart = Math.max(0, this.skylineMaxTravel - desiredTravel);
+      this.skylineStartX = spareForStart * this.skylineStartRatio;
+      this.skylineTravelLimit = desiredTravel;
+      this.skyline.x = -this.skylineStartX;
     }
 
     this.road = this.scene.add.tileSprite(0, 278, this.width, 270, this.keys.road)
@@ -542,8 +560,8 @@ export default class TokyoExpresswayBackground {
       // 0.0131 gives ~400 px of far-background travel over a 1/4 mile at
       // Tokyo SHIFT's 76 px/m world scale: distant enough to feel enormous.
       const desiredTravel = cameraPx * 0.0131;
-      const travel = Math.min(desiredTravel, this.skylineMaxTravel || 0);
-      this.skyline.x = -travel;
+      const travel = Math.min(desiredTravel, this.skylineTravelLimit ?? this.skylineMaxTravel ?? 0);
+      this.skyline.x = -(this.skylineStartX || 0) - travel;
     } else {
       this.backdrop.tilePositionX = cameraPx * 0.24;
     }
