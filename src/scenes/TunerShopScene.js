@@ -22,7 +22,7 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
-} from '../vehicles/WheelFit.js?v=20260929-r257';
+} from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
   normaliseTunerDecals,
   withTunerDecal,
