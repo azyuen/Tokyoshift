@@ -98,7 +98,13 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WORKSHOP_HERO_AE86_BODY_Y = 306;
-const WORKSHOP_THUMB_BODY_Y_OFFSET = -18;
+const WORKSHOP_THUMB_BODY_Y_OFFSET = -15;
+const WORKSHOP_THUMB_WIDTH = 176;
+
+const TUNING_CATEGORY_LOGO_Y_OFFSET = 94;
+const TUNING_CATEGORY_LOGO_MAX_HEIGHT = 164;
+const TUNING_CATEGORY_ROW_START_OFFSET = 214;
+const TUNING_CATEGORY_ROW_GAP = 56;
 
 const SAFE = 24;
 const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
@@ -909,7 +915,7 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       box.setInteractive({ useHandCursor: true });
-      const thumbWidth = Math.min(190, cardW - 22);
+      const thumbWidth = Math.min(WORKSHOP_THUMB_WIDTH, cardW - 30);
 
       // Workshop thumbnails used to be visually stable for many revisions.
       // Keep their whole car canvas on an authored card-local origin instead
@@ -2168,18 +2174,18 @@ export default class GarageScene extends Phaser.Scene {
     if (this.textures.exists('tuningCategoryEngine')) {
       const logo = add(this.add.image(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 102,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
         'tuningCategoryEngine'
       ).setOrigin(0.5).setDepth(73));
 
       const source = this.textures.get('tuningCategoryEngine').getSourceImage();
       const fit = Math.min(
         (SIDE.w - 54) / source.width,
-        164 / source.height
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
       );
       logo.setScale(fit);
     } else {
-      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 102, 'ENGINE', {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, 'ENGINE', {
         fontFamily: PIXEL_FONT,
         fontSize: '14px',
         color: '#e9f8ff'
@@ -2190,7 +2196,7 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePartRows = {};
 
     listIds.forEach((partId, i) => {
-      const y = SIDE.y + 216 + i * 56;
+      const y = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET + i * TUNING_CATEGORY_ROW_GAP;
       const part = ENGINE_TUNING_PARTS[partId];
 
       const box = add(this.add.rectangle(
@@ -3056,17 +3062,17 @@ export default class GarageScene extends Phaser.Scene {
     if (this.textures.exists('tuningCategoryChassis')) {
       const logo = add(this.add.image(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 72,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
         'tuningCategoryChassis'
       ).setOrigin(0.5).setDepth(73));
 
       const source = this.textures.get('tuningCategoryChassis').getSourceImage();
       logo.setScale(Math.min(
         (SIDE.w - 54) / source.width,
-        126 / source.height
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
       ));
     } else {
-      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 72, 'CHASSIS', {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, 'CHASSIS', {
         fontFamily: PIXEL_FONT,
         fontSize: '13px',
         color: '#e9f8ff',
@@ -3076,7 +3082,7 @@ export default class GarageScene extends Phaser.Scene {
     this.chassisPartRows = {};
     CHASSIS_PART_ORDER.forEach((partId, index) => {
       const part = CHASSIS_TUNING_PARTS[partId];
-      const y = SIDE.y + 170 + index * 66;
+      const y = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET + index * 62;
 
       const box = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
@@ -3112,7 +3118,7 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPartRows[partId] = { box, label, detail, level };
     });
 
-    const paintY = SIDE.y + 302;
+    const paintY = SIDE.y + 338;
     this.chassisPaintMenuButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       paintY,
@@ -3161,7 +3167,7 @@ export default class GarageScene extends Phaser.Scene {
     if (visualCatalog) {
       getVisualModSlotIds(this.selectedCarId).forEach((slotId, index) => {
         const slot = visualCatalog.slots[slotId];
-        const y = SIDE.y + 366 + index * 56;
+        const y = SIDE.y + 402 + index * TUNING_CATEGORY_ROW_GAP;
 
         const box = add(this.add.rectangle(
           SIDE.x + SIDE.w / 2,
@@ -3199,7 +3205,7 @@ export default class GarageScene extends Phaser.Scene {
 
       this.visualModsApplyButton = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 548,
+        SIDE.y + 534,
         SIDE.w - 36,
         38,
         0x102226,
@@ -3208,7 +3214,7 @@ export default class GarageScene extends Phaser.Scene {
 
       this.visualModsApplyText = add(this.add.text(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 548,
+        SIDE.y + 534,
         'VISUAL MODS INSTALLED',
         {
           fontFamily: PIXEL_FONT,
@@ -4158,17 +4164,17 @@ export default class GarageScene extends Phaser.Scene {
     if (this.textures.exists(secondaryCategoryKey)) {
       const logo = add(this.add.image(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 102,
+        SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET,
         secondaryCategoryKey
       ).setOrigin(0.5).setDepth(73));
 
       const source = this.textures.get(secondaryCategoryKey).getSourceImage();
       logo.setScale(Math.min(
         (SIDE.w - 54) / source.width,
-        164 / source.height
+        TUNING_CATEGORY_LOGO_MAX_HEIGHT / source.height
       ));
     } else {
-      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 102, secondaryCategoryName, {
+      add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + TUNING_CATEGORY_LOGO_Y_OFFSET, secondaryCategoryName, {
         fontFamily: PIXEL_FONT,
         fontSize: '13px',
         color: '#e9f8ff',
@@ -4176,8 +4182,8 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.secondaryPartRows = {};
-    const rowStartY = isDrivetrain ? SIDE.y + 244 : SIDE.y + 232;
-    const rowGap = isDrivetrain ? 68 : 58;
+    const rowStartY = SIDE.y + TUNING_CATEGORY_ROW_START_OFFSET;
+    const rowGap = TUNING_CATEGORY_ROW_GAP;
     order.forEach((partId, i) => {
       const y = rowStartY + i * rowGap;
       const part = parts[partId];
