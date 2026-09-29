@@ -9,13 +9,10 @@ export const WORKSHOP_PRESENTATION = Object.freeze({
     x: 708,
     targetWidth: 620,
 
-    // Use the established AE86 reference only to derive a common tyre baseline.
-    // baselineOffsetY lets us move every workshop car vertically without
-    // changing its size or per-model wheel geometry.
-    baselineReferenceCarId: 'ae86',
-    baselineReferenceBodyY: 306,
-    baselineReferenceWidth: 690,
-    baselineOffsetY: 26,
+    // Absolute visible tyre-contact line in workshop scene coordinates.
+    // Never derive this from another car's texture: workshops lazy-load only
+    // their local cars, so a reference car may not be present.
+    tyreContactY: 500,
   }),
 
   thumbnail: Object.freeze({
