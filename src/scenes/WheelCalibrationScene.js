@@ -8,7 +8,7 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
 } from '../vehicles/CarAppearance.js?v=20260929-r247';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r257';
+import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
