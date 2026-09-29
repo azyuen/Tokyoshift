@@ -583,74 +583,6 @@ export function showSettingsPanel(scene) {
 
   historyButton.on('pointerdown', () => showCarHistoryPanel(scene));
 
-  // Per-driver race difficulty. Existing profiles normalise to STANDARD, so
-  // adding this setting never silently changes an established career.
-  add(scene.add.text(410, 108, 'RACE DIFFICULTY // PER DRIVER', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#8fbfd6',
-  }).setOrigin(0, 0.5).setDepth(183));
-
-  let activeDifficulty = normalisePlayerDifficulty(
-    scene.registry.get('playerDifficulty')
-  );
-  const difficultyProfileAvailable = Boolean(
-    getProfileSlots()[getActiveProfileIndex()]?.occupied
-  );
-  const difficultyButtons = [];
-  const difficultyXs = [735, 865, 995];
-
-  const refreshDifficulty = () => {
-    difficultyButtons.forEach(({ id, box, label }) => {
-      const active = id === activeDifficulty;
-      box
-        .setFillStyle(active ? 0x123044 : 0x0c1721, 1)
-        .setStrokeStyle(active ? 2 : 1, active ? 0x55dcff : 0x355267, 1);
-      label.setColor(active ? '#f2fcff' : '#7895a5');
-    });
-  };
-
-  PLAYER_DIFFICULTIES.forEach((id, index) => {
-    const box = add(scene.add.rectangle(
-      difficultyXs[index],
-      108,
-      116,
-      30,
-      0x0c1721,
-      1
-    ).setStrokeStyle(1, 0x355267, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(183));
-
-    const label = add(scene.add.text(difficultyXs[index], 108, id, {
-      fontFamily: PIXEL_FONT,
-      fontSize: id === 'STANDARD' ? '5px' : '6px',
-      color: '#7895a5',
-    }).setOrigin(0.5).setDepth(184));
-
-    if (difficultyProfileAvailable) {
-      box.on('pointerdown', () => {
-        activeDifficulty = id;
-        scene.registry.set('playerDifficulty', id);
-        saveSessionState(scene.registry);
-        refreshDifficulty();
-      });
-    } else {
-      box.disableInteractive();
-      label.setColor('#4e5c65');
-    }
-
-    difficultyButtons.push({ id, box, label });
-  });
-
-  add(scene.add.text(1145, 108, 'FUTURE RACES', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '5px',
-    color: '#5f7785',
-  }).setOrigin(1, 0.5).setDepth(183));
-
-  refreshDifficulty();
-
   let settings = getAudioSettings();
 
   const buildVolumeRow = (label, y, key) => {
@@ -1100,25 +1032,86 @@ export function showSettingsPanel(scene) {
 
   refreshProfileSelection();
 
-  add(scene.add.text(780, 735, 'PROFILE BACKUP', {
+  // Keep the low-priority account controls together at the bottom:
+  // difficulty on the left, profile backup on the right.
+  add(scene.add.text(520, 735, 'RACE DIFFICULTY', {
+    fontFamily: PIXEL_FONT,
+    fontSize: '5px',
+    color: '#6f8f9f',
+  }).setOrigin(0.5).setDepth(183));
+
+  let activeDifficulty = normalisePlayerDifficulty(
+    scene.registry.get('playerDifficulty')
+  );
+  const difficultyProfileAvailable = Boolean(
+    getProfileSlots()[getActiveProfileIndex()]?.occupied
+  );
+  const difficultyButtons = [];
+  const difficultyXs = [410, 520, 630];
+
+  const refreshDifficulty = () => {
+    difficultyButtons.forEach(({ id, box, label }) => {
+      const active = id === activeDifficulty;
+      box
+        .setFillStyle(active ? 0x123044 : 0x0c1721, 1)
+        .setStrokeStyle(active ? 2 : 1, active ? 0x55dcff : 0x355267, 1);
+      label.setColor(active ? '#f2fcff' : '#7895a5');
+    });
+  };
+
+  PLAYER_DIFFICULTIES.forEach((id, index) => {
+    const box = add(scene.add.rectangle(
+      difficultyXs[index],
+      765,
+      96,
+      28,
+      0x0c1721,
+      1
+    ).setStrokeStyle(1, 0x355267, 1)
+      .setDepth(183));
+
+    const label = add(scene.add.text(difficultyXs[index], 765, id, {
+      fontFamily: PIXEL_FONT,
+      fontSize: id === 'STANDARD' ? '4px' : '5px',
+      color: '#7895a5',
+    }).setOrigin(0.5).setDepth(184));
+
+    if (difficultyProfileAvailable) {
+      box.setInteractive({ useHandCursor: true });
+      box.on('pointerdown', () => {
+        activeDifficulty = id;
+        scene.registry.set('playerDifficulty', id);
+        saveSessionState(scene.registry);
+        refreshDifficulty();
+      });
+    } else {
+      box.disableInteractive();
+      label.setColor('#4e5c65');
+    }
+
+    difficultyButtons.push({ id, box, label });
+  });
+  refreshDifficulty();
+
+  add(scene.add.text(980, 735, 'PROFILE BACKUP', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#536b79',
   }).setOrigin(0.5).setDepth(183));
 
-  const exportBackupButton = add(scene.add.rectangle(690, 765, 160, 28, 0x0d1720, 1)
+  const exportBackupButton = add(scene.add.rectangle(900, 765, 140, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const exportBackupLabel = add(scene.add.text(690, 765, 'EXPORT', {
+  const exportBackupLabel = add(scene.add.text(900, 765, 'EXPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
   }).setOrigin(0.5).setDepth(184));
 
-  const importBackupButton = add(scene.add.rectangle(870, 765, 160, 28, 0x0d1720, 1)
+  const importBackupButton = add(scene.add.rectangle(1060, 765, 140, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const importBackupLabel = add(scene.add.text(870, 765, 'IMPORT', {
+  const importBackupLabel = add(scene.add.text(1060, 765, 'IMPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
