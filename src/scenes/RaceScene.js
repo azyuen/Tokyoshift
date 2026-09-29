@@ -39,7 +39,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r246';
+} from '../state/GameState.js?v=20260929-r268';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
