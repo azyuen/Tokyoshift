@@ -63,6 +63,7 @@ import {
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20260926-r214';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
@@ -74,8 +75,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 
 const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
-const GPS = { x: 1180, y: 92, w: 356, h: 140 };
-const SIDE = { x: 1180, y: 248, w: 356, h: 568 };
+const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 
 const TAXI_TO_WORKSHOP_COST = 1000;
@@ -349,7 +349,6 @@ export default class MeetScene extends Phaser.Scene {
 
     this.drawBase();
     this.buildHeader();
-    this.buildGpsPanel();
     this.buildSidebar();
     this.buildBottomArea();
     this.buildDevControls();
@@ -1020,7 +1019,7 @@ export default class MeetScene extends Phaser.Scene {
     }).setOrigin(0, 0.5).setDepth(42);
 
     this.locationText = this.add.text(235, 35, 'TOKYO // NIGHT MEET', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8bbde0'
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
     }).setOrigin(0, 0.5).setDepth(42);
 
     const wins = this.registry.get('wins') ?? 0;
@@ -1035,7 +1034,8 @@ export default class MeetScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
     }).setOrigin(1, 0.5).setDepth(42);
 
-    addSettingsButton(this, 955, 35);
+    const settingsUi = addSettingsButton(this, 900, 35);
+    settingsUi?.devCutscenes?.destroy?.();
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
@@ -1045,20 +1045,26 @@ export default class MeetScene extends Phaser.Scene {
   buildDevControls() {
     if (!this.registry.get('devMode')) return;
 
-    const makeButton = (y, labelText, fill, stroke, onPress) => {
+    const width = 330;
+    const x = STAGE.x + STAGE.w - width / 2 - 16;
+    const startY = STAGE.y + 24;
+    const gap = 38;
+
+    const makeButton = (index, labelText, fill, stroke, onPress) => {
+      const y = startY + index * gap;
       const box = this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
+        x,
         y,
-        SIDE.w - 36,
+        width,
         30,
         fill,
-        0.98
-      ).setStrokeStyle(1, stroke, 0.95)
+        0.94
+      ).setStrokeStyle(1, stroke, 0.98)
         .setInteractive({ useHandCursor: true })
-        .setDepth(43);
+        .setDepth(88);
 
       const label = this.add.text(
-        SIDE.x + SIDE.w / 2,
+        x,
         y,
         labelText,
         {
@@ -1066,14 +1072,24 @@ export default class MeetScene extends Phaser.Scene {
           fontSize: '7px',
           color: '#f4fbff',
         }
-      ).setOrigin(0.5).setDepth(44);
+      ).setOrigin(0.5).setDepth(89);
 
       box.on('pointerdown', onPress);
       return { box, label, defaultText: labelText };
     };
 
+    this.devScenesControl = makeButton(
+      0,
+      'DEV // SCENES',
+      0x15131c,
+      0xff72a6,
+      () => {
+        if (!sceneCutsceneActive(this)) showCutsceneTester(this);
+      }
+    );
+
     this.devForceTeamChallengeControl = makeButton(
-      644,
+      1,
       'DEV // FORCE TUNER TEAM CHALLENGE',
       0x261a0d,
       0xe4b660,
@@ -1081,7 +1097,7 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     this.devForceChallengerControl = makeButton(
-      684,
+      2,
       'DEV // FORCE SPECIAL CHALLENGER',
       0x25101a,
       0xff5f93,
@@ -1089,7 +1105,7 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     this.devRefreshChallengesControl = makeButton(
-      724,
+      3,
       'DEV // REFRESH ALL MEET CHALLENGES',
       0x0b1c28,
       0x43dfff,
@@ -1206,78 +1222,17 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildGpsPanel() {
-    this.gpsPanel = this.add.rectangle(
-      GPS.x + GPS.w / 2,
-      GPS.y + GPS.h / 2,
-      GPS.w,
-      GPS.h,
-      0x07111d,
-      0.98
-    ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
-
-    this.add.text(GPS.x + 20, GPS.y + 14, 'GPS', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
-    }).setDepth(37);
-
-    this.gpsLocationText = this.add.text(
-      GPS.x + GPS.w - 20,
-      GPS.y + 16,
-      '',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#dff7ff',
-      }
-    ).setOrigin(1, 0).setDepth(37);
-
-    this.gpsMetaText = this.add.text(
-      GPS.x + 20,
-      GPS.y + 52,
-      '',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: '#7896a9',
-        fontStyle: '600',
-      }
-    ).setDepth(37);
-
-    this.gpsTravelButton = this.add.rectangle(
-      GPS.x + GPS.w / 2,
-      GPS.y + 105,
-      GPS.w - 40,
-      38,
-      0x0b1724,
-      1
-    ).setStrokeStyle(1, 0x315470, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(37);
-
-    this.add.text(
-      GPS.x + GPS.w / 2,
-      GPS.y + 105,
-      this.hasCar ? 'GO SOMEWHERE ELSE  >' : 'NO CAR // CAN\'T DRIVE',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#dff7ff',
-      }
-    ).setOrigin(0.5).setDepth(38);
-
-    this.gpsTravelButton.on('pointerdown', () => this.showDistrictPopup());
-    if (!this.hasCar) {
-      this.gpsTravelButton.disableInteractive()
-        .setFillStyle(0x10151b, 1)
-        .setStrokeStyle(1, 0x46545e, 1);
-    }
-    this.updateGpsPanel();
+    // Navigation now lives in the full-height race sidebar.
   }
 
   updateGpsPanel() {
     const current = getMeetLocation(this.selectedMeetLocation);
-    this.gpsLocationText?.setText(current.district + ' // ' + current.label);
-    this.gpsMetaText?.setText(
-      current.timeOfDay.toUpperCase() + '  •  ' + current.difficulty
+    const phase = this.worldPhase || getWorldPhase();
+    this.locationText?.setText(
+      current.district + ' // ' +
+      current.label + ' // ' +
+      phase.toUpperCase() + ' // ' +
+      current.difficulty
     );
   }
 
@@ -1389,8 +1344,10 @@ export default class MeetScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(SIDE.x + 20, 266, 'RACE MODE', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#8cc8ec'
+    this.add.text(SIDE.x + 20, SIDE.y + 18, 'RACE MODE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '12px',
+      color: '#8cc8ec',
     }).setDepth(37);
 
     const storedCompetition =
@@ -1401,11 +1358,10 @@ export default class MeetScene extends Phaser.Scene {
     const competitionUsed =
       Boolean(storedCompetition?.used) &&
       !storedCompetitionExpired;
-    const competitionCooldownRemaining =
-      Math.max(
-        0,
-        Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
-      );
+    const competitionCooldownRemaining = Math.max(
+      0,
+      Number(this.registry.get('competitionCooldownUntil') || 0) - Date.now()
+    );
     const competitionOnCooldown = competitionCooldownRemaining > 0;
     const competitionUnlocked =
       this.hasCar &&
@@ -1423,16 +1379,12 @@ export default class MeetScene extends Phaser.Scene {
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
-      [
-        competitionLabel,
-        'COMPETITION',
-        !competitionUnlocked,
-      ],
+      [competitionLabel, 'COMPETITION', !competitionUnlocked],
     ];
 
     this.modeButtons = [];
     buttons.forEach((row, i) => {
-      const y = 326 + i * 50;
+      const y = SIDE.y + 64 + i * 50;
       const locked = row[2];
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
@@ -1441,13 +1393,16 @@ export default class MeetScene extends Phaser.Scene {
         40,
         locked ? 0x0a1017 : 0x10283b,
         1
-      ).setStrokeStyle(locked ? 1 : 2, locked ? 0x29343d : 0x43dfff, 1)
-        .setDepth(37);
+      ).setStrokeStyle(
+        locked ? 1 : 2,
+        locked ? 0x29343d : 0x43dfff,
+        1
+      ).setDepth(37);
 
       const label = this.add.text(SIDE.x + 24, y, row[0], {
         fontFamily: PIXEL_FONT,
         fontSize: locked ? '7px' : '10px',
-        color: locked ? '#53626c' : '#ffffff'
+        color: locked ? '#53626c' : '#ffffff',
       }).setOrigin(0, 0.5).setDepth(38);
 
       if (!locked && row[1] === 'COMPETITION') {
@@ -1458,29 +1413,85 @@ export default class MeetScene extends Phaser.Scene {
       this.modeButtons.push({ key: row[1], box, label, locked });
     });
 
-    this.add.text(SIDE.x + 20, 430, 'SELECTED RIVAL', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
+    const selectedCarId = this.registry.get('selectedCarId');
+    const selectedCar = cars[selectedCarId];
+
+    this.add.text(SIDE.x + 20, SIDE.y + 174, 'YOUR CAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#8cc8ec',
     }).setDepth(37);
 
-    this.selectedSummary = this.add.text(SIDE.x + 20, 458, '', {
+    this.currentCarText = this.add.text(
+      SIDE.x + SIDE.w - 20,
+      SIDE.y + 174,
+      selectedCar?.shortName || 'NO CAR',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectedCar ? '#dff7ff' : '#72838f',
+      }
+    ).setOrigin(1, 0).setDepth(37);
+
+    this.add.text(SIDE.x + 20, SIDE.y + 218, 'SELECTED RIVAL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#8cc8ec',
+    }).setDepth(37);
+
+    this.selectedSummary = this.add.text(SIDE.x + 20, SIDE.y + 246, '', {
       fontFamily: BODY_FONT,
-      fontSize: '13px',
+      fontSize: '12px',
       color: '#d8e7ef',
-      lineSpacing: 1,
+      lineSpacing: 0,
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(37);
 
-    this.add.text(SIDE.x + 20, 536, 'RIVAL OFFER', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8cc8ec'
+    this.add.text(SIDE.x + 20, SIDE.y + 352, 'RIVAL OFFER', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#8cc8ec',
     }).setDepth(37);
 
-    this.rivalOfferText = this.add.text(SIDE.x + SIDE.w - 20, 536, '', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
-    }).setOrigin(1, 0).setDepth(37);
+    this.rivalOfferText = this.add.text(
+      SIDE.x + SIDE.w - 20,
+      SIDE.y + 352,
+      '',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#ffe08a',
+      }
+    ).setOrigin(1, 0).setDepth(37);
+
+    // Primary action now sits where the old pink-slip button lived.
+    this.raceButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 492,
+      SIDE.w - 36,
+      44,
+      0x0b2826,
+      1
+    ).setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(38);
+
+    this.raceButtonLabel = this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 492,
+      'RACE  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#f1fffb',
+      }
+    ).setOrigin(0.5).setDepth(39);
+
+    this.raceButton.on('pointerdown', () => this.startSelectedRace());
 
     this.pinkSlipButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      584,
+      SIDE.y + 552,
       SIDE.w - 36,
       40,
       0x291620,
@@ -1491,51 +1502,60 @@ export default class MeetScene extends Phaser.Scene {
 
     this.pinkSlipButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      584,
+      SIDE.y + 552,
       'PINK SLIPS?',
       {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffdce8'
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#ffdce8',
       }
     ).setOrigin(0.5).setDepth(38);
 
     this.pinkResponseText = this.add.text(
       SIDE.x + SIDE.w / 2,
-      615,
+      SIDE.y + 584,
       '',
       {
         fontFamily: BODY_FONT,
-        fontSize: '11px',
+        fontSize: '10px',
         color: '#91a9b7',
-        wordWrap: { width: SIDE.w - 40 },
+        wordWrap: { width: SIDE.w - 44 },
         align: 'center',
+        lineSpacing: 0,
       }
     ).setOrigin(0.5, 0).setDepth(38);
 
     this.pinkSlipButton.on('pointerdown', () => this.challengePinkSlips());
 
-    // Keep the action buttons aligned with the padded bottom margin.
-    this.raceButton = this.add.rectangle(
+    // Match Central Tokyo and Workshop navigation: the map is always the
+    // bottom-right action, including when the player is stranded.
+    this.mapButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      782,
-      SIDE.w - 36,
+      SIDE.y + SIDE.h - 34,
+      SIDE.w - 32,
       42,
-      0x0b2826,
+      0x102138,
       1
-    ).setStrokeStyle(2, 0x62e8c7, 1)
+    ).setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
-      .setDepth(38);
+      .setDepth(40);
 
-    this.raceButtonLabel = this.add.text(
+    this.mapButtonLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
-      782,
-      'RACE  >',
+      SIDE.y + SIDE.h - 34,
+      'GO TO MAP  >',
       {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#f1fffb'
+        fontFamily: PIXEL_FONT,
+        fontSize: '10px',
+        color: '#eef8ff',
       }
-    ).setOrigin(0.5).setDepth(39);
+    ).setOrigin(0.5).setDepth(41);
 
-    this.raceButton.on('pointerdown', () => this.startSelectedRace());
+    this.mapButton.on('pointerdown', () => this.showDistrictPopup());
 
+    // Backward-compatible alias for special-challenger code that temporarily
+    // disables navigation while the challenge presentation is active.
+    this.gpsTravelButton = this.mapButton;
   }
 
   updateWorkshopButton() {
@@ -1900,9 +1920,7 @@ export default class MeetScene extends Phaser.Scene {
     this.raceButton?.removeAllListeners('pointerdown');
     this.raceButton?.on('pointerdown', () => this.startSelectedRace());
 
-    if (this.hasCar) {
-      this.gpsTravelButton?.setInteractive({ useHandCursor: true });
-    }
+    this.mapButton?.setInteractive({ useHandCursor: true });
 
     this.modeButtons?.forEach(item => {
       if (item.key === 'COMPETITION' && !item.locked) {
@@ -2833,7 +2851,8 @@ export default class MeetScene extends Phaser.Scene {
     const phaseBackground = getMeetBackgroundForPhase(location.id, worldPhase);
     this.setMeetBackground(
       phaseBackground?.key || location.bgKey,
-      location.district + ' // ' + location.label + ' // ' + worldPhase.toUpperCase(),
+      location.district + ' // ' + location.label + ' // ' +
+        worldPhase.toUpperCase() + ' // ' + location.difficulty,
       location.bgKey
     );
 
@@ -3166,8 +3185,8 @@ export default class MeetScene extends Phaser.Scene {
 
   drawCards() {
     const xPositions = [215, 593, 971];
-    const cardY = 746;
-    const cardH = 124;
+    const cardY = 748;
+    const cardH = 132;
     const pinkLossCelebration = this.offers.some(
       offer => offer?.pinkSlipResult === 'PLAYER_LOSS'
     );
@@ -3219,7 +3238,7 @@ export default class MeetScene extends Phaser.Scene {
 
       const textX = x - 42;
 
-      const name = this.add.text(textX, cardY - 63, character.name.toUpperCase(), {
+      const name = this.add.text(textX, cardY - 52, character.name.toUpperCase(), {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
         color: '#ffffff'
@@ -3232,12 +3251,12 @@ export default class MeetScene extends Phaser.Scene {
           ? (character.resultQuotes?.win || 'That run was mine.')
           : offer.quote;
 
-      const quote = this.add.text(textX, cardY - 35, '"' + quoteText + '"', {
+      const quote = this.add.text(textX, cardY - 26, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,
-        fontSize: '12px',
+        fontSize: '11px',
         color: offer.locked ? '#8f9da6' : '#9fb4c2',
         wordWrap: { width: 214 },
-        lineSpacing: 1,
+        lineSpacing: -2,
       }).setDepth(35);
 
       let statusText = null;
@@ -3250,7 +3269,7 @@ export default class MeetScene extends Phaser.Scene {
               ? 'WON YOUR CAR'
               : 'DEFEATED';
 
-        statusText = this.add.text(textX, cardY + 31, status, {
+        statusText = this.add.text(textX, cardY + 48, status, {
           fontFamily: PIXEL_FONT,
           fontSize: '6px',
           color: offer.resultState === 'PLAYER_WIN' ? '#79dff1' : '#ff9ab8',
@@ -3625,7 +3644,8 @@ export default class MeetScene extends Phaser.Scene {
       const phaseBackground = getMeetBackgroundForPhase(location.id, nextWorldPhase);
       this.setMeetBackground(
         phaseBackground?.key || location.bgKey,
-        location.district + ' // ' + location.label + ' // ' + nextWorldPhase.toUpperCase(),
+        location.district + ' // ' + location.label + ' // ' +
+          nextWorldPhase.toUpperCase() + ' // ' + location.difficulty,
         location.bgKey
       );
     }
