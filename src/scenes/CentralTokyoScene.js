@@ -31,14 +31,18 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r268';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r269';
+} from '../state/GameState.js?v=20260929-r272';
+import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r272';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r247';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260926-r211';
+import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
+import {
+  applyMarketPriceDifficulty,
+  getMarketPriceMultiplier,
+} from '../data/careerProgression.js?v=20260929-r272';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
@@ -65,7 +69,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260929-r263';
+} from '../data/centralTokyo.js?v=20260929-r272';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -1067,13 +1071,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const paintColor = neutrals[
           this.marketHash(this.getAutoMarketCycle() + ':' + item.carId + ':new') % neutrals.length
         ];
-        const price = getAutoMarketBasePrice(item.carId);
+        const standardPrice = getAutoMarketBasePrice(item.carId);
+        const price = applyMarketPriceDifficulty(this.registry, standardPrice, 'new');
         return {
           ...item,
           marketType: 'new',
           buildLabel: 'FACTORY STOCK',
           price,
-          listPrice: price,
+          standardPrice,
+          listPrice: standardPrice,
           paintColor,
           previewState: getNewCarState(item.carId, paintColor),
           conditionLabel: 'NEW // FACTORY STOCK',
@@ -1110,7 +1116,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const percent = isDeal
           ? 74 + ((seed >>> 8) % 9)
           : 88 + ((seed >>> 8) % 23);
-        const listPrice = Math.max(
+        const standardListPrice = Math.max(
           100000,
           Math.round(
             (Number(item.price || getAutoMarketBasePrice(item.carId)) * percent / 100) / 10000
@@ -1130,11 +1136,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const haggleKey = cycle + ':' + item.carId;
         const haggle = this.getHaggleRecord(haggleKey);
 
+        const negotiatedStandardPrice = Math.max(
+          0,
+          Number(haggle?.price || standardListPrice)
+        );
+        const price = applyMarketPriceDifficulty(
+          this.registry,
+          negotiatedStandardPrice,
+          'used'
+        );
+
         return {
           ...item,
           marketType: 'used',
-          listPrice,
-          price: Math.max(0, Number(haggle?.price || listPrice)),
+          listPrice: standardListPrice,
+          standardPrice: negotiatedStandardPrice,
+          price,
           paintColor,
           previewState,
           haggleKey,
@@ -1533,11 +1550,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     ).setDepth(34));
 
+    const marketMultiplier = getMarketPriceMultiplier(this.registry, room);
+    const standardPrice = Number(listing.standardPrice || listing.price || 0);
+    const priceLabel = marketMultiplier < 1
+      ? 'EASY PRICE  ' + money(listing.price) + '  //  STANDARD ' + money(standardPrice)
+      : (room === 'new' ? 'STANDARD PRICE  ' : 'ASKING  ') + money(listing.price);
+
     this.addContent(this.add.text(
       SIDE.x + 20,
       y0 + 172,
-      (room === 'new' ? 'STANDARD PRICE  ' : 'ASKING  ') + money(listing.price),
-      { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe08a' }
+      priceLabel,
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: marketMultiplier < 1 ? '7px' : '9px',
+        color: '#ffe08a',
+        wordWrap: { width: SIDE.w - 40 },
+      }
     ).setDepth(34));
 
     if (room === 'new') {
@@ -1748,8 +1776,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     add(this.add.text(
       780,
       342,
-      cars[listing.carId].shortName + ' // ASKING ' + money(listing.listPrice) +
-        '\nOne attempt. A rejected offer makes the listed price firm.',
+      cars[listing.carId].shortName + ' // ASKING ' + money(listing.price) +
+        '\nOne attempt. Easy driver discount remains after bargaining.',
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -1785,24 +1813,30 @@ export default class CentralTokyoScene extends Phaser.Scene {
       button.on('pointerdown', () => {
         const roll = Math.random();
         let status = 'rejected';
-        let finalPrice = listing.listPrice;
+        let finalStandardPrice = listing.listPrice;
 
         if (roll < offer.accept) {
           status = 'accepted';
-          finalPrice = Math.round(
+          finalStandardPrice = Math.round(
             listing.listPrice * (1 - offer.discount) / 10000
           ) * 10000;
         } else if (roll < offer.accept + offer.counter) {
           status = 'countered';
-          finalPrice = Math.round(
+          finalStandardPrice = Math.round(
             listing.listPrice * (1 - offer.discount * 0.5) / 10000
           ) * 10000;
         }
 
+        const finalPrice = applyMarketPriceDifficulty(
+          this.registry,
+          finalStandardPrice,
+          'used'
+        );
+
         const current = { ...(this.registry.get('autoMarketHaggles') || {}) };
         current[listing.haggleKey] = {
           status,
-          price: finalPrice,
+          price: finalStandardPrice,
           attemptedAt: Date.now(),
         };
 
@@ -1822,7 +1856,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
             ? 'COUNTER OFFER'
             : 'OFFER REJECTED';
         const message = status === 'rejected'
-          ? 'Seller stays at ' + money(listing.listPrice) + '. The price is now firm.'
+          ? 'Seller stays at ' + money(listing.price) + '. The price is now firm.'
           : 'New price: ' + money(finalPrice);
 
         this.showTransactionConfirm({
