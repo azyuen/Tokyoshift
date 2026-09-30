@@ -183,6 +183,10 @@ export default class DynoScene extends Phaser.Scene {
     });
     this.introUiObjects = [];
     this.activeUiObjects = [];
+    (this.shiftLabelObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.shiftLabelObjects = [];
     this.runButton = null;
     this.resultsButton = null;
 
@@ -440,10 +444,6 @@ export default class DynoScene extends Phaser.Scene {
 
     // Stage I services are deliberately simple: buy the test you want.
     // Power Run is one pull; Drivetrain Test buys three attempts.
-    add(this.add.text(1148, 122, 'STAGE I', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe08a'
-    }).setDepth(29));
-
     const powerBox = add(this.add.rectangle(x, 178, 380, 100, 0x07111d, 0.97)
       .setStrokeStyle(2, 0x62e8c7, 0.95)
       .setInteractive({ useHandCursor: true }).setDepth(28));
@@ -854,7 +854,10 @@ export default class DynoScene extends Phaser.Scene {
 
     // A completed Power Run or Drivetrain attempt simply returns to the
     // service selection flow when its purchased attempts are exhausted.
-    if (this.sessionPullsRemaining <= 0) this.dynoRunMode = 'power';
+    if (this.sessionPullsRemaining <= 0) {
+      this.dynoRunMode = 'power';
+      this.drawIntroUi();
+    }
 
     this.refreshPullCounter();
     this.refreshRunButton();
@@ -1040,7 +1043,7 @@ export default class DynoScene extends Phaser.Scene {
         const label = this.add.text(
           x,
           labelY,
-          event.fromGear + '→' + event.toGear + '\\n' +
+          event.fromGear + '→' + event.toGear + '\n' +
           Math.round(event.rpmBefore).toLocaleString('en-US') + '→' +
           Math.round(event.rpmAfter).toLocaleString('en-US'),
           {
