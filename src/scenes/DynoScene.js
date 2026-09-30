@@ -1,4 +1,4 @@
-import TouchControls from '../input/TouchControls.js?v=20260930-r292';
+import TouchControls from '../input/TouchControls.js?v=20260930-r296';
 import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';

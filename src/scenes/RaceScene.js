@@ -1,5 +1,5 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20260929-r268';
-import TouchControls from '../input/TouchControls.js?v=20260926-r209';
+import TouchControls from '../input/TouchControls.js?v=20260930-r296';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import {
   applyDifficultyToPlayerCarConfig,

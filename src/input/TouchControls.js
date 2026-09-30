@@ -87,7 +87,53 @@ export default class TouchControls {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
+    scene.input.on('pointerdown', pointer => {
+      if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
+        this.clutchPointer = pointer;
+        this.clutchStartY = pointer.y;
+        this.clutchLatchedMax = false;
+      } else if (!this.throttlePointer && this.layout.throttle.contains(pointer.x, pointer.y)) {
+        this.throttlePointer = pointer;
+        this.throttleStartY = pointer.y;
+        this.throttleLatchedMax = false;
+      } else if (!this.shifterPointer && this.layout.shifter.contains(pointer.x, pointer.y)) {
+        this.shifterPointer = pointer;
+        this.shifterStartY = pointer.y;
+        this.shifterSwipeDirection = 'neutral';
+        this.shifterSwipeConsumed = false;
+      }
+    });
 
+    scene.input.on('pointermove', pointer => {
+      if (pointer !== this.shifterPointer || !pointer.isDown) return;
+
+      const deltaY = pointer.y - this.shifterStartY;
+      if (Math.abs(deltaY) >= 18) {
+        this.shifterSwipeDirection = deltaY < 0 ? 'up' : 'down';
+      }
+
+      if (!this.shifterSwipeConsumed && Math.abs(deltaY) >= this.shifterSwipePx) {
+        this.pendingGearRequest = deltaY < 0 ? 'UP' : 'DOWN';
+        this.shifterSwipeConsumed = true;
+      }
+    });
+
+    scene.input.on('pointerup', pointer => {
+      if (pointer === this.clutchPointer) {
+        this.clutchPointer = null;
+        this.clutchLatchedMax = false;
+      }
+      if (pointer === this.throttlePointer) {
+        this.throttlePointer = null;
+        this.throttleLatchedMax = false;
+      }
+      if (pointer === this.shifterPointer) {
+        this.shifterPointer = null;
+        this.shifterSwipeDirection = 'neutral';
+        this.shifterSwipeConsumed = false;
+      }
+    });
+  }
 
   pointerIn(rect) {
     return this.scene.input.manager.pointers.find(p => p.isDown && rect.contains(p.x, p.y));
@@ -172,28 +218,6 @@ export default class TouchControls {
     const g = this.pendingGearRequest;
     this.pendingGearRequest = null;
     return g;
-  }
-
-  destroy() {
-    try {
-      this.scene?.input?.off('pointerdown', this.onPointerDown);
-      this.scene?.input?.off('pointermove', this.onPointerMove);
-      this.scene?.input?.off('pointerup', this.onPointerUp);
-    } catch (e) {}
-
-    this.clutchPointer = null;
-    this.throttlePointer = null;
-    this.shifterPointer = null;
-    this.pendingGearRequest = null;
-    this.enabled = false;
-
-    try { this.graphics?.destroy(); } catch (e) {}
-    try { this.clutchSprite?.destroy(); } catch (e) {}
-    try { this.nosSprite?.destroy(); } catch (e) {}
-    try { this.shifterSprite?.destroy(); } catch (e) {}
-    try { this.throttleSprite?.destroy(); } catch (e) {}
-    try { this.plusLabel?.destroy(); } catch (e) {}
-    try { this.minusLabel?.destroy(); } catch (e) {}
   }
 
   snapshot() {
