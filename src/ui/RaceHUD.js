@@ -22,8 +22,11 @@ export default class RaceHUD {
       fontFamily: '"Silkscreen", monospace', fontSize: '11px', color: '#fff0b8'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
+    this.gearBack = scene.add.rectangle(0, 0, 72, 58, 0x071019, 0.86)
+      .setStrokeStyle(2, 0x6f8c9b, 0.82).setDepth(42).setScrollFactor(0);
+
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: '"Rajdhani", monospace', fontSize: '22px', color: '#f7f7f2', fontStyle: '700'
+      fontFamily: '"Rajdhani", monospace', fontSize: '30px', color: '#f7f7f2', fontStyle: '700'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
@@ -49,6 +52,7 @@ export default class RaceHUD {
   layoutText() {
     const gear = this.sourcePoint(1260, 229);
     const speed = this.sourcePoint(723, 352);
+    this.gearBack.setPosition(gear.x, gear.y);
     this.gearText.setPosition(gear.x, gear.y);
     this.speedText.setPosition(speed.x, speed.y);
   }
@@ -103,7 +107,10 @@ export default class RaceHUD {
     }
 
     this.status.setText(raceStatus);
-    this.gearText.setText(t.gear === 0 ? 'N' : String(t.gear));
+    const gearValue = Number(t.gear || 0);
+    this.gearText.setText(gearValue === 0 ? 'N' : String(gearValue));
+    this.gearText.setVisible(true);
+    this.gearBack.setVisible(true);
     this.speedText.setText(String(Math.round(t.speedKmh)));
   }
 }
