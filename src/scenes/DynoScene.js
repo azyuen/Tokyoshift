@@ -689,10 +689,13 @@ export default class DynoScene extends Phaser.Scene {
           wheelRPM * ratio
         );
 
+        const shiftPoint = getDynoPoint(this.build, oldRPM, this.currentBoost, 1);
         this.shiftEvents.push({
           speedKmh: Math.max(0, speedKmh),
           rpmBefore: oldRPM,
           rpmAfter: this.currentRPM,
+          powerKW: shiftPoint.powerKW,
+          torqueNm: shiftPoint.torqueNm,
           fromGear: oldGear,
           toGear: nextGear,
         });
