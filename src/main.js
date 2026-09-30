@@ -9,7 +9,7 @@ import RunOverScene from './scenes/RunOverScene.js?v=20260929-r272';
 import ResultScene from './scenes/ResultScene.js?v=20260924-r171';
 import TunerShopScene from './scenes/TunerShopScene.js?v=20260929-r286';
 import WheelCalibrationScene from './scenes/WheelCalibrationScene.js?v=20260929-r258';
-import DynoScene from './scenes/DynoScene.js?v=20260930-r292';
+import DynoScene from './scenes/DynoScene.js?v=20260930-r294';
 
 
 // Phone readability pass.
