@@ -40,7 +40,7 @@ const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
 const MONITOR = { x: 163, y: 82, w: 505, h: 230 };
-const CAR_X = 950;
+const CAR_X = 840;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
 
@@ -277,7 +277,7 @@ export default class DynoScene extends Phaser.Scene {
 
     this.telemetryText = this.add.text(
       MONITOR.x + 18,
-      MONITOR.y + MONITOR.h - 12,
+      MONITOR.y + MONITOR.h - 24,
       '',
       {
         fontFamily: BODY_FONT,
@@ -356,10 +356,12 @@ export default class DynoScene extends Phaser.Scene {
     this.carObjects = [...this.wheelObjects, ...this.carBodyObjects];
     this.carBodyBase = this.carBodyObjects.map(obj => ({ obj, y: obj.y }));
 
-    this.add.text(CAR_X, 638, cars[this.carId].name.toUpperCase(), {
+    /* Car identity is already known from the workshop selection. */
+    /* The dyno display is kept clean beneath the car. */
+    if (false) this.add.text(CAR_X, 638, cars[this.carId].name.toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#e8f6ff'
     }).setOrigin(0.5).setDepth(22);
-    this.add.text(
+    if (false) this.add.text(
       CAR_X,
       666,
       Math.round(this.build.car.powerKW) + ' kW  //  ' +
@@ -374,11 +376,11 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(345, 565, daichi.visual.spriteKey)
+      const sprite = this.add.image(345, 580, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
-      sprite.setScale(232 / Math.max(1, source.height));
+      sprite.setScale(250 / Math.max(1, source.height));
     }
 
     // Manga-style instruction tab tucked directly beneath the dyno dashboard.
@@ -603,6 +605,7 @@ export default class DynoScene extends Phaser.Scene {
     this.currentRPM = Number(this.build.engine.idleRPM || 850);
     this.currentBoost = 0;
     this.turbo = null;
+    this.finalDynoPoint = null;
     this.pullState = 'SETUP';
     if (this.dynoUiMode !== 'active') this.drawActiveUi();
     this.redrawGraph();
@@ -689,7 +692,7 @@ export default class DynoScene extends Phaser.Scene {
     if (this.pullState !== 'RUNNING') return;
     this.pullState = 'COMPLETE';
     this.controls.enabled = false;
-    this.audio?.fadeOut();
+    // Keep the engine model alive while the completed pull naturally winds down.
     this.sessionPullsRemaining = Math.max(0, this.sessionPullsRemaining - 1);
 
     const run = {
@@ -724,6 +727,12 @@ export default class DynoScene extends Phaser.Scene {
 
     this.carState = state;
     this.previousRun = run;
+    this.finalDynoPoint = run.points?.[run.points.length - 1] || {
+      rpm: this.currentRPM,
+      powerKW: run.analysis.peakPowerKW,
+      torqueNm: run.analysis.peakTorqueNm,
+      boostBar: this.currentBoost,
+    };
     this.daichiText.setText('DAICHI // ' + run.analysis.comment);
     this.refreshPullCounter();
     this.refreshRunButton();
@@ -911,13 +920,14 @@ export default class DynoScene extends Phaser.Scene {
   updateTelemetry(point = null, throttle = 0) {
     if (!this.telemetryText) return;
     const p = point || { powerKW: 0, torqueNm: 0, boostBar: 0 };
+    const displayPoint = point || this.finalDynoPoint || { powerKW: 0, torqueNm: 0, boostBar: 0 };
     this.telemetryText.setText(
       'RPM  ' + Math.round(this.currentRPM).toLocaleString('en-US') +
       '   //   GEAR  ' + (this.currentGear || 'N') +
       '   //   THROTTLE  ' + Math.round(clamp(throttle, 0, 1) * 100) + '%' +
-      '\nBOOST  ' + Number(p.boostBar || 0).toFixed(2) + ' bar' +
-      '   //   TORQUE  ' + Math.round(Number(p.torqueNm || 0)) + ' Nm' +
-      '   //   POWER  ' + Math.round(Number(p.powerKW || 0)) + ' kW'
+      '\nBOOST  ' + Number(displayPoint.boostBar || 0).toFixed(2) + ' bar' +
+      '   //   TORQUE  ' + Math.round(Number(displayPoint.torqueNm || 0)) + ' Nm' +
+      '   //   POWER  ' + Math.round(Number(displayPoint.powerKW || 0)) + ' kW'
     );
   }
 
@@ -954,6 +964,21 @@ export default class DynoScene extends Phaser.Scene {
         this.daichiText.setText('DAICHI // READY. Hold full throttle for the pull.');
         if (Number(input.throttle || 0) >= 0.86) this.startRunning();
       }
+      return;
+    }
+
+    if (this.pullState === 'COMPLETE') {
+      // After a completed pull, the throttle is locked out and the engine
+      // naturally winds down instead of freezing at the redline.
+      this.controls.enabled = false;
+      const idleRPM = Math.max(0, Number(this.build.engine.idleRPM || 850));
+      this.currentRPM += (idleRPM - this.currentRPM) * Math.min(1, dt * 1.8);
+      this.currentBoost = Math.max(0, this.currentBoost - dt * Math.max(0.1, this.currentBoost * 1.8));
+      const cooldownTelemetry = this.getRollerTelemetry(0, 0, this.currentBoost);
+      this.updateTelemetry(this.finalDynoPoint, 0);
+      this.updateDynoHud(cooldownTelemetry, 'DYNO // RUN COMPLETE');
+      this.audio?.update(cooldownTelemetry, null, this.build.car, null, dt);
+      this.redrawRollers(time * 0.006 + cooldownTelemetry.wheelRPM * 0.02);
       return;
     }
 
