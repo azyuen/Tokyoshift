@@ -1,34 +1,27 @@
-export function startSceneLoading(scene, label = 'LOADING ASSETS', queuedCount = 1) {
+export function startSceneLoading(scene, label = 'LOADING', queuedCount = 1) {
   if (!scene || queuedCount <= 0) return false;
 
-  window.TOKYO_SHIFT_SHOW_SPLASH?.(label);
-  window.TOKYO_SHIFT_SET_LOADING?.(0.04, label);
+  // Keep every scene transition visually consistent: one bar, one label.
+  window.TOKYO_SHIFT_SHOW_SPLASH?.('LOADING');
+  window.TOKYO_SHIFT_SET_LOADING?.(0.12, 'LOADING');
 
   const onProgress = value => {
     const clamped = Math.max(0, Math.min(1, Number(value) || 0));
-    window.TOKYO_SHIFT_SET_LOADING?.(0.05 + clamped * 0.90, label);
+    window.TOKYO_SHIFT_SET_LOADING?.(0.12 + clamped * 0.84, 'LOADING');
   };
 
   scene.load.on('progress', onProgress);
   scene.load.once('complete', () => {
     scene.load.off('progress', onProgress);
-    window.TOKYO_SHIFT_SET_LOADING?.(0.97, 'OPENING TOKYO');
-
-    // Once the loader itself is complete, do not allow a create() exception
-    // to leave the global splash permanently frozen at 97%.
-    window.setTimeout(() => {
-      window.TOKYO_SHIFT_HIDE_SPLASH?.();
-    }, 1400);
+    window.TOKYO_SHIFT_SET_LOADING?.(0.98, 'LOADING');
   });
 
   return true;
 }
 
-export function finishSceneLoading(label = 'READY') {
-  window.TOKYO_SHIFT_SET_LOADING?.(1, label);
+export function finishSceneLoading() {
+  window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
 
-  // Hide on the next paint, with a short timeout fallback for iOS PWAs where
-  // requestAnimationFrame can be throttled during a scene hand-off.
   let hidden = false;
   const hide = () => {
     if (hidden) return;

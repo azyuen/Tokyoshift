@@ -22,8 +22,6 @@ function showBootError(error) {
 
 async function waitForTokyoShiftFonts() {
   if (!document.fonts?.load) return;
-  window.TOKYO_SHIFT_SET_LOADING?.(0.06, 'LOADING FONTS');
-
   const fontLoad = Promise.all([
     document.fonts.load('400 16px "Silkscreen"'),
     document.fonts.load('700 16px "Silkscreen"'),
@@ -37,12 +35,9 @@ async function waitForTokyoShiftFonts() {
 
 async function startTokyoShift() {
   try {
-    // Import after the loading UI has moved past 3%, so module failures are
-    // observable instead of looking like a frozen first-load screen.
-    window.TOKYO_SHIFT_SET_LOADING?.(0.07, 'LOADING GAME MODULES');
+    window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING');
 
     const loadScene = async (name, path) => {
-      window.TOKYO_SHIFT_SET_LOADING?.(0.07, 'LOADING ' + name);
       try {
         const module = await import(path);
         return module.default;
@@ -52,20 +47,35 @@ async function startTokyoShift() {
       }
     };
 
-    const BootScene = await loadScene('BOOT SCENE', './scenes/BootScene.js?v=20260930-r296');
-    const CharacterSelectScene = await loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20260930-r296');
-    const ProfileSelectScene = await loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20260930-r296');
-    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r299');
-    const DynoScene = await loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r299');
-    const CentralTokyoScene = await loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20260930-r296');
-    const MeetScene = await loadScene('MEET', './scenes/MeetScene.js?v=20260930-r296');
-    const RaceScene = await loadScene('RACE', './scenes/RaceScene.js?v=20260930-r299');
-    const RunOverScene = await loadScene('RUN OVER', './scenes/RunOverScene.js?v=20260930-r296');
-    const ResultScene = await loadScene('RESULT', './scenes/ResultScene.js?v=20260930-r296');
-    const TunerShopScene = await loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20260930-r296');
-    const WheelCalibrationScene = await loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20260930-r296');
+    const [
+      BootScene,
+      CharacterSelectScene,
+      ProfileSelectScene,
+      GarageScene,
+      DynoScene,
+      CentralTokyoScene,
+      MeetScene,
+      RaceScene,
+      RunOverScene,
+      ResultScene,
+      TunerShopScene,
+      WheelCalibrationScene,
+    ] = await Promise.all([
+      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20260930-r300'),
+      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20260930-r300'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20260930-r300'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r300'),
+      loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r300'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20260930-r300'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20260930-r300'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20260930-r300'),
+      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20260930-r300'),
+      loadScene('RESULT', './scenes/ResultScene.js?v=20260930-r300'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20260930-r300'),
+      loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20260930-r300'),
+    ]);
 
-    window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'STARTING ENGINE');
+    window.TOKYO_SHIFT_SET_LOADING?.(0.10, 'LOADING');
 
     // Keep the existing phone readability pass.
     const originalTextFactory = Phaser.GameObjects.GameObjectFactory.prototype.text;

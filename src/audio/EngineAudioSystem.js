@@ -848,28 +848,33 @@ class UpgradeAudioVoice {
 }
 
 export default class EngineAudioSystem {
-  constructor(playerEngineId, opponentEngineId, playerState = {}, opponentState = {}) {
+  constructor(playerEngineId, opponentEngineId, playerState = {}, opponentState = {}, options = {}) {
     this.ctx = ensureContext();
+    this.singleVehicle = Boolean(options.singleVehicle);
 
     this.player = new EngineVoice(playerEngineId, {
       volume: 0.26,
       pan: -0.05,
     });
 
-    this.opponent = new EngineVoice(opponentEngineId, {
-      volume: 0.15,
-      pan: 0.22,
-    });
+    this.opponent = this.singleVehicle
+      ? null
+      : new EngineVoice(opponentEngineId, {
+          volume: 0.15,
+          pan: 0.22,
+        });
 
     this.playerUpgrades = new UpgradeAudioVoice(playerState, {
       volume: 1.0,
       pan: -0.04,
     });
 
-    this.opponentUpgrades = new UpgradeAudioVoice(opponentState, {
-      volume: 0.58,
-      pan: 0.22,
-    });
+    this.opponentUpgrades = this.singleVehicle
+      ? null
+      : new UpgradeAudioVoice(opponentState, {
+          volume: 0.58,
+          pan: 0.22,
+        });
 
     this.destroyed = false;
   }
@@ -880,37 +885,39 @@ export default class EngineAudioSystem {
     this.player.update(playerTelemetry, playerConfig, sfxVolume);
     this.playerUpgrades.update(playerTelemetry, playerConfig, dt, 1.0);
 
-    const separation = Math.abs(
-      (playerTelemetry?.positionM || 0) - (opponentTelemetry?.positionM || 0)
-    );
-    const opponentScale = Math.max(0.22, Math.min(0.72, 0.72 - separation * 0.025));
+    if (this.opponent && this.opponentUpgrades) {
+      const separation = Math.abs(
+        (playerTelemetry?.positionM || 0) - (opponentTelemetry?.positionM || 0)
+      );
+      const opponentScale = Math.max(0.22, Math.min(0.72, 0.72 - separation * 0.025));
 
-    this.opponent.update(
-      opponentTelemetry,
-      opponentConfig,
-      opponentScale * sfxVolume
-    );
-    this.opponentUpgrades.update(
-      opponentTelemetry,
-      opponentConfig,
-      dt,
-      opponentScale
-    );
+      this.opponent.update(
+        opponentTelemetry,
+        opponentConfig,
+        opponentScale * sfxVolume
+      );
+      this.opponentUpgrades.update(
+        opponentTelemetry,
+        opponentConfig,
+        dt,
+        opponentScale
+      );
+    }
   }
 
   fadeOut() {
     this.player.fadeOut(0.16);
-    this.opponent.fadeOut(0.16);
+    this.opponent?.fadeOut(0.16);
     this.playerUpgrades.fadeOut();
-    this.opponentUpgrades.fadeOut();
+    this.opponentUpgrades?.fadeOut();
   }
 
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
     this.player.destroy();
-    this.opponent.destroy();
+    this.opponent?.destroy();
     this.playerUpgrades.destroy();
-    this.opponentUpgrades.destroy();
+    this.opponentUpgrades?.destroy();
   }
 }

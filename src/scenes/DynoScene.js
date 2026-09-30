@@ -1,5 +1,6 @@
 import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260929-r275';
@@ -38,7 +39,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 115, y: 94, w: 535, h: 248 };
+const MONITOR = { x: 150, y: 94, w: 505, h: 230 };
 const CAR_X = 950;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
@@ -106,11 +107,10 @@ export default class DynoScene extends Phaser.Scene {
     this.points = [];
     this.previousRun = this.carState?.dyno?.lastRun || null;
     this.controls = null;
-    // Dyno deliberately runs without the full race EngineAudioSystem. That
-    // system creates a large Web Audio graph (multiple oscillators/noise
-    // voices) which is unnecessary for the dyno and can overwhelm iOS PWAs.
+    // Dyno uses the race engine voice in single-car mode. This restores the
+    // live engine/turbo sound without constructing an unnecessary rival voice.
     this.audio = null;
-    this.dynoAudioEnabled = false;
+    this.dynoAudioEnabled = true;
     this.turbo = null;
     this.currentGear = 0;
     this.currentRPM = 0;
@@ -268,9 +268,16 @@ export default class DynoScene extends Phaser.Scene {
     };
     this.graphGraphics = this.add.graphics().setDepth(20);
 
-    this.add.text(this.graphRect.x, MONITOR.y + MONITOR.h - 34, 'RPM  →', {
-      fontFamily: PIXEL_FONT, fontSize: '6px', color: '#7892a2'
-    }).setDepth(21);
+    this.add.text(
+      this.graphRect.x + this.graphRect.w - 8,
+      this.graphRect.y + this.graphRect.h - 6,
+      'RPM',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: '#7892a2',
+      }
+    ).setOrigin(1, 1).setDepth(21);
     this.add.text(MONITOR.x + 18, MONITOR.y + 44, 'TORQUE', {
       fontFamily: PIXEL_FONT, fontSize: '6px', color: '#59dcff'
     }).setDepth(21);
@@ -377,7 +384,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(560, 565, daichi.visual.spriteKey)
+      const sprite = this.add.image(480, 550, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -385,13 +392,13 @@ export default class DynoScene extends Phaser.Scene {
     }
 
     // Manga-style instruction tab tucked directly beneath the dyno dashboard.
-    this.daichiMessageBoard = this.add.rectangle(720, 817, 750, 38, 0xfffcf1, 0.985)
+    this.daichiMessageBoard = this.add.rectangle(755, 814, 810, 48, 0xfffcf1, 0.985)
       .setStrokeStyle(4, 0x111111, 1)
       .setDepth(58)
       .setScrollFactor(0);
     this.daichiText = this.add.text(
-      720,
-      817,
+      755,
+      814,
       'DAICHI // Ready when you are. We need a clean baseline first.',
       {
         fontFamily: BODY_FONT,
@@ -399,7 +406,7 @@ export default class DynoScene extends Phaser.Scene {
         color: '#111111',
         fontStyle: '700',
         align: 'center',
-        wordWrap: { width: 710 },
+        wordWrap: { width: 770 },
         lineSpacing: 1,
       }
     ).setOrigin(0.5).setDepth(59).setScrollFactor(0);
@@ -558,9 +565,23 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   ensureAudio() {
-    // Keep this hook so the pull flow remains simple. Dyno audio is disabled
-    // intentionally; the physics/telemetry must never depend on Web Audio.
-    this.audio = null;
+    if (this.audio || !this.dynoAudioEnabled || !this.build?.car) return;
+
+    const engineId = this.build.car.engine || cars[this.carId]?.engine;
+    if (!engineId) return;
+
+    try {
+      this.audio = new EngineAudioSystem(
+        engineId,
+        null,
+        this.carState || {},
+        {},
+        { singleVehicle: true }
+      );
+    } catch (e) {
+      // Audio must never stop a dyno session from functioning.
+      this.audio = null;
+    }
   }
 
   beginPull() {
@@ -638,6 +659,8 @@ export default class DynoScene extends Phaser.Scene {
         '. Release the clutch and build RPM.'
       );
       this.refreshRunButton?.();
+      const shiftTelemetry = this.getRollerTelemetry(0, clutch, this.currentBoost);
+      this.updateDynoHud(shiftTelemetry, 'DYNO // SELECT GEAR');
     } catch (error) {
       this.dynoUpdateError = error;
       this.currentGear = 0;
@@ -842,23 +865,54 @@ export default class DynoScene extends Phaser.Scene {
     drawSeries(this.points, 'torqueNm', torqueY, 0x59dcff, 1, 3);
     drawSeries(this.points, 'powerKW', powerY, 0x7df6a8, 1, 3);
 
-    if (this.previousRun?.points?.length) {
-      if (!this.previousRunLegend) {
-        this.previousRunLegend = this.add.text(
-          MONITOR.x + MONITOR.w - 18,
-          MONITOR.y + MONITOR.h - 34,
-          'FAINT CURVES // PREVIOUS RUN',
-          {
-            fontFamily: PIXEL_FONT,
-            fontSize: '5px',
-            color: '#8ca7b7',
-          }
-        ).setOrigin(1, 0).setDepth(21);
-      }
-      this.previousRunLegend.setVisible(true);
-    } else {
-      this.previousRunLegend?.setVisible(false);
-    }
+  }
+
+  getRollerTelemetry(throttle = 0, clutch = 0, boostBar = this.currentBoost) {
+    const gear = Math.max(0, Number(this.currentGear || 0));
+    const ratio = gear > 0
+      ? Math.max(
+          0.1,
+          Number(this.build?.car?.gearRatios?.[gear - 1] || 1) *
+            Number(this.build?.car?.finalDriveRatio || 1)
+        )
+      : 0;
+
+    const wheelRPM = ratio > 0 && Number(clutch || 0) < 0.92
+      ? Math.max(0, Number(this.currentRPM || 0) / ratio)
+      : 0;
+    const wheelRadius = Math.max(0.20, Number(this.build?.car?.wheelRadius || 0.32));
+    const speedKmh = wheelRPM * (Math.PI * 2 * wheelRadius) / 60 * 3.6;
+    const maxBoost = Math.max(0.01, Number(this.build?.car?.maximumBoost || 0));
+
+    return {
+      positionM: 0,
+      speedKmh,
+      rpm: this.currentRPM,
+      gear,
+      pendingGear: null,
+      throttle: clamp(throttle, 0, 1),
+      clutch: clamp(clutch, 0, 1),
+      boostBar: Math.max(0, Number(boostBar || 0)),
+      turboSpool: clamp(Number(boostBar || 0) / maxBoost, 0, 1),
+      wheelRPM,
+      wheelspin: false,
+      slipRatio: 0,
+      nosActive: false,
+      nosFraction: 0,
+    };
+  }
+
+  updateDynoHud(telemetry, status) {
+    if (!this.dynoHud || !telemetry) return;
+    this.dynoHud.update({
+      rpm: telemetry.rpm,
+      speedKmh: telemetry.speedKmh,
+      gear: telemetry.gear,
+      throttle: telemetry.throttle,
+      boostBar: telemetry.boostBar,
+      wheelspin: false,
+      nosFraction: 0,
+    }, status);
   }
 
   updateTelemetry(point = null, throttle = 0) {
@@ -892,8 +946,16 @@ export default class DynoScene extends Phaser.Scene {
         Number(this.build.engine.idleRPM || 850) + Number(input.throttle || 0) * 800
       );
       this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 7);
-      this.updateTelemetry({ boostBar: 0, powerKW: 0, torqueNm: 0 }, input.throttle);
-      this.redrawRollers(time * 0.015);
+
+      const setupTurboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
+      const setupTurboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+      this.currentBoost = setupTurboMax * Math.pow(setupTurboRpm, 1.18) * Math.pow(clamp(input.throttle, 0, 1), 0.88);
+
+      const setupTelemetry = this.getRollerTelemetry(input.throttle, input.clutch, this.currentBoost);
+      this.updateTelemetry({ boostBar: this.currentBoost, powerKW: 0, torqueNm: 0 }, input.throttle);
+      this.updateDynoHud(setupTelemetry, 'DYNO // SETUP');
+      this.audio?.update(setupTelemetry, null, this.build.car, null, dt);
+      this.redrawRollers(time * 0.015 + setupTelemetry.wheelRPM * 0.03);
 
       if (this.currentGear === this.recommendedGear && Number(input.clutch || 0) < 0.20) {
         this.daichiText.setText('DAICHI // READY. Hold full throttle for the pull.');
@@ -903,7 +965,10 @@ export default class DynoScene extends Phaser.Scene {
     }
 
     if (this.pullState !== 'RUNNING') {
+      const idleTelemetry = this.getRollerTelemetry(0, 1, 0);
       this.updateTelemetry(null, 0);
+      this.updateDynoHud(idleTelemetry, 'DYNO // READY');
+      this.audio?.update(idleTelemetry, null, this.build.car, null, dt);
       this.redrawRollers(time * 0.006);
       return;
     }
@@ -931,9 +996,8 @@ export default class DynoScene extends Phaser.Scene {
     if (!this.points.length || point.rpm - this.lastRecordedRPM >= 300 || this.runProgress >= 0.999) {
       this.points.push(point);
       this.lastRecordedRPM = point.rpm;
-      // Do not redraw the full Phaser graph on every small RPM increment.
-      // The live graph is sampled sparsely during the pull and redrawn fully
-      // when the run completes.
+      // Redraw only when a new sample lands: visually live, but still cheap.
+      this.redrawGraph();
     }
 
     const overallRatio = Math.max(
@@ -951,34 +1015,11 @@ export default class DynoScene extends Phaser.Scene {
       if (item.obj?.active) item.obj.y = item.y + vibration;
     });
 
-    const telemetry = {
-      positionM: 0,
-      speedKmh: Math.max(0, wheelRPM * 0.002),
-      rpm: this.currentRPM,
-      gear: this.currentGear,
-      pendingGear: null,
-      throttle,
-      clutch: input.clutch,
-      boostBar: this.currentBoost,
-      turboSpool: Number(this.turbo?.spool || 0),
-      wheelRPM,
-      wheelspin: false,
-      slipRatio: 0,
-      nosActive: false,
-    };
+    const telemetry = this.getRollerTelemetry(throttle, input.clutch, this.currentBoost);
 
     this.updateTelemetry(point, throttle);
-    if (this.dynoHud && (++this.dynoHudFrame % 4 === 0 || this.runProgress >= 0.999)) {
-      this.dynoHud.update({
-        rpm: this.currentRPM,
-        speedKmh: telemetry.speedKmh,
-        gear: this.currentGear,
-        throttle,
-        boostBar: this.currentBoost,
-        wheelspin: false,
-        nosFraction: 0,
-      }, 'DYNO PULL // LIVE');
-    }
+    this.updateDynoHud(telemetry, 'DYNO PULL // LIVE');
+    this.audio?.update(telemetry, null, this.build.car, null, dt);
 
     if (this.runProgress >= 0.999) {
       this.redrawGraph();
