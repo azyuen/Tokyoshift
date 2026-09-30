@@ -17,6 +17,8 @@ export default class TouchControls {
     this.shifterSwipeDirection = 'neutral';
     this.shifterSwipeConsumed = false;
     this.verticalOffsetY = Number(options.verticalOffsetY || 0);
+    this.controlScaleMultiplier = Number(options.controlScaleMultiplier || 1);
+    this.controlBottomY = Number(options.controlBottomY || 710);
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
@@ -47,25 +49,38 @@ export default class TouchControls {
       throttle: new Phaser.Geom.Rectangle(1315, 385, 190, 325),
     };
 
-    this.layout.clutch.y += this.verticalOffsetY;
-    this.layout.nos.y += this.verticalOffsetY;
-    this.layout.shifter.y += this.verticalOffsetY;
-    this.layout.throttle.y += this.verticalOffsetY;
+    const layoutOffset = this.controlBottomY - 710 + this.verticalOffsetY;
+    this.layout.clutch.y += layoutOffset;
+    this.layout.nos.y += layoutOffset;
+    this.layout.shifter.y += layoutOffset;
+    this.layout.throttle.y += layoutOffset;
 
-    this.clutchScale = 0.175;
-    this.throttleScale = 0.175;
-    this.nosScale = 0.088;
-    this.shifterScale = 0.20;
+    this.clutchScale = 0.175 * this.controlScaleMultiplier;
+    this.throttleScale = 0.175 * this.controlScaleMultiplier;
+    this.nosScale = 0.088 * this.controlScaleMultiplier;
+    this.shifterScale = 0.20 * this.controlScaleMultiplier;
 
-    this.clutchSprite = scene.add.image(175, 545 + this.verticalOffsetY, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
-    this.nosSprite = scene.add.image(378, 570 + this.verticalOffsetY, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0).setVisible(this.nosEnabled);
-    this.shifterSprite = scene.add.image(1218, 535 + this.verticalOffsetY, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
-    this.throttleSprite = scene.add.image(1405, 545 + this.verticalOffsetY, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+    const textureHeight = key => {
+      try { return Number(scene.textures.get(key)?.getSourceImage()?.height || 0); } catch (e) { return 0; }
+    };
+    const bottomAlignedY = (key, scale, fallback) => {
+      const h = textureHeight(key);
+      return h > 0 ? this.controlBottomY - (h * scale) / 2 : fallback;
+    };
+    const clutchY = bottomAlignedY('clutchPedal', this.clutchScale, 545);
+    const throttleY = bottomAlignedY('throttlePedal', this.throttleScale, 545);
+    const shifterY = bottomAlignedY('shifterNeutral', this.shifterScale, 535);
+    const nosY = Math.min(this.controlBottomY - 70, 570);
 
-    this.plusLabel = scene.add.text(1218, 390 + this.verticalOffsetY, '↑', {
+    this.clutchSprite = scene.add.image(175, clutchY, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
+    this.nosSprite = scene.add.image(378, nosY, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0).setVisible(this.nosEnabled);
+    this.shifterSprite = scene.add.image(1218, shifterY, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
+    this.throttleSprite = scene.add.image(1405, throttleY, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+
+    this.plusLabel = scene.add.text(1218, this.controlBottomY - 400 + this.verticalOffsetY, '↑', {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-    this.minusLabel = scene.add.text(1218, 697 + this.verticalOffsetY, '↓', {
+    this.minusLabel = scene.add.text(1218, this.controlBottomY - 93 + this.verticalOffsetY, '↓', {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
@@ -172,8 +187,8 @@ export default class TouchControls {
     const g = this.graphics;
     g.clear();
 
-    const clutchBar = { x: 226.5, y: 470.5 + this.verticalOffsetY, w: 19.5, h: 156.0 };
-    const throttleBar = { x: 1438.0, y: 466.0 + this.verticalOffsetY, w: 20.5, h: 165.0 };
+    const clutchBar = { x: 226.5, y: 470.5 + (this.controlBottomY - 710) + this.verticalOffsetY, w: 19.5, h: 156.0 };
+    const throttleBar = { x: 1438.0, y: 466.0 + (this.controlBottomY - 710) + this.verticalOffsetY, w: 20.5, h: 165.0 };
 
     g.fillStyle(0x48c9e8, 0.92)
       .fillRoundedRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch, 3);
@@ -185,9 +200,9 @@ export default class TouchControls {
     g.lineStyle(2, 0x476272, 0.12).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
 
     if (shiftState === 'down') {
-      this.shifterSprite.setTexture('shifterDown').setPosition(1218, 545 + this.verticalOffsetY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterDown').setPosition(1218, this.controlBottomY - 245 + this.verticalOffsetY).setScale(this.shifterScale);
     } else {
-      this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, (shiftState === 'up' ? 525 : 535) + this.verticalOffsetY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, this.controlBottomY - (shiftState === 'up' ? 265 : 255) + this.verticalOffsetY).setScale(this.shifterScale);
     }
 
     if (this.nosEnabled) {
