@@ -41,31 +41,28 @@ async function startTokyoShift() {
     // observable instead of looking like a frozen first-load screen.
     window.TOKYO_SHIFT_SET_LOADING?.(0.07, 'LOADING GAME MODULES');
 
-    const [
-      { default: BootScene },
-      { default: CharacterSelectScene },
-      { default: ProfileSelectScene },
-      { default: GarageScene },
-      { default: CentralTokyoScene },
-      { default: MeetScene },
-      { default: RaceScene },
-      { default: RunOverScene },
-      { default: ResultScene },
-      { default: TunerShopScene },
-      { default: WheelCalibrationScene },
-    ] = await Promise.all([
-      import('./scenes/BootScene.js?v=20260930-recovery'),
-      import('./scenes/CharacterSelectScene.js?v=20260930-recovery'),
-      import('./scenes/ProfileSelectScene.js?v=20260930-recovery'),
-      import('./scenes/GarageScene.js?v=20260930-recovery'),
-      import('./scenes/CentralTokyoScene.js?v=20260930-recovery'),
-      import('./scenes/MeetScene.js?v=20260930-recovery'),
-      import('./scenes/RaceScene.js?v=20260930-recovery'),
-      import('./scenes/RunOverScene.js?v=20260930-recovery'),
-      import('./scenes/ResultScene.js?v=20260930-recovery'),
-      import('./scenes/TunerShopScene.js?v=20260930-recovery'),
-      import('./scenes/WheelCalibrationScene.js?v=20260930-recovery'),
-    ]);
+    const loadScene = async (name, path) => {
+      window.TOKYO_SHIFT_SET_LOADING?.(0.07, 'LOADING ' + name);
+      try {
+        const module = await import(path);
+        return module.default;
+      } catch (error) {
+        error.message = name + ' IMPORT FAILED: ' + (error.message || error);
+        throw error;
+      }
+    };
+
+    const BootScene = await loadScene('BOOT SCENE', './scenes/BootScene.js?v=20260930-r295');
+    const CharacterSelectScene = await loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20260930-r295');
+    const ProfileSelectScene = await loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20260930-r295');
+    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r295');
+    const CentralTokyoScene = await loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20260930-r295');
+    const MeetScene = await loadScene('MEET', './scenes/MeetScene.js?v=20260930-r295');
+    const RaceScene = await loadScene('RACE', './scenes/RaceScene.js?v=20260930-r295');
+    const RunOverScene = await loadScene('RUN OVER', './scenes/RunOverScene.js?v=20260930-r295');
+    const ResultScene = await loadScene('RESULT', './scenes/ResultScene.js?v=20260930-r295');
+    const TunerShopScene = await loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20260930-r295');
+    const WheelCalibrationScene = await loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20260930-r295');
 
     window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'STARTING ENGINE');
 
