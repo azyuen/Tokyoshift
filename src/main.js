@@ -9,7 +9,7 @@ import RunOverScene from './scenes/RunOverScene.js?v=20260929-r272';
 import ResultScene from './scenes/ResultScene.js?v=20260924-r171';
 import TunerShopScene from './scenes/TunerShopScene.js?v=20260929-r286';
 import WheelCalibrationScene from './scenes/WheelCalibrationScene.js?v=20260929-r258';
-import DynoScene from './scenes/DynoScene.js?v=20260930-r294';
+
 
 
 // Phone readability pass.
@@ -54,7 +54,7 @@ const config = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [BootScene, ProfileSelectScene, CharacterSelectScene, GarageScene, DynoScene, CentralTokyoScene, MeetScene, RaceScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene],
+  scene: [BootScene, ProfileSelectScene, CharacterSelectScene, GarageScene, CentralTokyoScene, MeetScene, RaceScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene],
 };
 
 async function waitForTokyoShiftFonts() {
