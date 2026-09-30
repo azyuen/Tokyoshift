@@ -569,22 +569,50 @@ export default class TokyoExpresswayBackground {
     }
   }
 
-  drawWBeam(g, x1, x2, segmentIndex) {
+  roadsideHash(segmentIndex, salt = 0) {
+    const seed =
+      (Number(segmentIndex || 0) + 1) * 12.9898 +
+      (Number(salt || 0) + 1) * 78.233 +
+      this.roadsideSeed * 0.0137;
+    const value = Math.sin(seed) * 43758.5453123;
+    return value - Math.floor(value);
+  }
+
+  drawWBeam(g, x1, x2, segmentIndex, segmentStartX = x1) {
     const p = this.palette();
     const baseY = 354;
     const postTop = 309;
-    const spacing = 96;
-    const start = Math.floor((x1 - 30) / spacing) * spacing;
+
+    // Vary post rhythm by segment and anchor it to the segment's world-space
+    // origin. This avoids the "frozen fence" / strobing effect at certain speeds.
+    const spacing = 86 + Math.floor(this.roadsideHash(segmentIndex, 2) * 31);
+    const phase = 24 + Math.floor(this.roadsideHash(segmentIndex, 3) * 42);
+    const firstPostIndex = Math.floor((x1 - segmentStartX - phase) / spacing) - 1;
+    const lastPostIndex = Math.ceil((x2 - segmentStartX - phase) / spacing) + 1;
 
     g.fillStyle(0x12171c, this.timeOfDay === 'day' ? 0.18 : 0.34);
     g.fillRect(x1, baseY - 1, x2 - x1, 4);
 
-    for (let x = start; x < x2 + spacing; x += spacing) {
-      if (x < x1 - 8) continue;
-      g.fillStyle(Phaser.Display.Color.HexStringToColor(p.fence).color, 1);
-      g.fillRect(x, postTop, 5, baseY - postTop + 1);
-      g.fillStyle(Phaser.Display.Color.HexStringToColor(p.fenceBright).color, 0.52);
+    for (let postIndex = firstPostIndex; postIndex <= lastPostIndex; postIndex += 1) {
+      const x = segmentStartX + phase + postIndex * spacing;
+      if (x < x1 - 10 || x > x2 + 10) continue;
+
+      const width = 4 + Math.floor(this.roadsideHash(segmentIndex, 30 + postIndex) * 3);
+      const postDark = Phaser.Display.Color.HexStringToColor(p.fence).color;
+      const postBright = Phaser.Display.Color.HexStringToColor(p.fenceBright).color;
+      g.fillStyle(postDark, 1);
+      g.fillRect(x, postTop, width, baseY - postTop + 1);
+      g.fillStyle(postBright, 0.52);
       g.fillRect(x + 1, postTop, 1, baseY - postTop);
+
+      // Occasional painted inspection stripe / reflector on the upright.
+      const markRoll = this.roadsideHash(segmentIndex, 90 + postIndex);
+      if (markRoll > 0.78) {
+        g.fillStyle(markRoll > 0.90
+          ? (this.timeOfDay === 'day' ? 0xd9d9d2 : 0xdce8ec)
+          : (this.timeOfDay === 'day' ? 0xd2ad58 : 0xffc85b), 0.92);
+        g.fillRect(x - 1, postTop + 13, width + 2, 4);
+      }
     }
 
     const rail = Phaser.Display.Color.HexStringToColor(
@@ -603,17 +631,32 @@ export default class TokyoExpresswayBackground {
     g.fillRect(x1, 316, x2 - x1, 2);
     g.fillRect(x1, 325, x2 - x1, 2);
 
-    // Sparse reflectors add movement without turning the barrier into noise.
-    const markerStep = 286;
-    const markerOffset = (segmentIndex * 53) % markerStep;
-    for (let x = x1 - markerOffset; x < x2; x += markerStep) {
+    // Reflector spacing also changes by segment, breaking up visual cadence.
+    const markerStep = 248 + Math.floor(this.roadsideHash(segmentIndex, 5) * 92);
+    const markerPhase = Math.floor(this.roadsideHash(segmentIndex, 6) * markerStep);
+    const firstMarker = Math.floor((x1 - segmentStartX - markerPhase) / markerStep) - 1;
+    const lastMarker = Math.ceil((x2 - segmentStartX - markerPhase) / markerStep) + 1;
+    for (let markerIndex = firstMarker; markerIndex <= lastMarker; markerIndex += 1) {
+      const x = segmentStartX + markerPhase + markerIndex * markerStep;
+      if (x < x1 - 12 || x > x2 + 12) continue;
       g.fillStyle(this.timeOfDay === 'day' ? 0xd8bd72 : 0xffc85b, 0.9);
-      g.fillRect(x, 312, 8, 4);
+      g.fillRect(x, 312, 7 + (Math.abs(markerIndex) % 3), 4);
+    }
+
+    // Sparse dark maintenance plates make long stretches read as unique.
+    if (this.roadsideHash(segmentIndex, 11) > 0.58) {
+      const plateX = segmentStartX + 180 + this.roadsideHash(segmentIndex, 12) * 980;
+      if (plateX > x1 - 40 && plateX < x2 + 40) {
+        g.fillStyle(dark, 0.88);
+        g.fillRect(plateX, 315, 28, 9);
+        g.fillStyle(rail, 0.78);
+        g.fillRect(plateX + 5, 318, 12, 2);
+      }
     }
   }
 
-  drawThrieBeam(g, x1, x2, segmentIndex) {
-    this.drawWBeam(g, x1, x2, segmentIndex);
+  drawThrieBeam(g, x1, x2, segmentIndex, segmentStartX = x1) {
+    this.drawWBeam(g, x1, x2, segmentIndex, segmentStartX);
 
     const rail = this.timeOfDay === 'day' ? 0xc1c9ce : 0x84909a;
     const dark = this.timeOfDay === 'day' ? 0x7f8990 : 0x414b54;
@@ -649,31 +692,60 @@ export default class TokyoExpresswayBackground {
     }
   }
 
-  drawFoliage(g, x1, x2, segmentIndex) {
+  drawFoliage(g, x1, x2, segmentIndex, segmentStartX = x1) {
     this.drawLowRidge(g, x1, x2, segmentIndex);
 
     const dark = this.timeOfDay === 'day' ? 0x315b39 : 0x173322;
     const mid = this.timeOfDay === 'day' ? 0x48784c : 0x245039;
     const light = this.timeOfDay === 'day' ? 0x659665 : 0x35694a;
-    const step = 44;
-    const offset = (segmentIndex * 19) % step;
-    const first = Math.floor((x1 - offset) / step) * step + offset;
+    const warm = this.timeOfDay === 'day' ? 0x789f68 : 0x3e7250;
 
-    for (let x = first; x < x2 + step; x += step) {
-      if (x < x1 - 30) continue;
-      const variant = Math.abs(Math.floor((x + segmentIndex * 17) / step)) % 4;
-      const h = 16 + variant * 3;
-      const w = 34 + (variant % 3) * 7;
+    // Each 100 m segment gets its own cell size and phase. Individual clusters
+    // then jitter inside those cells, so the foliage never becomes a repeating
+    // metronome at one particular road speed.
+    const cell = 46 + Math.floor(this.roadsideHash(segmentIndex, 20) * 18);
+    const phase = Math.floor(this.roadsideHash(segmentIndex, 21) * cell);
+    const firstCell = Math.floor((x1 - segmentStartX - phase) / cell) - 2;
+    const lastCell = Math.ceil((x2 - segmentStartX - phase) / cell) + 2;
+
+    for (let cellIndex = firstCell; cellIndex <= lastCell; cellIndex += 1) {
+      const gapRoll = this.roadsideHash(segmentIndex, 1000 + cellIndex * 7);
+      if (gapRoll < 0.14) continue; // deliberate little gaps in the planting
+
+      const jitter = (this.roadsideHash(segmentIndex, 1001 + cellIndex * 7) - 0.5) * 24;
+      const x = segmentStartX + phase + cellIndex * cell + jitter;
+      if (x < x1 - 46 || x > x2 + 46) continue;
+
+      const sizeRoll = this.roadsideHash(segmentIndex, 1002 + cellIndex * 7);
+      const shapeRoll = this.roadsideHash(segmentIndex, 1003 + cellIndex * 7);
+      const h = 14 + Math.floor(sizeRoll * 16);
+      const w = 28 + Math.floor(shapeRoll * 25);
+      const yJitter = Math.floor((this.roadsideHash(segmentIndex, 1004 + cellIndex * 7) - 0.5) * 8);
 
       g.fillStyle(dark, 1);
-      g.fillCircle(x + 8, 334 - h * 0.35, Math.max(7, h * 0.55));
-      g.fillCircle(x + 22, 336 - h * 0.45, Math.max(8, h * 0.62));
+      g.fillCircle(x + 6, 336 - h * 0.34 + yJitter, Math.max(6, h * 0.50));
+      g.fillCircle(x + Math.floor(w * 0.62), 336 - h * 0.43 + yJitter, Math.max(7, h * 0.58));
+
+      if (shapeRoll > 0.36) {
+        g.fillCircle(x + Math.floor(w * 0.34), 330 - h * 0.52 + yJitter, Math.max(5, h * 0.43));
+      }
+
       g.fillStyle(mid, 1);
-      g.fillCircle(x + 13, 330 - h * 0.42, Math.max(6, h * 0.48));
-      g.fillCircle(x + Math.floor(w * 0.65), 332 - h * 0.38, Math.max(6, h * 0.46));
-      g.fillStyle(light, this.timeOfDay === 'day' ? 0.72 : 0.48);
-      g.fillRect(x + 7, 320 - variant, 7, 5);
-      g.fillRect(x + 22, 325 - variant, 6, 4);
+      g.fillCircle(x + 11, 331 - h * 0.39 + yJitter, Math.max(5, h * 0.42));
+      g.fillCircle(x + Math.floor(w * 0.70), 333 - h * 0.35 + yJitter, Math.max(5, h * 0.40));
+
+      g.fillStyle(shapeRoll > 0.72 ? warm : light, this.timeOfDay === 'day' ? 0.72 : 0.50);
+      g.fillRect(x + 5, 321 - Math.floor(sizeRoll * 5) + yJitter, 5 + Math.floor(shapeRoll * 4), 4);
+      if (gapRoll > 0.55) {
+        g.fillRect(x + Math.floor(w * 0.58), 325 - Math.floor(shapeRoll * 4) + yJitter, 5, 3);
+      }
+
+      // Very occasional flower/sign colour fleck: tiny, but useful at speed.
+      const fleck = this.roadsideHash(segmentIndex, 1005 + cellIndex * 7);
+      if (fleck > 0.91) {
+        g.fillStyle(this.timeOfDay === 'day' ? 0xd5c572 : 0xb4c87a, 0.8);
+        g.fillRect(x + Math.floor(w * 0.45), 326 + yJitter, 3, 3);
+      }
     }
   }
 
@@ -741,15 +813,15 @@ export default class TokyoExpresswayBackground {
       const style = this.roadsidePlan[index] || 'wbeam';
 
       if (style === 'thrie') {
-        this.drawThrieBeam(g, x1, x2, index);
+        this.drawThrieBeam(g, x1, x2, index, screenX1);
       } else if (style === 'foliage') {
-        this.drawFoliage(g, x1, x2, index);
+        this.drawFoliage(g, x1, x2, index, screenX1);
       } else if (style === 'ridge') {
         this.drawLowRidge(g, x1, x2, index);
       } else if (style === 'concrete') {
         this.drawConcreteBarrier(g, x1, x2, index);
       } else {
-        this.drawWBeam(g, x1, x2, index);
+        this.drawWBeam(g, x1, x2, index, screenX1);
       }
 
       // Small end post / seam makes a material change feel physically joined.
