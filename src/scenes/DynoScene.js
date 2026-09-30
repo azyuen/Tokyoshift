@@ -816,6 +816,7 @@ export default class DynoScene extends Phaser.Scene {
       this.daichiText?.setText('DAICHI // DYNO SAFETY STOP. Pull aborted; the cell is still online.');
       this.refreshRunButton?.();
     }
+  }
 
   returnToWorkshop() {
     this.cleanup();
