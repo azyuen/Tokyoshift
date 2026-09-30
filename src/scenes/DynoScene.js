@@ -1,5 +1,5 @@
-import TouchControls from '../input/TouchControls.js?v=20260926-r209';
-import RaceHUD from '../ui/RaceHUD.js?v=20260930-r289';
+import TouchControls from '../input/TouchControls.js?v=20260930-r292';
+import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260929-r275';
@@ -32,7 +32,7 @@ import {
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260930-r292';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -153,7 +153,7 @@ export default class DynoScene extends Phaser.Scene {
       hasNitrous: false,
       x: 780,
       y: 790,
-      scale: 0.34,
+      scale: 0.52,
       statusY: 620,
     });
     this.redrawGraph();
@@ -428,7 +428,7 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false });
+    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 790, controlScaleMultiplier: 1.10 });
     this.controls.nosSprite?.setVisible(false);
   }
 
