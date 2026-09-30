@@ -39,7 +39,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 163, y: 94, w: 505, h: 230 };
+const MONITOR = { x: 163, y: 82, w: 505, h: 230 };
 const CAR_X = 950;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
@@ -151,7 +151,6 @@ export default class DynoScene extends Phaser.Scene {
     this.drawDynoMonitor();
     this.drawCarOnDyno();
     this.drawDaichiPanel();
-    this.ensureDynoHud();
     this.drawIntroUi();
     this.redrawGraph();
 
@@ -379,7 +378,7 @@ export default class DynoScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
-      sprite.setScale(215 / Math.max(1, source.height));
+      sprite.setScale(232 / Math.max(1, source.height));
     }
 
     // Manga-style instruction tab tucked directly beneath the dyno dashboard.
@@ -393,7 +392,7 @@ export default class DynoScene extends Phaser.Scene {
       'DAICHI // Ready when you are. We need a clean baseline first.',
       {
         fontFamily: BODY_FONT,
-        fontSize: '10px',
+        fontSize: '12px',
         color: '#111111',
         fontStyle: '700',
         align: 'center',
@@ -593,6 +592,7 @@ export default class DynoScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
+    this.ensureDynoHud();
     this.ensureControls();
     this.ensureAudio();
     this.points = [];
