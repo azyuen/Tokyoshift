@@ -1,5 +1,4 @@
 import TouchControls from '../input/TouchControls.js?v=20260926-r209';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r55';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260929-r275';
@@ -105,8 +104,11 @@ export default class DynoScene extends Phaser.Scene {
     this.points = [];
     this.previousRun = this.carState?.dyno?.lastRun || null;
     this.controls = null;
+    // Dyno deliberately runs without the full race EngineAudioSystem. That
+    // system creates a large Web Audio graph (multiple oscillators/noise
+    // voices) which is unnecessary for the dyno and can overwhelm iOS PWAs.
     this.audio = null;
-    this.dynoAudioEnabled = true;
+    this.dynoAudioEnabled = false;
     this.turbo = null;
     this.currentGear = 0;
     this.currentRPM = 0;
@@ -418,18 +420,9 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   ensureAudio() {
-    if (!this.dynoAudioEnabled || this.audio) return;
-    const engineId = this.build?.car?.engine || cars[this.carId]?.engine;
-    try {
-      this.audio = new EngineAudioSystem(engineId, engineId, this.carState, {});
-    } catch (error) {
-      // Audio is non-essential to a dyno pull. Some mobile browsers can fail
-      // while constructing/resuming a Web Audio graph; never let that take
-      // down the dyno itself.
-      this.audio = null;
-      this.dynoAudioEnabled = false;
-      console.warn('Tokyo SHIFT dyno audio disabled:', error);
-    }
+    // Keep this hook so the pull flow remains simple. Dyno audio is disabled
+    // intentionally; the physics/telemetry must never depend on Web Audio.
+    this.audio = null;
   }
 
   beginPull() {
@@ -787,17 +780,7 @@ export default class DynoScene extends Phaser.Scene {
       slipRatio: 0,
       nosActive: false,
     };
-    if (this.audio && this.dynoAudioEnabled) {
-      try {
-        this.audio.update(telemetry, null, this.build.car, this.build.car, dt);
-      } catch (error) {
-        // A transient Web Audio failure must not abort the physics/render loop.
-        try { this.audio.destroy(); } catch (e) {}
-        this.audio = null;
-        this.dynoAudioEnabled = false;
-        console.warn('Tokyo SHIFT dyno audio update disabled:', error);
-      }
-    }
+
     this.updateTelemetry(point, throttle);
 
     if (this.runProgress >= 0.999) this.completePull();
