@@ -55,11 +55,11 @@ async function startTokyoShift() {
     const BootScene = await loadScene('BOOT SCENE', './scenes/BootScene.js?v=20260930-r296');
     const CharacterSelectScene = await loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20260930-r296');
     const ProfileSelectScene = await loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20260930-r296');
-    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r298');
-    const DynoScene = await loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r298');
+    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r299');
+    const DynoScene = await loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r299');
     const CentralTokyoScene = await loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20260930-r296');
     const MeetScene = await loadScene('MEET', './scenes/MeetScene.js?v=20260930-r296');
-    const RaceScene = await loadScene('RACE', './scenes/RaceScene.js?v=20260930-r296');
+    const RaceScene = await loadScene('RACE', './scenes/RaceScene.js?v=20260930-r299');
     const RunOverScene = await loadScene('RUN OVER', './scenes/RunOverScene.js?v=20260930-r296');
     const ResultScene = await loadScene('RESULT', './scenes/ResultScene.js?v=20260930-r296');
     const TunerShopScene = await loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20260930-r296');

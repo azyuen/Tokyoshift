@@ -19,6 +19,7 @@ export default class TouchControls {
     this.verticalOffsetY = Number(options.verticalOffsetY || 0);
     this.controlScaleMultiplier = Number(options.controlScaleMultiplier || 1);
     this.controlBottomY = Number(options.controlBottomY || 710);
+    this.pedalLatchMax = options.pedalLatchMax !== false;
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
@@ -153,8 +154,10 @@ export default class TouchControls {
     let touchThrottle = 0;
     if (this.throttlePointer) {
       const travel = this.throttleStartY - this.throttlePointer.y;
-      if (travel >= this.pedalSwipePx) this.throttleLatchedMax = true;
-      touchThrottle = this.throttleLatchedMax ? 1 : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
+      if (this.pedalLatchMax && travel >= this.pedalSwipePx) this.throttleLatchedMax = true;
+      touchThrottle = this.throttleLatchedMax
+        ? 1
+        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
     this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle);
 
@@ -165,8 +168,10 @@ export default class TouchControls {
     let touchClutch = 0;
     if (this.clutchPointer) {
       const travel = this.clutchStartY - this.clutchPointer.y;
-      if (travel >= this.pedalSwipePx) this.clutchLatchedMax = true;
-      touchClutch = this.clutchLatchedMax ? 1 : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
+      if (this.pedalLatchMax && travel >= this.pedalSwipePx) this.clutchLatchedMax = true;
+      touchClutch = this.clutchLatchedMax
+        ? 1
+        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
     }
     this.clutch = keyboardClutch ? 1 : touchClutch;
     this.nos = this.nosEnabled && (keyboardNos || Boolean(this.pointerIn(this.layout.nos)));

@@ -65,7 +65,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R298</div>
+    <div id="build-stamp">R299</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -142,7 +142,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R298';
+      let resolvedBuild = 'R299';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -216,7 +216,7 @@
       if (splash) splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown rejection').slice(0, 500));
     });
 
-    import('./src/main.js?v=20260930-r298').catch((error) => {
+    import('./src/main.js?v=20260930-r299').catch((error) => {
       console.error('[Tokyo SHIFT] main module failed to load', error);
       const label = document.getElementById('loading-label');
       const percent = document.getElementById('loading-percent');

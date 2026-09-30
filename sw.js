@@ -1,4 +1,4 @@
-const BUILD = 'R298';
+const BUILD = 'R299';
 const ASSET_CACHE = 'tokyoshift-assets-v227';
 const RUNTIME_CACHE = 'tokyoshift-runtime-v227';
 

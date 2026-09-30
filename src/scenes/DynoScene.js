@@ -1,4 +1,4 @@
-import TouchControls from '../input/TouchControls.js?v=20260930-r296';
+import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
@@ -38,7 +38,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 74, y: 94, w: 570, h: 272 };
+const MONITOR = { x: 115, y: 94, w: 535, h: 248 };
 const CAR_X = 950;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
@@ -377,7 +377,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(665, 595, daichi.visual.spriteKey)
+      const sprite = this.add.image(560, 565, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -522,12 +522,10 @@ export default class DynoScene extends Phaser.Scene {
       return { box, text };
     };
 
-    this.runButton = makeButton(152, 'NEXT PULL', () => this.beginPull());
-    this.resultsButton = makeButton(218, 'RESULTS // LAST RUN', () => this.showLastRun(), 'secondary');
-    this.returnButton = makeButton(284, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
+    this.runButton = makeButton(170, 'NEXT PULL', () => this.beginPull());
+    this.returnButton = makeButton(236, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
 
-    this.resultsButton.box.setAlpha(this.previousRun ? 1 : 0.45);
-    if (!this.previousRun) this.resultsButton.box.disableInteractive();
+    this.resultsButton = null;
     this.refreshRunButton();
   }
 
@@ -536,7 +534,7 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 790, controlScaleMultiplier: 1.10 });
+    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 790, controlScaleMultiplier: 1.10, pedalLatchMax: false });
     this.controls.nosSprite?.setVisible(false);
 
     // Dyno-specific input guard: the shifter touch rectangle overlaps the
@@ -710,7 +708,6 @@ export default class DynoScene extends Phaser.Scene {
 
     this.carState = state;
     this.previousRun = run;
-    this.resultsButton?.box?.setAlpha(1)?.setInteractive?.({ useHandCursor: true });
     this.daichiText.setText('DAICHI // ' + run.analysis.comment);
     this.refreshPullCounter();
     this.refreshRunButton();
@@ -835,15 +832,33 @@ export default class DynoScene extends Phaser.Scene {
     };
 
     if (this.previousRun?.points?.length && this.points.length === 0) {
-      drawSeries(this.previousRun.points, 'torqueNm', torqueY, 0x64727a, 0.42, 2);
-      drawSeries(this.previousRun.points, 'powerKW', powerY, 0x64727a, 0.42, 2);
+      drawSeries(this.previousRun.points, 'torqueNm', torqueY, 0x59dcff, 0.48, 2);
+      drawSeries(this.previousRun.points, 'powerKW', powerY, 0x7df6a8, 0.48, 2);
     } else if (this.previousRun?.points?.length) {
-      drawSeries(this.previousRun.points, 'torqueNm', torqueY, 0x6c7479, 0.24, 2);
-      drawSeries(this.previousRun.points, 'powerKW', powerY, 0x6c7479, 0.24, 2);
+      drawSeries(this.previousRun.points, 'torqueNm', torqueY, 0x59dcff, 0.30, 2);
+      drawSeries(this.previousRun.points, 'powerKW', powerY, 0x7df6a8, 0.30, 2);
     }
 
     drawSeries(this.points, 'torqueNm', torqueY, 0x59dcff, 1, 3);
     drawSeries(this.points, 'powerKW', powerY, 0x7df6a8, 1, 3);
+
+    if (this.previousRun?.points?.length) {
+      if (!this.previousRunLegend) {
+        this.previousRunLegend = this.add.text(
+          MONITOR.x + MONITOR.w - 18,
+          MONITOR.y + MONITOR.h - 34,
+          'FAINT CURVES // PREVIOUS RUN',
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '5px',
+            color: '#8ca7b7',
+          }
+        ).setOrigin(1, 0).setDepth(21);
+      }
+      this.previousRunLegend.setVisible(true);
+    } else {
+      this.previousRunLegend?.setVisible(false);
+    }
   }
 
   updateTelemetry(point = null, throttle = 0) {
@@ -980,10 +995,19 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   returnToWorkshop() {
-    this.cleanup();
     this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
     this.registry.set('selectedCarId', this.carId);
     saveSessionState(this.registry);
+
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+      window.location.reload();
+      return;
+    } catch (e) {}
+
+    this.cleanup();
     this.scene.start('GarageScene', { workshopLocationId: DYNO_WAREHOUSE_ID });
   }
 }
