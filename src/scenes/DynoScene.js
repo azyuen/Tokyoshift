@@ -106,6 +106,7 @@ export default class DynoScene extends Phaser.Scene {
     this.previousRun = this.carState?.dyno?.lastRun || null;
     this.controls = null;
     this.audio = null;
+    this.dynoAudioEnabled = true;
     this.turbo = null;
     this.currentGear = 0;
     this.currentRPM = 0;
@@ -417,9 +418,18 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   ensureAudio() {
-    if (this.audio) return;
+    if (!this.dynoAudioEnabled || this.audio) return;
     const engineId = this.build?.car?.engine || cars[this.carId]?.engine;
-    this.audio = new EngineAudioSystem(engineId, engineId, this.carState, {});
+    try {
+      this.audio = new EngineAudioSystem(engineId, engineId, this.carState, {});
+    } catch (error) {
+      // Audio is non-essential to a dyno pull. Some mobile browsers can fail
+      // while constructing/resuming a Web Audio graph; never let that take
+      // down the dyno itself.
+      this.audio = null;
+      this.dynoAudioEnabled = false;
+      console.warn('Tokyo SHIFT dyno audio disabled:', error);
+    }
   }
 
   beginPull() {
@@ -777,7 +787,17 @@ export default class DynoScene extends Phaser.Scene {
       slipRatio: 0,
       nosActive: false,
     };
-    this.audio?.update(telemetry, null, this.build.car, this.build.car, dt);
+    if (this.audio && this.dynoAudioEnabled) {
+      try {
+        this.audio.update(telemetry, null, this.build.car, this.build.car, dt);
+      } catch (error) {
+        // A transient Web Audio failure must not abort the physics/render loop.
+        try { this.audio.destroy(); } catch (e) {}
+        this.audio = null;
+        this.dynoAudioEnabled = false;
+        console.warn('Tokyo SHIFT dyno audio update disabled:', error);
+      }
+    }
     this.updateTelemetry(point, throttle);
 
     if (this.runProgress >= 0.999) this.completePull();
