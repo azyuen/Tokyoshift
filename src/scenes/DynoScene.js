@@ -151,7 +151,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoHud = new RaceHUD(this, {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
-      x: 780,
+      x: 720,
       y: 790,
       scale: 0.52,
       statusY: 620,
@@ -484,15 +484,39 @@ export default class DynoScene extends Phaser.Scene {
 
   handleGearRequest(request, controls) {
     if (request == null || !this.build?.car) return;
-    if (Number(controls.clutch || 0) < 0.55) {
-      this.daichiText.setText('DAICHI // Clutch first. Do not force the gearbox on the dyno.');
-      return;
-    }
 
-    const maxGear = Math.max(1, this.build.car.gearRatios?.length || 5);
-    if (request === 'UP') this.currentGear = Math.min(maxGear, this.currentGear + 1);
-    else if (request === 'DOWN') this.currentGear = Math.max(0, this.currentGear - 1);
-    else if (Number.isFinite(Number(request))) this.currentGear = clamp(Number(request), 1, maxGear);
+    // The dyno should accept a shift without depending on the full race
+    // gearbox simulation. Previously this path could transition into an
+    // invalid state on touch shifter input, which was exactly where the
+    // intermittent 97% reload/reset appeared.
+    try {
+      const maxGear = Math.max(1, Number(this.build.car.gearRatios?.length || 5));
+      const clutch = Number(controls?.clutch || 0);
+
+      if (clutch < 0.55) {
+        this.daichiText?.setText('DAICHI // Clutch first. Do not force the gearbox on the dyno.');
+        return;
+      }
+
+      let requestedGear = this.currentGear;
+      if (request === 'UP') requestedGear += 1;
+      else if (request === 'DOWN') requestedGear -= 1;
+      else if (Number.isFinite(Number(request))) requestedGear = Number(request);
+
+      this.currentGear = Phaser.Math.Clamp(Math.round(requestedGear), 0, maxGear);
+
+      this.dynoUpdateError = null;
+      this.dynoHudFrame = 0;
+      this.daichiText?.setText(
+        'DAICHI // GEAR ' + (this.currentGear === 0 ? 'NEUTRAL' : this.currentGear) +
+        '. Release the clutch and build RPM.'
+      );
+      this.refreshRunButton?.();
+    } catch (error) {
+      this.dynoUpdateError = error;
+      this.currentGear = 0;
+      this.daichiText?.setText('DAICHI // GEARBOX SAFETY RESET. Try the shift again.');
+    }
   }
 
   startRunning() {
@@ -717,7 +741,7 @@ export default class DynoScene extends Phaser.Scene {
     const dt = Math.min(1 / 30, Math.max(0.001, Number(deltaMs || 16.7) / 1000));
     const input = this.controls.update();
     const gearRequest = this.controls.consumeGearRequest();
-    this.handleGearRequest(gearRequest, input);
+    if (gearRequest != null) this.handleGearRequest(gearRequest, input);
 
     if (this.pullState === 'SETUP') {
       const targetRPM = Math.max(
