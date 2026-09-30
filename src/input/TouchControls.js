@@ -71,6 +71,9 @@ export default class TouchControls {
     const throttleY = bottomAlignedY('throttlePedal', this.throttleScale, 545);
     const shifterY = bottomAlignedY('shifterNeutral', this.shifterScale, 535);
     const nosY = Math.min(this.controlBottomY - 70, 570);
+    this.shifterNeutralY = shifterY;
+    this.shifterUpY = shifterY - 10;
+    this.shifterDownY = shifterY + 10;
 
     this.clutchSprite = scene.add.image(175, clutchY, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
     this.nosSprite = scene.add.image(378, nosY, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0).setVisible(this.nosEnabled);
@@ -200,9 +203,9 @@ export default class TouchControls {
     g.lineStyle(2, 0x476272, 0.12).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
 
     if (shiftState === 'down') {
-      this.shifterSprite.setTexture('shifterDown').setPosition(1218, this.controlBottomY - 245 + this.verticalOffsetY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterDown').setPosition(1218, this.shifterDownY).setScale(this.shifterScale);
     } else {
-      this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, this.controlBottomY - (shiftState === 'up' ? 265 : 255) + this.verticalOffsetY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, shiftState === 'up' ? this.shifterUpY : this.shifterNeutralY).setScale(this.shifterScale);
     }
 
     if (this.nosEnabled) {
