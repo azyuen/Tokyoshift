@@ -1,13 +1,16 @@
 export default class RaceHUD {
   constructor(scene, options = {}) {
     this.scene = scene;
-    this.scale = 0.47;
+    this.scale = Number(options.scale || 0.47);
+    this.x = Number(options.x ?? 780);
+    this.y = Number(options.y ?? 675);
+    this.statusY = Number(options.statusY ?? 452);
     this.sourceW = 1473;
     this.sourceH = 452;
     this.hasTurbo = Boolean(options.hasTurbo);
     this.hasNitrous = Boolean(options.hasNitrous);
 
-    this.cluster = scene.add.image(780, 675, 'hudCluster')
+    this.cluster = scene.add.image(this.x, this.y, 'hudCluster')
       .setOrigin(0.5, 1)
       .setScale(this.scale)
       .setDepth(39)
@@ -15,7 +18,7 @@ export default class RaceHUD {
 
     this.g = scene.add.graphics().setDepth(40).setScrollFactor(0);
 
-    this.status = scene.add.text(780, 452, '', {
+    this.status = scene.add.text(this.x, this.statusY, '', {
       fontFamily: '"Silkscreen", monospace', fontSize: '11px', color: '#fff0b8'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
