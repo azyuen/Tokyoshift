@@ -122,6 +122,7 @@ export default class DynoScene extends Phaser.Scene {
     this.carObjects = [];
     this.dynoHud = null;
     this.dynoUpdateError = null;
+    this.dynoHudFrame = 0;
 
     this.drawBackground();
     this.drawHeader();
@@ -151,9 +152,9 @@ export default class DynoScene extends Phaser.Scene {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
       x: 780,
-      y: 842,
+      y: 790,
       scale: 0.34,
-      statusY: 452,
+      statusY: 620,
     });
     this.redrawGraph();
 
@@ -427,7 +428,7 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false, verticalOffsetY: 112 });
+    this.controls = new TouchControls(this, { nosEnabled: false });
     this.controls.nosSprite?.setVisible(false);
   }
 
@@ -462,7 +463,7 @@ export default class DynoScene extends Phaser.Scene {
     this.currentGear = 0;
     this.currentRPM = Number(this.build.engine.idleRPM || 850);
     this.currentBoost = 0;
-    this.turbo = new Turbo(this.build.car);
+    this.turbo = null;
     this.pullState = 'SETUP';
     this.redrawGraph();
     this.daichiText.setText(
@@ -753,14 +754,19 @@ export default class DynoScene extends Phaser.Scene {
     this.runProgress = clamp(this.runProgress + dt * Math.max(0.18, throttle) / 5.25, 0, 1);
     this.currentRPM = startRPM + (redline - startRPM) * this.runProgress;
 
-    this.turbo?.update(dt, this.currentRPM, throttle, 1.0, false, false);
-    this.currentBoost = Number(this.turbo?.boostBar || 0);
+    // Keep the Dyno physics deliberately lightweight. Turbo spool is derived
+    // directly from RPM/throttle here; the race Turbo object is not needed.
+    const turboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
+    const turboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+    this.currentBoost = turboMax * Math.pow(turboRpm, 1.18) * Math.pow(throttle, 0.88);
     const point = getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle);
 
-    if (!this.points.length || point.rpm - this.lastRecordedRPM >= 85 || this.runProgress >= 0.999) {
+    if (!this.points.length || point.rpm - this.lastRecordedRPM >= 300 || this.runProgress >= 0.999) {
       this.points.push(point);
       this.lastRecordedRPM = point.rpm;
-      this.redrawGraph();
+      // Do not redraw the full Phaser graph on every small RPM increment.
+      // The live graph is sampled sparsely during the pull and redrawn fully
+      // when the run completes.
     }
 
     const overallRatio = Math.max(
@@ -795,7 +801,7 @@ export default class DynoScene extends Phaser.Scene {
     };
 
     this.updateTelemetry(point, throttle);
-    if (this.dynoHud) {
+    if (this.dynoHud && (++this.dynoHudFrame % 4 === 0 || this.runProgress >= 0.999)) {
       this.dynoHud.update({
         rpm: this.currentRPM,
         speedKmh: telemetry.speedKmh,
@@ -807,7 +813,10 @@ export default class DynoScene extends Phaser.Scene {
       }, 'DYNO PULL // LIVE');
     }
 
-    if (this.runProgress >= 0.999) this.completePull();
+    if (this.runProgress >= 0.999) {
+      this.redrawGraph();
+      this.completePull();
+    }
   } catch (error) {
       this.dynoUpdateError = error;
       this.pullState = 'ABORTED';
