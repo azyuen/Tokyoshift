@@ -13,6 +13,12 @@ export function startSceneLoading(scene, label = 'LOADING ASSETS', queuedCount =
   scene.load.once('complete', () => {
     scene.load.off('progress', onProgress);
     window.TOKYO_SHIFT_SET_LOADING?.(0.97, 'OPENING TOKYO');
+
+    // Once the loader itself is complete, do not allow a create() exception
+    // to leave the global splash permanently frozen at 97%.
+    window.setTimeout(() => {
+      window.TOKYO_SHIFT_HIDE_SPLASH?.();
+    }, 1400);
   });
 
   return true;
