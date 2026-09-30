@@ -40,7 +40,7 @@ const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
 const MONITOR = { x: 163, y: 82, w: 505, h: 230 };
-const CAR_X = 840;
+const CAR_X = 780;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
 
@@ -125,6 +125,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoRunMode = 'power';
     this.shiftEvents = [];
     this.shiftCooldown = 0;
+    this.shiftLabelObjects = this.shiftLabelObjects || [];
     this.wheelObjects = [];
     this.carObjects = [];
     this.dynoHud = null;
@@ -133,6 +134,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoUiMode = 'intro';
     this.introUiObjects = [];
     this.activeUiObjects = [];
+    this.shiftLabelObjects = [];
     this.dynoShifterInputShield = null;
     this._dynoCleanedUp = false;
 
@@ -368,7 +370,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(345, 580, daichi.visual.spriteKey)
+      const sprite = this.add.image(345, 550, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -433,49 +435,55 @@ export default class DynoScene extends Phaser.Scene {
 
     const add = obj => this.addUiObject('introUiObjects', obj);
     const x = 1320;
-    const next = getDynoNextStage(this.facilityTier);
-    const cost = Number(this.stage.sessionCost || 0);
-    const pulls = Math.max(1, Number(this.stage.pullsPerSession || 3));
+    const powerCost = 5000;
+    const drivetrainCost = 15000;
 
-    add(this.add.text(1148, 112, this.stage.label, {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff7ff'
+    // Stage I services are deliberately simple: buy the test you want.
+    // Power Run is one pull; Drivetrain Test buys three attempts.
+    add(this.add.text(1148, 122, 'STAGE I', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe08a'
     }).setDepth(29));
 
-    const powerBox = add(this.add.rectangle(x, 188, 380, 100, 0x07111d, 0.97)
+    const powerBox = add(this.add.rectangle(x, 178, 380, 100, 0x07111d, 0.97)
       .setStrokeStyle(2, 0x62e8c7, 0.95)
       .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 150,
+    add(this.add.text(1148, 140,
       'POWER RUN  //  BASELINE ENGINE CURVE\n' +
       '1 CLEAN PULL  //  POWER + TORQUE VS RPM',
       {
         fontFamily: BODY_FONT, fontSize: '9px', color: '#b8dce8',
         fontStyle: '700', lineSpacing: 5,
       }).setDepth(29));
-    add(this.add.text(1490, 238, 'START  >', {
+    add(this.add.text(1490, 252, 'START FOR ¥5,000', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
+    }).setOrigin(1, 0.5).setDepth(29));
+    add(this.add.text(1490, 265, 'STAGE 1', {
+      fontFamily: PIXEL_FONT, fontSize: '5px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(29));
     powerBox.on('pointerdown', () => this.beginPull('power'));
 
-    const driveBox = add(this.add.rectangle(x, 306, 380, 100, 0x07111d, 0.97)
+    const driveBox = add(this.add.rectangle(x, 292, 380, 100, 0x07111d, 0.97)
       .setStrokeStyle(2, 0x43dfff, 0.95)
       .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 268,
-      'DRIVETRAIN TEST  //  2 RUNS\n' +
+    add(this.add.text(1148, 254,
+      'DRIVETRAIN TEST  //  3 ATTEMPTS\n' +
       'STANDING START  //  SHIFT THROUGH THE GEARS\n' +
       'SEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
       {
         fontFamily: BODY_FONT, fontSize: '8px', color: '#b8dce8',
         fontStyle: '700', lineSpacing: 4,
       }).setDepth(29));
-    add(this.add.text(1490, 356, 'START  >', {
+    add(this.add.text(1490, 366, 'START FOR ¥15,000', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
+    }).setOrigin(1, 0.5).setDepth(29));
+    add(this.add.text(1490, 379, 'STAGE 1', {
+      fontFamily: PIXEL_FONT, fontSize: '5px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(29));
     driveBox.on('pointerdown', () => this.beginPull('drivetrain'));
 
     add(this.add.text(1148, 430,
-      'SESSION  //  ¥ ' + cost.toLocaleString('en-US') +
-      '  //  ' + pulls + ' PULLS\n' +
-      '1 × POWER RUN  +  2 × DRIVETRAIN ATTEMPTS',
+      'POWER RUN  //  ¥5,000  //  1 PULL\n' +
+      'DRIVETRAIN TEST  //  ¥15,000  //  3 ATTEMPTS',
       {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe08a',
         lineSpacing: 5,
@@ -484,12 +492,12 @@ export default class DynoScene extends Phaser.Scene {
     if (this.facilityTier < 3) {
       add(this.add.rectangle(x, 530, 380, 108, 0x0b1017, 0.92)
         .setStrokeStyle(1, 0x6b5b37, 0.86).setDepth(28));
-      add(this.add.text(1148, 486, 'NEXT // ' + next.shortLabel, {
+      add(this.add.text(1148, 486, 'NEXT // ' + getDynoNextStage(this.facilityTier).shortLabel, {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe08a'
       }).setDepth(29));
       add(this.add.text(1148, 515,
-        'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') +
-        '\n' + next.description.toUpperCase(),
+        'UPGRADE  ¥ ' + Number(getDynoNextStage(this.facilityTier).installCost || 0).toLocaleString('en-US') +
+        '\n' + getDynoNextStage(this.facilityTier).description.toUpperCase(),
         {
           fontFamily: BODY_FONT, fontSize: '8px', color: '#aa9e80',
           fontStyle: '700', lineSpacing: 3, wordWrap: { width: 340 },
@@ -584,27 +592,26 @@ export default class DynoScene extends Phaser.Scene {
   beginPull(requestedMode = null) {
     if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
 
-    const totalPulls = Math.max(1, Number(this.stage.pullsPerSession || 3));
+    // Stage I service pricing: Power Run is ¥5,000 for one pull;
+    // Drivetrain Test is ¥15,000 for three attempts.
+    const serviceCost = requestedMode === 'drivetrain' ? 15000 : 5000;
+    const servicePulls = requestedMode === 'drivetrain' ? 3 : 1;
+
     if (this.sessionPullsRemaining <= 0) {
-      const cost = Math.max(0, Number(this.stage.sessionCost || 0));
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-      if (cash < cost) {
-        this.daichiText.setText('DAICHI // You need ¥' + cost.toLocaleString('en-US') + ' for a full dyno session.');
+      if (cash < serviceCost) {
+        this.daichiText.setText('DAICHI // You need ¥' + serviceCost.toLocaleString('en-US') + ' for this Stage I test.');
         return;
       }
-      this.registry.set('cash', cash - cost);
-      this.cashText.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
-      this.sessionPullsRemaining = totalPulls;
+      this.registry.set('cash', cash - serviceCost);
+      this.cashText.setText('¥ ' + Number(cash - serviceCost).toLocaleString('en-US'));
+      this.sessionPullsRemaining = servicePulls;
       this.dynoRunMode = requestedMode || 'power';
       saveSessionState(this.registry);
     } else if (requestedMode) {
-      // The first run can choose Power Run or Drivetrain Test. Once the
-      // session is underway, the remaining two pulls are drivetrain attempts.
-      const completed = totalPulls - this.sessionPullsRemaining;
-      if (completed === 0 && requestedMode === 'power') this.dynoRunMode = 'power';
-      else if (completed === 0 && requestedMode === 'drivetrain') this.dynoRunMode = 'drivetrain';
-    } else if (!this.dynoRunMode) {
-      this.dynoRunMode = (totalPulls - this.sessionPullsRemaining) === 0 ? 'power' : 'drivetrain';
+      // Do not charge again while a purchased three-attempt drivetrain
+      // service is being used. A new purchase starts once the attempts run out.
+      this.dynoRunMode = requestedMode;
     }
 
     this.ensureDynoHud();
@@ -621,7 +628,7 @@ export default class DynoScene extends Phaser.Scene {
     this.vehicleDistanceM = 0;
     this.dynoRunTime = 0;
     this.shiftCooldown = 0;
-    this.currentGear = this.dynoRunMode === 'drivetrain' ? 1 : 0;
+    this.currentGear = this.dynoRunMode === 'drivetrain' ? 0 : 0;
     this.currentRPM = Number(this.build.engine.idleRPM || 850);
     this.currentBoost = 0;
     this.turbo = null;
@@ -632,7 +639,7 @@ export default class DynoScene extends Phaser.Scene {
 
     if (this.dynoRunMode === 'drivetrain') {
       this.daichiText.setText(
-        'DAICHI // DRIVETRAIN TEST. Start in 1ST. Clutch in, then release it cleanly at your launch RPM.'
+        'DAICHI // DRIVETRAIN TEST. Start in N. Clutch in, select your launch gear, set RPM, then release.'
       );
     } else {
       this.daichiText.setText(
@@ -739,7 +746,6 @@ export default class DynoScene extends Phaser.Scene {
       const idle = Number(this.build.engine.idleRPM || 850);
       const redline = Number(this.build.engine.redlineRPM || 7600);
       this.currentRPM = Math.max(idle + 1000, redline * 0.24);
-      this.currentGear = 1;
       this.daichiText.setText('DAICHI // GO. Hold it. Shift when you think the engine has had enough.');
     } else {
       this.currentRPM = Math.max(
@@ -775,7 +781,7 @@ export default class DynoScene extends Phaser.Scene {
     const run = {
       completedAt: Date.now(),
       mode: this.dynoRunMode,
-      gear: this.dynoRunMode === 'power' ? this.currentGear : 1,
+      gear: this.dynoRunMode === 'power' ? this.currentGear : (this.points?.[0]?.gear || this.currentGear),
       points: this.points.map(point => ({
         rpm: Math.round(point.rpm),
         speedKmh: Math.round(Number(point.speedKmh || 0) * 10) / 10,
@@ -846,9 +852,9 @@ export default class DynoScene extends Phaser.Scene {
       this.daichiText.setText('DAICHI // ' + run.analysis.comment);
     }
 
-    if (run.mode === 'power' && this.sessionPullsRemaining > 0) {
-      this.dynoRunMode = 'drivetrain';
-    }
+    // A completed Power Run or Drivetrain attempt simply returns to the
+    // service selection flow when its purchased attempts are exhausted.
+    if (this.sessionPullsRemaining <= 0) this.dynoRunMode = 'power';
 
     this.refreshPullCounter();
     this.refreshRunButton();
@@ -891,21 +897,19 @@ export default class DynoScene extends Phaser.Scene {
     if (!this.pullCounterText) return;
     this.pullCounterText.setText(
       this.sessionPullsRemaining > 0
-        ? 'SESSION // ' + this.sessionPullsRemaining + ' PULL' + (this.sessionPullsRemaining === 1 ? '' : 'S') + ' LEFT'
-        : this.stage?.tier > 0
-          ? 'SESSION // ¥ ' + Number(this.stage.sessionCost || 0).toLocaleString('en-US') + ' // 1 POWER + 2 DRIVETRAIN'
-          : ''
+        ? 'TEST // ' + this.sessionPullsRemaining + ' ATTEMPT' + (this.sessionPullsRemaining === 1 ? '' : 'S') + ' LEFT'
+        : 'STAGE I // POWER ¥5,000 // DRIVETRAIN ¥15,000 / 3 ATTEMPTS'
     );
   }
 
   refreshRunButton() {
     if (!this.runButton) return;
-    let label = 'NEW SESSION // ¥ ' + Number(this.stage.sessionCost || 0).toLocaleString('en-US');
+    let label = 'NEW TEST';
     let enabled = true;
 
     if (this.pullState === 'SETUP') {
       label = this.dynoRunMode === 'drivetrain'
-        ? 'SETUP // 1ST GEAR // LAUNCH'
+        ? 'SETUP // N // SELECT LAUNCH GEAR'
         : 'SETUP // SELECT ' + this.ordinal(this.recommendedGear) + ' GEAR';
       enabled = false;
     } else if (this.pullState === 'RUNNING') {
@@ -915,8 +919,8 @@ export default class DynoScene extends Phaser.Scene {
       enabled = false;
     } else if (this.sessionPullsRemaining > 0) {
       label = this.pullState === 'ABORTED'
-        ? 'RETRY ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'POWER') + ' RUN // ' + this.sessionPullsRemaining + ' LEFT'
-        : 'NEXT ' + (this.sessionPullsRemaining === 2 ? 'DRIVETRAIN' : 'DYNO') + ' RUN // ' + this.sessionPullsRemaining + ' LEFT';
+        ? 'RETRY ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'POWER') + ' // ' + this.sessionPullsRemaining + ' LEFT'
+        : 'NEXT ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'TEST') + ' // ' + this.sessionPullsRemaining + ' LEFT';
     }
 
     this.runButton.text.setText(label);
@@ -1017,7 +1021,12 @@ export default class DynoScene extends Phaser.Scene {
 
     if (drivetrain) {
       const events = this.shiftEvents?.length ? this.shiftEvents : (graphRun?.shiftEvents || []);
-      events.forEach(event => {
+      (this.shiftLabelObjects || []).forEach(obj => {
+        try { obj?.destroy?.(); } catch (e) {}
+      });
+      this.shiftLabelObjects = [];
+
+      events.forEach((event, index) => {
         const x = xAt(Number(event.speedKmh || 0));
         const yTorque = torqueY(Number(event.torqueNm || event.wheelTorqueNm || 0));
         const yPower = powerY(Number(event.powerKW || 0));
@@ -1026,6 +1035,24 @@ export default class DynoScene extends Phaser.Scene {
         g.fillCircle(x, yPower, 3);
         g.lineStyle(1, 0xffe08a, 0.55);
         g.lineBetween(x, rect.y + 4, x, rect.y + rect.h - 4);
+
+        const labelY = rect.y + 8 + (index % 2) * 28;
+        const label = this.add.text(
+          x,
+          labelY,
+          event.fromGear + '→' + event.toGear + '\\n' +
+          Math.round(event.rpmBefore).toLocaleString('en-US') + '→' +
+          Math.round(event.rpmAfter).toLocaleString('en-US'),
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '5px',
+            color: '#ffe08a',
+            align: 'center',
+            backgroundColor: '#07111d',
+            padding: { left: 2, right: 2, top: 2, bottom: 2 },
+          }
+        ).setOrigin(0.5, 0).setDepth(23);
+        this.shiftLabelObjects.push(label);
       });
     }
   }
@@ -1097,264 +1124,3 @@ export default class DynoScene extends Phaser.Scene {
     const finalDrive = Number(this.build?.car?.finalDriveRatio || 1);
     return Math.max(0.1, ratio * finalDrive);
   }
-
-  getWheelRPMFromSpeed(speedMps = 0) {
-    const wheelRadius = Math.max(0.20, Number(this.build?.car?.wheelRadius || 0.32));
-    return Math.max(0, Number(speedMps || 0)) / (Math.PI * 2 * wheelRadius) * 60;
-  }
-
-  getDrivetrainPoint(point, speedMps, gear) {
-    const efficiency = clamp(Number(this.build.car.drivetrainEfficiency || 0.86), 0.60, 0.99);
-    const ratio = this.getOverallGearRatio(gear);
-    const wheelRadius = Math.max(0.20, Number(this.build.car.wheelRadius || 0.32));
-    const wheelTorqueNm = Math.max(0, Number(point.torqueNm || 0) * ratio * efficiency);
-    const wheelPowerKW = Math.max(0, wheelTorqueNm * this.getWheelRPMFromSpeed(speedMps) / 9549);
-    return {
-      ...point,
-      speedKmh: Math.max(0, speedMps * 3.6),
-      positionM: this.vehicleDistanceM,
-      gear,
-      wheelTorqueNm,
-      wheelPowerKW,
-    };
-  }
-
-  update(time, deltaMs) {
-    try {
-      if (!this.build || !this.controls) {
-        this.redrawRollers(0);
-        return;
-      }
-
-      const dt = Math.min(1 / 30, Math.max(0.001, Number(deltaMs || 16.7) / 1000));
-      const input = this.controls.update();
-      const gearRequest = this.controls.consumeGearRequest();
-      if (gearRequest != null) this.handleGearRequest(gearRequest, input);
-
-      if (this.pullState === 'SETUP') {
-        if (this.dynoRunMode === 'drivetrain') {
-          const throttle = clamp(input.throttle, 0, 1);
-          const idle = Number(this.build.engine.idleRPM || 850);
-          const launchRPM = Math.max(idle + 1000, Number(this.build.engine.redlineRPM || 7600) * 0.24);
-          if (this.currentGear !== 1) this.currentGear = 1;
-          const targetRPM = Math.max(idle, idle + throttle * Math.max(700, launchRPM - idle));
-          this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 8);
-          const setupTurboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
-          const setupTurboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
-          this.currentBoost = setupTurboMax * Math.pow(setupTurboRpm, 1.18) * Math.pow(throttle, 0.88);
-          const setupTelemetry = this.getRollerTelemetry(throttle, input.clutch, this.currentBoost);
-          this.updateTelemetry({ boostBar: this.currentBoost, powerKW: 0, torqueNm: 0 }, throttle);
-          this.updateDynoHud(setupTelemetry, 'DRIVETRAIN // LAUNCH SETUP');
-          this.audio?.update(setupTelemetry, null, this.build.car, null, dt);
-          this.redrawRollers(time * 0.015 + setupTelemetry.wheelRPM * 0.03);
-
-          if (Number(input.clutch || 0) < 0.20 && throttle >= 0.72) {
-            this.startRunning();
-          }
-          return;
-        }
-
-        const targetRPM = Math.max(
-          Number(this.build.engine.idleRPM || 850),
-          Number(this.build.engine.idleRPM || 850) + Number(input.throttle || 0) * 800
-        );
-        this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 7);
-
-        const setupTurboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
-        const setupTurboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
-        this.currentBoost = setupTurboMax * Math.pow(setupTurboRpm, 1.18) * Math.pow(clamp(input.throttle, 0, 1), 0.88);
-
-        const setupTelemetry = this.getRollerTelemetry(input.throttle, input.clutch, this.currentBoost);
-        this.updateTelemetry({ boostBar: this.currentBoost, powerKW: 0, torqueNm: 0 }, input.throttle);
-        this.updateDynoHud(setupTelemetry, 'POWER RUN // SETUP');
-        this.audio?.update(setupTelemetry, null, this.build.car, null, dt);
-        this.redrawRollers(time * 0.015 + setupTelemetry.wheelRPM * 0.03);
-
-        if (this.currentGear === this.recommendedGear && Number(input.clutch || 0) < 0.20) {
-          this.daichiText.setText('DAICHI // READY. Hold full throttle for the pull.');
-          if (Number(input.throttle || 0) >= 0.86) this.startRunning();
-        }
-        return;
-      }
-
-      if (this.pullState === 'COMPLETE') {
-        this.controls.enabled = false;
-        const idleRPM = Math.max(0, Number(this.build.engine.idleRPM || 850));
-        this.currentRPM += (idleRPM - this.currentRPM) * Math.min(1, dt * 1.8);
-        this.currentBoost = Math.max(0, this.currentBoost - dt * Math.max(0.1, this.currentBoost * 1.8));
-        const cooldownTelemetry = this.getRollerTelemetry(0, 0, this.currentBoost);
-        this.updateTelemetry(this.finalDynoPoint, 0);
-        this.updateDynoHud(cooldownTelemetry, 'DYNO // RUN COMPLETE');
-        this.audio?.update(cooldownTelemetry, null, this.build.car, null, dt);
-        this.redrawRollers(time * 0.006 + cooldownTelemetry.wheelRPM * 0.02);
-        return;
-      }
-
-      if (this.pullState !== 'RUNNING') {
-        const idleTelemetry = this.getRollerTelemetry(0, 1, 0);
-        this.updateTelemetry(null, 0);
-        this.updateDynoHud(idleTelemetry, 'DYNO // READY');
-        this.audio?.update(idleTelemetry, null, this.build.car, null, dt);
-        this.redrawRollers(time * 0.006);
-        return;
-      }
-
-      const throttle = clamp(input.throttle, 0, 1);
-      if (throttle < 0.72) this.lowThrottleTime += dt;
-      else this.lowThrottleTime = Math.max(0, this.lowThrottleTime - dt * 2);
-      if (this.lowThrottleTime > 0.55) {
-        this.abortPull();
-        return;
-      }
-
-      this.dynoRunTime += dt;
-      this.shiftCooldown = Math.max(0, this.shiftCooldown - dt);
-
-      const redline = Math.max(3000, Number(this.build.engine.redlineRPM || this.build.car.engineRedlineRPM || 8000));
-      const turboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
-
-      if (this.dynoRunMode === 'power') {
-        this.runProgress = clamp(this.runProgress + dt * Math.max(0.18, throttle) / 5.25, 0, 1);
-        const startRPM = Math.max(Number(this.build.engine.idleRPM || 850) + 650, redline * 0.24);
-        this.currentRPM = startRPM + (redline - startRPM) * this.runProgress;
-
-        const turboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
-        this.currentBoost = turboMax * Math.pow(turboRpm, 1.18) * Math.pow(throttle, 0.88);
-        const point = getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle);
-
-        if (!this.points.length || point.rpm - this.lastRecordedRPM >= 300 || this.runProgress >= 0.999) {
-          this.points.push({ ...point, speedKmh: this.getRollerTelemetry(throttle, input.clutch, this.currentBoost).speedKmh, gear: this.currentGear });
-          this.lastRecordedRPM = point.rpm;
-          this.redrawGraph();
-        }
-
-        const overallRatio = this.getOverallGearRatio(this.currentGear);
-        const wheelRPM = this.currentRPM / overallRatio;
-        const rotation = wheelRPM * (Math.PI * 2 / 60) * dt;
-        this.wheelObjects.forEach(wheel => { if (wheel?.active) wheel.rotation += rotation; });
-        this.redrawRollers(time * 0.18 + wheelRPM * 0.03);
-
-        const vibration = Math.sin(time * 0.055) * (1.0 + throttle * 1.3);
-        this.carBodyBase.forEach(item => { if (item.obj?.active) item.obj.y = item.y + vibration; });
-
-        const telemetry = this.getRollerTelemetry(throttle, input.clutch, this.currentBoost);
-        this.updateTelemetry(point, throttle);
-        this.updateDynoHud(telemetry, 'POWER RUN // LIVE');
-        this.audio?.update(telemetry, null, this.build.car, null, dt);
-
-        if (this.runProgress >= 0.999) {
-          this.redrawGraph();
-          this.completePull();
-        }
-        return;
-      }
-
-      // DRIVETRAIN TEST: a lightweight road-load simulation. The engine curve
-      // stays RPM-based; the gearbox transforms it into wheel torque, and
-      // vehicle speed determines the RPM after every shift.
-      const clutch = clamp(input.clutch, 0, 1);
-      if (this.currentGear < 1) {
-        this.currentGear = 1;
-      }
-
-      if (this.shiftCooldown <= 0) {
-        const ratio = this.getOverallGearRatio(this.currentGear);
-        const wheelRPM = this.getWheelRPMFromSpeed(this.vehicleSpeedMps);
-        const targetRPM = this.vehicleSpeedMps < 0.5
-          ? this.currentRPM
-          : wheelRPM * ratio;
-        this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 14);
-      }
-
-      const turboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
-      this.currentBoost = turboMax * Math.pow(turboRpm, 1.18) * Math.pow(throttle, 0.88);
-      const enginePoint = getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle);
-      const drivetrainPoint = this.getDrivetrainPoint(enginePoint, this.vehicleSpeedMps, this.currentGear);
-
-      const massKg = Math.max(850, Number(this.build.car.massKg || this.build.car.weightKg || 1350));
-      const wheelRadius = Math.max(0.20, Number(this.build.car.wheelRadius || 0.32));
-      const wheelForce = drivetrainPoint.wheelTorqueNm / wheelRadius;
-      const rolling = massKg * 9.81 * 0.015;
-      const speed = Math.max(0, this.vehicleSpeedMps);
-      const dragCoeff = Math.max(0.15, Number(this.build.car.dragCoefficient || this.build.car.cd || 0.30));
-      const frontalArea = Math.max(1.4, Number(this.build.car.frontalAreaM2 || 2.0));
-      const aero = 0.5 * 1.225 * dragCoeff * frontalArea * speed * speed;
-      const tractionForce = Math.max(0, Number(this.build.car.tractionForceN || 0));
-      const driveForce = tractionForce > 0 ? Math.min(wheelForce, tractionForce) : wheelForce;
-      const netForce = Math.max(-massKg * 1.5, driveForce - rolling - aero);
-      const acceleration = netForce / massKg;
-
-      if (clutch < 0.20 && this.shiftCooldown <= 0) {
-        this.vehicleSpeedMps = Math.max(0, this.vehicleSpeedMps + acceleration * dt);
-        this.vehicleDistanceM += this.vehicleSpeedMps * dt;
-      }
-
-      this.currentRPM = Math.max(
-        Number(this.build.engine.idleRPM || 850),
-        this.getWheelRPMFromSpeed(this.vehicleSpeedMps) * this.getOverallGearRatio(this.currentGear)
-      );
-
-      if (this.currentRPM >= redline * 0.995 && this.currentGear >= Number(this.build.car.gearRatios?.length || 1)) {
-        this.currentRPM = Math.min(this.currentRPM, redline);
-        this.completePull();
-        return;
-      }
-
-      if (this.dynoRunTime > 22) {
-        this.completePull();
-        return;
-      }
-
-      const finalPoint = this.getDrivetrainPoint(
-        getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle),
-        this.vehicleSpeedMps,
-        this.currentGear
-      );
-
-      if (!this.points.length || this.dynoRunTime - this.lastRecordedTime >= 0.10 || this.currentRPM >= redline * 0.995) {
-        this.points.push(finalPoint);
-        this.lastRecordedTime = this.dynoRunTime;
-        this.redrawGraph();
-      }
-
-      const wheelRPM = this.getWheelRPMFromSpeed(this.vehicleSpeedMps);
-      const rotation = wheelRPM * (Math.PI * 2 / 60) * dt;
-      this.wheelObjects.forEach(wheel => { if (wheel?.active) wheel.rotation += rotation; });
-      this.redrawRollers(time * 0.18 + wheelRPM * 0.03);
-
-      const vibration = Math.sin(time * 0.055) * (1.0 + throttle * 1.3);
-      this.carBodyBase.forEach(item => { if (item.obj?.active) item.obj.y = item.y + vibration; });
-
-      const telemetry = this.getRollerTelemetry(throttle, clutch, this.currentBoost);
-      telemetry.speedKmh = this.vehicleSpeedMps * 3.6;
-      telemetry.wheelRPM = wheelRPM;
-      this.updateTelemetry(finalPoint, throttle);
-      this.updateDynoHud(telemetry, 'DRIVETRAIN TEST // LIVE');
-      this.audio?.update(telemetry, null, this.build.car, null, dt);
-    } catch (error) {
-      this.dynoUpdateError = error;
-      this.pullState = 'ABORTED';
-      if (this.controls) this.controls.enabled = false;
-      this.currentBoost = 0;
-      this.daichiText?.setText('DAICHI // DYNO SAFETY STOP. Pull aborted; the cell is still online.');
-      this.refreshRunButton?.();
-    }
-  }
-
-  returnToWorkshop() {
-    this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
-    this.registry.set('selectedCarId', this.carId);
-    saveSessionState(this.registry);
-
-    try {
-      sessionStorage.setItem('tokyoShiftInternalReload', '1');
-      sessionStorage.setItem('tokyoShiftForceGarage', '1');
-      sessionStorage.removeItem('tokyoShiftBootMessage');
-      window.location.reload();
-      return;
-    } catch (e) {}
-
-    this.cleanup();
-    this.scene.start('GarageScene', { workshopLocationId: DYNO_WAREHOUSE_ID });
-  }
-}
