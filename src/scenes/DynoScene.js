@@ -671,12 +671,16 @@ export default class DynoScene extends Phaser.Scene {
 
       const nextGear = Phaser.Math.Clamp(Math.round(requestedGear), 0, maxGear);
 
-      // In drivetrain mode, the gearbox actually matters. Keep vehicle speed
-      // continuous and let the new ratio determine the post-shift RPM.
-      if (this.pullState === 'RUNNING' && this.dynoRunMode === 'drivetrain' && nextGear > 0 && nextGear !== this.currentGear) {
+      if (
+        this.pullState === 'RUNNING' &&
+        this.dynoRunMode === 'drivetrain' &&
+        nextGear > 0 &&
+        nextGear !== this.currentGear
+      ) {
         const oldGear = this.currentGear;
         const speedKmh = this.vehicleSpeedMps * 3.6;
         const oldRPM = this.currentRPM;
+
         this.currentGear = nextGear;
         const ratio = this.getOverallGearRatio(nextGear);
         const wheelRPM = this.getWheelRPMFromSpeed(this.vehicleSpeedMps);
@@ -684,11 +688,41 @@ export default class DynoScene extends Phaser.Scene {
           Number(this.build.engine.idleRPM || 850),
           wheelRPM * ratio
         );
+
         this.shiftEvents.push({
           speedKmh: Math.max(0, speedKmh),
           rpmBefore: oldRPM,
           rpmAfter: this.currentRPM,
-          fromGear: old  startRunning() {
+          fromGear: oldGear,
+          toGear: nextGear,
+        });
+        this.shiftCooldown = 0.16;
+        this.daichiText?.setText(
+          'DAICHI // ' + oldGear + ' > ' + nextGear +
+          '. RPM DROP: ' + Math.max(0, Math.round(oldRPM - this.currentRPM)) + ' rpm.'
+        );
+      } else {
+        this.currentGear = nextGear;
+        if (this.pullState !== 'RUNNING') {
+          this.daichiText?.setText(
+            'DAICHI // GEAR ' + (this.currentGear === 0 ? 'NEUTRAL' : this.currentGear) +
+            '. Release the clutch and build RPM.'
+          );
+        }
+      }
+
+      this.dynoUpdateError = null;
+      this.dynoHudFrame = 0;
+      const shiftTelemetry = this.getRollerTelemetry(0, clutch, this.currentBoost);
+      this.updateDynoHud(shiftTelemetry, 'DYNO // SHIFT');
+    } catch (error) {
+      this.dynoUpdateError = error;
+      this.currentGear = this.dynoRunMode === 'drivetrain' ? 1 : 0;
+      this.daichiText?.setText('DAICHI // GEARBOX SAFETY RESET. Try the shift again.');
+    }
+  }
+
+  startRunning() {
     if (this.pullState !== 'SETUP') return;
     this.pullState = 'RUNNING';
     this.runProgress = 0;
