@@ -430,9 +430,17 @@ export default class DynoScene extends Phaser.Scene {
     return obj;
   }
 
+  clearShiftLabels() {
+    (this.shiftLabelObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.shiftLabelObjects = [];
+  }
+
   drawIntroUi() {
     this.clearUiObjects('activeUiObjects');
     this.clearUiObjects('introUiObjects');
+    this.clearShiftLabels();
     this.dynoUiMode = 'intro';
     this.runButton = null;
     this.resultsButton = null;
@@ -442,30 +450,34 @@ export default class DynoScene extends Phaser.Scene {
     const powerCost = 5000;
     const drivetrainCost = 15000;
 
-    // Stage I services are deliberately simple: buy the test you want.
-    // Power Run is one pull; Drivetrain Test buys three attempts.
-    const powerBox = add(this.add.rectangle(x, 178, 380, 100, 0x07111d, 0.97)
+    // Compact Stage I service cards. Stage label lives top-right; purchase
+    // action lives bottom-right so future dyno services can stack underneath.
+    const powerTop = 92;
+    const powerBottom = 184;
+    const powerBox = add(this.add.rectangle(x, (powerTop + powerBottom) / 2, 380, powerBottom - powerTop, 0x07111d, 0.97)
       .setStrokeStyle(2, 0x62e8c7, 0.95)
       .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 140,
+    add(this.add.text(1148, 112,
       'POWER RUN  //  BASELINE ENGINE CURVE\n' +
       '1 CLEAN PULL  //  POWER + TORQUE VS RPM',
       {
         fontFamily: BODY_FONT, fontSize: '9px', color: '#b8dce8',
         fontStyle: '700', lineSpacing: 5,
       }).setDepth(29));
-    add(this.add.text(1490, 252, 'START FOR ¥5,000', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
-    }).setOrigin(1, 0.5).setDepth(29));
-    add(this.add.text(1490, 265, 'STAGE 1', {
+    add(this.add.text(1490, powerTop + 8, 'STAGE 1', {
       fontFamily: PIXEL_FONT, fontSize: '5px', color: '#ffe08a'
-    }).setOrigin(1, 0.5).setDepth(29));
+    }).setOrigin(1, 0).setDepth(29));
+    add(this.add.text(1490, powerBottom - 9, 'START FOR ¥' + powerCost.toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
+    }).setOrigin(1, 1).setDepth(29));
     powerBox.on('pointerdown', () => this.beginPull('power'));
 
-    const driveBox = add(this.add.rectangle(x, 292, 380, 100, 0x07111d, 0.97)
+    const driveTop = 194;
+    const driveBottom = 298;
+    const driveBox = add(this.add.rectangle(x, (driveTop + driveBottom) / 2, 380, driveBottom - driveTop, 0x07111d, 0.97)
       .setStrokeStyle(2, 0x43dfff, 0.95)
       .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 254,
+    add(this.add.text(1148, 216,
       'DRIVETRAIN TEST  //  3 ATTEMPTS\n' +
       'STANDING START  //  SHIFT THROUGH THE GEARS\n' +
       'SEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
@@ -473,38 +485,33 @@ export default class DynoScene extends Phaser.Scene {
         fontFamily: BODY_FONT, fontSize: '8px', color: '#b8dce8',
         fontStyle: '700', lineSpacing: 4,
       }).setDepth(29));
-    add(this.add.text(1490, 366, 'START FOR ¥15,000', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
-    }).setOrigin(1, 0.5).setDepth(29));
-    add(this.add.text(1490, 379, 'STAGE 1', {
+    add(this.add.text(1490, driveTop + 8, 'STAGE 1', {
       fontFamily: PIXEL_FONT, fontSize: '5px', color: '#ffe08a'
-    }).setOrigin(1, 0.5).setDepth(29));
+    }).setOrigin(1, 0).setDepth(29));
+    add(this.add.text(1490, driveBottom - 9, 'START FOR ¥' + drivetrainCost.toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
+    }).setOrigin(1, 1).setDepth(29));
     driveBox.on('pointerdown', () => this.beginPull('drivetrain'));
 
-    add(this.add.text(1148, 430,
-      'POWER RUN  //  ¥5,000  //  1 PULL\n' +
-      'DRIVETRAIN TEST  //  ¥15,000  //  3 ATTEMPTS',
-      {
-        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe08a',
-        lineSpacing: 5,
-      }).setDepth(29));
-
     if (this.facilityTier < 3) {
-      add(this.add.rectangle(x, 530, 380, 108, 0x0b1017, 0.92)
+      const next = getDynoNextStage(this.facilityTier);
+      const nextTop = 308;
+      const nextBottom = 404;
+      add(this.add.rectangle(x, (nextTop + nextBottom) / 2, 380, nextBottom - nextTop, 0x0b1017, 0.92)
         .setStrokeStyle(1, 0x6b5b37, 0.86).setDepth(28));
-      add(this.add.text(1148, 486, 'NEXT // ' + getDynoNextStage(this.facilityTier).shortLabel, {
+      add(this.add.text(1148, nextTop + 13, 'NEXT // ' + next.shortLabel, {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe08a'
       }).setDepth(29));
-      add(this.add.text(1148, 515,
-        'UPGRADE  ¥ ' + Number(getDynoNextStage(this.facilityTier).installCost || 0).toLocaleString('en-US') +
-        '\n' + getDynoNextStage(this.facilityTier).description.toUpperCase(),
+      add(this.add.text(1148, nextTop + 39,
+        'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') +
+        '\n' + next.description.toUpperCase(),
         {
           fontFamily: BODY_FONT, fontSize: '8px', color: '#aa9e80',
           fontStyle: '700', lineSpacing: 3, wordWrap: { width: 340 },
         }).setDepth(29));
     }
 
-    const backY = this.facilityTier < 3 ? 670 : 530;
+    const backY = this.facilityTier < 3 ? 440 : 350;
     const back = add(this.add.rectangle(x, backY, 380, 50, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true }).setDepth(31));
@@ -534,8 +541,9 @@ export default class DynoScene extends Phaser.Scene {
       return { box, text };
     };
 
-    this.runButton = makeButton(170, 'NEXT PULL', () => this.beginPull());
-    this.returnButton = makeButton(236, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
+    this.runButton = makeButton(154, 'NEXT PULL', () => this.beginPull());
+    this.dynoMenuButton = makeButton(218, 'RETURN TO DYNO', () => this.returnToDynoMenu(), 'secondary');
+    this.returnButton = makeButton(282, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
 
     this.resultsButton = null;
     this.refreshRunButton();
@@ -597,7 +605,12 @@ export default class DynoScene extends Phaser.Scene {
     const serviceCost = requestedMode === 'drivetrain' ? 15000 : 5000;
     const servicePulls = requestedMode === 'drivetrain' ? 3 : 1;
 
-    if (this.sessionPullsRemaining <= 0) {
+    const modeChanged =
+      requestedMode &&
+      this.sessionPullsRemaining > 0 &&
+      requestedMode !== this.dynoRunMode;
+
+    if (this.sessionPullsRemaining <= 0 || modeChanged) {
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
       if (cash < serviceCost) {
         this.daichiText.setText('DAICHI // You need ¥' + serviceCost.toLocaleString('en-US') + ' for this Stage I test.');
@@ -609,8 +622,8 @@ export default class DynoScene extends Phaser.Scene {
       this.dynoRunMode = requestedMode || 'power';
       saveSessionState(this.registry);
     } else if (requestedMode) {
-      // Do not charge again while a purchased three-attempt drivetrain
-      // service is being used. A new purchase starts once the attempts run out.
+      // Returning to the service menu does not throw away paid attempts.
+      // Re-entering the same test resumes them without another charge.
       this.dynoRunMode = requestedMode;
     }
 
@@ -620,6 +633,7 @@ export default class DynoScene extends Phaser.Scene {
 
     this.points = [];
     this.shiftEvents = [];
+    this.clearShiftLabels();
     this.runProgress = 0;
     this.lowThrottleTime = 0;
     this.lastRecordedRPM = 0;
@@ -657,6 +671,34 @@ export default class DynoScene extends Phaser.Scene {
     if (n === 2) return '2ND';
     if (n === 3) return '3RD';
     return n + 'TH';
+  }
+
+  returnToDynoMenu() {
+    if (this.controls) this.controls.enabled = false;
+    this.audio?.fadeOut?.();
+
+    this.pullState = 'IDLE';
+    this.points = [];
+    this.shiftEvents = [];
+    this.clearShiftLabels();
+    this.runProgress = 0;
+    this.lowThrottleTime = 0;
+    this.lastRecordedRPM = 0;
+    this.lastRecordedTime = 0;
+    this.vehicleSpeedMps = 0;
+    this.vehicleDistanceM = 0;
+    this.dynoRunTime = 0;
+    this.shiftCooldown = 0;
+    this.currentGear = 0;
+    this.currentRPM = Number(this.build?.engine?.idleRPM || 850);
+    this.currentBoost = 0;
+    this.finalDynoPoint = null;
+
+    this.telemetryText?.setText('');
+    this.daichiText?.setText('DAICHI // Choose the Stage I test you want to run.');
+    this.drawIntroUi();
+    this.refreshPullCounter();
+    this.redrawGraph();
   }
 
   handleGearRequest(request, controls) {
@@ -797,6 +839,8 @@ export default class DynoScene extends Phaser.Scene {
         speedKmh: Math.round(Number(event.speedKmh || 0) * 10) / 10,
         rpmBefore: Math.round(Number(event.rpmBefore || 0)),
         rpmAfter: Math.round(Number(event.rpmAfter || 0)),
+        powerKW: Math.round(Number(event.powerKW || 0) * 10) / 10,
+        torqueNm: Math.round(Number(event.torqueNm || 0) * 10) / 10,
         fromGear: event.fromGear,
         toGear: event.toGear,
       })),
@@ -959,40 +1003,71 @@ export default class DynoScene extends Phaser.Scene {
     const g = this.graphGraphics;
     const rect = this.graphRect;
     g.clear();
+    this.clearShiftLabels();
 
-    const graphRun = (this.points?.length ? { mode: this.dynoRunMode, points: this.points, shiftEvents: this.shiftEvents } : this.previousRun);
+    const graphRun = (
+      this.points?.length
+        ? { mode: this.dynoRunMode, points: this.points, shiftEvents: this.shiftEvents }
+        : this.previousRun
+    );
     const drivetrain = graphRun?.mode === 'drivetrain';
-    this.graphXAxisLabel?.setText(drivetrain ? 'KM/H' : 'RPM');
+
+    // Drivetrain reserves a compact readout column on the right of the TV.
+    // Power runs continue to use the full plotting area.
+    const shiftColumnW = drivetrain ? 118 : 0;
+    const plotRect = {
+      x: rect.x,
+      y: rect.y,
+      w: Math.max(220, rect.w - shiftColumnW),
+      h: rect.h,
+    };
+
+    this.graphXAxisLabel
+      ?.setText(drivetrain ? 'KM/H' : 'RPM')
+      ?.setPosition(plotRect.x + plotRect.w - 6, plotRect.y + plotRect.h - 5);
 
     g.lineStyle(1, 0x1f3a49, 0.52);
     for (let i = 0; i <= 5; i += 1) {
-      const x = rect.x + rect.w * i / 5;
-      g.lineBetween(x, rect.y, x, rect.y + rect.h);
+      const x = plotRect.x + plotRect.w * i / 5;
+      g.lineBetween(x, plotRect.y, x, plotRect.y + plotRect.h);
     }
     for (let i = 0; i <= 4; i += 1) {
-      const y = rect.y + rect.h * i / 4;
-      g.lineBetween(rect.x, y, rect.x + rect.w, y);
+      const y = plotRect.y + plotRect.h * i / 4;
+      g.lineBetween(plotRect.x, y, plotRect.x + plotRect.w, y);
     }
 
-    const redline = Math.max(2000, Number(this.build.engine.redlineRPM || this.build.car.engineRedlineRPM || 8000));
+    if (drivetrain) {
+      const dividerX = plotRect.x + plotRect.w + 8;
+      g.lineStyle(1, 0x6b5b37, 0.46);
+      g.lineBetween(dividerX, rect.y, dividerX, rect.y + rect.h);
+    }
+
+    const redline = Math.max(
+      2000,
+      Number(this.build.engine.redlineRPM || this.build.car.engineRedlineRPM || 8000)
+    );
     const rpmMin = Math.max(500, Number(this.build.engine.idleRPM || 850));
     const maxTorque = Math.max(100, Number(this.build.car.torqueNm || 0) * 1.22);
     const maxPower = Math.max(80, Number(this.build.car.powerKW || 0) * 1.22);
 
     const xAt = value => {
       if (!drivetrain) {
-        return rect.x + clamp((Number(value) - rpmMin) / Math.max(1, redline - rpmMin), 0, 1) * rect.w;
+        return plotRect.x +
+          clamp((Number(value) - rpmMin) / Math.max(1, redline - rpmMin), 0, 1) *
+          plotRect.w;
       }
       const maxSpeed = Math.max(
         80,
         ...((graphRun?.points || []).map(p => Number(p.speedKmh || 0))),
         Number(this.build.car.topSpeedKmh || 0)
       );
-      return rect.x + clamp(Number(value) / Math.max(1, maxSpeed), 0, 1) * rect.w;
+      return plotRect.x + clamp(Number(value) / Math.max(1, maxSpeed), 0, 1) * plotRect.w;
     };
 
-    const torqueY = value => rect.y + rect.h - clamp(Number(value) / maxTorque, 0, 1.08) * rect.h;
-    const powerY = value => rect.y + rect.h - clamp(Number(value) / maxPower, 0, 1.08) * rect.h;
+    const torqueY = value =>
+      plotRect.y + plotRect.h - clamp(Number(value) / maxTorque, 0, 1.08) * plotRect.h;
+    const powerY = value =>
+      plotRect.y + plotRect.h - clamp(Number(value) / maxPower, 0, 1.08) * plotRect.h;
 
     const drawSeries = (points, key, yFn, color, alpha, width) => {
       if (!Array.isArray(points) || points.length < 2) return;
@@ -1015,46 +1090,65 @@ export default class DynoScene extends Phaser.Scene {
 
     const previous = this.previousRun?.points?.length ? this.previousRun : null;
     if (previous && previous.mode === (drivetrain ? 'drivetrain' : 'power')) {
-      drawSeries(previous.points, 'torqueNm', torqueY, 0x59dcff, this.points.length ? 0.25 : 0.48, 2);
-      drawSeries(previous.points, 'powerKW', powerY, 0x7df6a8, this.points.length ? 0.25 : 0.48, 2);
+      drawSeries(
+        previous.points,
+        'torqueNm',
+        torqueY,
+        0x59dcff,
+        this.points.length ? 0.25 : 0.48,
+        2
+      );
+      drawSeries(
+        previous.points,
+        'powerKW',
+        powerY,
+        0x7df6a8,
+        this.points.length ? 0.25 : 0.48,
+        2
+      );
     }
 
     drawSeries(this.points, 'torqueNm', torqueY, 0x59dcff, 1, 3);
     drawSeries(this.points, 'powerKW', powerY, 0x7df6a8, 1, 3);
 
     if (drivetrain) {
-      const events = this.shiftEvents?.length ? this.shiftEvents : (graphRun?.shiftEvents || []);
-      (this.shiftLabelObjects || []).forEach(obj => {
-        try { obj?.destroy?.(); } catch (e) {}
-      });
-      this.shiftLabelObjects = [];
+      const events = this.shiftEvents?.length
+        ? this.shiftEvents
+        : (graphRun?.shiftEvents || []);
 
-      events.forEach((event, index) => {
+      const columnX = plotRect.x + plotRect.w + 17;
+      const header = this.add.text(columnX, rect.y + 2, 'SHIFTS', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: '#ffe08a',
+      }).setDepth(23);
+      this.shiftLabelObjects.push(header);
+
+      events.slice(0, 6).forEach((event, index) => {
         const x = xAt(Number(event.speedKmh || 0));
         const yTorque = torqueY(Number(event.torqueNm || event.wheelTorqueNm || 0));
         const yPower = powerY(Number(event.powerKW || 0));
-        g.fillStyle(0xffe08a, 1);
-        g.fillCircle(x, yTorque, 3);
-        g.fillCircle(x, yPower, 3);
-        g.lineStyle(1, 0xffe08a, 0.55);
-        g.lineBetween(x, rect.y + 4, x, rect.y + rect.h - 4);
 
-        const labelY = rect.y + 8 + (index % 2) * 28;
+        // Keep subtle plot markers, but move all text into the readout column.
+        g.fillStyle(0xffe08a, 0.94);
+        if (Number(event.torqueNm || event.wheelTorqueNm || 0) > 0) g.fillCircle(x, yTorque, 2);
+        if (Number(event.powerKW || 0) > 0) g.fillCircle(x, yPower, 2);
+        g.lineStyle(1, 0xffe08a, 0.32);
+        g.lineBetween(x, plotRect.y + 4, x, plotRect.y + plotRect.h - 4);
+
         const label = this.add.text(
-          x,
-          labelY,
-          event.fromGear + '→' + event.toGear + '\n' +
-          Math.round(event.rpmBefore).toLocaleString('en-US') + '→' +
-          Math.round(event.rpmAfter).toLocaleString('en-US'),
+          columnX,
+          rect.y + 16 + index * 18,
+          event.fromGear + '→' + event.toGear + '  ' +
+          Math.round(Number(event.rpmBefore || 0)).toLocaleString('en-US') +
+          '→' +
+          Math.round(Number(event.rpmAfter || 0)).toLocaleString('en-US'),
           {
             fontFamily: PIXEL_FONT,
-            fontSize: '5px',
+            fontSize: '4px',
             color: '#ffe08a',
-            align: 'center',
-            backgroundColor: '#07111d',
-            padding: { left: 2, right: 2, top: 2, bottom: 2 },
           }
-        ).setOrigin(0.5, 0).setDepth(23);
+        ).setDepth(23);
         this.shiftLabelObjects.push(label);
       });
     }
