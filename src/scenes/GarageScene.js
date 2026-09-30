@@ -1688,7 +1688,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const stageOne = getDynoStage(1);
     const x = SIDE.x + SIDE.w / 2;
-    const y = 662;
+    // Keep the Dyno action above MOVE CAR. These buttons previously shared
+    // the same Y position and were therefore directly overlapping.
+    const y = 608;
 
     this.dynoButton = this.add.rectangle(
       x,
@@ -1741,6 +1743,15 @@ export default class GarageScene extends Phaser.Scene {
 
     this.dynoButton.on('pointerdown', () => {
       if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+      // The Dyno is currently an Arkon Den / developer-only feature. Keep the
+      // workshop button visible for everyone, but gate the actual feature
+      // behind the same character helper used elsewhere in the game.
+      if (!isArkonDen(this.registry)) {
+        this.showDynoComingSoonPopup();
+        return;
+      }
+
       const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
       if (tier < 1) {
         this.showDynoInstallPopup();
