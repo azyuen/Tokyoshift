@@ -731,6 +731,9 @@ export default class DynoScene extends Phaser.Scene {
     this.pullState = 'COMPLETE';
     this.controls.enabled = false;
     this.sessionPullsRemaining = Math.max(0, this.sessionPullsRemaining - 1);
+    // The normal session flow is one engine baseline followed by two
+    // drivetrain attempts. A retry keeps the current mode; a fresh pull
+    // after the baseline automatically switches to drivetrain analysis.
 
     const run = {
       completedAt: Date.now(),
