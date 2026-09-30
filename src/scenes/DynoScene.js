@@ -1,4 +1,5 @@
 import TouchControls from '../input/TouchControls.js?v=20260926-r209';
+import RaceHUD from '../ui/RaceHUD.js?v=20260930-r289';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260929-r275';
@@ -57,7 +58,8 @@ export default class DynoScene extends Phaser.Scene {
       queued += 1;
     };
 
-    queueImage('dynoWarehouseDayBg', 'assets/Garage/shinonome_dyno_day.png?v=20260930-r288');
+    queueImage('dynoWarehouseDayBg', 'assets/Garage/shinonome_dyno_day.png?v=20260930-r289');
+    queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
     queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
     queueImage('nosButton', 'assets/Controls/nos_button.png');
@@ -118,6 +120,8 @@ export default class DynoScene extends Phaser.Scene {
     this.lastRecordedRPM = 0;
     this.wheelObjects = [];
     this.carObjects = [];
+    this.dynoHud = null;
+    this.dynoUpdateError = null;
 
     this.drawBackground();
     this.drawHeader();
@@ -143,6 +147,14 @@ export default class DynoScene extends Phaser.Scene {
     this.drawDaichiPanel();
     this.drawActions();
     this.drawProgressionCards();
+    this.dynoHud = new RaceHUD(this, {
+      hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
+      hasNitrous: false,
+      x: 780,
+      y: 842,
+      scale: 0.34,
+      statusY: 452,
+    });
     this.redrawGraph();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
@@ -415,7 +427,7 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false });
+    this.controls = new TouchControls(this, { nosEnabled: false, verticalOffsetY: 112 });
     this.controls.nosSprite?.setVisible(false);
   }
 
@@ -695,6 +707,7 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   update(time, deltaMs) {
+    try {
     if (!this.build || !this.controls) {
       this.redrawRollers(0);
       return;
@@ -767,7 +780,7 @@ export default class DynoScene extends Phaser.Scene {
 
     const telemetry = {
       positionM: 0,
-      speedKmh: 0,
+      speedKmh: Math.max(0, wheelRPM * 0.002),
       rpm: this.currentRPM,
       gear: this.currentGear,
       pendingGear: null,
@@ -782,9 +795,27 @@ export default class DynoScene extends Phaser.Scene {
     };
 
     this.updateTelemetry(point, throttle);
+    if (this.dynoHud) {
+      this.dynoHud.update({
+        rpm: this.currentRPM,
+        speedKmh: telemetry.speedKmh,
+        gear: this.currentGear,
+        throttle,
+        boostBar: this.currentBoost,
+        wheelspin: false,
+        nosFraction: 0,
+      }, 'DYNO PULL // LIVE');
+    }
 
     if (this.runProgress >= 0.999) this.completePull();
-  }
+  } catch (error) {
+      this.dynoUpdateError = error;
+      this.pullState = 'ABORTED';
+      if (this.controls) this.controls.enabled = false;
+      this.currentBoost = 0;
+      this.daichiText?.setText('DAICHI // DYNO SAFETY STOP. Pull aborted; the cell is still online.');
+      this.refreshRunButton?.();
+    }
 
   returnToWorkshop() {
     this.cleanup();
