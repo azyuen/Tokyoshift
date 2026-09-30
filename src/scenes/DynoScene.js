@@ -430,6 +430,25 @@ export default class DynoScene extends Phaser.Scene {
     }
     this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 790, controlScaleMultiplier: 1.10 });
     this.controls.nosSprite?.setVisible(false);
+
+    // Dyno-specific input guard: the shifter touch rectangle overlaps the
+    // CHANGE CAR / RETURN TO WORKSHOP buttons in the right-hand action column.
+    // Without a top-most interactive object, a shifter swipe can also fire the
+    // workshop button underneath it and make the dyno appear to "crash".
+    // This invisible zone owns pointer hit-testing in the shifter region while
+    // TouchControls continues to receive the scene-level pointer events.
+    const shifterRect = this.controls.layout?.shifter;
+    if (shifterRect && !this.dynoShifterInputShield) {
+      this.dynoShifterInputShield = this.add.zone(
+        shifterRect.centerX,
+        shifterRect.centerY,
+        shifterRect.width,
+        shifterRect.height
+      )
+        .setInteractive()
+        .setDepth(95)
+        .setScrollFactor(0);
+    }
   }
 
   ensureAudio() {
