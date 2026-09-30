@@ -190,6 +190,44 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-  <script type="module" src="./src/main.js?v=20260930-r294"></script>
+  <script type="module">
+    // Keep module-load failures visible. A normal import error happens before
+    // main.js can install its own catch handler.
+    window.addEventListener('error', (event) => {
+      const target = event.target;
+      if (target?.tagName === 'SCRIPT') {
+        const label = document.getElementById('loading-label');
+        const percent = document.getElementById('loading-percent');
+        if (label) label.textContent = 'SCRIPT LOAD ERROR';
+        if (percent) percent.textContent = 'ERROR';
+        const splash = document.getElementById('loading-screen');
+        if (splash) splash.setAttribute('data-boot-error', 'Failed to load: ' + (target.src || 'unknown script'));
+      }
+    }, true);
+
+    window.addEventListener('unhandledrejection', (event) => {
+      const error = event.reason;
+      console.error('[Tokyo SHIFT] unhandled boot rejection', error);
+      const label = document.getElementById('loading-label');
+      const percent = document.getElementById('loading-percent');
+      if (label) label.textContent = 'BOOT ERROR';
+      if (percent) percent.textContent = 'ERROR';
+      const splash = document.getElementById('loading-screen');
+      if (splash) splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown rejection').slice(0, 500));
+    });
+
+    import('./src/main.js?v=20260930-r295').catch((error) => {
+      console.error('[Tokyo SHIFT] main module failed to load', error);
+      const label = document.getElementById('loading-label');
+      const percent = document.getElementById('loading-percent');
+      if (label) label.textContent = 'MAIN MODULE ERROR';
+      if (percent) percent.textContent = 'ERROR';
+      const splash = document.getElementById('loading-screen');
+      if (splash) {
+        splash.classList.remove('is-hidden');
+        splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown module error').slice(0, 500));
+      }
+    });
+  </script>
 </body>
 </html>
