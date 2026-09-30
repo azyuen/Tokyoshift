@@ -809,6 +809,10 @@ export default class DynoScene extends Phaser.Scene {
       this.daichiText.setText('DAICHI // ' + run.analysis.comment);
     }
 
+    if (run.mode === 'power' && this.sessionPullsRemaining > 0) {
+      this.dynoRunMode = 'drivetrain';
+    }
+
     this.refreshPullCounter();
     this.refreshRunButton();
     this.redrawGraph();
