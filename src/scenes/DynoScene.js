@@ -14,7 +14,7 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20260930-r288';
+} from '../data/dyno.js?v=20260930-r301';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -39,7 +39,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 150, y: 94, w: 505, h: 230 };
+const MONITOR = { x: 175, y: 94, w: 505, h: 230 };
 const CAR_X = 950;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
@@ -384,7 +384,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(480, 550, daichi.visual.spriteKey)
+      const sprite = this.add.image(345, 565, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -392,21 +392,22 @@ export default class DynoScene extends Phaser.Scene {
     }
 
     // Manga-style instruction tab tucked directly beneath the dyno dashboard.
-    this.daichiMessageBoard = this.add.rectangle(755, 814, 810, 48, 0xfffcf1, 0.985)
+    this.daichiMessageBoard = this.add.rectangle(765, 808, 860, 64, 0xfffcf1, 0.985)
       .setStrokeStyle(4, 0x111111, 1)
       .setDepth(58)
       .setScrollFactor(0);
     this.daichiText = this.add.text(
-      755,
-      814,
+      765,
+      808,
       'DAICHI // Ready when you are. We need a clean baseline first.',
       {
         fontFamily: BODY_FONT,
-        fontSize: '8px',
+        fontSize: '10px',
         color: '#111111',
         fontStyle: '700',
         align: 'center',
-        wordWrap: { width: 770 },
+        wordWrap: { width: 802 },
+        padding: { left: 12, right: 12, top: 5, bottom: 5 },
         lineSpacing: 1,
       }
     ).setOrigin(0.5).setDepth(59).setScrollFactor(0);
@@ -418,10 +419,11 @@ export default class DynoScene extends Phaser.Scene {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
       x: 720,
-      y: 790,
+      y: 776,
       scale: 0.52,
       statusY: 620,
     });
+    this.dynoHud.status?.setVisible(false);
   }
 
   clearUiObjects(listName) {
@@ -701,7 +703,7 @@ export default class DynoScene extends Phaser.Scene {
 
     const run = {
       completedAt: Date.now(),
-      gear: this.recommendedGear,
+      gear: this.currentGear,
       points: this.points.map(point => ({
         rpm: Math.round(point.rpm),
         powerKW: Math.round(point.powerKW * 10) / 10,
@@ -1002,7 +1004,7 @@ export default class DynoScene extends Phaser.Scene {
 
     const overallRatio = Math.max(
       0.1,
-      Number(this.build.car.gearRatios?.[Math.max(0, this.recommendedGear - 1)] || 1) *
+      Number(this.build.car.gearRatios?.[Math.max(0, this.currentGear - 1)] || 1) *
         Number(this.build.car.finalDriveRatio || 1)
     );
     const wheelRPM = this.currentRPM / overallRatio;

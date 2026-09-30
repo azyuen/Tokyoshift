@@ -68,9 +68,14 @@ export function getRecommendedDynoGear(car = {}) {
   const ratios = Array.isArray(car.gearRatios) ? car.gearRatios : [];
   if (!ratios.length) return 1;
 
+  // Tokyo SHIFT uses a consistent road-car dyno procedure capped at 4th gear.
+  // This keeps five- and six-speed cars on the same interaction flow and avoids
+  // six-speed collector cars appearing to "rev cap" while still in SETUP.
+  const dynoRatios = ratios.slice(0, Math.min(4, ratios.length));
+
   let bestGear = 1;
   let bestDelta = Infinity;
-  ratios.forEach((ratio, index) => {
+  dynoRatios.forEach((ratio, index) => {
     const numeric = Math.max(0.01, Number(ratio) || 0.01);
     const delta = Math.abs(numeric - 1.0);
     if (delta < bestDelta) {

@@ -795,7 +795,7 @@ export default class TokyoExpresswayBackground {
       this.skyline.x = -this.skylineStartX;
     }
 
-    this.road = this.scene.add.tileSprite(0, 278, this.width, 270, this.keys.road)
+    this.road = this.scene.add.tileSprite(0, 340, this.width, 270, this.keys.road)
       .setOrigin(0, 0)
       .setDepth(1);
 
