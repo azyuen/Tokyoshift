@@ -87,58 +87,7 @@ export default class TouchControls {
       fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
     }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
 
-    // Store explicit listener references so stopping/restarting Dyno does not
-    // accumulate stale touch handlers. This matters on iOS when clutch and
-    // shifter are used as simultaneous touches.
-    this.onPointerDown = pointer => {
-      if (!this.enabled) return;
-      if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
-        this.clutchPointer = pointer;
-        this.clutchStartY = pointer.y;
-        this.clutchLatchedMax = false;
-      } else if (!this.throttlePointer && this.layout.throttle.contains(pointer.x, pointer.y)) {
-        this.throttlePointer = pointer;
-        this.throttleStartY = pointer.y;
-        this.throttleLatchedMax = false;
-      } else if (!this.shifterPointer && this.layout.shifter.contains(pointer.x, pointer.y)) {
-        this.shifterPointer = pointer;
-        this.shifterStartY = pointer.y;
-        this.shifterSwipeDirection = 'neutral';
-        this.shifterSwipeConsumed = false;
-      }
-    };
 
-    this.onPointerMove = pointer => {
-      if (!this.enabled || pointer !== this.shifterPointer || !pointer.isDown) return;
-      const deltaY = pointer.y - this.shifterStartY;
-      if (Math.abs(deltaY) >= 18) {
-        this.shifterSwipeDirection = deltaY < 0 ? 'up' : 'down';
-      }
-      if (!this.shifterSwipeConsumed && Math.abs(deltaY) >= this.shifterSwipePx) {
-        this.pendingGearRequest = deltaY < 0 ? 'UP' : 'DOWN';
-        this.shifterSwipeConsumed = true;
-      }
-    };
-
-    this.onPointerUp = pointer => {
-      if (pointer === this.clutchPointer) {
-        this.clutchPointer = null;
-        this.clutchLatchedMax = false;
-      }
-      if (pointer === this.throttlePointer) {
-        this.throttlePointer = null;
-        this.throttleLatchedMax = false;
-      }
-      if (pointer === this.shifterPointer) {
-        this.shifterPointer = null;
-        this.shifterSwipeDirection = 'neutral';
-        this.shifterSwipeConsumed = false;
-      }
-    };
-
-    scene.input.on('pointerdown', this.onPointerDown);
-    scene.input.on('pointermove', this.onPointerMove);
-    scene.input.on('pointerup', this.onPointerUp);
 
   pointerIn(rect) {
     return this.scene.input.manager.pointers.find(p => p.isDown && rect.contains(p.x, p.y));
