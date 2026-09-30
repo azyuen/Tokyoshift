@@ -38,10 +38,10 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 48, y: 108, w: 610, h: 306 };
+const MONITOR = { x: 74, y: 94, w: 570, h: 272 };
 const CAR_X = 950;
-const CAR_TARGET_WIDTH = 720;
-const WHEEL_CONTACT_Y = 586;
+const CAR_TARGET_WIDTH = 650;
+const WHEEL_CONTACT_Y = 600;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 
@@ -123,6 +123,11 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoHud = null;
     this.dynoUpdateError = null;
     this.dynoHudFrame = 0;
+    this.dynoUiMode = 'intro';
+    this.introUiObjects = [];
+    this.activeUiObjects = [];
+    this.dynoShifterInputShield = null;
+    this._dynoCleanedUp = false;
 
     this.drawBackground();
     this.drawHeader();
@@ -146,16 +151,8 @@ export default class DynoScene extends Phaser.Scene {
     this.drawDynoMonitor();
     this.drawCarOnDyno();
     this.drawDaichiPanel();
-    this.drawActions();
-    this.drawProgressionCards();
-    this.dynoHud = new RaceHUD(this, {
-      hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
-      hasNitrous: false,
-      x: 720,
-      y: 790,
-      scale: 0.52,
-      statusY: 620,
-    });
+    this.ensureDynoHud();
+    this.drawIntroUi();
     this.redrawGraph();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.cleanup());
@@ -164,7 +161,39 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   cleanup() {
-    try { this.audio?.destroy(); } catch (e) {}
+    if (this._dynoCleanedUp) return;
+    this._dynoCleanedUp = true;
+
+    try { this.controls?.destroy?.(); } catch (e) {}
+    this.controls = null;
+
+    try { this.dynoShifterInputShield?.destroy?.(); } catch (e) {}
+    this.dynoShifterInputShield = null;
+
+    [...(this.introUiObjects || []), ...(this.activeUiObjects || [])].forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.introUiObjects = [];
+    this.activeUiObjects = [];
+    this.runButton = null;
+    this.resultsButton = null;
+
+    if (this.dynoHud) {
+      [
+        this.dynoHud.cluster,
+        this.dynoHud.g,
+        this.dynoHud.status,
+        this.dynoHud.gearBack,
+        this.dynoHud.gearText,
+        this.dynoHud.speedText,
+        this.dynoHud.auxLabel,
+      ].forEach(obj => {
+        try { obj?.destroy?.(); } catch (e) {}
+      });
+    }
+    this.dynoHud = null;
+
+    try { this.audio?.destroy?.(); } catch (e) {}
     this.audio = null;
   }
 
@@ -330,12 +359,12 @@ export default class DynoScene extends Phaser.Scene {
     this.carObjects = [...this.wheelObjects, ...this.carBodyObjects];
     this.carBodyBase = this.carBodyObjects.map(obj => ({ obj, y: obj.y }));
 
-    this.add.text(CAR_X, 625, cars[this.carId].name.toUpperCase(), {
+    this.add.text(CAR_X, 638, cars[this.carId].name.toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#e8f6ff'
     }).setOrigin(0.5).setDepth(22);
     this.add.text(
       CAR_X,
-      654,
+      666,
       Math.round(this.build.car.powerKW) + ' kW  //  ' +
         Math.round(this.build.car.torqueNm) + ' Nm  //  ' +
         Math.round(this.build.car.vehicleMassKg) + ' kg',
@@ -348,79 +377,158 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(700, 560, daichi.visual.spriteKey)
+      const sprite = this.add.image(665, 595, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
-      sprite.setScale(190 / Math.max(1, source.height));
+      sprite.setScale(215 / Math.max(1, source.height));
     }
 
-    this.add.rectangle(355, 478, 610, 94, 0x07111d, 0.92)
-      .setStrokeStyle(1, 0x315470, 0.92)
-      .setDepth(23);
-    this.daichiText = this.add.text(72, 450, 'DAICHI // Ready when you are. We need a clean baseline first.', {
-      fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#d8e8f0',
-      fontStyle: '700',
-      wordWrap: { width: 560 },
-      lineSpacing: 2,
-    }).setDepth(24);
+    // Manga-style instruction tab tucked directly beneath the dyno dashboard.
+    this.daichiMessageBoard = this.add.rectangle(720, 817, 750, 38, 0xfffcf1, 0.985)
+      .setStrokeStyle(4, 0x111111, 1)
+      .setDepth(58)
+      .setScrollFactor(0);
+    this.daichiText = this.add.text(
+      720,
+      817,
+      'DAICHI // Ready when you are. We need a clean baseline first.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '8px',
+        color: '#111111',
+        fontStyle: '700',
+        align: 'center',
+        wordWrap: { width: 710 },
+        lineSpacing: 1,
+      }
+    ).setOrigin(0.5).setDepth(59).setScrollFactor(0);
   }
 
-  drawActions() {
+  ensureDynoHud() {
+    if (this.dynoHud) return;
+    this.dynoHud = new RaceHUD(this, {
+      hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
+      hasNitrous: false,
+      x: 720,
+      y: 790,
+      scale: 0.52,
+      statusY: 620,
+    });
+  }
+
+  clearUiObjects(listName) {
+    const list = Array.isArray(this[listName]) ? this[listName] : [];
+    list.forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this[listName] = [];
+  }
+
+  addUiObject(listName, obj) {
+    if (!Array.isArray(this[listName])) this[listName] = [];
+    this[listName].push(obj);
+    return obj;
+  }
+
+  drawIntroUi() {
+    this.clearUiObjects('activeUiObjects');
+    this.clearUiObjects('introUiObjects');
+    this.dynoUiMode = 'intro';
+    this.runButton = null;
+    this.resultsButton = null;
+
+    const add = obj => this.addUiObject('introUiObjects', obj);
     const x = 1320;
-    const makeButton = (y, label, onClick, style = 'primary') => {
-      const primary = style === 'primary';
-      const box = this.add.rectangle(x, y, 380, 50, primary ? 0x0c2827 : 0x102138, 0.98)
-        .setStrokeStyle(2, primary ? 0x62e8c7 : 0x55b8ff, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(31);
-      const text = this.add.text(x, y, label, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f1fffb', align: 'center'
-      }).setOrigin(0.5).setDepth(32);
-      box.on('pointerdown', onClick);
-      return { box, text };
-    };
-
-    this.runButton = makeButton(454, 'START SESSION // ¥ ' + Number(this.stage.sessionCost || 0).toLocaleString('en-US'), () => this.beginPull());
-    this.resultsButton = makeButton(516, 'RESULTS // LAST RUN', () => this.showLastRun(), 'secondary');
-    makeButton(578, 'CHANGE CAR // WORKSHOP', () => this.returnToWorkshop(), 'secondary');
-    makeButton(640, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
-
-    this.resultsButton.box.setAlpha(this.previousRun ? 1 : 0.45);
-    if (!this.previousRun) this.resultsButton.box.disableInteractive();
-    this.refreshRunButton();
-  }
-
-  drawProgressionCards() {
     const next = getDynoNextStage(this.facilityTier);
-    this.add.rectangle(1320, 170, 380, 122, 0x07111d, 0.93)
-      .setStrokeStyle(2, 0x43dfff, 0.82).setDepth(28);
-    this.add.text(1148, 126, this.stage.label, {
+    const cost = Number(this.stage.sessionCost || 0);
+    const pulls = Math.max(1, Number(this.stage.pullsPerSession || 3));
+
+    const stageBox = add(this.add.rectangle(x, 170, 380, 122, 0x07111d, 0.96)
+      .setStrokeStyle(2, 0x43dfff, 0.92)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(28));
+    add(this.add.text(1148, 126, this.stage.label, {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#dff7ff'
-    }).setDepth(29);
-    this.add.text(1148, 162, '3 PULL SESSION  //  LIVE POWER + TORQUE\nBASELINE MAPPING  //  DAICHI ANALYSIS', {
-      fontFamily: BODY_FONT, fontSize: '9px', color: '#a7bdca', fontStyle: '700', lineSpacing: 4
-    }).setDepth(29);
+    }).setDepth(29));
+    add(this.add.text(
+      1148,
+      160,
+      'START ' + pulls + ' PULL SESSION  //  ¥ ' + cost.toLocaleString('en-US') +
+        '\nLIVE POWER + TORQUE  //  DAICHI ANALYSIS',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#b8dce8',
+        fontStyle: '700',
+        lineSpacing: 4,
+      }
+    ).setDepth(29));
+    add(this.add.text(1490, 211, 'START  >', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
+    }).setOrigin(1, 0.5).setDepth(29));
+    stageBox.on('pointerdown', () => this.beginPull());
 
     if (this.facilityTier < 3) {
-      this.add.rectangle(1320, 306, 380, 128, 0x0b1017, 0.92)
-        .setStrokeStyle(1, 0x6b5b37, 0.86).setDepth(28);
-      this.add.text(1148, 258, 'NEXT // ' + next.shortLabel, {
+      add(this.add.rectangle(x, 306, 380, 128, 0x0b1017, 0.92)
+        .setStrokeStyle(1, 0x6b5b37, 0.86).setDepth(28));
+      add(this.add.text(1148, 258, 'NEXT // ' + next.shortLabel, {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe08a'
-      }).setDepth(29);
-      this.add.text(
+      }).setDepth(29));
+      add(this.add.text(
         1148,
         290,
         'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') +
           '\n' + next.description.toUpperCase() + '\nLOCKED // NEXT DYNO RELEASE',
         {
-          fontFamily: BODY_FONT, fontSize: '8px', color: '#aa9e80', fontStyle: '700', lineSpacing: 3,
+          fontFamily: BODY_FONT,
+          fontSize: '8px',
+          color: '#aa9e80',
+          fontStyle: '700',
+          lineSpacing: 3,
           wordWrap: { width: 340 },
         }
-      ).setDepth(29);
+      ).setDepth(29));
     }
+
+    const backY = this.facilityTier < 3 ? 406 : 276;
+    const back = add(this.add.rectangle(x, backY, 380, 50, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(x, backY, 'RETURN TO WORKSHOP', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(32));
+    back.on('pointerdown', () => this.returnToWorkshop());
+  }
+
+  drawActiveUi() {
+    this.clearUiObjects('introUiObjects');
+    this.clearUiObjects('activeUiObjects');
+    this.dynoUiMode = 'active';
+
+    const add = obj => this.addUiObject('activeUiObjects', obj);
+    const x = 1320;
+    const makeButton = (y, label, onClick, style = 'primary') => {
+      const primary = style === 'primary';
+      const box = add(this.add.rectangle(x, y, 380, 52, primary ? 0x0c2827 : 0x102138, 0.98)
+        .setStrokeStyle(2, primary ? 0x62e8c7 : 0x55b8ff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(31));
+      const text = add(this.add.text(x, y, label, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f1fffb', align: 'center'
+      }).setOrigin(0.5).setDepth(32));
+      box.on('pointerdown', onClick);
+      return { box, text };
+    };
+
+    this.runButton = makeButton(152, 'NEXT PULL', () => this.beginPull());
+    this.resultsButton = makeButton(218, 'RESULTS // LAST RUN', () => this.showLastRun(), 'secondary');
+    this.returnButton = makeButton(284, 'RETURN TO WORKSHOP', () => this.returnToWorkshop(), 'secondary');
+
+    this.resultsButton.box.setAlpha(this.previousRun ? 1 : 0.45);
+    if (!this.previousRun) this.resultsButton.box.disableInteractive();
+    this.refreshRunButton();
   }
 
   ensureControls() {
@@ -484,6 +592,7 @@ export default class DynoScene extends Phaser.Scene {
     this.currentBoost = 0;
     this.turbo = null;
     this.pullState = 'SETUP';
+    if (this.dynoUiMode !== 'active') this.drawActiveUi();
     this.redrawGraph();
     this.daichiText.setText(
       'DAICHI // Clutch in. Select ' + this.ordinal(this.recommendedGear) +
@@ -640,7 +749,7 @@ export default class DynoScene extends Phaser.Scene {
 
   refreshRunButton() {
     if (!this.runButton) return;
-    let label = 'START SESSION // ¥ ' + Number(this.stage.sessionCost || 0).toLocaleString('en-US');
+    let label = 'NEW SESSION // ¥ ' + Number(this.stage.sessionCost || 0).toLocaleString('en-US');
     let enabled = true;
 
     if (this.pullState === 'SETUP') {
@@ -652,7 +761,7 @@ export default class DynoScene extends Phaser.Scene {
     } else if (this.sessionPullsRemaining > 0) {
       label = this.pullState === 'ABORTED'
         ? 'RETRY PULL // ' + this.sessionPullsRemaining + ' LEFT'
-        : 'RUN NEXT PULL // ' + this.sessionPullsRemaining + ' LEFT';
+        : 'NEXT PULL // ' + this.sessionPullsRemaining + ' LEFT';
     }
 
     this.runButton.text.setText(label);

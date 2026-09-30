@@ -1744,14 +1744,6 @@ export default class GarageScene extends Phaser.Scene {
     this.dynoButton.on('pointerdown', () => {
       if (this.engineMode || this.secondaryMode || this.chassisMode) return;
 
-      // The Dyno is currently an Arkon Den / developer-only feature. Keep the
-      // workshop button visible for everyone, but gate the actual feature
-      // behind the same character helper used elsewhere in the game.
-      if (!isArkonDen(this.registry)) {
-        this.showDynoComingSoonPopup();
-        return;
-      }
-
       const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
       if (tier < 1) {
         this.showDynoInstallPopup();

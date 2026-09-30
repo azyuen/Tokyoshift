@@ -55,8 +55,8 @@ async function startTokyoShift() {
     const BootScene = await loadScene('BOOT SCENE', './scenes/BootScene.js?v=20260930-r296');
     const CharacterSelectScene = await loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20260930-r296');
     const ProfileSelectScene = await loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20260930-r296');
-    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r296');
-    const DynoScene = await loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r297');
+    const GarageScene = await loadScene('GARAGE', './scenes/GarageScene.js?v=20260930-r298');
+    const DynoScene = await loadScene('DYNO', './scenes/DynoScene.js?v=20260930-r298');
     const CentralTokyoScene = await loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20260930-r296');
     const MeetScene = await loadScene('MEET', './scenes/MeetScene.js?v=20260930-r296');
     const RaceScene = await loadScene('RACE', './scenes/RaceScene.js?v=20260930-r296');
