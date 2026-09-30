@@ -356,21 +356,6 @@ export default class DynoScene extends Phaser.Scene {
     this.carObjects = [...this.wheelObjects, ...this.carBodyObjects];
     this.carBodyBase = this.carBodyObjects.map(obj => ({ obj, y: obj.y }));
 
-    /* Car identity is already known from the workshop selection. */
-    /* The dyno display is kept clean beneath the car. */
-    if (false) this.add.text(CAR_X, 638, cars[this.carId].name.toUpperCase(), {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#e8f6ff'
-    }).setOrigin(0.5).setDepth(22);
-    if (false) this.add.text(
-      CAR_X,
-      666,
-      Math.round(this.build.car.powerKW) + ' kW  //  ' +
-        Math.round(this.build.car.torqueNm) + ' Nm  //  ' +
-        Math.round(this.build.car.vehicleMassKg) + ' kg',
-      {
-        fontFamily: BODY_FONT, fontSize: '10px', color: '#a7bdca', fontStyle: '700'
-      }
-    ).setOrigin(0.5).setDepth(22);
   }
 
   drawDaichiPanel() {
