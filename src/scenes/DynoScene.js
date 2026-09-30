@@ -1,4 +1,4 @@
-import TouchControls from '../input/TouchControls.js?v=20260930-r292';
+import TouchControls from '../input/TouchControls.js?v=20260930-r293';
 import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
@@ -164,6 +164,8 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   cleanup() {
+    try { this.controls?.destroy?.(); } catch (e) {}
+    this.controls = null;
     try { this.audio?.destroy(); } catch (e) {}
     this.audio = null;
   }
