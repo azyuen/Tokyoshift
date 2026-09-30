@@ -39,7 +39,7 @@ const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const WIDTH = 1560;
 const HEIGHT = 840;
-const MONITOR = { x: 175, y: 94, w: 505, h: 230 };
+const MONITOR = { x: 163, y: 94, w: 505, h: 230 };
 const CAR_X = 950;
 const CAR_TARGET_WIDTH = 650;
 const WHEEL_CONTACT_Y = 600;
@@ -247,15 +247,6 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   drawDynoMonitor() {
-    this.add.rectangle(
-      MONITOR.x + MONITOR.w / 2,
-      MONITOR.y + MONITOR.h / 2,
-      MONITOR.w,
-      MONITOR.h,
-      0x031018,
-      0.94
-    ).setStrokeStyle(3, 0x55b8ff, 0.94).setDepth(18);
-
     this.add.text(MONITOR.x + 18, MONITOR.y + 16, 'DYNO LIVE // POWER + TORQUE', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#d9f5ff'
     }).setDepth(21);
@@ -819,8 +810,8 @@ export default class DynoScene extends Phaser.Scene {
     const g = this.graphGraphics;
     const rect = this.graphRect;
     g.clear();
-    g.fillStyle(0x02090e, 0.93).fillRect(rect.x, rect.y, rect.w, rect.h);
-    g.lineStyle(1, 0x1f3a49, 0.72);
+    // The graph is drawn directly onto the authored TV screen.
+    g.lineStyle(1, 0x1f3a49, 0.52);
     for (let i = 0; i <= 5; i += 1) {
       const x = rect.x + rect.w * i / 5;
       g.lineBetween(x, rect.y, x, rect.y + rect.h);
