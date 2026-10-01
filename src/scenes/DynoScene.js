@@ -380,11 +380,11 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(345, 550, daichi.visual.spriteKey)
+      const sprite = this.add.image(345, 590, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
-      sprite.setScale(250 / Math.max(1, source.height));
+      sprite.setScale(270 / Math.max(1, source.height));
     }
 
     // Manga-style instruction tab tucked directly beneath the dyno dashboard.
@@ -1383,7 +1383,7 @@ export default class DynoScene extends Phaser.Scene {
         g.lineStyle(1, 0xffe08a, 0.32);
         g.lineBetween(x, plotRect.y + 4, x, plotRect.y + plotRect.h - 4);
 
-        const baseY = MONITOR.y + 31 + index * 15;
+        const baseY = MONITOR.y + 31 + index * 26;
         const gearLabel = this.add.text(
           columnX,
           baseY,
@@ -1396,7 +1396,7 @@ export default class DynoScene extends Phaser.Scene {
         ).setDepth(23);
         const rpmLabel = this.add.text(
           columnX,
-          baseY + 7,
+          baseY + 11,
           Math.round(Number(event.rpmBefore || 0)).toLocaleString('en-US') +
           '-' +
           Math.round(Number(event.rpmAfter || 0)).toLocaleString('en-US'),
