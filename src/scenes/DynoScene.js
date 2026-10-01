@@ -809,8 +809,7 @@ export default class DynoScene extends Phaser.Scene {
       this.sessionPullsRemaining > 0 &&
       requestedMode !== this.dynoRunMode;
 
-    const hasSavedRun = this.getDynoHistoryRuns(requestedMode || this.dynoRunMode).length > 0;
-    const freshPaidStart = this.pullState === 'IDLE' && this.sessionPullsRemaining <= 0 && !hasSavedRun;
+    const freshPaidStart = this.pullState === 'IDLE' && this.sessionPullsRemaining <= 0;
     const replacementStart = this.pullState === 'IDLE' && this.sessionPullsRemaining <= 0 && Number.isInteger(options.replaceSlot);
 
     if (freshPaidStart || modeChanged || replacementStart) {
