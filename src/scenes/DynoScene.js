@@ -690,9 +690,14 @@ export default class DynoScene extends Phaser.Scene {
     const selected = modeRuns[this.graphViewIndex];
     if (!selected) return;
 
-    const remaining = history.filter(run => run !== selected);
+    let remaining = history.filter(run => run !== selected);
+    const modeRunsAfterDelete = remaining.filter(run => run?.mode === this.dynoRunMode);
+    if (modeRunsAfterDelete.length > 3) {
+      const keep = new Set(modeRunsAfterDelete.slice(-3));
+      remaining = remaining.filter(run => run?.mode !== this.dynoRunMode || keep.has(run));
+    }
     const dyno = { ...(this.carState.dyno || {}) };
-    dyno.history = remaining.slice(-3);
+    dyno.history = remaining;
     dyno.lastRun = dyno.history[dyno.history.length - 1] || null;
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
