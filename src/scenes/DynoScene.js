@@ -591,8 +591,8 @@ export default class DynoScene extends Phaser.Scene {
 
     const add = obj => this.addUiObject('introUiObjects', obj);
     const x = 1320;
-    const powerRuns = this.getDynoHistoryRuns('power');
-    const driveRuns = this.getDynoHistoryRuns('drivetrain');
+    const powerRuns = this.getDynoGraphSlots('power');
+    const driveRuns = this.getDynoGraphSlots('drivetrain');
 
     const makeSection = (y, mode, title, accent, runs) => {
       add(this.add.text(1148, y, title, { fontFamily: PIXEL_FONT, fontSize: '8px', color: accent }).setDepth(32));
@@ -610,10 +610,10 @@ export default class DynoScene extends Phaser.Scene {
       });
     };
 
-    makeSection(92, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
-    makeSection(252, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+    makeSection(82, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
+    makeSection(255, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
 
-    const selectedRuns = this.getDynoHistoryRuns(this.graphManagementMode);
+    const selectedRuns = this.getDynoGraphSlots(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
     const deleteEnabled = !!selectedGraph;
     const deleteBox = add(this.add.rectangle(x, 360, 380, 50, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
@@ -638,7 +638,7 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   openGraphManagementGraph(mode, index) {
-    const history = this.getDynoHistoryRuns(mode);
+    const history = this.getDynoGraphSlots(mode);
     if (!history[index]) return;
     this.graphManagementMode = mode;
     this.graphManagementIndex = index;
@@ -659,12 +659,12 @@ export default class DynoScene extends Phaser.Scene {
     const mode = this.graphManagementMode;
     const index = this.graphManagementIndex;
     const history = Array.isArray(this.carState?.dyno?.history) ? [...this.carState.dyno.history] : [];
-    const modeRuns = history.filter(run => run?.mode === mode).slice(-3).reverse();
+    const modeRuns = this.getDynoGraphSlots(mode);
     const selected = modeRuns[index];
     if (!selected) return;
-    const remaining = history.filter(run => run !== selected);
+    modeRuns[index] = null;
     const dyno = { ...(this.carState.dyno || {}) };
-    dyno.history = remaining;
+    dyno.graphs = { ...(dyno.graphs || {}), [mode]: modeRuns };
     dyno.lastRun = dyno.history[dyno.history.length - 1] || null;
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const state = { ...(carStates[this.carId] || {}) };
@@ -788,7 +788,7 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   openGraphView(mode) {
-    const history = this.getDynoHistoryRuns(mode);
+    const history = this.getDynoGraphSlots(mode);
     if (!history.length) return;
     this.graphManagementMode = mode;
     this.graphManagementIndex = 0;
@@ -807,19 +807,17 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   deleteSelectedGraph() {
-    const history = Array.isArray(this.carState?.dyno?.history) ? [...this.carState.dyno.history] : [];
-    const modeRuns = history.filter(run => run?.mode === this.dynoRunMode).slice(-3).reverse();
-    const selected = modeRuns[this.graphViewIndex];
-    if (!selected) return;
+    const mode = this.dynoRunMode === 'drivetrain' ? 'drivetrain' : 'power';
+    const slots = this.getDynoGraphSlots(mode);
+    if (!slots[this.graphViewIndex]) return;
+    slots[this.graphViewIndex] = null;
 
-    let remaining = history.filter(run => run !== selected);
-    const modeRunsAfterDelete = remaining.filter(run => run?.mode === this.dynoRunMode);
-    if (modeRunsAfterDelete.length > 3) {
-      const keep = new Set(modeRunsAfterDelete.slice(-3));
-      remaining = remaining.filter(run => run?.mode !== this.dynoRunMode || keep.has(run));
-    }
     const dyno = { ...(this.carState.dyno || {}) };
-    dyno.history = remaining;
+    dyno.graphs = { ...(dyno.graphs || {}), [mode]: slots };
+    dyno.history = [
+      ...this.getDynoGraphSlots('power').filter(Boolean),
+      ...this.getDynoGraphSlots('drivetrain').filter(Boolean)
+    ];
     dyno.lastRun = dyno.history[dyno.history.length - 1] || null;
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
@@ -830,7 +828,7 @@ export default class DynoScene extends Phaser.Scene {
     saveSessionState(this.registry);
     this.carState = state;
     this.graphViewIndex = 0;
-    this.previousRun = this.getDynoHistoryRuns()[0] || null;
+    this.previousRun = this.getDynoHistoryRuns(mode)[0] || null;
     this.refreshGraphManagement();
     this.refreshGraphButton();
     this.showRunSummary(this.previousRun);
@@ -1156,27 +1154,21 @@ export default class DynoScene extends Phaser.Scene {
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const state = { ...(carStates[this.carId] || {}) };
     const dyno = { ...(state.dyno || {}) };
-    let history = Array.isArray(dyno.history) ? [...dyno.history] : [];
-    if (Number.isInteger(this.pendingReplaceSlot)) {
-      const modeRuns = history.filter(item => item?.mode === run.mode).slice(-3).reverse();
-      const target = modeRuns[this.pendingReplaceSlot];
-      const targetIndex = history.indexOf(target);
-      if (targetIndex >= 0) history[targetIndex] = run;
-      else history.push(run);
-    } else {
-      history.push(run);
-    }
-    const modeRuns = history.filter(item => item?.mode === run.mode);
-    if (modeRuns.length > 3) {
-      const keep = new Set(modeRuns.slice(-3));
-      history = history.filter(item => item?.mode !== run.mode || keep.has(item));
-    }
-    dyno.history = history;
+    const mode = run.mode === 'drivetrain' ? 'drivetrain' : 'power';
+    const slots = Array.isArray(dyno.graphs?.[mode])
+      ? dyno.graphs[mode].slice(0, 3)
+      : this.getDynoGraphSlots(mode);
+    const targetIndex = Number.isInteger(this.pendingReplaceSlot)
+      ? this.pendingReplaceSlot
+      : Math.max(0, slots.findIndex(slot => !slot));
+    slots[targetIndex] = run;
+    dyno.graphs = { ...(dyno.graphs || {}), [mode]: slots };
+    dyno.history = [
+      ...this.getDynoGraphSlots('power').filter(Boolean),
+      ...this.getDynoGraphSlots('drivetrain').filter(Boolean)
+    ];
     dyno.lastRun = run;
     this.pendingReplaceSlot = null;
-    if (!dyno.bestRun || Number(run.analysis.peakPowerKW || 0) > Number(dyno.bestRun?.analysis?.peakPowerKW || 0)) {
-      dyno.bestRun = run;
-    }
     state.dyno = dyno;
     carStates[this.carId] = state;
     this.registry.set('carStates', carStates);
@@ -1311,11 +1303,23 @@ export default class DynoScene extends Phaser.Scene {
     });
   }
 
+  getDynoGraphSlots(mode = this.dynoRunMode) {
+    const dyno = this.carState?.dyno || {};
+    const graphs = dyno.graphs || {};
+    if (Array.isArray(graphs[mode])) return graphs[mode].slice(0, 3);
+
+    const legacy = Array.isArray(dyno.history)
+      ? dyno.history.filter(run => run?.mode === mode).slice(-3).reverse()
+      : [];
+    return [legacy[0] || null, legacy[1] || null, legacy[2] || null];
+  }
+
   getDynoHistoryRuns(mode = null) {
-    const history = this.carState?.dyno?.history;
-    if (!Array.isArray(history)) return [];
-    const runs = mode ? history.filter(run => run?.mode === mode) : history;
-    return runs.slice(-3).reverse();
+    if (mode) return this.getDynoGraphSlots(mode).filter(Boolean);
+    return [
+      ...this.getDynoGraphSlots('power').filter(Boolean),
+      ...this.getDynoGraphSlots('drivetrain').filter(Boolean)
+    ];
   }
 
   toggleGraphHistory() {
