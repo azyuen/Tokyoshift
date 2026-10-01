@@ -133,6 +133,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoHudFrame = 0;
     this.dynoUiMode = 'intro';
     this.graphViewIndex = 0;
+    this.pendingReplaceSlot = null;
     this.introUiObjects = [];
     this.activeUiObjects = [];
     this.shiftLabelObjects = [];
@@ -233,10 +234,14 @@ export default class DynoScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#ffe08a'
     }).setOrigin(1, 0.5).setDepth(81);
 
-    this.pullCounterText = this.add.text(1190, 35, '', {
+    this.pullCounterText = this.add.text(1190, 35, 'DYNO OPTIONS', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9edcf7'
     }).setOrigin(1, 0.5).setDepth(81);
-    this.refreshPullCounter();
+    this.setHeaderContext('DYNO OPTIONS');
+  }
+
+  setHeaderContext(label = 'DYNO OPTIONS') {
+    this.pullCounterText?.setText(String(label).toUpperCase());
   }
 
   drawNoCarState(message = 'NO CAR STORED AT WAREHOUSE HQ') {
@@ -445,14 +450,32 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoUiMode = 'intro';
     this.runButton = null;
     this.resultsButton = null;
+    this.setHeaderContext('DYNO OPTIONS');
 
     const add = obj => this.addUiObject('introUiObjects', obj);
     const x = 1320;
     const powerCost = 5000;
     const drivetrainCost = 15000;
 
-    // Compact Stage I service cards. Stage label lives top-right; purchase
-    // action lives bottom-right so future dyno services can stack underneath.
+    const stageActionLabel = (mode, cost) => {
+      if (this.sessionPullsRemaining > 0 && this.dynoRunMode === mode) {
+        return this.sessionPullsRemaining + ' RUN' + (this.sessionPullsRemaining === 1 ? '' : 'S') + ' REMAINING';
+      }
+      return 'ENTER';
+    };
+
+    const addGraphSquare = (mode, y, accent) => {
+      const history = this.getDynoHistoryRuns(mode);
+      if (!history.length) return;
+      const box = add(this.add.rectangle(1100, y, 48, 48, 0x102138, 0.98)
+        .setStrokeStyle(2, accent, 1)
+        .setInteractive({ useHandCursor: true }).setDepth(31));
+      add(this.add.text(1100, y, 'G', {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: accent
+      }).setOrigin(0.5).setDepth(32));
+      box.on('pointerdown', () => this.openGraphView(mode));
+    };
+
     const powerTop = 92;
     const powerBottom = 184;
     const powerBox = add(this.add.rectangle(x, (powerTop + powerBottom) / 2, 380, powerBottom - powerTop, 0x07111d, 0.97)
@@ -468,10 +491,11 @@ export default class DynoScene extends Phaser.Scene {
     add(this.add.text(1490, powerTop + 8, 'STAGE 1', {
       fontFamily: PIXEL_FONT, fontSize: '5px', color: '#62e8c7'
     }).setOrigin(1, 0).setDepth(29));
-    add(this.add.text(1490, powerBottom - 9, 'START FOR ¥' + powerCost.toLocaleString('en-US'), {
+    add(this.add.text(1490, powerBottom - 9, stageActionLabel('power', powerCost), {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
     }).setOrigin(1, 1).setDepth(29));
     powerBox.on('pointerdown', () => this.beginPull('power'));
+    addGraphSquare('power', (powerTop + powerBottom) / 2, 0x62e8c7);
 
     const driveTop = 194;
     const driveBottom = 298;
@@ -489,16 +513,17 @@ export default class DynoScene extends Phaser.Scene {
     add(this.add.text(1490, driveTop + 8, 'STAGE 2', {
       fontFamily: PIXEL_FONT, fontSize: '5px', color: '#43dfff'
     }).setOrigin(1, 0).setDepth(29));
-    add(this.add.text(1490, driveBottom - 9, 'START FOR ¥' + drivetrainCost.toLocaleString('en-US'), {
+    add(this.add.text(1490, driveBottom - 9, stageActionLabel('drivetrain', drivetrainCost), {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
     }).setOrigin(1, 1).setDepth(29));
     driveBox.on('pointerdown', () => this.beginPull('drivetrain'));
+    addGraphSquare('drivetrain', (driveTop + driveBottom) / 2, 0x43dfff);
 
     const next = getDynoNextStage(this.facilityTier);
     const nextTop = 308;
     const nextBottom = 404;
     const tuningUnlocked = this.facilityTier >= 3;
-    const tuningBox = add(this.add.rectangle(x, (nextTop + nextBottom) / 2, 380, nextBottom - nextTop, tuningUnlocked ? 0x0b1715 : 0x0b1017, 0.94)
+    add(this.add.rectangle(x, (nextTop + nextBottom) / 2, 380, nextBottom - nextTop, tuningUnlocked ? 0x0b1715 : 0x0b1017, 0.94)
       .setStrokeStyle(2, tuningUnlocked ? 0x62e8c7 : 0x6b5b37, 0.86)
       .setDepth(28));
     add(this.add.text(1148, nextTop + 13, 'DYNO TUNING', {
@@ -509,21 +534,21 @@ export default class DynoScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '5px', color: tuningUnlocked ? '#62e8c7' : '#aa9e80'
     }).setOrigin(1, 0).setDepth(29));
     add(this.add.text(1148, nextTop + 39,
-      tuningUnlocked
-        ? 'ECU RESPONSE + LOAD TUNING'
-        : 'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') + '\n' + next.description.toUpperCase(),
+      tuningUnlocked ? 'ECU RESPONSE + LOAD TUNING' :
+      'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') + '\n' + next.description.toUpperCase(),
       {
         fontFamily: BODY_FONT, fontSize: '8px', color: tuningUnlocked ? '#62e8c7' : '#aa9e80',
         fontStyle: '700', lineSpacing: 3, wordWrap: { width: 340 },
       }).setDepth(29));
-    const backY = this.facilityTier < 3 ? 440 : 350;
+
+    const backY = 440;
     const back = add(this.add.rectangle(x, backY, 380, 50, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true }).setDepth(31));
-    add(this.add.text(x, backY, 'RETURN TO DYNO OPTIONS', {
+    add(this.add.text(x, backY, 'RETURN TO WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
-    back.on('pointerdown', () => this.returnToDynoMenu());
+    back.on('pointerdown', () => this.returnToWorkshop());
   }
 
   drawActiveUi() {
@@ -546,13 +571,35 @@ export default class DynoScene extends Phaser.Scene {
       return { box, text };
     };
 
-    this.runButton = makeButton(154, 'NEXT PULL', () => this.beginPull());
-    this.dynoMenuButton = makeButton(218, 'RETURN TO DYNO OPTIONS', () => this.returnToDynoMenu(), 'secondary');
-    this.graphButton = makeButton(282, 'TOGGLE GRAPH', () => this.toggleGraphHistory(), 'secondary');
+    this.runButton = makeButton(154, 'START', () => this.handlePrimaryRunAction());
+    this.graphButton = makeButton(218, 'TOGGLE GRAPH', () => this.toggleGraphHistory(), 'primary');
+    this.dynoMenuButton = makeButton(282, 'RETURN TO DYNO OPTIONS', () => this.returnToDynoMenu(), 'secondary');
+
+    // Graph management: three numbered slots, plus delete/replace controls.
+    add(this.add.text(1148, 326, 'SAVED GRAPHS', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#9edcf7'
+    }).setDepth(32));
+
+    this.graphSlotButtons = [];
+    [0, 1, 2].forEach(index => {
+      const bx = 1172 + index * 58;
+      const box = add(this.add.rectangle(bx, 358, 46, 46, 0x102138, 0.98)
+        .setStrokeStyle(2, 0x55b8ff, 1)
+        .setInteractive({ useHandCursor: true }).setDepth(31));
+      const label = add(this.add.text(bx, 358, String(index + 1), {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff'
+      }).setOrigin(0.5).setDepth(32));
+      box.on('pointerdown', () => this.selectGraphSlot(index));
+      this.graphSlotButtons.push({ box, label });
+    });
+
+    this.deleteGraphButton = makeButton(426, 'DELETE SELECTED GRAPH', () => this.deleteSelectedGraph(), 'secondary');
+    this.replaceGraphButton = makeButton(490, 'REPLACE SELECTED GRAPH', () => this.prepareGraphReplacement(), 'secondary');
 
     this.resultsButton = null;
     this.refreshRunButton();
     this.refreshGraphButton();
+    this.refreshGraphManagement();
   }
 
   ensureControls() {
@@ -603,8 +650,97 @@ export default class DynoScene extends Phaser.Scene {
     }
   }
 
-  beginPull(requestedMode = null) {
+  getDynoHistoryRuns(mode = this.dynoRunMode) {
+    const history = Array.isArray(this.carState?.dyno?.history) ? this.carState.dyno.history : [];
+    return history.filter(run => !mode || run?.mode === mode).slice(-3).reverse();
+  }
+
+  openGraphView(mode) {
+    const history = this.getDynoHistoryRuns(mode);
+    if (!history.length) return;
+    if (this.controls) this.controls.enabled = false;
+    this.dynoRunMode = mode;
+    this.setHeaderContext(mode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
+    this.pullState = 'IDLE';
+    this.graphViewIndex = 0;
+    this.previousRun = history[0];
+    this.pendingReplaceSlot = null;
+    this.drawActiveUi();
+    this.showRunSummary(this.previousRun);
+    this.redrawGraph();
+    this.refreshRunButton();
+    this.refreshGraphButton();
+    this.refreshGraphManagement();
+  }
+
+  selectGraphSlot(index) {
+    const history = this.getDynoHistoryRuns();
+    if (!history[index]) return;
+    this.graphViewIndex = index;
+    this.previousRun = history[index];
+    this.showRunSummary(this.previousRun);
+    this.redrawGraph();
+    this.refreshGraphButton();
+    this.refreshGraphManagement();
+  }
+
+  deleteSelectedGraph() {
+    const history = Array.isArray(this.carState?.dyno?.history) ? [...this.carState.dyno.history] : [];
+    const modeRuns = history.filter(run => run?.mode === this.dynoRunMode).slice(-3).reverse();
+    const selected = modeRuns[this.graphViewIndex];
+    if (!selected) return;
+
+    const remaining = history.filter(run => run !== selected);
+    const dyno = { ...(this.carState.dyno || {}) };
+    dyno.history = remaining.slice(-3);
+    dyno.lastRun = dyno.history[dyno.history.length - 1] || null;
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const state = { ...(carStates[this.carId] || {}) };
+    state.dyno = dyno;
+    carStates[this.carId] = state;
+    this.registry.set('carStates', carStates);
+    saveSessionState(this.registry);
+    this.carState = state;
+    this.graphViewIndex = 0;
+    this.previousRun = this.getDynoHistoryRuns()[0] || null;
+    this.refreshGraphManagement();
+    this.refreshGraphButton();
+    this.showRunSummary(this.previousRun);
+    this.redrawGraph();
+  }
+
+  prepareGraphReplacement() {
+    const history = this.getDynoHistoryRuns();
+    if (!history[this.graphViewIndex]) return;
+    this.pendingReplaceSlot = this.graphViewIndex;
+    this.refreshRunButton();
+    this.daichiText?.setText(
+      'DAICHI // Graph ' + (this.graphViewIndex + 1) + ' selected. Press the green button to pay and replace it.'
+    );
+  }
+
+  handlePrimaryRunAction() {
+    if (this.pullState === 'ABORTED') {
+      this.beginPull();
+      return;
+    }
+    if (this.sessionPullsRemaining > 0) {
+      this.beginPull();
+      return;
+    }
+    const history = this.getDynoHistoryRuns();
+    if (history.length >= 3) {
+      this.pendingReplaceSlot = this.graphViewIndex;
+      this.beginPull(this.dynoRunMode, { replaceSlot: this.graphViewIndex });
+      return;
+    }
+    this.beginPull(this.dynoRunMode);
+  }
+
+  beginPull(requestedMode = null, options = {}) {
     if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
+    if (Number.isInteger(options.replaceSlot)) this.pendingReplaceSlot = options.replaceSlot;
 
     // Stage I service pricing: Power Run is ¥5,000 for one pull;
     // Drivetrain Test is ¥15,000 for three attempts.
@@ -655,6 +791,7 @@ export default class DynoScene extends Phaser.Scene {
     this.finalDynoPoint = null;
     this.graphViewIndex = 0;
     this.pullState = 'SETUP';
+    this.setHeaderContext(this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
     if (this.dynoUiMode !== 'active') this.drawActiveUi();
     this.redrawGraph();
 
@@ -701,6 +838,7 @@ export default class DynoScene extends Phaser.Scene {
     this.currentBoost = 0;
     this.finalDynoPoint = null;
     this.graphViewIndex = 0;
+    this.pendingReplaceSlot = null;
 
     this.telemetryText?.setText('');
     this.daichiText?.setText('DAICHI // Choose the Stage I test you want to run.');
@@ -872,10 +1010,24 @@ export default class DynoScene extends Phaser.Scene {
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const state = { ...(carStates[this.carId] || {}) };
     const dyno = { ...(state.dyno || {}) };
-    const history = Array.isArray(dyno.history) ? [...dyno.history] : [];
-    history.push(run);
-    dyno.history = history.slice(-6);
+    let history = Array.isArray(dyno.history) ? [...dyno.history] : [];
+    if (Number.isInteger(this.pendingReplaceSlot)) {
+      const modeRuns = history.filter(item => item?.mode === run.mode).slice(-3).reverse();
+      const target = modeRuns[this.pendingReplaceSlot];
+      const targetIndex = history.indexOf(target);
+      if (targetIndex >= 0) history[targetIndex] = run;
+      else history.push(run);
+    } else {
+      history.push(run);
+    }
+    const modeRuns = history.filter(item => item?.mode === run.mode);
+    if (modeRuns.length > 3) {
+      const keep = new Set(modeRuns.slice(-3));
+      history = history.filter(item => item?.mode !== run.mode || keep.has(item));
+    }
+    dyno.history = history;
     dyno.lastRun = run;
+    this.pendingReplaceSlot = null;
     if (!dyno.bestRun || Number(run.analysis.peakPowerKW || 0) > Number(dyno.bestRun?.analysis?.peakPowerKW || 0)) {
       dyno.bestRun = run;
     }
@@ -905,13 +1057,7 @@ export default class DynoScene extends Phaser.Scene {
       this.daichiText.setText('DAICHI // ' + run.analysis.comment);
     }
 
-    // A completed Power Run or Drivetrain attempt simply returns to the
-    // service selection flow when its purchased attempts are exhausted.
-    if (this.sessionPullsRemaining <= 0) {
-      this.dynoRunMode = 'power';
-      this.drawIntroUi();
-    }
-
+    // Stay on the test page after a completed run so the saved graph remains visible.
     this.graphViewIndex = 0;
     this.previousRun = run;
     this.refreshPullCounter();
@@ -963,7 +1109,7 @@ export default class DynoScene extends Phaser.Scene {
 
   refreshRunButton() {
     if (!this.runButton) return;
-    let label = 'NEW TEST';
+    let label = 'START';
     let enabled = true;
 
     if (this.pullState === 'SETUP') {
@@ -972,14 +1118,20 @@ export default class DynoScene extends Phaser.Scene {
         : 'SETUP // SELECT ' + this.ordinal(this.recommendedGear) + ' GEAR';
       enabled = false;
     } else if (this.pullState === 'RUNNING') {
-      label = this.dynoRunMode === 'drivetrain'
-        ? 'DRIVETRAIN TEST // LIVE'
-        : 'POWER RUN // LIVE';
+      label = this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST // LIVE' : 'POWER RUN // LIVE';
       enabled = false;
+    } else if (this.pullState === 'ABORTED') {
+      label = 'RETRY ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'POWER') +
+        ' // ¥' + (this.dynoRunMode === 'drivetrain' ? '15,000' : '5,000');
     } else if (this.sessionPullsRemaining > 0) {
-      label = this.pullState === 'ABORTED'
-        ? 'RETRY ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'POWER') + ' // ' + this.sessionPullsRemaining + ' LEFT'
-        : 'NEXT ' + (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN' : 'TEST') + ' // ' + this.sessionPullsRemaining + ' LEFT';
+      label = 'CONTINUE // ' + this.sessionPullsRemaining + ' RUN' +
+        (this.sessionPullsRemaining === 1 ? '' : 'S') + ' REMAINING';
+    } else {
+      const history = this.getDynoHistoryRuns();
+      const cost = this.dynoRunMode === 'drivetrain' ? '15,000' : '5,000';
+      label = history.length >= 3
+        ? 'REPLACE GRAPH ' + (this.graphViewIndex + 1) + ' // ¥' + cost
+        : 'START RUN // ¥' + cost;
     }
 
     this.runButton.text.setText(label);
@@ -1039,16 +1191,48 @@ export default class DynoScene extends Phaser.Scene {
     if (!this.graphButton) return;
     const history = this.getDynoHistoryRuns();
     if (!history.length) {
-      this.graphButton.text.setText('TOGGLE GRAPH // NO HISTORY');
+      this.graphButton.text.setText('TOGGLE GRAPH // NO SAVED RUNS');
       this.graphButton.box.disableInteractive();
       this.graphButton.text.setColor('#80949e');
       return;
     }
     this.graphButton.text.setText('TOGGLE GRAPH // ' + (this.graphViewIndex + 1) + '/' + history.length);
     this.graphButton.box.setInteractive({ useHandCursor: true })
-      .setFillStyle(0x102138, 0.98)
-      .setStrokeStyle(2, 0x55b8ff, 1);
+      .setFillStyle(0x0c2827, 0.98)
+      .setStrokeStyle(2, 0x62e8c7, 1);
     this.graphButton.text.setColor('#f1fffb');
+  }
+
+  refreshGraphManagement() {
+    if (!this.graphSlotButtons) return;
+    const history = this.getDynoHistoryRuns();
+    this.graphSlotButtons.forEach((slot, index) => {
+      const exists = Boolean(history[index]);
+      const selected = index === this.graphViewIndex && exists;
+      slot.box.setFillStyle(selected ? 0x0c2827 : 0x102138, 0.98);
+      slot.box.setStrokeStyle(2, selected ? 0x62e8c7 : 0x55b8ff, 1);
+      slot.label.setText(exists ? String(index + 1) : '—');
+      slot.label.setColor(exists ? (selected ? '#62e8c7' : '#eef8ff') : '#60737d');
+      if (exists) slot.box.setInteractive({ useHandCursor: true });
+      else slot.box.disableInteractive();
+    });
+    const exists = Boolean(history[this.graphViewIndex]);
+    if (this.deleteGraphButton) {
+      if (exists) {
+        this.deleteGraphButton.box.setInteractive({ useHandCursor: true }).setStrokeStyle(2, 0x55b8ff, 1);
+        this.deleteGraphButton.text.setColor('#f1fffb');
+      } else {
+        this.deleteGraphButton.box.disableInteractive();
+        this.deleteGraphButton.text.setColor('#80949e');
+      }
+    }
+    if (this.replaceGraphButton) {
+      const full = history.length >= 3 && exists;
+      this.replaceGraphButton.box.setInteractive(full ? { useHandCursor: true } : undefined);
+      this.replaceGraphButton.text.setText(full ? 'SELECT GRAPH ' + (this.graphViewIndex + 1) + ' TO REPLACE' : 'REPLACE SELECTED GRAPH');
+      this.replaceGraphButton.text.setColor(full ? '#f1fffb' : '#80949e');
+      if (!full) this.replaceGraphButton.box.disableInteractive();
+    }
   }
 
   redrawGraph() {
