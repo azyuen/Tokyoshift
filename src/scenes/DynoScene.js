@@ -319,7 +319,7 @@ export default class DynoScene extends Phaser.Scene {
 
     this.telemetryText = this.add.text(
       MONITOR.x + 18,
-      MONITOR.y + MONITOR.h - 24,
+      MONITOR.y + MONITOR.h - 20,
       '',
       {
         fontFamily: BODY_FONT,
@@ -403,7 +403,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(330, 585, daichi.visual.spriteKey)
+      const sprite = this.add.image(330, 565, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -495,17 +495,17 @@ export default class DynoScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true }).setDepth(31));
       add((() => {
         const chart = this.add.graphics().setDepth(32);
-        const iconColor = 0xcbd8df;
+        const iconColor = 0x5b7890;
         chart.lineStyle(2, iconColor, 0.95);
-        chart.lineBetween(1089, y + 19, 1089, y + 29);
-        chart.lineBetween(1097, y + 14, 1097, y + 29);
-        chart.lineBetween(1105, y + 9, 1105, y + 29);
+        chart.lineBetween(1089, y + 14, 1089, y + 24);
+        chart.lineBetween(1097, y + 9, 1097, y + 24);
+        chart.lineBetween(1105, y + 4, 1105, y + 24);
         chart.lineStyle(1.5, iconColor, 0.95);
         chart.beginPath();
-        chart.moveTo(1087, y + 25);
-        chart.lineTo(1095, y + 20);
-        chart.lineTo(1101, y + 22);
-        chart.lineTo(1110, y + 12);
+        chart.moveTo(1087, y + 20);
+        chart.lineTo(1095, y + 15);
+        chart.lineTo(1101, y + 17);
+        chart.lineTo(1110, y + 7);
         chart.strokePath();
         add(chart);
       })());
@@ -530,7 +530,7 @@ export default class DynoScene extends Phaser.Scene {
     add(this.add.text(1490, powerBottom - 9, stageActionLabel('power', powerCost), {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
     }).setOrigin(1, 1).setDepth(29));
-    powerBox.on('pointerdown', () => this.beginPull('power'));
+    powerBox.on('pointerdown', () => this.enterDynoTest('power'));
     addGraphSquare('power', (powerTop + powerBottom) / 2, 0x62e8c7);
 
     const driveTop = 194;
@@ -552,7 +552,7 @@ export default class DynoScene extends Phaser.Scene {
     add(this.add.text(1490, driveBottom - 9, stageActionLabel('drivetrain', drivetrainCost), {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
     }).setOrigin(1, 1).setDepth(29));
-    driveBox.on('pointerdown', () => this.beginPull('drivetrain'));
+    driveBox.on('pointerdown', () => this.enterDynoTest('drivetrain'));
     addGraphSquare('drivetrain', (driveTop + driveBottom) / 2, 0x43dfff);
 
     const next = getDynoNextStage(this.facilityTier);
@@ -761,6 +761,22 @@ export default class DynoScene extends Phaser.Scene {
     );
   }
 
+  enterDynoTest(mode) {
+    if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
+    this.dynoRunMode = mode === 'drivetrain' ? 'drivetrain' : 'power';
+    this.pullState = 'IDLE';
+    this.graphViewIndex = 0;
+    this.pendingReplaceSlot = null;
+    this.setHeaderContext(this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
+    this.drawActiveUi();
+    this.redrawGraph();
+    this.daichiText?.setText(
+      this.dynoRunMode === 'drivetrain'
+        ? 'DAICHI // Ready. Press START FOR ¥15,000 to begin the drivetrain test.'
+        : 'DAICHI // Ready. Press START FOR ¥5,000 to begin the power run.'
+    );
+  }
+
   handlePrimaryRunAction() {
     if (this.pullState === 'ABORTED') {
       this.beginPull();
@@ -793,7 +809,11 @@ export default class DynoScene extends Phaser.Scene {
       this.sessionPullsRemaining > 0 &&
       requestedMode !== this.dynoRunMode;
 
-    if (this.sessionPullsRemaining <= 0 || modeChanged) {
+    const hasSavedRun = this.getDynoHistoryRuns(requestedMode || this.dynoRunMode).length > 0;
+    const freshPaidStart = this.pullState === 'IDLE' && this.sessionPullsRemaining <= 0 && !hasSavedRun;
+    const replacementStart = this.pullState === 'IDLE' && this.sessionPullsRemaining <= 0 && Number.isInteger(options.replaceSlot);
+
+    if (freshPaidStart || modeChanged || replacementStart) {
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
       if (cash < serviceCost) {
         this.daichiText.setText('DAICHI // You need ¥' + serviceCost.toLocaleString('en-US') + ' for this Stage I test.');
@@ -1169,9 +1189,13 @@ export default class DynoScene extends Phaser.Scene {
     } else {
       const history = this.getDynoHistoryRuns();
       const cost = this.dynoRunMode === 'drivetrain' ? '15,000' : '5,000';
-      label = history.length >= 3
-        ? 'REPLACE GRAPH ' + (this.graphViewIndex + 1) + ' // ¥' + cost
-        : 'START RUN // ¥' + cost;
+      if (!history.length && this.sessionPullsRemaining <= 0) {
+        label = 'START FOR ¥' + cost;
+      } else {
+        label = history.length >= 3
+          ? 'REPLACE GRAPH ' + (this.graphViewIndex + 1) + ' // ¥' + cost
+          : 'START RUN // ¥' + cost;
+      }
     }
 
     this.runButton.text.setText(label);
