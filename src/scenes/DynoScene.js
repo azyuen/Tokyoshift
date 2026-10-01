@@ -285,7 +285,7 @@ export default class DynoScene extends Phaser.Scene {
     this.add.text(MONITOR.x + 18, MONITOR.y + 44, 'TORQUE', {
       fontFamily: PIXEL_FONT, fontSize: '6px', color: '#59dcff'
     }).setDepth(21);
-    this.add.text(MONITOR.x + MONITOR.w - 18, MONITOR.y + 44, 'POWER', {
+    this.powerAxisLabel = this.add.text(MONITOR.x + MONITOR.w - 18, MONITOR.y + 44, 'POWER', {
       fontFamily: PIXEL_FONT, fontSize: '6px', color: '#7df6a8'
     }).setOrigin(1, 0).setDepth(21);
 
@@ -1080,6 +1080,9 @@ export default class DynoScene extends Phaser.Scene {
       ?.setText(drivetrain ? 'KM/H' : 'RPM')
       ?.setPosition(plotRect.x + plotRect.w - 6, plotRect.y + plotRect.h - 5);
 
+    this.powerAxisLabel
+      ?.setPosition(plotRect.x + plotRect.w, MONITOR.y + 44);
+
     g.lineStyle(1, 0x1f3a49, 0.52);
     for (let i = 0; i <= 5; i += 1) {
       const x = plotRect.x + plotRect.w * i / 5;
@@ -1171,7 +1174,7 @@ export default class DynoScene extends Phaser.Scene {
         : (graphRun?.shiftEvents || []);
 
       const columnX = plotRect.x + plotRect.w + 17;
-      const header = this.add.text(columnX, rect.y + 2, 'SHIFTS', {
+      const header = this.add.text(columnX, MONITOR.y + 16, 'SHIFTS', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: '#ffe08a',
@@ -1183,19 +1186,30 @@ export default class DynoScene extends Phaser.Scene {
         const yTorque = torqueY(Number(event.torqueNm || event.wheelTorqueNm || 0));
         const yPower = powerY(Number(event.powerKW || 0));
 
-        // Keep subtle plot markers, but move all text into the readout column.
+        // Keep subtle plot markers, but put the readable shift record in the
+        // side column: gear change on one line, RPM drop directly beneath it.
         g.fillStyle(0xffe08a, 0.94);
         if (Number(event.torqueNm || event.wheelTorqueNm || 0) > 0) g.fillCircle(x, yTorque, 2);
         if (Number(event.powerKW || 0) > 0) g.fillCircle(x, yPower, 2);
         g.lineStyle(1, 0xffe08a, 0.32);
         g.lineBetween(x, plotRect.y + 4, x, plotRect.y + plotRect.h - 4);
 
-        const label = this.add.text(
+        const baseY = MONITOR.y + 31 + index * 15;
+        const gearLabel = this.add.text(
           columnX,
-          rect.y + 16 + index * 18,
-          event.fromGear + '→' + event.toGear + '  ' +
+          baseY,
+          event.fromGear + '-' + event.toGear,
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '5px',
+            color: '#ffe08a',
+          }
+        ).setDepth(23);
+        const rpmLabel = this.add.text(
+          columnX,
+          baseY + 7,
           Math.round(Number(event.rpmBefore || 0)).toLocaleString('en-US') +
-          '→' +
+          '-' +
           Math.round(Number(event.rpmAfter || 0)).toLocaleString('en-US'),
           {
             fontFamily: PIXEL_FONT,
@@ -1203,7 +1217,7 @@ export default class DynoScene extends Phaser.Scene {
             color: '#ffe08a',
           }
         ).setDepth(23);
-        this.shiftLabelObjects.push(label);
+        this.shiftLabelObjects.push(gearLabel, rpmLabel);
       });
     }
   }
