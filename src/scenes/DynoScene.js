@@ -610,8 +610,8 @@ export default class DynoScene extends Phaser.Scene {
       });
     };
 
-    makeSection(104, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
-    makeSection(264, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+    makeSection(92, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
+    makeSection(252, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
 
     const selectedRuns = this.getDynoHistoryRuns(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
@@ -1311,9 +1311,11 @@ export default class DynoScene extends Phaser.Scene {
     });
   }
 
-  getDynoHistoryRuns() {
+  getDynoHistoryRuns(mode = null) {
     const history = this.carState?.dyno?.history;
-    return Array.isArray(history) ? [...history].reverse() : [];
+    if (!Array.isArray(history)) return [];
+    const runs = mode ? history.filter(run => run?.mode === mode) : history;
+    return runs.slice(-3).reverse();
   }
 
   toggleGraphHistory() {
