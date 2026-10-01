@@ -99,6 +99,29 @@ export default class DynoScene extends Phaser.Scene {
     playMusic('workshop');
 
     this.carId = this.resolveCarId();
+
+    // R311 chart reset: clear all legacy Dyno graphs once. The marker lives
+    // inside each car's dyno state so new cars are not repeatedly reset.
+    const allCarStates = { ...(this.registry.get('carStates') || {}) };
+    let chartResetChanged = false;
+    Object.entries(allCarStates).forEach(([id, rawState]) => {
+      const state = { ...(rawState || {}) };
+      const dyno = { ...(state.dyno || {}) };
+      if (dyno.chartResetVersion !== 1) {
+        dyno.history = [];
+        dyno.lastRun = null;
+        dyno.bestRun = null;
+        dyno.chartResetVersion = 1;
+        state.dyno = dyno;
+        allCarStates[id] = state;
+        chartResetChanged = true;
+      }
+    });
+    if (chartResetChanged) {
+      this.registry.set('carStates', allCarStates);
+      saveSessionState(this.registry);
+    }
+
     this.carState = (this.registry.get('carStates') || {})[this.carId] || {};
     this.facilityTier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
     this.stage = getDynoStage(this.facilityTier);
@@ -380,7 +403,7 @@ export default class DynoScene extends Phaser.Scene {
   drawDaichiPanel() {
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual && this.textures.exists(daichi.visual.spriteKey)) {
-      const sprite = this.add.image(345, 590, daichi.visual.spriteKey)
+      const sprite = this.add.image(330, 585, daichi.visual.spriteKey)
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(daichi.visual.spriteKey).getSourceImage();
@@ -470,9 +493,22 @@ export default class DynoScene extends Phaser.Scene {
       const box = add(this.add.rectangle(1100, y, 48, 48, 0x102138, 0.98)
         .setStrokeStyle(2, accent, 1)
         .setInteractive({ useHandCursor: true }).setDepth(31));
-      add(this.add.text(1100, y, 'G', {
-        fontFamily: PIXEL_FONT, fontSize: '10px', color: accent
-      }).setOrigin(0.5).setDepth(32));
+      add((() => {
+        const chart = this.add.graphics().setDepth(32);
+        const iconColor = 0xcbd8df;
+        chart.lineStyle(2, iconColor, 0.95);
+        chart.lineBetween(1089, y + 19, 1089, y + 29);
+        chart.lineBetween(1097, y + 14, 1097, y + 29);
+        chart.lineBetween(1105, y + 9, 1105, y + 29);
+        chart.lineStyle(1.5, iconColor, 0.95);
+        chart.beginPath();
+        chart.moveTo(1087, y + 25);
+        chart.lineTo(1095, y + 20);
+        chart.lineTo(1101, y + 22);
+        chart.lineTo(1110, y + 12);
+        chart.strokePath();
+        add(chart);
+      })());
       box.on('pointerdown', () => this.openGraphView(mode));
     };
 
@@ -1105,11 +1141,10 @@ export default class DynoScene extends Phaser.Scene {
 
   refreshPullCounter() {
     if (!this.pullCounterText) return;
-    this.pullCounterText.setText(
-      this.sessionPullsRemaining > 0
-        ? 'TEST // ' + this.sessionPullsRemaining + ' ATTEMPT' + (this.sessionPullsRemaining === 1 ? '' : 'S') + ' LEFT'
-        : 'STAGE I // POWER ¥5,000 // DRIVETRAIN ¥15,000 / 3 ATTEMPTS'
-    );
+    const label = this.dynoUiMode === 'intro'
+      ? 'DYNO OPTIONS'
+      : (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
+    this.pullCounterText.setText(label);
   }
 
   refreshRunButton() {
