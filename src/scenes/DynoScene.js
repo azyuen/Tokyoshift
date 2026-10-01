@@ -160,6 +160,7 @@ export default class DynoScene extends Phaser.Scene {
     this.pendingReplaceSlot = null;
     this.replacementCandidateSlot = null;
     this.replacementPopupObjects = [];
+    this.awaitingNextPull = false;
     this.introUiObjects = [];
     this.activeUiObjects = [];
     this.shiftLabelObjects = [];
@@ -440,6 +441,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoHud = new RaceHUD(this, {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
+      showGear: false,
       x: 720,
       y: 776,
       scale: 0.52,
@@ -477,6 +479,8 @@ export default class DynoScene extends Phaser.Scene {
     if (this.controls) this.controls.enabled = false;
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
     if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
+    this.dynoHud?.gearBack?.setVisible(false);
+    this.dynoHud?.gearText?.setVisible(false);
     this.runButton = null;
     this.resultsButton = null;
     this.setHeaderContext('DYNO OPTIONS');
@@ -696,7 +700,8 @@ export default class DynoScene extends Phaser.Scene {
 
     if (this.controls) {
       this.controls.enabled = true;
-      [this.controls.clutchSprite, this.controls.nosSprite, this.controls.shifterSprite, this.controls.throttleSprite].forEach(obj => obj?.setVisible(true));
+      [this.controls.clutchSprite, this.controls.shifterSprite, this.controls.throttleSprite].forEach(obj => obj?.setVisible(true));
+      this.controls.nosSprite?.setVisible(false);
     }
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
@@ -741,7 +746,7 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 790, controlScaleMultiplier: 1.10, pedalLatchMax: false });
+    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 815, controlScaleMultiplier: 1.10, pedalLatchMax: false });
     this.controls.nosSprite?.setVisible(false);
 
     // Dyno-specific input guard: the shifter touch rectangle overlaps the
@@ -834,6 +839,7 @@ export default class DynoScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 1));
 
     const slots = this.getDynoGraphSlots(this.dynoRunMode);
+    this.replacementPopupButtons = [];
     [0,1,2].forEach(index => {
       const y = 485 + index * 52;
       const box = add(this.add.rectangle(1320, y, 260, 40, 0x102138, 0.98)
@@ -842,11 +848,18 @@ export default class DynoScene extends Phaser.Scene {
       const label = add(this.add.text(1320, y, 'GRAPH ' + (index + 1), {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eef8ff'
       }).setOrigin(0.5).setDepth(depth + 2));
+      this.replacementPopupButtons.push({ box, label });
       box.on('pointerdown', () => {
+        this.replacementPopupButtons?.forEach(item => {
+          item.box.setFillStyle(0x102138, 0.98);
+          item.box.setStrokeStyle(2, this.dynoRunMode === 'drivetrain' ? 0x43dfff : 0x62e8c7, 0.9);
+          item.label.setColor('#eef8ff');
+        });
         this.replacementCandidateSlot = index;
         this.pendingReplaceSlot = index;
-        box.setStrokeStyle(2, 0xffffff, 1);
-        label.setColor('#ffffff');
+        box.setFillStyle(0x6b5b37, 1);
+        box.setStrokeStyle(2, 0xffd45a, 1);
+        label.setColor('#ffe58a');
         this.redrawGraph();
       });
     });
@@ -862,13 +875,13 @@ export default class DynoScene extends Phaser.Scene {
       if (!Number.isInteger(this.replacementCandidateSlot)) return;
       this.pendingReplaceSlot = this.replacementCandidateSlot;
       this.closeGraphReplacementPopup();
-      this.startRunning();
+      this.prepareNextPull();
     });
     cancel.on('pointerdown', () => {
       this.pendingReplaceSlot = null;
       this.replacementCandidateSlot = null;
       this.closeGraphReplacementPopup();
-      this.abortPaidSetupWithoutCharge();
+      this.cancelGraphReplacement();
     });
   }
 
@@ -877,20 +890,45 @@ export default class DynoScene extends Phaser.Scene {
       try { obj?.destroy?.(); } catch (e) {}
     });
     this.replacementPopupObjects = [];
+    this.replacementPopupButtons = [];
   }
 
-  abortPaidSetupWithoutCharge() {
+  cancelGraphReplacement() {
     this.pullState = 'IDLE';
     this.points = [];
     this.shiftEvents = [];
     this.clearShiftLabels();
     if (this.controls) this.controls.enabled = false;
+    this.currentGear = 0;
+    this.currentRPM = Number(this.build?.engine?.idleRPM || 850);
     this.currentBoost = 0;
-    this.sessionPullsRemainingByMode[this.dynoRunMode] = 0;
-    this.sessionPullsRemaining = 0;
+    this.vehicleSpeedMps = 0;
+    this.vehicleDistanceM = 0;
+    this.awaitingNextPull = false;
     this.redrawGraph();
     this.refreshRunButton();
-    this.daichiText?.setText('DAICHI // Run cancelled. The service charge remains used.');
+    this.daichiText?.setText('DAICHI // Replacement cancelled. The paid test session remains available.');
+  }
+
+  prepareNextPull() {
+    this.pullState = 'IDLE';
+    this.awaitingNextPull = true;
+    this.points = [];
+    this.shiftEvents = [];
+    this.clearShiftLabels();
+    if (this.controls) this.controls.enabled = false;
+    this.currentGear = 0;
+    this.currentRPM = Number(this.build?.engine?.idleRPM || 850);
+    this.currentBoost = 0;
+    this.vehicleSpeedMps = 0;
+    this.vehicleDistanceM = 0;
+    this.dynoRunTime = 0;
+    this.runProgress = 0;
+    this.lastRecordedTime = 0;
+    this.lastRecordedRPM = 0;
+    this.daichiText?.setText('DAICHI // Graph selected. Press NEXT PULL when you are ready to set up the test.');
+    this.redrawGraph();
+    this.refreshRunButton();
   }
 
 
@@ -902,6 +940,7 @@ export default class DynoScene extends Phaser.Scene {
     this.graphViewIndex = 0;
     this.pendingReplaceSlot = null;
     this.replacementCandidateSlot = null;
+    this.awaitingNextPull = false;
     this.closeGraphReplacementPopup();
     this.setHeaderContext(this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
     this.drawActiveUi();
@@ -914,6 +953,24 @@ export default class DynoScene extends Phaser.Scene {
   }
   
   handlePrimaryRunAction() {
+    if (this.awaitingNextPull) {
+      this.awaitingNextPull = false;
+      this.pullState = 'SETUP';
+      this.points = [];
+      this.shiftEvents = [];
+      this.currentGear = 0;
+      this.currentRPM = Number(this.build?.engine?.idleRPM || 850);
+      this.currentBoost = 0;
+      this.vehicleSpeedMps = 0;
+      this.vehicleDistanceM = 0;
+      this.ensureControls();
+      this.controls.enabled = true;
+      this.daichiText?.setText(this.dynoRunMode === 'drivetrain'
+        ? 'DAICHI // DRIVETRAIN TEST. Select your launch gear, set RPM, then release the clutch.'
+        : 'DAICHI // POWER RUN. Select any starting gear, then release the clutch and hold full throttle.');
+      this.refreshRunButton();
+      return;
+    }
     if (this.pullState === 'ABORTED') {
       this.beginPull(this.dynoRunMode);
       return;
@@ -951,6 +1008,7 @@ export default class DynoScene extends Phaser.Scene {
     }
 
     this.sessionPullsRemaining = remaining;
+    this.awaitingNextPull = false;
     this.ensureDynoHud();
     if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(true));
     this.ensureControls();
@@ -979,7 +1037,7 @@ export default class DynoScene extends Phaser.Scene {
     this.daichiText?.setText(
       mode === 'drivetrain'
         ? 'DAICHI // DRIVETRAIN TEST. Start in N. Clutch in, select your launch gear, set RPM, then release.'
-        : 'DAICHI // POWER RUN. Clutch in. Select ' + this.ordinal(this.recommendedGear) + ' gear — closest to 1:1 — then release the clutch.'
+        : 'DAICHI // POWER RUN. Clutch in. Select any starting gear, then release the clutch.'
     );
     this.refreshRunButton();
   }
@@ -1173,6 +1231,11 @@ export default class DynoScene extends Phaser.Scene {
       })),
     };
     run.analysis = analyseDynoRun(run, this.build);
+    const runMetrics = this.getRunMetrics(run);
+    run.maxBoostBar = Math.round(runMetrics.maxBoostBar * 100) / 100;
+    run.maxTorqueNm = Math.round(runMetrics.maxTorqueNm * 10) / 10;
+    run.maxPowerKW = Math.round(runMetrics.maxPowerKW * 10) / 10;
+    run.startingGear = runMetrics.startingGear;
     run.wheelPowerKW = Math.round(Number(run.analysis.peakPowerKW || 0) * clamp(Number(this.build.car.drivetrainEfficiency || 0.86), 0.60, 0.99));
 
     if (mode === 'drivetrain') {
@@ -1230,27 +1293,15 @@ export default class DynoScene extends Phaser.Scene {
     this.refreshGraphManagement();
   }
   showRunSummary(run) {
-    const a = run?.analysis;
-    if (!a) return;
-
-    if (run.mode === 'drivetrain') {
-      const maxSpeed = Math.round(Number(run.drivetrain?.maxSpeedKmh || 0));
-      const shifts = Number(run.drivetrain?.shiftCount || 0);
-      const last = run.shiftEvents?.[run.shiftEvents.length - 1];
-      this.telemetryText.setText(
-        'DRIVETRAIN  //  MAX ' + maxSpeed + ' km/h  //  ' + shifts + ' SHIFTS' +
-        (last ? '  //  LAST SHIFT ' + last.fromGear + '>' + last.toGear : '') +
-        '\nPEAK ENGINE  ' + a.peakPowerKW + ' kW @ ' + a.peakPowerRPM.toLocaleString('en-US') +
-        ' rpm  //  WHEEL ~' + Number(run.wheelPowerKW || 0) + ' kW'
-      );
-    } else {
-      this.telemetryText.setText(
-        'POWER RUN  //  PEAK ' + a.peakPowerKW + ' kW @ ' + a.peakPowerRPM.toLocaleString('en-US') +
-        ' rpm  //  ' + a.peakTorqueNm + ' Nm @ ' + a.peakTorqueRPM.toLocaleString('en-US') +
-        ' rpm\nUSABLE BAND  ' + a.usableBandStartRPM.toLocaleString('en-US') +
-        '–' + a.usableBandEndRPM.toLocaleString('en-US') + ' rpm'
-      );
-    }
+    if (!run || !this.telemetryText) return;
+    const m = this.getRunMetrics(run);
+    const gearLabel = m.startingGear > 0 ? String(m.startingGear) : 'N';
+    this.telemetryText.setText(
+      'MAX BOOST  ' + m.maxBoostBar.toFixed(2) + ' bar' +
+      '   //   MAX TORQUE  ' + Math.round(m.maxTorqueNm) + ' Nm' +
+      '   //   MAX POWER  ' + Math.round(m.maxPowerKW) + ' kW' +
+      '\nSTART GEAR  ' + gearLabel
+    );
   }
 
   showLastRun() {
@@ -1276,14 +1327,16 @@ export default class DynoScene extends Phaser.Scene {
     const remaining = this.getModeSessionRemaining(mode);
     let label = 'DYNO RUN // ¥' + cost;
     let enabled = true;
-    if (this.pullState === 'SETUP') {
-      label = mode === 'drivetrain' ? 'SETUP // N // SELECT LAUNCH GEAR' : 'SETUP // SELECT ' + this.ordinal(this.recommendedGear) + ' GEAR';
+    if (this.awaitingNextPull) {
+      label = 'NEXT PULL';
+    } else if (this.pullState === 'SETUP') {
+      label = mode === 'drivetrain' ? 'SETUP // SELECT LAUNCH GEAR' : 'SETUP // SELECT STARTING GEAR';
       enabled = false;
     } else if (this.pullState === 'RUNNING') {
       label = mode === 'drivetrain' ? 'DRIVETRAIN TEST // LIVE' : 'DYNO RUN // LIVE';
       enabled = false;
     } else if (this.pullState === 'ABORTED') {
-      label = 'RETRY ' + (mode === 'drivetrain' ? 'DRIVETRAIN' : 'DYNO RUN') + ' // ¥' + cost;
+      label = mode === 'drivetrain' ? 'RETRY DRIVETRAIN TEST RUN' : 'RETRY DYNO RUN // ¥' + cost;
     } else if (remaining > 0) {
       label = 'CONTINUE // ' + remaining + ' RUN' + (remaining === 1 ? '' : 'S') + ' REMAINING';
     }
@@ -1308,6 +1361,19 @@ export default class DynoScene extends Phaser.Scene {
         g.lineBetween(x + offset, this.rollerY - 8, x + offset + 18, this.rollerY + 11);
       }
     });
+  }
+
+  getRunMetrics(run) {
+    const points = Array.isArray(run?.points) ? run.points : [];
+    const maxBoostBar = points.reduce((max, p) => Math.max(max, Number(p?.boostBar || 0)), 0);
+    const maxTorqueNm = points.reduce((max, p) => Math.max(max, Number(p?.torqueNm || 0)), 0);
+    const maxPowerKW = points.reduce((max, p) => Math.max(max, Number(p?.powerKW || 0)), 0);
+    return {
+      maxBoostBar: Number(run?.maxBoostBar ?? maxBoostBar),
+      maxTorqueNm: Number(run?.maxTorqueNm ?? maxTorqueNm),
+      maxPowerKW: Number(run?.maxPowerKW ?? maxPowerKW),
+      startingGear: Number(run?.startingGear ?? run?.gear ?? points[0]?.gear ?? 0),
+    };
   }
 
   getDynoGraphSlots(mode = this.dynoRunMode) {
@@ -1477,6 +1543,10 @@ export default class DynoScene extends Phaser.Scene {
 
     drawSeries(this.points, 'torqueNm', torqueY, 0x59dcff, 1, 3);
     drawSeries(this.points, 'powerKW', powerY, 0x7df6a8, 1, 3);
+
+    if (graphRun?.points?.length && this.dynoUiMode === 'graphManagement') {
+      this.showRunSummary(graphRun);
+    }
 
     if (drivetrain) {
       const events = this.shiftEvents?.length
@@ -1675,7 +1745,7 @@ export default class DynoScene extends Phaser.Scene {
         this.audio?.update(setupTelemetry, null, this.build.car, null, dt);
         this.redrawRollers(time * 0.015 + setupTelemetry.wheelRPM * 0.03);
 
-        if (this.currentGear === this.recommendedGear && Number(input.clutch || 0) < 0.20) {
+        if (this.currentGear > 0 && Number(input.clutch || 0) < 0.20) {
           this.daichiText.setText('DAICHI // READY. Hold full throttle for the pull.');
           if (Number(input.throttle || 0) >= 0.86) this.startRunning();
         }
