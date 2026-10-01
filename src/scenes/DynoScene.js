@@ -584,6 +584,8 @@ export default class DynoScene extends Phaser.Scene {
     if (this.controls) this.controls.enabled = false;
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
     if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
+    this.dynoHud?.gearBack?.setVisible(false);
+    this.dynoHud?.gearText?.setVisible(false);
     this.daichiMessageBoard?.setVisible(false);
     this.daichiText?.setVisible(false);
     this.dynoUiMode = 'graphManagement';
