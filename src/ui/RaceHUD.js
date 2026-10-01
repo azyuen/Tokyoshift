@@ -9,6 +9,7 @@ export default class RaceHUD {
     this.sourceH = 452;
     this.hasTurbo = Boolean(options.hasTurbo);
     this.hasNitrous = Boolean(options.hasNitrous);
+    this.showGear = options.showGear !== false;
 
     this.cluster = scene.add.image(this.x, this.y, 'hudCluster')
       .setOrigin(0.5, 1)
@@ -54,6 +55,8 @@ export default class RaceHUD {
     const speed = this.sourcePoint(723, 352);
     this.gearBack.setPosition(gear.x, gear.y);
     this.gearText.setPosition(gear.x, gear.y);
+    this.gearBack.setVisible(this.showGear);
+    this.gearText.setVisible(this.showGear);
     this.speedText.setPosition(speed.x, speed.y);
   }
 
@@ -109,8 +112,8 @@ export default class RaceHUD {
     this.status.setText(raceStatus);
     const gearValue = Number(t.gear || 0);
     this.gearText.setText(gearValue === 0 ? 'N' : String(gearValue));
-    this.gearText.setVisible(true);
-    this.gearBack.setVisible(true);
+    this.gearText.setVisible(this.showGear);
+    this.gearBack.setVisible(this.showGear);
     this.speedText.setText(String(Math.round(t.speedKmh)));
   }
 }
