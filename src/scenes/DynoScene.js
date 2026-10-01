@@ -471,6 +471,8 @@ export default class DynoScene extends Phaser.Scene {
     this.clearUiObjects('introUiObjects');
     this.clearShiftLabels();
     this.dynoUiMode = 'intro';
+    if (this.controls) this.controls.enabled = false;
+    [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
     this.runButton = null;
     this.resultsButton = null;
     this.setHeaderContext('DYNO OPTIONS');
@@ -484,101 +486,83 @@ export default class DynoScene extends Phaser.Scene {
       if (this.sessionPullsRemaining > 0 && this.dynoRunMode === mode) {
         return this.sessionPullsRemaining + ' RUN' + (this.sessionPullsRemaining === 1 ? '' : 'S') + ' REMAINING';
       }
-      return 'ENTER';
+      return '';
     };
 
-    const addGraphSquare = (mode, y, accent) => {
-      const history = this.getDynoHistoryRuns(mode);
-      if (!history.length) return;
-      const box = add(this.add.rectangle(1100, y, 48, 48, 0x102138, 0.98)
-        .setStrokeStyle(2, accent, 1)
-        .setInteractive({ useHandCursor: true }).setDepth(31));
-      add((() => {
-        const chart = this.add.graphics().setDepth(32);
-        const iconColor = 0x5b7890;
-        chart.lineStyle(2, iconColor, 0.95);
-        chart.lineBetween(1089, y + 14, 1089, y + 24);
-        chart.lineBetween(1097, y + 9, 1097, y + 24);
-        chart.lineBetween(1105, y + 4, 1105, y + 24);
-        chart.lineStyle(1.5, iconColor, 0.95);
-        chart.beginPath();
-        chart.moveTo(1087, y + 20);
-        chart.lineTo(1095, y + 15);
-        chart.lineTo(1101, y + 17);
-        chart.lineTo(1110, y + 7);
-        chart.strokePath();
-        add(chart);
-      })());
-      box.on('pointerdown', () => this.openGraphView(mode));
+    const cardLeft = 92;
+    const cardHeight = 96;
+    const cardWidth = 380;
+    const powerTop = cardLeft;
+    const powerBottom = powerTop + cardHeight;
+    const driveTop = powerBottom + 10;
+    const driveBottom = driveTop + cardHeight;
+    const nextTop = driveBottom + 10;
+    const nextBottom = nextTop + cardHeight;
+
+    const drawStageCard = (top, accent, title, body, stage, action, onClick, locked = false) => {
+      const bottom = top + cardHeight;
+      const box = add(this.add.rectangle(x, (top + bottom) / 2, cardWidth, cardHeight,
+        locked ? 0x0b1017 : 0x07111d, 0.97)
+        .setStrokeStyle(2, locked ? 0x6b5b37 : accent, locked ? 0.86 : 0.95)
+        .setInteractive({ useHandCursor: !locked }).setDepth(28));
+      add(this.add.text(1148, top + 13, title, {
+        fontFamily: BODY_FONT, fontSize: '9px',
+        color: locked ? '#8f8770' : '#b8dce8', fontStyle: '700'
+      }).setDepth(29));
+      add(this.add.text(1490, top + 9, stage, {
+        fontFamily: PIXEL_FONT, fontSize: '5px',
+        color: locked ? '#aa9e80' : accent
+      }).setOrigin(1, 0).setDepth(29));
+      add(this.add.text(1148, top + 39, body, {
+        fontFamily: BODY_FONT, fontSize: '8px',
+        color: locked ? '#aa9e80' : '#b8dce8',
+        fontStyle: '700', lineSpacing: 3, wordWrap: { width: 340 }
+      }).setDepth(29));
+      if (action) {
+        add(this.add.text(1490, bottom - 10, action, {
+          fontFamily: PIXEL_FONT, fontSize: '6px',
+          color: locked ? '#aa9e80' : accent
+        }).setOrigin(1, 1).setDepth(29));
+      }
+      if (!locked) box.on('pointerdown', onClick);
+      return box;
     };
 
-    const powerTop = 92;
-    const powerBottom = 184;
-    const powerBox = add(this.add.rectangle(x, (powerTop + powerBottom) / 2, 380, powerBottom - powerTop, 0x07111d, 0.97)
-      .setStrokeStyle(2, 0x62e8c7, 0.95)
-      .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 112,
-      'POWER RUN  //  BASELINE ENGINE CURVE\n' +
+    drawStageCard(
+      powerTop, 0x62e8c7, 'POWER RUN  //  BASELINE ENGINE CURVE',
       '1 CLEAN PULL  //  POWER + TORQUE VS RPM',
-      {
-        fontFamily: BODY_FONT, fontSize: '9px', color: '#b8dce8',
-        fontStyle: '700', lineSpacing: 5,
-      }).setDepth(29));
-    add(this.add.text(1490, powerTop + 8, 'STAGE 1', {
-      fontFamily: PIXEL_FONT, fontSize: '5px', color: '#62e8c7'
-    }).setOrigin(1, 0).setDepth(29));
-    add(this.add.text(1490, powerBottom - 9, stageActionLabel('power', powerCost), {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#62e8c7'
-    }).setOrigin(1, 1).setDepth(29));
-    powerBox.on('pointerdown', () => this.enterDynoTest('power'));
-    addGraphSquare('power', (powerTop + powerBottom) / 2, 0x62e8c7);
+      'STAGE 1', stageActionLabel('power', powerCost),
+      () => this.enterDynoTest('power')
+    );
 
-    const driveTop = 194;
-    const driveBottom = 298;
-    const driveBox = add(this.add.rectangle(x, (driveTop + driveBottom) / 2, 380, driveBottom - driveTop, 0x07111d, 0.97)
-      .setStrokeStyle(2, 0x43dfff, 0.95)
-      .setInteractive({ useHandCursor: true }).setDepth(28));
-    add(this.add.text(1148, 216,
-      'DRIVETRAIN TEST  //  3 ATTEMPTS\n' +
-      'STANDING START  //  SHIFT THROUGH THE GEARS\n' +
-      'SEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
-      {
-        fontFamily: BODY_FONT, fontSize: '8px', color: '#b8dce8',
-        fontStyle: '700', lineSpacing: 4,
-      }).setDepth(29));
-    add(this.add.text(1490, driveTop + 8, 'STAGE 2', {
-      fontFamily: PIXEL_FONT, fontSize: '5px', color: '#43dfff'
-    }).setOrigin(1, 0).setDepth(29));
-    add(this.add.text(1490, driveBottom - 9, stageActionLabel('drivetrain', drivetrainCost), {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#43dfff'
-    }).setOrigin(1, 1).setDepth(29));
-    driveBox.on('pointerdown', () => this.enterDynoTest('drivetrain'));
-    addGraphSquare('drivetrain', (driveTop + driveBottom) / 2, 0x43dfff);
+    drawStageCard(
+      driveTop, 0x43dfff, 'DRIVETRAIN TEST  //  3 ATTEMPTS',
+      'STANDING START  //  SHIFT THROUGH THE GEARS\nSEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
+      'STAGE 2', stageActionLabel('drivetrain', drivetrainCost),
+      () => this.enterDynoTest('drivetrain')
+    );
 
     const next = getDynoNextStage(this.facilityTier);
-    const nextTop = 308;
-    const nextBottom = 404;
     const tuningUnlocked = this.facilityTier >= 3;
-    add(this.add.rectangle(x, (nextTop + nextBottom) / 2, 380, nextBottom - nextTop, tuningUnlocked ? 0x0b1715 : 0x0b1017, 0.94)
-      .setStrokeStyle(2, tuningUnlocked ? 0x62e8c7 : 0x6b5b37, 0.86)
-      .setDepth(28));
-    add(this.add.text(1148, nextTop + 13, 'DYNO TUNING', {
-      fontFamily: BODY_FONT, fontSize: '9px', color: tuningUnlocked ? '#b8dce8' : '#8f8770',
-      fontStyle: '700'
-    }).setDepth(29));
-    add(this.add.text(1490, nextTop + 8, 'STAGE 3', {
-      fontFamily: PIXEL_FONT, fontSize: '5px', color: tuningUnlocked ? '#62e8c7' : '#aa9e80'
-    }).setOrigin(1, 0).setDepth(29));
-    add(this.add.text(1148, nextTop + 39,
+    drawStageCard(
+      nextTop, tuningUnlocked ? 0x62e8c7 : 0x6b5b37,
+      'DYNO TUNING',
       tuningUnlocked ? 'ECU RESPONSE + LOAD TUNING' :
-      'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') + '\n' + next.description.toUpperCase(),
-      {
-        fontFamily: BODY_FONT, fontSize: '8px', color: tuningUnlocked ? '#62e8c7' : '#aa9e80',
-        fontStyle: '700', lineSpacing: 3, wordWrap: { width: 340 },
-      }).setDepth(29));
+        'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') + '\n' + next.description.toUpperCase(),
+      'STAGE 3', '', null, !tuningUnlocked
+    );
 
-    const backY = 440;
-    const back = add(this.add.rectangle(x, backY, 380, 50, 0x102138, 0.98)
+    const graphY = 440;
+    const graphBox = add(this.add.rectangle(x, graphY, cardWidth, 50, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(31));
+    add(this.add.text(x, graphY, 'GRAPH MANAGEMENT', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(32));
+    graphBox.on('pointerdown', () => this.openGraphManagement());
+
+    const backY = 500;
+    const back = add(this.add.rectangle(x, backY, cardWidth, 50, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true }).setDepth(31));
     add(this.add.text(x, backY, 'RETURN TO WORKSHOP', {
@@ -587,10 +571,53 @@ export default class DynoScene extends Phaser.Scene {
     back.on('pointerdown', () => this.returnToWorkshop());
   }
 
+  openGraphManagement() {
+    if (this.controls) this.controls.enabled = false;
+    [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
+    this.dynoUiMode = 'graphManagement';
+    this.clearUiObjects('introUiObjects');
+    this.clearUiObjects('activeUiObjects');
+    const add = obj => this.addUiObject('introUiObjects', obj);
+    const x = 1320;
+
+    add(this.add.text(1148, 112, 'POWER RUN GRAPHS', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#9edcf7'
+    }).setDepth(32));
+    add(this.add.text(1490, 112, '3 SAVED MAX', {
+      fontFamily: PIXEL_FONT, fontSize: '6px', color: '#62e8c7'
+    }).setOrigin(1, 0).setDepth(32));
+    add(this.add.text(1148, 140, 'Select a saved graph to view, delete, or replace it.', {
+      fontFamily: BODY_FONT, fontSize: '8px', color: '#b8dce8'
+    }).setDepth(32));
+
+    const powerRuns = this.getDynoHistoryRuns('power');
+    const driveRuns = this.getDynoHistoryRuns('drivetrain');
+    const makeSection = (y, mode, title, accent, runs) => {
+      add(this.add.text(1148, y, title, { fontFamily: PIXEL_FONT, fontSize: '7px', color: accent }).setDepth(32));
+      [0,1,2].forEach(i => {
+        const bx=1172+i*105;
+        const box=add(this.add.rectangle(bx,y+42,88,48,0x102138,0.98).setStrokeStyle(2,accent,1).setInteractive({useHandCursor:true}).setDepth(31));
+        const label=add(this.add.text(bx,y+42, runs[i] ? ('GRAPH '+(i+1)) : 'EMPTY',{fontFamily:PIXEL_FONT,fontSize:'6px',color:runs[i]?'#eef8ff':'#687983'}).setOrigin(0.5).setDepth(32));
+        if(runs[i]) box.on('pointerdown',()=>{ this.dynoRunMode=mode; this.openGraphView(mode); });
+      });
+    };
+    makeSection(190,'power','POWER RUN',0x62e8c7,powerRuns);
+    makeSection(300,'drivetrain','DRIVETRAIN TEST',0x43dfff,driveRuns);
+
+    const backY=410;
+    const back=add(this.add.rectangle(x,backY,380,50,0x102138,0.98).setStrokeStyle(2,0x55b8ff,1).setInteractive({useHandCursor:true}).setDepth(31));
+    add(this.add.text(x,backY,'RETURN TO DYNO OPTIONS',{fontFamily:PIXEL_FONT,fontSize:'8px',color:'#eef8ff'}).setOrigin(0.5).setDepth(32));
+    back.on('pointerdown',()=>this.drawIntroUi());
+  }
+
   drawActiveUi() {
     this.clearUiObjects('introUiObjects');
     this.clearUiObjects('activeUiObjects');
     this.dynoUiMode = 'active';
+    if (this.controls) {
+      this.controls.enabled = true;
+      [this.controls.clutchSprite, this.controls.nosSprite, this.controls.shifterSprite, this.controls.throttleSprite].forEach(obj => obj?.setVisible(true));
+    }
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
     const x = 1320;
