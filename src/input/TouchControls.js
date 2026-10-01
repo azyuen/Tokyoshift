@@ -81,13 +81,6 @@ export default class TouchControls {
     this.shifterSprite = scene.add.image(1218, shifterY, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
     this.throttleSprite = scene.add.image(1405, throttleY, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
 
-    this.plusLabel = scene.add.text(1218, this.controlBottomY - 400 + this.verticalOffsetY, '↑', {
-      fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
-    }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-    this.minusLabel = scene.add.text(1218, this.controlBottomY - 93 + this.verticalOffsetY, '↓', {
-      fontFamily: '"Silkscreen", monospace', fontSize: '14px', color: '#c7d8df'
-    }).setOrigin(0.5).setDepth(52).setScrollFactor(0);
-
     scene.input.on('pointerdown', pointer => {
       if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
         this.clutchPointer = pointer;
