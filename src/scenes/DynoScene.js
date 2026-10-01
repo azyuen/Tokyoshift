@@ -473,6 +473,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoUiMode = 'intro';
     if (this.controls) this.controls.enabled = false;
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
+    if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
     this.runButton = null;
     this.resultsButton = null;
     this.setHeaderContext('DYNO OPTIONS');
@@ -574,40 +575,108 @@ export default class DynoScene extends Phaser.Scene {
   openGraphManagement() {
     if (this.controls) this.controls.enabled = false;
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
+    if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
+    this.daichiMessageBoard?.setVisible(false);
+    this.daichiText?.setVisible(false);
     this.dynoUiMode = 'graphManagement';
+    this.pullState = 'IDLE';
+    this.points = [];
+    this.shiftEvents = [];
+    this.clearShiftLabels();
     this.clearUiObjects('introUiObjects');
     this.clearUiObjects('activeUiObjects');
+    this.graphManagementMode = this.graphManagementMode || 'power';
+    this.graphManagementIndex = Number.isInteger(this.graphManagementIndex) ? this.graphManagementIndex : 0;
+    this.setHeaderContext('GRAPH MANAGEMENT');
+
     const add = obj => this.addUiObject('introUiObjects', obj);
     const x = 1320;
-
-    add(this.add.text(1148, 112, 'POWER RUN GRAPHS', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#9edcf7'
-    }).setDepth(32));
-    add(this.add.text(1490, 112, '3 SAVED MAX', {
-      fontFamily: PIXEL_FONT, fontSize: '6px', color: '#62e8c7'
-    }).setOrigin(1, 0).setDepth(32));
-    add(this.add.text(1148, 140, 'Select a saved graph to view, delete, or replace it.', {
-      fontFamily: BODY_FONT, fontSize: '8px', color: '#b8dce8'
-    }).setDepth(32));
-
     const powerRuns = this.getDynoHistoryRuns('power');
     const driveRuns = this.getDynoHistoryRuns('drivetrain');
+
     const makeSection = (y, mode, title, accent, runs) => {
-      add(this.add.text(1148, y, title, { fontFamily: PIXEL_FONT, fontSize: '7px', color: accent }).setDepth(32));
-      [0,1,2].forEach(i => {
-        const bx=1172+i*105;
-        const box=add(this.add.rectangle(bx,y+42,88,48,0x102138,0.98).setStrokeStyle(2,accent,1).setInteractive({useHandCursor:true}).setDepth(31));
-        const label=add(this.add.text(bx,y+42, runs[i] ? ('GRAPH '+(i+1)) : 'EMPTY',{fontFamily:PIXEL_FONT,fontSize:'6px',color:runs[i]?'#eef8ff':'#687983'}).setOrigin(0.5).setDepth(32));
-        if(runs[i]) box.on('pointerdown',()=>{ this.dynoRunMode=mode; this.openGraphView(mode); });
+      add(this.add.text(1148, y, title, { fontFamily: PIXEL_FONT, fontSize: '8px', color: accent }).setDepth(32));
+      [0, 1, 2].forEach(i => {
+        const bx = 1172 + i * 105;
+        const hasGraph = !!runs[i];
+        const selected = this.graphManagementMode === mode && this.graphManagementIndex === i && hasGraph;
+        const box = add(this.add.rectangle(bx, y + 42, 88, 48, hasGraph ? 0x102138 : 0x0b1017, 0.98)
+          .setStrokeStyle(2, hasGraph ? accent : 0x46515a, selected ? 1 : 0.7)
+          .setInteractive({ useHandCursor: hasGraph }).setDepth(31));
+        add(this.add.text(bx, y + 42, hasGraph ? ('GRAPH ' + (i + 1)) : 'EMPTY', {
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: hasGraph ? '#eef8ff' : '#687983'
+        }).setOrigin(0.5).setDepth(32));
+        if (hasGraph) box.on('pointerdown', () => this.openGraphManagementGraph(mode, i));
       });
     };
-    makeSection(190,'power','POWER RUN',0x62e8c7,powerRuns);
-    makeSection(300,'drivetrain','DRIVETRAIN TEST',0x43dfff,driveRuns);
 
-    const backY=410;
-    const back=add(this.add.rectangle(x,backY,380,50,0x102138,0.98).setStrokeStyle(2,0x55b8ff,1).setInteractive({useHandCursor:true}).setDepth(31));
-    add(this.add.text(x,backY,'RETURN TO DYNO OPTIONS',{fontFamily:PIXEL_FONT,fontSize:'8px',color:'#eef8ff'}).setOrigin(0.5).setDepth(32));
-    back.on('pointerdown',()=>this.drawIntroUi());
+    makeSection(104, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
+    makeSection(264, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+
+    const selectedRuns = this.getDynoHistoryRuns(this.graphManagementMode);
+    const selectedGraph = selectedRuns[this.graphManagementIndex];
+    const deleteEnabled = !!selectedGraph;
+    const deleteBox = add(this.add.rectangle(x, 360, 380, 50, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
+      .setStrokeStyle(2, deleteEnabled ? 0x55b8ff : 0x46515a, 1)
+      .setInteractive({ useHandCursor: deleteEnabled }).setDepth(31));
+    add(this.add.text(x, 360, 'DELETE SELECTED GRAPH', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: deleteEnabled ? '#eef8ff' : '#687983'
+    }).setOrigin(0.5).setDepth(32));
+    if (deleteEnabled) deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
+
+    const back = add(this.add.rectangle(x, 425, 380, 50, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x55b8ff, 1).setInteractive({ useHandCursor: true }).setDepth(31));
+    add(this.add.text(x, 425, 'RETURN TO DYNO OPTIONS', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+    }).setOrigin(0.5).setDepth(32));
+    back.on('pointerdown', () => this.drawIntroUi());
+
+    this.previousRun = selectedGraph || null;
+    this.graphViewIndex = this.graphManagementIndex;
+    this.dynoRunMode = this.graphManagementMode;
+    this.redrawGraph();
+  }
+
+  openGraphManagementGraph(mode, index) {
+    const history = this.getDynoHistoryRuns(mode);
+    if (!history[index]) return;
+    this.graphManagementMode = mode;
+    this.graphManagementIndex = index;
+    this.dynoRunMode = mode;
+    this.pullState = 'IDLE';
+    this.points = [];
+    this.shiftEvents = [];
+    this.clearShiftLabels();
+    this.previousRun = history[index];
+    this.graphViewIndex = index;
+    this.pendingReplaceSlot = null;
+    this.setHeaderContext('GRAPH MANAGEMENT');
+    this.redrawGraph();
+    this.openGraphManagement();
+  }
+
+  deleteGraphManagementSelection() {
+    const mode = this.graphManagementMode;
+    const index = this.graphManagementIndex;
+    const history = Array.isArray(this.carState?.dyno?.history) ? [...this.carState.dyno.history] : [];
+    const modeRuns = history.filter(run => run?.mode === mode).slice(-3).reverse();
+    const selected = modeRuns[index];
+    if (!selected) return;
+    const remaining = history.filter(run => run !== selected);
+    const dyno = { ...(this.carState.dyno || {}) };
+    dyno.history = remaining;
+    dyno.lastRun = dyno.history[dyno.history.length - 1] || null;
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const state = { ...(carStates[this.carId] || {}) };
+    state.dyno = dyno;
+    carStates[this.carId] = state;
+    this.registry.set('carStates', carStates);
+    saveSessionState(this.registry);
+    this.carState = state;
+    const remainingRuns = this.getDynoHistoryRuns(mode);
+    this.graphManagementIndex = Math.min(index, Math.max(0, remainingRuns.length - 1));
+    this.previousRun = remainingRuns[this.graphManagementIndex] || null;
+    this.openGraphManagement();
   }
 
   drawActiveUi() {
@@ -721,19 +790,9 @@ export default class DynoScene extends Phaser.Scene {
   openGraphView(mode) {
     const history = this.getDynoHistoryRuns(mode);
     if (!history.length) return;
-    if (this.controls) this.controls.enabled = false;
-    this.dynoRunMode = mode;
-    this.setHeaderContext(mode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
-    this.pullState = 'IDLE';
-    this.graphViewIndex = 0;
-    this.previousRun = history[0];
-    this.pendingReplaceSlot = null;
-    this.drawActiveUi();
-    this.showRunSummary(this.previousRun);
-    this.redrawGraph();
-    this.refreshRunButton();
-    this.refreshGraphButton();
-    this.refreshGraphManagement();
+    this.graphManagementMode = mode;
+    this.graphManagementIndex = 0;
+    this.openGraphManagementGraph(mode, 0);
   }
 
   selectGraphSlot(index) {
