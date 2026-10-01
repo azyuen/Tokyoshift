@@ -443,7 +443,7 @@ export default class DynoScene extends Phaser.Scene {
       hasNitrous: false,
       showGear: false,
       x: 720,
-      y: 776,
+      y: 810,
       scale: 0.52,
       statusY: 620,
     });
