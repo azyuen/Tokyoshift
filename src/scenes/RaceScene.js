@@ -6,7 +6,7 @@ import {
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
 } from '../data/playerDifficulty.js?v=20260929-r271';
-import RaceHUD from '../ui/RaceHUD.js?v=20260921-r43';
+import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';

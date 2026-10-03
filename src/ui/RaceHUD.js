@@ -23,8 +23,10 @@ export default class RaceHUD {
       fontFamily: '"Silkscreen", monospace', fontSize: '11px', color: '#fff0b8'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
-    this.gearBack = scene.add.rectangle(0, 0, 72, 58, 0x071019, 0.86)
-      .setStrokeStyle(2, 0x6f8c9b, 0.82).setDepth(42).setScrollFactor(0);
+    this.gearBack = scene.add.rectangle(0, 0, 72, 58, 0x000000, 0)
+      .setStrokeStyle(0, 0x000000, 0)
+      .setDepth(42)
+      .setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
       fontFamily: '"Rajdhani", monospace', fontSize: '30px', color: '#f7f7f2', fontStyle: '700'

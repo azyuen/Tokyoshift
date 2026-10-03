@@ -1,5 +1,5 @@
 import TouchControls from '../input/TouchControls.js?v=20260930-r299';
-import RaceHUD from '../ui/RaceHUD.js?v=20260930-r292';
+import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
@@ -442,7 +442,7 @@ export default class DynoScene extends Phaser.Scene {
     this.dynoHud = new RaceHUD(this, {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
-      showGear: false,
+      showGear: true,
       x: 720,
       y: 810,
       scale: 0.52,
@@ -780,7 +780,10 @@ export default class DynoScene extends Phaser.Scene {
       this.controls.enabled = true;
       return;
     }
-    this.controls = new TouchControls(this, { nosEnabled: false, controlBottomY: 815, controlScaleMultiplier: 1.10, pedalLatchMax: false });
+    this.controls = new TouchControls(this, {
+      nosEnabled: false,
+      pedalLatchMax: false,
+    });
     this.controls.nosSprite?.setVisible(false);
 
     // Dyno-specific input guard: the shifter touch rectangle overlaps the
