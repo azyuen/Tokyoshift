@@ -4,7 +4,7 @@ import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20260929-r275';
-import { saveSessionState } from '../state/GameState.js?v=20260930-r288';
+import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
@@ -14,7 +14,8 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20260930-r301';
+} from '../data/dyno.js?v=20261004-r319';
+import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r319';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -605,40 +606,71 @@ export default class DynoScene extends Phaser.Scene {
     const driveRuns = this.getDynoGraphSlots('drivetrain');
 
     const makeSection = (titleY, buttonY, mode, title, accent, runs) => {
-      add(this.add.text(1125, titleY, title, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: accent
-      }).setDepth(32));
-      [0,1,2].forEach(i => {
-        const bx = 1172 + i * 105;
+      const accentText = mode === 'power' ? '#62e8c7' : '#43dfff';
+      add(this.add.text(x, titleY, title, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: accentText,
+        align: 'center',
+      }).setOrigin(0.5).setDepth(32));
+
+      [0, 1, 2].forEach(i => {
+        const bx = 1190 + i * 130;
         const hasGraph = !!runs[i];
-        const selected = this.graphManagementMode === mode && this.graphManagementIndex === i && hasGraph;
-        const box = add(this.add.rectangle(bx, buttonY, 88, 48, hasGraph ? 0x102138 : 0x0b1017, 0.98)
-          .setStrokeStyle(2, hasGraph ? accent : 0x46515a, selected ? 1 : 0.7)
-          .setInteractive({ useHandCursor: hasGraph }).setDepth(31));
-        add(this.add.text(bx, buttonY, hasGraph ? ('GRAPH ' + (i + 1)) : 'EMPTY', {
-          fontFamily: PIXEL_FONT, fontSize: '6px', color: hasGraph ? '#eef8ff' : '#687983'
-        }).setOrigin(0.5).setDepth(32));
-        if (hasGraph) box.on('pointerdown', () => this.openGraphManagementGraph(mode, i));
+        const selected =
+          this.graphManagementMode === mode &&
+          this.graphManagementIndex === i &&
+          hasGraph;
+        const box = add(this.add.rectangle(
+          bx,
+          buttonY,
+          108,
+          46,
+          hasGraph ? 0x102138 : 0x0b1017,
+          0.98
+        )
+          .setStrokeStyle(
+            2,
+            hasGraph ? accent : 0x46515a,
+            selected ? 1 : 0.7
+          )
+          .setInteractive({ useHandCursor: hasGraph })
+          .setDepth(31));
+
+        add(this.add.text(
+          bx,
+          buttonY,
+          hasGraph ? ('GRAPH ' + (i + 1)) : 'EMPTY',
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '6px',
+            color: hasGraph ? accentText : '#687983',
+          }
+        ).setOrigin(0.5).setDepth(32));
+
+        if (hasGraph) {
+          box.on('pointerdown', () => this.openGraphManagementGraph(mode, i));
+        }
       });
     };
 
-    makeSection(72, 118, 'power', 'POWER RUN', 0x62e8c7, powerRuns);
-    makeSection(202, 248, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+    makeSection(72, 112, 'power', 'DYNO RUN', 0x62e8c7, powerRuns);
+    makeSection(170, 210, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
 
     const selectedRuns = this.getDynoGraphSlots(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
     const deleteEnabled = !!selectedGraph;
-    const deleteBox = add(this.add.rectangle(x, 330, 380, 50, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
+    const deleteBox = add(this.add.rectangle(x, 286, 380, 50, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
       .setStrokeStyle(2, deleteEnabled ? 0x55b8ff : 0x46515a, 1)
       .setInteractive({ useHandCursor: deleteEnabled }).setDepth(31));
-    add(this.add.text(x, 330, 'DELETE SELECTED GRAPH', {
+    add(this.add.text(x, 286, 'DELETE SELECTED GRAPH', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: deleteEnabled ? '#eef8ff' : '#687983'
     }).setOrigin(0.5).setDepth(32));
     if (deleteEnabled) deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
 
-    const back = add(this.add.rectangle(x, 395, 380, 50, 0x102138, 0.98)
+    const back = add(this.add.rectangle(x, 350, 380, 50, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1).setInteractive({ useHandCursor: true }).setDepth(31));
-    add(this.add.text(x, 395, 'RETURN TO DYNO OPTIONS', {
+    add(this.add.text(x, 350, 'RETURN TO DYNO OPTIONS', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
     back.on('pointerdown', () => this.drawIntroUi());
@@ -1262,6 +1294,13 @@ export default class DynoScene extends Phaser.Scene {
       ...(dyno.graphs.power || []).filter(Boolean),
       ...(dyno.graphs.drivetrain || []).filter(Boolean),
     ];
+
+    // A completed power pull becomes the official measured rating for this
+    // exact physical build. Any later performance modification changes the
+    // build signature and automatically returns displays to estimated ranges.
+    if (mode === 'power') {
+      dyno.officialReading = createOfficialDynoReading(state, run);
+    }
     dyno.lastRun = run;
 
     this.sessionPullsRemainingByMode[mode] = Math.max(0, this.getModeSessionRemaining(mode) - 1);
