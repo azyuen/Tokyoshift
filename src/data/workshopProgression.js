@@ -291,11 +291,10 @@ function progressionSourceValue(source, key, fallback = null) {
 }
 
 export function getTotalRegionalWins(source) {
-  const wins = progressionSourceValue(source, 'regionWins', {}) || {};
-  return Object.values(wins).reduce(
-    (total, value) => total + Math.max(0, Math.floor(Number(value || 0))),
-    0
-  );
+  const challenges = progressionSourceValue(source, 'tunerTeamChallenges', {}) || {};
+  return Object.values(challenges).filter(item =>
+    Boolean(item?.championEarned || item?.completed)
+  ).length;
 }
 
 export function getWorkshopRegionalWinRequirement(tier = 0) {

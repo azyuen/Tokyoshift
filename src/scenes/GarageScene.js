@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20260929-r285';
+import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20260929-r283';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260929-r275';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -63,13 +63,17 @@ import {
   applyWorkshopServiceCost,
   canInstallTuningLevel,
   getTuningRequirementLabel,
-} from '../data/workshopProgression.js?v=20260929-r263';
+  getTotalRegionalWins,
+  getWorkshopRegionalWinRequirement,
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js?v=20261004-r319';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20260930-r288';
+} from '../data/dyno.js?v=20261004-r319';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -1519,7 +1523,11 @@ export default class GarageScene extends Phaser.Scene {
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
       const cost = Math.max(0, Number(workshop.unlockCost || 0));
 
-      if (workshop.tier !== liveTier + 1 || cash < cost) return;
+      if (
+        workshop.tier !== liveTier + 1 ||
+        cash < cost ||
+        !isWorkshopProgressionReady(this.registry, workshop.tier)
+      ) return;
 
       this.registry.set('garageTier', workshop.tier);
       this.registry.set('cash', cash - cost);
@@ -1596,6 +1604,9 @@ export default class GarageScene extends Phaser.Scene {
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
       const cost = Math.max(0, Number(workshop.unlockCost || 0));
       const affordable = cash >= cost;
+      const regionalWins = getTotalRegionalWins(this.registry);
+      const requiredRegionalWins = getWorkshopRegionalWinRequirement(workshop.tier);
+      const progressionReady = isWorkshopProgressionReady(this.registry, workshop.tier);
       const usage = isUnlocked
         ? getWorkshopUsage(
             this.ownedCarIds,
@@ -1644,9 +1655,14 @@ export default class GarageScene extends Phaser.Scene {
       } else if (isUnlocked) {
         meta = usage + ' / ' + capacity + ' CARS  //  GO >';
       } else if (isNextUnlock) {
-        meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
-          '¥ ' + Number(cost).toLocaleString('en-US');
-        metaColor = affordable ? '#f2d899' : '#c99aa4';
+        if (!progressionReady) {
+          meta = 'REGIONAL WINS  ' + regionalWins + '/' + requiredRegionalWins;
+          metaColor = '#c99aa4';
+        } else {
+          meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
+            '¥ ' + Number(cost).toLocaleString('en-US');
+          metaColor = affordable ? '#f2d899' : '#c99aa4';
+        }
       } else {
         meta = 'LOCKED // UNLOCK PREVIOUS WORKSHOP';
         metaColor = '#817d84';
@@ -1662,7 +1678,7 @@ export default class GarageScene extends Phaser.Scene {
       if (isUnlocked && !isCurrent) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => reloadIntoWorkshop(workshop));
-      } else if (!isUnlocked && isNextUnlock && affordable) {
+      } else if (!isUnlocked && isNextUnlock && affordable && progressionReady) {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => unlockWorkshop(workshop));
       }
@@ -2221,6 +2237,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const tunedPower = Number(tunedBuild.car.powerKW ?? 0);
     const tunedTorque = Number(tunedBuild.car.torqueNm ?? 0);
+    const ratingDisplay = getPowerTorqueDisplay(car, carState, tunedBuild.car);
     const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
     const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
 
@@ -2229,10 +2246,12 @@ export default class GarageScene extends Phaser.Scene {
       : (car.engineModel || '—');
     this.specValueTexts.engine.setText(engineLabel);
     this.specValueTexts.power.setText(
-      Math.round(tunedPower) + ' kW' + (powerGain > 0 ? '  (+' + powerGain + ')' : '')
+      ratingDisplay.powerLabel +
+      (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')
     );
     this.specValueTexts.torque.setText(
-      Math.round(tunedTorque) + ' Nm' + (torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+      ratingDisplay.torqueLabel +
+      (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
     );
     this.specValueTexts.weight.setText(Math.round(tunedBuild.car.vehicleMassKg) + ' kg');
 
@@ -2947,11 +2966,15 @@ export default class GarageScene extends Phaser.Scene {
     const car = cars[this.selectedCarId];
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
-    const enginePreview = applyEngineTuning(car, engines[car.engine], {
+    const previewState = {
       ...state,
       tuning: this.pendingEngineTuning,
-    });
-    const preview = applySecondaryTuning(enginePreview.car, enginePreview.engine, state);
+      engineTuning: this.pendingEngineTuning,
+      stock: false,
+    };
+    const enginePreview = applyEngineTuning(car, engines[car.engine], previewState);
+    const preview = applySecondaryTuning(enginePreview.car, enginePreview.engine, previewState);
+    const previewRating = getPowerTorqueDisplay(car, previewState, preview.car);
 
     Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
       const current = this.currentEngineTuning[partId];
@@ -2971,8 +2994,8 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     this.enginePreviewText?.setText(
-      'POWER  ' + preview.car.powerKW + ' kW\n' +
-      'TORQUE ' + preview.car.torqueNm + ' Nm\n' +
+      'POWER  ' + previewRating.powerLabel + '\n' +
+      'TORQUE ' + previewRating.torqueLabel + '\n' +
       'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar'
     );
 
@@ -4712,16 +4735,19 @@ export default class GarageScene extends Phaser.Scene {
 
     const tunedPower = Number(fullBuild.car.powerKW ?? 0);
     const tunedTorque = Number(fullBuild.car.torqueNm ?? 0);
+    const ratingDisplay = getPowerTorqueDisplay(car, state, fullBuild.car);
     const powerGain = Math.round(tunedPower - Number(car.powerKW || 0));
     const torqueGain = Math.round(tunedTorque - Number(car.torqueNm || 0));
 
     // Match selectCar(): exiting a tuning screen must not silently drop the
     // visible gain brackets even though the underlying tuned stats are correct.
     this.specValueTexts.power.setText(
-      Math.round(tunedPower) + ' kW' + (powerGain > 0 ? '  (+' + powerGain + ')' : '')
+      ratingDisplay.powerLabel +
+      (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')
     );
     this.specValueTexts.torque.setText(
-      Math.round(tunedTorque) + ' Nm' + (torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
+      ratingDisplay.torqueLabel +
+      (!ratingDisplay.estimated && torqueGain > 0 ? '  (+' + torqueGain + ')' : '')
     );
     this.specValueTexts.weight.setText(Math.round(fullBuild.car.vehicleMassKg) + ' kg');
   }
@@ -4991,6 +5017,11 @@ export default class GarageScene extends Phaser.Scene {
 
     const engineBuild = applyEngineTuning(car, engines[car.engine], previewState);
     const preview = applySecondaryTuning(engineBuild.car, engineBuild.engine, previewState);
+    const previewRating = getPowerTorqueDisplay(
+      car,
+      { ...previewState, stock: false },
+      preview.car
+    );
 
     Object.entries(this.secondaryPartRows || {}).forEach(([partId, row]) => {
       const current = this.currentSecondaryTuning[partId];
@@ -5021,7 +5052,7 @@ export default class GarageScene extends Phaser.Scene {
       );
     } else {
       this.secondaryPreviewText?.setText(
-        'POWER    ' + preview.car.powerKW + ' kW\n' +
+        'POWER    ' + previewRating.powerLabel + '\n' +
         'NITROUS  ' + Number(preview.car.nosPower || 0) + ' hp\n' +
         'CAPACITY ' + Number(preview.car.nosCapacitySeconds || 0).toFixed(1) + ' sec\n' +
         'WEIGHT   ' + Math.round(preview.car.vehicleMassKg) + ' kg'
