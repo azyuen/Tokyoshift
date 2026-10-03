@@ -14,6 +14,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import {
   characters,
+  rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
 } from '../data/characters.js?v=20260926-r213';
@@ -28,11 +29,17 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20260929-r285';
+import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r283';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r286';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { getGarageCapacity, getUnlockedWorkshops, getCarsInWorkshop, isWorkshopUnlocked } from '../data/workshopProgression.js?v=20260926-r211';
+import {
+  getGarageCapacity,
+  getUnlockedWorkshops,
+  getCarsInWorkshop,
+  isWorkshopUnlocked,
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js?v=20261004-r319';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -49,7 +56,8 @@ import {
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260929-r271';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20260928-r236';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r319';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
@@ -1026,9 +1034,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', round.difficulty);
-    this.registry.set('selectedOpponentBuildRating', null);
-    this.registry.set('selectedOpponentBuildArchetype', null);
-    this.registry.set('selectedOpponentBuildState', null);
+    this.registry.set('selectedOpponentBuildRating', round.opponentBuildRating || null);
+    this.registry.set('selectedOpponentBuildArchetype', round.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState || null);
     this.registry.set('selectedRaceCategory', 'TUNER_TEAM');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDistanceM', round.distanceM);
@@ -1510,12 +1518,13 @@ export default class MeetScene extends Phaser.Scene {
     const selectedPerformance = selectedCarId
       ? getVehiclePerformance(selectedCarId, selectedState)
       : null;
-    const selectedPower = Math.round(
-      Number(selectedPerformance?.car?.powerKW ?? selectedCar?.powerKW ?? 0)
-    );
-    const selectedTorque = Math.round(
-      Number(selectedPerformance?.car?.torqueNm ?? selectedCar?.torqueNm ?? 0)
-    );
+    const selectedRating = selectedCar
+      ? getPowerTorqueDisplay(
+          selectedCar,
+          selectedState,
+          selectedPerformance?.car || selectedCar
+        )
+      : null;
 
     this.add.text(SIDE.x + 20, SIDE.y + 168, 'YOUR CAR', {
       fontFamily: PIXEL_FONT,
@@ -1527,7 +1536,8 @@ export default class MeetScene extends Phaser.Scene {
       SIDE.x + 20,
       SIDE.y + 194,
       selectedCar
-        ? selectedCar.shortName + '\n' + selectedPower + ' kW  •  ' + selectedTorque + ' Nm'
+        ? selectedCar.shortName + '\n' +
+          selectedRating.powerLabel + '  •  ' + selectedRating.torqueLabel
         : 'NO CAR',
       {
         fontFamily: BODY_FONT,
@@ -1680,6 +1690,7 @@ export default class MeetScene extends Phaser.Scene {
     if (cash < price) return;
 
     const targetTier = Number(location.garageTier || 0);
+    if (!isWorkshopProgressionReady(this.registry, targetTier)) return;
     const selectedCarId = this.registry.get('selectedCarId');
     const ownedCarIds = this.registry.get('ownedCarIds') || [];
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
@@ -2406,34 +2417,111 @@ export default class MeetScene extends Phaser.Scene {
     this.updateModeButtons();
   }
 
+  chooseCompetitionCharacter(rating = 4, exclude = []) {
+    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const blocked = new Set([playerId, ...exclude]);
+    const location = getMeetLocation(this.selectedMeetLocation);
+
+    const regional = getRivalCharacterOrderForRegion(location.district)
+      .filter(id =>
+        !blocked.has(id) &&
+        characters[id] &&
+        Number(characters[id]?.skill?.rating || 0) >= 4
+      );
+    const globalExperts = rivalCharacterOrder.filter(id =>
+      !blocked.has(id) &&
+      characters[id] &&
+      Number(characters[id]?.skill?.rating || 0) >= 4
+    );
+    const pool = regional.length ? regional : globalExperts;
+    if (!pool.length) return this.chooseEventCharacter(5, exclude);
+
+    const target = Phaser.Math.Clamp(Math.round(Number(rating) || 4), 4, 5);
+    const closestDistance = Math.min(...pool.map(id =>
+      Math.abs(Number(characters[id]?.skill?.rating || 4) - target)
+    ));
+    const closest = pool.filter(id =>
+      Math.abs(Number(characters[id]?.skill?.rating || 4) - target) === closestDistance
+    );
+    return Phaser.Utils.Array.GetRandom(closest.length ? closest : pool);
+  }
+
+  getCompetitionRefreshToken() {
+    return Number(this.registry.get('meetRefreshAt') || this.nextRefreshAt || 0);
+  }
+
   generateCompetitionOffer() {
     const location = getMeetLocation(this.selectedMeetLocation);
     const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
     const difficulty = profile.difficulty || 'MED';
 
     const settings = {
-      EASY: { entryFee: 2500, cashPrize: 20000, ratings: [2, 2, 3] },
-      MED: { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] },
-      HARD: { entryFee: 6500, cashPrize: 48000, ratings: [3, 4, 5] },
-      ELITE: { entryFee: 9000, cashPrize: 70000, ratings: [4, 5, 5] },
-    }[difficulty] || { entryFee: 4000, cashPrize: 32000, ratings: [2, 3, 4] };
+      EASY: { entryFee: 2500, cashPrize: 20000 },
+      MED: { entryFee: 4000, cashPrize: 32000 },
+      HARD: { entryFee: 6500, cashPrize: 48000 },
+      ELITE: { entryFee: 9000, cashPrize: 70000 },
+    }[difficulty] || { entryFee: 4000, cashPrize: 32000 };
 
     const owned = this.registry.get('ownedCarIds') || [];
-    const restriction = this.getCompetitionRestriction(difficulty);
-    const preferCouponPrize = Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
+    const playerCarId = this.registry.get('selectedCarId');
+    const playerState = (this.registry.get('carStates') || {})[playerCarId] || {};
+    const playerDifficulty = this.registry.get('playerDifficulty') || 'STANDARD';
+    const refreshToken = this.getCompetitionRefreshToken();
+    const preferCouponPrize =
+      Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
 
     const usedCharacters = [];
     const usedCars = [];
-    const rounds = settings.ratings.map((rating, index) => {
-      const characterId = this.chooseEventCharacter(rating, usedCharacters);
-      usedCharacters.push(characterId);
+    const driverRatings = [4, 4, 5];
 
-      const carId = this.chooseEventCar(rating, {
+    const rounds = driverRatings.map((rating, index) => {
+      const raceType = chooseWeightedRaceType(
+        PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.competitionRolling ?? 0.20
+      );
+
+      // Sample several comparable builds and keep the one closest to the
+      // player's actual performance. Driver skill remains expert/elite.
+      const matches = Array.from({ length: 5 }, (_, attempt) =>
+        createMeetOpponentMatch({
+          playerCarId,
+          playerState,
+          raceType,
+          difficulty,
+          playerDifficulty,
+          bandId: 'comparable',
+          locationId: this.selectedMeetLocation,
+          refreshSeed: [
+            'competition',
+            refreshToken,
+            index,
+            attempt,
+          ].join(':'),
+          slotIndex: index * 10 + attempt,
+          ownedCarIds: owned,
+          usedCarIds: usedCars,
+        })
+      ).filter(Boolean);
+
+      matches.sort((a, b) =>
+        Math.abs(Number(a.ratio || 1) - 1) -
+        Math.abs(Number(b.ratio || 1) - 1)
+      );
+      const match = matches[0] || null;
+
+      const characterId = this.chooseCompetitionCharacter(rating, usedCharacters);
+      if (characterId) usedCharacters.push(characterId);
+
+      const carId = match?.carId || this.chooseEventCar(3, {
         preferUnowned: index === 2,
         exclude: usedCars,
-        restriction,
+        restriction: null,
       });
       usedCars.push(carId);
+
+      const buildState = match?.buildState || createRivalBuildState(cars[carId], 3, {
+        raceType,
+        seed: ['competition-fallback', refreshToken, index, carId].join(':'),
+      });
 
       return {
         characterId,
@@ -2442,9 +2530,12 @@ export default class MeetScene extends Phaser.Scene {
         encounterRating: rating,
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
-        raceType: chooseWeightedRaceType(
-          PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.competitionRolling ?? 0.20
-        ),
+        raceType,
+        opponentBuildState: buildState,
+        opponentBuildRating: Number(match?.buildRating || buildState?.buildRating || 3),
+        opponentBuildArchetype:
+          match?.buildArchetype || buildState?.buildArchetype || 'balancedStreet',
+        performanceRatio: Number(match?.ratio || 1),
       };
     });
 
@@ -2459,48 +2550,40 @@ export default class MeetScene extends Phaser.Scene {
 
     let prizeType = 'CASH';
     let prizeCarId = null;
-
-    if (preferCouponPrize) {
-      const finalRating = settings.ratings[2];
-      const candidate = this.chooseEventCar(finalRating, { preferUnowned: true, restriction });
-      if (candidate && !owned.includes(candidate)) {
-        prizeType = 'COUPON';
-        prizeCarId = candidate;
-        rounds[2].carId = candidate;
-      }
+    const finalCarId = rounds[2]?.carId || null;
+    if (preferCouponPrize && finalCarId && !owned.includes(finalCarId)) {
+      prizeType = 'COUPON';
+      prizeCarId = finalCarId;
     }
 
     return {
-      id: this.selectedMeetLocation + ':' + Date.now(),
+      id: this.selectedMeetLocation + ':' + String(refreshToken || Date.now()),
       locationId: this.selectedMeetLocation,
       difficulty,
       entryFee: settings.entryFee,
       prizeType,
       prizeCash: adjustedCashPrize,
       prizeCarId,
-      restriction,
+      restriction: null,
       rounds,
-      balanceVersion: 'R273',
-      refreshAt: Date.now() + this.getCompetitionOfferLifetimeMs(),
+      balanceVersion: 'R319',
+      meetRefreshAt: refreshToken,
+      refreshAt: refreshToken,
     };
   }
 
   getCompetitionOffer() {
     const offers = { ...(this.registry.get('competitionOffers') || {}) };
     const current = offers[this.selectedMeetLocation];
-    const location = getMeetLocation(this.selectedMeetLocation);
-    const allowed = new Set(getRivalCharacterOrderForRegion(location.district));
-    const wrongRegion = Boolean(
-      current?.rounds?.some(round => !allowed.has(round?.characterId))
-    );
+    const refreshToken = this.getCompetitionRefreshToken();
+    const refreshChanged = Number(current?.meetRefreshAt || 0) !== refreshToken;
     const legacyDirectCarPrize = current?.prizeType === 'CAR';
     const expired =
       !current ||
-      Number(current.refreshAt || 0) <= Date.now() ||
-      wrongRegion ||
+      refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R273';
+      current?.balanceVersion !== 'R319';
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -2568,7 +2651,9 @@ export default class MeetScene extends Phaser.Scene {
       780,
       235,
       'WIN ALL THREE RACES IN A ROW' +
-        (offer.restriction ? '\\nCLASS // ' + offer.restriction.label : '\\nCLASS // OPEN'),
+        (offer.restriction
+          ? '\\nCLASS // ' + offer.restriction.label
+          : '\\nPOWER MATCH // EXPERT + ELITE'),
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -3636,9 +3721,52 @@ export default class MeetScene extends Phaser.Scene {
     };
   }
 
+  getPinkSlipRequestInterval() {
+    const difficulty = String(
+      this.registry.get('playerDifficulty') || 'STANDARD'
+    ).toUpperCase();
+    if (difficulty === 'EASY') return 0;
+    if (difficulty === 'HARD') return 5;
+    return 3;
+  }
+
+  getPinkSlipRequestCooldownRaces() {
+    const interval = this.getPinkSlipRequestInterval();
+    if (interval <= 0) return 0;
+
+    const completedRaces =
+      Math.max(0, Number(this.registry.get('wins') || 0)) +
+      Math.max(0, Number(this.registry.get('losses') || 0));
+    const lastRequestRace = Number(
+      this.registry.get('pinkSlipLastRequestRace') ?? -999
+    );
+    return Math.max(
+      0,
+      interval - Math.max(0, completedRaces - lastRequestRace)
+    );
+  }
+
   challengePinkSlips() {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
+
+    const pinkCooldown = this.getPinkSlipRequestCooldownRaces();
+    if (pinkCooldown > 0) {
+      this.pinkSlipButton?.disableInteractive();
+      this.pinkSlipButtonLabel
+        ?.setText(
+          'PINKS // ' + pinkCooldown + ' RACE' +
+          (pinkCooldown === 1 ? '' : 'S')
+        )
+        .setColor('#72838f');
+      this.pinkResponseText
+        ?.setText(
+          'Race ' + pinkCooldown + ' more time' +
+          (pinkCooldown === 1 ? '' : 's') + ' before asking again.'
+        )
+        .setColor('#8799a5');
+      return;
+    }
 
     const ownedCars = this.registry.get('ownedCarIds') || [];
     const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
@@ -3667,6 +3795,11 @@ export default class MeetScene extends Phaser.Scene {
       difficulty: offer.difficulty || profile.difficulty,
       pinkAcceptanceBase: profile.pinkAcceptanceBase,
     });
+
+    const completedRaces =
+      Math.max(0, Number(this.registry.get('wins') || 0)) +
+      Math.max(0, Number(this.registry.get('losses') || 0));
+    this.registry.set('pinkSlipLastRequestRace', completedRaces);
 
     offer.pinkAccepted = pinkDecision.accepted;
     offer.pinkAcceptanceChance = pinkDecision.chance;
@@ -3703,6 +3836,27 @@ export default class MeetScene extends Phaser.Scene {
         this.pinkSlipButtonLabel.setText('GARAGE FULL').setColor('#72838f');
         this.pinkResponseText
           .setText('Upgrade your Shinonome workshop to add another car.')
+          .setColor('#8799a5');
+        return;
+      }
+
+      const pinkCooldown = this.getPinkSlipRequestCooldownRaces();
+      if (pinkCooldown > 0) {
+        this.pinkSlipButton
+          .setFillStyle(0x11161c, 1)
+          .setStrokeStyle(1, 0x46545e, 1)
+          .disableInteractive();
+        this.pinkSlipButtonLabel
+          .setText(
+            'PINKS // ' + pinkCooldown + ' RACE' +
+            (pinkCooldown === 1 ? '' : 'S')
+          )
+          .setColor('#72838f');
+        this.pinkResponseText
+          .setText(
+            'Ask again after ' + pinkCooldown + ' more race' +
+            (pinkCooldown === 1 ? '.' : 's.')
+          )
           .setColor('#8799a5');
         return;
       }

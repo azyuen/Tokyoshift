@@ -39,7 +39,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r285';
+} from '../state/GameState.js?v=20261004-r319';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -247,15 +247,37 @@ export default class RaceScene extends Phaser.Scene {
       storedMeetOffer &&
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
+    const isCompetitionBuild =
+      this.raceMode === 'COMPETITION' &&
+      storedBuildState &&
+      typeof storedBuildState === 'object';
 
-    // Only ordinary random Meets carry a performance-matched build into the
-    // race. Team ladders, special challengers and competitions stay authored.
-    this.explicitOpponentBuildState = isRandomMeetBuild ? clone(storedBuildState) : null;
-    this.opponentBuildRating = isRandomMeetBuild
-      ? Phaser.Math.Clamp(Number(this.registry.get('selectedOpponentBuildRating') || storedMeetOffer?.opponentBuildRating || storedBuildState?.buildRating || 1), 1, 5)
+    // Random Meets and competitions may carry a pre-matched physical build.
+    // Driver skill stays separate, so expert/elite competition AI does not
+    // silently make the opponent's hardware stronger.
+    this.explicitOpponentBuildState =
+      (isRandomMeetBuild || isCompetitionBuild)
+        ? clone(storedBuildState)
+        : null;
+    this.opponentBuildRating = (isRandomMeetBuild || isCompetitionBuild)
+      ? Phaser.Math.Clamp(
+          Number(
+            this.registry.get('selectedOpponentBuildRating') ||
+            storedMeetOffer?.opponentBuildRating ||
+            storedBuildState?.buildRating ||
+            1
+          ),
+          1,
+          5
+        )
       : this.opponentEncounterRating;
-    this.opponentBuildArchetype = isRandomMeetBuild
-      ? (this.registry.get('selectedOpponentBuildArchetype') || storedMeetOffer?.opponentBuildArchetype || storedBuildState?.buildArchetype || null)
+    this.opponentBuildArchetype = (isRandomMeetBuild || isCompetitionBuild)
+      ? (
+          this.registry.get('selectedOpponentBuildArchetype') ||
+          storedMeetOffer?.opponentBuildArchetype ||
+          storedBuildState?.buildArchetype ||
+          null
+        )
       : null;
     this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getWorldPhase();
     this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
@@ -2990,6 +3012,9 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', state.difficulty);
+    this.registry.set('selectedOpponentBuildRating', round.opponentBuildRating || null);
+    this.registry.set('selectedOpponentBuildArchetype', round.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState || null);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDeal', 'COMPETITION');
