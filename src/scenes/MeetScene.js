@@ -30,8 +30,8 @@ import {
 } from '../data/meetAssets.js?v=20260928-r245';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r283';
-import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r286';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import {
   getGarageCapacity,
@@ -54,7 +54,7 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20260929-r271';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261004-r320';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r319';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';

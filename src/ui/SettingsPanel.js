@@ -707,9 +707,13 @@ export function showSettingsPanel(scene) {
     color: '#718a99',
   }).setOrigin(1, 0).setDepth(183));
 
-  // Capture the live slot before any profile pointer can change. This also
-  // establishes the R319 registry ownership marker used to reject stale saves.
-  saveSessionState(scene.registry);
+  // Capture the live slot before any profile pointer can change. If the active
+  // slot was just deleted, do not snapshot the stale registry back into it.
+  const beforeSnapshotSlots = getProfileSlots();
+  const beforeSnapshotActiveIndex = getActiveProfileIndex();
+  if (beforeSnapshotSlots[beforeSnapshotActiveIndex]?.occupied) {
+    saveSessionState(scene.registry);
+  }
   const slots = getProfileSlots();
   const activeIndex = getActiveProfileIndex();
   const activeSlotOccupied = Boolean(slots[activeIndex]?.occupied);
