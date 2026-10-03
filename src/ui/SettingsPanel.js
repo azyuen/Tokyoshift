@@ -10,7 +10,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20260929-r285';
+} from '../state/GameState.js?v=20261004-r319';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
@@ -26,6 +26,15 @@ function destroyObjects(objects = []) {
   objects.forEach(obj => {
     try { obj?.destroy?.(); } catch (e) {}
   });
+}
+
+function playTimeLabel(value = 0) {
+  const totalMinutes = Math.max(0, Math.floor(Number(value || 0) / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0
+    ? 'PLAY ' + hours + 'H ' + minutes + 'M'
+    : 'PLAY ' + minutes + 'M';
 }
 
 function drawCog(scene, x, y, depth = 44) {
@@ -698,6 +707,9 @@ export function showSettingsPanel(scene) {
     color: '#718a99',
   }).setOrigin(1, 0).setDepth(183));
 
+  // Capture the live slot before any profile pointer can change. This also
+  // establishes the R319 registry ownership marker used to reject stale saves.
+  saveSessionState(scene.registry);
   const slots = getProfileSlots();
   const activeIndex = getActiveProfileIndex();
   const activeSlotOccupied = Boolean(slots[activeIndex]?.occupied);
@@ -965,14 +977,20 @@ export function showSettingsPanel(scene) {
       }
     ).setOrigin(0.5).setDepth(185));
 
+    add(scene.add.text(x, 580, playTimeLabel(slot.playTimeMs), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#789dad',
+    }).setOrigin(0.5).setDepth(185));
+
     if (active) {
-      add(scene.add.text(x, 585, 'ACTIVE', {
+      add(scene.add.text(x, 603, 'ACTIVE', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: '#64e5ff',
       }).setOrigin(0.5).setDepth(185));
     } else {
-      add(scene.add.text(x, 585, 'TAP TO SELECT', {
+      add(scene.add.text(x, 603, 'TAP TO SELECT', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: '#9ac5d9',

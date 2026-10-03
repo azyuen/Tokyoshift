@@ -5,7 +5,7 @@ import {
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20260929-r285';
+} from '../state/GameState.js?v=20261004-r319';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
@@ -18,6 +18,15 @@ function money(value) {
 
 function districtLabel(value = '') {
   return String(value || 'ODAIBA').replaceAll('_', ' ');
+}
+
+function playTimeLabel(value = 0) {
+  const totalMinutes = Math.max(0, Math.floor(Number(value || 0) / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return hours > 0
+    ? 'PLAY TIME  ' + hours + 'H ' + minutes + 'M'
+    : 'PLAY TIME  ' + minutes + 'M';
 }
 
 function lastPlayedLabel(value) {
@@ -296,14 +305,20 @@ export default class ProfileSelectScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(depth + 2);
 
-    this.add.text(x, cardY + 197, lastPlayedLabel(slot.updatedAt), {
+    this.add.text(x, cardY + 192, playTimeLabel(slot.playTimeMs), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#83a9bc',
+    }).setOrigin(0.5).setDepth(depth + 2);
+
+    this.add.text(x, cardY + 218, lastPlayedLabel(slot.updatedAt), {
       fontFamily: BODY_FONT,
       fontSize: '9px',
       color: '#637d8c',
       fontStyle: '600',
     }).setOrigin(0.5).setDepth(depth + 2);
 
-    this.add.text(x, cardY + 228, 'TAP TO SELECT', {
+    this.add.text(x, cardY + 246, 'TAP TO SELECT', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#7da9ba',
