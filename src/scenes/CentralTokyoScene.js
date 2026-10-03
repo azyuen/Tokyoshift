@@ -31,7 +31,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20260929-r285';
+} from '../state/GameState.js?v=20261004-r319';
 import { showTravelMap } from '../ui/TravelMap.js?v=20260929-r286';
 import {
   getGarageDeliveryOptions,
@@ -48,7 +48,9 @@ import {
   getUnlockedWorkshops,
   getWorkshopStorageCapacity,
   getWorkshopUsage,
-} from '../data/workshopProgression.js?v=20260929-r263';
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js?v=20261004-r319';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20260929-r283';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
@@ -817,6 +819,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (cash < price) return;
 
     const targetTier = Number(location.garageTier || 0);
+    if (!isWorkshopProgressionReady(this.registry, targetTier)) return;
     const selectedCarId = this.registry.get('selectedCarId');
     const ownedCarIds = this.registry.get('ownedCarIds') || [];
     const locations = { ...(this.registry.get('carGarageLocations') || {}) };
@@ -1382,7 +1385,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const car = cars[listing.carId];
       const x = CARDS.x + 190 + index * 365;
       const selected = this.autoMarketShowcaseActive && index === this.selectedIndex;
-      const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+      const ratingState = room === 'used'
+      ? { ...(listing.previewState || {}), stock: false }
+      : { stock: true };
+    const ratingDisplay = getPowerTorqueDisplay(car, ratingState, displaySpec);
+    const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
@@ -1540,8 +1547,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       y0 + 84,
       (room === 'new' ? 'STOCK SPEC' : listing.buildLabel) + '\n' +
       car.engineModel + '\n' +
-      Math.round(displaySpec.powerKW) + ' kW  //  ' +
-      Math.round(displaySpec.torqueNm) + ' Nm\n' +
+      ratingDisplay.powerLabel + '  //  ' +
+      ratingDisplay.torqueLabel + '\n' +
       Math.round(displaySpec.vehicleMassKg) + ' kg',
       {
         fontFamily: BODY_FONT,

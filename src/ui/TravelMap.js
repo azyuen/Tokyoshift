@@ -6,7 +6,10 @@ import {
   getWorkshopByLocationId,
   getGarageCapacity,
   isWorkshopUnlocked,
-} from '../data/workshopProgression.js?v=20260926-r211';
+  getWorkshopRegionalWinRequirement,
+  getTotalRegionalWins,
+  isWorkshopProgressionReady,
+} from '../data/workshopProgression.js?v=20261004-r319';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -820,10 +823,21 @@ export function showTravelMap(scene, options = {}) {
         return;
       }
 
-      // The map is the universal workshop-upgrade surface. A locked next-tier
-      // workshop can be bought from anywhere in Tokyo, not only while standing
-      // inside GarageScene.
+      // The map remains the universal upgrade surface, but the next property
+      // only becomes purchasable after the required regional championships.
       if (!unlocked) {
+        if (!isWorkshopProgressionReady(scene.registry, targetTier)) {
+          const wins = getTotalRegionalWins(scene.registry);
+          const requiredWins = getWorkshopRegionalWinRequirement(targetTier);
+          travelButton.disableInteractive()
+            .setFillStyle(0x25151a, 1)
+            .setStrokeStyle(2, 0x8b4f5c, 1);
+          travelLabel
+            .setColor('#c99aa4')
+            .setText('REGIONAL WINS ' + wins + '/' + requiredWins);
+          return;
+        }
+
         if (!onWorkshopUpgrade) {
           travelButton.disableInteractive()
             .setFillStyle(0x111820, 1)
