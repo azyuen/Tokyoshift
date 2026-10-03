@@ -65,7 +65,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R321</div>
+    <div id="build-stamp">R324</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -216,7 +216,7 @@
       if (splash) splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown rejection').slice(0, 500));
     });
 
-    import('./src/main.js?v=20261004-r321').catch((error) => {
+    import('./src/main.js?v=20261004-r324').catch((error) => {
       console.error('[Tokyo SHIFT] main module failed to load', error);
       const label = document.getElementById('loading-label');
       const percent = document.getElementById('loading-percent');

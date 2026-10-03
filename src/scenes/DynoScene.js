@@ -447,10 +447,6 @@ export default class DynoScene extends Phaser.Scene {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
       showGear: true,
-      x: 720,
-      y: 810,
-      scale: 0.52,
-      statusY: 620,
     });
     this.dynoHud.status?.setVisible(false);
   }
@@ -609,8 +605,20 @@ export default class DynoScene extends Phaser.Scene {
     const powerRuns = this.getDynoGraphSlots('power');
     const driveRuns = this.getDynoGraphSlots('drivetrain');
 
-    const makeSection = (titleY, buttonY, mode, title, accent, runs) => {
+    const makeSection = (centerY, mode, title, accent, runs) => {
       const accentText = mode === 'power' ? '#62e8c7' : '#43dfff';
+      const panelW = 410;
+      const panelH = 102;
+      const titleY = centerY - 29;
+      const buttonY = centerY + 18;
+
+      // A padded, dark translucent group card keeps the label readable over
+      // the authored TV/background and visually ties the three graph slots
+      // together without obscuring the rest of Graph Management.
+      add(this.add.rectangle(x, centerY, panelW, panelH, 0x02070d, 0.86)
+        .setStrokeStyle(2, accent, 0.62)
+        .setDepth(30));
+
       add(this.add.text(x, titleY, title, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -629,7 +637,7 @@ export default class DynoScene extends Phaser.Scene {
           bx,
           buttonY,
           108,
-          46,
+          44,
           hasGraph ? 0x102138 : 0x0b1017,
           0.98
         )
@@ -658,23 +666,23 @@ export default class DynoScene extends Phaser.Scene {
       });
     };
 
-    makeSection(72, 112, 'power', 'DYNO RUN', 0x62e8c7, powerRuns);
-    makeSection(170, 210, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+    makeSection(108, 'power', 'DYNO RUN', 0x62e8c7, powerRuns);
+    makeSection(222, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
 
     const selectedRuns = this.getDynoGraphSlots(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
     const deleteEnabled = !!selectedGraph;
-    const deleteBox = add(this.add.rectangle(x, 286, 380, 50, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
+    const deleteBox = add(this.add.rectangle(x, 306, 380, 48, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
       .setStrokeStyle(2, deleteEnabled ? 0x55b8ff : 0x46515a, 1)
       .setInteractive({ useHandCursor: deleteEnabled }).setDepth(31));
-    add(this.add.text(x, 286, 'DELETE SELECTED GRAPH', {
+    add(this.add.text(x, 306, 'DELETE SELECTED GRAPH', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: deleteEnabled ? '#eef8ff' : '#687983'
     }).setOrigin(0.5).setDepth(32));
     if (deleteEnabled) deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
 
-    const back = add(this.add.rectangle(x, 350, 380, 50, 0x102138, 0.98)
+    const back = add(this.add.rectangle(x, 368, 380, 48, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1).setInteractive({ useHandCursor: true }).setDepth(31));
-    add(this.add.text(x, 350, 'RETURN TO DYNO OPTIONS', {
+    add(this.add.text(x, 368, 'RETURN TO DYNO OPTIONS', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
     back.on('pointerdown', () => this.drawIntroUi());
