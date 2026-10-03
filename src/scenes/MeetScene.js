@@ -17,7 +17,7 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20260926-r213';
+} from '../data/characters.js?v=20261004-r322';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -27,12 +27,12 @@ import {
   getMeetLocation,
   getTravelCost,
   WORKSHOP_RETURN_COST,
-} from '../data/meetAssets.js?v=20260928-r245';
+} from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
+import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
