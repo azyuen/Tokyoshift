@@ -3,7 +3,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 import Turbo from '../vehicles/Turbo.js';
 import { cars } from '../data/cars.js?v=20260928-r232';
-import { characters } from '../data/characters.js?v=20260929-r275';
+import { characters } from '../data/characters.js?v=20261004-r322';
 import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
@@ -35,6 +35,7 @@ import {
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260930-r292';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -60,7 +61,8 @@ export default class DynoScene extends Phaser.Scene {
       queued += 1;
     };
 
-    queueImage('dynoWarehouseDayBg', 'assets/Garage/shinonome_dyno_day.png?v=20260930-r289');
+    queueImage('dynoWarehouseDayBg', 'assets/Garage/shinonome_dyno_day.png?v=20261004-r322');
+    queueImage('dynoWarehouseNightBg', 'assets/Garage/shinonome_dyno_night.png?v=20261004-r322');
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
     queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
@@ -241,8 +243,10 @@ export default class DynoScene extends Phaser.Scene {
 
   drawBackground() {
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x05080c).setDepth(-20);
-    if (this.textures.exists('dynoWarehouseDayBg')) {
-      this.add.image(WIDTH / 2, HEIGHT / 2, 'dynoWarehouseDayBg')
+    const dynoPhase = getWorldPhase() === 'day' ? 'day' : 'night';
+    const dynoBgKey = dynoPhase === 'day' ? 'dynoWarehouseDayBg' : 'dynoWarehouseNightBg';
+    if (this.textures.exists(dynoBgKey)) {
+      this.add.image(WIDTH / 2, HEIGHT / 2, dynoBgKey)
         .setDisplaySize(WIDTH, HEIGHT)
         .setDepth(-15);
     }
