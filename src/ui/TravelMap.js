@@ -22,7 +22,7 @@ import {
   getTravelRegionUnlockLabel,
   isTravelLocationUnlocked,
   getTravelLocationUnlockLabel,
-} from '../data/travelRegions.js?v=20260929-r279';
+} from '../data/travelRegions.js?v=20261004-r322';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
