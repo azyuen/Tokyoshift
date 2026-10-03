@@ -63,6 +63,8 @@ export function createDefaultGameState(options = {}) {
     carMagazineSightings: {},
     wins: 0,
     losses: 0,
+    playTimeMs: 0,
+    pinkSlipLastRequestRace: -999,
     cash: 50000,
     playerDifficulty: 'STANDARD',
     devMode: false,
@@ -132,6 +134,10 @@ export function createFreshRunStateFromRegistry(registry) {
     registry?.get?.('playerDifficulty') || state.playerDifficulty
   );
   state.devMode = Boolean(registry?.get?.('devMode'));
+  const timerStartedAt = Number(registry?.get?.('__playTimerStartedAt') || Date.now());
+  state.playTimeMs =
+    Math.max(0, Number(registry?.get?.('playTimeMs') || 0)) +
+    Math.max(0, Date.now() - timerStartedAt);
 
   // Restart Night is a fresh progression run, not a forced replay of onboarding.
   const previousSeen = Array.isArray(registry?.get?.('cutscenesSeen'))
@@ -286,6 +292,7 @@ export function getProfileSlots() {
       carCount: Array.isArray(state?.ownedCarIds) ? state.ownedCarIds.length : 0,
       wins: Number(state?.wins || 0),
       losses: Number(state?.losses || 0),
+      playTimeMs: Math.max(0, Number(state?.playTimeMs || 0)),
       selectedCarId: state?.selectedCarId || null,
       district: String(state?.district || 'ODAIBA'),
       garageTier: Math.max(0, Number(state?.garageTier || 0)),
@@ -725,6 +732,10 @@ export function normaliseState(input = {}) {
         : {},
     wins: Number.isFinite(input.wins) ? input.wins : base.wins,
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
+    playTimeMs: Math.max(0, Number(input.playTimeMs || 0)),
+    pinkSlipLastRequestRace: Number.isFinite(Number(input.pinkSlipLastRequestRace))
+      ? Math.floor(Number(input.pinkSlipLastRequestRace))
+      : -999,
     cash: normalisedCash,
     competitionWins: Math.max(0, Math.floor(Number(input.competitionWins || 0))),
     easyCouponLastMilestone: Number.isFinite(input.easyCouponLastMilestone)
@@ -835,10 +846,42 @@ export function normaliseState(input = {}) {
 export function applyStateToRegistry(registry, input) {
   const state = normaliseState(input);
   Object.entries(state).forEach(([key, value]) => registry.set(key, value));
+  registry.set('__profileSlotIndex', getActiveProfileIndex());
+  registry.set('__playTimerStartedAt', Date.now());
   return state;
 }
 
+function registryOwnsActiveProfile(registry) {
+  if (!registry?.get || !registry?.set) return false;
+  const activeIndex = getActiveProfileIndex();
+  const rawOwner = registry.get('__profileSlotIndex');
+
+  // Old sessions have no owner marker until the first R319 state application.
+  // It is safe to adopt the currently active slot exactly once.
+  if (rawOwner == null) {
+    registry.set('__profileSlotIndex', activeIndex);
+    return true;
+  }
+
+  const owner = Number(rawOwner);
+  if (owner === activeIndex) return true;
+
+  console.warn(
+    '[Tokyo SHIFT] blocked stale profile autosave',
+    { registrySlot: owner, activeSlot: activeIndex }
+  );
+  return false;
+}
+
 export function snapshotRegistry(registry) {
+  const now = Date.now();
+  const timerStartedAt = Number(registry.get('__playTimerStartedAt') || now);
+  const playTimeMs =
+    Math.max(0, Number(registry.get('playTimeMs') || 0)) +
+    Math.max(0, now - timerStartedAt);
+  registry.set('playTimeMs', playTimeMs);
+  registry.set('__playTimerStartedAt', now);
+
   return normaliseState({
     version: 9,
     firstName: registry.get('firstName') || '',
@@ -852,6 +895,8 @@ export function snapshotRegistry(registry) {
     carMagazineSightings: registry.get('carMagazineSightings') || {},
     wins: registry.get('wins') ?? 0,
     losses: registry.get('losses') ?? 0,
+    playTimeMs,
+    pinkSlipLastRequestRace: Number(registry.get('pinkSlipLastRequestRace') ?? -999),
     cash: registry.get('cash') ?? 50000,
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
@@ -923,12 +968,14 @@ function writeActiveSlot(update) {
 }
 
 export function saveSessionState(registry) {
+  if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
   writeActiveSlot({ session: state });
   return state;
 }
 
 export function saveManualState(registry) {
+  if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),
     savedAt: new Date().toISOString(),
@@ -938,6 +985,7 @@ export function saveManualState(registry) {
 }
 
 export function saveIdentityState(registry) {
+  if (!registryOwnsActiveProfile(registry)) return null;
   const devName = (
     String(registry.get('firstName') || '').trim().toLowerCase() +
     String(registry.get('lastName') || '').trim().toLowerCase()

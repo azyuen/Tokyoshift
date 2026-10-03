@@ -277,3 +277,39 @@ export function getWorkshopUsage(
 ) {
   return getCarsInWorkshop(ownedCarIds, carGarageLocations, workshopLocationId).length;
 }
+
+
+export const WORKSHOP_REGIONAL_WIN_REQUIREMENTS = Object.freeze([0, 2, 5]);
+
+function progressionSourceValue(source, key, fallback = null) {
+  if (source && typeof source.get === 'function') {
+    const value = source.get(key);
+    return value == null ? fallback : value;
+  }
+  const value = source?.[key];
+  return value == null ? fallback : value;
+}
+
+export function getTotalRegionalWins(source) {
+  const wins = progressionSourceValue(source, 'regionWins', {}) || {};
+  return Object.values(wins).reduce(
+    (total, value) => total + Math.max(0, Math.floor(Number(value || 0))),
+    0
+  );
+}
+
+export function getWorkshopRegionalWinRequirement(tier = 0) {
+  const safeTier = clampWorkshopTier(tier);
+  return Number(WORKSHOP_REGIONAL_WIN_REQUIREMENTS[safeTier] || 0);
+}
+
+export function isWorkshopProgressionReady(source, tier = 0) {
+  return getTotalRegionalWins(source) >= getWorkshopRegionalWinRequirement(tier);
+}
+
+export function getWorkshopProgressionLabel(source, tier = 0) {
+  const required = getWorkshopRegionalWinRequirement(tier);
+  const current = getTotalRegionalWins(source);
+  if (required <= 0 || current >= required) return 'REGIONAL WIN REQUIREMENT MET';
+  return current + '/' + required + ' REGIONAL WINS';
+}
