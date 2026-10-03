@@ -1555,6 +1555,14 @@ export const REGION_TEAM_CHARACTER_IDS = {
     'masatoKurogane',
     'tetsuNakahara',
   ],
+  SHINJUKU: [
+    'daigoArakawa',
+    'emiSaionji',
+    'kaedeTachibana',
+    'renKurosawa',
+    'rinAmamiya',
+    'soraKanzaki',
+  ],
   DAIKOKU: [
     'shoNakamura',
     'miloArai',
