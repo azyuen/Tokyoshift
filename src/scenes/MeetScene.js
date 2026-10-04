@@ -415,6 +415,7 @@ export default class MeetScene extends Phaser.Scene {
     this.buildSidebar();
     this.buildBottomArea();
     this.buildDevControls();
+    this.buildCrewBattleButton();
     this.rollOffers({ resetTimer: false });
 
     const activeChallenger = this.registry.get('specialChallenger');
@@ -440,15 +441,23 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     if (!specialChallengerShown) {
-      const centralInviteShown = this.maybeShowRemoteCentralTokyoInvitation();
-      if (!centralInviteShown) {
-        const revealShown = this.maybeShowTunerChallengeReveal();
-        if (!revealShown) {
-          this.time.delayedCall(180, () => {
-            if (!this.maybeShowRegionalCrewIntroduction()) {
-              this.maybeShowTunerTeamChallenge();
-            }
-          });
+      const pendingRecruitShown = this.maybeShowPendingCrewRecruitOffer();
+      const activeRecruitShown = pendingRecruitShown
+        ? false
+        : this.maybeShowActiveCrewRecruitChallenge();
+
+      if (!pendingRecruitShown && !activeRecruitShown) {
+        const centralInviteShown = this.maybeShowRemoteCentralTokyoInvitation();
+        if (!centralInviteShown) {
+          const revealShown = this.maybeShowTunerChallengeReveal();
+          if (!revealShown) {
+            this.time.delayedCall(180, () => {
+              if (!this.maybeShowRegionalCrewIntroduction()) {
+                const tunerShown = this.maybeShowTunerTeamChallenge();
+                if (!tunerShown) this.maybeRollCrewRecruitChallenge();
+              }
+            });
+          }
         }
       }
     }
