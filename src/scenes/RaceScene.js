@@ -2595,7 +2595,9 @@ export default class RaceScene extends Phaser.Scene {
       ? 'RETURN TO CENTRAL TOKYO  >'
       : returnScene === 'GarageScene'
         ? 'RETURN TO WORKSHOP  >'
-        : 'RETURN TO MEET  >';
+        : returnScene === 'CrewScene'
+          ? 'RETURN TO CREW SPACE  >'
+          : 'RETURN TO MEET  >';
     const actionLabel = settlement?.gameOver
       ? 'RUN OVER // OPTIONS  >'
       : settlement?.crewBattleContinues
