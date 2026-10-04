@@ -108,13 +108,13 @@ export const LOCATION_ENCOUNTERS = {
 
   // Shinjuku // serious late-night city crews.
   shinjukuSouthExit: {
-    difficulty: 'HARD',
+    difficulty: 'ELITE',
     ratingSlots: [4, 4, 4],
     stakeRange: [8500, 11000],
     likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
   },
   shinjukuKabukicho: {
-    difficulty: 'HARD',
+    difficulty: 'ELITE',
     ratingSlots: [4, 4, 5],
     stakeRange: [9000, 12000],
     likelyCars: ['evo3', 'wrx22b', 'r32', 'fc3s'],
