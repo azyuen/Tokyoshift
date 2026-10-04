@@ -453,8 +453,8 @@ export default class MeetScene extends Phaser.Scene {
           if (!revealShown) {
             this.time.delayedCall(180, () => {
               if (!this.maybeShowRegionalCrewIntroduction()) {
-                const tunerShown = this.maybeShowTunerTeamChallenge();
-                if (!tunerShown) this.maybeRollCrewRecruitChallenge();
+                const recruitShown = this.maybeRollCrewRecruitChallenge();
+                if (!recruitShown) this.maybeShowTunerTeamChallenge();
               }
             });
           }
@@ -573,13 +573,297 @@ export default class MeetScene extends Phaser.Scene {
         REGION_SENDOFF: copy.sendoff,
       },
       onComplete: () => {
-        this.time.delayedCall(120, () =>
-          this.maybeShowTunerTeamChallenge({ countReofferVisit: countChallengeVisit })
-        );
+        this.time.delayedCall(120, () => {
+          const recruitShown = this.maybeRollCrewRecruitChallenge();
+          if (!recruitShown) {
+            this.maybeShowTunerTeamChallenge({ countReofferVisit: countChallengeVisit });
+          }
+        });
       },
     });
 
     return Boolean(result.played);
+  }
+
+  maybeShowPendingCrewRecruitOffer() {
+    const pending = this.registry.get('crewPendingRecruit');
+    if (!pending?.characterId || !pending?.regionId) return false;
+
+    const character = characters[pending.characterId];
+    const car = cars[pending.baseCarId];
+    if (!character || !car || getCrewMemberForRegion(this.registry, pending.regionId)) {
+      declinePendingCrewRecruit(this.registry);
+      saveSessionState(this.registry);
+      return false;
+    }
+
+    const depth = 190;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.84)
+      .setDepth(depth).setScrollFactor(0).setInteractive());
+
+    add(this.add.rectangle(780, 420, 810, 390, 0x09131d, 0.998)
+      .setStrokeStyle(3, 0x62e8c7, 0.98)
+      .setDepth(depth + 1).setScrollFactor(0));
+
+    add(this.add.text(780, 282, 'CREW OFFER // ' + String(pending.regionId).toUpperCase(), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#91ffe7',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(
+      780,
+      365,
+      String(character.name || pending.characterId).toUpperCase() +
+        ' is impressed.\nRecruit them and their stock ' +
+        String(car.shortName || car.name).toUpperCase() +
+        ' becomes a loan car at Warehouse HQ.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#d7e5ec',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 8,
+        wordWrap: { width: 660 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const accept = add(this.add.rectangle(650, 515, 270, 54, 0x10352d, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(650, 515, 'ADD TO CREW', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#edfff9'
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const decline = add(this.add.rectangle(910, 515, 270, 54, 0x261922, 1)
+      .setStrokeStyle(1, 0xff7cac, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(910, 515, 'DECLINE // WAIT', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffc9db'
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    accept.on('pointerdown', () => {
+      const recruited = acceptCrewMember(this.registry, pending);
+      if (!recruited) declinePendingCrewRecruit(this.registry);
+      saveSessionState(this.registry);
+      close();
+    });
+
+    decline.on('pointerdown', () => {
+      declinePendingCrewRecruit(this.registry);
+      saveSessionState(this.registry);
+      close();
+    });
+
+    return true;
+  }
+
+  maybeShowActiveCrewRecruitChallenge() {
+    const challenge = this.registry.get('crewRecruitChallenge');
+    if (!challenge?.active) return false;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (String(challenge.regionId || '').toUpperCase() !== regionId) {
+      clearCrewRecruitChallenge(this.registry);
+      saveSessionState(this.registry);
+      return false;
+    }
+
+    const character = characters[challenge.characterId];
+    const opponentCar = cars[challenge.baseCarId];
+    if (!character || !opponentCar) {
+      clearCrewRecruitChallenge(this.registry);
+      saveSessionState(this.registry);
+      return false;
+    }
+
+    const stockCarIds = getStockCrewChallengeCarIds(this.registry);
+    let selectedCarId = stockCarIds.includes(this.registry.get('selectedCarId'))
+      ? this.registry.get('selectedCarId')
+      : stockCarIds[0] || null;
+
+    const depth = 185;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
+      .setDepth(depth).setScrollFactor(0).setInteractive());
+
+    add(this.add.rectangle(780, 420, 880, 500, 0x09131d, 0.998)
+      .setStrokeStyle(3, 0x69ecff, 0.98)
+      .setDepth(depth + 1).setScrollFactor(0));
+
+    add(this.add.text(780, 226, 'CREW RECRUITMENT CHALLENGE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#dffbff',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(
+      780,
+      298,
+      String(character.name || challenge.characterId).toUpperCase() +
+        ' // ' + String(opponentCar.shortName || opponentCar.name).toUpperCase() +
+        '\nSTOCK vs STOCK // 1/4 MILE // NO STAKES',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#bcd0dc',
+        fontStyle: '700',
+        align: 'center',
+        lineSpacing: 6,
+      }
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const carLabel = add(this.add.text(
+      780,
+      370,
+      selectedCarId
+        ? 'YOUR STOCK CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
+        : 'NO STOCK CAR AVAILABLE // BUY OR WIN A STOCK CAR FIRST',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: selectedCarId ? '#91ffe7' : '#ff9fb9',
+      }
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    if (stockCarIds.length > 1) {
+      const prev = add(this.add.text(500, 370, '<', {
+        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
+        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
+      const next = add(this.add.text(1060, 370, '>', {
+        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
+        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
+      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
+
+      const cycle = direction => {
+        const current = Math.max(0, stockCarIds.indexOf(selectedCarId));
+        const index = (current + direction + stockCarIds.length) % stockCarIds.length;
+        selectedCarId = stockCarIds[index];
+        carLabel.setText(
+          'YOUR STOCK CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
+        ).setColor('#91ffe7');
+      };
+
+      prev.on('pointerdown', () => cycle(-1));
+      next.on('pointerdown', () => cycle(1));
+    }
+
+    const accept = add(this.add.rectangle(
+      650, 535, 285, 54,
+      selectedCarId ? 0x10352d : 0x181a1d,
+      1
+    ).setStrokeStyle(2, selectedCarId ? 0x62e8c7 : 0x50575c, 1)
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(650, 535, selectedCarId ? 'ACCEPT RACE' : 'NEED STOCK CAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: selectedCarId ? '#edfff9' : '#727c82',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    if (selectedCarId) {
+      accept.setInteractive({ useHandCursor: true });
+      accept.on('pointerdown', () => {
+        close();
+        this.startCrewRecruitmentRace(challenge, selectedCarId);
+      });
+    }
+
+    const decline = add(this.add.rectangle(930, 535, 245, 54, 0x261922, 1)
+      .setStrokeStyle(1, 0xff7cac, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2).setScrollFactor(0));
+    add(this.add.text(930, 535, 'DECLINE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffc9db'
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    decline.on('pointerdown', () => {
+      clearCrewRecruitChallenge(this.registry);
+      saveSessionState(this.registry);
+      close();
+    });
+
+    return true;
+  }
+
+  maybeRollCrewRecruitChallenge() {
+    if (
+      !this.hasCar ||
+      this.specialChallengeActive ||
+      this.competitionPopup?.active ||
+      !isCrewUnlocked(this.registry) ||
+      isCrewComplete(this.registry)
+    ) return false;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (!regionId || getCrewMemberForRegion(this.registry, regionId)) return false;
+
+    const existing = this.registry.get('crewRecruitChallenge');
+    if (existing?.active) return this.maybeShowActiveCrewRecruitChallenge();
+
+    const challenge = rollCrewRecruitChallenge(
+      this.registry,
+      regionId,
+      this.selectedMeetLocation
+    );
+    saveSessionState(this.registry);
+    return challenge ? this.maybeShowActiveCrewRecruitChallenge() : false;
+  }
+
+  startCrewRecruitmentRace(challenge, playerCarId) {
+    if (!challenge?.characterId || !challenge?.baseCarId || !cars[playerCarId]) return;
+
+    const character = characters[challenge.characterId];
+    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
+
+    this.registry.set('selectedCarId', playerCarId);
+    this.registry.set(
+      'selectedRacePlayerCharacterId',
+      this.registry.get('playerCharacterId') || 'renMizuno'
+    );
+    this.registry.set('selectedOpponentCarId', challenge.baseCarId);
+    this.registry.set('selectedOpponentPaintColor', DEFAULT_PAINT_COLOR);
+    this.registry.set('selectedOpponentCharacterId', challenge.characterId);
+    this.registry.set('selectedOpponentEncounterRating', rating);
+    this.registry.set(
+      'selectedOpponentEncounterAi',
+      character?.skill?.ai || getEncounterAi(rating)
+    );
+    this.registry.set(
+      'selectedOpponentDifficulty',
+      rating >= 5 ? 'ELITE' : rating >= 4 ? 'EXPERT' : 'SKILLED'
+    );
+    this.registry.set('selectedOpponentBuildRating', 1);
+    this.registry.set('selectedOpponentBuildArchetype', 'stock');
+    this.registry.set(
+      'selectedOpponentBuildState',
+      createStockOpponentState(challenge.baseCarId)
+    );
+    this.registry.set('selectedRaceCategory', 'CREW_RECRUIT');
+    this.registry.set('selectedRaceType', 'Standing Start');
+    this.registry.set('selectedRaceDistanceM', 402.336);
+    this.registry.set('selectedRaceDeal', 'CREW_RECRUIT');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'MeetScene');
+    this.registry.set('raceDistrict', String(challenge.regionId).toUpperCase());
+    this.registry.set('raceLocationLabel', 'CREW RECRUITMENT');
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
   }
 
   maybeShowTunerChallengeReveal() {
