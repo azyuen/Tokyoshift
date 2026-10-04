@@ -3309,6 +3309,169 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
 
+    if (this.raceMode === 'CREW_RECRUIT') {
+      const challenge = this.registry.get('crewRecruitChallenge');
+      let recruitOffered = false;
+
+      if (playerWon && challenge?.active) {
+        recruitOffered = Math.random() < CREW_RECRUIT_OFFER_CHANCE;
+        if (recruitOffered) setPendingCrewRecruit(this.registry, challenge);
+        else clearCrewRecruitChallenge(this.registry);
+      } else {
+        clearCrewRecruitChallenge(this.registry);
+      }
+
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+
+      this.raceSettlement = {
+        playerWon,
+        cashDelta: 0,
+        cash: oldCash,
+        pinkMessage: '',
+        gameOver: false,
+        crewRecruit: true,
+        crewRecruitWon: Boolean(playerWon),
+        crewRecruitOffered: recruitOffered,
+        crewRecruitCharacterId: challenge?.characterId || this.opponentCharacterId,
+        crewRecruitRegionId: String(challenge?.regionId || this.raceDistrict || '').toUpperCase(),
+      };
+      return this.raceSettlement;
+    }
+
+    if (this.raceMode === 'CREW_BATTLE') {
+      const state = this.registry.get('crewBattleState');
+      if (!state?.active) {
+        this.registry.set('selectedRacePlayerCharacterId', null);
+        saveSessionState(this.registry);
+        this.raceSettlement = {
+          playerWon,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          crewBattle: true,
+          crewBattleFailed: true,
+          crewBattleContinues: false,
+          crewBattleCompleted: false,
+          regionId: String(this.raceDistrict || '').toUpperCase(),
+          playerScore: 0,
+          opponentScore: 0,
+        };
+        return this.raceSettlement;
+      }
+
+      const regionId = String(state.regionId || this.raceDistrict || '').toUpperCase();
+      const roundIndex = Math.max(0, Math.min(5, Number(state.roundIndex || 0)));
+      const roundNumber = roundIndex + 1;
+      const playerScore = Math.max(0, Number(state.playerWins || 0)) + (playerWon ? 1 : 0);
+      const opponentScore = Math.max(0, Number(state.opponentWins || 0)) + (playerWon ? 0 : 1);
+      const nextRoundIndex = roundIndex + 1;
+      const remaining = Math.max(0, 6 - nextRoundIndex);
+      const playerCanStillReachFour = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
+      const battleWon = playerScore >= CREW_BATTLE_WINS_REQUIRED;
+      const battleLost =
+        !battleWon &&
+        (
+          !playerCanStillReachFour ||
+          nextRoundIndex >= 6
+        );
+
+      if (!battleWon && !battleLost) {
+        const nextState = {
+          ...state,
+          roundIndex: nextRoundIndex,
+          playerWins: playerScore,
+          opponentWins: opponentScore,
+        };
+        this.registry.set('crewBattleState', nextState);
+        saveSessionState(this.registry);
+
+        this.raceSettlement = {
+          playerWon,
+          cashDelta: 0,
+          cash: oldCash,
+          pinkMessage: '',
+          gameOver: false,
+          crewBattle: true,
+          crewBattleFailed: false,
+          crewBattleContinues: true,
+          crewBattleCompleted: false,
+          regionId,
+          roundNumber,
+          nextRoundNumber: nextRoundIndex + 1,
+          playerScore,
+          opponentScore,
+        };
+        return this.raceSettlement;
+      }
+
+      const previousProgress = (this.registry.get('crewBattleProgress') || {})[regionId] || {};
+      const firstClear = battleWon && !previousProgress.completed;
+      const reward = getRegionalCrewBattleReward(regionId);
+      let cashReward = 0;
+      let couponAwards = 0;
+      let couponCount = 0;
+      let couponRequired = 0;
+      let newCash = oldCash;
+
+      if (battleWon) {
+        markCrewBattleCompleted(this.registry, regionId, playerScore);
+
+        if (firstClear) {
+          cashReward = Math.max(0, Number(reward.cash || 0));
+          newCash = oldCash + cashReward;
+          this.registry.set('cash', newCash);
+
+          if (reward.couponCarId && cars[reward.couponCarId]) {
+            couponAwards = CREW_BATTLE_COUPONS;
+            const coupons = { ...(this.registry.get('carCoupons') || {}) };
+            couponCount =
+              Math.max(0, Number(coupons[reward.couponCarId] || 0)) +
+              couponAwards;
+            coupons[reward.couponCarId] = couponCount;
+            couponRequired = getCarCouponRequirement(reward.couponCarId);
+            this.registry.set('carCoupons', coupons);
+          }
+        }
+      }
+
+      const tokyoInvite = battleWon && areAllCrewBattlesComplete(this.registry);
+      const restoreCarId =
+        state.originalSelectedCarId && cars[state.originalSelectedCarId]
+          ? state.originalSelectedCarId
+          : (this.registry.get('ownedCarIds') || []).find(id => cars[id] && !cars[id].crewLoan) || null;
+
+      this.registry.set('selectedCarId', restoreCarId);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      this.registry.set('crewBattleState', null);
+      saveSessionState(this.registry);
+
+      this.raceSettlement = {
+        playerWon,
+        cashDelta: cashReward,
+        cash: newCash,
+        pinkMessage: '',
+        gameOver: false,
+        crewBattle: true,
+        crewBattleFailed: battleLost,
+        crewBattleContinues: false,
+        crewBattleCompleted: battleWon,
+        crewBattleFirstClear: firstClear,
+        regionId,
+        roundNumber,
+        playerScore,
+        opponentScore,
+        cashReward,
+        couponAwards,
+        couponCarId: reward.couponCarId || null,
+        couponCount,
+        couponRequired,
+        tokyoChampionshipInvited: tokyoInvite,
+      };
+      return this.raceSettlement;
+    }
+
     if (this.raceMode === 'TUNER_TEAM') {
       const regionId = String(
         this.registry.get('raceDistrict') || this.registry.get('district') || ''
