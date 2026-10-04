@@ -1,7 +1,7 @@
 import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
-import Turbo from '../vehicles/Turbo.js';
+
 import { cars } from '../data/cars.js?v=20260928-r232';
 import { characters } from '../data/characters.js?v=20261004-r322';
 import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
@@ -15,7 +15,7 @@ import {
   getDynoPoint,
   analyseDynoRun,
 } from '../data/dyno.js?v=20261004-r325';
-import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r319';
+import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
 import {
   STAGE3_CALIBRATION_OPTIONS,
   normaliseStage3Calibration,
@@ -645,9 +645,9 @@ export default class DynoScene extends Phaser.Scene {
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
     const panelX = 1305;
-    const panelY = 407;
+    const panelY = 435;
     const panelW = 450;
-    const panelH = 650;
+    const panelH = 710;
     const eligibility = getStage3CalibrationEligibility(this.carState || {});
     const tune = normaliseStage3Calibration(this.stage3PendingTune || {});
     const powerRuns = this.getDynoGraphSlots('power');

@@ -67,13 +67,13 @@ import {
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261004-r319';
-import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20261004-r319';
+} from '../data/dyno.js?v=20261004-r325';
 import {
   PAINT_PRESETS,
   getCarPaintColor,

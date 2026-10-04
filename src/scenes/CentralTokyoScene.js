@@ -50,7 +50,7 @@ import {
   getWorkshopUsage,
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261004-r319';
-import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r319';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
