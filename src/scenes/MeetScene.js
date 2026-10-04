@@ -2351,7 +2351,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildBottomArea() {
-    this.rivalsTitleText = this.add.text(CARDS.x + 18, CARDS.y + 10, 'RIVALS', {
+    this.rivalsTitleText = this.add.text(CARDS.x + 18, CARDS.y + 6, 'RIVALS', {
       fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
     }).setDepth(33);
   }
@@ -3776,9 +3776,7 @@ export default class MeetScene extends Phaser.Scene {
     this.drawCards();
     this.updateModeButtons();
     this.updateGpsPanel();
-    this.rivalsTitleText?.setText(
-      'RIVALS // ' + location.district + ' // ' + location.label + ' // ' + location.difficulty
-    );
+    this.rivalsTitleText?.setText('RIVALS');
 
     if (!this.hasCar) {
       this.applyNoCarMeetState();
@@ -3887,11 +3885,7 @@ export default class MeetScene extends Phaser.Scene {
       item.label.setColor('#53626c');
     });
 
-    this.rivalsTitleText?.setText(
-      this.registry.get('meetStranded')
-        ? 'RIVALS // CAR LOST // TAXI HOME TO SWITCH CARS'
-        : 'RIVALS // NO CAR // EVERYONE IS OUT OF REACH'
-    );
+    this.rivalsTitleText?.setText('RIVALS');
     this.updateWorkshopButton();
   }
 
@@ -4096,7 +4090,7 @@ export default class MeetScene extends Phaser.Scene {
 
   drawCards() {
     const xPositions = [215, 593, 971];
-    const cardY = 748;
+    const cardY = 742;
     const cardH = 132;
     const pinkLossCelebration = this.offers.some(
       offer => offer?.pinkSlipResult === 'PLAYER_LOSS'
@@ -4709,9 +4703,7 @@ export default class MeetScene extends Phaser.Scene {
         const note = this.add.text(
           STAGE.x + STAGE.w - 24,
           STAGE.y + 32,
-          challenger
-            ? '15 MINUTES LATER // SOMEONE PULLED IN'
-            : '15 MINUTES LATER // NEW RACERS',
+          'SOMETIME LATER, A DIFFERENT SET OF RIVALS ARRIVE',
           {
             fontFamily: PIXEL_FONT,
             fontSize: '8px',
