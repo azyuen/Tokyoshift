@@ -169,6 +169,7 @@ const MARKET_BUILDS = {
 // New dealership entries use the matching drivetrain's street build recipe.
 Object.assign(MARKET_BUILDS, {
   ef: MARKET_BUILDS.ek9,
+  s2000: MARKET_BUILDS.ek9,
   rx7fd: MARKET_BUILDS.fc3s,
   rx8: MARKET_BUILDS.fc3s,
   gr86: MARKET_BUILDS.ae86,
@@ -187,6 +188,7 @@ export const AUTO_MARKET_LISTINGS = [
   { carId: 'ae86', price: 1150000, buildLabel: 'LIGHT STREET BUILD' },
   { carId: 'ef', price: 1400000, buildLabel: 'VTEC STREET BUILD' },
   { carId: 'ek9', price: 1750000, buildLabel: 'STAGE 1 STREET BUILD' },
+  { carId: 's2000', price: 4300000, buildLabel: 'VTEC ROADSTER BUILD' },
   { carId: 'fc3s', price: 2350000, buildLabel: 'TURBO STREET BUILD' },
   { carId: 'rx8', price: 2600000, buildLabel: 'ROTARY STREET BUILD' },
   { carId: 'evo3', price: 3450000, buildLabel: 'AWD STREET BUILD' },
