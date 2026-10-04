@@ -49,6 +49,7 @@ import {
   isArkonDen,
 } from '../data/centralTokyo.js?v=20260929-r279';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r342';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -297,6 +298,7 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
+    this.buildCrewSpaceHotspot();
     this.buildMagazineProp();
 
     this.time.addEvent({
@@ -526,6 +528,61 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth - 0.08);
 
     return sprite;
+  }
+
+  buildCrewSpaceHotspot() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (
+      activeWorkshop.id !== 'shinonomeWarehouseStrip' ||
+      !isCrewUnlocked(this.registry)
+    ) return;
+
+    // The Crew Meeting Space is represented as a translucent lit zone inside
+    // the Warehouse artwork rather than another conventional UI button.
+    const x = STAGE.x + STAGE.w - 150;
+    const y = STAGE.y + 150;
+    const w = 250;
+    const h = 150;
+
+    const glow = this.add.rectangle(x, y, w, h, 0x43dfff, 0.055)
+      .setStrokeStyle(2, 0x43dfff, 0.55)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(26);
+
+    const label = this.add.text(x, y + h / 2 - 18, 'CREW SPACE  >', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#dffbff',
+      backgroundColor: '#06121dcc',
+      padding: { x: 10, y: 6 },
+    }).setOrigin(0.5).setDepth(27);
+
+    this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.55, to: 0.92 },
+      duration: 1350,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    glow.on('pointerover', () => {
+      glow.setFillStyle(0x43dfff, 0.16).setStrokeStyle(3, 0x86eeff, 0.95);
+      label.setColor('#ffffff');
+    });
+    glow.on('pointerout', () => {
+      glow.setFillStyle(0x43dfff, 0.055).setStrokeStyle(2, 0x43dfff, 0.55);
+      label.setColor('#dffbff');
+    });
+    glow.on('pointerdown', () => {
+      const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
+        ? this.selectedCarId
+        : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
+      this.registry.set('crewPreviousCarId', previous);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      saveSessionState(this.registry);
+      this.scene.start('CrewScene');
+    });
   }
 
   buildMagazineProp() {
