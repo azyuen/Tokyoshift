@@ -14,6 +14,8 @@ export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
 
+const REMOVED_CAR_IDS = new Set(['gr86']);
+
 export const STARTER_CAR_IDS = ['ae86', 'ef'];
 
 // Existing profiles may legitimately have started with the old EK9 option.
@@ -610,9 +612,13 @@ export function normaliseState(input = {}) {
   const normalisedDistrict = districtAliases[input.district]
     || input.district
     || (String(normalisedLocation).startsWith('odaiba') ? 'ODAIBA' : base.district);
-  const owned = Array.isArray(input.ownedCarIds)
-    ? [...new Set(input.ownedCarIds)]
-    : [...base.ownedCarIds];
+  const owned = (
+    Array.isArray(input.ownedCarIds)
+      ? [...new Set(input.ownedCarIds)]
+      : [...base.ownedCarIds]
+  ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
+
+  if (!owned.length) owned.push(base.starterCarId);
 
   const starterCarId = base.starterCarId;
 
