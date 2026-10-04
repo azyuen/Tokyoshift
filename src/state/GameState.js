@@ -4,7 +4,7 @@ import {
   getWorkshopByLocationId,
   inferWorkshopTier,
   normaliseCarGarageLocations,
-} from '../data/workshopProgression.js?v=20260922-r86';
+} from '../data/workshopProgression.js?v=20261005-r344';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 
