@@ -30,7 +30,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r346';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r347';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
@@ -76,8 +76,8 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r346';
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261005-r346';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r347';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261005-r347';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
@@ -98,8 +98,8 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r346';
-import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r346';
+} from '../data/crewSystem.js?v=20261005-r347';
+import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r347';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
