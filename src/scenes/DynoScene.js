@@ -17,11 +17,16 @@ import {
 import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
 import {
   STAGE3_CALIBRATION_OPTIONS,
+  STAGE3_PRESET_SAVE_COST,
+  MAX_STAGE3_PRESETS,
   normaliseStage3Calibration,
   getStage3CalibrationEligibility,
   getStage3CalibrationOption,
   describeStage3Calibration,
-} from '../data/stage3Calibration.js?v=20261004-r325';
+  getStage3Presets,
+  findMatchingStage3Preset,
+  normaliseStage3PresetName,
+} from '../data/stage3Calibration.js?v=20261004-r327';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -181,6 +186,7 @@ export default class DynoScene extends Phaser.Scene {
     this.stage3PendingTune = null;
     this.stage3ReferenceIndex = 0;
     this.stage3StatusMessage = '';
+    this.textEntryPopupObjects = [];
     this._dynoCleanedUp = false;
 
     this.drawBackground();
@@ -226,6 +232,10 @@ export default class DynoScene extends Phaser.Scene {
     [...(this.introUiObjects || []), ...(this.activeUiObjects || [])].forEach(obj => {
       try { obj?.destroy?.(); } catch (e) {}
     });
+    (this.textEntryPopupObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.textEntryPopupObjects = [];
     this.introUiObjects = [];
     this.activeUiObjects = [];
     (this.shiftLabelObjects || []).forEach(obj => {
@@ -667,6 +677,109 @@ export default class DynoScene extends Phaser.Scene {
     this.drawIntroUi();
   }
 
+  closeTextEntryPopup() {
+    (this.textEntryPopupObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.textEntryPopupObjects = [];
+  }
+
+  openTextEntryPopup({
+    title = 'ENTER NAME',
+    initialValue = '',
+    confirmLabel = 'SAVE',
+    maxLength = 20,
+    onConfirm = null,
+  } = {}) {
+    this.closeTextEntryPopup();
+
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    this.textEntryPopupObjects = objects;
+    const depth = 210;
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x010306, 0.74)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 410, 650, 260, 0x07111d, 0.995)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 325, title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#eefaff',
+      align: 'center',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const safeInitial = String(initialValue || '').slice(0, maxLength);
+    const input = add(this.add.dom(780, 405, 'input', [
+      'width: 480px',
+      'height: 42px',
+      'box-sizing: border-box',
+      'background: #0b1620',
+      'border: 2px solid #557d93',
+      'color: #eefaff',
+      'font: 700 20px monospace',
+      'letter-spacing: 1px',
+      'padding: 7px 12px',
+      'outline: none',
+      'text-align: center',
+    ].join(';'), safeInitial).setDepth(depth + 3));
+    input.node?.setAttribute?.('maxlength', String(maxLength));
+    input.node?.setAttribute?.('autocomplete', 'off');
+    input.node?.setAttribute?.('autocapitalize', 'characters');
+    window.setTimeout(() => {
+      try {
+        input.node?.focus?.();
+        input.node?.select?.();
+      } catch (e) {}
+    }, 0);
+
+    const confirm = add(this.add.rectangle(700, 485, 210, 48, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(700, 485, confirmLabel, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const cancel = add(this.add.rectangle(930, 485, 210, 48, 0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(930, 485, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#d4e6ef',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const submit = () => {
+      const value = String(input.node?.value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+      if (!value) return;
+      this.closeTextEntryPopup();
+      onConfirm?.(value);
+    };
+
+    confirm.on('pointerdown', submit);
+    cancel.on('pointerdown', () => this.closeTextEntryPopup());
+    input.node?.addEventListener?.('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeTextEntryPopup();
+      }
+    });
+  }
+
   openStage3Tuning() {
     if (this.facilityTier < 3 || !this.carId) return;
 
@@ -750,7 +863,8 @@ export default class DynoScene extends Phaser.Scene {
         .setStrokeStyle(2, run ? (selected ? 0xffd45a : 0x456f82) : 0x394752, 0.92)
         .setDepth(31));
 
-      add(this.add.text(bx, 160, run ? ('GRAPH ' + (index + 1)) : 'EMPTY', {
+      const graphLabel = run?.label || ('GRAPH ' + (index + 1));
+      add(this.add.text(bx, 160, run ? graphLabel : 'EMPTY', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: run ? (selected ? '#ffe58a' : '#b9d9e8') : '#687983',
@@ -915,29 +1029,42 @@ export default class DynoScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(32));
     });
 
-    const save = add(this.add.rectangle(1215, 692, 170, 44, 0x2a2615, 0.98)
+    const save = add(this.add.rectangle(1160, 692, 125, 44, 0x2a2615, 0.98)
       .setStrokeStyle(2, 0xffd45a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1215, 692, 'SAVE TUNE', {
+    add(this.add.text(1160, 692, 'APPLY TUNE', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#fff0b5',
     }).setOrigin(0.5).setDepth(32));
     save.on('pointerdown', () => this.saveStage3Tuning());
 
-    const reset = add(this.add.rectangle(1395, 692, 170, 44, 0x102138, 0.98)
+    const presets = getStage3Presets(this.carState || {});
+    const presetCount = presets.filter(Boolean).length;
+    const presetButton = add(this.add.rectangle(1305, 692, 145, 44, 0x1d2418, 0.98)
+      .setStrokeStyle(2, 0xd9b65f, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(1305, 692, 'PRESETS ' + presetCount + '/' + MAX_STAGE3_PRESETS, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#ffe08a',
+    }).setOrigin(0.5).setDepth(32));
+    presetButton.on('pointerdown', () => this.openStage3PresetManager());
+
+    const reset = add(this.add.rectangle(1460, 692, 125, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x65879a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1395, 692, 'RESET BALANCED', {
+    add(this.add.text(1460, 692, 'BALANCED', {
       fontFamily: PIXEL_FONT,
-      fontSize: '6px',
+      fontSize: '5px',
       color: '#cce4ef',
     }).setOrigin(0.5).setDepth(32));
     reset.on('pointerdown', () => {
       this.stage3PendingTune = { ecuBias: 0, boostBias: 0, gearBias: 0 };
-      this.stage3StatusMessage = 'BALANCED PRESET LOADED // SAVE TO APPLY';
+      this.stage3StatusMessage = 'BALANCED PRESET LOADED // APPLY TUNE TO USE';
       this.renderStage3Tuning();
     });
 
@@ -971,6 +1098,207 @@ export default class DynoScene extends Phaser.Scene {
     this.points = [];
     this.dynoRunMode = 'power';
     this.redrawGraph();
+  }
+
+  openStage3PresetManager() {
+    if (this.facilityTier < 3 || !this.carId) return;
+
+    this.clearUiObjects('activeUiObjects');
+    this.dynoUiMode = 'stage3Presets';
+    this.setHeaderContext('STAGE III // PRESETS');
+
+    const add = obj => this.addUiObject('activeUiObjects', obj);
+    const x = 1305;
+    const presets = getStage3Presets(this.carState || {});
+    const pending = normaliseStage3Calibration(this.stage3PendingTune || this.carState || {});
+
+    add(this.add.rectangle(x, 420, 470, 690, 0x02070d, 0.95)
+      .setStrokeStyle(2, 0xd9b65f, 0.9)
+      .setDepth(30));
+
+    add(this.add.text(x, 98, 'TUNE PRESETS // THIS CAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffe08a',
+    }).setOrigin(0.5).setDepth(32));
+
+    add(this.add.text(x, 127,
+      'SAVE / OVERWRITE  ¥' + STAGE3_PRESET_SAVE_COST.toLocaleString('en-US') +
+      '  //  LOAD + RENAME FREE',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '7px',
+        color: '#9fb3bf',
+        fontStyle: '700',
+      }
+    ).setOrigin(0.5).setDepth(32));
+
+    presets.forEach((preset, index) => {
+      const y = 235 + index * 155;
+      const occupied = Boolean(preset);
+      const tune = occupied ? preset.calibration : pending;
+      const labels = describeStage3Calibration(tune);
+
+      add(this.add.rectangle(x, y, 430, 136, occupied ? 0x07111d : 0x090d11, 0.94)
+        .setStrokeStyle(2, occupied ? 0x8e7742 : 0x3f4b52, 0.86)
+        .setDepth(30.5));
+
+      add(this.add.text(1110, y - 48,
+        occupied ? preset.name : ('EMPTY PRESET ' + (index + 1)),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: occupied ? '#ffe08a' : '#74838c',
+        }
+      ).setDepth(32));
+
+      add(this.add.text(1110, y - 16,
+        'ECU ' + labels.ecu + '\n' +
+        'BOOST ' + labels.boost + '\n' +
+        'GEARS ' + labels.gears,
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '7px',
+          color: occupied ? '#b6cad5' : '#6f7e87',
+          fontStyle: '700',
+          lineSpacing: 3,
+        }
+      ).setDepth(32));
+
+      const saveBox = add(this.add.rectangle(1435, y - 28, 128, 38, 0x2a2615, 0.98)
+        .setStrokeStyle(1, 0xd9b65f, 0.92)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(31));
+      add(this.add.text(
+        1435,
+        y - 28,
+        occupied ? 'OVERWRITE' : 'SAVE CURRENT',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: occupied ? '5px' : '4px',
+          color: '#ffe6a0',
+        }
+      ).setOrigin(0.5).setDepth(32));
+      saveBox.on('pointerdown', () => this.saveStage3Preset(index));
+
+      const loadBox = add(this.add.rectangle(1365, y + 27, 118, 36, 0x102138, 0.98)
+        .setStrokeStyle(1, occupied ? 0x62e8c7 : 0x46515a, 0.9)
+        .setDepth(31));
+      add(this.add.text(1365, y + 27, occupied ? 'LOAD' : 'NO PRESET', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: occupied ? '#dffbf3' : '#687983',
+      }).setOrigin(0.5).setDepth(32));
+      if (occupied) {
+        loadBox.setInteractive({ useHandCursor: true });
+        loadBox.on('pointerdown', () => {
+          this.stage3PendingTune = { ...preset.calibration };
+          this.stage3StatusMessage = 'LOADED ' + preset.name + ' // APPLY TUNE TO USE';
+          this.dynoUiMode = 'stage3Tuning';
+          this.renderStage3Tuning();
+        });
+      }
+
+      const renameBox = add(this.add.rectangle(1495, y + 27, 118, 36, 0x102138, 0.98)
+        .setStrokeStyle(1, occupied ? 0x55b8ff : 0x46515a, 0.9)
+        .setDepth(31));
+      add(this.add.text(1495, y + 27, occupied ? 'RENAME' : '—', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: occupied ? '#d5edfa' : '#687983',
+      }).setOrigin(0.5).setDepth(32));
+      if (occupied) {
+        renameBox.setInteractive({ useHandCursor: true });
+        renameBox.on('pointerdown', () => this.renameStage3Preset(index));
+      }
+    });
+
+    const back = add(this.add.rectangle(x, 715, 350, 46, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(x, 715, 'RETURN TO TUNING', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(32));
+    back.on('pointerdown', () => {
+      this.dynoUiMode = 'stage3Tuning';
+      this.renderStage3Tuning();
+    });
+  }
+
+  saveStage3Preset(index) {
+    const slot = Math.max(0, Math.min(MAX_STAGE3_PRESETS - 1, Math.floor(Number(index) || 0)));
+    const presets = getStage3Presets(this.carState || {});
+    const existing = presets[slot];
+    const defaultName = existing?.name || ('PRESET ' + (slot + 1));
+
+    this.openTextEntryPopup({
+      title: existing ? 'OVERWRITE PRESET // NAME' : 'SAVE PRESET // NAME',
+      initialValue: defaultName,
+      confirmLabel: 'SAVE // ¥' + STAGE3_PRESET_SAVE_COST.toLocaleString('en-US'),
+      onConfirm: name => {
+        const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+        if (cash < STAGE3_PRESET_SAVE_COST) {
+          this.stage3StatusMessage =
+            'NEED ¥' + STAGE3_PRESET_SAVE_COST.toLocaleString('en-US') + ' TO SAVE A PRESET';
+          this.openStage3PresetManager();
+          return;
+        }
+
+        const carStates = { ...(this.registry.get('carStates') || {}) };
+        const state = { ...(carStates[this.carId] || {}) };
+        const nextPresets = getStage3Presets(state);
+        nextPresets[slot] = {
+          name: normaliseStage3PresetName(name, 'PRESET ' + (slot + 1)),
+          calibration: normaliseStage3Calibration(this.stage3PendingTune || state),
+          savedAt: Date.now(),
+        };
+        state.stage3Presets = nextPresets;
+        carStates[this.carId] = state;
+
+        this.registry.set('cash', cash - STAGE3_PRESET_SAVE_COST);
+        this.registry.set('carStates', carStates);
+        this.cashText?.setText(
+          '¥ ' + Number(cash - STAGE3_PRESET_SAVE_COST).toLocaleString('en-US')
+        );
+        saveSessionState(this.registry);
+
+        this.carState = state;
+        this.stage3StatusMessage = 'PRESET SAVED // ' + nextPresets[slot].name;
+        this.openStage3PresetManager();
+      },
+    });
+  }
+
+  renameStage3Preset(index) {
+    const slot = Math.max(0, Math.min(MAX_STAGE3_PRESETS - 1, Math.floor(Number(index) || 0)));
+    const presets = getStage3Presets(this.carState || {});
+    const preset = presets[slot];
+    if (!preset) return;
+
+    this.openTextEntryPopup({
+      title: 'RENAME PRESET',
+      initialValue: preset.name,
+      confirmLabel: 'RENAME',
+      onConfirm: name => {
+        const carStates = { ...(this.registry.get('carStates') || {}) };
+        const state = { ...(carStates[this.carId] || {}) };
+        const nextPresets = getStage3Presets(state);
+        if (!nextPresets[slot]) return;
+        nextPresets[slot] = {
+          ...nextPresets[slot],
+          name: normaliseStage3PresetName(name, preset.name),
+        };
+        state.stage3Presets = nextPresets;
+        carStates[this.carId] = state;
+        this.registry.set('carStates', carStates);
+        saveSessionState(this.registry);
+        this.carState = state;
+        this.openStage3PresetManager();
+      },
+    });
   }
 
   saveStage3Tuning() {
@@ -1092,7 +1420,7 @@ export default class DynoScene extends Phaser.Scene {
         add(this.add.text(
           bx,
           buttonY,
-          hasGraph ? ('GRAPH ' + (i + 1)) : 'EMPTY',
+          hasGraph ? (runs[i]?.label || ('GRAPH ' + (i + 1))) : 'EMPTY',
           {
             fontFamily: PIXEL_FONT,
             fontSize: '6px',
@@ -1111,18 +1439,35 @@ export default class DynoScene extends Phaser.Scene {
 
     const selectedRuns = this.getDynoGraphSlots(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
-    const deleteEnabled = !!selectedGraph;
-    const deleteBox = add(this.add.rectangle(x, 306, 380, 48, deleteEnabled ? 0x102138 : 0x0b1017, 0.98)
-      .setStrokeStyle(2, deleteEnabled ? 0x55b8ff : 0x46515a, 1)
-      .setInteractive({ useHandCursor: deleteEnabled }).setDepth(31));
-    add(this.add.text(x, 306, 'DELETE SELECTED GRAPH', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: deleteEnabled ? '#eef8ff' : '#687983'
-    }).setOrigin(0.5).setDepth(32));
-    if (deleteEnabled) deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
+    const selectedEnabled = !!selectedGraph;
 
-    const back = add(this.add.rectangle(x, 368, 380, 48, 0x102138, 0.98)
+    const renameBox = add(this.add.rectangle(x, 306, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
+      .setStrokeStyle(2, selectedEnabled ? 0xd9b65f : 0x46515a, 1)
+      .setDepth(31));
+    add(this.add.text(x, 306, 'RENAME SELECTED GRAPH', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: selectedEnabled ? '#ffe08a' : '#687983',
+    }).setOrigin(0.5).setDepth(32));
+    if (selectedEnabled) {
+      renameBox.setInteractive({ useHandCursor: true });
+      renameBox.on('pointerdown', () => this.renameGraphManagementSelection());
+    }
+
+    const deleteBox = add(this.add.rectangle(x, 360, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
+      .setStrokeStyle(2, selectedEnabled ? 0x55b8ff : 0x46515a, 1)
+      .setDepth(31));
+    add(this.add.text(x, 360, 'DELETE SELECTED GRAPH', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: selectedEnabled ? '#eef8ff' : '#687983'
+    }).setOrigin(0.5).setDepth(32));
+    if (selectedEnabled) {
+      deleteBox.setInteractive({ useHandCursor: true });
+      deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
+    }
+
+    const back = add(this.add.rectangle(x, 414, 380, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1).setInteractive({ useHandCursor: true }).setDepth(31));
-    add(this.add.text(x, 368, 'RETURN TO DYNO OPTIONS', {
+    add(this.add.text(x, 414, 'RETURN TO DYNO OPTIONS', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
     back.on('pointerdown', () => this.drawIntroUi());
@@ -1151,6 +1496,57 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   
+  renameGraphManagementSelection() {
+    const mode = this.graphManagementMode === 'drivetrain' ? 'drivetrain' : 'power';
+    const index = this.graphManagementIndex;
+    const slots = this.getDynoGraphSlots(mode);
+    const selected = slots[index];
+    if (!selected) return;
+
+    this.openTextEntryPopup({
+      title: 'RENAME ' + (mode === 'drivetrain' ? 'DRIVETRAIN GRAPH' : 'DYNO GRAPH'),
+      initialValue: selected.label || ('GRAPH ' + (index + 1)),
+      confirmLabel: 'RENAME',
+      onConfirm: name => {
+        const carStates = { ...(this.registry.get('carStates') || {}) };
+        const state = { ...(carStates[this.carId] || {}) };
+        const nextDyno = { ...(state.dyno || {}) };
+        const nextGraphs = { ...(nextDyno.graphs || {}) };
+        const nextSlots = Array.isArray(nextGraphs[mode])
+          ? nextGraphs[mode].slice(0, 3)
+          : this.getDynoGraphSlots(mode);
+
+        if (!nextSlots[index]) return;
+        const renamed = {
+          ...nextSlots[index],
+          label: normaliseStage3PresetName(name, 'GRAPH ' + (index + 1)),
+        };
+        nextSlots[index] = renamed;
+        nextGraphs[mode] = nextSlots;
+        nextDyno.graphs = nextGraphs;
+        nextDyno.history = [
+          ...(nextGraphs.power || []).filter(Boolean),
+          ...(nextGraphs.drivetrain || []).filter(Boolean),
+        ];
+        if (
+          nextDyno.lastRun &&
+          Number(nextDyno.lastRun.completedAt || 0) === Number(renamed.completedAt || 0)
+        ) {
+          nextDyno.lastRun = renamed;
+        }
+
+        state.dyno = nextDyno;
+        carStates[this.carId] = state;
+        this.registry.set('carStates', carStates);
+        saveSessionState(this.registry);
+
+        this.carState = state;
+        this.previousRun = renamed;
+        this.openGraphManagement();
+      },
+    });
+  }
+
   deleteGraphManagementSelection() {
     const mode = this.graphManagementMode === 'drivetrain' ? 'drivetrain' : 'power';
     const index = this.graphManagementIndex;
@@ -1334,9 +1730,14 @@ export default class DynoScene extends Phaser.Scene {
       const box = add(this.add.rectangle(1320, y, 260, 40, 0x102138, 0.98)
         .setStrokeStyle(2, this.dynoRunMode === 'drivetrain' ? 0x43dfff : 0x62e8c7, 0.9)
         .setInteractive({ useHandCursor: true }).setDepth(depth + 1));
-      const label = add(this.add.text(1320, y, 'GRAPH ' + (index + 1), {
-        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eef8ff'
-      }).setOrigin(0.5).setDepth(depth + 2));
+      const label = add(this.add.text(
+        1320,
+        y,
+        slots[index]?.label || ('GRAPH ' + (index + 1)),
+        {
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#eef8ff'
+        }
+      ).setOrigin(0.5).setDepth(depth + 2));
       this.replacementPopupButtons.push({ box, label });
       box.on('pointerdown', () => {
         this.replacementPopupButtons?.forEach(item => {
@@ -1702,10 +2103,14 @@ export default class DynoScene extends Phaser.Scene {
     const slots = Array.isArray(dyno.graphs?.[mode]) ? dyno.graphs[mode].slice(0,3) : this.getDynoGraphSlots(mode);
     const targetIndex = Number.isInteger(this.pendingReplaceSlot) ? this.pendingReplaceSlot : Math.max(0, slots.findIndex(slot => !slot));
 
+    const runCalibration = normaliseStage3Calibration(state);
+    const matchingPreset = findMatchingStage3Preset(state, runCalibration);
     const run = {
       completedAt: Date.now(),
       mode,
-      stage3Calibration: normaliseStage3Calibration(state),
+      label: matchingPreset?.preset?.name || '',
+      presetName: matchingPreset?.preset?.name || '',
+      stage3Calibration: runCalibration,
       gear: mode === 'power' ? this.currentGear : (this.points?.[0]?.gear || this.currentGear),
       points: this.points.map(point => ({
         rpm: Math.round(point.rpm),
@@ -1918,7 +2323,7 @@ export default class DynoScene extends Phaser.Scene {
       const selected = index === this.graphViewIndex && exists;
       slot.box.setFillStyle(selected ? 0x0c2827 : (exists ? 0x102138 : 0x0b1017), 0.98);
       slot.box.setStrokeStyle(2, exists ? accent : 0x46515a, selected ? 1 : 0.7);
-      slot.label.setText(exists ? ('GRAPH ' + (index + 1)) : 'EMPTY');
+      slot.label.setText(exists ? (history[index]?.label || ('GRAPH ' + (index + 1))) : 'EMPTY');
       slot.label.setColor(exists ? (selected ? '#f1fffb' : '#eef8ff') : '#687983');
       if (exists) slot.box.setInteractive({ useHandCursor: true });
       else slot.box.disableInteractive();

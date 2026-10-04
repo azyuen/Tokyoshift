@@ -5,6 +5,8 @@ const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 
 const clone = value => JSON.parse(JSON.stringify(value || {}));
 
 export const STAGE3_CALIBRATION_KEYS = Object.freeze(['ecuBias', 'boostBias', 'gearBias']);
+export const STAGE3_PRESET_SAVE_COST = 100000;
+export const MAX_STAGE3_PRESETS = 3;
 
 export const STAGE3_CALIBRATION_OPTIONS = Object.freeze({
   ecuBias: Object.freeze([
@@ -127,4 +129,44 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
   car.stage3Calibration = { ...tune };
   engine.stage3Calibration = { ...tune };
   return { car, engine, calibration: tune, eligibility };
+}
+
+
+export function normaliseStage3PresetName(value = '', fallback = 'UNTITLED') {
+  const cleaned = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 20);
+  return cleaned || fallback;
+}
+
+export function stage3CalibrationsEqual(a = {}, b = {}) {
+  const left = normaliseStage3Calibration(a);
+  const right = normaliseStage3Calibration(b);
+  return (
+    left.ecuBias === right.ecuBias &&
+    left.boostBias === right.boostBias &&
+    left.gearBias === right.gearBias
+  );
+}
+
+export function getStage3Presets(state = {}) {
+  const source = Array.isArray(state?.stage3Presets) ? state.stage3Presets : [];
+  return Array.from({ length: MAX_STAGE3_PRESETS }, (_, index) => {
+    const raw = source[index];
+    if (!raw || typeof raw !== 'object') return null;
+    return {
+      name: normaliseStage3PresetName(raw.name, 'PRESET ' + (index + 1)),
+      calibration: normaliseStage3Calibration(raw.calibration || raw),
+      savedAt: Math.max(0, Number(raw.savedAt || 0)),
+    };
+  });
+}
+
+export function findMatchingStage3Preset(state = {}, calibration = {}) {
+  const presets = getStage3Presets(state);
+  const index = presets.findIndex(preset =>
+    preset && stage3CalibrationsEqual(preset.calibration, calibration)
+  );
+  return index >= 0 ? { index, preset: presets[index] } : null;
 }
