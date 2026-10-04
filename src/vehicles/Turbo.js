@@ -3,12 +3,18 @@ export default class Turbo {
     this.size = config.turboSize;
     this.spoolRate = config.turboSpoolRate;
     this.maxBoostBar = config.maximumBoost;
+    this.boostOnsetRPM = Number(config.boostOnsetRPM || 1800);
+    this.boostRampRPM = Math.max(1200, Number(config.boostRampRPM || 4300));
     this.spool = 0;
     this.boostBar = 0;
   }
 
   update(dt, rpm, throttle, engineLoad, nosActive = false, shifting = false) {
-    const rpmFactor = Phaser.Math.Clamp((rpm - 1800) / 4300, 0, 1);
+    const rpmFactor = Phaser.Math.Clamp(
+      (rpm - this.boostOnsetRPM) / this.boostRampRPM,
+      0,
+      1
+    );
     const loadFactor = Phaser.Math.Clamp(engineLoad, 0.15, 1.15);
     const sizePenalty = Phaser.Math.Linear(1.35, 0.62, Phaser.Math.Clamp(this.size, 0, 1));
     let target = Math.pow(rpmFactor, 1.18) * Math.pow(throttle, 0.88) * loadFactor;

@@ -47,6 +47,7 @@ export function getPerformanceModificationSignature(state = {}) {
     chassisTuning: state?.chassisTuning || {},
     exhaustNosTuning: state?.exhaustNosTuning || {},
     specialistTuning: state?.specialistTuning || [],
+    stage3Calibration: state?.stage3Calibration || {},
     nosInstalled: Boolean(state?.nosInstalled),
     nosPower: Number(state?.nosPower || 0),
     nosCapacitySeconds: Number(state?.nosCapacitySeconds || 0),

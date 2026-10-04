@@ -3,6 +3,7 @@ import { engines } from '../data/engines.js?v=20260928-r232';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
+import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261004-r325';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -51,6 +52,11 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   const engineTuned = applyEngineTuning(config, engine, state);
   // applySecondaryTuning already applies regional specialist tuning exactly once.
   const tuned = applySecondaryTuning(engineTuned.car, engineTuned.engine, state);
+  const calibrated = applyStage3Calibration(tuned.car, tuned.engine, state);
+  tuned.car = calibrated.car;
+  tuned.engine = calibrated.engine;
+  tuned.stage3Calibration = calibrated.calibration;
+  tuned.stage3CalibrationEligibility = calibrated.eligibility;
   const exhaustNos = getExhaustNosTuning(state);
 
   if (exhaustNos.nosKit <= 0) {

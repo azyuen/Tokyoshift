@@ -2,6 +2,7 @@ import { cars } from './cars.js?v=20260928-r232';
 import { engines } from './engines.js?v=20260928-r232';
 import { applyEngineTuning } from './tuning.js?v=20260926-r211';
 import { applySecondaryTuning } from './secondaryTuning.js?v=20260926-r211';
+import { applyStage3Calibration } from './stage3Calibration.js?v=20261004-r325';
 
 const clone = value => JSON.parse(JSON.stringify(value || {}));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -94,10 +95,13 @@ export function buildDynoCar(carId, state = {}) {
   const engineBuild = applyEngineTuning(clone(baseCar), clone(baseEngine), state);
   // Secondary tuning already includes the regional tuner-house refinement.
   const secondaryBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+  const calibrated = applyStage3Calibration(secondaryBuild.car, secondaryBuild.engine, state);
 
   return {
-    car: secondaryBuild.car,
-    engine: secondaryBuild.engine,
+    car: calibrated.car,
+    engine: calibrated.engine,
+    calibration: calibrated.calibration,
+    calibrationEligibility: calibrated.eligibility,
     installedSpecialistTuning: secondaryBuild.specialistTuning || [],
   };
 }
