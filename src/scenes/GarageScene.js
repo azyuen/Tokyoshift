@@ -108,6 +108,7 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
 import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r278';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
+import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r334';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -309,6 +310,7 @@ export default class GarageScene extends Phaser.Scene {
     this.buildMoveCarButton();
     this.buildWorkshopJumpButton();
     this.buildDynoButton();
+    this.buildCrewSpaceHotspot();
     this.buildMeetButton();
 
     if (this.selectedCarId) {
@@ -1698,6 +1700,60 @@ export default class GarageScene extends Phaser.Scene {
 
     closeButton.on('pointerdown', close);
     blocker.on('pointerdown', close);
+  }
+
+  buildCrewSpaceHotspot() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (
+      activeWorkshop?.id !== 'shinonomeWarehouseStrip' ||
+      !isCrewUnlocked(this.registry)
+    ) return;
+
+    // Treat this as a physical space inside the Warehouse artwork rather than
+    // another side-panel menu button. The glow is intentionally subtle until
+    // the pointer/finger enters it.
+    const x = STAGE.x + STAGE.w - 170;
+    const y = STAGE.y + 172;
+    const w = 275;
+    const h = 128;
+
+    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.035)
+      .setStrokeStyle(2, 0x69ecff, 0.38)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(28);
+
+    const labelBg = this.add.rectangle(x, y + h / 2 - 18, 172, 28, 0x06141d, 0.72)
+      .setStrokeStyle(1, 0x69ecff, 0.34)
+      .setDepth(29);
+
+    const label = this.add.text(x, y + h / 2 - 18, 'CREW SPACE  >', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#bff8ff',
+    }).setOrigin(0.5).setAlpha(0.78).setDepth(30);
+
+    this.tweens.add({
+      targets: [glow, labelBg],
+      alpha: { from: 0.58, to: 1 },
+      duration: 1150,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    glow.on('pointerover', () => {
+      glow.setFillStyle(0x4ee8ff, 0.11).setStrokeStyle(3, 0x8ff5ff, 0.92);
+      label.setAlpha(1).setColor('#ffffff');
+    });
+    glow.on('pointerout', () => {
+      glow.setFillStyle(0x4ee8ff, 0.035).setStrokeStyle(2, 0x69ecff, 0.38);
+      label.setAlpha(0.78).setColor('#bff8ff');
+    });
+    glow.on('pointerdown', () => {
+      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+      saveSessionState(this.registry);
+      this.scene.start('CrewScene');
+    });
   }
 
   buildDynoButton() {
