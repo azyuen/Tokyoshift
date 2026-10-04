@@ -10,7 +10,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r343';
+import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -21,7 +21,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261005-r343';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261005-r345';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20261004-r333';
@@ -40,7 +40,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r344';
+} from '../state/GameState.js?v=20261005-r345';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -53,7 +53,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261005-r343';
+} from '../data/centralTokyo.js?v=20261005-r345';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
@@ -84,7 +84,7 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r343';
+} from '../data/crewSystem.js?v=20261005-r345';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
