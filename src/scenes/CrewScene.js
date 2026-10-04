@@ -19,10 +19,10 @@ import {
   getRegionalCrewBattleReward,
   CREW_BATTLE_LINEUP_SIZE,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r345';
+} from '../data/crewSystem.js?v=20261005-r346';
 import {
   saveSessionState,
-} from '../state/GameState.js?v=20261005-r345';
+} from '../state/GameState.js?v=20261005-r346';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
