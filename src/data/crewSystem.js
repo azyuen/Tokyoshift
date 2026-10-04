@@ -11,9 +11,14 @@ import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
-export const CREW_RECRUIT_CHALLENGE_CHANCE = 0.35;
-export const CREW_RECRUIT_OFFER_CHANCE = 0.60;
-export const CREW_RECRUIT_PITY_ROLLS = 3;
+export const CREW_INVITE_INTEREST_CHANCE = 0.25;
+export const CREW_INVITE_PITY_WINS = 4;
+
+// Legacy aliases remain exported so a stale PWA module cannot crash while the
+// new scene bundle rolls out. The random arrival mechanic itself is disabled.
+export const CREW_RECRUIT_CHALLENGE_CHANCE = CREW_INVITE_INTEREST_CHANCE;
+export const CREW_RECRUIT_OFFER_CHANCE = 1;
+export const CREW_RECRUIT_PITY_ROLLS = CREW_INVITE_PITY_WINS;
 export const CREW_BATTLE_LINEUP_SIZE = 6;
 export const CREW_BATTLE_WINS_REQUIRED = 4;
 export const CREW_BATTLE_COUPONS = 2;
@@ -170,71 +175,159 @@ export function getCrewRecruitmentState(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   const store = value(source, 'crewRecruitmentState', {}) || {};
   const raw = store[key] || {};
+  const legacyMisses = Math.max(0, Number(raw.misses || 0));
+
   return {
     regionId: key,
-    misses: Math.max(0, Number(raw.misses || 0)),
+    eligibleWinsSinceInvite: Math.max(
+      0,
+      Number(raw.eligibleWinsSinceInvite ?? legacyMisses)
+    ),
     lastCharacterId: String(raw.lastCharacterId || ''),
-    lastRollToken: String(raw.lastRollToken || ''),
+    lastWinToken: String(raw.lastWinToken || raw.lastRollToken || ''),
   };
 }
 
-export function rollCrewRecruitChallenge(registry, regionId, locationId, random = Math.random) {
-  const key = String(regionId || '').toUpperCase();
-  if (!registry?.get || !registry?.set) return null;
-  if (!isCrewUnlocked(registry) || isCrewComplete(registry)) return null;
-  if (getCrewMemberForRegion(registry, key)) return null;
-  if (registry.get('crewPendingRecruit') || registry.get('crewRecruitChallenge')) return null;
-
-  const candidates = getRecruitableCrewCandidates(registry, key);
-  if (!candidates.length) return null;
-
-  const activityCount =
-    Math.max(0, Number(registry.get('wins') || 0)) +
-    Math.max(0, Number(registry.get('losses') || 0));
-  const token = String(locationId || key) + ':' + activityCount;
-  const state = getCrewRecruitmentState(registry, key);
-  if (state.lastRollToken === token) return null;
-
-  const nextMisses = state.misses + 1;
-  const trigger =
-    nextMisses >= CREW_RECRUIT_PITY_ROLLS ||
-    random() < CREW_RECRUIT_CHALLENGE_CHANCE;
-
-  const store = { ...(registry.get('crewRecruitmentState') || {}) };
-
-  if (!trigger) {
-    store[key] = {
-      ...state,
-      misses: nextMisses,
-      lastRollToken: token,
-    };
-    registry.set('crewRecruitmentState', store);
-    return null;
+export function getCrewInviteInterest(source) {
+  const interest = value(source, 'crewInviteInterest', null);
+  if (interest && typeof interest === 'object' && interest.characterId) {
+    return { ...interest };
   }
 
-  const alternate = candidates.filter(item => item.characterId !== state.lastCharacterId);
-  const pool = alternate.length ? alternate : candidates;
-  const selected = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
-  if (!selected) return null;
+  // One-build migration path: the earlier crew prototype could leave a
+  // crewPendingRecruit object in a save. Treat that as an invite interest
+  // rather than silently discarding it.
+  const legacy = value(source, 'crewPendingRecruit', null);
+  if (legacy && typeof legacy === 'object' && legacy.characterId) {
+    return {
+      regionId: String(legacy.regionId || '').toUpperCase(),
+      characterId: String(legacy.characterId),
+      baseCarId: String(
+        legacy.baseCarId ||
+        getCrewBaseCarId(legacy.characterId) ||
+        ''
+      ),
+      locationId: String(legacy.locationId || ''),
+      createdAt: Math.max(0, Number(legacy.offeredAt || Date.now())),
+      source: 'legacyPendingRecruit',
+    };
+  }
 
-  const challenge = {
-    active: true,
-    regionId: key,
-    locationId: String(locationId || ''),
-    characterId: selected.characterId,
-    baseCarId: selected.baseCarId,
-    createdAt: Date.now(),
-  };
+  return null;
+}
 
+export function clearCrewInviteInterest(registry) {
+  if (!registry?.set) return;
+  registry.set('crewInviteInterest', null);
+  registry.set('crewPendingRecruit', null);
+}
+
+export function createCrewInviteFromMeetWin(
+  registry,
+  {
+    regionId = '',
+    characterId = '',
+    locationId = '',
+    winToken = '',
+  } = {},
+  random = Math.random
+) {
+  const key = String(regionId || '').toUpperCase();
+  const rivalId = String(characterId || '');
+
+  if (!registry?.get || !registry?.set) return null;
+  if (!key || !rivalId) return null;
+  if (!isCrewUnlocked(registry) || isCrewComplete(registry)) return null;
+  if (getCrewMemberForRegion(registry, key)) return null;
+  if (
+    getCrewInviteInterest(registry) ||
+    registry.get('crewRecruitChallenge')
+  ) return null;
+
+  const candidate = getRecruitableCrewCandidates(registry, key)
+    .find(member => member.characterId === rivalId);
+  if (!candidate) return null;
+
+  const state = getCrewRecruitmentState(registry, key);
+  const token = String(
+    winToken ||
+    (locationId + ':' + rivalId + ':' +
+      (Number(registry.get('wins') || 0) + Number(registry.get('losses') || 0)))
+  );
+  if (state.lastWinToken && state.lastWinToken === token) return null;
+
+  const nextEligibleWins = state.eligibleWinsSinceInvite + 1;
+  const trigger =
+    nextEligibleWins >= CREW_INVITE_PITY_WINS ||
+    Number(random()) < CREW_INVITE_INTEREST_CHANCE;
+
+  const store = { ...(registry.get('crewRecruitmentState') || {}) };
   store[key] = {
-    ...state,
-    misses: 0,
-    lastCharacterId: selected.characterId,
+    eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins,
+    misses: trigger ? 0 : nextEligibleWins,
+    lastCharacterId: rivalId,
+    lastWinToken: token,
     lastRollToken: token,
   };
   registry.set('crewRecruitmentState', store);
+
+  if (!trigger) return null;
+
+  const interest = {
+    active: true,
+    regionId: key,
+    locationId: String(locationId || ''),
+    characterId: rivalId,
+    baseCarId: String(candidate.baseCarId),
+    createdAt: Date.now(),
+    source: 'meetWin',
+  };
+  registry.set('crewInviteInterest', interest);
+  registry.set('crewPendingRecruit', null);
+  return interest;
+}
+
+export function acceptCrewInviteChallenge(
+  registry,
+  interest = getCrewInviteInterest(registry)
+) {
+  if (!registry?.get || !registry?.set || !interest?.characterId) return null;
+
+  const regionId = String(interest.regionId || '').toUpperCase();
+  const characterId = String(interest.characterId || '');
+  if (getCrewMemberForRegion(registry, regionId)) {
+    clearCrewInviteInterest(registry);
+    return null;
+  }
+
+  const candidate = getRecruitableCrewCandidates(registry, regionId)
+    .find(member => member.characterId === characterId);
+  if (!candidate) {
+    clearCrewInviteInterest(registry);
+    return null;
+  }
+
+  const challenge = {
+    active: true,
+    regionId,
+    locationId: String(interest.locationId || ''),
+    characterId,
+    baseCarId: String(candidate.baseCarId),
+    createdAt: Date.now(),
+    acceptedAt: Date.now(),
+    attempts: 0,
+    source: 'meetInvite',
+  };
+
   registry.set('crewRecruitChallenge', challenge);
+  clearCrewInviteInterest(registry);
   return challenge;
+}
+
+// Deprecated random-arrival entry point. Keep the export temporarily so stale
+// cached MeetScene modules fail closed instead of reintroducing popup recruits.
+export function rollCrewRecruitChallenge() {
+  return null;
 }
 
 export function clearCrewRecruitChallenge(registry) {
@@ -253,6 +346,26 @@ export function setPendingCrewRecruit(registry, challenge) {
   registry.set('crewPendingRecruit', pending);
   registry.set('crewRecruitChallenge', null);
   return pending;
+}
+
+export function completeCrewRecruitChallenge(
+  registry,
+  challenge = registry?.get?.('crewRecruitChallenge')
+) {
+  if (!registry?.get || !registry?.set || !challenge?.characterId) return null;
+
+  const pending = {
+    regionId: String(challenge.regionId || '').toUpperCase(),
+    characterId: String(challenge.characterId),
+    baseCarId: String(
+      challenge.baseCarId ||
+      getCrewBaseCarId(challenge.characterId) ||
+      ''
+    ),
+    offeredAt: Date.now(),
+  };
+
+  return acceptCrewMember(registry, pending);
 }
 
 export function acceptCrewMember(registry, pending = registry?.get?.('crewPendingRecruit')) {
@@ -293,6 +406,7 @@ export function acceptCrewMember(registry, pending = registry?.get?.('crewPendin
   registry.set('carStates', states);
   registry.set('carGarageLocations', locations);
   registry.set('crewPendingRecruit', null);
+  registry.set('crewInviteInterest', null);
   registry.set('crewRecruitChallenge', null);
   return members[regionId];
 }
@@ -300,6 +414,7 @@ export function acceptCrewMember(registry, pending = registry?.get?.('crewPendin
 export function declinePendingCrewRecruit(registry) {
   if (!registry?.set) return;
   registry.set('crewPendingRecruit', null);
+  registry.set('crewInviteInterest', null);
   registry.set('crewRecruitChallenge', null);
 }
 
@@ -323,6 +438,7 @@ export function removeCrewMember(registry, regionId) {
   registry.set('carStates', states);
   registry.set('carGarageLocations', locations);
   registry.set('crewPendingRecruit', null);
+  registry.set('crewInviteInterest', null);
 
   if (registry.get('selectedCarId') === loanCarId) {
     registry.set('selectedCarId', owned.find(id => !cars[id]?.crewLoan) || owned[0] || null);
