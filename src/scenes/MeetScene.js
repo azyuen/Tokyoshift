@@ -82,6 +82,7 @@ import {
   markCentralTokyoUnlocked,
   getCarCouponRequirement,
   getCarCouponCount,
+  MARKET_BASE_PRICES,
 } from '../data/centralTokyo.js?v=20260929-r279';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -2461,11 +2462,11 @@ export default class MeetScene extends Phaser.Scene {
     const difficulty = profile.difficulty || 'MED';
 
     const settings = {
-      EASY: { entryFee: 2500, cashPrize: 20000 },
-      MED: { entryFee: 4000, cashPrize: 32000 },
-      HARD: { entryFee: 6500, cashPrize: 48000 },
-      ELITE: { entryFee: 9000, cashPrize: 70000 },
-    }[difficulty] || { entryFee: 4000, cashPrize: 32000 };
+      EASY: { entryFee: 10000, cashPrize: 20000 },
+      MED: { entryFee: 20000, cashPrize: 32000 },
+      HARD: { entryFee: 35000, cashPrize: 48000 },
+      ELITE: { entryFee: 50000, cashPrize: 70000 },
+    }[difficulty] || { entryFee: 20000, cashPrize: 32000 };
 
     const owned = this.registry.get('ownedCarIds') || [];
     const playerCarId = this.registry.get('selectedCarId');
@@ -2561,17 +2562,28 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId = finalCarId;
     }
 
+    let entryFee = settings.entryFee;
+    if (prizeType === 'COUPON' && prizeCarId) {
+      const carValue = Math.max(0, Number(MARKET_BASE_PRICES[prizeCarId] || 0));
+      const couponRequirement = Math.max(1, getCarCouponRequirement(prizeCarId));
+      const rawCouponFee = carValue > 0
+        ? (carValue / couponRequirement) * 0.05
+        : 75000;
+      const roundedCouponFee = Math.round(rawCouponFee / 5000) * 5000;
+      entryFee = Phaser.Math.Clamp(roundedCouponFee, 75000, 300000);
+    }
+
     return {
       id: this.selectedMeetLocation + ':' + String(refreshToken || Date.now()),
       locationId: this.selectedMeetLocation,
       difficulty,
-      entryFee: settings.entryFee,
+      entryFee,
       prizeType,
       prizeCash: adjustedCashPrize,
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R319',
+      balanceVersion: 'R332',
       meetRefreshAt: refreshToken,
       refreshAt: refreshToken,
     };
@@ -2588,7 +2600,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R319';
+      current?.balanceVersion !== 'R332';
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
