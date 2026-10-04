@@ -1,3 +1,5 @@
+import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261005-r334';
+
 const base = {
   wheelRadius: 0.305,
   dragCoefficient: 0.34,
@@ -1369,3 +1371,28 @@ export const carOrder = [
   'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
 ];
+
+
+// Register per-character crew loan aliases after all regular visual geometry has
+// been finalised. Crew cars are independent tuneable instances that reuse the
+// current base model art/physics; this lets multiple crew members temporarily
+// share a model while keeping separate upgrades.
+Object.entries(CREW_CHARACTER_CARS).forEach(([characterId, baseCarId]) => {
+  const baseCar = cars[baseCarId];
+  if (!baseCar) return;
+
+  const loanId = getCrewLoanCarId(characterId);
+  cars[loanId] = {
+    ...baseCar,
+    id: loanId,
+    name: baseCar.name + ' // CREW LOAN',
+    shortName: baseCar.shortName,
+    crewLoan: true,
+    crewOwnerCharacterId: characterId,
+    crewBaseCarId: baseCarId,
+    collector: false,
+    tuningLocked: false,
+    ginzaExclusive: false,
+    visual: { ...(baseCar.visual || {}) },
+  };
+});
