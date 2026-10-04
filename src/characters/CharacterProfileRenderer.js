@@ -1,13 +1,111 @@
 import {
   characters,
   DEFAULT_CHARACTER_PROFILE,
-} from '../data/characters.js?v=20261004-r324';
+} from '../data/characters.js?v=20261004-r333';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
 export const PROFILE_EYE_TARGET_RATIO = 0.30;
 export const PROFILE_TORSO_CROP_RATIO = 0.82;
 export const PROFILE_DEFAULT_ZOOM = 3.65;
+
+const PROFILE_METRICS_CACHE = new Map();
+const PROFILE_ALPHA_SAMPLE_MAX = 256;
+const PROFILE_HEAD_FROM_CENTRAL_TOP_RATIO = 0.055;
+
+function getProfileSubjectMetrics(source, cacheKey = '') {
+  const sourceWidth = Math.max(1, Number(source?.naturalWidth || source?.width || 1));
+  const sourceHeight = Math.max(1, Number(source?.naturalHeight || source?.height || 1));
+  const key = String(cacheKey || source?.src || (sourceWidth + 'x' + sourceHeight));
+  if (PROFILE_METRICS_CACHE.has(key)) return PROFILE_METRICS_CACHE.get(key);
+
+  const fallback = {
+    centreX: sourceWidth * 0.5,
+    headY: sourceHeight * 0.063,
+    top: 0,
+    bottom: sourceHeight,
+  };
+
+  if (typeof document === 'undefined') {
+    PROFILE_METRICS_CACHE.set(key, fallback);
+    return fallback;
+  }
+
+  try {
+    const sampleScale = Math.min(
+      1,
+      PROFILE_ALPHA_SAMPLE_MAX / Math.max(sourceWidth, sourceHeight)
+    );
+    const sampleWidth = Math.max(1, Math.round(sourceWidth * sampleScale));
+    const sampleHeight = Math.max(1, Math.round(sourceHeight * sampleScale));
+    const canvas = document.createElement('canvas');
+    canvas.width = sampleWidth;
+    canvas.height = sampleHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error('profile canvas unavailable');
+
+    ctx.clearRect(0, 0, sampleWidth, sampleHeight);
+    ctx.drawImage(source, 0, 0, sampleWidth, sampleHeight);
+    const pixels = ctx.getImageData(0, 0, sampleWidth, sampleHeight).data;
+
+    let minX = sampleWidth;
+    let minY = sampleHeight;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < sampleHeight; y += 1) {
+      for (let x = 0; x < sampleWidth; x += 1) {
+        const alpha = pixels[(y * sampleWidth + x) * 4 + 3];
+        if (alpha <= 12) continue;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+
+    if (maxX < minX || maxY < minY) throw new Error('empty profile sprite');
+
+    const subjectWidth = Math.max(1, maxX - minX + 1);
+    const subjectHeight = Math.max(1, maxY - minY + 1);
+    const centreX = minX + subjectWidth * 0.5;
+
+    // Raised hands and victory poses can extend above the hair. Find the first
+    // opaque row through the middle of the body instead of trusting the raw
+    // topmost alpha pixel; this keeps idle/win/loss portraits aimed at the head.
+    const bandLeft = Math.max(minX, Math.floor(centreX - subjectWidth * 0.16));
+    const bandRight = Math.min(maxX, Math.ceil(centreX + subjectWidth * 0.16));
+    let centralTop = minY;
+
+    outer:
+    for (let y = minY; y <= maxY; y += 1) {
+      let hits = 0;
+      for (let x = bandLeft; x <= bandRight; x += 1) {
+        if (pixels[(y * sampleWidth + x) * 4 + 3] > 12) hits += 1;
+        if (hits >= 2) {
+          centralTop = y;
+          break outer;
+        }
+      }
+    }
+
+    const inv = 1 / sampleScale;
+    const metrics = {
+      centreX: centreX * inv,
+      headY: (
+        centralTop +
+        subjectHeight * PROFILE_HEAD_FROM_CENTRAL_TOP_RATIO
+      ) * inv,
+      top: minY * inv,
+      bottom: (maxY + 1) * inv,
+    };
+    PROFILE_METRICS_CACHE.set(key, metrics);
+    return metrics;
+  } catch (e) {
+    PROFILE_METRICS_CACHE.set(key, fallback);
+    return fallback;
+  }
+}
 
 const POSE_KEYS = {
   idle: ['spriteKey', 'path'],
@@ -99,14 +197,25 @@ export function createCharacterProfile(scene, {
   const offsetScale = height / PROFILE_REFERENCE_HEIGHT;
   const signedOffsetX = profile.offsetX * offsetScale * (inwardFlip ? -1 : 1);
   const topY = centreY - height / 2;
-  const baseScale = (height * PROFILE_DEFAULT_ZOOM) / Math.max(1, source.height);
+  const sourceWidth = Math.max(1, Number(source?.naturalWidth || source?.width || 1));
+  const sourceHeight = Math.max(1, Number(source?.naturalHeight || source?.height || 1));
+  const metrics = getProfileSubjectMetrics(source, spriteKey);
+  const baseScale = (height * PROFILE_DEFAULT_ZOOM) / sourceHeight;
+  const finalScale = baseScale * profile.scale;
+  const subjectCentreDelta = (metrics.centreX - sourceWidth * 0.5) * finalScale;
+  const signedSubjectCentreDelta = subjectCentreDelta * (inwardFlip ? -1 : 1);
+  const targetHeadY =
+    topY +
+    height * PROFILE_EYE_TARGET_RATIO +
+    profile.offsetY * offsetScale;
+
   const image = scene.add.image(
-    Math.round(centreX + signedOffsetX),
-    Math.round(topY + height * PROFILE_HEAD_SAFE_RATIO + profile.offsetY * offsetScale),
+    Math.round(centreX + signedOffsetX - signedSubjectCentreDelta),
+    Math.round(targetHeadY - metrics.headY * finalScale),
     spriteKey
   ).setOrigin(0.5, 0)
     .setDepth(depth)
-    .setScale(baseScale * profile.scale)
+    .setScale(finalScale)
     .setFlipX(inwardFlip);
 
   let maskShape = null;

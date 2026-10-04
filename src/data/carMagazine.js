@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20260928-r232';
+import { cars } from './cars.js?v=20261004-r333';
 
 export const MAGAZINE_ISSUES = Object.freeze({
   1: Object.freeze({

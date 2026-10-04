@@ -332,6 +332,23 @@ export const engines = {
     ],
   },
 
+
+  f20c: {
+    id: 'f20c',
+    name: 'Honda F20C 2.0L VTEC',
+    idleRPM: 900,
+    redlineRPM: 9000,
+    limiterRPM: 9200,
+    inertia: 0.14,
+    referenceBoostBar: 0,
+    offBoostTorqueFraction: 1,
+    torqueCurve: [
+      [1000, 105], [2000, 135], [3000, 155], [4000, 170],
+      [5000, 180], [6000, 190], [7000, 207], [7500, 218],
+      [8000, 216], [8500, 207], [9000, 190], [9200, 175],
+    ],
+  },
+
   f20c_amuse: {
     id: 'f20c_amuse',
     name: 'Amuse F20C Turbo',

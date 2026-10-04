@@ -1,8 +1,8 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { cars, carOrder } from '../data/cars.js?v=20261004-r333';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { engines } from '../data/engines.js?v=20260928-r232';
-import { characters } from '../data/characters.js?v=20260929-r275';
+import { engines } from '../data/engines.js?v=20261004-r333';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -102,7 +102,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20260929-r266';
+} from '../data/visualMods.js?v=20261004-r333';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
@@ -200,7 +200,7 @@ export default class GarageScene extends Phaser.Scene {
     [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']
       .forEach(id => {
         const visual = characters[id]?.visual;
-        if (visual) queueImage(visual.spriteKey, visual.path + '?v=20260926-r213');
+        if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
       });
 
     // A workshop can show and switch between its local cars without another

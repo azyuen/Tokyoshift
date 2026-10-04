@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { cars, carOrder } from '../data/cars.js?v=20261004-r333';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -14,10 +14,11 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import {
   characters,
+  getCharacterAssetUrl,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20261004-r324';
+} from '../data/characters.js?v=20261004-r333';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -74,7 +75,7 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r324';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20260926-r214';
 import {
@@ -2018,7 +2019,7 @@ export default class MeetScene extends Phaser.Scene {
     ) {
       this.load.image(
         character.visual.spriteKey,
-        character.visual.path + '?v=20260923-r145'
+        getCharacterAssetUrl(character.visual.path)
       );
     }
 
@@ -2912,7 +2913,7 @@ export default class MeetScene extends Phaser.Scene {
 
     (offers || []).forEach(offer => {
       const visual = characters[offer?.characterId]?.visual || {};
-      queueImage(visual.spriteKey, visual.path ? visual.path + '?v=20260923-r145' : null);
+      queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
 
       if (offer?.resultState) {
         const won = offer.resultState === 'PLAYER_LOSS';
@@ -3333,11 +3334,11 @@ export default class MeetScene extends Phaser.Scene {
       const visual = characters[offer?.characterId]?.visual || {};
       queueImage(
         visual.winSpriteKey,
-        visual.winPath ? visual.winPath + '?v=20260923-r145' : null
+        getCharacterAssetUrl(visual.winPath)
       );
       queueImage(
         visual.lossSpriteKey,
-        visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null
+        getCharacterAssetUrl(visual.lossPath)
       );
     });
 

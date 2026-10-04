@@ -4,14 +4,15 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars } from '../data/cars.js?v=20260928-r232';
+import { cars } from '../data/cars.js?v=20261004-r333';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
-import { characters, playableCharacterOrder } from '../data/characters.js?v=20260929-r275';
+import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
@@ -27,7 +28,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     playableCharacterOrder.forEach(id => {
       const visual = characters[id]?.visual;
       if (!visual || this.textures.exists(visual.spriteKey)) return;
-      this.load.image(visual.spriteKey, visual.path + '?v=20260923-r145');
+      this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
       queued += 1;
     });
 
@@ -140,15 +141,20 @@ export default class CharacterSelectScene extends Phaser.Scene {
     this.portraitObjects.forEach(obj => obj.destroy());
     this.portraitObjects = [];
 
-    const character = characters[this.currentCharacterId];
-    const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-    const portrait = this.add.image(300, 188, character.visual.spriteKey)
-      .setOrigin(0.5, 0)
-      .setDepth(4)
-      .setMask(this.portraitMask);
+    const profile = createCharacterProfile(this, {
+      characterId: this.currentCharacterId,
+      pose: 'idle',
+      x: 300,
+      y: 328,
+      frameWidth: 240,
+      frameHeight: 240,
+      side: 'center',
+      depth: 4,
+    });
 
-    portrait.setScale(690 / source.height);
-    this.portraitObjects.push(portrait);
+    if (profile) {
+      this.portraitObjects.push(profile.image, profile.maskShape);
+    }
 
     this.profileLabel.setText(
       'CHARACTER ' +

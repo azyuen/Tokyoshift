@@ -1,4 +1,4 @@
-import { characters } from '../data/characters.js?v=20260929-r275';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -11,7 +11,7 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
+} from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { saveSessionState } from '../state/GameState.js?v=20260929-r275';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -140,7 +140,7 @@ function queueCharacterAssets(scene, characterIds) {
       [visual.lossSpriteKey, visual.lossPath],
     ].forEach(([key, path]) => {
       if (!key || !path || scene.textures.exists(key)) return;
-      scene.load.image(key, path + '?v=20260925-r184');
+      scene.load.image(key, getCharacterAssetUrl(path));
       queued += 1;
     });
   });

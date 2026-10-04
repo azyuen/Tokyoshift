@@ -1,11 +1,12 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
-import { engines } from '../data/engines.js?v=20260928-r232';
+import { cars, carOrder } from '../data/cars.js?v=20261004-r333';
+import { engines } from '../data/engines.js?v=20261004-r333';
 import {
   characters,
+  getCharacterAssetUrl,
   genericRivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20260926-r213';
+} from '../data/characters.js?v=20261004-r333';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -24,7 +25,7 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20260929-r266';
+} from '../data/visualMods.js?v=20261004-r333';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -229,7 +230,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ['sayakaFujieda', 'reinaShibata'].forEach(id => {
         const visual = characters[id]?.visual;
         if (!visual || this.textures.exists(visual.spriteKey)) return;
-        this.load.image(visual.spriteKey, visual.path + '?v=20260929-r269');
+        this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
         queued += 1;
       });
     }
@@ -246,7 +247,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       new Set([...rivalIds, 'tetsuyaKanda']).forEach(id => {
         const visual = characters[id]?.visual;
         if (!visual || this.textures.exists(visual.spriteKey)) return;
-        this.load.image(visual.spriteKey, visual.path + '?v=20260923-r145');
+        this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
         queued += 1;
       });
     }
