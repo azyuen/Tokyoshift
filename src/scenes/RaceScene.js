@@ -10,7 +10,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { cars, carOrder } from '../data/cars.js?v=20261004-r333';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -21,18 +21,19 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260929-r266';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261004-r333';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { engines } from '../data/engines.js?v=20260928-r232';
+import { engines } from '../data/engines.js?v=20261004-r333';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,
+  getCharacterAssetUrl,
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261004-r323';
+} from '../data/characters.js?v=20261004-r333';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -64,7 +65,7 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
@@ -153,8 +154,8 @@ export default class RaceScene extends Phaser.Scene {
     const opponentId = this.registry.get('selectedOpponentCharacterId');
     [playerId, opponentId].filter(Boolean).forEach(id => {
       const visual = characters[id]?.visual || {};
-      queueImage(visual.winSpriteKey, visual.winPath ? visual.winPath + '?v=20260923-r145' : null);
-      queueImage(visual.lossSpriteKey, visual.lossPath ? visual.lossPath + '?v=20260923-r145' : null);
+      queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
+      queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
     });
 
     const playerState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
