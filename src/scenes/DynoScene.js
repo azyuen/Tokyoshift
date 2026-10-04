@@ -13,7 +13,7 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20261004-r326';
+} from '../data/dyno.js?v=20261004-r331';
 import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
 import {
   STAGE3_CALIBRATION_OPTIONS,
@@ -64,6 +64,12 @@ export default class DynoScene extends Phaser.Scene {
     super('DynoScene');
   }
 
+  init(data = {}) {
+    this.isRentalSession = Boolean(data?.rentalSession);
+    this.rentalCarId = data?.carId || null;
+    this.rentalReturnWorkshopId = data?.returnWorkshopId || null;
+  }
+
   preload() {
     let queued = 0;
     const queueImage = (key, path) => {
@@ -105,6 +111,9 @@ export default class DynoScene extends Phaser.Scene {
 
   resolveCarId() {
     const owned = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    if (this.isRentalSession && this.rentalCarId && owned.includes(this.rentalCarId)) {
+      return this.rentalCarId;
+    }
     const locations = this.registry.get('carGarageLocations') || {};
     const warehouseCars = owned.filter(id => locations[id] === DYNO_WAREHOUSE_ID);
     const selected = this.registry.get('selectedCarId');
@@ -141,10 +150,15 @@ export default class DynoScene extends Phaser.Scene {
     }
 
     this.carState = (this.registry.get('carStates') || {})[this.carId] || {};
-    this.facilityTier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
+    this.facilityTier = this.isRentalSession
+      ? 1
+      : Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
     this.stage = getDynoStage(this.facilityTier);
-    this.sessionPullsRemaining = 0;
-    this.sessionPullsRemainingByMode = { power: 0, drivetrain: 0 };
+    this.sessionPullsRemaining = this.isRentalSession ? 1 : 0;
+    this.sessionPullsRemainingByMode = {
+      power: this.isRentalSession ? 1 : 0,
+      drivetrain: 0,
+    };
     this.pullState = 'IDLE';
     this.points = [];
     this.previousRun = this.carState?.dyno?.lastRun || null;
@@ -280,9 +294,14 @@ export default class DynoScene extends Phaser.Scene {
     this.add.rectangle(780, 35, 1512, 62, 0x07111d, 0.96)
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(80);
-    this.add.text(48, 35, 'WAREHOUSE HQ // DYNO', {
-      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#eefaff'
-    }).setOrigin(0, 0.5).setDepth(81);
+    this.add.text(
+      48,
+      35,
+      this.isRentalSession ? 'RENTED STAGE I // DYNO' : 'WAREHOUSE HQ // DYNO',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '18px', color: '#eefaff'
+      }
+    ).setOrigin(0, 0.5).setDepth(81);
 
     const cash = Number(this.registry.get('cash') || 0);
     this.cashText = this.add.text(1512, 35, '¥ ' + cash.toLocaleString('en-US'), {
@@ -299,16 +318,23 @@ export default class DynoScene extends Phaser.Scene {
     this.pullCounterText?.setText(String(label).toUpperCase());
   }
 
-  drawNoCarState(message = 'NO CAR STORED AT WAREHOUSE HQ') {
+  drawNoCarState(message = this.isRentalSession ? 'RENTAL CAR UNAVAILABLE' : 'NO CAR STORED AT WAREHOUSE HQ') {
     this.add.rectangle(780, 420, 760, 310, 0x07111d, 0.94)
       .setStrokeStyle(2, 0x315470, 1)
       .setDepth(20);
     this.add.text(780, 375, message, {
       fontFamily: PIXEL_FONT, fontSize: '14px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(21);
-    this.add.text(780, 430, 'Move a car to Warehouse HQ before using the dyno.', {
-      fontFamily: BODY_FONT, fontSize: '13px', color: '#a7bdca', fontStyle: '600'
-    }).setOrigin(0.5).setDepth(21);
+    this.add.text(
+      780,
+      430,
+      this.isRentalSession
+        ? 'Return to the workshop and book a new rental session.'
+        : 'Move a car to Warehouse HQ before using the dyno.',
+      {
+        fontFamily: BODY_FONT, fontSize: '13px', color: '#a7bdca', fontStyle: '600'
+      }
+    ).setOrigin(0.5).setDepth(21);
     const back = this.add.rectangle(780, 505, 260, 52, 0x102138, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
@@ -560,6 +586,49 @@ export default class DynoScene extends Phaser.Scene {
       if (!locked) box.on('pointerdown', onClick);
       return box;
     };
+
+    if (this.isRentalSession) {
+      const remaining = this.getModeSessionRemaining('power');
+      this.setHeaderContext('RENTED STAGE I SESSION');
+
+      drawStageCard(
+        powerTop,
+        remaining > 0 ? 0x62e8c7 : 0x6b5b37,
+        remaining > 0
+          ? 'RENTED POWER RUN  //  SESSION PAID'
+          : 'RENTAL SESSION COMPLETE',
+        remaining > 0
+          ? '1 CLEAN PULL  //  OFFICIAL POWER + TORQUE + SAVED GRAPH'
+          : 'RETURN TO THE WORKSHOP TO BOOK ANOTHER SESSION',
+        'STAGE 1',
+        remaining > 0 ? 'PAID // ¥100,000' : '1 / 1 RUN USED',
+        remaining > 0 ? () => this.enterDynoTest('power') : null,
+        remaining <= 0
+      );
+
+      add(this.add.text(1320, 255,
+        'RENTAL ACCESS\nPOWER RUN ONLY\nNO STAGE II / III',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: '#829aa8',
+          align: 'center',
+          lineSpacing: 6,
+        }
+      ).setOrigin(0.5).setDepth(29));
+
+      const back = add(this.add.rectangle(1320, 360, cardWidth, 50, 0x102138, 0.98)
+        .setStrokeStyle(2, 0x55b8ff, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(31));
+      add(this.add.text(1320, 360, 'RETURN TO WORKSHOP', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+      }).setOrigin(0.5).setDepth(32));
+      back.on('pointerdown', () => this.returnToWorkshop());
+      return;
+    }
 
     drawStageCard(
       powerTop, 0x62e8c7, 'POWER RUN  //  BASELINE ENGINE CURVE',
@@ -1746,7 +1815,11 @@ export default class DynoScene extends Phaser.Scene {
       return { box, text };
     };
 
-    this.runButton = makeButton(154, 'DYNO RUN // ¥5,000', () => this.handlePrimaryRunAction());
+    this.runButton = makeButton(
+      154,
+      this.isRentalSession ? 'DYNO RUN // SESSION PAID' : 'DYNO RUN // ¥5,000',
+      () => this.handlePrimaryRunAction()
+    );
 
     const modeSlots = this.getDynoGraphSlots(this.dynoRunMode);
     const accent = this.dynoRunMode === 'drivetrain' ? 0x43dfff : 0x62e8c7;
@@ -1978,6 +2051,11 @@ export default class DynoScene extends Phaser.Scene {
 
   enterDynoTest(mode) {
     if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
+    if (this.isRentalSession && mode !== 'power') return;
+    if (this.isRentalSession && this.getModeSessionRemaining('power') <= 0) {
+      this.daichiText?.setText('DAICHI // Rental session complete. Return to the workshop to book another pull.');
+      return;
+    }
     if (mode === 'drivetrain' && this.facilityTier < 2) {
       this.daichiText?.setText('DAICHI // Install the Stage II Load Dyno before running a drivetrain test.');
       return;
@@ -1994,9 +2072,13 @@ export default class DynoScene extends Phaser.Scene {
     this.drawActiveUi();
     this.redrawGraph();
     this.daichiText?.setText(
-      this.dynoRunMode === 'drivetrain'
-        ? 'DAICHI // Ready. Press DYNO RUN // ¥15,000 to begin the drivetrain test.'
-        : 'DAICHI // Ready. Press DYNO RUN // ¥5,000 to begin the power run.'
+      this.isRentalSession
+        ? 'DAICHI // Rental session is paid. One power run — make it count.'
+        : (
+            this.dynoRunMode === 'drivetrain'
+              ? 'DAICHI // Ready. Press DYNO RUN // ¥15,000 to begin the drivetrain test.'
+              : 'DAICHI // Ready. Press DYNO RUN // ¥5,000 to begin the power run.'
+          )
     );
   }
   
@@ -2045,6 +2127,11 @@ export default class DynoScene extends Phaser.Scene {
     const serviceCost = mode === 'drivetrain' ? 15000 : 5000;
     const servicePulls = mode === 'drivetrain' ? 3 : 1;
     let remaining = this.getModeSessionRemaining(mode);
+
+    if (this.isRentalSession && (mode !== 'power' || remaining <= 0)) {
+      this.daichiText?.setText('DAICHI // Rental session complete. Book another Stage I session from the workshop.');
+      return;
+    }
 
     if (remaining <= 0) {
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
@@ -2377,9 +2464,11 @@ export default class DynoScene extends Phaser.Scene {
 
   refreshPullCounter() {
     if (!this.pullCounterText) return;
-    const label = this.dynoUiMode === 'intro'
+    const label = this.isRentalSession
+      ? 'RENTED STAGE I SESSION'
+      : (this.dynoUiMode === 'intro'
       ? 'DYNO OPTIONS'
-      : (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN');
+      : (this.dynoRunMode === 'drivetrain' ? 'DRIVETRAIN TEST' : 'POWER RUN'));
     this.pullCounterText.setText(label);
   }
 
@@ -2392,7 +2481,7 @@ export default class DynoScene extends Phaser.Scene {
     let label = 'DYNO RUN // ¥' + cost;
     let enabled = true;
     if (this.awaitingNextPull) {
-      label = 'NEXT PULL';
+      label = this.isRentalSession ? 'NEXT PULL // PAID' : 'NEXT PULL';
     } else if (this.pullState === 'SETUP') {
       label = mode === 'drivetrain' ? 'SETUP // SELECT LAUNCH GEAR' : 'SETUP // SELECT STARTING GEAR';
       enabled = false;
@@ -2400,7 +2489,14 @@ export default class DynoScene extends Phaser.Scene {
       label = mode === 'drivetrain' ? 'DRIVETRAIN TEST // LIVE' : 'DYNO RUN // LIVE';
       enabled = false;
     } else if (this.pullState === 'ABORTED') {
-      label = mode === 'drivetrain' ? 'RETRY DRIVETRAIN TEST RUN' : 'RETRY DYNO RUN // ¥' + cost;
+      label = this.isRentalSession
+        ? 'RETRY RENTAL RUN // PAID'
+        : (mode === 'drivetrain' ? 'RETRY DRIVETRAIN TEST RUN' : 'RETRY DYNO RUN // ¥' + cost);
+    } else if (this.isRentalSession && remaining > 0) {
+      label = 'DYNO RUN // SESSION PAID';
+    } else if (this.isRentalSession && remaining <= 0) {
+      label = 'RENTAL SESSION COMPLETE';
+      enabled = false;
     } else if (remaining > 0) {
       label = 'CONTINUE // ' + remaining + ' RUN' + (remaining === 1 ? '' : 'S') + ' REMAINING';
     }
@@ -2987,7 +3083,10 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   returnToWorkshop() {
-    this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
+    const returnWorkshopId = this.isRentalSession
+      ? (this.rentalReturnWorkshopId || this.registry.get('workshopLocationId') || 'shinonomeWorkshop')
+      : DYNO_WAREHOUSE_ID;
+    this.registry.set('workshopLocationId', returnWorkshopId);
     this.registry.set('selectedCarId', this.carId);
     saveSessionState(this.registry);
 
@@ -3000,6 +3099,6 @@ export default class DynoScene extends Phaser.Scene {
     } catch (e) {}
 
     this.cleanup();
-    this.scene.start('GarageScene', { workshopLocationId: DYNO_WAREHOUSE_ID });
+    this.scene.start('GarageScene', { workshopLocationId: returnWorkshopId });
   }
 }

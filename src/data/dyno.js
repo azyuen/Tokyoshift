@@ -50,6 +50,7 @@ export const DYNO_STAGES = Object.freeze([
 ]);
 
 export const DYNO_WAREHOUSE_ID = 'shinonomeWarehouseStrip';
+export const DYNO_RENTAL_SESSION_COST = 100000;
 
 export function normaliseDynoFacilityTier(value = 0) {
   return Math.max(0, Math.min(3, Math.floor(Number(value) || 0)));

@@ -71,9 +71,10 @@ import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
   DYNO_WAREHOUSE_ID,
+  DYNO_RENTAL_SESSION_COST,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20261004-r325';
+} from '../data/dyno.js?v=20261004-r331';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -1700,7 +1701,73 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildDynoButton() {
-    if (this.getActiveWorkshop().id !== DYNO_WAREHOUSE_ID) return;
+    const activeWorkshop = this.getActiveWorkshop();
+
+    if (activeWorkshop.id !== DYNO_WAREHOUSE_ID) {
+      if (Number(activeWorkshop.tier || 0) > 1) return;
+
+      const x = SIDE.x + SIDE.w / 2;
+      const y = 608;
+      const rentalCost = DYNO_RENTAL_SESSION_COST;
+
+      this.dynoButton = this.add.rectangle(
+        x,
+        y,
+        SIDE.w - 32,
+        40,
+        0x102138,
+        1
+      ).setStrokeStyle(2, 0x55b8ff, 1)
+        .setDepth(40);
+
+      this.dynoButtonLabel = this.add.text(x, y, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#eef8ff',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(41);
+
+      this.refreshDynoButton = () => {
+        if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
+        const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+        const hasLocalCar = Boolean(this.selectedCarId);
+        const affordable = cash >= rentalCost;
+        const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
+
+        if (!hasLocalCar) {
+          this.dynoButtonLabel.setText('RENT DYNO // SELECT CAR').setColor('#817d84');
+          this.dynoButton
+            .setFillStyle(0x17181d, 1)
+            .setStrokeStyle(2, 0x514f55, 1);
+        } else {
+          this.dynoButtonLabel
+            .setText(
+              affordable
+                ? 'RENT STAGE I DYNO // ¥100,000'
+                : 'RENT DYNO // NEED ¥100,000'
+            )
+            .setColor(affordable ? '#f1fffb' : '#c99aa4');
+          this.dynoButton
+            .setFillStyle(affordable ? 0x0c2827 : 0x1b1418, 1)
+            .setStrokeStyle(2, affordable ? 0x62e8c7 : 0x79515a, 1);
+        }
+
+        if (lockedByTuning) this.dynoButton.disableInteractive();
+        else this.dynoButton.setInteractive({ useHandCursor: true });
+      };
+
+      this.dynoButton.on('pointerdown', () => {
+        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+        if (!this.selectedCarId) {
+          this.showWorkshopToast('SELECT A CAR BEFORE BOOKING THE DYNO');
+          return;
+        }
+        this.showDynoRentalPopup(activeWorkshop);
+      });
+
+      this.refreshDynoButton();
+      return;
+    }
 
     const stageOne = getDynoStage(1);
     const x = SIDE.x + SIDE.w / 2;
@@ -1777,6 +1844,137 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     this.refreshDynoButton();
+  }
+
+  showDynoRentalPopup(workshop = this.getActiveWorkshop()) {
+    if (!workshop || Number(workshop.tier || 0) > 1) return;
+    if (!this.selectedCarId) return;
+
+    const cost = DYNO_RENTAL_SESSION_COST;
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    const affordable = cash >= cost;
+    const depth = 160;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 790, 440, 0x08131f, 0.995)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(430, 245, 'BOOK STAGE I DYNO SESSION', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      300,
+      'Rent time on a basic AWD roller dyno. Your booking includes one paid power run, an official power / torque reading, and a saved graph for this car.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#b8cbd7',
+        fontStyle: '600',
+        wordWrap: { width: 700 },
+        lineSpacing: 4,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      405,
+      'RENTAL SESSION  //  ¥ ' + cost.toLocaleString('en-US') +
+        '\n1 POWER RUN  //  STAGE I ONLY',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: affordable ? '#ffe08a' : '#c99aa4',
+        lineSpacing: 8,
+      }
+    ).setDepth(depth + 2));
+
+    add(this.add.text(
+      430,
+      470,
+      'NO DRIVETRAIN TEST  //  NO STAGE III TUNING',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#829aa8',
+      }
+    ).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 555, 220, 54, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 555, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(
+      940,
+      555,
+      300,
+      54,
+      affordable ? 0x0c2827 : 0x2a171b,
+      1
+    ).setStrokeStyle(2, affordable ? 0x62e8c7 : 0xff6f7d, 1)
+      .setDepth(depth + 2));
+
+    const confirmText = add(this.add.text(
+      940,
+      555,
+      affordable
+        ? 'BOOK // ¥ ' + cost.toLocaleString('en-US')
+        : 'NOT ENOUGH CASH',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: affordable ? '#f1fffb' : '#ffc0c6',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+    blocker.on('pointerdown', close);
+
+    if (affordable) {
+      confirm.setInteractive({ useHandCursor: true });
+      confirm.on('pointerdown', () => {
+        const liveCash = Math.max(0, Number(this.registry.get('cash') || 0));
+        if (liveCash < cost) {
+          confirm.disableInteractive();
+          confirmText.setText('NOT ENOUGH CASH').setColor('#ffc0c6');
+          return;
+        }
+
+        const carId = this.selectedCarId;
+        const returnWorkshopId = workshop.id;
+        this.registry.set('cash', liveCash - cost);
+        this.registry.set('selectedCarId', carId);
+        this.registry.set('workshopLocationId', returnWorkshopId);
+        this.cashText?.setText('¥ ' + Number(liveCash - cost).toLocaleString('en-US'));
+        saveSessionState(this.registry);
+        close();
+
+        this.scene.start('DynoScene', {
+          rentalSession: true,
+          carId,
+          returnWorkshopId,
+        });
+      });
+    }
   }
 
   showDynoInstallPopup() {
