@@ -317,6 +317,55 @@ export const cars = {
     },
   },
 
+
+  s2000: {
+    ...base,
+    id: 's2000',
+    shortName: 'S2000',
+    name: 'Honda S2000 AP1',
+    description: 'A razor-sharp rear-drive roadster built around Honda\'s 9000 rpm F20C.',
+    engine: 'f20c',
+    engineModel: 'F20C',
+    powerKW: 184,
+    torqueNm: 218,
+    vehicleMassKg: 1260,
+    engineIdleRPM: 900,
+    engineRedlineRPM: 9000,
+    engineLimiterRPM: 9200,
+    engineInertia: 0.14,
+    gearRatios: [3.133, 2.045, 1.481, 1.161, 0.943, 0.763],
+    finalDriveRatio: 4.100,
+    drivetrainEfficiency: 0.90,
+    drivenAxleWeightFraction: 0.50,
+    launchLoadMultiplier: 1.00,
+    tyreGrip: 1.05,
+    clutchStrength: 380,
+    dragCoefficient: 0.35,
+    frontalAreaM2: 1.80,
+    turboSize: 0,
+    turboSpoolRate: 0,
+    maximumBoost: 0,
+    launchRPM: 6200,
+    visual: {
+      assetStem: 's2000',
+      engineKey: 'stockEngineB16B',
+      wheelKey: 'wheel5Spoke',
+      bodyScale: 0.238,
+      wheelScale: 0.04524,
+      rearOffsetX: -522,
+      frontOffsetX: 590,
+      wheelOffsetY: 207,
+      rearWheelOffsetX: -522,
+      frontWheelOffsetX: 590,
+      rearWheelOffsetY: 207,
+      frontWheelOffsetY: 207,
+      rearWheelWellRadius: 151,
+      frontWheelWellRadius: 151,
+      exhaustOffsetX: -885,
+      exhaustOffsetY: 216,
+    },
+  },
+
   minesR34: {
     ...base,
     id: 'minesR34',
@@ -1266,6 +1315,60 @@ Object.entries(REGULAR_ASSETS).forEach(([id, [
   });
 });
 
+
+// The current S2000 art is deliberately higher-resolution than the older
+// 1200x500 regular-car template. Keep its measured source geometry explicit
+// instead of forcing it through REGULAR_ASSETS' 600px centre assumption.
+const S2000_CANVAS = {
+  width: 1942,
+  height: 809,
+  visibleWidth: 1868,
+  targetWidth: 445,
+  rear: { x: 449, y: 612, radius: 151 },
+  front: { x: 1561, y: 612, radius: 151 },
+};
+
+{
+  const visual = cars.s2000.visual;
+  const bodyScale = S2000_CANVAS.targetWidth / S2000_CANVAS.visibleWidth;
+  const rearWheelOffsetX = S2000_CANVAS.rear.x - S2000_CANVAS.width / 2;
+  const frontWheelOffsetX = S2000_CANVAS.front.x - S2000_CANVAS.width / 2;
+  const rearWheelOffsetY = S2000_CANVAS.rear.y - S2000_CANVAS.height / 2;
+  const frontWheelOffsetY = S2000_CANVAS.front.y - S2000_CANVAS.height / 2;
+
+  Object.assign(visual, {
+    assetStem: 's2000',
+    modularAssetRoot: 'assets/Cars',
+    modularAssetStem: 's2000',
+    bodyPath: 'assets/Cars/s2000_stock_body.png',
+    paintPath: 'assets/Cars/s2000_stock_paint.png',
+    overlayPath: 'assets/Cars/s2000_stock_body.png',
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: bodyScale / 0.36,
+    bodyScale,
+    wheelFitMode: 'visible-well',
+    wheelFill: 1.0,
+    levelWheelContact: false,
+    rearOffsetX: rearWheelOffsetX,
+    frontOffsetX: frontWheelOffsetX,
+    wheelOffsetY: (rearWheelOffsetY + frontWheelOffsetY) / 2,
+    rearWheelOffsetX,
+    frontWheelOffsetX,
+    rearWheelOffsetY,
+    frontWheelOffsetY,
+    rearWheelWellRadius: S2000_CANVAS.rear.radius,
+    frontWheelWellRadius: S2000_CANVAS.front.radius,
+    rearWheelBackingRadius: S2000_CANVAS.rear.radius,
+    frontWheelBackingRadius: S2000_CANVAS.front.radius,
+    exhaustOffsetX: -885,
+    exhaustOffsetY: 216,
+  });
+}
+
 // Unique collector cars keep their existing fixed body and wheel assets.
 Object.values(cars).forEach(car => {
   car.visual = {
@@ -1275,7 +1378,7 @@ Object.values(cars).forEach(car => {
 });
 
 export const carOrder = [
-  'ae86', 'ef', 'ek9', 'fc3s', 'rx7fd', 'rx8', 'gr86',
+  'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8', 'gr86',
   'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
 ];
