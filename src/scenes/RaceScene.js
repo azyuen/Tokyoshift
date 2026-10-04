@@ -40,7 +40,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r347';
+} from '../state/GameState.js?v=20261005-r348';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -66,8 +66,8 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r347';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r347';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r348';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
 import {
@@ -83,7 +83,7 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r347';
+} from '../data/crewSystem.js?v=20261005-r348';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
