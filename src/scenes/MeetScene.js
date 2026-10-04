@@ -86,7 +86,6 @@ import {
   MARKET_BASE_PRICES,
 } from '../data/centralTokyo.js?v=20261005-r345';
 import {
-  isCrewUnlocked,
   isCrewComplete,
   getCrewInviteInterest,
   clearCrewInviteInterest,
@@ -965,8 +964,9 @@ export default class MeetScene extends Phaser.Scene {
 
     return () => {
       carObjects.forEach(obj => {
-        try { obj?.clearMask?.(true); } catch (e) {}
+        try { obj?.clearMask?.(false); } catch (e) {}
       });
+      try { mask?.destroy?.(); } catch (e) {}
       objects.forEach(obj => {
         try { obj?.destroy?.(); } catch (e) {}
       });
