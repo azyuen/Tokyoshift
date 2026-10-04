@@ -88,18 +88,19 @@ import {
 import {
   isCrewUnlocked,
   isCrewComplete,
-  rollCrewRecruitChallenge,
+  getCrewInviteInterest,
+  clearCrewInviteInterest,
+  acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
   getStockCrewChallengeCarIds,
   createStockOpponentState,
-  acceptCrewMember,
-  declinePendingCrewRecruit,
   getCrewMemberForRegion,
   getCrewBattleProgress,
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r345';
+} from '../data/crewSystem.js?v=20261005-r346';
+import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r346';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
