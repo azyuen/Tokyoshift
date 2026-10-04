@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
+import { cars, carOrder } from '../data/cars.js?v=20261005-r343';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r343';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260929-r275';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -47,9 +47,9 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20260929-r279';
+} from '../data/centralTokyo.js?v=20261005-r343';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r345';
+import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r343';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -103,7 +103,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261004-r333';
+} from '../data/visualMods.js?v=20261005-r343';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
