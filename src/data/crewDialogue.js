@@ -63,10 +63,24 @@ export const CREW_INVITE_DIALOGUE = Object.freeze({
   soraKanzaki: Object.freeze({}),
 });
 
-export function getCrewInviteDialogue(characterId) {
+function interpolateDialogue(value, variables = {}) {
+  if (typeof value !== 'string') return value;
+  return value.replace(/\{([A-Z0-9_]+)\}/g, (_, key) =>
+    variables[key] == null ? '{' + key + '}' : String(variables[key])
+  );
+}
+
+export function getCrewInviteDialogue(characterId, variables = {}) {
   const override = CREW_INVITE_DIALOGUE[String(characterId || '')] || {};
-  return {
+  const merged = {
     ...DEFAULT_CREW_INVITE_DIALOGUE,
     ...override,
   };
+
+  return Object.fromEntries(
+    Object.entries(merged).map(([key, value]) => [
+      key,
+      interpolateDialogue(value, variables),
+    ])
+  );
 }
