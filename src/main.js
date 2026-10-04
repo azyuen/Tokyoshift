@@ -52,6 +52,7 @@ async function startTokyoShift() {
       CharacterSelectScene,
       ProfileSelectScene,
       GarageScene,
+      CrewScene,
       DynoScene,
       CentralTokyoScene,
       MeetScene,
@@ -64,7 +65,8 @@ async function startTokyoShift() {
       loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261004-r333'),
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261004-r333'),
       loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261004-r333'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261004-r333'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261005-r342'),
+      loadScene('CREW', './scenes/CrewScene.js?v=20261005-r342'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261004-r333'),
       loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261004-r333'),
       loadScene('MEET', './scenes/MeetScene.js?v=20261004-r333'),
@@ -112,7 +114,7 @@ async function startTokyoShift() {
         height: GAME_HEIGHT,
       },
       scene: [
-        BootScene, ProfileSelectScene, CharacterSelectScene, GarageScene, DynoScene,
+        BootScene, ProfileSelectScene, CharacterSelectScene, GarageScene, CrewScene, DynoScene,
         CentralTokyoScene, MeetScene, RaceScene, RunOverScene, ResultScene,
         TunerShopScene, WheelCalibrationScene
       ],
