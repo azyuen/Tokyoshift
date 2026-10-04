@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars } from '../data/cars.js?v=20261004-r333';
+import { cars } from '../data/cars.js?v=20261005-r343';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
@@ -13,7 +13,7 @@ import {
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261004-r319';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261005-r343';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
 
