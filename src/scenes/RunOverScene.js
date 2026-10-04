@@ -6,7 +6,7 @@ import {
   getActiveProfileIndex,
   normaliseStarterCarId,
   saveSessionState,
-} from '../state/GameState.js?v=20261005-r345';
+} from '../state/GameState.js?v=20261005-r346';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
