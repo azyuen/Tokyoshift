@@ -88,7 +88,7 @@ export const CENTRAL_TOKYO_LOCATIONS = {
     },
     winsRequired: 0,
     championshipsRequired: 7,
-    garageTierRequired: 2,
+    garageTierRequired: 0,
   },
 };
 
