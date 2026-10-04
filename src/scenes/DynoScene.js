@@ -2,8 +2,8 @@ import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
-import { cars } from '../data/cars.js?v=20260928-r232';
-import { characters } from '../data/characters.js?v=20261004-r322';
+import { cars } from '../data/cars.js?v=20261004-r333';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
 import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
@@ -39,7 +39,7 @@ import {
   getVisualModWheelVisual,
   createVisualModLayers,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20260929-r266';
+} from '../data/visualMods.js?v=20261004-r333';
 import {
   createTunerDecalLayers,
   preloadTunerDecalAssets,
@@ -93,7 +93,7 @@ export default class DynoScene extends Phaser.Scene {
 
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual) {
-      queueImage(daichi.visual.spriteKey, daichi.visual.path + '?v=20260926-r213');
+      queueImage(daichi.visual.spriteKey, getCharacterAssetUrl(daichi.visual.path));
     }
 
     const carId = this.resolveCarId();
