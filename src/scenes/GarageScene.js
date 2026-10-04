@@ -34,9 +34,9 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r346';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r347';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261004-r320';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r346';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r347';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
@@ -49,7 +49,7 @@ import {
   isArkonDen,
 } from '../data/centralTokyo.js?v=20261005-r345';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r346';
+import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r347';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
