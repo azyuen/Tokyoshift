@@ -32,7 +32,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r345';
+} from '../state/GameState.js?v=20261005-r346';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import {
   getGarageDeliveryOptions,
@@ -54,7 +54,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20260928-r235';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r346';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
