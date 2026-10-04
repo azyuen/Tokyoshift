@@ -1,4 +1,4 @@
-import Vehicle from '../vehicles/Vehicle.js?v=20260929-r268';
+import Vehicle from '../vehicles/Vehicle.js?v=20261004-r325';
 import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
 import {
@@ -25,7 +25,7 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20260928-r232';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20260930-r288';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,

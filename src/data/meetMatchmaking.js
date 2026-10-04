@@ -1,7 +1,7 @@
 import { cars, carOrder } from './cars.js?v=20260928-r232';
 import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260929-r271';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r319';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
 import { applyDifficultyToMeetBands } from './playerDifficulty.js?v=20260929-r271';
 
 function weightedChoice(entries, random = Math.random) {
