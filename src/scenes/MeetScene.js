@@ -99,7 +99,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r342';
+} from '../data/crewSystem.js?v=20261005-r343';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
