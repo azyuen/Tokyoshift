@@ -1705,7 +1705,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedCar = cars[selectedCarId];
     const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
     const collectorLocked = Boolean(
-      selectedCar?.tuningLocked || selectedState.collector || selectedState.immutable
+      selectedCar?.tuningLocked ||
+      selectedState.collector ||
+      selectedState.immutable ||
+      selectedCar?.crewLoan ||
+      selectedState.crewLoan ||
+      selectedCar?.nonTradeable ||
+      selectedState.nonTradeable
     );
     const starterOnly = Boolean(
       ownedCars.length === 1 &&
@@ -1732,7 +1738,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       canSell
         ? 'SELL ' + selectedCar.shortName + ' // ' + money(sellPrice)
         : collectorLocked
-          ? 'COLLECTOR CAR NOT TRADED'
+          ? (selectedCar?.crewLoan || selectedState.crewLoan
+              ? 'CREW LOAN // NOT FOR SALE'
+              : 'COLLECTOR CAR NOT TRADED')
           : starterOnly
             ? 'ONLY CAR // NOT FOR SALE'
             : 'KEEP AT LEAST ONE CAR',
