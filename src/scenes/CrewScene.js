@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261005-r342';
+import { cars } from '../data/cars.js?v=20261005-r343';
 import {
   characters,
   getCharacterAssetUrl,
@@ -19,10 +19,10 @@ import {
   getRegionalCrewBattleReward,
   CREW_BATTLE_LINEUP_SIZE,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r344';
+} from '../data/crewSystem.js?v=20261005-r343';
 import {
   saveSessionState,
-} from '../state/GameState.js?v=20261005-r342';
+} from '../state/GameState.js?v=20261005-r343';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
@@ -38,7 +38,7 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261004-r333';
+} from '../data/visualMods.js?v=20261005-r343';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
