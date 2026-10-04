@@ -5,7 +5,7 @@ import {
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20261005-r347';
+} from '../state/GameState.js?v=20261005-r348';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
