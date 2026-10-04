@@ -40,7 +40,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r345';
+} from '../state/GameState.js?v=20261005-r346';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
@@ -67,7 +67,7 @@ import {
 } from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r346';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
 import {
