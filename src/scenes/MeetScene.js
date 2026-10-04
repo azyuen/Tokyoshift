@@ -1159,12 +1159,13 @@ export default class MeetScene extends Phaser.Scene {
       .setStrokeStyle(1, 0xff7cac, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(930, 535, 'DECLINE', {
+    add(this.add.text(930, 535, 'RACE LATER', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffc9db'
     }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
 
     decline.on('pointerdown', () => {
-      clearCrewRecruitChallenge(this.registry);
+      // The invitation has already been accepted. Closing this selector only
+      // postpones the stock challenge; the same driver waits for the player.
       saveSessionState(this.registry);
       close();
     });
