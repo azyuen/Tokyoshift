@@ -16,6 +16,22 @@ export const TUNER_TEAM_PITY_ARRIVALS = 4;
 export const TUNER_TEAM_REOFFER_MIN_VISITS = 5;
 export const TUNER_TEAM_REOFFER_MAX_VISITS = 10;
 
+export const REGION_CHAMPIONSHIP_ORDER = Object.freeze([
+  'ODAIBA',
+  'SHINAGAWA',
+  'TATSUMI',
+  'SHIBUYA',
+  'YOKOHAMA',
+  'DAIKOKU',
+  'SHINJUKU',
+]);
+
+export function getRegionalChampionshipRank(regionId) {
+  const key = String(regionId || '').trim().toUpperCase();
+  const index = REGION_CHAMPIONSHIP_ORDER.indexOf(key);
+  return index >= 0 ? index + 1 : null;
+}
+
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
     const value = source.get(key);
@@ -36,13 +52,21 @@ const REGION_OFFSETS = {
 };
 
 const REGION_CARS = {
-  ODAIBA: ['ae86', 'ek9', 'fc3s', 'r32', 'evo3', 'wrx22b', 'r32'],
-  SHINAGAWA: ['ek9', 'ae86', 'fc3s', 'wrx22b', 'r32', 'evo3', 'r32'],
-  TATSUMI: ['evo3', 'r32', 'wrx22b', 'fc3s', 'evo3', 'r32', 'wrx22b'],
-  SHIBUYA: ['ek9', 'fc3s', 'ae86', 'r32', 'evo3', 'wrx22b', 'r32'],
-  SHINJUKU: ['r32', 'evo3', 'wrx22b', 'fc3s', 'r32', 'evo3', 'wrx22b'],
-  YOKOHAMA: ['r32', 'wrx22b', 'evo3', 'fc3s', 'r32', 'wrx22b', 'evo3'],
-  DAIKOKU: ['fc3s', 'r32', 'evo3', 'wrx22b', 'r32', 'evo3', 'wrx22b'],
+  // Temporary Option 2 pools using the current roster. These are intentionally
+  // progression-ordered and may duplicate cars until the full 42-car roster lands.
+  ODAIBA: ['ej1', 'ae86', 'ef', 'a60', 'fc3s', 'ek9', 'ek9'],
+  SHINAGAWA: ['ae86', 'ef', 'a60', 'ek9', 'fc3s', 'rx8', 'rx8'],
+  TATSUMI: ['a60', 'ek9', 'fc3s', 'rx8', 's2000', 'evo3', 'evo3'],
+  SHIBUYA: ['fc3s', 'ek9', 'rx8', 's2000', 'evo3', 'r32', 'r32'],
+
+  // Rank 5: final Canal Yard / Level 2 graduation region.
+  YOKOHAMA: ['rx8', 's2000', 'evo3', 'rx7fd', 'evo5', 'r32', 'r32'],
+
+  // Rank 6: Warehouse-era region.
+  DAIKOKU: ['s2000', 'evo3', 'r32', 'rx7fd', 'nsx', '3000gt', '3000gt'],
+
+  // Rank 7: hardest regional championship.
+  SHINJUKU: ['wrx22b', 'evo5', 'evo6', 'jza80', 'r34', '3000gt', '3000gt'],
 };
 
 const REGION_RACE_PATTERNS = {
@@ -252,6 +276,7 @@ export function buildTunerTeamChallengeRounds(regionId, playerCharacterId = '') 
 
     return {
       stageIndex: index,
+      regionRank: getRegionalChampionshipRank(key),
       characterId: roster[index] || roster[roster.length - 1] || 'kaitoFujimori',
       carId: cars[index] || cars[cars.length - 1] || 'r32',
       paintColor: paintColors[index % paintColors.length],
