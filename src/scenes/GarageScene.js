@@ -67,7 +67,7 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261004-r319';
+} from '../data/workshopProgression.js?v=20261005-r344';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
