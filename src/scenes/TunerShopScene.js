@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars } from '../data/cars.js?v=20260928-r232';
-import { characters } from '../data/characters.js?v=20260926-r213';
+import { cars } from '../data/cars.js?v=20261004-r333';
+import { characters } from '../data/characters.js?v=20261004-r333';
 import {
   getTunerShopForRegion,
   getTunerShopPhaseBackground,
@@ -19,7 +19,7 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20260929-r266';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261004-r333';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -68,7 +68,7 @@ export default class TunerShopScene extends Phaser.Scene {
     let queued = 0;
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
-      this.load.image(key, path + '?v=20260924-r176');
+      this.load.image(key, path + '?v=20261004-r333');
       queued += 1;
     };
 
