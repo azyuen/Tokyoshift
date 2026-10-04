@@ -17,7 +17,7 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20261004-r323';
+} from '../data/characters.js?v=20261004-r324';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
