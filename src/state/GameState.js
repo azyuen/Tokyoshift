@@ -77,6 +77,7 @@ export function createDefaultGameState(options = {}) {
     tunerChallengeRevealPending: null,
     crewMembers: {},
     crewRecruitmentState: {},
+    crewInviteInterest: null,
     crewRecruitChallenge: null,
     crewPendingRecruit: null,
     crewBattleProgress: {},
@@ -793,6 +794,10 @@ export function normaliseState(input = {}) {
       input.crewRecruitmentState && typeof input.crewRecruitmentState === 'object'
         ? input.crewRecruitmentState
         : {},
+    crewInviteInterest:
+      input.crewInviteInterest && typeof input.crewInviteInterest === 'object'
+        ? input.crewInviteInterest
+        : null,
     crewRecruitChallenge:
       input.crewRecruitChallenge && typeof input.crewRecruitChallenge === 'object'
         ? input.crewRecruitChallenge
