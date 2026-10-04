@@ -50,7 +50,7 @@ import {
   getWorkshopStorageCapacity,
   getWorkshopUsage,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261004-r319';
+} from '../data/workshopProgression.js?v=20261005-r344';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
