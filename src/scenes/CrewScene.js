@@ -13,8 +13,13 @@ import {
   removeCrewMember,
   isCrewUnlocked,
   getCrewBattleWinCount,
+  getCrewBattleProgress,
+  getCrewBattleUnits,
+  buildRegionalCrewBattleRounds,
+  getRegionalCrewBattleReward,
+  CREW_BATTLE_LINEUP_SIZE,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r342';
+} from '../data/crewSystem.js?v=20261005-r344';
 import {
   saveSessionState,
 } from '../state/GameState.js?v=20261005-r342';
@@ -120,6 +125,7 @@ export default class CrewScene extends Phaser.Scene {
       CREW_REGIONS.find(regionId => members[regionId]) || CREW_REGIONS[0];
     this.contentObjects = [];
     this.carObjects = [];
+    this.battleOverlayObjects = [];
 
     this.drawShell();
     this.render();
@@ -283,6 +289,27 @@ export default class CrewScene extends Phaser.Scene {
         wordWrap: { width: 760 },
       }
     ).setDepth(20));
+
+    if (complete) {
+      const battleButton = this.addContent(this.add.rectangle(
+        1300,
+        150,
+        330,
+        54,
+        0x35280f,
+        0.96
+      ).setStrokeStyle(2, 0xffc65c, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(24));
+
+      this.addContent(this.add.text(1300, 150, 'REGIONAL CREW BATTLES  >', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#fff2c2',
+      }).setOrigin(0.5).setDepth(25));
+
+      battleButton.on('pointerdown', () => this.showCrewBattleRegions());
+    }
 
     const regionY = CARDS.y + 72;
     const left = CARDS.x + 82;
@@ -528,6 +555,346 @@ export default class CrewScene extends Phaser.Scene {
       close();
       this.render();
     });
+  }
+
+  closeCrewBattleOverlay() {
+    (this.battleOverlayObjects || []).forEach(obj => obj?.destroy?.());
+    this.battleOverlayObjects = [];
+  }
+
+  showCrewBattleRegions() {
+    if (!isCrewComplete(this.registry)) return;
+    this.closeCrewBattleOverlay();
+
+    const depth = 150;
+    const add = obj => {
+      this.battleOverlayObjects.push(obj);
+      return obj;
+    };
+    const progress = getCrewBattleProgress(this.registry);
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.90)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 1190, 660, 0x08131f, 0.998)
+      .setStrokeStyle(3, 0xffc65c, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 124, 'REGIONAL CREW BATTLES', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '16px',
+      color: '#fff3c1',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      170,
+      'Your recruit has left their old team. Pick five of your eight drivers to face the five who remain.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#b9cbd5',
+        fontStyle: '600',
+        align: 'center',
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    CREW_REGIONS.forEach((regionId, index) => {
+      const col = index % 4;
+      const row = Math.floor(index / 4);
+      const x = 350 + col * 285;
+      const y = 280 + row * 165;
+      const done = Boolean(progress[regionId]?.completed);
+      const reward = getRegionalCrewBattleReward(regionId);
+
+      const box = add(this.add.rectangle(
+        x,
+        y,
+        252,
+        132,
+        done ? 0x123024 : 0x111e2b,
+        1
+      ).setStrokeStyle(2, done ? 0x62e8c7 : 0xffc65c, 0.92)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 2));
+
+      add(this.add.text(x, y - 40, regionLabel(regionId), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(depth + 3));
+
+      add(this.add.text(
+        x,
+        y + 2,
+        done ? 'DEFEATED ★' : '5-DRIVER CREW\nFIRST TO 3',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: done ? '#8ff0d8' : '#bed0da',
+          align: 'center',
+          lineSpacing: 5,
+        }
+      ).setOrigin(0.5).setDepth(depth + 3));
+
+      add(this.add.text(
+        x,
+        y + 43,
+        '¥' + Number(reward.cash || 0).toLocaleString('en-US') + ' + 1 COUPON',
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '8px',
+          color: '#ffd88b',
+          fontStyle: '700',
+        }
+      ).setOrigin(0.5).setDepth(depth + 3));
+
+      box.on('pointerdown', () => this.showCrewBattleLineup(regionId));
+    });
+
+    const close = add(this.add.rectangle(780, 684, 220, 46, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    add(this.add.text(780, 684, 'CLOSE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#d3e0e7',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    close.on('pointerdown', () => this.closeCrewBattleOverlay());
+  }
+
+  showCrewBattleLineup(regionId) {
+    this.closeCrewBattleOverlay();
+
+    const units = getCrewBattleUnits(this.registry);
+    const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
+    if (units.length < 8 || rounds.length !== CREW_BATTLE_LINEUP_SIZE) return;
+
+    const selected = [];
+    const depth = 150;
+    const cards = [];
+    const add = obj => {
+      this.battleOverlayObjects.push(obj);
+      return obj;
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.92)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 1280, 680, 0x08131f, 0.998)
+      .setStrokeStyle(3, 0xffc65c, 0.96).setDepth(depth + 1));
+
+    add(this.add.text(780, 112, regionLabel(regionId) + ' // SET RUNNING ORDER', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#fff3c1',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const instruction = add(this.add.text(
+      780,
+      153,
+      'SELECT FIVE DRIVERS IN THE ORDER THEY WILL RACE',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#a9c4d2',
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    units.forEach((unit, index) => {
+      const col = index % 4;
+      const row = Math.floor(index / 4);
+      const x = 330 + col * 300;
+      const y = 270 + row * 178;
+      const character = characters[unit.characterId];
+      const car = cars[unit.carId];
+
+      const box = add(this.add.rectangle(
+        x,
+        y,
+        270,
+        142,
+        0x101d29,
+        1
+      ).setStrokeStyle(1, 0x39586c, 0.86)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 2));
+
+      add(this.add.text(x - 116, y - 48, unit.player ? 'YOU' : regionLabel(unit.regionId), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: unit.player ? '#ffd88b' : '#78dff2',
+      }).setDepth(depth + 3));
+
+      add(this.add.text(
+        x - 116,
+        y - 12,
+        String(character?.name || unit.characterId).toUpperCase(),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: '#ffffff',
+          wordWrap: { width: 190 },
+        }
+      ).setDepth(depth + 3));
+
+      add(this.add.text(x - 116, y + 29, car?.shortName || unit.carId, {
+        fontFamily: BODY_FONT,
+        fontSize: '9px',
+        color: '#a9c5d3',
+        fontStyle: '700',
+      }).setDepth(depth + 3));
+
+      const order = add(this.add.text(x + 102, y - 44, '', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '17px',
+        color: '#69ecff',
+      }).setOrigin(0.5).setDepth(depth + 4));
+
+      cards.push({ unit, box, order });
+
+      box.on('pointerdown', () => {
+        const existing = selected.indexOf(unit.id);
+        if (existing >= 0) {
+          selected.splice(existing, 1);
+        } else if (selected.length < CREW_BATTLE_LINEUP_SIZE) {
+          selected.push(unit.id);
+        }
+        redraw();
+      });
+    });
+
+    const startBox = add(this.add.rectangle(
+      930,
+      690,
+      360,
+      48,
+      0x17191d,
+      1
+    ).setStrokeStyle(2, 0x555b60, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+
+    const startLabel = add(this.add.text(930, 690, 'START CREW BATTLE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#68747b',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const redraw = () => {
+      cards.forEach(card => {
+        const orderIndex = selected.indexOf(card.unit.id);
+        card.box.setFillStyle(orderIndex >= 0 ? 0x163b42 : 0x101d29, 1);
+        card.box.setStrokeStyle(
+          orderIndex >= 0 ? 3 : 1,
+          orderIndex >= 0 ? 0x69ecff : 0x39586c,
+          orderIndex >= 0 ? 1 : 0.86
+        );
+        card.order.setText(orderIndex >= 0 ? String(orderIndex + 1) : '');
+      });
+
+      instruction.setText(
+        selected.length < CREW_BATTLE_LINEUP_SIZE
+          ? 'SELECT ' + (CREW_BATTLE_LINEUP_SIZE - selected.length) + ' MORE // TAP AGAIN TO REMOVE'
+          : 'LINEUP READY // ORDER 1 → ' + CREW_BATTLE_LINEUP_SIZE
+      );
+
+      const ready = selected.length === CREW_BATTLE_LINEUP_SIZE;
+      startBox
+        .setFillStyle(ready ? 0x3a2a0e : 0x17191d, 1)
+        .setStrokeStyle(2, ready ? 0xffc65c : 0x555b60, 1);
+      startLabel.setColor(ready ? '#fff3c1' : '#68747b');
+    };
+
+    startBox.on('pointerdown', () => {
+      if (selected.length !== CREW_BATTLE_LINEUP_SIZE) return;
+      const lineup = selected
+        .map(id => units.find(unit => unit.id === id))
+        .filter(Boolean);
+      this.startCrewBattle(regionId, lineup, rounds);
+    });
+
+    const back = add(this.add.rectangle(550, 690, 230, 48, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(550, 690, 'BACK', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#d3e0e7',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    back.on('pointerdown', () => this.showCrewBattleRegions());
+    redraw();
+  }
+
+  startCrewBattle(regionId, lineup, rounds) {
+    if (
+      lineup.length !== CREW_BATTLE_LINEUP_SIZE ||
+      rounds.length !== CREW_BATTLE_LINEUP_SIZE
+    ) return;
+
+    const playerUnit = getCrewBattleUnits(this.registry).find(unit => unit.player);
+    this.registry.set('crewBattleState', {
+      active: true,
+      regionId: String(regionId).toUpperCase(),
+      roundIndex: 0,
+      playerWins: 0,
+      opponentWins: 0,
+      lineup: JSON.parse(JSON.stringify(lineup)),
+      rounds: JSON.parse(JSON.stringify(rounds)),
+      originalSelectedCarId: playerUnit?.carId || null,
+      startedAt: Date.now(),
+    });
+
+    this.launchCrewBattleRound();
+  }
+
+  launchCrewBattleRound() {
+    const state = this.registry.get('crewBattleState');
+    if (!state?.active) return;
+
+    const index = Math.max(
+      0,
+      Math.min(CREW_BATTLE_LINEUP_SIZE - 1, Number(state.roundIndex || 0))
+    );
+    const unit = state.lineup?.[index];
+    const round = state.rounds?.[index];
+    if (!unit || !round || !cars[unit.carId] || !cars[round.carId]) return;
+
+    this.registry.set('selectedCarId', unit.carId);
+    this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', 0xffffff);
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedOpponentBuildRating', round.buildRating);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState);
+    this.registry.set(
+      'selectedOpponentBuildArchetype',
+      round.opponentBuildState?.buildArchetype || null
+    );
+    this.registry.set('selectedRaceCategory', 'CREW_BATTLE');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', round.distanceM);
+    this.registry.set('selectedRaceDeal', 'CREW_BATTLE');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'CrewScene');
+    this.registry.set('raceDistrict', state.regionId);
+    this.registry.set(
+      'raceLocationLabel',
+      'CREW BATTLE // ' + (index + 1) + '/' + CREW_BATTLE_LINEUP_SIZE
+    );
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
   }
 
   renderCar(car, state, x, y, targetWidth) {
