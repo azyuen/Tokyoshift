@@ -77,7 +77,7 @@ import {
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r346';
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20260926-r214';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261005-r346';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
