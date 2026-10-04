@@ -1,11 +1,11 @@
-import { cars } from './cars.js?v=20261005-r343';
+import { cars } from './cars.js?v=20261005-r345';
 import {
   CREW_REGIONS,
   getRegionalCrewRoster,
   getRecruitableRegionalMembers,
   getCrewBaseCarId,
   getCrewLoanCarId,
-} from './crewRoster.js?v=20261005-r343';
+} from './crewRoster.js?v=20261005-r345';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
