@@ -74,7 +74,7 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r324';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20260928-r240';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20260926-r214';
 import {
