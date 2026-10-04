@@ -501,6 +501,7 @@ export default class DynoScene extends Phaser.Scene {
     this.clearShiftLabels();
     this.dynoUiMode = 'intro';
     if (this.controls) this.controls.enabled = false;
+    this.setDynoShifterShieldEnabled(false);
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
     if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
     this.dynoHud?.gearBack?.setVisible(false);
@@ -730,9 +731,15 @@ export default class DynoScene extends Phaser.Scene {
       'outline: none',
       'text-align: center',
     ].join(';'), safeInitial).setDepth(depth + 3));
-    input.node?.setAttribute?.('maxlength', String(maxLength));
-    input.node?.setAttribute?.('autocomplete', 'off');
-    input.node?.setAttribute?.('autocapitalize', 'characters');
+    if (input.node) {
+      input.node.type = 'text';
+      input.node.value = safeInitial;
+      input.node.setAttribute('maxlength', String(maxLength));
+      input.node.setAttribute('autocomplete', 'off');
+      input.node.setAttribute('autocapitalize', 'characters');
+      input.node.setAttribute('spellcheck', 'false');
+      input.node.setAttribute('inputmode', 'text');
+    }
     window.setTimeout(() => {
       try {
         input.node?.focus?.();
@@ -761,7 +768,8 @@ export default class DynoScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 3));
 
     const submit = () => {
-      const value = String(input.node?.value || '').replace(/\s+/g, ' ').trim().slice(0, maxLength);
+      const rawValue = String(input.node?.value || safeInitial || '');
+      const value = rawValue.replace(/\s+/g, ' ').trim().slice(0, maxLength);
       if (!value) return;
       this.closeTextEntryPopup();
       onConfirm?.(value);
@@ -784,6 +792,7 @@ export default class DynoScene extends Phaser.Scene {
     if (this.facilityTier < 3 || !this.carId) return;
 
     if (this.controls) this.controls.enabled = false;
+    this.setDynoShifterShieldEnabled(false);
     [
       this.controls?.clutchSprite,
       this.controls?.nosSprite,
@@ -898,6 +907,30 @@ export default class DynoScene extends Phaser.Scene {
         fontStyle: '700',
         align: 'center',
         wordWrap: { width: 405 },
+      }
+    ).setOrigin(0.5).setDepth(32));
+
+    const activeTune = normaliseStage3Calibration(this.carState || {});
+    const activeLabels = describeStage3Calibration(activeTune);
+    const pendingTune = normaliseStage3Calibration(this.stage3PendingTune || {});
+    const hasPendingChanges =
+      activeTune.ecuBias !== pendingTune.ecuBias ||
+      activeTune.boostBias !== pendingTune.boostBias ||
+      activeTune.gearBias !== pendingTune.gearBias;
+
+    add(this.add.text(
+      panelX,
+      220,
+      'ACTIVE // ECU ' + activeLabels.ecu +
+        ' // BOOST ' + activeLabels.boost +
+        ' // GEARS ' + activeLabels.gears +
+        (hasPendingChanges ? ' // PENDING CHANGES' : ''),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '4px',
+        color: hasPendingChanges ? '#ffcf71' : '#72e7bd',
+        align: 'center',
+        wordWrap: { width: 410 },
       }
     ).setOrigin(0.5).setDepth(32));
 
@@ -1103,6 +1136,7 @@ export default class DynoScene extends Phaser.Scene {
   openStage3PresetManager() {
     if (this.facilityTier < 3 || !this.carId) return;
 
+    this.setDynoShifterShieldEnabled(false);
     this.clearUiObjects('activeUiObjects');
     this.dynoUiMode = 'stage3Presets';
     this.setHeaderContext('STAGE III // PRESETS');
@@ -1132,6 +1166,16 @@ export default class DynoScene extends Phaser.Scene {
         fontStyle: '700',
       }
     ).setOrigin(0.5).setDepth(32));
+
+    if (this.stage3StatusMessage) {
+      add(this.add.text(x, 154, this.stage3StatusMessage, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '4px',
+        color: '#ffe08a',
+        align: 'center',
+        wordWrap: { width: 420 },
+      }).setOrigin(0.5).setDepth(32));
+    }
 
     presets.forEach((preset, index) => {
       const y = 235 + index * 155;
@@ -1339,11 +1383,11 @@ export default class DynoScene extends Phaser.Scene {
 
     const labels = describeStage3Calibration(next);
     this.stage3StatusMessage = changed
-      ? 'SAVED // ECU ' + labels.ecu +
+      ? 'APPLIED // ECU ' + labels.ecu +
         ' // BOOST ' + labels.boost +
         ' // GEARS ' + labels.gears +
         ' // OFFICIAL RATING CLEARED'
-      : 'TUNE UNCHANGED';
+      : 'ACTIVE TUNE ALREADY MATCHES THESE SETTINGS';
 
     this.renderStage3Tuning();
   }
@@ -1351,6 +1395,7 @@ export default class DynoScene extends Phaser.Scene {
   
   openGraphManagement() {
     if (this.controls) this.controls.enabled = false;
+    this.setDynoShifterShieldEnabled(false);
     [this.controls?.clutchSprite, this.controls?.nosSprite, this.controls?.shifterSprite, this.controls?.throttleSprite].forEach(obj => obj?.setVisible(false));
     if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
     this.dynoHud?.gearBack?.setVisible(false);
@@ -1623,9 +1668,16 @@ export default class DynoScene extends Phaser.Scene {
     this.refreshRunButton();
     this.refreshGraphManagement();
   }
+  setDynoShifterShieldEnabled(enabled = true) {
+    if (!this.dynoShifterInputShield) return;
+    if (enabled) this.dynoShifterInputShield.setInteractive();
+    else this.dynoShifterInputShield.disableInteractive();
+  }
+
   ensureControls() {
     if (this.controls) {
       this.controls.enabled = true;
+      this.setDynoShifterShieldEnabled(true);
       return;
     }
     this.controls = new TouchControls(this, {
@@ -1652,6 +1704,7 @@ export default class DynoScene extends Phaser.Scene {
         .setDepth(95)
         .setScrollFactor(0);
     }
+    this.setDynoShifterShieldEnabled(true);
   }
 
   ensureAudio() {
