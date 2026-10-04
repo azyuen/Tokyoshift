@@ -76,6 +76,7 @@ import {
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import {
   CREW_RECRUIT_OFFER_CHANCE,
+  CREW_BATTLE_LINEUP_SIZE,
   CREW_BATTLE_WINS_REQUIRED,
   CREW_BATTLE_COUPONS,
   clearCrewRecruitChallenge,
@@ -2190,7 +2191,8 @@ export default class RaceScene extends Phaser.Scene {
             primary: 'CREW SCORE\n' +
               settlement.playerScore + ' - ' + settlement.opponentScore,
             secondary:
-              'ROUND ' + settlement.roundNumber + '/6 COMPLETE // NEXT CREW CAR READY',
+              'ROUND ' + settlement.roundNumber + '/' + CREW_BATTLE_LINEUP_SIZE +
+              ' COMPLETE // NEXT CREW CAR READY',
           };
         }
 
@@ -2601,7 +2603,8 @@ export default class RaceScene extends Phaser.Scene {
     const actionLabel = settlement?.gameOver
       ? 'RUN OVER // OPTIONS  >'
       : settlement?.crewBattleContinues
-        ? 'NEXT CREW MATCH // ' + settlement.nextRoundNumber + '/6  >'
+        ? 'NEXT CREW MATCH // ' + settlement.nextRoundNumber + '/' +
+          CREW_BATTLE_LINEUP_SIZE + '  >'
         : settlement?.teamChallengeContinues
           ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
           : settlement?.competitionContinues
@@ -3085,7 +3088,10 @@ export default class RaceScene extends Phaser.Scene {
       return;
     }
 
-    const index = Math.max(0, Math.min(5, Number(state.roundIndex || 0)));
+    const index = Math.max(
+      0,
+      Math.min(CREW_BATTLE_LINEUP_SIZE - 1, Number(state.roundIndex || 0))
+    );
     const unit = state.lineup?.[index];
     const round = state.rounds?.[index];
 
@@ -3125,7 +3131,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('raceDistrict', state.regionId);
     this.registry.set(
       'raceLocationLabel',
-      'CREW BATTLE // ' + (index + 1) + '/6'
+      'CREW BATTLE // ' + (index + 1) + '/' + CREW_BATTLE_LINEUP_SIZE
     );
 
     saveSessionState(this.registry);
@@ -3487,19 +3493,22 @@ export default class RaceScene extends Phaser.Scene {
       }
 
       const regionId = String(state.regionId || this.raceDistrict || '').toUpperCase();
-      const roundIndex = Math.max(0, Math.min(5, Number(state.roundIndex || 0)));
+      const roundIndex = Math.max(
+        0,
+        Math.min(CREW_BATTLE_LINEUP_SIZE - 1, Number(state.roundIndex || 0))
+      );
       const roundNumber = roundIndex + 1;
       const playerScore = Math.max(0, Number(state.playerWins || 0)) + (playerWon ? 1 : 0);
       const opponentScore = Math.max(0, Number(state.opponentWins || 0)) + (playerWon ? 0 : 1);
       const nextRoundIndex = roundIndex + 1;
-      const remaining = Math.max(0, 6 - nextRoundIndex);
+      const remaining = Math.max(0, CREW_BATTLE_LINEUP_SIZE - nextRoundIndex);
       const playerCanStillReachFour = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
       const battleWon = playerScore >= CREW_BATTLE_WINS_REQUIRED;
       const battleLost =
         !battleWon &&
         (
           !playerCanStillReachFour ||
-          nextRoundIndex >= 6
+          nextRoundIndex >= CREW_BATTLE_LINEUP_SIZE
         );
 
       if (!battleWon && !battleLost) {
