@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r343';
+import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import {
   characters,
@@ -25,14 +25,14 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261005-r343';
+} from '../data/visualMods.js?v=20261005-r345';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r344';
+} from '../state/GameState.js?v=20261005-r345';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import {
   getGarageDeliveryOptions,
@@ -50,7 +50,7 @@ import {
   getWorkshopStorageCapacity,
   getWorkshopUsage,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r344';
+} from '../data/workshopProgression.js?v=20261005-r345';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
@@ -73,7 +73,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261005-r343';
+} from '../data/centralTokyo.js?v=20261005-r345';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
