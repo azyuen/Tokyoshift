@@ -500,6 +500,530 @@ export default class MeetScene extends Phaser.Scene {
     return merged.filter(Boolean).slice(0, 3);
   }
 
+  buildCrewBattleButton() {
+    if (!isCrewComplete(this.registry) || !this.hasCar) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (!regionId) return;
+
+    const progress = getCrewBattleProgress(this.registry);
+    const completed = Boolean(progress[regionId]?.completed);
+    const x = STAGE.x + STAGE.w - 150;
+    const y = STAGE.y + 38;
+
+    const button = this.add.rectangle(
+      x,
+      y,
+      270,
+      44,
+      completed ? 0x14251f : 0x241b32,
+      0.96
+    ).setStrokeStyle(2, completed ? 0x62e8c7 : 0xd875ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(55);
+
+    this.add.text(
+      x,
+      y,
+      completed ? 'CREW BATTLE // CLEARED  >' : 'REGIONAL CREW BATTLE  >',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: completed ? '#bff8e8' : '#f0c8ff',
+      }
+    ).setOrigin(0.5).setDepth(56);
+
+    button.on('pointerdown', () => this.showCrewBattleLineup(regionId));
+  }
+
+  maybeShowPendingCrewRecruitOffer() {
+    const pending = this.registry.get('crewPendingRecruit');
+    if (!pending?.characterId || !pending?.regionId) return false;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const currentRegion = String(location?.district || '').toUpperCase();
+    if (String(pending.regionId).toUpperCase() !== currentRegion) return false;
+
+    const character = characters[pending.characterId];
+    const car = cars[pending.baseCarId];
+    if (!character || !car) {
+      declinePendingCrewRecruit(this.registry);
+      saveSessionState(this.registry);
+      return false;
+    }
+
+    const depth = 190;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 820, 430, 0x09131d, 1)
+      .setStrokeStyle(3, 0x62e8c7, 1).setDepth(depth + 1));
+
+    add(this.add.text(780, 285, 'CREW OFFER', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '15px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      350,
+      String(character.name || 'REGIONAL DRIVER').toUpperCase() +
+        ' is willing to join your crew.\n' +
+        'Their stock ' + String(car.shortName || car.name || 'car').toUpperCase() +
+        ' becomes a loan car at Warehouse HQ.\n\n' +
+        'One member per region. If you decline, another driver may challenge you later.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#c6d7df',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 5,
+        wordWrap: { width: 690 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const decline = add(this.add.rectangle(635, 540, 240, 52, 0x171c25, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(635, 540, 'DECLINE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const accept = add(this.add.rectangle(925, 540, 240, 52, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(925, 540, 'JOIN MY CREW', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    decline.on('pointerdown', () => {
+      declinePendingCrewRecruit(this.registry);
+      saveSessionState(this.registry);
+      close();
+    });
+
+    accept.on('pointerdown', () => {
+      const recruited = acceptCrewMember(this.registry, pending);
+      if (!recruited) return;
+      saveSessionState(this.registry);
+      close();
+      if (isCrewComplete(this.registry)) this.buildCrewBattleButton();
+    });
+
+    return true;
+  }
+
+  maybeShowActiveCrewRecruitChallenge() {
+    const challenge = this.registry.get('crewRecruitChallenge');
+    if (!challenge?.active) return false;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const currentRegion = String(location?.district || '').toUpperCase();
+    if (String(challenge.regionId || '').toUpperCase() !== currentRegion) return false;
+
+    this.showCrewRecruitChallenge(challenge);
+    return true;
+  }
+
+  maybeRollCrewRecruitChallenge() {
+    if (!isCrewUnlocked(this.registry) || isCrewComplete(this.registry) || !this.hasCar) {
+      return false;
+    }
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    if (!regionId || getCrewMemberForRegion(this.registry, regionId)) return false;
+
+    const challenge = rollCrewRecruitChallenge(
+      this.registry,
+      regionId,
+      this.selectedMeetLocation
+    );
+    saveSessionState(this.registry);
+
+    if (!challenge) return false;
+    this.showCrewRecruitChallenge(challenge);
+    return true;
+  }
+
+  showCrewRecruitChallenge(challenge) {
+    if (!challenge?.characterId || !challenge?.baseCarId) return;
+
+    const character = characters[challenge.characterId];
+    const car = cars[challenge.baseCarId];
+    if (!character || !car) {
+      clearCrewRecruitChallenge(this.registry);
+      saveSessionState(this.registry);
+      return;
+    }
+
+    const stockCars = getStockCrewChallengeCarIds(this.registry);
+    const selectedCarId = this.registry.get('selectedCarId');
+    const eligible = stockCars.includes(selectedCarId);
+    const selectedCar = cars[selectedCarId];
+
+    const depth = 188;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 850, 460, 0x09131d, 1)
+      .setStrokeStyle(3, 0xd875ff, 1).setDepth(depth + 1));
+
+    add(this.add.text(780, 265, 'CREW RECRUITMENT CHALLENGE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      335,
+      String(character.name || 'LOCAL DRIVER').toUpperCase() +
+        ' // ' + String(car.shortName || car.name || '').toUpperCase() +
+        '\n\nStock car versus stock car. Win the race and you may earn a crew offer.' +
+        (eligible
+          ? '\n\nYOUR CAR: ' + String(selectedCar?.shortName || selectedCarId).toUpperCase() + ' // STOCK'
+          : '\n\nYour selected car is modified. Return with a factory-performance stock car.'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: eligible ? '#c6d7df' : '#e2a8b8',
+        fontStyle: '600',
+        align: 'center',
+        lineSpacing: 5,
+        wordWrap: { width: 700 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const decline = add(this.add.rectangle(630, 555, 245, 52, 0x171c25, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(630, 555, 'DECLINE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const race = add(this.add.rectangle(
+      930,
+      555,
+      285,
+      52,
+      eligible ? 0x251b32 : 0x1b171c,
+      1
+    ).setStrokeStyle(2, eligible ? 0xd875ff : 0x665267, 1)
+      .setDepth(depth + 2));
+
+    add(this.add.text(
+      930,
+      555,
+      eligible ? 'ACCEPT STOCK RACE  >' : 'STOCK CAR REQUIRED',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: eligible ? '#f3d9ff' : '#8a768b',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    decline.on('pointerdown', () => {
+      clearCrewRecruitChallenge(this.registry);
+      saveSessionState(this.registry);
+      close();
+    });
+
+    if (eligible) {
+      race.setInteractive({ useHandCursor: true });
+      race.on('pointerdown', () => {
+        close();
+
+        const rating = Phaser.Math.Clamp(
+          Number(character.skill?.rating || 4),
+          1,
+          5
+        );
+
+        this.registry.set('selectedOpponentCarId', challenge.baseCarId);
+        this.registry.set('selectedOpponentPaintColor', DEFAULT_PAINT_COLOR);
+        this.registry.set('selectedOpponentCharacterId', challenge.characterId);
+        this.registry.set('selectedOpponentEncounterRating', rating);
+        this.registry.set(
+          'selectedOpponentEncounterAi',
+          character.skill?.ai || getEncounterAi(rating)
+        );
+        this.registry.set('selectedOpponentBuildRating', 1);
+        this.registry.set('selectedOpponentBuildArchetype', 'stock');
+        this.registry.set(
+          'selectedOpponentBuildState',
+          createStockOpponentState(challenge.baseCarId)
+        );
+        this.registry.set('selectedRacePlayerCharacterId', null);
+        this.registry.set('selectedRaceCategory', 'CREW_RECRUIT');
+        this.registry.set('selectedRaceType', 'Standing Start');
+        this.registry.set('selectedRaceDistanceM', 402.336);
+        this.registry.set('selectedRaceDeal', 'CREW_RECRUIT');
+        this.registry.set('selectedRaceStake', 0);
+        this.registry.set('selectedRaceSpecialChallenge', false);
+        this.registry.set('selectedRaceMeetOffer', null);
+        this.registry.set('raceReturnScene', 'MeetScene');
+        this.registry.set('raceTimeOfDay', getWorldPhase());
+        this.registry.set('raceDistrict', challenge.regionId);
+        this.registry.set('raceLocationLabel', 'CREW RECRUITMENT');
+
+        saveSessionState(this.registry);
+        this.scene.start('RaceScene');
+      });
+    }
+  }
+
+  showCrewBattleLineup(regionId) {
+    if (!isCrewComplete(this.registry)) return;
+
+    const units = getCrewBattleUnits(this.registry);
+    if (units.length < 8) return;
+
+    const rounds = buildRegionalCrewBattleRounds(regionId);
+    if (rounds.length < 6) return;
+
+    const selected = [];
+    const cards = [];
+    const depth = 200;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.88)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 1330, 650, 0x07111d, 1)
+      .setStrokeStyle(3, 0xd875ff, 1).setDepth(depth + 1));
+
+    add(this.add.text(780, 130, String(regionId).toUpperCase() + ' // CREW BATTLE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '15px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      175,
+      'Choose SIX racers from your 8-person crew and tap them in running order. You must include yourself. First crew to 4 wins takes the battle; a 3–3 tie stays with the regional crew.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '11px',
+        color: '#b9cad4',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 1100 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const status = add(this.add.text(780, 650, '0 / 6 SELECTED', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#9fc7db',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const start = add(this.add.rectangle(980, 710, 300, 52, 0x19171d, 1)
+      .setStrokeStyle(2, 0x665267, 1).setDepth(depth + 2));
+    const startText = add(this.add.text(980, 710, 'SELECT 6 RACERS', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#8a768b',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const refresh = () => {
+      cards.forEach(card => {
+        const position = selected.indexOf(card.unit.id);
+        const chosen = position >= 0;
+        card.box
+          .setFillStyle(chosen ? 0x1d3142 : 0x0b1724, 1)
+          .setStrokeStyle(chosen ? 3 : 1, chosen ? 0x43dfff : 0x315470, 1);
+        card.order.setText(chosen ? String(position + 1) : '—');
+        card.order.setColor(chosen ? '#ffffff' : '#607988');
+      });
+
+      const playerIncluded = selected.includes('PLAYER');
+      const ready = selected.length === 6 && playerIncluded;
+      status.setText(
+        selected.length + ' / 6 SELECTED' +
+        (selected.length === 6 && !playerIncluded ? ' // INCLUDE YOUR CAR' : '')
+      );
+
+      if (ready) {
+        start
+          .setFillStyle(0x251b32, 1)
+          .setStrokeStyle(2, 0xd875ff, 1)
+          .setInteractive({ useHandCursor: true });
+        startText.setText('START CREW BATTLE  >').setColor('#f3d9ff');
+      } else {
+        start
+          .disableInteractive()
+          .setFillStyle(0x19171d, 1)
+          .setStrokeStyle(2, 0x665267, 1);
+        startText
+          .setText(selected.length < 6 ? 'SELECT 6 RACERS' : 'INCLUDE YOUR CAR')
+          .setColor('#8a768b');
+      }
+    };
+
+    units.forEach((unit, index) => {
+      const col = index % 4;
+      const row = Math.floor(index / 4);
+      const x = 355 + col * 285;
+      const y = 300 + row * 155;
+      const car = cars[unit.carId];
+      const char = characters[unit.characterId];
+      const box = add(this.add.rectangle(x, y, 250, 124, 0x0b1724, 1)
+        .setStrokeStyle(1, 0x315470, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 2));
+
+      add(this.add.text(x - 105, y - 42, unit.player ? 'YOU' : String(unit.regionId), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: unit.player ? '#ffe08a' : '#8fe7ff',
+      }).setDepth(depth + 3));
+
+      add(this.add.text(
+        x - 105,
+        y - 6,
+        String(char?.name || unit.characterId).toUpperCase() +
+          '\n' + String(car?.shortName || unit.carId).toUpperCase(),
+        {
+          fontFamily: BODY_FONT,
+          fontSize: '9px',
+          color: '#e6f0f5',
+          fontStyle: '700',
+          lineSpacing: 4,
+        }
+      ).setDepth(depth + 3));
+
+      const order = add(this.add.text(x + 100, y - 44, '—', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '14px',
+        color: '#607988',
+      }).setOrigin(1, 0).setDepth(depth + 3));
+
+      const card = { unit, box, order };
+      cards.push(card);
+
+      box.on('pointerdown', () => {
+        const pos = selected.indexOf(unit.id);
+        if (pos >= 0) selected.splice(pos, 1);
+        else if (selected.length < 6) selected.push(unit.id);
+        refresh();
+      });
+    });
+
+    const auto = add(this.add.rectangle(580, 710, 220, 52, 0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(580, 710, 'AUTO LINEUP', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    auto.on('pointerdown', () => {
+      selected.splice(0, selected.length, ...units.slice(0, 6).map(unit => unit.id));
+      if (!selected.includes('PLAYER')) {
+        selected[selected.length - 1] = 'PLAYER';
+      }
+      refresh();
+    });
+
+    const cancel = add(this.add.rectangle(340, 710, 180, 52, 0x171c25, 1)
+      .setStrokeStyle(1, 0x657d8c, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(340, 710, 'CANCEL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c4d5df',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    cancel.on('pointerdown', close);
+
+    start.on('pointerdown', () => {
+      if (selected.length !== 6 || !selected.includes('PLAYER')) return;
+      const lineup = selected
+        .map(id => units.find(unit => unit.id === id))
+        .filter(Boolean);
+      if (lineup.length !== 6) return;
+      close();
+      this.startCrewBattle(regionId, lineup, rounds);
+    });
+
+    refresh();
+  }
+
+  startCrewBattle(regionId, lineup, rounds = buildRegionalCrewBattleRounds(regionId)) {
+    if (!isCrewComplete(this.registry) || lineup.length !== 6 || rounds.length < 6) return;
+
+    const state = {
+      active: true,
+      regionId: String(regionId || '').toUpperCase(),
+      lineup: lineup.map(unit => ({ ...unit })),
+      rounds: rounds.slice(0, 6).map(round => ({ ...round })),
+      roundIndex: 0,
+      playerWins: 0,
+      opponentWins: 0,
+      originalSelectedCarId: this.registry.get('selectedCarId') || null,
+      reward: getRegionalCrewBattleReward(regionId),
+    };
+
+    this.registry.set('crewBattleState', state);
+    this.registry.set('raceReturnScene', 'MeetScene');
+
+    if (!this.configureCrewBattleRound(state, 0)) return;
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
+  configureCrewBattleRound(state, index) {
+    const unit = state?.lineup?.[index];
+    const round = state?.rounds?.[index];
+    if (!unit || !round || !cars[unit.carId] || !cars[round.carId]) return false;
+
+    this.registry.set('selectedCarId', unit.carId);
+    this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', DEFAULT_PAINT_COLOR);
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedOpponentBuildRating', round.buildRating);
+    this.registry.set('selectedOpponentBuildArchetype', round.opponentBuildState?.buildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState);
+    this.registry.set('selectedRaceCategory', 'CREW_BATTLE');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', round.distanceM);
+    this.registry.set('selectedRaceDeal', 'CREW_BATTLE');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceDistrict', state.regionId);
+    this.registry.set(
+      'raceLocationLabel',
+      'CREW BATTLE // ' + (index + 1) + '/6'
+    );
+
+    return true;
+  }
+
   maybeShowRemoteCentralTokyoInvitation() {
     const inviteKey = getPendingCentralTokyoInvite(this.registry);
     if (inviteKey !== 'ginza' && inviteKey !== 'drag') return false;
