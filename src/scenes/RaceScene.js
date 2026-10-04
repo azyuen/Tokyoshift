@@ -3074,6 +3074,62 @@ export default class RaceScene extends Phaser.Scene {
     this.scene.restart();
   }
 
+  startNextCrewBattleRound() {
+    const state = this.registry.get('crewBattleState');
+    if (!state?.active) {
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+
+    const index = Math.max(0, Math.min(5, Number(state.roundIndex || 0)));
+    const unit = state.lineup?.[index];
+    const round = state.rounds?.[index];
+
+    if (!unit || !round || !cars[unit.carId] || !cars[round.carId]) {
+      this.registry.set('crewBattleState', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+
+    this.registry.set('selectedCarId', unit.carId);
+    this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
+    this.registry.set('selectedOpponentCarId', round.carId);
+    this.registry.set('selectedOpponentPaintColor', normalisePaintColor(
+      round.paintColor,
+      DEFAULT_PAINT_COLOR
+    ));
+    this.registry.set('selectedOpponentCharacterId', round.characterId);
+    this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedOpponentBuildRating', round.buildRating);
+    this.registry.set(
+      'selectedOpponentBuildArchetype',
+      round.opponentBuildState?.buildArchetype || null
+    );
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState || null);
+    this.registry.set('selectedRaceCategory', 'CREW_BATTLE');
+    this.registry.set('selectedRaceType', round.raceType);
+    this.registry.set('selectedRaceDistanceM', round.distanceM);
+    this.registry.set('selectedRaceDeal', 'CREW_BATTLE');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceDistrict', state.regionId);
+    this.registry.set(
+      'raceLocationLabel',
+      'CREW BATTLE // ' + (index + 1) + '/6'
+    );
+
+    saveSessionState(this.registry);
+    this.scene.restart();
+  }
+
   startNextCompetitionRound() {
     const state = this.registry.get('competitionState');
     if (!state?.active) {
