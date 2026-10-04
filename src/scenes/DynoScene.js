@@ -9,12 +9,11 @@ import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
   getDynoStage,
-  getDynoNextStage,
   getRecommendedDynoGear,
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20261004-r325';
+} from '../data/dyno.js?v=20261004-r326';
 import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
 import {
   STAGE3_CALIBRATION_OPTIONS,
@@ -558,27 +557,63 @@ export default class DynoScene extends Phaser.Scene {
       () => this.enterDynoTest('power')
     );
 
-    drawStageCard(
-      driveTop, 0x43dfff, 'DRIVETRAIN TEST  //  3 ATTEMPTS',
-      'STANDING START  //  SHIFT THROUGH THE GEARS\nSEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
-      'STAGE 2', stageActionLabel('drivetrain', drivetrainCost),
-      () => this.enterDynoTest('drivetrain')
-    );
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    const stageTwo = getDynoStage(2);
+    const stageThree = getDynoStage(3);
 
-    const next = getDynoNextStage(this.facilityTier);
-    const tuningUnlocked = this.facilityTier >= 3;
-    drawStageCard(
-      nextTop, tuningUnlocked ? 0xd9b65f : 0x6b5b37,
-      'TUNING CONSOLE  //  TRADE-OFF SETUP',
-      tuningUnlocked
-        ? 'ECU CURVE + BOOST CURVE + GEAR SPREAD'
-        : 'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') +
-          '\n' + next.description.toUpperCase(),
-      'STAGE 3',
-      tuningUnlocked ? 'OPEN TUNING CONSOLE' : '',
-      () => this.openStage3Tuning(),
-      !tuningUnlocked
-    );
+    if (this.facilityTier >= 2) {
+      drawStageCard(
+        driveTop, 0x43dfff, 'DRIVETRAIN TEST  //  3 ATTEMPTS',
+        'STANDING START  //  SHIFT THROUGH THE GEARS\nSEE RPM DROP + DELIVERED POWER AT EACH SHIFT',
+        'STAGE 2', stageActionLabel('drivetrain', drivetrainCost),
+        () => this.enterDynoTest('drivetrain')
+      );
+    } else {
+      const stageTwoCost = Number(stageTwo.installCost || 0);
+      drawStageCard(
+        driveTop,
+        cash >= stageTwoCost ? 0x43dfff : 0x7b5962,
+        'LOAD DYNO + ECU  //  FACILITY UPGRADE',
+        'UNLOCK DRIVETRAIN TEST + ROAD-LOAD SIMULATION',
+        'STAGE 2',
+        (cash >= stageTwoCost ? 'INSTALL // ¥ ' : 'NEED // ¥ ') +
+          stageTwoCost.toLocaleString('en-US'),
+        () => this.purchaseDynoFacilityStage(2)
+      );
+    }
+
+    if (this.facilityTier >= 3) {
+      drawStageCard(
+        nextTop, 0xd9b65f,
+        'TUNING CONSOLE  //  TRADE-OFF SETUP',
+        'ECU CURVE + BOOST CURVE + GEAR SPREAD',
+        'STAGE 3',
+        'OPEN TUNING CONSOLE',
+        () => this.openStage3Tuning()
+      );
+    } else if (this.facilityTier === 2) {
+      const stageThreeCost = Number(stageThree.installCost || 0);
+      drawStageCard(
+        nextTop,
+        cash >= stageThreeCost ? 0xd9b65f : 0x7b5962,
+        'COMPETITION CALIBRATION CELL',
+        'END-GAME TUNING // ECU + BOOST + GEAR SPREAD',
+        'STAGE 3',
+        (cash >= stageThreeCost ? 'INSTALL // ¥ ' : 'NEED // ¥ ') +
+          stageThreeCost.toLocaleString('en-US'),
+        () => this.purchaseDynoFacilityStage(3)
+      );
+    } else {
+      drawStageCard(
+        nextTop, 0x6b5b37,
+        'COMPETITION CALIBRATION CELL',
+        'INSTALL THE STAGE II LOAD DYNO FIRST',
+        'STAGE 3',
+        'REQUIRES STAGE 2',
+        null,
+        true
+      );
+    }
 
     const graphY = 440;
     const graphBox = add(this.add.rectangle(x, graphY, cardWidth, 50, 0x102138, 0.98)
@@ -599,6 +634,38 @@ export default class DynoScene extends Phaser.Scene {
     back.on('pointerdown', () => this.returnToWorkshop());
   }
 
+
+  purchaseDynoFacilityStage(targetTier) {
+    const target = Math.max(1, Math.min(3, Math.floor(Number(targetTier) || 0)));
+    if (target !== this.facilityTier + 1) return;
+
+    const stage = getDynoStage(target);
+    const cost = Math.max(0, Number(stage.installCost || 0));
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+
+    if (cash < cost) {
+      this.daichiText?.setText(
+        'DAICHI // You need ¥' + cost.toLocaleString('en-US') +
+        ' to install ' + String(stage.shortLabel || stage.label || 'the next dyno stage') + '.'
+      );
+      return;
+    }
+
+    const remaining = cash - cost;
+    this.registry.set('cash', remaining);
+    this.registry.set('dynoFacilityTier', target);
+    this.facilityTier = target;
+    this.stage = stage;
+    this.cashText?.setText('¥ ' + remaining.toLocaleString('en-US'));
+    saveSessionState(this.registry);
+
+    this.daichiText?.setText(
+      target >= 3
+        ? 'DAICHI // Competition Calibration Cell installed. Stage III tuning is online.'
+        : 'DAICHI // Load Dyno installed. Drivetrain testing is now available.'
+    );
+    this.drawIntroUi();
+  }
 
   openStage3Tuning() {
     if (this.facilityTier < 3 || !this.carId) return;
@@ -1356,6 +1423,10 @@ export default class DynoScene extends Phaser.Scene {
 
   enterDynoTest(mode) {
     if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
+    if (mode === 'drivetrain' && this.facilityTier < 2) {
+      this.daichiText?.setText('DAICHI // Install the Stage II Load Dyno before running a drivetrain test.');
+      return;
+    }
     this.dynoRunMode = mode === 'drivetrain' ? 'drivetrain' : 'power';
     this.pullState = 'IDLE';
     this.sessionPullsRemaining = Number(this.sessionPullsRemainingByMode?.[this.dynoRunMode] || 0);
@@ -1410,6 +1481,10 @@ export default class DynoScene extends Phaser.Scene {
   beginPull(requestedMode = null) {
     if (this.pullState === 'RUNNING' || this.pullState === 'SETUP') return;
     const mode = requestedMode === 'drivetrain' ? 'drivetrain' : (requestedMode === 'power' ? 'power' : this.dynoRunMode);
+    if (mode === 'drivetrain' && this.facilityTier < 2) {
+      this.daichiText?.setText('DAICHI // Stage II is required for drivetrain testing.');
+      return;
+    }
     this.dynoRunMode = mode;
 
     const serviceCost = mode === 'drivetrain' ? 15000 : 5000;

@@ -42,7 +42,7 @@ export const DYNO_STAGES = Object.freeze([
     id: 'competition',
     label: 'STAGE III // COMPETITION CALIBRATION CELL',
     shortLabel: 'COMPETITION CELL',
-    installCost: 900000,
+    installCost: 3000000,
     sessionCost: 20000,
     pullsPerSession: 3,
     description: 'Advanced maps, shift analysis and road-load simulation.',
