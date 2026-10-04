@@ -26,7 +26,7 @@ import {
   getStage3Presets,
   findMatchingStage3Preset,
   normaliseStage3PresetName,
-} from '../data/stage3Calibration.js?v=20261004-r327';
+} from '../data/stage3Calibration.js?v=20261004-r330';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -693,7 +693,7 @@ export default class DynoScene extends Phaser.Scene {
     title = 'ENTER NAME',
     initialValue = '',
     confirmLabel = 'SAVE',
-    maxLength = 20,
+    maxLength = 8,
     onConfirm = null,
   } = {}) {
     this.closeTextEntryPopup();
@@ -717,35 +717,35 @@ export default class DynoScene extends Phaser.Scene {
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 420, 980, 640, 0x07111d, 0.995)
+    add(this.add.rectangle(780, 420, 1180, 720, 0x07111d, 0.995)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(780, 145, title, {
+    add(this.add.text(780, 105, title, {
       fontFamily: PIXEL_FONT,
-      fontSize: '10px',
+      fontSize: '11px',
       color: '#eefaff',
       align: 'center',
     }).setOrigin(0.5).setDepth(depth + 2));
 
-    add(this.add.rectangle(780, 205, 760, 58, 0x0b1620, 1)
+    add(this.add.rectangle(780, 170, 900, 66, 0x0b1620, 1)
       .setStrokeStyle(2, 0x557d93, 1)
       .setDepth(depth + 2));
 
-    const valueText = add(this.add.text(780, 205, value || ' ', {
+    const valueText = add(this.add.text(780, 170, value || ' ', {
       fontFamily: PIXEL_FONT,
       fontSize: '10px',
       color: '#eefaff',
       align: 'center',
     }).setOrigin(0.5).setDepth(depth + 3));
 
-    const countText = add(this.add.text(1145, 238, '', {
+    const countText = add(this.add.text(1215, 207, '', {
       fontFamily: PIXEL_FONT,
       fontSize: '4px',
       color: '#7895a5',
     }).setOrigin(1, 0.5).setDepth(depth + 3));
 
-    add(this.add.text(780, 260, 'TOUCH KEYS TO NAME THIS SETUP', {
+    add(this.add.text(780, 225, 'TOUCH KEYS TO NAME THIS SETUP', {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#7895a5',
@@ -780,15 +780,15 @@ export default class DynoScene extends Phaser.Scene {
     };
 
     const keyRows = [
-      { chars: ['1','2','3','4','5','6','7','8','9','0'], y: 325 },
-      { chars: ['Q','W','E','R','T','Y','U','I','O','P'], y: 385 },
-      { chars: ['A','S','D','F','G','H','J','K','L'], y: 445 },
-      { chars: ['Z','X','C','V','B','N','M','-','/','#'], y: 505 },
+      { chars: ['1','2','3','4','5','6','7','8','9','0'], y: 300 },
+      { chars: ['Q','W','E','R','T','Y','U','I','O','P'], y: 370 },
+      { chars: ['A','S','D','F','G','H','J','K','L'], y: 440 },
+      { chars: ['Z','X','C','V','B','N','M','-','/','#'], y: 510 },
     ];
 
     keyRows.forEach(row => {
-      const keyW = 66;
-      const gap = 8;
+      const keyW = 78;
+      const gap = 10;
       const totalW = row.chars.length * keyW + (row.chars.length - 1) * gap;
       const startX = 780 - totalW / 2 + keyW / 2;
 
@@ -800,41 +800,41 @@ export default class DynoScene extends Phaser.Scene {
           .setDepth(depth + 2));
         add(this.add.text(x, row.y, character, {
           fontFamily: PIXEL_FONT,
-          fontSize: '7px',
+          fontSize: '8px',
           color: '#eaf7ff',
         }).setOrigin(0.5).setDepth(depth + 3));
         key.on('pointerdown', () => appendCharacter(character));
       });
     });
 
-    const specialY = 565;
-    const space = add(this.add.rectangle(620, specialY, 290, 44, 0x102138, 1)
+    const specialY = 585;
+    const space = add(this.add.rectangle(585, specialY, 330, 52, 0x102138, 1)
       .setStrokeStyle(1, 0x557d93, 0.92)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(620, specialY, 'SPACE', {
+    add(this.add.text(585, specialY, 'SPACE', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#eaf7ff',
     }).setOrigin(0.5).setDepth(depth + 3));
     space.on('pointerdown', () => appendCharacter(' '));
 
-    const back = add(this.add.rectangle(850, specialY, 145, 44, 0x102138, 1)
+    const back = add(this.add.rectangle(875, specialY, 170, 52, 0x102138, 1)
       .setStrokeStyle(1, 0x557d93, 0.92)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(850, specialY, 'BACK', {
+    add(this.add.text(875, specialY, 'BACK', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#eaf7ff',
     }).setOrigin(0.5).setDepth(depth + 3));
     back.on('pointerdown', backspace);
 
-    const clearBox = add(this.add.rectangle(1015, specialY, 145, 44, 0x21171b, 1)
+    const clearBox = add(this.add.rectangle(1065, specialY, 170, 52, 0x21171b, 1)
       .setStrokeStyle(1, 0x9b6672, 0.92)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(1015, specialY, 'CLEAR', {
+    add(this.add.text(1065, specialY, 'CLEAR', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#f2c9d2',
@@ -848,11 +848,11 @@ export default class DynoScene extends Phaser.Scene {
       onConfirm?.(finalValue);
     };
 
-    const confirm = add(this.add.rectangle(675, 640, 300, 50, 0x0c2827, 1)
+    const confirm = add(this.add.rectangle(650, 665, 340, 56, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(675, 640, confirmLabel, {
+    add(this.add.text(650, 665, confirmLabel, {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#f1fffb',
@@ -860,11 +860,11 @@ export default class DynoScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 3));
     confirm.on('pointerdown', submit);
 
-    const cancel = add(this.add.rectangle(995, 640, 240, 50, 0x102138, 1)
+    const cancel = add(this.add.rectangle(1010, 665, 300, 56, 0x102138, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(995, 640, 'CANCEL', {
+    add(this.add.text(1010, 665, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#d4e6ef',
@@ -935,9 +935,9 @@ export default class DynoScene extends Phaser.Scene {
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
     const panelX = 1265;
-    const panelY = 435;
+    const panelY = 450;
     const panelW = 570;
-    const panelH = 710;
+    const panelH = 780;
     const eligibility = getStage3CalibrationEligibility(this.carState || {});
     const tune = normaliseStage3Calibration(this.stage3PendingTune || {});
     const powerRuns = this.getDynoGraphSlots('power');
@@ -959,7 +959,7 @@ export default class DynoScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(32));
 
     [0, 1, 2].forEach(index => {
-      const bx = 1195 + index * 110;
+      const bx = 1085 + index * 180;
       const run = powerRuns[index];
       const selected = Boolean(run) && index === this.stage3ReferenceIndex;
       const box = add(this.add.rectangle(
@@ -1038,7 +1038,7 @@ export default class DynoScene extends Phaser.Scene {
     const rows = [
       {
         key: 'ecuBias',
-        y: 285,
+        y: 325,
         title: 'ECU CURVE',
         sprite: 'tuningPartEcuL3',
         requirement: 'REQUIRES MOTORSPORT ECU // LEVEL 3',
@@ -1048,7 +1048,7 @@ export default class DynoScene extends Phaser.Scene {
       },
       {
         key: 'boostBias',
-        y: 420,
+        y: 465,
         title: 'BOOST CURVE',
         sprite: 'tuningPartTurboL3',
         requirement: 'REQUIRES BIG TURBO // LEVEL 3',
@@ -1058,7 +1058,7 @@ export default class DynoScene extends Phaser.Scene {
       },
       {
         key: 'gearBias',
-        y: 555,
+        y: 605,
         title: 'GEAR SPREAD',
         sprite: 'tuningPartGearboxL3',
         requirement: 'REQUIRES DOG BOX // LEVEL 3',
@@ -1077,7 +1077,7 @@ export default class DynoScene extends Phaser.Scene {
         .setStrokeStyle(1, unlocked ? row.accent : 0x47535a, unlocked ? 0.62 : 0.48)
         .setDepth(30.5));
 
-      const sprite = add(this.add.image(1025, row.y, row.sprite)
+      const sprite = add(this.add.image(1070, row.y, row.sprite)
         .setDepth(32)
         .setAlpha(unlocked ? 1 : 0.30));
       if (this.textures.exists(row.sprite)) {
@@ -1085,7 +1085,7 @@ export default class DynoScene extends Phaser.Scene {
         sprite.setScale(Math.min(62 / Math.max(1, source.width), 62 / Math.max(1, source.height)));
       }
 
-      add(this.add.text(1080, row.y - 42, row.title + '  //  ' + (option?.label || 'BALANCED'), {
+      add(this.add.text(1120, row.y - 42, row.title + '  //  ' + (option?.label || 'BALANCED'), {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: unlocked
@@ -1094,7 +1094,7 @@ export default class DynoScene extends Phaser.Scene {
       }).setDepth(32));
 
       if (!unlocked) {
-        add(this.add.text(1080, row.y + 5, row.requirement, {
+        add(this.add.text(1120, row.y + 5, row.requirement, {
           fontFamily: PIXEL_FONT,
           fontSize: '5px',
           color: '#806f62',
@@ -1103,7 +1103,7 @@ export default class DynoScene extends Phaser.Scene {
         return;
       }
 
-      add(this.add.text(1185, row.y - 10, row.left, {
+      add(this.add.text(1220, row.y - 10, row.left, {
         fontFamily: BODY_FONT,
         fontSize: '6px',
         color: '#839aa8',
@@ -1118,7 +1118,7 @@ export default class DynoScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(32));
 
       STAGE3_CALIBRATION_OPTIONS[row.key].forEach((preset, presetIndex) => {
-        const bx = 1195 + presetIndex * 62;
+        const bx = 1230 + presetIndex * 62;
         const selected = preset.value === current;
         const button = add(this.add.rectangle(
           bx,
@@ -1153,7 +1153,7 @@ export default class DynoScene extends Phaser.Scene {
         });
       });
 
-      add(this.add.text(1340, row.y + 47, option?.detail || '', {
+      add(this.add.text(1365, row.y + 47, option?.detail || '', {
         fontFamily: BODY_FONT,
         fontSize: '6px',
         color: '#9ab0bc',
@@ -1163,11 +1163,11 @@ export default class DynoScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(32));
     });
 
-    const save = add(this.add.rectangle(1095, 692, 150, 44, 0x2a2615, 0.98)
+    const save = add(this.add.rectangle(1095, 730, 150, 44, 0x2a2615, 0.98)
       .setStrokeStyle(2, 0xffd45a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1095, 692, 'APPLY TUNE', {
+    add(this.add.text(1095, 730, 'APPLY TUNE', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#fff0b5',
@@ -1176,22 +1176,22 @@ export default class DynoScene extends Phaser.Scene {
 
     const presets = getStage3Presets(this.carState || {});
     const presetCount = presets.filter(Boolean).length;
-    const presetButton = add(this.add.rectangle(1270, 692, 180, 44, 0x1d2418, 0.98)
+    const presetButton = add(this.add.rectangle(1270, 730, 180, 44, 0x1d2418, 0.98)
       .setStrokeStyle(2, 0xd9b65f, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1270, 692, 'PRESETS ' + presetCount + '/' + MAX_STAGE3_PRESETS, {
+    add(this.add.text(1270, 730, 'PRESETS ' + presetCount + '/' + MAX_STAGE3_PRESETS, {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#ffe08a',
     }).setOrigin(0.5).setDepth(32));
     presetButton.on('pointerdown', () => this.openStage3PresetManager());
 
-    const reset = add(this.add.rectangle(1450, 692, 150, 44, 0x102138, 0.98)
+    const reset = add(this.add.rectangle(1450, 730, 150, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x65879a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1450, 692, 'BALANCED', {
+    add(this.add.text(1450, 730, 'BALANCED', {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#cce4ef',
@@ -1202,11 +1202,11 @@ export default class DynoScene extends Phaser.Scene {
       this.renderStage3Tuning();
     });
 
-    const back = add(this.add.rectangle(panelX, 748, 420, 44, 0x102138, 0.98)
+    const back = add(this.add.rectangle(panelX, 785, 420, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(panelX, 748, 'RETURN TO DYNO', {
+    add(this.add.text(panelX, 785, 'RETURN TO DYNO', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#eef8ff',
@@ -1218,7 +1218,7 @@ export default class DynoScene extends Phaser.Scene {
     });
 
     if (this.stage3StatusMessage) {
-      add(this.add.text(panelX, 790, this.stage3StatusMessage, {
+      add(this.add.text(panelX, 690, this.stage3StatusMessage, {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: '#ffe08a',
@@ -1310,12 +1310,12 @@ export default class DynoScene extends Phaser.Scene {
         }
       ).setDepth(32));
 
-      const saveBox = add(this.add.rectangle(1450, y - 28, 150, 38, 0x2a2615, 0.98)
+      const saveBox = add(this.add.rectangle(1395, y - 28, 150, 38, 0x2a2615, 0.98)
         .setStrokeStyle(1, 0xd9b65f, 0.92)
         .setInteractive({ useHandCursor: true })
         .setDepth(31));
       add(this.add.text(
-        1450,
+        1395,
         y - 28,
         occupied ? 'OVERWRITE' : 'SAVE CURRENT',
         {
@@ -1326,10 +1326,10 @@ export default class DynoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(32));
       saveBox.on('pointerdown', () => this.saveStage3Preset(index));
 
-      const loadBox = add(this.add.rectangle(1360, y + 27, 120, 36, 0x102138, 0.98)
+      const loadBox = add(this.add.rectangle(1320, y + 27, 120, 36, 0x102138, 0.98)
         .setStrokeStyle(1, occupied ? 0x62e8c7 : 0x46515a, 0.9)
         .setDepth(31));
-      add(this.add.text(1360, y + 27, occupied ? 'LOAD' : 'NO PRESET', {
+      add(this.add.text(1320, y + 27, occupied ? 'LOAD' : 'NO PRESET', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: occupied ? '#dffbf3' : '#687983',
@@ -1344,10 +1344,10 @@ export default class DynoScene extends Phaser.Scene {
         });
       }
 
-      const renameBox = add(this.add.rectangle(1490, y + 27, 120, 36, 0x102138, 0.98)
+      const renameBox = add(this.add.rectangle(1450, y + 27, 120, 36, 0x102138, 0.98)
         .setStrokeStyle(1, occupied ? 0x55b8ff : 0x46515a, 0.9)
         .setDepth(31));
-      add(this.add.text(1490, y + 27, occupied ? 'RENAME' : '—', {
+      add(this.add.text(1450, y + 27, occupied ? 'RENAME' : '—', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: occupied ? '#d5edfa' : '#687983',
@@ -1580,17 +1580,17 @@ export default class DynoScene extends Phaser.Scene {
       });
     };
 
-    makeSection(108, 'power', 'DYNO RUN', 0x62e8c7, powerRuns);
-    makeSection(222, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
+    makeSection(145, 'power', 'DYNO RUN', 0x62e8c7, powerRuns);
+    makeSection(265, 'drivetrain', 'DRIVETRAIN TEST', 0x43dfff, driveRuns);
 
     const selectedRuns = this.getDynoGraphSlots(this.graphManagementMode);
     const selectedGraph = selectedRuns[this.graphManagementIndex];
     const selectedEnabled = !!selectedGraph;
 
-    const renameBox = add(this.add.rectangle(x, 306, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
+    const renameBox = add(this.add.rectangle(x, 355, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
       .setStrokeStyle(2, selectedEnabled ? 0xd9b65f : 0x46515a, 1)
       .setDepth(31));
-    add(this.add.text(x, 306, 'RENAME SELECTED GRAPH', {
+    add(this.add.text(x, 355, 'RENAME SELECTED GRAPH', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: selectedEnabled ? '#ffe08a' : '#687983',
@@ -1600,10 +1600,10 @@ export default class DynoScene extends Phaser.Scene {
       renameBox.on('pointerdown', () => this.renameGraphManagementSelection());
     }
 
-    const deleteBox = add(this.add.rectangle(x, 360, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
+    const deleteBox = add(this.add.rectangle(x, 410, 380, 44, selectedEnabled ? 0x102138 : 0x0b1017, 0.98)
       .setStrokeStyle(2, selectedEnabled ? 0x55b8ff : 0x46515a, 1)
       .setDepth(31));
-    add(this.add.text(x, 360, 'DELETE SELECTED GRAPH', {
+    add(this.add.text(x, 410, 'DELETE SELECTED GRAPH', {
       fontFamily: PIXEL_FONT, fontSize: '7px', color: selectedEnabled ? '#eef8ff' : '#687983'
     }).setOrigin(0.5).setDepth(32));
     if (selectedEnabled) {
@@ -1611,9 +1611,9 @@ export default class DynoScene extends Phaser.Scene {
       deleteBox.on('pointerdown', () => this.deleteGraphManagementSelection());
     }
 
-    const back = add(this.add.rectangle(x, 414, 380, 44, 0x102138, 0.98)
+    const back = add(this.add.rectangle(x, 465, 380, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1).setInteractive({ useHandCursor: true }).setDepth(31));
-    add(this.add.text(x, 414, 'RETURN TO DYNO OPTIONS', {
+    add(this.add.text(x, 465, 'RETURN TO DYNO OPTIONS', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
     back.on('pointerdown', () => this.drawIntroUi());

@@ -136,7 +136,7 @@ export function normaliseStage3PresetName(value = '', fallback = 'UNTITLED') {
   const cleaned = String(value || '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 20);
+    .slice(0, 8);
   return cleaned || fallback;
 }
 
