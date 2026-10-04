@@ -1,7 +1,8 @@
 import {
   characters,
   characterOrder,
-} from '../data/characters.js?v=20260925-r195';
+  getCharacterAssetUrl,
+} from '../data/characters.js?v=20261004-r333';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -9,7 +10,7 @@ import {
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_EYE_TARGET_RATIO,
   PROFILE_TORSO_CROP_RATIO,
-} from '../characters/CharacterProfileRenderer.js?v=20260925-r195';
+} from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -27,7 +28,7 @@ export default class ProfileCalibrationScene extends Phaser.Scene {
         [visual.lossSpriteKey, visual.lossPath],
       ].forEach(([key, path]) => {
         if (key && path && !this.textures.exists(key)) {
-          this.load.image(key, path + '?v=20260925-r182');
+          this.load.image(key, getCharacterAssetUrl(path));
         }
       });
     });
