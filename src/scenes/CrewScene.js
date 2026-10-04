@@ -5,7 +5,7 @@ import {
 } from '../data/characters.js?v=20261004-r333';
 import {
   CREW_REGIONS,
-} from '../data/crewRoster.js?v=20261005-r341';
+} from '../data/crewRoster.js?v=20261005-r343';
 import {
   getCrewMembers,
   getCrewCount,
