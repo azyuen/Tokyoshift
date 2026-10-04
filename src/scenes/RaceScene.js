@@ -75,16 +75,15 @@ import {
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import {
-  CREW_RECRUIT_OFFER_CHANCE,
   CREW_BATTLE_LINEUP_SIZE,
   CREW_BATTLE_WINS_REQUIRED,
   CREW_BATTLE_COUPONS,
-  clearCrewRecruitChallenge,
-  setPendingCrewRecruit,
+  createCrewInviteFromMeetWin,
+  completeCrewRecruitChallenge,
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r345';
+} from '../data/crewSystem.js?v=20261005-r346';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -2169,19 +2168,19 @@ export default class RaceScene extends Phaser.Scene {
       if (settlement.crewRecruit) {
         if (!settlement.playerWon) {
           return {
-            primary: 'RECRUITMENT RACE\nLOST',
-            secondary: 'NO CREW OFFER // ANOTHER DRIVER MAY CHALLENGE YOU LATER',
+            primary: 'STOCK CHALLENGE\nLOST',
+            secondary: 'THE CHALLENGE STAYS OPEN // RETURN TO THE MEET AND TRY AGAIN',
           };
         }
 
-        return settlement.crewRecruitOffered
+        return settlement.crewRecruitJoined
           ? {
-              primary: 'CREW OFFER\nEARNED',
-              secondary: 'RETURN TO THE MEET // DECIDE WHETHER TO RECRUIT THEM',
+              primary: 'CREW MEMBER\nJOINED',
+              secondary: 'SIGNATURE CAR LOANED TO WAREHOUSE HQ // CREW SPACE UPDATED',
             }
           : {
-              primary: 'RACE WON',
-              secondary: 'NO CREW OFFER THIS TIME // KEEP RACING IN THE REGION',
+              primary: 'STOCK CHALLENGE\nWON',
+              secondary: 'RECRUITMENT COULD NOT BE SAVED // RETURN TO THE MEET',
             };
       }
 
@@ -3442,14 +3441,17 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceMode === 'CREW_RECRUIT') {
       const challenge = this.registry.get('crewRecruitChallenge');
-      let recruitOffered = false;
+      let recruited = null;
 
       if (playerWon && challenge?.active) {
-        recruitOffered = Math.random() < CREW_RECRUIT_OFFER_CHANCE;
-        if (recruitOffered) setPendingCrewRecruit(this.registry, challenge);
-        else clearCrewRecruitChallenge(this.registry);
-      } else {
-        clearCrewRecruitChallenge(this.registry);
+        recruited = completeCrewRecruitChallenge(this.registry, challenge);
+      } else if (challenge?.active) {
+        this.registry.set('crewRecruitChallenge', {
+          ...challenge,
+          active: true,
+          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
+          lastLossAt: Date.now(),
+        });
       }
 
       this.registry.set('selectedRacePlayerCharacterId', null);
@@ -3463,9 +3465,11 @@ export default class RaceScene extends Phaser.Scene {
         gameOver: false,
         crewRecruit: true,
         crewRecruitWon: Boolean(playerWon),
-        crewRecruitOffered: recruitOffered,
+        crewRecruitJoined: Boolean(recruited),
+        crewRecruitRetry: Boolean(!playerWon && challenge?.active),
         crewRecruitCharacterId: challenge?.characterId || this.opponentCharacterId,
         crewRecruitRegionId: String(challenge?.regionId || this.raceDistrict || '').toUpperCase(),
+        crewRecruitLoanCarId: recruited?.loanCarId || null,
       };
       return this.raceSettlement;
     }
@@ -3974,6 +3978,44 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('cash', newCash);
 
     this.recordMeetRaceOutcome(playerWon);
+
+    let crewInviteInterest = null;
+    if (
+      playerWon &&
+      this.raceMode === 'SINGLE' &&
+      !this.registry.get('selectedRaceSpecialChallenge')
+    ) {
+      const meetOffer = this.registry.get('selectedRaceMeetOffer') || {};
+      const defeatedCharacterId = String(
+        meetOffer.characterId || this.opponentCharacterId || ''
+      );
+      const regionId = String(
+        this.registry.get('raceDistrict') ||
+        this.registry.get('district') ||
+        ''
+      ).toUpperCase();
+      const locationId = String(
+        meetOffer.meetLocation ||
+        this.registry.get('meetLocation') ||
+        ''
+      );
+
+      if (defeatedCharacterId && regionId) {
+        crewInviteInterest = createCrewInviteFromMeetWin(
+          this.registry,
+          {
+            regionId,
+            characterId: defeatedCharacterId,
+            locationId,
+            winToken:
+              locationId + ':' +
+              defeatedCharacterId + ':' +
+              Date.now(),
+          }
+        );
+      }
+    }
+
     saveSessionState(this.registry);
 
     this.raceSettlement = {
@@ -3983,6 +4025,13 @@ export default class RaceScene extends Phaser.Scene {
       pinkMessage,
       gameOver,
       acquiredCarId,
+      crewInviteInterest: crewInviteInterest
+        ? {
+            regionId: crewInviteInterest.regionId,
+            characterId: crewInviteInterest.characterId,
+            baseCarId: crewInviteInterest.baseCarId,
+          }
+        : null,
     };
     return this.raceSettlement;
   }
