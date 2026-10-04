@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r343';
+import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -30,7 +30,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r344';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r345';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
@@ -40,7 +40,7 @@ import {
   getCarsInWorkshop,
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r344';
+} from '../data/workshopProgression.js?v=20261005-r345';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -84,7 +84,7 @@ import {
   getCarCouponRequirement,
   getCarCouponCount,
   MARKET_BASE_PRICES,
-} from '../data/centralTokyo.js?v=20261005-r343';
+} from '../data/centralTokyo.js?v=20261005-r345';
 import {
   isCrewUnlocked,
   isCrewComplete,
@@ -99,7 +99,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r343';
+} from '../data/crewSystem.js?v=20261005-r345';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
