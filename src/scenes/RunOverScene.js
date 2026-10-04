@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20260928-r232';
+import { cars } from '../data/cars.js?v=20261004-r333';
 import {
   applyStateToRegistry,
   beginNewProfile,
