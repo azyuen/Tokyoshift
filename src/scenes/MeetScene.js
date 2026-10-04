@@ -85,6 +85,21 @@ import {
   getCarCouponCount,
   MARKET_BASE_PRICES,
 } from '../data/centralTokyo.js?v=20260929-r279';
+import {
+  isCrewUnlocked,
+  isCrewComplete,
+  rollCrewRecruitChallenge,
+  clearCrewRecruitChallenge,
+  getStockCrewChallengeCarIds,
+  createStockOpponentState,
+  acceptCrewMember,
+  declinePendingCrewRecruit,
+  getCrewMemberForRegion,
+  getCrewBattleProgress,
+  getCrewBattleUnits,
+  buildRegionalCrewBattleRounds,
+  getRegionalCrewBattleReward,
+} from '../data/crewSystem.js?v=20261005-r342';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
