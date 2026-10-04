@@ -2165,6 +2165,64 @@ export default class RaceScene extends Phaser.Scene {
         };
       }
 
+      if (settlement.crewRecruit) {
+        if (!settlement.playerWon) {
+          return {
+            primary: 'RECRUITMENT RACE\nLOST',
+            secondary: 'NO CREW OFFER // ANOTHER DRIVER MAY CHALLENGE YOU LATER',
+          };
+        }
+
+        return settlement.crewRecruitOffered
+          ? {
+              primary: 'CREW OFFER\nEARNED',
+              secondary: 'RETURN TO THE MEET // DECIDE WHETHER TO RECRUIT THEM',
+            }
+          : {
+              primary: 'RACE WON',
+              secondary: 'NO CREW OFFER THIS TIME // KEEP RACING IN THE REGION',
+            };
+      }
+
+      if (settlement.crewBattle) {
+        if (settlement.crewBattleContinues) {
+          return {
+            primary: 'CREW SCORE\n' +
+              settlement.playerScore + ' - ' + settlement.opponentScore,
+            secondary:
+              'ROUND ' + settlement.roundNumber + '/6 COMPLETE // NEXT CREW CAR READY',
+          };
+        }
+
+        if (settlement.crewBattleCompleted) {
+          const couponLine = settlement.couponAwards > 0 && settlement.couponCarId
+            ? String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() +
+              ' COUPONS +' + settlement.couponAwards
+            : 'REPLAY // NO EXTRA REWARD';
+
+          return {
+            primary: 'REGIONAL CREW\nDEFEATED',
+            secondary:
+              settlement.playerScore + ' - ' + settlement.opponentScore +
+              ' // ' +
+              (settlement.crewBattleFirstClear
+                ? '+¥' + Number(settlement.cashReward || 0).toLocaleString('en-US') +
+                  ' // ' + couponLine
+                : couponLine) +
+              (settlement.tokyoChampionshipInvited
+                ? ' // TOKYO CHAMPIONSHIP INVITATION'
+                : ''),
+          };
+        }
+
+        return {
+          primary: 'CREW BATTLE\nLOST',
+          secondary:
+            settlement.playerScore + ' - ' + settlement.opponentScore +
+            ' // REORDER YOUR CREW AND TRY AGAIN',
+        };
+      }
+
       if (settlement.teamChallenge) {
         if (settlement.teamChallengeFailed) {
           return settlement.teamChallengePerfectAttempt
@@ -2296,7 +2354,12 @@ export default class RaceScene extends Phaser.Scene {
     // Fill the empty reward board in the uploaded art. Keep the balance clearly
     // below the board's divider line.
     const competitionMultilineText =
-      Boolean(settlement?.competition || settlement?.teamChallenge) && reward.primary.includes('\n');
+      Boolean(
+        settlement?.competition ||
+        settlement?.teamChallenge ||
+        settlement?.crewRecruit ||
+        settlement?.crewBattle
+      ) && reward.primary.includes('\n');
     this.add.text(780, competitionMultilineText ? 266 : 274, reward.primary, {
       fontFamily: titleFont,
       fontSize: competitionMultilineText
@@ -2535,9 +2598,11 @@ export default class RaceScene extends Phaser.Scene {
         : 'RETURN TO MEET  >';
     const actionLabel = settlement?.gameOver
       ? 'RUN OVER // OPTIONS  >'
-      : settlement?.teamChallengeContinues
-        ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
-        : settlement?.competitionContinues
+      : settlement?.crewBattleContinues
+        ? 'NEXT CREW MATCH // ' + settlement.nextRoundNumber + '/6  >'
+        : settlement?.teamChallengeContinues
+          ? 'NEXT CHALLENGER BRIEFING // ' + (settlement.progress + 1) + '/7  >'
+          : settlement?.competitionContinues
           ? 'NEXT ROUND // ' + (settlement.roundNumber + 1) + '/3  >'
           : returnLabel;
 
@@ -2555,6 +2620,8 @@ export default class RaceScene extends Phaser.Scene {
     button.on('pointerdown', () => {
       if (settlement?.gameOver) {
         this.scene.start('RunOverScene');
+      } else if (settlement?.crewBattleContinues) {
+        this.startNextCrewBattleRound();
       } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
       } else if (settlement?.competitionContinues) {
