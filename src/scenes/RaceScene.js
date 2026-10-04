@@ -66,7 +66,7 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20260928-r240';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r346';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r346';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
