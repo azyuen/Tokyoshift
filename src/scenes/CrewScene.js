@@ -22,7 +22,7 @@ import {
 } from '../data/crewSystem.js?v=20261005-r343';
 import {
   saveSessionState,
-} from '../state/GameState.js?v=20261005-r343';
+} from '../state/GameState.js?v=20261005-r344';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
