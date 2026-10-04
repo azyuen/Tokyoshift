@@ -2734,7 +2734,11 @@ export default class MeetScene extends Phaser.Scene {
       this.lastCarPinkWarning?.active ||
       sceneCutsceneActive(this)
     );
-    if (!this.hasCar || meetObscured) return null;
+    if (
+      !this.hasCar ||
+      meetObscured ||
+      cars[this.registry.get('selectedCarId')]?.crewLoan
+    ) return null;
 
     const existing = this.registry.get('specialChallenger');
     const allowedHere = new Set(
@@ -4670,6 +4674,19 @@ export default class MeetScene extends Phaser.Scene {
   updatePinkSlipControl(offer) {
     if (!offer) return;
 
+    const selectedCar = cars[this.registry.get('selectedCarId')];
+    if (selectedCar?.crewLoan) {
+      this.pinkSlipButton
+        .setFillStyle(0x11161c, 1)
+        .setStrokeStyle(1, 0x46545e, 1)
+        .disableInteractive();
+      this.pinkSlipButtonLabel.setText('CREW LOAN // NO PINKS').setColor('#72838f');
+      this.pinkResponseText
+        .setText('Loan cars stay with their crew member and cannot be wagered.')
+        .setColor('#8799a5');
+      return;
+    }
+
     if (!offer.pinkChallenged) {
       const ownedCars = this.registry.get('ownedCarIds') || [];
       const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
@@ -5074,6 +5091,10 @@ export default class MeetScene extends Phaser.Scene {
 
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer) return;
+
+    if (this.selectedDeal === 'PINK' && cars[this.registry.get('selectedCarId')]?.crewLoan) {
+      return;
+    }
 
     if (this.selectedDeal === 'PINK' && !storyConfirmed) {
       const rivalName = String(characters[offer.characterId]?.name || 'RIVAL').toUpperCase();
