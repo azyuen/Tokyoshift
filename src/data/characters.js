@@ -1,3 +1,11 @@
+export const CHARACTER_ASSET_VERSION = '20261004-r333';
+
+export function getCharacterAssetUrl(path) {
+  if (!path) return null;
+  const separator = String(path).includes('?') ? '&' : '?';
+  return String(path) + separator + 'v=' + encodeURIComponent(CHARACTER_ASSET_VERSION);
+}
+
 export const DEFAULT_CHARACTER_PROFILE = Object.freeze({
   scale: 1,
   offsetX: 0,
@@ -1576,6 +1584,19 @@ export const characterOrder = [
   'kentoFujisawa',
   'rinaTachibana',
   'itsukiKuroda',
+  // Shinjuku and Yokohama use the corrected named regional sprite sets too.
+  'daigoArakawa',
+  'emiSaionji',
+  'kaedeTachibana',
+  'renKurosawa',
+  'rinAmamiya',
+  'soraKanzaki',
+  'masatoIshikawa',
+  'mikaHayase',
+  'reinaKuroda',
+  'ryoheiTakeda',
+  'shunMizuno',
+  'yuiKanzaki',
 ];
 
 // Keep the complete roster available for asset loading and workshop NPC use,
