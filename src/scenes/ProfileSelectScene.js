@@ -1,11 +1,11 @@
 import { characters } from '../data/characters.js?v=20261004-r333';
-import { cars } from '../data/cars.js?v=20261005-r344';
+import { cars } from '../data/cars.js?v=20261005-r345';
 import {
   getProfileSlots,
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20261005-r344';
+} from '../state/GameState.js?v=20261005-r345';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
