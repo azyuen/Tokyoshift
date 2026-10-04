@@ -2,9 +2,9 @@ import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
-import { cars } from '../data/cars.js?v=20261005-r343';
+import { cars } from '../data/cars.js?v=20261005-r345';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r344';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r345';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
@@ -39,7 +39,7 @@ import {
   getVisualModWheelVisual,
   createVisualModLayers,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261005-r343';
+} from '../data/visualMods.js?v=20261005-r345';
 import {
   createTunerDecalLayers,
   preloadTunerDecalAssets,
