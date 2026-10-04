@@ -809,6 +809,7 @@ export const CUTSCENE_ORDER = [
   'openingWorkshopGuide',
   'tunerTeamCallout',
   'regionalCrewIntroduction',
+  'crewRecruitmentInvite',
   'tunerShopDiscovery',
   'regionalChampionVictory',
   'regionalPerfectVictory',
