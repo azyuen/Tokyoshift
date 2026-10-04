@@ -907,9 +907,9 @@ export default class MeetScene extends Phaser.Scene {
 
     const carObjects = this.createCarDisplay(
       car,
-      1265,
+      1145,
       420,
-      760,
+      820,
       916,
       false,
       DEFAULT_PAINT_COLOR
@@ -3566,8 +3566,15 @@ export default class MeetScene extends Phaser.Scene {
   queueMeetRosterAssets(offers = [], locationId = this.selectedMeetLocation) {
     let queued = 0;
     const carIds = new Set();
+    const queuedImageKeys = new Set();
     const queueImage = (key, path) => {
-      if (!key || !path || this.textures.exists(key)) return;
+      if (
+        !key ||
+        !path ||
+        this.textures.exists(key) ||
+        queuedImageKeys.has(key)
+      ) return;
+      queuedImageKeys.add(key);
       this.load.image(key, path);
       queued += 1;
     };
@@ -3588,9 +3595,26 @@ export default class MeetScene extends Phaser.Scene {
       queueImage(fallbackBackground.key, fallbackBackground.path + '?v=20260928-r245');
     }
 
+    const inviteCharacterId = String(
+      getCrewInviteInterest(this.registry)?.characterId ||
+      this.registry.get('crewRecruitChallenge')?.characterId ||
+      ''
+    );
+
     (offers || []).forEach(offer => {
       const visual = characters[offer?.characterId]?.visual || {};
       queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+
+      if (String(offer?.characterId || '') === inviteCharacterId) {
+        queueImage(
+          visual.winSpriteKey,
+          visual.winPath ? getCharacterAssetUrl(visual.winPath) : null
+        );
+        queueImage(
+          visual.lossSpriteKey,
+          visual.lossPath ? getCharacterAssetUrl(visual.lossPath) : null
+        );
+      }
 
       if (offer?.resultState) {
         const won = offer.resultState === 'PLAYER_LOSS';
