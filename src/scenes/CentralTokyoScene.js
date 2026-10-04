@@ -1508,6 +1508,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         listing.previewState || {}
       ).car;
     })();
+    const ratingState = room === 'used'
+      ? { ...(listing.previewState || {}), stock: false }
+      : { stock: true };
+    const ratingDisplay = getPowerTorqueDisplay(car, ratingState, displaySpec);
     const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
     const cash = Number(this.registry.get('cash') || 0);
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
