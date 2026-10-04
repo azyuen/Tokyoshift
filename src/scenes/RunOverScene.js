@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261005-r343';
+import { cars } from '../data/cars.js?v=20261005-r344';
 import {
   applyStateToRegistry,
   beginNewProfile,
@@ -6,7 +6,7 @@ import {
   getActiveProfileIndex,
   normaliseStarterCarId,
   saveSessionState,
-} from '../state/GameState.js?v=20261005-r343';
+} from '../state/GameState.js?v=20261005-r344';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
