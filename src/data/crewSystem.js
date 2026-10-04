@@ -14,9 +14,9 @@ export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_RECRUIT_CHALLENGE_CHANCE = 0.35;
 export const CREW_RECRUIT_OFFER_CHANCE = 0.60;
 export const CREW_RECRUIT_PITY_ROLLS = 3;
-export const CREW_BATTLE_LINEUP_SIZE = 5;
-export const CREW_BATTLE_WINS_REQUIRED = 3;
-export const CREW_BATTLE_COUPONS = 1;
+export const CREW_BATTLE_LINEUP_SIZE = 6;
+export const CREW_BATTLE_WINS_REQUIRED = 4;
+export const CREW_BATTLE_COUPONS = 2;
 export const CREW_WAREHOUSE_ID = 'shinonomeWarehouseStrip';
 
 function value(source, key, fallback = null) {
