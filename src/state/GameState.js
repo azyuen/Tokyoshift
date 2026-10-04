@@ -75,6 +75,14 @@ export function createDefaultGameState(options = {}) {
     tunerShopProgress: {},
     tunerTeamChallenges: {},
     tunerChallengeRevealPending: null,
+    crewMembers: {},
+    crewRecruitmentState: {},
+    crewRecruitChallenge: null,
+    crewPendingRecruit: null,
+    crewBattleProgress: {},
+    crewBattleState: null,
+    tokyoChampionshipInvited: false,
+    selectedRacePlayerCharacterId: null,
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
     district: 'ODAIBA',
@@ -777,6 +785,33 @@ export function normaliseState(input = {}) {
       input.tunerChallengeRevealPending
         ? String(input.tunerChallengeRevealPending).toUpperCase()
         : null,
+    crewMembers:
+      input.crewMembers && typeof input.crewMembers === 'object'
+        ? input.crewMembers
+        : {},
+    crewRecruitmentState:
+      input.crewRecruitmentState && typeof input.crewRecruitmentState === 'object'
+        ? input.crewRecruitmentState
+        : {},
+    crewRecruitChallenge:
+      input.crewRecruitChallenge && typeof input.crewRecruitChallenge === 'object'
+        ? input.crewRecruitChallenge
+        : null,
+    crewPendingRecruit:
+      input.crewPendingRecruit && typeof input.crewPendingRecruit === 'object'
+        ? input.crewPendingRecruit
+        : null,
+    crewBattleProgress:
+      input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
+        ? input.crewBattleProgress
+        : {},
+    crewBattleState:
+      input.crewBattleState && typeof input.crewBattleState === 'object'
+        ? input.crewBattleState
+        : null,
+    tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
+    selectedRacePlayerCharacterId:
+      input.selectedRacePlayerCharacterId ? String(input.selectedRacePlayerCharacterId) : null,
     tunerDecalsUnlocked: Array.isArray(input.tunerDecalsUnlocked)
       ? [...new Set(input.tunerDecalsUnlocked.map(String).filter(Boolean))]
       : [],
@@ -911,6 +946,14 @@ export function snapshotRegistry(registry) {
     tunerShopProgress: registry.get('tunerShopProgress') || {},
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
     tunerChallengeRevealPending: registry.get('tunerChallengeRevealPending') || null,
+    crewMembers: registry.get('crewMembers') || {},
+    crewRecruitmentState: registry.get('crewRecruitmentState') || {},
+    crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
+    crewPendingRecruit: registry.get('crewPendingRecruit') || null,
+    crewBattleProgress: registry.get('crewBattleProgress') || {},
+    crewBattleState: registry.get('crewBattleState') || null,
+    tokyoChampionshipInvited: Boolean(registry.get('tokyoChampionshipInvited')),
+    selectedRacePlayerCharacterId: registry.get('selectedRacePlayerCharacterId') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
     district: registry.get('district') || 'ODAIBA',
