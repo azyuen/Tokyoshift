@@ -14,8 +14,8 @@ export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_RECRUIT_CHALLENGE_CHANCE = 0.35;
 export const CREW_RECRUIT_OFFER_CHANCE = 0.60;
 export const CREW_RECRUIT_PITY_ROLLS = 3;
-export const CREW_BATTLE_LINEUP_SIZE = 6;
-export const CREW_BATTLE_WINS_REQUIRED = 4;
+export const CREW_BATTLE_LINEUP_SIZE = 5;
+export const CREW_BATTLE_WINS_REQUIRED = 3;
 export const CREW_BATTLE_COUPONS = 1;
 export const CREW_WAREHOUSE_ID = 'shinonomeWarehouseStrip';
 
@@ -396,14 +396,22 @@ function proLeaderAi(base = {}) {
   };
 }
 
-export function buildRegionalCrewBattleRounds(regionId) {
+export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
   const roster = getRegionalCrewRoster(key);
   if (!roster) return [];
 
+  // The driver recruited from this region has left their old team. The return
+  // crew battle is therefore leader + the four non-recruited teammates.
+  const recruitedCharacterId = source
+    ? getCrewMemberForRegion(source, key)?.characterId
+    : null;
+  const opponents = roster.members.filter(
+    member => member.characterId !== recruitedCharacterId
+  );
   const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
 
-  return roster.members.map((member, index) => {
+  return opponents.map((member, index) => {
     const raceType = index % 3 === 1 ? 'Roll Race' : 'Standing Start';
     const buildRating = regionalBuildRating(rank, index);
     const encounterRating = regionalDriverRating(rank, index);
@@ -433,7 +441,7 @@ export function buildRegionalCrewBattleRounds(regionId) {
       difficulty: leader ? 'PRO' : encounterRating >= 5 ? 'ELITE' : 'EXPERT',
       leader,
     };
-  });
+  }).slice(0, CREW_BATTLE_LINEUP_SIZE);
 }
 
 export function getRegionalCrewBattleReward(regionId) {
