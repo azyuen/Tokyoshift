@@ -996,7 +996,21 @@ export default class MeetScene extends Phaser.Scene {
       return false;
     }
 
-    const dialogue = getCrewInviteDialogue(interest.characterId);
+    const rivalName = String(character.name || interest.characterId).toUpperCase();
+    const signatureCarName = String(
+      car.name || car.shortName || interest.baseCarId
+    ).toUpperCase();
+    const playerName = [
+      String(this.registry.get('firstName') || '').trim(),
+      String(this.registry.get('lastName') || '').trim(),
+    ].filter(Boolean).join(' ') || 'PLAYER';
+
+    const dialogue = getCrewInviteDialogue(interest.characterId, {
+      REGION: currentRegion,
+      RIVAL_NAME: rivalName,
+      SIGNATURE_CAR: signatureCarName,
+      PLAYER_NAME: playerName.toUpperCase(),
+    });
     let cleanupReveal = () => {};
 
     const result = playMangaCutscene(this, 'crewRecruitmentInvite', {
@@ -1010,8 +1024,8 @@ export default class MeetScene extends Phaser.Scene {
       },
       variables: {
         REGION: currentRegion,
-        RIVAL_NAME: String(character.name || interest.characterId).toUpperCase(),
-        SIGNATURE_CAR: String(car.name || car.shortName || interest.baseCarId).toUpperCase(),
+        RIVAL_NAME: rivalName,
+        SIGNATURE_CAR: signatureCarName,
         CREW_LINE_1: dialogue.opening,
         CREW_LINE_2: dialogue.reveal,
         CREW_LINE_3: dialogue.challenge,
