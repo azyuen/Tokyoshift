@@ -1129,16 +1129,6 @@ for (const [id, numeral, powerKW, torqueNm, mass, engine, boost, finalDrive, spo
     visual: { wheelKey: 'wheelMesh' },
   });
 }
-addRegularCar('gr86', 'ae86', {
-  shortName: 'GR86', name: 'Toyota GR86', description: 'Modern naturally aspirated balance and rear drive.',
-  engine: 'fa24', engineModel: 'FA24', powerKW: 174, torqueNm: 250, vehicleMassKg: 1270,
-  engineRedlineRPM: 7400, engineLimiterRPM: 7600, launchRPM: 4700,
-  gearRatios: [3.626, 2.188, 1.541, 1.213, 1.000, 0.767],
-  finalDriveRatio: 4.10, drivenAxleWeightFraction: 0.53,
-  engineInertia: 0.20, clutchStrength: 420, tyreGrip: 1.04,
-  dragCoefficient: 0.30, frontalAreaM2: 1.91,
-  visual: { wheelKey: 'wheel5Spoke' },
-});
 addRegularCar('rx8', 'fc3s', {
   shortName: 'RX-8', name: 'Mazda RX-8', description: 'High revving RENESIS rotary with a broad chassis.',
   engine: '13b_msp', engineModel: '13B-MSP', powerKW: 170, torqueNm: 211, vehicleMassKg: 1370,
@@ -1242,9 +1232,6 @@ const REGULAR_ASSETS = {
 
   rx7fd: ['rx7fd', 500, 264, 403, 102, 970, 403, 97, 1184, 430],
   rx8: ['rx8', 400, 241, 310, 98, 945, 310, 101, 1165, 440],
-
-  // Re-aligned SpriteR GR86.
-  gr86: ['gr86', 500, 245, 383, 101, 949, 383, 101, 1155, 430],
 
   // Re-authored Evo III / V use 500px canvases. X follows the new wheel
   // openings; Y retains the old axle relationship after the +50px canvas shift.
@@ -1378,7 +1365,7 @@ Object.values(cars).forEach(car => {
 });
 
 export const carOrder = [
-  'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8', 'gr86',
+  'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
   'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
 ];
