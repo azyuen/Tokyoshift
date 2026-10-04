@@ -2840,6 +2840,39 @@ export default class CentralTokyoScene extends Phaser.Scene {
       'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
     );
 
+    if (Boolean(this.registry.get('tokyoChampionshipInvited'))) {
+      this.addContent(this.add.rectangle(
+        STAGE.x + STAGE.w - 240,
+        STAGE.y + 58,
+        430,
+        82,
+        0x281731,
+        0.94
+      ).setStrokeStyle(3, 0xd875ff, 1).setDepth(26));
+
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w - 240,
+        STAGE.y + 45,
+        'TOKYO CHAMPIONSHIP // INVITED',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '9px',
+          color: '#ffffff',
+        }
+      ).setOrigin(0.5).setDepth(27));
+
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w - 240,
+        STAGE.y + 77,
+        'EVENT LOCKED // CHAMPIONSHIP FORMAT COMING LATER',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: '#efcfff',
+        }
+      ).setOrigin(0.5).setDepth(27));
+    }
+
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
     const selectedCar = build ? cars[build.carId] : null;
