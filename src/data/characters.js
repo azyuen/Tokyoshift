@@ -1135,11 +1135,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterAkiraShimizu',
-      path: 'assets/Characters/Shinagawa/shinagawa_lead_racer_idle.png',
+      path: 'assets/Characters/Shinagawa/akira_shimizu_idle.png',
       winSpriteKey: 'characterAkiraShimizuWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_lead_racer_win.png',
+      winPath: 'assets/Characters/Shinagawa/akira_shimizu_win.png',
       lossSpriteKey: 'characterAkiraShimizuLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_lead_racer_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/akira_shimizu_loss.png',
     },
   },
 
@@ -1169,11 +1169,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterTetsuyaKanda',
-      path: 'assets/Characters/Shinagawa/shinagawa_veteran_idle.png',
+      path: 'assets/Characters/Shinagawa/tetsuya_kanda_idle.png',
       winSpriteKey: 'characterTetsuyaKandaWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_veteran_win.png',
+      winPath: 'assets/Characters/Shinagawa/tetsuya_kanda_win.png',
       lossSpriteKey: 'characterTetsuyaKandaLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_veteran_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/tetsuya_kanda_loss.png',
     },
   },
 
@@ -1203,11 +1203,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterNatsumiKagawa',
-      path: 'assets/Characters/Shinagawa/shinagawa_mechanic_idle.png',
+      path: 'assets/Characters/Shinagawa/natsumi_kagawa_idle.png',
       winSpriteKey: 'characterNatsumiKagawaWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_mechanic_win.png',
+      winPath: 'assets/Characters/Shinagawa/natsumi_kagawa_win.png',
       lossSpriteKey: 'characterNatsumiKagawaLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_mechanic_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/natsumi_kagawa_loss.png',
     },
   },
 
@@ -1237,11 +1237,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterReiTakamura',
-      path: 'assets/Characters/Shinagawa/shinagawa_specialist_idle.png',
+      path: 'assets/Characters/Shinagawa/rei_takamura_idle.png',
       winSpriteKey: 'characterReiTakamuraWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_specialist_win.png',
+      winPath: 'assets/Characters/Shinagawa/rei_takamura_win.png',
       lossSpriteKey: 'characterReiTakamuraLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_specialist_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/rei_takamura_loss.png',
     },
   },
 
@@ -1271,11 +1271,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterGoroNakajima',
-      path: 'assets/Characters/Shinagawa/shinagawa_enforcer_idle.png',
+      path: 'assets/Characters/Shinagawa/goro_nakajima_idle.png',
       winSpriteKey: 'characterGoroNakajimaWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_enforcer_win.png',
+      winPath: 'assets/Characters/Shinagawa/goro_nakajima_win.png',
       lossSpriteKey: 'characterGoroNakajimaLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_enforcer_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/goro_nakajima_loss.png',
     },
   },
 
@@ -1305,11 +1305,11 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterSayakaFujieda',
-      path: 'assets/Characters/Shinagawa/shinagawa_strategist_idle.png',
+      path: 'assets/Characters/Shinagawa/sayaka_fujieda_idle.png',
       winSpriteKey: 'characterSayakaFujiedaWin',
-      winPath: 'assets/Characters/Shinagawa/shinagawa_strategist_win.png',
+      winPath: 'assets/Characters/Shinagawa/sayaka_fujieda_win.png',
       lossSpriteKey: 'characterSayakaFujiedaLoss',
-      lossPath: 'assets/Characters/Shinagawa/shinagawa_strategist_loss.png',
+      lossPath: 'assets/Characters/Shinagawa/sayaka_fujieda_loss.png',
     },
   },
 
