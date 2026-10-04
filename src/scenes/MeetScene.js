@@ -40,7 +40,7 @@ import {
   getCarsInWorkshop,
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261004-r319';
+} from '../data/workshopProgression.js?v=20261005-r344';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
