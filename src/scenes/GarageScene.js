@@ -1156,7 +1156,12 @@ export default class GarageScene extends Phaser.Scene {
         ) < getWorkshopStorageCapacity(workshop.id)
       );
 
-    const enabled = !locked && Boolean(this.selectedCarId) && alternatives.length > 0;
+    const crewLoan = Boolean(cars[this.selectedCarId]?.crewLoan);
+    const enabled =
+      !locked &&
+      !crewLoan &&
+      Boolean(this.selectedCarId) &&
+      alternatives.length > 0;
 
     if (enabled) {
       this.moveCarButton
@@ -1169,12 +1174,20 @@ export default class GarageScene extends Phaser.Scene {
         .disableInteractive()
         .setFillStyle(0x17181d, 1)
         .setStrokeStyle(1, 0x514f55, 1);
-      this.moveCarLabel.setColor('#817d84').setText('MOVE CAR');
+      this.moveCarLabel
+        .setColor('#817d84')
+        .setText(crewLoan ? 'CREW LOAN // WAREHOUSE' : 'MOVE CAR');
     }
   }
 
   showMoveCarPopup() {
-    if (!this.selectedCarId || this.engineMode || this.secondaryMode || this.chassisMode) return;
+    if (
+      !this.selectedCarId ||
+      cars[this.selectedCarId]?.crewLoan ||
+      this.engineMode ||
+      this.secondaryMode ||
+      this.chassisMode
+    ) return;
 
     this.syncGarageAssignments();
     const currentWorkshop = this.getActiveWorkshop();
