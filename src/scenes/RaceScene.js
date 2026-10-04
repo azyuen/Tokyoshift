@@ -74,6 +74,16 @@ import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
+import {
+  CREW_RECRUIT_OFFER_CHANCE,
+  CREW_BATTLE_WINS_REQUIRED,
+  CREW_BATTLE_COUPONS,
+  clearCrewRecruitChallenge,
+  setPendingCrewRecruit,
+  getRegionalCrewBattleReward,
+  markCrewBattleCompleted,
+  areAllCrewBattlesComplete,
+} from '../data/crewSystem.js?v=20261005-r342';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -150,7 +160,10 @@ export default class RaceScene extends Phaser.Scene {
       queueImage(asset.key, asset.path);
     });
 
-    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const playerId =
+      this.registry.get('selectedRacePlayerCharacterId') ||
+      this.registry.get('playerCharacterId') ||
+      'renMizuno';
     const opponentId = this.registry.get('selectedOpponentCharacterId');
     [playerId, opponentId].filter(Boolean).forEach(id => {
       const visual = characters[id]?.visual || {};
@@ -195,13 +208,17 @@ export default class RaceScene extends Phaser.Scene {
       DEFAULT_PAINT_COLOR
     );
     const storedPlayerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const racePlayerCharacterId =
+      this.registry.get('selectedRacePlayerCharacterId') || storedPlayerCharacterId;
     const developerAvatar =
       Boolean(this.registry.get('devMode')) &&
-      storedPlayerCharacterId === 'arkonDen';
+      racePlayerCharacterId === 'arkonDen';
     this.playerCharacterId =
-      developerAvatar || playableCharacterOrder.includes(storedPlayerCharacterId)
-        ? storedPlayerCharacterId
-        : playableCharacterOrder[0];
+      developerAvatar || characters[racePlayerCharacterId]
+        ? racePlayerCharacterId
+        : playableCharacterOrder.includes(storedPlayerCharacterId)
+          ? storedPlayerCharacterId
+          : playableCharacterOrder[0];
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
@@ -249,7 +266,7 @@ export default class RaceScene extends Phaser.Scene {
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
     const isCompetitionBuild =
-      this.raceMode === 'COMPETITION' &&
+      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE'].includes(this.raceMode) &&
       storedBuildState &&
       typeof storedBuildState === 'object';
 
