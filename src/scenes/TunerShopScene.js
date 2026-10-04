@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars } from '../data/cars.js?v=20261004-r333';
+import { cars } from '../data/cars.js?v=20261005-r343';
 import { characters } from '../data/characters.js?v=20261004-r333';
 import {
   getTunerShopForRegion,
@@ -12,14 +12,14 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261004-r319';
+} from '../state/GameState.js?v=20261005-r343';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261004-r333';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261005-r343';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
