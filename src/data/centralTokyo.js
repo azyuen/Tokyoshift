@@ -367,7 +367,6 @@ export function getCentralTokyoEligibility(source) {
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.ginza.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.ginza.garageTierRequired,
     drag:
-      wins >= CENTRAL_TOKYO_LOCATIONS.drag.winsRequired &&
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.drag.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.drag.garageTierRequired,
   };
@@ -383,7 +382,7 @@ export function getCentralTokyoAccess(source) {
   return {
     autoMarket: Boolean(unlocked.autoMarket && eligible.autoMarket),
     ginza: Boolean(unlocked.ginza && eligible.ginza),
-    drag: Boolean(unlocked.drag && eligible.drag),
+    drag: Boolean(eligible.drag),
   };
 }
 
@@ -454,7 +453,6 @@ export function getPendingCentralTokyoInvite(source) {
 
   if (eligible.autoMarket && !access.autoMarket) return 'autoMarket';
   if (eligible.ginza && !access.ginza) return 'ginza';
-  if (eligible.drag && !access.drag) return 'drag';
   return null;
 }
 
