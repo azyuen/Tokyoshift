@@ -1,4 +1,4 @@
-import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261005-r334';
+import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261005-r343';
 
 const base = {
   wheelRadius: 0.305,
