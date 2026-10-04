@@ -174,6 +174,59 @@ export const CUTSCENES = {
     finalActionLabel: 'DRIVE',
   },
 
+  crewRecruitmentInvite: {
+    id: 'crewRecruitmentInvite',
+    category: 'CREW / RECRUITMENT',
+    testerLabel: 'Crew — Signature Car Invitation',
+    title: '{REGION} // CREW INVITE',
+    once: false,
+    characters: {
+      left: '$RIVAL',
+      right: null,
+    },
+    preview: {
+      characterOverrides: { RIVAL: 'aoiShindou' },
+      variables: {
+        REGION: 'ODAIBA',
+        RIVAL_NAME: 'AOI SHINDOU',
+        SIGNATURE_CAR: 'TOYOTA SPRINTER TRUENO AE86',
+        CREW_LINE_1: "You've got my attention. That was a clean run.",
+        CREW_LINE_2: "The car you saw tonight isn't the one I'm known for. This is my car: TOYOTA SPRINTER TRUENO AE86.",
+        CREW_LINE_3: "Stock for stock. Beat me in it and I'll run with your crew.",
+        CREW_ACCEPT_LABEL: 'ACCEPT STOCK RACE',
+        CREW_DECLINE_LABEL: 'NOT NOW',
+      },
+    },
+    introCard: {
+      character: 'left',
+      name: '{RIVAL_NAME}',
+      subtitle: '{REGION} // CREW CANDIDATE',
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'loss',
+        text: '{CREW_LINE_1}',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: '{CREW_LINE_2}',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'win',
+        text: '{CREW_LINE_3}',
+        emphasis: true,
+      },
+    ],
+    finalActionLabel: '{CREW_ACCEPT_LABEL}',
+    secondaryFinalActionLabel: '{CREW_DECLINE_LABEL}',
+  },
+
   tunerShopDiscovery: {
     id: 'tunerShopDiscovery',
     category: 'TUNER / STORY',
