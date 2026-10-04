@@ -3983,6 +3983,7 @@ export default class RaceScene extends Phaser.Scene {
     if (
       playerWon &&
       this.raceMode === 'SINGLE' &&
+      this.raceDeal === 'BET' &&
       !this.registry.get('selectedRaceSpecialChallenge')
     ) {
       const meetOffer = this.registry.get('selectedRaceMeetOffer') || {};
