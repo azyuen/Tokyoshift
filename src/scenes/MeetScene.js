@@ -222,11 +222,16 @@ export default class MeetScene extends Phaser.Scene {
     const storedCurrentUnique =
       new Set(storedCurrent.map(offer => offer?.characterId).filter(Boolean)).size ===
       storedCurrent.length;
+    const initialRegion = getMeetLocation(initialLocationId)?.district;
+    const initialRegionalCharacters = new Set(
+      getRivalCharacterOrderForRegion(initialRegion)
+    );
     const storedCurrentValid =
       storedRefreshAt > Date.now() &&
       storedCurrent.length > 0 &&
       storedCurrentUnique &&
       storedCurrent.every(offer =>
+        initialRegionalCharacters.has(offer?.characterId) &&
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
