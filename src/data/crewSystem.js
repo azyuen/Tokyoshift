@@ -147,7 +147,11 @@ export function isPerformanceStockState(state = {}) {
 export function getStockCrewChallengeCarIds(source) {
   const states = value(source, 'carStates', {}) || {};
   return (value(source, 'ownedCarIds', []) || [])
-    .filter(carId => cars[carId] && isPerformanceStockState(states[carId] || {}));
+    .filter(carId =>
+      cars[carId] &&
+      !cars[carId].crewLoan &&
+      isPerformanceStockState(states[carId] || {})
+    );
 }
 
 export function getRecruitableCrewCandidates(source, regionId) {
