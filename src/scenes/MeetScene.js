@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261004-r333';
+import { cars, carOrder } from '../data/cars.js?v=20261005-r343';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -30,7 +30,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261004-r319';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r343';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
@@ -84,7 +84,7 @@ import {
   getCarCouponRequirement,
   getCarCouponCount,
   MARKET_BASE_PRICES,
-} from '../data/centralTokyo.js?v=20260929-r279';
+} from '../data/centralTokyo.js?v=20261005-r343';
 import {
   isCrewUnlocked,
   isCrewComplete,
