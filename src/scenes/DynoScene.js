@@ -14,8 +14,15 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20261004-r319';
+} from '../data/dyno.js?v=20261004-r325';
 import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r319';
+import {
+  STAGE3_CALIBRATION_OPTIONS,
+  normaliseStage3Calibration,
+  getStage3CalibrationEligibility,
+  getStage3CalibrationOption,
+  describeStage3Calibration,
+} from '../data/stage3Calibration.js?v=20261004-r325';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -69,6 +76,10 @@ export default class DynoScene extends Phaser.Scene {
     queueImage('nosButton', 'assets/Controls/nos_button.png');
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
+
+    queueImage('tuningPartEcuL3', 'assets/Tuning/Parts/ecu_l3.png?v=20261004-r325');
+    queueImage('tuningPartTurboL3', 'assets/Tuning/Parts/turbo_l3.png?v=20261004-r325');
+    queueImage('tuningPartGearboxL3', 'assets/Tuning/Parts/gearbox_l3.png?v=20261004-r325');
 
     const daichi = characters.daichiSakamoto;
     if (daichi?.visual) {
@@ -168,6 +179,9 @@ export default class DynoScene extends Phaser.Scene {
     this.activeUiObjects = [];
     this.shiftLabelObjects = [];
     this.dynoShifterInputShield = null;
+    this.stage3PendingTune = null;
+    this.stage3ReferenceIndex = 0;
+    this.stage3StatusMessage = '';
     this._dynoCleanedUp = false;
 
     this.drawBackground();
@@ -554,11 +568,16 @@ export default class DynoScene extends Phaser.Scene {
     const next = getDynoNextStage(this.facilityTier);
     const tuningUnlocked = this.facilityTier >= 3;
     drawStageCard(
-      nextTop, tuningUnlocked ? 0x62e8c7 : 0x6b5b37,
-      'DYNO TUNING',
-      tuningUnlocked ? 'ECU RESPONSE + LOAD TUNING' :
-        'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') + '\n' + next.description.toUpperCase(),
-      'STAGE 3', '', null, !tuningUnlocked
+      nextTop, tuningUnlocked ? 0xd9b65f : 0x6b5b37,
+      'TUNING CONSOLE  //  TRADE-OFF SETUP',
+      tuningUnlocked
+        ? 'ECU CURVE + BOOST CURVE + GEAR SPREAD'
+        : 'UPGRADE  ¥ ' + Number(next.installCost || 0).toLocaleString('en-US') +
+          '\n' + next.description.toUpperCase(),
+      'STAGE 3',
+      tuningUnlocked ? 'OPEN TUNING CONSOLE' : '',
+      () => this.openStage3Tuning(),
+      !tuningUnlocked
     );
 
     const graphY = 440;
@@ -578,6 +597,360 @@ export default class DynoScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(32));
     back.on('pointerdown', () => this.returnToWorkshop());
+  }
+
+
+  openStage3Tuning() {
+    if (this.facilityTier < 3 || !this.carId) return;
+
+    if (this.controls) this.controls.enabled = false;
+    [
+      this.controls?.clutchSprite,
+      this.controls?.nosSprite,
+      this.controls?.shifterSprite,
+      this.controls?.throttleSprite,
+    ].forEach(obj => obj?.setVisible(false));
+
+    if (this.dynoHud) Object.values(this.dynoHud).forEach(obj => obj?.setVisible?.(false));
+    this.dynoHud?.gearBack?.setVisible(false);
+    this.dynoHud?.gearText?.setVisible(false);
+    this.daichiMessageBoard?.setVisible(false);
+    this.daichiText?.setVisible(false);
+
+    this.pullState = 'IDLE';
+    this.points = [];
+    this.shiftEvents = [];
+    this.clearShiftLabels();
+    this.clearUiObjects('introUiObjects');
+    this.clearUiObjects('activeUiObjects');
+
+    this.dynoUiMode = 'stage3Tuning';
+    this.dynoRunMode = 'power';
+    this.stage3PendingTune = normaliseStage3Calibration(this.carState || {});
+    this.stage3StatusMessage = '';
+    this.setHeaderContext('STAGE III // TUNING CONSOLE');
+
+    const runs = this.getDynoGraphSlots('power');
+    const firstSaved = runs.findIndex(Boolean);
+    this.stage3ReferenceIndex = firstSaved >= 0 ? firstSaved : 0;
+    this.graphViewIndex = this.stage3ReferenceIndex;
+    this.previousRun = runs[this.stage3ReferenceIndex] || null;
+
+    this.renderStage3Tuning();
+  }
+
+  renderStage3Tuning() {
+    if (this.dynoUiMode !== 'stage3Tuning') return;
+    this.clearUiObjects('activeUiObjects');
+
+    const add = obj => this.addUiObject('activeUiObjects', obj);
+    const panelX = 1305;
+    const panelY = 407;
+    const panelW = 450;
+    const panelH = 650;
+    const eligibility = getStage3CalibrationEligibility(this.carState || {});
+    const tune = normaliseStage3Calibration(this.stage3PendingTune || {});
+    const powerRuns = this.getDynoGraphSlots('power');
+
+    add(this.add.rectangle(panelX, panelY, panelW, panelH, 0x02070d, 0.94)
+      .setStrokeStyle(2, 0xd9b65f, 0.86)
+      .setDepth(30));
+
+    add(this.add.text(panelX, 99, 'STAGE III // CALIBRATION', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '9px',
+      color: '#ffe08a',
+    }).setOrigin(0.5).setDepth(32));
+
+    add(this.add.text(panelX, 126, 'SAVED DYNO REFERENCE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#88a8ba',
+    }).setOrigin(0.5).setDepth(32));
+
+    [0, 1, 2].forEach(index => {
+      const bx = 1195 + index * 110;
+      const run = powerRuns[index];
+      const selected = Boolean(run) && index === this.stage3ReferenceIndex;
+      const box = add(this.add.rectangle(
+        bx,
+        160,
+        92,
+        36,
+        run ? (selected ? 0x243a32 : 0x102138) : 0x0b1017,
+        0.98
+      )
+        .setStrokeStyle(2, run ? (selected ? 0xffd45a : 0x456f82) : 0x394752, 0.92)
+        .setDepth(31));
+
+      add(this.add.text(bx, 160, run ? ('GRAPH ' + (index + 1)) : 'EMPTY', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: run ? (selected ? '#ffe58a' : '#b9d9e8') : '#687983',
+      }).setOrigin(0.5).setDepth(32));
+
+      if (run) {
+        box.setInteractive({ useHandCursor: true });
+        box.on('pointerdown', () => {
+          this.stage3ReferenceIndex = index;
+          this.graphViewIndex = index;
+          this.previousRun = powerRuns[index];
+          this.renderStage3Tuning();
+        });
+      }
+    });
+
+    const selectedRun = powerRuns[this.stage3ReferenceIndex] || null;
+    const refTune = describeStage3Calibration(selectedRun?.stage3Calibration || {});
+    add(this.add.text(
+      panelX,
+      193,
+      selectedRun
+        ? 'REF  //  ECU ' + refTune.ecu +
+          '  //  BOOST ' + refTune.boost +
+          '  //  GEARS ' + refTune.gears
+        : 'NO SAVED POWER GRAPH YET',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '7px',
+        color: selectedRun ? '#9fb6c3' : '#748793',
+        fontStyle: '700',
+        align: 'center',
+        wordWrap: { width: 405 },
+      }
+    ).setOrigin(0.5).setDepth(32));
+
+    const rows = [
+      {
+        key: 'ecuBias',
+        y: 285,
+        title: 'ECU CURVE',
+        sprite: 'tuningPartEcuL3',
+        requirement: 'REQUIRES MOTORSPORT ECU // LEVEL 3',
+        left: 'MIDRANGE',
+        right: 'TOP END',
+        accent: 0x62e8c7,
+      },
+      {
+        key: 'boostBias',
+        y: 420,
+        title: 'BOOST CURVE',
+        sprite: 'tuningPartTurboL3',
+        requirement: 'REQUIRES BIG TURBO // LEVEL 3',
+        left: 'EARLY',
+        right: 'LATE / STRONG',
+        accent: 0x43dfff,
+      },
+      {
+        key: 'gearBias',
+        y: 555,
+        title: 'GEAR SPREAD',
+        sprite: 'tuningPartGearboxL3',
+        requirement: 'REQUIRES DOG BOX // LEVEL 3',
+        left: 'CLOSE',
+        right: 'WIDE',
+        accent: 0xffc86a,
+      },
+    ];
+
+    rows.forEach(row => {
+      const unlocked = Boolean(eligibility[row.key]);
+      const current = tune[row.key];
+      const option = getStage3CalibrationOption(row.key, current);
+
+      add(this.add.rectangle(panelX, row.y, 414, 118, 0x07111d, unlocked ? 0.86 : 0.72)
+        .setStrokeStyle(1, unlocked ? row.accent : 0x47535a, unlocked ? 0.62 : 0.48)
+        .setDepth(30.5));
+
+      const sprite = add(this.add.image(1130, row.y, row.sprite)
+        .setDepth(32)
+        .setAlpha(unlocked ? 1 : 0.30));
+      if (this.textures.exists(row.sprite)) {
+        const source = this.textures.get(row.sprite).getSourceImage();
+        sprite.setScale(Math.min(62 / Math.max(1, source.width), 62 / Math.max(1, source.height)));
+      }
+
+      add(this.add.text(1180, row.y - 42, row.title + '  //  ' + (option?.label || 'BALANCED'), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: unlocked
+          ? '#' + row.accent.toString(16).padStart(6, '0')
+          : '#71808a',
+      }).setDepth(32));
+
+      if (!unlocked) {
+        add(this.add.text(1180, row.y + 5, row.requirement, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#806f62',
+          wordWrap: { width: 300 },
+        }).setDepth(32));
+        return;
+      }
+
+      add(this.add.text(1245, row.y - 10, row.left, {
+        fontFamily: BODY_FONT,
+        fontSize: '6px',
+        color: '#839aa8',
+        fontStyle: '700',
+      }).setOrigin(1, 0.5).setDepth(32));
+
+      add(this.add.text(1485, row.y - 10, row.right, {
+        fontFamily: BODY_FONT,
+        fontSize: '6px',
+        color: '#839aa8',
+        fontStyle: '700',
+      }).setOrigin(1, 0.5).setDepth(32));
+
+      STAGE3_CALIBRATION_OPTIONS[row.key].forEach((preset, presetIndex) => {
+        const bx = 1270 + presetIndex * 48;
+        const selected = preset.value === current;
+        const button = add(this.add.rectangle(
+          bx,
+          row.y + 15,
+          36,
+          28,
+          selected ? row.accent : 0x102138,
+          selected ? 0.92 : 0.98
+        )
+          .setStrokeStyle(1, selected ? 0xffffff : row.accent, selected ? 0.85 : 0.55)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(31));
+
+        add(this.add.text(
+          bx,
+          row.y + 15,
+          preset.value > 0 ? '+' + preset.value : String(preset.value),
+          {
+            fontFamily: PIXEL_FONT,
+            fontSize: '4px',
+            color: selected ? '#07111d' : '#dcecf4',
+          }
+        ).setOrigin(0.5).setDepth(32));
+
+        button.on('pointerdown', () => {
+          this.stage3PendingTune = {
+            ...normaliseStage3Calibration(this.stage3PendingTune || {}),
+            [row.key]: preset.value,
+          };
+          this.stage3StatusMessage = '';
+          this.renderStage3Tuning();
+        });
+      });
+
+      add(this.add.text(1365, row.y + 47, option?.detail || '', {
+        fontFamily: BODY_FONT,
+        fontSize: '6px',
+        color: '#9ab0bc',
+        fontStyle: '700',
+        align: 'center',
+        wordWrap: { width: 265 },
+      }).setOrigin(0.5).setDepth(32));
+    });
+
+    const save = add(this.add.rectangle(1215, 692, 170, 44, 0x2a2615, 0.98)
+      .setStrokeStyle(2, 0xffd45a, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(1215, 692, 'SAVE TUNE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#fff0b5',
+    }).setOrigin(0.5).setDepth(32));
+    save.on('pointerdown', () => this.saveStage3Tuning());
+
+    const reset = add(this.add.rectangle(1395, 692, 170, 44, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x65879a, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(1395, 692, 'RESET BALANCED', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#cce4ef',
+    }).setOrigin(0.5).setDepth(32));
+    reset.on('pointerdown', () => {
+      this.stage3PendingTune = { ecuBias: 0, boostBias: 0, gearBias: 0 };
+      this.stage3StatusMessage = 'BALANCED PRESET LOADED // SAVE TO APPLY';
+      this.renderStage3Tuning();
+    });
+
+    const back = add(this.add.rectangle(panelX, 748, 350, 44, 0x102138, 0.98)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(31));
+    add(this.add.text(panelX, 748, 'RETURN TO DYNO', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(32));
+    back.on('pointerdown', () => {
+      this.daichiMessageBoard?.setVisible(true);
+      this.daichiText?.setVisible(true);
+      this.returnToDynoMenu();
+    });
+
+    if (this.stage3StatusMessage) {
+      add(this.add.text(panelX, 790, this.stage3StatusMessage, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: '#ffe08a',
+        align: 'center',
+        wordWrap: { width: 420 },
+      }).setOrigin(0.5).setDepth(32));
+    }
+
+    this.graphViewIndex = this.stage3ReferenceIndex;
+    this.previousRun = selectedRun;
+    this.points = [];
+    this.dynoRunMode = 'power';
+    this.redrawGraph();
+  }
+
+  saveStage3Tuning() {
+    if (this.facilityTier < 3 || !this.carId) return;
+
+    const carStates = { ...(this.registry.get('carStates') || {}) };
+    const state = { ...(carStates[this.carId] || {}) };
+    const eligibility = getStage3CalibrationEligibility(state);
+    const requested = normaliseStage3Calibration(this.stage3PendingTune || {});
+    const next = {
+      ecuBias: eligibility.ecuBias ? requested.ecuBias : 0,
+      boostBias: eligibility.boostBias ? requested.boostBias : 0,
+      gearBias: eligibility.gearBias ? requested.gearBias : 0,
+    };
+    const previous = normaliseStage3Calibration(state);
+    const changed =
+      previous.ecuBias !== next.ecuBias ||
+      previous.boostBias !== next.boostBias ||
+      previous.gearBias !== next.gearBias;
+
+    state.stage3Calibration = next;
+    if (changed && state.dyno) {
+      state.dyno = { ...state.dyno, officialReading: null };
+    }
+
+    carStates[this.carId] = state;
+    this.registry.set('carStates', carStates);
+    saveSessionState(this.registry);
+
+    this.carState = state;
+    this.stage3PendingTune = { ...next };
+    this.build = buildDynoCar(this.carId, state);
+    this.recommendedGear = getRecommendedDynoGear(this.build?.car || {});
+    this.currentRPM = Number(this.build?.engine?.idleRPM || 850);
+    this.currentBoost = 0;
+    try { this.audio?.destroy?.(); } catch (e) {}
+    this.audio = null;
+
+    const labels = describeStage3Calibration(next);
+    this.stage3StatusMessage = changed
+      ? 'SAVED // ECU ' + labels.ecu +
+        ' // BOOST ' + labels.boost +
+        ' // GEARS ' + labels.gears +
+        ' // OFFICIAL RATING CLEARED'
+      : 'TUNE UNCHANGED';
+
+    this.renderStage3Tuning();
   }
 
   
@@ -1257,6 +1630,7 @@ export default class DynoScene extends Phaser.Scene {
     const run = {
       completedAt: Date.now(),
       mode,
+      stage3Calibration: normaliseStage3Calibration(state),
       gear: mode === 'power' ? this.currentGear : (this.points?.[0]?.gear || this.currentGear),
       points: this.points.map(point => ({
         rpm: Math.round(point.rpm),
@@ -1720,6 +2094,12 @@ export default class DynoScene extends Phaser.Scene {
     );
   }
 
+  getDynoBoostFraction(rpm = this.currentRPM) {
+    const onset = Number(this.build?.car?.boostOnsetRPM || 1800);
+    const ramp = Math.max(1200, Number(this.build?.car?.boostRampRPM || 4300));
+    return Phaser.Math.Clamp((Number(rpm || 0) - onset) / ramp, 0, 1);
+  }
+
   getOverallGearRatio(gear = this.currentGear) {
     const ratio = Number(this.build?.car?.gearRatios?.[Math.max(0, Number(gear) - 1)] || 1);
     const finalDrive = Number(this.build?.car?.finalDriveRatio || 1);
@@ -1767,7 +2147,7 @@ export default class DynoScene extends Phaser.Scene {
           const targetRPM = Math.max(idle, idle + throttle * Math.max(700, launchRPM - idle));
           this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 8);
           const setupTurboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
-          const setupTurboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+          const setupTurboRpm = this.getDynoBoostFraction(this.currentRPM);
           this.currentBoost = setupTurboMax * Math.pow(setupTurboRpm, 1.18) * Math.pow(throttle, 0.88);
           const setupTelemetry = this.getRollerTelemetry(throttle, input.clutch, this.currentBoost);
           this.updateTelemetry({ boostBar: this.currentBoost, powerKW: 0, torqueNm: 0 }, throttle);
@@ -1792,7 +2172,7 @@ export default class DynoScene extends Phaser.Scene {
         this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 7);
 
         const setupTurboMax = Math.max(0, Number(this.build.car.maximumBoost || 0));
-        const setupTurboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+        const setupTurboRpm = this.getDynoBoostFraction(this.currentRPM);
         this.currentBoost = setupTurboMax * Math.pow(setupTurboRpm, 1.18) * Math.pow(clamp(input.throttle, 0, 1), 0.88);
 
         const setupTelemetry = this.getRollerTelemetry(input.throttle, input.clutch, this.currentBoost);
@@ -1849,7 +2229,7 @@ export default class DynoScene extends Phaser.Scene {
         const startRPM = Math.max(Number(this.build.engine.idleRPM || 850) + 650, redline * 0.24);
         this.currentRPM = startRPM + (redline - startRPM) * this.runProgress;
 
-        const turboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+        const turboRpm = this.getDynoBoostFraction(this.currentRPM);
         this.currentBoost = turboMax * Math.pow(turboRpm, 1.18) * Math.pow(throttle, 0.88);
         const point = getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle);
 
@@ -1897,7 +2277,7 @@ export default class DynoScene extends Phaser.Scene {
         this.currentRPM += (targetRPM - this.currentRPM) * Math.min(1, dt * 14);
       }
 
-      const turboRpm = Phaser.Math.Clamp((this.currentRPM - 1800) / 4300, 0, 1);
+      const turboRpm = this.getDynoBoostFraction(this.currentRPM);
       this.currentBoost = turboMax * Math.pow(turboRpm, 1.18) * Math.pow(throttle, 0.88);
       const enginePoint = getDynoPoint(this.build, this.currentRPM, this.currentBoost, throttle);
       const drivetrainPoint = this.getDrivetrainPoint(enginePoint, this.vehicleSpeedMps, this.currentGear);
