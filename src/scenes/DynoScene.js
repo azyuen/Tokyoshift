@@ -679,6 +679,10 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   closeTextEntryPopup() {
+    if (this.textEntryKeyboardHandler) {
+      try { this.input.keyboard?.off?.('keydown', this.textEntryKeyboardHandler); } catch (e) {}
+      this.textEntryKeyboardHandler = null;
+    }
     (this.textEntryPopupObjects || []).forEach(obj => {
       try { obj?.destroy?.(); } catch (e) {}
     });
@@ -693,6 +697,7 @@ export default class DynoScene extends Phaser.Scene {
     onConfirm = null,
   } = {}) {
     this.closeTextEntryPopup();
+    this.setDynoShifterShieldEnabled(false);
 
     const objects = [];
     const add = obj => {
@@ -701,91 +706,187 @@ export default class DynoScene extends Phaser.Scene {
     };
     this.textEntryPopupObjects = objects;
     const depth = 210;
+    let value = String(initialValue || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, maxLength)
+      .toUpperCase();
+    let replaceOnFirstCharacter = Boolean(value);
 
-    add(this.add.rectangle(780, 420, 1560, 840, 0x010306, 0.74)
+    add(this.add.rectangle(780, 420, 1560, 840, 0x010306, 0.78)
       .setDepth(depth)
       .setInteractive());
 
-    add(this.add.rectangle(780, 410, 650, 260, 0x07111d, 0.995)
+    add(this.add.rectangle(780, 420, 980, 640, 0x07111d, 0.995)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setDepth(depth + 1));
 
-    add(this.add.text(780, 325, title, {
+    add(this.add.text(780, 145, title, {
       fontFamily: PIXEL_FONT,
       fontSize: '10px',
       color: '#eefaff',
       align: 'center',
     }).setOrigin(0.5).setDepth(depth + 2));
 
-    const safeInitial = String(initialValue || '').slice(0, maxLength);
-    const input = add(this.add.dom(780, 405, 'input', [
-      'width: 480px',
-      'height: 42px',
-      'box-sizing: border-box',
-      'background: #0b1620',
-      'border: 2px solid #557d93',
-      'color: #eefaff',
-      'font: 700 20px monospace',
-      'letter-spacing: 1px',
-      'padding: 7px 12px',
-      'outline: none',
-      'text-align: center',
-    ].join(';'), safeInitial).setDepth(depth + 3));
-    if (input.node) {
-      input.node.type = 'text';
-      input.node.value = safeInitial;
-      input.node.setAttribute('maxlength', String(maxLength));
-      input.node.setAttribute('autocomplete', 'off');
-      input.node.setAttribute('autocapitalize', 'characters');
-      input.node.setAttribute('spellcheck', 'false');
-      input.node.setAttribute('inputmode', 'text');
-    }
-    window.setTimeout(() => {
-      try {
-        input.node?.focus?.();
-        input.node?.select?.();
-      } catch (e) {}
-    }, 0);
+    add(this.add.rectangle(780, 205, 760, 58, 0x0b1620, 1)
+      .setStrokeStyle(2, 0x557d93, 1)
+      .setDepth(depth + 2));
 
-    const confirm = add(this.add.rectangle(700, 485, 210, 48, 0x0c2827, 1)
+    const valueText = add(this.add.text(780, 205, value || ' ', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '10px',
+      color: '#eefaff',
+      align: 'center',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const countText = add(this.add.text(1145, 238, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '4px',
+      color: '#7895a5',
+    }).setOrigin(1, 0.5).setDepth(depth + 3));
+
+    add(this.add.text(780, 260, 'TOUCH KEYS TO NAME THIS SETUP', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '5px',
+      color: '#7895a5',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const refreshValue = () => {
+      valueText.setText(value || ' ');
+      countText.setText(value.length + ' / ' + maxLength);
+    };
+    refreshValue();
+
+    const appendCharacter = character => {
+      if (replaceOnFirstCharacter) {
+        value = '';
+        replaceOnFirstCharacter = false;
+      }
+      if (value.length >= maxLength) return;
+      value += character;
+      refreshValue();
+    };
+
+    const backspace = () => {
+      replaceOnFirstCharacter = false;
+      value = value.slice(0, -1);
+      refreshValue();
+    };
+
+    const clear = () => {
+      replaceOnFirstCharacter = false;
+      value = '';
+      refreshValue();
+    };
+
+    const keyRows = [
+      { chars: ['1','2','3','4','5','6','7','8','9','0'], y: 325 },
+      { chars: ['Q','W','E','R','T','Y','U','I','O','P'], y: 385 },
+      { chars: ['A','S','D','F','G','H','J','K','L'], y: 445 },
+      { chars: ['Z','X','C','V','B','N','M','-','/','#'], y: 505 },
+    ];
+
+    keyRows.forEach(row => {
+      const keyW = 66;
+      const gap = 8;
+      const totalW = row.chars.length * keyW + (row.chars.length - 1) * gap;
+      const startX = 780 - totalW / 2 + keyW / 2;
+
+      row.chars.forEach((character, index) => {
+        const x = startX + index * (keyW + gap);
+        const key = add(this.add.rectangle(x, row.y, keyW, 44, 0x102138, 1)
+          .setStrokeStyle(1, 0x557d93, 0.92)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(depth + 2));
+        add(this.add.text(x, row.y, character, {
+          fontFamily: PIXEL_FONT,
+          fontSize: '7px',
+          color: '#eaf7ff',
+        }).setOrigin(0.5).setDepth(depth + 3));
+        key.on('pointerdown', () => appendCharacter(character));
+      });
+    });
+
+    const specialY = 565;
+    const space = add(this.add.rectangle(620, specialY, 290, 44, 0x102138, 1)
+      .setStrokeStyle(1, 0x557d93, 0.92)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(620, specialY, 'SPACE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#eaf7ff',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    space.on('pointerdown', () => appendCharacter(' '));
+
+    const back = add(this.add.rectangle(850, specialY, 145, 44, 0x102138, 1)
+      .setStrokeStyle(1, 0x557d93, 0.92)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(850, specialY, 'BACK', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#eaf7ff',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    back.on('pointerdown', backspace);
+
+    const clearBox = add(this.add.rectangle(1015, specialY, 145, 44, 0x21171b, 1)
+      .setStrokeStyle(1, 0x9b6672, 0.92)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(1015, specialY, 'CLEAR', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '6px',
+      color: '#f2c9d2',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    clearBox.on('pointerdown', clear);
+
+    const submit = () => {
+      const finalValue = value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+      if (!finalValue) return;
+      this.closeTextEntryPopup();
+      onConfirm?.(finalValue);
+    };
+
+    const confirm = add(this.add.rectangle(675, 640, 300, 50, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(700, 485, confirmLabel, {
+    add(this.add.text(675, 640, confirmLabel, {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#f1fffb',
+      align: 'center',
     }).setOrigin(0.5).setDepth(depth + 3));
+    confirm.on('pointerdown', submit);
 
-    const cancel = add(this.add.rectangle(930, 485, 210, 48, 0x102138, 1)
+    const cancel = add(this.add.rectangle(995, 640, 240, 50, 0x102138, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(930, 485, 'CANCEL', {
+    add(this.add.text(995, 640, 'CANCEL', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#d4e6ef',
     }).setOrigin(0.5).setDepth(depth + 3));
-
-    const submit = () => {
-      const rawValue = String(input.node?.value || safeInitial || '');
-      const value = rawValue.replace(/\s+/g, ' ').trim().slice(0, maxLength);
-      if (!value) return;
-      this.closeTextEntryPopup();
-      onConfirm?.(value);
-    };
-
-    confirm.on('pointerdown', submit);
     cancel.on('pointerdown', () => this.closeTextEntryPopup());
-    input.node?.addEventListener?.('keydown', event => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
+
+    this.textEntryKeyboardHandler = event => {
+      if (!event) return;
+      const key = String(event.key || '');
+      if (/^[a-z0-9#\-/]$/i.test(key)) {
+        appendCharacter(key.toUpperCase());
+      } else if (key === ' ') {
+        appendCharacter(' ');
+      } else if (key === 'Backspace') {
+        backspace();
+      } else if (key === 'Enter') {
         submit();
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
+      } else if (key === 'Escape') {
         this.closeTextEntryPopup();
       }
-    });
+    };
+    this.input.keyboard?.on?.('keydown', this.textEntryKeyboardHandler);
   }
 
   openStage3Tuning() {
@@ -833,9 +934,9 @@ export default class DynoScene extends Phaser.Scene {
     this.clearUiObjects('activeUiObjects');
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
-    const panelX = 1305;
+    const panelX = 1265;
     const panelY = 435;
-    const panelW = 450;
+    const panelW = 570;
     const panelH = 710;
     const eligibility = getStage3CalibrationEligibility(this.carState || {});
     const tune = normaliseStage3Calibration(this.stage3PendingTune || {});
@@ -864,7 +965,7 @@ export default class DynoScene extends Phaser.Scene {
       const box = add(this.add.rectangle(
         bx,
         160,
-        92,
+        150,
         36,
         run ? (selected ? 0x243a32 : 0x102138) : 0x0b1017,
         0.98
@@ -906,7 +1007,7 @@ export default class DynoScene extends Phaser.Scene {
         color: selectedRun ? '#9fb6c3' : '#748793',
         fontStyle: '700',
         align: 'center',
-        wordWrap: { width: 405 },
+        wordWrap: { width: 520 },
       }
     ).setOrigin(0.5).setDepth(32));
 
@@ -930,7 +1031,7 @@ export default class DynoScene extends Phaser.Scene {
         fontSize: '4px',
         color: hasPendingChanges ? '#ffcf71' : '#72e7bd',
         align: 'center',
-        wordWrap: { width: 410 },
+        wordWrap: { width: 520 },
       }
     ).setOrigin(0.5).setDepth(32));
 
@@ -972,11 +1073,11 @@ export default class DynoScene extends Phaser.Scene {
       const current = tune[row.key];
       const option = getStage3CalibrationOption(row.key, current);
 
-      add(this.add.rectangle(panelX, row.y, 414, 118, 0x07111d, unlocked ? 0.86 : 0.72)
+      add(this.add.rectangle(panelX, row.y, 530, 118, 0x07111d, unlocked ? 0.86 : 0.72)
         .setStrokeStyle(1, unlocked ? row.accent : 0x47535a, unlocked ? 0.62 : 0.48)
         .setDepth(30.5));
 
-      const sprite = add(this.add.image(1130, row.y, row.sprite)
+      const sprite = add(this.add.image(1025, row.y, row.sprite)
         .setDepth(32)
         .setAlpha(unlocked ? 1 : 0.30));
       if (this.textures.exists(row.sprite)) {
@@ -984,7 +1085,7 @@ export default class DynoScene extends Phaser.Scene {
         sprite.setScale(Math.min(62 / Math.max(1, source.width), 62 / Math.max(1, source.height)));
       }
 
-      add(this.add.text(1180, row.y - 42, row.title + '  //  ' + (option?.label || 'BALANCED'), {
+      add(this.add.text(1080, row.y - 42, row.title + '  //  ' + (option?.label || 'BALANCED'), {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: unlocked
@@ -993,23 +1094,23 @@ export default class DynoScene extends Phaser.Scene {
       }).setDepth(32));
 
       if (!unlocked) {
-        add(this.add.text(1180, row.y + 5, row.requirement, {
+        add(this.add.text(1080, row.y + 5, row.requirement, {
           fontFamily: PIXEL_FONT,
           fontSize: '5px',
           color: '#806f62',
-          wordWrap: { width: 300 },
+          wordWrap: { width: 410 },
         }).setDepth(32));
         return;
       }
 
-      add(this.add.text(1245, row.y - 10, row.left, {
+      add(this.add.text(1185, row.y - 10, row.left, {
         fontFamily: BODY_FONT,
         fontSize: '6px',
         color: '#839aa8',
         fontStyle: '700',
       }).setOrigin(1, 0.5).setDepth(32));
 
-      add(this.add.text(1485, row.y - 10, row.right, {
+      add(this.add.text(1510, row.y - 10, row.right, {
         fontFamily: BODY_FONT,
         fontSize: '6px',
         color: '#839aa8',
@@ -1017,7 +1118,7 @@ export default class DynoScene extends Phaser.Scene {
       }).setOrigin(1, 0.5).setDepth(32));
 
       STAGE3_CALIBRATION_OPTIONS[row.key].forEach((preset, presetIndex) => {
-        const bx = 1270 + presetIndex * 48;
+        const bx = 1195 + presetIndex * 62;
         const selected = preset.value === current;
         const button = add(this.add.rectangle(
           bx,
@@ -1052,21 +1153,21 @@ export default class DynoScene extends Phaser.Scene {
         });
       });
 
-      add(this.add.text(1365, row.y + 47, option?.detail || '', {
+      add(this.add.text(1340, row.y + 47, option?.detail || '', {
         fontFamily: BODY_FONT,
         fontSize: '6px',
         color: '#9ab0bc',
         fontStyle: '700',
         align: 'center',
-        wordWrap: { width: 265 },
+        wordWrap: { width: 355 },
       }).setOrigin(0.5).setDepth(32));
     });
 
-    const save = add(this.add.rectangle(1160, 692, 125, 44, 0x2a2615, 0.98)
+    const save = add(this.add.rectangle(1095, 692, 150, 44, 0x2a2615, 0.98)
       .setStrokeStyle(2, 0xffd45a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1160, 692, 'APPLY TUNE', {
+    add(this.add.text(1095, 692, 'APPLY TUNE', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#fff0b5',
@@ -1075,22 +1176,22 @@ export default class DynoScene extends Phaser.Scene {
 
     const presets = getStage3Presets(this.carState || {});
     const presetCount = presets.filter(Boolean).length;
-    const presetButton = add(this.add.rectangle(1305, 692, 145, 44, 0x1d2418, 0.98)
+    const presetButton = add(this.add.rectangle(1270, 692, 180, 44, 0x1d2418, 0.98)
       .setStrokeStyle(2, 0xd9b65f, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1305, 692, 'PRESETS ' + presetCount + '/' + MAX_STAGE3_PRESETS, {
+    add(this.add.text(1270, 692, 'PRESETS ' + presetCount + '/' + MAX_STAGE3_PRESETS, {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#ffe08a',
     }).setOrigin(0.5).setDepth(32));
     presetButton.on('pointerdown', () => this.openStage3PresetManager());
 
-    const reset = add(this.add.rectangle(1460, 692, 125, 44, 0x102138, 0.98)
+    const reset = add(this.add.rectangle(1450, 692, 150, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x65879a, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
-    add(this.add.text(1460, 692, 'BALANCED', {
+    add(this.add.text(1450, 692, 'BALANCED', {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#cce4ef',
@@ -1101,7 +1202,7 @@ export default class DynoScene extends Phaser.Scene {
       this.renderStage3Tuning();
     });
 
-    const back = add(this.add.rectangle(panelX, 748, 350, 44, 0x102138, 0.98)
+    const back = add(this.add.rectangle(panelX, 748, 420, 44, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));
@@ -1122,7 +1223,7 @@ export default class DynoScene extends Phaser.Scene {
         fontSize: '5px',
         color: '#ffe08a',
         align: 'center',
-        wordWrap: { width: 420 },
+        wordWrap: { width: 520 },
       }).setOrigin(0.5).setDepth(32));
     }
 
@@ -1142,11 +1243,11 @@ export default class DynoScene extends Phaser.Scene {
     this.setHeaderContext('STAGE III // PRESETS');
 
     const add = obj => this.addUiObject('activeUiObjects', obj);
-    const x = 1305;
+    const x = 1265;
     const presets = getStage3Presets(this.carState || {});
     const pending = normaliseStage3Calibration(this.stage3PendingTune || this.carState || {});
 
-    add(this.add.rectangle(x, 420, 470, 690, 0x02070d, 0.95)
+    add(this.add.rectangle(x, 420, 570, 690, 0x02070d, 0.95)
       .setStrokeStyle(2, 0xd9b65f, 0.9)
       .setDepth(30));
 
@@ -1183,11 +1284,11 @@ export default class DynoScene extends Phaser.Scene {
       const tune = occupied ? preset.calibration : pending;
       const labels = describeStage3Calibration(tune);
 
-      add(this.add.rectangle(x, y, 430, 136, occupied ? 0x07111d : 0x090d11, 0.94)
+      add(this.add.rectangle(x, y, 530, 136, occupied ? 0x07111d : 0x090d11, 0.94)
         .setStrokeStyle(2, occupied ? 0x8e7742 : 0x3f4b52, 0.86)
         .setDepth(30.5));
 
-      add(this.add.text(1110, y - 48,
+      add(this.add.text(1020, y - 48,
         occupied ? preset.name : ('EMPTY PRESET ' + (index + 1)),
         {
           fontFamily: PIXEL_FONT,
@@ -1196,7 +1297,7 @@ export default class DynoScene extends Phaser.Scene {
         }
       ).setDepth(32));
 
-      add(this.add.text(1110, y - 16,
+      add(this.add.text(1020, y - 16,
         'ECU ' + labels.ecu + '\n' +
         'BOOST ' + labels.boost + '\n' +
         'GEARS ' + labels.gears,
@@ -1209,12 +1310,12 @@ export default class DynoScene extends Phaser.Scene {
         }
       ).setDepth(32));
 
-      const saveBox = add(this.add.rectangle(1435, y - 28, 128, 38, 0x2a2615, 0.98)
+      const saveBox = add(this.add.rectangle(1450, y - 28, 150, 38, 0x2a2615, 0.98)
         .setStrokeStyle(1, 0xd9b65f, 0.92)
         .setInteractive({ useHandCursor: true })
         .setDepth(31));
       add(this.add.text(
-        1435,
+        1450,
         y - 28,
         occupied ? 'OVERWRITE' : 'SAVE CURRENT',
         {
@@ -1225,10 +1326,10 @@ export default class DynoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(32));
       saveBox.on('pointerdown', () => this.saveStage3Preset(index));
 
-      const loadBox = add(this.add.rectangle(1365, y + 27, 118, 36, 0x102138, 0.98)
+      const loadBox = add(this.add.rectangle(1360, y + 27, 120, 36, 0x102138, 0.98)
         .setStrokeStyle(1, occupied ? 0x62e8c7 : 0x46515a, 0.9)
         .setDepth(31));
-      add(this.add.text(1365, y + 27, occupied ? 'LOAD' : 'NO PRESET', {
+      add(this.add.text(1360, y + 27, occupied ? 'LOAD' : 'NO PRESET', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: occupied ? '#dffbf3' : '#687983',
@@ -1243,10 +1344,10 @@ export default class DynoScene extends Phaser.Scene {
         });
       }
 
-      const renameBox = add(this.add.rectangle(1495, y + 27, 118, 36, 0x102138, 0.98)
+      const renameBox = add(this.add.rectangle(1490, y + 27, 120, 36, 0x102138, 0.98)
         .setStrokeStyle(1, occupied ? 0x55b8ff : 0x46515a, 0.9)
         .setDepth(31));
-      add(this.add.text(1495, y + 27, occupied ? 'RENAME' : '—', {
+      add(this.add.text(1490, y + 27, occupied ? 'RENAME' : '—', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: occupied ? '#d5edfa' : '#687983',
@@ -1257,7 +1358,7 @@ export default class DynoScene extends Phaser.Scene {
       }
     });
 
-    const back = add(this.add.rectangle(x, 715, 350, 46, 0x102138, 0.98)
+    const back = add(this.add.rectangle(x, 715, 420, 46, 0x102138, 0.98)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(31));

@@ -1385,11 +1385,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const car = cars[listing.carId];
       const x = CARDS.x + 190 + index * 365;
       const selected = this.autoMarketShowcaseActive && index === this.selectedIndex;
-      const ratingState = room === 'used'
-      ? { ...(listing.previewState || {}), stock: false }
-      : { stock: true };
-    const ratingDisplay = getPowerTorqueDisplay(car, ratingState, displaySpec);
-    const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+      const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
