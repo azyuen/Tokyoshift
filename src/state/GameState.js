@@ -953,6 +953,7 @@ export function snapshotRegistry(registry) {
     tunerChallengeRevealPending: registry.get('tunerChallengeRevealPending') || null,
     crewMembers: registry.get('crewMembers') || {},
     crewRecruitmentState: registry.get('crewRecruitmentState') || {},
+    crewInviteInterest: registry.get('crewInviteInterest') || null,
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
