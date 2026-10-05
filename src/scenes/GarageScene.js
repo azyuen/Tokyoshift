@@ -467,17 +467,18 @@ export default class GarageScene extends Phaser.Scene {
     if (nextPhase === this.worldPhase) return;
     this.worldPhase = nextPhase;
 
+    const image = this.workshopBackgroundImage;
+    if (!image?.active) return;
+
     const activeWorkshop = getWorkshopByLocationId(
       this.registry.get('workshopLocationId') || this.activeWorkshopId || 'shinonomeWorkshop'
     );
-    const background = getWorkshopPhaseBackground(activeWorkshop, nextPhase);
-    if (
-      !this.workshopBackgroundImage?.active ||
-      !background?.key ||
-      !this.textures.exists(background.key)
-    ) return;
+    const textureKey = this.crewMode
+      ? (nextPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : getWorkshopPhaseBackground(activeWorkshop, nextPhase)?.key;
 
-    const image = this.workshopBackgroundImage;
+    if (!textureKey || !this.textures.exists(textureKey)) return;
+
     this.tweens.killTweensOf(image);
     this.tweens.add({
       targets: image,
@@ -486,7 +487,8 @@ export default class GarageScene extends Phaser.Scene {
       ease: 'Quad.easeIn',
       onComplete: () => {
         if (!image?.active) return;
-        this.applyWorkshopBackgroundTexture(image, background.key, activeWorkshop);
+        if (this.crewMode) this.applyCrewSpaceBackgroundTexture(image, textureKey);
+        else this.applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop);
         this.workshopBackgroundWorkshop = activeWorkshop;
         this.tweens.add({
           targets: image,
@@ -498,11 +500,157 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  applyCrewSpaceBackgroundTexture(image, textureKey) {
+    if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
+    image.setTexture(textureKey);
+    const source = this.textures.get(textureKey).getSourceImage();
+    const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    image.setScale(scale).setPosition(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h - (source.height * scale) / 2
+    );
+    return true;
+  }
+
+  clearCrewStageObjects() {
+    (this.crewStageObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.crewStageObjects = [];
+  }
+
+  getCrewMemberForLoanCar(carId) {
+    return Object.values(getCrewMembers(this.registry))
+      .find(member => member?.loanCarId === carId) || null;
+  }
+
+  syncSelectedRaceDriver() {
+    const member = this.getCrewMemberForLoanCar(this.selectedCarId);
+    this.registry.set(
+      'selectedRacePlayerCharacterId',
+      member?.characterId || null
+    );
+    return member;
+  }
+
+  drawCrewOverview() {
+    if (!this.crewMode) return;
+    this.clearCrewStageObjects();
+    this.crewFocusedCharacterId = null;
+
+    const members = Object.values(getCrewMembers(this.registry));
+    members.slice(0, CREW_MEMBER_LAYOUT.length).forEach((member, index) => {
+      const character = characters[member.characterId];
+      const layout = CREW_MEMBER_LAYOUT[index];
+      if (!character?.visual?.spriteKey || !this.textures.exists(character.visual.spriteKey)) return;
+
+      const x = STAGE.x + layout.x;
+      const feetY = STAGE.y + layout.feetY;
+      const shadow = this.add.ellipse(
+        x,
+        feetY - 8,
+        74,
+        18,
+        0x000000,
+        0.55
+      ).setDepth(12);
+
+      const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+        .setOrigin(0.5, 1)
+        .setDepth(14)
+        .setInteractive({ useHandCursor: true });
+
+      const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+      sprite.setScale(layout.h / Math.max(1, source.height));
+
+      const name = this.add.text(
+        x,
+        feetY + 9,
+        String(character.name || member.characterId).toUpperCase(),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#dff7ff',
+          backgroundColor: '#06111dcc',
+          padding: { x: 5, y: 3 },
+        }
+      ).setOrigin(0.5, 0).setDepth(18).setAlpha(0);
+
+      sprite.on('pointerover', () => name.setAlpha(1));
+      sprite.on('pointerout', () => name.setAlpha(0));
+      sprite.on('pointerdown', () => this.selectCar(member.loanCarId));
+
+      this.crewStageObjects.push(shadow, sprite, name);
+    });
+
+    const title = this.add.text(
+      STAGE.x + 28,
+      STAGE.y + 24,
+      'CREW TOGETHER // TAP A MEMBER',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: '#e8faff',
+        backgroundColor: '#06111dcc',
+        padding: { x: 8, y: 6 },
+      }
+    ).setDepth(22);
+    this.crewStageObjects.push(title);
+  }
+
+  focusCrewMember(member) {
+    if (!this.crewMode || !member) return;
+    this.clearCrewStageObjects();
+    this.crewFocusedCharacterId = member.characterId;
+
+    const character = characters[member.characterId];
+    if (character?.visual?.spriteKey && this.textures.exists(character.visual.spriteKey)) {
+      const x = STAGE.x + 205;
+      const feetY = STAGE.y + 468;
+      const shadow = this.add.ellipse(x, feetY - 10, 116, 24, 0x000000, 0.58)
+        .setDepth(13);
+      const sprite = this.add.image(x, feetY, character.visual.spriteKey)
+        .setOrigin(0.5, 1)
+        .setDepth(15);
+      const source = this.textures.get(character.visual.spriteKey).getSourceImage();
+      sprite.setScale(265 / Math.max(1, source.height));
+
+      const tag = this.add.text(
+        STAGE.x + 30,
+        STAGE.y + 32,
+        String(character.name || member.characterId).toUpperCase() +
+          ' // ' + String(member.regionId || '').replace(/_/g, ' '),
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: '#ffffff',
+          backgroundColor: '#06111ddd',
+          padding: { x: 8, y: 6 },
+        }
+      ).setDepth(22);
+
+      this.crewStageObjects.push(shadow, sprite, tag);
+    }
+
+    const allCrew = this.add.text(
+      STAGE.x + STAGE.w - 24,
+      STAGE.y + 24,
+      'ALL CREW  <',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#bfeeff',
+        backgroundColor: '#06111ddd',
+        padding: { x: 10, y: 7 },
+      }
+    ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
+    allCrew.on('pointerdown', () => this.showCrewOverviewState());
+    this.crewStageObjects.push(allCrew);
+  }
+
   drawScene() {
     this.add.rectangle(780, 420, 1560, 840, 0x050a11).setDepth(-20);
 
-    // Framed workshop viewport: the artwork is now deliberately contained in
-    // the upper-left game panel instead of pretending to be the whole screen.
     this.add.rectangle(
       STAGE.x + STAGE.w / 2,
       STAGE.y + STAGE.h / 2,
@@ -515,15 +663,19 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = getWorkshopByLocationId(
       this.registry.get('workshopLocationId') || 'shinonomeWorkshop'
     );
-    const phaseBackground = getWorkshopPhaseBackground(
-      activeWorkshop,
-      this.worldPhase || getWorldPhase()
-    );
-    const workshopTexture = phaseBackground?.key && this.textures.exists(phaseBackground.key)
-      ? phaseBackground.key
-      : this.textures.exists(activeWorkshop.textureKey)
-        ? activeWorkshop.textureKey
-        : 'garageWorkshopBg';
+    const workshopTexture = this.crewMode
+      ? (this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg')
+      : (() => {
+          const phaseBackground = getWorkshopPhaseBackground(
+            activeWorkshop,
+            this.worldPhase || getWorldPhase()
+          );
+          return phaseBackground?.key && this.textures.exists(phaseBackground.key)
+            ? phaseBackground.key
+            : this.textures.exists(activeWorkshop.textureKey)
+              ? activeWorkshop.textureKey
+              : 'garageWorkshopBg';
+        })();
 
     const workshop = this.add.image(
       STAGE.x + STAGE.w / 2,
@@ -531,7 +683,8 @@ export default class GarageScene extends Phaser.Scene {
       workshopTexture
     ).setDepth(-10);
 
-    this.applyWorkshopBackgroundTexture(workshop, workshopTexture, activeWorkshop);
+    if (this.crewMode) this.applyCrewSpaceBackgroundTexture(workshop, workshopTexture);
+    else this.applyWorkshopBackgroundTexture(workshop, workshopTexture, activeWorkshop);
     this.workshopBackgroundImage = workshop;
     this.workshopBackgroundWorkshop = activeWorkshop;
 
@@ -546,8 +699,13 @@ export default class GarageScene extends Phaser.Scene {
       STAGE.w,
       STAGE.h,
       0x03101b,
-      0.06
+      this.crewMode ? 0.02 : 0.06
     ).setDepth(-9);
+
+    if (this.crewMode) {
+      this.drawCrewOverview();
+      return;
+    }
 
     if (activeWorkshop.tier > 0) {
       this.add.rectangle(STAGE.x + 142, STAGE.y + 30, 238, 34, 0x06101b, 0.82)
@@ -560,8 +718,6 @@ export default class GarageScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setDepth(19);
     }
 
-    // Only show the selected protagonist in the workshop. Keeping this as a
-    // separate sprite lets us swap protagonists later without changing the art.
     const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
     this.addGarageCharacter(
       playerCharacter,
