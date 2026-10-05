@@ -3345,7 +3345,9 @@ export default class MeetScene extends Phaser.Scene {
     let prizeType = 'CASH';
     let prizeCarId = null;
     const finalCarId = rounds[2]?.carId || null;
-    if (preferCouponPrize && finalCarId && !owned.includes(finalCarId)) {
+    if (preferCouponPrize && finalCarId && getCarCouponRequirement(finalCarId) > 0) {
+      // A coupon prize remains useful even when the player already owns this
+      // model, because coupons can now be banked toward duplicate cars.
       prizeType = 'COUPON';
       prizeCarId = finalCarId;
     }
@@ -3435,7 +3437,7 @@ export default class MeetScene extends Phaser.Scene {
       : 0;
     const prizeText = offer.prizeType === 'COUPON'
       ? cars[offer.prizeCarId].shortName + ' COUPON\n' +
-        couponOwned + '/' + couponRequired + ' OWNED'
+        couponOwned + ' OWNED // ' + couponRequired + ' PER CAR'
       : '¥' + offer.prizeCash.toLocaleString('en-US');
 
     const depth = 120;
