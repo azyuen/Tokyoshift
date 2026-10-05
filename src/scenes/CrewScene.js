@@ -1,4 +1,4 @@
-import { saveSessionState } from '../state/GameState.js?v=20261005-r352';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
 
 // Crew Space transition bridge.
 //
