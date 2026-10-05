@@ -30,10 +30,11 @@ import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.j
 import {
   characters,
   getCharacterAssetUrl,
+  CENTRAL_TOKYO_CHARACTER_IDS,
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261004-r333';
+} from '../data/characters.js?v=20261005-r365';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -65,9 +66,9 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r348';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r348';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r365';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
 import {
@@ -2693,9 +2694,12 @@ export default class RaceScene extends Phaser.Scene {
         },
       });
     } else if (settlement?.competitionWon) {
+      const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
       playMangaCutscene(this, 'competitionChampion', {
-        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
-        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+        characterOverrides: { PROMOTER: promoterId },
+        variables: {
+          PROMOTER_NAME: String(characters[promoterId]?.name || 'Masato Kuroda').toUpperCase(),
+        },
       });
     }
   }
