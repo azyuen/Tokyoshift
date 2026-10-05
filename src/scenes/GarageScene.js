@@ -639,7 +639,7 @@ export default class GarageScene extends Phaser.Scene {
         padding: { x: 10, y: 7 },
       }
     ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
-    allCrew.on('pointerdown', () => this.showCrewOverviewState({ preserveSelection: true }));
+    allCrew.on('pointerdown', () => this.showCrewOverviewState());
     this.crewStageObjects.push(allCrew);
 
     const remove = this.add.text(
