@@ -133,13 +133,16 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 
 const CREW_MEMBER_LAYOUT = Object.freeze([
-  { x: 145, feetY: 472, h: 150 },
-  { x: 285, feetY: 470, h: 158 },
-  { x: 430, feetY: 462, h: 154 },
-  { x: 585, feetY: 474, h: 162 },
-  { x: 740, feetY: 463, h: 156 },
-  { x: 905, feetY: 360, h: 140 },
-  { x: 1050, feetY: 358, h: 144 },
+  // Five on the workshop floor, two on the balcony. Heights deliberately vary
+  // with perspective so a full seven-person crew reads as one authored group,
+  // not seven identical stickers laid over the room.
+  { x: 150, feetY: 478, h: 154, zone: 'floor' },
+  { x: 300, feetY: 468, h: 162, zone: 'floor' },
+  { x: 455, feetY: 480, h: 158, zone: 'floor' },
+  { x: 625, feetY: 466, h: 166, zone: 'floor' },
+  { x: 790, feetY: 478, h: 158, zone: 'floor' },
+  { x: 928, feetY: 354, h: 136, zone: 'balcony' },
+  { x: 1065, feetY: 350, h: 140, zone: 'balcony' },
 ]);
 
 export default class GarageScene extends Phaser.Scene {
@@ -393,15 +396,7 @@ export default class GarageScene extends Phaser.Scene {
       this.showEmptyGarageState();
     }
 
-    window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
-    let splashHidden = false;
-    const hideSplash = () => {
-      if (splashHidden) return;
-      splashHidden = true;
-      window.TOKYO_SHIFT_HIDE_SPLASH?.();
-    };
-    requestAnimationFrame(() => requestAnimationFrame(hideSplash));
-    window.setTimeout(hideSplash, 120);
+    finishSceneLoading('READY');
 
     // Warm the tuning bay in the background once the workshop itself is
     // visible. This keeps initial garage entry quick, but removes the visible
@@ -604,7 +599,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const character = characters[member.characterId];
     if (character?.visual?.spriteKey && this.textures.exists(character.visual.spriteKey)) {
-      const x = STAGE.x + 205;
+      const x = STAGE.x + 215;
       const feetY = STAGE.y + 468;
       const shadow = this.add.ellipse(x, feetY - 10, 116, 24, 0x000000, 0.58)
         .setDepth(13);
@@ -618,7 +613,8 @@ export default class GarageScene extends Phaser.Scene {
         STAGE.x + 30,
         STAGE.y + 32,
         String(character.name || member.characterId).toUpperCase() +
-          ' // ' + String(member.regionId || '').replace(/_/g, ' '),
+          ' // ' + String(member.regionId || '').replace(/_/g, ' ') +
+          ' // TUNING BAY',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
@@ -2135,9 +2131,20 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
 
-      // Reuse GarageScene directly. Avoiding the old CrewScene -> GarageScene
-      // hand-off also removes the mobile/PWA 98% loading stall.
-      this.scene.restart({
+      // iOS/PWA can stall at the loader's 98% hand-off when GarageScene is
+      // restarted from inside itself after Crew Space has loaded a different
+      // asset set. Use the same clean reload path as Dyno/workshop transfers:
+      // save first, force Garage on boot, and return to Warehouse HQ normally.
+      try {
+        sessionStorage.setItem('tokyoShiftInternalReload', '1');
+        sessionStorage.setItem('tokyoShiftForceGarage', '1');
+        sessionStorage.removeItem('tokyoShiftBootMessage');
+        window.location.reload();
+        return;
+      } catch (e) {}
+
+      // Browser environments without sessionStorage still have a safe fallback.
+      this.scene.start('GarageScene', {
         crewMode: false,
         workshopLocationId: 'shinonomeWarehouseStrip',
       });
@@ -2947,22 +2954,23 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     if (this.crewMode) {
-      const travel = 520;
+      const travel = 610;
+      const duration = 2600;
       this.selectedDisplay.forEach(obj => {
-        if (obj?.x != null) obj.x -= travel;
+        if (obj?.x != null) obj.x += travel;
       });
       this.tweens.add({
         targets: this.selectedDisplay,
-        x: '+=' + travel,
-        duration: 1800,
+        x: '-=' + travel,
+        duration,
         ease: 'Sine.easeOut',
       });
 
       const wheels = [this.selectedDisplay[3], this.selectedDisplay[4]].filter(Boolean);
       this.tweens.add({
         targets: wheels,
-        angle: '+=540',
-        duration: 1800,
+        angle: '-=420',
+        duration,
         ease: 'Sine.easeOut',
       });
     }
