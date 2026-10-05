@@ -11,6 +11,7 @@ import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
+import { createAndRegisterOwnedCarInstance } from '../data/carOwnership.js?v=20261006-r376';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -21,7 +22,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261005-r345';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r376';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20261004-r333';
@@ -41,7 +42,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r354';
+} from '../state/GameState.js?v=20261006-r376';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
@@ -54,7 +55,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261005-r345';
+} from '../data/centralTokyo.js?v=20261006-r376';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
@@ -69,8 +70,8 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r348';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r365';
-import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20260929-r274';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r376';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -4623,22 +4624,31 @@ export default class RaceScene extends Phaser.Scene {
       const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
 
       if (playerWon) {
-        if (!ownedCarIds.includes(this.opponentCarId)) {
+        const wonInstanceId = createAndRegisterOwnedCarInstance(
+          ownedCarIds,
+          this.opponentCarId
+        );
+
+        if (wonInstanceId) {
           pinkCarNewlyWon = true;
-          acquiredCarId = this.opponentCarId;
-          ownedCarIds.push(this.opponentCarId);
-          carStates[this.opponentCarId] = {
+          acquiredCarId = wonInstanceId;
+          ownedCarIds.push(wonInstanceId);
+          carStates[wonInstanceId] = {
             ...this.opponentBuildState,
             acquiredVia: 'pinkSlip',
           };
-          const provisionalGarageId = getGarageDeliveryOptions(this, this.opponentCarId)
+          const provisionalGarageId = getGarageDeliveryOptions(this, null)
             .find(option => option.available)?.id
             || this.registry.get('workshopLocationId')
             || 'shinonomeWorkshop';
-          carGarageLocations[this.opponentCarId] = provisionalGarageId;
-          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' // CHOOSE DELIVERY GARAGE';
+          carGarageLocations[wonInstanceId] = provisionalGarageId;
+          pinkMessage =
+            'PINK SLIP WON // ' + cars[this.opponentCarId].shortName +
+            ' // CHOOSE DELIVERY GARAGE';
         } else {
-          pinkMessage = 'PINK SLIP WON // ' + cars[this.opponentCarId].shortName + ' ALREADY OWNED';
+          pinkMessage =
+            'PINK SLIP WON // ' + cars[this.opponentCarId].shortName +
+            ' // UNIQUE CAR ALREADY COLLECTED';
         }
       } else {
         recordCarDeparture(this.registry, this.selectedCarId, 'pink-slip-lost', {
@@ -4665,8 +4675,8 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.set('carGarageLocations', carGarageLocations);
       this.registry.set('gameOver', gameOver);
 
-      if (playerWon && pinkCarNewlyWon) {
-        recordCarAcquisition(this.registry, this.opponentCarId, {
+      if (playerWon && pinkCarNewlyWon && acquiredCarId) {
+        recordCarAcquisition(this.registry, acquiredCarId, {
           acquiredVia: 'pinkSlip',
         });
       }
