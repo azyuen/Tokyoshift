@@ -2152,53 +2152,111 @@ export default class GarageScene extends Phaser.Scene {
     saveSessionState(this.registry);
   }
 
+  restoreWarehouseAfterCrewSpace(selectedCarId = null) {
+    if (this.crewMode) return;
+
+    const localCars = this.getCurrentWorkshopCars();
+    const nextCarId = localCars.includes(selectedCarId)
+      ? selectedCarId
+      : localCars.includes(this.selectedCarId)
+        ? this.selectedCarId
+        : localCars[0] || null;
+
+    this.selectedCarId = nextCarId;
+    this.registry.set('crewSpaceActive', false);
+    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    this.registry.set('selectedCarId', nextCarId);
+    this.registry.set('selectedRacePlayerCharacterId', null);
+    this.registry.set('crewPreviousCarId', null);
+
+    // The Warehouse scene was slept, not rebuilt. Re-enable input/camera and
+    // refresh only data that may have changed while Crew Space was open.
+    try { this.input.enabled = true; } catch (e) {}
+    try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
+    this.cameras.main.resetFX?.();
+    this.cameras.main.setAlpha(1);
+
+    this.cashText?.setText(
+      '¥ ' + Number(this.registry.get('cash') || 0).toLocaleString('en-US')
+    );
+
+    if (nextCarId) {
+      // The hero car and buttons are deliberately left in place; they never
+      // left the sleeping Warehouse scene. Just restore the selected card/UI.
+      this.thumbButtons?.forEach(item => {
+        const active = item.id === nextCarId;
+        item.box
+          ?.setFillStyle(active ? 0x10263a : 0x0b1724, 1)
+          .setStrokeStyle(active ? 3 : 2, active ? 0x41dcff : 0x29465c, 1);
+        item.label?.setColor(active ? '#ffffff' : '#b8cad7');
+      });
+      this.refreshWorkshopSpecs();
+    }
+
+    this.updateMoveCarButtonState();
+    this.refreshDynoButton?.();
+    saveSessionState(this.registry);
+  }
+
   transitionWarehousePresentation(crewMode, selectedCarId = null) {
     if (this._warehousePresentationTransitioning) return;
     this._warehousePresentationTransitioning = true;
 
     const nextCrewMode = Boolean(crewMode);
-    this.registry.set('crewSpaceActive', nextCrewMode);
-    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
-
-    if (nextCrewMode) {
-      this.registry.set('selectedCarId', null);
-      this.registry.set('selectedRacePlayerCharacterId', null);
-    } else {
-      this.registry.set('selectedCarId', selectedCarId || null);
-      this.registry.set('selectedRacePlayerCharacterId', null);
-      this.registry.set('crewPreviousCarId', null);
-    }
-
-    saveSessionState(this.registry);
-    cancelSceneLoading(this);
-
-    const targetScene = nextCrewMode ? 'CrewSpaceScene' : 'GarageScene';
     const currentScene = this.sys?.settings?.key;
 
-    // Warehouse HQ and Crew Space now use separate Phaser scene instances that
-    // share the same GarageScene implementation. This eliminates the lifecycle
-    // deadlock caused by restarting/re-entering GarageScene while it is still
-    // shutting down, and avoids showing an empty black bridge scene.
-    if (currentScene !== targetScene) {
-      this.cameras.main.resetFX?.();
-      this.cameras.main.setAlpha(1);
-      this.scene.start(targetScene, {
-        crewMode: nextCrewMode,
+    if (nextCrewMode && currentScene === 'GarageScene') {
+      this.registry.set('crewSpaceActive', true);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      cancelSceneLoading(this);
+
+      // Keep Warehouse HQ alive exactly as rendered underneath Crew Space.
+      // Sleeping preserves the selected hero car, physical-room hotspots and
+      // all side-panel controls, so returning is an instant reveal rather than
+      // another fragile rebuild of GarageScene.
+      this.scene.launch('CrewSpaceScene', {
+        crewMode: true,
+        returningFromCrewSpace: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+      this.scene.sleep('GarageScene');
+      this._warehousePresentationTransitioning = false;
+      return;
+    }
+
+    if (!nextCrewMode && currentScene === 'CrewSpaceScene') {
+      const warehouse = this.scene.get('GarageScene');
+      const warehouseIsSleeping = this.scene.isSleeping('GarageScene');
+
+      this.registry.set('crewSpaceActive', false);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      this.registry.set('selectedCarId', selectedCarId || null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      cancelSceneLoading(this);
+
+      if (warehouse && warehouseIsSleeping) {
+        warehouse.restoreWarehouseAfterCrewSpace?.(selectedCarId || null);
+        this.scene.wake('GarageScene');
+        this.scene.stop('CrewSpaceScene');
+        this._warehousePresentationTransitioning = false;
+        return;
+      }
+
+      // Recovery path for a direct Crew Space boot where no sleeping Warehouse
+      // exists. This should be rare, but keeps old saves navigable.
+      this.scene.start('GarageScene', {
+        crewMode: false,
         returningFromCrewSpace: true,
         workshopLocationId: 'shinonomeWarehouseStrip',
       });
       return;
     }
 
-    // Rare recovery path: e.g. a browser refresh restored crew mode directly
-    // into GarageScene. Persist the desired presentation and perform a clean
-    // reload rather than attempting another same-scene handoff.
-    try {
-      sessionStorage.setItem('tokyoShiftInternalReload', '1');
-      sessionStorage.setItem('tokyoShiftForceGarage', '1');
-      sessionStorage.removeItem('tokyoShiftBootMessage');
-    } catch (e) {}
-    window.location.reload();
+    this._warehousePresentationTransitioning = false;
   }
 
   buildCrewSpaceNavigation() {
@@ -2537,7 +2595,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.createWarehouseSpaceHotspot({
       x: 1025,
-      y: 294,
+      y: 291,
       w: 230,
       h: 44,
       label: 'DYNO',
