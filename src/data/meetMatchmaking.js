@@ -1,4 +1,5 @@
-import { cars, carOrder } from './cars.js?v=20261004-r333';
+import { cars, carOrder } from './cars.js?v=20261005-r345';
+import { getBaseCarId } from './carOwnership.js?v=20261006-r376';
 import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260929-r271';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
@@ -91,9 +92,10 @@ export function rollMeetPerformanceBand(
 
 function candidateWeight(candidate, context) {
   const cfg = PROGRESSION_BALANCE.meetMatchmaking;
-  const preferred = new Set(context.preferredCars || []);
-  const owned = new Set(context.ownedCarIds || []);
-  const used = new Set(context.usedCarIds || []);
+  const preferred = new Set((context.preferredCars || []).map(getBaseCarId));
+  const owned = new Set((context.ownedCarIds || []).map(getBaseCarId));
+  const used = new Set((context.usedCarIds || []).map(getBaseCarId));
+  const playerCarId = getBaseCarId(context.playerCarId);
   const bands = context.performanceBands || getPerformanceBands(
     context.raceType,
     context.difficulty,
@@ -104,7 +106,7 @@ function candidateWeight(candidate, context) {
   let weight = 1;
   if (preferred.has(candidate.carId)) weight *= cfg.preferredRegionalModelWeight;
   if (!owned.has(candidate.carId)) weight *= cfg.unownedCarWeight;
-  if (candidate.carId === context.playerCarId) weight *= cfg.sameModelWeight;
+  if (candidate.carId === playerCarId) weight *= cfg.sameModelWeight;
   if (used.has(candidate.carId)) weight *= 0.10;
 
   const distance = Math.abs(candidate.ratio - Number(band.targetRatio || 1));
