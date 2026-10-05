@@ -2263,9 +2263,16 @@ export default class GarageScene extends Phaser.Scene {
       cancelSceneLoading(this);
 
       if (warehouse && warehouseIsSleeping) {
-        warehouse.restoreWarehouseAfterCrewSpace?.(selectedCarId || null);
+        // Scene ownership first, cosmetic refresh second. Never let a sleeping
+        // Warehouse refresh prevent Crew Space from closing.
         this.scene.wake('GarageScene');
+        this.scene.bringToTop?.('GarageScene');
         this.scene.stop('CrewSpaceScene');
+        try {
+          warehouse.restoreWarehouseAfterCrewSpace?.(selectedCarId || null);
+        } catch (error) {
+          console.error('Warehouse refresh after Crew Space failed', error);
+        }
         this._warehousePresentationTransitioning = false;
         return;
       }
@@ -2424,6 +2431,7 @@ export default class GarageScene extends Phaser.Scene {
   exitCrewSpaceToWorkshop() {
     if (!this.crewMode || this._warehousePresentationTransitioning) return;
     if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+    this._warehousePresentationTransitioning = true;
 
     const personalCars = (this.registry.get('ownedCarIds') || [])
       .filter(id => cars[id] && !cars[id].crewLoan);
@@ -2437,22 +2445,67 @@ export default class GarageScene extends Phaser.Scene {
       ? previous
       : warehouseCars[0] || personalCars[0] || null;
 
-    // A focused crew member has a long car roll-in tween running. Kill that
-    // presentation before waking the sleeping Warehouse scene, and clear the
-    // crew driver selection immediately so it can never leak back to Workshop.
+    // Commit the destination state before touching either scene. This makes the
+    // exit deterministic even if the sleeping Warehouse needs a UI refresh.
     try { this.tweens.killTweensOf(this.selectedDisplay || []); } catch (e) {}
     this.crewFocusedCharacterId = null;
+    this.registry.set('crewSpaceActive', false);
+    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    this.registry.set('selectedCarId', nextCarId);
     this.registry.set('selectedRacePlayerCharacterId', null);
+    this.registry.set('crewPreviousCarId', null);
+    saveSessionState(this.registry);
+    cancelSceneLoading(this);
 
     this.crewBackButton?.disableInteractive();
     this.crewBackButtonLabel?.setText('RETURNING TO WORKSHOP...');
 
-    // Do the wake/stop one task after pointerdown. This avoids the iOS/PWA
-    // input-stack edge case that can occur while the selected crew car is
-    // still active in the scene.
-    this.time.delayedCall(0, () => {
-      this.transitionWarehousePresentation(false, nextCarId);
-    });
+    // Use a browser task rather than a CrewSpace Phaser timer. More
+    // importantly, wake/stop the scenes BEFORE doing any optional Warehouse UI
+    // refresh. A refresh error must never be able to strand the player here.
+    window.setTimeout(() => {
+      const warehouse = this.scene.get('GarageScene');
+
+      if (warehouse) {
+        try {
+          if (this.scene.isSleeping('GarageScene')) {
+            this.scene.wake('GarageScene');
+          } else if (this.scene.isPaused('GarageScene')) {
+            this.scene.resume('GarageScene');
+          }
+
+          this.scene.bringToTop?.('GarageScene');
+        } catch (error) {
+          console.error('Could not wake Warehouse HQ', error);
+        }
+
+        // Crew Space must disappear regardless of whether the sleeping
+        // Warehouse's cosmetic refresh succeeds.
+        try {
+          this.scene.stop('CrewSpaceScene');
+        } catch (error) {
+          console.error('Could not stop Crew Space cleanly', error);
+        }
+
+        try {
+          warehouse.restoreWarehouseAfterCrewSpace?.(nextCarId);
+        } catch (error) {
+          console.error('Warehouse refresh after Crew Space failed', error);
+        }
+
+        this._warehousePresentationTransitioning = false;
+        return;
+      }
+
+      // Recovery for a direct Crew Space boot where no preserved Warehouse
+      // instance exists.
+      this.scene.start('GarageScene', {
+        crewMode: false,
+        returningFromCrewSpace: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+      this._warehousePresentationTransitioning = false;
+    }, 0);
   }
 
   buildCrewBackButton() {
