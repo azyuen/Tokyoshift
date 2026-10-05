@@ -801,13 +801,18 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.text(52, 35, 'WORKSHOP', {
+    this.add.text(52, 35, this.crewMode ? 'CREW SPACE' : 'WORKSHOP', {
       fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
     }).setOrigin(0, 0.5).setDepth(42);
 
-    this.headerCarText = this.add.text(305, 35, '', {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
-    }).setOrigin(0, 0.5).setDepth(42);
+    this.headerCarText = this.add.text(
+      305,
+      35,
+      this.crewMode ? 'CREW ' + (getCrewCount(this.registry) + 1) + '/8' : '',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '11px', color: '#8bbde0'
+      }
+    ).setOrigin(0, 0.5).setDepth(42);
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
@@ -959,9 +964,14 @@ export default class GarageScene extends Phaser.Scene {
       0.98
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(35);
 
-    this.add.text(SIDE.x + 20, SIDE.y + 18, 'CAR SPECS', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
-    }).setDepth(37);
+    this.add.text(
+      SIDE.x + 20,
+      SIDE.y + 18,
+      this.crewMode ? 'CREW CAR SPECS' : 'CAR SPECS',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8cc8ec'
+      }
+    ).setDepth(37);
 
     const rows = [
       ['ENGINE', 'engine'],
@@ -996,7 +1006,9 @@ export default class GarageScene extends Phaser.Scene {
     this.tuningStatusText = this.add.text(
       SIDE.x + 20,
       SIDE.y + 230,
-      'TUNING // ' + this.getActiveWorkshop().shortLabel,
+      this.crewMode
+        ? 'CREW TUNING // WAREHOUSE HQ'
+        : 'TUNING // ' + this.getActiveWorkshop().shortLabel,
       {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8cc8ec'
       }
@@ -1106,12 +1118,18 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getCurrentWorkshopCars() {
+    if (this.crewMode) {
+      return Object.values(getCrewMembers(this.registry))
+        .map(member => member.loanCarId)
+        .filter(id => cars[id] && this.ownedCarIds.includes(id));
+    }
+
     const assignments = this.syncGarageAssignments();
     return getCarsInWorkshop(
       this.ownedCarIds,
       assignments,
       this.getActiveWorkshop().id
-    );
+    ).filter(id => !cars[id]?.crewLoan);
   }
 
   getWorkshopAdjustedCost(baseCost) {
@@ -1150,9 +1168,14 @@ export default class GarageScene extends Phaser.Scene {
       0.99
     ).setStrokeStyle(2, 0x17354d, 1).setDepth(30);
 
-    this.add.text(STRIP.x + 18, STRIP.y + 7, 'MY GARAGE', {
-      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
-    }).setDepth(32);
+    this.add.text(
+      STRIP.x + 18,
+      STRIP.y + 7,
+      this.crewMode ? 'CREW LOAN GARAGE' : 'MY GARAGE',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#a7d5ef'
+      }
+    ).setDepth(32);
 
     this.garageCountText = this.add.text(STRIP.x + STRIP.w - 18, STRIP.y + 14, '', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#7fa6bd'
@@ -1233,8 +1256,10 @@ export default class GarageScene extends Phaser.Scene {
 
     const activeWorkshop = this.getActiveWorkshop();
     const localCars = this.getCurrentWorkshopCars();
-    const capacity = getWorkshopStorageCapacity(activeWorkshop.id);
-    const totalCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+    const capacity = this.crewMode ? 7 : getWorkshopStorageCapacity(activeWorkshop.id);
+    const totalCapacity = this.crewMode
+      ? 7
+      : getGarageCapacity(this.registry.get('garageTier') || 0);
     const pageSize = this.garagePageSize || 4;
     const totalPages = Math.max(1, Math.ceil(capacity / pageSize));
     this.garagePage = Phaser.Math.Clamp(Number(this.garagePage || 0), 0, totalPages - 1);
@@ -1311,8 +1336,11 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.garageCountText.setText(
-      localCars.length + '/' + capacity + ' HERE  //  ' +
-      this.ownedCarIds.length + '/' + totalCapacity + ' TOTAL'
+      this.crewMode
+        ? localCars.length + '/7 LOAN CARS'
+        : localCars.length + '/' + capacity + ' HERE  //  ' +
+          this.ownedCarIds.filter(id => !cars[id]?.crewLoan).length +
+          '/' + totalCapacity + ' TOTAL'
     );
 
     this.garagePageText.setText(
@@ -1320,7 +1348,9 @@ export default class GarageScene extends Phaser.Scene {
         ? activeWorkshop.shortLabel + '  //  SLOTS ' +
           (startIndex + 1) + '-' + Math.min(startIndex + pageSize, capacity) +
           '  //  ' + (this.garagePage + 1) + '/' + totalPages
-        : activeWorkshop.shortLabel + '  //  ' + capacity + ' SLOTS'
+        : this.crewMode
+          ? 'CREW SPACE // 7 REGIONAL LOAN SLOTS'
+          : activeWorkshop.shortLabel + '  //  ' + capacity + ' SLOTS'
     );
 
     this.updateGarageNavState();
@@ -1330,7 +1360,9 @@ export default class GarageScene extends Phaser.Scene {
   changeGaragePage(delta) {
     if (this.engineMode || this.secondaryMode || this.chassisMode) return;
 
-    const capacity = getWorkshopStorageCapacity(this.getActiveWorkshop().id);
+    const capacity = this.crewMode
+      ? 7
+      : getWorkshopStorageCapacity(this.getActiveWorkshop().id);
     const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
     const nextPage = Phaser.Math.Clamp(
       Number(this.garagePage || 0) + Number(delta || 0),
