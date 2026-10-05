@@ -158,12 +158,18 @@ export function getTunerTeamChallengeState(source, regionId) {
     legacyCompleted &&
     raw.perfectEligible !== false;
   const perfectEarned = Boolean(raw.perfectEarned || legacyPerfect);
+  const perfectComplete = Boolean(perfectEarned);
 
   return {
     regionId: key,
-    invited: Boolean(raw.invited),
+    // Perfect is terminal. Normal champion clears remain eligible for a later
+    // seven-win sweep, but once the ★ has been earned no stale invite/session
+    // flags may reopen the challenge or make its prizes claimable twice.
+    invited: perfectComplete ? false : Boolean(raw.invited),
     offeredOnce: Boolean(raw.offeredOnce || raw.invited || Number(raw.stage || 0) > 0),
-    reofferVisitsRemaining: Math.max(0, Number(raw.reofferVisitsRemaining || 0)),
+    reofferVisitsRemaining: perfectComplete
+      ? 0
+      : Math.max(0, Number(raw.reofferVisitsRemaining || 0)),
     completed: legacyCompleted || championEarned,
     championEarned,
     perfectEarned,
@@ -173,14 +179,16 @@ export function getTunerTeamChallengeState(source, regionId) {
     perfectRewardClaimed: raw.perfectRewardClaimed == null
       ? legacyPerfect
       : Boolean(raw.perfectRewardClaimed),
-    perfectAttempt: Boolean(raw.perfectAttempt),
-    stage: Math.max(0, Math.min(TUNER_TEAM_CHALLENGE_STAGES, Number(raw.stage || 0))),
+    perfectAttempt: perfectComplete ? false : Boolean(raw.perfectAttempt),
+    stage: perfectComplete
+      ? TUNER_TEAM_CHALLENGE_STAGES
+      : Math.max(0, Math.min(TUNER_TEAM_CHALLENGE_STAGES, Number(raw.stage || 0))),
     misses: Math.max(0, Number(raw.misses || 0)),
     perfectEligible: raw.perfectEligible !== false,
-    activeSession: Boolean(raw.activeSession),
-    paused: Boolean(raw.paused),
-    pausedAt: Math.max(0, Number(raw.pausedAt || 0)),
-    retryNotBefore: Math.max(0, Number(raw.retryNotBefore || 0)),
+    activeSession: perfectComplete ? false : Boolean(raw.activeSession),
+    paused: perfectComplete ? false : Boolean(raw.paused),
+    pausedAt: perfectComplete ? 0 : Math.max(0, Number(raw.pausedAt || 0)),
+    retryNotBefore: perfectComplete ? 0 : Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds) ? raw.rounds : [],
     offeredAt: String(raw.offeredAt || ''),
     playerCarId: String(raw.playerCarId || ''),
