@@ -40,10 +40,11 @@ export function maybeAwardSurpriseReward(registry, { playerWon = false, random =
   }
 
   const ownedCars = registry.get('ownedCarIds') || [];
-  const couponCandidates = carOrder.filter(carId => {
-    if (!cars[carId] || !CAR_COUPON_REQUIREMENTS[carId]) return false;
-    return getCarCouponCount(registry, carId) < getCarCouponRequirement(carId);
-  });
+  // Coupon totals may exceed the amount needed for one redemption. This lets
+  // players deliberately bank coupons for future duplicate cars.
+  const couponCandidates = carOrder.filter(carId =>
+    Boolean(cars[carId] && CAR_COUPON_REQUIREMENTS[carId])
+  );
   const preferredCoupons = couponCandidates.filter(carId => !ownsCarModel(ownedCars, carId));
   const ownedWheels = new Set((registry.get('ownedWheelIds') || []).map(String));
   const wheelCandidates = WHEEL_CATALOG.filter(
