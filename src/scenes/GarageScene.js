@@ -162,6 +162,7 @@ export default class GarageScene extends Phaser.Scene {
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
+    this._warehousePresentationTransitioning = false;
 
     if (this.crewMode) {
       this.registry.set('crewSpaceActive', true);
@@ -391,7 +392,7 @@ export default class GarageScene extends Phaser.Scene {
     } else {
       this.buildMoveCarButton();
       this.buildWorkshopJumpButton();
-      this.buildCrewSpaceHotspot();
+      this.buildWarehouseSpaceHotspots();
     }
     this.buildDynoButton();
     this.buildMeetButton();
@@ -2110,6 +2111,56 @@ export default class GarageScene extends Phaser.Scene {
     saveSessionState(this.registry);
   }
 
+  transitionWarehousePresentation(crewMode, selectedCarId = null) {
+    if (this._warehousePresentationTransitioning) return;
+    this._warehousePresentationTransitioning = true;
+
+    const nextCrewMode = Boolean(crewMode);
+    this.registry.set('crewSpaceActive', nextCrewMode);
+    this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+
+    if (nextCrewMode) {
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+    } else {
+      this.registry.set('selectedCarId', selectedCarId || null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      this.registry.set('crewPreviousCarId', null);
+    }
+
+    saveSessionState(this.registry);
+    cancelSceneLoading(this);
+
+    // Warehouse HQ and Crew Space are two presentations of the same property.
+    // Restart GarageScene directly with cached textures instead of crossing an
+    // empty bridge scene. This removes the black-frame / second-entry hang and
+    // also makes returning to the garage feel immediate.
+    try { this.input.enabled = false; } catch (e) {}
+    this.cameras.main.resetFX?.();
+    this.cameras.main.setAlpha(1);
+
+    this.time.delayedCall(1, () => {
+      try {
+        this.scene.restart({
+          crewMode: nextCrewMode,
+          returningFromCrewSpace: true,
+          workshopLocationId: 'shinonomeWarehouseStrip',
+        });
+      } catch (error) {
+        console.error('[Tokyo SHIFT] Warehouse presentation restart failed', error);
+        this._warehousePresentationTransitioning = false;
+        try { this.input.enabled = true; } catch (e) {}
+
+        // Keep the old bridge as a last-resort fallback rather than leaving the
+        // player on a black frame if Phaser rejects a same-scene restart.
+        this.scene.start('CrewScene', {
+          mode: nextCrewMode ? 'crew' : 'warehouse',
+          selectedCarId: selectedCarId || null,
+        });
+      }
+    });
+  }
+
   buildCrewBackButton() {
     if (!this.crewMode) return;
 
@@ -2141,78 +2192,158 @@ export default class GarageScene extends Phaser.Scene {
         ? previous
         : warehouseCars[0] || personalCars[0] || null;
 
-      this.registry.set('selectedCarId', nextCarId);
-      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
-      saveSessionState(this.registry);
-      cancelSceneLoading(this);
-
-      // Leave GarageScene completely before starting its Warehouse version.
-      // This avoids the iOS/PWA 98% loader stall caused by re-entering the same
-      // scene (or doing a whole-app reload) with a different asset set.
-      this.scene.start('CrewScene', {
-        mode: 'warehouse',
-        selectedCarId: nextCarId,
-      });
+      this.transitionWarehousePresentation(false, nextCarId);
     });
   }
 
-  buildCrewSpaceHotspot() {
-    const activeWorkshop = this.getActiveWorkshop();
-    if (
-      activeWorkshop?.id !== 'shinonomeWarehouseStrip' ||
-      !isCrewUnlocked(this.registry)
-    ) return;
+  createWarehouseSpaceHotspot({
+    x,
+    y,
+    label,
+    onActivate,
+    enabled = true,
+  }) {
+    const w = 300;
+    const h = 70;
+    const labelW = 108;
+    const left = x - w / 2;
 
-    // Treat this as a physical space inside the Warehouse artwork rather than
-    // another side-panel menu button. The glow is intentionally subtle until
-    // the pointer/finger enters it.
-    const x = STAGE.x + STAGE.w - 170;
-    const y = STAGE.y + 172;
-    const w = 275;
-    const h = 128;
-
-    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.035)
-      .setStrokeStyle(2, 0x69ecff, 0.38)
-      .setInteractive({ useHandCursor: true })
+    // One standard button language for the physical rooms. The right side of
+    // each outline intentionally stays almost empty so the authored sign in
+    // the background remains readable; the button text lives in a left gutter.
+    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.025)
+      .setStrokeStyle(2, 0x69ecff, 0.72)
       .setDepth(28);
 
-    const labelBg = this.add.rectangle(x, y + h / 2 - 18, 172, 28, 0x06141d, 0.72)
-      .setStrokeStyle(1, 0x69ecff, 0.34)
-      .setDepth(29);
+    const labelPad = this.add.rectangle(
+      left + labelW / 2,
+      y,
+      labelW,
+      h - 10,
+      0x06141d,
+      0.66
+    ).setDepth(29);
 
-    const label = this.add.text(x, y + h / 2 - 18, 'CREW SPACE  >', {
+    const text = this.add.text(left + 14, y, label + '  >', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#bff8ff',
-    }).setOrigin(0.5).setAlpha(0.78).setDepth(30);
+      fontSize: '8px',
+      color: enabled ? '#c9f8ff' : '#72909b',
+    }).setOrigin(0, 0.5).setDepth(30);
 
-    this.tweens.add({
-      targets: [glow, labelBg],
-      alpha: { from: 0.58, to: 1 },
-      duration: 1150,
+    if (enabled) glow.setInteractive({ useHandCursor: true });
+
+    // Make the blue outline breathe much more obviously than before. At the
+    // low point the border is nearly transparent, then it blooms back to full.
+    const glowTween = this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.07, to: 1 },
+      duration: 1300,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
     });
 
-    glow.on('pointerover', () => {
-      glow.setFillStyle(0x4ee8ff, 0.11).setStrokeStyle(3, 0x8ff5ff, 0.92);
-      label.setAlpha(1).setColor('#ffffff');
+    const padTween = this.tweens.add({
+      targets: labelPad,
+      alpha: { from: 0.14, to: 0.72 },
+      duration: 1300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
     });
-    glow.on('pointerout', () => {
-      glow.setFillStyle(0x4ee8ff, 0.035).setStrokeStyle(2, 0x69ecff, 0.38);
-      label.setAlpha(0.78).setColor('#bff8ff');
+
+    this.tweens.add({
+      targets: text,
+      alpha: { from: 0.46, to: 0.96 },
+      duration: 1300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
     });
-    glow.on('pointerdown', () => {
-      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-      const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
-        ? this.selectedCarId
-        : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
-      this.registry.set('crewPreviousCarId', previous);
-      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
-      saveSessionState(this.registry);
-      cancelSceneLoading(this);
-      this.scene.start('CrewScene', { mode: 'crew' });
+
+    if (enabled) {
+      glow.on('pointerover', () => {
+        glowTween.pause();
+        padTween.pause();
+        glow.setAlpha(1)
+          .setFillStyle(0x4ee8ff, 0.085)
+          .setStrokeStyle(3, 0x9af6ff, 0.98);
+        labelPad.setAlpha(0.82);
+        text.setAlpha(1).setColor('#ffffff');
+      });
+
+      glow.on('pointerout', () => {
+        glow.setFillStyle(0x4ee8ff, 0.025)
+          .setStrokeStyle(2, 0x69ecff, 0.72);
+        text.setColor('#c9f8ff');
+        glowTween.resume();
+        padTween.resume();
+      });
+
+      glow.on('pointerdown', () => {
+        if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+        onActivate?.();
+      });
+    }
+
+    return { glow, labelPad, text };
+  }
+
+  activateWarehouseDynoSpace() {
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+    if (this.getActiveWorkshop()?.id !== DYNO_WAREHOUSE_ID) return;
+
+    const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
+    if (tier < 1) {
+      this.showDynoInstallPopup();
+      return;
+    }
+
+    if (!this.selectedCarId) {
+      this.showWorkshopToast('MOVE A CAR TO WAREHOUSE HQ FIRST');
+      return;
+    }
+
+    this.registry.set('selectedCarId', this.selectedCarId);
+    this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
+    saveSessionState(this.registry);
+    this.scene.start('DynoScene');
+  }
+
+  buildWarehouseSpaceHotspots() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (activeWorkshop?.id !== 'shinonomeWarehouseStrip') return;
+
+    // Positions line up with the authored signs in the Warehouse HQ artwork:
+    // OFFICE at the upper tuning-office sign, CREW above the car, DYNO right.
+    this.createWarehouseSpaceHotspot({
+      x: 760,
+      y: 170,
+      label: 'OFFICE',
+      onActivate: () => this.showWorkshopToast('OFFICE // COMING SOON'),
+    });
+
+    if (isCrewUnlocked(this.registry)) {
+      this.createWarehouseSpaceHotspot({
+        x: 650,
+        y: 258,
+        label: 'CREW',
+        onActivate: () => {
+          const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
+            ? this.selectedCarId
+            : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
+
+          this.registry.set('crewPreviousCarId', previous);
+          this.transitionWarehousePresentation(true, null);
+        },
+      });
+    }
+
+    this.createWarehouseSpaceHotspot({
+      x: 990,
+      y: 320,
+      label: 'DYNO',
+      onActivate: () => this.activateWarehouseDynoSpace(),
     });
   }
 
@@ -2341,22 +2472,7 @@ export default class GarageScene extends Phaser.Scene {
     };
 
     this.dynoButton.on('pointerdown', () => {
-      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-
-      const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
-      if (tier < 1) {
-        this.showDynoInstallPopup();
-        return;
-      }
-      if (!this.selectedCarId) {
-        this.showWorkshopToast('MOVE A CAR TO WAREHOUSE HQ FIRST');
-        return;
-      }
-
-      this.registry.set('selectedCarId', this.selectedCarId);
-      this.registry.set('workshopLocationId', DYNO_WAREHOUSE_ID);
-      saveSessionState(this.registry);
-      this.scene.start('DynoScene');
+      this.activateWarehouseDynoSpace();
     });
 
     this.refreshDynoButton();
