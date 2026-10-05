@@ -1,7 +1,7 @@
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
 import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261005-r354';
-import { showMagazinePanel } from './CarHistoryPanel.js?v=20261005-r362';
+import { showMagazinePanel } from './CarHistoryPanel.js?v=20261005-r367';
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261005-r362';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
