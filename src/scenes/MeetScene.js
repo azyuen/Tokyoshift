@@ -41,7 +41,7 @@ import {
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
 } from '../data/workshopProgression.js?v=20261005-r354';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   recordCarMagazineSightings,
