@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r350';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -54,7 +54,7 @@ import {
   getCrewMembers,
   getCrewCount,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261005-r351';
+} from '../data/crewSystem.js?v=20261005-r354';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -72,7 +72,7 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r350';
+} from '../data/workshopProgression.js?v=20261005-r354';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
@@ -111,7 +111,7 @@ import {
 } from '../data/visualMods.js?v=20261005-r345';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
 import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r278';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
