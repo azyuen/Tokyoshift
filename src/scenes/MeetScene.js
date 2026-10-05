@@ -31,7 +31,7 @@ import {
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r362';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
