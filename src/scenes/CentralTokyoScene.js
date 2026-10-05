@@ -2432,7 +2432,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     if (!listing?.carId) return;
 
-    const instanceId = createAndRegisterOwnedCarInstance(owned, listing.carId);
+    const historicalIds = (this.registry.get('carHistory') || [])
+      .map(entry => entry?.carId)
+      .filter(Boolean);
+    const instanceId = createAndRegisterOwnedCarInstance(
+      owned,
+      listing.carId,
+      historicalIds
+    );
     if (!instanceId) return;
 
     const cash = Number(this.registry.get('cash') || 0);
