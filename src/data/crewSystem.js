@@ -22,6 +22,8 @@ export const CREW_RECRUIT_PITY_ROLLS = CREW_INVITE_PITY_WINS;
 export const CREW_BATTLE_LINEUP_SIZE = 6;
 export const CREW_BATTLE_WINS_REQUIRED = 4;
 export const CREW_BATTLE_COUPONS = 2;
+// Loan cars live in their own Crew Space garage and never consume ordinary
+// Warehouse HQ storage. The name is kept for compatibility with older imports.
 export const CREW_WAREHOUSE_ID = 'crewSpace';
 
 function value(source, key, fallback = null) {
