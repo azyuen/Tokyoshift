@@ -2660,22 +2660,24 @@ export default class RaceScene extends Phaser.Scene {
     const winnerEntry = winnerOnLeft ? -210 : 210;
     const loserEntry = winnerOnLeft ? 145 : -145;
     if (winnerProfile?.image) {
-      winnerProfile.image.x += winnerEntry;
+      const targetX = winnerProfile.image.x;
+      winnerProfile.image.x = targetX + winnerEntry;
       winnerProfile.image.setAlpha(0);
       this.tweens.add({
         targets: winnerProfile.image,
-        x: '-=' + winnerEntry,
+        x: targetX,
         alpha: 1,
         duration: 145,
         ease: 'Back.Out',
       });
     }
     if (loserProfile?.image) {
-      loserProfile.image.x += loserEntry;
+      const targetX = loserProfile.image.x;
+      loserProfile.image.x = targetX + loserEntry;
       loserProfile.image.setAlpha(0);
       this.tweens.add({
         targets: loserProfile.image,
-        x: '-=' + loserEntry,
+        x: targetX,
         alpha: 0.74,
         duration: 135,
         delay: 18,
@@ -2704,12 +2706,15 @@ export default class RaceScene extends Phaser.Scene {
       ease: 'Back.Out',
     });
 
-    this.tweens.add({
-      targets: winnerCarObjects,
-      x: '+=' + carTravel,
-      duration: 175,
-      delay: 28,
-      ease: 'Cubic.Out',
+    winnerCarObjects.forEach(obj => {
+      const targetX = obj.x + carTravel;
+      this.tweens.add({
+        targets: obj,
+        x: targetX,
+        duration: 175,
+        delay: 28,
+        ease: 'Cubic.Out',
+      });
     });
 
     if (winnerCar?.rearWheel && winnerCar?.frontWheel) {
