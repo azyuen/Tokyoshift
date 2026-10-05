@@ -157,6 +157,7 @@ export default class GarageScene extends Phaser.Scene {
     this.crewMode = explicitCrewMode == null
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
+    this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
 
     if (this.crewMode) {
       this.registry.set('crewSpaceActive', true);
@@ -273,11 +274,16 @@ export default class GarageScene extends Phaser.Scene {
       queued += preloadTunerDecalAssets(this, carStates[id] || {}, '20260928-r242');
     });
 
-    startSceneLoading(
-      this,
-      this.crewMode ? 'LOADING CREW SPACE' : 'LOADING WORKSHOP',
-      queued
-    );
+    // Returning from Crew Space is a same-property presentation change.
+    // Warehouse textures are normally already resident, and showing a second
+    // global splash here was the path that could stick at 98% on iOS/PWA.
+    if (!this.returningFromCrewSpace) {
+      startSceneLoading(
+        this,
+        this.crewMode ? 'LOADING CREW SPACE' : 'LOADING WORKSHOP',
+        queued
+      );
+    }
   }
 
   create() {
@@ -2942,8 +2948,10 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     if (this.crewMode) {
-      const travel = 660;
-      const duration = 3400;
+      const travel = 690;
+      // Crew cars enter an indoor meeting/workshop bay rather than blasting
+      // onto a race stage. Keep the roll-in deliberately calm and physical.
+      const duration = 4400;
       this.selectedDisplay.forEach(obj => {
         if (obj?.x != null) obj.x += travel;
       });
