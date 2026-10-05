@@ -1,4 +1,5 @@
 import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
+import { cancelSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 // Crew Space transition bridge.
 //
@@ -20,6 +21,10 @@ export default class CrewScene extends Phaser.Scene {
   preload() {}
 
   create() {
+    // Kill any late loader callback from the GarageScene instance we just left
+    // before changing presentation mode.
+    cancelSceneLoading();
+
     const returningToWarehouse = this.transitionMode === 'warehouse';
 
     this.registry.set('crewSpaceActive', !returningToWarehouse);
@@ -46,12 +51,9 @@ export default class CrewScene extends Phaser.Scene {
     // inside the same SceneManager lifecycle tick. Give Phaser one frame to
     // complete the CrewScene start/stop bookkeeping first.
     this.time.delayedCall(34, () => {
-      if (returningToWarehouse) {
-        // Warehouse assets were already resident before Crew Space opened.
-        // Explicitly clear any stale completed-load splash before returning.
-        window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
-        window.TOKYO_SHIFT_HIDE_SPLASH?.();
-      }
+      // Warehouse/Crew Space share one physical property and almost all assets.
+      // Do not carry a global loading splash across this bridge.
+      cancelSceneLoading();
 
       this.scene.start('GarageScene', {
         crewMode: !returningToWarehouse,
