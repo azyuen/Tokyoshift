@@ -87,7 +87,7 @@ export function countOwnedCarModel(ownedCarIds = [], carId) {
   );
 }
 
-export function createOwnedCarInstanceId(ownedCarIds = [], carId) {
+export function createOwnedCarInstanceId(ownedCarIds = [], carId, reservedCarIds = []) {
   const baseId = getBaseCarId(carId);
   if (!baseId || !cars[baseId]) return null;
 
@@ -95,20 +95,29 @@ export function createOwnedCarInstanceId(ownedCarIds = [], carId) {
     return ownsCarModel(ownedCarIds, baseId) ? null : baseId;
   }
 
-  const owned = new Set((ownedCarIds || []).map(String));
-  if (!owned.has(baseId)) return baseId;
+  // Never recycle an old instance ID after a sale or pink-slip loss. Car
+  // History can then follow one physical car for its entire life.
+  const reserved = new Set([
+    ...(ownedCarIds || []).map(String),
+    ...(reservedCarIds || []).map(String),
+  ]);
+  if (!reserved.has(baseId)) return baseId;
 
   let copyNumber = 2;
   let instanceId = baseId + COPY_MARKER + copyNumber;
-  while (owned.has(instanceId)) {
+  while (reserved.has(instanceId)) {
     copyNumber += 1;
     instanceId = baseId + COPY_MARKER + copyNumber;
   }
   return instanceId;
 }
 
-export function createAndRegisterOwnedCarInstance(ownedCarIds = [], carId) {
-  const instanceId = createOwnedCarInstanceId(ownedCarIds, carId);
+export function createAndRegisterOwnedCarInstance(
+  ownedCarIds = [],
+  carId,
+  reservedCarIds = []
+) {
+  const instanceId = createOwnedCarInstanceId(ownedCarIds, carId, reservedCarIds);
   if (!instanceId) return null;
   if (instanceId !== getBaseCarId(instanceId)) {
     registerOwnedCarInstance(instanceId, carId);
