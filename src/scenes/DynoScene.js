@@ -3090,6 +3090,18 @@ export default class DynoScene extends Phaser.Scene {
     this.registry.set('selectedCarId', this.carId);
     saveSessionState(this.registry);
 
+    // A crew loan car belongs to Crew Space, not the ordinary Warehouse
+    // garage. Return through the lightweight bridge so the same selected crew
+    // member/car comes back into the Crew tuning bay without a browser reload.
+    if (this.registry.get('crewSpaceActive')) {
+      this.cleanup();
+      this.scene.start('CrewScene', {
+        mode: 'crew',
+        selectedCarId: this.carId,
+      });
+      return;
+    }
+
     try {
       sessionStorage.setItem('tokyoShiftInternalReload', '1');
       sessionStorage.setItem('tokyoShiftForceGarage', '1');
