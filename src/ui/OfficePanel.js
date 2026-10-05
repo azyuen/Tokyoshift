@@ -247,11 +247,11 @@ export function showOfficePanel(scene) {
   // 160x576 flag asset coordinates in garage_assets.json.
   // Keep the achievement wall compact and biased left so the right-hand
   // display remains clear for a future large event trophy.
-  const flagTop = frame.y + frame.h * 0.175;
-  const flagHeight = frame.h * 0.315;
+  const flagTop = frame.y + frame.h * 0.225;
+  const flagHeight = frame.h * 0.335;
   const flagWidth = flagHeight * (160 / 576);
-  const flagStartX = 0.275;
-  const flagGap = 0.0585;
+  const flagStartX = 0.235;
+  const flagGap = 0.0600;
   const badgeSize = flagHeight * (56 / 576);
 
   REGIONS.forEach((region, index) => {
@@ -294,8 +294,8 @@ export function showOfficePanel(scene) {
   const issue = getActiveMagazineIssue(scene.registry);
   if (issue?.coverKey && scene.textures.exists(issue.coverKey)) {
     const source = scene.textures.get(issue.coverKey).getSourceImage();
-    const coverP = point(frame, 0.392, 0.835);
-    const coverH = frame.h * 0.125;
+    const coverP = point(frame, 0.365, 0.832);
+    const coverH = frame.h * 0.128;
     const coverW = coverH * (source.width / Math.max(1, source.height));
 
     add(scene.add.rectangle(
@@ -305,11 +305,11 @@ export function showOfficePanel(scene) {
       coverH + 8,
       0x000000,
       0.36
-    ).setAngle(-5).setDepth(199));
+    ).setAngle(0).setDepth(199));
 
     const cover = add(scene.add.image(coverP.x, coverP.y, issue.coverKey)
       .setDisplaySize(coverW, coverH)
-      .setAngle(-5)
+      .setAngle(0)
       .setInteractive({ useHandCursor: true })
       .setDepth(202));
     const sx = cover.scaleX;
