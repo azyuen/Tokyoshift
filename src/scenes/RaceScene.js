@@ -2053,6 +2053,7 @@ export default class RaceScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       bodyLayers,
+      objects: carObjects,
     };
   }
 
@@ -2270,12 +2271,11 @@ export default class RaceScene extends Phaser.Scene {
       };
     }
 
-    // Ink-black dead screen with a single manga action panel.
+    // Ink-black dead screen with a clean single manga action panel.
     this.add.rectangle(780, 360, 1560, 720, 0x080a0f, 1)
       .setDepth(depth)
       .setScrollFactor(0);
 
-    // Low-fi scan lines: deliberately visible, sparse, and pixel-clean.
     for (let y = 8; y < 720; y += 16) {
       this.add.rectangle(780, y, 1560, 2, 0xffffff, 0.022)
         .setDepth(depth + 1)
@@ -2298,17 +2298,15 @@ export default class RaceScene extends Phaser.Scene {
       new Phaser.Geom.Point(96, 472),
     ], true);
 
-    // Coarse manga speed rays. More aggressive on a win, more restrained on a loss.
     const rays = this.add.graphics().setDepth(depth + 3).setScrollFactor(0);
-    rays.lineStyle(playerWon ? 5 : 3, ink, playerWon ? 0.16 : 0.10);
-    const rayOriginX = playerWon ? 1220 : 1110;
-    const rayOriginY = 260;
-    for (let i = -8; i <= 8; i += 1) {
-      rays.lineBetween(rayOriginX, rayOriginY, 90 + i * 95, 80 + Math.abs(i) * 21);
-      rays.lineBetween(rayOriginX, rayOriginY, 180 + i * 80, 445 - Math.abs(i) * 11);
+    rays.lineStyle(playerWon ? 5 : 3, ink, playerWon ? 0.13 : 0.08);
+    const rayOriginX = 1120;
+    const rayOriginY = 270;
+    for (let i = -7; i <= 7; i += 1) {
+      rays.lineBetween(rayOriginX, rayOriginY, 120 + i * 96, 92 + Math.abs(i) * 19);
+      rays.lineBetween(rayOriginX, rayOriginY, 220 + i * 82, 432 - Math.abs(i) * 10);
     }
 
-    // Strong result colour stripe, but keep most of the panel monochrome.
     const stripe = this.add.graphics().setDepth(depth + 4).setScrollFactor(0);
     stripe.fillStyle(accent, 1);
     stripe.fillPoints([
@@ -2335,7 +2333,6 @@ export default class RaceScene extends Phaser.Scene {
         fontSize: playerWon ? '42px' : '34px',
         color: '#11141a',
         fontStyle: 'bold',
-        lineSpacing: 2,
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
@@ -2357,127 +2354,174 @@ export default class RaceScene extends Phaser.Scene {
       : (playerCharacter?.resultQuotes?.loss || 'Next run will be different.');
     const quoteText = this.add.text(144, 286, '“' + quote + '”', {
       fontFamily: dataFont,
-      fontSize: '13px',
+      fontSize: '12px',
       color: '#1f2329',
       fontStyle: '700',
-      wordWrap: { width: 500 },
+      wordWrap: { width: 420 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
     const playerDisplayName = [
       String(this.registry.get('firstName') || '').trim(),
       String(this.registry.get('lastName') || '').trim(),
     ].filter(Boolean).join(' ') || playerCharacter.name;
+    const rivalDisplayName = rivalCharacter.name;
 
-    this.add.text(144, 365, String(playerDisplayName || 'YOU').toUpperCase(), {
+    this.add.text(144, 354, String(playerDisplayName || 'YOU').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '8px',
       color: '#11141a',
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const portraitFrame = this.add.rectangle(1160, 255, 500, 380, 0xffffff, 0)
+    // Draft 1.1: keep the player's portrait as the hero face, but add a clear
+    // rival reaction panel beside it using the opposite result pose.
+    const playerFrame = this.add.rectangle(1215, 224, 380, 300, 0xffffff, 0)
       .setStrokeStyle(5, ink, 0.95)
       .setDepth(depth + 6)
       .setScrollFactor(0);
 
-    const profile = createCharacterProfile(this, {
+    const playerProfile = createCharacterProfile(this, {
       characterId: this.playerCharacterId,
-      pose: resultPose,
-      x: 1160,
-      y: 255,
-      frameWidth: 500,
-      frameHeight: 380,
+      pose: playerWon ? 'win' : 'loss',
+      x: 1215,
+      y: 224,
+      frameWidth: 380,
+      frameHeight: 300,
       side: 'right',
       depth: depth + 5,
-      flipInward: false,
+      flipInward: true,
       profileOverride: playerWon
-        ? { scale: 0.98, offsetX: 0, offsetY: 4 }
-        : { scale: 1.04, offsetX: 0, offsetY: 7 },
+        ? { scale: 1.00, offsetX: 0, offsetY: 5 }
+        : { scale: 1.04, offsetX: 0, offsetY: 8 },
     });
-    const portraitImage = profile?.image || null;
 
-    // Car slices across the bottom edge of the manga panel; wheels spin only
-    // during the very short fly-in, then the whole composition becomes static.
+    const rivalFrame = this.add.rectangle(905, 244, 238, 214, 0xf0eadf, 0.96)
+      .setStrokeStyle(4, ink, 0.90)
+      .setDepth(depth + 6)
+      .setScrollFactor(0)
+      .setAngle(-2);
+
+    const rivalProfile = createCharacterProfile(this, {
+      characterId: this.opponentCharacterId,
+      pose: playerWon ? 'loss' : 'win',
+      x: 905,
+      y: 244,
+      frameWidth: 238,
+      frameHeight: 214,
+      side: 'left',
+      depth: depth + 5,
+      flipInward: true,
+      dimmed: playerWon,
+      profileOverride: { scale: 1.02, offsetX: 0, offsetY: 6 },
+    });
+
+    const playerPortraitImage = playerProfile?.image || null;
+    const rivalPortraitImage = rivalProfile?.image || null;
+
+    this.add.text(1215, 392, String(playerDisplayName || 'YOU').toUpperCase(), {
+      fontFamily: titleFont,
+      fontSize: '7px',
+      color: '#f4f0e7',
+      backgroundColor: '#11141add',
+      padding: { x: 9, y: 5 },
+    }).setOrigin(0.5).setDepth(depth + 9).setScrollFactor(0);
+
+    this.add.text(905, 372, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+      fontFamily: titleFont,
+      fontSize: '6px',
+      color: playerWon ? '#d6d2cb' : '#17191e',
+      backgroundColor: playerWon ? '#222630dd' : accentBright,
+      padding: { x: 8, y: 4 },
+    }).setOrigin(0.5).setDepth(depth + 9).setScrollFactor(0);
+
+    // The player's car is now smaller and behaves like a quick action streak,
+    // leaving the faces and result title as the lasting composition.
     const resultCar = this.addResultCar(
       this.selectedCarId,
       this.playerPaintColor,
-      930,
-      438,
+      775,
+      425,
       {
         flipX: false,
         depth: depth + 10,
-        scaleMul: 1.46,
+        scaleMul: 1.08,
       }
     );
 
-    // Result information is already there when the fly-in lands: no waiting.
-    const infoY = 525;
-    this.add.rectangle(780, infoY, 1420, 150, 0x11151d, 0.98)
-      .setStrokeStyle(3, accent, 0.92)
+    // Compact timing slip in the lower-left. Reward/balance and the essential
+    // comparison live together instead of spanning the whole screen.
+    const slipX = 235;
+    const slipY = 588;
+    const slipW = 410;
+    const slipH = 220;
+
+    this.add.rectangle(slipX, slipY, slipW, slipH, 0x11151d, 0.985)
+      .setStrokeStyle(3, accent, 0.94)
       .setDepth(depth + 20)
       .setScrollFactor(0);
 
-    this.add.text(106, 477, reward.primary, {
+    this.add.text(54, 488, reward.primary, {
       fontFamily: titleFont,
-      fontSize: '16px',
+      fontSize: '13px',
       color: accentBright,
       fontStyle: 'bold',
-      wordWrap: { width: 520 },
+      wordWrap: { width: 355 },
     }).setDepth(depth + 22).setScrollFactor(0);
 
-    this.add.text(106, 520, reward.secondary, {
+    this.add.text(54, 521, reward.secondary, {
       fontFamily: titleFont,
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#d6d9df',
-      wordWrap: { width: 520 },
-      lineSpacing: 3,
+      wordWrap: { width: 355 },
+      lineSpacing: 2,
+      maxLines: 2,
     }).setDepth(depth + 22).setScrollFactor(0);
 
     const rows = this.isRollingStart
       ? [
           ['1/8', this.falseStart ? '—' : formatTime(this.times.eighth), formatTime(this.opponentTimes.eighth)],
-          ['1/4', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
           [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
           ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
         ]
       : [
           ['RT', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
-          ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
           [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
           ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
         ];
 
-    const timingX = 720;
-    this.add.text(timingX, 472, cars[this.selectedCarId].shortName, {
+    this.add.text(54, 572, 'YOU', {
       fontFamily: titleFont,
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#f8f8f5',
-    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-    this.add.text(1030, 472, cars[this.opponentCarId].shortName, {
+    }).setDepth(depth + 22).setScrollFactor(0);
+
+    this.add.text(370, 572, 'RIVAL', {
       fontFamily: titleFont,
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#bfc6d4',
-    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+    }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
 
     rows.forEach((row, index) => {
-      const y = 506 + index * 28;
-      this.add.text(600, y, row[0], {
+      const y = 602 + index * 31;
+      this.add.text(54, y, row[0], {
         fontFamily: dataFont,
         fontSize: '7px',
         color: '#858e9b',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-      this.add.text(timingX, y, row[1], {
+      }).setDepth(depth + 22).setScrollFactor(0);
+
+      this.add.text(224, y, row[1], {
         fontFamily: dataFont,
         fontSize: '9px',
         color: '#ffffff',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-      this.add.text(1030, y, row[2], {
+      }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
+
+      this.add.text(370, y, row[2], {
         fontFamily: dataFont,
         fontSize: '9px',
         color: '#c4cad4',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+      }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
     });
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
@@ -2539,62 +2583,99 @@ export default class RaceScene extends Phaser.Scene {
     const nextKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     nextKey.once('down', advance);
 
-    // Snappy 220–260 ms fly-in. It should read as an impact, not a cinematic.
+    // Snappy fly-in: both reaction faces arrive immediately and the smaller
+    // player car crosses the centre without becoming the permanent focal point.
     const flyObjects = [title, subTitle, quoteText, kicker];
     flyObjects.forEach(obj => {
-      obj.x -= 310;
+      obj.x -= 280;
       obj.setAlpha(0);
     });
 
     this.tweens.add({
       targets: flyObjects,
-      x: '+=310',
+      x: '+=280',
       alpha: 1,
-      duration: 190,
+      duration: 175,
       ease: 'Expo.Out',
     });
 
-    if (portraitImage) {
-      portraitImage.setAlpha(0);
-      portraitImage.x += 260;
+    if (playerPortraitImage) {
+      const targetX = playerPortraitImage.x;
+      playerPortraitImage.x += 220;
+      playerPortraitImage.setAlpha(0);
       this.tweens.add({
-        targets: portraitImage,
-        x: '-=260',
+        targets: playerPortraitImage,
+        x: targetX,
         alpha: 1,
-        duration: 220,
+        duration: 205,
         ease: 'Expo.Out',
       });
     }
 
-    portraitFrame.setAlpha(0);
+    if (rivalPortraitImage) {
+      const targetX = rivalPortraitImage.x;
+      rivalPortraitImage.x -= 150;
+      rivalPortraitImage.setAlpha(0);
+      this.tweens.add({
+        targets: rivalPortraitImage,
+        x: targetX,
+        alpha: playerWon ? 0.72 : 1,
+        duration: 185,
+        delay: 12,
+        ease: 'Expo.Out',
+      });
+    }
+
+    playerFrame.setAlpha(0);
+    rivalFrame.setAlpha(0);
     this.tweens.add({
-      targets: portraitFrame,
+      targets: [playerFrame, rivalFrame],
       alpha: 1,
-      duration: 150,
+      duration: 135,
       ease: 'Linear',
+    });
+
+    const carObjects = resultCar?.objects || [
+      resultCar?.shadow,
+      resultCar?.rearBacking,
+      resultCar?.frontBacking,
+      resultCar?.rearWheel,
+      resultCar?.frontWheel,
+      ...(resultCar?.bodyLayers?.objects || []),
+    ].filter(Boolean);
+
+    carObjects.forEach(obj => {
+      const targetX = obj.x;
+      obj.x = targetX - 310;
+      this.tweens.add({
+        targets: obj,
+        x: targetX,
+        duration: 185,
+        delay: 24,
+        ease: 'Cubic.Out',
+      });
     });
 
     if (resultCar?.rearWheel && resultCar?.frontWheel) {
       this.tweens.add({
         targets: [resultCar.rearWheel, resultCar.frontWheel],
-        angle: playerWon ? 720 : 360,
-        duration: playerWon ? 240 : 210,
-        ease: playerWon ? 'Cubic.Out' : 'Quad.Out',
+        angle: playerWon ? 620 : 360,
+        duration: 205,
+        delay: 12,
+        ease: 'Quad.Out',
       });
     }
 
-    if (!playerWon) {
-      // One tiny low-fi "drop" makes the sad/loss pose read without slowing play.
+    if (!playerWon && playerPortraitImage) {
       this.tweens.add({
-        targets: portraitImage ? [portraitImage] : [],
-        y: '+=8',
-        duration: 150,
-        delay: 110,
+        targets: playerPortraitImage,
+        y: '+=7',
+        duration: 130,
+        delay: 95,
         ease: 'Quad.In',
       });
-    } else {
-      // Micro impact shake on victory only.
-      this.cameras.main.shake(85, 0.0022);
+    } else if (playerWon) {
+      this.cameras.main.shake(75, 0.0018);
     }
 
     this.time.delayedCall(210, () => {
