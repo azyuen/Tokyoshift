@@ -151,10 +151,6 @@ function getRegionAchievement(scene, regionId) {
   const crew = getCrewBattleProgress(scene.registry)?.[regionId] || {};
 
   const hasProgress = dev ||
-    Number(regionWins[regionId] || 0) > 0 ||
-    challenge.offeredOnce ||
-    challenge.invited ||
-    challenge.stage > 0 ||
     challenge.championEarned ||
     challenge.perfectEarned ||
     Boolean(crew.completed);
@@ -296,8 +292,8 @@ export function showOfficePanel(scene) {
   const issue = getActiveMagazineIssue(scene.registry);
   if (issue?.coverKey && scene.textures.exists(issue.coverKey)) {
     const source = scene.textures.get(issue.coverKey).getSourceImage();
-    const coverP = point(frame, 0.855, 0.585);
-    const coverH = frame.h * 0.18;
+    const coverP = point(frame, 0.392, 0.835);
+    const coverH = frame.h * 0.125;
     const coverW = coverH * (source.width / Math.max(1, source.height));
 
     add(scene.add.rectangle(
@@ -324,24 +320,24 @@ export function showOfficePanel(scene) {
   // Transparent, hover-revealed interaction zones preserve the authored
   // office artwork while making the display areas reliable on touch screens.
   addHotspot(scene, add, frame, {
-    x: 0.12, y: 0.56, w: 0.19, h: 0.38,
+    x: 0.115, y: 0.285, w: 0.17, h: 0.24,
     onActivate: () => showCarHistoryLedger(scene),
   });
   addHotspot(scene, add, frame, {
-    x: 0.33, y: 0.78, w: 0.20, h: 0.18,
-    onActivate: () => {
-      if (typeof scene.showCouponsPopup === 'function') scene.showCouponsPopup();
-    },
+    x: 0.50, y: 0.84, w: 0.34, h: 0.16,
+    onActivate: () => showMagazinePanel(scene),
   });
   addHotspot(scene, add, frame, {
-    x: 0.66, y: 0.78, w: 0.22, h: 0.18,
+    x: 0.84, y: 0.52, w: 0.25, h: 0.37,
     onActivate: () => showOfficePopup(scene, 'TROPHY CASE', [
       'NO TROPHIES YET',
       'Event trophies will appear here as those events are introduced.',
     ]),
   });
   addHotspot(scene, add, frame, {
-    x: 0.855, y: 0.585, w: 0.17, h: 0.28,
-    onActivate: () => showMagazinePanel(scene),
+    x: 0.915, y: 0.765, w: 0.15, h: 0.17,
+    onActivate: () => {
+      if (typeof scene.showCouponsPopup === 'function') scene.showCouponsPopup();
+    },
   });
 }
