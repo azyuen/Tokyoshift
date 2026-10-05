@@ -232,23 +232,16 @@ export function normaliseCarGarageLocations(
   const counts = Object.fromEntries(unlocked.map(item => [item.id, 0]));
   const result = {};
 
-  // Crew loan cars are part of Warehouse HQ rather than ordinary player
-  // storage. Reserve their Warehouse slots before preserving other assignments,
-  // so a full late-game garage can never silently migrate a crew member's car
-  // back to Home or Canal Yard during save normalisation.
-  const warehouseId = 'shinonomeWarehouseStrip';
-  if (unlockedIds.has(warehouseId)) {
-    owned
-      .filter(carId => String(carId || '').startsWith('crew__'))
-      .forEach(carId => {
-        const capacity = getWorkshopStorageCapacity(warehouseId);
-        if ((counts[warehouseId] || 0) >= capacity) return;
-        result[carId] = warehouseId;
-        counts[warehouseId] = (counts[warehouseId] || 0) + 1;
-      });
-  }
+  // Crew loan cars have their own Crew Space garage. They never consume
+  // Home / Canal Yard / Warehouse storage slots and never appear twice in the
+  // ordinary workshop strip.
+  owned
+    .filter(carId => String(carId || '').startsWith('crew__'))
+    .forEach(carId => {
+      result[carId] = 'crewSpace';
+    });
 
-  // Preserve valid existing assignments for ordinary cars after crew slots.
+  // Preserve valid existing assignments for ordinary cars only.
   owned.forEach(carId => {
     if (result[carId]) return;
 
