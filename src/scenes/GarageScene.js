@@ -49,7 +49,12 @@ import {
   isArkonDen,
 } from '../data/centralTokyo.js?v=20261005-r345';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { isCrewUnlocked } from '../data/crewSystem.js?v=20261005-r348';
+import {
+  isCrewUnlocked,
+  getCrewMembers,
+  getCrewCount,
+  removeCrewMember,
+} from '../data/crewSystem.js?v=20261005-r349';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -127,10 +132,36 @@ const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
 const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 
+const CREW_MEMBER_LAYOUT = Object.freeze([
+  { x: 145, feetY: 472, h: 150 },
+  { x: 285, feetY: 470, h: 158 },
+  { x: 430, feetY: 462, h: 154 },
+  { x: 585, feetY: 474, h: 162 },
+  { x: 740, feetY: 463, h: 156 },
+  { x: 905, feetY: 360, h: 140 },
+  { x: 1050, feetY: 358, h: 144 },
+]);
+
 export default class GarageScene extends Phaser.Scene {
   constructor() { super('GarageScene'); }
 
   init(data = {}) {
+    // Crew Space is a workshop-mode presentation of GarageScene so all tuning,
+    // visual-mod and dyno behaviour stays on the same battle-tested code path.
+    const explicitCrewMode = Object.prototype.hasOwnProperty.call(data || {}, 'crewMode')
+      ? Boolean(data.crewMode)
+      : null;
+    this.crewMode = explicitCrewMode == null
+      ? Boolean(this.registry.get('crewSpaceActive'))
+      : explicitCrewMode;
+
+    if (this.crewMode) {
+      this.registry.set('crewSpaceActive', true);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    } else if (explicitCrewMode === false) {
+      this.registry.set('crewSpaceActive', false);
+    }
+
     // Pass the workshop explicitly when changing properties. This avoids
     // depending on a re-entrant scene restart to preserve the new location.
     if (data?.workshopLocationId) {
