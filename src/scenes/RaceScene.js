@@ -11,7 +11,7 @@ import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
-import { createAndRegisterOwnedCarInstance } from '../data/carOwnership.js?v=20261006-r376';
+import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r376';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -70,7 +70,7 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r348';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r365';
-import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r376';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r377';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
 import {
   getGarageDeliveryOptions,
@@ -4030,30 +4030,26 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('easyCouponLastMilestone', milestone);
     if (this.playerDifficulty !== 'EASY') return null;
 
-    const owned = new Set((this.registry.get('ownedCarIds') || []).map(String));
+    const owned = this.registry.get('ownedCarIds') || [];
     const priceCap = newWins < 40
       ? 4000000
       : newWins < 80
         ? 7500000
         : Infinity;
 
-    const incomplete = AUTO_MARKET_LISTINGS.filter(item => {
-      if (!cars[item.carId]) return false;
-      if (Number(item.price || 0) > priceCap) return false;
-      return getCarCouponCount(this.registry, item.carId) <
-        getCarCouponRequirement(item.carId);
-    });
+    // Coupons are inventory, not a one-car progress bar. Reaching the
+    // redemption requirement does not remove a model from future rewards.
+    const withinPriceBand = AUTO_MARKET_LISTINGS.filter(item =>
+      Boolean(cars[item.carId]) && Number(item.price || 0) <= priceCap
+    );
+    const fallback = AUTO_MARKET_LISTINGS.filter(item => Boolean(cars[item.carId]));
 
-    const fallback = AUTO_MARKET_LISTINGS.filter(item => {
-      if (!cars[item.carId]) return false;
-      return getCarCouponCount(this.registry, item.carId) <
-        getCarCouponRequirement(item.carId);
-    });
-
-    const eligible = incomplete.length ? incomplete : fallback;
+    const eligible = withinPriceBand.length ? withinPriceBand : fallback;
     if (!eligible.length) return null;
 
-    const preferred = eligible.filter(item => !owned.has(String(item.carId)));
+    // Still favour discovery when possible, but once every model has been
+    // represented the player can keep stockpiling whichever coupons roll.
+    const preferred = eligible.filter(item => !ownsCarModel(owned, item.carId));
     const pool = preferred.length ? preferred : eligible;
     const selected = Phaser.Utils.Array.GetRandom(pool);
     if (!selected) return null;
