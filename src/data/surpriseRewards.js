@@ -1,5 +1,6 @@
-import { cars, carOrder } from './cars.js?v=20261004-r333';
-import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20260929-r272';
+import { cars, carOrder } from './cars.js?v=20261005-r345';
+import { ownsCarModel } from './carOwnership.js?v=20261006-r376';
+import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20261006-r376';
 import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';
 
 function sourceValue(source, key, fallback = null) {
@@ -38,12 +39,12 @@ export function maybeAwardSurpriseReward(registry, { playerWon = false, random =
     return null;
   }
 
-  const ownedCars = new Set((registry.get('ownedCarIds') || []).map(String));
+  const ownedCars = registry.get('ownedCarIds') || [];
   const couponCandidates = carOrder.filter(carId => {
     if (!cars[carId] || !CAR_COUPON_REQUIREMENTS[carId]) return false;
     return getCarCouponCount(registry, carId) < getCarCouponRequirement(carId);
   });
-  const preferredCoupons = couponCandidates.filter(carId => !ownedCars.has(carId));
+  const preferredCoupons = couponCandidates.filter(carId => !ownsCarModel(ownedCars, carId));
   const ownedWheels = new Set((registry.get('ownedWheelIds') || []).map(String));
   const wheelCandidates = WHEEL_CATALOG.filter(
     wheel => wheel.tier === 'STANDARD' && !ownedWheels.has(wheel.id)
