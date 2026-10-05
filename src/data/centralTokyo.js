@@ -1,3 +1,4 @@
+import { getBaseCarId } from './carOwnership.js?v=20261005-r376';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -492,14 +493,15 @@ export function canRedeemCarCoupon(source, carId) {
 }
 
 export function getAutoMarketBuild(carId) {
-  return JSON.parse(JSON.stringify(MARKET_BUILDS[carId] || {
+  const baseCarId = getBaseCarId(carId);
+  return JSON.parse(JSON.stringify(MARKET_BUILDS[baseCarId] || {
     stock: true,
     acquiredVia: 'tokyoAutoMarket',
   }));
 }
 
 export function getAutoMarketBasePrice(carId) {
-  return Math.max(100000, Number(MARKET_BASE_PRICES[String(carId)] || 1000000));
+  return Math.max(100000, Number(MARKET_BASE_PRICES[getBaseCarId(carId)] || 1000000));
 }
 
 export function getNewCarState(carId, paintColor = 0xffffff) {
@@ -557,7 +559,7 @@ function getInstalledPerformanceInvestment(carState = {}) {
 }
 
 export function getAutoMarketSellPrice(carId, carState = {}) {
-  const base = Number(MARKET_BASE_PRICES[carId] || 1000000);
+  const base = Number(MARKET_BASE_PRICES[getBaseCarId(carId)] || 1000000);
 
   // The dealership pays wholesale for the shell, then only a fraction of the
   // money sunk into performance parts. This prevents a cheap cosmetic flag or
