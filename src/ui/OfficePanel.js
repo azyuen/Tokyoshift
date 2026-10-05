@@ -245,12 +245,14 @@ export function showOfficePanel(scene) {
 
   // Seven regional pennants. The badge positions follow the authored
   // 160x576 flag asset coordinates in garage_assets.json.
-  const flagTop = frame.y + frame.h * 0.135;
-  const flagHeight = frame.h * 0.36;
+  // Keep the achievement wall compact and biased left so the right-hand
+  // display remains clear for a future large event trophy.
+  const flagTop = frame.y + frame.h * 0.175;
+  const flagHeight = frame.h * 0.315;
   const flagWidth = flagHeight * (160 / 576);
-  const flagStartX = 0.305;
-  const flagGap = 0.0665;
-  const badgeSize = flagHeight * (60 / 576);
+  const flagStartX = 0.275;
+  const flagGap = 0.0585;
+  const badgeSize = flagHeight * (56 / 576);
 
   REGIONS.forEach((region, index) => {
     const achievement = getRegionAchievement(scene, region.id);
@@ -335,9 +337,14 @@ export function showOfficePanel(scene) {
     ]),
   });
   addHotspot(scene, add, frame, {
-    x: 0.915, y: 0.765, w: 0.15, h: 0.17,
+    // Exact bottom-right CAR COUPONS register: sign + coupon cards.
+    // Keep this above the broad trophy area so taps always resolve here.
+    x: 0.765, y: 0.815, w: 0.155, h: 0.18,
+    depth: 220,
     onActivate: () => {
-      if (typeof scene.showCouponsPopup === 'function') scene.showCouponsPopup();
+      if (typeof scene.showCouponsPopup === 'function') {
+        scene.showCouponsPopup();
+      }
     },
   });
 }
