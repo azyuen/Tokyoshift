@@ -356,11 +356,12 @@ function showMagazine(scene, features) {
     0.82
   ).setDepth(290));
 
-  const close = add(scene.add.rectangle(1492, 82, 108, 42, 0x17130f, 1)
+  const closeX = 1460;
+  const close = add(scene.add.rectangle(closeX, 82, 108, 42, 0x17130f, 1)
     .setStrokeStyle(1, 0xa89170, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(295));
-  const closeText = add(scene.add.text(1492, 82, 'CLOSE', {
+  const closeText = add(scene.add.text(closeX, 82, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#f6e8ce',
