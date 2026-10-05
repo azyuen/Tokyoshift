@@ -2591,7 +2591,7 @@ export default class GarageScene extends Phaser.Scene {
       // Move the Canal Yard entry right and slightly upward so it finishes
       // immediately before the top of the staircase.
       position = {
-        x: 880,
+        x: 930,
         y: 142,
         w: 250,
         h: 44,
@@ -2602,9 +2602,9 @@ export default class GarageScene extends Phaser.Scene {
       // Its right edge is pulled left to meet the top of the doorway and the
       // label reads naturally from the left edge of the button.
       position = {
-        x: 760,
-        y: 158,
-        w: 240,
+        x: 710,
+        y: 190,
+        w: 250,
         h: 44,
         labelText: 'OFFICE  >',
       };
@@ -2670,6 +2670,15 @@ export default class GarageScene extends Phaser.Scene {
 
   buildDynoButton() {
     const activeWorkshop = this.getActiveWorkshop();
+
+    // Warehouse HQ uses the in-room glowing DYNO hotspot exclusively. Keeping
+    // a second right-pane action here made the same destination appear twice.
+    if (activeWorkshop.id === DYNO_WAREHOUSE_ID) {
+      this.dynoButton = null;
+      this.dynoButtonLabel = null;
+      this.refreshDynoButton = () => {};
+      return;
+    }
 
     if (activeWorkshop.id !== DYNO_WAREHOUSE_ID) {
       if (Number(activeWorkshop.tier || 0) > 1) return;
