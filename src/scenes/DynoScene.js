@@ -4,7 +4,7 @@ import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
 import { cars } from '../data/cars.js?v=20261005-r345';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r350';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
@@ -45,7 +45,7 @@ import {
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260930-r292';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
