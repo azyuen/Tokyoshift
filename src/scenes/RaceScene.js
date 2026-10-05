@@ -1702,12 +1702,9 @@ export default class RaceScene extends Phaser.Scene {
     this.updateDrivingTutorial(controlState, playerT);
 
     if (this.finished) {
-      this.afterFinishTimer += dt;
-      const cinematicElapsed = this.firstFinishClock == null
-        ? 0
-        : this.raceClock - this.firstFinishClock;
-
-      if (cinematicElapsed > 0.38 && !this.resultsShown) {
+      // Freeze on the exact frame the race resolves. Do not let the cars/road
+      // coast for a cinematic beat before the manga result animation appears.
+      if (!this.resultsShown) {
         this.showResultsOverlay();
       }
     }
@@ -2376,16 +2373,8 @@ export default class RaceScene extends Phaser.Scene {
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
-    const quote = playerWon
-      ? (playerCharacter?.resultQuotes?.win || 'That was clean.')
-      : (playerCharacter?.resultQuotes?.loss || 'Next run will be different.');
-    const quoteText = this.add.text(948, 584, '“' + quote + '”', {
-      fontFamily: dataFont,
-      fontSize: '9px',
-      color: '#1f2329',
-      fontStyle: '700',
-      wordWrap: { width: 430 },
-    }).setDepth(depth + 8).setScrollFactor(0);
+    // The result oblong belongs to the race outcome, not the player's voice.
+    // Character dialogue is reserved for the rival reaction panel below.
 
     const playerDisplayName = [
       String(this.registry.get('firstName') || '').trim(),
@@ -2468,6 +2457,19 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 8, y: 4 },
     }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
 
+    const rivalQuote = playerWon
+      ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
+      : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
+    this.add.text(1102, 337, '“' + rivalQuote + '”', {
+      fontFamily: dataFont,
+      fontSize: '8px',
+      color: '#f5f0e7',
+      backgroundColor: '#11141acc',
+      padding: { x: 8, y: 5 },
+      align: 'center',
+      wordWrap: { width: 250 },
+    }).setOrigin(0.5, 0).setDepth(depth + 10).setScrollFactor(0);
+
     // Compact translucent timing slip at lower-left. The real cars stay in the
     // race frame; no duplicate display car is spawned on top of them.
     const slipX = 225;
@@ -2475,10 +2477,14 @@ export default class RaceScene extends Phaser.Scene {
     const slipW = 390;
     const slipH = 190;
 
-    this.add.rectangle(slipX, slipY, slipW, slipH, 0x0b1018, 0.82)
-      .setStrokeStyle(3, accent, 0.92)
-      .setDepth(depth + 20)
-      .setScrollFactor(0);
+    // Borderless telemetry: let the frozen road be the panel background.
+    // Thin rules keep the information readable without introducing another
+    // rectangular UI card into the manga composition.
+    const slipRules = this.add.graphics().setDepth(depth + 20).setScrollFactor(0);
+    slipRules.lineStyle(2, 0xd6d9df, 0.34);
+    slipRules.lineBetween(50, 578, 430, 578);
+    slipRules.lineBetween(50, 610, 430, 610);
+    slipRules.lineBetween(50, 704, 430, 704);
 
     this.add.text(50, 518, reward.primary, {
       fontFamily: titleFont,
@@ -2489,8 +2495,8 @@ export default class RaceScene extends Phaser.Scene {
     }).setDepth(depth + 22).setScrollFactor(0);
 
     this.add.text(50, 550, reward.secondary, {
-      fontFamily: titleFont,
-      fontSize: '6px',
+      fontFamily: dataFont,
+      fontSize: '8px',
       color: '#d6d9df',
       wordWrap: { width: 340 },
       lineSpacing: 2,
