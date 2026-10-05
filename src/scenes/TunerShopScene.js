@@ -12,7 +12,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r350';
+} from '../state/GameState.js?v=20261005-r354';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
@@ -38,7 +38,7 @@ import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r128';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
