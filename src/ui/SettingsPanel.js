@@ -849,7 +849,7 @@ export function showSettingsPanel(scene) {
     });
   };
 
-  const profileLowerShift = -26;
+  const profileLowerShift = -46;
 
   slots.forEach((slot, i) => {
     const x = cardXs[i];
