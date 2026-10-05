@@ -1,9 +1,9 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261005-r365';
 import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261005-r348';
+} from '../data/cutscenes.js?v=20261005-r365';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -11,7 +11,7 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
+} from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
 import { saveSessionState } from '../state/GameState.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -134,12 +134,20 @@ function queueCharacterAssets(scene, characterIds) {
     const visual = characters[id]?.visual;
     if (!visual) return;
 
-    [
+    const assets = [
       [visual.spriteKey, visual.path],
       [visual.winSpriteKey, visual.winPath],
       [visual.lossSpriteKey, visual.lossPath],
-    ].forEach(([key, path]) => {
-      if (!key || !path || scene.textures.exists(key)) return;
+      ...Object.values(visual.poseAssets || {}).map(asset => [
+        asset?.key,
+        asset?.path,
+      ]),
+    ];
+    const seen = new Set();
+
+    assets.forEach(([key, path]) => {
+      if (!key || !path || seen.has(key) || scene.textures.exists(key)) return;
+      seen.add(key);
       scene.load.image(key, getCharacterAssetUrl(path));
       queued += 1;
     });
@@ -323,7 +331,7 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   const character = characters[characterId];
   if (!profile || !image || !frame || !character?.visual) return false;
 
-  const requestedPose = pose === 'win' || pose === 'loss' ? pose : 'idle';
+  const requestedPose = String(pose || 'idle').trim().toLowerCase() || 'idle';
   const textureInfo = getCharacterProfileTexture(characterId, requestedPose);
 
   let spriteKey = textureInfo?.key;
