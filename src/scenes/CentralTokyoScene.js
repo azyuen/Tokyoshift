@@ -32,7 +32,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r350';
+} from '../state/GameState.js?v=20261005-r354';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import {
   getGarageDeliveryOptions,
@@ -50,9 +50,9 @@ import {
   getWorkshopStorageCapacity,
   getWorkshopUsage,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r350';
+} from '../data/workshopProgression.js?v=20261005-r354';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
