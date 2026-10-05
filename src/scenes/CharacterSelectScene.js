@@ -15,7 +15,7 @@ import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../dat
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261005-r354';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
