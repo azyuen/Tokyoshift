@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261004-r333';
+export const CHARACTER_ASSET_VERSION = '20261005-r365';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -1318,6 +1318,15 @@ export const characters = {
       winPath: 'assets/Characters/Shinagawa/sayaka_fujieda_win.png',
       lossSpriteKey: 'characterSayakaFujiedaLoss',
       lossPath: 'assets/Characters/Shinagawa/sayaka_fujieda_loss.png',
+      // Sayaka is a recurring character: keep her Shinagawa race set as the
+      // canonical idle/win/loss art, but expose her Ginza wardrobe and
+      // expressions as explicit Central Tokyo poses for showroom/cutscene use.
+      poseAssets: {
+        normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Central/sayaka_fujieda_normal.png' },
+        happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Central/sayaka_fujieda_happy.png' },
+        sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Central/sayaka_fujieda_sad.png' },
+        serious: { key: 'characterSayakaFujiedaCentralSerious', path: 'assets/Characters/Central/sayaka_fujieda_serious.png' },
+      },
     },
   },
 
@@ -1508,6 +1517,176 @@ export const characters = {
   },
 
 
+  harutoMizuno: {
+    id: 'harutoMizuno',
+    name: 'Haruto Mizuno',
+    archetype: 'New Car Specialist',
+    roleTags: ['central', 'auto-market', 'npc', 'dealer'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'new-car-specialist',
+    personality: 'Polished, upbeat and product-focused.',
+    bio: 'The Tokyo Auto Market specialist for factory-stock new cars.',
+    visual: {
+      spriteKey: 'characterHarutoMizuno',
+      path: 'assets/Characters/Central/haruto_mizuno_normal.png',
+      poseAssets: {
+        normal: { key: 'characterHarutoMizuno', path: 'assets/Characters/Central/haruto_mizuno_normal.png' },
+        happy: { key: 'characterHarutoMizunoHappy', path: 'assets/Characters/Central/haruto_mizuno_happy.png' },
+        sad: { key: 'characterHarutoMizunoSad', path: 'assets/Characters/Central/haruto_mizuno_sad.png' },
+      },
+    },
+  },
+
+  kenjiOkabe: {
+    id: 'kenjiOkabe',
+    name: 'Kenji Okabe',
+    archetype: 'Used Car Dealer',
+    roleTags: ['central', 'auto-market', 'npc', 'dealer'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'used-car-dealer',
+    personality: 'Friendly, shrewd and always ready to talk condition or price.',
+    bio: 'The Tokyo Auto Market buyer and dealer handling modified used stock.',
+    visual: {
+      spriteKey: 'characterKenjiOkabe',
+      path: 'assets/Characters/Central/kenji_okabe_normal.png',
+      poseAssets: {
+        normal: { key: 'characterKenjiOkabe', path: 'assets/Characters/Central/kenji_okabe_normal.png' },
+        happy: { key: 'characterKenjiOkabeHappy', path: 'assets/Characters/Central/kenji_okabe_happy.png' },
+        sad: { key: 'characterKenjiOkabeSad', path: 'assets/Characters/Central/kenji_okabe_sad.png' },
+      },
+    },
+  },
+
+  yunaKisaragi: {
+    id: 'yunaKisaragi',
+    name: 'Yuna Kisaragi',
+    archetype: 'Wheel & Fitment Specialist',
+    roleTags: ['central', 'auto-market', 'npc', 'wheels'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'wheel-specialist',
+    personality: 'Exacting, stylish and enthusiastic about getting fitment right.',
+    bio: 'The Tokyo Auto Market wheel and fitment specialist.',
+    visual: {
+      spriteKey: 'characterYunaKisaragi',
+      path: 'assets/Characters/Central/yuna_kisaragi_normal.png',
+      poseAssets: {
+        normal: { key: 'characterYunaKisaragi', path: 'assets/Characters/Central/yuna_kisaragi_normal.png' },
+        happy: { key: 'characterYunaKisaragiHappy', path: 'assets/Characters/Central/yuna_kisaragi_happy.png' },
+        sad: { key: 'characterYunaKisaragiSad', path: 'assets/Characters/Central/yuna_kisaragi_sad.png' },
+      },
+    },
+  },
+
+  ryujiTakahashi: {
+    id: 'ryujiTakahashi',
+    name: 'Ryuji Takahashi',
+    archetype: 'Drag Complex Owner',
+    roleTags: ['central', 'drag-complex', 'npc', 'owner', 'veteran'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'drag-owner',
+    personality: 'Old-school, understated and deeply serious about proper racing.',
+    bio: 'An old-school racer and the owner of the Tokyo Drag Complex.',
+    visual: {
+      spriteKey: 'characterRyujiTakahashi',
+      path: 'assets/Characters/Central/ryuji_takahashi_normal.png',
+      poseAssets: {
+        normal: { key: 'characterRyujiTakahashi', path: 'assets/Characters/Central/ryuji_takahashi_normal.png' },
+        happy: { key: 'characterRyujiTakahashiHappy', path: 'assets/Characters/Central/ryuji_takahashi_happy.png' },
+        serious: { key: 'characterRyujiTakahashiSerious', path: 'assets/Characters/Central/ryuji_takahashi_serious.png' },
+      },
+    },
+  },
+
+  masatoKuroda: {
+    id: 'masatoKuroda',
+    name: 'Masato Kuroda',
+    archetype: 'Drag Complex Manager',
+    roleTags: ['central', 'drag-complex', 'npc', 'manager', 'promoter'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'drag-manager',
+    personality: 'Professional, organised and calm under pressure.',
+    bio: 'The day-to-day manager and event promoter at the Tokyo Drag Complex.',
+    visual: {
+      spriteKey: 'characterMasatoKuroda',
+      path: 'assets/Characters/Central/masato_kuroda_normal.png',
+      poseAssets: {
+        normal: { key: 'characterMasatoKuroda', path: 'assets/Characters/Central/masato_kuroda_normal.png' },
+        happy: { key: 'characterMasatoKurodaHappy', path: 'assets/Characters/Central/masato_kuroda_happy.png' },
+        sad: { key: 'characterMasatoKurodaSad', path: 'assets/Characters/Central/masato_kuroda_sad.png' },
+      },
+    },
+  },
+
+  hiroshiSato: {
+    id: 'hiroshiSato',
+    name: 'Hiroshi Sato',
+    archetype: 'Chief Starter',
+    roleTags: ['central', 'drag-complex', 'npc', 'official', 'starter'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'chief-starter',
+    personality: 'Focused, authoritative and completely locked in once cars stage.',
+    bio: 'Chief umpire and starter at the Tokyo Drag Complex.',
+    visual: {
+      spriteKey: 'characterHiroshiSato',
+      path: 'assets/Characters/Central/hiroshi_sato_normal.png',
+      poseAssets: {
+        normal: { key: 'characterHiroshiSato', path: 'assets/Characters/Central/hiroshi_sato_normal.png' },
+        happy: { key: 'characterHiroshiSatoHappy', path: 'assets/Characters/Central/hiroshi_sato_happy.png' },
+        focus: { key: 'characterHiroshiSatoFocus', path: 'assets/Characters/Central/hiroshi_sato_focus.png' },
+        signal: { key: 'characterHiroshiSatoSignal', path: 'assets/Characters/Central/hiroshi_sato_signal.png' },
+      },
+    },
+  },
+
+  kentaIshikawa: {
+    id: 'kentaIshikawa',
+    name: 'Kenta Ishikawa',
+    archetype: 'Track Mechanic',
+    roleTags: ['central', 'drag-complex', 'npc', 'mechanic'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'track-mechanic',
+    personality: 'Young, practical and happiest when there is a car to inspect.',
+    bio: 'The young track mechanic keeping Drag Complex cars and equipment ready.',
+    visual: {
+      spriteKey: 'characterKentaIshikawa',
+      path: 'assets/Characters/Central/kenta_ishikawa_normal.png',
+      poseAssets: {
+        normal: { key: 'characterKentaIshikawa', path: 'assets/Characters/Central/kenta_ishikawa_normal.png' },
+        happy: { key: 'characterKentaIshikawaHappy', path: 'assets/Characters/Central/kenta_ishikawa_happy.png' },
+        sad: { key: 'characterKentaIshikawaSad', path: 'assets/Characters/Central/kenta_ishikawa_sad.png' },
+      },
+    },
+  },
+
+  tomoSakamoto: {
+    id: 'tomoSakamoto',
+    name: 'Tomo Sakamoto',
+    archetype: 'Timing & Telemetry Assistant',
+    roleTags: ['central', 'drag-complex', 'npc', 'telemetry'],
+    selectable: false,
+    rivalEligible: false,
+    centralRole: 'timing-assistant',
+    relatedCharacterIds: ['daichiSakamoto'],
+    personality: 'Shy, clever and much more comfortable around timing data than crowds.',
+    bio: 'Daichi Sakamoto’s younger brother and the Drag Complex timing and telemetry assistant.',
+    visual: {
+      spriteKey: 'characterTomoSakamoto',
+      path: 'assets/Characters/Central/tomo_sakamoto_normal.png',
+      poseAssets: {
+        normal: { key: 'characterTomoSakamoto', path: 'assets/Characters/Central/tomo_sakamoto_normal.png' },
+        happy: { key: 'characterTomoSakamotoHappy', path: 'assets/Characters/Central/tomo_sakamoto_happy.png' },
+        sad: { key: 'characterTomoSakamotoSad', path: 'assets/Characters/Central/tomo_sakamoto_sad.png' },
+      },
+    },
+  },
+
   arkonDen: {
     id: 'arkonDen',
     name: 'Arkon Den',
@@ -1597,6 +1776,15 @@ export const characterOrder = [
   'ryoheiTakeda',
   'shunMizuno',
   'yuiKanzaki',
+  // Central Tokyo venue cast. These are NPC/cutscene characters, not rivals.
+  'harutoMizuno',
+  'kenjiOkabe',
+  'yunaKisaragi',
+  'ryujiTakahashi',
+  'masatoKuroda',
+  'hiroshiSato',
+  'kentaIshikawa',
+  'tomoSakamoto',
 ];
 
 // Keep the complete roster available for asset loading and workshop NPC use,
@@ -1673,6 +1861,65 @@ export const REGION_TEAM_CHARACTER_IDS = {
     'reinaShibata',
   ],
 };
+
+export const CENTRAL_TOKYO_CHARACTER_IDS = Object.freeze({
+  autoMarket: Object.freeze({
+    new: 'harutoMizuno',
+    used: 'kenjiOkabe',
+    wheels: 'yunaKisaragi',
+  }),
+  ginza: Object.freeze({
+    proprietor: 'sayakaFujieda',
+  }),
+  dragComplex: Object.freeze({
+    owner: 'ryujiTakahashi',
+    manager: 'masatoKuroda',
+    starter: 'hiroshiSato',
+    mechanic: 'kentaIshikawa',
+    telemetry: 'tomoSakamoto',
+  }),
+});
+
+export function getCharacterVisualAsset(characterId, pose = 'idle') {
+  const visual = characters[characterId]?.visual;
+  if (!visual) return null;
+
+  const requestedPose = String(pose || 'idle').trim().toLowerCase() || 'idle';
+  const customPose = visual.poseAssets?.[requestedPose];
+  if (customPose?.key || customPose?.path) {
+    return {
+      key: customPose.key || visual.spriteKey,
+      path: customPose.path || visual.path,
+      pose: requestedPose,
+      fallback: false,
+    };
+  }
+
+  if (requestedPose === 'win' && (visual.winSpriteKey || visual.winPath)) {
+    return {
+      key: visual.winSpriteKey || visual.spriteKey,
+      path: visual.winPath || visual.path,
+      pose: 'win',
+      fallback: false,
+    };
+  }
+
+  if (requestedPose === 'loss' && (visual.lossSpriteKey || visual.lossPath)) {
+    return {
+      key: visual.lossSpriteKey || visual.spriteKey,
+      path: visual.lossPath || visual.path,
+      pose: 'loss',
+      fallback: false,
+    };
+  }
+
+  return {
+    key: visual.spriteKey,
+    path: visual.path,
+    pose: 'idle',
+    fallback: requestedPose !== 'idle',
+  };
+}
 
 export const genericRivalCharacterOrder = rivalCharacterOrder.filter(
   id => !characters[id]?.regionExclusive
