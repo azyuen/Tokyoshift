@@ -83,7 +83,7 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r350';
+} from '../data/crewSystem.js?v=20261005-r351';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
