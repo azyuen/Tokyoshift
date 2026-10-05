@@ -3806,10 +3806,12 @@ export default class MeetScene extends Phaser.Scene {
       ? configuredOrder.slice(shift).concat(configuredOrder.slice(0, shift))
       : [];
 
-    const eligible = [...new Set(rotatedOrder.filter(id =>
-      id !== playerCharacterId &&
-      characters[id]
-    ))];
+    const eligible = [...new Set(
+      [...rotatedOrder, ...regionalPool].filter(id =>
+        id !== playerCharacterId &&
+        characters[id]
+      )
+    )];
 
     const availableCharacters = [...eligible];
     if (!regionalTeam) Phaser.Utils.Array.Shuffle(availableCharacters);
@@ -3839,7 +3841,16 @@ export default class MeetScene extends Phaser.Scene {
     const cfg = MODE_DATA[this.selectedMode];
     const paintPool = [...RIVAL_PAINT_COLORS];
     Phaser.Utils.Array.Shuffle(paintPool);
-    const offerCount = Math.max(1, Number(PROGRESSION_BALANCE.meetMatchmaking.offerCount || 3));
+    const configuredOfferCount = Math.max(
+      1,
+      Number(PROGRESSION_BALANCE.meetMatchmaking.offerCount || 3)
+    );
+    // Never duplicate a person to fill a Meet. In the unlikely event a region
+    // has fewer eligible drivers than configured slots, show fewer cards.
+    const offerCount = Math.min(
+      configuredOfferCount,
+      Math.max(1, eligible.length)
+    );
 
     // The location owns driver difficulty. Use its authored three rating slots
     // as the Meet population (shuffled only to avoid a fixed card order).
