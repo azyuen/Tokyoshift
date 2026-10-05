@@ -1371,9 +1371,14 @@ export default class GarageScene extends Phaser.Scene {
         add(this.add.text(x, y - 8, 'EMPTY SLOT', {
           fontFamily: PIXEL_FONT, fontSize: '8px', color: '#40515d'
         }).setOrigin(0.5).setDepth(34));
-        add(this.add.text(x, y + 24, 'MOVE OR WIN A CAR', {
-          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#31414c'
-        }).setOrigin(0.5).setDepth(34));
+        add(this.add.text(
+          x,
+          y + 24,
+          this.crewMode ? 'RECRUIT A DRIVER' : 'MOVE OR WIN A CAR',
+          {
+            fontFamily: PIXEL_FONT, fontSize: '6px', color: '#31414c'
+          }
+        ).setOrigin(0.5).setDepth(34));
         continue;
       }
 
@@ -1456,7 +1461,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   updateGarageNavState() {
-    const capacity = getWorkshopStorageCapacity(this.getActiveWorkshop().id);
+    const capacity = this.crewMode
+      ? 7
+      : getWorkshopStorageCapacity(this.getActiveWorkshop().id);
     const totalPages = Math.max(1, Math.ceil(capacity / (this.garagePageSize || 4)));
     const locked = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
     const canPrev = !locked && this.garagePage > 0;
@@ -2124,29 +2131,16 @@ export default class GarageScene extends Phaser.Scene {
         ? previous
         : warehouseCars[0] || personalCars[0] || null;
 
-      this.registry.set('crewSpaceActive', false);
-      this.registry.set('crewPreviousCarId', null);
-      this.registry.set('selectedRacePlayerCharacterId', null);
       this.registry.set('selectedCarId', nextCarId);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
 
-      // iOS/PWA can stall at the loader's 98% hand-off when GarageScene is
-      // restarted from inside itself after Crew Space has loaded a different
-      // asset set. Use the same clean reload path as Dyno/workshop transfers:
-      // save first, force Garage on boot, and return to Warehouse HQ normally.
-      try {
-        sessionStorage.setItem('tokyoShiftInternalReload', '1');
-        sessionStorage.setItem('tokyoShiftForceGarage', '1');
-        sessionStorage.removeItem('tokyoShiftBootMessage');
-        window.location.reload();
-        return;
-      } catch (e) {}
-
-      // Browser environments without sessionStorage still have a safe fallback.
-      this.scene.start('GarageScene', {
-        crewMode: false,
-        workshopLocationId: 'shinonomeWarehouseStrip',
+      // Leave GarageScene completely before starting its Warehouse version.
+      // This avoids the iOS/PWA 98% loader stall caused by re-entering the same
+      // scene (or doing a whole-app reload) with a different asset set.
+      this.scene.start('CrewScene', {
+        mode: 'warehouse',
+        selectedCarId: nextCarId,
       });
     });
   }
@@ -2204,15 +2198,9 @@ export default class GarageScene extends Phaser.Scene {
         ? this.selectedCarId
         : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
       this.registry.set('crewPreviousCarId', previous);
-      this.registry.set('crewSpaceActive', true);
-      this.registry.set('selectedCarId', null);
-      this.registry.set('selectedRacePlayerCharacterId', null);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
-      this.scene.restart({
-        crewMode: true,
-        workshopLocationId: 'shinonomeWarehouseStrip',
-      });
+      this.scene.start('CrewScene', { mode: 'crew' });
     });
   }
 
@@ -2954,8 +2942,8 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     if (this.crewMode) {
-      const travel = 610;
-      const duration = 2600;
+      const travel = 660;
+      const duration = 3400;
       this.selectedDisplay.forEach(obj => {
         if (obj?.x != null) obj.x += travel;
       });
@@ -2963,7 +2951,7 @@ export default class GarageScene extends Phaser.Scene {
         targets: this.selectedDisplay,
         x: '-=' + travel,
         duration,
-        ease: 'Sine.easeOut',
+        ease: 'Sine.easeInOut',
       });
 
       const wheels = [this.selectedDisplay[3], this.selectedDisplay[4]].filter(Boolean);
