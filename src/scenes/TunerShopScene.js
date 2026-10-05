@@ -1,5 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars } from '../data/cars.js?v=20261005-r345';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r376';
 import { characters } from '../data/characters.js?v=20261004-r333';
 import {
   getTunerShopForRegion,
@@ -12,14 +13,14 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r354';
+} from '../state/GameState.js?v=20261006-r376';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261005-r345';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r376';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -39,7 +40,7 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r362';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -485,7 +486,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const owned = this.registry.get('ownedCarIds') || [];
     const carStates = this.registry.get('carStates') || {};
     const donorExists = Boolean(cars[this.shop.donorCarId]);
-    const currentIsDonor = currentCarId === this.shop.donorCarId;
+    const currentIsDonor = getBaseCarId(currentCarId) === this.shop.donorCarId;
     const donorState = currentIsDonor ? (carStates[currentCarId] || {}) : {};
     const donorStock = currentIsDonor && donorState.stock !== false;
     const heroOwned = owned.includes(this.shop.heroCarId);
@@ -1526,7 +1527,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     if (
       !donor ||
-      currentCarId !== this.shop.donorCarId ||
+      getBaseCarId(currentCarId) !== this.shop.donorCarId ||
       donorState.stock === false
     ) return;
 
@@ -1718,11 +1719,17 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   performHeroConversion() {
-    const donorId = this.shop.donorCarId;
+    const donorBaseId = this.shop.donorCarId;
+    const donorId = this.getCurrentCarId();
     const heroId = this.shop.heroCarId;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const donorIndex = owned.indexOf(donorId);
-    if (donorIndex < 0 || owned.includes(heroId)) return false;
+    if (
+      !donorId ||
+      getBaseCarId(donorId) !== donorBaseId ||
+      donorIndex < 0 ||
+      owned.includes(heroId)
+    ) return false;
 
     const carStates = { ...(this.registry.get('carStates') || {}) };
     const donorState = carStates[donorId] || {};
