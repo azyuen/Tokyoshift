@@ -30,7 +30,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r348';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r350';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
@@ -40,7 +40,7 @@ import {
   getCarsInWorkshop,
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r345';
+} from '../data/workshopProgression.js?v=20261005-r350';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r117';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -98,7 +98,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r348';
+} from '../data/crewSystem.js?v=20261005-r350';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
