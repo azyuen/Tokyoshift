@@ -116,7 +116,8 @@ import {
   finishSceneLoading,
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r278';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r362';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r362';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -264,6 +265,41 @@ export default class GarageScene extends Phaser.Scene {
         };
     queueImage(workshopMapAsset.key, workshopMapAsset.path);
 
+
+    if (!this.crewMode) {
+      const officeBackgrounds = {
+        shinonomeWorkshop: {
+          key: 'officeWorkshopBg',
+          path: 'assets/Garage/shinonome_workshop_office.png?v=20261005-r362',
+        },
+        shinonomeCanalYard: {
+          key: 'officeCanalYardBg',
+          path: 'assets/Garage/shinonome_canalyard_office.png?v=20261005-r362',
+        },
+        shinonomeWarehouseStrip: {
+          key: 'officeWarehouseBg',
+          path: 'assets/Garage/shinonome_warehouse_office.png?v=20261005-r362',
+        },
+      };
+      const officeBackground =
+        officeBackgrounds[activeWorkshopId] ||
+        officeBackgrounds.shinonomeWorkshop;
+      queueImage(officeBackground.key, officeBackground.path);
+
+      [
+        ['officeFlagOdaiba', 'assets/Garage/flag_odaiba.png?v=20261005-r362'],
+        ['officeFlagShinagawa', 'assets/Garage/flag_shinagawa.png?v=20261005-r362'],
+        ['officeFlagTatsumi', 'assets/Garage/flag_tatsumi.png?v=20261005-r362'],
+        ['officeFlagShibuya', 'assets/Garage/flag_shibuya.png?v=20261005-r362'],
+        ['officeFlagYokohama', 'assets/Garage/flag_yokohama.png?v=20261005-r362'],
+        ['officeFlagDaikoku', 'assets/Garage/flag_daikoku.png?v=20261005-r362'],
+        ['officeFlagShinjuku', 'assets/Garage/flag_shinjuku.png?v=20261005-r362'],
+        ['officeBadgeCrown', 'assets/Garage/badge_crown.png?v=20261005-r362'],
+        ['officeBadgeStar', 'assets/Garage/badge_star.png?v=20261005-r362'],
+        ['officeBadgeCrew', 'assets/Garage/badge_crew.png?v=20261005-r362'],
+      ].forEach(([key, path]) => queueImage(key, path));
+    }
+
     // Street File belongs to the ordinary workshop. Crew Space uses the same
     // three-panel layout but keeps the room focused on the team.
     if (!this.crewMode) {
@@ -409,7 +445,6 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
-    if (!this.crewMode) this.buildMagazineProp();
 
     this.time.addEvent({
       delay: 5000,
@@ -424,6 +459,7 @@ export default class GarageScene extends Phaser.Scene {
     } else {
       this.buildMoveCarButton();
       this.buildWorkshopJumpButton();
+      this.buildOfficeHotspot();
       this.buildWarehouseSpaceHotspots();
       this.buildDynoButton();
       this.buildMeetButton();
@@ -917,7 +953,7 @@ export default class GarageScene extends Phaser.Scene {
     cover.on('pointerout', () => {
       cover.setScale(baseScaleX, baseScaleY);
     });
-    cover.on('pointerdown', () => showCarHistoryPanel(this));
+    cover.on('pointerdown', () => showMagazinePanel(this));
   }
 
   buildHeader() {
@@ -952,18 +988,6 @@ export default class GarageScene extends Phaser.Scene {
     // Keep utility buttons clear of the enlarged W/L record on phone layouts.
     addSettingsButton(this, 925, 35);
 
-    const couponsButton = this.add.rectangle(1020, 35, 112, 38, 0x0b1724, 1)
-      .setStrokeStyle(1, 0x315470, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(43);
-    this.add.text(1020, 35, 'COUPONS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#bfeaff',
-    }).setOrigin(0.5).setDepth(44);
-    couponsButton.on('pointerover', () => couponsButton.setStrokeStyle(2, 0x43dfff, 1));
-    couponsButton.on('pointerout', () => couponsButton.setStrokeStyle(1, 0x315470, 1));
-    couponsButton.on('pointerdown', () => this.showCouponsPopup());
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#ffe08a'
@@ -2556,6 +2580,24 @@ export default class GarageScene extends Phaser.Scene {
     this.scene.start('DynoScene');
   }
 
+  buildOfficeHotspot() {
+    const activeWorkshop = this.getActiveWorkshop();
+    if (!activeWorkshop || activeWorkshop.id === 'shinonomeWarehouseStrip') return;
+
+    // These sit over the authored illuminated Office entrance/detail in each
+    // workshop background. Warehouse HQ has its own labelled OFFICE hotspot.
+    const position = activeWorkshop.id === 'shinonomeCanalYard'
+      ? { x: 760, y: 153, w: 250, h: 44, labelText: 'OFFICE  >' }
+      : { x: 900, y: 158, w: 240, h: 44, labelText: 'OFFICE  >' };
+
+    this.createWarehouseSpaceHotspot({
+      ...position,
+      label: 'OFFICE',
+      labelAlign: 'right',
+      onActivate: () => showOfficePanel(this),
+    });
+  }
+
   buildWarehouseSpaceHotspots() {
     const activeWorkshop = this.getActiveWorkshop();
     if (activeWorkshop?.id !== 'shinonomeWarehouseStrip') return;
@@ -2572,7 +2614,7 @@ export default class GarageScene extends Phaser.Scene {
       w: 300,
       h: 44,
       label: 'OFFICE',
-      onActivate: () => this.showWorkshopToast('OFFICE // COMING SOON'),
+      onActivate: () => showOfficePanel(this),
     });
 
     if (isCrewUnlocked(this.registry)) {
