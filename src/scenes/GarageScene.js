@@ -2591,7 +2591,7 @@ export default class GarageScene extends Phaser.Scene {
       // Move the Canal Yard entry right and slightly upward so it finishes
       // immediately before the top of the staircase.
       position = {
-        x: 930,
+        x: 1010,
         y: 142,
         w: 250,
         h: 44,
@@ -2602,8 +2602,8 @@ export default class GarageScene extends Phaser.Scene {
       // Its right edge is pulled left to meet the top of the doorway and the
       // label reads naturally from the left edge of the button.
       position = {
-        x: 710,
-        y: 190,
+        x: 680,
+        y: 215,
         w: 250,
         h: 44,
         labelText: 'OFFICE  >',
@@ -2746,66 +2746,6 @@ export default class GarageScene extends Phaser.Scene {
       return;
     }
 
-    const stageOne = getDynoStage(1);
-    const x = SIDE.x + SIDE.w / 2;
-    // Keep the Dyno action above MOVE CAR. These buttons previously shared
-    // the same Y position and were therefore directly overlapping.
-    const y = 608;
-
-    this.dynoButton = this.add.rectangle(
-      x,
-      y,
-      SIDE.w - 32,
-      40,
-      0x102138,
-      1
-    ).setStrokeStyle(2, 0x55b8ff, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(40);
-
-    this.dynoButtonLabel = this.add.text(x, y, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#eef8ff',
-    }).setOrigin(0.5).setDepth(41);
-
-    this.refreshDynoButton = () => {
-      if (!this.dynoButton?.active || !this.dynoButtonLabel?.active) return;
-      const tier = Math.max(0, Number(this.registry.get('dynoFacilityTier') || 0));
-      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-      const lockedByTuning = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
-      const hasLocalCar = Boolean(this.selectedCarId);
-
-      if (tier < 1) {
-        const affordable = cash >= Number(stageOne.installCost || 0);
-        this.dynoButtonLabel
-          .setText(
-            affordable
-              ? 'INSTALL DYNO // ¥ ' + Number(stageOne.installCost || 0).toLocaleString('en-US')
-              : 'DYNO // NEED ¥ ' + Number(stageOne.installCost || 0).toLocaleString('en-US')
-          )
-          .setColor(affordable ? '#ffe7a5' : '#c99aa4');
-        this.dynoButton
-          .setFillStyle(affordable ? 0x211a12 : 0x1b1418, 1)
-          .setStrokeStyle(2, affordable ? 0xe4b660 : 0x79515a, 1);
-      } else {
-        this.dynoButtonLabel
-          .setText(hasLocalCar ? 'DYNO // STAGE I  >' : 'DYNO // MOVE CAR HERE')
-          .setColor(hasLocalCar ? '#f1fffb' : '#817d84');
-        this.dynoButton
-          .setFillStyle(hasLocalCar ? 0x0c2827 : 0x17181d, 1)
-          .setStrokeStyle(2, hasLocalCar ? 0x62e8c7 : 0x514f55, 1);
-      }
-
-      if (lockedByTuning) this.dynoButton.disableInteractive();
-      else this.dynoButton.setInteractive({ useHandCursor: true });
-    };
-
-    this.dynoButton.on('pointerdown', () => {
-      this.activateWarehouseDynoSpace();
-    });
-
-    this.refreshDynoButton();
   }
 
   showDynoRentalPopup(workshop = this.getActiveWorkshop()) {
