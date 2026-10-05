@@ -82,6 +82,8 @@ export function createDefaultGameState(options = {}) {
     crewPendingRecruit: null,
     crewBattleProgress: {},
     crewBattleState: null,
+    crewSpaceActive: false,
+    crewPreviousCarId: null,
     tokyoChampionshipInvited: false,
     selectedRacePlayerCharacterId: null,
     tunerDecalsUnlocked: [],
@@ -814,6 +816,8 @@ export function normaliseState(input = {}) {
       input.crewBattleState && typeof input.crewBattleState === 'object'
         ? input.crewBattleState
         : null,
+    crewSpaceActive: Boolean(input.crewSpaceActive),
+    crewPreviousCarId: input.crewPreviousCarId ? String(input.crewPreviousCarId) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId ? String(input.selectedRacePlayerCharacterId) : null,
@@ -958,6 +962,8 @@ export function snapshotRegistry(registry) {
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
     crewBattleState: registry.get('crewBattleState') || null,
+    crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
+    crewPreviousCarId: registry.get('crewPreviousCarId') || null,
     tokyoChampionshipInvited: Boolean(registry.get('tokyoChampionshipInvited')),
     selectedRacePlayerCharacterId: registry.get('selectedRacePlayerCharacterId') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
