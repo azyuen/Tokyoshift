@@ -502,7 +502,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const source = texture.getSourceImage();
     const safeHeight = Math.max(1, Number(source?.height || source?.naturalHeight || 1));
-    const displayHeight = Math.max(1, Number(height || 220)) * 1.38;
+    const displayHeight = Math.max(1, Number(height || 220)) * 1.50;
 
     if (shadow) {
       this.addContent(this.add.ellipse(
@@ -2039,7 +2039,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         car,
         STAGE.x + STAGE.w * 0.51,
         STAGE.y + 350,
-        700,
+        640,
         24,
         getCarPaintColor(carState),
         null,
