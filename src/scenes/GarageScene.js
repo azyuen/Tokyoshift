@@ -39,7 +39,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261005-r372';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -2343,12 +2343,14 @@ export default class GarageScene extends Phaser.Scene {
       obj.setAlpha(1);
     });
 
-    this.crewBackButton?.setDepth(82);
-    this.crewBackButtonLabel?.setDepth(83);
-    this.dynoButton?.setDepth(82);
-    this.dynoButtonLabel?.setDepth(83);
-    this.meetButton?.setDepth(82);
-    this.meetButtonLabel?.setDepth(83);
+    // Keep Crew Space navigation above the selected-member/car presentation.
+    // The map still sits higher (depth 120+), so it can cover these normally.
+    this.crewBackButton?.setDepth(110);
+    this.crewBackButtonLabel?.setDepth(111);
+    this.dynoButton?.setDepth(110);
+    this.dynoButtonLabel?.setDepth(111);
+    this.meetButton?.setDepth(110);
+    this.meetButtonLabel?.setDepth(111);
 
     // Going back to the workshop is always available, including an empty crew.
     this.crewBackButton
@@ -2419,6 +2421,40 @@ export default class GarageScene extends Phaser.Scene {
       .setColor('#f1fffb');
   }
 
+  exitCrewSpaceToWorkshop() {
+    if (!this.crewMode || this._warehousePresentationTransitioning) return;
+    if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+    const personalCars = (this.registry.get('ownedCarIds') || [])
+      .filter(id => cars[id] && !cars[id].crewLoan);
+    const previous = this.registry.get('crewPreviousCarId');
+    const warehouseCars = getCarsInWorkshop(
+      personalCars,
+      this.registry.get('carGarageLocations') || {},
+      'shinonomeWarehouseStrip'
+    );
+    const nextCarId = warehouseCars.includes(previous)
+      ? previous
+      : warehouseCars[0] || personalCars[0] || null;
+
+    // A focused crew member has a long car roll-in tween running. Kill that
+    // presentation before waking the sleeping Warehouse scene, and clear the
+    // crew driver selection immediately so it can never leak back to Workshop.
+    try { this.tweens.killTweensOf(this.selectedDisplay || []); } catch (e) {}
+    this.crewFocusedCharacterId = null;
+    this.registry.set('selectedRacePlayerCharacterId', null);
+
+    this.crewBackButton?.disableInteractive();
+    this.crewBackButtonLabel?.setText('RETURNING TO WORKSHOP...');
+
+    // Do the wake/stop one task after pointerdown. This avoids the iOS/PWA
+    // input-stack edge case that can occur while the selected crew car is
+    // still active in the scene.
+    this.time.delayedCall(0, () => {
+      this.transitionWarehousePresentation(false, nextCarId);
+    });
+  }
+
   buildCrewBackButton() {
     if (!this.crewMode) return;
 
@@ -2427,30 +2463,16 @@ export default class GarageScene extends Phaser.Scene {
     this.crewBackButton = this.add.rectangle(x, y, SIDE.w - 32, 40, 0x122331, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
-      .setDepth(82);
+      .setDepth(110);
 
     this.crewBackButtonLabel = this.add.text(x, y, 'BACK TO WORKSHOP  >', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#eef8ff',
-    }).setOrigin(0.5).setDepth(83);
+    }).setOrigin(0.5).setDepth(111);
 
     this.crewBackButton.on('pointerdown', () => {
-      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
-
-      const personalCars = (this.registry.get('ownedCarIds') || [])
-        .filter(id => cars[id] && !cars[id].crewLoan);
-      const previous = this.registry.get('crewPreviousCarId');
-      const warehouseCars = getCarsInWorkshop(
-        personalCars,
-        this.registry.get('carGarageLocations') || {},
-        'shinonomeWarehouseStrip'
-      );
-      const nextCarId = warehouseCars.includes(previous)
-        ? previous
-        : warehouseCars[0] || personalCars[0] || null;
-
-      this.transitionWarehousePresentation(false, nextCarId);
+      this.exitCrewSpaceToWorkshop();
     });
   }
 
@@ -3015,7 +3037,15 @@ export default class GarageScene extends Phaser.Scene {
         actionVerb: 'DRIVE',
         fromWorkshop: true,
         allowCurrentAction: true,
+        travelMode: this.crewMode ? 'crew' : 'default',
         onWorkshopUpgrade: (location, cost, alreadyUnlocked) => {
+          // Crew loan cars belong to Crew Space at Warehouse HQ. They cannot
+          // be used to switch the player's active Shinonome garage.
+          if (this.crewMode && location?.id !== 'shinonomeWarehouseStrip') {
+            this.showWorkshopToast('CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE');
+            return;
+          }
+
           const cash = Number(this.registry.get('cash') || 0);
           if (!alreadyUnlocked && cash < cost) return;
 
@@ -3077,6 +3107,11 @@ export default class GarageScene extends Phaser.Scene {
         },
         onTravel: (locationId, cost) => {
           const travelTarget = getTravelLocation(locationId);
+
+          if (this.crewMode && travelTarget?.regionId === 'CENTRAL_TOKYO') {
+            this.showWorkshopToast('CREW CAR // CENTRAL TOKYO UNAVAILABLE');
+            return;
+          }
 
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
