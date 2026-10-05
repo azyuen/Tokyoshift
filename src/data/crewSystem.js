@@ -22,7 +22,7 @@ export const CREW_RECRUIT_PITY_ROLLS = CREW_INVITE_PITY_WINS;
 export const CREW_BATTLE_LINEUP_SIZE = 6;
 export const CREW_BATTLE_WINS_REQUIRED = 4;
 export const CREW_BATTLE_COUPONS = 2;
-export const CREW_WAREHOUSE_ID = 'shinonomeWarehouseStrip';
+export const CREW_WAREHOUSE_ID = 'crewSpace';
 
 function value(source, key, fallback = null) {
   if (source && typeof source.get === 'function') {
