@@ -87,6 +87,7 @@ import {
 } from '../data/centralTokyo.js?v=20261005-r345';
 import {
   isCrewComplete,
+  getRecruitableCrewCandidates,
   getCrewInviteInterest,
   clearCrewInviteInterest,
   acceptCrewInviteChallenge,
@@ -438,11 +439,17 @@ export default class MeetScene extends Phaser.Scene {
     const activeRegionRivals = getRivalCharacterOrderForRegion(
       getMeetLocation(this.selectedMeetLocation).district
     );
+    const visibleMeetCharacters = new Set(
+      (this.locationOffers[this.selectedMeetLocation] || [])
+        .map(offer => offer?.characterId)
+        .filter(Boolean)
+    );
     let specialChallengerShown = false;
     if (
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       activeRegionRivals.includes(activeChallenger.characterId) &&
+      visibleMeetCharacters.has(activeChallenger.characterId) &&
       this.hasCar
     ) {
       specialChallengerShown = true;
@@ -450,7 +457,10 @@ export default class MeetScene extends Phaser.Scene {
     } else if (
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
-      !activeRegionRivals.includes(activeChallenger.characterId)
+      (
+        !activeRegionRivals.includes(activeChallenger.characterId) ||
+        !visibleMeetCharacters.has(activeChallenger.characterId)
+      )
     ) {
       this.registry.set('specialChallenger', null);
       saveSessionState(this.registry);
@@ -1909,8 +1919,16 @@ export default class MeetScene extends Phaser.Scene {
       () => this.forceDevSpecialChallenger()
     );
 
-    this.devRefreshChallengesControl = makeButton(
+    this.devForceCrewRecruitControl = makeButton(
       3,
+      'DEV // DEPLOY CREW RECRUIT',
+      0x10251f,
+      0x62e8c7,
+      () => this.forceDevCrewRecruitment()
+    );
+
+    this.devRefreshChallengesControl = makeButton(
+      4,
       'DEV // REFRESH ALL MEET CHALLENGES',
       0x0b1c28,
       0x43dfff,
@@ -2002,6 +2020,53 @@ export default class MeetScene extends Phaser.Scene {
       this.devForceChallengerControl,
       'DEV // SPECIAL DEPLOYED',
       '#ffb4c8'
+    );
+  }
+
+  forceDevCrewRecruitment() {
+    if (!this.registry.get('devMode')) return;
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    const candidates = getRecruitableCrewCandidates(this.registry, regionId);
+    const visibleCharacterIds = new Set(
+      (this.locationOffers[this.selectedMeetLocation] || [])
+        .map(offer => offer?.characterId)
+        .filter(Boolean)
+    );
+    const candidate = candidates.find(item =>
+      visibleCharacterIds.has(item.characterId)
+    );
+
+    if (!candidate) {
+      this.flashDevControl(
+        this.devForceCrewRecruitControl,
+        candidates.length
+          ? 'DEV // RECRUIT NOT IN THIS MEET'
+          : 'DEV // NO CREW CANDIDATE',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    this.registry.set('crewInviteInterest', {
+      active: true,
+      regionId,
+      locationId: this.selectedMeetLocation,
+      characterId: candidate.characterId,
+      baseCarId: candidate.baseCarId,
+      createdAt: Date.now(),
+      source: 'devMeetDeploy',
+    });
+    this.registry.set('crewPendingRecruit', null);
+    this.registry.set('crewRecruitChallenge', null);
+    saveSessionState(this.registry);
+
+    const shown = this.maybeShowCrewInviteInterest();
+    this.flashDevControl(
+      this.devForceCrewRecruitControl,
+      shown ? 'DEV // CREW RECRUIT DEPLOYED' : 'DEV // RECRUIT READY',
+      '#9fffe3'
     );
   }
 
@@ -2556,24 +2621,50 @@ export default class MeetScene extends Phaser.Scene {
     // Do not offer a car the player cannot physically keep.
     if (owned.length >= capacity) return null;
 
-    const encounterRating = Phaser.Utils.Array.GetRandom(profile.ratingSlots);
-    const characterId = this.chooseEventCharacter(encounterRating);
-    const carId = this.chooseEventCar(encounterRating, { preferUnowned: true });
+    // A character-instigated pink-slip race must come from somebody who is
+    // physically present at this exact Meet. This keeps the challenger tied to
+    // the visible three-person roster instead of spawning a second/random NPC.
+    const roster = (this.locationOffers[this.selectedMeetLocation] || this.offers || [])
+      .filter(offer =>
+        offer?.characterId &&
+        offer?.carId &&
+        characters[offer.characterId] &&
+        cars[offer.carId]
+      );
+    const freshRoster = roster.filter(offer => !offer.resultState && !offer.locked);
+    const sourceOffer = Phaser.Utils.Array.GetRandom(
+      freshRoster.length ? freshRoster : roster
+    );
+    if (!sourceOffer) return null;
+
+    const encounterRating = Phaser.Math.Clamp(
+      Number(sourceOffer.encounterRating || 3),
+      1,
+      5
+    );
+    const characterId = sourceOffer.characterId;
+    const carId = sourceOffer.carId;
 
     return {
       active: true,
       locationId: this.selectedMeetLocation,
       characterId,
       carId,
-      paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+      paintColor: normalisePaintColor(
+        sourceOffer.paintColor,
+        Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS)
+      ),
       encounterRating,
-      encounterAi: boostAiForPinkSlip(getEncounterAi(encounterRating)),
+      encounterAi: boostAiForPinkSlip(
+        sourceOffer.encounterAi || getEncounterAi(encounterRating)
+      ),
       skillRange: this.getDisplayedSkillRange(encounterRating),
-      raceType: chooseWeightedRaceType(
+      raceType: sourceOffer.raceType || chooseWeightedRaceType(
         PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.pinkSlipRolling ?? 0.12
       ),
-      difficulty: profile.difficulty,
+      difficulty: sourceOffer.difficulty || profile.difficulty,
       quote: 'Keys for keys. Right now.',
+      sourceMeetSlot: Math.max(0, roster.indexOf(sourceOffer)),
       createdAt: Date.now(),
     };
   }
