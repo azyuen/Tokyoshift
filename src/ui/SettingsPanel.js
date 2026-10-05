@@ -13,7 +13,6 @@ import {
 } from '../state/GameState.js?v=20261004-r319';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20260926-r214';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
-import { showCarHistoryPanel } from './CarHistoryPanel.js?v=20260926-r215';
 import {
   PLAYER_DIFFICULTIES,
   normalisePlayerDifficulty,
@@ -616,19 +615,6 @@ export function showSettingsPanel(scene) {
   }).setOrigin(0.5).setDepth(184));
 
   controlsButton.on('pointerdown', () => showControlsPanel(scene));
-
-  const historyButton = add(scene.add.rectangle(1010, 72, 190, 40, 0x102138, 1)
-    .setStrokeStyle(1, 0x45a8cc, 1)
-    .setInteractive({ useHandCursor: true })
-    .setDepth(183));
-
-  add(scene.add.text(1010, 72, 'CAR HISTORY', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '6px',
-    color: '#c6efff',
-  }).setOrigin(0.5).setDepth(184));
-
-  historyButton.on('pointerdown', () => showCarHistoryPanel(scene));
 
   let settings = getAudioSettings();
 
