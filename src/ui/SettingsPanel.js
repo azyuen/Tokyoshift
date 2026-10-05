@@ -849,6 +849,8 @@ export function showSettingsPanel(scene) {
     });
   };
 
+  const profileLowerShift = -26;
+
   slots.forEach((slot, i) => {
     const x = cardXs[i];
     const occupied = slot.occupied;
@@ -882,13 +884,13 @@ export function showSettingsPanel(scene) {
         color: '#55dfff',
       }).setOrigin(0.5).setDepth(185));
 
-      add(scene.add.text(x, 505, 'NEW DRIVER', {
+      add(scene.add.text(x, 505 + profileLowerShift, 'NEW DRIVER', {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
         color: '#dff9ff',
       }).setOrigin(0.5).setDepth(185));
 
-      add(scene.add.text(x, 548, 'Tap to start', {
+      add(scene.add.text(x, 548 + profileLowerShift, 'Tap to start', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: '#78909e',
@@ -936,7 +938,7 @@ export function showSettingsPanel(scene) {
     }
 
     const name = [slot.firstName, slot.lastName].filter(Boolean).join(' ') || character.name;
-    add(scene.add.text(x, 490, name.toUpperCase(), {
+    add(scene.add.text(x, 490 + profileLowerShift, name.toUpperCase(), {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#ffffff',
@@ -946,7 +948,7 @@ export function showSettingsPanel(scene) {
 
     add(scene.add.text(
       x,
-      530,
+      530 + profileLowerShift,
       slot.carCount + ' CAR' + (slot.carCount === 1 ? '' : 'S') + '  •  ¥' + slot.cash.toLocaleString('en-US'),
       {
         fontFamily: BODY_FONT,
@@ -957,7 +959,7 @@ export function showSettingsPanel(scene) {
 
     add(scene.add.text(
       x,
-      558,
+      558 + profileLowerShift,
       slot.wins + ' W  •  ' + slot.losses + ' L',
       {
         fontFamily: BODY_FONT,
@@ -967,20 +969,20 @@ export function showSettingsPanel(scene) {
       }
     ).setOrigin(0.5).setDepth(185));
 
-    add(scene.add.text(x, 580, playTimeLabel(slot.playTimeMs), {
+    add(scene.add.text(x, 580 + profileLowerShift, playTimeLabel(slot.playTimeMs), {
       fontFamily: PIXEL_FONT,
       fontSize: '5px',
       color: '#789dad',
     }).setOrigin(0.5).setDepth(185));
 
     if (active) {
-      add(scene.add.text(x, 603, 'ACTIVE', {
+      add(scene.add.text(x, 603 + profileLowerShift, 'ACTIVE', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: '#64e5ff',
       }).setOrigin(0.5).setDepth(185));
     } else {
-      add(scene.add.text(x, 603, 'TAP TO SELECT', {
+      add(scene.add.text(x, 603 + profileLowerShift, 'TAP TO SELECT', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
         color: '#9ac5d9',
@@ -994,12 +996,12 @@ export function showSettingsPanel(scene) {
     });
 
     if (active) {
-      const renameButton = add(scene.add.rectangle(x - 56, 625, 100, 30, 0x102638, 1)
+      const renameButton = add(scene.add.rectangle(x - 56, 625 + profileLowerShift, 100, 30, 0x102638, 1)
         .setStrokeStyle(1, 0x45b9dc, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(188));
 
-      add(scene.add.text(x - 56, 625, 'RENAME', {
+      add(scene.add.text(x - 56, 625 + profileLowerShift, 'RENAME', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: '#c9f4ff',
@@ -1012,12 +1014,12 @@ export function showSettingsPanel(scene) {
         });
       });
 
-      const deleteButton = add(scene.add.rectangle(x + 56, 625, 100, 30, 0x25141a, 1)
+      const deleteButton = add(scene.add.rectangle(x + 56, 625 + profileLowerShift, 100, 30, 0x25141a, 1)
         .setStrokeStyle(1, 0x965266, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(188));
 
-      add(scene.add.text(x + 56, 625, 'DELETE', {
+      add(scene.add.text(x + 56, 625 + profileLowerShift, 'DELETE', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: '#ffafbd',
@@ -1025,12 +1027,12 @@ export function showSettingsPanel(scene) {
 
       deleteButton.on('pointerdown', () => showDeleteConfirm(slot));
     } else {
-      const deleteButton = add(scene.add.rectangle(x, 625, 116, 30, 0x25141a, 1)
+      const deleteButton = add(scene.add.rectangle(x, 625 + profileLowerShift, 116, 30, 0x25141a, 1)
         .setStrokeStyle(1, 0x965266, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(188));
 
-      add(scene.add.text(x, 625, 'DELETE', {
+      add(scene.add.text(x, 625 + profileLowerShift, 'DELETE', {
         fontFamily: PIXEL_FONT,
         fontSize: '5px',
         color: '#ffafbd',
@@ -1040,12 +1042,12 @@ export function showSettingsPanel(scene) {
     }
   });
 
-  profileActionButton = add(scene.add.rectangle(780, 690, 390, 44, 0x102638, 1)
+  profileActionButton = add(scene.add.rectangle(780, 690 + profileLowerShift, 390, 44, 0x102638, 1)
     .setStrokeStyle(2, 0x45c9ed, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(188));
 
-  profileActionLabel = add(scene.add.text(780, 690, '', {
+  profileActionLabel = add(scene.add.text(780, 690 + profileLowerShift, '', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#effbff',
@@ -1080,7 +1082,7 @@ export function showSettingsPanel(scene) {
 
   // Keep the low-priority account controls together at the bottom:
   // difficulty on the left, profile backup on the right.
-  add(scene.add.text(520, 735, 'RACE DIFFICULTY', {
+  add(scene.add.text(520, 735 + profileLowerShift, 'RACE DIFFICULTY', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#6f8f9f',
@@ -1108,7 +1110,7 @@ export function showSettingsPanel(scene) {
   PLAYER_DIFFICULTIES.forEach((id, index) => {
     const box = add(scene.add.rectangle(
       difficultyXs[index],
-      765,
+      765 + profileLowerShift,
       96,
       28,
       0x0c1721,
@@ -1116,7 +1118,7 @@ export function showSettingsPanel(scene) {
     ).setStrokeStyle(1, 0x355267, 1)
       .setDepth(183));
 
-    const label = add(scene.add.text(difficultyXs[index], 765, id, {
+    const label = add(scene.add.text(difficultyXs[index], 765 + profileLowerShift, id, {
       fontFamily: PIXEL_FONT,
       fontSize: id === 'STANDARD' ? '4px' : '5px',
       color: '#7895a5',
@@ -1139,25 +1141,25 @@ export function showSettingsPanel(scene) {
   });
   refreshDifficulty();
 
-  add(scene.add.text(980, 735, 'PROFILE BACKUP', {
+  add(scene.add.text(980, 735 + profileLowerShift, 'PROFILE BACKUP', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#536b79',
   }).setOrigin(0.5).setDepth(183));
 
-  const exportBackupButton = add(scene.add.rectangle(900, 765, 140, 28, 0x0d1720, 1)
+  const exportBackupButton = add(scene.add.rectangle(900, 765 + profileLowerShift, 140, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const exportBackupLabel = add(scene.add.text(900, 765, 'EXPORT', {
+  const exportBackupLabel = add(scene.add.text(900, 765 + profileLowerShift, 'EXPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
   }).setOrigin(0.5).setDepth(184));
 
-  const importBackupButton = add(scene.add.rectangle(1060, 765, 140, 28, 0x0d1720, 1)
+  const importBackupButton = add(scene.add.rectangle(1060, 765 + profileLowerShift, 140, 28, 0x0d1720, 1)
     .setStrokeStyle(1, 0x395467, 1)
     .setDepth(183));
-  const importBackupLabel = add(scene.add.text(1060, 765, 'IMPORT', {
+  const importBackupLabel = add(scene.add.text(1060, 765 + profileLowerShift, 'IMPORT', {
     fontFamily: PIXEL_FONT,
     fontSize: '5px',
     color: '#8da7b5',
