@@ -247,10 +247,10 @@ export function showOfficePanel(scene) {
   // 160x576 flag asset coordinates in garage_assets.json.
   // Keep the achievement wall compact and biased left so the right-hand
   // display remains clear for a future large event trophy.
-  const flagTop = frame.y + frame.h * 0.225;
-  const flagHeight = frame.h * 0.335;
+  const flagTop = frame.y + frame.h * 0.255;
+  const flagHeight = frame.h * 0.355;
   const flagWidth = flagHeight * (160 / 576);
-  const flagStartX = 0.235;
+  const flagStartX = 0.205;
   const flagGap = 0.0600;
   const badgeSize = flagHeight * (56 / 576);
 
@@ -294,8 +294,8 @@ export function showOfficePanel(scene) {
   const issue = getActiveMagazineIssue(scene.registry);
   if (issue?.coverKey && scene.textures.exists(issue.coverKey)) {
     const source = scene.textures.get(issue.coverKey).getSourceImage();
-    const coverP = point(frame, 0.365, 0.832);
-    const coverH = frame.h * 0.128;
+    const coverP = point(frame, 0.335, 0.832);
+    const coverH = frame.h * 0.122;
     const coverW = coverH * (source.width / Math.max(1, source.height));
 
     add(scene.add.rectangle(
