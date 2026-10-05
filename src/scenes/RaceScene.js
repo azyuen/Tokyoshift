@@ -2450,31 +2450,32 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 9, y: 5 },
     }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
 
-    this.add.text(1102, 304, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    this.add.text(1210, 304, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '6px',
-      color: '#15181d',
-      backgroundColor: playerWon ? '#e8e2d7dd' : accentBright,
+      color: '#f5f0e7',
+      backgroundColor: '#11141add',
       padding: { x: 8, y: 4 },
-    }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
+      align: 'right',
+    }).setOrigin(1, 0.5).setDepth(depth + 10).setScrollFactor(0);
 
     const rivalQuote = playerWon
       ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
       : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
-    this.add.text(1102, 337, '“' + rivalQuote + '”', {
+    this.add.text(1210, 337, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
       fontSize: '8px',
       color: '#f5f0e7',
-      backgroundColor: '#11141acc',
+      backgroundColor: '#11141add',
       padding: { x: 8, y: 5 },
-      align: 'center',
-      wordWrap: { width: 250 },
-    }).setOrigin(0.5, 0).setDepth(depth + 10).setScrollFactor(0);
+      align: 'right',
+      wordWrap: { width: 220 },
+    }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     // Compact translucent timing slip at lower-left. The real cars stay in the
     // race frame; no duplicate display car is spawned on top of them.
-    const slipX = 225;
-    const slipY = 600;
+    const slipX = 295;
+    const slipY = 570;
     const slipW = 390;
     const slipH = 190;
 
@@ -2483,11 +2484,11 @@ export default class RaceScene extends Phaser.Scene {
     // rectangular UI card into the manga composition.
     const slipRules = this.add.graphics().setDepth(depth + 20).setScrollFactor(0);
     slipRules.lineStyle(2, 0xd6d9df, 0.34);
-    slipRules.lineBetween(50, 578, 430, 578);
-    slipRules.lineBetween(50, 610, 430, 610);
-    slipRules.lineBetween(50, 704, 430, 704);
+    slipRules.lineBetween(120, 548, 500, 548);
+    slipRules.lineBetween(120, 580, 500, 580);
+    slipRules.lineBetween(120, 674, 500, 674);
 
-    this.add.text(50, 518, reward.primary, {
+    this.add.text(120, 488, reward.primary, {
       fontFamily: titleFont,
       fontSize: '12px',
       color: accentBright,
@@ -2495,7 +2496,7 @@ export default class RaceScene extends Phaser.Scene {
       wordWrap: { width: 340 },
     }).setDepth(depth + 22).setScrollFactor(0);
 
-    this.add.text(50, 550, reward.secondary, {
+    this.add.text(120, 520, reward.secondary, {
       fontFamily: dataFont,
       fontSize: '8px',
       color: '#d6d9df',
@@ -2516,40 +2517,40 @@ export default class RaceScene extends Phaser.Scene {
           ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
         ];
 
-    this.add.text(50, 592, 'YOU', {
+    this.add.text(330, 562, 'YOU', {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#f8f8f5',
-    }).setDepth(depth + 22).setScrollFactor(0);
+    }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
-    this.add.text(350, 592, 'RIVAL', {
+    this.add.text(455, 562, 'RIVAL', {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#c4cad4',
-    }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
+    }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
     rows.forEach((row, index) => {
-      const y = 620 + index * 28;
-      this.add.text(50, y, row[0], {
+      const y = 590 + index * 28;
+      this.add.text(120, y, row[0], {
         fontFamily: dataFont,
         fontSize: '7px',
         color: '#929aa6',
         fontStyle: '700',
       }).setDepth(depth + 22).setScrollFactor(0);
 
-      this.add.text(212, y, row[1], {
+      this.add.text(330, y, row[1], {
         fontFamily: dataFont,
         fontSize: '9px',
         color: '#ffffff',
         fontStyle: '700',
-      }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
+      }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
-      this.add.text(350, y, row[2], {
+      this.add.text(455, y, row[2], {
         fontFamily: dataFont,
         fontSize: '9px',
         color: '#c4cad4',
         fontStyle: '700',
-      }).setOrigin(1, 0).setDepth(depth + 22).setScrollFactor(0);
+      }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
     });
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
