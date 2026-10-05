@@ -1319,10 +1319,17 @@ export default class GarageScene extends Phaser.Scene {
         add(obj);
       });
 
-      const label = add(this.add.text(x, y + 38, cars[id].shortName, {
+      const crewMember = this.crewMode ? this.getCrewMemberForLoanCar(id) : null;
+      const cardLabel = crewMember
+        ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
+          '\n' + String(cars[id].shortName || id).toUpperCase()
+        : cars[id].shortName;
+      const label = add(this.add.text(x, y + 34, cardLabel, {
         fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: active ? '#ffffff' : '#b8cad7'
+        fontSize: this.crewMode ? '6px' : '9px',
+        color: active ? '#ffffff' : '#b8cad7',
+        align: 'center',
+        lineSpacing: this.crewMode ? 3 : 0,
       }).setOrigin(0.5).setDepth(48));
 
       box.on('pointerup', pointer => {
