@@ -110,7 +110,10 @@ export function showTravelMap(scene, options = {}) {
     allowCurrentAction = false,
     actionVerb = 'DRIVE',
     homeCost = HOME_RETURN_COST,
+    travelMode = 'default',
   } = options;
+
+  const crewTravelMode = travelMode === 'crew';
 
   const worldPhase = getWorldPhase();
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
@@ -169,8 +172,36 @@ export function showTravelMap(scene, options = {}) {
   let selectedLocationId = null;
   const garageTier = () => Number(scene.registry.get('garageTier') || 0);
   const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+
+  const crewBlockedLocation = location => {
+    if (!crewTravelMode || !location) return false;
+
+    const target = getTravelLocation(location.id);
+    if (location.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+      return true;
+    }
+
+    // Crew Space is physically attached to Warehouse HQ. The crew map can
+    // launch street travel, but it cannot move the player between Shinonome
+    // properties or purchase a different workshop.
+    if (location.kind === 'home' || location.kind === 'garageUpgrade') {
+      return location.id !== activeWorkshopId();
+    }
+
+    return false;
+  };
+
+  const crewBlockedLabel = location => {
+    const target = location ? getTravelLocation(location.id) : null;
+    if (location?.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+      return 'CREW CAR // CENTRAL TOKYO UNAVAILABLE';
+    }
+    return 'CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE';
+  };
+
   const locationAvailable = location => {
     if (!location) return false;
+    if (crewBlockedLocation(location)) return false;
     if (location.centralTokyoUnlock) {
       return isCentralTokyoLocationUnlocked(scene.registry, location.id);
     }
@@ -805,6 +836,14 @@ export function showTravelMap(scene, options = {}) {
       return;
     }
 
+    if (crewBlockedLocation(location)) {
+      travelButton.disableInteractive()
+        .setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#72838f').setText(crewBlockedLabel(location));
+      return;
+    }
+
     if (location.kind === 'garageUpgrade') {
       const tier = garageTier();
       const targetTier = Number(location.garageTier || getWorkshopByLocationId(location.id).tier || 0);
@@ -1001,15 +1040,20 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
-    const regionOpen = selectedRegionId === currentRegionId ||
-      isTravelRegionUnlocked(scene.registry, selectedRegionId);
+    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
+    const regionOpen = !crewRegionBlocked && (
+      selectedRegionId === currentRegionId ||
+      isTravelRegionUnlocked(scene.registry, selectedRegionId)
+    );
 
     regionNameText.setText(region.label);
     regionLockText
       .setText(
         regionOpen
           ? ''
-          : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
+          : crewRegionBlocked
+            ? 'CREW CAR // UNAVAILABLE'
+            : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
       )
       .setVisible(!regionOpen);
     regionLineText.setText(region.description);
@@ -1119,7 +1163,9 @@ export function showTravelMap(scene, options = {}) {
       const time = locationTimeLabel(item, worldPhase);
 
       row.label.setText(item.label);
-      if (item.kind === 'garageUpgrade') {
+      if (crewBlockedLocation(item)) {
+        row.meta.setText('CREW CAR // UNAVAILABLE');
+      } else if (item.kind === 'garageUpgrade') {
         const unlocked = isWorkshopUnlocked(item.id, garageTier());
         const totalCapacity = getGarageCapacity(Number(item.garageTier || 0));
         row.meta.setText(
@@ -1183,7 +1229,10 @@ export function showTravelMap(scene, options = {}) {
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const unlocked = regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId);
+    const crewRegionBlocked = crewTravelMode && centralTokyo;
+    const unlocked = !crewRegionBlocked && (
+      regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
+    );
 
     const glow = add(scene.add.circle(pt.x, pt.y, 20, 0x82909a, 0.04)
       .setStrokeStyle(2, 0x9aa9b4, 0.42)
