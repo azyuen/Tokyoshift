@@ -1,5 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
+import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r376';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import {
   characters,
@@ -27,14 +28,14 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261005-r345';
+} from '../data/visualMods.js?v=20261006-r376';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261005-r354';
+} from '../state/GameState.js?v=20261006-r376';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import {
   getGarageDeliveryOptions,
@@ -59,7 +60,7 @@ import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r367';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r365';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -75,7 +76,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261005-r345';
+} from '../data/centralTokyo.js?v=20261006-r376';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
@@ -1108,16 +1109,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   getNewCarListings() {
-    const owned = new Set(this.registry.get('ownedCarIds') || []);
+    const owned = this.registry.get('ownedCarIds') || [];
     const pool = AUTO_MARKET_LISTINGS.filter(item => cars[item.carId]);
     const rotated = this.rotateMarketPool(pool, 0);
     const claimable = rotated.filter(item =>
-      !owned.has(item.carId) && canRedeemCarCoupon(this.registry, item.carId)
+      canRedeemCarCoupon(this.registry, item.carId)
     );
     const unowned = rotated.filter(item =>
-      !owned.has(item.carId) && !claimable.includes(item)
+      !ownsCarModel(owned, item.carId) && !claimable.includes(item)
     );
-    const alreadyOwned = rotated.filter(item => owned.has(item.carId));
+    const alreadyOwned = rotated.filter(item =>
+      ownsCarModel(owned, item.carId) && !claimable.includes(item)
+    );
     const neutrals = [0xffffff, 0x30343a, 0x8d939a];
 
     return [...claimable, ...unowned, ...alreadyOwned]
@@ -1147,11 +1150,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   getUsedCarListings() {
-    const owned = new Set(this.registry.get('ownedCarIds') || []);
+    const owned = this.registry.get('ownedCarIds') || [];
     const pool = AUTO_MARKET_LISTINGS.filter(item => cars[item.carId]);
     const rotated = this.rotateMarketPool(pool, 7);
-    const unowned = rotated.filter(item => !owned.has(item.carId));
-    const alreadyOwned = rotated.filter(item => owned.has(item.carId));
+    const unowned = rotated.filter(item => !ownsCarModel(owned, item.carId));
+    const alreadyOwned = rotated.filter(item => ownsCarModel(owned, item.carId));
     const colours = [...RIVAL_PAINT_COLORS, 0xffffff, 0x25292f, 0xa3a8ad];
     const conditionLabels = [
       'CLEAN STREET CAR',
@@ -1472,7 +1475,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const car = cars[listing.carId];
       const x = CARDS.x + 190 + index * 365;
       const selected = this.autoMarketShowcaseActive && index === this.selectedIndex;
-      const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+      const modelOwnedCount = countOwnedCarModel(
+        this.registry.get('ownedCarIds') || [],
+        listing.carId
+      );
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
@@ -1502,11 +1508,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 126,
-        owned ? 'OWNED' : money(listing.price),
+        modelOwnedCount > 0 ? 'OWNED ×' + modelOwnedCount : money(listing.price),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
-          color: owned ? '#62e8c7' : '#ffe08a',
+          color: modelOwnedCount > 0 ? '#62e8c7' : '#ffe08a',
         }
       ).setOrigin(1, 0.5).setDepth(34));
 
@@ -1595,17 +1601,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ? { ...(listing.previewState || {}), stock: false }
       : { stock: true };
     const ratingDisplay = getPowerTorqueDisplay(car, ratingState, displaySpec);
-    const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
+    const ownedCars = this.registry.get('ownedCarIds') || [];
+    const modelOwnedCount = countOwnedCarModel(ownedCars, listing.carId);
     const cash = Number(this.registry.get('cash') || 0);
     const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
-    const ownedCount = (this.registry.get('ownedCarIds') || []).length;
+    const ownedCount = ownedCars.length;
     const hasStorage = Boolean(this.findStorageForPurchase());
 
     const couponRequired = getCarCouponRequirement(listing.carId);
     const couponCount = getCarCouponCount(this.registry, listing.carId);
     const couponReady = room === 'new' && canRedeemCarCoupon(this.registry, listing.carId);
-    const canBuyWithCash = !owned && cash >= listing.price && ownedCount < capacity && hasStorage;
-    const canClaimWithCoupons = !owned && couponReady && ownedCount < capacity && hasStorage;
+    const canBuyWithCash = cash >= listing.price && ownedCount < capacity && hasStorage;
+    const canClaimWithCoupons = couponReady && ownedCount < capacity && hasStorage;
     const canBuy = canBuyWithCash || canClaimWithCoupons;
 
     const y0 = SIDE.y + 224;
@@ -1699,7 +1706,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         }
       ).setDepth(34));
 
-      const offerAvailable = !owned && !haggle;
+      const offerAvailable = !haggle;
       const offerButton = this.addContent(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
         SIDE.y + 488,
@@ -1737,15 +1744,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, canBuy ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
 
-    const buyLabel = owned
-      ? 'ALREADY OWNED'
-      : !hasStorage || ownedCount >= capacity
-        ? 'GARAGE FULL'
-        : canClaimWithCoupons
-          ? 'CLAIM // ' + couponRequired + ' COUPONS'
-          : cash < listing.price
-            ? 'NEED ' + money(listing.price)
-            : 'BUY // ' + money(listing.price);
+    const buyLabel = !hasStorage || ownedCount >= capacity
+      ? 'GARAGE FULL'
+      : canClaimWithCoupons
+        ? (modelOwnedCount > 0 ? 'CLAIM ANOTHER // ' : 'CLAIM // ') + couponRequired + ' COUPONS'
+        : cash < listing.price
+          ? 'NEED ' + money(listing.price)
+          : (modelOwnedCount > 0 ? 'BUY ANOTHER // ' : 'BUY // ') + money(listing.price);
 
     this.addContent(this.add.text(
       SIDE.x + SIDE.w / 2,
@@ -1773,7 +1778,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
           onConfirm: () => {
             const carName = car?.shortName || car?.name || listing.carId;
             showGarageDeliveryPicker(this, {
-              carId: listing.carId,
+              // Incoming purchases always consume a new slot, even when this
+              // model is already represented elsewhere in the collection.
+              carId: null,
               carName,
               title: useCoupons ? 'CHOOSE CLAIM DELIVERY' : 'CHOOSE PURCHASE DELIVERY',
               message: 'Select the garage where this car should be delivered.',
@@ -2423,7 +2430,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   buyAutoMarketCar(listing, storageId = null) {
     const owned = [...(this.registry.get('ownedCarIds') || [])];
-    if (!listing?.carId || owned.includes(listing.carId)) return;
+    if (!listing?.carId) return;
+
+    const instanceId = createAndRegisterOwnedCarInstance(owned, listing.carId);
+    if (!instanceId) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     const couponRequired = getCarCouponRequirement(listing.carId);
@@ -2432,7 +2442,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (!useCoupons && cash < Number(listing.price || 0)) return;
 
-    const delivery = getGarageDeliveryOptions(this, listing.carId)
+    const delivery = getGarageDeliveryOptions(this, null)
       .find(option => option.id === storageId && option.available);
     if (!delivery) return;
 
@@ -2448,9 +2458,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
           acquiredVia: 'tokyoAutoMarketUsed',
         };
 
-    owned.push(listing.carId);
-    carStates[listing.carId] = purchasedState;
-    locations[listing.carId] = storageId;
+    owned.push(instanceId);
+    carStates[instanceId] = purchasedState;
+    locations[instanceId] = storageId;
 
     let nextCash = cash;
     if (useCoupons) {
@@ -2468,7 +2478,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('carGarageLocations', locations);
     // Buying a car does not teleport the driver out of the car they arrived in.
     // The purchased vehicle simply appears in the selected delivery garage.
-    recordCarAcquisition(this.registry, listing.carId, {
+    recordCarAcquisition(this.registry, instanceId, {
       acquiredVia: useCoupons
         ? 'competitionCoupon'
         : listing.marketType === 'new'
