@@ -302,7 +302,12 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
-    this.activeWorkshopId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+    this.activeWorkshopId = this.crewMode
+      ? 'shinonomeWarehouseStrip'
+      : (this.registry.get('workshopLocationId') || 'shinonomeWorkshop');
+    if (this.crewMode) {
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+    }
     this.carGarageLocations = normaliseCarGarageLocations(
       this.ownedCarIds,
       this.registry.get('carGarageLocations') || {},
@@ -312,9 +317,9 @@ export default class GarageScene extends Phaser.Scene {
 
     const localCars = this.getCurrentWorkshopCars();
     const requestedCarId = this.registry.get('selectedCarId');
-    this.selectedCarId = localCars.includes(requestedCarId)
-      ? requestedCarId
-      : localCars[0] || null;
+    this.selectedCarId = this.crewMode
+      ? (localCars.includes(requestedCarId) ? requestedCarId : null)
+      : (localCars.includes(requestedCarId) ? requestedCarId : localCars[0] || null);
 
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
@@ -326,6 +331,8 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     this.selectedDisplay = [];
+    this.crewStageObjects = [];
+    this.crewFocusedCharacterId = null;
     this.thumbButtons = [];
     this.upgradeButtons = [];
     this.selectedUpgrade = null;
@@ -356,7 +363,7 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
-    this.buildMagazineProp();
+    if (!this.crewMode) this.buildMagazineProp();
 
     this.time.addEvent({
       delay: 5000,
@@ -366,16 +373,23 @@ export default class GarageScene extends Phaser.Scene {
     this.buildHeader();
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
-    this.buildMoveCarButton();
-    this.buildWorkshopJumpButton();
+    if (this.crewMode) {
+      this.buildCrewBackButton();
+    } else {
+      this.buildMoveCarButton();
+      this.buildWorkshopJumpButton();
+      this.buildCrewSpaceHotspot();
+    }
     this.buildDynoButton();
-    this.buildCrewSpaceHotspot();
     this.buildMeetButton();
 
     if (this.selectedCarId) {
       this.selectCar(this.selectedCarId);
       this.renderGaragePage();
       this.selectUpgrade(null);
+    } else if (this.crewMode) {
+      this.showCrewOverviewState();
+      this.renderGaragePage();
     } else {
       this.showEmptyGarageState();
     }
@@ -413,7 +427,7 @@ export default class GarageScene extends Phaser.Scene {
       this.time.delayedCall(80, () => showSettingsPanel(this));
     } else if (tutorialJustCompleted) {
       this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
-    } else {
+    } else if (!this.crewMode) {
       this.time.delayedCall(260, () => {
         if (!this.showPendingWorkshopCutscene()) {
           this.continueGarageStoryFlow();
