@@ -150,7 +150,7 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
 ]);
 
 export default class GarageScene extends Phaser.Scene {
-  constructor() { super('GarageScene'); }
+  constructor(sceneKey = 'GarageScene') { super(sceneKey); }
 
   init(data = {}) {
     // Crew Space is a workshop-mode presentation of GarageScene so all tuning,
@@ -2172,17 +2172,33 @@ export default class GarageScene extends Phaser.Scene {
     saveSessionState(this.registry);
     cancelSceneLoading(this);
 
-    // Never restart GarageScene from inside itself. Phaser/iOS can complete the
-    // shutdown but fail to finish the replacement create(), leaving only the
-    // black game background. CrewScene gives the SceneManager a clean lifecycle
-    // boundary, then re-enters GarageScene on the following frame.
-    this.cameras.main.resetFX?.();
-    this.cameras.main.setAlpha(1);
+    const targetScene = nextCrewMode ? 'CrewSpaceScene' : 'GarageScene';
+    const currentScene = this.sys?.settings?.key;
 
-    this.scene.start('CrewScene', {
-      mode: nextCrewMode ? 'crew' : 'warehouse',
-      selectedCarId: selectedCarId || null,
-    });
+    // Warehouse HQ and Crew Space now use separate Phaser scene instances that
+    // share the same GarageScene implementation. This eliminates the lifecycle
+    // deadlock caused by restarting/re-entering GarageScene while it is still
+    // shutting down, and avoids showing an empty black bridge scene.
+    if (currentScene !== targetScene) {
+      this.cameras.main.resetFX?.();
+      this.cameras.main.setAlpha(1);
+      this.scene.start(targetScene, {
+        crewMode: nextCrewMode,
+        returningFromCrewSpace: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+      return;
+    }
+
+    // Rare recovery path: e.g. a browser refresh restored crew mode directly
+    // into GarageScene. Persist the desired presentation and perform a clean
+    // reload rather than attempting another same-scene handoff.
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+    window.location.reload();
   }
 
   buildCrewSpaceNavigation() {
@@ -2521,7 +2537,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.createWarehouseSpaceHotspot({
       x: 1025,
-      y: 299,
+      y: 294,
       w: 230,
       h: 44,
       label: 'DYNO',
