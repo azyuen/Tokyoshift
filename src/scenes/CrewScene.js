@@ -1,4 +1,4 @@
-import { saveSessionState } from '../state/GameState.js?v=20261005-r349';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r350';
 
 // Legacy scene alias.
 //
