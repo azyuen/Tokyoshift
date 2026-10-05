@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r348';
+import { saveSessionState } from '../state/GameState.js?v=20261005-r350';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261004-r320';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -54,7 +54,7 @@ import {
   getCrewMembers,
   getCrewCount,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261005-r349';
+} from '../data/crewSystem.js?v=20261005-r350';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -72,7 +72,7 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r345';
+} from '../data/workshopProgression.js?v=20261005-r350';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
