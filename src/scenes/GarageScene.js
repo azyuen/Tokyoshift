@@ -1004,7 +1004,7 @@ export default class GarageScene extends Phaser.Scene {
         required: Math.max(1, Number(getCarCouponRequirement(carId) || 2)),
       }));
 
-    const depth = 170;
+    const depth = 270;
     const objects = [];
     const add = obj => {
       objects.push(obj);
