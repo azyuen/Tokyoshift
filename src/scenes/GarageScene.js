@@ -2172,33 +2172,16 @@ export default class GarageScene extends Phaser.Scene {
     saveSessionState(this.registry);
     cancelSceneLoading(this);
 
-    // Warehouse HQ and Crew Space are two presentations of the same property.
-    // Restart GarageScene directly with cached textures instead of crossing an
-    // empty bridge scene. This removes the black-frame / second-entry hang and
-    // also makes returning to the garage feel immediate.
-    try { this.input.enabled = false; } catch (e) {}
+    // Never restart GarageScene from inside itself. Phaser/iOS can complete the
+    // shutdown but fail to finish the replacement create(), leaving only the
+    // black game background. CrewScene gives the SceneManager a clean lifecycle
+    // boundary, then re-enters GarageScene on the following frame.
     this.cameras.main.resetFX?.();
     this.cameras.main.setAlpha(1);
 
-    this.time.delayedCall(1, () => {
-      try {
-        this.scene.restart({
-          crewMode: nextCrewMode,
-          returningFromCrewSpace: true,
-          workshopLocationId: 'shinonomeWarehouseStrip',
-        });
-      } catch (error) {
-        console.error('[Tokyo SHIFT] Warehouse presentation restart failed', error);
-        this._warehousePresentationTransitioning = false;
-        try { this.input.enabled = true; } catch (e) {}
-
-        // Keep the old bridge as a last-resort fallback rather than leaving the
-        // player on a black frame if Phaser rejects a same-scene restart.
-        this.scene.start('CrewScene', {
-          mode: nextCrewMode ? 'crew' : 'warehouse',
-          selectedCarId: selectedCarId || null,
-        });
-      }
+    this.scene.start('CrewScene', {
+      mode: nextCrewMode ? 'crew' : 'warehouse',
+      selectedCarId: selectedCarId || null,
     });
   }
 
@@ -2521,7 +2504,7 @@ export default class GarageScene extends Phaser.Scene {
     if (isCrewUnlocked(this.registry)) {
       this.createWarehouseSpaceHotspot({
         x: 650,
-        y: 225,
+        y: 234,
         w: 300,
         h: 44,
         label: 'CREW',
@@ -2538,7 +2521,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.createWarehouseSpaceHotspot({
       x: 1025,
-      y: 290,
+      y: 299,
       w: 230,
       h: 44,
       label: 'DYNO',
