@@ -34,7 +34,7 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r376';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261005-r367';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -47,7 +47,7 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261005-r345';
+} from '../data/centralTokyo.js?v=20261006-r376';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   isCrewUnlocked,
@@ -108,7 +108,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261005-r345';
+} from '../data/visualMods.js?v=20261006-r376';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
@@ -118,7 +118,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r367';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r367';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r376';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1474,10 +1474,11 @@ export default class GarageScene extends Phaser.Scene {
       });
 
       const crewMember = this.crewMode ? this.getCrewMemberForLoanCar(id) : null;
+      const copyNumber = Math.max(1, Number(cars[id]?.ownedCopyNumber || 1));
       const cardLabel = crewMember
         ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
           '\n' + String(cars[id].shortName || id).toUpperCase()
-        : cars[id].shortName;
+        : String(cars[id].shortName || id) + (copyNumber > 1 ? ' #' + copyNumber : '');
       const label = add(this.add.text(x, y + 34, cardLabel, {
         fontFamily: PIXEL_FONT,
         fontSize: this.crewMode ? '6px' : '9px',
