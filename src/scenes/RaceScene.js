@@ -2612,7 +2612,7 @@ export default class RaceScene extends Phaser.Scene {
     nextKey.once('down', advance);
 
     // Almost-instant manga overlay over the frozen race frame.
-    const flyObjects = [title, subTitle, quoteText, kicker];
+    const flyObjects = [title, subTitle, kicker];
     flyObjects.forEach(obj => {
       obj.x += 220;
       obj.setAlpha(0);
