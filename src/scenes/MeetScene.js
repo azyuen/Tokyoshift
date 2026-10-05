@@ -98,7 +98,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r350';
+} from '../data/crewSystem.js?v=20261005-r351';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
