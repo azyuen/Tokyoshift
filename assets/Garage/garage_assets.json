@@ -1,0 +1,119 @@
+{
+  "assets": {
+    "flag_odaiba": {
+      "path": "assets/garage/flag_odaiba.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_shinagawa": {
+      "path": "assets/garage/flag_shinagawa.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_tatsumi": {
+      "path": "assets/garage/flag_tatsumi.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_shibuya": {
+      "path": "assets/garage/flag_shibuya.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_yokohama": {
+      "path": "assets/garage/flag_yokohama.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_daikoku": {
+      "path": "assets/garage/flag_daikoku.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "flag_shinjuku": {
+      "path": "assets/garage/flag_shinjuku.png",
+      "width": 160,
+      "height": 576,
+      "origin": [
+        0.5,
+        0
+      ]
+    },
+    "badge_crown": {
+      "path": "assets/garage/badge_crown.png",
+      "width": 96,
+      "height": 96,
+      "origin": [
+        0.5,
+        0.5
+      ]
+    },
+    "badge_star": {
+      "path": "assets/garage/badge_star.png",
+      "width": 96,
+      "height": 96,
+      "origin": [
+        0.5,
+        0.5
+      ]
+    },
+    "badge_crew": {
+      "path": "assets/garage/badge_crew.png",
+      "width": 96,
+      "height": 96,
+      "origin": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "badgePlacement": {
+    "coordinateSpace": "160x576 flag canvas, top-left origin",
+    "displaySize": [
+      60,
+      60
+    ],
+    "origin": [
+      0.5,
+      0.5
+    ],
+    "centres": {
+      "badge_crown": [
+        80,
+        380
+      ],
+      "badge_star": [
+        80,
+        441
+      ],
+      "badge_crew": [
+        80,
+        502
+      ]
+    }
+  }
+}
