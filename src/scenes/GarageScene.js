@@ -117,7 +117,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r362';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r362';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r364';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -2584,16 +2584,37 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
     if (!activeWorkshop || activeWorkshop.id === 'shinonomeWarehouseStrip') return;
 
-    // These sit over the authored illuminated Office entrance/detail in each
-    // workshop background. Warehouse HQ has its own labelled OFFICE hotspot.
-    const position = activeWorkshop.id === 'shinonomeCanalYard'
-      ? { x: 760, y: 153, w: 250, h: 44, labelText: 'OFFICE  >' }
-      : { x: 900, y: 158, w: 240, h: 44, labelText: 'OFFICE  >' };
+    let position;
+    let labelAlign = 'right';
+
+    if (activeWorkshop.id === 'shinonomeCanalYard') {
+      // Move the Canal Yard entry right and slightly upward so it finishes
+      // immediately before the top of the staircase.
+      position = {
+        x: 880,
+        y: 142,
+        w: 250,
+        h: 44,
+        labelText: 'OFFICE  >',
+      };
+    } else {
+      // Home Workshop: place the glow over the door rather than the wall.
+      // Its right edge is pulled left to meet the top of the doorway and the
+      // label reads naturally from the left edge of the button.
+      position = {
+        x: 760,
+        y: 158,
+        w: 240,
+        h: 44,
+        labelText: 'OFFICE  >',
+      };
+      labelAlign = 'left';
+    }
 
     this.createWarehouseSpaceHotspot({
       ...position,
       label: 'OFFICE',
-      labelAlign: 'right',
+      labelAlign,
       onActivate: () => showOfficePanel(this),
     });
   }
