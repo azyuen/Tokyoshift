@@ -41,9 +41,23 @@ export default class CrewScene extends Phaser.Scene {
 
     saveSessionState(this.registry);
 
-    this.scene.start('GarageScene', {
-      crewMode: !returningToWarehouse,
-      workshopLocationId: 'shinonomeWarehouseStrip',
+    // Do not re-enter GarageScene synchronously from this bridge's create().
+    // iOS/PWA can leave the loader at 98% when a stopped scene is restarted
+    // inside the same SceneManager lifecycle tick. Give Phaser one frame to
+    // complete the CrewScene start/stop bookkeeping first.
+    this.time.delayedCall(34, () => {
+      if (returningToWarehouse) {
+        // Warehouse assets were already resident before Crew Space opened.
+        // Explicitly clear any stale completed-load splash before returning.
+        window.TOKYO_SHIFT_SET_LOADING?.(1, 'READY');
+        window.TOKYO_SHIFT_HIDE_SPLASH?.();
+      }
+
+      this.scene.start('GarageScene', {
+        crewMode: !returningToWarehouse,
+        returningFromCrewSpace: returningToWarehouse,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
     });
   }
 }
