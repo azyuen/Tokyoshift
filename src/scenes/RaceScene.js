@@ -424,6 +424,7 @@ export default class RaceScene extends Phaser.Scene {
     this.finished = false;
     this.afterFinishTimer = 0;
     this.finishCameraPx = null;
+    this.finishVisualFrozen = false;
     this.startMoved = false;
     this.times = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
     this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
@@ -4753,6 +4754,11 @@ export default class RaceScene extends Phaser.Scene {
       ? 0
       : this.raceClock - this.firstFinishClock;
 
+    // Hold the authored finish-frame before either car can disappear off the
+    // right edge. Physics/timing may continue invisibly for a trailing car,
+    // but the picture the player sees remains the moment just after the line.
+    if (this.finishVisualFrozen) return;
+
     if (finishElapsed >= 0.30 && this.finishCameraPx == null) {
       this.finishCameraPx = chaseCameraPx;
     }
@@ -4809,6 +4815,10 @@ export default class RaceScene extends Phaser.Scene {
 
     this.drawEffects(pt, this.isTutorial ? null : ot);
     this.drawTree(cameraPx);
+
+    if (finishElapsed >= 0.32) {
+      this.finishVisualFrozen = true;
+    }
   }
 
   updateCarVisual(v, x, y, t, dt) {
