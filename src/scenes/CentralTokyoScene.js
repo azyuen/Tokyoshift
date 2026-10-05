@@ -4,9 +4,11 @@ import { engines } from '../data/engines.js?v=20261004-r333';
 import {
   characters,
   getCharacterAssetUrl,
+  CENTRAL_TOKYO_CHARACTER_IDS,
+  getCharacterVisualAsset,
   genericRivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261004-r333';
+} from '../data/characters.js?v=20261005-r365';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -54,7 +56,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r362';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r365';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20260929-r274';
@@ -180,6 +182,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
 
     if (location?.kind === 'autoMarket') {
+      queued += this.queueCharacterPose(
+        CENTRAL_TOKYO_CHARACTER_IDS.autoMarket[this.autoMarketRoom],
+        'normal'
+      );
+
       if (this.autoMarketRoom === 'wheels') {
         const selectedCarId = this.registry.get('selectedCarId');
         const selectedCar = cars[selectedCarId];
@@ -227,12 +234,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += preloadCarWheel(this, car);
       });
 
-      ['sayakaFujieda', 'reinaShibata'].forEach(id => {
-        const visual = characters[id]?.visual;
-        if (!visual || this.textures.exists(visual.spriteKey)) return;
-        this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
-        queued += 1;
-      });
+      queued += this.queueCharacterPose(
+        CENTRAL_TOKYO_CHARACTER_IDS.ginza.proprietor,
+        'normal'
+      );
     }
 
     if (location?.kind === 'proDrag') {
@@ -244,11 +249,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
           Number(characters[a]?.skill?.rating || 3)
         )
         .slice(0, 3);
-      new Set([...rivalIds, 'tetsuyaKanda']).forEach(id => {
-        const visual = characters[id]?.visual;
-        if (!visual || this.textures.exists(visual.spriteKey)) return;
-        this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
-        queued += 1;
+      new Set([
+        ...rivalIds,
+        ...Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex),
+      ]).forEach(id => {
+        queued += this.queueCharacterPose(id, 'normal');
       });
     }
 
@@ -470,6 +475,50 @@ export default class CentralTokyoScene extends Phaser.Scene {
   addContent(obj) {
     this.contentObjects.push(obj);
     return obj;
+  }
+
+  queueCharacterPose(characterId, pose = 'normal') {
+    const asset = getCharacterVisualAsset(characterId, pose);
+    if (!asset?.key || !asset?.path || this.textures.exists(asset.key)) return 0;
+    this.load.image(asset.key, getCharacterAssetUrl(asset.path));
+    return 1;
+  }
+
+  addVenueCharacter({
+    characterId,
+    pose = 'normal',
+    x,
+    feetY,
+    height = 220,
+    flip = false,
+    depth = 21,
+    shadow = true,
+  } = {}) {
+    const asset = getCharacterVisualAsset(characterId, pose);
+    const key = asset?.key;
+    if (!key || !this.textures.exists(key)) return null;
+
+    const texture = this.textures.get(key);
+    texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+    const source = texture.getSourceImage();
+    const safeHeight = Math.max(1, Number(source?.height || source?.naturalHeight || 1));
+
+    if (shadow) {
+      this.addContent(this.add.ellipse(
+        x,
+        feetY - 7,
+        Math.max(62, height * 0.42),
+        Math.max(14, height * 0.075),
+        0x000000,
+        0.48
+      ).setDepth(depth - 0.1));
+    }
+
+    return this.addContent(this.add.image(x, feetY, key)
+      .setOrigin(0.5, 1)
+      .setScale(height / safeHeight)
+      .setFlipX(Boolean(flip))
+      .setDepth(depth));
   }
 
   renderLocation(locationId, assetsAttempted = false) {
@@ -1244,10 +1293,46 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (this.autoMarketRoom === 'wheels') {
       this.drawWheelShop();
+      this.drawAutoMarketStaff();
       return;
     }
 
     this.drawMarketCarRoom(this.autoMarketRoom);
+    this.drawAutoMarketStaff();
+  }
+
+  drawAutoMarketStaff() {
+    const room = this.autoMarketRoom;
+    const characterId = CENTRAL_TOKYO_CHARACTER_IDS.autoMarket[room];
+    const placements = {
+      new: {
+        x: STAGE.x + STAGE.w - 58,
+        feetY: STAGE.y + 506,
+        height: 218,
+        flip: true,
+      },
+      used: {
+        x: STAGE.x + 62,
+        feetY: STAGE.y + 506,
+        height: 218,
+        flip: false,
+      },
+      wheels: {
+        x: STAGE.x + STAGE.w - 68,
+        feetY: STAGE.y + 508,
+        height: 224,
+        flip: true,
+      },
+    };
+    const placement = placements[room];
+    if (!characterId || !placement) return;
+
+    this.addVenueCharacter({
+      characterId,
+      pose: 'normal',
+      ...placement,
+      depth: 25,
+    });
   }
 
   getMarketBayPoses(room = 'new') {
@@ -2591,31 +2676,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
         hit.on('pointerdown', () => this.selectGinzaCar(index));
       });
 
-      const ginzaGuests = [
-        { id: 'sayakaFujieda', x: STAGE.x + 118, feetY: STAGE.y + 492, height: 255, flip: false },
-        { id: 'reinaShibata', x: STAGE.x + STAGE.w - 108, feetY: STAGE.y + 492, height: 245, flip: true },
-      ];
-
-      ginzaGuests.forEach((guest, guestIndex) => {
-        const character = characters[guest.id];
-        const key = character?.visual?.spriteKey;
-        if (!key || !this.textures.exists(key)) return;
-
-        const source = this.textures.get(key).getSourceImage();
-        const shadow = this.addContent(this.add.ellipse(
-          guest.x,
-          guest.feetY - 8,
-          102,
-          20,
-          0x000000,
-          0.52
-        ).setDepth(20 + guestIndex * 0.02));
-
-        const sprite = this.addContent(this.add.image(guest.x, guest.feetY, key)
-          .setOrigin(0.5, 1)
-          .setScale(guest.height / Math.max(1, source.height))
-          .setFlipX(guest.flip)
-          .setDepth(21 + guestIndex * 0.02));
+      this.addVenueCharacter({
+        characterId: CENTRAL_TOKYO_CHARACTER_IDS.ginza.proprietor,
+        pose: 'normal',
+        x: STAGE.x + 118,
+        feetY: STAGE.y + 492,
+        height: 255,
+        flip: false,
+        depth: 21,
       });
     }
 
@@ -2893,6 +2961,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       carObjects.forEach(obj => this.addContent(obj));
     }
 
+    const dragStaff = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex;
+    [
+      { characterId: dragStaff.owner, x: STAGE.x + 72, feetY: STAGE.y + 505, height: 210, flip: false, depth: 19 },
+      { characterId: dragStaff.mechanic, x: STAGE.x + 704, feetY: STAGE.y + 508, height: 184, flip: false, depth: 18 },
+      { characterId: dragStaff.starter, x: STAGE.x + 824, feetY: STAGE.y + 505, height: 202, flip: false, depth: 20 },
+      { characterId: dragStaff.telemetry, x: STAGE.x + 950, feetY: STAGE.y + 508, height: 182, flip: true, depth: 18 },
+      { characterId: dragStaff.manager, x: STAGE.x + STAGE.w - 68, feetY: STAGE.y + 505, height: 216, flip: true, depth: 21 },
+    ].forEach(config => this.addVenueCharacter({ ...config, pose: 'normal' }));
+
     this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'EVENTS // TOKYO DRAG COMPLEX', {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
@@ -3044,9 +3121,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!build || cash < event.entryFee) return;
 
     if (!storyConfirmed) {
+      const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
       const story = playMangaCutscene(this, 'competitionIntroduction', {
-        characterOverrides: { PROMOTER: 'tetsuyaKanda' },
-        variables: { PROMOTER_NAME: 'TETSUYA KANDA' },
+        characterOverrides: { PROMOTER: promoterId },
+        variables: {
+          PROMOTER_NAME: String(characters[promoterId]?.name || 'Masato Kuroda').toUpperCase(),
+        },
         onComplete: () => this.startProBracket(event, build, true),
       });
       if (story.played) return;
