@@ -420,14 +420,14 @@ export default class GarageScene extends Phaser.Scene {
     this.buildSpecsAndUpgrades();
     this.buildGarageStrip();
     if (this.crewMode) {
-      this.buildCrewBackButton();
+      this.buildCrewSpaceNavigation();
     } else {
       this.buildMoveCarButton();
       this.buildWorkshopJumpButton();
       this.buildWarehouseSpaceHotspots();
+      this.buildDynoButton();
+      this.buildMeetButton();
     }
-    this.buildDynoButton();
-    this.buildMeetButton();
 
     if (this.selectedCarId) {
       this.selectCar(this.selectedCarId);
@@ -437,6 +437,14 @@ export default class GarageScene extends Phaser.Scene {
       this.showCrewOverviewState();
     } else {
       this.showEmptyGarageState();
+    }
+
+    if (this.crewMode) {
+      // A same-scene Warehouse -> Crew restart can finish object teardown a
+      // frame after create(). Reassert the Crew Space nav after state drawing
+      // so its three persistent actions can never disappear on re-entry.
+      this.refreshCrewSpaceNavigationState();
+      this.time.delayedCall(0, () => this.refreshCrewSpaceNavigationState());
     }
 
     finishSceneLoading('READY');
@@ -2140,6 +2148,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.drawCrewOverview();
     this.renderGaragePage();
+    this.refreshCrewSpaceNavigationState();
     saveSessionState(this.registry);
   }
 
@@ -2193,23 +2202,159 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  buildCrewSpaceNavigation() {
+    if (!this.crewMode) return;
+
+    // Rebuild this small persistent nav as a unit. This is deliberately
+    // idempotent because GarageScene is restarted in place when moving between
+    // Warehouse HQ and Crew Space.
+    [
+      this.crewBackButton,
+      this.crewBackButtonLabel,
+      this.dynoButton,
+      this.dynoButtonLabel,
+      this.meetButton,
+      this.meetButtonLabel,
+    ].forEach(obj => {
+      if (obj?.active) {
+        try { obj.destroy(); } catch (e) {}
+      }
+    });
+
+    this.crewBackButton = null;
+    this.crewBackButtonLabel = null;
+    this.dynoButton = null;
+    this.dynoButtonLabel = null;
+    this.meetButton = null;
+    this.meetButtonLabel = null;
+
+    this.buildDynoButton();
+    this.buildCrewBackButton();
+    this.buildMeetButton();
+    this.refreshCrewSpaceNavigationState();
+  }
+
+  refreshCrewSpaceNavigationState() {
+    if (!this.crewMode) return;
+
+    const crewCount = getCrewCount(this.registry);
+    const hasCrew = crewCount > 0;
+    const hasCrewCar = Boolean(
+      this.selectedCarId &&
+      cars[this.selectedCarId]?.crewLoan
+    );
+    const tuningLocked = Boolean(
+      this.engineMode || this.secondaryMode || this.chassisMode
+    );
+
+    // Persistent navigation should always be visible on Crew Space, even on
+    // the empty overview and after a second/third visit.
+    [
+      this.crewBackButton,
+      this.crewBackButtonLabel,
+      this.dynoButton,
+      this.dynoButtonLabel,
+      this.meetButton,
+      this.meetButtonLabel,
+    ].forEach(obj => {
+      if (!obj?.active) return;
+      obj.setVisible(true);
+      obj.setAlpha(1);
+    });
+
+    this.crewBackButton?.setDepth(82);
+    this.crewBackButtonLabel?.setDepth(83);
+    this.dynoButton?.setDepth(82);
+    this.dynoButtonLabel?.setDepth(83);
+    this.meetButton?.setDepth(82);
+    this.meetButtonLabel?.setDepth(83);
+
+    // Going back to the workshop is always available, including an empty crew.
+    this.crewBackButton
+      ?.setInteractive({ useHandCursor: true })
+      .setFillStyle(0x122331, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1);
+    this.crewBackButtonLabel
+      ?.setText('BACK TO WORKSHOP  >')
+      .setColor('#eef8ff');
+
+    if (!hasCrew) {
+      // Empty Crew Space: leave the whole workspace readable but inert. The
+      // player can always retreat to the workshop and recruit later.
+      this.upgradeButtons?.forEach(item => {
+        item.box.disableInteractive()
+          .setFillStyle(0x0a1017, 1)
+          .setStrokeStyle(1, 0x29343d, 1);
+        item.label.setColor('#53626c');
+        item.arrow.setText('—').setColor('#46545e');
+      });
+
+      this.dynoButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.dynoButtonLabel
+        ?.setText('DYNO // NO CREW')
+        .setColor('#817d84');
+
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel
+        ?.setText('GO TO MAP // NO CREW')
+        .setColor('#817d84');
+      return;
+    }
+
+    if (!hasCrewCar) {
+      this.dynoButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.dynoButtonLabel
+        ?.setText('DYNO // SELECT CREW CAR')
+        .setColor('#817d84');
+
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel
+        ?.setText('GO TO MAP // SELECT CAR')
+        .setColor('#817d84');
+      return;
+    }
+
+    // Once a crew car is selected, restore the normal Dyno state (installed,
+    // installable, etc.) and enable map travel.
+    this.refreshDynoButton?.();
+    if (tuningLocked) {
+      this.meetButton?.disableInteractive();
+    } else {
+      this.meetButton?.setInteractive({ useHandCursor: true });
+    }
+    this.meetButton
+      ?.setFillStyle(0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1);
+    this.meetButtonLabel
+      ?.setText('GO TO MAP  >')
+      .setColor('#f1fffb');
+  }
+
   buildCrewBackButton() {
     if (!this.crewMode) return;
 
     const x = SIDE.x + SIDE.w / 2;
     const y = 664;
-    const button = this.add.rectangle(x, y, SIDE.w - 32, 40, 0x122331, 1)
+    this.crewBackButton = this.add.rectangle(x, y, SIDE.w - 32, 40, 0x122331, 1)
       .setStrokeStyle(2, 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
-      .setDepth(40);
+      .setDepth(82);
 
-    this.add.text(x, y, 'BACK TO WAREHOUSE  >', {
+    this.crewBackButtonLabel = this.add.text(x, y, 'BACK TO WORKSHOP  >', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#eef8ff',
-    }).setOrigin(0.5).setDepth(41);
+    }).setOrigin(0.5).setDepth(83);
 
-    button.on('pointerdown', () => {
+    this.crewBackButton.on('pointerdown', () => {
       if (this.engineMode || this.secondaryMode || this.chassisMode) return;
 
       const personalCars = (this.registry.get('ownedCarIds') || [])
@@ -2231,41 +2376,53 @@ export default class GarageScene extends Phaser.Scene {
   createWarehouseSpaceHotspot({
     x,
     y,
+    w = 300,
+    h = 44,
     label,
+    labelAlign = 'left',
+    labelText = null,
     onActivate,
     enabled = true,
   }) {
-    const w = 300;
-    const h = 70;
-    const labelW = 108;
+    const labelW = 104;
     const left = x - w / 2;
+    const right = x + w / 2;
+    const isRight = labelAlign === 'right';
 
-    // One standard button language for the physical rooms. The right side of
-    // each outline intentionally stays almost empty so the authored sign in
-    // the background remains readable; the button text lives in a left gutter.
-    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.025)
+    // Thin outline that wraps the authored room sign instead of becoming a
+    // second sign itself. Text sits in a dark gutter away from background type.
+    const glow = this.add.rectangle(x, y, w, h, 0x4ee8ff, 0.022)
       .setStrokeStyle(2, 0x69ecff, 0.72)
       .setDepth(28);
 
+    const padX = isRight
+      ? right - labelW / 2
+      : left + labelW / 2;
     const labelPad = this.add.rectangle(
-      left + labelW / 2,
+      padX,
       y,
       labelW,
-      h - 10,
+      h - 8,
       0x06141d,
       0.66
     ).setDepth(29);
 
-    const text = this.add.text(left + 14, y, label + '  >', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: enabled ? '#c9f8ff' : '#72909b',
-    }).setOrigin(0, 0.5).setDepth(30);
+    const textX = isRight ? right - 13 : left + 13;
+    const text = this.add.text(
+      textX,
+      y,
+      labelText || (label + (isRight ? '' : '  >')),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '8px',
+        color: enabled ? '#c9f8ff' : '#72909b',
+        align: isRight ? 'right' : 'left',
+      }
+    ).setOrigin(isRight ? 1 : 0, 0.5).setDepth(30);
 
     if (enabled) glow.setInteractive({ useHandCursor: true });
 
-    // Make the blue outline breathe much more obviously than before. At the
-    // low point the border is nearly transparent, then it blooms back to full.
+    // Strong breathing pulse: almost invisible at the low point.
     const glowTween = this.tweens.add({
       targets: glow,
       alpha: { from: 0.07, to: 1 },
@@ -2298,14 +2455,14 @@ export default class GarageScene extends Phaser.Scene {
         glowTween.pause();
         padTween.pause();
         glow.setAlpha(1)
-          .setFillStyle(0x4ee8ff, 0.085)
+          .setFillStyle(0x4ee8ff, 0.08)
           .setStrokeStyle(3, 0x9af6ff, 0.98);
         labelPad.setAlpha(0.82);
         text.setAlpha(1).setColor('#ffffff');
       });
 
       glow.on('pointerout', () => {
-        glow.setFillStyle(0x4ee8ff, 0.025)
+        glow.setFillStyle(0x4ee8ff, 0.022)
           .setStrokeStyle(2, 0x69ecff, 0.72);
         text.setColor('#c9f8ff');
         glowTween.resume();
@@ -2346,11 +2503,17 @@ export default class GarageScene extends Phaser.Scene {
     const activeWorkshop = this.getActiveWorkshop();
     if (activeWorkshop?.id !== 'shinonomeWarehouseStrip') return;
 
-    // Positions line up with the authored signs in the Warehouse HQ artwork:
-    // OFFICE at the upper tuning-office sign, CREW above the car, DYNO right.
+    // Calibrated against the Warehouse HQ artwork:
+    // - all three are thinner;
+    // - Office moves up/left so its label clears the painted sign;
+    // - Crew moves upward above the car roof;
+    // - Dyno keeps the same right edge, shortens from the left to start just
+    //   before the authored DYNO sign, with its call-to-action on the right.
     this.createWarehouseSpaceHotspot({
-      x: 760,
-      y: 170,
+      x: 700,
+      y: 142,
+      w: 300,
+      h: 44,
       label: 'OFFICE',
       onActivate: () => this.showWorkshopToast('OFFICE // COMING SOON'),
     });
@@ -2358,7 +2521,9 @@ export default class GarageScene extends Phaser.Scene {
     if (isCrewUnlocked(this.registry)) {
       this.createWarehouseSpaceHotspot({
         x: 650,
-        y: 258,
+        y: 225,
+        w: 300,
+        h: 44,
         label: 'CREW',
         onActivate: () => {
           const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
@@ -2372,9 +2537,13 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     this.createWarehouseSpaceHotspot({
-      x: 990,
-      y: 320,
+      x: 1025,
+      y: 290,
+      w: 230,
+      h: 44,
       label: 'DYNO',
+      labelAlign: 'right',
+      labelText: '<  DYNO',
       onActivate: () => this.activateWarehouseDynoSpace(),
     });
   }
@@ -3184,6 +3353,7 @@ export default class GarageScene extends Phaser.Scene {
       const selectedIndex = Math.max(0, crewCars.indexOf(id));
       this.garagePage = Math.floor(selectedIndex / (this.garagePageSize || 4));
       this.renderGaragePage();
+      this.refreshCrewSpaceNavigationState();
     }
 
     this.saveProfile();
