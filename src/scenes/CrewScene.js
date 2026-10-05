@@ -47,19 +47,29 @@ export default class CrewScene extends Phaser.Scene {
     saveSessionState(this.registry);
 
     // Do not re-enter GarageScene synchronously from this bridge's create().
-    // iOS/PWA can leave the loader at 98% when a stopped scene is restarted
-    // inside the same SceneManager lifecycle tick. Give Phaser one frame to
-    // complete the CrewScene start/stop bookkeeping first.
-    this.time.delayedCall(34, () => {
-      // Warehouse/Crew Space share one physical property and almost all assets.
-      // Do not carry a global loading splash across this bridge.
+    // iOS/PWA can leave a same-tick scene replacement on the black game
+    // background. Hand off after two browser frames, with a Phaser-timer
+    // fallback in case requestAnimationFrame is throttled.
+    let handedOff = false;
+    const handoff = () => {
+      if (handedOff) return;
+      handedOff = true;
+
+      // Warehouse/Crew Space share one physical property and the Warehouse has
+      // already warmed the Crew assets. Never carry a global loading splash
+      // across this tiny bridge.
       cancelSceneLoading();
 
       this.scene.start('GarageScene', {
         crewMode: !returningToWarehouse,
-        returningFromCrewSpace: returningToWarehouse,
+        returningFromCrewSpace: true,
         workshopLocationId: 'shinonomeWarehouseStrip',
       });
-    });
+    };
+
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => requestAnimationFrame(handoff));
+    }
+    this.time.delayedCall(96, handoff);
   }
 }
