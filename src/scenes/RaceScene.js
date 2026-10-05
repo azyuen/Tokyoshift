@@ -4624,9 +4624,13 @@ export default class RaceScene extends Phaser.Scene {
       const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
 
       if (playerWon) {
+        const historicalIds = (this.registry.get('carHistory') || [])
+          .map(entry => entry?.carId)
+          .filter(Boolean);
         const wonInstanceId = createAndRegisterOwnedCarInstance(
           ownedCarIds,
-          this.opponentCarId
+          this.opponentCarId,
+          historicalIds
         );
 
         if (wonInstanceId) {
