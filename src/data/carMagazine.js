@@ -1,4 +1,5 @@
-import { cars } from './cars.js?v=20261004-r333';
+import { cars } from './cars.js?v=20261005-r345';
+import { getBaseCarId } from './carOwnership.js?v=20261005-r376';
 
 export const MAGAZINE_ISSUES = Object.freeze({
   1: Object.freeze({
@@ -50,8 +51,9 @@ const HERO_LABELS = Object.freeze({
 });
 
 export function getCarMagazineMeta(carId) {
-  const id = String(carId || '');
-  const car = cars[id];
+  const instanceId = String(carId || '');
+  const id = getBaseCarId(instanceId);
+  const car = cars[instanceId] || cars[id];
   const meta = CAR_MAGAZINE_META[id] || {};
   return {
     id,
@@ -72,9 +74,10 @@ export function recordCarMagazineSightings(registry, entries = [], source = 'str
 
   list.forEach(raw => {
     const item = typeof raw === 'string' ? { carId: raw } : (raw || {});
-    const carId = String(item.carId || item.id || '');
+    const rawCarId = String(item.carId || item.id || '');
+    const carId = getBaseCarId(rawCarId);
     if (!carId) return;
-    if (!cars[carId] && !HERO_LABELS[carId] && !item.label) return;
+    if (!cars[rawCarId] && !cars[carId] && !HERO_LABELS[carId] && !item.label) return;
 
     const existing = current[carId] || {};
     const sources = new Set(Array.isArray(existing.sources) ? existing.sources : []);
