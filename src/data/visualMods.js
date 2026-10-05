@@ -67,7 +67,7 @@ export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
 
 export function getVisualModCatalog(carId) {
   const id = String(carId || '');
-  const baseCarId = cars[id]?.crewBaseCarId;
+  const baseCarId = cars[id]?.ownedBaseCarId || cars[id]?.crewBaseCarId;
   return VISUAL_MOD_CATALOG[id] ||
     (baseCarId ? VISUAL_MOD_CATALOG[baseCarId] : null) ||
     null;
@@ -86,7 +86,10 @@ export function preloadVisualModAssets(scene, cacheBust = '', carIds = null) {
   const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
   const queued = new Set();
   const allowed = Array.isArray(carIds) && carIds.length
-    ? new Set(carIds.map(String))
+    ? new Set(carIds.map(id => {
+        const raw = String(id);
+        return cars[raw]?.ownedBaseCarId || cars[raw]?.crewBaseCarId || raw;
+      }))
     : null;
 
   Object.entries(VISUAL_MOD_CATALOG).forEach(([carId, catalog]) => {
