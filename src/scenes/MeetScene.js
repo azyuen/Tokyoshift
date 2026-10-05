@@ -30,7 +30,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r376';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r367';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
@@ -47,7 +47,7 @@ import {
   recordCarMagazineSightings,
   carMatchesCompetitionRestriction,
   getCompetitionRestrictionPool,
-} from '../data/carMagazine.js?v=20260929-r274';
+} from '../data/carMagazine.js?v=20261006-r376';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -55,7 +55,7 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261004-r320';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r376';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
@@ -84,7 +84,7 @@ import {
   getCarCouponRequirement,
   getCarCouponCount,
   MARKET_BASE_PRICES,
-} from '../data/centralTokyo.js?v=20261005-r345';
+} from '../data/centralTokyo.js?v=20261006-r376';
 import {
   isCrewComplete,
   getRecruitableCrewCandidates,
