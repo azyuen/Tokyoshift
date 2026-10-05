@@ -644,7 +644,7 @@ export default class GarageScene extends Phaser.Scene {
         padding: { x: 10, y: 7 },
       }
     ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
-    allCrew.on('pointerdown', () => this.showCrewOverviewState());
+    allCrew.on('pointerdown', () => this.showCrewOverviewState({ preserveSelection: true }));
     this.crewStageObjects.push(allCrew);
   }
 
@@ -1976,6 +1976,90 @@ export default class GarageScene extends Phaser.Scene {
     blocker.on('pointerdown', close);
   }
 
+  showCrewOverviewState({ preserveSelection = false } = {}) {
+    if (!this.crewMode) return;
+
+    for (const obj of this.selectedDisplay || []) {
+      try { obj?.destroy?.(); } catch (e) {}
+    }
+    this.selectedDisplay = [];
+    this.heroCarLayout = null;
+
+    if (!preserveSelection) {
+      this.selectedCarId = null;
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+
+      this.headerCarText?.setText(
+        'CREW ' + (getCrewCount(this.registry) + 1) + '/8'
+      );
+      Object.values(this.specValueTexts || {}).forEach(text => text?.setText?.('—'));
+      this.upgradeButtons?.forEach(item => {
+        item.box.disableInteractive()
+          .setFillStyle(0x0a1017, 1)
+          .setStrokeStyle(1, 0x29343d, 1);
+        item.label.setColor('#53626c');
+        item.arrow.setText('—').setColor('#46545e');
+      });
+      this.meetButton?.disableInteractive()
+        .setFillStyle(0x17181d, 1)
+        .setStrokeStyle(1, 0x514f55, 1);
+      this.meetButtonLabel?.setText('SELECT A CREW CAR').setColor('#817d84');
+      this.refreshDynoButton?.();
+    }
+
+    this.drawCrewOverview();
+    this.renderGaragePage();
+    saveSessionState(this.registry);
+  }
+
+  buildCrewBackButton() {
+    if (!this.crewMode) return;
+
+    const x = SIDE.x + SIDE.w / 2;
+    const y = 664;
+    const button = this.add.rectangle(x, y, SIDE.w - 32, 40, 0x122331, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(40);
+
+    this.add.text(x, y, 'BACK TO WAREHOUSE  >', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+
+    button.on('pointerdown', () => {
+      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+
+      const personalCars = (this.registry.get('ownedCarIds') || [])
+        .filter(id => cars[id] && !cars[id].crewLoan);
+      const previous = this.registry.get('crewPreviousCarId');
+      const warehouseCars = getCarsInWorkshop(
+        personalCars,
+        this.registry.get('carGarageLocations') || {},
+        'shinonomeWarehouseStrip'
+      );
+      const nextCarId = warehouseCars.includes(previous)
+        ? previous
+        : warehouseCars[0] || personalCars[0] || null;
+
+      this.registry.set('crewSpaceActive', false);
+      this.registry.set('crewPreviousCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      this.registry.set('selectedCarId', nextCarId);
+      this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
+      saveSessionState(this.registry);
+
+      // Reuse GarageScene directly. Avoiding the old CrewScene -> GarageScene
+      // hand-off also removes the mobile/PWA 98% loading stall.
+      this.scene.restart({
+        crewMode: false,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
+    });
+  }
+
   buildCrewSpaceHotspot() {
     const activeWorkshop = this.getActiveWorkshop();
     if (
@@ -2029,9 +2113,15 @@ export default class GarageScene extends Phaser.Scene {
         ? this.selectedCarId
         : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
       this.registry.set('crewPreviousCarId', previous);
+      this.registry.set('crewSpaceActive', true);
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
-      this.scene.start('CrewScene');
+      this.scene.restart({
+        crewMode: true,
+        workshopLocationId: 'shinonomeWarehouseStrip',
+      });
     });
   }
 
@@ -2735,7 +2825,15 @@ export default class GarageScene extends Phaser.Scene {
 
   selectCar(id) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
-    if (this.carGarageLocations?.[id] !== this.getActiveWorkshop().id) return;
+    if (
+      !this.crewMode &&
+      this.carGarageLocations?.[id] !== this.getActiveWorkshop().id
+    ) return;
+    if (
+      this.crewMode &&
+      !this.getCurrentWorkshopCars().includes(id)
+    ) return;
+
     if (this.engineMode || this.secondaryMode || this.chassisMode) {
       if (id !== this.selectedCarId) this.showWorkshopToast('EXIT TUNING BEFORE CHANGING CARS');
       return;
@@ -2743,11 +2841,16 @@ export default class GarageScene extends Phaser.Scene {
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
+    const crewMember = this.syncSelectedRaceDriver();
 
-    for (const obj of this.selectedDisplay) obj.destroy();
+    for (const obj of this.selectedDisplay || []) {
+      try { obj?.destroy?.(); } catch (e) {}
+    }
 
-    // One canonical workshop layout path for initial load, car switching,
-    // purchased cars and tuning previews.
+    if (this.crewMode && crewMember) {
+      this.focusCrewMember(crewMember);
+    }
+
     this.heroCarLayout = this.buildWorkshopHeroLayout(cars[id]);
     if (!this.heroCarLayout) return;
     this.selectedDisplay = this.createCarDisplay(
@@ -2758,6 +2861,27 @@ export default class GarageScene extends Phaser.Scene {
       10
     );
 
+    if (this.crewMode) {
+      const travel = 520;
+      this.selectedDisplay.forEach(obj => {
+        if (obj?.x != null) obj.x -= travel;
+      });
+      this.tweens.add({
+        targets: this.selectedDisplay,
+        x: '+=' + travel,
+        duration: 1800,
+        ease: 'Sine.easeOut',
+      });
+
+      const wheels = [this.selectedDisplay[3], this.selectedDisplay[4]].filter(Boolean);
+      this.tweens.add({
+        targets: wheels,
+        angle: '+=540',
+        duration: 1800,
+        ease: 'Sine.easeOut',
+      });
+    }
+
     const car = cars[id];
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[id] || {};
@@ -2766,7 +2890,12 @@ export default class GarageScene extends Phaser.Scene {
       return applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
     })();
 
-    this.headerCarText.setText(car.name.toUpperCase());
+    this.headerCarText.setText(
+      this.crewMode && crewMember
+        ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
+          ' // ' + car.shortName.toUpperCase()
+        : car.name.toUpperCase()
+    );
 
     const tunedPower = Number(tunedBuild.car.powerKW ?? 0);
     const tunedTorque = Number(tunedBuild.car.torqueNm ?? 0);
@@ -2797,7 +2926,15 @@ export default class GarageScene extends Phaser.Scene {
       item.label.setColor(active ? '#ffffff' : '#b8cad7');
     }
 
+    if (this.meetButton) {
+      this.meetButton.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x0c2827, 1)
+        .setStrokeStyle(2, 0x62e8c7, 1);
+      this.meetButtonLabel?.setText('GO TO MAP  >').setColor('#f1fffb');
+    }
+
     this.updateMoveCarButtonState();
+    this.refreshDynoButton?.();
     this.saveProfile();
   }
 
