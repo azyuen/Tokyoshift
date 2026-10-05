@@ -43,7 +43,7 @@ import {
 } from '../state/GameState.js?v=20261005-r354';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   getEncounterAi,
   boostAiForPinkSlip,
