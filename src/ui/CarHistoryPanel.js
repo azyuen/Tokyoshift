@@ -735,3 +735,10 @@ function showMagazine(scene, features) {
   updateControls();
 }
 
+
+
+// Office-facing alias. Keep showCarHistoryPanel for old callers while the
+// magazine and the simple car-history ledger are separate UI concepts.
+export function showMagazinePanel(scene) {
+  return showCarHistoryPanel(scene);
+}
