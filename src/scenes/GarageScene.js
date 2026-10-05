@@ -645,6 +645,85 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
     allCrew.on('pointerdown', () => this.showCrewOverviewState({ preserveSelection: true }));
     this.crewStageObjects.push(allCrew);
+
+    const remove = this.add.text(
+      STAGE.x + STAGE.w - 24,
+      STAGE.y + 62,
+      'REMOVE MEMBER',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#ffc0d7',
+        backgroundColor: '#241018dd',
+        padding: { x: 10, y: 7 },
+      }
+    ).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(24);
+    remove.on('pointerdown', () => this.confirmRemoveCrewMember(member));
+    this.crewStageObjects.push(remove);
+  }
+
+  confirmRemoveCrewMember(member) {
+    if (!this.crewMode || !member) return;
+
+    const depth = 180;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(depth).setInteractive());
+
+    add(this.add.rectangle(780, 420, 760, 350, 0x09131d, 1)
+      .setStrokeStyle(2, 0xff7cac, 1).setDepth(depth + 1));
+
+    add(this.add.text(780, 330, 'REMOVE CREW MEMBER?', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      397,
+      'Their loan car leaves with them. Every upgrade on that car is lost.\nYou can recruit another driver from this region later.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#c5d2da',
+        fontStyle: '600',
+        align: 'center',
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const keep = add(this.add.rectangle(650, 505, 220, 48, 0x151d28, 1)
+      .setStrokeStyle(1, 0x657d8c, 1).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 505, 'KEEP MEMBER', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d2dce2',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const removeButton = add(this.add.rectangle(910, 505, 220, 48, 0x351820, 1)
+      .setStrokeStyle(2, 0xff7cac, 1).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(910, 505, 'REMOVE', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffd1e0',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    keep.on('pointerdown', close);
+    removeButton.on('pointerdown', () => {
+      removeCrewMember(this.registry, member.regionId);
+      this.selectedCarId = null;
+      this.registry.set('selectedCarId', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      close();
+      this.showCrewOverviewState();
+      this.renderGaragePage();
+      this.refreshDynoButton?.();
+      saveSessionState(this.registry);
+    });
   }
 
   drawScene() {
