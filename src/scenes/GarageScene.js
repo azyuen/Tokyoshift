@@ -111,7 +111,11 @@ import {
 } from '../data/visualMods.js?v=20261005-r345';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
+import {
+  startSceneLoading,
+  finishSceneLoading,
+  cancelSceneLoading,
+} from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showCarHistoryPanel } from '../ui/CarHistoryPanel.js?v=20260929-r278';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
@@ -2140,6 +2144,7 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('selectedCarId', nextCarId);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
+      cancelSceneLoading(this);
 
       // Leave GarageScene completely before starting its Warehouse version.
       // This avoids the iOS/PWA 98% loader stall caused by re-entering the same
@@ -2206,6 +2211,7 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('crewPreviousCarId', previous);
       this.registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
       saveSessionState(this.registry);
+      cancelSceneLoading(this);
       this.scene.start('CrewScene', { mode: 'crew' });
     });
   }
@@ -2951,7 +2957,7 @@ export default class GarageScene extends Phaser.Scene {
       const travel = 690;
       // Crew cars enter an indoor meeting/workshop bay rather than blasting
       // onto a race stage. Keep the roll-in deliberately calm and physical.
-      const duration = 4400;
+      const duration = 5200;
       this.selectedDisplay.forEach(obj => {
         if (obj?.x != null) obj.x += travel;
       });
