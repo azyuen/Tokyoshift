@@ -715,7 +715,94 @@ export default class DynoScene extends Phaser.Scene {
   }
 
 
-  purchaseDynoFacilityStage(targetTier) {
+  showDynoFacilityPurchaseConfirm(targetTier) {
+    const target = Math.max(1, Math.min(3, Math.floor(Number(targetTier) || 0)));
+    if (target !== this.facilityTier + 1) return;
+
+    const stage = getDynoStage(target);
+    const cost = Math.max(0, Number(stage.installCost || 0));
+    const cash = Math.max(0, Number(this.registry.get('cash') || 0));
+    if (cash < cost) {
+      this.daichiText?.setText(
+        'DAICHI // You need ¥' + cost.toLocaleString('en-US') +
+        ' to install ' + String(stage.shortLabel || stage.label || 'the next dyno stage') + '.'
+      );
+      return;
+    }
+
+    (this.dynoPurchaseConfirmObjects || []).forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    this.dynoPurchaseConfirmObjects = objects;
+    const depth = 205;
+    const close = () => {
+      objects.forEach(obj => {
+        try { obj?.destroy?.(); } catch (e) {}
+      });
+      this.dynoPurchaseConfirmObjects = [];
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x010306, 0.80)
+      .setDepth(depth)
+      .setInteractive());
+
+    add(this.add.rectangle(780, 420, 720, 380, 0x07111d, 0.997)
+      .setStrokeStyle(3, 0x55b8ff, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 300, 'CONFIRM DYNO UPGRADE', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#eefaff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(
+      780,
+      390,
+      'INSTALL ' + String(stage.shortLabel || stage.label || ('STAGE ' + target)).toUpperCase() +
+        '\n\nCOST  //  ¥ ' + cost.toLocaleString('en-US') +
+        '\nBALANCE AFTER  //  ¥ ' + (cash - cost).toLocaleString('en-US'),
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '12px',
+        color: '#b8cbd7',
+        fontStyle: '700',
+        align: 'center',
+        lineSpacing: 5,
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(650, 535, 220, 52, 0x102138, 1)
+      .setStrokeStyle(2, 0x55b8ff, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(650, 535, 'CANCEL', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#dcecf4',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const confirm = add(this.add.rectangle(910, 535, 220, 52, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    add(this.add.text(910, 535, 'INSTALL // ¥ ' + cost.toLocaleString('en-US'), {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#f1fffb',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+    confirm.on('pointerdown', () => {
+      close();
+      this.purchaseDynoFacilityStage(target, true);
+    });
+  }
+
+  purchaseDynoFacilityStage(targetTier, confirmed = false) {
     const target = Math.max(1, Math.min(3, Math.floor(Number(targetTier) || 0)));
     if (target !== this.facilityTier + 1) return;
 
@@ -728,6 +815,11 @@ export default class DynoScene extends Phaser.Scene {
         'DAICHI // You need ¥' + cost.toLocaleString('en-US') +
         ' to install ' + String(stage.shortLabel || stage.label || 'the next dyno stage') + '.'
       );
+      return;
+    }
+
+    if (!confirmed) {
+      this.showDynoFacilityPurchaseConfirm(target);
       return;
     }
 
@@ -1857,6 +1949,9 @@ export default class DynoScene extends Phaser.Scene {
     this.controls = new TouchControls(this, {
       nosEnabled: false,
       pedalLatchMax: false,
+      // Dyno controls sit just above the white Daichi dialogue strip. The
+      // shared race default is intentionally higher to leave room for race HUD.
+      controlBottomY: 755,
     });
     this.controls.nosSprite?.setVisible(false);
 
