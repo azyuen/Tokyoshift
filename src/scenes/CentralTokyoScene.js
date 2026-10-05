@@ -502,13 +502,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const source = texture.getSourceImage();
     const safeHeight = Math.max(1, Number(source?.height || source?.naturalHeight || 1));
+    const displayHeight = Math.max(1, Number(height || 220)) * 1.38;
 
     if (shadow) {
       this.addContent(this.add.ellipse(
         x,
         feetY - 7,
-        Math.max(62, height * 0.42),
-        Math.max(14, height * 0.075),
+        Math.max(62, displayHeight * 0.42),
+        Math.max(14, displayHeight * 0.075),
         0x000000,
         0.48
       ).setDepth(depth - 0.1));
@@ -516,7 +517,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     return this.addContent(this.add.image(x, feetY, key)
       .setOrigin(0.5, 1)
-      .setScale(height / safeHeight)
+      .setScale(displayHeight / safeHeight)
       .setFlipX(Boolean(flip))
       .setDepth(depth));
   }
@@ -1431,7 +1432,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         car,
         STAGE.x + STAGE.w * 0.51,
         STAGE.y + 350,
-        700,
+        640,
         16,
         listing.paintColor,
         null,
@@ -2626,7 +2627,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const listing = listings[this.selectedIndex];
       const car = cars[listing.carId];
       const objects = this.createCarDisplay(
-        car, STAGE.x + STAGE.w * 0.51, STAGE.y + 350, 700, 8
+        car, STAGE.x + STAGE.w * 0.51, STAGE.y + 350, 640, 8
       );
       objects.slice(3, 5).forEach(obj => obj?.setData?.('ginzaWheel', true));
       objects.forEach(obj => this.addContent(obj));
@@ -2953,7 +2954,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         selectedCar,
         STAGE.x + 420,
         STAGE.y + 350,
-        500,
+        460,
         8,
         getCarPaintColor(build.state),
         playerCharacter
