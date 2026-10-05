@@ -13,9 +13,9 @@ import {
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
 import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261005-r350';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261005-r354';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20260922-r120';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r354';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
