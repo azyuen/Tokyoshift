@@ -35,7 +35,7 @@ import {
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
 import { saveSessionState } from '../state/GameState.js?v=20261005-r354';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261005-r362';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261005-r367';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
@@ -116,8 +116,8 @@ import {
   finishSceneLoading,
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r362';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r364';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r367';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r367';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
