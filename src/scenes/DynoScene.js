@@ -1951,7 +1951,7 @@ export default class DynoScene extends Phaser.Scene {
       pedalLatchMax: false,
       // Dyno controls sit just above the white Daichi dialogue strip. The
       // shared race default is intentionally higher to leave room for race HUD.
-      controlBottomY: 755,
+      controlBottomY: 760,
     });
     this.controls.nosSprite?.setVisible(false);
 
