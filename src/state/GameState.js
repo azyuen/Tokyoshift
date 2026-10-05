@@ -7,6 +7,7 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r350';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
+import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261005-r376';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -630,6 +631,11 @@ export function normaliseState(input = {}) {
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
 
   if (!owned.length) owned.push(base.starterCarId);
+
+  // Duplicate production cars are persisted as stable instance IDs such as
+  // ek9__copy2. Re-register their aliases before any scene filters owned cars
+  // through the shared cars catalog.
+  registerOwnedCarInstances(owned);
 
   const starterCarId = base.starterCarId;
 
