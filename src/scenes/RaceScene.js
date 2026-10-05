@@ -2301,47 +2301,49 @@ export default class RaceScene extends Phaser.Scene {
 
     // Only a light cinematic wash: the skyline, road, finish line and both
     // physical race cars remain visible underneath.
-    this.add.rectangle(780, 360, 1560, 720, 0x05070b, 0.22)
+    this.add.rectangle(780, 360, 1560, 720, 0x05070b, 0.12)
       .setDepth(depth)
       .setScrollFactor(0);
 
-    // Main translucent result wedge. It is deliberately asymmetric/near-
-    // triangular so this reads as manga composition rather than a UI window.
+    // Manga result oblong lives at bottom-right, deliberately leaving the
+    // frozen car and skyline unobstructed across the left half of the screen.
     const actionPanel = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
-    actionPanel.fillStyle(paper, 0.80);
+    actionPanel.fillStyle(paper, 0.82);
     actionPanel.fillPoints([
-      new Phaser.Geom.Point(42, 62),
-      new Phaser.Geom.Point(935, 30),
-      new Phaser.Geom.Point(788, 332),
-      new Phaser.Geom.Point(82, 354),
+      new Phaser.Geom.Point(875, 435),
+      new Phaser.Geom.Point(1515, 414),
+      new Phaser.Geom.Point(1468, 610),
+      new Phaser.Geom.Point(918, 628),
+      new Phaser.Geom.Point(842, 542),
     ], true);
     actionPanel.lineStyle(6, ink, 0.94);
     actionPanel.strokePoints([
-      new Phaser.Geom.Point(42, 62),
-      new Phaser.Geom.Point(935, 30),
-      new Phaser.Geom.Point(788, 332),
-      new Phaser.Geom.Point(82, 354),
+      new Phaser.Geom.Point(875, 435),
+      new Phaser.Geom.Point(1515, 414),
+      new Phaser.Geom.Point(1468, 610),
+      new Phaser.Geom.Point(918, 628),
+      new Phaser.Geom.Point(842, 542),
     ], true);
 
-    // A few contained rays live inside the title wedge only; the real race
-    // panorama supplies most of the visual movement now.
+    // Keep the manga energy contained to the result shape so the panorama on
+    // the left remains the visual breathing space.
     const rays = this.add.graphics().setDepth(depth + 3).setScrollFactor(0);
-    rays.lineStyle(playerWon ? 4 : 3, ink, playerWon ? 0.10 : 0.07);
-    for (let i = -4; i <= 4; i += 1) {
-      rays.lineBetween(770, 210, 190 + i * 78, 88 + Math.abs(i) * 18);
-      rays.lineBetween(770, 210, 235 + i * 72, 326 - Math.abs(i) * 10);
+    rays.lineStyle(playerWon ? 4 : 3, ink, playerWon ? 0.09 : 0.06);
+    for (let i = -3; i <= 3; i += 1) {
+      rays.lineBetween(1450, 515, 980 + i * 72, 452 + Math.abs(i) * 14);
+      rays.lineBetween(1450, 515, 1000 + i * 68, 603 - Math.abs(i) * 8);
     }
 
     const stripe = this.add.graphics().setDepth(depth + 4).setScrollFactor(0);
     stripe.fillStyle(accent, 0.96);
     stripe.fillPoints([
-      new Phaser.Geom.Point(57, 79),
-      new Phaser.Geom.Point(100, 77),
-      new Phaser.Geom.Point(73, 337),
-      new Phaser.Geom.Point(108, 336),
+      new Phaser.Geom.Point(883, 454),
+      new Phaser.Geom.Point(918, 451),
+      new Phaser.Geom.Point(875, 594),
+      new Phaser.Geom.Point(907, 591),
     ], true);
 
-    const kicker = this.add.text(138, 91, this.falseStart ? 'RED LIGHT' : 'TOKYO SHIFT // RESULT', {
+    const kicker = this.add.text(946, 458, this.falseStart ? 'RED LIGHT' : 'TOKYO SHIFT // RESULT', {
       fontFamily: titleFont,
       fontSize: '8px',
       color: '#15181d',
@@ -2350,26 +2352,26 @@ export default class RaceScene extends Phaser.Scene {
     }).setDepth(depth + 7).setScrollFactor(0);
 
     const title = this.add.text(
-      136,
-      138,
+      944,
+      500,
       playerWon ? 'VICTORY!' : 'NOT THIS TIME.',
       {
         fontFamily: titleFont,
-        fontSize: playerWon ? '38px' : '31px',
+        fontSize: playerWon ? '35px' : '28px',
         color: '#11141a',
         fontStyle: 'bold',
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
     const subTitle = this.add.text(
-      140,
-      playerWon ? 210 : 202,
+      948,
+      playerWon ? 557 : 552,
       this.falseStart
         ? 'FALSE START // DQ'
         : String(this.raceDistrict + ' // ' + this.raceLocationLabel).toUpperCase(),
       {
         fontFamily: titleFont,
-        fontSize: '8px',
+        fontSize: '7px',
         color: '#3b3f45',
       }
     ).setDepth(depth + 8).setScrollFactor(0);
@@ -2377,12 +2379,12 @@ export default class RaceScene extends Phaser.Scene {
     const quote = playerWon
       ? (playerCharacter?.resultQuotes?.win || 'That was clean.')
       : (playerCharacter?.resultQuotes?.loss || 'Next run will be different.');
-    const quoteText = this.add.text(140, 255, '“' + quote + '”', {
+    const quoteText = this.add.text(948, 584, '“' + quote + '”', {
       fontFamily: dataFont,
-      fontSize: '11px',
+      fontSize: '9px',
       color: '#1f2329',
       fontStyle: '700',
-      wordWrap: { width: 420 },
+      wordWrap: { width: 430 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
     const playerDisplayName = [
@@ -2391,15 +2393,12 @@ export default class RaceScene extends Phaser.Scene {
     ].filter(Boolean).join(' ') || playerCharacter.name;
     const rivalDisplayName = rivalCharacter.name;
 
-    this.add.text(140, 312, String(playerDisplayName || 'YOU').toUpperCase(), {
-      fontFamily: titleFont,
-      fontSize: '7px',
-      color: '#11141a',
-    }).setDepth(depth + 8).setScrollFactor(0);
+    // Portrait nameplates below each reaction pane carry identity; keep the
+    // result oblong free of duplicate names.
 
     // Two translucent reaction panes float over the frozen skyline. Both
     // characters stay fully clear; hierarchy comes from size, not dimming.
-    const playerFrame = this.add.rectangle(1245, 178, 330, 258, 0xf1eadb, 0.74)
+    const playerFrame = this.add.rectangle(1322, 174, 330, 258, 0xf1eadb, 0.74)
       .setStrokeStyle(5, ink, 0.92)
       .setDepth(depth + 6)
       .setScrollFactor(0)
@@ -2408,8 +2407,8 @@ export default class RaceScene extends Phaser.Scene {
     const playerProfile = createCharacterProfile(this, {
       characterId: this.playerCharacterId,
       pose: playerWon ? 'win' : 'loss',
-      x: 1245,
-      y: 178,
+      x: 1322,
+      y: 174,
       frameWidth: 330,
       frameHeight: 258,
       side: 'right',
@@ -2423,24 +2422,24 @@ export default class RaceScene extends Phaser.Scene {
     const rivalFrame = this.add.graphics().setDepth(depth + 6).setScrollFactor(0);
     rivalFrame.fillStyle(0xf1eadb, 0.70);
     rivalFrame.fillPoints([
-      new Phaser.Geom.Point(872, 89),
-      new Phaser.Geom.Point(1058, 74),
-      new Phaser.Geom.Point(1092, 277),
-      new Phaser.Geom.Point(850, 292),
+      new Phaser.Geom.Point(1010, 86),
+      new Phaser.Geom.Point(1190, 72),
+      new Phaser.Geom.Point(1218, 273),
+      new Phaser.Geom.Point(990, 288),
     ], true);
     rivalFrame.lineStyle(4, ink, 0.90);
     rivalFrame.strokePoints([
-      new Phaser.Geom.Point(872, 89),
-      new Phaser.Geom.Point(1058, 74),
-      new Phaser.Geom.Point(1092, 277),
-      new Phaser.Geom.Point(850, 292),
+      new Phaser.Geom.Point(1010, 86),
+      new Phaser.Geom.Point(1190, 72),
+      new Phaser.Geom.Point(1218, 273),
+      new Phaser.Geom.Point(990, 288),
     ], true);
 
     const rivalProfile = createCharacterProfile(this, {
       characterId: this.opponentCharacterId,
       pose: playerWon ? 'loss' : 'win',
-      x: 970,
-      y: 184,
+      x: 1102,
+      y: 180,
       frameWidth: 220,
       frameHeight: 198,
       side: 'left',
@@ -2453,7 +2452,7 @@ export default class RaceScene extends Phaser.Scene {
     const playerPortraitImage = playerProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
-    this.add.text(1245, 327, String(playerDisplayName || 'YOU').toUpperCase(), {
+    this.add.text(1322, 323, String(playerDisplayName || 'YOU').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
@@ -2461,7 +2460,7 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 9, y: 5 },
     }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
 
-    this.add.text(970, 308, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    this.add.text(1102, 304, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#15181d',
@@ -2557,19 +2556,19 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : 'CONTINUE';
 
-    const nextButton = this.add.rectangle(1330, 632, 260, 58, accent, 0.94)
+    const nextButton = this.add.rectangle(1332, 671, 250, 44, accent, 0.94)
       .setStrokeStyle(4, 0xf4efe5, 0.9)
       .setDepth(depth + 24)
       .setScrollFactor(0);
 
-    this.add.text(1330, 628, 'NEXT  >', {
+    this.add.text(1332, 669, 'NEXT  >', {
       fontFamily: titleFont,
       fontSize: '13px',
       color: playerWon ? '#13161b' : '#f7f8ff',
       fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
 
-    this.add.text(1330, 675, actionHint + ' // TAP ANYWHERE', {
+    this.add.text(1040, 681, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#7f8793',
@@ -2608,13 +2607,13 @@ export default class RaceScene extends Phaser.Scene {
     // Almost-instant manga overlay over the frozen race frame.
     const flyObjects = [title, subTitle, quoteText, kicker];
     flyObjects.forEach(obj => {
-      obj.x -= 250;
+      obj.x += 220;
       obj.setAlpha(0);
     });
 
     this.tweens.add({
       targets: flyObjects,
-      x: '+=250',
+      x: '-=220',
       alpha: 1,
       duration: 165,
       ease: 'Expo.Out',
