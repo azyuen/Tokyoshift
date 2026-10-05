@@ -389,7 +389,6 @@ export default class GarageScene extends Phaser.Scene {
       this.selectUpgrade(null);
     } else if (this.crewMode) {
       this.showCrewOverviewState();
-      this.renderGaragePage();
     } else {
       this.showEmptyGarageState();
     }
@@ -2521,6 +2520,7 @@ export default class GarageScene extends Phaser.Scene {
 
     button.on('pointerdown', () => {
       this.registry.set('selectedCarId', this.selectedCarId);
+      this.syncSelectedRaceDriver();
 
       // Old Arkon Den profiles pre-date the persisted devMode flag. Promote the
       // live registry before the workshop map evaluates unlocks so dev access
