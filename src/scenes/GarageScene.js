@@ -233,6 +233,25 @@ export default class GarageScene extends Phaser.Scene {
       });
     }
 
+    // Warehouse HQ is the doorway to Crew Space. Warm the alternate room and
+    // its current roster while the Warehouse itself is loading so the room
+    // buttons can switch presentation without exposing a black loading frame.
+    const shouldWarmCrewSpace = (
+      !this.crewMode &&
+      activeWorkshopId === 'shinonomeWarehouseStrip' &&
+      isCrewUnlocked(this.registry)
+    );
+    if (shouldWarmCrewSpace) {
+      queueImage(
+        'crewSpaceDayBg',
+        'assets/Garage/shinonome_crewspace_day.png?v=20261005-r349'
+      );
+      queueImage(
+        'crewSpaceNightBg',
+        'assets/Garage/shinonome_crewspace_night.png?v=20261005-r349'
+      );
+    }
+
     const mapPhase = getWorldPhase() === 'day' ? 'day' : 'night';
     const workshopMapAsset = mapPhase === 'day'
       ? {
@@ -262,15 +281,28 @@ export default class GarageScene extends Phaser.Scene {
     // Garage / Crew Space characters shown immediately.
     const characterIds = this.crewMode
       ? Object.values(members).map(member => member.characterId)
-      : [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto'];
+      : [
+          this.registry.get('playerCharacterId') || 'renMizuno',
+          'daichiSakamoto',
+          ...(shouldWarmCrewSpace
+            ? Object.values(members).map(member => member.characterId)
+            : []),
+        ];
     [...new Set(characterIds)].forEach(id => {
       const visual = characters[id]?.visual;
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
 
     // A workshop can show and switch between its local cars without another
-    // network round trip. Cars stored at other workshops stay unloaded.
-    localCars.forEach(id => {
+    // network round trip. At Warehouse HQ also warm the crew loan cars so the
+    // Crew Space doorway can be an instant in-scene presentation switch.
+    const preloadCarIds = [
+      ...new Set([
+        ...localCars,
+        ...(shouldWarmCrewSpace ? crewCars : []),
+      ]),
+    ];
+    preloadCarIds.forEach(id => {
       const car = cars[id];
       if (!car) return;
       queued += preloadCarAppearanceAssets(this, { [id]: car }, '20260928-r242');
