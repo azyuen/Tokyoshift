@@ -1342,6 +1342,10 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
+    // The perfect sweep can surface again on later Meet visits after the
+    // championship, but once its prize has been earned/claimed it is retired.
+    if (state.perfectEarned || state.perfectRewardClaimed) return false;
+
     const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
 
     // Returning from the briefing after choosing PAUSE should actually return
@@ -2685,13 +2689,13 @@ export default class MeetScene extends Phaser.Scene {
     ) return null;
 
     const existing = this.registry.get('specialChallenger');
-    const allowedHere = new Set(
-      getRivalCharacterOrderForRegion(
-        getMeetLocation(this.selectedMeetLocation).district
-      )
+    const visibleHere = new Set(
+      (this.locationOffers[this.selectedMeetLocation] || this.offers || [])
+        .map(offer => offer?.characterId)
+        .filter(Boolean)
     );
-    if (existing?.active && allowedHere.has(existing.characterId)) return existing;
-    if (existing?.active && !allowedHere.has(existing.characterId)) {
+    if (existing?.active && visibleHere.has(existing.characterId)) return existing;
+    if (existing?.active && !visibleHere.has(existing.characterId)) {
       this.registry.set('specialChallenger', null);
     }
 
