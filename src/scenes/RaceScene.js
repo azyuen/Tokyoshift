@@ -100,6 +100,8 @@ const RESULT_FRAME = {
   h: 697,
 };
 
+const USE_MANGA_RACE_RESULTS = true; // Phase 1 experiment. Set false to restore the preserved legacy result screen.
+
 const RESULT_BACKGROUNDS = {
   victory: {
     key: 'raceResultVictoryBg',
@@ -2054,7 +2056,632 @@ export default class RaceScene extends Phaser.Scene {
     };
   }
 
+
+  showMangaResultsOverlay() {
+    this.engineAudio?.fadeOut();
+    this.resultsShown = true;
+    this.controls.enabled = false;
+
+    if (this.devCutsceneControl) {
+      this.devCutsceneControl.button.setDepth(290);
+      this.devCutsceneControl.label.setDepth(291);
+      this.devCutsceneControl.setVisible(true);
+    }
+    this.cancelButton?.disableInteractive();
+    this.startButton?.disableInteractive();
+
+    let playerWon = false;
+    let opponentWon = false;
+    if (this.falseStart) {
+      opponentWon = true;
+    } else if (this.playerFinishClock != null && this.opponentFinishClock != null) {
+      playerWon = this.playerFinishClock <= this.opponentFinishClock;
+      opponentWon = !playerWon;
+    } else if (this.playerFinishClock != null) {
+      playerWon = true;
+    } else if (this.opponentFinishClock != null) {
+      opponentWon = true;
+    }
+
+    const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
+    const settlement = (playerWon || opponentWon)
+      ? this.settleRace(playerWon)
+      : null;
+
+    if (playerWon) playVictorySting();
+    else stopMusic();
+
+    const isPinkSlip = this.raceDeal === 'PINK_SLIP';
+    const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
+    const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
+    const resultPose = playerWon ? 'win' : 'loss';
+    const accent = playerWon ? 0xf2b84b : 0x6f8edb;
+    const accentBright = playerWon ? '#ffd36a' : '#94b0ff';
+    const accentSoft = playerWon ? '#f2b84b' : '#6f8edb';
+    const paper = 0xf1eadb;
+    const ink = 0x11141a;
+    const depth = 200;
+    const titleFont = PIXEL_FONT;
+    const dataFont = BODY_FONT;
+    const formatTime = value => value == null ? '—' : value.toFixed(3) + ' s';
+    const formatSpeed = value => value == null ? '—' : value.toFixed(1);
+
+    const rewardFor = () => {
+      if (!settlement) return { primary: 'RACE COMPLETE', secondary: '' };
+
+      if (settlement.tutorial) {
+        return {
+          primary: 'PRACTICE COMPLETE',
+          secondary: 'NO CASH // NO RECORD',
+        };
+      }
+
+      if (settlement.crewRecruit) {
+        if (!settlement.playerWon) {
+          return {
+            primary: 'STOCK CHALLENGE LOST',
+            secondary: 'CHALLENGE REMAINS OPEN',
+          };
+        }
+        return settlement.crewRecruitJoined
+          ? {
+              primary: 'CREW MEMBER JOINED',
+              secondary: 'SIGNATURE CAR LOANED TO WAREHOUSE HQ',
+            }
+          : {
+              primary: 'STOCK CHALLENGE WON',
+              secondary: 'RETURN TO THE MEET',
+            };
+      }
+
+      if (settlement.crewBattle) {
+        if (settlement.crewBattleContinues) {
+          return {
+            primary: 'CREW SCORE  ' + settlement.playerScore + ' - ' + settlement.opponentScore,
+            secondary: 'ROUND ' + settlement.roundNumber + '/' + CREW_BATTLE_LINEUP_SIZE + ' COMPLETE',
+          };
+        }
+        if (settlement.crewBattleCompleted) {
+          const couponLine = settlement.couponAwards > 0 && settlement.couponCarId
+            ? String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() +
+              ' COUPONS +' + settlement.couponAwards
+            : 'REPLAY // NO EXTRA REWARD';
+          return {
+            primary: 'REGIONAL CREW DEFEATED',
+            secondary:
+              settlement.playerScore + ' - ' + settlement.opponentScore + ' // ' +
+              (settlement.crewBattleFirstClear
+                ? '+¥' + Number(settlement.cashReward || 0).toLocaleString('en-US') + ' // ' + couponLine
+                : couponLine) +
+              (settlement.tokyoChampionshipInvited ? ' // TOKYO CHAMPIONSHIP INVITATION' : ''),
+          };
+        }
+        return {
+          primary: 'CREW BATTLE LOST',
+          secondary: settlement.playerScore + ' - ' + settlement.opponentScore + ' // TRY AGAIN',
+        };
+      }
+
+      if (settlement.teamChallenge) {
+        if (settlement.teamChallengeFailed) {
+          return settlement.teamChallengePerfectAttempt
+            ? {
+                primary: 'PERFECT SWEEP RESET',
+                secondary: 'REGIONAL CHAMPION BADGE KEPT // START AGAIN AT 0 / 7',
+              }
+            : {
+                primary: 'CHALLENGE PAUSED',
+                secondary: settlement.progress + ' / 7 DEFEATED // RESUME LATER',
+              };
+        }
+        if (settlement.teamChallengeContinues) {
+          return {
+            primary: 'RACER ' + settlement.stageNumber + ' DEFEATED',
+            secondary: settlement.progress + ' / 7 CLEARED',
+          };
+        }
+        if (settlement.teamChallengeCompleted) {
+          const donor = String(settlement.donorLabel || 'DONOR CAR').toUpperCase();
+          const couponText = settlement.couponAwards > 0
+            ? donor + ' COUPON ' + settlement.couponCount + ' / ' + settlement.couponRequired
+            : donor + ' COUPON ALREADY CLAIMED';
+          if (settlement.teamChallengePerfect) {
+            return {
+              primary: 'PERFECT 7–0 ★  +¥' + Number(settlement.totalReward || 0).toLocaleString('en-US'),
+              secondary: 'REGIONAL CHAMPION ★ // ' + couponText,
+            };
+          }
+          return {
+            primary: 'REGIONAL CHAMPION  +¥' + Number(settlement.completionReward || 0).toLocaleString('en-US'),
+            secondary: 'CHAMPION BADGE EARNED // ' + couponText,
+          };
+        }
+      }
+
+      if (settlement.competition) {
+        if (settlement.competitionFailed) {
+          return {
+            primary: 'STREAK BROKEN',
+            secondary: 'COMPETITION OVER // ROUND ' + settlement.roundNumber + '/3',
+          };
+        }
+        if (settlement.competitionContinues) {
+          return {
+            primary: 'ROUND ' + settlement.roundNumber + ' CLEARED',
+            secondary: (3 - settlement.roundNumber) + ' RACE' +
+              ((3 - settlement.roundNumber) === 1 ? '' : 'S') + ' TO GRAND PRIZE',
+          };
+        }
+        if (settlement.competitionWon && settlement.prizeType === 'COUPON') {
+          return {
+            primary: cars[settlement.prizeCouponCarId].shortName + ' COUPON WON',
+            secondary:
+              settlement.couponCount + ' / ' + settlement.couponRequired +
+              ' COUPONS // REDEEM AT TOKYO AUTO MARKET',
+          };
+        }
+        if (settlement.competitionWon) {
+          return {
+            primary: '+¥' + Number(settlement.prizeCash || 0).toLocaleString('en-US'),
+            secondary: 'COMPETITION CLEARED // BALANCE ¥' +
+              Number(settlement.cash || 0).toLocaleString('en-US'),
+          };
+        }
+      }
+
+      if (isPinkSlip) {
+        return playerWon
+          ? {
+              primary: 'NEW CAR WON',
+              secondary: cars[this.opponentCarId].shortName + ' ADDED TO GARAGE',
+            }
+          : {
+              primary: 'YOUR CAR IS GONE',
+              secondary: cars[this.selectedCarId].shortName + ' LOST',
+            };
+      }
+
+      const delta = Number(settlement.cashDelta || 0);
+      return {
+        primary: (delta >= 0 ? '+¥' : '-¥') + Math.abs(delta).toLocaleString('en-US'),
+        secondary: 'BALANCE ¥' + Number(settlement.cash || 0).toLocaleString('en-US'),
+      };
+    };
+
+    let reward = rewardFor();
+    if (this.lastEasyCouponAward?.carId && cars[this.lastEasyCouponAward.carId]) {
+      const award = this.lastEasyCouponAward;
+      const line =
+        'EASY 20-WIN BONUS // ' + cars[award.carId].shortName +
+        ' COUPON ' + award.count + '/' + award.required;
+      reward = {
+        ...reward,
+        secondary: reward.secondary ? reward.secondary + ' // ' + line : line,
+      };
+    }
+    if (this.lastSurpriseReward) {
+      const bonus = this.lastSurpriseReward;
+      const line = bonus.type === 'WHEEL'
+        ? 'BONUS FIND // ' + bonus.label
+        : 'BONUS FIND // ' + bonus.label + ' COUPON ' + bonus.count + '/' + bonus.required;
+      reward = {
+        ...reward,
+        secondary: reward.secondary ? reward.secondary + ' // ' + line : line,
+      };
+    }
+
+    // Ink-black dead screen with a single manga action panel.
+    this.add.rectangle(780, 360, 1560, 720, 0x080a0f, 1)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    // Low-fi scan lines: deliberately visible, sparse, and pixel-clean.
+    for (let y = 8; y < 720; y += 16) {
+      this.add.rectangle(780, y, 1560, 2, 0xffffff, 0.022)
+        .setDepth(depth + 1)
+        .setScrollFactor(0);
+    }
+
+    const actionPanel = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
+    actionPanel.fillStyle(paper, 1);
+    actionPanel.fillPoints([
+      new Phaser.Geom.Point(42, 72),
+      new Phaser.Geom.Point(1518, 24),
+      new Phaser.Geom.Point(1456, 430),
+      new Phaser.Geom.Point(96, 472),
+    ], true);
+    actionPanel.lineStyle(7, ink, 1);
+    actionPanel.strokePoints([
+      new Phaser.Geom.Point(42, 72),
+      new Phaser.Geom.Point(1518, 24),
+      new Phaser.Geom.Point(1456, 430),
+      new Phaser.Geom.Point(96, 472),
+    ], true);
+
+    // Coarse manga speed rays. More aggressive on a win, more restrained on a loss.
+    const rays = this.add.graphics().setDepth(depth + 3).setScrollFactor(0);
+    rays.lineStyle(playerWon ? 5 : 3, ink, playerWon ? 0.16 : 0.10);
+    const rayOriginX = playerWon ? 1220 : 1110;
+    const rayOriginY = 260;
+    for (let i = -8; i <= 8; i += 1) {
+      rays.lineBetween(rayOriginX, rayOriginY, 90 + i * 95, 80 + Math.abs(i) * 21);
+      rays.lineBetween(rayOriginX, rayOriginY, 180 + i * 80, 445 - Math.abs(i) * 11);
+    }
+
+    // Strong result colour stripe, but keep most of the panel monochrome.
+    const stripe = this.add.graphics().setDepth(depth + 4).setScrollFactor(0);
+    stripe.fillStyle(accent, 1);
+    stripe.fillPoints([
+      new Phaser.Geom.Point(58, 90),
+      new Phaser.Geom.Point(110, 88),
+      new Phaser.Geom.Point(68, 452),
+      new Phaser.Geom.Point(104, 451),
+    ], true);
+
+    const kicker = this.add.text(142, 104, this.falseStart ? 'RED LIGHT' : 'TOKYO SHIFT // RESULT', {
+      fontFamily: titleFont,
+      fontSize: '9px',
+      color: '#15181d',
+      backgroundColor: playerWon ? '#ffd36a' : '#a9bcff',
+      padding: { x: 9, y: 5 },
+    }).setDepth(depth + 7).setScrollFactor(0);
+
+    const title = this.add.text(
+      140,
+      154,
+      playerWon ? 'VICTORY!' : 'NOT THIS TIME.',
+      {
+        fontFamily: titleFont,
+        fontSize: playerWon ? '42px' : '34px',
+        color: '#11141a',
+        fontStyle: 'bold',
+        lineSpacing: 2,
+      }
+    ).setDepth(depth + 8).setScrollFactor(0);
+
+    const subTitle = this.add.text(
+      144,
+      playerWon ? 232 : 226,
+      this.falseStart
+        ? 'FALSE START // DQ'
+        : String(this.raceDistrict + ' // ' + this.raceLocationLabel).toUpperCase(),
+      {
+        fontFamily: titleFont,
+        fontSize: '9px',
+        color: '#3b3f45',
+      }
+    ).setDepth(depth + 8).setScrollFactor(0);
+
+    const quote = playerWon
+      ? (playerCharacter?.resultQuotes?.win || 'That was clean.')
+      : (playerCharacter?.resultQuotes?.loss || 'Next run will be different.');
+    const quoteText = this.add.text(144, 286, '“' + quote + '”', {
+      fontFamily: dataFont,
+      fontSize: '13px',
+      color: '#1f2329',
+      fontStyle: '700',
+      wordWrap: { width: 500 },
+    }).setDepth(depth + 8).setScrollFactor(0);
+
+    const playerDisplayName = [
+      String(this.registry.get('firstName') || '').trim(),
+      String(this.registry.get('lastName') || '').trim(),
+    ].filter(Boolean).join(' ') || playerCharacter.name;
+
+    this.add.text(144, 365, String(playerDisplayName || 'YOU').toUpperCase(), {
+      fontFamily: titleFont,
+      fontSize: '8px',
+      color: '#11141a',
+    }).setDepth(depth + 8).setScrollFactor(0);
+
+    const portraitFrame = this.add.rectangle(1160, 255, 500, 380, 0xffffff, 0)
+      .setStrokeStyle(5, ink, 0.95)
+      .setDepth(depth + 6)
+      .setScrollFactor(0);
+
+    const profile = createCharacterProfile(this, {
+      characterId: this.playerCharacterId,
+      pose: resultPose,
+      x: 1160,
+      y: 255,
+      frameWidth: 500,
+      frameHeight: 380,
+      side: 'right',
+      depth: depth + 5,
+      flipInward: false,
+      profileOverride: playerWon
+        ? { scale: 0.98, offsetX: 0, offsetY: 4 }
+        : { scale: 1.04, offsetX: 0, offsetY: 7 },
+    });
+    const portraitImage = profile?.image || null;
+
+    // Car slices across the bottom edge of the manga panel; wheels spin only
+    // during the very short fly-in, then the whole composition becomes static.
+    const resultCar = this.addResultCar(
+      this.selectedCarId,
+      this.playerPaintColor,
+      930,
+      438,
+      {
+        flipX: false,
+        depth: depth + 10,
+        scaleMul: 1.46,
+      }
+    );
+
+    // Result information is already there when the fly-in lands: no waiting.
+    const infoY = 525;
+    this.add.rectangle(780, infoY, 1420, 150, 0x11151d, 0.98)
+      .setStrokeStyle(3, accent, 0.92)
+      .setDepth(depth + 20)
+      .setScrollFactor(0);
+
+    this.add.text(106, 477, reward.primary, {
+      fontFamily: titleFont,
+      fontSize: '16px',
+      color: accentBright,
+      fontStyle: 'bold',
+      wordWrap: { width: 520 },
+    }).setDepth(depth + 22).setScrollFactor(0);
+
+    this.add.text(106, 520, reward.secondary, {
+      fontFamily: titleFont,
+      fontSize: '7px',
+      color: '#d6d9df',
+      wordWrap: { width: 520 },
+      lineSpacing: 3,
+    }).setDepth(depth + 22).setScrollFactor(0);
+
+    const rows = this.isRollingStart
+      ? [
+          ['1/8', this.falseStart ? '—' : formatTime(this.times.eighth), formatTime(this.opponentTimes.eighth)],
+          ['1/4', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
+          [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
+          ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
+        ]
+      : [
+          ['RT', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
+          ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
+          [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
+          ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
+        ];
+
+    const timingX = 720;
+    this.add.text(timingX, 472, cars[this.selectedCarId].shortName, {
+      fontFamily: titleFont,
+      fontSize: '7px',
+      color: '#f8f8f5',
+    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+    this.add.text(1030, 472, cars[this.opponentCarId].shortName, {
+      fontFamily: titleFont,
+      fontSize: '7px',
+      color: '#bfc6d4',
+    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+
+    rows.forEach((row, index) => {
+      const y = 506 + index * 28;
+      this.add.text(600, y, row[0], {
+        fontFamily: dataFont,
+        fontSize: '7px',
+        color: '#858e9b',
+        fontStyle: '700',
+      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+      this.add.text(timingX, y, row[1], {
+        fontFamily: dataFont,
+        fontSize: '9px',
+        color: '#ffffff',
+        fontStyle: '700',
+      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+      this.add.text(1030, y, row[2], {
+        fontFamily: dataFont,
+        fontSize: '9px',
+        color: '#c4cad4',
+        fontStyle: '700',
+      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+    });
+
+    const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
+    const actionHint = settlement?.gameOver
+      ? 'RUN OVER'
+      : settlement?.crewBattleContinues
+        ? 'NEXT CREW MATCH'
+        : settlement?.teamChallengeContinues
+          ? 'NEXT CHALLENGER'
+          : settlement?.competitionContinues
+            ? 'NEXT ROUND'
+            : 'CONTINUE';
+
+    const nextButton = this.add.rectangle(1330, 632, 260, 58, accent, 0.94)
+      .setStrokeStyle(4, 0xf4efe5, 0.9)
+      .setDepth(depth + 24)
+      .setScrollFactor(0);
+
+    this.add.text(1330, 628, 'NEXT  >', {
+      fontFamily: titleFont,
+      fontSize: '13px',
+      color: playerWon ? '#13161b' : '#f7f8ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
+
+    this.add.text(1330, 675, actionHint + ' // TAP ANYWHERE', {
+      fontFamily: titleFont,
+      fontSize: '6px',
+      color: '#7f8793',
+    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
+
+    let advanceArmed = false;
+    let advanced = false;
+    const tapTarget = this.add.rectangle(780, 360, 1560, 720, 0xffffff, 0.001)
+      .setDepth(depth + 80)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+
+    const advance = () => {
+      if (!advanceArmed || advanced || sceneCutsceneActive(this)) return;
+      advanced = true;
+      tapTarget.disableInteractive();
+
+      if (settlement?.gameOver) {
+        this.scene.start('RunOverScene');
+      } else if (settlement?.crewBattleContinues) {
+        this.startNextCrewBattleRound();
+      } else if (settlement?.teamChallengeContinues) {
+        this.showNextTunerChallengeBriefing();
+      } else if (settlement?.competitionContinues) {
+        this.startNextCompetitionRound();
+      } else {
+        this.scene.start(returnScene);
+      }
+    };
+
+    tapTarget.on('pointerdown', advance);
+
+    const nextKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    nextKey.once('down', advance);
+
+    // Snappy 220–260 ms fly-in. It should read as an impact, not a cinematic.
+    const flyObjects = [title, subTitle, quoteText, kicker];
+    flyObjects.forEach(obj => {
+      obj.x -= 310;
+      obj.setAlpha(0);
+    });
+
+    this.tweens.add({
+      targets: flyObjects,
+      x: '+=310',
+      alpha: 1,
+      duration: 190,
+      ease: 'Expo.Out',
+    });
+
+    if (portraitImage) {
+      portraitImage.setAlpha(0);
+      portraitImage.x += 260;
+      this.tweens.add({
+        targets: portraitImage,
+        x: '-=260',
+        alpha: 1,
+        duration: 220,
+        ease: 'Expo.Out',
+      });
+    }
+
+    portraitFrame.setAlpha(0);
+    this.tweens.add({
+      targets: portraitFrame,
+      alpha: 1,
+      duration: 150,
+      ease: 'Linear',
+    });
+
+    if (resultCar?.rearWheel && resultCar?.frontWheel) {
+      this.tweens.add({
+        targets: [resultCar.rearWheel, resultCar.frontWheel],
+        angle: playerWon ? 720 : 360,
+        duration: playerWon ? 240 : 210,
+        ease: playerWon ? 'Cubic.Out' : 'Quad.Out',
+      });
+    }
+
+    if (!playerWon) {
+      // One tiny low-fi "drop" makes the sad/loss pose read without slowing play.
+      this.tweens.add({
+        targets: portraitImage ? [portraitImage] : [],
+        y: '+=8',
+        duration: 150,
+        delay: 110,
+        ease: 'Quad.In',
+      });
+    } else {
+      // Micro impact shake on victory only.
+      this.cameras.main.shake(85, 0.0022);
+    }
+
+    this.time.delayedCall(210, () => {
+      advanceArmed = true;
+      nextButton.setFillStyle(accent, 1);
+    });
+
+    // Preserve the existing special-result follow-ups. They run after the
+    // manga panel lands so an ordinary result never waits on animation.
+    this.time.delayedCall(265, () => {
+      if (!settlement) return;
+
+      if (isPinkSlip) {
+        const rivalName = String(rivalCharacter?.name || 'RIVAL').toUpperCase();
+        const carName = String(
+          playerWon
+            ? (cars[this.opponentCarId]?.shortName || 'CAR')
+            : (cars[this.selectedCarId]?.shortName || 'CAR')
+        ).toUpperCase();
+
+        const showDelivery = () => {
+          if (settlement?.acquiredCarId) {
+            this.showAcquiredCarDelivery(settlement.acquiredCarId);
+          }
+        };
+
+        const resultCutscene = playMangaCutscene(
+          this,
+          wasSpecialChallenge
+            ? (playerWon ? 'specialChallengerWin' : 'specialChallengerLoss')
+            : (playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss'),
+          {
+            historyId: wasSpecialChallenge
+              ? 'specialChallengerResult:' + Date.now() + ':' + (playerWon ? 'W' : 'L')
+              : undefined,
+            characterOverrides: {
+              RIVAL: this.opponentCharacterId,
+              WINNER: playerWon ? this.playerCharacterId : this.opponentCharacterId,
+              LOSER: playerWon ? this.opponentCharacterId : this.playerCharacterId,
+            },
+            variables: {
+              RIVAL_NAME: rivalName,
+              CAR: carName,
+            },
+            onComplete: showDelivery,
+          }
+        );
+        if (!resultCutscene?.played) showDelivery();
+      } else if (settlement?.teamChallengeCompleted) {
+        const perfect = Boolean(settlement.teamChallengePerfect);
+        const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
+        const rivalName = String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase();
+        playMangaCutscene(this, cutsceneId, {
+          historyId: cutsceneId + ':' + String(settlement.regionId || 'REGION'),
+          characterOverrides: { RIVAL: this.opponentCharacterId },
+          variables: {
+            REGION: String(settlement.regionId || 'REGION').toUpperCase(),
+            RIVAL_NAME: rivalName,
+            CASH_REWARD: Number(settlement.totalReward || 0).toLocaleString('en-US'),
+            DONOR: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
+            COUPON_AWARDS: String(Number(settlement.couponAwards || 0)),
+            BADGE: String(
+              settlement.badgeLabel ||
+              (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+            ),
+          },
+        });
+      } else if (settlement?.competitionWon) {
+        const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
+        playMangaCutscene(this, 'competitionChampion', {
+          characterOverrides: { PROMOTER: promoterId },
+          variables: {
+            PROMOTER_NAME: String(
+              characters[promoterId]?.name || 'Masato Kuroda'
+            ).toUpperCase(),
+          },
+        });
+      }
+    });
+  }
+
   showResultsOverlay() {
+    if (USE_MANGA_RACE_RESULTS) {
+      this.showMangaResultsOverlay();
+      return;
+    }
+
     this.engineAudio?.fadeOut();
     this.resultsShown = true;
     this.controls.enabled = false;
