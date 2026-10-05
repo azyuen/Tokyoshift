@@ -2445,8 +2445,10 @@ export default class GarageScene extends Phaser.Scene {
       ? previous
       : warehouseCars[0] || personalCars[0] || null;
 
-    // Commit the destination state before touching either scene. This makes the
-    // exit deterministic even if the sleeping Warehouse needs a UI refresh.
+    // Persist an unambiguous ordinary Warehouse state first. This is especially
+    // important for dev profiles, which can have extra scene shortcuts and a
+    // GarageScene object that is not necessarily the sleeping Warehouse
+    // instance that originally launched Crew Space.
     try { this.tweens.killTweensOf(this.selectedDisplay || []); } catch (e) {}
     this.crewFocusedCharacterId = null;
     this.registry.set('crewSpaceActive', false);
@@ -2460,51 +2462,19 @@ export default class GarageScene extends Phaser.Scene {
     this.crewBackButton?.disableInteractive();
     this.crewBackButtonLabel?.setText('RETURNING TO WORKSHOP...');
 
-    // Use a browser task rather than a CrewSpace Phaser timer. More
-    // importantly, wake/stop the scenes BEFORE doing any optional Warehouse UI
-    // refresh. A refresh error must never be able to strand the player here.
+    // Crew Space is a presentation layered on top of Warehouse HQ. Phaser's
+    // sleeping-scene lifecycle can become ambiguous after dev/test shortcuts or
+    // repeated transitions, so do not attempt to infer which GarageScene object
+    // should be woken here. The project already uses controlled internal reloads
+    // for workshop/map transitions because they are deterministic on iOS/PWA.
+    try {
+      sessionStorage.setItem('tokyoShiftInternalReload', '1');
+      sessionStorage.setItem('tokyoShiftForceGarage', '1');
+      sessionStorage.removeItem('tokyoShiftBootMessage');
+    } catch (e) {}
+
     window.setTimeout(() => {
-      const warehouse = this.scene.get('GarageScene');
-
-      if (warehouse) {
-        try {
-          if (this.scene.isSleeping('GarageScene')) {
-            this.scene.wake('GarageScene');
-          } else if (this.scene.isPaused('GarageScene')) {
-            this.scene.resume('GarageScene');
-          }
-
-          this.scene.bringToTop?.('GarageScene');
-        } catch (error) {
-          console.error('Could not wake Warehouse HQ', error);
-        }
-
-        // Crew Space must disappear regardless of whether the sleeping
-        // Warehouse's cosmetic refresh succeeds.
-        try {
-          this.scene.stop('CrewSpaceScene');
-        } catch (error) {
-          console.error('Could not stop Crew Space cleanly', error);
-        }
-
-        try {
-          warehouse.restoreWarehouseAfterCrewSpace?.(nextCarId);
-        } catch (error) {
-          console.error('Warehouse refresh after Crew Space failed', error);
-        }
-
-        this._warehousePresentationTransitioning = false;
-        return;
-      }
-
-      // Recovery for a direct Crew Space boot where no preserved Warehouse
-      // instance exists.
-      this.scene.start('GarageScene', {
-        crewMode: false,
-        returningFromCrewSpace: true,
-        workshopLocationId: 'shinonomeWarehouseStrip',
-      });
-      this._warehousePresentationTransitioning = false;
+      window.location.reload();
     }, 0);
   }
 
