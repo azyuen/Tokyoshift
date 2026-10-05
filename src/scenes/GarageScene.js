@@ -178,31 +178,51 @@ export default class GarageScene extends Phaser.Scene {
     };
 
     const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
-    const activeWorkshopId = this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+    const activeWorkshopId = this.crewMode
+      ? 'shinonomeWarehouseStrip'
+      : (this.registry.get('workshopLocationId') || 'shinonomeWorkshop');
     const assignments = normaliseCarGarageLocations(
       ownedCarIds,
       this.registry.get('carGarageLocations') || {},
       Number(this.registry.get('garageTier') || 0)
     );
-    const localCars = getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId);
+    const members = getCrewMembers(this.registry);
+    const crewCars = Object.values(members)
+      .map(member => member.loanCarId)
+      .filter(id => cars[id]);
+    const localCars = this.crewMode
+      ? crewCars
+      : getCarsInWorkshop(ownedCarIds, assignments, activeWorkshopId)
+          .filter(id => !cars[id]?.crewLoan);
     const carStates = this.registry.get('carStates') || {};
 
-    // Load both day/night variants only for the active workshop so the global
-    // phase can flip instantly without increasing boot cost across all garages.
+    // Crew Space has its own authored day/night room. Normal workshops keep
+    // using their phase-aware workshop backgrounds.
     const activeWorkshop = getWorkshopByLocationId(activeWorkshopId);
-    ['day', 'night'].forEach(phase => {
-      const background = getWorkshopPhaseBackground(activeWorkshop, phase);
-      if (background?.key && background?.path) {
-        queueImage(background.key, background.path + '?v=20260929-r263');
-      }
-    });
+    if (this.crewMode) {
+      queueImage(
+        'crewSpaceDayBg',
+        'assets/Garage/shinonome_crewspace_day.png?v=20261005-r349'
+      );
+      queueImage(
+        'crewSpaceNightBg',
+        'assets/Garage/shinonome_crewspace_night.png?v=20261005-r349'
+      );
+    } else {
+      ['day', 'night'].forEach(phase => {
+        const background = getWorkshopPhaseBackground(activeWorkshop, phase);
+        if (background?.key && background?.path) {
+          queueImage(background.key, background.path + '?v=20260929-r263');
+        }
+      });
 
-    // Keep the legacy active texture and home texture available as hard
-    // fallbacks for old saves or a missing uploaded phase file.
-    [activeWorkshop.textureKey, 'garageWorkshopBg'].forEach(key => {
-      const asset = garageAssets.find(item => item.key === key);
-      if (asset) queueImage(asset.key, asset.path);
-    });
+      // Keep the legacy active texture and home texture available as hard
+      // fallbacks for old saves or a missing uploaded phase file.
+      [activeWorkshop.textureKey, 'garageWorkshopBg'].forEach(key => {
+        const asset = garageAssets.find(item => item.key === key);
+        if (asset) queueImage(asset.key, asset.path);
+      });
+    }
 
     const mapPhase = getWorldPhase() === 'day' ? 'day' : 'night';
     const workshopMapAsset = mapPhase === 'day'
@@ -216,24 +236,28 @@ export default class GarageScene extends Phaser.Scene {
         };
     queueImage(workshopMapAsset.key, workshopMapAsset.path);
 
-    // Street File issue art is lightweight and belongs to the workshop UI.
-    // Load the current cover + intro together so opening the magazine is instant.
-    const magazineIssue = getActiveMagazineIssue(this.registry);
-    queueImage(
-      magazineIssue?.coverKey,
-      magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r278' : null
-    );
-    queueImage(
-      magazineIssue?.insetKey,
-      magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r278' : null
-    );
+    // Street File belongs to the ordinary workshop. Crew Space uses the same
+    // three-panel layout but keeps the room focused on the team.
+    if (!this.crewMode) {
+      const magazineIssue = getActiveMagazineIssue(this.registry);
+      queueImage(
+        magazineIssue?.coverKey,
+        magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r278' : null
+      );
+      queueImage(
+        magazineIssue?.insetKey,
+        magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r278' : null
+      );
+    }
 
-    // Garage characters shown immediately.
-    [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']
-      .forEach(id => {
-        const visual = characters[id]?.visual;
-        if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
-      });
+    // Garage / Crew Space characters shown immediately.
+    const characterIds = this.crewMode
+      ? Object.values(members).map(member => member.characterId)
+      : [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto'];
+    [...new Set(characterIds)].forEach(id => {
+      const visual = characters[id]?.visual;
+      if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+    });
 
     // A workshop can show and switch between its local cars without another
     // network round trip. Cars stored at other workshops stay unloaded.
@@ -246,7 +270,11 @@ export default class GarageScene extends Phaser.Scene {
       queued += preloadTunerDecalAssets(this, carStates[id] || {}, '20260928-r242');
     });
 
-    startSceneLoading(this, 'LOADING WORKSHOP', queued);
+    startSceneLoading(
+      this,
+      this.crewMode ? 'LOADING CREW SPACE' : 'LOADING WORKSHOP',
+      queued
+    );
   }
 
   create() {
