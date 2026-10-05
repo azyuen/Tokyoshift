@@ -489,6 +489,18 @@ export default class MeetScene extends Phaser.Scene {
     finishSceneLoading('READY');
   }
 
+  getActiveDriverCharacterId() {
+    const selectedCarId = this.registry.get('selectedCarId');
+    const selectedCar = cars[selectedCarId];
+    const crewDriverId = this.registry.get('selectedRacePlayerCharacterId');
+
+    if (selectedCar?.crewLoan && crewDriverId && characters[crewDriverId]) {
+      return crewDriverId;
+    }
+
+    return this.registry.get('playerCharacterId') || 'renMizuno';
+  }
+
   getMeetRaceResults(locationId) {
     const store = this.registry.get('meetRaceResults') || {};
     return Array.isArray(store[locationId]) ? store[locationId] : [];
@@ -843,7 +855,7 @@ export default class MeetScene extends Phaser.Scene {
     const copy = REGIONAL_INTRO_COPY[regionId];
     if (!copy) return false;
 
-    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const playerCharacterId = this.getActiveDriverCharacterId();
     const npcId = getRivalCharacterOrderForRegion(regionId)
       .find(id => id !== playerCharacterId && characters[id]);
     if (!npcId) return false;
@@ -3102,7 +3114,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   chooseCompetitionCharacter(rating = 4, exclude = []) {
-    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const playerId = this.getActiveDriverCharacterId();
     const blocked = new Set([playerId, ...exclude]);
     const location = getMeetLocation(this.selectedMeetLocation);
 
@@ -3676,7 +3688,7 @@ export default class MeetScene extends Phaser.Scene {
   generateOffersForLocation(locationId) {
     const location = getMeetLocation(locationId);
     const profile = getEncounterProfile(locationId, location.difficulty);
-    const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
+    const playerCharacterId = this.getActiveDriverCharacterId();
 
     const regionalPool = getRivalCharacterOrderForRegion(location.district);
     const regionalTeam = hasRegionalTeam(location.district);
