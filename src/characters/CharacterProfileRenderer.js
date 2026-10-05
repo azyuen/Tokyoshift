@@ -1,7 +1,8 @@
 import {
   characters,
   DEFAULT_CHARACTER_PROFILE,
-} from '../data/characters.js?v=20261004-r333';
+  getCharacterVisualAsset,
+} from '../data/characters.js?v=20261005-r365';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
@@ -107,33 +108,12 @@ function getProfileSubjectMetrics(source, cacheKey = '') {
   }
 }
 
-const POSE_KEYS = {
-  idle: ['spriteKey', 'path'],
-  win: ['winSpriteKey', 'winPath'],
-  loss: ['lossSpriteKey', 'lossPath'],
-};
-
 const normalisePose = pose => (
-  pose === 'win' || pose === 'loss' ? pose : 'idle'
+  String(pose || 'idle').trim().toLowerCase() || 'idle'
 );
 
 export function getCharacterProfileTexture(characterId, pose = 'idle') {
-  const character = characters[characterId];
-  if (!character?.visual) return null;
-
-  const resolvedPose = normalisePose(pose);
-  const [keyField, pathField] = POSE_KEYS[resolvedPose];
-  const key = character.visual[keyField];
-  const path = character.visual[pathField];
-
-  if (key) return { key, path, pose: resolvedPose, fallback: false };
-
-  return {
-    key: character.visual.spriteKey,
-    path: character.visual.path,
-    pose: 'idle',
-    fallback: resolvedPose !== 'idle',
-  };
+  return getCharacterVisualAsset(characterId, normalisePose(pose));
 }
 
 export function resolveCharacterProfile(
