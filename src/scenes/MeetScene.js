@@ -439,17 +439,17 @@ export default class MeetScene extends Phaser.Scene {
     const activeRegionRivals = getRivalCharacterOrderForRegion(
       getMeetLocation(this.selectedMeetLocation).district
     );
-    const visibleMeetCharacters = new Set(
-      (this.locationOffers[this.selectedMeetLocation] || [])
-        .map(offer => offer?.characterId)
-        .filter(Boolean)
+    const visibleMeetOffers = this.locationOffers[this.selectedMeetLocation] || [];
+    const activeChallengerPresent = visibleMeetOffers.some(offer =>
+      offer?.characterId === activeChallenger?.characterId &&
+      offer?.carId === activeChallenger?.carId
     );
     let specialChallengerShown = false;
     if (
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       activeRegionRivals.includes(activeChallenger.characterId) &&
-      visibleMeetCharacters.has(activeChallenger.characterId) &&
+      activeChallengerPresent &&
       this.hasCar
     ) {
       specialChallengerShown = true;
@@ -459,7 +459,7 @@ export default class MeetScene extends Phaser.Scene {
       activeChallenger.locationId === this.selectedMeetLocation &&
       (
         !activeRegionRivals.includes(activeChallenger.characterId) ||
-        !visibleMeetCharacters.has(activeChallenger.characterId)
+        !activeChallengerPresent
       )
     ) {
       this.registry.set('specialChallenger', null);
@@ -2689,13 +2689,16 @@ export default class MeetScene extends Phaser.Scene {
     ) return null;
 
     const existing = this.registry.get('specialChallenger');
-    const visibleHere = new Set(
-      (this.locationOffers[this.selectedMeetLocation] || this.offers || [])
-        .map(offer => offer?.characterId)
-        .filter(Boolean)
+    const existingStillAtMeet = (
+      this.locationOffers[this.selectedMeetLocation] ||
+      this.offers ||
+      []
+    ).some(offer =>
+      offer?.characterId === existing?.characterId &&
+      offer?.carId === existing?.carId
     );
-    if (existing?.active && visibleHere.has(existing.characterId)) return existing;
-    if (existing?.active && !visibleHere.has(existing.characterId)) {
+    if (existing?.active && existingStillAtMeet) return existing;
+    if (existing?.active && !existingStillAtMeet) {
       this.registry.set('specialChallenger', null);
     }
 
