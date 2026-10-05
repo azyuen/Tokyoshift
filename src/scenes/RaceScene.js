@@ -2053,6 +2053,7 @@ export default class RaceScene extends Phaser.Scene {
       rearWheel,
       frontWheel,
       bodyLayers,
+      objects: carObjects,
     };
   }
 
@@ -2063,8 +2064,8 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.enabled = false;
 
     if (this.devCutsceneControl) {
-      this.devCutsceneControl.button.setDepth(290);
-      this.devCutsceneControl.label.setDepth(291);
+      this.devCutsceneControl.button.setDepth(390);
+      this.devCutsceneControl.label.setDepth(391);
       this.devCutsceneControl.setVisible(true);
     }
     this.cancelButton?.disableInteractive();
@@ -2094,16 +2095,20 @@ export default class RaceScene extends Phaser.Scene {
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
     const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
     const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
-    const resultPose = playerWon ? 'win' : 'loss';
-    const accent = playerWon ? 0xf2b84b : 0x6f8edb;
-    const accentBright = playerWon ? '#ffd36a' : '#94b0ff';
-    const accentSoft = playerWon ? '#f2b84b' : '#6f8edb';
-    const paper = 0xf1eadb;
-    const ink = 0x11141a;
-    const depth = 200;
+    const winnerCharacter = playerWon ? playerCharacter : rivalCharacter;
+    const loserCharacter = playerWon ? rivalCharacter : playerCharacter;
+    const winnerCharacterId = playerWon ? this.playerCharacterId : this.opponentCharacterId;
+    const loserCharacterId = playerWon ? this.opponentCharacterId : this.playerCharacterId;
+    const winnerCarId = playerWon ? this.selectedCarId : this.opponentCarId;
+    const winnerPaintColor = playerWon ? this.playerPaintColor : this.opponentPaintColor;
+    const accent = playerWon ? 0xd6a43a : 0x607bb7;
+    const accentBright = playerWon ? '#f0c65a' : '#8fa8df';
+    const paper = 0xeee8dc;
+    const ink = 0x111318;
+    const depth = 300;
     const titleFont = PIXEL_FONT;
     const dataFont = BODY_FONT;
-    const formatTime = value => value == null ? '—' : value.toFixed(3) + ' s';
+    const formatTime = value => value == null ? '—' : value.toFixed(3);
     const formatSpeed = value => value == null ? '—' : value.toFixed(1);
 
     const rewardFor = () => {
@@ -2270,214 +2275,323 @@ export default class RaceScene extends Phaser.Scene {
       };
     }
 
-    // Ink-black dead screen with a single manga action panel.
-    this.add.rectangle(780, 360, 1560, 720, 0x080a0f, 1)
-      .setDepth(depth)
-      .setScrollFactor(0);
-
-    // Low-fi scan lines: deliberately visible, sparse, and pixel-clean.
-    for (let y = 8; y < 720; y += 16) {
-      this.add.rectangle(780, y, 1560, 2, 0xffffff, 0.022)
-        .setDepth(depth + 1)
-        .setScrollFactor(0);
-    }
-
-    const actionPanel = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
-    actionPanel.fillStyle(paper, 1);
-    actionPanel.fillPoints([
-      new Phaser.Geom.Point(42, 72),
-      new Phaser.Geom.Point(1518, 24),
-      new Phaser.Geom.Point(1456, 430),
-      new Phaser.Geom.Point(96, 472),
-    ], true);
-    actionPanel.lineStyle(7, ink, 1);
-    actionPanel.strokePoints([
-      new Phaser.Geom.Point(42, 72),
-      new Phaser.Geom.Point(1518, 24),
-      new Phaser.Geom.Point(1456, 430),
-      new Phaser.Geom.Point(96, 472),
-    ], true);
-
-    // Coarse manga speed rays. More aggressive on a win, more restrained on a loss.
-    const rays = this.add.graphics().setDepth(depth + 3).setScrollFactor(0);
-    rays.lineStyle(playerWon ? 5 : 3, ink, playerWon ? 0.16 : 0.10);
-    const rayOriginX = playerWon ? 1220 : 1110;
-    const rayOriginY = 260;
-    for (let i = -8; i <= 8; i += 1) {
-      rays.lineBetween(rayOriginX, rayOriginY, 90 + i * 95, 80 + Math.abs(i) * 21);
-      rays.lineBetween(rayOriginX, rayOriginY, 180 + i * 80, 445 - Math.abs(i) * 11);
-    }
-
-    // Strong result colour stripe, but keep most of the panel monochrome.
-    const stripe = this.add.graphics().setDepth(depth + 4).setScrollFactor(0);
-    stripe.fillStyle(accent, 1);
-    stripe.fillPoints([
-      new Phaser.Geom.Point(58, 90),
-      new Phaser.Geom.Point(110, 88),
-      new Phaser.Geom.Point(68, 452),
-      new Phaser.Geom.Point(104, 451),
-    ], true);
-
-    const kicker = this.add.text(142, 104, this.falseStart ? 'RED LIGHT' : 'TOKYO SHIFT // RESULT', {
-      fontFamily: titleFont,
-      fontSize: '9px',
-      color: '#15181d',
-      backgroundColor: playerWon ? '#ffd36a' : '#a9bcff',
-      padding: { x: 9, y: 5 },
-    }).setDepth(depth + 7).setScrollFactor(0);
-
-    const title = this.add.text(
-      140,
-      154,
-      playerWon ? 'VICTORY!' : 'NOT THIS TIME.',
-      {
-        fontFamily: titleFont,
-        fontSize: playerWon ? '42px' : '34px',
-        color: '#11141a',
-        fontStyle: 'bold',
-        lineSpacing: 2,
-      }
-    ).setDepth(depth + 8).setScrollFactor(0);
-
-    const subTitle = this.add.text(
-      144,
-      playerWon ? 232 : 226,
-      this.falseStart
-        ? 'FALSE START // DQ'
-        : String(this.raceDistrict + ' // ' + this.raceLocationLabel).toUpperCase(),
-      {
-        fontFamily: titleFont,
-        fontSize: '9px',
-        color: '#3b3f45',
-      }
-    ).setDepth(depth + 8).setScrollFactor(0);
-
-    const quote = playerWon
-      ? (playerCharacter?.resultQuotes?.win || 'That was clean.')
-      : (playerCharacter?.resultQuotes?.loss || 'Next run will be different.');
-    const quoteText = this.add.text(144, 286, '“' + quote + '”', {
-      fontFamily: dataFont,
-      fontSize: '13px',
-      color: '#1f2329',
-      fontStyle: '700',
-      wordWrap: { width: 500 },
-    }).setDepth(depth + 8).setScrollFactor(0);
 
     const playerDisplayName = [
       String(this.registry.get('firstName') || '').trim(),
       String(this.registry.get('lastName') || '').trim(),
     ].filter(Boolean).join(' ') || playerCharacter.name;
+    const rivalDisplayName = rivalCharacter.name;
+    const winnerName = playerWon ? playerDisplayName : rivalDisplayName;
+    const loserName = playerWon ? rivalDisplayName : playerDisplayName;
 
-    this.add.text(144, 365, String(playerDisplayName || 'YOU').toUpperCase(), {
-      fontFamily: titleFont,
-      fontSize: '8px',
-      color: '#11141a',
-    }).setDepth(depth + 8).setScrollFactor(0);
-
-    const portraitFrame = this.add.rectangle(1160, 255, 500, 380, 0xffffff, 0)
-      .setStrokeStyle(5, ink, 0.95)
-      .setDepth(depth + 6)
+    // Draft 2: FINISH FREEZE. The action is panel movement, halftone, tyre
+    // smoke and broken chequer fragments rather than conventional speed lines.
+    this.add.rectangle(780, 360, 1560, 720, 0x080a0e, 1)
+      .setDepth(depth)
       .setScrollFactor(0);
 
-    const profile = createCharacterProfile(this, {
-      characterId: this.playerCharacterId,
-      pose: resultPose,
-      x: 1160,
-      y: 255,
-      frameWidth: 500,
-      frameHeight: 380,
-      side: 'right',
-      depth: depth + 5,
-      flipInward: false,
-      profileOverride: playerWon
-        ? { scale: 0.98, offsetX: 0, offsetY: 4 }
-        : { scale: 1.04, offsetX: 0, offsetY: 7 },
-    });
-    const portraitImage = profile?.image || null;
+    for (let y = 7; y < 720; y += 15) {
+      this.add.rectangle(780, y, 1560, 1, 0xffffff, 0.024)
+        .setDepth(depth + 1)
+        .setScrollFactor(0);
+    }
 
-    // Car slices across the bottom edge of the manga panel; wheels spin only
-    // during the very short fly-in, then the whole composition becomes static.
-    const resultCar = this.addResultCar(
-      this.selectedCarId,
-      this.playerPaintColor,
-      930,
-      438,
+    const page = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
+    page.fillStyle(paper, 1);
+    page.fillPoints([
+      new Phaser.Geom.Point(38, 28),
+      new Phaser.Geom.Point(1526, 56),
+      new Phaser.Geom.Point(1490, 468),
+      new Phaser.Geom.Point(70, 445),
+    ], true);
+    page.lineStyle(7, ink, 1);
+    page.strokePoints([
+      new Phaser.Geom.Point(38, 28),
+      new Phaser.Geom.Point(1526, 56),
+      new Phaser.Geom.Point(1490, 468),
+      new Phaser.Geom.Point(70, 445),
+    ], true);
+
+    // Halftone burst behind the winner. Dots are intentionally coarse so they
+    // read as low-fi printed manga rather than a modern particle effect.
+    const halftone = this.add.container(0, 0).setDepth(depth + 3).setScrollFactor(0);
+    const halfX = playerWon ? 350 : 1210;
+    const halfY = 220;
+    for (let row = -4; row <= 4; row += 1) {
+      for (let col = -5; col <= 5; col += 1) {
+        const distance = Math.sqrt(row * row + col * col);
+        if (distance > 6.1) continue;
+        const radius = Math.max(2, 8 - distance);
+        const dot = this.add.circle(
+          halfX + col * 29 + (row % 2 ? 13 : 0),
+          halfY + row * 27,
+          radius,
+          ink,
+          Math.max(0.05, 0.22 - distance * 0.02)
+        ).setScrollFactor(0);
+        halftone.add(dot);
+      }
+    }
+
+    // A short broken chequer strip marks the finish without dominating the art.
+    const chequers = [];
+    const checkerY = 398;
+    for (let i = 0; i < 17; i += 1) {
+      const size = i % 3 === 0 ? 18 : 14;
+      const square = this.add.rectangle(
+        570 + i * 35,
+        checkerY + (i % 2) * 17,
+        size,
+        size,
+        i % 2 === 0 ? ink : accent,
+        i % 2 === 0 ? 0.72 : 0.74
+      ).setAngle((i % 5 - 2) * 4)
+        .setDepth(depth + 4)
+        .setScrollFactor(0);
+      chequers.push(square);
+    }
+
+    const winnerOnLeft = playerWon;
+    const winnerX = winnerOnLeft ? 300 : 1260;
+    const loserX = winnerOnLeft ? 1260 : 300;
+    const winnerY = 205;
+    const loserY = 220;
+    const winnerSize = 310;
+    const loserSize = 220;
+
+    const winnerPanel = this.add.graphics().setDepth(depth + 6).setScrollFactor(0);
+    winnerPanel.fillStyle(0xf5f0e6, 0.96);
+    winnerPanel.lineStyle(6, ink, 1);
+    const winnerPoints = winnerOnLeft
+      ? [
+          new Phaser.Geom.Point(winnerX - 170, winnerY - 164),
+          new Phaser.Geom.Point(winnerX + 175, winnerY - 142),
+          new Phaser.Geom.Point(winnerX + 140, winnerY + 166),
+          new Phaser.Geom.Point(winnerX - 154, winnerY + 145),
+        ]
+      : [
+          new Phaser.Geom.Point(winnerX - 175, winnerY - 142),
+          new Phaser.Geom.Point(winnerX + 170, winnerY - 164),
+          new Phaser.Geom.Point(winnerX + 154, winnerY + 145),
+          new Phaser.Geom.Point(winnerX - 140, winnerY + 166),
+        ];
+    winnerPanel.fillPoints(winnerPoints, true);
+    winnerPanel.strokePoints(winnerPoints, true);
+
+    const loserPanel = this.add.rectangle(
+      loserX,
+      loserY,
+      loserSize + 18,
+      loserSize + 18,
+      0xd8d3ca,
+      0.92
+    ).setStrokeStyle(5, ink, 0.92)
+      .setDepth(depth + 6)
+      .setScrollFactor(0)
+      .setAngle(winnerOnLeft ? 2 : -2);
+
+    const winnerProfile = createCharacterProfile(this, {
+      characterId: winnerCharacterId,
+      pose: 'win',
+      x: winnerX,
+      y: winnerY,
+      frameWidth: winnerSize,
+      frameHeight: winnerSize,
+      side: winnerOnLeft ? 'left' : 'right',
+      depth: depth + 7,
+      flipInward: true,
+      profileOverride: { scale: 1.02, offsetY: 6 },
+    });
+
+    const loserProfile = createCharacterProfile(this, {
+      characterId: loserCharacterId,
+      pose: 'loss',
+      x: loserX,
+      y: loserY,
+      frameWidth: loserSize,
+      frameHeight: loserSize,
+      side: winnerOnLeft ? 'right' : 'left',
+      depth: depth + 7,
+      flipInward: true,
+      dimmed: true,
+      profileOverride: { scale: 1.02, offsetY: 7 },
+    });
+
+    const winnerPlate = this.add.text(
+      winnerX,
+      363,
+      String(winnerName || winnerCharacter?.name || 'WINNER').toUpperCase(),
+      {
+        fontFamily: titleFont,
+        fontSize: '8px',
+        color: '#111318',
+        backgroundColor: accentBright,
+        padding: { x: 10, y: 5 },
+      }
+    ).setOrigin(0.5)
+      .setDepth(depth + 10)
+      .setScrollFactor(0);
+
+    const loserPlate = this.add.text(
+      loserX,
+      352,
+      String(loserName || loserCharacter?.name || 'RIVAL').toUpperCase(),
+      {
+        fontFamily: titleFont,
+        fontSize: '7px',
+        color: '#ece9e2',
+        backgroundColor: '#242832dd',
+        padding: { x: 9, y: 5 },
+      }
+    ).setOrigin(0.5)
+      .setDepth(depth + 10)
+      .setScrollFactor(0);
+
+    const stamp = this.add.text(
+      780,
+      86,
+      this.falseStart ? 'RED LIGHT' : (playerWon ? 'VICTORY!' : 'NOT THIS TIME.'),
+      {
+        fontFamily: titleFont,
+        fontSize: playerWon ? '35px' : '29px',
+        color: playerWon ? '#17191d' : '#f4f5fa',
+        backgroundColor: playerWon ? accentBright : '#405681',
+        padding: { x: 17, y: 8 },
+      }
+    ).setOrigin(0.5)
+      .setAngle(playerWon ? -2 : 2)
+      .setDepth(depth + 14)
+      .setScrollFactor(0);
+
+    const raceLabel = this.add.text(
+      780,
+      137,
+      String(this.raceDistrict + ' // ' + this.raceLocationLabel).toUpperCase(),
+      {
+        fontFamily: titleFont,
+        fontSize: '7px',
+        color: '#34383f',
+      }
+    ).setOrigin(0.5)
+      .setDepth(depth + 13)
+      .setScrollFactor(0);
+
+    // The winning car is the action beat, even when the player loses.
+    const winnerCar = this.addResultCar(
+      winnerCarId,
+      winnerPaintColor,
+      820,
+      414,
       {
         flipX: false,
-        depth: depth + 10,
-        scaleMul: 1.46,
+        depth: depth + 18,
+        scaleMul: 1.62,
       }
     );
 
-    // Result information is already there when the fly-in lands: no waiting.
-    const infoY = 525;
-    this.add.rectangle(780, infoY, 1420, 150, 0x11151d, 0.98)
-      .setStrokeStyle(3, accent, 0.92)
-      .setDepth(depth + 20)
+    const winnerCarObjects = winnerCar?.objects || [
+      winnerCar?.shadow,
+      winnerCar?.rearBacking,
+      winnerCar?.frontBacking,
+      winnerCar?.rearWheel,
+      winnerCar?.frontWheel,
+      ...(winnerCar?.bodyLayers?.objects || []),
+    ].filter(Boolean);
+
+    const carTravel = winnerOnLeft ? 360 : -360;
+    winnerCarObjects.forEach(obj => {
+      obj.x -= carTravel;
+      obj.setAlpha?.(0.96);
+    });
+
+    // Chunky pixel smoke follows the rear of the car for only a fraction of a
+    // second. No continuous animation survives once the result has landed.
+    const smoke = [];
+    const smokeBaseX = winnerOnLeft ? 520 : 1040;
+    for (let i = 0; i < 9; i += 1) {
+      const puff = this.add.rectangle(
+        smokeBaseX - i * (winnerOnLeft ? 22 : -22),
+        422 + (i % 3) * 7,
+        12 + (i % 4) * 4,
+        8 + (i % 3) * 3,
+        i % 2 ? 0x6e7176 : 0xc6c2b8,
+        0
+      ).setDepth(depth + 16)
+        .setScrollFactor(0)
+        .setAngle((i % 5 - 2) * 7);
+      smoke.push(puff);
+    }
+
+    // Compact timing slip: reward and bank account sit with only the essential
+    // race numbers in the bottom-left.
+    const slipX = 225;
+    const slipY = 588;
+    const slipW = 370;
+    const slipH = 218;
+    this.add.rectangle(slipX, slipY, slipW, slipH, 0x11151b, 0.98)
+      .setStrokeStyle(3, accent, 0.96)
+      .setDepth(depth + 30)
       .setScrollFactor(0);
 
-    this.add.text(106, 477, reward.primary, {
+    this.add.text(62, 490, reward.primary, {
       fontFamily: titleFont,
-      fontSize: '16px',
+      fontSize: '13px',
       color: accentBright,
       fontStyle: 'bold',
-      wordWrap: { width: 520 },
-    }).setDepth(depth + 22).setScrollFactor(0);
+      wordWrap: { width: 315 },
+    }).setDepth(depth + 32).setScrollFactor(0);
 
-    this.add.text(106, 520, reward.secondary, {
+    this.add.text(62, 524, reward.secondary, {
       fontFamily: titleFont,
-      fontSize: '7px',
-      color: '#d6d9df',
-      wordWrap: { width: 520 },
-      lineSpacing: 3,
-    }).setDepth(depth + 22).setScrollFactor(0);
+      fontSize: '6px',
+      color: '#c9ced6',
+      wordWrap: { width: 315 },
+      lineSpacing: 2,
+    }).setDepth(depth + 32).setScrollFactor(0);
 
     const rows = this.isRollingStart
       ? [
           ['1/8', this.falseStart ? '—' : formatTime(this.times.eighth), formatTime(this.opponentTimes.eighth)],
-          ['1/4', this.falseStart ? '—' : formatTime(this.times.quarter), formatTime(this.opponentTimes.quarter)],
           [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
           ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
         ]
       : [
           ['RT', this.falseStart ? 'DQ' : formatTime(this.times.reaction), formatTime(this.opponentTimes.reaction)],
-          ['60 FT', this.falseStart ? '—' : formatTime(this.times.sixty), formatTime(this.opponentTimes.sixty)],
           [this.raceDistanceLabel, this.falseStart ? '—' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
           ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
         ];
 
-    const timingX = 720;
-    this.add.text(timingX, 472, cars[this.selectedCarId].shortName, {
+    this.add.text(62, 572, 'YOU', {
       fontFamily: titleFont,
-      fontSize: '7px',
-      color: '#f8f8f5',
-    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-    this.add.text(1030, 472, cars[this.opponentCarId].shortName, {
+      fontSize: '6px',
+      color: '#f3f3ef',
+    }).setDepth(depth + 32).setScrollFactor(0);
+    this.add.text(294, 572, 'RIVAL', {
       fontFamily: titleFont,
-      fontSize: '7px',
-      color: '#bfc6d4',
-    }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+      fontSize: '6px',
+      color: '#aeb5c1',
+    }).setOrigin(1, 0).setDepth(depth + 32).setScrollFactor(0);
 
     rows.forEach((row, index) => {
-      const y = 506 + index * 28;
-      this.add.text(600, y, row[0], {
+      const y = 603 + index * 31;
+      this.add.text(62, y, row[0], {
         fontFamily: dataFont,
         fontSize: '7px',
-        color: '#858e9b',
+        color: '#7f8997',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-      this.add.text(timingX, y, row[1], {
+      }).setDepth(depth + 32).setScrollFactor(0);
+      this.add.text(183, y, row[1], {
         fontFamily: dataFont,
         fontSize: '9px',
-        color: '#ffffff',
+        color: '#f3f3f0',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
-      this.add.text(1030, y, row[2], {
+      }).setOrigin(1, 0).setDepth(depth + 32).setScrollFactor(0);
+      this.add.text(322, y, row[2], {
         fontFamily: dataFont,
         fontSize: '9px',
-        color: '#c4cad4',
+        color: '#b8c0cb',
         fontStyle: '700',
-      }).setOrigin(0.5).setDepth(depth + 22).setScrollFactor(0);
+      }).setOrigin(1, 0).setDepth(depth + 32).setScrollFactor(0);
     });
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
@@ -2491,23 +2605,25 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : 'CONTINUE';
 
-    const nextButton = this.add.rectangle(1330, 632, 260, 58, accent, 0.94)
-      .setStrokeStyle(4, 0xf4efe5, 0.9)
-      .setDepth(depth + 24)
+    const nextButton = this.add.rectangle(1330, 630, 270, 62, accent, 0.96)
+      .setStrokeStyle(4, 0xf1ede5, 0.9)
+      .setDepth(depth + 34)
       .setScrollFactor(0);
-
-    this.add.text(1330, 628, 'NEXT  >', {
+    const nextText = this.add.text(1330, 625, 'NEXT  >', {
       fontFamily: titleFont,
       fontSize: '13px',
-      color: playerWon ? '#13161b' : '#f7f8ff',
+      color: playerWon ? '#111318' : '#f6f7fb',
       fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
-
+    }).setOrigin(0.5)
+      .setDepth(depth + 35)
+      .setScrollFactor(0);
     this.add.text(1330, 675, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
       fontSize: '6px',
-      color: '#7f8793',
-    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
+      color: '#808895',
+    }).setOrigin(0.5)
+      .setDepth(depth + 35)
+      .setScrollFactor(0);
 
     let advanceArmed = false;
     let advanced = false;
@@ -2535,76 +2651,111 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     tapTarget.on('pointerdown', advance);
-
     const nextKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     nextKey.once('down', advance);
 
-    // Snappy 220–260 ms fly-in. It should read as an impact, not a cinematic.
-    const flyObjects = [title, subTitle, quoteText, kicker];
-    flyObjects.forEach(obj => {
-      obj.x -= 310;
-      obj.setAlpha(0);
-    });
+    // Page-flash and panel slam replace the previous speed-line animation.
+    this.cameras.main.flash(55, 238, 232, 220, false);
 
-    this.tweens.add({
-      targets: flyObjects,
-      x: '+=310',
-      alpha: 1,
-      duration: 190,
-      ease: 'Expo.Out',
-    });
-
-    if (portraitImage) {
-      portraitImage.setAlpha(0);
-      portraitImage.x += 260;
+    const winnerEntry = winnerOnLeft ? -210 : 210;
+    const loserEntry = winnerOnLeft ? 145 : -145;
+    if (winnerProfile?.image) {
+      winnerProfile.image.x += winnerEntry;
+      winnerProfile.image.setAlpha(0);
       this.tweens.add({
-        targets: portraitImage,
-        x: '-=260',
+        targets: winnerProfile.image,
+        x: '-=' + winnerEntry,
         alpha: 1,
-        duration: 220,
-        ease: 'Expo.Out',
+        duration: 145,
+        ease: 'Back.Out',
+      });
+    }
+    if (loserProfile?.image) {
+      loserProfile.image.x += loserEntry;
+      loserProfile.image.setAlpha(0);
+      this.tweens.add({
+        targets: loserProfile.image,
+        x: '-=' + loserEntry,
+        alpha: 0.74,
+        duration: 135,
+        delay: 18,
+        ease: 'Cubic.Out',
       });
     }
 
-    portraitFrame.setAlpha(0);
+    winnerPanel.setAlpha(0);
+    loserPanel.setAlpha(0);
     this.tweens.add({
-      targets: portraitFrame,
+      targets: [winnerPanel, loserPanel],
       alpha: 1,
-      duration: 150,
+      duration: 95,
       ease: 'Linear',
     });
 
-    if (resultCar?.rearWheel && resultCar?.frontWheel) {
+    stamp.setScale(1.20);
+    stamp.setAlpha(0);
+    this.tweens.add({
+      targets: stamp,
+      scaleX: 1,
+      scaleY: 1,
+      alpha: 1,
+      duration: 115,
+      delay: 58,
+      ease: 'Back.Out',
+    });
+
+    this.tweens.add({
+      targets: winnerCarObjects,
+      x: '+=' + carTravel,
+      duration: 175,
+      delay: 28,
+      ease: 'Cubic.Out',
+    });
+
+    if (winnerCar?.rearWheel && winnerCar?.frontWheel) {
       this.tweens.add({
-        targets: [resultCar.rearWheel, resultCar.frontWheel],
-        angle: playerWon ? 720 : 360,
-        duration: playerWon ? 240 : 210,
-        ease: playerWon ? 'Cubic.Out' : 'Quad.Out',
+        targets: [winnerCar.rearWheel, winnerCar.frontWheel],
+        angle: winnerOnLeft ? 630 : -630,
+        duration: 185,
+        delay: 20,
+        ease: 'Quad.Out',
       });
     }
 
-    if (!playerWon) {
-      // One tiny low-fi "drop" makes the sad/loss pose read without slowing play.
+    smoke.forEach((puff, i) => {
       this.tweens.add({
-        targets: portraitImage ? [portraitImage] : [],
-        y: '+=8',
-        duration: 150,
-        delay: 110,
-        ease: 'Quad.In',
+        targets: puff,
+        alpha: { from: 0, to: Math.max(0.08, 0.34 - i * 0.025) },
+        x: '+=' + (winnerOnLeft ? -28 - i * 3 : 28 + i * 3),
+        duration: 75,
+        delay: 45 + i * 5,
+        yoyo: true,
+        hold: 18,
+        ease: 'Linear',
       });
-    } else {
-      // Micro impact shake on victory only.
-      this.cameras.main.shake(85, 0.0022);
-    }
+    });
 
-    this.time.delayedCall(210, () => {
+    chequers.forEach((square, i) => {
+      this.tweens.add({
+        targets: square,
+        x: '+=' + ((i % 2 ? 1 : -1) * (10 + (i % 4) * 5)),
+        y: '+=' + ((i % 3 - 1) * 7),
+        angle: '+=' + ((i % 2 ? 1 : -1) * 13),
+        duration: 120,
+        delay: 70 + i * 2,
+        ease: 'Quad.Out',
+      });
+    });
+
+    this.time.delayedCall(205, () => {
       advanceArmed = true;
       nextButton.setFillStyle(accent, 1);
+      nextText.setAlpha(1);
     });
 
     // Preserve the existing special-result follow-ups. They run after the
     // manga panel lands so an ordinary result never waits on animation.
-    this.time.delayedCall(265, () => {
+    this.time.delayedCall(235, () => {
       if (!settlement) return;
 
       if (isPinkSlip) {
