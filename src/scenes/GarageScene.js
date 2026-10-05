@@ -720,7 +720,6 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('selectedRacePlayerCharacterId', null);
       close();
       this.showCrewOverviewState();
-      this.renderGaragePage();
       this.refreshDynoButton?.();
       saveSessionState(this.registry);
     });
@@ -3021,6 +3020,14 @@ export default class GarageScene extends Phaser.Scene {
 
     this.updateMoveCarButtonState();
     this.refreshDynoButton?.();
+
+    if (this.crewMode) {
+      const crewCars = this.getCurrentWorkshopCars();
+      const selectedIndex = Math.max(0, crewCars.indexOf(id));
+      this.garagePage = Math.floor(selectedIndex / (this.garagePageSize || 4));
+      this.renderGaragePage();
+    }
+
     this.saveProfile();
   }
 
