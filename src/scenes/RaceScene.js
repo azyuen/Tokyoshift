@@ -426,6 +426,7 @@ export default class RaceScene extends Phaser.Scene {
     this.afterFinishTimer = 0;
     this.finishCameraPx = null;
     this.finishVisualFrozen = false;
+    this.finishTimedOut = false;
     this.startMoved = false;
     this.times = {
       reaction: null,
@@ -1722,10 +1723,16 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.finished) {
       this.afterFinishTimer += dt;
+      const elapsedSinceFirstFinish = this.firstFinishClock == null
+        ? 0
+        : this.raceClock - this.firstFinishClock;
 
-      // Once the race is resolved, give both cars a short uninterrupted run
-      // through the locked finish camera so even the trailing car clears frame.
-      if (this.afterFinishTimer > 0.82 && !this.resultsShown) {
+      // Normal close races keep the full fly-past. A huge performance gap gets
+      // a hard cap so the player never waits more than ~2 seconds after the
+      // winner crosses the line.
+      const normalFlyPastReady = this.afterFinishTimer > 0.82;
+      const hardCapReached = this.firstFinishClock != null && elapsedSinceFirstFinish >= 2.0;
+      if ((normalFlyPastReady || hardCapReached) && !this.resultsShown) {
         this.showResultsOverlay();
       }
     }
@@ -1813,7 +1820,14 @@ export default class RaceScene extends Phaser.Scene {
     if (!this.finished) {
       const bothFinished = this.playerFinishClock != null && this.opponentFinishClock != null;
       const dqComplete = this.falseStart && this.opponentFinishClock != null;
-      const finishTimeout = this.firstFinishClock != null && this.raceClock - this.firstFinishClock > 4.0;
+      const finishElapsed = this.firstFinishClock == null
+        ? 0
+        : this.raceClock - this.firstFinishClock;
+      const finishTimeout = this.firstFinishClock != null && finishElapsed >= 2.0;
+
+      if (finishTimeout && !bothFinished && !dqComplete) {
+        this.finishTimedOut = true;
+      }
       if (bothFinished || dqComplete || finishTimeout) this.finished = true;
     }
   }
@@ -2333,6 +2347,24 @@ export default class RaceScene extends Phaser.Scene {
     this.hud?.g?.clear?.();
     this.treeLightsG?.clear?.();
 
+    if (this.finishTimedOut) {
+      const hideCarVisual = visual => {
+        if (!visual) return;
+        [
+          visual.rearWheel,
+          visual.frontWheel,
+          visual.rearWheelBacking,
+          visual.frontWheelBacking,
+          visual.roadShadow,
+          visual.driverSilhouette,
+          ...(visual.bodyObjects || []),
+        ].forEach(obj => obj?.setVisible?.(false));
+      };
+
+      if (this.playerFinishClock == null) hideCarVisual(this.playerVisual);
+      if (this.opponentFinishClock == null) hideCarVisual(this.opponentVisual);
+    }
+
     // Only a light cinematic wash: the skyline, road, finish line and both
     // physical race cars remain visible underneath.
     this.add.rectangle(780, 360, 1560, 720, 0x05070b, 0.12)
@@ -2349,7 +2381,7 @@ export default class RaceScene extends Phaser.Scene {
       fontSize: '88px',
       color: resultColor,
       fontStyle: 'italic 900',
-      stroke: resultColor,
+      stroke: '#11141a',
       strokeThickness: 4,
     };
 
