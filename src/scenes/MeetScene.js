@@ -18,7 +18,7 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20261006-r392';
+} from '../data/characters.js?v=20261007-r404';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -69,7 +69,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261007-r402';
+} from '../data/tunerChallenges.js?v=20261007-r404';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
@@ -100,7 +100,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261007-r403';
+} from '../data/crewSystem.js?v=20261007-r404';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
