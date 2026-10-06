@@ -47,7 +47,7 @@ const BODY_FONT = '"Rajdhani", monospace';
 
 const STAGE = { x: 24, y: 92, w: 1138, h: 724 };
 const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
-const HERO_CAR_DISPLAY_SCALE = 0.70;
+const HERO_CAR_DISPLAY_SCALE = 0.84;
 
 const money = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
