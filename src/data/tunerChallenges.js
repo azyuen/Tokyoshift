@@ -3,7 +3,7 @@ import {
   REGION_TEAM_CHARACTER_IDS,
   MAIN_RIVAL_BY_REGION,
   genericRivalCharacterOrder,
-} from './characters.js?v=20261006-r392';
+} from './characters.js?v=20261007-r404';
 import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
 
 export const TUNER_TEAM_CHALLENGE_WINS = 10;
