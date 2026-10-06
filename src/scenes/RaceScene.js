@@ -1704,13 +1704,10 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.finished) {
       this.afterFinishTimer += dt;
-      const cinematicElapsed = this.firstFinishClock == null
-        ? this.afterFinishTimer
-        : this.raceClock - this.firstFinishClock;
 
-      // Let both cars shoot completely through the locked finish-line frame,
-      // then reveal the post-race character/title composition.
-      if (cinematicElapsed > 0.92 && !this.resultsShown) {
+      // Once the race is resolved, give both cars a short uninterrupted run
+      // through the locked finish camera so even the trailing car clears frame.
+      if (this.afterFinishTimer > 0.82 && !this.resultsShown) {
         this.showResultsOverlay();
       }
     }
@@ -2567,7 +2564,7 @@ export default class RaceScene extends Phaser.Scene {
     const playerPortraitImage = playerProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
-    this.add.text(1310, 381, String(playerDisplayName || 'YOU').toUpperCase(), {
+    const playerNameText = this.add.text(1310, 381, String(playerDisplayName || 'YOU').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
@@ -2575,7 +2572,7 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 9, y: 5 },
     }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
 
-    this.add.text(1160, 338, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    const rivalNameText = this.add.text(1160, 338, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#f5f0e7',
@@ -2587,7 +2584,7 @@ export default class RaceScene extends Phaser.Scene {
     const rivalQuote = playerWon
       ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
       : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
-    this.add.text(1160, 369, '“' + rivalQuote + '”', {
+    const rivalQuoteText = this.add.text(1160, 369, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
       fontSize: '8px',
       color: '#f5f0e7',
@@ -2705,7 +2702,9 @@ export default class RaceScene extends Phaser.Scene {
     // Cars are already gone. Character reactions pop in first, then the
     // oversized motorsport result word flies in from the left.
     const detailObjects = [raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText];
+    const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
+    portraitCopy.forEach(obj => obj.setAlpha(0));
 
     const finalTitleX = title.x;
     title.x = -title.width - 80;
@@ -2746,6 +2745,14 @@ export default class RaceScene extends Phaser.Scene {
       targets: [playerFrame, rivalFrame],
       alpha: 1,
       duration: 120,
+      ease: 'Linear',
+    });
+
+    this.tweens.add({
+      targets: portraitCopy,
+      alpha: 1,
+      duration: 120,
+      delay: 95,
       ease: 'Linear',
     });
 
