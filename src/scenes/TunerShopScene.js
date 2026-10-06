@@ -1,14 +1,14 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars } from '../data/cars.js?v=20261006-r388';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r388';
-import { characters } from '../data/characters.js?v=20261004-r333';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r391';
 import {
   getTunerShopForRegion,
   getTunerShopPhaseBackground,
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20260929-r263';
+} from '../data/tunerShops.js?v=20261006-r391';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -85,7 +85,14 @@ export default class TunerShopScene extends Phaser.Scene {
     queueImage(shop.decalTextureKey, shop.decalPath);
 
     const mechanic = characters[shop.mechanicId]?.visual;
-    if (mechanic) queueImage(mechanic.spriteKey, mechanic.path);
+    if (
+      mechanic?.spriteKey &&
+      mechanic?.path &&
+      !this.textures.exists(mechanic.spriteKey)
+    ) {
+      this.load.image(mechanic.spriteKey, getCharacterAssetUrl(mechanic.path));
+      queued += 1;
+    }
 
     const currentCarId = this.registry.get('selectedCarId');
     const owned = this.registry.get('ownedCarIds') || [];
@@ -1328,7 +1335,7 @@ export default class TunerShopScene extends Phaser.Scene {
     this.addDynamic(this.add.text(
       64,
       730,
-      character.name + ' // ENGINEER',
+      character.name + ' // REGION MECHANIC',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',

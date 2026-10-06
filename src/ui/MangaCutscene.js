@@ -1,9 +1,9 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261005-r365';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r391';
 import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261005-r365';
+} from '../data/cutscenes.js?v=20261006-r391';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,

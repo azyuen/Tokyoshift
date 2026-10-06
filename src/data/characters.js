@@ -319,6 +319,8 @@ export const characters = {
     selectable: false,
     rivalEligible: true,
     regionId: 'TATSUMI',
+    regionMechanic: true,
+    regionMechanicShopId: 'tatsumiJun',
     regionExclusive: true,
     teamRole: 'support-mechanic',
     personality: 'Eccentric, friendly and mechanically obsessive; he is usually fixing something nobody else noticed was wrong.',
@@ -378,8 +380,10 @@ export const characters = {
     age: 22,
     hometown: 'Kawasaki',
     archetype: 'The Tuner',
-    roleTags: ['protagonist', 'teammate', 'rival', 'daikoku', 'team', 'ace'],
+    roleTags: ['protagonist', 'teammate', 'rival', 'daikoku', 'team', 'ace', 'mechanic'],
     regionId: 'DAIKOKU',
+    regionMechanic: true,
+    regionMechanicShopId: 'daikokuReAmemiya',
     regionExclusive: true,
     teamRole: 'ace',
     personality: 'Confident, analytical and blunt in a useful way.',
@@ -612,10 +616,12 @@ export const characters = {
     skill: { rating: 5, label: 'PRO', ai: { reactionSkill: 0.93, launchSkill: 0.94, shiftSkill: 0.93, aggression: 0.86 }, betRange: [16000, 30000], competitionPrize: 29000 },
     name: 'Daigo Arakawa',
     archetype: 'The Authority',
-    roleTags: ['rival', 'shinjuku', 'team'],
+    roleTags: ['rival', 'shinjuku', 'team', 'mechanic'],
     selectable: false,
     rivalEligible: true,
     regionId: 'SHINJUKU',
+    regionMechanic: true,
+    regionMechanicShopId: 'shinjukuTopSecret',
     regionExclusive: true,
     teamRole: 'ace',
     personality: 'Focused, competitive and at home in Shinjuku’s high-pressure street scene.',
@@ -821,8 +827,10 @@ export const characters = {
   ryoheiTakeda: {
     id: 'ryoheiTakeda',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.88, launchSkill: 0.91, shiftSkill: 0.89, aggression: 0.87 }, betRange: [10000, 20000], competitionPrize: 21000 },
-    name: 'Ryohei Takeda', archetype: 'The Launcher', roleTags: ['rival', 'yokohama', 'team'],
-    selectable: false, rivalEligible: true, regionId: 'YOKOHAMA', regionExclusive: true, teamRole: 'core',
+    name: 'Ryohei Takeda', archetype: 'The Launcher', roleTags: ['rival', 'yokohama', 'team', 'mechanic'],
+    selectable: false, rivalEligible: true, regionId: 'YOKOHAMA',
+    regionMechanic: true,
+    regionMechanicShopId: 'yokohamaMines', regionExclusive: true, teamRole: 'core',
     personality: 'Direct and competitive.', bio: 'A Yokohama racer who makes the first sixty feet count.',
     drivingStyle: 'Hard launches and decisive shifts.', tuningFocus: 'Traction and response.',
     preferredCars: ['evo3', 'evo6'], signatureRace: 'Quarter Mile',
@@ -1094,6 +1102,8 @@ export const characters = {
     selectable: false,
     rivalEligible: true,
     regionId: 'ODAIBA',
+    regionMechanic: true,
+    regionMechanicShopId: 'odaibaEsprit',
     regionExclusive: true,
     teamRole: 'support-mechanic',
     personality: 'Patient, good-humoured and practical; he usually has a tool in one hand and coffee in the other.',
@@ -1196,6 +1206,8 @@ export const characters = {
     selectable: false,
     rivalEligible: true,
     regionId: 'SHINAGAWA',
+    regionMechanic: true,
+    regionMechanicShopId: 'shinagawaSpoon',
     regionExclusive: true,
     teamRole: 'support-mechanic',
     personality: 'Practical, blunt and good-humoured, with no patience for decorative tuning.',
@@ -1496,6 +1508,8 @@ export const characters = {
     selectable: false,
     rivalEligible: true,
     regionId: 'SHIBUYA',
+    regionMechanic: true,
+    regionMechanicShopId: 'shibuyaAmuse',
     regionExclusive: true,
     teamRole: 'support-mechanic',
     personality: 'Inventive, low-key and obsessive about making unusual ideas actually work.',
@@ -1920,6 +1934,37 @@ export function getCharacterVisualAsset(characterId, pose = 'idle') {
     fallback: requestedPose !== 'idle',
   };
 }
+
+
+export const REGION_MECHANIC_CHARACTER_IDS = Object.freeze(
+  Object.fromEntries(
+    Object.values(characters)
+      .filter(character =>
+        character?.regionMechanic === true &&
+        character?.regionId &&
+        character?.id
+      )
+      .map(character => [
+        String(character.regionId).trim().toUpperCase(),
+        character.id,
+      ])
+  )
+);
+
+export function getRegionMechanicCharacterId(regionId) {
+  const key = String(regionId || '').trim().toUpperCase();
+  return REGION_MECHANIC_CHARACTER_IDS[key] || null;
+}
+
+export function getRegionMechanicCharacter(regionId) {
+  const id = getRegionMechanicCharacterId(regionId);
+  return id ? (characters[id] || null) : null;
+}
+
+export function isRegionMechanicCharacter(characterId) {
+  return Boolean(characters[String(characterId || '')]?.regionMechanic);
+}
+
 
 export const genericRivalCharacterOrder = rivalCharacterOrder.filter(
   id => !characters[id]?.regionExclusive
