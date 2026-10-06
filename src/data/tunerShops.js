@@ -1,7 +1,8 @@
+import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r391';
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
-} from './tunerChallenges.js?v=20260926-r212';
+} from './tunerChallenges.js?v=20261006-r391';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
@@ -21,7 +22,7 @@ export const TUNER_SHOPS = {
     label: 'ESPRIT',
     fullName: 'ESPRIT',
     specialty: 'AERO & WEIGHT',
-    mechanicId: 'takumiSerizawa',
+    mechanicId: getRegionMechanicCharacterId('ODAIBA'),
     heroCarId: 'espritNsx',
 
     // The stock NA1 is intentionally a separate donor id. The current car
@@ -107,10 +108,7 @@ export const TUNER_SHOPS = {
     label: 'AMUSE',
     fullName: 'POWER HOUSE AMUSE',
     specialty: 'EXHAUST & FLOW',
-
-    // Shibuya's crew mechanic sprite has not been authored yet. The tuner
-    // scene safely renders the shop without a character until this id exists.
-    mechanicId: 'shibuyaAmuseEngineer',
+    mechanicId: getRegionMechanicCharacterId('SHIBUYA'),
     heroCarId: 'amuseS2000Gt1',
 
     donorCarId: 's2000',
@@ -195,7 +193,7 @@ export const TUNER_SHOPS = {
     fullName: 'TOP SECRET',
     specialty: 'TURBO & BOOST',
 
-    mechanicId: 'shinjukuTopSecretEngineer',
+    mechanicId: getRegionMechanicCharacterId('SHINJUKU'),
     heroCarId: 'topSecretSupra',
 
     donorCarId: 'supraA80',
@@ -280,7 +278,7 @@ export const TUNER_SHOPS = {
     fullName: "MINE'S MOTOR SPORTS",
     specialty: 'ECU & RESPONSE',
 
-    mechanicId: 'yokohamaMinesEngineer',
+    mechanicId: getRegionMechanicCharacterId('YOKOHAMA'),
     heroCarId: 'minesR34',
 
     donorCarId: 'r34',
@@ -367,7 +365,7 @@ export const TUNER_SHOPS = {
     fullName: 'RE AMEMIYA',
     specialty: 'ROTARY COOLING',
 
-    mechanicId: 'daikokuReAmemiyaEngineer',
+    mechanicId: getRegionMechanicCharacterId('DAIKOKU'),
     heroCarId: 'reAmemiyaRx7',
 
     donorCarId: 'fd3s',
@@ -452,7 +450,7 @@ export const TUNER_SHOPS = {
     fullName: 'SPOON SPORTS',
     specialty: 'CHASSIS & HANDLING',
 
-    mechanicId: 'natsumiKagawa',
+    mechanicId: getRegionMechanicCharacterId('SHINAGAWA'),
     heroCarId: 'spoonEk9',
 
     donorCarId: 'ek9',
@@ -535,12 +533,7 @@ export const TUNER_SHOPS = {
     label: 'JUN',
     fullName: 'JUN AUTO MECHANIC',
     specialty: 'ENGINE INTERNALS',
-
-    // Tatsumi's dedicated crew mechanic asset has not been added to the
-    // current catalogue yet. Keep the slot intentionally empty rather than
-    // borrowing another region's engineer; the scene safely renders without
-    // a mechanic until that character is supplied.
-    mechanicId: 'tatsumiJunEngineer',
+    mechanicId: getRegionMechanicCharacterId('TATSUMI'),
     heroCarId: 'junHyperLemonEvo5',
 
     // The hero is an Evo V, so do not let an Evo III act as a fake donor.
