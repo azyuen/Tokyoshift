@@ -115,7 +115,7 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('nosButton', 'assets/Controls/nos_button.png');
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
-    queueImage('regionalChallengeBadge', 'assets/Garage/badge_crew.png');
+    queueImage('regionalChallengeBadge', 'assets/Garage/badge_crown.png');
     queueImage('regionalPerfectStarBadge', 'assets/Garage/badge_star.png');
 
     // All street-race regions now use authored day/night panoramas.
@@ -2159,8 +2159,8 @@ export default class RaceScene extends Phaser.Scene {
       : null;
 
     const regionalBadge = finalRegionalWin && this.textures.exists('regionalChallengeBadge')
-      ? this.add.image(430, 230, 'regionalChallengeBadge')
-          .setDisplaySize(96, 96)
+      ? this.add.image(1450, 590, 'regionalChallengeBadge')
+          .setDisplaySize(104, 104)
           .setDepth(depth + 12)
           .setScrollFactor(0)
           .setAlpha(0)
@@ -2179,8 +2179,8 @@ export default class RaceScene extends Phaser.Scene {
       finalRegionalWin &&
       settlement?.teamChallengePerfect &&
       this.textures.exists('regionalPerfectStarBadge')
-        ? this.add.image(535, 230, 'regionalPerfectStarBadge')
-            .setDisplaySize(82, 82)
+        ? this.add.image(1335, 590, 'regionalPerfectStarBadge')
+            .setDisplaySize(88, 88)
             .setDepth(depth + 13)
             .setScrollFactor(0)
             .setAlpha(0)
