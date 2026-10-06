@@ -18,7 +18,7 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20261006-r391';
+} from '../data/characters.js?v=20261006-r392';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -70,13 +70,13 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261006-r391';
+} from '../data/tunerChallenges.js?v=20261006-r392';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20261006-r391';
+} from '../data/tunerShops.js?v=20261006-r392';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r391';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r392';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261006-r391';
 import {

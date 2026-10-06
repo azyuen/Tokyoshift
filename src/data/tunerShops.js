@@ -1,8 +1,8 @@
-import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r391';
+import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r392';
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
-} from './tunerChallenges.js?v=20261006-r391';
+} from './tunerChallenges.js?v=20261006-r392';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
