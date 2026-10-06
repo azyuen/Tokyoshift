@@ -590,11 +590,9 @@ export default class RaceScene extends Phaser.Scene {
       if (alreadyBriefed) {
         this.registry.set('regionalChallengeBriefedStage', null);
         saveSessionState(this.registry);
-
-        // The player already pressed anywhere on the between-race briefing.
-        // After the new opponent is installed by the scene restart, launch the
-        // race automatically rather than asking for a second START tap.
-        this.time.delayedCall(90, () => this.startRace());
+        // The manga briefing has already been acknowledged. Leave the newly
+        // staged race visible and wait for the normal START RACE / START ROLL
+        // button instead of auto-launching.
       } else {
         this.time.delayedCall(45, () => this.showRegionalChallengeBriefing());
       }
@@ -2777,7 +2775,8 @@ export default class RaceScene extends Phaser.Scene {
         }
 
         this.restoreRegionalChallengeRaceUi();
-        this.startRace();
+        // Briefing dismissed. The player now uses the ordinary race START
+        // control, keeping the familiar staging beat before every challenge run.
       },
       onPause: () => this.showRegionalChallengePauseWarning(),
     });
