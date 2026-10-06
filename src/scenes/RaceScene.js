@@ -2303,79 +2303,185 @@ export default class RaceScene extends Phaser.Scene {
       .setDepth(depth)
       .setScrollFactor(0);
 
-    // Manga result oblong lives at bottom-right, deliberately leaving the
-    // frozen car and skyline unobstructed across the left half of the screen.
-    const actionPanel = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
-    actionPanel.fillStyle(paper, 0.82);
-    actionPanel.fillPoints([
-      new Phaser.Geom.Point(875, 435),
-      new Phaser.Geom.Point(1515, 414),
-      new Phaser.Geom.Point(1468, 610),
-      new Phaser.Geom.Point(918, 628),
-      new Phaser.Geom.Point(842, 542),
-    ], true);
-    actionPanel.lineStyle(6, ink, 0.94);
-    actionPanel.strokePoints([
-      new Phaser.Geom.Point(875, 435),
-      new Phaser.Geom.Point(1515, 414),
-      new Phaser.Geom.Point(1468, 610),
-      new Phaser.Geom.Point(918, 628),
-      new Phaser.Geom.Point(842, 542),
-    ], true);
-
-    // Keep the manga energy contained to the result shape so the panorama on
-    // the left remains the visual breathing space.
-    const rays = this.add.graphics().setDepth(depth + 3).setScrollFactor(0);
-    rays.lineStyle(playerWon ? 4 : 3, ink, playerWon ? 0.09 : 0.06);
-    for (let i = -3; i <= 3; i += 1) {
-      rays.lineBetween(1450, 515, 980 + i * 72, 452 + Math.abs(i) * 14);
-      rays.lineBetween(1450, 515, 1000 + i * 68, 603 - Math.abs(i) * 8);
-    }
-
-    const stripe = this.add.graphics().setDepth(depth + 4).setScrollFactor(0);
-    stripe.fillStyle(accent, 0.96);
-    stripe.fillPoints([
-      new Phaser.Geom.Point(883, 454),
-      new Phaser.Geom.Point(918, 451),
-      new Phaser.Geom.Point(875, 594),
-      new Phaser.Geom.Point(907, 591),
-    ], true);
-
-    const kicker = this.add.text(946, 458, this.falseStart ? 'RED LIGHT' : 'TOKYO SHIFT // RESULT', {
-      fontFamily: titleFont,
-      fontSize: '8px',
-      color: '#15181d',
-      backgroundColor: playerWon ? '#ffd36add' : '#a9bcffdd',
-      padding: { x: 8, y: 5 },
-    }).setDepth(depth + 7).setScrollFactor(0);
+    // Typography-only race result. The road/skyline is the canvas: no badge,
+    // no enclosing panel. Exo 2 Black Italic gives the finish screen the same
+    // forward-leaning motorsport energy as the Warehouse HQ branding.
+    const resultFont = '"Exo 2", sans-serif';
+    const resultColor = playerWon ? '#62e8c7' : '#ff5f93';
+    const slashColor = '#e31b2f';
 
     const title = this.add.text(
-      944,
-      500,
-      playerWon ? 'VICTORY!' : 'NOT THIS TIME.',
+      902,
+      426,
+      playerWon ? 'VICTORY' : 'LOSS',
       {
-        fontFamily: titleFont,
-        fontSize: playerWon ? '35px' : '28px',
-        color: '#11141a',
-        fontStyle: 'bold',
+        fontFamily: resultFont,
+        fontSize: playerWon ? '82px' : '86px',
+        color: resultColor,
+        fontStyle: '900 italic',
+        stroke: '#071019',
+        strokeThickness: 5,
+        shadow: { offsetX: 3, offsetY: 4, color: '#000000', blur: 0, fill: true },
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
-    const subTitle = this.add.text(
-      948,
-      playerWon ? 557 : 552,
-      this.falseStart
-        ? 'FALSE START // DQ'
-        : String(this.raceDistrict + ' // ' + this.raceLocationLabel).toUpperCase(),
+    const slashMark = this.add.text(
+      title.x + title.width + 20,
+      444,
+      '///',
       {
-        fontFamily: titleFont,
-        fontSize: '7px',
-        color: '#3b3f45',
+        fontFamily: resultFont,
+        fontSize: '61px',
+        color: slashColor,
+        fontStyle: '900 italic',
+        stroke: '#071019',
+        strokeThickness: 3,
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
-    // The result oblong belongs to the race outcome, not the player's voice.
-    // Character dialogue is reserved for the rival reaction panel below.
+    const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
+    const contextType = isPinkSlip
+      ? 'PINK SLIP'
+      : this.raceMode === 'COMPETITION'
+        ? 'COMPETITION'
+        : this.raceMode === 'TUNER_TEAM'
+          ? 'REGIONAL TEAM CHALLENGE'
+          : this.raceMode === 'CREW_RECRUIT'
+            ? 'CREW RECRUITMENT'
+            : this.raceMode === 'CREW_BATTLE'
+              ? 'CREW BATTLE'
+              : 'STREET RACE';
+
+    let contextExtra = '';
+    if (settlement?.competition && settlement.roundNumber) {
+      contextExtra = ' // ROUND ' + settlement.roundNumber + '/3';
+    } else if (settlement?.crewBattle && settlement.roundNumber) {
+      contextExtra = ' // ROUND ' + settlement.roundNumber + '/' + CREW_BATTLE_LINEUP_SIZE;
+    } else if (settlement?.teamChallenge && settlement.stageNumber) {
+      contextExtra = ' // RACER ' + settlement.stageNumber + '/7';
+    }
+
+    const contextLine =
+      contextType + contextExtra + ' // ' + this.raceDistanceLabel + ' // ' + startLabel +
+      ' // ' + String(this.raceDistrict + ' · ' + this.raceLocationLabel).toUpperCase();
+
+    const rivalCar = cars[this.opponentCarId] || {};
+    const rivalConfig = this.opponent?.config || rivalCar;
+    const rivalPower = Math.round(Number(rivalConfig.powerKW || rivalCar.powerKW || 0));
+    const rivalMass = Math.round(Number(rivalConfig.vehicleMassKg || rivalCar.vehicleMassKg || 0));
+    const rivalBuildLabel = this.opponentBuildArchetype
+      ? ' // ' + String(this.opponentBuildArchetype).replaceAll('_', ' ').toUpperCase()
+      : this.opponentBuildRating
+        ? ' // BUILD ' + Number(this.opponentBuildRating) + '/5'
+        : '';
+    const rivalCarLine =
+      String(rivalCar.name || rivalCar.shortName || 'RIVAL CAR').toUpperCase() +
+      (rivalPower ? ' // ' + rivalPower + ' KW' : '') +
+      (rivalMass ? ' // ' + rivalMass + ' KG' : '') +
+      rivalBuildLabel;
+
+    const bonusParts = [];
+    if (playerWon && isPinkSlip) {
+      bonusParts.push('CAR WON · ' + String(rivalCar.shortName || rivalCar.name || 'RIVAL CAR').toUpperCase());
+    }
+    if (playerWon && settlement?.crewRecruitJoined) {
+      bonusParts.push('CREW MEMBER JOINED');
+      bonusParts.push('SIGNATURE CAR LOANED');
+    }
+    if (playerWon && settlement?.teamChallengeCompleted) {
+      bonusParts.push(String(
+        settlement.badgeLabel ||
+        (settlement.teamChallengePerfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+      ).toUpperCase());
+      if (Number(settlement.couponAwards || 0) > 0) {
+        bonusParts.push(
+          String(settlement.donorLabel || 'DONOR CAR').toUpperCase() +
+          ' COUPON +' + Number(settlement.couponAwards || 0)
+        );
+      }
+      if (settlement.tokyoChampionshipInvited) bonusParts.push('TOKYO CHAMPIONSHIP INVITATION');
+    }
+    if (playerWon && settlement?.crewBattleCompleted && settlement.crewBattleFirstClear) {
+      if (Number(settlement.couponAwards || 0) > 0 && settlement.couponCarId) {
+        bonusParts.push(
+          String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() +
+          ' COUPONS +' + Number(settlement.couponAwards || 0)
+        );
+      }
+      if (settlement.tokyoChampionshipInvited) bonusParts.push('TOKYO CHAMPIONSHIP INVITATION');
+    }
+    if (playerWon && settlement?.competitionWon && settlement.prizeType === 'COUPON') {
+      bonusParts.push(
+        String(cars[settlement.prizeCouponCarId]?.shortName || 'CAR').toUpperCase() +
+        ' COUPON · ' + Number(settlement.couponCount || 0) + '/' + Number(settlement.couponRequired || 0)
+      );
+    }
+    if (playerWon && this.lastEasyCouponAward?.carId) {
+      const award = this.lastEasyCouponAward;
+      bonusParts.push(
+        '20-WIN BONUS · ' + String(cars[award.carId]?.shortName || 'CAR').toUpperCase() +
+        ' COUPON ' + award.count + '/' + award.required
+      );
+    }
+    if (playerWon && this.lastSurpriseReward) {
+      const bonus = this.lastSurpriseReward;
+      bonusParts.push(
+        bonus.type === 'WHEEL'
+          ? 'BONUS FIND · ' + String(bonus.label || 'WHEEL').toUpperCase()
+          : 'BONUS FIND · ' + String(bonus.label || 'CAR').toUpperCase() +
+            ' COUPON ' + bonus.count + '/' + bonus.required
+      );
+    }
+
+    const captionStyle = {
+      fontFamily: dataFont,
+      fontSize: '10px',
+      color: '#f4f7f8',
+      fontStyle: '700',
+      stroke: '#071019',
+      strokeThickness: 2,
+    };
+    const captionLabelStyle = {
+      fontFamily: resultFont,
+      fontSize: '10px',
+      color: '#d5dde1',
+      fontStyle: '900 italic',
+      stroke: '#071019',
+      strokeThickness: 2,
+    };
+
+    const captionX = 914;
+    const labelX = 914;
+    const valueX = 986;
+
+    const raceLabel = this.add.text(labelX, 533, 'RACE', captionLabelStyle)
+      .setDepth(depth + 8).setScrollFactor(0);
+    const contextText = this.add.text(valueX, 533, contextLine, {
+      ...captionStyle,
+      wordWrap: { width: 520 },
+    }).setDepth(depth + 8).setScrollFactor(0);
+
+    const carLabel = this.add.text(labelX, 565, 'RIVAL', captionLabelStyle)
+      .setDepth(depth + 8).setScrollFactor(0);
+    const rivalCarText = this.add.text(valueX, 565, rivalCarLine, {
+      ...captionStyle,
+      wordWrap: { width: 520 },
+    }).setDepth(depth + 8).setScrollFactor(0);
+
+    const bonusLabel = this.add.text(labelX, 597, 'BONUS', captionLabelStyle)
+      .setDepth(depth + 8).setScrollFactor(0);
+    const bonusText = this.add.text(
+      valueX,
+      597,
+      playerWon
+        ? (bonusParts.length ? bonusParts.join(' // ') : 'NO EXTRA REWARD')
+        : 'NO WIN BONUS',
+      {
+        ...captionStyle,
+        color: playerWon ? '#cfeee6' : '#d5c3c8',
+        wordWrap: { width: 520 },
+      }
+    ).setDepth(depth + 8).setScrollFactor(0);
 
     const playerDisplayName = [
       String(this.registry.get('firstName') || '').trim(),
@@ -2613,7 +2719,7 @@ export default class RaceScene extends Phaser.Scene {
     nextKey.once('down', advance);
 
     // Almost-instant manga overlay over the frozen race frame.
-    const flyObjects = [title, subTitle, kicker];
+    const flyObjects = [title, slashMark, raceLabel, contextText, carLabel, rivalCarText, bonusLabel, bonusText];
     flyObjects.forEach(obj => {
       obj.x += 220;
       obj.setAlpha(0);
