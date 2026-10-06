@@ -134,7 +134,6 @@ const CREW_GARAGE_PRESENTATION = Object.freeze({
   offsetX: -78,
   offsetY: 32,
   backgroundScale: 1.12,
-  backgroundShiftY: -72,
 });
 
 const TUNING_CATEGORY_LOGO_Y_OFFSET = 94;
@@ -612,13 +611,22 @@ export default class GarageScene extends Phaser.Scene {
     const scale = naturalScale * (
       focusedGarage ? CREW_GARAGE_PRESENTATION.backgroundScale : 1
     );
-    const y = STAGE.y + STAGE.h + (
-      focusedGarage ? CREW_GARAGE_PRESENTATION.backgroundShiftY : 0
-    );
-    image.setOrigin(0.5, 1).setScale(scale).setPosition(
-      STAGE.x + STAGE.w / 2,
-      y
-    );
+
+    if (focusedGarage) {
+      // Crew Garage framing is authored from the source image's bottom-left:
+      // align that exact corner with the stage window's bottom-left corner.
+      // With the existing zoom retained, this naturally shifts the artwork
+      // right and down compared with the old centred/lifted framing.
+      image
+        .setOrigin(0, 1)
+        .setScale(scale)
+        .setPosition(STAGE.x, STAGE.y + STAGE.h);
+    } else {
+      image
+        .setOrigin(0.5, 1)
+        .setScale(scale)
+        .setPosition(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h);
+    }
     return true;
   }
 
@@ -648,6 +656,7 @@ export default class GarageScene extends Phaser.Scene {
     if (!this.crewMode) return;
     this.clearCrewStageObjects();
     this.crewFocusedCharacterId = null;
+    this.headerTitleText?.setText('CREW SPACE');
 
     // The overview is a full-screen room, above the tuning UI. Its blocker
     // prevents hidden garage controls from receiving taps between members.
@@ -751,6 +760,7 @@ export default class GarageScene extends Phaser.Scene {
     if (!this.crewMode || !member) return;
     this.clearCrewStageObjects();
     this.crewFocusedCharacterId = member.characterId;
+    this.headerTitleText?.setText('CREW GARAGE');
 
     const crewBackgroundKey =
       this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg';
@@ -1026,9 +1036,14 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x173249, 1)
       .setDepth(40);
 
-    this.add.text(52, 35, this.crewMode ? 'CREW SPACE' : 'WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
-    }).setOrigin(0, 0.5).setDepth(42);
+    this.headerTitleText = this.add.text(
+      52,
+      35,
+      this.crewMode ? 'CREW SPACE' : 'WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '20px', color: '#eefaff'
+      }
+    ).setOrigin(0, 0.5).setDepth(42);
 
     this.headerCarText = this.add.text(
       305,
