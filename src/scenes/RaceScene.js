@@ -68,7 +68,7 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20261006-r392';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
-import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261006-r395';
+import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261006-r396';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r388';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
@@ -1859,11 +1859,6 @@ export default class RaceScene extends Phaser.Scene {
     if (playerWon) playVictorySting();
     else stopMusic();
 
-    if (settlement?.teamChallenge) {
-      this.showRegionalChallengeResultOverlay(settlement, playerWon);
-      return;
-    }
-
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
     const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
     const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
@@ -2125,9 +2120,13 @@ export default class RaceScene extends Phaser.Scene {
     const title = this.add.text(
       titleTargetX,
       196,
-      isPinkSlip
-        ? (playerWon ? 'CAR WON!' : 'CAR LOST')
-        : (playerWon ? 'VICTORY' : 'LOSS'),
+      settlement?.teamChallenge
+        ? (playerWon
+            ? 'WIN STREAK ' + Number(settlement.stageNumber || 1)
+            : 'CHALLENGE LOSS')
+        : isPinkSlip
+          ? (playerWon ? 'CAR WON!' : 'CAR LOST')
+          : (playerWon ? 'VICTORY' : 'LOSS'),
       titleStyle
     ).setDepth(depth + 8).setScrollFactor(0);
 
@@ -2495,6 +2494,8 @@ export default class RaceScene extends Phaser.Scene {
         this.startNextCrewBattleRound();
       } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
+      } else if (settlement?.teamChallengeCompleted) {
+        this.showRegionalChallengeCompletionCutscene(settlement);
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
@@ -2630,26 +2631,7 @@ export default class RaceScene extends Phaser.Scene {
 
       if (isPinkSlip) return;
 
-      if (settlement?.teamChallengeCompleted) {
-        const perfect = Boolean(settlement.teamChallengePerfect);
-        const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
-        const rivalName = String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase();
-        playMangaCutscene(this, cutsceneId, {
-          historyId: cutsceneId + ':' + String(settlement.regionId || 'REGION'),
-          characterOverrides: { RIVAL: this.opponentCharacterId },
-          variables: {
-            REGION: String(settlement.regionId || 'REGION').toUpperCase(),
-            RIVAL_NAME: rivalName,
-            CASH_REWARD: Number(settlement.totalReward || 0).toLocaleString('en-US'),
-            DONOR: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
-            COUPON_AWARDS: String(Number(settlement.couponAwards || 0)),
-            BADGE: String(
-              settlement.badgeLabel ||
-              (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
-            ),
-          },
-        });
-      } else if (settlement?.competitionWon) {
+      if (settlement?.competitionWon) {
         const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
         playMangaCutscene(this, 'competitionChampion', {
           characterOverrides: { PROMOTER: promoterId },
@@ -2703,7 +2685,9 @@ export default class RaceScene extends Phaser.Scene {
     return {
       regionId,
       state,
-      rounds: Array.isArray(state.rounds) ? state.rounds.slice(0, TUNER_TEAM_CHALLENGE_STAGES) : [],
+      rounds: Array.isArray(state.rounds)
+        ? state.rounds.slice(0, TUNER_TEAM_CHALLENGE_STAGES)
+        : [],
       perfectMode: Boolean(
         state.perfectAttempt ||
         (state.championEarned && !state.perfectEarned)
@@ -2711,63 +2695,9 @@ export default class RaceScene extends Phaser.Scene {
     };
   }
 
-  getRegionalChallengePlayerName() {
-    return [
-      String(this.registry.get('firstName') || '').trim(),
-      String(this.registry.get('lastName') || '').trim(),
-    ].filter(Boolean).join(' ') || characters[this.playerCharacterId]?.name || 'YOU';
-  }
-
-  showRegionalChallengeBriefing() {
-    if (this.regionalChallengeTableau?.active) return;
-
-    const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
-    const stageIndex = Math.max(
-      0,
-      Math.min(TUNER_TEAM_CHALLENGE_STAGES - 1, Number(state.stage || 0))
-    );
-    const round = rounds[stageIndex];
-    if (!state.activeSession || !round) {
-      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
-      return;
-    }
-
-    this.regionalChallengeTableau = createRegionalChallengeTableau(this, {
-      regionId,
-      rounds,
-      stageIndex,
-      playerCharacterId: this.playerCharacterId,
-      playerDisplayName: this.getRegionalChallengePlayerName(),
-      mode: 'briefing',
-      perfectMode,
-      onStart: () => {
-        this.regionalChallengeTableau?.destroy?.();
-        this.regionalChallengeTableau = null;
-        this.startRace();
-      },
-      onPause: () => this.showRegionalChallengePauseWarning(),
-    });
-  }
-
-  showNextTunerChallengeBriefing() {
-    if (this.regionalChallengeTableau?.active) {
-      this.regionalChallengeTableau.transitionToNext?.();
-      return;
-    }
-    this.showRegionalChallengeBriefing();
-  }
-
-  showRegionalChallengeResultOverlay(settlement, playerWon) {
-    const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
-    const stageIndex = Math.max(
-      0,
-      Math.min(
-        TUNER_TEAM_CHALLENGE_STAGES - 1,
-        Number(settlement?.stageNumber || 1) - 1
-      )
-    );
-
-    [
+  hideRegionalChallengeRaceUi() {
+    if (this._regionalChallengeUiVisibility) return;
+    const ui = [
       this.controls?.graphics,
       this.controls?.clutchSprite,
       this.controls?.nosSprite,
@@ -2788,75 +2718,97 @@ export default class RaceScene extends Phaser.Scene {
       this.startButtonText,
       this.cancelButton,
       this.cancelButtonText,
-    ].forEach(obj => obj?.setVisible?.(false));
-    this.hud?.g?.clear?.();
-    this.treeLightsG?.clear?.();
+    ].filter(Boolean);
 
-    const completed = Boolean(settlement?.teamChallengeCompleted);
-    const failed = Boolean(settlement?.teamChallengeFailed);
-    const resultPerfectMode = Boolean(
-      perfectMode ||
-      settlement?.teamChallengePerfectAttempt
+    this._regionalChallengeUiVisibility = ui.map(obj => ({
+      obj,
+      visible: obj.visible !== false,
+    }));
+    ui.forEach(obj => obj.setVisible?.(false));
+  }
+
+  restoreRegionalChallengeRaceUi() {
+    (this._regionalChallengeUiVisibility || []).forEach(({ obj, visible }) => {
+      if (obj?.active !== false) obj?.setVisible?.(visible);
+    });
+    this._regionalChallengeUiVisibility = null;
+  }
+
+  showRegionalChallengeBriefing({ revealCurrent = false, fromResult = false } = {}) {
+    if (this.regionalChallengeTableau?.active) return;
+
+    const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
+    const stageIndex = Math.max(
+      0,
+      Math.min(TUNER_TEAM_CHALLENGE_STAGES - 1, Number(state.stage || 0))
     );
-
-    const returnToMeet = () => {
+    const round = rounds[stageIndex];
+    if (!state.activeSession || !round) {
       this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
-    };
+      return;
+    }
 
-    const finishChallenge = () => {
-      if (!completed) {
-        returnToMeet();
-        return;
-      }
-
-      const perfect = Boolean(settlement?.teamChallengePerfect);
-      const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
-      const rivalCharacter = characters[this.opponentCharacterId] || null;
-      const result = playMangaCutscene(this, cutsceneId, {
-        historyId: cutsceneId + ':' + String(settlement.regionId || regionId),
-        characterOverrides: { RIVAL: this.opponentCharacterId },
-        variables: {
-          REGION: String(settlement.regionId || regionId).toUpperCase(),
-          RIVAL_NAME: String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase(),
-          CASH_REWARD: Number(settlement.totalReward || 0).toLocaleString('en-US'),
-          DONOR: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
-          COUPON_AWARDS: String(Number(settlement.couponAwards || 0)),
-          BADGE: String(
-            settlement.badgeLabel ||
-            (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
-          ),
-        },
-        onComplete: returnToMeet,
-      });
-      if (!result?.played) returnToMeet();
-    };
+    this.hideRegionalChallengeRaceUi();
 
     this.regionalChallengeTableau = createRegionalChallengeTableau(this, {
       regionId,
       rounds,
       stageIndex,
-      playerCharacterId: this.playerCharacterId,
-      playerDisplayName: this.getRegionalChallengePlayerName(),
-      mode: 'result',
-      playerWon,
-      perfectMode: resultPerfectMode,
-      completed,
-      failed,
-      settlement,
-      onPause: () => this.showRegionalChallengePauseWarning(),
-      onContinue: finishChallenge,
-      onNextReady: () => {},
-      onStart: nextIndex => {
-        const current = getTunerTeamChallengeState(this.registry, regionId);
-        const stageKey = regionId + ':' + Number(current.stage || nextIndex || 0);
-        this.registry.set('regionalChallengeBriefedStage', stageKey);
-        saveSessionState(this.registry);
-
+      perfectMode,
+      revealCurrent,
+      onStart: () => {
         this.regionalChallengeTableau?.destroy?.();
         this.regionalChallengeTableau = null;
-        this.startNextTunerChallengeRound();
+
+        if (fromResult || this.resultsShown) {
+          const current = getTunerTeamChallengeState(this.registry, regionId);
+          this.registry.set(
+            'regionalChallengeBriefedStage',
+            regionId + ':' + Number(current.stage || stageIndex)
+          );
+          saveSessionState(this.registry);
+          this.startNextTunerChallengeRound();
+          return;
+        }
+
+        this.restoreRegionalChallengeRaceUi();
+        this.startRace();
       },
+      onPause: () => this.showRegionalChallengePauseWarning(),
     });
+  }
+
+  showNextTunerChallengeBriefing() {
+    this.showRegionalChallengeBriefing({
+      revealCurrent: true,
+      fromResult: true,
+    });
+  }
+
+  showRegionalChallengeCompletionCutscene(settlement) {
+    const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
+    const perfect = Boolean(settlement?.teamChallengePerfect);
+    const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
+    const rivalCharacter = characters[this.opponentCharacterId] || null;
+
+    const result = playMangaCutscene(this, cutsceneId, {
+      historyId: cutsceneId + ':' + String(settlement?.regionId || this.raceDistrict || 'REGION'),
+      characterOverrides: { RIVAL: this.opponentCharacterId },
+      variables: {
+        REGION: String(settlement?.regionId || this.raceDistrict || 'REGION').toUpperCase(),
+        RIVAL_NAME: String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase(),
+        CASH_REWARD: Number(settlement?.totalReward || 0).toLocaleString('en-US'),
+        DONOR: String(settlement?.donorLabel || 'DONOR CAR').toUpperCase(),
+        COUPON_AWARDS: String(Number(settlement?.couponAwards || 0)),
+        BADGE: String(
+          settlement?.badgeLabel ||
+          (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+        ),
+      },
+      onComplete: () => this.scene.start(returnScene),
+    });
+
+    if (!result?.played) this.scene.start(returnScene);
   }
 
   pauseRegionalChallenge() {
@@ -2884,6 +2836,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.regionalChallengeTableau?.destroy?.();
     this.regionalChallengeTableau = null;
+    this._regionalChallengeUiVisibility = null;
     this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
   }
 
