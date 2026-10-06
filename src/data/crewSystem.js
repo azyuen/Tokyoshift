@@ -515,9 +515,16 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
   // those drivers defects to the player's crew, exactly six remain.
   const originalSeven = buildTunerTeamChallengeRounds(key, '')
     .filter(round => round?.characterId && round?.carId);
-  const opponents = originalSeven
-    .filter(round => round.characterId !== recruitedCharacterId)
-    .slice(0, CREW_BATTLE_LINEUP_SIZE);
+  const remaining = originalSeven
+    .filter(round => round.characterId !== recruitedCharacterId);
+
+  // Keep the permanent regional leader as the sixth/final matchup even when
+  // the championship roster's authored order placed them earlier.
+  const leaderCharacterId = getRegionalCrewRoster(key)?.mainRivalId || null;
+  const opponents = [
+    ...remaining.filter(round => round.characterId !== leaderCharacterId),
+    ...remaining.filter(round => round.characterId === leaderCharacterId),
+  ].slice(0, CREW_BATTLE_LINEUP_SIZE);
 
   const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
 
@@ -525,7 +532,7 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
     const raceType = index % 3 === 1 ? 'Roll Race' : 'Standing Start';
     const buildRating = regionalBuildRating(rank, index);
     const encounterRating = regionalDriverRating(rank, index);
-    const leader = index === opponents.length - 1;
+    const leader = baseRound.characterId === leaderCharacterId;
     const baseAi = getEncounterAi(encounterRating);
     const encounterAi = leader ? proLeaderAi(baseAi) : { ...baseAi };
     const opponentBuildState = createRivalBuildState(
