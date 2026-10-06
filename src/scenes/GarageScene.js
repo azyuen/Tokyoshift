@@ -127,6 +127,16 @@ const THUMB_CFG = WORKSHOP_PRESENTATION.thumbnail;
 const PLAYER_CFG = WORKSHOP_PRESENTATION.player;
 const DAICHI_CFG = WORKSHOP_PRESENTATION.daichi;
 
+// Selected crew garages use the same normal workshop geometry, with one
+// deliberate camera/composition offset so the scene sits further left/lower.
+// The wide Crew Space overview is unaffected.
+const CREW_GARAGE_PRESENTATION = Object.freeze({
+  offsetX: -78,
+  offsetY: 32,
+  backgroundScale: 1.12,
+  backgroundShiftY: -72,
+});
+
 const TUNING_CATEGORY_LOGO_Y_OFFSET = 94;
 const TUNING_CATEGORY_LOGO_MAX_HEIGHT = 164;
 const TUNING_CATEGORY_ROW_START_OFFSET = 214;
@@ -597,10 +607,17 @@ export default class GarageScene extends Phaser.Scene {
     if (!image?.active || !textureKey || !this.textures.exists(textureKey)) return false;
     image.setTexture(textureKey);
     const source = this.textures.get(textureKey).getSourceImage();
-    const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const naturalScale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
+    const focusedGarage = Boolean(this.crewFocusedCharacterId);
+    const scale = naturalScale * (
+      focusedGarage ? CREW_GARAGE_PRESENTATION.backgroundScale : 1
+    );
+    const y = STAGE.y + STAGE.h + (
+      focusedGarage ? CREW_GARAGE_PRESENTATION.backgroundShiftY : 0
+    );
     image.setOrigin(0.5, 1).setScale(scale).setPosition(
       STAGE.x + STAGE.w / 2,
-      STAGE.y + STAGE.h
+      y
     );
     return true;
   }
@@ -665,7 +682,7 @@ export default class GarageScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       const spriteSource = this.textures.get(character.visual.spriteKey).getSourceImage();
-      const perspectiveBoost = layout.zone === 'floor' ? 1.58 : 1.45;
+      const perspectiveBoost = layout.zone === 'floor' ? 1.72 : 1.45;
       sprite.setScale((layout.h * perspectiveBoost) / Math.max(1, spriteSource.height));
 
       const name = this.add.text(
@@ -718,7 +735,7 @@ export default class GarageScene extends Phaser.Scene {
     const title = this.add.text(
       32,
       28,
-      'CREW TOGETHER // TAP A MEMBER',
+      'CREW SPACE // TAP A MEMBER',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -735,12 +752,21 @@ export default class GarageScene extends Phaser.Scene {
     this.clearCrewStageObjects();
     this.crewFocusedCharacterId = member.characterId;
 
+    const crewBackgroundKey =
+      this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg';
+    if (this.workshopBackgroundImage?.active) {
+      this.applyCrewSpaceBackgroundTexture(
+        this.workshopBackgroundImage,
+        crewBackgroundKey
+      );
+    }
+
     const character = characters[member.characterId];
     if (character?.visual?.spriteKey && this.textures.exists(character.visual.spriteKey)) {
       // Match the normal garage foreground exactly: crew driver occupies the
       // player's authored left-hand anchor and uses the same target height.
-      const x = PLAYER_CFG.x;
-      const feetY = PLAYER_CFG.feetY;
+      const x = PLAYER_CFG.x + CREW_GARAGE_PRESENTATION.offsetX;
+      const feetY = PLAYER_CFG.feetY + CREW_GARAGE_PRESENTATION.offsetY;
       const targetHeight = PLAYER_CFG.targetHeight;
       const sprite = this.add.image(x, feetY, character.visual.spriteKey)
         .setOrigin(0.5, 1)
@@ -3442,7 +3468,10 @@ export default class GarageScene extends Phaser.Scene {
   buildWorkshopHeroLayout(car, visualModsOverride = null) {
     if (!car) return null;
 
-    const tyreContactY = Number(HERO_CFG.tyreContactY || 500);
+    const crewOffsetX = this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0;
+    const crewOffsetY = this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0;
+    const heroX = HERO_CFG.x + crewOffsetX;
+    const tyreContactY = Number(HERO_CFG.tyreContactY || 500) + crewOffsetY;
     const bodyY = this.getBodyYForWheelBottom(
       car,
       HERO_CFG.targetWidth,
@@ -3469,21 +3498,21 @@ export default class GarageScene extends Phaser.Scene {
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
 
     return {
-      x: HERO_CFG.x,
+      x: heroX,
       bodyY,
       targetWidth: HERO_CFG.targetWidth,
       bodyScale,
       tyreContactY,
-      frontWheelX: HERO_CFG.x + wheelFit.front.offsetX,
-      rearWheelX: HERO_CFG.x + wheelFit.rear.offsetX,
+      frontWheelX: heroX + wheelFit.front.offsetX,
+      rearWheelX: heroX + wheelFit.rear.offsetX,
       rearWheelY: bodyY + renderOffsetY + wheelFit.rear.offsetY,
       frontWheelY: bodyY + renderOffsetY + wheelFit.front.offsetY,
       wheelY: bodyY + renderOffsetY + (
         wheelFit.rear.offsetY +
         wheelFit.front.offsetY
       ) / 2,
-      left: HERO_CFG.x - HERO_CFG.targetWidth / 2,
-      right: HERO_CFG.x + HERO_CFG.targetWidth / 2,
+      left: heroX - HERO_CFG.targetWidth / 2,
+      right: heroX + HERO_CFG.targetWidth / 2,
     };
   }
 
@@ -6200,8 +6229,8 @@ export default class GarageScene extends Phaser.Scene {
       const drivetrainCfg = DAICHI_CFG.drivetrain;
       this.addDaichiTuningHelper({
         textureKey: daichi.visual.spriteKey,
-        x: drivetrainCfg.x,
-        feetY: drivetrainCfg.feetY,
+        x: drivetrainCfg.x + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0),
+        feetY: drivetrainCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
         targetHeight: drivetrainCfg.targetHeight,
         depth: 8.4,
         anchorY: 1,
@@ -6254,7 +6283,7 @@ export default class GarageScene extends Phaser.Scene {
       // Chassis work reads better with Daichi behind the car rather than
       // standing over the foreground. Lift and shrink him so the car remains
       // the main subject while his tools/pose are still visible.
-      feetY: chassisCfg.feetY,
+      feetY: chassisCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
       targetHeight: chassisCfg.targetHeight,
       depth: 9.4,
       anchorY: 1517 / 1536,
