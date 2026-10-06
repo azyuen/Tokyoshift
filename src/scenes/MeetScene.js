@@ -2879,8 +2879,31 @@ export default class MeetScene extends Phaser.Scene {
   showSpecialChallenger(challenger, animate = true) {
     if (!challenger || !this.hasCar) return;
 
-    const character = characters[challenger.characterId];
-    const car = cars[challenger.carId];
+    const physicalRoster =
+      this.locationOffers[this.selectedMeetLocation] || this.offers || [];
+    const rawSourceSlot = Number(challenger.sourceMeetSlot);
+    const sourceSlot = Number.isInteger(rawSourceSlot) && rawSourceSlot >= 0
+      ? rawSourceSlot
+      : -1;
+    const slotOffer = sourceSlot >= 0 ? physicalRoster[sourceSlot] : null;
+    const sourceOffer =
+      slotOffer?.characterId === challenger.characterId &&
+      slotOffer?.carId === challenger.carId
+        ? slotOffer
+        : physicalRoster.find(offer =>
+            offer?.characterId === challenger.characterId &&
+            offer?.carId === challenger.carId
+          );
+
+    // NPC-instigated pink slips never create a new/random person. The
+    // challenger must still be one of the physical rivals at this exact Meet.
+    if (!sourceOffer) {
+      this.recoverSpecialChallengerView({ clearChallenger: true });
+      return;
+    }
+
+    const character = characters[sourceOffer.characterId];
+    const car = cars[sourceOffer.carId];
 
     // Validate definitions and textures before clearing the ordinary meet.
     // On slower iPhones a challenger could previously arrive while an asset
@@ -2904,13 +2927,12 @@ export default class MeetScene extends Phaser.Scene {
     this.modeButtons?.forEach(item => item.box.disableInteractive());
 
     try {
-    // The challenger car now rolls naturally into the meet from the left.
-    // Start fully outside the masked stage, then coast to its parking position.
-    const startX = animate ? STAGE.x - 390 : 640;
-    const finalX = 640;
+    // This driver was already physically present in the Meet roster. Do not
+    // animate a second "arrival"; simply focus the existing rival into the
+    // pink-slip presentation.
     const carObjects = this.createCarDisplay(
       car,
-      startX,
+      640,
       430,
       690,
       48,
@@ -2922,30 +2944,6 @@ export default class MeetScene extends Phaser.Scene {
       obj.setMask(this.stageMask);
       this.specialChallengeObjects.push(obj);
     });
-
-    if (animate) {
-      const dx = finalX - startX;
-      const rollDuration = 1900;
-      const rollEase = 'Sine.easeOut';
-
-      this.tweens.add({
-        targets: carObjects,
-        x: '+=' + dx,
-        duration: rollDuration,
-        ease: rollEase,
-      });
-
-      // createCarDisplay returns the two wheel sprites at indexes 4 and 5.
-      // Match their rotation easing to the car's translation so it reads as a
-      // slow roll-in rather than a sliding entrance.
-      const rollingWheels = [carObjects[4], carObjects[5]].filter(Boolean);
-      this.tweens.add({
-        targets: rollingWheels,
-        angle: '+=1260',
-        duration: rollDuration,
-        ease: rollEase,
-      });
-    }
 
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
     const driver = this.add.image(930, 590, character.visual.spriteKey)
@@ -3992,6 +3990,26 @@ export default class MeetScene extends Phaser.Scene {
     });
   }
 
+  meetRosterHasDuplicatePeople(offers = []) {
+    const characterIds = new Set();
+    const visualIds = new Set();
+
+    for (const offer of offers || []) {
+      const characterId = String(offer?.characterId || '');
+      const visual = characters[characterId]?.visual || {};
+      const visualId = String(visual.spriteKey || visual.path || '');
+
+      if (!characterId) return true;
+      if (characterIds.has(characterId)) return true;
+      if (visualId && visualIds.has(visualId)) return true;
+
+      characterIds.add(characterId);
+      if (visualId) visualIds.add(visualId);
+    }
+
+    return false;
+  }
+
   rollOffers({ resetTimer = true, force = false } = {}) {
     if (!force && (this.specialChallengeActive || this.specialChallengePreparing)) {
       return;
@@ -4001,8 +4019,20 @@ export default class MeetScene extends Phaser.Scene {
     this.clearStageObjects();
 
     const location = getMeetLocation(this.selectedMeetLocation);
-    this.offers = this.locationOffers[this.selectedMeetLocation]
+    let visibleOffers = this.locationOffers[this.selectedMeetLocation]
       || this.generateOffersForLocation(this.selectedMeetLocation);
+
+    // Rendering is the final authority: even if an old save or an interrupted
+    // refresh somehow leaves duplicate people in a roster, never put the same
+    // character (or the same visual identity) on one Meet screen twice.
+    if (this.meetRosterHasDuplicatePeople(visibleOffers)) {
+      visibleOffers = this.generateOffersForLocation(this.selectedMeetLocation);
+      this.locationOffers[this.selectedMeetLocation] = visibleOffers;
+      this.locationSelectedOfferIndex[this.selectedMeetLocation] = 0;
+      this.persistMeetRound();
+    }
+
+    this.offers = visibleOffers;
     this.locationOffers[this.selectedMeetLocation] = this.offers;
 
     this.selectedOfferIndex = Phaser.Math.Clamp(
