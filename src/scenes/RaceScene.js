@@ -136,6 +136,7 @@ export default class RaceScene extends Phaser.Scene {
     const opponentId = this.registry.get('selectedOpponentCharacterId');
     [playerId, opponentId].filter(Boolean).forEach(id => {
       const visual = characters[id]?.visual || {};
+      queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
       queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
       queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
     });
