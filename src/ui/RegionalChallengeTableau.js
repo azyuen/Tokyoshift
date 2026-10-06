@@ -8,15 +8,15 @@ const RESULT_FONT = '"Exo 2", sans-serif';
 
 const RIVAL_LAYOUTS = [
   // Three overlapping panels across the upper-right.
-  { x: 820, y: 185, w: 280, h: 250, skew: -18 },
-  { x: 1055, y: 185, w: 280, h: 250, skew: 15 },
-  { x: 1290, y: 185, w: 280, h: 250, skew: -16 },
+  { x: 900, y: 175, w: 280, h: 250, skew: -18 },
+  { x: 1135, y: 175, w: 280, h: 250, skew: 15 },
+  { x: 1370, y: 175, w: 280, h: 250, skew: -16 },
 
   // Four overlapping panels across the lower-right.
-  { x: 700, y: 500, w: 250, h: 285, skew: 15 },
-  { x: 915, y: 500, w: 250, h: 285, skew: -14 },
-  { x: 1130, y: 500, w: 250, h: 285, skew: 14 },
-  { x: 1345, y: 500, w: 250, h: 285, skew: -15 },
+  { x: 790, y: 525, w: 250, h: 285, skew: 15 },
+  { x: 1005, y: 525, w: 250, h: 285, skew: -14 },
+  { x: 1220, y: 525, w: 250, h: 285, skew: 14 },
+  { x: 1435, y: 525, w: 250, h: 285, skew: -15 },
 ];
 
 function panelPoints(layout) {
@@ -187,6 +187,26 @@ export function createRegionalChallengeTableau(scene, {
       lineSpacing: -10,
     }
   ).setDepth(depth + 30).setScrollFactor(0));
+
+  const rivalQuote = String(
+    currentRival?.resultQuotes?.win ||
+    currentRival?.resultQuotes?.loss ||
+    'This is where your run gets serious.'
+  );
+
+  const quoteBox = add(scene.add.rectangle(1115, 350, 520, 62, 0x0b0d10, 0.94)
+    .setStrokeStyle(2, 0x11141a, 1)
+    .setDepth(depth + 32)
+    .setScrollFactor(0));
+
+  add(scene.add.text(1115, 350, '“' + rivalQuote + '”', {
+    fontFamily: BODY_FONT,
+    fontSize: '14px',
+    color: '#ffffff',
+    fontStyle: '700',
+    align: 'center',
+    wordWrap: { width: 468 },
+  }).setOrigin(0.5).setDepth(depth + 33).setScrollFactor(0));
 
   const pauseText = add(scene.add.text(132, 654, 'PAUSE CHALLENGE', {
     fontFamily: PIXEL_FONT,
