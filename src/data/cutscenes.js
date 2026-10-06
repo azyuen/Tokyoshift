@@ -244,7 +244,7 @@ export const CUTSCENES = {
       variables: {
         SHOP: 'SPOON SPORTS',
         MECHANIC_NAME: 'NATSUMI KAGAWA',
-        MECHANIC_SUBTITLE: 'SPOON SPORTS ENGINEER',
+        MECHANIC_SUBTITLE: 'SPOON SPORTS // REGION MECHANIC',
       },
     },
     introCard: {
@@ -269,7 +269,7 @@ export const CUTSCENES = {
         speaker: 'left',
         speakerLabel: '{MECHANIC_NAME}',
         pose: 'idle',
-        text: 'Bring your car to my workshop.',
+        text: "Come with me. I'll show you the shop.",
         emphasis: true,
       },
     ],
