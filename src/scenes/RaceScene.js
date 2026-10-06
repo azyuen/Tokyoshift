@@ -68,6 +68,7 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
+import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261006-r395';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r388';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
@@ -138,6 +139,19 @@ export default class RaceScene extends Phaser.Scene {
       queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
       queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
     });
+
+    if (this.raceMode === 'TUNER_TEAM') {
+      const regionId = String(
+        this.registry.get('raceDistrict') || this.registry.get('district') || ''
+      ).toUpperCase();
+      const challenge = getTunerTeamChallengeState(this.registry, regionId);
+      (challenge.rounds || []).slice(0, TUNER_TEAM_CHALLENGE_STAGES).forEach(round => {
+        const visual = characters[round?.characterId]?.visual || {};
+        queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+        queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
+        queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
+      });
+    }
 
     const playerState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
     const raceCarIds = [...new Set([this.selectedCarId, this.opponentCarId])]
@@ -565,6 +579,20 @@ export default class RaceScene extends Phaser.Scene {
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
     this.devCutsceneControl = addDevCutsceneButton(this, 350, 54, { depth: 90 });
+
+    if (this.raceMode === 'TUNER_TEAM') {
+      const regionId = String(this.raceDistrict || '').toUpperCase();
+      const state = getTunerTeamChallengeState(this.registry, regionId);
+      const stageKey = regionId + ':' + Number(state.stage || 0);
+      const alreadyBriefed = this.registry.get('regionalChallengeBriefedStage') === stageKey;
+
+      if (alreadyBriefed) {
+        this.registry.set('regionalChallengeBriefedStage', null);
+        saveSessionState(this.registry);
+      } else {
+        this.time.delayedCall(45, () => this.showRegionalChallengeBriefing());
+      }
+    }
 
     finishSceneLoading('READY TO RACE');
   }
@@ -1830,6 +1858,11 @@ export default class RaceScene extends Phaser.Scene {
     if (playerWon) playVictorySting();
     else stopMusic();
 
+    if (settlement?.teamChallenge) {
+      this.showRegionalChallengeResultOverlay(settlement, playerWon);
+      return;
+    }
+
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
     const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
     const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
@@ -2661,317 +2694,267 @@ export default class RaceScene extends Phaser.Scene {
     return { regionId, state, round };
   }
 
-  showNextTunerChallengeBriefing() {
-    if (this.tunerChallengeBriefing?.active) return;
+  getRegionalChallengeTableauState() {
+    const regionId = String(
+      this.registry.get('raceDistrict') || this.registry.get('district') || ''
+    ).toUpperCase();
+    const state = getTunerTeamChallengeState(this.registry, regionId);
+    return {
+      regionId,
+      state,
+      rounds: Array.isArray(state.rounds) ? state.rounds.slice(0, TUNER_TEAM_CHALLENGE_STAGES) : [],
+      perfectMode: Boolean(
+        state.perfectAttempt ||
+        (state.championEarned && !state.perfectEarned)
+      ),
+    };
+  }
 
-    const { regionId, state, round } = this.getNextTunerChallengeRound();
+  getRegionalChallengePlayerName() {
+    return [
+      String(this.registry.get('firstName') || '').trim(),
+      String(this.registry.get('lastName') || '').trim(),
+    ].filter(Boolean).join(' ') || characters[this.playerCharacterId]?.name || 'YOU';
+  }
+
+  showRegionalChallengeBriefing() {
+    if (this.regionalChallengeTableau?.active) return;
+
+    const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
+    const stageIndex = Math.max(
+      0,
+      Math.min(TUNER_TEAM_CHALLENGE_STAGES - 1, Number(state.stage || 0))
+    );
+    const round = rounds[stageIndex];
     if (!state.activeSession || !round) {
       this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
       return;
     }
 
-    const nextNumber = state.stage + 1;
-    const rival = characters[round.characterId] || null;
-    const rivalCar = cars[round.carId] || null;
-    const distanceLabel = Math.abs(Number(round.distanceM || 0) - QUARTER_M) < 1
-      ? '1/4 MILE'
-      : Math.abs(Number(round.distanceM || 0) - HALF_MILE_M) < 1
-        ? '1/2 MILE'
-        : Math.round(Number(round.distanceM || 0)) + ' M';
-    const isRoll = round.raceType === 'Roll Race';
-    const startAdvice = isRoll
-      ? 'ROLLING START // CHOOSE YOUR GEAR BEFORE THE COUNTDOWN ENDS'
-      : 'STANDING START // CLUTCH + THROTTLE // WATCH THE TREE';
-    const depth = 210;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-
-    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.90)
-      .setDepth(depth)
-      .setScrollFactor(0)
-      .setInteractive());
-
-    const panel = add(this.add.rectangle(780, 360, 900, 590, 0x07111d, 0.998)
-      .setStrokeStyle(3, 0xff5f93, 0.98)
-      .setDepth(depth + 1)
-      .setScrollFactor(0));
-
-    add(this.add.text(780, 104, regionId + ' // TEAM CHALLENGE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#ff91b6',
-    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    add(this.add.text(780, 149, 'CHALLENGER ' + nextNumber + ' / 7', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '20px',
-      color: '#fff4f8',
-    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    const portraitBoxX = 515;
-    const portraitBoxY = 314;
-    add(this.add.rectangle(portraitBoxX, portraitBoxY, 230, 250, 0x06101a, 1)
-      .setStrokeStyle(2, 0x315b73, 1)
-      .setDepth(depth + 2)
-      .setScrollFactor(0));
-
-    const textureKey = rival?.visual?.spriteKey;
-    if (textureKey && this.textures.exists(textureKey)) {
-      const profile = createCharacterProfile(this, {
-        characterId: round.characterId,
-        pose: 'idle',
-        x: portraitBoxX,
-        y: portraitBoxY,
-        frameWidth: 224,
-        frameHeight: 242,
-        side: 'left',
-        depth: depth + 3,
-        flipInward: true,
-      });
-      if (profile) {
-        profile.image.setScrollFactor(0);
-        add(profile.image);
-        objects.push(profile.maskShape);
-      }
-    } else {
-      add(this.add.text(portraitBoxX, portraitBoxY, '#' + nextNumber, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '30px',
-        color: '#718fa3',
-      }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-    }
-
-    add(this.add.text(portraitBoxX, 464, String(rival?.name || 'RIVAL').toUpperCase(), {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#e8f6fc',
-      align: 'center',
-      wordWrap: { width: 240 },
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    const infoX = 785;
-    const infoStartY = 235;
-    const labelStyle = {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#718fa3',
-    };
-    const valueStyle = {
-      fontFamily: PIXEL_FONT,
-      fontSize: '10px',
-      color: '#eefaff',
-    };
-
-    const rows = [
-      ['CAR', rivalCar?.shortName || round.carId],
-      ['RACE', String(round.raceType || 'Standing Start').toUpperCase()],
-      ['DISTANCE', distanceLabel],
-      ['DIFFICULTY', String(round.difficulty || 'HARD').toUpperCase()],
-    ];
-
-    rows.forEach((row, index) => {
-      const y = infoStartY + index * 62;
-      add(this.add.text(infoX, y, row[0], labelStyle)
-        .setDepth(depth + 2).setScrollFactor(0));
-      add(this.add.text(infoX, y + 25, row[1], valueStyle)
-        .setDepth(depth + 2).setScrollFactor(0));
+    this.regionalChallengeTableau = createRegionalChallengeTableau(this, {
+      regionId,
+      rounds,
+      stageIndex,
+      playerCharacterId: this.playerCharacterId,
+      playerDisplayName: this.getRegionalChallengePlayerName(),
+      mode: 'briefing',
+      perfectMode,
+      onStart: () => {
+        this.regionalChallengeTableau?.destroy?.();
+        this.regionalChallengeTableau = null;
+        this.startRace();
+      },
+      onPause: () => this.showRegionalChallengePauseWarning(),
     });
+  }
 
-    add(this.add.rectangle(780, 512, 720, 74, isRoll ? 0x10283b : 0x10281e, 0.96)
-      .setStrokeStyle(2, isRoll ? 0x45d7ff : 0x62e8c7, 0.95)
-      .setDepth(depth + 2)
-      .setScrollFactor(0));
-
-    add(this.add.text(780, 500, 'START PROCEDURE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: isRoll ? '#8fe7ff' : '#8ff0c2',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    add(this.add.text(780, 529, startAdvice, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#f3fbff',
-      align: 'center',
-      wordWrap: { width: 670 },
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    if (rival?.introQuote) {
-      add(this.add.text(780, 558, '“' + rival.introQuote + '”', {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#a7bac5',
-        fontStyle: '600',
-        align: 'center',
-        wordWrap: { width: 700 },
-      }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+  showNextTunerChallengeBriefing() {
+    if (this.regionalChallengeTableau?.active) {
+      this.regionalChallengeTableau.transitionToNext?.();
+      return;
     }
+    this.showRegionalChallengeBriefing();
+  }
 
-    add(this.add.text(
-      780,
-      594,
-      state.stage + ' / 7 DEFEATED' +
-        (state.perfectEligible !== false ? '  //  PERFECT RUN ACTIVE' : ''),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: state.perfectEligible !== false ? '#ffe08a' : '#8fa0aa',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+  showRegionalChallengeResultOverlay(settlement, playerWon) {
+    const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
+    const stageIndex = Math.max(
+      0,
+      Math.min(
+        TUNER_TEAM_CHALLENGE_STAGES - 1,
+        Number(settlement?.stageNumber || 1) - 1
+      )
+    );
 
-    const pause = add(this.add.rectangle(625, 630, 230, 50, 0x171c25, 1)
-      .setStrokeStyle(1, 0x70818d, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2)
-      .setScrollFactor(0));
+    [
+      this.controls?.graphics,
+      this.controls?.clutchSprite,
+      this.controls?.nosSprite,
+      this.controls?.shifterSprite,
+      this.controls?.throttleSprite,
+      this.hud?.cluster,
+      this.hud?.status,
+      this.hud?.gearBack,
+      this.hud?.gearText,
+      this.hud?.speedText,
+      this.hud?.auxLabel,
+      this.treeSprite,
+      this.rollCountdownText,
+      this.raceLocationText,
+      this.rivalText,
+      this.stakeText,
+      this.startButton,
+      this.startButtonText,
+      this.cancelButton,
+      this.cancelButtonText,
+    ].forEach(obj => obj?.setVisible?.(false));
+    this.hud?.g?.clear?.();
+    this.treeLightsG?.clear?.();
 
-    add(this.add.text(625, 630, 'PAUSE CHALLENGE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#d7e2e8',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+    const completed = Boolean(settlement?.teamChallengeCompleted);
+    const failed = Boolean(settlement?.teamChallengeFailed);
+    const resultPerfectMode = Boolean(
+      perfectMode ||
+      settlement?.teamChallengePerfectAttempt
+    );
 
-    const ready = add(this.add.rectangle(955, 630, 300, 50, 0x321522, 1)
-      .setStrokeStyle(2, 0xff5f93, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2)
-      .setScrollFactor(0));
-
-    add(this.add.text(955, 630, 'READY // RACE ' + nextNumber, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#fff4f8',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    const performPause = () => {
-      const store = { ...(this.registry.get('tunerTeamChallenges') || {}) };
-      const current = getTunerTeamChallengeState(this.registry, regionId);
-      const perfectSweep = Boolean(
-        current.perfectAttempt ||
-        (current.championEarned && !current.perfectEarned)
-      );
-
-      store[regionId] = {
-        ...(store[regionId] || {}),
-        ...current,
-        invited: true,
-        activeSession: false,
-        paused: true,
-        pausedAt: Date.now(),
-        // First-clear challenge progress is permanent, but leaving the event
-        // breaks the 7-0 streak. A post-champion Perfect Sweep has no partial
-        // progress to preserve, so pausing restarts that sweep from racer one.
-        stage: perfectSweep ? 0 : current.stage,
-        perfectAttempt: false,
-        perfectEligible: perfectSweep ? true : false,
-        retryNotBefore: 0,
-      };
-      this.registry.set('tunerTeamChallenges', store);
-      saveSessionState(this.registry);
-
-      objects.forEach(obj => obj?.destroy?.());
-      this.tunerChallengeBriefing = null;
+    const returnToMeet = () => {
       this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
     };
 
-    const showPauseWarning = () => {
-      const warningObjects = [];
-      const addWarning = obj => { warningObjects.push(obj); return obj; };
-      const warningDepth = depth + 20;
-      const perfectSweep = Boolean(
-        state.perfectAttempt ||
-        (state.championEarned && !state.perfectEarned)
-      );
+    const finishChallenge = () => {
+      if (!completed) {
+        returnToMeet();
+        return;
+      }
 
-      const warningBlocker = addWarning(this.add.rectangle(
-        780, 360, 1560, 720, 0x02050b, 0.82
-      ).setDepth(warningDepth).setScrollFactor(0).setInteractive());
-
-      addWarning(this.add.rectangle(
-        780, 360, 760, 300, 0x09111a, 0.998
-      ).setStrokeStyle(3, 0xffc65c, 0.98)
-        .setDepth(warningDepth + 1)
-        .setScrollFactor(0));
-
-      addWarning(this.add.text(780, 275, 'PAUSE REGIONAL CHALLENGE?', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '14px',
-        color: '#ffe09a',
-      }).setOrigin(0.5).setDepth(warningDepth + 2).setScrollFactor(0));
-
-      addWarning(this.add.text(
-        780,
-        350,
-        perfectSweep
-          ? 'Pausing ends this Perfect Sweep streak.\nYour next Perfect Sweep will restart from challenger 1.'
-          : 'Your ' + state.stage + '-win streak will end.\nChallenge progress is saved, but ★ Perfect will no longer be available on this run.',
-        {
-          fontFamily: BODY_FONT,
-          fontSize: '13px',
-          color: '#e4edf2',
-          align: 'center',
-          lineSpacing: 7,
-          wordWrap: { width: 650 },
-        }
-      ).setOrigin(0.5).setDepth(warningDepth + 2).setScrollFactor(0));
-
-      const keep = addWarning(this.add.rectangle(
-        650, 448, 220, 48, 0x17242a, 1
-      ).setStrokeStyle(1, 0x6d8796, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(warningDepth + 2)
-        .setScrollFactor(0));
-
-      addWarning(this.add.text(650, 448, 'KEEP RACING', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#dcebf2',
-      }).setOrigin(0.5).setDepth(warningDepth + 3).setScrollFactor(0));
-
-      const confirm = addWarning(this.add.rectangle(
-        910, 448, 230, 48, 0x3a2710, 1
-      ).setStrokeStyle(2, 0xffc65c, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(warningDepth + 2)
-        .setScrollFactor(0));
-
-      addWarning(this.add.text(910, 448, 'PAUSE ANYWAY', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#fff1c7',
-      }).setOrigin(0.5).setDepth(warningDepth + 3).setScrollFactor(0));
-
-      const dismissWarning = () => warningObjects.forEach(obj => obj?.destroy?.());
-      warningBlocker.on('pointerdown', () => {});
-      keep.on('pointerdown', dismissWarning);
-      confirm.on('pointerdown', () => {
-        dismissWarning();
-        performPause();
+      const perfect = Boolean(settlement?.teamChallengePerfect);
+      const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
+      const rivalCharacter = characters[this.opponentCharacterId] || null;
+      const result = playMangaCutscene(this, cutsceneId, {
+        historyId: cutsceneId + ':' + String(settlement.regionId || regionId),
+        characterOverrides: { RIVAL: this.opponentCharacterId },
+        variables: {
+          REGION: String(settlement.regionId || regionId).toUpperCase(),
+          RIVAL_NAME: String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase(),
+          CASH_REWARD: Number(settlement.totalReward || 0).toLocaleString('en-US'),
+          DONOR: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
+          COUPON_AWARDS: String(Number(settlement.couponAwards || 0)),
+          BADGE: String(
+            settlement.badgeLabel ||
+            (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+          ),
+        },
+        onComplete: returnToMeet,
       });
+      if (!result?.played) returnToMeet();
     };
 
-    blocker.on('pointerdown', () => {});
-    pause.on('pointerover', () => pause.setFillStyle(0x25323b, 1));
-    pause.on('pointerout', () => pause.setFillStyle(0x171c25, 1));
-    pause.on('pointerdown', () => {
-      const onPerfectStreak = Boolean(
-        state.perfectEligible !== false ||
-        state.perfectAttempt ||
-        (state.championEarned && !state.perfectEarned)
-      );
-      if (onPerfectStreak) showPauseWarning();
-      else performPause();
-    });
+    this.regionalChallengeTableau = createRegionalChallengeTableau(this, {
+      regionId,
+      rounds,
+      stageIndex,
+      playerCharacterId: this.playerCharacterId,
+      playerDisplayName: this.getRegionalChallengePlayerName(),
+      mode: 'result',
+      playerWon,
+      perfectMode: resultPerfectMode,
+      completed,
+      failed,
+      settlement,
+      onPause: () => this.showRegionalChallengePauseWarning(),
+      onContinue: finishChallenge,
+      onNextReady: () => {},
+      onStart: nextIndex => {
+        const current = getTunerTeamChallengeState(this.registry, regionId);
+        const stageKey = regionId + ':' + Number(current.stage || nextIndex || 0);
+        this.registry.set('regionalChallengeBriefedStage', stageKey);
+        saveSessionState(this.registry);
 
-    ready.on('pointerover', () => ready.setFillStyle(0x5b2036, 1));
-    ready.on('pointerout', () => ready.setFillStyle(0x321522, 1));
-    ready.on('pointerdown', () => {
+        this.regionalChallengeTableau?.destroy?.();
+        this.regionalChallengeTableau = null;
+        this.startNextTunerChallengeRound();
+      },
+    });
+  }
+
+  pauseRegionalChallenge() {
+    const { regionId, state } = this.getRegionalChallengeTableauState();
+    const store = { ...(this.registry.get('tunerTeamChallenges') || {}) };
+    const perfectSweep = Boolean(
+      state.perfectAttempt ||
+      (state.championEarned && !state.perfectEarned)
+    );
+
+    store[regionId] = {
+      ...(store[regionId] || {}),
+      ...state,
+      invited: true,
+      activeSession: false,
+      paused: true,
+      pausedAt: Date.now(),
+      stage: perfectSweep ? 0 : state.stage,
+      perfectAttempt: false,
+      perfectEligible: perfectSweep ? true : false,
+      retryNotBefore: 0,
+    };
+    this.registry.set('tunerTeamChallenges', store);
+    saveSessionState(this.registry);
+
+    this.regionalChallengeTableau?.destroy?.();
+    this.regionalChallengeTableau = null;
+    this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+  }
+
+  showRegionalChallengePauseWarning() {
+    if (this.regionalChallengePauseWarning?.active) return;
+
+    const { state } = this.getRegionalChallengeTableauState();
+    const perfectSweep = Boolean(
+      state.perfectAttempt ||
+      (state.championEarned && !state.perfectEarned)
+    );
+    const depth = 500;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 360, 1560, 720, 0x02050b, 0.82)
+      .setDepth(depth).setScrollFactor(0).setInteractive());
+    add(this.add.rectangle(780, 360, 760, 300, 0x09111a, 0.998)
+      .setStrokeStyle(3, 0xffc65c, 0.98)
+      .setDepth(depth + 1).setScrollFactor(0));
+
+    add(this.add.text(780, 274, 'PAUSE REGIONAL CHALLENGE?', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '14px',
+      color: '#ffe09a',
+    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    add(this.add.text(
+      780,
+      350,
+      perfectSweep
+        ? 'Pausing ends this Perfect Streak.\nYour next attempt restarts from racer 1.'
+        : 'Challenge progress is saved, but leaving breaks the current 7–0 run.',
+      {
+        fontFamily: BODY_FONT,
+        fontSize: '13px',
+        color: '#e4edf2',
+        align: 'center',
+        lineSpacing: 7,
+        wordWrap: { width: 650 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
+
+    const keep = add(this.add.rectangle(650, 448, 220, 48, 0x17242a, 1)
+      .setStrokeStyle(1, 0x6d8796, 1).setDepth(depth + 2)
+      .setScrollFactor(0).setInteractive({ useHandCursor: true }));
+    add(this.add.text(650, 448, 'KEEP RACING', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#dcebf2',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const confirm = add(this.add.rectangle(910, 448, 230, 48, 0x3a2710, 1)
+      .setStrokeStyle(2, 0xffc65c, 1).setDepth(depth + 2)
+      .setScrollFactor(0).setInteractive({ useHandCursor: true }));
+    add(this.add.text(910, 448, 'PAUSE ANYWAY', {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#fff1c7',
+    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
+
+    const close = () => {
       objects.forEach(obj => obj?.destroy?.());
-      this.tunerChallengeBriefing = null;
-      this.startNextTunerChallengeRound();
+      this.regionalChallengePauseWarning = null;
+    };
+    blocker.on('pointerdown', () => {});
+    keep.on('pointerdown', close);
+    confirm.on('pointerdown', () => {
+      close();
+      this.pauseRegionalChallenge();
     });
 
-    this.tunerChallengeBriefing = panel;
+    this.regionalChallengePauseWarning = blocker;
   }
 
   startNextTunerChallengeRound() {
