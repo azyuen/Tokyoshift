@@ -5,11 +5,11 @@ import {
   getRecruitableRegionalMembers,
   getCrewBaseCarId,
   getCrewLoanCarId,
-} from './crewRoster.js?v=20261005-r345';
+} from './crewRoster.js?v=20261007-r404';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261007-r402';
+import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261007-r404';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
