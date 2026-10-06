@@ -87,6 +87,7 @@ import {
 } from '../data/centralTokyo.js?v=20261006-r388';
 import {
   isCrewComplete,
+  getCrewMembers,
   getRecruitableCrewCandidates,
   getCrewInviteInterest,
   clearCrewInviteInterest,
@@ -244,12 +245,18 @@ export default class MeetScene extends Phaser.Scene {
     const initialRegionalCharacters = new Set(
       getRivalCharacterOrderForRegion(initialRegion)
     );
+    const recruitedCharacterIds = new Set(
+      Object.values(getCrewMembers(this.registry))
+        .map(member => member?.characterId)
+        .filter(Boolean)
+    );
     const storedCurrentValid =
       storedRefreshAt > Date.now() &&
       storedCurrent.length > 0 &&
       storedCurrentUnique &&
       storedCurrent.every(offer =>
         initialRegionalCharacters.has(offer?.characterId) &&
+        !recruitedCharacterIds.has(offer?.characterId) &&
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         offer?.driverSkillSource === 'LOCATION' &&
@@ -369,9 +376,14 @@ export default class MeetScene extends Phaser.Scene {
       ALL_MEET_LOCATION_IDS.forEach(locationId => {
         const location = getMeetLocation(locationId);
         const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+        const recruitedIds = new Set(
+          Object.values(getCrewMembers(this.registry))
+            .map(member => member?.characterId)
+            .filter(Boolean)
+        );
         const allowed = new Set(
           getRivalCharacterOrderForRegion(location.district)
-            .filter(id => id !== playerId)
+            .filter(id => id !== playerId && !recruitedIds.has(id))
         );
 
         const stored = Array.isArray(storedRosters[locationId])
@@ -707,9 +719,9 @@ export default class MeetScene extends Phaser.Scene {
     if (!isCrewComplete(this.registry)) return;
 
     const units = getCrewBattleUnits(this.registry);
-    if (units.length < 8) return;
+    if (units.length < 7) return;
 
-    const rounds = buildRegionalCrewBattleRounds(regionId);
+    const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
     if (rounds.length < 6) return;
 
     const selected = [];
@@ -737,7 +749,7 @@ export default class MeetScene extends Phaser.Scene {
     add(this.add.text(
       780,
       175,
-      'Choose SIX racers from your 8-person crew and tap them in running order. You must include yourself. First crew to 4 wins takes the battle; a 3–3 tie stays with the regional crew.',
+      'Choose SIX of your seven recruited crew drivers in running order. Loan cars only — you sit this one out. The regional crew has six remaining drivers after their recruit joined you. First crew to 4 wins; a 3–3 tie stays with the regional crew.',
       {
         fontFamily: BODY_FONT,
         fontSize: '11px',
@@ -773,12 +785,8 @@ export default class MeetScene extends Phaser.Scene {
         card.order.setColor(chosen ? '#ffffff' : '#607988');
       });
 
-      const playerIncluded = selected.includes('PLAYER');
-      const ready = selected.length === 6 && playerIncluded;
-      status.setText(
-        selected.length + ' / 6 SELECTED' +
-        (selected.length === 6 && !playerIncluded ? ' // INCLUDE YOUR CAR' : '')
-      );
+      const ready = selected.length === 6;
+      status.setText(selected.length + ' / 6 SELECTED');
 
       if (ready) {
         start
@@ -792,7 +800,7 @@ export default class MeetScene extends Phaser.Scene {
           .setFillStyle(0x19171d, 1)
           .setStrokeStyle(2, 0x665267, 1);
         startText
-          .setText(selected.length < 6 ? 'SELECT 6 RACERS' : 'INCLUDE YOUR CAR')
+          .setText('SELECT 6 RACERS')
           .setColor('#8a768b');
       }
     };
@@ -809,10 +817,10 @@ export default class MeetScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true })
         .setDepth(depth + 2));
 
-      add(this.add.text(x - 105, y - 42, unit.player ? 'YOU' : String(unit.regionId), {
+      add(this.add.text(x - 105, y - 42, String(unit.regionId), {
         fontFamily: PIXEL_FONT,
         fontSize: '7px',
-        color: unit.player ? '#ffe08a' : '#8fe7ff',
+        color: '#8fe7ff',
       }).setDepth(depth + 3));
 
       add(this.add.text(
@@ -854,9 +862,6 @@ export default class MeetScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 3));
     auto.on('pointerdown', () => {
       selected.splice(0, selected.length, ...units.slice(0, 6).map(unit => unit.id));
-      if (!selected.includes('PLAYER')) {
-        selected[selected.length - 1] = 'PLAYER';
-      }
       refresh();
     });
 
@@ -869,7 +874,7 @@ export default class MeetScene extends Phaser.Scene {
     cancel.on('pointerdown', close);
 
     start.on('pointerdown', () => {
-      if (selected.length !== 6 || !selected.includes('PLAYER')) return;
+      if (selected.length !== 6) return;
       const lineup = selected
         .map(id => units.find(unit => unit.id === id))
         .filter(Boolean);
@@ -881,14 +886,15 @@ export default class MeetScene extends Phaser.Scene {
     refresh();
   }
 
-  startCrewBattle(regionId, lineup, rounds = buildRegionalCrewBattleRounds(regionId)) {
-    if (!isCrewComplete(this.registry) || lineup.length !== 6 || rounds.length < 6) return;
+  startCrewBattle(regionId, lineup, rounds = null) {
+    const battleRounds = rounds || buildRegionalCrewBattleRounds(regionId, this.registry);
+    if (!isCrewComplete(this.registry) || lineup.length !== 6 || battleRounds.length < 6) return;
 
     const state = {
       active: true,
       regionId: String(regionId || '').toUpperCase(),
       lineup: lineup.map(unit => ({ ...unit })),
-      rounds: rounds.slice(0, 6).map(round => ({ ...round })),
+      rounds: battleRounds.slice(0, 6).map(round => ({ ...round })),
       roundIndex: 0,
       playerWins: 0,
       opponentWins: 0,
@@ -3795,7 +3801,13 @@ export default class MeetScene extends Phaser.Scene {
     const profile = getEncounterProfile(locationId, location.difficulty);
     const playerCharacterId = this.getActiveDriverCharacterId();
 
-    const regionalPool = getRivalCharacterOrderForRegion(location.district);
+    const recruitedIds = new Set(
+      Object.values(getCrewMembers(this.registry))
+        .map(member => member?.characterId)
+        .filter(Boolean)
+    );
+    const regionalPool = getRivalCharacterOrderForRegion(location.district)
+      .filter(id => !recruitedIds.has(id));
     const regionalTeam = hasRegionalTeam(location.district);
     const configuredOrder =
       REGION_LOCATION_RIVAL_ROTATION[location.district]?.[locationId]
@@ -3816,6 +3828,7 @@ export default class MeetScene extends Phaser.Scene {
     const eligible = [...new Set(
       [...rotatedOrder, ...regionalPool].filter(id =>
         id !== playerCharacterId &&
+        !recruitedIds.has(id) &&
         characters[id]
       )
     )];
