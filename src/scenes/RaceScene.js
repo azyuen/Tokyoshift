@@ -2365,11 +2365,24 @@ export default class RaceScene extends Phaser.Scene {
       if (this.opponentFinishClock == null) hideCarVisual(this.opponentVisual);
     }
 
-    // Only a light cinematic wash: the skyline, road, finish line and both
-    // physical race cars remain visible underneath.
-    this.add.rectangle(780, 360, 1560, 720, 0x05070b, 0.12)
+    // Normal results retain a light cinematic wash. Pink-slip results get a
+    // much stronger ownership-change colour wash which fades in before every
+    // other result element.
+    const baseWash = this.add.rectangle(780, 360, 1560, 720, 0x05070b, isPinkSlip ? 0.08 : 0.12)
       .setDepth(depth)
       .setScrollFactor(0);
+
+    const pinkSlipShade = isPinkSlip
+      ? this.add.rectangle(
+          780,
+          360,
+          1560,
+          720,
+          playerWon ? 0x2fb99a : 0xd62f67,
+          0
+        ).setDepth(depth + 1).setScrollFactor(0)
+      : null;
+    const pinkSlipShadeTargetAlpha = playerWon ? 0.30 : 0.29;
 
     // Editorial result composition. VICTORY and LOSS share the exact same
     // Exo 2 Black Italic treatment; only the outcome colour changes.
@@ -2385,10 +2398,37 @@ export default class RaceScene extends Phaser.Scene {
       strokeThickness: 4,
     };
 
+    // Pink-slip ownership emblem. This is drawn natively in Phaser rather
+    // than raster art so it stays sharp and can share the result colour.
+    const pinkSlipKey = isPinkSlip
+      ? this.add.graphics().setDepth(depth + 9).setScrollFactor(0).setPosition(96, 116)
+      : null;
+    if (pinkSlipKey) {
+      const keyColour = Phaser.Display.Color.HexStringToColor(resultColor).color;
+
+      // Dark outer stroke gives the key the same graphic weight as the
+      // character-panel borders.
+      pinkSlipKey.lineStyle(12, 0x11141a, 0.94);
+      pinkSlipKey.strokeCircle(22, 20, 16);
+      pinkSlipKey.lineBetween(38, 20, 91, 20);
+      pinkSlipKey.lineBetween(73, 20, 73, 34);
+      pinkSlipKey.lineBetween(73, 34, 85, 34);
+      pinkSlipKey.lineBetween(85, 34, 85, 20);
+
+      pinkSlipKey.lineStyle(7, keyColour, 1);
+      pinkSlipKey.strokeCircle(22, 20, 16);
+      pinkSlipKey.lineBetween(38, 20, 91, 20);
+      pinkSlipKey.lineBetween(73, 20, 73, 34);
+      pinkSlipKey.lineBetween(73, 34, 85, 34);
+      pinkSlipKey.lineBetween(85, 34, 85, 20);
+    }
+
     const title = this.add.text(
       titleTargetX,
       196,
-      playerWon ? 'VICTORY' : 'LOSS',
+      isPinkSlip
+        ? (playerWon ? 'CAR WON!' : 'CAR LOST')
+        : (playerWon ? 'VICTORY' : 'LOSS'),
       titleStyle
     ).setDepth(depth + 8).setScrollFactor(0);
 
@@ -2441,8 +2481,18 @@ export default class RaceScene extends Phaser.Scene {
       awardParts.push('CASH -¥' + Math.abs(cashDelta).toLocaleString('en-US'));
     }
 
-    if (playerWon && isPinkSlip) {
-      awardParts.push('CAR WON · ' + String(rivalCar.shortName || rivalCar.name || 'RIVAL CAR').toUpperCase());
+    if (isPinkSlip) {
+      if (playerWon) {
+        awardParts.push(
+          'CAR WON · ' +
+          String(rivalCar.shortName || rivalCar.name || 'RIVAL CAR').toUpperCase()
+        );
+      } else {
+        awardParts.push(
+          'CAR LOST · ' +
+          String(cars[this.selectedCarId]?.shortName || cars[this.selectedCarId]?.name || 'YOUR CAR').toUpperCase()
+        );
+      }
     }
     if (playerWon && settlement?.crewRecruitJoined) {
       awardParts.push('CREW MEMBER JOINED');
@@ -2739,8 +2789,8 @@ export default class RaceScene extends Phaser.Scene {
     const nextKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     nextKey.once('down', advance);
 
-    // Cars are already gone. Character reactions pop in first, then the
-    // unified VICTORY / LOSS word flies in from the left.
+    // Cars are already gone. For pink slips the ownership-colour wash lands
+    // first, then the key/portraits/headline/details arrive as a second beat.
     const detailObjects = [
       raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText,
       ...timingObjects,
@@ -2749,9 +2799,25 @@ export default class RaceScene extends Phaser.Scene {
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
 
+    const pinkRevealDelay = isPinkSlip ? 190 : 0;
+
     const finalTitleX = title.x;
     title.x = -title.width - 80;
     title.setAlpha(0);
+
+    if (pinkSlipKey) {
+      pinkSlipKey.setAlpha(0);
+      pinkSlipKey.setScale(0.72);
+    }
+
+    if (pinkSlipShade) {
+      this.tweens.add({
+        targets: pinkSlipShade,
+        alpha: pinkSlipShadeTargetAlpha,
+        duration: 155,
+        ease: 'Quad.Out',
+      });
+    }
 
     if (playerPortraitImage) {
       const targetX = playerPortraitImage.x;
@@ -2762,6 +2828,7 @@ export default class RaceScene extends Phaser.Scene {
         x: targetX,
         alpha: 1,
         duration: 190,
+        delay: pinkRevealDelay,
         ease: 'Expo.Out',
       });
     }
@@ -2775,7 +2842,7 @@ export default class RaceScene extends Phaser.Scene {
         x: targetX,
         alpha: 1,
         duration: 175,
-        delay: 15,
+        delay: pinkRevealDelay + 15,
         ease: 'Expo.Out',
       });
     }
@@ -2786,6 +2853,7 @@ export default class RaceScene extends Phaser.Scene {
       targets: [playerFrame, rivalFrame],
       alpha: 1,
       duration: 120,
+      delay: pinkRevealDelay,
       ease: 'Linear',
     });
 
@@ -2793,16 +2861,28 @@ export default class RaceScene extends Phaser.Scene {
       targets: portraitCopy,
       alpha: 1,
       duration: 135,
-      delay: 95,
+      delay: pinkRevealDelay + 95,
       ease: 'Linear',
     });
+
+    if (pinkSlipKey) {
+      this.tweens.add({
+        targets: pinkSlipKey,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 155,
+        delay: pinkRevealDelay + 20,
+        ease: 'Back.Out',
+      });
+    }
 
     this.tweens.add({
       targets: title,
       x: finalTitleX,
       alpha: 1,
       duration: 215,
-      delay: 65,
+      delay: pinkRevealDelay + 65,
       ease: 'Expo.Out',
     });
 
@@ -2810,7 +2890,7 @@ export default class RaceScene extends Phaser.Scene {
       targets: detailObjects,
       alpha: 1,
       duration: 135,
-      delay: 175,
+      delay: pinkRevealDelay + 175,
       ease: 'Linear',
     });
 
@@ -2819,20 +2899,22 @@ export default class RaceScene extends Phaser.Scene {
         targets: playerPortraitImage,
         y: '+=7',
         duration: 120,
-        delay: 120,
+        delay: pinkRevealDelay + 120,
         ease: 'Quad.In',
       });
     } else if (playerWon) {
-      this.cameras.main.shake(65, 0.0012);
+      this.time.delayedCall(pinkRevealDelay + 55, () => {
+        this.cameras.main.shake(isPinkSlip ? 95 : 65, isPinkSlip ? 0.0018 : 0.0012);
+      });
     }
 
-    this.time.delayedCall(330, () => {
+    this.time.delayedCall(isPinkSlip ? 560 : 330, () => {
       advanceArmed = true;
     });
 
     // Preserve the existing special-result follow-ups. They run after the
     // manga panel lands so an ordinary result never waits on animation.
-    this.time.delayedCall(390, () => {
+    this.time.delayedCall(isPinkSlip ? 650 : 390, () => {
       if (!settlement) return;
 
       if (isPinkSlip) {
