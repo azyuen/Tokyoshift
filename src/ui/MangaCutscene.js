@@ -1,4 +1,4 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r391';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
   getCutscene,
   hasSeenCutscene,
