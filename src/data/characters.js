@@ -380,11 +380,9 @@ export const characters = {
     age: 22,
     hometown: 'Kawasaki',
     archetype: 'The Tuner',
-    roleTags: ['protagonist', 'teammate', 'rival', 'daikoku', 'team', 'ace', 'mechanic'],
+    roleTags: ['protagonist', 'teammate', 'rival', 'daikoku', 'team', 'ace'],
     regionId: 'DAIKOKU',
-    regionMechanic: true,
-    regionMechanicShopId: 'daikokuReAmemiya',
-    regionExclusive: true,
+regionExclusive: true,
     teamRole: 'ace',
     personality: 'Confident, analytical and blunt in a useful way.',
     bio: 'Reina tunes by feel, then proves it with data. She can hear when something is wrong before most people can find it on a gauge. As a teammate she unlocks a strong mechanical identity; as a rival she arrives with cars that are always deceptively well sorted.',
@@ -550,11 +548,12 @@ export const characters = {
     age: 32,
     hometown: 'Kanagawa',
     archetype: 'The Diagnostician',
-    roleTags: ['rival', 'daikoku', 'team', 'diagnostics'],
+    roleTags: ['rival', 'daikoku', 'team', 'diagnostics', 'mechanic'],
     selectable: false,
     rivalEligible: true,
     regionId: 'DAIKOKU',
-    regionExclusive: true,
+    regionMechanic: true,
+    regionMechanicShopId: 'daikokuReAmemiya', regionExclusive: true,
     teamRole: 'diagnostics-specialist',
     personality: 'Dryly funny, observant and methodical; very little escapes her attention.',
     bio: 'Nao specialises in finding the faults everyone else has already spent hours chasing. At Daikoku she is known for turning temperamental cars into brutally dependable ones.',
@@ -816,8 +815,10 @@ export const characters = {
   reinaKuroda: {
     id: 'reinaKuroda',
     skill: { rating: 5, label: 'PRO', ai: { reactionSkill: 0.93, launchSkill: 0.90, shiftSkill: 0.93, aggression: 0.90 }, betRange: [15000, 28000], competitionPrize: 28000 },
-    name: 'Reina Kuroda', archetype: 'The Night Runner', roleTags: ['rival', 'yokohama', 'team'],
-    selectable: false, rivalEligible: true, regionId: 'YOKOHAMA', regionExclusive: true, teamRole: 'ace',
+    name: 'Reina Kuroda', archetype: 'The Night Runner', roleTags: ['rival', 'yokohama', 'team', 'mechanic'],
+    selectable: false, rivalEligible: true, regionId: 'YOKOHAMA',
+    regionMechanic: true,
+    regionMechanicShopId: 'yokohamaMines', regionExclusive: true, teamRole: 'ace',
     personality: 'Confident and relentless.', bio: 'A Yokohama night runner who thrives when speeds climb.',
     drivingStyle: 'Aggressive top-end acceleration.', tuningFocus: 'Power and gearing.',
     preferredCars: ['r32', 'r34'], signatureRace: 'Half Mile',
@@ -827,10 +828,9 @@ export const characters = {
   ryoheiTakeda: {
     id: 'ryoheiTakeda',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.88, launchSkill: 0.91, shiftSkill: 0.89, aggression: 0.87 }, betRange: [10000, 20000], competitionPrize: 21000 },
-    name: 'Ryohei Takeda', archetype: 'The Launcher', roleTags: ['rival', 'yokohama', 'team', 'mechanic'],
+    name: 'Ryohei Takeda', archetype: 'The Launcher', roleTags: ['rival', 'yokohama', 'team'],
     selectable: false, rivalEligible: true, regionId: 'YOKOHAMA',
-    regionMechanic: true,
-    regionMechanicShopId: 'yokohamaMines', regionExclusive: true, teamRole: 'core',
+regionExclusive: true, teamRole: 'core',
     personality: 'Direct and competitive.', bio: 'A Yokohama racer who makes the first sixty feet count.',
     drivingStyle: 'Hard launches and decisive shifts.', tuningFocus: 'Traction and response.',
     preferredCars: ['evo3', 'evo6'], signatureRace: 'Quarter Mile',
@@ -1809,7 +1809,9 @@ export const playableCharacterOrder = characterOrder.filter(
 );
 
 export const rivalCharacterOrder = characterOrder.filter(
-  id => characters[id]?.rivalEligible !== false
+  id =>
+    characters[id]?.rivalEligible !== false &&
+    characters[id]?.regionMechanic !== true
 );
 
 export const REGION_TEAM_CHARACTER_IDS = {
@@ -1974,7 +1976,10 @@ export function getRivalCharacterOrderForRegion(regionId) {
   const key = String(regionId || '').trim().toUpperCase();
   const regional = REGION_TEAM_CHARACTER_IDS[key];
   if (Array.isArray(regional) && regional.length) {
-    return regional.filter(id => characters[id]?.rivalEligible !== false);
+    return regional.filter(id =>
+      characters[id]?.rivalEligible !== false &&
+      characters[id]?.regionMechanic !== true
+    );
   }
   return [...genericRivalCharacterOrder];
 }
