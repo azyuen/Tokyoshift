@@ -449,6 +449,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, 0x24475f, 1).setDepth(-12);
 
+    // Central Tokyo characters belong inside the authored stage window. Keep a
+    // reusable crop mask on them, then redraw the border above character art so
+    // nobody can visually spill over the frame.
+    this.centralStageMaskShape = this.make.graphics({ add: false });
+    this.centralStageMaskShape.fillStyle(0xffffff, 1);
+    this.centralStageMaskShape.fillRect(STAGE.x, STAGE.y, STAGE.w, STAGE.h);
+    this.centralStageMask = this.centralStageMaskShape.createGeometryMask();
+
+    this.centralStageBorderOverlay = this.add.rectangle(
+      STAGE.x + STAGE.w / 2,
+      STAGE.y + STAGE.h / 2,
+      STAGE.w,
+      STAGE.h,
+      0x000000,
+      0
+    ).setStrokeStyle(2, 0x24475f, 1).setDepth(39);
+
     this.add.rectangle(
       SIDE.x + SIDE.w / 2,
       SIDE.y + SIDE.h / 2,
@@ -506,21 +523,25 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const displayHeight = Math.max(1, Number(height || 220)) * 1.50;
 
     if (shadow) {
-      this.addContent(this.add.ellipse(
+      const venueShadow = this.add.ellipse(
         x,
         feetY - 7,
         Math.max(62, displayHeight * 0.42),
         Math.max(14, displayHeight * 0.075),
         0x000000,
         0.48
-      ).setDepth(depth - 0.1));
+      ).setDepth(depth - 0.1);
+      if (this.centralStageMask) venueShadow.setMask(this.centralStageMask);
+      this.addContent(venueShadow);
     }
 
-    return this.addContent(this.add.image(x, feetY, key)
+    const venueCharacter = this.add.image(x, feetY, key)
       .setOrigin(0.5, 1)
       .setScale(displayHeight / safeHeight)
       .setFlipX(Boolean(flip))
-      .setDepth(depth));
+      .setDepth(depth);
+    if (this.centralStageMask) venueCharacter.setMask(this.centralStageMask);
+    return this.addContent(venueCharacter);
   }
 
   renderLocation(locationId, assetsAttempted = false) {
@@ -2046,7 +2067,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         car,
         STAGE.x + STAGE.w * 0.51,
         STAGE.y + 350,
-        640,
+        700,
         24,
         getCarPaintColor(carState),
         null,
