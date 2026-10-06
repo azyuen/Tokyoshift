@@ -69,7 +69,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261006-r392';
+} from '../data/tunerChallenges.js?v=20261007-r400';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
