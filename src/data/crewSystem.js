@@ -564,13 +564,13 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
 export function getRegionalCrewBattleReward(regionId) {
   const key = String(regionId || '').toUpperCase();
   const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
-  const roster = getRegionalCrewRoster(key);
-  const leader = roster?.members?.find(member => member.leader) ||
-    roster?.members?.[roster.members.length - 1];
+  const mainRivalId = getRegionalCrewRoster(key)?.mainRivalId || null;
+  const mainRivalRound = buildTunerTeamChallengeRounds(key, '')
+    .find(round => round.characterId === mainRivalId);
 
   return {
     cash: 500000 + rank * 100000,
-    couponCarId: leader?.baseCarId || null,
+    couponCarId: mainRivalRound?.carId || null,
     label: key + ' CREW BADGE',
   };
 }
