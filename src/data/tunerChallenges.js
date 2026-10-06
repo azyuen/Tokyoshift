@@ -220,39 +220,31 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
     ? REGION_TEAM_CHARACTER_IDS[key]
     : [];
 
-  const base = explicit.length >= TUNER_TEAM_CHALLENGE_STAGES
-    ? explicit
-    : genericRivalCharacterOrder;
-
-  const eligible = base.filter(id =>
-    id !== playerCharacterId &&
-    characters[id] &&
-    characters[id].rivalEligible !== false
-  );
-
-  if (!eligible.length) return [];
-
-  const offset = (REGION_OFFSETS[key] || 0) % eligible.length;
-  const rotated = eligible.slice(offset).concat(eligible.slice(0, offset));
-
+  // Keep every authored regional driver. If a region has fewer than seven
+  // authored characters, fill only the missing slot(s) with reserve rivals.
   const result = [];
-  for (const id of rotated) {
-    if (!result.includes(id)) result.push(id);
-    if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
-  }
+  const add = id => {
+    if (
+      id &&
+      id !== playerCharacterId &&
+      characters[id] &&
+      characters[id].rivalEligible !== false &&
+      !result.includes(id)
+    ) {
+      result.push(id);
+    }
+  };
+
+  explicit.forEach(add);
 
   if (result.length < TUNER_TEAM_CHALLENGE_STAGES) {
-    for (const id of genericRivalCharacterOrder) {
-      if (
-        id !== playerCharacterId &&
-        characters[id] &&
-        characters[id].rivalEligible !== false &&
-        !result.includes(id)
-      ) {
-        result.push(id);
-      }
-      if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
-    }
+    const offset = (REGION_OFFSETS[key] || 0) % Math.max(1, genericRivalCharacterOrder.length);
+    const rotatedGeneric = genericRivalCharacterOrder.length
+      ? genericRivalCharacterOrder.slice(offset).concat(genericRivalCharacterOrder.slice(0, offset))
+      : [];
+    rotatedGeneric.forEach(id => {
+      if (result.length < TUNER_TEAM_CHALLENGE_STAGES) add(id);
+    });
   }
 
   return result.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
