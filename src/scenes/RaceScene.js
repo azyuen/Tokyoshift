@@ -427,8 +427,26 @@ export default class RaceScene extends Phaser.Scene {
     this.finishCameraPx = null;
     this.finishVisualFrozen = false;
     this.startMoved = false;
-    this.times = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
-    this.opponentTimes = { reaction: null, sixty: null, eighth: null, quarter: null, finish: null, trapKmh: null };
+    this.times = {
+      reaction: null,
+      sixty: null,
+      zeroToSixty: null,
+      eighth: null,
+      quarter: null,
+      finish: null,
+      trapKmh: null,
+      maxKmh: 0,
+    };
+    this.opponentTimes = {
+      reaction: null,
+      sixty: null,
+      zeroToSixty: null,
+      eighth: null,
+      quarter: null,
+      finish: null,
+      trapKmh: null,
+      maxKmh: 0,
+    };
     this.opponentStartMoved = false;
     this.opponentFinishClock = null;
     this.playerFinishClock = null;
@@ -518,7 +536,7 @@ export default class RaceScene extends Phaser.Scene {
       this.finishTargetM = 999999;
     }
 
-    this.add.text(
+    this.raceLocationText = this.add.text(
       780,
       102,
       this.raceDistrict + ' // ' + this.raceLocationLabel + ' // ' + this.raceTimeOfDay.toUpperCase(),
@@ -1741,6 +1759,12 @@ export default class RaceScene extends Phaser.Scene {
         ? this.greenClock
         : this.greenClock + (this.times.reaction ?? 0);
       const elapsed = this.raceClock - launchClock;
+      if (this.times.finish == null) {
+        this.times.maxKmh = Math.max(Number(this.times.maxKmh || 0), Number(pt.speedKmh || 0));
+      }
+      if (!this.isRollingStart && this.times.zeroToSixty == null && pt.speedKmh >= 60) {
+        this.times.zeroToSixty = elapsed;
+      }
       if (this.times.sixty == null && playerDistance >= 18.288) this.times.sixty = elapsed;
       if (this.times.eighth == null && playerDistance >= 201.168) this.times.eighth = elapsed;
       if (this.times.quarter == null && playerDistance >= QUARTER_M) {
@@ -1757,6 +1781,15 @@ export default class RaceScene extends Phaser.Scene {
         ? this.greenClock
         : this.greenClock + (this.opponentTimes.reaction ?? 0);
       const elapsed = this.raceClock - launchClock;
+      if (this.opponentTimes.finish == null) {
+        this.opponentTimes.maxKmh = Math.max(
+          Number(this.opponentTimes.maxKmh || 0),
+          Number(ot.speedKmh || 0)
+        );
+      }
+      if (!this.isRollingStart && this.opponentTimes.zeroToSixty == null && ot.speedKmh >= 60) {
+        this.opponentTimes.zeroToSixty = elapsed;
+      }
       if (this.opponentTimes.sixty == null && opponentDistance >= 18.288) this.opponentTimes.sixty = elapsed;
       if (this.opponentTimes.eighth == null && opponentDistance >= 201.168) this.opponentTimes.eighth = elapsed;
       if (this.opponentTimes.quarter == null && opponentDistance >= QUARTER_M) {
@@ -2289,6 +2322,7 @@ export default class RaceScene extends Phaser.Scene {
       this.hud?.auxLabel,
       this.treeSprite,
       this.rollCountdownText,
+      this.raceLocationText,
       this.rivalText,
       this.stakeText,
       this.startButton,
@@ -2305,26 +2339,25 @@ export default class RaceScene extends Phaser.Scene {
       .setDepth(depth)
       .setScrollFactor(0);
 
-    // Editorial result composition. The title/details form one left-aligned
-    // column while the enlarged, square-cropped character reactions own the right.
+    // Editorial result composition. VICTORY and LOSS share the exact same
+    // Exo 2 Black Italic treatment; only the outcome colour changes.
     const resultFont = '"Exo 2", sans-serif';
     const resultColor = playerWon ? '#a8f3e3' : '#ff9caf';
-
     const titleTargetX = 92;
+    const titleStyle = {
+      fontFamily: resultFont,
+      fontSize: '88px',
+      color: resultColor,
+      fontStyle: 'italic',
+      stroke: resultColor,
+      strokeThickness: 4,
+    };
+
     const title = this.add.text(
       titleTargetX,
-      214,
+      196,
       playerWon ? 'VICTORY' : 'LOSS',
-      {
-        fontFamily: resultFont,
-        fontSize: '94px',
-        color: resultColor,
-        fontStyle: '900 italic',
-        // Same-colour stroke makes both words equally heavy without an outline.
-        stroke: resultColor,
-        strokeThickness: 4,
-        shadow: { offsetX: 4, offsetY: 5, color: '#071019', blur: 0, fill: true },
-      }
+      titleStyle
     ).setDepth(depth + 8).setScrollFactor(0);
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
@@ -2428,9 +2461,8 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    // Very light wash only behind the information stack. It protects legibility
-    // on bright daytime roads without turning the result back into a boxed UI.
-    const infoWash = this.add.rectangle(413, 474, 704, 302, 0xd7dde0, 0.11)
+    // Very light wash only behind the text stack for readability.
+    const infoWash = this.add.rectangle(420, 492, 720, 342, 0xd7dde0, 0.11)
       .setDepth(depth + 2)
       .setScrollFactor(0);
 
@@ -2446,41 +2478,66 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: resultFont,
       fontSize: '11px',
       color: '#e1e5e7',
-      fontStyle: '900 italic',
+      fontStyle: 'italic',
       stroke: '#071019',
       strokeThickness: 2,
     };
 
-    // Everything below the headline shares this left edge.
     const labelX = 96;
-    const valueX = 202;
+    const valueX = 210;
 
-    const raceLabel = this.add.text(labelX, 350, 'RACE', captionLabelStyle)
+    const raceLabel = this.add.text(labelX, 374, 'RACE', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
-    const contextText = this.add.text(valueX, 354, contextLine, {
+    const contextText = this.add.text(valueX, 379, contextLine, {
       ...captionStyle,
-      wordWrap: { width: 560 },
+      wordWrap: { width: 548 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const carLabel = this.add.text(labelX, 390, 'RIVAL', captionLabelStyle)
+    const carLabel = this.add.text(labelX, 414, 'RIVAL', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
-    const rivalCarText = this.add.text(valueX, 394, rivalCarLine, {
+    const rivalCarText = this.add.text(valueX, 419, rivalCarLine, {
       ...captionStyle,
-      wordWrap: { width: 560 },
+      wordWrap: { width: 548 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const awardsLabel = this.add.text(labelX, 430, 'AWARDS', captionLabelStyle)
+    const awardsLabel = this.add.text(labelX, 454, 'AWARDS', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
     const awardsText = this.add.text(
       valueX,
-      434,
+      459,
       awardParts.length ? awardParts.join(' // ') : 'NONE',
       {
         ...captionStyle,
         color: playerWon ? '#d9f5ee' : '#dec9ce',
-        wordWrap: { width: 560 },
+        wordWrap: { width: 548 },
       }
     ).setDepth(depth + 8).setScrollFactor(0);
+
+    // Timing uses the same label/value grammar as the editorial details above.
+    const timingLines = [
+      ['TIME',
+        'YOU ' + (this.falseStart ? 'DQ' : formatTime(this.times.finish)) +
+        ' // RIVAL ' + formatTime(this.opponentTimes.finish)],
+      ['0–60',
+        'YOU ' + (this.isRollingStart || this.falseStart ? '—' : formatTime(this.times.zeroToSixty)) +
+        ' // RIVAL ' + (this.isRollingStart ? '—' : formatTime(this.opponentTimes.zeroToSixty))],
+      ['MAX KM/H',
+        'YOU ' + (this.falseStart ? '—' : formatSpeed(this.times.maxKmh)) +
+        ' // RIVAL ' + formatSpeed(this.opponentTimes.maxKmh)],
+    ];
+
+    const timingObjects = [];
+    timingLines.forEach((row, index) => {
+      const y = 510 + index * 36;
+      timingObjects.push(
+        this.add.text(labelX, y, row[0], captionLabelStyle)
+          .setDepth(depth + 8).setScrollFactor(0),
+        this.add.text(valueX, y + 5, row[1], {
+          ...captionStyle,
+          wordWrap: { width: 548 },
+        }).setDepth(depth + 8).setScrollFactor(0)
+      );
+    });
 
     const playerDisplayName = [
       String(this.registry.get('firstName') || '').trim(),
@@ -2488,71 +2545,99 @@ export default class RaceScene extends Phaser.Scene {
     ].filter(Boolean).join(' ') || playerCharacter.name;
     const rivalDisplayName = rivalCharacter.name;
 
-    // Square manga windows: keep the current impact, but move them down so no
-    // part of either frame falls outside the 720p game canvas.
-    const playerFrame = this.add.rectangle(1325, 246, 420, 420, 0xf1eadb, 0.74)
-      .setStrokeStyle(5, ink, 0.92)
-      .setDepth(depth + 6)
-      .setScrollFactor(0);
+    // Return to the angled manga panels from R381, but crop the portrait image
+    // with the exact same polygon used by its frame.
+    const playerPanelPoints = [
+      new Phaser.Geom.Point(1102, 72),
+      new Phaser.Geom.Point(1542, 58),
+      new Phaser.Geom.Point(1522, 430),
+      new Phaser.Geom.Point(1078, 446),
+    ];
+    const playerFrame = this.add.graphics().setDepth(depth + 6).setScrollFactor(0);
+    playerFrame.fillStyle(paper, 0.74);
+    playerFrame.fillPoints(playerPanelPoints, true);
+    playerFrame.lineStyle(5, ink, 0.92);
+    playerFrame.strokePoints(playerPanelPoints, true);
 
     const playerProfile = createCharacterProfile(this, {
       characterId: this.playerCharacterId,
       pose: playerWon ? 'win' : 'loss',
-      x: 1325,
-      y: 246,
-      frameWidth: 420,
-      frameHeight: 420,
+      x: 1310,
+      y: 252,
+      frameWidth: 470,
+      frameHeight: 390,
       side: 'right',
       depth: depth + 7,
       flipInward: true,
+      mask: false,
       profileOverride: playerWon
         ? { scale: 1.00, offsetX: 0, offsetY: 18 }
         : { scale: 1.04, offsetX: 0, offsetY: 20 },
     });
 
-    const rivalFrame = this.add.rectangle(1005, 248, 320, 320, 0xf1eadb, 0.72)
-      .setStrokeStyle(4, ink, 0.90)
-      .setDepth(depth + 6)
-      .setScrollFactor(0);
+    const playerMaskShape = this.make.graphics({ add: false });
+    playerMaskShape.fillStyle(0xffffff, 1);
+    playerMaskShape.fillPoints(playerPanelPoints, true);
+    const playerMask = playerMaskShape.createGeometryMask();
+    playerProfile?.image?.setMask(playerMask);
+
+    const rivalPanelPoints = [
+      new Phaser.Geom.Point(818, 126),
+      new Phaser.Geom.Point(1115, 108),
+      new Phaser.Geom.Point(1155, 388),
+      new Phaser.Geom.Point(792, 406),
+    ];
+    const rivalFrame = this.add.graphics().setDepth(depth + 6).setScrollFactor(0);
+    rivalFrame.fillStyle(paper, 0.72);
+    rivalFrame.fillPoints(rivalPanelPoints, true);
+    rivalFrame.lineStyle(4, ink, 0.90);
+    rivalFrame.strokePoints(rivalPanelPoints, true);
 
     const rivalProfile = createCharacterProfile(this, {
       characterId: this.opponentCharacterId,
       pose: playerWon ? 'loss' : 'win',
-      x: 1005,
-      y: 248,
-      frameWidth: 320,
-      frameHeight: 320,
+      x: 982,
+      y: 257,
+      frameWidth: 355,
+      frameHeight: 310,
       side: 'left',
       depth: depth + 7,
       flipInward: true,
       dimmed: false,
+      mask: false,
       profileOverride: { scale: 1.02, offsetX: 0, offsetY: 18 },
     });
+
+    const rivalMaskShape = this.make.graphics({ add: false });
+    rivalMaskShape.fillStyle(0xffffff, 1);
+    rivalMaskShape.fillPoints(rivalPanelPoints, true);
+    const rivalMask = rivalMaskShape.createGeometryMask();
+    rivalProfile?.image?.setMask(rivalMask);
 
     const playerPortraitImage = playerProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
-    const playerNameText = this.add.text(1325, 469, String(playerDisplayName || 'YOU').toUpperCase(), {
+    const playerNameText = this.add.text(1515, 452, String(playerDisplayName || 'YOU').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
       backgroundColor: '#11141add',
       padding: { x: 9, y: 5 },
-    }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
+    }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
-    const rivalNameText = this.add.text(1160, 414, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    const rivalNameText = this.add.text(1148, 411, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
       backgroundColor: '#11141add',
       padding: { x: 9, y: 5 },
       align: 'right',
-    }).setOrigin(1, 0.5).setDepth(depth + 10).setScrollFactor(0);
+    }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const rivalQuote = playerWon
       ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
       : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
-    const rivalQuoteText = this.add.text(1160, 447, '“' + rivalQuote + '”', {
+    const rivalQuoteText = this.add.text(1148, 446, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
       fontSize: '15px',
       color: '#ffffff',
@@ -2561,55 +2646,8 @@ export default class RaceScene extends Phaser.Scene {
       align: 'right',
       fontStyle: '700',
       lineSpacing: 3,
-      wordWrap: { width: 310 },
+      wordWrap: { width: 330 },
     }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
-
-    // Key timing only, directly below the editorial details and sharing the
-    // same left edge. The values remain compact enough to live in the dark road.
-    const compactRows = [
-      ['TIME', this.falseStart ? 'DQ' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
-      ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
-    ];
-
-    const tableLabelX = labelX;
-    const youX = 298;
-    const rivalX = 430;
-
-    this.add.text(youX, 507, 'YOU', {
-      fontFamily: titleFont,
-      fontSize: '5px',
-      color: '#f8f8f5',
-    }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
-
-    this.add.text(rivalX, 507, 'RIVAL', {
-      fontFamily: titleFont,
-      fontSize: '5px',
-      color: '#aeb6c1',
-    }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
-
-    compactRows.forEach((row, index) => {
-      const y = 529 + index * 25;
-      this.add.text(tableLabelX, y, row[0], {
-        fontFamily: dataFont,
-        fontSize: '7px',
-        color: '#9ca5ae',
-        fontStyle: '700',
-      }).setDepth(depth + 22).setScrollFactor(0);
-
-      this.add.text(youX, y, row[1], {
-        fontFamily: dataFont,
-        fontSize: '9px',
-        color: '#ffffff',
-        fontStyle: '700',
-      }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
-
-      this.add.text(rivalX, y, row[2], {
-        fontFamily: dataFont,
-        fontSize: '9px',
-        color: '#c4cad4',
-        fontStyle: '700',
-      }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
-    });
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
     const actionHint = settlement?.gameOver
@@ -2660,7 +2698,10 @@ export default class RaceScene extends Phaser.Scene {
 
     // Cars are already gone. Character reactions pop in first, then the
     // unified VICTORY / LOSS word flies in from the left.
-    const detailObjects = [raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText];
+    const detailObjects = [
+      raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText,
+      ...timingObjects,
+    ];
     const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
