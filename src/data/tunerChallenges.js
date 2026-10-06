@@ -1,6 +1,7 @@
 import {
   characters,
   REGION_TEAM_CHARACTER_IDS,
+  MAIN_RIVAL_BY_REGION,
   genericRivalCharacterOrder,
 } from './characters.js?v=20261006-r392';
 import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
@@ -247,7 +248,14 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
     });
   }
 
-  return result.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
+  const mainRivalId = MAIN_RIVAL_BY_REGION[key] || null;
+  const nonRivalDrivers = result.filter(id => id !== mainRivalId);
+  const finalRoster = [
+    ...nonRivalDrivers.slice(0, TUNER_TEAM_CHALLENGE_STAGES - 1),
+    ...(mainRivalId ? [mainRivalId] : []),
+  ];
+
+  return finalRoster.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
 }
 
 function challengeAi(stageIndex) {
