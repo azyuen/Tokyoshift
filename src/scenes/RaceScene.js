@@ -590,6 +590,11 @@ export default class RaceScene extends Phaser.Scene {
       if (alreadyBriefed) {
         this.registry.set('regionalChallengeBriefedStage', null);
         saveSessionState(this.registry);
+
+        // The player already pressed anywhere on the between-race briefing.
+        // After the new opponent is installed by the scene restart, launch the
+        // race automatically rather than asking for a second START tap.
+        this.time.delayedCall(90, () => this.startRace());
       } else {
         this.time.delayedCall(45, () => this.showRegionalChallengeBriefing());
       }
