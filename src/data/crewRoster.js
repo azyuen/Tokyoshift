@@ -23,10 +23,9 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'mikaHoshino', baseCarId: 'ef', recruitable: true }),
       Object.freeze({ characterId: 'kaoriNishimura', baseCarId: 'a60', recruitable: true }),
       Object.freeze({ characterId: 'shunAmamiya', baseCarId: 'fc3s', recruitable: true }),
-      Object.freeze({ characterId: 'emiKanzaki', baseCarId: 'ek9', recruitable: false, leader: true }),
+      Object.freeze({ characterId: 'takumiSerizawa', baseCarId: 'ek9', recruitable: true }),
     ]),
   }),
-
   SHINAGAWA: Object.freeze({
     mainRivalId: 'renMizuno',
     members: Object.freeze([
@@ -35,10 +34,9 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'reiTakamura', baseCarId: 'a60', recruitable: true }),
       Object.freeze({ characterId: 'goroNakajima', baseCarId: 'ek9', recruitable: true }),
       Object.freeze({ characterId: 'tetsuyaKanda', baseCarId: 'fc3s', recruitable: true }),
-      Object.freeze({ characterId: 'renMizuno', baseCarId: 'rx8', recruitable: false, leader: true }),
+      Object.freeze({ characterId: 'sayakaFujieda', baseCarId: 'rx8', recruitable: true }),
     ]),
   }),
-
   TATSUMI: Object.freeze({
     mainRivalId: 'kaitoFujimori',
     members: Object.freeze([
@@ -47,10 +45,9 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'daigoMoriyama', baseCarId: 'fc3s', recruitable: true }),
       Object.freeze({ characterId: 'risaTachikawa', baseCarId: 'rx8', recruitable: true }),
       Object.freeze({ characterId: 'masatoKurogane', baseCarId: 's2000', recruitable: true }),
-      Object.freeze({ characterId: 'kaitoFujimori', baseCarId: 'evo3', recruitable: false, leader: true }),
+      Object.freeze({ characterId: 'tetsuNakahara', baseCarId: 'evo3', recruitable: true }),
     ]),
   }),
-
   SHIBUYA: Object.freeze({
     mainRivalId: 'ayaKurose',
     members: Object.freeze([
@@ -59,22 +56,20 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'renjiAoki', baseCarId: 'rx8', recruitable: true }),
       Object.freeze({ characterId: 'kentoFujisawa', baseCarId: 's2000', recruitable: true }),
       Object.freeze({ characterId: 'rinaTachibana', baseCarId: 'evo3', recruitable: true }),
-      Object.freeze({ characterId: 'ayaKurose', baseCarId: 'r32', recruitable: false, leader: true }),
+      Object.freeze({ characterId: 'itsukiKuroda', baseCarId: 'r32', recruitable: true }),
     ]),
   }),
-
   YOKOHAMA: Object.freeze({
-    mainRivalId: 'masatoIshikawa',
+    mainRivalId: 'haruTachibana',
     members: Object.freeze([
+      Object.freeze({ characterId: 'masatoIshikawa', baseCarId: 'r32', recruitable: true }),
       Object.freeze({ characterId: 'mikaHayase', baseCarId: 'rx8', recruitable: true }),
       Object.freeze({ characterId: 'reinaKuroda', baseCarId: 's2000', recruitable: true }),
       Object.freeze({ characterId: 'ryoheiTakeda', baseCarId: 'evo3', recruitable: true }),
       Object.freeze({ characterId: 'shunMizuno', baseCarId: 'rx7fd', recruitable: true }),
       Object.freeze({ characterId: 'yuiKanzaki', baseCarId: 'evo5', recruitable: true }),
-      Object.freeze({ characterId: 'masatoIshikawa', baseCarId: 'r32', recruitable: false, leader: true }),
     ]),
   }),
-
   DAIKOKU: Object.freeze({
     mainRivalId: 'reinaShibata',
     members: Object.freeze([
@@ -83,19 +78,18 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'naoFujita', baseCarId: 'r32', recruitable: true }),
       Object.freeze({ characterId: 'akiSenda', baseCarId: 'rx7fd', recruitable: true }),
       Object.freeze({ characterId: 'tetsuoMori', baseCarId: 'nsx', recruitable: true }),
-      Object.freeze({ characterId: 'reinaShibata', baseCarId: '3000gt', recruitable: false, leader: true }),
+      Object.freeze({ characterId: 'kazuoTanaka', baseCarId: '3000gt', recruitable: true }),
     ]),
   }),
-
   SHINJUKU: Object.freeze({
-    mainRivalId: 'daigoArakawa',
+    mainRivalId: 'rikuAkamine',
     members: Object.freeze([
+      Object.freeze({ characterId: 'daigoArakawa', baseCarId: '3000gt', recruitable: true }),
       Object.freeze({ characterId: 'emiSaionji', baseCarId: 'wrx22b', recruitable: true }),
       Object.freeze({ characterId: 'kaedeTachibana', baseCarId: 'evo5', recruitable: true }),
       Object.freeze({ characterId: 'renKurosawa', baseCarId: 'evo6', recruitable: true }),
       Object.freeze({ characterId: 'rinAmamiya', baseCarId: 'jza80', recruitable: true }),
       Object.freeze({ characterId: 'soraKanzaki', baseCarId: 'r34', recruitable: true }),
-      Object.freeze({ characterId: 'daigoArakawa', baseCarId: '3000gt', recruitable: false, leader: true }),
     ]),
   }),
 });
