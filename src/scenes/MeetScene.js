@@ -436,7 +436,12 @@ export default class MeetScene extends Phaser.Scene {
     this.buildCrewBattleButton();
     this.rollOffers({ resetTimer: false });
 
-    const pendingPinkSlipResultShown = this.maybeShowPendingPinkSlipResult();
+    const pendingRegionalChallengeShown = this.maybeShowPendingRegionalChallengeResult();
+    const pendingPinkSlipResultShown = pendingRegionalChallengeShown
+      ? false
+      : this.maybeShowPendingPinkSlipResult();
+    const pendingResultShown =
+      pendingRegionalChallengeShown || pendingPinkSlipResultShown;
 
     const activeChallenger = this.registry.get('specialChallenger');
     const activeRegionRivals = getRivalCharacterOrderForRegion(
@@ -449,7 +454,7 @@ export default class MeetScene extends Phaser.Scene {
     );
     let specialChallengerShown = false;
     if (
-      !pendingPinkSlipResultShown &&
+      !pendingResultShown &&
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       activeRegionRivals.includes(activeChallenger.characterId) &&
@@ -459,7 +464,7 @@ export default class MeetScene extends Phaser.Scene {
       specialChallengerShown = true;
       this.time.delayedCall(80, () => this.showSpecialChallenger(activeChallenger, false));
     } else if (
-      !pendingPinkSlipResultShown &&
+      !pendingResultShown &&
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       (
@@ -471,7 +476,7 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
-    if (!pendingPinkSlipResultShown && !specialChallengerShown) {
+    if (!pendingResultShown && !specialChallengerShown) {
       const crewInviteShown = this.maybeShowCrewInviteInterest();
       const activeRecruitShown = crewInviteShown
         ? false
@@ -502,6 +507,56 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  maybeShowPendingRegionalChallengeResult() {
+    const pending = this.registry.get('pendingRegionalChallengeResult');
+    if (!pending || typeof pending !== 'object') return false;
+
+    this.registry.set('pendingRegionalChallengeResult', null);
+    saveSessionState(this.registry);
+
+    this.time.delayedCall(120, () => {
+      const completed = Boolean(pending.completed);
+      const failed = Boolean(pending.failed);
+      const perfect = Boolean(pending.perfect);
+      const cutsceneId = failed
+        ? 'regionalChallengeLoss'
+        : perfect
+          ? 'regionalPerfectVictory'
+          : 'regionalChampionVictory';
+
+      const result = playMangaCutscene(this, cutsceneId, {
+        historyId: failed
+          ? 'regionalChallengeLoss:' +
+            String(pending.regionId || 'REGION') + ':' +
+            Number(pending.completedAt || Date.now())
+          : cutsceneId + ':' + String(pending.regionId || 'REGION'),
+        characterOverrides: {
+          RIVAL: pending.rivalCharacterId,
+          PLAYER: pending.playerCharacterId,
+        },
+        variables: {
+          REGION: String(pending.regionId || 'REGION').toUpperCase(),
+          RIVAL_NAME: String(pending.rivalName || 'REGIONAL RIVAL').toUpperCase(),
+          CASH_REWARD: Number(pending.cashReward || 0).toLocaleString('en-US'),
+          DONOR: String(pending.donorLabel || 'DONOR CAR').toUpperCase(),
+          COUPON_AWARDS: String(Number(pending.couponAwards || 0)),
+          BADGE: String(
+            pending.badgeLabel ||
+            (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+          ),
+        },
+      });
+
+      // Loss cutscene is non-once and should always play; if a cached/edge
+      // condition prevents any result cutscene, simply leave the player at Meet.
+      if (!result?.played && completed) {
+        saveSessionState(this.registry);
+      }
+    });
+
+    return true;
   }
 
   maybeShowPendingPinkSlipResult() {
