@@ -1590,7 +1590,11 @@ export default class GarageScene extends Phaser.Scene {
           (startIndex + 1) + '-' + Math.min(startIndex + pageSize, capacity) +
           '  //  ' + (this.garagePage + 1) + '/' + totalPages
         : this.crewMode
-          ? 'CREW SPACE // 7 REGIONAL LOAN SLOTS'
+          ? (
+              this.crewFocusedCharacterId
+                ? 'CREW GARAGE // 7 REGIONAL LOAN SLOTS'
+                : 'CREW SPACE // 7 REGIONAL LOAN SLOTS'
+            )
           : activeWorkshop.shortLabel + '  //  ' + capacity + ' SLOTS'
     );
 
