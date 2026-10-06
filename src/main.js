@@ -28,6 +28,7 @@ async function waitForTokyoShiftFonts() {
     document.fonts.load('500 16px "Rajdhani"'),
     document.fonts.load('600 16px "Rajdhani"'),
     document.fonts.load('600 16px "Teko"'),
+    document.fonts.load('italic 900 16px "Exo 2"'),
   ]).then(() => document.fonts.ready);
   const timeout = new Promise(resolve => window.setTimeout(resolve, 2200));
   try { await Promise.race([fontLoad, timeout]); } catch (e) {}
