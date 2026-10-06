@@ -1,8 +1,8 @@
-import { characters } from '../data/characters.js?v=20261004-r333';
+import { characters } from '../data/characters.js?v=20261006-r391';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261005-r348';
+} from '../data/cutscenes.js?v=20261006-r391';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
