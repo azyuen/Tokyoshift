@@ -2309,7 +2309,7 @@ export default class RaceScene extends Phaser.Scene {
     // camera, so the skyline/road become an uncluttered editorial canvas.
     const resultFont = '"Exo 2", sans-serif';
     const resultColor = playerWon ? '#a8f3e3' : '#ff9caf';
-    const slashColor = '#d51f32';
+    const slashColor = 0xd51f32;
 
     const titleTargetX = 92;
     const title = this.add.text(
@@ -2340,7 +2340,7 @@ export default class RaceScene extends Phaser.Scene {
       .setDepth(depth + 8)
       .setScrollFactor(0)
       .setPosition(slashTargetX, slashTargetY);
-    slashMark.fillStyle(Phaser.Display.Color.HexStringToColor(slashColor).color, 1);
+    slashMark.fillStyle(slashColor, 1);
     for (let i = 0; i < 3; i += 1) {
       const x = i * (slashWidth + slashGap);
       slashMark.fillPoints([
