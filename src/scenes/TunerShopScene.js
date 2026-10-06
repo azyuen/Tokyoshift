@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars } from '../data/cars.js?v=20261005-r345';
-import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r376';
+import { cars } from '../data/cars.js?v=20261006-r388';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r388';
 import { characters } from '../data/characters.js?v=20261004-r333';
 import {
   getTunerShopForRegion,
@@ -13,14 +13,14 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261006-r376';
+} from '../state/GameState.js?v=20261006-r388';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r376';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -34,13 +34,13 @@ import {
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260929-r284';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261006-r388';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r362';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261006-r388';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

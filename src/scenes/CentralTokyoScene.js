@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
-import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r376';
+import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
+import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import {
   characters,
@@ -28,15 +28,15 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261006-r376';
+} from '../data/visualMods.js?v=20261006-r388';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261006-r376';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
+} from '../state/GameState.js?v=20261006-r388';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261006-r388';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -56,11 +56,11 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r354';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r367';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r365';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261006-r388';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -76,7 +76,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261006-r376';
+} from '../data/centralTokyo.js?v=20261006-r388';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,

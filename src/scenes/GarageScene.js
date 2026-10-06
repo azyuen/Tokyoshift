@@ -1,5 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
+import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
@@ -34,12 +34,12 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r376';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261005-r367';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261005-r348';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261006-r388';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261005-r372';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261006-r388';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -47,14 +47,14 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261006-r376';
+} from '../data/centralTokyo.js?v=20261006-r388';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   isCrewUnlocked,
   getCrewMembers,
   getCrewCount,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261005-r354';
+} from '../data/crewSystem.js?v=20261006-r388';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -80,7 +80,7 @@ import {
   DYNO_RENTAL_SESSION_COST,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20261004-r331';
+} from '../data/dyno.js?v=20261006-r388';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -108,7 +108,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261006-r376';
+} from '../data/visualMods.js?v=20261006-r388';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
@@ -116,9 +116,9 @@ import {
   finishSceneLoading,
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261005-r367';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261005-r367';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r376';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261006-r388';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261006-r388';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -146,8 +146,8 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
   { x: 455, feetY: 480, h: 158, zone: 'floor' },
   { x: 625, feetY: 466, h: 166, zone: 'floor' },
   { x: 790, feetY: 478, h: 158, zone: 'floor' },
-  { x: 928, feetY: 354, h: 136, zone: 'balcony' },
-  { x: 1065, feetY: 350, h: 140, zone: 'balcony' },
+  { x: 680, feetY: 198, h: 112, zone: 'balcony' },
+  { x: 850, feetY: 198, h: 112, zone: 'balcony' },
 ]);
 
 export default class GarageScene extends Phaser.Scene {
@@ -400,7 +400,7 @@ export default class GarageScene extends Phaser.Scene {
     const localCars = this.getCurrentWorkshopCars();
     const requestedCarId = this.registry.get('selectedCarId');
     this.selectedCarId = this.crewMode
-      ? (localCars.includes(requestedCarId) ? requestedCarId : null)
+      ? null
       : (localCars.includes(requestedCarId) ? requestedCarId : localCars[0] || null);
 
     this.registry.set('ownedCarIds', this.ownedCarIds);
@@ -547,6 +547,7 @@ export default class GarageScene extends Phaser.Scene {
     const nextPhase = getWorldPhase();
     if (nextPhase === this.worldPhase) return;
     this.worldPhase = nextPhase;
+    if (this.crewMode && this.crewOverviewBackground?.active) this.drawCrewOverview();
 
     const image = this.workshopBackgroundImage;
     if (!image?.active) return;
@@ -586,9 +587,9 @@ export default class GarageScene extends Phaser.Scene {
     image.setTexture(textureKey);
     const source = this.textures.get(textureKey).getSourceImage();
     const scale = Math.max(STAGE.w / source.width, STAGE.h / source.height);
-    image.setScale(scale).setPosition(
+    image.setOrigin(0.5, 1).setScale(scale).setPosition(
       STAGE.x + STAGE.w / 2,
-      STAGE.y + STAGE.h - (source.height * scale) / 2
+      STAGE.y + STAGE.h
     );
     return true;
   }
@@ -598,6 +599,7 @@ export default class GarageScene extends Phaser.Scene {
       try { obj?.destroy?.(); } catch (e) {}
     });
     this.crewStageObjects = [];
+    this.crewOverviewBackground = null;
   }
 
   getCrewMemberForLoanCar(carId) {
@@ -619,14 +621,24 @@ export default class GarageScene extends Phaser.Scene {
     this.clearCrewStageObjects();
     this.crewFocusedCharacterId = null;
 
+    // The overview is a full-screen room, above the tuning UI. Its blocker
+    // prevents hidden garage controls from receiving taps between members.
+    const key = this.worldPhase === 'day' ? 'crewSpaceDayBg' : 'crewSpaceNightBg';
+    const source = this.textures.get(key).getSourceImage();
+    const roomScale = Math.max(1560 / source.width, 840 / source.height);
+    const room = this.add.image(780, 840, key).setOrigin(0.5, 1)
+      .setScale(roomScale).setDepth(100).setInteractive();
+    this.crewOverviewBackground = room;
+    this.crewStageObjects.push(room);
+
     const members = Object.values(getCrewMembers(this.registry));
     members.slice(0, CREW_MEMBER_LAYOUT.length).forEach((member, index) => {
       const character = characters[member.characterId];
       const layout = CREW_MEMBER_LAYOUT[index];
       if (!character?.visual?.spriteKey || !this.textures.exists(character.visual.spriteKey)) return;
 
-      const x = STAGE.x + layout.x;
-      const feetY = STAGE.y + layout.feetY;
+      const x = layout.x / STAGE.w * 1560;
+      const feetY = layout.feetY / STAGE.h * 840;
       const shadow = this.add.ellipse(
         x,
         feetY - 8,
@@ -634,15 +646,15 @@ export default class GarageScene extends Phaser.Scene {
         18,
         0x000000,
         0.55
-      ).setDepth(12);
+      ).setDepth(102);
 
       const sprite = this.add.image(x, feetY, character.visual.spriteKey)
         .setOrigin(0.5, 1)
-        .setDepth(14)
+        .setDepth(104)
         .setInteractive({ useHandCursor: true });
 
       const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-      sprite.setScale(layout.h / Math.max(1, source.height));
+      sprite.setScale((layout.h * 1.45) / Math.max(1, source.height));
 
       const name = this.add.text(
         x,
@@ -655,7 +667,7 @@ export default class GarageScene extends Phaser.Scene {
           backgroundColor: '#06111dcc',
           padding: { x: 5, y: 3 },
         }
-      ).setOrigin(0.5, 0).setDepth(18).setAlpha(0);
+      ).setOrigin(0.5, 0).setDepth(106).setAlpha(0);
 
       sprite.on('pointerover', () => name.setAlpha(1));
       sprite.on('pointerout', () => name.setAlpha(0));
@@ -665,8 +677,8 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     const title = this.add.text(
-      STAGE.x + 28,
-      STAGE.y + 24,
+      32,
+      28,
       'CREW TOGETHER // TAP A MEMBER',
       {
         fontFamily: PIXEL_FONT,
@@ -675,7 +687,7 @@ export default class GarageScene extends Phaser.Scene {
         backgroundColor: '#06111dcc',
         padding: { x: 8, y: 6 },
       }
-    ).setDepth(22);
+    ).setDepth(106);
     this.crewStageObjects.push(title);
   }
 
@@ -686,7 +698,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const character = characters[member.characterId];
     if (character?.visual?.spriteKey && this.textures.exists(character.visual.spriteKey)) {
-      const x = STAGE.x + 215;
+      const x = STAGE.x + STAGE.w - 150;
       const feetY = STAGE.y + 468;
       const shadow = this.add.ellipse(x, feetY - 10, 116, 24, 0x000000, 0.58)
         .setDepth(13);
@@ -694,7 +706,7 @@ export default class GarageScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(15);
       const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-      sprite.setScale(265 / Math.max(1, source.height));
+      sprite.setScale(335 / Math.max(1, source.height));
 
       const tag = this.add.text(
         STAGE.x + 30,
@@ -2351,6 +2363,14 @@ export default class GarageScene extends Phaser.Scene {
       obj.setAlpha(1);
     });
 
+    const overview = !this.crewFocusedCharacterId;
+    [this.dynoButton, this.dynoButtonLabel, this.meetButton, this.meetButtonLabel]
+      .forEach(obj => obj?.setVisible(!overview));
+    const backX = overview ? 1350 : SIDE.x + SIDE.w / 2;
+    const backY = overview ? 792 : 664;
+    this.crewBackButton?.setPosition(backX, backY);
+    this.crewBackButtonLabel?.setPosition(backX, backY);
+
     // Keep Crew Space navigation above the selected-member/car presentation.
     // The map still sits higher (depth 120+), so it can cover these normally.
     this.crewBackButton?.setDepth(110);
@@ -2366,7 +2386,7 @@ export default class GarageScene extends Phaser.Scene {
       .setFillStyle(0x122331, 1)
       .setStrokeStyle(2, 0x55b8ff, 1);
     this.crewBackButtonLabel
-      ?.setText('BACK TO WORKSHOP  >')
+      ?.setText('RETURN TO WORKSHOP  >')
       .setColor('#eef8ff');
 
     if (!hasCrew) {
@@ -2489,7 +2509,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(110);
 
-    this.crewBackButtonLabel = this.add.text(x, y, 'BACK TO WORKSHOP  >', {
+    this.crewBackButtonLabel = this.add.text(x, y, 'RETURN TO WORKSHOP  >', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#eef8ff',
@@ -3399,16 +3419,16 @@ export default class GarageScene extends Phaser.Scene {
     );
 
     if (this.crewMode) {
-      const travel = 690;
+      const travel = 1100;
       // Crew cars enter an indoor meeting/workshop bay rather than blasting
       // onto a race stage. Keep the roll-in deliberately calm and physical.
       const duration = 5200;
       this.selectedDisplay.forEach(obj => {
-        if (obj?.x != null) obj.x += travel;
+        if (obj?.x != null) obj.x -= travel;
       });
       this.tweens.add({
         targets: this.selectedDisplay,
-        x: '-=' + travel,
+        x: '+=' + travel,
         duration,
         ease: 'Sine.easeInOut',
       });
@@ -3416,7 +3436,7 @@ export default class GarageScene extends Phaser.Scene {
       const wheels = [this.selectedDisplay[3], this.selectedDisplay[4]].filter(Boolean);
       this.tweens.add({
         targets: wheels,
-        angle: '-=420',
+        angle: '+=420',
         duration,
         ease: 'Sine.easeOut',
       });

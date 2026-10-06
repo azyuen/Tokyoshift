@@ -7,7 +7,7 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r350';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
-import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261005-r376';
+import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261006-r388';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';

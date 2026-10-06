@@ -1,8 +1,8 @@
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20260929-r278';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
 import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
-import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261005-r354';
-import { showMagazinePanel } from './CarHistoryPanel.js?v=20261005-r367';
-import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261005-r362';
+import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261006-r388';
+import { showMagazinePanel } from './CarHistoryPanel.js?v=20261006-r388';
+import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -215,6 +215,9 @@ export function showOfficePanel(scene) {
     backgroundKey
   ).setDisplaySize(frame.w, frame.h)
     .setDepth(191));
+  add(scene.add.rectangle(frame.x + frame.w / 2, frame.y + frame.h / 2,
+    frame.w - 4, frame.h - 4, 0x000000, 0)
+    .setStrokeStyle(3, 0x43dfff, 0.96).setDepth(216));
 
   const titleP = point(frame, 0.50, 0.055);
   add(scene.add.rectangle(titleP.x, titleP.y, 390, 42, 0x06111b, 0.82)
@@ -250,7 +253,7 @@ export function showOfficePanel(scene) {
   const flagTop = frame.y + frame.h * 0.255;
   const flagHeight = frame.h * 0.355;
   const flagWidth = flagHeight * (160 / 576);
-  const flagStartX = 0.205;
+  const flagStartX = 0.255;
   const flagGap = 0.0600;
   const badgeSize = flagHeight * (56 / 576);
 
@@ -294,7 +297,7 @@ export function showOfficePanel(scene) {
   const issue = getActiveMagazineIssue(scene.registry);
   if (issue?.coverKey && scene.textures.exists(issue.coverKey)) {
     const source = scene.textures.get(issue.coverKey).getSourceImage();
-    const coverP = point(frame, 0.335, 0.832);
+    const coverP = point(frame, 0.290, 0.832);
     const coverH = frame.h * 0.122;
     const coverW = coverH * (source.width / Math.max(1, source.height));
 
@@ -324,10 +327,6 @@ export function showOfficePanel(scene) {
   addHotspot(scene, add, frame, {
     x: 0.115, y: 0.285, w: 0.17, h: 0.24,
     onActivate: () => showCarHistoryLedger(scene),
-  });
-  addHotspot(scene, add, frame, {
-    x: 0.50, y: 0.84, w: 0.34, h: 0.16,
-    onActivate: () => showMagazinePanel(scene),
   });
   addHotspot(scene, add, frame, {
     x: 0.84, y: 0.52, w: 0.25, h: 0.37,

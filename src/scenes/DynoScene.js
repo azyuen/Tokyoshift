@@ -2,9 +2,9 @@ import TouchControls from '../input/TouchControls.js?v=20260930-r299';
 import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
-import { cars } from '../data/cars.js?v=20261005-r345';
+import { cars } from '../data/cars.js?v=20261006-r388';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r376';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
@@ -13,7 +13,7 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20261004-r331';
+} from '../data/dyno.js?v=20261006-r388';
 import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
 import {
   STAGE3_CALIBRATION_OPTIONS,
@@ -39,7 +39,7 @@ import {
   getVisualModWheelVisual,
   createVisualModLayers,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261006-r376';
+} from '../data/visualMods.js?v=20261006-r388';
 import {
   createTunerDecalLayers,
   preloadTunerDecalAssets,
@@ -496,6 +496,7 @@ export default class DynoScene extends Phaser.Scene {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
       showGear: true,
+      y: 770,
     });
     this.dynoHud.status?.setVisible(false);
   }
@@ -1949,9 +1950,9 @@ export default class DynoScene extends Phaser.Scene {
     this.controls = new TouchControls(this, {
       nosEnabled: false,
       pedalLatchMax: false,
-      // Dyno controls sit just above the white Daichi dialogue strip. The
-      // shared race default is intentionally higher to leave room for race HUD.
-      controlBottomY: 760,
+      // Pedals and shifter sit near the lower edge; the dashboard clears
+      // the centred Daichi dialogue strip. Race layout remains independent.
+      controlBottomY: 830,
     });
     this.controls.nosSprite?.setVisible(false);
 
@@ -2893,7 +2894,7 @@ export default class DynoScene extends Phaser.Scene {
   }
 
   updateDynoHud(telemetry, status) {
-    if (!this.dynoHud || !telemetry) return;
+    if (!this.dynoHud || !telemetry || this.dynoUiMode !== 'active') return;
     this.dynoHud.update({
       rpm: telemetry.rpm,
       speedKmh: telemetry.speedKmh,

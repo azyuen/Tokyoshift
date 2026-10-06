@@ -10,8 +10,8 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
-import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r376';
+import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
+import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -22,11 +22,11 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r376';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20261004-r333';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,
@@ -42,7 +42,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261006-r376';
+} from '../state/GameState.js?v=20261006-r388';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
@@ -55,7 +55,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261006-r376';
+} from '../data/centralTokyo.js?v=20261006-r388';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
@@ -68,10 +68,10 @@ import {
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20260929-r286';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261005-r348';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r365';
-import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r377';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r376';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r388';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r388';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -85,7 +85,7 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261005-r354';
+} from '../data/crewSystem.js?v=20261006-r388';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;

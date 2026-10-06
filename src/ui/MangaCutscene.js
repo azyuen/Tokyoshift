@@ -12,7 +12,7 @@ import {
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
-import { saveSessionState } from '../state/GameState.js?v=20261005-r348';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

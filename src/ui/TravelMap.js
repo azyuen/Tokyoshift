@@ -26,7 +26,7 @@ import {
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20260929-r279';
+} from '../data/centralTokyo.js?v=20261006-r388';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,

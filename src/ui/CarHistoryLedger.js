@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261005-r345';
+import { cars } from '../data/cars.js?v=20261006-r388';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211';
@@ -166,12 +166,12 @@ export function showCarHistoryLedger(scene) {
     }
   ).setOrigin(1, 0.5).setDepth(263));
 
-  const closeButton = add(scene.add.rectangle(1280, 160, 150, 38, 0x141d28, 1)
+  const closeButton = add(scene.add.rectangle(1200, 160, 150, 38, 0x141d28, 1)
     .setStrokeStyle(1, 0x678192, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(263));
 
-  add(scene.add.text(1280, 160, 'CLOSE', {
+  add(scene.add.text(1200, 160, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#d1e2eb',

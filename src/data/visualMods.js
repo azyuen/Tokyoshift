@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20261005-r345';
+import { cars, carOrder } from './cars.js?v=20261006-r388';
 import { getWheelOption } from './wheels.js?v=20260929-r246';
 
 // Complete replacement paint + outline pairs. Both kit layers share the stock

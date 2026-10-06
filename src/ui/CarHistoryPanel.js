@@ -1,4 +1,4 @@
-import { cars } from '../data/cars.js?v=20261004-r333';
+import { cars } from '../data/cars.js?v=20261006-r388';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211';
@@ -6,7 +6,7 @@ import {
   getCarMagazineMeta,
   getCarMagazineSightings,
   getActiveMagazineIssue,
-} from '../data/carMagazine.js?v=20260929-r278';
+} from '../data/carMagazine.js?v=20261006-r388';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
@@ -240,13 +240,17 @@ function prepareMagazineAssets(scene, features, onReady) {
     return;
   }
 
-  scene.load.once('complete', () => {
+  const complete = () => {
+    scene.events.off('shutdown', cancel);
     ensureDerivedModularCarTextures(
       scene,
       Object.fromEntries(ids.map(id => [id, cars[id]]))
     );
     onReady();
-  });
+  };
+  const cancel = () => scene.load.off('complete', complete);
+  scene.events.once('shutdown', cancel);
+  scene.load.once('complete', complete);
   scene.load.start();
 }
 
@@ -274,9 +278,36 @@ export function showCarHistoryPanel(scene) {
 
   const features = buildMagazineFeatures(scene);
   scene._carMagazineLoading = true;
-  prepareMagazineAssets(scene, features, () => {
+  const loading = [
+    scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.82)
+      .setDepth(300).setInteractive(),
+    scene.add.rectangle(780, 420, 480, 142, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff, 1).setDepth(301),
+    scene.add.text(780, 389, 'LOADING MAGAZINE', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#eefaff',
+    }).setOrigin(0.5).setDepth(302),
+    scene.add.rectangle(780, 438, 400, 16, 0x213b4b, 1).setDepth(302),
+  ];
+  const bar = scene.add.rectangle(580, 438, 1, 16, 0x43dfff, 1)
+    .setOrigin(0, 0.5).setDepth(303);
+  loading.push(bar);
+  const progress = value => bar.setDisplaySize(Math.max(1, 400 * value), 16);
+  const cleanup = () => {
+    scene.load.off('progress', progress);
+    scene.events.off('shutdown', cleanup);
+    destroyObjects(loading);
     scene._carMagazineLoading = false;
+  };
+  scene.load.on('progress', progress);
+  scene.events.once('shutdown', cleanup);
+  prepareMagazineAssets(scene, features, () => {
+    cleanup();
     if (!scene.sys?.isActive?.()) return;
+    const issue = getActiveMagazineIssue(scene.registry);
+    if (issue && (!scene.textures.exists(issue.coverKey) || !scene.textures.exists(issue.insetKey))) {
+      scene.showWorkshopToast?.('MAGAZINE COULD NOT LOAD // TAP TO RETRY');
+      return;
+    }
     showMagazine(scene, features);
   });
 }

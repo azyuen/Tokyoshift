@@ -806,7 +806,7 @@ export const cars = {
 
       // R158: regenerated template-style hero asset, calibrated directly from
       // the uploaded body and wheel PNGs. No automatic hero wheel sizing.
-      bodyScale: 0.194,
+      bodyScale: 445 / 1729,
       renderOffsetY: 32,
 
       rearOffsetX: -468,
@@ -869,7 +869,7 @@ export const cars = {
       wheelKey: 'heroWheelSpoonEk9',
       wheelPath: 'assets/wheels/spoon_ek9_hero_wheel.png',
 
-      bodyScale: 0.198,
+      bodyScale: 420 / 1704,
       renderOffsetY: 5,
 
       rearOffsetX: -581,
@@ -1337,7 +1337,7 @@ const S2000_CANVAS = {
     singleLayerModular: false,
     deriveModularFromPreview: false,
     layeredMasterGeometry: null,
-    canvasDisplayScale: bodyScale / 0.36,
+    canvasDisplayScale: S2000_CANVAS.width / S2000_CANVAS.visibleWidth,
     bodyScale,
     wheelFitMode: 'visible-well',
     wheelFill: 1.0,

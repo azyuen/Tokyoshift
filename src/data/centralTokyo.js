@@ -1,4 +1,4 @@
-import { getBaseCarId } from './carOwnership.js?v=20261005-r376';
+import { getBaseCarId } from './carOwnership.js?v=20261006-r388';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,

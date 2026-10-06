@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20260928-r232';
+import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import {
   DEFAULT_PAINT_COLOR,
   createCarBodyLayers,

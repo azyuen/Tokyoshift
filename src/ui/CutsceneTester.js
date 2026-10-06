@@ -6,7 +6,7 @@ import {
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261005-r348';
+} from './MangaCutscene.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

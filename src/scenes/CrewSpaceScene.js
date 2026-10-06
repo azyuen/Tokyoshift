@@ -1,4 +1,4 @@
-import GarageScene from './GarageScene.js?v=20261006-r376';
+import GarageScene from './GarageScene.js?v=20261006-r388';
 
 // Dedicated Crew Space scene.
 //

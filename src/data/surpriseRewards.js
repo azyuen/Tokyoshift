@@ -1,6 +1,6 @@
-import { cars, carOrder } from './cars.js?v=20261005-r345';
-import { ownsCarModel } from './carOwnership.js?v=20261006-r376';
-import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20261006-r376';
+import { cars, carOrder } from './cars.js?v=20261006-r388';
+import { ownsCarModel } from './carOwnership.js?v=20261006-r388';
+import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20261006-r388';
 import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';
 
 function sourceValue(source, key, fallback = null) {

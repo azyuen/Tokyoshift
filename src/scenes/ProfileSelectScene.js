@@ -1,11 +1,11 @@
 import { characters } from '../data/characters.js?v=20261004-r333';
-import { cars } from '../data/cars.js?v=20261005-r345';
+import { cars } from '../data/cars.js?v=20261006-r388';
 import {
   getProfileSlots,
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20261005-r354';
+} from '../state/GameState.js?v=20261006-r388';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
@@ -316,12 +316,6 @@ export default class ProfileSelectScene extends Phaser.Scene {
       fontSize: '9px',
       color: '#637d8c',
       fontStyle: '600',
-    }).setOrigin(0.5).setDepth(depth + 2);
-
-    this.add.text(x, cardY + 246, 'TAP TO SELECT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#7da9ba',
     }).setOrigin(0.5).setDepth(depth + 2);
 
     card.on('pointerover', () => {

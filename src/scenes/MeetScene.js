@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261005-r345';
+import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -30,9 +30,9 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r376';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261005-r367';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261004-r320';
+import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261006-r388';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261006-r388';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
   getGarageCapacity,
@@ -47,7 +47,7 @@ import {
   recordCarMagazineSightings,
   carMatchesCompetitionRestriction,
   getCompetitionRestrictionPool,
-} from '../data/carMagazine.js?v=20261006-r376';
+} from '../data/carMagazine.js?v=20261006-r388';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
@@ -55,9 +55,9 @@ import {
   boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r376';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261004-r325';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
@@ -76,16 +76,16 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r348';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261005-r348';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261006-r388';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   getCarCouponRequirement,
   getCarCouponCount,
   MARKET_BASE_PRICES,
-} from '../data/centralTokyo.js?v=20261006-r376';
+} from '../data/centralTokyo.js?v=20261006-r388';
 import {
   isCrewComplete,
   getRecruitableCrewCandidates,
@@ -100,7 +100,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261005-r354';
+} from '../data/crewSystem.js?v=20261006-r388';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

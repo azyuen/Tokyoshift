@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261004-r333';
+import { cars } from './cars.js?v=20261006-r388';
 import { engines } from './engines.js?v=20261004-r333';
 import { applyEngineTuning } from './tuning.js?v=20260926-r211';
 import { applySecondaryTuning } from './secondaryTuning.js?v=20260926-r211';
