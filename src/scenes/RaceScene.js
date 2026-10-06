@@ -2404,7 +2404,7 @@ export default class RaceScene extends Phaser.Scene {
       ? this.add.graphics().setDepth(depth + 9).setScrollFactor(0).setPosition(96, 116)
       : null;
     if (pinkSlipKey) {
-      const keyColour = Phaser.Display.Color.HexStringToColor(resultColor).color;
+      const keyColour = playerWon ? 0xa8f3e3 : 0xff9caf;
 
       // Dark outer stroke gives the key the same graphic weight as the
       // character-panel borders.
