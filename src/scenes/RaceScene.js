@@ -35,7 +35,7 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261006-r392';
+} from '../data/characters.js?v=20261007-r404';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -66,7 +66,7 @@ import {
   TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20261007-r402';
+} from '../data/tunerChallenges.js?v=20261007-r404';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261006-r398';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
@@ -86,7 +86,7 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
-} from '../data/crewSystem.js?v=20261007-r403';
+} from '../data/crewSystem.js?v=20261007-r404';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
