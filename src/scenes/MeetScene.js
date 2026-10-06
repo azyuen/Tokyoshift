@@ -2734,9 +2734,14 @@ export default class MeetScene extends Phaser.Scene {
         Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS)
       ),
       encounterRating,
-      encounterAi: boostAiForPinkSlip(
-        sourceOffer.encounterAi || getEncounterAi(encounterRating)
-      ),
+      // Easy keeps the full pink-slip system, but does not add the special
+      // pink-race AI skill bump. Standard/Hard retain the existing pressure.
+      encounterAi: String(this.registry.get('playerDifficulty') || 'STANDARD').toUpperCase() === 'EASY'
+        ? (sourceOffer.encounterAi || getEncounterAi(encounterRating))
+        : boostAiForPinkSlip(sourceOffer.encounterAi || getEncounterAi(encounterRating)),
+      opponentBuildRating: sourceOffer.opponentBuildRating,
+      opponentBuildArchetype: sourceOffer.opponentBuildArchetype || null,
+      opponentBuildState: sourceOffer.opponentBuildState || null,
       skillRange: this.getDisplayedSkillRange(encounterRating),
       raceType: sourceOffer.raceType || chooseWeightedRaceType(
         PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.pinkSlipRolling ?? 0.12
@@ -3207,6 +3212,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentCharacterId', challenger.characterId);
     this.registry.set('selectedOpponentEncounterRating', challenger.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', challenger.encounterAi);
+    this.registry.set('selectedOpponentBuildRating', Number(challenger.opponentBuildRating || 1));
+    this.registry.set('selectedOpponentBuildArchetype', challenger.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', challenger.opponentBuildState || null);
     this.registry.set('selectedOpponentDifficulty', challenger.difficulty);
     this.registry.set('selectedOpponentBuildRating', null);
     this.registry.set('selectedOpponentBuildArchetype', null);
@@ -4046,6 +4054,11 @@ export default class MeetScene extends Phaser.Scene {
         pinkAcceptanceChance: pinkDecision.chance,
         pinkReply: pinkDecision.reply,
         pinkChallenged: false,
+        // Predetermine whether this visible rival will counter a normal race
+        // offer with pink slips. This is fixed for the life of the Meet roster,
+        // so clicking cards cannot reroll it.
+        incomingPinkChallenge: Phaser.Math.FloatBetween(0, 1) < 0.14,
+        incomingPinkPrompted: false,
         paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
         locked: false,
@@ -5149,6 +5162,48 @@ export default class MeetScene extends Phaser.Scene {
 
     if (this.selectedDeal === 'PINK' && cars[this.registry.get('selectedCarId')]?.crewLoan) {
       return;
+    }
+
+    // Incoming pink-slip offers come from the actual rival the player chose to
+    // race, rather than from waiting for the three-minute Meet refresh.
+    if (
+      this.selectedDeal === 'CASH' &&
+      offer.incomingPinkChallenge &&
+      !offer.incomingPinkPrompted &&
+      !cars[this.registry.get('selectedCarId')]?.crewLoan
+    ) {
+      const owned = this.registry.get('ownedCarIds') || [];
+      const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
+      if (owned.length < capacity) {
+        offer.incomingPinkPrompted = true;
+        this.persistMeetRound();
+        const encounterRating = Phaser.Math.Clamp(Number(offer.encounterRating || 3), 1, 5);
+        const easy = String(this.registry.get('playerDifficulty') || 'STANDARD').toUpperCase() === 'EASY';
+        const challenger = {
+          active: true,
+          locationId: this.selectedMeetLocation,
+          characterId: offer.characterId,
+          carId: offer.carId,
+          paintColor: offer.paintColor,
+          encounterRating,
+          encounterAi: easy
+            ? (offer.encounterAi || getEncounterAi(encounterRating))
+            : boostAiForPinkSlip(offer.encounterAi || getEncounterAi(encounterRating)),
+          opponentBuildRating: offer.opponentBuildRating,
+          opponentBuildArchetype: offer.opponentBuildArchetype || null,
+          opponentBuildState: offer.opponentBuildState || null,
+          skillRange: this.getDisplayedSkillRange(encounterRating),
+          raceType: offer.raceType,
+          difficulty: offer.difficulty,
+          quote: 'Forget the cash. Keys for keys.',
+          sourceMeetSlot: this.selectedOfferIndex,
+          createdAt: Date.now(),
+        };
+        this.registry.set('specialChallenger', challenger);
+        saveSessionState(this.registry);
+        this.showSpecialChallenger(challenger, true);
+        return;
+      }
     }
 
     if (this.selectedDeal === 'PINK' && !storyConfirmed) {
