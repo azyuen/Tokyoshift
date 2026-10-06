@@ -1,14 +1,14 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars } from '../data/cars.js?v=20261006-r388';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r388';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r391';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
   getTunerShopForRegion,
   getTunerShopPhaseBackground,
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20261006-r391';
+} from '../data/tunerShops.js?v=20261006-r392';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -486,7 +486,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const hero = cars[this.shop.heroCarId];
     if (hero) {
-      this.drawCarOnStage(hero.id, 720, 650, 770, 10, true);
+      this.drawCarOnStage(hero.id, 720, 650, 770 * 0.70, 10, true);
     }
 
     const currentCarId = this.getCurrentCarId();
@@ -1332,14 +1332,42 @@ export default class TunerShopScene extends Phaser.Scene {
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
     sprite.setScale(350 / source.height);
 
+    const plateX = 54;
+    const plateY = 718;
+    const plateW = 360;
+    const plateH = 82;
+
+    this.addDynamic(this.add.rectangle(
+      plateX,
+      plateY,
+      plateW,
+      plateH,
+      0x05090d,
+      0.72
+    ).setOrigin(0, 0)
+      .setStrokeStyle(1, 0x6b7a81, 0.65)
+      .setDepth(19));
+
     this.addDynamic(this.add.text(
-      64,
-      730,
-      character.name + ' // REGION MECHANIC',
+      plateX + 18,
+      plateY + 17,
+      character.name.toUpperCase(),
       {
         fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#e7cfaa',
+        fontSize: '8px',
+        color: '#f4dfbd',
+      }
+    ).setDepth(20));
+
+    this.addDynamic(this.add.text(
+      plateX + 18,
+      plateY + 49,
+      String(this.shop.regionId || character.regionId || '').toUpperCase() +
+        ' // REGION MECHANIC',
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#a9bec7',
       }
     ).setDepth(20));
 
@@ -1683,7 +1711,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
         if (success) {
           this.drawPlayerCharacter();
-          this.drawCarOnStage(this.shop.heroCarId, 735, 650, 780, 10, true);
+          this.drawCarOnStage(this.shop.heroCarId, 735, 650, 780 * 0.70, 10, true);
           this.addDynamic(this.add.text(
             STAGE.x + STAGE.w / 2,
             STAGE.y + 110,
