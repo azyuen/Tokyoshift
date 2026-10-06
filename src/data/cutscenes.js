@@ -334,8 +334,60 @@ export const CUTSCENES = {
         pose: 'win',
         text: 'Prize is ¥{CASH_REWARD}. You also earned {COUPON_AWARDS} × {DONOR} coupon and the {BADGE} badge.',
       },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: 'Keep racing in {REGION}. We may call you back for a Perfect Streak — seven straight wins, with bonus rewards.',
+      },
     ],
     finalActionLabel: 'CLAIM CHAMPION REWARDS',
+  },
+
+  regionalChallengeLoss: {
+    id: 'regionalChallengeLoss',
+    category: 'REGION / CHALLENGE RESULT',
+    testerLabel: 'Region — Challenge Paused',
+    title: '{REGION} // CHALLENGE PAUSED',
+    once: false,
+    characters: {
+      left: '$RIVAL',
+      right: '$PLAYER',
+    },
+    preview: {
+      characterOverrides: { RIVAL: 'natsumiKagawa' },
+      variables: {
+        REGION: 'SHINAGAWA',
+        RIVAL_NAME: 'NATSUMI KAGAWA',
+      },
+    },
+    introCard: {
+      character: 'left',
+      name: '{RIVAL_NAME}',
+      subtitle: '{REGION} // REGIONAL CREW',
+    },
+    pages: [
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'win',
+        text: 'That is where the run stops.',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: 'Keep racing around {REGION}. You might get another shot at the challenge.',
+      },
+      {
+        speaker: 'left',
+        speakerLabel: '{RIVAL_NAME}',
+        pose: 'idle',
+        text: 'If we call you back, you pick up from the racer who stopped you. Bring the car back ready.',
+        emphasis: true,
+      },
+    ],
+    finalActionLabel: 'BACK TO THE MEET',
   },
 
   regionalPerfectVictory: {
