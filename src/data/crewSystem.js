@@ -9,6 +9,7 @@ import {
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
+import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261007-r402';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
@@ -463,21 +464,11 @@ export function getPlayerCrewCarId(source) {
 }
 
 export function getCrewBattleUnits(source) {
-  const playerCharacterId = String(value(source, 'playerCharacterId', 'renMizuno'));
-  const playerCarId = getPlayerCrewCarId(source);
+  // Crew battles are exclusive to the recruited team: only loan cars and their
+  // recruited drivers are eligible. The player and ordinary garage cars sit out.
   const units = [];
-
-  if (playerCarId && cars[playerCarId]) {
-    units.push({
-      id: 'PLAYER',
-      regionId: 'PLAYER',
-      characterId: playerCharacterId,
-      carId: playerCarId,
-      player: true,
-    });
-  }
-
   const members = getCrewMembers(source);
+
   CREW_REGIONS.forEach(regionId => {
     const member = members[regionId];
     if (!member?.loanCarId || !cars[member.loanCarId]) return;
@@ -516,31 +507,32 @@ function proLeaderAi(base = {}) {
 
 export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
-  const roster = getRegionalCrewRoster(key);
-  if (!roster) return [];
-
-  // The driver recruited from this region has left their old team. The return
-  // crew battle is therefore leader + the four non-recruited teammates.
   const recruitedCharacterId = source
     ? getCrewMemberForRegion(source, key)?.characterId
     : null;
-  const opponents = roster.members.filter(
-    member => member.characterId !== recruitedCharacterId
-  );
+
+  // Reuse the original seven-driver regional championship cast. Once one of
+  // those drivers defects to the player's crew, exactly six remain.
+  const originalSeven = buildTunerTeamChallengeRounds(key, '')
+    .filter(round => round?.characterId && round?.carId);
+  const opponents = originalSeven
+    .filter(round => round.characterId !== recruitedCharacterId)
+    .slice(0, CREW_BATTLE_LINEUP_SIZE);
+
   const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
 
-  return opponents.map((member, index) => {
+  return opponents.map((baseRound, index) => {
     const raceType = index % 3 === 1 ? 'Roll Race' : 'Standing Start';
     const buildRating = regionalBuildRating(rank, index);
     const encounterRating = regionalDriverRating(rank, index);
-    const leader = Boolean(member.leader);
+    const leader = index === opponents.length - 1;
     const baseAi = getEncounterAi(encounterRating);
     const encounterAi = leader ? proLeaderAi(baseAi) : { ...baseAi };
     const opponentBuildState = createRivalBuildState(
-      cars[member.baseCarId],
+      cars[baseRound.carId],
       buildRating,
       {
-        seed: 'crew-battle:' + key + ':' + member.characterId,
+        seed: 'crew-battle:' + key + ':' + baseRound.characterId,
         raceType,
       }
     );
@@ -548,8 +540,8 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
     return {
       index,
       regionId: key,
-      characterId: member.characterId,
-      carId: member.baseCarId,
+      characterId: baseRound.characterId,
+      carId: baseRound.carId,
       raceType,
       distanceM: index >= 3 ? 804.672 : 402.336,
       buildRating,
@@ -559,7 +551,7 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
       difficulty: leader ? 'PRO' : encounterRating >= 5 ? 'ELITE' : 'EXPERT',
       leader,
     };
-  }).slice(0, CREW_BATTLE_LINEUP_SIZE);
+  });
 }
 
 export function getRegionalCrewBattleReward(regionId) {
