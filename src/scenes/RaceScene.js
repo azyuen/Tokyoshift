@@ -2379,10 +2379,10 @@ export default class RaceScene extends Phaser.Scene {
           1560,
           720,
           playerWon ? 0x2fb99a : 0xd62f67,
-          0
-        ).setDepth(depth + 1).setScrollFactor(0)
+          1
+        ).setDepth(depth + 1).setScrollFactor(0).setAlpha(0)
       : null;
-    const pinkSlipShadeTargetAlpha = playerWon ? 0.30 : 0.29;
+    const pinkSlipShadeTargetAlpha = playerWon ? 0.34 : 0.33;
 
     // Editorial result composition. VICTORY and LOSS share the exact same
     // Exo 2 Black Italic treatment; only the outcome colour changes.
@@ -2397,31 +2397,6 @@ export default class RaceScene extends Phaser.Scene {
       stroke: '#11141a',
       strokeThickness: 4,
     };
-
-    // Pink-slip ownership emblem. This is drawn natively in Phaser rather
-    // than raster art so it stays sharp and can share the result colour.
-    const pinkSlipKey = isPinkSlip
-      ? this.add.graphics().setDepth(depth + 9).setScrollFactor(0).setPosition(96, 116)
-      : null;
-    if (pinkSlipKey) {
-      const keyColour = playerWon ? 0xa8f3e3 : 0xff9caf;
-
-      // Dark outer stroke gives the key the same graphic weight as the
-      // character-panel borders.
-      pinkSlipKey.lineStyle(12, 0x11141a, 0.94);
-      pinkSlipKey.strokeCircle(22, 20, 16);
-      pinkSlipKey.lineBetween(38, 20, 91, 20);
-      pinkSlipKey.lineBetween(73, 20, 73, 34);
-      pinkSlipKey.lineBetween(73, 34, 85, 34);
-      pinkSlipKey.lineBetween(85, 34, 85, 20);
-
-      pinkSlipKey.lineStyle(7, keyColour, 1);
-      pinkSlipKey.strokeCircle(22, 20, 16);
-      pinkSlipKey.lineBetween(38, 20, 91, 20);
-      pinkSlipKey.lineBetween(73, 20, 73, 34);
-      pinkSlipKey.lineBetween(73, 34, 85, 34);
-      pinkSlipKey.lineBetween(85, 34, 85, 20);
-    }
 
     const title = this.add.text(
       titleTargetX,
@@ -2771,7 +2746,25 @@ export default class RaceScene extends Phaser.Scene {
       advanced = true;
       tapTarget.disableInteractive();
 
-      if (settlement?.gameOver) {
+      if (isPinkSlip && settlement) {
+        this.registry.set('pendingPinkSlipResult', {
+          playerWon: Boolean(playerWon),
+          gameOver: Boolean(settlement.gameOver),
+          wasSpecialChallenge: Boolean(wasSpecialChallenge),
+          rivalCharacterId: this.opponentCharacterId,
+          playerCharacterId: this.playerCharacterId,
+          rivalName: String(rivalCharacter?.name || 'RIVAL').toUpperCase(),
+          carName: String(
+            playerWon
+              ? (cars[this.opponentCarId]?.shortName || 'CAR')
+              : (cars[this.selectedCarId]?.shortName || 'CAR')
+          ).toUpperCase(),
+          acquiredCarId: settlement.acquiredCarId || null,
+          completedAt: Date.now(),
+        });
+        saveSessionState(this.registry);
+        this.scene.start('MeetScene');
+      } else if (settlement?.gameOver) {
         this.scene.start('RunOverScene');
       } else if (settlement?.crewBattleContinues) {
         this.startNextCrewBattleRound();
@@ -2804,11 +2797,6 @@ export default class RaceScene extends Phaser.Scene {
     const finalTitleX = title.x;
     title.x = -title.width - 80;
     title.setAlpha(0);
-
-    if (pinkSlipKey) {
-      pinkSlipKey.setAlpha(0);
-      pinkSlipKey.setScale(0.72);
-    }
 
     if (pinkSlipShade) {
       this.tweens.add({
@@ -2865,18 +2853,6 @@ export default class RaceScene extends Phaser.Scene {
       ease: 'Linear',
     });
 
-    if (pinkSlipKey) {
-      this.tweens.add({
-        targets: pinkSlipKey,
-        alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
-        duration: 155,
-        delay: pinkRevealDelay + 20,
-        ease: 'Back.Out',
-      });
-    }
-
     this.tweens.add({
       targets: title,
       x: finalTitleX,
@@ -2914,46 +2890,12 @@ export default class RaceScene extends Phaser.Scene {
 
     // Preserve the existing special-result follow-ups. They run after the
     // manga panel lands so an ordinary result never waits on animation.
-    this.time.delayedCall(isPinkSlip ? 650 : 390, () => {
+    this.time.delayedCall(390, () => {
       if (!settlement) return;
 
-      if (isPinkSlip) {
-        const rivalName = String(rivalCharacter?.name || 'RIVAL').toUpperCase();
-        const carName = String(
-          playerWon
-            ? (cars[this.opponentCarId]?.shortName || 'CAR')
-            : (cars[this.selectedCarId]?.shortName || 'CAR')
-        ).toUpperCase();
+      if (isPinkSlip) return;
 
-        const showDelivery = () => {
-          if (settlement?.acquiredCarId) {
-            this.showAcquiredCarDelivery(settlement.acquiredCarId);
-          }
-        };
-
-        const resultCutscene = playMangaCutscene(
-          this,
-          wasSpecialChallenge
-            ? (playerWon ? 'specialChallengerWin' : 'specialChallengerLoss')
-            : (playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss'),
-          {
-            historyId: wasSpecialChallenge
-              ? 'specialChallengerResult:' + Date.now() + ':' + (playerWon ? 'W' : 'L')
-              : undefined,
-            characterOverrides: {
-              RIVAL: this.opponentCharacterId,
-              WINNER: playerWon ? this.playerCharacterId : this.opponentCharacterId,
-              LOSER: playerWon ? this.opponentCharacterId : this.playerCharacterId,
-            },
-            variables: {
-              RIVAL_NAME: rivalName,
-              CAR: carName,
-            },
-            onComplete: showDelivery,
-          }
-        );
-        if (!resultCutscene?.played) showDelivery();
-      } else if (settlement?.teamChallengeCompleted) {
+      if (settlement?.teamChallengeCompleted) {
         const perfect = Boolean(settlement.teamChallengePerfect);
         const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
         const rivalName = String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase();
