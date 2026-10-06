@@ -115,6 +115,8 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('nosButton', 'assets/Controls/nos_button.png');
     queueImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
+    queueImage('regionalChallengeBadge', 'assets/Garage/badge_crew.png');
+    queueImage('regionalPerfectStarBadge', 'assets/Garage/badge_star.png');
 
     // All street-race regions now use authored day/night panoramas.
     // Assets follow skyline_<region>_<phase>.webp and share one renderer.
@@ -585,17 +587,17 @@ export default class RaceScene extends Phaser.Scene {
       const regionId = String(this.raceDistrict || '').toUpperCase();
       const state = getTunerTeamChallengeState(this.registry, regionId);
       const stageKey = regionId + ':' + Number(state.stage || 0);
-      const alreadyBriefed = this.registry.get('regionalChallengeBriefedStage') === stageKey;
+      const revealCurrent =
+        this.registry.get('regionalChallengeRevealCurrentStage') === stageKey;
 
-      if (alreadyBriefed) {
-        this.registry.set('regionalChallengeBriefedStage', null);
+      if (revealCurrent) {
+        this.registry.set('regionalChallengeRevealCurrentStage', null);
         saveSessionState(this.registry);
-        // The manga briefing has already been acknowledged. Leave the newly
-        // staged race visible and wait for the normal START RACE / START ROLL
-        // button instead of auto-launching.
-      } else {
-        this.time.delayedCall(45, () => this.showRegionalChallengeBriefing());
       }
+
+      this.time.delayedCall(45, () =>
+        this.showRegionalChallengeBriefing({ revealCurrent })
+      );
     }
 
     finishSceneLoading('READY TO RACE');
@@ -2120,18 +2122,53 @@ export default class RaceScene extends Phaser.Scene {
       strokeThickness: 4,
     };
 
+    const finalRegionalWin = Boolean(
+      settlement?.teamChallengeCompleted && playerWon
+    );
     const title = this.add.text(
       titleTargetX,
       196,
       settlement?.teamChallenge
-        ? (playerWon
-            ? 'WIN ' + Number(settlement.stageNumber || 1) + ' OF 7'
-            : 'LOSS')
+        ? (finalRegionalWin
+            ? 'WON'
+            : playerWon
+              ? 'WIN #' + Number(settlement.stageNumber || 1)
+              : 'LOSS')
         : isPinkSlip
           ? (playerWon ? 'CAR WON!' : 'CAR LOST')
           : (playerWon ? 'VICTORY' : 'LOSS'),
       titleStyle
     ).setDepth(depth + 8).setScrollFactor(0);
+
+    const challengeTitle = finalRegionalWin
+      ? this.add.text(titleTargetX, 134, 'CHALLENGE', {
+          ...titleStyle,
+          fontSize: '46px',
+        }).setDepth(depth + 8).setScrollFactor(0)
+      : null;
+
+    const regionalBadge = finalRegionalWin && this.textures.exists('regionalChallengeBadge')
+      ? this.add.image(430, 230, 'regionalChallengeBadge')
+          .setDisplaySize(96, 96)
+          .setDepth(depth + 12)
+          .setScrollFactor(0)
+          .setAlpha(0)
+          .setScale(1.65)
+          .setAngle(-8)
+      : null;
+
+    const perfectStarBadge =
+      finalRegionalWin &&
+      settlement?.teamChallengePerfect &&
+      this.textures.exists('regionalPerfectStarBadge')
+        ? this.add.image(535, 230, 'regionalPerfectStarBadge')
+            .setDisplaySize(82, 82)
+            .setDepth(depth + 13)
+            .setScrollFactor(0)
+            .setAlpha(0)
+            .setScale(1.65)
+            .setAngle(8)
+        : null;
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
     const contextType = isPinkSlip
@@ -2155,9 +2192,17 @@ export default class RaceScene extends Phaser.Scene {
       contextExtra = ' // RACER ' + settlement.stageNumber + '/7';
     }
 
-    const contextLine =
-      contextType + contextExtra + ' // ' + this.raceDistanceLabel + ' // ' + startLabel +
-      ' // ' + String(this.raceDistrict + ' · ' + this.raceLocationLabel).toUpperCase();
+    const contextLine = settlement?.teamChallenge
+      ? (
+          String(this.raceDistrict).toUpperCase() +
+          contextExtra +
+          ' // ' + this.raceDistanceLabel +
+          ' // ' + (this.isRollingStart ? 'ROLLING' : 'STANDING')
+        )
+      : (
+          contextType + contextExtra + ' // ' + this.raceDistanceLabel + ' // ' + startLabel +
+          ' // ' + String(this.raceDistrict + ' · ' + this.raceLocationLabel).toUpperCase()
+        );
 
     const rivalCar = cars[this.opponentCarId] || {};
     const rivalConfig = this.opponent?.config || rivalCar;
@@ -2533,8 +2578,29 @@ export default class RaceScene extends Phaser.Scene {
         this.startNextCrewBattleRound();
       } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
-      } else if (settlement?.teamChallengeCompleted) {
-        this.showRegionalChallengeCompletionCutscene(settlement);
+      } else if (
+        settlement?.teamChallengeCompleted ||
+        settlement?.teamChallengeFailed
+      ) {
+        this.registry.set('pendingRegionalChallengeResult', {
+          completed: Boolean(settlement.teamChallengeCompleted),
+          failed: Boolean(settlement.teamChallengeFailed),
+          perfect: Boolean(settlement.teamChallengePerfect),
+          regionId: String(settlement.regionId || this.raceDistrict || 'REGION').toUpperCase(),
+          rivalCharacterId: this.opponentCharacterId,
+          playerCharacterId: this.playerCharacterId,
+          rivalName: String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase(),
+          cashReward: Number(settlement.totalReward || 0),
+          donorLabel: String(settlement.donorLabel || 'DONOR CAR').toUpperCase(),
+          couponAwards: Number(settlement.couponAwards || 0),
+          badgeLabel: String(
+            settlement.badgeLabel ||
+            (settlement.teamChallengePerfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
+          ),
+          completedAt: Date.now(),
+        });
+        saveSessionState(this.registry);
+        this.scene.start('MeetScene');
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
@@ -2626,6 +2692,48 @@ export default class RaceScene extends Phaser.Scene {
       delay: pinkRevealDelay + 65,
       ease: 'Expo.Out',
     });
+
+    if (challengeTitle) {
+      const finalChallengeX = challengeTitle.x;
+      challengeTitle.x = -challengeTitle.width - 60;
+      challengeTitle.setAlpha(0);
+      this.tweens.add({
+        targets: challengeTitle,
+        x: finalChallengeX,
+        alpha: 1,
+        duration: 190,
+        delay: pinkRevealDelay + 25,
+        ease: 'Expo.Out',
+      });
+    }
+
+    if (regionalBadge) {
+      this.tweens.add({
+        targets: regionalBadge,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        angle: 0,
+        duration: 170,
+        delay: pinkRevealDelay + 245,
+        ease: 'Back.Out',
+        onStart: () => this.cameras.main.shake(65, 0.0012),
+      });
+    }
+
+    if (perfectStarBadge) {
+      this.tweens.add({
+        targets: perfectStarBadge,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        angle: 0,
+        duration: 165,
+        delay: pinkRevealDelay + 390,
+        ease: 'Back.Out',
+        onStart: () => this.cameras.main.shake(55, 0.001),
+      });
+    }
 
     this.tweens.add({
       targets: detailObjects,
@@ -2819,10 +2927,11 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   showNextTunerChallengeBriefing() {
-    this.showRegionalChallengeBriefing({
-      revealCurrent: true,
-      fromResult: true,
-    });
+    const { regionId, state } = this.getRegionalChallengeTableauState();
+    const stageKey = regionId + ':' + Number(state.stage || 0);
+    this.registry.set('regionalChallengeRevealCurrentStage', stageKey);
+    saveSessionState(this.registry);
+    this.startNextTunerChallengeRound();
   }
 
   showRegionalChallengeCompletionCutscene(settlement) {
