@@ -2153,9 +2153,16 @@ export default class RaceScene extends Phaser.Scene {
           .setDepth(depth + 12)
           .setScrollFactor(0)
           .setAlpha(0)
-          .setScale(1.65)
           .setAngle(-8)
       : null;
+    if (regionalBadge) {
+      regionalBadge.stampTargetScaleX = regionalBadge.scaleX;
+      regionalBadge.stampTargetScaleY = regionalBadge.scaleY;
+      regionalBadge.setScale(
+        regionalBadge.scaleX * 1.65,
+        regionalBadge.scaleY * 1.65
+      );
+    }
 
     const perfectStarBadge =
       finalRegionalWin &&
@@ -2166,9 +2173,16 @@ export default class RaceScene extends Phaser.Scene {
             .setDepth(depth + 13)
             .setScrollFactor(0)
             .setAlpha(0)
-            .setScale(1.65)
             .setAngle(8)
         : null;
+    if (perfectStarBadge) {
+      perfectStarBadge.stampTargetScaleX = perfectStarBadge.scaleX;
+      perfectStarBadge.stampTargetScaleY = perfectStarBadge.scaleY;
+      perfectStarBadge.setScale(
+        perfectStarBadge.scaleX * 1.65,
+        perfectStarBadge.scaleY * 1.65
+      );
+    }
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
     const contextType = isPinkSlip
@@ -2711,8 +2725,8 @@ export default class RaceScene extends Phaser.Scene {
       this.tweens.add({
         targets: regionalBadge,
         alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: regionalBadge.stampTargetScaleX,
+        scaleY: regionalBadge.stampTargetScaleY,
         angle: 0,
         duration: 170,
         delay: pinkRevealDelay + 245,
@@ -2725,8 +2739,8 @@ export default class RaceScene extends Phaser.Scene {
       this.tweens.add({
         targets: perfectStarBadge,
         alpha: 1,
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: perfectStarBadge.stampTargetScaleX,
+        scaleY: perfectStarBadge.stampTargetScaleY,
         angle: 0,
         duration: 165,
         delay: pinkRevealDelay + 390,
@@ -2881,7 +2895,7 @@ export default class RaceScene extends Phaser.Scene {
     this._regionalChallengeUiVisibility = null;
   }
 
-  showRegionalChallengeBriefing({ revealCurrent = false, fromResult = false } = {}) {
+  showRegionalChallengeBriefing({ revealCurrent = false } = {}) {
     if (this.regionalChallengeTableau?.active) return;
 
     const { regionId, state, rounds, perfectMode } = this.getRegionalChallengeTableauState();
@@ -2907,17 +2921,6 @@ export default class RaceScene extends Phaser.Scene {
         this.regionalChallengeTableau?.destroy?.();
         this.regionalChallengeTableau = null;
 
-        if (fromResult || this.resultsShown) {
-          const current = getTunerTeamChallengeState(this.registry, regionId);
-          this.registry.set(
-            'regionalChallengeBriefedStage',
-            regionId + ':' + Number(current.stage || stageIndex)
-          );
-          saveSessionState(this.registry);
-          this.startNextTunerChallengeRound();
-          return;
-        }
-
         this.restoreRegionalChallengeRaceUi();
         // Briefing dismissed. The player now uses the ordinary race START
         // control, keeping the familiar staging beat before every challenge run.
@@ -2932,32 +2935,6 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('regionalChallengeRevealCurrentStage', stageKey);
     saveSessionState(this.registry);
     this.startNextTunerChallengeRound();
-  }
-
-  showRegionalChallengeCompletionCutscene(settlement) {
-    const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
-    const perfect = Boolean(settlement?.teamChallengePerfect);
-    const cutsceneId = perfect ? 'regionalPerfectVictory' : 'regionalChampionVictory';
-    const rivalCharacter = characters[this.opponentCharacterId] || null;
-
-    const result = playMangaCutscene(this, cutsceneId, {
-      historyId: cutsceneId + ':' + String(settlement?.regionId || this.raceDistrict || 'REGION'),
-      characterOverrides: { RIVAL: this.opponentCharacterId },
-      variables: {
-        REGION: String(settlement?.regionId || this.raceDistrict || 'REGION').toUpperCase(),
-        RIVAL_NAME: String(rivalCharacter?.name || 'REGIONAL RIVAL').toUpperCase(),
-        CASH_REWARD: Number(settlement?.totalReward || 0).toLocaleString('en-US'),
-        DONOR: String(settlement?.donorLabel || 'DONOR CAR').toUpperCase(),
-        COUPON_AWARDS: String(Number(settlement?.couponAwards || 0)),
-        BADGE: String(
-          settlement?.badgeLabel ||
-          (perfect ? 'REGIONAL CHAMPION ★' : 'REGIONAL CHAMPION')
-        ),
-      },
-      onComplete: () => this.scene.start(returnScene),
-    });
-
-    if (!result?.played) this.scene.start(returnScene);
   }
 
   pauseRegionalChallenge() {
