@@ -2125,8 +2125,8 @@ export default class RaceScene extends Phaser.Scene {
       196,
       settlement?.teamChallenge
         ? (playerWon
-            ? 'WIN STREAK ' + Number(settlement.stageNumber || 1)
-            : 'CHALLENGE LOSS')
+            ? 'WIN ' + Number(settlement.stageNumber || 1) + ' OF 7'
+            : 'LOSS')
         : isPinkSlip
           ? (playerWon ? 'CAR WON!' : 'CAR LOST')
           : (playerWon ? 'VICTORY' : 'LOSS'),
@@ -2244,6 +2244,42 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
+    const teamStateAfterResult = settlement?.teamChallenge
+      ? getTunerTeamChallengeState(
+          this.registry,
+          String(settlement.regionId || this.raceDistrict || '').toUpperCase()
+        )
+      : null;
+    const teamResultIsFinal = Boolean(settlement?.teamChallengeCompleted);
+    const teamStreakActive = Boolean(
+      settlement?.teamChallenge &&
+      playerWon &&
+      !teamResultIsFinal &&
+      teamStateAfterResult?.perfectEligible !== false
+    );
+
+    let resultRowLabel = 'AWARDS';
+    let resultRowText = awardParts.length ? awardParts.join(' // ') : 'NONE';
+
+    if (settlement?.teamChallenge && !teamResultIsFinal) {
+      if (!playerWon) {
+        resultRowLabel = 'STATUS';
+        resultRowText =
+          'CHALLENGE PAUSED // RACE AT MEETS FOR A CHANCE TO CONTINUE';
+      } else if (teamStreakActive) {
+        resultRowLabel = 'ON STREAK';
+        resultRowText = Number(settlement.stageNumber || 1) + ' OF 7';
+      } else {
+        const remaining = Math.max(
+          0,
+          TUNER_TEAM_CHALLENGE_STAGES - Number(settlement.stageNumber || 1)
+        );
+        resultRowLabel = 'STATUS';
+        resultRowText =
+          remaining + ' RACE' + (remaining === 1 ? '' : 'S') + ' TO GO';
+      }
+    }
+
     const captionStyle = {
       fontFamily: dataFont,
       fontSize: '10px',
@@ -2278,12 +2314,12 @@ export default class RaceScene extends Phaser.Scene {
       wordWrap: { width: 548 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const awardsLabel = this.add.text(labelX, 454, 'AWARDS', captionLabelStyle)
+    const awardsLabel = this.add.text(labelX, 454, resultRowLabel, captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
     const awardsText = this.add.text(
       valueX,
       459,
-      awardParts.length ? awardParts.join(' // ') : 'NONE',
+      resultRowText,
       {
         ...captionStyle,
         color: playerWon ? '#d9f5ee' : '#dec9ce',
