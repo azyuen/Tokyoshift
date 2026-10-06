@@ -126,7 +126,7 @@ export function createRegionalChallengeTableau(scene, {
     : 'STANDING START';
 
   // Sparse editorial briefing, deliberately isolated in the left quadrant.
-  add(scene.add.text(76, 58, String(regionId || 'REGION').toUpperCase(), {
+  add(scene.add.text(132, 58, String(regionId || 'REGION').toUpperCase(), {
     fontFamily: RESULT_FONT,
     fontSize: '13px',
     color: '#e9f0f2',
@@ -136,7 +136,7 @@ export function createRegionalChallengeTableau(scene, {
   }).setDepth(depth + 30).setScrollFactor(0));
 
   const racerLine = add(scene.add.text(
-    76,
+    132,
     98,
     'Racer ' + raceNumber + ' of 7  ' + String(currentRival?.name || 'RIVAL'),
     {
@@ -150,7 +150,7 @@ export function createRegionalChallengeTableau(scene, {
   ).setDepth(depth + 30).setScrollFactor(0));
 
   const specLine = add(scene.add.text(
-    76,
+    132,
     136,
     String(currentCar?.shortName || currentCar?.name || currentRound.carId || 'CAR').toUpperCase() +
       ' // ' + raceDistanceLabel(currentRound.distanceM) + ' // ' + startType,
@@ -164,7 +164,7 @@ export function createRegionalChallengeTableau(scene, {
     }
   ).setDepth(depth + 30).setScrollFactor(0));
 
-  const startHint = add(scene.add.text(76, 178, 'PRESS ANYWHERE TO START', {
+  const startHint = add(scene.add.text(132, 178, 'PRESS ANYWHERE TO START', {
     fontFamily: BODY_FONT,
     fontSize: '12px',
     color: '#f4f7f8',
@@ -174,20 +174,21 @@ export function createRegionalChallengeTableau(scene, {
   }).setDepth(depth + 30).setScrollFactor(0));
 
   const mainTitle = add(scene.add.text(
-    76,
-    278,
-    perfectMode ? 'PERFECT STREAK' : 'REGIONAL CHALLENGE',
+    132,
+    236,
+    perfectMode ? 'PERFECT\nSTREAK' : 'REGIONAL\nCHALLENGE',
     {
       fontFamily: RESULT_FONT,
-      fontSize: perfectMode ? '50px' : '54px',
+      fontSize: perfectMode ? '48px' : '50px',
       color: '#f4f7f8',
       fontStyle: 'italic 900',
       stroke: '#11141a',
       strokeThickness: 4,
+      lineSpacing: -10,
     }
   ).setDepth(depth + 30).setScrollFactor(0));
 
-  const pauseText = add(scene.add.text(76, 654, 'PAUSE CHALLENGE', {
+  const pauseText = add(scene.add.text(132, 654, 'PAUSE CHALLENGE', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#9ca9af',
