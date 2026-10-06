@@ -2348,7 +2348,7 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: resultFont,
       fontSize: '88px',
       color: resultColor,
-      fontStyle: 'italic',
+      fontStyle: 'italic 900',
       stroke: resultColor,
       strokeThickness: 4,
     };
@@ -2461,11 +2461,6 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    // Very light wash only behind the text stack for readability.
-    const infoWash = this.add.rectangle(420, 492, 720, 342, 0xd7dde0, 0.11)
-      .setDepth(depth + 2)
-      .setScrollFactor(0);
-
     const captionStyle = {
       fontFamily: dataFont,
       fontSize: '10px',
@@ -2478,7 +2473,7 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: resultFont,
       fontSize: '11px',
       color: '#e1e5e7',
-      fontStyle: 'italic',
+      fontStyle: 'italic 900',
       stroke: '#071019',
       strokeThickness: 2,
     };
@@ -2513,28 +2508,44 @@ export default class RaceScene extends Phaser.Scene {
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
-    // Timing uses the same label/value grammar as the editorial details above.
-    const timingLines = [
+    // Compact two-column timing table, visually tied to the editorial labels.
+    const timingRows = [
       ['TIME',
-        'YOU ' + (this.falseStart ? 'DQ' : formatTime(this.times.finish)) +
-        ' // RIVAL ' + formatTime(this.opponentTimes.finish)],
+        this.falseStart ? 'DQ' : formatTime(this.times.finish),
+        formatTime(this.opponentTimes.finish)],
       ['0–60',
-        'YOU ' + (this.isRollingStart || this.falseStart ? '—' : formatTime(this.times.zeroToSixty)) +
-        ' // RIVAL ' + (this.isRollingStart ? '—' : formatTime(this.opponentTimes.zeroToSixty))],
+        this.isRollingStart || this.falseStart ? '—' : formatTime(this.times.zeroToSixty),
+        this.isRollingStart ? '—' : formatTime(this.opponentTimes.zeroToSixty)],
       ['MAX KM/H',
-        'YOU ' + (this.falseStart ? '—' : formatSpeed(this.times.maxKmh)) +
-        ' // RIVAL ' + formatSpeed(this.opponentTimes.maxKmh)],
+        this.falseStart ? '—' : formatSpeed(this.times.maxKmh),
+        formatSpeed(this.opponentTimes.maxKmh)],
     ];
 
     const timingObjects = [];
-    timingLines.forEach((row, index) => {
-      const y = 510 + index * 36;
+    const timingLabelX = labelX;
+    const timingYouX = 260;
+    const timingRivalX = 420;
+    const timingHeaderY = 526;
+
+    timingObjects.push(
+      this.add.text(timingYouX, timingHeaderY, 'YOU', captionLabelStyle)
+        .setDepth(depth + 8).setScrollFactor(0),
+      this.add.text(timingRivalX, timingHeaderY, 'RIVAL', captionLabelStyle)
+        .setDepth(depth + 8).setScrollFactor(0)
+    );
+
+    timingRows.forEach((row, index) => {
+      const y = 558 + index * 34;
       timingObjects.push(
-        this.add.text(labelX, y, row[0], captionLabelStyle)
+        this.add.text(timingLabelX, y, row[0], captionLabelStyle)
           .setDepth(depth + 8).setScrollFactor(0),
-        this.add.text(valueX, y + 5, row[1], {
+        this.add.text(timingYouX, y + 5, row[1], {
           ...captionStyle,
-          wordWrap: { width: 548 },
+          wordWrap: { width: 130 },
+        }).setDepth(depth + 8).setScrollFactor(0),
+        this.add.text(timingRivalX, y + 5, row[2], {
+          ...captionStyle,
+          wordWrap: { width: 130 },
         }).setDepth(depth + 8).setScrollFactor(0)
       );
     });
@@ -2625,29 +2636,29 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 9, y: 5 },
     }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
-    const rivalNameText = this.add.text(1148, 411, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    const rivalNameText = this.add.text(812, 411, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
       backgroundColor: '#11141add',
       padding: { x: 9, y: 5 },
-      align: 'right',
-    }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
+      align: 'left',
+    }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const rivalQuote = playerWon
       ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
       : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
-    const rivalQuoteText = this.add.text(1148, 446, '“' + rivalQuote + '”', {
+    const rivalQuoteText = this.add.text(812, 446, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
       fontSize: '15px',
       color: '#ffffff',
       backgroundColor: '#11141ae8',
       padding: { x: 12, y: 8 },
-      align: 'right',
+      align: 'left',
       fontStyle: '700',
       lineSpacing: 3,
       wordWrap: { width: 330 },
-    }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
+    }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
     const actionHint = settlement?.gameOver
@@ -2705,7 +2716,6 @@ export default class RaceScene extends Phaser.Scene {
     const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
-    infoWash.setAlpha(0);
 
     const finalTitleX = title.x;
     title.x = -title.width - 80;
@@ -2762,14 +2772,6 @@ export default class RaceScene extends Phaser.Scene {
       duration: 215,
       delay: 65,
       ease: 'Expo.Out',
-    });
-
-    this.tweens.add({
-      targets: infoWash,
-      alpha: 1,
-      duration: 150,
-      delay: 160,
-      ease: 'Linear',
     });
 
     this.tweens.add({
