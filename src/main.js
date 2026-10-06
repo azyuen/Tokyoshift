@@ -76,7 +76,7 @@ async function startTokyoShift() {
       loadScene('RACE', './scenes/RaceScene.js?v=20261006-r389'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261006-r388'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261006-r392'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261006-r393'),
       loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261006-r388'),
     ]);
 
