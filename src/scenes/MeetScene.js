@@ -1477,7 +1477,10 @@ export default class MeetScene extends Phaser.Scene {
     return true;
   }
 
-  showTunerTeamChallengePopup(regionId, { skipCallout = false } = {}) {
+  showTunerTeamChallengePopup(
+    regionId,
+    { skipCallout = false, forceCallout = false } = {}
+  ) {
     if (this.tunerChallengePopup?.active || !this.hasCar) return;
 
     const key = String(regionId || '').toUpperCase();
@@ -1561,6 +1564,7 @@ export default class MeetScene extends Phaser.Scene {
 
       const cutscene = playMangaCutscene(this, 'tunerTeamCallout', {
         historyId: 'tunerTeamCallout:' + key,
+        force: Boolean(forceCallout),
         characterOverrides: { NPC: npcId },
         variables: {
           REGION: key,
@@ -1927,7 +1931,7 @@ export default class MeetScene extends Phaser.Scene {
     });
     saveSessionState(this.registry);
 
-    this.showTunerTeamChallengePopup(regionId);
+    this.showTunerTeamChallengePopup(regionId, { forceCallout: true });
     this.flashDevControl(
       this.devForceTeamChallengeControl,
       'DEV // TEAM CHALLENGE READY',
