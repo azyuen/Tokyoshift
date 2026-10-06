@@ -2728,11 +2728,12 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : 'CONTINUE';
 
-    this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
+    const actionHintText = this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
       fontSize: '6px',
       color: '#9aa3ad',
     }).setOrigin(1, 0.5).setDepth(depth + 25).setScrollFactor(0);
+    if (isPinkSlip) actionHintText.setAlpha(0);
 
     let advanceArmed = false;
     let advanced = false;
@@ -2869,6 +2870,16 @@ export default class RaceScene extends Phaser.Scene {
       delay: pinkRevealDelay + 175,
       ease: 'Linear',
     });
+
+    if (isPinkSlip) {
+      this.tweens.add({
+        targets: actionHintText,
+        alpha: 1,
+        duration: 120,
+        delay: pinkRevealDelay + 230,
+        ease: 'Linear',
+      });
+    }
 
     if (!playerWon && playerPortraitImage) {
       this.tweens.add({
