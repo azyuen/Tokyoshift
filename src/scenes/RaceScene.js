@@ -2305,51 +2305,27 @@ export default class RaceScene extends Phaser.Scene {
       .setDepth(depth)
       .setScrollFactor(0);
 
-    // Typography-only race result. Cars have already cleared the locked finish
-    // camera, so the skyline/road become an uncluttered editorial canvas.
+    // Editorial result composition. The title/details form one left-aligned
+    // column while the enlarged, square-cropped character reactions own the right.
     const resultFont = '"Exo 2", sans-serif';
     const resultColor = playerWon ? '#a8f3e3' : '#ff9caf';
-    const slashColor = 0xd51f32;
 
     const titleTargetX = 92;
     const title = this.add.text(
       titleTargetX,
-      286,
+      214,
       playerWon ? 'VICTORY' : 'LOSS',
       {
         fontFamily: resultFont,
-        fontSize: playerWon ? '112px' : '118px',
+        fontSize: '94px',
         color: resultColor,
         fontStyle: '900 italic',
-        // Same-colour stroke fattens Exo 2 without reintroducing a black outline.
+        // Same-colour stroke makes both words equally heavy without an outline.
         stroke: resultColor,
-        strokeThickness: 3,
+        strokeThickness: 4,
         shadow: { offsetX: 4, offsetY: 5, color: '#071019', blur: 0, fill: true },
       }
     ).setDepth(depth + 8).setScrollFactor(0);
-
-    // Three real Phaser parallelograms, sized from the rendered title height.
-    // They phase in after the word rather than behaving like a tiny text glyph.
-    const slashHeight = Math.max(76, title.height - 14);
-    const slashWidth = 24;
-    const slashGap = 13;
-    const slashLean = 20;
-    const slashTargetX = titleTargetX + title.width + 28;
-    const slashTargetY = title.y + 8;
-    const slashMark = this.add.graphics()
-      .setDepth(depth + 8)
-      .setScrollFactor(0)
-      .setPosition(slashTargetX, slashTargetY);
-    slashMark.fillStyle(slashColor, 1);
-    for (let i = 0; i < 3; i += 1) {
-      const x = i * (slashWidth + slashGap);
-      slashMark.fillPoints([
-        new Phaser.Geom.Point(x + slashLean, 0),
-        new Phaser.Geom.Point(x + slashLean + slashWidth, 0),
-        new Phaser.Geom.Point(x + slashWidth, slashHeight),
-        new Phaser.Geom.Point(x, slashHeight),
-      ], true);
-    }
 
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
     const contextType = isPinkSlip
@@ -2452,6 +2428,12 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
+    // Very light wash only behind the information stack. It protects legibility
+    // on bright daytime roads without turning the result back into a boxed UI.
+    const infoWash = this.add.rectangle(413, 474, 704, 302, 0xd7dde0, 0.11)
+      .setDepth(depth + 2)
+      .setScrollFactor(0);
+
     const captionStyle = {
       fontFamily: dataFont,
       fontSize: '10px',
@@ -2462,40 +2444,41 @@ export default class RaceScene extends Phaser.Scene {
     };
     const captionLabelStyle = {
       fontFamily: resultFont,
-      fontSize: '10px',
-      color: '#d5dde1',
+      fontSize: '11px',
+      color: '#e1e5e7',
       fontStyle: '900 italic',
       stroke: '#071019',
       strokeThickness: 2,
     };
 
-    const labelX = 920;
-    const valueX = 995;
+    // Everything below the headline shares this left edge.
+    const labelX = 96;
+    const valueX = 202;
 
-    const raceLabel = this.add.text(labelX, 497, 'RACE', captionLabelStyle)
+    const raceLabel = this.add.text(labelX, 350, 'RACE', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
-    const contextText = this.add.text(valueX, 497, contextLine, {
+    const contextText = this.add.text(valueX, 354, contextLine, {
       ...captionStyle,
-      wordWrap: { width: 510 },
+      wordWrap: { width: 560 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const carLabel = this.add.text(labelX, 529, 'RIVAL', captionLabelStyle)
+    const carLabel = this.add.text(labelX, 390, 'RIVAL', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
-    const rivalCarText = this.add.text(valueX, 529, rivalCarLine, {
+    const rivalCarText = this.add.text(valueX, 394, rivalCarLine, {
       ...captionStyle,
-      wordWrap: { width: 510 },
+      wordWrap: { width: 560 },
     }).setDepth(depth + 8).setScrollFactor(0);
 
-    const awardsLabel = this.add.text(labelX, 561, 'AWARDS', captionLabelStyle)
+    const awardsLabel = this.add.text(labelX, 430, 'AWARDS', captionLabelStyle)
       .setDepth(depth + 8).setScrollFactor(0);
     const awardsText = this.add.text(
       valueX,
-      561,
+      434,
       awardParts.length ? awardParts.join(' // ') : 'NONE',
       {
         ...captionStyle,
         color: playerWon ? '#d9f5ee' : '#dec9ce',
-        wordWrap: { width: 510 },
+        wordWrap: { width: 560 },
       }
     ).setDepth(depth + 8).setScrollFactor(0);
 
@@ -2505,66 +2488,51 @@ export default class RaceScene extends Phaser.Scene {
     ].filter(Boolean).join(' ') || playerCharacter.name;
     const rivalDisplayName = rivalCharacter.name;
 
-    // Portrait nameplates below each reaction pane carry identity; keep the
-    // result oblong free of duplicate names.
-
-    // Two translucent reaction panes float over the frozen skyline. Both
-    // characters stay fully clear; hierarchy comes from size, not dimming.
-    const playerFrame = this.add.rectangle(1310, 174, 490, 380, 0xf1eadb, 0.74)
+    // Square manga windows: keep the current impact, but move them down so no
+    // part of either frame falls outside the 720p game canvas.
+    const playerFrame = this.add.rectangle(1325, 246, 420, 420, 0xf1eadb, 0.74)
       .setStrokeStyle(5, ink, 0.92)
       .setDepth(depth + 6)
-      .setScrollFactor(0)
-      .setAngle(1);
+      .setScrollFactor(0);
 
     const playerProfile = createCharacterProfile(this, {
       characterId: this.playerCharacterId,
       pose: playerWon ? 'win' : 'loss',
-      x: 1310,
-      y: 174,
-      frameWidth: 490,
-      frameHeight: 380,
+      x: 1325,
+      y: 246,
+      frameWidth: 420,
+      frameHeight: 420,
       side: 'right',
       depth: depth + 7,
       flipInward: true,
       profileOverride: playerWon
-        ? { scale: 1.00, offsetX: 0, offsetY: 5 }
-        : { scale: 1.04, offsetX: 0, offsetY: 7 },
+        ? { scale: 1.00, offsetX: 0, offsetY: 18 }
+        : { scale: 1.04, offsetX: 0, offsetY: 20 },
     });
 
-    const rivalFrame = this.add.graphics().setDepth(depth + 6).setScrollFactor(0);
-    rivalFrame.fillStyle(0xf1eadb, 0.70);
-    rivalFrame.fillPoints([
-      new Phaser.Geom.Point(850, 62),
-      new Phaser.Geom.Point(1128, 48),
-      new Phaser.Geom.Point(1172, 329),
-      new Phaser.Geom.Point(825, 347),
-    ], true);
-    rivalFrame.lineStyle(4, ink, 0.90);
-    rivalFrame.strokePoints([
-      new Phaser.Geom.Point(850, 62),
-      new Phaser.Geom.Point(1128, 48),
-      new Phaser.Geom.Point(1172, 329),
-      new Phaser.Geom.Point(825, 347),
-    ], true);
+    const rivalFrame = this.add.rectangle(1005, 248, 320, 320, 0xf1eadb, 0.72)
+      .setStrokeStyle(4, ink, 0.90)
+      .setDepth(depth + 6)
+      .setScrollFactor(0);
 
     const rivalProfile = createCharacterProfile(this, {
       characterId: this.opponentCharacterId,
       pose: playerWon ? 'loss' : 'win',
-      x: 1002,
-      y: 190,
-      frameWidth: 330,
-      frameHeight: 292,
+      x: 1005,
+      y: 248,
+      frameWidth: 320,
+      frameHeight: 320,
       side: 'left',
       depth: depth + 7,
       flipInward: true,
       dimmed: false,
-      profileOverride: { scale: 1.02, offsetX: 0, offsetY: 6 },
+      profileOverride: { scale: 1.02, offsetX: 0, offsetY: 18 },
     });
 
     const playerPortraitImage = playerProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
-    const playerNameText = this.add.text(1310, 381, String(playerDisplayName || 'YOU').toUpperCase(), {
+    const playerNameText = this.add.text(1325, 469, String(playerDisplayName || 'YOU').toUpperCase(), {
       fontFamily: titleFont,
       fontSize: '7px',
       color: '#f5f0e7',
@@ -2572,69 +2540,72 @@ export default class RaceScene extends Phaser.Scene {
       padding: { x: 9, y: 5 },
     }).setOrigin(0.5).setDepth(depth + 10).setScrollFactor(0);
 
-    const rivalNameText = this.add.text(1160, 338, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
+    const rivalNameText = this.add.text(1160, 414, String(rivalDisplayName || 'RIVAL').toUpperCase(), {
       fontFamily: titleFont,
-      fontSize: '6px',
+      fontSize: '7px',
       color: '#f5f0e7',
       backgroundColor: '#11141add',
-      padding: { x: 8, y: 4 },
+      padding: { x: 9, y: 5 },
       align: 'right',
     }).setOrigin(1, 0.5).setDepth(depth + 10).setScrollFactor(0);
 
     const rivalQuote = playerWon
       ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
       : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
-    const rivalQuoteText = this.add.text(1160, 369, '“' + rivalQuote + '”', {
+    const rivalQuoteText = this.add.text(1160, 447, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
-      fontSize: '8px',
-      color: '#f5f0e7',
-      backgroundColor: '#11141add',
-      padding: { x: 8, y: 5 },
+      fontSize: '15px',
+      color: '#ffffff',
+      backgroundColor: '#11141ae8',
+      padding: { x: 12, y: 8 },
       align: 'right',
-      wordWrap: { width: 300 },
+      fontStyle: '700',
+      lineSpacing: 3,
+      wordWrap: { width: 310 },
     }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
-    // Minimal race telemetry tucked into the bottom black banner. Cash and
-    // bonus rewards now live in AWARDS on the right, so this is timing only.
+    // Key timing only, directly below the editorial details and sharing the
+    // same left edge. The values remain compact enough to live in the dark road.
     const compactRows = [
       ['TIME', this.falseStart ? 'DQ' : formatTime(this.times.finish), formatTime(this.opponentTimes.finish)],
       ['KM/H', this.falseStart ? '—' : formatSpeed(this.times.trapKmh), formatSpeed(this.opponentTimes.trapKmh)],
     ];
 
-    const tableX = 86;
-    const youX = 286;
-    const rivalX = 420;
-    this.add.text(youX, 650, 'YOU', {
+    const tableLabelX = labelX;
+    const youX = 298;
+    const rivalX = 430;
+
+    this.add.text(youX, 507, 'YOU', {
       fontFamily: titleFont,
       fontSize: '5px',
       color: '#f8f8f5',
     }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
-    this.add.text(rivalX, 650, 'RIVAL', {
+    this.add.text(rivalX, 507, 'RIVAL', {
       fontFamily: titleFont,
       fontSize: '5px',
       color: '#aeb6c1',
     }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
     compactRows.forEach((row, index) => {
-      const y = 670 + index * 22;
-      this.add.text(tableX, y, row[0], {
+      const y = 529 + index * 25;
+      this.add.text(tableLabelX, y, row[0], {
         fontFamily: dataFont,
-        fontSize: '6px',
-        color: '#7f8994',
+        fontSize: '7px',
+        color: '#9ca5ae',
         fontStyle: '700',
       }).setDepth(depth + 22).setScrollFactor(0);
 
       this.add.text(youX, y, row[1], {
         fontFamily: dataFont,
-        fontSize: '8px',
+        fontSize: '9px',
         color: '#ffffff',
         fontStyle: '700',
       }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
 
       this.add.text(rivalX, y, row[2], {
         fontFamily: dataFont,
-        fontSize: '8px',
+        fontSize: '9px',
         color: '#c4cad4',
         fontStyle: '700',
       }).setOrigin(0.5, 0).setDepth(depth + 22).setScrollFactor(0);
@@ -2651,23 +2622,11 @@ export default class RaceScene extends Phaser.Scene {
             ? 'NEXT ROUND'
             : 'CONTINUE';
 
-    const nextButton = this.add.rectangle(1332, 671, 250, 44, accent, 0.94)
-      .setStrokeStyle(4, 0xf4efe5, 0.9)
-      .setDepth(depth + 24)
-      .setScrollFactor(0);
-
-    this.add.text(1332, 669, 'NEXT  >', {
-      fontFamily: titleFont,
-      fontSize: '13px',
-      color: playerWon ? '#13161b' : '#f7f8ff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
-
-    this.add.text(1040, 681, actionHint + ' // TAP ANYWHERE', {
+    this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
       fontSize: '6px',
-      color: '#7f8793',
-    }).setOrigin(0.5).setDepth(depth + 25).setScrollFactor(0);
+      color: '#9aa3ad',
+    }).setOrigin(1, 0.5).setDepth(depth + 25).setScrollFactor(0);
 
     let advanceArmed = false;
     let advanced = false;
@@ -2700,17 +2659,16 @@ export default class RaceScene extends Phaser.Scene {
     nextKey.once('down', advance);
 
     // Cars are already gone. Character reactions pop in first, then the
-    // oversized motorsport result word flies in from the left.
+    // unified VICTORY / LOSS word flies in from the left.
     const detailObjects = [raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText];
     const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
+    infoWash.setAlpha(0);
 
     const finalTitleX = title.x;
     title.x = -title.width - 80;
     title.setAlpha(0);
-    slashMark.setAlpha(0);
-    slashMark.x = slashTargetX + 34;
 
     if (playerPortraitImage) {
       const targetX = playerPortraitImage.x;
@@ -2751,7 +2709,7 @@ export default class RaceScene extends Phaser.Scene {
     this.tweens.add({
       targets: portraitCopy,
       alpha: 1,
-      duration: 120,
+      duration: 135,
       delay: 95,
       ease: 'Linear',
     });
@@ -2766,12 +2724,11 @@ export default class RaceScene extends Phaser.Scene {
     });
 
     this.tweens.add({
-      targets: slashMark,
-      x: slashTargetX,
+      targets: infoWash,
       alpha: 1,
-      duration: 115,
-      delay: 205,
-      ease: 'Quad.Out',
+      duration: 150,
+      delay: 160,
+      ease: 'Linear',
     });
 
     this.tweens.add({
@@ -2796,7 +2753,6 @@ export default class RaceScene extends Phaser.Scene {
 
     this.time.delayedCall(330, () => {
       advanceArmed = true;
-      nextButton.setFillStyle(accent, 1);
     });
 
     // Preserve the existing special-result follow-ups. They run after the
