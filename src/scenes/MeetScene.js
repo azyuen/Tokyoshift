@@ -1477,10 +1477,7 @@ export default class MeetScene extends Phaser.Scene {
     return true;
   }
 
-  showTunerTeamChallengePopup(
-    regionId,
-    { skipCallout = false, portraitsReady = false } = {}
-  ) {
+  showTunerTeamChallengePopup(regionId, { skipCallout = false } = {}) {
     if (this.tunerChallengePopup?.active || !this.hasCar) return;
 
     const key = String(regionId || '').toUpperCase();
@@ -1488,7 +1485,6 @@ export default class MeetScene extends Phaser.Scene {
     if (!shop) return;
 
     let state = getTunerTeamChallengeState(this.registry, key);
-    const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
     const generatedRounds = buildTunerTeamChallengeRounds(key, playerCharacterId);
     const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
@@ -1510,245 +1506,9 @@ export default class MeetScene extends Phaser.Scene {
     });
     saveSessionState(this.registry);
 
-    // First invitation uses the reusable manga overlay. If the player skips it,
-    // the invitation remains active and the legacy challenge card can be used
-    // on the next visit to preserve the existing LATER/RESUME progression path.
-    if (!perfectRematch && state.stage <= 0 && !state.activeSession && !skipCallout) {
-      const npcId = characters[shop.mechanicId]
-        ? shop.mechanicId
-        : (rounds[0]?.characterId || null);
-      const npcName = characters[npcId]?.name || (key + ' CREW');
+    const perfectRematch = Boolean(state.championEarned && !state.perfectEarned);
 
-      const cutscene = playMangaCutscene(this, 'tunerTeamCallout', {
-        historyId: 'tunerTeamCallout:' + key,
-        characterOverrides: {
-          NPC: npcId,
-        },
-        variables: {
-          REGION: key,
-          SHOP: shop.label,
-          NPC_NAME: npcName.toUpperCase(),
-          NPC_SUBTITLE: (shop.label + ' // CREW CALL-OUT').toUpperCase(),
-        },
-        onComplete: ({ reason }) => {
-          if (reason === 'secondary') {
-            const visits = Phaser.Math.Between(
-              TUNER_TEAM_REOFFER_MIN_VISITS,
-              TUNER_TEAM_REOFFER_MAX_VISITS
-            );
-            const nextState = getTunerTeamChallengeState(this.registry, key);
-            this.setTunerChallengeState(key, {
-              ...nextState,
-              invited: false,
-              offeredOnce: true,
-              activeSession: false,
-              misses: 0,
-              reofferVisitsRemaining: visits,
-              rounds,
-            });
-            saveSessionState(this.registry);
-            return;
-          }
-          if (reason !== 'action' && reason !== 'skip') return;
-          this.time.delayedCall(80, () =>
-            this.showTunerTeamChallengePopup(key, { skipCallout: true })
-          );
-        },
-      });
-
-      if (cutscene.played) return;
-    }
-
-    // The legacy pink challenge panel used to render immediately and substitute
-    // racer numbers whenever a profile texture was still lazy-loading. Hold the
-    // panel for one loader pass instead so all seven crew portraits arrive
-    // together and the popup never flashes the numeric fallback.
-    if (!portraitsReady) {
-      if (this.tunerChallengePortraitLoading) return;
-
-      let queuedPortraits = 0;
-
-      rounds.forEach(round => {
-        const character = characters[round.characterId];
-        const key = character?.visual?.spriteKey;
-        const path = character?.visual?.path;
-        if (!key || !path || this.textures.exists(key)) return;
-        this.load.image(key, path + '?v=20260929-r261');
-        queuedPortraits += 1;
-      });
-
-      if (queuedPortraits > 0) {
-        this.tunerChallengePortraitLoading = true;
-
-        this.load.once('complete', () => {
-          this.tunerChallengePortraitLoading = false;
-          this.showTunerTeamChallengePopup(key, {
-            skipCallout: true,
-            portraitsReady: true,
-          });
-        });
-
-        if (!this.load.isLoading()) this.load.start();
-        return;
-      }
-    }
-
-    const depth = 160;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.76)
-      .setDepth(depth).setInteractive());
-
-    const panel = add(this.add.rectangle(780, 420, 950, 590, 0x07111d, 0.997)
-      .setStrokeStyle(3, 0xff5f93, 0.96).setDepth(depth + 1));
-
-    add(this.add.text(
-      780,
-      164,
-      perfectRematch
-        ? key + ' // PERFECT SWEEP'
-        : key + ' // TEAM CHALLENGE',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '16px',
-        color: '#fff3f7',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      780,
-      207,
-      perfectRematch
-        ? 'REGIONAL CHAMPION // GO 7–0 FOR THE GOLD STAR'
-        : 'BEAT THE WHOLE CREW // 7 RACERS',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: perfectRematch ? '#ffe08a' : '#ff94b8',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const displayStage = perfectRematch && !state.perfectAttempt ? 0 : state.stage;
-    const remaining = Math.max(0, TUNER_TEAM_CHALLENGE_STAGES - displayStage);
-    add(this.add.text(
-      780,
-      246,
-      displayStage > 0
-        ? displayStage + ' DEFEATED // ' + remaining + ' REMAIN'
-        : perfectRematch
-          ? 'START A FRESH SEVEN-RACE STREAK.'
-          : 'THEY CAME LOOKING FOR YOU.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#aac0cd',
-        fontStyle: '600',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const portraitY = 350;
-    const startX = 438;
-    const gap = 114;
-
-    rounds.forEach((round, index) => {
-      const x = startX + index * gap;
-      const defeated = index < displayStage;
-      const current = index === displayStage;
-      const character = characters[round.characterId];
-      const visual = character?.visual || {};
-      const textureKey = visual.spriteKey;
-
-      add(this.add.rectangle(
-        x, portraitY, 86, 102,
-        defeated ? 0x0b0d10 : 0x081522,
-        1
-      ).setStrokeStyle(
-        current ? 3 : 1,
-        current ? 0xff6f9c : defeated ? 0x4e565c : 0x315b73,
-        1
-      ).setDepth(depth + 2));
-
-      if (textureKey && this.textures.exists(textureKey)) {
-        const profile = createCharacterProfile(this, {
-          characterId: round.characterId,
-          pose: 'idle',
-          x,
-          y: portraitY - 3,
-          frameWidth: 78,
-          frameHeight: 90,
-          side: 'center',
-          depth: depth + 3,
-          dimmed: defeated,
-        });
-        if (profile) objects.push(profile.image, profile.maskShape);
-      } else {
-        add(this.add.text(x, portraitY - 6, String(index + 1), {
-          fontFamily: PIXEL_FONT, fontSize: '14px',
-          color: defeated ? '#5d6469' : '#d8e8ef'
-        }).setOrigin(0.5).setDepth(depth + 3));
-      }
-
-      add(this.add.text(x, portraitY + 67, defeated ? 'DEFEATED' : ('#' + (index + 1)), {
-        fontFamily: PIXEL_FONT,
-        fontSize: defeated ? '5px' : '6px',
-        color: defeated ? '#7d858a' : current ? '#ff91b6' : '#8095a2',
-      }).setOrigin(0.5).setDepth(depth + 3));
-    });
-
-    add(this.add.text(
-      780,
-      458,
-      perfectRematch
-        ? (this.legacyChampionRewardNotice?.regionId === key
-            ? 'Champion reward credited: +¥250,000 + ' +
-              (shop.donorLabel || 'DONOR CAR') + ' coupon.\n'
-            : 'Your Champion badge is permanent. ') +
-          'This rematch is a true streak: lose once and it resets.\n' +
-          'Go 7–0 for +¥250,000, the ★ Perfect badge and the second coupon.'
-        : 'Progress is permanent. Lose a race and the challenge ends for tonight,\n' +
-          'but next time you resume from the racer who beat you.\n' +
-          'Clear all seven for ¥250,000 + Champion badge + ' +
-          (shop.donorLabel || 'DONOR CAR') +
-          ' coupon. Go 7–0 for another ¥250,000 + ★ + second coupon.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#a6b9c4',
-        fontStyle: '600',
-        align: 'center',
-        lineSpacing: 5,
-        wordWrap: { width: 820, useAdvancedWrap: true },
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const accept = add(this.add.rectangle(660, 620, 300, 54, 0x321522, 1)
-      .setStrokeStyle(2, 0xff5f93, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(
-      660,
-      620,
-      perfectRematch
-        ? (state.perfectAttempt && displayStage > 0 ? 'RESUME PERFECT SWEEP' : 'START PERFECT SWEEP')
-        : (state.stage > 0 ? 'RESUME CHALLENGE' : 'ACCEPT CHALLENGE'),
-      {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff4f8'
-      }
-    ).setOrigin(0.5).setDepth(depth + 3));
-
-    const later = add(this.add.rectangle(930, 620, 190, 54, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(930, 620, 'NOT YET', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
-      this.tunerChallengePopup = null;
-    };
-
-    later.on('pointerdown', () => {
+    const postpone = () => {
       const visits = Phaser.Math.Between(
         TUNER_TEAM_REOFFER_MIN_VISITS,
         TUNER_TEAM_REOFFER_MAX_VISITS
@@ -1764,11 +1524,9 @@ export default class MeetScene extends Phaser.Scene {
         rounds,
       });
       saveSessionState(this.registry);
-      dismiss();
-    });
-    blocker.on('pointerdown', () => {});
-    accept.on('pointerdown', () => {
-      dismiss();
+    };
+
+    const acceptAndStart = () => {
       const nextState = getTunerTeamChallengeState(this.registry, key);
       const startingPerfectRematch = Boolean(
         nextState.championEarned &&
@@ -1785,13 +1543,124 @@ export default class MeetScene extends Phaser.Scene {
         paused: false,
         pausedAt: 0,
         stage: startingPerfectRematch ? 0 : nextState.stage,
-        perfectAttempt: perfectRematch ? true : nextState.perfectAttempt,
+        perfectAttempt: startingPerfectRematch ? true : nextState.perfectAttempt,
         perfectEligible: startingPerfectRematch ? true : nextState.perfectEligible,
         playerCarId: this.registry.get('selectedCarId') || '',
         rounds,
       });
       saveSessionState(this.registry);
       this.startTunerTeamChallengeRound(key);
+    };
+
+    // The first invitation now explains the entire event. Accepting it goes
+    // directly to the race-opening manga tableau; there is no intermediate
+    // seven-portrait challenge card anymore.
+    if (!perfectRematch && state.stage <= 0 && !state.activeSession && !skipCallout) {
+      const npcId = rounds[0]?.characterId || shop.mechanicId || null;
+      const npcName = characters[npcId]?.name || (key + ' CREW');
+
+      const cutscene = playMangaCutscene(this, 'tunerTeamCallout', {
+        historyId: 'tunerTeamCallout:' + key,
+        characterOverrides: { NPC: npcId },
+        variables: {
+          REGION: key,
+          SHOP: shop.label,
+          NPC_NAME: npcName.toUpperCase(),
+          NPC_SUBTITLE: (key + ' // REGIONAL CREW').toUpperCase(),
+        },
+        onComplete: ({ reason }) => {
+          if (reason === 'secondary') {
+            postpone();
+            return;
+          }
+          if (reason === 'action' || reason === 'skip') {
+            this.time.delayedCall(80, acceptAndStart);
+          }
+        },
+      });
+
+      if (cutscene.played) return;
+    }
+
+    // Returning/resuming challenges use a compact confirmation only. The old
+    // seven-box popup has been retired; the crew reveal belongs to RaceScene.
+    const depth = 160;
+    const objects = [];
+    const add = obj => {
+      objects.push(obj);
+      return obj;
+    };
+
+    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
+      .setDepth(depth).setInteractive());
+
+    const panel = add(this.add.rectangle(780, 420, 700, 300, 0x07111d, 0.995)
+      .setStrokeStyle(3, perfectRematch ? 0xffd36a : 0xa8f3e3, 0.96)
+      .setDepth(depth + 1));
+
+    const displayStage = perfectRematch && !state.perfectAttempt ? 0 : state.stage;
+    const title = perfectRematch
+      ? key + ' // PERFECT STREAK'
+      : key + ' // REGIONAL CHALLENGE';
+    const body = perfectRematch
+      ? 'Seven straight wins. One car. One loss resets the streak.'
+      : displayStage > 0
+        ? displayStage + ' OF 7 DEFEATED // NEXT: RACER ' + (displayStage + 1)
+        : 'SEVEN RACERS // BEAT THE REGIONAL CREW';
+
+    add(this.add.text(780, 335, title, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '13px',
+      color: '#f4fbff',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 390, body, {
+      fontFamily: BODY_FONT,
+      fontSize: '14px',
+      color: '#c5d3da',
+      fontStyle: '700',
+      align: 'center',
+      wordWrap: { width: 590 },
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    const accept = add(this.add.rectangle(665, 485, 270, 52, 0x18342c, 1)
+      .setStrokeStyle(2, 0xa8f3e3, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(
+      665,
+      485,
+      perfectRematch
+        ? (displayStage > 0 ? 'RESUME STREAK' : 'START STREAK')
+        : (displayStage > 0 ? 'RESUME CHALLENGE' : 'ACCEPT CHALLENGE'),
+      {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: '#effffb',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    const later = add(this.add.rectangle(930, 485, 190, 52, 0x171c25, 1)
+      .setStrokeStyle(1, 0x516a7b, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(930, 485, 'NOT YET', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#c7d5de',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const dismiss = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.tunerChallengePopup = null;
+    };
+
+    blocker.on('pointerdown', () => {});
+    later.on('pointerdown', () => {
+      dismiss();
+      postpone();
+    });
+    accept.on('pointerdown', () => {
+      dismiss();
+      acceptAndStart();
     });
 
     this.tunerChallengePopup = panel;
