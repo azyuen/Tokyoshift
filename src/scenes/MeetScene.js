@@ -52,7 +52,6 @@ import {
   getEncounterProfile,
   getEncounterSkillLabel,
   getEncounterAi,
-  boostAiForPinkSlip,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
@@ -2662,11 +2661,8 @@ export default class MeetScene extends Phaser.Scene {
         Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS)
       ),
       encounterRating,
-      // Easy keeps the full pink-slip system, but does not add the special
-      // pink-race AI skill bump. Standard/Hard retain the existing pressure.
-      encounterAi: String(this.registry.get('playerDifficulty') || 'STANDARD').toUpperCase() === 'EASY'
-        ? (sourceOffer.encounterAi || getEncounterAi(encounterRating))
-        : boostAiForPinkSlip(sourceOffer.encounterAi || getEncounterAi(encounterRating)),
+      // Driver pressure is applied once, when RaceScene constructs the AI.
+      encounterAi: sourceOffer.encounterAi || getEncounterAi(encounterRating),
       opponentBuildRating: sourceOffer.opponentBuildRating,
       opponentBuildArchetype: sourceOffer.opponentBuildArchetype || null,
       opponentBuildState: sourceOffer.opponentBuildState || null,
@@ -5114,9 +5110,7 @@ export default class MeetScene extends Phaser.Scene {
           carId: offer.carId,
           paintColor: offer.paintColor,
           encounterRating,
-          encounterAi: easy
-            ? (offer.encounterAi || getEncounterAi(encounterRating))
-            : boostAiForPinkSlip(offer.encounterAi || getEncounterAi(encounterRating)),
+          encounterAi: offer.encounterAi || getEncounterAi(encounterRating),
           opponentBuildRating: offer.opponentBuildRating,
           opponentBuildArchetype: offer.opponentBuildArchetype || null,
           opponentBuildState: offer.opponentBuildState || null,
@@ -5294,3 +5288,4 @@ export default class MeetScene extends Phaser.Scene {
     ];
   }
 }
+

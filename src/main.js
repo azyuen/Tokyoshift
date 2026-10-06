@@ -72,8 +72,8 @@ async function startTokyoShift() {
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261006-r388'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261006-r388'),
       loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261006-r390'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261006-r398'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261006-r398'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20261007-r399'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20261007-r399'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261006-r388'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
       loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261006-r393'),
@@ -130,3 +130,4 @@ async function startTokyoShift() {
 }
 
 startTokyoShift();
+

@@ -91,7 +91,11 @@ export function applyDifficultyToRivalAi(
   const cfg = getPlayerDifficultyConfig(id);
   const multiplier = Number(cfg.aiSkillMultiplier || 1)
     * (rollingStart ? Number(cfg.rollingAiMultiplier || 1) : 1);
-  const clamp = value => Math.max(0.30, Math.min(0.99, Number(value || 0) * multiplier));
+  // Hard tightens execution without flattening distinct characters at 0.99.
+  // Advanced techniques are selected by DragRacingAI's explicit tier/context.
+  const clamp = value => id === 'HARD'
+    ? Math.max(0.30, Math.min(0.99, Number(value) + (1 - Number(value)) * 0.22))
+    : Math.max(0.30, Math.min(0.99, Number(value || 0) * multiplier));
 
   return {
     ...ai,
@@ -147,3 +151,4 @@ export function applyDifficultyToMeetBands(
     })
   );
 }
+

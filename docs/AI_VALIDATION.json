@@ -1,0 +1,245 @@
+{
+  "runs": 1351,
+  "rows": [
+    {
+      "car": "evo3",
+      "build": "stock",
+      "start": "standing quarter",
+      "seconds": [
+        17.697,
+        17.325,
+        16.686,
+        13.95,
+        13.851
+      ]
+    },
+    {
+      "car": "evo3",
+      "build": "stock",
+      "start": "rolling half",
+      "seconds": [
+        19.793,
+        19.539,
+        19.1,
+        18.982,
+        18.907
+      ]
+    },
+    {
+      "car": "evo3",
+      "build": "stage3+NOS",
+      "start": "standing quarter",
+      "seconds": [
+        13.507,
+        13.1,
+        12.45,
+        11.099,
+        10.972
+      ]
+    },
+    {
+      "car": "evo3",
+      "build": "stage3+NOS",
+      "start": "rolling half",
+      "seconds": [
+        16.404,
+        16.079,
+        15.51,
+        15.315,
+        15.21
+      ]
+    },
+    {
+      "car": "r32",
+      "build": "stock",
+      "start": "standing quarter",
+      "seconds": [
+        19.081,
+        18.768,
+        18.283,
+        14.743,
+        14.663
+      ]
+    },
+    {
+      "car": "r32",
+      "build": "stock",
+      "start": "rolling half",
+      "seconds": [
+        19.879,
+        19.711,
+        19.422,
+        19.157,
+        19.083
+      ]
+    },
+    {
+      "car": "r32",
+      "build": "stage3+NOS",
+      "start": "standing quarter",
+      "seconds": [
+        14.486,
+        14.142,
+        13.507,
+        11.554,
+        11.446
+      ]
+    },
+    {
+      "car": "r32",
+      "build": "stage3+NOS",
+      "start": "rolling half",
+      "seconds": [
+        16.243,
+        15.99,
+        15.547,
+        15.361,
+        15.283
+      ]
+    },
+    {
+      "car": "jza80",
+      "build": "stock",
+      "start": "standing quarter",
+      "seconds": [
+        18.603,
+        18.276,
+        17.722,
+        14.269,
+        14.165
+      ]
+    },
+    {
+      "car": "jza80",
+      "build": "stock",
+      "start": "rolling half",
+      "seconds": [
+        20.069,
+        19.839,
+        19.449,
+        19.353,
+        19.283
+      ]
+    },
+    {
+      "car": "jza80",
+      "build": "stage3+NOS",
+      "start": "standing quarter",
+      "seconds": [
+        14.318,
+        13.951,
+        13.293,
+        11.669,
+        11.563
+      ]
+    },
+    {
+      "car": "jza80",
+      "build": "stage3+NOS",
+      "start": "rolling half",
+      "seconds": [
+        16.76,
+        16.446,
+        15.888,
+        15.683,
+        15.579
+      ]
+    },
+    {
+      "car": "ek9",
+      "build": "stock",
+      "start": "standing quarter",
+      "seconds": [
+        18.474,
+        18.199,
+        17.715,
+        15.207,
+        15.172
+      ]
+    },
+    {
+      "car": "ek9",
+      "build": "stock",
+      "start": "rolling half",
+      "seconds": [
+        21.249,
+        21.065,
+        20.735,
+        20.426,
+        20.372
+      ]
+    },
+    {
+      "car": "ek9",
+      "build": "stage3+NOS",
+      "start": "standing quarter",
+      "seconds": [
+        14.092,
+        13.247,
+        12.718,
+        11.488,
+        11.4
+      ]
+    },
+    {
+      "car": "ek9",
+      "build": "stage3+NOS",
+      "start": "rolling half",
+      "seconds": [
+        16.363,
+        16.093,
+        15.614,
+        15.144,
+        15.108
+      ]
+    },
+    {
+      "car": "s2000",
+      "build": "stock",
+      "start": "standing quarter",
+      "seconds": [
+        17.946,
+        17.664,
+        17.199,
+        14.529,
+        14.429
+      ]
+    },
+    {
+      "car": "s2000",
+      "build": "stock",
+      "start": "rolling half",
+      "seconds": [
+        19.742,
+        19.51,
+        19.126,
+        19.046,
+        18.969
+      ]
+    },
+    {
+      "car": "s2000",
+      "build": "stage3+NOS",
+      "start": "standing quarter",
+      "seconds": [
+        13.922,
+        13.479,
+        12.943,
+        11.319,
+        11.247
+      ]
+    },
+    {
+      "car": "s2000",
+      "build": "stage3+NOS",
+      "start": "rolling half",
+      "seconds": [
+        15.775,
+        15.513,
+        15.097,
+        14.508,
+        14.433
+      ]
+    }
+  ]
+}

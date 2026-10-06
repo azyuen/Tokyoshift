@@ -1,11 +1,11 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20261004-r325';
 import TouchControls from '../input/TouchControls.js?v=20260930-r299';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20260923-r162';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20261007-r399';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
-} from '../data/playerDifficulty.js?v=20260929-r271';
+} from '../data/playerDifficulty.js?v=20261007-r399';
 import RaceHUD from '../ui/RaceHUD.js?v=20261004-r321';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
@@ -225,6 +225,7 @@ export default class RaceScene extends Phaser.Scene {
       5
     );
     this.opponentEncounterAi = this.registry.get('selectedOpponentEncounterAi')
+      || characters[this.opponentCharacterId]?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
     this.isTutorial = this.raceMode === 'TUTORIAL';
@@ -373,7 +374,8 @@ export default class RaceScene extends Phaser.Scene {
     const baseRivalAI = this.opponentEncounterAi
       || rivalCharacter?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
-    let rivalAI = this.raceDeal === 'PINK_SLIP'
+    // One deliberate pink-slip driver bump; Easy remains exempt.
+    let rivalAI = this.raceDeal === 'PINK_SLIP' && this.playerDifficulty !== 'EASY'
       ? boostAiForPinkSlip(baseRivalAI)
       : { ...baseRivalAI };
 
@@ -389,7 +391,13 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    this.ai = new DragRacingAI(this.opponent, rivalAI, { rollingStart: this.isRollingStart });
+    this.ai = new DragRacingAI(this.opponent, rivalAI, {
+      rollingStart: this.isRollingStart, rating: this.opponentEncounterRating,
+      playerDifficulty: this.playerDifficulty, tutorial: this.isTutorial,
+      raceDistanceM: this.raceDistanceM,
+    });
+    // Developer inspection: scene.aiDiagnostics. No normal HUD output.
+    this.aiDiagnostics = this.ai.diagnostics;
 
     this.controls = new TouchControls(this, { nosEnabled: this.playerCapabilities.hasNitrous });
     this.hud = new RaceHUD(this, {
@@ -928,7 +936,8 @@ export default class RaceScene extends Phaser.Scene {
     vehicle.tyres.wheelRPM = wheelRPM;
     vehicle.tyres.wheelspin = false;
     vehicle.tyres.slipRatio = 0;
-    this.setRollingGear(vehicle, this.chooseRollingStartGear(vehicle));
+    const aiGear = vehicle === this.opponent ? this.ai.chooseRollingStartGear(this.rollingSpeedMps) : null;
+    this.setRollingGear(vehicle, aiGear ?? this.chooseRollingStartGear(vehicle));
     vehicle.clutch.pedal = 0;
   }
 
@@ -1814,6 +1823,8 @@ export default class RaceScene extends Phaser.Scene {
       this.opponentFinishClock = this.raceClock;
       this.firstFinishClock ??= this.raceClock;
     }
+
+    this.aiDiagnostics.raceTimes = { ...this.opponentTimes };
 
     if (!this.finished) {
       const bothFinished = this.playerFinishClock != null && this.opponentFinishClock != null;
@@ -4238,3 +4249,4 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 }
+
