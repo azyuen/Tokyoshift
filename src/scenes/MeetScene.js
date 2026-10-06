@@ -77,6 +77,7 @@ import {
 } from '../data/tunerShops.js?v=20260926-r212';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261005-r348';
+import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261005-r348';
 import {
   getPendingCentralTokyoInvite,
@@ -435,6 +436,8 @@ export default class MeetScene extends Phaser.Scene {
     this.buildCrewBattleButton();
     this.rollOffers({ resetTimer: false });
 
+    const pendingPinkSlipResultShown = this.maybeShowPendingPinkSlipResult();
+
     const activeChallenger = this.registry.get('specialChallenger');
     const activeRegionRivals = getRivalCharacterOrderForRegion(
       getMeetLocation(this.selectedMeetLocation).district
@@ -446,6 +449,7 @@ export default class MeetScene extends Phaser.Scene {
     );
     let specialChallengerShown = false;
     if (
+      !pendingPinkSlipResultShown &&
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       activeRegionRivals.includes(activeChallenger.characterId) &&
@@ -455,6 +459,7 @@ export default class MeetScene extends Phaser.Scene {
       specialChallengerShown = true;
       this.time.delayedCall(80, () => this.showSpecialChallenger(activeChallenger, false));
     } else if (
+      !pendingPinkSlipResultShown &&
       activeChallenger?.active &&
       activeChallenger.locationId === this.selectedMeetLocation &&
       (
@@ -466,7 +471,7 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
-    if (!specialChallengerShown) {
+    if (!pendingPinkSlipResultShown && !specialChallengerShown) {
       const crewInviteShown = this.maybeShowCrewInviteInterest();
       const activeRecruitShown = crewInviteShown
         ? false
@@ -497,6 +502,76 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  maybeShowPendingPinkSlipResult() {
+    const pending = this.registry.get('pendingPinkSlipResult');
+    if (!pending || typeof pending !== 'object') return false;
+
+    // Consume first so a reload cannot replay the ownership handover.
+    this.registry.set('pendingPinkSlipResult', null);
+    saveSessionState(this.registry);
+
+    this.time.delayedCall(120, () => {
+      const playerWon = Boolean(pending.playerWon);
+      const acquiredCarId = pending.acquiredCarId || null;
+      const gameOver = Boolean(pending.gameOver);
+      const carName = String(pending.carName || 'CAR').toUpperCase();
+
+      const finishHandover = () => {
+        if (playerWon && acquiredCarId) {
+          const picker = showGarageDeliveryPicker(this, {
+            carId: acquiredCarId,
+            carName,
+            title: 'CAR WON // DELIVERY',
+            message: 'Choose which garage should receive your new car.',
+            allowCancel: false,
+            onSelect: workshopId => {
+              const locations = { ...(this.registry.get('carGarageLocations') || {}) };
+              locations[acquiredCarId] = workshopId;
+              this.registry.set('carGarageLocations', locations);
+              saveSessionState(this.registry);
+            },
+          });
+
+          // If all garages are full, keep the provisional assignment made at
+          // settlement rather than trapping the player behind an impossible modal.
+          if (!picker) saveSessionState(this.registry);
+          return;
+        }
+
+        if (gameOver) {
+          this.scene.start('RunOverScene');
+        }
+      };
+
+      const resultCutscene = playMangaCutscene(
+        this,
+        pending.wasSpecialChallenge
+          ? (playerWon ? 'specialChallengerWin' : 'specialChallengerLoss')
+          : (playerWon ? 'firstPinkSlipWin' : 'firstPinkSlipLoss'),
+        {
+          historyId: pending.wasSpecialChallenge
+            ? 'specialChallengerResult:' + Number(pending.completedAt || Date.now()) +
+              ':' + (playerWon ? 'W' : 'L')
+            : undefined,
+          characterOverrides: {
+            RIVAL: pending.rivalCharacterId,
+            WINNER: playerWon ? pending.playerCharacterId : pending.rivalCharacterId,
+            LOSER: playerWon ? pending.rivalCharacterId : pending.playerCharacterId,
+          },
+          variables: {
+            RIVAL_NAME: String(pending.rivalName || 'RIVAL').toUpperCase(),
+            CAR: carName,
+          },
+          onComplete: finishHandover,
+        }
+      );
+
+      if (!resultCutscene?.played) finishHandover();
+    });
+
+    return true;
   }
 
   getActiveDriverCharacterId() {
