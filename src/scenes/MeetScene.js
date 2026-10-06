@@ -69,7 +69,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261007-r400';
+} from '../data/tunerChallenges.js?v=20261007-r402';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
@@ -100,7 +100,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261006-r388';
+} from '../data/crewSystem.js?v=20261007-r402';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
