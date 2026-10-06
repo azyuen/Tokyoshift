@@ -1,12 +1,8 @@
-// Post-regional crew roster.
+// Post-regional recruitment roster.
 //
-// The finished game will map these six regional drivers onto the full 42-car
-// roster. Until those assets land, this table deliberately reuses the current
-// regular cars while preserving the intended low -> high regional power curve.
-//
-// Each region has exactly six active crew-battle drivers:
-//   five recruitable members + one permanent main rival.
-// The main rival always receives the final/strongest car in the temporary pool.
+// This table defines recruitable candidates and signature-car mapping. The
+// later 6-on-6 crew battle reuses the original seven-race regional championship
+// cast, then removes the driver who defected to the player's crew.
 
 export const CREW_REGIONS = Object.freeze([
   'ODAIBA',
