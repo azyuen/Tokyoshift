@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261005-r365';
+export const CHARACTER_ASSET_VERSION = '20261007-r407';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -11,6 +11,39 @@ export const DEFAULT_CHARACTER_PROFILE = Object.freeze({
   offsetX: 0,
   offsetY: 0,
   poses: Object.freeze({}),
+});
+
+// The seven selectable lead characters also exist in the world as authored
+// regional rivals. When the active profile chose that same avatar, keep the
+// rival's identity, dialogue, car and AI but render a same-gender substitute
+// so the player never races or meets an alternate copy of themselves.
+export const RIVAL_SUBSTITUTE_VISUALS = Object.freeze({
+  male: Object.freeze({
+    spriteKey: 'characterMaleSubstitute',
+    path: 'assets/Characters/male_sub_idle.png',
+    winSpriteKey: 'characterMaleSubstituteWin',
+    winPath: 'assets/Characters/male_sub_win.png',
+    lossSpriteKey: 'characterMaleSubstituteLoss',
+    lossPath: 'assets/Characters/male_sub_loss.png',
+  }),
+  female: Object.freeze({
+    spriteKey: 'characterFemaleSubstitute',
+    path: 'assets/Characters/female_sub_idle.png',
+    winSpriteKey: 'characterFemaleSubstituteWin',
+    winPath: 'assets/Characters/female_sub_win.png',
+    lossSpriteKey: 'characterFemaleSubstituteLoss',
+    lossPath: 'assets/Characters/female_sub_loss.png',
+  }),
+});
+
+const RIVAL_SUBSTITUTE_KIND_BY_CHARACTER = Object.freeze({
+  renMizuno: 'male',
+  kaitoFujimori: 'male',
+  haruTachibana: 'male',
+  rikuAkamine: 'male',
+  ayaKurose: 'female',
+  reinaShibata: 'female',
+  emiKanzaki: 'female',
 });
 
 export const characters = {
@@ -1924,8 +1957,28 @@ export const CENTRAL_TOKYO_CHARACTER_IDS = Object.freeze({
   }),
 });
 
-export function getCharacterVisualAsset(characterId, pose = 'idle') {
-  const visual = characters[characterId]?.visual;
+export function getRivalSubstituteVisual(characterId, playerCharacterId = '') {
+  const rivalId = String(characterId || '');
+  const playerId = String(playerCharacterId || '');
+  if (!rivalId || rivalId !== playerId) return null;
+
+  const kind = RIVAL_SUBSTITUTE_KIND_BY_CHARACTER[playerId];
+  if (!kind || characters[playerId]?.mainRival !== true) return null;
+  return RIVAL_SUBSTITUTE_VISUALS[kind] || null;
+}
+
+export function getCharacterVisualForContext(
+  characterId,
+  { rivalContext = false, playerCharacterId = '' } = {}
+) {
+  const substitute = rivalContext
+    ? getRivalSubstituteVisual(characterId, playerCharacterId)
+    : null;
+  return substitute || characters[characterId]?.visual || null;
+}
+
+export function getCharacterVisualAsset(characterId, pose = 'idle', options = {}) {
+  const visual = getCharacterVisualForContext(characterId, options);
   if (!visual) return null;
 
   const requestedPose = String(pose || 'idle').trim().toLowerCase() || 'idle';

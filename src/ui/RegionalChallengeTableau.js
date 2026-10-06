@@ -1,6 +1,6 @@
-import { characters } from '../data/characters.js?v=20261006-r392';
+import { characters } from '../data/characters.js?v=20261007-r407';
 import { cars } from '../data/cars.js?v=20261006-r388';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -73,6 +73,7 @@ function addMaskedProfile(scene, objects, masks, {
     flipInward: true,
     mask: false,
     profileOverride,
+    rivalContext: true,
   });
   if (!profile?.image) return null;
 

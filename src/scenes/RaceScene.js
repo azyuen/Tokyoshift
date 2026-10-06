@@ -31,11 +31,12 @@ import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.j
 import {
   characters,
   getCharacterAssetUrl,
+  getCharacterVisualForContext,
   CENTRAL_TOKYO_CHARACTER_IDS,
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261007-r404';
+} from '../data/characters.js?v=20261007-r407';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -67,8 +68,8 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20261007-r404';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
-import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261006-r398';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
+import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r407';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r398';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
@@ -131,17 +132,27 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    const playerId =
-      this.registry.get('selectedRacePlayerCharacterId') ||
+    const profilePlayerCharacterId =
       this.registry.get('playerCharacterId') ||
       'renMizuno';
+    const playerId =
+      this.registry.get('selectedRacePlayerCharacterId') ||
+      profilePlayerCharacterId;
     const opponentId = this.registry.get('selectedOpponentCharacterId');
-    [playerId, opponentId].filter(Boolean).forEach(id => {
-      const visual = characters[id]?.visual || {};
+    const queueCharacterVisual = visual => {
+      if (!visual) return;
       queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
       queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
       queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
-    });
+    };
+
+    // The temporary race driver can be a recruited crew member, but the avatar
+    // that must never appear as an opponent is the active profile's character.
+    queueCharacterVisual(characters[playerId]?.visual || null);
+    queueCharacterVisual(getCharacterVisualForContext(opponentId, {
+      rivalContext: true,
+      playerCharacterId: profilePlayerCharacterId,
+    }));
 
     if (this.raceMode === 'TUNER_TEAM') {
       const regionId = String(
@@ -149,10 +160,10 @@ export default class RaceScene extends Phaser.Scene {
       ).toUpperCase();
       const challenge = getTunerTeamChallengeState(this.registry, regionId);
       (challenge.rounds || []).slice(0, TUNER_TEAM_CHALLENGE_STAGES).forEach(round => {
-        const visual = characters[round?.characterId]?.visual || {};
-        queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
-        queueImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
-        queueImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
+        queueCharacterVisual(getCharacterVisualForContext(round?.characterId, {
+          rivalContext: true,
+          playerCharacterId: profilePlayerCharacterId,
+        }));
       });
     }
 
@@ -2506,6 +2517,8 @@ export default class RaceScene extends Phaser.Scene {
       dimmed: false,
       mask: false,
       profileOverride: { scale: 1.02, offsetX: 0, offsetY: 18 },
+      rivalContext: true,
+      playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
     });
 
     const rivalMaskShape = this.make.graphics({ add: false });

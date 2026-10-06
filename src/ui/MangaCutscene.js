@@ -1,4 +1,8 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
+import {
+  characters,
+  getCharacterAssetUrl,
+  getCharacterVisualForContext,
+} from '../data/characters.js?v=20261007-r407';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -11,7 +15,7 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20261005-r365';
+} from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
 import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -111,13 +115,24 @@ function resolvePageCharacter(context, page, side) {
   );
 }
 
-function collectCutsceneCharacterIds(context) {
-  const ids = new Set();
+function tokenUsesPlayerSubstitute(token, context) {
+  if (!token || token === '$PLAYER') return false;
+  const id = resolveCharacterToken(token, context);
+  return Boolean(id && id === context.playerCharacterId);
+}
+
+function collectCutsceneCharacterRefs(context) {
+  const refs = new Map();
   const pages = context.definition.pages || [];
 
   const addToken = token => {
     const id = resolveCharacterToken(token, context);
-    if (id && characters[id]) ids.add(id);
+    if (!id || !characters[id]) return;
+    const rivalContext = tokenUsesPlayerSubstitute(token, context);
+    refs.set(id + ':' + (rivalContext ? 'rival' : 'player'), {
+      id,
+      rivalContext,
+    });
   };
 
   SIDES.forEach(side => addToken(context.definition.characters?.[side]));
@@ -125,13 +140,16 @@ function collectCutsceneCharacterIds(context) {
     SIDES.forEach(side => addToken(page?.[side + 'Character']));
   });
 
-  return [...ids];
+  return [...refs.values()];
 }
 
-function queueCharacterAssets(scene, characterIds) {
+function queueCharacterAssets(scene, characterRefs, playerCharacterId) {
   let queued = 0;
-  characterIds.forEach(id => {
-    const visual = characters[id]?.visual;
+  characterRefs.forEach(({ id, rivalContext }) => {
+    const visual = getCharacterVisualForContext(id, {
+      rivalContext,
+      playerCharacterId,
+    });
     if (!visual) return;
 
     const assets = [
@@ -231,11 +249,11 @@ function frameFor(scene, side) {
   return { x: width * 0.50, y, frameWidth: Math.min(700, frameWidth * 1.10), frameHeight };
 }
 
-function actorLabel(scene, context, page, side, characterId) {
+function actorLabel(scene, context, page, side, characterId, rivalContext = false) {
   if (page?.nameOverride) return interpolate(page.nameOverride, context.variables);
   if (page?.speakerLabel) return interpolate(page.speakerLabel, context.variables);
 
-  if (characterId === context.playerCharacterId) {
+  if (characterId === context.playerCharacterId && !rivalContext) {
     return playerDisplayName(scene, context.playerCharacterId).toUpperCase();
   }
 
@@ -332,14 +350,26 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   if (!profile || !image || !frame || !character?.visual) return false;
 
   const requestedPose = String(pose || 'idle').trim().toLowerCase() || 'idle';
-  const textureInfo = getCharacterProfileTexture(characterId, requestedPose);
+  const visualOptions = {
+    rivalContext: Boolean(actor?.rivalContext),
+    playerCharacterId:
+      actor?.playerCharacterId ||
+      scene.registry?.get?.('playerCharacterId') ||
+      '',
+  };
+  const contextualVisual = getCharacterVisualForContext(characterId, visualOptions);
+  const textureInfo = getCharacterProfileTexture(
+    characterId,
+    requestedPose,
+    visualOptions
+  );
 
   let spriteKey = textureInfo?.key;
   let actualPose = textureInfo?.pose || 'idle';
   let poseFallback = Boolean(textureInfo?.fallback);
 
   if (!spriteKey || !scene.textures.exists(spriteKey)) {
-    spriteKey = character.visual.spriteKey;
+    spriteKey = contextualVisual?.spriteKey;
     actualPose = 'idle';
     poseFallback = requestedPose !== 'idle';
   }
@@ -374,12 +404,21 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   return true;
 }
 
-function replaceActorProfile(controller, side, characterId, pose, dimmed, firstPage = false) {
-  const { scene } = controller;
+function replaceActorProfile(
+  controller,
+  side,
+  characterId,
+  pose,
+  dimmed,
+  firstPage = false,
+  rivalContext = false
+) {
+  const { scene, context } = controller;
   const previous = controller.actors[side];
 
   if (
     previous?.characterId === characterId &&
+    previous?.rivalContext === Boolean(rivalContext) &&
     previous?.profile
   ) {
     if (previous.pose !== pose) {
@@ -398,6 +437,8 @@ function replaceActorProfile(controller, side, characterId, pose, dimmed, firstP
       characterId: null,
       pose,
       profile: null,
+      rivalContext: false,
+      playerCharacterId: context.playerCharacterId,
     };
     return controller.actors[side];
   }
@@ -418,6 +459,8 @@ function replaceActorProfile(controller, side, characterId, pose, dimmed, firstP
     // their rectangular masks; cutscenes intentionally let hair/arms/poses
     // extend sideways and disappear naturally behind the dialogue gutter.
     mask: false,
+    rivalContext,
+    playerCharacterId: context.playerCharacterId,
   });
 
   if (!profile) {
@@ -425,6 +468,8 @@ function replaceActorProfile(controller, side, characterId, pose, dimmed, firstP
       characterId,
       pose,
       profile: null,
+      rivalContext: Boolean(rivalContext),
+      playerCharacterId: context.playerCharacterId,
     };
     return controller.actors[side];
   }
@@ -457,6 +502,8 @@ function replaceActorProfile(controller, side, characterId, pose, dimmed, firstP
     characterId,
     pose,
     profile,
+    rivalContext: Boolean(rivalContext),
+    playerCharacterId: context.playerCharacterId,
   };
   return controller.actors[side];
 }
@@ -485,12 +532,20 @@ function drawDialogue(controller, page) {
   const x = width / 2;
   const y = height - bottomSafe - cardHeight / 2;
 
-  const characterId = SIDES.includes(speaker)
-    ? controller.actors[speaker]?.characterId
+  const speakingActor = SIDES.includes(speaker)
+    ? controller.actors[speaker]
     : null;
+  const characterId = speakingActor?.characterId || null;
   const label = speaker === 'system'
     ? interpolate(page.speakerLabel || 'TOKYO SHIFT', context.variables)
-    : actorLabel(scene, context, page, speaker, characterId);
+    : actorLabel(
+        scene,
+        context,
+        page,
+        speaker,
+        characterId,
+        Boolean(speakingActor?.rivalContext)
+      );
 
   const card = scene.add.rectangle(x, y, cardWidth, cardHeight, 0xfffcf1, 1)
     .setStrokeStyle(6, 0x111111, 1)
@@ -675,10 +730,20 @@ function renderPage(controller, pageIndex, firstPage = false) {
 
   SIDES.forEach(side => {
     const current = controller.actors[side];
-    const characterId = resolvePageCharacter(context, page, side);
+    const token = pageCharacterToken(definition, page, side);
+    const characterId = resolveCharacterToken(token, context);
+    const rivalContext = tokenUsesPlayerSubstitute(token, context);
     const pose = desiredPose(page, side, current?.pose || 'idle');
     const dimmed = desiredDimmed(page.speaker, side);
-    replaceActorProfile(controller, side, characterId, pose, dimmed, firstPage);
+    replaceActorProfile(
+      controller,
+      side,
+      characterId,
+      pose,
+      dimmed,
+      firstPage,
+      rivalContext
+    );
   });
 
   drawDialogue(controller, page);
@@ -945,8 +1010,12 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     return { played: false, reason: 'seen', active: false };
   }
 
-  const characterIds = collectCutsceneCharacterIds(context);
-  const queued = queueCharacterAssets(scene, characterIds);
+  const characterRefs = collectCutsceneCharacterRefs(context);
+  const queued = queueCharacterAssets(
+    scene,
+    characterRefs,
+    context.playerCharacterId
+  );
 
   if (queued <= 0) {
     return beginOverlay(scene, definition, context, historyId);

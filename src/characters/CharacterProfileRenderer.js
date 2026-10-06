@@ -2,7 +2,8 @@ import {
   characters,
   DEFAULT_CHARACTER_PROFILE,
   getCharacterVisualAsset,
-} from '../data/characters.js?v=20261005-r365';
+  getCharacterVisualForContext,
+} from '../data/characters.js?v=20261007-r407';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
@@ -112,8 +113,8 @@ const normalisePose = pose => (
   String(pose || 'idle').trim().toLowerCase() || 'idle'
 );
 
-export function getCharacterProfileTexture(characterId, pose = 'idle') {
-  return getCharacterVisualAsset(characterId, normalisePose(pose));
+export function getCharacterProfileTexture(characterId, pose = 'idle', options = {}) {
+  return getCharacterVisualAsset(characterId, normalisePose(pose), options);
 }
 
 export function resolveCharacterProfile(
@@ -148,17 +149,31 @@ export function createCharacterProfile(scene, {
   dimmed = false,
   mask = true,
   profileOverride = null,
+  rivalContext = false,
+  playerCharacterId = null,
 } = {}) {
   const character = characters[characterId];
   if (!character?.visual) return null;
 
-  const textureInfo = getCharacterProfileTexture(characterId, pose);
+  const activePlayerCharacterId = String(
+    playerCharacterId ||
+    scene?.registry?.get?.('playerCharacterId') ||
+    ''
+  );
+  const visualOptions = {
+    rivalContext: Boolean(rivalContext),
+    playerCharacterId: activePlayerCharacterId,
+  };
+  const contextualVisual = getCharacterVisualForContext(characterId, visualOptions);
+  if (!contextualVisual) return null;
+
+  const textureInfo = getCharacterProfileTexture(characterId, pose, visualOptions);
   let spriteKey = textureInfo?.key;
   let actualPose = textureInfo?.pose || 'idle';
   let poseFallback = Boolean(textureInfo?.fallback);
 
   if (!spriteKey || !scene.textures.exists(spriteKey)) {
-    spriteKey = character.visual.spriteKey;
+    spriteKey = contextualVisual.spriteKey;
     actualPose = 'idle';
     poseFallback = normalisePose(pose) !== 'idle';
   }
@@ -231,6 +246,9 @@ export function createCharacterProfile(scene, {
   const api = {
     character,
     characterId,
+    rivalContext: Boolean(rivalContext),
+    playerCharacterId: activePlayerCharacterId,
+    visualSubstituted: contextualVisual !== character.visual,
     requestedPose: normalisePose(pose),
     actualPose,
     poseFallback,
