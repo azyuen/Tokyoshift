@@ -1074,16 +1074,12 @@ export function showTravelMap(scene, options = {}) {
     tunerBadge.removeAllListeners('pointerdown');
 
     if (tunerUnlocked) {
+      // Once unlocked, the map is navigation only. Championship/perfect-sweep
+      // progression is surfaced through Meet/result flows instead.
       tunerKicker
         .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 17)
-        .setText(
-          tunerChallenge.perfectEarned
-            ? 'REGIONAL CHAMPION ★'
-            : tunerChallenge.championEarned
-              ? 'REGIONAL CHAMPION'
-              : 'TUNER SHOP'
-        )
-        .setColor(tunerChallenge.championEarned ? '#ffe08a' : '#c99a4e');
+        .setText('TUNER SHOP')
+        .setColor('#c99a4e');
       tunerName
         .setPosition(TUNER_BADGE.x + 20, TUNER_BADGE.y + 43)
         .setText(tunerShop.label)
@@ -1091,12 +1087,8 @@ export function showTravelMap(scene, options = {}) {
       tunerSpecialty
         .setPosition(TUNER_BADGE.x + TUNER_BADGE.w - 22, TUNER_BADGE.y + 43)
         .setOrigin(1, 0.5)
-        .setText(
-          tunerChallenge.championEarned && !tunerChallenge.perfectEarned
-            ? 'PERFECT SWEEP AVAILABLE // VISIT MEET'
-            : tunerShop.specialty
-        )
-        .setColor(tunerChallenge.championEarned ? '#f2d899' : '#c8b58e');
+        .setText(tunerShop.specialty)
+        .setColor('#c8b58e');
       tunerArrow.setText('>').setVisible(true);
       tunerBadge
         .setInteractive({ useHandCursor: true })
