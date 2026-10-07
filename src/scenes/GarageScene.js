@@ -209,6 +209,16 @@ export default class GarageScene extends Phaser.Scene {
       queued += 1;
     };
 
+    // Settings > Controls uses the real race-control artwork in its live
+    // layout mock-up, so keep these lightweight UI textures available here.
+    [
+      ['hudCluster', 'assets/Ui/hud_cluster.png'],
+      ['clutchPedal', 'assets/Controls/clutch_pedal.png'],
+      ['throttlePedal', 'assets/Controls/throttle_pedal.png'],
+      ['nosButton', 'assets/Controls/nos_button.png'],
+      ['shifterNeutral', 'assets/Controls/shifter_neutral.png'],
+    ].forEach(([key, path]) => queueImage(key, path));
+
     const ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
     const activeWorkshopId = this.crewMode
       ? 'shinonomeWarehouseStrip'
