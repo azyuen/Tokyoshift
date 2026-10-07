@@ -490,6 +490,53 @@ export function declinePendingCrewRecruit(registry) {
   registry.set('crewRecruitChallenge', null);
 }
 
+export function removeAllCrewMembers(registry) {
+  if (!registry?.get || !registry?.set) return [];
+
+  const removed = [];
+  CREW_REGIONS.forEach(regionId => {
+    const member = removeCrewMember(registry, regionId);
+    if (member) removed.push(member);
+  });
+
+  registry.set('selectedRacePlayerCharacterId', null);
+  registry.set('crewPendingRecruit', null);
+  registry.set('crewInviteInterest', null);
+  registry.set('crewRecruitChallenge', null);
+  return removed;
+}
+
+export function recruitRandomDevCrew(registry, random = Math.random) {
+  if (!registry?.get || !registry?.set) return [];
+  if (!Boolean(value(registry, 'devMode', false))) return [];
+
+  removeAllCrewMembers(registry);
+
+  const recruited = [];
+  CREW_REGIONS.forEach(regionId => {
+    const candidates = getRecruitableRegionalMembers(regionId)
+      .filter(candidate =>
+        cars[candidate.baseCarId] &&
+        cars[getCrewLoanCarId(candidate.characterId)]
+      );
+    if (!candidates.length) return;
+
+    const roll = Math.max(0, Math.min(0.999999, Number(random()) || 0));
+    const candidate = candidates[Math.floor(roll * candidates.length)];
+    const member = acceptCrewMember(registry, {
+      regionId,
+      characterId: candidate.characterId,
+      baseCarId: candidate.baseCarId,
+      offeredAt: Date.now(),
+      source: 'devRandomCrew',
+    });
+    if (member) recruited.push(member);
+  });
+
+  registry.set('selectedRacePlayerCharacterId', null);
+  return recruited;
+}
+
 export function removeCrewMember(registry, regionId) {
   if (!registry?.get || !registry?.set) return null;
   const key = String(regionId || '').toUpperCase();
