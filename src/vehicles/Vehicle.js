@@ -3,7 +3,7 @@ import Transmission from './Transmission.js?v=20260929-r268';
 import Clutch from './Clutch.js';
 import Turbo from './Turbo.js?v=20261004-r325';
 import Tyres from './Tyres.js';
-import NitrousSystem from './NitrousSystem.js';
+import NitrousSystem from './NitrousSystem.js?v=20261008-r428';
 
 export default class Vehicle {
   constructor(carConfig, engineConfig) {
