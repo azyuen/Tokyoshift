@@ -1,7 +1,50 @@
+import {
+  getControlSettings,
+  getConnectedGamepads,
+} from './ControlSettings.js?v=20261007-r418';
+
+const BASE_RECTS = Object.freeze({
+  clutch: Object.freeze({ x: 65, y: 390, w: 220, h: 320 }),
+  nos: Object.freeze({ x: 318, y: 510, w: 122, h: 145 }),
+  shifter: Object.freeze({ x: 1090, y: 380, w: 245, h: 330 }),
+  throttle: Object.freeze({ x: 1315, y: 385, w: 190, h: 325 }),
+});
+
+const BASE_SPRITES = Object.freeze({
+  clutch: Object.freeze({ x: 175, scale: 0.175 }),
+  nos: Object.freeze({ x: 378, y: 570, scale: 0.088 }),
+  shifter: Object.freeze({ x: 1218, scale: 0.20 }),
+  throttle: Object.freeze({ x: 1405, scale: 0.175 }),
+});
+
+const DIRECT_GEAR_ACTIONS = Object.freeze([
+  ['gear1', 1],
+  ['gear2', 2],
+  ['gear3', 3],
+  ['gear4', 4],
+  ['gear5', 5],
+  ['gear6', 6],
+]);
+
+function bindingDown(set, binding = []) {
+  return (Array.isArray(binding) ? binding : []).some(code => set.has(code));
+}
+
+function scaledRect(base, placement) {
+  const scale = Number(placement?.scale || 1);
+  const cx = base.x + base.w / 2 + Number(placement?.dx || 0);
+  const cy = base.y + base.h / 2 + Number(placement?.dy || 0);
+  const w = base.w * scale;
+  const h = base.h * scale;
+  return new Phaser.Geom.Rectangle(cx - w / 2, cy - h / 2, w, h);
+}
+
 export default class TouchControls {
   constructor(scene, options = {}) {
     this.scene = scene;
+    this.settings = getControlSettings();
     this.nosEnabled = options.nosEnabled !== false;
+    this.showNos = options.showNos !== false && (options.showNos === true || this.nosEnabled);
     this.throttle = 0;
     this.clutch = 0;
     this.nos = false;
@@ -16,72 +59,119 @@ export default class TouchControls {
     this.shifterStartY = 0;
     this.shifterSwipeDirection = 'neutral';
     this.shifterSwipeConsumed = false;
-    this.verticalOffsetY = Number(options.verticalOffsetY || 0);
-    this.controlScaleMultiplier = Number(options.controlScaleMultiplier || 1);
-    this.controlBottomY = Number(options.controlBottomY || 710);
     this.pedalLatchMax = options.pedalLatchMax !== false;
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
     this.shifterSwipePx = 54;
+    this.controllerPrevious = {};
+
+    const layout = this.settings.layout || {};
+    this.placements = {
+      clutch: { ...(layout.clutch || {}) },
+      nos: { ...(layout.nos || {}) },
+      shifter: { ...(layout.shifter || {}) },
+      throttle: { ...(layout.throttle || {}) },
+    };
 
     scene.input.addPointer(5);
+
+    // Developer utility keys stay fixed. Driving keys are user-remappable.
     this.keys = scene.input.keyboard.addKeys({
-      throttle: Phaser.Input.Keyboard.KeyCodes.W,
-      throttleAlt: Phaser.Input.Keyboard.KeyCodes.UP,
-      clutch: Phaser.Input.Keyboard.KeyCodes.C,
-      nos: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      one: Phaser.Input.Keyboard.KeyCodes.ONE,
-      two: Phaser.Input.Keyboard.KeyCodes.TWO,
-      three: Phaser.Input.Keyboard.KeyCodes.THREE,
-      four: Phaser.Input.Keyboard.KeyCodes.FOUR,
-      five: Phaser.Input.Keyboard.KeyCodes.FIVE,
-      six: Phaser.Input.Keyboard.KeyCodes.SIX,
       debug: Phaser.Input.Keyboard.KeyCodes.D,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
     });
 
+    this.keyboardDown = new Set();
+    this.onKeyDown = event => {
+      const code = String(event?.code || '');
+      if (!code) return;
+      this.keyboardDown.add(code);
+      if (event?.repeat) return;
+
+      const bindings = this.settings.keyboard || {};
+      if (bindingDown(new Set([code]), bindings.shiftUp)) {
+        this.pendingGearRequest = 'UP';
+        return;
+      }
+      if (bindingDown(new Set([code]), bindings.shiftDown)) {
+        this.pendingGearRequest = 'DOWN';
+        return;
+      }
+      for (const [action, gear] of DIRECT_GEAR_ACTIONS) {
+        if (bindingDown(new Set([code]), bindings[action])) {
+          this.pendingGearRequest = gear;
+          return;
+        }
+      }
+    };
+    this.onKeyUp = event => {
+      const code = String(event?.code || '');
+      if (code) this.keyboardDown.delete(code);
+    };
+    scene.input.keyboard.on('keydown', this.onKeyDown);
+    scene.input.keyboard.on('keyup', this.onKeyUp);
+
     this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
 
     this.layout = {
-      clutch: new Phaser.Geom.Rectangle(65, 390, 220, 320),
-      nos: new Phaser.Geom.Rectangle(318, 510, 122, 145),
-      shifter: new Phaser.Geom.Rectangle(1090, 380, 245, 330),
-      throttle: new Phaser.Geom.Rectangle(1315, 385, 190, 325),
+      clutch: scaledRect(BASE_RECTS.clutch, this.placements.clutch),
+      nos: scaledRect(BASE_RECTS.nos, this.placements.nos),
+      shifter: scaledRect(BASE_RECTS.shifter, this.placements.shifter),
+      throttle: scaledRect(BASE_RECTS.throttle, this.placements.throttle),
     };
-
-    const layoutOffset = this.controlBottomY - 710 + this.verticalOffsetY;
-    this.layout.clutch.y += layoutOffset;
-    this.layout.nos.y += layoutOffset;
-    this.layout.shifter.y += layoutOffset;
-    this.layout.throttle.y += layoutOffset;
-
-    this.clutchScale = 0.175 * this.controlScaleMultiplier;
-    this.throttleScale = 0.175 * this.controlScaleMultiplier;
-    this.nosScale = 0.088 * this.controlScaleMultiplier;
-    this.shifterScale = 0.20 * this.controlScaleMultiplier;
 
     const textureHeight = key => {
       try { return Number(scene.textures.get(key)?.getSourceImage()?.height || 0); } catch (e) { return 0; }
     };
     const bottomAlignedY = (key, scale, fallback) => {
       const h = textureHeight(key);
-      return h > 0 ? this.controlBottomY - (h * scale) / 2 : fallback;
+      return h > 0 ? 710 - (h * scale) / 2 : fallback;
     };
-    const clutchY = bottomAlignedY('clutchPedal', this.clutchScale, 545);
-    const throttleY = bottomAlignedY('throttlePedal', this.throttleScale, 545);
-    const shifterY = bottomAlignedY('shifterNeutral', this.shifterScale, 535);
-    const nosY = Math.min(this.controlBottomY - 70, 570);
+
+    this.clutchScale = BASE_SPRITES.clutch.scale * Number(this.placements.clutch.scale || 1);
+    this.throttleScale = BASE_SPRITES.throttle.scale * Number(this.placements.throttle.scale || 1);
+    this.nosScale = BASE_SPRITES.nos.scale * Number(this.placements.nos.scale || 1);
+    this.shifterScale = BASE_SPRITES.shifter.scale * Number(this.placements.shifter.scale || 1);
+
+    const clutchY = bottomAlignedY('clutchPedal', this.clutchScale, 545) + Number(this.placements.clutch.dy || 0);
+    const throttleY = bottomAlignedY('throttlePedal', this.throttleScale, 545) + Number(this.placements.throttle.dy || 0);
+    const shifterY = bottomAlignedY('shifterNeutral', this.shifterScale, 535) + Number(this.placements.shifter.dy || 0);
+    const nosY = BASE_SPRITES.nos.y + Number(this.placements.nos.dy || 0);
+
     this.shifterNeutralY = shifterY;
-    this.shifterUpY = shifterY - 10;
-    this.shifterDownY = shifterY + 10;
+    this.shifterUpY = shifterY - 10 * Number(this.placements.shifter.scale || 1);
+    this.shifterDownY = shifterY + 10 * Number(this.placements.shifter.scale || 1);
+    this.shifterX = BASE_SPRITES.shifter.x + Number(this.placements.shifter.dx || 0);
 
-    this.clutchSprite = scene.add.image(175, clutchY, 'clutchPedal').setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
-    this.nosSprite = scene.add.image(378, nosY, 'nosButton').setScale(this.nosScale).setDepth(51).setScrollFactor(0).setVisible(this.nosEnabled);
-    this.shifterSprite = scene.add.image(1218, shifterY, 'shifterNeutral').setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
-    this.throttleSprite = scene.add.image(1405, throttleY, 'throttlePedal').setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+    this.clutchSprite = scene.add.image(
+      BASE_SPRITES.clutch.x + Number(this.placements.clutch.dx || 0),
+      clutchY,
+      'clutchPedal'
+    ).setScale(this.clutchScale).setDepth(51).setScrollFactor(0);
 
-    scene.input.on('pointerdown', pointer => {
+    this.nosSprite = scene.add.image(
+      BASE_SPRITES.nos.x + Number(this.placements.nos.dx || 0),
+      nosY,
+      'nosButton'
+    ).setScale(this.nosScale).setDepth(51).setScrollFactor(0)
+      .setVisible(this.showNos)
+      .setAlpha(this.nosEnabled ? 1 : 0.42);
+
+    this.shifterSprite = scene.add.image(
+      this.shifterX,
+      shifterY,
+      'shifterNeutral'
+    ).setScale(this.shifterScale).setDepth(51).setScrollFactor(0);
+
+    this.throttleSprite = scene.add.image(
+      BASE_SPRITES.throttle.x + Number(this.placements.throttle.dx || 0),
+      throttleY,
+      'throttlePedal'
+    ).setScale(this.throttleScale).setDepth(51).setScrollFactor(0);
+
+    this.onPointerDown = pointer => {
+      if (!this.enabled) return;
       if (!this.clutchPointer && this.layout.clutch.contains(pointer.x, pointer.y)) {
         this.clutchPointer = pointer;
         this.clutchStartY = pointer.y;
@@ -96,23 +186,22 @@ export default class TouchControls {
         this.shifterSwipeDirection = 'neutral';
         this.shifterSwipeConsumed = false;
       }
-    });
+    };
 
-    scene.input.on('pointermove', pointer => {
-      if (pointer !== this.shifterPointer || !pointer.isDown) return;
-
+    this.onPointerMove = pointer => {
+      if (!this.enabled || pointer !== this.shifterPointer || !pointer.isDown) return;
       const deltaY = pointer.y - this.shifterStartY;
       if (Math.abs(deltaY) >= 18) {
         this.shifterSwipeDirection = deltaY < 0 ? 'up' : 'down';
       }
-
-      if (!this.shifterSwipeConsumed && Math.abs(deltaY) >= this.shifterSwipePx) {
+      const scale = Math.max(0.55, Number(this.placements.shifter.scale || 1));
+      if (!this.shifterSwipeConsumed && Math.abs(deltaY) >= this.shifterSwipePx * scale) {
         this.pendingGearRequest = deltaY < 0 ? 'UP' : 'DOWN';
         this.shifterSwipeConsumed = true;
       }
-    });
+    };
 
-    scene.input.on('pointerup', pointer => {
+    this.onPointerUp = pointer => {
       if (pointer === this.clutchPointer) {
         this.clutchPointer = null;
         this.clutchLatchedMax = false;
@@ -126,19 +215,70 @@ export default class TouchControls {
         this.shifterSwipeDirection = 'neutral';
         this.shifterSwipeConsumed = false;
       }
-    });
+    };
+
+    scene.input.on('pointerdown', this.onPointerDown);
+    scene.input.on('pointermove', this.onPointerMove);
+    scene.input.on('pointerup', this.onPointerUp);
   }
 
   pointerIn(rect) {
     return this.scene.input.manager.pointers.find(p => p.isDown && rect.contains(p.x, p.y));
   }
 
+  getActiveGamepad() {
+    return getConnectedGamepads()[0] || null;
+  }
+
+  readControllerBinding(gamepad, binding) {
+    if (!gamepad || !binding) return 0;
+    if (binding.kind === 'button') {
+      const button = gamepad.buttons?.[Number(binding.index)];
+      if (!button) return 0;
+      const value = Number(button.value);
+      return Phaser.Math.Clamp(Number.isFinite(value) ? value : (button.pressed ? 1 : 0), 0, 1);
+    }
+    if (binding.kind === 'axis') {
+      const raw = Number(gamepad.axes?.[Number(binding.index)] || 0);
+      const direction = Number(binding.direction) < 0 ? -1 : 1;
+      const deadzone = Phaser.Math.Clamp(Number(binding.deadzone ?? 0.18), 0, 0.75);
+      const directed = raw * direction;
+      if (directed <= deadzone) return 0;
+      return Phaser.Math.Clamp((directed - deadzone) / Math.max(0.01, 1 - deadzone), 0, 1);
+    }
+    return 0;
+  }
+
+  updateControllerRequests(gamepad) {
+    const bindings = this.settings.controller || {};
+    const actions = [
+      ['shiftUp', 'UP'],
+      ['shiftDown', 'DOWN'],
+      ...DIRECT_GEAR_ACTIONS,
+    ];
+
+    actions.forEach(([action, request]) => {
+      const down = this.readControllerBinding(gamepad, bindings[action]) >= 0.55;
+      const wasDown = Boolean(this.controllerPrevious[action]);
+      if (down && !wasDown) this.pendingGearRequest = request;
+      this.controllerPrevious[action] = down;
+    });
+  }
+
   update() {
     if (!this.enabled) return this.snapshot();
 
-    const keyboardThrottle = this.keys.throttle.isDown || this.keys.throttleAlt.isDown;
-    const keyboardClutch = this.keys.clutch.isDown;
-    const keyboardNos = this.nosEnabled && this.keys.nos.isDown;
+    const keyboard = this.settings.keyboard || {};
+    const keyboardThrottle = bindingDown(this.keyboardDown, keyboard.throttle);
+    const keyboardClutch = bindingDown(this.keyboardDown, keyboard.clutch);
+    const keyboardNos = this.nosEnabled && bindingDown(this.keyboardDown, keyboard.nos);
+
+    const gamepad = this.getActiveGamepad();
+    const controller = this.settings.controller || {};
+    this.updateControllerRequests(gamepad);
+    const controllerThrottle = this.readControllerBinding(gamepad, controller.throttle);
+    const controllerClutch = this.readControllerBinding(gamepad, controller.clutch);
+    const controllerNos = this.nosEnabled && this.readControllerBinding(gamepad, controller.nos) >= 0.55;
 
     if (this.throttlePointer && !this.throttlePointer.isDown) {
       this.throttlePointer = null;
@@ -146,13 +286,14 @@ export default class TouchControls {
     }
     let touchThrottle = 0;
     if (this.throttlePointer) {
+      const scale = Math.max(0.55, Number(this.placements.throttle.scale || 1));
       const travel = this.throttleStartY - this.throttlePointer.y;
-      if (this.pedalLatchMax && travel >= this.pedalSwipePx) this.throttleLatchedMax = true;
+      if (this.pedalLatchMax && travel >= this.pedalSwipePx * scale) this.throttleLatchedMax = true;
       touchThrottle = this.throttleLatchedMax
         ? 1
-        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
+        : Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
     }
-    this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle);
+    this.throttle = Math.max(keyboardThrottle ? 1 : 0, touchThrottle, controllerThrottle);
 
     if (this.clutchPointer && !this.clutchPointer.isDown) {
       this.clutchPointer = null;
@@ -160,19 +301,19 @@ export default class TouchControls {
     }
     let touchClutch = 0;
     if (this.clutchPointer) {
+      const scale = Math.max(0.55, Number(this.placements.clutch.scale || 1));
       const travel = this.clutchStartY - this.clutchPointer.y;
-      if (this.pedalLatchMax && travel >= this.pedalSwipePx) this.clutchLatchedMax = true;
+      if (this.pedalLatchMax && travel >= this.pedalSwipePx * scale) this.clutchLatchedMax = true;
       touchClutch = this.clutchLatchedMax
         ? 1
-        : Phaser.Math.Clamp(travel / this.pedalSwipePx, 0, 1);
+        : Phaser.Math.Clamp(travel / (this.pedalSwipePx * scale), 0, 1);
     }
-    this.clutch = keyboardClutch ? 1 : touchClutch;
-    this.nos = this.nosEnabled && (keyboardNos || Boolean(this.pointerIn(this.layout.nos)));
-
-    for (let g = 1; g <= 6; g++) {
-      const key = this.keys[['one', 'two', 'three', 'four', 'five', 'six'][g - 1]];
-      if (Phaser.Input.Keyboard.JustDown(key)) this.pendingGearRequest = g;
-    }
+    this.clutch = Math.max(keyboardClutch ? 1 : 0, touchClutch, controllerClutch);
+    this.nos = this.nosEnabled && (
+      keyboardNos ||
+      controllerNos ||
+      Boolean(this.pointerIn(this.layout.nos))
+    );
 
     if (this.shifterPointer && !this.shifterPointer.isDown) {
       this.shifterPointer = null;
@@ -188,8 +329,22 @@ export default class TouchControls {
     const g = this.graphics;
     g.clear();
 
-    const clutchBar = { x: 226.5, y: 470.5 + (this.controlBottomY - 710) + this.verticalOffsetY, w: 19.5, h: 156.0 };
-    const throttleBar = { x: 1438.0, y: 466.0 + (this.controlBottomY - 710) + this.verticalOffsetY, w: 20.5, h: 165.0 };
+    const clutchScale = Number(this.placements.clutch.scale || 1);
+    const throttleScale = Number(this.placements.throttle.scale || 1);
+    const clutchRect = this.layout.clutch;
+    const throttleRect = this.layout.throttle;
+    const clutchBar = {
+      x: clutchRect.right - 58 * clutchScale,
+      y: clutchRect.y + 80 * clutchScale,
+      w: 20 * clutchScale,
+      h: 156 * clutchScale,
+    };
+    const throttleBar = {
+      x: throttleRect.right - 67 * throttleScale,
+      y: throttleRect.y + 81 * throttleScale,
+      w: 21 * throttleScale,
+      h: 165 * throttleScale,
+    };
 
     g.fillStyle(0x48c9e8, 0.92)
       .fillRoundedRect(clutchBar.x, clutchBar.y + clutchBar.h * (1 - this.clutch), clutchBar.w, clutchBar.h * this.clutch, 3);
@@ -201,24 +356,41 @@ export default class TouchControls {
     g.lineStyle(2, 0x476272, 0.12).strokeRoundedRect(this.layout.shifter.x, this.layout.shifter.y, this.layout.shifter.width, this.layout.shifter.height, 18);
 
     if (shiftState === 'down') {
-      this.shifterSprite.setTexture('shifterDown').setPosition(1218, this.shifterDownY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterDown').setPosition(this.shifterX, this.shifterDownY).setScale(this.shifterScale);
     } else {
-      this.shifterSprite.setTexture('shifterNeutral').setPosition(1218, shiftState === 'up' ? this.shifterUpY : this.shifterNeutralY).setScale(this.shifterScale);
+      this.shifterSprite.setTexture('shifterNeutral').setPosition(
+        this.shifterX,
+        shiftState === 'up' ? this.shifterUpY : this.shifterNeutralY
+      ).setScale(this.shifterScale);
     }
 
-    if (this.nosEnabled) {
+    if (this.showNos) {
       this.nosSprite.setScale(this.nos ? this.nosScale * 0.965 : this.nosScale);
       this.nosSprite.setTint(this.nos ? 0xffffff : 0xe9eef1);
+      this.nosSprite.setAlpha(this.nosEnabled ? 1 : 0.42);
     }
   }
 
   consumeGearRequest() {
-    const g = this.pendingGearRequest;
+    const request = this.pendingGearRequest;
     this.pendingGearRequest = null;
-    return g;
+    return request;
   }
 
   snapshot() {
     return { throttle: this.throttle, clutch: this.clutch, nos: this.nos };
+  }
+
+  destroy() {
+    try { this.scene.input.keyboard.off('keydown', this.onKeyDown); } catch (e) {}
+    try { this.scene.input.keyboard.off('keyup', this.onKeyUp); } catch (e) {}
+    try { this.scene.input.off('pointerdown', this.onPointerDown); } catch (e) {}
+    try { this.scene.input.off('pointermove', this.onPointerMove); } catch (e) {}
+    try { this.scene.input.off('pointerup', this.onPointerUp); } catch (e) {}
+    [this.graphics, this.clutchSprite, this.nosSprite, this.shifterSprite, this.throttleSprite].forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
+    this.keyboardDown.clear();
+    this.controllerPrevious = {};
   }
 }
