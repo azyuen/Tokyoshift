@@ -33,9 +33,9 @@ export const CONTROL_ACTIONS = Object.freeze([
 ]);
 
 const DEFAULT_SETTINGS = Object.freeze({
-  version: 1,
+  version: 2,
   layout: {
-    hud: { dx: 0, dy: 0, scale: 1 },
+    hud: { dx: 0, dy: 40, scale: 1 },
     clutch: { dx: 0, dy: 0, scale: 1 },
     nos: { dx: 0, dy: 0, scale: 1 },
     shifter: { dx: 0, dy: 0, scale: 1 },
@@ -78,14 +78,24 @@ function clamp(value, min, max, fallback) {
     : fallback;
 }
 
-function sanitiseLayout(raw = {}) {
+function sanitiseLayout(raw = {}, rawVersion = 2) {
   const next = {};
   TOUCH_COMPONENTS.forEach(({ id }) => {
     const source = raw?.[id] || {};
+    const defaults = DEFAULT_SETTINGS.layout[id] || { dx: 0, dy: 0, scale: 1 };
+    const sourceHasDy = Object.prototype.hasOwnProperty.call(source, 'dy');
+    let dy = clamp(source.dy, -650, 650, defaults.dy);
+
+    // V2 moves the default dash down so it clears the racing cars. Preserve
+    // any previous custom offset while shifting all V1 dash layouts by 40 px.
+    if (id === 'hud' && Number(rawVersion || 1) < 2 && sourceHasDy) {
+      dy = clamp(dy + 40, -650, 650, defaults.dy);
+    }
+
     next[id] = {
-      dx: clamp(source.dx, -1200, 1200, 0),
-      dy: clamp(source.dy, -650, 650, 0),
-      scale: clamp(source.scale, 0.55, 1.65, 1),
+      dx: clamp(source.dx, -1200, 1200, defaults.dx),
+      dy,
+      scale: clamp(source.scale, 0.55, 1.65, defaults.scale),
     };
   });
   return next;
@@ -136,8 +146,8 @@ function sanitiseController(raw = {}) {
 
 function sanitise(raw = {}) {
   return {
-    version: 1,
-    layout: sanitiseLayout(raw.layout),
+    version: 2,
+    layout: sanitiseLayout(raw.layout, raw.version),
     keyboard: sanitiseKeyboard(raw.keyboard),
     controller: sanitiseController(raw.controller),
   };
