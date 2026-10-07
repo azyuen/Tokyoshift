@@ -13,10 +13,11 @@ export const DEFAULT_CHARACTER_PROFILE = Object.freeze({
   poses: Object.freeze({}),
 });
 
-// The seven selectable lead characters also exist in the world as authored
-// regional rivals. When the active profile chose that same avatar, keep the
-// rival's identity, dialogue, car and AI but render a same-gender substitute
-// so the player never races or meets an alternate copy of themselves.
+// The seven selectable lead sprites also back authored regional main-rival
+// slots. If the active profile chooses the same avatar as one of those slots,
+// the player always keeps the original identity and artwork. The in-world rival
+// slot instead receives a conditional replacement identity using the matching
+// substitute art, while retaining the canonical rival's gameplay progression.
 export const RIVAL_SUBSTITUTE_VISUALS = Object.freeze({
   male: Object.freeze({
     spriteKey: 'characterMaleSubstitute',

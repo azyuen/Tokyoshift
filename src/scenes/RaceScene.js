@@ -337,7 +337,7 @@ export default class RaceScene extends Phaser.Scene {
       this.opponentCharacterId,
       {
         rivalContext: true,
-        playerCharacterId: storedPlayerCharacterId,
+        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
       }
     ) || rivalCharacter;
     const playerBaseCar = clone(cars[this.selectedCarId]);
