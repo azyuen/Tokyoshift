@@ -2,6 +2,7 @@ import {
   getControlSettings,
   getConnectedGamepads,
   CONTROL_TOUCH_RECTS,
+  CONTROL_REFERENCE,
 } from './ControlSettings.js?v=20261007-r422';
 
 const BASE_RECTS = CONTROL_TOUCH_RECTS;
@@ -26,10 +27,10 @@ function bindingDown(set, binding = []) {
   return (Array.isArray(binding) ? binding : []).some(code => set.has(code));
 }
 
-function scaledRect(base, placement) {
+function scaledRect(base, placement, verticalOffset = 0) {
   const scale = Number(placement?.scale || 1);
   const cx = base.x + base.w / 2 + Number(placement?.dx || 0);
-  const cy = base.y + base.h / 2 + Number(placement?.dy || 0);
+  const cy = base.y + base.h / 2 + Number(placement?.dy || 0) + Number(verticalOffset || 0);
   const w = base.w * scale;
   const h = base.h * scale;
   return new Phaser.Geom.Rectangle(cx - w / 2, cy - h / 2, w, h);
@@ -71,6 +72,14 @@ export default class TouchControls {
     this.pedalSwipePx = 72;
     this.shifterSwipePx = 54;
     this.controllerPrevious = {};
+
+    // Control layouts are authored in the canonical 1560x720 race viewport.
+    // Anchor that entire coordinate system to the bottom of taller scenes
+    // (Dyno is 1560x840), so the player's chosen layout is identical relative
+    // to the bottom edge rather than floating 120 px higher.
+    this.viewportYOffset =
+      Number(scene.scale?.height || CONTROL_REFERENCE.height) -
+      Number(CONTROL_REFERENCE.height);
 
     const layout = this.settings.layout || {};
     this.placements = {
@@ -121,10 +130,10 @@ export default class TouchControls {
     this.graphics = scene.add.graphics().setDepth(50).setScrollFactor(0);
 
     this.layout = {
-      clutch: scaledRect(BASE_RECTS.clutch, this.placements.clutch),
-      nos: scaledRect(BASE_RECTS.nos, this.placements.nos),
-      shifter: scaledRect(BASE_RECTS.shifter, this.placements.shifter),
-      throttle: scaledRect(BASE_RECTS.throttle, this.placements.throttle),
+      clutch: scaledRect(BASE_RECTS.clutch, this.placements.clutch, this.viewportYOffset),
+      nos: scaledRect(BASE_RECTS.nos, this.placements.nos, this.viewportYOffset),
+      shifter: scaledRect(BASE_RECTS.shifter, this.placements.shifter, this.viewportYOffset),
+      throttle: scaledRect(BASE_RECTS.throttle, this.placements.throttle, this.viewportYOffset),
     };
 
     const textureHeight = key => {
@@ -132,7 +141,9 @@ export default class TouchControls {
     };
     const bottomAlignedY = (key, scale, fallback) => {
       const h = textureHeight(key);
-      return h > 0 ? 710 - (h * scale) / 2 : fallback;
+      return h > 0
+        ? (CONTROL_REFERENCE.height - 10 + this.viewportYOffset) - (h * scale) / 2
+        : fallback + this.viewportYOffset;
     };
 
     this.clutchScale = BASE_SPRITES.clutch.scale * Number(this.placements.clutch.scale || 1);
@@ -143,7 +154,10 @@ export default class TouchControls {
     const clutchY = bottomAlignedY('clutchPedal', this.clutchScale, 545) + Number(this.placements.clutch.dy || 0);
     const throttleY = bottomAlignedY('throttlePedal', this.throttleScale, 545) + Number(this.placements.throttle.dy || 0);
     const shifterY = bottomAlignedY('shifterNeutral', this.shifterScale, 535) + Number(this.placements.shifter.dy || 0);
-    const nosY = BASE_SPRITES.nos.y + Number(this.placements.nos.dy || 0);
+    const nosY =
+      BASE_SPRITES.nos.y +
+      Number(this.placements.nos.dy || 0) +
+      this.viewportYOffset;
 
     this.shifterNeutralY = shifterY;
     this.shifterUpY = shifterY - 10 * Number(this.placements.shifter.scale || 1);
