@@ -5196,6 +5196,7 @@ export default class MeetScene extends Phaser.Scene {
       title: 'TOKYO REGION MAP',
       actionVerb: 'DRIVE',
       allowCurrentAction: false,
+      travelMode: this.isCrewTestDriveMode() ? 'crew' : 'default',
       homeCost: this.hasCar ? WORKSHOP_RETURN_COST : TAXI_TO_WORKSHOP_COST,
       onHome: (workshopLocationId, cost) => this.returnToWorkshop(workshopLocationId, cost),
       onWorkshopUpgrade: (location, cost, alreadyUnlocked) =>
