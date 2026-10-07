@@ -38,6 +38,10 @@ async function startTokyoShift() {
   try {
     window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING');
 
+    const MenuNavigation = (
+      await import('./input/MenuNavigation.js?v=20261007-r422')
+    ).default;
+
     const loadScene = async (name, path) => {
       try {
         const module = await import(path);
@@ -125,6 +129,8 @@ async function startTokyoShift() {
     };
 
     window.TOKYO_SHIFT = new Phaser.Game(config);
+    try { window.TOKYO_SHIFT_MENU_NAV?.destroy?.(); } catch (e) {}
+    window.TOKYO_SHIFT_MENU_NAV = new MenuNavigation(window.TOKYO_SHIFT);
   } catch (error) {
     showBootError(error);
   }
