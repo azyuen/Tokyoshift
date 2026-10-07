@@ -60,7 +60,7 @@ import {
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
