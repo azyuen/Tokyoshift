@@ -484,9 +484,12 @@ function showControlsPanel(scene) {
   };
 
   const renderTouchTab = () => {
-    const preview = { x: 300, y: 200, w: 960, h: 443 };
+    // Exact race-screen aspect ratio: 1560 x 720.
+    const preview = { x: 300, y: 205, w: 960, h: 443 };
     const sx = preview.w / CONTROL_REFERENCE.width;
     const sy = preview.h / CONTROL_REFERENCE.height;
+    const mapX = value => preview.x + Number(value || 0) * sx;
+    const mapY = value => preview.y + Number(value || 0) * sy;
 
     addTab(scene.add.rectangle(
       preview.x + preview.w / 2,
@@ -497,19 +500,118 @@ function showControlsPanel(scene) {
       1
     ).setStrokeStyle(2, 0x294b61, 1).setDepth(depth + 2));
 
+    // Mock race view. This is deliberately simple, but uses the real lane/car
+    // positions so dash overlap is obvious while editing.
+    const raceMock = addTab(scene.add.graphics().setDepth(depth + 2.2));
+    raceMock.fillStyle(0x08111b, 1).fillRect(preview.x, preview.y, preview.w, preview.h);
+    raceMock.fillStyle(0x101c28, 1).fillRect(preview.x, preview.y, preview.w, 145 * sy);
+
+    // Low skyline / barriers.
+    raceMock.fillStyle(0x172735, 1);
+    [70, 170, 275, 390, 520, 650, 790, 905, 1040, 1180, 1310, 1440].forEach((logicalX, i) => {
+      const h = (55 + (i % 4) * 17) * sy;
+      raceMock.fillRect(mapX(logicalX), mapY(145) - h, 72 * sx, h);
+    });
+    raceMock.fillStyle(0x27323b, 1).fillRect(preview.x, mapY(238), preview.w, 285 * sy);
+
+    // Grey shoulder bands + solid white shoulder lines.
+    raceMock.fillStyle(0x62686d, 1)
+      .fillRect(preview.x, mapY(238), preview.w, 18 * sy)
+      .fillRect(preview.x, mapY(505), preview.w, 18 * sy);
+    raceMock.fillStyle(0xf2f3f1, 0.95)
+      .fillRect(preview.x, mapY(256), preview.w, 4 * sy)
+      .fillRect(preview.x, mapY(501), preview.w, 4 * sy);
+
+    // Dotted lane line sits just below the top car's wheel line.
+    raceMock.fillStyle(0xf2f3f1, 0.88);
+    for (let logicalX = 15; logicalX < CONTROL_REFERENCE.width; logicalX += 145) {
+      raceMock.fillRect(mapX(logicalX), mapY(377), 72 * sx, 4 * sy);
+    }
+
+    const drawMockCar = (logicalX, logicalY, bodyColor) => {
+      const x = mapX(logicalX);
+      const y = mapY(logicalY);
+      const carW = 250 * sx;
+      const carH = 64 * sy;
+      raceMock.fillStyle(0x07090c, 1)
+        .fillCircle(x - carW * 0.31, y + carH * 0.34, 24 * sx)
+        .fillCircle(x + carW * 0.31, y + carH * 0.34, 24 * sx);
+      raceMock.fillStyle(bodyColor, 0.92)
+        .fillRoundedRect(x - carW / 2, y - carH / 2, carW, carH, 9 * sx);
+      raceMock.fillStyle(0x17232c, 1)
+        .fillRoundedRect(x - carW * 0.09, y - carH * 0.44, carW * 0.39, carH * 0.36, 6 * sx);
+    };
+    drawMockCar(745, 340, 0x5b7f96);
+    drawMockCar(810, 430, 0x8e555d);
+
     addTab(scene.add.text(preview.x + 18, preview.y + 15,
-      'DRAG ANY CONTROL  //  THIS EXACT PLACEMENT IS USED IN BOTH RACE + DYNO', {
+      'MOCK RACE VIEW  //  DRAG THE ACTUAL CONTROLS', {
         fontFamily: PIXEL_FONT,
         fontSize: '6px',
-        color: '#93dff7',
-      }).setDepth(depth + 3));
+        color: '#c8f3ff',
+      }).setDepth(depth + 6));
 
-    const sizes = {
-      hud: { w: 680, h: 160, color: 0x4a7388 },
-      clutch: { w: 180, h: 265, color: 0x48c9e8 },
-      nos: { w: 125, h: 135, color: 0xa06be3 },
-      shifter: { w: 205, h: 270, color: 0xe0b24e },
-      throttle: { w: 160, h: 265, color: 0xe0b24e },
+    addTab(scene.add.text(preview.x + preview.w - 18, preview.y + 15,
+      'RACE + DYNO SHARE THIS LAYOUT', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '5px',
+        color: '#7fb7c9',
+      }).setOrigin(1, 0).setDepth(depth + 6));
+
+    // Clip the real control artwork to the mock race screen. This means moving
+    // the dash partly below the viewport previews the same crop seen in-race.
+    const maskShape = scene.make.graphics({ x: 0, y: 0, add: false });
+    maskShape.fillStyle(0xffffff, 1).fillRect(preview.x, preview.y, preview.w, preview.h);
+    tabObjects.push(maskShape);
+    objects.push(maskShape);
+    const previewMask = maskShape.createGeometryMask();
+
+    const visuals = {
+      hud: {
+        texture: 'hudCluster',
+        gameScale: 0.47,
+        originX: 0.5,
+        originY: 1,
+        zoneW: 1473 * 0.47,
+        zoneH: 452 * 0.47,
+        color: 0x55dcff,
+      },
+      clutch: {
+        texture: 'clutchPedal',
+        gameScale: 0.175,
+        originX: 0.5,
+        originY: 0.5,
+        zoneW: 220,
+        zoneH: 320,
+        color: 0x48c9e8,
+      },
+      nos: {
+        texture: 'nosButton',
+        gameScale: 0.088,
+        originX: 0.5,
+        originY: 0.5,
+        zoneW: 122,
+        zoneH: 145,
+        color: 0xa06be3,
+      },
+      shifter: {
+        texture: 'shifterNeutral',
+        gameScale: 0.20,
+        originX: 0.5,
+        originY: 0.5,
+        zoneW: 245,
+        zoneH: 330,
+        color: 0xe0b24e,
+      },
+      throttle: {
+        texture: 'throttlePedal',
+        gameScale: 0.175,
+        originX: 0.5,
+        originY: 0.5,
+        zoneW: 190,
+        zoneH: 325,
+        color: 0xe0b24e,
+      },
     };
 
     TOUCH_COMPONENTS.forEach(({ id, label }) => {
@@ -518,37 +620,105 @@ function showControlsPanel(scene) {
       const logicalX = base.x + Number(saved.dx || 0);
       const logicalY = base.y + Number(saved.dy || 0);
       const itemScale = Number(saved.scale || 1);
-      const size = sizes[id];
-      const x = preview.x + logicalX * sx;
-      const y = preview.y + logicalY * sy;
-      const w = Math.max(54, size.w * sx * itemScale);
-      const h = Math.max(34, size.h * sy * itemScale);
+      const spec = visuals[id];
 
-      const box = addTab(scene.add.rectangle(x, y, w, h, 0x0c1721, 0.94)
-        .setStrokeStyle(3, size.color, 0.95)
+      const zoneW = spec.zoneW * itemScale * sx;
+      const zoneH = spec.zoneH * itemScale * sy;
+      const visualX = mapX(logicalX);
+      const visualY = mapY(logicalY);
+      const zoneCenterY = id === 'hud'
+        ? visualY - zoneH / 2
+        : visualY;
+
+      let visual = null;
+      if (scene.textures.exists(spec.texture)) {
+        visual = addTab(scene.add.image(visualX, visualY, spec.texture)
+          .setOrigin(spec.originX, spec.originY)
+          .setScale(spec.gameScale * itemScale * sx)
+          .setDepth(depth + 4)
+          .setMask(previewMask));
+      } else {
+        visual = addTab(scene.add.rectangle(
+          visualX,
+          id === 'hud' ? zoneCenterY : visualY,
+          Math.max(40, zoneW * 0.72),
+          Math.max(30, zoneH * 0.72),
+          0x10212d,
+          0.94
+        ).setStrokeStyle(2, spec.color, 1).setDepth(depth + 4).setMask(previewMask));
+      }
+
+      const zone = addTab(scene.add.rectangle(
+        visualX,
+        zoneCenterY,
+        zoneW,
+        zoneH,
+        0xffffff,
+        0.001
+      ).setStrokeStyle(2, spec.color, 0.90)
         .setInteractive({ useHandCursor: true, draggable: true })
-        .setDepth(depth + (id === 'hud' ? 3 : 4)));
-      scene.input.setDraggable(box);
+        .setDepth(depth + 5)
+        .setMask(previewMask));
+      scene.input.setDraggable(zone);
 
-      const text = addTab(scene.add.text(x, y, label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: id === 'hud' ? '8px' : '6px',
-        color: '#f4fbff',
-      }).setOrigin(0.5).setDepth(depth + 5));
+      const tag = addTab(scene.add.text(
+        visualX,
+        zoneCenterY - zoneH / 2 + 11,
+        label,
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#f4fbff',
+          backgroundColor: '#08131f',
+          padding: { x: 5, y: 3 },
+        }
+      ).setOrigin(0.5).setDepth(depth + 6).setMask(previewMask));
 
-      box.on('drag', (_pointer, dragX, dragY) => {
-        const halfW = w / 2;
-        const halfH = h / 2;
-        const clampedX = Phaser.Math.Clamp(dragX, preview.x + halfW, preview.x + preview.w - halfW);
-        const clampedY = Phaser.Math.Clamp(dragY, preview.y + halfH, preview.y + preview.h - halfH);
-        box.setPosition(clampedX, clampedY);
-        text.setPosition(clampedX, clampedY);
+      const syncVisual = (x, centerY) => {
+        const bottomY = centerY + zoneH / 2;
+        if (visual?.setPosition) {
+          visual.setPosition(x, id === 'hud' ? bottomY : centerY);
+        }
+        tag.setPosition(x, centerY - zoneH / 2 + 11);
+      };
+
+      zone.on('drag', (_pointer, dragX, dragY) => {
+        const halfW = zoneW / 2;
+        const clampedX = Phaser.Math.Clamp(
+          dragX,
+          preview.x + halfW,
+          preview.x + preview.w - halfW
+        );
+
+        let clampedCenterY = dragY;
+        if (id === 'hud') {
+          // HUD is bottom-anchored in RaceHUD. Allow up to 60 logical px of
+          // intentional bottom crop so the player can get it fully clear of
+          // the cars if desired.
+          const minBottomY = preview.y + zoneH;
+          const maxBottomY = preview.y + preview.h + 60 * sy;
+          const proposedBottomY = dragY + zoneH / 2;
+          const bottomY = Phaser.Math.Clamp(proposedBottomY, minBottomY, maxBottomY);
+          clampedCenterY = bottomY - zoneH / 2;
+        } else {
+          const halfH = zoneH / 2;
+          clampedCenterY = Phaser.Math.Clamp(
+            dragY,
+            preview.y + halfH,
+            preview.y + preview.h - halfH
+          );
+        }
+
+        zone.setPosition(clampedX, clampedCenterY);
+        syncVisual(clampedX, clampedCenterY);
       });
 
-      box.on('dragend', () => {
+      zone.on('dragend', () => {
         const logical = {
-          x: (box.x - preview.x) / sx,
-          y: (box.y - preview.y) / sy,
+          x: (zone.x - preview.x) / sx,
+          y: id === 'hud'
+            ? ((zone.y + zoneH / 2 - preview.y) / sy)
+            : ((zone.y - preview.y) / sy),
         };
         settings = updateControlSettings(next => {
           next.layout[id].dx = logical.x - base.x;
@@ -558,23 +728,31 @@ function showControlsPanel(scene) {
       });
     });
 
-    const rowY = 692;
+    // Keep every scale control on one evenly spaced baseline below the mock
+    // race view. RESET occupies its own sixth slot and cannot overlap.
+    const rowY = 742;
+    const scaleXs = [370, 535, 700, 865, 1030];
     TOUCH_COMPONENTS.forEach(({ id, label }, index) => {
-      const x = 430 + index * 175;
-      addTab(scene.add.text(x, rowY - 28, label, {
-        fontFamily: PIXEL_FONT, fontSize: '5px', color: '#8fb0c0',
-      }).setOrigin(0.5).setDepth(depth + 3));
+      const x = scaleXs[index];
+      const currentScale = Number(settings.layout?.[id]?.scale || 1);
 
-      const minus = addTab(scene.add.rectangle(x - 38, rowY, 58, 34, 0x111d28, 1)
+      addTab(scene.add.text(x, rowY - 31,
+        label + '  ' + Math.round(currentScale * 100) + '%', {
+          fontFamily: PIXEL_FONT,
+          fontSize: '5px',
+          color: '#8fb0c0',
+        }).setOrigin(0.5).setDepth(depth + 3));
+
+      const minus = addTab(scene.add.rectangle(x - 34, rowY, 56, 34, 0x111d28, 1)
         .setStrokeStyle(1, 0x456273, 1)
         .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-      const plus = addTab(scene.add.rectangle(x + 38, rowY, 58, 34, 0x111d28, 1)
+      const plus = addTab(scene.add.rectangle(x + 34, rowY, 56, 34, 0x111d28, 1)
         .setStrokeStyle(1, 0x456273, 1)
         .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-      addTab(scene.add.text(x - 38, rowY, '−', {
+      addTab(scene.add.text(x - 34, rowY, '−', {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#dcebf2',
       }).setOrigin(0.5).setDepth(depth + 4));
-      addTab(scene.add.text(x + 38, rowY, '+', {
+      addTab(scene.add.text(x + 34, rowY, '+', {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#dcebf2',
       }).setOrigin(0.5).setDepth(depth + 4));
 
@@ -593,10 +771,11 @@ function showControlsPanel(scene) {
       plus.on('pointerdown', () => changeScale(0.10));
     });
 
-    const reset = addTab(scene.add.rectangle(1188, 692, 130, 34, 0x191c23, 1)
+    const resetX = 1195;
+    const reset = addTab(scene.add.rectangle(resetX, rowY, 130, 34, 0x191c23, 1)
       .setStrokeStyle(1, 0x7a6d59, 1)
       .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-    addTab(scene.add.text(1188, 692, 'RESET', {
+    addTab(scene.add.text(resetX, rowY, 'RESET', {
       fontFamily: PIXEL_FONT, fontSize: '6px', color: '#d9c9ad',
     }).setOrigin(0.5).setDepth(depth + 4));
     reset.on('pointerdown', () => {
