@@ -296,18 +296,16 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
   return finalRoster.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
 }
 
-function challengeAi(stageIndex) {
+function challengeAi(stageIndex, rating) {
   const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
-  const rating = STAGE_RATINGS[stage];
   const base = { ...getEncounterAi(rating) };
   const progress = stage / 6;
-
   return {
     ...base,
-    reactionSkill: Math.max(Number(base.reactionSkill || 0), 0.86 + progress * 0.12),
-    launchSkill: Math.max(Number(base.launchSkill || 0), 0.86 + progress * 0.12),
-    shiftSkill: Math.max(Number(base.shiftSkill || 0), 0.88 + progress * 0.11),
-    aggression: Math.max(Number(base.aggression || 0), 0.84 + progress * 0.12),
+    reactionSkill: Math.min(0.98, Number(base.reactionSkill || 0) + progress * 0.035),
+    launchSkill: Math.min(0.98, Number(base.launchSkill || 0) + progress * 0.035),
+    shiftSkill: Math.min(0.99, Number(base.shiftSkill || 0) + progress * 0.025),
+    aggression: Math.min(0.97, Number(base.aggression || 0) + progress * 0.035),
   };
 }
 
