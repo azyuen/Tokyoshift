@@ -23,7 +23,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20261006-r388';
+} from '../state/GameState.js?v=20261007-r422';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20261006-r388';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import {
