@@ -156,12 +156,12 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
   { x: 520, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
   { x: 690, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
 
-  // Upper level is deliberately asymmetrical: left sits between floor 1/2,
-  // centre tucks into the plant gap, and right is the tallest upper figure.
-  // All three sit slightly higher than the previous composition.
-  { x: 245, feetY: 178, h: 140, zone: 'balcony', scale: 1.00 },
-  { x: 500, feetY: 179, h: 134, zone: 'balcony', scale: 1.00 },
-  { x: 770, feetY: 184, h: 148, zone: 'balcony', scale: 1.15 },
+  // Upper level: all three recruits share the same visual height. The former
+  // right-side recruit is tucked between the two left positions, and the row
+  // sits a touch lower for a more natural relationship with the balcony.
+  { x: 245, feetY: 184, h: 148, zone: 'balcony', scale: 1.15 },
+  { x: 500, feetY: 185, h: 148, zone: 'balcony', scale: 1.15 },
+  { x: 372, feetY: 190, h: 148, zone: 'balcony', scale: 1.15 },
 ]);
 
 // The player sits just left of centre on the whiteboard, at the same visual
@@ -686,7 +686,7 @@ export default class GarageScene extends Phaser.Scene {
       const shadow = this.add.ellipse(
         x,
         feetY - 12,
-        88,
+        176,
         23,
         0x000000,
         0.38
@@ -739,7 +739,7 @@ export default class GarageScene extends Phaser.Scene {
       const shadow = this.add.ellipse(
         x,
         feetY - 12,
-        94,
+        188,
         24,
         0x000000,
         0.38
