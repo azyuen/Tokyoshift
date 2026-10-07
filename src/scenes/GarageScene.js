@@ -156,12 +156,12 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
   { x: 520, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
   { x: 690, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
 
-  // Upper level: all three recruits share the same visual height. The former
-  // right-side recruit is tucked between the two left positions, and the row
-  // sits a touch lower for a more natural relationship with the balcony.
-  { x: 245, feetY: 184, h: 148, zone: 'balcony', scale: 1.15 },
-  { x: 500, feetY: 185, h: 148, zone: 'balcony', scale: 1.15 },
-  { x: 372, feetY: 190, h: 148, zone: 'balcony', scale: 1.15 },
+  // Upper level: one shared rendered height, reduced 5% from R417.
+  // Visually ordered left -> centre -> right, with the centre shadow lifted
+  // slightly and the right figure opened out a little farther.
+  { x: 245, feetY: 184, h: 140.6, zone: 'balcony', scale: 1.15 },
+  { x: 535, feetY: 185, h: 140.6, zone: 'balcony', scale: 1.15 },
+  { x: 372, feetY: 190, h: 140.6, zone: 'balcony', scale: 1.15, shadowLift: 4 },
 ]);
 
 // The player sits just left of centre on the whiteboard, at the same visual
@@ -683,9 +683,10 @@ export default class GarageScene extends Phaser.Scene {
 
       const x = layout.x / STAGE.w * 1560;
       const feetY = layout.feetY / STAGE.h * 840;
+      const shadowLift = Number(layout.shadowLift || 0);
       const shadow = this.add.ellipse(
         x,
-        feetY - 12,
+        feetY - 12 - shadowLift,
         176,
         23,
         0x000000,
