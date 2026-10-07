@@ -68,7 +68,7 @@ import {
   TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20261007-r404';
+} from '../data/tunerChallenges.js?v=20261008-r425';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
@@ -265,7 +265,7 @@ export default class RaceScene extends Phaser.Scene {
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
     const isCompetitionBuild =
-      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE'].includes(this.raceMode) &&
+      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM'].includes(this.raceMode) &&
       storedBuildState &&
       typeof storedBuildState === 'object';
 
@@ -3104,6 +3104,9 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', round.difficulty);
+    this.registry.set('selectedOpponentBuildRating', round.opponentBuildRating || null);
+    this.registry.set('selectedOpponentBuildArchetype', round.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState || null);
     this.registry.set('selectedRaceCategory', 'TUNER_TEAM');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDistanceM', round.distanceM);
