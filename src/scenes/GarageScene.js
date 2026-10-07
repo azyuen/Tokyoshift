@@ -34,8 +34,8 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20260926-r211';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261007-r421';
+import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261007-r422';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
