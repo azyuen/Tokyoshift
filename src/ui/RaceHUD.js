@@ -1,10 +1,17 @@
+import { getControlSettings } from '../input/ControlSettings.js?v=20261007-r418';
+
 export default class RaceHUD {
   constructor(scene, options = {}) {
     this.scene = scene;
-    this.scale = Number(options.scale || 0.47);
-    this.x = Number(options.x ?? 780);
-    this.y = Number(options.y ?? 675);
-    this.statusY = Number(options.statusY ?? 452);
+
+    // Race and Dyno deliberately consume the same canonical HUD placement.
+    // No scene may supply its own x/y/scale override.
+    const settings = getControlSettings();
+    const placement = settings?.layout?.hud || {};
+    this.scale = 0.47 * Number(placement.scale || 1);
+    this.x = 780 + Number(placement.dx || 0);
+    this.y = 675 + Number(placement.dy || 0);
+    this.statusY = 452 + Number(placement.dy || 0);
     this.sourceW = 1473;
     this.sourceH = 452;
     this.hasTurbo = Boolean(options.hasTurbo);
@@ -86,8 +93,6 @@ export default class RaceHUD {
     if (this.hasTurbo) {
       this.drawNeedle(aux, (t.boostBar + 1.0) / 3.0, 75 * this.scale, 151, 393, 0xf7f7f2, 3);
     } else {
-      // A stock naturally aspirated car has no boost gauge. Re-purpose the
-      // small auxiliary dial as a throttle-position meter instead.
       g.fillStyle(0x071019, 0.84).fillCircle(aux.x, aux.y, 79 * this.scale);
       g.lineStyle(2, 0x415c6b, 0.78).strokeCircle(aux.x, aux.y, 70 * this.scale);
       this.drawNeedle(aux, t.throttle, 62 * this.scale, 151, 393, 0x7fe5ff, 3);
@@ -117,5 +122,19 @@ export default class RaceHUD {
     this.gearText.setVisible(this.showGear);
     this.gearBack.setVisible(this.showGear);
     this.speedText.setText(String(Math.round(t.speedKmh)));
+  }
+
+  destroy() {
+    [
+      this.cluster,
+      this.g,
+      this.status,
+      this.gearBack,
+      this.gearText,
+      this.speedText,
+      this.auxLabel,
+    ].forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+    });
   }
 }
