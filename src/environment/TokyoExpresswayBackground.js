@@ -475,26 +475,18 @@ export default class TokyoExpresswayBackground {
       // to reveal more skyline, but the painted lane divider stayed at its old
       // texture coordinate and therefore ended up far too low on screen.
       //
-      // Keep the road layer at y=340 and restore the lane/shoulder geometry
-      // inside the texture instead:
+      // Keep the road layer at y=340. The shoulders are subtle grey bands
+      // only; the centre dashed divider is the sole white road marking.
       //   screen y 340-356  : upper grey shoulder
-      //   screen y 356-360  : upper solid white edge
       //   screen y 432      : dashed lane divider (just below top-lane tyres)
-      //   screen y 496-500  : lower solid white edge
       //   screen y 500-518  : lower grey shoulder
       const shoulderColour = this.timeOfDay === 'day' ? '#777d82' : '#505860';
-      const edgeWhite = this.timeOfDay === 'day' ? '#f3f4ef' : '#dde2e6';
       const dividerWhite = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
 
       ctx.globalAlpha = 0.94;
       ctx.fillStyle = shoulderColour;
       ctx.fillRect(0, 0, w, 16);
       ctx.fillRect(0, 160, w, 18);
-
-      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.96 : 0.82;
-      ctx.fillStyle = edgeWhite;
-      ctx.fillRect(0, 16, w, 4);
-      ctx.fillRect(0, 156, w, 4);
 
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.82 : 0.68;
       ctx.fillStyle = dividerWhite;
