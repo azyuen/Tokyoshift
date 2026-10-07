@@ -149,25 +149,25 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 
 const CREW_MEMBER_LAYOUT = Object.freeze([
-  // Four on the workshop floor and three on the upper level. The deliberately
-  // staggered feet positions and two slightly smaller floor members keep the
-  // group feeling naturally gathered rather than arranged in a straight row.
+  // Four on the workshop floor. The two right-side recruits are pulled inward
+  // so the lower group reads as a looser cluster rather than a wide line.
   { x: 145, feetY: 482, h: 158, zone: 'floor', scale: 1.00 },
   { x: 345, feetY: 447, h: 158, zone: 'floor', scale: 0.90 },
-  { x: 575, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
-  { x: 805, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
+  { x: 520, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
+  { x: 690, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
 
-  // Upper-level recruits sit higher in the authored room and are exactly 25%
-  // larger than the previous balcony treatment (112 -> 140 target height).
-  { x: 585, feetY: 168, h: 140, zone: 'balcony', scale: 1.00 },
-  { x: 745, feetY: 157, h: 140, zone: 'balcony', scale: 1.00 },
-  { x: 900, feetY: 174, h: 140, zone: 'balcony', scale: 1.00 },
+  // Upper level is deliberately asymmetrical: left sits between floor 1/2,
+  // centre drops toward the room middle and is slightly smaller, while right
+  // comes left/down and is a touch taller.
+  { x: 245, feetY: 190, h: 140, zone: 'balcony', scale: 1.00 },
+  { x: 565, feetY: 191, h: 134, zone: 'balcony', scale: 1.00 },
+  { x: 770, feetY: 196, h: 148, zone: 'balcony', scale: 1.00 },
 ]);
 
-// The player is always visible in the wide Crew Space shot beside the
-// whiteboard on the right, even before the first crew member is recruited.
+// The player sits just left of centre on the whiteboard, at the same visual
+// scale as the full-size floor recruits.
 const CREW_PLAYER_OVERVIEW_LAYOUT = Object.freeze({
-  x: 1010,
+  x: 950,
   feetY: 473,
   h: 160,
 });
