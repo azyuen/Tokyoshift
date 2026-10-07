@@ -1,4 +1,16 @@
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
+import {
+  getControlSettings,
+  updateControlSettings,
+  resetControlSettings,
+  keyboardBindingLabel,
+  controllerBindingLabel,
+  getConnectedGamepads,
+  CONTROL_ACTIONS,
+  TOUCH_COMPONENTS,
+  CONTROL_LAYOUT_DEFAULTS,
+  CONTROL_REFERENCE,
+} from '../input/ControlSettings.js?v=20261007-r418';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   getProfileSlots,
@@ -379,138 +391,411 @@ function showControlsPanel(scene) {
   if (scene._controlsOverlay?.length) return;
 
   const objects = [];
+  let tabObjects = [];
+  let activeTab = 'touch';
+  let settings = getControlSettings();
+  let keyboardCaptureAction = null;
+  let controllerCaptureAction = null;
+  let keyboardCaptureHandler = null;
+  let controllerTimer = null;
+
   const add = obj => {
+    objects.push(obj);
+    return obj;
+  };
+  const addTab = obj => {
+    tabObjects.push(obj);
     objects.push(obj);
     return obj;
   };
   scene._controlsOverlay = objects;
 
+  const destroyTab = () => {
+    if (controllerTimer) {
+      try { controllerTimer.destroy(); } catch (e) {}
+      controllerTimer = null;
+    }
+    tabObjects.forEach(obj => {
+      try { obj?.destroy?.(); } catch (e) {}
+      const index = objects.indexOf(obj);
+      if (index >= 0) objects.splice(index, 1);
+    });
+    tabObjects = [];
+  };
+
   const close = () => {
+    destroyTab();
+    if (keyboardCaptureHandler) {
+      try { scene.input.keyboard.off('keydown', keyboardCaptureHandler); } catch (e) {}
+      keyboardCaptureHandler = null;
+    }
     destroyObjects(objects);
     scene._controlsOverlay = [];
   };
 
   const depth = 230;
-  add(scene.add.rectangle(780, 420, 1560, 840, 0x010309, 0.82)
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x010309, 0.84)
     .setDepth(depth)
     .setInteractive());
 
-  add(scene.add.rectangle(780, 420, 1040, 620, 0x08131f, 0.998)
+  add(scene.add.rectangle(780, 420, 1180, 720, 0x08131f, 0.998)
     .setStrokeStyle(2, 0x43dfff, 0.96)
     .setDepth(depth + 1));
 
-  add(scene.add.text(300, 140, 'RACE CONTROLS', {
+  add(scene.add.text(235, 85, 'DRIVING CONTROLS', {
     fontFamily: PIXEL_FONT,
-    fontSize: '15px',
+    fontSize: '14px',
     color: '#eefaff',
   }).setDepth(depth + 2));
 
-  const closeButton = add(scene.add.rectangle(1210, 146, 96, 40, 0x141d28, 1)
+  add(scene.add.text(235, 116, 'ONE SHARED LAYOUT + INPUT MAP FOR RACE AND DYNO', {
+    fontFamily: BODY_FONT,
+    fontSize: '9px',
+    color: '#7da6b8',
+    fontStyle: '700',
+  }).setDepth(depth + 2));
+
+  const closeButton = add(scene.add.rectangle(1280, 92, 100, 40, 0x141d28, 1)
     .setStrokeStyle(1, 0x678192, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(depth + 2));
-  add(scene.add.text(1210, 146, 'CLOSE', {
+  add(scene.add.text(1280, 92, 'CLOSE', {
     fontFamily: PIXEL_FONT,
     fontSize: '7px',
     color: '#cbdce6',
   }).setOrigin(0.5).setDepth(depth + 3));
   closeButton.on('pointerdown', close);
 
-  add(scene.add.text(520, 205, 'MOBILE // TOUCH', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '10px',
-    color: '#8fe8ff',
-  }).setOrigin(0.5).setDepth(depth + 2));
+  const tabDefs = [
+    ['touch', 'TOUCH LAYOUT', 520],
+    ['keyboard', 'KEYBOARD', 780],
+    ['controller', 'CONTROLLER', 1040],
+  ];
+  const tabButtons = [];
 
-  // A simplified race-screen diagram using the same physical layout as
-  // TouchControls: clutch left, NOS inside-left, shifter inside-right,
-  // throttle right.
-  add(scene.add.rectangle(520, 440, 430, 390, 0x06101b, 1)
-    .setStrokeStyle(1, 0x315470, 1)
-    .setDepth(depth + 2));
-
-  const mobileZone = (x, y, w, h, label, hint, accent = 0x315470) => {
-    add(scene.add.rectangle(x, y, w, h, 0x0b1724, 0.98)
-      .setStrokeStyle(2, accent, 1)
-      .setDepth(depth + 3));
-    add(scene.add.text(x, y - 10, label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#eaf8ff',
-      align: 'center',
-    }).setOrigin(0.5).setDepth(depth + 4));
-    add(scene.add.text(x, y + 21, hint, {
-      fontFamily: BODY_FONT,
-      fontSize: '8px',
-      color: '#91a9b7',
-      align: 'center',
-      wordWrap: { width: w - 12 },
-    }).setOrigin(0.5).setDepth(depth + 4));
+  const refreshTabs = () => {
+    tabButtons.forEach(({ id, box, label }) => {
+      const selected = activeTab === id;
+      box
+        .setFillStyle(selected ? 0x123246 : 0x0d1822, 1)
+        .setStrokeStyle(selected ? 2 : 1, selected ? 0x55dcff : 0x355267, 1);
+      label.setColor(selected ? '#f3fcff' : '#86a1b0');
+    });
   };
 
-  mobileZone(370, 475, 92, 220, 'CLUTCH', 'SWIPE UP', 0x48c9e8);
-  mobileZone(466, 505, 74, 90, 'NOS', 'PRESS / HOLD', 0x9d5be8);
-  mobileZone(616, 475, 104, 220, 'SHIFTER', 'SWIPE UP / DOWN', 0xe0b24e);
-  mobileZone(704, 475, 72, 220, 'THROTTLE', 'SWIPE UP', 0xe0b24e);
+  const renderTouchTab = () => {
+    const preview = { x: 300, y: 200, w: 960, h: 443 };
+    const sx = preview.w / CONTROL_REFERENCE.width;
+    const sy = preview.h / CONTROL_REFERENCE.height;
 
-  add(scene.add.text(
-    520,
-    664,
-    'Pedals respond progressively as you swipe upward.\nShifter: UP = next gear • DOWN = lower gear.',
-    {
-      fontFamily: BODY_FONT,
-      fontSize: '9px',
-      color: '#9eb4c1',
-      align: 'center',
-      lineSpacing: 4,
-      wordWrap: { width: 420 },
-    }
-  ).setOrigin(0.5).setDepth(depth + 3));
+    addTab(scene.add.rectangle(
+      preview.x + preview.w / 2,
+      preview.y + preview.h / 2,
+      preview.w,
+      preview.h,
+      0x050d16,
+      1
+    ).setStrokeStyle(2, 0x294b61, 1).setDepth(depth + 2));
 
-  add(scene.add.text(1035, 205, 'COMPUTER // KEYBOARD', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '10px',
-    color: '#8fe8ff',
-  }).setOrigin(0.5).setDepth(depth + 2));
+    addTab(scene.add.text(preview.x + 18, preview.y + 15,
+      'DRAG ANY CONTROL  //  THIS EXACT PLACEMENT IS USED IN BOTH RACE + DYNO', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#93dff7',
+      }).setDepth(depth + 3));
 
-  const keyboardRows = [
-    ['W  /  ↑', 'THROTTLE'],
-    ['C', 'CLUTCH'],
-    ['1 – 6', 'SELECT GEAR DIRECTLY'],
-    ['SPACE', 'NOS'],
-  ];
+    const sizes = {
+      hud: { w: 680, h: 160, color: 0x4a7388 },
+      clutch: { w: 180, h: 265, color: 0x48c9e8 },
+      nos: { w: 125, h: 135, color: 0xa06be3 },
+      shifter: { w: 205, h: 270, color: 0xe0b24e },
+      throttle: { w: 160, h: 265, color: 0xe0b24e },
+    };
 
-  keyboardRows.forEach((row, index) => {
-    const y = 292 + index * 88;
-    add(scene.add.rectangle(930, y, 170, 50, 0x0b1724, 1)
-      .setStrokeStyle(1, 0x45a8cc, 1)
-      .setDepth(depth + 2));
-    add(scene.add.text(930, y, row[0], {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#f2fbff',
+    TOUCH_COMPONENTS.forEach(({ id, label }) => {
+      const base = CONTROL_LAYOUT_DEFAULTS[id];
+      const saved = settings.layout?.[id] || {};
+      const logicalX = base.x + Number(saved.dx || 0);
+      const logicalY = base.y + Number(saved.dy || 0);
+      const itemScale = Number(saved.scale || 1);
+      const size = sizes[id];
+      const x = preview.x + logicalX * sx;
+      const y = preview.y + logicalY * sy;
+      const w = Math.max(54, size.w * sx * itemScale);
+      const h = Math.max(34, size.h * sy * itemScale);
+
+      const box = addTab(scene.add.rectangle(x, y, w, h, 0x0c1721, 0.94)
+        .setStrokeStyle(3, size.color, 0.95)
+        .setInteractive({ useHandCursor: true, draggable: true })
+        .setDepth(depth + (id === 'hud' ? 3 : 4)));
+      scene.input.setDraggable(box);
+
+      const text = addTab(scene.add.text(x, y, label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: id === 'hud' ? '8px' : '6px',
+        color: '#f4fbff',
+      }).setOrigin(0.5).setDepth(depth + 5));
+
+      box.on('drag', (_pointer, dragX, dragY) => {
+        const halfW = w / 2;
+        const halfH = h / 2;
+        const clampedX = Phaser.Math.Clamp(dragX, preview.x + halfW, preview.x + preview.w - halfW);
+        const clampedY = Phaser.Math.Clamp(dragY, preview.y + halfH, preview.y + preview.h - halfH);
+        box.setPosition(clampedX, clampedY);
+        text.setPosition(clampedX, clampedY);
+      });
+
+      box.on('dragend', () => {
+        const logical = {
+          x: (box.x - preview.x) / sx,
+          y: (box.y - preview.y) / sy,
+        };
+        settings = updateControlSettings(next => {
+          next.layout[id].dx = logical.x - base.x;
+          next.layout[id].dy = logical.y - base.y;
+          return next;
+        });
+      });
+    });
+
+    const rowY = 692;
+    TOUCH_COMPONENTS.forEach(({ id, label }, index) => {
+      const x = 430 + index * 175;
+      addTab(scene.add.text(x, rowY - 28, label, {
+        fontFamily: PIXEL_FONT, fontSize: '5px', color: '#8fb0c0',
+      }).setOrigin(0.5).setDepth(depth + 3));
+
+      const minus = addTab(scene.add.rectangle(x - 38, rowY, 58, 34, 0x111d28, 1)
+        .setStrokeStyle(1, 0x456273, 1)
+        .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
+      const plus = addTab(scene.add.rectangle(x + 38, rowY, 58, 34, 0x111d28, 1)
+        .setStrokeStyle(1, 0x456273, 1)
+        .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
+      addTab(scene.add.text(x - 38, rowY, '−', {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#dcebf2',
+      }).setOrigin(0.5).setDepth(depth + 4));
+      addTab(scene.add.text(x + 38, rowY, '+', {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#dcebf2',
+      }).setOrigin(0.5).setDepth(depth + 4));
+
+      const changeScale = delta => {
+        settings = updateControlSettings(next => {
+          next.layout[id].scale = Phaser.Math.Clamp(
+            Number(next.layout[id].scale || 1) + delta,
+            0.55,
+            1.65
+          );
+          return next;
+        });
+        renderTab();
+      };
+      minus.on('pointerdown', () => changeScale(-0.10));
+      plus.on('pointerdown', () => changeScale(0.10));
+    });
+
+    const reset = addTab(scene.add.rectangle(1188, 692, 130, 34, 0x191c23, 1)
+      .setStrokeStyle(1, 0x7a6d59, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 3));
+    addTab(scene.add.text(1188, 692, 'RESET', {
+      fontFamily: PIXEL_FONT, fontSize: '6px', color: '#d9c9ad',
+    }).setOrigin(0.5).setDepth(depth + 4));
+    reset.on('pointerdown', () => {
+      settings = resetControlSettings('layout');
+      renderTab();
+    });
+  };
+
+  const renderBindingRows = (mode) => {
+    const source = mode === 'keyboard' ? settings.keyboard : settings.controller;
+    const heading = mode === 'keyboard'
+      ? 'TAP A BINDING, THEN PRESS THE NEW KEY'
+      : 'TAP A BINDING, THEN PRESS A GAMEPAD BUTTON / TRIGGER / STICK AXIS';
+    addTab(scene.add.text(780, 215, heading, {
+      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#93dff7',
     }).setOrigin(0.5).setDepth(depth + 3));
-    add(scene.add.text(1040, y, row[1], {
-      fontFamily: BODY_FONT,
-      fontSize: '10px',
-      color: '#a8bfcc',
-      fontStyle: '700',
-    }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+    if (mode === 'controller') {
+      const pads = getConnectedGamepads();
+      const padLabel = pads.length
+        ? 'CONNECTED  //  ' + String(pads[0].id || 'GAMEPAD').slice(0, 70)
+        : 'NO GAMEPAD DETECTED  //  CONNECT BY BLUETOOTH OR USB-C, THEN PRESS A BUTTON';
+      addTab(scene.add.text(780, 250, padLabel, {
+        fontFamily: BODY_FONT, fontSize: '8px',
+        color: pads.length ? '#72e6c4' : '#d0b77d',
+        fontStyle: '700',
+      }).setOrigin(0.5).setDepth(depth + 3));
+    }
+
+    CONTROL_ACTIONS.forEach((action, index) => {
+      const column = index < 6 ? 0 : 1;
+      const row = column === 0 ? index : index - 6;
+      const x = column === 0 ? 515 : 1045;
+      const y = (mode === 'controller' ? 305 : 275) + row * 66;
+
+      addTab(scene.add.text(x - 205, y, action.label, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#9cb7c6',
+      }).setOrigin(0, 0.5).setDepth(depth + 3));
+
+      const box = addTab(scene.add.rectangle(x + 75, y, 300, 42, 0x0d1b27, 1)
+        .setStrokeStyle(1, 0x3e7189, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(depth + 3));
+
+      const value = mode === 'keyboard'
+        ? keyboardBindingLabel(source?.[action.id])
+        : controllerBindingLabel(source?.[action.id]);
+      const label = addTab(scene.add.text(x + 75, y, value, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#eefaff',
+      }).setOrigin(0.5).setDepth(depth + 4));
+      if (label.width > 276) label.setScale(276 / label.width);
+
+      box.on('pointerdown', () => {
+        if (mode === 'keyboard') {
+          keyboardCaptureAction = action.id;
+          controllerCaptureAction = null;
+        } else {
+          controllerCaptureAction = action.id;
+          keyboardCaptureAction = null;
+        }
+        label.setText('PRESS INPUT…').setColor('#ffe08a').setScale(1);
+      });
+    });
+
+    const reset = addTab(scene.add.rectangle(780, 690, 260, 38, 0x191c23, 1)
+      .setStrokeStyle(1, 0x7a6d59, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    addTab(scene.add.text(780, 690,
+      mode === 'keyboard' ? 'RESET KEYBOARD' : 'RESET CONTROLLER', {
+        fontFamily: PIXEL_FONT, fontSize: '6px', color: '#d9c9ad',
+      }).setOrigin(0.5).setDepth(depth + 4));
+    reset.on('pointerdown', () => {
+      settings = resetControlSettings(mode);
+      keyboardCaptureAction = null;
+      controllerCaptureAction = null;
+      renderTab();
+    });
+
+    if (mode === 'controller') {
+      addTab(scene.add.text(780, 735,
+        'DEFAULT: RT THROTTLE  •  LT CLUTCH  •  RB SHIFT UP  •  LB SHIFT DOWN  •  A/CROSS NOS\nAnalogue triggers and stick axes keep their progressive 0–100% input.', {
+          fontFamily: BODY_FONT, fontSize: '8px', color: '#829eac',
+          align: 'center', lineSpacing: 3,
+        }).setOrigin(0.5).setDepth(depth + 3));
+    } else {
+      addTab(scene.add.text(780, 735,
+        'SHIFT UP / DOWN can be bound as sequential controls; GEAR 1–6 remain available for direct selection.', {
+          fontFamily: BODY_FONT, fontSize: '8px', color: '#829eac',
+          align: 'center',
+        }).setOrigin(0.5).setDepth(depth + 3));
+    }
+  };
+
+  const renderControllerTab = () => {
+    renderBindingRows('controller');
+
+    controllerTimer = scene.time.addEvent({
+      delay: 80,
+      loop: true,
+      callback: () => {
+        if (!controllerCaptureAction) return;
+        const pad = getConnectedGamepads()[0];
+        if (!pad) return;
+
+        for (let i = 0; i < (pad.buttons?.length || 0); i++) {
+          const button = pad.buttons[i];
+          if (Number(button?.value || 0) >= 0.60 || button?.pressed) {
+            const action = controllerCaptureAction;
+            controllerCaptureAction = null;
+            settings = updateControlSettings(next => {
+              next.controller[action] = { kind: 'button', index: i };
+              return next;
+            });
+            renderTab();
+            return;
+          }
+        }
+
+        for (let i = 0; i < (pad.axes?.length || 0); i++) {
+          const value = Number(pad.axes[i] || 0);
+          if (Math.abs(value) >= 0.78) {
+            const action = controllerCaptureAction;
+            controllerCaptureAction = null;
+            settings = updateControlSettings(next => {
+              next.controller[action] = {
+                kind: 'axis',
+                index: i,
+                direction: value < 0 ? -1 : 1,
+                deadzone: 0.18,
+              };
+              return next;
+            });
+            renderTab();
+            return;
+          }
+        }
+      },
+    });
+  };
+
+  const renderTab = () => {
+    destroyTab();
+    settings = getControlSettings();
+    keyboardCaptureAction = null;
+    controllerCaptureAction = null;
+    refreshTabs();
+
+    if (activeTab === 'touch') {
+      renderTouchTab();
+    } else if (activeTab === 'keyboard') {
+      renderBindingRows('keyboard');
+    } else {
+      renderControllerTab();
+    }
+  };
+
+  tabDefs.forEach(([id, labelText, x]) => {
+    const box = add(scene.add.rectangle(x, 160, 220, 42, 0x0d1822, 1)
+      .setStrokeStyle(1, 0x355267, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(depth + 2));
+    const label = add(scene.add.text(x, 160, labelText, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '7px',
+      color: '#86a1b0',
+    }).setOrigin(0.5).setDepth(depth + 3));
+    box.on('pointerdown', () => {
+      activeTab = id;
+      renderTab();
+    });
+    tabButtons.push({ id, box, label });
   });
 
-  add(scene.add.text(
-    1035,
-    660,
-    'Keyboard shifting currently uses the number keys directly.\nThe on-screen shifter remains the mobile up/down control.',
-    {
-      fontFamily: BODY_FONT,
-      fontSize: '9px',
-      color: '#8099a8',
-      align: 'center',
-      lineSpacing: 4,
-      wordWrap: { width: 410 },
+  keyboardCaptureHandler = event => {
+    if (activeTab !== 'keyboard' || !keyboardCaptureAction) return;
+    const code = String(event?.code || '');
+    if (!code) return;
+    if (code === 'Escape') {
+      keyboardCaptureAction = null;
+      renderTab();
+      return;
     }
-  ).setOrigin(0.5).setDepth(depth + 2));
+    try { event.preventDefault?.(); } catch (e) {}
+    const action = keyboardCaptureAction;
+    keyboardCaptureAction = null;
+    settings = updateControlSettings(next => {
+      next.keyboard[action] = [code];
+      return next;
+    });
+    renderTab();
+  };
+  scene.input.keyboard.on('keydown', keyboardCaptureHandler);
+
+  renderTab();
 }
 
 export function showSettingsPanel(scene) {
