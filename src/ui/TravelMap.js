@@ -224,6 +224,13 @@ export function showTravelMap(scene, options = {}) {
     if (!region) return [];
     if (region.id !== HOME_REGION_ID) return region.locations;
 
+    // A recruited driver is only borrowing the street map to test their car.
+    // Keep Shinonome anchored to Warehouse HQ and do not expose the player's
+    // Workshop or Canal Yard garage from this mode.
+    if (crewTravelMode) {
+      return region.locations.filter(item => item.id === activeWorkshopId());
+    }
+
     const tier = garageTier();
 
     // Workshop map rule: show everything already owned plus exactly the next
@@ -749,7 +756,8 @@ export function showTravelMap(scene, options = {}) {
       const accent = specialColor ?? regularPink;
 
       if (!item.unlocked) {
-        item.hit.setInteractive({ useHandCursor: true });
+        if (item.crewBlocked) item.hit.disableInteractive();
+        else item.hit.setInteractive({ useHandCursor: true });
 
         // Locked places are visible discoveries, but clearly unavailable:
         // stronger grey dial + grey name, with no hover/click target.
@@ -1281,6 +1289,7 @@ export function showTravelMap(scene, options = {}) {
     ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
+      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
       selectedRegionId = regionId;
 
       if (regionId === currentRegionId && !fromWorkshop) {
@@ -1315,6 +1324,7 @@ export function showTravelMap(scene, options = {}) {
       unlocked,
       labelBg,
       labelText,
+      crewBlocked: crewRegionBlocked,
     };
   });
 
