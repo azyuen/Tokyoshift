@@ -88,6 +88,8 @@ import {
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
+  getCrewMembers,
+  removeCrewMember,
 } from '../data/crewSystem.js?v=20261007-r410';
 
 const QUARTER_M = 402.336;
@@ -732,6 +734,8 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceDeal === 'PINK_SLIP') {
       const forfeitedCarName = cars[this.selectedCarId]?.shortName || 'YOUR CAR';
+      const forfeitedCrewMember = Object.values(getCrewMembers(this.registry))
+        .find(member => member?.loanCarId === this.selectedCarId) || null;
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
       const carStates = { ...(this.registry.get('carStates') || {}) };
 
@@ -741,8 +745,16 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.set('ownedCarIds', ownedCarIds);
       this.registry.set('carStates', carStates);
 
+      if (forfeitedCrewMember?.regionId) {
+        removeCrewMember(this.registry, forfeitedCrewMember.regionId);
+        this.registry.set('selectedRacePlayerCharacterId', null);
+      }
+
       if (ownedCarIds.length) {
-        this.registry.set('selectedCarId', ownedCarIds[0]);
+        this.registry.set(
+          'selectedCarId',
+          ownedCarIds.find(id => !cars[id]?.crewLoan) || ownedCarIds[0]
+        );
         this.registry.set('meetStranded', true);
         this.registry.set('gameOver', false);
       } else {
@@ -3972,6 +3984,8 @@ export default class RaceScene extends Phaser.Scene {
             ' // UNIQUE CAR ALREADY COLLECTED';
         }
       } else {
+        const lostCrewMember = Object.values(getCrewMembers(this.registry))
+          .find(member => member?.loanCarId === this.selectedCarId) || null;
         recordCarDeparture(this.registry, this.selectedCarId, 'pink-slip-lost', {
           opponentCarId: this.opponentCarId,
         });
@@ -3981,7 +3995,10 @@ export default class RaceScene extends Phaser.Scene {
         pinkMessage = 'PINK SLIP LOST // ' + cars[this.selectedCarId].shortName + ' TAKEN';
 
         if (ownedCarIds.length) {
-          this.registry.set('selectedCarId', ownedCarIds[0]);
+          this.registry.set(
+            'selectedCarId',
+            ownedCarIds.find(id => !cars[id]?.crewLoan) || ownedCarIds[0]
+          );
           this.registry.set('meetStranded', true);
         } else {
           this.registry.set('selectedCarId', null);
@@ -3995,6 +4012,11 @@ export default class RaceScene extends Phaser.Scene {
       this.registry.set('carStates', carStates);
       this.registry.set('carGarageLocations', carGarageLocations);
       this.registry.set('gameOver', gameOver);
+
+      if (!playerWon && lostCrewMember?.regionId) {
+        removeCrewMember(this.registry, lostCrewMember.regionId);
+        this.registry.set('selectedRacePlayerCharacterId', null);
+      }
 
       if (playerWon && pinkCarNewlyWon && acquiredCarId) {
         recordCarAcquisition(this.registry, acquiredCarId, {
@@ -4022,6 +4044,7 @@ export default class RaceScene extends Phaser.Scene {
       playerWon &&
       this.raceMode === 'SINGLE' &&
       this.raceDeal === 'BET' &&
+      !cars[this.selectedCarId]?.crewLoan &&
       !this.registry.get('selectedRaceSpecialChallenge')
     ) {
       const meetOffer = this.registry.get('selectedRaceMeetOffer') || {};
