@@ -34,6 +34,7 @@ export default class DragRacingAI {
     this.filteredSlip = 0;
     this.previousRPM = null;
     this.rpmRate = 0;
+    this.nosCooldown = 0;
     this.targets = this.model.shiftPoints.map(ideal => {
       const old = vehicle.engine.config.redlineRPM * lerp(.94, .992, this.aggression)
         * lerp(.975, 1, this.shiftSkill);
@@ -94,6 +95,7 @@ export default class DragRacingAI {
 
   drive(dt, elapsed, t) {
     const v = this.vehicle;
+    this.nosCooldown = Math.max(0, Number(this.nosCooldown || 0) - dt);
     if (this.shiftState === 'lift') {
       this.shiftTimer -= dt;
       // requestGear reads LAST frame's pedals. Wait until they really arrived.
@@ -154,12 +156,35 @@ export default class DragRacingAI {
       this.shiftTimer = this.smart ? lerp(.065, .018, this.precision) + (1 - this.shiftSkill) * .04 : lerp(.085, .035, this.shiftSkill) + this.executionHesitation;
       return { throttle: this.smart ? 0 : .06, clutch: 1, nos: false };
     }
-    const nos = this.smart
-      ? throttle > .88 && clutch < .12 && Math.abs(t.clutchSlipRPM) < v.engine.config.redlineRPM * .10 && t.gear > 0
-        && v.transmission.shiftTimer <= 0 && t.rpm > Math.max(2600, v.engine.config.redlineRPM * .38)
-        && t.slipRatio < .065 && v.nitrous.remaining > .001 && v.nitrous.powerHp > 0
-        && (t.gear === v.transmission.gearRatios.length || target - t.rpm > Math.max(220, Math.max(0, this.rpmRate) * .16))
-      : elapsed > (this.rollingStart ? .50 : .82) && t.gear >= 1 && t.rpm > 3200 && v.nitrous.fraction > .05;
+    const nitrousReady =
+      !v.nitrous.active &&
+      v.nitrous.shotsRemaining > 0 &&
+      v.nitrous.powerHp > 0 &&
+      this.nosCooldown <= 0;
+    const stableForNos = this.smart
+      ? throttle > .88 &&
+        clutch < .12 &&
+        Math.abs(t.clutchSlipRPM) < v.engine.config.redlineRPM * .10 &&
+        t.gear >= 2 &&
+        v.transmission.shiftTimer <= 0 &&
+        t.rpm > Math.max(2800, v.engine.config.redlineRPM * .40) &&
+        t.slipRatio < .065 &&
+        (
+          t.gear === v.transmission.gearRatios.length ||
+          target - t.rpm > Math.max(260, Math.max(0, this.rpmRate) * .18)
+        )
+      : elapsed > (this.rollingStart ? .75 : 1.05) &&
+        t.gear >= 2 &&
+        t.rpm > 3400 &&
+        t.slipRatio < .12;
+    const nos = Boolean(nitrousReady && stableForNos);
+    if (nos) {
+      // A discrete request pulse starts one committed shot. The cooldown spaces
+      // multiple charges instead of letting AI chain all three continuously.
+      this.nosCooldown = this.smart
+        ? lerp(1.65, 1.35, this.precision)
+        : 1.90;
+    }
     return { throttle, clutch, nos };
   }
 
@@ -203,7 +228,7 @@ export default class DragRacingAI {
       d.launchSamples.push({ time: elapsed, rpm: t.rpm, slip: t.slipRatio, throttle: controls.throttle, clutch: controls.clutch });
     }
     if (controls.nos !== Boolean(this.lastNos) && d.nosEvents.length < 80) {
-      d.nosEvents.push({ time, active: controls.nos, gear: t.gear, rpm: t.rpm, remaining: this.vehicle.nitrous.remaining });
+      d.nosEvents.push({ time, active: controls.nos, gear: t.gear, rpm: t.rpm, remaining: this.vehicle.nitrous.shotsRemaining });
     }
     this.lastNos = controls.nos;
     const distance = t.positionM - this.startPosition;
