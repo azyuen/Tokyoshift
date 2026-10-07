@@ -1,12 +1,12 @@
-import Vehicle from '../vehicles/Vehicle.js?v=20261004-r325';
+import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261008-r426';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20261007-r399';
+import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
 } from '../data/playerDifficulty.js?v=20261007-r399';
-import RaceHUD from '../ui/RaceHUD.js?v=20261008-r426';
+import RaceHUD from '../ui/RaceHUD.js?v=20261008-r428';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261008-r424';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
@@ -26,7 +26,7 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20261004-r333';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import {
   characters,
