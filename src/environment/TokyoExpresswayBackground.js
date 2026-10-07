@@ -451,10 +451,6 @@ export default class TokyoExpresswayBackground {
         ctx.globalAlpha = 1;
       }
 
-      ctx.fillStyle = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
-      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.78 : 0.56;
-      for (let x = -20; x < w + 100; x += 185) ctx.fillRect(x, 154, 92, 4);
-      ctx.globalAlpha = 1;
 
       // Sparse highway furniture: repaired asphalt, cats-eyes and drain grates.
       // These stay subtle so cars remain the visual focus.
@@ -466,10 +462,6 @@ export default class TokyoExpresswayBackground {
       }
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = this.timeOfDay === 'day' ? '#d9d8c6' : '#c8c59d';
-      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.52 : 0.72;
-      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 156, 4, 2);
-      ctx.globalAlpha = 1;
 
       ctx.fillStyle = p.roadDark;
       for (const x of [332, 934]) {
@@ -479,14 +471,43 @@ export default class TokyoExpresswayBackground {
         ctx.fillStyle = p.roadDark;
       }
 
-      // Lower lane edge: sit below the player-car tyres, then transition into
-      // a darker shoulder band on the far side so the lane reads correctly.
-      ctx.fillStyle = p.barrierTop;
-      ctx.globalAlpha = 0.72;
-      ctx.fillRect(0, 236, w, 3);
+      // R423 road geometry. R301 moved the entire road layer down by 62 px
+      // to reveal more skyline, but the painted lane divider stayed at its old
+      // texture coordinate and therefore ended up far too low on screen.
+      //
+      // Keep the road layer at y=340 and restore the lane/shoulder geometry
+      // inside the texture instead:
+      //   screen y 340-356  : upper grey shoulder
+      //   screen y 356-360  : upper solid white edge
+      //   screen y 432      : dashed lane divider (just below top-lane tyres)
+      //   screen y 496-500  : lower solid white edge
+      //   screen y 500-518  : lower grey shoulder
+      const shoulderColour = this.timeOfDay === 'day' ? '#777d82' : '#505860';
+      const edgeWhite = this.timeOfDay === 'day' ? '#f3f4ef' : '#dde2e6';
+      const dividerWhite = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
+
+      ctx.globalAlpha = 0.94;
+      ctx.fillStyle = shoulderColour;
+      ctx.fillRect(0, 0, w, 16);
+      ctx.fillRect(0, 160, w, 18);
+
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.96 : 0.82;
+      ctx.fillStyle = edgeWhite;
+      ctx.fillRect(0, 16, w, 4);
+      ctx.fillRect(0, 156, w, 4);
+
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.82 : 0.68;
+      ctx.fillStyle = dividerWhite;
+      for (let x = -20; x < w + 100; x += 185) {
+        ctx.fillRect(x, 92, 92, 4);
+      }
+
+      // Small reflectors follow the dashed divider rather than the old,
+      // accidentally lowered y=156 position.
+      ctx.fillStyle = this.timeOfDay === 'day' ? '#d9d8c6' : '#c8c59d';
+      ctx.globalAlpha = this.timeOfDay === 'day' ? 0.52 : 0.72;
+      for (let x = 78; x < w; x += 252) ctx.fillRect(x, 94, 4, 2);
       ctx.globalAlpha = 1;
-      ctx.fillStyle = p.roadDark;
-      ctx.fillRect(0, 224, w, 36);
     });
   }
 
