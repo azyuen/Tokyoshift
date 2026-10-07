@@ -7,13 +7,9 @@ const SKIP_SCENES = new Set([
 const SELECT_KEYS = new Set(['Enter', 'Space', 'KeyX']);
 const DIRECTIONS = Object.freeze({
   ArrowUp: 'up',
-  KeyW: 'up',
   ArrowDown: 'down',
-  KeyS: 'down',
   ArrowLeft: 'left',
-  KeyA: 'left',
   ArrowRight: 'right',
-  KeyD: 'right',
 });
 
 function activeTextInput() {
@@ -105,12 +101,14 @@ export default class MenuNavigation {
       const direction = DIRECTIONS[event.code];
       if (direction) {
         event.preventDefault();
+        event.stopPropagation();
         this.navigate(direction, scene);
         return;
       }
 
       if (SELECT_KEYS.has(event.code)) {
         event.preventDefault();
+        event.stopPropagation();
         this.activate(scene);
       }
     };
@@ -119,7 +117,7 @@ export default class MenuNavigation {
       this.clearFocus();
     };
 
-    window.addEventListener('keydown', this.onKeyDown, { passive: false });
+    window.addEventListener('keydown', this.onKeyDown, { passive: false, capture: true });
     window.addEventListener('pointerdown', this.onPointerUse, true);
 
     this.tick = this.tick.bind(this);
@@ -501,7 +499,7 @@ export default class MenuNavigation {
   destroy() {
     this.destroyed = true;
     try { window.cancelAnimationFrame(this.raf); } catch (e) {}
-    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keydown', this.onKeyDown, true);
     window.removeEventListener('pointerdown', this.onPointerUse, true);
     this.clearFocus();
   }
