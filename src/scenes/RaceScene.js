@@ -8,7 +8,7 @@ import {
 } from '../data/playerDifficulty.js?v=20261007-r399';
 import RaceHUD from '../ui/RaceHUD.js?v=20261007-r422';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20260930-r302';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261007-r423';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
