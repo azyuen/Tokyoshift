@@ -70,3 +70,9 @@ The next iteration should tune only the feel of:
 6. AI launch and shift consistency
 
 Do not add progression until those feel good.
+
+## Character continuity and narrative
+
+[Character Bible v1](docs/CHARACTER_BIBLE.md) is the repository foundation for consistent personalities, relationships, voices and knowledge across Career and future Story Mode. Read [narrative authoring guidance](docs/NARRATIVE_AUTHORING.md) before writing scenes.
+
+V1 supports individualised Career dialogue now and deeper histories or mysteries later. Explicitly unresolved identity/origin questions remain labelled; adding these documents does not change gameplay or automatically rewrite existing dialogue.
