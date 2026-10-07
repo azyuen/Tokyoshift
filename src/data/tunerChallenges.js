@@ -309,26 +309,38 @@ function challengeAi(stageIndex, rating) {
   };
 }
 
-export function buildTunerTeamChallengeRounds(regionId, playerCharacterId = '') {
+export function buildTunerTeamChallengeRounds(
+  regionId,
+  playerCharacterId = '',
+  playerDifficulty = 'STANDARD'
+) {
   const key = normaliseRegion(regionId);
   const roster = getTunerTeamChallengeRoster(key, playerCharacterId);
   const cars = REGION_CARS[key] || REGION_CARS.ODAIBA;
   const pattern = REGION_RACE_PATTERNS[key] || REGION_RACE_PATTERNS.ODAIBA;
+  const ratings = REGION_DRIVER_RATINGS[key] || REGION_DRIVER_RATINGS.ODAIBA;
+  const era = REGION_BUILD_ERAS[key] || REGION_BUILD_ERAS.ODAIBA;
   const paintColors = [0xffffff, 0x2d7cff, 0xffd54a, 0xe94d5f, 0x46d39a, 0x9d73ff, 0x111111];
 
   return Array.from({ length: TUNER_TEAM_CHALLENGE_STAGES }, (_, index) => {
     const [raceType, distanceM] = pattern[index] || ['Standing Start', 402.336];
-    const rating = STAGE_RATINGS[index];
+    const rating = ratings[index] || ratings[ratings.length - 1] || 3;
 
     return {
       stageIndex: index,
+      regionId: key,
       regionRank: getRegionalChampionshipRank(key),
       characterId: roster[index] || roster[roster.length - 1] || 'kaitoFujimori',
       carId: cars[index] || cars[cars.length - 1] || 'r32',
       paintColor: paintColors[index % paintColors.length],
       encounterRating: rating,
-      encounterAi: challengeAi(index),
-      difficulty: index === 6 ? 'PRO' : index >= 3 ? 'ELITE' : 'HARD',
+      encounterAi: challengeAi(index, rating),
+      difficulty: index === 6 ? 'PRO' : rating >= 5 ? 'ELITE' : rating >= 4 ? 'EXPERT' : rating >= 3 ? 'SKILLED' : 'ROOKIE',
+      workshopEra: era.workshopEra,
+      tuningPointCap: regionalTuningPointCap(key, index, playerDifficulty),
+      maxTuningLevel: era.maxTuningLevel,
+      allowNos: era.allowNos,
+      specialistUpgradeCount: regionalSpecialistUpgradeCount(key, index, playerDifficulty),
       raceType,
       distanceM,
     };
