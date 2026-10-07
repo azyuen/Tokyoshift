@@ -1,20 +1,16 @@
 import {
   getControlSettings,
   getConnectedGamepads,
-} from './ControlSettings.js?v=20261007-r421';
+  CONTROL_TOUCH_RECTS,
+} from './ControlSettings.js?v=20261007-r422';
 
-const BASE_RECTS = Object.freeze({
-  clutch: Object.freeze({ x: 65, y: 390, w: 220, h: 320 }),
-  nos: Object.freeze({ x: 318, y: 510, w: 122, h: 145 }),
-  shifter: Object.freeze({ x: 1090, y: 380, w: 245, h: 330 }),
-  throttle: Object.freeze({ x: 1315, y: 385, w: 190, h: 325 }),
-});
+const BASE_RECTS = CONTROL_TOUCH_RECTS;
 
 const BASE_SPRITES = Object.freeze({
   clutch: Object.freeze({ x: 175, scale: 0.175 }),
   nos: Object.freeze({ x: 378, y: 570, scale: 0.088 }),
   shifter: Object.freeze({ x: 1218, scale: 0.20 }),
-  throttle: Object.freeze({ x: 1405, scale: 0.175 }),
+  throttle: Object.freeze({ x: 1435, scale: 0.175 }),
 });
 
 const DIRECT_GEAR_ACTIONS = Object.freeze([
