@@ -88,6 +88,7 @@ import {
   getCarCouponRequirement,
   getCarCouponCount,
   MARKET_BASE_PRICES,
+  isArkonDen,
 } from '../data/centralTokyo.js?v=20261006-r388';
 import {
   isCrewComplete,
@@ -105,7 +106,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261007-r410';
+} from '../data/crewSystem.js?v=20261007-r413';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1944,6 +1945,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildDevControls() {
+    if (isArkonDen(this.registry)) this.registry.set('devMode', true);
     if (!this.registry.get('devMode')) return;
 
     const width = 330;
@@ -2020,6 +2022,16 @@ export default class MeetScene extends Phaser.Scene {
       0x43dfff,
       () => this.devRefreshAllChallenges()
     );
+
+    if (isArkonDen(this.registry) && isCrewComplete(this.registry)) {
+      this.devForceRegionalCrewBattleControl = makeButton(
+        5,
+        'DEV // DEPLOY REGIONAL CREW BATTLE',
+        0x25172d,
+        0xd875ff,
+        () => this.forceDevRegionalCrewBattle()
+      );
+    }
   }
 
   flashDevControl(control, message, color = '#f4fbff') {
@@ -2029,6 +2041,40 @@ export default class MeetScene extends Phaser.Scene {
       if (!control?.label?.active) return;
       control.label.setText(control.defaultText).setColor('#f4fbff');
     });
+  }
+
+  forceDevRegionalCrewBattle() {
+    if (!isArkonDen(this.registry) || !isCrewComplete(this.registry)) return;
+
+    if (this.isCrewTestDriveMode()) {
+      this.flashDevControl(
+        this.devForceRegionalCrewBattleControl,
+        'DEV // RETURN WITH YOUR CAR',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    const location = getMeetLocation(this.selectedMeetLocation);
+    const regionId = String(location?.district || '').toUpperCase();
+    const units = getCrewBattleUnits(this.registry);
+    const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
+
+    if (!regionId || units.length < 7 || rounds.length < 6) {
+      this.flashDevControl(
+        this.devForceRegionalCrewBattleControl,
+        'DEV // CREW BATTLE UNAVAILABLE',
+        '#ffb4c8'
+      );
+      return;
+    }
+
+    this.showCrewBattleLineup(regionId);
+    this.flashDevControl(
+      this.devForceRegionalCrewBattleControl,
+      'DEV // CREW BATTLE DEPLOYED',
+      '#f1d0ff'
+    );
   }
 
   forceDevTunerTeamChallenge() {
