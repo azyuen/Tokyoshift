@@ -54,7 +54,7 @@ import {
   getCrewMembers,
   getCrewCount,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261006-r388';
+} from '../data/crewSystem.js?v=20261007-r410';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,

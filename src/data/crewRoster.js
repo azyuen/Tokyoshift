@@ -98,7 +98,10 @@ export const CREW_CHARACTER_CARS = Object.freeze(
   Object.fromEntries(
     CREW_REGIONS.flatMap(regionId =>
       REGIONAL_CREW_ROSTERS[regionId].members
-        .filter(member => member.recruitable)
+        .filter(member =>
+          member.recruitable &&
+          member.characterId !== REGIONAL_CREW_ROSTERS[regionId].mainRivalId
+        )
         .map(member => [member.characterId, member.baseCarId])
     )
   )
@@ -112,9 +115,25 @@ export function getRegionalMainRivalId(regionId) {
   return getRegionalCrewRoster(regionId)?.mainRivalId || null;
 }
 
+export function isRecruitableRegionalCharacter(regionId, characterId) {
+  const roster = getRegionalCrewRoster(regionId);
+  const id = String(characterId || '');
+  if (!roster || !id) return false;
+
+  // Main rivals are persistent progression characters. They remain opponents
+  // throughout the career and can never defect to the player's crew, even if
+  // a future roster edit accidentally marks one as recruitable.
+  if (id === String(roster.mainRivalId || '')) return false;
+
+  return (roster.members || []).some(
+    member => member.recruitable && member.characterId === id
+  );
+}
+
 export function getRecruitableRegionalMembers(regionId) {
-  return (getRegionalCrewRoster(regionId)?.members || [])
-    .filter(member => member.recruitable)
+  const key = String(regionId || '').toUpperCase();
+  return (getRegionalCrewRoster(key)?.members || [])
+    .filter(member => isRecruitableRegionalCharacter(key, member.characterId))
     .map(member => ({ ...member }));
 }
 

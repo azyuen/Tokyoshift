@@ -3,9 +3,10 @@ import {
   CREW_REGIONS,
   getRegionalCrewRoster,
   getRecruitableRegionalMembers,
+  isRecruitableRegionalCharacter,
   getCrewBaseCarId,
   getCrewLoanCarId,
-} from './crewRoster.js?v=20261007-r404';
+} from './crewRoster.js?v=20261007-r410';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
@@ -63,7 +64,13 @@ export function getCrewMembers(source) {
   const raw = value(source, 'crewMembers', {}) || {};
   return Object.fromEntries(
     CREW_REGIONS
-      .filter(regionId => raw[regionId]?.characterId)
+      .filter(regionId =>
+        raw[regionId]?.characterId &&
+        isRecruitableRegionalCharacter(
+          regionId,
+          raw[regionId].characterId
+        )
+      )
       .map(regionId => [regionId, { ...raw[regionId], regionId }])
   );
 }
@@ -234,9 +241,7 @@ export function getRecruitableCrewCandidates(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   if (!isCrewUnlocked(source) || getCrewMemberForRegion(source, key)) return [];
 
-  const playerCharacterId = String(value(source, 'playerCharacterId', '') || '');
   return getRecruitableRegionalMembers(key)
-    .filter(member => member.characterId !== playerCharacterId)
     .filter(member => cars[member.baseCarId])
     .map(member => ({ ...member, regionId: key }));
 }
@@ -443,10 +448,7 @@ export function acceptCrewMember(registry, pending = registry?.get?.('crewPendin
 
   const regionId = String(pending.regionId || '').toUpperCase();
   const characterId = String(pending.characterId || '');
-  const roster = getRegionalCrewRoster(regionId);
-  const allowed = roster?.members?.some(
-    member => member.recruitable && member.characterId === characterId
-  );
+  const allowed = isRecruitableRegionalCharacter(regionId, characterId);
   if (!allowed || getCrewMemberForRegion(registry, regionId)) return null;
 
   const baseCarId = String(pending.baseCarId || getCrewBaseCarId(characterId) || '');
