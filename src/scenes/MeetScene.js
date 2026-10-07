@@ -73,7 +73,8 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261007-r404';
+} from '../data/tunerChallenges.js?v=20261008-r425';
+import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261008-r425';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
@@ -1623,15 +1624,22 @@ export default class MeetScene extends Phaser.Scene {
 
     let state = getTunerTeamChallengeState(this.registry, key);
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const generatedRounds = buildTunerTeamChallengeRounds(key, playerCharacterId);
+    const generatedRounds = materialiseRegionalChallengeRounds(
+      buildTunerTeamChallengeRounds(
+        key,
+        playerCharacterId,
+        this.registry.get('playerDifficulty') || 'STANDARD'
+      )
+    );
     const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
     const rounds = Array.from(
       { length: TUNER_TEAM_CHALLENGE_STAGES },
       (_, index) => {
         const stored = storedRounds[index];
+        const generated = generatedRounds[index];
         return stored?.characterId && characters[stored.characterId]
-          ? stored
-          : generatedRounds[index];
+          ? { ...generated, characterId: stored.characterId }
+          : generated;
       }
     );
 
@@ -2094,7 +2102,13 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const playerCharacterId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const rounds = buildTunerTeamChallengeRounds(regionId, playerCharacterId);
+    const rounds = materialiseRegionalChallengeRounds(
+      buildTunerTeamChallengeRounds(
+        regionId,
+        playerCharacterId,
+        this.registry.get('playerDifficulty') || 'STANDARD'
+      )
+    );
     this.setTunerChallengeState(regionId, {
       invited: true,
       offeredOnce: true,
