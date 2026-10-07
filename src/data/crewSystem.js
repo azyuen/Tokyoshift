@@ -503,6 +503,7 @@ export function removeAllCrewMembers(registry) {
   registry.set('crewPendingRecruit', null);
   registry.set('crewInviteInterest', null);
   registry.set('crewRecruitChallenge', null);
+  registry.set('crewBattleState', null);
   return removed;
 }
 
