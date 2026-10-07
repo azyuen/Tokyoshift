@@ -1,7 +1,7 @@
 import { cars } from '../data/cars.js?v=20261006-r388';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20260926-r211';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261008-r428';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
 import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261004-r325';
 
@@ -40,6 +40,8 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
 
   if (config.tuningLocked || state.tuningLocked || state.immutable || state.collector) {
     config.nosPower = 0;
+    config.nosShots = 0;
+    config.nosShotDurationSeconds = 1.0;
     config.nosCapacitySeconds = 0;
     return { car: config, engine };
   }
@@ -62,10 +64,16 @@ export function buildCarFromState(carConfig, engineConfig, state = {}) {
   if (exhaustNos.nosKit <= 0) {
     if (!state.nosInstalled) {
       tuned.car.nosPower = 0;
+      tuned.car.nosShots = 0;
+      tuned.car.nosShotDurationSeconds = 1.0;
       tuned.car.nosCapacitySeconds = 0;
     } else {
+      // Old pre-parts-tree saves remain usable as a conservative single-shot
+      // system rather than inheriting their old 5-second continuous bottle.
       tuned.car.nosPower = Number(state.nosPower || tuned.car.nosPower || 35);
-      tuned.car.nosCapacitySeconds = Number(state.nosCapacitySeconds || tuned.car.nosCapacitySeconds || 5);
+      tuned.car.nosShots = 1;
+      tuned.car.nosShotDurationSeconds = 1.0;
+      tuned.car.nosCapacitySeconds = 1.0;
     }
   }
 
