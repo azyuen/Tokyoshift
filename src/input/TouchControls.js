@@ -1,7 +1,7 @@
 import {
   getControlSettings,
   getConnectedGamepads,
-} from './ControlSettings.js?v=20261007-r418';
+} from './ControlSettings.js?v=20261007-r421';
 
 const BASE_RECTS = Object.freeze({
   clutch: Object.freeze({ x: 65, y: 390, w: 220, h: 320 }),
