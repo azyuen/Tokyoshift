@@ -10,7 +10,7 @@ import {
   TOUCH_COMPONENTS,
   CONTROL_LAYOUT_DEFAULTS,
   CONTROL_REFERENCE,
-} from '../input/ControlSettings.js?v=20261007-r418';
+} from '../input/ControlSettings.js?v=20261007-r421';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   getProfileSlots,
