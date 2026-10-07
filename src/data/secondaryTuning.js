@@ -105,12 +105,12 @@ export const EXHAUST_NOS_TUNING_PARTS = {
   },
   nosKit: {
     id: 'nosKit',
-    name: 'NOS KIT',
+    name: 'BOTTLE CAPACITY',
     levels: [
-      { level: 0, name: 'No nitrous system', cost: 0, capacitySeconds: 0, spriteKey: 'tuningPartNosKitL0', benefit: 'No nitrous installed' },
-      { level: 1, name: 'Street bottle', cost: 22000, capacitySeconds: 3.0, spriteKey: 'tuningPartNosKitL1', benefit: '3.0 sec nitrous capacity' },
-      { level: 2, name: 'Wet kit', cost: 55000, capacitySeconds: 5.0, spriteKey: 'tuningPartNosKitL2', benefit: '5.0 sec nitrous capacity' },
-      { level: 3, name: 'Race twin-bottle', cost: 130000, capacitySeconds: 7.0, spriteKey: 'tuningPartNosKitL3', benefit: '7.0 sec nitrous capacity' },
+      { level: 0, name: 'No nitrous bottle', cost: 0, shots: 0, shotDurationSeconds: 1.0, spriteKey: 'tuningPartNosKitL0', benefit: 'No nitrous capacity' },
+      { level: 1, name: 'Single-shot bottle', cost: 22000, shots: 1, shotDurationSeconds: 1.0, spriteKey: 'tuningPartNosKitL1', benefit: '1 × 1.0 sec nitrous burst' },
+      { level: 2, name: 'Two-shot bottle', cost: 55000, shots: 2, shotDurationSeconds: 1.0, spriteKey: 'tuningPartNosKitL2', benefit: '2 × 1.0 sec nitrous bursts' },
+      { level: 3, name: 'Three-shot bottle', cost: 130000, shots: 3, shotDurationSeconds: 1.0, spriteKey: 'tuningPartNosKitL3', benefit: '3 × 1.0 sec nitrous bursts' },
     ],
   },
   nitrousShot: {
@@ -269,9 +269,16 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
       + Number(ch.weightReduction.massDelta || 0)
   );
 
-  if (exhaustNos.nosKit > 0) {
-    car.nosCapacitySeconds = Number(ex.nosKit.capacitySeconds || 0);
+  if (exhaustNos.nosKit > 0 && exhaustNos.nitrousShot > 0) {
+    car.nosShots = Math.max(0, Math.min(3, Number(ex.nosKit.shots || 0)));
+    car.nosShotDurationSeconds = Number(ex.nosKit.shotDurationSeconds || 1.0);
+    car.nosCapacitySeconds = car.nosShots * car.nosShotDurationSeconds;
     car.nosPower = Number(ex.nitrousShot.powerHp || 0);
+  } else {
+    car.nosShots = 0;
+    car.nosShotDurationSeconds = 1.0;
+    car.nosCapacitySeconds = 0;
+    car.nosPower = 0;
   }
 
   // Regional tuner-house work is a final refinement layered over the normal
