@@ -1,4 +1,7 @@
-import { getControlSettings } from '../input/ControlSettings.js?v=20261007-r422';
+import {
+  getControlSettings,
+  CONTROL_REFERENCE,
+} from '../input/ControlSettings.js?v=20261007-r422';
 
 export default class RaceHUD {
   constructor(scene, options = {}) {
@@ -8,10 +11,13 @@ export default class RaceHUD {
     // No scene may supply its own x/y/scale override.
     const settings = getControlSettings();
     const placement = settings?.layout?.hud || {};
+    const viewportYOffset =
+      Number(scene.scale?.height || CONTROL_REFERENCE.height) -
+      Number(CONTROL_REFERENCE.height);
     this.scale = 0.47 * Number(placement.scale || 1);
     this.x = 780 + Number(placement.dx || 0);
-    this.y = 675 + Number(placement.dy || 0);
-    this.statusY = 452 + Number(placement.dy || 0);
+    this.y = 675 + Number(placement.dy || 0) + viewportYOffset;
+    this.statusY = 452 + Number(placement.dy || 0) + viewportYOffset;
     this.sourceW = 1473;
     this.sourceH = 452;
     this.hasTurbo = Boolean(options.hasTurbo);
