@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261007-r407';
+export const CHARACTER_ASSET_VERSION = '20261007-r409';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -1871,6 +1871,135 @@ export const MAIN_RIVAL_BY_REGION = Object.freeze({
 
 export function getMainRivalForRegion(regionId) {
   return MAIN_RIVAL_BY_REGION[String(regionId || '').trim().toUpperCase()] || null;
+}
+
+function rivalContextValue(source, key, fallback = null) {
+  if (source && typeof source.get === 'function') {
+    const value = source.get(key);
+    return value == null ? fallback : value;
+  }
+  const value = source?.[key];
+  return value == null ? fallback : value;
+}
+
+function clampRivalSkill(value) {
+  return Math.max(0.30, Math.min(0.99, Number(value) || 0));
+}
+
+function growRivalAi(base = {}, floors = {}, bump = 0) {
+  const grow = (key, fallback) => clampRivalSkill(
+    Math.max(
+      Number(floors[key] ?? 0),
+      Number(base[key] ?? fallback) + Number(bump || 0)
+    )
+  );
+
+  return {
+    ...base,
+    reactionSkill: grow('reactionSkill', 0.78),
+    launchSkill: grow('launchSkill', 0.76),
+    shiftSkill: grow('shiftSkill', 0.78),
+    aggression: grow('aggression', 0.74),
+  };
+}
+
+export function getConqueredMainRivalIds(source) {
+  const progress = rivalContextValue(source, 'crewBattleProgress', {}) || {};
+  return Object.entries(MAIN_RIVAL_BY_REGION)
+    .filter(([regionId, characterId]) =>
+      Boolean(progress?.[regionId]?.completed) &&
+      Boolean(characters[characterId])
+    )
+    .sort((a, b) =>
+      Number(progress?.[a[0]]?.completedAt || 0) -
+      Number(progress?.[b[0]]?.completedAt || 0)
+    )
+    .map(([, characterId]) => characterId);
+}
+
+export function isMainRivalAvailableAtRegionalMeet(
+  source,
+  characterId,
+  regionId = ''
+) {
+  const id = String(characterId || '');
+  const character = characters[id];
+  if (!character?.mainRival) return true;
+
+  const canonicalRegion = String(
+    regionId || character.regionId || ''
+  ).trim().toUpperCase();
+  if (!canonicalRegion || MAIN_RIVAL_BY_REGION[canonicalRegion] !== id) return true;
+
+  const progress = rivalContextValue(source, 'crewBattleProgress', {}) || {};
+  return !Boolean(progress?.[canonicalRegion]?.completed);
+}
+
+export function getMainRivalProgression(source, characterId) {
+  const id = String(characterId || '');
+  const character = characters[id];
+  if (!character?.mainRival) return null;
+
+  const regionId = String(character.regionId || '').trim().toUpperCase();
+  const progress = rivalContextValue(source, 'crewBattleProgress', {}) || {};
+  const conquered = Boolean(progress?.[regionId]?.completed);
+  const wins = Math.max(0, Number(rivalContextValue(source, 'wins', 0) || 0));
+  const losses = Math.max(0, Number(rivalContextValue(source, 'losses', 0) || 0));
+  const raceExperience = wins + losses * 0.25;
+  const conqueredCount = Object.keys(MAIN_RIVAL_BY_REGION)
+    .filter(key => Boolean(progress?.[key]?.completed))
+    .length;
+
+  const baseRating = Math.max(
+    1,
+    Math.min(5, Math.round(Number(character.skill?.rating || 4)))
+  );
+  const baseAi = character.skill?.ai || {};
+
+  if (!conquered) {
+    const tier = raceExperience >= 70 ? 3 : raceExperience >= 40 ? 2 : raceExperience >= 18 ? 1 : 0;
+    const bump = [0, 0.012, 0.026, 0.042][tier];
+    const encounterRating = Math.max(
+      baseRating,
+      tier >= 3 ? 5 : tier >= 1 ? 4 : baseRating
+    );
+
+    return {
+      characterId: id,
+      regionId,
+      phase: 'REGIONAL',
+      tier,
+      tierLabel: 'REGIONAL_' + (tier + 1),
+      encounterRating,
+      difficulty: encounterRating >= 5 ? 'ELITE' : encounterRating >= 4 ? 'EXPERT' : 'SKILLED',
+      encounterAi: growRivalAi(baseAi, {}, bump),
+      conquered: false,
+    };
+  }
+
+  const complexScore = raceExperience + conqueredCount * 16;
+  const tier = complexScore >= 150 ? 3 : complexScore >= 95 ? 2 : 1;
+  const floorsByTier = {
+    1: { reactionSkill: 0.94, launchSkill: 0.95, shiftSkill: 0.96, aggression: 0.90 },
+    2: { reactionSkill: 0.96, launchSkill: 0.97, shiftSkill: 0.98, aggression: 0.92 },
+    3: { reactionSkill: 0.98, launchSkill: 0.985, shiftSkill: 0.99, aggression: 0.95 },
+  };
+
+  return {
+    characterId: id,
+    regionId,
+    phase: 'DRAG_COMPLEX',
+    tier,
+    tierLabel: 'COMPLEX_' + tier,
+    encounterRating: 5,
+    difficulty: 'ELITE',
+    encounterAi: growRivalAi(
+      baseAi,
+      floorsByTier[tier],
+      tier === 3 ? 0.006 : tier === 2 ? 0.004 : 0
+    ),
+    conquered: true,
+  };
 }
 
 export const REGION_TEAM_CHARACTER_IDS = {

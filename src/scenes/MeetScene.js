@@ -18,7 +18,10 @@ import {
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
-} from '../data/characters.js?v=20261007-r404';
+  getCharacterVisualForContext,
+  getMainRivalProgression,
+  isMainRivalAvailableAtRegionalMeet,
+} from '../data/characters.js?v=20261007-r409';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -94,13 +97,14 @@ import {
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
   getStockCrewChallengeCarIds,
+  getCrewRecruitmentChallengeRules,
   createStockOpponentState,
   getCrewMemberForRegion,
   getCrewBattleProgress,
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261007-r404';
+} from '../data/crewSystem.js?v=20261007-r409';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -257,10 +261,15 @@ export default class MeetScene extends Phaser.Scene {
       storedCurrent.every(offer =>
         initialRegionalCharacters.has(offer?.characterId) &&
         !recruitedCharacterIds.has(offer?.characterId) &&
+        isMainRivalAvailableAtRegionalMeet(
+          this.registry,
+          offer?.characterId,
+          initialRegion
+        ) &&
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
-        offer?.driverSkillSource === 'LOCATION' &&
-        offer?.matchmakingVersion === 'R271' &&
+        ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
+        offer?.matchmakingVersion === 'R409' &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -336,8 +345,8 @@ export default class MeetScene extends Phaser.Scene {
     const isCurrentMeetOffer = offer =>
       Number.isFinite(offer?.encounterRating) &&
       offer?.encounterAi &&
-      offer?.driverSkillSource === 'LOCATION' &&
-      offer?.matchmakingVersion === 'R271' &&
+      ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
+      offer?.matchmakingVersion === 'R409' &&
       Number.isFinite(Number(offer?.opponentBuildRating)) &&
       offer?.opponentBuildState && typeof offer.opponentBuildState === 'object';
 
@@ -375,7 +384,6 @@ export default class MeetScene extends Phaser.Scene {
 
       ALL_MEET_LOCATION_IDS.forEach(locationId => {
         const location = getMeetLocation(locationId);
-        const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
         const recruitedIds = new Set(
           Object.values(getCrewMembers(this.registry))
             .map(member => member?.characterId)
@@ -383,7 +391,14 @@ export default class MeetScene extends Phaser.Scene {
         );
         const allowed = new Set(
           getRivalCharacterOrderForRegion(location.district)
-            .filter(id => id !== playerId && !recruitedIds.has(id))
+            .filter(id =>
+              !recruitedIds.has(id) &&
+              isMainRivalAvailableAtRegionalMeet(
+                this.registry,
+                id,
+                location.district
+              )
+            )
         );
 
         const stored = Array.isArray(storedRosters[locationId])
@@ -1231,10 +1246,11 @@ export default class MeetScene extends Phaser.Scene {
       return false;
     }
 
-    const stockCarIds = getStockCrewChallengeCarIds(this.registry);
-    let selectedCarId = stockCarIds.includes(this.registry.get('selectedCarId'))
+    const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
+    const challengeCarIds = recruitRules.eligibleCarIds || [];
+    let selectedCarId = challengeCarIds.includes(this.registry.get('selectedCarId'))
       ? this.registry.get('selectedCarId')
-      : stockCarIds[0] || null;
+      : challengeCarIds[0] || null;
 
     const depth = 185;
     const objects = [];
@@ -1248,7 +1264,9 @@ export default class MeetScene extends Phaser.Scene {
       .setStrokeStyle(3, 0x69ecff, 0.98)
       .setDepth(depth + 1).setScrollFactor(0));
 
-    add(this.add.text(780, 226, 'STOCK CHALLENGE // CHOOSE YOUR CAR', {
+    add(this.add.text(780, 226, recruitRules.carRule === 'STOCK'
+        ? 'STOCK CHALLENGE // CHOOSE YOUR CAR'
+        : 'RECRUITMENT CHALLENGE // CHOOSE YOUR CAR', {
       fontFamily: PIXEL_FONT,
       fontSize: '14px',
       color: '#dffbff',
@@ -1259,7 +1277,11 @@ export default class MeetScene extends Phaser.Scene {
       298,
       String(character.name || challenge.characterId).toUpperCase() +
         ' // ' + String(opponentCar.shortName || opponentCar.name).toUpperCase() +
-        '\nSTOCK vs STOCK // 1/4 MILE // NO STAKES',
+        '\n' +
+        (recruitRules.carRule === 'STOCK'
+          ? 'STOCK vs STOCK'
+          : recruitRules.powerClassLabel + ' CLASS // ' + recruitRules.aiTier) +
+        ' // 1/4 MILE // NO STAKES',
       {
         fontFamily: BODY_FONT,
         fontSize: '12px',
@@ -1274,8 +1296,10 @@ export default class MeetScene extends Phaser.Scene {
       780,
       370,
       selectedCarId
-        ? 'YOUR STOCK CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
-        : 'NO STOCK CAR AVAILABLE // BUY OR WIN A STOCK CAR FIRST',
+        ? 'YOUR CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
+        : recruitRules.carRule === 'STOCK'
+          ? 'NO STOCK CAR AVAILABLE // BUY OR WIN A STOCK CAR FIRST'
+          : 'NO ' + recruitRules.powerClassLabel + ' CAR AVAILABLE',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -1283,7 +1307,7 @@ export default class MeetScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
 
-    if (stockCarIds.length > 1) {
+    if (challengeCarIds.length > 1) {
       const prev = add(this.add.text(500, 370, '<', {
         fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
         backgroundColor: '#101d29', padding: { x: 12, y: 5 },
@@ -1294,9 +1318,9 @@ export default class MeetScene extends Phaser.Scene {
       }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
 
       const cycle = direction => {
-        const current = Math.max(0, stockCarIds.indexOf(selectedCarId));
-        const index = (current + direction + stockCarIds.length) % stockCarIds.length;
-        selectedCarId = stockCarIds[index];
+        const current = Math.max(0, challengeCarIds.indexOf(selectedCarId));
+        const index = (current + direction + challengeCarIds.length) % challengeCarIds.length;
+        selectedCarId = challengeCarIds[index];
         carLabel.setText(
           'YOUR STOCK CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
         ).setColor('#91ffe7');
@@ -1312,7 +1336,15 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setStrokeStyle(2, selectedCarId ? 0x62e8c7 : 0x50575c, 1)
       .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(650, 535, selectedCarId ? 'ACCEPT RACE' : 'NEED STOCK CAR', {
+    add(this.add.text(
+      650,
+      535,
+      selectedCarId
+        ? 'ACCEPT RACE'
+        : recruitRules.carRule === 'STOCK'
+          ? 'NEED STOCK CAR'
+          : 'NEED ' + recruitRules.powerClassLabel,
+      {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: selectedCarId ? '#edfff9' : '#727c82',
@@ -1348,7 +1380,22 @@ export default class MeetScene extends Phaser.Scene {
     if (!challenge?.characterId || !challenge?.baseCarId || !cars[playerCarId]) return;
 
     const character = characters[challenge.characterId];
-    const rating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
+    const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
+    if (!(recruitRules.eligibleCarIds || []).includes(playerCarId)) return;
+
+    const characterRating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
+    const rating = recruitRules.aiRating || characterRating;
+    const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
+    const tierAi = getEncounterAi(rating);
+    const encounterAi = recruitRules.aiTier
+      ? {
+          ...characterAi,
+          reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
+          launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
+          shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
+          aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
+        }
+      : characterAi;
 
     this.registry.set('selectedCarId', playerCarId);
     this.registry.set(
@@ -1359,13 +1406,11 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentPaintColor', DEFAULT_PAINT_COLOR);
     this.registry.set('selectedOpponentCharacterId', challenge.characterId);
     this.registry.set('selectedOpponentEncounterRating', rating);
-    this.registry.set(
-      'selectedOpponentEncounterAi',
-      character?.skill?.ai || getEncounterAi(rating)
-    );
+    this.registry.set('selectedOpponentEncounterAi', encounterAi);
     this.registry.set(
       'selectedOpponentDifficulty',
-      rating >= 5 ? 'ELITE' : rating >= 4 ? 'EXPERT' : 'SKILLED'
+      recruitRules.aiTier ||
+        (rating >= 5 ? 'ELITE' : rating >= 4 ? 'EXPERT' : 'SKILLED')
     );
     this.registry.set('selectedOpponentBuildRating', 1);
     this.registry.set('selectedOpponentBuildArchetype', 'stock');
@@ -2598,12 +2643,19 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   chooseEventCharacter(rating = 3, exclude = []) {
-    const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
-    const blocked = new Set([playerId, ...exclude]);
+    const blocked = new Set(exclude);
     const location = getMeetLocation(this.selectedMeetLocation);
 
     const candidates = getRivalCharacterOrderForRegion(location.district)
-      .filter(id => !blocked.has(id) && characters[id])
+      .filter(id =>
+        !blocked.has(id) &&
+        characters[id] &&
+        isMainRivalAvailableAtRegionalMeet(
+          this.registry,
+          id,
+          location.district
+        )
+      )
       .sort((a, b) => {
         const ar = Number(characters[a]?.skill?.rating || 3);
         const br = Number(characters[b]?.skill?.rating || 3);
@@ -2754,7 +2806,14 @@ export default class MeetScene extends Phaser.Scene {
       ensureDerivedModularCarTextures(this, { [challenger.carId]: car });
     } catch (e) {}
 
-    const characterKey = character.visual?.spriteKey;
+    const contextualVisual = getCharacterVisualForContext(
+      challenger?.characterId,
+      {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }
+    ) || character.visual;
+    const characterKey = contextualVisual?.spriteKey;
     const bodyKey = getCarBodyTextureKey(this, car);
     const wheelKey = car.visual?.wheelKey;
 
@@ -2809,14 +2868,22 @@ export default class MeetScene extends Phaser.Scene {
     this.gpsTravelButton?.disableInteractive();
     this.modeButtons?.forEach(item => item.box.disableInteractive());
 
+    const contextualVisual = getCharacterVisualForContext(
+      challenger?.characterId,
+      {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }
+    ) || character.visual;
+
     if (
-      character.visual?.spriteKey &&
-      character.visual?.path &&
-      !this.textures.exists(character.visual.spriteKey)
+      contextualVisual?.spriteKey &&
+      contextualVisual?.path &&
+      !this.textures.exists(contextualVisual.spriteKey)
     ) {
       this.load.image(
-        character.visual.spriteKey,
-        getCharacterAssetUrl(character.visual.path)
+        contextualVisual.spriteKey,
+        getCharacterAssetUrl(contextualVisual.path)
       );
     }
 
@@ -2951,8 +3018,15 @@ export default class MeetScene extends Phaser.Scene {
       this.specialChallengeObjects.push(obj);
     });
 
-    const source = this.textures.get(character.visual.spriteKey).getSourceImage();
-    const driver = this.add.image(930, 590, character.visual.spriteKey)
+    const contextualVisual = getCharacterVisualForContext(
+      sourceOffer.characterId,
+      {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }
+    ) || character.visual;
+    const source = this.textures.get(contextualVisual.spriteKey).getSourceImage();
+    const driver = this.add.image(930, 590, contextualVisual.spriteKey)
       .setOrigin(0.5, 1)
       .setDepth(56)
       .setMask(this.stageMask)
@@ -3725,7 +3799,13 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     (offers || []).forEach(offer => {
-      const visual = characters[offer?.characterId]?.visual || {};
+      const visual = getCharacterVisualForContext(
+        offer?.characterId,
+        {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }
+      ) || {};
       queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
 
       if (String(offer?.characterId || '') === inviteCharacterId) {
@@ -3807,7 +3887,14 @@ export default class MeetScene extends Phaser.Scene {
         .filter(Boolean)
     );
     const regionalPool = getRivalCharacterOrderForRegion(location.district)
-      .filter(id => !recruitedIds.has(id));
+      .filter(id =>
+        !recruitedIds.has(id) &&
+        isMainRivalAvailableAtRegionalMeet(
+          this.registry,
+          id,
+          location.district
+        )
+      );
     const regionalTeam = hasRegionalTeam(location.district);
     const configuredOrder =
       REGION_LOCATION_RIVAL_ROTATION[location.district]?.[locationId]
@@ -3827,8 +3914,12 @@ export default class MeetScene extends Phaser.Scene {
 
     const eligible = [...new Set(
       [...rotatedOrder, ...regionalPool].filter(id =>
-        id !== playerCharacterId &&
         !recruitedIds.has(id) &&
+        isMainRivalAvailableAtRegionalMeet(
+          this.registry,
+          id,
+          location.district
+        ) &&
         characters[id]
       )
     )];
@@ -3891,11 +3982,18 @@ export default class MeetScene extends Phaser.Scene {
 
       // DRIVER skill is independent from vehicle/build performance, but it is
       // not global: the current location's authored population supplies it.
-      const encounterRating = Number(
+      const locationEncounterRating = Number(
         locationDriverRatings[slotIndex % locationDriverRatings.length] || 3
       );
-      const characterId = chooseCharacterForRating(encounterRating);
+      const characterId = chooseCharacterForRating(locationEncounterRating);
       const character = characters[characterId];
+      const mainRivalProgression = getMainRivalProgression(
+        this.registry,
+        characterId
+      );
+      const encounterRating = Number(
+        mainRivalProgression?.encounterRating || locationEncounterRating
+      );
 
       const match = createMeetOpponentMatch({
         playerCarId: selectedCarId,
@@ -3917,7 +4015,7 @@ export default class MeetScene extends Phaser.Scene {
 
       const carId = match.carId;
       usedRivalCars.add(carId);
-      const encounterAi = getEncounterAi(encounterRating);
+      const encounterAi = mainRivalProgression?.encounterAi || getEncounterAi(encounterRating);
       const skillLabel = getEncounterSkillLabel(encounterRating);
 
       let raceDeal = 'PRIZE';
@@ -3966,11 +4064,12 @@ export default class MeetScene extends Phaser.Scene {
         encounterRating,
         encounterAi,
         skillLabel,
-        driverSkillSource: 'LOCATION',
+        driverSkillSource: mainRivalProgression ? 'MAIN_RIVAL' : 'LOCATION',
+        mainRivalTier: mainRivalProgression?.tierLabel || null,
 
-        // Matchmaking generation version forces pre-R271 saved Meet rosters to
-        // reroll once so regional build ceilings take effect immediately.
-        matchmakingVersion: 'R271',
+        // R409 migrates saved rosters so conquered leaders leave regional Meets
+        // and selectable-avatar rivals can safely return using substitute art.
+        matchmakingVersion: 'R409',
         vehicleDifficultyProfile: profile.difficulty,
         allowedBuildRatings: match.allowedBuildRatings,
         buildCeiling: match.buildCeiling,
@@ -4009,7 +4108,13 @@ export default class MeetScene extends Phaser.Scene {
 
     for (const offer of offers || []) {
       const characterId = String(offer?.characterId || '');
-      const visual = characters[characterId]?.visual || {};
+      const visual = getCharacterVisualForContext(
+        characterId,
+        {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }
+      ) || {};
       const visualId = String(visual.spriteKey || visual.path || '');
 
       if (!characterId) return true;
@@ -4243,7 +4348,13 @@ export default class MeetScene extends Phaser.Scene {
 
   getOfferCharacterSpriteKey(offer) {
     const character = characters[offer?.characterId];
-    const visual = character?.visual || {};
+    const visual = getCharacterVisualForContext(
+      offer?.characterId,
+      {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }
+    ) || character?.visual || {};
 
     if (offer?.resultState === 'PLAYER_WIN' && visual.lossSpriteKey && this.textures.exists(visual.lossSpriteKey)) {
       return visual.lossSpriteKey;
@@ -4435,6 +4546,8 @@ export default class MeetScene extends Phaser.Scene {
         frameHeight: portraitSize,
         side: 'left',
         depth: 36,
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
       });
 
       const textX = x - 42;

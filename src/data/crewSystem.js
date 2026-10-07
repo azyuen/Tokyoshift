@@ -9,6 +9,7 @@ import {
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261007-r404';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
@@ -161,6 +162,72 @@ export function getStockCrewChallengeCarIds(source) {
       !cars[carId].crewLoan &&
       isPerformanceStockState(states[carId] || {})
     );
+}
+
+export const CREW_RECRUIT_POWER_CLASS_KW = 50;
+
+function normaliseCrewRecruitDifficulty(source) {
+  const key = String(value(source, 'playerDifficulty', 'STANDARD') || 'STANDARD')
+    .trim()
+    .toUpperCase();
+  return ['EASY', 'STANDARD', 'HARD'].includes(key) ? key : 'STANDARD';
+}
+
+function getCrewRecruitPowerClass(powerKW) {
+  const power = Math.max(0, Number(powerKW) || 0);
+  const minKW = Math.floor(power / CREW_RECRUIT_POWER_CLASS_KW) * CREW_RECRUIT_POWER_CLASS_KW;
+  const maxExclusiveKW = minKW + CREW_RECRUIT_POWER_CLASS_KW;
+  return {
+    minKW,
+    maxExclusiveKW,
+    label: minKW + '–' + (maxExclusiveKW - 1) + ' kW',
+  };
+}
+
+export function getCrewRecruitmentChallengeRules(
+  source,
+  challenge = value(source, 'crewRecruitChallenge', null)
+) {
+  const difficulty = normaliseCrewRecruitDifficulty(source);
+  const baseCarId = String(challenge?.baseCarId || '');
+  const states = value(source, 'carStates', {}) || {};
+  const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
+    .filter(carId => cars[carId] && !cars[carId].crewLoan);
+
+  if (difficulty === 'EASY') {
+    return {
+      playerDifficulty: difficulty,
+      aiTier: null,
+      aiRating: null,
+      carRule: 'STOCK',
+      powerClass: null,
+      powerClassLabel: null,
+      eligibleCarIds: getStockCrewChallengeCarIds(source),
+    };
+  }
+
+  const opponentPerformance = baseCarId
+    ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
+    : null;
+  const powerClass = getCrewRecruitPowerClass(
+    opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
+  );
+
+  const eligibleCarIds = ownedCarIds.filter(carId => {
+    const performance = getVehiclePerformance(carId, states[carId] || {});
+    const power = Number(performance?.car?.powerKW || 0);
+    return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
+  });
+
+  return {
+    playerDifficulty: difficulty,
+    aiTier: difficulty === 'HARD' ? 'ELITE' : 'EXPERT',
+    aiRating: difficulty === 'HARD' ? 5 : 4,
+    carRule: 'POWER_CLASS',
+    powerClass,
+    powerClassLabel: powerClass.label,
+    eligibleCarIds,
+  };
 }
 
 export function getRecruitableCrewCandidates(source, regionId) {

@@ -7,9 +7,12 @@ import {
   getCharacterAssetUrl,
   CENTRAL_TOKYO_CHARACTER_IDS,
   getCharacterVisualAsset,
+  getCharacterVisualForContext,
   genericRivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261005-r365';
+  getConqueredMainRivalIds,
+  getMainRivalProgression,
+} from '../data/characters.js?v=20261007-r409';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -31,6 +34,8 @@ import {
 } from '../data/visualMods.js?v=20261006-r388';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
+import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import {
   saveSessionState,
   recordCarAcquisition,
@@ -243,17 +248,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (location?.kind === 'proDrag') {
       const playerId = this.registry.get('playerCharacterId');
-      const rivalIds = genericRivalCharacterOrder
-        .filter(id => id !== playerId && characters[id])
+      const migratedRivals = getConqueredMainRivalIds(this.registry);
+      const genericRivals = genericRivalCharacterOrder
+        .filter(id => id !== playerId && characters[id] && !migratedRivals.includes(id))
         .sort((a, b) =>
           Number(characters[b]?.skill?.rating || 3) -
           Number(characters[a]?.skill?.rating || 3)
         )
         .slice(0, 3);
-      new Set([
-        ...rivalIds,
-        ...Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex),
-      ]).forEach(id => {
+
+      migratedRivals.forEach(id => {
+        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true });
+      });
+      genericRivals.forEach(id => {
+        queued += this.queueCharacterPose(id, 'normal');
+      });
+      Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
       });
     }
@@ -495,8 +505,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return obj;
   }
 
-  queueCharacterPose(characterId, pose = 'normal') {
-    const asset = getCharacterVisualAsset(characterId, pose);
+  queueCharacterPose(characterId, pose = 'normal', { rivalContext = false } = {}) {
+    const asset = getCharacterVisualAsset(characterId, pose, {
+      rivalContext,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    });
     if (!asset?.key || !asset?.path || this.textures.exists(asset.key)) return 0;
     this.load.image(asset.key, getCharacterAssetUrl(asset.path));
     return 1;
@@ -511,8 +524,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     flip = false,
     depth = 21,
     shadow = true,
+    rivalContext = false,
   } = {}) {
-    const asset = getCharacterVisualAsset(characterId, pose);
+    const asset = getCharacterVisualAsset(characterId, pose, {
+      rivalContext,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    });
     const key = asset?.key;
     if (!key || !this.textures.exists(key)) return null;
 
@@ -3000,6 +3017,38 @@ export default class CentralTokyoScene extends Phaser.Scene {
       carObjects.forEach(obj => this.addContent(obj));
     }
 
+    const migratedRivals = getConqueredMainRivalIds(this.registry);
+    if (migratedRivals.length) {
+      const spacing = Math.min(132, 760 / Math.max(1, migratedRivals.length - 1));
+      const totalWidth = spacing * Math.max(0, migratedRivals.length - 1);
+      const startX = STAGE.x + STAGE.w / 2 - totalWidth / 2;
+
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + 118,
+        'REGIONAL RIVALS // MOVED UP TO THE COMPLEX',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '6px',
+          color: '#9fc4d5',
+        }
+      ).setOrigin(0.5).setDepth(7));
+
+      migratedRivals.forEach((characterId, index) => {
+        this.addVenueCharacter({
+          characterId,
+          pose: 'normal',
+          x: startX + spacing * index,
+          feetY: STAGE.y + 290,
+          height: 82,
+          flip: index % 2 === 1,
+          depth: 6,
+          shadow: false,
+          rivalContext: true,
+        });
+      });
+    }
+
     const dragStaff = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex;
     [
       { characterId: dragStaff.owner, x: STAGE.x + 72, feetY: STAGE.y + 505, height: 210, flip: false, depth: 19 },
@@ -3155,6 +3204,81 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
   }
 
+  buildDragMainRivalRound(characterId, event, build, index = 0) {
+    const progression = getMainRivalProgression(this.registry, characterId);
+    if (!progression?.conquered) return null;
+
+    const character = characters[characterId] || {};
+    const candidateCarIds = [
+      ...(character.preferredCars || []),
+      ...(event.opponentCars || []),
+    ].filter((id, pos, list) => cars[id] && list.indexOf(id) === pos);
+    const targetPower = Math.min(
+      Number(event.maxPowerKW || 9999),
+      Math.max(1, Number(build?.car?.powerKW || event.maxPowerKW || 1))
+    );
+    const preferredRating = progression.tier >= 2 ? 5 : 4;
+    const ratingCandidates = preferredRating >= 5 ? [5, 4, 3] : [4, 3, 5];
+    let best = null;
+
+    candidateCarIds.forEach(carId => {
+      ratingCandidates.forEach(buildRating => {
+        let state = createRivalBuildState(
+          cars[carId],
+          buildRating,
+          {
+            seed:
+              'drag-main-rival:' + characterId + ':' + event.id + ':' +
+              progression.tier + ':' + index,
+            raceType: 'Standing Start',
+          }
+        );
+
+        if (event.noNos) {
+          state = {
+            ...state,
+            nosInstalled: false,
+            exhaustNosTuning: {
+              ...(state.exhaustNosTuning || {}),
+              nosKit: 0,
+              nitrousShot: 0,
+            },
+          };
+        }
+
+        const performance = getVehiclePerformance(carId, state);
+        const power = Number(performance?.car?.powerKW || cars[carId]?.powerKW || 0);
+        if (power <= 0 || power > Number(event.maxPowerKW || Infinity)) return;
+
+        const score =
+          Math.abs(power - targetPower) +
+          Math.abs(buildRating - preferredRating) * 8;
+        if (!best || score < best.score) {
+          best = {
+            score,
+            carId,
+            buildRating,
+            state,
+            power,
+          };
+        }
+      });
+    });
+
+    if (!best) return null;
+    return {
+      characterId,
+      carId: best.carId,
+      opponentBuildRating: best.buildRating,
+      opponentBuildArchetype: best.state.buildArchetype || null,
+      opponentBuildState: best.state,
+      encounterRating: progression.encounterRating,
+      encounterAi: progression.encounterAi,
+      difficulty: progression.difficulty,
+      mainRivalTier: progression.tierLabel,
+    };
+  }
+
   startProBracket(event, build, storyConfirmed = false) {
     const cash = Number(this.registry.get('cash') || 0);
     if (!build || cash < event.entryFee) return;
@@ -3172,20 +3296,49 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     const playerCharacterId = this.registry.get('playerCharacterId');
-    const rivals = genericRivalCharacterOrder
-      .filter(id => id !== playerCharacterId && characters[id])
+    const migrated = getConqueredMainRivalIds(this.registry);
+    const rotation = migrated.length
+      ? (
+          Number(this.registry.get('wins') || 0) +
+          Math.max(0, PRO_DRAG_EVENTS.findIndex(item => item.id === event.id))
+        ) % migrated.length
+      : 0;
+    const rotatedMigrated = migrated.length
+      ? migrated.slice(rotation).concat(migrated.slice(0, rotation))
+      : [];
+    const genericFill = genericRivalCharacterOrder
+      .filter(id =>
+        id !== playerCharacterId &&
+        characters[id] &&
+        !rotatedMigrated.includes(id)
+      )
       .sort((a, b) =>
         Number(characters[b]?.skill?.rating || 3) -
         Number(characters[a]?.skill?.rating || 3)
-      )
-      .slice(0, 3);
+      );
+    const rivals = [...rotatedMigrated, ...genericFill].slice(0, 3);
 
     const rounds = event.opponentRatings.map((rating, index) => {
+      const characterId = rivals[index % rivals.length];
+      const mainRivalRound = this.buildDragMainRivalRound(
+        characterId,
+        event,
+        build,
+        index
+      );
       const baseAi = getEncounterAi(rating);
       const eventBoost = event.id === 'tokyoInvitational' ? 0.035 : event.id === 'midnightCup' ? 0.02 : 0.01;
 
+      if (mainRivalRound) {
+        return {
+          ...mainRivalRound,
+          paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
+          raceType: 'Standing Start',
+        };
+      }
+
       return {
-        characterId: rivals[index % rivals.length],
+        characterId,
         carId: event.opponentCars[index % event.opponentCars.length],
         paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
@@ -3223,7 +3376,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('selectedOpponentCharacterId', rounds[0].characterId);
     this.registry.set('selectedOpponentEncounterRating', rounds[0].encounterRating);
     this.registry.set('selectedOpponentEncounterAi', rounds[0].encounterAi);
-    this.registry.set('selectedOpponentDifficulty', 'ELITE');
+    this.registry.set('selectedOpponentDifficulty', rounds[0].difficulty || 'ELITE');
+    this.registry.set('selectedOpponentBuildRating', rounds[0].opponentBuildRating || null);
+    this.registry.set('selectedOpponentBuildArchetype', rounds[0].opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', rounds[0].opponentBuildState || null);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', 'Standing Start');
     this.registry.set('selectedRaceDeal', 'COMPETITION');
