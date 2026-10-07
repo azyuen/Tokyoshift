@@ -4130,10 +4130,10 @@ export default class MeetScene extends Phaser.Scene {
         pinkAcceptanceChance: pinkDecision.chance,
         pinkReply: pinkDecision.reply,
         pinkChallenged: false,
-        // Predetermine whether this visible rival will counter a normal race
-        // offer with pink slips. This is fixed for the life of the Meet roster,
-        // so clicking cards cannot reroll it.
-        incomingPinkChallenge: Phaser.Math.FloatBetween(0, 1) < 0.14,
+        // Incoming pinks are rolled only when the player actually chooses a
+        // normal race. Keeping this false at roster generation prevents rivals
+        // created during the global cooldown from banking a future offer.
+        incomingPinkChallenge: false,
         incomingPinkPrompted: false,
         paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
@@ -4793,6 +4793,27 @@ export default class MeetScene extends Phaser.Scene {
     );
   }
 
+  getIncomingPinkSlipCooldownInterval() {
+    const difficulty = String(
+      this.registry.get('playerDifficulty') || 'STANDARD'
+    ).toUpperCase();
+    return difficulty === 'EASY' ? 8 : 15;
+  }
+
+  getIncomingPinkSlipCooldownRaces() {
+    const completedRaces =
+      Math.max(0, Number(this.registry.get('wins') || 0)) +
+      Math.max(0, Number(this.registry.get('losses') || 0));
+    const lastOfferRace = Number(
+      this.registry.get('incomingPinkSlipLastOfferRace') ?? -999
+    );
+    return Math.max(
+      0,
+      this.getIncomingPinkSlipCooldownInterval() -
+        Math.max(0, completedRaces - lastOfferRace)
+    );
+  }
+
   challengePinkSlips() {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
@@ -5281,14 +5302,22 @@ export default class MeetScene extends Phaser.Scene {
     // race, rather than from waiting for the three-minute Meet refresh.
     if (
       this.selectedDeal === 'CASH' &&
-      offer.incomingPinkChallenge &&
       !offer.incomingPinkPrompted &&
-      !cars[this.registry.get('selectedCarId')]?.crewLoan
+      !cars[this.registry.get('selectedCarId')]?.crewLoan &&
+      this.getIncomingPinkSlipCooldownRaces() === 0 &&
+      Phaser.Math.FloatBetween(0, 1) < 0.14
     ) {
       const owned = this.registry.get('ownedCarIds') || [];
       const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
       if (owned.length < capacity) {
+        offer.incomingPinkChallenge = true;
         offer.incomingPinkPrompted = true;
+        const completedRaces =
+          Math.max(0, Number(this.registry.get('wins') || 0)) +
+          Math.max(0, Number(this.registry.get('losses') || 0));
+        // Cooldown starts when the offer is made, whether accepted or declined.
+        // This is global across Meet regions and does not accumulate probability.
+        this.registry.set('incomingPinkSlipLastOfferRace', completedRaces);
         this.persistMeetRound();
         const encounterRating = Phaser.Math.Clamp(Number(offer.encounterRating || 3), 1, 5);
         const easy = String(this.registry.get('playerDifficulty') || 'STANDARD').toUpperCase() === 'EASY';
