@@ -890,13 +890,13 @@ function showControlsPanel(scene) {
 
     if (mode === 'controller') {
       addTab(scene.add.text(780, 735,
-        'DEFAULT: RT THROTTLE  •  LT CLUTCH  •  RB SHIFT UP  •  LB SHIFT DOWN  •  A/CROSS NOS\nAnalogue triggers and stick axes keep their progressive 0–100% input.', {
+        'DEFAULT: RT THROTTLE  •  LT CLUTCH  •  RB SHIFT UP  •  LB SHIFT DOWN  •  A/CROSS NOS\nAnalogue triggers and stick axes keep their progressive 0–100% input.\nMENUS: D-PAD / LEFT STICK  •  A/CROSS OR X/SQUARE SELECT', {
           fontFamily: BODY_FONT, fontSize: '8px', color: '#829eac',
           align: 'center', lineSpacing: 3,
         }).setOrigin(0.5).setDepth(depth + 3));
     } else {
       addTab(scene.add.text(780, 735,
-        'SHIFT UP / DOWN can be bound as sequential controls; GEAR 1–6 remain available for direct selection.', {
+        'SHIFT UP / DOWN can be bound as sequential controls; GEAR 1–6 remain available for direct selection.\nMENUS: ARROW KEYS  •  ENTER / SPACE / X SELECT', {
           fontFamily: BODY_FONT, fontSize: '8px', color: '#829eac',
           align: 'center',
         }).setOrigin(0.5).setDepth(depth + 3));
