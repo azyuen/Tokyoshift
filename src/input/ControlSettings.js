@@ -89,7 +89,16 @@ function sanitiseLayout(raw = {}, rawVersion = 2) {
     // V2 moves the default dash down so it clears the racing cars. Preserve
     // any previous custom offset while shifting all V1 dash layouts by 40 px.
     if (id === 'hud' && Number(rawVersion || 1) < 2 && sourceHasDy) {
-      dy = clamp(dy + 40, -650, 650, defaults.dy);
+      // The R420 editor could save a small negative value while the user was
+      // dragging the bottom-anchored dash downward. Treat that range as the
+      // editor bug rather than an intentional "move up" preference.
+      const shifted = dy + 40;
+      dy = clamp(
+        Math.abs(dy) <= 80 ? Math.max(40, shifted) : shifted,
+        -650,
+        650,
+        defaults.dy
+      );
     }
 
     next[id] = {
