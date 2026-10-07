@@ -54,7 +54,9 @@ import {
   getCrewMembers,
   getCrewCount,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261007-r410';
+  removeAllCrewMembers,
+  recruitRandomDevCrew,
+} from '../data/crewSystem.js?v=20261007-r413';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -435,6 +437,7 @@ export default class GarageScene extends Phaser.Scene {
     this.selectedDisplay = [];
     this.crewStageObjects = [];
     this.crewFocusedCharacterId = null;
+    this._devCrewChanging = false;
     this.thumbButtons = [];
     this.upgradeButtons = [];
     this.selectedUpgrade = null;
@@ -755,6 +758,113 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(106);
     this.crewStageObjects.push(title);
+
+    if (isArkonDen(this.registry)) {
+      const fullCrew = getCrewCount(this.registry) >= 7;
+      const devBox = this.add.rectangle(
+        1300,
+        34,
+        410,
+        38,
+        fullCrew ? 0x2b1520 : 0x10251f,
+        0.96
+      ).setStrokeStyle(2, fullCrew ? 0xff6f9e : 0x62e8c7, 1)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(110);
+
+      const devLabel = this.add.text(
+        1300,
+        34,
+        fullCrew ? 'DEV // REMOVE CREW' : 'DEV // RANDOM FULL CREW',
+        {
+          fontFamily: PIXEL_FONT,
+          fontSize: '8px',
+          color: fullCrew ? '#ffd3e1' : '#d9fff4',
+        }
+      ).setOrigin(0.5).setDepth(111);
+
+      devBox.on('pointerdown', () => this.toggleDevRandomCrew(devBox, devLabel));
+      this.crewStageObjects.push(devBox, devLabel);
+    }
+  }
+
+  toggleDevRandomCrew(button = null, label = null) {
+    if (!this.crewMode || !isArkonDen(this.registry) || this._devCrewChanging) return;
+
+    this.registry.set('devMode', true);
+    const fullCrew = getCrewCount(this.registry) >= 7;
+
+    if (fullCrew) {
+      removeAllCrewMembers(this.registry);
+      this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+      this.carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+      saveSessionState(this.registry);
+      this.showCrewOverviewState();
+      return;
+    }
+
+    this._devCrewChanging = true;
+    button?.disableInteractive?.();
+    label?.setText?.('DEV // BUILDING RANDOM CREW...');
+
+    const recruited = recruitRandomDevCrew(this.registry);
+    this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
+    this.carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
+    saveSessionState(this.registry);
+
+    const queueImage = (key, path) => {
+      if (!key || !path || this.textures.exists(key)) return 0;
+      this.load.image(key, path);
+      return 1;
+    };
+
+    let queued = 0;
+    const carStates = this.registry.get('carStates') || {};
+    const recruitedCars = {};
+
+    recruited.forEach(member => {
+      const visual = characters[member.characterId]?.visual;
+      if (visual) {
+        queued += queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+      }
+
+      const car = cars[member.loanCarId];
+      if (!car) return;
+      recruitedCars[member.loanCarId] = car;
+      queued += preloadCarAppearanceAssets(
+        this,
+        { [member.loanCarId]: car },
+        '20261007-r413'
+      );
+      queued += preloadCarWheel(this, car, carStates[member.loanCarId] || {});
+      queued += preloadVisualModSelectionAssets(
+        this,
+        member.loanCarId,
+        carStates[member.loanCarId] || {},
+        '20261007-r413'
+      );
+      queued += preloadTunerDecalAssets(
+        this,
+        carStates[member.loanCarId] || {},
+        '20261007-r413'
+      );
+    });
+
+    const finish = () => {
+      ensureDerivedModularCarTextures(this, recruitedCars);
+      this._devCrewChanging = false;
+      this.showCrewOverviewState();
+      finishSceneLoading('DEV CREW READY');
+    };
+
+    if (queued > 0) {
+      startSceneLoading(this, 'LOADING DEV CREW', queued);
+      this.load.once('complete', finish);
+      if (!this.load.isLoading()) this.load.start();
+      return;
+    }
+
+    finish();
   }
 
   focusCrewMember(member) {
