@@ -4,7 +4,7 @@ import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
 import { cars } from '../data/cars.js?v=20261006-r388';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
+import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   DYNO_WAREHOUSE_ID,
