@@ -496,7 +496,6 @@ export default class DynoScene extends Phaser.Scene {
       hasTurbo: Number(this.build.car.maximumBoost || 0) > 0.05,
       hasNitrous: false,
       showGear: true,
-      y: 770,
     });
     this.dynoHud.status?.setVisible(false);
   }
@@ -1947,12 +1946,10 @@ export default class DynoScene extends Phaser.Scene {
       this.setDynoShifterShieldEnabled(true);
       return;
     }
+    // Shared controls are bottom-anchored from the canonical 1560x720 race
+    // layout, so Dyno's 840 px viewport adds exactly 120 px automatically.
     this.controls = new TouchControls(this, {
       nosEnabled: false,
-      pedalLatchMax: false,
-      // Pedals and shifter sit near the lower edge; the dashboard clears
-      // the centred Daichi dialogue strip. Race layout remains independent.
-      controlBottomY: 830,
     });
     this.controls.nosSprite?.setVisible(false);
 
