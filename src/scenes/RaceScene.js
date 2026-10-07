@@ -3948,6 +3948,7 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceDeal === 'PINK_SLIP') {
       let pinkCarNewlyWon = false;
+      let lostCrewMember = null;
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
       const carStates = { ...(this.registry.get('carStates') || {}) };
       const carGarageLocations = { ...(this.registry.get('carGarageLocations') || {}) };
@@ -3984,7 +3985,7 @@ export default class RaceScene extends Phaser.Scene {
             ' // UNIQUE CAR ALREADY COLLECTED';
         }
       } else {
-        const lostCrewMember = Object.values(getCrewMembers(this.registry))
+        lostCrewMember = Object.values(getCrewMembers(this.registry))
           .find(member => member?.loanCarId === this.selectedCarId) || null;
         recordCarDeparture(this.registry, this.selectedCarId, 'pink-slip-lost', {
           opponentCarId: this.opponentCarId,
