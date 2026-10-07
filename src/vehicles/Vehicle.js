@@ -114,6 +114,11 @@ export default class Vehicle {
       slipRatio: this.tyres.slipRatio,
       nosActive: this.nitrous.active,
       nosFraction: this.nitrous.fraction,
+      nosShotsTotal: this.nitrous.totalShots,
+      nosShotsRemaining: this.nitrous.shotsRemaining,
+      nosShotsVisible: this.nitrous.visibleShots,
+      nosShotFraction: this.nitrous.shotFraction,
+      nosPowerFraction: this.nitrous.powerFraction,
       shiftQuality: this.transmission.lastShiftQuality,
       forces: this.lastForces,
     };
