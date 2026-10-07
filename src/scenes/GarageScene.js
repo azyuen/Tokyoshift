@@ -149,16 +149,19 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const STRIP = { x: 24, y: 644, w: 1138, h: 172 };
 
 const CREW_MEMBER_LAYOUT = Object.freeze([
-  // Five on the workshop floor, two on the balcony. Heights deliberately vary
-  // with perspective so a full seven-person crew reads as one authored group,
-  // not seven identical stickers laid over the room.
-  { x: 150, feetY: 478, h: 154, zone: 'floor' },
-  { x: 300, feetY: 468, h: 162, zone: 'floor' },
-  { x: 455, feetY: 480, h: 158, zone: 'floor' },
-  { x: 625, feetY: 466, h: 166, zone: 'floor' },
-  { x: 790, feetY: 478, h: 158, zone: 'floor' },
-  { x: 680, feetY: 198, h: 112, zone: 'balcony' },
-  { x: 850, feetY: 198, h: 112, zone: 'balcony' },
+  // Four on the workshop floor and three on the upper level. The deliberately
+  // staggered feet positions and two slightly smaller floor members keep the
+  // group feeling naturally gathered rather than arranged in a straight row.
+  { x: 145, feetY: 482, h: 158, zone: 'floor', scale: 1.00 },
+  { x: 345, feetY: 447, h: 158, zone: 'floor', scale: 0.90 },
+  { x: 575, feetY: 486, h: 164, zone: 'floor', scale: 1.00 },
+  { x: 805, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
+
+  // Upper-level recruits sit higher in the authored room and are exactly 25%
+  // larger than the previous balcony treatment (112 -> 140 target height).
+  { x: 585, feetY: 168, h: 140, zone: 'balcony', scale: 1.00 },
+  { x: 745, feetY: 157, h: 140, zone: 'balcony', scale: 1.00 },
+  { x: 900, feetY: 174, h: 140, zone: 'balcony', scale: 1.00 },
 ]);
 
 // The player is always visible in the wide Crew Space shot beside the
@@ -696,7 +699,11 @@ export default class GarageScene extends Phaser.Scene {
 
       const spriteSource = this.textures.get(character.visual.spriteKey).getSourceImage();
       const perspectiveBoost = layout.zone === 'floor' ? 1.94 : 1.45;
-      sprite.setScale((layout.h * perspectiveBoost) / Math.max(1, spriteSource.height));
+      const organicScale = Number(layout.scale ?? 1);
+      sprite.setScale(
+        (layout.h * perspectiveBoost * organicScale) /
+        Math.max(1, spriteSource.height)
+      );
 
       const name = this.add.text(
         x,
@@ -741,7 +748,9 @@ export default class GarageScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setDepth(104);
       const spriteSource = this.textures.get(playerCharacter.visual.spriteKey).getSourceImage();
-      sprite.setScale((layout.h * 1.58) / Math.max(1, spriteSource.height));
+      // Match the visual height of the full-size floor recruits so the player
+      // reads as part of the same crew rather than a smaller background figure.
+      sprite.setScale((layout.h * 1.94) / Math.max(1, spriteSource.height));
       this.crewStageObjects.push(shadow, sprite);
     }
 
