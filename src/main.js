@@ -39,7 +39,7 @@ async function startTokyoShift() {
     window.TOKYO_SHIFT_SET_LOADING?.(0.08, 'LOADING');
 
     const MenuNavigation = (
-      await import('./input/MenuNavigation.js?v=20261007-r422')
+      await import('./input/MenuNavigation.js?v=20261007-r423')
     ).default;
 
     const loadScene = async (name, path) => {
@@ -68,19 +68,19 @@ async function startTokyoShift() {
       TunerShopScene,
       WheelCalibrationScene,
     ] = await Promise.all([
-      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261007-r422'),
-      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261007-r422'),
-      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261007-r422'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261007-r422'),
+      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261007-r423'),
+      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261007-r423'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261007-r423'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261007-r423'),
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261007-r418'),
-      loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261007-r422'),
-      loadScene('DYNO', './scenes/DynoScene.js?v=20261007-r422'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261007-r422'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261007-r422'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261007-r422'),
-      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261007-r422'),
+      loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261007-r423'),
+      loadScene('DYNO', './scenes/DynoScene.js?v=20261007-r423'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261007-r423'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20261007-r423'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20261007-r423'),
+      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261007-r423'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261007-r422'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261007-r423'),
       loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261006-r388'),
     ]);
 
