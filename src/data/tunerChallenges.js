@@ -138,7 +138,45 @@ const REGION_RACE_PATTERNS = {
   ],
 };
 
-const STAGE_RATINGS = [4, 4, 4, 5, 5, 5, 5];
+const REGION_DRIVER_RATINGS = Object.freeze({
+  ODAIBA: [2, 2, 2, 3, 3, 3, 4],
+  SHINAGAWA: [2, 2, 3, 3, 3, 4, 4],
+  TATSUMI: [3, 3, 3, 3, 4, 4, 4],
+  SHIBUYA: [3, 3, 3, 4, 4, 4, 4],
+  YOKOHAMA: [4, 4, 4, 4, 4, 5, 5],
+  DAIKOKU: [4, 4, 4, 4, 4, 5, 5],
+  SHINJUKU: [4, 4, 4, 5, 5, 5, 5],
+});
+
+const REGION_BUILD_ERAS = Object.freeze({
+  ODAIBA: { workshopEra: 'HOME', tuningPointCap: 12, maxTuningLevel: 1, allowNos: false },
+  SHINAGAWA: { workshopEra: 'HOME', tuningPointCap: 12, maxTuningLevel: 1, allowNos: false },
+  TATSUMI: { workshopEra: 'CANAL', tuningPointCap: 30, maxTuningLevel: 2, allowNos: true },
+  SHIBUYA: { workshopEra: 'CANAL', tuningPointCap: 30, maxTuningLevel: 2, allowNos: true },
+  YOKOHAMA: { workshopEra: 'CANAL', tuningPointCap: 30, maxTuningLevel: 2, allowNos: true },
+  DAIKOKU: { workshopEra: 'WAREHOUSE', tuningPointCap: 48, maxTuningLevel: 3, allowNos: true },
+  SHINJUKU: { workshopEra: 'WAREHOUSE', tuningPointCap: 48, maxTuningLevel: 3, allowNos: true },
+});
+
+function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDARD') {
+  const era = REGION_BUILD_ERAS[normaliseRegion(regionId)] || REGION_BUILD_ERAS.ODAIBA;
+  const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
+  const difficulty = String(playerDifficulty || 'STANDARD').toUpperCase();
+  if (stage !== 6 || era.workshopEra === 'WAREHOUSE') return era.tuningPointCap;
+  if (difficulty === 'HARD') return era.tuningPointCap + 2;
+  if (difficulty === 'STANDARD') return era.tuningPointCap + 1;
+  return era.tuningPointCap;
+}
+
+function regionalSpecialistUpgradeCount(regionId, stageIndex, playerDifficulty = 'STANDARD') {
+  const era = REGION_BUILD_ERAS[normaliseRegion(regionId)] || REGION_BUILD_ERAS.ODAIBA;
+  if (era.workshopEra !== 'WAREHOUSE') return 0;
+  const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
+  const difficulty = String(playerDifficulty || 'STANDARD').toUpperCase();
+  if (stage === 5) return difficulty === 'HARD' ? 6 : difficulty === 'STANDARD' ? 4 : 0;
+  if (stage === 6) return difficulty === 'HARD' ? 10 : difficulty === 'STANDARD' ? 6 : 2;
+  return 0;
+}
 
 function normaliseRegion(regionId) {
   return String(regionId || '').trim().toUpperCase();
