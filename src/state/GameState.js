@@ -18,6 +18,16 @@ export const MAX_PROFILES = 3;
 
 const REMOVED_CAR_IDS = new Set(['gr86']);
 
+const ARKON_DEV_CHAMPIONSHIP_REGIONS = Object.freeze([
+  'ODAIBA',
+  'SHINAGAWA',
+  'TATSUMI',
+  'SHIBUYA',
+  'YOKOHAMA',
+  'DAIKOKU',
+  'SHINJUKU',
+]);
+
 export const STARTER_CAR_IDS = ['ae86', 'ef'];
 
 // Existing profiles may legitimately have started with the old EK9 option.
@@ -742,12 +752,12 @@ export function normaliseState(input = {}) {
     ? input.selectedCarId
     : owned[0] || null;
 
-  const garageTier = inferWorkshopTier(owned.length, input.garageTier);
+  let garageTier = inferWorkshopTier(owned.length, input.garageTier);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
-  const workshopLocationId = requestedWorkshop.tier <= garageTier
+  let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
     : WORKSHOP_TIERS[garageTier].id;
-  const carGarageLocations = normaliseCarGarageLocations(
+  let carGarageLocations = normaliseCarGarageLocations(
     owned,
     input.carGarageLocations || {},
     garageTier
@@ -763,6 +773,21 @@ export function normaliseState(input = {}) {
   const normalisedCash = devName && !input.devMode
     ? Math.max(rawCash, 1000000000)
     : rawCash;
+
+  if (devName) {
+    // Arkon is the development profile for testing the post-regional game.
+    // Put him exactly at the crew phase: every regional championship is won,
+    // Warehouse HQ is unlocked, but no crew recruitment/battle is fabricated.
+    garageTier = Math.max(2, garageTier);
+    workshopLocationId = requestedWorkshop.tier <= garageTier
+      ? requestedWorkshop.id
+      : WORKSHOP_TIERS[garageTier].id;
+    carGarageLocations = normaliseCarGarageLocations(
+      owned,
+      input.carGarageLocations || {},
+      garageTier
+    );
+  }
 
   // A profile literally named Arkon Den is the developer avatar. Keep Arkon
   // out of the normal playable pool while still migrating existing dev saves.
@@ -822,6 +847,51 @@ export function normaliseState(input = {}) {
       ? input.specialChallenger
       : null;
 
+  const normalisedRegionWins = input.regionWins && typeof input.regionWins === 'object'
+    ? Object.fromEntries(
+        Object.entries(input.regionWins).map(([regionId, value]) => [
+          String(regionId).toUpperCase(),
+          Math.max(0, Number(value || 0)),
+        ])
+      )
+    : {};
+
+  const normalisedTunerTeamChallenges =
+    input.tunerTeamChallenges && typeof input.tunerTeamChallenges === 'object'
+      ? clonePlain(input.tunerTeamChallenges)
+      : {};
+
+  if (devName) {
+    ARKON_DEV_CHAMPIONSHIP_REGIONS.forEach(regionId => {
+      normalisedRegionWins[regionId] = Math.max(
+        10,
+        Number(normalisedRegionWins[regionId] || 0)
+      );
+
+      const existing = normalisedTunerTeamChallenges[regionId] || {};
+      normalisedTunerTeamChallenges[regionId] = {
+        ...existing,
+        invited: false,
+        offeredOnce: true,
+        reofferVisitsRemaining: 0,
+        completed: true,
+        championEarned: true,
+        championRewardClaimed: true,
+        // Keep Perfect Sweep available for dev testing; only the championship
+        // badge itself is pre-awarded.
+        perfectEarned: Boolean(existing.perfectEarned),
+        perfectRewardClaimed: Boolean(existing.perfectRewardClaimed),
+        perfectAttempt: false,
+        stage: Math.max(7, Number(existing.stage || 0)),
+        activeSession: false,
+        paused: false,
+        pausedAt: 0,
+        retryNotBefore: 0,
+        completedAt: Math.max(1, Number(existing.completedAt || 1)),
+      };
+    });
+  }
+
   return {
     ...base,
     ...input,
@@ -852,14 +922,18 @@ export function normaliseState(input = {}) {
       input.carMagazineSightings && typeof input.carMagazineSightings === 'object'
         ? input.carMagazineSightings
         : {},
-    wins: Number.isFinite(input.wins) ? input.wins : base.wins,
+    wins: devName
+      ? Math.max(75, Number.isFinite(input.wins) ? input.wins : base.wins)
+      : (Number.isFinite(input.wins) ? input.wins : base.wins),
     losses: Number.isFinite(input.losses) ? input.losses : base.losses,
     playTimeMs: Math.max(0, Number(input.playTimeMs || 0)),
     pinkSlipLastRequestRace: Number.isFinite(Number(input.pinkSlipLastRequestRace))
       ? Math.floor(Number(input.pinkSlipLastRequestRace))
       : -999,
     cash: normalisedCash,
-    competitionWins: Math.max(0, Math.floor(Number(input.competitionWins || 0))),
+    competitionWins: devName
+      ? Math.max(1, Math.floor(Number(input.competitionWins || 0)))
+      : Math.max(0, Math.floor(Number(input.competitionWins || 0))),
     easyCouponLastMilestone: Number.isFinite(input.easyCouponLastMilestone)
       ? Math.max(0, Math.floor(Number(input.easyCouponLastMilestone || 0)))
       : getEasyCouponMilestoneForWins(Number.isFinite(input.wins) ? input.wins : base.wins),
@@ -873,26 +947,17 @@ export function normaliseState(input = {}) {
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
       ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
       : [],
-    regionWins: input.regionWins && typeof input.regionWins === 'object'
-      ? Object.fromEntries(
-          Object.entries(input.regionWins).map(([regionId, value]) => [
-            String(regionId).toUpperCase(),
-            Math.max(0, Number(value || 0)),
-          ])
-        )
-      : {},
+    regionWins: normalisedRegionWins,
     tunerShopProgress:
       input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
         ? input.tunerShopProgress
         : {},
-    tunerTeamChallenges:
-      input.tunerTeamChallenges && typeof input.tunerTeamChallenges === 'object'
-        ? input.tunerTeamChallenges
-        : {},
-    tunerChallengeRevealPending:
-      input.tunerChallengeRevealPending
-        ? String(input.tunerChallengeRevealPending).toUpperCase()
-        : null,
+    tunerTeamChallenges: normalisedTunerTeamChallenges,
+    tunerChallengeRevealPending: devName
+      ? null
+      : (input.tunerChallengeRevealPending
+          ? String(input.tunerChallengeRevealPending).toUpperCase()
+          : null),
     crewMembers:
       input.crewMembers && typeof input.crewMembers === 'object'
         ? input.crewMembers
