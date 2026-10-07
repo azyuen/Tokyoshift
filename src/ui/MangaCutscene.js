@@ -2,7 +2,8 @@ import {
   characters,
   getCharacterAssetUrl,
   getCharacterVisualForContext,
-} from '../data/characters.js?v=20261007-r407';
+  getCharacterForContext,
+} from '../data/characters.js?v=20261007-r411';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -15,7 +16,7 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
+} from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -79,6 +80,13 @@ function buildContext(scene, definition, options) {
   variables.PLAYER_FIRST_NAME ??= (nameParts[0] || displayName).toUpperCase();
   variables.PLAYER_LAST_NAME ??= (nameParts.slice(1).join(' ') || '').toUpperCase();
 
+  const playerRoleKeys = new Set([
+    'PLAYER',
+    ...((options.playerRoleTokens || []).map(token =>
+      String(token || '').replace(/^\$/, '')
+    )),
+  ]);
+
   return {
     scene,
     definition,
@@ -87,6 +95,7 @@ function buildContext(scene, definition, options) {
     characterOverrides,
     variables,
     playerCharacterId,
+    playerRoleKeys,
   };
 }
 
@@ -116,7 +125,11 @@ function resolvePageCharacter(context, page, side) {
 }
 
 function tokenUsesPlayerSubstitute(token, context) {
-  if (!token || token === '$PLAYER') return false;
+  if (!token) return false;
+  const marker = String.fromCharCode(36);
+  const raw = String(token);
+  const key = raw.startsWith(marker) ? raw.slice(1) : raw;
+  if (context.playerRoleKeys?.has(key)) return false;
   const id = resolveCharacterToken(token, context);
   return Boolean(id && id === context.playerCharacterId);
 }
@@ -257,7 +270,11 @@ function actorLabel(scene, context, page, side, characterId, rivalContext = fals
     return playerDisplayName(scene, context.playerCharacterId).toUpperCase();
   }
 
-  return String(characters[characterId]?.name || side || 'TOKYO SHIFT').toUpperCase();
+  const displayCharacter = getCharacterForContext(characterId, {
+    rivalContext,
+    playerCharacterId: context.playerCharacterId,
+  });
+  return String(displayCharacter?.name || side || 'TOKYO SHIFT').toUpperCase();
 }
 
 function createMangaPointer(scene, x, y, speaker, depth) {

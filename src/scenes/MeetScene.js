@@ -19,9 +19,10 @@ import {
   getRivalCharacterOrderForRegion,
   hasRegionalTeam,
   getCharacterVisualForContext,
+  getCharacterForContext,
   getMainRivalProgression,
   isMainRivalAvailableAtRegionalMeet,
-} from '../data/characters.js?v=20261007-r409';
+} from '../data/characters.js?v=20261007-r411';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -77,8 +78,8 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261006-r392';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r398';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261007-r411';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261006-r398';
 import {
@@ -641,6 +642,7 @@ export default class MeetScene extends Phaser.Scene {
             WINNER: playerWon ? pending.playerCharacterId : pending.rivalCharacterId,
             LOSER: playerWon ? pending.rivalCharacterId : pending.playerCharacterId,
           },
+          playerRoleTokens: [playerWon ? 'WINNER' : 'LOSER'],
           variables: {
             RIVAL_NAME: String(pending.rivalName || 'RIVAL').toUpperCase(),
             CAR: carName,
@@ -653,6 +655,13 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     return true;
+  }
+
+  getRivalDisplayCharacter(characterId) {
+    return getCharacterForContext(characterId, {
+      rivalContext: true,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    }) || characters[characterId] || null;
   }
 
   getActiveDriverCharacterId() {
@@ -2977,6 +2986,7 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const character = characters[sourceOffer.characterId];
+    const displayCharacter = this.getRivalDisplayCharacter(sourceOffer.characterId);
     const car = cars[sourceOffer.carId];
 
     // Validate definitions and textures before clearing the ordinary meet.
@@ -3106,9 +3116,11 @@ export default class MeetScene extends Phaser.Scene {
       frameHeight: 104,
       side: 'left',
       depth: 66,
+      rivalContext: true,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
     });
 
-    const name = this.add.text(270, 690, character.name.toUpperCase(), {
+    const name = this.add.text(270, 690, String(displayCharacter?.name || character.name).toUpperCase(), {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff'
     }).setDepth(66);
 
@@ -3173,7 +3185,7 @@ export default class MeetScene extends Phaser.Scene {
         historyId: 'specialChallengerIntroduction:' + String(challenger.createdAt || 0),
         characterOverrides: { RIVAL: challenger.characterId },
         variables: {
-          RIVAL_NAME: character.name.toUpperCase(),
+          RIVAL_NAME: String(displayCharacter?.name || character.name).toUpperCase(),
           RIVAL_SUBTITLE: 'SPECIAL CHALLENGER',
         },
       });
@@ -3198,7 +3210,9 @@ export default class MeetScene extends Phaser.Scene {
     if (!challenger?.active || !this.hasCar) return;
 
     if (!storyConfirmed) {
-      const rivalName = String(characters[challenger.characterId]?.name || 'RIVAL').toUpperCase();
+      const rivalName = String(
+        this.getRivalDisplayCharacter(challenger.characterId)?.name || 'RIVAL'
+      ).toUpperCase();
       const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
         characterOverrides: { RIVAL: challenger.characterId },
         variables: { RIVAL_NAME: rivalName },
@@ -3987,6 +4001,7 @@ export default class MeetScene extends Phaser.Scene {
       );
       const characterId = chooseCharacterForRating(locationEncounterRating);
       const character = characters[characterId];
+      const displayCharacter = this.getRivalDisplayCharacter(characterId);
       const mainRivalProgression = getMainRivalProgression(
         this.registry,
         characterId
@@ -4058,7 +4073,7 @@ export default class MeetScene extends Phaser.Scene {
         raceDeal,
         stake,
         distance,
-        quote: character.introQuote,
+        quote: displayCharacter?.introQuote || character.introQuote,
 
         // Driver ability.
         encounterRating,
@@ -4505,7 +4520,8 @@ export default class MeetScene extends Phaser.Scene {
 
     this.offers.forEach((offer, i) => {
       const x = xPositions[i];
-      const character = characters[offer.characterId];
+      const character = this.getRivalDisplayCharacter(offer.characterId)
+        || characters[offer.characterId];
 
       const card = this.add.rectangle(
         x,
@@ -5285,7 +5301,9 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     if (this.selectedDeal === 'PINK' && !storyConfirmed) {
-      const rivalName = String(characters[offer.characterId]?.name || 'RIVAL').toUpperCase();
+      const rivalName = String(
+        this.getRivalDisplayCharacter(offer.characterId)?.name || 'RIVAL'
+      ).toUpperCase();
       const story = playMangaCutscene(this, 'firstPinkSlipChallenge', {
         characterOverrides: { RIVAL: offer.characterId },
         variables: { RIVAL_NAME: rivalName },

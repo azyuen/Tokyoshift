@@ -32,11 +32,12 @@ import {
   characters,
   getCharacterAssetUrl,
   getCharacterVisualForContext,
+  getCharacterForContext,
   CENTRAL_TOKYO_CHARACTER_IDS,
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261007-r407';
+} from '../data/characters.js?v=20261007-r411';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -68,10 +69,10 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
 } from '../data/tunerChallenges.js?v=20261007-r404';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
-import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r407';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261006-r398';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261007-r411';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
 import {
@@ -226,8 +227,7 @@ export default class RaceScene extends Phaser.Scene {
       || rivalCharacterOrder.find(id => id !== this.playerCharacterId)
       || rivalCharacterOrder[0];
     this.opponentCharacterId =
-      regionRivals.includes(storedOpponentCharacterId) &&
-      storedOpponentCharacterId !== this.playerCharacterId
+      regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
@@ -333,6 +333,13 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const rivalCharacter = characters[this.opponentCharacterId];
+    const rivalDisplayCharacter = getCharacterForContext(
+      this.opponentCharacterId,
+      {
+        rivalContext: true,
+        playerCharacterId: storedPlayerCharacterId,
+      }
+    ) || rivalCharacter;
     const playerBaseCar = clone(cars[this.selectedCarId]);
     const playerBuild = this.applyOwnedBuild(
       playerBaseCar,
@@ -501,7 +508,7 @@ export default class RaceScene extends Phaser.Scene {
           6,
           0.88,
           this.opponentPaintColor,
-          characters[this.opponentCharacterId],
+          rivalDisplayCharacter,
           {}
         );
 
@@ -550,7 +557,7 @@ export default class RaceScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
-    const rivalName = characters[this.opponentCharacterId]?.name || 'Rival';
+    const rivalName = rivalDisplayCharacter?.name || 'Rival';
     const moneyLabel = this.isTutorial
       ? 'CONTROLS // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
@@ -1888,7 +1895,13 @@ export default class RaceScene extends Phaser.Scene {
 
     const isPinkSlip = this.raceDeal === 'PINK_SLIP';
     const playerCharacter = characters[this.playerCharacterId] || characters.renMizuno;
-    const rivalCharacter = characters[this.opponentCharacterId] || characters.kaitoFujimori;
+    const rivalCharacter = getCharacterForContext(
+      this.opponentCharacterId,
+      {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || 'renMizuno',
+      }
+    ) || characters[this.opponentCharacterId] || characters.kaitoFujimori;
     const resultPose = playerWon ? 'win' : 'loss';
     const accent = playerWon ? 0xf2b84b : 0x6f8edb;
     const accentBright = playerWon ? '#ffd36a' : '#94b0ff';

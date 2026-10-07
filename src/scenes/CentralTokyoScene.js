@@ -11,7 +11,7 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261007-r409';
+} from '../data/characters.js?v=20261007-r411';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -61,7 +61,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261006-r388';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261007-r411';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';

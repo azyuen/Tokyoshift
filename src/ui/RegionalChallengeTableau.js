@@ -1,6 +1,9 @@
-import { characters } from '../data/characters.js?v=20261007-r407';
+import {
+  characters,
+  getCharacterForContext,
+} from '../data/characters.js?v=20261007-r411';
 import { cars } from '../data/cars.js?v=20261006-r388';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r407';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -119,7 +122,15 @@ export function createRegionalChallengeTableau(scene, {
 
   const safeStage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
   const currentRound = rounds[safeStage] || {};
-  const currentRival = characters[currentRound.characterId] || null;
+  const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
+  const rivalDisplayCharacter = characterId => getCharacterForContext(
+    characterId,
+    {
+      rivalContext: true,
+      playerCharacterId,
+    }
+  ) || characters[characterId] || null;
+  const currentRival = rivalDisplayCharacter(currentRound.characterId);
   const currentCar = cars[currentRound.carId] || null;
   const raceNumber = safeStage + 1;
   const startType = currentRound.raceType === 'Roll Race'
@@ -262,7 +273,7 @@ export function createRegionalChallengeTableau(scene, {
     // Names are earned/revealed progressively. Future silhouettes have no
     // labels at all.
     if (!future && !(current && revealCurrent)) {
-      const characterName = String(characters[round.characterId]?.name || 'RIVAL').toUpperCase();
+      const characterName = String(rivalDisplayCharacter(round.characterId)?.name || 'RIVAL').toUpperCase();
       const label = add(scene.add.text(
         layout.x - layout.w / 2 + 12,
         layout.y + layout.h / 2 - 30,
@@ -298,7 +309,7 @@ export function createRegionalChallengeTableau(scene, {
             const label = add(scene.add.text(
               layout.x - layout.w / 2 + 12,
               layout.y + layout.h / 2 - 30,
-              String(characters[round.characterId]?.name || 'RIVAL').toUpperCase(),
+              String(rivalDisplayCharacter(round.characterId)?.name || 'RIVAL').toUpperCase(),
               {
                 fontFamily: PIXEL_FONT,
                 fontSize: '5px',

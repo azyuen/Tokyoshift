@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261007-r409';
+export const CHARACTER_ASSET_VERSION = '20261007-r411';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -44,6 +44,11 @@ const RIVAL_SUBSTITUTE_KIND_BY_CHARACTER = Object.freeze({
   ayaKurose: 'female',
   reinaShibata: 'female',
   emiKanzaki: 'female',
+});
+
+export const RIVAL_REPLACEMENT_CHARACTER_IDS = Object.freeze({
+  male: 'keiNomura',
+  female: 'amiOkada',
 });
 
 export const characters = {
@@ -1748,6 +1753,54 @@ regionExclusive: true, teamRole: 'core',
     },
   },
 
+  keiNomura: {
+    id: 'keiNomura',
+    name: 'Kei Nomura',
+    archetype: 'The Conditional Rival',
+    roleTags: ['conditional-rival', 'avatar-replacement'],
+    selectable: false,
+    rivalEligible: false,
+    conditionalRivalReplacement: true,
+    personality: 'Measured, competitive and comfortable stepping into a difficult matchup.',
+    introQuote: 'If I am here, I intend to earn the spot.',
+    resultQuotes: {
+      win: 'That was the pace I came for.',
+      loss: 'Good run. I will adjust.',
+    },
+    visual: {
+      spriteKey: 'characterMaleSubstitute',
+      path: 'assets/Characters/male_sub_idle.png',
+      winSpriteKey: 'characterMaleSubstituteWin',
+      winPath: 'assets/Characters/male_sub_win.png',
+      lossSpriteKey: 'characterMaleSubstituteLoss',
+      lossPath: 'assets/Characters/male_sub_loss.png',
+    },
+  },
+
+  amiOkada: {
+    id: 'amiOkada',
+    name: 'Ami Okada',
+    archetype: 'The Conditional Rival',
+    roleTags: ['conditional-rival', 'avatar-replacement'],
+    selectable: false,
+    rivalEligible: false,
+    conditionalRivalReplacement: true,
+    personality: 'Calm, sharp and immediately serious once a race is on.',
+    introQuote: 'You have my attention. Let us run it properly.',
+    resultQuotes: {
+      win: 'I knew where the gap would open.',
+      loss: 'That was clean. I will find the time.',
+    },
+    visual: {
+      spriteKey: 'characterFemaleSubstitute',
+      path: 'assets/Characters/female_sub_idle.png',
+      winSpriteKey: 'characterFemaleSubstituteWin',
+      winPath: 'assets/Characters/female_sub_win.png',
+      lossSpriteKey: 'characterFemaleSubstituteLoss',
+      lossPath: 'assets/Characters/female_sub_loss.png',
+    },
+  },
+
   arkonDen: {
     id: 'arkonDen',
     name: 'Arkon Den',
@@ -1846,6 +1899,8 @@ export const characterOrder = [
   'hiroshiSato',
   'kentaIshikawa',
   'tomoSakamoto',
+  'keiNomura',
+  'amiOkada',
 ];
 
 // Keep the complete roster available for asset loading and workshop NPC use,
@@ -2086,24 +2141,46 @@ export const CENTRAL_TOKYO_CHARACTER_IDS = Object.freeze({
   }),
 });
 
-export function getRivalSubstituteVisual(characterId, playerCharacterId = '') {
+export function getRivalReplacementCharacterId(characterId, playerCharacterId = '') {
   const rivalId = String(characterId || '');
   const playerId = String(playerCharacterId || '');
-  if (!rivalId || rivalId !== playerId) return null;
+  if (!rivalId || rivalId !== playerId) return rivalId;
 
   const kind = RIVAL_SUBSTITUTE_KIND_BY_CHARACTER[playerId];
-  if (!kind || characters[playerId]?.mainRival !== true) return null;
-  return RIVAL_SUBSTITUTE_VISUALS[kind] || null;
+  if (!kind || characters[playerId]?.mainRival !== true) return rivalId;
+  return RIVAL_REPLACEMENT_CHARACTER_IDS[kind] || rivalId;
+}
+
+export function getCharacterForContext(
+  characterId,
+  { rivalContext = false, playerCharacterId = '' } = {}
+) {
+  const canonicalId = String(characterId || '');
+  if (!canonicalId) return null;
+
+  const resolvedId = rivalContext
+    ? getRivalReplacementCharacterId(canonicalId, playerCharacterId)
+    : canonicalId;
+  return characters[resolvedId] || characters[canonicalId] || null;
+}
+
+export function getRivalSubstituteVisual(characterId, playerCharacterId = '') {
+  const replacementId = getRivalReplacementCharacterId(
+    characterId,
+    playerCharacterId
+  );
+  if (!replacementId || replacementId === String(characterId || '')) return null;
+  return characters[replacementId]?.visual || null;
 }
 
 export function getCharacterVisualForContext(
   characterId,
   { rivalContext = false, playerCharacterId = '' } = {}
 ) {
-  const substitute = rivalContext
-    ? getRivalSubstituteVisual(characterId, playerCharacterId)
-    : null;
-  return substitute || characters[characterId]?.visual || null;
+  return getCharacterForContext(characterId, {
+    rivalContext,
+    playerCharacterId,
+  })?.visual || null;
 }
 
 export function getCharacterVisualAsset(characterId, pose = 'idle', options = {}) {
