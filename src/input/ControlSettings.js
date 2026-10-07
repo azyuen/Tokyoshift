@@ -7,8 +7,22 @@ export const CONTROL_LAYOUT_DEFAULTS = Object.freeze({
   clutch: Object.freeze({ x: 175, y: 545, scale: 1 }),
   nos: Object.freeze({ x: 378, y: 570, scale: 1 }),
   shifter: Object.freeze({ x: 1218, y: 535, scale: 1 }),
-  throttle: Object.freeze({ x: 1405, y: 545, scale: 1 }),
+  // Keep a real gap between the shifter and throttle touch zones.
+  throttle: Object.freeze({ x: 1435, y: 545, scale: 1 }),
 });
+
+export const CONTROL_TOUCH_RECTS = Object.freeze({
+  clutch: Object.freeze({ x: 65, y: 390, w: 220, h: 320 }),
+  nos: Object.freeze({ x: 318, y: 510, w: 122, h: 145 }),
+  shifter: Object.freeze({ x: 1090, y: 380, w: 245, h: 330 }),
+  throttle: Object.freeze({ x: 1345, y: 385, w: 190, h: 325 }),
+});
+
+export const NON_OVERLAPPING_TOUCH_CONTROLS = Object.freeze([
+  'clutch',
+  'shifter',
+  'throttle',
+]);
 
 export const TOUCH_COMPONENTS = Object.freeze([
   { id: 'hud', label: 'DASH' },
@@ -33,7 +47,7 @@ export const CONTROL_ACTIONS = Object.freeze([
 ]);
 
 const DEFAULT_SETTINGS = Object.freeze({
-  version: 2,
+  version: 3,
   layout: {
     hud: { dx: 0, dy: 40, scale: 1 },
     clutch: { dx: 0, dy: 0, scale: 1 },
@@ -78,7 +92,95 @@ function clamp(value, min, max, fallback) {
     : fallback;
 }
 
-function sanitiseLayout(raw = {}, rawVersion = 2) {
+function touchRectForPlacement(id, placement = {}) {
+  const base = CONTROL_TOUCH_RECTS[id];
+  if (!base) return null;
+  const scale = clamp(placement.scale, 0.55, 1.65, 1);
+  const cx = base.x + base.w / 2 + Number(placement.dx || 0);
+  const cy = base.y + base.h / 2 + Number(placement.dy || 0);
+  const w = base.w * scale;
+  const h = base.h * scale;
+  return {
+    left: cx - w / 2,
+    right: cx + w / 2,
+    top: cy - h / 2,
+    bottom: cy + h / 2,
+    width: w,
+    height: h,
+  };
+}
+
+function rectsOverlap(a, b, padding = 8) {
+  if (!a || !b) return false;
+  return !(
+    a.right + padding <= b.left ||
+    b.right + padding <= a.left ||
+    a.bottom + padding <= b.top ||
+    b.bottom + padding <= a.top
+  );
+}
+
+export function isTouchControlPlacementValid(id, candidatePlacement, layout = {}) {
+  if (!NON_OVERLAPPING_TOUCH_CONTROLS.includes(id)) return true;
+  const candidate = touchRectForPlacement(id, candidatePlacement);
+  return NON_OVERLAPPING_TOUCH_CONTROLS.every(otherId => {
+    if (otherId === id) return true;
+    return !rectsOverlap(candidate, touchRectForPlacement(otherId, layout?.[otherId]), 8);
+  });
+}
+
+function repairTouchControlOverlaps(layout) {
+  const next = clone(layout);
+  const pairs = [
+    ['clutch', 'shifter'],
+    ['clutch', 'throttle'],
+    ['shifter', 'throttle'],
+  ];
+
+  for (let pass = 0; pass < 4; pass++) {
+    let changed = false;
+
+    for (const [anchorId, moverId] of pairs) {
+      const anchor = touchRectForPlacement(anchorId, next[anchorId]);
+      const mover = touchRectForPlacement(moverId, next[moverId]);
+      if (!rectsOverlap(anchor, mover, 8)) continue;
+
+      const moves = [
+        { axis: 'x', amount: anchor.right + 8 - mover.left },
+        { axis: 'x', amount: anchor.left - 8 - mover.right },
+        { axis: 'y', amount: anchor.bottom + 8 - mover.top },
+        { axis: 'y', amount: anchor.top - 8 - mover.bottom },
+      ].sort((a, b) => Math.abs(a.amount) - Math.abs(b.amount));
+
+      const chosen = moves.find(move => {
+        const candidate = { ...next[moverId] };
+        if (move.axis === 'x') candidate.dx += move.amount;
+        else candidate.dy += move.amount;
+        const rect = touchRectForPlacement(moverId, candidate);
+        return rect &&
+          rect.left >= 0 &&
+          rect.right <= CONTROL_REFERENCE.width &&
+          rect.top >= 0 &&
+          rect.bottom <= CONTROL_REFERENCE.height;
+      });
+
+      if (chosen) {
+        if (chosen.axis === 'x') next[moverId].dx += chosen.amount;
+        else next[moverId].dy += chosen.amount;
+        changed = true;
+      } else {
+        next[moverId] = clone(DEFAULT_SETTINGS.layout[moverId]);
+        changed = true;
+      }
+    }
+
+    if (!changed) break;
+  }
+
+  return next;
+}
+
+function sanitiseLayout(raw = {}, rawVersion = 3) {
   const next = {};
   TOUCH_COMPONENTS.forEach(({ id }) => {
     const source = raw?.[id] || {};
@@ -107,7 +209,9 @@ function sanitiseLayout(raw = {}, rawVersion = 2) {
       scale: clamp(source.scale, 0.55, 1.65, defaults.scale),
     };
   });
-  return next;
+  // V3 makes the three large driving touch zones mutually exclusive.
+  // Dash may sit behind them and NOS may sit above them.
+  return repairTouchControlOverlaps(next);
 }
 
 function sanitiseKeyboard(raw = {}) {
@@ -155,7 +259,7 @@ function sanitiseController(raw = {}) {
 
 function sanitise(raw = {}) {
   return {
-    version: 2,
+    version: 3,
     layout: sanitiseLayout(raw.layout, raw.version),
     keyboard: sanitiseKeyboard(raw.keyboard),
     controller: sanitiseController(raw.controller),
