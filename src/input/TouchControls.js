@@ -44,7 +44,15 @@ export default class TouchControls {
     this.scene = scene;
     this.settings = getControlSettings();
     this.nosEnabled = options.nosEnabled !== false;
-    this.showNos = options.showNos !== false && (options.showNos === true || this.nosEnabled);
+    const dynoHasNos =
+      scene.sys?.settings?.key === 'DynoScene' &&
+      Number(scene.build?.car?.nosPower || 0) > 0 &&
+      Number(scene.build?.car?.nosCapacitySeconds || 0) > 0;
+    this.showNos = options.showNos !== false && (
+      options.showNos === true ||
+      this.nosEnabled ||
+      dynoHasNos
+    );
     this.throttle = 0;
     this.clutch = 0;
     this.nos = false;
@@ -59,7 +67,9 @@ export default class TouchControls {
     this.shifterStartY = 0;
     this.shifterSwipeDirection = 'neutral';
     this.shifterSwipeConsumed = false;
-    this.pedalLatchMax = options.pedalLatchMax !== false;
+    // Race and Dyno deliberately share identical pedal gesture behaviour.
+    // Legacy scene-specific overrides are ignored.
+    this.pedalLatchMax = true;
     this.clutchLatchedMax = false;
     this.throttleLatchedMax = false;
     this.pedalSwipePx = 72;
@@ -157,6 +167,16 @@ export default class TouchControls {
     ).setScale(this.nosScale).setDepth(51).setScrollFactor(0)
       .setVisible(this.showNos)
       .setAlpha(this.nosEnabled ? 1 : 0.42);
+
+    // Older DynoScene code explicitly hides NOS because dyno pulls do not fire
+    // nitrous. Keep it visible (dimmed/non-functional) while driving so Race
+    // and Dyno retain the same canonical layout; intro screens may still hide it.
+    if (scene.sys?.settings?.key === 'DynoScene' && this.showNos) {
+      const setNosVisible = this.nosSprite.setVisible.bind(this.nosSprite);
+      this.nosSprite.setVisible = value => setNosVisible(
+        value || (this.enabled && this.showNos)
+      );
+    }
 
     this.shifterSprite = scene.add.image(
       this.shifterX,
