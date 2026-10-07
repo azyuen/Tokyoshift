@@ -10,7 +10,8 @@ import {
   TOUCH_COMPONENTS,
   CONTROL_LAYOUT_DEFAULTS,
   CONTROL_REFERENCE,
-} from '../input/ControlSettings.js?v=20261007-r421';
+  isTouchControlPlacementValid,
+} from '../input/ControlSettings.js?v=20261007-r422';
 import { characters } from '../data/characters.js?v=20260926-r213';
 import {
   getProfileSlots,
@@ -424,6 +425,7 @@ function showControlsPanel(scene) {
   };
 
   const close = () => {
+    scene._menuNavigationCaptureInput = false;
     destroyTab();
     if (keyboardCaptureHandler) {
       try { scene.input.keyboard.off('keydown', keyboardCaptureHandler); } catch (e) {}
@@ -709,6 +711,25 @@ function showControlsPanel(scene) {
           );
         }
 
+        const proposedLogical = {
+          x: (clampedX - preview.x) / sx,
+          y: id === 'hud'
+            ? ((clampedCenterY + zoneH / 2 - preview.y) / sy)
+            : ((clampedCenterY - preview.y) / sy),
+        };
+        const candidatePlacement = {
+          ...(settings.layout?.[id] || {}),
+          dx: proposedLogical.x - base.x,
+          dy: proposedLogical.y - base.y,
+        };
+
+        // The three large driving touch zones are mutually exclusive. Keeping
+        // the invalid drag at its last valid point makes the boundary feel
+        // like a physical stop rather than silently creating ambiguous input.
+        if (!isTouchControlPlacementValid(id, candidatePlacement, settings.layout)) {
+          return;
+        }
+
         zone.setPosition(clampedX, clampedCenterY);
         syncVisual(clampedX, clampedCenterY);
       });
@@ -757,12 +778,19 @@ function showControlsPanel(scene) {
       }).setOrigin(0.5).setDepth(depth + 4));
 
       const changeScale = delta => {
+        const nextScale = Phaser.Math.Clamp(
+          Number(settings.layout?.[id]?.scale || 1) + delta,
+          0.55,
+          1.65
+        );
+        const candidatePlacement = {
+          ...(settings.layout?.[id] || {}),
+          scale: nextScale,
+        };
+        if (!isTouchControlPlacementValid(id, candidatePlacement, settings.layout)) return;
+
         settings = updateControlSettings(next => {
-          next.layout[id].scale = Phaser.Math.Clamp(
-            Number(next.layout[id].scale || 1) + delta,
-            0.55,
-            1.65
-          );
+          next.layout[id].scale = nextScale;
           return next;
         });
         renderTab();
@@ -840,6 +868,7 @@ function showControlsPanel(scene) {
           controllerCaptureAction = action.id;
           keyboardCaptureAction = null;
         }
+        scene._menuNavigationCaptureInput = true;
         label.setText('PRESS INPUT…').setColor('#ffe08a').setScale(1);
       });
     });
@@ -922,6 +951,7 @@ function showControlsPanel(scene) {
   };
 
   const renderTab = () => {
+    scene._menuNavigationCaptureInput = false;
     destroyTab();
     settings = getControlSettings();
     keyboardCaptureAction = null;
