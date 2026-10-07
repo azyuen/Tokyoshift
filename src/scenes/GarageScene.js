@@ -157,11 +157,11 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
   { x: 690, feetY: 442, h: 160, zone: 'floor', scale: 0.90 },
 
   // Upper level is deliberately asymmetrical: left sits between floor 1/2,
-  // centre drops toward the room middle and is slightly smaller, while right
-  // comes left/down and is a touch taller.
-  { x: 245, feetY: 190, h: 140, zone: 'balcony', scale: 1.00 },
-  { x: 565, feetY: 191, h: 134, zone: 'balcony', scale: 1.00 },
-  { x: 770, feetY: 196, h: 148, zone: 'balcony', scale: 1.00 },
+  // centre tucks into the plant gap, and right is the tallest upper figure.
+  // All three sit slightly higher than the previous composition.
+  { x: 245, feetY: 178, h: 140, zone: 'balcony', scale: 1.00 },
+  { x: 500, feetY: 179, h: 134, zone: 'balcony', scale: 1.00 },
+  { x: 770, feetY: 184, h: 148, zone: 'balcony', scale: 1.15 },
 ]);
 
 // The player sits just left of centre on the whiteboard, at the same visual
@@ -685,11 +685,11 @@ export default class GarageScene extends Phaser.Scene {
       const feetY = layout.feetY / STAGE.h * 840;
       const shadow = this.add.ellipse(
         x,
-        feetY - 8,
-        74,
-        18,
+        feetY - 12,
+        88,
+        23,
         0x000000,
-        0.55
+        0.38
       ).setDepth(102);
 
       const sprite = this.add.image(x, feetY, character.visual.spriteKey)
@@ -738,11 +738,11 @@ export default class GarageScene extends Phaser.Scene {
       const feetY = layout.feetY / STAGE.h * 840;
       const shadow = this.add.ellipse(
         x,
-        feetY - 8,
-        78,
-        18,
+        feetY - 12,
+        94,
+        24,
         0x000000,
-        0.55
+        0.38
       ).setDepth(102);
       const sprite = this.add.image(x, feetY, playerCharacter.visual.spriteKey)
         .setOrigin(0.5, 1)
