@@ -1,5 +1,5 @@
-import TouchControls from '../input/TouchControls.js?v=20261007-r422';
-import RaceHUD from '../ui/RaceHUD.js?v=20261007-r422';
+import TouchControls from '../input/TouchControls.js?v=20261008-r426';
+import RaceHUD from '../ui/RaceHUD.js?v=20261008-r426';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
 import { cars } from '../data/cars.js?v=20261006-r388';
