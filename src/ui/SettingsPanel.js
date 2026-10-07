@@ -516,13 +516,11 @@ function showControlsPanel(scene) {
     });
     raceMock.fillStyle(0x27323b, 1).fillRect(preview.x, mapY(238), preview.w, 285 * sy);
 
-    // Grey shoulder bands + solid white shoulder lines.
+    // Subtle grey shoulders only. The centre dotted divider is the sole
+    // white road marking, matching the actual race renderer.
     raceMock.fillStyle(0x62686d, 1)
       .fillRect(preview.x, mapY(238), preview.w, 18 * sy)
       .fillRect(preview.x, mapY(505), preview.w, 18 * sy);
-    raceMock.fillStyle(0xf2f3f1, 0.95)
-      .fillRect(preview.x, mapY(256), preview.w, 4 * sy)
-      .fillRect(preview.x, mapY(501), preview.w, 4 * sy);
 
     // Dotted lane line sits just below the top car's wheel line.
     raceMock.fillStyle(0xf2f3f1, 0.88);
