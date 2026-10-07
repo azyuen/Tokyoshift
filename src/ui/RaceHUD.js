@@ -109,9 +109,23 @@ export default class RaceHUD {
       const segW = 20 * this.scale;
       const segH = 36 * this.scale;
       const segGap = 7 * this.scale;
-      const filled = Math.ceil(Phaser.Math.Clamp(t.nosFraction, 0, 1) * 4 - 0.0001);
-      for (let i = 0; i < 4; i++) {
-        g.fillStyle(i < filled ? 0x4cc8ff : 0x071019, i < filled ? 0.92 : 0.68)
+      const totalShots = Phaser.Math.Clamp(Math.round(Number(t.nosShotsTotal || 0)), 0, 3);
+      const visibleShots = Phaser.Math.Clamp(
+        Math.round(Number(t.nosShotsVisible ?? totalShots)),
+        0,
+        totalShots
+      );
+      const activeIndex = t.nosActive ? visibleShots - 1 : -1;
+      const shotFraction = Phaser.Math.Clamp(Number(t.nosShotFraction || 0), 0, 1);
+
+      for (let i = 0; i < visibleShots; i++) {
+        let visible = true;
+        if (i === activeIndex && shotFraction <= 0.35) {
+          const periodMs = shotFraction <= 0.15 ? 70 : 140;
+          visible = Math.floor(Number(this.scene.time?.now || 0) / periodMs) % 2 === 0;
+        }
+        if (!visible) continue;
+        g.fillStyle(0x4cc8ff, i === activeIndex ? 1 : 0.92)
           .fillRoundedRect(nosStart.x + i * (segW + segGap), nosStart.y, segW, segH, 2);
       }
     }
