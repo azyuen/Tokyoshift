@@ -36,7 +36,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261006-r388';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261006-r390';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261007-r412';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
   getGarageCapacity,
@@ -503,7 +503,7 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
     }
 
-    if (!pendingResultShown && !specialChallengerShown) {
+    if (!pendingResultShown && !specialChallengerShown && !this.isCrewTestDriveMode()) {
       const crewInviteShown = this.maybeShowCrewInviteInterest();
       const activeRecruitShown = crewInviteShown
         ? false
@@ -534,6 +534,15 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  isCrewTestDriveMode() {
+    const selectedCarId = String(this.registry.get('selectedCarId') || '');
+    return Boolean(
+      selectedCarId &&
+      cars[selectedCarId]?.crewLoan &&
+      this.registry.get('selectedRacePlayerCharacterId')
+    );
   }
 
   maybeShowPendingRegionalChallengeResult() {
@@ -703,6 +712,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   buildCrewBattleButton() {
+    if (this.isCrewTestDriveMode()) return;
     if (!isCrewComplete(this.registry) || !this.hasCar) return;
 
     const location = getMeetLocation(this.selectedMeetLocation);
@@ -740,6 +750,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   showCrewBattleLineup(regionId) {
+    if (this.isCrewTestDriveMode()) return;
     if (!isCrewComplete(this.registry)) return;
 
     const units = getCrewBattleUnits(this.registry);
@@ -1015,6 +1026,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeShowRegionalCrewIntroduction({ countChallengeVisit = false } = {}) {
+    if (this.isCrewTestDriveMode()) return false;
     if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
       return false;
     }
@@ -1156,6 +1168,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeShowCrewInviteInterest() {
+    if (this.isCrewTestDriveMode()) return false;
     const interest = getCrewInviteInterest(this.registry);
     if (!interest?.characterId || !interest?.regionId) return false;
 
@@ -1238,6 +1251,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeShowActiveCrewRecruitChallenge() {
+    if (this.isCrewTestDriveMode()) return false;
     const challenge = this.registry.get('crewRecruitChallenge');
     if (!challenge?.active) return false;
 
@@ -1387,6 +1401,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   startCrewRecruitmentRace(challenge, playerCarId) {
+    if (this.isCrewTestDriveMode()) return;
     if (!challenge?.characterId || !challenge?.baseCarId || !cars[playerCarId]) return;
 
     const character = characters[challenge.characterId];
@@ -1444,6 +1459,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeShowTunerChallengeReveal() {
+    if (this.isCrewTestDriveMode()) return false;
     const pending = String(this.registry.get('tunerChallengeRevealPending') || '').toUpperCase();
     if (!pending) return false;
 
@@ -1489,6 +1505,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   maybeShowTunerTeamChallenge({ countReofferVisit = false } = {}) {
+    if (this.isCrewTestDriveMode()) return false;
     if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return false;
 
     const location = getMeetLocation(this.selectedMeetLocation);
@@ -1596,6 +1613,7 @@ export default class MeetScene extends Phaser.Scene {
     regionId,
     { skipCallout = false, forceCallout = false } = {}
   ) {
+    if (this.isCrewTestDriveMode()) return;
     if (this.tunerChallengePopup?.active || !this.hasCar) return;
 
     const key = String(regionId || '').toUpperCase();
@@ -1786,6 +1804,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   startTunerTeamChallengeRound(regionId) {
+    if (this.isCrewTestDriveMode()) return;
     const key = String(regionId || '').toUpperCase();
     const state = getTunerTeamChallengeState(this.registry, key);
     const round = state.rounds[state.stage];
@@ -2289,16 +2308,20 @@ export default class MeetScene extends Phaser.Scene {
     }).setDepth(37);
 
     const competitionCooldownRemaining = this.getCompetitionCooldownRemainingMs();
+    const crewTestDrive = this.isCrewTestDriveMode();
     const competitionUnlocked =
       this.hasCar &&
+      !crewTestDrive &&
       Number(this.registry.get('wins') || 0) >= 1 &&
       competitionCooldownRemaining <= 0;
 
-    const competitionLabel = Number(this.registry.get('wins') || 0) < 1
-      ? 'COMPETITION // WIN 1 RACE'
-      : competitionCooldownRemaining > 0
-        ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
-        : 'COMPETITION';
+    const competitionLabel = crewTestDrive
+      ? 'CREW TEST // SINGLE + PINKS'
+      : Number(this.registry.get('wins') || 0) < 1
+        ? 'COMPETITION // WIN 1 RACE'
+        : competitionCooldownRemaining > 0
+          ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
+          : 'COMPETITION';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
@@ -3289,15 +3312,18 @@ export default class MeetScene extends Phaser.Scene {
 
     const wins = Number(this.registry.get('wins') || 0);
     const remaining = this.getCompetitionCooldownRemainingMs();
-    const unlocked = this.hasCar && wins >= 1 && remaining <= 0;
+    const crewTestDrive = this.isCrewTestDriveMode();
+    const unlocked = this.hasCar && !crewTestDrive && wins >= 1 && remaining <= 0;
 
     item.locked = !unlocked;
     item.label.setText(
-      wins < 1
-        ? 'COMPETITION // WIN 1 RACE'
-        : remaining > 0
-          ? 'COOLDOWN // ' + this.formatCompetitionCooldown(remaining)
-          : 'COMPETITION'
+      crewTestDrive
+        ? 'CREW TEST // SINGLE + PINKS'
+        : wins < 1
+          ? 'COMPETITION // WIN 1 RACE'
+          : remaining > 0
+            ? 'COOLDOWN // ' + this.formatCompetitionCooldown(remaining)
+            : 'COMPETITION'
     );
 
     item.box.removeAllListeners('pointerdown');
@@ -3502,6 +3528,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   showCompetitionPopup(storyConfirmed = false) {
+    if (this.isCrewTestDriveMode()) return;
     if (this.specialChallengeActive || !this.hasCar) return;
     if (this.getCompetitionCooldownRemainingMs() > 0) return;
 
@@ -4789,10 +4816,11 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const ownedCars = this.registry.get('ownedCarIds') || [];
+    const personalCarCount = ownedCars.filter(id => !cars[id]?.crewLoan).length;
     const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
     const displayCarId = this.getOfferDisplayCar(offer)?.carId || offer.carId;
     if (
-      ownedCars.length >= garageCapacity &&
+      personalCarCount >= garageCapacity &&
       !ownedCars.includes(displayCarId)
     ) {
       this.pinkSlipButton.disableInteractive();
@@ -4840,25 +4868,13 @@ export default class MeetScene extends Phaser.Scene {
   updatePinkSlipControl(offer) {
     if (!offer) return;
 
-    const selectedCar = cars[this.registry.get('selectedCarId')];
-    if (selectedCar?.crewLoan) {
-      this.pinkSlipButton
-        .setFillStyle(0x11161c, 1)
-        .setStrokeStyle(1, 0x46545e, 1)
-        .disableInteractive();
-      this.pinkSlipButtonLabel.setText('CREW LOAN // NO PINKS').setColor('#72838f');
-      this.pinkResponseText
-        .setText('Loan cars stay with their crew member and cannot be wagered.')
-        .setColor('#8799a5');
-      return;
-    }
-
     if (!offer.pinkChallenged) {
       const ownedCars = this.registry.get('ownedCarIds') || [];
+      const personalCarCount = ownedCars.filter(id => !cars[id]?.crewLoan).length;
       const garageCapacity = getGarageCapacity(this.registry.get('garageTier') || 0);
       const displayCarId = this.getOfferDisplayCar(offer)?.carId || offer.carId;
       const garageFull =
-        ownedCars.length >= garageCapacity &&
+        personalCarCount >= garageCapacity &&
         !ownedCars.includes(displayCarId);
 
       if (garageFull) {
