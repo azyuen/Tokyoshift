@@ -414,8 +414,10 @@ export function getProfileSlots() {
       selectedCarId: state?.selectedCarId || null,
       district: String(state?.district || 'ODAIBA'),
       garageTier: Math.max(0, Number(state?.garageTier || 0)),
-      championCount: Object.values(state?.tunerTeamChallenges || {})
-        .filter(item => Boolean(item?.championEarned || item?.completed)).length,
+      championCount: profileNameKey.includes('arkonden')
+        ? ARKON_DEV_CHAMPIONSHIP_REGIONS.length
+        : Object.values(state?.tunerTeamChallenges || {})
+            .filter(item => Boolean(item?.championEarned || item?.completed)).length,
       perfectCount: Object.values(state?.tunerTeamChallenges || {})
         .filter(item => Boolean(
           item?.perfectEarned ||
