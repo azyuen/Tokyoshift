@@ -502,8 +502,8 @@ function showControlsPanel(scene) {
       1
     ).setStrokeStyle(2, 0x294b61, 1).setDepth(depth + 2));
 
-    // Mock race view. This is deliberately simple, but uses the real lane/car
-    // positions so dash overlap is obvious while editing.
+    // Mock race view. Keep the road/background as spatial context for the real
+    // draggable controls, but do not add fake cars to the preview.
     const raceMock = addTab(scene.add.graphics().setDepth(depth + 2.2));
     raceMock.fillStyle(0x08111b, 1).fillRect(preview.x, preview.y, preview.w, preview.h);
     raceMock.fillStyle(0x101c28, 1).fillRect(preview.x, preview.y, preview.w, 145 * sy);
@@ -529,22 +529,6 @@ function showControlsPanel(scene) {
     for (let logicalX = 15; logicalX < CONTROL_REFERENCE.width; logicalX += 145) {
       raceMock.fillRect(mapX(logicalX), mapY(377), 72 * sx, 4 * sy);
     }
-
-    const drawMockCar = (logicalX, logicalY, bodyColor) => {
-      const x = mapX(logicalX);
-      const y = mapY(logicalY);
-      const carW = 250 * sx;
-      const carH = 64 * sy;
-      raceMock.fillStyle(0x07090c, 1)
-        .fillCircle(x - carW * 0.31, y + carH * 0.34, 24 * sx)
-        .fillCircle(x + carW * 0.31, y + carH * 0.34, 24 * sx);
-      raceMock.fillStyle(bodyColor, 0.92)
-        .fillRoundedRect(x - carW / 2, y - carH / 2, carW, carH, 9 * sx);
-      raceMock.fillStyle(0x17232c, 1)
-        .fillRoundedRect(x - carW * 0.09, y - carH * 0.44, carW * 0.39, carH * 0.36, 6 * sx);
-    };
-    drawMockCar(745, 340, 0x5b7f96);
-    drawMockCar(810, 430, 0x8e555d);
 
     addTab(scene.add.text(preview.x + 18, preview.y + 15,
       'MOCK RACE VIEW  //  DRAG THE ACTUAL CONTROLS', {
