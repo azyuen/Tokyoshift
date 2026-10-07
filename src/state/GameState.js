@@ -12,6 +12,7 @@ import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261006-r3
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
 export const PROFILE_STORE_KEY = 'tokyoShiftProfilesV1';
+export const PROFILE_STORE_BACKUP_KEY = 'tokyoShiftProfilesV1Backup';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
 
@@ -201,8 +202,25 @@ function emptyProfileStore() {
 
 function normaliseSlot(slot) {
   if (!slot || typeof slot !== 'object') return null;
-  const manual = slot.manual && typeof slot.manual === 'object' ? slot.manual : null;
-  const session = slot.session && typeof slot.session === 'object' ? slot.session : null;
+
+  let manual = slot.manual && typeof slot.manual === 'object' ? slot.manual : null;
+  let session = slot.session && typeof slot.session === 'object' ? slot.session : null;
+
+  // Recovery compatibility: some older/interrupted builds can leave a raw
+  // profile state directly in a slot. Do not discard it as "empty".
+  if (!manual && !session) {
+    const looksLikeRawState =
+      Array.isArray(slot.ownedCarIds) ||
+      slot.carStates ||
+      slot.playerCharacterId ||
+      slot.firstName ||
+      slot.lastName;
+    if (looksLikeRawState) {
+      manual = slot;
+      session = slot;
+    }
+  }
+
   if (!manual && !session) return null;
 
   return {
@@ -213,15 +231,77 @@ function normaliseSlot(slot) {
   };
 }
 
+function profileStoreHasData(store) {
+  return Boolean(
+    store?.slots &&
+    Array.isArray(store.slots) &&
+    store.slots.some(slot => Boolean(normaliseSlot(slot)))
+  );
+}
+
+function normaliseProfileStore(store) {
+  return {
+    version: 1,
+    slots: Array.from({ length: MAX_PROFILES }, (_, index) =>
+      normaliseSlot(store?.slots?.[index])
+    ),
+  };
+}
+
+function getRawActiveProfileIndex() {
+  const raw = Number(readJson(ACTIVE_PROFILE_KEY));
+  return Number.isInteger(raw) && raw >= 0 && raw < MAX_PROFILES ? raw : 0;
+}
+
 function ensureProfileStore() {
   const existing = readJson(PROFILE_STORE_KEY);
   if (existing?.slots && Array.isArray(existing.slots)) {
-    const slots = Array.from({ length: MAX_PROFILES }, (_, index) =>
-      normaliseSlot(existing.slots[index])
-    );
-    const store = { version: 1, slots };
-    writeJson(PROFILE_STORE_KEY, store);
+    const store = normaliseProfileStore(existing);
+
+    if (profileStoreHasData(store)) {
+      // Keep an independent rolling rescue copy before any later mutation.
+      writeJson(PROFILE_STORE_BACKUP_KEY, store);
+      writeJson(PROFILE_STORE_KEY, store);
+      return store;
+    }
+
+    // An empty-looking store can be the result of an interrupted write or an
+    // older slot schema. Prefer a known-good multi-profile rescue copy.
+    const backup = readJson(PROFILE_STORE_BACKUP_KEY);
+    if (profileStoreHasData(backup)) {
+      const recovered = normaliseProfileStore(backup);
+      writeJson(PROFILE_STORE_KEY, recovered);
+      return recovered;
+    }
+
+    // The active profile is also mirrored under the original single-profile
+    // keys. If those still exist, recover them instead of showing zero slots.
+    const legacyManual = readJson(SAVE_KEY);
+    const legacySession = readJson(SESSION_KEY);
+    if (legacyManual || legacySession) {
+      const recovered = emptyProfileStore();
+      const index = getRawActiveProfileIndex();
+      recovered.slots[index] = {
+        manual: legacyManual || null,
+        session: legacySession || legacyManual || null,
+        createdAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
+        updatedAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
+      };
+      writeJson(PROFILE_STORE_KEY, recovered);
+      writeJson(PROFILE_STORE_BACKUP_KEY, recovered);
+      return recovered;
+    }
+
     return store;
+  }
+
+  // If the primary store is absent/corrupt, first try the independent rescue
+  // copy before falling all the way back to the legacy active-profile mirror.
+  const backup = readJson(PROFILE_STORE_BACKUP_KEY);
+  if (profileStoreHasData(backup)) {
+    const recovered = normaliseProfileStore(backup);
+    writeJson(PROFILE_STORE_KEY, recovered);
+    return recovered;
   }
 
   // One-time migration from the original single-profile save format.
@@ -230,13 +310,15 @@ function ensureProfileStore() {
   const store = emptyProfileStore();
 
   if (legacyManual || legacySession) {
-    store.slots[0] = {
+    const index = getRawActiveProfileIndex();
+    store.slots[index] = {
       manual: legacyManual || null,
       session: legacySession || legacyManual || null,
       createdAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
       updatedAt: legacyManual?.savedAt || legacySession?.savedAt || new Date().toISOString(),
     };
-    writeJson(ACTIVE_PROFILE_KEY, 0);
+    writeJson(ACTIVE_PROFILE_KEY, index);
+    writeJson(PROFILE_STORE_BACKUP_KEY, store);
   }
 
   writeJson(PROFILE_STORE_KEY, store);
@@ -250,7 +332,19 @@ function writeProfileStore(store) {
       normaliseSlot(store?.slots?.[index])
     ),
   };
+
+  // Preserve the last readable multi-profile store before replacing it.
+  const current = readJson(PROFILE_STORE_KEY);
+  if (profileStoreHasData(current)) {
+    writeJson(PROFILE_STORE_BACKUP_KEY, normaliseProfileStore(current));
+  }
+
   writeJson(PROFILE_STORE_KEY, safe);
+
+  // A successful non-empty write becomes the new known-good rescue copy.
+  if (profileStoreHasData(safe)) {
+    writeJson(PROFILE_STORE_BACKUP_KEY, safe);
+  }
   return safe;
 }
 
@@ -436,7 +530,12 @@ export function readManualSave() {
 
 export function readSessionState() {
   const slot = ensureProfileStore().slots[getActiveProfileIndex()];
-  return slot?.session || slot?.manual || null;
+  const state = slot?.session || slot?.manual || null;
+  if (state) return state;
+
+  // Final non-destructive fallback: never strand a mirrored active profile
+  // behind an empty/corrupt multi-profile store.
+  return readJson(SESSION_KEY) || readJson(SAVE_KEY) || null;
 }
 
 function clonePlain(value, fallback = {}) {
