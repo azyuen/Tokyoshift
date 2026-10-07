@@ -7,7 +7,6 @@ import {
   getCharacterAssetUrl,
   CENTRAL_TOKYO_CHARACTER_IDS,
   getCharacterVisualAsset,
-  getCharacterVisualForContext,
   genericRivalCharacterOrder,
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,

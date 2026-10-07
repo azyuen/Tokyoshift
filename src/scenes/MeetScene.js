@@ -1322,7 +1322,8 @@ export default class MeetScene extends Phaser.Scene {
         const index = (current + direction + challengeCarIds.length) % challengeCarIds.length;
         selectedCarId = challengeCarIds[index];
         carLabel.setText(
-          'YOUR STOCK CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
+          (recruitRules.carRule === 'STOCK' ? 'YOUR STOCK CAR // ' : 'YOUR CAR // ') +
+          String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
         ).setColor('#91ffe7');
       };
 
@@ -1368,7 +1369,7 @@ export default class MeetScene extends Phaser.Scene {
 
     decline.on('pointerdown', () => {
       // The invitation has already been accepted. Closing this selector only
-      // postpones the stock challenge; the same driver waits for the player.
+      // postpones the recruitment challenge; the same driver waits for the player.
       saveSessionState(this.registry);
       close();
     });
@@ -3879,7 +3880,6 @@ export default class MeetScene extends Phaser.Scene {
   generateOffersForLocation(locationId) {
     const location = getMeetLocation(locationId);
     const profile = getEncounterProfile(locationId, location.difficulty);
-    const playerCharacterId = this.getActiveDriverCharacterId();
 
     const recruitedIds = new Set(
       Object.values(getCrewMembers(this.registry))
@@ -4083,7 +4083,7 @@ export default class MeetScene extends Phaser.Scene {
         playerPerformanceIndex: match.playerPerformanceIndex,
         opponentPerformanceIndex: match.opponentPerformanceIndex,
 
-        difficulty: profile.difficulty,
+        difficulty: mainRivalProgression?.difficulty || profile.difficulty,
         pinkAccepted: pinkDecision.accepted,
         pinkAcceptanceChance: pinkDecision.chance,
         pinkReply: pinkDecision.reply,
