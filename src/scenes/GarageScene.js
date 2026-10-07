@@ -163,7 +163,7 @@ const CREW_MEMBER_LAYOUT = Object.freeze([
 // whiteboard on the right, even before the first crew member is recruited.
 const CREW_PLAYER_OVERVIEW_LAYOUT = Object.freeze({
   x: 1010,
-  feetY: 455,
+  feetY: 473,
   h: 160,
 });
 
@@ -451,6 +451,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMode = false;
     this.chassisModeObjects = [];
+    this.workshopHomeHotspotObjects = [];
     this.chassisPresetButtons = [];
     this.chassisRgbLabels = {};
     this.currentPaintColor = 0xffffff;
@@ -691,7 +692,7 @@ export default class GarageScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       const spriteSource = this.textures.get(character.visual.spriteKey).getSourceImage();
-      const perspectiveBoost = layout.zone === 'floor' ? 1.72 : 1.45;
+      const perspectiveBoost = layout.zone === 'floor' ? 1.94 : 1.45;
       sprite.setScale((layout.h * perspectiveBoost) / Math.max(1, spriteSource.height));
 
       const name = this.add.text(
@@ -1046,7 +1047,7 @@ export default class GarageScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(42);
 
     this.headerCarText = this.add.text(
-      305,
+      this.crewMode ? 370 : 305,
       35,
       this.crewMode ? 'CREW ' + (getCrewCount(this.registry) + 1) + '/8' : '',
       {
@@ -1556,15 +1557,14 @@ export default class GarageScene extends Phaser.Scene {
       const crewMember = this.crewMode ? this.getCrewMemberForLoanCar(id) : null;
       const copyNumber = Math.max(1, Number(cars[id]?.ownedCopyNumber || 1));
       const cardLabel = crewMember
-        ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
-          '\n' + String(cars[id].shortName || id).toUpperCase()
+        ? String(cars[id].shortName || id).toUpperCase()
         : String(cars[id].shortName || id) + (copyNumber > 1 ? ' #' + copyNumber : '');
       const label = add(this.add.text(x, y + 34, cardLabel, {
         fontFamily: PIXEL_FONT,
-        fontSize: this.crewMode ? '6px' : '9px',
+        fontSize: this.crewMode ? '8px' : '9px',
         color: active ? '#ffffff' : '#b8cad7',
         align: 'center',
-        lineSpacing: this.crewMode ? 3 : 0,
+        lineSpacing: 0,
       }).setOrigin(0.5).setDepth(48));
 
       box.on('pointerup', pointer => {
@@ -2457,7 +2457,7 @@ export default class GarageScene extends Phaser.Scene {
         ?.setVisible(true)
         .setPosition(1350, 792)
         .setDepth(111)
-        .setText('RETURN TO WORKSHOP  >')
+        .setText('BACK  >')
         .setColor('#eef8ff');
       return;
     }
@@ -2485,23 +2485,17 @@ export default class GarageScene extends Phaser.Scene {
       .setDepth(111)
       .setVisible(true);
 
-    // Selecting a tuning category replaces GO TO MAP with the escape action.
-    // It cancels the pending setup and exits the crew garage in one tap.
+    // Tuning categories own the entire sidebar. Hide every Crew Garage
+    // navigation control so none can sit over the tuning controls.
     if (tuningLocked && hasCrewCar) {
-      this.crewOverviewButton?.setVisible(false);
+      this.crewOverviewButton?.setVisible(false).disableInteractive();
       this.crewOverviewButtonLabel?.setVisible(false);
-      this.crewBackButton?.setVisible(false);
+      this.crewBackButton?.setVisible(false).disableInteractive();
       this.crewBackButtonLabel?.setVisible(false);
-      this.dynoButton?.setVisible(false);
+      this.dynoButton?.setVisible(false).disableInteractive();
       this.dynoButtonLabel?.setVisible(false);
-
-      this.meetButton
-        ?.setInteractive({ useHandCursor: true })
-        .setFillStyle(0x122331, 1)
-        .setStrokeStyle(2, 0x55b8ff, 1);
-      this.meetButtonLabel
-        ?.setText('RETURN TO WORKSHOP  >')
-        .setColor('#eef8ff');
+      this.meetButton?.setVisible(false).disableInteractive();
+      this.meetButtonLabel?.setVisible(false);
       return;
     }
 
@@ -2522,7 +2516,7 @@ export default class GarageScene extends Phaser.Scene {
       .setStrokeStyle(2, 0x55b8ff, 1);
     this.crewBackButtonLabel
       ?.setVisible(true)
-      .setText('RETURN TO WORKSHOP  >')
+      .setText('BACK  >')
       .setColor('#eef8ff');
 
     this.dynoButton?.setVisible(Boolean(hasCrewCar));
@@ -2581,7 +2575,7 @@ export default class GarageScene extends Phaser.Scene {
     cancelSceneLoading(this);
 
     this.crewBackButton?.disableInteractive();
-    this.crewBackButtonLabel?.setText('RETURNING TO WORKSHOP...');
+    this.crewBackButtonLabel?.setText('BACK...');
 
     // Crew Space is a presentation layered on top of Warehouse HQ. Phaser's
     // sleeping-scene lifecycle can become ambiguous after dev/test shortcuts or
@@ -2653,7 +2647,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(110);
 
-    this.crewBackButtonLabel = this.add.text(x, y, 'RETURN TO WORKSHOP  >', {
+    this.crewBackButtonLabel = this.add.text(x, y, 'BACK  >', {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#eef8ff',
@@ -2661,6 +2655,16 @@ export default class GarageScene extends Phaser.Scene {
 
     this.crewBackButton.on('pointerdown', () => {
       this.exitCrewSpaceToWorkshop();
+    });
+  }
+
+  setWorkshopHomeHotspotsVisible(visible) {
+    const show = Boolean(visible) && !this.crewMode;
+    (this.workshopHomeHotspotObjects || []).forEach(item => {
+      [item.glow, item.labelPad, item.text].forEach(obj => obj?.setVisible?.(show));
+      if (!item.glow?.active) return;
+      if (show && item.enabled) item.glow.setInteractive({ useHandCursor: true });
+      else item.glow.disableInteractive();
     });
   }
 
@@ -2766,7 +2770,10 @@ export default class GarageScene extends Phaser.Scene {
       });
     }
 
-    return { glow, labelPad, text };
+    const hotspot = { glow, labelPad, text, enabled };
+    this.workshopHomeHotspotObjects ??= [];
+    this.workshopHomeHotspotObjects.push(hotspot);
+    return hotspot;
   }
 
   activateWarehouseDynoSpace() {
@@ -2798,23 +2805,22 @@ export default class GarageScene extends Phaser.Scene {
     let labelAlign = 'right';
 
     if (activeWorkshop.id === 'shinonomeCanalYard') {
-      // Move the Canal Yard entry right and slightly upward so it finishes
-      // immediately before the top of the staircase.
+      // Keep the Canal Yard entry clear of the staircase and move it slightly
+      // left so the label sits more naturally over the office opening.
       position = {
-        x: 1010,
+        x: 970,
         y: 142,
         w: 250,
         h: 44,
         labelText: 'OFFICE  >',
       };
     } else {
-      // Home Workshop: place the glow over the door rather than the wall.
-      // Its right edge is pulled left to meet the top of the doorway and the
-      // label reads naturally from the left edge of the button.
+      // Home Workshop: make the glow exactly the width of its translucent
+      // label pad, then centre it over the door.
       position = {
-        x: 680,
+        x: 725,
         y: 215,
-        w: 250,
+        w: 104,
         h: 44,
         labelText: 'OFFICE  >',
       };
@@ -3584,7 +3590,7 @@ export default class GarageScene extends Phaser.Scene {
     this.headerCarText.setText(
       this.crewMode && crewMember
         ? String(characters[crewMember.characterId]?.name || crewMember.characterId).toUpperCase() +
-          ' // ' + car.shortName.toUpperCase()
+          ' // ' + String(crewMember.regionId || '').toUpperCase()
         : car.name.toUpperCase()
     );
 
@@ -3875,6 +3881,7 @@ export default class GarageScene extends Phaser.Scene {
   activateEngineMode() {
     if (this.engineMode || this.secondaryMode || this.chassisMode || !this.selectedCarId) return;
     this.engineMode = true;
+    this.setWorkshopHomeHotspotsVisible(false);
     this.updateGarageNavState();
 
     this.upgradeButtons.forEach(item => item.box.disableInteractive());
@@ -4020,9 +4027,14 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(72));
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 678, '<  BACK TO WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
-    }).setOrigin(0.5).setDepth(73));
+    add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+      }
+    ).setOrigin(0.5).setDepth(73));
 
     backButton.on('pointerdown', () => this.leaveEngineMode(true, true));
 
@@ -4072,6 +4084,7 @@ export default class GarageScene extends Phaser.Scene {
     this.engineHotspotObjects = [];
     this.engineHelperObjects = [];
     this.engineMode = false;
+    this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
     this.enginePartRows = {};
     this.inlineEngineSprite = null;
@@ -4771,6 +4784,7 @@ export default class GarageScene extends Phaser.Scene {
     const state = carStates[this.selectedCarId] || {};
 
     this.chassisMode = true;
+    this.setWorkshopHomeHotspotsVisible(false);
     this.currentPaintColor = getCarPaintColor(state);
     this.pendingPaintColor = this.currentPaintColor;
     this.currentChassisTuning = getChassisTuning(state);
@@ -4924,6 +4938,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // Authored full-body kit pairs share the stock canvas and paint tint.
     // Each available row cycles through STOCK and its two options.
+    const crewControlLift = this.crewMode ? -32 : 0;
     const visualCatalog = getVisualModCatalog(this.selectedCarId);
     if (visualCatalog) {
       getVisualModSlotIds(this.selectedCarId).forEach((slotId, index) => {
@@ -4966,7 +4981,7 @@ export default class GarageScene extends Phaser.Scene {
 
       this.visualModsApplyButton = add(this.add.rectangle(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 534,
+        SIDE.y + 534 + crewControlLift,
         SIDE.w - 36,
         38,
         0x102226,
@@ -4975,7 +4990,7 @@ export default class GarageScene extends Phaser.Scene {
 
       this.visualModsApplyText = add(this.add.text(
         SIDE.x + SIDE.w / 2,
-        SIDE.y + 534,
+        SIDE.y + 534 + crewControlLift,
         'VISUAL MODS INSTALLED',
         {
           fontFamily: PIXEL_FONT,
@@ -4996,7 +5011,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPartsApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 594 + crewControlLift,
       SIDE.w - 36,
       44,
       0x102226,
@@ -5005,7 +5020,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPartsApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594,
+      SIDE.y + 594 + crewControlLift,
       'NO CHASSIS PARTS SELECTED',
       {
         fontFamily: PIXEL_FONT,
@@ -5016,7 +5031,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 658,
+      SIDE.y + 658 + crewControlLift,
       SIDE.w - 36,
       44,
       0x102138,
@@ -5027,8 +5042,8 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 658,
-      '<  BACK TO WORKSHOP',
+      SIDE.y + 658 + crewControlLift,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
       {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
@@ -5848,6 +5863,7 @@ export default class GarageScene extends Phaser.Scene {
     this.visualModsApplyButton = null;
     this.visualModsApplyText = null;
     this.chassisMode = false;
+    this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
 
     this.upgradeButtons.forEach(item => item.box.setInteractive({ useHandCursor: true }));
@@ -5887,6 +5903,7 @@ export default class GarageScene extends Phaser.Scene {
     const state = carStates[this.selectedCarId] || {};
 
     this.secondaryMode = mode;
+    this.setWorkshopHomeHotspotsVisible(false);
     this.updateGarageNavState();
     this.currentSecondaryTuning = isDrivetrain
       ? getDrivetrainTuning(state)
@@ -6021,9 +6038,14 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(72));
 
-    add(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 678, '<  BACK TO WORKSHOP', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
-    }).setOrigin(0.5).setDepth(73));
+    add(this.add.text(
+      SIDE.x + SIDE.w / 2,
+      SIDE.y + 678,
+      this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
+      {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+      }
+    ).setOrigin(0.5).setDepth(73));
 
     backButton.on('pointerdown', () => this.leaveSecondaryTuningMode(true));
 
@@ -6073,6 +6095,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryHelperObjects = [];
     this.secondaryHotspotObjects = [];
     this.secondaryMode = null;
+    this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
     this.secondaryPartRows = {};
     this.secondarySpriteImage = null;
