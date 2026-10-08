@@ -40,6 +40,8 @@ const WIDTH = 1560;
 const HEIGHT = 720;
 const STAND_Y = 130;
 const ROAD_BOTTOM = 490;
+// One four-lane road strip (75 world pixels) lower; the complex and HUD stay put.
+const ROAD_DROP_Y = 75;
 // The establishing shot is deliberately wider than the standard race framing.
 const PREVIEW_ZOOM = 0.52;
 const TRACK_PIVOT_X = 780;
@@ -487,32 +489,33 @@ export default class FourLaneTestScene extends RaceScene {
     g.fillStyle(0x050c14).fillRect(TRACK_DRAW_LEFT, -140, TRACK_DRAW_WIDTH, HEIGHT + 280);
     g.fillStyle(0x0c2330).fillRect(TRACK_DRAW_LEFT, 0, TRACK_DRAW_WIDTH, STAND_Y);
     g.fillStyle(0x183240).fillRect(TRACK_DRAW_LEFT, 26, TRACK_DRAW_WIDTH, 35);
-    g.fillStyle(0x091b26).fillRect(TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, 55);
+    // Extend the lower venue wall down to meet the newly lowered road.
+    g.fillStyle(0x091b26).fillRect(TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, 55 + ROAD_DROP_Y);
     const drift = (((this.cameraPx * 0.08) % 165) + 165) % 165;
     for (let x = -900 - drift; x < TRACK_DRAW_RIGHT; x += 165) {
       g.fillStyle(0x5e8496, 0.42).fillRect(x, 14, 4, 100);
       g.fillStyle(0x36d5e4, 0.30).fillRect(x + 12, 40, 82, 4);
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
-    g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
+    g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y + ROAD_DROP_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
     // The track stays in place when the cars are lifted. Keep all four
     // asphalt bands aligned with the unchanged lane-divider markings.
     const laneBandTops = [383, 310, 235, 160];
     FOUR_LANE_TEST_LANES.forEach((_lane, index) => {
       g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
-        .fillRect(TRACK_DRAW_LEFT, laneBandTops[index], TRACK_DRAW_WIDTH, 74);
+        .fillRect(TRACK_DRAW_LEFT, laneBandTops[index] + ROAD_DROP_Y, TRACK_DRAW_WIDTH, 74);
     });
-    g.fillStyle(0x8ea8b7, 0.5).fillRect(TRACK_DRAW_LEFT, STAND_Y + 2, TRACK_DRAW_WIDTH, 3);
-    g.fillStyle(0xc2d5e0, 0.72).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM - 3, TRACK_DRAW_WIDTH, 2);
+    g.fillStyle(0x8ea8b7, 0.5).fillRect(TRACK_DRAW_LEFT, STAND_Y + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 3);
+    g.fillStyle(0xc2d5e0, 0.72).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y - 3, TRACK_DRAW_WIDTH, 2);
     // Lane boundaries: keep the asphalt uncluttered.
     for (const y of [233, 308, 383]) {
-      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(TRACK_DRAW_LEFT, y)
-        .lineTo(TRACK_DRAW_RIGHT, y).strokePath();
+      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(TRACK_DRAW_LEFT, y + ROAD_DROP_Y)
+        .lineTo(TRACK_DRAW_RIGHT, y + ROAD_DROP_Y).strokePath();
     }
     const trackShift = (((this.cameraPx * 0.90) % 150) + 150) % 150;
     for (let x = -900 - trackShift; x < TRACK_DRAW_RIGHT; x += 150) {
       for (const y of [230, 305, 380]) {
-        g.fillStyle(0xe6eff2, 0.28).fillRect(x, y, 54, 2);
+        g.fillStyle(0xe6eff2, 0.28).fillRect(x, y + ROAD_DROP_Y, 54, 2);
       }
       g.fillStyle(0x58b6c4, 0.40).fillRect(x + 12, 118, 4, 10);
     }
@@ -521,18 +524,18 @@ export default class FourLaneTestScene extends RaceScene {
     const startX = fourLaneCarX(0, this.cameraPx, 0, front);
     const finishX = fourLaneCarX(FOUR_LANE_TEST_DISTANCE_M, this.cameraPx, 0, front);
     if (startX > -30 && startX < WIDTH + 30) {
-      g.fillStyle(0xffffff, 0.7).fillRect(startX, 139, 4, ROAD_BOTTOM - 144);
+      g.fillStyle(0xffffff, 0.7).fillRect(startX, 139 + ROAD_DROP_Y, 4, ROAD_BOTTOM - 144);
     }
     if (finishX > -30 && finishX < WIDTH + 30) {
-      for (let y = 139; y < ROAD_BOTTOM - 6; y += 16) {
+      for (let y = 139 + ROAD_DROP_Y; y < ROAD_BOTTOM + ROAD_DROP_Y - 6; y += 16) {
         g.fillStyle(((y - 139) / 16) % 2 === 0 ? 0xffffff : 0x15202a, 0.92)
           .fillRect(finishX, y, 14, 16);
         g.fillStyle(((y - 139) / 16) % 2 === 0 ? 0x15202a : 0xffffff, 0.92)
           .fillRect(finishX + 14, y, 14, 16);
       }
     }
-    g.fillStyle(0x121b23).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + 2, TRACK_DRAW_WIDTH, 26);
-    g.fillStyle(0x68adba, 0.24).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + 2, TRACK_DRAW_WIDTH, 3);
+    g.fillStyle(0x121b23).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 26);
+    g.fillStyle(0x68adba, 0.24).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 3);
 
     this.trackFX.clear();
     this.runners.forEach((runner, index) => {
@@ -540,7 +543,7 @@ export default class FourLaneTestScene extends RaceScene {
       const v = runner.visual;
       const x = fourLaneCarX(runner.vehicle.positionM, this.cameraPx,
         v.noseOffsetPx, front);
-      this.updateCarVisual(v, x, FOUR_LANE_TEST_LANES[index].bodyY, t, dt);
+      this.updateCarVisual(v, x, FOUR_LANE_TEST_LANES[index].bodyY + ROAD_DROP_Y, t, dt);
       if (t.wheelspin) {
         this.trackFX.fillStyle(0xe0eff6, 0.16).fillCircle(v.rearX - 23, v.rearY + 5, 15);
       }
