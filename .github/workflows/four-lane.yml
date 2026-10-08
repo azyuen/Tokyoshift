@@ -1,0 +1,35 @@
+name: Four-lane drag prototype checks
+
+on:
+  push:
+    branches:
+      - feature/four-lane-dev-prototype
+  pull_request:
+    paths:
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/data/fourLanePrototype.js'
+      - 'src/main.js'
+      - 'tests/four-lane-prototype.mjs'
+      - '.github/workflows/four-lane.yml'
+
+jobs:
+  four-lane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check game module syntax
+        run: |
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/data/fourLanePrototype.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
+      - name: Four-wide regression tests
+        run: node --test tests/four-lane-prototype.mjs
+      - name: Professional circuit regression tests
+        run: node --test tests/pro-circuit-foundation.mjs

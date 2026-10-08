@@ -78,3 +78,11 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 4. Phase 4 after genuine individual/crew simulations are demonstrably reliable.
 
 **Design status:** blueprint approved; implementation status must be updated based on actual merges, not presumed from this document.
+
+## Optional four-wide drag development track (R431 prototype)
+
+A dev-only four-lane quarter-mile **sandbox** is implemented in `src/scenes/FourLaneTestScene.js`, accessible via the upper-right **4-LANE TEST** button at Tokyo Drag Complex **only for Arkon Den**. It reuses the existing `RaceScene` car visuals, player controls, car physics and AI driving implementation, with three AI opponents. Four lanes span the upper part of the road; distant cars scale smaller but **front bumpers line up** at staging. Venue-only close-up scenery replaces the racing skyline. Press START for a wider track-preview-to-close-up camera move before the standard amber/green countdown. Placings 1–4 reflect actual quarter-mile crossing times; false starts are DQ, non-finishers DNF.
+
+**This is intentionally not** a professional-circuit event: no cash or profile competition progress, no trophy, no persistent ranking update, no tournament advancement, and no changes to normal two-car race presentation. The sandbox permits Retry / Return to Drag; normal competition code retains its existing three-race rules.
+
+**To validate on device:** inspect four-lane positioning / wheel grounding on narrow iPhones, front-bumper alignment, camera zoom, manual shifting, rivals' launches, live placements, 1–4 final results, and return-to-Drag. Four-wide points events/qualification and richer professional complex art are later design/implementation tasks; never confuse this prototype with the completed tournament engine.
