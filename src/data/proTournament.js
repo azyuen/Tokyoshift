@@ -7,7 +7,7 @@ import { characters } from './characters.js?v=20261007-r411';
 
 export const FOUR_WIDE_CUP = Object.freeze({
   id: 'fourWideOpen', label: 'TOKYO FOUR-WIDE OPEN',
-  entrants: 16, qualifyPerHeat: 2, entryFee: 35000,
+  entrants: 16, qualifyPerHeat: 2, entryFee: 90000,
   prizeCash: Object.freeze([320000, 170000, 90000, 50000]),
   stageNames: Object.freeze(['QUALIFYING', 'SEMIFINAL', 'FINAL']),
 });

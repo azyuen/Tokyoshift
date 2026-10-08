@@ -36,7 +36,7 @@ import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r
 import { getProCircuitAccess, getProCircuitDriverSeeds } from '../data/proCircuit.js?v=20261008-r429';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
-} from '../data/proTournament.js?v=20261008-r443';
+} from '../data/proTournament.js?v=20261009-r447';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,

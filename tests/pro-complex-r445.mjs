@@ -76,10 +76,17 @@ test('invalid or corrupt legacy pro cup cannot secretly pay cash', () => {
 
 test('intro professional cups are all less lucrative than the four-wide championship', () => {
   assert.equal(PRO_DRAG_EVENTS.length,3);
+  const meetSource = load('../src/scenes/MeetScene.js');
+  assert.match(meetSource, /ELITE: \{ entryFee: 50000, cashPrize: 70000 \}/);
+  assert.equal(FOUR_WIDE_CUP.entryFee, 90000);
+  assert.ok(FOUR_WIDE_CUP.prizeCash[0] > PRO_DRAG_EVENTS[2].prizeCash);
+  assert.ok(FOUR_WIDE_CUP.entryFee > PRO_DRAG_EVENTS[2].entryFee);
+  assert.ok(PRO_DRAG_EVENTS[0].entryFee > 50000);
+  assert.ok(PRO_DRAG_EVENTS[0].prizeCash > 70000);
   const expected=[
-    {id:'streetShootout',entryFee:12000,prizeCash:60000},
-    {id:'midnightCup',entryFee:20000,prizeCash:105000},
-    {id:'tokyoInvitational',entryFee:32000,prizeCash:170000},
+    {id:'streetShootout',entryFee:55000,prizeCash:95000},
+    {id:'midnightCup',entryFee:65000,prizeCash:135000},
+    {id:'tokyoInvitational',entryFee:80000,prizeCash:190000},
   ];
   for(let i=0;i<3;i++){
     const event=PRO_DRAG_EVENTS[i];
