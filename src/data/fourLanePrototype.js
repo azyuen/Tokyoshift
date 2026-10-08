@@ -1,9 +1,9 @@
 // Four-wide drag test helpers. No prizes, wins, or standings are written.
 export const FOUR_LANE_TEST_DISTANCE_M = 402.336;
 export const FOUR_LANE_TEST_PX_PER_M = 70;
-// Shift staging toward the right to leave room for the control tower and crew.
-// Cars' noses remain aligned by fourLaneCarX; only presentation moves.
-export const FOUR_LANE_TEST_ANCHOR_X = 715;
+// R435: nudge all cars and the start/finish markers 25 world pixels right.
+// A camera-anchor change preserves aligned bumpers and world-space race timing.
+export const FOUR_LANE_TEST_ANCHOR_X = 740;
 // R434: raise each car by about one wheel width (30 track-world pixels).
 // Preserve the lane gaps, perspective scales and front-bumper alignment.
 export const FOUR_LANE_TEST_LANES = Object.freeze([
