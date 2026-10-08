@@ -31,8 +31,9 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
-  fourLaneCarX, fourLaneCameraX, rankFourLaneFinishers,
-} from '../data/fourLanePrototype.js?v=20261008-r435';
+  fourLaneCarX, fourLaneCameraX, fourLaneDashSafeYOffset,
+  rankFourLaneFinishers,
+} from '../data/fourLanePrototype.js?v=20261008-r436';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';
@@ -40,8 +41,13 @@ const WIDTH = 1560;
 const HEIGHT = 720;
 const STAND_Y = 130;
 const ROAD_BOTTOM = 490;
-// One four-lane road strip (75 world pixels) lower; the complex and HUD stay put.
-const ROAD_DROP_Y = 75;
+// Two one-lane downward shifts relative to the original road. Keep the
+// venue art and HUD fixed; only the Phaser road and car visuals move.
+const ROAD_DROP_Y = 150;
+// In the close-up the cars should occupy the race area, with the lowest car
+// fully above the actual top of the player's custom-positioned dashboard.
+const ZOOM_CAR_FOCUS_X = 640;
+const DASH_CLEARANCE_PX = 24;
 // The establishing shot is deliberately wider than the standard race framing.
 const PREVIEW_ZOOM = 0.52;
 const TRACK_PIVOT_X = 780;
@@ -286,14 +292,52 @@ export default class FourLaneTestScene extends RaceScene {
     art.setPosition(this.complexBaseX, artWorldY).setScale(worldImageScale);
   }
 
+  getStagedCarBottomWorld() {
+    // Measure the real sprite bottoms after renderTrack() has positioned
+    // the current player's body, wheels and road shadow. This is more robust
+    // than assuming a particular car model, tyre size or tuned body kit.
+    const v = this.runners?.[0]?.visual;
+    const parts = v
+      ? [v.roadShadow, v.rearWheel, v.frontWheel, ...(v.bodyObjects || [])]
+      : [];
+    const bottoms = parts
+      .filter(obj => obj && Number.isFinite(obj.y) &&
+        Number.isFinite(obj.displayHeight))
+      .map(obj => obj.y + (1 - Number(obj.originY ?? 0.5)) * obj.displayHeight);
+    return Math.max(
+      FOUR_LANE_TEST_LANES[0].bodyY + ROAD_DROP_Y + 35,
+      ...bottoms
+    );
+  }
+
+  configureZoomFocus() {
+    const carBottom = this.getStagedCarBottomWorld();
+    // The player's HUD can move and scale in control settings. Read its real
+    // position rather than depending on a hardcoded 720px-device cutoff.
+    const dashBounds = this.hud?.cluster?.getBounds?.();
+    const hudTop = Number.isFinite(dashBounds?.top) ? dashBounds.top : 462;
+    this.zoomFocusShiftY = fourLaneDashSafeYOffset(
+      carBottom, hudTop, DASH_CLEARANCE_PX
+    );
+    // Move a little toward the cars horizontally at close-up, without
+    // changing the established wider start composition.
+    this.zoomFocusShiftX = ZOOM_CAR_FOCUS_X -
+      (FOUR_LANE_TEST_ANCHOR_X + TRACK_PAN_X);
+  }
+
   setTrackZoom(scale) {
-    // Zoom the WHOLE track world around the race, including the complex.
-    // The constant left pan brings the cars closer to the asset in preview;
-    // the world-space complex naturally slips out of frame as we zoom in.
+    // Scale the complete world, but ease the frame toward the four staged
+    // cars during the push-in. At full zoom the lowest pixel stays at least
+    // DASH_CLEARANCE_PX above the user's actual dashboard image.
+    const progress = Phaser.Math.Clamp(
+      (scale - PREVIEW_ZOOM) / (1 - PREVIEW_ZOOM), 0, 1
+    );
     this.trackRoot.setScale(scale);
     this.trackRoot.setPosition(
-      TRACK_PIVOT_X * (1 - scale) + TRACK_PAN_X,
-      TRACK_PIVOT_Y * (1 - scale)
+      TRACK_PIVOT_X * (1 - scale) + TRACK_PAN_X +
+        (this.zoomFocusShiftX || 0) * progress,
+      TRACK_PIVOT_Y * (1 - scale) +
+        (this.zoomFocusShiftY || 0) * progress
     );
     this.positionComplexArt();
   }
@@ -319,6 +363,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.startButton.bg.disableInteractive().setVisible(false);
     this.startButton.text.setVisible(false);
     this.signalText.setText('CAMERA CLOSING IN');
+    this.configureZoomFocus();
     this.tweens.addCounter({
       from: PREVIEW_ZOOM, to: 1, duration: 1250, ease: 'Sine.InOut',
       onUpdate: tween => this.setTrackZoom(tween.getValue()),
@@ -489,7 +534,7 @@ export default class FourLaneTestScene extends RaceScene {
     g.fillStyle(0x050c14).fillRect(TRACK_DRAW_LEFT, -140, TRACK_DRAW_WIDTH, HEIGHT + 280);
     g.fillStyle(0x0c2330).fillRect(TRACK_DRAW_LEFT, 0, TRACK_DRAW_WIDTH, STAND_Y);
     g.fillStyle(0x183240).fillRect(TRACK_DRAW_LEFT, 26, TRACK_DRAW_WIDTH, 35);
-    // Extend the lower venue wall down to meet the newly lowered road.
+    // Extend the lower venue wall to the translated road's top boundary.
     g.fillStyle(0x091b26).fillRect(TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, 55 + ROAD_DROP_Y);
     const drift = (((this.cameraPx * 0.08) % 165) + 165) % 165;
     for (let x = -900 - drift; x < TRACK_DRAW_RIGHT; x += 165) {
@@ -498,8 +543,8 @@ export default class FourLaneTestScene extends RaceScene {
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
     g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y + ROAD_DROP_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
-    // The track stays in place when the cars are lifted. Keep all four
-    // asphalt bands aligned with the unchanged lane-divider markings.
+    // Translate the entire road by ROAD_DROP_Y, keeping its four band
+    // heights and all three lane dividers identical to the preceding build.
     const laneBandTops = [383, 310, 235, 160];
     FOUR_LANE_TEST_LANES.forEach((_lane, index) => {
       g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
