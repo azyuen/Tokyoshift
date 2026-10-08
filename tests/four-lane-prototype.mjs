@@ -72,9 +72,10 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /positionComplexArt\(\)/);
   assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
   assert.match(sceneSource, /const TRACK_PAN_X = -235/);
-  assert.match(sceneSource, /const COMPLEX_PREVIEW_WIDTH = 495/);
-  assert.match(sceneSource, /const COMPLEX_PREVIEW_TOP_Y = -69\.2/);
-  assert.match(sceneSource, /const artWorldY = \(COMPLEX_PREVIEW_TOP_Y - previewRootY\) \/ PREVIEW_ZOOM/);
+  assert.match(sceneSource, /const COMPLEX_BASE_PREVIEW_WIDTH = 330/);
+  assert.match(sceneSource, /const COMPLEX_PREVIEW_WIDTH = COMPLEX_BASE_PREVIEW_WIDTH \* 1\.5/);
+  assert.match(sceneSource, /const originalImageScale = COMPLEX_BASE_PREVIEW_WIDTH \/ art\.width/);
+  assert.match(sceneSource, /const artWorldY = \(originalArtTop - previewRootY\) \/ PREVIEW_ZOOM/);
   assert.match(sceneSource, /const laneBandTops = \[383, 310, 235, 160\]/);
   assert.match(sceneSource, /art\.x = this\.complexBaseX - travelledPx/);
   assert.doesNotMatch(sceneSource, /artScreenScale \/ zoom/);
