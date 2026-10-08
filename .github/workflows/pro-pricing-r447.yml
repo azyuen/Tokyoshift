@@ -1,0 +1,35 @@
+name: Professional economy R447 checks
+
+on:
+  push:
+    branches:
+      - balance/pro-circuit-tier-pricing-r447
+  pull_request:
+    paths:
+      - 'src/data/centralTokyo.js'
+      - 'src/data/proTournament.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-complex-r445.mjs'
+      - '.github/workflows/pro-pricing-r447.yml'
+
+jobs:
+  pro-pricing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse modules
+        run: |
+          node --check src/data/centralTokyo.js
+          node --check src/data/proTournament.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+      - name: Validate pricing against meet tiers and two/four-lane workflow
+        run: node --test tests/pro-complex-r445.mjs
+      - name: Validate four-wide tournament and old save
+        run: node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs
+      - name: Check four-wide finish and stage geometry
+        run: node --test tests/four-lane-finish-regression.mjs tests/four-lane-prototype.mjs
