@@ -1,7 +1,7 @@
 // Dev-only four-wide drag visual/physics prototype.
 // IMPORTANT: This scene never invokes RaceScene settlement or writes career data.
 // Reuses the production two-lane Vehicle/AI, car rendering and control systems.
-import RaceScene from './RaceScene.js?v=20261008-r430';
+import RaceScene from './RaceScene.js?v=20261008-r431';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261008-r426';
@@ -159,6 +159,9 @@ export default class FourLaneTestScene extends RaceScene {
     );
     this.trackRoot = this.add.container(0, 0, [this.trackG, this.trackFX, ...carObjects])
       .setDepth(1);
+    // Containers render children in list order, not scene Display List depth order.
+    // Preserve standard wheels/body/decals/FX layering across all four cars.
+    this.trackRoot.list.sort((a, b) => a.depth - b.depth);
     this.setTrackZoom(0.77);
 
     const hasNitrous = Number(playerConfig.nosPower || 0) > 0 &&
