@@ -3121,7 +3121,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 126,
-        unlocked ? 'ENTRY ' + money(event.entryFee) : !circuitOpen ? 'CREW ' + access.crewCount + '/7' : event.requiredWins + ' WINS',
+        'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
