@@ -1,0 +1,35 @@
+name: Four-wide finish and briefing regressions
+
+on:
+  push:
+    branches:
+      - fix/pro-cup-finish-and-briefing-r444
+  pull_request:
+    paths:
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/data/fourLaneFinish.js'
+      - 'tests/four-lane-finish-regression.mjs'
+      - '.github/workflows/four-lane-finish.yml'
+
+jobs:
+  four-lane-finish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/data/fourLaneFinish.js
+          node --check src/data/proTournament.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Test finish/camera/official settlement
+        run: node --test tests/four-lane-finish-regression.mjs
+      - name: Test four-lane renderer regression
+        run: node --test tests/four-lane-prototype.mjs
+      - name: Test professional tournament progression
+        run: node --test tests/pro-tournament-phase2.mjs
+      - name: Test professional circuit save compatibility
+        run: node --test tests/pro-circuit-foundation.mjs
