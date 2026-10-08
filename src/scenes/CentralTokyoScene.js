@@ -762,16 +762,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawNavigation(title, subtitle) {
+    const dragTheme = LOCATION_BY_ID[this.activeLocationId]?.kind === 'proDrag';
     this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 18, title, {
       fontFamily: PIXEL_FONT,
       fontSize: '14px',
-      color: '#8fe7ff',
+      color: dragTheme ? '#f0e9e9' : '#8fe7ff',
     }).setDepth(33));
 
     this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 54, subtitle, {
       fontFamily: BODY_FONT,
       fontSize: '10px',
-      color: '#93aebd',
+      color: dragTheme ? '#c6b7ba' : '#93aebd',
       fontStyle: '600',
       wordWrap: { width: SIDE.w - 40 },
     }).setDepth(33));
@@ -785,9 +786,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       mapY,
       SIDE.w - 36,
       42,
-      0x102138,
+      dragTheme ? 0x30181e : 0x102138,
       1
-    ).setStrokeStyle(2, 0x55b8ff, 1)
+    ).setStrokeStyle(2, dragTheme ? 0xd54a54 : 0x55b8ff, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(33));
 
