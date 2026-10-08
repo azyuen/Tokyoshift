@@ -203,11 +203,12 @@ test('placings account for realistic quarter mile times and DQ/DNF', () => {
   assert.deepEqual(dq.map(x => x.status), ['FINISHED', 'FINISHED', 'DNF', 'DQ']);
 });
 
-test('dev-only sandbox does not mutate career economy or write race settlement', () => {
+test('standalone dev race retired while shared four-lane scenery and production physics remain', () => {
   const sceneSource = fs.readFileSync(new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8');
   const centralTokyo = fs.readFileSync(new URL('../src/scenes/CentralTokyoScene.js', import.meta.url), 'utf8');
-  assert.match(sceneSource, /if \(!isArkonDen\(this\.registry\)\)/);
-  assert.match(centralTokyo, /'4-LANE TEST'/);
+  assert.doesNotMatch(centralTokyo, /'4-LANE TEST'/);
+  assert.match(sceneSource, /only registered professional/);
+  assert.match(sceneSource, /else \{\s+\/\/ The standalone dev tester is retired/);
   assert.match(sceneSource, /new DragRacingAI/);
   assert.match(sceneSource, /new TouchControls/);
   assert.match(sceneSource, /new RaceHUD/);
