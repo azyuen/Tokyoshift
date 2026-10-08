@@ -9,6 +9,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261008-r428';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261006-r388';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261007-r411';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -167,6 +168,13 @@ export default class FourLaneTestScene extends RaceScene {
     loadImage('nosButton', 'assets/Controls/nos_button.png');
     loadImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     loadImage('shifterDown', 'assets/Controls/shifter_down.png');
+    if (this.proCup) {
+      const visual = characters[this.registry.get('playerCharacterId')]?.visual;
+      if (visual) {
+        loadImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+        loadImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
+      }
+    }
     // Dev-only venue foreground: loaded only when four-wide tester opens.
     loadImage('fourLaneStartComplex', 'assets/CentralTokyo/dragstrip_complex_night.png');
     loadImage('fourLaneStandLeft', 'assets/CentralTokyo/dragstrip_standleft_night.png');
@@ -1176,19 +1184,48 @@ export default class FourLaneTestScene extends RaceScene {
       ) : 'FINISHED ' + (own?.placing || 4) + '/4  //  PRACTICE', {
         fontFamily: PIXEL, fontSize: '11px', color: '#a3e5ec',
       }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
+    if (this.proCup) {
+      const visual = characters[this.registry.get('playerCharacterId')]?.visual;
+      const key = this.textures.exists(visual?.winSpriteKey)
+        ? visual.winSpriteKey : visual?.spriteKey;
+      if (key && this.textures.exists(key)) {
+        const portrait = this.add.image(415, 328, key).setDepth(97).setScrollFactor(0);
+        const image = this.textures.get(key).getSourceImage();
+        portrait.setScale(Math.min(225 / image.width, 253 / image.height));
+      }
+      if (outcome?.summary) {
+        const last = outcome.summary;
+        const capsule = this.add.rectangle(412, 472, 318, 64, 0x142e40, 0.97)
+          .setStrokeStyle(2, 0x70def0, 1).setDepth(98).setScrollFactor(0)
+          .setScale(0.06, 1);
+        const rankLabel = this.add.text(412, 472, 'PRO RANK #' + last.rankBefore, {
+          fontFamily: PIXEL, fontSize: '13px', color: '#bcf6ff',
+        }).setOrigin(0.5).setDepth(99).setScrollFactor(0).setVisible(false);
+        this.tweens.add({
+          targets: capsule, scaleX: 1, duration: 750, ease: 'Cubic.Out',
+        });
+        this.tweens.addCounter({
+          from: last.rankBefore, to: last.rankAfter, duration: 1100,
+          ease: 'Cubic.Out',
+          onUpdate: tween => rankLabel.setText('PRO RANK #' + Math.round(tween.getValue())),
+          onStart: () => rankLabel.setVisible(true),
+        });
+      }
+    }
     standings.forEach((row, i) => {
       const y = 215 + i * 64;
       const mine = row.id === (this.proCup ? 'player:driver' : 'player');
-      this.add.rectangle(780, y, 865, 52, mine ? 0x154051 : 0x122433, 1)
+      this.add.rectangle(this.proCup ? 1005 : 780, y,
+        this.proCup ? 720 : 865, 52, mine ? 0x154051 : 0x122433, 1)
         .setStrokeStyle(1, mine ? 0x79e6ff : 0x395362)
         .setDepth(96).setScrollFactor(0);
-      this.add.text(410, y, String(row.placing) + '  LANE ' + row.lane, {
+      this.add.text(this.proCup ? 675 : 410, y, String(row.placing) + '  LANE ' + row.lane, {
         fontFamily: PIXEL, fontSize: '10px', color: mine ? '#91efff' : '#ffffff',
       }).setOrigin(0, 0.5).setDepth(97).setScrollFactor(0);
-      this.add.text(680, y, row.label + '  //  ' + row.carLabel, {
+      this.add.text(this.proCup ? 855 : 680, y, row.label + '  //  ' + row.carLabel, {
         fontFamily: BODY, fontSize: '15px', color: '#edfaff', fontStyle: '700',
       }).setOrigin(0, 0.5).setDepth(97).setScrollFactor(0);
-      this.add.text(1190, y,
+      this.add.text(this.proCup ? 1340 : 1190, y,
         row.status === 'FINISHED' ? row.finishSeconds.toFixed(3) + 's' : row.status, {
           fontFamily: PIXEL, fontSize: '10px',
           color: row.status === 'FINISHED' ? '#85e5b3' : '#ff93a2',
@@ -1196,9 +1233,8 @@ export default class FourLaneTestScene extends RaceScene {
     });
     if (this.proCup && outcome?.status === 'COMPLETE' && outcome.summary) {
       const last = outcome.summary;
-      this.add.text(780, 484,
-        'EVENT #' + last.placing + '  //  RANK ' + last.rankBefore +
-        ' > ' + last.rankAfter + '  //  +' + last.cashPrize.toLocaleString('en-US') + ' YEN', {
+      this.add.text(1010, 484,
+        'EVENT #' + last.placing + ' // +' + last.cashPrize.toLocaleString('en-US') + ' YEN', {
           fontFamily: PIXEL, fontSize: '10px', color: '#95e6b5',
         }).setOrigin(0.5).setDepth(98).setScrollFactor(0);
     }
