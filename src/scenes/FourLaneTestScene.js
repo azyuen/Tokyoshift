@@ -1,6 +1,6 @@
-// Dev-only four-wide drag visual/physics prototype.
-// IMPORTANT: This scene never invokes RaceScene settlement or writes career data.
-// Reuses the production two-lane Vehicle/AI, car rendering and control systems.
+// Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
+// Only pro-cup results enter professional standings; no street race settlement.
+// Reuses production two-lane Vehicle/AI, car rendering and control systems.
 import RaceScene from './RaceScene.js?v=20261008-r431';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
