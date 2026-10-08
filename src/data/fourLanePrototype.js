@@ -1,9 +1,16 @@
 // Four-wide drag test helpers. No prizes, wins, or standings are written.
 export const FOUR_LANE_TEST_DISTANCE_M = 402.336;
 export const FOUR_LANE_TEST_PX_PER_M = 70;
-// R435: nudge all cars and the start/finish markers 25 world pixels right.
-// A camera-anchor change preserves aligned bumpers and world-space race timing.
-export const FOUR_LANE_TEST_ANCHOR_X = 740;
+// R436: shift staging 45 more world pixels right. Bumpers remain aligned
+// and the start/finish markings stay attached to the shared physical track.
+export const FOUR_LANE_TEST_ANCHOR_X = 785;
+
+// Keep the lowest rendered car above the real HUD image during the final
+// four-wide camera framing, including user-customised dashboard positions.
+export function fourLaneDashSafeYOffset(carBottomY, hudTopY, clearance = 24) {
+  if (!Number.isFinite(carBottomY) || !Number.isFinite(hudTopY)) return 0;
+  return Math.min(0, hudTopY - clearance - carBottomY);
+}
 // R434: raise each car by about one wheel width (30 track-world pixels).
 // Preserve the lane gaps, perspective scales and front-bumper alignment.
 export const FOUR_LANE_TEST_LANES = Object.freeze([
