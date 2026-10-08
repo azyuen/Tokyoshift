@@ -47,10 +47,11 @@ const TRACK_PIVOT_Y = 290;
 // Pan the entire race world left. This brings the staged cars alongside the
 // pit complex and keeps the eventual driving view focused on the four cars.
 const TRACK_PAN_X = -235;
-// Enlarge the start complex 50% from its PREVIOUS preview upper-left corner.
-// Its top/left is unchanged even though its right/bottom now reach farther.
-const COMPLEX_PREVIEW_WIDTH = 495;
-const COMPLEX_PREVIEW_TOP_Y = -69.2;
+// Enlarge the start complex by exactly 50% from its R433 preview size.
+// Retain the exact R433 top-left coordinates rather than a rounded pixel.
+const COMPLEX_BASE_PREVIEW_WIDTH = 330;
+const COMPLEX_PREVIEW_WIDTH = COMPLEX_BASE_PREVIEW_WIDTH * 1.5;
+const COMPLEX_ORIGINAL_FENCE_FRAC = 0.67;
 const TRACK_DRAW_LEFT = -800;
 const TRACK_DRAW_RIGHT = 3400;
 const TRACK_DRAW_WIDTH = TRACK_DRAW_RIGHT - TRACK_DRAW_LEFT;
@@ -272,10 +273,14 @@ export default class FourLaneTestScene extends RaceScene {
     const worldImageScale = previewImageScale / PREVIEW_ZOOM;
     const previewRootX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
     const previewRootY = TRACK_PIVOT_Y * (1 - PREVIEW_ZOOM);
-    // Keep the top-left of the image fixed in preview screen space; do not
-    // re-register its fence to the road after resizing the illustration.
+    // Recover the precise OLD preview top-left using R433's original fence
+    // registration. The 50% larger picture then expands only down/right.
+    const originalImageScale = COMPLEX_BASE_PREVIEW_WIDTH / art.width;
+    const originalRoadTop = previewRootY + STAND_Y * PREVIEW_ZOOM;
+    const originalArtTop = originalRoadTop -
+      art.height * COMPLEX_ORIGINAL_FENCE_FRAC * originalImageScale;
     this.complexBaseX = -previewRootX / PREVIEW_ZOOM;
-    const artWorldY = (COMPLEX_PREVIEW_TOP_Y - previewRootY) / PREVIEW_ZOOM;
+    const artWorldY = (originalArtTop - previewRootY) / PREVIEW_ZOOM;
     art.setPosition(this.complexBaseX, artWorldY).setScale(worldImageScale);
   }
 
