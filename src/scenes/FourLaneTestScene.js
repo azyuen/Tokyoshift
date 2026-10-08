@@ -137,6 +137,9 @@ export default class FourLaneTestScene extends RaceScene {
         .map(id => [id, cars[id]]))
     );
 
+    // The opening zoom-out reveals space outside the close-up track crop.
+    // Fill that space with neutral venue architecture, never black gutters.
+    this.add.rectangle(780, 360, WIDTH, HEIGHT, 0x10212d).setDepth(-2);
     this.trackG = this.add.graphics().setDepth(0);
     this.trackFX = this.add.graphics().setDepth(18);
     this.runners.forEach((runner, index) => {
@@ -413,31 +416,31 @@ export default class FourLaneTestScene extends RaceScene {
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
-    g.fillStyle(0x050c14).fillRect(0, 0, WIDTH, HEIGHT);
-    g.fillStyle(0x0c2330).fillRect(0, 0, WIDTH, STAND_Y);
-    g.fillStyle(0x183240).fillRect(0, 26, WIDTH, 35);
-    g.fillStyle(0x091b26).fillRect(0, 75, WIDTH, 55);
+    g.fillStyle(0x050c14).fillRect(-460, -140, WIDTH + 920, HEIGHT + 280);
+    g.fillStyle(0x0c2330).fillRect(-460, 0, WIDTH + 920, STAND_Y);
+    g.fillStyle(0x183240).fillRect(-460, 26, WIDTH + 920, 35);
+    g.fillStyle(0x091b26).fillRect(-460, 75, WIDTH + 920, 55);
     const drift = (((this.cameraPx * 0.08) % 165) + 165) % 165;
-    for (let x = -180 - drift; x < WIDTH + 180; x += 165) {
+    for (let x = -580 - drift; x < WIDTH + 580; x += 165) {
       g.fillStyle(0x5e8496, 0.42).fillRect(x, 14, 4, 100);
       g.fillStyle(0x36d5e4, 0.30).fillRect(x + 12, 40, 82, 4);
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
-    g.fillStyle(0x0a121b).fillRect(0, STAND_Y, WIDTH, ROAD_BOTTOM - STAND_Y);
+    g.fillStyle(0x0a121b).fillRect(-460, STAND_Y, WIDTH + 920, ROAD_BOTTOM - STAND_Y);
     FOUR_LANE_TEST_LANES.forEach((lane, index) => {
       const top = index === 0 ? 383 : (lane.bodyY - 35);
       g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
-        .fillRect(0, top, WIDTH, 74);
+        .fillRect(-460, top, WIDTH + 920, 74);
     });
-    g.fillStyle(0x8ea8b7, 0.5).fillRect(0, STAND_Y + 2, WIDTH, 3);
-    g.fillStyle(0xc2d5e0, 0.72).fillRect(0, ROAD_BOTTOM - 3, WIDTH, 2);
+    g.fillStyle(0x8ea8b7, 0.5).fillRect(-460, STAND_Y + 2, WIDTH + 920, 3);
+    g.fillStyle(0xc2d5e0, 0.72).fillRect(-460, ROAD_BOTTOM - 3, WIDTH + 920, 2);
     // Lane boundaries: keep the asphalt uncluttered.
     for (const y of [233, 308, 383]) {
-      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(0, y)
-        .lineTo(WIDTH, y).strokePath();
+      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(-460, y)
+        .lineTo(WIDTH + 460, y).strokePath();
     }
     const trackShift = (((this.cameraPx * 0.90) % 150) + 150) % 150;
-    for (let x = -150 - trackShift; x < WIDTH + 150; x += 150) {
+    for (let x = -600 - trackShift; x < WIDTH + 600; x += 150) {
       for (const y of [230, 305, 380]) {
         g.fillStyle(0xe6eff2, 0.28).fillRect(x, y, 54, 2);
       }
@@ -458,8 +461,8 @@ export default class FourLaneTestScene extends RaceScene {
           .fillRect(finishX + 14, y, 14, 16);
       }
     }
-    g.fillStyle(0x121b23).fillRect(0, ROAD_BOTTOM + 2, WIDTH, 26);
-    g.fillStyle(0x68adba, 0.24).fillRect(0, ROAD_BOTTOM + 2, WIDTH, 3);
+    g.fillStyle(0x121b23).fillRect(-460, ROAD_BOTTOM + 2, WIDTH + 920, 26);
+    g.fillStyle(0x68adba, 0.24).fillRect(-460, ROAD_BOTTOM + 2, WIDTH + 920, 3);
 
     this.trackFX.clear();
     this.runners.forEach((runner, index) => {
