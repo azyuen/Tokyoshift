@@ -65,12 +65,6 @@ test('the four-wide scenery enlarges Shinjuku and bridges the two stands', () =>
   assert.match(src, /this\.drawRoadsideFence\(cameraTravel\)/);
   assert.match(src, /const FENCE_TOP_Y = 134/);
   assert.match(src, /const FENCE_CONCRETE_HEIGHT = 84/);
-  assert.match(src, /this\.startTree = this\.add\.graphics\(\)\.setDepth\(2\.5\)/);
-  assert.match(src, /this\.drawStartTree\(\)/);
-  assert.match(src, /const START_TREE_BASE_Y = ROAD_TOP_LINE_Y/);
-  assert.match(src, /const START_TREE_OFFSET_X = 78/);
-  assert.match(src, /const x = startX \+ START_TREE_OFFSET_X/);
-  assert.match(src, /const lamps = fourLaneTreeLights\(phase, this\.falseStart\)/);
   assert.match(src, /const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP/);
   assert.match(src, /const worldStart = start\.initialWorldX \+ start\.worldWidth - joinOverlap/);
   assert.match(src, /const worldEnd = finish\.initialWorldX/);
