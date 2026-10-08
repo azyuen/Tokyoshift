@@ -58,21 +58,21 @@ body {
   pointer-events: none;
 }
 
-/* Dark unobstructed asphalt below the racers is reserved for the real loader. */
+/* Anchor to the visible 16:9 artwork, rather than the viewport bottom.
+   The contained background is letterboxed vertically on iPad; the previous
+   viewport-based 11% offset made the bar cross its lower cyan frame. */
 .loading-panel {
   position: absolute;
   z-index: 1;
   left: 50%;
-  bottom: clamp(26px, 11%, 110px);
+  bottom: 14%; /* Fallback for older CSS engines */
+  bottom: calc((100% - min(100%, 56.25vw)) / 2 + min(14%, 7.875vw));
   transform: translateX(-50%);
   width: min(680px, 58vw);
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 14px 18px 12px;
-  background: rgba(3, 9, 19, .77);
-  border: 1px solid rgba(52, 176, 235, .65);
-  box-shadow: 0 0 0 1px rgba(1, 7, 15, .5), 0 9px 28px rgba(0,0,0,.36);
+  /* Intentionally no panel background, padding, border or box shadow. */
   pointer-events: none;
 }
 
@@ -80,9 +80,7 @@ body {
   width: 100%;
   height: 9px;
   overflow: hidden;
-  border: 1px solid rgba(70, 184, 241, .65);
-  background: rgba(1, 6, 14, .9);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, .6);
+  background: rgba(1, 6, 14, .72);
 }
 
 #loading-bar {
@@ -105,7 +103,7 @@ body {
   line-height: 1.1;
   font-weight: 700;
   letter-spacing: .12em;
-  text-shadow: 0 1px 2px #000;
+  text-shadow: 0 2px 3px #000, 0 0 9px rgba(0, 0, 0, .88);
 }
 
 #loading-label {
@@ -124,8 +122,6 @@ body {
 @media (max-height: 500px) {
   .loading-panel {
     gap: 6px;
-    bottom: 8%;
-    padding: 9px 13px 8px;
     width: min(630px, 60vw);
   }
   .loading-track { height: 7px; }
