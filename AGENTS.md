@@ -15,3 +15,10 @@ Deeper backstories, concealed affiliations and antagonists can be added through 
 When authorised narrative work creates a durable fact, update the canon and affected knowledge/relationship entries. Keep variable save outcomes distinct from fixed past. Documentation does not itself implement runtime narrative gates.
 
 This guidance adds no deployment approval requirement and does not authorise unrelated runtime changes.
+
+## Professional circuit / Drag Complex
+
+Before modifying the Tokyo Drag Complex, crew-driven professional unlocks, rankings, championship brackets, professional prize economy, or trophy-case integration, read:
+- [Drag Complex blueprint](docs/DRAG_COMPLEX_BLUEPRINT.md)
+
+Phase 1 provides persistent professional circuit standings and canonical event definitions; it does not implement the living season or full tournaments. Do not award phase 3/4 points, trophies or championships until authoritative simulation and settlement have been implemented and tested. Keep street/race three-round competition behaviour and prior profile data compatible.
