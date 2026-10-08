@@ -1288,7 +1288,11 @@ export default class FourLaneTestScene extends RaceScene {
       .setStrokeStyle(3, 0x62d7ed).setDepth(95).setScrollFactor(0);
     const resultHeading = this.proCup
       ? outcome?.status === 'ADVANCED' ? 'QUALIFIED'
-        : outcome?.summary?.placing === 1 ? 'CHAMPION'
+        : outcome?.summary?.stagesCompleted === 3
+          ? ['CHAMPION', 'RUNNER-UP', 'PODIUM FINISH', 'FOURTH PLACE'][
+              Math.max(0, Math.min(3, outcome.summary.placing - 1))
+            ]
+          : outcome?.status === 'ERROR' ? 'HEAT FINISHED'
           : 'ELIMINATED'
       : own?.placing === 1 ? 'VICTORY' : 'RACE COMPLETE';
     const finishTitle = this.add.text(780, 109, resultHeading, {
