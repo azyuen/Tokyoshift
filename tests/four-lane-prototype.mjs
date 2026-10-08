@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   FOUR_LANE_TEST_LANES, FOUR_LANE_TEST_DISTANCE_M,
-  FOUR_LANE_TEST_PX_PER_M, fourLaneCameraX, fourLaneCarX,
+  FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
+  fourLaneCameraX, fourLaneCarX,
   rankFourLaneFinishers,
 } from '../src/data/fourLanePrototype.js';
 
@@ -22,7 +23,7 @@ test('all four noses are perfectly lined up at zero distance despite different s
   const playerNose = 110;
   for (const nose of [110, 96, 78, 62]) {
     const bodyCenter = fourLaneCarX(0, camera, nose, playerNose);
-    assert.equal(bodyCenter + nose, 525 + playerNose);
+    assert.equal(bodyCenter + nose, FOUR_LANE_TEST_ANCHOR_X + playerNose);
   }
 });
 
@@ -62,6 +63,9 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /new TouchControls/);
   assert.match(sceneSource, /new RaceHUD/);
   assert.match(sceneSource, /rankFourLaneFinishers/);
-  assert.match(sceneSource, /this\.setTrackZoom\(0\.77\)/);
+  assert.match(sceneSource, /this\.setTrackZoom\(PREVIEW_ZOOM\)/);
+  assert.match(sceneSource, /dragstrip_complex_night\.png/);
+  assert.match(sceneSource, /positionComplexArt\(\)/);
+  assert.match(sceneSource, /cameraPx - fourLaneCameraX\(0\)/);
   assert.doesNotMatch(sceneSource, /saveSessionState|\bregistry\.set\(|\bcompetitionState\b|raceSettlement/);
 });
