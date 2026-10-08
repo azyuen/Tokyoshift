@@ -16,6 +16,7 @@ test('four staged cars have unique lanes, with two extra lanes above old top row
   assert.ok(FOUR_LANE_TEST_LANES.every((lane, i, rows) =>
     i === 0 || lane.scale < rows[i - 1].scale));
   assert.equal(FOUR_LANE_TEST_DISTANCE_M, 402.336);
+  assert.equal(FOUR_LANE_TEST_ANCHOR_X, 740, 'R435 staging nudges 25px right');
   // R434: raise the cars without changing perspective or lane spacing.
   assert.deepEqual(FOUR_LANE_TEST_LANES.map(lane => lane.bodyY),
     [390, 315, 240, 165]);
@@ -72,6 +73,11 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /positionComplexArt\(\)/);
   assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
   assert.match(sceneSource, /const TRACK_PAN_X = -235/);
+  assert.match(sceneSource, /const ROAD_DROP_Y = 75/);
+  assert.match(sceneSource, /STAND_Y \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /laneBandTops\[index\] \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /FOUR_LANE_TEST_LANES\[index\]\.bodyY \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /ROAD_BOTTOM \+ ROAD_DROP_Y/);
   assert.match(sceneSource, /const COMPLEX_BASE_PREVIEW_WIDTH = 330/);
   assert.match(sceneSource, /const COMPLEX_PREVIEW_WIDTH = COMPLEX_BASE_PREVIEW_WIDTH \* 1\.5/);
   assert.match(sceneSource, /const originalImageScale = COMPLEX_BASE_PREVIEW_WIDTH \/ art\.width/);
