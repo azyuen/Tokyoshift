@@ -32,8 +32,8 @@ import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCarX, fourLaneCameraX, fourLaneDashSafeYOffset,
-  rankFourLaneFinishers,
-} from '../data/fourLanePrototype.js?v=20261008-r436';
+  fourLaneTreeLights, rankFourLaneFinishers,
+} from '../data/fourLanePrototype.js?v=20261008-r440';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';
@@ -84,7 +84,9 @@ const STAND_PREVIEW_PIECE_WIDTH = 495;
 const STAND_PREVIEW_OVERLAP = 32;
 const STAND_PREVIEW_START_X = 360;
 const STAND_BASE_GAP = 3; // bottom of concrete, just above top white line
-// The finish crowd is longer: LEFT, MIDDLE x3, RIGHT.
+// Starting crowd stays LEFT / MIDDLE / RIGHT. At the finish, eight middle
+// pieces produce LEFT / MIDDLE x8 / RIGHT (+5 middles over R439).
+const FINISH_STAND_MIDDLES = 8;
 const FINISH_STAND_DISTANCE_M = FOUR_LANE_TEST_DISTANCE_M;
 const SKYLINE_PARALLAX = 0.16;
 const SKYLINE_WORLD_WIDTH = 4096;
@@ -92,11 +94,17 @@ const SKYLINE_SCALE_UP = 1.5;
 const SKYLINE_MIN_WORLD_HEIGHT = 730;
 // Phaser-drawn floodlit chain-link fence on concrete safety barriers.
 const FENCE_TOP_Y = 134;
-const FENCE_CONCRETE_HEIGHT = 42;
+const FENCE_CONCRETE_HEIGHT = 84; // 2x R439, base stays at y=315
 const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP;
 const FENCE_CONCRETE_TOP_Y = FENCE_BASE_Y - FENCE_CONCRETE_HEIGHT;
 const FENCE_POST_INTERVAL = 112;
 const FENCE_MESH_STEP = 20;
+// Trackside starting 'Christmas tree'; its foot sits on the far white line,
+// just to the RIGHT of the actual world-space start marker.
+const START_TREE_OFFSET_X = 78;
+const START_TREE_BASE_Y = ROAD_TOP_LINE_Y;
+const START_TREE_PANEL_WIDTH = 54;
+const START_TREE_PANEL_HEIGHT = 124;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -213,6 +221,7 @@ export default class FourLaneTestScene extends RaceScene {
       this.createStandSet(FINISH_STAND_DISTANCE_M),
     ].filter(Boolean);
     this.roadsideFence = this.add.graphics().setDepth(0.8);
+    this.startTree = this.add.graphics().setDepth(2.5);
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
@@ -244,6 +253,7 @@ export default class FourLaneTestScene extends RaceScene {
       this.roadsideFence,
       ...this.standSets.flatMap(set => set.images),
       ...(this.complexArt ? [this.complexArt] : []),
+      this.startTree,
       this.trackFX, ...carObjects,
     ])
       .setDepth(1);
@@ -417,9 +427,11 @@ export default class FourLaneTestScene extends RaceScene {
   createStandSet(distanceM) {
     if (!STAND_KEYS.every(key => this.textures.exists(key))) return null;
     const imageKeys = STAND_KEYS.map(key => this.prepareStandTexture(key));
-    // Preserve exactly one left and right. Repeat the middle three times
-    // ONLY at the finish, to make the final grandstand substantially longer.
-    if (distanceM > 0) imageKeys.splice(2, 0, imageKeys[1], imageKeys[1]);
+    // A single left and right end-cap at both venues. Only the finish uses
+    // eight middle sections; every section reuses the same cached texture.
+    if (distanceM > 0) {
+      imageKeys.splice(1, 1, ...Array(FINISH_STAND_MIDDLES).fill(imageKeys[1]));
+    }
     // Scale all images with one shared pixel scale, so the bottom
     // concrete walls and crowd proportions line up even for different crops.
     const midWidth = this.textures.get(imageKeys[1]).getSourceImage().width;
@@ -546,6 +558,69 @@ export default class FourLaneTestScene extends RaceScene {
       g.fillStyle(0x8097a8, 0.8).fillRect(x - 2, FENCE_TOP_Y, 2,
         meshBottom - FENCE_TOP_Y);
       g.fillStyle(0xa9b9c4, 0.9).fillCircle(x, FENCE_TOP_Y, 4);
+    }
+  }
+
+  drawStartTree() {
+    const g = this.startTree;
+    if (!g || !this.runners?.length) return;
+    g.clear();
+    // Use exactly the same world-space camera and start-line calculation as
+    // the road's actual starting stripe; no drifting screen overlay.
+    const playerNose = this.runners[0].visual?.noseOffsetPx || 110;
+    const startX = fourLaneCarX(0, this.cameraPx, 0, playerNose);
+    const x = startX + START_TREE_OFFSET_X;
+    if (x < -90 || x > TRACK_DRAW_RIGHT + 90) return;
+
+    const phase = this.racePhase();
+    const lamps = fourLaneTreeLights(phase, this.falseStart);
+    const baseY = START_TREE_BASE_Y;
+    const panelTop = baseY - START_TREE_PANEL_HEIGHT - 18;
+    const panelLeft = x - START_TREE_PANEL_WIDTH / 2;
+
+    // Steel baseplate and anchored stem.
+    g.fillStyle(0x131b25, 1)
+      .fillRect(x - 22, baseY - 8, 44, 8);
+    g.fillStyle(0x697d89, 0.9)
+      .fillRect(x - 17, baseY - 8, 34, 2);
+    g.fillStyle(0x172431, 1)
+      .fillRect(x - 5, panelTop - 4, 10, baseY - panelTop);
+    g.fillStyle(0x617887, 0.92)
+      .fillRect(x - 4, panelTop - 4, 2, baseY - panelTop);
+
+    // Two illuminated columns evoke a professional drag strip tree. One
+    // light assembly serves the dev tester's four simultaneous lanes.
+    g.fillStyle(0x080f18, 1)
+      .fillRoundedRect(panelLeft - 3, panelTop - 3,
+        START_TREE_PANEL_WIDTH + 6, START_TREE_PANEL_HEIGHT + 6, 5);
+    g.fillStyle(0x25333e, 1)
+      .fillRoundedRect(panelLeft, panelTop,
+        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
+    g.lineStyle(2, 0x91a8b8, 0.66)
+      .strokeRoundedRect(panelLeft, panelTop,
+        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
+
+    const rows = [
+      { offset: 13, color: 0xd9f5ff, on: lamps.preStage },
+      { offset: 29, color: 0xf7fbff, on: lamps.stage },
+      { offset: 47, color: 0xffb94b, on: lamps.ambers[0] },
+      { offset: 63, color: 0xffb94b, on: lamps.ambers[1] },
+      { offset: 79, color: 0xffb94b, on: lamps.ambers[2] },
+      { offset: 98, color: 0x61fda1, on: lamps.green },
+      { offset: 114, color: 0xff5167, on: lamps.red },
+    ];
+    for (const row of rows) {
+      const cy = panelTop + row.offset;
+      for (const dx of [-11, 11]) {
+        g.fillStyle(0x03080d, 1).fillCircle(x + dx, cy, 7.7);
+        if (row.on) {
+          g.fillStyle(row.color, 0.19).fillCircle(x + dx, cy, 10);
+          g.fillStyle(row.color, 1).fillCircle(x + dx, cy, 5.2);
+          g.fillStyle(0xffffff, 0.72).fillCircle(x + dx - 1.1, cy - 1.2, 2);
+        } else {
+          g.fillStyle(row.color, 0.14).fillCircle(x + dx, cy, 4.5);
+        }
+      }
     }
   }
 
@@ -806,6 +881,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.cameraPx = fourLaneCameraX(playerM);
     this.positionComplexArt();
     this.positionTrackside();
+    this.drawStartTree();
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
