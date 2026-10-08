@@ -1,0 +1,36 @@
+name: Professional complex R445 checks
+
+on:
+  push:
+    branches:
+      - feature/pro-race-results-and-two-lane-complex-r445
+  pull_request:
+    paths:
+      - 'src/data/proDragDuel.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/pro-complex-r445.mjs'
+      - '.github/workflows/pro-complex-r445.yml'
+
+jobs:
+  pro-complex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse changed game modules
+        run: |
+          node --check src/data/proDragDuel.js
+          node --check src/data/centralTokyo.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
+      - name: Intro pro duels and manga result regressions
+        run: node --test tests/pro-complex-r445.mjs
+      - name: Original four-wide renderer and finish tests
+        run: node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs
+      - name: Tournament and save backward compatibility
+        run: node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs
