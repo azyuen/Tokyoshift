@@ -4,11 +4,13 @@ export const FOUR_LANE_TEST_PX_PER_M = 70;
 // Shift staging toward the right to leave room for the control tower and crew.
 // Cars' noses remain aligned by fourLaneCarX; only presentation moves.
 export const FOUR_LANE_TEST_ANCHOR_X = 715;
+// R434: raise each car by about one wheel width (30 track-world pixels).
+// Preserve the lane gaps, perspective scales and front-bumper alignment.
 export const FOUR_LANE_TEST_LANES = Object.freeze([
-  Object.freeze({ lane: 1, bodyY: 420, scale: 1.00, label: 'YOU' }),
-  Object.freeze({ lane: 2, bodyY: 345, scale: 0.90, label: 'RIVAL 1' }),
-  Object.freeze({ lane: 3, bodyY: 270, scale: 0.81, label: 'RIVAL 2' }),
-  Object.freeze({ lane: 4, bodyY: 195, scale: 0.73, label: 'RIVAL 3' }),
+  Object.freeze({ lane: 1, bodyY: 390, scale: 1.00, label: 'YOU' }),
+  Object.freeze({ lane: 2, bodyY: 315, scale: 0.90, label: 'RIVAL 1' }),
+  Object.freeze({ lane: 3, bodyY: 240, scale: 0.81, label: 'RIVAL 2' }),
+  Object.freeze({ lane: 4, bodyY: 165, scale: 0.73, label: 'RIVAL 3' }),
 ]);
 
 // Cars have different art bounding boxes and scales. Align their FRONT edges,
