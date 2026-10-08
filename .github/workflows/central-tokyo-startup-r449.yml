@@ -1,0 +1,27 @@
+name: Central Tokyo startup hotfix R449
+
+on:
+  push:
+    branches:
+      - hotfix/central-tokyo-black-screen-r449
+  pull_request:
+    paths:
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/central-tokyo-startup-r449.mjs'
+      - '.github/workflows/central-tokyo-startup-r449.yml'
+
+jobs:
+  startup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify scene syntax and bootstrap
+        run: |
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
+          node --test tests/central-tokyo-startup-r449.mjs
+      - name: Check pro venue and save regressions
+        run: node --test tests/drag-complex-r448.mjs tests/pro-complex-r445.mjs tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs
