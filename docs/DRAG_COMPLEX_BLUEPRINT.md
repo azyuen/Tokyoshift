@@ -102,3 +102,19 @@ The first playable professional tournament uses **exactly the current FourLaneTe
 **Scope limits:** The original three pro cups still run through the existing two-car engine, with no new pro rating integration. The Four-Wide Open proves the four-lane shared stage; moving *every* two-car professional cup to the nearest two lanes will be a later renderer unification. Crowd-level variants depend on the user's future assets. Season calendar/automatic background progression, crew competitions and Tokyo Championships remain Phase 3/4, not silently implemented here.
 
 **Next user testing:** Arkon Den can enter and play a new cup, inspect minimalist race overlays, place 1–4, see top-two qualification, leave/resume mid-event, confirm a final payout/rank movement, and verify existing 4-LANE TEST and Midnight Cup have no changed settlement behaviour. Test a genuine seven-crew non-dev profile when available.
+
+## R444 hotfix — Four-wide finish and first-heat briefing
+
+**Bug reported:** An R443 Four-Wide Open heat could continue driving long after the quarter-mile timing line, then freeze with no results. Two concrete causes were found:
+1. `FourLaneTestScene` created the player's in-race ID as `player`, but the professional tournament engine's registered ID is `player:driver`. The old result payload therefore threw during scoring.
+2. Four-wide camera tracked the player indefinitely until a long all-driver/10-second timeout instead of freezing immediately after the first finish.
+
+**Fixed in R444:**
+- Professional heats now create the actual registered `player:driver` runner. Arkon Den's non-paying sandbox still uses `player`.
+- `src/data/fourLaneFinish.js` supplies reusable meet-style timing: approximately 0.24 seconds after the first finish, lock the scene camera; let all four car sprites fly past the fixed venue; show race results by 2.1 seconds after the first finish (earlier after all finish), or fail safe after 38 seconds if *no* car reaches the finish. Camera, crowd, road and vehicle scale/camera zoom before the finish remain unchanged.
+- Brief 160ms results transition followed by a result-title animation (QUALIFIED, ELIMINATED, CHAMPION, RUNNER-UP, etc.). Defensive recovery on tournament settlement failure shows return/retry rather than leaving a frozen race screen.
+- New **once per tournament** introductory overlay before the first heat: 16-driver qualifying/semifinal/final structure, top two advance, actual three opponents and their cars, entry fee, top prize, registered-car/save reminder. It must be dismissed with READY TO RACE before stage controls become active.
+- R443 saves of an active/pending Four-Wide Open continue unchanged; no second entry charge. The first heat can be rerun if the old build crashed before recording it.
+- Added `tests/four-lane-finish-regression.mjs` and GitHub Actions checks for finish camera timing, max flypast, real saved bracket ID, first-heat briefing and existing tournament/Phase 1 compatibility.
+
+**Still pending device validation:** verify finish world art stays frozen while cars pass it, popup is readable on iPhone, results buttons respond, and a paused R443 cup can resume without re-entry fees. Do not claim automated syntax tests prove visual behavior.
