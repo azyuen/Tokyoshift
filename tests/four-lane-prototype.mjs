@@ -5,7 +5,7 @@ import {
   FOUR_LANE_TEST_LANES, FOUR_LANE_TEST_DISTANCE_M,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCameraX, fourLaneCarX, fourLaneDashSafeYOffset,
-  rankFourLaneFinishers,
+  fourLaneTreeLights, rankFourLaneFinishers,
 } from '../src/data/fourLanePrototype.js';
 
 test('four staged cars have unique lanes, with two extra lanes above old top row', () => {
@@ -95,17 +95,17 @@ test('foreground crowd repeats 3 times at launch and 10 times at finish', () => 
   assert.match(src, /this\.frontCrowdSets = this\.standSets\.map\(set =>/);
   assert.match(src, /this\.createFrontCrowdSet\(set\.distanceM, set\.images\.length\)/);
   assert.match(src, /const FINISH_STAND_MIDDLES = 8/);
-  assert.match(src, /const FRONT_CROWD_PREVIEW_WIDTH = 550/);
+  assert.match(src, /const FRONT_CROWD_PREVIEW_WIDTH = 1100/);
   assert.match(src, /const FRONT_CROWD_BASE_Y = ROAD_BOTTOM_LINE_Y \+ 180/);
   assert.match(src, /const FRONT_WALL_BOTTOM_Y = 1900/);
   assert.match(src, /this\.drawFrontCrowdSurfaces\(cameraTravel\)/);
   assert.match(src, /this\.frontCrowdSets\.flatMap\(set => set\.images\)/);
   assert.match(src, /this\.prepareStandTexture\('fourLaneFrontCrowd'\)/);
-  assert.match(src, /FRONT_CROWD_PREVIEW_OVERLAP = 35/);
+  assert.match(src, /FRONT_CROWD_PREVIEW_OVERLAP = 70/);
 
   const counts = [3, 2 + 8];
   assert.deepEqual(counts, [3, 10]);
-  assert.ok(550 * 3 - 35 * 2 >= 1560,
+  assert.ok(1100 * 3 - 70 * 2 >= 1560,
     'the 3 starting sprites cover the width of the staging screen');
 });
 
@@ -130,16 +130,41 @@ test('lower fence never overlaps the road, and concrete extends below game view'
   assert.match(src, /const viewRight = screenToWorld\(WIDTH \+ 120\)/);
 });
 
-test('no starting tree, countdown bar or live car standings UI survives', () => {
+test('the original on-track Christmas tree returns without redundant HUD lamps or live standings', () => {
   const src = fs.readFileSync(
     new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
   );
-  assert.doesNotMatch(src, /drawStartTree|this\.startTree|renderSignals|this\.signalG|this\.signalText/);
-  assert.doesNotMatch(src, /this\.placeText|updateLivePositions|countdownClock|countdownActive/);
+  assert.match(src, /const START_TREE_OFFSET_X = 78/);
+  assert.match(src, /const START_TREE_BASE_Y = ROAD_TOP_LINE_Y/);
+  assert.match(src, /this\.startTree = this\.add\.graphics\(\)\.setDepth\(2\.5\)/);
+  assert.match(src, /this\.drawStartTree\(\)/);
+  assert.match(src, /fourLaneTreeLights\(phase, this\.falseStart\)/);
+  assert.match(src, /fourLaneCarX\(0, this\.cameraPx, 0, playerNose\)/);
+  assert.match(src, /const x = startX \+ START_TREE_OFFSET_X/);
+  assert.match(src, /this\.countdownActive = true/);
+  assert.match(src, /this\.countdownClock >= 3\.3/);
   assert.match(src, /this\.greenClock = this\.raceClock/);
-  assert.match(src, /this\.zooming = false/);
+  assert.match(src, /runner\.disqualified = true/);
+  assert.doesNotMatch(src, /this\.signalG|this\.signalText|renderSignals/);
+  assert.doesNotMatch(src, /this\.placeText|updateLivePositions/);
   assert.match(src, /new RaceHUD/);
   assert.match(src, /showFourLaneResults\(\)/);
+});
+
+test('tree illumination matches staging, three sequential ambers, green, and false start red', () => {
+  const preview = fourLaneTreeLights('PREVIEW');
+  assert.equal(preview.preStage, false);
+  const stage = fourLaneTreeLights('STAGE');
+  assert.equal(stage.stage, true);
+  assert.deepEqual(stage.ambers, [false, false, false]);
+  for (let n = 1; n <= 3; n++) {
+    const lamps = fourLaneTreeLights('AMBER ' + n);
+    assert.deepEqual(lamps.ambers, [1, 2, 3].map(i => i <= n));
+    assert.equal(lamps.green, false);
+  }
+  assert.equal(fourLaneTreeLights('GREEN').green, true);
+  assert.equal(fourLaneTreeLights('GREEN', true).red, true);
+  assert.equal(fourLaneTreeLights('GREEN', true).green, false);
 });
 
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
