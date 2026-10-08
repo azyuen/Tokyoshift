@@ -2546,6 +2546,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Registered professional tournament cars cannot be sold mid-event.
     if (normaliseProCircuitState(this.registry.get('proCircuit'))
       .activeTournament?.carId === carId) return;
+    const proDuel = this.registry.get('competitionState');
+    if (proDuel?.active && proDuel?.proEvent && proDuel.playerCarId === carId) return;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const starterCarId = this.registry.get('starterCarId');
     if (!owned.includes(carId)) return;
