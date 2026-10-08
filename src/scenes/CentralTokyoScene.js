@@ -308,7 +308,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.contentObjects = [];
     this.selectedIndex = 0;
-    if (kind !== 'proDrag') this.selectedEventIndex = 0;
+    this.selectedEventIndex = 0;
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
     this.autoMarketTransitioning = false;
