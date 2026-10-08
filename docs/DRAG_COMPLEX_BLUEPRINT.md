@@ -1,6 +1,6 @@
 # TOKYO SHIFT — Drag Complex Professional Circuit Blueprint (v1)
 
-**Adopted:** 2026-10-08. **Status:** Phase 1 merged on 2026-10-08 (PR #59 / R429); Phase 2–4 not yet implemented.
+**Adopted:** 2026-10-08. **Status:** Phase 1 merged (PR #59 / R429); Phase 2 first playable four-wide tournament merged (PR #62 / R443); Phases 3–4 still planned.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
 ## Product vision and unlock
@@ -44,7 +44,7 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 - Test new and legacy saves, corrupt payloads, dev bypass, roster uniqueness and deterministic seeding.
 - **Explicitly not shipping yet:** visible full leaderboard/season races, Elo updates, actual trophies, team event execution, Tokyo Championships.
 
-### Phase 2 — First playable professional tournament
+### Phase 2 — First playable professional tournament (merged R443, first four-wide cup)
 - Dedicated reusable tournament engine, independent of fixed `RaceScene` three-round `competitionState` settlement; do not break street cups.
 - Seeded bracket, player event, real rating/season-point updates, robust payout once, save/resume, garage breaks, good UX and regression tests.
 - Treat current pro three-round events as legacy until migration is proven.
@@ -73,8 +73,8 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 ## Next handoff / where to resume
 
 1. Phase 1 completed in PR #59 with passing GitHub foundation checks; build R429. Verify the in-game access gate with Arkon Den and one mature non-dev profile.
-2. Build Phase 2 isolated engine **before** changing major tournament scene presentation.
-3. On Sunday 2026-10-11, Astra can tackle Phase 3 using this document and Phase 2 engine; preserve all tested interfaces.
+2. Phase 2 deployed (R443): test the Four-Wide Open with Arkon Den and a regular seven-crew profile, finish three heats, check rank/cash once, break/resume, mobile composition and saved profiles.
+3. On Sunday 2026-10-11, Astra can tackle Phase 3 (living season and three-driver crew racing), while using the proven Phase 2 bracket interfaces; also evaluate routing all professional two-car races to the nearest two lanes of the shared four-lane complex.
 4. Phase 4 after genuine individual/crew simulations are demonstrably reliable.
 
 **Design status:** blueprint approved; implementation status must be updated based on actual merges, not presumed from this document.
