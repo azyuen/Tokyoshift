@@ -1479,6 +1479,32 @@ export default class FourLaneTestScene extends RaceScene {
         console.error('[Tokyo SHIFT] Four-wide cup settlement failed', error);
         outcome = { status: 'ERROR', cashPrize: 0 };
       }
+    } else if (this.proDuel) {
+      const state = this.registry.get('competitionState');
+      const playerWon = own?.status === 'FINISHED' && own?.placing === 1;
+      outcome = settleProfessionalDuel(state, playerWon);
+      if (outcome.status !== 'NO_EVENT') {
+        try {
+          let earned = 0;
+          if (outcome.status === 'CHAMPION') {
+            earned = applyEasyCashWinBonus(this.registry, outcome.cashPrize);
+            this.registry.set('cash', Number(this.registry.get('cash') || 0) + earned);
+            this.registry.set('competitionWins',
+              Number(this.registry.get('competitionWins') || 0) +
+              outcome.competitionWinsDelta);
+          }
+          outcome.cashPrize = earned;
+          this.registry.set('competitionState', outcome.nextState);
+          saveSessionState(this.registry);
+        } catch (error) {
+          console.error('[Tokyo SHIFT] Two-lane pro settlement failed', error);
+          outcome = { status: 'ERROR', cashPrize: 0 };
+        }
+      }
+    }
+    if (this.proCup || this.proDuel) {
+      this.showProfessionalMangaResult(standings, outcome);
+      return;
     }
     this.add.rectangle(780, 345, 1050, 552, 0x06121e, 0.985)
       .setStrokeStyle(3, 0x62d7ed).setDepth(95).setScrollFactor(0);
