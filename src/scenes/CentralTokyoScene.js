@@ -2968,6 +2968,27 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
+    // Four-wide is a visual/physics sandbox, not a tournament or saved race.
+    // Keep its entry isolated to Arkon Den in the upper-right Drag sidebar.
+    if (isArkonDen(this.registry)) {
+      const testX = SIDE.x + SIDE.w / 2;
+      const testY = SIDE.y + 124;
+      const testButton = this.addContent(this.add.rectangle(
+        testX, testY, SIDE.w - 36, 39, 0x113039, 1
+      ).setStrokeStyle(2, 0x66f1ff, 1)
+        .setDepth(36)
+        .setInteractive({ useHandCursor: true }));
+      this.addContent(this.add.text(testX, testY, '4-LANE TEST', {
+        fontFamily: PIXEL_FONT,
+        fontSize: '9px',
+        color: '#e9fdff',
+      }).setOrigin(0.5).setDepth(37));
+      testButton.on('pointerdown', () => {
+        if (!isArkonDen(this.registry)) return;
+        this.scene.start('FourLaneTestScene');
+      });
+    }
+
     if (!circuitOpen) {
       this.addContent(this.add.text(
         STAGE.x + STAGE.w / 2,
