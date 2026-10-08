@@ -11,6 +11,21 @@ export function fourLaneDashSafeYOffset(carBottomY, hudTopY, clearance = 24) {
   if (!Number.isFinite(carBottomY) || !Number.isFinite(hudTopY)) return 0;
   return Math.min(0, hudTopY - clearance - carBottomY);
 }
+// The physical starting tree and the fixed HUD indicators share one
+// countdown state. No separate timers, physics or race progression.
+export function fourLaneTreeLights(phase, falseStart = false) {
+  const staged = ['STAGE', 'AMBER 1', 'AMBER 2', 'AMBER 3', 'GREEN'].includes(phase);
+  const amberLevel = phase === 'AMBER 1' ? 1 :
+    phase === 'AMBER 2' ? 2 : phase === 'AMBER 3' ? 3 : 0;
+  return {
+    preStage: phase !== 'PREVIEW' && phase !== 'ZOOM',
+    stage: staged,
+    ambers: [1, 2, 3].map(n => amberLevel >= n),
+    green: phase === 'GREEN' && !falseStart,
+    red: Boolean(falseStart),
+  };
+}
+
 // R434: raise each car by about one wheel width (30 track-world pixels).
 // Preserve the lane gaps, perspective scales and front-bumper alignment.
 export const FOUR_LANE_TEST_LANES = Object.freeze([
