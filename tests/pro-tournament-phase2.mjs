@@ -136,7 +136,8 @@ test('offscreen simulation is deterministic, using seed; main story races untouc
   const central=fs.readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
   assert.match(proScene,/this\.proCup/);
   assert.match(proScene,/settleFourWideHeat/);
-  assert.match(central,/ENTER FOUR-WIDE OPEN/);
+  assert.match(central,/FOUR-WIDE OPEN/);
+  assert.match(central,/this\.enterFourWideCup\(\)/);
   assert.match(central,/RESUME FOUR-WIDE OPEN/);
   assert.match(central,/startProBracket/);
   assert.match(proScene,/this\.configureZoomFocus\(\)/);

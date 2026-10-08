@@ -111,7 +111,7 @@ test('all new professional race entries use four-lane complex; only 2 cars for p
 
 test('professional endings use angled manga portrait, large sign and top-depth tap-anywhere', () => {
   assert.match(scene,/showProfessionalMangaResult\(standings, outcome\)/);
-  assert.match(scene,/new Phaser\.Geom\.Point\(56, 55\)/);
+  assert.match(scene,/new Phaser\.Geom\.Point\(88, 114\)/);
   assert.match(scene,/createCharacterProfile\(this, \{/);
   assert.match(scene,/createGeometryMask\(\)/);
   assert.match(scene,/fontSize: titleText\.length > 9 \? '66px' : '87px'/);
@@ -122,10 +122,10 @@ test('professional endings use angled manga portrait, large sign and top-depth t
   assert.match(scene,/this\.time\.delayedCall\(360, \(\) => \{ armed = true; \}\)/);
 });
 
-test('free developer 4-lane tester continues to exist and does not collect pro fees', () => {
+test('standalone developer test entry is retired in favour of fully playable pro modes', () => {
   assert.match(scene,/this\.proDuel = data\.mode === 'PRO_DUEL'/);
   assert.match(scene,/this\.proCup = data\.mode === 'PRO_CUP'/);
-  assert.match(scene,/else if \(!isArkonDen\(this\.registry\)\)/);
-  assert.match(central,/'4-LANE TEST'/);
+  assert.doesNotMatch(scene,/else if \(!isArkonDen\(this\.registry\)\)/);
+  assert.doesNotMatch(central,/'4-LANE TEST'/);
   assert.match(scene,/showFourLaneResults\(\)/);
 });
