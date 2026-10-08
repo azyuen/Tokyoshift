@@ -33,7 +33,12 @@ import {
 } from '../data/visualMods.js?v=20261006-r388';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
-import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
+import {
+  getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState,
+} from '../data/proCircuit.js?v=20261008-r443';
+import {
+  FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
+} from '../data/proTournament.js?v=20261008-r443';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import {
@@ -3033,6 +3038,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
+    this.drawFourWideCupEntry(circuitOpen, build);
     const selectedCar = build ? cars[build.carId] : null;
 
     if (selectedCar) {
@@ -3152,6 +3158,73 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
 
     this.drawDragSide(events[this.selectedEventIndex], build);
+  }
+
+  drawFourWideCupEntry(circuitOpen, build) {
+    const state = normaliseProCircuitState(this.registry.get('proCircuit'));
+    const active = state.activeTournament;
+    const hasActive = active?.eventId === FOUR_WIDE_CUP.id && Boolean(getPlayerProHeat(active));
+    const owned = this.registry.get('ownedCarIds') || [];
+    const selectedCarId = build?.carId || null;
+    const canRace = circuitOpen && !this.registry.get('competitionState')?.active &&
+      (hasActive
+        ? owned.includes(active.carId)
+        : Boolean(build && selectedCarId && owned.includes(selectedCarId) &&
+          Number(this.registry.get('cash') || 0) >= FOUR_WIDE_CUP.entryFee));
+    const x = SIDE.x + SIDE.w / 2, y = SIDE.y + 251;
+    const button = this.addContent(this.add.rectangle(x, y, SIDE.w - 36, 45,
+      canRace ? 0x0e3434 : 0x171c23, 1
+    ).setStrokeStyle(2, canRace ? 0x5fe7dc : 0x596778, 1).setDepth(35));
+    const label = !circuitOpen ? 'RECRUIT 7 CREW MEMBERS' :
+      hasActive ? 'RESUME FOUR-WIDE OPEN' :
+        active ? 'TOURNAMENT IN PROGRESS' :
+          !canRace ? 'FOUR-WIDE // NOT ELIGIBLE' :
+            'ENTER FOUR-WIDE OPEN';
+    this.addContent(this.add.text(x, y, label, {
+      fontFamily: PIXEL_FONT, fontSize: '8px',
+      color: canRace ? '#eafff9' : '#8995a0',
+    }).setOrigin(0.5).setDepth(36));
+    const rank = getProCircuitDriverSeeds(state)
+      .find(item => item.id === 'player:driver')?.seed || 32;
+    this.addContent(this.add.text(x, SIDE.y + 288,
+      (hasActive ? 'CUP ' + ['QUALIFYING','SEMIFINAL','FINAL'][active.stage] +
+        ' // REGISTERED ' + (cars[active.carId]?.shortName || active.carId)
+        : '16 RACERS / TOP TWO ADVANCE / ENTRY ' + money(FOUR_WIDE_CUP.entryFee)) +
+      ' // RANK #' + rank, {
+        fontFamily: BODY_FONT, fontSize: '8px',
+        color: '#afc9d1', wordWrap: { width: SIDE.w - 40 }, align: 'center',
+      }).setOrigin(0.5).setDepth(36));
+    if (canRace) {
+      button.setInteractive({ useHandCursor: true });
+      button.on('pointerdown', () => this.enterFourWideCup());
+    }
+  }
+
+  enterFourWideCup() {
+    const access = getProCircuitAccess(this.registry);
+    if (!access.unlocked || this.registry.get('competitionState')?.active) return;
+    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
+    const owned = this.registry.get('ownedCarIds') || [];
+    const active = pro.activeTournament;
+    if (active) {
+      if (active.eventId !== FOUR_WIDE_CUP.id ||
+        !getPlayerProHeat(active) || !owned.includes(active.carId)) return;
+      this.scene.start('FourLaneTestScene', { mode: 'PRO_CUP' });
+      return;
+    }
+    const build = this.getSelectedBuild();
+    const carId = build?.carId;
+    if (!carId || !owned.includes(carId)) return;
+    const cash = Number(this.registry.get('cash') || 0);
+    if (cash < FOUR_WIDE_CUP.entryFee) return;
+    const tournament = createFourWideTournament(pro, carId);
+    if (!tournament) return;
+    // Registry snapshot is written ONCE before leaving the venue, so closing
+    // the PWA mid-heat never charges another fee or loses a registered bracket.
+    this.registry.set('proCircuit', { ...pro, activeTournament: tournament });
+    this.registry.set('cash', cash - FOUR_WIDE_CUP.entryFee);
+    saveSessionState(this.registry);
+    this.scene.start('FourLaneTestScene', { mode: 'PRO_CUP' });
   }
 
   drawDragSide(event, build) {
