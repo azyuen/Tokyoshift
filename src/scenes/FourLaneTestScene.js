@@ -490,10 +490,12 @@ export default class FourLaneTestScene extends RaceScene {
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
     g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
-    FOUR_LANE_TEST_LANES.forEach((lane, index) => {
-      const top = index === 0 ? 383 : (lane.bodyY - 35);
+    // The track stays in place when the cars are lifted. Keep all four
+    // asphalt bands aligned with the unchanged lane-divider markings.
+    const laneBandTops = [383, 310, 235, 160];
+    FOUR_LANE_TEST_LANES.forEach((_lane, index) => {
       g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
-        .fillRect(TRACK_DRAW_LEFT, top, TRACK_DRAW_WIDTH, 74);
+        .fillRect(TRACK_DRAW_LEFT, laneBandTops[index], TRACK_DRAW_WIDTH, 74);
     });
     g.fillStyle(0x8ea8b7, 0.5).fillRect(TRACK_DRAW_LEFT, STAND_Y + 2, TRACK_DRAW_WIDTH, 3);
     g.fillStyle(0xc2d5e0, 0.72).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM - 3, TRACK_DRAW_WIDTH, 2);
