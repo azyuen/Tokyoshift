@@ -34,6 +34,22 @@ test('the final camera framing keeps every staged car above the customised HUD',
   }
 });
 
+test('distant lane is narrower and grey asphalt sits inside moved shoulder lines', () => {
+  const roadDrop = 150;
+  const lineShift = 12;
+  const farInset = 26;
+  const outerTop = 130 + roadDrop + lineShift + farInset;
+  const dividers = [233, 308, 383].map(y => y + roadDrop + lineShift);
+  const outerBottom = 490 + roadDrop + lineShift;
+  const edges = [outerTop, ...dividers, outerBottom];
+  assert.deepEqual(edges, [318, 395, 470, 545, 652]);
+  const widths = edges.slice(1).map((bottom, i) => bottom - edges[i]);
+  assert.deepEqual(widths, [77, 75, 75, 107]);
+  assert.ok(widths[0] < widths[3], 'far side remains slimmer than near side');
+  assert.ok(outerTop > 130 + roadDrop + lineShift);
+  assert.ok(edges.every((value, i) => !i || value > edges[i - 1]));
+});
+
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
   const camera = fourLaneCameraX(0);
   const playerNose = 110;
@@ -93,15 +109,23 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /this\.hud\?\.cluster\?\.getBounds/);
   assert.match(sceneSource, /getStagedCarBottomWorld\(\)/);
   assert.match(sceneSource, /this\.zoomFocusShiftY \|\| 0/);
-  assert.match(sceneSource, /STAND_Y \+ ROAD_DROP_Y/);
-  assert.match(sceneSource, /laneBandTops\[index\] \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /const ROAD_LINE_SHIFT_Y = 12/);
+  assert.match(sceneSource, /const FAR_EDGE_EXTRA_INSET_Y = 26/);
+  assert.match(sceneSource, /const ROAD_TOP_LINE_Y = STAND_Y \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /const ROAD_BOTTOM_LINE_Y = ROAD_BOTTOM \+ ROAD_DROP_Y/);
+  assert.match(sceneSource, /ROAD_DIVIDER_LINE_YS = \[233, 308, 383\]\.map/);
+  assert.match(sceneSource, /const laneEdges = \[/);
+  assert.match(sceneSource, /ROAD_TOP_LINE_Y, \.\.\.ROAD_DIVIDER_LINE_YS, ROAD_BOTTOM_LINE_Y/);
+  assert.match(sceneSource, /bottom - top/);
   assert.match(sceneSource, /FOUR_LANE_TEST_LANES\[index\]\.bodyY \+ ROAD_DROP_Y/);
-  assert.match(sceneSource, /ROAD_BOTTOM \+ ROAD_DROP_Y/);
   assert.match(sceneSource, /const COMPLEX_BASE_PREVIEW_WIDTH = 330/);
   assert.match(sceneSource, /const COMPLEX_PREVIEW_WIDTH = COMPLEX_BASE_PREVIEW_WIDTH \* 1\.5/);
   assert.match(sceneSource, /const originalImageScale = COMPLEX_BASE_PREVIEW_WIDTH \/ art\.width/);
   assert.match(sceneSource, /const artWorldY = \(originalArtTop - previewRootY\) \/ PREVIEW_ZOOM/);
-  assert.match(sceneSource, /const laneBandTops = \[383, 310, 235, 160\]/);
+  assert.doesNotMatch(sceneSource, /const laneBandTops =/);
+  assert.match(sceneSource, /fillRect\(TRACK_DRAW_LEFT, ROAD_TOP_LINE_Y, TRACK_DRAW_WIDTH, 3\)/);
+  assert.match(sceneSource, /fillRect\(TRACK_DRAW_LEFT, ROAD_BOTTOM_LINE_Y - 2, TRACK_DRAW_WIDTH, 2\)/);
+  assert.match(sceneSource, /finishEndY = ROAD_BOTTOM_LINE_Y - 5/);
   assert.match(sceneSource, /art\.x = this\.complexBaseX - travelledPx/);
   assert.doesNotMatch(sceneSource, /artScreenScale \/ zoom/);
   assert.match(sceneSource, /cameraPx - fourLaneCameraX\(0\)/);
