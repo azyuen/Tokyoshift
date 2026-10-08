@@ -163,15 +163,10 @@ export function normaliseProCircuitState(raw) {
     completedEventIds: Array.isArray(source.completedEventIds)
       ? [...new Set(source.completedEventIds.filter(id => typeof id === 'string').slice(-250))]
       : [],
+    // Preserve future/legacy saved bracket structures; the Phase 2 runner
+    // separately validates its own eventId and expected heat before starting.
     activeTournament: source.activeTournament && typeof source.activeTournament === 'object' &&
-      !Array.isArray(source.activeTournament) &&
-      source.activeTournament.eventId === 'fourWideOpen' &&
-      source.activeTournament.schema === 1 &&
-      Number.isInteger(source.activeTournament.stage) &&
-      source.activeTournament.stage >= 0 && source.activeTournament.stage <= 2 &&
-      Array.isArray(source.activeTournament.heats) &&
-      Array.isArray(source.activeTournament.entrants)
-      ? source.activeTournament : null,
+      !Array.isArray(source.activeTournament) ? source.activeTournament : null,
     lastTournament: source.lastTournament && typeof source.lastTournament === 'object' &&
       !Array.isArray(source.lastTournament) ? source.lastTournament : null,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
