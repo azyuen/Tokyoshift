@@ -9,10 +9,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Tokyo SHIFT" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180.png?v=20260929-r253" />
-  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./app-icon-180.png?v=20260929-r253" />
-  <link rel="icon" href="./app-icon.svg?v=20260922-r112" type="image/svg+xml" />
-  <link rel="manifest" href="./manifest.webmanifest?v=20260929-r253" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180.png?v=20261009-r445" />
+  <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./app-icon-180.png?v=20261009-r445" />
+  <link rel="icon" sizes="192x192" href="./app-icon-192.png?v=20261009-r445" type="image/png" />
+  <link rel="manifest" href="./manifest.webmanifest?v=20261009-r445" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -20,16 +20,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,900&family=Rajdhani:wght@500;600;700&family=Silkscreen:wght@400;700&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260927-r221" />
+  <link rel="stylesheet" href="./styles.css?v=20261009-r445" />
 </head>
 <body>
   <div id="game-shell">
     <div id="loading-screen" role="status" aria-live="polite" aria-label="Tokyo SHIFT loading">
-      <div class="loading-atmosphere" aria-hidden="true"></div>
       <div class="loading-panel">
-        <img class="loading-logo" src="./app-icon.svg?v=20260922-r112" alt="" />
-        <div class="loading-title">TOKYO <strong>SHIFT</strong></div>
-        <div class="loading-kicker">TOKYO AFTER DARK</div>
         <div class="loading-track" aria-hidden="true">
           <div id="loading-bar"></div>
         </div>
@@ -65,7 +61,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R427</div>
+    <div id="build-stamp">R445</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -142,7 +138,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R427';
+      let resolvedBuild = 'R445';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -216,7 +212,7 @@
       if (splash) splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown rejection').slice(0, 500));
     });
 
-    import('./src/main.js?v=20261009-r444').catch((error) => {
+    import('./src/main.js?v=20261009-r445').catch((error) => {
       console.error('[Tokyo SHIFT] main module failed to load', error);
       const label = document.getElementById('loading-label');
       const percent = document.getElementById('loading-percent');

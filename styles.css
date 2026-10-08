@@ -30,6 +30,10 @@ body {
   background: #05070d;
 }
 
+/* Shared boot and Phaser scene-loading backdrop.
+   Keep the single optimized WebP as a CSS image (not a Phaser queued asset),
+   so it is available while the game is loading. All existing DOM status,
+   progress and error handling remains in index.html / LoadingScreen.js. */
 #loading-screen {
   position: absolute;
   inset: 0;
@@ -37,41 +41,15 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(26, 82, 112, .28), transparent 34%),
-    radial-gradient(circle at 72% 68%, rgba(203, 46, 114, .13), transparent 33%),
-    linear-gradient(180deg, #07101a 0%, #04070d 72%, #020408 100%);
+  background-color: #030814;
+  background-image: url("./assets/Ui/tokyo_shift_loading.webp?v=20261009-r445");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
   opacity: 1;
   visibility: visible;
   transition: opacity 480ms ease, visibility 0s linear 480ms;
   pointer-events: all;
-}
-
-#loading-screen::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: .16;
-  background-image: repeating-linear-gradient(
-    0deg,
-    rgba(255,255,255,.035) 0,
-    rgba(255,255,255,.035) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-  pointer-events: none;
-}
-
-#loading-screen::after {
-  content: "";
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  bottom: 12%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(70,215,255,.55), rgba(255,73,154,.42), transparent);
-  box-shadow: 0 0 20px rgba(65, 211, 255, .2);
-  pointer-events: none;
 }
 
 #loading-screen.is-hidden {
@@ -80,102 +58,81 @@ body {
   pointer-events: none;
 }
 
-.loading-atmosphere {
-  position: absolute;
-  inset: -12%;
-  background:
-    linear-gradient(115deg, transparent 32%, rgba(77,223,255,.045) 47%, transparent 57%),
-    linear-gradient(295deg, transparent 38%, rgba(255,70,150,.04) 50%, transparent 60%);
-  animation: loadingAtmosphere 6s ease-in-out infinite alternate;
-}
-
+/* Dark unobstructed asphalt below the racers is reserved for the real loader. */
 .loading-panel {
-  position: relative;
+  position: absolute;
   z-index: 1;
-  width: min(520px, 72vw);
+  left: 50%;
+  bottom: clamp(26px, 11%, 110px);
+  transform: translateX(-50%);
+  width: min(680px, 58vw);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.loading-logo {
-  width: clamp(82px, 15vh, 124px);
-  height: clamp(82px, 15vh, 124px);
-  display: block;
-  border-radius: 23%;
-  box-shadow:
-    0 0 0 1px rgba(126, 227, 255, .28),
-    0 12px 34px rgba(0, 0, 0, .55),
-    0 0 30px rgba(55, 206, 255, .12);
-}
-
-.loading-title {
-  margin-top: 2px;
-  color: #eefbff;
-  font-family: "Silkscreen", ui-monospace, monospace;
-  font-size: clamp(18px, 4vh, 30px);
-  line-height: 1;
-  letter-spacing: .12em;
-  text-shadow: 0 0 18px rgba(77, 219, 255, .18);
-}
-
-.loading-title strong {
-  color: #ff5a93;
-  font: inherit;
-}
-
-.loading-kicker {
-  color: #6c8998;
-  font-family: "Rajdhani", ui-monospace, monospace;
-  font-size: clamp(9px, 1.7vh, 12px);
-  font-weight: 700;
-  letter-spacing: .28em;
+  gap: 9px;
+  padding: 14px 18px 12px;
+  background: rgba(3, 9, 19, .77);
+  border: 1px solid rgba(52, 176, 235, .65);
+  box-shadow: 0 0 0 1px rgba(1, 7, 15, .5), 0 9px 28px rgba(0,0,0,.36);
+  pointer-events: none;
 }
 
 .loading-track {
-  width: min(360px, 72%);
-  height: 5px;
-  margin-top: 8px;
+  width: 100%;
+  height: 9px;
   overflow: hidden;
-  border: 1px solid rgba(106, 177, 207, .28);
-  background: rgba(2, 8, 13, .82);
-  box-shadow: inset 0 0 7px rgba(0,0,0,.65);
+  border: 1px solid rgba(70, 184, 241, .65);
+  background: rgba(1, 6, 14, .9);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, .6);
 }
 
 #loading-bar {
   width: 3%;
   height: 100%;
-  background: linear-gradient(90deg, #45d9ff 0%, #76eaff 52%, #ff4d91 100%);
-  box-shadow: 0 0 12px rgba(67, 220, 255, .55);
+  background: linear-gradient(90deg, #217cbe, #54d6ff 73%, #f94652 100%);
+  box-shadow: 0 0 9px rgba(80, 217, 255, .65);
   transition: width 120ms ease-out;
 }
 
 .loading-meta {
-  width: min(360px, 72%);
+  width: 100%;
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  color: #7794a3;
+  gap: 12px;
+  color: #f4e9d5;
   font-family: "Rajdhani", ui-monospace, monospace;
-  font-size: clamp(9px, 1.6vh, 11px);
+  font-size: clamp(11px, 2.1vh, 16px);
+  line-height: 1.1;
   font-weight: 700;
-  letter-spacing: .16em;
+  letter-spacing: .12em;
+  text-shadow: 0 1px 2px #000;
 }
 
-@keyframes loadingAtmosphere {
-  from { transform: translate3d(-1.5%, -.5%, 0) scale(1); opacity: .72; }
-  to { transform: translate3d(1.5%, .8%, 0) scale(1.03); opacity: 1; }
+#loading-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#loading-percent {
+  flex: none;
+  color: #58d7ff;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-height: 500px) {
-  .loading-panel { gap: 8px; }
-  .loading-logo {
-    width: clamp(68px, 22vh, 94px);
-    height: clamp(68px, 22vh, 94px);
+  .loading-panel {
+    gap: 6px;
+    bottom: 8%;
+    padding: 9px 13px 8px;
+    width: min(630px, 60vw);
   }
-  .loading-kicker { display: none; }
-  .loading-track { margin-top: 3px; }
+  .loading-track { height: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #loading-bar { transition: none; }
 }
 
 body[data-scene="setup"] #game-shell,
