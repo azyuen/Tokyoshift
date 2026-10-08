@@ -40,6 +40,13 @@ const WIDTH = 1560;
 const HEIGHT = 720;
 const STAND_Y = 130;
 const ROAD_BOTTOM = 490;
+const PREVIEW_ZOOM = 0.62;
+const TRACK_PIVOT_X = 780;
+const TRACK_PIVOT_Y = 290;
+// Fractions of transparent source image height: first visible building roof
+// and the concrete barriers' lowest pixels, respectively.
+const COMPLEX_ART_TOP = 0.16;
+const COMPLEX_ART_BOTTOM = 0.85;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -68,6 +75,8 @@ export default class FourLaneTestScene extends RaceScene {
     loadImage('nosButton', 'assets/Controls/nos_button.png');
     loadImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     loadImage('shifterDown', 'assets/Controls/shifter_down.png');
+    // Dev-only venue foreground: loaded only when four-wide tester opens.
+    loadImage('fourLaneStartComplex', 'assets/CentralTokyo/dragstrip_complex_night.png');
     const states = this.registry.get('carStates') || {};
     const playerState = states[this.playerCarId] || {};
     [...new Set([this.playerCarId, ...this.aiCarIds])].forEach(id => {
@@ -141,6 +150,12 @@ export default class FourLaneTestScene extends RaceScene {
     // Fill that space with neutral venue architecture, never black gutters.
     this.add.rectangle(780, 360, WIDTH, HEIGHT, 0x10212d).setDepth(-2);
     this.trackG = this.add.graphics().setDepth(0);
+    // Transparent building, crew, lights and barriers. Road remains Phaser-generated.
+    // It shares track display ordering, but is screen-fitted during the zoom
+    // before following world distance once the cars leave the start.
+    this.complexArt = this.textures.exists('fourLaneStartComplex')
+      ? this.add.image(0, 0, 'fourLaneStartComplex').setOrigin(0, 0).setDepth(2)
+      : null;
     this.trackFX = this.add.graphics().setDepth(18);
     this.runners.forEach((runner, index) => {
       const lane = FOUR_LANE_TEST_LANES[index];
@@ -160,12 +175,14 @@ export default class FourLaneTestScene extends RaceScene {
         v.rearWheel, v.frontWheel, v.driverSilhouette, ...v.bodyObjects]
         .filter(Boolean)
     );
-    this.trackRoot = this.add.container(0, 0, [this.trackG, this.trackFX, ...carObjects])
+    this.trackRoot = this.add.container(0, 0, [
+      this.trackG, ...(this.complexArt ? [this.complexArt] : []), this.trackFX, ...carObjects,
+    ])
       .setDepth(1);
     // Containers render children in list order, not scene Display List depth order.
     // Preserve standard wheels/body/decals/FX layering across all four cars.
     this.trackRoot.list.sort((a, b) => a.depth - b.depth);
-    this.setTrackZoom(0.77);
+    this.setTrackZoom(PREVIEW_ZOOM);
 
     const hasNitrous = Number(playerConfig.nosPower || 0) > 0 &&
       Number(playerConfig.nosCapacitySeconds || 0) > 0;
@@ -239,9 +256,35 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   setTrackZoom(scale) {
-    // Centre the wider venue view around the whole four-lane starting area.
+    // Zoom the road and cars together; do not scale the controls/HUD.
     this.trackRoot.setScale(scale);
-    this.trackRoot.setPosition(780 * (1 - scale), 290 * (1 - scale));
+    this.trackRoot.setPosition(TRACK_PIVOT_X * (1 - scale), TRACK_PIVOT_Y * (1 - scale));
+    this.positionComplexArt();
+  }
+
+  positionComplexArt() {
+    if (!this.complexArt || !this.trackRoot) return;
+    const zoom = this.trackRoot.scaleX;
+    const art = this.complexArt;
+    // Keep the start complex aligned to the left edge of the race frame at
+    // every preview zoom; seat its concrete barrier on the near road edge.
+    // Fit by visible art bounds, not the transparent padding in the PNG.
+    const roadEdge = TRACK_PIVOT_Y + (ROAD_BOTTOM - TRACK_PIVOT_Y) * zoom;
+    const artScreenScale = Math.max(0.01,
+      (roadEdge - 8 - 40) / ((COMPLEX_ART_BOTTOM - COMPLEX_ART_TOP) * art.height));
+    const artScreenY = 40 - art.height * COMPLEX_ART_TOP * artScreenScale;
+    // The same metre-to-pixel displacement as the test track's camera. No
+    // timer-based fake motion: the building exits left as the player drives.
+    const travelledPx = this.cameraPx == null ? 0 :
+      Math.max(0, this.cameraPx - fourLaneCameraX(0));
+    const artScreenX = -travelledPx * zoom;
+    art.setVisible(artScreenX + art.width * artScreenScale > -8);
+    // Art is a child of the scaled trackRoot; convert desired SCREEN-space
+    // placement to container-local coordinates so the image remains fitted.
+    art.setPosition(
+      (artScreenX - this.trackRoot.x) / zoom,
+      (artScreenY - this.trackRoot.y) / zoom
+    ).setScale(artScreenScale / zoom);
   }
 
   startFourLaneRace() {
@@ -252,7 +295,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.startButton.text.setVisible(false);
     this.signalText.setText('CAMERA CLOSING IN');
     this.tweens.addCounter({
-      from: 0.77, to: 1, duration: 950, ease: 'Sine.InOut',
+      from: PREVIEW_ZOOM, to: 1, duration: 1150, ease: 'Sine.InOut',
       onUpdate: tween => this.setTrackZoom(tween.getValue()),
       onComplete: () => {
         this.setTrackZoom(1);
@@ -414,6 +457,7 @@ export default class FourLaneTestScene extends RaceScene {
     const player = this.runners[0];
     const playerM = player.vehicle.positionM;
     this.cameraPx = fourLaneCameraX(playerM);
+    this.positionComplexArt();
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
