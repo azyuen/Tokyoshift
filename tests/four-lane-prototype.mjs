@@ -65,7 +65,13 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /rankFourLaneFinishers/);
   assert.match(sceneSource, /this\.setTrackZoom\(PREVIEW_ZOOM\)/);
   assert.match(sceneSource, /dragstrip_complex_night\.png/);
+  assert.match(sceneSource, /configureComplexArt\(\)/);
   assert.match(sceneSource, /positionComplexArt\(\)/);
+  assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
+  assert.match(sceneSource, /const TRACK_PAN_X = -220/);
+  assert.match(sceneSource, /art\.height \* COMPLEX_FENCE_BASE_FRAC \* previewImageScale/);
+  assert.match(sceneSource, /art\.x = this\.complexBaseX - travelledPx/);
+  assert.doesNotMatch(sceneSource, /artScreenScale \/ zoom/);
   assert.match(sceneSource, /cameraPx - fourLaneCameraX\(0\)/);
   assert.doesNotMatch(sceneSource, /saveSessionState|\bregistry\.set\(|\bcompetitionState\b|raceSettlement/);
 });
