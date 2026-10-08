@@ -103,7 +103,8 @@ const TAXI_TO_WORKSHOP_COST = 1000;
 const clone = value => JSON.parse(JSON.stringify(value));
 
 export default class RaceScene extends Phaser.Scene {
-  constructor() { super('RaceScene'); }
+  // Allow an isolated dev scene to reuse the production car renderer and physics helpers.
+  constructor(sceneKey = 'RaceScene') { super(sceneKey); }
 
   preload() {
     let queued = 0;
