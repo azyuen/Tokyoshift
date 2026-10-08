@@ -184,6 +184,7 @@ export default class FourLaneTestScene extends RaceScene {
       if (visual) {
         loadImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
         loadImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
+        loadImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
       }
     }
     // Dev-only venue foreground: loaded only when four-wide tester opens.
