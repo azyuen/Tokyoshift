@@ -3186,7 +3186,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const activeCupHere = selectedFourWide && activeCup?.eventId === FOUR_WIDE_CUP.id &&
       Boolean(getPlayerProHeat(activeCup));
     const activeDuelHere = !selectedFourWide && activeDuel &&
-      (!activeDuel.eventId || activeDuel.eventId === event.id);
+      (!activeDuel.eventId || activeDuel.eventId === event.id ||
+        activeDuel.eventId === 'tokyoInvitational');
     const resuming = Boolean(activeCupHere || activeDuelHere);
     const registeredCar = activeCupHere ? activeCup.carId : activeDuelHere ? activeDuel.playerCarId : null;
     const canResume = circuitOpen && resuming && !(
@@ -3198,12 +3199,25 @@ export default class CentralTokyoScene extends Phaser.Scene {
       passesPower && passesNos && cash >= event.entryFee;
     const canEnter = canResume || eligible;
 
-    const title = selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
+    const title = activeDuelHere && (
+      !activeDuel.eventId || activeDuel.eventId === 'tokyoInvitational'
+    ) ? 'ACTIVE PRO CUP' : selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
     this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 207, title, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#f8f3f2',
     }).setDepth(34));
 
-    const desc = selectedFourWide
+    const desc = activeDuelHere && (!activeDuel.eventId ||
+        activeDuel.eventId === 'tokyoInvitational')
+      ? [
+          'PRO COMP // DRIVER // SAVED',
+          '3 ROUNDS // HEAD-TO-HEAD',
+          'WIN EACH ROUND TO ADVANCE',
+          'ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3',
+          'ORIGINAL ENTRY  ' + money(activeDuel.entryFee || 0),
+          'REGISTERED PRIZE  ' + money(activeDuel.prizeCash || 0),
+          'REGISTERED CAR  ' + (cars[activeDuel.playerCarId]?.shortName || activeDuel.playerCarId),
+        ]
+      : selectedFourWide
       ? [
           'TROPHY COMP // FOUR-WIDE',
           '16 DRIVERS // FOUR CARS PER HEAT',
