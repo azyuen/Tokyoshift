@@ -111,7 +111,7 @@ test('professional endings use angled manga portrait, large sign and top-depth t
   assert.match(scene,/TAP ANYWHERE/);
   assert.match(scene,/setDepth\(depth \+ 95\)\.setScrollFactor\(0\)/);
   assert.match(scene,/tap\.on\('pointerdown', advance\)/);
-  assert.match(scene,/enter\.once\('down', advance\)/);
+  assert.match(scene,/enter\.on\('down', advance\)/);
   assert.match(scene,/this\.time\.delayedCall\(360, \(\) => \{ armed = true; \}\)/);
 });
 
