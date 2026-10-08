@@ -1260,20 +1260,28 @@ export default class FourLaneTestScene extends RaceScene {
     const own = standings.find(r => r.id === (this.proCup ? 'player:driver' : 'player'));
     let outcome = null;
     if (this.proCup) {
-      outcome = settleFourWideHeat(
-        this.registry.get('proCircuit'),
-        this.runners.map(r => ({
-          id: r.id, finishSeconds: r.finishSeconds,
-          disqualified: r.disqualified,
-        })),
-        this.proHeat.id
-      );
-      if (outcome.status === 'ADVANCED' || (outcome.status === 'COMPLETE' && outcome.settled)) {
-        this.registry.set('proCircuit', outcome.circuit);
-        if (outcome.cashPrize > 0) {
-          this.registry.set('cash', Number(this.registry.get('cash') || 0) + outcome.cashPrize);
+      try {
+        outcome = settleFourWideHeat(
+          this.registry.get('proCircuit'),
+          this.runners.map(r => ({
+            id: r.id, finishSeconds: r.finishSeconds,
+            disqualified: r.disqualified,
+          })),
+          this.proHeat.id
+        );
+        if (outcome.status === 'ADVANCED' || (outcome.status === 'COMPLETE' && outcome.settled)) {
+          this.registry.set('proCircuit', outcome.circuit);
+          if (outcome.cashPrize > 0) {
+            this.registry.set('cash', Number(this.registry.get('cash') || 0) + outcome.cashPrize);
+          }
+          saveSessionState(this.registry);
         }
-        saveSessionState(this.registry);
+      } catch (error) {
+        // A damaged or legacy saved bracket must NEVER strand the player on
+        // the frozen race scene. Do not award/replace the saved result: return
+        // to the complex and let the pending heat be safely retried.
+        console.error('[Tokyo SHIFT] Four-wide cup settlement failed', error);
+        outcome = { status: 'ERROR', cashPrize: 0 };
       }
     }
     this.add.rectangle(780, 345, 1050, 552, 0x06121e, 0.985)
@@ -1299,7 +1307,7 @@ export default class FourLaneTestScene extends RaceScene {
           ? 'FINISHED ' + (own?.placing || 4) + '/4  //  ADVANCED'
           : outcome?.status === 'COMPLETE'
             ? 'FINISHED ' + (own?.placing || 4) + '/4  //  TOURNAMENT COMPLETE'
-            : 'EVENT STATUS UNAVAILABLE'
+            : 'RESULT NOT SAVED // RETURN AND RETRY'
       ) : 'FINISHED ' + (own?.placing || 4) + '/4  //  PRACTICE', {
         fontFamily: PIXEL, fontSize: '11px', color: '#a3e5ec',
       }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
