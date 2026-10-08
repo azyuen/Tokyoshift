@@ -1,0 +1,36 @@
+name: Phase 2 professional cup checks
+
+on:
+  push:
+    branches:
+      - feature/pro-circuit-phase2-four-wide-cup
+  pull_request:
+    paths:
+      - 'src/data/proTournament.js'
+      - 'src/data/proCircuit.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/pro-tournament-phase2.mjs'
+      - '.github/workflows/pro-tournament.yml'
+
+jobs:
+  phase2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse JS
+        run: |
+          node --check src/data/proTournament.js
+          node --check src/data/proCircuit.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/main.js
+      - name: Run new professional cup tests
+        run: node --test tests/pro-tournament-phase2.mjs
+      - name: Run existing four-wide scene tests
+        run: node --test tests/four-lane-prototype.mjs
+      - name: Run phase 1 profile foundation tests
+        run: node --test tests/pro-circuit-foundation.mjs
