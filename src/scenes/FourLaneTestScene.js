@@ -40,13 +40,20 @@ const WIDTH = 1560;
 const HEIGHT = 720;
 const STAND_Y = 130;
 const ROAD_BOTTOM = 490;
-const PREVIEW_ZOOM = 0.62;
+// The establishing shot is deliberately wider than the standard race framing.
+const PREVIEW_ZOOM = 0.52;
 const TRACK_PIVOT_X = 780;
 const TRACK_PIVOT_Y = 290;
-// Fractions of transparent source image height: first visible building roof
-// and the concrete barriers' lowest pixels, respectively.
-const COMPLEX_ART_TOP = 0.16;
-const COMPLEX_ART_BOTTOM = 0.85;
+// Pan the entire race world left. This brings the staged cars alongside the
+// pit complex and keeps the eventual driving view focused on the four cars.
+const TRACK_PAN_X = -220;
+// Size the transparent source by its width, not its padded canvas height.
+// Fence base registers against the top road edge in world space.
+const COMPLEX_PREVIEW_WIDTH = 350;
+const COMPLEX_FENCE_BASE_FRAC = 0.67;
+const TRACK_DRAW_LEFT = -800;
+const TRACK_DRAW_RIGHT = 3400;
+const TRACK_DRAW_WIDTH = TRACK_DRAW_RIGHT - TRACK_DRAW_LEFT;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -150,9 +157,9 @@ export default class FourLaneTestScene extends RaceScene {
     // Fill that space with neutral venue architecture, never black gutters.
     this.add.rectangle(780, 360, WIDTH, HEIGHT, 0x10212d).setDepth(-2);
     this.trackG = this.add.graphics().setDepth(0);
-    // Transparent building, crew, lights and barriers. Road remains Phaser-generated.
-    // It shares track display ordering, but is screen-fitted during the zoom
-    // before following world distance once the cars leave the start.
+    // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
+    // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
+    // must grow all three together, revealing progressively less of the venue.
     this.complexArt = this.textures.exists('fourLaneStartComplex')
       ? this.add.image(0, 0, 'fourLaneStartComplex').setOrigin(0, 0).setDepth(2)
       : null;
@@ -182,6 +189,7 @@ export default class FourLaneTestScene extends RaceScene {
     // Containers render children in list order, not scene Display List depth order.
     // Preserve standard wheels/body/decals/FX layering across all four cars.
     this.trackRoot.list.sort((a, b) => a.depth - b.depth);
+    this.configureComplexArt();
     this.setTrackZoom(PREVIEW_ZOOM);
 
     const hasNitrous = Number(playerConfig.nosPower || 0) > 0 &&
@@ -255,36 +263,47 @@ export default class FourLaneTestScene extends RaceScene {
     return { bg, text };
   }
 
+  configureComplexArt() {
+    if (!this.complexArt) return;
+    const art = this.complexArt;
+    // Establish the PNG once in track world coordinates. Unlike R432 we do
+    // NOT re-fit its on-screen dimensions for every zoom frame.
+    const previewImageScale = COMPLEX_PREVIEW_WIDTH / art.width;
+    const worldImageScale = previewImageScale / PREVIEW_ZOOM;
+    const previewRootX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
+    const previewRootY = TRACK_PIVOT_Y * (1 - PREVIEW_ZOOM);
+    const previewRoadTop = previewRootY + STAND_Y * PREVIEW_ZOOM;
+    const artTopScreen = previewRoadTop -
+      art.height * COMPLEX_FENCE_BASE_FRAC * previewImageScale;
+    this.complexBaseX = -previewRootX / PREVIEW_ZOOM;
+    const artWorldY = (artTopScreen - previewRootY) / PREVIEW_ZOOM;
+    art.setPosition(this.complexBaseX, artWorldY).setScale(worldImageScale);
+  }
+
   setTrackZoom(scale) {
-    // Zoom the road and cars together; do not scale the controls/HUD.
+    // Zoom the WHOLE track world around the race, including the complex.
+    // The constant left pan brings the cars closer to the asset in preview;
+    // the world-space complex naturally slips out of frame as we zoom in.
     this.trackRoot.setScale(scale);
-    this.trackRoot.setPosition(TRACK_PIVOT_X * (1 - scale), TRACK_PIVOT_Y * (1 - scale));
+    this.trackRoot.setPosition(
+      TRACK_PIVOT_X * (1 - scale) + TRACK_PAN_X,
+      TRACK_PIVOT_Y * (1 - scale)
+    );
     this.positionComplexArt();
   }
 
   positionComplexArt() {
     if (!this.complexArt || !this.trackRoot) return;
-    const zoom = this.trackRoot.scaleX;
-    const art = this.complexArt;
-    // Keep the start complex aligned to the left edge of the race frame at
-    // every preview zoom; seat its concrete barrier on the near road edge.
-    // Fit by visible art bounds, not the transparent padding in the PNG.
-    const roadEdge = TRACK_PIVOT_Y + (ROAD_BOTTOM - TRACK_PIVOT_Y) * zoom;
-    const artScreenScale = Math.max(0.01,
-      (roadEdge - 8 - 40) / ((COMPLEX_ART_BOTTOM - COMPLEX_ART_TOP) * art.height));
-    const artScreenY = 40 - art.height * COMPLEX_ART_TOP * artScreenScale;
-    // The same metre-to-pixel displacement as the test track's camera. No
-    // timer-based fake motion: the building exits left as the player drives.
+    // World-space travel makes the venue disappear after the launch, with no
+    // abrupt removal and no arbitrary time-based slide animation.
     const travelledPx = this.cameraPx == null ? 0 :
       Math.max(0, this.cameraPx - fourLaneCameraX(0));
-    const artScreenX = -travelledPx * zoom;
-    art.setVisible(artScreenX + art.width * artScreenScale > -8);
-    // Art is a child of the scaled trackRoot; convert desired SCREEN-space
-    // placement to container-local coordinates so the image remains fitted.
-    art.setPosition(
-      (artScreenX - this.trackRoot.x) / zoom,
-      (artScreenY - this.trackRoot.y) / zoom
-    ).setScale(artScreenScale / zoom);
+    const art = this.complexArt;
+    art.x = this.complexBaseX - travelledPx;
+    // Culling avoids drawing the building once it is fully off the left edge.
+    const rightEdge = this.trackRoot.x +
+      (art.x + art.displayWidth) * this.trackRoot.scaleX;
+    art.setVisible(rightEdge > -8);
   }
 
   startFourLaneRace() {
@@ -295,7 +314,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.startButton.text.setVisible(false);
     this.signalText.setText('CAMERA CLOSING IN');
     this.tweens.addCounter({
-      from: PREVIEW_ZOOM, to: 1, duration: 1150, ease: 'Sine.InOut',
+      from: PREVIEW_ZOOM, to: 1, duration: 1250, ease: 'Sine.InOut',
       onUpdate: tween => this.setTrackZoom(tween.getValue()),
       onComplete: () => {
         this.setTrackZoom(1);
@@ -461,31 +480,31 @@ export default class FourLaneTestScene extends RaceScene {
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
-    g.fillStyle(0x050c14).fillRect(-760, -140, WIDTH + 1520, HEIGHT + 280);
-    g.fillStyle(0x0c2330).fillRect(-760, 0, WIDTH + 1520, STAND_Y);
-    g.fillStyle(0x183240).fillRect(-760, 26, WIDTH + 1520, 35);
-    g.fillStyle(0x091b26).fillRect(-760, 75, WIDTH + 1520, 55);
+    g.fillStyle(0x050c14).fillRect(TRACK_DRAW_LEFT, -140, TRACK_DRAW_WIDTH, HEIGHT + 280);
+    g.fillStyle(0x0c2330).fillRect(TRACK_DRAW_LEFT, 0, TRACK_DRAW_WIDTH, STAND_Y);
+    g.fillStyle(0x183240).fillRect(TRACK_DRAW_LEFT, 26, TRACK_DRAW_WIDTH, 35);
+    g.fillStyle(0x091b26).fillRect(TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, 55);
     const drift = (((this.cameraPx * 0.08) % 165) + 165) % 165;
-    for (let x = -580 - drift; x < WIDTH + 580; x += 165) {
+    for (let x = -900 - drift; x < TRACK_DRAW_RIGHT; x += 165) {
       g.fillStyle(0x5e8496, 0.42).fillRect(x, 14, 4, 100);
       g.fillStyle(0x36d5e4, 0.30).fillRect(x + 12, 40, 82, 4);
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
-    g.fillStyle(0x0a121b).fillRect(-760, STAND_Y, WIDTH + 1520, ROAD_BOTTOM - STAND_Y);
+    g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
     FOUR_LANE_TEST_LANES.forEach((lane, index) => {
       const top = index === 0 ? 383 : (lane.bodyY - 35);
       g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
-        .fillRect(-760, top, WIDTH + 1520, 74);
+        .fillRect(TRACK_DRAW_LEFT, top, TRACK_DRAW_WIDTH, 74);
     });
-    g.fillStyle(0x8ea8b7, 0.5).fillRect(-760, STAND_Y + 2, WIDTH + 1520, 3);
-    g.fillStyle(0xc2d5e0, 0.72).fillRect(-760, ROAD_BOTTOM - 3, WIDTH + 1520, 2);
+    g.fillStyle(0x8ea8b7, 0.5).fillRect(TRACK_DRAW_LEFT, STAND_Y + 2, TRACK_DRAW_WIDTH, 3);
+    g.fillStyle(0xc2d5e0, 0.72).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM - 3, TRACK_DRAW_WIDTH, 2);
     // Lane boundaries: keep the asphalt uncluttered.
     for (const y of [233, 308, 383]) {
-      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(-760, y)
-        .lineTo(WIDTH + 760, y).strokePath();
+      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(TRACK_DRAW_LEFT, y)
+        .lineTo(TRACK_DRAW_RIGHT, y).strokePath();
     }
     const trackShift = (((this.cameraPx * 0.90) % 150) + 150) % 150;
-    for (let x = -600 - trackShift; x < WIDTH + 600; x += 150) {
+    for (let x = -900 - trackShift; x < TRACK_DRAW_RIGHT; x += 150) {
       for (const y of [230, 305, 380]) {
         g.fillStyle(0xe6eff2, 0.28).fillRect(x, y, 54, 2);
       }
@@ -506,8 +525,8 @@ export default class FourLaneTestScene extends RaceScene {
           .fillRect(finishX + 14, y, 14, 16);
       }
     }
-    g.fillStyle(0x121b23).fillRect(-760, ROAD_BOTTOM + 2, WIDTH + 1520, 26);
-    g.fillStyle(0x68adba, 0.24).fillRect(-760, ROAD_BOTTOM + 2, WIDTH + 1520, 3);
+    g.fillStyle(0x121b23).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + 2, TRACK_DRAW_WIDTH, 26);
+    g.fillStyle(0x68adba, 0.24).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + 2, TRACK_DRAW_WIDTH, 3);
 
     this.trackFX.clear();
     this.runners.forEach((runner, index) => {
