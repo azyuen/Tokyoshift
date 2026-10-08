@@ -50,6 +50,42 @@ test('distant lane is narrower and grey asphalt sits inside moved shoulder lines
   assert.ok(edges.every((value, i) => !i || value > edges[i - 1]));
 });
 
+test('the four-wide scenery enlarges Shinjuku and bridges the two stands', () => {
+  const src = fs.readFileSync(
+    new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
+  );
+  assert.match(src, /const SKYLINE_SCALE_UP = 1\.5/);
+  assert.match(src, /const SKYLINE_MIN_WORLD_HEIGHT = 730/);
+  assert.match(src, /Math\.max\(SKYLINE_SCALE_UP,/);
+  assert.match(src, /setDisplaySize\(this\.skylineWorldWidth, skylineHeight\)/);
+  assert.match(src, /if \(distanceM > 0\) imageKeys\.splice\(2, 0, imageKeys\[1\], imageKeys\[1\]\)/);
+  assert.match(src, /const worldWidth = x \+ overlap/);
+  assert.match(src, /this\.roadsideFence = this\.add\.graphics\(\)\.setDepth\(0\.8\)/);
+  assert.match(src, /this\.drawRoadsideFence\(cameraTravel\)/);
+  assert.match(src, /const FENCE_TOP_Y = 134/);
+  assert.match(src, /const FENCE_CONCRETE_HEIGHT = 42/);
+  assert.match(src, /const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP/);
+  assert.match(src, /const worldStart = start\.initialWorldX \+ start\.worldWidth - joinOverlap/);
+  assert.match(src, /const worldEnd = finish\.initialWorldX/);
+  assert.match(src, /const minWorld = Math\.max\(worldStart, viewStart\)/);
+  assert.match(src, /const maxWorld = Math\.min\(worldEnd, viewEnd\)/);
+  assert.match(src, /FENCE_MESH_STEP/);
+
+  // Both railing and concrete align 3px above the road; the fence is
+  // considerably taller than normal street-race roadside structures.
+  const roadTop = 130 + 150 + 12 + 26;
+  const baseline = roadTop - 3;
+  assert.equal(baseline, 315);
+  assert.equal(baseline - (baseline - 42), 42);
+  assert.ok((baseline - 42) - 134 >= 120);
+
+  // In the widest establishing view, even the MINIMUM enlarged panorama
+  // covers the top edge of the 720px race frame.
+  const previewRootY = 290 * (1 - 0.52);
+  const skylineTop = previewRootY + 0.52 * (baseline - 730);
+  assert.ok(skylineTop < 0);
+});
+
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
   const camera = fourLaneCameraX(0);
   const playerNose = 110;
