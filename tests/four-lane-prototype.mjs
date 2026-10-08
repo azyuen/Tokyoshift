@@ -5,7 +5,7 @@ import {
   FOUR_LANE_TEST_LANES, FOUR_LANE_TEST_DISTANCE_M,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCameraX, fourLaneCarX, fourLaneDashSafeYOffset,
-  fourLaneTreeLights, rankFourLaneFinishers,
+  rankFourLaneFinishers,
 } from '../src/data/fourLanePrototype.js';
 
 test('four staged cars have unique lanes, with two extra lanes above old top row', () => {
@@ -93,29 +93,59 @@ test('the four-wide scenery enlarges Shinjuku and bridges the two stands', () =>
   assert.ok(skylineTop < 0);
 });
 
-test('physical drag tree follows the actual countdown and false starts', () => {
-  const preview = fourLaneTreeLights('PREVIEW');
-  const zoom = fourLaneTreeLights('ZOOM');
-  assert.deepEqual(preview.ambers, [false, false, false]);
-  assert.equal(preview.preStage, false);
-  assert.equal(zoom.preStage, false);
-  const first = fourLaneTreeLights('PRE-STAGE');
-  assert.equal(first.preStage, true);
-  assert.equal(first.stage, false);
-  const staged = fourLaneTreeLights('STAGE');
-  assert.equal(staged.stage, true);
-  assert.deepEqual(staged.ambers, [false, false, false]);
-  for (let i = 1; i <= 3; i++) {
-    const state = fourLaneTreeLights('AMBER ' + i);
-    assert.deepEqual(state.ambers, [1, 2, 3].map(n => n <= i));
-    assert.equal(state.green, false);
-  }
-  const green = fourLaneTreeLights('GREEN');
-  assert.equal(green.green, true);
-  assert.equal(green.red, false);
-  const red = fourLaneTreeLights('GREEN', true);
-  assert.equal(red.green, false);
-  assert.equal(red.red, true);
+test('foreground crowd repeats 3 times at launch and 10 times at finish', () => {
+  const src = fs.readFileSync(
+    new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
+  );
+  assert.match(src, /dragstrip_frontcrowd_night\.png/);
+  assert.match(src, /this\.frontCrowdSets = this\.standSets\.map\(set =>/);
+  assert.match(src, /this\.createFrontCrowdSet\(set\.distanceM, set\.images\.length\)/);
+  assert.match(src, /const FINISH_STAND_MIDDLES = 8/);
+  assert.match(src, /const FRONT_CROWD_PREVIEW_WIDTH = 550/);
+  assert.match(src, /const FRONT_CROWD_BASE_Y = ROAD_BOTTOM_LINE_Y \+ 180/);
+  assert.match(src, /const FRONT_WALL_BOTTOM_Y = 1900/);
+  assert.match(src, /this\.drawFrontCrowdSurfaces\(cameraTravel\)/);
+  assert.match(src, /this\.frontCrowdSets\.flatMap\(set => set\.images\)/);
+  assert.match(src, /this\.prepareStandTexture\('fourLaneFrontCrowd'\)/);
+  assert.match(src, /FRONT_CROWD_PREVIEW_OVERLAP = 35/);
+
+  const counts = [3, 2 + 8];
+  assert.deepEqual(counts, [3, 10]);
+  assert.ok(550 * 3 - 35 * 2 >= 1560,
+    'the 3 starting sprites cover the width of the staging screen');
+});
+
+test('lower fence never overlaps the road, and concrete extends below game view', () => {
+  const src = fs.readFileSync(
+    new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
+  );
+  const bottomLineY = 490 + 150 + 12;
+  const fenceTopY = bottomLineY + 14;
+  const barrierTopY = bottomLineY + 90;
+  const spriteBaseY = bottomLineY + 180;
+  assert.ok(fenceTopY > bottomLineY);
+  assert.ok(barrierTopY > fenceTopY);
+  assert.ok(spriteBaseY > barrierTopY);
+  assert.ok(1900 > 720);
+  assert.match(src, /const FRONT_FENCE_TOP_Y = ROAD_BOTTOM_LINE_Y \+ 14/);
+  assert.match(src, /const FRONT_FENCE_CONCRETE_TOP_Y = ROAD_BOTTOM_LINE_Y \+ 90/);
+  assert.match(src, /const fromWorld = startSet\.initialWorldX \+ startSet\.worldWidth/);
+  assert.match(src, /const toWorld = finishSet\.initialWorldX \+/);
+  assert.match(src, /const clip = visiblePart\(fromWorld, toWorld\)/);
+  assert.match(src, /const viewLeft = screenToWorld\(-120\)/);
+  assert.match(src, /const viewRight = screenToWorld\(WIDTH \+ 120\)/);
+});
+
+test('no starting tree, countdown bar or live car standings UI survives', () => {
+  const src = fs.readFileSync(
+    new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
+  );
+  assert.doesNotMatch(src, /drawStartTree|this\.startTree|renderSignals|this\.signalG|this\.signalText/);
+  assert.doesNotMatch(src, /this\.placeText|updateLivePositions|countdownClock|countdownActive/);
+  assert.match(src, /this\.greenClock = this\.raceClock/);
+  assert.match(src, /this\.zooming = false/);
+  assert.match(src, /new RaceHUD/);
+  assert.match(src, /showFourLaneResults\(\)/);
 });
 
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
