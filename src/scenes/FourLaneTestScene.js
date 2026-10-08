@@ -46,10 +46,10 @@ const TRACK_PIVOT_X = 780;
 const TRACK_PIVOT_Y = 290;
 // Pan the entire race world left. This brings the staged cars alongside the
 // pit complex and keeps the eventual driving view focused on the four cars.
-const TRACK_PAN_X = -220;
+const TRACK_PAN_X = -235;
 // Size the transparent source by its width, not its padded canvas height.
 // Fence base registers against the top road edge in world space.
-const COMPLEX_PREVIEW_WIDTH = 350;
+const COMPLEX_PREVIEW_WIDTH = 330;
 const COMPLEX_FENCE_BASE_FRAC = 0.67;
 const TRACK_DRAW_LEFT = -800;
 const TRACK_DRAW_RIGHT = 3400;
