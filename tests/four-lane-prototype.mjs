@@ -270,7 +270,7 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   // The shared four-wide renderer now supports a real paid tournament.
   // Persistent writes are only permitted after proCup heat settlement;
   // the Arkon Den free tester must retain no economy or record changes.
-  assert.match(sceneSource, /if \(this\.proCup\) \{\s+outcome = settleFourWideHeat/);
+  assert.match(sceneSource, /if \(this\.proCup\) \{\s+try \{\s+outcome = settleFourWideHeat/);
   assert.match(sceneSource, /if \(outcome\.status === 'ADVANCED'/);
   assert.doesNotMatch(sceneSource, /registry\.set\(['"](?:wins|losses|competitionWins|competitionState)['"]/);
   assert.doesNotMatch(sceneSource, /raceSettlement/);
