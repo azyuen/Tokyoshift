@@ -80,6 +80,11 @@ export function createDefaultGameState(options = {}) {
     losses: 0,
     playTimeMs: 0,
     pinkSlipLastRequestRace: -999,
+    pinkSlipLastWinRace: 0,
+    pinkSlipOpportunityRace: -1,
+    pinkSlipOpportunityGranted: false,
+    pinkSlipOpportunityUsed: false,
+    incomingPinkSlipLastOfferRace: -999,
     cash: 50000,
     playerDifficulty: 'STANDARD',
     devMode: false,
@@ -935,6 +940,20 @@ export function normaliseState(input = {}) {
     pinkSlipLastRequestRace: Number.isFinite(Number(input.pinkSlipLastRequestRace))
       ? Math.floor(Number(input.pinkSlipLastRequestRace))
       : -999,
+    // Old saves predate the shared lottery. Retain partial race buildup so
+    // returning players aren't treated like they just won another car.
+    pinkSlipLastWinRace: input.pinkSlipLastWinRace != null &&
+      Number.isFinite(Number(input.pinkSlipLastWinRace))
+      ? Math.max(0, Math.floor(Number(input.pinkSlipLastWinRace)))
+      : Math.max(0, Number(input.wins || 0) + Number(input.losses || 0) - 12),
+    pinkSlipOpportunityRace: Number.isFinite(Number(input.pinkSlipOpportunityRace))
+      ? Math.floor(Number(input.pinkSlipOpportunityRace))
+      : -1,
+    pinkSlipOpportunityGranted: Boolean(input.pinkSlipOpportunityGranted),
+    pinkSlipOpportunityUsed: Boolean(input.pinkSlipOpportunityUsed),
+    incomingPinkSlipLastOfferRace: Number.isFinite(Number(input.incomingPinkSlipLastOfferRace))
+      ? Math.floor(Number(input.incomingPinkSlipLastOfferRace))
+      : -999,
     cash: normalisedCash,
     competitionWins: devName
       ? Math.max(1, Math.floor(Number(input.competitionWins || 0)))
@@ -1123,6 +1142,11 @@ export function snapshotRegistry(registry) {
     losses: registry.get('losses') ?? 0,
     playTimeMs,
     pinkSlipLastRequestRace: Number(registry.get('pinkSlipLastRequestRace') ?? -999),
+    pinkSlipLastWinRace: Number(registry.get('pinkSlipLastWinRace') ?? 0),
+    pinkSlipOpportunityRace: Number(registry.get('pinkSlipOpportunityRace') ?? -1),
+    pinkSlipOpportunityGranted: Boolean(registry.get('pinkSlipOpportunityGranted')),
+    pinkSlipOpportunityUsed: Boolean(registry.get('pinkSlipOpportunityUsed')),
+    incomingPinkSlipLastOfferRace: Number(registry.get('incomingPinkSlipLastOfferRace') ?? -999),
     cash: registry.get('cash') ?? 50000,
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
