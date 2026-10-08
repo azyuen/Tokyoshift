@@ -32,7 +32,7 @@ import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCarX, fourLaneCameraX, rankFourLaneFinishers,
-} from '../data/fourLanePrototype.js?v=20261008-r432';
+} from '../data/fourLanePrototype.js?v=20261008-r435';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';
@@ -528,9 +528,9 @@ export default class FourLaneTestScene extends RaceScene {
     }
     if (finishX > -30 && finishX < WIDTH + 30) {
       for (let y = 139 + ROAD_DROP_Y; y < ROAD_BOTTOM + ROAD_DROP_Y - 6; y += 16) {
-        g.fillStyle(((y - 139) / 16) % 2 === 0 ? 0xffffff : 0x15202a, 0.92)
+        g.fillStyle(((y - (139 + ROAD_DROP_Y)) / 16) % 2 === 0 ? 0xffffff : 0x15202a, 0.92)
           .fillRect(finishX, y, 14, 16);
-        g.fillStyle(((y - 139) / 16) % 2 === 0 ? 0x15202a : 0xffffff, 0.92)
+        g.fillStyle(((y - (139 + ROAD_DROP_Y)) / 16) % 2 === 0 ? 0x15202a : 0xffffff, 0.92)
           .fillRect(finishX + 14, y, 14, 16);
       }
     }
