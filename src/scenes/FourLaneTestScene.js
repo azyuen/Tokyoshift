@@ -29,6 +29,7 @@ import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=2026100
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { isArkonDen } from '../data/centralTokyo.js?v=20261006-r388';
 import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
+import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
@@ -224,7 +225,7 @@ export default class FourLaneTestScene extends RaceScene {
     player.transmission.lastShiftQuality = 'NEUTRAL';
 
     this.runners = [{
-      id: 'player', lane: 1, label: 'YOU', carId: this.playerCarId,
+      id: this.proCup ? 'player:driver' : 'player', lane: 1, label: 'YOU', carId: this.playerCarId,
       carState: this.playerState, carLabel: cars[this.playerCarId].shortName,
       vehicle: player, ai: null, config: playerConfig,
       paint: getCarPaintColor(this.playerState), finishSeconds: null,
@@ -353,6 +354,8 @@ export default class FourLaneTestScene extends RaceScene {
     this.finished = false;
     this.resultsShown = false;
     this.firstFinishClock = null;
+    this.finishCameraPx = null;
+    this.finishTransitioning = false;
     this.cameraPx = fourLaneCameraX(0);
 
     this.header = this.add.text(780, 22, this.proCup
@@ -377,6 +380,10 @@ export default class FourLaneTestScene extends RaceScene {
       () => this.returnToDrag());
 
     this.renderTrack(0);
+    if (this.proCup && this.proTournament?.stage === 0 &&
+        !this.proTournament?.briefingSeen) {
+      this.showTournamentBriefing();
+    }
     finishSceneLoading('READY FOR FOUR-WIDE TEST');
   }
 
@@ -1009,22 +1016,34 @@ export default class FourLaneTestScene extends RaceScene {
       : !this.raceStarted ? 'TAP START TO STAGE'
       : '');
 
-    if (this.greenClock != null && !this.finished) {
-      const allDone = this.runners.every(r => r.finishSeconds != null);
-      const timeLimit = this.raceClock - this.greenClock > 38;
-      // Avoid trapping a player who fails to launch indefinitely after all
-      // rival cars have finished. A non-finisher is shown as DNF.
-      const stragglerLimit = this.firstFinishClock != null &&
-        this.raceClock - this.firstFinishClock > 10;
-      if (allDone || timeLimit || stragglerLimit) {
-        this.finished = true;
-        this.time.delayedCall(950, () => this.showFourLaneResults());
-      }
+    if (!this.finished) {
+      const cue = getFourLaneFinishCue({
+        now: this.raceClock,
+        greenClock: this.greenClock,
+        firstFinishClock: this.firstFinishClock,
+        allFinished: this.runners.every(r => r.finishSeconds != null),
+      });
+      if (cue.showResults) this.beginFinishTransition();
     }
   }
 
+  beginFinishTransition() {
+    if (this.finishTransitioning || this.resultsShown) return;
+    this.finishTransitioning = true;
+    this.finished = true;
+    this.controls.enabled = false;
+    this.engineAudio?.fadeOut?.();
+    this.hud?.status?.setText('');
+    // RaceScene's cinematic pause: a tiny beat after the frozen camera
+    // before the results panel takes over. No extra 10-second driving loop.
+    this.time.delayedCall(160, () => {
+      if (!this.sys?.isActive?.() || this.resultsShown) return;
+      this.showFourLaneResults();
+    });
+  }
+
   handleGearRequest(request) {
-    if (!this.raceStarted || this.zooming) return;
+    if (!this.raceStarted || this.zooming || this.finished) return;
     const v = this.runners[0].vehicle;
     const gearbox = v.transmission;
     if (gearbox.shiftTimer > 0) return;
@@ -1041,7 +1060,19 @@ export default class FourLaneTestScene extends RaceScene {
   renderTrack(dt) {
     const player = this.runners[0];
     const playerM = player.vehicle.positionM;
-    this.cameraPx = fourLaneCameraX(playerM);
+    const chaseCameraPx = fourLaneCameraX(playerM);
+    const finishCue = getFourLaneFinishCue({
+      now: this.raceClock,
+      greenClock: this.greenClock,
+      firstFinishClock: this.firstFinishClock,
+      allFinished: this.runners.every(r => r.finishSeconds != null),
+    });
+    // Match RaceScene's finish choreography: follow briefly, then pin the
+    // venue so all cars accelerate out of the camera and fly past the line.
+    if (finishCue.lockCamera && this.finishCameraPx == null) {
+      this.finishCameraPx = chaseCameraPx;
+    }
+    this.cameraPx = this.finishCameraPx ?? chaseCameraPx;
     this.positionComplexArt();
     this.positionTrackside();
     this.drawStartTree();
