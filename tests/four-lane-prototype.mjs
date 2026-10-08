@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {
   FOUR_LANE_TEST_LANES, FOUR_LANE_TEST_DISTANCE_M,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
-  fourLaneCameraX, fourLaneCarX,
+  fourLaneCameraX, fourLaneCarX, fourLaneDashSafeYOffset,
   rankFourLaneFinishers,
 } from '../src/data/fourLanePrototype.js';
 
@@ -16,10 +16,22 @@ test('four staged cars have unique lanes, with two extra lanes above old top row
   assert.ok(FOUR_LANE_TEST_LANES.every((lane, i, rows) =>
     i === 0 || lane.scale < rows[i - 1].scale));
   assert.equal(FOUR_LANE_TEST_DISTANCE_M, 402.336);
-  assert.equal(FOUR_LANE_TEST_ANCHOR_X, 740, 'R435 staging nudges 25px right');
+  assert.equal(FOUR_LANE_TEST_ANCHOR_X, 785, 'R436 staging nudges 45px right');
   // R434: raise the cars without changing perspective or lane spacing.
   assert.deepEqual(FOUR_LANE_TEST_LANES.map(lane => lane.bodyY),
     [390, 315, 240, 165]);
+});
+
+test('the final camera framing keeps every staged car above the customised HUD', () => {
+  assert.equal(fourLaneDashSafeYOffset(595, 463, 24), -156);
+  assert.equal(fourLaneDashSafeYOffset(350, 463, 24), 0);
+  assert.equal(fourLaneDashSafeYOffset(NaN, 463, 24), 0);
+  for (const hudTop of [375, 410, 463, 520]) {
+    for (const carBottom of [455, 545, 640]) {
+      const shiftY = fourLaneDashSafeYOffset(carBottom, hudTop, 24);
+      assert.ok(carBottom + shiftY <= hudTop - 24);
+    }
+  }
 });
 
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
@@ -73,7 +85,14 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /positionComplexArt\(\)/);
   assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
   assert.match(sceneSource, /const TRACK_PAN_X = -235/);
-  assert.match(sceneSource, /const ROAD_DROP_Y = 75/);
+  assert.match(sceneSource, /const ROAD_DROP_Y = 150/);
+  assert.match(sceneSource, /const ZOOM_CAR_FOCUS_X = 640/);
+  assert.match(sceneSource, /const DASH_CLEARANCE_PX = 24/);
+  assert.match(sceneSource, /this\.configureZoomFocus\(\)/);
+  assert.match(sceneSource, /fourLaneDashSafeYOffset\(/);
+  assert.match(sceneSource, /this\.hud\?\.cluster\?\.getBounds/);
+  assert.match(sceneSource, /getStagedCarBottomWorld\(\)/);
+  assert.match(sceneSource, /this\.zoomFocusShiftY \|\| 0/);
   assert.match(sceneSource, /STAND_Y \+ ROAD_DROP_Y/);
   assert.match(sceneSource, /laneBandTops\[index\] \+ ROAD_DROP_Y/);
   assert.match(sceneSource, /FOUR_LANE_TEST_LANES\[index\]\.bodyY \+ ROAD_DROP_Y/);
