@@ -2543,6 +2543,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   sellSelectedCar(carId, salePrice) {
+    // Registered professional tournament cars cannot be sold mid-event.
+    if (normaliseProCircuitState(this.registry.get('proCircuit'))
+      .activeTournament?.carId === carId) return;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const starterCarId = this.registry.get('starterCarId');
     if (!owned.includes(carId)) return;
@@ -3233,10 +3236,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const access = getProCircuitAccess(this.registry);
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     const eventUnlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
+    const activeProCup = Boolean(normaliseProCircuitState(
+      this.registry.get('proCircuit')).activeTournament);
     const power = Math.round(Number(build?.car?.powerKW || 0));
     const passesPower = Boolean(build) && power <= event.maxPowerKW;
     const passesNos = Boolean(build) && (!event.noNos || !build.nosInstalled);
-    const eligible = eventUnlocked && passesPower && passesNos && cash >= event.entryFee;
+    const eligible = eventUnlocked && !activeProCup && passesPower && passesNos && cash >= event.entryFee;
 
     const y = SIDE.y + 326;
 
@@ -3263,8 +3268,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     ).setDepth(34));
 
-    const status = !circuitOpen
-      ? 'PRO ENTRY LOCKED // RECRUIT CREW ' + access.crewCount + '/' + access.crewRequired
+    const status = activeProCup ? 'FINISH FOUR-WIDE CUP BEFORE ANOTHER EVENT'
+      : !circuitOpen
+        ? 'PRO ENTRY LOCKED // RECRUIT CREW ' + access.crewCount + '/' + access.crewRequired
       : !eventUnlocked
         ? 'LOCKED // ' + event.requiredWins + ' WINS'
       : !build
@@ -3391,6 +3397,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   startProBracket(event, build, storyConfirmed = false) {
+    if (normaliseProCircuitState(this.registry.get('proCircuit')).activeTournament) return;
     const access = getProCircuitAccess(this.registry);
     const isDev = isArkonDen(this.registry);
     if (!event || (!access.unlocked && !isDev)) return;
