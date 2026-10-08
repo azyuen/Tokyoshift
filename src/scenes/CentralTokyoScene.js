@@ -38,7 +38,7 @@ import {
 } from '../data/proCircuit.js?v=20261008-r443';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
-} from '../data/proTournament.js?v=20261008-r443';
+} from '../data/proTournament.js?v=20261009-r447';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import {
@@ -86,7 +86,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js?v=20261009-r447';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
