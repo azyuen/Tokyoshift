@@ -1,0 +1,32 @@
+name: Drag Complex R448 UI checks
+
+on:
+  push:
+    branches:
+      - feature/drag-complex-three-events-redesign-r448
+  pull_request:
+    paths:
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/drag-complex-r448.mjs'
+      - '.github/workflows/drag-complex-r448.yml'
+
+jobs:
+  drag-complex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/main.js
+      - name: Three event slots and manga results
+        run: node --test tests/drag-complex-r448.mjs
+      - name: Four lane geometry, finish and revised pro results
+        run: node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs tests/pro-complex-r445.mjs
+      - name: Tournament, profile and save compatibility
+        run: node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs
