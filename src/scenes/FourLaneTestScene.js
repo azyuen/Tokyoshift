@@ -313,6 +313,78 @@ export default class FourLaneTestScene extends RaceScene {
     return { bg, text };
   }
 
+  prepareStandTexture(key) {
+    // The authored grandstand PNGs may contain a white preview backdrop and
+    // canvas padding. Remove ONLY edge-connected white, retaining white logos,
+    // floodlight bulbs and spectator clothing, then trim empty margins.
+    const cleanKey = key + 'SceneTrim';
+    if (this.textures.exists(cleanKey)) return cleanKey;
+    const source = this.textures.get(key)?.getSourceImage();
+    if (!source) return key;
+    const w = source.width, h = source.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return key;
+    ctx.drawImage(source, 0, 0);
+    const frame = ctx.getImageData(0, 0, w, h);
+    const px = frame.data;
+    const isWhite = p => {
+      const a = p * 4;
+      return px[a + 3] > 0 &&
+        Math.min(px[a], px[a + 1], px[a + 2]) > 235 &&
+        Math.max(px[a], px[a + 1], px[a + 2]) -
+          Math.min(px[a], px[a + 1], px[a + 2]) < 16;
+    };
+    // Flood-fill only if the actual outside edge looks like white paper.
+    if ([0, w - 1, (h - 1) * w, h * w - 1].some(isWhite)) {
+      const seen = new Uint8Array(w * h);
+      const queue = new Int32Array(w * h);
+      let head = 0, tail = 0;
+      const offer = p => {
+        if (p < 0 || p >= w * h || seen[p] || !isWhite(p)) return;
+        seen[p] = 1;
+        queue[tail++] = p;
+      };
+      for (let x = 0; x < w; x++) {
+        offer(x); offer((h - 1) * w + x);
+      }
+      for (let y = 0; y < h; y++) {
+        offer(y * w); offer(y * w + w - 1);
+      }
+      while (head < tail) {
+        const p = queue[head++];
+        px[p * 4 + 3] = 0;
+        const x = p % w;
+        if (x > 0) offer(p - 1);
+        if (x + 1 < w) offer(p + 1);
+        if (p >= w) offer(p - w);
+        if (p < (h - 1) * w) offer(p + w);
+      }
+      ctx.putImageData(frame, 0, 0);
+    }
+    // Trim to actual drawn alpha so all concrete barrier bases meet the same
+    // world-space top road boundary when anchored at image origin (0, 1).
+    let left = w, top = h, right = -1, bottom = -1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const p = (y * w + x) * 4;
+      if (px[p + 3] < 8) continue;
+      left = Math.min(left, x); right = Math.max(right, x);
+      top = Math.min(top, y); bottom = Math.max(bottom, y);
+    }
+    if (right < left) return key;
+    left = Math.max(0, left - 1); top = Math.max(0, top - 1);
+    right = Math.min(w - 1, right + 1);
+    bottom = Math.min(h - 1, bottom + 1);
+    const trimmed = document.createElement('canvas');
+    trimmed.width = right - left + 1;
+    trimmed.height = bottom - top + 1;
+    trimmed.getContext('2d').drawImage(canvas, left, top,
+      trimmed.width, trimmed.height, 0, 0, trimmed.width, trimmed.height);
+    this.textures.addCanvas(cleanKey, trimmed);
+    return cleanKey;
+  }
+
   createShinjukuSkyline() {
     if (!this.textures.exists('fourLaneShinjukuNight')) return [];
     // Three instances of one shared WebP texture avoid gigantic panoramas.
@@ -333,16 +405,17 @@ export default class FourLaneTestScene extends RaceScene {
 
   createStandSet(distanceM) {
     if (!STAND_KEYS.every(key => this.textures.exists(key))) return null;
+    const imageKeys = STAND_KEYS.map(key => this.prepareStandTexture(key));
     // Scale all three images with one shared pixel scale, so the bottom
     // concrete walls and crowd proportions line up even for different crops.
-    const midWidth = this.textures.get(STAND_KEYS[1]).getSourceImage().width;
+    const midWidth = this.textures.get(imageKeys[1]).getSourceImage().width;
     const worldScale = (STAND_PREVIEW_PIECE_WIDTH / PREVIEW_ZOOM) / midWidth;
     const rootPreviewX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
     const initialWorldX = (STAND_PREVIEW_START_X - rootPreviewX) / PREVIEW_ZOOM;
     const overlap = STAND_PREVIEW_OVERLAP / PREVIEW_ZOOM;
     const images = [];
     let x = 0;
-    STAND_KEYS.forEach(key => {
+    imageKeys.forEach(key => {
       const img = this.add.image(0, 0, key).setOrigin(0, 1)
         .setScale(worldScale).setDepth(1);
       // Exactly one left, one middle, one right; slight overlap at the joins.
