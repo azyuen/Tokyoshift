@@ -44,6 +44,17 @@ const ROAD_BOTTOM = 490;
 // Two one-lane downward shifts relative to the original road. Keep the
 // venue art and HUD fixed; only the Phaser road and car visuals move.
 const ROAD_DROP_Y = 150;
+// R437: move all road boundary lines down, with an extra inward shift on
+// the distant shoulder so the far lane is narrower in perspective.
+// Asphalt and lane bands are filled BETWEEN these exact same boundaries.
+const ROAD_LINE_SHIFT_Y = 12;
+const FAR_EDGE_EXTRA_INSET_Y = 26;
+const ROAD_TOP_LINE_Y = STAND_Y + ROAD_DROP_Y +
+  ROAD_LINE_SHIFT_Y + FAR_EDGE_EXTRA_INSET_Y;
+const ROAD_BOTTOM_LINE_Y = ROAD_BOTTOM + ROAD_DROP_Y + ROAD_LINE_SHIFT_Y;
+const ROAD_DIVIDER_LINE_YS = [233, 308, 383].map(y =>
+  y + ROAD_DROP_Y + ROAD_LINE_SHIFT_Y
+);
 // In the close-up the cars should occupy the race area, with the lowest car
 // fully above the actual top of the player's custom-positioned dashboard.
 const ZOOM_CAR_FOCUS_X = 640;
@@ -534,33 +545,48 @@ export default class FourLaneTestScene extends RaceScene {
     g.fillStyle(0x050c14).fillRect(TRACK_DRAW_LEFT, -140, TRACK_DRAW_WIDTH, HEIGHT + 280);
     g.fillStyle(0x0c2330).fillRect(TRACK_DRAW_LEFT, 0, TRACK_DRAW_WIDTH, STAND_Y);
     g.fillStyle(0x183240).fillRect(TRACK_DRAW_LEFT, 26, TRACK_DRAW_WIDTH, 35);
-    // Extend the lower venue wall to the translated road's top boundary.
-    g.fillStyle(0x091b26).fillRect(TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, 55 + ROAD_DROP_Y);
+    // Venue wall now stops at the far white shoulder; asphalt is strictly
+    // contained between the top and bottom white outer borders.
+    g.fillStyle(0x091b26).fillRect(
+      TRACK_DRAW_LEFT, 75, TRACK_DRAW_WIDTH, ROAD_TOP_LINE_Y - 75
+    );
     const drift = (((this.cameraPx * 0.08) % 165) + 165) % 165;
     for (let x = -900 - drift; x < TRACK_DRAW_RIGHT; x += 165) {
       g.fillStyle(0x5e8496, 0.42).fillRect(x, 14, 4, 100);
       g.fillStyle(0x36d5e4, 0.30).fillRect(x + 12, 40, 82, 4);
       g.fillStyle(0xd9f6ff, 0.67).fillCircle(x + 60, 117, 3);
     }
-    g.fillStyle(0x0a121b).fillRect(TRACK_DRAW_LEFT, STAND_Y + ROAD_DROP_Y, TRACK_DRAW_WIDTH, ROAD_BOTTOM - STAND_Y);
-    // Translate the entire road by ROAD_DROP_Y, keeping its four band
-    // heights and all three lane dividers identical to the preceding build.
-    const laneBandTops = [383, 310, 235, 160];
-    FOUR_LANE_TEST_LANES.forEach((_lane, index) => {
-      g.fillStyle(index % 2 ? 0x222c34 : 0x252d35, 1)
-        .fillRect(TRACK_DRAW_LEFT, laneBandTops[index] + ROAD_DROP_Y, TRACK_DRAW_WIDTH, 74);
-    });
-    g.fillStyle(0x8ea8b7, 0.5).fillRect(TRACK_DRAW_LEFT, STAND_Y + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 3);
-    g.fillStyle(0xc2d5e0, 0.72).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y - 3, TRACK_DRAW_WIDTH, 2);
-    // Lane boundaries: keep the asphalt uncluttered.
-    for (const y of [233, 308, 383]) {
-      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath().moveTo(TRACK_DRAW_LEFT, y + ROAD_DROP_Y)
-        .lineTo(TRACK_DRAW_RIGHT, y + ROAD_DROP_Y).strokePath();
+
+    // Four perspective lanes. The far lane becomes 26px thinner than before,
+    // while the three other divider lines move down by the same 12px.
+    // Painting each band between adjacent white lines prevents stray grey
+    // patches above the distant border or below the near border.
+    const laneEdges = [
+      ROAD_TOP_LINE_Y, ...ROAD_DIVIDER_LINE_YS, ROAD_BOTTOM_LINE_Y,
+    ];
+    for (let index = 0; index < 4; index++) {
+      const top = laneEdges[index];
+      const bottom = laneEdges[index + 1];
+      g.fillStyle(index % 2 ? 0x252d35 : 0x222c34, 1)
+        .fillRect(TRACK_DRAW_LEFT, top, TRACK_DRAW_WIDTH, bottom - top);
+    }
+
+    // Both outer shoulder lines are deliberately restrained.
+    g.fillStyle(0x8ea8b7, 0.6)
+      .fillRect(TRACK_DRAW_LEFT, ROAD_TOP_LINE_Y, TRACK_DRAW_WIDTH, 3);
+    g.fillStyle(0xc2d5e0, 0.72)
+      .fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM_LINE_Y - 2, TRACK_DRAW_WIDTH, 2);
+
+    // Three interior dividers follow the new road geometry.
+    for (const y of ROAD_DIVIDER_LINE_YS) {
+      g.lineStyle(2, 0xc2d5e0, 0.48).beginPath()
+        .moveTo(TRACK_DRAW_LEFT, y)
+        .lineTo(TRACK_DRAW_RIGHT, y).strokePath();
     }
     const trackShift = (((this.cameraPx * 0.90) % 150) + 150) % 150;
     for (let x = -900 - trackShift; x < TRACK_DRAW_RIGHT; x += 150) {
-      for (const y of [230, 305, 380]) {
-        g.fillStyle(0xe6eff2, 0.28).fillRect(x, y + ROAD_DROP_Y, 54, 2);
+      for (const y of ROAD_DIVIDER_LINE_YS) {
+        g.fillStyle(0xe6eff2, 0.28).fillRect(x, y - 3, 54, 2);
       }
       g.fillStyle(0x58b6c4, 0.40).fillRect(x + 12, 118, 4, 10);
     }
@@ -569,18 +595,29 @@ export default class FourLaneTestScene extends RaceScene {
     const startX = fourLaneCarX(0, this.cameraPx, 0, front);
     const finishX = fourLaneCarX(FOUR_LANE_TEST_DISTANCE_M, this.cameraPx, 0, front);
     if (startX > -30 && startX < WIDTH + 30) {
-      g.fillStyle(0xffffff, 0.7).fillRect(startX, 139 + ROAD_DROP_Y, 4, ROAD_BOTTOM - 144);
+      g.fillStyle(0xffffff, 0.7).fillRect(
+        startX, ROAD_TOP_LINE_Y + 5, 4, ROAD_BOTTOM_LINE_Y - ROAD_TOP_LINE_Y - 10
+      );
     }
     if (finishX > -30 && finishX < WIDTH + 30) {
-      for (let y = 139 + ROAD_DROP_Y; y < ROAD_BOTTOM + ROAD_DROP_Y - 6; y += 16) {
-        g.fillStyle(((y - (139 + ROAD_DROP_Y)) / 16) % 2 === 0 ? 0xffffff : 0x15202a, 0.92)
-          .fillRect(finishX, y, 14, 16);
-        g.fillStyle(((y - (139 + ROAD_DROP_Y)) / 16) % 2 === 0 ? 0x15202a : 0xffffff, 0.92)
-          .fillRect(finishX + 14, y, 14, 16);
+      const finishStartY = ROAD_TOP_LINE_Y + 5;
+      const finishEndY = ROAD_BOTTOM_LINE_Y - 5;
+      for (let y = finishStartY; y < finishEndY; y += 16) {
+        const cellH = Math.min(16, finishEndY - y);
+        const light = ((y - finishStartY) / 16) % 2 === 0;
+        g.fillStyle(light ? 0xffffff : 0x15202a, 0.92)
+          .fillRect(finishX, y, 14, cellH);
+        g.fillStyle(light ? 0x15202a : 0xffffff, 0.92)
+          .fillRect(finishX + 14, y, 14, cellH);
       }
     }
-    g.fillStyle(0x121b23).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 26);
-    g.fillStyle(0x68adba, 0.24).fillRect(TRACK_DRAW_LEFT, ROAD_BOTTOM + ROAD_DROP_Y + 2, TRACK_DRAW_WIDTH, 3);
+    // The lower shoulder starts outside the white line, not inside the road.
+    g.fillStyle(0x121b23).fillRect(
+      TRACK_DRAW_LEFT, ROAD_BOTTOM_LINE_Y + 2, TRACK_DRAW_WIDTH, 26
+    );
+    g.fillStyle(0x68adba, 0.24).fillRect(
+      TRACK_DRAW_LEFT, ROAD_BOTTOM_LINE_Y + 2, TRACK_DRAW_WIDTH, 3
+    );
 
     this.trackFX.clear();
     this.runners.forEach((runner, index) => {
