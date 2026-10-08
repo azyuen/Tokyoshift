@@ -16,6 +16,9 @@ test('four staged cars have unique lanes, with two extra lanes above old top row
   assert.ok(FOUR_LANE_TEST_LANES.every((lane, i, rows) =>
     i === 0 || lane.scale < rows[i - 1].scale));
   assert.equal(FOUR_LANE_TEST_DISTANCE_M, 402.336);
+  // R434: raise the cars without changing perspective or lane spacing.
+  assert.deepEqual(FOUR_LANE_TEST_LANES.map(lane => lane.bodyY),
+    [390, 315, 240, 165]);
 });
 
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
@@ -69,7 +72,10 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /positionComplexArt\(\)/);
   assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
   assert.match(sceneSource, /const TRACK_PAN_X = -235/);
-  assert.match(sceneSource, /art\.height \* COMPLEX_FENCE_BASE_FRAC \* previewImageScale/);
+  assert.match(sceneSource, /const COMPLEX_PREVIEW_WIDTH = 495/);
+  assert.match(sceneSource, /const COMPLEX_PREVIEW_TOP_Y = -69\.2/);
+  assert.match(sceneSource, /const artWorldY = \(COMPLEX_PREVIEW_TOP_Y - previewRootY\) \/ PREVIEW_ZOOM/);
+  assert.match(sceneSource, /const laneBandTops = \[383, 310, 235, 160\]/);
   assert.match(sceneSource, /art\.x = this\.complexBaseX - travelledPx/);
   assert.doesNotMatch(sceneSource, /artScreenScale \/ zoom/);
   assert.match(sceneSource, /cameraPx - fourLaneCameraX\(0\)/);
