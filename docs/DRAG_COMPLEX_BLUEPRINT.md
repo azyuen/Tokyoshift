@@ -1,6 +1,6 @@
 # TOKYO SHIFT — Drag Complex Professional Circuit Blueprint (v1)
 
-**Adopted:** 2026-10-08. **Status:** Phase 1 foundation in development; Phase 2–4 not yet implemented.
+**Adopted:** 2026-10-08. **Status:** Phase 1 merged on 2026-10-08 (PR #59 / R429); Phase 2–4 not yet implemented.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
 ## Product vision and unlock
@@ -37,7 +37,7 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 
 ## Delivery phases / acceptance
 
-### Phase 1 — Foundation (in progress)
+### Phase 1 — Foundation (complete, merged 2026-10-08)
 - Add this blueprint and durable ownership guidelines.
 - Keep existing venue access; gate **entry into** pro racing behind seven valid crew recruits (dev exception).
 - Add versioned, normalized, backward-compatible per-profile professional-circuit state and stable world roster, driver/team ratings, season-points placeholders, deterministic seed functions, and declarative trophy/championship definitions.
@@ -72,7 +72,7 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 
 ## Next handoff / where to resume
 
-1. Confirm Phase 1 branch changes and tests have passed; merge only after review.
+1. Phase 1 completed in PR #59 with passing GitHub foundation checks; build R429. Verify the in-game access gate with Arkon Den and one mature non-dev profile.
 2. Build Phase 2 isolated engine **before** changing major tournament scene presentation.
 3. On Sunday 2026-10-11, Astra can tackle Phase 3 using this document and Phase 2 engine; preserve all tested interfaces.
 4. Phase 4 after genuine individual/crew simulations are demonstrably reliable.
