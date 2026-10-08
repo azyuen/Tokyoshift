@@ -32,7 +32,7 @@ import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCarX, fourLaneCameraX, fourLaneDashSafeYOffset,
-  fourLaneTreeLights, rankFourLaneFinishers,
+  rankFourLaneFinishers,
 } from '../data/fourLanePrototype.js?v=20261008-r440';
 
 const PIXEL = '"Silkscreen", monospace';
@@ -99,12 +99,21 @@ const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP;
 const FENCE_CONCRETE_TOP_Y = FENCE_BASE_Y - FENCE_CONCRETE_HEIGHT;
 const FENCE_POST_INTERVAL = 112;
 const FENCE_MESH_STEP = 20;
-// Trackside starting 'Christmas tree'; its foot sits on the far white line,
-// just to the RIGHT of the actual world-space start marker.
-const START_TREE_OFFSET_X = 78;
-const START_TREE_BASE_Y = ROAD_TOP_LINE_Y;
-const START_TREE_PANEL_WIDTH = 54;
-const START_TREE_PANEL_HEIGHT = 124;
+// Lower foreground spectator strip: three sections at the start and exactly
+// the same section count as the long grandstand at the finish.
+const FRONT_CROWD_PREVIEW_WIDTH = 550;
+const FRONT_CROWD_PREVIEW_OVERLAP = 35;
+const FRONT_CROWD_PREVIEW_START_X = -25;
+// The nearest white lane ends at y=652. Keep the spectator heads LOWER than
+// the nearest car; the backing wall then continues down beneath the image.
+const FRONT_CROWD_BASE_Y = ROAD_BOTTOM_LINE_Y + 180;
+const FRONT_WALL_TOP_Y = FRONT_CROWD_BASE_Y - 28;
+const FRONT_WALL_BOTTOM_Y = 1900;
+// Between foreground crowd sets, the mesh starts fully BELOW the asphalt.
+const FRONT_FENCE_TOP_Y = ROAD_BOTTOM_LINE_Y + 14;
+const FRONT_FENCE_CONCRETE_TOP_Y = ROAD_BOTTOM_LINE_Y + 90;
+const FRONT_FENCE_POST_SPACING = 112;
+const FRONT_FENCE_MESH_SIZE = 18;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -139,6 +148,7 @@ export default class FourLaneTestScene extends RaceScene {
     // The uploaded filename is "standmid", not "standmiddle".
     loadImage('fourLaneStandMid', 'assets/CentralTokyo/dragstrip_standmid_night.png');
     loadImage('fourLaneStandRight', 'assets/CentralTokyo/dragstrip_standright_night.png');
+    loadImage('fourLaneFrontCrowd', 'assets/CentralTokyo/dragstrip_frontcrowd_night.png');
     loadImage('fourLaneShinjukuNight', 'assets/Race/Skylines/skyline_shinjuku_night.webp');
     const states = this.registry.get('carStates') || {};
     const playerState = states[this.playerCarId] || {};
@@ -221,7 +231,11 @@ export default class FourLaneTestScene extends RaceScene {
       this.createStandSet(FINISH_STAND_DISTANCE_M),
     ].filter(Boolean);
     this.roadsideFence = this.add.graphics().setDepth(0.8);
-    this.startTree = this.add.graphics().setDepth(2.5);
+    this.frontCrowdSets = this.standSets.map(set =>
+      this.createFrontCrowdSet(set.distanceM, set.images.length)
+    ).filter(Boolean);
+    this.frontGapFence = this.add.graphics().setDepth(18.1);
+    this.frontConcreteWall = this.add.graphics().setDepth(18.2);
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
@@ -253,8 +267,10 @@ export default class FourLaneTestScene extends RaceScene {
       this.roadsideFence,
       ...this.standSets.flatMap(set => set.images),
       ...(this.complexArt ? [this.complexArt] : []),
-      this.startTree,
       this.trackFX, ...carObjects,
+      this.frontGapFence,
+      this.frontConcreteWall,
+      ...this.frontCrowdSets.flatMap(set => set.images),
     ])
       .setDepth(1);
     // Containers render children in list order, not scene Display List depth order.
@@ -283,14 +299,11 @@ export default class FourLaneTestScene extends RaceScene {
     this.raceClock = 0;
     this.greenClock = null;
     this.raceStarted = false;
-    this.countdownActive = false;
-    this.countdownClock = 0;
-    this.zooming = false;
+     this.zooming = false;
     this.finished = false;
     this.resultsShown = false;
     this.firstFinishClock = null;
     this.cameraPx = fourLaneCameraX(0);
-    this.falseStart = false;
 
     this.header = this.add.text(780, 22, 'TOKYO DRAG COMPLEX // FOUR-WIDE DEV TEST', {
       fontFamily: PIXEL, fontSize: '10px', color: '#d7f4ff',
@@ -307,17 +320,6 @@ export default class FourLaneTestScene extends RaceScene {
       () => this.startFourLaneRace());
     this.exitButton = this.makeButton(150, 64, 215, 'RETURN TO DRAG', 0xffa9b3,
       () => this.returnToDrag());
-
-    this.signalG = this.add.graphics().setDepth(45).setScrollFactor(0);
-    this.signalText = this.add.text(1178, 72, 'TRACK PREVIEW', {
-      fontFamily: PIXEL, fontSize: '9px', color: '#e9f9ff',
-    }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
-
-    this.placeText = this.add.text(1325, 159, '', {
-      fontFamily: PIXEL, fontSize: '8px', color: '#eaf8ff',
-      backgroundColor: '#061019dd', padding: { x: 10, y: 8 },
-      lineSpacing: 9,
-    }).setDepth(45).setOrigin(0.5, 0).setScrollFactor(0);
 
     this.renderTrack(0);
     finishSceneLoading('READY FOR FOUR-WIDE TEST');
@@ -455,6 +457,133 @@ export default class FourLaneTestScene extends RaceScene {
     return { images, initialWorldX, distanceM, worldWidth };
   }
 
+  createFrontCrowdSet(distanceM, count) {
+    if (!this.textures.exists('fourLaneFrontCrowd')) return null;
+    // The asset is transparent. Trimming its empty canvas ensures the
+    // spectator heads are measured from the actual visible silhouettes.
+    const key = this.prepareStandTexture('fourLaneFrontCrowd');
+    const source = this.textures.get(key).getSourceImage();
+    const scale = (FRONT_CROWD_PREVIEW_WIDTH / PREVIEW_ZOOM) / source.width;
+    const rootPreviewX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
+    const initialWorldX = (FRONT_CROWD_PREVIEW_START_X - rootPreviewX) / PREVIEW_ZOOM;
+    const overlap = FRONT_CROWD_PREVIEW_OVERLAP / PREVIEW_ZOOM;
+    const images = [];
+    let x = 0;
+    for (let i = 0; i < count; i++) {
+      const img = this.add.image(0, FRONT_CROWD_BASE_Y, key)
+        .setOrigin(0, 1).setScale(scale).setDepth(19);
+      img.crowdLocalX = x;
+      images.push(img);
+      x += img.width * scale - overlap;
+    }
+    return { images, distanceM, initialWorldX, worldWidth: x + overlap };
+  }
+
+  drawFrontCrowdSurfaces(cameraTravel) {
+    const wall = this.frontConcreteWall;
+    const fence = this.frontGapFence;
+    if (!wall || !fence || !this.frontCrowdSets?.length) return;
+    wall.clear();
+    fence.clear();
+    const zoom = Math.max(0.01, this.trackRoot.scaleX);
+    const screenToWorld = screenX =>
+      (screenX - this.trackRoot.x) / zoom + cameraTravel;
+    const viewLeft = screenToWorld(-120);
+    const viewRight = screenToWorld(WIDTH + 120);
+
+    const visiblePart = (fromWorld, toWorld) => {
+      const start = Math.max(fromWorld, viewLeft);
+      const end = Math.min(toWorld, viewRight);
+      return end > start ? [start - cameraTravel, end - cameraTravel,
+        start, end] : null;
+    };
+    // Behind all foreground silhouettes, these tall panels continue to the
+    // bottom of the screen at both the 52% preview and full racing zoom.
+    for (const set of this.frontCrowdSets) {
+      const worldX = set.initialWorldX +
+        set.distanceM * FOUR_LANE_TEST_PX_PER_M;
+      const clip = visiblePart(worldX, worldX + set.worldWidth);
+      if (!clip) continue;
+      const [left, right, start, end] = clip;
+      const w = right - left;
+      wall.fillStyle(0x141b25, 1).fillRect(left, FRONT_WALL_TOP_Y,
+        w, FRONT_WALL_BOTTOM_Y - FRONT_WALL_TOP_Y);
+      wall.fillStyle(0x34414d, 1).fillRect(left, FRONT_WALL_TOP_Y, w, 7);
+      wall.fillStyle(0x56616a, 0.68).fillRect(left, FRONT_WALL_TOP_Y + 6, w, 2);
+      const first = Math.floor(start / 126);
+      const last = Math.ceil(end / 126);
+      for (let i = first; i <= last; i++) {
+        const x = i * 126 - cameraTravel;
+        if (x < left || x > right) continue;
+        wall.fillStyle(0x080f18, 0.85).fillRect(x, FRONT_WALL_TOP_Y + 9,
+          5, FRONT_WALL_BOTTOM_Y - FRONT_WALL_TOP_Y - 9);
+        wall.fillStyle(0x7d8a94, 0.34).fillRect(x + 15,
+          FRONT_WALL_TOP_Y + 16, 4, 4);
+      }
+    }
+
+    // Continuous low fencing + concrete for ONLY the clear strip between the
+    // near spectator sets. The fence top is 14px below the white road edge.
+    if (this.frontCrowdSets.length < 2) return;
+    const startSet = this.frontCrowdSets[0];
+    const finishSet = this.frontCrowdSets[1];
+    const fromWorld = startSet.initialWorldX + startSet.worldWidth;
+    const toWorld = finishSet.initialWorldX +
+      finishSet.distanceM * FOUR_LANE_TEST_PX_PER_M;
+    const clip = visiblePart(fromWorld, toWorld);
+    if (!clip) return;
+    const [left, right, firstVisible, lastVisible] = clip;
+    const width = right - left;
+
+    fence.fillStyle(0x27313b, 1).fillRect(left, FRONT_FENCE_CONCRETE_TOP_Y,
+      width, FRONT_WALL_BOTTOM_Y - FRONT_FENCE_CONCRETE_TOP_Y);
+    fence.fillStyle(0x7a8893, 1).fillRect(left, FRONT_FENCE_CONCRETE_TOP_Y,
+      width, 6);
+    fence.fillStyle(0x141e29, 1).fillRect(left,
+      FRONT_FENCE_CONCRETE_TOP_Y + 12, width, 5);
+    const firstPost = Math.floor(firstVisible / FRONT_FENCE_POST_SPACING);
+    const lastPost = Math.ceil(lastVisible / FRONT_FENCE_POST_SPACING);
+    for (let i = firstPost; i <= lastPost; i++) {
+      const x = i * FRONT_FENCE_POST_SPACING - cameraTravel;
+      if (x < left - 4 || x > right + 4) continue;
+      fence.fillStyle(0x0d151f, 0.92).fillRect(x - 2,
+        FRONT_FENCE_CONCRETE_TOP_Y + 7, 4,
+        FRONT_WALL_BOTTOM_Y - FRONT_FENCE_CONCRETE_TOP_Y - 7);
+      if (i % 3 === 0) fence.fillStyle(0xe6ba67, 0.85)
+        .fillRect(x + 18, FRONT_FENCE_CONCRETE_TOP_Y + 23, 16, 4);
+    }
+
+    // Mesh is drawn with limited visible extents, not a 28,000px world strip.
+    fence.lineStyle(1, 0x9db3c0, 0.18).beginPath();
+    for (let y = FRONT_FENCE_TOP_Y + 9;
+      y < FRONT_FENCE_CONCRETE_TOP_Y - 9; y += FRONT_FENCE_MESH_SIZE) {
+      const meshPeriod = FRONT_FENCE_MESH_SIZE * 2;
+      for (let worldX = Math.floor(firstVisible / meshPeriod) * meshPeriod;
+        worldX <= lastVisible; worldX += meshPeriod) {
+        const x = worldX - cameraTravel;
+        if (x < left + 8 || x > right - 8) continue;
+        fence.moveTo(x - 8, y).lineTo(x, y + 8)
+          .lineTo(x + 8, y).lineTo(x, y - 8);
+      }
+    }
+    fence.strokePath();
+    fence.fillStyle(0x283b4b, 1).fillRect(left, FRONT_FENCE_TOP_Y,
+      width, 5);
+    fence.fillStyle(0x8da1ad, 0.86).fillRect(left, FRONT_FENCE_TOP_Y,
+      width, 2);
+    fence.fillStyle(0x233543, 1).fillRect(left,
+      FRONT_FENCE_CONCRETE_TOP_Y - 4, width, 4);
+    for (let i = firstPost; i <= lastPost; i++) {
+      const x = i * FRONT_FENCE_POST_SPACING - cameraTravel;
+      if (x < left - 5 || x > right + 5) continue;
+      fence.fillStyle(0x192a37, 1).fillRect(x - 3, FRONT_FENCE_TOP_Y,
+        6, FRONT_FENCE_CONCRETE_TOP_Y - FRONT_FENCE_TOP_Y);
+      fence.fillStyle(0x8da1ad, 0.72).fillRect(x - 2, FRONT_FENCE_TOP_Y,
+        2, FRONT_FENCE_CONCRETE_TOP_Y - FRONT_FENCE_TOP_Y);
+      fence.fillStyle(0xa5b8c4, 0.86).fillCircle(x, FRONT_FENCE_TOP_Y, 4);
+    }
+  }
+
   positionTrackside() {
     if (!this.trackRoot) return;
     const cameraTravel = this.cameraPx == null ? 0 :
@@ -475,6 +604,12 @@ export default class FourLaneTestScene extends RaceScene {
       });
     });
     this.drawRoadsideFence(cameraTravel);
+    this.frontCrowdSets.forEach(set => {
+      const baseX = set.initialWorldX +
+        set.distanceM * FOUR_LANE_TEST_PX_PER_M - cameraTravel;
+      set.images.forEach(image => { image.x = baseX + image.crowdLocalX; });
+    });
+    this.drawFrontCrowdSurfaces(cameraTravel);
   }
 
   drawRoadsideFence(cameraTravel) {
@@ -558,69 +693,6 @@ export default class FourLaneTestScene extends RaceScene {
       g.fillStyle(0x8097a8, 0.8).fillRect(x - 2, FENCE_TOP_Y, 2,
         meshBottom - FENCE_TOP_Y);
       g.fillStyle(0xa9b9c4, 0.9).fillCircle(x, FENCE_TOP_Y, 4);
-    }
-  }
-
-  drawStartTree() {
-    const g = this.startTree;
-    if (!g || !this.runners?.length) return;
-    g.clear();
-    // Use exactly the same world-space camera and start-line calculation as
-    // the road's actual starting stripe; no drifting screen overlay.
-    const playerNose = this.runners[0].visual?.noseOffsetPx || 110;
-    const startX = fourLaneCarX(0, this.cameraPx, 0, playerNose);
-    const x = startX + START_TREE_OFFSET_X;
-    if (x < -90 || x > TRACK_DRAW_RIGHT + 90) return;
-
-    const phase = this.racePhase();
-    const lamps = fourLaneTreeLights(phase, this.falseStart);
-    const baseY = START_TREE_BASE_Y;
-    const panelTop = baseY - START_TREE_PANEL_HEIGHT - 18;
-    const panelLeft = x - START_TREE_PANEL_WIDTH / 2;
-
-    // Steel baseplate and anchored stem.
-    g.fillStyle(0x131b25, 1)
-      .fillRect(x - 22, baseY - 8, 44, 8);
-    g.fillStyle(0x697d89, 0.9)
-      .fillRect(x - 17, baseY - 8, 34, 2);
-    g.fillStyle(0x172431, 1)
-      .fillRect(x - 5, panelTop - 4, 10, baseY - panelTop);
-    g.fillStyle(0x617887, 0.92)
-      .fillRect(x - 4, panelTop - 4, 2, baseY - panelTop);
-
-    // Two illuminated columns evoke a professional drag strip tree. One
-    // light assembly serves the dev tester's four simultaneous lanes.
-    g.fillStyle(0x080f18, 1)
-      .fillRoundedRect(panelLeft - 3, panelTop - 3,
-        START_TREE_PANEL_WIDTH + 6, START_TREE_PANEL_HEIGHT + 6, 5);
-    g.fillStyle(0x25333e, 1)
-      .fillRoundedRect(panelLeft, panelTop,
-        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
-    g.lineStyle(2, 0x91a8b8, 0.66)
-      .strokeRoundedRect(panelLeft, panelTop,
-        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
-
-    const rows = [
-      { offset: 13, color: 0xd9f5ff, on: lamps.preStage },
-      { offset: 29, color: 0xf7fbff, on: lamps.stage },
-      { offset: 47, color: 0xffb94b, on: lamps.ambers[0] },
-      { offset: 63, color: 0xffb94b, on: lamps.ambers[1] },
-      { offset: 79, color: 0xffb94b, on: lamps.ambers[2] },
-      { offset: 98, color: 0x61fda1, on: lamps.green },
-      { offset: 114, color: 0xff5167, on: lamps.red },
-    ];
-    for (const row of rows) {
-      const cy = panelTop + row.offset;
-      for (const dx of [-11, 11]) {
-        g.fillStyle(0x03080d, 1).fillCircle(x + dx, cy, 7.7);
-        if (row.on) {
-          g.fillStyle(row.color, 0.19).fillCircle(x + dx, cy, 10);
-          g.fillStyle(row.color, 1).fillCircle(x + dx, cy, 5.2);
-          g.fillStyle(0xffffff, 0.72).fillCircle(x + dx - 1.1, cy - 1.2, 2);
-        } else {
-          g.fillStyle(row.color, 0.14).fillCircle(x + dx, cy, 4.5);
-        }
-      }
     }
   }
 
@@ -714,7 +786,6 @@ export default class FourLaneTestScene extends RaceScene {
     this.zooming = true;
     this.startButton.bg.disableInteractive().setVisible(false);
     this.startButton.text.setVisible(false);
-    this.signalText.setText('CAMERA CLOSING IN');
     this.configureZoomFocus();
     this.tweens.addCounter({
       from: PREVIEW_ZOOM, to: 1, duration: 1250, ease: 'Sine.InOut',
@@ -722,21 +793,11 @@ export default class FourLaneTestScene extends RaceScene {
       onComplete: () => {
         this.setTrackZoom(1);
         this.zooming = false;
-        this.countdownActive = true;
-        this.countdownClock = 0;
+        // No invisible staging delay once the start lights are removed.
+        // Both player and rivals get the same green instant.
+        this.greenClock = this.raceClock;
       },
     });
-  }
-
-  racePhase() {
-    if (!this.raceStarted) return 'PREVIEW';
-    if (this.zooming) return 'ZOOM';
-    if (this.greenClock != null) return 'GREEN';
-    if (this.countdownClock < 0.9) return 'PRE-STAGE';
-    if (this.countdownClock < 1.8) return 'STAGE';
-    if (this.countdownClock < 2.3) return 'AMBER 1';
-    if (this.countdownClock < 2.8) return 'AMBER 2';
-    return 'AMBER 3';
   }
 
   update(_time, deltaMs) {
@@ -751,14 +812,6 @@ export default class FourLaneTestScene extends RaceScene {
     const gearRequest = this.controls.consumeGearRequest();
     if (gearRequest != null && !this.finished) this.handleGearRequest(gearRequest);
 
-    if (this.countdownActive && this.greenClock == null) {
-      this.countdownClock += dt;
-      if (this.countdownClock >= 3.3) {
-        this.greenClock = this.raceClock;
-        this.signalText.setText('GREEN!').setColor('#8affb0');
-      }
-    }
-
     let playerTelemetry = null;
     let firstAiTelemetry = null;
     const inPreview = !this.raceStarted || this.zooming;
@@ -767,8 +820,7 @@ export default class FourLaneTestScene extends RaceScene {
       // only their official crossing time is frozen.
       let state;
       if (index === 0) {
-        // Staged cars cannot creep before the test begins; after START, a
-        // release before green is a genuine red-light disqualification.
+        // Keep cars staged during the preview and camera push-in.
         state = inPreview
           ? { throttle: control.throttle, clutch: 1, nos: false }
           : control;
@@ -779,11 +831,6 @@ export default class FourLaneTestScene extends RaceScene {
       runner.lastTelemetry = telemetry;
       if (index === 0) playerTelemetry = telemetry;
       if (index === 1) firstAiTelemetry = telemetry;
-      if (index === 0 && this.raceStarted && this.greenClock == null &&
-          !this.zooming && runner.vehicle.positionM > 0.25) {
-        runner.disqualified = true;
-        this.falseStart = true;
-      }
       if (this.greenClock != null && runner.finishSeconds == null &&
           runner.vehicle.positionM >= FOUR_LANE_TEST_DISTANCE_M) {
         // Interpolate across the crossing within the frame for fair placings.
@@ -804,13 +851,9 @@ export default class FourLaneTestScene extends RaceScene {
     const livePlayer = playerTelemetry || this.runners[0].lastTelemetry ||
       this.runners[0].vehicle.telemetry;
     this.renderTrack(dt);
-    this.renderSignals();
-    this.updateLivePositions();
-    this.hud.update(livePlayer, this.falseStart ? 'RED LIGHT // DISQUALIFIED'
-      : this.zooming ? 'FOUR-LANE TRACK // CLOSING IN'
+    this.hud.update(livePlayer, this.zooming ? 'FOUR-LANE TRACK // CLOSING IN'
       : !this.raceStarted ? 'WIDE VIEW // TAP START 4-WIDE'
-      : this.greenClock != null ? 'FOUR-WIDE // QUARTER MILE'
-      : 'STAGED // WAIT FOR GREEN');
+      : 'FOUR-WIDE // QUARTER MILE');
 
     if (this.greenClock != null && !this.finished) {
       const allDone = this.runners.every(r => r.finishSeconds != null);
@@ -841,47 +884,12 @@ export default class FourLaneTestScene extends RaceScene {
     }
   }
 
-  updateLivePositions() {
-    if (!this.placeText) return;
-    const byDistance = [...this.runners].sort((a, b) =>
-      (b.vehicle.positionM - a.vehicle.positionM) || a.lane - b.lane
-    );
-    const text = byDistance.map((r, i) =>
-      (i + 1) + '  ' + r.carLabel.toUpperCase()
-    ).join('\n');
-    this.placeText.setText(text);
-  }
-
-  renderSignals() {
-    const g = this.signalG;
-    g.clear();
-    const phase = this.racePhase();
-    const statuses = [
-      { name: 'STAGE', color: 0xc2e8ff, active: phase === 'STAGE' },
-      { name: 'AMBER 1', color: 0xffbd46, active: phase === 'AMBER 1' },
-      { name: 'AMBER 2', color: 0xffbd46, active: phase === 'AMBER 2' },
-      { name: 'AMBER 3', color: 0xffbd46, active: phase === 'AMBER 3' },
-      { name: 'GREEN', color: 0x58ffac, active: phase === 'GREEN' && !this.falseStart },
-    ];
-    g.fillStyle(0x041018, 0.92).fillRoundedRect(1076, 84, 215, 22, 6);
-    statuses.forEach((lamp, index) => {
-      g.fillStyle(lamp.active ? lamp.color : 0x243341, lamp.active ? 1 : 0.75);
-      g.fillCircle(1100 + index * 40, 95, 7.5);
-    });
-    if (this.falseStart) this.signalText.setText('RED LIGHT').setColor('#ff697c');
-    else if (phase === 'AMBER 1' || phase === 'AMBER 2' || phase === 'AMBER 3' ||
-      phase === 'STAGE' || phase === 'PRE-STAGE') {
-      this.signalText.setText(phase).setColor('#ffda9d');
-    }
-  }
-
   renderTrack(dt) {
     const player = this.runners[0];
     const playerM = player.vehicle.positionM;
     this.cameraPx = fourLaneCameraX(playerM);
     this.positionComplexArt();
     this.positionTrackside();
-    this.drawStartTree();
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
