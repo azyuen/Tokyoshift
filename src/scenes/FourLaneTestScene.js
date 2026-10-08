@@ -75,6 +75,20 @@ const TRACK_DRAW_LEFT = -800;
 const TRACK_DRAW_RIGHT = 3400;
 const TRACK_DRAW_WIDTH = TRACK_DRAW_RIGHT - TRACK_DRAW_LEFT;
 
+// Venue modules: source PNGs share the same bottom-aligned barrier baseline.
+// Width and overlap are specified in the opening preview's SCREEN pixels.
+const STAND_KEYS = [
+  'fourLaneStandLeft', 'fourLaneStandMid', 'fourLaneStandRight',
+];
+const STAND_PREVIEW_PIECE_WIDTH = 495;
+const STAND_PREVIEW_OVERLAP = 32;
+const STAND_PREVIEW_START_X = 360;
+const STAND_BASE_GAP = 3; // bottom of concrete, just above top white line
+// Recreate the same three stands approaching the quarter-mile timing line.
+const FINISH_STAND_DISTANCE_M = FOUR_LANE_TEST_DISTANCE_M;
+const SKYLINE_PARALLAX = 0.16;
+const SKYLINE_WORLD_WIDTH = 4096;
+
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
     super('FourLaneTestScene');
@@ -104,6 +118,11 @@ export default class FourLaneTestScene extends RaceScene {
     loadImage('shifterDown', 'assets/Controls/shifter_down.png');
     // Dev-only venue foreground: loaded only when four-wide tester opens.
     loadImage('fourLaneStartComplex', 'assets/CentralTokyo/dragstrip_complex_night.png');
+    loadImage('fourLaneStandLeft', 'assets/CentralTokyo/dragstrip_standleft_night.png');
+    // The uploaded filename is "standmid", not "standmiddle".
+    loadImage('fourLaneStandMid', 'assets/CentralTokyo/dragstrip_standmid_night.png');
+    loadImage('fourLaneStandRight', 'assets/CentralTokyo/dragstrip_standright_night.png');
+    loadImage('fourLaneShinjukuNight', 'assets/Race/Skylines/skyline_shinjuku_night.webp');
     const states = this.registry.get('carStates') || {};
     const playerState = states[this.playerCarId] || {};
     [...new Set([this.playerCarId, ...this.aiCarIds])].forEach(id => {
@@ -177,6 +196,13 @@ export default class FourLaneTestScene extends RaceScene {
     // Fill that space with neutral venue architecture, never black gutters.
     this.add.rectangle(780, 360, WIDTH, HEIGHT, 0x10212d).setDepth(-2);
     this.trackG = this.add.graphics().setDepth(0);
+    // Shinjuku behind the stands, but in front of the generated venue wall.
+    // The skyline ends above the outermost road line and never covers asphalt.
+    this.skylineSprites = this.createShinjukuSkyline();
+    this.standSets = [
+      this.createStandSet(0),
+      this.createStandSet(FINISH_STAND_DISTANCE_M),
+    ].filter(Boolean);
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
@@ -203,7 +229,11 @@ export default class FourLaneTestScene extends RaceScene {
         .filter(Boolean)
     );
     this.trackRoot = this.add.container(0, 0, [
-      this.trackG, ...(this.complexArt ? [this.complexArt] : []), this.trackFX, ...carObjects,
+      this.trackG,
+      ...this.skylineSprites,
+      ...this.standSets.flatMap(set => set.images),
+      ...(this.complexArt ? [this.complexArt] : []),
+      this.trackFX, ...carObjects,
     ])
       .setDepth(1);
     // Containers render children in list order, not scene Display List depth order.
@@ -281,6 +311,67 @@ export default class FourLaneTestScene extends RaceScene {
     }).setOrigin(0.5).setDepth(61).setScrollFactor(0);
     bg.on('pointerdown', onPress);
     return { bg, text };
+  }
+
+  createShinjukuSkyline() {
+    if (!this.textures.exists('fourLaneShinjukuNight')) return [];
+    // Three instances of one shared WebP texture avoid gigantic panoramas.
+    // With a 4096px world tile this also covers the 52% establishing shot.
+    return [-1, 0, 1].map(() =>
+      this.add.image(0, ROAD_TOP_LINE_Y - STAND_BASE_GAP, 'fourLaneShinjukuNight')
+        .setOrigin(0, 1)
+        .setDepth(0.4)
+        .setDisplaySize(
+          SKYLINE_WORLD_WIDTH,
+          SKYLINE_WORLD_WIDTH *
+            this.textures.get('fourLaneShinjukuNight').getSourceImage().height /
+            this.textures.get('fourLaneShinjukuNight').getSourceImage().width
+        )
+        .setAlpha(0.78)
+    );
+  }
+
+  createStandSet(distanceM) {
+    if (!STAND_KEYS.every(key => this.textures.exists(key))) return null;
+    // Scale all three images with one shared pixel scale, so the bottom
+    // concrete walls and crowd proportions line up even for different crops.
+    const midWidth = this.textures.get(STAND_KEYS[1]).getSourceImage().width;
+    const worldScale = (STAND_PREVIEW_PIECE_WIDTH / PREVIEW_ZOOM) / midWidth;
+    const rootPreviewX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
+    const initialWorldX = (STAND_PREVIEW_START_X - rootPreviewX) / PREVIEW_ZOOM;
+    const overlap = STAND_PREVIEW_OVERLAP / PREVIEW_ZOOM;
+    const images = [];
+    let x = 0;
+    STAND_KEYS.forEach(key => {
+      const img = this.add.image(0, 0, key).setOrigin(0, 1)
+        .setScale(worldScale).setDepth(1);
+      // Exactly one left, one middle, one right; slight overlap at the joins.
+      img.standLocalX = x;
+      img.setPosition(x, ROAD_TOP_LINE_Y - STAND_BASE_GAP);
+      images.push(img);
+      x += img.width * worldScale - overlap;
+    });
+    return { images, initialWorldX, distanceM };
+  }
+
+  positionTrackside() {
+    if (!this.trackRoot) return;
+    const cameraTravel = this.cameraPx == null ? 0 :
+      Math.max(0, this.cameraPx - fourLaneCameraX(0));
+    // A modest, slower parallax keeps the Shinjuku skyline distant.
+    const skylinePhase = (cameraTravel * SKYLINE_PARALLAX) % SKYLINE_WORLD_WIDTH;
+    this.skylineSprites.forEach((image, i) => {
+      image.x = (i - 1) * SKYLINE_WORLD_WIDTH - skylinePhase;
+    });
+    // World-anchored scenery: the finish group returns as we approach 402 m.
+    this.standSets.forEach(set => {
+      const deltaX = set.initialWorldX +
+        set.distanceM * FOUR_LANE_TEST_PX_PER_M - cameraTravel;
+      set.images.forEach(image => {
+        // Preserve each image's local join position while translating the set.
+        image.x = deltaX + image.standLocalX;
+      });
+    });
   }
 
   configureComplexArt() {
@@ -539,6 +630,7 @@ export default class FourLaneTestScene extends RaceScene {
     const playerM = player.vehicle.positionM;
     this.cameraPx = fourLaneCameraX(playerM);
     this.positionComplexArt();
+    this.positionTrackside();
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
