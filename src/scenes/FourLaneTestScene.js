@@ -33,7 +33,7 @@ import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444'
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
+import { getProCircuitAccess, getProCircuitDriverSeeds } from '../data/proCircuit.js?v=20261008-r429';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
 } from '../data/proTournament.js?v=20261008-r443';
@@ -1275,6 +1275,176 @@ export default class FourLaneTestScene extends RaceScene {
             v.exhaustX - 28, v.exhaustY + 6);
       }
     });
+  }
+
+  showProfessionalMangaResult(standings, outcome) {
+    // Unlike the old opaque popup, this is a frozen-race manga tableau in the
+    // same visual language as RaceScene's regular end-of-race cutscene.
+    const depth = 200;
+    const duel = this.proDuel;
+    const driverId = duel ? 'player' : 'player:driver';
+    const mine = standings.find(r => r.id === driverId);
+    const total = standings.length;
+    const phase = duel
+      ? 'ROUND ' + this.proDuelInfo.roundNumber + '/3'
+      : FOUR_WIDE_CUP.stageNames[this.proTournament.stage];
+    const advanced = outcome?.status === 'ADVANCED';
+    const champion = outcome?.status === 'CHAMPION' ||
+      (outcome?.summary?.stagesCompleted === 3 && outcome?.summary?.placing === 1);
+    const finalist = !duel && outcome?.summary?.stagesCompleted === 3;
+    const failure = outcome?.status === 'ERROR' || outcome?.status === 'STALE_HEAT' ||
+      outcome?.status === 'NO_EVENT';
+    const titleText = failure ? 'RACE COMPLETE'
+      : champion ? 'CHAMPION'
+      : advanced ? 'QUALIFIED'
+      : finalist ? ['CHAMPION', 'RUNNER-UP', 'PODIUM', 'FOURTH PLACE'][
+          Math.max(0, Math.min(3, outcome.summary.placing - 1))
+        ]
+      : 'ELIMINATED';
+    const accent = failure ? 0xffc18e
+      : champion || advanced ? 0x77ead5 : 0xf8a7b4;
+    const accentCSS = failure ? '#ffe0b8'
+      : champion || advanced ? '#92fff0' : '#ffc2cf';
+    const name = [
+      this.registry.get('firstName'), this.registry.get('lastName'),
+    ].map(v => String(v || '').trim()).filter(Boolean).join(' ') || 'YOU';
+
+    // Let the location beneath show through, as in the regular meet result.
+    this.add.rectangle(780, 360, 1560, 720, 0x020711, 0.66)
+      .setDepth(depth).setScrollFactor(0);
+
+    // Large, angled manga face panel on the LEFT, using the same mask/profile
+    // renderer as RaceScene (not a loosely scaled full-body PNG).
+    const points = [
+      new Phaser.Geom.Point(56, 55),
+      new Phaser.Geom.Point(562, 78),
+      new Phaser.Geom.Point(505, 640),
+      new Phaser.Geom.Point(28, 665),
+    ];
+    const frame = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
+    frame.fillStyle(0xece6d9, 0.92).fillPoints(points, true);
+    frame.lineStyle(7, 0x0b1622, 1).strokePoints(points, true);
+    const portrait = createCharacterProfile(this, {
+      characterId: this.registry.get('playerCharacterId') || 'renMizuno',
+      pose: champion || advanced ? 'win' : 'loss',
+      x: 285, y: 333, frameWidth: 560, frameHeight: 560,
+      side: 'left', depth: depth + 3, flipInward: true, mask: false,
+      profileOverride: { scale: 1.20, offsetX: 0, offsetY: 28 },
+    });
+    const maskShape = this.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1).fillPoints(points, true);
+    portrait?.image?.setMask(maskShape.createGeometryMask());
+    frame.setAlpha(0);
+    portrait?.image?.setAlpha(0);
+    this.tweens.add({
+      targets: [frame, ...(portrait?.image ? [portrait.image] : [])],
+      alpha: 1, duration: 260, ease: 'Sine.Out',
+    });
+    this.add.text(72, 636, name.toUpperCase(), {
+      fontFamily: PIXEL, fontSize: '12px', color: '#eff9ff',
+      backgroundColor: '#0c1727e8', padding: { x: 13, y: 9 },
+    }).setDepth(depth + 5).setScrollFactor(0);
+
+    const title = this.add.text(1010, 151, titleText, {
+      fontFamily: '"Exo 2", sans-serif', fontStyle: '900 italic',
+      fontSize: titleText.length > 9 ? '66px' : '87px',
+      color: accentCSS, stroke: '#051018', strokeThickness: 8,
+    }).setOrigin(0.5).setDepth(depth + 6).setScrollFactor(0)
+      .setAlpha(0).setScale(0.63);
+    // Phaser graphics/lines keep race finish visible beneath the headline.
+    const accentShape = this.add.graphics().setDepth(depth + 2).setScrollFactor(0);
+    accentShape.lineStyle(7, accent, 0.95)
+      .lineBetween(607, 218, 1490, 203);
+    accentShape.lineStyle(2, 0xffffff, 0.62)
+      .lineBetween(610, 229, 1420, 217);
+    this.tweens.add({
+      targets: title, alpha: 1, scaleX: 1, scaleY: 1,
+      duration: 360, ease: 'Back.Out',
+    });
+
+    const label = (x, y, value, size, color = '#d9eefa') =>
+      this.add.text(x, y, value, {
+        fontFamily: PIXEL, fontSize: size + 'px', color,
+      }).setDepth(depth + 8).setScrollFactor(0);
+    label(675, 251,
+      (duel ? 'PRO STREET CUP' : 'TOKYO FOUR-WIDE OPEN') + ' // ' + phase,
+      11, '#c6e8fb');
+    label(677, 296,
+      'FINISH ' + String(mine?.placing || total) + '/' + total +
+      (advanced ? '    NEXT ROUND UNLOCKED' : ''),
+      15, accentCSS);
+
+    standings.forEach((row, index) => {
+      const y = 346 + 37 * index;
+      const isMine = row.id === driverId;
+      const colour = isMine ? '#a6ffeb' : '#d9eafa';
+      const who = String(row.label || row.id).slice(0, 15);
+      const et = row.status === 'FINISHED'
+        ? row.finishSeconds.toFixed(3) + 's' : row.status;
+      label(677, y, String(row.placing) + '  ' + who + '  ' +
+        row.carLabel.toUpperCase().slice(0, 10), 10, colour);
+      label(1340, y, et, 10, colour).setOrigin(1, 0);
+    });
+
+    if (outcome?.summary && !duel) {
+      const cash = outcome.summary.cashPrize;
+      label(679, 508, 'PRIZE   +¥' + cash.toLocaleString('en-US'), 11, '#fce6ac');
+    } else if (duel && outcome?.cashPrize > 0) {
+      label(679, 508,
+        'PRIZE   +¥' + outcome.cashPrize.toLocaleString('en-US'),
+        11, '#fce6ac');
+    }
+
+    // Angled oblong leaderboard plaque: the old rank and the new rank
+    // visibly flip/slide to each other only when the tournament settles.
+    const standingsState = this.registry.get('proCircuit') || {};
+    const ranked = getProCircuitDriverSeeds(standingsState);
+    const rankCurrent = ranked.find(r => r.id === 'player:driver')?.seed || 32;
+    const rankBefore = outcome?.summary?.rankBefore || rankCurrent;
+    const rankAfter = outcome?.summary?.rankAfter || rankCurrent;
+    const rankPoly = [
+      new Phaser.Geom.Point(686, 524),
+      new Phaser.Geom.Point(1420, 514),
+      new Phaser.Geom.Point(1401, 588),
+      new Phaser.Geom.Point(665, 603),
+    ];
+    const capsule = this.add.graphics()
+      .setDepth(depth + 4).setScrollFactor(0);
+    capsule.fillStyle(0x113443, 0.96).fillPoints(rankPoly, true);
+    capsule.lineStyle(3, 0x66dbdd, 1).strokePoints(rankPoly, true);
+    capsule.setAlpha(0);
+    this.tweens.add({ targets: capsule, alpha: 1, duration: 300 });
+    label(713, 547, 'PRO RANKING', 11, '#b9f7fa');
+    const value = label(1315, 536, '#' + rankBefore, 32, '#ffffff').setOrigin(1, 0);
+    this.tweens.addCounter({
+      from: rankBefore, to: rankAfter, duration: 820, delay: 180,
+      ease: 'Cubic.Out',
+      onUpdate: tween => value.setText('#' + Math.round(tween.getValue())),
+    });
+
+    const nextText = failure ? 'RETURN TO COMPLEX // RETRY HEAT'
+      : advanced ? 'NEXT ROUND' : 'RETURN TO COMPLEX';
+    label(1494, 679, 'TAP ANYWHERE  //  ' + nextText, 9, '#edfcff')
+      .setOrigin(1, 0.5);
+    // A single HIGH-depth full-screen hit area, not the old lower-depth
+    // buttons hidden under the manga art. Touch and ENTER share the guard.
+    let armed = false, navigating = false;
+    const tap = this.add.rectangle(780, 360, 1560, 720, 0xffffff, 0.001)
+      .setDepth(depth + 95).setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+    const advance = () => {
+      if (!armed || navigating) return;
+      navigating = true;
+      tap.disableInteractive();
+      if (advanced && (this.proCup || duel)) {
+        this.scene.restart({ mode: duel ? 'PRO_DUEL' : 'PRO_CUP' });
+      } else this.returnToDrag();
+    };
+    tap.on('pointerdown', advance);
+    const enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    enter.once('down', advance);
+    // Prevent an incidental last racing touch from immediately skipping.
+    this.time.delayedCall(360, () => { armed = true; });
   }
 
   showFourLaneResults() {
