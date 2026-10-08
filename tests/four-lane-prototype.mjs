@@ -112,6 +112,12 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   assert.match(sceneSource, /const SKYLINE_PARALLAX = 0\.16/);
   assert.match(sceneSource, /this\.standSets\.flatMap\(set => set\.images\)/);
   assert.match(sceneSource, /this\.skylineSprites/);
+  assert.match(sceneSource, /prepareStandTexture\(key\)/);
+  assert.match(sceneSource, /STAND_KEYS\.map\(key => this\.prepareStandTexture\(key\)\)/);
+  assert.match(sceneSource, /this\.textures\.addCanvas\(cleanKey, trimmed\)/);
+  assert.match(sceneSource, /const imageKeys = STAND_KEYS/);
+  assert.match(sceneSource, /STAND_PREVIEW_OVERLAP = 32/);
+  assert.match(sceneSource, /STAND_PREVIEW_PIECE_WIDTH = 495/);
   assert.match(sceneSource, /configureComplexArt\(\)/);
   assert.match(sceneSource, /positionComplexArt\(\)/);
   assert.match(sceneSource, /const PREVIEW_ZOOM = 0\.52/);
