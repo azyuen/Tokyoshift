@@ -30,6 +30,9 @@ import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r
 import { isArkonDen } from '../data/centralTokyo.js?v=20261006-r388';
 import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
+import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
@@ -135,10 +138,15 @@ export default class FourLaneTestScene extends RaceScene {
 
   init(data = {}) {
     this.proCup = data.mode === 'PRO_CUP';
+    this.proDuel = data.mode === 'PRO_DUEL';
+    this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
+    this.proDuelInfo = this.proDuel ? getProfessionalDuelRound(this.proDuelState) : null;
     const circuit = this.registry.get('proCircuit') || {};
     this.proTournament = this.proCup ? circuit.activeTournament : null;
     this.proHeat = this.proCup ? getPlayerProHeat(this.proTournament) : null;
-    const selected = this.proCup ? this.proTournament?.carId : this.registry.get('selectedCarId');
+    const selected = this.proCup ? this.proTournament?.carId
+      : this.proDuel ? this.proDuelState?.playerCarId
+        : this.registry.get('selectedCarId');
     this.playerCarId = cars[selected] ? selected : 'ae86';
     const candidates = ['evo6', 'r34', 'rx7fd', 's2000', 'r32', 'jza80']
       .filter(id => Boolean(cars[id]));
@@ -147,13 +155,15 @@ export default class FourLaneTestScene extends RaceScene {
         .filter(id => id !== 'player:driver')
         .map(id => this.proTournament.entrants.find(r => r.id === id))
       : [];
-    this.aiCarIds = this.aiEntrants.length === 3
-      ? this.aiEntrants.map(e => {
-          const available = candidates.filter(id => id !== this.playerCarId);
-          return available[proCupHash(this.proTournament.id + e.id) % available.length];
-        })
-      : candidates.filter(id => id !== this.playerCarId).slice(0, 3);
-    while (this.aiCarIds.length < 3) this.aiCarIds.push('ae86');
+    this.aiCarIds = this.proDuel
+      ? (this.proDuelInfo ? [this.proDuelInfo.round.carId] : [])
+      : this.aiEntrants.length === 3
+        ? this.aiEntrants.map(e => {
+            const available = candidates.filter(id => id !== this.playerCarId);
+            return available[proCupHash(this.proTournament.id + e.id) % available.length];
+          })
+        : candidates.filter(id => id !== this.playerCarId).slice(0, 3);
+    if (!this.proDuel) while (this.aiCarIds.length < 3) this.aiCarIds.push('ae86');
   }
 
   preload() {
@@ -169,7 +179,7 @@ export default class FourLaneTestScene extends RaceScene {
     loadImage('nosButton', 'assets/Controls/nos_button.png');
     loadImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     loadImage('shifterDown', 'assets/Controls/shifter_down.png');
-    if (this.proCup) {
+    if (this.proCup || this.proDuel) {
       const visual = characters[this.registry.get('playerCharacterId')]?.visual;
       if (visual) {
         loadImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
@@ -205,6 +215,13 @@ export default class FourLaneTestScene extends RaceScene {
         this.returnToDrag();
         return;
       }
+    } else if (this.proDuel) {
+      const owned = this.registry.get('ownedCarIds') || [];
+      if (!this.proDuelInfo || !this.proDuelState?.active ||
+          !owned.includes(this.playerCarId)) {
+        this.returnToDrag();
+        return;
+      }
     } else if (!isArkonDen(this.registry)) {
       this.returnToDrag();
       return;
@@ -233,10 +250,14 @@ export default class FourLaneTestScene extends RaceScene {
     }];
     this.aiCarIds.forEach((id, index) => {
       const entrant = this.aiEntrants[index];
-      const rating = entrant ? Math.max(2, Math.min(5,
-        Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
-      const state = createRivalBuildState(cars[id], rating, {
-        seed: this.proCup ? this.proHeat.id + ':' + entrant.id : 'four-lane-dev:' + id + ':' + index,
+      const rivalRound = this.proDuel ? this.proDuelInfo.round : null;
+      const rating = rivalRound ? Number(rivalRound.encounterRating || 4)
+        : entrant ? Math.max(2, Math.min(5,
+            Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
+      const state = rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
+        seed: this.proCup ? this.proHeat.id + ':' + entrant.id
+          : this.proDuel ? 'pro-duel:' + this.proDuelInfo.roundIndex + ':' + id
+          : 'four-lane-dev:' + id + ':' + index,
         raceType: 'Standing Start',
       });
       const built = getBuiltCar(id, state) || getBuiltCar(id, {});
@@ -244,12 +265,14 @@ export default class FourLaneTestScene extends RaceScene {
       vehicle.transmission.currentGear = 1;
       vehicle.transmission.lastShiftQuality = 'STAGED';
       const skill = applyDifficultyToRivalAi(
-        boostAiForStandingStart(getEncounterAi(rating), rating),
+        boostAiForStandingStart(rivalRound?.encounterAi || getEncounterAi(rating), rating),
         difficulty, { rollingStart: false }
       );
       this.runners.push({
         id: entrant?.id || 'ai-' + (index + 1), lane: index + 2,
-        label: entrant ? entrant.name.toUpperCase().slice(0, 16) : 'RIVAL ' + (index + 1), carId: id,
+        label: rivalRound ? String(characters[rivalRound.characterId]?.name || 'RIVAL').toUpperCase().slice(0, 16)
+          : entrant ? entrant.name.toUpperCase().slice(0, 16)
+          : 'RIVAL ' + (index + 1), carId: id,
         carState: {}, carLabel: cars[id].shortName,
         vehicle, ai: new DragRacingAI(vehicle, skill, {
           rating, playerDifficulty: difficulty, rollingStart: false,
@@ -360,6 +383,7 @@ export default class FourLaneTestScene extends RaceScene {
 
     this.header = this.add.text(780, 22, this.proCup
       ? 'TOKYO FOUR-WIDE OPEN  //  ' + FOUR_WIDE_CUP.stageNames[this.proTournament.stage]
+      : this.proDuel ? 'PRO CUP // ROUND ' + this.proDuelInfo.roundNumber + '/3'
       : '4-LANE TEST', {
       fontFamily: PIXEL, fontSize: '10px', color: '#d7f4ff',
       backgroundColor: '#061019dd', padding: { x: 13, y: 6 },
@@ -367,6 +391,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.subheader = this.add.text(
       780, 113, this.proCup
         ? 'TOP TWO ADVANCE  //  1/4 MILE'
+        : this.proDuel ? 'WIN TO ADVANCE // 1/4 MILE'
         : 'FOUR LANES  //  NO STAKES', {
         fontFamily: PIXEL, fontSize: '8px', color: '#b0deeb',
         backgroundColor: '#07111dcc', padding: { x: 10, y: 5 },
@@ -374,7 +399,7 @@ export default class FourLaneTestScene extends RaceScene {
     ).setDepth(48).setOrigin(0.5).setScrollFactor(0);
 
     this.startButton = this.makeButton(780, 64, 245,
-      this.proCup ? 'START HEAT' : 'START 4-WIDE', 0x52dbd1,
+      this.proCup ? 'START HEAT' : this.proDuel ? 'START ROUND' : 'START 4-WIDE', 0x52dbd1,
       () => this.startFourLaneRace());
     this.exitButton = this.makeButton(150, 64, 215, 'BACK TO DRAG', 0xffa9b3,
       () => this.returnToDrag());
@@ -1089,6 +1114,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.renderTrack(dt);
     this.hud.update(livePlayer, this.falseStart ? 'RED LIGHT'
       : !this.raceStarted && this.proCup ? 'TOP TWO ADVANCE'
+      : !this.raceStarted && this.proDuel ? 'WIN TO ADVANCE'
       : !this.raceStarted ? 'TAP START TO STAGE'
       : '');
 
