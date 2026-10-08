@@ -906,6 +906,8 @@ export default class FourLaneTestScene extends RaceScene {
     this.zooming = true;
     this.startButton.bg.disableInteractive().setVisible(false);
     this.startButton.text.setVisible(false);
+    this.exitButton?.bg?.disableInteractive().setVisible(false);
+    this.exitButton?.text?.setVisible(false);
     this.configureZoomFocus();
     // All pre-race overlay copy fades away before green. Track, tree and HUD remain.
     this.tweens.add({
