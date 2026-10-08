@@ -5,7 +5,7 @@ import {
   FOUR_LANE_TEST_LANES, FOUR_LANE_TEST_DISTANCE_M,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCameraX, fourLaneCarX, fourLaneDashSafeYOffset,
-  rankFourLaneFinishers,
+  fourLaneTreeLights, rankFourLaneFinishers,
 } from '../src/data/fourLanePrototype.js';
 
 test('four staged cars have unique lanes, with two extra lanes above old top row', () => {
@@ -58,12 +58,19 @@ test('the four-wide scenery enlarges Shinjuku and bridges the two stands', () =>
   assert.match(src, /const SKYLINE_MIN_WORLD_HEIGHT = 730/);
   assert.match(src, /Math\.max\(SKYLINE_SCALE_UP,/);
   assert.match(src, /setDisplaySize\(this\.skylineWorldWidth, skylineHeight\)/);
-  assert.match(src, /if \(distanceM > 0\) imageKeys\.splice\(2, 0, imageKeys\[1\], imageKeys\[1\]\)/);
+  assert.match(src, /const FINISH_STAND_MIDDLES = 8/);
+  assert.match(src, /imageKeys\.splice\(1, 1, \.\.\.Array\(FINISH_STAND_MIDDLES\)\.fill\(imageKeys\[1\]\)\)/);
   assert.match(src, /const worldWidth = x \+ overlap/);
   assert.match(src, /this\.roadsideFence = this\.add\.graphics\(\)\.setDepth\(0\.8\)/);
   assert.match(src, /this\.drawRoadsideFence\(cameraTravel\)/);
   assert.match(src, /const FENCE_TOP_Y = 134/);
-  assert.match(src, /const FENCE_CONCRETE_HEIGHT = 42/);
+  assert.match(src, /const FENCE_CONCRETE_HEIGHT = 84/);
+  assert.match(src, /this\.startTree = this\.add\.graphics\(\)\.setDepth\(2\.5\)/);
+  assert.match(src, /this\.drawStartTree\(\)/);
+  assert.match(src, /const START_TREE_BASE_Y = ROAD_TOP_LINE_Y/);
+  assert.match(src, /const START_TREE_OFFSET_X = 78/);
+  assert.match(src, /const x = startX \+ START_TREE_OFFSET_X/);
+  assert.match(src, /const lamps = fourLaneTreeLights\(phase, this\.falseStart\)/);
   assert.match(src, /const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP/);
   assert.match(src, /const worldStart = start\.initialWorldX \+ start\.worldWidth - joinOverlap/);
   assert.match(src, /const worldEnd = finish\.initialWorldX/);
@@ -76,14 +83,39 @@ test('the four-wide scenery enlarges Shinjuku and bridges the two stands', () =>
   const roadTop = 130 + 150 + 12 + 26;
   const baseline = roadTop - 3;
   assert.equal(baseline, 315);
-  assert.equal(baseline - (baseline - 42), 42);
-  assert.ok((baseline - 42) - 134 >= 120);
+  assert.equal(baseline - (baseline - 84), 84);
+  assert.ok((baseline - 84) - 134 >= 90);
 
   // In the widest establishing view, even the MINIMUM enlarged panorama
   // covers the top edge of the 720px race frame.
   const previewRootY = 290 * (1 - 0.52);
   const skylineTop = previewRootY + 0.52 * (baseline - 730);
   assert.ok(skylineTop < 0);
+});
+
+test('physical drag tree follows the actual countdown and false starts', () => {
+  const preview = fourLaneTreeLights('PREVIEW');
+  const zoom = fourLaneTreeLights('ZOOM');
+  assert.deepEqual(preview.ambers, [false, false, false]);
+  assert.equal(preview.preStage, false);
+  assert.equal(zoom.preStage, false);
+  const first = fourLaneTreeLights('PRE-STAGE');
+  assert.equal(first.preStage, true);
+  assert.equal(first.stage, false);
+  const staged = fourLaneTreeLights('STAGE');
+  assert.equal(staged.stage, true);
+  assert.deepEqual(staged.ambers, [false, false, false]);
+  for (let i = 1; i <= 3; i++) {
+    const state = fourLaneTreeLights('AMBER ' + i);
+    assert.deepEqual(state.ambers, [1, 2, 3].map(n => n <= i));
+    assert.equal(state.green, false);
+  }
+  const green = fourLaneTreeLights('GREEN');
+  assert.equal(green.green, true);
+  assert.equal(green.red, false);
+  const red = fourLaneTreeLights('GREEN', true);
+  assert.equal(red.green, false);
+  assert.equal(red.red, true);
 });
 
 test('all four noses are perfectly lined up at zero distance despite different sprites', () => {
