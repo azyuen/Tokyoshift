@@ -1,7 +1,9 @@
 // Four-wide drag test helpers. No prizes, wins, or standings are written.
 export const FOUR_LANE_TEST_DISTANCE_M = 402.336;
 export const FOUR_LANE_TEST_PX_PER_M = 70;
-export const FOUR_LANE_TEST_ANCHOR_X = 525;
+// Shift staging toward the right to leave room for the control tower and crew.
+// Cars' noses remain aligned by fourLaneCarX; only presentation moves.
+export const FOUR_LANE_TEST_ANCHOR_X = 715;
 export const FOUR_LANE_TEST_LANES = Object.freeze([
   Object.freeze({ lane: 1, bodyY: 420, scale: 1.00, label: 'YOU' }),
   Object.freeze({ lane: 2, bodyY: 345, scale: 0.90, label: 'RIVAL 1' }),
