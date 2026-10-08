@@ -61,6 +61,12 @@ import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r2
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import {
+  getPinkSlipOpportunityChance,
+  isPinkSlipValueEligible,
+  rollPinkSlipOpportunity,
+  consumePinkSlipOpportunity,
+} from '../data/pinkSlipProgression.js?v=20261008-r430';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
@@ -2788,9 +2794,12 @@ export default class MeetScene extends Phaser.Scene {
         characters[offer.characterId] &&
         cars[offer.carId]
       );
-    const freshRoster = roster.filter(offer => !offer.resultState && !offer.locked);
+    const fairRoster = roster.filter(offer =>
+      isPinkSlipValueEligible(this.registry.get('selectedCarId'), offer.carId)
+    );
+    const freshRoster = fairRoster.filter(offer => !offer.resultState && !offer.locked);
     const sourceOffer = Phaser.Utils.Array.GetRandom(
-      freshRoster.length ? freshRoster : roster
+      freshRoster.length ? freshRoster : fairRoster
     );
     if (!sourceOffer) return null;
 
@@ -2857,30 +2866,15 @@ export default class MeetScene extends Phaser.Scene {
       this.registry.set('specialChallenger', null);
     }
 
-    let cooldown = Math.max(0, Number(this.registry.get('challengerCooldown') || 0));
-    let misses = Math.max(0, Number(this.registry.get('challengerMisses') || 0));
-
-    if (cooldown > 0) {
-      this.registry.set('challengerCooldown', cooldown - 1);
-      saveSessionState(this.registry);
-      return null;
-    }
-
-    // 24% base chance; each miss raises the odds. The fourth eligible refresh
-    // is guaranteed so the player can never go indefinitely without seeing one.
-    const chance = misses >= 3 ? 1 : 0.24 + misses * 0.12;
-    if (Phaser.Math.FloatBetween(0, 1) > chance) {
-      this.registry.set('challengerMisses', misses + 1);
-      saveSessionState(this.registry);
-      return null;
-    }
-
+    // Meet refreshes share the same cached race-based lottery as player
+    // requests and incoming rivals. Refreshing cannot improve the odds.
     const challenger = this.generateSpecialChallenger();
-    if (!challenger) return null;
+    if (!challenger || !rollPinkSlipOpportunity(this.registry)) return null;
+    if (!consumePinkSlipOpportunity(this.registry)) return null;
 
     this.registry.set('specialChallenger', challenger);
     this.registry.set('challengerMisses', 0);
-    this.registry.set('challengerCooldown', 2);
+    this.registry.set('challengerCooldown', 0);
     saveSessionState(this.registry);
     return challenger;
   }
@@ -4725,106 +4719,48 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   evaluatePinkSlipAcceptance(character, opponentCarId, encounter = {}) {
-    const rating = Phaser.Math.Clamp(
-      Number(encounter.encounterRating ?? character?.skill?.rating ?? 3),
-      1,
-      5
-    );
-    const encounterAi = encounter.encounterAi || getEncounterAi(rating);
-    const aggression = Phaser.Math.Clamp(
-      Number(encounterAi.aggression ?? character?.skill?.ai?.aggression ?? 0.76),
-      0.5,
-      1
-    );
+    if (!isPinkSlipValueEligible(this.registry.get('selectedCarId'), opponentCarId)) {
+      return {
+        accepted: false,
+        chance: 0,
+        reply: 'Not risking a car worth that much against yours.',
+      };
+    }
 
     const playerCarId = this.registry.get('selectedCarId') || 'ae86';
     const carStates = this.registry.get('carStates') || {};
     const playerState = carStates[playerCarId] || { tuneLevel: 0, nosInstalled: false };
     const raceType = encounter.raceType || 'Standing Start';
-
     const buildRating = Phaser.Math.Clamp(
-      Number(encounter.opponentBuildRating ?? encounter.encounterRating ?? 3),
-      1,
-      5
+      Number(encounter.opponentBuildRating ?? encounter.encounterRating ?? 3), 1, 5
     );
     const opponentState = encounter.opponentBuildState || createRivalBuildState(
-      cars[opponentCarId] || {},
-      buildRating,
-      {
-        raceType,
-        seed: 'pink-eval:' + opponentCarId + ':' + buildRating + ':' + raceType,
-      }
+      cars[opponentCarId] || {}, buildRating,
+      { raceType, seed: 'pink-eval:' + opponentCarId + ':' + buildRating + ':' + raceType }
     );
-
     const opponentPerformance = getVehiclePerformance(opponentCarId, opponentState, { raceType });
     const playerPerformance = getVehiclePerformance(playerCarId, playerState, { raceType });
-    const opponentStock = getVehiclePerformance(opponentCarId, {}, {});
-    const playerStock = getVehiclePerformance(playerCarId, {}, {});
+    const strengthRatio =
+      Number(playerPerformance?.index?.selected || 1) /
+      Math.max(1, Number(opponentPerformance?.index?.selected || 1));
 
-    const opponentThreat = Number(opponentPerformance?.index?.selected || 1);
-    const playerThreat = Number(playerPerformance?.index?.selected || 1);
-    const opponentCarValue = Number(opponentStock?.index?.overall || opponentThreat);
-    const playerCarValue = Number(playerStock?.index?.overall || playerThreat);
-    const strengthRatio = playerThreat / Math.max(1, opponentThreat);
-
-    const wins = Number(this.registry.get('wins') || 0);
-    const losses = Number(this.registry.get('losses') || 0);
-    const races = wins + losses;
-    const playerWinRate = races > 0 ? wins / races : 0.5;
-
-    const yesReplies = [
-      'All right. Keys for keys.',
-      'You\'re on. Pink slips.',
-      'Fine. Winner takes the car.',
-    ];
-    const noReplies = [
-      'No. Cash race only.',
-      'Not risking the car tonight.',
-      'Cash is enough.',
-      'Not for this matchup.',
-    ];
-
-    // Pink-slip acceptance can account for risk/reputation, but the opponent
-    // vehicle itself is never selected from player wins or progression.
     if (strengthRatio >= 1.18) {
       return {
         accepted: false,
         chance: 0,
-        reply: Phaser.Utils.Array.GetRandom([
-          'Not against that build.',
-          'No chance. Your car is in another league.',
-          'Cash race only. I know what that thing can do.',
-        ]),
+        reply: 'Cash race only. Your build is in another league.',
       };
     }
 
-    const advantage = opponentThreat - playerThreat;
-    const confidenceBonus = Phaser.Math.Clamp((advantage - 5) / 115, -0.05, 0.13);
-    const aggressionBonus = Phaser.Math.Clamp((aggression - 0.75) * 0.09, -0.025, 0.03);
-    const temptationBonus = Phaser.Math.Clamp((playerCarValue - opponentCarValue) / 220, 0, 0.04);
-    const riskPenalty = Phaser.Math.Clamp((opponentCarValue - playerCarValue) / 190, 0, 0.08);
-    const mismatchPenalty = Phaser.Math.Clamp((strengthRatio - 1.0) * 0.28, 0, 0.07);
-    const reputationPenalty = Phaser.Math.Clamp((playerWinRate - 0.55) * 0.12, 0, 0.05);
-
-    const baseChance = Number(encounter.pinkAcceptanceBase ?? 0.07);
-    const chance = Phaser.Math.Clamp(
-      baseChance
-        + confidenceBonus
-        + aggressionBonus
-        + temptationBonus
-        - riskPenalty
-        - mismatchPenalty
-        - reputationPenalty,
-      0,
-      0.26
-    );
-
-    const accepted = Phaser.Math.FloatBetween(0, 1) < chance;
-
+    // The shared completed-race roll replaces the old independent acceptance
+    // lottery. Clicking again or refreshing does not add a lottery ticket.
+    const accepted = encounter.opportunityGranted === true;
     return {
       accepted,
-      chance,
-      reply: Phaser.Utils.Array.GetRandom(accepted ? yesReplies : noReplies),
+      chance: getPinkSlipOpportunityChance(this.registry),
+      reply: Phaser.Utils.Array.GetRandom(accepted
+        ? ["All right. Keys for keys.", "You're on. Pink slips.", "Fine. Winner takes the car."]
+        : ['No. Cash race only.', 'Not risking the car tonight.', 'Cash is enough.']),
     };
   }
 
@@ -4915,7 +4851,11 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[offer.characterId];
     const location = getMeetLocation(this.selectedMeetLocation);
     const profile = getEncounterProfile(this.selectedMeetLocation, location.difficulty);
+    const opportunityGranted = isPinkSlipValueEligible(
+      this.registry.get('selectedCarId'), displayCarId
+    ) && rollPinkSlipOpportunity(this.registry);
     const pinkDecision = this.evaluatePinkSlipAcceptance(character, displayCarId, {
+      opportunityGranted,
       encounterRating: offer.encounterRating,
       encounterAi: offer.encounterAi,
       opponentBuildRating: offer.opponentBuildRating,
@@ -4929,6 +4869,9 @@ export default class MeetScene extends Phaser.Scene {
       Math.max(0, Number(this.registry.get('wins') || 0)) +
       Math.max(0, Number(this.registry.get('losses') || 0));
     this.registry.set('pinkSlipLastRequestRace', completedRaces);
+    if (pinkDecision.accepted && !consumePinkSlipOpportunity(this.registry)) {
+      pinkDecision.accepted = false;
+    }
 
     offer.pinkAccepted = pinkDecision.accepted;
     offer.pinkAcceptanceChance = pinkDecision.chance;
@@ -5365,11 +5308,16 @@ export default class MeetScene extends Phaser.Scene {
       !offer.incomingPinkPrompted &&
       !cars[this.registry.get('selectedCarId')]?.crewLoan &&
       this.getIncomingPinkSlipCooldownRaces() === 0 &&
-      Phaser.Math.FloatBetween(0, 1) < 0.14
+      !offer.pinkChallenged &&
+      isPinkSlipValueEligible(
+        this.registry.get('selectedCarId'),
+        this.getOfferDisplayCar(offer)?.carId || offer.carId
+      ) &&
+      rollPinkSlipOpportunity(this.registry)
     ) {
       const owned = this.registry.get('ownedCarIds') || [];
       const capacity = getGarageCapacity(this.registry.get('garageTier') || 0);
-      if (owned.length < capacity) {
+      if (owned.length < capacity && consumePinkSlipOpportunity(this.registry)) {
         offer.incomingPinkChallenge = true;
         offer.incomingPinkPrompted = true;
         const completedRaces =

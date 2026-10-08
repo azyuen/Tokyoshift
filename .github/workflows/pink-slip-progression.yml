@@ -1,0 +1,29 @@
+name: Pink-slip progression checks
+
+on:
+  pull_request:
+    paths:
+      - 'src/data/pinkSlipProgression.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/pinkSlipProgression.test.mjs'
+      - '.github/workflows/pink-slip-progression.yml'
+
+jobs:
+  pink-slips:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check src/data/pinkSlipProgression.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+          node --check tests/pinkSlipProgression.test.mjs
+      - name: Test pink-slip chance and eligibility
+        run: node --test tests/pinkSlipProgression.test.mjs

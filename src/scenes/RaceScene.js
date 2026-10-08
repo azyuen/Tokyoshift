@@ -28,6 +28,7 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
+import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261008-r430';
 import {
   characters,
   getCharacterAssetUrl,
@@ -3950,6 +3951,7 @@ export default class RaceScene extends Phaser.Scene {
     let acquiredCarId = null;
 
     if (this.raceDeal === 'PINK_SLIP') {
+      if (playerWon) recordPinkSlipVictory(this.registry);
       let pinkCarNewlyWon = false;
       let lostCrewMember = null;
       let ownedCarIds = [...(this.registry.get('ownedCarIds') || [])];
