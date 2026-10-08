@@ -2981,7 +2981,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawNavigation(
       'PRO DRAG RACING',
       circuitOpen
-        ? 'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
+        ? 'PRO CIRCUIT // DRIVER CUPS AND FOUR-WIDE TROPHY'
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
@@ -3165,7 +3165,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   enterFourWideCup() {
     const access = getProCircuitAccess(this.registry);
-    if (!access.unlocked || this.registry.get('competitionState')?.active) return;
+    if ((!access.unlocked && !isArkonDen(this.registry)) ||
+        this.registry.get('competitionState')?.active) return;
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const owned = this.registry.get('ownedCarIds') || [];
     const active = pro.activeTournament;
@@ -3195,92 +3196,108 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const cash = Number(this.registry.get('cash') || 0);
     const access = getProCircuitAccess(this.registry);
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
-    const eventUnlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
-    const activeProCup = Boolean(normaliseProCircuitState(
-      this.registry.get('proCircuit')).activeTournament);
-    const activeProDuel = Boolean(this.registry.get('competitionState')?.active);
+    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
+    const activeCup = pro.activeTournament;
+    const activeDuel = this.registry.get('competitionState')?.active &&
+      this.registry.get('competitionState')?.proEvent
+        ? this.registry.get('competitionState') : null;
+    const selectedFourWide = Boolean(event.fourWide);
+    const eventUnlocked = circuitOpen &&
+      (selectedFourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
     const power = Math.round(Number(build?.car?.powerKW || 0));
-    const passesPower = Boolean(build) && power <= event.maxPowerKW;
-    const passesNos = Boolean(build) && (!event.noNos || !build.nosInstalled);
-    const eligible = eventUnlocked && !activeProCup && !activeProDuel &&
+    const passesPower = selectedFourWide || Boolean(build) && power <= event.maxPowerKW;
+    const passesNos = selectedFourWide || Boolean(build) && (!event.noNos || !build.nosInstalled);
+    const owned = this.registry.get('ownedCarIds') || [];
+    const activeCupHere = selectedFourWide && activeCup?.eventId === FOUR_WIDE_CUP.id &&
+      Boolean(getPlayerProHeat(activeCup));
+    const activeDuelHere = !selectedFourWide && activeDuel &&
+      (!activeDuel.eventId || activeDuel.eventId === event.id);
+    const resuming = Boolean(activeCupHere || activeDuelHere);
+    const registeredCar = activeCupHere ? activeCup.carId : activeDuelHere ? activeDuel.playerCarId : null;
+    const canResume = circuitOpen && resuming && !(
+      selectedFourWide ? activeDuel : activeCup
+    ) && owned.includes(registeredCar);
+    const eligible = circuitOpen && eventUnlocked &&
+      !activeCup && !this.registry.get('competitionState')?.active &&
+      Boolean(build) && owned.includes(build.carId) &&
       passesPower && passesNos && cash >= event.entryFee;
+    const canEnter = canResume || eligible;
 
-    const y = SIDE.y + 326;
-
-    this.addContent(this.add.text(SIDE.x + 20, y, event.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '11px',
-      color: '#ffffff',
+    const title = selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
+    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 207, title, {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#f8f3f2',
     }).setDepth(34));
 
-    this.addContent(this.add.text(
-      SIDE.x + 20,
-      y + 48,
-      'ENTRY  ' + money(event.entryFee) + '\n' +
-      'PURSE  ' + money(event.prizeCash) + '\n' +
-      'FORMAT  3-RACE BRACKET\n' +
-      'POWER LIMIT  ' + event.maxPowerKW + ' kW\n' +
-      'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#a4b7c3',
-        fontStyle: '600',
-        lineSpacing: 6,
-      }
-    ).setDepth(34));
+    const desc = selectedFourWide
+      ? [
+          'TROPHY COMP // FOUR-WIDE',
+          '16 DRIVERS // FOUR CARS PER HEAT',
+          'QUALIFYING   4 HEATS',
+          'SEMIFINALS   2 HEATS',
+          'FINAL        1 HEAT',
+          'TOP TWO ADVANCE EACH HEAT',
+          '1ST ' + money(FOUR_WIDE_CUP.prizeCash[0]) +
+            ' // 2ND ' + money(FOUR_WIDE_CUP.prizeCash[1]),
+          '3RD ' + money(FOUR_WIDE_CUP.prizeCash[2]) +
+            ' // 4TH ' + money(FOUR_WIDE_CUP.prizeCash[3]),
+          'ENTRY  ' + money(event.entryFee),
+        ]
+      : [
+          'PRO COMP // DRIVER',
+          '3 ROUNDS // HEAD-TO-HEAD',
+          'WIN ALL THREE TO CLAIM PURSE',
+          'NO COMPETITION COOLDOWN',
+          'ENTRY  ' + money(event.entryFee),
+          'CHAMPION  ' + money(event.prizeCash),
+          'POWER LIMIT  ' + event.maxPowerKW + ' KW',
+          'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
+        ];
 
-    const status = activeProCup || activeProDuel
-      ? 'FINISH CURRENT PRO EVENT BEFORE ANOTHER ENTRY'
-      : !circuitOpen
-        ? 'PRO ENTRY LOCKED // RECRUIT CREW ' + access.crewCount + '/' + access.crewRequired
-      : !eventUnlocked
-        ? 'LOCKED // ' + event.requiredWins + ' WINS'
-      : !build
-        ? 'NO CAR SELECTED'
-        : !passesPower
-          ? 'OVER POWER LIMIT // ' + power + ' kW'
-          : !passesNos
-            ? 'REMOVE NOS'
-            : cash < event.entryFee
-              ? 'NOT ENOUGH CASH'
-              : 'SCRUTINEERING PASSED';
+    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 250, desc.join('\n'), {
+      fontFamily: BODY_FONT, fontSize: '11px', fontStyle: '700',
+      color: '#c4bec0', lineSpacing: 5,
+      wordWrap: { width: SIDE.w - 37 },
+    }).setDepth(34));
 
-    this.addContent(this.add.text(
-      SIDE.x + 20,
-      y + 210,
-      status,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: eligible ? '#62e8c7' : '#ff8d9b',
-        wordWrap: { width: SIDE.w - 40 },
-      }
-    ).setDepth(34));
+    const label = resuming
+      ? selectedFourWide
+        ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
+        : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
+      : activeCup || activeDuel || this.registry.get('competitionState')?.active
+        ? 'FINISH YOUR ACTIVE EVENT FIRST'
+        : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
+        : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
+        : !build ? 'SELECT A CAR FIRST'
+        : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
+        : !passesNos ? 'REMOVE NOS'
+        : cash < event.entryFee ? 'INSUFFICIENT CASH'
+        : 'SCRUTINEERING PASSED';
+    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 518, label, {
+      fontFamily: PIXEL_FONT, fontSize: '8px',
+      color: canEnter ? '#f1e7e6' : '#ea777d',
+      wordWrap: { width: SIDE.w - 40 },
+    }).setDepth(34));
 
     const enter = this.addContent(this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 590,
-      SIDE.w - 36,
-      48,
-      eligible ? 0x0d2b29 : 0x17181d,
-      1
-    ).setStrokeStyle(2, eligible ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
+      SIDE.x + SIDE.w / 2, SIDE.y + 590, SIDE.w - 36, 48,
+      canEnter ? 0x551d25 : 0x201d20, 1
+    ).setStrokeStyle(2, canEnter ? 0xed515c : 0x575154, 1).setDepth(33));
+    const actionText = canResume
+      ? selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
+      : eligible ? 'ENTER EVENT // ' + money(event.entryFee) : 'NOT ELIGIBLE';
+    this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 590, actionText, {
+      fontFamily: PIXEL_FONT, fontSize: '8px',
+      color: canEnter ? '#fff6f5' : '#938a8d',
+    }).setOrigin(0.5).setDepth(34));
 
-    this.addContent(this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 590,
-      eligible ? 'ENTER BRACKET // ' + money(event.entryFee) : 'NOT ELIGIBLE',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: eligible ? '#f1fffb' : '#817d84',
-      }
-    ).setOrigin(0.5).setDepth(34));
-
-    if (eligible) {
+    if (canEnter) {
       enter.setInteractive({ useHandCursor: true });
-      enter.on('pointerdown', () => this.startProBracket(event, build));
+      enter.on('pointerdown', () => {
+        if (activeCupHere) this.enterFourWideCup();
+        else if (activeDuelHere) this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+        else if (selectedFourWide) this.enterFourWideCup();
+        else this.startProBracket(event, build);
+      });
     }
   }
 
@@ -3443,6 +3460,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const state = {
       active: true,
       proEvent: true,
+      eventId: event.id,
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
       difficulty: 'ELITE',
