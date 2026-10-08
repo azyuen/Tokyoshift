@@ -308,7 +308,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.contentObjects = [];
     this.selectedIndex = 0;
-    this.selectedEventIndex = 0;
+    if (kind !== 'proDrag') this.selectedEventIndex = 0;
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
     this.autoMarketTransitioning = false;
@@ -804,7 +804,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     mapButton.on('pointerdown', () => this.openMap());
 
-    if (isArkonDen(this.registry)) {
+    if (isArkonDen(this.registry) &&
+        LOCATION_BY_ID[this.activeLocationId]?.kind !== 'proDrag') {
       const location = LOCATION_BY_ID[this.activeLocationId];
       const kind = location?.kind || 'autoMarket';
       // Dev refresh stays near the header so GO TO MAP remains the bottom-most action.
@@ -2961,11 +2962,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   getProDragEvents() {
-    const events = [...PRO_DRAG_EVENTS];
-    if (!events.length) return events;
-
-    const offset = Number(this.devCentralRefreshOffsets?.proDrag || 0) % events.length;
-    return [...events.slice(offset), ...events.slice(0, offset)];
+    // Fixed event slots; future Phase 3 season scheduling can replace these.
+    return [
+      PRO_DRAG_EVENTS[0],
+      PRO_DRAG_EVENTS[1],
+      {
+        id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN',
+        subtitle: 'TROPHY COMP', entryFee: FOUR_WIDE_CUP.entryFee,
+        prizeCash: FOUR_WIDE_CUP.prizeCash[0], fourWide: true,
+        requiredWins: 0,
+      },
+    ];
   }
 
   drawDragComplex() {
@@ -2978,41 +2985,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
-    // Four-wide is a visual/physics sandbox, not a tournament or saved race.
-    // Keep its entry isolated to Arkon Den in the upper-right Drag sidebar.
+    // Dev-only refresh is in the venue pane, never the sidebar.
     if (isArkonDen(this.registry)) {
-      const testX = SIDE.x + SIDE.w / 2;
-      const testY = SIDE.y + 124;
-      const testButton = this.addContent(this.add.rectangle(
-        testX, testY, SIDE.w - 36, 39, 0x113039, 1
-      ).setStrokeStyle(2, 0x66f1ff, 1)
-        .setDepth(36)
-        .setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(testX, testY, '4-LANE TEST', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#e9fdff',
-      }).setOrigin(0.5).setDepth(37));
-      testButton.on('pointerdown', () => {
-        if (!isArkonDen(this.registry)) return;
-        this.scene.start('FourLaneTestScene');
-      });
-    }
-
-    const pendingDuel = this.registry.get('competitionState');
-    if (pendingDuel?.active && pendingDuel?.proEvent) {
-      const resume = this.addContent(this.add.rectangle(
-        SIDE.x + SIDE.w / 2, SIDE.y + 188, SIDE.w - 36, 41,
-        0x13343e, 1
-      ).setStrokeStyle(2, 0x7bdadf, 1)
-        .setDepth(36).setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 188,
-        'RESUME PRO CUP // ROUND ' + (Number(pendingDuel.roundIndex || 0) + 1),
-        { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e8fcff' }
-      ).setOrigin(0.5).setDepth(37));
-      resume.on('pointerdown', () =>
-        this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' })
-      );
+      const x = STAGE.x + STAGE.w - 135, y = STAGE.y + 19;
+      const dev = this.addContent(this.add.rectangle(
+        x, y, 250, 30, 0x211317, 0.96
+      ).setStrokeStyle(1, 0xbf444b, 1)
+        .setDepth(29).setInteractive({ useHandCursor: true }));
+      this.addContent(this.add.text(x, y, 'DEV // REFRESH LINEUP', {
+        fontFamily: PIXEL_FONT, fontSize: '7px', color: '#f1e6e7',
+      }).setOrigin(0.5).setDepth(30));
+      dev.on('pointerdown', () => this.devRefreshCentralLocation());
     }
 
     if (!circuitOpen) {
@@ -3059,7 +3042,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
-    this.drawFourWideCupEntry(circuitOpen, build);
     const selectedCar = build ? cars[build.carId] : null;
 
     if (selectedCar) {
@@ -3119,7 +3101,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       { characterId: dragStaff.manager, x: STAGE.x + STAGE.w - 68, feetY: STAGE.y + 505, height: 216, flip: true, depth: 21 },
     ].forEach(config => this.addVenueCharacter({ ...config, pose: 'normal' }));
 
-    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'EVENTS // TOKYO DRAG COMPLEX', {
+    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'PRO CIRCUIT // EVENT SELECTION', {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
       color: '#8fe7ff',
@@ -3135,29 +3117,29 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const x = CARDS.x + 190 + index * 365;
       const selected = index === this.selectedEventIndex;
       const wins = Number(this.registry.get('wins') || 0);
-      const unlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
+      const unlocked = circuitOpen && (event.fourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
 
       const box = this.addContent(this.add.rectangle(
         x,
         CARDS.y + 104,
         340,
         116,
-        selected ? 0x123047 : 0x0b1724,
+        selected ? 0x36181d : 0x141317,
         1
-      ).setStrokeStyle(selected ? 2 : 1, selected ? 0x43dfff : 0x315470, 1)
+      ).setStrokeStyle(selected ? 2 : 1, selected ? 0xd74750 : 0x665f62, 1)
         .setInteractive({ useHandCursor: true })
         .setDepth(32));
 
       this.addContent(this.add.text(x - 145, CARDS.y + 68, event.label, {
         fontFamily: PIXEL_FONT,
         fontSize: '8px',
-        color: unlocked ? '#ffffff' : '#667780',
+        color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.subtitle + ' // 3 ROUNDS', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.fourWide ? 'TROPHY COMP // 4-WIDE' : 'PRO COMP // DRIVER', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
-        color: unlocked ? '#91a9b8' : '#5b6971',
+        color: unlocked ? '#d9cacb' : '#7f7377',
         fontStyle: '600',
       }).setDepth(34));
 
@@ -3168,7 +3150,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
-          color: unlocked ? '#ffe08a' : '#817d84',
+          color: unlocked ? '#f2dadc' : '#817d84',
         }
       ).setOrigin(1, 0.5).setDepth(34));
 
@@ -3179,46 +3161,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
 
     this.drawDragSide(events[this.selectedEventIndex], build);
-  }
-
-  drawFourWideCupEntry(circuitOpen, build) {
-    const state = normaliseProCircuitState(this.registry.get('proCircuit'));
-    const active = state.activeTournament;
-    const hasActive = active?.eventId === FOUR_WIDE_CUP.id && Boolean(getPlayerProHeat(active));
-    const owned = this.registry.get('ownedCarIds') || [];
-    const selectedCarId = build?.carId || null;
-    const canRace = circuitOpen && !this.registry.get('competitionState')?.active &&
-      (hasActive
-        ? owned.includes(active.carId)
-        : Boolean(build && selectedCarId && owned.includes(selectedCarId) &&
-          Number(this.registry.get('cash') || 0) >= FOUR_WIDE_CUP.entryFee));
-    const x = SIDE.x + SIDE.w / 2, y = SIDE.y + 251;
-    const button = this.addContent(this.add.rectangle(x, y, SIDE.w - 36, 45,
-      canRace ? 0x0e3434 : 0x171c23, 1
-    ).setStrokeStyle(2, canRace ? 0x5fe7dc : 0x596778, 1).setDepth(35));
-    const label = !circuitOpen ? 'RECRUIT 7 CREW MEMBERS' :
-      hasActive ? 'RESUME FOUR-WIDE OPEN' :
-        active ? 'TOURNAMENT IN PROGRESS' :
-          !canRace ? 'FOUR-WIDE // NOT ELIGIBLE' :
-            'ENTER FOUR-WIDE OPEN';
-    this.addContent(this.add.text(x, y, label, {
-      fontFamily: PIXEL_FONT, fontSize: '8px',
-      color: canRace ? '#eafff9' : '#8995a0',
-    }).setOrigin(0.5).setDepth(36));
-    const rank = getProCircuitDriverSeeds(state)
-      .find(item => item.id === 'player:driver')?.seed || 32;
-    this.addContent(this.add.text(x, SIDE.y + 288,
-      (hasActive ? 'CUP ' + ['QUALIFYING','SEMIFINAL','FINAL'][active.stage] +
-        ' // REGISTERED ' + (cars[active.carId]?.shortName || active.carId)
-        : '16 RACERS / TOP TWO ADVANCE / ENTRY ' + money(FOUR_WIDE_CUP.entryFee)) +
-      ' // RANK #' + rank, {
-        fontFamily: BODY_FONT, fontSize: '8px',
-        color: '#afc9d1', wordWrap: { width: SIDE.w - 40 }, align: 'center',
-      }).setOrigin(0.5).setDepth(36));
-    if (canRace) {
-      button.setInteractive({ useHandCursor: true });
-      button.on('pointerdown', () => this.enterFourWideCup());
-    }
   }
 
   enterFourWideCup() {
@@ -3445,6 +3387,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const rotation = migrated.length
       ? (
           Number(this.registry.get('wins') || 0) +
+          Number(this.devCentralRefreshOffsets?.proDrag || 0) +
           Math.max(0, PRO_DRAG_EVENTS.findIndex(item => item.id === event.id))
         ) % migrated.length
       : 0;
