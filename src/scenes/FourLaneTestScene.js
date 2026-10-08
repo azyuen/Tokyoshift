@@ -1053,10 +1053,6 @@ export default class FourLaneTestScene extends RaceScene {
     if (!this.runners || this.resultsShown) return;
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     this.raceClock += dt;
-    if (!this.proCup && Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) {
-      this.scene.restart();
-      return;
-    }
     const control = this.controls.update();
     const gearRequest = this.controls.consumeGearRequest();
     if (gearRequest != null && !this.finished) this.handleGearRequest(gearRequest);
@@ -1527,104 +1523,9 @@ export default class FourLaneTestScene extends RaceScene {
         }
       }
     }
-    if (this.proCup || this.proDuel) {
-      this.showProfessionalMangaResult(standings, outcome);
-      return;
-    }
-    this.add.rectangle(780, 345, 1050, 552, 0x06121e, 0.985)
-      .setStrokeStyle(3, 0x62d7ed).setDepth(95).setScrollFactor(0);
-    const resultHeading = this.proCup
-      ? outcome?.status === 'ADVANCED' ? 'QUALIFIED'
-        : outcome?.summary?.stagesCompleted === 3
-          ? ['CHAMPION', 'RUNNER-UP', 'PODIUM FINISH', 'FOURTH PLACE'][
-              Math.max(0, Math.min(3, outcome.summary.placing - 1))
-            ]
-          : outcome?.status === 'ERROR' ? 'HEAT FINISHED'
-          : 'ELIMINATED'
-      : own?.placing === 1 ? 'VICTORY' : 'RACE COMPLETE';
-    const finishTitle = this.add.text(780, 109, resultHeading, {
-      fontFamily: '"Exo 2", sans-serif', fontStyle: '900 italic',
-      fontSize: '44px', color: outcome?.status === 'ADVANCED' ? '#88f4df' : '#edfbff',
-      stroke: '#030c18', strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(96).setScrollFactor(0)
-      .setAlpha(0).setScale(0.78);
-    this.tweens.add({
-      targets: finishTitle, alpha: 1, scaleX: 1, scaleY: 1,
-      duration: 290, ease: 'Back.Out',
-    });
-    this.add.text(780, 154,
-      this.proCup ? (
-        outcome?.status === 'ADVANCED'
-          ? 'FINISHED ' + (own?.placing || 4) + '/4  //  ADVANCED'
-          : outcome?.status === 'COMPLETE'
-            ? 'FINISHED ' + (own?.placing || 4) + '/4  //  TOURNAMENT COMPLETE'
-            : 'RESULT NOT SAVED // RETURN AND RETRY'
-      ) : 'FINISHED ' + (own?.placing || 4) + '/4  //  PRACTICE', {
-        fontFamily: PIXEL, fontSize: '11px', color: '#a3e5ec',
-      }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
-    if (this.proCup) {
-      const visual = characters[this.registry.get('playerCharacterId')]?.visual;
-      const key = this.textures.exists(visual?.winSpriteKey)
-        ? visual.winSpriteKey : visual?.spriteKey;
-      if (key && this.textures.exists(key)) {
-        const portrait = this.add.image(415, 328, key).setDepth(97).setScrollFactor(0);
-        const image = this.textures.get(key).getSourceImage();
-        portrait.setScale(Math.min(225 / image.width, 253 / image.height));
-      }
-      if (outcome?.summary) {
-        const last = outcome.summary;
-        const capsule = this.add.rectangle(412, 472, 318, 64, 0x142e40, 0.97)
-          .setStrokeStyle(2, 0x70def0, 1).setDepth(98).setScrollFactor(0)
-          .setScale(0.06, 1);
-        const rankLabel = this.add.text(412, 472, 'PRO RANK #' + last.rankBefore, {
-          fontFamily: PIXEL, fontSize: '13px', color: '#bcf6ff',
-        }).setOrigin(0.5).setDepth(99).setScrollFactor(0).setVisible(false);
-        this.tweens.add({
-          targets: capsule, scaleX: 1, duration: 750, ease: 'Cubic.Out',
-        });
-        this.tweens.addCounter({
-          from: last.rankBefore, to: last.rankAfter, duration: 1100,
-          ease: 'Cubic.Out',
-          onUpdate: tween => rankLabel.setText('PRO RANK #' + Math.round(tween.getValue())),
-          onStart: () => rankLabel.setVisible(true),
-        });
-      }
-    }
-    standings.forEach((row, i) => {
-      const y = 215 + i * 64;
-      const mine = row.id === (this.proCup ? 'player:driver' : 'player');
-      this.add.rectangle(this.proCup ? 1005 : 780, y,
-        this.proCup ? 720 : 865, 52, mine ? 0x154051 : 0x122433, 1)
-        .setStrokeStyle(1, mine ? 0x79e6ff : 0x395362)
-        .setDepth(96).setScrollFactor(0);
-      this.add.text(this.proCup ? 675 : 410, y, String(row.placing) + '  LANE ' + row.lane, {
-        fontFamily: PIXEL, fontSize: '10px', color: mine ? '#91efff' : '#ffffff',
-      }).setOrigin(0, 0.5).setDepth(97).setScrollFactor(0);
-      this.add.text(this.proCup ? 855 : 680, y, row.label + '  //  ' + row.carLabel, {
-        fontFamily: BODY, fontSize: '15px', color: '#edfaff', fontStyle: '700',
-      }).setOrigin(0, 0.5).setDepth(97).setScrollFactor(0);
-      this.add.text(this.proCup ? 1340 : 1190, y,
-        row.status === 'FINISHED' ? row.finishSeconds.toFixed(3) + 's' : row.status, {
-          fontFamily: PIXEL, fontSize: '10px',
-          color: row.status === 'FINISHED' ? '#85e5b3' : '#ff93a2',
-        }).setOrigin(1, 0.5).setDepth(97).setScrollFactor(0);
-    });
-    if (this.proCup && outcome?.status === 'COMPLETE' && outcome.summary) {
-      const last = outcome.summary;
-      this.add.text(1010, 484,
-        'EVENT #' + last.placing + ' // +' + last.cashPrize.toLocaleString('en-US') + ' YEN', {
-          fontFamily: PIXEL, fontSize: '10px', color: '#95e6b5',
-        }).setOrigin(0.5).setDepth(98).setScrollFactor(0);
-    }
-    if (this.proCup && outcome?.status === 'ADVANCED') {
-      this.makeButton(625, 532, 290, 'NEXT HEAT', 0x70dcca,
-        () => this.scene.restart({ mode: 'PRO_CUP' }));
-    } else if (!this.proCup) {
-      this.makeButton(625, 532, 290, 'RETRY 4-WIDE', 0x70dcca,
-        () => this.scene.restart());
-    }
-    this.makeButton(this.proCup && outcome?.status !== 'ADVANCED' ? 780 : 970,
-      532, 310, 'RETURN TO DRAG', 0xffcf9b, () => this.returnToDrag());
+    // Only registered professional races can reach results. The retired
+    // standalone test's opaque popup and Retry button no longer exist.
+    this.showProfessionalMangaResult(standings, outcome);
   }
 
   returnToDrag() {
