@@ -298,7 +298,8 @@ export default class FourLaneTestScene extends RaceScene {
     let firstAiTelemetry = null;
     const inPreview = !this.raceStarted || this.zooming;
     this.runners.forEach((runner, index) => {
-      if (runner.finishSeconds != null) return;
+      // Let finished cars keep rolling past the line while others finish;
+      // only their official crossing time is frozen.
       let state;
       if (index === 0) {
         // Staged cars cannot creep before the test begins; after START, a
@@ -318,7 +319,7 @@ export default class FourLaneTestScene extends RaceScene {
         runner.disqualified = true;
         this.falseStart = true;
       }
-      if (this.greenClock != null &&
+      if (this.greenClock != null && runner.finishSeconds == null &&
           runner.vehicle.positionM >= FOUR_LANE_TEST_DISTANCE_M) {
         // Interpolate across the crossing within the frame for fair placings.
         const speed = Math.max(0.1, telemetry.speedMps || 0.1);
