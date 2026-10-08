@@ -2546,6 +2546,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Registered professional tournament cars cannot be sold mid-event.
     if (normaliseProCircuitState(this.registry.get('proCircuit'))
       .activeTournament?.carId === carId) return;
+    const proDuel = this.registry.get('competitionState');
+    if (proDuel?.active && proDuel?.proEvent && proDuel.playerCarId === carId) return;
     const owned = [...(this.registry.get('ownedCarIds') || [])];
     const starterCarId = this.registry.get('starterCarId');
     if (!owned.includes(carId)) return;
@@ -2997,6 +2999,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
 
+    const pendingDuel = this.registry.get('competitionState');
+    if (pendingDuel?.active && pendingDuel?.proEvent) {
+      const resume = this.addContent(this.add.rectangle(
+        SIDE.x + SIDE.w / 2, SIDE.y + 188, SIDE.w - 36, 41,
+        0x13343e, 1
+      ).setStrokeStyle(2, 0x7bdadf, 1)
+        .setDepth(36).setInteractive({ useHandCursor: true }));
+      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 188,
+        'RESUME PRO CUP // ROUND ' + (Number(pendingDuel.roundIndex || 0) + 1),
+        { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e8fcff' }
+      ).setOrigin(0.5).setDepth(37));
+      resume.on('pointerdown', () =>
+        this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' })
+      );
+    }
+
     if (!circuitOpen) {
       this.addContent(this.add.text(
         STAGE.x + STAGE.w / 2,
@@ -3238,10 +3256,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const eventUnlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
     const activeProCup = Boolean(normaliseProCircuitState(
       this.registry.get('proCircuit')).activeTournament);
+    const activeProDuel = Boolean(this.registry.get('competitionState')?.active);
     const power = Math.round(Number(build?.car?.powerKW || 0));
     const passesPower = Boolean(build) && power <= event.maxPowerKW;
     const passesNos = Boolean(build) && (!event.noNos || !build.nosInstalled);
-    const eligible = eventUnlocked && !activeProCup && passesPower && passesNos && cash >= event.entryFee;
+    const eligible = eventUnlocked && !activeProCup && !activeProDuel &&
+      passesPower && passesNos && cash >= event.entryFee;
 
     const y = SIDE.y + 326;
 
@@ -3268,7 +3288,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     ).setDepth(34));
 
-    const status = activeProCup ? 'FINISH FOUR-WIDE CUP BEFORE ANOTHER EVENT'
+    const status = activeProCup || activeProDuel
+      ? 'FINISH CURRENT PRO EVENT BEFORE ANOTHER ENTRY'
       : !circuitOpen
         ? 'PRO ENTRY LOCKED // RECRUIT CREW ' + access.crewCount + '/' + access.crewRequired
       : !eventUnlocked
@@ -3514,6 +3535,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', 'TOKYO DRAG COMPLEX');
     saveSessionState(this.registry);
 
-    this.scene.start('RaceScene');
+    // The 3-entry-level events race in the exact same professional venue as
+    // Four-Wide Open, with only the two nearest cars/lanes occupied.
+    this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
   }
 }

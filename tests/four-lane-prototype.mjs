@@ -272,6 +272,10 @@ test('dev-only sandbox does not mutate career economy or write race settlement',
   // the Arkon Den free tester must retain no economy or record changes.
   assert.match(sceneSource, /if \(this\.proCup\) \{\s+try \{\s+outcome = settleFourWideHeat/);
   assert.match(sceneSource, /if \(outcome\.status === 'ADVANCED'/);
-  assert.doesNotMatch(sceneSource, /registry\.set\(['"](?:wins|losses|competitionWins|competitionState)['"]/);
+  // Career writes exist ONLY for the paid, legacy two-lane cup path.
+  // Free Arkon Den sandbox retains its own result branch without settlement.
+  assert.match(sceneSource, /else if \(this\.proDuel\) \{/);
+  assert.match(sceneSource, /this\.registry\.set\('competitionWins'/);
+  assert.doesNotMatch(sceneSource, /registry\.set\(['"](?:wins|losses)['"]/);
   assert.doesNotMatch(sceneSource, /raceSettlement/);
 });
