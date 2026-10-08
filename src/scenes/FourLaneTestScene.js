@@ -27,6 +27,11 @@ import {
 import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { isArkonDen } from '../data/centralTokyo.js?v=20261006-r388';
+import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
+import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
+import {
+  FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
+} from '../data/proTournament.js?v=20261008-r443';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
@@ -126,12 +131,26 @@ export default class FourLaneTestScene extends RaceScene {
     super('FourLaneTestScene');
   }
 
-  init() {
-    const selected = this.registry.get('selectedCarId');
+  init(data = {}) {
+    this.proCup = data.mode === 'PRO_CUP';
+    const circuit = this.registry.get('proCircuit') || {};
+    this.proTournament = this.proCup ? circuit.activeTournament : null;
+    this.proHeat = this.proCup ? getPlayerProHeat(this.proTournament) : null;
+    const selected = this.proCup ? this.proTournament?.carId : this.registry.get('selectedCarId');
     this.playerCarId = cars[selected] ? selected : 'ae86';
-    // Fixed, recognisable JDM test opponents; no effect on persistent racers.
-    const candidates = ['evo6', 'r34', 'rx7fd', 's2000', 'r32', 'jza80'];
-    this.aiCarIds = candidates.filter(id => cars[id] && id !== this.playerCarId).slice(0, 3);
+    const candidates = ['evo6', 'r34', 'rx7fd', 's2000', 'r32', 'jza80']
+      .filter(id => Boolean(cars[id]));
+    this.aiEntrants = this.proHeat
+      ? this.proHeat.entrants
+        .filter(id => id !== 'player:driver')
+        .map(id => this.proTournament.entrants.find(r => r.id === id))
+      : [];
+    this.aiCarIds = this.aiEntrants.length === 3
+      ? this.aiEntrants.map(e => {
+          const available = candidates.filter(id => id !== this.playerCarId);
+          return available[proCupHash(this.proTournament.id + e.id) % available.length];
+        })
+      : candidates.filter(id => id !== this.playerCarId).slice(0, 3);
     while (this.aiCarIds.length < 3) this.aiCarIds.push('ae86');
   }
 
@@ -168,7 +187,16 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   create() {
-    if (!isArkonDen(this.registry)) {
+    const access = getProCircuitAccess(this.registry);
+    if (this.proCup) {
+      const owned = this.registry.get('ownedCarIds') || [];
+      if (!access.unlocked || !this.proHeat ||
+          !owned.includes(this.playerCarId) ||
+          this.registry.get('competitionState')?.active) {
+        this.returnToDrag();
+        return;
+      }
+    } else if (!isArkonDen(this.registry)) {
       this.returnToDrag();
       return;
     }
@@ -195,9 +223,12 @@ export default class FourLaneTestScene extends RaceScene {
       disqualified: false,
     }];
     this.aiCarIds.forEach((id, index) => {
-      const rating = index === 2 ? 5 : 4;
+      const entrant = this.aiEntrants[index];
+      const rating = entrant ? Math.max(2, Math.min(5,
+        Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
       const state = createRivalBuildState(cars[id], rating, {
-        seed: 'four-lane-dev:' + id + ':' + index, raceType: 'Standing Start',
+        seed: this.proCup ? this.proHeat.id + ':' + entrant.id : 'four-lane-dev:' + id + ':' + index,
+        raceType: 'Standing Start',
       });
       const built = getBuiltCar(id, state) || getBuiltCar(id, {});
       const vehicle = new Vehicle(built.car, built.engine);
@@ -208,8 +239,8 @@ export default class FourLaneTestScene extends RaceScene {
         difficulty, { rollingStart: false }
       );
       this.runners.push({
-        id: 'ai-' + (index + 1), lane: index + 2,
-        label: 'RIVAL ' + (index + 1), carId: id,
+        id: entrant?.id || 'ai-' + (index + 1), lane: index + 2,
+        label: entrant ? entrant.name.toUpperCase().slice(0, 16) : 'RIVAL ' + (index + 1), carId: id,
         carState: {}, carLabel: cars[id].shortName,
         vehicle, ai: new DragRacingAI(vehicle, skill, {
           rating, playerDifficulty: difficulty, rollingStart: false,
@@ -316,20 +347,25 @@ export default class FourLaneTestScene extends RaceScene {
     this.firstFinishClock = null;
     this.cameraPx = fourLaneCameraX(0);
 
-    this.header = this.add.text(780, 22, 'TOKYO DRAG COMPLEX // FOUR-WIDE DEV TEST', {
+    this.header = this.add.text(780, 22, this.proCup
+      ? 'TOKYO FOUR-WIDE OPEN  //  ' + FOUR_WIDE_CUP.stageNames[this.proTournament.stage]
+      : '4-LANE TEST', {
       fontFamily: PIXEL, fontSize: '10px', color: '#d7f4ff',
       backgroundColor: '#061019dd', padding: { x: 13, y: 6 },
     }).setDepth(48).setOrigin(0.5).setScrollFactor(0);
     this.subheader = this.add.text(
-      780, 113, '4 LANES  //  QUARTER MILE  //  NO FEES OR CAREER RESULTS', {
+      780, 113, this.proCup
+        ? 'TOP TWO ADVANCE  //  1/4 MILE'
+        : 'FOUR LANES  //  NO STAKES', {
         fontFamily: PIXEL, fontSize: '8px', color: '#b0deeb',
         backgroundColor: '#07111dcc', padding: { x: 10, y: 5 },
       }
     ).setDepth(48).setOrigin(0.5).setScrollFactor(0);
 
-    this.startButton = this.makeButton(780, 64, 245, 'START 4-WIDE', 0x52dbd1,
+    this.startButton = this.makeButton(780, 64, 245,
+      this.proCup ? 'START HEAT' : 'START 4-WIDE', 0x52dbd1,
       () => this.startFourLaneRace());
-    this.exitButton = this.makeButton(150, 64, 215, 'RETURN TO DRAG', 0xffa9b3,
+    this.exitButton = this.makeButton(150, 64, 215, 'BACK TO DRAG', 0xffa9b3,
       () => this.returnToDrag());
 
     this.renderTrack(0);
@@ -863,6 +899,11 @@ export default class FourLaneTestScene extends RaceScene {
     this.startButton.bg.disableInteractive().setVisible(false);
     this.startButton.text.setVisible(false);
     this.configureZoomFocus();
+    // All pre-race overlay copy fades away before green. Track, tree and HUD remain.
+    this.tweens.add({
+      targets: [this.header, this.subheader],
+      alpha: 0, delay: 550, duration: 450,
+    });
     this.tweens.addCounter({
       from: PREVIEW_ZOOM, to: 1, duration: 1250, ease: 'Sine.InOut',
       onUpdate: tween => this.setTrackZoom(tween.getValue()),
@@ -892,7 +933,7 @@ export default class FourLaneTestScene extends RaceScene {
     if (!this.runners || this.resultsShown) return;
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     this.raceClock += dt;
-    if (Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) {
+    if (!this.proCup && Phaser.Input.Keyboard.JustDown(this.controls.keys.restart)) {
       this.scene.restart();
       return;
     }
@@ -953,11 +994,10 @@ export default class FourLaneTestScene extends RaceScene {
     const livePlayer = playerTelemetry || this.runners[0].lastTelemetry ||
       this.runners[0].vehicle.telemetry;
     this.renderTrack(dt);
-    this.hud.update(livePlayer, this.falseStart ? 'RED LIGHT // DISQUALIFIED'
-      : this.zooming ? 'FOUR-LANE TRACK // CLOSING IN'
-      : !this.raceStarted ? 'WIDE VIEW // TAP START 4-WIDE'
-      : this.greenClock != null ? 'FOUR-WIDE // QUARTER MILE'
-      : 'STAGED // WAIT FOR GREEN');
+    this.hud.update(livePlayer, this.falseStart ? 'RED LIGHT'
+      : !this.raceStarted && this.proCup ? 'TOP TWO ADVANCE'
+      : !this.raceStarted ? 'TAP START TO STAGE'
+      : '');
 
     if (this.greenClock != null && !this.finished) {
       const allDone = this.runners.every(r => r.finishSeconds != null);
@@ -1100,19 +1140,45 @@ export default class FourLaneTestScene extends RaceScene {
     this.controls.enabled = false;
     this.engineAudio?.fadeOut?.();
     const standings = rankFourLaneFinishers(this.runners);
-    const own = standings.find(r => r.id === 'player');
+    const own = standings.find(r => r.id === (this.proCup ? 'player:driver' : 'player'));
+    let outcome = null;
+    if (this.proCup) {
+      outcome = settleFourWideHeat(
+        this.registry.get('proCircuit'),
+        this.runners.map(r => ({
+          id: r.id, finishSeconds: r.finishSeconds,
+          disqualified: r.disqualified,
+        })),
+        this.proHeat.id
+      );
+      if (outcome.status === 'ADVANCED' || (outcome.status === 'COMPLETE' && outcome.settled)) {
+        this.registry.set('proCircuit', outcome.circuit);
+        if (outcome.cashPrize > 0) {
+          this.registry.set('cash', Number(this.registry.get('cash') || 0) + outcome.cashPrize);
+        }
+        saveSessionState(this.registry);
+      }
+    }
     this.add.rectangle(780, 345, 1050, 552, 0x06121e, 0.985)
       .setStrokeStyle(3, 0x62d7ed).setDepth(95).setScrollFactor(0);
-    this.add.text(780, 110, 'FOUR-WIDE TEST // OFFICIAL RESULTS', {
+    this.add.text(780, 110, this.proCup
+      ? FOUR_WIDE_CUP.label + ' // HEAT RESULTS'
+      : 'FOUR-WIDE TEST // RESULTS', {
       fontFamily: PIXEL, fontSize: '18px', color: '#edfbff',
     }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
     this.add.text(780, 154,
-      'YOUR FINISH: ' + (own?.placing || 4) + '/4 // NO MONEY OR CAREER CHANGES', {
+      this.proCup ? (
+        outcome?.status === 'ADVANCED'
+          ? 'FINISHED ' + (own?.placing || 4) + '/4  //  ADVANCED'
+          : outcome?.status === 'COMPLETE'
+            ? 'FINISHED ' + (own?.placing || 4) + '/4  //  TOURNAMENT COMPLETE'
+            : 'EVENT STATUS UNAVAILABLE'
+      ) : 'FINISHED ' + (own?.placing || 4) + '/4  //  PRACTICE', {
         fontFamily: PIXEL, fontSize: '11px', color: '#a3e5ec',
       }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
     standings.forEach((row, i) => {
       const y = 215 + i * 64;
-      const mine = row.id === 'player';
+      const mine = row.id === (this.proCup ? 'player:driver' : 'player');
       this.add.rectangle(780, y, 865, 52, mine ? 0x154051 : 0x122433, 1)
         .setStrokeStyle(1, mine ? 0x79e6ff : 0x395362)
         .setDepth(96).setScrollFactor(0);
@@ -1128,8 +1194,23 @@ export default class FourLaneTestScene extends RaceScene {
           color: row.status === 'FINISHED' ? '#85e5b3' : '#ff93a2',
         }).setOrigin(1, 0.5).setDepth(97).setScrollFactor(0);
     });
-    this.makeButton(625, 532, 290, 'RETRY 4-WIDE', 0x70dcca, () => this.scene.restart());
-    this.makeButton(970, 532, 310, 'RETURN TO DRAG', 0xffcf9b, () => this.returnToDrag());
+    if (this.proCup && outcome?.status === 'COMPLETE' && outcome.summary) {
+      const last = outcome.summary;
+      this.add.text(780, 484,
+        'EVENT #' + last.placing + '  //  RANK ' + last.rankBefore +
+        ' > ' + last.rankAfter + '  //  +' + last.cashPrize.toLocaleString('en-US') + ' YEN', {
+          fontFamily: PIXEL, fontSize: '10px', color: '#95e6b5',
+        }).setOrigin(0.5).setDepth(98).setScrollFactor(0);
+    }
+    if (this.proCup && outcome?.status === 'ADVANCED') {
+      this.makeButton(625, 532, 290, 'NEXT HEAT', 0x70dcca,
+        () => this.scene.restart({ mode: 'PRO_CUP' }));
+    } else if (!this.proCup) {
+      this.makeButton(625, 532, 290, 'RETRY 4-WIDE', 0x70dcca,
+        () => this.scene.restart());
+    }
+    this.makeButton(this.proCup && outcome?.status !== 'ADVANCED' ? 780 : 970,
+      532, 310, 'RETURN TO DRAG', 0xffcf9b, () => this.returnToDrag());
   }
 
   returnToDrag() {
