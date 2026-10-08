@@ -84,10 +84,19 @@ const STAND_PREVIEW_PIECE_WIDTH = 495;
 const STAND_PREVIEW_OVERLAP = 32;
 const STAND_PREVIEW_START_X = 360;
 const STAND_BASE_GAP = 3; // bottom of concrete, just above top white line
-// Recreate the same three stands approaching the quarter-mile timing line.
+// The finish crowd is longer: LEFT, MIDDLE x3, RIGHT.
 const FINISH_STAND_DISTANCE_M = FOUR_LANE_TEST_DISTANCE_M;
 const SKYLINE_PARALLAX = 0.16;
 const SKYLINE_WORLD_WIDTH = 4096;
+const SKYLINE_SCALE_UP = 1.5;
+const SKYLINE_MIN_WORLD_HEIGHT = 730;
+// Phaser-drawn floodlit chain-link fence on concrete safety barriers.
+const FENCE_TOP_Y = 134;
+const FENCE_CONCRETE_HEIGHT = 42;
+const FENCE_BASE_Y = ROAD_TOP_LINE_Y - STAND_BASE_GAP;
+const FENCE_CONCRETE_TOP_Y = FENCE_BASE_Y - FENCE_CONCRETE_HEIGHT;
+const FENCE_POST_INTERVAL = 112;
+const FENCE_MESH_STEP = 20;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -203,6 +212,7 @@ export default class FourLaneTestScene extends RaceScene {
       this.createStandSet(0),
       this.createStandSet(FINISH_STAND_DISTANCE_M),
     ].filter(Boolean);
+    this.roadsideFence = this.add.graphics().setDepth(0.8);
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
@@ -231,6 +241,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.trackRoot = this.add.container(0, 0, [
       this.trackG,
       ...this.skylineSprites,
+      this.roadsideFence,
       ...this.standSets.flatMap(set => set.images),
       ...(this.complexArt ? [this.complexArt] : []),
       this.trackFX, ...carObjects,
@@ -387,18 +398,18 @@ export default class FourLaneTestScene extends RaceScene {
 
   createShinjukuSkyline() {
     if (!this.textures.exists('fourLaneShinjukuNight')) return [];
-    // Three instances of one shared WebP texture avoid gigantic panoramas.
-    // With a 4096px world tile this also covers the 52% establishing shot.
+    // Use a larger aspect-correct panorama. At minimum it reaches ABOVE
+    // screen y=0 even in the 52% preview; its lower edge stays at the road.
+    const source = this.textures.get('fourLaneShinjukuNight').getSourceImage();
+    const baseHeight = SKYLINE_WORLD_WIDTH * source.height / source.width;
+    const scale = Math.max(SKYLINE_SCALE_UP,
+      SKYLINE_MIN_WORLD_HEIGHT / baseHeight);
+    this.skylineWorldWidth = SKYLINE_WORLD_WIDTH * scale;
+    const skylineHeight = baseHeight * scale;
     return [-1, 0, 1].map(() =>
       this.add.image(0, ROAD_TOP_LINE_Y - STAND_BASE_GAP, 'fourLaneShinjukuNight')
-        .setOrigin(0, 1)
-        .setDepth(0.4)
-        .setDisplaySize(
-          SKYLINE_WORLD_WIDTH,
-          SKYLINE_WORLD_WIDTH *
-            this.textures.get('fourLaneShinjukuNight').getSourceImage().height /
-            this.textures.get('fourLaneShinjukuNight').getSourceImage().width
-        )
+        .setOrigin(0, 1).setDepth(0.4)
+        .setDisplaySize(this.skylineWorldWidth, skylineHeight)
         .setAlpha(0.78)
     );
   }
@@ -406,7 +417,10 @@ export default class FourLaneTestScene extends RaceScene {
   createStandSet(distanceM) {
     if (!STAND_KEYS.every(key => this.textures.exists(key))) return null;
     const imageKeys = STAND_KEYS.map(key => this.prepareStandTexture(key));
-    // Scale all three images with one shared pixel scale, so the bottom
+    // Preserve exactly one left and right. Repeat the middle three times
+    // ONLY at the finish, to make the final grandstand substantially longer.
+    if (distanceM > 0) imageKeys.splice(2, 0, imageKeys[1], imageKeys[1]);
+    // Scale all images with one shared pixel scale, so the bottom
     // concrete walls and crowd proportions line up even for different crops.
     const midWidth = this.textures.get(imageKeys[1]).getSourceImage().width;
     const worldScale = (STAND_PREVIEW_PIECE_WIDTH / PREVIEW_ZOOM) / midWidth;
@@ -418,13 +432,15 @@ export default class FourLaneTestScene extends RaceScene {
     imageKeys.forEach(key => {
       const img = this.add.image(0, 0, key).setOrigin(0, 1)
         .setScale(worldScale).setDepth(1);
-      // Exactly one left, one middle, one right; slight overlap at the joins.
+      // Full-height common barrier baseline; each module overlaps at joins.
       img.standLocalX = x;
       img.setPosition(x, ROAD_TOP_LINE_Y - STAND_BASE_GAP);
       images.push(img);
       x += img.width * worldScale - overlap;
     });
-    return { images, initialWorldX, distanceM };
+    // x includes one final unused overlap; compensate to obtain right edge.
+    const worldWidth = x + overlap;
+    return { images, initialWorldX, distanceM, worldWidth };
   }
 
   positionTrackside() {
@@ -432,9 +448,10 @@ export default class FourLaneTestScene extends RaceScene {
     const cameraTravel = this.cameraPx == null ? 0 :
       Math.max(0, this.cameraPx - fourLaneCameraX(0));
     // A modest, slower parallax keeps the Shinjuku skyline distant.
-    const skylinePhase = (cameraTravel * SKYLINE_PARALLAX) % SKYLINE_WORLD_WIDTH;
+    const skylineWidth = this.skylineWorldWidth || SKYLINE_WORLD_WIDTH;
+    const skylinePhase = (cameraTravel * SKYLINE_PARALLAX) % skylineWidth;
     this.skylineSprites.forEach((image, i) => {
-      image.x = (i - 1) * SKYLINE_WORLD_WIDTH - skylinePhase;
+      image.x = (i - 1) * skylineWidth - skylinePhase;
     });
     // World-anchored scenery: the finish group returns as we approach 402 m.
     this.standSets.forEach(set => {
@@ -445,6 +462,91 @@ export default class FourLaneTestScene extends RaceScene {
         image.x = deltaX + image.standLocalX;
       });
     });
+    this.drawRoadsideFence(cameraTravel);
+  }
+
+  drawRoadsideFence(cameraTravel) {
+    const g = this.roadsideFence;
+    if (!g) return;
+    g.clear();
+    if (this.standSets.length < 2) return;
+
+    // A single bounded world interval between the two grandstand groups.
+    // The start and finish artworks cover the first/last few fence panels.
+    const start = this.standSets[0];
+    const finish = this.standSets[1];
+    const joinOverlap = STAND_PREVIEW_OVERLAP / PREVIEW_ZOOM * 0.5;
+    const worldStart = start.initialWorldX + start.worldWidth - joinOverlap;
+    const worldEnd = finish.initialWorldX +
+      finish.distanceM * FOUR_LANE_TEST_PX_PER_M + joinOverlap;
+    if (worldEnd <= worldStart) return;
+
+    // Convert visible SCREEN area back into track-root coordinates, then
+    // render only these segments. No 28,000px-wide Graphics mesh/allocation.
+    const zoom = Math.max(0.01, this.trackRoot.scaleX);
+    const viewStart = (-this.trackRoot.x) / zoom + cameraTravel - 160;
+    const viewEnd = (WIDTH - this.trackRoot.x) / zoom + cameraTravel + 160;
+    const minWorld = Math.max(worldStart, viewStart);
+    const maxWorld = Math.min(worldEnd, viewEnd);
+    if (maxWorld <= minWorld) return;
+    const left = minWorld - cameraTravel;
+    const right = maxWorld - cameraTravel;
+    const width = right - left;
+
+    // Concrete trackside bollards, adapted from the normal race guardrail
+    // palette but shaped as discrete bolted modular panels.
+    g.fillStyle(0x333d48, 1).fillRect(left, FENCE_CONCRETE_TOP_Y,
+      width, FENCE_CONCRETE_HEIGHT);
+    g.fillStyle(0x7a8791, 1).fillRect(left, FENCE_CONCRETE_TOP_Y, width, 5);
+    g.fillStyle(0x161f28, 0.96).fillRect(left,
+      FENCE_BASE_Y - 6, width, 6);
+    g.fillStyle(0xabb4bc, 0.3).fillRect(left,
+      FENCE_CONCRETE_TOP_Y + 8, width, 2);
+    const firstPanel = Math.floor(minWorld / FENCE_POST_INTERVAL);
+    const lastPanel = Math.ceil(maxWorld / FENCE_POST_INTERVAL);
+    for (let i = firstPanel; i <= lastPanel; i++) {
+      const x = i * FENCE_POST_INTERVAL - cameraTravel;
+      if (x < left - 3 || x > right + 3) continue;
+      g.fillStyle(0x1a242e, 0.86).fillRect(x - 2,
+        FENCE_CONCRETE_TOP_Y + 5, 4, FENCE_CONCRETE_HEIGHT - 11);
+      g.fillStyle(0x9fabb5, 0.7).fillRect(x + 9,
+        FENCE_CONCRETE_TOP_Y + 14, 3, 3);
+      if (i % 3 === 0) {
+        g.fillStyle(0xe4ae61, 0.86).fillRect(x + 20,
+          FENCE_BASE_Y - 16, 16, 4);
+      }
+    }
+
+    // Taller-than-street-racing fence; diagonal open mesh lets the enlarged
+    // Shinjuku night skyline remain visible between structural elements.
+    const meshBottom = FENCE_CONCRETE_TOP_Y;
+    g.lineStyle(1, 0x9bb3c0, 0.18);
+    g.beginPath();
+    for (let y = FENCE_TOP_Y + 9; y < meshBottom - 8; y += FENCE_MESH_STEP) {
+      for (let worldX = Math.floor(minWorld / (FENCE_MESH_STEP * 2)) *
+          FENCE_MESH_STEP * 2; worldX <= maxWorld; worldX += FENCE_MESH_STEP * 2) {
+        const x = worldX - cameraTravel;
+        if (x < left + 8 || x > right - 8) continue;
+        g.moveTo(x - 8, y);
+        g.lineTo(x, y + 9);
+        g.lineTo(x + 8, y);
+        g.lineTo(x, y - 9);
+      }
+    }
+    g.strokePath();
+    // Fence posts and rails align to the concrete's repeat grid.
+    g.fillStyle(0x263b4d, 0.95).fillRect(left, FENCE_TOP_Y, width, 5);
+    g.fillStyle(0x718899, 0.87).fillRect(left, FENCE_TOP_Y, width, 2);
+    g.fillStyle(0x304554, 0.86).fillRect(left, meshBottom - 4, width, 5);
+    for (let i = firstPanel; i <= lastPanel; i++) {
+      const x = i * FENCE_POST_INTERVAL - cameraTravel;
+      if (x < left - 4 || x > right + 4) continue;
+      g.fillStyle(0x1b2c3a, 0.98).fillRect(x - 3, FENCE_TOP_Y, 6,
+        meshBottom - FENCE_TOP_Y);
+      g.fillStyle(0x8097a8, 0.8).fillRect(x - 2, FENCE_TOP_Y, 2,
+        meshBottom - FENCE_TOP_Y);
+      g.fillStyle(0xa9b9c4, 0.9).fillCircle(x, FENCE_TOP_Y, 4);
+    }
   }
 
   configureComplexArt() {
