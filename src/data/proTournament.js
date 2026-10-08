@@ -2,7 +2,8 @@
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
   normaliseProCircuitState, getProCircuitDriverSeeds,
-} from './proCircuit.js?v=20261008-r429';
+} from './proCircuit.js?v=20261008-r443';
+import { characters } from './characters.js?v=20261007-r411';
 
 export const FOUR_WIDE_CUP = Object.freeze({
   id: 'fourWideOpen', label: 'TOKYO FOUR-WIDE OPEN',
@@ -63,7 +64,7 @@ export function createFourWideTournament(proCircuit, carId) {
   const selected = selectEntrants(c, id);
   const players = selected.map((r, i) => ({
     id: r.id, seed: i + 1, rating: r.rating,
-    name: r.id === PLAYER ? 'YOU' : String(r.name || r.characterId || r.id),
+    name: r.id === PLAYER ? 'YOU' : String(r.name || characters[r.characterId]?.name || r.id),
     characterId: r.characterId || null,
   }));
   const heats = SEED_GRID.map((positions, i) => makeHeat(id, positions.map(n => players[n].id), 0, i));
