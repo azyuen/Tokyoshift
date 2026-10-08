@@ -1,0 +1,31 @@
+name: Professional circuit foundation checks
+
+on:
+  push:
+    branches:
+      - feature/pro-drag-phase1-foundation
+  pull_request:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/pro-circuit-foundation.mjs'
+      - '.github/workflows/pro-circuit.yml'
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse updated JavaScript
+        run: |
+          node --check src/data/proCircuit.js
+          node --check src/data/centralTokyo.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/state/GameState.js
+      - name: Run professional circuit foundation tests
+        run: node --test tests/pro-circuit-foundation.mjs
