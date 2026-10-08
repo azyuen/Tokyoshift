@@ -1113,7 +1113,7 @@ export default class FourLaneTestScene extends RaceScene {
     // RaceScene's cinematic pause: a tiny beat after the frozen camera
     // before the results panel takes over. No extra 10-second driving loop.
     this.time.delayedCall(160, () => {
-      if (!this.sys?.isActive?.() || this.resultsShown) return;
+      if (this.sys?.isActive?.() === false || this.resultsShown) return;
       this.showFourLaneResults();
     });
   }
@@ -1278,11 +1278,21 @@ export default class FourLaneTestScene extends RaceScene {
     }
     this.add.rectangle(780, 345, 1050, 552, 0x06121e, 0.985)
       .setStrokeStyle(3, 0x62d7ed).setDepth(95).setScrollFactor(0);
-    this.add.text(780, 110, this.proCup
-      ? FOUR_WIDE_CUP.label + ' // HEAT RESULTS'
-      : 'FOUR-WIDE TEST // RESULTS', {
-      fontFamily: PIXEL, fontSize: '18px', color: '#edfbff',
-    }).setOrigin(0.5).setDepth(96).setScrollFactor(0);
+    const resultHeading = this.proCup
+      ? outcome?.status === 'ADVANCED' ? 'QUALIFIED'
+        : outcome?.summary?.placing === 1 ? 'CHAMPION'
+          : 'ELIMINATED'
+      : own?.placing === 1 ? 'VICTORY' : 'RACE COMPLETE';
+    const finishTitle = this.add.text(780, 109, resultHeading, {
+      fontFamily: '"Exo 2", sans-serif', fontStyle: '900 italic',
+      fontSize: '44px', color: outcome?.status === 'ADVANCED' ? '#88f4df' : '#edfbff',
+      stroke: '#030c18', strokeThickness: 4,
+    }).setOrigin(0.5).setDepth(96).setScrollFactor(0)
+      .setAlpha(0).setScale(0.78);
+    this.tweens.add({
+      targets: finishTitle, alpha: 1, scaleX: 1, scaleY: 1,
+      duration: 290, ease: 'Back.Out',
+    });
     this.add.text(780, 154,
       this.proCup ? (
         outcome?.status === 'ADVANCED'
