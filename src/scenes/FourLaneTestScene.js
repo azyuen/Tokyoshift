@@ -1282,6 +1282,20 @@ export default class FourLaneTestScene extends RaceScene {
     // Unlike the old opaque popup, this is a frozen-race manga tableau in the
     // same visual language as RaceScene's regular end-of-race cutscene.
     const depth = 200;
+    [
+      this.controls?.graphics,
+      this.controls?.clutchSprite,
+      this.controls?.nosSprite,
+      this.controls?.shifterSprite,
+      this.controls?.throttleSprite,
+      this.hud?.cluster, this.hud?.status,
+      this.hud?.gearBack, this.hud?.gearText, this.hud?.speedText,
+      this.hud?.auxLabel,
+      this.header, this.subheader,
+      this.startButton?.bg, this.startButton?.text,
+      this.exitButton?.bg, this.exitButton?.text,
+    ].forEach(item => item?.setVisible?.(false));
+    this.hud?.g?.clear?.();
     const duel = this.proDuel;
     const driverId = duel ? 'player' : 'player:driver';
     const mine = standings.find(r => r.id === driverId);
@@ -1443,7 +1457,8 @@ export default class FourLaneTestScene extends RaceScene {
     };
     tap.on('pointerdown', advance);
     const enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
-    enter.once('down', advance);
+    enter.on('down', advance);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => enter.off('down', advance));
     // Prevent an incidental last racing touch from immediately skipping.
     this.time.delayedCall(360, () => { armed = true; });
   }
