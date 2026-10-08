@@ -387,6 +387,82 @@ export default class FourLaneTestScene extends RaceScene {
     finishSceneLoading('READY FOR FOUR-WIDE TEST');
   }
 
+  showTournamentBriefing() {
+    if (!this.proCup || !this.proHeat || this.briefingOpen) return;
+    this.briefingOpen = true;
+    this.controls.enabled = false;
+    this.startButton.bg.disableInteractive();
+    this.exitButton.bg.disableInteractive();
+
+    const overlay = [];
+    const place = obj => {
+      overlay.push(obj);
+      return obj;
+    };
+    const text = (x, y, value, fontSize, color = '#eafaff', options = {}) =>
+      place(this.add.text(x, y, value, {
+        fontFamily: PIXEL,
+        fontSize: fontSize + 'px',
+        color,
+        ...options,
+      }).setDepth(112).setScrollFactor(0));
+    place(this.add.rectangle(780, 360, WIDTH, HEIGHT, 0x020810, 0.83)
+      .setDepth(109).setScrollFactor(0).setInteractive());
+    place(this.add.rectangle(780, 360, 1010, 564, 0x091b2b, 0.99)
+      .setStrokeStyle(3, 0x5de3f0, 1)
+      .setDepth(110).setScrollFactor(0));
+
+    text(780, 111, 'TOKYO FOUR-WIDE OPEN', 18, '#e9fbff').setOrigin(0.5);
+    text(780, 153, '16 DRIVERS  /  4 CARS PER HEAT  /  QUARTER MILE', 9, '#a1dbe9')
+      .setOrigin(0.5);
+    place(this.add.rectangle(780, 181, 876, 2, 0x33576a, 1)
+      .setDepth(111).setScrollFactor(0));
+
+    const stages = [
+      'QUALIFYING     4 HEATS OF FOUR      TOP TWO ADVANCE',
+      'SEMIFINALS    2 HEATS OF FOUR      TOP TWO ADVANCE',
+      'FINAL         1 HEAT OF FOUR      FINISH 1ST-4TH',
+    ];
+    stages.forEach((line, i) => {
+      text(346, 211 + 36 * i, line, 8, i === 0 ? '#7cf2e5' : '#e4f0fa');
+    });
+    text(344, 341, 'YOUR FIRST HEAT', 10, '#8df6e5');
+
+    const rivals = this.runners.slice(1);
+    rivals.forEach((runner, i) => {
+      const label = runner.label + '   /   ' + runner.carLabel.toUpperCase();
+      text(345, 375 + i * 31, (i + 1) + '.  ' + label, 9, '#f0f7fc');
+    });
+    text(347, 483,
+      'ENTRY PAID  ¥' + FOUR_WIDE_CUP.entryFee.toLocaleString('en-US') +
+      '     FIRST PRIZE  ¥' + FOUR_WIDE_CUP.prizeCash[0].toLocaleString('en-US'),
+      8, '#ffd993');
+    text(347, 513, 'SAVES BETWEEN HEATS  /  SAME CAR FOR THE EVENT',
+      8, '#9ac7d6');
+
+    const confirm = place(this.add.rectangle(780, 581, 356, 44, 0x124249, 1)
+      .setStrokeStyle(2, 0x6af0e0, 1)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(113).setScrollFactor(0));
+    text(780, 581, 'READY TO RACE', 11, '#f0fffe')
+      .setOrigin(0.5).setDepth(114);
+    confirm.on('pointerdown', () => {
+      if (!this.briefingOpen) return;
+      const state = this.registry.get('proCircuit');
+      if (state?.activeTournament?.id === this.proTournament.id) {
+        const tournament = { ...state.activeTournament, briefingSeen: true };
+        this.registry.set('proCircuit', { ...state, activeTournament: tournament });
+        this.proTournament = tournament;
+        saveSessionState(this.registry);
+      }
+      overlay.forEach(obj => obj.destroy());
+      this.briefingOpen = false;
+      this.controls.enabled = true;
+      this.startButton.bg.setInteractive({ useHandCursor: true });
+      this.exitButton.bg.setInteractive({ useHandCursor: true });
+    });
+  }
+
   makeButton(x, y, width, label, color, onPress) {
     const bg = this.add.rectangle(x, y, width, 43, 0x091928, 0.98)
       .setStrokeStyle(2, color, 1).setInteractive({ useHandCursor: true })
