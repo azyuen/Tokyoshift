@@ -33,6 +33,7 @@ import {
 } from '../data/visualMods.js?v=20261006-r388';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
+import { getProCircuitAccess } from '../data/proCircuit.js?v=20261008-r429';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import {
@@ -2958,10 +2959,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawDragComplex() {
+    const access = getProCircuitAccess(this.registry);
+    const circuitOpen = access.unlocked || isArkonDen(this.registry);
     this.drawNavigation(
       'PRO DRAG RACING',
-      'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
+      circuitOpen
+        ? 'THREE-ROUND BRACKETS // POWER LIMITS // ELITE DRIVERS'
+        : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
+
+    if (!circuitOpen) {
+      this.addContent(this.add.text(
+        STAGE.x + STAGE.w / 2,
+        STAGE.y + 46,
+        'PRO ENTRY LOCKED // CREW ' + access.crewCount + '/' + access.crewRequired,
+        { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a' }
+      ).setOrigin(0.5).setDepth(27));
+    }
 
     if (Boolean(this.registry.get('tokyoChampionshipInvited'))) {
       this.addContent(this.add.rectangle(
@@ -3073,7 +3087,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const x = CARDS.x + 190 + index * 365;
       const selected = index === this.selectedEventIndex;
       const wins = Number(this.registry.get('wins') || 0);
-      const unlocked = isArkonDen(this.registry) || wins >= event.requiredWins;
+      const unlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
 
       const box = this.addContent(this.add.rectangle(
         x,
@@ -3102,7 +3116,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 126,
-        unlocked ? 'ENTRY ' + money(event.entryFee) : event.requiredWins + ' WINS',
+        unlocked ? 'ENTRY ' + money(event.entryFee) : !circuitOpen ? 'CREW ' + access.crewCount + '/7' : event.requiredWins + ' WINS',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
@@ -3122,7 +3136,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawDragSide(event, build) {
     const wins = Number(this.registry.get('wins') || 0);
     const cash = Number(this.registry.get('cash') || 0);
-    const eventUnlocked = isArkonDen(this.registry) || wins >= event.requiredWins;
+    const access = getProCircuitAccess(this.registry);
+    const circuitOpen = access.unlocked || isArkonDen(this.registry);
+    const eventUnlocked = circuitOpen && (isArkonDen(this.registry) || wins >= event.requiredWins);
     const power = Math.round(Number(build?.car?.powerKW || 0));
     const passesPower = Boolean(build) && power <= event.maxPowerKW;
     const passesNos = Boolean(build) && (!event.noNos || !build.nosInstalled);
@@ -3153,8 +3169,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     ).setDepth(34));
 
-    const status = !eventUnlocked
-      ? 'LOCKED // ' + event.requiredWins + ' WINS'
+    const status = !circuitOpen
+      ? 'PRO ENTRY LOCKED // RECRUIT CREW ' + access.crewCount + '/' + access.crewRequired
+      : !eventUnlocked
+        ? 'LOCKED // ' + event.requiredWins + ' WINS'
       : !build
         ? 'NO CAR SELECTED'
         : !passesPower
@@ -3279,8 +3297,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   startProBracket(event, build, storyConfirmed = false) {
+    const access = getProCircuitAccess(this.registry);
+    const isDev = isArkonDen(this.registry);
+    if (!event || (!access.unlocked && !isDev)) return;
+    if (!isDev && Number(this.registry.get('wins') || 0) < event.requiredWins) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (!build || cash < event.entryFee) return;
+    if (Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
+    if (event.noNos && build.nosInstalled) return;
 
     if (!storyConfirmed) {
       const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;

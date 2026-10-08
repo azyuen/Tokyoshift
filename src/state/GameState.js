@@ -1,4 +1,5 @@
 import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20261004-r333';
+import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js?v=20261008-r429';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
@@ -120,6 +121,8 @@ export function createDefaultGameState(options = {}) {
     challengerCooldown: 0,
     competitionOffers: {},
     competitionState: null,
+    // Independent, versioned professional-circuit standings and future tournament state.
+    proCircuit: createDefaultProCircuitState(),
     competitionCooldownUntil: 0,
     competitionWins: 0,
     carCoupons: {},
@@ -1034,6 +1037,7 @@ export function normaliseState(input = {}) {
     competitionState: input.competitionState && typeof input.competitionState === 'object'
       ? input.competitionState
       : null,
+    proCircuit: normaliseProCircuitState(input.proCircuit),
     competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
     carCoupons:
       input.carCoupons && typeof input.carCoupons === 'object'
@@ -1158,6 +1162,7 @@ export function snapshotRegistry(registry) {
     challengerCooldown: Number(registry.get('challengerCooldown') || 0),
     competitionOffers: registry.get('competitionOffers') || {},
     competitionState: registry.get('competitionState') || null,
+    proCircuit: registry.get('proCircuit') || createDefaultProCircuitState(),
     competitionCooldownUntil: Number(registry.get('competitionCooldownUntil') || 0),
     competitionWins: Number(registry.get('competitionWins') || 0),
     carCoupons: registry.get('carCoupons') || {},
