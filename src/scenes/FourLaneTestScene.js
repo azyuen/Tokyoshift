@@ -32,7 +32,7 @@ import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCarX, fourLaneCameraX, fourLaneDashSafeYOffset,
-  rankFourLaneFinishers,
+  fourLaneTreeLights, rankFourLaneFinishers,
 } from '../data/fourLanePrototype.js?v=20261008-r440';
 
 const PIXEL = '"Silkscreen", monospace';
@@ -101,8 +101,8 @@ const FENCE_POST_INTERVAL = 112;
 const FENCE_MESH_STEP = 20;
 // Lower foreground spectator strip: three sections at the start and exactly
 // the same section count as the long grandstand at the finish.
-const FRONT_CROWD_PREVIEW_WIDTH = 550;
-const FRONT_CROWD_PREVIEW_OVERLAP = 35;
+const FRONT_CROWD_PREVIEW_WIDTH = 1100;
+const FRONT_CROWD_PREVIEW_OVERLAP = 70;
 const FRONT_CROWD_PREVIEW_START_X = -25;
 // The nearest white lane ends at y=652. Keep the spectator heads LOWER than
 // the nearest car; the backing wall then continues down beneath the image.
@@ -114,6 +114,12 @@ const FRONT_FENCE_TOP_Y = ROAD_BOTTOM_LINE_Y + 14;
 const FRONT_FENCE_CONCRETE_TOP_Y = ROAD_BOTTOM_LINE_Y + 90;
 const FRONT_FENCE_POST_SPACING = 112;
 const FRONT_FENCE_MESH_SIZE = 18;
+// Physical trackside Christmas tree only. The redundant fixed-screen light
+// sequence and live standings box remain removed.
+const START_TREE_OFFSET_X = 78;
+const START_TREE_BASE_Y = ROAD_TOP_LINE_Y;
+const START_TREE_PANEL_WIDTH = 54;
+const START_TREE_PANEL_HEIGHT = 124;
 
 export default class FourLaneTestScene extends RaceScene {
   constructor() {
@@ -236,6 +242,7 @@ export default class FourLaneTestScene extends RaceScene {
     ).filter(Boolean);
     this.frontGapFence = this.add.graphics().setDepth(18.1);
     this.frontConcreteWall = this.add.graphics().setDepth(18.2);
+    this.startTree = this.add.graphics().setDepth(2.5);
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
@@ -267,6 +274,7 @@ export default class FourLaneTestScene extends RaceScene {
       this.roadsideFence,
       ...this.standSets.flatMap(set => set.images),
       ...(this.complexArt ? [this.complexArt] : []),
+      this.startTree,
       this.trackFX, ...carObjects,
       this.frontGapFence,
       this.frontConcreteWall,
@@ -298,6 +306,9 @@ export default class FourLaneTestScene extends RaceScene {
 
     this.raceClock = 0;
     this.greenClock = null;
+    this.countdownActive = false;
+    this.countdownClock = 0;
+    this.falseStart = false;
     this.raceStarted = false;
      this.zooming = false;
     this.finished = false;
@@ -463,6 +474,8 @@ export default class FourLaneTestScene extends RaceScene {
     // spectator heads are measured from the actual visible silhouettes.
     const key = this.prepareStandTexture('fourLaneFrontCrowd');
     const source = this.textures.get(key).getSourceImage();
+    // R442: twice the R441 scale in both axes. The bottom-origin y stays
+    // untouched, so the heads become 2x taller without moving the baseline.
     const scale = (FRONT_CROWD_PREVIEW_WIDTH / PREVIEW_ZOOM) / source.width;
     const rootPreviewX = TRACK_PIVOT_X * (1 - PREVIEW_ZOOM) + TRACK_PAN_X;
     const initialWorldX = (FRONT_CROWD_PREVIEW_START_X - rootPreviewX) / PREVIEW_ZOOM;
@@ -696,6 +709,69 @@ export default class FourLaneTestScene extends RaceScene {
     }
   }
 
+  drawStartTree() {
+    const g = this.startTree;
+    if (!g || !this.runners?.length) return;
+    g.clear();
+    // Use exactly the same world-space camera and start-line calculation as
+    // the road's actual starting stripe; no drifting screen overlay.
+    const playerNose = this.runners[0].visual?.noseOffsetPx || 110;
+    const startX = fourLaneCarX(0, this.cameraPx, 0, playerNose);
+    const x = startX + START_TREE_OFFSET_X;
+    if (x < -90 || x > TRACK_DRAW_RIGHT + 90) return;
+
+    const phase = this.racePhase();
+    const lamps = fourLaneTreeLights(phase, this.falseStart);
+    const baseY = START_TREE_BASE_Y;
+    const panelTop = baseY - START_TREE_PANEL_HEIGHT - 18;
+    const panelLeft = x - START_TREE_PANEL_WIDTH / 2;
+
+    // Steel baseplate and anchored stem.
+    g.fillStyle(0x131b25, 1)
+      .fillRect(x - 22, baseY - 8, 44, 8);
+    g.fillStyle(0x697d89, 0.9)
+      .fillRect(x - 17, baseY - 8, 34, 2);
+    g.fillStyle(0x172431, 1)
+      .fillRect(x - 5, panelTop - 4, 10, baseY - panelTop);
+    g.fillStyle(0x617887, 0.92)
+      .fillRect(x - 4, panelTop - 4, 2, baseY - panelTop);
+
+    // Two illuminated columns evoke a professional drag strip tree. One
+    // light assembly serves the dev tester's four simultaneous lanes.
+    g.fillStyle(0x080f18, 1)
+      .fillRoundedRect(panelLeft - 3, panelTop - 3,
+        START_TREE_PANEL_WIDTH + 6, START_TREE_PANEL_HEIGHT + 6, 5);
+    g.fillStyle(0x25333e, 1)
+      .fillRoundedRect(panelLeft, panelTop,
+        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
+    g.lineStyle(2, 0x91a8b8, 0.66)
+      .strokeRoundedRect(panelLeft, panelTop,
+        START_TREE_PANEL_WIDTH, START_TREE_PANEL_HEIGHT, 4);
+
+    const rows = [
+      { offset: 13, color: 0xd9f5ff, on: lamps.preStage },
+      { offset: 29, color: 0xf7fbff, on: lamps.stage },
+      { offset: 47, color: 0xffb94b, on: lamps.ambers[0] },
+      { offset: 63, color: 0xffb94b, on: lamps.ambers[1] },
+      { offset: 79, color: 0xffb94b, on: lamps.ambers[2] },
+      { offset: 98, color: 0x61fda1, on: lamps.green },
+      { offset: 114, color: 0xff5167, on: lamps.red },
+    ];
+    for (const row of rows) {
+      const cy = panelTop + row.offset;
+      for (const dx of [-11, 11]) {
+        g.fillStyle(0x03080d, 1).fillCircle(x + dx, cy, 7.7);
+        if (row.on) {
+          g.fillStyle(row.color, 0.19).fillCircle(x + dx, cy, 10);
+          g.fillStyle(row.color, 1).fillCircle(x + dx, cy, 5.2);
+          g.fillStyle(0xffffff, 0.72).fillCircle(x + dx - 1.1, cy - 1.2, 2);
+        } else {
+          g.fillStyle(row.color, 0.14).fillCircle(x + dx, cy, 4.5);
+        }
+      }
+    }
+  }
+
   configureComplexArt() {
     if (!this.complexArt) return;
     const art = this.complexArt;
@@ -793,11 +869,23 @@ export default class FourLaneTestScene extends RaceScene {
       onComplete: () => {
         this.setTrackZoom(1);
         this.zooming = false;
-        // No invisible staging delay once the start lights are removed.
-        // Both player and rivals get the same green instant.
-        this.greenClock = this.raceClock;
+        // The same 3.3s pre-stage / amber / green timing as the original
+        // physical tree (R440); no fixed-screen lights are reintroduced.
+        this.countdownActive = true;
+        this.countdownClock = 0;
       },
     });
+  }
+
+  racePhase() {
+    if (!this.raceStarted) return 'PREVIEW';
+    if (this.zooming) return 'ZOOM';
+    if (this.greenClock != null) return 'GREEN';
+    if (this.countdownClock < 0.9) return 'PRE-STAGE';
+    if (this.countdownClock < 1.8) return 'STAGE';
+    if (this.countdownClock < 2.3) return 'AMBER 1';
+    if (this.countdownClock < 2.8) return 'AMBER 2';
+    return 'AMBER 3';
   }
 
   update(_time, deltaMs) {
@@ -812,6 +900,14 @@ export default class FourLaneTestScene extends RaceScene {
     const gearRequest = this.controls.consumeGearRequest();
     if (gearRequest != null && !this.finished) this.handleGearRequest(gearRequest);
 
+    if (this.countdownActive && this.greenClock == null) {
+      this.countdownClock += dt;
+      if (this.countdownClock >= 3.3) {
+        this.greenClock = this.raceClock;
+        this.countdownActive = false;
+      }
+    }
+
     let playerTelemetry = null;
     let firstAiTelemetry = null;
     const inPreview = !this.raceStarted || this.zooming;
@@ -820,7 +916,8 @@ export default class FourLaneTestScene extends RaceScene {
       // only their official crossing time is frozen.
       let state;
       if (index === 0) {
-        // Keep cars staged during the preview and camera push-in.
+        // Staged cars cannot creep during preview/zoom; a launch before
+        // green is a genuine red-light disqualification.
         state = inPreview
           ? { throttle: control.throttle, clutch: 1, nos: false }
           : control;
@@ -831,6 +928,11 @@ export default class FourLaneTestScene extends RaceScene {
       runner.lastTelemetry = telemetry;
       if (index === 0) playerTelemetry = telemetry;
       if (index === 1) firstAiTelemetry = telemetry;
+      if (index === 0 && this.raceStarted && this.greenClock == null &&
+          !this.zooming && runner.vehicle.positionM > 0.25) {
+        runner.disqualified = true;
+        this.falseStart = true;
+      }
       if (this.greenClock != null && runner.finishSeconds == null &&
           runner.vehicle.positionM >= FOUR_LANE_TEST_DISTANCE_M) {
         // Interpolate across the crossing within the frame for fair placings.
@@ -851,9 +953,11 @@ export default class FourLaneTestScene extends RaceScene {
     const livePlayer = playerTelemetry || this.runners[0].lastTelemetry ||
       this.runners[0].vehicle.telemetry;
     this.renderTrack(dt);
-    this.hud.update(livePlayer, this.zooming ? 'FOUR-LANE TRACK // CLOSING IN'
+    this.hud.update(livePlayer, this.falseStart ? 'RED LIGHT // DISQUALIFIED'
+      : this.zooming ? 'FOUR-LANE TRACK // CLOSING IN'
       : !this.raceStarted ? 'WIDE VIEW // TAP START 4-WIDE'
-      : 'FOUR-WIDE // QUARTER MILE');
+      : this.greenClock != null ? 'FOUR-WIDE // QUARTER MILE'
+      : 'STAGED // WAIT FOR GREEN');
 
     if (this.greenClock != null && !this.finished) {
       const allDone = this.runners.every(r => r.finishSeconds != null);
@@ -890,6 +994,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.cameraPx = fourLaneCameraX(playerM);
     this.positionComplexArt();
     this.positionTrackside();
+    this.drawStartTree();
     const g = this.trackG;
     g.clear();
     // Close-up professional venue, not a distant city skyline.
