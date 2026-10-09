@@ -70,7 +70,7 @@ The audit is a dated snapshot, not a claim that every identified implementation 
 
 ## Cast inventory
 
-**Current R457 roster: 60 named character entries:** seven regional principals, 42 regional supporting racers (including Reika, **not** Sayaka), Daichi, nine standalone story/Central Tokyo characters (including Sayaka), and Arkon Den. Thus 59 ordinary in-world characters and one developer character. The original 7 October audit counted 59 entries before Reika replaced Sayaka's street slot and Sayaka became a separate story NPC.
+**Current R458 roster: 60 named character entries:** seven regional principals, 42 regional supporting racers (including Reika, **not** Sayaka), Daichi, nine standalone story/Central Tokyo characters (including Sayaka), and Arkon Den. Thus 59 ordinary in-world characters and one developer character. The original 7 October audit counted 59 entries before Reika replaced Sayaka's street slot and Sayaka became a separate story NPC.
 
 | Principal / ID | Established age / hometown | Region | Existing personality | Audit final-round car |
 |---|---|---|---|---|
@@ -141,7 +141,7 @@ Beyond the explicit family/opening relationships, named personal friendships, ro
 5. **Placeholder profiles:** Shinjuku supporters originally share much prose; Yokohama profiles are thin. V1 differentiates them.
 6. **Recruitment copy:** overrides are mostly empty and some candidates lack explicit entries, using shared fallback text. Generic copy is not a common personality.
 7. **Daichi:** the older asset README describes eight flexible/selectable characters; runtime excludes him. Treat him as workshop companion, not an ordinary selectable/recruitable rival.
-8. **Sayaka visuals (revised R457):** `assets/Characters/Main/home_sayaka_*` is for delivery, `assets/Characters/Central/sayaka_*` for Ginza, and `assets/Characters/Main/race_sayaka_*` for her later professional-team appearances. Reika uses `assets/Characters/Shinagawa/reika_tachibana_*`. The legacy Shinagawa Sayaka PNGs are no longer character-roster assets; there is only one Sayaka.
+8. **Main cast visuals (R458):** `assets/Characters/Main/home_daichi_*` supplies workshop Daichi for Home, Canal Yard, Warehouse HQ and dyno; future pro-series racing clothing awaits new art. `assets/Characters/Main/home_sayaka_*` supplies her opening appearance, `assets/Characters/Main/ginza_sayaka_*` her curator role, and `assets/Characters/Main/race_sayaka_*` her professional strategist role. Reika uses `assets/Characters/Shinagawa/reika_tachibana_*`. Retired duplicate Central/Shinagawa Sayaka art no longer needs to load; there is only one Sayaka. Emi Kanzaki is a selectable Odaiba main rival using root `assets/Characters/emi_kanzaki_*.png` sprites.
 9. **Substitution:** visual replacement does not solve the semantic problem of two copies of a selected canonical identity. Roster and race fallbacks also matter.
 10. **Drag Complex pool:** the audited generic rival pool is empty after region exclusivity, yet bracket generation uses it. Do not canonise unreliable generated identities.
 11. **Cutscene source:** dragComplexInvitation is duplicated; the later property wins. Preview mechanics/final rivals and example signature cars are not historical evidence.
@@ -1001,3 +1001,4 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 
 - 2026-10-07: v1 adopted for repository-based authoring after review. Added explicit future-depth policy requested by owner. Retained unresolved identity/origin decisions and provisional demographic details. No runtime or existing dialogue changes.
 - 2026-10-09 (R457): owner changed Sayaka to the player's father's racing-era friend, first-car deliverer, Ginza curator/manager and former strategist who joins at legitimate pro entry. Introduced Reika Tachibana as independent 47-year-old Shinagawa tactical racer and sixth regional crew candidate, with uploaded idle/win/loss assets. Added three staged career narrative beats, knowledge gates and explicit separation from seven-driver recruitment. No broader protagonist-identity decision or automatic tactical gameplay buff.
+- 2026-10-10 (R458): consolidate Daichi's home/workshop and Sayaka's Ginza visual sets under `assets/Characters/Main`, retire redundant copies, correct Emi's idle/win/loss asset paths to the canonical root folder. Emi was already correctly selectable and Odaiba's main rival; no role reassignment was necessary. Future Daichi pro racing outfit is pending artwork.
