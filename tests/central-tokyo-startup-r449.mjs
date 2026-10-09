@@ -26,7 +26,7 @@ test('Central Tokyo retains Drag Complex fixed three-card menu and its refresh l
   const drag = method('drawDragComplex', 'enterFourWideCup');
   assert.match(drag, /this\.getProDragEvents\(\)/);
   assert.match(drag, /this\.drawDragSide\(events\[this\.selectedEventIndex\], build\)/);
-  assert.match(drag, /DEV \/\/ REFRESH LINEUP/);
+  assert.match(drag, /D\) REFRESH LINEUP/);
   assert.doesNotMatch(drag, /'4-LANE TEST'/);
   const refresh = method('devRefreshCentralLocation', 'openMap');
   assert.match(refresh, /const kind = location\?\.kind \|\| 'autoMarket'/);
