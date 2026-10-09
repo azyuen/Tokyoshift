@@ -270,13 +270,27 @@ export default class RaceScene extends Phaser.Scene {
     const regionalRaceDistrict = String(
       this.registry.get('raceDistrict') || this.registry.get('district') || ''
     ).toUpperCase();
-    const earlyRegionalRace = this.raceMode === 'TUNER_TEAM'
+    const earlyRegionalState = this.raceMode === 'TUNER_TEAM'
       && ['ODAIBA', 'SHINAGAWA'].includes(regionalRaceDistrict)
-      ? getRegionalChallengeRaceSpec(
-          regionalRaceDistrict,
-          getTunerTeamChallengeState(this.registry, regionalRaceDistrict).stage
-        )
+      ? getTunerTeamChallengeState(this.registry, regionalRaceDistrict)
       : null;
+    const earlyRegionalStage = Math.max(0, Math.min(
+      TUNER_TEAM_CHALLENGE_STAGES - 1, Number(earlyRegionalState?.stage || 0)
+    ));
+    const earlyRegionalRace = earlyRegionalState
+      ? getRegionalChallengeRaceSpec(regionalRaceDistrict, earlyRegionalStage)
+      : null;
+    const earlyRegionalRound = earlyRegionalState?.rounds?.[earlyRegionalStage];
+    if (earlyRegionalRound && cars[earlyRegionalRound.carId]) {
+      // Old suspended races may still have an RX-8 selected in the registry.
+      // The current saved challenge, not that stale selection, wins.
+      this.opponentCarId = earlyRegionalRound.carId;
+      this.opponentEncounterRating = Phaser.Math.Clamp(
+        Number(earlyRegionalRound.encounterRating || 3), 1, 5
+      );
+      this.opponentEncounterAi = earlyRegionalRound.encounterAi
+        || getEncounterAi(this.opponentEncounterRating);
+    }
     // Also honour the revised schedule if the player resumes directly into
     // a race with a pre-R464 selectedRaceType in their session.
     this.raceType = earlyRegionalRace?.raceType
