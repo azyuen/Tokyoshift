@@ -72,8 +72,8 @@ import {
 } from '../data/tunerChallenges.js?v=20261009-r452';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261007-r411';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261009-r453';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
 import {
