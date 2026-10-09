@@ -24,7 +24,7 @@ import {
   exportProfileBackup,
   importProfileBackup,
 } from '../state/GameState.js?v=20261007-r422';
-import { addDevCutsceneButton } from './CutsceneTester.js?v=20261006-r388';
+import { addDevCutsceneButton } from './CutsceneTester.js?v=20261009-r451';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import {
   PLAYER_DIFFICULTIES,
@@ -1068,7 +1068,7 @@ export function showSettingsPanel(scene) {
       .setStrokeStyle(1, 0xc59652, 1)
       .setInteractive({ useHandCursor: true })
       .setDepth(183));
-    add(scene.add.text(610, 72, 'WHEEL FIT', {
+    add(scene.add.text(610, 72, 'D) WHEEL FIT', {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
       color: '#ffe1a6',
