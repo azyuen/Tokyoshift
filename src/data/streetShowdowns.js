@@ -24,10 +24,50 @@ const PARTS = Object.freeze({
 });
 
 const ERA = Object.freeze([
-  { name: 'HOME', maxLevel: 1, ranges: [[0, 6], [0, 8], [0, 10]], drivers: [2, 2, 3] },
-  { name: 'CANAL', maxLevel: 2, ranges: [[0, 16], [0, 22], [0, 28]], drivers: [3, 3, 4] },
-  { name: 'WAREHOUSE', maxLevel: 3, ranges: [[0, 33], [0, 40], [0, 46]], drivers: [4, 4, 5] },
+  { name: 'HOME', maxLevel: 1, ranges: [[0, 6], [0, 8], [0, 10]] },
+  { name: 'CANAL', maxLevel: 2, ranges: [[0, 16], [0, 22], [0, 28]] },
+  { name: 'WAREHOUSE', maxLevel: 3, ranges: [[0, 33], [0, 40], [0, 46]] },
 ]);
+
+// Prize value, rather than garage age alone, determines the driving talent in
+// all three rounds. Low-value cash events are a genuine stepping stone toward
+// the first Street Showdown win needed to unlock Shibuya and Yokohama.
+// These are driver tiers, not extra engine/physics modifiers.
+const CASH_DRIVER_RATINGS = Object.freeze({
+  ENTRY: Object.freeze([2, 2, 3]), // ¥20k: Rookie, Rookie, Skilled
+  LOCAL: Object.freeze([3, 3, 3]), // ¥32k: Skilled all the way
+  HIGH: Object.freeze([3, 3, 4]),  // ¥48k: Expert final
+  TOP: Object.freeze([3, 4, 4]),   // ¥70k: Expert finish
+});
+const COUPON_DRIVER_RATINGS = Object.freeze([4, 4, 5]);
+
+export function getStreetShowdownDriverRatings(options = {}) {
+  const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
+  const coupon = options.prizeType === 'COUPON' || options.prizeType === 'CAR';
+
+  if (coupon) {
+    return profile === 'EASY' ? [3, 4, 4]
+      : profile === 'HARD' ? [4, 5, 5]
+      : [...COUPON_DRIVER_RATINGS];
+  }
+
+  // New offers pass baseCashPrize; saved R454-era sessions have prizeCash
+  // including up to three rolling-start bonuses, so wider legacy boundaries
+  // ensure that a ¥20k event remains in the entry tier on resume.
+  const prize = Math.max(0, Number(options.baseCashPrize || options.prizeCash || 20000));
+  const band = prize <= (options.baseCashPrize ? 20000 : 27000) ? 'ENTRY'
+    : prize <= (options.baseCashPrize ? 32000 : 43000) ? 'LOCAL'
+    : prize <= (options.baseCashPrize ? 48000 : 63500) ? 'HIGH'
+    : 'TOP';
+  const base = CASH_DRIVER_RATINGS[band];
+  if (profile === 'EASY') return base.map(rating => Math.max(1, rating - 1));
+  if (profile === 'HARD') {
+    // Even Hard's smallest cash event must not exceed SKILLED.
+    return band === 'ENTRY' ? [2, 3, 3]
+      : base.map(rating => Math.min(5, rating + 1));
+  }
+  return [...base];
+}
 
 function emptyState(archetype, maxLevel) {
   return {
@@ -105,14 +145,7 @@ export function createStreetShowdownRounds(options = {}) {
   const playerState = options.playerState || {};
   const seed = String(options.seed || 'showdown');
   const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
-  // Easy retains the graduated local skill curve. Standard and Hard retain
-  // high-level drivers but every physical car stays workshop-legal and bound
-  // to the same per-round tuning-point ceiling as Easy.
-  const driverRatings = profile === 'EASY'
-    ? era.drivers
-    : profile === 'HARD'
-      ? [4, 5, 5]
-      : [4, 4, 5];
+  const driverRatings = getStreetShowdownDriverRatings(options);
   const targets = profile === 'EASY'
     ? [0.85, 0.91, 0.96]
     : profile === 'HARD'
