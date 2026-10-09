@@ -145,7 +145,7 @@ function buildMagazineFeatures(scene) {
   return [...owned, ...archived, ...sightings];
 }
 
-function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
+export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
   const car = cars[feature.carId];
   if (!car) return false;
 

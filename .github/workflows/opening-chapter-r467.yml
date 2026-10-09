@@ -1,0 +1,38 @@
+name: Tokyo SHIFT R467 station-opening regression
+on:
+  push:
+    branches: [main, feature/r467-train-station-opening]
+    paths:
+      - 'src/**'
+      - 'tests/opening-chapter-r467.mjs'
+      - 'tests/sayaka-reika-continuity.mjs'
+      - '.github/workflows/opening-chapter-r467.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/opening-chapter-r467.mjs'
+      - '.github/workflows/opening-chapter-r467.yml'
+jobs:
+  opening:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate updated scenes and story module syntax
+        run: |
+          node --check src/main.js
+          node --check src/state/GameState.js
+          node --check src/scenes/TrainStationScene.js
+          node --check src/scenes/CharacterSelectScene.js
+          node --check src/scenes/BootScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/ui/OfficePanel.js
+          node --check src/ui/OpeningMagazine.js
+          node --check src/ui/CarHistoryPanel.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/data/cutscenes.js
+      - name: Check new and existing profile continuity
+        run: node --test tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs

@@ -49,7 +49,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261007-r422';
+} from '../state/GameState.js?v=20261010-r467';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
@@ -1674,7 +1674,11 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.clutch = 1;
     this.engineAudio?.fadeOut();
 
-    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DAICHI');
+    if (this.registry.get('openingChapter') === 'tutorial') {
+      this.registry.set('openingDrivingLessonComplete', true);
+    }
+    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO ' +
+      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI'));
     saveSessionState(this.registry);
 
     // RaceScene has repeatedly proven fragile when it tears down controls,

@@ -8,7 +8,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261009-r453';
+} from '../data/cutscenes.js?v=20261010-r467';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -17,7 +17,7 @@ import {
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { saveSessionState } from '../state/GameState.js?v=20261006-r388';
+import { saveSessionState } from '../state/GameState.js?v=20261010-r467';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

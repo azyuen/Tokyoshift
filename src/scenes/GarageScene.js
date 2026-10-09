@@ -38,9 +38,9 @@ import {
   getPartRemovalQuote,
   removeTuningPartFromState,
 } from '../data/partUninstall.js?v=20261009-r456';
-import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261010-r467';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261010-r467';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -359,6 +359,8 @@ export default class GarageScene extends Phaser.Scene {
       : [
           this.registry.get('playerCharacterId') || 'renMizuno',
           'daichiSakamoto',
+          ...(['home', 'magazine', 'delivery', 'tutorial', 'daichi'].includes(this.registry.get('openingChapter'))
+            ? ['sayakaFujieda'] : []),
           ...(shouldWarmCrewSpace
             ? Object.values(members).map(member => member.characterId)
             : []),
@@ -374,6 +376,8 @@ export default class GarageScene extends Phaser.Scene {
     const preloadCarIds = [
       ...new Set([
         ...localCars,
+        ...(['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))
+          ? ['ae86', 'ef'] : []),
         ...(shouldWarmCrewSpace ? crewCars : []),
       ]),
     ];
@@ -446,9 +450,16 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedCarId', this.selectedCarId);
     this.registry.set('meetStranded', false);
 
+    // New-player car advertisements and first-car arrival share the same
+    // modular textures as normal cars, even though this garage starts empty.
+    const introCarIds = ['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))
+      ? ['ae86', 'ef'] : [];
     ensureDerivedModularCarTextures(
       this,
-      Object.fromEntries(localCars.filter(id => cars[id]).map(id => [id, cars[id]]))
+      Object.fromEntries(
+        [...new Set([...localCars, ...introCarIds])]
+          .filter(id => cars[id]).map(id => [id, cars[id]])
+      )
     );
 
     this.selectedDisplay = [];
@@ -486,6 +497,11 @@ export default class GarageScene extends Phaser.Scene {
     this.workshopBackgroundWorkshop = null;
 
     this.drawScene();
+    if (!this.crewMode && this.registry.get('openingChapter') === 'tutorial') {
+      this.spawnOpeningCompanion('sayakaFujieda', false);
+    } else if (!this.crewMode && this.registry.get('openingChapter') === 'daichi') {
+      this.spawnOpeningCompanion('daichiSakamoto', false);
+    }
 
     this.time.addEvent({
       delay: 5000,
@@ -552,7 +568,14 @@ export default class GarageScene extends Phaser.Scene {
     } else if (!this.crewMode) {
       this.time.delayedCall(260, () => {
         if (!this.showPendingWorkshopCutscene()) {
-          this.continueGarageStoryFlow();
+          const chapter = this.registry.get('openingChapter');
+          if (chapter === 'home' || chapter === 'magazine') {
+            this.promptOpeningOffice();
+          } else if (chapter === 'delivery') {
+            this.showOpeningPhoneCall();
+          } else {
+            this.continueGarageStoryFlow();
+          }
         }
       });
     }
@@ -1163,7 +1186,10 @@ export default class GarageScene extends Phaser.Scene {
     cover.on('pointerout', () => {
       cover.setScale(baseScaleX, baseScaleY);
     });
-    cover.on('pointerdown', () => showMagazinePanel(this));
+    cover.on('pointerdown', () => {
+      if (this.registry.get('openingChapter') === 'magazine') showOfficePanel(this);
+      else showMagazinePanel(this);
+    });
   }
 
   buildHeader() {
@@ -3900,6 +3926,9 @@ export default class GarageScene extends Phaser.Scene {
       ?.setText(ownsCarsElsewhere ? 'NO CAR // USE OTHER WORKSHOP' : 'NO CAR')
       .setColor('#817d84');
     this.updateMoveCarButtonState();
+
+    // The first visit is deliberately empty, not a pink-slip game over.
+    if (['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))) return;
 
     this.add.rectangle(710, 360, 720, 148, 0x050b12, 0.78)
       .setStrokeStyle(1, 0x315470, 0.64)
@@ -7095,6 +7124,120 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  // Save checkpoints survive iOS/PWA reloads without awarding a car early.
+  promptOpeningOffice() {
+    if (this.registry.get('openingChapter') === 'home') {
+      this.registry.set('openingChapter', 'magazine');
+      saveSessionState(this.registry);
+    }
+    if (this._openingOfficePrompt) return;
+    this._openingOfficePrompt = true;
+    this.add.rectangle(700, 573, 805, 68, 0x071823, 0.96)
+      .setStrokeStyle(2, 0xfbd57d, 0.9).setDepth(78);
+    this.add.text(700, 573, "Still no car. I'll read Daichi's magazine in the office.", {
+      fontFamily: BODY_FONT, fontSize: '14px', color: '#fff0c8',
+      fontStyle: '700', align: 'center',
+    }).setOrigin(0.5).setDepth(79);
+    const glow = this.add.rectangle(725, 215, 146, 60, 0x000000, 0)
+      .setStrokeStyle(4, 0xfbd57d, 1).setDepth(80);
+    this.tweens.add({ targets: glow, alpha: 0.38, duration: 590, repeat: -1, yoyo: true });
+  }
+
+  completeOpeningMagazineChoice(carId) {
+    if (this.registry.get('openingChapter') !== 'magazine' ||
+        !['ae86', 'ef'].includes(carId)) return;
+    this.registry.set('starterCarId', carId);
+    this.registry.set('openingChapter', 'delivery');
+    saveSessionState(this.registry);
+    this.showOpeningPhoneCall();
+  }
+
+  showOpeningPhoneCall() {
+    if (this._openingPhoneOpen || this.registry.get('openingChapter') !== 'delivery') return;
+    this._openingPhoneOpen = true;
+    const items = [];
+    const add = obj => { items.push(obj); return obj; };
+    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.78).setDepth(300).setInteractive());
+    add(this.add.rectangle(780, 417, 900, 466, 0x0c1825, 1)
+      .setStrokeStyle(3, 0x6ce3c0, 1).setDepth(301));
+    add(this.add.text(780, 237, 'INCOMING CALL // SAYAKA', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8df6d3',
+    }).setOrigin(0.5).setDepth(302));
+    add(this.add.text(780, 376,
+      "Hey! I'm just around the corner.\nI've got your " +
+      (this.registry.get('starterCarId') === 'ef' ? 'Civic EF' : 'AE86') +
+      ". Meet me in the workshop!", {
+      fontFamily: BODY_FONT, fontSize: '17px', color: '#f2fbff',
+      align: 'center', lineSpacing: 12, wordWrap: { width: 750 },
+    }).setOrigin(0.5).setDepth(302));
+    const button = add(this.add.rectangle(780, 560, 300, 60, 0x104233, 1)
+      .setStrokeStyle(2, 0x73ffce, 1).setDepth(303).setInteractive({ useHandCursor: true }));
+    add(this.add.text(780, 560, 'NEXT  >', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(304));
+    button.on('pointerdown', () => {
+      button.disableInteractive();
+      items.forEach(o => o?.destroy?.());
+      this._openingPhoneOpen = false;
+      this.deliverOpeningCar();
+    });
+  }
+
+  spawnOpeningCompanion(id, animate = true) {
+    if (this.openingCompanion?.active) this.openingCompanion.destroy();
+    const npc = characters[id];
+    if (!npc?.visual?.spriteKey || !this.textures.exists(npc.visual.spriteKey)) return;
+    const targetX = 970;
+    const sprite = this.addGarageCharacter(npc, targetX, 566, 200, 18);
+    this.openingCompanion = sprite;
+    if (animate) {
+      sprite.x = targetX + 260;
+      sprite.setAlpha(0);
+      this.tweens.add({ targets: sprite, x: targetX, alpha: 1, duration: 450, ease: 'Sine.easeOut' });
+    }
+  }
+
+  deliverOpeningCar() {
+    if (this.registry.get('openingChapter') !== 'delivery') return;
+    const carId = this.registry.get('starterCarId') === 'ef' ? 'ef' : 'ae86';
+    if (!cars[carId]) return;
+    this.ownedCarIds = [carId];
+    this.registry.set('ownedCarIds', [carId]);
+    this.registry.set('carStates', { [carId]: createStarterCarState() });
+    this.carGarageLocations = { [carId]: 'shinonomeWorkshop' };
+    this.registry.set('carGarageLocations', this.carGarageLocations);
+    this.registry.set('selectedCarId', carId);
+    this.registry.set('openingChapter', 'tutorial');
+    recordCarAcquisition(this.registry, carId, { acquiredVia: 'starter' });
+    saveSessionState(this.registry);
+    this.selectCar(carId);
+    this.renderGaragePage();
+
+    // Translate every wheel and body layer together, preserving original fit.
+    const arrival = (this.selectedDisplay || []).filter(obj => obj?.active && Number.isFinite(obj.x));
+    arrival.forEach(obj => { obj.x -= 850; });
+    this.tweens.add({
+      targets: arrival, x: '+=850', duration: 1350, ease: 'Sine.easeOut',
+      onComplete: () => {
+        const fade = this.add.rectangle(780, 420, 1560, 840, 0x000000, 0)
+          .setDepth(400).setInteractive();
+        this.tweens.add({
+          targets: fade, alpha: 1, duration: 300,
+          onComplete: () => {
+            this.spawnOpeningCompanion('sayakaFujieda', false);
+            this.tweens.add({
+              targets: fade, alpha: 0, duration: 340,
+              onComplete: () => {
+                fade.destroy();
+                this.time.delayedCall(150, () => this.runOpeningStoryIfNeeded());
+              },
+            });
+          },
+        });
+      },
+    });
+  }
+
   showTutorialCompletionChoice() {
     if (this.tutorialCompletionPopup?.active) return true;
 
@@ -7150,7 +7293,8 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
 
-    add(this.add.text(910, 510, 'CONTINUE WITH DAICHI', {
+    add(this.add.text(910, 510,
+      this.registry.get('openingChapter') === 'tutorial' ? 'FINISH WITH SAYAKA' : 'CONTINUE WITH DAICHI', {
       fontFamily: PIXEL_FONT,
       fontSize: '7px',
       color: '#173849',
@@ -7165,6 +7309,10 @@ export default class GarageScene extends Phaser.Scene {
 
     again.on('pointerdown', () => {
       dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial') {
+        this.registry.set('openingDrivingLessonComplete', false);
+        saveSessionState(this.registry);
+      }
       this.time.delayedCall(80, () => this.startOpeningDrivingTutorial());
     });
 
@@ -7209,12 +7357,55 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   continueGarageStoryFlow() {
+    if (['home', 'magazine', 'delivery', 'station'].includes(this.registry.get('openingChapter'))) return true;
+    if (['tutorial', 'daichi'].includes(this.registry.get('openingChapter')))
+      return this.runOpeningStoryIfNeeded();
     if (this.showEthanYuenRewardIfNeeded()) return true;
     if (this.runOpeningStoryIfNeeded()) return true;
     return this.showCentralTokyoInvitationIfNeeded();
   }
 
   runOpeningStoryIfNeeded() {
+    const chapter = this.registry.get('openingChapter');
+    if (chapter === 'tutorial') {
+      if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
+        const result = playMangaCutscene(this, 'openingSayakaKeys', {
+          onComplete: () => this.time.delayedCall(130, () => this.showOpeningTutorialChoice()),
+        });
+        return Boolean(result.played);
+      }
+      if (!this.registry.get('introTutorialChoiceDone')) {
+        this.showOpeningTutorialChoice();
+        return true;
+      }
+      if (!this.registry.get('openingDrivingLessonComplete')) {
+        this.showOpeningTutorialChoice();
+        return true;
+      }
+      if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
+        const result = playMangaCutscene(this, 'openingSayakaFarewell', {
+          onComplete: () => {
+            this.registry.set('openingChapter', 'daichi');
+            saveSessionState(this.registry);
+            this.spawnOpeningCompanion('daichiSakamoto');
+            this.time.delayedCall(160, () => this.runOpeningStoryIfNeeded());
+          },
+        });
+        return Boolean(result.played);
+      }
+      this.registry.set('openingChapter', 'daichi');
+      saveSessionState(this.registry);
+      return this.runOpeningStoryIfNeeded();
+    }
+    // Completed modern profiles must never fall into the legacy first-car cutscene.
+    if (chapter === 'done') return false;
+
+    if (chapter === 'daichi' && !this.hasSeenStoryCutscene('openingDaichiAfterSayaka')) {
+      const result = playMangaCutscene(this, 'openingDaichiAfterSayaka', {
+        onComplete: () => this.time.delayedCall(120, () => this.runOpeningStoryIfNeeded()),
+      });
+      return Boolean(result.played);
+    }
     // Only introduce the origin story on a fresh run. Existing progressed
     // profiles are not interrupted by a retroactive tutorial.
     const racesRun =
@@ -7226,16 +7417,18 @@ export default class GarageScene extends Phaser.Scene {
 
     if (racesRun > 0 && !hasStartedOpening) return false;
 
-    if (!this.hasSeenStoryCutscene('openingDaichiStory')) {
+    if (chapter !== 'daichi' && !this.hasSeenStoryCutscene('openingDaichiStory')) {
       const result = playMangaCutscene(this, 'openingDaichiStory', {
         onComplete: () => {
-          this.time.delayedCall(120, () => this.showOpeningTutorialChoice());
+          this.time.delayedCall(120, () => chapter === 'daichi'
+            ? this.runOpeningStoryIfNeeded()
+            : this.showOpeningTutorialChoice());
         },
       });
       return Boolean(result.played);
     }
 
-    if (!this.registry.get('introTutorialChoiceDone')) {
+    if (chapter !== 'daichi' && !this.registry.get('introTutorialChoiceDone')) {
       this.showOpeningTutorialChoice();
       return true;
     }
@@ -7252,6 +7445,10 @@ export default class GarageScene extends Phaser.Scene {
     if (!this.hasSeenStoryCutscene('openingWorkshopGuide')) {
       const result = playMangaCutscene(this, 'openingWorkshopGuide', {
         onComplete: () => {
+          if (this.registry.get('openingChapter') === 'daichi') {
+            this.registry.set('openingChapter', 'done');
+            saveSessionState(this.registry);
+          }
           this.time.delayedCall(160, () => this.showCentralTokyoInvitationIfNeeded());
         },
       });
@@ -7281,7 +7478,8 @@ export default class GarageScene extends Phaser.Scene {
     add(this.add.text(
       780,
       375,
-      'Run a consequence-free standing-start practice.\nDaichi will guide clutch, first gear, launch RPM and shifting on-screen.',
+      'Run a consequence-free standing-start practice.\n' + (this.registry.get('openingChapter') === 'tutorial' ? 'Sayaka' : 'Daichi') +
+       ' will guide clutch, first gear, launch RPM and shifting on-screen.',
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -7320,6 +7518,8 @@ export default class GarageScene extends Phaser.Scene {
 
     skip.on('pointerdown', () => {
       dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial')
+        this.registry.set('openingDrivingLessonComplete', true);
       this.registry.set('introTutorialChoiceDone', true);
       saveSessionState(this.registry);
       this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
@@ -7354,7 +7554,8 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'GarageScene');
     this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', 'ODAIBA');
-    this.registry.set('raceLocationLabel', 'DAICHI PRACTICE RUN');
+    this.registry.set('raceLocationLabel',
+      this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA DRIVING LESSON' : 'DAICHI PRACTICE RUN');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
