@@ -74,7 +74,8 @@ import {
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261009-r452';
+  getRegionalChallengeRaceSpec,
+} from '../data/tunerChallenges.js?v=20261010-r464';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
@@ -266,9 +267,24 @@ export default class RaceScene extends Phaser.Scene {
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
     this.isTutorial = this.raceMode === 'TUTORIAL';
-    this.raceType = this.registry.get('selectedRaceType') || 'Standing Start';
+    const regionalRaceDistrict = String(
+      this.registry.get('raceDistrict') || this.registry.get('district') || ''
+    ).toUpperCase();
+    const earlyRegionalRace = this.raceMode === 'TUNER_TEAM'
+      && ['ODAIBA', 'SHINAGAWA'].includes(regionalRaceDistrict)
+      ? getRegionalChallengeRaceSpec(
+          regionalRaceDistrict,
+          getTunerTeamChallengeState(this.registry, regionalRaceDistrict).stage
+        )
+      : null;
+    // Also honour the revised schedule if the player resumes directly into
+    // a race with a pre-R464 selectedRaceType in their session.
+    this.raceType = earlyRegionalRace?.raceType
+      || this.registry.get('selectedRaceType') || 'Standing Start';
     this.isRollingStart = this.raceType === 'Roll Race';
-    const configuredRaceDistanceM = Number(this.registry.get('selectedRaceDistanceM') || 0);
+    const configuredRaceDistanceM = Number(
+      earlyRegionalRace?.distanceM || this.registry.get('selectedRaceDistanceM') || 0
+    );
     this.raceDistanceM = configuredRaceDistanceM > 100
       ? configuredRaceDistanceM
       : (this.isRollingStart ? HALF_MILE_M : QUARTER_M);
