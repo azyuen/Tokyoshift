@@ -487,7 +487,7 @@ export default class TokyoExpresswayBackground {
       ctx.globalAlpha = 0.94;
       ctx.fillStyle = shoulderColour;
       ctx.fillRect(0, 0, w, 16);
-      ctx.fillRect(0, 160, w, 18);
+      ctx.fillRect(0, 174, w, 10);
 
       ctx.globalAlpha = this.timeOfDay === 'day' ? 0.82 : 0.68;
       ctx.fillStyle = dividerWhite;
