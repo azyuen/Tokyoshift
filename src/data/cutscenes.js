@@ -17,7 +17,7 @@ export const CUTSCENES = {
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
       { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeNormal', text: "Your family asked me to bring this over. It's your first car, and I wanted to hand you the keys myself." },
-      { speaker: 'right', pose: 'idle', text: "You knew my father from his racing days, didn't you?" },
+      { speaker: 'right', leftCharacter: 'sayakaFujieda', pose: 'idle', text: "You knew my father from his racing days, didn't you?" },
       { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeHappy', text: "We go back a long way. He'd want you to enjoy this, not just look after it. I'll be around." },
       { speaker: 'left', leftCharacter: 'daichiSakamoto', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "So Sayaka brought it over. After all those years talking about driving, you've finally got one of your own." },
       { speaker: 'right', pose: 'idle', text: "And I've finally moved close enough to actually use it." },
