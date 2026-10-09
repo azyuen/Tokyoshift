@@ -363,20 +363,22 @@ export default class TouchControls {
     const throttleScale = Number(this.placements.throttle.scale || 1);
     const clutchRect = this.layout.clutch;
     const throttleRect = this.layout.throttle;
-    // Pedal PNGs have wider, slightly lower inset gauge windows than the
-    // original overlay measurements. Keep these offsets relative to each
-    // touch zone so both custom placement and size settings stay aligned.
+    // Fine tune the fill meters against the transparent pedal windows.
+    // Offsets stay relative to each saved control rectangle: users' custom
+    // positions/scales and the actual touch gesture areas do not change.
+    // The clutch fill moves slightly left/down; both fills are a little
+    // taller, without rescaling the pedal sprites themselves.
     const clutchBar = {
-      x: clutchRect.right - 53 * clutchScale,
-      y: clutchRect.y + 98 * clutchScale,
+      x: clutchRect.right - 60 * clutchScale,
+      y: clutchRect.y + 103 * clutchScale,
       w: 26 * clutchScale,
-      h: 156 * clutchScale,
+      h: 166 * clutchScale,
     };
     const throttleBar = {
       x: throttleRect.right - 61 * throttleScale,
       y: throttleRect.y + 99 * throttleScale,
       w: 27 * throttleScale,
-      h: 165 * throttleScale,
+      h: 175 * throttleScale,
     };
 
     g.fillStyle(0x48c9e8, 0.92)
