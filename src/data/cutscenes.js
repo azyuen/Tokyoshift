@@ -62,15 +62,15 @@ export const CUTSCENES = {
   openingRaceRules: {
     id: 'openingRaceRules',
     category: 'OPENING / SYSTEMS',
-    testerLabel: 'Opening — Bets, Pinks & Competitions',
+    testerLabel: 'Opening — Bets, Pinks & Street Showdowns',
     title: 'THE STREET // WHAT IS AT STAKE',
     once: true,
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Most races are simple cash bets. Agree on the money, line up, winner gets paid." },
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Pink slips are different. Keys for keys. Lose and that car is gone. If it's your last car, your run is over.", emphasis: true },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You'll also see three-race competitions. Same car through the bracket, no tuning between rounds. Lose once and the streak is finished." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Some competition prizes are vehicle coupons. Two matching coupons can claim most cars for free at the Auto Market." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You'll also see local Street Showdowns. Three races, same car, no tuning between rounds. Lose once and the streak is finished." },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Some showdown prizes are vehicle coupons. Two matching coupons can claim most cars for free at the Auto Market." },
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "The R32 is different. That thing is worth too much to hand out easily — you'll need three R32 coupons." },
     ],
     finalActionLabel: 'GOT IT',
@@ -709,7 +709,7 @@ export const CUTSCENES = {
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You've made enough noise that people have started passing your name around." },
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "There's another side of the scene in Central Tokyo. Less standing around at meets, more cars and money changing hands." },
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "The Auto Market sells used street cars — some stock, some already modified. If you win a car you don't want, they'll buy it from you too." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Competition coupons get redeemed there as well. I've added Central Tokyo to your map.", emphasis: true },
+      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Street Showdown coupons get redeemed there as well. I've added Central Tokyo to your map.", emphasis: true },
     ],
     finalActionLabel: 'UNLOCK CENTRAL TOKYO',
   },
@@ -806,9 +806,9 @@ export const CUTSCENES = {
 
   competitionIntroduction: {
     id: 'competitionIntroduction',
-    category: 'COMPETITION / STORY',
-    testerLabel: 'Competition — First Entry',
-    title: 'COMPETITION // STREET THREE',
+    category: 'STREET SHOWDOWN / STORY',
+    testerLabel: 'Street Showdown — First Entry',
+    title: 'STREET SHOWDOWN // THREE RACES',
     once: true,
     characters: { left: '$PROMOTER', right: '$PLAYER' },
     preview: {
@@ -834,9 +834,9 @@ export const CUTSCENES = {
 
   competitionChampion: {
     id: 'competitionChampion',
-    category: 'COMPETITION / RESULT',
-    testerLabel: 'Competition — First Championship',
-    title: 'COMPETITION // CLEARED',
+    category: 'STREET SHOWDOWN / RESULT',
+    testerLabel: 'Street Showdown — First Victory',
+    title: 'STREET SHOWDOWN // CLEARED',
     once: true,
     characters: { left: '$PROMOTER', right: '$PLAYER' },
     preview: {
