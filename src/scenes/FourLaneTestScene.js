@@ -4,12 +4,12 @@
 import RaceScene from './RaceScene.js?v=20261008-r431';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261008-r426';
-import RaceHUD from '../ui/RaceHUD.js?v=20261008-r428';
+import TouchControls from '../input/TouchControls.js?v=20261010-r458';
+import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261006-r388';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261007-r411';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r458';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
