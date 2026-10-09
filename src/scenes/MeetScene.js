@@ -59,6 +59,7 @@ import {
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
+import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261009-r453';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
@@ -3372,31 +3373,24 @@ export default class MeetScene extends Phaser.Scene {
     this.updateModeButtons();
   }
 
-  chooseCompetitionCharacter(rating = 4, exclude = []) {
+  chooseCompetitionCharacter(rating = 3, exclude = []) {
     const playerId = this.getActiveDriverCharacterId();
     const blocked = new Set([playerId, ...exclude]);
     const location = getMeetLocation(this.selectedMeetLocation);
+    const target = Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5);
 
     const regional = getRivalCharacterOrderForRegion(location.district)
-      .filter(id =>
-        !blocked.has(id) &&
-        characters[id] &&
-        Number(characters[id]?.skill?.rating || 0) >= 4
-      );
-    const globalExperts = rivalCharacterOrder.filter(id =>
-      !blocked.has(id) &&
-      characters[id] &&
-      Number(characters[id]?.skill?.rating || 0) >= 4
-    );
-    const pool = regional.length ? regional : globalExperts;
-    if (!pool.length) return this.chooseEventCharacter(5, exclude);
+      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false);
+    const global = rivalCharacterOrder
+      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false);
+    const pool = regional.length ? regional : global;
+    if (!pool.length) return this.chooseEventCharacter(target, exclude);
 
-    const target = Phaser.Math.Clamp(Math.round(Number(rating) || 4), 4, 5);
     const closestDistance = Math.min(...pool.map(id =>
-      Math.abs(Number(characters[id]?.skill?.rating || 4) - target)
+      Math.abs(Number(characters[id]?.skill?.rating || 3) - target)
     ));
     const closest = pool.filter(id =>
-      Math.abs(Number(characters[id]?.skill?.rating || 4) - target) === closestDistance
+      Math.abs(Number(characters[id]?.skill?.rating || 3) - target) === closestDistance
     );
     return Phaser.Utils.Array.GetRandom(closest.length ? closest : pool);
   }
@@ -3426,71 +3420,29 @@ export default class MeetScene extends Phaser.Scene {
       Phaser.Math.FloatBetween(0, 1) < (owned.length <= 1 ? 0.48 : 0.36);
 
     const usedCharacters = [];
-    const usedCars = [];
-    const driverRatings = [4, 4, 5];
-
-    const rounds = driverRatings.map((rating, index) => {
-      const raceType = chooseWeightedRaceType(
+    const raceTypes = Array.from({ length: 3 }, () =>
+      chooseWeightedRaceType(
         PROGRESSION_BALANCE.meetMatchmaking.raceTypeChances?.competitionRolling ?? 0.20
-      );
+      )
+    );
+    const garageTier = Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0)));
+    const wins = Math.max(0, Number(this.registry.get('wins') || 0));
+    const physicalRounds = createStreetShowdownRounds({
+      garageTier, wins, playerCarId, playerState, playerDifficulty, raceTypes,
+      seed: ['street-showdown', this.selectedMeetLocation, refreshToken, playerCarId].join(':'),
+    });
+    if (physicalRounds.length !== 3) return null;
 
-      // Sample several comparable builds and keep the one closest to the
-      // player's actual performance. Driver skill remains expert/elite.
-      const matches = Array.from({ length: 5 }, (_, attempt) =>
-        createMeetOpponentMatch({
-          playerCarId,
-          playerState,
-          raceType,
-          difficulty,
-          playerDifficulty,
-          bandId: 'comparable',
-          locationId: this.selectedMeetLocation,
-          refreshSeed: [
-            'competition',
-            refreshToken,
-            index,
-            attempt,
-          ].join(':'),
-          slotIndex: index * 10 + attempt,
-          ownedCarIds: owned,
-          usedCarIds: usedCars,
-        })
-      ).filter(Boolean);
-
-      matches.sort((a, b) =>
-        Math.abs(Number(a.ratio || 1) - 1) -
-        Math.abs(Number(b.ratio || 1) - 1)
-      );
-      const match = matches[0] || null;
-
+    const rounds = physicalRounds.map(physical => {
+      const rating = physical.encounterRating;
       const characterId = this.chooseCompetitionCharacter(rating, usedCharacters);
       if (characterId) usedCharacters.push(characterId);
-
-      const carId = match?.carId || this.chooseEventCar(3, {
-        preferUnowned: index === 2,
-        exclude: usedCars,
-        restriction: null,
-      });
-      usedCars.push(carId);
-
-      const buildState = match?.buildState || createRivalBuildState(cars[carId], 3, {
-        raceType,
-        seed: ['competition-fallback', refreshToken, index, carId].join(':'),
-      });
-
       return {
+        ...physical,
         characterId,
-        carId,
         paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
-        encounterRating: rating,
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
-        raceType,
-        opponentBuildState: buildState,
-        opponentBuildRating: Number(match?.buildRating || buildState?.buildRating || 3),
-        opponentBuildArchetype:
-          match?.buildArchetype || buildState?.buildArchetype || 'balancedStreet',
-        performanceRatio: Number(match?.ratio || 1),
       };
     });
 
@@ -3534,7 +3486,12 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R332',
+      balanceVersion: 'R453',
+      playerCarId,
+      garageTier,
+      winsAtGeneration: wins,
+      playerDifficulty,
+      tuningFingerprint: JSON.stringify(playerState),
       meetRefreshAt: refreshToken,
       refreshAt: refreshToken,
     };
@@ -3551,7 +3508,14 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R332';
+      current?.balanceVersion !== 'R453' ||
+      current?.playerCarId !== this.registry.get('selectedCarId') ||
+      current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
+      current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
+      current?.playerDifficulty !== (this.registry.get('playerDifficulty') || 'STANDARD') ||
+      current?.tuningFingerprint !== JSON.stringify(
+        (this.registry.get('carStates') || {})[this.registry.get('selectedCarId')] || {}
+      );
 
     if (expired) {
       offers[this.selectedMeetLocation] = this.generateCompetitionOffer();
@@ -3612,7 +3576,7 @@ export default class MeetScene extends Phaser.Scene {
     const panel = add(this.add.rectangle(780, 420, 780, 540, 0x07111d, 0.995)
       .setStrokeStyle(3, 0x45d7ff, 0.95).setDepth(depth + 1));
 
-    add(this.add.text(780, 192, 'COMPETITION // STREET THREE', {
+    add(this.add.text(780, 192, 'STREET SHOWDOWN // THREE RACES', {
       fontFamily: PIXEL_FONT, fontSize: '15px', color: '#eefaff'
     }).setOrigin(0.5).setDepth(depth + 2));
 
@@ -3622,7 +3586,8 @@ export default class MeetScene extends Phaser.Scene {
       'WIN ALL THREE RACES IN A ROW' +
         (offer.restriction
           ? '\\nCLASS // ' + offer.restriction.label
-          : '\\nPOWER MATCH // EXPERT + ELITE'),
+          : '\\n' + (offer.rounds[0]?.showdownEra || 'STREET') +
+            ' BUILDS // UP TO LV' + (offer.rounds[0]?.showdownMaxLevel || 1)),
       {
         fontFamily: BODY_FONT,
         fontSize: '13px',
@@ -3733,9 +3698,9 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterRating', round.encounterRating);
     this.registry.set('selectedOpponentEncounterAi', round.encounterAi);
     this.registry.set('selectedOpponentDifficulty', state.difficulty);
-    this.registry.set('selectedOpponentBuildRating', null);
-    this.registry.set('selectedOpponentBuildArchetype', null);
-    this.registry.set('selectedOpponentBuildState', null);
+    this.registry.set('selectedOpponentBuildRating', round.opponentBuildRating || null);
+    this.registry.set('selectedOpponentBuildArchetype', round.opponentBuildArchetype || null);
+    this.registry.set('selectedOpponentBuildState', round.opponentBuildState || null);
     this.registry.set('selectedRaceCategory', 'COMPETITION');
     this.registry.set('selectedRaceType', round.raceType);
     this.registry.set('selectedRaceDistanceM', 0);
