@@ -39,7 +39,7 @@ test('Reika and Sayaka use the already uploaded, distinct sprite sets', () => {
     assert.match(reikaAsset.path, new RegExp('assets/Characters/Shinagawa/reika_tachibana_' + pose + '\\.png$'));
     assert.ok(readFileSync(reikaAsset.path).byteLength > 0);
   }
-  for (const [pose, location] of [['homeNormal', 'Main'], ['normal', 'Central'], ['track', 'Main']]) {
+  for (const [pose, location] of [['homeNormal', 'Main'], ['normal', 'Main'], ['track', 'Main']]) {
     const asset = getCharacterVisualAsset('sayakaFujieda', pose);
     assert.ok(asset.path.includes('assets/Characters/' + location + '/'));
     assert.ok(readFileSync(asset.path).byteLength > 0);
