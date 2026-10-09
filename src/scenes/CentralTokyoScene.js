@@ -812,9 +812,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // Dev refresh stays near the header so GO TO MAP remains the bottom-most action.
       const devY = SIDE.y + 176;
       const labels = {
-        autoMarket: 'DEV // REFRESH AUTO MARKET',
-        showroom: 'DEV // REFRESH COLLECTORS',
-        proDrag: 'DEV // REFRESH DRAG EVENTS',
+        autoMarket: 'D) REFRESH AUTO MARKET',
+        showroom: 'D) REFRESH COLLECTORS',
+        proDrag: 'D) REFRESH DRAG EVENTS',
       };
 
       const devButton = this.addContent(this.add.rectangle(
@@ -831,7 +831,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         SIDE.x + SIDE.w / 2,
         devY,
-        labels[kind] || 'DEV // REFRESH LOCATION',
+        labels[kind] || 'D) REFRESH LOCATION',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
@@ -2993,7 +2993,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         x, y, 250, 30, 0x211317, 0.96
       ).setStrokeStyle(1, 0xbf444b, 1)
         .setDepth(29).setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(x, y, 'DEV // REFRESH LINEUP', {
+      this.addContent(this.add.text(x, y, 'D) REFRESH LINEUP', {
         fontFamily: PIXEL_FONT, fontSize: '7px', color: '#f1e6e7',
       }).setOrigin(0.5).setDepth(30));
       dev.on('pointerdown', () => this.devRefreshCentralLocation());
