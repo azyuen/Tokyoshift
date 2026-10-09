@@ -34,6 +34,10 @@ import {
   getExhaustNosCartCost,
   applySecondaryTuning,
 } from '../data/secondaryTuning.js?v=20261008-r428';
+import {
+  getPartRemovalQuote,
+  removeTuningPartFromState,
+} from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261006-r388';
@@ -4769,6 +4773,145 @@ export default class GarageScene extends Phaser.Scene {
     return well;
   }
 
+  // Removing an installed kit is intentionally not a downgrade or a refund.
+  // A confirmation is required because all previously purchased tiers of the
+  // chosen component are discarded, including the NOS shot if its kit is gone.
+  addPartUninstallButton(add, depth, category, partId) {
+    const state = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
+    const quote = getPartRemovalQuote(state, category, partId);
+    if (!quote || this.isSelectedCarTuningLocked()) return;
+
+    const x = 965;
+    const box = add(this.add.rectangle(x, 124, 210, 44, 0x35151e, 1)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setDepth(depth + 2)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(x, 124,
+      'UNINSTALL // ¥' + quote.cost.toLocaleString('en-US'), {
+        fontFamily: PIXEL_FONT,
+        fontSize: '6px',
+        color: '#ffd5df',
+      }
+    ).setOrigin(0.5).setDepth(depth + 3));
+
+    box.on('pointerdown', () => this.showPartUninstallConfirmation(category, partId));
+  }
+
+  showPartUninstallConfirmation(category, partId) {
+    if (this._partUninstallConfirmObjects?.length || this.isSelectedCarTuningLocked()) return;
+
+    const carId = this.selectedCarId;
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = getPartRemovalQuote(state, category, partId);
+    if (!quote) return;
+
+    const objects = [];
+    this._partUninstallConfirmObjects = objects;
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 155;
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      if (this._partUninstallConfirmObjects === objects) {
+        this._partUninstallConfirmObjects = [];
+      }
+    };
+
+    add(this.add.rectangle(780, 420, 1560, 840, 0x010309, 0.84)
+      .setInteractive().setDepth(depth));
+
+    add(this.add.rectangle(780, 420, 780, 390, 0x15121b, 0.995)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setDepth(depth + 1));
+
+    add(this.add.text(780, 284, 'UNINSTALL ' + quote.partName.toUpperCase() + '?', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffe2ea',
+    }).setOrigin(0.5).setDepth(depth + 2));
+
+    add(this.add.text(780, 377,
+      'REMOVE LV.' + quote.level + ' // RETURN TO STOCK\\n' +
+      'LABOUR  ¥ ' + quote.cost.toLocaleString('en-US') + '\\n' +
+      'PART DESTROYED // NO REFUND OR INVENTORY' +
+      (quote.removesShot ? '\\nNITROUS SHOT ALSO DESTROYED' : '') +
+      '\\nUNPURCHASED CHANGES IN THIS CATEGORY WILL BE CLEARED',
+      {
+        fontFamily: BODY_FONT, fontSize: '15px', color: '#d5c9d2',
+        align: 'center', lineSpacing: 4, wordWrap: { width: 710 },
+      }
+    ).setOrigin(0.5).setDepth(depth + 2));
+
+    const cancel = add(this.add.rectangle(615, 555, 240, 48, 0x17222e, 1)
+      .setStrokeStyle(1, 0x8091a4, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(615, 555, 'KEEP PART', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#e1f0fa',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    const uninstall = add(this.add.rectangle(945, 555, 270, 48, 0x411721, 1)
+      .setStrokeStyle(2, 0xff7e9c, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
+    add(this.add.text(945, 555, 'PAY & UNINSTALL', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe2ea',
+    }).setOrigin(0.5).setDepth(depth + 3));
+
+    cancel.on('pointerdown', close);
+    uninstall.on('pointerdown', () => {
+      // Recheck at commitment; a user can change cars or money while a
+      // modal is open, especially across an interrupted mobile session.
+      if (carId !== this.selectedCarId || this.isSelectedCarTuningLocked()) {
+        close();
+        return;
+      }
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const current = states[carId] || {};
+      const liveQuote = getPartRemovalQuote(current, category, partId);
+      if (!liveQuote || liveQuote.level !== quote.level) {
+        close();
+        this.showWorkshopToast('PARTS CHANGED // REOPEN TUNING');
+        return;
+      }
+
+      const cash = Number(this.registry.get('cash') || 0);
+      if (cash < liveQuote.cost) {
+        close();
+        this.showWorkshopToast('NOT ENOUGH CASH TO UNINSTALL');
+        return;
+      }
+
+      const updated = removeTuningPartFromState(current, category, partId);
+      if (!updated) return;
+      // Perform the state/cash update together, before the next save.
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - liveQuote.cost);
+      this.cashText?.setText('¥ ' + (cash - liveQuote.cost).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+
+      if (category === 'engine') {
+        this.closeEnginePartSelector();
+        this.currentEngineTuning = getEngineTuning(updated);
+        this.pendingEngineTuning = { ...this.currentEngineTuning };
+        this.refreshEngineMode();
+      } else if (category === 'chassis') {
+        this.closeChassisPartSelector();
+        this.currentChassisTuning = getChassisTuning(updated);
+        this.pendingChassisTuning = { ...this.currentChassisTuning };
+        this.refreshChassisMode();
+      } else {
+        this.closeSecondaryPartSelector();
+        this.currentSecondaryTuning = category === 'drivetrain'
+          ? getDrivetrainTuning(updated)
+          : getExhaustNosTuning(updated);
+        this.pendingSecondaryTuning = { ...this.currentSecondaryTuning };
+        this.refreshSecondaryTuningMode();
+      }
+      this.refreshWorkshopSpecs();
+      this.showWorkshopToast(
+        'PART SCRAPPED // ¥ ' + liveQuote.cost.toLocaleString('en-US')
+      );
+    });
+  }
+
   openEnginePartSelector(partId, previewLevel = null) {
     this.closeEnginePartSelector();
     const part = ENGINE_TUNING_PARTS[partId];
@@ -4889,6 +5032,8 @@ export default class GarageScene extends Phaser.Scene {
         });
       }
     });
+
+    this.addPartUninstallButton(add, depth, 'engine', partId);
 
     const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
@@ -5729,6 +5874,8 @@ export default class GarageScene extends Phaser.Scene {
         });
       }
     });
+
+    this.addPartUninstallButton(add, depth, 'chassis', partId);
 
     const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
@@ -6814,6 +6961,8 @@ export default class GarageScene extends Phaser.Scene {
         });
       }
     });
+
+    this.addPartUninstallButton(add, depth, category, partId);
 
     const cancel = add(this.add.rectangle(1160, 124, 140, 44, 0x151d28, 1)
       .setStrokeStyle(1, 0x657d8c, 1)
