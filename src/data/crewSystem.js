@@ -6,7 +6,7 @@ import {
   isRecruitableRegionalCharacter,
   getCrewBaseCarId,
   getCrewLoanCarId,
-} from './crewRoster.js?v=20261007-r410';
+} from './crewRoster.js?v=20261009-r457';
 import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
