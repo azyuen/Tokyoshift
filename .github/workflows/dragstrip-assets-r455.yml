@@ -1,0 +1,33 @@
+name: Dragstrip crowd and day-night asset checks
+
+on:
+  push:
+    branches:
+      - feature/dragstrip-crowd-day-night-r455
+  pull_request:
+    paths:
+      - 'src/data/dragstripVenue.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/dragstrip-venue-variants-r455.mjs'
+      - 'tests/four-lane-prototype.mjs'
+      - '.github/workflows/dragstrip-assets-r455.yml'
+
+jobs:
+  variant-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check src/data/dragstripVenue.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/main.js
+      - name: Validate all 30 PNG variants and matching day/night skyline
+        run: node --test tests/dragstrip-venue-variants-r455.mjs
+      - name: Existing scene geometry, race finish and professional competition checks
+        run: node --test tests/four-lane-prototype.mjs tests/four-lane-finish-regression.mjs tests/pro-complex-r445.mjs
+      - name: Existing bracket, event progression and profile persistence checks
+        run: node --test tests/pro-tournament-phase2.mjs tests/pro-circuit-foundation.mjs tests/drag-complex-r448.mjs tests/central-tokyo-startup-r449.mjs
