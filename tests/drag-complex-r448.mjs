@@ -29,7 +29,7 @@ test('no duplicate four-wide entry, standalone dev test or right sidebar dev ref
   assert.match(pro,/standalone dev tester is retired/i);
   assert.match(central,/LOCATION_BY_ID\[this\.activeLocationId\]\?\.kind !== 'proDrag'/);
   assert.match(central,/x = STAGE\.x \+ STAGE\.w - 135/);
-  assert.match(central,/DEV \/\/ REFRESH LINEUP/);
+  assert.match(central,/D\) REFRESH LINEUP/);
 });
 
 test('single right panel action routes paid events and resumed heats, without other controls',()=>{
