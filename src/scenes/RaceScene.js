@@ -2236,8 +2236,8 @@ export default class RaceScene extends Phaser.Scene {
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
     const contextType = isPinkSlip
       ? 'PINK SLIP'
-      : this.raceMode === 'STREET SHOWDOWN'
-        ? 'COMPETITION'
+      : this.raceMode === 'COMPETITION'
+        ? 'STREET SHOWDOWN'
         : this.raceMode === 'TUNER_TEAM'
           ? 'REGIONAL TEAM CHALLENGE'
           : this.raceMode === 'CREW_RECRUIT'
