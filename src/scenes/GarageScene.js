@@ -450,9 +450,16 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedCarId', this.selectedCarId);
     this.registry.set('meetStranded', false);
 
+    // New-player car advertisements and first-car arrival share the same
+    // modular textures as normal cars, even though this garage starts empty.
+    const introCarIds = ['home', 'magazine', 'delivery'].includes(this.registry.get('openingChapter'))
+      ? ['ae86', 'ef'] : [];
     ensureDerivedModularCarTextures(
       this,
-      Object.fromEntries(localCars.filter(id => cars[id]).map(id => [id, cars[id]]))
+      Object.fromEntries(
+        [...new Set([...localCars, ...introCarIds])]
+          .filter(id => cars[id]).map(id => [id, cars[id]])
+      )
     );
 
     this.selectedDisplay = [];
