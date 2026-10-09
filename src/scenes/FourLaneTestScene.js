@@ -29,6 +29,8 @@ import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=2026100
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
+import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
@@ -86,9 +88,6 @@ const TRACK_DRAW_WIDTH = TRACK_DRAW_RIGHT - TRACK_DRAW_LEFT;
 
 // Venue modules: source PNGs share the same bottom-aligned barrier baseline.
 // Width and overlap are specified in the opening preview's SCREEN pixels.
-const STAND_KEYS = [
-  'fourLaneStandLeft', 'fourLaneStandMid', 'fourLaneStandRight',
-];
 const STAND_PREVIEW_PIECE_WIDTH = 495;
 const STAND_PREVIEW_OVERLAP = 32;
 const STAND_PREVIEW_START_X = 360;
@@ -143,6 +142,19 @@ export default class FourLaneTestScene extends RaceScene {
     const circuit = this.registry.get('proCircuit') || {};
     this.proTournament = this.proCup ? circuit.activeTournament : null;
     this.proHeat = this.proCup ? getPlayerProHeat(this.proTournament) : null;
+    // Snapshot the live Tokyo map clock when this heat starts. Lock the art
+    // for the race; the next heat will select the current world phase again.
+    const eventId = this.proCup
+      ? this.proTournament?.eventId || FOUR_WIDE_CUP.id
+      : this.proDuelState?.eventId || 'streetShootout';
+    this.venueArt = resolveDragstripVenue({
+      eventId,
+      phase: getWorldPhase(),
+      // Phase 3 season/ranking systems may set this optional attendance value.
+      crowdTier: this.proCup
+        ? this.proTournament?.crowdTier
+        : this.proDuelState?.crowdTier,
+    });
     const selected = this.proCup ? this.proTournament?.carId
       : this.proDuel ? this.proDuelState?.playerCarId
         : this.registry.get('selectedCarId');
@@ -186,14 +198,13 @@ export default class FourLaneTestScene extends RaceScene {
         loadImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
       }
     }
-    // Shared professional venue foreground for both event formats.
-    loadImage('fourLaneStartComplex', 'assets/CentralTokyo/dragstrip_complex_night.png');
-    loadImage('fourLaneStandLeft', 'assets/CentralTokyo/dragstrip_standleft_night.png');
-    // The uploaded filename is "standmid", not "standmiddle".
-    loadImage('fourLaneStandMid', 'assets/CentralTokyo/dragstrip_standmid_night.png');
-    loadImage('fourLaneStandRight', 'assets/CentralTokyo/dragstrip_standright_night.png');
-    loadImage('fourLaneFrontCrowd', 'assets/CentralTokyo/dragstrip_frontcrowd_night.png');
-    loadImage('fourLaneShinjukuNight', 'assets/Race/Skylines/skyline_shinjuku_night.webp');
+    // Load ONLY this heat's complete matching crowd/day-night set.
+    // Variant-specific Phaser texture keys prevent old cached night/low art
+    // being accidentally reused after a world-clock or event change.
+    Object.values(this.venueArt.sprites).forEach(sprite =>
+      loadImage(sprite.key, sprite.path)
+    );
+    loadImage(this.venueArt.skyline.key, this.venueArt.skyline.path);
     const states = this.registry.get('carStates') || {};
     const playerState = states[this.playerCarId] || {};
     [...new Set([this.playerCarId, ...this.aiCarIds])].forEach(id => {
@@ -311,8 +322,9 @@ export default class FourLaneTestScene extends RaceScene {
     // Transparent building, crew, lights and barriers. The road stays Phaser-generated.
     // Keep the art in the SAME WORLD as the road and cars: the cinematic zoom
     // must grow all three together, revealing progressively less of the venue.
-    this.complexArt = this.textures.exists('fourLaneStartComplex')
-      ? this.add.image(0, 0, 'fourLaneStartComplex').setOrigin(0, 0).setDepth(2)
+    const complexKey = this.venueArt.sprites.complex.key;
+    this.complexArt = this.textures.exists(complexKey)
+      ? this.add.image(0, 0, complexKey).setOrigin(0, 0).setDepth(2)
       : null;
     this.trackFX = this.add.graphics().setDepth(18);
     this.runners.forEach((runner, index) => {
@@ -574,17 +586,18 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   createShinjukuSkyline() {
-    if (!this.textures.exists('fourLaneShinjukuNight')) return [];
+    const skylineKey = this.venueArt.skyline.key;
+    if (!this.textures.exists(skylineKey)) return [];
     // Use a larger aspect-correct panorama. At minimum it reaches ABOVE
     // screen y=0 even in the 52% preview; its lower edge stays at the road.
-    const source = this.textures.get('fourLaneShinjukuNight').getSourceImage();
+    const source = this.textures.get(skylineKey).getSourceImage();
     const baseHeight = SKYLINE_WORLD_WIDTH * source.height / source.width;
     const scale = Math.max(SKYLINE_SCALE_UP,
       SKYLINE_MIN_WORLD_HEIGHT / baseHeight);
     this.skylineWorldWidth = SKYLINE_WORLD_WIDTH * scale;
     const skylineHeight = baseHeight * scale;
     return [-1, 0, 1].map(() =>
-      this.add.image(0, ROAD_TOP_LINE_Y - STAND_BASE_GAP, 'fourLaneShinjukuNight')
+      this.add.image(0, ROAD_TOP_LINE_Y - STAND_BASE_GAP, skylineKey)
         .setOrigin(0, 1).setDepth(0.4)
         .setDisplaySize(this.skylineWorldWidth, skylineHeight)
         .setAlpha(0.78)
@@ -592,8 +605,13 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   createStandSet(distanceM) {
-    if (!STAND_KEYS.every(key => this.textures.exists(key))) return null;
-    const imageKeys = STAND_KEYS.map(key => this.prepareStandTexture(key));
+    const standKeys = [
+      this.venueArt.sprites.standleft.key,
+      this.venueArt.sprites.standmid.key,
+      this.venueArt.sprites.standright.key,
+    ];
+    if (!standKeys.every(key => this.textures.exists(key))) return null;
+    const imageKeys = standKeys.map(key => this.prepareStandTexture(key));
     // A single left and right end-cap at both venues. Only the finish uses
     // eight middle sections; every section reuses the same cached texture.
     if (distanceM > 0) {
@@ -623,10 +641,11 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   createFrontCrowdSet(distanceM, count) {
-    if (!this.textures.exists('fourLaneFrontCrowd')) return null;
+    const crowdKey = this.venueArt.sprites.frontcrowd.key;
+    if (!this.textures.exists(crowdKey)) return null;
     // The asset is transparent. Trimming its empty canvas ensures the
     // spectator heads are measured from the actual visible silhouettes.
-    const key = this.prepareStandTexture('fourLaneFrontCrowd');
+    const key = this.prepareStandTexture(crowdKey);
     const source = this.textures.get(key).getSourceImage();
     // R442: twice the R441 scale in both axes. The bottom-origin y stays
     // untouched, so the heads become 2x taller without moving the baseline.
