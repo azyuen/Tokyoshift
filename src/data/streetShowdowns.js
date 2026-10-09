@@ -105,6 +105,14 @@ export function createStreetShowdownRounds(options = {}) {
   const playerState = options.playerState || {};
   const seed = String(options.seed || 'showdown');
   const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
+  // Easy retains the graduated local skill curve. Standard and Hard retain
+  // high-level drivers but every physical car stays workshop-legal and bound
+  // to the same per-round tuning-point ceiling as Easy.
+  const driverRatings = profile === 'EASY'
+    ? era.drivers
+    : profile === 'HARD'
+      ? [4, 5, 5]
+      : [4, 4, 5];
   const targets = profile === 'EASY'
     ? [0.85, 0.91, 0.96]
     : profile === 'HARD'
@@ -125,7 +133,7 @@ export function createStreetShowdownRounds(options = {}) {
     for (const carId of carOrder) {
       const config = cars[carId];
       if (!config || config.collector || config.tuningLocked || config.crewLoan) continue;
-      const archetype = chooseRivalBuildArchetype(config, era.drivers[roundIndex], {
+      const archetype = chooseRivalBuildArchetype(config, driverRatings[roundIndex], {
         raceType, seed: [seed, roundIndex, carId].join(':'),
       });
       const stride = high >= 25 ? 3 : high >= 15 ? 2 : 1;
@@ -155,7 +163,7 @@ export function createStreetShowdownRounds(options = {}) {
       opponentBuildState: best.buildState,
       opponentBuildRating: best.buildState.buildRating,
       opponentBuildArchetype: best.buildState.buildArchetype,
-      encounterRating: era.drivers[roundIndex],
+      encounterRating: driverRatings[roundIndex],
       raceType,
       performanceRatio: best.ratio,
       showdownEra: era.name,
