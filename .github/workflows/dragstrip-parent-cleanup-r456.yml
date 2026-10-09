@@ -1,0 +1,27 @@
+name: Parent dragstrip PNG cleanup R456
+
+on:
+  push:
+    branches:
+      - cleanup/remove-legacy-parent-dragstrip-pngs-r456
+  pull_request:
+    paths:
+      - 'assets/CentralTokyo/*.png'
+      - 'tests/dragstrip-parent-cleanup-r456.mjs'
+      - 'index.html'
+      - 'sw.js'
+      - 'version.json'
+      - '.github/workflows/dragstrip-parent-cleanup-r456.yml'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check no active references and all required art preserved
+        run: node --test tests/dragstrip-parent-cleanup-r456.mjs
+      - name: Validate crowd/day-night variants and race compatibility
+        run: node --test tests/dragstrip-venue-variants-r455.mjs tests/four-lane-prototype.mjs tests/central-tokyo-startup-r449.mjs
