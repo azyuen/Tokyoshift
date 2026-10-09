@@ -1,12 +1,12 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261008-r426';
+import TouchControls from '../input/TouchControls.js?v=20261010-r458';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
 } from '../data/playerDifficulty.js?v=20261007-r399';
-import RaceHUD from '../ui/RaceHUD.js?v=20261008-r428';
+import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261008-r424';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
@@ -38,7 +38,7 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261007-r411';
+} from '../data/characters.js?v=20261010-r458';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
