@@ -142,7 +142,7 @@ const REGION_RACE_PATTERNS = {
 
 const REGION_DRIVER_RATINGS = Object.freeze({
   ODAIBA: [2, 2, 2, 3, 3, 3, 3],
-  SHINAGAWA: [2, 2, 3, 3, 3, 3, 4],
+  SHINAGAWA: [2, 2, 3, 3, 3, 3, 3],
   TATSUMI: [3, 3, 3, 3, 4, 4, 4],
   SHIBUYA: [3, 3, 3, 4, 4, 4, 4],
   YOKOHAMA: [4, 4, 4, 4, 4, 5, 5],
@@ -273,7 +273,7 @@ export function getTunerTeamChallengeState(source, regionId) {
             ...round,
             carId: REGION_CARS[key][index] || round.carId,
             encounterRating: rating,
-            encounterAi: challengeAi(index, rating),
+            encounterAi: challengeAi(index, rating, key),
             difficulty: index === 6 ? 'PRO' : rating >= 4 ? 'EXPERT' : rating >= 3 ? 'SKILLED' : 'ROOKIE',
             tuningPointCap: regionalTuningPointCap(
               key, index, sourceValue(source, 'playerDifficulty', 'STANDARD')
@@ -347,16 +347,24 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
   return finalRoster.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
 }
 
-function challengeAi(stageIndex, rating) {
+const BEGINNER_REGIONAL_DRIVER_PENALTIES = Object.freeze({
+  // Keep the beginner championships decided by real shifting and launching,
+  // not by near-perfect computer execution. Later regions are untouched.
+  ODAIBA: Object.freeze({ reaction: 0.065, launch: 0.045, shift: 0.085, aggression: 0.050 }),
+  SHINAGAWA: Object.freeze({ reaction: 0.040, launch: 0.030, shift: 0.060, aggression: 0.035 }),
+});
+
+function challengeAi(stageIndex, rating, regionId = '') {
   const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
   const base = { ...getEncounterAi(rating) };
   const progress = stage / 6;
+  const penalty = BEGINNER_REGIONAL_DRIVER_PENALTIES[normaliseRegion(regionId)] || {};
   return {
     ...base,
-    reactionSkill: Math.min(0.98, Number(base.reactionSkill || 0) + progress * 0.035),
-    launchSkill: Math.min(0.98, Number(base.launchSkill || 0) + progress * 0.035),
-    shiftSkill: Math.min(0.99, Number(base.shiftSkill || 0) + progress * 0.025),
-    aggression: Math.min(0.97, Number(base.aggression || 0) + progress * 0.035),
+    reactionSkill: Math.max(0.30, Math.min(0.98, Number(base.reactionSkill || 0) + progress * 0.035 - (penalty.reaction || 0))),
+    launchSkill: Math.max(0.30, Math.min(0.98, Number(base.launchSkill || 0) + progress * 0.035 - (penalty.launch || 0))),
+    shiftSkill: Math.max(0.30, Math.min(0.99, Number(base.shiftSkill || 0) + progress * 0.025 - (penalty.shift || 0))),
+    aggression: Math.max(0.30, Math.min(0.97, Number(base.aggression || 0) + progress * 0.035 - (penalty.aggression || 0))),
   };
 }
 
@@ -385,7 +393,7 @@ export function buildTunerTeamChallengeRounds(
       carId: cars[index] || cars[cars.length - 1] || 'r32',
       paintColor: paintColors[index % paintColors.length],
       encounterRating: rating,
-      encounterAi: challengeAi(index, rating),
+      encounterAi: challengeAi(index, rating, key),
       difficulty: index === 6 ? 'PRO' : rating >= 5 ? 'ELITE' : rating >= 4 ? 'EXPERT' : rating >= 3 ? 'SKILLED' : 'ROOKIE',
       workshopEra: era.workshopEra,
       tuningPointCap: regionalTuningPointCap(key, index, playerDifficulty),
