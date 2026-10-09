@@ -87,9 +87,9 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261006-r392';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261007-r411';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261009-r453';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261009-r451';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261009-r453';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
@@ -133,9 +133,9 @@ const MODE_DATA = {
     distances: ['1/4 mile'],
   },
   COMPETITION: {
-    label: 'COMPETITION',
-    types: ['Night Cup', 'Quarter Mile', 'Eliminator'],
-    distances: ['1/4 mile', '5.0 km', '3 rounds'],
+    label: 'STREET SHOWDOWN',
+    types: ['Three-Race Streak'],
+    distances: ['1/4 mile', '3 rounds'],
   },
 };
 
@@ -3624,7 +3624,7 @@ export default class MeetScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#718fa3'
       }).setOrigin(0, 0.5).setDepth(depth + 2));
 
-      add(this.add.text(650, y, round.skillLabel, {
+      add(this.add.text(650, y, round.skillLabel + ' // ' + round.showdownTuningPoints + ' TP', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d9edf7'
       }).setOrigin(0, 0.5).setDepth(depth + 2));
 
