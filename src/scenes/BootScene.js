@@ -98,6 +98,8 @@ export default class BootScene extends Phaser.Scene {
       return;
     }
 
-    this.scene.start(state.gameOver ? 'RunOverScene' : 'GarageScene');
+    this.scene.start(state.openingChapter === 'station'
+      ? 'TrainStationScene'
+      : state.gameOver ? 'RunOverScene' : 'GarageScene');
   }
 }
