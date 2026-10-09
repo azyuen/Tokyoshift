@@ -8,28 +8,55 @@ const sourceValue = (source, key, fallback = null) => {
 };
 
 export const CUTSCENES = {
+  openingSayakaKeys: {
+    id: 'openingSayakaKeys',
+    category: 'OPENING / STORY',
+    testerLabel: 'Opening — Sayaka Delivers Your First Car',
+    title: 'SHINONOME // FIRST KEYS',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'homeNormal', text: "Your family asked me to bring this over. And you made your choice from that magazine, I hear." },
+      { speaker: 'right', pose: 'idle', text: "It's hard to believe I've finally got my own car." },
+      { speaker: 'left', pose: 'homeHappy', text: "Your father and I go back a long way. He'd want you to enjoy driving it, not just look at it." },
+      { speaker: 'right', pose: 'idle', text: "I'm not sure my shifts are quite ready for the streets yet." },
+      { speaker: 'left', pose: 'homeNormal', text: "Then let's make sure they are. I'll show you the clutch, the launch, and how to get through the gears without fighting the car.", emphasis: true },
+    ],
+    finalActionLabel: 'LEARN TO DRIVE',
+  },
+  openingSayakaFarewell: {
+    id: 'openingSayakaFarewell',
+    category: 'OPENING / STORY',
+    testerLabel: 'Opening — Sayaka Finishes Driving Lesson',
+    title: 'SHINONOME // DRIVE SAFE',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'homeHappy', text: "That's it. Feel where the clutch catches, and listen to the engine. You'll get smoother every time." },
+      { speaker: 'right', pose: 'idle', text: "Thanks, Sayaka. I think I can take it from here." },
+      { speaker: 'left', pose: 'homeNormal', text: "Drive safely. I've got somewhere to be, but we'll see each other around." },
+      { speaker: 'right', pose: 'idle', text: "See you soon!" },
+    ],
+    finalActionLabel: 'SAY GOODBYE',
+  },
   openingDaichiStory: {
     id: 'openingDaichiStory',
     category: 'OPENING / STORY',
-    testerLabel: 'Opening — Sayaka Delivers First Car / Daichi Explains Tokyo',
+    testerLabel: 'Opening — Daichi Explains Tokyo and Tuning',
     title: 'TOKYO SHIFT // FIRST NIGHT',
     once: true,
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
-      { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeNormal', text: "Your family asked me to bring this over. It's your first car, and I wanted to hand you the keys myself." },
-      { speaker: 'right', leftCharacter: 'sayakaFujieda', pose: 'idle', text: "You knew my father from his racing days, didn't you?" },
-      { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeHappy', text: "We go back a long way. He'd want you to enjoy this, not just look after it. I'll be around." },
-      { speaker: 'left', leftCharacter: 'daichiSakamoto', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "So Sayaka brought it over. After all those years talking about driving, you've finally got one of your own." },
-      { speaker: 'right', pose: 'idle', text: "And I've finally moved close enough to actually use it." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Your father would've had a list of things to change already. Professional racers never really switch that part of their brain off." },
+      { speaker: 'left', pose: 'idle', text: "So Sayaka brought the car over. After all these years talking about driving, you've finally got one of your own." },
+      { speaker: 'right', pose: 'idle', text: "She even taught me how to get through the gears." },
+      { speaker: 'left', pose: 'idle', text: "Your father would've had a list of things to change already. Professional racers never really switch that part of their brain off." },
       { speaker: 'right', pose: 'idle', text: "Watching him race is why I've always wanted to do this." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Good thing your childhood friend happens to know which end of a spanner to hold." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Tokyo has a whole drag scene after dark. Odaiba, Shinagawa, Tatsumi, Shibuya, Shinjuku, Yokohama, Daikoku — every region has its own crowd." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Some run as teams. Others just appear when you're cruising between meets. You'll keep finding new people and new cars as your name gets around." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Most racers drive whatever they can get access to, but everyone has one car they're really known for. Their best car. Remember that when you learn who you're racing." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "First thing first: learn to launch this one without embarrassing either of us.", emphasis: true },
+      { speaker: 'left', pose: 'win', text: "Good thing your childhood friend knows which end of a spanner to hold. We can start with the engine, then work on the drivetrain and grip." },
+      { speaker: 'left', pose: 'idle', text: "Tokyo has a whole drag scene after dark. Odaiba, Shinagawa, Tatsumi, Shibuya, Yokohama, Daikoku and Shinjuku — each has its own crowd." },
+      { speaker: 'left', pose: 'idle', text: "Some racers run as teams. Others turn up on their own. Everyone has a car they're known for, but they might drive something different when you meet." },
+      { speaker: 'left', pose: 'win', text: "You've got a car. You've learned to drive it. Now let's see what you can really do with it.", emphasis: true },
     ],
-    finalActionLabel: 'LEARN THE CAR',
+    finalActionLabel: 'START THE NIGHT',
   },
 
   ethanYuenEfCompensation: {
@@ -893,6 +920,8 @@ export const CUTSCENES = {
 };
 
 export const CUTSCENE_ORDER = [
+  'openingSayakaKeys',
+  'openingSayakaFarewell',
   'openingDaichiStory',
   'openingRaceRules',
   'openingWorkshopGuide',
