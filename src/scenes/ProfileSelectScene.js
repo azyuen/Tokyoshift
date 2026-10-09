@@ -209,7 +209,7 @@ export default class ProfileSelectScene extends Phaser.Scene {
         color: '#f0fbff',
       }).setOrigin(0.5).setDepth(depth + 2);
 
-      this.add.text(x, cardY + 82, 'Create a new profile\nand choose your first car.', {
+      this.add.text(x, cardY + 82, 'Create a driver profile\nand begin at the station.', {
         fontFamily: BODY_FONT,
         fontSize: '12px',
         color: '#829dac',
