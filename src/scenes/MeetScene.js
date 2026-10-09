@@ -59,7 +59,7 @@ import {
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
-import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261009-r453';
+import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261009-r454';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
@@ -3486,7 +3486,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R453',
+      balanceVersion: 'R454',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -3508,7 +3508,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R453' ||
+      current?.balanceVersion !== 'R454' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
