@@ -59,7 +59,7 @@ import {
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
-import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261009-r454';
+import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261010-r468';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
@@ -3429,11 +3429,25 @@ export default class MeetScene extends Phaser.Scene {
     );
     const garageTier = Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0)));
     const wins = Math.max(0, Number(this.registry.get('wins') || 0));
-    const physicalRounds = createStreetShowdownRounds({
+    const generatePrizeRounds = prizeType => createStreetShowdownRounds({
       garageTier, wins, playerCarId, playerState, playerDifficulty, raceTypes,
+      prizeType, baseCashPrize: settings.cashPrize,
       seed: ['street-showdown', this.selectedMeetLocation, refreshToken, playerCarId].join(':'),
     });
+    let prizeType = preferCouponPrize ? 'COUPON' : 'CASH';
+    let physicalRounds = generatePrizeRounds(prizeType);
     if (physicalRounds.length !== 3) return null;
+    let prizeCarId = prizeType === 'COUPON' ? physicalRounds[2]?.carId : null;
+
+    // Not every candidate car issues coupons. Never sell a coupon-strength
+    // showdown for a cash prize merely because its chosen final car cannot
+    // award coupons; instead build a real cash-strength event.
+    if (prizeType === 'COUPON' && !(prizeCarId && getCarCouponRequirement(prizeCarId) > 0)) {
+      prizeType = 'CASH';
+      prizeCarId = null;
+      physicalRounds = generatePrizeRounds('CASH');
+      if (physicalRounds.length !== 3) return null;
+    }
 
     const rounds = physicalRounds.map(physical => {
       const rating = physical.encounterRating;
@@ -3457,16 +3471,6 @@ export default class MeetScene extends Phaser.Scene {
       500
     );
 
-    let prizeType = 'CASH';
-    let prizeCarId = null;
-    const finalCarId = rounds[2]?.carId || null;
-    if (preferCouponPrize && finalCarId && getCarCouponRequirement(finalCarId) > 0) {
-      // A coupon prize remains useful even when the player already owns this
-      // model, because coupons can now be banked toward duplicate cars.
-      prizeType = 'COUPON';
-      prizeCarId = finalCarId;
-    }
-
     let entryFee = settings.entryFee;
     if (prizeType === 'COUPON' && prizeCarId) {
       const carValue = Math.max(0, Number(MARKET_BASE_PRICES[prizeCarId] || 0));
@@ -3485,10 +3489,11 @@ export default class MeetScene extends Phaser.Scene {
       entryFee,
       prizeType,
       prizeCash: adjustedCashPrize,
+      baseCashPrize: settings.cashPrize,
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R454',
+      balanceVersion: 'R468',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -3510,7 +3515,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R454' ||
+      current?.balanceVersion !== 'R468' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
@@ -3733,6 +3738,7 @@ export default class MeetScene extends Phaser.Scene {
       entryFee: offer.entryFee,
       prizeType: offer.prizeType,
       prizeCash: offer.prizeCash,
+      baseCashPrize: offer.baseCashPrize || 0,
       prizeCarId: offer.prizeCarId,
       restriction: offer.restriction || null,
       rounds: offer.rounds,
