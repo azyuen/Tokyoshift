@@ -4,7 +4,7 @@
 import RaceScene from './RaceScene.js?v=20261008-r431';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261010-r458';
+import TouchControls from '../input/TouchControls.js?v=20261010-r461';
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
