@@ -103,9 +103,12 @@ const PX_PER_M = 76.0;
 // The roadside start assembly and the zebra crossing share one physical
 // world anchor, so both slide naturally past the camera after the launch.
 const STREET_START_M = 4.72;
-const STREET_SIGNAL_SCALE = 0.22;
+// 15% larger than the R460 prop, positioned about one wheel-height lower.
+// Account for the scale increase when lowering the base so the signal head
+// actually descends, rather than growing upwards into the skyline.
+const STREET_SIGNAL_SCALE = 0.253;
 const STREET_SIGNAL_POLE_X = 602; // pixel coordinate in 836px source PNG
-const STREET_SIGNAL_BASE_Y = 505;
+const STREET_SIGNAL_BASE_Y = 605;
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const TAXI_TO_WORKSHOP_COST = 1000;
@@ -124,8 +127,16 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
-    // Unlit transparent assembly; Phaser paints each lamp + digital countdown.
-    queueImage('streetStartSignal', 'assets/Ui/trafficlight_normal.png?v=20261010-r460');
+    // Each race picks one of the four same-canvas suburban traffic signals.
+    // A distinct Phaser texture key per variant is essential: reusing a single
+    // cache key would make later races retain the first loaded appearance.
+    const signalVariant = Phaser.Math.Between(1, 4);
+    const signalSuffix = String(signalVariant).padStart(2, '0');
+    this.streetSignalTextureKey = 'streetStartSignal' + signalSuffix;
+    queueImage(
+      this.streetSignalTextureKey,
+      'assets/Ui/trafficlight_' + signalSuffix + '.png?v=20261010-r461'
+    );
     queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
     queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
     queueImage('nosButton', 'assets/Controls/nos_button.png');
@@ -528,7 +539,7 @@ export default class RaceScene extends Phaser.Scene {
 
     // The base of the signal stands in front of the foreground roadside
     // bollards (depth 3), with its head rising above the racing surface.
-    this.treeSprite = this.add.image(780, 192, 'streetStartSignal')
+    this.treeSprite = this.add.image(780, 192, this.streetSignalTextureKey)
       .setOrigin(0, 0)
       .setScale(STREET_SIGNAL_SCALE)
       .setDepth(20)
@@ -571,8 +582,8 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     this.raceLocationText = this.add.text(
-      780,
-      102,
+      30,
+      39,
       this.raceDistrict + ' // ' + this.raceLocationLabel + ' // ' + this.raceTimeOfDay.toUpperCase(),
       {
         fontFamily: PIXEL_FONT,
@@ -581,7 +592,8 @@ export default class RaceScene extends Phaser.Scene {
         backgroundColor: '#07111daa',
         padding: { x: 8, y: 4 },
       }
-    ).setOrigin(0.5).setDepth(46).setScrollFactor(0);
+    ).setOrigin(0, 0.5).setDepth(46).setScrollFactor(0)
+      .setVisible(false);
 
     const rivalName = rivalDisplayCharacter?.name || 'Rival';
     const moneyLabel = this.isTutorial
@@ -1637,6 +1649,9 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentStartMoved = false;
     this.startButton.setVisible(false).disableInteractive();
     this.startButtonText.setVisible(false);
+    // The top-left location title replaces the cancel control only after
+    // launch is pressed, at the same y-coordinate as the rival's name.
+    this.raceLocationText?.setVisible(true);
     if (!this.isTutorial) {
       this.cancelButton?.setVisible(false).disableInteractive();
       this.cancelButtonText?.setVisible(false);
