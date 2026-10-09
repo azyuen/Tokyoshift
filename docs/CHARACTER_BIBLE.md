@@ -1,7 +1,7 @@
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
-Version: 1.0 — 7 October 2026
-Status: adopted as the foundation for character authoring, following owner approval.
+Version: 1.1 — 9 October 2026
+Status: adopted foundation; Sayaka/Reika story-role revision explicitly approved by owner on 9 October 2026.
 Original repository audit: bc491c0, updated through 3632145.
 Deployment source check: 0bc3b0b (subsequent changes since that audit were build/cache files).
 This is narrative documentation. It does not implement dialogue selection or a branching Story Mode engine.
@@ -19,7 +19,7 @@ Status vocabulary:
 - **Story seed** is an opportunity, not a guaranteed event or outcome.
 - **Variable future** belongs to an individual save or story branch.
 
-The foundational profiles below are usable now. Explicitly conditional material must not be presented as settled fact. Approving this document did not resolve the player identity model, migrate the opening to Ren, assign substitute identities, or change gameplay.
+The foundational profiles below are usable now. Explicitly conditional material must not be presented as settled fact. The 9 October update **does** authorise Sayaka's new opening/Ginza/professional reveal sequence and Reika's Shinagawa slot, but does not resolve the protagonist-identity model, migrate the opening to Ren, or assign substitute identities. The runtime opening still addresses the selected $PLAYER.
 
 ## Future depth and revelation policy
 
@@ -70,7 +70,7 @@ The audit is a dated snapshot, not a claim that every identified implementation 
 
 ## Cast inventory
 
-59 named character entries: seven principals, 42 regional supporting racers, Daichi, eight additional Central Tokyo staff, and Arkon Den. Sayaka is counted once among the regional racers despite her Ginza role. Thus there are 58 ordinary in-world characters and one developer character.
+**Current R457 roster: 60 named character entries:** seven regional principals, 42 regional supporting racers (including Reika, **not** Sayaka), Daichi, nine standalone story/Central Tokyo characters (including Sayaka), and Arkon Den. Thus 59 ordinary in-world characters and one developer character. The original 7 October audit counted 59 entries before Reika replaced Sayaka's street slot and Sayaka became a separate story NPC.
 
 | Principal / ID | Established age / hometown | Region | Existing personality | Audit final-round car |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ Final-round cars are event assignments, not permanent ownership.
 | Region | Recruitment signature associations |
 |---|---|
 | ODAIBA | Aoi Shindou — EJ1; Yuto Asakura — AE86; Mika Hoshino — Civic EF; Kaori Nishimura — Supra A60; Shun Amamiya — FC; Takumi Serizawa — EK9 |
-| SHINAGAWA | Akira Shimizu — AE86; Natsumi Kagawa — EF; Rei Takamura — A60; Goro Nakajima — EK9; Tetsuya Kanda — FC; Sayaka Fujieda — RX-8 |
+| SHINAGAWA | Akira Shimizu — AE86; Natsumi Kagawa — EF; Rei Takamura — A60; Goro Nakajima — EK9; Tetsuya Kanda — FC; **Reika Tachibana — RX-8** |
 | TATSUMI | Sota Kisaragi — A60; Yui Naruse — EK9; Daigo Moriyama — FC; Risa Tachikawa — RX-8; Masato Kurogane — S2000; Tetsu Nakahara — Evo III |
 | SHIBUYA | Haru Sakurai — FC; Miu Tanaka — EK9; Renji Aoki — RX-8; Kento Fujisawa — S2000; Rina Tachibana — Evo III; Itsuki Kuroda — R32 |
 | YOKOHAMA | Masato Ishikawa — R32; Mika Hayase — RX-8; Reina Kuroda — S2000; Ryohei Takeda — Evo III; Shun Mizuno — FD; Yui Kanzaki — Evo V |
@@ -126,7 +126,7 @@ Regional crews predate recruitment. Each region has six recruitable supporters a
 
 Daichi explains that racers drive cars they can access while having a car they are known for. Preferences, signature cars, event assignments and actual ownership must remain distinct. Generated cars do not automatically acquire a detailed provenance.
 
-Sayaka's regional strategist role and Ginza proprietor/host mapping refer to one person. The original biography lacked their connecting history.
+**Superseded by the 9 October decision:** Sayaka's former Shinagawa racing/recruitment slot belongs to Reika Tachibana. Sayaka is one recurring non-racing story character: family friend and first-car deliverer, later revealed as Ginza's curator/manager, then revealed as the player's father's former racing-team strategist who joins the professional crew. These are successive disclosures, not separate Sayakas.
 
 Street File artwork describes the player's cars, rivals, hero cars and save moments. Four cover/inset sets exist, while the audited resolver returns Issue 01. No named editor, fixed champion or cast member's past victory is established by the illustrations.
 
@@ -141,7 +141,7 @@ Beyond the explicit family/opening relationships, named personal friendships, ro
 5. **Placeholder profiles:** Shinjuku supporters originally share much prose; Yokohama profiles are thin. V1 differentiates them.
 6. **Recruitment copy:** overrides are mostly empty and some candidates lack explicit entries, using shared fallback text. Generic copy is not a common personality.
 7. **Daichi:** the older asset README describes eight flexible/selectable characters; runtime excludes him. Treat him as workshop companion, not an ordinary selectable/recruitable rival.
-8. **Sayaka visuals:** regional and Central sprite sets exist, but the audited character visual mapping is not fully unified. Do not invent a second Sayaka.
+8. **Sayaka visuals (revised R457):** `assets/Characters/Main/home_sayaka_*` is for delivery, `assets/Characters/Central/sayaka_*` for Ginza, and `assets/Characters/Main/race_sayaka_*` for her later professional-team appearances. Reika uses `assets/Characters/Shinagawa/reika_tachibana_*`. The legacy Shinagawa Sayaka PNGs are no longer character-roster assets; there is only one Sayaka.
 9. **Substitution:** visual replacement does not solve the semantic problem of two copies of a selected canonical identity. Roster and race fallbacks also matter.
 10. **Drag Complex pool:** the audited generic rival pool is empty after region exclusivity, yet bracket generation uses it. Do not canonise unreliable generated identities.
 11. **Cutscene source:** dragComplexInvitation is duplicated; the later property wins. Preview mechanics/final rivals and example signature cars are not historical evidence.
@@ -155,7 +155,7 @@ These are documentation findings, not instructions to implement unrelated fixes 
 
 - Tier A: the seven principals, Daichi, Tomo and Sayaka.
 - Tier B: seven regional mechanics; Kaori Nishimura, Daigo Moriyama, Kazuo Tanaka; Haruto, Kenji, Yuna; Ryuji, Masato Kuroda, Hiroshi, Kenta.
-- Tier C: the other 31 regional supporting racers.
+- Tier C: the other 32 regional supporting racers, now including Reika Tachibana.
 - Outside ordinary canon: Arkon Den.
 - Unresolved identity: substitute appearances.
 
@@ -382,28 +382,31 @@ Glimpse: corrected printout signed “T. Sakamoto”.
 Hooks: independence, confronting assumption, public credit.
 Constraints: younger than Daichi; shy is not helpless; only logs received are known.
 
-### Sayaka Fujieda — The Strategist
+### Sayaka Fujieda — The Family Friend / Curator / Pro Strategist
 ID: sayakaFujieda
 
-Established: 47, female, Shinagawa strategist/racer and Ginza host/proprietor mapping. Controlled, perceptive, professional; signature RX-8, preferred R32/22B.
-Persona: understands financial/emotional car value, sometimes treats people like carefully managed inventory. Courteous/exact; privately likes plain food and unpretentious company. Withholds context believing she knows what others need.
-Past: competition planning and automotive trade over years; coordinated entries involving Tetsuya/Kaori. Ginza grew from provenance assessment and specialist transactions.
-Ambition: preserve gallery credibility while deciding its future.
-Relationships: longstanding Tetsuya planning contact, Kaori respectful friend, Kenji business contact, Masato Kuroda event dealings. Knows Daichi's work by reputation before closeness.
-Knowledge: entrusted records, not every car's full history. Suspects one consignment file incomplete; does not know why. Kenji knows one document missing, not whole transaction. Missing provenance is not proof of crime.
-Values: understands status as market force, not moral worth. Calculated financial/racing risk. Clear terms earn respect; invented provenance annoys.
-Racing: patient/adaptive, habits and strategic gearing; selective pink slips, never wagering someone else's consigned property.
-Voice: concise complete sentences, polite/direct, minimal slang, dry transactional humour.
-- “You're on time. That helps.”
-- “Let's make the terms clear.”
-- “You showed me the same move twice.”
-- “I'll revise the plan.”
-- “That deserves a closer look.”
+**Owner-approved canon (9 October):** 47, female, longtime family friend of the selected player's father from his racing days. **Not** a Shinagawa regional racer, rival, wager target or regional crew recruit. Controlled, perceptive, warm in small ways, and professionally discreet.
+**Fixed past:** she knew the player's father during his active racing years and served as a racing-team strategist for his team. She later built a career in collector provenance, specialist automotive transactions and curating/managing the private Ginza collection. She retains competition contacts such as Tetsuya, Kaori and Masato Kuroda.
+**Career story sequence (fixed truth, staged knowledge):**
+1. **Opening / delivered keys:** Sayaka arrives with the first car the player's family has given them. She openly identifies herself as their father's old racing friend. She does **not** explain her work in Ginza or her former strategist role. The existing Daichi workshop/origin/tutorial dialogue follows her delivery; no father death is established.
+2. **Ginza invitation / first revelation:** on the private gallery invitation, the player recognises Sayaka. She reveals she is the **curator and manager of the Ginza collection**, not simply a family acquaintance. She still withholds her strategic racing past.
+3. **Professional circuit / second revelation and recruitment:** after the player's genuine seven-member regional crew is assembled and the Ginza meeting has happened, Sayaka explains she planned strategy for the father's racing team and **joins the player's professional team as strategist**. She advises/scouts rather than occupies a driving slot. The pro-circuit introduction is a once-per-save manga scene; no bonus physics or simulated race advantage is implied.
+**Career knowledge gates:** the player knows the family link from opening; knows the Ginza role only from `ginzaInvitation`; knows her prior strategic role and team affiliation only from `proCircuitStrategistReveal`. Sayaka knows all three facts from the start. Other characters may know only their own dealings; generic street-racer lines cannot disclose her pro past early. Save history is tracked in `cutscenesSeen` rather than a new eighth regional crew member.
+Persona: understands emotional and financial car value, sometimes treats people like carefully managed inventory. Courteous/exact; privately likes plain food and unpretentious company. Withholds context believing she knows what others need.
+Ambition: safeguard Ginza's credibility while helping the next generation stand on its own merit.
+Relationships: the player's father is her longstanding friend and former team colleague; a familiar adult to the player. Tetsuya and Kaori are old competition contacts, Kenji a business contact, Masato Kuroda an event contact; Daichi knows her through the family handoff. These connections do not establish the father's name or present whereabouts.
+Knowledge: entrusted records, not every car's complete history. Suspects one consignment file incomplete; does not know why. Kenji knows one document missing, not the entire transaction. Missing provenance is not proof of crime.
+Values: status is a market force, not moral worth. Calculated financial/racing risk and verifiable provenance. Business ownership, curation and strategist duties can coexist.
+Voice: concise complete sentences, polite/direct, minimal slang, dry transactional humour; personally warmer with the player than with an ordinary customer.
+- “Your father and I go back a long way.”
+- “You should be the one to take the keys.”
 - “A story is not a service record.”
-- “Preserving something and keeping it can become different things.”
+- “Let's make the terms clear.”
+- “Seven drivers. That's a team worth planning for.”
+- “I'll revise the plan.”
 Glimpse: recognises Kaori's old entry handwriting.
-Hooks: provenance, access/exclusivity, business friendship.
-Constraints: one Sayaka; recruitment doesn't erase business; stock isn't all personally owned.
+Hooks: family ties, provenance, access, professional strategy and inherited expectations.
+**Constraints:** never put her into Shinagawa meets, regional challenges, street recruitment, pink slips or character-rival pools. She is a separate, non-driving professional strategist only at the final reveal. Ginza stock is not all personally owned. The father and protagonist's canonical identity remain unresolved beyond current $PLAYER-scoped opening history.
 
 ## Tier B
 
@@ -718,6 +721,12 @@ Intimidating/loyal, explicitly not reckless. Building maintenance, carries thing
 “Need a hand?” / “No speeches. Line up.”
 Constraint: “enforcer” is not proof of organised crime.
 
+### Reika Tachibana
+ID: reikaTachibana — Shinagawa; owner-approved woman, 47; signature RX-8.
+Replaces Sayaka's **street racing** slot, not her biography or relationships. Elegant, controlled and calculating, with a similar mature presence but an independent competitive identity. Studies launches, logs opponent habits and varies gearing or risk only when the evidence justifies it. An expert regional strategist/racer who can join the player's standard seven-driver crew in Shinagawa; she is **not** the father's former team strategist and has no automatic Ginza affiliation.
+Voice: quietly competitive, direct, understated. “The first run tells me what the second will cost you.” / “Good. Now I know what I missed.”
+Constraint: shares a surname with Haru/Rina/Kaede Tachibana but no kinship is established. No Sayaka family history or delayed revelations belong to her.
+
 ### Tetsuya Kanda
 ID: tetsuyaKanda — Shinagawa; established 55, male, Takanawa; FC.
 Veteran with executive appearance; procurement consultant, Sayaka's older competition contact. Patient until politeness is mistaken for agreement. Wants interesting racing, not a monument to the past. Smooth/stable, selective stakes.
@@ -880,7 +889,7 @@ Except Daichi–Tomo and the unresolved player-opening link, specific interperso
 
 | Network | Connections | Tension |
 |---|---|---|
-| Workshop/family | Ren–Daichi (childhood conditional), Daichi–Tomo, Daichi–Natsumi, Daichi–Reina Shibata | Independence, competence, accepting help |
+| Workshop/family | $PLAYER–father–Sayaka (friendship from racing days), Ren–Daichi (childhood conditional), Daichi–Tomo, Daichi–Natsumi, Daichi–Reina Shibata | Independence, trust, old racing connections, accepting help |
 | Odaiba | Aoi–Emi, Emi–Kaori, Kaori–Takumi, Kaori–Sayaka | Encouragement versus pressure |
 | Tatsumi | Kaito–Moriyama/Kurogane, Sota–Tomo, Tetsu–Sota | Different teaching/discipline |
 | Shibuya | Aya–Rina/Riku, Riku–Renji/Miu, Haru Sakurai–Yuna–Itsuki | Visibility, consent, reputation |
@@ -888,6 +897,8 @@ Except Daichi–Tomo and the unresolved player-opening link, specific interperso
 | Daikoku | Reina Shibata–Kazuo/Nao/Aki, Milo–Itsuki/Tetsu, Tetsuo–Kazuo | Credit, craft pride, uncertainty |
 | Organised racing | Ryuji–Masato Kuroda/Hiroshi, Tomo–Kenta, Kaito–Masato, Sayaka–Masato | Credibility and commerce |
 | Provenance | Sayaka–Kenji–Natsumi, Yuna–Itsuki | Known, claimed, verified |
+| Shinagawa tactics | Reika–the Shinagawa crew | Competitor preparation, analysis and adaptation; no family link |
+| Professional mentorship | Sayaka–$PLAYER and their recruited seven drivers | Delayed disclosure, planning and earned leadership |
 | Shinjuku | Riku–Arakawa–Ren Kurosawa, Rin–Riku | Promises versus completion |
 
 No additional siblings from repeated surnames. No compulsory romances. Aya/Kaito's respect and Emi/Ren's acquaintance can develop in multiple directions. Recruitment changes participation, not earlier truth. Professional disagreement is not automatic enmity.
@@ -899,7 +910,8 @@ Relative dates avoid unnecessary calendar constraints. New events are V1 foundat
 | Period | Events |
 |---|---|
 | Earlier generation | Kaori, Tetsuya, Moriyama and Kazuo accumulate experience; Ryuji develops racing background. |
-| Years before opening | Sayaka develops trading/planning contacts, including Kaori/Tetsuya entries. |
+| Father's racing era | Sayaka is his longtime friend and works as his racing team's strategist; their exact races and later circumstances remain unassigned. |
+| Years before opening | Sayaka develops trading/planning contacts, including Kaori/Tetsuya entries, later managing the Ginza collection. |
 | Childhood, conditional | Ren–Daichi friendship and Ren watching his professional-racer father only if origin assignment is approved. |
 | Several years before | Daichi gains repair experience; Reina Shibata receives Kazuo opportunities. |
 | Before current regional roles | Aya knows Reina Kuroda in Yokohama before Shibuya association. |
@@ -907,7 +919,9 @@ Relative dates avoid unnecessary calendar constraints. New events are V1 foundat
 | Recent pre-game | Shun helps Haru with minor roadside issue; Reina Kuroda checks subsequent work. |
 | Before game start | Daichi declines Complex offer; Tomo earns separate role and privately suspects influence. |
 | Before game start | Kaito declines promotional appearance; Riku corrects Aya caption; Aki solves fault credited to Reina. |
-| Game start | Regions/businesses/past relationships exist; champion, recruitment, romances, betrayals and transfers remain open. |
+| Game start | Sayaka delivers the family's first car to $PLAYER, says she knew the father through racing, then Daichi introduces the Tokyo street scene. Reika, not Sayaka, occupies the sixth Shinagawa supporter racing slot. |
+| After Ginza invitation | Sayaka discloses her role as Ginza curator and manager; she does not disclose her former racing strategist identity. |
+| First legitimate pro-circuit entry following Ginza | With seven regional recruits, Sayaka reveals the old strategist role and joins the player as non-driving team strategist. The seven-driver roster is unchanged. |
 
 No shared fatal accident is needed to connect the cast. Ordinary work, competition and repeat encounters already do.
 
@@ -926,6 +940,8 @@ These are scene ideas, not implemented assets or guaranteed events.
 | Emi accepts Aoi refusal | Learning not to pressure | Do not repeat mechanically every visit |
 | Reina credits Aki small adjustment | Unresolved larger omission | Does not disclose secret to everyone |
 | Kaori recognises Sayaka entry notes | Old connection | No invented champion title |
+| Sayaka's personal key handover | Familial trust without overt exposition | Keep Ginza/professional roles undisclosed at opening |
+| Familiar gallery curator | First reveal reframes the opener | Do not disclose racing-team strategy until genuine pro entry |
 | Haru notebook gains maintenance figures | Growing competence | Actual progression required |
 | Shun recalls loose connection | Mundane first help | No inflated dramatic rescue |
 | Kenji marks “unverified” | Provenance concern | Does not prove theft |
@@ -984,3 +1000,4 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 # Change record
 
 - 2026-10-07: v1 adopted for repository-based authoring after review. Added explicit future-depth policy requested by owner. Retained unresolved identity/origin decisions and provisional demographic details. No runtime or existing dialogue changes.
+- 2026-10-09 (R457): owner changed Sayaka to the player's father's racing-era friend, first-car deliverer, Ginza curator/manager and former strategist who joins at legitimate pro entry. Introduced Reika Tachibana as independent 47-year-old Shinagawa tactical racer and sixth regional crew candidate, with uploaded idle/win/loss assets. Added three staged career narrative beats, knowledge gates and explicit separation from seven-driver recruitment. No broader protagonist-identity decision or automatic tactical gameplay buff.
