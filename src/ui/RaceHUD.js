@@ -42,7 +42,7 @@ export default class RaceHUD {
       .setScrollFactor(0);
 
     this.gearText = scene.add.text(0, 0, 'N', {
-      fontFamily: '"Rajdhani", monospace', fontSize: '30px', color: '#f7f7f2', fontStyle: '700'
+      fontFamily: '"Rajdhani", monospace', fontSize: '26px', color: '#f7f7f2', fontStyle: '700'
     }).setOrigin(0.5).setDepth(43).setScrollFactor(0);
 
     this.speedText = scene.add.text(0, 0, '0', {
@@ -131,9 +131,11 @@ export default class RaceHUD {
     }
 
     if (t.wheelspin) {
-      const tr = this.sourcePoint(1201, 294);
-      g.fillStyle(0xffa928, 0.24).fillRoundedRect(tr.x, tr.y, 170 * this.scale, 48 * this.scale, 4);
-      g.lineStyle(2, 0xffa928, 0.85).strokeRoundedRect(tr.x, tr.y, 170 * this.scale, 48 * this.scale, 4);
+      // Keep the yellow wheelspin warning inside the dash's traction icon.
+      // The original 170x48 highlight was too broad and sat to the left.
+      const tr = this.sourcePoint(1213, 300);
+      g.fillStyle(0xffa928, 0.24).fillRoundedRect(tr.x, tr.y, 152 * this.scale, 36 * this.scale, 3);
+      g.lineStyle(1.5, 0xffa928, 0.85).strokeRoundedRect(tr.x, tr.y, 152 * this.scale, 36 * this.scale, 3);
     }
 
     this.status.setText(raceStatus);
