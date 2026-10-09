@@ -9,6 +9,10 @@ import {
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261008-r424';
+import {
+  STREET_GREEN_SECONDS,
+  getStreetSignalFrame,
+} from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
@@ -96,7 +100,12 @@ import {
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
 const PX_PER_M = 76.0;
-const TREE_START_M = 4.72;
+// The roadside start assembly and the zebra crossing share one physical
+// world anchor, so both slide naturally past the camera after the launch.
+const STREET_START_M = 4.72;
+const STREET_SIGNAL_SCALE = 0.22;
+const STREET_SIGNAL_POLE_X = 602; // pixel coordinate in 836px source PNG
+const STREET_SIGNAL_BASE_Y = 505;
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const TAXI_TO_WORKSHOP_COST = 1000;
@@ -115,7 +124,8 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
-    queueImage('dragTree', 'assets/Ui/drag_tree.png');
+    // Unlit transparent assembly; Phaser paints each lamp + digital countdown.
+    queueImage('streetStartSignal', 'assets/Ui/trafficlight_normal.png?v=20261010-r460');
     queueImage('clutchPedal', 'assets/Controls/clutch_pedal.png');
     queueImage('throttlePedal', 'assets/Controls/throttle_pedal.png');
     queueImage('nosButton', 'assets/Controls/nos_button.png');
@@ -516,11 +526,23 @@ export default class RaceScene extends Phaser.Scene {
           {}
         );
 
-    this.treeSprite = this.add.image(780, 192, 'dragTree')
-      .setScale(0.105)
+    // The base of the signal stands in front of the foreground roadside
+    // bollards (depth 3), with its head rising above the racing surface.
+    this.treeSprite = this.add.image(780, 192, 'streetStartSignal')
+      .setOrigin(0, 0)
+      .setScale(STREET_SIGNAL_SCALE)
       .setDepth(20)
-      .setAlpha(0.94)
       .setVisible(!this.isRollingStart);
+
+    // Phaser overlays glow and seven-segment-style text on the neutral PNG,
+    // avoiding separate colour-variant assets for every state.
+    this.streetCountdownText = this.add.text(0, 0, '', {
+      fontFamily: PIXEL_FONT,
+      fontSize: '18px',
+      color: '#ff6245',
+      stroke: '#34100c',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(24).setVisible(false);
 
     this.rollCountdownText = this.add.text(780, 176, '', {
       fontFamily: PIXEL_FONT,
@@ -1265,8 +1287,11 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     if (key === 'tree') {
-      const tx = Number(this.treeSprite?.x || 880);
-      return new Phaser.Geom.Rectangle(tx - 70, 72, 140, 245);
+      const signal = this.treeSprite;
+      return new Phaser.Geom.Rectangle(
+        Number(signal?.x || 755), Number(signal?.y || 90),
+        Number(signal?.displayWidth || 185), 230
+      );
     }
 
     return null;
@@ -1360,7 +1385,7 @@ export default class RaceScene extends Phaser.Scene {
     } else if (this.tutorialStep === 'LAUNCH_PREP') {
       title = 'BUILD REVS + WAIT FOR GREEN';
       body = this.tutorialCountdownStarted
-        ? 'Keep the clutch held and the accelerator high. Do NOT release the clutch until the tree turns green.'
+        ? 'Keep the clutch held and the accelerator high. Do NOT release the clutch until the street signal turns green.'
         : 'Keep the clutch held. Push the accelerator high and hold it. The start lights will begin when you are ready.';
       prompt = this.tutorialCountdownStarted
         ? 'HOLD BOTH // WAIT FOR GREEN'
@@ -1628,11 +1653,10 @@ export default class RaceScene extends Phaser.Scene {
     if (!this.raceStarted) return 'READY';
     if (this.isRollingStart && this.greenClock == null) return 'ROLLING';
     if (this.greenClock != null) return 'GREEN';
-    if (this.countdownClock < 0.9) return 'PRE-STAGE';
-    if (this.countdownClock < 1.8) return 'STAGE';
-    if (this.countdownClock < 2.3) return 'AMBER 1';
-    if (this.countdownClock < 2.8) return 'AMBER 2';
-    if (this.countdownClock < 3.3) return 'AMBER 3';
+    if (this.countdownClock < 2) return 'PEDESTRIAN WARNING';
+    if (this.countdownClock < 3) return 'COUNT 3';
+    if (this.countdownClock < 4) return 'COUNT 2';
+    if (this.countdownClock < 5) return 'COUNT 1';
     return 'GREEN';
   }
 
@@ -1705,7 +1729,7 @@ export default class RaceScene extends Phaser.Scene {
           this.opponentStartMoved = true;
           this.showRollCountdown('GO!');
         }
-      } else if (this.countdownClock >= 3.3) {
+      } else if (this.countdownClock >= STREET_GREEN_SECONDS) {
         this.greenClock = this.raceClock;
       }
     }
@@ -1754,7 +1778,7 @@ export default class RaceScene extends Phaser.Scene {
       status = (this.raceClock - this.greenClock) < 0.70 ? 'GO!' : '';
     }
     else if (this.isRollingStart) status = 'ROLLING 60 KM/H  //  ' + this.raceDistanceLabel + '  //  SELECT GEAR';
-    else if (this.countdownClock < 1.8) status = 'STAGED';
+    else if (this.countdownClock < 2) status = 'STAGED';
 
     this.hud.update(playerT, status);
     this.debug.update(playerT);
@@ -2108,6 +2132,7 @@ export default class RaceScene extends Phaser.Scene {
       this.hud?.speedText,
       this.hud?.auxLabel,
       this.treeSprite,
+      this.streetCountdownText,
       this.rollCountdownText,
       this.raceLocationText,
       this.rivalText,
@@ -2922,6 +2947,7 @@ export default class RaceScene extends Phaser.Scene {
       this.hud?.speedText,
       this.hud?.auxLabel,
       this.treeSprite,
+      this.streetCountdownText,
       this.rollCountdownText,
       this.raceLocationText,
       this.rivalText,
@@ -4131,6 +4157,7 @@ export default class RaceScene extends Phaser.Scene {
     this.environment.update(cameraPx, pt.speedKmh);
 
     this.worldG.clear();
+    if (!this.isRollingStart) this.drawStreetCrosswalk(cameraPx);
     const finishX = this.finishTargetM * PX_PER_M - cameraPx;
 
     // Odaiba is the visual test bed for the authored race scenes. Keep the
@@ -4253,55 +4280,105 @@ export default class RaceScene extends Phaser.Scene {
     }
   }
 
+  drawStreetCrosswalk(cameraPx) {
+    // The world-space crossing sits just in front of the staged cars' noses.
+    // Broad light bars run across both lanes, ending before the shoulder and
+    // the near-side bollards. It scrolls off naturally when cars accelerate.
+    const poleX = STREET_START_M * PX_PER_M - cameraPx;
+    const stripeX = Math.round(poleX - 175);
+    const crossingWidth = 106;
+    if (stripeX < -crossingWidth || stripeX > 1560) return;
+
+    this.worldG.fillStyle(0xe8eceb, 0.76);
+    for (let i = 0; i < 8; i++) {
+      const stripeY = 358 + i * 18;
+      // Small edge variations keep the painted stripes from looking like UI.
+      const edge = i % 3 === 0 ? 3 : 0;
+      this.worldG.fillRect(stripeX + edge, stripeY, crossingWidth - edge * 2, 12);
+    }
+  }
+
+  drawStreetSignalPerson(graphics, cx, cy, colour, walking = false) {
+    // Deliberately chunky at ~20px high, matching the low-resolution LED
+    // pedestrian glyph rather than covering the housing with a flat tint.
+    graphics.fillStyle(colour, 0.97);
+    graphics.fillCircle(cx, cy - 8, 2.6);
+    graphics.fillRect(cx - 2.1, cy - 4.5, 4.2, 9);
+    if (walking) {
+      graphics.fillRect(cx - 7.3, cy - 3, 5.5, 2.1);
+      graphics.fillRect(cx + 1.4, cy - 1.5, 5.2, 2);
+      graphics.fillRect(cx - 6.1, cy + 4.1, 6.2, 2.3);
+      graphics.fillRect(cx + 1, cy + 4, 3, 7);
+    } else {
+      graphics.fillRect(cx - 5.2, cy - 3.5, 3, 9);
+      graphics.fillRect(cx + 2.2, cy - 3.5, 3, 9);
+      graphics.fillRect(cx - 3.4, cy + 4, 2.8, 7);
+      graphics.fillRect(cx + 0.9, cy + 4, 2.8, 7);
+    }
+  }
+
   drawTree(cameraPx) {
+    // Rolling street races have an existing rolling countdown. No stationary
+    // pedestrian crossing or traffic signal is shown for those starts.
+    this.treeLightsG.clear();
     if (this.isRollingStart) {
       this.treeSprite.setVisible(false);
-      this.treeLightsG.clear();
+      this.streetCountdownText.setVisible(false);
       return;
     }
 
-    const treeX = TREE_START_M * PX_PER_M - cameraPx;
-    const treeY = 192;
-    const s = 0.105;
-    const visible = treeX > -100 && treeX < 1660;
-
+    const poleX = STREET_START_M * PX_PER_M - cameraPx;
+    const scale = STREET_SIGNAL_SCALE;
+    const sourceH = 1881;
+    const left = poleX - STREET_SIGNAL_POLE_X * scale;
+    const top = STREET_SIGNAL_BASE_Y - sourceH * scale;
+    const visible = poleX > -160 && left < 1560;
     this.treeSprite.setVisible(visible);
-    this.treeLightsG.clear();
+    this.streetCountdownText.setVisible(false);
     if (!visible) return;
 
-    this.treeSprite.setPosition(treeX, treeY);
+    this.treeSprite.setPosition(left, top);
+    const px = (x, y) => ({
+      x: left + x * scale,
+      y: top + y * scale,
+    });
+    const frame = getStreetSignalFrame(
+      this.raceStarted,
+      this.countdownClock,
+      this.greenClock != null
+    );
+    const drawLens = (x, colour) => {
+      const p = px(x, 246);
+      this.treeLightsG.fillStyle(colour, 0.28).fillCircle(p.x, p.y, 12);
+      this.treeLightsG.fillStyle(colour, 0.97).fillCircle(p.x, p.y, 8.3);
+      this.treeLightsG.fillStyle(0xffffff, 0.22).fillCircle(p.x - 2.2, p.y - 2.4, 2);
+    };
 
-    const phase = this.racePhase();
-    const sourceW = 1086;
-    const sourceH = 1448;
-    const left = treeX - sourceW * s / 2;
-    const top = treeY - sourceH * s / 2;
-    const point = (sx, sy) => ({ x: left + sx * s, y: top + sy * s });
+    // Vehicle light: source asset uses LEFT green, CENTRE amber, RIGHT red.
+    if (frame.vehicle === 'red') drawLens(389, 0xff332c);
+    if (frame.vehicle === 'green') drawLens(160, 0x25ef82);
 
-    const onlyGreen = phase === 'GREEN' && !this.falseStart;
-    const onlyRed = this.falseStart;
+    if (frame.pedestrian === 'green') {
+      const walk = px(415, 785);
+      this.treeLightsG.fillStyle(0x15d6a5, 0.13)
+        .fillRoundedRect(walk.x - 11, walk.y - 14, 22, 27, 3);
+      this.drawStreetSignalPerson(this.treeLightsG, walk.x, walk.y, 0x32ffae, true);
+    } else if (frame.pedestrian === 'red') {
+      const stop = px(414, 684);
+      this.treeLightsG.fillStyle(0xed332a, 0.13)
+        .fillRoundedRect(stop.x - 11, stop.y - 14, 22, 27, 3);
+      this.drawStreetSignalPerson(this.treeLightsG, stop.x, stop.y, 0xff5046);
+    }
 
-    const lamps = [
-      { x: 411, y: 130, r: 43, on: !onlyGreen && !onlyRed && ['PRE-STAGE','STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 675, y: 130, r: 43, on: !onlyGreen && !onlyRed && ['PRE-STAGE','STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 411, y: 284, r: 44, on: !onlyGreen && !onlyRed && ['STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 675, y: 284, r: 44, on: !onlyGreen && !onlyRed && ['STAGE','AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 433, y: 466, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 653, y: 466, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 1','AMBER 2','AMBER 3'].includes(phase) },
-      { x: 432, y: 632, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 2','AMBER 3'].includes(phase) },
-      { x: 653, y: 632, r: 52, on: !onlyGreen && !onlyRed && ['AMBER 2','AMBER 3'].includes(phase) },
-      { x: 432, y: 797, r: 52, on: !onlyGreen && !onlyRed && phase === 'AMBER 3' },
-      { x: 653, y: 797, r: 52, on: !onlyGreen && !onlyRed && phase === 'AMBER 3' },
-      { x: 429, y: 959, r: 55, on: onlyGreen },
-      { x: 657, y: 959, r: 55, on: onlyGreen },
-      { x: 429, y: 1119, r: 55, on: onlyRed },
-      { x: 656, y: 1119, r: 55, on: onlyRed },
-    ];
-
-    for (const lamp of lamps) {
-      if (lamp.on) continue;
-      const p = point(lamp.x, lamp.y);
-      this.treeLightsG.fillStyle(0x05080d, 0.92).fillCircle(p.x, p.y, lamp.r * s);
+    if (frame.countdown != null) {
+      const count = px(544, 761);
+      // Cover the neutral/dim "88" face, not the silver housing bezel.
+      this.treeLightsG.fillStyle(0x101219, 0.96)
+        .fillRoundedRect(count.x - 10.5, count.y - 12.5, 21, 25, 2);
+      this.streetCountdownText
+        .setPosition(count.x, count.y)
+        .setText(String(frame.countdown))
+        .setVisible(true);
     }
   }
 }
