@@ -718,6 +718,16 @@ export function recordCarDeparture(registry, carId, reason = 'archived', metadat
   return history[entryIndex];
 }
 
+// Sayaka moved from Shinagawa's roster to a non-driving story role in R457.
+// Preserve existing recruit progress and loan cars: Reika fills the same RX-8
+// street slot, so old profiles should not lose a crew member on upgrade.
+function migrateShinagawaSayakaRecruit(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry) ||
+      String(entry.regionId || '').toUpperCase() !== 'SHINAGAWA' ||
+      entry.characterId !== 'sayakaFujieda') return entry;
+  return { ...entry, characterId: 'reikaTachibana' };
+}
+
 export function normaliseState(input = {}) {
   const requestedStarterCarId =
     input.starterCarId ||
@@ -984,24 +994,30 @@ export function normaliseState(input = {}) {
           : null),
     crewMembers:
       input.crewMembers && typeof input.crewMembers === 'object'
-        ? input.crewMembers
+        ? {
+            ...input.crewMembers,
+            ...(input.crewMembers.SHINAGAWA?.characterId === 'sayakaFujieda'
+              ? { SHINAGAWA: { ...input.crewMembers.SHINAGAWA, characterId: 'reikaTachibana' } }
+              : {}),
+          }
         : {},
     crewRecruitmentState:
       input.crewRecruitmentState && typeof input.crewRecruitmentState === 'object'
-        ? input.crewRecruitmentState
+        ? {
+            ...input.crewRecruitmentState,
+            ...(input.crewRecruitmentState.SHINAGAWA?.lastCharacterId === 'sayakaFujieda'
+              ? {
+                  SHINAGAWA: {
+                    ...input.crewRecruitmentState.SHINAGAWA,
+                    lastCharacterId: 'reikaTachibana',
+                  },
+                }
+              : {}),
+          }
         : {},
-    crewInviteInterest:
-      input.crewInviteInterest && typeof input.crewInviteInterest === 'object'
-        ? input.crewInviteInterest
-        : null,
-    crewRecruitChallenge:
-      input.crewRecruitChallenge && typeof input.crewRecruitChallenge === 'object'
-        ? input.crewRecruitChallenge
-        : null,
-    crewPendingRecruit:
-      input.crewPendingRecruit && typeof input.crewPendingRecruit === 'object'
-        ? input.crewPendingRecruit
-        : null,
+    crewInviteInterest: migrateShinagawaSayakaRecruit(input.crewInviteInterest || null),
+    crewRecruitChallenge: migrateShinagawaSayakaRecruit(input.crewRecruitChallenge || null),
+    crewPendingRecruit: migrateShinagawaSayakaRecruit(input.crewPendingRecruit || null),
     crewBattleProgress:
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
         ? input.crewBattleProgress
@@ -1014,7 +1030,10 @@ export function normaliseState(input = {}) {
     crewPreviousCarId: input.crewPreviousCarId ? String(input.crewPreviousCarId) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
     selectedRacePlayerCharacterId:
-      input.selectedRacePlayerCharacterId ? String(input.selectedRacePlayerCharacterId) : null,
+      input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
+      input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda'
+        ? 'reikaTachibana'
+        : (input.selectedRacePlayerCharacterId ? String(input.selectedRacePlayerCharacterId) : null),
     tunerDecalsUnlocked: Array.isArray(input.tunerDecalsUnlocked)
       ? [...new Set(input.tunerDecalsUnlocked.map(String).filter(Boolean))]
       : [],
