@@ -913,6 +913,7 @@ export const CUTSCENE_ORDER = [
   'centralTokyoUnlocked',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
+  'proCircuitStrategistReveal',
   'dragComplexInvitation',
   'competitionIntroduction',
   'competitionChampion',
