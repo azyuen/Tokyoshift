@@ -1674,7 +1674,8 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.clutch = 1;
     this.engineAudio?.fadeOut();
 
-    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DAICHI');
+    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO ' +
+      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI'));
     saveSessionState(this.registry);
 
     // RaceScene has repeatedly proven fragile when it tears down controls,
