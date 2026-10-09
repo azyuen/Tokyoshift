@@ -795,7 +795,7 @@ export default class GarageScene extends Phaser.Scene {
       const devLabel = this.add.text(
         1300,
         34,
-        fullCrew ? 'DEV // REMOVE CREW' : 'DEV // RANDOM FULL CREW',
+        fullCrew ? 'D) REMOVE CREW' : 'D) RANDOM CREW',
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
@@ -825,7 +825,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this._devCrewChanging = true;
     button?.disableInteractive?.();
-    label?.setText?.('DEV // BUILDING RANDOM CREW...');
+    label?.setText?.('D) BUILDING CREW...');
 
     const recruited = recruitRandomDevCrew(this.registry);
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
