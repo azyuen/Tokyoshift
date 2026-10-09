@@ -729,6 +729,17 @@ function migrateShinagawaSayakaRecruit(entry) {
 }
 
 export function normaliseState(input = {}) {
+  const hadSayakaShinagawaCrew = input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda';
+  const oldLoanCarId = 'crew__sayakaFujieda';
+  const replacementLoanCarId = 'crew__reikaTachibana';
+  const remapLoanCarId = id =>
+    hadSayakaShinagawaCrew && id === oldLoanCarId ? replacementLoanCarId : id;
+  const migratedGarageLocations = { ...(input.carGarageLocations || {}) };
+  if (hadSayakaShinagawaCrew && Object.prototype.hasOwnProperty.call(migratedGarageLocations, oldLoanCarId)) {
+    migratedGarageLocations[replacementLoanCarId] = migratedGarageLocations[oldLoanCarId];
+    delete migratedGarageLocations[oldLoanCarId];
+  }
+
   const requestedStarterCarId =
     input.starterCarId ||
     Object.entries(input.carStates || {}).find(
@@ -755,7 +766,7 @@ export function normaliseState(input = {}) {
     || (String(normalisedLocation).startsWith('odaiba') ? 'ODAIBA' : base.district);
   const owned = (
     Array.isArray(input.ownedCarIds)
-      ? [...new Set(input.ownedCarIds)]
+      ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
 
@@ -768,8 +779,8 @@ export function normaliseState(input = {}) {
 
   const starterCarId = base.starterCarId;
 
-  const selectedCarId = owned.includes(input.selectedCarId)
-    ? input.selectedCarId
+  const selectedCarId = owned.includes(remapLoanCarId(input.selectedCarId))
+    ? remapLoanCarId(input.selectedCarId)
     : owned[0] || null;
 
   let garageTier = inferWorkshopTier(owned.length, input.garageTier);
@@ -779,7 +790,7 @@ export function normaliseState(input = {}) {
     : WORKSHOP_TIERS[garageTier].id;
   let carGarageLocations = normaliseCarGarageLocations(
     owned,
-    input.carGarageLocations || {},
+    migratedGarageLocations,
     garageTier
   );
   const joinedDevName = (
@@ -804,7 +815,7 @@ export function normaliseState(input = {}) {
       : WORKSHOP_TIERS[garageTier].id;
     carGarageLocations = normaliseCarGarageLocations(
       owned,
-      input.carGarageLocations || {},
+      migratedGarageLocations,
       garageTier
     );
   }
@@ -821,6 +832,13 @@ export function normaliseState(input = {}) {
     ...base.carStates,
     ...(input.carStates || {}),
   };
+  if (hadSayakaShinagawaCrew && mergedCarStates[oldLoanCarId]) {
+    mergedCarStates[replacementLoanCarId] = {
+      ...mergedCarStates[oldLoanCarId],
+      crewOwnerCharacterId: 'reikaTachibana',
+    };
+    delete mergedCarStates[oldLoanCarId];
+  }
   const carHistory = normaliseCarHistory(
     input.carHistory || [],
     owned,
@@ -997,7 +1015,11 @@ export function normaliseState(input = {}) {
         ? {
             ...input.crewMembers,
             ...(input.crewMembers.SHINAGAWA?.characterId === 'sayakaFujieda'
-              ? { SHINAGAWA: { ...input.crewMembers.SHINAGAWA, characterId: 'reikaTachibana' } }
+              ? { SHINAGAWA: {
+                  ...input.crewMembers.SHINAGAWA,
+                  characterId: 'reikaTachibana',
+                  loanCarId: replacementLoanCarId,
+                } }
               : {}),
           }
         : {},
@@ -1027,7 +1049,7 @@ export function normaliseState(input = {}) {
         ? input.crewBattleState
         : null,
     crewSpaceActive: Boolean(input.crewSpaceActive),
-    crewPreviousCarId: input.crewPreviousCarId ? String(input.crewPreviousCarId) : null,
+    crewPreviousCarId: input.crewPreviousCarId ? remapLoanCarId(String(input.crewPreviousCarId)) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
