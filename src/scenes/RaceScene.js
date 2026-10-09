@@ -69,7 +69,7 @@ import {
   TUNER_TEAM_COMPLETION_REWARD,
   TUNER_TEAM_PERFECT_REWARD,
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20261008-r425';
+} from '../data/tunerChallenges.js?v=20261009-r452';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261006-r398';
