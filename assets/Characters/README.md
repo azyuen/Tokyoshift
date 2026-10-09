@@ -15,4 +15,11 @@ Upload each finished transparent PNG sprite into this folder using the exact fil
 | Riku Akamine | `riku_akamine.png` | `characterRikuAkamine` |
 | Emi Kanzaki | `emi_kanzaki.png` | `characterEmiKanzaki` |
 
-All eight characters are deliberately role-flexible: any can be used as the player protagonist, a teammate, or a rival.
+The original eight principal illustrations are role-flexible, subject to the current roster's selectable and rival flags.
+
+## Shinagawa strategist and recurring story cast (R457)
+
+- **Reika Tachibana** (regional rival/recruit): `assets/Characters/Shinagawa/reika_tachibana_idle.png`, `reika_tachibana_win.png` and `reika_tachibana_loss.png`. These assets replace Sayaka in Shinagawa meet pools and the seventh-member regional team roster.
+- **Sayaka Fujieda** (recurring non-rival): use `assets/Characters/Main/home_sayaka_fujieda_*.png` at the opening, `assets/Characters/Central/sayaka_fujieda_*.png` for Ginza, and `assets/Characters/Main/race_sayaka_fujieda_*.png` when the professional strategist reveal occurs. The old `assets/Characters/Shinagawa/sayaka_fujieda_*.png` files are legacy art, not active Shinagawa racing sprites.
+
+See `docs/CHARACTER_BIBLE.md` for the two characters' distinct identities and staged Sayaka revelations.
