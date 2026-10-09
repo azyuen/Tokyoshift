@@ -363,16 +363,19 @@ export default class TouchControls {
     const throttleScale = Number(this.placements.throttle.scale || 1);
     const clutchRect = this.layout.clutch;
     const throttleRect = this.layout.throttle;
+    // Pedal PNGs have wider, slightly lower inset gauge windows than the
+    // original overlay measurements. Keep these offsets relative to each
+    // touch zone so both custom placement and size settings stay aligned.
     const clutchBar = {
-      x: clutchRect.right - 58 * clutchScale,
-      y: clutchRect.y + 80 * clutchScale,
-      w: 20 * clutchScale,
+      x: clutchRect.right - 53 * clutchScale,
+      y: clutchRect.y + 98 * clutchScale,
+      w: 26 * clutchScale,
       h: 156 * clutchScale,
     };
     const throttleBar = {
-      x: throttleRect.right - 67 * throttleScale,
-      y: throttleRect.y + 81 * throttleScale,
-      w: 21 * throttleScale,
+      x: throttleRect.right - 61 * throttleScale,
+      y: throttleRect.y + 99 * throttleScale,
+      w: 27 * throttleScale,
       h: 165 * throttleScale,
     };
 
