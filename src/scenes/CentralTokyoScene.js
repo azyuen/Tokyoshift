@@ -11,7 +11,7 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261007-r411';
+} from '../data/characters.js?v=20261009-r457';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
