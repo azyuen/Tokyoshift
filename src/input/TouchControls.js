@@ -370,7 +370,7 @@ export default class TouchControls {
     // taller, without rescaling the pedal sprites themselves.
     const clutchBar = {
       x: clutchRect.right - 60 * clutchScale,
-      y: clutchRect.y + 103 * clutchScale,
+      y: clutchRect.y + 110 * clutchScale,
       w: 26 * clutchScale,
       h: 166 * clutchScale,
     };
