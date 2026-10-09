@@ -1,4 +1,4 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r458';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
 import {
   createDefaultGameState,
   readSessionState,

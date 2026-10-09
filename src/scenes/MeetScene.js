@@ -22,7 +22,7 @@ import {
   getCharacterForContext,
   getMainRivalProgression,
   isMainRivalAvailableAtRegionalMeet,
-} from '../data/characters.js?v=20261010-r458';
+} from '../data/characters.js?v=20261010-r459';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,

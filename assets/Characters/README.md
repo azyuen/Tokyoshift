@@ -25,3 +25,7 @@ The seven playable lead racers have selectable appearances; Daichi is the non-se
 Daichi's workshop action poses (`home_daichi_engine_inspect.png`, `home_daichi_chassis_tools.png`, `home_daichi_exhaust_crouch.png`) also live in `Main` and apply to Home, Canal Yard and Warehouse HQ. His future professional racing outfit has not been supplied yet. Emi Kanzaki is the selectable Odaiba **main rival**, and her idle/win/loss files live in the `assets/Characters` root.
 
 See `docs/CHARACTER_BIBLE.md` for Reika and Sayaka's distinct identities and staged revelations.
+
+## Shibuya sprite naming (R459)
+
+Six regional rivals (Haru Sakurai, Miu Tanaka, Renji Aoki, Kento Fujisawa, Rina Tachibana, Itsuki Kuroda) use `assets/Characters/Shibuya/<character_name>_<idle|win|loss>.png`, **without a redundant `shibuya_` filename prefix**. The `Shibuya` directory supplies the region. These are byte-identical renames of the prior 18 files and keep the same character IDs, sprite keys, and gameplay roles.

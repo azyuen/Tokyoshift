@@ -9,7 +9,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261006-r388';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r458';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
