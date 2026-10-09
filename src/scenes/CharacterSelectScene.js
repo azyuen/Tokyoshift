@@ -11,7 +11,7 @@ import {
   createCarBodyLayers,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
-import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
+import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r458';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261007-r422';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
