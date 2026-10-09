@@ -2366,10 +2366,10 @@ export default class MeetScene extends Phaser.Scene {
     const competitionLabel = crewTestDrive
       ? 'CREW TEST // SINGLE + PINKS'
       : Number(this.registry.get('wins') || 0) < 1
-        ? 'COMPETITION // WIN 1 RACE'
+        ? 'SHOWDOWN // WIN 1 RACE'
         : competitionCooldownRemaining > 0
           ? 'COOLDOWN // ' + this.formatCompetitionCooldown(competitionCooldownRemaining)
-          : 'COMPETITION';
+          : 'STREET SHOWDOWN';
 
     const buttons = [
       ['SINGLE RACE', 'SINGLE', false],
@@ -3356,7 +3356,7 @@ export default class MeetScene extends Phaser.Scene {
       crewTestDrive
         ? 'CREW TEST // SINGLE + PINKS'
         : wins < 1
-          ? 'COMPETITION // WIN 1 RACE'
+          ? 'SHOWDOWN // WIN 1 RACE'
           : remaining > 0
             ? 'COOLDOWN // ' + this.formatCompetitionCooldown(remaining)
             : 'COMPETITION'
