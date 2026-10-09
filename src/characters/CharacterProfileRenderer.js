@@ -3,7 +3,7 @@ import {
   DEFAULT_CHARACTER_PROFILE,
   getCharacterVisualAsset,
   getCharacterVisualForContext,
-} from '../data/characters.js?v=20261007-r411';
+} from '../data/characters.js?v=20261010-r458';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
