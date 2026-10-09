@@ -24,9 +24,9 @@ const PARTS = Object.freeze({
 });
 
 const ERA = Object.freeze([
-  { name: 'HOME', maxLevel: 1, ranges: [[3, 6], [5, 8], [7, 10]], drivers: [2, 2, 3] },
-  { name: 'CANAL', maxLevel: 2, ranges: [[9, 16], [14, 22], [19, 28]], drivers: [3, 3, 4] },
-  { name: 'WAREHOUSE', maxLevel: 3, ranges: [[23, 33], [30, 40], [37, 46]], drivers: [4, 4, 5] },
+  { name: 'HOME', maxLevel: 1, ranges: [[0, 6], [0, 8], [0, 10]], drivers: [2, 2, 3] },
+  { name: 'CANAL', maxLevel: 2, ranges: [[0, 16], [0, 22], [0, 28]], drivers: [3, 3, 4] },
+  { name: 'WAREHOUSE', maxLevel: 3, ranges: [[0, 33], [0, 40], [0, 46]], drivers: [4, 4, 5] },
 ]);
 
 function emptyState(archetype, maxLevel) {
@@ -128,7 +128,13 @@ export function createStreetShowdownRounds(options = {}) {
       const archetype = chooseRivalBuildArchetype(config, era.drivers[roundIndex], {
         raceType, seed: [seed, roundIndex, carId].join(':'),
       });
-      for (let points = low; points <= high; points += 1) {
+      const stride = high >= 25 ? 3 : high >= 15 ? 2 : 1;
+      const budgets = [...new Set([
+        ...Array.from({ length: Math.floor((high - low) / stride) + 1 },
+          (_, index) => low + index * stride),
+        high,
+      ])];
+      for (const points of budgets) {
         const buildState = generateBuild(carId, archetype, points, eligible, era.maxLevel);
         const perf = getVehiclePerformance(carId, buildState, { raceType });
         if (!perf) continue;
