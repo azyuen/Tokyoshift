@@ -75,25 +75,44 @@ test('Sayaka starts as family friend then becomes Ginza curator then pro strateg
 
 test('legacy Shinagawa Sayaka recruit migrates to Reika without losing car or status', () => {
   const old = createDefaultGameState();
+  const oldLoanCarId = getCrewLoanCarId('sayakaFujieda');
+  const newLoanCarId = getCrewLoanCarId('reikaTachibana');
   old.crewMembers.SHINAGAWA = {
     regionId: 'SHINAGAWA',
     characterId: 'sayakaFujieda',
     baseCarId: 'rx8',
-    loanCarId: getCrewLoanCarId('sayakaFujieda'),
+    loanCarId: oldLoanCarId,
     recruitedAt: 1234,
   };
+  old.ownedCarIds.push(oldLoanCarId);
+  old.carStates[oldLoanCarId] = {
+    acquiredVia: 'crewLoan', crewLoan: true,
+    crewOwnerCharacterId: 'sayakaFujieda', crewBaseCarId: 'rx8',
+    tuning: { engine: 2, ecu: 1 },
+  };
+  old.carGarageLocations[oldLoanCarId] = 'crewSpace';
+  old.selectedCarId = oldLoanCarId;
+  old.crewPreviousCarId = oldLoanCarId;
   old.crewRecruitmentState.SHINAGAWA = { lastCharacterId: 'sayakaFujieda', misses: 3 };
   old.selectedRacePlayerCharacterId = 'sayakaFujieda';
   const restored = normaliseState(old);
   assert.equal(restored.crewMembers.SHINAGAWA.characterId, 'reikaTachibana');
   assert.equal(restored.crewMembers.SHINAGAWA.recruitedAt, 1234);
-  assert.equal(restored.crewMembers.SHINAGAWA.loanCarId, old.crewMembers.SHINAGAWA.loanCarId);
+  assert.equal(restored.crewMembers.SHINAGAWA.loanCarId, newLoanCarId);
+  assert.ok(restored.ownedCarIds.includes(newLoanCarId));
+  assert.ok(!restored.ownedCarIds.includes(oldLoanCarId));
+  assert.equal(restored.carGarageLocations[newLoanCarId], 'crewSpace');
+  assert.equal(restored.carStates[newLoanCarId].tuning.engine, 2);
+  assert.equal(restored.carStates[newLoanCarId].crewOwnerCharacterId, 'reikaTachibana');
+  assert.equal(restored.carStates[oldLoanCarId], undefined);
+  assert.equal(restored.selectedCarId, newLoanCarId);
+  assert.equal(restored.crewPreviousCarId, newLoanCarId);
   assert.equal(restored.crewRecruitmentState.SHINAGAWA.lastCharacterId, 'reikaTachibana');
   assert.equal(restored.selectedRacePlayerCharacterId, 'reikaTachibana');
   assert.equal(getCrewMembers(restored).SHINAGAWA.characterId, 'reikaTachibana');
   assert.equal(getCrewCount(restored), 1);
   assert.equal(restored.cash, old.cash);
-  assert.deepEqual(restored.ownedCarIds, old.ownedCarIds);
+  assert.equal(restored.ownedCarIds.length, old.ownedCarIds.length);
 });
 
 test('legacy Sayaka recruitment invitations are updated without changing other regions', () => {
