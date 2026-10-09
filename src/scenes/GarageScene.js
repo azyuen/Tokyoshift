@@ -4828,11 +4828,11 @@ export default class GarageScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 2));
 
     add(this.add.text(780, 377,
-      'REMOVE LV.' + quote.level + ' // RETURN TO STOCK\\n' +
-      'LABOUR  ¥ ' + quote.cost.toLocaleString('en-US') + '\\n' +
+      'REMOVE LV.' + quote.level + ' // RETURN TO STOCK\n' +
+      'LABOUR  ¥ ' + quote.cost.toLocaleString('en-US') + '\n' +
       'PART DESTROYED // NO REFUND OR INVENTORY' +
-      (quote.removesShot ? '\\nNITROUS SHOT ALSO DESTROYED' : '') +
-      '\\nUNPURCHASED CHANGES IN THIS CATEGORY WILL BE CLEARED',
+      (quote.removesShot ? '\nNITROUS SHOT ALSO DESTROYED' : '') +
+      '\nUNPURCHASED CHANGES IN THIS CATEGORY WILL BE CLEARED',
       {
         fontFamily: BODY_FONT, fontSize: '15px', color: '#d5c9d2',
         align: 'center', lineSpacing: 4, wordWrap: { width: 710 },
