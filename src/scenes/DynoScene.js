@@ -1,4 +1,4 @@
-import TouchControls from '../input/TouchControls.js?v=20261010-r458';
+import TouchControls from '../input/TouchControls.js?v=20261010-r461';
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
 
