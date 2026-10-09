@@ -44,7 +44,7 @@ export function addDevCutsceneButton(scene, x = 840, y = 35, options = {}) {
     .setDepth(depth)
     .setScrollFactor(0);
 
-  const label = scene.add.text(x, y, 'DEV // SCENES', {
+  const label = scene.add.text(x, y, 'D) SCENES', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#ffc0d6',
