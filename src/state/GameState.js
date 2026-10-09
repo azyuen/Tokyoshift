@@ -150,6 +150,7 @@ export function createDefaultGameState(options = {}) {
       drag: false,
     },
     introTutorialChoiceDone: false,
+    openingDrivingLessonComplete: false,
     raceReturnScene: 'MeetScene',
     selectedRaceMeetOffer: null,
     meetStranded: false,
@@ -1125,6 +1126,7 @@ export function normaliseState(input = {}) {
       ...(input.tokyoInvitesSeen || {}),
     },
     introTutorialChoiceDone: Boolean(input.introTutorialChoiceDone),
+    openingDrivingLessonComplete: Boolean(input.openingDrivingLessonComplete),
     raceReturnScene: String(input.raceReturnScene || 'MeetScene'),
     selectedRaceMeetOffer: input.selectedRaceMeetOffer && typeof input.selectedRaceMeetOffer === 'object'
       ? input.selectedRaceMeetOffer
@@ -1247,6 +1249,7 @@ export function snapshotRegistry(registry) {
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
     introTutorialChoiceDone: Boolean(registry.get('introTutorialChoiceDone')),
+    openingDrivingLessonComplete: Boolean(registry.get('openingDrivingLessonComplete')),
     raceReturnScene: registry.get('raceReturnScene') || 'MeetScene',
     selectedRaceMeetOffer: registry.get('selectedRaceMeetOffer') || null,
     meetStranded: Boolean(registry.get('meetStranded')),
