@@ -2,7 +2,7 @@ import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929
 import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261004-r333';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261004-r333';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r458';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
