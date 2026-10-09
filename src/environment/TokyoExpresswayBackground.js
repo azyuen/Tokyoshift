@@ -479,7 +479,8 @@ export default class TokyoExpresswayBackground {
       // only; the centre dashed divider is the sole white road marking.
       //   screen y 340-356  : upper grey shoulder
       //   screen y 432      : dashed lane divider (just below top-lane tyres)
-      //   screen y 500-518  : lower grey shoulder
+      //   screen y 514-524  : lower grey shoulder, inset farther below
+      //                         the near car's tyres and 8 px thinner.
       const shoulderColour = this.timeOfDay === 'day' ? '#777d82' : '#505860';
       const dividerWhite = this.timeOfDay === 'day' ? '#f0f1ec' : '#d7dce0';
 
