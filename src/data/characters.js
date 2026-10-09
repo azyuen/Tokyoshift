@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261007-r411';
+export const CHARACTER_ASSET_VERSION = '20261009-r457';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -1352,45 +1352,84 @@ regionExclusive: true, teamRole: 'core',
     },
   },
 
-  sayakaFujieda: {
-    id: 'sayakaFujieda',
+  reikaTachibana: {
+    id: 'reikaTachibana',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.90, launchSkill: 0.84, shiftSkill: 0.90, aggression: 0.68 }, betRange: [8500, 14000], competitionPrize: 19500 },
-    name: 'Sayaka Fujieda',
+    name: 'Reika Tachibana',
     age: 47,
     hometown: 'Shinagawa',
-    archetype: 'The Strategist',
+    archetype: 'The Tactician',
     roleTags: ['rival', 'shinagawa', 'team', 'strategist'],
     selectable: false,
     rivalEligible: true,
     regionId: 'SHINAGAWA',
     regionExclusive: true,
     teamRole: 'strategist',
-    personality: 'Controlled, perceptive and difficult to read; she treats a race like a negotiation.',
-    bio: 'Sayaka is the senior planner behind many of Shinagawa’s competition entries. She has a polished professional presence and races only when she sees a useful reason to do so.',
-    drivingStyle: 'Patient, adaptive and excellent at exploiting an opponent’s habits.',
-    tuningFocus: 'Balanced setups, data logging and strategic gearing.',
-    preferredCars: ['r32', 'wrx22b'],
+    personality: 'Composed, elegant and competitive; she studies the opponent before committing to a run.',
+    bio: 'Reika is a senior Shinagawa racer who wins through careful preparation and subtle adjustments. She is a strategist on the street, not the professional-team strategist from the player’s family history.',
+    drivingStyle: 'Patient, adaptive launches and calculated gear choices that exploit her opponent’s patterns.',
+    tuningFocus: 'Data logging, strategic gearing and balanced rotary setups.',
+    preferredCars: ['rx8', 'r32'],
     signatureRace: 'Eliminator',
-    introQuote: 'You have already shown me more than you think.',
+    introQuote: 'The first run tells me what the second will cost you.',
     resultQuotes: {
-      win: 'Predictable is expensive.',
-      loss: 'I will revise the plan.',
+      win: 'You gave me enough to plan around.',
+      loss: 'Good. Now I know what I missed.',
+    },
+    visual: {
+      spriteKey: 'characterReikaTachibana',
+      path: 'assets/Characters/Shinagawa/reika_tachibana_idle.png',
+      winSpriteKey: 'characterReikaTachibanaWin',
+      winPath: 'assets/Characters/Shinagawa/reika_tachibana_win.png',
+      lossSpriteKey: 'characterReikaTachibanaLoss',
+      lossPath: 'assets/Characters/Shinagawa/reika_tachibana_loss.png',
+    },
+  },
+
+  // Sayaka is a recurring story character, never a Shinagawa opponent or recruit.
+  // Her professional strategist identity is a later story reveal, not a crew slot.
+  sayakaFujieda: {
+    id: 'sayakaFujieda',
+    name: 'Sayaka Fujieda',
+    age: 47,
+    hometown: 'Shinagawa',
+    archetype: 'The Family Friend',
+    roleTags: ['story', 'family-friend', 'opening', 'ginza', 'pro-circuit', 'strategist'],
+    selectable: false,
+    rivalEligible: false,
+    regionId: null,
+    regionExclusive: false,
+    teamRole: 'pro-circuit-strategist',
+    personality: 'Controlled, perceptive and discreet; she offers help without announcing every reason for it.',
+    // Public-facing bio must not spoil the later Ginza and pro-circuit reveals.
+    bio: 'An old friend of the player’s father from his racing days. She delivers the player’s first car and keeps much of her own past private.',
+    drivingStyle: 'Careful strategic planning, not active regional street racing.',
+    tuningFocus: 'Race strategy, telemetry, opponent analysis and adapting the team plan.',
+    preferredCars: ['r32', 'wrx22b'],
+    introQuote: 'Your father would want you to make this car your own.',
+    resultQuotes: {
+      win: 'Preparation matters.',
+      loss: 'We will revise the plan.',
     },
     visual: {
       spriteKey: 'characterSayakaFujieda',
-      path: 'assets/Characters/Shinagawa/sayaka_fujieda_idle.png',
+      path: 'assets/Characters/Main/home_sayaka_fujieda_normal.png',
       winSpriteKey: 'characterSayakaFujiedaWin',
-      winPath: 'assets/Characters/Shinagawa/sayaka_fujieda_win.png',
+      winPath: 'assets/Characters/Main/home_sayaka_fujieda_happy.png',
       lossSpriteKey: 'characterSayakaFujiedaLoss',
-      lossPath: 'assets/Characters/Shinagawa/sayaka_fujieda_loss.png',
-      // Sayaka is a recurring character: keep her Shinagawa race set as the
-      // canonical idle/win/loss art, but expose her Ginza wardrobe and
-      // expressions as explicit Central Tokyo poses for showroom/cutscene use.
+      lossPath: 'assets/Characters/Main/home_sayaka_fujieda_sad.png',
       poseAssets: {
+        homeNormal: { key: 'characterSayakaHomeNormal', path: 'assets/Characters/Main/home_sayaka_fujieda_normal.png' },
+        homeHappy: { key: 'characterSayakaHomeHappy', path: 'assets/Characters/Main/home_sayaka_fujieda_happy.png' },
+        homeSad: { key: 'characterSayakaHomeSad', path: 'assets/Characters/Main/home_sayaka_fujieda_sad.png' },
+        homeSerious: { key: 'characterSayakaHomeSerious', path: 'assets/Characters/Main/home_sayaka_fujieda_serious.png' },
         normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Central/sayaka_fujieda_normal.png' },
         happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Central/sayaka_fujieda_happy.png' },
         sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Central/sayaka_fujieda_sad.png' },
         serious: { key: 'characterSayakaFujiedaCentralSerious', path: 'assets/Characters/Central/sayaka_fujieda_serious.png' },
+        track: { key: 'characterSayakaProTrack', path: 'assets/Characters/Main/race_sayaka_fujieda_idle.png' },
+        trackHappy: { key: 'characterSayakaProTrackHappy', path: 'assets/Characters/Main/race_sayaka_fujieda_win.png' },
+        trackSerious: { key: 'characterSayakaProTrackSerious', path: 'assets/Characters/Main/race_sayaka_fujieda_loss.png' },
       },
     },
   },
@@ -1871,7 +1910,7 @@ export const characterOrder = [
   'natsumiKagawa',
   'reiTakamura',
   'goroNakajima',
-  'sayakaFujieda',
+  'reikaTachibana',
   'haruSakurai',
   'miuTanaka',
   'renjiAoki',
@@ -1891,7 +1930,8 @@ export const characterOrder = [
   'ryoheiTakeda',
   'shunMizuno',
   'yuiKanzaki',
-  // Central Tokyo venue cast. These are NPC/cutscene characters, not rivals.
+  // Recurring storyline and Central Tokyo cast. These are NPCs, not rivals.
+  'sayakaFujieda',
   'harutoMizuno',
   'kenjiOkabe',
   'yunaKisaragi',
@@ -2074,7 +2114,7 @@ export const REGION_TEAM_CHARACTER_IDS = {
     'reiTakamura',
     'goroNakajima',
     'tetsuyaKanda',
-    'sayakaFujieda',
+    'reikaTachibana',
     MAIN_RIVAL_BY_REGION.SHINAGAWA,
   ],
   TATSUMI: [
