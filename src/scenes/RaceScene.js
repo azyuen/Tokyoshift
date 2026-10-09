@@ -1,5 +1,5 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261010-r458';
+import TouchControls from '../input/TouchControls.js?v=20261010-r461';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -8,7 +8,7 @@ import {
 } from '../data/playerDifficulty.js?v=20261007-r399';
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261008-r424';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261010-r461';
 import {
   STREET_GREEN_SECONDS,
   getStreetSignalFrame,
