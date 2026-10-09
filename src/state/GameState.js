@@ -1,4 +1,4 @@
-import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20261004-r333';
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20261009-r457';
 import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js?v=20261008-r429';
 import {
   WORKSHOP_TIERS,
