@@ -67,7 +67,8 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261007-r411';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261009-r457';
+import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
@@ -271,6 +272,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
       });
+      if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
+        queued += this.queueCharacterPose('sayakaFujieda', 'track');
+      }
     }
 
     return queued;
@@ -635,6 +639,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
 
     this.drawDragComplex();
+    this.queueSayakaProStrategistReveal();
+  }
+
+  // Sayaka is an eighth, non-driving support figure, not a substitute for any
+  // of the seven regional recruits. Ginza recognition must precede this reveal.
+  queueSayakaProStrategistReveal() {
+    if (this._sayakaProRevealScheduled ||
+        hasSeenCutscene(this.registry, 'proCircuitStrategistReveal') ||
+        !hasSeenCutscene(this.registry, 'ginzaInvitation')) return false;
+
+    const access = getProCircuitAccess(this.registry);
+    // A dev bypass alone is not the canonical seven-member career milestone.
+    if (!access.unlocked || access.crewCount < access.crewRequired) return false;
+
+    this._sayakaProRevealScheduled = true;
+    this.time.delayedCall(260, () => {
+      this._sayakaProRevealScheduled = false;
+      if (this.activeLocationId !== CENTRAL_TOKYO_LOCATIONS.drag.id ||
+          sceneCutsceneActive(this) ||
+          hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) return;
+
+      playMangaCutscene(this, 'proCircuitStrategistReveal', {
+        onComplete: () => this.renderLocation(this.activeLocationId),
+      });
+    });
+    return true;
   }
 
   updateLocationHeaderForPhase(location) {
@@ -3076,6 +3106,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
       { characterId: dragStaff.telemetry, x: STAGE.x + 950, feetY: STAGE.y + 508, height: 182, flip: true, depth: 18 },
       { characterId: dragStaff.manager, x: STAGE.x + STAGE.w - 68, feetY: STAGE.y + 505, height: 216, flip: true, depth: 21 },
     ].forEach(config => this.addVenueCharacter({ ...config, pose: 'normal' }));
+
+    if (hasSeenCutscene(this.registry, 'proCircuitStrategistReveal')) {
+      this.addVenueCharacter({
+        characterId: 'sayakaFujieda',
+        pose: 'track',
+        x: STAGE.x + 230,
+        feetY: STAGE.y + 505,
+        height: 202,
+        flip: false,
+        depth: 20,
+      });
+    }
 
     this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'PRO CIRCUIT // EVENT SELECTION', {
       fontFamily: PIXEL_FONT,
