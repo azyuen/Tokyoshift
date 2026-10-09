@@ -34,7 +34,7 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'reiTakamura', baseCarId: 'a60', recruitable: true }),
       Object.freeze({ characterId: 'goroNakajima', baseCarId: 'ek9', recruitable: true }),
       Object.freeze({ characterId: 'tetsuyaKanda', baseCarId: 'fc3s', recruitable: true }),
-      Object.freeze({ characterId: 'sayakaFujieda', baseCarId: 'rx8', recruitable: true }),
+      Object.freeze({ characterId: 'reikaTachibana', baseCarId: 'rx8', recruitable: true }),
     ]),
   }),
   TATSUMI: Object.freeze({
