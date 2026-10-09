@@ -56,7 +56,7 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import {
   applyMarketPriceDifficulty,
   getMarketPriceMultiplier,
-} from '../data/careerProgression.js?v=20260929-r272';
+} from '../data/careerProgression.js?v=20261010-r468';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
