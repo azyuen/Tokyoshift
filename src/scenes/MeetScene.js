@@ -1962,87 +1962,68 @@ export default class MeetScene extends Phaser.Scene {
     if (isArkonDen(this.registry)) this.registry.set('devMode', true);
     if (!this.registry.get('devMode')) return;
 
-    const width = 330;
-    const x = STAGE.x + STAGE.w - width / 2 - 16;
-    const startY = STAGE.y + 24;
-    const gap = 38;
+    // Compact developer-only controls live together in the top-left of the
+    // Meet stage. Keep all six actions and their existing unlock conditions.
+    const width = 292;
+    const x = STAGE.x + 18 + width / 2;
+    const startY = STAGE.y + 22;
+    const gap = 39;
+    const fill = 0x321523;
+    const stroke = 0xff72a6;
+    const textColor = '#ffd1e1';
 
-    const makeButton = (index, labelText, fill, stroke, onPress) => {
+    const makeButton = (index, labelText, onPress) => {
       const y = startY + index * gap;
       const box = this.add.rectangle(
-        x,
-        y,
-        width,
-        30,
-        fill,
-        0.94
+        x, y, width, 32, fill, 0.96
       ).setStrokeStyle(1, stroke, 0.98)
         .setInteractive({ useHandCursor: true })
         .setDepth(88);
 
-      const label = this.add.text(
-        x,
-        y,
-        labelText,
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: '#f4fbff',
-        }
-      ).setOrigin(0.5).setDepth(89);
+      const label = this.add.text(x, y, labelText, {
+        fontFamily: PIXEL_FONT,
+        fontSize: '7px',
+        color: textColor,
+      }).setOrigin(0.5).setDepth(89);
 
+      box.on('pointerover', () => box.setStrokeStyle(2, 0xffa7c6, 1));
+      box.on('pointerout', () => box.setStrokeStyle(1, stroke, 0.98));
       box.on('pointerdown', onPress);
       return { box, label, defaultText: labelText };
     };
 
     this.devScenesControl = makeButton(
-      0,
-      'DEV // SCENES',
-      0x15131c,
-      0xff72a6,
+      0, 'D) SCENES',
       () => {
         if (!sceneCutsceneActive(this)) showCutsceneTester(this);
       }
     );
 
-    this.devForceTeamChallengeControl = makeButton(
-      1,
-      'DEV // FORCE TUNER TEAM CHALLENGE',
-      0x261a0d,
-      0xe4b660,
-      () => this.forceDevTunerTeamChallenge()
+    this.devRefreshChallengesControl = makeButton(
+      1, 'D) REFRESH MEET',
+      () => this.devRefreshAllChallenges()
     );
 
+    // The existing Special Challenger action is the pink-slip test shortcut.
     this.devForceChallengerControl = makeButton(
-      2,
-      'DEV // FORCE SPECIAL CHALLENGER',
-      0x25101a,
-      0xff5f93,
+      2, 'D) PINK SLIP',
       () => this.forceDevSpecialChallenger()
     );
 
-    this.devForceCrewRecruitControl = makeButton(
-      3,
-      'DEV // DEPLOY CREW RECRUIT',
-      0x10251f,
-      0x62e8c7,
-      () => this.forceDevCrewRecruitment()
+    // Preserve the existing regional tuner-team challenge shortcut.
+    this.devForceTeamChallengeControl = makeButton(
+      3, 'D) REGIONAL CHALLENGE',
+      () => this.forceDevTunerTeamChallenge()
     );
 
-    this.devRefreshChallengesControl = makeButton(
-      4,
-      'DEV // REFRESH ALL MEET CHALLENGES',
-      0x0b1c28,
-      0x43dfff,
-      () => this.devRefreshAllChallenges()
+    this.devForceCrewRecruitControl = makeButton(
+      4, 'D) DEPLOY RECRUIT',
+      () => this.forceDevCrewRecruitment()
     );
 
     if (isArkonDen(this.registry) && isCrewComplete(this.registry)) {
       this.devForceRegionalCrewBattleControl = makeButton(
-        5,
-        'DEV // DEPLOY REGIONAL CREW BATTLE',
-        0x25172d,
-        0xd875ff,
+        5, 'D) CREW CHALLENGE',
         () => this.forceDevRegionalCrewBattle()
       );
     }
@@ -2053,7 +2034,7 @@ export default class MeetScene extends Phaser.Scene {
     control.label.setText(message).setColor(color);
     this.time.delayedCall(1100, () => {
       if (!control?.label?.active) return;
-      control.label.setText(control.defaultText).setColor('#f4fbff');
+      control.label.setText(control.defaultText).setColor('#ffd1e1');
     });
   }
 
@@ -2063,7 +2044,7 @@ export default class MeetScene extends Phaser.Scene {
     if (this.isCrewTestDriveMode()) {
       this.flashDevControl(
         this.devForceRegionalCrewBattleControl,
-        'DEV // RETURN WITH YOUR CAR',
+        'D) USE OWN CAR',
         '#ffb4c8'
       );
       return;
@@ -2077,7 +2058,7 @@ export default class MeetScene extends Phaser.Scene {
     if (!regionId || units.length < 7 || rounds.length < 6) {
       this.flashDevControl(
         this.devForceRegionalCrewBattleControl,
-        'DEV // CREW BATTLE UNAVAILABLE',
+        'D) CREW UNAVAILABLE',
         '#ffb4c8'
       );
       return;
@@ -2086,7 +2067,7 @@ export default class MeetScene extends Phaser.Scene {
     this.showCrewBattleLineup(regionId);
     this.flashDevControl(
       this.devForceRegionalCrewBattleControl,
-      'DEV // CREW BATTLE DEPLOYED',
+      'D) CREW READY',
       '#f1d0ff'
     );
   }
@@ -2101,7 +2082,7 @@ export default class MeetScene extends Phaser.Scene {
     if (!shop) {
       this.flashDevControl(
         this.devForceTeamChallengeControl,
-        'DEV // NO TUNER IN THIS REGION',
+        'D) NO REGIONAL TUNER',
         '#ffb4c8'
       );
       return;
@@ -2134,7 +2115,7 @@ export default class MeetScene extends Phaser.Scene {
     this.showTunerTeamChallengePopup(regionId, { forceCallout: true });
     this.flashDevControl(
       this.devForceTeamChallengeControl,
-      'DEV // TEAM CHALLENGE READY',
+      'D) CHALLENGE READY',
       '#ffe2a4'
     );
   }
@@ -2145,7 +2126,7 @@ export default class MeetScene extends Phaser.Scene {
     if (!this.hasCar) {
       this.flashDevControl(
         this.devForceChallengerControl,
-        'DEV // NO CAR AVAILABLE',
+        'D) NO CAR',
         '#ffb4c8'
       );
       return;
@@ -2155,7 +2136,7 @@ export default class MeetScene extends Phaser.Scene {
     if (!challenger) {
       this.flashDevControl(
         this.devForceChallengerControl,
-        'DEV // GARAGE FULL',
+        'D) GARAGE FULL',
         '#ffb4c8'
       );
       return;
@@ -2170,7 +2151,7 @@ export default class MeetScene extends Phaser.Scene {
     this.showSpecialChallenger(challenger, true);
     this.flashDevControl(
       this.devForceChallengerControl,
-      'DEV // SPECIAL DEPLOYED',
+      'D) PINK SLIP READY',
       '#ffb4c8'
     );
   }
@@ -2194,8 +2175,8 @@ export default class MeetScene extends Phaser.Scene {
       this.flashDevControl(
         this.devForceCrewRecruitControl,
         candidates.length
-          ? 'DEV // RECRUIT NOT IN THIS MEET'
-          : 'DEV // NO CREW CANDIDATE',
+          ? 'D) RECRUIT NOT HERE'
+          : 'D) NO RECRUIT',
         '#ffb4c8'
       );
       return;
@@ -2217,7 +2198,7 @@ export default class MeetScene extends Phaser.Scene {
     const shown = this.maybeShowCrewInviteInterest();
     this.flashDevControl(
       this.devForceCrewRecruitControl,
-      shown ? 'DEV // CREW RECRUIT DEPLOYED' : 'DEV // RECRUIT READY',
+      shown ? 'D) RECRUIT DEPLOYED' : 'D) RECRUIT READY',
       '#9fffe3'
     );
   }
@@ -2239,7 +2220,7 @@ export default class MeetScene extends Phaser.Scene {
 
     this.flashDevControl(
       this.devRefreshChallengesControl,
-      'DEV // ALL MEETS REFRESHED',
+      'D) MEET REFRESHED',
       '#8fe7ff'
     );
   }
@@ -5166,15 +5147,15 @@ export default class MeetScene extends Phaser.Scene {
         ).setStrokeStyle(1, challenger ? 0xff5f93 : 0x4bdcff, 0.8).setDepth(84);
 
         const note = this.add.text(
-          STAGE.x + STAGE.w - 24,
+          STAGE.x + STAGE.w - 200,
           STAGE.y + 32,
-          'SOMETIME LATER, A DIFFERENT SET OF RIVALS ARRIVE',
+          'NEW RIVALS ARRIVE',
           {
             fontFamily: PIXEL_FONT,
             fontSize: '8px',
             color: challenger ? '#ffe4ee' : '#dff8ff',
           }
-        ).setOrigin(1, 0.5).setDepth(85);
+        ).setOrigin(0.5).setDepth(85);
 
         this.tweens.add({
           targets: [stageVeil, cardVeil],
