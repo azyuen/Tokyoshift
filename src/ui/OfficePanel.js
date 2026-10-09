@@ -1,7 +1,8 @@
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
 import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
 import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261006-r388';
-import { showMagazinePanel } from './CarHistoryPanel.js?v=20261006-r388';
+import { showMagazinePanel } from './CarHistoryPanel.js?v=20261010-r467';
+import { showOpeningMagazine } from './OpeningMagazine.js?v=20261010-r467';
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -246,6 +247,25 @@ export function showOfficePanel(scene) {
   }).setOrigin(0.5).setDepth(215));
   back.on('pointerdown', closeOffice);
 
+  const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
+  const openMagazine = () => openingMagazine
+    ? showOpeningMagazine(scene, carId => {
+        closeOffice();
+        scene.completeOpeningMagazineChoice?.(carId);
+      })
+    : showMagazinePanel(scene);
+
+  if (openingMagazine) {
+    const instruction = add(scene.add.text(
+      frame.x + frame.w * 0.36, frame.y + frame.h * 0.715,
+      'ISSUE 01 // TAP THE MAGAZINE TO CHOOSE YOUR CAR', {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
+        backgroundColor: '#06303b', padding: { x: 14, y: 11 },
+      }
+    ).setDepth(218));
+    scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
+  }
+
   // Seven regional pennants. The badge positions follow the authored
   // 160x576 flag asset coordinates in garage_assets.json.
   // Keep the achievement wall compact and biased left so the right-hand
@@ -319,7 +339,13 @@ export function showOfficePanel(scene) {
     const sy = cover.scaleY;
     cover.on('pointerover', () => cover.setScale(sx * 1.04, sy * 1.04));
     cover.on('pointerout', () => cover.setScale(sx, sy));
-    cover.on('pointerdown', () => showMagazinePanel(scene));
+    if (openingMagazine) {
+      const outline = add(scene.add.rectangle(
+        coverP.x, coverP.y, coverW + 20, coverH + 20, 0x000000, 0
+      ).setStrokeStyle(4, 0x62e8c7, 1).setDepth(201));
+      scene.tweens.add({ targets: outline, alpha: 0.5, duration: 500, yoyo: true, repeat: -1 });
+    }
+    cover.on('pointerdown', openMagazine);
   }
 
   // Transparent, hover-revealed interaction zones preserve the authored
