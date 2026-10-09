@@ -32,14 +32,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
       queued += 1;
     });
 
-    const starterCars = Object.fromEntries(
-      ['ae86', 'ef'].filter(id => cars[id]).map(id => [id, cars[id]])
-    );
-    queued += preloadCarAppearanceAssets(this, starterCars, '20260928-r242');
-    Object.values(starterCars).forEach(car => {
-      queued += preloadCarWheel(this, car);
-    });
-
     startSceneLoading(this, 'LOADING DRIVER SELECT', queued);
   }
 
@@ -51,10 +43,6 @@ export default class CharacterSelectScene extends Phaser.Scene {
     try { if (this.input.keyboard) this.input.keyboard.enabled = true; } catch (e) {}
 
     playMusic('title');
-
-    ensureDerivedModularCarTextures(this, Object.fromEntries(
-      ['ae86', 'ef'].filter(id => cars[id]).map(id => [id, cars[id]])
-    ));
 
     this.currentCharacterId = Phaser.Utils.Array.GetRandom(playableCharacterOrder);
     this.currentStarterCarId = 'ae86';
