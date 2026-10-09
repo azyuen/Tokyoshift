@@ -31,6 +31,7 @@ import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/Tun
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { engines } from '../data/engines.js?v=20261004-r333';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261010-r468';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
 import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261008-r430';
 import {
@@ -266,6 +267,23 @@ export default class RaceScene extends Phaser.Scene {
       || characters[this.opponentCharacterId]?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    // Older in-progress Street Showdowns may carry a pre-rebalance Expert AI.
+    // Resolve driver talent from the actual award for this stage at race entry,
+    // preserving saved cars, prize, paid entry fee and remaining rounds.
+    if (this.raceMode === 'COMPETITION') {
+      const event = this.registry.get('competitionState');
+      if (event?.active) {
+        const ratings = getStreetShowdownDriverRatings({
+          prizeType: event.prizeType,
+          baseCashPrize: event.baseCashPrize,
+          prizeCash: event.prizeCash,
+          playerDifficulty: this.registry.get('playerDifficulty') || 'STANDARD',
+        });
+        const currentRound = Math.max(0, Math.min(2, Number(event.roundIndex || 0)));
+        this.opponentEncounterRating = ratings[currentRound];
+        this.opponentEncounterAi = getEncounterAi(this.opponentEncounterRating);
+      }
+    }
     this.isTutorial = this.raceMode === 'TUTORIAL';
     const regionalRaceDistrict = String(
       this.registry.get('raceDistrict') || this.registry.get('district') || ''
