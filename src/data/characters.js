@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261009-r457';
+export const CHARACTER_ASSET_VERSION = '20261010-r458';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -110,7 +110,7 @@ export const characters = {
     },
     visual: {
       spriteKey: 'characterDaichiSakamoto',
-      path: 'assets/Characters/daichi_sakamoto.png',
+      path: 'assets/Characters/Main/home_daichi_sakamoto.png',
     },
   },
 
@@ -966,11 +966,11 @@ regionExclusive: true, teamRole: 'core',
     },
     visual: {
       spriteKey: 'characterEmiKanzaki',
-      path: 'assets/Characters/Odaiba/emi_kanzaki_idle.png',
+      path: 'assets/Characters/emi_kanzaki_idle.png',
       winSpriteKey: 'characterEmiKanzakiWin',
-      winPath: 'assets/Characters/Odaiba/emi_kanzaki_win.png',
+      winPath: 'assets/Characters/emi_kanzaki_win.png',
       lossSpriteKey: 'characterEmiKanzakiLoss',
-      lossPath: 'assets/Characters/Odaiba/emi_kanzaki_loss.png',
+      lossPath: 'assets/Characters/emi_kanzaki_loss.png',
     },
   },
 
@@ -1423,10 +1423,10 @@ regionExclusive: true, teamRole: 'core',
         homeHappy: { key: 'characterSayakaHomeHappy', path: 'assets/Characters/Main/home_sayaka_fujieda_happy.png' },
         homeSad: { key: 'characterSayakaHomeSad', path: 'assets/Characters/Main/home_sayaka_fujieda_sad.png' },
         homeSerious: { key: 'characterSayakaHomeSerious', path: 'assets/Characters/Main/home_sayaka_fujieda_serious.png' },
-        normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Central/sayaka_fujieda_normal.png' },
-        happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Central/sayaka_fujieda_happy.png' },
-        sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Central/sayaka_fujieda_sad.png' },
-        serious: { key: 'characterSayakaFujiedaCentralSerious', path: 'assets/Characters/Central/sayaka_fujieda_serious.png' },
+        normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Main/ginza_sayaka_fujieda_normal.png' },
+        happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Main/ginza_sayaka_fujieda_happy.png' },
+        sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Main/ginza_sayaka_fujieda_sad.png' },
+        serious: { key: 'characterSayakaFujiedaCentralSerious', path: 'assets/Characters/Main/ginza_sayaka_fujieda_serious.png' },
         track: { key: 'characterSayakaProTrack', path: 'assets/Characters/Main/race_sayaka_fujieda_idle.png' },
         trackHappy: { key: 'characterSayakaProTrackHappy', path: 'assets/Characters/Main/race_sayaka_fujieda_win.png' },
         trackSerious: { key: 'characterSayakaProTrackSerious', path: 'assets/Characters/Main/race_sayaka_fujieda_loss.png' },
