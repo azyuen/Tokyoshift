@@ -2,6 +2,7 @@ import { cars } from './cars.js?v=20261006-r388';
 import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260928-r239';
 import { chooseRivalBuildArchetype } from './rivalBuilds.js?v=20260928-r234';
 import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
+import { canInstallTuningLevel } from './workshopProgression.js?v=20261005-r354';
 
 const TARGETS = {
   'engine.engine': ['tuning', 'engine'],
@@ -60,15 +61,46 @@ function priority(archetypeId, allowNos) {
   return result;
 }
 
-function allocate(state, points, maxLevel, allowNos, archetypeId) {
+const WORKSHOP_BY_ERA = Object.freeze({
+  HOME: 'shinonomeWorkshop',
+  CANAL: 'shinonomeCanalYard',
+  WAREHOUSE: 'shinonomeWarehouseStrip',
+});
+const CATEGORY_BY_GROUP = Object.freeze({
+  tuning: 'engine',
+  drivetrainTuning: 'drivetrain',
+  chassisTuning: 'chassis',
+  exhaustNosTuning: 'exhaustNos',
+});
+
+function allocate(state, points, maxLevel, allowNos, archetypeId, workshopEra, careerWins) {
+  const workshop = WORKSHOP_BY_ERA[String(workshopEra || '').toUpperCase()] || WORKSHOP_BY_ERA.HOME;
   const order = priority(archetypeId, allowNos);
-  let left = Math.min(order.length * maxLevel, Math.max(0, Math.floor(Number(points) || 0)));
+  const maxAllowed = Object.fromEntries(order.map(id => {
+    const [group, part] = TARGETS[id];
+    let level = 0;
+    for (let next = 1; next <= maxLevel; next++) {
+      if (!canInstallTuningLevel(CATEGORY_BY_GROUP[group], part, next, workshop, careerWins)) break;
+      level = next;
+    }
+    return [id, level];
+  }));
+
+  // A tuning-point budget is not permission to install parts the player
+  // physically cannot access in this workshop era.
+  let left = Math.min(
+    Math.max(0, Math.floor(Number(points) || 0)),
+    Object.values(maxAllowed).reduce((sum, level) => sum + level, 0)
+  );
   let cursor = 0;
-  while (left > 0) {
+  while (left > 0 && order.length) {
     const id = order[cursor % order.length];
     cursor += 1;
     const [group, key] = TARGETS[id];
-    if (Number(state[group][key] || 0) >= maxLevel) continue;
+    if (Number(state[group][key] || 0) >= maxAllowed[id]) continue;
+
+    // Do not allocate an unusable nitrous power shot before its bottle.
+    if (id === 'exhaust.nitrousShot' && !state.exhaustNosTuning.nosKit) continue;
     state[group][key] += 1;
     left -= 1;
   }
@@ -76,7 +108,9 @@ function allocate(state, points, maxLevel, allowNos, archetypeId) {
     const [group, key] = TARGETS[id];
     return sum + Number(state[group][key] || 0);
   }, 0);
-  state.nosInstalled = Boolean(allowNos && state.exhaustNosTuning.nosKit > 0);
+  state.nosInstalled = Boolean(
+    allowNos && state.exhaustNosTuning.nosKit > 0 && state.exhaustNosTuning.nitrousShot > 0
+  );
   return state;
 }
 
@@ -121,7 +155,7 @@ function addSpecialists(state, count, round) {
   return state;
 }
 
-export function materialiseRegionalChallengeRounds(rounds = []) {
+export function materialiseRegionalChallengeRounds(rounds = [], careerWins = Infinity) {
   return rounds.map(round => {
     const config = cars[round.carId];
     if (!config) return { ...round };
@@ -136,7 +170,9 @@ export function materialiseRegionalChallengeRounds(rounds = []) {
       round.tuningPointCap,
       Number(round.maxTuningLevel || 1),
       Boolean(round.allowNos),
-      archetype
+      archetype,
+      round.workshopEra,
+      careerWins
     );
     state = addSpecialists(state, round.specialistUpgradeCount, round);
     return {
