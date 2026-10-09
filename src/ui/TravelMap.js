@@ -423,20 +423,20 @@ export function showTravelMap(scene, options = {}) {
       devPhaseY,
       220,
       42,
-      0x10263a,
+      0x321523,
       0.96
-    ).setStrokeStyle(1, 0x63d7ff, 0.95)
+    ).setStrokeStyle(1, 0xff72a6, 0.95)
       .setInteractive({ useHandCursor: true })
       .setDepth(depth + 10));
 
     add(scene.add.text(
       devPhaseX,
       devPhaseY,
-      'DEV: ' + worldPhase.toUpperCase() + ' → ' + nextPhase,
+      'D) ' + worldPhase.toUpperCase() + ' → ' + nextPhase,
       {
         fontFamily: PIXEL_FONT,
         fontSize: '9px',
-        color: '#bdefff',
+        color: '#ffd1e1',
       }
     ).setOrigin(0.5).setDepth(depth + 11));
 
