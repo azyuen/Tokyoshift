@@ -3997,9 +3997,9 @@ export default class GarageScene extends Phaser.Scene {
       .forEach(asset => queueImage(asset.key, asset.path));
 
     [
-      ['daichiEngineInspect', 'assets/Characters/daichi_engine_inspect.png?v=20260922-r110'],
-      ['daichiChassisTools', 'assets/Characters/daichi_chassis_tools.png?v=20260922-r110'],
-      ['daichiExhaustCrouch', 'assets/Characters/daichi_exhaust_crouch.png?v=20260922-r110'],
+      ['daichiEngineInspect', 'assets/Characters/Main/home_daichi_engine_inspect.png?v=20261010-r458'],
+      ['daichiChassisTools', 'assets/Characters/Main/home_daichi_chassis_tools.png?v=20261010-r458'],
+      ['daichiExhaustCrouch', 'assets/Characters/Main/home_daichi_exhaust_crouch.png?v=20261010-r458'],
     ].forEach(([key, path]) => queueImage(key, path));
 
     if (includeVisualMods && this.selectedCarId) {
