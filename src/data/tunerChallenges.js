@@ -162,10 +162,21 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
   const era = REGION_BUILD_ERAS[normaliseRegion(regionId)] || REGION_BUILD_ERAS.ODAIBA;
   const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
   const difficulty = String(playerDifficulty || 'STANDARD').toUpperCase();
-  if (stage !== 6 || era.workshopEra === 'WAREHOUSE') return era.tuningPointCap;
-  if (difficulty === 'HARD') return era.tuningPointCap + 2;
-  if (difficulty === 'STANDARD') return era.tuningPointCap + 1;
-  return era.tuningPointCap;
+
+  // Warehouse rivals stay at 48 base points; late-stage specialist tunes
+  // supply their extra difficulty instead of exceeding the physical Lv3 cap.
+  if (era.workshopEra === 'WAREHOUSE') return era.tuningPointCap;
+
+  // Keep rounds 1–6 at or below the penultimate rival, so a tuning
+  // reduction for round 6 never makes earlier opponents more powerful.
+  const regularPoints = Math.max(0, era.tuningPointCap - 1);
+  if (stage !== 6 || difficulty === 'EASY') return regularPoints;
+
+  // Standard's boss reaches its era's nominal cap (Home 12 / Canal 30).
+  // Hard retains one point of above-era hardware as the final-round challenge.
+  return difficulty === 'HARD'
+    ? era.tuningPointCap + 1
+    : era.tuningPointCap;
 }
 
 function regionalSpecialistUpgradeCount(regionId, stageIndex, playerDifficulty = 'STANDARD') {
