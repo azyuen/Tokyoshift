@@ -151,3 +151,30 @@ The initial R446 introductory cup fees were accidentally priced below ELITE and 
 - UI tests include active legacy Invitational/unnamed saved brackets, exactly three fixed cards, no direct dev tester entry, no duplicate sidebar fourwide button, stage line, portrait placement, rank badge and tap-anywhere. Automated syntax and data regressions do **not** replace iPhone visual/touch testing.
 
 **Phase 3 still planned:** proper team event simulations, rotating season calendar, venue reputation/crowd density variants, formal five-trophy programme and championships. Keep the three-slot UI architecture and adapt slot event definitions when those systems are genuinely playable.
+
+## R455 — Real spectator density and day/night racing art (Phase 3-ready)
+
+The official professional Drag Complex renderer uses `src/data/dragstripVenue.js` to choose exactly one **five-part** scenery set from the `assets/CentralTokyo/dragstrip` folder per live heat:
+
+| Current playable event | Default crowd tier |
+| --- | --- |
+| Street Shootout | `low` |
+| Midnight Cup | `half` |
+| Four-Wide Open | `full` |
+| Existing saved Tokyo Invitational cup | `half` |
+
+Each combination of crowd tier `low / half / full` and Tokyo world phase `day / night` loads:
+- `{tier}_complex_{phase}.png`
+- `{tier}_frontcrowd_{phase}.png`
+- `{tier}_standleft_{phase}.png`
+- `{tier}_standmid_{phase}.png`
+- `{tier}_standright_{phase}.png`
+- the matching `assets/Race/Skylines/skyline_shinjuku_{phase}.webp`
+
+All 30 source PNGs are verified by CI as named; the shared `getWorldPhase()` clock drives the phase, not actual clock time, device brightness or a stale race flag. Lock the art during a heat so it cannot pop between phases mid-race, then resolve the live world clock again on the next heat.
+
+Asset keys include both crowd and phase, preventing Phaser from displaying a previously cached version. Remove inactive dragstrip variants and their `SceneTrim` generated textures during preload so iPhone memory does not accumulate all six large-resolution venue sets. This changes no lane geometry, camera perspective, starter tree, venue placement, movement, simulation or match payouts.
+
+For Phase 3, the event/season/rank/crowd-attendance engine may populate a validated `crowdTier` property on the active `competitionState` (three-round duel) or `proCircuit.activeTournament` (four-wide cup). `resolveDragstripVenue({eventId, phase, crowdTier})` will honor it without any asset-renaming or renderer modification. The current presets remain the user-approved defaults.
+
+**Physical iOS validation outstanding:** compare crowd sprite scale and alignment at the start/finish, verify day-to-night change at a world-phase boundary between heats, monitor PWA memory over repeated venue changes, and verify all five chosen PNGs share intended scale/transparency.
