@@ -58,7 +58,7 @@ const REGION_CARS = {
   // Temporary Option 2 pools using the current roster. These are intentionally
   // progression-ordered and may duplicate cars until the full 42-car roster lands.
   ODAIBA: ['ej1', 'ae86', 'ef', 'a60', 'fc3s', 'ek9', 'ek9'],
-  SHINAGAWA: ['ae86', 'ef', 'a60', 'ek9', 'fc3s', 'rx8', 'rx8'],
+  SHINAGAWA: ['ae86', 'ef', 'a60', 'ek9', 'fc3s', 'fc3s', 'ek9'],
   TATSUMI: ['a60', 'ek9', 'fc3s', 'rx8', 's2000', 'evo3', 'evo3'],
   SHIBUYA: ['fc3s', 'ek9', 'rx8', 's2000', 'evo3', 'r32', 'r32'],
 
@@ -141,8 +141,8 @@ const REGION_RACE_PATTERNS = {
 };
 
 const REGION_DRIVER_RATINGS = Object.freeze({
-  ODAIBA: [2, 2, 2, 3, 3, 3, 4],
-  SHINAGAWA: [2, 2, 3, 3, 3, 4, 4],
+  ODAIBA: [2, 2, 2, 3, 3, 3, 3],
+  SHINAGAWA: [2, 2, 3, 3, 3, 3, 4],
   TATSUMI: [3, 3, 3, 3, 4, 4, 4],
   SHIBUYA: [3, 3, 3, 4, 4, 4, 4],
   YOKOHAMA: [4, 4, 4, 4, 4, 5, 5],
@@ -164,6 +164,17 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
   const era = REGION_BUILD_ERAS[normaliseRegion(regionId)] || REGION_BUILD_ERAS.ODAIBA;
   const stage = Math.max(0, Math.min(6, Number(stageIndex || 0)));
   const difficulty = String(playerDifficulty || 'STANDARD').toUpperCase();
+
+  // Early championships are a first-campaign graduation, not endgame.
+  // Spread development through all seven rounds instead of giving the very
+  // first opponent virtually the same maxed-out Home build as the boss.
+  if (['ODAIBA', 'SHINAGAWA'].includes(normaliseRegion(regionId))) {
+    const steps = normaliseRegion(regionId) === 'ODAIBA'
+      ? [3, 4, 5, 6, 7, 8, 9]
+      : [5, 6, 7, 8, 9, 10, 11];
+    const modifier = difficulty === 'EASY' ? -1 : difficulty === 'HARD' ? 1 : 0;
+    return Math.max(0, Math.min(12, steps[stage] + modifier));
+  }
 
   // Warehouse rivals stay at 48 base points; late-stage specialist tunes
   // supply their extra difficulty instead of exceeding the physical Lv3 cap.
@@ -253,10 +264,22 @@ export function getTunerTeamChallengeState(source, regionId) {
     retryNotBefore: perfectComplete ? 0 : Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds)
       ? raw.rounds.map((round, index) => {
-          // Preserve identities, cars, unlocks and progress from old saves,
-          // while updating the first two championships' race formats.
+          // Existing saves keep their player car, driver identities, earned
+          // wins and stage. Only the first two championships receive the
+          // corrected entrant hardware, driver difficulty and race format.
           if (!round || !['ODAIBA', 'SHINAGAWA'].includes(key)) return round;
-          return { ...round, ...getRegionalChallengeRaceSpec(key, index) };
+          const rating = REGION_DRIVER_RATINGS[key][index];
+          return {
+            ...round,
+            carId: REGION_CARS[key][index] || round.carId,
+            encounterRating: rating,
+            encounterAi: challengeAi(index, rating),
+            difficulty: index === 6 ? 'PRO' : rating >= 4 ? 'EXPERT' : rating >= 3 ? 'SKILLED' : 'ROOKIE',
+            tuningPointCap: regionalTuningPointCap(
+              key, index, sourceValue(source, 'playerDifficulty', 'STANDARD')
+            ),
+            ...getRegionalChallengeRaceSpec(key, index),
+          };
         })
       : [],
     offeredAt: String(raw.offeredAt || ''),
