@@ -211,86 +211,15 @@ export default class CharacterSelectScene extends Phaser.Scene {
   }
   buildStarterCarPanel() {
     const x = 1260;
-    this.panel(x, 365, 370, 455, '3 // FIRST CAR');
-
-    this.add.text(x, 205, 'CHOOSE YOUR STARTER', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#7e9caf'
+    this.panel(x, 365, 370, 455, '3 // THE JOURNEY');
+    this.add.text(x, 272, 'NO CAR YET', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#69dfff'
     }).setOrigin(0.5);
-
-    this.starterCarNameText = this.add.text(x, 432, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#ffffff',
-      align: 'center',
-      wordWrap: { width: 320 },
-    }).setOrigin(0.5);
-
-    this.starterCarSpecText = this.add.text(x, 474, '', {
-      fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#91a9b7',
-      fontStyle: '600',
-      align: 'center',
-    }).setOrigin(0.5);
-
-    this.starterCarTraitText = this.add.text(x, 510, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#69dfff',
-      align: 'center',
-      wordWrap: { width: 320 },
-    }).setOrigin(0.5);
-
-    this.starterButtons = [
-      { id: 'ae86', label: 'AE86', x: x - 82 },
-      { id: 'ef', label: 'CIVIC EF', x: x + 82 },
-    ].map(item => {
-      const box = this.add.rectangle(item.x, 558, 146, 38, 0x0b1724, 1)
-        .setStrokeStyle(1, 0x315470, 1)
-        .setInteractive({ useHandCursor: true });
-      const label = this.add.text(item.x, 558, item.label, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#b8d4e3'
+    this.add.text(x, 410,
+      'Your first car is on its way.\n\nMeet Daichi at the station,\nride home, and read Issue 01\nto choose your first set of keys.', {
+        fontFamily: BODY_FONT, fontSize: '12px', color: '#c5dae6',
+        align: 'center', lineSpacing: 7, wordWrap: { width: 300 },
       }).setOrigin(0.5);
-
-      box.on('pointerdown', () => {
-        this.currentStarterCarId = item.id;
-        this.refreshStarterCar();
-      });
-
-      return { ...item, box, label };
-    });
-
-    this.refreshStarterCar();
-  }
-
-  refreshStarterCar() {
-    this.starterDisplayObjects.forEach(obj => obj?.destroy?.());
-    this.starterDisplayObjects = [];
-
-    const id = this.currentStarterCarId === 'ef' ? 'ef' : 'ae86';
-    const car = cars[id];
-    const meta = id === 'ef'
-      ? {
-          spec: '118 kW   •   1010 kg   •   FWD / NA',
-          trait: 'VTEC // LIGHTWEIGHT // FRONT-DRIVE TRACTION',
-        }
-      : {
-          spec: '96 kW   •   940 kg   •   RWD / NA',
-          trait: 'MOMENTUM // LIGHTWEIGHT // REAR-DRIVE TECHNIQUE',
-        };
-
-    this.starterDisplayObjects = this.createCarDisplay(car, 1260, 330, 280, 4);
-    this.starterCarNameText.setText(car.name.toUpperCase());
-    this.starterCarSpecText.setText(meta.spec);
-    this.starterCarTraitText.setText(meta.trait);
-
-    this.starterButtons.forEach(item => {
-      const active = item.id === id;
-      item.box
-        .setFillStyle(active ? 0x123047 : 0x0b1724, 1)
-        .setStrokeStyle(active ? 2 : 1, active ? 0x43dfff : 0x315470, 1);
-      item.label.setColor(active ? '#ffffff' : '#8aa8b8');
-    });
   }
 
   buildExplanation() {
@@ -348,8 +277,14 @@ export default class CharacterSelectScene extends Phaser.Scene {
       return;
     }
 
-    const starterCarId = this.currentStarterCarId === 'ef' ? 'ef' : 'ae86';
-    const state = createDefaultGameState({ starterCarId });
+    // The new intro begins on foot. No starter vehicle exists until Sayaka delivers it.
+    const state = createDefaultGameState({ starterCarId: 'ae86' });
+    state.openingChapter = 'station';
+    state.selectedCarId = null;
+    state.ownedCarIds = [];
+    state.carStates = {};
+    state.carGarageLocations = {};
+    state.gameOver = false;
     state.firstName = firstName;
     state.lastName = lastName;
 
@@ -372,7 +307,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
 
     applyStateToRegistry(this.registry, state);
     saveSessionState(this.registry);
-    this.scene.start('GarageScene');
+    this.scene.start('TrainStationScene');
   }
   createCarDisplay(car, x, y, targetWidth, depth) {
     const source = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
