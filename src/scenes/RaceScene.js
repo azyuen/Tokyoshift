@@ -567,7 +567,7 @@ export default class RaceScene extends Phaser.Scene {
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
-          ? 'COMPETITION ROUND'
+          ? 'SHOWDOWN ROUND'
           : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
     this.rivalText = this.add.text(
@@ -642,7 +642,7 @@ export default class RaceScene extends Phaser.Scene {
     const penaltyText = isPink
       ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
       : isCompetition
-        ? 'Your competition streak ends here. The entry fee is not refunded.'
+        ? 'Your Street Showdown ends here. The entry fee is not refunded.'
         : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
 
     const depth = 110;
@@ -2024,7 +2024,7 @@ export default class RaceScene extends Phaser.Scene {
         if (settlement.competitionFailed) {
           return {
             primary: 'STREAK BROKEN',
-            secondary: 'COMPETITION OVER // ROUND ' + settlement.roundNumber + '/3',
+            secondary: 'SHOWDOWN OVER // ROUND ' + settlement.roundNumber + '/3',
           };
         }
         if (settlement.competitionContinues) {
@@ -2045,7 +2045,7 @@ export default class RaceScene extends Phaser.Scene {
         if (settlement.competitionWon) {
           return {
             primary: '+¥' + Number(settlement.prizeCash || 0).toLocaleString('en-US'),
-            secondary: 'COMPETITION CLEARED // BALANCE ¥' +
+            secondary: 'SHOWDOWN CLEARED // BALANCE ¥' +
               Number(settlement.cash || 0).toLocaleString('en-US'),
           };
         }
@@ -2236,7 +2236,7 @@ export default class RaceScene extends Phaser.Scene {
     const startLabel = this.isRollingStart ? 'ROLLING START' : 'STANDING START';
     const contextType = isPinkSlip
       ? 'PINK SLIP'
-      : this.raceMode === 'COMPETITION'
+      : this.raceMode === 'STREET SHOWDOWN'
         ? 'COMPETITION'
         : this.raceMode === 'TUNER_TEAM'
           ? 'REGIONAL TEAM CHALLENGE'
