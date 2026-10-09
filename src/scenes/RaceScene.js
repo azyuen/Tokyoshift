@@ -67,7 +67,7 @@ import {
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
-} from '../data/careerProgression.js?v=20260929-r272';
+} from '../data/careerProgression.js?v=20261010-r468';
 import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260926-r212';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
