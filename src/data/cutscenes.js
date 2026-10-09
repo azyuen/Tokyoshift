@@ -11,12 +11,15 @@ export const CUTSCENES = {
   openingDaichiStory: {
     id: 'openingDaichiStory',
     category: 'OPENING / STORY',
-    testerLabel: 'Opening — Daichi & Tokyo Scene',
+    testerLabel: 'Opening — Sayaka Delivers First Car / Daichi Explains Tokyo',
     title: 'TOKYO SHIFT // FIRST NIGHT',
     once: true,
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "So this is the car your family gave you. After all those years talking about driving, you've finally got one of your own." },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeNormal', text: "Your family asked me to bring this over. It's your first car, and I wanted to hand you the keys myself." },
+      { speaker: 'right', pose: 'idle', text: "You knew my father from his racing days, didn't you?" },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', speakerLabel: 'SAYAKA FUJIEDA', pose: 'homeHappy', text: "We go back a long way. He'd want you to enjoy this, not just look after it. I'll be around." },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "So Sayaka brought it over. After all those years talking about driving, you've finally got one of your own." },
       { speaker: 'right', pose: 'idle', text: "And I've finally moved close enough to actually use it." },
       { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "Your father would've had a list of things to change already. Professional racers never really switch that part of their brain off." },
       { speaker: 'right', pose: 'idle', text: "Watching him race is why I've always wanted to do this." },
@@ -723,12 +726,34 @@ export const CUTSCENES = {
     characters: { left: '$HOST', right: '$PLAYER' },
     preview: { characterOverrides: { HOST: 'sayakaFujieda' }, variables: { HOST_NAME: 'SAYAKA FUJIEDA' } },
     pages: [
-      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'normal', text: "Your name came up tonight. That doesn't happen often with the people I'm calling for." },
-      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'normal', text: "There's a private collection in Ginza. Complete tuner builds, competition cars, and cars with histories that don't appear in normal listings." },
-      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'normal', text: "The gallery isn't open to the public. You've been invited to see the collection — and if you can afford one, you can buy it." },
-      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'serious', text: "One rule: collector cars stay complete. You buy the finished car, not a project to tear apart.", emphasis: true },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'happy', text: "Remember when I brought your first car over? You've come a long way since then." },
+      { speaker: 'right', pose: 'idle', text: "Sayaka? You're the person inviting me to Ginza?" },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'normal', text: "I curate and manage the Ginza collection. It's a side of my work I prefer to keep separate until someone is ready." },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'normal', text: "Complete tuner builds, competition cars, and cars with histories that don't appear in normal listings. This collection isn't open to the public." },
+      { speaker: 'left', speakerLabel: '{HOST_NAME}', pose: 'serious', text: "You've been invited to see it — and if you can afford one, you can buy it. But collector cars stay complete.", emphasis: true },
     ],
     finalActionLabel: 'UNLOCK GINZA',
+  },
+
+  // Only reveal Sayaka's professional past after the Ginza encounter and a
+  // legitimate seven-member street crew. The pro venue controls that gate.
+  proCircuitStrategistReveal: {
+    id: 'proCircuitStrategistReveal',
+    category: 'PRO CIRCUIT / STORY',
+    testerLabel: 'Pro Circuit — Sayaka Joins as Strategist',
+    title: 'PRO CIRCUIT // THE STRATEGIST',
+    once: true,
+    characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "Seven drivers. You've assembled a real team. Your father would recognise what that takes." },
+      { speaker: 'right', pose: 'idle', text: "Sayaka? I thought you were managing the Ginza collection." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "I am. But back when your father raced, I was a racing-team strategist. I helped plan his team's runs." },
+      { speaker: 'right', pose: 'idle', text: "You never mentioned that." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'track', text: "It wasn't the right time. Now you're entering the professional circuit. If you'll have me, I'll join as your team strategist." },
+      { speaker: 'right', pose: 'idle', text: "Welcome to the team." },
+      { speaker: 'left', speakerLabel: 'SAYAKA FUJIEDA', pose: 'trackHappy', text: "Then let's study the field. You and your drivers handle the racing; I'll handle the plan.", emphasis: true },
+    ],
+    finalActionLabel: 'WELCOME SAYAKA',
   },
 
   dragComplexInvitation: {
