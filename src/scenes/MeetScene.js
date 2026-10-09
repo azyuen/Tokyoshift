@@ -3359,7 +3359,7 @@ export default class MeetScene extends Phaser.Scene {
           ? 'SHOWDOWN // WIN 1 RACE'
           : remaining > 0
             ? 'COOLDOWN // ' + this.formatCompetitionCooldown(remaining)
-            : 'COMPETITION'
+            : 'STREET SHOWDOWN'
     );
 
     item.box.removeAllListeners('pointerdown');
