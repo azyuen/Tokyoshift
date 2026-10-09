@@ -20,7 +20,8 @@ const REGION_GATES = Object.freeze({
   TATSUMI: Object.freeze({ minWins: 10, earlyGarageCheck: true }),
   SHIBUYA: Object.freeze({ minWins: 30, minGarageTier: 1, minCompetitionWins: 1 }),
   YOKOHAMA: Object.freeze({ minWins: 30, minGarageTier: 1, minCompetitionWins: 1 }),
-  SHINJUKU: Object.freeze({ minWins: 50, minChampionships: 1 }),
+  // The last regional district belongs after the Daikoku title and HQ.
+  SHINJUKU: Object.freeze({ minWins: 100, minGarageTier: 2, requiredRegionalChampion: 'DAIKOKU' }),
   DAIKOKU: Object.freeze({ minWins: 75, minChampionships: 2 }),
   CENTRAL_TOKYO: Object.freeze({ minWins: 3 }),
 });
@@ -139,6 +140,17 @@ export function getCareerRegionStatus(source, regionId) {
         ? 'WIN A REGIONAL CHAMPIONSHIP'
         : needed + ' REGIONAL CHAMPIONSHIPS REQUIRED',
     };
+  }
+
+  if (gate.requiredRegionalChampion) {
+    const required = String(gate.requiredRegionalChampion).toUpperCase();
+    const regionalState = (sourceValue(source, 'tunerTeamChallenges', {}) || {})[required];
+    if (!(regionalState?.championEarned || regionalState?.completed)) {
+      return {
+        unlocked: false,
+        label: 'WIN ' + required + ' REGIONAL CHAMPIONSHIP',
+      };
+    }
   }
 
   return { unlocked: true, label: 'OPEN' };
