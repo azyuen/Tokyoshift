@@ -81,7 +81,7 @@ import {
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
 } from '../data/tunerChallenges.js?v=20261009-r452';
-import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261008-r425';
+import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
@@ -1636,7 +1636,8 @@ export default class MeetScene extends Phaser.Scene {
         key,
         playerCharacterId,
         this.registry.get('playerDifficulty') || 'STANDARD'
-      )
+      ),
+      Number(this.registry.get('wins') || 0)
     );
     const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
     const rounds = Array.from(
@@ -2095,7 +2096,8 @@ export default class MeetScene extends Phaser.Scene {
         regionId,
         playerCharacterId,
         this.registry.get('playerDifficulty') || 'STANDARD'
-      )
+      ),
+      Number(this.registry.get('wins') || 0)
     );
     this.setTunerChallengeState(regionId, {
       invited: true,
