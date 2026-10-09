@@ -32,7 +32,7 @@ const ERA = Object.freeze([
 function emptyState(archetype, maxLevel) {
   return {
     stock: false, nosInstalled: false, buildArchetype: archetype,
-    buildRating: Math.min(5, maxLevel + 2), tuneLevel: maxLevel,
+    buildRating: Math.min(5, maxLevel + 2), tuneLevel: 0,
     acquiredVia: 'streetShowdown', specialistTuning: [],
     tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0 },
     drivetrainTuning: { clutch: 0, gearbox: 0, differential: 0, suspension: 0 },
