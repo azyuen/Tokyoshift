@@ -75,7 +75,7 @@ import {
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
-} from '../data/tunerChallenges.js?v=20261010-r464';
+} from '../data/tunerChallenges.js?v=20261010-r465';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
