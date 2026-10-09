@@ -1,5 +1,5 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261010-r461';
+import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -103,12 +103,11 @@ const PX_PER_M = 76.0;
 // The roadside start assembly and the zebra crossing share one physical
 // world anchor, so both slide naturally past the camera after the launch.
 const STREET_START_M = 4.72;
-// 15% larger than the R460 prop, positioned about one wheel-height lower.
-// Account for the scale increase when lowering the base so the signal head
-// actually descends, rather than growing upwards into the skyline.
+// Keep the R461 15% larger prop, but lift the entire pole and lights by
+// 18px following the in-game positioning pass (without changing animation).
 const STREET_SIGNAL_SCALE = 0.253;
 const STREET_SIGNAL_POLE_X = 602; // pixel coordinate in 836px source PNG
-const STREET_SIGNAL_BASE_Y = 605;
+const STREET_SIGNAL_BASE_Y = 587;
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const TAXI_TO_WORKSHOP_COST = 1000;
