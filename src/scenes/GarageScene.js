@@ -7302,6 +7302,10 @@ export default class GarageScene extends Phaser.Scene {
 
     again.on('pointerdown', () => {
       dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial') {
+        this.registry.set('openingDrivingLessonComplete', false);
+        saveSessionState(this.registry);
+      }
       this.time.delayedCall(80, () => this.startOpeningDrivingTutorial());
     });
 
@@ -7347,6 +7351,8 @@ export default class GarageScene extends Phaser.Scene {
 
   continueGarageStoryFlow() {
     if (['home', 'magazine', 'delivery', 'station'].includes(this.registry.get('openingChapter'))) return true;
+    if (['tutorial', 'daichi'].includes(this.registry.get('openingChapter')))
+      return this.runOpeningStoryIfNeeded();
     if (this.showEthanYuenRewardIfNeeded()) return true;
     if (this.runOpeningStoryIfNeeded()) return true;
     return this.showCentralTokyoInvitationIfNeeded();
@@ -7365,6 +7371,10 @@ export default class GarageScene extends Phaser.Scene {
         this.showOpeningTutorialChoice();
         return true;
       }
+      if (!this.registry.get('openingDrivingLessonComplete')) {
+        this.showOpeningTutorialChoice();
+        return true;
+      }
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
           onComplete: () => {
@@ -7380,6 +7390,15 @@ export default class GarageScene extends Phaser.Scene {
       saveSessionState(this.registry);
       return this.runOpeningStoryIfNeeded();
     }
+    // Completed modern profiles must never fall into the legacy first-car cutscene.
+    if (chapter === 'done') return false;
+
+    if (chapter === 'daichi' && !this.hasSeenStoryCutscene('openingDaichiAfterSayaka')) {
+      const result = playMangaCutscene(this, 'openingDaichiAfterSayaka', {
+        onComplete: () => this.time.delayedCall(120, () => this.runOpeningStoryIfNeeded()),
+      });
+      return Boolean(result.played);
+    }
     // Only introduce the origin story on a fresh run. Existing progressed
     // profiles are not interrupted by a retroactive tutorial.
     const racesRun =
@@ -7391,7 +7410,7 @@ export default class GarageScene extends Phaser.Scene {
 
     if (racesRun > 0 && !hasStartedOpening) return false;
 
-    if (!this.hasSeenStoryCutscene('openingDaichiStory')) {
+    if (chapter !== 'daichi' && !this.hasSeenStoryCutscene('openingDaichiStory')) {
       const result = playMangaCutscene(this, 'openingDaichiStory', {
         onComplete: () => {
           this.time.delayedCall(120, () => chapter === 'daichi'
@@ -7402,7 +7421,7 @@ export default class GarageScene extends Phaser.Scene {
       return Boolean(result.played);
     }
 
-    if (!this.registry.get('introTutorialChoiceDone')) {
+    if (chapter !== 'daichi' && !this.registry.get('introTutorialChoiceDone')) {
       this.showOpeningTutorialChoice();
       return true;
     }
@@ -7492,6 +7511,8 @@ export default class GarageScene extends Phaser.Scene {
 
     skip.on('pointerdown', () => {
       dismiss();
+      if (this.registry.get('openingChapter') === 'tutorial')
+        this.registry.set('openingDrivingLessonComplete', true);
       this.registry.set('introTutorialChoiceDone', true);
       saveSessionState(this.registry);
       this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded());
