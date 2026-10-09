@@ -7,7 +7,7 @@ Upload each finished transparent PNG sprite into this folder using the exact fil
 | Character | File name | Sprite key |
 |---|---|---|
 | Ren Mizuno | `ren_mizuno.png` | `characterRenMizuno` |
-| Daichi Sakamoto | `daichi_sakamoto.png` | `characterDaichiSakamoto` |
+| Daichi Sakamoto | `Main/home_daichi_sakamoto.png` | `characterDaichiSakamoto` |
 | Aya Kurose | `aya_kurose.png` | `characterAyaKurose` |
 | Kaito Fujimori | `kaito_fujimori.png` | `characterKaitoFujimori` |
 | Haru Tachibana | `haru_tachibana.png` | `characterHaruTachibana` |
@@ -15,11 +15,13 @@ Upload each finished transparent PNG sprite into this folder using the exact fil
 | Riku Akamine | `riku_akamine.png` | `characterRikuAkamine` |
 | Emi Kanzaki | `emi_kanzaki.png` | `characterEmiKanzaki` |
 
-The original eight principal illustrations are role-flexible, subject to the current roster's selectable and rival flags.
+The seven playable lead racers have selectable appearances; Daichi is the non-selectable workshop companion.
 
-## Shinagawa strategist and recurring story cast (R457)
+## Regional and recurring story cast (R458)
 
 - **Reika Tachibana** (regional rival/recruit): `assets/Characters/Shinagawa/reika_tachibana_idle.png`, `reika_tachibana_win.png` and `reika_tachibana_loss.png`. These assets replace Sayaka in Shinagawa meet pools and the seventh-member regional team roster.
-- **Sayaka Fujieda** (recurring non-rival): use `assets/Characters/Main/home_sayaka_fujieda_*.png` at the opening, `assets/Characters/Central/sayaka_fujieda_*.png` for Ginza, and `assets/Characters/Main/race_sayaka_fujieda_*.png` when the professional strategist reveal occurs. The old `assets/Characters/Shinagawa/sayaka_fujieda_*.png` files are legacy art, not active Shinagawa racing sprites.
+- **Sayaka Fujieda** (recurring non-rival): use `assets/Characters/Main/home_sayaka_fujieda_*.png` at the opening, `assets/Characters/Main/ginza_sayaka_fujieda_*.png` for Ginza, and `assets/Characters/Main/race_sayaka_fujieda_*.png` when the professional strategist reveal occurs. Retired Shinagawa Sayaka artwork is consolidated into the identical `Main/race_sayaka_*.png` files.
 
-See `docs/CHARACTER_BIBLE.md` for the two characters' distinct identities and staged Sayaka revelations.
+Daichi's workshop action poses (`home_daichi_engine_inspect.png`, `home_daichi_chassis_tools.png`, `home_daichi_exhaust_crouch.png`) also live in `Main` and apply to Home, Canal Yard and Warehouse HQ. His future professional racing outfit has not been supplied yet. Emi Kanzaki is the selectable Odaiba **main rival**, and her idle/win/loss files live in the `assets/Characters` root.
+
+See `docs/CHARACTER_BIBLE.md` for Reika and Sayaka's distinct identities and staged revelations.
