@@ -91,7 +91,7 @@ test('foreground crowd repeats 3 times at launch and 10 times at finish', () => 
   const src = fs.readFileSync(
     new URL('../src/scenes/FourLaneTestScene.js', import.meta.url), 'utf8'
   );
-  assert.match(src, /dragstrip_frontcrowd_night\.png/);
+  assert.match(src, /this\.venueArt\.sprites\.frontcrowd\.key/);
   assert.match(src, /this\.frontCrowdSets = this\.standSets\.map\(set =>/);
   assert.match(src, /this\.createFrontCrowdSet\(set\.distanceM, set\.images\.length\)/);
   assert.match(src, /const FINISH_STAND_MIDDLES = 8/);
@@ -100,7 +100,7 @@ test('foreground crowd repeats 3 times at launch and 10 times at finish', () => 
   assert.match(src, /const FRONT_WALL_BOTTOM_Y = 1900/);
   assert.match(src, /this\.drawFrontCrowdSurfaces\(cameraTravel\)/);
   assert.match(src, /this\.frontCrowdSets\.flatMap\(set => set\.images\)/);
-  assert.match(src, /this\.prepareStandTexture\('fourLaneFrontCrowd'\)/);
+  assert.match(src, /this\.prepareStandTexture\(crowdKey\)/);
   assert.match(src, /FRONT_CROWD_PREVIEW_OVERLAP = 70/);
 
   const counts = [3, 2 + 8];
@@ -214,13 +214,13 @@ test('standalone dev race retired while shared four-lane scenery and production 
   assert.match(sceneSource, /new RaceHUD/);
   assert.match(sceneSource, /rankFourLaneFinishers/);
   assert.match(sceneSource, /this\.setTrackZoom\(PREVIEW_ZOOM\)/);
-  assert.match(sceneSource, /dragstrip_complex_night\.png/);
-  assert.match(sceneSource, /dragstrip_standleft_night\.png/);
-  assert.match(sceneSource, /dragstrip_standmid_night\.png/);
-  assert.match(sceneSource, /dragstrip_standright_night\.png/);
-  assert.match(sceneSource, /skyline_shinjuku_night\.webp/);
-  assert.match(sceneSource, /STAND_KEYS = \[/);
-  assert.match(sceneSource, /'fourLaneStandLeft', 'fourLaneStandMid', 'fourLaneStandRight'/);
+  assert.match(sceneSource, /resolveDragstripVenue/);
+  assert.match(sceneSource, /phase: getWorldPhase\(\)/);
+  assert.match(sceneSource, /loadImage\(sprite\.key, sprite\.path\)/);
+  assert.match(sceneSource, /this\.venueArt\.sprites\.standleft\.key/);
+  assert.match(sceneSource, /this\.venueArt\.sprites\.standmid\.key/);
+  assert.match(sceneSource, /this\.venueArt\.sprites\.standright\.key/);
+  assert.match(sceneSource, /this\.venueArt\.skyline\.key/);
   assert.match(sceneSource, /this\.createStandSet\(0\)/);
   assert.match(sceneSource, /this\.createStandSet\(FINISH_STAND_DISTANCE_M\)/);
   assert.match(sceneSource, /STAND_BASE_GAP = 3/);
@@ -231,9 +231,9 @@ test('standalone dev race retired while shared four-lane scenery and production 
   assert.match(sceneSource, /this\.standSets\.flatMap\(set => set\.images\)/);
   assert.match(sceneSource, /this\.skylineSprites/);
   assert.match(sceneSource, /prepareStandTexture\(key\)/);
-  assert.match(sceneSource, /STAND_KEYS\.map\(key => this\.prepareStandTexture\(key\)\)/);
+  assert.match(sceneSource, /standKeys\.map\(key => this\.prepareStandTexture\(key\)\)/);
   assert.match(sceneSource, /this\.textures\.addCanvas\(cleanKey, trimmed\)/);
-  assert.match(sceneSource, /const imageKeys = STAND_KEYS/);
+  assert.match(sceneSource, /const imageKeys = standKeys/);
   assert.match(sceneSource, /STAND_PREVIEW_OVERLAP = 32/);
   assert.match(sceneSource, /STAND_PREVIEW_PIECE_WIDTH = 495/);
   assert.match(sceneSource, /configureComplexArt\(\)/);
