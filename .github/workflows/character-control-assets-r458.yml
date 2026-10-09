@@ -1,0 +1,52 @@
+name: R458 character sprites and race controls
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/characters.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/DynoScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/input/TouchControls.js'
+      - 'src/ui/RaceHUD.js'
+      - 'src/state/GameState.js'
+      - 'tests/character-control-assets-r458.mjs'
+      - 'tests/sayaka-reika-continuity.mjs'
+      - '.github/workflows/character-control-assets-r458.yml'
+      - 'assets/Characters/**'
+  pull_request:
+    paths:
+      - 'src/data/characters.js'
+      - 'src/scenes/**'
+      - 'src/input/TouchControls.js'
+      - 'src/ui/RaceHUD.js'
+      - 'tests/character-control-assets-r458.mjs'
+      - 'tests/sayaka-reika-continuity.mjs'
+      - '.github/workflows/character-control-assets-r458.yml'
+      - 'assets/Characters/**'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse edited control and character modules
+        run: |
+          node --check src/data/characters.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/scenes/DynoScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/input/TouchControls.js
+          node --check src/ui/RaceHUD.js
+      - name: Check portrait mappings, Emi main rival and shared race controls
+        run: node --test tests/character-control-assets-r458.mjs tests/sayaka-reika-continuity.mjs tests/pro-circuit-foundation.mjs
