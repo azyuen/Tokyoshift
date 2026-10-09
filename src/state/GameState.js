@@ -69,6 +69,7 @@ export function createDefaultGameState(options = {}) {
     lastName: '',
     playerCharacterId: 'renMizuno',
     starterCarId,
+    openingChapter: null, // New profiles only: station -> home -> magazine -> delivery -> tutorial -> daichi -> done.
     selectedCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
@@ -764,13 +765,14 @@ export function normaliseState(input = {}) {
   const normalisedDistrict = districtAliases[input.district]
     || input.district
     || (String(normalisedLocation).startsWith('odaiba') ? 'ODAIBA' : base.district);
+  const openingPending = ['station', 'home', 'magazine', 'delivery'].includes(String(input.openingChapter || ''));
   const owned = (
     Array.isArray(input.ownedCarIds)
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
 
-  if (!owned.length) owned.push(base.starterCarId);
+  if (!owned.length && !openingPending) owned.push(base.starterCarId);
 
   // Duplicate production cars are persisted as stable instance IDs such as
   // ek9__copy2. Re-register their aliases before any scene filters owned cars
@@ -829,7 +831,7 @@ export function normaliseState(input = {}) {
       : base.playerCharacterId;
 
   const mergedCarStates = {
-    ...base.carStates,
+    ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
   if (hadSayakaShinagawaCrew && mergedCarStates[oldLoanCarId]) {
@@ -850,6 +852,7 @@ export function normaliseState(input = {}) {
   // reconstructed, so mark it clearly as a pre-history archive rather than
   // inventing a sale price or tuned specification.
   if (
+    !openingPending &&
     !owned.includes(starterCarId) &&
     !carHistory.some(entry => entry.carId === starterCarId)
   ) {
@@ -952,6 +955,8 @@ export function normaliseState(input = {}) {
         : {},
     playerCharacterId,
     starterCarId,
+    openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'daichi', 'done'].includes(String(input.openingChapter))
+      ? String(input.openingChapter) : null,
     selectedCarId,
     ownedCarIds: owned,
     carStates: mergedCarStates,
@@ -1125,7 +1130,7 @@ export function normaliseState(input = {}) {
       ? input.selectedRaceMeetOffer
       : null,
     meetStranded: Boolean(input.meetStranded && owned.length > 0),
-    gameOver: Boolean(input.gameOver || owned.length === 0),
+    gameOver: Boolean(input.gameOver || (owned.length === 0 && !openingPending)),
   };
 }
 
@@ -1174,6 +1179,7 @@ export function snapshotRegistry(registry) {
     lastName: registry.get('lastName') || '',
     playerCharacterId: registry.get('playerCharacterId') || 'renMizuno',
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
+    openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
     ownedCarIds: registry.get('ownedCarIds') || [],
     carStates: registry.get('carStates') || {},
