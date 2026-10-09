@@ -73,22 +73,24 @@ const REGION_CARS = {
 };
 
 const REGION_RACE_PATTERNS = {
+  // Home Workshop championships teach launches and clean shifts first.
+  // Only Shinagawa's second round introduces a short rolling start.
   ODAIBA: [
     ['Standing Start', 402.336],
-    ['Roll Race', 402.336],
     ['Standing Start', 402.336],
-    ['Roll Race', 804.672],
+    ['Standing Start', 402.336],
     ['Standing Start', 804.672],
-    ['Roll Race', 804.672],
+    ['Standing Start', 804.672],
+    ['Standing Start', 804.672],
     ['Standing Start', 804.672],
   ],
   SHINAGAWA: [
     ['Standing Start', 402.336],
     ['Roll Race', 402.336],
     ['Standing Start', 402.336],
-    ['Roll Race', 402.336],
+    ['Standing Start', 402.336],
     ['Standing Start', 804.672],
-    ['Roll Race', 804.672],
+    ['Standing Start', 804.672],
     ['Standing Start', 402.336],
   ],
   TATSUMI: [
@@ -193,6 +195,14 @@ function normaliseRegion(regionId) {
   return String(regionId || '').trim().toUpperCase();
 }
 
+export function getRegionalChallengeRaceSpec(regionId, stageIndex) {
+  const region = normaliseRegion(regionId);
+  const pattern = REGION_RACE_PATTERNS[region] || REGION_RACE_PATTERNS.ODAIBA;
+  const stage = Math.max(0, Math.min(TUNER_TEAM_CHALLENGE_STAGES - 1, Math.floor(Number(stageIndex) || 0)));
+  const [raceType, distanceM] = pattern[stage] || pattern[0];
+  return { raceType, distanceM };
+}
+
 export function getTunerTeamChallengeState(source, regionId) {
   const key = normaliseRegion(regionId);
   const all = sourceValue(source, 'tunerTeamChallenges', {}) || {};
@@ -241,7 +251,14 @@ export function getTunerTeamChallengeState(source, regionId) {
     paused: perfectComplete ? false : Boolean(raw.paused),
     pausedAt: perfectComplete ? 0 : Math.max(0, Number(raw.pausedAt || 0)),
     retryNotBefore: perfectComplete ? 0 : Math.max(0, Number(raw.retryNotBefore || 0)),
-    rounds: Array.isArray(raw.rounds) ? raw.rounds : [],
+    rounds: Array.isArray(raw.rounds)
+      ? raw.rounds.map((round, index) => {
+          // Preserve identities, cars, unlocks and progress from old saves,
+          // while updating the first two championships' race formats.
+          if (!round || !['ODAIBA', 'SHINAGAWA'].includes(key)) return round;
+          return { ...round, ...getRegionalChallengeRaceSpec(key, index) };
+        })
+      : [],
     offeredAt: String(raw.offeredAt || ''),
     playerCarId: String(raw.playerCarId || ''),
     completedAt: Math.max(0, Number(raw.completedAt || 0)),
