@@ -178,6 +178,22 @@ export default class FourLaneTestScene extends RaceScene {
   }
 
   preload() {
+    // Keep only the selected five art PNGs and matching skyline in Phaser's
+    // global texture cache. Thirty full-resolution sets would otherwise build
+    // up on memory-constrained iPhones across repeated day/night races.
+    const retained = new Set([
+      ...Object.values(this.venueArt.sprites).flatMap(({ key }) =>
+        [key, key + 'SceneTrim']
+      ),
+      this.venueArt.skyline.key,
+    ]);
+    for (const key of Object.keys(this.textures.list || {})) {
+      if ((/^dragstrip_(low|half|full)_(complex|frontcrowd|standleft|standmid|standright)_(day|night)(SceneTrim)?$/.test(key) ||
+          /^dragstrip_shinjuku_skyline_(day|night)$/.test(key)) &&
+          !retained.has(key)) {
+        this.textures.remove(key);
+      }
+    }
     let queued = 0;
     const loadImage = (key, path) => {
       if (this.textures.exists(key)) return;
