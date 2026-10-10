@@ -23,7 +23,7 @@ Progress the world on **in-game event completions**, never real-world time or of
 
 ## Crew competitions
 
-Player is **manager, not an on-track driver** in crew fixtures. Select three eligible crew drivers from the recruited seven, each racing one heat against corresponding opponent; team wins with two of three heats. Player can scout and choose lineup/order and approved car/preset; AI skill and real vehicle state determine races. For championship squad registration, optionally register five, field three per fixture; provide simulated viewing and skip/fast-forward. Restrictions should be less punishing than individual events and **must not strand users** requiring three identical manufacturer cars without attainable alternatives.
+**User revision, R471 (2026-10-10): the player DRIVES the crew cars.** Register up to five recruited crew members/cars, field three per fixture, and manually drive each selected crew loan car against the corresponding opponent in the existing two-lane Drag Complex. Two heat wins take the fixture. Investment in each car and the player's launch/clutch/throttle/shifting determine performance; friendly crew AI skill must not decide an on-track result. Upgrade cars in the Crew Garage between fixtures. No watch/skip simulation for unplayed player heats. Simulate only off-screen opposition fixtures. Restrictions must not strand users requiring three identical manufacturer cars without attainable alternatives. This supersedes the manager model described in historical milestone notes below.
 
 ## Progression/economy/UX guardrails
 
@@ -51,7 +51,7 @@ Player is **manager, not an on-track driver** in crew fixtures. Select three eli
 
 ### Phase 3 — Living season + three-driver crew racing (Astra suggested)
 - Background deterministic simulated events, evolving standings, event calendar/rotation.
-- Three-driver manager-led crew fixture, roster registration, AI/performance integration.
+- Three-car player-driven crew fixture, roster registration, car investment and live-race integration.
 - Save safety and repeatable simulation tests are prerequisites to merge.
 
 ### Phase 4 — Five trophies + Tokyo Championships
@@ -192,3 +192,11 @@ Attendance now considers event prestige, stage/final, player ranking and late-se
 Validation: new automated coverage includes eligibility, five-driver squads, distinct cars, lineup order, car replacement, locked outcomes, watch/skip parity, every reveal interruption, three-fixture progression, standings, duplicate settlement, old saves, eight-event transitions, dynamic attendance, malformed fixtures and storage/profile failures. Existing control-position assertions were corrected to the current R468 60/110 clutch offsets; control implementation was not changed.
 
 **Still outstanding from the full requested programme:** the five formal trophy events and 16-entry driver/crew championship formats, their qualifying/invitation and title prizes, dedicated trophy celebrations, and full venue-rendered crew replay. Season standings alone do not award a championship or trophy. Physical iPhone/iPad touch, spectator memory and extended economy playtesting remain required. This is a functional Phase 3 milestone, not completion of every Phase 3/4 feature in the broader request.
+
+## R471 — Player-driven crew cars and panel typography correction
+
+The user explicitly replaced the manager concept with manual racing. Crew selection now selects the recruited member's loan car; the player's personal selected car is never replaced in the profile. Each fixture locks three car builds in the chosen order and launches `PRO_CREW` races through the existing two-lane `FourLaneTestScene` physics, controls, camera and art. Real finish times/DQ/DNF determine each heat. Losing a heat does not eliminate the team: all three cars race, then the existing two-of-three fixture settlement applies. Only other teams' off-screen fixtures use simulation. Fees, series standings and season progression remain unchanged.
+
+Saved R470 series retain entry payment and completed fixtures. Already revealed old heats are retained; unrevealed heats convert to pending player-driven races when resumed. Every actual finish saves once with a fixture/heat ID guard, and closing before settlement resumes that pending heat. Crew car builds remain locked during a fixture; garage tuning is picked up for the next fixture.
+
+The crew panels use the normal Rajdhani UI font and explicit final text sizes, avoiding the global 1.6x font enlargement that caused R470 overflow. Sidebar lines have fixed vertical spacing and captions fit inside their buttons. Exo race-result styling remains in the actual manga race results. Formal trophies and championship formats remain pending.
