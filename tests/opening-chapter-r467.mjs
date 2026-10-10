@@ -190,7 +190,7 @@ test('confirming a car closes the actual magazine and starts delivery, without b
   assert.match(magazine, /accept\.on\('pointerdown', \(\) =>/);
   assert.match(magazine, /closeMagazine\(\);\s+if \(typeof options\.onChoose/);
   assert.match(magazine, /frame\.on\('pointerdown', \(\) => confirmStarterCar\(id\)\)/);
-  assert.match(office, /closeOffice\(\);\s+scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
+  assert.doesNotMatch(office, /closeOffice\(\);\s+scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
   assert.match(garage, /this\.registry\.set\('openingChapter', 'delivery'\)/);
   assert.match(garage, /this\.showOpeningPhoneCall\(\)/);
 });
