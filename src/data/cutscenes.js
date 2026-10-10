@@ -8,6 +8,25 @@ const sourceValue = (source, key, fallback = null) => {
 };
 
 export const CUTSCENES = {
+  openingStationEncounter: {
+    id: 'openingStationEncounter',
+    category: 'OPENING / STORY',
+    testerLabel: 'Opening — Daichi and the driver meet at the station',
+    title: 'TOKYO STATION // A CHANCE ENCOUNTER',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'idle', text: "Hey, {PLAYER_FIRST_NAME}! Seen the new Tokyo SHIFT magazine?" },
+      { speaker: 'right', pose: 'idle', text: "Not yet. What's in it?" },
+      { speaker: 'left', pose: 'idle', text: "Cars, tuners and Tokyo's night racing scene. Issue one even looks back at last year's Tokyo Champion." },
+      { speaker: 'left', pose: 'win', text: "I left a copy at your place. Have a read when you get home." },
+      { speaker: 'right', pose: 'idle', text: "Thanks. Good bumping into you, but I'd better head back. I've got to wait for my car." },
+      { speaker: 'left', pose: 'win', text: "You're getting a car? You can do your own Tokyo SHIFT then!" },
+      { speaker: 'right', pose: 'idle', text: "I don't think it's like that. A family friend is dropping it off. It's from my dad." },
+      { speaker: 'left', pose: 'win', text: "Then you'd better go! Can't wait to see what it is. I'll come by later.", emphasis: true },
+    ],
+    finalActionLabel: 'GO TO MAP',
+  },
   openingSayakaKeys: {
     id: 'openingSayakaKeys',
     category: 'OPENING / STORY',

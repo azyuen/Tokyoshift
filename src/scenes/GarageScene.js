@@ -7132,12 +7132,16 @@ export default class GarageScene extends Phaser.Scene {
     }
     if (this._openingOfficePrompt) return;
     this._openingOfficePrompt = true;
-    this.add.rectangle(700, 573, 805, 68, 0x071823, 0.96)
+    const promptX = 700;
+    const promptY = 573;
+    const promptW = 805;
+    this.add.rectangle(promptX, promptY, promptW, 68, 0x071823, 0.96)
       .setStrokeStyle(2, 0xfbd57d, 0.9).setDepth(78);
-    this.add.text(700, 573, "Still no car. I'll read Daichi's magazine in the office.", {
-      fontFamily: BODY_FONT, fontSize: '14px', color: '#fff0c8',
-      fontStyle: '700', align: 'center',
-    }).setOrigin(0.5).setDepth(79);
+    this.add.text(promptX, promptY,
+      "Still no car. I'll read Daichi's magazine in the office.", {
+        fontFamily: BODY_FONT, fontSize: '14px', color: '#fff0c8',
+        fontStyle: '700', align: 'center', wordWrap: { width: promptW - 48 },
+      }).setOrigin(0.5, 0.5).setDepth(79);
     const glow = this.add.rectangle(725, 215, 146, 60, 0x000000, 0)
       .setStrokeStyle(4, 0xfbd57d, 1).setDepth(80);
     this.tweens.add({ targets: glow, alpha: 0.38, duration: 590, repeat: -1, yoyo: true });

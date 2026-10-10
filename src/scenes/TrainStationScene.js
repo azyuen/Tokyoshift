@@ -2,39 +2,29 @@ import { characters, getCharacterAssetUrl } from '../data/characters.js?v=202610
 import { saveSessionState } from '../state/GameState.js?v=20261010-r467';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261010-r471';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261010-r471';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 const PIXEL = '"Silkscreen", monospace';
-const BODY = '"Rajdhani", monospace';
 
-const DIALOGUE = [
-  ['DAICHI', "There you are. Have you seen the first issue of Tokyo SHIFT?"],
-  ['DAICHI', "It's a new magazine about Tokyo's street racing and car-modifying scene. Issue one looks back at last year's Tokyo Champion."],
-  ['YOU', "Not yet. I'd like to see what everyone's driving."],
-  ['DAICHI', "I posted a copy to your place. You should find it in the office when you get home."],
-  ['YOU', "Thanks. This should be my last day taking the train. A family friend is bringing over my first car today."],
-  ['DAICHI', "About time! Your family said there were two cars you could choose from. Have a look at that magazine first, then let Sayaka know which one you want."],
-  ['YOU', "I'll head home and check it out."],
-];
-
-// Deliberately a separate scene: a new save has no owned car until the
-// magazine choice and must not be fed into the normal street-racing map.
+// The station is a silent establishing shot. The actual conversation is the
+// shared white-paper MangaCutscene, not a bespoke black dialogue panel.
 export default class TrainStationScene extends Phaser.Scene {
   constructor() { super('TrainStationScene'); }
 
   preload() {
     const phase = getWorldPhase() === 'day' ? 'day' : 'night';
-    const backgroundKey = 'tokyoOpeningStation_' + phase;
-    this.stationKey = backgroundKey;
+    this.stationKey = 'tokyoOpeningStation_' + phase;
     let queued = 0;
     const queue = (key, path) => {
-      if (this.textures.exists(key) || !path) return;
+      if (!key || !path || this.textures.exists(key)) return;
       this.load.image(key, path);
       queued += 1;
     };
-    queue(backgroundKey, 'assets/CentralTokyo/tokyo_trainstation_' + phase + '.png?v=20261010-r467');
-    const ids = [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto'];
-    for (const id of ids) {
+
+    queue(this.stationKey, 'assets/CentralTokyo/tokyo_trainstation_' + phase + '.png?v=20261010-r467');
+    for (const id of [this.registry.get('playerCharacterId') || 'renMizuno', 'daichiSakamoto']) {
       const visual = characters[id]?.visual;
       if (visual) queue(visual.spriteKey, getCharacterAssetUrl(visual.path));
     }
@@ -48,94 +38,98 @@ export default class TrainStationScene extends Phaser.Scene {
     this.cameras.main.setAlpha(1);
     playMusic('title');
 
-    const bg = this.add.image(780, 420, this.stationKey).setDepth(0);
-    const scale = Math.max(1560 / bg.width, 840 / bg.height);
-    bg.setScale(scale);
+    const background = this.add.image(780, 420, this.stationKey).setDepth(0);
+    background.setScale(Math.max(1560 / background.width, 840 / background.height));
     this.add.rectangle(780, 420, 1560, 840, 0x04101b, 0.24).setDepth(1);
     this.add.text(58, 48, 'TOKYO // THE FIRST DAY', {
       fontFamily: PIXEL, fontSize: '14px', color: '#f4fbff',
       backgroundColor: '#071521', padding: { x: 16, y: 10 },
     }).setDepth(8);
 
-    const placeCharacter = (id, x, feetY, height) => {
+    // 150% of the original sizes. Keep both characters grounded on the
+    // station forecourt and close together on the right side of the screen.
+    const placeCharacter = (id, x, feetY, targetHeight) => {
       const visual = characters[id]?.visual;
       if (!visual?.spriteKey || !this.textures.exists(visual.spriteKey)) return;
       const source = this.textures.get(visual.spriteKey).getSourceImage();
-      this.add.ellipse(x + 8, feetY - 7, 132, 28, 0x000000, 0.45).setDepth(4);
+      this.add.ellipse(x + 9, feetY - 6, 142, 28, 0x000000, 0.43).setDepth(4);
       this.add.image(x, feetY, visual.spriteKey)
-        .setOrigin(0.5, 1).setScale(height / source.height).setDepth(5);
+        .setOrigin(0.5, 1)
+        .setScale(targetHeight / source.height)
+        .setDepth(5);
     };
-    placeCharacter(this.registry.get('playerCharacterId') || 'renMizuno', 540, 590, 270);
-    placeCharacter('daichiSakamoto', 1030, 590, 290);
+    placeCharacter(this.registry.get('playerCharacterId') || 'renMizuno', 985, 739, 405);
+    placeCharacter('daichiSakamoto', 1265, 739, 435);
 
-    this.add.rectangle(780, 716, 1488, 230, 0x05101c, 0.95)
-      .setStrokeStyle(3, 0x5bcedf, 0.9).setDepth(12);
-    this.speaker = this.add.text(96, 622, '', {
-      fontFamily: PIXEL, fontSize: '11px', color: '#6bdeff',
-    }).setDepth(13);
-    this.dialogue = this.add.text(96, 667, '', {
-      fontFamily: BODY, fontSize: '16px', color: '#f5faff',
-      wordWrap: { width: 1310 }, lineSpacing: 7, fontStyle: '700',
-    }).setDepth(13);
-
-    const next = this.add.rectangle(1366, 795, 286, 50, 0x0b302f, 1)
-      .setStrokeStyle(2, 0x62e8c7, 1).setInteractive({ useHandCursor: true }).setDepth(14);
-    this.nextText = this.add.text(1366, 795, 'NEXT  >', {
+    const next = this.add.rectangle(1410, 783, 220, 56, 0x0b302f, 1)
+      .setStrokeStyle(2, 0x62e8c7, 1).setDepth(14);
+    this.nextText = this.add.text(1410, 783, 'NEXT  >', {
       fontFamily: PIXEL, fontSize: '10px', color: '#f2fffb',
     }).setOrigin(0.5).setDepth(15);
-    this.page = 0;
-    this.transitioning = false;
-    this.showLine();
+
+    this.conversationComplete = false;
+    this.nextBusy = false;
     next.on('pointerdown', () => {
-      if (this.transitioning) return;
-      if (this.page < DIALOGUE.length - 1) {
-        this.page += 1;
-        this.showLine();
-      } else {
+      if (this.nextBusy || this.registry.get('openingChapter') !== 'station') return;
+      if (this.conversationComplete) {
         this.showTrainMap();
+        return;
       }
+
+      this.nextBusy = true;
+      const result = playMangaCutscene(this, 'openingStationEncounter', {
+        backgroundStyle: 'paper',
+        onComplete: () => {
+          this.conversationComplete = true;
+          this.nextBusy = false;
+          this.nextText.setText('GO TO MAP  >');
+          this.showTrainMap();
+        },
+      });
+      if (!result.played) {
+        this.nextBusy = false;
+        if (result.reason === 'seen') {
+          this.conversationComplete = true;
+          this.nextText.setText('GO TO MAP  >');
+          this.showTrainMap();
+        }
+      }
+    });
+
+    // The establishing shot remains silent and completely unobstructed until
+    // the player explicitly advances into the full-size manga portraits.
+    next.disableInteractive();
+    this.cameras.main.fadeIn(1600, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+      next.setInteractive({ useHandCursor: true });
     });
     finishSceneLoading('STATION READY');
   }
 
-  showLine() {
-    const [speaker, line] = DIALOGUE[this.page];
-    this.speaker.setText(speaker);
-    this.dialogue.setText(line);
-    this.nextText.setText(this.page === DIALOGUE.length - 1 ? 'GO TO MAP  >' : 'NEXT  >');
-  }
-
   showTrainMap() {
-    if (this.transitioning) return;
-    this.transitioning = true;
-    const shade = this.add.rectangle(780, 420, 1560, 840, 0x030812, 0.89)
-      .setInteractive().setDepth(100);
-    this.add.rectangle(780, 420, 1060, 580, 0x0a1623, 0.99)
-      .setStrokeStyle(3, 0x4bd4ff, 1).setDepth(101);
-    this.add.text(780, 210, 'TOKYO REGION MAP // TRAIN', {
-      fontFamily: PIXEL, fontSize: '17px', color: '#f4fbff',
-    }).setOrigin(0.5).setDepth(102);
-    this.add.text(780, 300, 'YOUR ONLY DESTINATION', {
-      fontFamily: PIXEL, fontSize: '9px', color: '#79a5b8',
-    }).setOrigin(0.5).setDepth(102);
-    const home = this.add.rectangle(780, 415, 760, 122, 0x112f3d, 1)
-      .setStrokeStyle(3, 0x62e8c7, 1).setInteractive({ useHandCursor: true }).setDepth(102);
-    this.add.text(780, 412, 'SHINONOME WORKSHOP', {
-      fontFamily: PIXEL, fontSize: '16px', color: '#f0fffc',
-    }).setOrigin(0.5).setDepth(103);
-    this.add.text(780, 476, 'TRAIN HOME // FREE', {
-      fontFamily: PIXEL, fontSize: '9px', color: '#8cebd4',
-    }).setOrigin(0.5).setDepth(103);
-    shade.on('pointerdown', () => {});
-    home.on('pointerdown', () => {
-      home.disableInteractive();
-      this.registry.set('openingChapter', 'home');
-      this.registry.set('workshopLocationId', 'shinonomeWorkshop');
-      saveSessionState(this.registry);
-      this.cameras.main.fadeOut(350, 0, 0, 0);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.scene.start('GarageScene');
-      });
+    if (this.nextBusy || this.registry.get('openingChapter') !== 'station') return;
+    this.nextBusy = true;
+    // Reuse the real Tokyo region map artwork and interaction, but show only
+    // the Shinonome node / HOME destination during this prologue.
+    showTravelMap(this, {
+      currentLocationId: 'tokyoOpeningStation',
+      title: 'TOKYO REGION MAP',
+      travelMode: 'openingTrain',
+      homeCost: 0,
+      fromWorkshop: false,
+      onHome: (locationId) => {
+        if (locationId !== 'shinonomeWorkshop') return;
+        this.registry.set('openingChapter', 'home');
+        this.registry.set('workshopLocationId', 'shinonomeWorkshop');
+        saveSessionState(this.registry);
+        this.cameras.main.fadeOut(380, 0, 0, 0);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+          this.scene.start('GarageScene');
+        });
+      },
     });
+    // The map can be closed and reopened. Its own popup state blocks duplicate
+    // maps; don't lock the station NEXT button for the rest of the scene.
+    this.nextBusy = false;
   }
 }

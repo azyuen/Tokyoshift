@@ -874,13 +874,16 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setScrollFactor(0)
     .setInteractive();
 
+  // Opening cinematics can opt into a clean white manga-paper stage.
+  // All existing cutscenes retain the usual dimmed background.
+  const paperBackground = context.options.backgroundStyle === 'paper';
   const shade = scene.add.rectangle(
     width / 2,
     height / 2,
     width,
     height,
-    0x000000,
-    0.54
+    paperBackground ? 0xfffcf1 : 0x000000,
+    paperBackground ? 1 : 0.54
   ).setDepth(BASE_DEPTH + 1)
     .setScrollFactor(0)
     .setAlpha(0);

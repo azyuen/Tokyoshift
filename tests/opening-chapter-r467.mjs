@@ -81,7 +81,8 @@ test('new character and scene order resolves the station and first-car choice on
   assert.match(setup, /state\.openingChapter = 'station'/);
   assert.doesNotMatch(setup, /this\.buildStarterCarPanel\(\).*?this\.currentStarterCarId =/s);
   assert.match(main, /TrainStationScene/);
-  assert.match(station, /SHINONOME WORKSHOP/);
+  assert.match(station, /travelMode: 'openingTrain'/);
+  assert.match(station, /this.cameras.main.fadeIn\(1600/);
   assert.match(garage, /createStarterCarState\(\)/);
   assert.match(garage, /openingSayakaFarewell/);
   assert.match(garage, /openingDaichiAfterSayaka/);
@@ -97,4 +98,49 @@ test('Sayaka stays the driving mentor while Daichi explains tuning and Tokyo', (
   assert.equal(CUTSCENES.openingSayakaFarewell.characters.left, 'sayakaFujieda');
   assert.equal(CUTSCENES.openingDaichiAfterSayaka.characters.left, 'daichiSakamoto');
   assert.match(CUTSCENES.openingDaichiAfterSayaka.pages.map(x => x.text).join(' '), /engine|drivetrain|drag scene/i);
+});
+
+test('station starts with grounded, larger characters and only a next button', () => {
+  const station = source('src/scenes/TrainStationScene.js');
+  assert.match(station, /985, 739, 405/);
+  assert.match(station, /1265, 739, 435/);
+  assert.match(station, /this.nextText =/);
+  assert.doesNotMatch(station, /this.dialogue =|this.speaker =|showLine\(/);
+  assert.match(station, /playMangaCutscene\(this, 'openingStationEncounter'/);
+  assert.match(station, /backgroundStyle: 'paper'/);
+});
+
+test('station cutscene addresses selected name without spoiling car or Sayaka', () => {
+  const scene = CUTSCENES.openingStationEncounter;
+  assert.deepEqual(scene.characters, { left: 'daichiSakamoto', right: '$PLAYER' });
+  assert.equal(scene.finalActionLabel, 'GO TO MAP');
+  assert.equal(scene.pages[0].speaker, 'left');
+  assert.match(scene.pages[0].text, /\{PLAYER_FIRST_NAME\}/);
+  assert.ok(scene.pages.some(p => p.speaker === 'right'));
+  assert.ok(scene.pages.some(p => /last year's Tokyo Champion/.test(p.text)));
+  const lines = scene.pages.map(p => p.text).join('\n');
+  assert.doesNotMatch(lines, /Sayaka|two cars|choose a car|AE86|Civic EF/i);
+  assert.match(lines, /family friend/i);
+  assert.match(lines, /from my dad/i);
+});
+
+test('train map reveals only Shinonome home without modifying the ordinary map', () => {
+  const map = source('src/ui/TravelMap.js');
+  const station = source('src/scenes/TrainStationScene.js');
+  assert.match(map, /openingTrainMode = travelMode === 'openingTrain'/);
+  assert.match(map, /openingTrainMode && regionId !== HOME_REGION_ID/);
+  assert.match(map, /region.locations.filter\(item => item.id === 'shinonomeWorkshop'\)/);
+  assert.match(map, /setText\('HOME'\)/);
+  assert.match(station, /homeCost: 0/);
+  assert.match(station, /onHome: \(locationId\)/);
+  assert.match(station, /openingChapter', 'home'/);
+});
+
+test('workshop prompt is centred and office magazine label is simplified', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  const office = source('src/ui/OfficePanel.js');
+  assert.match(garage, /wordWrap: \{ width: promptW - 48 \}/);
+  assert.match(garage, /setOrigin\(0\.5, 0\.5\)/);
+  assert.match(office, /READ THE TOKYO SHIFT MAGAZINE/);
+  assert.doesNotMatch(office, /TAP THE MAGAZINE TO CHOOSE YOUR CAR/);
 });

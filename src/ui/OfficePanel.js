@@ -258,11 +258,12 @@ export function showOfficePanel(scene) {
   if (openingMagazine) {
     const instruction = add(scene.add.text(
       frame.x + frame.w * 0.36, frame.y + frame.h * 0.715,
-      'ISSUE 01 // TAP THE MAGAZINE TO CHOOSE YOUR CAR', {
+      'READ THE TOKYO SHIFT MAGAZINE', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
         backgroundColor: '#06303b', padding: { x: 14, y: 11 },
+        align: 'center',
       }
-    ).setDepth(218));
+    ).setOrigin(0.5).setDepth(218));
     scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
   }
 
