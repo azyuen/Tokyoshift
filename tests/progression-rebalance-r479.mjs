@@ -4,16 +4,28 @@ import { migrateRetiredEvoIX } from '../src/data/carRetirement.js';
 import { createDefaultGameState, normaliseState } from '../src/state/GameState.js';
 import { cars, carOrder } from '../src/data/cars.js';
 import { getRegionalChampionshipCashReward } from '../src/data/tunerChallenges.js';
+import { applyEasyCashWinBonus } from '../src/data/careerProgression.js';
 import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement } from '../src/data/centralTokyo.js';
 import { getStreetShowdownDriverRatings } from '../src/data/streetShowdowns.js';
 import { PINK_SLIP_MEDIAN_RACES, getPinkSlipOpportunityChance } from '../src/data/pinkSlipProgression.js';
 
-test('regional prizes rise gradually from ¥5k without old ¥250k flat reward', () => {
+test('regional championships pay larger one-time cash prizes while retaining perfect bonuses', () => {
   const order = ['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'SHIBUYA', 'YOKOHAMA', 'DAIKOKU', 'SHINJUKU'];
   assert.deepEqual(order.map(id => getRegionalChampionshipCashReward(id)),
-    [5000, 10000, 17500, 30000, 45000, 65000, 90000]);
+    [40000, 60000, 55000, 75000, 100000, 135000, 180000]);
   assert.deepEqual(order.map(id => getRegionalChampionshipCashReward(id, true)),
-    [2500, 5000, 7500, 10000, 15000, 20000, 30000]);
+    [15000, 20000, 20000, 25000, 30000, 40000, 50000]);
+  assert.equal(getRegionalChampionshipCashReward('ODAIBA') + getRegionalChampionshipCashReward('SHINAGAWA'), 100000);
+  assert.equal(getRegionalChampionshipCashReward('ODAIBA', true) + getRegionalChampionshipCashReward('SHINAGAWA', true), 35000);
+});
+
+test('regional payouts apply the existing Easy cash bonus to completion and perfect prizes', () => {
+  const easy = { playerDifficulty: 'EASY' };
+  const standard = { playerDifficulty: 'STANDARD' };
+  assert.equal(applyEasyCashWinBonus(easy, getRegionalChampionshipCashReward('ODAIBA')), 52000);
+  assert.equal(applyEasyCashWinBonus(easy, getRegionalChampionshipCashReward('ODAIBA', true)), 19500);
+  assert.equal(applyEasyCashWinBonus(standard, getRegionalChampionshipCashReward('ODAIBA')), 40000);
+  assert.equal(applyEasyCashWinBonus(standard, getRegionalChampionshipCashReward('ODAIBA', true)), 15000);
 });
 
 test('coupons require five for entry-tier models and seven for higher-tier cars', () => {

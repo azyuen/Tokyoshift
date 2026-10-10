@@ -64,6 +64,7 @@ import {
   getEncounterAi,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
+import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20261010-r468';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261011-r479';
 import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
@@ -86,7 +87,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261011-r479';
+} from '../data/tunerChallenges.js?v=20261011-r483';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
@@ -1554,10 +1555,12 @@ export default class MeetScene extends Phaser.Scene {
         this.registry.set('carCoupons', coupons);
       }
 
-      this.registry.set('cash', cash + getRegionalChampionshipCashReward(regionId));
-      this.cashText?.setText(
-        '¥ ' + Number(cash + getRegionalChampionshipCashReward(regionId)).toLocaleString('en-US')
+      const cashReward = applyEasyCashWinBonus(
+        this.registry,
+        getRegionalChampionshipCashReward(regionId)
       );
+      this.registry.set('cash', cash + cashReward);
+      this.cashText?.setText('¥ ' + Number(cash + cashReward).toLocaleString('en-US'));
 
       state = this.setTunerChallengeState(regionId, {
         ...state,
@@ -1570,7 +1573,7 @@ export default class MeetScene extends Phaser.Scene {
         donorLabel,
         couponCount,
         couponRequired,
-        cash: getRegionalChampionshipCashReward(regionId),
+        cash: cashReward,
       };
 
       saveSessionState(this.registry);

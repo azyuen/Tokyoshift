@@ -12,22 +12,22 @@ export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 12;
 // Yard here creates a circular progression lock on fresh profiles.
 export const TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER = 0;
 export const TUNER_TEAM_CHALLENGE_STAGES = 7;
-// Championship payouts rise with regional progression. A first Odaiba
-// title should be an achievement, not an instant workshop upgrade: coupons
-// and tuner access are the larger long-term rewards.
+// Seven-race regional championships fund meaningful early tuning without
+// making the ¥250k Canal Yard unlock automatic. Coupons and tuner access
+// remain separate one-time progression rewards.
 const REGIONAL_CHAMPIONSHIP_PRIZES = Object.freeze({
-  ODAIBA:   { completion: 5000, perfect: 2500 },
-  SHINAGAWA: { completion: 10000, perfect: 5000 },
-  TATSUMI:  { completion: 17500, perfect: 7500 },
-  SHIBUYA:  { completion: 30000, perfect: 10000 },
-  YOKOHAMA: { completion: 45000, perfect: 15000 },
-  DAIKOKU:  { completion: 65000, perfect: 20000 },
-  SHINJUKU: { completion: 90000, perfect: 30000 },
+  ODAIBA:   { completion: 40000, perfect: 15000 },
+  SHINAGAWA: { completion: 60000, perfect: 20000 },
+  TATSUMI:  { completion: 55000, perfect: 20000 },
+  SHIBUYA:  { completion: 75000, perfect: 25000 },
+  YOKOHAMA: { completion: 100000, perfect: 30000 },
+  DAIKOKU:  { completion: 135000, perfect: 40000 },
+  SHINJUKU: { completion: 180000, perfect: 50000 },
 });
 // Compatibility exports: callers should use getRegionalChampionshipCashReward
 // so they never accidentally award the former flat ¥250k/¥150k amounts.
-export const TUNER_TEAM_COMPLETION_REWARD = 5000;
-export const TUNER_TEAM_PERFECT_REWARD = 2500;
+export const TUNER_TEAM_COMPLETION_REWARD = 40000;
+export const TUNER_TEAM_PERFECT_REWARD = 15000;
 export function getRegionalChampionshipCashReward(regionId, perfect = false) {
   const key = String(regionId || '').trim().toUpperCase();
   const amount = REGIONAL_CHAMPIONSHIP_PRIZES[key] || REGIONAL_CHAMPIONSHIP_PRIZES.ODAIBA;
