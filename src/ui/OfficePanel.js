@@ -261,8 +261,9 @@ export function showOfficePanel(scene) {
       'READ THE TOKYO SHIFT MAGAZINE', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
         backgroundColor: '#06303b', padding: { x: 14, y: 11 },
+        align: 'center',
       }
-    ).setDepth(218));
+    ).setOrigin(0.5).setDepth(218));
     scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
   }
 
