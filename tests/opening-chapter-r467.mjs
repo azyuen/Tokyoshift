@@ -190,7 +190,66 @@ test('confirming a car closes the actual magazine and starts delivery, without b
   assert.match(magazine, /accept\.on\('pointerdown', \(\) =>/);
   assert.match(magazine, /closeMagazine\(\);\s+if \(typeof options\.onChoose/);
   assert.match(magazine, /frame\.on\('pointerdown', \(\) => confirmStarterCar\(id\)\)/);
-  assert.match(office, /closeOffice\(\);\s+scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
+  assert.doesNotMatch(office, /closeOffice\(\);\s+scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
   assert.match(garage, /this\.registry\.set\('openingChapter', 'delivery'\)/);
   assert.match(garage, /this\.showOpeningPhoneCall\(\)/);
+});
+
+test('Sayaka calls inside the office and addresses the chosen first name', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  const office = source('src/ui/OfficePanel.js');
+  assert.match(office, /scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
+  assert.doesNotMatch(office, /closeOffice\(\);\s*scene\.completeOpeningMagazineChoice/);
+  assert.match(garage, /if \(!this\._officeOverlay\?\.length\) showOfficePanel\(this\)/);
+  assert.match(garage, /INCOMING CALL/);
+  assert.match(garage, /SAYAKA/);
+  assert.match(garage, /firstName = String\(this\.registry\.get\('firstName'\)/);
+  assert.match(garage, /I've got your new car, meet me in your garage!/);
+  assert.match(garage, /this\.closeOpeningOffice\?\.\(\)/);
+});
+
+test('starter car rolls in slowly with distance-synchronised wheel rotation', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /this\.selectedDisplay\?\.\[3\], this\.selectedDisplay\?\.\[4\]/);
+  assert.match(garage, /duration: 4300/);
+  assert.match(garage, /const distance = currentX - lastX/);
+  assert.match(garage, /wheel\.angle \+= \(distance \/ radius\)/);
+  assert.match(garage, /this\.time\.delayedCall\(440/);
+  assert.match(garage, /this\.spawnOpeningCompanion\('sayakaFujieda', true/);
+});
+
+test('Sayaka matches player height, faces player and fades in left of the car', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /const targetX = isSayaka \? 548 : 970/);
+  assert.match(garage, /isSayaka \? PLAYER_CFG\.targetHeight : 200/);
+  assert.match(garage, /if \(isSayaka\) sprite\.setFlipX\(true\)/);
+  assert.match(garage, /duration: 950/);
+  assert.match(garage, /sprite\.once\('destroy'/);
+});
+
+test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => {
+  const intro = CUTSCENES.openingSayakaKeys.pages;
+  const goodbye = CUTSCENES.openingSayakaFarewell.pages;
+  assert.equal(intro.length, 5);
+  assert.equal(goodbye.length, 4);
+  assert.match(intro[0].text, /father said you needed this/);
+  assert.match(intro[2].text, /even know how to drive/);
+  assert.match(intro[3].text, /press accelerate/);
+  assert.match(intro[4].text, /clutch in, shift gears/);
+  assert.equal(goodbye[0].pose, 'homeNormal');
+  assert.match(goodbye[0].text, /listen to the engine/);
+  assert.equal(goodbye[2].pose, 'homeHappy');
+  assert.match(goodbye[2].text, /Teehehe/);
+  assert.equal(goodbye[3].pose, 'homeNormal');
+  assert.match(goodbye[3].text, /drive safely/i);
+});
+
+test('the player may explore after Sayaka leaves; Daichi is intentionally deferred', () => {
+  const state = normaliseState({ ...pending('awaitDaichi'), ownedCarIds: ['ae86'], selectedCarId: 'ae86' });
+  assert.equal(state.openingChapter, 'awaitDaichi');
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
+  assert.match(garage, /this\.openingCompanion\?\.destroy\?\.\(\)/);
+  assert.match(garage, /if \(chapter === 'awaitDaichi'\) return true/);
+  assert.match(garage, /continueGarageStoryFlow\(\) \{[\s\S]*?if \(this\.registry\.get\('openingChapter'\) === 'awaitDaichi'\) return true/);
 });
