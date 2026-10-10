@@ -1421,6 +1421,7 @@ regionExclusive: true, teamRole: 'core',
       poseAssets: {
         homeNormal: { key: 'characterSayakaHomeNormal', path: 'assets/Characters/Main/home_sayaka_fujieda_normal.png' },
         homeHappy: { key: 'characterSayakaHomeHappy', path: 'assets/Characters/Main/home_sayaka_fujieda_happy.png' },
+        homeBlushing: { key: 'characterSayakaHomeBlushing', path: 'assets/Characters/Main/home_sayaka_fujieda_blushing.png' },
         homeSad: { key: 'characterSayakaHomeSad', path: 'assets/Characters/Main/home_sayaka_fujieda_sad.png' },
         homeSerious: { key: 'characterSayakaHomeSerious', path: 'assets/Characters/Main/home_sayaka_fujieda_serious.png' },
         normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Main/ginza_sayaka_fujieda_normal.png' },
