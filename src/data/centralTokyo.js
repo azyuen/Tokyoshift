@@ -110,7 +110,6 @@ export const MARKET_BASE_PRICES = {
   evo3: 2800000,
   evo5: 3900000,
   evo6: 4500000,
-  evo9: 5600000,
   wrx22b: 6200000,
   r32: 7200000,
   ej1: 1350000,
@@ -174,7 +173,6 @@ Object.assign(MARKET_BUILDS, {
   rx8: MARKET_BUILDS.fc3s,
   evo5: MARKET_BUILDS.evo3,
   evo6: MARKET_BUILDS.evo3,
-  evo9: MARKET_BUILDS.evo3,
   ej1: MARKET_BUILDS.ek9,
   a60: MARKET_BUILDS.ae86,
   jza80: MARKET_BUILDS.r32,
@@ -194,7 +192,6 @@ export const AUTO_MARKET_LISTINGS = [
   { carId: 'rx7fd', price: 4900000, buildLabel: 'TWIN TURBO BUILD' },
   { carId: 'evo5', price: 4700000, buildLabel: 'AWD STREET BUILD' },
   { carId: 'evo6', price: 5400000, buildLabel: 'AWD STREET BUILD' },
-  { carId: 'evo9', price: 6700000, buildLabel: 'MIVEC STREET BUILD' },
   { carId: 'wrx22b', price: 7200000, buildLabel: 'PERFORMANCE BUILD' },
   { carId: 'r32', price: 8450000, buildLabel: 'PERFORMANCE BUILD' },
   { carId: 'ej1', price: 1650000, buildLabel: 'VTEC COUPE BUILD' },
@@ -458,29 +455,30 @@ export function getPendingCentralTokyoInvite(source) {
 }
 
 export const CAR_COUPON_REQUIREMENTS = {
-  ae86: 2,
-  ef: 2,
-  ek9: 2,
-  s2000: 2,
-  fc3s: 2,
-  rx8: 2,
-  rx7fd: 3,
-  evo3: 2,
-  evo5: 3,
-  evo6: 3,
-  evo9: 3,
-  wrx22b: 2,
-  r32: 3,
-  ej1: 2,
-  a60: 2,
-  jza80: 3,
-  nsx: 3,
-  r34: 3,
-  '3000gt': 3,
+  ae86: 5,
+  ef: 5,
+  ek9: 5,
+  s2000: 5,
+  fc3s: 5,
+  rx8: 5,
+  rx7fd: 7,
+  evo3: 5,
+  evo5: 7,
+  evo6: 7,
+  wrx22b: 5,
+  r32: 7,
+  ej1: 5,
+  a60: 5,
+  jza80: 7,
+  nsx: 7,
+  r34: 7,
+  '3000gt': 7,
 };
 
 export function getCarCouponRequirement(carId) {
-  return Math.max(1, Number(CAR_COUPON_REQUIREMENTS[String(carId)] || 2));
+  // Unlisted models do not issue coupons; keep the minimum meaningful target
+  // aligned with the entry-tier five-coupon economy.
+  return Math.max(5, Number(CAR_COUPON_REQUIREMENTS[String(carId)] || 5));
 }
 
 export function getCarCouponCount(source, carId) {
