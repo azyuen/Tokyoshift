@@ -1115,19 +1115,16 @@ addRegularCar('ef', 'ek9', {
 for (const [id, numeral, powerKW, torqueNm, mass, engine, boost, finalDrive, spool] of [
   ['evo5', 'V', 206, 373, 1360, '4g63t_evo5', 0.92, 4.529, 1.68],
   ['evo6', 'VI', 206, 373, 1360, '4g63t_evo6', 0.96, 4.529, 1.74],
-  ['evo9', 'IX', 206, 392, 1410, '4g63t_evo9', 1.00, 4.529, 1.85],
 ]) {
   addRegularCar(id, 'evo3', {
     shortName: 'EVO ' + numeral,
     name: 'Mitsubishi Lancer Evolution ' + numeral,
     description: 'Later generation 4G63T AWD grip and turbo punch.',
     powerKW, torqueNm, vehicleMassKg: mass,
-    engine, engineModel: id === 'evo9' ? '4G63T MIVEC' : '4G63T',
+    engine, engineModel: '4G63T',
     maximumBoost: boost, finalDriveRatio: finalDrive, turboSpoolRate: spool,
-    gearRatios: id === 'evo9'
-      ? [2.928, 1.950, 1.407, 1.031, 0.761, 0.599]
-      : [2.785, 1.950, 1.407, 1.031, 0.761],
-    dragCoefficient: id === 'evo9' ? 0.34 : 0.36,
+    gearRatios: [2.785, 1.950, 1.407, 1.031, 0.761],
+    dragCoefficient: 0.36,
     visual: { wheelKey: 'wheelMesh' },
   });
 }
@@ -1247,7 +1244,6 @@ const REGULAR_ASSETS = {
   nsx: ['nsx', 500, 251, 383, 97, 930, 383, 97, 1161, 445],
 
   evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
-  evo9: ['evo9', 400, 232, 317, 86, 921, 308, 81, 1188, 450],
   wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
   r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
   '3000gt': ['3000gt', 500, 273, 339, 100, 926, 339, 100, 1165, 455],
@@ -1368,7 +1364,7 @@ Object.values(cars).forEach(car => {
 
 export const carOrder = [
   'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
-  'evo3', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34',
+  'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
 ];
 
