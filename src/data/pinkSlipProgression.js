@@ -4,7 +4,10 @@ import { getBaseCarId } from './carOwnership.js?v=20261006-r388';
 import { MARKET_BASE_PRICES } from './centralTokyo.js?v=20261006-r388';
 
 export const PINK_SLIP_VALUE_RATIO_LIMIT = 2;
-export const PINK_SLIP_MEDIAN_RACES = Object.freeze({ EASY: 25, STANDARD: 30, HARD: 35 });
+// On Easy, pink slips should be attainable but genuinely rare. Keep the
+// existing low-probability cumulative curve and stretch its midpoint instead
+// of bypassing the shared race-based lottery.
+export const PINK_SLIP_MEDIAN_RACES = Object.freeze({ EASY: 45, STANDARD: 30, HARD: 35 });
 const LN_2 = Math.log(2);
 function read(source, key, fallback = null) {
   const value = typeof source?.get === 'function' ? source.get(key) : source?.[key];
