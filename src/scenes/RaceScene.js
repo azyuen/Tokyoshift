@@ -71,12 +71,11 @@ import {
 import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260926-r212';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
-  TUNER_TEAM_COMPLETION_REWARD,
-  TUNER_TEAM_PERFECT_REWARD,
+  getRegionalChampionshipCashReward,
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
-} from '../data/tunerChallenges.js?v=20261010-r466';
+} from '../data/tunerChallenges.js?v=20261011-r479';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
@@ -3856,9 +3855,9 @@ export default class RaceScene extends Phaser.Scene {
       const wasChampion = Boolean(current.championEarned);
       const completionReward = current.championRewardClaimed
         ? 0
-        : TUNER_TEAM_COMPLETION_REWARD;
+        : getRegionalChampionshipCashReward(regionId);
       const perfectReward = perfect && !current.perfectRewardClaimed
-        ? TUNER_TEAM_PERFECT_REWARD
+        ? getRegionalChampionshipCashReward(regionId, true)
         : 0;
       const totalReward = completionReward + perfectReward;
       const newCash = oldCash + totalReward;
