@@ -1,5 +1,5 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261010-r469';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261010-r470';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
 import { cars } from './cars.js?v=20261006-r388';
 import { characters } from './characters.js?v=20261010-r459';
@@ -44,7 +44,9 @@ export function completeSeasonRound(raw,summary,participants=[]) {
     const ids=Object.keys(roster).filter(id=>!excluded.has(id)).sort();
     for(let i=ids.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
     for(let i=0;i+1<ids.length;i+=2) {
-      const a=roster[ids[i]],b=roster[ids[i+1]],won=rng()<1/(1+10**((b.rating-a.rating)/400));
+      const a=roster[ids[i]],b=roster[ids[i+1]];
+      const buildA=opponentBuild(ids[i],a.rating,0),buildB=opponentBuild(ids[i+1],b.rating,0);
+      const won=estimateCrewHeat(buildA,rng)<=estimateCrewHeat(buildB,rng);
       elo(a,b,won,10);a.entered++;b.entered++;a.seasonPoints+=won?5:1;b.seasonPoints+=won?1:5;
       background.push({kind,winner:ids[i+(won?0:1)],loser:ids[i+(won?1:0)]});
     }
@@ -106,6 +108,18 @@ export function registerCrewSeries(source,squadIds,assignments={}) {
 export function getCrewFixture(raw) {
   const t=raw?.activeCrewEvent;
   if(!t||t.schema!==1||!Number.isInteger(t.round)||t.round<0||t.round>2||!Array.isArray(t.schedule?.[t.round])||!Array.isArray(t.entrants)||!Array.isArray(t.squadIds))return null;
+  if (typeof t.id !== 'string' || t.entrants.length !== 4 ||
+      t.entrants.some(e => !e || typeof e.id !== 'string' || !Array.isArray(e.drivers) || e.drivers.length !== 3 || e.drivers.some(d => !d || !cars[d.carId] || !Number.isFinite(d.performance) || !Number.isFinite(d.skill))) ||
+      new Set(t.entrants.map(e => e.id)).size !== 4 || !t.entrants.some(e => e.id === PLAYER) ||
+      !Array.isArray(t.history) || t.history.length !== t.round ||
+      !Array.isArray(t.prizes) || t.prizes.length !== 4 || t.prizes.some(n => !Number.isFinite(n) || n < 0 || n > 210000) ||
+      t.squadIds.length < 3 || t.squadIds.length > 5 || new Set(t.squadIds).size !== t.squadIds.length ||
+      t.schedule[t.round].length !== 2 || t.schedule[t.round].some(p => !Array.isArray(p) || p.length !== 2 || p.some(id => !t.entrants.some(e => e.id === id))) ||
+      new Set(t.schedule[t.round].flat()).size !== 4) return null;
+  if (t.fixture && (t.fixture.id !== t.id+':fixture:'+t.round ||
+      !Array.isArray(t.fixture.heats) || t.fixture.heats.length !== 3 ||
+      !Number.isInteger(t.fixture.revealed) || t.fixture.revealed < 0 || t.fixture.revealed > 3 ||
+      t.fixture.heats.some(h => !h || typeof h.won !== 'boolean' || !Number.isFinite(h.ownSeconds) || !Number.isFinite(h.opponentSeconds)))) return null;
   const pair=t.schedule[t.round].find(p=>Array.isArray(p)&&p.includes(PLAYER));
   const opponent=t.entrants.find(e=>e.id===pair?.find(id=>id!==PLAYER));
   if(!opponent||opponent.drivers?.length!==3)return null;
@@ -121,6 +135,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
   if(f.prepared)return {circuit:c,fixture:f.prepared};
   const units=getCrewSeriesUnits(source,t.assignments),chosen=lineupIds.map(id=>units.find(u=>u.id===id));
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
+  if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
     const own=estimateCrewHeat(u,rng),other=estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
@@ -182,4 +197,13 @@ export function settleLegacySeasonEvent(raw,state,roundsWon) {
   const summary={id,label:state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT',discipline:'DRIVER',placing:roundsWon===3?1:4-roundsWon,points,rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:roundsWon===3?Number(state.prizeCash||0):0};
   c.lastTournament=summary;
   return completeSeasonRound(c,summary,participants);
+}
+
+export function assignCrewSeriesCar(source,driverId,carId) {
+  const c=normaliseProCircuitState(value(source,'proCircuit')),f=getCrewFixture(c),t=c.activeCrewEvent;
+  if(!f||f.prepared||!t.squadIds.includes(driverId))return {error:'LINEUP ALREADY LOCKED'};
+  const assignments={...t.assignments,[driverId]:carId};
+  const unit=getCrewSeriesUnits(source,assignments).find(u=>u.id===driverId);
+  if(!unit?.validAssignment||unit.carId!==carId)return {error:'CAR NOT ELIGIBLE'};
+  c.activeCrewEvent={...clone(t),assignments};return {circuit:c};
 }

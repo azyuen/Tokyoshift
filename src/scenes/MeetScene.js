@@ -48,6 +48,12 @@ import {
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
+  MEET_REFRESH_INTERVAL_MS,
+  isMeetRoundActive,
+  chooseMeetPreloadedOffers,
+  mayAdoptPreloadedOffers,
+} from '../data/meetRefreshCycle.js?v=20261010-r469';
+import {
   recordCarMagazineSightings,
   carMatchesCompetitionRestriction,
   getCompetitionRestrictionPool,
@@ -251,7 +257,11 @@ export default class MeetScene extends Phaser.Scene {
     const rawStoredCurrent = Array.isArray(storedRosters[initialLocationId])
       ? storedRosters[initialLocationId]
       : [];
-    const storedCurrent = this.applyMeetRaceResults(initialLocationId, rawStoredCurrent);
+    // Do not apply defeated results from an expired cycle. Otherwise yesterday's
+    // three locked rivals can be copied onto today's newly generated roster.
+    const storedCurrent = isMeetRoundActive(storedRefreshAt)
+      ? this.applyMeetRaceResults(initialLocationId, rawStoredCurrent)
+      : [];
     const storedCurrentUnique =
       new Set(storedCurrent.map(offer => offer?.characterId).filter(Boolean)).size ===
       storedCurrent.length;
@@ -265,7 +275,7 @@ export default class MeetScene extends Phaser.Scene {
         .filter(Boolean)
     );
     const storedCurrentValid =
-      storedRefreshAt > Date.now() &&
+      isMeetRoundActive(storedRefreshAt) &&
       storedCurrent.length > 0 &&
       storedCurrentUnique &&
       storedCurrent.every(offer =>
@@ -287,14 +297,14 @@ export default class MeetScene extends Phaser.Scene {
     this.selectedMode = 'SINGLE';
     this.nextRefreshAt = storedCurrentValid
       ? storedRefreshAt
-      : Date.now() + 180000;
+      : Date.now() + MEET_REFRESH_INTERVAL_MS;
     this.preloadedInitialLocationId = initialLocationId;
-    this.preloadedInitialOffers = storedCurrentValid
-      ? storedCurrent.map(offer => ({ ...offer }))
-      : this.applyMeetRaceResults(
-          initialLocationId,
-          this.generateOffersForLocation(initialLocationId)
-        );
+    this.preloadedFromStoredRound = storedCurrentValid;
+    this.preloadedInitialOffers = chooseMeetPreloadedOffers({
+      useStoredRound: storedCurrentValid,
+      storedOffers: storedCurrent,
+      generateOffers: () => this.generateOffersForLocation(initialLocationId),
+    });
 
     const batch = this.queueMeetRosterAssets(
       this.preloadedInitialOffers,
@@ -371,9 +381,13 @@ export default class MeetScene extends Phaser.Scene {
         : []
     );
     const hasStoredRound =
-      storedRefreshAt > Date.now() &&
+      isMeetRoundActive(storedRefreshAt) &&
       selectedStoredOffers.length > 0 &&
-      selectedStoredOffers.every(isCurrentMeetOffer);
+      selectedStoredOffers.every(isCurrentMeetOffer) &&
+      // Preload performs additional regional/duplicate/recruit validation.
+      // If it rejected the roster, create must not adopt that stale cycle.
+      (this.preloadedInitialLocationId !== this.selectedMeetLocation ||
+        this.preloadedFromStoredRound === true);
 
     // Preload may have generated the visible three-car roster before create().
     // Keep that exact roster so the assets we just loaded are the ones rendered.
@@ -440,7 +454,7 @@ export default class MeetScene extends Phaser.Scene {
         this.locationSelectedOfferIndex[locationId] = 0;
       });
     } else {
-      this.nextRefreshAt = Date.now() + 180000;
+      this.nextRefreshAt = Date.now() + MEET_REFRESH_INTERVAL_MS;
       this.registry.set('defeatedRivalKeys', []);
       this.refreshAllLocationOffers({ resetTimer: false, persist: false });
       this.persistMeetRound();
@@ -448,7 +462,8 @@ export default class MeetScene extends Phaser.Scene {
 
     if (
       preloadedInitialOffers &&
-      this.preloadedInitialLocationId === this.selectedMeetLocation
+      this.preloadedInitialLocationId === this.selectedMeetLocation &&
+      mayAdoptPreloadedOffers(this.preloadedFromStoredRound, hasStoredRound)
     ) {
       this.locationOffers[this.selectedMeetLocation] = preloadedInitialOffers;
       this.locationSelectedOfferIndex[this.selectedMeetLocation] = 0;
@@ -695,6 +710,9 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   getMeetRaceResults(locationId) {
+    // An expired refresh deadline invalidates every saved slot-bound result.
+    // This guard protects future refresh paths, not just preload/create.
+    if (!isMeetRoundActive(this.registry.get('meetRefreshAt'))) return [];
     const store = this.registry.get('meetRaceResults') || {};
     return Array.isArray(store[locationId]) ? store[locationId] : [];
   }
@@ -3777,7 +3795,7 @@ export default class MeetScene extends Phaser.Scene {
       this.locationSelectedOfferIndex[locationId] = 0;
     });
 
-    if (resetTimer) this.nextRefreshAt = Date.now() + 180000;
+    if (resetTimer) this.nextRefreshAt = Date.now() + MEET_REFRESH_INTERVAL_MS;
     if (persist) this.persistMeetRound();
   }
 
@@ -3952,7 +3970,7 @@ export default class MeetScene extends Phaser.Scene {
     // Preserve authored regional character rotation. Region affects who and
     // what tends to appear, but never replaces current-car performance matching.
     const refreshBasis = Number(this.nextRefreshAt || Date.now());
-    const cycle = Math.floor(refreshBasis / 180000);
+    const cycle = Math.floor(refreshBasis / MEET_REFRESH_INTERVAL_MS);
     const locationOffset = Math.max(0, ALL_MEET_LOCATION_IDS.indexOf(locationId));
     const shift = configuredOrder.length
       ? (cycle + locationOffset) % configuredOrder.length
@@ -4219,7 +4237,7 @@ export default class MeetScene extends Phaser.Scene {
     );
 
     if (resetTimer) {
-      this.nextRefreshAt = Date.now() + 180000;
+      this.nextRefreshAt = Date.now() + MEET_REFRESH_INTERVAL_MS;
       this.persistMeetRound();
     }
 
@@ -5470,4 +5488,5 @@ export default class MeetScene extends Phaser.Scene {
     ];
   }
 }
+
 

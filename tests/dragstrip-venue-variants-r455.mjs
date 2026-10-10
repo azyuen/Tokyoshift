@@ -16,7 +16,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const scene = fs.readFileSync(path.join(root, 'src/scenes/FourLaneTestScene.js'), 'utf8');
 const central = fs.readFileSync(path.join(root, 'src/scenes/CentralTokyoScene.js'), 'utf8');
 
-test('three currently playable professional event slots map to increasing spectator size', () => {
+test('legacy event crowd defaults remain available alongside dynamic season attendance', () => {
   assert.equal(DRAGSTRIP_EVENT_CROWDS.streetShootout, 'low');
   assert.equal(DRAGSTRIP_EVENT_CROWDS.midnightCup, 'half');
   assert.equal(DRAGSTRIP_EVENT_CROWDS.fourWideOpen, 'full');
@@ -24,7 +24,8 @@ test('three currently playable professional event slots map to increasing specta
   assert.equal(getDragstripCrowdTier('midnightCup'), 'half');
   assert.equal(getDragstripCrowdTier('fourWideOpen'), 'full');
   assert.match(central, /PRO_DRAG_EVENTS\[0\]/);
-  assert.match(central, /PRO_DRAG_EVENTS\[1\]/);
+  assert.match(central, /PRO_DRAG_EVENTS\[pro\.calendar\.round % 2\]/);
+  assert.match(scene, /getProfessionalAttendance/);
   assert.match(central, /id: FOUR_WIDE_CUP\.id/);
 });
 

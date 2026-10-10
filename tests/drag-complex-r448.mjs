@@ -8,10 +8,13 @@ import { getProfessionalDuelRound } from '../src/data/proDragDuel.js';
 const central=fs.readFileSync(new URL('../src/scenes/CentralTokyoScene.js',import.meta.url),'utf8');
 const pro=fs.readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');
 
-test('three fixed public event cards are two driver cups and one four-wide trophy',()=>{
+test('three season event cards retain driver, playable crew and four-wide slots',()=>{
   const block=central.match(/getProDragEvents\(\) \{([\s\S]*?)\n  \}/)?.[1]||'';
   assert.match(block,/PRO_DRAG_EVENTS\[0\]/);
-  assert.match(block,/PRO_DRAG_EVENTS\[1\]/);
+  assert.match(block,/PRO_DRAG_EVENTS\[pro\.calendar\.round % 2\]/);
+  assert.match(block,/CREW_SERIES/);
+  assert.match(block,/pro\.activeCrewEvent/);
+  assert.match(block,/seasonEnd: true/);
   assert.match(block,/id: FOUR_WIDE_CUP\.id/);
   assert.doesNotMatch(block,/PRO_DRAG_EVENTS\[2\]/);
   assert.match(block,/fourWide: true/);

@@ -1,6 +1,6 @@
-import { CREW_SERIES, PRO_SEASON_LENGTH, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, prepareCrewSeriesFixture, revealCrewSeriesHeat, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason } from '../data/proSeason.js?v=20261010-r469';
-import { normaliseProCircuitState, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261010-r469';
-import { saveProTransaction } from '../state/GameState.js?v=20261010-r469';
+import { CREW_SERIES, PRO_SEASON_LENGTH, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, prepareCrewSeriesFixture, revealCrewSeriesHeat, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar } from '../data/proSeason.js?v=20261010-r470';
+import { normaliseProCircuitState, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261010-r470';
+import { saveProTransaction } from '../state/GameState.js?v=20261010-r470';
 import { cars } from '../data/cars.js?v=20261006-r388';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
@@ -17,7 +17,7 @@ function button(s,x,y,w,label,action,enabled=true) {
 }
 export function drawSeasonHeader(s,side) {
   const c=circuit(s),driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver'),team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
-  text(s,side.x+20,side.y+117,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16);
+  text(s,side.x+20,side.y+117,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16).setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   text(s,side.x+20,side.y+146,`DRIVER #${driver.seed} · ${driver.seasonPoints} PTS\nCREW #${team.seed} · ${team.seasonPoints} PTS`,14);
   if(s.proError)text(s,side.x+20,side.y+630,s.proError,12,{color:'#ef939b',wordWrap:{width:side.w-40}});
 }
@@ -48,7 +48,7 @@ function overlay(s,title) {
   add(s.add.text(90,62,title,{fontFamily:FONT,fontSize:'30px',fontStyle:'900 italic',color:'#fff4f2'}).setDepth(201));
   const label=(x,y,v,size=20)=>add(s.add.text(x,y,v,{fontFamily:FONT,fontSize:size+'px',color:'#e8e1df',wordWrap:{width:1320}}).setDepth(202));
   const btn=(x,y,w,v,fn)=>{const b=add(s.add.rectangle(x,y,w,48,0x5d1d27).setStrokeStyle(2,0xd8515b).setDepth(202).setInteractive({useHandCursor:true}));label(x,y,v,17).setOrigin(.5);b.on('pointerdown',()=>{if(!closed)fn();});return b;};
-  const close=()=>{if(closed)return;closed=true;nodes.forEach(n=>n.destroy());s._proOverlayClose=null;};s._proOverlayClose=close;
+  const close=()=>{if(closed)return;closed=true;nodes.forEach(n=>n.destroy());s._proOverlayClose=null;s.events.off('shutdown',close);};s._proOverlayClose=close;
   s.events.once('shutdown',close);
   return {add,label,btn,close};
 }
@@ -78,7 +78,12 @@ export function showCrewFixture(s,selection=null) {
   if(!f.prepared){
     o.label(90,158,'Select three drivers in racing order. Car tuning is read when you lock the lineup.',18);
     units.forEach((u,i)=>{
-      o.btn(345,235+i*70,500,(chosen.includes(u.id)?chosen.indexOf(u.id)+1+'. ':'')+u.name+' / '+cars[u.carId]?.shortName,()=>{const next=chosen.includes(u.id)?chosen.filter(id=>id!==u.id):chosen.length<3?[...chosen,u.id]:chosen;o.close();showCrewFixture(s,next);});
+      o.btn(280,235+i*70,390,(chosen.includes(u.id)?chosen.indexOf(u.id)+1+'. ':'')+u.name,()=>{const next=chosen.includes(u.id)?chosen.filter(id=>id!==u.id):chosen.length<3?[...chosen,u.id]:chosen;o.close();showCrewFixture(s,next);});
+      const eligible=(s.registry.get('ownedCarIds')||[]).filter(id=>cars[id]&&(!cars[id].crewLoan||id===u.loanCarId));
+      o.btn(630,235+i*70,230,(u.validAssignment?'':'! ')+(cars[u.carId]?.shortName||u.carId),()=>{
+        const next=eligible[(eligible.indexOf(u.carId)+1)%eligible.length],out=assignCrewSeriesCar(s.registry,u.id,next);
+        if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s,chosen);}
+      });
     });
     f.opponent.drivers.forEach((u,i)=>o.label(770,232+i*96,`HEAT ${i+1}: ${cars[u.carId]?.shortName}\nSKILL ${Math.round(u.skill*100)} · PERFORMANCE ${Math.round(u.performance)}`,23));
     o.label(90,650,'Current table: '+getCrewSeriesTable(t).map(r=>r.name+' '+r.points).join('  /  '),18);
@@ -123,7 +128,7 @@ function watchCrewHeat(s,f) {
 function showCrewResult(s,out) {
   const o=overlay(s,'PROFESSIONAL CIRCUIT'),champion=out.summary?.placing===1;
   const portrait=createCharacterProfile(s,{characterId:s.registry.get('playerCharacterId')||'renMizuno',pose:out.wins>=2?'win':'loss',x:290,y:400,frameWidth:430,frameHeight:480,side:'left',depth:204,flipInward:true});
-  if(portrait?.image)o.add(portrait.image);
+  if(portrait)o.add(portrait);
   o.label(610,205,champion?'SERIES WINNER':out.status==='COMPLETE'?'SERIES COMPLETE':out.wins>=2?'TEAM VICTORY':'TEAM DEFEAT',52);
   o.label(620,305,`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
   o.label(620,385,out.summary?`FINISH #${out.summary.placing} · +${cash(out.cashPrize)}\nTEAM RANK #${out.summary.rankBefore} → #${out.summary.rankAfter}\n+${out.summary.points} SEASON POINTS`:`NEXT: FIXTURE ${out.circuit.activeCrewEvent.round+1}/3\nYour crew and results are saved.`,24);

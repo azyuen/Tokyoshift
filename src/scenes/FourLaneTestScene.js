@@ -1,5 +1,5 @@
-import { getProfessionalAttendance, settleLegacySeasonEvent } from '../data/proSeason.js?v=20261010-r469';
-import { saveProTransaction } from '../state/GameState.js?v=20261010-r469';
+import { getProfessionalAttendance, settleLegacySeasonEvent } from '../data/proSeason.js?v=20261010-r470';
+import { saveProTransaction } from '../state/GameState.js?v=20261010-r470';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
