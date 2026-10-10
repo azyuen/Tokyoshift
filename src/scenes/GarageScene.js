@@ -7611,63 +7611,26 @@ export default class GarageScene extends Phaser.Scene {
     // Completed modern profiles must never fall into the legacy first-car cutscene.
     if (chapter === 'done') return false;
 
-    if (chapter === 'daichi' && !this.hasSeenStoryCutscene('openingDaichiAfterSayaka')) {
+    if (chapter === 'daichi') {
+      // The entire introduction is one cutscene. Old three-part Daichi lessons
+      // have been retired; a save resumed after this scene simply completes.
+      const finishDaichiIntroduction = () => {
+        this.registry.set('openingChapter', 'done');
+        saveSessionState(this.registry);
+        this.restoreNormalWorkshopAfterOpening();
+      };
+      if (this.hasSeenStoryCutscene('openingDaichiAfterSayaka')) {
+        finishDaichiIntroduction();
+        return true;
+      }
       const result = playMangaCutscene(this, 'openingDaichiAfterSayaka', {
-        onComplete: () => this.time.delayedCall(120, () => this.runOpeningStoryIfNeeded()),
-      });
-      return Boolean(result.played);
-    }
-    // Only introduce the origin story on a fresh run. Existing progressed
-    // profiles are not interrupted by a retroactive tutorial.
-    const racesRun =
-      Number(this.registry.get('wins') || 0) +
-      Number(this.registry.get('losses') || 0);
-    const hasStartedOpening =
-      this.hasSeenStoryCutscene('openingDaichiStory') ||
-      Boolean(this.registry.get('introTutorialChoiceDone'));
-
-    if (racesRun > 0 && !hasStartedOpening) return false;
-
-    if (chapter !== 'daichi' && !this.hasSeenStoryCutscene('openingDaichiStory')) {
-      const result = playMangaCutscene(this, 'openingDaichiStory', {
-        onComplete: () => {
-          this.time.delayedCall(120, () => chapter === 'daichi'
-            ? this.runOpeningStoryIfNeeded()
-            : this.showOpeningTutorialChoice());
-        },
+        onComplete: finishDaichiIntroduction,
       });
       return Boolean(result.played);
     }
 
-    if (chapter !== 'daichi' && !this.registry.get('introTutorialChoiceDone')) {
-      this.showOpeningTutorialChoice();
-      return true;
-    }
-
-    if (!this.hasSeenStoryCutscene('openingRaceRules')) {
-      const result = playMangaCutscene(this, 'openingRaceRules', {
-        onComplete: () => {
-          this.time.delayedCall(140, () => this.runOpeningStoryIfNeeded());
-        },
-      });
-      return Boolean(result.played);
-    }
-
-    if (!this.hasSeenStoryCutscene('openingWorkshopGuide')) {
-      const result = playMangaCutscene(this, 'openingWorkshopGuide', {
-        onComplete: () => {
-          if (this.registry.get('openingChapter') === 'daichi') {
-            this.registry.set('openingChapter', 'done');
-            saveSessionState(this.registry);
-            this.restoreNormalWorkshopAfterOpening();
-            return;
-          }
-          this.time.delayedCall(160, () => this.showCentralTokyoInvitationIfNeeded());
-        },
-      });
-      return Boolean(result.played);
-    }
-
+    // Pre-R467 profiles and Restart Night already have a car. Keep their
+    // progression and do not resurrect retired opening dialogue or tutorials.
     return false;
   }
 
