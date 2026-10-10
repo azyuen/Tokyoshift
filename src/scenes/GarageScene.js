@@ -576,6 +576,9 @@ export default class GarageScene extends Phaser.Scene {
           if (chapter === 'home' || chapter === 'magazine') {
             this.promptOpeningOffice();
           } else if (chapter === 'delivery') {
+            // An interrupted call resumes inside the same office, not
+            // inexplicably against the garage background.
+            if (!this._officeOverlay?.length) showOfficePanel(this);
             this.showOpeningPhoneCall();
           } else {
             this.continueGarageStoryFlow();
@@ -1133,24 +1136,27 @@ export default class GarageScene extends Phaser.Scene {
     const source = this.textures.get(character.visual.spriteKey).getSourceImage();
     sprite.setScale(targetHeight / source.height);
 
-    this.add.ellipse(
-      x + 12,
-      feetY - 16,
-      Math.max(60, sprite.displayWidth * 0.80),
-      30,
-      0x000000,
-      0.58
-    ).setDepth(depth - 0.12);
-
-    this.add.ellipse(
-      x + 9,
-      feetY - 11,
-      Math.max(44, sprite.displayWidth * 0.60),
-      18,
-      0x000000,
-      0.84
-    ).setDepth(depth - 0.08);
-
+    const shadows = [
+      this.add.ellipse(
+        x + 12,
+        feetY - 16,
+        Math.max(60, sprite.displayWidth * 0.80),
+        30,
+        0x000000,
+        0.58
+      ).setDepth(depth - 0.12),
+      this.add.ellipse(
+        x + 9,
+        feetY - 11,
+        Math.max(44, sprite.displayWidth * 0.60),
+        18,
+        0x000000,
+        0.84
+      ).setDepth(depth - 0.08),
+    ];
+    // Companion shadows must disappear when the character leaves.
+    sprite.once('destroy', () => shadows.forEach(shadow => shadow?.destroy?.()));
+    sprite.stageShadows = shadows;
     return sprite;
   }
 
@@ -7139,16 +7145,19 @@ export default class GarageScene extends Phaser.Scene {
     const promptX = 700;
     const promptY = 573;
     const promptW = 805;
-    this.add.rectangle(promptX, promptY, promptW, 68, 0x071823, 0.96)
+    const panel = this.add.rectangle(promptX, promptY, promptW, 68, 0x071823, 0.96)
       .setStrokeStyle(2, 0xfbd57d, 0.9).setDepth(78);
-    this.add.text(promptX, promptY,
+    const line = this.add.text(promptX, promptY,
       "Still no car. I'll read Daichi's magazine in the office.", {
         fontFamily: BODY_FONT, fontSize: '14px', color: '#fff0c8',
         fontStyle: '700', align: 'center', wordWrap: { width: promptW - 48 },
       }).setOrigin(0.5, 0.5).setDepth(79);
     const glow = this.add.rectangle(725, 215, 146, 60, 0x000000, 0)
       .setStrokeStyle(4, 0xfbd57d, 1).setDepth(80);
-    this.tweens.add({ targets: glow, alpha: 0.38, duration: 590, repeat: -1, yoyo: true });
+    this._openingOfficePromptObjects = [panel, line, glow];
+    this._openingOfficeGlowTween = this.tweens.add({
+      targets: glow, alpha: 0.38, duration: 590, repeat: -1, yoyo: true,
+    });
   }
 
   completeOpeningMagazineChoice(carId) {
@@ -7157,51 +7166,83 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('starterCarId', carId);
     this.registry.set('openingChapter', 'delivery');
     saveSessionState(this.registry);
+    // Do not dismiss the office here: Sayaka calls while the player is
+    // still standing over the magazine rack.
     this.showOpeningPhoneCall();
   }
 
   showOpeningPhoneCall() {
     if (this._openingPhoneOpen || this.registry.get('openingChapter') !== 'delivery') return;
+    // Protect the first-call presentation after reloads. The phone is never
+    // floating over an otherwise empty workshop.
+    if (!this._officeOverlay?.length) showOfficePanel(this);
     this._openingPhoneOpen = true;
     const items = [];
     const add = obj => { items.push(obj); return obj; };
-    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.78).setDepth(300).setInteractive());
-    add(this.add.rectangle(780, 417, 900, 466, 0x0c1825, 1)
-      .setStrokeStyle(3, 0x6ce3c0, 1).setDepth(301));
-    add(this.add.text(780, 237, 'INCOMING CALL // SAYAKA', {
-      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8df6d3',
-    }).setOrigin(0.5).setDepth(302));
-    add(this.add.text(780, 376,
-      "Hey! I'm just around the corner.\nI've got your " +
-      (this.registry.get('starterCarId') === 'ef' ? 'Civic EF' : 'AE86') +
-      ". Meet me in the workshop!", {
-      fontFamily: BODY_FONT, fontSize: '17px', color: '#f2fbff',
-      align: 'center', lineSpacing: 12, wordWrap: { width: 750 },
-    }).setOrigin(0.5).setDepth(302));
-    const button = add(this.add.rectangle(780, 560, 300, 60, 0x104233, 1)
-      .setStrokeStyle(2, 0x73ffce, 1).setDepth(303).setInteractive({ useHandCursor: true }));
-    add(this.add.text(780, 560, 'NEXT  >', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    const firstName = String(this.registry.get('firstName') || 'there').trim() || 'there';
+
+    // Long, slim in-game call banner. Office art remains visible underneath.
+    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.43)
+      .setDepth(300).setInteractive());
+    add(this.add.rectangle(780, 413, 1140, 264, 0x091521, 0.98)
+      .setStrokeStyle(3, 0x62e8c7, 1).setDepth(301));
+    add(this.add.rectangle(780, 286, 1140, 10, 0x62e8c7, 1).setDepth(302));
+    add(this.add.text(275, 324, 'INCOMING CALL', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7df0cd',
+    }).setDepth(302));
+    add(this.add.text(275, 361, 'SAYAKA', {
+      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#f7fcff',
+    }).setDepth(302));
+    add(this.add.text(825, 402,
+      "Hey " + firstName + "! I'm just around the corner.\\nI've got your new car, meet me in your garage!", {
+        fontFamily: BODY_FONT, fontSize: '15px', color: '#f2fbff',
+        fontStyle: '700', align: 'left', lineSpacing: 10,
+        wordWrap: { width: 680 },
+      }).setOrigin(0.5).setDepth(302));
+
+    const button = add(this.add.rectangle(780, 504, 288, 54, 0x104233, 1)
+      .setStrokeStyle(2, 0x73ffce, 1).setDepth(303)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(780, 504, 'NEXT  >', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
     }).setOrigin(0.5).setDepth(304));
     button.on('pointerdown', () => {
       button.disableInteractive();
       items.forEach(o => o?.destroy?.());
       this._openingPhoneOpen = false;
+      this.closeOpeningOffice?.();
+      this._openingOfficeGlowTween?.remove?.();
+      (this._openingOfficePromptObjects || []).forEach(obj => obj?.destroy?.());
+      this._openingOfficePromptObjects = [];
       this.deliverOpeningCar();
     });
   }
 
-  spawnOpeningCompanion(id, animate = true) {
+  spawnOpeningCompanion(id, animate = true, onShown = null) {
     if (this.openingCompanion?.active) this.openingCompanion.destroy();
     const npc = characters[id];
     if (!npc?.visual?.spriteKey || !this.textures.exists(npc.visual.spriteKey)) return;
-    const targetX = 970;
-    const sprite = this.addGarageCharacter(npc, targetX, 566, 200, 18);
+    const isSayaka = id === 'sayakaFujieda';
+    // Sayaka stands beside the car door, in the foreground, at precisely
+    // the selected driver's full-size presentation height.
+    const targetX = isSayaka ? 548 : 970;
+    const targetHeight = isSayaka ? PLAYER_CFG.targetHeight : 200;
+    const sprite = this.addGarageCharacter(npc, targetX, PLAYER_CFG.feetY, targetHeight, 18);
+    if (isSayaka) sprite.setFlipX(true); // Face toward the player at x=282.
     this.openingCompanion = sprite;
+
     if (animate) {
-      sprite.x = targetX + 260;
       sprite.setAlpha(0);
-      this.tweens.add({ targets: sprite, x: targetX, alpha: 1, duration: 450, ease: 'Sine.easeOut' });
+      (sprite.stageShadows || []).forEach(obj => obj.setAlpha(0));
+      this.tweens.add({
+        targets: [sprite, ...(sprite.stageShadows || [])],
+        alpha: 1,
+        duration: 950,
+        ease: 'Sine.easeInOut',
+        onComplete: () => onShown?.(),
+      });
+    } else {
+      onShown?.();
     }
   }
 
@@ -7221,26 +7262,42 @@ export default class GarageScene extends Phaser.Scene {
     this.selectCar(carId);
     this.renderGaragePage();
 
-    // Translate every wheel and body layer together, preserving original fit.
+    // A roughly four-second garage arrival instead of the old 1.35s launch.
+    // createCarDisplay returns the real wheel images at indices 3 and 4.
+    // Rotate each wheel by travelled distance / its rendered radius so the
+    // rotation slows naturally with the ease-out rather than spinning forever.
     const arrival = (this.selectedDisplay || []).filter(obj => obj?.active && Number.isFinite(obj.x));
+    const wheels = [this.selectedDisplay?.[3], this.selectedDisplay?.[4]]
+      .filter(obj => obj?.active && obj.texture);
     arrival.forEach(obj => { obj.x -= 850; });
+    let lastX = arrival[0]?.x ?? 0;
+
+    if (!arrival.length) {
+      this.spawnOpeningCompanion('sayakaFujieda', true, () =>
+        this.time.delayedCall(1100, () => this.runOpeningStoryIfNeeded()));
+      return;
+    }
+
     this.tweens.add({
-      targets: arrival, x: '+=850', duration: 1350, ease: 'Sine.easeOut',
+      targets: arrival,
+      x: '+=850',
+      duration: 4300,
+      ease: 'Sine.easeOut',
+      onUpdate: () => {
+        const currentX = arrival[0]?.x ?? lastX;
+        const distance = currentX - lastX;
+        lastX = currentX;
+        wheels.forEach(wheel => {
+          const radius = Math.max(8, wheel.displayWidth * 0.5);
+          wheel.angle += (distance / radius) * (180 / Math.PI);
+        });
+      },
       onComplete: () => {
-        const fade = this.add.rectangle(780, 420, 1560, 840, 0x000000, 0)
-          .setDepth(400).setInteractive();
-        this.tweens.add({
-          targets: fade, alpha: 1, duration: 300,
-          onComplete: () => {
-            this.spawnOpeningCompanion('sayakaFujieda', false);
-            this.tweens.add({
-              targets: fade, alpha: 0, duration: 340,
-              onComplete: () => {
-                fade.destroy();
-                this.time.delayedCall(150, () => this.runOpeningStoryIfNeeded());
-              },
-            });
-          },
+        // Let the engine settle, then reveal Sayaka from the car door.
+        this.time.delayedCall(440, () => {
+          this.spawnOpeningCompanion('sayakaFujieda', true, () => {
+            this.time.delayedCall(1200, () => this.runOpeningStoryIfNeeded());
+          });
         });
       },
     });
@@ -7365,6 +7422,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   continueGarageStoryFlow() {
+    // The next Daichi conversation is deliberately deferred for a future
+    // interaction; do not autoplay it or other prologue story prompts.
+    if (this.registry.get('openingChapter') === 'awaitDaichi') return true;
     if (['home', 'magazine', 'delivery', 'station'].includes(this.registry.get('openingChapter'))) return true;
     if (['tutorial', 'daichi'].includes(this.registry.get('openingChapter')))
       return this.runOpeningStoryIfNeeded();
@@ -7375,6 +7435,7 @@ export default class GarageScene extends Phaser.Scene {
 
   runOpeningStoryIfNeeded() {
     const chapter = this.registry.get('openingChapter');
+    if (chapter === 'awaitDaichi') return true;
     if (chapter === 'tutorial') {
       if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
         const result = playMangaCutscene(this, 'openingSayakaKeys', {
@@ -7393,17 +7454,21 @@ export default class GarageScene extends Phaser.Scene {
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
           onComplete: () => {
-            this.registry.set('openingChapter', 'daichi');
+            // Finish this chapter here. The player may look around the
+            // workshop before a later owner-authored interaction begins Daichi.
+            this.registry.set('openingChapter', 'awaitDaichi');
             saveSessionState(this.registry);
-            this.spawnOpeningCompanion('daichiSakamoto');
-            this.time.delayedCall(160, () => this.runOpeningStoryIfNeeded());
+            this.openingCompanion?.destroy?.();
+            this.openingCompanion = null;
           },
         });
         return Boolean(result.played);
       }
-      this.registry.set('openingChapter', 'daichi');
+      this.registry.set('openingChapter', 'awaitDaichi');
       saveSessionState(this.registry);
-      return this.runOpeningStoryIfNeeded();
+      this.openingCompanion?.destroy?.();
+      this.openingCompanion = null;
+      return true;
     }
     // Completed modern profiles must never fall into the legacy first-car cutscene.
     if (chapter === 'done') return false;
