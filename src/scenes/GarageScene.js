@@ -7194,56 +7194,22 @@ export default class GarageScene extends Phaser.Scene {
 
   showOpeningPhoneCall() {
     if (this._openingPhoneOpen || this.registry.get('openingChapter') !== 'delivery') return;
-    // Protect the first-call presentation after reloads. The phone is never
-    // floating over an otherwise empty workshop.
+    // Keep the office visible behind the canonical phone-call bubble.
     if (!this._officeOverlay?.length) showOfficePanel(this);
     this._openingPhoneOpen = true;
-    const items = [];
-    const add = obj => { items.push(obj); return obj; };
-    const firstName = String(this.registry.get('firstName') || 'there').trim() || 'there';
 
-    // Compact phone-call panel, offset right to leave room for the caller
-    // icon. Both the icon and its drop-shadow may overlap the bottom border.
-    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.42)
-      .setDepth(300).setInteractive());
-    add(this.add.rectangle(920, 414, 920, 256, 0x091521, 0.98)
-      .setStrokeStyle(3, 0x62e8c7, 1).setDepth(301));
-    add(this.add.rectangle(920, 290, 920, 8, 0x62e8c7, 1).setDepth(302));
-    add(this.add.text(690, 341, 'INCOMING CALL', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7df0cd',
-    }).setOrigin(0.5).setDepth(303));
-    add(this.add.text(690, 383, 'SAYAKA', {
-      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#f7fcff',
-    }).setOrigin(0.5).setDepth(303));
-
-    if (this.textures.exists('openingIncomingPhone')) {
-      const phone = this.add.image(678, 478, 'openingIncomingPhone').setDepth(304);
-      const image = this.textures.get('openingIncomingPhone').getSourceImage();
-      phone.setScale(Math.min(176 / image.width, 176 / image.height));
-      add(phone);
-    }
-
-    add(this.add.text(1060, 395,
-      "Hey " + firstName + "! I'm just around the corner.\nI've got your new car, meet me in your garage!", {
-        fontFamily: BODY_FONT, fontSize: '16px', color: '#f2fbff',
-        fontStyle: '700', align: 'center', lineSpacing: 9,
-        wordWrap: { width: 580 },
-      }).setOrigin(0.5).setDepth(303));
-
-    const button = add(this.add.rectangle(1090, 501, 248, 50, 0x104233, 1)
-      .setStrokeStyle(2, 0x73ffce, 1).setDepth(303)
-      .setInteractive({ useHandCursor: true }));
-    add(this.add.text(1090, 501, 'NEXT  >', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(304));
-    button.on('pointerdown', () => {
-      button.disableInteractive();
-      items.forEach(o => o?.destroy?.());
-      this._openingPhoneOpen = false;
-      this.closeOpeningOffice?.();
-      this.clearOpeningOfficePrompt();
-      this.deliverOpeningCar();
+    // Every authored cutscene with presentation: 'phone' routes through the
+    // same caller portrait, rounded speech bubble and paged NEXT controls.
+    const result = playMangaCutscene(this, 'openingSayakaPhoneCall', {
+      onComplete: () => {
+        this._openingPhoneOpen = false;
+        this.closeOpeningOffice?.();
+        this.clearOpeningOfficePrompt();
+        this.deliverOpeningCar();
+      },
+      onCancel: () => { this._openingPhoneOpen = false; },
     });
+    if (!result.played) this._openingPhoneOpen = false;
   }
 
   spawnOpeningCompanion(id, animate = true, onShown = null) {
