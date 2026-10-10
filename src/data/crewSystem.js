@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261006-r388';
+import { cars } from './cars.js?v=20261011-r479';
 import {
   CREW_REGIONS,
   getRegionalCrewRoster,
@@ -11,7 +11,7 @@ import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
-import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261007-r404';
+import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
