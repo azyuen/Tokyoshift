@@ -211,10 +211,10 @@ test('Sayaka calls inside the office and addresses the chosen first name', () =>
   assert.match(office, /scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
   assert.doesNotMatch(office, /closeOffice\(\);\s*scene\.completeOpeningMagazineChoice/);
   assert.match(garage, /if \(!this\._officeOverlay\?\.length\) showOfficePanel\(this\)/);
-  assert.match(garage, /INCOMING CALL/);
-  assert.match(garage, /SAYAKA/);
-  assert.match(garage, /firstName = String\(this\.registry\.get\('firstName'\)/);
-  assert.match(garage, /I've got your new car, meet me in your garage!/);
+  assert.match(garage, /playMangaCutscene\(this, 'openingSayakaPhoneCall'/);
+  assert.equal(CUTSCENES.openingSayakaPhoneCall.presentation, 'phone');
+  assert.equal(CUTSCENES.openingSayakaPhoneCall.callerId, 'sayakaFujieda');
+  assert.match(CUTSCENES.openingSayakaPhoneCall.pages[0].text, /I've got your new car, meet me in your garage!/);
   assert.match(garage, /this\.closeOpeningOffice\?\.\(\)/);
 });
 
@@ -331,14 +331,52 @@ test('authored 02–03 spread pauses, then reveals thought and one shared car in
   assert.ok(!magazine.includes(String.raw`in…\\nbut which one would be better?`));
 });
 
-test('the in-office Sayaka phone call shows uploaded artwork and real line breaks', () => {
+test('the in-office Sayaka call uses the canonical round portrait bubble and phone icon', async () => {
   const garage = source('src/scenes/GarageScene.js');
-  assert.match(garage, /assets\/Ui\/phone\.png\?v=20261011-r475/);
+  const manga = source('src/ui/MangaCutscene.js');
+  const phone = source('src/ui/PhoneConversation.js');
+  const { formatPhoneMessage, getPhoneCallerPortrait } =
+    await import('../src/ui/PhoneConversation.js');
+  const definition = CUTSCENES.openingSayakaPhoneCall;
+  assert.equal(definition.presentation, 'phone');
+  assert.equal(definition.once, false, 'A delivery save can replay the phone call');
+  assert.equal(definition.callerPose, 'idle');
+  assert.equal(definition.pages.length, 1);
   assert.ok(existsSync('assets/Ui/phone.png'));
-  assert.match(garage, /this\.add\.image\(678, 478, 'openingIncomingPhone'\)/);
-  assert.match(garage, /rectangle\(920, 414, 920, 256/);
-  assert.ok(garage.includes(String.raw`around the corner.\nI've got your new car`));
-  assert.ok(!garage.includes(String.raw`around the corner.\\nI've got your new car`));
+  assert.match(garage, /assets\/Ui\/phone\.png/);
+  assert.match(garage, /playMangaCutscene\(this, 'openingSayakaPhoneCall'/);
+  assert.doesNotMatch(garage, /scene\.add\.rectangle\(920, 414, 920, 256/);
+  assert.match(manga, /definition\.presentation === 'phone'/);
+  assert.match(manga, /scene\?\._phoneConversation\?\.active/);
+  assert.match(manga, /playPhoneConversation\(scene, \{/);
+  assert.match(phone, /fillRoundedRect\(BOX\.x, BOX\.y, BOX\.width, BOX\.height/);
+  assert.match(phone, /fillTriangle\(/);
+  assert.match(phone, /fillCircle\(PORTRAIT\.x, PORTRAIT\.y, PORTRAIT\.radius\)/);
+  assert.match(phone, /image\.setMask\(portraitMask\)/);
+  assert.match(phone, /setInteractive\(\{ useHandCursor: true \}\)/);
+  assert.match(phone, /PHONE_ICON_KEY = 'openingIncomingPhone'/);
+  assert.equal(getPhoneCallerPortrait('sayakaFujieda', 'idle')?.path,
+    'assets/Characters/Main/home_sayaka_fujieda_normal.png');
+  const line = formatPhoneMessage(definition.pages[0].text,
+    { PLAYER_FIRST_NAME: 'Ethan' });
+  assert.equal(line, "Hey Ethan! I'm just around the corner. I've got your new car, meet me in your garage!");
+  assert.equal(formatPhoneMessage(String.raw`First line\nSecond line`), 'First line\nSecond line');
+  assert.equal(formatPhoneMessage('Hi {PLAYER_FIRST_NAME}', { PLAYER_FIRST_NAME: 'Jun' }), 'Hi Jun');
+});
+
+test('phone style is reusable for multiple speakers and dialogue pages', () => {
+  const phone = source('src/ui/PhoneConversation.js');
+  const manga = source('src/ui/MangaCutscene.js');
+  assert.match(phone, /callerId = ''/);
+  assert.match(phone, /callerName = ''/);
+  assert.match(phone, /callerPose = 'idle'/);
+  assert.match(phone, /pages = \[\]/);
+  assert.match(phone, /state\.pageIndex\+\+/);
+  assert.match(phone, /showPage\(\)/);
+  assert.match(phone, /onComplete\?\.\(\{ reason, pages: normalisedPages\.length \}\)/);
+  assert.match(phone, /if \(scene\._phoneConversation === state\) scene\._phoneConversation = null/);
+  assert.match(manga, /pages: definition\.pages \|\| \[\]/);
+  assert.match(manga, /if \(!context\.preview && definition\.once !== false\)/);
 });
 
 test('Sayaka expression assets are loaded in the manga portrait pose map', async () => {
