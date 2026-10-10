@@ -1,6 +1,6 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars } from '../data/cars.js?v=20261006-r388';
-import { getBaseCarId } from '../data/carOwnership.js?v=20261006-r388';
+import { cars } from '../data/cars.js?v=20261011-r479';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
 import {
   getTunerShopForRegion,
@@ -8,19 +8,19 @@ import {
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20261006-r392';
+} from '../data/tunerShops.js?v=20261011-r479';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261007-r422';
+} from '../state/GameState.js?v=20261011-r479';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
@@ -40,7 +40,7 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261009-r451';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
