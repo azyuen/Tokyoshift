@@ -6,7 +6,7 @@ import {
   getCarMagazineMeta,
   getCarMagazineSightings,
   getActiveMagazineIssue,
-} from '../data/carMagazine.js?v=20261006-r388';
+} from '../data/carMagazine.js?v=20261011-r472';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
