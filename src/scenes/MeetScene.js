@@ -78,7 +78,7 @@ import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
-  TUNER_TEAM_COMPLETION_REWARD,
+  getRegionalChampionshipCashReward,
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
   TUNER_TEAM_REOFFER_MIN_VISITS,
@@ -86,7 +86,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261010-r466';
+} from '../data/tunerChallenges.js?v=20261011-r479';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
@@ -1554,9 +1554,9 @@ export default class MeetScene extends Phaser.Scene {
         this.registry.set('carCoupons', coupons);
       }
 
-      this.registry.set('cash', cash + TUNER_TEAM_COMPLETION_REWARD);
+      this.registry.set('cash', cash + getRegionalChampionshipCashReward(regionId));
       this.cashText?.setText(
-        '¥ ' + Number(cash + TUNER_TEAM_COMPLETION_REWARD).toLocaleString('en-US')
+        '¥ ' + Number(cash + getRegionalChampionshipCashReward(regionId)).toLocaleString('en-US')
       );
 
       state = this.setTunerChallengeState(regionId, {
@@ -1570,7 +1570,7 @@ export default class MeetScene extends Phaser.Scene {
         donorLabel,
         couponCount,
         couponRequired,
-        cash: TUNER_TEAM_COMPLETION_REWARD,
+        cash: getRegionalChampionshipCashReward(regionId),
       };
 
       saveSessionState(this.registry);
