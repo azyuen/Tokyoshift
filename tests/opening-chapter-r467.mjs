@@ -244,12 +244,55 @@ test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => 
   assert.match(goodbye[3].text, /drive safely/i);
 });
 
-test('the player may explore after Sayaka leaves; Daichi is intentionally deferred', () => {
+test('Sayaka leaves the player at a resumable workshop checkpoint before a separate tap', () => {
   const state = normaliseState({ ...pending('awaitDaichi'), ownedCarIds: ['ae86'], selectedCarId: 'ae86' });
   assert.equal(state.openingChapter, 'awaitDaichi');
   const garage = source('src/scenes/GarageScene.js');
   assert.match(garage, /this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
   assert.match(garage, /this\.openingCompanion\?\.destroy\?\.\(\)/);
   assert.match(garage, /if \(chapter === 'awaitDaichi'\) return true/);
-  assert.match(garage, /continueGarageStoryFlow\(\) \{[\s\S]*?if \(this\.registry\.get\('openingChapter'\) === 'awaitDaichi'\) return true/);
+  assert.match(garage, /if \(chapter === 'awaitDaichi'\) \{\s*this\.armDaichiWorkshopTap\(\);/);
+  assert.match(garage, /delayedCall\(120, \(\) => this\.armDaichiWorkshopTap\(\)\)/);
+});
+
+test('the very next workshop tap triggers the full-size Daichi chassis pose', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /armDaichiWorkshopTap\(\) \{/);
+  assert.match(garage, /rectangle\(780, 420, 1560, 840, 0x000000, 0\.001\)/);
+  assert.match(garage, /shield\.once\('pointerdown', \(\) =>/);
+  assert.match(garage, /this\.startDaichiWorkshopArrival\(\)/);
+  assert.match(garage, /this\.registry\.set\('openingChapter', 'daichi'\)/);
+  assert.match(garage, /this\.startDaichiWorkshopArrival\(true\)/);
+  assert.match(garage, /textureKey: 'daichiChassisTools'/);
+  assert.match(garage, /getDaichiChassisPosition\(\) \{/);
+  assert.match(garage, /DAICHI_CFG\.chassis/);
+  assert.match(garage, /targetHeight: chassisCfg\.targetHeight/);
+  assert.match(garage, /anchorY: 1517 \/ 1536/);
+  assert.match(garage, /duration: 950/);
+  assert.doesNotMatch(garage, /spawnOpeningCompanion\('daichiSakamoto', false\)/);
+});
+
+test('Daichi dialogue begins with the father and stock car but keeps later tuning exposition', () => {
+  const pages = CUTSCENES.openingDaichiAfterSayaka.pages;
+  assert.match(pages[0].text, /after all these years talking about driving/i);
+  assert.match(pages[1].text, /my dad would get me one/);
+  assert.match(pages[2].text, /picked a good one/);
+  assert.match(pages[2].text, /ex-pro driver/);
+  assert.match(pages[3].text, /looks stock to me/);
+  assert.match(pages[4].text, /Good thing your childhood friend/);
+  assert.match(pages.slice(5).map(p => p.text).join(' '), /Tokyo has a whole drag scene/);
+});
+
+test('the Daichi story finishes with a normal, cleaned workshop and no stale gold prompt', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /clearOpeningOfficePrompt\(\) \{/);
+  assert.match(garage, /this\._openingOfficeGlowTween\?\.remove\?\.\(\)/);
+  assert.match(garage, /this\.clearOpeningOfficePrompt\(\);\s*this\.deliverOpeningCar\(\)/);
+  assert.match(garage, /restoreNormalWorkshopAfterOpening\(\) \{/);
+  assert.match(garage, /this\._openingDaichiObjects = \[\]/);
+  assert.match(garage, /this\.selectCar\(this\.selectedCarId\)/);
+  assert.match(garage, /this\.renderGaragePage\(\)/);
+  assert.match(garage, /this\.setWorkshopHomeHotspotsVisible\(true\)/);
+  assert.match(garage, /this\.registry\.set\('openingChapter', 'done'\);[\s\S]*?this\.restoreNormalWorkshopAfterOpening\(\);/);
+  assert.doesNotMatch(garage, /this\.time\.delayedCall\(160, \(\) => this\.showCentralTokyoInvitationIfNeeded\(\)\);\s*return;/);
 });

@@ -40,7 +40,7 @@ import {
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r473';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r473';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r474';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -503,9 +503,9 @@ export default class GarageScene extends Phaser.Scene {
     this.drawScene();
     if (!this.crewMode && this.registry.get('openingChapter') === 'tutorial') {
       this.spawnOpeningCompanion('sayakaFujieda', false);
-    } else if (!this.crewMode && this.registry.get('openingChapter') === 'daichi') {
-      this.spawnOpeningCompanion('daichiSakamoto', false);
     }
+    // The Daichi chapter uses the full chassis-tuning pose, placed only
+    // through startDaichiWorkshopArrival — never the tiny generic NPC.
 
     this.time.addEvent({
       delay: 5000,
@@ -6717,25 +6717,33 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
-  addDaichiChassisHelper() {
+  getDaichiChassisPosition() {
     const layout = this.heroCarLayout;
-    if (!layout) return;
-
+    if (!layout) return null;
     const chassisCfg = DAICHI_CFG.chassis;
-    const x = Phaser.Math.Clamp(
-      layout.frontWheelX + chassisCfg.frontWheelOffsetX,
-      layout.x + chassisCfg.minFromCarCentre,
-      STAGE.x + STAGE.w - chassisCfg.rightInset
-    );
+    return {
+      x: Phaser.Math.Clamp(
+        layout.frontWheelX + chassisCfg.frontWheelOffsetX,
+        layout.x + chassisCfg.minFromCarCentre,
+        STAGE.x + STAGE.w - chassisCfg.rightInset
+      ),
+      feetY: chassisCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
+      targetHeight: chassisCfg.targetHeight,
+    };
+  }
+
+  addDaichiChassisHelper() {
+    const placement = this.getDaichiChassisPosition();
+    if (!placement) return;
 
     this.addDaichiTuningHelper({
       textureKey: 'daichiChassisTools',
-      x,
+      x: placement.x,
       // Chassis work reads better with Daichi behind the car rather than
       // standing over the foreground. Lift and shrink him so the car remains
       // the main subject while his tools/pose are still visible.
-      feetY: chassisCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
-      targetHeight: chassisCfg.targetHeight,
+      feetY: placement.feetY,
+      targetHeight: placement.targetHeight,
       depth: 9.4,
       anchorY: 1517 / 1536,
       useGarageCharacterShadow: false,
@@ -7160,6 +7168,17 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  clearOpeningOfficePrompt() {
+    this._openingOfficeGlowTween?.remove?.();
+    this._openingOfficeGlowTween = null;
+    (this._openingOfficePromptObjects || []).forEach(obj => {
+      this.tweens.killTweensOf(obj);
+      obj?.destroy?.();
+    });
+    this._openingOfficePromptObjects = [];
+    this._openingOfficePrompt = false;
+  }
+
   completeOpeningMagazineChoice(carId) {
     if (this.registry.get('openingChapter') !== 'magazine' ||
         !['ae86', 'ef'].includes(carId)) return;
@@ -7211,9 +7230,7 @@ export default class GarageScene extends Phaser.Scene {
       items.forEach(o => o?.destroy?.());
       this._openingPhoneOpen = false;
       this.closeOpeningOffice?.();
-      this._openingOfficeGlowTween?.remove?.();
-      (this._openingOfficePromptObjects || []).forEach(obj => obj?.destroy?.());
-      this._openingOfficePromptObjects = [];
+      this.clearOpeningOfficePrompt();
       this.deliverOpeningCar();
     });
   }
@@ -7421,12 +7438,118 @@ export default class GarageScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
+  armDaichiWorkshopTap() {
+    if (this.registry.get('openingChapter') !== 'awaitDaichi' ||
+        this._daichiTapShield?.active || this._daichiEntryStarted ||
+        !this.sys?.isActive?.()) return;
+    // Transparent input surface: the NEXT pointer event that closed the
+    // Sayaka cutscene must finish before a NEW tap can summon Daichi.
+    const shield = this.add.rectangle(780, 420, 1560, 840, 0x000000, 0.001)
+      .setDepth(177).setInteractive({ useHandCursor: true });
+    this._daichiTapShield = shield;
+    shield.once('pointerdown', () => {
+      shield.disableInteractive();
+      shield.destroy();
+      this._daichiTapShield = null;
+      this.startDaichiWorkshopArrival();
+    });
+  }
+
+  startDaichiWorkshopArrival(resume = false) {
+    const chapter = this.registry.get('openingChapter');
+    if (this._daichiEntryStarted ||
+        (!resume && chapter !== 'awaitDaichi') ||
+        (resume && chapter !== 'daichi')) return;
+    this._daichiEntryStarted = true;
+    this._daichiTapShield?.destroy?.();
+    this._daichiTapShield = null;
+    this.clearOpeningOfficePrompt();
+    // Save the tap before preparing assets so a refresh midway can resume.
+    this.registry.set('openingChapter', 'daichi');
+    saveSessionState(this.registry);
+
+    // This is the *same* asset, footprint, elevation and depth as when the
+    // player selects chassis tuning, not the tiny generic companion sprite.
+    this.ensureGarageTuningAssets(() => {
+      if (!this.sys?.isActive?.()) return;
+      const placement = this.getDaichiChassisPosition();
+      const objects = [];
+      let sprite = null;
+      if (placement) {
+        sprite = this.addDaichiTuningHelper({
+          textureKey: 'daichiChassisTools',
+          ...placement,
+          depth: 9.4,
+          anchorY: 1517 / 1536,
+          useGarageCharacterShadow: false,
+          shadowWidth: 86,
+          shadowHeight: 20,
+          shadowOffsetY: -6,
+          objectList: objects,
+        });
+      }
+      // Graceful fallback for failed tuning-asset loads.
+      if (!sprite && placement) {
+        sprite = this.addGarageCharacter(
+          characters.daichiSakamoto, placement.x, placement.feetY,
+          placement.targetHeight, 9.4
+        );
+        objects.push(sprite, ...(sprite.stageShadows || []));
+      }
+      this._openingDaichiObjects = objects;
+      this.openingCompanion = sprite;
+      if (!objects.length) {
+        this._daichiEntryStarted = false;
+        this.time.delayedCall(220, () => this.runOpeningStoryIfNeeded());
+        return;
+      }
+      objects.forEach(obj => obj.setAlpha(0));
+      this.tweens.add({
+        targets: objects,
+        alpha: 1,
+        duration: 950,
+        ease: 'Sine.easeInOut',
+        onComplete: () => this.time.delayedCall(500, () => this.runOpeningStoryIfNeeded()),
+      });
+    }, { includeVisualMods: false });
+  }
+
+  restoreNormalWorkshopAfterOpening() {
+    this._daichiTapShield?.destroy?.();
+    this._daichiTapShield = null;
+    this._daichiEntryStarted = false;
+    this.clearOpeningOfficePrompt();
+    this.closeOpeningOffice?.();
+    this.openingCompanion = null;
+    (this._openingDaichiObjects || []).forEach(obj => {
+      this.tweens.killTweensOf(obj);
+      obj?.destroy?.();
+    });
+    this._openingDaichiObjects = [];
+    // Refresh the actual hero car and controls, without rerunning a first-car
+    // choice or adding any special introduction overlay.
+    if (this.selectedCarId && cars[this.selectedCarId]) {
+      this.selectCar(this.selectedCarId);
+      this.renderGaragePage();
+      this.selectUpgrade(null);
+    }
+    this.setWorkshopHomeHotspotsVisible(true);
+  }
+
   continueGarageStoryFlow() {
-    // The next Daichi conversation is deliberately deferred for a future
-    // interaction; do not autoplay it or other prologue story prompts.
-    if (this.registry.get('openingChapter') === 'awaitDaichi') return true;
-    if (['home', 'magazine', 'delivery', 'station'].includes(this.registry.get('openingChapter'))) return true;
-    if (['tutorial', 'daichi'].includes(this.registry.get('openingChapter')))
+    // A single screen tap now starts Daichi's visit. A save interrupted after
+    // the tap can resume the same fade-in without needing a second tap.
+    const chapter = this.registry.get('openingChapter');
+    if (chapter === 'awaitDaichi') {
+      this.armDaichiWorkshopTap();
+      return true;
+    }
+    if (chapter === 'daichi') {
+      this.startDaichiWorkshopArrival(true);
+      return true;
+    }
+    if (['home', 'magazine', 'delivery', 'station'].includes(chapter)) return true;
+    if (chapter === 'tutorial')
       return this.runOpeningStoryIfNeeded();
     if (this.showEthanYuenRewardIfNeeded()) return true;
     if (this.runOpeningStoryIfNeeded()) return true;
@@ -7454,12 +7577,14 @@ export default class GarageScene extends Phaser.Scene {
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
           onComplete: () => {
-            // Finish this chapter here. The player may look around the
-            // workshop before a later owner-authored interaction begins Daichi.
+            // Give the player one quiet workshop beat before their next
+            // separate tap summons Daichi.
             this.registry.set('openingChapter', 'awaitDaichi');
             saveSessionState(this.registry);
             this.openingCompanion?.destroy?.();
             this.openingCompanion = null;
+            this.clearOpeningOfficePrompt();
+            this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
           },
         });
         return Boolean(result.played);
@@ -7468,6 +7593,8 @@ export default class GarageScene extends Phaser.Scene {
       saveSessionState(this.registry);
       this.openingCompanion?.destroy?.();
       this.openingCompanion = null;
+      this.clearOpeningOfficePrompt();
+      this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
       return true;
     }
     // Completed modern profiles must never fall into the legacy first-car cutscene.
@@ -7521,6 +7648,8 @@ export default class GarageScene extends Phaser.Scene {
           if (this.registry.get('openingChapter') === 'daichi') {
             this.registry.set('openingChapter', 'done');
             saveSessionState(this.registry);
+            this.restoreNormalWorkshopAfterOpening();
+            return;
           }
           this.time.delayedCall(160, () => this.showCentralTokyoInvitationIfNeeded());
         },
