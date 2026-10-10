@@ -58,6 +58,22 @@ export const CUTSCENES = {
     ],
     finalActionLabel: 'SAY GOODBYE',
   },
+  openingSayakaPhoneCall: {
+    id: 'openingSayakaPhoneCall',
+    category: 'OPENING / PHONE',
+    testerLabel: 'Opening — Sayaka Calls from Around the Corner',
+    title: 'SHINONOME // INCOMING CALL',
+    once: false, // A save reloaded during delivery should still receive the call.
+    presentation: 'phone',
+    callerId: 'sayakaFujieda',
+    callerPose: 'homeNormal',
+    callerName: 'SAYAKA',
+    label: 'INCOMING CALL',
+    pages: [
+      { text: "Hey {PLAYER_FIRST_NAME}! I'm just around the corner. I've got your new car, meet me in your garage!" },
+    ],
+  },
+
   openingDaichiAfterSayaka: {
     id: 'openingDaichiAfterSayaka',
     category: 'OPENING / STORY',
@@ -910,6 +926,7 @@ export const CUTSCENES = {
 export const CUTSCENE_ORDER = [
   'openingSayakaKeys',
   'openingSayakaFarewell',
+  'openingSayakaPhoneCall',
   'openingDaichiAfterSayaka',
   'tunerTeamCallout',
   'regionalCrewIntroduction',
