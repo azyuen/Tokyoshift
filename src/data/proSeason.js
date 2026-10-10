@@ -129,7 +129,7 @@ export function estimateCrewHeat(unit,rng,difficulty='STANDARD',opponent=false) 
   const adjustment=opponent?(difficulty==='EASY'?.4:difficulty==='HARD'?-.18:0):0;
   return Number(clamp(15.2*Math.pow(100/Math.max(15,unit.performance),.23)+(1-unit.skill)*3.5+adjustment+(rng()+rng()-1)*.6,7,29).toFixed(3));
 }
-export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
+export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven=false) {
   const c=normaliseProCircuitState(value(source,'proCircuit')),f=getCrewFixture(c),t=c.activeCrewEvent;
   if(!f||f.id!==fixtureId)return {error:'SAVED FIXTURE UNAVAILABLE'};
   if(f.prepared)return {circuit:c,fixture:f.prepared};
@@ -137,7 +137,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
-    const own=estimateCrewHeat(u,rng),other=estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
+    const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
   });
   c.activeCrewEvent={...clone(t),fixture:{id:f.id,lineup:[...lineupIds],heats,revealed:0}};
@@ -146,6 +146,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
 export function revealCrewSeriesHeat(raw,fixtureId,all=false) {
   const c=normaliseProCircuitState(raw),f=getCrewFixture(c);
   if(!f||f.id!==fixtureId||f.prepared?.heats?.length!==3)return {error:'NO PREPARED FIXTURE'};
+  if(f.prepared.control==='PLAYER')return {error:'DRIVE THE HEAT TO RECORD A RESULT'};
   c.activeCrewEvent=clone(c.activeCrewEvent);const fixture=c.activeCrewEvent.fixture;
   fixture.revealed=all?3:Math.min(3,fixture.revealed+1);
   return {circuit:c,fixture};
@@ -166,6 +167,7 @@ export function getCrewSeriesTable(t) {
 export function settleCrewSeriesFixture(raw,fixtureId) {
   const c=normaliseProCircuitState(raw),f=getCrewFixture(c),t=clone(c.activeCrewEvent);
   if(!f||f.id!==fixtureId||f.prepared?.revealed!==3||c.completedEventIds.includes(t.id))return {circuit:c,status:'STALE',cashPrize:0};
+  if(f.prepared.control==='PLAYER'&&f.prepared.heats.some(h=>h.pending))return {circuit:c,status:'STALE',cashPrize:0};
   const wins=f.prepared.heats.filter(h=>h.won).length;
   const fixtures=t.schedule[t.round].map((pair,i)=>pair.includes(PLAYER)?{ids:pair,score:pair.map(id=>id===PLAYER?wins:3-wins)}:simulateTeamPair(t,pair,t.id+':'+t.round+':'+i));
   t.history.push({round:t.round,fixtures,playerHeats:clone(f.prepared.heats)});t.round++;t.fixture=null;
@@ -206,4 +208,48 @@ export function assignCrewSeriesCar(source,driverId,carId) {
   const unit=getCrewSeriesUnits(source,assignments).find(u=>u.id===driverId);
   if(!unit?.validAssignment||unit.carId!==carId)return {error:'CAR NOT ELIGIBLE'};
   c.activeCrewEvent={...clone(t),assignments};return {circuit:c};
+}
+
+// Player-driven fixtures supersede the R470 manager presentation. Preserve
+// already revealed legacy results, but never precompute an unplayed heat.
+export function preparePlayerCrewFixture(source,lineupIds,fixtureId) {
+  const out=prepareCrewSeriesFixture(source,lineupIds,fixtureId,true);
+  if(out.error)return out;
+  out.circuit.activeCrewEvent=clone(out.circuit.activeCrewEvent);
+  const t=out.circuit.activeCrewEvent,f=t.fixture;
+  if(f.control==='PLAYER')return {circuit:out.circuit,fixture:f};
+  const states=value(source,'carStates',{});
+  f.control='PLAYER';
+  f.heats=f.heats.map((h,i)=>({...h,playerState:clone(states[h.carId]||{}),
+    ...(i<f.revealed?{}:{ownSeconds:0,opponentSeconds:0,won:false,pending:true})}));
+  return {circuit:out.circuit,fixture:f};
+}
+
+export function getPlayerCrewHeat(raw) {
+  const f=getCrewFixture(raw),p=f?.prepared;
+  if(p?.control!=='PLAYER'||p.revealed>=3)return null;
+  const index=p.revealed,h=p.heats[index];
+  if(!h?.pending||!cars[h.carId])return null;
+  return {id:f.id+':heat:'+index,fixtureId:f.id,index,round:f.round,
+    ...h,opponent:f.opponent.drivers[index],opponentName:f.opponent.name};
+}
+
+export function settlePlayerCrewHeat(raw,heatId,results) {
+  const c=normaliseProCircuitState(raw),h=getPlayerCrewHeat(c);
+  if(!h||h.id!==heatId)return {circuit:c,status:'STALE_HEAT',cashPrize:0};
+  const own=results?.find(r=>r.id==='player'),other=results?.find(r=>r.id==='ai-1');
+  const valid=r=>r&&typeof r.disqualified==='boolean'&&(r.finishSeconds===null||
+    (Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+  if(!valid(own)||!valid(other))return {circuit:c,status:'ERROR',cashPrize:0};
+  const finished=r=>!r.disqualified&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0;
+  const won=finished(own)&&(!finished(other)||own.finishSeconds<=other.finishSeconds);
+  c.activeCrewEvent=clone(c.activeCrewEvent);
+  const fixture=c.activeCrewEvent.fixture;
+  fixture.heats[h.index]={...fixture.heats[h.index],pending:false,won,
+    ownSeconds:own.finishSeconds||0,opponentSeconds:other.finishSeconds||0,
+    ownStatus:own.disqualified?'DQ':finished(own)?'FINISHED':'DNF',
+    opponentStatus:other.disqualified?'DQ':finished(other)?'FINISHED':'DNF'};
+  fixture.revealed++;
+  return {circuit:c,status:'CREW_HEAT',won,heatNumber:h.index+1,
+    wins:fixture.heats.slice(0,fixture.revealed).filter(r=>r.won).length,cashPrize:0};
 }
