@@ -11,7 +11,7 @@ import {
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
-const PHONE_ICON_PATH = 'assets/Ui/phone.png?v=20261011-r478';
+const PHONE_ICON_PATH = 'assets/Ui/phone.png?v=20261011-r480';
 const DEPTH = 305;
 // Compact scale: the bubble stays legible on phone-sized game canvases.
 const BOX = Object.freeze({ x: 472, y: 326, width: 804, height: 178, radius: 27 });
