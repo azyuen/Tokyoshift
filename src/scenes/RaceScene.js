@@ -14,8 +14,8 @@ import {
   getStreetSignalFrame,
 } from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
-import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
+import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -26,14 +26,14 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { engines } from '../data/engines.js?v=20261004-r333';
+import { engines } from '../data/engines.js?v=20261011-r479';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
-import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261010-r468';
+import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
-import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261008-r430';
+import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261011-r479';
 import {
   characters,
   getCharacterAssetUrl,
@@ -50,7 +50,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261011-r476';
+} from '../state/GameState.js?v=20261011-r479';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
@@ -63,12 +63,12 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js?v=20261011-r479';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
 } from '../data/careerProgression.js?v=20261010-r468';
-import { getTunerShopForRegion } from '../data/tunerShops.js?v=20260926-r212';
+import { getTunerShopForRegion } from '../data/tunerShops.js?v=20261011-r479';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
   getRegionalChampionshipCashReward,
@@ -81,8 +81,8 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261011-r476';
-import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261006-r388';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -98,7 +98,7 @@ import {
   areAllCrewBattlesComplete,
   getCrewMembers,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261007-r410';
+} from '../data/crewSystem.js?v=20261011-r479';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
