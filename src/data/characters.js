@@ -2230,12 +2230,19 @@ export function getCharacterVisualAsset(characterId, pose = 'idle', options = {}
   if (!visual) return null;
 
   const requestedPose = String(pose || 'idle').trim().toLowerCase() || 'idle';
-  const customPose = visual.poseAssets?.[requestedPose];
+  // The portrait renderer normalises pose names to lowercase, whereas many
+  // authored poseAssets keys use camelCase (homeSad, homeHappy, homeBlushing).
+  // Resolve them case-insensitively or the game silently uses the idle sprite.
+  const poseAssets = visual.poseAssets || {};
+  const authoredPoseKey = Object.keys(poseAssets).find(
+    key => key.toLowerCase() === requestedPose
+  );
+  const customPose = authoredPoseKey ? poseAssets[authoredPoseKey] : null;
   if (customPose?.key || customPose?.path) {
     return {
       key: customPose.key || visual.spriteKey,
       path: customPose.path || visual.path,
-      pose: requestedPose,
+      pose: authoredPoseKey,
       fallback: false,
     };
   }
