@@ -43,6 +43,8 @@ test('retired EVO IX cars preserve per-car tuning and garages alongside a real E
       evo9__copy2: 'shinonomeWarehouseStrip',
     },
     carCoupons: { evo9: 3, evo6: 2 },
+    selectedOpponentCarId: 'evo9',
+    meetRosters: { odaiba: [{ carId: 'evo9', characterId: 'rival-a' }] },
   };
   const migrated = migrateRetiredEvoIX(legacy);
   assert.deepEqual(migrated.ownedCarIds, ['evo6', 'evo6__copy2', 'evo6__copy3']);
@@ -53,6 +55,8 @@ test('retired EVO IX cars preserve per-car tuning and garages alongside a real E
   assert.equal(migrated.carGarageLocations.evo6__copy3, 'shinonomeWarehouseStrip');
   assert.equal(migrated.carCoupons.evo6, 5);
   assert.equal(migrated.carCoupons.evo9, undefined);
+  assert.equal(migrated.selectedOpponentCarId, 'evo6');
+  assert.equal(migrated.meetRosters.odaiba[0].carId, 'evo6');
   assert.deepEqual(migrateRetiredEvoIX(migrated), migrated);
   assert.equal(legacy.selectedCarId, 'evo9__copy2', 'migration must not mutate original save');
 });
