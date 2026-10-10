@@ -1,8 +1,8 @@
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
 import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
 import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261006-r388';
-import { showMagazinePanel } from './CarHistoryPanel.js?v=20261010-r467';
-import { showOpeningMagazine } from './OpeningMagazine.js?v=20261010-r467';
+import { showMagazinePanel } from './CarHistoryPanel.js?v=20261011-r472';
+
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -248,12 +248,14 @@ export function showOfficePanel(scene) {
   back.on('pointerdown', closeOffice);
 
   const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
-  const openMagazine = () => openingMagazine
-    ? showOpeningMagazine(scene, carId => {
-        closeOffice();
-        scene.completeOpeningMagazineChoice?.(carId);
-      })
-    : showMagazinePanel(scene);
+  // One canonical Issue 01 viewer for the first read and every later visit.
+  // The magazine itself enforces the temporary page cap during onboarding.
+  const openMagazine = () => showMagazinePanel(scene, openingMagazine ? {
+    onChoose: carId => {
+      closeOffice();
+      scene.completeOpeningMagazineChoice?.(carId);
+    },
+  } : {});
 
   if (openingMagazine) {
     const instruction = add(scene.add.text(

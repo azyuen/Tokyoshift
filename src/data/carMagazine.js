@@ -6,9 +6,11 @@ export const MAGAZINE_ISSUES = Object.freeze({
     id: 1,
     label: 'ISSUE 01',
     coverKey: 'magazineCover01',
-    coverPath: 'assets/Ui/magazine_cover_01.webp',
+    coverPath: 'assets/Magazine/01/cover.webp',
+    adKey: 'magazineAutoMarketAd01',
+    adPath: 'assets/Magazine/01/automarket_ad.webp',
     insetKey: 'magazineInset01',
-    insetPath: 'assets/Ui/magazine_inset_01.webp',
+    insetPath: 'assets/Magazine/01/contents.webp',
   }),
 });
 
