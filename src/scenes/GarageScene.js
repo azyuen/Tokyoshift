@@ -342,11 +342,15 @@ export default class GarageScene extends Phaser.Scene {
       const magazineIssue = getActiveMagazineIssue(this.registry);
       queueImage(
         magazineIssue?.coverKey,
-        magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20260929-r278' : null
+        magazineIssue?.coverPath ? magazineIssue.coverPath + '?v=20261011-r472' : null
+      );
+      queueImage(
+        magazineIssue?.adKey,
+        magazineIssue?.adPath ? magazineIssue.adPath + '?v=20261011-r472' : null
       );
       queueImage(
         magazineIssue?.insetKey,
-        magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20260929-r278' : null
+        magazineIssue?.insetPath ? magazineIssue.insetPath + '?v=20261011-r472' : null
       );
     }
 
