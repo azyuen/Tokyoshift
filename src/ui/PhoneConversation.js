@@ -153,7 +153,7 @@ export function playPhoneConversation(scene, {
       const source = texture.getSourceImage();
       const w = Number(source?.naturalWidth || source?.width || 1);
       const h = Number(source?.naturalHeight || source?.height || 1);
-      const cropSize = Math.max(1, Math.min(w * 0.84, h * 0.42));
+      const cropSize = Math.max(1, Math.min(w * 0.72, h * 0.28));
       const cropX = (w - cropSize) * 0.5;
       // Character artwork includes a full-length body; prioritise the head.
       const cropY = Math.min(h - cropSize, Math.max(0, h * 0.035));
