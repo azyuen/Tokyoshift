@@ -98,13 +98,6 @@ export const engines = {
     torqueCurve: [[1000, 145], [2000, 220], [3000, 335], [3500, 373],
       [4500, 370], [5500, 345], [6500, 300], [7500, 250], [7700, 230]],
   },
-  '4g63t_evo9': {
-    id: '4g63t_evo9', name: 'Mitsubishi 4G63T MIVEC', idleRPM: 850,
-    redlineRPM: 7500, limiterRPM: 7700, inertia: 0.20,
-    referenceBoostBar: 1.0, offBoostTorqueFraction: 0.5,
-    torqueCurve: [[1000, 150], [2000, 240], [3000, 350], [3500, 392],
-      [4500, 380], [5500, 350], [6500, 305], [7500, 250], [7700, 230]],
-  },
   '4age': {
     id: '4age',
     name: 'Toyota 4A-GE 1.6L DOHC',
