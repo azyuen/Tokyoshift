@@ -1,4 +1,4 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
 import { saveSessionState } from '../state/GameState.js?v=20261010-r467';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
