@@ -3,7 +3,7 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261011-r475';
+} from '../data/characters.js?v=20261011-r477';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -16,7 +16,7 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+} from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -417,7 +417,8 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   profile.poseFallback = poseFallback;
   profile.spriteKey = spriteKey;
   profile.profile = resolved;
-  actor.pose = requestedPose;
+  // Keep the authored pose spelling for consistent reuse across pages.
+  actor.pose = pose;
   return true;
 }
 
@@ -983,8 +984,9 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     scene.tweens.add({
       targets: fadeTargets,
       alpha: 0,
-      duration: 190,
-      ease: 'Sine.easeIn',
+      // Sayaka's farewell is allowed a gentler exit than ordinary panels.
+      duration: Math.max(190, Number(context.options.exitFadeMs) || 190),
+      ease: 'Sine.easeInOut',
       onComplete: () => finaliseController(controller, { reason }),
     });
   };

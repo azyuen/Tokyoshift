@@ -40,7 +40,7 @@ import {
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r476';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r476';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r477';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -7567,10 +7567,43 @@ export default class GarageScene extends Phaser.Scene {
     return this.showCentralTokyoInvitationIfNeeded();
   }
 
+  fadeOpeningSayakaFromGarage(onComplete) {
+    const actor = this.openingCompanion;
+    if (!actor?.active) {
+      this.openingCompanion = null;
+      onComplete?.();
+      return;
+    }
+    const targets = [actor, ...(actor.stageShadows || [])]
+      .filter(obj => obj?.active);
+    this.tweens.killTweensOf(targets);
+    this.tweens.add({
+      targets,
+      alpha: 0,
+      duration: 950,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        actor.destroy();
+        if (this.openingCompanion === actor) this.openingCompanion = null;
+        onComplete?.();
+      },
+    });
+  }
+
   runOpeningStoryIfNeeded() {
     const chapter = this.registry.get('openingChapter');
     if (chapter === 'awaitDaichi') return true;
     if (chapter === 'tutorial') {
+      const finishSayakaFarewell = () => {
+        // The manga portrait has already faded. Now let the Sayaka sprite
+        // standing by the car disappear naturally instead of popping away.
+        this.fadeOpeningSayakaFromGarage(() => {
+          this.registry.set('openingChapter', 'awaitDaichi');
+          saveSessionState(this.registry);
+          this.clearOpeningOfficePrompt();
+          this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
+        });
+      };
       if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
         const result = playMangaCutscene(this, 'openingSayakaKeys', {
           onComplete: () => this.time.delayedCall(130, () => this.showOpeningTutorialChoice()),
@@ -7587,25 +7620,12 @@ export default class GarageScene extends Phaser.Scene {
       }
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
-          onComplete: () => {
-            // Give the player one quiet workshop beat before their next
-            // separate tap summons Daichi.
-            this.registry.set('openingChapter', 'awaitDaichi');
-            saveSessionState(this.registry);
-            this.openingCompanion?.destroy?.();
-            this.openingCompanion = null;
-            this.clearOpeningOfficePrompt();
-            this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
-          },
+          exitFadeMs: 850,
+          onComplete: finishSayakaFarewell,
         });
         return Boolean(result.played);
       }
-      this.registry.set('openingChapter', 'awaitDaichi');
-      saveSessionState(this.registry);
-      this.openingCompanion?.destroy?.();
-      this.openingCompanion = null;
-      this.clearOpeningOfficePrompt();
-      this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
+      finishSayakaFarewell();
       return true;
     }
     // Completed modern profiles must never fall into the legacy first-car cutscene.
