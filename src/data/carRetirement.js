@@ -35,11 +35,24 @@ export function migrateRetiredEvoIX(input = {}) {
     return substitutions.get(id) || (OLD_MODEL.test(id) ? 'evo6' : id);
   };
 
+  // Race opponent / prize references are model IDs, not owned instances.
+  // The distinction matters if the player also owns a real EVO VI: a rival
+  // must not accidentally take the identifier of one of the player's copies.
+  const modelFields = new Set([
+    'carId', 'opponentCarId', 'selectedOpponentCarId', 'prizeCarId',
+    'displayCarId', 'donorCarId', 'baseCarId', 'crewBaseCarId',
+  ]);
+
   // Recurse through nested race snapshots/competition offers as well as the
   // garage. No in-place edits: backups and other profile slots stay intact.
-  const convert = (value, parentKey = '') => {
-    if (typeof value === 'string') return mapId(value);
-    if (Array.isArray(value)) return value.map(item => convert(item, parentKey));
+  const convert = (value, parentKey = '', path = []) => {
+    if (typeof value === 'string') {
+      if (value === '4g63t_evo9') return '4g63t_evo6';
+      if (OLD_MODEL.test(value) && modelFields.has(parentKey) &&
+          !path.includes('carHistory')) return 'evo6';
+      return mapId(value);
+    }
+    if (Array.isArray(value)) return value.map(item => convert(item, parentKey, path));
     if (!value || typeof value !== 'object') return value;
     if (parentKey === 'carCoupons') {
       const out = {};
@@ -58,7 +71,7 @@ export function migrateRetiredEvoIX(input = {}) {
         // collision; owned instances are assigned distinct keys above.
         continue;
       }
-      out[nextKey] = convert(item, key);
+      out[nextKey] = convert(item, key, [...path, parentKey]);
     }
     return out;
   };
