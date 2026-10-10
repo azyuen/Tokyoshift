@@ -18,7 +18,7 @@ import {
   PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
-import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r478';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1041,7 +1041,8 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
       callerName: options.callerName || definition.callerName || '',
       callerPose: options.callerPose || definition.callerPose || 'idle',
       label: options.label || definition.label || 'INCOMING CALL',
-      accent: options.accent || definition.accent || 0xd94479,
+      speakerStyle: options.speakerStyle || definition.speakerStyle || 'incoming',
+      accent: options.accent ?? definition.accent ?? null,
       pages: definition.pages || [],
       variables: {
         ...context.variables,
