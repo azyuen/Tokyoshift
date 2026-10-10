@@ -347,6 +347,7 @@ test('the in-office Sayaka call uses the canonical round portrait bubble and pho
   assert.match(garage, /playMangaCutscene\(this, 'openingSayakaPhoneCall'/);
   assert.doesNotMatch(garage, /scene\.add\.rectangle\(920, 414, 920, 256/);
   assert.match(manga, /definition\.presentation === 'phone'/);
+  assert.match(manga, /scene\?\._phoneConversation\?\.active/);
   assert.match(manga, /playPhoneConversation\(scene, \{/);
   assert.match(phone, /fillRoundedRect\(BOX\.x, BOX\.y, BOX\.width, BOX\.height/);
   assert.match(phone, /fillTriangle\(/);
