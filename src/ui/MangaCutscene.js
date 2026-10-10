@@ -417,7 +417,8 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   profile.poseFallback = poseFallback;
   profile.spriteKey = spriteKey;
   profile.profile = resolved;
-  actor.pose = requestedPose;
+  // Keep the authored pose spelling for consistent reuse across pages.
+  actor.pose = pose;
   return true;
 }
 
@@ -983,8 +984,9 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     scene.tweens.add({
       targets: fadeTargets,
       alpha: 0,
-      duration: 190,
-      ease: 'Sine.easeIn',
+      // Sayaka's farewell is allowed a gentler exit than ordinary panels.
+      duration: Math.max(190, Number(context.options.exitFadeMs) || 190),
+      ease: 'Sine.easeInOut',
       onComplete: () => finaliseController(controller, { reason }),
     });
   };
