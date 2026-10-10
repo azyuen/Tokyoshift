@@ -1,10 +1,10 @@
 import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=20261010-r470';
 import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261010-r470';
-import { saveProTransaction } from '../state/GameState.js?v=20261010-r470';
+import { saveProTransaction } from '../state/GameState.js?v=20261011-r479';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
-import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
-import { engines } from '../data/engines.js?v=20261004-r333';
+import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261011-r479';
 import {
   characters,
   getCharacterAssetUrl,
@@ -33,7 +33,7 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261006-r388';
+} from '../data/visualMods.js?v=20261011-r479';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -48,7 +48,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261007-r422';
+} from '../state/GameState.js?v=20261011-r479';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
 import {
   getGarageDeliveryOptions,
@@ -74,7 +74,7 @@ import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261006-r388';
+import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -90,18 +90,18 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261009-r447';
+} from '../data/centralTokyo.js?v=20261011-r479';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
-} from '../data/tunerChallenges.js?v=20260929-r286';
+} from '../data/tunerChallenges.js?v=20261011-r479';
 import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260926-r212';
+} from '../data/tunerShops.js?v=20261011-r479';
 import {
   WHEEL_CATALOG,
   getWheelOption,
