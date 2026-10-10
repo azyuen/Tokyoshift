@@ -66,3 +66,7 @@ When an authorised scene introduces a durable fact, record it in the bible or an
 A twist can recontextualise a public impression. If it contradicts an explicit approved fact, call out the conflict for a deliberate owner decision. The fact that a character is friendly is not proof they cannot have darker history; it also does not justify assigning that history without a story-design request.
 
 Verify that new dialogue agrees with actual save state and existing gameplay conditions. Check the actor's voice and knowledge, then check that the scene leaves intended future branches open.
+
+## Phone-style cutscenes (R478)
+
+Use the shared phone presentation rather than building a bespoke phone-call popup in a scene. Define `presentation: 'phone'`, `callerId` (a real `characters.js` ID), optional `callerPose`, `callerName`, `label`, and one or more `pages: [{ text }]` on a `CUTSCENES` definition. `playMangaCutscene(scene, id, options)` automatically routes it to `src/ui/PhoneConversation.js`, using the same circular character portrait, compact rounded message bubble, speaker header, small phone icon and NEXT navigation for every caller. The shared helper also accepts multiple messages, substitutions such as `{PLAYER_FIRST_NAME}`, and an onComplete callback. Preserve character reveal gates; the caller's name and appearance must be justified by the scene. Existing authored phone scenes can opt into this presentation without duplicating UI code.
