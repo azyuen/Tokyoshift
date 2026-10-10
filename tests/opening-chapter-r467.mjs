@@ -260,7 +260,7 @@ test('Sayaka leaves the player at a resumable workshop checkpoint before a separ
   assert.equal(state.openingChapter, 'awaitDaichi');
   const garage = source('src/scenes/GarageScene.js');
   assert.match(garage, /this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
-  assert.match(garage, /this\.openingCompanion\?\.destroy\?\.\(\)/);
+  assert.match(garage, /this\.fadeOpeningSayakaFromGarage\(\(\) =>/);
   assert.match(garage, /if \(chapter === 'awaitDaichi'\) return true/);
   assert.match(garage, /if \(chapter === 'awaitDaichi'\) \{\s*this\.armDaichiWorkshopTap\(\);/);
   assert.match(garage, /delayedCall\(120, \(\) => this\.armDaichiWorkshopTap\(\)\)/);
@@ -366,4 +366,37 @@ test('single modern Daichi cutscene ends immediately in a normal workshop', () =
     assert.doesNotMatch(cutsceneData, new RegExp(id));
     assert.equal(CUTSCENES[id], undefined);
   }
+});
+
+test('Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures', async () => {
+  const { getCharacterVisualAsset } = await import('../src/data/characters.js');
+  const { getCharacterProfileTexture } = await import('../src/characters/CharacterProfileRenderer.js');
+  const { openingSayakaKeys, openingSayakaFarewell } = CUTSCENES;
+  const checks = [
+    [openingSayakaKeys.pages[4], 'assets/Characters/Main/home_sayaka_fujieda_sad.png'],
+    [openingSayakaFarewell.pages[0], 'assets/Characters/Main/home_sayaka_fujieda_happy.png'],
+    [openingSayakaFarewell.pages[2], 'assets/Characters/Main/home_sayaka_fujieda_blushing.png'],
+    [openingSayakaFarewell.pages[3], 'assets/Characters/Main/home_sayaka_fujieda_serious.png'],
+  ];
+  for (const [page, path] of checks) {
+    const asset = getCharacterVisualAsset('sayakaFujieda', page.pose);
+    assert.equal(asset?.path, path, 'Wrong texture lookup for ' + page.text);
+    assert.equal(asset?.fallback, false);
+    const portrait = getCharacterProfileTexture('sayakaFujieda', page.pose);
+    assert.equal(portrait?.path, path, 'Portrait renderer fell back to idle for ' + page.pose);
+    assert.ok(existsSync(path), 'Missing image: ' + path);
+    const lower = getCharacterProfileTexture('sayakaFujieda', page.pose.toLowerCase());
+    assert.equal(lower?.key, portrait?.key, 'Case-insensitive pose lookup must be stable');
+  }
+});
+
+test('Sayaka farewell fades both manga portrait and garage companion before Daichi can appear', () => {
+  const cutscene = source('src/ui/MangaCutscene.js');
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /playMangaCutscene\(this, 'openingSayakaFarewell', \{\s*exitFadeMs: 850/);
+  assert.match(cutscene, /duration: Math\.max\(190, Number\(context\.options\.exitFadeMs\) \|\| 190\)/);
+  assert.match(garage, /fadeOpeningSayakaFromGarage\(onComplete\) \{/);
+  assert.match(garage, /targets,\s*alpha: 0,\s*duration: 950/);
+  assert.match(garage, /this\.fadeOpeningSayakaFromGarage\(\(\) => \{\s*this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
+  assert.doesNotMatch(garage, /this\.openingCompanion\?\.destroy\?\.\(\)/);
 });
