@@ -1,11 +1,11 @@
 import { characters } from '../data/characters.js?v=20261004-r333';
-import { cars } from '../data/cars.js?v=20261006-r388';
+import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   getProfileSlots,
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20261010-r467';
+} from '../state/GameState.js?v=20261011-r482';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 
@@ -47,6 +47,17 @@ function lastPlayedLabel(value) {
 export default class ProfileSelectScene extends Phaser.Scene {
   constructor() { super('ProfileSelectScene'); }
 
+  preload() {
+    // Only the three-profile opening scene uses this artwork.
+    // Phaser caches the texture once and the boot splash remains visible until create().
+    if (!this.textures.exists('tokyo_shift_profile_backing')) {
+      this.load.image(
+        'tokyo_shift_profile_backing',
+        './assets/Ui/tokyo_shift_backing.webp?v=20261011-r481'
+      );
+    }
+  }
+
   create() {
     document.body.dataset.scene = 'setup';
     this.scale.resize(1560, 840);
@@ -77,19 +88,18 @@ export default class ProfileSelectScene extends Phaser.Scene {
   }
 
   drawBackdrop() {
-    this.add.rectangle(780, 420, 1560, 840, 0x03070d, 1);
+    // Match the entire 1560x840 canvas without stretching the 16:9 artwork.
+    // This uses a subtle centre crop, avoiding empty bands on wider devices.
+    if (this.textures.exists('tokyo_shift_profile_backing')) {
+      const backdrop = this.add.image(780, 420, 'tokyo_shift_profile_backing').setDepth(-2);
+      backdrop.setScale(Math.max(1560 / backdrop.width, 840 / backdrop.height));
+    } else {
+      // Retain a safe fallback if the image fails to load.
+      this.add.rectangle(780, 420, 1560, 840, 0x03070d).setDepth(-2);
+    }
 
-    const glow = this.add.graphics().setDepth(0);
-    glow.fillStyle(0x0b2435, 0.46);
-    glow.fillEllipse(780, 390, 1320, 650);
-    glow.lineStyle(1, 0x1f526d, 0.20);
-    for (let y = 145; y <= 760; y += 44) {
-      glow.lineBetween(90, y, 1470, y);
-    }
-    glow.lineStyle(1, 0xff4f94, 0.12);
-    for (let x = 140; x <= 1420; x += 92) {
-      glow.lineBetween(x, 165, x - 155, 780);
-    }
+    // Slightly darken the bright roadway so profile cards and labels stay legible.
+    this.add.rectangle(780, 420, 1560, 840, 0x020916, 0.30).setDepth(-1);
 
     this.add.text(780, 58, 'TOKYO SHIFT', {
       fontFamily: PIXEL_FONT,

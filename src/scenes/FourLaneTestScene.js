@@ -1,16 +1,16 @@
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat } from '../data/proSeason.js?v=20261010-r471';
-import { saveProTransaction } from '../state/GameState.js?v=20261010-r470';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat } from '../data/proSeason.js?v=20261011-r485';
+import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
-import RaceScene from './RaceScene.js?v=20261008-r431';
+import RaceScene from './RaceScene.js?v=20261011-r482';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { cars } from '../data/cars.js?v=20261006-r388';
+import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
@@ -27,9 +27,9 @@ import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261006-r388';
+import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
-import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
+import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';

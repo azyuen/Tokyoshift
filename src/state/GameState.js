@@ -8,7 +8,8 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r350';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
-import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261006-r388';
+import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
+import { migrateRetiredEvoIX } from '../data/carRetirement.js?v=20261011-r479';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -69,7 +70,7 @@ export function createDefaultGameState(options = {}) {
     lastName: '',
     playerCharacterId: 'renMizuno',
     starterCarId,
-    openingChapter: null, // New profiles only: station -> home -> magazine -> delivery -> tutorial -> daichi -> done.
+    openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
@@ -86,7 +87,7 @@ export function createDefaultGameState(options = {}) {
     pinkSlipOpportunityGranted: false,
     pinkSlipOpportunityUsed: false,
     incomingPinkSlipLastOfferRace: -999,
-    cash: 50000,
+    cash: 5000,
     playerDifficulty: 'STANDARD',
     devMode: false,
     cutscenesSeen: [],
@@ -178,7 +179,9 @@ export function createFreshRunStateFromRegistry(registry) {
   const previousSeen = Array.isArray(registry?.get?.('cutscenesSeen'))
     ? registry.get('cutscenesSeen')
     : [];
-  const onboardingIds = ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide'];
+  // Preserve completed modern introductions when resetting a progressed run.
+  // Legacy Daichi scene IDs are no longer executable story content.
+  const onboardingIds = ['openingSayakaKeys', 'openingSayakaFarewell', 'openingDaichiAfterSayaka'];
   state.cutscenesSeen = previousSeen.filter(id => onboardingIds.includes(String(id)));
   state.introTutorialChoiceDone = Boolean(
     registry?.get?.('introTutorialChoiceDone') || state.cutscenesSeen.length
@@ -731,6 +734,9 @@ function migrateShinagawaSayakaRecruit(entry) {
 }
 
 export function normaliseState(input = {}) {
+  // Retired EVO IX owned cars/coupons are migrated before any IDs are filtered,
+  // registered or copied into persistent workshop/competition state.
+  input = migrateRetiredEvoIX(input);
   const hadSayakaShinagawaCrew = input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda';
   const oldLoanCarId = 'crew__sayakaFujieda';
   const replacementLoanCarId = 'crew__reikaTachibana';
@@ -956,7 +962,7 @@ export function normaliseState(input = {}) {
         : {},
     playerCharacterId,
     starterCarId,
-    openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'daichi', 'done'].includes(String(input.openingChapter))
+    openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'awaitDaichi', 'daichi', 'done'].includes(String(input.openingChapter))
       ? String(input.openingChapter) : null,
     selectedCarId,
     ownedCarIds: owned,
@@ -1196,7 +1202,7 @@ export function snapshotRegistry(registry) {
     pinkSlipOpportunityGranted: Boolean(registry.get('pinkSlipOpportunityGranted')),
     pinkSlipOpportunityUsed: Boolean(registry.get('pinkSlipOpportunityUsed')),
     incomingPinkSlipLastOfferRace: Number(registry.get('incomingPinkSlipLastOfferRace') ?? -999),
-    cash: registry.get('cash') ?? 50000,
+    cash: registry.get('cash') ?? 5000,
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
     cutscenesSeen: registry.get('cutscenesSeen') || [],

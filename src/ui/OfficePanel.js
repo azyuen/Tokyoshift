@@ -1,8 +1,8 @@
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
-import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
-import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261006-r388';
-import { showMagazinePanel } from './CarHistoryPanel.js?v=20261010-r467';
-import { showOpeningMagazine } from './OpeningMagazine.js?v=20261010-r467';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
+import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20261011-r479';
+import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261011-r479';
+import { showMagazinePanel } from './CarHistoryPanel.js?v=20261011-r475';
+
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -202,7 +202,11 @@ export function showOfficePanel(scene) {
     scene._officeRecordOverlay = [];
     destroyObjects(objects);
     scene._officeOverlay = [];
+    if (scene.closeOpeningOffice === closeOffice) scene.closeOpeningOffice = null;
   };
+  // The Sayaka call is received while the office is open. Only NEXT dismisses
+  // the office to reveal the real garage before the car enters.
+  scene.closeOpeningOffice = closeOffice;
 
   // Prevent workshop controls beneath the room from receiving input.
   add(scene.add.rectangle(780, 420, 1560, 840, 0x010308, 1)
@@ -248,21 +252,24 @@ export function showOfficePanel(scene) {
   back.on('pointerdown', closeOffice);
 
   const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
-  const openMagazine = () => openingMagazine
-    ? showOpeningMagazine(scene, carId => {
-        closeOffice();
-        scene.completeOpeningMagazineChoice?.(carId);
-      })
-    : showMagazinePanel(scene);
+  // One canonical Issue 01 viewer for the first read and every later visit.
+  // The magazine itself enforces the temporary page cap during onboarding.
+  const openMagazine = () => showMagazinePanel(scene, openingMagazine ? {
+    onChoose: carId => {
+      // Keep the office artwork behind the incoming-call overlay.
+      scene.completeOpeningMagazineChoice?.(carId);
+    },
+  } : {});
 
   if (openingMagazine) {
     const instruction = add(scene.add.text(
       frame.x + frame.w * 0.36, frame.y + frame.h * 0.715,
-      'ISSUE 01 // TAP THE MAGAZINE TO CHOOSE YOUR CAR', {
+      'READ THE TOKYO SHIFT MAGAZINE', {
         fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffffff',
         backgroundColor: '#06303b', padding: { x: 14, y: 11 },
+        align: 'center',
       }
-    ).setDepth(218));
+    ).setOrigin(0.5).setDepth(218));
     scene.tweens.add({ targets: instruction, alpha: 0.65, duration: 550, yoyo: true, repeat: -1 });
   }
 

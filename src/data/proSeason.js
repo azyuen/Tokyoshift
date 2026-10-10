@@ -1,12 +1,12 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261010-r470';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
-import { cars } from './cars.js?v=20261006-r388';
+import { cars } from './cars.js?v=20261011-r479';
 import { characters } from './characters.js?v=20261010-r459';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { getCarMagazineMeta } from './carMagazine.js?v=20261010-r467';
+import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 
 export const PRO_SEASON_LENGTH = 8;
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
@@ -129,7 +129,7 @@ export function estimateCrewHeat(unit,rng,difficulty='STANDARD',opponent=false) 
   const adjustment=opponent?(difficulty==='EASY'?.4:difficulty==='HARD'?-.18:0):0;
   return Number(clamp(15.2*Math.pow(100/Math.max(15,unit.performance),.23)+(1-unit.skill)*3.5+adjustment+(rng()+rng()-1)*.6,7,29).toFixed(3));
 }
-export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
+export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven=false) {
   const c=normaliseProCircuitState(value(source,'proCircuit')),f=getCrewFixture(c),t=c.activeCrewEvent;
   if(!f||f.id!==fixtureId)return {error:'SAVED FIXTURE UNAVAILABLE'};
   if(f.prepared)return {circuit:c,fixture:f.prepared};
@@ -137,7 +137,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId) {
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
-    const own=estimateCrewHeat(u,rng),other=estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
+    const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
   });
   c.activeCrewEvent={...clone(t),fixture:{id:f.id,lineup:[...lineupIds],heats,revealed:0}};
@@ -213,7 +213,7 @@ export function assignCrewSeriesCar(source,driverId,carId) {
 // Player-driven fixtures supersede the R470 manager presentation. Preserve
 // already revealed legacy results, but never precompute an unplayed heat.
 export function preparePlayerCrewFixture(source,lineupIds,fixtureId) {
-  const out=prepareCrewSeriesFixture(source,lineupIds,fixtureId);
+  const out=prepareCrewSeriesFixture(source,lineupIds,fixtureId,true);
   if(out.error)return out;
   out.circuit.activeCrewEvent=clone(out.circuit.activeCrewEvent);
   const t=out.circuit.activeCrewEvent,f=t.fixture;

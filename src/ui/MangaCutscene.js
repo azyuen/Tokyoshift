@@ -3,12 +3,12 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261011-r477';
 import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261010-r467';
+} from '../data/cutscenes.js?v=20261011-r478';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -16,8 +16,9 @@ import {
   PROFILE_REFERENCE_HEIGHT,
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_DEFAULT_ZOOM,
-} from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { saveSessionState } from '../state/GameState.js?v=20261010-r467';
+} from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
+import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r480';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -50,7 +51,7 @@ const interpolate = (value, variables = {}) => String(value ?? '').replace(
 );
 
 export function sceneCutsceneActive(scene) {
-  return Boolean(scene?._mangaCutscene?.active);
+  return Boolean(scene?._mangaCutscene?.active || scene?._phoneConversation?.active);
 }
 
 function playerDisplayName(scene, playerCharacterId) {
@@ -417,7 +418,8 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   profile.poseFallback = poseFallback;
   profile.spriteKey = spriteKey;
   profile.profile = resolved;
-  actor.pose = requestedPose;
+  // Keep the authored pose spelling for consistent reuse across pages.
+  actor.pose = pose;
   return true;
 }
 
@@ -874,13 +876,16 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setScrollFactor(0)
     .setInteractive();
 
+  // Opening cinematics can opt into a clean white manga-paper stage.
+  // All existing cutscenes retain the usual dimmed background.
+  const paperBackground = context.options.backgroundStyle === 'paper';
   const shade = scene.add.rectangle(
     width / 2,
     height / 2,
     width,
     height,
-    0x000000,
-    0.54
+    paperBackground ? 0xfffcf1 : 0x000000,
+    paperBackground ? 1 : 0.54
   ).setDepth(BASE_DEPTH + 1)
     .setScrollFactor(0)
     .setAlpha(0);
@@ -980,8 +985,9 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     scene.tweens.add({
       targets: fadeTargets,
       alpha: 0,
-      duration: 190,
-      ease: 'Sine.easeIn',
+      // Sayaka's farewell is allowed a gentler exit than ordinary panels.
+      duration: Math.max(190, Number(context.options.exitFadeMs) || 190),
+      ease: 'Sine.easeInOut',
       onComplete: () => finaliseController(controller, { reason }),
     });
   };
@@ -1025,6 +1031,40 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     !options.force
   ) {
     return { played: false, reason: 'seen', active: false };
+  }
+
+  // Phone-style scenes use the canonical circular-portrait callout rather
+  // than manga silhouettes. Existing character scenes remain unchanged.
+  if (definition.presentation === 'phone') {
+    const result = playPhoneConversation(scene, {
+      callerId: options.callerId || definition.callerId || '',
+      callerName: options.callerName || definition.callerName || '',
+      callerPose: options.callerPose || definition.callerPose || 'idle',
+      label: options.label || definition.label || 'INCOMING CALL',
+      speakerStyle: options.speakerStyle || definition.speakerStyle || 'incoming',
+      accent: options.accent ?? definition.accent ?? null,
+      pages: definition.pages || [],
+      variables: {
+        ...context.variables,
+        // Use the driver's entered spelling, not the manga ALL-CAPS label.
+        PLAYER_FIRST_NAME: String(scene.registry.get('firstName') || '').trim() ||
+          context.variables.PLAYER_FIRST_NAME,
+      },
+      onComplete: () => {
+        if (!context.preview && definition.once !== false) {
+          markCutsceneSeen(scene.registry, historyId);
+          saveSessionState(scene.registry);
+        }
+        const payload = {
+          cutsceneId: definition.id, historyId,
+          reason: 'action', skipped: false, preview: context.preview,
+        };
+        if (context.preview) options.onPreviewComplete?.(payload);
+        else options.onComplete?.(payload);
+      },
+      onCancel: payload => options.onCancel?.(payload),
+    });
+    return result;
   }
 
   const characterRefs = collectCutsceneCharacterRefs(context);

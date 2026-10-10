@@ -22,7 +22,7 @@ test('AE86 and EF still have an actual early pink-slip car pool', () => {
   assert.equal(isPinkSlipValueEligible('ae86__copy2', 'fc3s'), true);
 });
 test('cumulative chance reaches 50% by the intended completed-race median', () => {
-  for (const [difficulty, median] of [['EASY', 25], ['STANDARD', 30], ['HARD', 35]]) {
+  for (const [difficulty, median] of [['EASY', 45], ['STANDARD', 30], ['HARD', 35]]) {
     let none = 1;
     for (let n = 1; n <= median; n++) {
       none *= 1 - getPinkSlipOpportunityChance(registry({

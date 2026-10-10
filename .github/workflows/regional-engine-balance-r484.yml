@@ -1,0 +1,41 @@
+name: Regional engine balance R484
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/cars.js'
+      - 'src/data/engines.js'
+      - 'src/data/regionalChallengeBuilds.js'
+      - 'src/data/tunerChallenges.js'
+      - 'src/vehicles/VehiclePerformance.js'
+      - 'tests/regional-engine-balance-r484.mjs'
+      - '.github/workflows/regional-engine-balance-r484.yml'
+  pull_request:
+    paths:
+      - 'src/data/cars.js'
+      - 'src/data/engines.js'
+      - 'src/data/regionalChallengeBuilds.js'
+      - 'src/data/tunerChallenges.js'
+      - 'src/vehicles/VehiclePerformance.js'
+      - 'tests/regional-engine-balance-r484.mjs'
+      - '.github/workflows/regional-engine-balance-r484.yml'
+
+jobs:
+  engine-balance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check src/data/cars.js
+          node --check src/data/engines.js
+          node --check src/data/regionalChallengeBuilds.js
+          node --check src/vehicles/VehiclePerformance.js
+          node --check src/scenes/RaceScene.js
+          node --check tests/regional-engine-balance-r484.mjs
+      - name: Test FD power band and regional rivals
+        run: node --test tests/regional-engine-balance-r484.mjs tests/progression-rebalance-r479.mjs

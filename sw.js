@@ -1,6 +1,6 @@
-const BUILD = 'R471';
-const ASSET_CACHE = 'tokyoshift-assets-r471';
-const RUNTIME_CACHE = 'tokyoshift-runtime-r471';
+const BUILD = 'R485';
+const ASSET_CACHE = 'tokyoshift-assets-r485';
+const RUNTIME_CACHE = 'tokyoshift-runtime-r485';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -59,7 +59,8 @@ self.addEventListener('fetch', event => {
     url.pathname.includes('/assets/Meet/Day/') ||
     url.pathname.includes('/assets/Meet/Night/') ||
     url.pathname.includes('/assets/Ui/tokyo_region_map') ||
-    url.pathname.includes('/assets/Ui/tokyo_shift_loading.webp')
+    url.pathname.includes('/assets/Ui/tokyo_shift_loading.webp') ||
+    url.pathname.includes('/assets/Ui/tokyo_shift_backing.webp')
   ) {
     event.respondWith(networkFirst(request));
     return;

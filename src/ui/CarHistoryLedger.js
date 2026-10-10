@@ -1,5 +1,5 @@
-import { cars } from '../data/cars.js?v=20261006-r388';
-import { engines } from '../data/engines.js?v=20261004-r333';
+import { cars } from '../data/cars.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261011-r479';
 import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
 import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211';
 

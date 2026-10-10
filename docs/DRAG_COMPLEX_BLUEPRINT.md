@@ -23,7 +23,7 @@ Progress the world on **in-game event completions**, never real-world time or of
 
 ## Crew competitions
 
-**User revision, R471 (2026-10-10): the player DRIVES the crew cars.** Register up to five recruited crew members/cars, field three per fixture, and manually drive each selected crew loan car against the corresponding opponent in the existing two-lane Drag Complex. Two heat wins take the fixture. Investment in each car and the player's launch/clutch/throttle/shifting determine performance; friendly crew AI skill must not decide an on-track result. Upgrade cars in the Crew Garage between fixtures. No watch/skip simulation for unplayed player heats. Simulate only off-screen opposition fixtures. Restrictions must not strand users requiring three identical manufacturer cars without attainable alternatives. This supersedes the manager model described in historical milestone notes below.
+**User revision, R485 (2026-10-10): the player DRIVES the crew cars.** Register up to five recruited crew members/cars, field three per fixture, and manually drive each selected crew loan car against the corresponding opponent in the existing two-lane Drag Complex. Two heat wins take the fixture. Investment in each car and the player's launch/clutch/throttle/shifting determine performance; friendly crew AI skill must not decide an on-track result. Upgrade cars in the Crew Garage between fixtures. No watch/skip simulation for unplayed player heats. Simulate only off-screen opposition fixtures. Restrictions must not strand users requiring three identical manufacturer cars without attainable alternatives. This supersedes the manager model described in historical milestone notes below.
 
 ## Progression/economy/UX guardrails
 
@@ -193,7 +193,7 @@ Validation: new automated coverage includes eligibility, five-driver squads, dis
 
 **Still outstanding from the full requested programme:** the five formal trophy events and 16-entry driver/crew championship formats, their qualifying/invitation and title prizes, dedicated trophy celebrations, and full venue-rendered crew replay. Season standings alone do not award a championship or trophy. Physical iPhone/iPad touch, spectator memory and extended economy playtesting remain required. This is a functional Phase 3 milestone, not completion of every Phase 3/4 feature in the broader request.
 
-## R471 — Player-driven crew cars and panel typography correction
+## R485 — Player-driven crew cars and panel typography correction
 
 The user explicitly replaced the manager concept with manual racing. Crew selection now selects the recruited member's loan car; the player's personal selected car is never replaced in the profile. Each fixture locks three car builds in the chosen order and launches `PRO_CREW` races through the existing two-lane `FourLaneTestScene` physics, controls, camera and art. Real finish times/DQ/DNF determine each heat. Losing a heat does not eliminate the team: all three cars race, then the existing two-of-three fixture settlement applies. Only other teams' off-screen fixtures use simulation. Fees, series standings and season progression remain unchanged.
 

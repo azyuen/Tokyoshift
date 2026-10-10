@@ -67,8 +67,12 @@ export const engines = {
     id: '13brew', name: 'Mazda 13B-REW Twin Turbo', idleRPM: 850,
     redlineRPM: 8000, limiterRPM: 8200, inertia: 0.15,
     referenceBoostBar: 0.85, offBoostTorqueFraction: 0.54,
-    torqueCurve: [[1000, 110], [2000, 160], [3000, 235], [4500, 294],
-      [5500, 290], [6500, 280], [8000, 245], [8200, 228]],
+    // Late JDM 13B-REW: 314 Nm @ 5,000 rpm, 206 kW @ 6,500 rpm.
+    // Replaces an overly top-heavy curve that peaked in power near the limiter.
+    // Reference: Mazda RX-7 Spirit R Type A (2002) factory specifications.
+    torqueCurve: [[1000, 120], [2000, 175], [3000, 250], [4500, 306],
+      [5000, 314], [5500, 311], [6500, 303], [7000, 275],
+      [7500, 247], [8000, 218], [8200, 202]],
   },
   '13b_msp': {
     id: '13b_msp', name: 'Mazda 13B-MSP RENESIS', idleRPM: 900,
@@ -97,13 +101,6 @@ export const engines = {
     referenceBoostBar: 0.92, offBoostTorqueFraction: 0.5,
     torqueCurve: [[1000, 145], [2000, 220], [3000, 335], [3500, 373],
       [4500, 370], [5500, 345], [6500, 300], [7500, 250], [7700, 230]],
-  },
-  '4g63t_evo9': {
-    id: '4g63t_evo9', name: 'Mitsubishi 4G63T MIVEC', idleRPM: 850,
-    redlineRPM: 7500, limiterRPM: 7700, inertia: 0.20,
-    referenceBoostBar: 1.0, offBoostTorqueFraction: 0.5,
-    torqueCurve: [[1000, 150], [2000, 240], [3000, 350], [3500, 392],
-      [4500, 380], [5500, 350], [6500, 305], [7500, 250], [7700, 230]],
   },
   '4age': {
     id: '4age',

@@ -10,6 +10,25 @@ import { CREW_SERIES, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSer
 const clone=x=>JSON.parse(JSON.stringify(x));
 const physicalResult=(win=true)=>[{id:'player',finishSeconds:win?10:12,disqualified:false},{id:'ai-1',finishSeconds:11,disqualified:false}];
 
+test('real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup',async()=>{
+ const storage=new Map();globalThis.localStorage={getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)};
+ globalThis.window={addEventListener(){}};globalThis.Phaser={Scene:class{}};
+ const {default:Scene}=await import('../src/scenes/FourLaneTestScene.js');
+ const s=source(),ids=enter(s),f=getCrewFixture(s.get('proCircuit'));
+ s.set('proCircuit',preparePlayerCrewFixture(s,ids.slice(0,3),f.id).circuit);
+ const scene=new Scene();scene.registry=s;scene.init({mode:'PRO_CREW'});
+ assert.equal(scene.proCrew,true);assert.equal(scene.proDuel,true);assert.equal(scene.aiCarIds.length,1);
+ assert.equal(scene.playerCarId,getPlayerCrewHeat(s.get('proCircuit')).carId);
+ assert.notEqual(scene.playerCarId,s.get('selectedCarId'));
+ scene.runners=physicalResult().map((r,i)=>({...r,lane:i+1,carLabel:'CAR'}));scene.controls={enabled:true};
+ let presented;scene.showProfessionalMangaResult=(rows,out)=>{presented=out;};
+ scene.showFourLaneResults();assert.equal(presented.status,'CREW_HEAT');assert.equal(presented.won,true);
+ assert.equal(readSessionState().proCircuit.activeCrewEvent.fixture.revealed,1);
+ assert.equal(s.get('selectedCarId'),'ae86');assert.equal(s.get('competitionState'),null);
+ scene.showFourLaneResults();assert.equal(s.get('proCircuit').activeCrewEvent.fixture.revealed,1);
+ delete globalThis.localStorage;delete globalThis.Phaser;delete globalThis.window;
+});
+
 test('player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection',()=>{
  const s=source(),ids=enter(s),f=getCrewFixture(s.get('proCircuit'));
  const loan=getCrewSeriesUnits(s)[0].loanCarId;s.set('carStates',{[loan]:{tuneLevel:3,stock:false}});

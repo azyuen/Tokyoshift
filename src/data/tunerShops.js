@@ -2,7 +2,7 @@ import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r392';
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
-} from './tunerChallenges.js?v=20261006-r392';
+} from './tunerChallenges.js?v=20261011-r479';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {

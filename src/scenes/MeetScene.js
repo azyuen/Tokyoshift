@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
+import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -34,8 +34,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261007-r422';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261009-r451';
+import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
@@ -57,28 +57,29 @@ import {
   recordCarMagazineSightings,
   carMatchesCompetitionRestriction,
   getCompetitionRestrictionPool,
-} from '../data/carMagazine.js?v=20261006-r388';
+} from '../data/carMagazine.js?v=20261011-r479';
 import {
   getEncounterProfile,
   getEncounterSkillLabel,
   getEncounterAi,
 } from '../data/encounterProfiles.js?v=20260926-r204';
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
-import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261006-r388';
-import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261010-r468';
+import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20261010-r468';
+import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261011-r479';
+import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import {
   getPinkSlipOpportunityChance,
   isPinkSlipValueEligible,
   rollPinkSlipOpportunity,
   consumePinkSlipOpportunity,
-} from '../data/pinkSlipProgression.js?v=20261008-r430';
+} from '../data/pinkSlipProgression.js?v=20261011-r479';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
-  TUNER_TEAM_COMPLETION_REWARD,
+  getRegionalChampionshipCashReward,
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
   TUNER_TEAM_REOFFER_MIN_VISITS,
@@ -86,12 +87,12 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261010-r466';
+} from '../data/tunerChallenges.js?v=20261011-r483';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20261006-r392';
+} from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261009-r453';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
@@ -103,7 +104,7 @@ import {
   getCarCouponCount,
   MARKET_BASE_PRICES,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js?v=20261011-r479';
 import {
   isCrewComplete,
   getCrewMembers,
@@ -120,7 +121,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261007-r413';
+} from '../data/crewSystem.js?v=20261011-r479';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1554,10 +1555,12 @@ export default class MeetScene extends Phaser.Scene {
         this.registry.set('carCoupons', coupons);
       }
 
-      this.registry.set('cash', cash + TUNER_TEAM_COMPLETION_REWARD);
-      this.cashText?.setText(
-        '¥ ' + Number(cash + TUNER_TEAM_COMPLETION_REWARD).toLocaleString('en-US')
+      const cashReward = applyEasyCashWinBonus(
+        this.registry,
+        getRegionalChampionshipCashReward(regionId)
       );
+      this.registry.set('cash', cash + cashReward);
+      this.cashText?.setText('¥ ' + Number(cash + cashReward).toLocaleString('en-US'));
 
       state = this.setTunerChallengeState(regionId, {
         ...state,
@@ -1570,7 +1573,7 @@ export default class MeetScene extends Phaser.Scene {
         donorLabel,
         couponCount,
         couponRequired,
-        cash: TUNER_TEAM_COMPLETION_REWARD,
+        cash: cashReward,
       };
 
       saveSessionState(this.registry);
@@ -2691,7 +2694,7 @@ export default class MeetScene extends Phaser.Scene {
       2: ['ae86', 'ef', 'ek9', 'ej1', 'fc3s', 'rx8', 'a60'],
       3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
       4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', '3000gt'],
-      5: ['rx7fd', 'evo5', 'evo6', 'evo9', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
+      5: ['rx7fd', 'evo5', 'evo6', 'evo3', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
     };
     return bands[Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5)] || bands[3];
   }
@@ -3495,9 +3498,9 @@ export default class MeetScene extends Phaser.Scene {
       const couponRequirement = Math.max(1, getCarCouponRequirement(prizeCarId));
       const rawCouponFee = carValue > 0
         ? (carValue / couponRequirement) * 0.05
-        : 75000;
+        : 60000;
       const roundedCouponFee = Math.round(rawCouponFee / 5000) * 5000;
-      entryFee = Phaser.Math.Clamp(roundedCouponFee, 75000, 300000);
+      entryFee = Phaser.Math.Clamp(roundedCouponFee, 60000, 220000);
     }
 
     return {
@@ -3511,7 +3514,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R468',
+      balanceVersion: 'R479',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -3533,7 +3536,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R468' ||
+      current?.balanceVersion !== 'R479' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
