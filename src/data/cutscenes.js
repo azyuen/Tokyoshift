@@ -66,7 +66,7 @@ export const CUTSCENES = {
     once: false, // A save reloaded during delivery should still receive the call.
     presentation: 'phone',
     callerId: 'sayakaFujieda',
-    callerPose: 'homeNormal',
+    callerPose: 'idle', // Same normal Sayaka PNG already preloaded for the garage.
     callerName: 'SAYAKA',
     label: 'INCOMING CALL',
     pages: [
