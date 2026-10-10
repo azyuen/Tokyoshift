@@ -69,7 +69,7 @@ import {
 } from '../data/workshopProgression.js?v=20261005-r354';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261009-r451';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261009-r457';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
