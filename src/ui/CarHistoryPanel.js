@@ -358,8 +358,12 @@ function showMagazine(scene, features, options = {}) {
   let flipping = false;
   let confirmation = null;
   const activeGlows = [];
+  const revealTimers = [];
+  const revealTweens = [];
 
   const destroyView = view => {
+    revealTimers.splice(0).forEach(timer => timer?.remove?.());
+    revealTweens.splice(0).forEach(tween => tween?.remove?.());
     activeGlows.splice(0).forEach(tween => tween?.remove?.());
     if (!view) return;
     [view.cover, view.left, view.right].forEach(container => {
@@ -388,7 +392,7 @@ function showMagazine(scene, features, options = {}) {
       .setDepth(321).setInteractive());
     addModal(scene.add.rectangle(780, 410, 740, 348, 0xfffcf1, 1)
       .setStrokeStyle(6, 0x151515, 1).setDepth(322));
-    addModal(scene.add.text(780, 309, 'YOUR FAVOURITE CAR?', {
+    addModal(scene.add.text(780, 309, 'DO YOU THINK THIS CAR IS BETTER?', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#171717',
     }).setOrigin(0.5).setDepth(323));
     addModal(scene.add.text(780, 390, selectedName, {
@@ -544,6 +548,9 @@ function showMagazine(scene, features, options = {}) {
       addPaper(right, 'right');
     }
 
+    const selectionUi = [];
+    const selectionFrames = [];
+
     // The two display bays are at 25% and 75% of the advertisement width,
     // between 63% and 85% of its height. Coordinates are proportional so
     // replacement ad artwork with the same aspect ratio remains aligned.
@@ -577,34 +584,62 @@ function showMagazine(scene, features, options = {}) {
       const frame = addTo(left, scene.add.rectangle(
         bayX, PAGE_H * 0.750, PAGE_W * 0.405, PAGE_W * 0.405,
         0x62e8c7, 0.025
-      ).setStrokeStyle(3, 0x64ffe0, 0.95)
-        .setInteractive({ useHandCursor: true }));
-      activeGlows.push(scene.tweens.add({
-        targets: frame, alpha: { from: 0.58, to: 1 },
-        duration: 580, yoyo: true, repeat: -1,
-        ease: 'Sine.easeInOut',
-      }));
-      addTo(left, scene.add.text(bayX, PAGE_H * 0.640,
-        'PRESS THE ONE\\nYOU LIKE BEST', {
-          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#ffffff',
-          backgroundColor: '#091621dd',
-          padding: { x: 4, y: 5 }, align: 'center',
-        }).setOrigin(0.5));
+      ).setStrokeStyle(3, 0x64ffe0, 0.95).setAlpha(0));
+      frame.disableInteractive();
+      selectionUi.push(frame);
+      selectionFrames.push(frame);
       frame.on('pointerdown', () => confirmStarterCar(id));
     }
 
     if (openingChoice) {
-      // An internal thought belongs to the spread, not to a new page.
-      addTo(left, scene.add.rectangle(
-        0, PAGE_H * 0.095, PAGE_W * 1.86, 88,
-        0xfffcf1, 0.96
-      ).setStrokeStyle(3, 0x151515, 1));
-      addTo(left, scene.add.text(0, PAGE_H * 0.095,
-        "I've heard that these two cars are great to start racing in…\\nbut which one would be better?", {
-          fontFamily: BODY_FONT, fontSize: '12px', fontStyle: '700',
-          color: '#151515', align: 'center', lineSpacing: 3,
-          wordWrap: { width: PAGE_W * 1.70 },
-        }).setOrigin(0.5));
+      // Keep the authored 02–03 spread unobstructed for one full second.
+      // First the player's thought fades in, then the two selectable frames
+      // and their single common instruction appear.
+      const thought = [
+        addTo(left, scene.add.rectangle(
+          0, PAGE_H * 0.095, PAGE_W * 1.86, 88,
+          0xfffcf1, 0.96
+        ).setStrokeStyle(3, 0x151515, 1).setAlpha(0)),
+        addTo(left, scene.add.text(0, PAGE_H * 0.095,
+          "I've heard that these two cars are great to start racing in…\nbut which one would be better?", {
+            fontFamily: BODY_FONT, fontSize: '12px', fontStyle: '700',
+            color: '#151515', align: 'center', lineSpacing: 3,
+            wordWrap: { width: PAGE_W * 1.70 },
+          }).setOrigin(0.5).setAlpha(0)),
+      ];
+      const prompt = addTo(left, scene.add.text(
+        -PAGE_W / 2, PAGE_H * 0.625, 'PRESS THE CAR YOU THINK IS BETTER', {
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffffff',
+          backgroundColor: '#091621dd',
+          padding: { x: 9, y: 8 }, align: 'center',
+          wordWrap: { width: PAGE_W * 0.94 },
+        }).setOrigin(0.5).setAlpha(0));
+      selectionUi.push(prompt);
+      revealTimers.push(scene.time.delayedCall(1000, () => {
+        if (!left.active || viewIndex !== 1 || currentView?.left !== left) return;
+        revealTweens.push(scene.tweens.add({
+          targets: thought, alpha: 1, duration: 520,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            if (!left.active || viewIndex !== 1) return;
+            revealTweens.push(scene.tweens.add({
+              targets: selectionUi, alpha: 1, duration: 480,
+              ease: 'Sine.easeInOut',
+              onComplete: () => {
+                if (!left.active || viewIndex !== 1) return;
+                selectionFrames.forEach(frame => {
+                  frame.setInteractive({ useHandCursor: true });
+                  activeGlows.push(scene.tweens.add({
+                    targets: frame, alpha: { from: 0.62, to: 1 },
+                    duration: 620, yoyo: true, repeat: -1,
+                    ease: 'Sine.easeInOut',
+                  }));
+                });
+              },
+            }));
+          },
+        }));
+      }));
     }
 
     return { cover: null, left, right };
