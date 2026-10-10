@@ -72,7 +72,7 @@ async function startTokyoShift() {
     ] = await Promise.all([
       loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261011-r480'),
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261011-r480'),
-      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261011-r480'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261011-r481'),
       loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261011-r480'),
       loadScene('GARAGE', './scenes/GarageScene.js?v=20261011-r480'),
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261011-r480'),
