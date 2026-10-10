@@ -1229,7 +1229,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;
-    const cash = this.registry.get('cash') ?? 50000;
+    const cash = this.registry.get('cash') ?? 5000;
 
     this.add.text(1250, 25, 'WINS  ' + wins, {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#b4ccdb'
