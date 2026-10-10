@@ -47,14 +47,15 @@ test('Reika and Sayaka use the already uploaded, distinct sprite sets', () => {
 });
 
 test('Sayaka starts as family friend then becomes Ginza curator then pro strategist', () => {
-  const opening = CUTSCENES.openingDaichiStory;
-  assert.equal(opening.pages[0].leftCharacter, 'sayakaFujieda');
-  assert.equal(opening.pages[1].leftCharacter, 'sayakaFujieda');
-  assert.equal(opening.pages[2].leftCharacter, 'sayakaFujieda');
-  assert.equal(opening.pages[3].leftCharacter, 'daichiSakamoto');
-  assert.match(opening.pages[0].text, /bring this over/i);
-  assert.match(opening.pages[2].text, /go back a long way/i);
+  const opening = CUTSCENES.openingSayakaKeys;
+  assert.equal(opening.characters.left, 'sayakaFujieda');
+  assert.match(opening.pages[0].text, /father said you needed this/i);
+  assert.match(opening.pages[1].text, /finally got my own car/i);
   assert.doesNotMatch(opening.pages.map(p => p.text).join(' '), /curat|strategist/i);
+  const daichi = CUTSCENES.openingDaichiAfterSayaka;
+  assert.equal(daichi.characters.left, 'daichiSakamoto');
+  assert.match(daichi.pages[2].text, /ex-pro driver/i);
+  assert.doesNotMatch(daichi.pages.map(p => p.text).join(' '), /Sayaka|curat|strategist/i);
 
   const ginza = CUTSCENES.ginzaInvitation;
   assert.match(ginza.pages.map(p => p.text).join(' '), /curate and manage/i);
