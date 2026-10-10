@@ -1,4 +1,4 @@
-name: Tokyo SHIFT R467 station-opening regression
+name: Tokyo SHIFT station-opening regression
 on:
   push:
     branches: [main, feature/r467-train-station-opening]
@@ -30,6 +30,7 @@ jobs:
           node --check src/scenes/GarageScene.js
           node --check src/scenes/RaceScene.js
           node --check src/ui/OfficePanel.js
+          node --check src/ui/TravelMap.js
           node --check src/ui/OpeningMagazine.js
           node --check src/ui/CarHistoryPanel.js
           node --check src/ui/MangaCutscene.js
