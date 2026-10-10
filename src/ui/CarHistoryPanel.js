@@ -575,7 +575,7 @@ function showMagazine(scene, features, options = {}) {
       if (!openingChoice) continue;
 
       const frame = addTo(left, scene.add.rectangle(
-        bayX, PAGE_H * 0.755, PAGE_W * 0.422, PAGE_H * 0.205,
+        bayX, PAGE_H * 0.750, PAGE_W * 0.405, PAGE_W * 0.405,
         0x62e8c7, 0.025
       ).setStrokeStyle(3, 0x64ffe0, 0.95)
         .setInteractive({ useHandCursor: true }));
