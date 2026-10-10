@@ -40,7 +40,7 @@ import {
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r479';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r478';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r480';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -6677,14 +6677,11 @@ export default class GarageScene extends Phaser.Scene {
     if (!daichi) return;
 
     if (mode === 'drivetrain') {
-      // This is Daichi's original tuning pose and intentionally keeps the exact
-      // former engine-helper placement.
-      const drivetrainCfg = DAICHI_CFG.drivetrain;
+      // Use the same fixed, original drivetrain standing pose/placement as
+      // the opening appearance. Never substitute the chassis helper artwork.
       this.addDaichiTuningHelper({
         textureKey: daichi.visual.spriteKey,
-        x: drivetrainCfg.x + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0),
-        feetY: drivetrainCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
-        targetHeight: drivetrainCfg.targetHeight,
+        ...this.getDaichiDrivetrainPosition(),
         depth: 8.4,
         anchorY: 1,
         shadowWidth: 74,
@@ -6717,6 +6714,15 @@ export default class GarageScene extends Phaser.Scene {
       shadowOffsetY: -7,
       objectList: this.secondaryHelperObjects,
     });
+  }
+
+  getDaichiDrivetrainPosition() {
+    const drivetrainCfg = DAICHI_CFG.drivetrain;
+    return {
+      x: drivetrainCfg.x + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetX : 0),
+      feetY: drivetrainCfg.feetY + (this.crewMode ? CREW_GARAGE_PRESENTATION.offsetY : 0),
+      targetHeight: drivetrainCfg.targetHeight,
+    };
   }
 
   getDaichiChassisPosition() {
@@ -7445,23 +7451,21 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('openingChapter', 'daichi');
     saveSessionState(this.registry);
 
-    // This is the *same* asset, footprint, elevation and depth as when the
-    // player selects chassis tuning, not the tiny generic companion sprite.
+    // Match drivetrain tuning exactly: Daichi's original workshop sprite,
+    // fixed standing position, feet anchor, scale, depth and floor shadow.
     this.ensureGarageTuningAssets(() => {
       if (!this.sys?.isActive?.()) return;
-      const placement = this.getDaichiChassisPosition();
+      const placement = this.getDaichiDrivetrainPosition();
       const objects = [];
       let sprite = null;
       if (placement) {
         sprite = this.addDaichiTuningHelper({
-          textureKey: 'daichiChassisTools',
+          textureKey: characters.daichiSakamoto?.visual?.spriteKey,
           ...placement,
-          depth: 9.4,
-          anchorY: 1517 / 1536,
-          useGarageCharacterShadow: false,
-          shadowWidth: 86,
-          shadowHeight: 20,
-          shadowOffsetY: -6,
+          depth: 8.4,
+          anchorY: 1,
+          shadowWidth: 74,
+          shadowHeight: 22,
           objectList: objects,
         });
       }
@@ -7469,7 +7473,7 @@ export default class GarageScene extends Phaser.Scene {
       if (!sprite && placement) {
         sprite = this.addGarageCharacter(
           characters.daichiSakamoto, placement.x, placement.feetY,
-          placement.targetHeight, 9.4
+          placement.targetHeight, 8.4
         );
         objects.push(sprite, ...(sprite.stageShadows || []));
       }
