@@ -10,7 +10,7 @@ import {
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
-const PHONE_ICON_KEY = 'phoneCutsceneIcon';
+const PHONE_ICON_KEY = 'openingIncomingPhone';
 const PHONE_ICON_PATH = 'assets/Ui/phone.png?v=20261011-r478';
 const DEPTH = 305;
 const BOX = Object.freeze({ x: 430, y: 304, width: 880, height: 220, radius: 34 });
@@ -178,7 +178,7 @@ export function playPhoneConversation(scene, {
 
     const pill = add(scene.add.graphics().setScrollFactor(0).setDepth(DEPTH + 6));
     pill.fillStyle(color, 1);
-    pill.fillRoundedRect(507, 280, 320, 51, 25);
+    pill.fillRoundedRect(507, 280, 370, 51, 25);
     const nameText = String(label || 'CALLER').toUpperCase() + ': ' + name;
     add(scene.add.text(531, 305, nameText, {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
@@ -186,7 +186,7 @@ export function playPhoneConversation(scene, {
 
     // Phone sprite is deliberately tiny: it supplements, not replaces, a face.
     if (scene.textures.exists(PHONE_ICON_KEY)) {
-      const icon = add(scene.add.image(796, 305, PHONE_ICON_KEY)
+      const icon = add(scene.add.image(851, 305, PHONE_ICON_KEY)
         .setScrollFactor(0).setDepth(DEPTH + 8));
       const src = scene.textures.get(PHONE_ICON_KEY).getSourceImage();
       icon.setScale(Math.min(26 / (src.width || 1), 26 / (src.height || 1)));
@@ -252,7 +252,7 @@ export function playPhoneConversation(scene, {
     queued.forEach(([key, path]) => scene.load.image(key, path));
     const ready = () => { if (state.active) begin(); };
     scene.load.once(Phaser.Loader.Events.COMPLETE, ready);
-    if (!scene.load.isLoading()) scene.load.start();
+    if (!scene.load.isLoading?.()) scene.load.start();
   } else {
     begin();
   }
