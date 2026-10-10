@@ -3,12 +3,12 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261011-r475';
 import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261011-r474';
+} from '../data/cutscenes.js?v=20261011-r475';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,

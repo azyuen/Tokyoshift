@@ -2,7 +2,7 @@ import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929
 import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261004-r333';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -40,7 +40,7 @@ import {
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r473';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r474';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r475';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -339,6 +339,8 @@ export default class GarageScene extends Phaser.Scene {
     // Street File belongs to the ordinary workshop. Crew Space uses the same
     // three-panel layout but keeps the room focused on the team.
     if (!this.crewMode) {
+      // Actual caller silhouette asset. Respect the repository's 'Ui' case.
+      queueImage('openingIncomingPhone', 'assets/Ui/phone.png?v=20261011-r475');
       const magazineIssue = getActiveMagazineIssue(this.registry);
       queueImage(
         magazineIssue?.coverKey,
@@ -7200,29 +7202,38 @@ export default class GarageScene extends Phaser.Scene {
     const add = obj => { items.push(obj); return obj; };
     const firstName = String(this.registry.get('firstName') || 'there').trim() || 'there';
 
-    // Long, slim in-game call banner. Office art remains visible underneath.
-    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.43)
+    // Compact phone-call panel, offset right to leave room for the caller
+    // icon. Both the icon and its drop-shadow may overlap the bottom border.
+    add(this.add.rectangle(780, 420, 1560, 840, 0x020710, 0.42)
       .setDepth(300).setInteractive());
-    add(this.add.rectangle(780, 413, 1140, 264, 0x091521, 0.98)
+    add(this.add.rectangle(920, 414, 920, 256, 0x091521, 0.98)
       .setStrokeStyle(3, 0x62e8c7, 1).setDepth(301));
-    add(this.add.rectangle(780, 286, 1140, 10, 0x62e8c7, 1).setDepth(302));
-    add(this.add.text(275, 324, 'INCOMING CALL', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#7df0cd',
-    }).setDepth(302));
-    add(this.add.text(275, 361, 'SAYAKA', {
-      fontFamily: PIXEL_FONT, fontSize: '18px', color: '#f7fcff',
-    }).setDepth(302));
-    add(this.add.text(825, 402,
-      "Hey " + firstName + "! I'm just around the corner.\\nI've got your new car, meet me in your garage!", {
-        fontFamily: BODY_FONT, fontSize: '15px', color: '#f2fbff',
-        fontStyle: '700', align: 'left', lineSpacing: 10,
-        wordWrap: { width: 680 },
-      }).setOrigin(0.5).setDepth(302));
+    add(this.add.rectangle(920, 290, 920, 8, 0x62e8c7, 1).setDepth(302));
+    add(this.add.text(690, 341, 'INCOMING CALL', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7df0cd',
+    }).setOrigin(0.5).setDepth(303));
+    add(this.add.text(690, 383, 'SAYAKA', {
+      fontFamily: PIXEL_FONT, fontSize: '17px', color: '#f7fcff',
+    }).setOrigin(0.5).setDepth(303));
 
-    const button = add(this.add.rectangle(780, 504, 288, 54, 0x104233, 1)
+    if (this.textures.exists('openingIncomingPhone')) {
+      const phone = this.add.image(678, 478, 'openingIncomingPhone').setDepth(304);
+      const image = this.textures.get('openingIncomingPhone').getSourceImage();
+      phone.setScale(Math.min(176 / image.width, 176 / image.height));
+      add(phone);
+    }
+
+    add(this.add.text(1060, 395,
+      "Hey " + firstName + "! I'm just around the corner.\nI've got your new car, meet me in your garage!", {
+        fontFamily: BODY_FONT, fontSize: '16px', color: '#f2fbff',
+        fontStyle: '700', align: 'center', lineSpacing: 9,
+        wordWrap: { width: 580 },
+      }).setOrigin(0.5).setDepth(303));
+
+    const button = add(this.add.rectangle(1090, 501, 248, 50, 0x104233, 1)
       .setStrokeStyle(2, 0x73ffce, 1).setDepth(303)
       .setInteractive({ useHandCursor: true }));
-    add(this.add.text(780, 504, 'NEXT  >', {
+    add(this.add.text(1090, 501, 'NEXT  >', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
     }).setOrigin(0.5).setDepth(304));
     button.on('pointerdown', () => {

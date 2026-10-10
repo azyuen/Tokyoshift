@@ -1,15 +1,15 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
 import { saveSessionState } from '../state/GameState.js?v=20261010-r467';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261010-r471';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r475';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261010-r471';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 const PIXEL = '"Silkscreen", monospace';
 
 // The station is a silent establishing shot. The actual conversation is the
-// shared white-paper MangaCutscene, not a bespoke black dialogue panel.
+// shared translucent MangaCutscene, not a bespoke black dialogue panel.
 export default class TrainStationScene extends Phaser.Scene {
   constructor() { super('TrainStationScene'); }
 
@@ -52,14 +52,15 @@ export default class TrainStationScene extends Phaser.Scene {
       const visual = characters[id]?.visual;
       if (!visual?.spriteKey || !this.textures.exists(visual.spriteKey)) return;
       const source = this.textures.get(visual.spriteKey).getSourceImage();
-      this.add.ellipse(x + 9, feetY - 6, 142, 28, 0x000000, 0.43).setDepth(4);
-      this.add.image(x, feetY, visual.spriteKey)
+      const shadow = this.add.ellipse(x + 9, feetY - 6, 142, 28, 0x000000, 0.43).setDepth(4);
+      const actor = this.add.image(x, feetY, visual.spriteKey)
         .setOrigin(0.5, 1)
         .setScale(targetHeight / source.height)
         .setDepth(5);
+      return { actor, shadow };
     };
     placeCharacter(this.registry.get('playerCharacterId') || 'renMizuno', 985, 739, 405);
-    placeCharacter('daichiSakamoto', 1265, 739, 435);
+    const daichiStage = placeCharacter('daichiSakamoto', 1265, 739, 435);
 
     const next = this.add.rectangle(1410, 783, 220, 56, 0x0b302f, 1)
       .setStrokeStyle(2, 0x62e8c7, 1).setDepth(14);
@@ -69,6 +70,24 @@ export default class TrainStationScene extends Phaser.Scene {
 
     this.conversationComplete = false;
     this.nextBusy = false;
+    const finishStationConversation = () => {
+      if (this.conversationComplete) return;
+      // Stay at the platform after the manga sequence, with the driver alone.
+      this.nextBusy = true;
+      const finish = () => {
+        this.conversationComplete = true;
+        this.nextBusy = false;
+        this.nextText.setText('GO TO MAP  >');
+      };
+      if (!daichiStage?.actor?.active) { finish(); return; }
+      this.tweens.add({
+        targets: [daichiStage.actor, daichiStage.shadow],
+        alpha: 0,
+        duration: 800,
+        ease: 'Sine.easeInOut',
+        onComplete: finish,
+      });
+    };
     next.on('pointerdown', () => {
       if (this.nextBusy || this.registry.get('openingChapter') !== 'station') return;
       if (this.conversationComplete) {
@@ -78,20 +97,12 @@ export default class TrainStationScene extends Phaser.Scene {
 
       this.nextBusy = true;
       const result = playMangaCutscene(this, 'openingStationEncounter', {
-        backgroundStyle: 'paper',
-        onComplete: () => {
-          this.conversationComplete = true;
-          this.nextBusy = false;
-          this.nextText.setText('GO TO MAP  >');
-          this.showTrainMap();
-        },
+        onComplete: finishStationConversation,
       });
       if (!result.played) {
         this.nextBusy = false;
         if (result.reason === 'seen') {
-          this.conversationComplete = true;
-          this.nextText.setText('GO TO MAP  >');
-          this.showTrainMap();
+          finishStationConversation();
         }
       }
     });
