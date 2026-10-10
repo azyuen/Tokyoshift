@@ -1,4 +1,4 @@
-import { cars, carOrder } from './cars.js?v=20261006-r388';
+import { cars, carOrder } from './cars.js?v=20261011-r479';
 import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260929-r271';
 import { chooseRivalBuildArchetype } from './rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
