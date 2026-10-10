@@ -67,7 +67,7 @@ import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r2
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261011-r479';
 import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import {
   getPinkSlipOpportunityChance,
   isPinkSlipValueEligible,
