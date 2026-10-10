@@ -18,7 +18,7 @@ import {
   PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
-import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r479';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r480';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
