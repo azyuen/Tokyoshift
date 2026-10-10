@@ -69,7 +69,7 @@ export function createDefaultGameState(options = {}) {
     lastName: '',
     playerCharacterId: 'renMizuno',
     starterCarId,
-    openingChapter: null, // New profiles: station -> home -> magazine -> delivery -> tutorial -> awaitDaichi (held for next narrative phase).
+    openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
@@ -178,7 +178,9 @@ export function createFreshRunStateFromRegistry(registry) {
   const previousSeen = Array.isArray(registry?.get?.('cutscenesSeen'))
     ? registry.get('cutscenesSeen')
     : [];
-  const onboardingIds = ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide'];
+  // Preserve completed modern introductions when resetting a progressed run.
+  // Legacy Daichi scene IDs are no longer executable story content.
+  const onboardingIds = ['openingSayakaKeys', 'openingSayakaFarewell', 'openingDaichiAfterSayaka'];
   state.cutscenesSeen = previousSeen.filter(id => onboardingIds.includes(String(id)));
   state.introTutorialChoiceDone = Boolean(
     registry?.get?.('introTutorialChoiceDone') || state.cutscenesSeen.length

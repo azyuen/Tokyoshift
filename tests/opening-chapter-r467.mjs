@@ -61,15 +61,20 @@ test('new lesson completion checkpoint survives normalisation', () => {
   assert.equal(normal.introTutorialChoiceDone, false);
 });
 
-test('older saves keep their original starter car and original Daichi cutscene', () => {
+test('older saves keep their starter car but never revive retired Daichi onboarding', () => {
   const saved = createDefaultGameState({ starterCarId: 'ae86' });
   delete saved.openingChapter;
+  saved.cutscenesSeen = ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide'];
   const normal = normaliseState(saved);
   assert.equal(normal.ownedCarIds[0], 'ae86');
   assert.equal(normal.gameOver, false);
   assert.equal(normal.openingChapter, null);
-  assert.equal(CUTSCENES.openingDaichiStory.pages[0].leftCharacter, 'sayakaFujieda');
-  assert.ok(CUTSCENES.openingDaichiStory.pages[0].text.includes('bring this over'));
+  assert.equal(CUTSCENES.openingDaichiStory, undefined);
+  assert.equal(CUTSCENES.openingRaceRules, undefined);
+  assert.equal(CUTSCENES.openingWorkshopGuide, undefined);
+  const garage = source('src/scenes/GarageScene.js');
+  for (const id of ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide'])
+    assert.doesNotMatch(garage, new RegExp(id));
 });
 
 test('new character and scene order resolves the station and first-car choice only at the magazine', () => {
@@ -97,7 +102,7 @@ test('Sayaka stays the driving mentor while Daichi explains tuning and Tokyo', (
   assert.equal(CUTSCENES.openingSayakaKeys.characters.left, 'sayakaFujieda');
   assert.equal(CUTSCENES.openingSayakaFarewell.characters.left, 'sayakaFujieda');
   assert.equal(CUTSCENES.openingDaichiAfterSayaka.characters.left, 'daichiSakamoto');
-  assert.match(CUTSCENES.openingDaichiAfterSayaka.pages.map(x => x.text).join(' '), /engine|drivetrain|drag scene/i);
+  assert.match(CUTSCENES.openingDaichiAfterSayaka.pages.map(x => x.text).join(' '), /engine|gearing|night meet/i);
 });
 
 test('station starts with grounded, larger characters and only a next button', () => {
@@ -286,7 +291,15 @@ test('Daichi dialogue begins with the father and stock car but keeps later tunin
   assert.match(pages[2].text, /ex-pro driver/);
   assert.match(pages[3].text, /looks stock to me/);
   assert.match(pages[4].text, /Good thing your childhood friend/);
-  assert.match(pages.slice(5).map(p => p.text).join(' '), /Tokyo has a whole drag scene/);
+  assert.equal(pages.length, 9, 'Four initial exchanges plus five final Daichi lines');
+  assert.equal(pages.slice(5).length, 4, 'Only four clicks after the spanner line');
+  assert.match(pages[5].text, /Engine, gearing, grip/);
+  assert.match(pages[5].text, /workshop/);
+  assert.match(pages[6].text, /meet on the map/);
+  assert.match(pages[6].text, /cash/);
+  assert.match(pages[7].text, /Pink slips/);
+  assert.match(pages[7].text, /Lose/);
+  assert.match(pages[8].text, /bring it back/);
 });
 
 test('the Daichi story finishes with a normal, cleaned workshop and no stale gold prompt', () => {
@@ -337,5 +350,20 @@ test('Sayaka expression assets are loaded in the manga portrait pose map', async
   assert.equal(poses.homeSerious.path, 'assets/Characters/Main/home_sayaka_fujieda_serious.png');
   for (const key of ['homeSad', 'homeHappy', 'homeBlushing', 'homeSerious']) {
     assert.ok(existsSync(poses[key].path));
+  }
+});
+
+test('single modern Daichi cutscene ends immediately in a normal workshop', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  const cutsceneData = source('src/data/cutscenes.js');
+  assert.match(garage, /if \(chapter === 'daichi'\) \{/);
+  assert.match(garage, /const finishDaichiIntroduction = \(\) => \{/);
+  assert.match(garage, /this\.registry\.set\('openingChapter', 'done'\)/);
+  assert.match(garage, /this\.restoreNormalWorkshopAfterOpening\(\)/);
+  assert.match(garage, /onComplete: finishDaichiIntroduction/);
+  for (const id of ['openingDaichiStory', 'openingRaceRules', 'openingWorkshopGuide']) {
+    assert.doesNotMatch(garage, new RegExp(id));
+    assert.doesNotMatch(cutsceneData, new RegExp(id));
+    assert.equal(CUTSCENES[id], undefined);
   }
 });
