@@ -202,7 +202,11 @@ export function showOfficePanel(scene) {
     scene._officeRecordOverlay = [];
     destroyObjects(objects);
     scene._officeOverlay = [];
+    if (scene.closeOpeningOffice === closeOffice) scene.closeOpeningOffice = null;
   };
+  // The Sayaka call is received while the office is open. Only NEXT dismisses
+  // the office to reveal the real garage before the car enters.
+  scene.closeOpeningOffice = closeOffice;
 
   // Prevent workshop controls beneath the room from receiving input.
   add(scene.add.rectangle(780, 420, 1560, 840, 0x010308, 1)
@@ -252,7 +256,7 @@ export function showOfficePanel(scene) {
   // The magazine itself enforces the temporary page cap during onboarding.
   const openMagazine = () => showMagazinePanel(scene, openingMagazine ? {
     onChoose: carId => {
-      closeOffice();
+      // Keep the office artwork behind the incoming-call overlay.
       scene.completeOpeningMagazineChoice?.(carId);
     },
   } : {});
