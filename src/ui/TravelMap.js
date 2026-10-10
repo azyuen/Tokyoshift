@@ -114,6 +114,7 @@ export function showTravelMap(scene, options = {}) {
   } = options;
 
   const crewTravelMode = travelMode === 'crew';
+  const openingTrainMode = travelMode === 'openingTrain';
 
   const worldPhase = getWorldPhase();
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
@@ -222,6 +223,11 @@ export function showTravelMap(scene, options = {}) {
 
   const visibleLocationsForRegion = region => {
     if (!region) return [];
+    if (openingTrainMode) {
+      return region.id === HOME_REGION_ID
+        ? region.locations.filter(item => item.id === 'shinonomeWorkshop')
+        : [];
+    }
     if (region.id !== HOME_REGION_ID) return region.locations;
 
     // A recruited driver is only borrowing the street map to test their car.
@@ -844,6 +850,19 @@ export function showTravelMap(scene, options = {}) {
       return;
     }
 
+    // This is the first ride home by train, not workshop management.
+    // The button becomes HOME, rather than "return to your workshop".
+    if (openingTrainMode) {
+      if (location.id !== 'shinonomeWorkshop') return;
+      travelButton
+        .setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102838, 1)
+        .setStrokeStyle(2, 0x55dfff, 1);
+      travelLabel.setColor('#f1fffb').setText('HOME');
+      travelButton.on('pointerdown', () => runHomeAction(location, 0));
+      return;
+    }
+
     if (crewBlockedLocation(location)) {
       travelButton.disableInteractive()
         .setFillStyle(0x111820, 1)
@@ -1049,12 +1068,12 @@ export function showTravelMap(scene, options = {}) {
     }
 
     const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
-    const regionOpen = !crewRegionBlocked && (
+    const regionOpen = openingTrainMode || (!crewRegionBlocked && (
       selectedRegionId === currentRegionId ||
       isTravelRegionUnlocked(scene.registry, selectedRegionId)
-    );
+    ));
 
-    regionNameText.setText(region.label);
+    regionNameText.setText(openingTrainMode ? 'SHINONOME' : region.label);
     regionLockText
       .setText(
         regionOpen
@@ -1064,7 +1083,9 @@ export function showTravelMap(scene, options = {}) {
             : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
       )
       .setVisible(!regionOpen);
-    regionLineText.setText(region.description);
+    regionLineText.setText(openingTrainMode
+      ? 'Only Shinonome is available on your first train ride home.'
+      : region.description);
 
     const tunerShop = getTunerShopForRegion(selectedRegionId);
     const tunerUnlocked = Boolean(
@@ -1162,7 +1183,7 @@ export function showTravelMap(scene, options = {}) {
       const available = locationAvailable(item) || item.kind === 'home';
       const time = locationTimeLabel(item, worldPhase);
 
-      row.label.setText(item.label);
+      row.label.setText(openingTrainMode ? 'HOME' : item.label);
       if (crewBlockedLocation(item)) {
         row.meta.setText('CREW CAR // UNAVAILABLE');
       } else if (item.kind === 'garageUpgrade') {
@@ -1176,7 +1197,7 @@ export function showTravelMap(scene, options = {}) {
             : MONEY(cost))
         );
       } else if (item.kind === 'home') {
-        row.meta.setText(
+        row.meta.setText(openingTrainMode ? 'SHINONOME  •  FREE TRAIN RIDE' :
           'HOME  •  4 SLOTS  •  ' +
           (fromWorkshop && activeWorkshopId() === item.id ? 'ACTIVE' : fromWorkshop ? 'OWNED' : MONEY(cost))
         );
@@ -1225,14 +1246,15 @@ export function showTravelMap(scene, options = {}) {
   };
 
   TRAVEL_REGION_ORDER.forEach(regionId => {
+    if (openingTrainMode && regionId !== HOME_REGION_ID) return;
     const region = TRAVEL_REGIONS[regionId];
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
     const crewRegionBlocked = crewTravelMode && centralTokyo;
-    const unlocked = !crewRegionBlocked && (
+    const unlocked = openingTrainMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
-    );
+    ));
 
     const glow = add(scene.add.circle(pt.x, pt.y, 20, 0x82909a, 0.04)
       .setStrokeStyle(2, 0x9aa9b4, 0.42)
