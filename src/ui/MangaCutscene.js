@@ -18,6 +18,7 @@ import {
   PROFILE_DEFAULT_ZOOM,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r478';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -1030,6 +1031,39 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     !options.force
   ) {
     return { played: false, reason: 'seen', active: false };
+  }
+
+  // Phone-style scenes use the canonical circular-portrait callout rather
+  // than manga silhouettes. Existing character scenes remain unchanged.
+  if (definition.presentation === 'phone') {
+    const result = playPhoneConversation(scene, {
+      callerId: options.callerId || definition.callerId || '',
+      callerName: options.callerName || definition.callerName || '',
+      callerPose: options.callerPose || definition.callerPose || 'idle',
+      label: options.label || definition.label || 'INCOMING CALL',
+      accent: options.accent || definition.accent || 0xd94479,
+      pages: definition.pages || [],
+      variables: {
+        ...context.variables,
+        // Use the driver's entered spelling, not the manga ALL-CAPS label.
+        PLAYER_FIRST_NAME: String(scene.registry.get('firstName') || '').trim() ||
+          context.variables.PLAYER_FIRST_NAME,
+      },
+      onComplete: () => {
+        if (!context.preview && definition.once !== false) {
+          markCutsceneSeen(scene.registry, historyId);
+          saveSessionState(scene.registry);
+        }
+        const payload = {
+          cutsceneId: definition.id, historyId,
+          reason: 'action', skipped: false, preview: context.preview,
+        };
+        if (context.preview) options.onPreviewComplete?.(payload);
+        else options.onComplete?.(payload);
+      },
+      onCancel: payload => options.onCancel?.(payload),
+    });
+    return result;
   }
 
   const characterRefs = collectCutsceneCharacterRefs(context);
