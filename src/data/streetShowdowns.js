@@ -39,15 +39,15 @@ const CASH_DRIVER_RATINGS = Object.freeze({
   HIGH: Object.freeze([3, 3, 4]),  // ¥48k: Expert final
   TOP: Object.freeze([3, 4, 4]),   // ¥70k: Expert finish
 });
-const COUPON_DRIVER_RATINGS = Object.freeze([4, 4, 5]);
+const COUPON_DRIVER_RATINGS = Object.freeze([3, 4, 4]);
 
 export function getStreetShowdownDriverRatings(options = {}) {
   const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
   const coupon = options.prizeType === 'COUPON' || options.prizeType === 'CAR';
 
   if (coupon) {
-    return profile === 'EASY' ? [3, 4, 4]
-      : profile === 'HARD' ? [4, 5, 5]
+    return profile === 'EASY' ? [3, 3, 4]
+      : profile === 'HARD' ? [4, 4, 5]
       : [...COUPON_DRIVER_RATINGS];
   }
 
@@ -146,11 +146,17 @@ export function createStreetShowdownRounds(options = {}) {
   const seed = String(options.seed || 'showdown');
   const profile = String(options.playerDifficulty || 'STANDARD').toUpperCase();
   const driverRatings = getStreetShowdownDriverRatings(options);
-  const targets = profile === 'EASY'
+  const couponEvent = options.prizeType === 'COUPON' || options.prizeType === 'CAR';
+  const baselineTargets = profile === 'EASY'
     ? [0.85, 0.91, 0.96]
     : profile === 'HARD'
       ? [0.95, 1.00, 1.035]
       : [0.90, 0.955, 1.005];
+  // With five/seven coupons needed per redemption, soften coupon events
+  // slightly while retaining more challenge than low-value cash events.
+  const targets = couponEvent
+    ? baselineTargets.map(value => value - (profile === 'HARD' ? 0.015 : 0.025))
+    : baselineTargets;
   const usedCars = new Set();
   const rounds = [];
 
