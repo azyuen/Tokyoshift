@@ -34,6 +34,7 @@ jobs:
           node --check src/ui/OpeningMagazine.js
           node --check src/ui/CarHistoryPanel.js
           node --check src/ui/MangaCutscene.js
+          node --check src/ui/PhoneConversation.js
           node --check src/data/cutscenes.js
       - name: Check new and existing profile continuity
         run: node --test tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs
