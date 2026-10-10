@@ -14,7 +14,7 @@ import {
   getStreetSignalFrame,
 } from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { cars, carOrder } from '../data/cars.js?v=20261011-r484';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
@@ -29,7 +29,7 @@ import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=202609
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { engines } from '../data/engines.js?v=20261011-r479';
+import { engines } from '../data/engines.js?v=20261011-r484';
 import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261011-r479';
 import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
@@ -76,7 +76,7 @@ import {
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
 } from '../data/tunerChallenges.js?v=20261011-r483';
-import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
+import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';

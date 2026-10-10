@@ -1102,7 +1102,7 @@ function addRegularCar(id, templateId, spec) {
 
 addRegularCar('rx7fd', 'fc3s', {
   shortName: 'RX-7 FD', name: 'Mazda RX-7 FD3S', description: 'Twin turbo rotary with a sharp, light chassis.',
-  engine: '13brew', engineModel: '13B-REW', powerKW: 206, torqueNm: 294, vehicleMassKg: 1280,
+  engine: '13brew', engineModel: '13B-REW', powerKW: 206, torqueNm: 314, vehicleMassKg: 1280,
   engineRedlineRPM: 8000, engineLimiterRPM: 8200, maximumBoost: 0.85,
   launchRPM: 5100, visual: { wheelKey: 'wheelDeepDish' },
 });

@@ -1,4 +1,4 @@
-import { cars } from './cars.js?v=20261006-r388';
+import { cars } from './cars.js?v=20261011-r484';
 import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260928-r239';
 import { chooseRivalBuildArchetype } from './rivalBuilds.js?v=20260928-r234';
 import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
@@ -48,15 +48,28 @@ function blank(round, archetype) {
   };
 }
 
-function priority(archetypeId, allowNos) {
-  const source = RIVAL_BUILD_ARCHETYPES[archetypeId]?.priority || [];
+function priority(archetypeId, allowNos, carConfig = {}) {
+  const archetype = RIVAL_BUILD_ARCHETYPES[archetypeId] || {};
+  const forbidden = new Set(archetype.forbidden || []);
+  const factoryTurbo = Number(carConfig.maximumBoost || 0) > 0.01;
+
+  // Match ordinary rival-build rules: a naturally aspirated street, launch,
+  // lightweight or high-rev tune must not silently become a turbo conversion.
+  // Only the explicit TURBO / ROLL archetype may convert an NA engine.
+  if (!factoryTurbo && archetypeId !== 'turboRoll') {
+    forbidden.add('engine.turbo');
+    forbidden.add('engine.intercooler');
+  }
+
   const result = [];
-  const add = id => { if (TARGETS[id] && !result.includes(id)) result.push(id); };
-  source.forEach(add);
+  const add = id => {
+    if (TARGETS[id] && !forbidden.has(id) && !result.includes(id)) result.push(id);
+  };
+  (archetype.priority || []).forEach(add);
   NORMAL.forEach(add);
   if (allowNos) {
     const at = archetypeId === 'launchDrag' ? 4 : archetypeId === 'turboRoll' ? 7 : result.length;
-    result.splice(at, 0, ...NOS);
+    result.splice(at, 0, ...NOS.filter(id => !forbidden.has(id)));
   }
   return result;
 }
@@ -73,15 +86,23 @@ const CATEGORY_BY_GROUP = Object.freeze({
   exhaustNosTuning: 'exhaustNos',
 });
 
-function allocate(state, points, maxLevel, allowNos, archetypeId, workshopEra, careerWins) {
+function allocate(state, points, maxLevel, allowNos, archetypeId, workshopEra, careerWins, carConfig) {
   const workshop = WORKSHOP_BY_ERA[String(workshopEra || '').toUpperCase()] || WORKSHOP_BY_ERA.HOME;
-  const order = priority(archetypeId, allowNos);
+  const order = priority(archetypeId, allowNos, carConfig);
   const maxAllowed = Object.fromEntries(order.map(id => {
     const [group, part] = TARGETS[id];
     let level = 0;
     for (let next = 1; next <= maxLevel; next++) {
       if (!canInstallTuningLevel(CATEGORY_BY_GROUP[group], part, next, workshop, careerWins)) break;
       level = next;
+    }
+    // Canal Yard is the first boost-conversion era. A purpose-built TURBO / ROLL
+    // NA rival can fit a street turbo here, but its full L2 conversion is
+    // reserved for the Warehouse tier. Factory-turbo cars retain L2 upgrades.
+    if (id === 'engine.turbo' &&
+        Number(carConfig?.maximumBoost || 0) <= 0.01 &&
+        String(workshopEra || '').toUpperCase() === 'CANAL') {
+      level = Math.min(level, 1);
     }
     return [id, level];
   }));
@@ -172,7 +193,8 @@ export function materialiseRegionalChallengeRounds(rounds = [], careerWins = Inf
       Boolean(round.allowNos),
       archetype,
       round.workshopEra,
-      careerWins
+      careerWins,
+      config
     );
     state = addSpecialists(state, round.specialistUpgradeCount, round);
     return {
