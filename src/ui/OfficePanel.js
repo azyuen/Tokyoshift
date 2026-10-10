@@ -1,6 +1,6 @@
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
-import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20260929-r286';
-import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261006-r388';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
+import { getTunerTeamChallengeState } from '../data/tunerChallenges.js?v=20261011-r479';
+import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261011-r479';
 import { showMagazinePanel } from './CarHistoryPanel.js?v=20261011-r475';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
