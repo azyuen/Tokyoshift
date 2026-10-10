@@ -13,14 +13,26 @@ const BODY_FONT = '"Rajdhani", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
 const PHONE_ICON_PATH = 'assets/Ui/phone.png?v=20261011-r478';
 const DEPTH = 305;
-const BOX = Object.freeze({ x: 430, y: 304, width: 880, height: 220, radius: 34 });
-const PORTRAIT = Object.freeze({ x: 405, y: 421, radius: 91 });
+// Compact scale: the bubble stays legible on phone-sized game canvases.
+const BOX = Object.freeze({ x: 472, y: 326, width: 804, height: 178, radius: 27 });
+const PORTRAIT = Object.freeze({ x: 430, y: 411, radius: 72 });
+export const PHONE_ACCENTS = Object.freeze({
+  incoming: 0xbe4a63, // Tokyo SHIFT muted crimson / rose
+  player: 0x349b95,   // garage blue-green / teal
+});
 
 const toColor = (value, fallback) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const parsed = Number.parseInt(String(value || '').replace(/^#/, ''), 16);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
+
+export function getPhoneAccent(speakerStyle = 'incoming', override = null) {
+  const style = speakerStyle === 'player' ? 'player' : 'incoming';
+  return override == null
+    ? PHONE_ACCENTS[style]
+    : toColor(override, PHONE_ACCENTS[style]);
+}
 
 export function formatPhoneMessage(text, variables = {}) {
   // Authored scene JSON sometimes contains literal "\n" text. Both forms
@@ -48,7 +60,8 @@ export function playPhoneConversation(scene, {
   label = 'INCOMING CALL',
   pages = [],
   variables = {},
-  accent = 0xd94479,
+  speakerStyle = 'incoming',
+  accent = null,
   onComplete = null,
   onCancel = null,
 } = {}) {
@@ -78,7 +91,7 @@ export function playPhoneConversation(scene, {
   };
   scene._phoneConversation = state;
 
-  const color = toColor(accent, 0xd94479);
+  let color = getPhoneAccent(speakerStyle, accent);
   const objects = [];
   const add = obj => { objects.push(obj); return obj; };
   let maskShape = null;
@@ -88,6 +101,10 @@ export function playPhoneConversation(scene, {
   let nextButton = null;
   let pageCounter = null;
   let lastAdvanceAt = 0;
+  let portraitRing = null;
+  let bubble = null;
+  let callerPill = null;
+  let callerLabel = null;
 
   const cleanup = () => {
     if (!state.active) return false;
@@ -122,30 +139,32 @@ export function playPhoneConversation(scene, {
     add(scene.add.rectangle(780, 420, 1560, 840, 0x080c15, 0.34)
       .setScrollFactor(0).setDepth(DEPTH).setInteractive());
 
-    const panel = add(scene.add.graphics().setScrollFactor(0).setDepth(DEPTH + 1));
-    panel.fillStyle(0x000000, 0.22);
-    panel.fillRoundedRect(BOX.x + 6, BOX.y + 9, BOX.width, BOX.height, BOX.radius);
-    panel.fillStyle(0xffedf2, 0.98);
-    panel.fillRoundedRect(BOX.x, BOX.y, BOX.width, BOX.height, BOX.radius);
-    panel.lineStyle(3, color, 0.95);
-    panel.strokeRoundedRect(BOX.x, BOX.y, BOX.width, BOX.height, BOX.radius);
+    bubble = add(scene.add.graphics().setScrollFactor(0).setDepth(DEPTH + 1));
+    const drawBubble = () => {
+      bubble.clear();
+      bubble.fillStyle(0x000000, 0.20);
+      bubble.fillRoundedRect(BOX.x + 5, BOX.y + 7, BOX.width, BOX.height, BOX.radius);
+      bubble.fillStyle(0xf4f1ee, 0.98);
+      bubble.fillRoundedRect(BOX.x, BOX.y, BOX.width, BOX.height, BOX.radius);
+      bubble.lineStyle(3, color, 0.96);
+      bubble.strokeRoundedRect(BOX.x, BOX.y, BOX.width, BOX.height, BOX.radius);
 
-    // The small manga speech tail points to the overlapping caller portrait.
-    panel.fillStyle(0xffedf2, 1);
-    panel.fillTriangle(BOX.x + 15, BOX.y + 102, BOX.x - 34, BOX.y + 132,
-      BOX.x + 22, BOX.y + 144);
-    panel.lineStyle(3, color, 0.88);
-    panel.lineBetween(BOX.x + 15, BOX.y + 102, BOX.x - 34, BOX.y + 132);
-    panel.lineBetween(BOX.x - 34, BOX.y + 132, BOX.x + 22, BOX.y + 144);
+      // Subtle callout notch towards the overlapping circular portrait.
+      bubble.fillStyle(0xf4f1ee, 1);
+      bubble.fillTriangle(BOX.x + 12, BOX.y + 73, BOX.x - 29, BOX.y + 96,
+        BOX.x + 17, BOX.y + 114);
+      bubble.lineStyle(3, color, 0.88);
+      bubble.lineBetween(BOX.x + 12, BOX.y + 73, BOX.x - 29, BOX.y + 96);
+      bubble.lineBetween(BOX.x - 29, BOX.y + 96, BOX.x + 17, BOX.y + 114);
+    };
+    drawBubble();
 
-    // The head-and-shoulders crop is consistent regardless of source dimensions.
-    // A circular geometry mask is used rather than a square image background.
-    add(scene.add.circle(PORTRAIT.x + 3, PORTRAIT.y + 5,
-      PORTRAIT.radius + 9, 0x101727, 0.25).setDepth(DEPTH + 2));
+    add(scene.add.circle(PORTRAIT.x + 2, PORTRAIT.y + 4,
+      PORTRAIT.radius + 7, 0x101727, 0.24).setDepth(DEPTH + 2));
+    portraitRing = add(scene.add.circle(PORTRAIT.x, PORTRAIT.y,
+      PORTRAIT.radius + 5, color, 1).setDepth(DEPTH + 3));
     add(scene.add.circle(PORTRAIT.x, PORTRAIT.y,
-      PORTRAIT.radius + 7, color, 1).setDepth(DEPTH + 3));
-    add(scene.add.circle(PORTRAIT.x, PORTRAIT.y,
-      PORTRAIT.radius, 0xf6d6df, 1).setDepth(DEPTH + 4));
+      PORTRAIT.radius, 0xe6dedb, 1).setDepth(DEPTH + 4));
 
     if (portraitAsset?.key && scene.textures.exists(portraitAsset.key)) {
       const texture = scene.textures.get(portraitAsset.key);
@@ -153,11 +172,11 @@ export function playPhoneConversation(scene, {
       const source = texture.getSourceImage();
       const w = Number(source?.naturalWidth || source?.width || 1);
       const h = Number(source?.naturalHeight || source?.height || 1);
-      const cropSize = Math.max(1, Math.min(w * 0.72, h * 0.28));
+      const cropSize = Math.max(1, Math.min(w * 0.53, h * 0.19));
       const cropX = (w - cropSize) * 0.5;
       // Character artwork includes a full-length body; prioritise the head.
-      const cropY = Math.min(h - cropSize, Math.max(0, h * 0.035));
-      const scale = (PORTRAIT.radius * 2.12) / cropSize;
+      const cropY = Math.min(h - cropSize, Math.max(0, h * 0.008));
+      const scale = (PORTRAIT.radius * 2.06) / cropSize;
       const image = add(scene.add.image(PORTRAIT.x, PORTRAIT.y, portraitAsset.key)
         .setScrollFactor(0).setDepth(DEPTH + 5).setScale(scale));
       image.setCrop(cropX, cropY, cropSize, cropSize);
@@ -176,46 +195,63 @@ export function playPhoneConversation(scene, {
       }).setScrollFactor(0).setOrigin(0.5).setDepth(DEPTH + 5));
     }
 
-    const pill = add(scene.add.graphics().setScrollFactor(0).setDepth(DEPTH + 6));
-    pill.fillStyle(color, 1);
-    pill.fillRoundedRect(507, 280, 370, 51, 25);
-    const nameText = String(label || 'CALLER').toUpperCase() + ': ' + name;
-    add(scene.add.text(531, 305, nameText, {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    callerPill = add(scene.add.graphics().setScrollFactor(0).setDepth(DEPTH + 6));
+    const drawPill = () => {
+      callerPill.clear();
+      callerPill.fillStyle(color, 1);
+      callerPill.fillRoundedRect(526, 305, 330, 41, 21);
+    };
+    drawPill();
+    callerLabel = add(scene.add.text(546, 325, '', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
     }).setScrollFactor(0).setOrigin(0, 0.5).setDepth(DEPTH + 7));
 
-    // Phone sprite is deliberately tiny: it supplements, not replaces, a face.
+    // A small accent only; the circular character face remains the focus.
     if (scene.textures.exists(PHONE_ICON_KEY)) {
-      const icon = add(scene.add.image(851, 305, PHONE_ICON_KEY)
+      const icon = add(scene.add.image(835, 325, PHONE_ICON_KEY)
         .setScrollFactor(0).setDepth(DEPTH + 8));
       const src = scene.textures.get(PHONE_ICON_KEY).getSourceImage();
-      icon.setScale(Math.min(26 / (src.width || 1), 26 / (src.height || 1)));
+      icon.setScale(Math.min(20 / (src.width || 1), 20 / (src.height || 1)));
     }
 
-    messageText = add(scene.add.text(538, 355, '', {
+    messageText = add(scene.add.text(552, 356, '', {
       fontFamily: BODY_FONT,
-      fontSize: '26px',
+      fontSize: '21px',
       fontStyle: '700',
-      color: '#242431',
-      lineSpacing: 9,
+      color: '#202d34',
+      lineSpacing: 6,
       align: 'left',
-      wordWrap: { width: 706 },
+      wordWrap: { width: 688 },
     }).setScrollFactor(0).setDepth(DEPTH + 7));
 
-    nextButton = add(scene.add.rectangle(1198, 550, 200, 51, color, 1)
-      .setStrokeStyle(2, 0xffcbd9, 1)
+    nextButton = add(scene.add.rectangle(1177, 515, 178, 44, color, 1)
+      .setStrokeStyle(2, 0xdfdfdb, 1)
       .setScrollFactor(0).setDepth(DEPTH + 8)
       .setInteractive({ useHandCursor: true }));
-    nextText = add(scene.add.text(1198, 550, 'NEXT >', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    nextText = add(scene.add.text(1177, 515, 'NEXT >', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
     }).setScrollFactor(0).setOrigin(0.5).setDepth(DEPTH + 9));
-    pageCounter = add(scene.add.text(1265, 510, '', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#92596b',
+    pageCounter = add(scene.add.text(1246, 482, '', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#68545d',
     }).setScrollFactor(0).setOrigin(1, 1).setDepth(DEPTH + 7));
 
     const showPage = () => {
       const page = normalisedPages[state.pageIndex] || {};
       const vars = { ...localVariables, ...(page.variables || {}) };
+      const pageStyle = page.speakerStyle ||
+        (page.speaker === 'player' ? 'player' : speakerStyle);
+      const nextColor = getPhoneAccent(pageStyle, page.accent ?? accent);
+      if (nextColor !== color) {
+        color = nextColor;
+        drawBubble();
+        drawPill();
+        portraitRing.setFillStyle(color, 1);
+        nextButton.setFillStyle(color, 1);
+      }
+      const isPlayer = pageStyle === 'player';
+      callerLabel.setText(isPlayer
+        ? 'YOU: ' + String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
+        : String(label || 'CALLER').toUpperCase() + ': ' + name);
       messageText.setText(formatPhoneMessage(page.text, vars));
       nextText.setText(state.pageIndex < normalisedPages.length - 1 ? 'NEXT >' : 'CONTINUE >');
       pageCounter.setText(normalisedPages.length > 1
