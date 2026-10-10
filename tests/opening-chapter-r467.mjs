@@ -76,7 +76,7 @@ test('new character and scene order resolves the station and first-car choice on
   const station = source('src/scenes/TrainStationScene.js');
   const setup = source('src/scenes/CharacterSelectScene.js');
   const garage = source('src/scenes/GarageScene.js');
-  const magazine = source('src/ui/OpeningMagazine.js');
+  const magazine = source('src/ui/CarHistoryPanel.js');
   const main = source('src/main.js');
   assert.match(setup, /state\.openingChapter = 'station'/);
   assert.doesNotMatch(setup, /this\.buildStarterCarPanel\(\).*?this\.currentStarterCarId =/s);
@@ -143,4 +143,54 @@ test('workshop prompt is centred and office magazine label is simplified', () =>
   assert.match(garage, /setOrigin\(0\.5, 0\.5\)/);
   assert.match(office, /READ THE TOKYO SHIFT MAGAZINE/);
   assert.doesNotMatch(office, /TAP THE MAGAZINE TO CHOOSE YOUR CAR/);
+});
+
+test('Issue 01 uses the real cover, Auto Market ad and contents assets', async () => {
+  const { MAGAZINE_ISSUES } = await import('../src/data/carMagazine.js');
+  const issue = MAGAZINE_ISSUES[1];
+  assert.equal(issue.coverPath, 'assets/Magazine/01/cover.webp');
+  assert.equal(issue.adPath, 'assets/Magazine/01/automarket_ad.webp');
+  assert.equal(issue.insetPath, 'assets/Magazine/01/contents.webp');
+  for (const path of [issue.coverPath, issue.adPath, issue.insetPath]) {
+    assert.equal(existsSync(path), true, 'Missing authored page: ' + path);
+  }
+});
+
+test('the opening and later visits use one magazine page-flip renderer', () => {
+  const magazine = source('src/ui/CarHistoryPanel.js');
+  const office = source('src/ui/OfficePanel.js');
+  const wrapper = source('src/ui/OpeningMagazine.js');
+  assert.match(magazine, /openingChoice = scene\.registry\.get\('openingChapter'\) === 'magazine'/);
+  assert.match(magazine, /totalViews = openingChoice \? 2 : 2 \+ featureSpreadCount/);
+  assert.match(magazine, /Math\.max\(1, Math\.ceil\(features\.length \/ 2\)\)/);
+  assert.match(magazine, /issue\.adKey/);
+  assert.match(magazine, /issue\.insetKey/);
+  assert.match(office, /showMagazinePanel\(scene, openingMagazine/);
+  assert.doesNotMatch(office, /showOpeningMagazine\(scene/);
+  assert.match(wrapper, /return showMagazinePanel\(scene, \{ onChoose \}\)/);
+});
+
+test('page 2 carries both rendered starter cars, model inserts and live selection prompts', () => {
+  const magazine = source('src/ui/CarHistoryPanel.js');
+  assert.match(magazine, /\['ae86', 0\.25, 'TOYOTA AE86'\]/);
+  assert.match(magazine, /\['ef', 0\.75, 'HONDA CIVIC EF'\]/);
+  assert.match(magazine, /renderCarPhoto\(scene, \{ carId: id, state: \{\} \}/);
+  assert.match(magazine, /PRESS THE ONE/);
+  assert.match(magazine, /YOU LIKE BEST/);
+  assert.match(magazine, /I've heard that these two cars are great to start racing in/);
+  assert.match(magazine, /but which one would be better/);
+  assert.match(magazine, /activeGlows\.push/);
+});
+
+test('confirming a car closes the actual magazine and starts delivery, without bypassing confirmation', () => {
+  const magazine = source('src/ui/CarHistoryPanel.js');
+  const office = source('src/ui/OfficePanel.js');
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(magazine, /const confirmStarterCar = carId =>/);
+  assert.match(magazine, /accept\.on\('pointerdown', \(\) =>/);
+  assert.match(magazine, /closeMagazine\(\);\s+if \(typeof options\.onChoose/);
+  assert.match(magazine, /frame\.on\('pointerdown', \(\) => confirmStarterCar\(id\)\)/);
+  assert.match(office, /closeOffice\(\);\s+scene\.completeOpeningMagazineChoice\?\.\(carId\)/);
+  assert.match(garage, /this\.registry\.set\('openingChapter', 'delivery'\)/);
+  assert.match(garage, /this\.showOpeningPhoneCall\(\)/);
 });
