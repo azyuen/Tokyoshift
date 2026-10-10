@@ -40,7 +40,7 @@ import {
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r473';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r474';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r475';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
