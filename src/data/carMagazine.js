@@ -32,7 +32,6 @@ export const CAR_MAGAZINE_META = Object.freeze({
   evo3: { year: 1995, drivetrain: 'AWD', fact: 'The Evolution III sharpened Mitsubishi’s rally-bred formula with more aero and a stronger 4G63T package.' },
   evo5: { year: 1998, drivetrain: 'AWD', fact: 'The Evolution V widened the track and body, creating one of the most recognizable shapes in the Evo lineage.' },
   evo6: { year: 1999, drivetrain: 'AWD', fact: 'The Evolution VI refined cooling and response while keeping the compact 4G63T all-wheel-drive recipe.' },
-  evo9: { year: 2005, drivetrain: 'AWD', fact: 'The Evolution IX added MIVEC to the 4G63T and became one of the last classic 4G63-powered Evos.' },
   wrx22b: { year: 1998, drivetrain: 'AWD', fact: 'The 22B STI was a wide-body homologation-era icon built to celebrate Subaru’s rally success.' },
   r32: { year: 1989, drivetrain: 'AWD', fact: 'The R32 GT-R revived the GT-R badge with the RB26DETT and ATTESA E-TS all-wheel-drive system.' },
   r34: { year: 1999, drivetrain: 'AWD', fact: 'The R34 GT-R evolved the RB26 and ATTESA formula into one of the defining Japanese performance cars of its era.' },
