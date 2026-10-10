@@ -401,7 +401,7 @@ function showMagazine(scene, features, options = {}) {
     }).setOrigin(0.5).setDepth(324));
     const accept = addModal(scene.add.rectangle(956, 510, 260, 58, 0x164b3b, 1)
       .setInteractive({ useHandCursor: true }).setDepth(323));
-    addModal(scene.add.text(956, 510, 'CONFIRM', {
+    addModal(scene.add.text(956, 510, 'CONFIRM CAR', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
     }).setOrigin(0.5).setDepth(324));
     cancel.on('pointerdown', dismissConfirmation);
