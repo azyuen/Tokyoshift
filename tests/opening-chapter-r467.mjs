@@ -107,7 +107,12 @@ test('station starts with grounded, larger characters and only a next button', (
   assert.match(station, /this.nextText =/);
   assert.doesNotMatch(station, /this.dialogue =|this.speaker =|showLine\(/);
   assert.match(station, /playMangaCutscene\(this, 'openingStationEncounter'/);
-  assert.match(station, /backgroundStyle: 'paper'/);
+  assert.doesNotMatch(station, /backgroundStyle: 'paper'/);
+  assert.match(station, /const daichiStage = placeCharacter/);
+  assert.match(station, /const finishStationConversation =/);
+  assert.match(station, /targets: \[daichiStage.actor, daichiStage.shadow\]/);
+  assert.match(station, /this.nextText.setText\('GO TO MAP  >'\)/);
+  assert.doesNotMatch(station, /onComplete: \(\) => \{[\s\S]{0,220}this\.showTrainMap\(\)/);
 });
 
 test('station cutscene addresses selected name without spoiling car or Sayaka', () => {
@@ -175,8 +180,8 @@ test('page 2 carries both rendered starter cars, model inserts and live selectio
   assert.match(magazine, /\['ae86', 0\.25, 'TOYOTA AE86'\]/);
   assert.match(magazine, /\['ef', 0\.75, 'HONDA CIVIC EF'\]/);
   assert.match(magazine, /renderCarPhoto\(scene, \{ carId: id, state: \{\} \}/);
-  assert.match(magazine, /PRESS THE ONE/);
-  assert.match(magazine, /YOU LIKE BEST/);
+  assert.match(magazine, /PRESS THE CAR YOU THINK IS BETTER/);
+  assert.doesNotMatch(magazine, /PRESS THE ONE/);
   assert.match(magazine, /I've heard that these two cars are great to start racing in/);
   assert.match(magazine, /but which one would be better/);
   assert.match(magazine, /activeGlows\.push/);
@@ -236,11 +241,12 @@ test('opening and farewell dialogue use Sayaka normal-happy-normal beat', () => 
   assert.match(intro[2].text, /even know how to drive/);
   assert.match(intro[3].text, /press accelerate/);
   assert.match(intro[4].text, /clutch in, shift gears/);
-  assert.equal(goodbye[0].pose, 'homeNormal');
+  assert.equal(intro[4].pose, 'homeSad');
+  assert.equal(goodbye[0].pose, 'homeHappy');
   assert.match(goodbye[0].text, /listen to the engine/);
-  assert.equal(goodbye[2].pose, 'homeHappy');
+  assert.equal(goodbye[2].pose, 'homeBlushing');
   assert.match(goodbye[2].text, /Teehehe/);
-  assert.equal(goodbye[3].pose, 'homeNormal');
+  assert.equal(goodbye[3].pose, 'homeSerious');
   assert.match(goodbye[3].text, /drive safely/i);
 });
 
@@ -295,4 +301,41 @@ test('the Daichi story finishes with a normal, cleaned workshop and no stale gol
   assert.match(garage, /this\.setWorkshopHomeHotspotsVisible\(true\)/);
   assert.match(garage, /this\.registry\.set\('openingChapter', 'done'\);[\s\S]*?this\.restoreNormalWorkshopAfterOpening\(\);/);
   assert.doesNotMatch(garage, /this\.time\.delayedCall\(160, \(\) => this\.showCentralTokyoInvitationIfNeeded\(\)\);\s*return;/);
+});
+
+
+test('authored 02–03 spread pauses, then reveals thought and one shared car instruction', () => {
+  const magazine = source('src/ui/CarHistoryPanel.js');
+  assert.match(magazine, /scene\.time\.delayedCall\(1000, \(\) =>/);
+  assert.match(magazine, /targets: thought, alpha: 1, duration: 520/);
+  assert.match(magazine, /targets: selectionUi, alpha: 1, duration: 480/);
+  assert.match(magazine, /frame\.disableInteractive\(\)/);
+  assert.match(magazine, /frame\.setInteractive\(\{ useHandCursor: true \}\)/);
+  assert.match(magazine, /DO YOU THINK THIS CAR IS BETTER\?/);
+  assert.equal((magazine.match(/PRESS THE CAR YOU THINK IS BETTER/g) || []).length, 1);
+  assert.doesNotMatch(magazine, /PRESS THE ONE\\nYOU LIKE BEST/);
+  assert.ok(magazine.includes(String.raw`in…\nbut which one would be better?`));
+  assert.ok(!magazine.includes(String.raw`in…\\nbut which one would be better?`));
+});
+
+test('the in-office Sayaka phone call shows uploaded artwork and real line breaks', () => {
+  const garage = source('src/scenes/GarageScene.js');
+  assert.match(garage, /assets\/Ui\/phone\.png\?v=20261011-r475/);
+  assert.ok(existsSync('assets/Ui/phone.png'));
+  assert.match(garage, /this\.add\.image\(678, 478, 'openingIncomingPhone'\)/);
+  assert.match(garage, /rectangle\(920, 414, 920, 256/);
+  assert.ok(garage.includes(String.raw`around the corner.\nI've got your new car`));
+  assert.ok(!garage.includes(String.raw`around the corner.\\nI've got your new car`));
+});
+
+test('Sayaka expression assets are loaded in the manga portrait pose map', async () => {
+  const { characters } = await import('../src/data/characters.js');
+  const poses = characters.sayakaFujieda.visual.poseAssets;
+  assert.equal(poses.homeSad.path, 'assets/Characters/Main/home_sayaka_fujieda_sad.png');
+  assert.equal(poses.homeHappy.path, 'assets/Characters/Main/home_sayaka_fujieda_happy.png');
+  assert.equal(poses.homeBlushing.path, 'assets/Characters/Main/home_sayaka_fujieda_blushing.png');
+  assert.equal(poses.homeSerious.path, 'assets/Characters/Main/home_sayaka_fujieda_serious.png');
+  for (const key of ['homeSad', 'homeHappy', 'homeBlushing', 'homeSerious']) {
+    assert.ok(existsSync(poses[key].path));
+  }
 });
