@@ -266,7 +266,7 @@ test('Sayaka leaves the player at a resumable workshop checkpoint before a separ
   assert.match(garage, /delayedCall\(120, \(\) => this\.armDaichiWorkshopTap\(\)\)/);
 });
 
-test('the very next workshop tap triggers the full-size Daichi chassis pose', () => {
+test('the very next workshop tap uses Daichi exactly as drivetrain tuning does', () => {
   const garage = source('src/scenes/GarageScene.js');
   assert.match(garage, /armDaichiWorkshopTap\(\) \{/);
   assert.match(garage, /rectangle\(780, 420, 1560, 840, 0x000000, 0\.001\)/);
@@ -274,11 +274,13 @@ test('the very next workshop tap triggers the full-size Daichi chassis pose', ()
   assert.match(garage, /this\.startDaichiWorkshopArrival\(\)/);
   assert.match(garage, /this\.registry\.set\('openingChapter', 'daichi'\)/);
   assert.match(garage, /this\.startDaichiWorkshopArrival\(true\)/);
-  assert.match(garage, /textureKey: 'daichiChassisTools'/);
-  assert.match(garage, /getDaichiChassisPosition\(\) \{/);
-  assert.match(garage, /DAICHI_CFG\.chassis/);
-  assert.match(garage, /targetHeight: chassisCfg\.targetHeight/);
-  assert.match(garage, /anchorY: 1517 \/ 1536/);
+  assert.match(garage, /getDaichiDrivetrainPosition\(\) \{/);
+  assert.match(garage, /drivetrainCfg\.x \+ \(this\.crewMode/);
+  assert.match(garage, /feetY: drivetrainCfg\.feetY/);
+  assert.match(garage, /targetHeight: drivetrainCfg\.targetHeight/);
+  assert.match(garage, /textureKey: characters\.daichiSakamoto\?\.visual\?\.spriteKey/);
+  assert.match(garage, /textureKey: daichi\.visual\.spriteKey/);
+  assert.match(garage, /depth: 8\.4,\s*anchorY: 1,\s*shadowWidth: 74,\s*shadowHeight: 22/);
   assert.match(garage, /duration: 950/);
   assert.doesNotMatch(garage, /spawnOpeningCompanion\('daichiSakamoto', false\)/);
 });
@@ -437,4 +439,34 @@ test('Sayaka farewell fades both manga portrait and garage companion before Daic
   assert.match(garage, /targets,\s*alpha: 0,\s*duration: 950/);
   assert.match(garage, /this\.fadeOpeningSayakaFromGarage\(\(\) => \{\s*this\.registry\.set\('openingChapter', 'awaitDaichi'\)/);
   assert.doesNotMatch(garage, /this\.openingCompanion\?\.destroy\?\.\(\)/);
+});
+
+
+test('phone UI is compact and uses a head-focused portrait crop', () => {
+  const phone = source('src/ui/PhoneConversation.js');
+  assert.match(phone, /BOX = Object\.freeze\(\{ x: 472, y: 326, width: 804, height: 178, radius: 27 \}\)/);
+  assert.match(phone, /PORTRAIT = Object\.freeze\(\{ x: 430, y: 411, radius: 72 \}\)/);
+  assert.match(phone, /fontSize: '21px'/);
+  assert.match(phone, /wordWrap: \{ width: 688 \}/);
+  assert.match(phone, /cropSize = Math\.max\(1, Math\.min\(w \* 0\.53, h \* 0\.19\)\)/);
+  assert.match(phone, /cropY = Math\.min\(h - cropSize, Math\.max\(0, h \* 0\.008\)\)/);
+  assert.match(phone, /icon\.setScale\(Math\.min\(20/);
+  assert.match(phone, /nextButton = add\(scene\.add\.rectangle\(1177, 515, 178, 44/);
+});
+
+test('every phone scene uses Tokyo SHIFT incoming crimson and player teal, including mixed calls', async () => {
+  const { PHONE_ACCENTS, getPhoneAccent } = await import('../src/ui/PhoneConversation.js');
+  assert.equal(PHONE_ACCENTS.incoming, 0xbe4a63);
+  assert.equal(PHONE_ACCENTS.player, 0x349b95);
+  assert.equal(getPhoneAccent(), PHONE_ACCENTS.incoming);
+  assert.equal(getPhoneAccent('player'), PHONE_ACCENTS.player);
+  assert.equal(getPhoneAccent('incoming', '#9a3040'), 0x9a3040);
+  const phone = source('src/ui/PhoneConversation.js');
+  const manga = source('src/ui/MangaCutscene.js');
+  assert.match(manga, /speakerStyle: options\.speakerStyle \|\| definition\.speakerStyle \|\| 'incoming'/);
+  assert.match(manga, /accent: options\.accent \?\? definition\.accent \?\? null/);
+  assert.match(phone, /page\.speakerStyle \|\|/);
+  assert.match(phone, /page\.speaker === 'player' \? 'player' : speakerStyle/);
+  assert.match(phone, /portraitRing\.setFillStyle\(color, 1\)/);
+  assert.match(phone, /nextButton\.setFillStyle\(color, 1\)/);
 });
