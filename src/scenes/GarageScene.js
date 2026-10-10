@@ -122,7 +122,7 @@ import {
   finishSceneLoading,
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261006-r388';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261011-r479';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261011-r473';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
