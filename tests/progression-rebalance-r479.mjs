@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { migrateRetiredEvoIX } from '../src/data/carRetirement.js';
-import { normaliseState } from '../src/state/GameState.js';
+import { createDefaultGameState, normaliseState } from '../src/state/GameState.js';
 import { cars, carOrder } from '../src/data/cars.js';
 import { getRegionalChampionshipCashReward } from '../src/data/tunerChallenges.js';
 import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement } from '../src/data/centralTokyo.js';
@@ -94,4 +94,11 @@ test('Easy pink slips keep a low-probability curve with 45-race median', () => {
     getPinkSlipOpportunityChance({ wins: 8, playerDifficulty: 'EASY' }) <
     getPinkSlipOpportunityChance({ wins: 8, playerDifficulty: 'STANDARD' })
   );
+});
+
+test('new profiles start with ¥5,000 while existing cash balances are not reset', () => {
+  assert.equal(createDefaultGameState().cash, 5000);
+  assert.equal(normaliseState({}).cash, 5000);
+  assert.equal(normaliseState({ cash: 50000 }).cash, 50000);
+  assert.equal(normaliseState({ cash: 123456 }).cash, 123456);
 });
