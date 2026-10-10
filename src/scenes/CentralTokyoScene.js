@@ -1,5 +1,5 @@
-import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=20261010-r470';
-import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261010-r470';
+import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=20261011-r479';
+import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261011-r479';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r479';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
@@ -43,7 +43,7 @@ import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261009-r447';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import {
   saveSessionState,
   recordCarAcquisition,
