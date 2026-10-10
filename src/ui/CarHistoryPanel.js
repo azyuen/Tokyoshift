@@ -210,20 +210,22 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 }
 
 function prepareMagazineAssets(scene, features, onReady) {
-  const ids = features
-    .map(feature => feature.carId)
-    .filter((id, index, list) => cars[id] && list.indexOf(id) === index);
+  // These two cars are printed into Issue 01 even before the player owns one.
+  // Keep them available for both the opening and all later magazine visits.
+  const ids = [...new Set(['ae86', 'ef', ...features.map(feature => feature.carId)])]
+    .filter(id => cars[id]);
   const states = scene.registry.get('carStates') || {};
   const issue = getActiveMagazineIssue(scene.registry);
   let queued = 0;
 
   const queueIssueImage = (key, path) => {
     if (!key || !path || scene.textures.exists(key)) return;
-    scene.load.image(key, path + '?v=20260929-r278');
+    scene.load.image(key, path + '?v=20261011-r472');
     queued += 1;
   };
 
   queueIssueImage(issue?.coverKey, issue?.coverPath);
+  queueIssueImage(issue?.adKey, issue?.adPath);
   queueIssueImage(issue?.insetKey, issue?.insetPath);
 
   ids.forEach(id => {
@@ -273,7 +275,7 @@ export function addCarHistoryButton(scene, x = 1102, y = 35) {
   return { button, label };
 }
 
-export function showCarHistoryPanel(scene) {
+export function showCarHistoryPanel(scene, options = {}) {
   if (scene._carHistoryOverlay?.length || scene._carMagazineLoading) return;
 
   const features = buildMagazineFeatures(scene);
@@ -304,15 +306,15 @@ export function showCarHistoryPanel(scene) {
     cleanup();
     if (!scene.sys?.isActive?.()) return;
     const issue = getActiveMagazineIssue(scene.registry);
-    if (issue && (!scene.textures.exists(issue.coverKey) || !scene.textures.exists(issue.insetKey))) {
+    if (issue && [issue.coverKey, issue.adKey, issue.insetKey].some(key => !key || !scene.textures.exists(key))) {
       scene.showWorkshopToast?.('MAGAZINE COULD NOT LOAD // TAP TO RETRY');
       return;
     }
-    showMagazine(scene, features);
+    showMagazine(scene, features, options);
   });
 }
 
-function showMagazine(scene, features) {
+function showMagazine(scene, features, options = {}) {
   if (scene._carHistoryOverlay?.length) return;
 
   const objects = [];
@@ -346,23 +348,69 @@ function showMagazine(scene, features) {
   const COVER_W = COVER_H * (coverSource.width / Math.max(1, coverSource.height));
   const COVER_LEFT = 780 - COVER_W / 2;
 
-  const featureSpreadCount = Math.ceil(features.length / 2);
-  const totalViews = 2 + featureSpreadCount; // cover + intro + feature spreads
+  const openingChoice = scene.registry.get('openingChapter') === 'magazine';
+  const featureSpreadCount = Math.max(1, Math.ceil(features.length / 2));
+  // First reading: cover + pages 2/3 only. Revisits keep the identical
+  // physical pages and unlock the existing generated Street File features.
+  const totalViews = openingChoice ? 2 : 2 + featureSpreadCount;
   let viewIndex = 0;
   let currentView = null;
   let flipping = false;
+  let confirmation = null;
+  const activeGlows = [];
 
   const destroyView = view => {
+    activeGlows.splice(0).forEach(tween => tween?.remove?.());
     if (!view) return;
     [view.cover, view.left, view.right].forEach(container => {
       try { container?.destroy?.(true); } catch (e) {}
     });
   };
 
+  const dismissConfirmation = () => {
+    if (!confirmation) return;
+    destroyObjects(confirmation);
+    confirmation = null;
+  };
   const closeMagazine = () => {
+    dismissConfirmation();
     destroyView(currentView);
     destroyObjects(objects);
     scene._carHistoryOverlay = [];
+  };
+
+  const confirmStarterCar = carId => {
+    if (!openingChoice || confirmation || !['ae86', 'ef'].includes(carId)) return;
+    const selectedName = carId === 'ae86' ? 'TOYOTA AE86' : 'HONDA CIVIC EF';
+    confirmation = [];
+    const addModal = obj => { confirmation.push(obj); return obj; };
+    addModal(scene.add.rectangle(780, 420, 1560, 840, 0x02040a, 0.75)
+      .setDepth(321).setInteractive());
+    addModal(scene.add.rectangle(780, 410, 740, 348, 0xfffcf1, 1)
+      .setStrokeStyle(6, 0x151515, 1).setDepth(322));
+    addModal(scene.add.text(780, 309, 'YOUR FAVOURITE CAR?', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#171717',
+    }).setOrigin(0.5).setDepth(323));
+    addModal(scene.add.text(780, 390, selectedName, {
+      fontFamily: PIXEL_FONT, fontSize: '16px', color: '#ae352a',
+    }).setOrigin(0.5).setDepth(323));
+    const cancel = addModal(scene.add.rectangle(603, 510, 260, 58, 0x303030, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(323));
+    addModal(scene.add.text(603, 510, 'GO BACK', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(324));
+    const accept = addModal(scene.add.rectangle(956, 510, 260, 58, 0x164b3b, 1)
+      .setInteractive({ useHandCursor: true }).setDepth(323));
+    addModal(scene.add.text(956, 510, 'CONFIRM', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(324));
+    cancel.on('pointerdown', dismissConfirmation);
+    accept.on('pointerdown', () => {
+      accept.disableInteractive();
+      closeMagazine();
+      if (typeof options.onChoose === 'function') options.onChoose(carId);
+      else scene.completeOpeningMagazineChoice?.(carId);
+    });
   };
 
   add(scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.90)
@@ -479,33 +527,84 @@ function showMagazine(scene, features) {
   };
 
   const buildIntroSpread = () => {
-    const left = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
+    // Page 2 (left) and 3 (right) are the actual authored Issue 01 WebPs,
+    // never a separately constructed 'starter magazine'.
+    const left = scene.add.container(SPINE_X, PAGE_TOP).setDepth(272);
     const right = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
-
     const leftPageX = addPaper(left, 'left');
 
-    addTo(left, scene.add.text(
-      leftPageX + PAGE_W / 2,
-      PAGE_H / 2,
-      issue?.label || 'ISSUE 01',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '26px',
-        color: '#8f2f23',
-        align: 'center',
-      }
-    ).setOrigin(0.5));
-
+    if (issue?.adKey && scene.textures.exists(issue.adKey)) {
+      addTo(left, scene.add.image(leftPageX + PAGE_W / 2, PAGE_H / 2, issue.adKey)
+        .setDisplaySize(PAGE_W, PAGE_H));
+    }
     if (issue?.insetKey && scene.textures.exists(issue.insetKey)) {
       addTo(right, scene.add.image(PAGE_W / 2, PAGE_H / 2, issue.insetKey)
         .setDisplaySize(PAGE_W, PAGE_H));
     } else {
       addPaper(right, 'right');
-      addTo(right, scene.add.text(PAGE_W / 2, PAGE_H / 2, 'INTRO PAGE', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '16px',
-        color: '#8a7961',
+    }
+
+    // The two display bays are at 25% and 75% of the advertisement width,
+    // between 63% and 85% of its height. Coordinates are proportional so
+    // replacement ad artwork with the same aspect ratio remains aligned.
+    for (const [id, fracX, label] of [
+      ['ae86', 0.25, 'TOYOTA AE86'],
+      ['ef', 0.75, 'HONDA CIVIC EF'],
+    ]) {
+      const bayX = leftPageX + PAGE_W * fracX;
+      const bayY = PAGE_H * 0.757;
+      const photoWidth = PAGE_W * 0.395;
+      const drawn = renderCarPhoto(scene, { carId: id, state: {} },
+        bayX, bayY, photoWidth, 0, obj => addTo(left, obj));
+      if (!drawn) {
+        addTo(left, scene.add.text(bayX, bayY, label, {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+          backgroundColor: '#111111', padding: { x: 5, y: 5 },
+        }).setOrigin(0.5));
+      }
+
+      // The little model insert lives immediately below each garage bay.
+      const nameY = PAGE_H * 0.862;
+      addTo(left, scene.add.rectangle(bayX, nameY, PAGE_W * 0.405, 27, 0x0b0b0b, 0.94)
+        .setStrokeStyle(1, 0xf8e2b1, 0.85));
+      addTo(left, scene.add.text(bayX, nameY, label, {
+        fontFamily: PIXEL_FONT, fontSize: '6px', color: '#ffffff',
+        align: 'center',
       }).setOrigin(0.5));
+
+      if (!openingChoice) continue;
+
+      const frame = addTo(left, scene.add.rectangle(
+        bayX, PAGE_H * 0.755, PAGE_W * 0.422, PAGE_H * 0.205,
+        0x62e8c7, 0.025
+      ).setStrokeStyle(3, 0x64ffe0, 0.95)
+        .setInteractive({ useHandCursor: true }));
+      activeGlows.push(scene.tweens.add({
+        targets: frame, alpha: { from: 0.58, to: 1 },
+        duration: 580, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut',
+      }));
+      addTo(left, scene.add.text(bayX, PAGE_H * 0.640,
+        'PRESS THE ONE\\nYOU LIKE BEST', {
+          fontFamily: PIXEL_FONT, fontSize: '6px', color: '#ffffff',
+          backgroundColor: '#091621dd',
+          padding: { x: 4, y: 5 }, align: 'center',
+        }).setOrigin(0.5));
+      frame.on('pointerdown', () => confirmStarterCar(id));
+    }
+
+    if (openingChoice) {
+      // An internal thought belongs to the spread, not to a new page.
+      addTo(left, scene.add.rectangle(
+        0, PAGE_H * 0.095, PAGE_W * 1.86, 88,
+        0xfffcf1, 0.96
+      ).setStrokeStyle(3, 0x151515, 1));
+      addTo(left, scene.add.text(0, PAGE_H * 0.095,
+        "I've heard that these two cars are great to start racing in…\\nbut which one would be better?", {
+          fontFamily: BODY_FONT, fontSize: '12px', fontStyle: '700',
+          color: '#151515', align: 'center', lineSpacing: 3,
+          wordWrap: { width: PAGE_W * 1.70 },
+        }).setOrigin(0.5));
     }
 
     return { cover: null, left, right };
@@ -682,7 +781,7 @@ function showMagazine(scene, features) {
     if (viewIndex === 0) {
       folio.setText((issue?.label || 'ISSUE 01') + ' // COVER');
     } else if (viewIndex === 1) {
-      folio.setText((issue?.label || 'ISSUE 01') + ' // INTRO');
+      folio.setText((issue?.label || 'ISSUE 01') + ' // 02–03');
     } else {
       const featureNumber = viewIndex - 1;
       folio.setText(
@@ -771,6 +870,6 @@ function showMagazine(scene, features) {
 
 // Office-facing alias. Keep showCarHistoryPanel for old callers while the
 // magazine and the simple car-history ledger are separate UI concepts.
-export function showMagazinePanel(scene) {
-  return showCarHistoryPanel(scene);
+export function showMagazinePanel(scene, options = {}) {
+  return showCarHistoryPanel(scene, options);
 }
