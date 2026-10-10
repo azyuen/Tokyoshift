@@ -38,9 +38,9 @@ import {
   getPartRemovalQuote,
   removeTuningPartFromState,
 } from '../data/partUninstall.js?v=20261009-r456';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261010-r467';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r473';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261010-r467';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r473';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -123,7 +123,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261006-r388';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261006-r388';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261011-r473';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
