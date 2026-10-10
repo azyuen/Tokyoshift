@@ -3,7 +3,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
-import RaceScene from './RaceScene.js?v=20261008-r431';
+import RaceScene from './RaceScene.js?v=20261011-r482';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
