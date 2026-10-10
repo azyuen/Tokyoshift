@@ -1,12 +1,12 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261010-r470';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
-import { cars } from './cars.js?v=20261006-r388';
+import { cars } from './cars.js?v=20261011-r479';
 import { characters } from './characters.js?v=20261010-r459';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { getCarMagazineMeta } from './carMagazine.js?v=20261010-r467';
+import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 
 export const PRO_SEASON_LENGTH = 8;
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
