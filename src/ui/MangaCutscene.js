@@ -51,7 +51,7 @@ const interpolate = (value, variables = {}) => String(value ?? '').replace(
 );
 
 export function sceneCutsceneActive(scene) {
-  return Boolean(scene?._mangaCutscene?.active);
+  return Boolean(scene?._mangaCutscene?.active || scene?._phoneConversation?.active);
 }
 
 function playerDisplayName(scene, playerCharacterId) {
