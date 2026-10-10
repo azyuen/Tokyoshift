@@ -69,8 +69,8 @@ test('retired duplicate character assets are removed without touching main cast 
 
 test('both pedal gauge fills remain size-aware and follow the art more closely', () => {
   const controls = source('src/input/TouchControls.js');
-  assert.match(controls, /x: clutchRect\.right - 53 \* clutchScale/);
-  assert.match(controls, /y: clutchRect\.y \+ 98 \* clutchScale/);
+  assert.match(controls, /x: clutchRect\.right - 60 \* clutchScale/);
+  assert.match(controls, /y: clutchRect\.y \+ 110 \* clutchScale/);
   assert.match(controls, /w: 26 \* clutchScale/);
   assert.match(controls, /x: throttleRect\.right - 61 \* throttleScale/);
   assert.match(controls, /y: throttleRect\.y \+ 99 \* throttleScale/);

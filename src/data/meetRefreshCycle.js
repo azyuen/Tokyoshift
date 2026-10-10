@@ -23,3 +23,4 @@ export function mayAdoptPreloadedOffers(preloadedFromStored, currentStoredRoundV
   // Never copy a cached expired round into a new cycle during create().
   return Boolean(preloadedFromStored) === Boolean(currentStoredRoundValid);
 }
+

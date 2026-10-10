@@ -1,0 +1,23 @@
+name: Professional seasons and crew series
+on:
+  pull_request:
+    paths: ['src/**', 'tests/**', '.github/workflows/pro-season-crew.yml']
+  push:
+    branches: [main, feature/pro-season-crew-r469]
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse professional modules
+        run: |
+          node --check src/data/proSeason.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/state/GameState.js
+      - name: Complete regression suite with repository assets
+        run: node --test tests/*.mjs

@@ -97,3 +97,4 @@ test('MeetScene only reuses preloaded rival cards from the matching active cycle
   assert.match(meetSource, /mayAdoptPreloadedOffers\(this\.preloadedFromStoredRound, hasStoredRound\)/);
   assert.match(meetSource, /this\.registry\.set\('meetRaceResults', \{\}\)/);
 });
+

@@ -276,7 +276,8 @@ test('standalone dev race retired while shared four-lane scenery and production 
   // Career writes exist ONLY for the paid, legacy two-lane cup path.
   // Free Arkon Den sandbox retains its own result branch without settlement.
   assert.match(sceneSource, /else if \(this\.proDuel\) \{/);
-  assert.match(sceneSource, /this\.registry\.set\('competitionWins'/);
+  assert.match(sceneSource, /competitionWins: Number\(this\.registry\.get\('competitionWins'\)/);
+  assert.match(sceneSource, /saveProTransaction\(this\.registry, changes\)/);
   assert.doesNotMatch(sceneSource, /registry\.set\(['"](?:wins|losses)['"]/);
   assert.doesNotMatch(sceneSource, /raceSettlement/);
 });

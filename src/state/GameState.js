@@ -1332,3 +1332,23 @@ export function clearAllSaves() {
   writeProfileStore(store);
   mirrorActiveProfile(null);
 }
+
+// Commit professional cash and progress in one active-profile snapshot and
+// verify durable storage before transitioning to a paid race or next fixture.
+export function saveProTransaction(registry, changes) {
+  if (!registryOwnsActiveProfile(registry)) throw new Error('PROFILE CHANGED — RETURN TO PROFILE SELECT');
+  const previous = Object.fromEntries(Object.keys(changes).map(key => [key, registry.get(key)]));
+  try {
+    Object.entries(changes).forEach(([key, value]) => registry.set(key, value));
+    const snapshot = saveSessionState(registry);
+    const stored = readSessionState();
+    if (!snapshot || !stored || Object.keys(changes).some(key =>
+      JSON.stringify(stored[key]) !== JSON.stringify(snapshot[key]))) {
+      throw new Error('SAVE FAILED — FREE DEVICE STORAGE AND RETRY');
+    }
+    return snapshot;
+  } catch (error) {
+    Object.entries(previous).forEach(([key, value]) => registry.set(key, value));
+    throw error;
+  }
+}
