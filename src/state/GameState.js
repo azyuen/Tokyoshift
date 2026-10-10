@@ -69,7 +69,7 @@ export function createDefaultGameState(options = {}) {
     lastName: '',
     playerCharacterId: 'renMizuno',
     starterCarId,
-    openingChapter: null, // New profiles only: station -> home -> magazine -> delivery -> tutorial -> daichi -> done.
+    openingChapter: null, // New profiles: station -> home -> magazine -> delivery -> tutorial -> awaitDaichi (held for next narrative phase).
     selectedCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
@@ -956,7 +956,7 @@ export function normaliseState(input = {}) {
         : {},
     playerCharacterId,
     starterCarId,
-    openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'daichi', 'done'].includes(String(input.openingChapter))
+    openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'awaitDaichi', 'daichi', 'done'].includes(String(input.openingChapter))
       ? String(input.openingChapter) : null,
     selectedCarId,
     ownedCarIds: owned,
