@@ -1,7 +1,7 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
+import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { engines } from '../data/engines.js?v=20261004-r333';
+import { engines } from '../data/engines.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
 import {
   ENGINE_PART_ORDER,
@@ -38,7 +38,7 @@ import {
   getPartRemovalQuote,
   removeTuningPartFromState,
 } from '../data/partUninstall.js?v=20261009-r456';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r476';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261011-r479';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261009-r451';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r478';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -51,7 +51,7 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js?v=20261011-r479';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   isCrewUnlocked,
@@ -60,7 +60,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
-} from '../data/crewSystem.js?v=20261007-r413';
+} from '../data/crewSystem.js?v=20261011-r479';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -86,7 +86,7 @@ import {
   DYNO_RENTAL_SESSION_COST,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20261006-r388';
+} from '../data/dyno.js?v=20261011-r479';
 import {
   PAINT_PRESETS,
   getCarPaintColor,
@@ -114,7 +114,7 @@ import {
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261006-r388';
+} from '../data/visualMods.js?v=20261011-r479';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import {
@@ -124,7 +124,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261006-r388';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261011-r473';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261006-r388';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
