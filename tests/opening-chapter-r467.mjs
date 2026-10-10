@@ -340,7 +340,7 @@ test('the in-office Sayaka call uses the canonical round portrait bubble and pho
   const definition = CUTSCENES.openingSayakaPhoneCall;
   assert.equal(definition.presentation, 'phone');
   assert.equal(definition.once, false, 'A delivery save can replay the phone call');
-  assert.equal(definition.callerPose, 'homeNormal');
+  assert.equal(definition.callerPose, 'idle');
   assert.equal(definition.pages.length, 1);
   assert.ok(existsSync('assets/Ui/phone.png'));
   assert.match(garage, /assets\/Ui\/phone\.png/);
@@ -354,7 +354,7 @@ test('the in-office Sayaka call uses the canonical round portrait bubble and pho
   assert.match(phone, /image\.setMask\(portraitMask\)/);
   assert.match(phone, /setInteractive\(\{ useHandCursor: true \}\)/);
   assert.match(phone, /PHONE_ICON_KEY = 'openingIncomingPhone'/);
-  assert.equal(getPhoneCallerPortrait('sayakaFujieda', 'homeNormal')?.path,
+  assert.equal(getPhoneCallerPortrait('sayakaFujieda', 'idle')?.path,
     'assets/Characters/Main/home_sayaka_fujieda_normal.png');
   const line = formatPhoneMessage(definition.pages[0].text,
     { PLAYER_FIRST_NAME: 'Ethan' });
