@@ -5,7 +5,7 @@
 import { MAIN_RIVAL_BY_REGION } from './characters.js?v=20261007-r411';
 import { getCrewCount, isCrewComplete } from './crewSystem.js?v=20261007-r413';
 
-export const PRO_CIRCUIT_SCHEMA_VERSION = 1;
+export const PRO_CIRCUIT_SCHEMA_VERSION = 2;
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;
 
 // Deliberately stable identities: DO NOT regenerate names/IDs each time the
@@ -124,6 +124,10 @@ export function createDefaultProCircuitState() {
     drivers: createDriverRoster(),
     teams: createTeamRoster(),
     completedEventIds: [],
+    activeCrewEvent: null,
+    lastCrewEvent: null,
+    crewSeriesWins: 0,
+    calendar: { round: 0, history: [], result: null, archives: [] },
     activeTournament: null,
     lastTournament: null,
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
@@ -163,6 +167,15 @@ export function normaliseProCircuitState(raw) {
     completedEventIds: Array.isArray(source.completedEventIds)
       ? [...new Set(source.completedEventIds.filter(id => typeof id === 'string').slice(-250))]
       : [],
+    activeCrewEvent: source.activeCrewEvent && typeof source.activeCrewEvent === 'object' && !Array.isArray(source.activeCrewEvent) ? source.activeCrewEvent : null,
+    lastCrewEvent: source.lastCrewEvent && typeof source.lastCrewEvent === 'object' && !Array.isArray(source.lastCrewEvent) ? source.lastCrewEvent : null,
+    crewSeriesWins: boundedInteger(source.crewSeriesWins, 0, 0, 1000000),
+    calendar: {
+      round: boundedInteger(source.calendar?.round, 0, 0, 8),
+      history: Array.isArray(source.calendar?.history) ? source.calendar.history.filter(e => e && typeof e.id === 'string').slice(-8) : [],
+      result: source.calendar?.result && typeof source.calendar.result === 'object' ? source.calendar.result : null,
+      archives: Array.isArray(source.calendar?.archives) ? source.calendar.archives.filter(e => e && typeof e === 'object').slice(-20) : [],
+    },
     // Preserve future/legacy saved bracket structures; the Phase 2 runner
     // separately validates its own eventId and expected heat before starting.
     activeTournament: source.activeTournament && typeof source.activeTournament === 'object' &&

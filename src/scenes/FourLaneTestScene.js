@@ -1,3 +1,5 @@
+import { getProfessionalAttendance, settleLegacySeasonEvent } from '../data/proSeason.js?v=20261010-r469';
+import { saveProTransaction } from '../state/GameState.js?v=20261010-r469';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -142,6 +144,11 @@ export default class FourLaneTestScene extends RaceScene {
     const circuit = this.registry.get('proCircuit') || {};
     this.proTournament = this.proCup ? circuit.activeTournament : null;
     this.proHeat = this.proCup ? getPlayerProHeat(this.proTournament) : null;
+    if (this.proTournament) this.proTournament = { ...this.proTournament,
+      crowdTier: getProfessionalAttendance(circuit, { prestige: 2, stage: this.proTournament.stage, final: this.proTournament.stage === 2 }) };
+    if (this.proDuelState) this.proDuelState = { ...this.proDuelState,
+      crowdTier: getProfessionalAttendance(circuit, { prestige: this.proDuelState.eventId === 'streetShootout' ? 1 : 2,
+        stage: this.proDuelInfo?.roundIndex || 0, final: this.proDuelInfo?.roundIndex === 2 }) };
     // Snapshot the live Tokyo map clock when this heat starts. Lock the art
     // for the race; the next heat will select the current world phase again.
     const eventId = this.proCup
@@ -1477,6 +1484,11 @@ export default class FourLaneTestScene extends RaceScene {
       onUpdate: tween => rankValue.setText('#' + Math.round(tween.getValue())),
     });
 
+    if (outcome?.summary) {
+      label(679, 615, 'RATING ' + outcome.summary.ratingBefore + ' → ' + outcome.summary.ratingAfter +
+        (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
+        (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
+    }
     const nextText = failure ? 'RETURN TO COMPLEX // RETRY HEAT'
       : advanced ? 'NEXT ROUND' : 'RETURN TO COMPLEX';
     label(1494, 679, 'TAP ANYWHERE  //  ' + nextText, 9, '#f6efef')
@@ -1522,11 +1534,8 @@ export default class FourLaneTestScene extends RaceScene {
           this.proHeat.id
         );
         if (outcome.status === 'ADVANCED' || (outcome.status === 'COMPLETE' && outcome.settled)) {
-          this.registry.set('proCircuit', outcome.circuit);
-          if (outcome.cashPrize > 0) {
-            this.registry.set('cash', Number(this.registry.get('cash') || 0) + outcome.cashPrize);
-          }
-          saveSessionState(this.registry);
+          saveProTransaction(this.registry, { proCircuit: outcome.circuit,
+            cash: Number(this.registry.get('cash') || 0) + outcome.cashPrize });
         }
       } catch (error) {
         // A damaged or legacy saved bracket must NEVER strand the player on
@@ -1538,20 +1547,22 @@ export default class FourLaneTestScene extends RaceScene {
     } else if (this.proDuel) {
       const state = this.registry.get('competitionState');
       const playerWon = own?.status === 'FINISHED' && own?.placing === 1;
-      outcome = settleProfessionalDuel(state, playerWon);
+      outcome = state?.proSeasonId === this.proDuelState?.proSeasonId && state?.roundIndex === this.proDuelInfo?.roundIndex
+        ? settleProfessionalDuel(state, playerWon) : { status: 'NO_EVENT', cashPrize: 0 };
       if (outcome.status !== 'NO_EVENT') {
         try {
-          let earned = 0;
-          if (outcome.status === 'CHAMPION') {
-            earned = applyEasyCashWinBonus(this.registry, outcome.cashPrize);
-            this.registry.set('cash', Number(this.registry.get('cash') || 0) + earned);
-            this.registry.set('competitionWins',
-              Number(this.registry.get('competitionWins') || 0) +
-              outcome.competitionWinsDelta);
+          const completed = outcome.status === 'CHAMPION' || outcome.status === 'ELIMINATED';
+          const earned = outcome.status === 'CHAMPION' ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
+          const changes = { competitionState: outcome.nextState,
+            cash: Number(this.registry.get('cash') || 0) + earned,
+            competitionWins: Number(this.registry.get('competitionWins') || 0) + outcome.competitionWinsDelta };
+          if (completed) {
+            changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
+              outcome.status === 'CHAMPION' ? 3 : Number(state.roundIndex));
+            outcome.summary = changes.proCircuit.lastTournament;
           }
+          saveProTransaction(this.registry, changes);
           outcome.cashPrize = earned;
-          this.registry.set('competitionState', outcome.nextState);
-          saveSessionState(this.registry);
         } catch (error) {
           console.error('[Tokyo SHIFT] Two-lane pro settlement failed', error);
           outcome = { status: 'ERROR', cashPrize: 0 };

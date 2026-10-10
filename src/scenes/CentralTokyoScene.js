@@ -1,3 +1,6 @@
+import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=20261010-r469';
+import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261010-r469';
+import { saveProTransaction } from '../state/GameState.js?v=20261010-r469';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
 import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261006-r388';
@@ -2993,17 +2996,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   getProDragEvents() {
-    // Fixed event slots; future Phase 3 season scheduling can replace these.
-    return [
-      PRO_DRAG_EVENTS[0],
-      PRO_DRAG_EVENTS[1],
-      {
-        id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN',
-        subtitle: 'TROPHY COMP', entryFee: FOUR_WIDE_CUP.entryFee,
-        prizeCash: FOUR_WIDE_CUP.prizeCash[0], fourWide: true,
-        requiredWins: 0,
-      },
-    ];
+    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
+    const legacy = this.registry.get('competitionState');
+    const driver = legacy?.active && legacy.proEvent
+      ? { ...(PRO_DRAG_EVENTS.find(e => e.id === legacy.eventId) || PRO_DRAG_EVENTS[0]), entryFee: legacy.entryFee || 0 }
+      : PRO_DRAG_EVENTS[pro.calendar.round % 2];
+    const slots = [driver, { ...CREW_SERIES, requiredWins: 0 }, {
+      id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
+      entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
+    }];
+    if (pro.activeCrewEvent) this.selectedEventIndex = 1;
+    else if (pro.activeTournament) this.selectedEventIndex = 2;
+    else if (legacy?.active && legacy.proEvent) this.selectedEventIndex = 0;
+    else if (pro.calendar.round >= 8) {
+      slots[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true, entryFee: 0, requiredWins: 0 };
+      this.selectedEventIndex = 2;
+    }
+    return slots;
   }
 
   drawDragComplex() {
@@ -3012,7 +3021,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawNavigation(
       'PRO DRAG RACING',
       circuitOpen
-        ? 'PRO CIRCUIT // DRIVER CUPS AND FOUR-WIDE TROPHY'
+        ? 'PRO CIRCUIT // DRIVER CUPS · CREW SERIES · FOUR-WIDE'
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
@@ -3038,13 +3047,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(27));
     }
 
-    if (Boolean(this.registry.get('tokyoChampionshipInvited'))) {
-      this.addContent(this.add.text(
-        SIDE.x + 20, SIDE.y + 120,
-        'TOKYO CHAMPIONSHIP // INVITED',
-        { fontFamily: PIXEL_FONT, fontSize: '7px', color: '#d8ced0' }
-      ).setDepth(34));
-    }
+    drawSeasonHeader(this, SIDE);
 
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
@@ -3154,7 +3157,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.fourWide ? 'TROPHY COMP // 4-WIDE' : 'PRO COMP // DRIVER', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.team ? 'PRO COMP // CREW' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'TROPHY COMP // 4-WIDE' : 'PRO COMP // DRIVER', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3187,6 +3190,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         this.registry.get('competitionState')?.active) return;
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const owned = this.registry.get('ownedCarIds') || [];
+    if (pro.activeCrewEvent || (pro.calendar.round >= 8 && !pro.activeTournament)) return;
     const active = pro.activeTournament;
     if (active) {
       if (active.eventId !== FOUR_WIDE_CUP.id ||
@@ -3203,13 +3207,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!tournament) return;
     // Registry snapshot is written ONCE before leaving the venue, so closing
     // the PWA mid-heat never charges another fee or loses a registered bracket.
-    this.registry.set('proCircuit', { ...pro, activeTournament: tournament });
-    this.registry.set('cash', cash - FOUR_WIDE_CUP.entryFee);
-    saveSessionState(this.registry);
+    tournament.crowdTier = getProfessionalAttendance(pro, { prestige: 2 });
+    try { saveProTransaction(this.registry, { proCircuit: { ...pro, activeTournament: tournament }, cash: cash - FOUR_WIDE_CUP.entryFee }); }
+    catch (error) { this.proError = error.message; this.renderLocation(this.activeLocationId); return; }
     this.scene.start('FourLaneTestScene', { mode: 'PRO_CUP' });
   }
 
   drawDragSide(event, build) {
+    if (drawCrewSidebar(this, event, SIDE)) return;
     const wins = Number(this.registry.get('wins') || 0);
     const cash = Number(this.registry.get('cash') || 0);
     const access = getProCircuitAccess(this.registry);
@@ -3240,7 +3245,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       !activeCup && !this.registry.get('competitionState')?.active &&
       Boolean(build) && owned.includes(build.carId) &&
       passesPower && passesNos && cash >= event.entryFee;
-    const canEnter = canResume || eligible;
+    const canEnter = canResume || (eligible && pro.calendar.round < 8 && !pro.activeCrewEvent);
 
     const title = activeDuelHere && (
       !activeDuel.eventId || activeDuel.eventId === 'tokyoInvitational'
@@ -3409,7 +3414,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   startProBracket(event, build, storyConfirmed = false) {
-    if (normaliseProCircuitState(this.registry.get('proCircuit')).activeTournament) return;
+    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
+    if (pro.activeTournament || pro.activeCrewEvent || pro.calendar.round >= 8 || this.registry.get('competitionState')?.active) return;
     const access = getProCircuitAccess(this.registry);
     const isDev = isArkonDen(this.registry);
     if (!event || (!access.unlocked && !isDev)) return;
@@ -3497,6 +3503,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const state = {
       active: true,
       proEvent: true,
+      proSeasonId: 'duel:' + event.id + ':s' + pro.season + ':e' + (pro.eventTick + 1),
       eventId: event.id,
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
@@ -3510,8 +3517,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       roundIndex: 0,
     };
 
-    this.registry.set('cash', cash - event.entryFee);
-    this.registry.set('competitionState', state);
+    try { saveProTransaction(this.registry, { cash: cash - event.entryFee, competitionState: state }); }
+    catch (error) { this.proError = error.message; this.renderLocation(this.activeLocationId); return; }
     this.registry.set('raceReturnScene', 'CentralTokyoScene');
     this.registry.set('selectedCarId', build.carId);
     this.registry.set('selectedOpponentCarId', rounds[0].carId);
