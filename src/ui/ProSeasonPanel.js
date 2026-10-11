@@ -55,7 +55,7 @@ export function drawCrewSidebar(s,event,side) {
     const row=text(s,side.x+20,side.y+278+i*18,line,16);
     if(row.width>side.w-40)row.setScale((side.w-40)/row.width);
   });
-  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!ready?'CREW SERIES UNAVAILABLE':!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
+  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
   text(s,side.x+20,side.y+540,reason,12,{color:'#e89da3',wordWrap:{width:side.w-38}});
   button(s,side.x+side.w/2,side.y+590,side.w-36,t?'RESUME CREW SERIES':'ENTER / SELECT SQUAD',()=>t?showCrewFixture(s):showCrewRegistration(s),t?!!f:canEnter);
   return true;
@@ -140,7 +140,7 @@ function showCrewResult(s,out) {
   if(portrait)o.add(portrait);
   o.label(610,205,champion?'SERIES WINNER':out.status==='COMPLETE'?'SERIES COMPLETE':out.wins>=2?'TEAM VICTORY':'TEAM DEFEAT',52);
   o.label(620,305,`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
-  o.label(620,385,out.summary?`FINISH #${out.summary.placing} · +${cash(out.cashPrize)}\nTEAM RANK #${out.summary.rankBefore} → #${out.summary.rankAfter}\n+${out.summary.points} SEASON POINTS`:`NEXT: FIXTURE ${out.circuit.activeCrewEvent.round+1}/3\nYour crew and results are saved.`,24);
+  o.label(620,385,out.summary?`${out.summary.wins!==undefined?'HEATS WON '+out.summary.wins+'/3':'FINISH #'+out.summary.placing} · +${cash(out.cashPrize)}\nTEAM RANK #${out.summary.rankBefore} → #${out.summary.rankAfter}\n+${out.summary.points} SEASON POINTS`:`NEXT: FIXTURE ${out.circuit.activeCrewEvent.round+1}/3\nYour crew and results are saved.`,24);
   if(out.circuit.calendar.round>=8)o.label(620,566,'SEASON COMPLETE · VIEW RESULTS AT THE COMPLEX',20);
   o.label(980,745,'TAP ANYWHERE · RETURN TO COMPLEX',18);
   let armed=false,done=false;const advance=()=>{if(!armed||done)return;done=true;o.close();redraw(s);};
