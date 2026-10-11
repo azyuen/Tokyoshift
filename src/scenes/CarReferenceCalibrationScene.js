@@ -315,10 +315,10 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
     this.text(45, 647, 'ONE SHARED AE86 SCALE', 8, '#88c5cc');
     this.text(45, 675, 'No car-specific Y or scaling.', 8, '#9eb9cb');
     this.button(230, 725, 357, 'RESET CURRENT CAR', () => {
-      const width = this.textures.get('carRef_' + id + '_body').getSourceImage().width;
-      car.rearX = -Math.round(width * 0.80);
-      car.frontX = -Math.round(width * 0.20);
-      car.size = 'S';
+      const baseline = BASELINE.cars[id];
+      car.rearX = baseline.rearX;
+      car.frontX = baseline.frontX;
+      car.size = baseline.size;
       this.persist(); this.render();
     }, 0x696776);
 
