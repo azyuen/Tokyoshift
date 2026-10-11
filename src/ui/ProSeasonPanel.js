@@ -24,17 +24,18 @@ export function drawSeasonHeader(s,side) {
   const c=circuit(s),driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver'),team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   text(s,side.x+20,side.y+117,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16).setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   text(s,side.x+20,side.y+146,`DRIVER #${driver.seed} · ${driver.seasonPoints} PTS\nCREW #${team.seed} · ${team.seasonPoints} PTS`,14);
+  text(s,side.x+20,side.y+188,'CHOOSE 1 OF 3 EVENTS · DRIVER + CREW TO QUALIFY',12,{color:'#9fc4d5'});
   if(s.proError)text(s,side.x+20,side.y+630,s.proError,12,{color:'#ef939b',wordWrap:{width:side.w-40}});
 }
 export function drawCrewSidebar(s,event,side) {
   const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c);
-  if(!event.team&&!event.seasonEnd&&!t)return false;
+  if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
     text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
     text(s,side.x+20,side.y+255,`Eight official events completed.\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.\n\nPast results remain in the season record.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
     button(s,side.x+side.w/2,side.y+590,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
-  const ready=c.calendar.round>=1||s.registry.get('devMode');
+  const ready=true;
   const canEnter=ready&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
   text(s,side.x+20,side.y+207,CREW_SERIES.label,21);
   const lines=['TEAM COMPETITION // YOU DRIVE','4 TEAMS · 3 ROUND-ROBIN FIXTURES','REGISTER 3–5 DRIVERS · FIELD 3','2 OF 3 HEATS WINS EACH FIXTURE','3 POINTS PER FIXTURE WIN','TIES: HEAT DIFFERENCE, THEN SEED',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'1ST ¥210,000 · 2ND ¥90,000','3RD ¥40,000 · 4TH ¥0','AFTER FIRST WIN: 65% PURSES'];
@@ -44,7 +45,7 @@ export function drawCrewSidebar(s,event,side) {
     const row=text(s,side.x+20,side.y+250+i*18,line,16);
     if(row.width>side.w-40)row.setScale((side.w-40)/row.width);
   });
-  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!ready?'COMPLETE ONE PRO EVENT TO UNLOCK':!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
+  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!ready?'CREW SERIES UNAVAILABLE':!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
   text(s,side.x+20,side.y+540,reason,12,{color:'#e89da3',wordWrap:{width:side.w-38}});
   button(s,side.x+side.w/2,side.y+590,side.w-36,t?'RESUME CREW SERIES':'ENTER / SELECT SQUAD',()=>t?showCrewFixture(s):showCrewRegistration(s),t?!!f:canEnter);
   return true;
