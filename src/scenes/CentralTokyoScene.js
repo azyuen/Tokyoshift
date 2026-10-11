@@ -2998,21 +2998,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getProDragEvents() {
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const legacy = this.registry.get('competitionState');
-    const driver = legacy?.active && legacy.proEvent
-      ? { ...(PRO_DRAG_EVENTS.find(e => e.id === legacy.eventId) || PRO_DRAG_EVENTS[0]), entryFee: legacy.entryFee || 0 }
-      : PRO_DRAG_EVENTS[pro.calendar.round % 2];
-    const slots = [driver, { ...CREW_SERIES, requiredWins: 0 }, {
+    const round = pro.calendar.round;
+    const driverPool = PRO_DRAG_EVENTS;
+    const primary = driverPool[round % driverPool.length];
+    const alternate = driverPool[(round + 1) % driverPool.length];
+    const fourWide = {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
-    }];
-    if (pro.activeCrewEvent) this.selectedEventIndex = 1;
-    else if (pro.activeTournament) this.selectedEventIndex = 2;
-    else if (legacy?.active && legacy.proEvent) this.selectedEventIndex = 0;
-    else if (pro.calendar.round >= 8) {
-      slots[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true, entryFee: 0, requiredWins: 0 };
-      this.selectedEventIndex = 2;
+    };
+    // Every round offers a driver event and a crew event; the third rotates.
+    // Keep legacy registered events visible even if their offering has rotated.
+    const choices = [primary, { ...CREW_SERIES, requiredWins: 0 }, round % 2 === 0 ? fourWide : alternate];
+    if (legacy?.active && legacy.proEvent) {
+      const saved = { ...(driverPool.find(e => e.id === legacy.eventId) || primary),
+        entryFee: legacy.entryFee || 0 };
+      const index = choices.findIndex(e => !e.team && !e.fourWide && e.id === saved.id);
+      choices[index >= 0 ? index : 0] = saved;
     }
-    return slots;
+    if (pro.activeTournament) choices[2] = fourWide;
+    if (round >= 8) {
+      choices[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true,
+        entryFee: 0, requiredWins: 0 };
+      if (!pro.activeCrewEvent && !pro.activeTournament && !legacy?.active) this.selectedEventIndex = 2;
+    }
+    // Never overwrite the player's chosen card merely because a crew series
+    // or another professional event is in progress.
+    return choices;
   }
 
   drawDragComplex() {
@@ -3021,7 +3032,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawNavigation(
       'PRO DRAG RACING',
       circuitOpen
-        ? 'PRO CIRCUIT // DRIVER CUPS · CREW SERIES · FOUR-WIDE'
+        ? 'PRO CIRCUIT // CHOOSE DRIVER OR CREW EVENTS · EARN SEASON POINTS'
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
@@ -3157,7 +3168,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.team ? 'PRO COMP // CREW' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'TROPHY COMP // 4-WIDE' : 'PRO COMP // DRIVER', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.team ? 'CREW POINTS // 32 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 32 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3300,7 +3311,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ? selectedFourWide
         ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
         : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
-      : activeCup || activeDuel || this.registry.get('competitionState')?.active
+      : activeCup || activeDuel || pro.activeCrewEvent || this.registry.get('competitionState')?.active
         ? 'FINISH YOUR ACTIVE EVENT FIRST'
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
