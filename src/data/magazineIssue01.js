@@ -5,7 +5,6 @@ export const ISSUE01_ASSETS = Object.freeze({
  featured_car: { key: 'issue01FeaturedCar', path: 'assets/Magazine/featuredcar_blank.webp' },
  ginza_ad: { key: 'issue01Ginza', path: 'assets/Magazine/ginza_blank.webp' },
  champion_01: { key: 'issue01Champion01', path: 'assets/Magazine/01/champion_01.webp' },
- champion_02: { key: 'issue01Champion02', path: 'assets/Magazine/01/champion_02.webp' },
  champion_03: { key: 'issue01Champion03', path: 'assets/Magazine/01/champion_03.webp' },
 });
 export const ISSUE01_GINZA_CARS = Object.freeze(['spoonEk9', 'amuseS2000Gt1']);
@@ -18,12 +17,12 @@ const pages = [
    deck:'Behind the trophy: a white R32, a battered notebook and years of ordinary work.',
    columns:[
     [
-     "Mika Hiyase's first race car wasn't a museum piece. She bought her white R32 with wages from a parts counter, then spent evenings learning which repairs mattered and which upgrades only sounded impressive.",
-     "At waterfront meets she lost more often than she won. But every bad launch, missed gear and change in weather went into a notebook. While others chased the next big part, Mika chased a better run.",
+     "Mika Hiyase bought her white R32 with wages from a parts counter. After work she drove to waterfront meets, where a perfect run mattered more than the shine of a fresh upgrade.",
+     "She lost often. Every bad launch, missed shift and change in weather went into a notebook. Instead of hiding the failures, she studied them until the next run was better.",
     ],
     [
-     "The notebook eventually filled with more than her own numbers. Mechanics added ideas; friends stayed late to prepare tyres and check settings. Mika learned that trusting a crew could make the car faster than working alone.",
-     "By the championship final, those small gains had become repeatable speed. Tokyo saw the trophy; Mika saw everyone who got her there. She carried that same discipline into international racing—and kept the battered notebook.",
+     "Friends added their ideas to Mika's notebook. Mechanics challenged her settings, and the crew stayed late checking tyres and gears. She learned to trust the people around her, not just the car.",
+     "At the final, small gains became repeatable speed. Tokyo saw a trophy; Mika saw everyone behind it. She carried that discipline into international racing, keeping the notebook close.",
     ],
    ] },
  { kind:'champion', art:'champion_03', kicker:'MIKA HIYASE / THE NEXT CHAPTER', title:'TOKYO GOES WITH HER',
