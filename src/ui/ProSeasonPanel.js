@@ -1,3 +1,4 @@
+import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-c2';
 import { CREW_SERIES, PRO_SEASON_LENGTH, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261011-r485';
 import { normaliseProCircuitState, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261010-r470';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r479';
@@ -173,5 +174,35 @@ export function showSeasonRecords(s,complete=false) {
   o.label(90,572,'EVENT HISTORY: '+(c.calendar.history.map(h=>h.label+' #'+h.placing).join(' / ')||'No completed events yet.'),18);
   const last=c.calendar.archives.at(-1);if(last)o.label(90,642,`PREVIOUS SEASON ${last.season}: DRIVER #${last.drivers.findIndex(r=>r.id==='player:driver')+1} · CREW #${last.teams.findIndex(r=>r.id==='player:team')+1}`,18);
   o.btn(310,758,390,'RETURN',o.close);
+  if(complete && (q.qualified || c.activeChampionship))o.btn(1090,696,600,c.activeChampionship?'VIEW TOKYO CHAMPIONSHIP':'ENTER TOKYO CHAMPIONSHIP',()=>{
+    if(!c.activeChampionship){const result=createProvisionalChampionship(c);if(result.error){o.label(90,690,result.error,18);return;}const next={...c,activeChampionship:result.championship};if(!commit(s,{proCircuit:next}))return;}
+    o.close();showTokyoChampionship(s);
+  });
   if(complete)o.btn(1100,758,570,'BEGIN SEASON '+(c.season+1),()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
+}
+
+/** Provisional championship lobby. Entry is available to all qualified players.
+ * Race launch is intentionally disabled until each stage is wired to the
+ * live racing scene, so a save cannot enter an unfinishable championship heat.
+ */
+export function showTokyoChampionship(s) {
+  const c=circuit(s),state=c.activeChampionship;
+  if(!state){showSeasonRecords(s,c.calendar.round>=8);return;}
+  const o=overlay(s,'TOKYO CHAMPIONSHIP // PROVISIONAL 16');
+  o.label(90,110,'STAGE '+state.stage+' · SEASON '+state.season+' · '+(state.completed?'FINAL RESULTS':'CHAMPIONSHIP IN PROGRESS'),23);
+  const rows=championshipStandings(state);
+  rows.forEach((r,i)=>{
+    const x=i<8?90:810,y=178+(i%8)*60;
+    o.label(x,y,(i+1)+'. '+(r.id==='player:driver'?'YOU':r.name)+'  '+r.total+' PTS',20);
+  });
+  const heat=state.stage==='KNOCKOUT'?getChampionshipKnockoutHeat(state):
+    state.stage==='CREW'?getChampionshipCrewHeat(state):
+    state.stage==='FOUR_WIDE'?getChampionshipFourWideHeat(state):null;
+  o.label(90,690,state.completed?'CHAMPION: '+(rows[0]?.name||'UNKNOWN'):
+    heat?'NEXT: '+(state.stage==='KNOCKOUT'?'KNOCKOUT ROUND '+(heat.round+1)+' vs '+heat.opponent?.name:
+      state.stage==='CREW'?'CREW HEAT '+(heat.index+1)+' vs '+heat.opponent?.name:
+      'FOUR-LANE '+['QUALIFIER','SEMIFINAL','FINAL'][heat.round]):
+    'STAGE TRANSITION PENDING',21);
+  o.btn(300,766,390,'SAVE / RETURN',o.close);
+  o.label(815,761,'RACE ENTRY COMING WITH SCENE INTEGRATION',17);
 }
