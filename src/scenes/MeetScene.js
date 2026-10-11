@@ -77,6 +77,7 @@ import {
 } from '../data/pinkSlipProgression.js?v=20261011-r479';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
   getRegionalChampionshipCashReward,
@@ -5411,9 +5412,10 @@ export default class MeetScene extends Phaser.Scene {
     const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = y + renderOffsetY;
+    const drawX = getReferenceRightX(car, x, bodyScale);
 
-    const rearX = x + fit.rear.offsetX;
-    const frontX = x + fit.front.offsetX;
+    const rearX = drawX + fit.rear.offsetX;
+    const frontX = drawX + fit.front.offsetX;
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
@@ -5472,7 +5474,7 @@ export default class MeetScene extends Phaser.Scene {
     ).setDepth(depth - 0.08);
 
     const bodyLayers = createCarBodyLayers(this, car, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1,
