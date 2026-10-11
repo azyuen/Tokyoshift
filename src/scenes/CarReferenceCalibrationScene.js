@@ -117,7 +117,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
     } catch (e) {}
   }
 
-  add(obj) {
+  track(obj) {
     this.objects.push(obj);
     return obj;
   }
@@ -130,7 +130,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
   }
 
   text(x, y, value, size = 9, color = '#c9dce9') {
-    return this.add(this.addText(x, y, value, size, color));
+    return this.track(this.addText(x, y, value, size, color));
   }
 
   addText(x, y, value, size, color) {
@@ -140,11 +140,11 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
   }
 
   button(x, y, w, label, action, color = 0x365c79) {
-    const area = this.add(this.add.rectangle(x, y, w, 40, 0x0b1d2c, 1)
+    const area = this.track(this.add.rectangle(x, y, w, 40, 0x0b1d2c, 1)
       .setStrokeStyle(2, color)
       .setInteractive({ useHandCursor: true })
       .setDepth(100));
-    this.add(this.add.text(x, y, label, {
+    this.track(this.add.text(x, y, label, {
       fontFamily: FONT, fontSize: '7px', color: '#f3f9fc',
     }).setOrigin(0.5).setDepth(101));
     area.on('pointerdown', action);
@@ -169,8 +169,8 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
 
   render() {
     this.clear();
-    this.add(this.add.rectangle(780, 420, 1560, 840, 0x050b15, 1).setDepth(-10));
-    this.add(this.add.rectangle(780, 42, 1524, 66, 0x0a1928, 1)
+    this.track(this.add.rectangle(780, 420, 1560, 840, 0x050b15, 1).setDepth(-10));
+    this.track(this.add.rectangle(780, 42, 1524, 66, 0x0a1928, 1)
       .setStrokeStyle(2, 0x335d78).setDepth(-5));
     this.text(35, 23, 'TOKYO SHIFT // 9-CAR REFERENCE TEST', 15, '#f5f0dd');
     this.button(730, 45, 112, this.view === 'grid' ? 'DETAIL' : 'ALL 9', () => {
@@ -206,7 +206,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
     const car = this.calibrations[id];
     const source = this.textures.get(bodyKey).getSourceImage();
     const width = source.width * scale;
-    const line = this.add(this.add.graphics().setDepth(10));
+    const line = this.track(this.add.graphics().setDepth(10));
     line.lineStyle(guides ? 3 : 1, 0x64c5c8, guides ? 0.95 : 0.55);
     line.lineBetween(right - width - 8, ground, right + 9, ground);
     if (guides) {
@@ -221,9 +221,9 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
         const wheelX = right + car[axle + 'X'] * scale;
         const visibleX = wheelX - this.wheelMetrics.centerX * wheelScale;
         const wheelY = ground - this.wheelMetrics.bottomY * wheelScale;
-        this.add(this.add.circle(wheelX, ground - diameter * scale / 2,
+        this.track(this.add.circle(wheelX, ground - diameter * scale / 2,
           diameter * scale / 2 * 1.03, 0x020407, 1).setDepth(1));
-        this.add(this.add.image(visibleX, wheelY, 'carRef_wheel')
+        this.track(this.add.image(visibleX, wheelY, 'carRef_wheel')
           .setScale(wheelScale).setDepth(2));
         if (guides) {
           const label = axle === 'rear' ? 'REAR' : 'FRONT';
@@ -237,10 +237,10 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
       }
     }
     if (this.showPaint && this.textures.exists(paintKey)) {
-      this.add(this.add.image(right, ground, paintKey)
+      this.track(this.add.image(right, ground, paintKey)
         .setOrigin(1, 1).setScale(scale).setDepth(3));
     }
-    this.add(this.add.image(right, ground, bodyKey)
+    this.track(this.add.image(right, ground, bodyKey)
       .setOrigin(1, 1).setScale(scale).setDepth(4));
   }
 
@@ -255,7 +255,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
       const row = Math.floor(i / 3);
       const right = xs[col];
       const ground = ys[row];
-      this.add(this.add.rectangle(right - 240, ground - 80, 486, 202, 0x0b1724, 1)
+      this.track(this.add.rectangle(right - 240, ground - 80, 486, 202, 0x0b1724, 1)
         .setStrokeStyle(1, id === REFS[this.selectedIndex][0] ? 0xd4a85c : 0x20394c)
         .setDepth(-2));
       this.text(right - 470, ground - 167, name, 10, '#e5f2fb');
@@ -264,7 +264,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
         String(config.size) + ' WHEELS  /  REAR ' + Math.round(config.rearX) +
         '  /  FRONT ' + Math.round(config.frontX), 7, '#839daf');
       this.renderCar(id, right - 10, ground, this.masterScale);
-      const hit = this.add(this.add.rectangle(right - 240, ground - 80, 485, 202, 0xffffff, 0.001)
+      const hit = this.track(this.add.rectangle(right - 240, ground - 80, 485, 202, 0xffffff, 0.001)
         .setInteractive({ useHandCursor: true }).setDepth(25));
       hit.on('pointerdown', () => {
         this.selectedIndex = i;
@@ -277,7 +277,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
   renderDetail() {
     const [id, name] = REFS[this.selectedIndex];
     const car = this.calibrations[id];
-    this.add(this.add.rectangle(230, 435, 400, 675, 0x0a1928, 1)
+    this.track(this.add.rectangle(230, 435, 400, 675, 0x0a1928, 1)
       .setStrokeStyle(2, 0x34596a));
     this.text(45, 111, name + ' // AXLE CALIBRATION', 11, '#ffcf8c');
     this.text(45, 158, 'TAP CAR AREA TO SET X', 9, '#d3e6f0');
@@ -328,7 +328,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
     const bodySource = this.textures.get('carRef_' + id + '_body').getSourceImage();
     const width = bodySource.width * scale;
     // The tap target is restricted to the body canvas, not the left controls.
-    const hit = this.add(this.add.rectangle(right - width / 2, ground - bodySource.height * scale / 2,
+    const hit = this.track(this.add.rectangle(right - width / 2, ground - bodySource.height * scale / 2,
       width, bodySource.height * scale, 0xffffff, 0.001)
       .setInteractive({ useHandCursor: true }).setDepth(20));
     hit.on('pointerdown', pointer => {
