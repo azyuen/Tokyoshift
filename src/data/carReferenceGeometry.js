@@ -28,3 +28,45 @@ export const STANDARD_CAR_REFERENCE = {
 };
 
 export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/Ref';
+
+// Only these NINE existing gameplay IDs are migrated. All remaining car IDs
+// keep assets/Cars, their current individual scales and the legacy wheel fit.
+export const REFERENCE_CAR_GAME_IDS = Object.freeze({
+  ae86: 'ae86',
+  ef: 'ef',
+  ek9: 'ek9',
+  wrx22b: '22b',
+  evo6: 'evo6',
+  r32: 'r32',
+  fc3s: 'rx7fc',
+  rx7fd: 'rx7fd',
+  rx8: 'rx8',
+});
+
+// Source canvas dimensions measured from authored GIMP PNGs.
+export const REFERENCE_CAR_CANVAS = Object.freeze({
+  ae86: [1166, 420],
+  ef: [1166, 420],
+  ek9: [1166, 420],
+  '22b': [1166, 420],
+  evo6: [1250, 440],
+  r32: [1300, 440],
+  rx7fc: [1300, 440],
+  rx7fd: [1300, 440],
+  rx8: [1300, 440],
+});
+
+// Scene-based zoom uses the AE86 source width rather than each car's width.
+// Thus targetWidth=900 means AE86=900 and R32=1003, with shared pixel scale.
+export const REFERENCE_AE86_SOURCE_WIDTH = 1166;
+
+export function getReferenceCarVisual(visualOrCar = {}) {
+  const visual = visualOrCar?.visual || visualOrCar || {};
+  return visual.referenceStandard ? visual : null;
+}
+
+export function getReferenceRightX(visualOrCar, virtualX, renderScale) {
+  return getReferenceCarVisual(visualOrCar)
+    ? virtualX + (REFERENCE_AE86_SOURCE_WIDTH * renderScale * 0.5)
+    : virtualX;
+}
