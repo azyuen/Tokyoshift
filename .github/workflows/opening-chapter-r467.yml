@@ -5,12 +5,14 @@ on:
     paths:
       - 'src/**'
       - 'tests/opening-chapter-r467.mjs'
+      - 'tests/magazine-issue01-r486.mjs'
       - 'tests/sayaka-reika-continuity.mjs'
       - '.github/workflows/opening-chapter-r467.yml'
   pull_request:
     paths:
       - 'src/**'
       - 'tests/opening-chapter-r467.mjs'
+      - 'tests/magazine-issue01-r486.mjs'
       - '.github/workflows/opening-chapter-r467.yml'
 jobs:
   opening:
@@ -33,8 +35,9 @@ jobs:
           node --check src/ui/TravelMap.js
           node --check src/ui/OpeningMagazine.js
           node --check src/ui/CarHistoryPanel.js
+          node --check src/ui/Issue01Pages.js
           node --check src/ui/MangaCutscene.js
           node --check src/ui/PhoneConversation.js
           node --check src/data/cutscenes.js
       - name: Check new and existing profile continuity
-        run: node --test tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs
+        run: node --test tests/opening-chapter-r467.mjs tests/sayaka-reika-continuity.mjs tests/magazine-issue01-r486.mjs
