@@ -1,6 +1,7 @@
 // Fixed print edition: authored copy, stable collector choices, stock game stats.
 export const ISSUE01_ASSETS = Object.freeze({
  blank: { key: 'issue01Blank', path: 'assets/Magazine/blank.webp' },
+ contents: { key: 'issue01Contents', path: 'assets/Magazine/contents.webp' },
  featured_car: { key: 'issue01FeaturedCar', path: 'assets/Magazine/featuredcar_blank.webp' },
  ginza_ad: { key: 'issue01Ginza', path: 'assets/Magazine/ginza_blank.webp' },
  champion_01: { key: 'issue01Champion01', path: 'assets/Magazine/01/champion_01.webp' },
@@ -10,12 +11,21 @@ export const ISSUE01_ASSETS = Object.freeze({
 export const ISSUE01_GINZA_CARS = Object.freeze(['spoonEk9', 'amuseS2000Gt1']);
 export const ISSUE01_PROFILE_CARS = Object.freeze(['ae86', 'ef', 'fc3s', 'ek9', 'evo3']);
 const pages = [
- { kind:'champion', art:'champion_01', kicker:'MIKA HIYASE / THE FORMER TOKYO CHAMPION', title:'BEFORE THE CROWN',
+ { kind:'champion', art:'champion_01', kicker:'MIKA HIYASE / THE FORMER TOKYO CHAMPION', title:'THE PRICE OF SPEED',
    body:'Mika Hiyase began at waterfront street meets, funding her white R32 with shifts at a parts counter. Quiet in a crowd, fiercely curious in the garage, she kept a notebook of every lost run. Tokyo noticed the car. Rivals remembered the preparation.',
-   quote:'“I kept the bad times. They told me what to fix.”' },
- { kind:'champion', art:'champion_02', kicker:'MIKA HIYASE / THE MAKING OF A CHAMPION', title:'EARNED AT THE LINE',
-   body:'At the drag strip, speed became discipline. Mika learned to trust her crew instead of changing everything herself. Clean launches and repeatable passes carried her to the Tokyo title. Her first words after the final were for the people in the pits.',
    quote:'“My name is on the trophy. It took all of us.”' },
+ { kind:'article', art:'blank', kicker:'COVER STORY / MIKA HIYASE', title:'THE LONG WAY TO THE LINE',
+   deck:'Behind the trophy: a white R32, a battered notebook and years of ordinary work.',
+   columns:[
+    [
+     "Mika Hiyase's first race car wasn't a museum piece. She bought her white R32 with wages from a parts counter, then spent evenings learning which repairs mattered and which upgrades only sounded impressive.",
+     "At waterfront meets she lost more often than she won. But every bad launch, missed gear and change in weather went into a notebook. While others chased the next big part, Mika chased a better run.",
+    ],
+    [
+     "The notebook eventually filled with more than her own numbers. Mechanics added ideas; friends stayed late to prepare tyres and check settings. Mika learned that trusting a crew could make the car faster than working alone.",
+     "By the championship final, those small gains had become repeatable speed. Tokyo saw the trophy; Mika saw everyone who got her there. She carried that same discipline into international racing—and kept the battered notebook.",
+    ],
+   ] },
  { kind:'champion', art:'champion_03', kicker:'MIKA HIYASE / THE NEXT CHAPTER', title:'TOKYO GOES WITH HER',
    body:'Now racing internationally, Mika still carries that battered notebook. Her dry humour survives the cameras; so does her habit of asking mechanics one more question. Tokyo remembers a champion. She wants its next generation to see a beginning.',
    quote:'“Don’t drive my story. Give Tokyo a new one.”' },
@@ -70,10 +80,9 @@ const profiles = [
 ];
 function freeze(value) { if(value && typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value; }
 export const ISSUE01_PAGES = freeze([...pages,...profiles.map(p=>({...p,kind:'car',art:'featured_car'}))].map((p,i)=>({...p,number:i+4})));
+// Editorial listings only. Page 07 is an advertisement, not a contents entry.
 export const ISSUE01_CONTENTS = freeze([
- ['04–06','MIKA HIYASE','Street racer. Tokyo champion. The world ahead.'],
- ['07','GINZA MOTOR GALLERY','Spoon EK9 / Amuse S2000 GT1'],
- ['08–10','RACE SCHOOL','Shift timing, starts and driven wheels.'],
- ['11–15','FIVE CARS TO KNOW','AE86 · Civic EF · RX-7 FC · EK9 · Evo III'],
- ['16+','YOUR STREET FILE','Your garage, archive and cars spotted in Tokyo.'],
+ ['04','FEATURE: MIKA HIYASE'],
+ ['08','RACE SCHOOL'],
+ ['11','FIVE CARS TO KNOW'],
 ]);
