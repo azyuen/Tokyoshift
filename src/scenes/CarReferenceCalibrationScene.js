@@ -1,4 +1,5 @@
 import { finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+import { STANDARD_CAR_REFERENCE as BASELINE, STANDARD_CAR_REFERENCE_ROOT } from '../data/carReferenceGeometry.js?v=20261012-ref1';
 
 // Read-only reference assets. This scene never modifies gameplay car data.
 // X positions are stored in unscaled source pixels, measured LEFT from the
@@ -59,7 +60,7 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
       for (const layer of ['body', 'paint']) {
         const key = 'carRef_' + id + '_' + layer;
         if (!this.textures.exists(key)) {
-          this.load.image(key, 'assets/Cars/Ref/' + id + '_stock_' + layer + '.png');
+          this.load.image(key, STANDARD_CAR_REFERENCE_ROOT + '/' + id + '_stock_' + layer + '.png');
         }
       }
     }
@@ -80,21 +81,25 @@ export default class CarReferenceCalibrationScene extends Phaser.Scene {
     this.objects = [];
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) {}
-    this.masterScale = clamp(Number(saved.masterScale) || 0.32, 0.26, 0.355);
+    // Browser-local edits remain available, but GIMP-approved values are now
+    // the canonical default on every device. Saved per-device tweaks override
+    // only when explicitly adjusted in this calibration screen.
+    this.masterScale = clamp(Number(saved.masterScale ?? BASELINE.masterScale), 0.26, 0.355);
     this.diameters = {
-      S: clamp(Number(saved.diameters?.S) || 176, 130, 230),
-      L: clamp(Number(saved.diameters?.L) || 196, 150, 250),
+      S: clamp(Number(saved.diameters?.S ?? BASELINE.wheelDiameters.S), 130, 230),
+      L: clamp(Number(saved.diameters?.L ?? BASELINE.wheelDiameters.L), 150, 250),
     };
     this.calibrations = {};
     for (const [id] of REFS) {
       const tex = this.textures.get('carRef_' + id + '_body');
       const source = tex?.getSourceImage();
       const width = source?.width || 1200;
+      const authored = BASELINE.cars[id] || {};
       const previous = saved.cars?.[id] || {};
       this.calibrations[id] = {
-        rearX: clamp(Number(previous.rearX) || -Math.round(width * 0.80), -width, 0),
-        frontX: clamp(Number(previous.frontX) || -Math.round(width * 0.20), -width, 0),
-        size: previous.size === 'L' ? 'L' : 'S',
+        rearX: clamp(Number(previous.rearX ?? authored.rearX ?? -Math.round(width * 0.80)), -width, 0),
+        frontX: clamp(Number(previous.frontX ?? authored.frontX ?? -Math.round(width * 0.20)), -width, 0),
+        size: (previous.size ?? authored.size) === 'L' ? 'L' : 'S',
       };
     }
     try {
