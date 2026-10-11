@@ -5411,7 +5411,10 @@ export default class MeetScene extends Phaser.Scene {
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const fit = getWheelPairFit(car.visual, bodyScale, flipX, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
-    const displayY = y + renderOffsetY;
+    // The existing meet layout supplies a legacy centred bay Y. Convert it
+    // to the common tyre contact line once, not individually per new model.
+    const displayY = y + renderOffsetY +
+      (car.visual.referenceStandard ? targetWidth * (232 / 1200) : 0);
     const drawX = getReferenceRightX(car, x, bodyScale);
 
     const rearX = drawX + fit.rear.offsetX;
