@@ -17,7 +17,8 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { drawIssue01Page, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261011-r486';
+import { drawIssue01Page, ISSUE01_ASSETS, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261012-r489';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -160,17 +161,18 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
   const wheelSource = scene.textures.get(wheelKey).getSourceImage();
   const fit = getWheelPairFit(car.visual || {}, bodyScale, false, wheelSource);
   const renderOffsetY = Number(car.visual?.renderOffsetY || 0) * bodyScale;
-  const displayY = y + renderOffsetY;
-  const rearX = x + fit.rear.offsetX;
-  const frontX = x + fit.front.offsetX;
+  const displayX = getReferenceRightX(car, x, bodyScale);
+  const displayY = car.visual?.referenceStandard ? y + targetWidth * 0.18 : y + renderOffsetY;
+  const rearX = displayX + fit.rear.offsetX;
+  const frontX = displayX + fit.front.offsetX;
   const rearY = displayY + fit.rear.offsetY;
   const frontY = displayY + fit.front.offsetY;
 
   add(scene.add.ellipse(
     x,
-    Math.max(rearY, frontY) + 8,
+    car.visual?.referenceStandard ? displayY + 2 : Math.max(rearY, frontY) + 8,
     targetWidth * 0.92,
-    28,
+    Math.max(6, targetWidth * 0.055),
     0x000000,
     0.22
   ).setDepth(depth - 0.2));
@@ -199,13 +201,14 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 
   const paintColor = getCarPaintColor(feature.state || {});
   const bodyLayers = createCarBodyLayers(scene, car, {
-    x,
+    x: displayX,
     y: displayY,
     scale: bodyScale,
     depth: depth + 1,
     paintColor,
   });
-  bodyLayers.objects.forEach(add);
+  // Phaser containers draw insertion order, not child depth. Paint stays below shell.
+  [...bodyLayers.objects].sort((a, b) => a.depth - b.depth).forEach(add);
 
   return Boolean(rearBacking && frontBacking && rearWheel && frontWheel);
 }
@@ -213,7 +216,7 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 function prepareMagazineAssets(scene, features, onReady) {
   // These two cars are printed into Issue 01 even before the player owns one.
   // Keep them available for both the opening and all later magazine visits.
-  const printedCars = scene.registry.get('openingChapter') === 'magazine' ? [] : ISSUE01_PHOTO_CARS;
+  const printedCars = ISSUE01_PHOTO_CARS;
   const ids = [...new Set(['ae86', 'ef', ...printedCars, ...features.map(feature => feature.carId)])]
     .filter(id => cars[id]);
   const states = scene.registry.get('carStates') || {};
@@ -222,13 +225,14 @@ function prepareMagazineAssets(scene, features, onReady) {
 
   const queueIssueImage = (key, path) => {
     if (!key || !path || scene.textures.exists(key)) return;
-    scene.load.image(key, path + '?v=20261011-r472');
+    scene.load.image(key, path + '?v=20261012-r489');
     queued += 1;
   };
 
   queueIssueImage(issue?.coverKey, issue?.coverPath);
   queueIssueImage(issue?.adKey, issue?.adPath);
   queueIssueImage(issue?.insetKey, issue?.insetPath);
+  Object.values(ISSUE01_ASSETS).forEach(({key,path}) => queueIssueImage(key,path));
 
   ids.forEach(id => {
     queued += preloadCarAppearanceAssets(scene, { [id]: cars[id] }, '20260929-r273');
@@ -308,7 +312,7 @@ export function showCarHistoryPanel(scene, options = {}) {
     cleanup();
     if (!scene.sys?.isActive?.()) return;
     const issue = getActiveMagazineIssue(scene.registry);
-    if (issue && [issue.coverKey, issue.adKey, issue.insetKey].some(key => !key || !scene.textures.exists(key))) {
+    if (issue && [issue.coverKey, issue.adKey, issue.insetKey, ...Object.values(ISSUE01_ASSETS).map(a => a.key)].some(key => !key || !scene.textures.exists(key))) {
       scene.showWorkshopToast?.('MAGAZINE COULD NOT LOAD // TAP TO RETRY');
       return;
     }
@@ -352,15 +356,16 @@ function showMagazine(scene, features, options = {}) {
 
   const openingChoice = scene.registry.get('openingChapter') === 'magazine';
   const featureSpreadCount = Math.max(1, Math.ceil(features.length / 2));
-  // First reading: cover + pages 2/3 only. Revisits keep the identical
-  // physical pages and unlock the existing generated Street File features.
+  // The full print edition is readable before choosing the first car.
   const editorialSpreads = ISSUE01_EDITORIAL_PAGE_COUNT / 2;
   const firstArchiveView = 2 + editorialSpreads;
-  const totalViews = openingChoice ? 2 : firstArchiveView + featureSpreadCount;
+  const totalViews = firstArchiveView + (openingChoice ? 0 : featureSpreadCount);
   let viewIndex = 0;
   let currentView = null;
   let flipping = false;
   let confirmation = null;
+  let closed = false;
+  const flipTweens = [];
   const activeGlows = [];
   const revealTimers = [];
   const revealTweens = [];
@@ -381,14 +386,20 @@ function showMagazine(scene, features, options = {}) {
     confirmation = null;
   };
   const closeMagazine = () => {
+    if (closed) return;
+    closed = true;
+    scene.events.off('shutdown', closeMagazine);
+    flipTweens.splice(0).forEach(tween => tween?.remove?.());
     dismissConfirmation();
     destroyView(currentView);
     destroyObjects(objects);
     scene._carHistoryOverlay = [];
   };
 
+  scene.events.once('shutdown', closeMagazine);
+
   const confirmStarterCar = carId => {
-    if (!openingChoice || confirmation || !['ae86', 'ef'].includes(carId)) return;
+    if (closed || flipping || !openingChoice || confirmation || !['ae86', 'ef'].includes(carId)) return;
     const selectedName = carId === 'ae86' ? 'TOYOTA AE86' : 'HONDA CIVIC EF';
     confirmation = [];
     const addModal = obj => { confirmation.push(obj); return obj; };
@@ -535,8 +546,7 @@ function showMagazine(scene, features, options = {}) {
   };
 
   const buildIntroSpread = () => {
-    // Page 2 (left) and 3 (right) are the actual authored Issue 01 WebPs,
-    // never a separately constructed 'starter magazine'.
+    // Original starter ad plus a live contents page on the supplied blank.
     const left = scene.add.container(SPINE_X, PAGE_TOP).setDepth(272);
     const right = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
     const leftPageX = addPaper(left, 'left');
@@ -545,12 +555,7 @@ function showMagazine(scene, features, options = {}) {
       addTo(left, scene.add.image(leftPageX + PAGE_W / 2, PAGE_H / 2, issue.adKey)
         .setDisplaySize(PAGE_W, PAGE_H));
     }
-    if (issue?.insetKey && scene.textures.exists(issue.insetKey)) {
-      addTo(right, scene.add.image(PAGE_W / 2, PAGE_H / 2, issue.insetKey)
-        .setDisplaySize(PAGE_W, PAGE_H));
-    } else {
-      addPaper(right, 'right');
-    }
+    drawIssue01Page(scene, {container: right, pageX: 0, pageW: PAGE_W, pageH: PAGE_H, pageNumber: 3});
 
     const selectionUi = [];
     const selectionFrames = [];
@@ -850,7 +855,7 @@ function showMagazine(scene, features, options = {}) {
   };
 
   const flipTo = direction => {
-    if (flipping) return;
+    if (closed || flipping || confirmation) return;
 
     const nextIndex = viewIndex + direction;
     if (nextIndex < 0 || nextIndex >= totalViews) return;
@@ -865,6 +870,7 @@ function showMagazine(scene, features, options = {}) {
       : (currentView?.left || currentView?.cover || currentView?.right);
 
     const finishSwap = () => {
+      if (closed) return;
       destroyView(currentView);
       viewIndex = nextIndex;
       currentView = buildView(viewIndex);
@@ -882,7 +888,7 @@ function showMagazine(scene, features, options = {}) {
       incoming.scaleX = 0;
       updateControls();
 
-      scene.tweens.add({
+      flipTweens.push(scene.tweens.add({
         targets: incoming,
         scaleX: 1,
         duration: 220,
@@ -890,7 +896,7 @@ function showMagazine(scene, features, options = {}) {
         onComplete: () => {
           flipping = false;
         },
-      });
+      }));
     };
 
     if (!outgoing) {
@@ -898,13 +904,13 @@ function showMagazine(scene, features, options = {}) {
       return;
     }
 
-    scene.tweens.add({
+    flipTweens.push(scene.tweens.add({
       targets: outgoing,
       scaleX: 0,
       duration: 190,
       ease: 'Sine.easeIn',
       onComplete: finishSwap,
-    });
+    }));
   };
 
   prev.on('pointerover', () => {

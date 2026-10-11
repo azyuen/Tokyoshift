@@ -123,8 +123,8 @@ import {
   finishSceneLoading,
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261011-r486';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261011-r486';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261012-r489';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

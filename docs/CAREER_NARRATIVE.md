@@ -26,7 +26,7 @@ Tokyo's racing world gathers after ordinary working days, beneath expressways, a
 
 The player begins at Tokyo station without a car. Daichi Sakamoto, their childhood friend, mentions the inaugural Tokyo SHIFT magazine and its retrospective on the previous champion. He has left a copy at the player's place. The player heads to Shinonome to wait for a car being delivered by a family friend on their father's behalf. Daichi does not yet know the friend's identity or the two starter choices.
 
-The office magazine makes racing success imaginable before it is attainable. The owner's magazine direction describes a former female Tokyo champion who rose from street racing and moved into international racing. Preserve that aspirational role without assigning an identity from artwork or linking her to the family without approval. The Auto Market advertisement offers the immediate choice of an AE86 or Civic EF.
+The office magazine makes racing success imaginable before it is attainable. The owner has named that former female Tokyo champion Mika Hiyase. Issue 01 recounts her street-racing origins, Tokyo title and move into international racing. Preserve that aspirational role and her separate identity; no family connection is established. The Auto Market advertisement offers the immediate choice of an AE86 or Civic EF.
 
 Sayaka Fujieda delivers the selected first car. She is a familiar family friend, understated about her expertise, and more capable of teaching manual driving than her casual manner suggests. She guides the first lesson, jokes about knowing cars and leaves with a serious reminder to drive safely. Her later disclosures will change the meaning of this ordinary beginning.
 
@@ -88,7 +88,7 @@ The career already explains becoming successful. Its remaining writing should sh
 
 ## Prioritised scene backlog
 
-All entries are proposed scenes except the explicitly approved father cameo. No runtime trigger or completion flag is implemented by this document.
+All entries are proposed scenes except the explicitly approved father cameo and the opening magazine portion of CAREER-09, implemented in R489. This document itself adds no runtime triggers or completion flags.
 
 | Planning ID | Priority / opportunity | Emotional purpose and proposed content | Authoring guardrails |
 |---|---|---|---|
@@ -100,7 +100,7 @@ All entries are proposed scenes except the explicitly approved father cameo. No 
 | CAREER-06 | High: proposed workshop homecoming | Quiet acknowledgement from Daichi and Sayaka; first lesson/first night and magazine callbacks. | This is a proposed companion to the approved celebration cameo. Respect current workshop, ownership and recorded championship result. No “your father would have wanted” death implication. |
 | CAREER-07 | Supporting: crew car handover/result | A member entrusts their car to the player before a fixture and responds afterwards. | Player drives the loan car. Match outcome and actual owner; no wager of loan cars. |
 | CAREER-08 | Supporting: first-car callback | Recall what the family gift started and the player's developing independence. | Branch phrasing for kept/sold/lost car; avoid assuming father's disapproval or player resentment. |
-| CAREER-09 | Supporting: former-champion/magazine arc | Establish an aspirational predecessor early; report the player's own public achievements later. | No invented kinship or identification from artwork. Magazines do not report private thoughts or unrevealed family history. |
+| CAREER-09 | Partly implemented R489: former-champion/magazine arc | Mika Hiyase's three-page opening feature establishes the aspirational predecessor; reporting the player's own public achievements later remains proposed. | Mika's name is owner-supplied; no invented kinship. Magazines do not report private thoughts or unrevealed family history. |
 
 ## Small rival developments to seed
 

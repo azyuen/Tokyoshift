@@ -129,7 +129,7 @@ Daichi explains that racers drive cars they can access while having a car they a
 
 **Superseded by the 9 October decision:** Sayaka's former Shinagawa racing/recruitment slot belongs to Reika Tachibana. Sayaka is one recurring non-racing story character: family friend and first-car deliverer, later revealed as Ginza's curator/manager, then revealed as the player's father's former racing-team strategist who joins the professional crew. These are successive disclosures, not separate Sayakas.
 
-Street File artwork describes the player's cars, rivals, hero cars and save moments. Four cover/inset sets exist, while the audited resolver returns Issue 01. No named editor, fixed champion or cast member's past victory is established by the illustrations.
+Street File artwork describes the player's cars, rivals, hero cars and save moments. Four cover/inset sets exist, while the audited resolver returns Issue 01. At that audit, no named editor, fixed champion or cast member's past victory was established by the illustrations. The owner's R489 Mika Hiyase extension below now explicitly names the magazine champion.
 
 Beyond the explicit family/opening relationships, named personal friendships, romances and grudges were largely unwritten. Repeated surnames do not establish kinship.
 
@@ -798,7 +798,7 @@ Constraint: no assumed Kenta relationship.
 ID: mikaHayase — Yokohama; provisional woman, 28; RX-8.
 Established measured/technical racer; laboratory technician, warm off-line, dislikes avoidable mess. Knows Yui Kanzaki. Can assume caution is the only responsible approach. Repeatable balanced runs.
 “Let's make it repeatable.” / “Yes, I enjoyed it. I'm checking the time.”
-Constraint: distinct from Mika Hoshino.
+Constraint: distinct from Mika Hoshino and the Central former champion Mika Hiyase.
 
 ### Ryohei Takeda
 ID: ryoheiTakeda — Yokohama; provisional man, 27; Evo III.
@@ -915,6 +915,24 @@ He and Sayaka do not want to force the player into racing; he especially wants i
 The father and Sayaka know their shared lived history. Do not assume he knows her entire motive to “right a wrong,” or that the player, Daichi, crew or press knows the private history. The wrong's specifics and the father's name/usual whereabouts remain open. The protagonist identity model is unchanged.
 
 See [Career narrative and emotional beats](CAREER_NARRATIVE.md) for the synopsis, fact register, proposed personal disclosures and ending handoff.
+
+## Mika Hiyase — The Quiet Benchmark (Issue 01, R489)
+
+**Identity:** owner-named former female Tokyo champion, now racing internationally. Editorial identity `mikaHiyase` (not a newly enabled race opponent). The owner's printed spelling is **Hiyase**. Existing Central artwork retains its filename spelling: `assets/Characters/Central/mika_hayase_idle.png`, `_win.png`, `_loss.png`. These three files and the commissioned black/red-clad champion portraits represent her. Do not reassign Yokohama's `mikaHayase` or Odaiba's Mika Hoshino.
+
+**Status/provenance:** name, former title, street-racing origin and international career supplied by the owner; the following small history/personality details are authored under the owner's explicit request to develop her feature. This supersedes earlier unresolved/unnamed-champion wording for this subject only. No protagonist or family identity decision changes.
+
+**Fixed past:** Mika entered Tokyo's waterfront street meets while working a parts counter, funding the white R32 associated with her early career. She kept a battered notebook of lost runs and setup observations. Moving into organised drag racing taught her that a fast pass was not enough: she needed repeatable starts and a crew she could trust. Learning to stop doing every adjustment herself was part of her growth. She earned the Tokyo title before the player's career and thanked her pit crew first. She subsequently moved into international racing; exact dates, season, age and overseas results remain unspecified.
+
+**Personality:** reserved in crowds, inquisitive around a car, dryly funny once comfortable. More interested in why a run failed than in excuses for it. Gives specific credit to mechanics and treats novice questions seriously. Her strength is preparation; her flaw is a tendency to over-check details and take on work she should share. Success has made her better at delegation, not magically free of doubt.
+
+**Voice:** short, concrete, wry. Avoid grand prophecies or repeated slogans. Feature quotes: “I kept the bad times. They told me what to fix.” / “My name is on the trophy. It took all of us.” / “Don’t drive my story. Give Tokyo a new one.”
+
+**Current motivation:** earn her place in unfamiliar international paddocks while staying connected to Tokyo's practical racing culture. She wants younger drivers to build their own careers, not copy her image. The notebook is a small recurring personal object, not a coded mystery.
+
+**Knowledge/relationships:** the printed account, title, car association and interview quotes are public to magazine readers. Her crew know their shared work; no unnamed crew member is silently identified as an existing NPC. No connection to the player's father, Sayaka, Yokohama Mika or the family is established. She has no automatic knowledge of the player's save results. Player recognition of her through reading is not a personal meeting.
+
+**Future opportunities, not implemented events:** a paddock greeting can reveal her dry humour; an earned interview may echo the first magazine; a poor international result could test her willingness to ask for help. No return race, championship defence, mentor relationship or guaranteed outcome is committed by this article.
 
 # World timeline
 
@@ -1036,3 +1054,5 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 - 2026-10-11 (R480): Daichi's workshop entrance now matches his **drivetrain** tuning standing sprite, scale, location and shadow rather than the chassis helper. The standard phone call bubble has a smaller face-focused portrait and reduced typography; caller dialogue defaults to muted crimson and the player's outgoing dialogue to blue-green/teal. No dialogue or character history has changed.
 
 - 2026-10-11 (narrative documentation, v1.2): owner approved Sayaka/father early friendship and support, his unspecified mistakes, their professional partnership that never fully made it, long distance and later reconnection; both protect the player's freedom to choose racing, while Sayaka hopes to right an unspecified wrong. Father is alive and has an approved quiet shadowed appearance at the very end of an earned trophy celebration. Added linked CAREER_NARRATIVE.md preserving the synopsis and emotional-beat backlog; exact proposed scenes are not implemented by this update. Protagonist identity remains unresolved.
+
+- 2026-10-12 (R489): Owner names the magazine champion Mika Hiyase, identifies her Central sprites and authorises a brief history/personality/story. Added the public profile, notebook motif, parts-counter/street origin, R32 association, crew-trust growth and international direction; preserved other Mikas and family reveal gates. Replaced magazine placeholders with commissioned portraits and owner-supplied templates.

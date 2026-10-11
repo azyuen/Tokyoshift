@@ -171,7 +171,7 @@ test('the opening and later visits use one magazine page-flip renderer', () => {
   const office = source('src/ui/OfficePanel.js');
   const wrapper = source('src/ui/OpeningMagazine.js');
   assert.match(magazine, /openingChoice = scene\.registry\.get\('openingChapter'\) === 'magazine'/);
-  assert.match(magazine, /totalViews = openingChoice \? 2 : firstArchiveView \+ featureSpreadCount/);
+  assert.match(magazine, /totalViews = firstArchiveView \+ \(openingChoice \? 0 : featureSpreadCount\)/);
   assert.match(magazine, /Math\.max\(1, Math\.ceil\(features\.length \/ 2\)\)/);
   assert.match(magazine, /issue\.adKey/);
   assert.match(magazine, /issue\.insetKey/);
