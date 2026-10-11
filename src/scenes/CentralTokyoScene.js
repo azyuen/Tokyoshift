@@ -3030,9 +3030,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const access = getProCircuitAccess(this.registry);
     const circuitOpen = access.unlocked || isArkonDen(this.registry);
     this.drawNavigation(
-      'PRO DRAG RACING',
+      'PRO DRAG CIRCUIT',
       circuitOpen
-        ? 'PRO CIRCUIT // CHOOSE DRIVER OR CREW EVENTS · EARN SEASON POINTS'
+        ? 'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP'
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
 
@@ -3058,7 +3058,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(27));
     }
 
-    drawSeasonHeader(this, SIDE);
+    drawSeasonHeader(this, STAGE);
 
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
