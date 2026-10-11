@@ -479,22 +479,21 @@ export function createCarBodyLayers(
   if (visual.referenceStandard && scene.textures.exists(keys.body)) {
     // Reference sprites use a real bottom-right PNG anchor. Paint/body PNGs
     // share the same canvas, so no individual transform or offset is allowed.
-    const base = scene.add.image(bodyX, bodyY, keys.body)
-      .setOrigin(1, 1)
-      .setScale(scale)
-      .setFlipX(flipX)
-      .setDepth(depth);
-
-    // Ref paint is a shaded body-colour mask drawn *over* the fixed shell.
-    // Legacy cars keep their original opposite ordering and centred origin.
+    // The shaded paint mask belongs BEHIND the fixed shell/linework.
+    // Only paint receives a tint; the body must retain its original pixels.
     const paint = scene.textures.exists(keys.paint)
       ? scene.add.image(bodyX, bodyY, keys.paint)
           .setOrigin(1, 1)
           .setScale(scale)
           .setFlipX(flipX)
-          .setDepth(depth + 0.025)
+          .setDepth(depth)
           .setTint(color)
       : null;
+    const base = scene.add.image(bodyX, bodyY, keys.body)
+      .setOrigin(1, 1)
+      .setScale(scale)
+      .setFlipX(flipX)
+      .setDepth(depth + 0.025);
     if (paint) {
       paint.setData('carPaintLayer', true);
       paint.setData('carBasePaintLayer', true);
