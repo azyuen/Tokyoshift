@@ -17,6 +17,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
+import { drawIssue01Page, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261011-r486';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -212,7 +213,7 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 function prepareMagazineAssets(scene, features, onReady) {
   // These two cars are printed into Issue 01 even before the player owns one.
   // Keep them available for both the opening and all later magazine visits.
-  const ids = [...new Set(['ae86', 'ef', ...features.map(feature => feature.carId)])]
+  const ids = [...new Set(['ae86', 'ef', ...ISSUE01_PHOTO_CARS, ...features.map(feature => feature.carId)])]
     .filter(id => cars[id]);
   const states = scene.registry.get('carStates') || {};
   const issue = getActiveMagazineIssue(scene.registry);
@@ -352,7 +353,9 @@ function showMagazine(scene, features, options = {}) {
   const featureSpreadCount = Math.max(1, Math.ceil(features.length / 2));
   // First reading: cover + pages 2/3 only. Revisits keep the identical
   // physical pages and unlock the existing generated Street File features.
-  const totalViews = openingChoice ? 2 : 2 + featureSpreadCount;
+  const editorialSpreads = ISSUE01_EDITORIAL_PAGE_COUNT / 2;
+  const firstArchiveView = 2 + editorialSpreads;
+  const totalViews = openingChoice ? 2 : firstArchiveView + featureSpreadCount;
   let viewIndex = 0;
   let currentView = null;
   let flipping = false;
@@ -795,10 +798,28 @@ function showMagazine(scene, features, options = {}) {
     return { cover: null, left, right };
   };
 
+  const buildIssue01Spread = spreadIndex => {
+    const firstPage = 4 + spreadIndex * 2;
+    const pages = ['left', 'right'].map((side, offset) => {
+      const container = scene.add.container(SPINE_X, PAGE_TOP).setDepth(side === 'left' ? 272 : 270);
+      const pageX = addPaper(container, side);
+      drawIssue01Page(scene, {
+        container, pageX, pageW: PAGE_W, pageH: PAGE_H,
+        pageNumber: firstPage + offset,
+        carPhoto: (id, x, y, width) =>
+          renderCarPhoto(scene, { carId: id, state: {} }, x, y, width, 0,
+            obj => addTo(container, obj)),
+      });
+      return container;
+    });
+    return { cover: null, left: pages[0], right: pages[1] };
+  };
+
   const buildView = index => {
     if (index === 0) return buildCoverView();
     if (index === 1) return buildIntroSpread();
-    return buildFeatureSpread(index - 2);
+    if (index < firstArchiveView) return buildIssue01Spread(index - 2);
+    return buildFeatureSpread(index - firstArchiveView);
   };
 
   const updateControls = () => {
@@ -817,11 +838,13 @@ function showMagazine(scene, features, options = {}) {
       folio.setText((issue?.label || 'ISSUE 01') + ' // COVER');
     } else if (viewIndex === 1) {
       folio.setText((issue?.label || 'ISSUE 01') + ' // 02–03');
+    } else if (viewIndex < firstArchiveView) {
+      const firstPage = 4 + (viewIndex - 2) * 2;
+      folio.setText((issue?.label || 'ISSUE 01') + ' // ' +
+        String(firstPage).padStart(2, '0') + '–' + String(firstPage + 1).padStart(2, '0'));
     } else {
-      const featureNumber = viewIndex - 1;
-      folio.setText(
-        'FEATURE SPREAD ' + featureNumber + ' / ' + Math.max(1, featureSpreadCount)
-      );
+      const featureNumber = viewIndex - firstArchiveView + 1;
+      folio.setText('YOUR GARAGE // ' + featureNumber + ' / ' + featureSpreadCount);
     }
   };
 
