@@ -130,6 +130,8 @@ export function createDefaultProCircuitState() {
     calendar: { round: 0, history: [], result: null, archives: [] },
     activeTournament: null,
     lastTournament: null,
+    activeChampionship: null,
+    championshipHistory: [],
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
     championshipWins: { DRIVER: 0, TEAM: 0 },
   };
@@ -182,6 +184,8 @@ export function normaliseProCircuitState(raw) {
       !Array.isArray(source.activeTournament) ? source.activeTournament : null,
     lastTournament: source.lastTournament && typeof source.lastTournament === 'object' &&
       !Array.isArray(source.lastTournament) ? source.lastTournament : null,
+    activeChampionship: source.activeChampionship && typeof source.activeChampionship === 'object' && !Array.isArray(source.activeChampionship) ? source.activeChampionship : null,
+    championshipHistory: Array.isArray(source.championshipHistory) ? source.championshipHistory.filter(x => x && typeof x === 'object').slice(-20) : [],
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
       t.id, boundedInteger(trophies[t.id], 0, 0, 10000),
     ])),
