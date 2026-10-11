@@ -1140,6 +1140,10 @@ export default class RaceScene extends Phaser.Scene {
     const cfg = car.visual;
     const wheelCfg = getVisualModWheelVisual(car, carState);
     const bodyScale = cfg.bodyScale * roleScale;
+    const referenceCar = Boolean(cfg.referenceStandard);
+    // For a standard car, this is the scene's fixed ground contact offset
+    // derived once from the old AE86 stage. All nine share it; no per-car Y.
+    const referenceGroundOffset = referenceCar ? 84 * roleScale : 0;
     const wheelSource = this.textures.get(wheelCfg.wheelKey).getSourceImage();
     const wheelFit = getWheelPairFit(wheelCfg, bodyScale, false, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
@@ -1249,6 +1253,9 @@ export default class RaceScene extends Phaser.Scene {
       bodyScale,
       renderOffsetY,
       groundCorrectionY,
+      referenceCar,
+      referenceGroundOffset,
+      wheelKey: wheelCfg.wheelKey,
       wheelFit,
       wheelScale: (wheelFit.rear.wheelScale + wheelFit.front.wheelScale) / 2,
       rearWheel,
@@ -1259,8 +1266,8 @@ export default class RaceScene extends Phaser.Scene {
       body,
       bodyObjects: [...bodyLayers.objects, ...visualModObjects, ...decalObjects],
       driverSilhouette: driver?.image || null,
-      driverOffsetX: driver?.offsetX || 0,
-      driverOffsetY: driver?.offsetY || 0,
+      driverOffsetX: (driver?.offsetX || 0) + (referenceCar ? body.width * bodyScale * 0.5 : 0),
+      driverOffsetY: (driver?.offsetY || 0) + referenceGroundOffset,
       paintBody: bodyLayers.paint,
       bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
@@ -4305,14 +4312,18 @@ export default class RaceScene extends Phaser.Scene {
       y +
       (v.renderOffsetY || 0) +
       (v.groundCorrectionY || 0) +
+      (v.referenceGroundOffset || 0) +
       Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
+    const drawX = v.referenceCar ? x + v.noseOffsetPx : x;
+    const decalX = v.referenceCar ? drawX - v.body.width * v.bodyScale * 0.5 : x;
+    const decalY = v.referenceCar ? bodyY - v.body.height * v.bodyScale * 0.5 : bodyY;
     (v.bodyObjects || [v.body]).forEach(obj => {
       if (obj?.getData?.('tunerDecalLayer')) {
         const offsetX = Number(obj.getData('tunerDecalOffsetX') || 0);
         const offsetY = Number(obj.getData('tunerDecalOffsetY') || 0);
-        obj.setPosition(x + offsetX, bodyY + offsetY);
+        obj.setPosition(decalX + offsetX, decalY + offsetY);
       } else {
-        obj.setPosition(x, bodyY);
+        obj.setPosition(drawX, bodyY);
       }
     });
     if (v.driverSilhouette) {
@@ -4322,8 +4333,8 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
-    const rearX = x + v.wheelFit.rear.offsetX;
-    const frontX = x + v.wheelFit.front.offsetX;
+    const rearX = drawX + v.wheelFit.rear.offsetX;
+    const frontX = drawX + v.wheelFit.front.offsetX;
     const rearY = bodyY + v.wheelFit.rear.offsetY;
     const frontY = bodyY + v.wheelFit.front.offsetY;
 
@@ -4332,7 +4343,7 @@ export default class RaceScene extends Phaser.Scene {
     v.frontWheelBacking.setPosition(frontX, frontY);
     v.rearWheel.setPosition(rearX, rearY).setRotation(v.wheelAngle);
     v.frontWheel.setPosition(frontX, frontY).setRotation(v.wheelAngle);
-    const wheelSource = this.textures.get(c.wheelKey).getSourceImage();
+    const wheelSource = this.textures.get(v.referenceCar ? v.wheelKey : c.wheelKey).getSourceImage();
     const wheelBaseY = Math.max(
       rearY + getWheelContactOffsetY(wheelSource, v.wheelFit.rear.wheelScale),
       frontY + getWheelContactOffsetY(wheelSource, v.wheelFit.front.wheelScale)
@@ -4346,7 +4357,7 @@ export default class RaceScene extends Phaser.Scene {
     v.rearY = rearY;
     v.frontX = frontX;
     v.frontY = frontY;
-    v.exhaustX = x + c.exhaustOffsetX * v.bodyScale;
+    v.exhaustX = drawX + c.exhaustOffsetX * v.bodyScale;
     v.exhaustY = bodyY + c.exhaustOffsetY * v.bodyScale;
   }
 
