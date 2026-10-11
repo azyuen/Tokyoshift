@@ -85,6 +85,7 @@ function getVisibleWheelMetrics(wheelSource) {
     const metrics = {
       visibleWidth,
       visibleHeight,
+      visibleCenterFromCenterX: ((minX + maxX + 1) / (2 * sampleScale)) - sourceWidth * 0.5,
       // Distance from Phaser's default image origin (canvas centre) to the
       // lowest visible tyre pixel. This lets different wheel PNGs share a true
       // visual ground line even when their transparent canvas padding differs.
@@ -121,6 +122,31 @@ export function getAxleWheelFit(
   const scaleRatio = authoredBodyScale > 0
     ? renderBodyScale / authoredBodyScale
     : 1;
+
+  if (visual.referenceStandard) {
+    // Opt-in: nine GIMP-normalised cars only. The wheel always touches the
+    // PNG bottom (world ground), so no per-car wheel Y/scale adjustments.
+    const diameter = numberOr(visual.referenceWheelDiameter, 182);
+    const geometry = visual.referenceGeometry || {};
+    const originalX = numberOr(geometry[prefix + 'X'], 0);
+    const canvasWidth = numberOr(visual.referenceCanvasWidth, 1166);
+    // Phaser flipX mirrors the artwork within the same right-origin canvas.
+    const sourceX = flipX ? -canvasWidth - originalX : originalX;
+    const metrics = getVisibleWheelMetrics(wheelSource);
+    const width = numberOr(wheelSource?.naturalWidth ?? wheelSource?.width, 384);
+    const height = numberOr(wheelSource?.naturalHeight ?? wheelSource?.height, 384);
+    const visibleDiameter = numberOr(metrics?.visibleDiameter, Math.max(width, height));
+    const wheelScale = diameter * renderBodyScale / visibleDiameter;
+    const tyreCentreOffsetX = numberOr(metrics?.visibleCenterFromCenterX, 0);
+    const tyreBottomOffset = numberOr(metrics?.visibleBottomFromCenter, height / 2);
+    return {
+      offsetX: sourceX * renderBodyScale - tyreCentreOffsetX * wheelScale,
+      offsetY: -tyreBottomOffset * wheelScale,
+      wheelScale,
+      backingRadius: Math.max(5, diameter * renderBodyScale * 0.505),
+      wellRadiusSource: diameter / 2,
+    };
+  }
 
   const explicitScaleRaw = visual[prefix + 'WheelScale'];
   const hasExplicitAxleScale =
