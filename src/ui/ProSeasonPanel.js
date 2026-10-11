@@ -1,4 +1,4 @@
-import { CREW_SERIES, PRO_SEASON_LENGTH, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261011-r485';
+import { CREW_SERIES, PRO_SEASON_LENGTH, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261011-r485';
 import { normaliseProCircuitState, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261010-r470';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r479';
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -21,28 +21,38 @@ function button(s,x,y,w,label,action,enabled=true) {
   if(enabled)b.setInteractive({useHandCursor:true}).on('pointerdown',action);
 }
 export function drawSeasonHeader(s,side) {
-  const c=circuit(s),driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver'),team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
-  text(s,side.x+20,side.y+117,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16).setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-  text(s,side.x+20,side.y+146,`DRIVER #${driver.seed} · ${driver.seasonPoints} PTS\nCREW #${team.seed} · ${team.seasonPoints} PTS`,14);
-  text(s,side.x+20,side.y+188,'CHOOSE 1 OF 3 EVENTS · DRIVER + CREW TO QUALIFY',12,{color:'#9fc4d5'});
+  const c=circuit(s),q=getProQualification(c);
+  const driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver');
+  const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
+  text(s,side.x+20,side.y+112,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16)
+    .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
+  const bar=(y,label,score,goal,seed,color)=>{
+    text(s,side.x+20,y,`${label} #${seed}  ${score} / ${goal} PTS`,13);
+    const width=side.w-42,x=side.x+21;
+    s.addContent(s.add.rectangle(x,y+23,width,7,0x353037).setOrigin(0,0).setDepth(39));
+    s.addContent(s.add.rectangle(x,y+23,width*Math.min(1,score/goal),7,color).setOrigin(0,0).setDepth(40));
+  };
+  bar(side.y+140,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
+  bar(side.y+179,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
+  text(s,side.x+20,side.y+224,q.qualified?'QUALIFIED // TOKYO CHAMPIONSHIP':`CHOOSE 1 OF 3 · ${q.roundsRemaining} ROUNDS LEFT`,12,{color:q.qualified?'#9ee6b0':'#9fc4d5'});
   if(s.proError)text(s,side.x+20,side.y+630,s.proError,12,{color:'#ef939b',wordWrap:{width:side.w-40}});
 }
 export function drawCrewSidebar(s,event,side) {
-  const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c);
+  const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c),short=!t||!!t.short;
   if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
     text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
-    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.\n\nPast results remain in the season record.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
+    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.\n\nPast results remain in the season record.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
     button(s,side.x+side.w/2,side.y+590,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
   const ready=true;
-  const canEnter=ready&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
-  text(s,side.x+20,side.y+207,CREW_SERIES.label,21);
-  const lines=['TEAM COMPETITION // YOU DRIVE','4 TEAMS · 3 ROUND-ROBIN FIXTURES','REGISTER 3–5 DRIVERS · FIELD 3','2 OF 3 HEATS WINS EACH FIXTURE','3 POINTS PER FIXTURE WIN','TIES: HEAT DIFFERENCE, THEN SEED',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'1ST ¥210,000 · 2ND ¥90,000','3RD ¥40,000 · 4TH ¥0','AFTER FIRST WIN: 65% PURSES'];
+  const canEnter=ready&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
+  text(s,side.x+20,side.y+240,short?'CREW CLUB SPRINT':CREW_SERIES.label,21);
+  const lines=short?['CREW POINTS // YOU DRIVE','ONE FIXTURE · THREE HEATS','REGISTER 3–5 · FIELD THREE CARS','YOU DRIVE ALL THREE HEATS','CREW PTS 6 / 14 / 24 / 32','BASED ON HEATS WON',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'3 WINS ¥210K · 2 WINS ¥90K','1 WIN ¥40K · 0 WINS ¥0','AFTER FIRST PERFECT: 65% PURSES']:['TEAM COMPETITION // YOU DRIVE','4 TEAMS · 3 ROUND-ROBIN FIXTURES','REGISTER 3–5 DRIVERS · FIELD 3','2 OF 3 HEATS WINS EACH FIXTURE','3 POINTS PER FIXTURE WIN','TIES: HEAT DIFFERENCE, THEN SEED',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'1ST ¥210,000 · 2ND ¥90,000','3RD ¥40,000 · 4TH ¥0','AFTER FIRST WIN: 65% PURSES'];
   if(t){lines.push(`FIXTURE ${t.round+1}/3 · ${f?.opponent.name||'SAVE NEEDS RECOVERY'}`);lines.push(...getCrewSeriesTable(t).map(r=>`${r.name} · ${r.points} PTS`));}
   else lines.push('YOUR SHIFTING + CREW CAR TUNING','GARAGE BREAKS BETWEEN FIXTURES');
   lines.forEach((line,i)=>{
-    const row=text(s,side.x+20,side.y+250+i*18,line,16);
+    const row=text(s,side.x+20,side.y+278+i*18,line,16);
     if(row.width>side.w-40)row.setScale((side.w-40)/row.width);
   });
   const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!ready?'CREW SERIES UNAVAILABLE':!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
@@ -62,7 +72,7 @@ function overlay(s,title) {
   return {add,label,btn,close};
 }
 export function showCrewRegistration(s,selection=[],assignments={}) {
-  const o=overlay(s,'REGISTER SQUAD // CREW CLUB SERIES'),units=getCrewSeriesUnits(s.registry,assignments),owned=s.registry.get('ownedCarIds')||[];
+  const o=overlay(s,'REGISTER SQUAD // CREW CLUB SPRINT'),units=getCrewSeriesUnits(s.registry,assignments),owned=s.registry.get('ownedCarIds')||[];
   o.label(90,115,'Select 3–5 crew cars. YOU drive each heat. Invest in their upgrades in the Crew Garage between fixtures.',18);
   units.forEach((u,i)=>{
     const chosen=selection.includes(u.id),y=187+i*65;
@@ -80,7 +90,7 @@ export function showCrewRegistration(s,selection=[],assignments={}) {
 }
 export function showCrewFixture(s,selection=null) {
   const c=circuit(s),f=getCrewFixture(c),t=c.activeCrewEvent;if(!f){s.proError='SAVED CREW FIXTURE UNAVAILABLE';redraw(s);return;}
-  const o=overlay(s,`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
+  const o=overlay(s,t.short?'CREW CLUB SPRINT // THREE HEATS':`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
   o.label(90,115,'YOUR CREW vs '+f.opponent.name+' · TWO HEAT WINS TAKE THE FIXTURE',23);
   if(!f.prepared){
@@ -145,7 +155,8 @@ export function showSeasonRecords(s,complete=false) {
     rows.slice(0,6).forEach((r,i)=>o.label(x,182+i*48,`${i+1}. ${r.id===player?'YOU':r.name||characters[r.characterId]?.name||r.id}  ${r.seasonPoints}`,20));
     const mine=rows.find(r=>r.id===player);o.label(x,487,`YOUR STANDING #${rows.indexOf(mine)+1} · ${mine.seasonPoints} PTS`,22);
   }
-  o.label(90,555,'EVENT HISTORY: '+(c.calendar.history.map(h=>h.label+' #'+h.placing).join(' / ')||'No completed events yet.'),18);
+  const q=getProQualification(c);o.label(90,533,`TOKYO QUALIFICATION: DRIVER ${q.driver}/${q.driverRequired} · CREW ${q.crew}/${q.crewRequired} · ${q.qualified?'QUALIFIED':'NOT YET'}`,20);
+  o.label(90,572,'EVENT HISTORY: '+(c.calendar.history.map(h=>h.label+' #'+h.placing).join(' / ')||'No completed events yet.'),18);
   const last=c.calendar.archives.at(-1);if(last)o.label(90,642,`PREVIOUS SEASON ${last.season}: DRIVER #${last.drivers.findIndex(r=>r.id==='player:driver')+1} · CREW #${last.teams.findIndex(r=>r.id==='player:team')+1}`,18);
   o.btn(310,758,390,'RETURN',o.close);
   if(complete)o.btn(1100,758,570,'BEGIN SEASON '+(c.season+1),()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
