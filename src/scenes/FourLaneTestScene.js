@@ -37,7 +37,7 @@ import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261008-r429';
+import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261012-champ2c';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
 } from '../data/proTournament.js?v=20261009-r447';
