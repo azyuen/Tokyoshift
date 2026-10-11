@@ -1148,28 +1148,11 @@ export default class RaceScene extends Phaser.Scene {
     const wheelFit = getWheelPairFit(wheelCfg, bodyScale, false, wheelSource);
     const renderOffsetY = Number(cfg.renderOffsetY || 0) * bodyScale;
 
-    // Keep unique collector cars on the same road contact line as the normal
-    // AE86 reference. Hero PNG trims differ, so renderOffsetY alone otherwise
-    // makes some cars float high or sit low even when their tyres are correct.
+    // Collector cars remain on their PRE-Ref road baseline. Their 1-off PNGs
+    // and historic wheel configs are deliberately not part of the nine-car
+    // GIMP conversion, so never derive their baseline from cars.ae86.visual.
     let groundCorrectionY = 0;
-    if (cfg.singleBody && cars.ae86) {
-      const reference = cars.ae86.visual;
-      const referenceBodyScale = reference.bodyScale * roleScale;
-      const referenceWheelSource = this.textures.get(reference.wheelKey).getSourceImage();
-      const referenceFit = getWheelPairFit(
-        reference,
-        referenceBodyScale,
-        false,
-        referenceWheelSource
-      );
-      const referenceGroundOffset =
-        Number(reference.renderOffsetY || 0) * referenceBodyScale +
-        Math.max(
-          referenceFit.rear.offsetY +
-            getWheelContactOffsetY(referenceWheelSource, referenceFit.rear.wheelScale),
-          referenceFit.front.offsetY +
-            getWheelContactOffsetY(referenceWheelSource, referenceFit.front.wheelScale)
-        );
+    if (cfg.singleBody) {
       const heroGroundOffset =
         renderOffsetY +
         Math.max(
@@ -1178,8 +1161,7 @@ export default class RaceScene extends Phaser.Scene {
           wheelFit.front.offsetY +
             getWheelContactOffsetY(wheelSource, wheelFit.front.wheelScale)
         );
-
-      groundCorrectionY = referenceGroundOffset - heroGroundOffset;
+      groundCorrectionY = 84 * roleScale - heroGroundOffset;
     }
 
     const rearWheel = this.add.image(0, 0, wheelCfg.wheelKey)
