@@ -9,6 +9,14 @@ import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 
 export const PRO_SEASON_LENGTH = 8;
+export const PRO_QUALIFICATION = Object.freeze({driver:100,crew:40});
+export function getProQualification(raw) {
+  const c=normaliseProCircuitState(raw);
+  const driver=c.playerDriver.seasonPoints,crew=c.playerTeam.seasonPoints;
+  return {driver,crew,driverRequired:PRO_QUALIFICATION.driver,crewRequired:PRO_QUALIFICATION.crew,
+    qualified:driver>=PRO_QUALIFICATION.driver&&crew>=PRO_QUALIFICATION.crew,
+    roundsRemaining:Math.max(0,PRO_SEASON_LENGTH-c.calendar.round)};
+}
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
 const clone=x=>JSON.parse(JSON.stringify(x));
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -101,7 +109,7 @@ export function registerCrewSeries(source,squadIds,assignments={}) {
   const ids=entrants.map(t=>t.id),schedule=[[[ids[0],ids[3]],[ids[1],ids[2]]],[[ids[0],ids[2]],[ids[3],ids[1]]],[[ids[0],ids[1]],[ids[2],ids[3]]]];
   const units=getCrewSeriesUnits(source,assignments);
   const registeredCars=Object.fromEntries(squadIds.map(id=>[id,units.find(u=>u.id===id).carId]));
-  c.activeCrewEvent={schema:1,id,eventId:CREW_SERIES.id,label:CREW_SERIES.label,round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,history:[],fixture:null,entryFee:CREW_SERIES.entryFee,prizes:[...CREW_SERIES.prizes],difficulty:value(source,'playerDifficulty','STANDARD')};
+  c.activeCrewEvent={schema:1,short:true,id,eventId:CREW_SERIES.id,label:CREW_SERIES.label,round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,history:[],fixture:null,entryFee:CREW_SERIES.entryFee,prizes:[...CREW_SERIES.prizes],difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-CREW_SERIES.entryFee};
 }
 export function getCrewFixture(raw) {
@@ -170,6 +178,27 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const wins=f.prepared.heats.filter(h=>h.won).length;
   const fixtures=t.schedule[t.round].map((pair,i)=>pair.includes(PLAYER)?{ids:pair,score:pair.map(id=>id===PLAYER?wins:3-wins)}:simulateTeamPair(t,pair,t.id+':'+t.round+':'+i));
   t.history.push({round:t.round,fixtures,playerHeats:clone(f.prepared.heats)});t.round++;t.fixture=null;
+  if(t.short) {
+    // New season crew sprints are exactly one three-heat fixture. Older saved
+    // round-robin series omit 'short' and continue through all three fixtures.
+    const rankBefore=getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed;
+    const ratingBefore=c.playerTeam.rating;
+    const match=fixtures.find(m=>m.ids.includes(PLAYER));
+    const opponentId=match.ids.find(id=>id!==PLAYER);
+    elo(c.playerTeam,c.teams[opponentId],wins>=2);
+    c.playerTeam.entered++;
+    const points=[6,14,24,32][wins];
+    c.playerTeam.seasonPoints+=points;
+    const cashPrize=Math.floor([0,40000,90000,210000][wins]*(c.crewSeriesWins>0?.65:1));
+    if(wins===3)c.crewSeriesWins++;
+    c.activeCrewEvent=null;c.eventTick++;
+    c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
+    const summary={id:t.id,label:'CREW CLUB SPRINT',discipline:'TEAM',placing:4-wins,
+      cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
+      ratingBefore,ratingAfter:c.playerTeam.rating,points,wins};
+    c.lastTournament=summary;c.lastCrewEvent=t;
+    return {circuit:completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),status:'COMPLETE',cashPrize,wins,summary};
+  }
   if(t.round<3){c.activeCrewEvent=t;return {circuit:c,status:'ADVANCED',cashPrize:0,wins};}
   const rankBefore=getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,ratingBefore=c.playerTeam.rating,table={[PLAYER]:c.playerTeam,...c.teams};
   for(const round of t.history)for(const match of round.fixtures)elo(table[match.ids[0]],table[match.ids[1]],match.score[0]>=2);
