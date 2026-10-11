@@ -66,7 +66,7 @@ export function completeSeasonRound(raw,summary,participants=[]) {
 }
 export function nextProfessionalSeason(raw) {
   const c=normaliseProCircuitState(raw);
-  if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent)return {error:'FINISH THE CURRENT SEASON'};
+  if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeChampionship&&!c.activeChampionship.completed)return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};c.season++;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
