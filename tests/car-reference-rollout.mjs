@@ -90,7 +90,7 @@ test('both tyre sizes contact zero ground at common scale, including flipped pre
   }
 });
 
-test('reference body layers anchor bottom-right and tint the paint OVER the fixed shell', () => {
+test('reference body layers anchor bottom-right and tint only paint UNDER the fixed shell', () => {
   const car = cars.ae86;
   const keys = getCarTextureKeys(car);
   const scene = textureScene(car);
@@ -111,13 +111,15 @@ test('reference body layers anchor bottom-right and tint the paint OVER the fixe
   scene.add = { image: fakeImage };
   const layers = createCarBodyLayers(scene, car, { x: 700, y: 500, scale: .32, paintColor: 0xe54433 });
   assert.equal(objects.length, 2);
-  assert.equal(objects[0].texture, keys.body);
-  assert.equal(objects[1].texture, keys.paint);
+  assert.equal(objects[0].texture, keys.paint);
+  assert.equal(objects[1].texture, keys.body);
   assert.equal(objects[0].originX, 1);
   assert.equal(objects[0].originY, 1);
   assert.equal(objects[1].originX, 1);
   assert.equal(objects[1].originY, 1);
   assert.ok(objects[0].depth < objects[1].depth);
-  assert.equal(objects[1].tint, 0xe54433);
-  assert.equal(layers.primary, objects[0]);
+  assert.equal(objects[0].tint, 0xe54433);
+  assert.equal(objects[1].tint, undefined, 'fixed body shell must NEVER be tinted');
+  assert.equal(layers.primary, objects[1]);
+  assert.equal(layers.paint, objects[0]);
 });
