@@ -51,7 +51,6 @@ export function drawCrewSidebar(s,event,side) {
   const lines=short?[
     'PRO COMP // CREW',
     '3 HEATS // THREE CREW CARS',
-    'YOU DRIVE EACH CREW CAR',
     'REGISTER 3–5 · FIELD THREE',
     'CREW POINTS  6 / 14 / 24 / 32',
     'ENTRY  '+cash(CREW_SERIES.entryFee),
@@ -61,7 +60,6 @@ export function drawCrewSidebar(s,event,side) {
   ]:[
     'PRO COMP // CREW // SAVED SERIES',
     '3 FIXTURES // 9 HEATS TOTAL',
-    'YOU DRIVE EACH CREW CAR',
     'REGISTER 3–5 · FIELD THREE',
     'ENTRY  '+cash(CREW_SERIES.entryFee),
     '1ST  ¥210,000 · 2ND  ¥90,000',
