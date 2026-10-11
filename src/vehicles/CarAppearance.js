@@ -415,6 +415,14 @@ export function hasLayeredPaintAssets(scene, visualOrCar) {
   }
 
   const keys = getCarTextureKeys(visualOrCar);
+  // Two-layer reference cars deliberately have NO third overlay texture.
+  // Their fixed body PNG *is* the overlay beneath the tintable paint mask.
+  if (visual.referenceStandard) {
+    return Boolean(
+      scene?.textures?.exists?.(keys.body) &&
+      scene?.textures?.exists?.(keys.paint)
+    );
+  }
   return Boolean(
     scene?.textures?.exists?.(keys.paint)
     && scene?.textures?.exists?.(keys.overlay)
