@@ -73,3 +73,73 @@ export function scoreChampionshipCrew(raw,winCounts) {
   state.stage='FOUR_WIDE';
   return state;
 }
+
+/**
+ * Championship knockout: sixteen entrants race through four two-car rounds.
+ * AI-only matches resolve deterministically; the player's actual win/loss
+ * must be supplied by the racing scene. Losing does not end the championship.
+ */
+export function getChampionshipKnockoutHeat(raw) {
+  const state=raw;
+  if(!state||state.stage!=='KNOCKOUT')return null;
+  const bracket=state.knockout?.bracket||seedKnockoutBracket(state.entrants);
+  const round=state.knockout?.round||0;
+  const matches=bracket[round]||[];
+  const match=matches.find(m=>m.includes(PLAYER));
+  if(!match)return null;
+  return {round,opponentId:match.find(id=>id!==PLAYER),
+    opponent:state.entrants.find(e=>e.id===match.find(id=>id!==PLAYER))};
+}
+export function seedKnockoutBracket(entrants) {
+  if(!Array.isArray(entrants)||entrants.length!==16)throw Error('EXPECTED 16 ENTRANTS');
+  const bySeed=[...entrants].sort((a,b)=>a.seed-b.seed);
+  const order=[0,15,7,8,3,12,4,11,1,14,6,9,2,13,5,10];
+  return [Array.from({length:8},(_,i)=>[bySeed[order[i*2]].id,bySeed[order[i*2+1]].id])];
+}
+export function settleChampionshipKnockout(raw,playerWon) {
+  const state=clone(raw);
+  if(state?.stage!=='KNOCKOUT'||typeof playerWon!=='boolean')throw Error('INVALID KNOCKOUT RESULT');
+  if(!state.knockout.bracket)state.knockout.bracket=seedKnockoutBracket(state.entrants);
+  const round=state.knockout.round||0,matches=state.knockout.bracket[round];
+  if(!matches?.some(m=>m.includes(PLAYER)))throw Error('NO ACTIVE PLAYER KNOCKOUT');
+  const winners=[],losers=[];
+  for(const match of matches) {
+    const [a,b]=match;
+    const first=state.entrants.find(e=>e.id===a),second=state.entrants.find(e=>e.id===b);
+    const winner=match.includes(PLAYER)?(playerWon?PLAYER:(a===PLAYER?b:a)):
+      hash(state.id+':knockout:'+round+':'+a+':'+b)%1000 <
+        Math.round(1000/(1+Math.exp(((second.rating||1400)-(first.rating||1400))/220)))?a:b;
+    winners.push(winner);losers.push(winner===a?b:a);
+  }
+  state.knockout.results.push({round,matches:matches.map((entrants,i)=>({entrants,winner:winners[i]}))});
+  if(winners.length===1) {
+    // Final order: champion, runner-up, semi exits, quarter exits, first-round exits.
+    const eliminated=state.knockout.results.map(r=>r.matches.flatMap(m=>m.entrants.filter(id=>id!==m.winner)));
+    const finish=[winners[0],...eliminated.reverse().flat()];
+    return scoreChampionshipStage(state,'KNOCKOUT',finish);
+  }
+  state.knockout.round=round+1;
+  state.knockout.bracket.push(Array.from({length:winners.length/2},(_,i)=>[winners[2*i],winners[2*i+1]]));
+  // Once eliminated, simulate remaining rounds immediately, preserving the
+  // actual loss and ensuring the player can still enter the crew stage.
+  if(!winners.includes(PLAYER)) {
+    while(state.knockout.bracket[state.knockout.round].length>1) {
+      const current=state.knockout.bracket[state.knockout.round];
+      const advanced=current.map(([a,b])=>{
+        const x=state.entrants.find(e=>e.id===a),y=state.entrants.find(e=>e.id===b);
+        return hash(state.id+':remainder:'+state.knockout.round+':'+a+':'+b)%1000 <
+          Math.round(1000/(1+Math.exp(((y.rating||1400)-(x.rating||1400))/220)))?a:b;
+      });
+      state.knockout.results.push({round:state.knockout.round,
+        matches:current.map((entrants,i)=>({entrants,winner:advanced[i]}))});
+      state.knockout.round++;
+      state.knockout.bracket.push(Array.from({length:advanced.length/2},(_,i)=>[advanced[2*i],advanced[2*i+1]]));
+    }
+    const finalMatch=state.knockout.bracket[state.knockout.round][0];
+    const winner=hash(state.id+':final')%2?finalMatch[0]:finalMatch[1];
+    state.knockout.results.push({round:state.knockout.round,matches:[{entrants:finalMatch,winner}]});
+    const eliminated=state.knockout.results.map(r=>r.matches.flatMap(m=>m.entrants.filter(id=>id!==m.winner)));
+    return scoreChampionshipStage(state,'KNOCKOUT',[winner,...eliminated.reverse().flat()]);
+  }
+  return state;
+}
