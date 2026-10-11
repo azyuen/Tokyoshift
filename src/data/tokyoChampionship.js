@@ -28,6 +28,7 @@ export function createProvisionalChampionship(raw) {
   const remaining=rivals.filter(r=>!r.characterId);
   const field=[...regional.sort((a,b)=>b.rating-a.rating),
     ...remaining.sort((a,b)=>b.rating-a.rating)].slice(0,15);
+  if(field.length!==15)return {error:'INSUFFICIENT CHAMPIONSHIP RIVALS'};
   const entrants=[{id:PLAYER,name:'YOU',rating:c.playerDriver.rating,seed:0},
     ...field.map(r=>({id:r.id,name:r.name||characters[r.characterId]?.name||r.id,
       characterId:r.characterId||null,rating:r.rating,seed:0}))];
@@ -209,8 +210,9 @@ export function settleChampionshipFourWideHeat(raw,heatId,finishers) {
     new Set(finishers.map(r=>r.id)).size!==4||
     finishers.some(r=>!active.entrants.includes(r.id)))throw Error('INVALID FOUR-WIDE FINISHERS');
   const ordered=[...finishers].sort((a,b)=>{
-    const rank=r=>r.disqualified?2:Number.isFinite(Number(r.finishSeconds))?0:1;
-    return rank(a)-rank(b)||(Number(a.finishSeconds)||Infinity)-(Number(b.finishSeconds)||Infinity)||
+    const valid=r=>r.finishSeconds!==null&&r.finishSeconds!==undefined&&Number.isFinite(Number(r.finishSeconds))&&Number(r.finishSeconds)>=0;
+    const rank=r=>r.disqualified?2:valid(r)?0:1;
+    return rank(a)-rank(b)||(valid(a)?Number(a.finishSeconds):Infinity)-(valid(b)?Number(b.finishSeconds):Infinity)||
       a.id.localeCompare(b.id);
   }).map(r=>({id:r.id,finishSeconds:r.finishSeconds??null}));
   active.results=ordered;
