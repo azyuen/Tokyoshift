@@ -1,4 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261011-r479';
@@ -3622,6 +3623,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getWheelBottomY(car, bodyY, targetWidth, visualModsOverride = null) {
+    if (car?.visual?.referenceStandard) return bodyY;
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
     const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
@@ -3640,6 +3642,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY, visualModsOverride = null) {
+    if (car?.visual?.referenceStandard) return wheelBottomY;
     const bodySource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
     const carState = (this.registry.get('carStates') || {})[car.id] || {};
     const wheelVisual = getVisualModWheelVisual(car, visualModsOverride || carState);
@@ -3669,9 +3672,12 @@ export default class GarageScene extends Phaser.Scene {
     const fit = getWheelPairFit(wheelVisual, bodyScale, false, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = y + renderOffsetY;
+    // Legacy scenes pass a centred bay coordinate. Ref cars use one common
+    // AE86-derived right edge, preserving their GIMP-authored relative lengths.
+    const drawX = getReferenceRightX(car, x, bodyScale);
 
-    const rearX = x + fit.rear.offsetX;
-    const frontX = x + fit.front.offsetX;
+    const rearX = drawX + fit.rear.offsetX;
+    const frontX = drawX + fit.front.offsetX;
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
@@ -3718,7 +3724,7 @@ export default class GarageScene extends Phaser.Scene {
 
     const paintColor = getCarPaintColor(carState);
     const bodyLayers = createCarBodyLayers(this, car, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1,
@@ -3726,7 +3732,7 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     const visualModObjects = createVisualModLayers(this, car, carState, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1.005,
@@ -3736,7 +3742,7 @@ export default class GarageScene extends Phaser.Scene {
     });
 
     const decalObjects = createTunerDecalLayers(this, carState, {
-      x,
+      x: car.visual?.referenceStandard ? drawX - source.width * bodyScale * 0.5 : x,
       y: displayY,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
@@ -3786,6 +3792,11 @@ export default class GarageScene extends Phaser.Scene {
       wheelSource
     );
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
+    const rightX = getReferenceRightX(car, heroX, bodyScale);
+    const heroSource = this.textures.get(getCarBodyTextureKey(this, car)).getSourceImage();
+    const visibleWidth = car.visual?.referenceStandard
+      ? heroSource.width * bodyScale
+      : HERO_CFG.targetWidth;
 
     return {
       x: heroX,
@@ -3793,16 +3804,16 @@ export default class GarageScene extends Phaser.Scene {
       targetWidth: HERO_CFG.targetWidth,
       bodyScale,
       tyreContactY,
-      frontWheelX: heroX + wheelFit.front.offsetX,
-      rearWheelX: heroX + wheelFit.rear.offsetX,
+      frontWheelX: rightX + wheelFit.front.offsetX,
+      rearWheelX: rightX + wheelFit.rear.offsetX,
       rearWheelY: bodyY + renderOffsetY + wheelFit.rear.offsetY,
       frontWheelY: bodyY + renderOffsetY + wheelFit.front.offsetY,
       wheelY: bodyY + renderOffsetY + (
         wheelFit.rear.offsetY +
         wheelFit.front.offsetY
       ) / 2,
-      left: heroX - HERO_CFG.targetWidth / 2,
-      right: heroX + HERO_CFG.targetWidth / 2,
+      left: car.visual?.referenceStandard ? rightX - visibleWidth : heroX - HERO_CFG.targetWidth / 2,
+      right: car.visual?.referenceStandard ? rightX : heroX + HERO_CFG.targetWidth / 2,
     };
   }
 
