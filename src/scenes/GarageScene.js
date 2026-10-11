@@ -1714,10 +1714,11 @@ export default class GarageScene extends Phaser.Scene {
       box.setInteractive({ useHandCursor: true });
       const thumbWidth = Math.min(THUMB_CFG.targetWidth, cardW - 30);
 
-      // Workshop thumbnails used to be visually stable for many revisions.
-      // Keep their whole car canvas on an authored card-local origin instead
-      // of solving a second tyre-contact baseline at tiny scale.
-      const thumbBodyY = y + THUMB_CFG.bodyYOffset;
+      // The new bottom-right Ref PNGs use their BOTTOM edge as tyre contact;
+      // they should sit lower in the card than legacy centre-origin sprites.
+      // Keep the original thumbnail position unchanged for all other cars.
+      const thumbBodyY = y + THUMB_CFG.bodyYOffset +
+        (cars[id]?.visual?.referenceStandard ? 30 : 0);
       const display = this.createCarDisplay(cars[id], x, thumbBodyY, thumbWidth, 42);
       display.forEach(obj => {
         // Do NOT force every returned object visible here. Replacement body
