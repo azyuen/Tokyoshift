@@ -1,3 +1,4 @@
+import { REFERENCE_AE86_SOURCE_WIDTH } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { getWheelOption } from '../data/wheels.js?v=20260929-r246';
 
 export const DEFAULT_PAINT_COLOR = 0xffffff;
@@ -423,6 +424,8 @@ export function hasLayeredPaintAssets(scene, visualOrCar) {
 export function getCarBodyTextureKey(scene, visualOrCar) {
   const visual = visualOrCar?.visual || visualOrCar || {};
   const keys = getCarTextureKeys(visualOrCar);
+  // Reference-car geometry and canvas extents come from the opaque base PNG.
+  if (visual.referenceStandard) return keys.body;
   if (visual.singleLayerModular) return visual.runtimeBodyTextureKey || keys.body;
   return hasLayeredPaintAssets(scene, visualOrCar) ? keys.paint : keys.body;
 }
@@ -431,6 +434,11 @@ export function getCarBodyScaleForWidth(scene, visualOrCar, targetWidth) {
   const visual = visualOrCar?.visual || visualOrCar || {};
   const key = getCarBodyTextureKey(scene, visualOrCar);
   if (!scene?.textures?.exists?.(key)) return 1;
+  // The AE86 supplies the *only* source-space scale calibration.
+  // Other reference cars must retain their authored relative GIMP dimensions.
+  if (visual.referenceStandard) {
+    return Math.max(1, Number(targetWidth) || 1) / REFERENCE_AE86_SOURCE_WIDTH;
+  }
 
   const source = scene.textures.get(key).getSourceImage();
   const sourceWidth = Number(source?.naturalWidth || source?.width || 1);
@@ -459,6 +467,43 @@ export function createCarBodyLayers(
   const bodyOffsetY = Number(visual.bodyRenderOffsetY || 0) * scale;
   const bodyX = x + bodyOffsetX;
   const bodyY = y + bodyOffsetY;
+
+  if (visual.referenceStandard && scene.textures.exists(keys.body)) {
+    // Reference sprites use a real bottom-right PNG anchor. Paint/body PNGs
+    // share the same canvas, so no individual transform or offset is allowed.
+    const base = scene.add.image(bodyX, bodyY, keys.body)
+      .setOrigin(1, 1)
+      .setScale(scale)
+      .setFlipX(flipX)
+      .setDepth(depth);
+
+    // Ref paint is a shaded body-colour mask drawn *over* the fixed shell.
+    // Legacy cars keep their original opposite ordering and centred origin.
+    const paint = scene.textures.exists(keys.paint)
+      ? scene.add.image(bodyX, bodyY, keys.paint)
+          .setOrigin(1, 1)
+          .setScale(scale)
+          .setFlipX(flipX)
+          .setDepth(depth + 0.025)
+          .setTint(color)
+      : null;
+    if (paint) {
+      paint.setData('carPaintLayer', true);
+      paint.setData('carBasePaintLayer', true);
+    }
+    return {
+      layered: Boolean(paint),
+      primary: base,
+      paint,
+      overlay: base,
+      bodyKitPaint: null,
+      bodyKit: null,
+      spoilerPaint: null,
+      spoiler: null,
+      stockSlots: { bodyKit: [], spoiler: [] },
+      objects: [base, paint].filter(Boolean),
+    };
+  }
 
   if (visual.singleLayerModular || visualOrCar?.singleLayerModular) {
     const bodyKey = visual.runtimeBodyTextureKey || keys.body;
