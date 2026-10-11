@@ -1,3 +1,4 @@
+import { STANDARD_CAR_REFERENCE, STANDARD_CAR_REFERENCE_ROOT, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261012-ref2';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
 
 const base = {
@@ -1351,6 +1352,53 @@ const S2000_CANVAS = {
     frontWheelBackingRadius: S2000_CANVAS.front.radius,
     exhaustOffsetX: -885,
     exhaustOffsetY: 216,
+  });
+}
+
+// Opt-in nine-car GIMP reference rollout. Do not touch any other stock assets.
+// Each copied crew car inherits this base model's reference visual parameters.
+for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
+  const visual = cars[gameId]?.visual;
+  const geometry = STANDARD_CAR_REFERENCE.cars[fileStem];
+  const canvas = REFERENCE_CAR_CANVAS[fileStem];
+  if (!visual || !geometry || !canvas) continue;
+  const diameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.size];
+
+  Object.assign(visual, {
+    referenceStandard: true,
+    referenceGeometry: { ...geometry },
+    referenceCanvasWidth: canvas[0],
+    referenceCanvasHeight: canvas[1],
+    referenceWheelDiameter: diameter,
+    referenceWheelSize: geometry.size,
+    modularAssetRoot: STANDARD_CAR_REFERENCE_ROOT,
+    modularAssetStem: fileStem,
+    bodyPath: STANDARD_CAR_REFERENCE_ROOT + '/' + fileStem + '_stock_body.png',
+    paintPath: STANDARD_CAR_REFERENCE_ROOT + '/' + fileStem + '_stock_paint.png',
+    overlayPath: null,
+    stockBodyKit: false,
+    stockSpoiler: false,
+    singleLayerModular: false,
+    deriveModularFromPreview: false,
+    layeredMasterGeometry: null,
+    canvasDisplayScale: 1,
+    bodyScale: STANDARD_CAR_REFERENCE.masterScale,
+    wheelFitMode: 'reference-standard',
+    wheelFill: 1,
+    levelWheelContact: false,
+    rearOffsetX: geometry.rearX,
+    frontOffsetX: geometry.frontX,
+    rearWheelOffsetX: geometry.rearX,
+    frontWheelOffsetX: geometry.frontX,
+    wheelOffsetY: -diameter / 2,
+    rearWheelOffsetY: -diameter / 2,
+    frontWheelOffsetY: -diameter / 2,
+    rearWheelWellRadius: diameter / 2,
+    frontWheelWellRadius: diameter / 2,
+    rearWheelBackingRadius: diameter / 2,
+    frontWheelBackingRadius: diameter / 2,
+    exhaustOffsetX: -canvas[0] + 35,
+    exhaustOffsetY: -diameter / 2,
   });
 }
 
