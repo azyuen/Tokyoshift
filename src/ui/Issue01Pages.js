@@ -41,22 +41,22 @@ export function drawIssue01Page(scene, {container,pageX:x,pageW:W,pageH:H,pageNu
   text(page.title,.083,.136,.84,.083,28,{fontFamily:'Georgia, serif',fontStyle:'bold italic'});
   text(page.deck,.083,.232,.84,.061,17.5,{fontFamily:'Georgia, serif',fontStyle:'italic',color:'#6d4a3e'});
   rect(.083,.318,.834,.002,0x9b302a,.65);
-  rect(.504,.357,.001,.515,0x786450,.28);
+  rect(.504,.346,.001,.57,0x786450,.28);
   page.columns.forEach((paragraphs,i)=>{
    const fx=i===0?.082:.536;
    const width=W*.381;
    const copy=paragraphs.map(p=>'\u2003'+p).join('\n\n');
-   const article=add(scene.add.text(x+W*fx,H*.357,copy,{
+   const article=add(scene.add.text(x+W*fx,H*.344,copy,{
     fontFamily:'Georgia, serif',
     fontSize:17.5*S+'px',
     color:'#28211d',
-    lineSpacing:3*S,
+    lineSpacing:2*S,
     wordWrap:{width},
    }));
    // Preserve an actual readable font floor instead of shrinking to tiny disclaimer print.
-   while(article.height>H*.515&&parseFloat(article.style.fontSize)>15.5*S)
+   while(article.height>H*.57&&parseFloat(article.style.fontSize)>15.5*S)
     article.setFontSize(Math.max(15.5*S,parseFloat(article.style.fontSize)-.35*S));
-   article.setData('magazineBox',{width,height:H*.515,page:page.number});
+   article.setData('magazineBox',{width,height:H*.57,page:page.number});
   });
  }else if(page.kind==='champion'){
   header();
