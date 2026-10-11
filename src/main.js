@@ -88,6 +88,12 @@ async function startTokyoShift() {
       loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261006-r388'),
     ]);
 
+    // Debug-only opt-in screen. No profile state or production car renderer changes.
+    const useCarReference = new URLSearchParams(window.location.search).get('carref') === '1';
+    const CarReferenceCalibrationScene = useCarReference
+      ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js?v=20261012-carref')
+      : null;
+
     window.TOKYO_SHIFT_SET_LOADING?.(0.10, 'LOADING');
 
     // Keep the existing phone readability pass.
@@ -107,6 +113,14 @@ async function startTokyoShift() {
 
     await waitForTokyoShiftFonts();
 
+    const allScenes = [
+      BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene,
+      CrewSpaceScene, CrewScene, DynoScene, CentralTokyoScene, MeetScene, RaceScene,
+      FourLaneTestScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene,
+    ];
+    // Phaser starts its first scene. Put the test scene first only when asked.
+    if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
+
     const config = {
       type: Phaser.AUTO,
       parent: 'game',
@@ -125,11 +139,7 @@ async function startTokyoShift() {
         width: GAME_WIDTH,
         height: GAME_HEIGHT,
       },
-      scene: [
-        BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene, CrewSpaceScene, CrewScene, DynoScene,
-        CentralTokyoScene, MeetScene, RaceScene, FourLaneTestScene, RunOverScene, ResultScene,
-        TunerShopScene, WheelCalibrationScene
-      ],
+      scene: allScenes,
     };
 
     window.TOKYO_SHIFT = new Phaser.Game(config);
