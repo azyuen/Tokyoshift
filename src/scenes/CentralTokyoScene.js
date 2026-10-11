@@ -323,6 +323,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.wheelPreviewActive = false;
     this.wheelAnimatePreview = false;
     this.selectedWheelIndex = 0;
+    this.newCarStockPage = 0;
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.ginzaTransitioning = false;
@@ -1189,7 +1190,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return [...pool.slice(offset), ...pool.slice(0, offset)];
   }
 
-  getNewCarListings() {
+  getAllNewCarListings() {
     const owned = this.registry.get('ownedCarIds') || [];
     const pool = AUTO_MARKET_LISTINGS.filter(item => cars[item.carId]);
     const rotated = this.rotateMarketPool(pool, 0);
@@ -1205,7 +1206,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const neutrals = [0xffffff, 0x30343a, 0x8d939a];
 
     return [...claimable, ...unowned, ...alreadyOwned]
-      .slice(0, 3)
       .map(item => {
         const paintColor = neutrals[
           this.marketHash(this.getAutoMarketCycle() + ':' + item.carId + ':new') % neutrals.length
@@ -1224,6 +1224,68 @@ export default class CentralTokyoScene extends Phaser.Scene {
           conditionLabel: 'NEW // FACTORY STOCK',
         };
       });
+  }
+
+  getNewCarListings() {
+    const all = this.getAllNewCarListings();
+    const pages = Math.max(1, Math.ceil(all.length / 3));
+    const page = Math.min(Math.max(0, this.newCarStockPage || 0), pages - 1);
+    return all.slice(page * 3, page * 3 + 3);
+  }
+
+  // Browse every stock model without changing the existing 3-car showroom.
+  // Only the next page's assets are loaded, avoiding a huge mobile preload.
+  browseNewCarStock(delta) {
+    if (this.autoMarketRoom !== 'new' || this.autoMarketTransitioning) return;
+    const all = this.getAllNewCarListings();
+    const pages = Math.ceil(all.length / 3);
+    if (pages <= 1) return;
+    const current = Math.min(Math.max(0, this.newCarStockPage || 0), pages - 1);
+    const next = (current + delta + pages) % pages;
+    const nextListings = all.slice(next * 3, next * 3 + 3);
+
+    this.autoMarketTransitioning = true;
+    const blocker = this.add.rectangle(780, 420, 1560, 840, 0x020811, 0.66)
+      .setDepth(180).setInteractive();
+    const loading = this.add.text(780, 420, 'LOADING NEW CAR STOCK', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#b4eafa',
+    }).setOrigin(0.5).setDepth(181);
+    const dismiss = () => { blocker.destroy(); loading.destroy(); };
+    const finish = () => {
+      if (!this.scene.isActive()) { dismiss(); return; }
+      // Keep the existing page if an image download failed.
+      const ready = nextListings.every(item => {
+        const car = cars[item.carId];
+        const key = getCarBodyTextureKey(this, car);
+        return this.textures.exists(key) &&
+          this.textures.exists(car.visual.wheelKey);
+      });
+      if (ready) {
+        this.newCarStockPage = next;
+        this.selectedIndex = 0;
+        this.autoMarketShowcaseActive = false;
+        this.autoMarketAnimateShowcase = false;
+        this.renderLocation(this.activeLocationId);
+      } else {
+        console.warn('[Tokyo SHIFT] New Car stock could not load. Retaining current page.');
+      }
+      dismiss();
+      this.autoMarketTransitioning = false;
+    };
+
+    let queued = 0;
+    for (const listing of nextListings) {
+      const car = cars[listing.carId];
+      if (!car) continue;
+      queued += preloadCarAppearanceAssets(this, { [listing.carId]: car }, '20261012-r488');
+      queued += preloadCarWheel(this, car);
+    }
+    if (queued > 0) {
+      this.load.once('complete', finish);
+      this.load.start();
+    } else {
+      finish();
+    }
   }
 
   getHaggleRecord(key) {
@@ -1358,6 +1420,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.registry.set('autoMarketRoom', room);
     this.selectedIndex = 0;
     this.selectedWheelIndex = 0;
+    this.newCarStockPage = 0;
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
     this.wheelPreviewActive = false;
@@ -1548,9 +1611,33 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.addContent(this.add.text(
       CARDS.x + 18,
       CARDS.y + 14,
-      (room === 'new' ? 'NEW CARS' : 'USED CARS') + ' // 3 AVAILABLE // ROTATES 3H',
-      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8fe7ff' }
+      room === 'new'
+        ? 'NEW CARS // 3 ON DISPLAY // BROWSE ALL MODELS'
+        : 'USED CARS // 3 AVAILABLE // ROTATES 3H',
+      { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#8fe7ff' }
     ).setDepth(33));
+
+    if (room === 'new') {
+      const pages = Math.max(1, Math.ceil(this.getAllNewCarListings().length / 3));
+      const current = Math.min(Math.max(0, this.newCarStockPage || 0), pages - 1);
+      this.addContent(this.add.text(
+        CARDS.x + 728, CARDS.y + 17,
+        'PAGE ' + (current + 1) + '/' + pages,
+        { fontFamily: PIXEL_FONT, fontSize: '7px', color: '#d6ebf4' }
+      ).setDepth(34));
+      const pageButton = (x, title, delta) => {
+        const button = this.addContent(this.add.rectangle(
+          x, CARDS.y + 23, 94, 37, 0x102838, 1
+        ).setStrokeStyle(2, 0x58afce, 1).setDepth(34)
+          .setInteractive({ useHandCursor: true }));
+        this.addContent(this.add.text(x, CARDS.y + 23, title, {
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#e7f8ff',
+        }).setOrigin(0.5).setDepth(35));
+        button.on('pointerdown', () => this.browseNewCarStock(delta));
+      };
+      pageButton(CARDS.x + 945, 'PREV', -1);
+      pageButton(CARDS.x + 1060, 'NEXT', 1);
+    }
 
     listings.forEach((listing, index) => {
       const car = cars[listing.carId];
