@@ -1,4 +1,5 @@
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
@@ -1403,6 +1404,7 @@ export default class TunerShopScene extends Phaser.Scene {
   }
 
   getBodyYForWheelBottom(car, targetWidth, wheelBottomY, carState = {}) {
+    if (car?.visual?.referenceStandard) return wheelBottomY;
     const bodyKey = getCarBodyTextureKey(this, car);
     const wheelVisual = getVisualModWheelVisual(car, carState);
     if (
@@ -1456,10 +1458,11 @@ export default class TunerShopScene extends Phaser.Scene {
     const fit = this.getStageWheelFit(wheelVisual, bodyScale, wheelSource);
     const renderOffsetY = Number(car.visual.renderOffsetY || 0) * bodyScale;
     const displayY = bodyY + renderOffsetY;
+    const drawX = getReferenceRightX(car, x, bodyScale);
 
-    const rearX = x + fit.rear.offsetX;
+    const rearX = drawX + fit.rear.offsetX;
     const rearY = displayY + fit.rear.offsetY;
-    const frontX = x + fit.front.offsetX;
+    const frontX = drawX + fit.front.offsetX;
     const frontY = displayY + fit.front.offsetY;
 
     const shadow = this.add.ellipse(
@@ -1500,7 +1503,7 @@ export default class TunerShopScene extends Phaser.Scene {
     ).setDepth(depth - 0.2);
 
     const bodyLayers = createCarBodyLayers(this, car, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1,
@@ -1508,7 +1511,7 @@ export default class TunerShopScene extends Phaser.Scene {
     });
 
     const visualModObjects = createVisualModLayers(this, car, carState, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1.005,
@@ -1518,7 +1521,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const decalObjects = showDecals
       ? createTunerDecalLayers(this, carState, {
-          x,
+          x: car.visual.referenceStandard ? drawX - source.width * bodyScale / 2 : x,
           y: displayY,
           displayWidth: bodyLayers.primary.displayWidth,
           displayHeight: bodyLayers.primary.displayHeight,
