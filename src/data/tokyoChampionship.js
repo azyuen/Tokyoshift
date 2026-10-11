@@ -143,3 +143,35 @@ export function settleChampionshipKnockout(raw,playerWon) {
   }
   return state;
 }
+
+/** Three distinct player-driven crew heats; AI results are stable by seed. */
+export function getChampionshipCrewHeat(raw) {
+  if(raw?.stage!=='CREW')return null;
+  const index=raw.crew?.results?.length||0;
+  if(index>=3)return null;
+  const opponents=raw.entrants.filter(e=>e.id!==PLAYER)
+    .sort((a,b)=>hash(raw.id+':crew:'+a.id)-hash(raw.id+':crew:'+b.id));
+  return {index,opponent:opponents[index*5]||opponents[index],
+    usedCarIds:(raw.crew.results||[]).map(r=>r.carId)};
+}
+export function settleChampionshipCrewHeat(raw,{carId,won,opponentId}={}) {
+  const state=clone(raw),heat=getChampionshipCrewHeat(state);
+  if(!heat)throw Error('NO ACTIVE CREW HEAT');
+  if(typeof carId!=='string'||!carId||heat.usedCarIds.includes(carId))
+    throw Error('CHOOSE A DISTINCT CREW CAR FOR EACH HEAT');
+  if(typeof won!=='boolean'||opponentId!==heat.opponent?.id)
+    throw Error('CREW HEAT RESULT MISMATCH');
+  state.crew.results.push({index:heat.index,carId,won,opponentId});
+  if(state.crew.results.length<3)return state;
+  const counts={};
+  counts[PLAYER]=state.crew.results.filter(r=>r.won).length;
+  for(const e of state.entrants) {
+    if(e.id===PLAYER)continue;
+    // Ratings influence expected crew results; do not award automatic 3/3.
+    const strength=Math.max(.12,Math.min(.88,.48+((e.rating||1400)-1400)/1800));
+    counts[e.id]=Array.from({length:3},(_,i)=>
+      (hash(state.id+':crew:'+e.id+':'+i)%10000)/10000<strength?1:0
+    ).reduce((a,b)=>a+b,0);
+  }
+  return scoreChampionshipCrew(state,counts);
+}
