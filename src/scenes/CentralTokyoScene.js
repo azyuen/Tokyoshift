@@ -2,6 +2,7 @@ import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=2
 import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261011-r485';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import { engines } from '../data/engines.js?v=20261011-r479';
@@ -1058,10 +1059,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const referenceFrontBottom =
           referenceFit.front.offsetY +
           getWheelContactOffsetY(referenceWheelSource, referenceFit.front.wheelScale);
-        const targetWheelBottom =
-          y +
-          referenceRenderOffsetY +
-          Math.max(referenceRearBottom, referenceFrontBottom);
+        const targetWheelBottom = reference.visual.referenceStandard
+          ? y + targetWidth * (232 / 1200) // exact old-AE86 reference contact ratio
+          : y + referenceRenderOffsetY +
+            Math.max(referenceRearBottom, referenceFrontBottom);
 
         const rearBottomOffset =
           fit.rear.offsetY + getWheelContactOffsetY(wheelSource, fit.rear.wheelScale);
@@ -1075,10 +1076,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
     }
 
-    const displayY = groundedBodyY + renderOffsetY;
+    const displayY = groundedBodyY + renderOffsetY +
+      (car.visual.referenceStandard ? targetWidth * (232 / 1200) : 0);
+    const drawX = getReferenceRightX(car, x, bodyScale);
 
-    const rearX = x + fit.rear.offsetX;
-    const frontX = x + fit.front.offsetX;
+    const rearX = drawX + fit.rear.offsetX;
+    const frontX = drawX + fit.front.offsetX;
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
@@ -1126,7 +1129,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     ).setDepth(depth - 0.1);
     const driver = driverCharacter
       ? createDriverSilhouette(this, car, driverCharacter, {
-          bodyX: x,
+          bodyX: drawX,
           bodyY: displayY,
           bodyScale,
           depth: depth + 0.55,
@@ -1134,7 +1137,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       : null;
 
     const bodyLayers = createCarBodyLayers(this, car, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1,
@@ -1143,7 +1146,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
 
     const visualModObjects = createVisualModLayers(this, car, carState, {
-      x,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: depth + 1.005,
