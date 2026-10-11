@@ -175,3 +175,84 @@ export function settleChampionshipCrewHeat(raw,{carId,won,opponentId}={}) {
   }
   return scoreChampionshipCrew(state,counts);
 }
+
+/** Four-wide championship: four qualifiers, two semifinals, one final.
+ * Only the player's own heat is interactive; all other heats are simulated.
+ * On elimination, the remaining bracket completes to award all 16 positions.
+ */
+const FOUR_GRID=[[0,7,8,15],[3,4,11,12],[1,6,9,14],[2,5,10,13]];
+function fourHeat(state,ids,round,index) {
+  return {id:state.id+':four:'+round+':'+index,round,index,entrants:ids,results:null};
+}
+export function getChampionshipFourWideHeat(raw) {
+  if(raw?.stage!=='FOUR_WIDE')return null;
+  const state=raw.fourWide;
+  const heats=state.heats||FOUR_GRID.map((slots,i)=>fourHeat(raw,slots.map(n=>
+    [...raw.entrants].sort((a,b)=>a.seed-b.seed)[n].id),0,i));
+  return heats.find(h=>h.entrants.includes(PLAYER)&&!h.results)||null;
+}
+function simulateChampionshipFourHeat(state,heat) {
+  return heat.entrants.map(id=>{
+    const e=state.entrants.find(r=>r.id===id);
+    const noise=(hash(heat.id+':'+id)%1000)/1000;
+    return {id,finishSeconds:Math.max(8,12.8-((e.rating||1400)-1400)*.003+(noise-.5)*1.5)};
+  }).sort((a,b)=>a.finishSeconds-b.finishSeconds||a.id.localeCompare(b.id));
+}
+export function settleChampionshipFourWideHeat(raw,heatId,finishers) {
+  const state=clone(raw);
+  if(state?.stage!=='FOUR_WIDE'||state.completed)throw Error('NO ACTIVE FOUR-WIDE CHAMPIONSHIP');
+  if(!state.fourWide.heats)state.fourWide.heats=FOUR_GRID.map((slots,i)=>
+    fourHeat(state,slots.map(n=>[...state.entrants].sort((a,b)=>a.seed-b.seed)[n].id),0,i));
+  const active=state.fourWide.heats.find(h=>h.entrants.includes(PLAYER)&&!h.results);
+  if(!active||active.id!==heatId)throw Error('FOUR-WIDE HEAT MISMATCH');
+  if(!Array.isArray(finishers)||finishers.length!==4||
+    new Set(finishers.map(r=>r.id)).size!==4||
+    finishers.some(r=>!active.entrants.includes(r.id)))throw Error('INVALID FOUR-WIDE FINISHERS');
+  const ordered=[...finishers].sort((a,b)=>{
+    const rank=r=>r.disqualified?2:Number.isFinite(Number(r.finishSeconds))?0:1;
+    return rank(a)-rank(b)||(Number(a.finishSeconds)||Infinity)-(Number(b.finishSeconds)||Infinity)||
+      a.id.localeCompare(b.id);
+  }).map(r=>({id:r.id,finishSeconds:r.finishSeconds??null}));
+  active.results=ordered;
+  const round=active.round;
+  for(const heat of state.fourWide.heats)if(!heat.results)heat.results=simulateChampionshipFourHeat(state,heat);
+  state.fourWide.results.push({round,heats:clone(state.fourWide.heats)});
+  const heats=state.fourWide.heats;
+  if(round===2) {
+    const history=state.fourWide.results;
+    const final=history[2].heats[0].results.map(r=>r.id);
+    const semiExits=history[1].heats.flatMap(h=>h.results.slice(2).map(r=>r.id));
+    const qualifyingExits=history[0].heats.flatMap(h=>h.results.slice(2).map(r=>r.id));
+    const rank=id=>state.entrants.find(e=>e.id===id)?.seed||99;
+    const orderedExits=ids=>ids.sort((a,b)=>rank(a)-rank(b));
+    return scoreChampionshipStage(state,'FOUR_WIDE',
+      [...final,...orderedExits(semiExits),...orderedExits(qualifyingExits)]);
+  }
+  const advanced=heats.map(h=>h.results.slice(0,2).map(r=>r.id));
+  state.fourWide.heats=round===0?[
+    fourHeat(state,[advanced[0][0],advanced[1][1],advanced[2][0],advanced[3][1]],1,0),
+    fourHeat(state,[advanced[1][0],advanced[0][1],advanced[3][0],advanced[2][1]],1,1),
+  ]:[fourHeat(state,[advanced[0][0],advanced[1][1],advanced[1][0],advanced[0][1]],2,0)];
+  if(!state.fourWide.heats.some(h=>h.entrants.includes(PLAYER))) {
+    // Eliminated drivers still receive championship points. Simulate the
+    // remaining rounds, without requiring the player to watch AI-only heats.
+    while(state.fourWide.heats[0].round<2) {
+      const roundHeats=state.fourWide.heats;
+      roundHeats.forEach(h=>{h.results=simulateChampionshipFourHeat(state,h);});
+      state.fourWide.results.push({round:roundHeats[0].round,heats:clone(roundHeats)});
+      const qualified=roundHeats.map(h=>h.results.slice(0,2).map(r=>r.id));
+      state.fourWide.heats=[fourHeat(state,[qualified[0][0],qualified[1][1],qualified[1][0],qualified[0][1]],2,0)];
+    }
+    const last=state.fourWide.heats[0];
+    last.results=simulateChampionshipFourHeat(state,last);
+    state.fourWide.results.push({round:2,heats:clone(state.fourWide.heats)});
+    const history=state.fourWide.results;
+    const rank=id=>state.entrants.find(e=>e.id===id)?.seed||99;
+    return scoreChampionshipStage(state,'FOUR_WIDE',[
+      ...history[2].heats[0].results.map(r=>r.id),
+      ...history[1].heats.flatMap(h=>h.results.slice(2).map(r=>r.id)).sort((a,b)=>rank(a)-rank(b)),
+      ...history[0].heats.flatMap(h=>h.results.slice(2).map(r=>r.id)).sort((a,b)=>rank(a)-rank(b))
+    ]);
+  }
+  return state;
+}
