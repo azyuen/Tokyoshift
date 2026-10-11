@@ -5,6 +5,7 @@
 Before creating or changing character dialogue, cutscenes, interactions, magazine narrative or story content, read:
 - [Character Bible v1](docs/CHARACTER_BIBLE.md)
 - [Narrative authoring guidance](docs/NARRATIVE_AUTHORING.md)
+- [Career narrative and emotional beats](docs/CAREER_NARRATIVE.md)
 
 Use those repository documents as the continuity source. Preserve individual voices and knowledge boundaries across Career and future Story Mode.
 

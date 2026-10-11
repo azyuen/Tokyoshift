@@ -2,6 +2,8 @@
 
 Read [CHARACTER_BIBLE.md](CHARACTER_BIBLE.md) before writing character dialogue, cutscenes, character interactions, magazine narrative, phone conversations or story content.
 
+Also read [CAREER_NARRATIVE.md](CAREER_NARRATIVE.md) for the saved synopsis, approved Sayaka/father history, ending direction and proposed emotional-beat backlog. Preserve the distinction between approved facts, conditional ending direction and unimplemented scene suggestions. Update that backlog as scenes are actually implemented.
+
 ## Current foundation
 
 The owner approved Character Bible v1 for individualised Career scenes on 7 October 2026, with deeper Story Mode to be designed much later. The repository is the continuity source; do not depend on a previous chat.

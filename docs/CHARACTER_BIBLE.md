@@ -1,7 +1,8 @@
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
-Version: 1.1 — 9 October 2026
-Status: adopted foundation; Sayaka/Reika story-role revision explicitly approved by owner on 9 October 2026.
+Version: 1.2 — 11 October 2026
+Status: adopted foundation; Sayaka/Reika roles approved 9 October; Sayaka/father history and final celebration direction approved 11 October 2026.
+Companion: [Career narrative and emotional beats](CAREER_NARRATIVE.md) preserves the synopsis, approved history, knowledge boundaries and proposed scene backlog.
 Original repository audit: bc491c0, updated through 3632145.
 Deployment source check: 0bc3b0b (subsequent changes since that audit were build/cache files).
 This is narrative documentation. It does not implement dialogue selection or a branching Story Mode engine.
@@ -118,7 +119,7 @@ Arkon Den is explicitly a developer persona. Ethan Yuen is a targeted player-pro
 
 # 2. Existing canon discovered
 
-The opening states that the player's family gave them their first personally owned car, they recently moved close enough to participate, their father raced professionally, watching him inspired them, and Daichi is their childhood friend. These statements currently apply through $PLAYER regardless of selection. The father's death is NOT established by “would've”.
+The opening states that the player's family gave them their first personally owned car, they recently moved close enough to participate, their father raced professionally, watching him inspired them, and Daichi is their childhood friend. These statements currently apply through $PLAYER regardless of selection. The 11 October canon extension establishes that the father is alive and is intended to appear quietly at the end of the earned championship trophy celebration; do not imply death from “would've”.
 
 Tomo is explicitly Daichi's younger brother and a shy, clever timing assistant. Daichi is 22; Tomo's age was not authored.
 
@@ -177,7 +178,7 @@ Established identity: 20, male, Saitama upbringing; Shinagawa principal. Learned
 Daily life: parts-distribution assistant, ordinary routine, exact memory for driving sensations. He looks unambitious because he dislikes declaring ambitions before he can justify them.
 Persona: patient and economical in public; privately stubborn, replaying mistakes. Notices exclusion but helps indirectly. Attentive, adaptable and dependable; restraint can become avoidance. Would rather practise than admit a remark hurt.
 Values: careful with money, uncomfortable with inherited reputation. Calculated driving risks are easier than emotional ones. Respects honest improvement; dislikes excuses and comparisons with another career.
-Conditional past: ONLY IF the opening-history decision is approved, Ren is Daichi's childhood friend and child of the unnamed professional racer; the ordinary learning car and first family-gifted personally owned car need not be the same. Father's name, career level, current circumstances and death are unassigned.
+Conditional past: ONLY IF the opening-history decision is approved, Ren is Daichi's childhood friend and child of the unnamed professional racer; the ordinary learning car and first family-gifted personally owned car need not be the same. The father's name, exact career level and usual whereabouts remain unassigned. The selected player's father is alive under the 11 October extension; that history still must not be assigned to Ren without the protagonist-origin decision.
 Starting ambition: establish results that belong to him.
 Relationships: Daichi is the friend around whom he need not perform competence (childhood duration conditional). Natsumi has inspected his work and finds him teachable. Emi is a recurring competitive acquaintance. Kaito is known mainly by reputation.
 Knowledge: knows Daichi's family and Tomo's timing job, not Tomo's private professional insecurity. Conditional father-origin material also conditions his concern over surname recognition. Incorrectly believes asking for advice weakens independence.
@@ -386,16 +387,16 @@ Constraints: younger than Daichi; shy is not helpless; only logs received are kn
 ID: sayakaFujieda
 
 **Owner-approved canon (9 October):** 47, female, longtime family friend of the selected player's father from his racing days. **Not** a Shinagawa regional racer, rival, wager target or regional crew recruit. Controlled, perceptive, warm in small ways, and professionally discreet.
-**Fixed past:** she knew the player's father during his active racing years and served as a racing-team strategist for his team. She later built a career in collector provenance, specialist automotive transactions and curating/managing the private Ginza collection. She retains competition contacts such as Tetsuya, Kaori and Masato Kuroda.
+**Fixed past (extended by owner, 11 October):** she and the player's father were good friends, and she supported him in their very early days. He made mistakes and poor decisions. They teamed up professionally, with Sayaka as racing-team strategist, but never fully made it. They grew distant for a long time and reconnected much later. The exact mistakes, causes of distance, dates and meaning of their limited success remain unassigned. She later built a career in collector provenance, specialist automotive transactions and curating/managing the private Ginza collection. She retains competition contacts such as Tetsuya, Kaori and Masato Kuroda.
 **Career story sequence (fixed truth, staged knowledge):**
 1. **Opening / delivered keys:** Sayaka arrives with the first car the player's family has given them. She openly identifies herself as their father's old racing friend. She does **not** explain her work in Ginza or her former strategist role. The existing Daichi workshop/origin/tutorial dialogue follows her delivery; no father death is established.
 2. **Ginza invitation / first revelation:** on the private gallery invitation, the player recognises Sayaka. She reveals she is the **curator and manager of the Ginza collection**, not simply a family acquaintance. She still withholds her strategic racing past.
 3. **Professional circuit / second revelation and recruitment:** after the player's genuine seven-member regional crew is assembled and the Ginza meeting has happened, Sayaka explains she planned strategy for the father's racing team and **joins the player's professional team as strategist**. She advises/scouts rather than occupies a driving slot. The pro-circuit introduction is a once-per-save manga scene; no bonus physics or simulated race advantage is implied.
 **Career knowledge gates:** the player knows the family link from opening; knows the Ginza role only from `ginzaInvitation`; knows her prior strategic role and team affiliation only from `proCircuitStrategistReveal`. Sayaka knows all three facts from the start. Other characters may know only their own dealings; generic street-racer lines cannot disclose her pro past early. Save history is tracked in `cutscenesSeen` rather than a new eighth regional crew member.
 Persona: understands emotional and financial car value, sometimes treats people like carefully managed inventory. Courteous/exact; privately likes plain food and unpretentious company. Withholds context believing she knows what others need.
-Ambition: safeguard Ginza's credibility while helping the next generation stand on its own merit.
+Ambition: safeguard Ginza's credibility while helping the next generation stand on its own merit. She also sees an opportunity to try to right a wrong through her support of the player. The exact wrong is unresolved. Both she and the father want racing to remain the player's choice, especially the father; her reparative hope must not turn the player into an obligation or a substitute for his career.
 Relationships: the player's father is her longstanding friend and former team colleague; a familiar adult to the player. Tetsuya and Kaori are old competition contacts, Kenji a business contact, Masato Kuroda an event contact; Daichi knows her through the family handoff. These connections do not establish the father's name or present whereabouts.
-Knowledge: entrusted records, not every car's complete history. Suspects one consignment file incomplete; does not know why. Kenji knows one document missing, not the entire transaction. Missing provenance is not proof of crime.
+Knowledge: she and the father know their shared history; the player and other cast do not automatically know the mistakes, distance or reconnection. Sayaka knows her own wish to right a wrong; whether the father knows that motive is unassigned. Preserve opening/Ginza/pro-strategist disclosure gates; deeper personal history needs a separately authored reveal. She knows entrusted records, not every car's complete history. Suspects one consignment file incomplete; does not know why. Kenji knows one document missing, not the entire transaction. Missing provenance is not proof of crime.
 Values: status is a market force, not moral worth. Calculated financial/racing risk and verifiable provenance. Business ownership, curation and strategist duties can coexist.
 Voice: concise complete sentences, polite/direct, minimal slang, dry transactional humour; personally warmer with the player than with an ordinary customer.
 - “Your father and I go back a long way.”
@@ -903,6 +904,18 @@ Except Daichi–Tomo and the unresolved player-opening link, specific interperso
 
 No additional siblings from repeated surnames. No compulsory romances. Aya/Kaito's respect and Emi/Ren's acquaintance can develop in multiple directions. Recruitment changes participation, not earlier truth. Professional disagreement is not automatic enmity.
 
+## The player's father — owner-approved extension (11 October 2026)
+
+The selected $PLAYER's unnamed father is a living ex-professional racer. Sayaka supported him from their early friendship; his mistakes and poor decisions belong to fixed history, as do their professional partnership that never fully succeeded, long period of distance and much later reconnection. Do not infer a particular scandal, accident, crime, romantic relationship or total absence of race wins.
+
+He and Sayaka do not want to force the player into racing; he especially wants it to be the player's choice. The first-car gift is not evidence of a secret plan to produce a champion. Daichi's opening speculation about racing intent remains his interpretation.
+
+**Approved future ending direction:** at the very end of the trophy celebration, the father appears in shadow and lets the moment belong to the player. This is conditional on an earned championship result, not a universal past event. He is not a ghost or an ominous antagonist. Exact appearance, words, who notices him and the Drivers'/Crew title trigger remain to be authored.
+
+The father and Sayaka know their shared lived history. Do not assume he knows her entire motive to “right a wrong,” or that the player, Daichi, crew or press knows the private history. The wrong's specifics and the father's name/usual whereabouts remain open. The protagonist identity model is unchanged.
+
+See [Career narrative and emotional beats](CAREER_NARRATIVE.md) for the synopsis, fact register, proposed personal disclosures and ending handoff.
+
 # World timeline
 
 Relative dates avoid unnecessary calendar constraints. New events are V1 foundation; opening-history assignment remains conditional.
@@ -910,7 +923,9 @@ Relative dates avoid unnecessary calendar constraints. New events are V1 foundat
 | Period | Events |
 |---|---|
 | Earlier generation | Kaori, Tetsuya, Moriyama and Kazuo accumulate experience; Ryuji develops racing background. |
-| Father's racing era | Sayaka is his longtime friend and works as his racing team's strategist; their exact races and later circumstances remain unassigned. |
+| Early shared racing years | Sayaka and the father are good friends; she supports him from their very early days. He makes mistakes and poor decisions, not yet specified. |
+| Father's professional racing era | They team up professionally, Sayaka as strategist, but never fully make it. Exact results and level remain unassigned. |
+| Long separation, then later reconnection | They grow distant for a long time and reconnect much later, before their present support of the player. Exact causes and dates remain open. |
 | Years before opening | Sayaka develops trading/planning contacts, including Kaori/Tetsuya entries, later managing the Ginza collection. |
 | Childhood, conditional | Ren–Daichi friendship and Ren watching his professional-racer father only if origin assignment is approved. |
 | Several years before | Daichi gains repair experience; Reina Shibata receives Kazuo opportunities. |
@@ -1019,3 +1034,5 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 - 2026-10-11 (R478): Sayaka's opening delivery call now uses the canonical reusable phone-conversation presentation: circular caller portrait, small decorative phone icon and compact callout bubble. Future phone conversations share this renderer by declaring `presentation: 'phone'` in cutscene data; multi-page conversations and other character portraits are supported. The words and story knowledge of Sayaka's call are unchanged.
 
 - 2026-10-11 (R480): Daichi's workshop entrance now matches his **drivetrain** tuning standing sprite, scale, location and shadow rather than the chassis helper. The standard phone call bubble has a smaller face-focused portrait and reduced typography; caller dialogue defaults to muted crimson and the player's outgoing dialogue to blue-green/teal. No dialogue or character history has changed.
+
+- 2026-10-11 (narrative documentation, v1.2): owner approved Sayaka/father early friendship and support, his unspecified mistakes, their professional partnership that never fully made it, long distance and later reconnection; both protect the player's freedom to choose racing, while Sayaka hopes to right an unspecified wrong. Father is alive and has an approved quiet shadowed appearance at the very end of an earned trophy celebration. Added linked CAREER_NARRATIVE.md preserving the synopsis and emotional-beat backlog; exact proposed scenes are not implemented by this update. Protagonist identity remains unresolved.
