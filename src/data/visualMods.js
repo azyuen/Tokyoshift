@@ -204,6 +204,11 @@ export function createVisualModLayers(
     depth = 0,
   } = {}
 ) {
+  // Only nine STOCK silhouettes have been converted to the new shared
+  // bottom-right canvas. Original kit PNGs still live in assets/Cars and
+  // cannot be placed on that canvas safely; retain purchased selections in
+  // saved state, but don't draw misregistered legacy artwork over Ref cars.
+  if (car?.visual?.referenceStandard) return [];
   const selected = normaliseVisualMods(car?.id, visualMods || state);
   const option = getVisualModOption(car?.id, 'bodyKit', selected.bodyKit);
   if (!option?.replacementBody || !bodyLayers?.primary) return [];
