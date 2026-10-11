@@ -213,7 +213,8 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
 function prepareMagazineAssets(scene, features, onReady) {
   // These two cars are printed into Issue 01 even before the player owns one.
   // Keep them available for both the opening and all later magazine visits.
-  const ids = [...new Set(['ae86', 'ef', ...ISSUE01_PHOTO_CARS, ...features.map(feature => feature.carId)])]
+  const printedCars = scene.registry.get('openingChapter') === 'magazine' ? [] : ISSUE01_PHOTO_CARS;
+  const ids = [...new Set(['ae86', 'ef', ...printedCars, ...features.map(feature => feature.carId)])]
     .filter(id => cars[id]);
   const states = scene.registry.get('carStates') || {};
   const issue = getActiveMagazineIssue(scene.registry);
