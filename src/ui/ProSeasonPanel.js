@@ -20,43 +20,59 @@ function button(s,x,y,w,label,action,enabled=true) {
   if(labelNode.width>w-24)labelNode.setScale((w-24)/labelNode.width);
   if(enabled)b.setInteractive({useHandCursor:true}).on('pointerdown',action);
 }
-export function drawSeasonHeader(s,side) {
+export function drawSeasonHeader(s,stage) {
   const c=circuit(s),q=getProQualification(c);
   const driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver');
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
-  text(s,side.x+20,side.y+112,`SEASON ${c.season} // ROUND ${Math.min(8,c.calendar.round+1)}/8`,16)
+  const x=stage.x+22,y=stage.y+18,w=355;
+  const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,158,0x11151c,.88)
+    .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
+  text(s,x,y,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)} OF 8`,20,{color:'#f5e9e5'})
     .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
-  const bar=(y,label,score,goal,seed,color)=>{
-    text(s,side.x+20,y,`${label} #${seed}  ${score} / ${goal} PTS`,13);
-    const width=side.w-42,x=side.x+21;
-    s.addContent(s.add.rectangle(x,y+23,width,7,0x353037).setOrigin(0,0).setDepth(39));
-    s.addContent(s.add.rectangle(x,y+23,width*Math.min(1,score/goal),7,color).setOrigin(0,0).setDepth(40));
+  const bar=(yy,label,score,goal,seed,color)=>{
+    text(s,x,yy,`${label} RANK #${seed}   ${score} / ${goal} PTS`,18,{color:'#f2e7e3'});
+    s.addContent(s.add.rectangle(x,yy+29,w-10,10,0x38343c).setOrigin(0,0).setDepth(39));
+    s.addContent(s.add.rectangle(x,yy+29,(w-10)*Math.min(1,score/goal),10,color).setOrigin(0,0).setDepth(40));
   };
-  bar(side.y+140,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
-  bar(side.y+179,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
-  text(s,side.x+20,side.y+224,q.qualified?'QUALIFIED // TOKYO CHAMPIONSHIP':`CHOOSE 1 OF 3 · ${q.roundsRemaining} ROUNDS LEFT`,12,{color:q.qualified?'#9ee6b0':'#9fc4d5'});
-  if(s.proError)text(s,side.x+20,side.y+630,s.proError,12,{color:'#ef939b',wordWrap:{width:side.w-40}});
+  bar(y+39,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
+  bar(y+92,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
+  if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
 export function drawCrewSidebar(s,event,side) {
   const c=circuit(s),t=c.activeCrewEvent,f=getCrewFixture(c),short=!t||!!t.short;
   if(!event.team&&!event.seasonEnd)return false;
   if(event.seasonEnd&&!t){
     text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
-    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.\n\nPast results remain in the season record.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
+    text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
     button(s,side.x+side.w/2,side.y+590,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
-  const ready=true;
-  const canEnter=ready&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
-  text(s,side.x+20,side.y+240,short?'CREW CLUB SPRINT':CREW_SERIES.label,21);
-  const lines=short?['CREW POINTS // YOU DRIVE','ONE FIXTURE · THREE HEATS','REGISTER 3–5 · FIELD THREE CARS','YOU DRIVE ALL THREE HEATS','CREW PTS 6 / 14 / 24 / 32','BASED ON HEATS WON',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'3 WINS ¥210K · 2 WINS ¥90K','1 WIN ¥40K · 0 WINS ¥0','AFTER FIRST PERFECT: 65% PURSES']:['TEAM COMPETITION // YOU DRIVE','4 TEAMS · 3 ROUND-ROBIN FIXTURES','REGISTER 3–5 DRIVERS · FIELD 3','2 OF 3 HEATS WINS EACH FIXTURE','3 POINTS PER FIXTURE WIN','TIES: HEAT DIFFERENCE, THEN SEED',`ENTRY ${cash(CREW_SERIES.entryFee)}`,'1ST ¥210,000 · 2ND ¥90,000','3RD ¥40,000 · 4TH ¥0','AFTER FIRST WIN: 65% PURSES'];
-  if(t){lines.push(`FIXTURE ${t.round+1}/3 · ${f?.opponent.name||'SAVE NEEDS RECOVERY'}`);lines.push(...getCrewSeriesTable(t).map(r=>`${r.name} · ${r.points} PTS`));}
-  else lines.push('YOUR SHIFTING + CREW CAR TUNING','GARAGE BREAKS BETWEEN FIXTURES');
-  lines.forEach((line,i)=>{
-    const row=text(s,side.x+20,side.y+278+i*18,line,16);
-    if(row.width>side.w-40)row.setScale((side.w-40)/row.width);
-  });
-  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE · NO MONEY CHANGED'):!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
-  text(s,side.x+20,side.y+540,reason,12,{color:'#e89da3',wordWrap:{width:side.w-38}});
+  const canEnter=!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
+  text(s,side.x+20,side.y+207,short?'CREW CLUB SPRINT':CREW_SERIES.label,21);
+  const lines=short?[
+    'PRO COMP // CREW',
+    '3 HEATS // THREE CREW CARS',
+    'YOU DRIVE EACH CREW CAR',
+    'REGISTER 3–5 · FIELD THREE',
+    'CREW POINTS  6 / 14 / 24 / 32',
+    'ENTRY  '+cash(CREW_SERIES.entryFee),
+    '3 WINS  ¥210,000',
+    '2 WINS  ¥90,000',
+    '1 WIN  ¥40,000',
+  ]:[
+    'PRO COMP // CREW // SAVED SERIES',
+    '3 FIXTURES // 9 HEATS TOTAL',
+    'YOU DRIVE EACH CREW CAR',
+    'REGISTER 3–5 · FIELD THREE',
+    'ENTRY  '+cash(CREW_SERIES.entryFee),
+    '1ST  ¥210,000 · 2ND  ¥90,000',
+    '3RD  ¥40,000 · 4TH  ¥0',
+  ];
+  if(t)lines.push(`FIXTURE ${t.round+1}/${short?1:3} · ${f?.opponent.name||'SAVED FIXTURE UNAVAILABLE'}`);
+  s.addContent(uiText(s,side.x+20,side.y+250,lines.join('\n'),18,{
+    color:'#c4bec0',fontStyle:'700',lineSpacing:5,wordWrap:{width:side.w-37}
+  }).setDepth(34));
+  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE'):!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
+  text(s,side.x+20,side.y+518,reason,13,{color:'#e89da3',wordWrap:{width:side.w-38}});
   button(s,side.x+side.w/2,side.y+590,side.w-36,t?'RESUME CREW SERIES':'ENTER / SELECT SQUAD',()=>t?showCrewFixture(s):showCrewRegistration(s),t?!!f:canEnter);
   return true;
 }
