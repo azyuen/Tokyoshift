@@ -208,5 +208,25 @@ export function showTokyoChampionship(s) {
       'FOUR-LANE '+['QUALIFIER','SEMIFINAL','FINAL'][heat.round]):
     'STAGE TRANSITION PENDING',21);
   o.btn(300,766,390,'SAVE / RETURN',o.close);
-  o.label(815,761,'RACE ENTRY COMING WITH SCENE INTEGRATION',17);
+  if(heat && !state.completed){
+    const mode=state.stage==='KNOCKOUT'?'CHAMP_KO':state.stage==='CREW'?'CHAMP_CREW':'CHAMP_FOUR';
+    const units=state.stage==='CREW'?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&!heat.usedCarIds.includes(u.carId)):[];
+    const carId=state.stage==='CREW'?units[0]?.carId:s.registry.get('selectedCarId');
+    if(state.stage==='CREW'){
+      o.label(790,558,'SELECT A DISTINCT CREW CAR',18);
+      units.slice(0,5).forEach((u,i)=>o.btn(970,605+i*32,340,u.name+' / '+(cars[u.carId]?.shortName||u.carId),()=>{
+        o.close();startChampionshipRace(s,mode,u.carId);
+      }));
+      if(!units.length)o.label(790,650,'NO ELIGIBLE CREW CARS AVAILABLE',18);
+    }else o.btn(1110,762,570,'DRIVE CHAMPIONSHIP HEAT',()=>{o.close();startChampionshipRace(s,mode,carId);});
+  }
+}
+
+function startChampionshipRace(s,mode,carId){
+  const owned=s.registry.get('ownedCarIds')||[];
+  if(!carId||!cars[carId]||!owned.includes(carId)){
+    s.proError='SELECT AN OWNED CAR BEFORE STARTING THE CHAMPIONSHIP HEAT';
+    redraw(s);return;
+  }
+  s.scene.start('FourLaneTestScene',{mode,carId});
 }
