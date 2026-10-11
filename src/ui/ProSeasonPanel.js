@@ -37,6 +37,10 @@ export function drawSeasonHeader(s,stage) {
   };
   bar(y+39,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
   bar(y+92,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
+  if(c.activeChampionship){
+    const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
+    championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
+  }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
 export function drawCrewSidebar(s,event,side) {
