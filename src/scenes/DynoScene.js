@@ -45,6 +45,7 @@ import {
   preloadTunerDecalAssets,
 } from '../vehicles/TunerDecals.js?v=20260928-r242';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 
@@ -406,11 +407,14 @@ export default class DynoScene extends Phaser.Scene {
       renderOffsetY + fit.rear.offsetY + rearContact,
       renderOffsetY + fit.front.offsetY + frontContact
     );
-    const bodyY = WHEEL_CONTACT_Y - maxBottomOffset;
+    const bodyY = car.visual?.referenceStandard
+      ? WHEEL_CONTACT_Y
+      : WHEEL_CONTACT_Y - maxBottomOffset;
     const displayY = bodyY + renderOffsetY;
+    const drawX = getReferenceRightX(car, CAR_X, bodyScale);
 
-    const rearX = CAR_X + fit.rear.offsetX;
-    const frontX = CAR_X + fit.front.offsetX;
+    const rearX = drawX + fit.rear.offsetX;
+    const frontX = drawX + fit.front.offsetX;
     const rearY = displayY + fit.rear.offsetY;
     const frontY = displayY + fit.front.offsetY;
 
@@ -430,14 +434,14 @@ export default class DynoScene extends Phaser.Scene {
 
     const paintColor = getCarPaintColor(state);
     const bodyLayers = createCarBodyLayers(this, car, {
-      x: CAR_X,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: 11,
       paintColor,
     });
     const visualMods = createVisualModLayers(this, car, state, {
-      x: CAR_X,
+      x: drawX,
       y: displayY,
       scale: bodyScale,
       depth: 11.005,
@@ -445,7 +449,7 @@ export default class DynoScene extends Phaser.Scene {
       bodyLayers,
     });
     const decals = createTunerDecalLayers(this, state, {
-      x: CAR_X,
+      x: car.visual?.referenceStandard ? drawX - bodyLayers.primary.displayWidth / 2 : CAR_X,
       y: displayY,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
