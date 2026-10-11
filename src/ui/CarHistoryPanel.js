@@ -1,12 +1,5 @@
 import { cars } from '../data/cars.js?v=20261011-r479';
-import { engines } from '../data/engines.js?v=20261011-r479';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211';
-import {
-  getCarMagazineMeta,
-  getCarMagazineSightings,
-  getActiveMagazineIssue,
-} from '../data/carMagazine.js?v=20261011-r479';
+import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
@@ -17,7 +10,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { drawIssue01Page, ISSUE01_ASSETS, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261012-r489';
+import { drawIssue01Page, ISSUE01_ASSETS, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261012-r490';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -27,124 +20,6 @@ function destroyObjects(objects = []) {
   objects.forEach(obj => {
     try { obj?.destroy?.(); } catch (e) {}
   });
-}
-
-function money(value) {
-  return '¥ ' + Number(value || 0).toLocaleString('en-US');
-}
-
-function acquisitionLabel(value = '') {
-  const labels = {
-    starter: 'STARTER CAR',
-    pinkSlip: 'PINK SLIP',
-    tokyoAutoMarket: 'TOKYO AUTO MARKET',
-    tokyoAutoMarketNew: 'TOKYO AUTO MARKET',
-    tokyoAutoMarketUsed: 'TOKYO AUTO MARKET',
-    competitionCoupon: 'COMPETITION COUPON',
-    ginzaMotorGallery: 'GINZA MOTOR GALLERY',
-    'tuner-shop': 'TUNER BUILD',
-    rivalBuild: 'PINK SLIP',
-    legacy: 'EARLY GARAGE',
-  };
-  return labels[value] || String(value || 'GARAGE').replaceAll('_', ' ').toUpperCase();
-}
-
-function statusLabel(entry = {}) {
-  const status = String(entry.status || 'OWNED').toUpperCase();
-  if (status === 'OWNED') return 'CURRENT GARAGE';
-  if (status === 'SOLD') return 'SOLD' + (entry.salePrice ? ' // ' + money(entry.salePrice) : '');
-  if (status === 'PINK_SLIP_LOST') return 'LOST ON A PINK SLIP';
-  if (status === 'CONVERTED') return 'CONVERTED';
-  if (status === 'LEGACY_ARCHIVED') return 'PRE-HISTORY ARCHIVE';
-  return status.replaceAll('_', ' ');
-}
-
-function dateLabel(timestamp) {
-  const value = Number(timestamp || 0);
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  try {
-    return date.toLocaleDateString(undefined, {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).toUpperCase();
-  } catch (e) {
-    return '';
-  }
-}
-
-function tunedStats(carId, state = {}) {
-  const car = cars[carId];
-  const engine = car ? engines[car.engine] : null;
-  if (!car || !engine) return null;
-
-  try {
-    const engineBuild = applyEngineTuning(car, engine, state || {});
-    const full = applySecondaryTuning(engineBuild.car, engineBuild.engine, state || {});
-    return {
-      power: Math.round(Number(full.car.powerKW || car.powerKW || 0)),
-      torque: Math.round(Number(full.car.torqueNm || car.torqueNm || 0)),
-      weight: Math.round(Number(full.car.vehicleMassKg || car.vehicleMassKg || 0)),
-    };
-  } catch (e) {
-    return {
-      power: Math.round(Number(car.powerKW || 0)),
-      torque: Math.round(Number(car.torqueNm || 0)),
-      weight: Math.round(Number(car.vehicleMassKg || 0)),
-    };
-  }
-}
-
-function buildMagazineFeatures(scene) {
-  const history = [...(scene.registry.get('carHistory') || [])]
-    .filter(entry => entry?.carId)
-    .sort((a, b) => Number(b.acquiredAt || 0) - Number(a.acquiredAt || 0));
-  const ownedIds = new Set((scene.registry.get('ownedCarIds') || []).map(String));
-  const currentStates = scene.registry.get('carStates') || {};
-  const latestByCar = new Map();
-
-  history.forEach(entry => {
-    if (!latestByCar.has(entry.carId)) latestByCar.set(entry.carId, entry);
-  });
-
-  const owned = [...ownedIds]
-    .filter(id => cars[id])
-    .map(id => {
-      const entry = latestByCar.get(id) || {
-        carId: id,
-        status: 'OWNED',
-        acquiredVia: currentStates[id]?.acquiredVia || 'garage',
-      };
-      return {
-        kind: 'OWNED',
-        carId: id,
-        entry,
-        state: currentStates[id] || entry.lastState || {},
-      };
-    });
-
-  const archived = [...latestByCar.values()]
-    .filter(entry => !ownedIds.has(String(entry.carId)) && cars[entry.carId])
-    .map(entry => ({
-      kind: 'ARCHIVE',
-      carId: entry.carId,
-      entry,
-      state: entry.lastState || {},
-    }));
-
-  const sightings = Object.values(getCarMagazineSightings(scene.registry))
-    .filter(item => item?.carId && !ownedIds.has(String(item.carId)))
-    .sort((a, b) => Number(b.lastSeenAt || 0) - Number(a.lastSeenAt || 0))
-    .map(item => ({
-      kind: 'SIGHTING',
-      carId: item.carId,
-      sighting: item,
-      state: {},
-    }));
-
-  return [...owned, ...archived, ...sightings];
 }
 
 export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
@@ -213,11 +88,11 @@ export function renderCarPhoto(scene, feature, x, y, targetWidth, depth, add) {
   return Boolean(rearBacking && frontBacking && rearWheel && frontWheel);
 }
 
-function prepareMagazineAssets(scene, features, onReady) {
+function prepareMagazineAssets(scene, onReady) {
   // These two cars are printed into Issue 01 even before the player owns one.
   // Keep them available for both the opening and all later magazine visits.
   const printedCars = ISSUE01_PHOTO_CARS;
-  const ids = [...new Set(['ae86', 'ef', ...printedCars, ...features.map(feature => feature.carId)])]
+  const ids = [...new Set(['ae86', 'ef', ...printedCars])]
     .filter(id => cars[id]);
   const states = scene.registry.get('carStates') || {};
   const issue = getActiveMagazineIssue(scene.registry);
@@ -225,7 +100,7 @@ function prepareMagazineAssets(scene, features, onReady) {
 
   const queueIssueImage = (key, path) => {
     if (!key || !path || scene.textures.exists(key)) return;
-    scene.load.image(key, path + '?v=20261012-r489');
+    scene.load.image(key, path + '?v=20261012-r490');
     queued += 1;
   };
 
@@ -284,7 +159,6 @@ export function addCarHistoryButton(scene, x = 1102, y = 35) {
 export function showCarHistoryPanel(scene, options = {}) {
   if (scene._carHistoryOverlay?.length || scene._carMagazineLoading) return;
 
-  const features = buildMagazineFeatures(scene);
   scene._carMagazineLoading = true;
   const loading = [
     scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.82)
@@ -308,7 +182,7 @@ export function showCarHistoryPanel(scene, options = {}) {
   };
   scene.load.on('progress', progress);
   scene.events.once('shutdown', cleanup);
-  prepareMagazineAssets(scene, features, () => {
+  prepareMagazineAssets(scene, () => {
     cleanup();
     if (!scene.sys?.isActive?.()) return;
     const issue = getActiveMagazineIssue(scene.registry);
@@ -316,11 +190,11 @@ export function showCarHistoryPanel(scene, options = {}) {
       scene.showWorkshopToast?.('MAGAZINE COULD NOT LOAD // TAP TO RETRY');
       return;
     }
-    showMagazine(scene, features, options);
+    showMagazine(scene, options);
   });
 }
 
-function showMagazine(scene, features, options = {}) {
+function showMagazine(scene, options = {}) {
   if (scene._carHistoryOverlay?.length) return;
 
   const objects = [];
@@ -344,22 +218,21 @@ function showMagazine(scene, features, options = {}) {
   // The authored inset defines the exact physical page proportion. Every
   // Phaser-generated page uses this same size so the magazine never changes
   // shape as the player turns through it.
-  const PAGE_H = 650;
+  const PAGE_H = 792; // 94% of the 1560 x 840 game canvas, without losing paper edges.
   const PAGE_W = PAGE_H * (insetSource.width / Math.max(1, insetSource.height));
-  const PAGE_TOP = 420 - PAGE_H / 2;
+  const PAGE_TOP = (840 - PAGE_H) / 2;
   const SPINE_X = 780;
   const LEFT_X = SPINE_X - PAGE_W;
   const RIGHT_X = SPINE_X;
-  const COVER_H = 650;
+  const COVER_H = PAGE_H;
   const COVER_W = COVER_H * (coverSource.width / Math.max(1, coverSource.height));
   const COVER_LEFT = 780 - COVER_W / 2;
 
   const openingChoice = scene.registry.get('openingChapter') === 'magazine';
-  const featureSpreadCount = Math.max(1, Math.ceil(features.length / 2));
-  // The full print edition is readable before choosing the first car.
+  // Issue 01 is a fixed print edition: cover, 02–03, then 04–15.
+  // Personal Street File / garage history pages no longer belong to this magazine.
   const editorialSpreads = ISSUE01_EDITORIAL_PAGE_COUNT / 2;
-  const firstArchiveView = 2 + editorialSpreads;
-  const totalViews = firstArchiveView + (openingChoice ? 0 : featureSpreadCount);
+  const totalViews = 2 + editorialSpreads;
   let viewIndex = 0;
   let currentView = null;
   let flipping = false;
@@ -454,43 +327,33 @@ function showMagazine(scene, features, options = {}) {
     0.82
   ).setDepth(290));
 
-  const closeX = 1460;
-  const close = add(scene.add.rectangle(closeX, 82, 108, 42, 0x17130f, 1)
-    .setStrokeStyle(1, 0xa89170, 1)
+  // Compact square controls sit outside the enlarged paper, not below it.
+  const closeX = 1494;
+  const closeY = 49;
+  const close = add(scene.add.rectangle(closeX, closeY, 48, 48, 0x17130f, 1)
+    .setStrokeStyle(2, 0xa89170, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(295));
-  const closeText = add(scene.add.text(closeX, 82, 'CLOSE', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#f6e8ce',
+  const closeText = add(scene.add.text(closeX, closeY, 'X', {
+    fontFamily: BODY_FONT, fontSize: '27px', fontStyle: 'bold', color: '#f6e8ce',
   }).setOrigin(0.5).setDepth(296));
   close.on('pointerdown', closeMagazine);
 
-  const prev = add(scene.add.rectangle(82, 420, 118, 48, 0x17130f, 1)
-    .setStrokeStyle(1, 0xa89170, 1)
+  const prev = add(scene.add.rectangle(75, 420, 52, 52, 0x17130f, 1)
+    .setStrokeStyle(2, 0xa89170, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(295));
-  const prevText = add(scene.add.text(82, 420, '<  PREV', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#f6e8ce',
+  const prevText = add(scene.add.text(75, 420, '<', {
+    fontFamily: BODY_FONT, fontSize: '29px', fontStyle: 'bold', color: '#f6e8ce',
   }).setOrigin(0.5).setDepth(296));
 
-  const next = add(scene.add.rectangle(1478, 420, 118, 48, 0x17130f, 1)
-    .setStrokeStyle(1, 0xa89170, 1)
+  const next = add(scene.add.rectangle(1485, 420, 52, 52, 0x17130f, 1)
+    .setStrokeStyle(2, 0xa89170, 1)
     .setInteractive({ useHandCursor: true })
     .setDepth(295));
-  const nextText = add(scene.add.text(1478, 420, 'NEXT  >', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '7px',
-    color: '#f6e8ce',
+  const nextText = add(scene.add.text(1485, 420, '>', {
+    fontFamily: BODY_FONT, fontSize: '29px', fontStyle: 'bold', color: '#f6e8ce',
   }).setOrigin(0.5).setDepth(296));
-
-  const folio = add(scene.add.text(780, 790, '', {
-    fontFamily: PIXEL_FONT,
-    fontSize: '6px',
-    color: '#9d8b73',
-  }).setOrigin(0.5).setDepth(295));
 
   const addTo = (container, obj) => {
     container.add(obj);
@@ -654,156 +517,6 @@ function showMagazine(scene, features, options = {}) {
     return { cover: null, left, right };
   };
 
-  const buildFeaturePage = (feature, side) => {
-    const container = scene.add.container(SPINE_X, PAGE_TOP).setDepth(270);
-    const pageX = addPaper(container, side);
-    const pad = 28;
-    const contentX = pageX + pad;
-    const contentW = PAGE_W - pad * 2;
-    const centerX = pageX + PAGE_W / 2;
-
-    if (!feature) {
-      addTo(container, scene.add.text(centerX, PAGE_H / 2, 'NEXT FEATURE\nPENDING', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '13px',
-        color: '#998a74',
-        align: 'center',
-        lineSpacing: 7,
-      }).setOrigin(0.5));
-      return container;
-    }
-
-    const meta = getCarMagazineMeta(feature.carId);
-    const car = cars[feature.carId];
-    const owned = feature.kind === 'OWNED';
-    const archived = feature.kind === 'ARCHIVE';
-    const sighting = feature.sighting || {};
-    const entry = feature.entry || {};
-    const stats = car ? tunedStats(feature.carId, feature.state || {}) : null;
-
-    addTo(container, scene.add.text(
-      contentX,
-      32,
-      owned ? 'GARAGE FEATURE' : archived ? 'FROM THE ARCHIVE' : 'SPOTTED IN TOKYO',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: owned ? '#9c3728' : '#5d6c79',
-      }
-    ));
-
-    addTo(container, scene.add.text(contentX, 62, meta.shortName, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '18px',
-      color: '#171512',
-    }));
-
-    addTo(container, scene.add.text(contentX, 94, meta.name.toUpperCase(), {
-      fontFamily: BODY_FONT,
-      fontSize: '12px',
-      color: '#3b342c',
-      fontStyle: '700',
-      wordWrap: { width: contentW },
-    }));
-
-    const specLine = [
-      meta.year ? String(meta.year) : null,
-      meta.drivetrain && meta.drivetrain !== 'SPECIAL' ? meta.drivetrain : null,
-      stats ? stats.power + ' kW' : null,
-      stats ? stats.weight + ' kg' : null,
-    ].filter(Boolean).join('  //  ');
-
-    addTo(container, scene.add.text(contentX, 128, specLine || 'SPECIAL FEATURE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '6px',
-      color: '#765f49',
-      wordWrap: { width: contentW },
-    }));
-
-    addTo(container, scene.add.rectangle(
-      centerX,
-      282,
-      contentW,
-      226,
-      0xd8cdb6,
-      1
-    ).setStrokeStyle(1, 0xaa9b7e, 1));
-
-    const photoRendered = renderCarPhoto(
-      scene,
-      feature,
-      centerX,
-      276,
-      Math.min(425, PAGE_W - 78),
-      0,
-      obj => addTo(container, obj)
-    );
-
-    if (!photoRendered) {
-      addTo(container, scene.add.text(
-        centerX,
-        280,
-        meta.isHero ? 'HERO CAR\nFEATURE FILE' : 'PHOTO ARCHIVE',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '11px',
-          color: '#887860',
-          align: 'center',
-          lineSpacing: 7,
-        }
-      ).setOrigin(0.5));
-    }
-
-    addTo(container, scene.add.text(contentX, 414, meta.fact, {
-      fontFamily: BODY_FONT,
-      fontSize: '11px',
-      color: '#26221d',
-      fontStyle: '600',
-      wordWrap: { width: contentW },
-      lineSpacing: 2,
-    }));
-
-    let footer = '';
-    if (owned || archived) {
-      footer =
-        statusLabel(entry) +
-        (entry.acquiredVia ? '  //  ' + acquisitionLabel(entry.acquiredVia) : '') +
-        (dateLabel(entry.acquiredAt) ? '  //  ' + dateLabel(entry.acquiredAt) : '');
-    } else {
-      const source = Array.isArray(sighting.sources) && sighting.sources.length
-        ? sighting.sources[sighting.sources.length - 1].replaceAll('-', ' ').toUpperCase()
-        : 'TOKYO';
-      footer =
-        'SEEN // ' + source +
-        (dateLabel(sighting.firstSeenAt) ? '  //  ' + dateLabel(sighting.firstSeenAt) : '');
-    }
-
-    addTo(container, scene.add.rectangle(
-      centerX,
-      PAGE_H - 54,
-      contentW,
-      1,
-      0xb7a68b,
-      0.7
-    ));
-
-    addTo(container, scene.add.text(contentX, PAGE_H - 38, footer, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '5px',
-      color: '#766752',
-      wordWrap: { width: contentW },
-    }));
-
-    return container;
-  };
-
-  const buildFeatureSpread = featureSpreadIndex => {
-    const featureIndex = featureSpreadIndex * 2;
-    const left = buildFeaturePage(features[featureIndex], 'left');
-    const right = buildFeaturePage(features[featureIndex + 1], 'right');
-    return { cover: null, left, right };
-  };
-
   const buildIssue01Spread = spreadIndex => {
     const firstPage = 4 + spreadIndex * 2;
     const pages = ['left', 'right'].map((side, offset) => {
@@ -824,8 +537,7 @@ function showMagazine(scene, features, options = {}) {
   const buildView = index => {
     if (index === 0) return buildCoverView();
     if (index === 1) return buildIntroSpread();
-    if (index < firstArchiveView) return buildIssue01Spread(index - 2);
-    return buildFeatureSpread(index - firstArchiveView);
+    return buildIssue01Spread(index - 2);
   };
 
   const updateControls = () => {
@@ -840,18 +552,7 @@ function showMagazine(scene, features, options = {}) {
     spreadShadow.setVisible(viewIndex > 0);
     seam.setVisible(viewIndex > 0);
 
-    if (viewIndex === 0) {
-      folio.setText((issue?.label || 'ISSUE 01') + ' // COVER');
-    } else if (viewIndex === 1) {
-      folio.setText((issue?.label || 'ISSUE 01') + ' // 02–03');
-    } else if (viewIndex < firstArchiveView) {
-      const firstPage = 4 + (viewIndex - 2) * 2;
-      folio.setText((issue?.label || 'ISSUE 01') + ' // ' +
-        String(firstPage).padStart(2, '0') + '–' + String(firstPage + 1).padStart(2, '0'));
-    } else {
-      const featureNumber = viewIndex - firstArchiveView + 1;
-      folio.setText('YOUR GARAGE // ' + featureNumber + ' / ' + featureSpreadCount);
-    }
+
   };
 
   const flipTo = direction => {
