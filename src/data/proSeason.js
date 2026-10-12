@@ -39,7 +39,7 @@ export function getFactoryStockStatus(state={}) {
       continue;
     }
     if(Object.entries(group).some(([part,level])=>
-      part!=='nitrousShot' && (typeof level==='object' ? level!==null :
+      (typeof level==='object' ? level!==null :
         typeof level==='boolean'?level:
         typeof level==='number'?level!==0:
         typeof level==='string'?level!==''&&level!=='0':false)))
