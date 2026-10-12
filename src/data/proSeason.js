@@ -9,7 +9,21 @@ import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 
 export const PRO_SEASON_LENGTH = 8;
-export const PRO_QUALIFICATION = Object.freeze({driver:100,crew:40});
+export const PRO_QUALIFICATION = Object.freeze({driver:60,crew:40});
+// One official entry per round, with equal maximum points for driver and crew.
+export const PRO_EVENT_POINTS = Object.freeze([20,17,15,13,12,11,10,9,8,7,6,5,4,3,2,1]);
+export const PRO_SEASON_CALENDAR = Object.freeze([
+  {driver:{id:'streetShootout',format:'KNOCKOUT',stock:true,maxPowerKW:180,noNos:true},crew:{format:'DUEL'}},
+  {driver:{id:'midnightCup',format:'TIME_ATTACK',drivetrain:'RWD',maxPowerKW:380},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE'},crew:{format:'DUEL'}},
+  {driver:{id:'streetShootout',format:'CONSISTENCY',drivetrain:'FWD',maxPowerKW:180},crew:{format:'TECHNICAL'}},
+  {driver:{id:'midnightCup',format:'KNOCKOUT',drivetrain:'AWD',maxPowerKW:550},crew:{format:'FOUR_WIDE'}},
+  {driver:{id:'streetShootout',format:'TIME_ATTACK',stock:true,maxPowerKW:300,noNos:true},crew:{format:'RELAY'}},
+  {driver:{id:'fourWideOpen',format:'FOUR_WIDE',drivetrain:'RWD',maxPowerKW:260},crew:{format:'TECHNICAL'}},
+  {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
+]);
+export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
+
 export function getProQualification(raw) {
   const c=normaliseProCircuitState(raw);
   const driver=c.playerDriver.seasonPoints,crew=c.playerTeam.seasonPoints;
