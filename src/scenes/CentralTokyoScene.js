@@ -1,6 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261012-season2a';
+import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-season2a';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3295,6 +3295,31 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawDragSide(events[this.selectedEventIndex], build);
   }
 
+  enterProfessionalTimedEvent(event) {
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const active=pro.activeTimedEvent;
+    const owned=this.registry.get('ownedCarIds')||[];
+    if(active) {
+      if(active.round===pro.calendar.round&&active.attempts.length<3&&owned.includes(active.carId))
+        this.scene.start('FourLaneTestScene',{mode:'PRO_TIMED'});
+      return;
+    }
+    const access=getProCircuitAccess(this.registry);
+    if(!access.unlocked&&!isArkonDen(this.registry))return;
+    if(pro.activeTournament||pro.activeCrewEvent||pro.activeChampionship||
+      this.registry.get('competitionState')?.active)return;
+    const build=this.getSelectedBuild();
+    if(!build||!owned.includes(build.carId))return;
+    const cash=Number(this.registry.get('cash')||0);
+    if(cash<event.entryFee)return;
+    const registration=registerProfessionalTimedEvent(pro,build.carId,event.entryFee,build.state);
+    if(registration.error){this.proError=registration.error;this.renderLocation(this.activeLocationId);return;}
+    try {
+      saveProTransaction(this.registry,{proCircuit:registration.circuit,cash:cash-event.entryFee});
+    }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);return;}
+    this.scene.start('FourLaneTestScene',{mode:'PRO_TIMED'});
+  }
+
   enterFourWideCup() {
     const access = getProCircuitAccess(this.registry);
     if ((!access.unlocked && !isArkonDen(this.registry)) ||
@@ -3358,6 +3383,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.registry.get('competitionState')?.proEvent
         ? this.registry.get('competitionState') : null;
     const selectedFourWide = Boolean(event.fourWide);
+    const selectedTimed = ['TIME_ATTACK','CONSISTENCY'].includes(event.seasonRules?.format);
     const eventUnlocked = circuitOpen &&
       (selectedFourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
     const power = Math.round(Number(build?.car?.powerKW || 0));
@@ -3368,7 +3394,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // A calendar format is only enterable when its actual race scene exists.
     // Do not silently substitute a knockout for time attack or consistency.
     const supportedFormat = !seasonRules?.format ||
-      (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : seasonRules.format === 'KNOCKOUT');
+      (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : ['KNOCKOUT','TIME_ATTACK','CONSISTENCY'].includes(seasonRules.format));
     const seasonDrivetrainOk = !seasonRules?.drivetrain ||
       proDriveClass(getCarMagazineMeta(build?.carId)?.drivetrain) === proDriveClass(seasonRules.drivetrain);
     const passesPower = selectedFourWide || Boolean(build) && (!Number.isFinite(event.maxPowerKW) || power <= event.maxPowerKW);
@@ -3379,13 +3405,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const activeDuelHere = !selectedFourWide && activeDuel &&
       (!activeDuel.eventId || activeDuel.eventId === event.id ||
         activeDuel.eventId === 'tokyoInvitational');
-    const resuming = Boolean(activeCupHere || activeDuelHere);
-    const registeredCar = activeCupHere ? activeCup.carId : activeDuelHere ? activeDuel.playerCarId : null;
+    const activeTimedHere = selectedTimed && pro.activeTimedEvent?.round === pro.calendar.round &&
+      pro.activeTimedEvent?.format === seasonRules.format && pro.activeTimedEvent.attempts.length<3;
+    const resuming = Boolean(activeCupHere || activeDuelHere || activeTimedHere);
+    const registeredCar = activeCupHere ? activeCup.carId : activeDuelHere ? activeDuel.playerCarId : activeTimedHere ? pro.activeTimedEvent.carId : null;
     const canResume = circuitOpen && resuming && !(
       selectedFourWide ? activeDuel : activeCup
-    ) && owned.includes(registeredCar);
+    ) && (!pro.activeTimedEvent || activeTimedHere) && owned.includes(registeredCar);
     const eligible = circuitOpen && eventUnlocked &&
-      !activeCup && !this.registry.get('competitionState')?.active &&
+      !activeCup && !pro.activeTimedEvent && !this.registry.get('competitionState')?.active &&
       Boolean(build) && owned.includes(build.carId) &&
       passesPower && passesNos && supportedFormat && seasonPowerOk && seasonNosOk && seasonStockOk && seasonDrivetrainOk && cash >= event.entryFee;
     const canEnter = canResume || (eligible && pro.calendar.round < 8 && !pro.activeCrewEvent);
@@ -3448,7 +3476,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }).setDepth(34));
 
     const label = resuming
-      ? selectedFourWide
+      ? activeTimedHere ? 'READY // ATTEMPT ' + (pro.activeTimedEvent.attempts.length+1) + '/3' : selectedFourWide
         ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
         : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
       : activeCup || activeDuel || pro.activeCrewEvent || this.registry.get('competitionState')?.active
@@ -3476,7 +3504,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       canEnter ? 0x551d25 : 0x201d20, 1
     ).setStrokeStyle(2, canEnter ? 0xed515c : 0x575154, 1).setDepth(33));
     const actionText = canResume
-      ? selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
+      ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
       : eligible ? 'ENTER EVENT // ' + money(event.entryFee) : 'NOT ELIGIBLE';
     this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 590, actionText, {
       fontFamily: PIXEL_FONT, fontSize: '8px',
@@ -3486,9 +3514,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (canEnter) {
       enter.setInteractive({ useHandCursor: true });
       enter.on('pointerdown', () => {
-        if (activeCupHere) this.enterFourWideCup();
+        if (activeTimedHere) this.enterProfessionalTimedEvent(event);
+        else if (activeCupHere) this.enterFourWideCup();
         else if (activeDuelHere) this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
         else if (selectedFourWide) this.enterFourWideCup();
+        else if (selectedTimed) this.enterProfessionalTimedEvent(event);
         else this.startProBracket(event, build);
       });
     }
