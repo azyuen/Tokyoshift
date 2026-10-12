@@ -57,7 +57,7 @@ export function drawCrewSidebar(s,event,side) {
     'PRO COMP // CREW',
     '3 HEATS // THREE CREW CARS',
     'REGISTER 3–5 · FIELD THREE',
-    'CREW POINTS  6 / 14 / 24 / 32',
+    'CREW POINTS  2 / 7 / 13 / 20',
     'ENTRY  '+cash(CREW_SERIES.entryFee),
     '3 WINS  ¥210,000',
     '2 WINS  ¥90,000',
