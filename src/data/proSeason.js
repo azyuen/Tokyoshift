@@ -110,17 +110,18 @@ function elo(a,b,won,k=20) {
 export function completeSeasonRound(raw,summary,participants=[]) {
   const c=normaliseProCircuitState(raw);
   if(!summary?.id||c.calendar.history.some(e=>e.id===summary.id)||c.calendar.round>=PRO_SEASON_LENGTH)return c;
-  const excluded=new Set(participants),rng=seasonRandom('season:'+c.season+':'+summary.id),background=[];
+  // Resolve one AI event per competitor. Player-driven opponents are excluded
+  // from background scoring so their actual race result remains authoritative.
+  const simulation=simulateProfessionalRound(c,c.calendar.round,summary.discipline,participants);
+  const background=[];
   for(const kind of ['DRIVER','TEAM']) {
     const roster=kind==='TEAM'?c.teams:c.drivers;
-    const ids=Object.keys(roster).filter(id=>!excluded.has(id)).sort();
-    for(let i=ids.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
-    for(let i=0;i+1<ids.length;i+=2) {
-      const a=roster[ids[i]],b=roster[ids[i+1]];
-      const buildA=opponentBuild(ids[i],a.rating,0),buildB=opponentBuild(ids[i+1],b.rating,0);
-      const won=estimateCrewHeat(buildA,rng)<=estimateCrewHeat(buildB,rng);
-      elo(a,b,won,10);a.entered++;b.entered++;a.seasonPoints+=won?5:1;b.seasonPoints+=won?1:5;
-      background.push({kind,winner:ids[i+(won?0:1)],loser:ids[i+(won?1:0)]});
+    for(const result of simulation.results[kind]) {
+      const standing=roster[result.id];
+      if(!standing)continue;
+      standing.entered++;
+      standing.seasonPoints+=result.points;
+      background.push({kind,id:result.id,placing:result.placing,points:result.points});
     }
   }
   c.calendar.round++;
