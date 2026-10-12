@@ -169,7 +169,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
   if(c.activeTournament||c.activeCrewEvent||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(c.calendar.round>=PRO_SEASON_LENGTH)return 'BEGIN THE NEXT SEASON';
-  if(getProfessionalRoundEvents(c.calendar.round).crew.format!=='DUEL')return 'CREW FORMAT NOT YET AVAILABLE';
+  if(!['DUEL','RELAY'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))return 'CREW FORMAT NOT YET AVAILABLE';
   if(Number(value(source,'cash',0))<CREW_SERIES.entryFee)return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
   if(squadIds.length<3||squadIds.length>5||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
@@ -185,13 +185,14 @@ function opponentBuild(id,rating,slot) {
 export function registerCrewSeries(source,squadIds,assignments={}) {
   const error=crewSeriesEligibility(source,squadIds,assignments);if(error)return {error};
   const c=normaliseProCircuitState(value(source,'proCircuit')),id='crewOpen:s'+c.season+':e'+(c.eventTick+1);
+  const format=getProfessionalRoundEvents(c.calendar.round).crew.format;
   const selected=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER).sort((a,b)=>Math.abs(a.rating-c.playerTeam.rating)-Math.abs(b.rating-c.playerTeam.rating)||a.id.localeCompare(b.id)).slice(0,3);
   const teams=[{id:PLAYER,name:'YOUR CREW',rating:c.playerTeam.rating},...selected].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
   const entrants=teams.map((r,i)=>({...r,seed:i+1,drivers:[0,1,2].map(n=>opponentBuild(r.id,r.rating,n))}));
   const ids=entrants.map(t=>t.id),schedule=[[[ids[0],ids[3]],[ids[1],ids[2]]],[[ids[0],ids[2]],[ids[3],ids[1]]],[[ids[0],ids[1]],[ids[2],ids[3]]]];
   const units=getCrewSeriesUnits(source,assignments);
   const registeredCars=Object.fromEntries(squadIds.map(id=>[id,units.find(u=>u.id===id).carId]));
-  c.activeCrewEvent={schema:1,short:true,id,eventId:CREW_SERIES.id,label:CREW_SERIES.label,round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,history:[],fixture:null,entryFee:CREW_SERIES.entryFee,prizes:[...CREW_SERIES.prizes],difficulty:value(source,'playerDifficulty','STANDARD')};
+  c.activeCrewEvent={schema:1,short:true,format,id,eventId:CREW_SERIES.id,label:CREW_SERIES.label,round:0,entrants,schedule,squadIds:[...squadIds],assignments:registeredCars,history:[],fixture:null,entryFee:CREW_SERIES.entryFee,prizes:[...CREW_SERIES.prizes],difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-CREW_SERIES.entryFee};
 }
 export function getCrewFixture(raw) {
@@ -257,7 +258,16 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const c=normaliseProCircuitState(raw),f=getCrewFixture(c),t=clone(c.activeCrewEvent);
   if(!f||f.id!==fixtureId||f.prepared?.revealed!==3||c.completedEventIds.includes(t.id))return {circuit:c,status:'STALE',cashPrize:0};
   if(f.prepared.control==='PLAYER'&&f.prepared.heats.some(h=>h.pending))return {circuit:c,status:'STALE',cashPrize:0};
-  const wins=f.prepared.heats.filter(h=>h.won).length;
+  const heatWins=f.prepared.heats.filter(h=>h.won).length;
+  const relay=t.format==='RELAY';
+  // Relay uses the combined elapsed time of all three player-driven legs.
+  // DNF/DQ loses the relay; individual heat wins do not decide its result.
+  const playerFinished=f.prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
+  const opponentFinished=f.prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
+  const ownTotal=f.prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
+  const opponentTotal=f.prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
+  const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
+  const wins=relay?(relayWon?3:0):heatWins;
   const fixtures=t.schedule[t.round].map((pair,i)=>pair.includes(PLAYER)?{ids:pair,score:pair.map(id=>id===PLAYER?wins:3-wins)}:simulateTeamPair(t,pair,t.id+':'+t.round+':'+i));
   t.history.push({round:t.round,fixtures,playerHeats:clone(f.prepared.heats)});t.round++;t.fixture=null;
   if(t.short) {
@@ -275,9 +285,9 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     if(wins===3)c.crewSeriesWins++;
     c.activeCrewEvent=null;c.eventTick++;
     c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
-    const summary={id:t.id,label:'CREW CLUB SPRINT',discipline:'TEAM',placing:4-wins,
+    const summary={id:t.id,label:relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
-      ratingBefore,ratingAfter:c.playerTeam.rating,points,wins};
+      ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,ownTotal,opponentTotal};
     c.lastTournament=summary;c.lastCrewEvent=t;
     return {circuit:completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),status:'COMPLETE',cashPrize,wins,summary};
   }
