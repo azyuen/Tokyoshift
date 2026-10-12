@@ -3103,7 +3103,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
-    const driver = rules.driver.id === 'fourWideOpen' ? fourWide : primary;
+    const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),
+      seasonRules: rules.driver,
+      label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };
     // Fixed positions: driver, crew, special/championship. Existing saved
     // registrations remain resumable even when the calendar has advanced.
     const choices = [driver, { ...CREW_SERIES, requiredWins: 0 },
@@ -3352,6 +3354,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const eventUnlocked = circuitOpen &&
       (selectedFourWide || isArkonDen(this.registry) || wins >= event.requiredWins);
     const power = Math.round(Number(build?.car?.powerKW || 0));
+    const seasonRules = event.seasonRules;
+    const seasonPowerOk = !seasonRules?.maxPowerKW || power <= seasonRules.maxPowerKW;
+    const seasonNosOk = !seasonRules?.noNos || !build?.nosInstalled;
+    const seasonStockOk = !seasonRules?.stock;
+    const seasonDrivetrainOk = !seasonRules?.drivetrain ||
+      getCarMagazineMeta(build?.carId)?.drivetrain === seasonRules.drivetrain;
     const passesPower = selectedFourWide || Boolean(build) && power <= event.maxPowerKW;
     const passesNos = selectedFourWide || Boolean(build) && (!event.noNos || !build.nosInstalled);
     const owned = this.registry.get('ownedCarIds') || [];
@@ -3368,7 +3376,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const eligible = circuitOpen && eventUnlocked &&
       !activeCup && !this.registry.get('competitionState')?.active &&
       Boolean(build) && owned.includes(build.carId) &&
-      passesPower && passesNos && cash >= event.entryFee;
+      passesPower && passesNos && seasonPowerOk && seasonNosOk && seasonStockOk && seasonDrivetrainOk && cash >= event.entryFee;
     const canEnter = canResume || (eligible && pro.calendar.round < 8 && !pro.activeCrewEvent);
 
     const title = activeDuelHere && (
@@ -3429,6 +3437,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
         : !build ? 'SELECT A CAR FIRST'
+        : !seasonStockOk ? 'FACTORY STOCK EVENTS NOT YET ENABLED'
+        : !seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
+        : !seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
+        : !seasonNosOk ? 'NOS PROHIBITED BY SEASON RULES'
         : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
         : !passesNos ? 'REMOVE NOS'
         : cash < event.entryFee ? 'INSUFFICIENT CASH'
