@@ -62,6 +62,37 @@ export function getSeasonStandings(raw,kind='DRIVER') {
   return (kind==='TEAM'?getProCircuitTeamSeeds(raw):getProCircuitDriverSeeds(raw))
     .sort((a,b)=>b.seasonPoints-a.seasonPoints||b.rating-a.rating||a.id.localeCompare(b.id));
 }
+// Pure, repeatable season simulation. It only computes fixtures; callers commit
+// these results once after the player's official competition is settled.
+export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER', occupiedIds=[]) {
+  const c=normaliseProCircuitState(raw);
+  const index=Math.max(0,Math.min(PRO_SEASON_LENGTH-1,Math.floor(Number(round)||0)));
+  const rng=seasonRandom('pro:season:'+c.season+':round:'+index);
+  const occupied=new Set(occupiedIds);
+  const competitors=Object.entries(c.drivers).map(([id,record])=>({id,record,teamId:null}));
+  // A single decision per professional: driver OR crew, never both.
+  const entries={DRIVER:[],TEAM:[]};
+  for(const item of competitors.sort((a,b)=>a.id.localeCompare(b.id))) {
+    if(occupied.has(item.id))continue;
+    const teamId='pro:team:'+item.id.split(':').pop();
+    const team=c.teams[teamId];
+    const driverGap=60-item.record.seasonPoints;
+    const crewGap=40-(team?.seasonPoints||0);
+    const discipline=team&&(crewGap>driverGap*0.7 || (Math.abs(crewGap-driverGap*0.7)<4&&rng()<0.5))?'TEAM':'DRIVER';
+    entries[discipline].push({id:discipline==='TEAM'?teamId:item.id,rating:discipline==='TEAM'?team.rating:item.record.rating});
+  }
+  const results={};
+  for(const discipline of ['DRIVER','TEAM']){
+    const field=entries[discipline].map(e=>({
+      ...e,performance:e.rating+(rng()+rng()+rng()-1.5)*210
+    })).sort((a,b)=>b.performance-a.performance||a.id.localeCompare(b.id));
+    results[discipline]=field.map((e,i)=>({
+      id:e.id,placing:i+1,points:PRO_EVENT_POINTS[i]||0,
+      rating:e.rating
+    }));
+  }
+  return {season:c.season,round:index,events:getProfessionalRoundEvents(index),results};
+}
 export function getProfessionalAttendance(raw,{prestige=1,stage=0,final=false,team=false}={}) {
   const c=normaliseProCircuitState(raw),rank=(team?getProCircuitTeamSeeds(c):getProCircuitDriverSeeds(c)).find(r=>r.id=== (team?PLAYER:'player:driver'))?.seed||32;
   const score=prestige-1+(final?2:stage>0?1:0)+(rank<=5?1:0)+(c.calendar.round>=6?1:0);
