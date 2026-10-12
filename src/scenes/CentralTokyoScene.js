@@ -1,6 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-crewfour';
+import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-crewfour';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-crewfour';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3390,7 +3390,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const seasonRules = event.seasonRules;
     const seasonPowerOk = !seasonRules?.maxPowerKW || power <= seasonRules.maxPowerKW;
     const seasonNosOk = !seasonRules?.noNos || !build?.nosInstalled;
-    const seasonStockOk = !seasonRules?.stock;
+    const seasonCheck=build&&seasonRules?getProfessionalCarEligibility(build.carId,(this.registry.get('carStates')||{})[build.carId]||{},seasonRules):null;
+    const seasonStockOk = !seasonRules?.stock || Boolean(seasonCheck&&!seasonCheck.reasons.some(r=>r.startsWith('MODIFIED ')||r.includes('TUNE')||r.includes('NITROUS')||r.includes('CALIBRATION')||r.includes('UNVERIFIED')||r.includes('INVALID')));
     // A calendar format is only enterable when its actual race scene exists.
     // Do not silently substitute a knockout for time attack or consistency.
     const supportedFormat = !seasonRules?.format ||
@@ -3496,7 +3497,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
         : !build ? 'SELECT A CAR FIRST'
         : !supportedFormat ? 'EVENT FORMAT NOT YET AVAILABLE'
-        : !seasonStockOk ? 'FACTORY STOCK EVENTS NOT YET ENABLED'
+        : !seasonStockOk ? 'FACTORY STOCK ONLY // '+(seasonCheck?.reasons?.[0]||'MODIFICATIONS DETECTED')
         : !seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
         : !seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
         : !seasonNosOk ? 'NOS PROHIBITED BY SEASON RULES'
