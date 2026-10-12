@@ -3112,7 +3112,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       choices[0] = { ...(driverPool.find(e => e.id === legacy.eventId) || primary), entryFee: legacy.entryFee || 0 };
     }
     if (pro.activeTournament) choices[0] = fourWide;
-    if (round >= 8) {
+    if (round >= 8 && !proCircuitSpecialEligible(this.registry)) {
       choices[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true,
         entryFee: 0, requiredWins: 0 };
       if (!pro.activeCrewEvent && !pro.activeTournament && !legacy?.active) this.selectedEventIndex = 2;
@@ -3323,7 +3323,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawDragSide(event, build) {
     if (event.specialSlot && proCircuitSpecialEligible(this.registry)) {
       this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 245,
-        'TOKYO CHAMPIONSHIP\\nQUALIFICATION ACHIEVED\\n\\nENTER THE CHAMPIONSHIP LOBBY',
+        'TOKYO CHAMPIONSHIP\nQUALIFICATION ACHIEVED\n\nENTER THE CHAMPIONSHIP LOBBY',
         { fontFamily: BODY_FONT, fontSize: '18px', color: '#f3cf8d' }).setDepth(34));
       const championshipEntry = this.addContent(this.add.rectangle(SIDE.x + SIDE.w / 2,
         SIDE.y + 590, SIDE.w - 36, 48, 0x5d1d27).setDepth(34).setInteractive({ useHandCursor: true }));
