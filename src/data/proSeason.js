@@ -253,7 +253,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     const opponentId=match.ids.find(id=>id!==PLAYER);
     elo(c.playerTeam,c.teams[opponentId],wins>=2);
     c.playerTeam.entered++;
-    const points=[6,14,24,32][wins];
+    const points=[2,7,13,20][wins];
     c.playerTeam.seasonPoints+=points;
     const cashPrize=Math.floor([0,40000,90000,210000][wins]*(c.crewSeriesWins>0?.65:1));
     if(wins===3)c.crewSeriesWins++;
@@ -269,10 +269,10 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const rankBefore=getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,ratingBefore=c.playerTeam.rating,table={[PLAYER]:c.playerTeam,...c.teams};
   for(const round of t.history)for(const match of round.fixtures)elo(table[match.ids[0]],table[match.ids[1]],match.score[0]>=2);
   const result=getCrewSeriesTable(t),place=result.findIndex(r=>r.id===PLAYER)+1;
-  result.forEach((r,i)=>{table[r.id].entered++;table[r.id].seasonPoints+=[32,24,14,6][i];});
+  result.forEach((r,i)=>{table[r.id].entered++;table[r.id].seasonPoints+=[20,15,10,5][i];});
   const cashPrize=Math.floor(t.prizes[place-1]*(c.crewSeriesWins>0?.65:1));if(place===1)c.crewSeriesWins++;
   c.activeCrewEvent=null;c.eventTick++;c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
-  const summary={id:t.id,label:t.label,discipline:'TEAM',placing:place,cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,ratingBefore,ratingAfter:c.playerTeam.rating,points:[32,24,14,6][place-1],table:result};
+  const summary={id:t.id,label:t.label,discipline:'TEAM',placing:place,cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,ratingBefore,ratingAfter:c.playerTeam.rating,points:[20,15,10,5][place-1],table:result};
   c.lastTournament=summary;c.lastCrewEvent=t;
   return {circuit:completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),status:'COMPLETE',cashPrize,wins,summary};
 }
@@ -288,7 +288,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon) {
     const rival=rivalId?c.drivers[rivalId]:{rating:1300+Number(round?.encounterRating||3)*70,wins:0,losses:0};
     elo(c.playerDriver,rival,n<roundsWon);if(rivalId)participants.push(rivalId);
   }
-  c.playerDriver.entered++;const points=[3,8,16,32][roundsWon];c.playerDriver.seasonPoints+=points;c.eventTick++;
+  c.playerDriver.entered++;const points=[2,7,13,20][roundsWon];c.playerDriver.seasonPoints+=points;c.eventTick++;
   c.completedEventIds=[...c.completedEventIds,id].slice(-250);
   const summary={id,label:state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT',discipline:'DRIVER',placing:roundsWon===3?1:4-roundsWon,points,rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:roundsWon===3?Number(state.prizeCash||0):0};
   c.lastTournament=summary;
