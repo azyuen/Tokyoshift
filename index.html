@@ -138,7 +138,7 @@
     }, { passive: true });
 
     (async () => {
-      let resolvedBuild = 'R489';
+      let resolvedBuild = 'R492';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -212,7 +212,7 @@
       if (splash) splash.setAttribute('data-boot-error', String(error?.stack || error?.message || error || 'Unknown rejection').slice(0, 500));
     });
 
-    import('./src/main.js?v=20261012-champaudit').catch((error) => {
+    import('./src/main.js?v=20261013-tatsumi-r492').catch((error) => {
       console.error('[Tokyo SHIFT] main module failed to load', error);
       const label = document.getElementById('loading-label');
       const percent = document.getElementById('loading-percent');

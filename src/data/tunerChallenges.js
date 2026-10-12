@@ -195,6 +195,19 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
     return Math.max(0, Math.min(12, steps[stage] + modifier));
   }
 
+  // Tatsumi is the first Canal Yard championship (rank 3). Its first three
+  // cars are relatively weak and need meaningful hardware to remain engaging;
+  // the later RX-8/S2000/EVO III have higher base performance, so their point
+  // budgets can be lower. In particular, the Expert EVO III must leave a
+  // realistic manual-driving margin for a Canal Yard Level 2 player build.
+  // A point-budget dip is intentional: balance actual car performance, not
+  // just an artificial rising count. Later Canal regions stay untouched.
+  if (normaliseRegion(regionId) === 'TATSUMI') {
+    const steps = [20, 21, 22, 19, 20, 21, 25];
+    const modifier = difficulty === 'EASY' ? -2 : difficulty === 'HARD' ? 2 : 0;
+    return Math.max(0, Math.min(era.tuningPointCap, steps[stage] + modifier));
+  }
+
   // Warehouse rivals stay at 48 base points; late-stage specialist tunes
   // supply their extra difficulty instead of exceeding the physical Lv3 cap.
   if (era.workshopEra === 'WAREHOUSE') return era.tuningPointCap;

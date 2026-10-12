@@ -88,7 +88,7 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261011-r483';
+} from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
