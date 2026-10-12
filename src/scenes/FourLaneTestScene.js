@@ -146,7 +146,10 @@ export default class FourLaneTestScene extends RaceScene {
     this.proCrew = data.mode === 'PRO_CREW';
     this.proTimed = data.mode === 'PRO_TIMED';
     this.timedEvent = this.proTimed ? this.registry.get('proCircuit')?.activeTimedEvent : null;
-    if(this.proTimed&&(!this.timedEvent||!Array.isArray(this.timedEvent.attempts)||this.timedEvent.attempts.length>=3)) {
+    if(this.proTimed&&(!this.timedEvent||!Array.isArray(this.timedEvent.attempts)||
+      this.timedEvent.attempts.length>=3||
+      this.timedEvent.round!==this.registry.get('proCircuit')?.calendar?.round||
+      !cars[this.timedEvent.carId])) {
       this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
       return;
     }
@@ -161,8 +164,14 @@ export default class FourLaneTestScene extends RaceScene {
     }
     if(this.proTimed) {
       const e=this.timedEvent;
-      const candidates=['r34','evo6','rx7fd','s2000','r32','jza80'].filter(id=>cars[id]&&id!==e?.carId);
-      const rival=candidates[0]||'ae86';
+      // Stable opponent across all three attempts, including after a reload.
+      // Choose a car near the player's power class rather than always using an R34.
+      const candidates=['ae86','ek9','s2000','r32','rx7fd','evo6','r34','jza80']
+        .filter(id=>cars[id]&&id!==e?.carId);
+      const playerPower=Number(cars[e?.carId]?.powerKW)||0;
+      const rival=candidates.sort((a,b)=>
+        Math.abs((Number(cars[a]?.powerKW)||0)-playerPower)-
+        Math.abs((Number(cars[b]?.powerKW)||0)-playerPower))[0]||'ae86';
       this.proDuelState=e?{active:true,proEvent:true,eventId:'timed',playerCarId:e.carId,
         roundIndex:e.attempts.length,rounds:[0,1,2].map(()=>({carId:rival,encounterRating:3}))}:null;
     }
