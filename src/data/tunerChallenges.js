@@ -195,6 +195,16 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
     return Math.max(0, Math.min(12, steps[stage] + modifier));
   }
 
+  // Tatsumi is the first Canal Yard championship (rank 3). Build toward
+  // Lv2 over the seven rounds; otherwise all six opening rivals run 29/30
+  // points and the Expert EVO III has almost no hardware handicap to a
+  // well-tuned 22B on Standard. Shibuya/Yokohama are the later Canal tests.
+  if (normaliseRegion(regionId) === 'TATSUMI') {
+    const steps = [12, 15, 18, 21, 23, 25, 27];
+    const modifier = difficulty === 'EASY' ? -2 : difficulty === 'HARD' ? 2 : 0;
+    return Math.max(0, Math.min(era.tuningPointCap, steps[stage] + modifier));
+  }
+
   // Warehouse rivals stay at 48 base points; late-stage specialist tunes
   // supply their extra difficulty instead of exceeding the physical Lv3 cap.
   if (era.workshopEra === 'WAREHOUSE') return era.tuningPointCap;
