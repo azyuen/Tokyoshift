@@ -3566,6 +3566,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!build || cash < event.entryFee) return;
     if (Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
     if (event.noNos && build.nosInstalled) return;
+    // Revalidate calendar restrictions at the transaction boundary, not only
+    // in the sidebar: stale buttons and cutscene callbacks cannot bypass them.
+    const rules = getProfessionalRoundEvents(pro.calendar.round).driver;
+    if (event.id !== rules.id || rules.format !== 'KNOCKOUT' || rules.stock) return;
+    if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
+    if (rules.noNos && build.nosInstalled) return;
+    if (rules.drivetrain && getCarMagazineMeta(build.carId)?.drivetrain !== rules.drivetrain) return;
 
     if (!storyConfirmed) {
       const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
