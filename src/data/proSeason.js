@@ -23,6 +23,38 @@ export const PRO_SEASON_CALENDAR = Object.freeze([
   {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
 ]);
 export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
+// Scrutineering checks the actual installed parts, not just horsepower.
+// Cosmetic paint/wheels, ownership metadata and unused saved presets do not
+// affect factory specification. Missing/legacy states default to stock.
+export function getFactoryStockStatus(state={}) {
+  if(!state||typeof state!=='object'||Array.isArray(state))
+    return {stock:false,reasons:['INVALID VEHICLE STATE']};
+  const reasons=[];
+  const groups=['tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning'];
+  for(const key of groups) {
+    const group=state[key];
+    if(group==null)continue;
+    if(typeof group!=='object'||Array.isArray(group)) {
+      reasons.push('UNVERIFIED '+key.toUpperCase());
+      continue;
+    }
+    if(Object.entries(group).some(([part,level])=>
+      part!=='nitrousShot' && (typeof level==='object' ? level!==null :
+        typeof level==='boolean'?level:
+        typeof level==='number'?level!==0:
+        typeof level==='string'?level!==''&&level!=='0':false)))
+      reasons.push('MODIFIED '+key.toUpperCase());
+  }
+  // Old pink-slip cars can have a hidden legacy tune with no workshop parts.
+  if(Number(state.tuneLevel||0)>2)reasons.push('LEGACY PERFORMANCE TUNE');
+  if(state.nosInstalled||Number(state.nosPower||0)>0&&state.nosInstalled)
+    reasons.push('AFTERMARKET NITROUS');
+  if(state.stage3Calibration&&['ecuBias','boostBias','gearBias'].some(k=>Number(state.stage3Calibration[k]||0)!==0))
+    reasons.push('CUSTOM ECU / BOOST / GEAR CALIBRATION');
+  if(state.specialistTuning&&Object.values(state.specialistTuning).some(v=>Boolean(v)))
+    reasons.push('SPECIALIST TUNING');
+  return {stock:reasons.length===0,reasons};
+}
 export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   const car=cars[carId];
   if(!car)return {eligible:false,reasons:['UNKNOWN CAR']};
@@ -34,9 +66,7 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   if(!Number.isFinite(power))reasons.push('PERFORMANCE UNAVAILABLE');
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
-  // Stock classification requires a separate baseline-vs-modifications audit.
-  // Until then, fail closed instead of allowing tuned cars into stock races.
-  if(rules.stock)reasons.push('FACTORY SPEC VERIFICATION NOT YET AVAILABLE');
+  if(rules.stock)reasons.push(...getFactoryStockStatus(carState).reasons);
   if(rules.noNos&&(Boolean(carState?.nosInstalled)||Number(carState?.exhaustNosTuning?.nosKit||0)>0))reasons.push('NOS PROHIBITED');
   return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain};
 }
