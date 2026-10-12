@@ -1,5 +1,5 @@
 import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261012-season2a';
-import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -129,6 +129,10 @@ function clamp01(value) {
   return Math.max(0, Math.min(0.99, Number(value) || 0));
 }
 
+function proCircuitSpecialEligible(registry) {
+  const pro = normaliseProCircuitState(registry.get('proCircuit'));
+  return Boolean(pro.activeChampionship) || (pro.playerDriver.seasonPoints >= 60 && pro.playerTeam.seasonPoints >= 40);
+}
 export default class CentralTokyoScene extends Phaser.Scene {
   constructor() {
     super('CentralTokyoScene');
@@ -3314,6 +3318,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawDragSide(event, build) {
+    if (event.specialSlot && proCircuitSpecialEligible(this.registry)) {
+      this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 245,
+        'TOKYO CHAMPIONSHIP\\nQUALIFICATION ACHIEVED\\n\\nENTER THE CHAMPIONSHIP LOBBY',
+        { fontFamily: BODY_FONT, fontSize: '18px', color: '#f3cf8d' }).setDepth(34));
+      const championshipEntry = this.addContent(this.add.rectangle(SIDE.x + SIDE.w / 2,
+        SIDE.y + 590, SIDE.w - 36, 48, 0x5d1d27).setDepth(34).setInteractive({ useHandCursor: true }));
+      championshipEntry.on('pointerdown', () => showTokyoChampionship(this));
+      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 590,
+        'OPEN TOKYO CHAMPIONSHIP', { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff6f5' }).setOrigin(0.5).setDepth(35));
+      return;
+    }
     if (event.specialSlot) {
       this.addContent(this.add.text(SIDE.x + 22, SIDE.y + 250,
         'MINOR TROPHIES WILL APPEAR HERE.\\nTHE TOKYO CHAMPIONSHIP TAKES PRIORITY\\nWHEN QUALIFICATION IS COMPLETE.',
