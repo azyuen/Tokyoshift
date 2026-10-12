@@ -5,6 +5,8 @@ on:
       - 'src/data/proSeason.js'
       - 'src/data/proCircuit.js'
       - 'tests/proSeason.simulation.test.js'
+      - 'tests/tokyoChampionship.simulation.test.js'
+      - 'src/data/tokyoChampionship.js'
       - '.github/workflows/pro-season-simulation.yml'
   workflow_dispatch:
 jobs:
@@ -19,8 +21,9 @@ jobs:
         run: |
           node --check src/data/proSeason.js
           node --check src/data/proCircuit.js
+          node --check src/data/tokyoChampionship.js
           node --check src/scenes/FourLaneTestScene.js
           node --check src/scenes/CentralTokyoScene.js
           node --check src/ui/ProSeasonPanel.js
       - name: Simulate eight-round seasons
-        run: node --test tests/proSeason.simulation.test.js
+        run: node --test tests/proSeason.simulation.test.js tests/tokyoChampionship.simulation.test.js
