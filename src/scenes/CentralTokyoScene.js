@@ -3311,6 +3311,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const build = this.getSelectedBuild();
     const carId = build?.carId;
     if (!carId || !owned.includes(carId)) return;
+    const rules = getProfessionalRoundEvents(pro.calendar.round).driver;
+    if (rules.id !== 'fourWideOpen' || rules.format !== 'FOUR_WIDE' || rules.stock) return;
+    if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
+    if (rules.noNos && build.nosInstalled) return;
+    if (rules.drivetrain && getCarMagazineMeta(carId)?.drivetrain !== rules.drivetrain) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < FOUR_WIDE_CUP.entryFee) return;
     const tournament = createFourWideTournament(pro, carId);
