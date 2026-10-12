@@ -134,7 +134,7 @@ export function showCrewFixture(s,selection=null) {
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
     prepared.heats.forEach((h,i)=>{
       o.label(120,241+i*90,`HEAT ${i+1} · ${h.name} / ${cars[h.carId]?.shortName}`,22);
-      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
+      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${h.tied?'DRAW':h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
     });
     if(prepared.revealed<3){
       o.btn(990,677,620,'DRIVE HEAT '+(prepared.revealed+1)+' / 3',()=>{
@@ -152,13 +152,13 @@ export function showCrewFixture(s,selection=null) {
       const opponentFinishedTech=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&Number.isFinite(h.opponentSeconds)&&h.opponentSeconds>0);
       const ownSpread=playerFinishedTech?Math.max(...prepared.heats.map(h=>h.ownSeconds))-Math.min(...prepared.heats.map(h=>h.ownSeconds)):null;
       const opponentSpread=opponentFinishedTech?Math.max(...prepared.heats.map(h=>h.opponentSeconds))-Math.min(...prepared.heats.map(h=>h.opponentSeconds)):null;
-      const technicalWon=playerFinishedTech&&(!opponentFinishedTech||ownSpread<=opponentSpread);
+      const technicalWon=playerFinishedTech&&(!opponentFinishedTech||ownSpread<opponentSpread-0.000001);
       const relay=t.format==='RELAY';
       const ownTotal=prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
       const opponentTotal=prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
       const playerFinished=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
       const opponentFinished=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
-      const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
+      const relayWon=playerFinished&&(!opponentFinished||ownTotal<opponentTotal-0.000001);
       o.label(130,568,technical
         ? 'PRECISION '+(technicalWon?'VICTORY':'DEFEAT')+' // '+(ownSpread===null?'DNF':ownSpread.toFixed(3)+'s')+' vs '+(opponentSpread===null?'DNF':opponentSpread.toFixed(3)+'s')
         : relay
