@@ -1675,6 +1675,17 @@ export default class FourLaneTestScene extends RaceScene {
       (outcome.summary.won?'EVENT VICTORY':'EVENT COMPLETE')+'  ·  +'+outcome.summary.points+' SEASON POINTS':
       ok?'ATTEMPT '+(this.timedEvent.attempts.length+1)+'/3':'RETURN TO COMPLEX AND RETRY',
       {fontFamily:'Rajdhani',fontSize:'29px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    if(ok&&complete) {
+      const summary=outcome.summary;
+      const fmt=value=>value===null||!Number.isFinite(value)?'NO VALID TIME':value.toFixed(3)+' S';
+      this.add.text(780,400,'YOU  '+fmt(summary.playerScore)+'    RIVAL  '+fmt(summary.rivalScore),
+        {fontFamily:'Rajdhani',fontSize:'27px',color:'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    } else if(ok) {
+      const c=this.registry.get('proCircuit')?.activeTimedEvent;
+      const formatTime=r=>r?.disqualified?'DQ':Number.isFinite(r?.finishSeconds)?r.finishSeconds.toFixed(3)+' S':'—';
+      this.add.text(780,405,'YOU  '+formatTime(c?.attempts?.at(-1))+'    RIVAL  '+formatTime(c?.rivalAttempts?.at(-1)),
+        {fontFamily:'Rajdhani',fontSize:'27px',color:'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    }
     this.add.text(780,480,'TAP TO '+(ok?next:'RETURN TO COMPLEX'),
       {fontFamily:'Rajdhani',fontSize:'25px',color:'#ffffff'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
     let armed=false;
