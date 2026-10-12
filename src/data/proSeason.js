@@ -27,7 +27,7 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   const car=cars[carId];
   if(!car)return {eligible:false,reasons:['UNKNOWN CAR']};
   const power=getVehiclePerformance(carId,carState).car.powerKW;
-  const drivetrain=String(getCarMagazineMeta(car)?.drivetrain||'').toUpperCase();
+  const drivetrain=String(getCarMagazineMeta(carId)?.drivetrain||'').toUpperCase();
   const expected=String(rules.drivetrain||'').toUpperCase();
   const aliases={FF:'FWD',FR:'RWD',AWD:'AWD',FWD:'FWD',RWD:'RWD'};
   const reasons=[];
