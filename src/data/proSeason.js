@@ -94,13 +94,15 @@ export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=
 export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rivalResult) {
   const c=normaliseProCircuitState(raw),e=c.activeTimedEvent;
   if(!e||e.id!==eventId||e.round!==c.calendar.round||
+    !Array.isArray(e.attempts)||!Array.isArray(e.rivalAttempts)||
+    e.attempts.length!==e.rivalAttempts.length||
     !Number.isInteger(runIndex)||runIndex!==e.attempts.length||runIndex>=3)
     return {error:'STALE TIMED ATTEMPT'};
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
     (r.finishSeconds===null||
       (typeof r.finishSeconds==='number'&&!r.disqualified&&
        Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
-    if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
+  if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
   // A disqualification cannot simultaneously count as a valid finish.
   // Store its time as null so downstream results and save resumes agree.
   const clean=r=>({finishSeconds:r.disqualified?null:r.finishSeconds,disqualified:r.disqualified});
