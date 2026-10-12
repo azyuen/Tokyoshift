@@ -169,6 +169,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
   if(c.activeTournament||c.activeCrewEvent||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(c.calendar.round>=PRO_SEASON_LENGTH)return 'BEGIN THE NEXT SEASON';
+  if(getProfessionalRoundEvents(c.calendar.round).crew.format!=='DUEL')return 'CREW FORMAT NOT YET AVAILABLE';
   if(Number(value(source,'cash',0))<CREW_SERIES.entryFee)return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
   if(squadIds.length<3||squadIds.length>5||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
