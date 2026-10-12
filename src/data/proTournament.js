@@ -205,7 +205,7 @@ function settleCompletedEvent(circuit, t) {
       .find(r=>r.id===id);
     const semiRow=t.history.find(h=>h.stage===1)?.heats.flatMap(h=>h.results)
       .find(r=>r.id===id);
-    s.seasonPoints += finalRow ? [32,24,18,14][finalRow.placing-1] :
+    s.seasonPoints += finalRow ? [20,17,15,13][finalRow.placing-1] :
       semiRow ? 8 : 3;
   }
   const place = eventPlacement(t);
