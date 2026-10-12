@@ -54,7 +54,7 @@ export function drawCrewSidebar(s,event,side) {
   const access=getProCircuitAccess(s.registry);
   const crewFormat=getProfessionalRoundEvents(c.calendar.round).crew.format;
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
-  const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
+  const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&!(c.activeChampionship&&!c.activeChampionship.completed)&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
   text(s,side.x+20,side.y+207,short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':(t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label,21);
   const lines=short?[
     'ROUND '+(c.calendar.round+1)+'/8 // '+crewFormat,
