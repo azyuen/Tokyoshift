@@ -200,7 +200,7 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
   // points and the Expert EVO III has almost no hardware handicap to a
   // well-tuned 22B on Standard. Shibuya/Yokohama are the later Canal tests.
   if (normaliseRegion(regionId) === 'TATSUMI') {
-    const steps = [12, 15, 18, 21, 23, 25, 27];
+    const steps = [12, 15, 17, 19, 20, 21, 25];
     const modifier = difficulty === 'EASY' ? -2 : difficulty === 'HARD' ? 2 : 0;
     return Math.max(0, Math.min(era.tuningPointCap, steps[stage] + modifier));
   }
