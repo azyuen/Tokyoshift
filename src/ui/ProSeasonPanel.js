@@ -1,5 +1,5 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-c2';
-import { CREW_SERIES, PRO_SEASON_LENGTH, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261012-champ2c';
+import { CREW_SERIES, PRO_SEASON_LENGTH, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261012-champ2c';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -52,10 +52,12 @@ export function drawCrewSidebar(s,event,side) {
     button(s,side.x+side.w/2,side.y+590,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
   const access=getProCircuitAccess(s.registry);
-  const canEnter=access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
+  const crewFormat=getProfessionalRoundEvents(c.calendar.round).crew.format;
+  const formatSupported=crewFormat==='DUEL';
+  const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
   text(s,side.x+20,side.y+207,short?'CREW CLUB SPRINT':CREW_SERIES.label,21);
   const lines=short?[
-    'PRO COMP // CREW',
+    'ROUND '+(c.calendar.round+1)+'/8 // '+crewFormat,
     '3 HEATS // THREE CREW CARS',
     'REGISTER 3–5 · FIELD THREE',
     'CREW POINTS  2 / 7 / 13 / 20',
@@ -75,7 +77,7 @@ export function drawCrewSidebar(s,event,side) {
   s.addContent(uiText(s,side.x+20,side.y+250,lines.join('\n'),18,{
     color:'#c4bec0',fontStyle:'700',lineSpacing:5,wordWrap:{width:side.w-37}
   }).setDepth(34));
-  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE'):!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
+  const reason=t?(f?'SAVED SQUAD · NO RE-ENTRY FEE':'INVALID SAVED FIXTURE'):!formatSupported?'CREW FORMAT NOT YET AVAILABLE':!canEnter?'FINISH ACTIVE EVENT / CHECK CASH':'SELECT YOUR SQUAD ON ENTRY';
   text(s,side.x+20,side.y+518,reason,13,{color:'#e89da3',wordWrap:{width:side.w-38}});
   button(s,side.x+side.w/2,side.y+590,side.w-36,t?'RESUME CREW SERIES':'ENTER / SELECT SQUAD',()=>t?showCrewFixture(s):showCrewRegistration(s),t?!!f:canEnter);
   return true;
