@@ -69,12 +69,20 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
 
 // Timed driver events are recorded one real run at a time. These transitions
 // are idempotent so an interrupted PWA session cannot double-record a run.
-export function registerProfessionalTimedEvent(raw, carId, entryFee=0) {
+export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=null) {
   const c=normaliseProCircuitState(raw);
+  if(c.calendar.round>=PRO_SEASON_LENGTH)return {error:'SEASON COMPLETE'};
   const rules=getProfessionalRoundEvents(c.calendar.round).driver;
   if(!['TIME_ATTACK','CONSISTENCY'].includes(rules.format)||
-    c.activeTimedEvent||c.activeTournament||c.activeCrewEvent||c.calendar.round>=PRO_SEASON_LENGTH||
-    !cars[carId])return {error:'TIMED EVENT UNAVAILABLE'};
+    c.activeTimedEvent||c.activeTournament||c.activeCrewEvent||
+    c.activeChampionship||!cars[carId])return {error:'TIMED EVENT UNAVAILABLE'};
+  // Registration must validate the actual owned car build, not just the ID.
+  // Null means the caller has not supplied a trustworthy tuning snapshot.
+  if(!carState||typeof carState!=='object'||Array.isArray(carState))
+    return {error:'CAR BUILD REQUIRED FOR SCRUTINEERING'};
+  const eligibility=getProfessionalCarEligibility(carId,carState,rules);
+  if(!eligibility.eligible)return {error:eligibility.reasons.join(' / ')};
+  if(!Number.isSafeInteger(entryFee)||entryFee<0)return {error:'INVALID ENTRY FEE'};
   const id='timed:s'+c.season+':r'+c.calendar.round;
   c.activeTimedEvent={id,format:rules.format,carId,round:c.calendar.round,
     entryFee:Math.max(0,Math.floor(Number(entryFee)||0)),attempts:[],rivalAttempts:[]};
