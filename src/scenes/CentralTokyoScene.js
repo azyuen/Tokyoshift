@@ -3436,6 +3436,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
           'REGISTERED PRIZE  ' + money(activeDuel.prizeCash || 0),
           'REGISTERED CAR  ' + (cars[activeDuel.playerCarId]?.shortName || activeDuel.playerCarId),
         ]
+      : selectedTimed
+      ? [
+          'PRO COMP // ' + (seasonRules.format==='TIME_ATTACK'?'TIME ATTACK':'CONSISTENCY'),
+          '3 DRIVEN ATTEMPTS // RESULTS SAVED',
+          seasonRules.format==='TIME_ATTACK'?'FASTEST VALID RUN WINS':'SMALLEST TIME SPREAD WINS',
+          'ATTEMPT ' + (activeTimedHere?pro.activeTimedEvent.attempts.length+1:1) + '/3',
+          'REGISTERED CAR  ' + (cars[activeTimedHere?pro.activeTimedEvent.carId:build?.carId]?.shortName||'NONE'),
+          'ENTRY  ' + money(event.entryFee),
+          'SEASON POINTS  20 WIN / 8 LOSS',
+        ]
       : selectedFourWide
       ? [
           'TROPHY COMP // FOUR-WIDE',
