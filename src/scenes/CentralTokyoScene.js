@@ -3433,6 +3433,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
           'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
         ];
 
+    if (!resuming && seasonRules) {
+      desc.splice(1, 0, 'ROUND ' + (pro.calendar.round + 1) + '/8 // ' + seasonRules.format.replaceAll('_', ' '));
+      if (seasonRules.stock) desc.push('CAR CLASS  FACTORY STOCK ONLY');
+      if (seasonRules.drivetrain) desc.push('DRIVETRAIN  ' + seasonRules.drivetrain);
+      if (seasonRules.maxPowerKW) desc.push('SEASON LIMIT  ' + seasonRules.maxPowerKW + ' KW');
+      if (seasonRules.noNos) desc.push('SEASON NOS  PROHIBITED');
+    }
+
     this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 250, desc.join('\n'), {
       fontFamily: BODY_FONT, fontSize: '11px', fontStyle: '700',
       color: '#c4bec0', lineSpacing: 5,
