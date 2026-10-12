@@ -3371,7 +3371,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : seasonRules.format === 'KNOCKOUT');
     const seasonDrivetrainOk = !seasonRules?.drivetrain ||
       proDriveClass(getCarMagazineMeta(build?.carId)?.drivetrain) === proDriveClass(seasonRules.drivetrain);
-    const passesPower = selectedFourWide || Boolean(build) && power <= event.maxPowerKW;
+    const passesPower = selectedFourWide || Boolean(build) && (!Number.isFinite(event.maxPowerKW) || power <= event.maxPowerKW);
     const passesNos = selectedFourWide || Boolean(build) && (!event.noNos || !build.nosInstalled);
     const owned = this.registry.get('ownedCarIds') || [];
     const activeCupHere = selectedFourWide && activeCup?.eventId === FOUR_WIDE_CUP.id &&
