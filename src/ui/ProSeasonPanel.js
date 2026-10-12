@@ -148,8 +148,8 @@ export function showCrewFixture(s,selection=null) {
     } else {
       const wins=prepared.heats.filter(h=>h.won).length;
       const technical=t.format==='TECHNICAL';
-      const playerFinishedTech=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
-      const opponentFinishedTech=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
+      const playerFinishedTech=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&Number.isFinite(h.ownSeconds)&&h.ownSeconds>0);
+      const opponentFinishedTech=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&Number.isFinite(h.opponentSeconds)&&h.opponentSeconds>0);
       const ownSpread=playerFinishedTech?Math.max(...prepared.heats.map(h=>h.ownSeconds))-Math.min(...prepared.heats.map(h=>h.ownSeconds)):null;
       const opponentSpread=opponentFinishedTech?Math.max(...prepared.heats.map(h=>h.opponentSeconds))-Math.min(...prepared.heats.map(h=>h.opponentSeconds)):null;
       const technicalWon=playerFinishedTech&&(!opponentFinishedTech||ownSpread<=opponentSpread);
