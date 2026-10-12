@@ -464,18 +464,21 @@ export function settlePlayerCrewHeat(raw,heatId,results) {
   const c=normaliseProCircuitState(raw),h=getPlayerCrewHeat(c);
   if(!h||h.id!==heatId)return {circuit:c,status:'STALE_HEAT',cashPrize:0};
   const own=results?.find(r=>r.id==='player'),other=results?.find(r=>r.id==='ai-1');
-  const valid=r=>r&&typeof r.disqualified==='boolean'&&(r.finishSeconds===null||
-    (typeof r.finishSeconds==='number'&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+  const valid=r=>r&&typeof r.disqualified==='boolean'&&
+    (r.disqualified?r.finishSeconds===null:
+      typeof r.finishSeconds==='number'&&Number.isFinite(r.finishSeconds)&&
+      r.finishSeconds>0&&r.finishSeconds<120);
   if(!valid(own)||!valid(other))return {circuit:c,status:'ERROR',cashPrize:0};
   const finished=r=>!r.disqualified&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0;
-  const won=finished(own)&&(!finished(other)||own.finishSeconds<=other.finishSeconds);
+  const won=finished(own)&&(!finished(other)||own.finishSeconds<other.finishSeconds-0.000001);
+  const tied=finished(own)&&finished(other)&&Math.abs(own.finishSeconds-other.finishSeconds)<=0.000001;
   c.activeCrewEvent=clone(c.activeCrewEvent);
   const fixture=c.activeCrewEvent.fixture;
-  fixture.heats[h.index]={...fixture.heats[h.index],pending:false,won,
+  fixture.heats[h.index]={...fixture.heats[h.index],pending:false,won,tied,
     ownSeconds:own.finishSeconds||0,opponentSeconds:other.finishSeconds||0,
     ownStatus:own.disqualified?'DQ':finished(own)?'FINISHED':'DNF',
     opponentStatus:other.disqualified?'DQ':finished(other)?'FINISHED':'DNF'};
   fixture.revealed++;
-  return {circuit:c,status:'CREW_HEAT',won,heatNumber:h.index+1,
+  return {circuit:c,status:'CREW_HEAT',won,tied,heatNumber:h.index+1,
     wins:fixture.heats.slice(0,fixture.revealed).filter(r=>r.won).length,cashPrize:0};
 }
