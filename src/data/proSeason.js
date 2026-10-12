@@ -87,7 +87,7 @@ export function registerProfessionalTimedEvent(raw, carId, entryFee=0, carState=
   if(!Number.isSafeInteger(entryFee)||entryFee<0)return {error:'INVALID ENTRY FEE'};
   const id='timed:s'+c.season+':r'+c.calendar.round;
   c.activeTimedEvent={id,format:rules.format,carId,round:c.calendar.round,
-    entryFee:Math.max(0,Math.floor(Number(entryFee)||0)),attempts:[],rivalAttempts:[]};
+    entryFee,carState:JSON.parse(JSON.stringify(carState)),attempts:[],rivalAttempts:[]};
   return {circuit:c,event:c.activeTimedEvent};
 }
 export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rivalResult) {
