@@ -74,3 +74,37 @@ test('Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed 
   assert.ok(fd.car.powerKW > s2000.car.powerKW, 'fully tuned FD should have more outright power');
   assert.ok(fd.index.rolling > s2000.index.rolling, 'fully tuned FD must be a viable rolling-race choice');
 });
+
+
+test('Tatsumi Standard develops gradually and Canal-maxed 22B can beat both Expert EVOs', () => {
+  const rounds = roundBuild('TATSUMI');
+  assert.deepEqual(rounds.map(round => round.tuningPointCap), [12, 15, 17, 19, 20, 21, 25]);
+  assert.ok(rounds.every(round =>
+    round.workshopEra === 'CANAL' &&
+    round.maxTuningLevel === 2 &&
+    round.opponentBuildState.specialistTuning.length === 0
+  ), 'Tatsumi rivals must stay within Canal Yard hardware');
+
+  const sixth = rounds[5];
+  const seventh = rounds[6];
+  assert.equal(sixth.carId, 'evo3');
+  assert.equal(seventh.carId, 'evo3');
+  assert.equal(sixth.encounterRating, 4);
+  assert.equal(seventh.encounterRating, 4);
+
+  const fullCanal22B = {
+    tuning: { engine: 2, intake: 2, ecu: 2, turbo: 2, intercooler: 2 },
+    drivetrainTuning: { clutch: 2, gearbox: 2, differential: 2, suspension: 2 },
+    chassisTuning: { tyres: 2, weightReduction: 2 },
+    exhaustNosTuning: { headers: 2, exhaust: 2, muffler: 2, nosKit: 2, nitrousShot: 2 },
+  };
+  const player = getVehiclePerformance('wrx22b', fullCanal22B);
+  const standingEvo = getVehiclePerformance('evo3', sixth.opponentBuildState);
+  const rollingEvo = getVehiclePerformance('evo3', seventh.opponentBuildState);
+  // Drivers still matter: this is a physical performance margin, not a
+  // guaranteed win. Expert AI retains its optimal launch/shift behaviour.
+  assert.ok(player.index.standing > standingEvo.index.standing * 1.10,
+    'round 6 half-mile Expert EVO leaves too little margin for manual driving');
+  assert.ok(player.index.rolling > rollingEvo.index.rolling * 1.10,
+    'round 7 half-mile Expert EVO leaves too little margin for manual driving');
+});
