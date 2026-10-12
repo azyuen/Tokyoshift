@@ -367,7 +367,7 @@ export function settlePlayerCrewHeat(raw,heatId,results) {
   if(!h||h.id!==heatId)return {circuit:c,status:'STALE_HEAT',cashPrize:0};
   const own=results?.find(r=>r.id==='player'),other=results?.find(r=>r.id==='ai-1');
   const valid=r=>r&&typeof r.disqualified==='boolean'&&(r.finishSeconds===null||
-    (Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+    (typeof r.finishSeconds==='number'&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
   if(!valid(own)||!valid(other))return {circuit:c,status:'ERROR',cashPrize:0};
   const finished=r=>!r.disqualified&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0;
   const won=finished(own)&&(!finished(other)||own.finishSeconds<=other.finishSeconds);
