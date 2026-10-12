@@ -42,6 +42,31 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
 }
 
 
+// Official timing rules shared by future driver Time Attack and Consistency
+// events. All attempts must be recorded by the live race scene; no simulated
+// player times or free wins are generated here.
+export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
+  const mode=String(format||'').toUpperCase();
+  if(!['TIME_ATTACK','CONSISTENCY'].includes(mode))return {valid:false,reason:'UNSUPPORTED FORMAT'};
+  const parse=r=>Array.isArray(r)&&r.length===3?r.map(a=>{
+    const time=typeof a==='number'?a:a?.finishSeconds;
+    const disqualified=typeof a==='object'&&a!==null&&Boolean(a.disqualified);
+    return !disqualified&&typeof time==='number'&&Number.isFinite(time)&&time>0&&time<120?time:null;
+  }):null;
+  const own=parse(attempts),rival=parse(rivalAttempts);
+  if(!own||!rival)return {valid:false,reason:'THREE RECORDED RUNS REQUIRED'};
+  const score=times=>{
+    const finished=times.filter(t=>t!==null);
+    if(mode==='TIME_ATTACK')return finished.length?Math.min(...finished):null;
+    return finished.length===3?Math.max(...finished)-Math.min(...finished):null;
+  };
+  const playerScore=score(own),rivalScore=score(rival);
+  const won=playerScore!==null&&(rivalScore===null||playerScore<=rivalScore);
+  return {valid:true,format:mode,playerScore,rivalScore,won,
+    completedRuns:own.filter(t=>t!==null).length,
+    rivalCompletedRuns:rival.filter(t=>t!==null).length};
+}
+
 export function getProQualification(raw) {
   const c=normaliseProCircuitState(raw);
   const driver=c.playerDriver.seasonPoints,crew=c.playerTeam.seasonPoints;
