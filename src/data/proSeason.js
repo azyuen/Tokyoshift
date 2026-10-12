@@ -169,7 +169,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
   if(c.activeTournament||c.activeCrewEvent||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(c.calendar.round>=PRO_SEASON_LENGTH)return 'BEGIN THE NEXT SEASON';
-  if(!['DUEL','RELAY'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))return 'CREW FORMAT NOT YET AVAILABLE';
+  if(!['DUEL','RELAY','TECHNICAL'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))return 'CREW FORMAT NOT YET AVAILABLE';
   if(Number(value(source,'cash',0))<CREW_SERIES.entryFee)return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
   if(squadIds.length<3||squadIds.length>5||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
@@ -267,7 +267,15 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const ownTotal=f.prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
   const opponentTotal=f.prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
   const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
-  const wins=relay?(relayWon?3:0):heatWins;
+  const technical=t.format==='TECHNICAL';
+  // Technical rewards repeatability: smallest spread between fastest and
+  // slowest completed leg wins. All three legs must finish cleanly.
+  const spread=key=>Math.max(...f.prepared.heats.map(h=>h[key]))-
+    Math.min(...f.prepared.heats.map(h=>h[key]));
+  const ownSpread=playerFinished?spread('ownSeconds'):null;
+  const opponentSpread=opponentFinished?spread('opponentSeconds'):null;
+  const technicalWon=playerFinished&&(!opponentFinished||ownSpread<=opponentSpread);
+  const wins=technical?(technicalWon?3:0):relay?(relayWon?3:0):heatWins;
   const fixtures=t.schedule[t.round].map((pair,i)=>pair.includes(PLAYER)?{ids:pair,score:pair.map(id=>id===PLAYER?wins:3-wins)}:simulateTeamPair(t,pair,t.id+':'+t.round+':'+i));
   t.history.push({round:t.round,fixtures,playerHeats:clone(f.prepared.heats)});t.round++;t.fixture=null;
   if(t.short) {
@@ -285,9 +293,9 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     if(wins===3)c.crewSeriesWins++;
     c.activeCrewEvent=null;c.eventTick++;
     c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
-    const summary={id:t.id,label:relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
+    const summary={id:t.id,label:technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
-      ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,ownTotal,opponentTotal};
+      ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,ownTotal,opponentTotal,ownSpread,opponentSpread};
     c.lastTournament=summary;c.lastCrewEvent=t;
     return {circuit:completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),status:'COMPLETE',cashPrize,wins,summary};
   }
