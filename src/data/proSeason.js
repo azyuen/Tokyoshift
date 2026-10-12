@@ -89,7 +89,9 @@ export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rival
     (r.finishSeconds===null||(typeof r.finishSeconds==='number'&&
     Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
   if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
-  const clean=r=>({finishSeconds:r.finishSeconds,disqualified:r.disqualified});
+  // A disqualification cannot simultaneously count as a valid finish.
+  // Store its time as null so downstream results and save resumes agree.
+  const clean=r=>({finishSeconds:r.disqualified?null:r.finishSeconds,disqualified:r.disqualified});
   c.activeTimedEvent={...e,attempts:[...e.attempts,clean(result)],
     rivalAttempts:[...e.rivalAttempts,clean(rivalResult)]};
   return {circuit:c,event:c.activeTimedEvent,complete:c.activeTimedEvent.attempts.length===3};
