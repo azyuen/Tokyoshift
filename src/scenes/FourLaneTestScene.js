@@ -307,7 +307,7 @@ export default class FourLaneTestScene extends RaceScene {
     document.body.dataset.scene = 'race';
     this.scale.resize(WIDTH, HEIGHT);
     playRaceMusic();
-    this.playerState = this.proCrew ? this.crewHeat.playerState || {} : (this.registry.get('carStates') || {})[this.playerCarId] || {};
+    this.playerState = this.proCrew ? this.crewHeat.playerState || {} : this.proTimed && this.timedEvent.carState ? this.timedEvent.carState : (this.registry.get('carStates') || {})[this.playerCarId] || {};
     const difficulty = normalisePlayerDifficulty(this.registry.get('playerDifficulty'));
     const playerBuild = getBuiltCar(this.playerCarId, this.playerState);
     if (!playerBuild) {
@@ -334,6 +334,7 @@ export default class FourLaneTestScene extends RaceScene {
             Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
       const state = rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
         seed: this.proCup ? this.proHeat.id + ':' + entrant.id
+          : this.proTimed ? 'pro-timed:' + this.timedEvent.id + ':' + id
           : this.proDuel ? 'pro-duel:' + this.proDuelInfo.roundIndex + ':' + id
           : 'four-lane-dev:' + id + ':' + index,
         raceType: 'Standing Start',
