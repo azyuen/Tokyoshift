@@ -1580,7 +1580,7 @@ export default class FourLaneTestScene extends RaceScene {
         let next;
         if(this.champMode==='CHAMP_KO')next=settleChampionshipKnockout(c.activeChampionship,own?.placing===1);
         else if(this.champMode==='CHAMP_CREW')next=settleChampionshipCrewHeat(c.activeChampionship,{carId:this.playerCarId,won:own?.placing===1,opponentId:this.champHeat.opponent.id});
-        else next=settleChampionshipFourWideHeat(c.activeChampionship,this.champHeat.id,this.runners.map(r=>({id:r.id,finishSeconds:r.finishSeconds,disqualified:r.disqualified})));
+        else next=settleChampionshipFourWideHeat(c.activeChampionship,this.champHeat.id,this.runners.map(r=>({id:r.id,finishSeconds:r.disqualified?null:r.finishSeconds,disqualified:Boolean(r.disqualified)})));
         const changes={...c,activeChampionship:next};
         if(next.completed&&!c.activeChampionship.completed){
           changes.championshipHistory=[...(c.championshipHistory||[]),{id:next.id,season:next.season,championId:next.championId,points:next.points}].slice(-20);
