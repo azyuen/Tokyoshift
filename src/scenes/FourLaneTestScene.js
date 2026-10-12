@@ -1595,8 +1595,8 @@ export default class FourLaneTestScene extends RaceScene {
         const rivalRun=this.runners.find(r=>r.ai);
         if(!ownRun||!rivalRun)throw Error('MISSING TIMED RACE RUNNER');
         const saved=recordProfessionalTimedAttempt(this.registry.get('proCircuit'),e.id,e.attempts.length,
-          {finishSeconds:ownRun?.finishSeconds??null,disqualified:Boolean(ownRun?.disqualified)},
-          {finishSeconds:rivalRun?.finishSeconds??null,disqualified:Boolean(rivalRun?.disqualified)});
+          {finishSeconds:ownRun.disqualified?null:ownRun.finishSeconds??null,disqualified:Boolean(ownRun.disqualified)},
+          {finishSeconds:rivalRun.disqualified?null:rivalRun.finishSeconds??null,disqualified:Boolean(rivalRun.disqualified)});
         if(saved.error)throw Error(saved.error);
         const final=saved.complete?completeProfessionalTimedEvent(saved.circuit):null;
         if(final?.error)throw Error(final.error);
