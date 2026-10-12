@@ -61,7 +61,9 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
     return finished.length===3?Math.max(...finished)-Math.min(...finished):null;
   };
   const playerScore=score(own),rivalScore=score(rival);
-  const won=playerScore!==null&&(rivalScore===null||playerScore<=rivalScore);
+  // A tie is not a win; compare raw seconds with a small tolerance to avoid
+  // floating-point noise awarding an artificial victory.
+  const won=playerScore!==null&&(rivalScore===null||playerScore<rivalScore-0.000001);
   return {valid:true,format:mode,playerScore,rivalScore,won,
     completedRuns:own.filter(t=>t!==null).length,
     rivalCompletedRuns:rival.filter(t=>t!==null).length};
@@ -94,8 +96,9 @@ export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rival
     !Number.isInteger(runIndex)||runIndex!==e.attempts.length||runIndex>=3)
     return {error:'STALE TIMED ATTEMPT'};
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
-    (r.finishSeconds===null||(typeof r.finishSeconds==='number'&&
-    Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+    (r.disqualified?r.finishSeconds===null:
+      (typeof r.finishSeconds==='number'&&
+    Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120)));
   if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
   // A disqualification cannot simultaneously count as a valid finish.
   // Store its time as null so downstream results and save resumes agree.
