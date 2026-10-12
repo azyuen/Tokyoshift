@@ -78,12 +78,24 @@ test('Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed 
 
 test('Tatsumi Standard develops gradually and Canal-maxed 22B can beat both Expert EVOs', () => {
   const rounds = roundBuild('TATSUMI');
-  assert.deepEqual(rounds.map(round => round.tuningPointCap), [12, 15, 17, 19, 20, 21, 25]);
+  assert.deepEqual(rounds.map(round => round.tuningPointCap), [20, 21, 22, 19, 20, 21, 25]);
   assert.ok(rounds.every(round =>
     round.workshopEra === 'CANAL' &&
     round.maxTuningLevel === 2 &&
     round.opponentBuildState.specialistTuning.length === 0
   ), 'Tatsumi rivals must stay within Canal Yard hardware');
+
+  // Weaker opening cars get enough upgrades to stay in the championship;
+  // lower points on stronger later cars reflect actual vehicle performance.
+  const first = getVehiclePerformance(rounds[0].carId, rounds[0].opponentBuildState, { raceType: rounds[0].raceType });
+  const second = getVehiclePerformance(rounds[1].carId, rounds[1].opponentBuildState, { raceType: rounds[1].raceType });
+  const third = getVehiclePerformance(rounds[2].carId, rounds[2].opponentBuildState, { raceType: rounds[2].raceType });
+  const fourth = getVehiclePerformance(rounds[3].carId, rounds[3].opponentBuildState, { raceType: rounds[3].raceType });
+  assert.ok(first.index.selected > 85, 'Tatsumi A60 opening race should not be excessively detuned');
+  assert.ok(second.index.selected > 150, 'Tatsumi EK9 should have meaningful Lv2 capability');
+  assert.ok(third.index.selected > 150, 'Tatsumi FC3S should have meaningful Lv2 capability');
+  assert.ok(third.index.selected < fourth.index.selected * 1.05,
+    'Tatsumi round 3 must not massively outperform round 4');
 
   const sixth = rounds[5];
   const seventh = rounds[6];
