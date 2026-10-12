@@ -1640,9 +1640,35 @@ export default class FourLaneTestScene extends RaceScene {
         }
       }
     }
+    if(this.proTimed) {
+      this.showTimedRaceResult(outcome);
+      return;
+    }
     // Only registered professional races can reach results. The retired
     // standalone test's opaque popup and Retry button no longer exist.
     this.showProfessionalMangaResult(standings, outcome);
+  }
+
+  showTimedRaceResult(outcome) {
+    const ok=outcome?.status==='ADVANCED'||outcome?.status==='COMPLETE';
+    const complete=outcome?.status==='COMPLETE';
+    const next=complete?'RETURN TO DRAG COMPLEX':'NEXT TIMED ATTEMPT';
+    this.add.rectangle(780,360,1560,720,0x0b0a0d,.93).setDepth(300).setScrollFactor(0);
+    this.add.text(780,185,ok?(complete?'TIMED EVENT COMPLETE':'ATTEMPT SAVED'):'RESULT NOT SAVED',
+      {fontFamily:'Rajdhani',fontSize:'44px',color:'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,330,complete?
+      (outcome.summary.won?'EVENT VICTORY':'EVENT COMPLETE')+'  ·  +'+outcome.summary.points+' SEASON POINTS':
+      ok?'ATTEMPT '+(this.timedEvent.attempts.length+1)+'/3':'RETURN TO COMPLEX AND RETRY',
+      {fontFamily:'Rajdhani',fontSize:'29px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    this.add.text(780,480,'TAP TO '+(ok?next:'RETURN TO COMPLEX'),
+      {fontFamily:'Rajdhani',fontSize:'25px',color:'#ffffff'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
+    let armed=false;
+    this.time.delayedCall(350,()=>{armed=true;});
+    this.add.rectangle(780,360,1560,720,0xffffff,.001).setDepth(302).setScrollFactor(0).setInteractive().on('pointerdown',()=>{
+      if(!armed)return;
+      if(ok&&!complete)this.scene.restart({mode:'PRO_TIMED'});
+      else this.returnToDrag();
+    });
   }
 
   showChampionshipRaceResult(standings,outcome){
