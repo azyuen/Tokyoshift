@@ -230,7 +230,7 @@ export default class FourLaneTestScene extends RaceScene {
       const rivals=this.registry.get('proCircuit')?.activeCrewEvent?.entrants
         ?.filter(e=>e.id!=='player:team')||[];
       const opponent=this.crewHeat.opponent;
-      const extras=rivals.filter(e=>e.id!==this.registry.get('proCircuit')?.activeCrewEvent?.fixture?.opponentId);
+      const extras=rivals.filter(e=>e.name!==this.crewHeat.opponentName);
       this.aiCarIds=[opponent.carId,...extras.slice(0,2).map((e,i)=>e.drivers[this.crewHeat.index]?.carId||'ae86')];
       this.aiEntrants=[{id:'ai-1',name:this.crewHeat.opponentName,rating:1400},
         {id:'ai-2',name:extras[0]?.name||'RIVAL 2',rating:extras[0]?.rating||1400},
@@ -1411,7 +1411,8 @@ export default class FourLaneTestScene extends RaceScene {
     const failure = outcome?.status === 'ERROR' || outcome?.status === 'STALE_HEAT' ||
       outcome?.status === 'NO_EVENT';
     const titleText = failure ? 'RACE COMPLETE'
-      : this.proCrew ? outcome?.won ? 'HEAT WIN' : 'HEAT LOSS'
+      : this.crewFourWide ? 'PLACE '+(outcome?.place||4)
+      : this.proCrew ? outcome?.tied?'HEAT DRAW':outcome?.won ? 'HEAT WIN' : 'HEAT LOSS'
       : champion ? 'CHAMPION'
       : advanced ? 'QUALIFIED'
       : finalist ? ['CHAMPION', 'RUNNER-UP', 'PODIUM', 'FOURTH PLACE'][
@@ -1493,7 +1494,7 @@ export default class FourLaneTestScene extends RaceScene {
       : 'FOUR-WIDE OPEN';
     label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
-      'HEAT '+outcome.heatNumber+'/3 SAVED // '+outcome.wins+' TEAM WINS // '+(outcome.heatNumber<3?'NEXT CREW CAR':'CONFIRM FIXTURE AT COMPLEX')) : advanced
+      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'NEXT CREW CAR':'CONFIRM FIXTURE AT COMPLEX')) : advanced
       ? 'STAGE ' + stageNumber + '/3 COMPLETE  //  NEXT: ' + nextStage
       : 'STAGE ' + stageNumber + '/3 COMPLETE  //  ' +
         (failure ? 'RESULT NOT SAVED' : 'EVENT FINISHED'), 10, '#e0a0a4');
