@@ -208,13 +208,11 @@ export function showSeasonRecords(s,complete=false) {
     if(!c.activeChampionship){const result=createProvisionalChampionship(c);if(result.error){o.label(90,690,result.error,18);return;}const next={...c,activeChampionship:result.championship};if(!commit(s,{proCircuit:next}))return;}
     o.close();showTokyoChampionship(s);
   });
-  if(complete)o.btn(1100,758,570,'BEGIN SEASON '+(c.season+1),()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
+  if(complete&&q.qualified&&!c.activeChampionship?.completed)o.label(760,748,'COMPLETE TOKYO CHAMPIONSHIP BEFORE NEXT SEASON',16);
+  if(complete&&(!q.qualified||c.activeChampionship?.completed))o.btn(1100,758,570,'BEGIN SEASON '+(c.season+1),()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
 }
 
-/** Provisional championship lobby. Entry is available to all qualified players.
- * Race launch is intentionally disabled until each stage is wired to the
- * live racing scene, so a save cannot enter an unfinishable championship heat.
- */
+/** Championship lobby: each stage launches the live race scene and saves after every heat. */
 export function showTokyoChampionship(s) {
   const c=circuit(s),state=c.activeChampionship;
   if(!state){showSeasonRecords(s,c.calendar.round>=8);return;}
@@ -239,8 +237,8 @@ export function showTokyoChampionship(s) {
     const units=state.stage==='CREW'?getCrewSeriesUnits(s.registry).filter(u=>u.validAssignment&&!heat.usedCarIds.includes(u.carId)):[];
     const carId=state.stage==='CREW'?units[0]?.carId:s.registry.get('selectedCarId');
     if(state.stage==='CREW'){
-      o.label(790,558,'SELECT A DISTINCT CREW CAR',18);
-      units.slice(0,5).forEach((u,i)=>o.btn(970,605+i*32,340,u.name+' / '+(cars[u.carId]?.shortName||u.carId),()=>{
+      o.label(790,515,'SELECT A DISTINCT CREW CAR',18);
+      units.slice(0,5).forEach((u,i)=>o.btn(970,558+i*43,340,u.name+' / '+(cars[u.carId]?.shortName||u.carId),()=>{
         o.close();startChampionshipRace(s,mode,u.carId);
       }));
       if(!units.length)o.label(790,650,'NO ELIGIBLE CREW CARS AVAILABLE',18);
