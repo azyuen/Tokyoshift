@@ -1,3 +1,4 @@
+import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261012-season2a';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
