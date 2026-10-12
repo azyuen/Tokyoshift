@@ -146,6 +146,10 @@ export default class FourLaneTestScene extends RaceScene {
     this.proCrew = data.mode === 'PRO_CREW';
     this.proTimed = data.mode === 'PRO_TIMED';
     this.timedEvent = this.proTimed ? this.registry.get('proCircuit')?.activeTimedEvent : null;
+    if(this.proTimed&&(!this.timedEvent||!Array.isArray(this.timedEvent.attempts)||this.timedEvent.attempts.length>=3)) {
+      this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
+      return;
+    }
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
@@ -1578,7 +1582,8 @@ export default class FourLaneTestScene extends RaceScene {
       try {
         const e=this.timedEvent;
         const ownRun=this.runners.find(r=>r.id==='player');
-        const rivalRun=this.runners.find(r=>r.id==='ai-1');
+        const rivalRun=this.runners.find(r=>r.ai);
+        if(!ownRun||!rivalRun)throw Error('MISSING TIMED RACE RUNNER');
         const saved=recordProfessionalTimedAttempt(this.registry.get('proCircuit'),e.id,e.attempts.length,
           {finishSeconds:ownRun?.finishSeconds??null,disqualified:Boolean(ownRun?.disqualified)},
           {finishSeconds:rivalRun?.finishSeconds??null,disqualified:Boolean(rivalRun?.disqualified)});
