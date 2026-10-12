@@ -56,6 +56,11 @@ for(const [name,plan] of Object.entries(plans)) {
     const qualified=getProQualification(state).qualified;
     assert.equal(qualified,state.playerDriver.seasonPoints>=60&&state.playerTeam.seasonPoints>=40);
     assert.equal(qualified,!['allDriver','allCrew'].includes(name));
+    // A qualified season must finish its championship before rollover.
+    if(qualified){
+      assert.ok(nextProfessionalSeason(state).error,'qualified season cannot skip championship');
+      state.activeChampionship={id:'tokyo:s1',season:1,completed:true};
+    }
     const next=nextProfessionalSeason(state);
     assert.ok(next.circuit,'season rollover should succeed');
     assert.equal(next.circuit.season,2);
