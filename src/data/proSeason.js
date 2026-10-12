@@ -262,8 +262,8 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const relay=t.format==='RELAY';
   // Relay uses the combined elapsed time of all three player-driven legs.
   // DNF/DQ loses the relay; individual heat wins do not decide its result.
-  const playerFinished=f.prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
-  const opponentFinished=f.prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
+  const playerFinished=f.prepared.heats.every(h=>h.ownStatus==='FINISHED'&&Number.isFinite(h.ownSeconds)&&h.ownSeconds>0);
+  const opponentFinished=f.prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&Number.isFinite(h.opponentSeconds)&&h.opponentSeconds>0);
   const ownTotal=f.prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
   const opponentTotal=f.prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
   const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
