@@ -1,5 +1,5 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-c3';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat } from '../data/proSeason.js?v=20261011-r485';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261011-r485';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
@@ -144,14 +144,23 @@ export default class FourLaneTestScene extends RaceScene {
     this.champHeat = this.champMode === 'CHAMP_KO' ? getChampionshipKnockoutHeat(this.champState) : this.champMode === 'CHAMP_CREW' ? getChampionshipCrewHeat(this.champState) : this.champMode === 'CHAMP_FOUR' ? getChampionshipFourWideHeat(this.champState) : null;
     this.proCup = data.mode === 'PRO_CUP';
     this.proCrew = data.mode === 'PRO_CREW';
+    this.proTimed = data.mode === 'PRO_TIMED';
+    this.timedEvent = this.proTimed ? this.registry.get('proCircuit')?.activeTimedEvent : null;
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
-    this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew;
+    this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
     if(this.proCrew) {
       const h=this.crewHeat;
       this.proDuelState=h?{active:true,proEvent:true,eventId:'crewOpen',playerCarId:h.carId,roundIndex:h.index,
         rounds:[0,1,2].map(()=>({carId:h.opponent.carId,opponentBuildState:h.opponent.state,
           encounterRating:Math.max(2,Math.min(5,Math.round(2+(h.opponent.skill-.72)*15)))}))}:null;
+    }
+    if(this.proTimed) {
+      const e=this.timedEvent;
+      const candidates=['r34','evo6','rx7fd','s2000','r32','jza80'].filter(id=>cars[id]&&id!==e?.carId);
+      const rival=candidates[0]||'ae86';
+      this.proDuelState=e?{active:true,proEvent:true,eventId:'timed',playerCarId:e.carId,
+        roundIndex:e.attempts.length,rounds:[0,1,2].map(()=>({carId:rival,encounterRating:3}))}:null;
     }
     this.proDuelInfo = this.proDuel ? getProfessionalDuelRound(this.proDuelState) : null;
     const circuit = this.registry.get('proCircuit') || {};
@@ -1565,7 +1574,21 @@ export default class FourLaneTestScene extends RaceScene {
       this.showChampionshipRaceResult(standings,outcome);
       return;
     }
-    if (this.proCrew) {
+    if (this.proTimed) {
+      try {
+        const e=this.timedEvent;
+        const ownRun=this.runners.find(r=>r.id==='player');
+        const rivalRun=this.runners.find(r=>r.id==='ai-1');
+        const saved=recordProfessionalTimedAttempt(this.registry.get('proCircuit'),e.id,e.attempts.length,
+          {finishSeconds:ownRun?.finishSeconds??null,disqualified:Boolean(ownRun?.disqualified)},
+          {finishSeconds:rivalRun?.finishSeconds??null,disqualified:Boolean(rivalRun?.disqualified)});
+        if(saved.error)throw Error(saved.error);
+        const final=saved.complete?completeProfessionalTimedEvent(saved.circuit):null;
+        if(final?.error)throw Error(final.error);
+        saveProTransaction(this.registry,{proCircuit:final?.circuit||saved.circuit});
+        outcome={status:final?'COMPLETE':'ADVANCED',summary:final?.summary};
+      }catch(error){console.error('[Tokyo SHIFT] Timed run save failed',error);outcome={status:'ERROR'};}
+    } else if (this.proCrew) {
       try {
         outcome=settlePlayerCrewHeat(this.registry.get('proCircuit'),this.crewHeat.id,
           this.runners.map(r=>({id:r.id,finishSeconds:r.finishSeconds,disqualified:r.disqualified})));
