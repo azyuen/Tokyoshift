@@ -75,7 +75,7 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
   // A single decision per professional: driver OR crew, never both.
   const entries={DRIVER:[],TEAM:[]};
   for(const item of competitors.sort((a,b)=>a.id.localeCompare(b.id))) {
-    if(occupied.has(item.id))continue;
+    if(occupied.has(item.id)||occupied.has(item.teamId))continue;
     const teamId=item.teamId;
     const team=c.teams[teamId];
     const driverGap=60-item.record.seasonPoints;
