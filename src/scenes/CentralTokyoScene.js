@@ -38,7 +38,7 @@ import {
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
-  getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState,
+  getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
 } from '../data/proCircuit.js?v=20261008-r443';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
@@ -129,6 +129,9 @@ function clamp01(value) {
   return Math.max(0, Math.min(0.99, Number(value) || 0));
 }
 
+function proCircuitTrophyWins(registry, id) {
+  return normaliseProCircuitState(registry.get('proCircuit')).trophyWins[id] || 0;
+}
 function proCircuitSpecialEligible(registry) {
   const pro = normaliseProCircuitState(registry.get('proCircuit'));
   return Boolean(pro.activeChampionship) || (pro.playerDriver.seasonPoints >= 60 && pro.playerTeam.seasonPoints >= 40);
@@ -3104,7 +3107,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Fixed positions: driver, crew, special/championship. Existing saved
     // registrations remain resumable even when the calendar has advanced.
     const choices = [driver, { ...CREW_SERIES, requiredWins: 0 },
-      { id: 'specialSlot', label: 'TROPHIES // COMING SOON', specialSlot: true, entryFee: 0, requiredWins: 0 }];
+      { id: 'specialSlot', label: proCircuitSpecialEligible(this.registry) ? 'TOKYO CHAMPIONSHIP' : 'MINOR TROPHIES', specialSlot: true, entryFee: 0, requiredWins: 0 }];
     if (legacy?.active && legacy.proEvent) {
       choices[0] = { ...(driverPool.find(e => e.id === legacy.eventId) || primary), entryFee: legacy.entryFee || 0 };
     }
@@ -3331,7 +3334,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
     if (event.specialSlot) {
       this.addContent(this.add.text(SIDE.x + 22, SIDE.y + 250,
-        'MINOR TROPHIES WILL APPEAR HERE.\\nTHE TOKYO CHAMPIONSHIP TAKES PRIORITY\\nWHEN QUALIFICATION IS COMPLETE.',
+        'MINOR TROPHIES // COLLECTION\\n' + PRO_CIRCUIT_TROPHIES.map(t => t.label + '  ' + (proCircuitTrophyWins(this.registry, t.id) || '—')).join('\\n') + '\\n\\nTROPHY RACES ARE NOT YET AVAILABLE.',
         { fontFamily: BODY_FONT, fontSize: '17px', color: '#e8d7b7', wordWrap: { width: SIDE.w - 44 } }).setDepth(34));
       return;
     }
