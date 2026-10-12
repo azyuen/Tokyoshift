@@ -1,0 +1,33 @@
+name: Mobile viewport regression
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/data/tokyoChampionship.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'tests/mobile-regression.mjs'
+      - '.github/workflows/mobile-regression.yml'
+jobs:
+  iphone-ipad-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Start local web server
+        run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/tokyoshift-http.log 2>&1 &
+      - name: Check iPhone and iPad boot and reload
+        run: node tests/mobile-regression.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-viewport-screenshots
+          path: artifacts/mobile/
+          if-no-files-found: ignore
