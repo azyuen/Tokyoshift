@@ -72,15 +72,20 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
   const occupied=new Set(occupiedIds);
   // Player-opponent IDs can be supplied as driver IDs or team IDs.
   // The mapped counterpart must not earn a second simulated result.
-  const allDrivers=Object.keys(c.drivers).sort();
-  const allTeams=Object.keys(c.teams).sort();
-  allDrivers.forEach((id,index)=>{
-    const teamId=allTeams[index];
+  // Pair the original 23 AI drivers with the original 23 teams.
+  // Unknown roster entries from older/future saves are appended, never
+  // allowed to shift the established driver-to-team correspondence.
+  const baseline=normaliseProCircuitState(null);
+  const canonicalDrivers=Object.keys(baseline.drivers).sort();
+  const canonicalTeams=Object.keys(baseline.teams).sort();
+  const extraDrivers=Object.keys(c.drivers).filter(id=>!baseline.drivers[id]).sort();
+  const extraTeams=Object.keys(c.teams).filter(id=>!baseline.teams[id]).sort();
+  const driverIds=[...canonicalDrivers,...extraDrivers].filter(id=>c.drivers[id]);
+  const teamIds=[...canonicalTeams,...extraTeams].filter(id=>c.teams[id]);
+  const competitors=driverIds.map((id,index)=>({id,record:c.drivers[id],teamId:teamIds[index]||null}));
+  competitors.forEach(({id,teamId})=>{
     if(teamId&&(occupied.has(id)||occupied.has(teamId))){occupied.add(id);occupied.add(teamId);}
   });
-  const drivers=Object.entries(c.drivers).sort(([a],[b])=>a.localeCompare(b));
-  const teams=Object.keys(c.teams).sort();
-  const competitors=drivers.map(([id,record],index)=>({id,record,teamId:teams[index]||null}));
   // A single decision per professional: driver OR crew, never both.
   const entries={DRIVER:[],TEAM:[]};
   for(const item of competitors.sort((a,b)=>a.id.localeCompare(b.id))) {
