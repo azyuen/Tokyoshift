@@ -282,7 +282,7 @@ export function completeSeasonRound(raw,summary,participants=[]) {
 }
 export function nextProfessionalSeason(raw) {
   const c=normaliseProCircuitState(raw);
-  if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed)return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
+  if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
   if(c.activeChampionship?.completed)c.activeChampionship=null;
