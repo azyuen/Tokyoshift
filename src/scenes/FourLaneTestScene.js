@@ -157,6 +157,7 @@ export default class FourLaneTestScene extends RaceScene {
       return;
     }
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
+    this.crewFourWide=this.proCrew&&this.registry.get('proCircuit')?.activeCrewEvent?.format==='FOUR_WIDE';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
     if(this.proCrew) {
@@ -223,6 +224,18 @@ export default class FourLaneTestScene extends RaceScene {
             return available[proCupHash(this.proTournament.id + e.id) % available.length];
           })
         : candidates.filter(id => id !== this.playerCarId).slice(0, 3);
+    if(this.crewFourWide&&this.crewHeat) {
+      // Four real lanes: the player's registered crew car against three
+      // persistent rival builds from the saved fixture.
+      const rivals=this.registry.get('proCircuit')?.activeCrewEvent?.entrants
+        ?.filter(e=>e.id!=='player:team')||[];
+      const opponent=this.crewHeat.opponent;
+      const extras=rivals.filter(e=>e.id!==this.registry.get('proCircuit')?.activeCrewEvent?.fixture?.opponentId);
+      this.aiCarIds=[opponent.carId,...extras.slice(0,2).map((e,i)=>e.drivers[this.crewHeat.index]?.carId||'ae86')];
+      this.aiEntrants=[{id:'ai-1',name:this.crewHeat.opponentName,rating:1400},
+        {id:'ai-2',name:extras[0]?.name||'RIVAL 2',rating:extras[0]?.rating||1400},
+        {id:'ai-3',name:extras[1]?.name||'RIVAL 3',rating:extras[1]?.rating||1400}];
+    }
     if (!this.proDuel && !this.champMode) while (this.aiCarIds.length < 3) this.aiCarIds.push('ae86');
   }
 
@@ -331,11 +344,11 @@ export default class FourLaneTestScene extends RaceScene {
     }];
     this.aiCarIds.forEach((id, index) => {
       const entrant = this.aiEntrants[index];
-      const rivalRound = this.proDuel ? this.proDuelInfo.round : null;
+      const rivalRound = this.proDuel&&!this.crewFourWide ? this.proDuelInfo.round : null;
       const rating = rivalRound ? Number(rivalRound.encounterRating || 4)
         : entrant ? Math.max(2, Math.min(5,
             Math.round(3 + (entrant.rating - 1400) / 250))) : index === 2 ? 5 : 4;
-      const state = rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
+      const state = (this.crewFourWide&&index===0?this.crewHeat.opponent.state:null) || rivalRound?.opponentBuildState || createRivalBuildState(cars[id], rating, {
         seed: this.proCup ? this.proHeat.id + ':' + entrant.id
           : this.proTimed ? 'pro-timed:' + this.timedEvent.id + ':' + id
           : this.proDuel ? 'pro-duel:' + this.proDuelInfo.roundIndex + ':' + id
@@ -352,7 +365,7 @@ export default class FourLaneTestScene extends RaceScene {
       );
       this.runners.push({
         id: entrant?.id || 'ai-' + (index + 1), lane: index + 2,
-        label: this.proCrew ? this.crewHeat.opponentName.toUpperCase().slice(0,16) : rivalRound ? String(characters[rivalRound.characterId]?.name || 'RIVAL').toUpperCase().slice(0, 16)
+        label: this.proCrew&&!this.crewFourWide ? this.crewHeat.opponentName.toUpperCase().slice(0,16) : rivalRound ? String(characters[rivalRound.characterId]?.name || 'RIVAL').toUpperCase().slice(0, 16)
           : entrant ? entrant.name.toUpperCase().slice(0, 16)
           : 'RIVAL ' + (index + 1), carId: id,
         carState: {}, carLabel: cars[id].shortName,
@@ -1609,7 +1622,7 @@ export default class FourLaneTestScene extends RaceScene {
     } else if (this.proCrew) {
       try {
         outcome=settlePlayerCrewHeat(this.registry.get('proCircuit'),this.crewHeat.id,
-          this.runners.map(r=>({id:r.id,finishSeconds:r.finishSeconds,disqualified:r.disqualified})));
+          this.runners.map(r=>({id:r.id,finishSeconds:r.disqualified?null:r.finishSeconds??null,disqualified:Boolean(r.disqualified)})));
         if(outcome.status==='CREW_HEAT')saveProTransaction(this.registry,{proCircuit:outcome.circuit});
       } catch(error) { console.error('[Tokyo SHIFT] Crew heat save failed',error);outcome={status:'ERROR'}; }
     } else if (this.proCup) {
