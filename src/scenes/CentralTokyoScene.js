@@ -3314,6 +3314,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawDragSide(event, build) {
+    if (event.specialSlot) {
+      this.addContent(this.add.text(SIDE.x + 22, SIDE.y + 250,
+        'MINOR TROPHIES WILL APPEAR HERE.\\nTHE TOKYO CHAMPIONSHIP TAKES PRIORITY\\nWHEN QUALIFICATION IS COMPLETE.',
+        { fontFamily: BODY_FONT, fontSize: '17px', color: '#e8d7b7', wordWrap: { width: SIDE.w - 44 } }).setDepth(34));
+      return;
+    }
     if (drawCrewSidebar(this, event, SIDE)) return;
     const wins = Number(this.registry.get('wins') || 0);
     const cash = Number(this.registry.get('cash') || 0);
