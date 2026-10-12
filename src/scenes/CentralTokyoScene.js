@@ -1,4 +1,4 @@
-import { CREW_SERIES, getProfessionalAttendance } from '../data/proSeason.js?v=20261011-r485';
+import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261012-season2a';
 import { drawSeasonHeader, drawCrewSidebar } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3090,22 +3090,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const legacy = this.registry.get('competitionState');
     const round = pro.calendar.round;
     const driverPool = PRO_DRAG_EVENTS;
-    const primary = driverPool[round % driverPool.length];
-    const alternate = driverPool[(round + 1) % driverPool.length];
+    const rules = getProfessionalRoundEvents(round);
+    const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];
     const fourWide = {
       id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,
       entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,
     };
-    // Every round offers a driver event and a crew event; the third rotates.
-    // Keep legacy registered events visible even if their offering has rotated.
-    const choices = [primary, { ...CREW_SERIES, requiredWins: 0 }, round % 2 === 0 ? fourWide : alternate];
+    const driver = rules.driver.id === 'fourWideOpen' ? fourWide : primary;
+    // Fixed positions: driver, crew, special/championship. Existing saved
+    // registrations remain resumable even when the calendar has advanced.
+    const choices = [driver, { ...CREW_SERIES, requiredWins: 0 },
+      { id: 'specialSlot', label: 'TROPHIES // COMING SOON', specialSlot: true, entryFee: 0, requiredWins: 0 }];
     if (legacy?.active && legacy.proEvent) {
-      const saved = { ...(driverPool.find(e => e.id === legacy.eventId) || primary),
-        entryFee: legacy.entryFee || 0 };
-      const index = choices.findIndex(e => !e.team && !e.fourWide && e.id === saved.id);
-      choices[index >= 0 ? index : 0] = saved;
+      choices[0] = { ...(driverPool.find(e => e.id === legacy.eventId) || primary), entryFee: legacy.entryFee || 0 };
     }
-    if (pro.activeTournament) choices[2] = fourWide;
+    if (pro.activeTournament) choices[0] = fourWide;
     if (round >= 8) {
       choices[2] = { id: 'seasonResults', label: 'SEASON RESULTS', seasonEnd: true,
         entryFee: 0, requiredWins: 0 };
