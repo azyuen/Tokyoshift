@@ -147,9 +147,12 @@ export default class FourLaneTestScene extends RaceScene {
     this.proTimed = data.mode === 'PRO_TIMED';
     this.timedEvent = this.proTimed ? this.registry.get('proCircuit')?.activeTimedEvent : null;
     if(this.proTimed&&(!this.timedEvent||!Array.isArray(this.timedEvent.attempts)||
+      !Array.isArray(this.timedEvent.rivalAttempts)||
+      this.timedEvent.attempts.length!==this.timedEvent.rivalAttempts.length||
       this.timedEvent.attempts.length>=3||
       this.timedEvent.round!==this.registry.get('proCircuit')?.calendar?.round||
-      !cars[this.timedEvent.carId])) {
+      !cars[this.timedEvent.carId]||
+      !(this.registry.get('ownedCarIds')||[]).includes(this.timedEvent.carId))) {
       this.scene.start('CentralTokyoScene',{locationId:'tokyoDragComplex'});
       return;
     }
