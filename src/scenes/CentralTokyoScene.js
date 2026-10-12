@@ -3580,6 +3580,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const selectedBuild = this.getSelectedBuild();
     const ownedCars = this.registry.get('ownedCarIds') || [];
     if (!build || !selectedBuild || build.carId !== selectedBuild.carId || !ownedCars.includes(build.carId) || cash < event.entryFee) return;
+    // Always use current saved tuning, never the pre-cutscene build snapshot.
+    build = selectedBuild;
     if (Number.isFinite(event.maxPowerKW) && Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
     if (event.noNos && build.nosInstalled) return;
     // Revalidate calendar restrictions at the transaction boundary, not only
