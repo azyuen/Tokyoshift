@@ -130,6 +130,7 @@ export function createDefaultProCircuitState() {
     crewSeriesWins: 0,
     calendar: { round: 0, history: [], result: null, archives: [] },
     activeTournament: null,
+    activeTimedEvent: null,
     lastTournament: null,
     activeChampionship: null,
     championshipHistory: [],
@@ -183,6 +184,7 @@ export function normaliseProCircuitState(raw) {
     // separately validates its own eventId and expected heat before starting.
     activeTournament: source.activeTournament && typeof source.activeTournament === 'object' &&
       !Array.isArray(source.activeTournament) ? source.activeTournament : null,
+    activeTimedEvent: source.activeTimedEvent && typeof source.activeTimedEvent === 'object' && !Array.isArray(source.activeTimedEvent) ? source.activeTimedEvent : null,
     lastTournament: source.lastTournament && typeof source.lastTournament === 'object' &&
       !Array.isArray(source.lastTournament) ? source.lastTournament : null,
     activeChampionship: source.activeChampionship && typeof source.activeChampionship === 'object' && !Array.isArray(source.activeChampionship) ? source.activeChampionship : null,
