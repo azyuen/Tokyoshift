@@ -97,10 +97,10 @@ export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rival
     !Number.isInteger(runIndex)||runIndex!==e.attempts.length||runIndex>=3)
     return {error:'STALE TIMED ATTEMPT'};
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
-    (r.disqualified ? r.finishSeconds===null :
-      (typeof r.finishSeconds==='number'&&
+    (r.finishSeconds===null||
+      (typeof r.finishSeconds==='number'&&!r.disqualified&&
        Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
-  if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
+    if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
   // A disqualification cannot simultaneously count as a valid finish.
   // Store its time as null so downstream results and save resumes agree.
   const clean=r=>({finishSeconds:r.disqualified?null:r.finishSeconds,disqualified:r.disqualified});
@@ -465,10 +465,10 @@ export function settlePlayerCrewHeat(raw,heatId,results) {
   if(!h||h.id!==heatId)return {circuit:c,status:'STALE_HEAT',cashPrize:0};
   const own=results?.find(r=>r.id==='player'),other=results?.find(r=>r.id==='ai-1');
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
-    (r.disqualified?r.finishSeconds===null:
-      typeof r.finishSeconds==='number'&&Number.isFinite(r.finishSeconds)&&
-      r.finishSeconds>0&&r.finishSeconds<120);
-  if(!valid(own)||!valid(other))return {circuit:c,status:'ERROR',cashPrize:0};
+    (r.finishSeconds===null||
+      (typeof r.finishSeconds==='number'&&!r.disqualified&&
+       Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+    if(!valid(own)||!valid(other))return {circuit:c,status:'ERROR',cashPrize:0};
   const finished=r=>!r.disqualified&&Number.isFinite(r.finishSeconds)&&r.finishSeconds>0;
   const won=finished(own)&&(!finished(other)||own.finishSeconds<other.finishSeconds-0.000001);
   const tied=finished(own)&&finished(other)&&Math.abs(own.finishSeconds-other.finishSeconds)<=0.000001;
