@@ -3489,7 +3489,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ? activeTimedHere ? 'READY // ATTEMPT ' + (pro.activeTimedEvent.attempts.length+1) + '/3' : selectedFourWide
         ? 'READY // ' + FOUR_WIDE_CUP.stageNames[activeCup.stage]
         : 'READY // ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3'
-      : activeCup || activeDuel || pro.activeCrewEvent || this.registry.get('competitionState')?.active
+      : pro.calendar.round >= 8 ? 'SEASON COMPLETE // VIEW RESULTS OR START NEXT SEASON'
+        : activeCup || activeDuel || pro.activeTimedEvent || pro.activeCrewEvent || this.registry.get('competitionState')?.active
         ? 'FINISH YOUR ACTIVE EVENT FIRST'
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
