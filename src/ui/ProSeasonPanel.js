@@ -147,7 +147,15 @@ export function showCrewFixture(s,selection=null) {
       });
     } else {
       const wins=prepared.heats.filter(h=>h.won).length;
-      o.label(130,568,`FIXTURE ${wins>=2?'VICTORY':'DEFEAT'} // ${wins} – ${3-wins}`,36);
+      const relay=t.format==='RELAY';
+      const ownTotal=prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
+      const opponentTotal=prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
+      const playerFinished=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
+      const opponentFinished=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
+      const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
+      o.label(130,568,relay
+        ? 'RELAY '+(relayWon?'VICTORY':'DEFEAT')+' // '+(playerFinished?ownTotal.toFixed(3)+'s':'DNF')+' vs '+(opponentFinished?opponentTotal.toFixed(3)+'s':'DNF')
+        : `FIXTURE ${wins>=2?'VICTORY':'DEFEAT'} // ${wins} – ${3-wins}`,36);
       o.btn(1070,706,470,'CONFIRM OFFICIAL RESULT',()=>{
         const out=settleCrewSeriesFixture(circuit(s),f.id);if(!['ADVANCED','COMPLETE'].includes(out.status))return;
         o.close();if(commit(s,{proCircuit:out.circuit,cash:Number(s.registry.get('cash')||0)+out.cashPrize}))showCrewResult(s,out);
@@ -161,7 +169,7 @@ function showCrewResult(s,out) {
   const portrait=createCharacterProfile(s,{characterId:s.registry.get('playerCharacterId')||'renMizuno',pose:out.wins>=2?'win':'loss',x:290,y:400,frameWidth:430,frameHeight:480,side:'left',depth:204,flipInward:true});
   if(portrait)o.add(portrait);
   o.label(610,205,champion?'SERIES WINNER':out.status==='COMPLETE'?'SERIES COMPLETE':out.wins>=2?'TEAM VICTORY':'TEAM DEFEAT',52);
-  o.label(620,305,`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
+  o.label(620,305,out.summary?.format==='RELAY'?`RELAY TOTAL ${out.summary.ownTotal.toFixed(3)}s vs ${out.summary.opponentTotal.toFixed(3)}s`:`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
   o.label(620,385,out.summary?`${out.summary.wins!==undefined?'HEATS WON '+out.summary.wins+'/3':'FINISH #'+out.summary.placing} · +${cash(out.cashPrize)}\nTEAM RANK #${out.summary.rankBefore} → #${out.summary.rankAfter}\n+${out.summary.points} SEASON POINTS`:`NEXT: FIXTURE ${out.circuit.activeCrewEvent.round+1}/3\nYour crew and results are saved.`,24);
   if(out.circuit.calendar.round>=8)o.label(620,566,'SEASON COMPLETE · VIEW RESULTS AT THE COMPLEX',20);
   o.label(980,745,'TAP ANYWHERE · RETURN TO COMPLEX',18);
