@@ -69,12 +69,14 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
   const index=Math.max(0,Math.min(PRO_SEASON_LENGTH-1,Math.floor(Number(round)||0)));
   const rng=seasonRandom('pro:season:'+c.season+':round:'+index);
   const occupied=new Set(occupiedIds);
-  const competitors=Object.entries(c.drivers).map(([id,record])=>({id,record,teamId:null}));
+  const drivers=Object.entries(c.drivers).sort(([a],[b])=>a.localeCompare(b));
+  const teams=Object.keys(c.teams).sort();
+  const competitors=drivers.map(([id,record],index)=>({id,record,teamId:teams[index]||null}));
   // A single decision per professional: driver OR crew, never both.
   const entries={DRIVER:[],TEAM:[]};
   for(const item of competitors.sort((a,b)=>a.id.localeCompare(b.id))) {
     if(occupied.has(item.id))continue;
-    const teamId='pro:team:'+item.id.split(':').pop();
+    const teamId=item.teamId;
     const team=c.teams[teamId];
     const driverGap=60-item.record.seasonPoints;
     const crewGap=40-(team?.seasonPoints||0);
