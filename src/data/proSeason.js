@@ -69,6 +69,14 @@ export function simulateProfessionalRound(raw, round, playerDiscipline='DRIVER',
   const index=Math.max(0,Math.min(PRO_SEASON_LENGTH-1,Math.floor(Number(round)||0)));
   const rng=seasonRandom('pro:season:'+c.season+':round:'+index);
   const occupied=new Set(occupiedIds);
+  // Player-opponent IDs can be supplied as driver IDs or team IDs.
+  // The mapped counterpart must not earn a second simulated result.
+  const allDrivers=Object.keys(c.drivers).sort();
+  const allTeams=Object.keys(c.teams).sort();
+  allDrivers.forEach((id,index)=>{
+    const teamId=allTeams[index];
+    if(teamId&&(occupied.has(id)||occupied.has(teamId))){occupied.add(id);occupied.add(teamId);}
+  });
   const drivers=Object.entries(c.drivers).sort(([a],[b])=>a.localeCompare(b));
   const teams=Object.keys(c.teams).sort();
   const competitors=drivers.map(([id,record],index)=>({id,record,teamId:teams[index]||null}));
