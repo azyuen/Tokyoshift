@@ -3578,7 +3578,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!isDev && Number(this.registry.get('wins') || 0) < event.requiredWins) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (!build || cash < event.entryFee) return;
-    if (Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
+    if (Number.isFinite(event.maxPowerKW) && Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
     if (event.noNos && build.nosInstalled) return;
     // Revalidate calendar restrictions at the transaction boundary, not only
     // in the sidebar: stale buttons and cutscene callbacks cannot bypass them.
