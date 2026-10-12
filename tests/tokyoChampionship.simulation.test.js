@@ -54,6 +54,9 @@ function runChampionship(koWin,crewWins,fourPlace) {
     const heat=getChampionshipCrewHeat(state);
     assert.ok(heat);
     assert.equal(heat.index,i);
+    if(i>0)assert.throws(()=>settleChampionshipCrewHeat(state,{
+      carId:'crew-test-car-0',won:true,opponentId:heat.opponent.id,
+    }),/DISTINCT/,'cannot reuse a registered crew car after reload');
     state=settleChampionshipCrewHeat(state,{
       carId:'crew-test-car-'+i,won:i<crewWins,opponentId:heat.opponent.id,
     });
@@ -68,9 +71,12 @@ function runChampionship(koWin,crewWins,fourPlace) {
     const others=heat.entrants.filter(x=>x!==PLAYER);
     const order=[...others];
     order.splice(fourPlace-1,0,PLAYER);
-    state=settleChampionshipFourWideHeat(state,heat.id,order.map((id,i)=>({
-      id,finishSeconds:10+i*.2,disqualified:false,
-    })));
+    const finishers=order.map((id,i)=>({id,finishSeconds:10+i*.2,disqualified:false}));
+    const previous=snapshot(state);
+    state=settleChampionshipFourWideHeat(state,heat.id,finishers);
+    assert.deepEqual(previous.fourWide.results.length,fourRuns,'settlement must not mutate saved source');
+    assert.throws(()=>settleChampionshipFourWideHeat(state,heat.id,finishers),
+      /MISMATCH|NO ACTIVE|INVALID/,'a completed heat cannot be recorded twice');
     state=snapshot(state);
     fourRuns++;
     assert.ok(fourRuns<=3,'four-wide must terminate');
