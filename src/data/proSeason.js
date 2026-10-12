@@ -96,6 +96,22 @@ export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rival
     rivalAttempts:[...e.rivalAttempts,clean(rivalResult)]};
   return {circuit:c,event:c.activeTimedEvent,complete:c.activeTimedEvent.attempts.length===3};
 }
+// Finalisation is a single saved-state transition: repeating it after a
+// reload cannot award points twice or advance the calendar again.
+export function completeProfessionalTimedEvent(raw) {
+  const c=normaliseProCircuitState(raw);
+  const result=getProfessionalTimedEventResult(c);
+  if(!result?.valid)return {error:'THREE COMPLETED ATTEMPTS REQUIRED'};
+  const event=c.activeTimedEvent;
+  const points=result.won?20:8;
+  const summary={id:event.id,discipline:'DRIVER',format:event.format,
+    placing:result.won?1:2,points,playerScore:result.playerScore,
+    rivalScore:result.rivalScore,won:result.won};
+  const next=completeSeasonRound(c,summary,[]);
+  if(next.calendar.round===c.calendar.round)return {error:'SEASON ROUND NOT ADVANCED'};
+  next.activeTimedEvent=null;
+  return {circuit:next,summary};
+}
 export function getProfessionalTimedEventResult(raw) {
   const c=normaliseProCircuitState(raw),e=c.activeTimedEvent;
   if(!e||e.round!==c.calendar.round||e.attempts?.length!==3||
