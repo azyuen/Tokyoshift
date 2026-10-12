@@ -90,7 +90,8 @@ function createDriverRoster() {
       regionId,
     },
   ]);
-  GENERIC_DRIVER_NAMES.forEach((name, index) => {
+  // 24 competitors total: seven regional rivals, sixteen professionals, and the player.
+  GENERIC_DRIVER_NAMES.slice(0, 16).forEach((name, index) => {
     entries.push([
       'pro:driver:' + String(index + 1).padStart(2, '0'),
       {
@@ -104,7 +105,7 @@ function createDriverRoster() {
 }
 
 function createTeamRoster() {
-  return Object.fromEntries(GENERIC_TEAM_NAMES.map((name, index) => [
+  return Object.fromEntries([...GENERIC_TEAM_NAMES, ...GENERIC_DRIVER_NAMES.slice(16, 23)].map((name, index) => [
     'pro:team:' + String(index + 1).padStart(2, '0'),
     {
       ...createStanding(1770 - index * 28),
