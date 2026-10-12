@@ -107,6 +107,14 @@ export function completeProfessionalTimedEvent(raw) {
   const summary={id:event.id,discipline:'DRIVER',format:event.format,
     placing:result.won?1:2,points,playerScore:result.playerScore,
     rivalScore:result.rivalScore,won:result.won};
+  // Apply the player's standing before generating the round's final table.
+  // completeSeasonRound handles AI standings, not the player's points.
+  c.playerDriver.entered++;
+  c.playerDriver.seasonPoints+=points;
+  c.playerDriver.wins+=result.won?1:0;
+  c.playerDriver.losses+=result.won?0:1;
+  c.eventTick++;
+  c.completedEventIds=[...c.completedEventIds,event.id].slice(-250);
   const next=completeSeasonRound(c,summary,[]);
   if(next.calendar.round===c.calendar.round)return {error:'SEASON ROUND NOT ADVANCED'};
   next.activeTimedEvent=null;
