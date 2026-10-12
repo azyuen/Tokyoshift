@@ -274,7 +274,7 @@ export function getCrewSeriesUnits(source,assignments={}) {
 export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
   const c=normaliseProCircuitState(value(source,'proCircuit'));
   if(!getProCircuitAccess(source).unlocked)return 'RECRUIT ALL SEVEN CREW MEMBERS';
-  if(c.activeTournament||c.activeCrewEvent||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
+  if(c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||c.activeChampionship&&!c.activeChampionship.completed||value(source,'competitionState')?.active)return 'RESUME THE ACTIVE COMPETITION';
   if(c.calendar.round>=PRO_SEASON_LENGTH)return 'BEGIN THE NEXT SEASON';
   if(!['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(getProfessionalRoundEvents(c.calendar.round).crew.format))
     return 'CREW FORMAT NOT AVAILABLE';
