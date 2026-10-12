@@ -15,11 +15,11 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const hash=s=>{let n=2166136261;for(const ch of String(s))n=Math.imul(n^ch.charCodeAt(0),16777619);return n>>>0;};
 export function canEnterTokyoChampionship(raw) {
   const c=normaliseProCircuitState(raw),q=getProQualification(c);
-  return c.calendar.round===8&&q.qualified&&!c.activeTournament&&!c.activeCrewEvent;
+  return c.calendar.round===8&&q.qualified&&!c.activeTournament&&!c.activeCrewEvent&&!c.activeTimedEvent&&!c.activeChampionship;
 }
 export function createProvisionalChampionship(raw) {
   const c=normaliseProCircuitState(raw);
-  if(!canEnterTokyoChampionship(c))return {error:'COMPLETE EIGHT ROUNDS AND REACH 100 DRIVER / 40 CREW POINTS'};
+  if(!canEnterTokyoChampionship(c))return {error:'COMPLETE EIGHT ROUNDS AND REACH 60 DRIVER / 40 CREW POINTS'};
   if(c.activeChampionship)return {error:'CHAMPIONSHIP ALREADY ACTIVE'};
   const rivals=getProCircuitDriverSeeds(c).filter(r=>r.id!==PLAYER);
   // Preserve main regional rivals in the provisional roster; actual season
@@ -51,7 +51,7 @@ export function championshipStandings(state) {
 }
 export function scoreChampionshipStage(raw,stage,placements) {
   const state=clone(raw);
-  if(!state||state.completed||state.stage!==stage)throw Error('CHAMPIONSHIP STAGE MISMATCH');
+  if(!state||state.completed||state.stage!==stage||!['KNOCKOUT','FOUR_WIDE'].includes(stage))throw Error('CHAMPIONSHIP STAGE MISMATCH');
   if(!Array.isArray(placements)||placements.length!==16||
     new Set(placements).size!==16||
     placements.some(id=>!state.points[id]))throw Error('INVALID CHAMPIONSHIP FINISH ORDER');
@@ -65,7 +65,7 @@ export function scoreChampionshipStage(raw,stage,placements) {
 }
 export function scoreChampionshipCrew(raw,winCounts) {
   const state=clone(raw);
-  if(!state||state.stage!=='CREW')throw Error('CREW STAGE NOT ACTIVE');
+  if(!state||state.stage!=='CREW'||(state.crew?.results?.length||0)!==3)throw Error('THREE CREW HEATS REQUIRED');
   for(const e of state.entrants){
     const wins=winCounts?.[e.id];
     if(!Number.isInteger(wins)||wins<0||wins>3)throw Error('INVALID CREW HEAT RESULTS');
