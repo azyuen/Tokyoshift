@@ -364,7 +364,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   const opponentFinished=f.prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&Number.isFinite(h.opponentSeconds)&&h.opponentSeconds>0);
   const ownTotal=f.prepared.heats.reduce((sum,h)=>sum+h.ownSeconds,0);
   const opponentTotal=f.prepared.heats.reduce((sum,h)=>sum+h.opponentSeconds,0);
-  const relayWon=playerFinished&&(!opponentFinished||ownTotal<=opponentTotal);
+  const relayWon=playerFinished&&(!opponentFinished||ownTotal<opponentTotal-0.000001);
   const technical=t.format==='TECHNICAL';
   // Technical rewards repeatability: smallest spread between fastest and
   // slowest completed leg wins. All three legs must finish cleanly.
@@ -372,7 +372,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     Math.min(...f.prepared.heats.map(h=>h[key]));
   const ownSpread=playerFinished?spread('ownSeconds'):null;
   const opponentSpread=opponentFinished?spread('opponentSeconds'):null;
-  const technicalWon=playerFinished&&(!opponentFinished||ownSpread<=opponentSpread);
+  const technicalWon=playerFinished&&(!opponentFinished||ownSpread<opponentSpread-0.000001);
   const wins=technical?(technicalWon?3:0):relay?(relayWon?3:0):heatWins;
   const fixtures=t.schedule[t.round].map((pair,i)=>pair.includes(PLAYER)?{ids:pair,score:pair.map(id=>id===PLAYER?wins:3-wins)}:simulateTeamPair(t,pair,t.id+':'+t.round+':'+i));
   t.history.push({round:t.round,fixtures,playerHeats:clone(f.prepared.heats)});t.round++;t.fixture=null;
