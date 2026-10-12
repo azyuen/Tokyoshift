@@ -96,9 +96,9 @@ export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rival
     !Number.isInteger(runIndex)||runIndex!==e.attempts.length||runIndex>=3)
     return {error:'STALE TIMED ATTEMPT'};
   const valid=r=>r&&typeof r.disqualified==='boolean'&&
-    (r.disqualified?r.finishSeconds===null:
+    (r.disqualified ? r.finishSeconds===null :
       (typeof r.finishSeconds==='number'&&
-    Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120)));
+       Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
   if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
   // A disqualification cannot simultaneously count as a valid finish.
   // Store its time as null so downstream results and save resumes agree.
