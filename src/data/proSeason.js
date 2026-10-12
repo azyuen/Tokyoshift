@@ -63,8 +63,9 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
   const playerScore=score(own),rivalScore=score(rival);
   // A tie is not a win; compare raw seconds with a small tolerance to avoid
   // floating-point noise awarding an artificial victory.
+  const tied=playerScore!==null&&rivalScore!==null&&Math.abs(playerScore-rivalScore)<=0.000001;
   const won=playerScore!==null&&(rivalScore===null||playerScore<rivalScore-0.000001);
-  return {valid:true,format:mode,playerScore,rivalScore,won,
+  return {valid:true,format:mode,playerScore,rivalScore,tied,won,
     completedRuns:own.filter(t=>t!==null).length,
     rivalCompletedRuns:rival.filter(t=>t!==null).length};
 }
@@ -114,16 +115,16 @@ export function completeProfessionalTimedEvent(raw) {
   const result=getProfessionalTimedEventResult(c);
   if(!result?.valid)return {error:'THREE COMPLETED ATTEMPTS REQUIRED'};
   const event=c.activeTimedEvent;
-  const points=result.won?20:8;
+  const points=result.tied?12:result.won?20:8;
   const summary={id:event.id,discipline:'DRIVER',format:event.format,
-    placing:result.won?1:2,points,playerScore:result.playerScore,
-    rivalScore:result.rivalScore,won:result.won};
+    placing:result.tied?1:result.won?1:2,points,playerScore:result.playerScore,
+    rivalScore:result.rivalScore,tied:result.tied,won:result.won};
   // Apply the player's standing before generating the round's final table.
   // completeSeasonRound handles AI standings, not the player's points.
   c.playerDriver.entered++;
   c.playerDriver.seasonPoints+=points;
   c.playerDriver.wins+=result.won?1:0;
-  c.playerDriver.losses+=result.won?0:1;
+  c.playerDriver.losses+=result.won||result.tied?0:1;
   c.eventTick++;
   c.completedEventIds=[...c.completedEventIds,event.id].slice(-250);
   const next=completeSeasonRound(c,summary,[]);
