@@ -23,6 +23,23 @@ export const PRO_SEASON_CALENDAR = Object.freeze([
   {driver:{id:'tokyoInvitational',format:'KNOCKOUT'},crew:{format:'DUEL'}},
 ]);
 export function getProfessionalRoundEvents(round){return PRO_SEASON_CALENDAR[Math.max(0,Math.min(7,Math.floor(Number(round)||0)))];}
+export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
+  const car=cars[carId];
+  if(!car)return {eligible:false,reasons:['UNKNOWN CAR']};
+  const power=getVehiclePerformance(carId,carState).car.powerKW;
+  const drivetrain=String(getCarMagazineMeta(car)?.drivetrain||'').toUpperCase();
+  const expected=String(rules.drivetrain||'').toUpperCase();
+  const aliases={FF:'FWD',FR:'RWD',AWD:'AWD',FWD:'FWD',RWD:'RWD'};
+  const reasons=[];
+  if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
+  if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
+  // Stock classification requires a separate baseline-vs-modifications audit.
+  // Until then, fail closed instead of allowing tuned cars into stock races.
+  if(rules.stock)reasons.push('FACTORY SPEC VERIFICATION NOT YET AVAILABLE');
+  if(rules.noNos&&Number(carState?.exhaustNosTuning?.nosKit||0)>0)reasons.push('NOS PROHIBITED');
+  return {eligible:reasons.length===0,reasons,powerKW:power,drivetrain};
+}
+
 
 export function getProQualification(raw) {
   const c=normaliseProCircuitState(raw);
