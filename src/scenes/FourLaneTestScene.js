@@ -1672,7 +1672,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.add.text(780,185,ok?(complete?'TIMED EVENT COMPLETE':'ATTEMPT SAVED'):'RESULT NOT SAVED',
       {fontFamily:'Rajdhani',fontSize:'44px',color:'#f5e6e4'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
     this.add.text(780,330,complete?
-      (outcome.summary.won?'EVENT VICTORY':'EVENT COMPLETE')+'  ·  +'+outcome.summary.points+' SEASON POINTS':
+      (outcome.summary.won?'EVENT VICTORY':outcome.summary.tied?'EVENT DRAW':'EVENT DEFEAT')+'  ·  +'+outcome.summary.points+' SEASON POINTS':
       ok?'ATTEMPT '+(this.timedEvent.attempts.length+1)+'/3':'RETURN TO COMPLEX AND RETRY',
       {fontFamily:'Rajdhani',fontSize:'29px',color:'#f0c2a2'}).setOrigin(.5).setDepth(301).setScrollFactor(0);
     if(ok&&complete) {
