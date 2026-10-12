@@ -53,12 +53,12 @@ export function drawCrewSidebar(s,event,side) {
   }
   const access=getProCircuitAccess(s.registry);
   const crewFormat=getProfessionalRoundEvents(c.calendar.round).crew.format;
-  const formatSupported=crewFormat==='DUEL';
+  const formatSupported=crewFormat==='DUEL'||crewFormat==='RELAY';
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
-  text(s,side.x+20,side.y+207,short?'CREW CLUB SPRINT':CREW_SERIES.label,21);
+  text(s,side.x+20,side.y+207,short?(t?.format==='RELAY'||(!t&&crewFormat==='RELAY')?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label,21);
   const lines=short?[
     'ROUND '+(c.calendar.round+1)+'/8 // '+crewFormat,
-    '3 HEATS // THREE CREW CARS',
+    crewFormat==='RELAY'?'3 LEGS // LOWEST COMBINED TIME WINS':'3 HEATS // THREE CREW CARS',
     'REGISTER 3–5 · FIELD THREE',
     'CREW POINTS  2 / 7 / 13 / 20',
     'ENTRY  '+cash(CREW_SERIES.entryFee),
@@ -112,9 +112,9 @@ export function showCrewRegistration(s,selection=[],assignments={}) {
 }
 export function showCrewFixture(s,selection=null) {
   const c=circuit(s),f=getCrewFixture(c),t=c.activeCrewEvent;if(!f){s.proError='SAVED CREW FIXTURE UNAVAILABLE';redraw(s);return;}
-  const o=overlay(s,t.short?'CREW CLUB SPRINT // THREE HEATS':`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
+  const o=overlay(s,t.short?(t.format==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
-  o.label(90,115,'YOUR CREW vs '+f.opponent.name+' · TWO HEAT WINS TAKE THE FIXTURE',23);
+  o.label(90,115,'YOUR CREW vs '+f.opponent.name+(t.format==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
   if(!f.prepared){
     o.label(90,158,'Choose three crew cars in racing order. You drive ALL three. Tuning is locked for this fixture.',18);
     units.forEach((u,i)=>{
