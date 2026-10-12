@@ -145,9 +145,16 @@ export function getProfessionalTimedEventResult(raw) {
 export function getProQualification(raw) {
   const c=normaliseProCircuitState(raw);
   const driver=c.playerDriver.seasonPoints,crew=c.playerTeam.seasonPoints;
+  const roundsRemaining=Math.max(0,PRO_SEASON_LENGTH-c.calendar.round);
+  // Only one official discipline can score in each remaining round.
+  // Each event awards at most 20 points, so qualification requires enough
+  // remaining slots for BOTH targets, not merely enough total points.
+  const driverEventsNeeded=Math.ceil(Math.max(0,PRO_QUALIFICATION.driver-driver)/20);
+  const crewEventsNeeded=Math.ceil(Math.max(0,PRO_QUALIFICATION.crew-crew)/20);
+  const qualified=driver>=PRO_QUALIFICATION.driver&&crew>=PRO_QUALIFICATION.crew;
   return {driver,crew,driverRequired:PRO_QUALIFICATION.driver,crewRequired:PRO_QUALIFICATION.crew,
-    qualified:driver>=PRO_QUALIFICATION.driver&&crew>=PRO_QUALIFICATION.crew,
-    roundsRemaining:Math.max(0,PRO_SEASON_LENGTH-c.calendar.round)};
+    qualified,roundsRemaining,driverEventsNeeded,crewEventsNeeded,
+    qualificationPossible:qualified||driverEventsNeeded+crewEventsNeeded<=roundsRemaining};
 }
 export const CREW_SERIES = Object.freeze({id:'crewOpen',label:'CREW CLUB SERIES',team:true,entryFee:75000,prizeCash:210000,prizes:[210000,90000,40000,0],fixtures:3,squadSize:5,fieldSize:3});
 const clone=x=>JSON.parse(JSON.stringify(x));
