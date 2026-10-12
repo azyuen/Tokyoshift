@@ -3359,6 +3359,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const seasonPowerOk = !seasonRules?.maxPowerKW || power <= seasonRules.maxPowerKW;
     const seasonNosOk = !seasonRules?.noNos || !build?.nosInstalled;
     const seasonStockOk = !seasonRules?.stock;
+    // A calendar format is only enterable when its actual race scene exists.
+    // Do not silently substitute a knockout for time attack or consistency.
+    const supportedFormat = !seasonRules?.format ||
+      (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : seasonRules.format === 'KNOCKOUT');
     const seasonDrivetrainOk = !seasonRules?.drivetrain ||
       getCarMagazineMeta(build?.carId)?.drivetrain === seasonRules.drivetrain;
     const passesPower = selectedFourWide || Boolean(build) && power <= event.maxPowerKW;
@@ -3377,7 +3381,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const eligible = circuitOpen && eventUnlocked &&
       !activeCup && !this.registry.get('competitionState')?.active &&
       Boolean(build) && owned.includes(build.carId) &&
-      passesPower && passesNos && seasonPowerOk && seasonNosOk && seasonStockOk && seasonDrivetrainOk && cash >= event.entryFee;
+      passesPower && passesNos && supportedFormat && seasonPowerOk && seasonNosOk && seasonStockOk && seasonDrivetrainOk && cash >= event.entryFee;
     const canEnter = canResume || (eligible && pro.calendar.round < 8 && !pro.activeCrewEvent);
 
     const title = activeDuelHere && (
@@ -3438,6 +3442,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !circuitOpen ? 'CREW REQUIRED // ' + access.crewCount + '/7'
         : !eventUnlocked ? 'REQUIRES ' + event.requiredWins + ' WINS'
         : !build ? 'SELECT A CAR FIRST'
+        : !supportedFormat ? 'EVENT FORMAT NOT YET AVAILABLE'
         : !seasonStockOk ? 'FACTORY STOCK EVENTS NOT YET ENABLED'
         : !seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
         : !seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
