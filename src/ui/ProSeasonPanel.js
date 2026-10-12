@@ -53,12 +53,12 @@ export function drawCrewSidebar(s,event,side) {
   }
   const access=getProCircuitAccess(s.registry);
   const crewFormat=getProfessionalRoundEvents(c.calendar.round).crew.format;
-  const formatSupported=['DUEL','RELAY','TECHNICAL'].includes(crewFormat);
+  const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
   const canEnter=formatSupported&&access.unlocked&&!c.activeCrewEvent&&!c.activeTournament&&!s.registry.get('competitionState')?.active&&c.calendar.round<8&&Number(s.registry.get('cash')||0)>=CREW_SERIES.entryFee;
   text(s,side.x+20,side.y+207,short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':(t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label,21);
   const lines=short?[
     'ROUND '+(c.calendar.round+1)+'/8 // '+crewFormat,
-    crewFormat==='TECHNICAL'?'3 RUNS // SMALLEST TIME SPREAD WINS':crewFormat==='RELAY'?'3 LEGS // LOWEST COMBINED TIME WINS':'3 HEATS // THREE CREW CARS',
+    crewFormat==='FOUR_WIDE'?'3 FOUR-LANE HEATS // 3/2/1/0 POINTS PER FINISH':crewFormat==='TECHNICAL'?'3 RUNS // SMALLEST TIME SPREAD WINS':crewFormat==='RELAY'?'3 LEGS // LOWEST COMBINED TIME WINS':'3 HEATS // THREE CREW CARS',
     'REGISTER 3–5 · FIELD THREE',
     'CREW POINTS  2 / 7 / 13 / 20',
     'ENTRY  '+cash(CREW_SERIES.entryFee),
@@ -112,9 +112,9 @@ export function showCrewRegistration(s,selection=[],assignments={}) {
 }
 export function showCrewFixture(s,selection=null) {
   const c=circuit(s),f=getCrewFixture(c),t=c.activeCrewEvent;if(!f){s.proError='SAVED CREW FIXTURE UNAVAILABLE';redraw(s);return;}
-  const o=overlay(s,t.short?(t.format==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':t.format==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
+  const o=overlay(s,t.short?(t.format==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':t.format==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':t.format==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):`CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
-  o.label(90,115,'YOUR CREW vs '+f.opponent.name+(t.format==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':t.format==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
+  o.label(90,115,'YOUR CREW vs '+f.opponent.name+(t.format==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':t.format==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':t.format==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
   if(!f.prepared){
     o.label(90,158,'Choose three crew cars in racing order. You drive ALL three. Tuning is locked for this fixture.',18);
     units.forEach((u,i)=>{
@@ -134,7 +134,7 @@ export function showCrewFixture(s,selection=null) {
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
     prepared.heats.forEach((h,i)=>{
       o.label(120,241+i*90,`HEAT ${i+1} · ${h.name} / ${cars[h.carId]?.shortName}`,22);
-      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${h.tied?'DRAW':h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
+      o.label(810,241+i*90,i<prepared.revealed?`${h.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:h.ownSeconds.toFixed(3)+'s'} vs ${h.opponentStatus&&h.opponentStatus!=='FINISHED'?h.opponentStatus:h.opponentSeconds.toFixed(3)+'s'} // ${t.format==='FOUR_WIDE'?'PLACE '+h.place+' / 4':h.tied?'DRAW':h.won?'WIN':'LOSS'}`:'AWAITING HEAT',24);
     });
     if(prepared.revealed<3){
       o.btn(990,677,620,'DRIVE HEAT '+(prepared.revealed+1)+' / 3',()=>{
@@ -159,7 +159,10 @@ export function showCrewFixture(s,selection=null) {
       const playerFinished=prepared.heats.every(h=>h.ownStatus==='FINISHED'&&h.ownSeconds>0);
       const opponentFinished=prepared.heats.every(h=>h.opponentStatus==='FINISHED'&&h.opponentSeconds>0);
       const relayWon=playerFinished&&(!opponentFinished||ownTotal<opponentTotal-0.000001);
-      o.label(130,568,technical
+      const fourWide=t.format==='FOUR_WIDE';
+      const fourWidePoints=prepared.heats.reduce((sum,h)=>sum+(h.place?4-h.place:0),0);
+      o.label(130,568,fourWide?'FOUR-WIDE TOTAL '+fourWidePoints+' / 9 POINTS · '+(fourWidePoints>=8?'TOP TIER':fourWidePoints>=5?'SECOND TIER':fourWidePoints>=2?'THIRD TIER':'FOURTH TIER')
+        :technical
         ? 'PRECISION '+(technicalWon?'VICTORY':'DEFEAT')+' // '+(ownSpread===null?'DNF':ownSpread.toFixed(3)+'s')+' vs '+(opponentSpread===null?'DNF':opponentSpread.toFixed(3)+'s')
         : relay
         ? 'RELAY '+(relayWon?'VICTORY':'DEFEAT')+' // '+(playerFinished?ownTotal.toFixed(3)+'s':'DNF')+' vs '+(opponentFinished?opponentTotal.toFixed(3)+'s':'DNF')
