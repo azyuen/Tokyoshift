@@ -67,6 +67,41 @@ export function scoreProfessionalTimedRuns(format, attempts, rivalAttempts=[]) {
     rivalCompletedRuns:rival.filter(t=>t!==null).length};
 }
 
+// Timed driver events are recorded one real run at a time. These transitions
+// are idempotent so an interrupted PWA session cannot double-record a run.
+export function registerProfessionalTimedEvent(raw, carId, entryFee=0) {
+  const c=normaliseProCircuitState(raw);
+  const rules=getProfessionalRoundEvents(c.calendar.round).driver;
+  if(!['TIME_ATTACK','CONSISTENCY'].includes(rules.format)||
+    c.activeTimedEvent||c.activeTournament||c.activeCrewEvent||c.calendar.round>=PRO_SEASON_LENGTH||
+    !cars[carId])return {error:'TIMED EVENT UNAVAILABLE'};
+  const id='timed:s'+c.season+':r'+c.calendar.round;
+  c.activeTimedEvent={id,format:rules.format,carId,round:c.calendar.round,
+    entryFee:Math.max(0,Math.floor(Number(entryFee)||0)),attempts:[],rivalAttempts:[]};
+  return {circuit:c,event:c.activeTimedEvent};
+}
+export function recordProfessionalTimedAttempt(raw,eventId,runIndex,result,rivalResult) {
+  const c=normaliseProCircuitState(raw),e=c.activeTimedEvent;
+  if(!e||e.id!==eventId||e.round!==c.calendar.round||
+    !Number.isInteger(runIndex)||runIndex!==e.attempts.length||runIndex>=3)
+    return {error:'STALE TIMED ATTEMPT'};
+  const valid=r=>r&&typeof r.disqualified==='boolean'&&
+    (r.finishSeconds===null||(typeof r.finishSeconds==='number'&&
+    Number.isFinite(r.finishSeconds)&&r.finishSeconds>0&&r.finishSeconds<120));
+  if(!valid(result)||!valid(rivalResult))return {error:'INVALID RACE RESULT'};
+  const clean=r=>({finishSeconds:r.finishSeconds,disqualified:r.disqualified});
+  c.activeTimedEvent={...e,attempts:[...e.attempts,clean(result)],
+    rivalAttempts:[...e.rivalAttempts,clean(rivalResult)]};
+  return {circuit:c,event:c.activeTimedEvent,complete:c.activeTimedEvent.attempts.length===3};
+}
+export function getProfessionalTimedEventResult(raw) {
+  const c=normaliseProCircuitState(raw),e=c.activeTimedEvent;
+  if(!e||e.round!==c.calendar.round||e.attempts?.length!==3||
+    e.rivalAttempts?.length!==3)return null;
+  return {...scoreProfessionalTimedRuns(e.format,e.attempts,e.rivalAttempts),
+    id:e.id,carId:e.carId,round:e.round};
+}
+
 export function getProQualification(raw) {
   const c=normaliseProCircuitState(raw);
   const driver=c.playerDriver.seasonPoints,crew=c.playerTeam.seasonPoints;
