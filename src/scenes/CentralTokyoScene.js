@@ -1,4 +1,5 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
+const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents } from '../data/proSeason.js?v=20261012-season2a';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champ2c';
 import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
@@ -3315,7 +3316,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (rules.id !== 'fourWideOpen' || rules.format !== 'FOUR_WIDE' || rules.stock) return;
     if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
     if (rules.noNos && build.nosInstalled) return;
-    if (rules.drivetrain && getCarMagazineMeta(carId)?.drivetrain !== rules.drivetrain) return;
+    if (rules.drivetrain && proDriveClass(getCarMagazineMeta(carId)?.drivetrain) !== proDriveClass(rules.drivetrain)) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < FOUR_WIDE_CUP.entryFee) return;
     const tournament = createFourWideTournament(pro, carId);
@@ -3369,7 +3370,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const supportedFormat = !seasonRules?.format ||
       (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : seasonRules.format === 'KNOCKOUT');
     const seasonDrivetrainOk = !seasonRules?.drivetrain ||
-      getCarMagazineMeta(build?.carId)?.drivetrain === seasonRules.drivetrain;
+      proDriveClass(getCarMagazineMeta(build?.carId)?.drivetrain) === proDriveClass(seasonRules.drivetrain);
     const passesPower = selectedFourWide || Boolean(build) && power <= event.maxPowerKW;
     const passesNos = selectedFourWide || Boolean(build) && (!event.noNos || !build.nosInstalled);
     const owned = this.registry.get('ownedCarIds') || [];
@@ -3577,7 +3578,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (event.id !== rules.id || rules.format !== 'KNOCKOUT' || rules.stock) return;
     if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
     if (rules.noNos && build.nosInstalled) return;
-    if (rules.drivetrain && getCarMagazineMeta(build.carId)?.drivetrain !== rules.drivetrain) return;
+    if (rules.drivetrain && proDriveClass(getCarMagazineMeta(build.carId)?.drivetrain) !== proDriveClass(rules.drivetrain)) return;
 
     if (!storyConfirmed) {
       const promoterId = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex.manager;
