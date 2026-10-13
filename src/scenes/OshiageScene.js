@@ -556,52 +556,109 @@ export default class OshiageScene extends Phaser.Scene {
   }
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
-    this.sideHeader('PAINT STUDIO', car ? String(car.name || car.label || id).toUpperCase() : 'NO CAR SELECTED');
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 150, SIDE.w - 40, 38, 'BACK TO CUSTOM WORKS', () => {
+    const mode = this.paintMode === 'custom' ? 'custom' : 'preset';
+    const fee = mode === 'custom' ? 16000 : 8000;
+    this.sideHeader('SPRAY PAINT STUDIO',
+      car ? String(car.shortName || car.name || id).toUpperCase() : 'NO CAR SELECTED');
+
+    if (!car) {
+      this.addText(SIDE.x + 20, SIDE.y + 190,
+        'Choose a car from your workshop before using the paint booth.',
+        { size: '13px', wrap: SIDE.w - 40 });
+    } else {
+      const current = getCarPaintColor(state);
+      if (this.pendingPaint == null) {
+        this.pendingPaint = mode === 'custom' && this.customPaintColor != null
+          ? this.customPaintColor : current;
+      }
+      const paintable = hasLayeredPaintAssets(this, car);
+      const canBuy = Number(this.registry.get('garageTier') || 0) >= 1;
+      // Same side-on car renderer as garage and dyno. The target is positioned
+      // well inside the high central spray bay, not on the foreground floor.
+      this.paintObjects = this.drawOwnedCar(car, state, 609, 363, 690, this.pendingPaint);
+
+      this.addText(SIDE.x + 20, SIDE.y + 169, mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM RGB MIX',
+        { pixel: true, size: '9px', color: '#ffe394' });
+      if (mode === 'preset') {
+        this.addText(SIDE.x + 20, SIDE.y + 217,
+          'SELECT A PRESET COLOUR', { pixel: true, size: '8px', color: '#96b6c7' });
+        PAINT_PRESETS.forEach((preset, i) => {
+          const x = SIDE.x + 48 + (i % 5) * 62;
+          const y = SIDE.y + 291 + Math.floor(i / 5) * 68;
+          const active = preset.color === this.pendingPaint;
+          const swatch = this.own(this.add.rectangle(x, y, 44, 41, preset.color)
+            .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
+          if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            if (this.paintBusy) return;
+            this.pendingPaint = preset.color;
+            this.renderView();
+          });
+        });
+      } else {
+        this.addText(SIDE.x + 20, SIDE.y + 212,
+          'MIX YOUR OWN CUSTOM COLOUR', { pixel: true, size: '8px', color: '#96b6c7' });
+        const rgb = paintColorToRgb(this.pendingPaint);
+        ['r', 'g', 'b'].forEach((ch, i) => {
+          const y = SIDE.y + 294 + i * 67;
+          this.addText(SIDE.x + 30, y - 11, ch.toUpperCase(),
+            { pixel: true, size: '9px', color: '#e9faff' });
+          this.button(SIDE.x + 112, y, 48, 42, '-', () => this.updatePaintChannel(ch, -15), { size: '15px' });
+          this.addText(SIDE.x + 190, y - 11, String(rgb[ch]).padStart(3, '0'),
+            { pixel: true, size: '9px', color: '#ffe5a1' });
+          this.button(SIDE.x + 268, y, 48, 42, '+', () => this.updatePaintChannel(ch, 15), { size: '15px' });
+        });
+        const chip = this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
+          SIDE.y + 510, SIDE.w - 72, 26, this.pendingPaint).setStrokeStyle(2, 0xcde4f3).setDepth(33));
+        chip.setAlpha(1);
+      }
+
+      this.addText(SIDE.x + 20, SIDE.y + 536,
+        !paintable ? 'PAINT LAYERS NOT AVAILABLE'
+          : !canBuy ? 'CANAL YARD REQUIRED'
+            : this.pendingPaint === current ? 'ALREADY INSTALLED'
+              : (mode === 'custom' ? 'CUSTOM PAINT // ' : 'PRESET PAINT // ') + MONEY(fee),
+        { pixel: true, size: '8px', color: '#f6dda0', wrap: SIDE.w - 40 });
+      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 614, SIDE.w - 40, 48,
+        'APPLY PAINT  //  ' + MONEY(fee),
+        () => this.applyPaint(id, this.pendingPaint, fee),
+        { disabled: !paintable || !canBuy || this.pendingPaint === current ||
+          Number(this.registry.get('cash') || 0) < fee || this.paintBusy,
+          accent: true, size: '8px' });
+    }
+
+    this.addText(48, 654, 'CUSTOM WORKS // SPRAY BOOTH // SIDE PROFILE',
+      { pixel: true, size: '10px', color: '#8feaff' });
+    this.button(206, 744, 315, 66, 'PRESET // ¥8,000', () => this.setPaintMode('preset'),
+      { accent: mode === 'preset', size: '8px' });
+    this.button(542, 744, 315, 66, 'CUSTOM RGB // ¥16,000', () => this.setPaintMode('custom'),
+      { accent: mode === 'custom', size: '8px' });
+    this.button(951, 744, 318, 66, 'RETURN TO CUSTOM WORKS', () => {
       this.room = 'outside'; this.pendingPaint = null; this.loadAndRender();
     }, { size: '7px' });
-    if (!car) {
-      this.addText(SIDE.x + 20, SIDE.y + 245,
-        'Select an owned car at your workshop to preview a paint job.',
-        { size: '12px', wrap: SIDE.w - 40 });
-      return;
-    }
-    const current = getCarPaintColor(state);
-    if (this.pendingPaint == null) this.pendingPaint = current;
-    const paintable = hasLayeredPaintAssets(this, car);
-    const canPurchase = Number(this.registry.get('garageTier') || 0) >= 1;
-    const cost = 8000; // First pass uses the base garage paint fee; no double charge.
-    this.paintObjects = this.drawOwnedCar(car, state, 615, 455, 690, this.pendingPaint);
-    this.addText(SIDE.x + 20, SIDE.y + 221, 'CHOOSE A FINISH', { pixel: true, size: '9px', color: '#e5f8ff' });
-    PAINT_PRESETS.forEach((p, i) => {
-      const x = SIDE.x + 49 + (i % 5) * 62;
-      const y = SIDE.y + 297 + Math.floor(i / 5) * 66;
-      const active = p.color === this.pendingPaint;
-      const swatch = this.own(this.add.rectangle(x, y, 43, 38, p.color)
-        .setStrokeStyle(active ? 4 : 2, active ? 0xeaffff : 0x526676)
-        .setDepth(33));
-      if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-        if (this.paintBusy) return;
-        this.pendingPaint = p.color;
-        this.renderView();
-      });
-    });
-    this.addText(SIDE.x + 20, SIDE.y + 450,
-      !paintable ? 'THIS CAR HAS NO TINTABLE PAINT LAYERS'
-        : !canPurchase ? 'CANAL YARD REQUIRED'
-          : this.pendingPaint === current ? 'CURRENT FINISH'
-            : 'FULL REPAINT // ' + MONEY(cost), {
-      pixel: true, size: '8px', color: '#f6dda0', wrap: SIDE.w - 40,
-    });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 550, SIDE.w - 40, 53,
-      'SPRAY PAINT // ' + MONEY(cost), () => this.applyPaint(id, this.pendingPaint, cost),
-      { disabled: !paintable || !canPurchase || this.pendingPaint === current ||
-          Number(this.registry.get('cash') || 0) < cost, accent: true });
-    this.addText(48, 665, 'PAINT BAY // SIDE PROFILE', { pixel: true, size: '10px', color: '#8feaff' });
-    this.addText(48, 725, this.paintBusy ? 'SPRAYING...' : 'Your car enters from the side. No front-facing sprites required.', {
-      size: '13px', color: '#d6edf3', wrap: 1020,
-    });
+    this.addText(48, 794, this.paintBusy ? 'CAR ENTERING / SPRAYING...' :
+      'Side-entry spray bay // real car paint layers // colour preview before purchase.',
+      { size: '9px', color: '#9cb8c8' });
   }
+
+  setPaintMode(mode) {
+    if (!['preset', 'custom'].includes(mode) || this.paintBusy) return;
+    if (this.paintMode === 'custom') this.customPaintColor = this.pendingPaint;
+    this.paintMode = mode;
+    const current = getCarPaintColor(this.selectedCar().state);
+    this.pendingPaint = mode === 'custom'
+      ? (this.customPaintColor ?? current) : current;
+    this.renderView();
+  }
+
+  updatePaintChannel(channel, amount) {
+    if (this.paintMode !== 'custom' || this.paintBusy) return;
+    const rgb = paintColorToRgb(this.pendingPaint);
+    rgb[channel] = Phaser.Math.Clamp(rgb[channel] + amount, 0, 255);
+    this.pendingPaint = rgbToPaintColor(rgb.r, rgb.g, rgb.b);
+    this.customPaintColor = this.pendingPaint;
+    this.renderView();
+  }
+
   drawOwnedCar(car, state, x, y, width, paintColor) {
     const bodyKey = getCarBodyTextureKey(this, car);
     const wheelVisual = getVisualModWheelVisual(car, state);
@@ -645,10 +702,19 @@ export default class OshiageScene extends Phaser.Scene {
   }
   rollPaintCarIn() {
     if (this.room !== 'paint' || !this.paintObjects.length) return;
-    this.paintObjects.forEach(o => {
-      const originalX = o.x;
-      o.x -= 1150;
-      this.tweens.add({ targets: o, x: originalX, duration: 1000, ease: 'Sine.easeOut' });
+    this.paintBusy = true;
+    const count = this.paintObjects.length;
+    this.paintObjects.forEach((obj, index) => {
+      const targetX = obj.x;
+      obj.x = targetX - 1140;
+      this.tweens.add({
+        targets: obj, x: targetX, duration: 3450, ease: 'Sine.easeInOut',
+        onComplete: () => {
+          if (index !== count - 1 || !this.sys.isActive()) return;
+          this.paintBusy = false;
+          this.renderView();
+        },
+      });
     });
   }
   applyPaint(carId, color, cost) {
@@ -659,6 +725,7 @@ export default class OshiageScene extends Phaser.Scene {
     const paintColor = normalisePaintColor(color);
     if (getCarPaintColor(current) === paintColor) return;
     if (Number(this.registry.get('garageTier') || 0) < 1) return;
+    if (cost !== (this.paintMode === 'custom' ? 16000 : 8000)) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < cost) return;
     this.paintBusy = true;
@@ -674,7 +741,7 @@ export default class OshiageScene extends Phaser.Scene {
     const sparkObjects = [];
     for (let i = 0; i < 34; i++) {
       const x = 310 + Phaser.Math.Between(0, 630);
-      const y = 360 + Phaser.Math.Between(0, 155);
+      const y = 263 + Phaser.Math.Between(0, 155);
       const mist = this.add.circle(x, y, Phaser.Math.Between(9, 26), paintColor, 0.25)
         .setMask(this.stageMask).setDepth(24);
       sparkObjects.push(mist);
