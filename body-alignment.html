@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07111b">
+<title>Tokyo SHIFT — Body & Wheel Calibration</title>
+<style>
+:root { color-scheme:dark; font-family:system-ui,-apple-system,Arial,sans-serif; --bg:#07111b; --panel:#10202e; --edge:#2d4b5d; --gold:#ffcd7b; --aqua:#7edfe3; --text:#e9f3fa; }
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text)} main{max-width:1280px;margin:auto;padding:clamp(12px,2vw,22px)}
+h1{font-size:clamp(19px,2.6vw,29px);margin:4px 0 8px;letter-spacing:.04em} h2{font-size:16px;margin:0 0 12px}
+p{margin:6px 0 12px;color:#a5bac7;line-height:1.4;font-size:14px}
+header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--aqua)}
+a{color:var(--aqua)}button{cursor:pointer;border:1px solid var(--edge);border-radius:8px;background:#163044;color:var(--text);min-height:43px;padding:9px 13px;font:700 13px system-ui;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:active{transform:translateY(1px)}button.primary{background:#85602c;color:#fff5e5;border-color:#e1a658}
+button.on{border-color:var(--gold);background:#3b3429;color:var(--gold)}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:13px;margin:13px 0}
+.models{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.models button{font-size:12px;padding:10px 4px;white-space:normal}
+.models button em{font-style:normal;font-size:10px;color:#9bc6ce}
+.models button.on em{color:#ffdf9e}
+.toolbar{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-bottom:9px}
+.toolbar strong{font-size:14px;color:var(--gold)}
+.toolbar .right{display:flex;gap:7px;flex-wrap:wrap}
+canvas{width:100%;height:auto;display:block;border:1px solid #39546a;border-radius:8px;background:#111e2a;image-rendering:pixelated;touch-action:none;cursor:ns-resize}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.85fr);gap:12px}
+.controlTitle{font-size:11px;font-weight:800;letter-spacing:.12em;color:#97b9c7;margin-bottom:7px}
+.nudge{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}
+.bigNum{font-size:30px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+input[type=range]{accent-color:#f2b457;width:100%;height:35px;cursor:pointer}
+input[type=number]{background:#091824;border:1px solid #49677a;border-radius:6px;color:#fff;font-size:16px;max-width:108px;padding:6px}
+.valueRow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.small{font-size:12px;color:#96aebd}
+.wheelGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.wheelGrid .axle{background:#0c1a27;border:1px solid #315369;border-radius:9px;padding:10px}
+.wheelControl{display:flex;align-items:center;gap:7px;justify-content:space-between}
+.wheelControl button{padding:6px 10px}
+summary{cursor:pointer;font-weight:700;color:#c5e0ee;padding:5px 0}
+.exportRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+textarea{width:100%;min-height:133px;background:#07131e;color:#d0e9f3;padding:10px;border:1px solid #385e71;border-radius:8px;font:12px ui-monospace,monospace;margin-top:10px}
+.status{color:var(--aqua);font-weight:700;font-size:12px;min-height:20px;margin:8px 0 0}
+footer{font-size:12px;color:#8eabba;margin:16px 0}
+@media(max-width:660px){.models{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:1fr}.nudge{grid-template-columns:repeat(4,minmax(0,1fr))}.nudge button{font-size:12px;padding:7px 3px}.wheelGrid{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div><div class="eyebrow">TOKYO SHIFT // CALIBRATION LAB</div><h1>Body & Wheel Alignment</h1></div>
+ <a href="./" aria-label="Return to Tokyo SHIFT game">← Return to game</a>
+</header>
+<p>Choose a car, then move its body up or down against the <b>fixed wheels</b>. PAINT and BODY stay together. All values are original PNG pixels, not screen pixels. Nothing changes in the game until you send back the copied data.</p>
+<section class="panel">
+ <h2>Select car <span class="small">— eight requested models</span></h2>
+ <div class="models" id="models" aria-label="Cars"></div>
+</section>
+<section class="panel">
+ <div class="toolbar">
+  <strong id="carName">Loading car…</strong>
+  <div class="right">
+   <button id="guidesBtn" class="on" type="button">GUIDES ON</button>
+   <button id="paintBtn" class="on" type="button">PAINT ON</button>
+   <button id="prevBtn" type="button">← CAR</button>
+   <button id="nextBtn" type="button">CAR →</button>
+  </div>
+ </div>
+ <canvas id="preview" width="1400" height="570" aria-label="Car body and wheel placement preview"></canvas>
+ <p class="small">Drag vertically on the preview to move the BODY + PAINT stack. The tyres and ground line stay fixed. Use the buttons for precise adjustments.</p>
+</section>
+<div class="controls">
+ <section class="panel" style="margin:0">
+  <div class="controlTitle">BODY HEIGHT — SOURCE PIXELS</div>
+  <div class="valueRow">
+   <div><span class="bigNum" id="offsetValue">0</span><span class="small"> px</span><div id="offsetDirection" class="small">Original body position</div></div>
+   <button id="resetCar" type="button">RESET CAR</button>
+  </div>
+  <div class="nudge">
+   <button type="button" data-move="-10">↑ 10</button>
+   <button type="button" data-move="-2">↑ 2</button>
+   <button type="button" data-move="2">↓ 2</button>
+   <button type="button" data-move="10">↓ 10</button>
+  </div>
+  <input type="range" min="-120" max="120" value="0" step="1" id="offsetSlider" aria-label="Car body vertical offset">
+  <div class="valueRow"><span class="small">−120 px = raise</span><span class="small">+120 px = lower</span></div>
+ </section>
+ <section class="panel" style="margin:0">
+  <div class="controlTitle">OPTIONAL WHEEL FINE-TUNING</div>
+  <p class="small">Existing wheel settings start from the game's exact Ref/Ref2 calibration. Change only if needed.</p>
+  <div class="wheelGrid">
+   <div class="axle"><b>REAR X</b><div class="wheelControl"><button id="rearMinus" type="button">−2</button><strong id="rearX"></strong><button id="rearPlus" type="button">+2</button></div></div>
+   <div class="axle"><b>FRONT X</b><div class="wheelControl"><button id="frontMinus" type="button">−2</button><strong id="frontX"></strong><button id="frontPlus" type="button">+2</button></div></div>
+  </div>
+  <div class="toolbar" style="margin-top:12px">
+   <span class="small">Wheel diameter (shared presets)</span>
+   <div class="right"><button id="smallTyre" type="button">S / 182</button><button id="largeTyre" type="button">L / 194</button></div>
+  </div>
+ </section>
+</div>
+<section class="panel">
+ <div class="toolbar"><div><h2>Copy your adjustments</h2><p class="small">Includes all eight cars, even unchanged ones. Your draft is saved locally in this browser.</p></div><div class="exportRow"><button id="resetAll" type="button">RESET ALL</button><button id="copyBtn" type="button" class="primary">COPY CHANGES</button></div></div>
+ <textarea id="exportData" readonly aria-label="Copyable calibration settings"></textarea>
+ <div class="status" id="status" role="status">Adjust each car, then press COPY CHANGES and paste the text into our chat.</div>
+</section>
+<footer>Tokyo SHIFT reference sprites • shared scale 0.32 • PNG bottom-right anchor • positive Y = lower the body • wheel coordinates measured left of the PNG right edge.</footer>
+</main>
+<script type="module">
+import { STANDARD_CAR_REFERENCE as reference, getReferenceAssetRoot } from './src/data/carReferenceGeometry.js?v=20261014-align';
+
+const carSpecs = [
+  {id:'r34', gameId:'r34', label:'NISSAN R34', note:'Lower clearly'},
+  {id:'3000gt', gameId:'3000gt', label:'3000GT', note:'Raise slightly'},
+  {id:'chaser', gameId:'jzx100', label:'CHASER JZX100', note:'Lower'},
+  {id:'s2000', gameId:'s2000', label:'HONDA S2000', note:'Lower'},
+  {id:'240z', gameId:'240z', label:'DATSUN 240Z', note:'Lower slightly'},
+  {id:'familia', gameId:'familia', label:'FAMILIA GT-R', note:'Lower slightly'},
+  {id:'evo5', gameId:'evo5', label:'EVO V', note:'Lower slightly'},
+  {id:'evo6', gameId:'evo6', label:'EVO VI', note:'Lower slightly'}
+];
+const storageKey = 'tokyoShiftBodyAlign_v1';
+const modelsEl = document.getElementById('models');
+const preview = document.getElementById('preview');
+const ctx = preview.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const loadedCars = new Map();
+const loadingCars = new Map();
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+let selected = 0, guides = true, showPaint = true, drag = null;
+let wheel = null, wheelMetrics = {diameter:384, centerX:0, bottomY:192};
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch (e) {}
+const configs = {};
+for (const car of carSpecs) {
+  const base = reference.cars[car.id];
+  const before = saved[car.id] || {};
+  configs[car.id] = {
+    bodyRenderOffsetY: clamp(Math.round(Number(before.bodyRenderOffsetY) || 0), -120, 120),
+    rearX: Number.isFinite(Number(before.rearX)) ? Number(before.rearX) : base.rearX,
+    frontX: Number.isFinite(Number(before.frontX)) ? Number(before.frontX) : base.frontX,
+    size: before.size === 'S' || before.size === 'L' ? before.size : base.size
+  };
+}
+const active = () => carSpecs[selected];
+const cfg = () => configs[active().id];
+function persist() { try { localStorage.setItem(storageKey, JSON.stringify(configs)); } catch (e) {} }
+function asset(src) {
+  return new Promise((resolve,reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('Asset failed: ' + src));
+    im.src = src;
+  });
+}
+function measureWheel(im) {
+  const scan = document.createElement('canvas');
+  scan.width = im.naturalWidth;
+  scan.height = im.naturalHeight;
+  const c = scan.getContext('2d', {willReadFrequently:true});
+  c.drawImage(im,0,0);
+  const data = c.getImageData(0,0,scan.width,scan.height).data;
+  let lx=scan.width, rx=-1, ty=scan.height, by=-1;
+  for(let y=0;y<scan.height;y++) for(let x=0;x<scan.width;x++) {
+    if(data[(y*scan.width+x)*4+3]<25) continue;
+    if(x<lx) lx=x; if(x>rx) rx=x; if(y<ty) ty=y; if(y>by) by=y;
+  }
+  if(rx<lx) return wheelMetrics;
+  return {
+    diameter:Math.max(rx-lx+1,by-ty+1),
+    centerX:(lx+rx+1)/2-scan.width/2,
+    bottomY:by+1-scan.height/2
+  };
+}
+async function loadCar(id) {
+  if(loadedCars.has(id)) return loadedCars.get(id);
+  if(loadingCars.has(id)) return loadingCars.get(id);
+  const root = getReferenceAssetRoot(id);
+  const task = Promise.all([
+    asset(root + '/' + id + '_stock_body.png'),
+    asset(root + '/' + id + '_stock_paint.png')
+  ]).then(([body,paint]) => {
+    const out = {body,paint};
+    loadedCars.set(id,out);
+    loadingCars.delete(id);
+    if(active().id===id) draw();
+    return out;
+  }).catch(err => {
+    loadingCars.delete(id);
+    if(active().id===id) setStatus(err.message);
+    return null;
+  });
+  loadingCars.set(id,task);
+  return task;
+}
+function drawWheel(cx, ground, sourceDiameter, scale) {
+  const diameter = sourceDiameter * scale;
+  const cy = ground - diameter/2;
+  ctx.beginPath(); ctx.arc(cx,cy,diameter*0.505,0,Math.PI*2);
+  ctx.fillStyle='#020304'; ctx.fill();
+  if(!wheel) return;
+  const ws = diameter / wheelMetrics.diameter;
+  const ix = cx - wheelMetrics.centerX*ws;
+  const iy = ground - wheelMetrics.bottomY*ws;
+  ctx.drawImage(wheel, ix-wheel.width*ws/2, iy-wheel.height*ws/2, wheel.width*ws, wheel.height*ws);
+  if(guides) {
+    ctx.beginPath(); ctx.arc(cx,cy,diameter*0.515,0,Math.PI*2);
+    ctx.strokeStyle='rgba(102,236,240,.85)';ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx-11,cy);ctx.lineTo(cx+11,cy);ctx.moveTo(cx,cy-11);ctx.lineTo(cx,cy+11);ctx.stroke();
+  }
+}
+function sceneTransform() {
+  const loaded = loadedCars.get(active().id);
+  const width = loaded?.body?.width || 1300;
+  const height = loaded?.body?.height || 440;
+  const scale = Math.min(1.015, (preview.width - 108) / width, (preview.height-110)/height);
+  return {right:preview.width-58, ground:preview.height-69, scale, width,height};
+}
+function draw() {
+  ctx.clearRect(0,0,preview.width,preview.height);
+  const back = ctx.createLinearGradient(0,0,0,preview.height);
+  back.addColorStop(0,'#15293b');back.addColorStop(1,'#07121e');
+  ctx.fillStyle=back;ctx.fillRect(0,0,preview.width,preview.height);
+  const t=sceneTransform(), current=cfg();
+  const road=t.ground+5;
+  ctx.fillStyle='#1e2b36'; ctx.fillRect(0,road,preview.width,preview.height-road);
+  ctx.strokeStyle='#41647b'; ctx.lineWidth=2; ctx.setLineDash([14,10]);
+  ctx.beginPath();ctx.moveTo(0,t.ground);ctx.lineTo(preview.width,t.ground);ctx.stroke();ctx.setLineDash([]);
+  const diameter = reference.wheelDiameters[current.size];
+  for(const axle of ['rear','front']) {
+    drawWheel(t.right+current[axle+'X']*t.scale,t.ground,diameter,t.scale);
+  }
+  const images=loadedCars.get(active().id);
+  if(images) {
+    const bx=t.right-t.width*t.scale;
+    const by=t.ground-t.height*t.scale+current.bodyRenderOffsetY*t.scale;
+    ctx.imageSmoothingEnabled=false;
+    if(showPaint) ctx.drawImage(images.paint,bx,by,t.width*t.scale,t.height*t.scale);
+    ctx.drawImage(images.body,bx,by,t.width*t.scale,t.height*t.scale);
+    if(guides) {
+      ctx.strokeStyle='rgba(255,205,123,.4)';ctx.lineWidth=2;ctx.setLineDash([9,8]);
+      ctx.strokeRect(bx,by,t.width*t.scale,t.height*t.scale);ctx.setLineDash([]);
+    }
+  } else {
+    ctx.fillStyle='#e4f1fa';ctx.font='bold 23px system-ui';
+    ctx.fillText('Loading ' + active().label + '…',45,68);
+  }
+  if(guides) {
+    ctx.fillStyle='#9ac2ca';ctx.font='17px monospace';
+    ctx.fillText('WHEEL GROUND / PNG BOTTOM',30,t.ground-12);
+    ctx.strokeStyle='#ffcc78';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(t.right,t.ground-380);ctx.lineTo(t.right,t.ground+14);ctx.stroke();
+    ctx.fillStyle='#ffcc78';ctx.fillText('RIGHT ANCHOR',t.right-171,38);
+  }
+  ctx.fillStyle='#f7d28d';ctx.font='bold 21px system-ui';
+  ctx.fillText((current.bodyRenderOffsetY>0?'+':'') + current.bodyRenderOffsetY + ' px BODY Y',28,38);
+}
+function exportObject() {
+ const cars = {};
+ for(const car of carSpecs) {
+  const c=configs[car.id];
+  cars[car.gameId]={
+   assetStem:car.id,
+   bodyRenderOffsetY:c.bodyRenderOffsetY,
+   rearX:c.rearX,frontX:c.frontX,size:c.size
+  };
+ }
+ return {
+   tool:'TOKYO_SHIFT_BODY_AND_WHEEL_ALIGNMENT_V1',
+   units:'source PNG pixels; positive bodyRenderOffsetY lowers body; rearX/frontX measured from PNG right edge',
+   masterScale:reference.masterScale,
+   wheelDiameters:reference.wheelDiameters,
+   cars
+ };
+}
+function refreshExport() {document.getElementById('exportData').value=JSON.stringify(exportObject(),null,2);}
+function setStatus(s){document.getElementById('status').textContent=s;}
+function renderControls() {
+  const c=cfg(), car=active();
+  document.getElementById('carName').textContent=car.label+' // '+(selected+1)+' OF 8';
+  document.getElementById('offsetValue').textContent=(c.bodyRenderOffsetY>0?'+':'')+c.bodyRenderOffsetY;
+  document.getElementById('offsetDirection').textContent=c.bodyRenderOffsetY>0?'Body lowered (wheels fixed)':c.bodyRenderOffsetY<0?'Body raised (wheels fixed)':'Original body position';
+  document.getElementById('offsetSlider').value=c.bodyRenderOffsetY;
+  document.getElementById('rearX').textContent=c.rearX;
+  document.getElementById('frontX').textContent=c.frontX;
+  document.getElementById('smallTyre').classList.toggle('on',c.size==='S');
+  document.getElementById('largeTyre').classList.toggle('on',c.size==='L');
+  document.getElementById('guidesBtn').classList.toggle('on',guides);
+  document.getElementById('paintBtn').classList.toggle('on',showPaint);
+  document.getElementById('guidesBtn').textContent=guides?'GUIDES ON':'GUIDES OFF';
+  document.getElementById('paintBtn').textContent=showPaint?'PAINT ON':'PAINT OFF';
+  modelsEl.innerHTML='';
+  carSpecs.forEach((item,index)=>{
+    const b=document.createElement('button');
+    b.type='button'; b.className=index===selected?'on':'';
+    const changed=configs[item.id].bodyRenderOffsetY!==0 ||
+      configs[item.id].rearX!==reference.cars[item.id].rearX ||
+      configs[item.id].frontX!==reference.cars[item.id].frontX ||
+      configs[item.id].size!==reference.cars[item.id].size;
+    b.innerHTML=item.label+(changed?' ●':'')+'<br><em>'+item.note+'</em>';
+    b.addEventListener('click',()=>choose(index)); modelsEl.appendChild(b);
+  });
+  refreshExport();
+  draw();
+}
+function choose(index) {
+ selected=(index+carSpecs.length)%carSpecs.length;
+ drag=null;
+ renderControls();
+ loadCar(active().id);
+}
+function updateOffset(value, refresh=true){
+ cfg().bodyRenderOffsetY=clamp(Math.round(value),-120,120);
+ persist();
+ if(refresh) renderControls();
+ else {
+  document.getElementById('offsetValue').textContent=(cfg().bodyRenderOffsetY>0?'+':'')+cfg().bodyRenderOffsetY;
+  document.getElementById('offsetSlider').value=cfg().bodyRenderOffsetY;
+  draw();
+ }
+}
+document.getElementById('prevBtn').onclick=()=>choose(selected-1);
+document.getElementById('nextBtn').onclick=()=>choose(selected+1);
+document.getElementById('guidesBtn').onclick=()=>{guides=!guides;renderControls();};
+document.getElementById('paintBtn').onclick=()=>{showPaint=!showPaint;renderControls();};
+document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>updateOffset(cfg().bodyRenderOffsetY+Number(b.dataset.move))));
+document.getElementById('offsetSlider').oninput=e=>updateOffset(Number(e.target.value));
+document.getElementById('resetCar').onclick=()=>{
+ const id=active().id, baseline=reference.cars[id];
+ configs[id]={bodyRenderOffsetY:0,rearX:baseline.rearX,frontX:baseline.frontX,size:baseline.size};
+ persist();renderControls();
+};
+function adjustAxle(axle,delta){cfg()[axle+'X']=clamp(cfg()[axle+'X']+delta,-1400,0);persist();renderControls();}
+document.getElementById('rearMinus').onclick=()=>adjustAxle('rear',-2);
+document.getElementById('rearPlus').onclick=()=>adjustAxle('rear',2);
+document.getElementById('frontMinus').onclick=()=>adjustAxle('front',-2);
+document.getElementById('frontPlus').onclick=()=>adjustAxle('front',2);
+document.getElementById('smallTyre').onclick=()=>{cfg().size='S';persist();renderControls();};
+document.getElementById('largeTyre').onclick=()=>{cfg().size='L';persist();renderControls();};
+document.getElementById('resetAll').onclick=()=>{
+ if(!confirm('Reset all eight car calibrations?')) return;
+ for(const car of carSpecs) {
+  const b=reference.cars[car.id];
+  configs[car.id]={bodyRenderOffsetY:0,rearX:b.rearX,frontX:b.frontX,size:b.size};
+ }
+ persist();renderControls();setStatus('All calibrations reset to current game values.');
+};
+document.getElementById('copyBtn').onclick=async()=>{
+ refreshExport();
+ const field=document.getElementById('exportData'); const str=field.value;
+ try{await navigator.clipboard.writeText(str);setStatus('COPIED! Paste the complete settings into our ChatGPT conversation.');}
+ catch(e){
+  field.focus();field.select();
+  try{
+   if(document.execCommand('copy')) setStatus('COPIED! Paste the settings into our chat.');
+   else setStatus('Select and copy the highlighted JSON, then paste it into our chat.');
+  }catch(err){setStatus('Clipboard unavailable. Manually copy the text from the box.');}
+ }
+};
+preview.addEventListener('pointerdown',e=>{
+ const box=preview.getBoundingClientRect();
+ drag={y:e.clientY,start:cfg().bodyRenderOffsetY,ratio:preview.height/box.height/sceneTransform().scale};
+ preview.setPointerCapture(e.pointerId);
+});
+preview.addEventListener('pointermove',e=>{
+ if(!drag) return;
+ updateOffset(drag.start+(e.clientY-drag.y)*drag.ratio,false);
+});
+function finishDrag() {if(!drag)return;drag=null;renderControls();}
+preview.addEventListener('pointerup',finishDrag);
+preview.addEventListener('pointercancel',finishDrag);
+document.addEventListener('keydown',e=>{
+ if(document.activeElement===document.getElementById('exportData'))return;
+ if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+  e.preventDefault();updateOffset(cfg().bodyRenderOffsetY+(e.key==='ArrowUp'?-1:1));
+ }
+});
+asset('./assets/wheels/wheel_5spoke.png').then(im=>{wheel=im;wheelMetrics=measureWheel(im);draw();})
+ .catch(()=>setStatus('Wheel preview PNG did not load. Body adjustments can still be copied.'));
+renderControls();loadCar(active().id);
+</script>
+</body>
+</html>
