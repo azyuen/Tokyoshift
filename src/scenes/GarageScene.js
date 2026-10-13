@@ -5338,7 +5338,7 @@ export default class GarageScene extends Phaser.Scene {
     // Retired bodykit assets are hidden across every garage.
     const crewControlLift = this.crewMode ? -32 : 0;
     add(this.add.text(SIDE.x + 23, SIDE.y + 382,
-      'PAINT / RIMS / BODYKIT\nOSHIAGE CUSTOM WORKS', {
+      'EXTERIOR CUSTOMISATION\nNOW AT OSHIAGE CUSTOM WORKS', {
       fontFamily: BODY_FONT,
       fontSize: '10px',
       color: '#89aebf',
