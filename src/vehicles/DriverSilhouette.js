@@ -13,8 +13,8 @@ const finite = (value, fallback) => value != null && Number.isFinite(Number(valu
  */
 export function resolveDriverSeat(visualOrCar = {}, sourceWidth = 0, sourceHeight = 0) {
   const visual = visualOrCar?.visual || visualOrCar || {};
-  const width = Math.max(1, finite(sourceWidth, visual.referenceCanvasWidth || 1200));
-  const height = Math.max(1, finite(sourceHeight, visual.referenceCanvasHeight || 500));
+  const width = Math.max(1, finite(sourceWidth > 0 ? sourceWidth : null, visual.referenceCanvasWidth || 1200));
+  const height = Math.max(1, finite(sourceHeight > 0 ? sourceHeight : null, visual.referenceCanvasHeight || 500));
   const authored = visual.driverFace;
   const override = visual.driverSeat || {};
   const originX = visual.referenceStandard ? 1 : 0.5;
