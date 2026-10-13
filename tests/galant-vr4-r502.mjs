@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cars, carOrder } from '../src/data/cars.js';
+// Ownership module imports its own versioned module URL; inspect that same instance.
+import { cars as registeredCars } from '../src/data/cars.js?v=20261011-r479';
 import { engines } from '../src/data/engines.js';
 import { getCarAssetPaths } from '../src/vehicles/CarAppearance.js';
 import { STANDARD_CAR_REFERENCE as ref, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS } from '../src/data/carReferenceGeometry.js';
@@ -34,8 +36,8 @@ test('legacy Evolution III becomes Galant VR-4, including all copied and crew ca
   });
   registerOwnedCarInstances(['evo3','evo3__copy2']);
   assert.equal(getBaseCarId('evo3__copy2'),'evo3');
-  assert.match(cars['evo3__copy2'].name,/Galant/);
-  assert.equal(cars['evo3__copy2'].powerKW,176);
+  assert.match(registeredCars['evo3__copy2'].name,/Galant/);
+  assert.equal(registeredCars['evo3__copy2'].powerKW,176);
 });
 
 test('Ref2 body and paint are matched PNGs and ground-normalised for two small tyres',()=>{
