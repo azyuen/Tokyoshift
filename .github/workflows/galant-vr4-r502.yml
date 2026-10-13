@@ -1,0 +1,44 @@
+name: Galant VR-4 replacement R502
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/cars.js'
+      - 'src/data/engines.js'
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/carMagazine.js'
+      - 'src/data/carDriverFaceAnchors.js'
+      - 'tests/galant-vr4-r502.mjs'
+      - 'tests/car-reference-geometry.mjs'
+      - 'tests/car-reference-rollout.mjs'
+      - 'tests/driver-face-anchors.mjs'
+      - '.github/workflows/galant-vr4-r502.yml'
+  pull_request:
+    paths:
+      - 'src/data/cars.js'
+      - 'src/data/engines.js'
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/carMagazine.js'
+      - 'src/data/carDriverFaceAnchors.js'
+      - 'tests/galant-vr4-r502.mjs'
+
+jobs:
+  galant:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check src/data/cars.js
+          node --check src/data/engines.js
+          node --check src/data/carReferenceGeometry.js
+          node --check src/data/carMagazine.js
+          node --check src/data/carDriverFaceAnchors.js
+          node --check tests/galant-vr4-r502.mjs
+      - name: Verify replacement and legacy saves
+        run: |
+          node --test tests/galant-vr4-r502.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs
