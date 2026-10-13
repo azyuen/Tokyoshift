@@ -139,6 +139,12 @@ export function createDefaultGameState(options = {}) {
       total: 0,
       lastAtWin: 0,
     },
+    oshiageLocation: 'oshiageDrivingSchool',
+    oshiageEliteVenue: 'underpass',
+    oshiageEliteCooldowns: {},
+    oshiageEliteLastResult: null,
+    oshiageInstructorMet: false,
+    oshiageBasicLessonComplete: false,
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
       autoMarket: false,
@@ -1119,6 +1125,15 @@ export function normaliseState(input = {}) {
               .filter(([, count]) => count > 0)
           )
         : {},
+    oshiageLocation: ['oshiageDrivingSchool', 'oshiageCustomWorks', 'oshiageSkytreeMeet'].includes(input.oshiageLocation)
+      ? input.oshiageLocation : base.oshiageLocation,
+    oshiageEliteVenue: ['underpass', 'plaza'].includes(input.oshiageEliteVenue) ? input.oshiageEliteVenue : 'underpass',
+    oshiageEliteCooldowns: Object.fromEntries(['underpass', 'plaza'].map(id => [id,
+      Math.max(0, Number(input.oshiageEliteCooldowns?.[id]) || 0)])),
+    oshiageEliteLastResult: input.oshiageEliteLastResult && typeof input.oshiageEliteLastResult === 'object'
+      ? input.oshiageEliteLastResult : null,
+    oshiageInstructorMet: Boolean(input.oshiageInstructorMet),
+    oshiageBasicLessonComplete: Boolean(input.oshiageBasicLessonComplete),
     centralTokyoLocation: String(input.centralTokyoLocation || base.centralTokyoLocation),
     centralTokyoUnlocks: {
       ...base.centralTokyoUnlocks,
@@ -1251,6 +1266,12 @@ export function snapshotRegistry(registry) {
       total: 0,
       lastAtWin: 0,
     },
+    oshiageLocation: registry.get('oshiageLocation') || 'oshiageDrivingSchool',
+    oshiageEliteVenue: registry.get('oshiageEliteVenue') || 'underpass',
+    oshiageEliteCooldowns: registry.get('oshiageEliteCooldowns') || {},
+    oshiageEliteLastResult: registry.get('oshiageEliteLastResult') || null,
+    oshiageInstructorMet: Boolean(registry.get('oshiageInstructorMet')),
+    oshiageBasicLessonComplete: Boolean(registry.get('oshiageBasicLessonComplete')),
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
