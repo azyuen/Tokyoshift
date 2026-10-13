@@ -64,12 +64,10 @@ export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
   }];
 }));
 
-export function getVisualModCatalog(carId) {
-  const id = String(carId || '');
-  const baseCarId = cars[id]?.ownedBaseCarId || cars[id]?.crewBaseCarId;
-  return VISUAL_MOD_CATALOG[id] ||
-    (baseCarId ? VISUAL_MOD_CATALOG[baseCarId] : null) ||
-    null;
+// Retired R501: the old bodykit PNGs do not fit the Ref2 sprites.
+// Keep source catalogue above for later re-authoring, but offer no kits now.
+export function getVisualModCatalog(_carId) {
+  return null;
 }
 
 export function hasVisualMods(carId) {
@@ -81,53 +79,12 @@ export function getVisualModSlotIds(carId) {
   return VISUAL_MOD_SLOT_ORDER.filter(id => Boolean(slots[id]));
 }
 
-export function preloadVisualModAssets(scene, cacheBust = '', carIds = null) {
-  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
-  const queued = new Set();
-  const allowed = Array.isArray(carIds) && carIds.length
-    ? new Set(carIds.map(id => {
-        const raw = String(id);
-        return cars[raw]?.ownedBaseCarId || cars[raw]?.crewBaseCarId || raw;
-      }))
-    : null;
-
-  Object.entries(VISUAL_MOD_CATALOG).forEach(([carId, catalog]) => {
-    if (allowed && !allowed.has(carId)) return;
-    Object.values(catalog.slots).forEach(slot => {
-      slot.options.forEach(option => {
-        option.layers.forEach(layer => {
-          if (queued.has(layer.textureKey) || scene.textures.exists(layer.textureKey)) return;
-          queued.add(layer.textureKey);
-          scene.load.image(layer.textureKey, layer.path + suffix);
-        });
-      });
-    });
-  });
-
-  return queued.size;
+export function preloadVisualModAssets(_scene, _cacheBust = '', _carIds = null) {
+  return 0;
 }
 
-export function preloadVisualModSelectionAssets(
-  scene,
-  carId,
-  source = {},
-  cacheBust = ''
-) {
-  const suffix = cacheBust ? '?v=' + encodeURIComponent(cacheBust) : '';
-  const selected = normaliseVisualMods(carId, source);
-  const queued = new Set();
-
-  getVisualModSlotIds(carId).forEach(slotId => {
-    const option = getVisualModOption(carId, slotId, selected[slotId]);
-    (option?.layers || []).forEach(layer => {
-      if (!layer?.textureKey || !layer?.path) return;
-      if (scene.textures.exists(layer.textureKey) || queued.has(layer.textureKey)) return;
-      queued.add(layer.textureKey);
-      scene.load.image(layer.textureKey, layer.path + suffix);
-    });
-  });
-
-  return queued.size;
+export function preloadVisualModSelectionAssets(_scene, _carId, _source = {}, _cacheBust = '') {
+  return 0;
 }
 
 export function getVisualModOptions(carId, slotId) {
@@ -139,23 +96,10 @@ export function getVisualModOption(carId, slotId, optionId) {
   return options.find(option => option.id === optionId) || options[0] || null;
 }
 
-export function normaliseVisualMods(carId, source = {}) {
-  const input = source?.visualMods || source || {};
-  const legacyBodyKit = {
-    street: 'bodykit1',
-    rocketBunny: 'bodykit2',
-    streetAero: 'bodykit1',
-    trackAero: 'bodykit2',
-  };
-  const result = {};
-  VISUAL_MOD_SLOT_ORDER.forEach(slotId => {
-    const requested = String(input?.[slotId] || 'stock');
-    const migrated = slotId === 'bodyKit' ? (legacyBodyKit[requested] || requested) : requested;
-    result[slotId] = getVisualModOptions(carId, slotId).some(option => option.id === migrated)
-      ? migrated
-      : 'stock';
-  });
-  return result;
+export function normaliseVisualMods(_carId, _source = {}) {
+  // Existing bodykit selections are overridden to stock. Custom wheel IDs
+  // are entirely separate and intentionally remain unchanged.
+  return { spoiler: 'stock', bodyKit: 'stock', hoodScoop: 'stock' };
 }
 
 export function hasNonStockVisualMods(carId, source = {}) {
@@ -167,89 +111,21 @@ export function hasNonStockVisualMods(carId, source = {}) {
 // renderer. Cars without a kit-specific calibration keep their stock visual.
 export function getVisualModWheelVisual(car, source = {}) {
   const visual = car?.visual || {};
-  const selected = normaliseVisualMods(car?.id, source);
-  const option = getVisualModOption(car?.id, 'bodyKit', selected.bodyKit);
-  const geometry = option?.wheelGeometry
-    ? { ...visual, ...option.wheelGeometry }
-    : { ...visual };
   const customWheel = getWheelOption(source?.customWheelId);
-
   return customWheel
-    ? {
-        ...geometry,
-        wheelKey: customWheel.textureKey,
-        wheelPath: customWheel.path,
-      }
-    : geometry;
+    ? { ...visual, wheelKey: customWheel.textureKey, wheelPath: customWheel.path }
+    : { ...visual };
 }
 
-export function getVisualModChangeCost(carId, currentSource = {}, pendingSource = {}) {
-  const current = normaliseVisualMods(carId, currentSource);
-  const pending = normaliseVisualMods(carId, pendingSource);
-  return getVisualModSlotIds(carId).reduce((sum, slotId) => {
-    if (current[slotId] === pending[slotId]) return sum;
-    return sum + Math.max(0, Number(getVisualModOption(carId, slotId, pending[slotId])?.price || 0));
-  }, 0);
+export function getVisualModChangeCost(_carId, _currentSource = {}, _pendingSource = {}) {
+  return 0;
 }
 
 // Assets are authored PNGs; there are no generated textures to prepare.
 export function ensureVisualModTextures() {}
 
-export function createVisualModLayers(
-  scene, car, state = {},
-  {
-    paintColor = 0xffffff,
-    visualMods = null,
-    bodyLayers = null,
-    depth = 0,
-  } = {}
-) {
-  // Only nine STOCK silhouettes have been converted to the new shared
-  // bottom-right canvas. Original kit PNGs still live in assets/Cars and
-  // cannot be placed on that canvas safely; retain purchased selections in
-  // saved state, but don't draw misregistered legacy artwork over Ref cars.
-  if (car?.visual?.referenceStandard) return [];
-  const selected = normaliseVisualMods(car?.id, visualMods || state);
-  const option = getVisualModOption(car?.id, 'bodyKit', selected.bodyKit);
-  if (!option?.replacementBody || !bodyLayers?.primary) return [];
-
-  const [paintLayer, outlineLayer] = option.layers;
-  // A missing upload must leave the stock car visible, not create an empty shell.
-  if (!scene.textures.exists(paintLayer.textureKey) ||
-      !scene.textures.exists(outlineLayer.textureKey)) return [];
-
-  const base = bodyLayers.primary;
-  const makeLayer = (layer, depthOffset) => {
-    // A stock-canvas kit is not permitted to introduce any independent image
-    // transform. This includes offsets, scale, origin, rotation and flipping.
-    const transform = option.layoutMode === 'stock-canvas' ? null : option.transform;
-    const unit = base.displayWidth / 1200;
-    const source = scene.textures.get(layer.textureKey).getSourceImage();
-    const width = transform
-      ? source.width * transform.scaleX * unit
-      : base.displayWidth;
-    const height = transform
-      ? source.height * transform.scaleY * unit
-      : base.displayHeight;
-    const x = base.x + (base.flipX ? -1 : 1) * (transform?.offsetX || 0) * unit;
-    const y = base.y + (transform?.offsetY || 0) * unit;
-    const image = scene.add.image(x, y, layer.textureKey)
-      .setOrigin(base.originX, base.originY)
-      .setRotation(base.rotation)
-      .setFlipX(base.flipX)
-      .setFlipY(base.flipY)
-      .setDisplaySize(width, height)
-      .setDepth(depth + depthOffset)
-      .setAlpha(1)
-      .setBlendMode(Phaser.BlendModes.NORMAL);
-    if (layer.paintMode === 'body') {
-      image.setTint(paintColor);
-      image.setData('carPaintLayer', true);
-    }
-    return image;
-  };
-
-  const pair = [makeLayer(paintLayer, 0), makeLayer(outlineLayer, 0.025)];
-  (bodyLayers.objects || []).forEach(object => object?.setVisible?.(false));
-  return pair;
+// All production renderers call this helper. One central no-op guarantees
+// legacy kits never obscure newly anchored stock cars, including in races.
+export function createVisualModLayers(_scene, _car, _state = {}, _options = {}) {
+  return [];
 }
