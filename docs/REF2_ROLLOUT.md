@@ -4,6 +4,6 @@
 
 All corrected assets retain their authored pixels, 0.32 master scale and bottom-right origin. Small tyres use 182 source pixels; medium uses the existing 194-pixel L preset. Axle X positions were measured from combined body/paint openings at the tyre centre line.
 
-R34 exception: Ref2/r34 body and paint are byte-identical to the legacy 1200x500 assets. They are loaded from Ref2 but retain legacy fit until corrected artwork is supplied.
+R498: R34 now uses the shared 0.32 scale and bottom-right anchor on its existing 1200x500 canvas, as requested. Medium (194px) tyres use axle offsets -922/-248. The preview shows extra clearance above the tyres; artwork is unchanged.
 
 New engine curves are game approximations calibrated to the requested peak kW, with separate engine IDs, boost, rev limits, mass, gearing and drivetrain traction. Auto Market prices follow existing game pricing, not real-world valuations. Existing regional progression is unchanged.

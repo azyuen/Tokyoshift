@@ -41,7 +41,7 @@ function textureScene(car) {
 }
 
 test('reference game IDs use their correct Ref/Ref2 stock PNG pairs', () => {
-  assert.equal(migrated.length, 26);
+  assert.equal(migrated.length, 27);
   for (const id of carOrder) {
     const car = cars[id];
     const paths = getCarAssetPaths(car);
@@ -53,7 +53,7 @@ test('reference game IDs use their correct Ref/Ref2 stock PNG pairs', () => {
       assert.equal(paths.overlay, null, id + ' does not ask for a redundant third PNG');
     } else {
       assert.notEqual(car.visual.referenceStandard, true, id);
-      assert.equal(paths.body, (id === 'r34' ? 'assets/Cars/Ref2/' : 'assets/Cars/') + car.visual.assetStem + '_stock_body.png', id);
+      assert.equal(paths.body, 'assets/Cars/' + car.visual.assetStem + '_stock_body.png', id);
     }
   }
 });

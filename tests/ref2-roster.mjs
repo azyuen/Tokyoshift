@@ -50,8 +50,8 @@ test('Ref2 paths resolve with exact filename case and matching PNG canvases', ()
       return [data.readUInt32BE(16),data.readUInt32BE(20)];
     });
     assert.deepEqual(dimensions[0],dimensions[1],id);
-    if(id!=='r34') assert.deepEqual(dimensions[0],[car.visual.referenceCanvasWidth,car.visual.referenceCanvasHeight],id);
-    else assert.notEqual(car.visual.referenceStandard,true,'unrevised R34 remains legacy fit');
+    assert.deepEqual(dimensions[0],[car.visual.referenceCanvasWidth,car.visual.referenceCanvasHeight],id);
+    assert.equal(car.visual.referenceStandard,true,id);
   }
 });
 test('new cars support stock and upgraded performance without missing engine configs', () => {

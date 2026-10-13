@@ -1792,14 +1792,6 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   });
 }
 
-// Ref2 R34 is byte-identical to the legacy 1200x500 pair. Preserve its fit.
-Object.assign(cars.r34.visual, {
-  modularAssetRoot: 'assets/Cars/Ref2',
-  bodyPath: 'assets/Cars/Ref2/r34_stock_body.png',
-  paintPath: 'assets/Cars/Ref2/r34_stock_paint.png',
-  overlayPath: null,
-});
-
 // Driver anchors are SOURCE-PNG window coordinates. They are applied after
 // all stock geometry migrations, so reference and legacy cars can keep their
 // separate image-origin conventions without changing wheel fit or scaling.
