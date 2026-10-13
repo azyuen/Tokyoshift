@@ -224,6 +224,47 @@ export const TRAVEL_REGIONS = {
     ],
   },
 
+  OSHIAGE: {
+    id: 'OSHIAGE',
+    label: 'OSHIAGE',
+    role: 'SKYTREE / SERVICES',
+    level: 'SPECIAL',
+    unlockWins: 3,
+    baseCost: 900,
+    mapX: 0.56,
+    mapY: 0.10,
+    description: 'Skytree underground meet, a local driving school and exterior customisation.',
+    locations: [
+      {
+        id: 'oshiageDrivingSchool',
+        label: 'DRIVING SCHOOL',
+        difficulty: 'ACADEMY',
+        kind: 'oshiageSchool',
+        costOffset: 0,
+        available: true,
+        note: 'Learn the basics and advanced driving principles with Sayaka.',
+      },
+      {
+        id: 'oshiageCustomWorks',
+        label: 'CUSTOM WORKS',
+        difficulty: 'PAINT',
+        kind: 'oshiageCustom',
+        costOffset: 100,
+        available: true,
+        note: 'Paint service at Canal Yard; future bodywork services.',
+      },
+      {
+        id: 'oshiageSkytreeMeet',
+        label: 'SKYTREE MEET',
+        difficulty: 'ELITE',
+        kind: 'oshiageMeet',
+        costOffset: 200,
+        available: true,
+        note: 'Bonus meet beneath Skytree; elite racing awaits Shinjuku.',
+      },
+    ],
+  },
+
   CENTRAL_TOKYO: {
     id: 'CENTRAL_TOKYO',
     label: 'CENTRAL TOKYO',
@@ -402,6 +443,7 @@ export const TRAVEL_REGION_ORDER = [
   'TATSUMI',
   'SHIBUYA',
   'CENTRAL_TOKYO',
+  'OSHIAGE',
   'SHINJUKU',
   'YOKOHAMA',
   'DAIKOKU',
@@ -478,7 +520,7 @@ export function isTravelLocationUnlocked(source, locationId) {
     return found.kind === 'home' || found.kind === 'garageUpgrade';
   }
 
-  if (found.regionId === 'CENTRAL_TOKYO') {
+  if (found.regionId === 'CENTRAL_TOKYO' || found.regionId === 'OSHIAGE') {
     return isTravelRegionUnlocked(source, found.regionId);
   }
 
@@ -493,6 +535,7 @@ export function getTravelLocationUnlockLabel(source, locationId) {
   if (!found) return 'LOCKED';
   if (isDevTravelProfile(source)) return 'OPEN';
   if (found.available === false) return 'COMING SOON';
+  if (found.regionId === 'OSHIAGE') return getTravelRegionUnlockLabel(source, 'OSHIAGE');
 
   const locationIndex = found.region.locations.findIndex(item => item.id === found.id);
   return getCareerLocationStatus(source, found.regionId, locationIndex).label;
