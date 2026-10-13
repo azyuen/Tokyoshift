@@ -231,8 +231,8 @@ export const TRAVEL_REGIONS = {
     level: 'SPECIAL',
     unlockWins: 3,
     baseCost: 900,
-    mapX: 0.56,
-    mapY: 0.10,
+    mapX: 0.476,
+    mapY: 0.158,
     description: 'Skytree underground meet, a local driving school and exterior customisation.',
     locations: [
       {
@@ -242,7 +242,7 @@ export const TRAVEL_REGIONS = {
         kind: 'oshiageSchool',
         costOffset: 0,
         available: true,
-        note: 'Learn the basics and advanced driving principles with Sayaka.',
+        note: 'Meet the mysterious Lady Instructor for practical driving lessons.',
       },
       {
         id: 'oshiageCustomWorks',
@@ -260,7 +260,7 @@ export const TRAVEL_REGIONS = {
         kind: 'oshiageMeet',
         costOffset: 200,
         available: true,
-        note: 'Bonus meet beneath Skytree; elite racing awaits Shinjuku.',
+        note: 'Two Elite street showdowns unlocked after all seven regional championships.',
       },
     ],
   },
@@ -272,8 +272,8 @@ export const TRAVEL_REGIONS = {
     level: 'SPECIAL',
     unlockWins: 0,
     baseCost: 1200,
-    mapX: 0.405,
-    mapY: 0.105,
+    mapX: 0.360,
+    mapY: 0.158,
     description: 'Used cars, collector cars and pro drag racing.',
     locations: [
       {
