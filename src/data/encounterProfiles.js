@@ -167,6 +167,30 @@ export const LOCATION_ENCOUNTERS = {
   },
 };
 
+// Ref2 cars are available to *all* rival drivers, not just the player market.
+// Keep authored per-location favourites, but add district-specific new models
+// so the matchmaker actually encounters them at meaningful weight. Physical
+// performance ratios and local upgrade ceilings still decide eligible rivals.
+export const NEW_MEET_MODELS_BY_REGION = Object.freeze({
+  ODAIBA: ['240z', 'crx', 'dc2', 'familia', 'ej1'],
+  SHINAGAWA: ['180sx', 'st205', 'familia', 'b4rsk', 'a60', 's2000'],
+  TATSUMI: ['st205', 'eclipse', 'evo5', 'evo6', 'b4rsk', 'z32'],
+  SHIBUYA: ['180sx', 's2000', 'z33', 'z32', 'jzx100', 'eclipse'],
+  SHINJUKU: ['jzx100', 'z33', 'z32', 'jza80', 'r34', 'evo6'],
+  YOKOHAMA: ['r34', '3000gt', 'jzx100', 'b4rsk', 'z33', 'evo5'],
+  DAIKOKU: ['3000gt', 'jzx100', 'z33', 'r34', 'b4rsk', 'evo6', 'nsx'],
+});
+
+export function getMeetPreferredCars(locationId, authoredCars = []) {
+  const region = Object.keys(NEW_MEET_MODELS_BY_REGION).find(
+    id => String(locationId || '').toUpperCase().startsWith(id)
+  );
+  return [...new Set([
+    ...(Array.isArray(authoredCars) ? authoredCars : []),
+    ...(NEW_MEET_MODELS_BY_REGION[region] || []),
+  ])];
+}
+
 export function getEncounterProfile(locationId, fallbackDifficulty = 'MED') {
   const location = LOCATION_ENCOUNTERS[locationId] || {};
   const difficulty = location.difficulty || fallbackDifficulty || 'MED';
@@ -178,7 +202,7 @@ export function getEncounterProfile(locationId, fallbackDifficulty = 'MED') {
     difficulty,
     ratingSlots: [...(location.ratingSlots || base.ratingSlots)],
     stakeRange: [...(location.stakeRange || base.stakeRange)],
-    likelyCars: [...(location.likelyCars || base.likelyCars)],
+    likelyCars: getMeetPreferredCars(locationId, location.likelyCars || base.likelyCars),
   };
 }
 
