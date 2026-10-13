@@ -72,14 +72,16 @@ test('calibrated paint and body move together without changing wheel ground cont
   }
 });
 
-test('decal origins match the shifted PNG centre at any render scale', () => {
+test('decals preserve historical shop Y coordinates and share the calibrated body shift', () => {
   for(const [gameId,[stem,y]] of Object.entries(approved)) {
     const car=cars[gameId];
     for(const scale of [.32,.77]) {
       const [w,h]=REFERENCE_CAR_CANVAS[stem];
       const {x, y:ay}=getCarDecalAnchor(car,{x:850,y:530,scale,sourceWidth:w,sourceHeight:h});
       close(x,850-w*scale*.5);
-      close(ay,530-h*scale*.5+y*scale);
+      // Saved tuner-shop y placements use the reference PNG's bottom edge.
+      // Do not shift them by half a canvas, or old decals jump up into windows.
+      close(ay,530+y*scale);
     }
   }
   assert.deepEqual(getCarDecalAnchor({visual:{}},{
