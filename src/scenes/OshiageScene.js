@@ -1,5 +1,7 @@
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
+import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261013-r494';
+import { getOshiageEliteProgress, getOshiageEliteOpponent, getOshiageEliteRemainingMs, OSHIAGE_ELITE_COOLDOWN_MS, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261013-r496';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
@@ -9,7 +11,7 @@ import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
-  PAINT_PRESETS, hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor,
+  PAINT_PRESETS, hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
   getCarBodyTextureKey, getCarBodyScaleForWidth, createCarBodyLayers, setCarBodyPaint,
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -29,7 +31,7 @@ const LOCATIONS = Object.freeze({
   oshiageCustomWorks: { label: 'OSHIAGE CUSTOM WORKS', stem: 'oshiage_shop' },
   oshiageDrivingSchool: { label: 'OSHIAGE DRIVING SCHOOL', stem: 'oshiage_school' },
 });
-const LESSONS = Object.freeze([
+const LEGACY_LESSONS = Object.freeze([
   { title: 'LAUNCH CONTROL', pose: 'explaining',
     text: 'Start with a repeatable launch. Add throttle smoothly while releasing the clutch. Too much torque too early can cost more time than a modest launch.',
     hint: 'Watch the first few metres, not just the engine note.' },
@@ -59,11 +61,14 @@ export default class OshiageScene extends Phaser.Scene {
   constructor() { super('OshiageScene'); }
 
   init(data = {}) {
-    this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId : 'oshiageDrivingSchool';
+    this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId :
+      (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
     this.room = data.room === 'paint' ? 'paint' : 'outside';
     if (this.activeLocationId !== 'oshiageCustomWorks') this.room = 'outside';
     this.lessonIndex = 0;
-    this.meetAlternative = false;
+    this.meetAlternative = this.registry.get('oshiageEliteVenue') === 'plaza';
+    this.paintMode = 'preset';
+    this.customPaintColor = null;
     this.pendingPaint = null;
     this.paintBusy = false;
     this.paintObjects = [];
@@ -78,7 +83,7 @@ export default class OshiageScene extends Phaser.Scene {
         ? 'oshiage_skytree02'
         : (LOCATIONS[locationId] || LOCATIONS.oshiageDrivingSchool).stem;
     const cleanPhase = phase === 'day' ? 'day' : 'night';
-    return { key: 'oshiage_' + stem + '_' + cleanPhase, path: ROOT + stem + '_' + cleanPhase + '.png?v=20261013-r494' };
+    return { key: 'oshiage_' + stem + '_' + cleanPhase, path: ROOT + stem + '_' + cleanPhase + '.png?v=20261013-r496' };
   }
 
   queueImage(key, path) {
@@ -103,15 +108,27 @@ export default class OshiageScene extends Phaser.Scene {
     }
     if (this.activeLocationId === 'oshiageDrivingSchool') {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
-        queued += this.queueImage('oshiageSayaka_' + pose, SAYAKA + pose + '.png?v=20261013-r494');
+        queued += this.queueImage('oshiageSayaka_' + pose, SAYAKA + pose + '.png?v=20261013-r496');
+      }
+    }
+    if (this.activeLocationId === 'oshiageSkytreeMeet' && getOshiageEliteProgress(this.registry).complete) {
+      const opponent = getOshiageEliteOpponent(this.registry, this.meetAlternative ? 'plaza' : 'underpass');
+      const rival = opponent && characters[opponent.characterId];
+      if (rival?.visual?.spriteKey && rival.visual?.path) {
+        queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
+          getCharacterAssetUrl(rival.visual.path));
+      }
+      if (opponent && cars[opponent.carId]) {
+        queued += preloadCarAppearanceAssets(this, { [opponent.carId]: cars[opponent.carId] }, '20261013-r496');
+        queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
       }
     }
     if (this.room === 'paint') {
       const { car, state } = this.selectedCar();
       if (car) {
-        queued += preloadCarAppearanceAssets(this, { [car.id]: car }, '20261013-r494');
+        queued += preloadCarAppearanceAssets(this, { [car.id]: car }, '20261013-r496');
         queued += preloadCarWheel(this, car, state);
-        queued += preloadVisualModSelectionAssets(this, car.id, state, '20261013-r494');
+        queued += preloadVisualModSelectionAssets(this, car.id, state, '20261013-r496');
       }
     }
     return queued;
@@ -128,6 +145,13 @@ export default class OshiageScene extends Phaser.Scene {
     playMusic('meet');
     this.drawShell();
     this.renderView();
+    if (this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
+      this.time.delayedCall(420, () => this.showInstructorCutscene());
+    }
+    this.time.addEvent({ delay: 5000, loop: true, callback: () => {
+      if (this.activeLocationId === 'oshiageSkytreeMeet' && !this.paintBusy &&
+          !this.instructorCutsceneOpen) this.renderView();
+    } });
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
       const phase = getWorldPhase();
       if (phase === this.phase) return;
