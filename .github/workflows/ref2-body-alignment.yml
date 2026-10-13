@@ -1,0 +1,45 @@
+name: Ref2 body and decal alignment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/cars.js'
+      - 'src/vehicles/CarAppearance.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'tests/ref2-body-alignment.mjs'
+      - 'tests/car-reference-geometry.mjs'
+      - '.github/workflows/ref2-body-alignment.yml'
+  pull_request:
+    paths:
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/cars.js'
+      - 'src/vehicles/CarAppearance.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'tests/ref2-body-alignment.mjs'
+      - 'tests/car-reference-geometry.mjs'
+
+jobs:
+  calibrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/data/carReferenceGeometry.js
+          node --check src/data/cars.js
+          node --check src/vehicles/CarAppearance.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/TunerShopScene.js
+          node --check tests/ref2-body-alignment.mjs
+      - name: Validate car geometry, calibration and decal anchors
+        run: node --test tests/ref2-body-alignment.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs
