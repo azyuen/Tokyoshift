@@ -62,6 +62,7 @@ async function startTokyoShift() {
       CrewScene,
       DynoScene,
       CentralTokyoScene,
+      OshiageScene,
       MeetScene,
       RaceScene,
       FourLaneTestScene,
@@ -74,12 +75,13 @@ async function startTokyoShift() {
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261011-r482'),
       loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261011-r482'),
       loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261011-r482'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261012-r490'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261013-r494'),
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261011-r482'),
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261011-r482'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261011-r482'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261012-champaudit'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261013-tatsumi-r492'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261013-r494'),
+      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261013-r494'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20261013-r494'),
       loadScene('RACE', './scenes/RaceScene.js?v=20261013-r493'),
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261012-champaudit'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261011-r482'),
@@ -122,7 +124,7 @@ async function startTokyoShift() {
 
     const allScenes = [
       BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene,
-      CrewSpaceScene, CrewScene, DynoScene, CentralTokyoScene, MeetScene, RaceScene,
+      CrewSpaceScene, CrewScene, DynoScene, CentralTokyoScene, OshiageScene, MeetScene, RaceScene,
       FourLaneTestScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene,
     ];
     // Phaser starts its first scene. Put the test scene first only when asked.
