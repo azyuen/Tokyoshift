@@ -44,7 +44,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r480';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -52,7 +52,7 @@ import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js?v=20261013-r496';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   isCrewUnlocked,
