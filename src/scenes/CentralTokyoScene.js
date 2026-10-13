@@ -52,7 +52,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -93,7 +93,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js?v=20261013-r496';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
