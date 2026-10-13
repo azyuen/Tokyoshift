@@ -1520,8 +1520,8 @@ export default class TunerShopScene extends Phaser.Scene {
       bodyLayers,
     });
 
-    // Use the same sticker origin as the race and garage, including the
-    // source-canvas half-height for right-anchored Ref/Ref2 PNGs.
+    // Correct for each reference PNG's real canvas width while preserving
+    // existing saved tuner-shop Y placements (and moving with the car body).
     const decalAnchor = getCarDecalAnchor(car, {
       x: car.visual?.referenceStandard ? drawX : x,
       y: displayY,
