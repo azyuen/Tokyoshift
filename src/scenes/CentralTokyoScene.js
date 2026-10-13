@@ -2,7 +2,7 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-champaudit';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champaudit';
-import { saveProTransaction } from '../state/GameState.js?v=20261011-r482';
+import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
@@ -36,7 +36,7 @@ import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261011-r479';
+} from '../data/visualMods.js?v=20261014-r501';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
@@ -51,7 +51,7 @@ import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261011-r482';
+} from '../state/GameState.js?v=20261014-r501';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import {
   getGarageDeliveryOptions,
@@ -93,7 +93,7 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261013-r496';
+} from '../data/centralTokyo.js?v=20261014-r501';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
