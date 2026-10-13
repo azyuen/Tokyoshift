@@ -100,6 +100,14 @@ export default class OshiageScene extends Phaser.Scene {
     return { id, car, state };
   }
 
+  getEliteRival(venueId) {
+    const series = this.registry.get('oshiageEliteSeries');
+    const continuing = series?.active && series.venueId === venueId;
+    return getOshiageEliteOpponent(this.registry, venueId,
+      continuing ? Number(series.startedAt || Date.now()) : Date.now(),
+      continuing ? Number(series.roundIndex || 0) : 0);
+  }
+
   queueViewAssets() {
     let queued = 0;
     for (const phase of ['day', 'night']) {
@@ -112,7 +120,7 @@ export default class OshiageScene extends Phaser.Scene {
       }
     }
     if (this.activeLocationId === 'oshiageSkytreeMeet' && getOshiageEliteProgress(this.registry).complete) {
-      const opponent = getOshiageEliteOpponent(this.registry, this.meetAlternative ? 'plaza' : 'underpass');
+      const opponent = this.getEliteRival(this.meetAlternative ? 'plaza' : 'underpass');
       const rival = opponent && characters[opponent.characterId];
       if (rival?.visual?.spriteKey && rival.visual?.path) {
         queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
@@ -401,8 +409,12 @@ export default class OshiageScene extends Phaser.Scene {
     const venueId = this.meetAlternative ? 'plaza' : 'underpass';
     const venue = OSHIAGE_ELITE_VENUES[venueId];
     const remaining = getOshiageEliteRemainingMs(this.registry, venueId);
-    const { car: playerCar } = this.selectedCar();
-    const opponent = progress.complete ? getOshiageEliteOpponent(this.registry, venueId) : null;
+    const { id: selectedCarId, car: playerCar } = this.selectedCar();
+    const series = this.registry.get('oshiageEliteSeries');
+    const continuing = Boolean(series?.active && series.venueId === venueId);
+    const busyElsewhere = Boolean(series?.active && series.venueId !== venueId);
+    const roundIndex = continuing ? Math.max(0, Math.min(2, Number(series.roundIndex || 0))) : 0;
+    const opponent = progress.complete ? this.getEliteRival(venueId) : null;
     const rival = opponent ? characters[opponent.characterId] : null;
     this.sideHeader('SKYTREE ELITE MEETS', venue.label + ' // ' +
       (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'));
@@ -434,7 +446,8 @@ export default class OshiageScene extends Phaser.Scene {
         rival?.name || 'TOKYO ELITE RACER', { pixel: true, size: '9px', wrap: SIDE.w - 40 });
       this.addText(SIDE.x + 20, SIDE.y + 253,
         'CAR // ' + String(cars[opponent?.carId]?.shortName || 'JDM BUILD').toUpperCase() +
-        '\nSKILL // ELITE 5/5\nPRIZE // ' + MONEY(venue.prizeCash),
+        '\nSKILL // ELITE 5/5\nROUND // ' + (roundIndex + 1) + ' / 3' +
+        '\nGRAND PRIZE // ' + MONEY(venue.prizeCash),
         { size: '13px', wrap: SIDE.w - 40, color: '#d9eff7', spacing: 9 });
       this.addText(SIDE.x + 20, SIDE.y + 389,
         venueId === 'plaza'
@@ -442,21 +455,26 @@ export default class OshiageScene extends Phaser.Scene {
           : 'WIN: 2 CAR COUPONS',
         { pixel: true, size: '8px', wrap: SIDE.w - 40, color: '#ffe394' });
       this.addText(SIDE.x + 20, SIDE.y + 461,
-        remaining > 0
-          ? 'COOLDOWN // ' + Math.floor(remaining / 60000) + ':' +
-            String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0')
-          : playerCar ? 'READY // ONE SHOWDOWN' : 'SELECT YOUR OWN CAR',
+        continuing ? 'STREAK ACTIVE // ROUND ' + (roundIndex + 1) + '/3'
+          : busyElsewhere ? 'FINISH YOUR OTHER SKYTREE STREAK FIRST'
+          : remaining > 0
+            ? 'COOLDOWN // ' + Math.floor(remaining / 60000) + ':' +
+              String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0')
+            : playerCar ? 'READY // THREE-RACE STREAK' : 'SELECT YOUR OWN CAR',
         { pixel: true, size: '9px', wrap: SIDE.w - 40,
           color: remaining > 0 ? '#ffbc96' : '#a8eacb' });
     }
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + 571, SIDE.w - 40, 52,
-      'START ELITE SHOWDOWN', () => this.startEliteRace(venueId), {
-        disabled: !progress.complete || remaining > 0 || !opponent || !playerCar || Boolean(playerCar.crewLoan),
+      continuing ? 'START ROUND ' + (roundIndex + 1) + ' / 3' : 'START ELITE SHOWDOWN',
+      () => this.startEliteRace(venueId), {
+        disabled: !progress.complete || busyElsewhere || (!continuing && remaining > 0) ||
+          !opponent || !playerCar || Boolean(playerCar.crewLoan) ||
+          (continuing && series.playerCarId !== selectedCarId),
         accent: true, size: '8px',
       });
     const last = this.registry.get('oshiageEliteLastResult');
     this.addText(48, 653,
-      'SKYTREE SHOWDOWNS // TWO INDEPENDENT 15-MINUTE COOLDOWNS',
+      'SKYTREE SHOWDOWNS // 3 RACES TO WIN // 15-MINUTE COOLDOWNS',
       { pixel: true, size: '9px', color: '#8feaff' });
     this.button(310, 747, 495, 70, 'SKYTREE UNDERPASS // ELITE', () => this.selectEliteVenue('underpass'),
       { accent: venueId === 'underpass', size: '8px' });
@@ -464,10 +482,11 @@ export default class OshiageScene extends Phaser.Scene {
       { accent: venueId === 'plaza', size: '8px' });
     if (last?.venueId === venueId) {
       this.addText(48, 793,
-        last.playerWon
-          ? 'LAST VICTORY // ' + MONEY(last.cash) +
-            (last.wheelLabel ? ' // ' + last.wheelLabel : ' // +' + last.couponAwards + ' COUPONS')
-          : 'LAST RACE // NO PRIZE // RETURN AFTER COOLDOWN',
+        last.continues ? 'ROUND ' + last.roundNumber + ' / 3 CLEARED // NO PRIZE YET'
+          : last.playerWon
+            ? 'SHOWDOWN WON // ' + MONEY(last.cash) +
+              (last.wheelLabel ? ' // ' + last.wheelLabel : ' // +' + last.couponAwards + ' COUPONS')
+            : 'STREAK BROKEN // NO PRIZE // RETURN AFTER COOLDOWN',
         { size: '10px', color: '#d9e2ef' });
     }
   }
@@ -481,17 +500,31 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   startEliteRace(venueId) {
-    if (this.paintBusy || !getOshiageEliteProgress(this.registry).complete ||
-        getOshiageEliteRemainingMs(this.registry, venueId) > 0) return;
+    if (this.paintBusy || !getOshiageEliteProgress(this.registry).complete) return;
     const { id, car } = this.selectedCar();
     if (!car || car.crewLoan) return;
-    const rival = getOshiageEliteOpponent(this.registry, venueId);
+    const activeSeries = this.registry.get('oshiageEliteSeries');
+    if (activeSeries?.active && activeSeries.venueId !== venueId) return;
+    const continuing = Boolean(activeSeries?.active && activeSeries.venueId === venueId);
+    if (continuing && activeSeries.playerCarId !== id) {
+      this.showOshiageNotice('YOU MUST FINISH THIS THREE-RACE STREAK IN THE SAME CAR');
+      return;
+    }
+    if (!continuing && getOshiageEliteRemainingMs(this.registry, venueId) > 0) return;
+    const rival = this.getEliteRival(venueId);
     const venue = OSHIAGE_ELITE_VENUES[venueId];
     if (!rival || !venue) return;
 
-    const cooldowns = { ...(this.registry.get('oshiageEliteCooldowns') || {}) };
-    cooldowns[venueId] = Date.now() + OSHIAGE_ELITE_COOLDOWN_MS;
-    this.registry.set('oshiageEliteCooldowns', cooldowns);
+    const roundIndex = continuing ? Number(activeSeries.roundIndex || 0) : 0;
+    if (!continuing) {
+      const startedAt = Date.now();
+      const cooldowns = { ...(this.registry.get('oshiageEliteCooldowns') || {}) };
+      cooldowns[venueId] = startedAt + OSHIAGE_ELITE_COOLDOWN_MS;
+      this.registry.set('oshiageEliteCooldowns', cooldowns);
+      this.registry.set('oshiageEliteSeries', {
+        active: true, venueId, roundIndex: 0, playerCarId: id, startedAt,
+      });
+    }
     this.registry.set('oshiageEliteVenue', venueId);
     this.registry.set('oshiageLocation', 'oshiageSkytreeMeet');
     this.registry.set('district', 'OSHIAGE');
@@ -515,7 +548,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'OshiageScene');
     this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', 'OSHIAGE');
-    this.registry.set('raceLocationLabel', venue.label);
+    this.registry.set('raceLocationLabel', venue.label + ' // ' + (roundIndex + 1) + '/3');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
