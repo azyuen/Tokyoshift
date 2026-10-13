@@ -27,5 +27,29 @@ jobs:
           for src in src/scenes/OshiageScene.js src/scenes/CentralTokyoScene.js src/scenes/GarageScene.js src/data/oshiageRims.js src/data/visualMods.js src/data/centralTokyo.js src/state/GameState.js src/data/travelRegions.js; do
             node --check "$src"
           done
-      - name: Verify moved Rims shop and existing Oshiage behaviour
-        run: node --test tests/oshiage-rims-r501.mjs tests/oshiage-r496.mjs
+      - name: Existing Oshiage R496
+        run: node --test tests/oshiage-r496.mjs
+      - name: R501 test 1 - Oshiage displays
+        if: always()
+        run: node --test --test-name-pattern="Oshiage displays" tests/oshiage-rims-r501.mjs
+      - name: R501 test 2 - original rim IDs
+        if: always()
+        run: node --test --test-name-pattern="original rim IDs" tests/oshiage-rims-r501.mjs
+      - name: R501 test 3 - already owned rims
+        if: always()
+        run: node --test --test-name-pattern="already owned rims" tests/oshiage-rims-r501.mjs
+      - name: R501 test 4 - restoring stock rims
+        if: always()
+        run: node --test --test-name-pattern="restoring stock rims" tests/oshiage-rims-r501.mjs
+      - name: R501 test 5 - unaffordable wheels
+        if: always()
+        run: node --test --test-name-pattern="unaffordable wheels" tests/oshiage-rims-r501.mjs
+      - name: R501 test 6 - old bodykits
+        if: always()
+        run: node --test --test-name-pattern="old bodykits" tests/oshiage-rims-r501.mjs
+      - name: R501 test 7 - retired Auto Market
+        if: always()
+        run: node --test --test-name-pattern="retired Auto Market" tests/oshiage-rims-r501.mjs
+      - name: R501 test 8 - Rims is second
+        if: always()
+        run: node --test --test-name-pattern="Rims is second" tests/oshiage-rims-r501.mjs
