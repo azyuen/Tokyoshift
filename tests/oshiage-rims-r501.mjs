@@ -148,10 +148,10 @@ test('Rims is second Custom Works service, with Bodykit disabled and Paint exclu
   assert.match(scene, /buyOrInstallOshiageRim\(this\.registry/);
   assert.match(scene, /restoreStockOshiageRims\(this\.registry/);
   const chassis = garage.slice(garage.indexOf('  activateChassisMode() {'),
-    garage.indexOf('  getPaintJobCost() {'));
+    garage.indexOf('  rebuildSelectedVisualModPreview() {'));
   assert.match(chassis, /CHASSIS_PART_ORDER\.forEach/);
   assert.doesNotMatch(chassis, /chassisPaintMenuButton/);
   assert.doesNotMatch(chassis, /getVisualModSlotIds/);
-  assert.match(garage, /applyPendingPaint\(\) \{\s*return;/);
-  assert.match(garage, /applyPendingVisualMods\(\) \{\s*return;/);
+  assert.doesNotMatch(garage, /applyPendingPaint\(/);
+  assert.doesNotMatch(garage, /applyPendingVisualMods\(/);
 });
