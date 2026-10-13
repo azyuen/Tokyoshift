@@ -22,6 +22,7 @@ import {
   getCarPaintColor,
   normalisePaintColor,
   createCarBodyLayers,
+  getCarDecalAnchor,
   getCarBodyTextureKey,
   preloadCarAppearanceAssets,
   preloadCarWheel,
@@ -4410,21 +4411,29 @@ export default class RaceScene extends Phaser.Scene {
       (v.referenceGroundOffset || 0) +
       Phaser.Math.Clamp(t.accelerationMps2 * 0.8, -2, 4);
     const drawX = v.referenceCar ? x + v.noseOffsetPx : x;
-    const decalX = v.referenceCar ? drawX - v.body.width * v.bodyScale * 0.5 : x;
-    const decalY = v.referenceCar ? bodyY - v.body.height * v.bodyScale * 0.5 : bodyY;
+    // Move shell, paint, decals and driver as one stack; tyres stay grounded.
+    const artOffsetX = Number(c.bodyRenderOffsetX || 0) * v.bodyScale;
+    const artOffsetY = Number(c.bodyRenderOffsetY || 0) * v.bodyScale;
+    const decalAnchor = getCarDecalAnchor(c, {
+      x: drawX,
+      y: bodyY,
+      scale: v.bodyScale,
+      sourceWidth: v.body.width,
+      sourceHeight: v.body.height,
+    });
     (v.bodyObjects || [v.body]).forEach(obj => {
       if (obj?.getData?.('tunerDecalLayer')) {
         const offsetX = Number(obj.getData('tunerDecalOffsetX') || 0);
         const offsetY = Number(obj.getData('tunerDecalOffsetY') || 0);
-        obj.setPosition(decalX + offsetX, decalY + offsetY);
+        obj.setPosition(decalAnchor.x + offsetX, decalAnchor.y + offsetY);
       } else {
-        obj.setPosition(drawX, bodyY);
+        obj.setPosition(drawX + artOffsetX, bodyY + artOffsetY);
       }
     });
     if (v.driverSilhouette) {
       v.driverSilhouette.setPosition(
-        x + v.driverOffsetX,
-        bodyY + v.driverOffsetY
+        x + v.driverOffsetX + artOffsetX,
+        bodyY + v.driverOffsetY + artOffsetY
       );
     }
 
