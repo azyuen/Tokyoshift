@@ -105,12 +105,6 @@ import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
-import {
-  WHEEL_CATALOG,
-  getWheelOption,
-  getOwnedWheelIds,
-  preloadWheelOption,
-} from '../data/wheels.js?v=20260929-r246';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -146,7 +140,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   init(data = {}) {
     this.requestedLocationId = data?.locationId || null;
     const requestedRoom = String(data?.autoMarketRoom || 'new');
-    this.autoMarketRoom = ['new', 'used', 'wheels'].includes(requestedRoom)
+    this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
       ? requestedRoom
       : 'new';
   }
@@ -164,7 +158,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const safePhase = String(phase).toLowerCase() === 'day' ? 'day' : 'night';
 
     if (location?.kind === 'autoMarket') {
-      const room = ['new', 'used', 'wheels'].includes(this.autoMarketRoom)
+      const room = ['new', 'used'].includes(this.autoMarketRoom)
         ? this.autoMarketRoom
         : 'new';
       const roomConfig = location.marketBackgrounds?.[room];
@@ -212,26 +206,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         'normal'
       );
 
-      if (this.autoMarketRoom === 'wheels') {
-        const selectedCarId = this.registry.get('selectedCarId');
-        const selectedCar = cars[selectedCarId];
-        const selectedState = (this.registry.get('carStates') || {})[selectedCarId] || {};
-
-        if (selectedCar) {
-          queued += preloadCarAppearanceAssets(this, { [selectedCarId]: selectedCar }, '20260929-r246');
-          queued += preloadCarWheel(this, selectedCar, selectedState);
-          queued += preloadVisualModSelectionAssets(
-            this,
-            selectedCarId,
-            selectedState,
-            '20260929-r246'
-          );
-        }
-
-        this.getWheelShopListings().forEach(option => {
-          queued += preloadWheelOption(this, option, '20260929-r246');
-        });
-      } else {
+      {
         const listings = this.autoMarketRoom === 'new'
           ? this.getNewCarListings()
           : this.getUsedCarListings();
@@ -329,9 +304,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
     this.autoMarketTransitioning = false;
-    this.wheelPreviewActive = false;
-    this.wheelAnimatePreview = false;
-    this.selectedWheelIndex = 0;
     this.newCarStockPage = 0;
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
@@ -630,8 +602,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (location.kind !== 'autoMarket' || previousLocationId !== location.id) {
       this.autoMarketShowcaseActive = false;
       this.autoMarketAnimateShowcase = false;
-      this.wheelPreviewActive = false;
-      this.wheelAnimatePreview = false;
     }
 
     this.clearContent();
@@ -682,11 +652,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   updateLocationHeaderForPhase(location) {
-    const marketRoomLabel = this.autoMarketRoom === 'new'
-      ? 'NEW CARS'
-      : this.autoMarketRoom === 'wheels'
-        ? 'WHEEL SHOP'
-        : 'USED CARS';
+    const marketRoomLabel = this.autoMarketRoom === 'new' ? 'NEW CARS' : 'USED CARS';
     const phaseLabel = (this.worldPhase || getWorldPhase()).toUpperCase();
 
     this.locationHeader?.setText(
@@ -906,8 +872,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.selectedEventIndex = 0;
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
-    this.wheelPreviewActive = false;
-    this.wheelAnimatePreview = false;
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.renderLocation(this.activeLocationId);
@@ -1341,10 +1305,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           ) * 10000
         );
         const paintColor = colours[seed % colours.length];
-        const kitRoll = (seed >>> 16) % 4;
-        const visualMods = kitRoll === 0
-          ? { bodyKit: 'stock' }
-          : { bodyKit: kitRoll % 2 ? 'bodykit1' : 'bodykit2' };
+        const visualMods = { bodyKit: 'stock' };
         const previewState = {
           ...getAutoMarketBuild(item.carId),
           paintColor,
@@ -1388,24 +1349,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
       : this.getUsedCarListings();
   }
 
-  getWheelShopListings() {
-    const pool = WHEEL_CATALOG.filter(Boolean);
-    if (pool.length <= 10) return [...pool];
-    const cycle = this.getAutoMarketCycle();
-    const dev = Number(this.devCentralRefreshOffsets?.autoMarket || 0);
-    const offset = (cycle * 5 + dev) % pool.length;
-    return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, 10);
-  }
-
   drawAutoMarketRoomTabs() {
     const tabs = [
-      { id: 'new', label: 'NEW' },
-      { id: 'used', label: 'USED' },
-      { id: 'wheels', label: 'WHEELS' },
+      { id: 'new', label: 'NEW CARS' },
+      { id: 'used', label: 'USED CARS' },
     ];
-    const startX = SIDE.x + 26;
-    const width = 96;
-    const gap = 8;
+    const startX = SIDE.x + 32;
+    const width = 140;
+    const gap = 12;
     const y = SIDE.y + 128;
 
     tabs.forEach((tab, index) => {
@@ -1430,13 +1381,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   selectAutoMarketRoom(room) {
-    if (!['new', 'used', 'wheels'].includes(room)) return;
+    if (!['new', 'used'].includes(room)) return;
     if (this.autoMarketTransitioning) return;
 
     this.autoMarketRoom = room;
     this.registry.set('autoMarketRoom', room);
     this.selectedIndex = 0;
-    this.selectedWheelIndex = 0;
     this.newCarStockPage = 0;
     this.autoMarketShowcaseActive = false;
     this.autoMarketAnimateShowcase = false;
@@ -1450,17 +1400,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const subtitles = {
       new: 'FACTORY STOCK // STANDARD PRICE // WHITE · BLACK · GREY',
       used: 'MODIFIED CARS // MIXED PRICES // ONE OFFER PER LISTING',
-      wheels: 'CUSTOM RIMS // STANDARD · TUNER · HERO // TRY BEFORE YOU BUY',
     };
 
     this.drawNavigation('TOKYO AUTO MARKET', subtitles[this.autoMarketRoom]);
     this.drawAutoMarketRoomTabs();
-
-    if (this.autoMarketRoom === 'wheels') {
-      this.drawWheelShop();
-      this.drawAutoMarketStaff();
-      return;
-    }
 
     this.drawMarketCarRoom(this.autoMarketRoom);
     this.drawAutoMarketStaff();
@@ -1524,29 +1467,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
   }
 
-  alignUsedMarketReplacementLayers(objects = [], listing = null) {
-    const bodyKit = String(listing?.previewState?.visualMods?.bodyKit || 'stock');
-    if (bodyKit === 'stock' || objects.length < 2) return;
-
-    const paintLayer = objects[objects.length - 2];
-    const outlineLayer = objects[objects.length - 1];
-    if (
-      !paintLayer?.setPosition ||
-      !outlineLayer?.setPosition ||
-      !paintLayer?.getData?.('carPaintLayer') ||
-      paintLayer.visible === false ||
-      outlineLayer.visible === false
-    ) return;
-
-    outlineLayer
-      .setPosition(paintLayer.x, paintLayer.y)
-      .setOrigin(paintLayer.originX, paintLayer.originY)
-      .setRotation(paintLayer.rotation)
-      .setFlipX(paintLayer.flipX)
-      .setFlipY(paintLayer.flipY)
-      .setDisplaySize(paintLayer.displayWidth, paintLayer.displayHeight);
-  }
-
   drawMarketCarRoom(room) {
     const listings = room === 'new' ? this.getNewCarListings() : this.getUsedCarListings();
     if (!listings.length) return;
@@ -1571,9 +1491,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
         listing.previewState
       );
       const artworkShiftY = room === 'new' ? 14 : 12;
-      if (room === 'used') {
-        this.alignUsedMarketReplacementLayers(objects, listing);
-      }
       this.shiftMarketCarArtwork(objects, artworkShiftY);
 
       objects.forEach(obj => this.addContent(obj));
@@ -2178,350 +2095,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(depth + 3).setInteractive({ useHandCursor: true }));
     cancel.on('pointerdown', close);
   }
-
-  drawWheelShop() {
-    const listings = this.getWheelShopListings();
-    const selectedCarId = this.registry.get('selectedCarId');
-    const car = cars[selectedCarId];
-    const carState = (this.registry.get('carStates') || {})[selectedCarId] || {};
-    const locked = Boolean(car?.tuningLocked || carState.collector || carState.immutable);
-
-    if (!car) {
-      this.addContent(this.add.text(
-        STAGE.x + STAGE.w / 2,
-        STAGE.y + STAGE.h / 2,
-        'NO CAR SELECTED',
-        { fontFamily: PIXEL_FONT, fontSize: '13px', color: '#8aa0ad' }
-      ).setOrigin(0.5).setDepth(20));
-      return;
-    }
-
-    this.selectedWheelIndex = Phaser.Math.Clamp(
-      this.selectedWheelIndex,
-      0,
-      Math.max(0, listings.length - 1)
-    );
-
-    // Keep all ten rack wheels visible even while a wheel is being tried on.
-    // The authored wall is part of the room, not a separate browse screen.
-    const wheelSlots = [
-      [0.276, 0.296], [0.391, 0.296], [0.500, 0.296], [0.611, 0.296], [0.728, 0.296],
-      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.611, 0.452], [0.728, 0.452],
-    ];
-
-    listings.forEach((option, index) => {
-      const slot = wheelSlots[index] || [0.5, 0.35];
-      const x = STAGE.x + STAGE.w * slot[0];
-      const y = STAGE.y + STAGE.h * slot[1];
-      const wheel = this.addContent(this.add.image(
-        x, y, option.textureKey
-      ).setDisplaySize(78, 78).setDepth(18).setInteractive({ useHandCursor: true }));
-
-      const baseScaleX = wheel.scaleX;
-      const baseScaleY = wheel.scaleY;
-      wheel.on('pointerover', () => wheel.setScale(baseScaleX * 1.06, baseScaleY * 1.06));
-      wheel.on('pointerout', () => wheel.setScale(baseScaleX, baseScaleY));
-      wheel.on('pointerdown', () => this.transitionWheelPreview(index));
-    });
-
-    if (this.wheelPreviewActive && listings.length) {
-      const option = listings[this.selectedWheelIndex];
-      const previewState = { ...carState, customWheelId: option.id };
-      const carObjects = this.createCarDisplay(
-        car,
-        STAGE.x + STAGE.w * 0.51,
-        STAGE.y + 350,
-        700,
-        24,
-        getCarPaintColor(carState),
-        null,
-        false,
-        previewState
-      );
-      carObjects.forEach(obj => this.addContent(obj));
-
-      if (this.wheelAnimatePreview) {
-        this.wheelAnimatePreview = false;
-        this.animateMarketCarIn(carObjects);
-      }
-
-      const back = this.addContent(this.add.text(
-        STAGE.x + STAGE.w - 22,
-        STAGE.y + 22,
-        '×  BACK TO WHEEL WALL',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: '#e4f2f8',
-          backgroundColor: '#07111bdd',
-          padding: { x: 11, y: 8 },
-        }
-      ).setOrigin(1, 0).setDepth(42).setInteractive({ useHandCursor: true }));
-      back.on('pointerdown', () => this.transitionWheelPreview(null));
-    }
-
-    this.addContent(this.add.text(
-      CARDS.x + 18,
-      CARDS.y + 16,
-      'WHEEL WALL // 10 AVAILABLE // ROTATES 3H',
-      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8fe7ff' }
-    ).setDepth(33));
-
-    this.addContent(this.add.text(
-      CARDS.x + 18,
-      CARDS.y + 58,
-      'STANDARD  •  TUNER SHOP  •  HERO CAR\n' +
-      'Tap a wheel to fade into a live preview on your current car.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#9ab0bd',
-        fontStyle: '600',
-        lineSpacing: 5,
-      }
-    ).setDepth(33));
-
-    this.addContent(this.add.text(
-      CARDS.x + 18,
-      CARDS.y + 126,
-      'CURRENT CAR  //  ' + car.shortName +
-        (locked ? '  //  COLLECTOR SPEC — WHEELS LOCKED' : ''),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: locked ? '#ff9aa8' : '#62e8c7',
-      }
-    ).setDepth(33));
-
-    this.drawWheelShopSide(
-      this.wheelPreviewActive ? listings[this.selectedWheelIndex] : null,
-      car,
-      carState,
-      locked
-    );
-  }
-
-  transitionWheelPreview(nextIndex = null) {
-    if (this.autoMarketTransitioning) return;
-    this.autoMarketTransitioning = true;
-
-    const fade = this.add.rectangle(780, 420, 1560, 840, 0x020307, 0)
-      .setDepth(180).setInteractive();
-
-    this.tweens.add({
-      targets: fade,
-      alpha: 0.97,
-      duration: 210,
-      ease: 'Quad.easeIn',
-      onComplete: () => {
-        if (nextIndex === null) {
-          this.wheelPreviewActive = false;
-          this.wheelAnimatePreview = false;
-        } else {
-          this.selectedWheelIndex = nextIndex;
-          this.wheelPreviewActive = true;
-          this.wheelAnimatePreview = true;
-        }
-
-        this.renderLocation(this.activeLocationId);
-
-        this.tweens.add({
-          targets: fade,
-          alpha: 0,
-          duration: 280,
-          ease: 'Quad.easeOut',
-          onComplete: () => {
-            fade.destroy();
-            this.autoMarketTransitioning = false;
-          },
-        });
-      },
-    });
-  }
-
-  drawWheelShopSide(option, car, carState, locked) {
-    const y0 = SIDE.y + 224;
-    const ownedWheels = new Set(getOwnedWheelIds(this.registry));
-
-    if (!option) {
-      this.addContent(this.add.text(SIDE.x + 20, y0, 'WHEEL SHOP', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#8cc8ec',
-      }).setDepth(34));
-      this.addContent(this.add.text(
-        SIDE.x + 20,
-        y0 + 46,
-        'Select one of the ten wheels on the wall to try it on ' +
-          car.shortName + '.\n\nNothing changes until you buy or install.',
-        {
-          fontFamily: BODY_FONT,
-          fontSize: '11px',
-          color: '#9ab0bd',
-          fontStyle: '600',
-          lineSpacing: 5,
-          wordWrap: { width: SIDE.w - 40 },
-        }
-      ).setDepth(34));
-      return;
-    }
-
-    const alreadyOwned = ownedWheels.has(option.id);
-    const installed = carState.customWheelId === option.id;
-    const cash = Number(this.registry.get('cash') || 0);
-    const canApply = !locked && (alreadyOwned || cash >= option.price);
-    const tierColor = option.tier === 'HERO'
-      ? '#ff9fc7'
-      : option.tier === 'TUNER'
-        ? '#ffe08a'
-        : '#8fe7ff';
-
-    this.addContent(this.add.text(SIDE.x + 20, y0, option.tier + ' WHEEL', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: tierColor,
-    }).setDepth(34));
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 38, option.label, {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#ffffff',
-      wordWrap: { width: SIDE.w - 40 },
-    }).setDepth(34));
-    this.addContent(this.add.text(
-      SIDE.x + 20,
-      y0 + 86,
-      option.source + '\n384 × 384 STANDARD FIT\n' +
-      (alreadyOwned ? 'IN YOUR WHEEL COLLECTION' : 'NOT YET OWNED'),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '10px',
-        color: '#9ab0bd',
-        fontStyle: '600',
-        lineSpacing: 5,
-      }
-    ).setDepth(34));
-    this.addContent(this.add.text(
-      SIDE.x + 20,
-      y0 + 178,
-      alreadyOwned ? 'OWNED // FREE TO INSTALL' : 'PRICE  ' + money(option.price),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: alreadyOwned ? '#62e8c7' : '#ffe08a',
-      }
-    ).setDepth(34));
-
-    if (carState.customWheelId) {
-      const stockButton = this.addContent(this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
-        SIDE.y + 548,
-        SIDE.w - 36,
-        40,
-        locked ? 0x17181d : 0x1b2028,
-        1
-      ).setStrokeStyle(1, locked ? 0x514f55 : 0x8aa0ad, 1).setDepth(33));
-      this.addContent(this.add.text(
-        SIDE.x + SIDE.w / 2,
-        SIDE.y + 548,
-        locked ? 'COLLECTOR WHEELS LOCKED' : 'RESTORE STOCK WHEELS',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: locked ? '#817d84' : '#d5e1e7',
-        }
-      ).setOrigin(0.5).setDepth(34));
-      if (!locked) {
-        stockButton.setInteractive({ useHandCursor: true });
-        stockButton.on('pointerdown', () => this.restoreStockWheels(car.id));
-      }
-    }
-
-    const apply = this.addContent(this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 608,
-      SIDE.w - 36,
-      48,
-      canApply && !installed ? 0x0d2b29 : 0x17181d,
-      1
-    ).setStrokeStyle(2, canApply && !installed ? 0x62e8c7 : 0x514f55, 1).setDepth(33));
-
-    const label = locked
-      ? 'COLLECTOR CAR // LOCKED'
-      : installed
-        ? 'CURRENTLY INSTALLED'
-        : alreadyOwned
-          ? 'INSTALL'
-          : cash < option.price
-            ? 'NEED ' + money(option.price)
-            : 'BUY & INSTALL // ' + money(option.price);
-
-    this.addContent(this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 608,
-      label,
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: canApply && !installed ? '#f1fffb' : '#817d84',
-      }
-    ).setOrigin(0.5).setDepth(34));
-
-    if (canApply && !installed) {
-      apply.setInteractive({ useHandCursor: true });
-      apply.on('pointerdown', () => {
-        this.showTransactionConfirm({
-          title: alreadyOwned ? 'INSTALL WHEELS' : 'BUY WHEELS',
-          message: alreadyOwned
-            ? 'Install ' + option.label + ' on ' + car.shortName + '?'
-            : 'Buy ' + option.label + ' for ' + money(option.price) +
-              ' and install them on ' + car.shortName + '?',
-          confirmLabel: alreadyOwned ? 'INSTALL' : 'BUY & INSTALL',
-          accent: 0x62e8c7,
-          onConfirm: () => this.buyOrInstallWheel(option, car.id),
-        });
-      });
-    }
-  }
-
-  buyOrInstallWheel(option, carId) {
-    const wheel = getWheelOption(option?.id);
-    const car = cars[carId];
-    if (!wheel || !car) return;
-
-    const states = { ...(this.registry.get('carStates') || {}) };
-    const state = { ...(states[carId] || {}) };
-    if (car.tuningLocked || state.collector || state.immutable) return;
-
-    const ownedWheelIds = getOwnedWheelIds(this.registry);
-    const alreadyOwned = ownedWheelIds.includes(wheel.id);
-    const cash = Number(this.registry.get('cash') || 0);
-    if (!alreadyOwned && cash < wheel.price) return;
-
-    if (!alreadyOwned) {
-      ownedWheelIds.push(wheel.id);
-      this.registry.set('ownedWheelIds', ownedWheelIds);
-      this.registry.set('cash', cash - wheel.price);
-      this.cashText?.setText(money(cash - wheel.price));
-    }
-
-    state.customWheelId = wheel.id;
-    states[carId] = state;
-    this.registry.set('carStates', states);
-    saveSessionState(this.registry);
-    this.renderLocation(this.activeLocationId);
-  }
-
-  restoreStockWheels(carId) {
-    const car = cars[carId];
-    const states = { ...(this.registry.get('carStates') || {}) };
-    const state = { ...(states[carId] || {}) };
-    if (!car || car.tuningLocked || state.collector || state.immutable) return;
-
-    delete state.customWheelId;
-    states[carId] = state;
-    this.registry.set('carStates', states);
-    saveSessionState(this.registry);
-    this.renderLocation(this.activeLocationId);
-  }
-
 
   showTransactionConfirm({
     title = 'CONFIRM',
