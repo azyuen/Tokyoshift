@@ -37,6 +37,9 @@ export const STANDARD_CAR_REFERENCE = {
     ef: { rearX: -877, frontX: -195, size: 'S' },
     ek9: { rearX: -931, frontX: -231, size: 'S' },
     '22b': { rearX: -901, frontX: -253, size: 'S' },
+    // Galant VR-4 replaces the historic Evo III save slot. First-pass source
+    // alignment; the car retains normal 182px tyres and AE86-derived scale.
+    galant: { rearX: -951, frontX: -248, size: 'S' },
     evo6: { rearX: -972, frontX: -280, size: 'S', bodyRenderOffsetY: 1 },
     r32: { rearX: -988, frontX: -268, size: 'L' },
     rx7fc: { rearX: -936, frontX: -260, size: 'L' },
@@ -48,7 +51,7 @@ export const STANDARD_CAR_REFERENCE = {
 export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/Ref';
 
 // Original Ref batch and the corrected Ref2 batch share scale and origin.
-export const REF2_CAR_STEMS = Object.freeze(["r34", "180sx", "240z", "3000gt", "300zx", "350Z", "B4RSK", "a60", "celicaGT4", "chaser", "crx", "dc2", "eclipse", "evo5", "familia", "jza80", "nsx", "s2000"]);
+export const REF2_CAR_STEMS = Object.freeze(["galant", "r34", "180sx", "240z", "3000gt", "300zx", "350Z", "B4RSK", "a60", "celicaGT4", "chaser", "crx", "dc2", "eclipse", "evo5", "familia", "jza80", "nsx", "s2000"]);
 export function getReferenceAssetRoot(stem) {
   return REF2_CAR_STEMS.includes(stem) ? 'assets/Cars/Ref2' : STANDARD_CAR_REFERENCE_ROOT;
 }
@@ -75,6 +78,8 @@ export const REFERENCE_CAR_GAME_IDS = Object.freeze({
   ef: 'ef',
   ek9: 'ek9',
   wrx22b: '22b',
+  // Keep the old ID for all existing owned copies, rival encounters and saves.
+  evo3: 'galant',
   evo6: 'evo6',
   r32: 'r32',
   fc3s: 'rx7fc',
@@ -106,6 +111,7 @@ export const REFERENCE_CAR_CANVAS = Object.freeze({
   ef: [1166, 420],
   ek9: [1166, 420],
   '22b': [1166, 420],
+  galant: [1300, 440], // Ref2 reference pair (normalised target canvas)
   evo6: [1250, 440],
   r32: [1300, 440],
   rx7fc: [1300, 440],
