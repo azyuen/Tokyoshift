@@ -1761,6 +1761,8 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
     referenceCanvasHeight: canvas[1],
     referenceWheelDiameter: diameter,
     referenceWheelSize: geometry.size,
+    // Shift only the car art, not its tyre-ground/wheel registration.
+    bodyRenderOffsetY: Number(geometry.bodyRenderOffsetY || 0),
     modularAssetRoot: assetRoot,
     modularAssetStem: fileStem,
     bodyPath: assetRoot + '/' + fileStem + '_stock_body.png',
