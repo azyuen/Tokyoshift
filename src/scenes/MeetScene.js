@@ -133,6 +133,9 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 
 const TAXI_TO_WORKSHOP_COST = 1000;
+// New regional Ref2 preferences require one fresh roster on entry; afterwards
+// normal three-minute refresh/result persistence continues unchanged.
+const MEET_ROSTER_VERSION = 'R500';
 
 const MODE_DATA = {
   SINGLE: {
@@ -291,7 +294,7 @@ export default class MeetScene extends Phaser.Scene {
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
-        offer?.matchmakingVersion === 'R409' &&
+        offer?.matchmakingVersion === MEET_ROSTER_VERSION &&
         Number.isFinite(Number(offer?.opponentBuildRating)) &&
         offer?.opponentBuildState && typeof offer.opponentBuildState === 'object'
       );
@@ -368,7 +371,7 @@ export default class MeetScene extends Phaser.Scene {
       Number.isFinite(offer?.encounterRating) &&
       offer?.encounterAi &&
       ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
-      offer?.matchmakingVersion === 'R409' &&
+      offer?.matchmakingVersion === MEET_ROSTER_VERSION &&
       Number.isFinite(Number(offer?.opponentBuildRating)) &&
       offer?.opponentBuildState && typeof offer.opponentBuildState === 'object';
 
@@ -4151,7 +4154,7 @@ export default class MeetScene extends Phaser.Scene {
 
         // R409 migrates saved rosters so conquered leaders leave regional Meets
         // and selectable-avatar rivals can safely return using substitute art.
-        matchmakingVersion: 'R409',
+        matchmakingVersion: MEET_ROSTER_VERSION,
         vehicleDifficultyProfile: profile.difficulty,
         allowedBuildRatings: match.allowedBuildRatings,
         buildCeiling: match.buildCeiling,
