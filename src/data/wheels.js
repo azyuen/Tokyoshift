@@ -1,4 +1,4 @@
-// Tokyo Auto Market wheel catalogue.
+// Oshiage Custom Works Rims catalogue (moved from Tokyo Auto Market in R501).
 //
 // Every asset follows the R244 384x384 centred-wheel standard, so any catalogue
 // wheel can use the receiving car's existing WheelFit geometry without bespoke
