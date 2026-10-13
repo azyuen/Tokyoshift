@@ -22,7 +22,7 @@ import {
   getTravelRegionUnlockLabel,
   isTravelLocationUnlocked,
   getTravelLocationUnlockLabel,
-} from '../data/travelRegions.js?v=20261004-r322';
+} from '../data/travelRegions.js?v=20261013-r494';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
@@ -178,7 +178,7 @@ export function showTravelMap(scene, options = {}) {
     if (!crewTravelMode || !location) return false;
 
     const target = getTravelLocation(location.id);
-    if (location.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+    if (location.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
       return true;
     }
 
@@ -194,8 +194,8 @@ export function showTravelMap(scene, options = {}) {
 
   const crewBlockedLabel = location => {
     const target = location ? getTravelLocation(location.id) : null;
-    if (location?.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
-      return 'CREW CAR // CENTRAL TOKYO UNAVAILABLE';
+    if (location?.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
+      return 'CREW CAR // SPECIAL DISTRICTS UNAVAILABLE';
     }
     return 'CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE';
   };
@@ -1067,7 +1067,7 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
-    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
+    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(selectedRegionId);
     const regionOpen = openingTrainMode || (!crewRegionBlocked && (
       selectedRegionId === currentRegionId ||
       isTravelRegionUnlocked(scene.registry, selectedRegionId)
@@ -1251,7 +1251,7 @@ export function showTravelMap(scene, options = {}) {
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const crewRegionBlocked = crewTravelMode && centralTokyo;
+    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId);
     const unlocked = openingTrainMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
     ));
