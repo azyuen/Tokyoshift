@@ -49,14 +49,6 @@ export const CENTRAL_TOKYO_LOCATIONS = {
           night: { key: 'centralTokyoAutoMarketUsedNightBg', path: 'assets/CentralTokyo/tokyo_used_night.png' },
         },
       },
-      wheels: {
-        key: 'centralTokyoAutoMarketWheelsBg',
-        path: 'assets/CentralTokyo/tokyo_auto_market_wheels.png',
-        phases: {
-          day: { key: 'centralTokyoAutoMarketWheelsDayBg', path: 'assets/CentralTokyo/tokyo_wheels_day.png' },
-          night: { key: 'centralTokyoAutoMarketWheelsNightBg', path: 'assets/CentralTokyo/tokyo_wheels_night.png' },
-        },
-      },
     },
     winsRequired: 3,
     championshipsRequired: 0,
