@@ -255,8 +255,13 @@ export default class RaceScene extends Phaser.Scene {
       regionRivals.find(id => id !== this.playerCharacterId)
       || rivalCharacterOrder.find(id => id !== this.playerCharacterId)
       || rivalCharacterOrder[0];
+    // Oshiage recruits opponents across all seven regions, not only its local
+    // regional pool. The encounter was already filtered to exclude player crew.
+    const oshiageEliteOpponent = this.registry.get('selectedRaceCategory') === 'OSHIAGE_ELITE' &&
+      characters[storedOpponentCharacterId]?.rivalEligible !== false &&
+      Boolean(characters[storedOpponentCharacterId]);
     this.opponentCharacterId =
-      regionRivals.includes(storedOpponentCharacterId)
+      oshiageEliteOpponent || regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
@@ -821,6 +826,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('losses', losses + 1);
 
     if (this.raceMode === 'OSHIAGE_ELITE') {
+      this.registry.set('oshiageEliteSeries', null);
       this.registry.set('oshiageEliteLastResult', {
         venueId: this.registry.get('oshiageEliteVenue') || 'underpass',
         playerWon: false, forfeited: true, cash: 0, at: Date.now(),
@@ -2079,9 +2085,13 @@ export default class RaceScene extends Phaser.Scene {
       }
 
       if (settlement.oshiageElite) {
+        if (settlement.oshiageEliteContinues) return {
+          primary: 'ELITE ROUND ' + settlement.roundNumber + ' / 3 WON',
+          secondary: 'STREAK CONTINUES // NO PRIZE UNTIL THREE WINS',
+        };
         return settlement.playerWon
           ? {
-              primary: 'SKYTREE ELITE VICTORY  +¥' + Number(settlement.cashReward || 0).toLocaleString('en-US'),
+              primary: 'SKYTREE SHOWDOWN CHAMPION  +¥' + Number(settlement.cashReward || 0).toLocaleString('en-US'),
               secondary: settlement.wheelLabel
                 ? 'RARE WHEEL UNLOCKED // ' + settlement.wheelLabel.toUpperCase()
                 : String(settlement.couponAwards || 0) + ' × ' +
@@ -3636,15 +3646,21 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     if (this.raceMode === 'OSHIAGE_ELITE') {
-      const venueId = String(this.registry.get('oshiageEliteVenue') || 'underpass');
+      const series = this.registry.get('oshiageEliteSeries');
+      const venueId = String(series?.venueId || this.registry.get('oshiageEliteVenue') || 'underpass');
       const venue = OSHIAGE_ELITE_VENUES[venueId];
-      const prize = venue && playerWon ? getOshiageElitePrize(this.registry, venueId, newWins) : null;
+      const roundIndex = Math.max(0, Math.min(2, Number(series?.roundIndex || 0)));
+      const roundNumber = roundIndex + 1;
+      const completed = Boolean(playerWon && roundNumber >= 3 && series?.active && venue);
+      const continues = Boolean(playerWon && !completed && series?.active && venue);
+      const prize = completed ? getOshiageElitePrize(this.registry, venueId, newWins) : null;
       const cashReward = prize ? Math.max(0, Number(prize.cash || 0)) : 0;
       let couponAwards = 0;
       let couponCarId = null;
       let wheelId = null;
       let wheelLabel = null;
 
+      // No prize until the third consecutive Elite victory, ever.
       if (prize?.wheelId) {
         const ownedWheelIds = [...(this.registry.get('ownedWheelIds') || [])];
         if (!ownedWheelIds.includes(prize.wheelId)) {
@@ -3664,15 +3680,20 @@ export default class RaceScene extends Phaser.Scene {
       const newCash = oldCash + cashReward;
       this.registry.set('cash', newCash);
       this.registry.set('selectedRaceMeetOffer', null);
+      this.registry.set('oshiageEliteSeries', continues
+        ? { ...series, roundIndex: roundIndex + 1 }
+        : null);
       this.registry.set('oshiageEliteLastResult', {
-        venueId, playerWon: Boolean(playerWon), cash: cashReward,
-        couponAwards, couponCarId, wheelId, wheelLabel, at: Date.now(),
+        venueId, roundNumber, continues, completed, playerWon: Boolean(playerWon),
+        cash: cashReward, couponAwards, couponCarId, wheelId, wheelLabel,
+        at: Date.now(),
       });
       saveSessionState(this.registry);
       this.raceSettlement = {
         playerWon, cashDelta: cashReward, cash: newCash, cashReward,
         pinkMessage: '', gameOver: false, oshiageElite: true,
-        venueId, couponAwards, couponCarId, wheelId, wheelLabel,
+        oshiageEliteContinues: continues, oshiageEliteCompleted: completed,
+        roundNumber, venueId, couponAwards, couponCarId, wheelId, wheelLabel,
       };
       return this.raceSettlement;
     }
