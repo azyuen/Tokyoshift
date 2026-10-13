@@ -270,78 +270,289 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 76, subtitle, { size: '12px', color: '#a9c3d1', wrap: SIDE.w - 40 });
   }
 
+  // Three lesson tabs mirror Central Tokyo's stage + side panel + bottom cards.
+  // Only the original hands-on basics are playable until later lessons are authored.
   drawSchool() {
-    const l = LESSONS[this.lessonIndex];
-    const key = 'oshiageSayaka_' + l.pose;
+    const selected = Math.max(0, Math.min(2, this.lessonIndex));
+    const lesson = [
+      { name: 'BASIC DRIVING', pose: 'explaining', cost: 0,
+        title: 'FIRST DRIVING LESSON', detail: 'A proper, consequence-free introduction to clutch, throttle, gears and the standing start. You drive your own car with the real race controls.',
+        hint: 'Lady Instructor: “Keep your clutch in, then shift deliberately.”' },
+      { name: 'ADVANCED SHIFT', pose: 'neutral', cost: 15000,
+        title: 'ADVANCED SHIFT TECHNIQUE', detail: 'Planned practical lessons on shift-point selection, throttle control and using the powerband. Exercises are still in development.',
+        hint: 'Lady Instructor: “You can pay when there is a real lesson to take.”' },
+      { name: 'ELITE LAUNCH', pose: 'concerned', cost: 30000,
+        title: 'ELITE LAUNCH TRAINING', detail: 'A future practical course focused on high-power starts, wheelspin and controlled clutch release. This does not provide an automatic performance upgrade.',
+        hint: 'Lady Instructor: “Every car responds differently.”' },
+    ][selected];
+    const key = 'oshiageSayaka_' + lesson.pose;
     if (this.textures.exists(key)) {
       const source = this.textures.get(key).getSourceImage();
-      const h = 325;
-      const img = this.own(this.add.image(985, 575, key)
-        .setOrigin(0.5, 1).setScale(h / source.height).setMask(this.stageMask).setDepth(12));
+      const img = this.own(this.add.image(947, STAGE.y + STAGE.h - 16, key)
+        .setOrigin(0.5, 1).setScale(345 / source.height)
+        .setMask(this.stageMask).setDepth(14));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.sideHeader('DRIVING ACADEMY', 'Sayaka Fujieda // Instructor');
-    this.addText(SIDE.x + 20, SIDE.y + 145, l.title, { pixel: true, size: '10px', color: '#ffe394', wrap: SIDE.w - 40 });
-    this.addText(SIDE.x + 20, SIDE.y + 205, l.text, { size: '12px', wrap: SIDE.w - 40, color: '#e6f2f7', spacing: 5 });
-    this.addText(SIDE.x + 20, SIDE.y + 420, 'SAYAKA: ' + l.hint, { size: '11px', wrap: SIDE.w - 40, color: '#9de0dd' });
-    this.addText(48, 654, 'DRIVING SCHOOL // CHOOSE A LESSON', { pixel: true, size: '10px', color: '#8feaff' });
-    LESSONS.forEach((lesson, index) => {
-      const x = 168 + index * 273;
-      this.button(x, 738, 252, 61, lesson.title, () => {
-        this.lessonIndex = index;
-        this.renderView();
-      }, { accent: index === this.lessonIndex, size: '7px' });
-    });
-    this.addText(48, 795, 'Instructor briefings // practical driving takes place at the race controls.', {
-      size: '9px', color: '#91aabd',
-    });
+    this.sideHeader('DRIVING SCHOOL', 'Lady Instructor // Oshiage');
+    this.addText(SIDE.x + 20, SIDE.y + 145, lesson.title,
+      { pixel: true, size: '10px', color: '#ffe394', wrap: SIDE.w - 40 });
+    this.addText(SIDE.x + 20, SIDE.y + 215, lesson.detail,
+      { size: '13px', color: '#e2edf4', wrap: SIDE.w - 40, spacing: 5 });
+    this.addText(SIDE.x + 20, SIDE.y + 399, lesson.hint,
+      { size: '11px', color: '#9de0dd', wrap: SIDE.w - 40 });
+    this.addText(SIDE.x + 20, SIDE.y + 494,
+      selected === 0 && this.registry.get('oshiageBasicLessonComplete')
+        ? 'BASIC COURSE // COMPLETED' : selected === 0 ? 'FREE // READY' : 'PAID COURSE // NOT YET AVAILABLE',
+      { pixel: true, size: '8px', color: '#9fe5bb', wrap: SIDE.w - 40 });
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 568, SIDE.w - 40, 47,
+      selected === 0 ? 'START FREE DRIVING LESSON' : 'COURSE IN DEVELOPMENT',
+      () => this.startBasicTutorial(), { disabled: selected !== 0, accent: selected === 0, size: '7px' });
+
+    this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL // TRAINING', { pixel: true, size: '10px', color: '#8feaff' });
+    const labels = ['BASIC // FREE', 'ADVANCED // ¥15,000', 'ELITE // ¥30,000'];
+    labels.forEach((label, i) => this.button(225 + i * 365, 743, 338, 65, label, () => {
+      this.lessonIndex = i;
+      this.renderView();
+    }, { accent: selected === i, size: '8px' }));
+    this.addText(48, 790, 'Paid lessons will only be charged when their exercises are ready.', { size: '9px', color: '#91aabd' });
   }
+
+  showInstructorCutscene() {
+    if (this.activeLocationId !== 'oshiageDrivingSchool' ||
+        this.registry.get('oshiageInstructorMet') || this.instructorCutsceneOpen) return;
+    this.instructorCutsceneOpen = true;
+    const pages = [
+      { who: 'YOU', pose: 'neutral', text: 'Wait... you look familiar. Like someone I know.' },
+      { who: 'LADY INSTRUCTOR', pose: 'concerned', text: "What do you mean?! I'm just a random driving instructor." },
+      { who: 'LADY INSTRUCTOR', pose: 'explaining', text: "Call me Lady Instructor. Now, are you here to learn how to drive, or to ask questions?" },
+    ];
+    let index = 0;
+    let pieces = [];
+    const render = () => {
+      pieces.forEach(o => o?.destroy?.());
+      pieces = [];
+      const add = o => { pieces.push(o); return o; };
+      const p = pages[index];
+      add(this.add.rectangle(780, 420, 1560, 840, 0x020713, 0.83)
+        .setDepth(100).setInteractive());
+      add(this.add.rectangle(780, 470, 960, 475, 0x101926, 0.995)
+        .setStrokeStyle(3, 0x86d8ef).setDepth(101));
+      const key = 'oshiageSayaka_' + p.pose;
+      if (this.textures.exists(key)) {
+        const source = this.textures.get(key).getSourceImage();
+        add(this.add.image(465, 651, key).setOrigin(0.5, 1)
+          .setScale(365 / source.height).setDepth(102));
+      }
+      add(TEXT(this, 687, 322, 'OSHIAGE // FIRST ENCOUNTER',
+        { pixel: true, size: '12px', color: '#91eaff' }).setDepth(103));
+      add(TEXT(this, 687, 377, p.who,
+        { pixel: true, size: '11px', color: '#ffe6a0' }).setDepth(103));
+      add(TEXT(this, 687, 427, p.text,
+        { size: '20px', wrap: 500, color: '#effaff', spacing: 8 }).setDepth(103));
+      const next = add(this.add.rectangle(1110, 620, 230, 54, 0x16363a, 1)
+        .setStrokeStyle(2, 0x79eddd).setDepth(103)
+        .setInteractive({ useHandCursor: true }));
+      add(TEXT(this, 1110, 620, index === pages.length - 1 ? 'VISIT SCHOOL' : 'NEXT  >',
+        { pixel: true, size: '10px', color: '#ebffff' }).setOrigin(0.5).setDepth(104));
+      next.on('pointerdown', () => {
+        if (++index < pages.length) { render(); return; }
+        pieces.forEach(o => o?.destroy?.());
+        pieces = [];
+        this.instructorCutsceneOpen = false;
+        this.registry.set('oshiageInstructorMet', true);
+        saveSessionState(this.registry);
+      });
+    };
+    render();
+  }
+
+  startBasicTutorial() {
+    const { id, car } = this.selectedCar();
+    if (!car || car.crewLoan) {
+      this.showOshiageNotice('SELECT YOUR OWN CAR AT YOUR WORKSHOP BEFORE A LESSON');
+      return;
+    }
+    this.registry.set('selectedCarId', id);
+    this.registry.set('selectedOpponentCarId', id);
+    this.registry.set('selectedOpponentPaintColor', 0xffffff);
+    this.registry.set('selectedOpponentCharacterId', 'emiKanzaki');
+    this.registry.set('selectedOpponentEncounterRating', 2);
+    this.registry.set('selectedOpponentEncounterAi', null);
+    this.registry.set('selectedOpponentBuildState', null);
+    this.registry.set('selectedOpponentDifficulty', 'EASY');
+    this.registry.set('selectedRaceCategory', 'TUTORIAL');
+    this.registry.set('selectedRaceType', 'Standing Start');
+    this.registry.set('selectedRaceDistanceM', 402.336);
+    this.registry.set('selectedRaceDeal', 'TUTORIAL');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'OshiageScene');
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceDistrict', 'OSHIAGE');
+    this.registry.set('raceLocationLabel', 'LADY INSTRUCTOR // BASIC DRIVING');
+    this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
   drawMeet() {
-    const challengeWon = Boolean(
-      (this.registry.get('tunerTeamChallenges') || {}).SHINJUKU?.championEarned ||
-      (this.registry.get('tunerTeamChallenges') || {}).SHINJUKU?.completed
-    );
-    this.sideHeader('SKYTREE ELITE MEET', 'An Oshiage satellite meet. No new regional flag.');
-    this.addText(SIDE.x + 20, SIDE.y + 158, challengeWon
-      ? 'SHINJUKU CLEARED'
-      : 'CHALLENGE LOCKED', {
-      pixel: true, size: '10px', color: challengeWon ? '#62e8c7' : '#ffd68d',
-    });
-    this.addText(SIDE.x + 20, SIDE.y + 222,
-      challengeWon
-        ? 'You have earned access to the elite tier. The cross-region rival roster and race rewards are awaiting their final balance pass.'
-        : 'Defeat the Shinjuku regional championship to qualify for the Skytree Elite challenge. Until then, explore the meet and prepare your cars.',
-      { size: '12px', wrap: SIDE.w - 40, spacing: 5 });
-    this.addText(SIDE.x + 20, SIDE.y + 420,
-      'No pink-slip bets or championship points are awarded here yet.',
-      { size: '10px', wrap: SIDE.w - 40, color: '#95adb8' });
-    this.addText(48, 660, 'OSHIAGE // SKYTREE MEET', { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(183, 741, 270, 57, 'UNDERPASS VIEW', () => {
-      this.meetAlternative = false; this.loadAndRender();
-    }, { accent: !this.meetAlternative });
-    this.button(485, 741, 270, 57, 'SKYTREE PLAZA', () => {
-      this.meetAlternative = true; this.loadAndRender();
-    }, { accent: this.meetAlternative });
-    this.button(853, 741, 278, 57, 'ELITE RACE // SOON', null, { disabled: true });
+    const progress = getOshiageEliteProgress(this.registry);
+    const venueId = this.meetAlternative ? 'plaza' : 'underpass';
+    const venue = OSHIAGE_ELITE_VENUES[venueId];
+    const remaining = getOshiageEliteRemainingMs(this.registry, venueId);
+    const { car: playerCar } = this.selectedCar();
+    const opponent = progress.complete ? getOshiageEliteOpponent(this.registry, venueId) : null;
+    const rival = opponent ? characters[opponent.characterId] : null;
+    this.sideHeader('SKYTREE ELITE MEETS', venue.label + ' // ' +
+      (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'));
+
+    if (!progress.complete) {
+      this.addText(SIDE.x + 20, SIDE.y + 160, 'ELITE SHOWDOWNS LOCKED',
+        { pixel: true, size: '9px', color: '#ffd68d', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 222,
+        'Win the regional championship in all seven districts, including Shinjuku, to race at Skytree. This is separate from the professional drag complex.',
+        { size: '13px', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 400,
+        'CHAMPIONSHIPS  ' + progress.count + ' / ' + progress.required,
+        { pixel: true, size: '9px', color: '#ffe394' });
+    } else {
+      const key = opponent && 'oshiageEliteRival_' + opponent.characterId;
+      if (key && this.textures.exists(key)) {
+        const source = this.textures.get(key).getSourceImage();
+        this.own(this.add.image(267, 567, key).setOrigin(0.5, 1)
+          .setScale(290 / source.height).setMask(this.stageMask).setDepth(11));
+      }
+      if (opponent && cars[opponent.carId] &&
+          this.textures.exists(getCarBodyTextureKey(this, cars[opponent.carId]))) {
+        this.drawOwnedCar(cars[opponent.carId], opponent.buildState,
+          738, 462, 510, opponent.paintColor);
+      }
+      this.addText(SIDE.x + 20, SIDE.y + 154, 'ELITE OPPONENT',
+        { pixel: true, size: '9px', color: '#f6d27b' });
+      this.addText(SIDE.x + 20, SIDE.y + 191,
+        rival?.name || 'TOKYO ELITE RACER', { pixel: true, size: '9px', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 253,
+        'CAR // ' + String(cars[opponent?.carId]?.shortName || 'JDM BUILD').toUpperCase() +
+        '\nSKILL // ELITE 5/5\nPRIZE // ' + MONEY(venue.prizeCash),
+        { size: '13px', wrap: SIDE.w - 40, color: '#d9eff7', spacing: 9 });
+      this.addText(SIDE.x + 20, SIDE.y + 389,
+        venueId === 'plaza'
+          ? 'WIN: RARE WHEEL OR 3 CAR COUPONS'
+          : 'WIN: 2 CAR COUPONS',
+        { pixel: true, size: '8px', wrap: SIDE.w - 40, color: '#ffe394' });
+      this.addText(SIDE.x + 20, SIDE.y + 461,
+        remaining > 0
+          ? 'COOLDOWN // ' + Math.floor(remaining / 60000) + ':' +
+            String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0')
+          : playerCar ? 'READY // ONE SHOWDOWN' : 'SELECT YOUR OWN CAR',
+        { pixel: true, size: '9px', wrap: SIDE.w - 40,
+          color: remaining > 0 ? '#ffbc96' : '#a8eacb' });
+    }
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 571, SIDE.w - 40, 52,
+      'START ELITE SHOWDOWN', () => this.startEliteRace(venueId), {
+        disabled: !progress.complete || remaining > 0 || !opponent || !playerCar || Boolean(playerCar.crewLoan),
+        accent: true, size: '8px',
+      });
+    const last = this.registry.get('oshiageEliteLastResult');
+    this.addText(48, 653,
+      'SKYTREE SHOWDOWNS // TWO INDEPENDENT 15-MINUTE COOLDOWNS',
+      { pixel: true, size: '9px', color: '#8feaff' });
+    this.button(310, 747, 495, 70, 'SKYTREE UNDERPASS // ELITE', () => this.selectEliteVenue('underpass'),
+      { accent: venueId === 'underpass', size: '8px' });
+    this.button(853, 747, 495, 70, 'SKYTREE PLAZA // ELITE', () => this.selectEliteVenue('plaza'),
+      { accent: venueId === 'plaza', size: '8px' });
+    if (last?.venueId === venueId) {
+      this.addText(48, 793,
+        last.playerWon
+          ? 'LAST VICTORY // ' + MONEY(last.cash) +
+            (last.wheelLabel ? ' // ' + last.wheelLabel : ' // +' + last.couponAwards + ' COUPONS')
+          : 'LAST RACE // NO PRIZE // RETURN AFTER COOLDOWN',
+        { size: '10px', color: '#d9e2ef' });
+    }
   }
+
+  selectEliteVenue(id) {
+    if (!OSHIAGE_ELITE_VENUES[id]) return;
+    this.meetAlternative = id === 'plaza';
+    this.registry.set('oshiageEliteVenue', id);
+    saveSessionState(this.registry);
+    this.loadAndRender();
+  }
+
+  startEliteRace(venueId) {
+    if (this.paintBusy || !getOshiageEliteProgress(this.registry).complete ||
+        getOshiageEliteRemainingMs(this.registry, venueId) > 0) return;
+    const { id, car } = this.selectedCar();
+    if (!car || car.crewLoan) return;
+    const rival = getOshiageEliteOpponent(this.registry, venueId);
+    const venue = OSHIAGE_ELITE_VENUES[venueId];
+    if (!rival || !venue) return;
+
+    const cooldowns = { ...(this.registry.get('oshiageEliteCooldowns') || {}) };
+    cooldowns[venueId] = Date.now() + OSHIAGE_ELITE_COOLDOWN_MS;
+    this.registry.set('oshiageEliteCooldowns', cooldowns);
+    this.registry.set('oshiageEliteVenue', venueId);
+    this.registry.set('oshiageLocation', 'oshiageSkytreeMeet');
+    this.registry.set('district', 'OSHIAGE');
+    this.registry.set('selectedCarId', id);
+    this.registry.set('selectedOpponentCarId', rival.carId);
+    this.registry.set('selectedOpponentPaintColor', rival.paintColor);
+    this.registry.set('selectedOpponentCharacterId', rival.characterId);
+    this.registry.set('selectedOpponentEncounterRating', 5);
+    this.registry.set('selectedOpponentEncounterAi', rival.encounterAi);
+    this.registry.set('selectedOpponentDifficulty', 'ELITE');
+    this.registry.set('selectedOpponentBuildRating', 5);
+    this.registry.set('selectedOpponentBuildArchetype', rival.buildState.buildArchetype);
+    this.registry.set('selectedOpponentBuildState', rival.buildState);
+    this.registry.set('selectedRaceCategory', 'OSHIAGE_ELITE');
+    this.registry.set('selectedRaceType', rival.raceType);
+    this.registry.set('selectedRaceDistanceM', rival.distanceM);
+    this.registry.set('selectedRaceDeal', 'OSHIAGE_ELITE');
+    this.registry.set('selectedRaceStake', 0);
+    this.registry.set('selectedRaceSpecialChallenge', false);
+    this.registry.set('selectedRaceMeetOffer', null);
+    this.registry.set('raceReturnScene', 'OshiageScene');
+    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceDistrict', 'OSHIAGE');
+    this.registry.set('raceLocationLabel', venue.label);
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
+  }
+
+  showOshiageNotice(message) {
+    const objs = [];
+    const add = obj => { objs.push(obj); return obj; };
+    add(this.add.rectangle(780, 420, 830, 150, 0x111e2c, 0.98)
+      .setStrokeStyle(2, 0x9de8f0).setDepth(80));
+    add(TEXT(this, 780, 420, message, { pixel: true, size: '9px', wrap: 740,
+      align: 'center', color: '#ecffff' }).setOrigin(0.5).setDepth(81));
+    this.time.delayedCall(1900, () => objs.forEach(obj => obj?.destroy?.()));
+  }
+
   drawCustomWorks() {
-    this.sideHeader('CUSTOM WORKS', 'Exterior finishing // Oshiage');
-    this.addText(SIDE.x + 20, SIDE.y + 164,
-      'PAINT STUDIO', { pixel: true, size: '12px', color: '#e3f1fc' });
-    this.addText(SIDE.x + 20, SIDE.y + 223,
-      'Select a colour, inspect the side-view paint preview and send your own car through the spray bay.',
-      { size: '12px', wrap: SIDE.w - 40 });
-    const tier = Number(this.registry.get('garageTier') || 0);
-    this.addText(SIDE.x + 20, SIDE.y + 390,
-      tier >= 1 ? 'CANAL YARD // PAINT SERVICE OPEN' : 'CANAL YARD REQUIRED FOR PAINTING',
-      { pixel: true, size: '8px', wrap: SIDE.w - 40, color: tier >= 1 ? '#73ead0' : '#ffc18b' });
-    this.addText(48, 660, 'SERVICES // EXTERIOR CUSTOMISATION', { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(225, 736, 350, 66, 'ENTER PAINT STUDIO', () => {
-      this.room = 'paint';
-      this.pendingPaint = null;
-      this.loadAndRender(() => this.rollPaintCarIn());
-    });
-    this.button(665, 736, 350, 66, 'BODY KITS // FUTURE', null, { disabled: true });
+    this.sideHeader('CUSTOM WORKS', 'Exterior customisation // Oshiage');
+    this.addText(SIDE.x + 20, SIDE.y + 154,
+      'CUSTOM PAINT', { pixel: true, size: '11px', color: '#ffe5b0' });
+    this.addText(SIDE.x + 20, SIDE.y + 216,
+      'Choose a factory-style preset for ¥8,000, or blend a unique RGB colour for ¥16,000. Your car is sprayed inside the adjacent paint booth.',
+      { size: '13px', wrap: SIDE.w - 40, color: '#e3f2fa' });
+    this.addText(SIDE.x + 20, SIDE.y + 403,
+      'BODY KITS // COMING SOON\nDECALS // COMING SOON',
+      { pixel: true, size: '8px', color: '#91a8b9', wrap: SIDE.w - 40 });
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 548, SIDE.w - 40, 50,
+      'ENTER PAINT BOOTH  >', () => {
+        this.room = 'paint';
+        this.paintMode = 'preset';
+        this.pendingPaint = null;
+        this.loadAndRender(() => this.rollPaintCarIn());
+      }, { accent: true, size: '8px' });
+    this.addText(48, 654, 'OSHIAGE CUSTOM WORKS // EXTERIOR SERVICES',
+      { pixel: true, size: '10px', color: '#8feaff' });
+    this.button(225, 743, 338, 65, 'CUSTOM PAINT', () => this.showOshiageNotice(
+      'CUSTOM PAINT // PRESETS ¥8,000 // CUSTOM RGB ¥16,000'), { accent: true });
+    this.button(590, 743, 338, 65, 'BODY KIT // SOON', null, { disabled: true });
+    this.button(955, 743, 338, 65, 'DECALS // SOON', null, { disabled: true });
   }
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
