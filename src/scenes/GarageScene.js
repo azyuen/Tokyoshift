@@ -3753,8 +3753,8 @@ export default class GarageScene extends Phaser.Scene {
       bodyLayers,
     });
 
-    // Reference PNGs have a bottom-right origin; decals are normalised around
-    // the visible car's source-canvas centre (including its calibrated Y).
+    // Correct reference-car centre X, but preserve the shop's saved Y origin.
+    // Both axes follow the car art whenever its height calibration changes.
     const decalAnchor = getCarDecalAnchor(car, {
       x: car.visual?.referenceStandard ? drawX : x,
       y: displayY,
