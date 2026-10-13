@@ -39,7 +39,7 @@ import {
   getVisualModWheelVisual,
   createVisualModLayers,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261011-r479';
+} from '../data/visualMods.js?v=20261014-r501';
 import {
   createTunerDecalLayers,
   preloadTunerDecalAssets,
