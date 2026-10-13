@@ -52,7 +52,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -938,6 +938,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (LOCATION_BY_ID[locationId]) {
       this.renderLocation(locationId);
+      return;
+    }
+
+    if (target.regionId === 'OSHIAGE') {
+      this.registry.set('oshiageLocation', locationId);
+      this.registry.set('district', 'OSHIAGE');
+      saveSessionState(this.registry);
+      this.scene.start('OshiageScene', { locationId });
       return;
     }
 
