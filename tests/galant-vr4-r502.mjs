@@ -16,7 +16,7 @@ import { getVehiclePerformance } from '../src/vehicles/VehiclePerformance.js';
 test('legacy Evolution III becomes Galant VR-4, including all copied and crew cars', () => {
   const galant=cars.evo3;
   assert.equal(galant.id,'evo3','save-compatible internal ID is retained');
-  assert.match(galant.name,/Galant VR-4 Evolution/);
+  assert.match(galant.name,/Galant VR-4 Evo/);
   assert.match(galant.shortName,/GALANT VR-4/);
   assert.doesNotMatch(galant.name,/Lancer|Evolution III/);
   assert.equal(carOrder.filter(id=>id==='evo3').length,1);
