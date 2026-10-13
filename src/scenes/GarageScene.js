@@ -44,7 +44,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r480';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -3577,15 +3577,15 @@ export default class GarageScene extends Phaser.Scene {
         onTravel: (locationId, cost) => {
           const travelTarget = getTravelLocation(locationId);
 
-          if (this.crewMode && travelTarget?.regionId === 'CENTRAL_TOKYO') {
-            this.showWorkshopToast('CREW CAR // CENTRAL TOKYO UNAVAILABLE');
+          if (this.crewMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
+            this.showWorkshopToast('CREW CAR // SPECIAL DISTRICTS UNAVAILABLE');
             return;
           }
 
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
           // Normal street meets still require a local car to drive out with.
-          if (!this.selectedCarId && travelTarget?.regionId !== 'CENTRAL_TOKYO') {
+          if (!this.selectedCarId && !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
           }
@@ -3605,7 +3605,17 @@ export default class GarageScene extends Phaser.Scene {
             return;
           }
 
+          if (travelTarget?.regionId === 'OSHIAGE') {
+            this.registry.set('oshiageLocation', locationId);
+            this.registry.set('district', 'OSHIAGE');
+            saveSessionState(this.registry);
+            this.cashText?.setText('¥ ' + Number(cash - cost).toLocaleString('en-US'));
+            this.scene.start('OshiageScene', { locationId });
+            return;
+          }
+
           const destination = getMeetLocation(locationId);
+          if (!destination) return;
           this.registry.set('meetLocation', locationId);
           this.registry.set('district', destination.district);
           saveSessionState(this.registry);
