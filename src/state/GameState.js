@@ -142,6 +142,7 @@ export function createDefaultGameState(options = {}) {
     oshiageLocation: 'oshiageDrivingSchool',
     oshiageEliteVenue: 'underpass',
     oshiageEliteCooldowns: {},
+    oshiageEliteSeries: null,
     oshiageEliteLastResult: null,
     oshiageInstructorMet: false,
     oshiageBasicLessonComplete: false,
@@ -1130,6 +1131,11 @@ export function normaliseState(input = {}) {
     oshiageEliteVenue: ['underpass', 'plaza'].includes(input.oshiageEliteVenue) ? input.oshiageEliteVenue : 'underpass',
     oshiageEliteCooldowns: Object.fromEntries(['underpass', 'plaza'].map(id => [id,
       Math.max(0, Number(input.oshiageEliteCooldowns?.[id]) || 0)])),
+    oshiageEliteSeries: input.oshiageEliteSeries?.active &&
+      ['underpass', 'plaza'].includes(input.oshiageEliteSeries?.venueId) &&
+      [0, 1, 2].includes(Number(input.oshiageEliteSeries?.roundIndex))
+      ? { ...input.oshiageEliteSeries,
+          roundIndex: Number(input.oshiageEliteSeries.roundIndex) } : null,
     oshiageEliteLastResult: input.oshiageEliteLastResult && typeof input.oshiageEliteLastResult === 'object'
       ? input.oshiageEliteLastResult : null,
     oshiageInstructorMet: Boolean(input.oshiageInstructorMet),
@@ -1269,6 +1275,7 @@ export function snapshotRegistry(registry) {
     oshiageLocation: registry.get('oshiageLocation') || 'oshiageDrivingSchool',
     oshiageEliteVenue: registry.get('oshiageEliteVenue') || 'underpass',
     oshiageEliteCooldowns: registry.get('oshiageEliteCooldowns') || {},
+    oshiageEliteSeries: registry.get('oshiageEliteSeries') || null,
     oshiageEliteLastResult: registry.get('oshiageEliteLastResult') || null,
     oshiageInstructorMet: Boolean(registry.get('oshiageInstructorMet')),
     oshiageBasicLessonComplete: Boolean(registry.get('oshiageBasicLessonComplete')),
