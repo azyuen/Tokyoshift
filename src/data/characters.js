@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261010-r459';
+export const CHARACTER_ASSET_VERSION = '20261013-r494';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -1394,7 +1394,7 @@ regionExclusive: true, teamRole: 'core',
     age: 47,
     hometown: 'Shinagawa',
     archetype: 'The Family Friend',
-    roleTags: ['story', 'family-friend', 'opening', 'ginza', 'pro-circuit', 'strategist'],
+    roleTags: ['story', 'family-friend', 'opening', 'oshiage-school', 'ginza', 'pro-circuit', 'strategist'],
     selectable: false,
     rivalEligible: false,
     regionId: null,
@@ -1428,6 +1428,10 @@ regionExclusive: true, teamRole: 'core',
         happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Main/ginza_sayaka_fujieda_happy.png' },
         sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Main/ginza_sayaka_fujieda_sad.png' },
         serious: { key: 'characterSayakaFujiedaCentralSerious', path: 'assets/Characters/Main/ginza_sayaka_fujieda_serious.png' },
+        oshiageNeutral: { key: 'characterSayakaOshiageNeutral', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_neutral.png' },
+        oshiageExplaining: { key: 'characterSayakaOshiageExplaining', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_explaining.png' },
+        oshiageHappy: { key: 'characterSayakaOshiageHappy', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_happy.png' },
+        oshiageConcerned: { key: 'characterSayakaOshiageConcerned', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_concerned.png' },
         track: { key: 'characterSayakaProTrack', path: 'assets/Characters/Main/race_sayaka_fujieda_idle.png' },
         trackHappy: { key: 'characterSayakaProTrackHappy', path: 'assets/Characters/Main/race_sayaka_fujieda_win.png' },
         trackSerious: { key: 'characterSayakaProTrackSerious', path: 'assets/Characters/Main/race_sayaka_fujieda_loss.png' },
