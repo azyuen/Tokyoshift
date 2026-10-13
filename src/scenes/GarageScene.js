@@ -98,6 +98,7 @@ import {
   hasLayeredPaintAssets,
   getCarBodyTextureKey,
   createCarBodyLayers,
+  getCarDecalAnchor,
   setCarBodyPaint,
   preloadCarAppearanceAssets,
   preloadCarWheel,
@@ -3752,9 +3753,18 @@ export default class GarageScene extends Phaser.Scene {
       bodyLayers,
     });
 
-    const decalObjects = createTunerDecalLayers(this, carState, {
-      x: car.visual?.referenceStandard ? drawX - source.width * bodyScale * 0.5 : x,
+    // Reference PNGs have a bottom-right origin; decals are normalised around
+    // the visible car's source-canvas centre (including its calibrated Y).
+    const decalAnchor = getCarDecalAnchor(car, {
+      x: car.visual?.referenceStandard ? drawX : x,
       y: displayY,
+      scale: bodyScale,
+      sourceWidth: source.width,
+      sourceHeight: source.height,
+    });
+    const decalObjects = createTunerDecalLayers(this, carState, {
+      x: decalAnchor.x,
+      y: decalAnchor.y,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
       depth: depth + 1.04,
