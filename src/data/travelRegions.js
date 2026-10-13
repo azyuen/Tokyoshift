@@ -247,11 +247,11 @@ export const TRAVEL_REGIONS = {
       {
         id: 'oshiageCustomWorks',
         label: 'CUSTOM WORKS',
-        difficulty: 'PAINT',
+        difficulty: 'PAINT / RIMS',
         kind: 'oshiageCustom',
         costOffset: 100,
         available: true,
-        note: 'Paint service at Canal Yard; future bodywork services.',
+        note: 'Exclusive paint studio, rotating rim shop, and future bodykits.',
       },
       {
         id: 'oshiageSkytreeMeet',
@@ -285,7 +285,7 @@ export const TRAVEL_REGIONS = {
         available: true,
         centralTokyoUnlock: 'autoMarket',
         timeOfDay: 'night',
-        note: 'Buy pre-modified used cars or sell one of your own.',
+        note: 'Buy new or pre-modified used cars, or sell your current car.',
       },
       {
         id: 'ginzaMotorGallery',
