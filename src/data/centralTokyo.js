@@ -18,6 +18,7 @@ import {
 import {
   getRegionalChampionshipCount,
 } from './careerProgression.js?v=20260929-r272';
+import { areAllCrewBattlesComplete, getCrewBattleWinCount } from './crewSystem.js?v=20261013-r496';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -366,7 +367,8 @@ export function getCentralTokyoEligibility(source) {
       garageTier >= CENTRAL_TOKYO_LOCATIONS.ginza.garageTierRequired,
     drag:
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.drag.championshipsRequired || 0) &&
-      garageTier >= CENTRAL_TOKYO_LOCATIONS.drag.garageTierRequired,
+      garageTier >= CENTRAL_TOKYO_LOCATIONS.drag.garageTierRequired &&
+      areAllCrewBattlesComplete(source),
   };
 }
 
@@ -430,6 +432,10 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
     return championshipsRequired === 1
       ? 'WIN A REGIONAL CHAMPIONSHIP'
       : championshipsRequired + ' REGIONAL CHAMPIONSHIPS REQUIRED';
+  }
+
+  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
+    return 'COMPLETE ALL 7 CREW CHALLENGES (' + getCrewBattleWinCount(source) + '/7)';
   }
 
   if (wins < cfg.winsRequired) {
