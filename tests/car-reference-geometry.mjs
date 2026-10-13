@@ -40,6 +40,8 @@ test('baseline axle coordinates stay exactly as approved', () => {
     rx8: [-986, -246, 'L'],
   };
   for (const [id, [rearX, frontX, size]] of Object.entries(expected)) {
-    assert.deepEqual(reference.cars[id], { rearX, frontX, size });
+    // Body-height calibration must never change the original wheel X/size spec.
+    const { rearX: actualRear, frontX: actualFront, size: actualSize } = reference.cars[id];
+    assert.deepEqual([actualRear, actualFront, actualSize], [rearX, frontX, size]);
   }
 });
