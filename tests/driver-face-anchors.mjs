@@ -29,7 +29,8 @@ test('reference-standard source coordinates use the right and bottom image edge'
 });
 
 test('new regular assets keep old centre-based vehicle origins', () => {
-  const car = cars.evo3.visual;
+  // Evo III is now a Ref2 Galant, so use the remaining legacy Civic EJ1.
+  const car = cars.ej1.visual;
   const seat = resolveDriverSeat(car, 1200, 500);
   nearly(seat.x, (car.driverFace.x - 0.5) * 1200);
   nearly(seat.y, (car.driverFace.y - 0.5) * 500);
