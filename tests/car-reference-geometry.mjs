@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { STANDARD_CAR_REFERENCE as reference } from '../src/data/carReferenceGeometry.js';
+import { STANDARD_CAR_REFERENCE as reference, getReferenceAssetRoot } from '../src/data/carReferenceGeometry.js';
 
 function dimensions(id, layer) {
-  const bytes = readFileSync(new URL('../assets/Cars/Ref/' + id + '_stock_' + layer + '.png', import.meta.url));
+  const bytes = readFileSync(new URL('../' + getReferenceAssetRoot(id) + '/' + id + '_stock_' + layer + '.png', import.meta.url));
   assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG', id + ' ' + layer + ' must be PNG');
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 }
@@ -12,10 +12,10 @@ function dimensions(id, layer) {
 test('AE86 master and two shared wheel diameters match approved calibration', () => {
   assert.equal(reference.masterScale, 0.32);
   assert.deepEqual(reference.wheelDiameters, { S: 182, L: 194 });
-  assert.equal(Object.keys(reference.cars).length, 9);
+  assert.equal(Object.keys(reference.cars).length, 26);
 });
 
-test('all nine reference cars have paired identical-size body/paint canvases and valid right-origin axles', () => {
+test('all reference cars have paired identical-size body/paint canvases and valid right-origin axles', () => {
   for (const [id, car] of Object.entries(reference.cars)) {
     const body = dimensions(id, 'body');
     const paint = dimensions(id, 'paint');

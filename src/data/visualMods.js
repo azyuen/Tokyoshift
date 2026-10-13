@@ -24,7 +24,7 @@ const STOCK_CANVAS_KIT_CARS = new Set(['s2000', 'fc3s', 'rx7fd', 'wrx22b', 'evo3
 // stock/body-kit layers. Do not reintroduce per-kit scaling or offsets: the
 // stock body transform and model-specific wheel geometry are the source of truth.
 const KIT_WHEEL_GEOMETRY = {};
-const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32');
+const KIT_CAR_IDS = carOrder.filter(id => id !== 'r32' && !cars[id].visual?.referenceStandard);
 export const VISUAL_MOD_CATALOG = Object.fromEntries(KIT_CAR_IDS.map(carId => {
   const stem = cars[carId].visual.assetStem;
   const kit = (number, price) => ({

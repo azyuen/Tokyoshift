@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { cars, carOrder } from '../src/data/cars.js';
 import {
   STANDARD_CAR_REFERENCE,
+  getReferenceAssetRoot,
   REFERENCE_CAR_GAME_IDS,
   REFERENCE_CAR_CANVAS,
   REFERENCE_AE86_SOURCE_WIDTH,
@@ -39,20 +40,20 @@ function textureScene(car) {
   };
 }
 
-test('exact nine game IDs use Ref stock PNG pairs; every other original model remains on Cars', () => {
-  assert.equal(migrated.length, 9);
+test('reference game IDs use their correct Ref/Ref2 stock PNG pairs', () => {
+  assert.equal(migrated.length, 26);
   for (const id of carOrder) {
     const car = cars[id];
     const paths = getCarAssetPaths(car);
     const filename = REFERENCE_CAR_GAME_IDS[id];
     if (filename) {
       assert.equal(car.visual.referenceStandard, true, id);
-      assert.equal(paths.body, 'assets/Cars/Ref/' + filename + '_stock_body.png');
-      assert.equal(paths.paint, 'assets/Cars/Ref/' + filename + '_stock_paint.png');
+      assert.equal(paths.body, getReferenceAssetRoot(filename) + '/' + filename + '_stock_body.png');
+      assert.equal(paths.paint, getReferenceAssetRoot(filename) + '/' + filename + '_stock_paint.png');
       assert.equal(paths.overlay, null, id + ' does not ask for a redundant third PNG');
     } else {
       assert.notEqual(car.visual.referenceStandard, true, id);
-      assert.equal(paths.body, 'assets/Cars/' + car.visual.assetStem + '_stock_body.png', id);
+      assert.equal(paths.body, (id === 'r34' ? 'assets/Cars/Ref2/' : 'assets/Cars/') + car.visual.assetStem + '_stock_body.png', id);
     }
   }
 });

@@ -21,6 +21,17 @@ export function getActiveMagazineIssue(source = null) {
 }
 
 export const CAR_MAGAZINE_META = Object.freeze({
+  'z32': { year: 1989, drivetrain: 'RWD' },
+  'z33': { year: 2002, drivetrain: 'RWD' },
+  '240z': { year: 1969, drivetrain: 'RWD' },
+  'crx': { year: 1989, drivetrain: 'FWD' },
+  'dc2': { year: 1998, drivetrain: 'FWD' },
+  'eclipse': { year: 1995, drivetrain: 'AWD' },
+  'familia': { year: 1992, drivetrain: 'AWD' },
+  '180sx': { year: 1996, drivetrain: 'RWD' },
+  'st205': { year: 1994, drivetrain: 'AWD' },
+  'jzx100': { year: 1996, drivetrain: 'RWD' },
+  'b4rsk': { year: 1998, drivetrain: 'AWD' },
   ae86: { year: 1983, drivetrain: 'RWD', fact: 'The AE86 became a cult lightweight because balance and momentum mattered more than outright power.' },
   ef: { year: 1989, drivetrain: 'FWD', fact: 'The EF-era Civic paired low mass with simple mechanicals, making it a natural grassroots tuning platform.' },
   ek9: { year: 1997, drivetrain: 'FWD', fact: 'The EK9 was Honda’s first Civic Type R and built its reputation around a high-revving B16B.' },

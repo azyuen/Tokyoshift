@@ -9,8 +9,8 @@ import { createDriverSilhouette, resolveDriverSeat } from '../src/vehicles/Drive
 const nearly = (a, b) => assert.ok(Math.abs(a - b) < 0.00001, a + ' should equal ' + b);
 
 test('each deployed stock car has its own authored driver-face target', () => {
-  assert.equal(carOrder.length, 18);
-  assert.equal(Object.keys(CAR_DRIVER_FACE_ANCHORS).length, 18);
+  assert.equal(carOrder.length, 29);
+  assert.equal(Object.keys(CAR_DRIVER_FACE_ANCHORS).length, 29);
   for (const id of carOrder) {
     const face = cars[id].visual.driverFace;
     assert.deepEqual(face, CAR_DRIVER_FACE_ANCHORS[id], id);

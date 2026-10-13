@@ -60,6 +60,21 @@ const ENGINE_PROFILES = {
   },
 };
 
+// Reuse the appropriate cylinder/layout synthesis for each Ref2 engine.
+Object.assign(ENGINE_PROFILES, {
+  vg30dett: { ...ENGINE_PROFILES.rb26dett, roughness: 0.04 },
+  vq35de: { ...ENGINE_PROFILES.rb26dett, brightness: 0.94, roughness: 0.05 },
+  l24: ENGINE_PROFILES.rb26dett,
+  b16a_ef8: ENGINE_PROFILES.b16b,
+  b18c: ENGINE_PROFILES.b16b,
+  '4g63t_gsx': ENGINE_PROFILES['4g63t'],
+  bpt: ENGINE_PROFILES['4g63t'],
+  sr20det: ENGINE_PROFILES['4g63t'],
+  '3sgte': ENGINE_PROFILES['4g63t'],
+  '1jzgte': ENGINE_PROFILES.rb26dett,
+  ej208: ENGINE_PROFILES.ej22g,
+});
+
 const DEFAULT_PROFILE = ENGINE_PROFILES['4age'];
 
 let ctx = null;

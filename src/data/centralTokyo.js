@@ -101,6 +101,17 @@ export const CENTRAL_TOKYO_LOCATION_ORDER = [
 ];
 
 export const MARKET_BASE_PRICES = {
+  'z32': 3500000,
+  'z33': 2900000,
+  '240z': 2200000,
+  'crx': 1550000,
+  'dc2': 2800000,
+  'eclipse': 2300000,
+  'familia': 2000000,
+  '180sx': 2400000,
+  'st205': 3200000,
+  'jzx100': 3600000,
+  'b4rsk': 2600000,
   ae86: 950000,
   ef: 1150000,
   ek9: 1450000,
@@ -168,6 +179,17 @@ const MARKET_BUILDS = {
 
 // New dealership entries use the matching drivetrain's street build recipe.
 Object.assign(MARKET_BUILDS, {
+  'z32': MARKET_BUILDS.fc3s,
+  'z33': MARKET_BUILDS.ae86,
+  '240z': MARKET_BUILDS.ae86,
+  'crx': MARKET_BUILDS.ek9,
+  'dc2': MARKET_BUILDS.ek9,
+  'eclipse': MARKET_BUILDS.evo3,
+  'familia': MARKET_BUILDS.evo3,
+  '180sx': MARKET_BUILDS.fc3s,
+  'st205': MARKET_BUILDS.evo3,
+  'jzx100': MARKET_BUILDS.fc3s,
+  'b4rsk': MARKET_BUILDS.evo3,
   ef: MARKET_BUILDS.ek9,
   s2000: MARKET_BUILDS.ek9,
   rx7fd: MARKET_BUILDS.fc3s,
@@ -183,6 +205,17 @@ Object.assign(MARKET_BUILDS, {
 });
 
 export const AUTO_MARKET_LISTINGS = [
+  { carId: 'z32', price: 4200000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'z33', price: 3480000, buildLabel: 'RWD STREET BUILD' },
+  { carId: '240z', price: 2640000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'crx', price: 1860000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'dc2', price: 3360000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'eclipse', price: 2760000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'familia', price: 2400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: '180sx', price: 2880000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'st205', price: 3840000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'jzx100', price: 4320000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'b4rsk', price: 3120000, buildLabel: 'AWD STREET BUILD' },
   { carId: 'ae86', price: 1150000, buildLabel: 'LIGHT STREET BUILD' },
   { carId: 'ef', price: 1400000, buildLabel: 'VTEC STREET BUILD' },
   { carId: 'ek9', price: 1750000, buildLabel: 'STAGE 1 STREET BUILD' },

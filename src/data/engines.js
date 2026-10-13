@@ -1,4 +1,533 @@
+// Ref2 torque curves are game calibrations matched to the requested rated power.
 export const engines = {
+  'vg30dett': {
+  "id": "vg30dett",
+  "name": "VG30DETT",
+  "idleRPM": 850,
+  "redlineRPM": 7000,
+  "limiterRPM": 7200,
+  "inertia": 0.25,
+  "referenceBoostBar": 0.7,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      155
+    ],
+    [
+      2000,
+      250
+    ],
+    [
+      3000,
+      350
+    ],
+    [
+      3600,
+      388
+    ],
+    [
+      4500,
+      380
+    ],
+    [
+      5500,
+      350
+    ],
+    [
+      6400,
+      307.36
+    ],
+    [
+      7000,
+      260
+    ],
+    [
+      7200,
+      240
+    ]
+  ]
+},
+  'vq35de': {
+  "id": "vq35de",
+  "name": "VQ35DE",
+  "idleRPM": 850,
+  "redlineRPM": 6600,
+  "limiterRPM": 6800,
+  "inertia": 0.25,
+  "referenceBoostBar": 0,
+  "offBoostTorqueFraction": 1,
+  "torqueCurve": [
+    [
+      1000,
+      200
+    ],
+    [
+      2000,
+      280
+    ],
+    [
+      3000,
+      330
+    ],
+    [
+      4000,
+      350
+    ],
+    [
+      4800,
+      363
+    ],
+    [
+      5600,
+      350
+    ],
+    [
+      6200,
+      317.28
+    ],
+    [
+      6600,
+      285
+    ],
+    [
+      6800,
+      260
+    ]
+  ]
+},
+  'l24': {
+  "id": "l24",
+  "name": "L24",
+  "idleRPM": 850,
+  "redlineRPM": 6500,
+  "limiterRPM": 6700,
+  "inertia": 0.25,
+  "referenceBoostBar": 0,
+  "offBoostTorqueFraction": 1,
+  "torqueCurve": [
+    [
+      1000,
+      95
+    ],
+    [
+      2000,
+      135
+    ],
+    [
+      3000,
+      170
+    ],
+    [
+      4000,
+      190
+    ],
+    [
+      4400,
+      198
+    ],
+    [
+      5000,
+      194
+    ],
+    [
+      6000,
+      178.25
+    ],
+    [
+      6500,
+      155
+    ],
+    [
+      6700,
+      140
+    ]
+  ]
+},
+  'b16a_ef8': {
+  "id": "b16a_ef8",
+  "name": "B16A",
+  "idleRPM": 850,
+  "redlineRPM": 8000,
+  "limiterRPM": 8200,
+  "inertia": 0.16,
+  "referenceBoostBar": 0,
+  "offBoostTorqueFraction": 1,
+  "torqueCurve": [
+    [
+      1000,
+      75
+    ],
+    [
+      2000,
+      95
+    ],
+    [
+      3000,
+      110
+    ],
+    [
+      4000,
+      123
+    ],
+    [
+      5500,
+      140
+    ],
+    [
+      6500,
+      152
+    ],
+    [
+      7600,
+      148.26
+    ],
+    [
+      8000,
+      136
+    ],
+    [
+      8200,
+      125
+    ]
+  ]
+},
+  'b18c': {
+  "id": "b18c",
+  "name": "B18C",
+  "idleRPM": 850,
+  "redlineRPM": 8400,
+  "limiterRPM": 8600,
+  "inertia": 0.16,
+  "referenceBoostBar": 0,
+  "offBoostTorqueFraction": 1,
+  "torqueCurve": [
+    [
+      1000,
+      95
+    ],
+    [
+      2000,
+      118
+    ],
+    [
+      3000,
+      138
+    ],
+    [
+      4000,
+      153
+    ],
+    [
+      5500,
+      169
+    ],
+    [
+      6200,
+      181
+    ],
+    [
+      7200,
+      180
+    ],
+    [
+      8000,
+      175.46
+    ],
+    [
+      8400,
+      157
+    ],
+    [
+      8600,
+      143
+    ]
+  ]
+},
+  '4g63t_gsx': {
+  "id": "4g63t_gsx",
+  "name": "4G63T",
+  "idleRPM": 850,
+  "redlineRPM": 7000,
+  "limiterRPM": 7200,
+  "inertia": 0.2,
+  "referenceBoostBar": 0.75,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      120
+    ],
+    [
+      2000,
+      210
+    ],
+    [
+      3000,
+      280
+    ],
+    [
+      3500,
+      290
+    ],
+    [
+      4500,
+      280
+    ],
+    [
+      5500,
+      270
+    ],
+    [
+      6000,
+      249.87
+    ],
+    [
+      7000,
+      205
+    ],
+    [
+      7200,
+      185
+    ]
+  ]
+},
+  'bpt': {
+  "id": "bpt",
+  "name": "BPT",
+  "idleRPM": 850,
+  "redlineRPM": 7000,
+  "limiterRPM": 7200,
+  "inertia": 0.2,
+  "referenceBoostBar": 0.65,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      95
+    ],
+    [
+      2000,
+      150
+    ],
+    [
+      3000,
+      215
+    ],
+    [
+      4500,
+      235
+    ],
+    [
+      5500,
+      228
+    ],
+    [
+      6000,
+      216.44
+    ],
+    [
+      7000,
+      172
+    ],
+    [
+      7200,
+      155
+    ]
+  ]
+},
+  'sr20det': {
+  "id": "sr20det",
+  "name": "SR20DET",
+  "idleRPM": 850,
+  "redlineRPM": 7500,
+  "limiterRPM": 7700,
+  "inertia": 0.2,
+  "referenceBoostBar": 0.7,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      100
+    ],
+    [
+      2000,
+      170
+    ],
+    [
+      3000,
+      250
+    ],
+    [
+      4000,
+      274
+    ],
+    [
+      5000,
+      265
+    ],
+    [
+      6000,
+      240.32
+    ],
+    [
+      6500,
+      218
+    ],
+    [
+      7500,
+      170
+    ],
+    [
+      7700,
+      155
+    ]
+  ]
+},
+  '3sgte': {
+  "id": "3sgte",
+  "name": "3S-GTE",
+  "idleRPM": 850,
+  "redlineRPM": 7200,
+  "limiterRPM": 7400,
+  "inertia": 0.2,
+  "referenceBoostBar": 0.9,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      120
+    ],
+    [
+      2000,
+      185
+    ],
+    [
+      3000,
+      270
+    ],
+    [
+      4000,
+      304
+    ],
+    [
+      5000,
+      302
+    ],
+    [
+      6000,
+      299.2
+    ],
+    [
+      6500,
+      270
+    ],
+    [
+      7200,
+      220
+    ],
+    [
+      7400,
+      200
+    ]
+  ]
+},
+  '1jzgte': {
+  "id": "1jzgte",
+  "name": "1JZ-GTE VVT-i",
+  "idleRPM": 850,
+  "redlineRPM": 7000,
+  "limiterRPM": 7200,
+  "inertia": 0.25,
+  "referenceBoostBar": 0.75,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      150
+    ],
+    [
+      2000,
+      285
+    ],
+    [
+      2400,
+      378
+    ],
+    [
+      3500,
+      375
+    ],
+    [
+      4500,
+      372
+    ],
+    [
+      5500,
+      352
+    ],
+    [
+      6200,
+      317.28
+    ],
+    [
+      7000,
+      265
+    ],
+    [
+      7200,
+      240
+    ]
+  ]
+},
+  'ej208': {
+  "id": "ej208",
+  "name": "EJ208",
+  "idleRPM": 850,
+  "redlineRPM": 7500,
+  "limiterRPM": 7700,
+  "inertia": 0.2,
+  "referenceBoostBar": 0.8,
+  "offBoostTorqueFraction": 0.54,
+  "torqueCurve": [
+    [
+      1000,
+      110
+    ],
+    [
+      2000,
+      195
+    ],
+    [
+      3000,
+      300
+    ],
+    [
+      4500,
+      328
+    ],
+    [
+      5000,
+      343
+    ],
+    [
+      5500,
+      340
+    ],
+    [
+      6500,
+      302.63
+    ],
+    [
+      7500,
+      245
+    ],
+    [
+      7700,
+      220
+    ]
+  ]
+},
   '5mge': {
     id: '5mge', name: 'Toyota 5M-GE 2.8L Straight-Six', idleRPM: 800,
     redlineRPM: 6500, limiterRPM: 6800, inertia: 0.27,

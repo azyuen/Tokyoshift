@@ -15,6 +15,23 @@ export const STANDARD_CAR_REFERENCE = {
     L: 194,
   },
   cars: {
+    '180sx': { rearX: -932, frontX: -248, size: 'L' },
+    '240z': { rearX: -887, frontX: -224, size: 'S' },
+    '3000gt': { rearX: -947, frontX: -258, size: 'L' },
+    '300zx': { rearX: -964, frontX: -252, size: 'S' },
+    '350Z': { rearX: -944, frontX: -196, size: 'L' },
+    'B4RSK': { rearX: -974, frontX: -248, size: 'L' },
+    'a60': { rearX: -988, frontX: -258, size: 'S' },
+    'celicaGT4': { rearX: -926, frontX: -244, size: 'S' },
+    'chaser': { rearX: -962, frontX: -248, size: 'S' },
+    'crx': { rearX: -908, frontX: -222, size: 'S' },
+    'dc2': { rearX: -943, frontX: -254, size: 'S' },
+    'eclipse': { rearX: -980, frontX: -244, size: 'L' },
+    'evo5': { rearX: -950, frontX: -252, size: 'S' },
+    'familia': { rearX: -946, frontX: -244, size: 'L' },
+    'jza80': { rearX: -972, frontX: -260, size: 'S' },
+    'nsx': { rearX: -968, frontX: -258, size: 'L' },
+    's2000': { rearX: -916, frontX: -228, size: 'S' },
     ae86: { rearX: -921, frontX: -247, size: 'S' },
     ef: { rearX: -877, frontX: -195, size: 'S' },
     ek9: { rearX: -931, frontX: -231, size: 'S' },
@@ -29,9 +46,29 @@ export const STANDARD_CAR_REFERENCE = {
 
 export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/Ref';
 
-// Only these NINE existing gameplay IDs are migrated. All remaining car IDs
-// keep assets/Cars, their current individual scales and the legacy wheel fit.
+// Original Ref batch and the corrected Ref2 batch share scale and origin.
+export const REF2_CAR_STEMS = Object.freeze(["180sx", "240z", "3000gt", "300zx", "350Z", "B4RSK", "a60", "celicaGT4", "chaser", "crx", "dc2", "eclipse", "evo5", "familia", "jza80", "nsx", "s2000"]);
+export function getReferenceAssetRoot(stem) {
+  return REF2_CAR_STEMS.includes(stem) ? 'assets/Cars/Ref2' : STANDARD_CAR_REFERENCE_ROOT;
+}
 export const REFERENCE_CAR_GAME_IDS = Object.freeze({
+  'z32': '300zx',
+  'z33': '350Z',
+  '240z': '240z',
+  'crx': 'crx',
+  'dc2': 'dc2',
+  'eclipse': 'eclipse',
+  'familia': 'familia',
+  '180sx': '180sx',
+  'st205': 'celicaGT4',
+  'jzx100': 'chaser',
+  'b4rsk': 'B4RSK',
+  '3000gt': '3000gt',
+  'a60': 'a60',
+  'evo5': 'evo5',
+  'jza80': 'jza80',
+  'nsx': 'nsx',
+  's2000': 's2000',
   ae86: 'ae86',
   ef: 'ef',
   ek9: 'ek9',
@@ -45,6 +82,23 @@ export const REFERENCE_CAR_GAME_IDS = Object.freeze({
 
 // Source canvas dimensions measured from authored GIMP PNGs.
 export const REFERENCE_CAR_CANVAS = Object.freeze({
+  '180sx': [1300, 440],
+  '240z': [1300, 440],
+  '3000gt': [1300, 440],
+  '300zx': [1300, 440],
+  '350Z': [1300, 440],
+  'B4RSK': [1300, 440],
+  'a60': [1300, 440],
+  'celicaGT4': [1300, 440],
+  'chaser': [1300, 440],
+  'crx': [1300, 440],
+  'dc2': [1300, 440],
+  'eclipse': [1300, 440],
+  'evo5': [1300, 440],
+  'familia': [1300, 440],
+  'jza80': [1300, 440],
+  'nsx': [1300, 440],
+  's2000': [1300, 440],
   ae86: [1166, 420],
   ef: [1166, 420],
   ek9: [1166, 420],

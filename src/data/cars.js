@@ -1,5 +1,5 @@
 import { CAR_DRIVER_FACE_ANCHORS } from './carDriverFaceAnchors.js?v=20261013-driverface';
-import { STANDARD_CAR_REFERENCE, STANDARD_CAR_REFERENCE_ROOT, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261012-ref2';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261012-ref2';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
 
 const base = {
@@ -1212,6 +1212,394 @@ addRegularCar('r34', 'r32', {
   launchRPM: 5000, visual: { wheelKey: 'wheel5Spoke' },
 });
 
+// Ref2 roster: independent engines/gearing; compatible with existing ownership IDs.
+addRegularCar('z32', 'jza80', {
+  "shortName": "300ZX Z32",
+  "name": "Nissan 300ZX Z32 Twin Turbo",
+  "description": "VG30DETT power with RWD traction.",
+  "engine": "vg30dett",
+  "engineModel": "VG30DETT",
+  "powerKW": 206,
+  "torqueNm": 388,
+  "vehicleMassKg": 1530,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.214,
+    1.925,
+    1.302,
+    1,
+    0.752
+  ],
+  "finalDriveRatio": 3.692,
+  "maximumBoost": 0.7,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 582,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "300zx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('z33', 'nsx', {
+  "shortName": "350Z Z33",
+  "name": "Nissan 350Z Z33",
+  "description": "VQ35DE power with RWD traction.",
+  "engine": "vq35de",
+  "engineModel": "VQ35DE",
+  "powerKW": 206,
+  "torqueNm": 363,
+  "vehicleMassKg": 1450,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 6600,
+  "engineLimiterRPM": 6800,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.794,
+    2.324,
+    1.624,
+    1.271,
+    1,
+    0.794
+  ],
+  "finalDriveRatio": 3.538,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 544,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "350Z",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('240z', 'a60', {
+  "shortName": "240Z",
+  "name": "Datsun 240Z",
+  "description": "L24 power with RWD traction.",
+  "engine": "l24",
+  "engineModel": "L24",
+  "powerKW": 112,
+  "torqueNm": 198,
+  "vehicleMassKg": 1044,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 6500,
+  "engineLimiterRPM": 6700,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.321,
+    2.077,
+    1.308,
+    1,
+    0.864
+  ],
+  "finalDriveRatio": 3.9,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 297,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "240z",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('crx', 'ef', {
+  "shortName": "CR-X SiR",
+  "name": "Honda CR-X SiR EF8",
+  "description": "B16A power with FWD traction.",
+  "engine": "b16a_ef8",
+  "engineModel": "B16A",
+  "powerKW": 118,
+  "torqueNm": 152,
+  "vehicleMassKg": 1000,
+  "drivetrain": "FWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 8000,
+  "engineLimiterRPM": 8200,
+  "engineInertia": 0.16,
+  "gearRatios": [
+    3.25,
+    2.052,
+    1.416,
+    1.103,
+    0.87
+  ],
+  "finalDriveRatio": 4.4,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 228,
+  "launchRPM": 5500,
+  "visual": {
+    "assetStem": "crx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('dc2', 'ek9', {
+  "shortName": "INTEGRA DC2",
+  "name": "Honda Integra Type R DC2",
+  "description": "B18C power with FWD traction.",
+  "engine": "b18c",
+  "engineModel": "B18C",
+  "powerKW": 147,
+  "torqueNm": 181,
+  "vehicleMassKg": 1060,
+  "drivetrain": "FWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 8400,
+  "engineLimiterRPM": 8600,
+  "engineInertia": 0.16,
+  "gearRatios": [
+    3.23,
+    2.105,
+    1.458,
+    1.107,
+    0.848
+  ],
+  "finalDriveRatio": 4.785,
+  "maximumBoost": 0,
+  "turboSize": 0,
+  "turboSpoolRate": 0,
+  "drivetrainEfficiency": 0.9,
+  "drivenAxleWeightFraction": 0.61,
+  "launchLoadMultiplier": 0.82,
+  "clutchStrength": 272,
+  "launchRPM": 5500,
+  "visual": {
+    "assetStem": "dc2",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('eclipse', 'evo3', {
+  "shortName": "ECLIPSE GSX",
+  "name": "Mitsubishi Eclipse GSX",
+  "description": "4G63T power with AWD traction.",
+  "engine": "4g63t_gsx",
+  "engineModel": "4G63T",
+  "powerKW": 157,
+  "torqueNm": 290,
+  "vehicleMassKg": 1480,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.083,
+    1.684,
+    1.115,
+    0.833,
+    0.666
+  ],
+  "finalDriveRatio": 4.929,
+  "maximumBoost": 0.75,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 435,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "eclipse",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('familia', 'evo3', {
+  "shortName": "FAMILIA GT-R",
+  "name": "Mazda Familia GT-R",
+  "description": "BPT power with AWD traction.",
+  "engine": "bpt",
+  "engineModel": "BPT",
+  "powerKW": 136,
+  "torqueNm": 235,
+  "vehicleMassKg": 1210,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.454,
+    1.833,
+    1.31,
+    0.97,
+    0.717
+  ],
+  "finalDriveRatio": 4.214,
+  "maximumBoost": 0.65,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 352,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "familia",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('180sx', 'fc3s', {
+  "shortName": "180SX",
+  "name": "Nissan 180SX",
+  "description": "SR20DET power with RWD traction.",
+  "engine": "sr20det",
+  "engineModel": "SR20DET",
+  "powerKW": 151,
+  "torqueNm": 274,
+  "vehicleMassKg": 1220,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7500,
+  "engineLimiterRPM": 7700,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.321,
+    1.902,
+    1.308,
+    1,
+    0.759
+  ],
+  "finalDriveRatio": 4.083,
+  "maximumBoost": 0.7,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 411,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "180sx",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('st205', 'evo3', {
+  "shortName": "CELICA GT-FOUR",
+  "name": "Toyota Celica GT-Four ST205",
+  "description": "3S-GTE power with AWD traction.",
+  "engine": "3sgte",
+  "engineModel": "3S-GTE",
+  "powerKW": 188,
+  "torqueNm": 304,
+  "vehicleMassKg": 1390,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7200,
+  "engineLimiterRPM": 7400,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.384,
+    1.913,
+    1.258,
+    0.918,
+    0.731
+  ],
+  "finalDriveRatio": 4.285,
+  "maximumBoost": 0.9,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 456,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "celicaGT4",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('jzx100', 'jza80', {
+  "shortName": "CHASER JZX100",
+  "name": "Toyota Chaser JZX100",
+  "description": "1JZ-GTE VVT-i power with RWD traction.",
+  "engine": "1jzgte",
+  "engineModel": "1JZ-GTE VVT-i",
+  "powerKW": 206,
+  "torqueNm": 378,
+  "vehicleMassKg": 1470,
+  "drivetrain": "RWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7000,
+  "engineLimiterRPM": 7200,
+  "engineInertia": 0.25,
+  "gearRatios": [
+    3.251,
+    1.955,
+    1.31,
+    1,
+    0.753
+  ],
+  "finalDriveRatio": 3.727,
+  "maximumBoost": 0.75,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.88,
+  "drivenAxleWeightFraction": 0.5,
+  "launchLoadMultiplier": 1.22,
+  "clutchStrength": 567,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "chaser",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+addRegularCar('b4rsk', 'wrx22b', {
+  "shortName": "LEGACY B4 RSK",
+  "name": "Subaru Legacy B4 RSK",
+  "description": "EJ208 power with AWD traction.",
+  "engine": "ej208",
+  "engineModel": "EJ208",
+  "powerKW": 206,
+  "torqueNm": 343,
+  "vehicleMassKg": 1470,
+  "drivetrain": "AWD",
+  "engineIdleRPM": 850,
+  "engineRedlineRPM": 7500,
+  "engineLimiterRPM": 7700,
+  "engineInertia": 0.2,
+  "gearRatios": [
+    3.166,
+    1.882,
+    1.296,
+    0.972,
+    0.738
+  ],
+  "finalDriveRatio": 4.444,
+  "maximumBoost": 0.8,
+  "turboSize": 0.58,
+  "turboSpoolRate": 1.65,
+  "drivetrainEfficiency": 0.84,
+  "drivenAxleWeightFraction": 1,
+  "launchLoadMultiplier": 1,
+  "clutchStrength": 514,
+  "launchRPM": 4600,
+  "visual": {
+    "assetStem": "B4RSK",
+    "wheelKey": "wheel5Spoke"
+  }
+});
+
 // Stock arch centres and radii measured from the combined paint/body alpha.
 // Visible widths are measured from that pair; target widths keep hatchbacks,
 // coupes and sedans in a consistent relative size in both race and garage views.
@@ -1356,7 +1744,7 @@ const S2000_CANVAS = {
   });
 }
 
-// Opt-in nine-car GIMP reference rollout. Do not touch any other stock assets.
+// Shared bottom-right reference rollout; legacy art keeps its existing fit.
 // Each copied crew car inherits this base model's reference visual parameters.
 for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   const visual = cars[gameId]?.visual;
@@ -1364,6 +1752,7 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   const canvas = REFERENCE_CAR_CANVAS[fileStem];
   if (!visual || !geometry || !canvas) continue;
   const diameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.size];
+  const assetRoot = getReferenceAssetRoot(fileStem);
 
   Object.assign(visual, {
     referenceStandard: true,
@@ -1372,10 +1761,10 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
     referenceCanvasHeight: canvas[1],
     referenceWheelDiameter: diameter,
     referenceWheelSize: geometry.size,
-    modularAssetRoot: STANDARD_CAR_REFERENCE_ROOT,
+    modularAssetRoot: assetRoot,
     modularAssetStem: fileStem,
-    bodyPath: STANDARD_CAR_REFERENCE_ROOT + '/' + fileStem + '_stock_body.png',
-    paintPath: STANDARD_CAR_REFERENCE_ROOT + '/' + fileStem + '_stock_paint.png',
+    bodyPath: assetRoot + '/' + fileStem + '_stock_body.png',
+    paintPath: assetRoot + '/' + fileStem + '_stock_paint.png',
     overlayPath: null,
     stockBodyKit: false,
     stockSpoiler: false,
@@ -1403,6 +1792,14 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   });
 }
 
+// Ref2 R34 is byte-identical to the legacy 1200x500 pair. Preserve its fit.
+Object.assign(cars.r34.visual, {
+  modularAssetRoot: 'assets/Cars/Ref2',
+  bodyPath: 'assets/Cars/Ref2/r34_stock_body.png',
+  paintPath: 'assets/Cars/Ref2/r34_stock_paint.png',
+  overlayPath: null,
+});
+
 // Driver anchors are SOURCE-PNG window coordinates. They are applied after
 // all stock geometry migrations, so reference and legacy cars can keep their
 // separate image-origin conventions without changing wheel fit or scaling.
@@ -1422,6 +1819,7 @@ export const carOrder = [
   'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
   'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
+  'z32', 'z33', '240z', 'crx', 'dc2', 'eclipse', 'familia', '180sx', 'st205', 'jzx100', 'b4rsk',
 ];
 
 
