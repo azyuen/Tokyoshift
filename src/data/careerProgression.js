@@ -24,6 +24,8 @@ const REGION_GATES = Object.freeze({
   SHINJUKU: Object.freeze({ minWins: 100, minGarageTier: 2, requiredRegionalChampion: 'DAIKOKU' }),
   DAIKOKU: Object.freeze({ minWins: 75, minChampionships: 2 }),
   CENTRAL_TOKYO: Object.freeze({ minWins: 3 }),
+  // Oshiage is a satellite service district, not an eighth regional championship.
+  OSHIAGE: Object.freeze({ minWins: 3 }),
 });
 
 export function isEasyDifficulty(source) {
