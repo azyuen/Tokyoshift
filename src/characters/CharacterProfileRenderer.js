@@ -8,7 +8,7 @@ import {
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
-export const PROFILE_EYE_TARGET_RATIO = 0.30;
+export const PROFILE_EYE_TARGET_RATIO = 0.36;
 export const PROFILE_TORSO_CROP_RATIO = 0.82;
 export const PROFILE_DEFAULT_ZOOM = 3.65;
 
@@ -36,6 +36,42 @@ export function resolveCharacterProfile(
     offsetY: Number(profile?.offsetY ?? DEFAULT_CHARACTER_PROFILE.offsetY),
     ...poseOverride,
     ...(profileOverride || {}),
+  };
+}
+
+// Central image placement for idle, win, loss and cutscene pose changes.
+// Only the profile renderers use this target: in-car driver face anchors must
+// not be moved when adjusting portrait framing.
+export function getCharacterProfilePlacement({
+  source,
+  spriteKey = '',
+  contextualVisual = {},
+  pose = 'idle',
+  profile = {},
+  x = 0,
+  y = 0,
+  frameWidth = 188,
+  frameHeight = 188,
+  side = 'center',
+  flipInward = false,
+} = {}) {
+  const width = Math.max(1, Number(frameWidth) || 1);
+  const height = Math.max(1, Number(frameHeight) || 1);
+  const sourceWidth = Math.max(1, Number(source?.naturalWidth || source?.width || 1));
+  const sourceHeight = Math.max(1, Number(source?.naturalHeight || source?.height || 1));
+  const inwardFlip = Boolean(flipInward && side === 'right');
+  const offsetScale = height / PROFILE_REFERENCE_HEIGHT;
+  const signedOffsetX = Number(profile.offsetX || 0) * offsetScale * (inwardFlip ? -1 : 1);
+  const topY = (Number(y) || 0) - height * 0.5;
+  const face = resolveCharacterFaceAnchor(source, spriteKey, contextualVisual, pose);
+  const scale = (height * PROFILE_DEFAULT_ZOOM / sourceHeight) * Number(profile.scale ?? 1);
+  const subjectCentreDelta = (face.x - sourceWidth * 0.5) * scale;
+  return {
+    x: Math.round((Number(x) || 0) + signedOffsetX - subjectCentreDelta * (inwardFlip ? -1 : 1)),
+    y: Math.round(topY + height * PROFILE_EYE_TARGET_RATIO +
+      Number(profile.offsetY || 0) * offsetScale - face.y * scale),
+    scale,
+    flipX: inwardFlip,
   };
 }
 
@@ -91,30 +127,17 @@ export function createCharacterProfile(scene, {
   texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   const source = texture.getSourceImage();
 
-  const inwardFlip = flipInward && side === 'right';
-  const offsetScale = height / PROFILE_REFERENCE_HEIGHT;
-  const signedOffsetX = profile.offsetX * offsetScale * (inwardFlip ? -1 : 1);
-  const topY = centreY - height / 2;
-  const sourceWidth = Math.max(1, Number(source?.naturalWidth || source?.width || 1));
-  const sourceHeight = Math.max(1, Number(source?.naturalHeight || source?.height || 1));
-  const metrics = resolveCharacterFaceAnchor(source, spriteKey, contextualVisual, actualPose);
-  const baseScale = (height * PROFILE_DEFAULT_ZOOM) / sourceHeight;
-  const finalScale = baseScale * profile.scale;
-  const subjectCentreDelta = (metrics.x - sourceWidth * 0.5) * finalScale;
-  const signedSubjectCentreDelta = subjectCentreDelta * (inwardFlip ? -1 : 1);
-  const targetHeadY =
-    topY +
-    height * PROFILE_EYE_TARGET_RATIO +
-    profile.offsetY * offsetScale;
+  const placement = getCharacterProfilePlacement({
+    source, spriteKey, contextualVisual, pose: actualPose, profile,
+    x: centreX, y: centreY, frameWidth: width, frameHeight: height,
+    side, flipInward,
+  });
 
-  const image = scene.add.image(
-    Math.round(centreX + signedOffsetX - signedSubjectCentreDelta),
-    Math.round(targetHeadY - metrics.y * finalScale),
-    spriteKey
-  ).setOrigin(0.5, 0)
+  const image = scene.add.image(placement.x, placement.y, spriteKey)
+    .setOrigin(0.5, 0)
     .setDepth(depth)
-    .setScale(finalScale)
-    .setFlipX(inwardFlip);
+    .setScale(placement.scale)
+    .setFlipX(placement.flipX);
 
   let maskShape = null;
   let geometryMask = null;
