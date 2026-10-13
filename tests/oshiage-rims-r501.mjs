@@ -40,7 +40,7 @@ test('Oshiage displays the same rotating ten-rim wall every three hours', () => 
   assert.equal(second.length, 10);
   assert.notDeepEqual(first.map(x => x.id), second.map(x => x.id));
   for (const rim of first) {
-    assert.ok(WHEEL_CATALOG.includes(rim));
+    assert.ok(WHEEL_CATALOG.some(item => item.id === rim.id));
     assert.ok(rim.path.startsWith('assets/wheels/'));
   }
 });
