@@ -40,7 +40,7 @@ export const CAR_MAGAZINE_META = Object.freeze({
   rx7fd: { year: 1992, drivetrain: 'RWD', fact: 'The FD RX-7 is famous for its compact 13B rotary, sequential twin turbos and unusually low-slung proportions.' },
   rx8: { year: 2003, drivetrain: 'RWD', fact: 'The RX-8 kept Mazda’s rotary lineage alive with the naturally aspirated Renesis and near-50:50 balance.' },
   gr86: { year: 2022, drivetrain: 'RWD', fact: 'The GR86 follows the classic lightweight rear-drive formula with a naturally aspirated boxer engine.' },
-  evo3: { year: 1995, drivetrain: 'AWD', fact: 'The Evolution III sharpened Mitsubishi’s rally-bred formula with more aero and a stronger 4G63T package.' },
+  evo3: { year: 1992, drivetrain: 'AWD', fact: 'The Galant VR-4 Evolution helped develop Mitsubishi’s turbocharged 4G63 AWD rally formula before the Lancer Evolution era.' },
   evo5: { year: 1998, drivetrain: 'AWD', fact: 'The Evolution V widened the track and body, creating one of the most recognizable shapes in the Evo lineage.' },
   evo6: { year: 1999, drivetrain: 'AWD', fact: 'The Evolution VI refined cooling and response while keeping the compact 4G63T all-wheel-drive recipe.' },
   wrx22b: { year: 1998, drivetrain: 'AWD', fact: 'The 22B STI was a wide-body homologation-era icon built to celebrate Subaru’s rally success.' },
