@@ -456,10 +456,11 @@ export function getCarBodyScaleForWidth(scene, visualOrCar, targetWidth) {
   return (width * paddingCompensation) / Math.max(1, sourceWidth);
 }
 
-// Give tuner decals the same source-image registration as the rendered shell.
-// Reference cars use bottom-right origins; their sticker positions are still
-// normalised around the centre of the actual image, including taller canvases.
-// Legacy cars retain their centre-origin sticker coordinates.
+// Give tuner decals one shared registration across the tuner shop, workshop
+// and race, without rewriting anyone's existing saved sticker positions.
+// Ref cars need an actual-image CENTER X (right-origin PNGs vary in width), but
+// preserve the shop's historically authored BOTTOM Y as decal origin.
+// Legacy cars retain their old centre-origin placement.
 export function getCarDecalAnchor(visualOrCar, {
   x = 0,
   y = 0,
@@ -473,7 +474,7 @@ export function getCarDecalAnchor(visualOrCar, {
   const bodyOffsetY = Number(visual.bodyRenderOffsetY || 0) * scale;
   return {
     x: x + bodyOffsetX - (visual.referenceStandard ? sourceWidth * scale * 0.5 : 0),
-    y: y + bodyOffsetY - (visual.referenceStandard ? sourceHeight * scale * 0.5 : 0),
+    y: y + bodyOffsetY,
   };
 }
 
