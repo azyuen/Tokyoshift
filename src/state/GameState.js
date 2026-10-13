@@ -848,6 +848,16 @@ export function normaliseState(input = {}) {
     ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
+  // R501: old bodykit image pairs are incompatible with the new car assets.
+  // Treat all previous kits as stock without touching paint, tune or rim IDs.
+  Object.entries(mergedCarStates).forEach(([carId, carState]) => {
+    if (carState?.visualMods?.bodyKit && carState.visualMods.bodyKit !== 'stock') {
+      mergedCarStates[carId] = {
+        ...carState,
+        visualMods: { ...carState.visualMods, bodyKit: 'stock' },
+      };
+    }
+  });
   if (hadSayakaShinagawaCrew && mergedCarStates[oldLoanCarId]) {
     mergedCarStates[replacementLoanCarId] = {
       ...mergedCarStates[oldLoanCarId],
@@ -960,7 +970,7 @@ export function normaliseState(input = {}) {
     ownedWheelIds: Array.isArray(input.ownedWheelIds)
       ? [...new Set(input.ownedWheelIds.map(String).filter(Boolean))]
       : [],
-    autoMarketRoom: ['new', 'used', 'wheels'].includes(String(input.autoMarketRoom))
+    autoMarketRoom: ['new', 'used'].includes(String(input.autoMarketRoom))
       ? String(input.autoMarketRoom)
       : 'used',
     autoMarketHaggles:
