@@ -135,7 +135,7 @@ for (const car of carSpecs) {
   const base = reference.cars[car.id];
   const before = saved[car.id] || {};
   configs[car.id] = {
-    bodyRenderOffsetY: clamp(Math.round(Number(before.bodyRenderOffsetY) || 0), -120, 120),
+    bodyRenderOffsetY: clamp(Math.round(Number(before.bodyRenderOffsetY ?? base.bodyRenderOffsetY ?? 0)), -120, 120),
     rearX: Number.isFinite(Number(before.rearX)) ? Number(before.rearX) : base.rearX,
     frontX: Number.isFinite(Number(before.frontX)) ? Number(before.frontX) : base.frontX,
     size: before.size === 'S' || before.size === 'L' ? before.size : base.size
@@ -292,7 +292,7 @@ function renderControls() {
   carSpecs.forEach((item,index)=>{
     const b=document.createElement('button');
     b.type='button'; b.className=index===selected?'on':'';
-    const changed=configs[item.id].bodyRenderOffsetY!==0 ||
+    const changed=configs[item.id].bodyRenderOffsetY!==(reference.cars[item.id].bodyRenderOffsetY || 0) ||
       configs[item.id].rearX!==reference.cars[item.id].rearX ||
       configs[item.id].frontX!==reference.cars[item.id].frontX ||
       configs[item.id].size!==reference.cars[item.id].size;
@@ -326,7 +326,7 @@ document.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',(
 document.getElementById('offsetSlider').oninput=e=>updateOffset(Number(e.target.value));
 document.getElementById('resetCar').onclick=()=>{
  const id=active().id, baseline=reference.cars[id];
- configs[id]={bodyRenderOffsetY:0,rearX:baseline.rearX,frontX:baseline.frontX,size:baseline.size};
+ configs[id]={bodyRenderOffsetY:baseline.bodyRenderOffsetY || 0,rearX:baseline.rearX,frontX:baseline.frontX,size:baseline.size};
  persist();renderControls();
 };
 function adjustAxle(axle,delta){cfg()[axle+'X']=clamp(cfg()[axle+'X']+delta,-1400,0);persist();renderControls();}
@@ -340,7 +340,7 @@ document.getElementById('resetAll').onclick=()=>{
  if(!confirm('Reset all eight car calibrations?')) return;
  for(const car of carSpecs) {
   const b=reference.cars[car.id];
-  configs[car.id]={bodyRenderOffsetY:0,rearX:b.rearX,frontX:b.frontX,size:b.size};
+  configs[car.id]={bodyRenderOffsetY:b.bodyRenderOffsetY || 0,rearX:b.rearX,frontX:b.frontX,size:b.size};
  }
  persist();renderControls();setStatus('All calibrations reset to current game values.');
 };
