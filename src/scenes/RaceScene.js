@@ -9,6 +9,7 @@ import {
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261010-r461';
+import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261013-r496';
 import {
   STREET_GREEN_SECONDS,
   getStreetSignalFrame,
@@ -337,7 +338,7 @@ export default class RaceScene extends Phaser.Scene {
       storedOfferCarId === this.opponentCarId &&
       storedBuildState && typeof storedBuildState === 'object';
     const isCompetitionBuild =
-      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM'].includes(this.raceMode) &&
+      ['COMPETITION', 'CREW_RECRUIT', 'CREW_BATTLE', 'TUNER_TEAM', 'OSHIAGE_ELITE'].includes(this.raceMode) &&
       storedBuildState &&
       typeof storedBuildState === 'object';
 
@@ -687,7 +688,8 @@ export default class RaceScene extends Phaser.Scene {
 
     this.cancelButton.on('pointerdown', () => {
       if (this.isTutorial) {
-        this.scene.start('GarageScene');
+        this.scene.start(this.registry.get('raceReturnScene') === 'OshiageScene' ? 'OshiageScene' : 'GarageScene',
+          this.registry.get('raceReturnScene') === 'OshiageScene' ? { locationId: 'oshiageDrivingSchool' } : undefined);
         return;
       }
       this.confirmCancelRace();
@@ -726,12 +728,15 @@ export default class RaceScene extends Phaser.Scene {
 
     const isPink = this.raceDeal === 'PINK_SLIP';
     const isCompetition = this.raceMode === 'COMPETITION';
-    const cashPenalty = Math.ceil((this.raceStake * 0.5) / 250) * 250;
+    const cashPenalty = this.raceMode === 'OSHIAGE_ELITE'
+      ? 0 : Math.ceil((this.raceStake * 0.5) / 250) * 250;
     const penaltyText = isPink
       ? 'You forfeit ' + cars[this.selectedCarId].shortName + '. The rival takes your car.'
       : isCompetition
         ? 'Your Street Showdown ends here. The entry fee is not refunded.'
-        : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
+        : this.raceMode === 'OSHIAGE_ELITE'
+          ? 'Withdraw from the Skytree showdown? This venue stays on cooldown.'
+          : 'You forfeit ¥' + cashPenalty.toLocaleString('en-US') + ' — half the agreed bet.';
 
     const depth = 110;
     const objects = [];
@@ -814,6 +819,16 @@ export default class RaceScene extends Phaser.Scene {
 
     const losses = Number(this.registry.get('losses') || 0);
     this.registry.set('losses', losses + 1);
+
+    if (this.raceMode === 'OSHIAGE_ELITE') {
+      this.registry.set('oshiageEliteLastResult', {
+        venueId: this.registry.get('oshiageEliteVenue') || 'underpass',
+        playerWon: false, forfeited: true, cash: 0, at: Date.now(),
+      });
+      saveSessionState(this.registry);
+      this.scene.start('OshiageScene', { locationId: 'oshiageSkytreeMeet' });
+      return;
+    }
 
     if (this.raceMode === 'COMPETITION') {
       this.registry.set('competitionState', null);
@@ -1692,6 +1707,13 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.clutch = 1;
     this.engineAudio?.fadeOut();
 
+    if (this.registry.get('raceReturnScene') === 'OshiageScene') {
+      this.registry.set('oshiageBasicLessonComplete', true);
+      saveSessionState(this.registry);
+      this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DRIVING SCHOOL');
+      this.time.delayedCall(110, () => this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' }));
+      return;
+    }
     if (this.registry.get('openingChapter') === 'tutorial') {
       this.registry.set('openingDrivingLessonComplete', true);
     }
@@ -2054,6 +2076,18 @@ export default class RaceScene extends Phaser.Scene {
           primary: 'PRACTICE COMPLETE',
           secondary: 'NO CASH // NO RECORD',
         };
+      }
+
+      if (settlement.oshiageElite) {
+        return settlement.playerWon
+          ? {
+              primary: 'SKYTREE ELITE VICTORY  +¥' + Number(settlement.cashReward || 0).toLocaleString('en-US'),
+              secondary: settlement.wheelLabel
+                ? 'RARE WHEEL UNLOCKED // ' + settlement.wheelLabel.toUpperCase()
+                : String(settlement.couponAwards || 0) + ' × ' +
+                  String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() + ' COUPONS',
+            }
+          : { primary: 'SKYTREE SHOWDOWN LOST', secondary: '15 MINUTE VENUE COOLDOWN // NO PRIZE' };
       }
 
       if (settlement.crewRecruit) {
@@ -3599,6 +3633,48 @@ export default class RaceScene extends Phaser.Scene {
         regionWins[regionId] = Math.max(0, Number(regionWins[regionId] || 0)) + 1;
         this.registry.set('regionWins', regionWins);
       }
+    }
+
+    if (this.raceMode === 'OSHIAGE_ELITE') {
+      const venueId = String(this.registry.get('oshiageEliteVenue') || 'underpass');
+      const venue = OSHIAGE_ELITE_VENUES[venueId];
+      const prize = venue && playerWon ? getOshiageElitePrize(this.registry, venueId, newWins) : null;
+      const cashReward = prize ? Math.max(0, Number(prize.cash || 0)) : 0;
+      let couponAwards = 0;
+      let couponCarId = null;
+      let wheelId = null;
+      let wheelLabel = null;
+
+      if (prize?.wheelId) {
+        const ownedWheelIds = [...(this.registry.get('ownedWheelIds') || [])];
+        if (!ownedWheelIds.includes(prize.wheelId)) {
+          ownedWheelIds.push(prize.wheelId);
+          this.registry.set('ownedWheelIds', ownedWheelIds);
+          wheelId = prize.wheelId;
+          wheelLabel = prize.wheelLabel;
+        }
+      } else if (prize?.couponCarId && prize.coupons > 0) {
+        couponCarId = prize.couponCarId;
+        couponAwards = prize.coupons;
+        const coupons = { ...(this.registry.get('carCoupons') || {}) };
+        coupons[couponCarId] = Math.max(0, Number(coupons[couponCarId] || 0)) + couponAwards;
+        this.registry.set('carCoupons', coupons);
+      }
+
+      const newCash = oldCash + cashReward;
+      this.registry.set('cash', newCash);
+      this.registry.set('selectedRaceMeetOffer', null);
+      this.registry.set('oshiageEliteLastResult', {
+        venueId, playerWon: Boolean(playerWon), cash: cashReward,
+        couponAwards, couponCarId, wheelId, wheelLabel, at: Date.now(),
+      });
+      saveSessionState(this.registry);
+      this.raceSettlement = {
+        playerWon, cashDelta: cashReward, cash: newCash, cashReward,
+        pinkMessage: '', gameOver: false, oshiageElite: true,
+        venueId, couponAwards, couponCarId, wheelId, wheelLabel,
+      };
+      return this.raceSettlement;
     }
 
     if (this.raceMode === 'CREW_RECRUIT') {
