@@ -18,6 +18,11 @@ import {
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
+import { preloadWheelOption } from '../data/wheels.js?v=20260929-r246';
+import {
+  getOshiageRimListings, getOshiageRimQuote, buyOrInstallOshiageRim,
+  restoreStockOshiageRims, RIMS_REFRESH_MS,
+} from '../data/oshiageRims.js?v=20261014-r501';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -63,12 +68,16 @@ export default class OshiageScene extends Phaser.Scene {
   init(data = {}) {
     this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId :
       (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
-    this.room = data.room === 'paint' ? 'paint' : 'outside';
+    this.room = ['paint', 'rims'].includes(data.room) ? data.room : 'outside';
     if (this.activeLocationId !== 'oshiageCustomWorks') this.room = 'outside';
     this.lessonIndex = 0;
     this.meetAlternative = this.registry.get('oshiageEliteVenue') === 'plaza';
     this.paintMode = 'preset';
     this.customPaintColor = null;
+    this.selectedRimIndex = -1;
+    this.rimPreview = false;
+    this.rimConfirmOpen = false;
+    this.rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
     this.pendingPaint = null;
     this.paintBusy = false;
     this.paintObjects = [];
@@ -77,12 +86,20 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   backgroundAsset(locationId = this.activeLocationId, phase = this.phase) {
+    const cleanPhase = phase === 'day' ? 'day' : 'night';
+    // The original wheel-wall artwork moves with its shop to Oshiage.
+    // Keep using this registered background until Oshiage-only rack art arrives.
+    if (locationId === 'oshiageCustomWorks' && this.room === 'rims') {
+      return {
+        key: 'oshiage_rim_wall_' + cleanPhase,
+        path: 'assets/CentralTokyo/tokyo_wheels_' + cleanPhase + '.png?v=20261014-r501',
+      };
+    }
     const stem = this.room === 'paint' && locationId === 'oshiageCustomWorks'
       ? 'oshiage_paint'
       : locationId === 'oshiageSkytreeMeet' && this.meetAlternative
         ? 'oshiage_skytree02'
         : (LOCATIONS[locationId] || LOCATIONS.oshiageDrivingSchool).stem;
-    const cleanPhase = phase === 'day' ? 'day' : 'night';
     return { key: 'oshiage_' + stem + '_' + cleanPhase, path: ROOT + stem + '_' + cleanPhase + '.png?v=20261013-r496' };
   }
 
@@ -131,6 +148,16 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
       }
     }
+    if (this.room === 'rims') {
+      const { car, state } = this.selectedCar();
+      if (car) {
+        queued += preloadCarAppearanceAssets(this, { [car.id]: car }, '20261014-r501');
+        queued += preloadCarWheel(this, car, state);
+      }
+      getOshiageRimListings().forEach(rim => {
+        queued += preloadWheelOption(this, rim, '20261014-r501');
+      });
+    }
     if (this.room === 'paint') {
       const { car, state } = this.selectedCar();
       if (car) {
@@ -152,6 +179,10 @@ export default class OshiageScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
     playMusic('meet');
     this.drawShell();
+    ensureDerivedModularCarTextures(this, Object.fromEntries(
+      Object.entries(cars).filter(([, car]) =>
+        car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey))
+    ));
     this.renderView();
     if (this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
       this.time.delayedCall(420, () => this.showInstructorCutscene());
@@ -162,8 +193,10 @@ export default class OshiageScene extends Phaser.Scene {
     } });
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
       const phase = getWorldPhase();
-      if (phase === this.phase) return;
+      const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
+      if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
       this.phase = phase;
+      this.rimCycle = rimCycle;
       this.loadAndRender();
     } });
     finishSceneLoading('OSHIAGE READY');
@@ -253,12 +286,13 @@ export default class OshiageScene extends Phaser.Scene {
     this.clearView();
     this.cashText.setText(MONEY(this.registry.get('cash')));
     this.header.setText(LOCATIONS[this.activeLocationId].label + ' // ' +
-      (this.room === 'paint' ? 'PAINT STUDIO // ' : '') + this.phase.toUpperCase());
+      (this.room === 'paint' ? 'PAINT STUDIO // ' :
+        this.room === 'rims' ? 'RIMS // ' : '') + this.phase.toUpperCase());
     const background = this.backgroundAsset();
     if (this.textures.exists(background.key)) {
       const src = this.textures.get(background.key).getSourceImage();
       const img = this.own(this.add.image(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2, background.key)
-        .setScale(Math.max(STAGE.w / src.width, STAGE.h / src.height))
+        .setScale((this.room === 'rims' ? Math.min : Math.max)(STAGE.w / src.width, STAGE.h / src.height))
         .setMask(this.stageMask).setDepth(-10));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     } else {
@@ -267,6 +301,7 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.activeLocationId === 'oshiageDrivingSchool') this.drawSchool();
     else if (this.activeLocationId === 'oshiageSkytreeMeet') this.drawMeet();
     else if (this.room === 'paint') this.drawPaintStudio();
+    else if (this.room === 'rims') this.drawRimShop();
     else this.drawCustomWorks();
 
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + SIDE.h - 48,
