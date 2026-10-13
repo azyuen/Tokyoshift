@@ -6,7 +6,7 @@ import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261013-r496';
-import { saveSessionState } from '../state/GameState.js?v=20261013-r496';
+import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -16,7 +16,7 @@ import {
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { preloadWheelOption } from '../data/wheels.js?v=20260929-r246';
 import {
