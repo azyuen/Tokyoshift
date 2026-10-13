@@ -80,7 +80,7 @@ async function startTokyoShift() {
       loadScene('DYNO', './scenes/DynoScene.js?v=20261011-r482'),
       loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261012-champaudit'),
       loadScene('MEET', './scenes/MeetScene.js?v=20261013-tatsumi-r492'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261013-tatsumi-r492'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20261013-r493'),
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261012-champaudit'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261011-r482'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
@@ -92,6 +92,13 @@ async function startTokyoShift() {
     const useCarReference = new URLSearchParams(window.location.search).get('carref') === '1';
     const CarReferenceCalibrationScene = useCarReference
       ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js?v=20261012-carref')
+      : null;
+
+    // Opt-in calibration for both source-canvas car driver faces and portrait
+    // head centres. Does not mutate any saved garage or player profile.
+    const useDriverFace = new URLSearchParams(window.location.search).get('driverface') === '1';
+    const DriverFaceCalibrationScene = useDriverFace
+      ? await loadScene('DRIVER FACE CALIBRATION', './scenes/DriverFaceCalibrationScene.js?v=20261013-r493')
       : null;
 
     window.TOKYO_SHIFT_SET_LOADING?.(0.10, 'LOADING');
@@ -120,6 +127,7 @@ async function startTokyoShift() {
     ];
     // Phaser starts its first scene. Put the test scene first only when asked.
     if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
+    if (DriverFaceCalibrationScene) allScenes.unshift(DriverFaceCalibrationScene);
 
     const config = {
       type: Phaser.AUTO,

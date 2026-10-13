@@ -21,11 +21,12 @@ import {
   getCarPaintColor,
   normalisePaintColor,
   createCarBodyLayers,
+  getCarBodyTextureKey,
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
+import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20261013-r493';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
@@ -77,7 +78,7 @@ import {
   getRegionalChallengeRaceSpec,
 } from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261011-r476';
@@ -1190,12 +1191,18 @@ export default class RaceScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
+    const bodyTextureKey = getCarBodyTextureKey(this, cfg);
+    const bodySource = this.textures.exists(bodyTextureKey)
+      ? this.textures.get(bodyTextureKey).getSourceImage()
+      : null;
     const driver = driverCharacter
       ? createDriverSilhouette(this, cfg, driverCharacter, {
           bodyX: 0,
           bodyY: 0,
           bodyScale,
           depth: depth + 0.55,
+          sourceWidth: bodySource?.width || cfg.referenceCanvasWidth || 1200,
+          sourceHeight: bodySource?.height || cfg.referenceCanvasHeight || 500,
         })
       : null;
 
@@ -1249,7 +1256,7 @@ export default class RaceScene extends Phaser.Scene {
       bodyObjects: [...bodyLayers.objects, ...visualModObjects, ...decalObjects],
       driverSilhouette: driver?.image || null,
       driverOffsetX: (driver?.offsetX || 0) + (referenceCar ? body.width * bodyScale * 0.5 : 0),
-      driverOffsetY: (driver?.offsetY || 0) + referenceGroundOffset,
+      driverOffsetY: driver?.offsetY || 0,
       paintBody: bodyLayers.paint,
       bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
