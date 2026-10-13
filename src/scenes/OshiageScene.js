@@ -348,9 +348,6 @@ export default class OshiageScene extends Phaser.Scene {
       if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
         if (this.paintBusy) return;
         this.pendingPaint = p.color;
-        this.paintObjects.forEach(o => o?.destroy?.());
-        this.content = this.content.filter(o => !this.paintObjects.includes(o));
-        this.paintObjects = this.drawOwnedCar(car, state, 615, 455, 690, this.pendingPaint);
         this.renderView();
       });
     });
