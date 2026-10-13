@@ -1,153 +1,123 @@
-// Generic in-car driver silhouette.
-//
-// Scalability rule:
-//   - each CAR may define visual.driverSeat once
-//   - each CHARACTER may define visual.driverHead once
-// Any car + character combination then works without pair-specific artwork.
-//
-// The character crop is tinted almost black and positioned BEHIND every body
-// layer. It is only visible through transparent/translucent glass in the car PNG.
+import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js?v=20261013-driverface';
 
-const DEFAULT_HEAD = {
-  cropX: 0.18,
-  cropY: 0.00,
-  cropW: 0.64,
-  cropH: 0.40,
-  offsetX: 0,
-  offsetY: 0,
-  scale: 1,
-};
+// One anchor per car and one face centre per character. This sprite is always
+// below the vehicle body, so its cutout appears only through clear windows.
+const clamp = (value, low, high) => Math.max(low, Math.min(high, Number(value)));
+const finite = (value, fallback) => value != null && Number.isFinite(Number(value))
+  ? Number(value) : fallback;
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value)));
-
-export function resolveDriverSeat(visualOrCar = {}) {
+/**
+ * Source-space position of the centre of the driver's face relative to the
+ * car's actual Phaser image origin. Standard-reference cars use bottom-right
+ * (1,1); older regular and hero cars use centre (0.5,0.5).
+ */
+export function resolveDriverSeat(visualOrCar = {}, sourceWidth = 0, sourceHeight = 0) {
   const visual = visualOrCar?.visual || visualOrCar || {};
-  const rear = Number(visual.rearOffsetX || -520);
-  const front = Number(visual.frontOffsetX || 520);
-  const wheelY = Number(visual.wheelOffsetY || 170);
-  const wheelbase = Math.max(500, Math.abs(front - rear));
+  const width = Math.max(1, finite(sourceWidth, visual.referenceCanvasWidth || 1200));
+  const height = Math.max(1, finite(sourceHeight, visual.referenceCanvasHeight || 500));
+  const authored = visual.driverFace;
   const override = visual.driverSeat || {};
+  const originX = visual.referenceStandard ? 1 : 0.5;
+  const originY = visual.referenceStandard ? 1 : 0.5;
 
-  // Automatic baseline. Most road cars land close enough that only unusual
-  // cabins need a small driverSeat override in cars.js.
-  const fallbackX = rear + (front - rear) * 0.62;
-  const fallbackY = wheelY - wheelbase * 0.22;
-  const fallbackHeight = wheelbase * 0.235;
+  if (authored) {
+    return {
+      x: (clamp(finite(authored.x, 0.54), 0, 1) - originX) * width,
+      y: (clamp(finite(authored.y, 0.22), 0, 1) - originY) * height,
+      height: clamp(finite(authored.height, 0.13), 0.04, 0.35) * height,
+      alpha: clamp(finite(authored.alpha, 0.52), 0.05, 1),
+    };
+  }
 
+  // Keep deliberately calibrated legacy hero-car overrides intact.
+  if (override.x != null && override.y != null) {
+    return {
+      x: finite(override.x, 0), y: finite(override.y, -height * 0.25),
+      height: Math.max(1, finite(override.height, height * 0.13)),
+      alpha: clamp(finite(override.alpha, 0.52), 0.05, 1),
+    };
+  }
+
+  // Safe placement for as-yet uncalibrated cars; never derive a vertical
+  // coordinate from wheelOffsetY (it has different origins by car family).
   return {
-    x: Number.isFinite(Number(override.x)) ? Number(override.x) : fallbackX,
-    y: Number.isFinite(Number(override.y)) ? Number(override.y) : fallbackY,
-    height: Number.isFinite(Number(override.height)) ? Number(override.height) : fallbackHeight,
-    alpha: clamp(
-      Number.isFinite(Number(override.alpha)) ? Number(override.alpha) : 0.50,
-      0.05,
-      1
-    ),
+    x: (0.54 - originX) * width,
+    y: (0.24 - originY) * height,
+    height: height * 0.13,
+    alpha: 0.52,
   };
 }
 
-export function resolveDriverHead(character = {}) {
-  const override = character?.visual?.driverHead || {};
+export function resolveDriverHead(character = {}, source = null, spriteKey = '') {
+  const visual = character?.visual || {};
+  const face = resolveCharacterFaceAnchor(source, spriteKey, visual, 'idle');
+  const override = visual.driverHead || {};
   return {
-    cropX: clamp(
-      Number.isFinite(Number(override.cropX)) ? Number(override.cropX) : DEFAULT_HEAD.cropX,
-      0,
-      0.90
-    ),
-    cropY: clamp(
-      Number.isFinite(Number(override.cropY)) ? Number(override.cropY) : DEFAULT_HEAD.cropY,
-      0,
-      0.90
-    ),
-    cropW: clamp(
-      Number.isFinite(Number(override.cropW)) ? Number(override.cropW) : DEFAULT_HEAD.cropW,
-      0.05,
-      1
-    ),
-    cropH: clamp(
-      Number.isFinite(Number(override.cropH)) ? Number(override.cropH) : DEFAULT_HEAD.cropH,
-      0.05,
-      1
-    ),
-    offsetX: Number.isFinite(Number(override.offsetX)) ? Number(override.offsetX) : 0,
-    offsetY: Number.isFinite(Number(override.offsetY)) ? Number(override.offsetY) : 0,
-    scale: clamp(
-      Number.isFinite(Number(override.scale)) ? Number(override.scale) : 1,
-      0.50,
-      1.75
-    ),
+    ...face,
+    offsetX: finite(override.offsetX, 0),
+    offsetY: finite(override.offsetY, 0),
+    scale: clamp(finite(override.scale, 1), 0.5, 1.75),
   };
 }
 
-export function createDriverSilhouette(
-  scene,
-  visualOrCar,
-  character,
-  {
-    bodyX = 0,
-    bodyY = 0,
-    bodyScale = 1,
-    depth = 0,
-    flipX = false,
-    alpha = null,
-  } = {}
-) {
+export function createDriverSilhouette(scene, visualOrCar, character, {
+  bodyX = 0,
+  bodyY = 0,
+  bodyScale = 1,
+  depth = 0,
+  flipX = false,
+  alpha = null,
+  sourceWidth = 0,
+  sourceHeight = 0,
+} = {}) {
   const spriteKey = character?.visual?.spriteKey;
   if (!spriteKey || !scene?.textures?.exists?.(spriteKey)) return null;
-
   const source = scene.textures.get(spriteKey).getSourceImage();
   if (!source?.width || !source?.height) return null;
 
-  const seat = resolveDriverSeat(visualOrCar);
-  const head = resolveDriverHead(character);
+  const seat = resolveDriverSeat(visualOrCar, sourceWidth, sourceHeight);
+  const head = resolveDriverHead(character, source, spriteKey);
 
-  const cropX = Math.round(source.width * head.cropX);
-  const cropY = Math.round(source.height * head.cropY);
-  const cropW = Math.max(
-    1,
-    Math.round(source.width * Math.min(head.cropW, 1 - head.cropX))
-  );
-  const cropH = Math.max(
-    1,
-    Math.round(source.height * Math.min(head.cropH, 1 - head.cropY))
-  );
+  // Keep the source crop tight around the HEAD. A full torso positioned at
+  // the window used to leak under the sill on cars with dark-tinted windows.
+  const desiredCropH = Math.max(8, head.headHeight * 1.32);
+  const cropH = Math.min(source.height, Math.round(desiredCropH));
+  const cropW = Math.min(source.width, Math.max(6, Math.round(cropH * 0.86)));
+  const cropX = Math.round(clamp(head.x - cropW * 0.5, 0, source.width - cropW));
+  const cropY = Math.round(clamp(head.y - cropH * 0.47, 0, source.height - cropH));
+  const renderedHeight = Math.max(4, seat.height * bodyScale * head.scale);
+  const spriteScale = renderedHeight / cropH;
 
-  const targetHeight = Math.max(12, seat.height * bodyScale * head.scale);
-  const silhouetteScale = targetHeight / cropH;
+  // setCrop does NOT move the source-image origin: compensate using the
+  // canonical face's coordinates within the *whole* sprite. The face centre
+  // now lands exactly on the car's source-space anchor for any sprite size.
+  const faceTargetX = bodyX + (seat.x * bodyScale) + head.offsetX * renderedHeight;
+  const faceTargetY = bodyY + (seat.y * bodyScale) + head.offsetY * renderedHeight;
+  const renderX = faceTargetX - (head.x - source.width * 0.5) * spriteScale;
+  const renderY = faceTargetY - (head.y - source.height * 0.5) * spriteScale;
 
-  const centreX =
-    bodyX +
-    seat.x * bodyScale +
-    head.offsetX * targetHeight;
-
-  const centreY =
-    bodyY +
-    seat.y * bodyScale +
-    head.offsetY * targetHeight;
-
-  const topY = centreY - targetHeight * 0.52;
-
-  const image = scene.add.image(centreX, topY, spriteKey)
-    .setOrigin(0.5, 0)
+  const silhouette = scene.add.image(renderX, renderY, spriteKey)
+    .setOrigin(0.5, 0.5)
     .setCrop(cropX, cropY, cropW, cropH)
-    .setScale(silhouetteScale)
+    .setScale(spriteScale)
     .setFlipX(Boolean(flipX))
     .setTint(0x05070a)
     .setAlpha(alpha == null ? seat.alpha : clamp(alpha, 0.05, 1))
     .setDepth(depth);
 
-  image.setData('driverSilhouette', true);
-
-  const offsetX = centreX - bodyX;
-  const offsetY = topY - bodyY;
-  image.setData('driverSeatOffsetX', offsetX);
-  image.setData('driverSeatOffsetY', offsetY);
+  const offsetX = renderX - bodyX;
+  const offsetY = renderY - bodyY;
+  silhouette.setData('driverSilhouette', true);
+  silhouette.setData('driverSeatOffsetX', offsetX);
+  silhouette.setData('driverSeatOffsetY', offsetY);
+  silhouette.setData('driverFaceTargetX', faceTargetX);
+  silhouette.setData('driverFaceTargetY', faceTargetY);
 
   return {
-    image,
+    image: silhouette,
     seat,
     head,
-    targetHeight,
+    targetHeight: renderedHeight,
     offsetX,
     offsetY,
   };
