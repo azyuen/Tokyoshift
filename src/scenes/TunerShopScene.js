@@ -19,6 +19,7 @@ import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
+  getCarDecalAnchor,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
@@ -1519,10 +1520,19 @@ export default class TunerShopScene extends Phaser.Scene {
       bodyLayers,
     });
 
+    // Use the same sticker origin as the race and garage, including the
+    // source-canvas half-height for right-anchored Ref/Ref2 PNGs.
+    const decalAnchor = getCarDecalAnchor(car, {
+      x: car.visual?.referenceStandard ? drawX : x,
+      y: displayY,
+      scale: bodyScale,
+      sourceWidth: source.width,
+      sourceHeight: source.height,
+    });
     const decalObjects = showDecals
       ? createTunerDecalLayers(this, carState, {
-          x: car.visual.referenceStandard ? drawX - source.width * bodyScale / 2 : x,
-          y: displayY,
+          x: decalAnchor.x,
+          y: decalAnchor.y,
           displayWidth: bodyLayers.primary.displayWidth,
           displayHeight: bodyLayers.primary.displayHeight,
           depth: depth + 1.04,
@@ -1541,8 +1551,9 @@ export default class TunerShopScene extends Phaser.Scene {
     ];
 
     objects.geometry = {
-      x,
-      displayY,
+      // The placement editor must use the identical anchor as saved decals.
+      x: decalAnchor.x,
+      displayY: decalAnchor.y,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
       bodyScale,
