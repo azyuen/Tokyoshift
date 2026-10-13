@@ -673,6 +673,33 @@ export const engines = {
     ],
   },
 
+  // Dedicated Galant VR-4 Evolution calibration: 176 kW stock and a
+  // distinct broad, earlier turbo torque delivery from the Lancer Evo III.
+  // Realistic period-inspired approximation, not a shared Evolution map.
+  '4g63t_galant_vr4': {
+    id: '4g63t_galant_vr4',
+    name: 'Mitsubishi 4G63T 2.0L DOHC Turbo // Galant VR-4 Evolution',
+    idleRPM: 850,
+    redlineRPM: 7000,
+    limiterRPM: 7200,
+    inertia: 0.23,
+    referenceBoostBar: 0.78,
+    offBoostTorqueFraction: 0.52,
+    torqueCurve: [
+      [1000, 118],
+      [1800, 178],
+      [2600, 254],
+      [3500, 304],
+      [4500, 298],
+      [5200, 291],
+      [5800, 288],
+      [6000, 280],
+      [6300, 263],
+      [7000, 215],
+      [7200, 197],
+    ],
+  },
+
   '4g63t': {
     id: '4g63t',
     name: 'Mitsubishi 4G63T 2.0L Turbo',
