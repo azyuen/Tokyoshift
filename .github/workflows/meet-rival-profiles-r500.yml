@@ -1,0 +1,38 @@
+name: Meet rival cars and portrait framing R500
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/encounterProfiles.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/characters/CharacterProfileRenderer.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/meet-rival-cars-and-profiles-r500.mjs'
+      - '.github/workflows/meet-rival-profiles-r500.yml'
+  pull_request:
+    paths:
+      - 'src/data/encounterProfiles.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/characters/CharacterProfileRenderer.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/meet-rival-cars-and-profiles-r500.mjs'
+
+jobs:
+  meet-and-portraits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/data/encounterProfiles.js
+          node --check src/scenes/MeetScene.js
+          node --check src/characters/CharacterProfileRenderer.js
+          node --check src/ui/MangaCutscene.js
+          node --check tests/meet-rival-cars-and-profiles-r500.mjs
+      - name: New meet cars and portrait regression checks
+        run: |
+          node --test tests/meet-rival-cars-and-profiles-r500.mjs tests/meet-refresh-r469.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/car-reference-rollout.mjs
