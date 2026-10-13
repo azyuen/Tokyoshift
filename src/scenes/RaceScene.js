@@ -150,7 +150,7 @@ export default class RaceScene extends Phaser.Scene {
 
     // All street-race regions now use authored day/night panoramas.
     // Assets follow skyline_<region>_<phase>.webp and share one renderer.
-    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA']);
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
     if (skylineRegions.has(this.raceDistrict)) {
       const regionSlug = this.raceDistrict.toLowerCase();
       const skylineKey = 'raceSkyline_' + regionSlug + '_' + this.raceTimeOfDay;
@@ -541,7 +541,7 @@ export default class RaceScene extends Phaser.Scene {
     this.rollingSpeedMps = 60 / 3.6;
     this.lastRollCountdownLabel = null;
 
-    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA']);
+    const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
     const skylineKey = skylineRegions.has(this.raceDistrict)
       ? 'raceSkyline_' + this.raceDistrict.toLowerCase() + '_' + this.raceTimeOfDay
       : null;
@@ -551,7 +551,12 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('raceRoadVariantCounter', roadVariantCounter);
     const roadVariant = roadVariantCounter % 4;
     const startWindow = this.raceDistanceM <= QUARTER_M + 1 ? 0.78 : 0.42;
-    const skylineStartRatio = ((roadVariantCounter * 0.61803398875) % 1) * startWindow;
+    // Oshiage's authored Skytree landmark belongs near the finish.
+    // Keep the track furniture varied, but anchor this skyline so its tower
+    // does not wander out of view from race to race.
+    const skylineStartRatio = this.raceDistrict === 'OSHIAGE'
+      ? 0.28
+      : ((roadVariantCounter * 0.61803398875) % 1) * startWindow;
     const skylineTravelPx = this.raceDistanceM <= QUARTER_M + 1 ? 430 : (this.raceDistanceM <= HALF_MILE_M + 1 ? 760 : 1000);
     this.environment = new TokyoExpresswayBackground(this, {
       timeOfDay: this.raceTimeOfDay,
