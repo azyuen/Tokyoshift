@@ -89,13 +89,8 @@ import {
   buildDynoCar,
 } from '../data/dyno.js?v=20261011-r479';
 import {
-  PAINT_PRESETS,
   getCarPaintColor,
-  paintColorToHex,
-  paintColorToRgb,
-  rgbToPaintColor,
   normalisePaintColor,
-  hasLayeredPaintAssets,
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarDecalAnchor,
@@ -105,13 +100,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import {
-  VISUAL_MOD_SLOT_ORDER,
-  getVisualModCatalog,
-  getVisualModSlotIds,
-  getVisualModOptions,
-  getVisualModOption,
   normaliseVisualMods,
-  getVisualModChangeCost,
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModAssets,
@@ -5259,12 +5248,6 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisModeObjects.push(obj);
       return obj;
     };
-    const addPaint = obj => {
-      this.chassisModeObjects.push(obj);
-      this.chassisPaintObjects.push(obj);
-      obj.setVisible(false);
-      return obj;
-    };
 
     add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
@@ -5394,92 +5377,6 @@ export default class GarageScene extends Phaser.Scene {
     this.refreshChassisMode();
   }
 
-  getPaintJobCost() {
-    return this.getWorkshopAdjustedCost(8000);
-  }
-
-  openChassisPaintPanel() {
-    return; // Paint purchases are exclusive to Oshiage Custom Works.
-    if (!this.chassisMode || this.chassisPaintPanelOpen) return;
-
-    this.chassisPaintPanelOpen = true;
-    this.pendingPaintColor = this.currentPaintColor;
-
-    Object.values(this.chassisPartRows || {}).forEach(row => {
-      [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(false));
-      row.box?.disableInteractive?.();
-    });
-    Object.values(this.chassisVisualModRows || {}).forEach(row => {
-      [row.box, row.label, row.detail, row.arrow].forEach(obj => obj?.setVisible?.(false));
-      row.box?.disableInteractive?.();
-    });
-
-    [
-      this.chassisPaintMenuButton,
-      this.chassisPaintMenuLabel,
-      this.chassisPaintMenuDetail,
-      this.chassisPaintMenuArrow,
-      this.chassisPartsApplyButton,
-      this.chassisPartsApplyText,
-      this.visualModsApplyButton,
-      this.visualModsApplyText,
-      this.chassisMainBackButton,
-      this.chassisMainBackText,
-    ].forEach(obj => obj?.setVisible?.(false));
-
-    this.chassisPaintMenuButton?.disableInteractive();
-    this.chassisPartsApplyButton?.disableInteractive();
-    this.visualModsApplyButton?.disableInteractive();
-    this.chassisMainBackButton?.disableInteractive();
-
-    (this.chassisPaintObjects || []).forEach(obj => obj?.setVisible?.(true));
-    this.chassisPaintBackButton?.setInteractive({ useHandCursor: true });
-    (this.chassisPaintChannelButtons || []).forEach(button =>
-      button?.setInteractive?.({ useHandCursor: true })
-    );
-
-    this.refreshChassisMode();
-  }
-
-  closeChassisPaintPanel() {
-    if (!this.chassisMode || !this.chassisPaintPanelOpen) return;
-
-    this.chassisPaintPanelOpen = false;
-    this.pendingPaintColor = this.currentPaintColor;
-    setCarBodyPaint(this.selectedDisplay, this.currentPaintColor);
-
-    (this.chassisPaintObjects || []).forEach(obj => obj?.setVisible?.(false));
-    this.chassisPresetButtons.forEach(item => item.hit?.disableInteractive?.());
-    (this.chassisPaintChannelButtons || []).forEach(button => button?.disableInteractive?.());
-    this.chassisApplyButton?.disableInteractive();
-    this.chassisPaintBackButton?.disableInteractive();
-
-    Object.values(this.chassisPartRows || {}).forEach(row => {
-      [row.box, row.label, row.detail, row.level].forEach(obj => obj?.setVisible?.(true));
-      row.box?.setInteractive?.({ useHandCursor: true });
-    });
-    Object.values(this.chassisVisualModRows || {}).forEach(row => {
-      [row.box, row.label, row.detail, row.arrow].forEach(obj => obj?.setVisible?.(true));
-      row.box?.setInteractive?.({ useHandCursor: true });
-    });
-
-    [
-      this.chassisPaintMenuButton,
-      this.chassisPaintMenuLabel,
-      this.chassisPaintMenuDetail,
-      this.chassisPaintMenuArrow,
-      this.chassisPartsApplyButton,
-      this.chassisPartsApplyText,
-      this.chassisMainBackButton,
-      this.chassisMainBackText,
-    ].forEach(obj => obj?.setVisible?.(true));
-
-    this.chassisPaintMenuButton?.setInteractive({ useHandCursor: true });
-    this.chassisMainBackButton?.setInteractive({ useHandCursor: true });
-
-    this.refreshChassisMode();
-  }
-
   rebuildSelectedVisualModPreview() {
     if (!this.selectedCarId || !this.heroCarLayout) return;
 
@@ -5501,78 +5398,6 @@ export default class GarageScene extends Phaser.Scene {
     setCarBodyPaint(
       this.selectedDisplay,
       normalisePaintColor(this.pendingPaintColor ?? this.currentPaintColor)
-    );
-  }
-
-  cyclePendingVisualMod(slotId) {
-    return; // Bodykit selection now disabled.
-    if (!this.chassisMode || !this.selectedCarId || this.chassisPaintPanelOpen) return;
-
-    const options = getVisualModOptions(this.selectedCarId, slotId);
-    if (options.length <= 1) return;
-
-    const currentId = this.pendingVisualMods?.[slotId] || 'stock';
-    const index = Math.max(0, options.findIndex(option => option.id === currentId));
-    const next = options[(index + 1) % options.length];
-
-    this.pendingVisualMods = {
-      ...(this.pendingVisualMods || {}),
-      [slotId]: next.id,
-    };
-
-    this.rebuildSelectedVisualModPreview();
-    this.refreshChassisMode();
-  }
-
-  applyPendingVisualMods() {
-    return; // All old bodykits retired until new assets are authored.
-    if (!this.chassisMode || !this.selectedCarId || !this.pendingVisualMods) return;
-
-    const cost = this.getWorkshopAdjustedCost(
-      getVisualModChangeCost(
-        this.selectedCarId,
-        this.currentVisualMods || {},
-        this.pendingVisualMods
-      )
-    );
-
-    const unchanged = VISUAL_MOD_SLOT_ORDER.every(
-      slotId =>
-        (this.currentVisualMods?.[slotId] || 'stock') ===
-        (this.pendingVisualMods?.[slotId] || 'stock')
-    );
-    if (unchanged) return;
-
-    const cash = Number(this.registry.get('cash') || 0);
-    if (cash < cost) {
-      this.showWorkshopToast('NOT ENOUGH CASH');
-      return;
-    }
-
-    const carStates = { ...(this.registry.get('carStates') || {}) };
-    const existing = carStates[this.selectedCarId] || {};
-    const installed = normaliseVisualMods(this.selectedCarId, this.pendingVisualMods);
-
-    carStates[this.selectedCarId] = {
-      ...existing,
-      stock: false,
-      visualMods: installed,
-    };
-
-    this.registry.set('carStates', carStates);
-    this.registry.set('cash', cash - cost);
-    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
-    saveSessionState(this.registry);
-
-    this.currentVisualMods = { ...installed };
-    this.pendingVisualMods = { ...installed };
-
-    this.rebuildSelectedVisualModPreview();
-    this.refreshChassisMode();
-    this.showWorkshopToast(
-      cost > 0
-        ? 'VISUAL MODS INSTALLED // ¥ ' + cost.toLocaleString('en-US')
-        : 'VISUAL MODS UPDATED'
     );
   }
 
@@ -5783,23 +5608,8 @@ export default class GarageScene extends Phaser.Scene {
     this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
 
-  adjustPendingPaintChannel(channel, delta) {
-    return; // No garage RGB adjustments.
-    if (!this.chassisMode || !hasLayeredPaintAssets(this, cars[this.selectedCarId])) return;
-
-    const rgb = paintColorToRgb(this.pendingPaintColor);
-    rgb[channel] = Phaser.Math.Clamp(Number(rgb[channel] || 0) + Number(delta || 0), 0, 255);
-    this.pendingPaintColor = rgbToPaintColor(rgb.r, rgb.g, rgb.b);
-    this.refreshChassisMode();
-  }
-
   refreshChassisMode() {
     if (!this.chassisMode || !this.selectedCarId) return;
-
-    const car = cars[this.selectedCarId];
-    const ready = hasLayeredPaintAssets(this, car);
-    const color = normalisePaintColor(this.pendingPaintColor);
-    const rgb = paintColorToRgb(color);
 
     Object.entries(this.chassisPartRows || {}).forEach(([partId, row]) => {
       const current = this.currentChassisTuning?.[partId] || 0;
@@ -5815,59 +5625,6 @@ export default class GarageScene extends Phaser.Scene {
         1
       );
     });
-
-    Object.entries(this.chassisVisualModRows || {}).forEach(([slotId, row]) => {
-      const currentId = this.currentVisualMods?.[slotId] || 'stock';
-      const pendingId = this.pendingVisualMods?.[slotId] || 'stock';
-      const option = getVisualModOption(this.selectedCarId, slotId, pendingId);
-      const changed = currentId !== pendingId;
-
-      row.detail.setText(
-        (option?.name || 'STOCK').toUpperCase() +
-        (option?.price ? ' // ¥ ' + Number(option.price).toLocaleString('en-US') : '')
-      );
-      row.detail.setColor(changed ? '#7fe6ff' : '#7d9bad');
-      row.box.setStrokeStyle(changed ? 2 : 1, changed ? 0x43dfff : 0x315470, 1);
-      row.arrow.setColor(changed ? '#55e4ff' : '#8db6cc');
-    });
-
-    if (this.visualModsApplyButton && this.visualModsApplyText) {
-      const visualUnchanged = VISUAL_MOD_SLOT_ORDER.every(
-        slotId =>
-          (this.currentVisualMods?.[slotId] || 'stock') ===
-          (this.pendingVisualMods?.[slotId] || 'stock')
-      );
-      const visualCost = this.getWorkshopAdjustedCost(
-        getVisualModChangeCost(
-          this.selectedCarId,
-          this.currentVisualMods || {},
-          this.pendingVisualMods || {}
-        )
-      );
-      const visualAffordable = Number(this.registry.get('cash') || 0) >= visualCost;
-
-      this.visualModsApplyButton.removeAllListeners('pointerdown');
-
-      if (visualUnchanged) {
-        this.visualModsApplyButton.disableInteractive()
-          .setFillStyle(0x102226, 1)
-          .setStrokeStyle(2, 0x3e7f78, 0.7);
-        this.visualModsApplyText
-          .setText('VISUAL MODS INSTALLED')
-          .setColor('#758e94');
-      } else {
-        this.visualModsApplyButton.setInteractive({ useHandCursor: true })
-          .setFillStyle(visualAffordable ? 0x0c2827 : 0x2a171b, 1)
-          .setStrokeStyle(2, visualAffordable ? 0x62e8c7 : 0xff6f7d, 1);
-        this.visualModsApplyText.setText(
-          visualAffordable
-            ? 'INSTALL VISUAL MODS // ¥ ' + visualCost.toLocaleString('en-US')
-            : 'NEED ¥ ' + visualCost.toLocaleString('en-US')
-        ).setColor(visualAffordable ? '#f1fffb' : '#ffc0c6');
-
-        this.visualModsApplyButton.on('pointerdown', () => this.applyPendingVisualMods());
-      }
-    }
 
     const chassisCost = this.getPendingChassisCost();
     const cash = Number(this.registry.get('cash') || 0);
@@ -5891,50 +5648,6 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPartsApplyButton?.on('pointerdown', () => this.applyPendingChassisUpgrades());
     }
 
-  }
-
-  applyPendingPaint() {
-    return; // Legacy garage paint path disabled in R501.
-    if (!this.chassisMode || !this.selectedCarId || !this.chassisPaintPanelOpen) return;
-    const car = cars[this.selectedCarId];
-    if (!hasLayeredPaintAssets(this, car)) {
-      this.showWorkshopToast('PAINT LAYERS NOT AVAILABLE');
-      return;
-    }
-
-    const paintColor = normalisePaintColor(this.pendingPaintColor);
-    if (paintColor === this.currentPaintColor) return;
-
-    const cost = this.getPaintJobCost();
-    const cash = Number(this.registry.get('cash') || 0);
-    if (cash < cost) {
-      this.showWorkshopToast('NOT ENOUGH CASH');
-      return;
-    }
-
-    const carStates = { ...(this.registry.get('carStates') || {}) };
-    const existing = carStates[this.selectedCarId] || {};
-
-    carStates[this.selectedCarId] = {
-      ...existing,
-      paintColor,
-    };
-
-    this.registry.set('carStates', carStates);
-    this.registry.set('cash', cash - cost);
-    this.cashText?.setText('¥ ' + (cash - cost).toLocaleString('en-US'));
-    saveSessionState(this.registry);
-    this.currentPaintColor = paintColor;
-    this.pendingPaintColor = paintColor;
-
-    this.thumbButtons.forEach(item => {
-      if (item.id === this.selectedCarId) setCarBodyPaint(item.display || [], paintColor);
-    });
-    setCarBodyPaint(this.selectedDisplay, paintColor);
-    this.refreshChassisMode();
-    this.showWorkshopToast(
-      'PAINT APPLIED // ' + paintColorToHex(paintColor) + ' // ¥ ' + cost.toLocaleString('en-US')
-    );
   }
 
   leaveChassisMode(animate = true) {
