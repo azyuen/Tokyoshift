@@ -2,7 +2,7 @@
 
 ## Save-safe clean replacement
 
-The existing base model ID `evo3` is deliberately stable for all existing saves, car copies, crews, achievements, coupons, garages, tuner state, car history, pink-slip challenges, magazine sightings and persisted race offers. **The visible car is now exclusively the Mitsubishi Galant VR-4 Evolution.** Keeping this internal ID avoids losing players' tuning and prevents new/old ownership collision. Every reference to `cars.evo3` now resolves to the Galant. No second car or choice between Evo III and Galant is offered.
+The existing base model ID `evo3` is deliberately stable for all existing saves, car copies, crews, achievements, coupons, garages, tuner state, car history, pink-slip challenges, magazine sightings and persisted race offers. **The visible car is now exclusively the Mitsubishi Galant VR-4 Evo.** Keeping this internal ID avoids losing players' tuning and prevents new/old ownership collision. Every reference to `cars.evo3` now resolves to the Galant. No second car or choice between Evo III and Galant is offered.
 
 ## Sprite integration
 
