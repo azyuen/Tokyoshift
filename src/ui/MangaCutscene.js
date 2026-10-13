@@ -13,9 +13,7 @@ import {
   createCharacterProfile,
   getCharacterProfileTexture,
   resolveCharacterProfile,
-  PROFILE_REFERENCE_HEIGHT,
-  PROFILE_HEAD_SAFE_RATIO,
-  PROFILE_DEFAULT_ZOOM,
+  getCharacterProfilePlacement,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261011-r480';
@@ -246,13 +244,12 @@ function restoreScene(scene, state) {
 function frameFor(scene, side) {
   const width = Number(scene.scale.width || scene.cameras.main.width || 1560);
   const height = Number(scene.scale.height || scene.cameras.main.height || 840);
-  // Cutscene-only staging: keep the canonical profile metadata, but give
-  // silhouettes more breathing room above the manga gutter. The smaller
-  // target frame reduces actor scale uniformly; the higher centre lifts both
-  // short and tall characters without introducing per-character hacks.
+  // Keep the whole silhouette comfortably within the staging area. Earlier
+  // cutscenes set their centre at 42% of screen height, which elevated every
+  // character relative to the dialogue gutter and cropped hair unnecessarily.
   const frameHeight = Math.min(620, Math.max(450, height * 0.76));
   const frameWidth = Math.min(550, Math.max(410, width * 0.35));
-  const y = height * 0.42;
+  const y = height * 0.50;
 
   if (side === 'left') {
     return { x: width * 0.28, y, frameWidth, frameHeight };
@@ -398,20 +395,28 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
   texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   const source = texture.getSourceImage();
 
-  const inwardFlip = side === 'right';
-  const offsetScale = frame.height / PROFILE_REFERENCE_HEIGHT;
-  const signedOffsetX = resolved.offsetX * offsetScale * (inwardFlip ? -1 : 1);
-  const topY = frame.y - frame.height / 2;
-  const baseScale = (frame.height * PROFILE_DEFAULT_ZOOM) / Math.max(1, source.height);
+  // Pose changes must use precisely the same crown/face-centred geometry as
+  // createCharacterProfile. The old shortcut ignored the head anchor and
+  // jumped the portrait upward (and sideways) whenever its pose changed.
+  const placement = getCharacterProfilePlacement({
+    source,
+    spriteKey,
+    contextualVisual,
+    pose: actualPose,
+    profile: resolved,
+    x: frame.x,
+    y: frame.y,
+    frameWidth: frame.width,
+    frameHeight: frame.height,
+    side,
+    flipInward: true,
+  });
 
   image
     .setTexture(spriteKey)
-    .setPosition(
-      Math.round(frame.x + signedOffsetX),
-      Math.round(topY + frame.height * PROFILE_HEAD_SAFE_RATIO + resolved.offsetY * offsetScale)
-    )
-    .setScale(baseScale * resolved.scale)
-    .setFlipX(inwardFlip);
+    .setPosition(placement.x, placement.y)
+    .setScale(placement.scale)
+    .setFlipX(placement.flipX);
 
   profile.requestedPose = requestedPose;
   profile.actualPose = actualPose;
