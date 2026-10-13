@@ -193,7 +193,7 @@ export default class OshiageScene extends Phaser.Scene {
     if (!queued) {
       ensureDerivedModularCarTextures(this, Object.fromEntries(
         Object.entries(cars).filter(([, car]) => car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
-      ));
+      )));
       this.renderView();
       afterLoad?.();
       return;
@@ -202,7 +202,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.load.once('complete', () => {
       ensureDerivedModularCarTextures(this, Object.fromEntries(
         Object.entries(cars).filter(([, car]) => car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey)
-      ));
+      )));
       this.renderView();
       finishSceneLoading('OSHIAGE READY');
       afterLoad?.();
