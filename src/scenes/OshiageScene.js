@@ -1,7 +1,6 @@
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261013-osh1';
@@ -138,7 +137,7 @@ export default class OshiageScene extends Phaser.Scene {
     finishSceneLoading('OSHIAGE READY');
   }
 
-  add(obj) { this.content.push(obj); return obj; }
+  own(obj) { this.content.push(obj); return obj; }
   clearView() {
     this.tweens.killTweensOf(this.content);
     this.content.forEach(o => o?.destroy?.());
@@ -171,11 +170,11 @@ export default class OshiageScene extends Phaser.Scene {
       STRIP.w, STRIP.h, 0x07111d, 0.99).setStrokeStyle(2, 0x24465e).setDepth(30);
   }
   addText(x, y, s, opts = {}) {
-    return this.add(TEXT(this, x, y, s, opts).setDepth(opts.depth ?? 33));
+    return this.own(TEXT(this, x, y, s, opts).setDepth(opts.depth ?? 33));
   }
   button(x, y, w, h, label, onClick, opts = {}) {
     const active = opts.disabled !== true;
-    const r = this.add(this.add.rectangle(x, y, w, h,
+    const r = this.own(this.add.rectangle(x, y, w, h,
       active ? (opts.accent ? 0x153d3a : 0x14253a) : 0x17212b)
       .setStrokeStyle(2, active ? (opts.accent ? 0x62e8c7 : 0x63baff) : 0x3c4e58)
       .setDepth(33));
@@ -226,7 +225,7 @@ export default class OshiageScene extends Phaser.Scene {
     const background = this.backgroundAsset();
     if (this.textures.exists(background.key)) {
       const src = this.textures.get(background.key).getSourceImage();
-      const img = this.add(this.add.image(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2, background.key)
+      const img = this.own(this.add.image(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2, background.key)
         .setScale(Math.max(STAGE.w / src.width, STAGE.h / src.height))
         .setMask(this.stageMask).setDepth(-10));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
@@ -253,7 +252,7 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.textures.exists(key)) {
       const source = this.textures.get(key).getSourceImage();
       const h = 325;
-      const img = this.add(this.add.image(985, 575, key)
+      const img = this.own(this.add.image(985, 575, key)
         .setOrigin(0.5, 1).setScale(h / source.height).setMask(this.stageMask).setDepth(12));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     }
@@ -343,7 +342,7 @@ export default class OshiageScene extends Phaser.Scene {
       const x = SIDE.x + 49 + (i % 5) * 62;
       const y = SIDE.y + 297 + Math.floor(i / 5) * 66;
       const active = p.color === this.pendingPaint;
-      const swatch = this.add(this.add.rectangle(x, y, 43, 38, p.color)
+      const swatch = this.own(this.add.rectangle(x, y, 43, 38, p.color)
         .setStrokeStyle(active ? 4 : 2, active ? 0xeaffff : 0x526676)
         .setDepth(33));
       if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
@@ -376,7 +375,6 @@ export default class OshiageScene extends Phaser.Scene {
     const wheelVisual = getVisualModWheelVisual(car, state);
     if (!this.textures.exists(bodyKey) || !wheelVisual?.wheelKey ||
         !this.textures.exists(wheelVisual.wheelKey)) return [];
-    const src = this.textures.get(bodyKey).getSourceImage();
     const wheelSrc = this.textures.get(wheelVisual.wheelKey).getSourceImage();
     const scale = getCarBodyScaleForWidth(this, car, width);
     const fit = getWheelPairFit(wheelVisual, scale, false, wheelSrc);
@@ -391,7 +389,7 @@ export default class OshiageScene extends Phaser.Scene {
     const objects = [];
     const track = obj => {
       obj.setMask?.(this.stageMask);
-      this.add(obj);
+      this.own(obj);
       objects.push(obj);
       return obj;
     };
