@@ -21,6 +21,7 @@ import {
   getCarPaintColor,
   normalisePaintColor,
   createCarBodyLayers,
+  getCarBodyTextureKey,
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
@@ -1190,12 +1191,18 @@ export default class RaceScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
+    const bodyTextureKey = getCarBodyTextureKey(this, cfg);
+    const bodySource = this.textures.exists(bodyTextureKey)
+      ? this.textures.get(bodyTextureKey).getSourceImage()
+      : null;
     const driver = driverCharacter
       ? createDriverSilhouette(this, cfg, driverCharacter, {
           bodyX: 0,
           bodyY: 0,
           bodyScale,
           depth: depth + 0.55,
+          sourceWidth: bodySource?.width || cfg.referenceCanvasWidth || 1200,
+          sourceHeight: bodySource?.height || cfg.referenceCanvasHeight || 500,
         })
       : null;
 
@@ -1249,7 +1256,7 @@ export default class RaceScene extends Phaser.Scene {
       bodyObjects: [...bodyLayers.objects, ...visualModObjects, ...decalObjects],
       driverSilhouette: driver?.image || null,
       driverOffsetX: (driver?.offsetX || 0) + (referenceCar ? body.width * bodyScale * 0.5 : 0),
-      driverOffsetY: (driver?.offsetY || 0) + referenceGroundOffset,
+      driverOffsetY: driver?.offsetY || 0,
       paintBody: bodyLayers.paint,
       bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
