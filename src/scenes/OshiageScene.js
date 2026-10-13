@@ -472,6 +472,10 @@ export default class OshiageScene extends Phaser.Scene {
           (continuing && series.playerCarId !== selectedCarId),
         accent: true, size: '8px',
       });
+    if (series?.active) {
+      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 627, SIDE.w - 40, 37,
+        'ABANDON CURRENT STREAK', () => this.abandonEliteStreak(), { size: '7px' });
+    }
     const last = this.registry.get('oshiageEliteLastResult');
     this.addText(48, 653,
       'SKYTREE SHOWDOWNS // 3 RACES TO WIN // 15-MINUTE COOLDOWNS',
@@ -551,6 +555,18 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('raceLocationLabel', venue.label + ' // ' + (roundIndex + 1) + '/3');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
+  }
+
+  abandonEliteStreak() {
+    const series = this.registry.get('oshiageEliteSeries');
+    if (!series?.active) return;
+    this.registry.set('oshiageEliteSeries', null);
+    this.registry.set('oshiageEliteLastResult', {
+      venueId: series.venueId, playerWon: false, abandoned: true,
+      cash: 0, at: Date.now(),
+    });
+    saveSessionState(this.registry);
+    this.renderView();
   }
 
   showOshiageNotice(message) {
