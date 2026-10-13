@@ -662,7 +662,9 @@ export default class RaceScene extends Phaser.Scene {
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
           ? 'SHOWDOWN ROUND'
-          : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
+          : this.raceMode === 'OSHIAGE_ELITE'
+            ? 'SKYTREE ELITE // 3-RACE STREAK'
+            : 'BET  ¥ ' + this.raceStake.toLocaleString('en-US');
 
     this.rivalText = this.add.text(
       1490,
@@ -2761,7 +2763,9 @@ export default class RaceScene extends Phaser.Scene {
           ? 'NEXT CHALLENGER'
           : settlement?.competitionContinues
             ? 'NEXT ROUND'
-            : 'CONTINUE';
+            : settlement?.oshiageEliteContinues
+              ? 'NEXT ELITE ROUND'
+              : 'CONTINUE';
 
     const actionHintText = this.add.text(1490, 690, actionHint + ' // TAP ANYWHERE', {
       fontFamily: titleFont,
