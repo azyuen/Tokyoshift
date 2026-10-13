@@ -34,7 +34,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
+import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
