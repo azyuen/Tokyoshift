@@ -36,7 +36,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
   getGarageCapacity,
@@ -2284,6 +2284,16 @@ export default class MeetScene extends Phaser.Scene {
       this.registry.set('meetStranded', false);
       saveSessionState(this.registry);
       this.scene.start('CentralTokyoScene', { locationId });
+      return true;
+    }
+
+    if (travelTarget.regionId === 'OSHIAGE') {
+      this.registry.set('cash', cash - travelCost);
+      this.registry.set('oshiageLocation', locationId);
+      this.registry.set('district', 'OSHIAGE');
+      this.registry.set('meetStranded', false);
+      saveSessionState(this.registry);
+      this.scene.start('OshiageScene', { locationId });
       return true;
     }
 
