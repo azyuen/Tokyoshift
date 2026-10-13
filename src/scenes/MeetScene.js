@@ -36,7 +36,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r494';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261004-r322';
 import {
   getGarageCapacity,
@@ -105,7 +105,7 @@ import {
   getCarCouponCount,
   MARKET_BASE_PRICES,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js?v=20261013-r496';
 import {
   isCrewComplete,
   getCrewMembers,
