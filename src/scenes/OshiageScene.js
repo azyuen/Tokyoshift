@@ -615,29 +615,215 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   drawCustomWorks() {
-    this.sideHeader('CUSTOM WORKS', 'Exterior customisation // Oshiage');
-    this.addText(SIDE.x + 20, SIDE.y + 154,
-      'CUSTOM PAINT', { pixel: true, size: '11px', color: '#ffe5b0' });
-    this.addText(SIDE.x + 20, SIDE.y + 216,
-      'Choose a factory-style preset for ¥8,000, or blend a unique RGB colour for ¥16,000. Your car is sprayed inside the adjacent paint booth.',
-      { size: '13px', wrap: SIDE.w - 40, color: '#e3f2fa' });
-    this.addText(SIDE.x + 20, SIDE.y + 403,
-      'BODY KITS // COMING SOON\nDECALS // COMING SOON',
-      { pixel: true, size: '8px', color: '#91a8b9', wrap: SIDE.w - 40 });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 548, SIDE.w - 40, 50,
-      'ENTER PAINT BOOTH  >', () => {
-        this.room = 'paint';
-        this.paintMode = 'preset';
-        this.pendingPaint = null;
-        this.loadAndRender(() => this.rollPaintCarIn());
-      }, { accent: true, size: '8px' });
-    this.addText(48, 654, 'OSHIAGE CUSTOM WORKS // EXTERIOR SERVICES',
+    this.sideHeader('CUSTOM WORKS', 'Paint & Rims // Oshiage');
+    this.addText(SIDE.x + 20, SIDE.y + 155, 'EXTERIOR CUSTOMISATION',
+      { pixel: true, size: '10px', color: '#ffe5b0', wrap: SIDE.w - 40 });
+    this.addText(SIDE.x + 20, SIDE.y + 222,
+      'PAINT: Preset finishes ¥8,000, or custom RGB for ¥16,000.\n\n' +
+      'RIMS: Try and buy standard, tuner and hero wheel designs, or install designs already in your collection.',
+      { size: '13px', wrap: SIDE.w - 40, color: '#e1eff6', spacing: 6 });
+    this.addText(SIDE.x + 20, SIDE.y + 450,
+      'BODYKIT // COMING SOON\nOld bodykits have been retired to match the new car assets.',
+      { size: '11px', wrap: SIDE.w - 40, color: '#9cb2c0', spacing: 6 });
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 557, SIDE.w - 40, 50,
+      'ENTER PAINT BOOTH  >', () => this.openCustomWorksRoom('paint'),
+      { accent: true, size: '8px' });
+    this.addText(48, 654, 'OSHIAGE CUSTOM WORKS // SELECT A SERVICE',
       { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(225, 743, 338, 65, 'CUSTOM PAINT', () => this.showOshiageNotice(
-      'CUSTOM PAINT // PRESETS ¥8,000 // CUSTOM RGB ¥16,000'), { accent: true });
-    this.button(590, 743, 338, 65, 'BODY KIT // SOON', null, { disabled: true });
-    this.button(955, 743, 338, 65, 'DECALS // SOON', null, { disabled: true });
+    this.button(225, 743, 338, 65, 'PAINT', () => this.openCustomWorksRoom('paint'),
+      { accent: true, size: '9px' });
+    this.button(590, 743, 338, 65, 'RIMS', () => this.openCustomWorksRoom('rims'),
+      { size: '9px' });
+    this.button(955, 743, 338, 65, 'BODYKIT // COMING SOON', null,
+      { disabled: true, size: '7px' });
   }
+
+  openCustomWorksRoom(room) {
+    if (!['paint', 'rims'].includes(room) || this.paintBusy) return;
+    this.room = room;
+    this.pendingPaint = null;
+    if (room === 'paint') this.paintMode = 'preset';
+    if (room === 'rims') {
+      this.selectedRimIndex = -1;
+      this.rimPreview = false;
+      this.rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
+    }
+    this.loadAndRender(room === 'paint' ? () => this.rollPaintCarIn() : null);
+  }
+
+  drawRimShop() {
+    const listings = getOshiageRimListings();
+    const { id, car, state } = this.selectedCar();
+    const selected = listings[this.selectedRimIndex] || null;
+    const quote = selected ? getOshiageRimQuote(this.registry, id, selected.id) : null;
+    this.sideHeader('CUSTOM WORKS // RIMS', '10 RIMS ON DISPLAY // CHANGES EVERY 3 HOURS');
+
+    // The original wheel-wall backdrop remains the rack. The live item PNGs
+    // are individually clickable and carry over from Central Tokyo.
+    const slots = [
+      [0.276, 0.296], [0.391, 0.296], [0.500, 0.296], [0.611, 0.296], [0.728, 0.296],
+      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.611, 0.452], [0.728, 0.452],
+    ];
+    listings.forEach((option, index) => {
+      if (!this.textures.exists(option.textureKey)) return;
+      const slot = slots[index];
+      const chosen = this.selectedRimIndex === index;
+      const x = STAGE.x + STAGE.w * slot[0];
+      const y = STAGE.y + STAGE.h * slot[1];
+      const img = this.own(this.add.image(x, y, option.textureKey)
+        .setDisplaySize(chosen ? 83 : 77, chosen ? 83 : 77)
+        .setMask(this.stageMask).setDepth(18)
+        .setInteractive({ useHandCursor: true }));
+      img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+      img.on('pointerdown', () => {
+        if (!this.rimConfirmOpen && !this.paintBusy) this.selectRim(index);
+      });
+    });
+
+    if (car && this.rimPreview && selected) {
+      const previewState = { ...state, customWheelId: selected.id };
+      // Reuse the exact fitted pair and stock car body as garage/paint studio.
+      // The preview modifies only this temporary object, not saved car state.
+      this.drawOwnedCar(car, previewState, 603, 453, 695, getCarPaintColor(state), 21);
+    } else if (!car) {
+      this.addText(STAGE.x + 125, STAGE.y + STAGE.h - 58,
+        'SELECT YOUR CAR AT A WORKSHOP TO PREVIEW RIMS',
+        { pixel: true, size: '9px', color: '#eff7ff', depth: 27 });
+    }
+
+    if (!car) {
+      this.addText(SIDE.x + 20, SIDE.y + 169, 'NO CAR SELECTED',
+        { pixel: true, size: '10px', color: '#ffc6a8' });
+      this.addText(SIDE.x + 20, SIDE.y + 226,
+        'Choose an owned car before trying, buying or installing rims. Your previously purchased rims stay in your collection.',
+        { size: '12px', wrap: SIDE.w - 40 });
+    } else if (!selected) {
+      this.addText(SIDE.x + 20, SIDE.y + 167, String(car.shortName || car.name).toUpperCase(),
+        { pixel: true, size: '10px', color: '#d9eefd', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 231,
+        'Tap one of the ten designs on the wheel wall to preview it on your current car.\n\n' +
+        'Previously purchased rims remain yours and are free to reinstall.',
+        { size: '13px', wrap: SIDE.w - 40, spacing: 5 });
+    } else {
+      const locked = quote?.locked;
+      const tierColor = selected.tier === 'HERO' ? '#ff9fc7' :
+        selected.tier === 'TUNER' ? '#ffe08a' : '#8fe7ff';
+      this.addText(SIDE.x + 20, SIDE.y + 151,
+        selected.tier + ' // ' + String(car.shortName || 'YOUR CAR').toUpperCase(),
+        { pixel: true, size: '8px', color: tierColor, wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 205, selected.label.toUpperCase(),
+        { pixel: true, size: '10px', color: '#f4faff', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 278,
+        selected.source + '\n384 × 384 STANDARD FIT',
+        { size: '11px', color: '#9cbbc9', wrap: SIDE.w - 40, spacing: 5 });
+      this.addText(SIDE.x + 20, SIDE.y + 377,
+        quote?.owned ? 'OWNED // FREE TO INSTALL' : 'PRICE // ' + MONEY(selected.price),
+        { pixel: true, size: '9px', color: '#ffe5a5', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 442,
+        locked ? 'COLLECTOR / CREW CAR // WHEELS LOCKED' :
+          quote?.status === 'INSTALLED' ? 'CURRENTLY INSTALLED' :
+            quote?.status === 'UNAFFORDABLE' ? 'NOT ENOUGH CASH' :
+              'READY TO ' + (quote?.owned ? 'INSTALL' : 'PURCHASE'),
+        { pixel: true, size: '8px', color: locked ? '#ffc3c9' : '#9ae6cd', wrap: SIDE.w - 40 });
+      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 601, SIDE.w - 40, 48,
+        quote?.owned ? 'INSTALL RIMS' :
+          'BUY & INSTALL // ' + MONEY(selected.price),
+        () => this.confirmRimTransaction(selected, id),
+        { disabled: !['OWNED', 'BUY'].includes(quote?.status), accent: true, size: '8px' });
+    }
+
+    const restoreAllowed = Boolean(car && state.customWheelId &&
+      !car.tuningLocked && !car.crewLoan && !state.collector && !state.immutable &&
+      !state.tuningLocked && !state.crewLoan);
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 535, SIDE.w - 40, 42,
+      restoreAllowed ? 'RESTORE STOCK RIMS' : 'STOCK RIMS',
+      () => {
+        if (!restoreStockOshiageRims(this.registry, id)) return;
+        saveSessionState(this.registry);
+        this.renderView();
+        this.showOshiageNotice('ORIGINAL FACTORY RIMS RESTORED');
+      }, { disabled: !restoreAllowed, size: '8px' });
+
+    this.addText(48, 654, 'RIMS // STANDARD · TUNER · HERO // 10 ROTATING DESIGNS',
+      { pixel: true, size: '9px', color: '#8feaff' });
+    this.button(214, 745, 326, 64, 'CUSTOM WORKS  <', () => {
+      this.room = 'outside';
+      this.selectedRimIndex = -1;
+      this.rimPreview = false;
+      this.loadAndRender();
+    }, { size: '8px' });
+    this.button(584, 745, 326, 64, 'VIEW RIM WALL', () => {
+      this.rimPreview = false;
+      this.renderView();
+    }, { size: '8px' });
+    this.button(950, 745, 326, 64, 'PREVIEW ON CAR', () => {
+      if (!car) return;
+      this.selectedRimIndex = Math.max(0, this.selectedRimIndex);
+      this.rimPreview = true;
+      this.renderView();
+    }, { disabled: !car, accent: Boolean(this.rimPreview), size: '8px' });
+    this.addText(48, 798,
+      selected
+        ? 'RIMS ARE PREVIEW ONLY UNTIL YOU CONFIRM THE PURCHASE OR INSTALLATION.'
+        : 'TAP ANY RIM ON THE WALL TO START A LIVE FITMENT PREVIEW.',
+      { size: '9px', color: '#a1bdcc' });
+  }
+
+  selectRim(index) {
+    const listings = getOshiageRimListings();
+    if (index < 0 || index >= listings.length || this.rimConfirmOpen) return;
+    this.selectedRimIndex = index;
+    this.rimPreview = true;
+    this.renderView();
+  }
+
+  confirmRimTransaction(option, carId) {
+    if (this.rimConfirmOpen || this.paintBusy) return;
+    const quote = getOshiageRimQuote(this.registry, carId, option?.id);
+    if (!['OWNED', 'BUY'].includes(quote.status)) return;
+    this.rimConfirmOpen = true;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => {
+      objects.forEach(obj => obj?.destroy?.());
+      this.rimConfirmOpen = false;
+    };
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.80)
+      .setDepth(240).setInteractive());
+    add(this.add.rectangle(780, 420, 770, 318, 0x0a1622, 0.998)
+      .setStrokeStyle(3, 0x62e8c7).setDepth(241));
+    add(TEXT(this, 780, 318, quote.owned ? 'INSTALL RIMS?' : 'BUY & INSTALL RIMS?',
+      { pixel: true, size: '15px', color: '#f5ffff' }).setOrigin(0.5).setDepth(242));
+    add(TEXT(this, 780, 394, option.label + '\n' +
+      (quote.owned ? 'ALREADY OWNED // NO CHARGE' : MONEY(quote.price)) +
+      '\nInstall on ' + String(cars[carId]?.shortName || 'YOUR CAR') + '?',
+      { size: '16px', color: '#c9e5ed', align: 'center', spacing: 6 })
+      .setOrigin(0.5).setDepth(242));
+    const cancel = add(this.add.rectangle(637, 516, 226, 50, 0x18232a)
+      .setStrokeStyle(2, 0x8299a5).setDepth(242).setInteractive({ useHandCursor: true }));
+    add(TEXT(this, 637, 516, 'CANCEL', { pixel: true, size: '9px' })
+      .setOrigin(0.5).setDepth(243));
+    cancel.on('pointerdown', close);
+    const confirm = add(this.add.rectangle(921, 516, 232, 50, 0x153a31)
+      .setStrokeStyle(2, 0x62e8c7).setDepth(242).setInteractive({ useHandCursor: true }));
+    add(TEXT(this, 921, 516, quote.owned ? 'INSTALL' : 'BUY & INSTALL',
+      { pixel: true, size: '9px' }).setOrigin(0.5).setDepth(243));
+    confirm.on('pointerdown', () => {
+      close();
+      const result = buyOrInstallOshiageRim(this.registry, carId, option.id);
+      if (!result.ok) {
+        this.renderView();
+        this.showOshiageNotice('TRANSACTION UNAVAILABLE // PLEASE TRY AGAIN');
+        return;
+      }
+      saveSessionState(this.registry);
+      this.renderView();
+      this.showOshiageNotice(result.spent > 0
+        ? 'RIMS PURCHASED & INSTALLED // ' + MONEY(result.spent)
+        : 'OWNED RIMS INSTALLED // NO CHARGE');
+    });
+  }
+
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
     const mode = this.paintMode === 'custom' ? 'custom' : 'preset';
@@ -743,7 +929,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.renderView();
   }
 
-  drawOwnedCar(car, state, x, y, width, paintColor) {
+  drawOwnedCar(car, state, x, y, width, paintColor, depth = 11) {
     const bodyKey = getCarBodyTextureKey(this, car);
     const wheelVisual = getVisualModWheelVisual(car, state);
     if (!this.textures.exists(bodyKey) || !wheelVisual?.wheelKey ||
@@ -758,7 +944,6 @@ export default class OshiageScene extends Phaser.Scene {
     const rearY = visualY + fit.rear.offsetY, frontY = visualY + fit.front.offsetY;
     const rearBottom = rearY + getWheelContactOffsetY(wheelSrc, fit.rear.wheelScale);
     const frontBottom = frontY + getWheelContactOffsetY(wheelSrc, fit.front.wheelScale);
-    const depth = 11;
     const objects = [];
     const track = obj => {
       obj.setMask?.(this.stageMask);
