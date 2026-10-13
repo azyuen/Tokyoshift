@@ -694,6 +694,7 @@ export function showTravelMap(scene, options = {}) {
     // future edge node), automatically flip below the dial rather than clipping
     // the label out of the map.
     const forceBelow = item.regionId === 'SHIBUYA';
+    const forceRight = item.regionId === 'OSHIAGE';
     let centerY = forceBelow
       ? item.pt.y + 42 + h / 2
       : item.pt.y - 42 - h / 2;
@@ -709,7 +710,11 @@ export function showTravelMap(scene, options = {}) {
     // their name spilling off-screen.
     const minCenterX = MAP.x + edge + w / 2;
     const maxCenterX = MAP.x + MAP.w - edge - w / 2;
-    const centerX = Phaser.Math.Clamp(item.pt.x, minCenterX, maxCenterX);
+    const centerX = Phaser.Math.Clamp(
+      forceRight ? item.pt.x + 41 + w / 2 : item.pt.x,
+      minCenterX, maxCenterX
+    );
+    if (forceRight) centerY = Phaser.Math.Clamp(item.pt.y, MAP.y + edge + h / 2, MAP.y + MAP.h - edge - h / 2);
     const x = centerX - w / 2;
     const y = centerY - h / 2;
 
@@ -757,7 +762,7 @@ export function showTravelMap(scene, options = {}) {
       const active = regionId === selectedRegionId;
       const home = regionId === HOME_REGION_ID;
       const centralTokyo = regionId === 'CENTRAL_TOKYO';
-      const specialColor = centralTokyo ? 0xffd600 : home ? 0x35dfff : null;
+      const specialColor = (centralTokyo || regionId === 'OSHIAGE') ? 0xffd600 : home ? 0x35dfff : null;
       const regularPink = 0xff57bd;
       const accent = specialColor ?? regularPink;
 
@@ -1311,7 +1316,7 @@ export function showTravelMap(scene, options = {}) {
     ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
-      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
+      if (crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId)) return;
       selectedRegionId = regionId;
 
       if (regionId === currentRegionId && !fromWorkshop) {
