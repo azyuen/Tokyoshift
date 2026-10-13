@@ -1,0 +1,33 @@
+name: Oshiage R496 regressions
+on:
+  push:
+    paths:
+      - 'src/data/oshiageElite.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/data/travelRegions.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'src/ui/TravelMap.js'
+      - 'tests/oshiage-r496.mjs'
+      - '.github/workflows/oshiage-r496.yml'
+  workflow_dispatch:
+jobs:
+  oshiage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        run: |
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/data/oshiageElite.js
+          node --check src/data/centralTokyo.js
+          node --check src/ui/TravelMap.js
+          node --check src/state/GameState.js
+      - name: Oshiage gameplay regressions
+        run: node --test tests/oshiage-r496.mjs
