@@ -42,6 +42,8 @@ Regional challenges, street competitions and specialist workshops establish cred
 
 Recruitment changes the scale of responsibility. Seven regional recruits bring existing loyalties and cars into the player's crew. Their relationships with their home regions continue. Preparing several cars and earning their owners' trust makes the workshop a shared undertaking. Under the current professional design, the player personally drives selected crew loan cars; dialogue must reflect that responsibility rather than imply friendly AI drove the player's heats.
 
+The Oshiage driving academy can provide voluntary technique lessons after the first few races. Sayaka's familiar presence there is deliberately understated: her teaching supports the player's improvement without pre-empting Ginza or the professional strategist revelation.
+
 An invitation to Ginza reveals Sayaka as the curator and manager of a private collection. Her professional competence reframes the first lesson. Collector cars introduce another form of automotive value: provenance, complete builds and histories worth preserving. This encounter does not disclose her old strategist role.
 
 At legitimate professional entry, after Ginza and the assembly of seven regional recruits, Sayaka reveals that she was the father's racing-team strategist and joins the player's team in that non-driving role. Her support now carries private history: she stood beside the father from their early days, shared a professional effort that never fully succeeded, grew distant from him for a long time, and reconnected much later. His mistakes and poor decisions are real, but their specifics have not been authored.
