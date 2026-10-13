@@ -5208,12 +5208,12 @@ export default class GarageScene extends Phaser.Scene {
   enterChassisMode() {
     if (this.engineMode || this.secondaryMode || this.chassisMode || this.engineTransitioning || !this.selectedCarId) return;
     if (this.isSelectedCarTuningLocked()) {
-      this.showWorkshopToast('COLLECTOR CAR // CHASSIS & PAINT LOCKED');
+      this.showWorkshopToast('COLLECTOR CAR // CHASSIS TUNING LOCKED');
       return;
     }
     this.ensureGarageTuningAssets(
       () => this.runTuningTransition(() => this.activateChassisMode()),
-      { includeVisualMods: true }
+      { includeVisualMods: false }
     );
   }
 
@@ -5334,125 +5334,21 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPartRows[partId] = { box, label, detail, level };
     });
 
-    const paintY = SIDE.y + 338;
-    this.chassisPaintMenuButton = add(this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      paintY,
-      SIDE.w - 36,
-      52,
-      0x0b1724,
-      1
-    ).setStrokeStyle(1, 0x315470, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(72));
-
-    this.chassisPaintMenuLabel = add(this.add.text(SIDE.x + 24, paintY - 9, 'PAINT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#dff3ff',
-    }).setOrigin(0, 0.5).setDepth(73));
-
-    this.chassisPaintMenuDetail = add(this.add.text(
-      SIDE.x + 24,
-      paintY + 13,
-      'CUSTOM COLOUR // ¥ ' + this.getPaintJobCost().toLocaleString('en-US'),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: '#7d9bad',
-        fontStyle: '600',
-      }
-    ).setOrigin(0, 0.5).setDepth(73));
-
-    this.chassisPaintMenuArrow = add(this.add.text(
-      SIDE.x + SIDE.w - 28,
-      paintY,
-      '>',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#8db6cc',
-      }
-    ).setOrigin(0.5).setDepth(73));
-
-    this.chassisPaintMenuButton.on('pointerdown', () => this.openChassisPaintPanel());
-
-    // Authored full-body kit pairs share the stock canvas and paint tint.
-    // Each available row cycles through STOCK and its two options.
+    // Paint and rims now belong exclusively to Oshiage Custom Works.
+    // Retired bodykit assets are hidden across every garage.
     const crewControlLift = this.crewMode ? -32 : 0;
-    const visualCatalog = getVisualModCatalog(this.selectedCarId);
-    if (visualCatalog) {
-      getVisualModSlotIds(this.selectedCarId).forEach((slotId, index) => {
-        const slot = visualCatalog.slots[slotId];
-        const y = SIDE.y + 402 + index * TUNING_CATEGORY_ROW_GAP;
-
-        const box = add(this.add.rectangle(
-          SIDE.x + SIDE.w / 2,
-          y,
-          SIDE.w - 36,
-          46,
-          0x0b1724,
-          1
-        ).setStrokeStyle(1, 0x315470, 1)
-          .setInteractive({ useHandCursor: true })
-          .setDepth(72));
-
-        const label = add(this.add.text(SIDE.x + 24, y - 8, slot.label, {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: '#dff3ff',
-        }).setOrigin(0, 0.5).setDepth(73));
-
-        const detail = add(this.add.text(SIDE.x + 24, y + 11, '', {
-          fontFamily: BODY_FONT,
-          fontSize: '9px',
-          color: '#7d9bad',
-          fontStyle: '600',
-        }).setOrigin(0, 0.5).setDepth(73));
-
-        const arrow = add(this.add.text(SIDE.x + SIDE.w - 28, y, '>', {
-          fontFamily: PIXEL_FONT,
-          fontSize: '9px',
-          color: '#8db6cc',
-        }).setOrigin(0.5).setDepth(73));
-
-        box.on('pointerdown', () => this.cyclePendingVisualMod(slotId));
-        this.chassisVisualModRows[slotId] = { box, label, detail, arrow };
-      });
-
-      this.visualModsApplyButton = add(this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
-        SIDE.y + 534 + crewControlLift,
-        SIDE.w - 36,
-        38,
-        0x102226,
-        1
-      ).setStrokeStyle(2, 0x3e7f78, 0.7).setDepth(72));
-
-      this.visualModsApplyText = add(this.add.text(
-        SIDE.x + SIDE.w / 2,
-        SIDE.y + 534 + crewControlLift,
-        'VISUAL MODS INSTALLED',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '7px',
-          color: '#758e94',
-        }
-      ).setOrigin(0.5).setDepth(73));
-    } else {
-      const y = SIDE.y + 390;
-      add(this.add.text(SIDE.x + 24, y, 'VISUAL MODS // NOT AVAILABLE FOR THIS CAR YET', {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: '#607887',
-        fontStyle: '600',
-        wordWrap: { width: SIDE.w - 48 },
-      }).setDepth(73));
-    }
+    add(this.add.text(SIDE.x + 23, SIDE.y + 382,
+      'PAINT / RIMS / BODYKIT\nOSHIAGE CUSTOM WORKS', {
+      fontFamily: BODY_FONT,
+      fontSize: '10px',
+      color: '#89aebf',
+      align: 'left',
+      lineSpacing: 7,
+    }).setDepth(73));
 
     this.chassisPartsApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594 + crewControlLift,
+      SIDE.y + 494 + crewControlLift,
       SIDE.w - 36,
       44,
       0x102226,
@@ -5461,7 +5357,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPartsApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 594 + crewControlLift,
+      SIDE.y + 494 + crewControlLift,
       'NO CHASSIS PARTS SELECTED',
       {
         fontFamily: PIXEL_FONT,
@@ -5472,7 +5368,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 658 + crewControlLift,
+      SIDE.y + 576 + crewControlLift,
       SIDE.w - 36,
       44,
       0x102138,
@@ -5483,7 +5379,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 658 + crewControlLift,
+      SIDE.y + 576 + crewControlLift,
       this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
       {
         fontFamily: PIXEL_FONT,
@@ -5494,165 +5390,6 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackButton.on('pointerdown', () => this.leaveChassisMode(true));
 
-    // Paint sub-panel: same controls as before, hidden until PAINT is selected.
-    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 154, 'PAINT', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '9px',
-      color: '#62dfff',
-    }).setDepth(73));
-
-    this.chassisPaintSwatch = addPaint(this.add.rectangle(
-      SIDE.x + 70,
-      SIDE.y + 198,
-      76,
-      52,
-      this.pendingPaintColor,
-      1
-    ).setStrokeStyle(2, 0xd8f5ff, 1).setDepth(72));
-
-    this.chassisHexText = addPaint(this.add.text(SIDE.x + 126, SIDE.y + 187, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#e8f7ff',
-    }).setDepth(73));
-
-    this.chassisAssetStatusText = addPaint(this.add.text(SIDE.x + 126, SIDE.y + 212, '', {
-      fontFamily: BODY_FONT,
-      fontSize: '9px',
-      color: '#7fa4b7',
-      wordWrap: { width: 180 },
-    }).setDepth(73));
-
-    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 254, 'PRESET COLOURS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#91b9ce',
-    }).setDepth(73));
-
-    const presetStartX = SIDE.x + 55;
-    const presetStartY = SIDE.y + 296;
-    const presetGapX = 62;
-    const presetGapY = 54;
-
-    PAINT_PRESETS.forEach((preset, index) => {
-      const col = index % 5;
-      const row = Math.floor(index / 5);
-      const x = presetStartX + col * presetGapX;
-      const y = presetStartY + row * presetGapY;
-
-      const box = addPaint(this.add.rectangle(x, y, 46, 32, preset.color, 1)
-        .setStrokeStyle(2, 0x42586a, 1)
-        .setDepth(72));
-
-      const hit = addPaint(this.add.rectangle(x, y, 52, 40, 0x000000, 0)
-        .setDepth(74));
-
-      hit.disableInteractive();
-      hit.on('pointerdown', () => {
-        if (!hasLayeredPaintAssets(this, car)) return;
-        this.pendingPaintColor = preset.color;
-        this.refreshChassisMode();
-      });
-
-      this.chassisPresetButtons.push({ preset, box, hit });
-    });
-
-    addPaint(this.add.text(SIDE.x + 28, SIDE.y + 398, 'CUSTOM RGB', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#91b9ce',
-    }).setDepth(73));
-
-    ['r', 'g', 'b'].forEach((channel, index) => {
-      const y = SIDE.y + 442 + index * 46;
-      const label = channel.toUpperCase();
-
-      addPaint(this.add.text(SIDE.x + 32, y, label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#dff3ff',
-      }).setOrigin(0, 0.5).setDepth(73));
-
-      const minus = addPaint(this.add.rectangle(SIDE.x + 112, y, 42, 34, 0x0b1724, 1)
-        .setStrokeStyle(1, 0x315470, 1)
-        .setDepth(72));
-      minus.disableInteractive();
-
-      addPaint(this.add.text(SIDE.x + 112, y, '−', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '12px',
-        color: '#bde9ff',
-      }).setOrigin(0.5).setDepth(73));
-
-      const valueText = addPaint(this.add.text(SIDE.x + 180, y, '000', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#ffffff',
-      }).setOrigin(0.5).setDepth(73));
-      this.chassisRgbLabels[channel] = valueText;
-
-      const plus = addPaint(this.add.rectangle(SIDE.x + 248, y, 42, 34, 0x0b1724, 1)
-        .setStrokeStyle(1, 0x315470, 1)
-        .setDepth(72));
-      plus.disableInteractive();
-
-      addPaint(this.add.text(SIDE.x + 248, y, '+', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '10px',
-        color: '#bde9ff',
-      }).setOrigin(0.5).setDepth(73));
-
-      minus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, -8));
-      plus.on('pointerdown', () => this.adjustPendingPaintChannel(channel, 8));
-
-      this.chassisPaintChannelButtons = this.chassisPaintChannelButtons || [];
-      this.chassisPaintChannelButtons.push(minus, plus);
-    });
-
-    this.chassisApplyButton = addPaint(this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
-      SIDE.w - 36,
-      44,
-      0x102226,
-      1
-    ).setStrokeStyle(2, 0x3e7f78, 1).setDepth(72));
-    this.chassisApplyButton.disableInteractive();
-
-    this.chassisApplyText = addPaint(this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 604,
-      'PAINT INSTALLED',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#758e94',
-      }
-    ).setOrigin(0.5).setDepth(73));
-
-    this.chassisPaintBackButton = addPaint(this.add.rectangle(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 662,
-      SIDE.w - 36,
-      44,
-      0x102138,
-      1
-    ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(72));
-    this.chassisPaintBackButton.disableInteractive();
-
-    this.chassisPaintBackText = addPaint(this.add.text(
-      SIDE.x + SIDE.w / 2,
-      SIDE.y + 662,
-      '<  BACK TO CHASSIS',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: '#eef8ff',
-      }
-    ).setOrigin(0.5).setDepth(73));
-
-    this.chassisPaintBackButton.on('pointerdown', () => this.closeChassisPaintPanel());
-
     this.addDaichiChassisHelper();
     this.refreshChassisMode();
   }
@@ -5662,6 +5399,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   openChassisPaintPanel() {
+    return; // Paint purchases are exclusive to Oshiage Custom Works.
     if (!this.chassisMode || this.chassisPaintPanelOpen) return;
 
     this.chassisPaintPanelOpen = true;
@@ -5767,6 +5505,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   cyclePendingVisualMod(slotId) {
+    return; // Bodykit selection now disabled.
     if (!this.chassisMode || !this.selectedCarId || this.chassisPaintPanelOpen) return;
 
     const options = getVisualModOptions(this.selectedCarId, slotId);
@@ -5786,6 +5525,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   applyPendingVisualMods() {
+    return; // All old bodykits retired until new assets are authored.
     if (!this.chassisMode || !this.selectedCarId || !this.pendingVisualMods) return;
 
     const cost = this.getWorkshopAdjustedCost(
@@ -6044,6 +5784,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   adjustPendingPaintChannel(channel, delta) {
+    return; // No garage RGB adjustments.
     if (!this.chassisMode || !hasLayeredPaintAssets(this, cars[this.selectedCarId])) return;
 
     const rgb = paintColorToRgb(this.pendingPaintColor);
@@ -6150,65 +5891,10 @@ export default class GarageScene extends Phaser.Scene {
       this.chassisPartsApplyButton?.on('pointerdown', () => this.applyPendingChassisUpgrades());
     }
 
-    this.chassisPaintSwatch?.setFillStyle(color, 1);
-    this.chassisHexText?.setText(paintColorToHex(color));
-    this.chassisRgbLabels.r?.setText(String(rgb.r).padStart(3, '0'));
-    this.chassisRgbLabels.g?.setText(String(rgb.g).padStart(3, '0'));
-    this.chassisRgbLabels.b?.setText(String(rgb.b).padStart(3, '0'));
-
-    this.chassisAssetStatusText?.setText(
-      ready
-        ? 'LIVE PREVIEW // PHASER TINT'
-        : 'PAINT LAYERS NOT AVAILABLE FOR THIS CAR'
-    ).setColor(ready ? '#62e8c7' : '#ffbc71');
-
-    this.chassisPresetButtons.forEach(item => {
-      const active = item.preset.color === color;
-      item.box.setStrokeStyle(active ? 3 : 2, active ? 0xffffff : 0x42586a, active ? 1 : 0.85);
-      if (ready && this.chassisPaintPanelOpen) item.hit.setInteractive({ useHandCursor: true });
-      else item.hit.disableInteractive();
-    });
-
-    if (ready && this.chassisPaintPanelOpen) setCarBodyPaint(this.selectedDisplay, color);
-
-    this.chassisApplyButton?.removeAllListeners('pointerdown');
-
-    if (!ready) {
-      this.chassisApplyButton?.disableInteractive()
-        .setFillStyle(0x241b16, 1)
-        .setStrokeStyle(2, 0x79563a, 0.85);
-      this.chassisApplyText?.setText('PAINT ASSETS REQUIRED').setColor('#c99b74');
-      return;
-    }
-
-    if (color === this.currentPaintColor) {
-      this.chassisApplyButton?.disableInteractive()
-        .setFillStyle(0x102226, 1)
-        .setStrokeStyle(2, 0x3e7f78, 0.7);
-      this.chassisApplyText?.setText('PAINT INSTALLED').setColor('#758e94');
-      return;
-    }
-
-    const paintCost = this.getPaintJobCost();
-    const affordablePaint = Number(this.registry.get('cash') || 0) >= paintCost;
-    if (this.chassisPaintPanelOpen) {
-      this.chassisApplyButton?.setInteractive({ useHandCursor: true })
-        .setFillStyle(affordablePaint ? 0x0c2827 : 0x2a171b, 1)
-        .setStrokeStyle(2, affordablePaint ? 0x62e8c7 : 0xff6f7d, 1);
-    } else {
-      this.chassisApplyButton?.disableInteractive();
-    }
-    this.chassisApplyText?.setText(
-      affordablePaint
-        ? 'PAINT CAR // ¥ ' + paintCost.toLocaleString('en-US')
-        : 'NEED ¥ ' + paintCost.toLocaleString('en-US')
-    ).setColor(affordablePaint ? '#f1fffb' : '#ffc0c6');
-    if (this.chassisPaintPanelOpen) {
-      this.chassisApplyButton?.on('pointerdown', () => this.applyPendingPaint());
-    }
   }
 
   applyPendingPaint() {
+    return; // Legacy garage paint path disabled in R501.
     if (!this.chassisMode || !this.selectedCarId || !this.chassisPaintPanelOpen) return;
     const car = cars[this.selectedCarId];
     if (!hasLayeredPaintAssets(this, car)) {
