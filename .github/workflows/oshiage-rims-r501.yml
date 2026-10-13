@@ -1,0 +1,31 @@
+name: Oshiage Rims R501
+on:
+  push:
+    paths:
+      - 'src/data/oshiageRims.js'
+      - 'src/data/visualMods.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/data/travelRegions.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/oshiage-rims-r501.mjs'
+      - '.github/workflows/oshiage-rims-r501.yml'
+  workflow_dispatch:
+jobs:
+  moved-rims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          for src in src/scenes/OshiageScene.js src/scenes/CentralTokyoScene.js src/scenes/GarageScene.js src/data/oshiageRims.js src/data/visualMods.js src/data/centralTokyo.js src/state/GameState.js src/data/travelRegions.js; do
+            node --check "$src"
+          done
+      - name: Verify moved Rims shop and existing Oshiage behaviour
+        run: node --test tests/oshiage-rims-r501.mjs tests/oshiage-r496.mjs
