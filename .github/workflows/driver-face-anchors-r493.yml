@@ -9,6 +9,8 @@ on:
       - 'src/data/cars.js'
       - 'src/vehicles/DriverSilhouette.js'
       - 'src/scenes/RaceScene.js'
+      - 'src/scenes/DriverFaceCalibrationScene.js'
+      - 'src/main.js'
       - 'tests/driver-face-anchors.mjs'
   push:
     branches:
@@ -30,5 +32,7 @@ jobs:
           node --check src/data/cars.js
           node --check src/vehicles/DriverSilhouette.js
           node --check src/scenes/RaceScene.js
+          node --check src/scenes/DriverFaceCalibrationScene.js
+          node --check src/main.js
       - name: Check race/car regression
         run: node --test tests/driver-face-anchors.mjs tests/car-reference-rollout.mjs tests/car-reference-geometry.mjs
