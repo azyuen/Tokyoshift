@@ -1208,7 +1208,7 @@ export default class OshiageScene extends Phaser.Scene {
         if (!this.sys.isActive()) return;
         if (lockUI) this.paintBusy = false;
         // Never invalidate an active manga scene during its confirmation.
-        if (!sceneCutsceneActive(this) && !this.schoolPromptOpen) {
+        if (!this._mangaCutscene?.active && !this.schoolPromptOpen) {
           this.renderView(); // Stationary car; no replay on colour / rim selection.
         }
       },
