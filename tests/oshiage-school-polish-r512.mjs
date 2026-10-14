@@ -53,6 +53,6 @@ test('car parks lower at stage midpoint without locking course buttons while rol
   assert.match(school, /lockUI: false/);
   assert.match(school, /if \(lockUI\) this\.paintBusy = true/);
   assert.match(school, /if \(lockUI\) this\.paintBusy = false/);
-  assert.match(school, /!sceneCutsceneActive\(this\) && !this\.schoolPromptOpen/);
+  assert.match(school, /!this\._mangaCutscene\?\.active && !this\.schoolPromptOpen/);
   assert.match(school, /progress\.travel \/ wheel\.radius/);
 });
