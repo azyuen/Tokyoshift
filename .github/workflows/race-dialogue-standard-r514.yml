@@ -1,0 +1,26 @@
+name: Shared Race and Phone Dialogue R514
+on:
+  push:
+    paths:
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'tests/race-dialogue-standard-r514.mjs'
+      - 'tests/oshiage-race-coach-hud-r513.mjs'
+      - 'tests/opening-chapter-r467.mjs'
+      - '.github/workflows/race-dialogue-standard-r514.yml'
+  workflow_dispatch:
+jobs:
+  dialogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/ui/RaceCoachHud.js
+          node --check src/ui/PhoneConversation.js
+      - name: Shared dialogue and existing story/regression tests
+        run: node --test tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/opening-chapter-r467.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-coaching-r509.mjs
