@@ -297,7 +297,10 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
     this.isTutorial = this.raceMode === 'TUTORIAL';
-    this.coachingLesson = this.isTutorial && ['launch', 'standing', 'rolling'].includes(
+    this.coachingLesson = this.isTutorial &&
+      this.registry.get('raceReturnScene') === 'OshiageScene' &&
+      String(this.registry.get('raceDistrict') || '').toUpperCase() === 'OSHIAGE' &&
+      ['launch', 'standing', 'rolling'].includes(
       this.registry.get('oshiageTrainingLesson')
     ) ? this.registry.get('oshiageTrainingLesson') : null;
     this.isCoaching = Boolean(this.coachingLesson);
@@ -1436,7 +1439,7 @@ export default class RaceScene extends Phaser.Scene {
     outcomes[this.selectedCarId] = {
       ...previous,
       [this.coachingLesson]: {
-        build, completed: !timedOut, lastSeconds: timedOut ? null : resultSeconds,
+        build, completed: !timedOut || Boolean(lastBest?.completed), lastSeconds: timedOut ? null : resultSeconds,
         bestSeconds: !timedOut && lastBest?.build === build
           ? Math.min(Number(lastBest.bestSeconds || Infinity), resultSeconds)
           : timedOut ? null : resultSeconds,
@@ -2071,7 +2074,12 @@ export default class RaceScene extends Phaser.Scene {
       playerT = this.advanceRollingVehicle(this.player, dt);
       oppT = this.advanceRollingVehicle(this.opponent, dt);
     } else if (this.isCoaching) {
-      playerT = this.player.update(dt, controlState);
+      // Keep staged cars behind the line. Training begins at green, not when
+      // the start button is pressed; the clutch can still be held for revs.
+      const coachedControls = !this.isRollingStart && this.greenClock == null
+        ? { ...controlState, clutch: 1, nos: false }
+        : { ...controlState, nos: false };
+      playerT = this.player.update(dt, coachedControls);
       oppT = null;
     } else {
       const aiState = this.ai.update(dt, this.raceClock, this.greenClock);
