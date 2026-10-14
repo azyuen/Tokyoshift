@@ -1,6 +1,7 @@
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
+import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
@@ -130,6 +131,12 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    if (this.isCoaching) {
+      for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
+        queueImage('oshiageSayaka_' + pose,
+          'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
+      }
+    }
     // Each race picks one of the four same-canvas suburban traffic signals.
     // A distinct Phaser texture key per variant is essential: reusing a single
     // cache key would make later races retain the first loaded appearance.
@@ -290,6 +297,10 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
     this.isTutorial = this.raceMode === 'TUTORIAL';
+    this.coachingLesson = this.isTutorial && ['launch', 'standing', 'rolling'].includes(
+      this.registry.get('oshiageTrainingLesson')
+    ) ? this.registry.get('oshiageTrainingLesson') : null;
+    this.isCoaching = Boolean(this.coachingLesson);
     const regionalRaceDistrict = String(
       this.registry.get('raceDistrict') || this.registry.get('district') || ''
     ).toUpperCase();
@@ -628,13 +639,13 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.startButtonText = this.add.text(780, 54, this.isRollingStart ? 'START ROLL' : 'START RACE', {
+    this.startButtonText = this.add.text(780, 54, this.isCoaching ? 'START PRACTICE' : this.isRollingStart ? 'START ROLL' : 'START RACE', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
     this.startButton.on('pointerdown', () => this.startRace());
 
-    if (this.isTutorial) {
+    if (this.isTutorial && !this.isCoaching) {
       this.startButton.setVisible(false).disableInteractive();
       this.startButtonText.setVisible(false);
       this.finishTargetM = 999999;
@@ -656,7 +667,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const rivalName = rivalDisplayCharacter?.name || 'Rival';
     const moneyLabel = this.isTutorial
-      ? 'CONTROLS // NO STAKES'
+      ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
@@ -688,12 +699,13 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.cancelButtonText = this.add.text(135, 54, this.isTutorial ? 'EXIT TUTORIAL' : 'CANCEL RACE', {
+    this.cancelButtonText = this.add.text(135, 54, this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : 'CANCEL RACE', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
     this.cancelButton.on('pointerdown', () => {
       if (this.isTutorial) {
+        if (this.isCoaching) this.registry.set('oshiageTrainingLesson', null);
         this.scene.start(this.registry.get('raceReturnScene') === 'OshiageScene' ? 'OshiageScene' : 'GarageScene',
           this.registry.get('raceReturnScene') === 'OshiageScene' ? { locationId: 'oshiageDrivingSchool' } : undefined);
         return;
@@ -701,9 +713,8 @@ export default class RaceScene extends Phaser.Scene {
       this.confirmCancelRace();
     });
 
-    if (this.isTutorial) {
-      this.setupDrivingTutorial();
-    }
+    if (this.isCoaching) this.setupCoachedLesson();
+    else if (this.isTutorial) this.setupDrivingTutorial();
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -1279,6 +1290,201 @@ export default class RaceScene extends Phaser.Scene {
     };
   }
 
+  // Oshiage's free practical lessons reuse the race renderer, player inputs,
+  // vehicle physics and HUD. They bypass all race settlement and rewards.
+  setupCoachedLesson() {
+    this.coach = new DrivingCoach(this.player);
+    this.coachLaunch = this.coach.launch();
+    this.coachRolling = this.coach.rollingStart(60);
+    this.coachShifts = [];
+    this.coachPeakSlip = 0;
+    this.coachLaunchRPM = null;
+    this.coachLaunchCommented = false;
+    this.coachComplete = false;
+    this.player.transmission.currentGear = 1;
+    this.player.clutch.pedal = 1;
+
+    const outer = this.add.rectangle(1283, 208, 500, 205, 0x0a1724, 0.91)
+      .setStrokeStyle(2, 0x80dce5).setScrollFactor(0).setDepth(80);
+    this.coachPanel = outer;
+    this.add.text(1090, 121, 'LADY INSTRUCTOR  //  OSHIAGE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80e8e5'
+    }).setDepth(82).setScrollFactor(0);
+    this.coachDialogue = this.add.text(1185, 158, '', {
+      fontFamily: BODY_FONT, fontSize: '16px', fontStyle: 'bold',
+      color: '#ffffff', wordWrap: { width: 320 }, lineSpacing: 4
+    }).setDepth(84).setScrollFactor(0);
+    this.coachTarget = this.add.text(1185, 255, '', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe49a',
+      wordWrap: { width: 315 }
+    }).setDepth(84).setScrollFactor(0);
+    if (this.textures.exists('oshiageSayaka_explaining')) {
+      this.coachPortrait = this.add.image(1080, 309, 'oshiageSayaka_explaining')
+        .setOrigin(0.5, 1).setDepth(83).setScrollFactor(0);
+      const source = this.textures.get('oshiageSayaka_explaining').getSourceImage();
+      this.coachPortrait.setScale(166 / Math.max(1, source.height));
+      this.coachPortrait.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+    }
+    this.coachSetTarget();
+    const lead = this.coachingLesson === 'launch'
+      ? 'Hold the revs in the suggested band. Release the clutch progressively on green.'
+      : this.coachingLesson === 'rolling'
+        ? 'We will start at 60 km/h. Select the suggested gear before green.'
+        : 'Start cleanly, then aim for each suggested shift band.';
+    this.coachSpeak(lead, 'explaining');
+  }
+
+  coachSpeak(message, pose = 'neutral') {
+    if (!this.coachDialogue) return;
+    this.coachDialogue.setText(message);
+    const key = 'oshiageSayaka_' + pose;
+    if (this.coachPortrait && this.textures.exists(key)) {
+      this.coachPortrait.setTexture(key);
+      const img = this.textures.get(key).getSourceImage();
+      this.coachPortrait.setScale(166 / Math.max(1, img.height));
+    }
+  }
+
+  coachSetTarget() {
+    if (!this.coachTarget) return;
+    if (this.coachingLesson === 'launch') {
+      this.coachTarget.setText('LAUNCH BAND  ' + this.coachLaunch.min.toLocaleString() +
+        '–' + this.coachLaunch.max.toLocaleString() + ' RPM');
+    } else if (this.coachingLesson === 'rolling' && this.greenClock == null) {
+      this.coachTarget.setText('AT 60 KM/H  ·  GEAR ' + this.coachRolling.gear +
+        '  ·  ~' + this.coachRolling.rpm.toLocaleString() + ' RPM');
+    } else {
+      const from = this.coachShifts.length
+        ? this.coachShifts[this.coachShifts.length - 1].to
+        : Math.max(1, this.player?.transmission?.currentGear || 1);
+      const band = this.coach.shiftBands[from - 1];
+      this.coachTarget.setText(band
+        ? 'SHIFT ' + band.from + ' → ' + band.to + '   ' +
+          band.min.toLocaleString() + '–' + band.max.toLocaleString() + ' RPM'
+        : 'HOLD YOUR GEAR  //  KEEP ACCELERATING');
+    }
+  }
+
+  observeCoachedShift(from, rpm) {
+    if (!this.isCoaching || this.coachingLesson === 'launch' || from < 1) return;
+    const tr = this.player.transmission;
+    if (!(tr.pendingGear === from + 1 || tr.currentGear === from + 1)) return;
+    const assessment = this.coach.shiftAdvice(from, rpm, tr.lastShiftQuality);
+    this.coachShifts.push({ from, to: from + 1, rpm: Math.round(rpm),
+      quality: tr.lastShiftQuality, verdict: assessment.verdict,
+      within: Boolean(assessment.band && rpm >= assessment.band.min && rpm <= assessment.band.max &&
+        tr.lastShiftQuality === 'CLEAN') });
+    this.coachSpeak(assessment.verdict, assessment.pose);
+    this.coachSetTarget();
+  }
+
+  updateCoachedLesson(controls, telemetry) {
+    if (!this.isCoaching || this.coachComplete || this.greenClock == null) return;
+    const elapsed = this.raceClock - this.greenClock;
+    this.coachPeakSlip = Math.max(this.coachPeakSlip, Number(telemetry.slipRatio || 0));
+    if (this.coachLaunchRPM == null && !this.isRollingStart &&
+        this.player.transmission.currentGear === 1 && telemetry.speedKmh >= 2) {
+      this.coachLaunchRPM = this.coachStagedRPM ?? telemetry.rpm;
+    }
+    if (this.coachingLesson === 'launch' && !this.coachLaunchCommented &&
+        telemetry.positionM - this.raceStartPositionM >= 5) {
+      this.coachLaunchCommented = true;
+      const rpm = this.coachLaunchRPM;
+      const band = this.coachLaunch;
+      if (this.coachPeakSlip > 0.27) this.coachSpeak('Too much wheelspin. Try a smoother clutch release.', 'concerned');
+      else if (rpm != null && rpm < band.min) this.coachSpeak('Low launch revs. Try slightly higher next time.', 'explaining');
+      else if (rpm != null && rpm > band.max) this.coachSpeak('Launch revs were high. Try a little lower.', 'concerned');
+      else this.coachSpeak('Good launch. You kept the car moving.', 'happy');
+    }
+    if (this.coachingLesson !== 'launch' && !this.coachShifts.length && elapsed < 0.35) {
+      this.coachSetTarget();
+    }
+    const goal = this.coachingLesson === 'launch' ? 18.288 : this.raceDistanceM;
+    if (telemetry.positionM - this.raceStartPositionM >= goal || elapsed > 55) {
+      this.completeCoachedLesson(telemetry, elapsed > 55);
+    }
+  }
+
+  completeCoachedLesson(t, timedOut = false) {
+    if (this.coachComplete) return;
+    this.coachComplete = true;
+    this.resultsShown = true;
+    this.controls.enabled = false;
+    this.engineAudio?.fadeOut?.();
+    const distance = Math.max(0, t.positionM - this.raceStartPositionM);
+    const resultSeconds = this.raceClock - this.greenClock;
+    const isLaunch = this.coachingLesson === 'launch';
+    const timeText = !timedOut ? resultSeconds.toFixed(3) + ' s' : 'INCOMPLETE';
+    const clean = this.coachShifts.filter(shift => shift.within).length;
+    const total = this.coachShifts.length;
+    let feedback;
+    if (timedOut) feedback = 'Practice ended. Try again when you are ready.';
+    else if (isLaunch) feedback = this.coachPeakSlip > 0.27
+      ? 'Try reducing wheelspin. A smooth clutch release helps.'
+      : 'Good. Repeat the launch and aim for consistency.';
+    else feedback = total ? clean + ' of ' + total + ' shifts were clean and in range.'
+      : 'You completed the run. Try practising your shift timing.';
+    const outcomes = { ...(this.registry.get('oshiageCoachingProgress') || {}) };
+    const previous = outcomes[this.selectedCarId] || {};
+    const signatureData = JSON.stringify({ car: this.player.config, engine: this.player.engine.config });
+    let hash = 2166136261;
+    for (let i = 0; i < signatureData.length; i++) {
+      hash = Math.imul(hash ^ signatureData.charCodeAt(i), 16777619);
+    }
+    const build = (hash >>> 0).toString(16);
+    const lastBest = previous[this.coachingLesson];
+    outcomes[this.selectedCarId] = {
+      ...previous,
+      [this.coachingLesson]: {
+        build, completed: !timedOut, lastSeconds: timedOut ? null : resultSeconds,
+        bestSeconds: !timedOut && lastBest?.build === build
+          ? Math.min(Number(lastBest.bestSeconds || Infinity), resultSeconds)
+          : timedOut ? null : resultSeconds,
+        cleanShifts: clean, totalShifts: total,
+      },
+    };
+    this.registry.set('oshiageCoachingProgress', outcomes);
+    saveSessionState(this.registry);
+
+    this.add.rectangle(780, 361, 1080, 558, 0x09131e, 0.97)
+      .setStrokeStyle(3, 0x77dce3).setDepth(120).setScrollFactor(0);
+    this.add.text(780, 139, 'OSHIAGE // DRIVING SCHOOL', {
+      fontFamily: PIXEL_FONT, fontSize: '14px', color: '#8de9e8'
+    }).setOrigin(0.5).setDepth(122).setScrollFactor(0);
+    this.add.text(780, 200, 'PRACTICE COMPLETE', {
+      fontFamily: PIXEL_FONT, fontSize: '24px', color: '#ffe49a'
+    }).setOrigin(0.5).setDepth(122).setScrollFactor(0);
+    this.add.text(780, 283, timeText + '   //   ' + (Math.round(distance)) + ' m', {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#f4fdff'
+    }).setOrigin(0.5).setDepth(122).setScrollFactor(0);
+    this.add.text(780, 353, feedback, {
+      fontFamily: BODY_FONT, fontSize: '21px', color: '#eaf4f7',
+      align: 'center', wordWrap: { width: 790 }
+    }).setOrigin(0.5).setDepth(122).setScrollFactor(0);
+    const note = isLaunch
+      ? 'SUGGESTED LAUNCH   ' + this.coachLaunch.min + '–' + this.coachLaunch.max + ' RPM'
+      : 'SHIFT TARGETS    ' + this.coach.shiftBands
+        .map(b => b.from + '→' + b.to + ': ' + b.min + '–' + b.max)
+        .slice(0, 4).join('   |   ');
+    this.add.text(780, 429, note, {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9ed4d3',
+      align: 'center', wordWrap: { width: 890 }
+    }).setOrigin(0.5).setDepth(122).setScrollFactor(0);
+    const button = (x, label, click) => {
+      this.add.rectangle(x, 543, 305, 65, 0x183a48, 0.98)
+        .setStrokeStyle(2, 0x8de9e8).setDepth(123).setScrollFactor(0)
+        .setInteractive({ useHandCursor: true }).on('pointerdown', click);
+      this.add.text(x, 543, label, {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff'
+      }).setOrigin(0.5).setDepth(124).setScrollFactor(0);
+    };
+    button(602, 'RETRY', () => this.scene.restart());
+    button(958, 'RETURN TO SCHOOL', () => {
+      this.registry.set('oshiageTrainingLesson', null);
+      this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
+    });
+  }
+
   setupDrivingTutorial() {
     this.tutorialStep = 'FIRST_GEAR';
     this.tutorialShiftReady = false;
@@ -1782,7 +1988,9 @@ export default class RaceScene extends Phaser.Scene {
 
     const rollingCountdown = this.isRollingStart && this.raceStarted && this.greenClock == null;
 
-    if (this.isTutorial) {
+    const coachPreviousGear = this.player.transmission.currentGear;
+    const coachPreviousRPM = this.player.engine.rpm;
+    if (this.isTutorial && !this.isCoaching) {
       this.handleTutorialGearRequest(requestedGear, controlState);
     } else if (rollingCountdown && requestedGear != null) {
       const tr = this.player.transmission;
@@ -1812,8 +2020,15 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
 
+    if (this.isCoaching && this.greenClock == null && !this.isRollingStart) {
+      this.coachStagedRPM = this.player.engine.rpm;
+    }
+    if (this.isCoaching && this.greenClock != null && requestedGear != null && !rollingCountdown) {
+      this.observeCoachedShift(coachPreviousGear, coachPreviousRPM);
+    }
+
     if (this.raceStarted && this.greenClock == null) {
-      const tutorialCanAdvanceTree = !this.isTutorial || (
+      const tutorialCanAdvanceTree = !this.isTutorial || this.isCoaching || (
         this.tutorialStep === 'LAUNCH_PREP' &&
         Number(controlState.clutch || 0) >= 0.68 &&
         Number(controlState.throttle || 0) >= 0.62
@@ -1842,7 +2057,7 @@ export default class RaceScene extends Phaser.Scene {
     let playerT;
     let oppT;
 
-    if (this.isTutorial) {
+    if (this.isTutorial && !this.isCoaching) {
       const tutorialControls = {
         ...controlState,
         // Before green the tutorial keeps the drivetrain safely disconnected.
@@ -1855,6 +2070,9 @@ export default class RaceScene extends Phaser.Scene {
     } else if (this.isRollingStart && this.raceStarted && this.greenClock == null) {
       playerT = this.advanceRollingVehicle(this.player, dt);
       oppT = this.advanceRollingVehicle(this.opponent, dt);
+    } else if (this.isCoaching) {
+      playerT = this.player.update(dt, controlState);
+      oppT = null;
     } else {
       const aiState = this.ai.update(dt, this.raceClock, this.greenClock);
       playerT = this.player.update(dt, controlState);
@@ -1874,7 +2092,7 @@ export default class RaceScene extends Phaser.Scene {
 
     let status = '';
     if (this.isTutorial) {
-      status = 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
+      status = this.isCoaching ? 'DRIVING SCHOOL // LADY INSTRUCTOR' : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
     } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
@@ -1887,7 +2105,8 @@ export default class RaceScene extends Phaser.Scene {
 
     this.hud.update(playerT, status);
     this.debug.update(playerT);
-    this.updateDrivingTutorial(controlState, playerT);
+    if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
+    else this.updateDrivingTutorial(controlState, playerT);
 
     if (this.finished) {
       this.afterFinishTimer += dt;
