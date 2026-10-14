@@ -1141,16 +1141,6 @@ addRegularCar('a60', 'ae86', {
   turboSpoolRate: 0, maximumBoost: 0,
   visual: { wheelKey: 'wheel8Spoke' },
 });
-addRegularCar('ej1', 'ek9', {
-  shortName: 'CIVIC EJ1', name: 'Honda Civic Coupe EJ1', description: 'Light front-drive coupe with a strong tuning platform.',
-  engine: 'd16z6', engineModel: 'D16Z6', powerKW: 93, torqueNm: 144, vehicleMassKg: 1040,
-  engineRedlineRPM: 7200, engineLimiterRPM: 7400, launchRPM: 5200,
-  gearRatios: [3.250, 1.900, 1.250, 0.909, 0.702], finalDriveRatio: 4.25,
-  engineInertia: 0.17, drivetrainEfficiency: 0.90,
-  drivenAxleWeightFraction: 0.61, clutchStrength: 310,
-  dragCoefficient: 0.32, frontalAreaM2: 1.86,
-  visual: { wheelKey: 'wheel8Spoke' },
-});
 addRegularCar('jza80', 'r32', {
   shortName: 'SUPRA JZA80', name: 'Toyota Supra JZA80', description: 'Twin-turbo straight-six coupe with enormous tuning headroom.',
   engine: '2jzgte', engineModel: '2JZ-GTE', powerKW: 206, torqueNm: 435, vehicleMassKg: 1510,
@@ -1617,7 +1607,6 @@ const REGULAR_ASSETS = {
 
   // New SpriteR cars: model-specific arch centres/radii.
   a60: ['a60', 500, 273, 370, 96, 945, 370, 96, 1161, 430],
-  ej1: ['ej1', 500, 236, 362, 98, 962, 362, 100, 1161, 420],
   jza80: ['jza80', 500, 271, 380, 96, 944, 380, 97, 1161, 450],
   nsx: ['nsx', 500, 251, 383, 97, 930, 383, 97, 1161, 445],
 
@@ -1800,7 +1789,7 @@ Object.values(cars).forEach(car => {
 export const carOrder = [
   'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
   'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', 'r34',
-  '3000gt', 'a60', 'ej1', 'jza80', 'nsx',
+  '3000gt', 'a60', 'jza80', 'nsx',
   'z32', 'z33', '240z', 'crx', 'dc2', 'eclipse', 'familia', '180sx', 'st205', 'jzx100', 'b4rsk',
 ];
 
