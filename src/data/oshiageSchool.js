@@ -4,7 +4,7 @@ export const OSHIAGE_SCHOOL_RETRIES = 3;
 export const OSHIAGE_SCHOOL_MAX_ATTEMPTS = 1 + OSHIAGE_SCHOOL_RETRIES;
 export const OSHIAGE_SCHOOL_LESSONS = Object.freeze({
   basic: Object.freeze({ id: 'basic', fee: 0, title: 'BASIC DRIVING', pose: 'explaining',
-    speech: 'Hi there, have we done this before…? Oh wait, never mind! Ahem. I’m happy to teach you how to drive for the first time.' }),
+    speech: 'Haven’t we done this before? Oh wait! Ahem, I can teach you the basics for the first time…' }),
   launch: Object.freeze({ id: 'launch', fee: 5000, title: 'LAUNCH CONTROL', pose: 'concerned',
     speech: 'But why are you trying to rush away from the lights so quickly? I’m sure your parents wouldn’t approve…' }),
   standing: Object.freeze({ id: 'standing', fee: 10000, title: 'STANDING SHIFTING', pose: 'explaining',
