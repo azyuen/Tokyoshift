@@ -27,7 +27,6 @@ export const CAR_DRIVER_FACE_ANCHORS = Object.freeze({
   evo3:    { x: 0.55, y: 0.195, height: 0.135 }, // Ref2 Galant VR-4 sedan cabin
   'evo5': { x: 0.56, y: 0.2, height: 0.13 },
   'a60': { x: 0.54, y: 0.29, height: 0.13 },
-  ej1:     { x: 0.54, y: 0.250, height: 0.130 },
   'jza80': { x: 0.53, y: 0.25, height: 0.13 },
   'nsx': { x: 0.55, y: 0.25, height: 0.13 },
   '3000gt': { x: 0.53, y: 0.2, height: 0.13 },
