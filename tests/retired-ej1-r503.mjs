@@ -12,10 +12,10 @@ import { buildTunerTeamChallengeRounds } from '../src/data/tunerChallenges.js';
 import { migrateRetiredEJ1 } from '../src/data/carRetirement.js';
 import { createDefaultGameState, normaliseState } from '../src/state/GameState.js';
 
-test('all 41 deployed regular cars use the new BODY/PAINT reference sprite system',()=>{
-  assert.equal(carOrder.length,41);
-  assert.equal(new Set(carOrder).size,41);
-  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,42);
+test('all 42 deployed regular cars use the new BODY/PAINT reference sprite system',()=>{
+  assert.equal(carOrder.length,42);
+  assert.equal(new Set(carOrder).size,42);
+  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,43);
   assert.deepEqual(new Set(carOrder),new Set(Object.keys(REFERENCE_CAR_GAME_IDS).filter(id => !cars[id].devOnly)));
   assert.ok(!('ej1' in cars));
   assert.ok(!carOrder.includes('ej1'));
@@ -31,7 +31,7 @@ test('all 41 deployed regular cars use the new BODY/PAINT reference sprite syste
 });
 
 test('market, rival preferences, Odaiba championship and crew recruitment never issue EJ1',()=>{
-  assert.equal(AUTO_MARKET_LISTINGS.length,41);
+  assert.equal(AUTO_MARKET_LISTINGS.length,42);
   assert.ok(AUTO_MARKET_LISTINGS.every(x=>x.carId!=='ej1'));
   assert.ok(!Object.hasOwn(MARKET_BASE_PRICES,'ej1'));
   assert.equal(GINZA_LISTINGS.length,11);
