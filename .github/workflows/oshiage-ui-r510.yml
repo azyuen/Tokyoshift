@@ -1,0 +1,28 @@
+name: Oshiage school visuals and bookings R510
+on:
+  push:
+    paths:
+      - 'src/data/oshiageSchool.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/oshiage-ui-r510.mjs'
+      - '.github/workflows/oshiage-ui-r510.yml'
+  workflow_dispatch:
+jobs:
+  school:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check src/data/oshiageSchool.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+      - name: Oshiage lesson regressions
+        run: node --test tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs
