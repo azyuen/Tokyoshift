@@ -155,8 +155,33 @@ function collectCutsceneCharacterRefs(context) {
   return [...refs.values()];
 }
 
-function queueCharacterAssets(scene, characterRefs, playerCharacterId) {
+function queueCharacterAssets(scene, characterRefs, playerCharacterId, context = null) {
   let queued = 0;
+  if (context?.options?.preloadPagePosesOnly) {
+    // Small repeatable school cutscenes use only the authored poses actually
+    // shown. Loading every lifetime Sayaka look (home / Ginza / track) and all
+    // player variants produced an unnecessary pause after each tap.
+    const queuedKeys = new Set();
+    for (const page of context.definition.pages || []) {
+      for (const side of SIDES) {
+        const token = pageCharacterToken(context.definition, page, side);
+        const id = resolveCharacterToken(token, context);
+        if (!id || !characters[id]) continue;
+        const pose = page?.[side + 'Pose'] ||
+          (page.speaker === side ? page.pose : null) || 'idle';
+        const asset = getCharacterProfileTexture(id, pose, {
+          rivalContext: tokenUsesPlayerSubstitute(token, context),
+          playerCharacterId,
+        });
+        if (!asset?.key || !asset?.path || queuedKeys.has(asset.key)) continue;
+        queuedKeys.add(asset.key);
+        if (scene.textures.exists(asset.key)) continue;
+        scene.load.image(asset.key, getCharacterAssetUrl(asset.path));
+        queued++;
+      }
+    }
+    return queued;
+  }
   characterRefs.forEach(({ id, rivalContext }) => {
     const visual = getCharacterVisualForContext(id, {
       rivalContext,
@@ -1140,7 +1165,8 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
   const queued = queueCharacterAssets(
     scene,
     characterRefs,
-    context.playerCharacterId
+    context.playerCharacterId,
+    context
   );
 
   if (queued <= 0) {
