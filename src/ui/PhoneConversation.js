@@ -9,6 +9,7 @@ import {
 import {
   createRaceDialogueHud, RACE_COACH_LAYOUT,
 } from './RaceCoachHud.js?v=20261014-r514';
+import { playOpeningPhonePrototype } from './OpeningPhonePrototype.js?v=20261014-r515';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -51,6 +52,7 @@ const safeDestroy = value => {
 };
 
 export function playPhoneConversation(scene, {
+  presentationMode = 'standard',
   callerId = '',
   callerName = '',
   callerPose = 'idle',
@@ -62,6 +64,12 @@ export function playPhoneConversation(scene, {
   onComplete = null,
   onCancel = null,
 } = {}) {
+  if (presentationMode === 'openingSwipe') {
+    return playOpeningPhonePrototype(scene, {
+      callerId, callerName, callerPose, label, pages, variables,
+      formatMessage: formatPhoneMessage, onComplete, onCancel,
+    });
+  }
   if (!scene || scene._phoneConversation?.active) {
     return { played: false, reason: 'active', active: false };
   }
