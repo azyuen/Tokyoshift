@@ -23,8 +23,8 @@ test('all 28 deployed regular cars use the new BODY/PAINT reference sprite syste
     const car=cars[id];
     assert.ok(car && car.visual.referenceStandard,id);
     const paths=getCarAssetPaths(car);
-    assert.ok(paths.body.includes('/Ref/'),id+' lacks reference stock body');
-    assert.ok(paths.paint.includes('/Ref/'),id+' lacks reference paint');
+    assert.match(paths.body,/\/Ref(?:2)?\//,id+' lacks reference stock body');
+    assert.match(paths.paint,/\/Ref(?:2)?\//,id+' lacks reference paint');
     for(const path of [paths.body,paths.paint])
       assert.ok(existsSync(new URL('../'+path,import.meta.url)),id+' missing '+path);
   }
