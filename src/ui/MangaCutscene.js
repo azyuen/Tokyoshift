@@ -1134,6 +1134,7 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
       callerId: options.callerId || definition.callerId || '',
       callerName: options.callerName || definition.callerName || '',
       callerPose: options.callerPose || definition.callerPose || 'idle',
+      presentationMode: options.presentationMode || definition.presentationMode || 'standard',
       label: options.label || definition.label || 'INCOMING CALL',
       speakerStyle: options.speakerStyle || definition.speakerStyle || 'incoming',
       accent: options.accent ?? definition.accent ?? null,
