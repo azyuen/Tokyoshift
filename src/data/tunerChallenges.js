@@ -86,7 +86,7 @@ const REGION_LEADER_CARS = Object.freeze({
   SHINJUKU: 'jza80',
 });
 
-function regionalSignatureCarId(regionId, characterId, fallback = 'r32') {
+export function getRegionalRivalSignatureCarId(regionId, characterId, fallback = null) {
   const key = normaliseRegion(regionId);
   const id = String(characterId || '');
   return id === MAIN_RIVAL_BY_REGION[key]
@@ -302,7 +302,7 @@ export function getTunerTeamChallengeState(source, regionId) {
           // Preserve progress, player hardware and driver identities in old
           // saves, while migrating each rival's model to their signature car.
           if (!round) return round;
-          const carId = regionalSignatureCarId(key, round.characterId, round.carId);
+          const carId = getRegionalRivalSignatureCarId(key, round.characterId, round.carId);
           if (!['ODAIBA', 'SHINAGAWA'].includes(key)) {
             return carId === round.carId ? round : { ...round, carId };
           }
@@ -432,7 +432,7 @@ export function buildTunerTeamChallengeRounds(
       regionId: key,
       regionRank: getRegionalChampionshipRank(key),
       characterId: rivalId,
-      carId: regionalSignatureCarId(key, rivalId, fallbackCars[index] || 'r32'),
+      carId: getRegionalRivalSignatureCarId(key, rivalId, fallbackCars[index] || 'r32'),
       paintColor: paintColors[index % paintColors.length],
       encounterRating: rating,
       encounterAi: challengeAi(index, rating, key),
