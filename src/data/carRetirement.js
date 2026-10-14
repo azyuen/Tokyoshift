@@ -77,3 +77,31 @@ export function migrateRetiredEvoIX(input = {}) {
   };
   return convert(input);
 }
+
+// EJ1 has been removed from the playable catalogue after all regular models
+// moved onto the reference-car artwork system. No live profile owns an EJ1,
+// but cached rival/crew/competition objects may still refer to that ID.
+// Replace those stale references with the comparable FWD CR-X so loading an
+// older saved race never attempts to construct a missing vehicle.
+export function migrateRetiredEJ1(input = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return input;
+  const retired = /^ej1(?:__copy[2-9]\d*)?$/;
+  // Normal saves have no EJ1 references; avoid cloning the whole save again.
+  if (!JSON.stringify(input).includes('ej1')) return input;
+  const remapId = value => retired.test(value) ? 'crx' + value.slice(3) : value;
+  const convert = value => {
+    if (typeof value === 'string') return remapId(value);
+    if (Array.isArray(value)) return value.map(convert);
+    if (!value || typeof value !== 'object') return value;
+    const out = {};
+    for (const [key, item] of Object.entries(value)) {
+      const id = remapId(key);
+      const next = convert(item);
+      // A real CR-X record takes precedence over a stale EJ1 record.
+      if (Object.prototype.hasOwnProperty.call(out, id) && id !== key) continue;
+      out[id] = next;
+    }
+    return out;
+  };
+  return convert(input);
+}
