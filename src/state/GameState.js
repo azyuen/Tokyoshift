@@ -146,6 +146,9 @@ export function createDefaultGameState(options = {}) {
     oshiageEliteLastResult: null,
     oshiageInstructorMet: false,
     oshiageBasicLessonComplete: false,
+    oshiageLessonTab: 0,
+    oshiageTrainingLesson: null,
+    oshiageCoachingProgress: {},
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
       autoMarket: false,
@@ -1152,6 +1155,11 @@ export function normaliseState(input = {}) {
       ? input.oshiageEliteLastResult : null,
     oshiageInstructorMet: Boolean(input.oshiageInstructorMet),
     oshiageBasicLessonComplete: Boolean(input.oshiageBasicLessonComplete),
+    oshiageLessonTab: Math.max(0, Math.min(3, Number(input.oshiageLessonTab) || 0)),
+    oshiageTrainingLesson: ['launch', 'standing', 'rolling'].includes(input.oshiageTrainingLesson)
+      ? input.oshiageTrainingLesson : null,
+    oshiageCoachingProgress: input.oshiageCoachingProgress && typeof input.oshiageCoachingProgress === 'object' &&
+      !Array.isArray(input.oshiageCoachingProgress) ? input.oshiageCoachingProgress : {},
     centralTokyoLocation: String(input.centralTokyoLocation || base.centralTokyoLocation),
     centralTokyoUnlocks: {
       ...base.centralTokyoUnlocks,
@@ -1291,6 +1299,9 @@ export function snapshotRegistry(registry) {
     oshiageEliteLastResult: registry.get('oshiageEliteLastResult') || null,
     oshiageInstructorMet: Boolean(registry.get('oshiageInstructorMet')),
     oshiageBasicLessonComplete: Boolean(registry.get('oshiageBasicLessonComplete')),
+    oshiageLessonTab: Number(registry.get('oshiageLessonTab') || 0),
+    oshiageTrainingLesson: registry.get('oshiageTrainingLesson') || null,
+    oshiageCoachingProgress: registry.get('oshiageCoachingProgress') || {},
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
