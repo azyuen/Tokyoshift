@@ -21,8 +21,8 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { preloadWheelOption } from '../data/wheels.js?v=20260929-r246';
 import {
   getOshiageRimListings, getOshiageRimQuote, buyOrInstallOshiageRim,
-  restoreStockOshiageRims, RIMS_REFRESH_MS,
-} from '../data/oshiageRims.js?v=20261014-r501';
+  restoreStockOshiageRims, RIMS_REFRESH_MS, OSHIAGE_RIM_SLOTS,
+} from '../data/oshiageRims.js?v=20261014-r506';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -87,12 +87,11 @@ export default class OshiageScene extends Phaser.Scene {
 
   backgroundAsset(locationId = this.activeLocationId, phase = this.phase) {
     const cleanPhase = phase === 'day' ? 'day' : 'night';
-    // The original wheel-wall artwork moves with its shop to Oshiage.
-    // Keep using this registered background until Oshiage-only rack art arrives.
+    // Dedicated 8-bay Oshiage wheel shop, with genuine day/night variants.
     if (locationId === 'oshiageCustomWorks' && this.room === 'rims') {
       return {
-        key: 'oshiage_rim_wall_' + cleanPhase,
-        path: 'assets/CentralTokyo/tokyo_wheels_' + cleanPhase + '.png?v=20261014-r501',
+        key: 'oshiage_wheels_' + cleanPhase + '_r506',
+        path: ROOT + 'oshiage_wheels_' + cleanPhase + '.png?v=20261014-r506',
       };
     }
     const stem = this.room === 'paint' && locationId === 'oshiageCustomWorks'
@@ -155,7 +154,7 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadCarWheel(this, car, state);
       }
       getOshiageRimListings().forEach(rim => {
-        queued += preloadWheelOption(this, rim, '20261014-r501');
+        queued += preloadWheelOption(this, rim, '20261014-r506');
       });
     }
     if (this.room === 'paint') {
@@ -196,6 +195,11 @@ export default class OshiageScene extends Phaser.Scene {
       const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
       if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
       this.phase = phase;
+      // Do not silently switch the selected item when a 3-hour rotation ends.
+      if (this.room === 'rims' && rimCycle !== this.rimCycle) {
+        this.selectedRimIndex = -1;
+        this.rimPreview = false;
+      }
       this.rimCycle = rimCycle;
       this.loadAndRender();
     } });
@@ -651,27 +655,44 @@ export default class OshiageScene extends Phaser.Scene {
     this.loadAndRender(room === 'paint' ? () => this.rollPaintCarIn() : null);
   }
 
+  rimWallRect() {
+    // Match renderView's contain transform exactly: overlay sprites must
+    // register to the authored slots even if the artwork is letterboxed.
+    const asset = this.backgroundAsset();
+    const image = this.textures.exists(asset.key)
+      ? this.textures.get(asset.key).getSourceImage() : null;
+    const sourceW = Number(image?.width || STAGE.w);
+    const sourceH = Number(image?.height || STAGE.h);
+    const scale = Math.min(STAGE.w / sourceW, STAGE.h / sourceH);
+    const width = sourceW * scale, height = sourceH * scale;
+    return {
+      x: STAGE.x + (STAGE.w - width) / 2,
+      y: STAGE.y + (STAGE.h - height) / 2,
+      width, height,
+    };
+  }
+
   drawRimShop() {
     const listings = getOshiageRimListings();
     const { id, car, state } = this.selectedCar();
     const selected = listings[this.selectedRimIndex] || null;
     const quote = selected ? getOshiageRimQuote(this.registry, id, selected.id) : null;
-    this.sideHeader('CUSTOM WORKS // RIMS', '10 RIMS ON DISPLAY // CHANGES EVERY 3 HOURS');
+    this.sideHeader('CUSTOM WORKS // RIMS', '4 STANDARD LEFT // 4 SPECIAL RIGHT');
 
-    // The original wheel-wall backdrop remains the rack. The live item PNGs
-    // are individually clickable and carry over from Central Tokyo.
-    const slots = [
-      [0.276, 0.296], [0.391, 0.296], [0.500, 0.296], [0.611, 0.296], [0.728, 0.296],
-      [0.276, 0.452], [0.391, 0.452], [0.500, 0.452], [0.611, 0.452], [0.728, 0.452],
-    ];
+    // The cabinet geometry is authored into oshiage_wheels_day/night.
+    // Left: 2x2 STANDARD. Middle: 2 horizontal TUNER. Right: 2 HERO
+    // stacked vertically. Position against the contained image, not STAGE.
+    const rack = this.rimWallRect();
     listings.forEach((option, index) => {
       if (!this.textures.exists(option.textureKey)) return;
-      const slot = slots[index];
+      const slot = OSHIAGE_RIM_SLOTS[index];
+      if (!slot) return;
       const chosen = this.selectedRimIndex === index;
-      const x = STAGE.x + STAGE.w * slot[0];
-      const y = STAGE.y + STAGE.h * slot[1];
+      const x = rack.x + rack.width * slot.x;
+      const y = rack.y + rack.height * slot.y;
+      const diameter = chosen ? slot.diameter + 4 : slot.diameter;
       const img = this.own(this.add.image(x, y, option.textureKey)
-        .setDisplaySize(chosen ? 83 : 77, chosen ? 83 : 77)
+        .setDisplaySize(diameter, diameter)
         .setMask(this.stageMask).setDepth(18)
         .setInteractive({ useHandCursor: true }));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
@@ -701,7 +722,7 @@ export default class OshiageScene extends Phaser.Scene {
       this.addText(SIDE.x + 20, SIDE.y + 167, String(car.shortName || car.name).toUpperCase(),
         { pixel: true, size: '10px', color: '#d9eefd', wrap: SIDE.w - 40 });
       this.addText(SIDE.x + 20, SIDE.y + 231,
-        'Tap one of the ten designs on the wheel wall to preview it on your current car.\n\n' +
+        'Tap one of the eight rims in the cabinets to preview it on your current car.\n\n' +
         'Previously purchased rims remain yours and are free to reinstall.',
         { size: '13px', wrap: SIDE.w - 40, spacing: 5 });
     } else {
@@ -744,7 +765,7 @@ export default class OshiageScene extends Phaser.Scene {
         this.showOshiageNotice('ORIGINAL FACTORY RIMS RESTORED');
       }, { disabled: !restoreAllowed, size: '8px' });
 
-    this.addText(48, 654, 'RIMS // STANDARD · TUNER · HERO // 10 ROTATING DESIGNS',
+    this.addText(48, 654, 'RIMS // 4 STANDARD LEFT · 2 TUNER CENTRE · 2 HERO RIGHT',
       { pixel: true, size: '9px', color: '#8feaff' });
     this.button(214, 745, 326, 64, 'CUSTOM WORKS  <', () => {
       this.room = 'outside';
