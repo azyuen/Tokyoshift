@@ -76,7 +76,7 @@ const REGION_OFFSETS = {
 const REGION_CARS = {
   // Temporary Option 2 pools using the current roster. These are intentionally
   // progression-ordered and may duplicate cars until the full 42-car roster lands.
-  ODAIBA: ['ej1', 'ae86', 'ef', 'a60', 'fc3s', 'ek9', 'ek9'],
+  ODAIBA: ['crx', 'ae86', 'ef', 'a60', 'fc3s', 'ek9', 'ek9'],
   SHINAGAWA: ['ae86', 'ef', 'a60', 'ek9', 'fc3s', 'fc3s', 'ek9'],
   TATSUMI: ['a60', 'ek9', 'fc3s', 'rx8', 's2000', 'evo3', 'evo3'],
   SHIBUYA: ['fc3s', 'ek9', 'rx8', 's2000', 'evo3', 'r32', 'r32'],
