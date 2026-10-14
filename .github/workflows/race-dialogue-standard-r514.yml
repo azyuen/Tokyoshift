@@ -23,4 +23,6 @@ jobs:
           node --check src/ui/RaceCoachHud.js
           node --check src/ui/PhoneConversation.js
       - name: Shared dialogue and existing story/regression tests
-        run: node --test tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/opening-chapter-r467.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-coaching-r509.mjs
+        run: |
+          node --test tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-coaching-r509.mjs
+          node --test --test-name-pattern='phone|call' tests/opening-chapter-r467.mjs
