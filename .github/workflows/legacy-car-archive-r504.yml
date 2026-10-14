@@ -1,0 +1,82 @@
+name: Archive old car stock and bodykit PNGs
+
+on:
+  push:
+    paths:
+      - '.github/workflows/legacy-car-archive-r504.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Package and verify 117 legacy PNGs
+        run: |
+          python3 - <<'PY'
+          import os, re, json, hashlib, zipfile, subprocess
+          from pathlib import Path
+          paths = subprocess.check_output(['git','ls-files','assets/Cars/'],text=True).splitlines()
+          legacy = sorted(p for p in paths
+              if p.count('/') == 2 and (
+                  re.fullmatch(r'.+_stock_(body|paint)\.png',Path(p).name) or
+                  re.fullmatch(r'.+_bodykit\d+_(body|paint)\.png',Path(p).name) or
+                  p == 'assets/Cars/3000gt_bodykit2_paintXxx.png'
+              ))
+          hero = sorted(p for p in paths if p.count('/')==2 and p.endswith('_hero_body.png'))
+          stock = [p for p in legacy if '_stock_' in p]
+          kits = [p for p in legacy if '_bodykit' in p and not p.endswith('paintXxx.png')]
+          extras = [p for p in legacy if p.endswith('paintXxx.png')]
+          assert (len(stock),len(kits),len(extras),len(hero))==(40,76,1,11), (len(stock),len(kits),len(extras),len(hero))
+          assert all(os.path.isfile(p) and os.stat(p).st_size>0 for p in legacy)
+          manifest = {'title':'Tokyo SHIFT original stock and bodykit sprites',
+            'archiveSourceCommit':os.environ['GITHUB_SHA'],
+            'notes':'Only legacy root-level Cars sprites. Excludes 11 hero cars and new Ref/Ref2 sprites. Git tag points to this original snapshot.',
+            'counts':{'stockPngs':len(stock),'bodykitPngs':len(kits),'extraPaintVariant':len(extras),'total':len(legacy)},
+            'files':[{'path':p,'bytes':os.stat(p).st_size,
+                      'sha256':hashlib.sha256(Path(p).read_bytes()).hexdigest()} for p in legacy]}
+          os.makedirs('archive',exist_ok=True)
+          out='archive/Tokyo_SHIFT_Legacy_Cars_Stock_Bodykits_2026-10-14.zip'
+          readme=('Tokyo SHIFT — original legacy car stock + bodykit assets\n'
+                  'Archived 14 October 2026 before R504 repository cleanup.\n'
+                  '40 stock files, 76 bodykit files, plus one extra 3000GT paint variant.\n'
+                  'All original PNG paths preserved under assets/Cars/.\n'
+                  'Hero/collector cars and assets/Cars/Ref, Ref2 ARE NOT in this backup\n'
+                  'because they remain deployed in the game.\n'
+                  'MANIFEST.json contains SHA-256 hashes for independent verification.\n')
+          with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=6,allowZip64=True) as z:
+            z.writestr('README.txt',readme)
+            z.writestr('MANIFEST.json',json.dumps(manifest,indent=2)+'\n')
+            for p in legacy:z.write(p,p)
+          with zipfile.ZipFile(out,'r') as z:
+            assert z.testzip() is None
+            files=set(z.namelist())
+            assert files==set(legacy)|{'README.txt','MANIFEST.json'}
+            for entry in manifest['files']:
+              assert hashlib.sha256(z.read(entry['path'])).hexdigest()==entry['sha256']
+          digest=hashlib.sha256(Path(out).read_bytes()).hexdigest()
+          Path('archive/SHA256SUMS.txt').write_text(digest+'  '+Path(out).name+'\n')
+          print('Verified',len(legacy),'legacy PNGs; archive bytes',os.stat(out).st_size,'SHA256',digest)
+          PY
+      - name: Publish permanent downloadable legacy-assets release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create legacy-car-assets-2026-10-14 \
+            archive/Tokyo_SHIFT_Legacy_Cars_Stock_Bodykits_2026-10-14.zip \
+            archive/SHA256SUMS.txt \
+            --title 'Tokyo SHIFT - Original stock and bodykit sprites (2026-10-14)' \
+            --notes 'Pre-cleanup, full-fidelity backup of 117 original car PNGs: 40 stock, 76 bodykit, and one auxiliary 3000GT paint file. Includes per-file SHA-256 manifest. All 11 hero/collector cars and Ref/Ref2 assets remain in the game. This tag preserves the original repository snapshot.' \
+            --target "${GITHUB_SHA}" \
+            --latest=false
+      - name: Confirm release exists and includes ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view legacy-car-assets-2026-10-14 --json assets --jq '.assets[] | [.name,.size] | @tsv'
+          gh release view legacy-car-assets-2026-10-14 --json assets --jq '.assets[].name' | grep -Fx 'Tokyo_SHIFT_Legacy_Cars_Stock_Bodykits_2026-10-14.zip'
