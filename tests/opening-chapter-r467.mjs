@@ -351,14 +351,14 @@ test('the in-office Sayaka call uses the shared blue race dialogue with phone co
   assert.match(manga, /definition\.presentation === 'phone'/);
   assert.match(manga, /scene\?\._phoneConversation\?\.active/);
   assert.match(manga, /playPhoneConversation\(scene, \{/);
-  assert.match(phone, /createRaceDialogueHud\\(scene, \\{/);
+  assert.match(phone, /createRaceDialogueHud\(scene, \{/);
   assert.match(phone, /theme: 'phone'/);
   assert.match(phone, /phoneIconKey: PHONE_ICON_KEY/);
   const shared = source('src/ui/RaceCoachHud.js');
-  assert.match(shared, /drawMangaSpeechBubble\\(/);
-  assert.match(shared, /bubble\\.lineTo\\(layout\\.left - layout\\.notchDepth, mid\\)/);
+  assert.match(shared, /drawMangaSpeechBubble\(/);
+  assert.match(shared, /bubble\.lineTo\(layout\.left - layout\.notchDepth, mid\)/);
   assert.match(shared, /RACE_DIALOGUE_THEMES/);
-  assert.match(shared, /iconBadge = own\\(scene\\.add\\.circle/);
+  assert.match(shared, /iconBadge = own\(scene\.add\.circle/);
   assert.match(shared, /0xe4f5ff/);
   assert.match(phone, /setInteractive\(\{ useHandCursor: true \}\)/);
   assert.match(phone, /PHONE_ICON_KEY = 'openingIncomingPhone'/);
