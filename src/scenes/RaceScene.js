@@ -1485,7 +1485,7 @@ export default class RaceScene extends Phaser.Scene {
     const panel = this.add.rectangle(984, 359, 934, 652, 0xffffff, 0.99)
       .setStrokeStyle(5, 0x141820).setDepth(117).setScrollFactor(0);
     panel.setScale(0.98);
-    this.tweens.add({ targets: panel, scale: 1, duration: 230, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: panel, scaleX: 1, scaleY: 1, duration: 230, ease: 'Cubic.Out' });
     const pose = isLaunch && this.coachPeakSlip > 0.27 ? 'concerned'
       : clean === total && total > 0 || isLaunch ? 'happy' : 'explaining';
     const key = 'oshiageSayaka_' + pose;
