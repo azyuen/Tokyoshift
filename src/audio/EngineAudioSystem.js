@@ -75,6 +75,24 @@ Object.assign(ENGINE_PROFILES, {
   ej208: ENGINE_PROFILES.ej22g,
 });
 
+// R516: individual timbres retain the correct firing layout and crossover.
+Object.assign(ENGINE_PROFILES, {
+  "ej207_gdb": { ...ENGINE_PROFILES["ej22g"], "brightness": 0.91, "roughness": 0.075 },
+  "sr20det_s15": { ...ENGINE_PROFILES["4g63t"], "brightness": 1.04, "roughness": 0.052 },
+  "g54b_starion": { ...ENGINE_PROFILES["4g63t"], "brightness": 0.68, "lowOrder": 0.34, "roughness": 0.085 },
+  "6a12_mivec": { ...ENGINE_PROFILES["rb26dett"], "brightness": 1.2, "mechanical": 0.12, "vtecRPM": 5500 },
+  "bp_nb": { ...ENGINE_PROFILES["4age"], "brightness": 0.96, "roughness": 0.04 },
+  "12at": { ...ENGINE_PROFILES["13bt"], "brightness": 1.15, "mechanical": 0.19 },
+  "klze": { ...ENGINE_PROFILES["rb26dett"], "brightness": 1.02, "roughness": 0.043 },
+  "h22a_types": { ...ENGINE_PROFILES["b16b"], "brightness": 1.17, "lowOrder": 0.25, "vtecRPM": 5200 },
+  "3sgte_sw20": { ...ENGINE_PROFILES["4g63t"], "brightness": 0.97, "roughness": 0.06 },
+  "1jzgte_soarer": { ...ENGINE_PROFILES["rb26dett"], "brightness": 0.83, "lowOrder": 0.22 },
+  "ej20_forester": { ...ENGINE_PROFILES["ej22g"], "brightness": 0.73, "lowOrder": 0.36 },
+  "eg33": { ...ENGINE_PROFILES["rb26dett"], "boxer": true, "brightness": 0.8, "roughness": 0.035 },
+  "ea82t": { ...ENGINE_PROFILES["ej22g"], "brightness": 0.66, "roughness": 0.1, "mechanical": 0.11 },
+  "6g72_magna": { ...ENGINE_PROFILES["rb26dett"], "brightness": 0.75, "roughness": 0.055, "lowOrder": 0.28 },
+});
+
 const DEFAULT_PROFILE = ENGINE_PROFILES['4age'];
 
 let ctx = null;

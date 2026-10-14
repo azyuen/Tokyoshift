@@ -8,11 +8,11 @@ import {
   REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS, getReferenceAssetRoot,
 } from '../src/data/carReferenceGeometry.js';
 const url = path => new URL('../' + path, import.meta.url);
-test('all 28 deployed regular cars resolve to unified lowercase stock folder', () => {
+test('all 41 deployed regular cars resolve to unified lowercase stock folder', () => {
   assert.equal(STANDARD_CAR_REFERENCE_ROOT,'assets/Cars/stock');
-  assert.equal(carOrder.length,28);
-  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,28);
-  assert.deepEqual(new Set(carOrder),new Set(Object.keys(REFERENCE_CAR_GAME_IDS)));
+  assert.equal(carOrder.length,41);
+  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,42);
+  assert.deepEqual(new Set(carOrder),new Set(Object.keys(REFERENCE_CAR_GAME_IDS).filter(id => !cars[id].devOnly)));
   for(const id of carOrder) {
     const stem=REFERENCE_CAR_GAME_IDS[id], car=cars[id];
     const paths=getCarAssetPaths(car);
@@ -27,7 +27,7 @@ test('all 28 deployed regular cars resolve to unified lowercase stock folder', (
   // evo3 remains the legacy save ID; modularAssetStem selects Galant art.
   assert.equal(cars.evo3.visual.modularAssetStem,'galant');
 });
-test('56 PNG assets exist in stock, no old Ref folders and all sizes match', () => {
+test('all 84 deployed PNG assets exist in stock and sizes match; future uploads are allowed', () => {
   assert.ok(existsSync(url('assets/Cars/stock')));
   assert.equal(existsSync(url('assets/Cars/Ref')),false);
   assert.equal(existsSync(url('assets/Cars/Ref2')),false);
@@ -36,9 +36,9 @@ test('56 PNG assets exist in stock, no old Ref folders and all sizes match', () 
   const expected=new Set(Object.values(REFERENCE_CAR_GAME_IDS).flatMap(stem=>[
     stem+'_stock_body.png',stem+'_stock_paint.png',
   ]));
-  assert.equal(pngs.length,56);
-  assert.equal(expected.size,56);
-  assert.deepEqual(new Set(pngs),expected);
+  assert.ok(pngs.length >= 84);
+  assert.equal(expected.size,84);
+  for (const file of expected) assert.ok(pngs.includes(file), file);
   for(const stem of new Set(Object.values(REFERENCE_CAR_GAME_IDS))){
     const images=['body','paint'].map(layer=>readFileSync(url('assets/Cars/stock/'+stem+'_stock_'+layer+'.png')));
     const dims=images.map(b=>{

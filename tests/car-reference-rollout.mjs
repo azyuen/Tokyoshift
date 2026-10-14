@@ -41,7 +41,7 @@ function textureScene(car) {
 }
 
 test('reference game IDs use their correct unified stock PNG pairs', () => {
-  assert.equal(migrated.length, 28);
+  assert.equal(migrated.length, 42);
   for (const id of carOrder) {
     const car = cars[id];
     const paths = getCarAssetPaths(car);
@@ -70,7 +70,7 @@ test('reference models share one AE86-derived source scale regardless of origina
     assert.equal(hasLayeredPaintAssets(scene, car), true, id);
   }
   // Every regular car must now be on the shared reference standard.
-  assert.deepEqual(new Set(migrated), new Set(carOrder));
+  assert.deepEqual(new Set(migrated.filter(id => !cars[id].devOnly)), new Set(carOrder));
 });
 
 test('both tyre sizes contact zero ground at common scale, including flipped presentations', () => {

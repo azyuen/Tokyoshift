@@ -93,6 +93,20 @@ export const CENTRAL_TOKYO_LOCATION_ORDER = [
 ];
 
 export const MARKET_BASE_PRICES = {
+  gdb: 3900000,
+  s15: 3100000,
+  starion: 1800000,
+  fto: 1650000,
+  mx5: 1350000,
+  sa22c: 2000000,
+  mx6: 1500000,
+  prelude: 2200000,
+  sw20: 3000000,
+  soarer: 2600000,
+  forester: 2000000,
+  svx: 2350000,
+  xt: 1250000,
+
   'z32': 3500000,
   'z33': 2900000,
   '240z': 2200000,
@@ -170,6 +184,20 @@ const MARKET_BUILDS = {
 
 // New dealership entries use the matching drivetrain's street build recipe.
 Object.assign(MARKET_BUILDS, {
+  gdb: MARKET_BUILDS.evo3,
+  s15: MARKET_BUILDS.fc3s,
+  starion: MARKET_BUILDS.fc3s,
+  fto: MARKET_BUILDS.ek9,
+  mx5: MARKET_BUILDS.ae86,
+  sa22c: MARKET_BUILDS.fc3s,
+  mx6: MARKET_BUILDS.ek9,
+  prelude: MARKET_BUILDS.ek9,
+  sw20: MARKET_BUILDS.fc3s,
+  soarer: MARKET_BUILDS.fc3s,
+  forester: MARKET_BUILDS.evo3,
+  svx: MARKET_BUILDS.evo3,
+  xt: MARKET_BUILDS.evo3,
+
   'z32': MARKET_BUILDS.fc3s,
   'z33': MARKET_BUILDS.ae86,
   '240z': MARKET_BUILDS.ae86,
@@ -195,6 +223,20 @@ Object.assign(MARKET_BUILDS, {
 });
 
 export const AUTO_MARKET_LISTINGS = [
+  { carId: 'gdb', price: 4680000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 's15', price: 3720000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'starion', price: 2160000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'fto', price: 1980000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'mx5', price: 1620000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'sa22c', price: 2400000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'mx6', price: 1800000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'prelude', price: 2640000, buildLabel: 'FWD STREET BUILD' },
+  { carId: 'sw20', price: 3600000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'soarer', price: 3120000, buildLabel: 'RWD STREET BUILD' },
+  { carId: 'forester', price: 2400000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'svx', price: 2820000, buildLabel: 'AWD STREET BUILD' },
+  { carId: 'xt', price: 1500000, buildLabel: 'AWD STREET BUILD' },
+
   { carId: 'z32', price: 4200000, buildLabel: 'RWD STREET BUILD' },
   { carId: 'z33', price: 3480000, buildLabel: 'RWD STREET BUILD' },
   { carId: '240z', price: 2640000, buildLabel: 'RWD STREET BUILD' },

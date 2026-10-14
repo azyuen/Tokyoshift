@@ -21,6 +21,21 @@ export function getActiveMagazineIssue(source = null) {
 }
 
 export const CAR_MAGAZINE_META = Object.freeze({
+  "gdb": {"year": 2002, "drivetrain": "AWD"},
+  "s15": {"year": 1999, "drivetrain": "RWD"},
+  "starion": {"year": 1988, "drivetrain": "RWD"},
+  "fto": {"year": 1994, "drivetrain": "FWD"},
+  "mx5": {"year": 1998, "drivetrain": "RWD"},
+  "sa22c": {"year": 1983, "drivetrain": "RWD"},
+  "mx6": {"year": 1992, "drivetrain": "FWD"},
+  "prelude": {"year": 1996, "drivetrain": "FWD"},
+  "sw20": {"year": 1994, "drivetrain": "RWD"},
+  "soarer": {"year": 1991, "drivetrain": "RWD"},
+  "forester": {"year": 1998, "drivetrain": "AWD"},
+  "svx": {"year": 1991, "drivetrain": "AWD"},
+  "xt": {"year": 1985, "drivetrain": "AWD"},
+  "magna": {"year": 1998, "drivetrain": "FWD"},
+
   'z32': { year: 1989, drivetrain: 'RWD' },
   'z33': { year: 2002, drivetrain: 'RWD' },
   '240z': { year: 1969, drivetrain: 'RWD' },

@@ -786,12 +786,29 @@ export function normaliseState(input = {}) {
     || input.district
     || (String(normalisedLocation).startsWith('odaiba') ? 'ODAIBA' : base.district);
   const openingPending = ['station', 'home', 'magazine', 'delivery'].includes(String(input.openingChapter || ''));
+  const joinedDevName = (
+    String(input.firstName || '').trim().toLowerCase() +
+    String(input.lastName || '').trim().toLowerCase()
+  ).replace(/[^a-z0-9]/g, '');
+  const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
+  const devName = joinedDevName.includes('arkonden');
+  const legacyDevCash = rawCash >= 900000000;
+  const devMode = Boolean(input.devMode || devName || legacyDevCash);
+  const normalisedCash = devName && !input.devMode
+    ? Math.max(rawCash, 1000000000)
+    : rawCash;
+
   const owned = (
     Array.isArray(input.ownedCarIds)
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
 
+  // Developer special never enters carOrder, markets, coupons or rival pools.
+  // Grant once, preserving existing Magna upgrades and avoiding re-grants after sale.
+  const grantDevMagna = devMode && !openingPending && !owned.includes('magna')
+    && !input.carStates?.magna && !(input.carHistory || []).some(entry => entry.carId === 'magna');
+  if (grantDevMagna) owned.push('magna');
   if (!owned.length && !openingPending) owned.push(base.starterCarId);
 
   // Duplicate production cars are persisted as stable instance IDs such as
@@ -815,17 +832,6 @@ export function normaliseState(input = {}) {
     migratedGarageLocations,
     garageTier
   );
-  const joinedDevName = (
-    String(input.firstName || '').trim().toLowerCase() +
-    String(input.lastName || '').trim().toLowerCase()
-  ).replace(/[^a-z0-9]/g, '');
-  const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
-  const devName = joinedDevName.includes('arkonden');
-  const legacyDevCash = rawCash >= 900000000;
-  const devMode = Boolean(input.devMode || devName || legacyDevCash);
-  const normalisedCash = devName && !input.devMode
-    ? Math.max(rawCash, 1000000000)
-    : rawCash;
 
   if (devName) {
     // Arkon is the development profile for testing the post-regional game.
@@ -854,6 +860,7 @@ export function normaliseState(input = {}) {
     ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
+  if (grantDevMagna) mergedCarStates.magna = { ...createStarterCarState(), acquiredVia: 'developerSpecial' };
   // R501: old bodykit image pairs are incompatible with the new car assets.
   // Treat all previous kits as stock without touching paint, tune or rim IDs.
   Object.entries(mergedCarStates).forEach(([carId, carState]) => {

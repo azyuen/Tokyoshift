@@ -15,6 +15,21 @@ export const STANDARD_CAR_REFERENCE = {
     L: 194,
   },
   cars: {
+    "WRXGDB": {"rearX": -983, "frontX": -256, "size": "L"},
+    "s15": {"rearX": -991, "frontX": -265, "size": "S"},
+    "starion": {"rearX": -958, "frontX": -248, "size": "S"},
+    "fto": {"rearX": -933, "frontX": -250, "size": "S"},
+    "mx5": {"rearX": -892, "frontX": -222, "size": "L"},
+    "sa22c": {"rearX": -936, "frontX": -238, "size": "S"},
+    "mx6": {"rearX": -966, "frontX": -253, "size": "S"},
+    "prelude": {"rearX": -944, "frontX": -255, "size": "S"},
+    "sw20": {"rearX": -911, "frontX": -241, "size": "S"},
+    "soarer": {"rearX": -964, "frontX": -258, "size": "S"},
+    "forester": {"rearX": -951, "frontX": -251, "size": "L"},
+    "svx": {"rearX": -981, "frontX": -274, "size": "S"},
+    "XT": {"rearX": -926, "frontX": -277, "size": "S"},
+    "magna": {"rearX": -970, "frontX": -205, "size": "L"},
+
     r34: { rearX: -922, frontX: -248, size: 'L', bodyRenderOffsetY: 36 },
     '180sx': { rearX: -932, frontX: -248, size: 'L' },
     '240z': { rearX: -887, frontX: -224, size: 'S', bodyRenderOffsetY: -3 },
@@ -55,6 +70,21 @@ export function getReferenceAssetRoot(_stem) {
   return STANDARD_CAR_REFERENCE_ROOT;
 }
 export const REFERENCE_CAR_GAME_IDS = Object.freeze({
+  "gdb": "WRXGDB",
+  "s15": "s15",
+  "starion": "starion",
+  "fto": "fto",
+  "mx5": "mx5",
+  "sa22c": "sa22c",
+  "mx6": "mx6",
+  "prelude": "prelude",
+  "sw20": "sw20",
+  "soarer": "soarer",
+  "forester": "forester",
+  "svx": "svx",
+  "xt": "XT",
+  "magna": "magna",
+
   r34: 'r34',
   'z32': '300zx',
   'z33': '350Z',
@@ -88,6 +118,21 @@ export const REFERENCE_CAR_GAME_IDS = Object.freeze({
 
 // Source canvas dimensions measured from authored GIMP PNGs.
 export const REFERENCE_CAR_CANVAS = Object.freeze({
+  "WRXGDB": [1300, 440],
+  "s15": [1300, 440],
+  "starion": [1300, 440],
+  "fto": [1300, 440],
+  "mx5": [1300, 440],
+  "sa22c": [1300, 440],
+  "mx6": [1300, 440],
+  "prelude": [1300, 440],
+  "sw20": [1300, 440],
+  "soarer": [1300, 440],
+  "forester": [1300, 440],
+  "svx": [1300, 440],
+  "XT": [1300, 440],
+  "magna": [1300, 440],
+
   r34: [1200, 500],
   '180sx': [1300, 440],
   '240z': [1300, 440],

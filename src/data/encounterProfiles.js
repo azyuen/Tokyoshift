@@ -172,13 +172,13 @@ export const LOCATION_ENCOUNTERS = {
 // so the matchmaker actually encounters them at meaningful weight. Physical
 // performance ratios and local upgrade ceilings still decide eligible rivals.
 export const NEW_MEET_MODELS_BY_REGION = Object.freeze({
-  ODAIBA: ['240z', 'crx', 'dc2', 'familia', 'ef'],
-  SHINAGAWA: ['180sx', 'st205', 'familia', 'b4rsk', 'a60', 's2000'],
-  TATSUMI: ['st205', 'eclipse', 'evo5', 'evo6', 'b4rsk', 'z32'],
-  SHIBUYA: ['180sx', 's2000', 'z33', 'z32', 'jzx100', 'eclipse'],
-  SHINJUKU: ['jzx100', 'z33', 'z32', 'jza80', 'r34', 'evo6'],
-  YOKOHAMA: ['r34', '3000gt', 'jzx100', 'b4rsk', 'z33', 'evo5'],
-  DAIKOKU: ['3000gt', 'jzx100', 'z33', 'r34', 'b4rsk', 'evo6', 'nsx'],
+  ODAIBA: ['mx5', 'fto', 'sa22c', 'xt', '240z', 'crx', 'dc2', 'familia', 'ef'],
+  SHINAGAWA: ['starion', 'mx6', 'prelude', 'forester', '180sx', 'st205', 'familia', 'b4rsk', 'a60', 's2000'],
+  TATSUMI: ['gdb', 'forester', 'sw20', 'st205', 'eclipse', 'evo5', 'evo6', 'b4rsk', 'z32'],
+  SHIBUYA: ['s15', 'mx5', 'prelude', 'fto', '180sx', 's2000', 'z33', 'z32', 'jzx100', 'eclipse'],
+  SHINJUKU: ['s15', 'soarer', 'gdb', 'jzx100', 'z33', 'z32', 'jza80', 'r34', 'evo6'],
+  YOKOHAMA: ['svx', 'soarer', 'sw20', 'r34', '3000gt', 'jzx100', 'b4rsk', 'z33', 'evo5'],
+  DAIKOKU: ['gdb', 'svx', 'soarer', '3000gt', 'jzx100', 'z33', 'r34', 'b4rsk', 'evo6', 'nsx'],
 });
 
 export function getMeetPreferredCars(locationId, authoredCars = []) {

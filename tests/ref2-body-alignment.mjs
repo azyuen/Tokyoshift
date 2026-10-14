@@ -97,7 +97,8 @@ test('race, garage and decal editor use the same anchor while wheel transforms r
   assert.match(race,/const decalAnchor = getCarDecalAnchor\(c,/);
   assert.match(race,/obj\.setPosition\(decalAnchor\.x \+ offsetX, decalAnchor\.y \+ offsetY\)/);
   assert.match(race,/obj\.setPosition\(drawX \+ artOffsetX, bodyY \+ artOffsetY\)/);
-  assert.match(race,/bodyY \+ v\.driverOffsetY \+ artOffsetY/);
+  // Driver silhouettes were retired; keep the wheel/body assertions below.
+  assert.doesNotMatch(race,/driverOffsetY/);
   assert.match(race,/const rearY = bodyY \+ v\.wheelFit\.rear\.offsetY/);
   assert.match(race,/const frontY = bodyY \+ v\.wheelFit\.front\.offsetY/);
   assert.match(garage,/const decalAnchor = getCarDecalAnchor\(car,/);
