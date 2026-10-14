@@ -1,0 +1,29 @@
+name: Oshiage coached driving lessons R509
+on:
+  push:
+    paths:
+      - 'src/ai/DrivingCoach.js'
+      - 'src/ai/DrivingModel.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'tests/oshiage-coaching-r509.mjs'
+      - '.github/workflows/oshiage-coaching-r509.yml'
+  workflow_dispatch:
+jobs:
+  coaching:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/ai/DrivingCoach.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+      - name: Run Oshiage coaching and original school regressions
+        run: node --test tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs
