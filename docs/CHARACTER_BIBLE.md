@@ -1063,3 +1063,6 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 
 
 **Race Dialogue Standard (R514):** In-car coaching and all `presentation: 'phone'` conversations now render through the same reusable `RaceCoachHud.js` speech/portrait surface. The frameless face is shifted right and the bubble has an attached, outward-pointing left triangular tail (not a cut-out). Standard dialogue retains off-white fill/black stroke. Phone dialogue uses a lightly translucent pale-blue fill, blue stroke and a clearly overlapping telephone-icon badge on the upper-right corner. Existing incoming/player page advancement and call callbacks are retained. This standard is available to future race dialogue via `createRaceDialogueHud()`.
+
+
+**Opening phone pilot (R515):** Sayaka rings the player after the magazine first-car choice. The centre phone sprite vibrates until the green pick-up control is pressed, then her home portrait/dialogue slide in as a joined pale-blue card. The card swipes upward before the player's selected avatar appears on the right, delivering “Great, see you in the garage!” The car is delivered only after the player's reply finishes. The staged animation is currently for the opening call only, not every phone conversation.
