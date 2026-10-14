@@ -81,6 +81,7 @@ import {
 } from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
+import { createRaceCoachHud } from '../ui/RaceCoachHud.js?v=20261014-r513';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261014-r512';
@@ -1310,39 +1311,19 @@ export default class RaceScene extends Phaser.Scene {
     this.player.transmission.currentGear = 1;
     this.player.clutch.pedal = 1;
 
-    // Compact cutscene-style coaching with a head close-up, white dialogue,
-    // and a completely separate large RPM/gear circle to the right.
-    const mask = this.make.graphics({ add: false });
-    mask.fillStyle(0xffffff).fillRect(38, 116, 191, 158);
-    this.coachFaceMask = mask;
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => mask.destroy());
-    this.add.rectangle(133, 195, 198, 166, 0xf9faf7, 1)
-      .setStrokeStyle(4, 0x111820).setScrollFactor(0).setDepth(81);
-    this.coachPortrait = this.add.image(50, 120, 'characterSayakaOshiageExplaining')
-      .setOrigin(0, 0).setDepth(82).setScrollFactor(0)
-      .setMask(mask.createGeometryMask());
-    this.add.rectangle(662, 195, 826, 162, 0xfafaf7, 0.985)
-      .setStrokeStyle(4, 0x15191c).setDepth(80).setScrollFactor(0);
-    this.add.text(275, 131, 'LADY INSTRUCTOR // OSHIAGE', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#121b21'
-    }).setScrollFactor(0).setDepth(83);
-    this.coachDialogue = this.add.text(275, 180, '', {
-      fontFamily: BODY_FONT, fontSize: '17px', fontStyle: 'bold',
-      color: '#101820', wordWrap: { width: 755 }, lineSpacing: 4
-    }).setDepth(84).setScrollFactor(0);
-    this.add.circle(1375, 199, 125, 0xfafbf7, 0.99)
-      .setStrokeStyle(5, 0x12171c).setDepth(79).setScrollFactor(0);
-    this.coachTargetLabel = this.add.text(1375, 138, 'SUGGESTED', {
-      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#25313a'
-    }).setOrigin(0.5).setDepth(82).setScrollFactor(0);
-    this.coachTarget = this.add.text(1375, 193, '', {
-      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#0b1520',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
-    this.coachTargetFoot = this.add.text(1375, 250, '', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#334454',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
+    // Shared race coach HUD: transparent zoomed face, compact manga dialogue
+    // with left notch and a small red target decal. No physics changes.
+    this.coachHud = createRaceCoachHud(this, {
+      speaker: 'LADY INSTRUCTOR // OSHIAGE',
+      characterVisual: characters.sayakaFujieda.visual,
+      initialPose: 'explaining',
+    });
+    this.coachPortrait = this.coachHud.portrait;
+    this.coachFaceMask = this.coachHud.maskShape;
+    this.coachDialogue = this.coachHud.dialogue;
+    this.coachTargetLabel = this.coachHud.label;
+    this.coachTarget = this.coachHud.value;
+    this.coachTargetFoot = this.coachHud.footer;
     this.coachSetTarget();
     const intro = this.coachingLesson === 'launch'
       ? 'Hold the launch RPM inside that circle. Release the clutch smoothly on green.'
@@ -1353,17 +1334,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   coachSetPortrait(pose = 'neutral') {
-    const key = 'characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1);
-    if (!this.coachPortrait || !this.textures.exists(key)) return;
-    this.coachPortrait.setTexture(key);
-    const image = this.textures.get(key).getSourceImage();
-    // A neckline-to-head crop using a fixed mask for all four poses.
-    const s = Math.max(191 / Math.max(1, image.width * 0.59),
-      158 / Math.max(1, image.height * 0.42));
-    this.coachPortrait.setScale(s);
-    this.coachPortrait.setPosition(38 - image.width * 0.205 * s,
-      116 - image.height * 0.055 * s);
-    this.coachPortrait.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+    this.coachHud?.setPortrait(pose);
   }
 
   coachSpeak(message, pose = 'neutral') {
