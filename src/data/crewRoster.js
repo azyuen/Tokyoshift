@@ -18,7 +18,7 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
   ODAIBA: Object.freeze({
     mainRivalId: 'emiKanzaki',
     members: Object.freeze([
-      Object.freeze({ characterId: 'aoiShindou', baseCarId: 'ej1', recruitable: true }),
+      Object.freeze({ characterId: 'aoiShindou', baseCarId: 'crx', recruitable: true }),
       Object.freeze({ characterId: 'yutoAsakura', baseCarId: 'ae86', recruitable: true }),
       Object.freeze({ characterId: 'mikaHoshino', baseCarId: 'ef', recruitable: true }),
       Object.freeze({ characterId: 'kaoriNishimura', baseCarId: 'a60', recruitable: true }),
