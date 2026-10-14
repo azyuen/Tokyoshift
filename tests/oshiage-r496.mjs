@@ -120,7 +120,8 @@ test('scene integrates three race streak, cutscene anonymity, preset and RGB pri
   assert.doesNotMatch(scene.slice(scene.indexOf('  drawSchool() {'), scene.indexOf('  drawMeet() {')), /Sayaka Fujieda/);
   assert.match(scene, /this\.registry\.set\('raceReturnScene', 'OshiageScene'\)/);
   assert.match(scene, /mode === 'custom' \? 16000 : 8000/);
-  assert.match(scene, /duration: 3450, ease: 'Sine.easeInOut'/);
+  assert.match(scene, /this\.animateShopCarEntry\(this\.paintObjects, \{ duration: 4100, distance: 1100 \}\)/);
+  assert.match(scene, /wheel\.sprite\.setAngle\(degrees\)/);
   assert.match(scene, /this\.registry\.set\('oshiageEliteSeries'/);
   assert.match(scene, /roundIndex \+ 1/);
   assert.match(race, /const completed = Boolean\(playerWon && roundNumber >= 3/);
