@@ -11,6 +11,7 @@ import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261013-r496';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261014-r511';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -434,7 +435,8 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   showLessonBookingDialogue(lessonId) {
-    if (this.schoolPromptOpen || this.instructorCutsceneOpen || this.paintBusy) return;
+    if (this.schoolPromptOpen || this.instructorCutsceneOpen ||
+        this.paintBusy || sceneCutsceneActive(this)) return;
     const { id, car } = this.selectedCar();
     if (!car || car.crewLoan) {
       this.showOshiageNotice('PLEASE SELECT YOUR OWN CAR FIRST');
@@ -449,67 +451,52 @@ export default class OshiageScene extends Phaser.Scene {
       this.showOshiageNotice('NOT ENOUGH YEN FOR THIS LESSON');
       return;
     }
-    this.schoolPromptOpen = true;
     const lesson = OSHIAGE_SCHOOL_LESSONS[lessonId];
-    const controls = [];
-    const add = obj => { controls.push(obj); return obj; };
-    const close = () => {
-      controls.forEach(obj => obj?.destroy?.());
-      this.schoolPromptOpen = false;
+    const text = continuing
+      ? 'You still have ' + remainingAttempts(booking) +
+        ' runs remaining on this booking. Shall we continue?'
+      : lessonId === 'basic'
+        ? 'The basics are free. Shall we practise together?'
+        : 'The fee is ' + MONEY(lesson.fee) +
+          ', including three retries. Shall we begin?';
+    // Real game manga cutscene: same portrait staging, dialogue plate,
+    // animated transitions and two final dialogue buttons as the Dev tester.
+    const definition = {
+      id: 'oshiageSchoolBooking_' + lessonId,
+      title: 'OSHIAGE // LADY INSTRUCTOR',
+      once: false,
+      characters: { left: 'sayakaFujieda' },
+      pages: [
+        { speaker: 'left', pose: 'homeNormal',
+          nameOverride: 'LADY INSTRUCTOR', text: lesson.speech },
+        { speaker: 'left', pose: 'homeHappy',
+          nameOverride: 'LADY INSTRUCTOR', text },
+      ],
+      finalActionLabel: 'YES, LET\'S DRIVE',
+      secondaryFinalActionLabel: 'NOT NOW',
     };
-    add(this.add.rectangle(780, 420, 1560, 840, 0x0b1020, 0.80)
-      .setDepth(96).setInteractive());
-    const panel = add(this.add.rectangle(780, 457, 1050, 486, 0xfafaf7, 0.98)
-      .setStrokeStyle(5, 0x101820).setDepth(97));
-    panel.setScale(0.97, 0.94);
-    this.tweens.add({ targets: panel, scaleX: 1, scaleY: 1, duration: 210,
-      ease: 'Cubic.Out' });
-    const sprite = 'oshiageSayaka_' + lesson.pose;
-    if (this.textures.exists(sprite)) {
-      const src = this.textures.get(sprite).getSourceImage();
-      add(this.add.image(505, 666, sprite).setOrigin(0.5, 1)
-        .setScale(360 / Math.max(1, src.height)).setDepth(99));
-    }
-    add(TEXT(this, 737, 285, 'LADY INSTRUCTOR // ' + lesson.title, {
-      pixel: true, size: '11px', color: '#101820', wrap: 490
-    }).setDepth(100));
-    add(TEXT(this, 737, 350,
-      continuing ? 'You still have ' + remainingAttempts(booking) +
-        ' practice runs on this booking. I suppose we should use them!' :
-        lessonId === 'basic' ? 'No charge today.' :
-        'This lesson costs ' + MONEY(lesson.fee) + '. Your fee includes three retries.', {
-      size: '19px', wrap: 500, color: '#20252c', spacing: 5
-    }).setDepth(100));
-    add(TEXT(this, 737, 446, lesson.speech, {
-      size: '19px', wrap: 500, color: '#20252c', spacing: 6
-    }).setDepth(100));
-    const action = (x, text, click) => {
-      const rect = add(this.add.rectangle(x, 622, 235, 58, 0xf7f7f3)
-        .setStrokeStyle(3, 0x131b25).setDepth(100)
-        .setInteractive({ useHandCursor: true }));
-      add(TEXT(this, x, 622, text, { pixel: true, size: '10px', color: '#182129' })
-        .setOrigin(0.5).setDepth(101));
-      rect.on('pointerdown', click);
-    };
-    action(807, 'NOT NOW', () => close());
-    action(1082, 'YES, LET\'S DRIVE', () => {
-      // Recheck funds and selected car before charging; taps cannot pay twice.
-      if (!this.schoolPromptOpen) return;
-      const currentCar = this.selectedCar();
-      const purchase = bookOshiageLesson({
-        booking: this.registry.get('oshiageSchoolBooking'), carId: currentCar.id,
-        lessonId, cash: this.registry.get('cash'),
-      });
-      if (!purchase.ok || currentCar.id !== id) { close(); return; }
-      if (lessonId !== 'basic') {
-        const nextBooking = consumeOshiageAttempt(purchase.booking);
-        if (!nextBooking) { close(); return; }
-        this.registry.set('cash', purchase.cash);
-        this.registry.set('oshiageSchoolBooking', nextBooking);
-      }
-      close();
-      this.startBasicTutorial(lessonId === 'basic' ? null : lessonId);
+    this.schoolPromptOpen = true;
+    const result = playMangaCutscene(this, definition, {
+      onComplete: ({ reason }) => {
+        this.schoolPromptOpen = false;
+        // Skipping or selecting the secondary button must never spend yen.
+        if (reason !== 'action') return;
+        const current = this.selectedCar();
+        const purchase = bookOshiageLesson({
+          booking: this.registry.get('oshiageSchoolBooking'),
+          carId: current.id, lessonId, cash: this.registry.get('cash'),
+        });
+        if (!purchase.ok || current.id !== id || !current.car || current.car.crewLoan) return;
+        if (lessonId !== 'basic') {
+          const attempt = consumeOshiageAttempt(purchase.booking);
+          if (!attempt) return;
+          this.registry.set('cash', purchase.cash);
+          this.registry.set('oshiageSchoolBooking', attempt);
+        }
+        this.startBasicTutorial(lessonId === 'basic' ? null : lessonId);
+      },
     });
+    if (!result.played) this.schoolPromptOpen = false;
   }
 
   showInstructorCutscene() {
