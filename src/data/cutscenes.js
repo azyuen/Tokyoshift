@@ -65,12 +65,14 @@ export const CUTSCENES = {
     title: 'SHINONOME // INCOMING CALL',
     once: false, // A save reloaded during delivery should still receive the call.
     presentation: 'phone',
+    presentationMode: 'openingSwipe', // Opening-only pilot; other phone calls unchanged.
     callerId: 'sayakaFujieda',
     callerPose: 'idle', // Same normal Sayaka PNG already preloaded for the garage.
     callerName: 'SAYAKA',
     label: 'INCOMING CALL',
     pages: [
-      { text: "Hey {PLAYER_FIRST_NAME}! I'm just around the corner. I've got your new car, meet me in your garage!" },
+      { speaker: 'caller', text: "Hey {PLAYER_FIRST_NAME}! I'm just around the corner. I've got your new car, meet me in your garage!" },
+      { speaker: 'player', text: "Great, see you in the garage!" },
     ],
   },
 
