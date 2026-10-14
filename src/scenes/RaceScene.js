@@ -23,12 +23,10 @@ import {
   normalisePaintColor,
   createCarBodyLayers,
   getCarDecalAnchor,
-  getCarBodyTextureKey,
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20261013-r493';
 import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
 import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
@@ -1220,21 +1218,6 @@ export default class RaceScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    const bodyTextureKey = getCarBodyTextureKey(this, cfg);
-    const bodySource = this.textures.exists(bodyTextureKey)
-      ? this.textures.get(bodyTextureKey).getSourceImage()
-      : null;
-    const driver = driverCharacter
-      ? createDriverSilhouette(this, cfg, driverCharacter, {
-          bodyX: 0,
-          bodyY: 0,
-          bodyScale,
-          depth: depth + 0.55,
-          sourceWidth: bodySource?.width || cfg.referenceCanvasWidth || 1200,
-          sourceHeight: bodySource?.height || cfg.referenceCanvasHeight || 500,
-        })
-      : null;
-
     const bodyLayers = createCarBodyLayers(this, cfg, {
       x: 0,
       y: 0,
@@ -1283,9 +1266,6 @@ export default class RaceScene extends Phaser.Scene {
       roadShadow,
       body,
       bodyObjects: [...bodyLayers.objects, ...visualModObjects, ...decalObjects],
-      driverSilhouette: driver?.image || null,
-      driverOffsetX: (driver?.offsetX || 0) + (referenceCar ? body.width * bodyScale * 0.5 : 0),
-      driverOffsetY: driver?.offsetY || 0,
       paintBody: bodyLayers.paint,
       bodyOverlay: bodyLayers.overlay,
       wheelAngle: 0,
@@ -2295,7 +2275,6 @@ export default class RaceScene extends Phaser.Scene {
           visual.rearWheelBacking,
           visual.frontWheelBacking,
           visual.roadShadow,
-          visual.driverSilhouette,
           ...(visual.bodyObjects || []),
         ].forEach(obj => obj?.setVisible?.(false));
       };
@@ -4430,12 +4409,7 @@ export default class RaceScene extends Phaser.Scene {
         obj.setPosition(drawX + artOffsetX, bodyY + artOffsetY);
       }
     });
-    if (v.driverSilhouette) {
-      v.driverSilhouette.setPosition(
-        x + v.driverOffsetX + artOffsetX,
-        bodyY + v.driverOffsetY + artOffsetY
-      );
-    }
+
 
     const rearX = drawX + v.wheelFit.rear.offsetX;
     const frontX = drawX + v.wheelFit.front.offsetX;

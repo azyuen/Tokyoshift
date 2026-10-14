@@ -96,12 +96,6 @@ async function startTokyoShift() {
       ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js?v=20261012-carref')
       : null;
 
-    // Opt-in calibration for both source-canvas car driver faces and portrait
-    // head centres. Does not mutate any saved garage or player profile.
-    const useDriverFace = new URLSearchParams(window.location.search).get('driverface') === '1';
-    const DriverFaceCalibrationScene = useDriverFace
-      ? await loadScene('DRIVER FACE CALIBRATION', './scenes/DriverFaceCalibrationScene.js?v=20261013-r493')
-      : null;
 
     window.TOKYO_SHIFT_SET_LOADING?.(0.10, 'LOADING');
 
@@ -129,7 +123,6 @@ async function startTokyoShift() {
     ];
     // Phaser starts its first scene. Put the test scene first only when asked.
     if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
-    if (DriverFaceCalibrationScene) allScenes.unshift(DriverFaceCalibrationScene);
 
     const config = {
       type: Phaser.AUTO,

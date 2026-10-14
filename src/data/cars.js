@@ -1,4 +1,3 @@
-import { CAR_DRIVER_FACE_ANCHORS } from './carDriverFaceAnchors.js?v=20261013-driverface';
 import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261014-stock';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
 
@@ -1770,13 +1769,6 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
     exhaustOffsetY: -diameter / 2,
   });
 }
-
-// Driver anchors are SOURCE-PNG window coordinates. They are applied after
-// all stock geometry migrations, so reference and legacy cars can keep their
-// separate image-origin conventions without changing wheel fit or scaling.
-Object.entries(CAR_DRIVER_FACE_ANCHORS).forEach(([id, face]) => {
-  if (cars[id]?.visual) cars[id].visual.driverFace = { ...face };
-});
 
 // Unique collector cars keep their existing fixed body and wheel assets.
 Object.values(cars).forEach(car => {
