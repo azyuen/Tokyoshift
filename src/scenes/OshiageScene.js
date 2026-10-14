@@ -1,6 +1,6 @@
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261013-r494';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
 import { getOshiageEliteProgress, getOshiageEliteOpponent, getOshiageEliteRemainingMs, OSHIAGE_ELITE_COOLDOWN_MS, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261013-r496';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
@@ -77,6 +77,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.selectedRimIndex = -1;
     this.rimPreview = false;
     this.rimConfirmOpen = false;
+    this.entryTween = null;
     this.rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
     this.pendingPaint = null;
     this.paintBusy = false;
@@ -147,6 +148,15 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
       }
     }
+    if (this.activeLocationId === 'oshiageCustomWorks' &&
+        ['paint', 'rims'].includes(this.room)) {
+      const specialist = getCharacterVisualAsset(
+        CENTRAL_TOKYO_CHARACTER_IDS.autoMarket.wheels, 'normal'
+      );
+      if (specialist?.key && specialist?.path) {
+        queued += this.queueImage(specialist.key, getCharacterAssetUrl(specialist.path));
+      }
+    }
     if (this.room === 'rims') {
       const { car, state } = this.selectedCar();
       if (car) {
@@ -208,6 +218,12 @@ export default class OshiageScene extends Phaser.Scene {
 
   own(obj) { this.content.push(obj); return obj; }
   clearView() {
+    // Entry tweens target a proxy, so stop them explicitly before destroying
+    // wheel sprites. Ordinary preview changes remain instant after entry.
+    if (this.entryTween) {
+      this.entryTween.stop();
+      this.entryTween = null;
+    }
     this.tweens.killTweensOf(this.content);
     this.content.forEach(o => o?.destroy?.());
     this.content = [];
