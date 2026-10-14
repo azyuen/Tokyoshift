@@ -1,0 +1,30 @@
+name: Opening phone swipe prototype R515
+on:
+  push:
+    paths:
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'src/data/cutscenes.js'
+      - 'tests/opening-phone-prototype-r515.mjs'
+      - '.github/workflows/opening-phone-prototype-r515.yml'
+  workflow_dispatch:
+jobs:
+  opening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check src/ui/OpeningPhonePrototype.js
+          node --check src/ui/PhoneConversation.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/data/cutscenes.js
+      - name: Opening phone and existing Oshiage regression
+        run: |
+          node --test tests/opening-phone-prototype-r515.mjs tests/race-dialogue-standard-r514.mjs tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs
+          node --test --test-name-pattern='phone|call' tests/opening-chapter-r467.mjs
