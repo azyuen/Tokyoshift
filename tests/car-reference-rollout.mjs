@@ -69,8 +69,8 @@ test('reference models share one AE86-derived source scale regardless of origina
     assert.equal(getCarBodyTextureKey(scene, car), getCarTextureKeys(car).body);
     assert.equal(hasLayeredPaintAssets(scene, car), true, id);
   }
-  const other = cars.ej1; // Evo III's stable slot is now the Ref2 Galant
-  assert.notEqual(getReferenceRightX(other, 400, .32), 400 + REFERENCE_AE86_SOURCE_WIDTH * .32 / 2);
+  // Every regular car must now be on the shared reference standard.
+  assert.deepEqual(new Set(migrated), new Set(carOrder));
 });
 
 test('both tyre sizes contact zero ground at common scale, including flipped presentations', () => {
