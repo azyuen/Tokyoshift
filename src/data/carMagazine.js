@@ -35,7 +35,6 @@ export const CAR_MAGAZINE_META = Object.freeze({
   ae86: { year: 1983, drivetrain: 'RWD', fact: 'The AE86 became a cult lightweight because balance and momentum mattered more than outright power.' },
   ef: { year: 1989, drivetrain: 'FWD', fact: 'The EF-era Civic paired low mass with simple mechanicals, making it a natural grassroots tuning platform.' },
   ek9: { year: 1997, drivetrain: 'FWD', fact: 'The EK9 was Honda’s first Civic Type R and built its reputation around a high-revving B16B.' },
-  ej1: { year: 1993, drivetrain: 'FWD', fact: 'The EJ1 coupe brought the fifth-generation Civic formula into a lighter two-door shape popular with street builds.' },
   fc3s: { year: 1989, drivetrain: 'RWD', fact: 'The FC RX-7 blended turbo rotary power with a more mature grand-touring chassis than the generation before it.' },
   rx7fd: { year: 1992, drivetrain: 'RWD', fact: 'The FD RX-7 is famous for its compact 13B rotary, sequential twin turbos and unusually low-slung proportions.' },
   rx8: { year: 2003, drivetrain: 'RWD', fact: 'The RX-8 kept Mazda’s rotary lineage alive with the naturally aspirated Renesis and near-50:50 balance.' },
