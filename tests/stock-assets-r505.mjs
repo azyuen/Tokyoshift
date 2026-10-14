@@ -24,7 +24,8 @@ test('all 28 deployed regular cars resolve to unified lowercase stock folder', (
     assert.ok(STANDARD_CAR_REFERENCE.cars[stem],id);
     assert.ok(REFERENCE_CAR_CANVAS[stem],id);
   }
-  assert.equal(cars.evo3.visual.assetStem,'galant');
+  // evo3 remains the legacy save ID; modularAssetStem selects Galant art.
+  assert.equal(cars.evo3.visual.modularAssetStem,'galant');
 });
 test('56 PNG assets exist in stock, no old Ref folders and all sizes match', () => {
   assert.ok(existsSync(url('assets/Cars/stock')));
