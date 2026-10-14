@@ -99,7 +99,7 @@ test('pickup shows left Sayaka, continue swipes up and reveals mirrored player, 
   const second=objects.filter(x=>x.kind==='container').at(-1);
   assert.ok(second.children.some(c=>c.kind==='text'&&c.args[2]==='Great, see you in the garage!'));
   assert.ok(second.children.some(c=>c.kind==='image'&&c.args[2]==='characterAyaKurose'));
-  next=objects.find(x=>x.kind==='rectangle'&&x.buttons.pointerdown&&!x.destroyed);
+  next=objects.filter(x=>x.kind==='rectangle'&&x.buttons.pointerdown&&!x.destroyed).at(-1);
   next.buttons.pointerdown();
   assert.equal(completed,1);
   assert.equal(state.active,false);
