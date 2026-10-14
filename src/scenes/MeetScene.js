@@ -2704,8 +2704,8 @@ export default class MeetScene extends Phaser.Scene {
 
   getEventCarBand(rating = 3) {
     const bands = {
-      1: ['ae86', 'ef', 'ek9', 'ej1'],
-      2: ['ae86', 'ef', 'ek9', 'ej1', 'fc3s', 'rx8', 'a60'],
+      1: ['ae86', 'ef', 'ek9', 'crx'],
+      2: ['ae86', 'ef', 'ek9', 'crx', 'fc3s', 'rx8', 'a60'],
       3: ['ek9', 'fc3s', 'rx8', 'gr86', 'evo3', 'rx7fd'],
       4: ['fc3s', 'gr86', 'rx7fd', 'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', '3000gt'],
       5: ['rx7fd', 'evo5', 'evo6', 'evo3', 'wrx22b', 'r32', 'r34', '3000gt', 'jza80', 'nsx'],
