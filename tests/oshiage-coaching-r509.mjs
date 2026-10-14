@@ -70,7 +70,7 @@ test('new lessons use tutorial category, keep old tutorial and protect race sett
   const race = readFileSync(new URL('../src/scenes/RaceScene.js', import.meta.url), 'utf8');
   assert.match(school, /startBasicTutorial\(lessonId = null\)/);
   for (const id of ['launch', 'standing', 'rolling']) {
-    assert.match(school, new RegExp("key: '" + id + "'"));
+    assert.match(school, new RegExp("id: '" + id + "'"));
   }
   assert.match(race, /this\.isCoaching = Boolean\(this\.coachingLesson\)/);
   assert.match(race, /if \(this\.isCoaching\) this\.setupCoachedLesson\(\)/);
