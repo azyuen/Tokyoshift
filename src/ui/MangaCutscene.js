@@ -743,6 +743,65 @@ function drawDialogue(controller, page) {
   secondaryBox?.on('pointerdown', () => controller.finish('secondary'));
 }
 
+// An optional readable data card on the right of the standard manga actor.
+// Used by Driving School reports; it remains part of the SAME renderer and
+// is torn down with the scene, not a second custom popup above the cutscene.
+function drawMangaInfoPanel(controller) {
+  const { scene, context } = controller;
+  const data = context.options.infoPanel;
+  if (!data || !Array.isArray(data.rows)) return;
+  const width = Number(scene.scale.width || 1560);
+  const height = Number(scene.scale.height || 840);
+  const scaleX = width / 1560;
+  const scaleY = height / 840;
+  const x = 1110 * scaleX;
+  const y = 354 * scaleY;
+  const w = 744 * scaleX;
+  const h = 490 * scaleY;
+  const depth = BASE_DEPTH + 24;
+  const own = object => {
+    object.setScrollFactor(0).setDepth(depth + 1);
+    controller.objects.push(object);
+    return object;
+  };
+  own(scene.add.rectangle(x, y, w, h, 0xfffcf1, 0.97)
+    .setStrokeStyle(5, 0x111111, 1)).setDepth(depth);
+  const left = x - w / 2 + 25 * scaleX;
+  const maxWidth = w - 50 * scaleX;
+  const writing = (xx, yy, text, size = '10px', color = '#111111', options = {}) =>
+    own(scene.add.text(xx, yy, String(text ?? ''), {
+      fontFamily: options.body ? BODY_FONT : PIXEL_FONT,
+      fontSize: size, color,
+      wordWrap: { width: options.wrap || maxWidth },
+      fontStyle: options.bold ? '700' : 'normal',
+    }));
+  writing(left, y - h / 2 + 21 * scaleY, data.title || 'LESSON SUMMARY', '12px');
+  if (data.subtitle) writing(left, y - h / 2 + 67 * scaleY, data.subtitle, '9px');
+  const headers = data.headers || ['GEAR', 'TARGET RPM', 'YOUR RPM', 'RESULT'];
+  const colPositions = [0, 0.21, 0.57, 0.79];
+  const headerY = y - h / 2 + 110 * scaleY;
+  own(scene.add.rectangle(x, headerY + 10 * scaleY, w - 45 * scaleX, 37 * scaleY, 0xe5e7e4));
+  headers.slice(0, 4).forEach((header, i) =>
+    writing(left + maxWidth * colPositions[i], headerY, header, '8px'));
+  const rows = data.rows.slice(0, 7);
+  rows.forEach((row, index) => {
+    const ry = headerY + (50 + index * 42) * scaleY;
+    if (index % 2 === 0) own(scene.add.rectangle(x, ry + 12 * scaleY, w - 45 * scaleX, 38 * scaleY, 0xf1f2ef));
+    const values = Array.isArray(row) ? row : [
+      row.label, row.target, row.actual, row.result,
+    ];
+    values.slice(0, 4).forEach((value, i) => {
+      const accent = i === 3 && value === 'IN RANGE' ? '#20744d'
+        : i === 3 && value !== '—' ? '#8a3727' : '#141820';
+      writing(left + maxWidth * colPositions[i], ry, value, '9px', accent);
+    });
+  });
+  if (data.footer) {
+    const bottomY = y + h / 2 - 48 * scaleY;
+    writing(left, bottomY, data.footer, '9px');
+  }
+}
+
 function renderPage(controller, pageIndex, firstPage = false) {
   const { context, definition } = controller;
   const pages = definition.pages || [];
@@ -881,16 +940,17 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setScrollFactor(0)
     .setInteractive();
 
-  // Opening cinematics can opt into a clean white manga-paper stage.
-  // All existing cutscenes retain the usual dimmed background.
+  // The new translucent white wash retains the standard cutscene silhouettes,
+  // title card and dialogue box while leaving a glimpse of the finish line.
   const paperBackground = context.options.backgroundStyle === 'paper';
+  const whiteWash = context.options.backgroundStyle === 'wash';
   const shade = scene.add.rectangle(
     width / 2,
     height / 2,
     width,
     height,
-    paperBackground ? 0xfffcf1 : 0x000000,
-    paperBackground ? 1 : 0.54
+    paperBackground || whiteWash ? 0xfffcf1 : 0x000000,
+    paperBackground ? 1 : whiteWash ? 0.83 : 0.54
   ).setDepth(BASE_DEPTH + 1)
     .setScrollFactor(0)
     .setAlpha(0);
@@ -1012,12 +1072,16 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, controller.shutdownHandler);
   scene.events.once(Phaser.Scenes.Events.DESTROY, controller.shutdownHandler);
 
+  drawMangaInfoPanel(controller);
   renderPage(controller, 0, true);
   return controller;
 }
 
 export function playMangaCutscene(scene, cutsceneId, options = {}) {
-  const definition = getCutscene(cutsceneId);
+  // Runtime one-off coaching/confirmation cutscenes have dynamic data and do
+  // not belong in the saved story canon or developer's fixed cutscene index.
+  const definition = cutsceneId && typeof cutsceneId === 'object' &&
+    Array.isArray(cutsceneId.pages) ? cutsceneId : getCutscene(cutsceneId);
   if (!scene || !definition) {
     return { played: false, reason: 'missing', active: false };
   }
