@@ -291,6 +291,7 @@ export default class MeetScene extends Phaser.Scene {
           offer?.characterId,
           initialRegion
         ) &&
+        cars[offer?.carId] &&
         Number.isFinite(offer?.encounterRating) &&
         offer?.encounterAi &&
         ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
@@ -368,6 +369,7 @@ export default class MeetScene extends Phaser.Scene {
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
     const isCurrentMeetOffer = offer =>
+      Boolean(cars[offer?.carId]) &&
       Number.isFinite(offer?.encounterRating) &&
       offer?.encounterAi &&
       ['LOCATION', 'MAIN_RIVAL'].includes(offer?.driverSkillSource) &&
