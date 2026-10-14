@@ -465,8 +465,10 @@ export default class OshiageScene extends Phaser.Scene {
       id: 'oshiageSchoolBooking_' + lessonId,
       title: 'OSHIAGE // LADY INSTRUCTOR',
       once: false,
-      characters: { left: 'sayakaFujieda' },
+      characters: { left: 'sayakaFujieda', right: '$PLAYER' },
       pages: [
+        { speaker: 'right', pose: 'idle',
+          text: 'Wait... have we met somewhere before?' },
         { speaker: 'left', pose: 'homeNormal',
           nameOverride: 'LADY INSTRUCTOR', text: lesson.speech },
         { speaker: 'left', pose: 'homeHappy',
