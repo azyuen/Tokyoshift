@@ -201,6 +201,8 @@ export default class OshiageScene extends Phaser.Scene {
           !this.instructorCutsceneOpen) this.renderView();
     } });
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
+      // Never tear down a moving car midway through a showroom entrance.
+      if (this.paintBusy) return;
       const phase = getWorldPhase();
       const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
       if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
@@ -1015,6 +1017,7 @@ export default class OshiageScene extends Phaser.Scene {
     const rearBottom = rearY + getWheelContactOffsetY(wheelSrc, fit.rear.wheelScale);
     const frontBottom = frontY + getWheelContactOffsetY(wheelSrc, fit.front.wheelScale);
     const objects = [];
+    const rollingWheels = [];
     const track = obj => {
       obj.setMask?.(this.stageMask);
       this.own(obj);
@@ -1026,8 +1029,13 @@ export default class OshiageScene extends Phaser.Scene {
       const wheelX = drawX + axle.offsetX;
       const wheelY = visualY + axle.offsetY;
       track(this.add.circle(wheelX, wheelY, axle.backingRadius || 10, 0x020304).setDepth(depth));
-      track(this.add.image(wheelX, wheelY, wheelVisual.wheelKey)
+      const wheelSprite = track(this.add.image(wheelX, wheelY, wheelVisual.wheelKey)
         .setScale(axle.wheelScale).setDepth(depth + 0.2));
+      rollingWheels.push({
+        sprite: wheelSprite,
+        radius: Math.max(9, Number(axle.backingRadius || 0) ||
+          wheelSprite.displayWidth * 0.48),
+      });
     }
     const body = createCarBodyLayers(this, car, {
       x: drawX, y: visualY, scale, depth: depth + 1, paintColor,
@@ -1037,24 +1045,60 @@ export default class OshiageScene extends Phaser.Scene {
       x: drawX, y: visualY, scale, depth: depth + 1.01, paintColor, bodyLayers: body,
     });
     for (const obj of mods) track(obj);
+    // Metadata stays on the returned array, never in save data. Only tyre
+    // textures rotate; the body, paint, decals, shadows and hub masks move
+    // horizontally together.
+    objects.rollingWheels = rollingWheels;
     return objects;
   }
-  rollPaintCarIn() {
-    if (this.room !== 'paint' || !this.paintObjects.length) return;
+
+  animateShopCarEntry(objects, { duration = 3950, distance = 1100 } = {}) {
+    if (!objects?.length || this.paintBusy) return;
+    if (this.entryTween) {
+      this.entryTween.stop();
+      this.entryTween = null;
+    }
     this.paintBusy = true;
-    const count = this.paintObjects.length;
-    this.paintObjects.forEach((obj, index) => {
-      const targetX = obj.x;
-      obj.x = targetX - 1140;
-      this.tweens.add({
-        targets: obj, x: targetX, duration: 3450, ease: 'Sine.easeInOut',
-        onComplete: () => {
-          if (index !== count - 1 || !this.sys.isActive()) return;
-          this.paintBusy = false;
-          this.renderView();
-        },
-      });
+
+    const originX = objects.map(obj => ({ obj, x: obj.x }));
+    const wheels = (objects.rollingWheels || []).filter(wheel => wheel?.sprite);
+    const progress = { travel: 0 };
+    for (const entry of originX) entry.obj.x = entry.x - distance;
+
+    // A single progress tween drives the car AND angular wheel displacement.
+    // Using travelled distance / visible tyre radius synchronises rotation
+    // with translation, unlike the previous horizontal slide with static rims.
+    this.entryTween = this.tweens.add({
+      targets: progress,
+      travel: distance,
+      duration,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        for (const entry of originX) {
+          entry.obj.x = entry.x - distance + progress.travel;
+        }
+        for (const wheel of wheels) {
+          const degrees = progress.travel / wheel.radius * (180 / Math.PI);
+          wheel.sprite.setAngle(degrees);
+        }
+      },
+      onComplete: () => {
+        this.entryTween = null;
+        if (!this.sys.isActive()) return;
+        this.paintBusy = false;
+        this.renderView(); // Stationary car; no replay on colour / rim selection.
+      },
     });
+  }
+
+  rollRimCarIn() {
+    if (this.room !== 'rims' || !this.rimPreview) return;
+    this.animateShopCarEntry(this.rimCarObjects, { duration: 3950, distance: 1090 });
+  }
+
+  rollPaintCarIn() {
+    if (this.room !== 'paint') return;
+    this.animateShopCarEntry(this.paintObjects, { duration: 4100, distance: 1100 });
   }
   applyPaint(carId, color, cost) {
     if (this.paintBusy || this.room !== 'paint') return;
