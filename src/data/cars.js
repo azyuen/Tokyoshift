@@ -1577,6 +1577,25 @@ addRegularCar('b4rsk', 'wrx22b', {
   }
 });
 
+// R517: 1999-2000 GF8 STI Version VI, dedicated 206 kW EJ207 and wagon artwork.
+addRegularCar('gf8', 'wrx22b', {
+  shortName: 'GF8 WRX STI',
+  name: 'Subaru Impreza WRX STI GF8',
+  description: 'Rally-bred five-door STI with lightweight AWD traction and an eager EJ207 turbo.',
+  engine: 'ej207_gf8', engineModel: 'EJ207',
+  powerKW: 206, torqueNm: 353, vehicleMassKg: 1310,
+  drivetrain: 'AWD', engineLayout: 'front',
+  engineIdleRPM: 850, engineRedlineRPM: 7000, engineLimiterRPM: 7200,
+  engineInertia: 0.20,
+  gearRatios: [3.166, 1.882, 1.296, 0.972, 0.738],
+  finalDriveRatio: 4.444,
+  maximumBoost: 0.80, turboSize: 0.58, turboSpoolRate: 1.65,
+  drivetrainEfficiency: 0.84, drivenAxleWeightFraction: 1,
+  launchLoadMultiplier: 1, tyreGrip: 1.02, clutchStrength: 500,
+  launchRPM: 5000, dragCoefficient: 0.35, frontalAreaM2: 1.95,
+  visual: { assetStem: 'wrxgf8', wheelKey: 'wheel5Spoke', engineKey: 'stockEngineEJ22G' },
+});
+
 // R516: dedicated stock models; no shared powertrain maps.
 addRegularCar("gdb", 'ae86', {
   "shortName": "WRX STI GDB",
@@ -2245,7 +2264,7 @@ Object.values(cars).forEach(car => {
 });
 
 export const carOrder = [
-  'gdb', 's15', 'starion', 'fto', 'mx5', 'sa22c', 'mx6', 'prelude', 'sw20', 'soarer', 'forester', 'svx', 'xt',
+  'gdb', 'gf8', 's15', 'starion', 'fto', 'mx5', 'sa22c', 'mx6', 'prelude', 'sw20', 'soarer', 'forester', 'svx', 'xt',
   'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
   'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', 'r34',
   '3000gt', 'a60', 'jza80', 'nsx',

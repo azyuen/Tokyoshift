@@ -8,10 +8,10 @@ import {
   REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS, getReferenceAssetRoot,
 } from '../src/data/carReferenceGeometry.js';
 const url = path => new URL('../' + path, import.meta.url);
-test('all 41 deployed regular cars resolve to unified lowercase stock folder', () => {
+test('all 42 deployed regular cars resolve to unified lowercase stock folder', () => {
   assert.equal(STANDARD_CAR_REFERENCE_ROOT,'assets/Cars/stock');
-  assert.equal(carOrder.length,41);
-  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,42);
+  assert.equal(carOrder.length,42);
+  assert.equal(Object.keys(REFERENCE_CAR_GAME_IDS).length,43);
   assert.deepEqual(new Set(carOrder),new Set(Object.keys(REFERENCE_CAR_GAME_IDS).filter(id => !cars[id].devOnly)));
   for(const id of carOrder) {
     const stem=REFERENCE_CAR_GAME_IDS[id], car=cars[id];
@@ -27,7 +27,7 @@ test('all 41 deployed regular cars resolve to unified lowercase stock folder', (
   // evo3 remains the legacy save ID; modularAssetStem selects Galant art.
   assert.equal(cars.evo3.visual.modularAssetStem,'galant');
 });
-test('all 84 deployed PNG assets exist in stock and sizes match; future uploads are allowed', () => {
+test('all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed', () => {
   assert.ok(existsSync(url('assets/Cars/stock')));
   assert.equal(existsSync(url('assets/Cars/Ref')),false);
   assert.equal(existsSync(url('assets/Cars/Ref2')),false);
@@ -36,8 +36,8 @@ test('all 84 deployed PNG assets exist in stock and sizes match; future uploads 
   const expected=new Set(Object.values(REFERENCE_CAR_GAME_IDS).flatMap(stem=>[
     stem+'_stock_body.png',stem+'_stock_paint.png',
   ]));
-  assert.ok(pngs.length >= 84);
-  assert.equal(expected.size,84);
+  assert.ok(pngs.length >= 86);
+  assert.equal(expected.size,86);
   for (const file of expected) assert.ok(pngs.includes(file), file);
   for(const stem of new Set(Object.values(REFERENCE_CAR_GAME_IDS))){
     const images=['body','paint'].map(layer=>readFileSync(url('assets/Cars/stock/'+stem+'_stock_'+layer+'.png')));

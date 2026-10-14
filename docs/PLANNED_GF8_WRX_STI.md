@@ -1,11 +1,11 @@
-# Planned stock car: Subaru Impreza WRX STI Version VI (GF8)
+# Deployed stock car: Subaru Impreza WRX STI Version VI (GF8)
 
-**Status: APPROVED FOR FUTURE DEPLOYMENT — NO ASSETS SUPPLIED; NOT PLAYABLE.**
+**Status: DEPLOYED IN TOKYO SHIFT R517; PURCHASABLE AND AVAILABLE IN REGIONAL MEETS.**
 **Roster decision:** 2026-10-15. This decision supersedes the earlier plan for a Subaru Legacy GT-B wagon and the briefly recorded GRB hatchback. Neither of those planned cars was deployed.
 
 ## Canonical identity
 
-- Game ID (when deployed): `gf8` — a new ID; do **not** reuse `b4rsk` or `wrx22b`.
+- Game ID: `gf8` — a new ID; do **not** reuse `b4rsk` or `wrx22b`.
 - Game short name: `GF8 WRX STI`
 - Game display name: `Subaru Impreza WRX STI GF8`
 - Reference trim: **JDM 1999–2000 Impreza Sports Wagon WRX STi Version VI**, five doors (GF8G5ED; GF-GF8).
@@ -31,15 +31,15 @@ Design positioning: stronger performance than most early AWD cars, but slightly 
 
 ## Asset intake / activation
 
-The user will upload remaining stock-car art **later**. Do not add this to live `cars`, `carOrder`, market listings, rivals, coupons, engine tables or preloads until its completed canonical sprite pair is available.
+The uploaded matching `wrxgf8` BODY/PAINT pair (1300×440) is now loaded through the shared reference-stock loader. GF8 is registered in `cars`, `carOrder`, market prices/listings and encounter pools, with a dedicated EJ207 torque curve. No old ID is reused.
 
 Expected filenames in `assets/Cars/stock/`:
-- `gf8_stock_body.png`
-- `gf8_stock_paint.png`
+- `wrxgf8_stock_body.png`
+- `wrxgf8_stock_paint.png`
 
 Match BODY and PAINT canvas sizes; transparent background and separated outlines/window/light versus tintable paint, respectively. Use the AE86 **only** for pixel-density, rendering scale, wheel-ground registration and alignment — **never** as a silhouette or window/proportion template. GF8 should use its own true five-door wagon roof, rear quarter and hatch geometry. The front of the car faces right. Canvas may be sized to preserve real relative proportions; do not assume 1166×420 is mandatory.
 
-At asset deployment, measure and register GF8 axle centres/tyre size/body-seat offsets from the **actual** uploaded sprites in `src/data/carReferenceGeometry.js`, then register the new car, EJ207 engine torque curve, prices and market listing. Keep existing saves and car IDs unchanged.
+R517 reference calibration (from the supplied 1300×440 pair): rear axle `-991` and front axle `-247` source pixels from the right canvas edge, common **L 194px** wheel diameter, shared `0.32` scale, bottom-right body anchor and common tyre-ground registration. Later visual fine-tuning will not change game IDs or save data.
 
 ## Unaffected deployed cars
 

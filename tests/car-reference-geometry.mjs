@@ -12,7 +12,7 @@ function dimensions(id, layer) {
 test('AE86 master and two shared wheel diameters match approved calibration', () => {
   assert.equal(reference.masterScale, 0.32);
   assert.deepEqual(reference.wheelDiameters, { S: 182, L: 194 });
-  assert.equal(Object.keys(reference.cars).length, 42);
+  assert.equal(Object.keys(reference.cars).length, 43);
 });
 
 test('all reference cars have paired identical-size body/paint canvases and valid right-origin axles', () => {

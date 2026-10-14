@@ -1,6 +1,15 @@
 // Ref2 torque curves are game calibrations matched to the requested rated power.
 // R516 curves are gameplay approximations, not measured dyno traces.
 export const engines = {
+  ej207_gf8: {
+    id: 'ej207_gf8', name: 'Subaru EJ207 GF8 Version VI',
+    idleRPM: 850, redlineRPM: 7000, limiterRPM: 7200, inertia: 0.20,
+    referenceBoostBar: 0.80, offBoostTorqueFraction: 0.52,
+    // Approximate street torque curve: 353 Nm at 4000 rpm; 206 kW at 6500 rpm.
+    torqueCurve: [[1000, 115], [2000, 185], [3000, 270],
+      [4000, 353], [4500, 350], [5000, 342], [5500, 338],
+      [6000, 323], [6500, 302.6], [7000, 255], [7200, 225]],
+  },
   "ej207_gdb": {"id": "ej207_gdb", "name": "EJ207", "idleRPM": 800, "redlineRPM": 8000, "limiterRPM": 8200, "inertia": 0.19, "referenceBoostBar": 1.05, "offBoostTorqueFraction": 0.54, "torqueCurve": [[1000, 115], [2000, 195], [3000, 300], [4000, 373], [5000, 360], [6000, 320], [6400, 307.36], [7000, 275], [8000, 225], [8200, 200]]},
   "sr20det_s15": {"id": "sr20det_s15", "name": "SR20DET S15", "idleRPM": 800, "redlineRPM": 7500, "limiterRPM": 7700, "inertia": 0.19, "referenceBoostBar": 0.8, "offBoostTorqueFraction": 0.54, "torqueCurve": [[1000, 100], [2000, 170], [3000, 245], [4800, 275], [5500, 273], [6400, 274.53], [7000, 240], [7500, 210], [7700, 190]]},
   "g54b_starion": {"id": "g54b_starion", "name": "G54B Turbo", "idleRPM": 800, "redlineRPM": 6000, "limiterRPM": 6200, "inertia": 0.29, "referenceBoostBar": 0.6, "offBoostTorqueFraction": 0.54, "torqueCurve": [[1000, 130], [2000, 230], [3000, 313], [3500, 310], [4000, 295], [4500, 267], [5000, 246.37], [5500, 220], [6000, 190], [6200, 170]]},

@@ -15,6 +15,8 @@ export const STANDARD_CAR_REFERENCE = {
     L: 194,
   },
   cars: {
+    // Measured from the uploaded 1300x440 GF8 silhouette, right-origin coordinates.
+    wrxgf8: { rearX: -991, frontX: -247, size: 'L' },
     "WRXGDB": {"rearX": -983, "frontX": -256, "size": "L"},
     "s15": {"rearX": -991, "frontX": -265, "size": "S"},
     "starion": {"rearX": -958, "frontX": -248, "size": "S"},
@@ -70,6 +72,7 @@ export function getReferenceAssetRoot(_stem) {
   return STANDARD_CAR_REFERENCE_ROOT;
 }
 export const REFERENCE_CAR_GAME_IDS = Object.freeze({
+  gf8: 'wrxgf8',
   "gdb": "WRXGDB",
   "s15": "s15",
   "starion": "starion",
@@ -118,6 +121,7 @@ export const REFERENCE_CAR_GAME_IDS = Object.freeze({
 
 // Source canvas dimensions measured from authored GIMP PNGs.
 export const REFERENCE_CAR_CANVAS = Object.freeze({
+  wrxgf8: [1300, 440],
   "WRXGDB": [1300, 440],
   "s15": [1300, 440],
   "starion": [1300, 440],

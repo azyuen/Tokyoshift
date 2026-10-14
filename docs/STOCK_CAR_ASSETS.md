@@ -1,10 +1,10 @@
-# Tokyo SHIFT stock cars — canonical asset folder (R505)
+# Tokyo SHIFT stock cars — canonical asset folder (R517)
 
-All **28 deployed standard car models** now load their two transparent PNG
+All **43 deployed standard car models** (42 regular + 1 dev-only) now load their two transparent PNG
 layers from `assets/Cars/stock/` (lowercase). This replaces the former
 `assets/Cars/Ref/` and `assets/Cars/Ref2/` folders.
 
-The **56 existing PNGs** (28 matching BODY/PAINT pairs) were moved unchanged,
+The original 56 PNGs (28 matching BODY/PAINT pairs) were moved unchanged,
 using the same Git blob hashes, case, canvas dimensions, pixel density, relative
 geometry, paint layers and bottom-right anchor.
 
@@ -36,6 +36,6 @@ placements, physics, wheel registration or existing game car IDs.
 
 The previously planned **Subaru Legacy GT-B wagon (BG5/BH5)** is **removed from the future roster plan** in favour of the **1999–2000 Subaru Impreza WRX STI Version VI (GF8)** five-door sports wagon/hatchback. This also supersedes the briefly selected third-generation GRB hatchback.
 
-The approved **GF8** is the **206 kW (280 PS) / 353 Nm** JDM EJ207-powered Version VI, weighing **1,310 kg**, with AWD and a **five-speed manual**. The intended unique game ID is `gf8`; proposed stock and modified Auto Market prices are **¥3,500,000** and **¥4,200,000** respectively. This remains **planned, not deployed**: only register it once the user uploads a matching GF8 BODY/PAINT asset pair and the geometry/engine/market configuration is calibrated.
+The approved **GF8** is the **206 kW (280 PS) / 353 Nm** JDM EJ207-powered Version VI, weighing **1,310 kg**, with AWD and a **five-speed manual**. The intended unique game ID is `gf8`; proposed stock and modified Auto Market prices are **¥3,500,000** and **¥4,200,000** respectively. **Deployed in R517** using the uploaded `wrxgf8_stock_body.png` and `wrxgf8_stock_paint.png` (1300×440). Its 206 kW EJ207 engine curve, reference geometry, market listings and regional encounter preferences are registered; existing models and saves retain their IDs.
 
 The GT-B and GRB were **never deployed**. The deployed **Subaru Legacy B4 RSK sedan** (`b4rsk`) and **Subaru Impreza 22B STI** (`wrx22b`) remain unchanged. See [canonical GF8 roster and asset-intake specifications](PLANNED_GF8_WRX_STI.md) for exact model identification, sources and asset naming.

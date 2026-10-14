@@ -41,7 +41,7 @@ function textureScene(car) {
 }
 
 test('reference game IDs use their correct unified stock PNG pairs', () => {
-  assert.equal(migrated.length, 42);
+  assert.equal(migrated.length, 43);
   for (const id of carOrder) {
     const car = cars[id];
     const paths = getCarAssetPaths(car);

@@ -93,6 +93,7 @@ export const CENTRAL_TOKYO_LOCATION_ORDER = [
 ];
 
 export const MARKET_BASE_PRICES = {
+  gf8: 3500000,
   gdb: 3900000,
   s15: 3100000,
   starion: 1800000,
@@ -184,6 +185,7 @@ const MARKET_BUILDS = {
 
 // New dealership entries use the matching drivetrain's street build recipe.
 Object.assign(MARKET_BUILDS, {
+  gf8: MARKET_BUILDS.evo3,
   gdb: MARKET_BUILDS.evo3,
   s15: MARKET_BUILDS.fc3s,
   starion: MARKET_BUILDS.fc3s,
@@ -223,6 +225,7 @@ Object.assign(MARKET_BUILDS, {
 });
 
 export const AUTO_MARKET_LISTINGS = [
+  { carId: 'gf8', price: 4200000, buildLabel: 'AWD STREET BUILD' },
   { carId: 'gdb', price: 4680000, buildLabel: 'AWD STREET BUILD' },
   { carId: 's15', price: 3720000, buildLabel: 'RWD STREET BUILD' },
   { carId: 'starion', price: 2160000, buildLabel: 'RWD STREET BUILD' },

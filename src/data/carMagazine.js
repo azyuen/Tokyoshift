@@ -21,6 +21,7 @@ export function getActiveMagazineIssue(source = null) {
 }
 
 export const CAR_MAGAZINE_META = Object.freeze({
+  gf8: { year: 1999, drivetrain: 'AWD', fact: 'The five-door WRX STI GF8 paired Subaru AWD with a 206 kW EJ207 turbo boxer in Version VI form.' },
   "gdb": {"year": 2002, "drivetrain": "AWD"},
   "s15": {"year": 1999, "drivetrain": "RWD"},
   "starion": {"year": 1988, "drivetrain": "RWD"},
