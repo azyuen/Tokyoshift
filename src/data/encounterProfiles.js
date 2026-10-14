@@ -172,7 +172,7 @@ export const LOCATION_ENCOUNTERS = {
 // so the matchmaker actually encounters them at meaningful weight. Physical
 // performance ratios and local upgrade ceilings still decide eligible rivals.
 export const NEW_MEET_MODELS_BY_REGION = Object.freeze({
-  ODAIBA: ['240z', 'crx', 'dc2', 'familia', 'ej1'],
+  ODAIBA: ['240z', 'crx', 'dc2', 'familia', 'ef'],
   SHINAGAWA: ['180sx', 'st205', 'familia', 'b4rsk', 'a60', 's2000'],
   TATSUMI: ['st205', 'eclipse', 'evo5', 'evo6', 'b4rsk', 'z32'],
   SHIBUYA: ['180sx', 's2000', 'z33', 'z32', 'jzx100', 'eclipse'],
