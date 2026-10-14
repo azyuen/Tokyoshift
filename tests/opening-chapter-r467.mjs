@@ -171,7 +171,7 @@ test('the opening and later visits use one magazine page-flip renderer', () => {
   const office = source('src/ui/OfficePanel.js');
   const wrapper = source('src/ui/OpeningMagazine.js');
   assert.match(magazine, /openingChoice = scene\.registry\.get\('openingChapter'\) === 'magazine'/);
-  assert.match(magazine, /totalViews = firstArchiveView \+ \(openingChoice \? 0 : featureSpreadCount\)/);
+  assert.match(magazine, /totalViews = 2 \+ editorialSpreads/);
   assert.match(magazine, /Math\.max\(1, Math\.ceil\(features\.length \/ 2\)\)/);
   assert.match(magazine, /issue\.adKey/);
   assert.match(magazine, /issue\.insetKey/);
@@ -447,22 +447,24 @@ test('Sayaka farewell fades both manga portrait and garage companion before Daic
 });
 
 
-test('phone UI is compact and uses a head-focused portrait crop', () => {
+test('phone UI uses the compact shared, face-centred bubble and phone corner icon', () => {
   const phone = source('src/ui/PhoneConversation.js');
-  assert.match(phone, /BOX = Object\.freeze\(\{ x: 472, y: 326, width: 804, height: 178, radius: 27 \}\)/);
-  assert.match(phone, /PORTRAIT = Object\.freeze\(\{ x: 430, y: 411, radius: 72 \}\)/);
-  assert.match(phone, /fontSize: '21px'/);
-  assert.match(phone, /wordWrap: \{ width: 688 \}/);
-  assert.match(phone, /cropSize = Math\.max\(1, Math\.min\(w \* 0\.53, h \* 0\.19\)\)/);
-  assert.match(phone, /cropY = Math\.min\(h - cropSize, Math\.max\(0, h \* 0\.008\)\)/);
-  assert.match(phone, /icon\.setScale\(Math\.min\(20/);
-  assert.match(phone, /nextButton = add\(scene\.add\.rectangle\(1177, 515, 178, 44/);
+  const shared = source('src/ui/RaceCoachHud.js');
+  assert.match(phone, /createRaceDialogueHud/);
+  assert.match(phone, /theme: 'phone'/);
+  assert.match(phone, /phoneIconKey: PHONE_ICON_KEY/);
+  assert.match(shared, /face\.targetX - anchor\.x \* zoom/);
+  assert.match(shared, /maskShape\.createGeometryMask\(\)/);
+  assert.match(shared, /bubble\.lineTo\(layout\.left - layout\.notchDepth, mid\)/);
+  assert.match(shared, /iconBadge = own\(scene\.add\.circle/);
+  assert.match(shared, /fillAlpha: 0\.92/);
+  assert.match(phone, /nextButton = add\(scene\.add\.rectangle/);
 });
 
-test('every phone scene uses Tokyo SHIFT incoming crimson and player teal, including mixed calls', async () => {
+test('every phone scene uses blue call accents including player responses and mixed calls', async () => {
   const { PHONE_ACCENTS, getPhoneAccent } = await import('../src/ui/PhoneConversation.js');
-  assert.equal(PHONE_ACCENTS.incoming, 0xbe4a63);
-  assert.equal(PHONE_ACCENTS.player, 0x349b95);
+  assert.equal(PHONE_ACCENTS.incoming, 0x287bb5);
+  assert.equal(PHONE_ACCENTS.player, 0x165b9a);
   assert.equal(getPhoneAccent(), PHONE_ACCENTS.incoming);
   assert.equal(getPhoneAccent('player'), PHONE_ACCENTS.player);
   assert.equal(getPhoneAccent('incoming', '#9a3040'), 0x9a3040);
@@ -472,6 +474,6 @@ test('every phone scene uses Tokyo SHIFT incoming crimson and player teal, inclu
   assert.match(manga, /accent: options\.accent \?\? definition\.accent \?\? null/);
   assert.match(phone, /page\.speakerStyle \|\|/);
   assert.match(phone, /page\.speaker === 'player' \? 'player' : speakerStyle/);
-  assert.match(phone, /portraitRing\.setFillStyle\(color, 1\)/);
+  assert.match(phone, /panel\.setAccent\(color\)/);
   assert.match(phone, /nextButton\.setFillStyle\(color, 1\)/);
 });
