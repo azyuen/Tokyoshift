@@ -39,7 +39,8 @@ try {
     await page.goto('http://127.0.0.1:8765/',{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(14000);
     const before=await page.evaluate(()=>({
-      bootError:document.body.innerText.includes('BOOT ERROR'),
+      bootError: Boolean(document.getElementById('loading-screen')?.getAttribute('data-boot-error')) ||
+        /ERROR/i.test(document.getElementById('loading-label')?.textContent || ''),
       canvas:document.querySelectorAll('canvas').length,
       viewport:document.documentElement.clientWidth,
       scrollWidth:document.documentElement.scrollWidth,
@@ -61,7 +62,8 @@ try {
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForTimeout(14000);
     const after=await page.evaluate(()=>({
-      bootError:document.body.innerText.includes('BOOT ERROR'),
+      bootError: Boolean(document.getElementById('loading-screen')?.getAttribute('data-boot-error')) ||
+        /ERROR/i.test(document.getElementById('loading-label')?.textContent || ''),
       canvas:document.querySelectorAll('canvas').length,
     }));
     await page.screenshot({path:'artifacts/mobile/'+name+'-reload.png',fullPage:true});
