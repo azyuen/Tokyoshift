@@ -83,7 +83,7 @@ import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBui
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261011-r476';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261014-r512';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
