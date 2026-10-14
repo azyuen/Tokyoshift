@@ -343,7 +343,10 @@ test('the in-office Sayaka call uses the shared blue race dialogue with phone co
   assert.equal(definition.presentation, 'phone');
   assert.equal(definition.once, false, 'A delivery save can replay the phone call');
   assert.equal(definition.callerPose, 'idle');
-  assert.equal(definition.pages.length, 1);
+  assert.equal(definition.pages.length, 2);
+  assert.equal(definition.presentationMode, 'openingSwipe');
+  assert.equal(definition.pages[1].speaker, 'player');
+  assert.equal(definition.pages[1].text, 'Great, see you in the garage!');
   assert.ok(existsSync('assets/Ui/phone.png'));
   assert.match(garage, /assets\/Ui\/phone\.png/);
   assert.match(garage, /playMangaCutscene\(this, 'openingSayakaPhoneCall'/);
