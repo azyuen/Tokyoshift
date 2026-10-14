@@ -75,7 +75,7 @@ async function startTokyoShift() {
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261011-r482'),
       loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261011-r482'),
       loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261011-r482'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261014-r514'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261014-r515'),
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261011-r482'),
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261011-r482'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261014-r501'),
