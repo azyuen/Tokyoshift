@@ -10,6 +10,7 @@ on:
       - 'assets/Cars/stock/**'
       - 'tests/stock-assets-r505.mjs'
       - 'tests/stock-expansion-r516.mjs'
+      - 'tests/gf8-r517.mjs'
       - 'src/data/engines.js'
       - 'src/state/GameState.js'
       - '.github/workflows/stock-assets-r505.yml'
@@ -20,6 +21,7 @@ on:
       - 'assets/Cars/stock/**'
       - 'tests/stock-assets-r505.mjs'
       - 'tests/stock-expansion-r516.mjs'
+      - 'tests/gf8-r517.mjs'
       - 'src/data/engines.js'
       - 'src/state/GameState.js'
       - '.github/workflows/stock-assets-r505.yml'
@@ -38,5 +40,6 @@ jobs:
           node --check src/vehicles/CarAppearance.js
           node --check src/scenes/CarReferenceCalibrationScene.js
           node --check tests/stock-assets-r505.mjs
+          node --check tests/gf8-r517.mjs
       - name: Verify moved PNGs and stock car compatibility
-        run: node --test tests/stock-assets-r505.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs tests/galant-vr4-r502.mjs tests/retired-ej1-r503.mjs tests/stock-expansion-r516.mjs tests/startup-import-integrity-r508.mjs
+        run: node --test tests/stock-assets-r505.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs tests/galant-vr4-r502.mjs tests/retired-ej1-r503.mjs tests/stock-expansion-r516.mjs tests/gf8-r517.mjs tests/startup-import-integrity-r508.mjs
