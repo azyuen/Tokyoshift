@@ -88,7 +88,8 @@ import {
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
   buildTunerTeamChallengeRounds,
-} from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
+  getRegionalRivalSignatureCarId,
+} from '../data/tunerChallenges.js?v=20261015-signatures';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261010-r462';
 import {
   getTunerShopForRegion,
@@ -135,7 +136,7 @@ const CARDS = { x: 24, y: 636, w: 1138, h: 180 };
 const TAXI_TO_WORKSHOP_COST = 1000;
 // New regional Ref2 preferences require one fresh roster on entry; afterwards
 // normal three-minute refresh/result persistence continues unchanged.
-const MEET_ROSTER_VERSION = 'R500';
+const MEET_ROSTER_VERSION = 'R518';
 
 const MODE_DATA = {
   SINGLE: {
@@ -4088,6 +4089,7 @@ export default class MeetScene extends Phaser.Scene {
         ownedCarIds: ownedCars,
         usedCarIds: [...usedRivalCars],
         preferredCars: profile.likelyCars,
+        requiredCarId: getRegionalRivalSignatureCarId(location.district, characterId),
         raceType,
         difficulty: profile.difficulty,
         playerDifficulty: this.registry.get('playerDifficulty') || 'STANDARD',
