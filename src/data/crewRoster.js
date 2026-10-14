@@ -56,7 +56,7 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'renjiAoki', baseCarId: 'mx6', recruitable: true }),
       Object.freeze({ characterId: 'kentoFujisawa', baseCarId: 'st205', recruitable: true }),
       Object.freeze({ characterId: 'rinaTachibana', baseCarId: 'svx', recruitable: true }),
-      Object.freeze({ characterId: 'itsukiKuroda', baseCarId: 'evo3', recruitable: true }),
+      Object.freeze({ characterId: 'itsukiKuroda', baseCarId: 'galant', recruitable: true }),
     ]),
   }),
   YOKOHAMA: Object.freeze({
@@ -76,7 +76,7 @@ export const REGIONAL_CREW_ROSTERS = Object.freeze({
       Object.freeze({ characterId: 'shoNakamura', baseCarId: 'z33', recruitable: true }),
       Object.freeze({ characterId: 'miloArai', baseCarId: 'soarer', recruitable: true }),
       Object.freeze({ characterId: 'naoFujita', baseCarId: 'b4rsk', recruitable: true }),
-      Object.freeze({ characterId: 'akiSenda', baseCarId: 'wrx22b', recruitable: true }),
+      Object.freeze({ characterId: 'akiSenda', baseCarId: 'gc8', recruitable: true }),
       Object.freeze({ characterId: 'tetsuoMori', baseCarId: '3000gt', recruitable: true }),
       Object.freeze({ characterId: 'kazuoTanaka', baseCarId: 'nsx', recruitable: true }),
     ]),

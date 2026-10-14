@@ -9,19 +9,19 @@ const DIFFICULTY_DEFAULTS = {
     ratingSlots: [2, 3, 3],
     stakeRange: [2500, 4500],
     pinkAcceptanceBase: 0.07,
-    likelyCars: ['ae86', 'ek9', 'fc3s', 'evo3'],
+    likelyCars: ['ae86', 'ek9', 'fc3s', 'galant'],
   },
   HARD: {
     ratingSlots: [3, 4, 4],
     stakeRange: [6000, 9000],
     pinkAcceptanceBase: 0.10,
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
   ELITE: {
     ratingSlots: [4, 5, 5],
     stakeRange: [12000, 18000],
     pinkAcceptanceBase: 0.13,
-    likelyCars: ['evo3', 'wrx22b', 'r32'],
+    likelyCars: ['galant', 'gc8', 'r32'],
   },
 };
 
@@ -43,7 +43,7 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'MED',
     ratingSlots: [2, 3, 3],
     stakeRange: [2500, 4000],
-    likelyCars: ['ek9', 'fc3s', 'evo3'],
+    likelyCars: ['ek9', 'fc3s', 'galant'],
   },
 
   // Shinagawa // early-game alternative route.
@@ -57,13 +57,13 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'MED',
     ratingSlots: [2, 3, 3],
     stakeRange: [2500, 4000],
-    likelyCars: ['ek9', 'fc3s', 'evo3'],
+    likelyCars: ['ek9', 'fc3s', 'galant'],
   },
   shinagawaOiWharf: {
     difficulty: 'MED',
     ratingSlots: [3, 3, 3],
     stakeRange: [3000, 4500],
-    likelyCars: ['ek9', 'fc3s', 'evo3'],
+    likelyCars: ['ek9', 'fc3s', 'galant'],
   },
 
   // Tatsumi // quicker expressway crowd.
@@ -71,19 +71,19 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'MED',
     ratingSlots: [3, 3, 3],
     stakeRange: [3500, 5000],
-    likelyCars: ['ek9', 'fc3s', 'evo3'],
+    likelyCars: ['ek9', 'fc3s', 'galant'],
   },
   tatsumiSkylineVista: {
     difficulty: 'MED',
     ratingSlots: [3, 3, 4],
     stakeRange: [4000, 6000],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b'],
+    likelyCars: ['fc3s', 'galant', 'gc8'],
   },
   tatsumiHarborLoop: {
     difficulty: 'HARD',
     ratingSlots: [3, 4, 4],
     stakeRange: [6000, 8500],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
 
   // Shibuya // flashier mid-game street builds.
@@ -91,19 +91,19 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'MED',
     ratingSlots: [3, 3, 4],
     stakeRange: [4500, 6500],
-    likelyCars: ['ek9', 'fc3s', 'evo3', 'r32'],
+    likelyCars: ['ek9', 'fc3s', 'galant', 'r32'],
   },
   shibuyaDogenzaka: {
     difficulty: 'HARD',
     ratingSlots: [3, 4, 4],
     stakeRange: [6500, 9000],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
   shibuyaCenterGai: {
     difficulty: 'HARD',
     ratingSlots: [4, 4, 4],
     stakeRange: [7500, 10000],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
 
   // Shinjuku // serious late-night city crews.
@@ -111,19 +111,19 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'ELITE',
     ratingSlots: [4, 4, 4],
     stakeRange: [8500, 11000],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
   shinjukuKabukicho: {
     difficulty: 'ELITE',
     ratingSlots: [4, 4, 5],
     stakeRange: [9000, 12000],
-    likelyCars: ['evo3', 'wrx22b', 'r32', 'fc3s'],
+    likelyCars: ['galant', 'gc8', 'r32', 'fc3s'],
   },
   shinjukuNishi: {
     difficulty: 'ELITE',
     ratingSlots: [4, 5, 5],
     stakeRange: [12000, 16000],
-    likelyCars: ['evo3', 'wrx22b', 'r32'],
+    likelyCars: ['galant', 'gc8', 'r32'],
   },
 
   // Yokohama // longer drive, powerful late-game builds.
@@ -131,19 +131,19 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'HARD',
     ratingSlots: [4, 4, 4],
     stakeRange: [9000, 12000],
-    likelyCars: ['fc3s', 'evo3', 'wrx22b', 'r32'],
+    likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
   yokohamaMinatoMirai: {
     difficulty: 'HARD',
     ratingSlots: [4, 4, 5],
     stakeRange: [10500, 14000],
-    likelyCars: ['evo3', 'wrx22b', 'r32', 'fc3s'],
+    likelyCars: ['galant', 'gc8', 'r32', 'fc3s'],
   },
   yokohamaBayBridge: {
     difficulty: 'ELITE',
     ratingSlots: [4, 5, 5],
     stakeRange: [13000, 17500],
-    likelyCars: ['evo3', 'wrx22b', 'r32'],
+    likelyCars: ['galant', 'gc8', 'r32'],
   },
 
   // Daikoku // prestige / end-game encounters.
@@ -151,19 +151,19 @@ export const LOCATION_ENCOUNTERS = {
     difficulty: 'HARD',
     ratingSlots: [4, 4, 5],
     stakeRange: [11000, 15000],
-    likelyCars: ['evo3', 'wrx22b', 'r32', 'fc3s'],
+    likelyCars: ['galant', 'gc8', 'r32', 'fc3s'],
   },
   daikokuHarbor: {
     difficulty: 'ELITE',
     ratingSlots: [4, 5, 5],
     stakeRange: [15000, 20000],
-    likelyCars: ['evo3', 'wrx22b', 'r32'],
+    likelyCars: ['galant', 'gc8', 'r32'],
   },
   daikokuOpenLot: {
     difficulty: 'ELITE',
     ratingSlots: [5, 5, 5],
     stakeRange: [18000, 24000],
-    likelyCars: ['evo3', 'wrx22b', 'r32'],
+    likelyCars: ['galant', 'gc8', 'r32'],
   },
 };
 

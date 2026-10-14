@@ -19,8 +19,8 @@ export const OSHIAGE_ELITE_VENUES = Object.freeze({
   }),
 });
 export const OSHIAGE_ELITE_VENUE_IDS = Object.freeze(Object.keys(OSHIAGE_ELITE_VENUES));
-const STANDARD_ELITE_CARS = Object.freeze(['r34', 'r32', 'jza80', 'rx7fd', 'evo6', 'wrx22b', 'nsx', 's2000', 'evo5']);
-const COUPON_CARS = Object.freeze(['r34', 'jza80', 'nsx', 'evo6', 'wrx22b', 'rx7fd', 'r32', 's2000']);
+const STANDARD_ELITE_CARS = Object.freeze(['r34', 'r32', 'jza80', 'rx7fd', 'evo6', 'gc8', 'nsx', 's2000', 'evo5']);
+const COUPON_CARS = Object.freeze(['r34', 'jza80', 'nsx', 'evo6', 'gc8', 'rx7fd', 'r32', 's2000']);
 const value = (source, key, fallback = null) => {
   const found = source?.get ? source.get(key) : source?.[key];
   return found == null ? fallback : found;

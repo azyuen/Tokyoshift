@@ -10,7 +10,7 @@ const KIT_ALIGNMENT = {
   ae86: [{ scaleX: 1.0197, scaleY: 0.9892, offsetX: 5.5, offsetY: -1.9 }, { scaleX: 1.0166, scaleY: 0.9946, offsetX: 4.5, offsetY: 6.2 }],
   ef: [{ scaleX: 0.9905, scaleY: 1, offsetX: -1.5, offsetY: -3 }, { scaleX: 1.0055, scaleY: 1, offsetX: 4, offsetY: -1 }],
   ek9: [{ scaleX: 0.9986, scaleY: 1.0423, offsetX: -0.5, offsetY: 2.8 }, { scaleX: 1.0041, scaleY: 1.0314, offsetX: -1.4, offsetY: 11.2 }],
-  evo3: [{ scaleX: 0.9695, scaleY: 1.0814, offsetX: -5.9, offsetY: 1.5 }, { scaleX: 1.0325, scaleY: 1.0814, offsetX: -14.4, offsetY: 0.4 }],
+  galant: [{ scaleX: 0.9695, scaleY: 1.0814, offsetX: -5.9, offsetY: 1.5 }, { scaleX: 1.0325, scaleY: 1.0814, offsetX: -14.4, offsetY: 0.4 }],
   evo5: [{ scaleX: 1.0142, scaleY: 1.0359, offsetX: 2.5, offsetY: 21.1 }, { scaleX: 1.0047, scaleY: 1.0359, offsetX: -0.5, offsetY: 46.5 }],
   evo6: [{ scaleX: 0.9848, scaleY: 0.9831, offsetX: -7.2, offsetY: -2.9 }, { scaleX: 0.9804, scaleY: 1.0419, offsetX: -12.6, offsetY: -4.3 }],
 };
@@ -18,7 +18,7 @@ const KIT_ALIGNMENT = {
 // These cars have been authored around their stock-paint canvas. Every kit
 // layer must inherit that stock layer's complete render transform verbatim.
 // Add models here as their assets are normalised to the same convention.
-const STOCK_CANVAS_KIT_CARS = new Set(['s2000', 'fc3s', 'rx7fd', 'wrx22b', 'evo3', 'evo5', 'rx8', '3000gt', 'r34', 'a60', 'jza80', 'nsx']);
+const STOCK_CANVAS_KIT_CARS = new Set(['s2000', 'fc3s', 'rx7fd', 'gc8', 'galant', 'evo5', 'rx8', '3000gt', 'r34', 'a60', 'jza80', 'nsx']);
 
 // SpriteR-authored replacement cars share each model's stock canvas across
 // stock/body-kit layers. Do not reintroduce per-kit scaling or offsets: the

@@ -53,9 +53,8 @@ export const STANDARD_CAR_REFERENCE = {
     ae86: { rearX: -921, frontX: -247, size: 'S' },
     ef: { rearX: -877, frontX: -195, size: 'S' },
     ek9: { rearX: -931, frontX: -231, size: 'S' },
-    '22b': { rearX: -901, frontX: -253, size: 'S' },
-    // Galant VR-4 replaces the historic Evo III save slot. First-pass source
-    // alignment; the car retains normal 182px tyres and AE86-derived scale.
+    gc8: { rearX: -901, frontX: -253, size: 'S' },
+    // Galant VR-4 source alignment and its original stock canvas.
     galant: { rearX: -951, frontX: -248, size: 'S' },
     evo6: { rearX: -972, frontX: -280, size: 'S', bodyRenderOffsetY: 1 },
     r32: { rearX: -988, frontX: -268, size: 'L' },
@@ -109,9 +108,9 @@ export const REFERENCE_CAR_GAME_IDS = Object.freeze({
   ae86: 'ae86',
   ef: 'ef',
   ek9: 'ek9',
-  wrx22b: '22b',
-  // Keep the old ID for all existing owned copies, rival encounters and saves.
-  evo3: 'galant',
+  gc8: 'gc8',
+  // Canonical ID. Historical Evo III saves migrate to galant on load.
+  galant: 'galant',
   evo6: 'evo6',
   r32: 'r32',
   fc3s: 'rx7fc',
@@ -158,7 +157,7 @@ export const REFERENCE_CAR_CANVAS = Object.freeze({
   ae86: [1166, 420],
   ef: [1166, 420],
   ek9: [1166, 420],
-  '22b': [1166, 420],
+  gc8: [1166, 420],
   galant: [1300, 440], // Standard stock PNG reference pair
   evo6: [1250, 440],
   r32: [1300, 440],

@@ -315,7 +315,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
   return null;
 }
 function opponentBuild(id,rating,slot) {
-  const rng=seasonRandom(id+':'+slot),pool=['ae86','ek9','fc3s','evo3','r32','s2000','rx7fd','jza80'];
+  const rng=seasonRandom(id+':'+slot),pool=['ae86','ek9','fc3s','galant','r32','s2000','rx7fd','jza80'];
   const carId=pool[Math.floor(rng()*pool.length)],level=clamp(Math.round(2+(rating-1400)/220),1,5);
   const state=createRivalBuildState(cars[carId],level,{seed:id+':'+slot,raceType:'Standing Start'});
   return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,skill:clamp(.72+(rating-1200)/1800,.65,.97)};

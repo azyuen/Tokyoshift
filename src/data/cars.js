@@ -124,16 +124,15 @@ export const cars = {
     },
   },
 
-  // Legacy 'evo3' is deliberately retained as a save-safe ID. Every former
-  // Evolution III -- players, copies, crew loans and rivals -- is now a Galant.
-  evo3: {
+  // Canonical Galant VR-4 model. Old Evo III save identifiers migrate on load.
+  galant: {
     ...base,
-    id: 'evo3',
+    id: 'galant',
     shortName: 'GALANT VR-4',
-    name: 'Mitsubishi Galant VR-4 Evo',
+    name: 'Mitsubishi Galant VR-4',
     description: 'Rally-bred AWD Galant with a responsive 2.0L 4G63 turbo. The pre-Lancer Mitsubishi hero.',
     engine: '4g63t_galant_vr4',
-    engineModel: '4G63T // GALANT VR-4 EVO',
+    engineModel: '4G63T',
     powerKW: 176,
     torqueNm: 304,
     vehicleMassKg: 1380,
@@ -210,17 +209,17 @@ export const cars = {
     },
   },
 
-  wrx22b: {
+  gc8: {
     ...base,
-    id: 'wrx22b',
-    shortName: '22B',
-    name: 'Subaru Impreza 22B STI',
-    description: 'Huge traction and a broad turbo torque curve.',
-    engine: 'ej22g',
-    engineModel: 'EJ22G',
+    id: 'gc8',
+    shortName: 'GC8 STI',
+    name: 'Subaru Impreza WRX STI GC8',
+    description: 'Classic GC8 WRX STI sedan with its own 2.0L EJ207 turbo response and AWD grip.',
+    engine: 'ej207_gc8',
+    engineModel: 'EJ207',
     powerKW: 206,
-    torqueNm: 363,
-    vehicleMassKg: 1270,
+    torqueNm: 353,
+    vehicleMassKg: 1260,
     engineIdleRPM: 850,
     engineRedlineRPM: 7000,
     engineLimiterRPM: 7200,
@@ -239,8 +238,8 @@ export const cars = {
     maximumBoost: 0.80,
     launchRPM: 5200,
     visual: {
-      assetStem: 'wrx_22b',
-      engineKey: 'stockEngineEJ22G',
+      assetStem: 'gc8',
+      engineKey: 'stockEngineEJ207',
       wheelKey: 'wheel5Spoke',
       bodyScale: 0.198,
       wheelScale: 0.039,
@@ -1105,7 +1104,7 @@ for (const [id, numeral, powerKW, torqueNm, mass, engine, boost, finalDrive, spo
   ['evo5', 'V', 206, 373, 1360, '4g63t_evo5', 0.92, 4.529, 1.68],
   ['evo6', 'VI', 206, 373, 1360, '4g63t_evo6', 0.96, 4.529, 1.74],
 ]) {
-  addRegularCar(id, 'evo3', {
+  addRegularCar(id, 'galant', {
     shortName: 'EVO ' + numeral,
     name: 'Mitsubishi Lancer Evolution ' + numeral,
     description: 'Later generation 4G63T AWD grip and turbo punch.',
@@ -1366,7 +1365,7 @@ addRegularCar('dc2', 'ek9', {
     "wheelKey": "wheel5Spoke"
   }
 });
-addRegularCar('eclipse', 'evo3', {
+addRegularCar('eclipse', 'galant', {
   "shortName": "ECLIPSE GSX",
   "name": "Mitsubishi Eclipse GSX",
   "description": "4G63T power with AWD traction.",
@@ -1401,7 +1400,7 @@ addRegularCar('eclipse', 'evo3', {
     "wheelKey": "wheel5Spoke"
   }
 });
-addRegularCar('familia', 'evo3', {
+addRegularCar('familia', 'galant', {
   "shortName": "FAMILIA GT-R",
   "name": "Mazda Familia GT-R",
   "description": "BPT power with AWD traction.",
@@ -1471,7 +1470,7 @@ addRegularCar('180sx', 'fc3s', {
     "wheelKey": "wheel5Spoke"
   }
 });
-addRegularCar('st205', 'evo3', {
+addRegularCar('st205', 'galant', {
   "shortName": "CELICA GT-FOUR",
   "name": "Toyota Celica GT-Four ST205",
   "description": "3S-GTE power with AWD traction.",
@@ -1541,7 +1540,7 @@ addRegularCar('jzx100', 'jza80', {
     "wheelKey": "wheel5Spoke"
   }
 });
-addRegularCar('b4rsk', 'wrx22b', {
+addRegularCar('b4rsk', 'gc8', {
   "shortName": "LEGACY B4 RSK",
   "name": "Subaru Legacy B4 RSK",
   "description": "EJ208 power with AWD traction.",
@@ -1578,7 +1577,7 @@ addRegularCar('b4rsk', 'wrx22b', {
 });
 
 // R517: 1999-2000 GF8 STI Version VI, dedicated 206 kW EJ207 and wagon artwork.
-addRegularCar('gf8', 'wrx22b', {
+addRegularCar('gf8', 'gc8', {
   shortName: 'GF8 WRX STI',
   name: 'Subaru Impreza WRX STI GF8',
   description: 'Rally-bred five-door STI with lightweight AWD traction and an eager EJ207 turbo.',
@@ -1593,7 +1592,7 @@ addRegularCar('gf8', 'wrx22b', {
   drivetrainEfficiency: 0.84, drivenAxleWeightFraction: 1,
   launchLoadMultiplier: 1, tyreGrip: 1.02, clutchStrength: 500,
   launchRPM: 5000, dragCoefficient: 0.35, frontalAreaM2: 1.95,
-  visual: { assetStem: 'wrxgf8', wheelKey: 'wheel5Spoke', engineKey: 'stockEngineEJ22G' },
+  visual: { assetStem: 'wrxgf8', wheelKey: 'wheel5Spoke', engineKey: 'stockEngineEJ207' },
 });
 
 // R516: dedicated stock models; no shared powertrain maps.
@@ -1627,7 +1626,7 @@ addRegularCar("gdb", 'ae86', {
   "visual": {
     "assetStem": "WRXGDB",
     "wheelKey": "wheel5Spoke",
-    "engineKey": "stockEngineEJ22G"
+    "engineKey": "stockEngineEJ207"
   }
 });
 addRegularCar("s15", 'ae86', {
@@ -1957,7 +1956,7 @@ addRegularCar("forester", 'ae86', {
   "visual": {
     "assetStem": "forester",
     "wheelKey": "wheel5Spoke",
-    "engineKey": "stockEngineEJ22G"
+    "engineKey": "stockEngineEJ207"
   }
 });
 addRegularCar("svx", 'ae86', {
@@ -1990,7 +1989,7 @@ addRegularCar("svx", 'ae86', {
   "visual": {
     "assetStem": "svx",
     "wheelKey": "wheel5Spoke",
-    "engineKey": "stockEngineEJ22G"
+    "engineKey": "stockEngineEJ207"
   }
 });
 addRegularCar("xt", 'ae86', {
@@ -2023,7 +2022,7 @@ addRegularCar("xt", 'ae86', {
   "visual": {
     "assetStem": "XT",
     "wheelKey": "wheel5Spoke",
-    "engineKey": "stockEngineEJ22G"
+    "engineKey": "stockEngineEJ207"
   }
 });
 addRegularCar("magna", 'ae86', {
@@ -2086,7 +2085,7 @@ const REGULAR_ASSETS = {
 
   // Re-authored Evo III / V use 500px canvases. X follows the new wheel
   // openings; Y retains the old axle relationship after the +50px canvas shift.
-  evo3: ['evo3', 500, 291, 390, 88, 909, 390, 89, 1137, 430],
+  galant: ['galant', 500, 291, 390, 88, 909, 390, 89, 1137, 430],
   evo5: ['evo5', 500, 268, 389, 88, 931, 389, 90, 1090, 440],
 
   // New SpriteR cars: model-specific arch centres/radii.
@@ -2095,7 +2094,7 @@ const REGULAR_ASSETS = {
   nsx: ['nsx', 500, 251, 383, 97, 930, 383, 97, 1161, 445],
 
   evo6: ['evo6', 400, 256, 318, 87, 905, 314, 87, 1139, 440],
-  wrx22b: ['22b', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
+  gc8: ['gc8', 400, 304, 316, 85, 927, 319, 88, 1106, 435],
   r32: ['r32', 400, 254, 306, 93, 926, 305, 92, 1163, 455],
   '3000gt': ['3000gt', 500, 273, 339, 100, 926, 339, 100, 1165, 455],
   r34: ['r34', 500, 278, 375, 92, 952, 375, 92, 1168, 455],
@@ -2266,7 +2265,7 @@ Object.values(cars).forEach(car => {
 export const carOrder = [
   'gdb', 'gf8', 's15', 'starion', 'fto', 'mx5', 'sa22c', 'mx6', 'prelude', 'sw20', 'soarer', 'forester', 'svx', 'xt',
   'ae86', 'ef', 'ek9', 's2000', 'fc3s', 'rx7fd', 'rx8',
-  'evo3', 'evo5', 'evo6', 'wrx22b', 'r32', 'r34',
+  'galant', 'evo5', 'evo6', 'gc8', 'r32', 'r34',
   '3000gt', 'a60', 'jza80', 'nsx',
   'z32', 'z33', '240z', 'crx', 'dc2', 'eclipse', 'familia', '180sx', 'st205', 'jzx100', 'b4rsk',
 ];

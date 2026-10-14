@@ -10,6 +10,7 @@ import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=2026092
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
 import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js?v=20261014-r503';
+import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js?v=20261015-r520';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -750,6 +751,9 @@ export function normaliseState(input = {}) {
   input = migrateRetiredEvoIX(input);
   // Resolve any leftover EJ1 rival/crew/competition IDs before registry hydration.
   input = migrateRetiredEJ1(input);
+  // Old EVO III / 22B model IDs are historical aliases of the canon Galant
+  // VR-4 and Impreza GC8. Migrate all saved instances before car registration.
+  input = migrateCanonicalCarModels(input);
   const hadSayakaShinagawaCrew = input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda';
   const oldLoanCarId = 'crew__sayakaFujieda';
   const replacementLoanCarId = 'crew__reikaTachibana';

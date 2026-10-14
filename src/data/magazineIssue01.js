@@ -8,7 +8,7 @@ export const ISSUE01_ASSETS = Object.freeze({
  champion_03: { key: 'issue01Champion03', path: 'assets/Magazine/01/champion_03.webp' },
 });
 export const ISSUE01_GINZA_CARS = Object.freeze(['spoonEk9', 'amuseS2000Gt1']);
-export const ISSUE01_PROFILE_CARS = Object.freeze(['ae86', 'ef', 'fc3s', 'ek9', 'evo3']);
+export const ISSUE01_PROFILE_CARS = Object.freeze(['ae86', 'ef', 'fc3s', 'ek9', 'galant']);
 const pages = [
  { kind:'champion', art:'champion_01', kicker:'MIKA HIYASE / THE FORMER TOKYO CHAMPION', title:'THE PRICE OF SPEED',
    body:'Mika Hiyase began at waterfront street meets, funding her white R32 with shifts at a parts counter. Quiet in a crowd, fiercely curious in the garage, she kept a notebook of every lost run. Tokyo noticed the car. Rivals remembered the preparation.',
@@ -42,7 +42,7 @@ const pages = [
  { kind:'guide', art:'blank', kicker:'RACE SCHOOL / 03', title:'WHICH WHEELS PULL?', deck:'FWD, RWD and AWD: learn the car behind the layout.',sections:[
    ['FWD / CIVIC EF + EK9','Light, efficient early choices. The front tyres do the driving and lose some launch loading under acceleration. Too much throttle can spin them: build revs, then introduce power progressively.'],
    ['RWD / AE86 + RX-7 FC','Rear-drive cars gain launch loading, rewarding a measured clutch release. They still have only two driven tyres. A light AE86 teaches momentum; the FC adds turbo torque that can overwhelm grip.'],
-   ['AWD / LANCER EVO III','Four driven wheels give the Evo a strong standing start. Extra mass and drivetrain losses still matter once rolling. AWD is no automatic win: gearing and clean shifts still count.'],
+   ['AWD / LANCER GALANT VR-4','Four driven wheels give the Galant a strong standing start. Extra mass and drivetrain losses still matter once rolling. AWD is no automatic win: gearing and clean shifts still count.'],
  ],note:'IN THIS GAME / Straight-line traction matters. Tyres and tuning count too.' },
 ];
 const profiles = [
@@ -70,9 +70,9 @@ const profiles = [
   tips:'Use the upper rev range, then shift cleanly. Fit grip to match power before chasing bigger figures.',
   strengths:'High-rev pace. Efficient drivetrain. A familiar step up from the Civic EF.',
   weaknesses:'Limited low-rev torque. More power still goes through two front tyres; rushed launches waste it.'},
- {carId:'evo3',year:'1995',drive:'AWD',role:'NEXT STEP / 05',
-  history:'The Lancer Evolution III arrived in 1995. Cooling and aerodynamics evolved for the increasing demands of world rallying.',
-  fact:'The large rear wing and deeper front bumper had a job to do: the rally programme shaped the road car.',
+ {carId:'galant',year:'1992',drive:'AWD',role:'NEXT STEP / 05',
+  history:'The Galant VR-4 brought Mitsubishi turbocharged four-wheel-drive rally engineering to the road before the Lancer Evolution line.',
+  fact:'Its 4G63 turbo four-cylinder and full-time AWD helped establish Mitsubishi’s rally-bred performance formula.',
   tips:'Use its grip with enough launch revs. Keep the turbo working through quick, clean changes.',
   strengths:'Strong standing starts. Turbo midrange. Four driven tyres to put power down.',
   weaknesses:'Heavier than the starters. More drivetrain loss. Rolling starts reduce its launch advantage.'},

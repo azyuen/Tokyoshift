@@ -8,7 +8,7 @@ const REFS = [
   ['ae86', 'AE86'],
   ['ef', 'CIVIC EF'],
   ['ek9', 'CIVIC EK9'],
-  ['22b', 'WRX 22B'],
+  ['22b', 'WRX GC8 STI'],
   ['evo6', 'EVO VI'],
   ['r32', 'R32 GT-R'],
   ['rx7fc', 'RX-7 FC'],

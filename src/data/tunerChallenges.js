@@ -79,7 +79,7 @@ const REGION_OFFSETS = {
 const REGION_LEADER_CARS = Object.freeze({
   ODAIBA: 'ae86',
   SHINAGAWA: 'fc3s',
-  TATSUMI: 's15',
+  TATSUMI: 'dc2',
   SHIBUYA: '180sx',
   YOKOHAMA: 'gdb',
   DAIKOKU: 'evo6',
@@ -200,8 +200,8 @@ function regionalTuningPointCap(regionId, stageIndex, playerDifficulty = 'STANDA
 
   // Tatsumi is the first Canal Yard championship (rank 3). Its first three
   // cars are relatively weak and need meaningful hardware to remain engaging;
-  // the later RX-8/S2000/EVO III have higher base performance, so their point
-  // budgets can be lower. In particular, the Expert EVO III must leave a
+  // the later cars have higher base performance, so their point budgets can
+  // be lower. In particular, the expert rounds must leave a
   // realistic manual-driving margin for a Canal Yard Level 2 player build.
   // A point-budget dip is intentional: balance actual car performance, not
   // just an artificial rising count. Later Canal regions stay untouched.
