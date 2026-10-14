@@ -8,7 +8,7 @@ const race = read('src/scenes/RaceScene.js');
 
 test('course starts in the SAME standard manga renderer as developer cutscenes', () => {
   assert.match(school, /playMangaCutscene\(this, definition/);
-  assert.match(school, /characters: \{ left: 'sayakaFujieda', right: '\$PLAYER' \}/);
+  assert.match(school, /characters: \\{ left: 'sayakaFujieda' \\}/);
   assert.match(school, /nameOverride: 'LADY INSTRUCTOR'/);
   assert.match(school, /finalActionLabel: 'YES, LET/);
   assert.match(school, /secondaryFinalActionLabel: 'NOT NOW'/);
