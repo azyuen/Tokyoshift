@@ -25,11 +25,8 @@ export const TUNER_SHOPS = {
     mechanicId: getRegionMechanicCharacterId('ODAIBA'),
     heroCarId: 'espritNsx',
 
-    // The stock NA1 is intentionally a separate donor id. The current car
-    // catalogue does not yet contain a stock NSX asset, so the conversion
-    // control remains disabled until nsxNa1 is added rather than substituting
-    // an unrelated car. One donor model maps to one regional tuner only.
-    donorCarId: 'nsxNa1',
+    // Canonical stock NA1 shares the 'nsx' model ID across garage and market.
+    donorCarId: 'nsx',
     donorLabel: 'HONDA NSX NA1',
     buildCost: 22000000,
 
@@ -196,7 +193,7 @@ export const TUNER_SHOPS = {
     mechanicId: getRegionMechanicCharacterId('SHINJUKU'),
     heroCarId: 'topSecretSupra',
 
-    donorCarId: 'supraA80',
+    donorCarId: 'jza80',
     donorLabel: 'TOYOTA SUPRA A80',
     buildCost: 18000000,
 
@@ -368,7 +365,7 @@ export const TUNER_SHOPS = {
     mechanicId: getRegionMechanicCharacterId('DAIKOKU'),
     heroCarId: 'reAmemiyaRx7',
 
-    donorCarId: 'fd3s',
+    donorCarId: 'rx7fd',
     donorLabel: 'MAZDA RX-7 FD3S',
     buildCost: 13000000,
 
@@ -536,9 +533,7 @@ export const TUNER_SHOPS = {
     mechanicId: getRegionMechanicCharacterId('TATSUMI'),
     heroCarId: 'junHyperLemonEvo5',
 
-    // The hero is an Evo V, so do not let an Evo III act as a fake donor.
-    // Once the stock Evo V enters the normal-car catalogue this build path
-    // becomes live automatically.
+    // The JUN donor is the registered stock Evo V, not the Galant VR-4.
     donorCarId: 'evo5',
     donorLabel: 'MITSUBISHI LANCER EVO V',
     buildCost: 12000000,

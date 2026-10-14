@@ -1,0 +1,22 @@
+name: Tuner hero donor conversions
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/tunerShops.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'src/data/cars.js'
+      - 'src/data/carOwnership.js'
+      - 'tests/tuner-hero-conversions-r521.mjs'
+      - '.github/workflows/tuner-hero-conversions-r521.yml'
+  workflow_dispatch:
+
+jobs:
+  tuner-hero-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/tuner-hero-conversions-r521.mjs

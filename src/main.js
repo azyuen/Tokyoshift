@@ -86,7 +86,7 @@ async function startTokyoShift() {
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261012-champaudit'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261011-r482'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261014-r501'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261015-r521'),
       loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261006-r388'),
     ]);
 
