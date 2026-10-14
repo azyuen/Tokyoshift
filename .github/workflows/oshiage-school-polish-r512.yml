@@ -1,0 +1,29 @@
+name: Oshiage Sayaka pose and UI responsiveness R512
+on:
+  push:
+    paths:
+      - 'src/ui/MangaCutscene.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/data/oshiageSchool.js'
+      - 'tests/oshiage-school-polish-r512.mjs'
+      - 'tests/oshiage-manga-r511.mjs'
+      - '.github/workflows/oshiage-school-polish-r512.yml'
+  workflow_dispatch:
+jobs:
+  school:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/data/oshiageSchool.js
+      - name: Run school and cutscene regression tests
+        run: node --test tests/oshiage-school-polish-r512.mjs tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs
