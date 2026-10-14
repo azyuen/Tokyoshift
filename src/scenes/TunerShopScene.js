@@ -935,7 +935,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const clampPlacement = () => {
       placement.x = Phaser.Math.Clamp(Number(placement.x || 0), -0.42, 0.42);
-      placement.y = Phaser.Math.Clamp(Number(placement.y || 0), -0.30, 0.30);
+      placement.y = Phaser.Math.Clamp(Number(placement.y || 0), -0.65, 0.30);
     };
 
     const syncPlacementFromPreview = previewObject => {
@@ -967,7 +967,7 @@ export default class TunerShopScene extends Phaser.Scene {
       preview.on('drag', (_pointer, dragX, dragY) => {
         const minX = geometry.x - geometry.displayWidth * 0.42;
         const maxX = geometry.x + geometry.displayWidth * 0.42;
-        const minY = geometry.displayY - geometry.displayHeight * 0.30;
+        const minY = geometry.displayY - geometry.displayHeight * 0.65;
         const maxY = geometry.displayY + geometry.displayHeight * 0.30;
         preview.x = Phaser.Math.Clamp(dragX, minX, maxX);
         preview.y = Phaser.Math.Clamp(dragY, minY, maxY);
