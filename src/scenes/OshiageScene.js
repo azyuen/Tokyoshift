@@ -36,6 +36,8 @@ const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const STRIP = { x: 24, y: 636, w: 1138, h: 180 };
 const ROOT = 'assets/Oshiage/';
 const SAYAKA = 'assets/Characters/Main/oshiage_sayaka_fujieda_';
+const schoolSayakaKey = pose => 'characterSayakaOshiage' +
+  pose.charAt(0).toUpperCase() + pose.slice(1);
 const LOCATIONS = Object.freeze({
   oshiageSkytreeMeet: { label: 'SKYTREE UNDERGROUND MEET', stem: 'oshiage_skytree01' },
   oshiageCustomWorks: { label: 'OSHIAGE CUSTOM WORKS', stem: 'oshiage_shop' },
@@ -146,7 +148,7 @@ export default class OshiageScene extends Phaser.Scene {
         queued += preloadVisualModSelectionAssets(this, car.id, state, '20261014-r510');
       }
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
-        queued += this.queueImage('oshiageSayaka_' + pose, SAYAKA + pose + '.png?v=20261013-r496');
+        queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + pose + '.png?v=20261013-r496');
       }
     }
     if (this.activeLocationId === 'oshiageSkytreeMeet' && getOshiageEliteProgress(this.registry).complete) {
@@ -369,8 +371,8 @@ export default class OshiageScene extends Phaser.Scene {
     const lesson = choices[selected];
     const { id, car, state } = this.selectedCar();
     if (car) {
-      const key = 'oshiageSayaka_' + lesson.pose;
-      this.schoolCarObjects = this.drawOwnedCar(car, state, 813, 381, 558,
+      const key = schoolSayakaKey(lesson.pose);
+      this.schoolCarObjects = this.drawOwnedCar(car, state, 621, 430, 558,
         getCarPaintColor(state), 8);
       if (!this.schoolCarEntered && this.schoolCarObjects?.length) {
         this.schoolCarEntered = true;
@@ -465,13 +467,11 @@ export default class OshiageScene extends Phaser.Scene {
       id: 'oshiageSchoolBooking_' + lessonId,
       title: 'OSHIAGE // LADY INSTRUCTOR',
       once: false,
-      characters: { left: 'sayakaFujieda', right: '$PLAYER' },
+      characters: { left: 'sayakaFujieda' },
       pages: [
-        { speaker: 'right', pose: 'idle',
-          text: 'Wait... have we met somewhere before?' },
-        { speaker: 'left', pose: 'homeNormal',
+        { speaker: 'left', pose: 'oshiageExplaining',
           nameOverride: 'LADY INSTRUCTOR', text: lesson.speech },
-        { speaker: 'left', pose: 'homeHappy',
+        { speaker: 'left', pose: 'oshiageHappy',
           nameOverride: 'LADY INSTRUCTOR', text },
       ],
       finalActionLabel: 'YES, LET\'S DRIVE',
@@ -479,6 +479,7 @@ export default class OshiageScene extends Phaser.Scene {
     };
     this.schoolPromptOpen = true;
     const result = playMangaCutscene(this, definition, {
+      preloadPagePosesOnly: true,
       onComplete: ({ reason }) => {
         this.schoolPromptOpen = false;
         // Skipping or selecting the secondary button must never spend yen.
@@ -521,7 +522,7 @@ export default class OshiageScene extends Phaser.Scene {
         .setDepth(100).setInteractive());
       add(this.add.rectangle(780, 470, 960, 475, 0x101926, 0.995)
         .setStrokeStyle(3, 0x86d8ef).setDepth(101));
-      const key = 'oshiageSayaka_' + p.pose;
+      const key = schoolSayakaKey(p.pose);
       if (this.textures.exists(key)) {
         const source = this.textures.get(key).getSourceImage();
         add(this.add.image(465, 651, key).setOrigin(0.5, 1)
