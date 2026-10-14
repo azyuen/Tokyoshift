@@ -18,14 +18,14 @@ test('short manga dialogue stops at the midpoint, and is taller and top-aligned'
   assert.ok(b.textX >= b.left + b.notchDepth);
   assert.ok(b.textY - b.headingY <= 30);
   assert.ok(b.textWidth <= b.right - b.textX - 10);
-  assert.match(hud, /bubble\.lineTo\(layout\.left \+ layout\.notchDepth, mid\)/);
+  assert.match(hud, /bubble\.lineTo\(layout\.left - layout\.notchDepth, mid\)/);
   assert.match(hud, /bubble\.fillPath\(\)/);
   assert.match(hud, /bubble\.strokePath\(\)/);
 });
 
 test('portrait floats borderless with a zoomed and face-centred transparent crop', () => {
   const face = RACE_COACH_LAYOUT.face;
-  assert.ok(face.x < 40 && face.y < 120);
+  assert.ok(face.x >= 40 && face.x <= 70 && face.y < 120);
   assert.ok(face.headHeight >= 180);
   assert.ok(face.width <= 225);
   assert.match(hud, /resolveCharacterFaceAnchor\(/);
