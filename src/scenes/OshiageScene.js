@@ -377,7 +377,7 @@ export default class OshiageScene extends Phaser.Scene {
       if (!this.schoolCarEntered && this.schoolCarObjects?.length) {
         this.schoolCarEntered = true;
         // The same wheel-distance rolling animation used in Custom Works.
-        this.animateShopCarEntry(this.schoolCarObjects, { duration: 3750, distance: 1010 });
+        this.animateShopCarEntry(this.schoolCarObjects, { duration: 3750, distance: 1010, lockUI: false });
       }
       if (this.textures.exists(key)) {
         const source = this.textures.get(key).getSourceImage();
@@ -1173,13 +1173,13 @@ export default class OshiageScene extends Phaser.Scene {
     return objects;
   }
 
-  animateShopCarEntry(objects, { duration = 3950, distance = 1100 } = {}) {
-    if (!objects?.length || this.paintBusy) return;
+  animateShopCarEntry(objects, { duration = 3950, distance = 1100, lockUI = true } = {}) {
+    if (!objects?.length || (lockUI && this.paintBusy)) return;
     if (this.entryTween) {
       this.entryTween.stop();
       this.entryTween = null;
     }
-    this.paintBusy = true;
+    if (lockUI) this.paintBusy = true;
 
     const originX = objects.map(obj => ({ obj, x: obj.x }));
     const wheels = (objects.rollingWheels || []).filter(wheel => wheel?.sprite);
@@ -1206,8 +1206,11 @@ export default class OshiageScene extends Phaser.Scene {
       onComplete: () => {
         this.entryTween = null;
         if (!this.sys.isActive()) return;
-        this.paintBusy = false;
-        this.renderView(); // Stationary car; no replay on colour / rim selection.
+        if (lockUI) this.paintBusy = false;
+        // Never invalidate an active manga scene during its confirmation.
+        if (!sceneCutsceneActive(this) && !this.schoolPromptOpen) {
+          this.renderView(); // Stationary car; no replay on colour / rim selection.
+        }
       },
     });
   }
