@@ -1,4 +1,4 @@
-# Ref2 stock-car rollout
+# Standard stock-car rollout (formerly Ref and Ref2)
 
 11 new regular cars, six corrected existing pairs and the supplied R34 pair. Existing car IDs and tuner associations are retained.
 
@@ -23,3 +23,8 @@ All scenes now share the same decal registration with the reference art's
 true source-canvas centre X, important for widths other than the AE86.
 The `body-alignment.html` tool exports original source-pixel coordinates
 and resets to these approved defaults.
+
+R505 migration: All standard car assets were relocated byte-for-byte from the
+Ref and Ref2 folders into `assets/Cars/stock/`. Axle/wheel geometry, source
+canvas sizes, BODY/PAINT registration, car IDs, tuning and body offsets are
+unchanged. The old directories have been retired.

@@ -1,0 +1,36 @@
+name: R505 unified stock car assets
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/carReferenceGeometry.js'
+      - 'src/data/cars.js'
+      - 'src/vehicles/CarAppearance.js'
+      - 'src/scenes/CarReferenceCalibrationScene.js'
+      - 'assets/Cars/stock/**'
+      - 'tests/stock-assets-r505.mjs'
+      - '.github/workflows/stock-assets-r505.yml'
+  pull_request:
+    paths:
+      - 'src/data/**'
+      - 'src/vehicles/CarAppearance.js'
+      - 'assets/Cars/stock/**'
+      - 'tests/stock-assets-r505.mjs'
+      - '.github/workflows/stock-assets-r505.yml'
+jobs:
+  stock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: |
+          node --check src/data/carReferenceGeometry.js
+          node --check src/data/cars.js
+          node --check src/vehicles/CarAppearance.js
+          node --check src/scenes/CarReferenceCalibrationScene.js
+          node --check tests/stock-assets-r505.mjs
+      - name: Verify moved PNGs and stock car compatibility
+        run: node --test tests/stock-assets-r505.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-roster.mjs tests/ref2-body-alignment.mjs tests/galant-vr4-r502.mjs tests/retired-ej1-r503.mjs tests/driver-face-anchors.mjs

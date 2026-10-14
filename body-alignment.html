@@ -87,7 +87,7 @@ footer{font-size:12px;color:#8eabba;margin:16px 0}
  </section>
  <section class="panel" style="margin:0">
   <div class="controlTitle">OPTIONAL WHEEL FINE-TUNING</div>
-  <p class="small">Existing wheel settings start from the game's exact Ref/Ref2 calibration. Change only if needed.</p>
+  <p class="small">Existing wheel settings start from the game's unified stock-car calibration. Change only if needed.</p>
   <div class="wheelGrid">
    <div class="axle"><b>REAR X</b><div class="wheelControl"><button id="rearMinus" type="button">−2</button><strong id="rearX"></strong><button id="rearPlus" type="button">+2</button></div></div>
    <div class="axle"><b>FRONT X</b><div class="wheelControl"><button id="frontMinus" type="button">−2</button><strong id="frontX"></strong><button id="frontPlus" type="button">+2</button></div></div>
@@ -106,7 +106,7 @@ footer{font-size:12px;color:#8eabba;margin:16px 0}
 <footer>Tokyo SHIFT reference sprites • shared scale 0.32 • PNG bottom-right anchor • positive Y = lower the body • wheel coordinates measured left of the PNG right edge.</footer>
 </main>
 <script type="module">
-import { STANDARD_CAR_REFERENCE as reference, getReferenceAssetRoot } from './src/data/carReferenceGeometry.js?v=20261014-align';
+import { STANDARD_CAR_REFERENCE as reference, getReferenceAssetRoot } from './src/data/carReferenceGeometry.js?v=20261014-stock';
 
 const carSpecs = [
   {id:'r34', gameId:'r34', label:'NISSAN R34', note:'Lower clearly'},

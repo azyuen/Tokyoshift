@@ -1,5 +1,5 @@
 import { finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { STANDARD_CAR_REFERENCE as BASELINE, STANDARD_CAR_REFERENCE_ROOT } from '../data/carReferenceGeometry.js?v=20261012-ref1';
+import { STANDARD_CAR_REFERENCE as BASELINE, STANDARD_CAR_REFERENCE_ROOT } from '../data/carReferenceGeometry.js?v=20261014-stock';
 
 // Read-only reference assets. This scene never modifies gameplay car data.
 // X positions are stored in unscaled source pixels, measured LEFT from the

@@ -15,6 +15,6 @@ On 14 October 2026, Tokyo SHIFT archived the 117 obsolete **root-level** `assets
 | Extra 3000GT paint variant | 1 |
 | **Total** | **117** |
 
-The archive retains original file paths, includes `MANIFEST.json` with per-file sizes and SHA-256 digests, and includes a separate `SHA256SUMS.txt` release asset. All **11 hero/collector PNGs**, **Ref**/**Ref2** standard-car PNGs, wheel assets and other active content remain in the repository.
+The archive retains original file paths, includes `MANIFEST.json` with per-file sizes and SHA-256 digests, and includes a separate `SHA256SUMS.txt` release asset. All **11 hero/collector PNGs**, the unified `assets/Cars/stock/` standard-car PNGs (relocated from Ref and Ref2 in R505), wheel assets and other active content remain in the repository.
 
 The original root-level stock/bodykit PNGs are no longer deployed by the modern 28-car reference-asset roster; archive them rather than keeping duplicates in the active Git tree.

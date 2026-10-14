@@ -1,4 +1,4 @@
-import { REFERENCE_AE86_SOURCE_WIDTH } from '../data/carReferenceGeometry.js?v=20261012-ref2';
+import { REFERENCE_AE86_SOURCE_WIDTH } from '../data/carReferenceGeometry.js?v=20261014-stock';
 import { getWheelOption } from '../data/wheels.js?v=20260929-r246';
 
 export const DEFAULT_PAINT_COLOR = 0xffffff;

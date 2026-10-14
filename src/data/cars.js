@@ -1,5 +1,5 @@
 import { CAR_DRIVER_FACE_ANCHORS } from './carDriverFaceAnchors.js?v=20261013-driverface';
-import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261012-ref2';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261014-stock';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
 
 const base = {

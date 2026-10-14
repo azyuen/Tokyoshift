@@ -6,7 +6,7 @@ The existing base model ID `evo3` is deliberately stable for all existing saves,
 
 ## Sprite integration
 
-- Ref2 actual files: `assets/Cars/Ref2/galant_stock_body.png`, `galant_stock_paint.png`
+- Current files: `assets/Cars/stock/galant_stock_body.png`, `assets/Cars/stock/galant_stock_paint.png` (same original pixels, relocated in R505)
 - Verified PNGs: **1300×440**, same dimensions
 - Both art layers use one shared scale with the AE86, bottom-right anchor and common wheel ground line
 - Small 182-source-pixel tyres (`S`)

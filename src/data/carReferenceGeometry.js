@@ -48,12 +48,11 @@ export const STANDARD_CAR_REFERENCE = {
   },
 };
 
-export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/Ref';
-
-// Original Ref batch and the corrected Ref2 batch share scale and origin.
-export const REF2_CAR_STEMS = Object.freeze(["galant", "r34", "180sx", "240z", "3000gt", "300zx", "350Z", "B4RSK", "a60", "celicaGT4", "chaser", "crx", "dc2", "eclipse", "evo5", "familia", "jza80", "nsx", "s2000"]);
-export function getReferenceAssetRoot(stem) {
-  return REF2_CAR_STEMS.includes(stem) ? 'assets/Cars/Ref2' : STANDARD_CAR_REFERENCE_ROOT;
+// All standard cars live in one stock directory, including future imports.
+// New models also need source axle geometry, canvas dimensions and a game ID.
+export const STANDARD_CAR_REFERENCE_ROOT = 'assets/Cars/stock';
+export function getReferenceAssetRoot(_stem) {
+  return STANDARD_CAR_REFERENCE_ROOT;
 }
 export const REFERENCE_CAR_GAME_IDS = Object.freeze({
   r34: 'r34',
@@ -111,7 +110,7 @@ export const REFERENCE_CAR_CANVAS = Object.freeze({
   ef: [1166, 420],
   ek9: [1166, 420],
   '22b': [1166, 420],
-  galant: [1300, 440], // Ref2 reference pair (normalised target canvas)
+  galant: [1300, 440], // Standard stock PNG reference pair
   evo6: [1250, 440],
   r32: [1300, 440],
   rx7fc: [1300, 440],

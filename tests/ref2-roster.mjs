@@ -41,11 +41,11 @@ test('all 11 cars have rated engines, correct drivetrain/tyres and reachable pur
     assert.equal(VISUAL_MOD_CATALOG[id],undefined,id+' has no supplied body kits');
   }
 });
-test('Ref2 paths resolve with exact filename case and matching PNG canvases', () => {
+test('Stock paths resolve with exact filename case and matching PNG canvases', () => {
   for(const id of [...expected.map(x=>x[0]),'a60','r34','s2000','nsx','evo5','jza80','3000gt']) {
     const car=cars[id], paths=getCarAssetPaths(car);
     const dimensions=['body','paint'].map(layer=>{
-      assert.ok(paths[layer].startsWith('assets/Cars/Ref2/'),id);
+      assert.ok(paths[layer].startsWith('assets/Cars/stock/'),id);
       const data=readFileSync(new URL('../'+paths[layer],import.meta.url));
       return [data.readUInt32BE(16),data.readUInt32BE(20)];
     });

@@ -40,11 +40,11 @@ test('legacy Evolution III becomes Galant VR-4, including all copied and crew ca
   assert.equal(registeredCars['evo3__copy2'].powerKW,176);
 });
 
-test('Ref2 body and paint are matched PNGs and ground-normalised for two small tyres',()=>{
-  assert.equal(getReferenceAssetRoot('galant'),'assets/Cars/Ref2');
+test('Stock body and paint are matched PNGs and ground-normalised for two small tyres',()=>{
+  assert.equal(getReferenceAssetRoot('galant'),'assets/Cars/stock');
   const {body,paint}=getCarAssetPaths(cars.evo3);
-  assert.equal(body,'assets/Cars/Ref2/galant_stock_body.png');
-  assert.equal(paint,'assets/Cars/Ref2/galant_stock_paint.png');
+  assert.equal(body,'assets/Cars/stock/galant_stock_body.png');
+  assert.equal(paint,'assets/Cars/stock/galant_stock_paint.png');
   const dimensions=path=>{
     const bytes=readFileSync(new URL('../'+path,import.meta.url));
     assert.equal(bytes.subarray(1,4).toString('ascii'),'PNG');
