@@ -75,14 +75,14 @@ const REGION_OFFSETS = {
 };
 
 // Each recruitable rival uses the one fixed regional signature car in crewRoster.
-// Main rivals are permanent opponents and reuse a car from their own region.
+// Main rivals are permanent opponents, with an independently assigned flagship car.
 const REGION_LEADER_CARS = Object.freeze({
   ODAIBA: 'ae86',
   SHINAGAWA: 'fc3s',
   TATSUMI: 's15',
   SHIBUYA: '180sx',
   YOKOHAMA: 'gdb',
-  DAIKOKU: 'wrx22b',
+  DAIKOKU: 'evo6',
   SHINJUKU: 'jza80',
 });
 
