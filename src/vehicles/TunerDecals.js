@@ -85,7 +85,7 @@ export function normaliseTunerDecals(carState = {}) {
 
     result[decalId] = {
       x: clamp(raw.x ?? 0.05, -0.42, 0.42),
-      y: clamp(raw.y ?? -0.02, -0.30, 0.30),
+      y: clamp(raw.y ?? -0.02, -0.65, 0.30),
       scale: clamp(raw.scale ?? 0.13, 0.055, 0.24),
       rotation: clamp(raw.rotation ?? 0, -35, 35),
       color: normaliseHex(raw.color, style?.color || '#FFFFFF'),
