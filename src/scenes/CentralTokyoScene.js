@@ -31,7 +31,6 @@ import {
   createCarBodyLayers,
   getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createDriverSilhouette } from '../vehicles/DriverSilhouette.js?v=20260923-r137';
 import {
   createVisualModLayers,
   getVisualModWheelVisual,
@@ -990,7 +989,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     targetWidth,
     depth,
     paintColor = DEFAULT_PAINT_COLOR,
-    driverCharacter = null,
+    _driverCharacter = null, // Legacy call slot; driver silhouettes retired.
     flipX = false,
     appearanceStateOverride = null
   ) {
@@ -1109,15 +1108,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       0x000000,
       0.72
     ).setDepth(depth - 0.1);
-    const driver = driverCharacter
-      ? createDriverSilhouette(this, car, driverCharacter, {
-          bodyX: drawX,
-          bodyY: displayY,
-          bodyScale,
-          depth: depth + 0.55,
-        })
-      : null;
-
     const bodyLayers = createCarBodyLayers(this, car, {
       x: drawX,
       y: displayY,
@@ -1143,7 +1133,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       shadow,
       rearWheel,
       frontWheel,
-      ...(driver?.image ? [driver.image] : []),
       ...bodyLayers.objects,
       ...visualModObjects,
     ];
