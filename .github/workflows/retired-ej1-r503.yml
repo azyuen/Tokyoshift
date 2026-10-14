@@ -1,0 +1,41 @@
+name: EJ1 retirement and full Ref roster R503
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/cars.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/data/crewRoster.js'
+      - 'src/data/tunerChallenges.js'
+      - 'src/data/encounterProfiles.js'
+      - 'src/data/carMagazine.js'
+      - 'src/data/carDriverFaceAnchors.js'
+      - 'src/data/carRetirement.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/data/visualMods.js'
+      - 'tests/driver-face-anchors.mjs'
+      - 'tests/car-reference-rollout.mjs'
+      - 'tests/retired-ej1-r503.mjs'
+      - '.github/workflows/retired-ej1-r503.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/retired-ej1-r503.mjs'
+      - '.github/workflows/retired-ej1-r503.yml'
+
+jobs:
+  retirement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          for file in src/data/cars.js src/data/centralTokyo.js src/data/crewRoster.js src/data/tunerChallenges.js src/data/encounterProfiles.js src/data/carMagazine.js src/data/carDriverFaceAnchors.js src/data/carRetirement.js src/state/GameState.js src/scenes/MeetScene.js src/data/visualMods.js tests/retired-ej1-r503.mjs; do node --check "$file"; done
+      - name: Check catalogue and saved-state compatibility
+        run: |
+          node --test tests/retired-ej1-r503.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/driver-face-anchors.mjs tests/ref2-roster.mjs tests/galant-vr4-r502.mjs tests/meet-rival-cars-and-profiles-r500.mjs tests/meet-refresh-r469.mjs tests/sayaka-reika-continuity.mjs tests/pro-season-crew.mjs
