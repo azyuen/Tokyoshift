@@ -1,0 +1,27 @@
+name: Oshiage shared manga scene R511
+on:
+  push:
+    paths:
+      - 'src/ui/MangaCutscene.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/oshiage-manga-r511.mjs'
+      - 'tests/oshiage-ui-r510.mjs'
+      - '.github/workflows/oshiage-manga-r511.yml'
+  workflow_dispatch:
+jobs:
+  manga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        run: |
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
+      - name: School, coaching, and legacy regressions
+        run: node --test tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs tests/sayaka-reika-continuity.mjs
