@@ -70,7 +70,7 @@ export default class OshiageScene extends Phaser.Scene {
       (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
     this.room = ['paint', 'rims'].includes(data.room) ? data.room : 'outside';
     if (this.activeLocationId !== 'oshiageCustomWorks') this.room = 'outside';
-    this.lessonIndex = 0;
+    this.lessonIndex = Math.max(0, Math.min(3, Number(this.registry.get('oshiageLessonTab') || 0)));
     this.meetAlternative = this.registry.get('oshiageEliteVenue') === 'plaza';
     this.paintMode = 'preset';
     this.customPaintColor = null;
@@ -335,21 +335,25 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 76, subtitle, { size: '12px', color: '#a9c3d1', wrap: SIDE.w - 40 });
   }
 
-  // Three lesson tabs mirror Central Tokyo's stage + side panel + bottom cards.
-  // Only the original hands-on basics are playable until later lessons are authored.
+  // The original controls tutorial remains intact. These three additional
+  // practical exercises use the selected car's current, real physics build.
   drawSchool() {
-    const selected = Math.max(0, Math.min(2, this.lessonIndex));
-    const lesson = [
-      { name: 'BASIC DRIVING', pose: 'explaining', cost: 0,
-        title: 'FIRST DRIVING LESSON', detail: 'A proper, consequence-free introduction to clutch, throttle, gears and the standing start. You drive your own car with the real race controls.',
-        hint: 'Lady Instructor: “Keep your clutch in, then shift deliberately.”' },
-      { name: 'ADVANCED SHIFT', pose: 'neutral', cost: 15000,
-        title: 'ADVANCED SHIFT TECHNIQUE', detail: 'Planned practical lessons on shift-point selection, throttle control and using the powerband. Exercises are still in development.',
-        hint: 'Lady Instructor: “You can pay when there is a real lesson to take.”' },
-      { name: 'ELITE LAUNCH', pose: 'concerned', cost: 30000,
-        title: 'ELITE LAUNCH TRAINING', detail: 'A future practical course focused on high-power starts, wheelspin and controlled clutch release. This does not provide an automatic performance upgrade.',
-        hint: 'Lady Instructor: “Every car responds differently.”' },
-    ][selected];
+    const selected = Math.max(0, Math.min(3, this.lessonIndex));
+    const lessons = [
+      { key: null, pose: 'explaining', tab: 'BASIC // FREE', title: 'FIRST DRIVING LESSON',
+        detail: 'Learn clutch, throttle, gearing and the standing start using your own car and the real race controls. A consequence-free step-by-step tutorial.',
+        hint: '“Start with the controls. There is no need to rush.”' },
+      { key: 'launch', pose: 'concerned', tab: 'LAUNCH // FREE', title: 'FIND YOUR LAUNCH BAND',
+        detail: 'Learn the suggested launch RPM range for your exact engine, tyres and tune. Practise a short 60-foot launch. I will watch the clutch and wheelspin.',
+        hint: '“A little less wheelspin can be a lot more speed.”' },
+      { key: 'standing', pose: 'explaining', tab: 'STANDING // FREE', title: 'STANDING-START SHIFTING',
+        detail: 'Run the quarter mile from a standing start. I will suggest each gear\'s shift RPM range and assess your timing and shift quality as you drive.',
+        hint: '“The next gear matters as much as the one you are leaving.”' },
+      { key: 'rolling', pose: 'neutral', tab: 'ROLLING // FREE', title: 'ROLLING-START SHIFTING',
+        detail: 'Start at 60 km/h. I will suggest a starting gear for your current build, then guide each shift through a rolling half-mile practice run.',
+        hint: '“Choose the gear for the speed, not just the engine sound.”' },
+    ];
+    const lesson = lessons[selected];
     const key = 'oshiageSayaka_' + lesson.pose;
     if (this.textures.exists(key)) {
       const source = this.textures.get(key).getSourceImage();
@@ -363,23 +367,29 @@ export default class OshiageScene extends Phaser.Scene {
       { pixel: true, size: '10px', color: '#ffe394', wrap: SIDE.w - 40 });
     this.addText(SIDE.x + 20, SIDE.y + 215, lesson.detail,
       { size: '13px', color: '#e2edf4', wrap: SIDE.w - 40, spacing: 5 });
-    this.addText(SIDE.x + 20, SIDE.y + 399, lesson.hint,
+    this.addText(SIDE.x + 20, SIDE.y + 400, lesson.hint,
       { size: '11px', color: '#9de0dd', wrap: SIDE.w - 40 });
-    this.addText(SIDE.x + 20, SIDE.y + 494,
-      selected === 0 && this.registry.get('oshiageBasicLessonComplete')
-        ? 'BASIC COURSE // COMPLETED' : selected === 0 ? 'FREE // READY' : 'PAID COURSE // NOT YET AVAILABLE',
+    const selectedCar = this.selectedCar();
+    const progress = this.registry.get('oshiageCoachingProgress') || {};
+    const completed = lesson.key
+      ? Boolean(progress[selectedCar.id]?.[lesson.key])
+      : Boolean(this.registry.get('oshiageBasicLessonComplete'));
+    this.addText(SIDE.x + 20, SIDE.y + 489,
+      completed ? 'COMPLETED // PRACTISE AGAIN' : 'FREE PRACTICE // NO STAKES',
       { pixel: true, size: '8px', color: '#9fe5bb', wrap: SIDE.w - 40 });
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + 568, SIDE.w - 40, 47,
-      selected === 0 ? 'START FREE DRIVING LESSON' : 'COURSE IN DEVELOPMENT',
-      () => this.startBasicTutorial(), { disabled: selected !== 0, accent: selected === 0, size: '7px' });
+      selected === 0 ? 'START BASIC LESSON' : 'START PRACTICE RUN',
+      () => this.startBasicTutorial(lesson.key), { accent: true, size: '8px' });
 
-    this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL // TRAINING', { pixel: true, size: '10px', color: '#8feaff' });
-    const labels = ['BASIC // FREE', 'ADVANCED // ¥15,000', 'ELITE // ¥30,000'];
-    labels.forEach((label, i) => this.button(225 + i * 365, 743, 338, 65, label, () => {
+    this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL // CHOOSE A LESSON',
+      { pixel: true, size: '10px', color: '#8feaff' });
+    lessons.forEach((option, i) => this.button(179 + i * 282, 743, 265, 65, option.tab, () => {
       this.lessonIndex = i;
+      this.registry.set('oshiageLessonTab', i);
       this.renderView();
-    }, { accent: selected === i, size: '8px' }));
-    this.addText(48, 790, 'Paid lessons will only be charged when their exercises are ready.', { size: '9px', color: '#91aabd' });
+    }, { accent: selected === i, size: '7px' }));
+    this.addText(48, 790, 'Real driving physics. No wagers, penalties or automatic performance upgrades.',
+      { size: '9px', color: '#91aabd' });
   }
 
   showInstructorCutscene() {
@@ -431,7 +441,7 @@ export default class OshiageScene extends Phaser.Scene {
     render();
   }
 
-  startBasicTutorial() {
+  startBasicTutorial(lessonId = null) {
     const { id, car } = this.selectedCar();
     if (!car || car.crewLoan) {
       this.showOshiageNotice('SELECT YOUR OWN CAR AT YOUR WORKSHOP BEFORE A LESSON');
@@ -445,9 +455,10 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('selectedOpponentEncounterAi', null);
     this.registry.set('selectedOpponentBuildState', null);
     this.registry.set('selectedOpponentDifficulty', 'EASY');
+    this.registry.set('oshiageTrainingLesson', ['launch', 'standing', 'rolling'].includes(lessonId) ? lessonId : null);
     this.registry.set('selectedRaceCategory', 'TUTORIAL');
-    this.registry.set('selectedRaceType', 'Standing Start');
-    this.registry.set('selectedRaceDistanceM', 402.336);
+    this.registry.set('selectedRaceType', lessonId === 'rolling' ? 'Roll Race' : 'Standing Start');
+    this.registry.set('selectedRaceDistanceM', lessonId === 'rolling' ? 804.672 : 402.336);
     this.registry.set('selectedRaceDeal', 'TUTORIAL');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
@@ -455,7 +466,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'OshiageScene');
     this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', 'OSHIAGE');
-    this.registry.set('raceLocationLabel', 'LADY INSTRUCTOR // BASIC DRIVING');
+    this.registry.set('raceLocationLabel', 'LADY INSTRUCTOR // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
