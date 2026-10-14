@@ -4,20 +4,51 @@ import { cars } from './cars.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { WHEEL_CATALOG, getOwnedWheelIds, getWheelOption } from './wheels.js?v=20260929-r246';
 
-export const RIMS_DISPLAY_COUNT = 10;
+// R506: the new Oshiage wheel-wall background has exactly eight EMPTY bays.
+// Coordinates are normalised to the original artwork, not the Phaser viewport.
+// This avoids shifting the rims when the art is contained to the stage.
+// Cabinet 1 (left): four standard rims in a 2x2 grid.
+// Cabinet 2 (middle): two tuner rims side by side.
+// Cabinet 3 (right): two hero rims stacked vertically.
+export const RIMS_DISPLAY_COUNT = 8;
+export const RIMS_STANDARD_COUNT = 4;
+export const RIMS_SPECIAL_COUNT = 4;
 export const RIMS_REFRESH_MS = 3 * 60 * 60 * 1000;
+export const OSHIAGE_RIM_SLOTS = Object.freeze([
+  { section: 'standard', x: 0.192, y: 0.325, diameter: 66 },
+  { section: 'standard', x: 0.283, y: 0.325, diameter: 66 },
+  { section: 'standard', x: 0.192, y: 0.452, diameter: 66 },
+  { section: 'standard', x: 0.283, y: 0.452, diameter: 66 },
+  { section: 'special', x: 0.458, y: 0.493, diameter: 70 },
+  { section: 'special', x: 0.545, y: 0.493, diameter: 70 },
+  { section: 'special', x: 0.716, y: 0.356, diameter: 70 },
+  { section: 'special', x: 0.716, y: 0.474, diameter: 70 },
+]);
 
 const read = (source, key, fallback) => {
   const result = source?.get ? source.get(key) : source?.[key];
   return result == null ? fallback : result;
 };
 
+function rotateItems(items, offset, count) {
+  if (!items.length) return [];
+  return Array.from({ length: Math.min(count, items.length) },
+    (_, i) => items[(offset + i) % items.length]);
+}
+
 export function getOshiageRimListings(now = Date.now()) {
-  const pool = WHEEL_CATALOG.filter(Boolean);
-  if (pool.length <= RIMS_DISPLAY_COUNT) return [...pool];
   const cycle = Math.floor(now / RIMS_REFRESH_MS);
-  const offset = ((cycle * 5) % pool.length + pool.length) % pool.length;
-  return [...pool.slice(offset), ...pool.slice(0, offset)].slice(0, RIMS_DISPLAY_COUNT);
+  // The four standard designs are always visible on the LEFT.
+  const standard = WHEEL_CATALOG.filter(rim => rim?.tier === 'STANDARD');
+  // Two rotating tuner wheels fill the centre's horizontal double cabinet.
+  const tuners = WHEEL_CATALOG.filter(rim => rim?.tier === 'TUNER');
+  // Two rotating rare/hero wheels fill the far-right vertical double cabinet.
+  const heroes = WHEEL_CATALOG.filter(rim => rim?.tier === 'HERO');
+  return [
+    ...rotateItems(standard, 0, RIMS_STANDARD_COUNT),
+    ...rotateItems(tuners, cycle * 2, 2),
+    ...rotateItems(heroes, cycle, 2),
+  ];
 }
 
 export function getOshiageRimQuote(source, carId, rimId) {
