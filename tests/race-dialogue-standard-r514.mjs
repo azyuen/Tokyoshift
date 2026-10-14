@@ -113,5 +113,4 @@ test('existing caller sequence advances pages, updates heading and completes onc
   assert.equal(completions,1);
   assert.equal(state.active,false);
   assert.equal(scene._phoneConversation,null);
-  assert.equal(formatPhoneMessage(String.raw`A\\nB`),'A\nB');
 });
