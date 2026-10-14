@@ -53,10 +53,6 @@ function drawMangaSpeechBubble(scene, layout, theme, depth = 80) {
     bubble.closePath();
     bubble.fillPath();
     bubble.strokePath();
-    // Hide the seam where the triangle joins the rectangular body.
-    bubble.lineStyle(6, theme.fill, theme.fillAlpha);
-    bubble.lineBetween(layout.left, mid - layout.notchHalfHeight + 3,
-      layout.left, mid + layout.notchHalfHeight - 3);
   };
   redraw();
   return { bubble, redraw };
