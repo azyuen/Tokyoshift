@@ -9,8 +9,8 @@ import { createDriverSilhouette, resolveDriverSeat } from '../src/vehicles/Drive
 const nearly = (a, b) => assert.ok(Math.abs(a - b) < 0.00001, a + ' should equal ' + b);
 
 test('each deployed stock car has its own authored driver-face target', () => {
-  assert.equal(carOrder.length, 29);
-  assert.equal(Object.keys(CAR_DRIVER_FACE_ANCHORS).length, 29);
+  assert.equal(carOrder.length, 28);
+  assert.equal(Object.keys(CAR_DRIVER_FACE_ANCHORS).length, 28);
   for (const id of carOrder) {
     const face = cars[id].visual.driverFace;
     assert.deepEqual(face, CAR_DRIVER_FACE_ANCHORS[id], id);
@@ -28,13 +28,15 @@ test('reference-standard source coordinates use the right and bottom image edge'
   assert.ok(seat.x < 0 && seat.y < 0);
 });
 
-test('new regular assets keep old centre-based vehicle origins', () => {
-  // Evo III is now a Ref2 Galant, so use the remaining legacy Civic EJ1.
-  const car = cars.ej1.visual;
-  const seat = resolveDriverSeat(car, 1200, 500);
-  nearly(seat.x, (car.driverFace.x - 0.5) * 1200);
-  nearly(seat.y, (car.driverFace.y - 0.5) * 500);
-  assert.ok(seat.x > 0 && seat.y < 0);
+test('all deployed stock cars use the right/bottom reference origin', () => {
+  for (const id of carOrder) {
+    const visual = cars[id].visual;
+    assert.equal(visual.referenceStandard, true, id);
+    const seat = resolveDriverSeat(visual, visual.referenceCanvasWidth, visual.referenceCanvasHeight);
+    nearly(seat.x, (visual.driverFace.x - 1) * visual.referenceCanvasWidth);
+    nearly(seat.y, (visual.driverFace.y - 1) * visual.referenceCanvasHeight);
+    assert.ok(seat.x < 0 && seat.y < 0, id);
+  }
 });
 
 test('face coordinates scale to the actual portrait PNG, with pose overrides', () => {
