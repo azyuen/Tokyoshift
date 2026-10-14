@@ -134,7 +134,7 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
     if (this.isCoaching) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
-        queueImage('oshiageSayaka_' + pose,
+        queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
           'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
       }
     }
@@ -1318,7 +1318,7 @@ export default class RaceScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => mask.destroy());
     this.add.rectangle(133, 195, 198, 166, 0xf9faf7, 1)
       .setStrokeStyle(4, 0x111820).setScrollFactor(0).setDepth(81);
-    this.coachPortrait = this.add.image(50, 120, 'oshiageSayaka_explaining')
+    this.coachPortrait = this.add.image(50, 120, 'characterSayakaOshiageExplaining')
       .setOrigin(0, 0).setDepth(82).setScrollFactor(0)
       .setMask(mask.createGeometryMask());
     this.add.rectangle(662, 195, 826, 162, 0xfafaf7, 0.985)
@@ -1353,7 +1353,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   coachSetPortrait(pose = 'neutral') {
-    const key = 'oshiageSayaka_' + pose;
+    const key = 'characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1);
     if (!this.coachPortrait || !this.textures.exists(key)) return;
     this.coachPortrait.setTexture(key);
     const image = this.textures.get(key).getSourceImage();
@@ -1549,7 +1549,7 @@ export default class RaceScene extends Phaser.Scene {
       characters: { left: 'sayakaFujieda' },
       pages: [{
         speaker: 'left',
-        pose: result.timedOut ? 'homeSad' : 'homeHappy',
+        pose: result.timedOut ? 'oshiageConcerned' : 'oshiageHappy',
         nameOverride: 'LADY INSTRUCTOR',
         text: result.feedback + ' Have a look at your actual revs against the recommended ranges.',
       }],
@@ -1557,6 +1557,7 @@ export default class RaceScene extends Phaser.Scene {
       secondaryFinalActionLabel: retries > 0 ? 'RETRY (' + retries + ' LEFT)' : null,
     };
     const next = playMangaCutscene(this, definition, {
+      preloadPagePosesOnly: true,
       backgroundStyle: 'wash',
       infoPanel: { title: title + ' // REPORT', subtitle,
         headers: ['SHIFT', 'IDEAL RPM', 'YOUR RPM', 'RESULT'],
