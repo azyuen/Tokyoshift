@@ -1,0 +1,23 @@
+name: Oshiage Yuna and rolling R507
+on:
+  push:
+    paths:
+      - 'src/scenes/OshiageScene.js'
+      - 'tests/oshiage-yuna-rolling-r507.mjs'
+      - '.github/workflows/oshiage-yuna-r507.yml'
+  workflow_dispatch:
+jobs:
+  oshiage-roll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check scene JavaScript syntax
+        run: node --check src/scenes/OshiageScene.js
+      - name: Verify Yuna and rolling tyre animations
+        run: node --test tests/oshiage-yuna-rolling-r507.mjs
+      - name: Preserve eight-slot rim shop and Oshiage regressions
+        run: node --test tests/oshiage-rims-r501.mjs tests/oshiage-r496.mjs
