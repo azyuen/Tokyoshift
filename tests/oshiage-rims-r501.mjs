@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   getOshiageRimListings, getOshiageRimQuote,
   buyOrInstallOshiageRim, restoreStockOshiageRims,
-  RIMS_DISPLAY_COUNT, RIMS_REFRESH_MS,
+  RIMS_DISPLAY_COUNT, RIMS_REFRESH_MS, OSHIAGE_RIM_SLOTS,
+  RIMS_STANDARD_COUNT, RIMS_SPECIAL_COUNT,
 } from '../src/data/oshiageRims.js';
 import { WHEEL_CATALOG } from '../src/data/wheels.js';
 import {
@@ -31,18 +32,59 @@ const startingCar = {
   carStates: { ae86: { paintColor: 0xef403a }, ek9: { paintColor: 0x245bc3 } },
 };
 
-test('Oshiage displays the same rotating ten-rim wall every three hours', () => {
-  assert.equal(RIMS_DISPLAY_COUNT, 10);
+test('Oshiage displays four normal and four special designs in eight bays', () => {
+  assert.equal(RIMS_DISPLAY_COUNT, 8);
+  assert.equal(RIMS_STANDARD_COUNT, 4);
+  assert.equal(RIMS_SPECIAL_COUNT, 4);
   assert.equal(RIMS_REFRESH_MS, 10800000);
   const first = getOshiageRimListings(0);
   const second = getOshiageRimListings(RIMS_REFRESH_MS);
-  assert.equal(first.length, 10);
-  assert.equal(second.length, 10);
-  assert.notDeepEqual(first.map(x => x.id), second.map(x => x.id));
+  assert.equal(first.length, 8);
+  assert.equal(second.length, 8);
+  assert.deepEqual(first.slice(0, 4).map(x => x.id), second.slice(0, 4).map(x => x.id));
+  assert.notDeepEqual(first.slice(4).map(x => x.id), second.slice(4).map(x => x.id));
+  assert.deepEqual(first.slice(0, 4).map(x => x.tier),
+    ['STANDARD', 'STANDARD', 'STANDARD', 'STANDARD']);
+  assert.deepEqual(first.slice(4).map(x => x.tier),
+    ['TUNER', 'TUNER', 'HERO', 'HERO']);
+  assert.equal(new Set(first.map(x => x.id)).size, RIMS_DISPLAY_COUNT);
   for (const rim of first) {
     assert.ok(WHEEL_CATALOG.some(item => item.id === rim.id));
     assert.ok(rim.path.startsWith('assets/wheels/'));
   }
+});
+
+test('eight overlay positions match the cabinets in the new Oshiage art', () => {
+  assert.equal(OSHIAGE_RIM_SLOTS.length, RIMS_DISPLAY_COUNT);
+  assert.deepEqual(OSHIAGE_RIM_SLOTS.slice(0, 4).map(x => x.section),
+    ['standard', 'standard', 'standard', 'standard']);
+  assert.deepEqual(OSHIAGE_RIM_SLOTS.slice(4).map(x => x.section),
+    ['special', 'special', 'special', 'special']);
+  const left = OSHIAGE_RIM_SLOTS.slice(0, 4);
+  const middle = OSHIAGE_RIM_SLOTS.slice(4, 6);
+  const right = OSHIAGE_RIM_SLOTS.slice(6, 8);
+  assert.equal(new Set(left.map(slot => slot.x)).size, 2);
+  assert.equal(new Set(left.map(slot => slot.y)).size, 2);
+  assert.ok(left.every(slot => slot.x < 0.40));
+  assert.equal(middle[0].y, middle[1].y);
+  assert.ok(middle[0].x < middle[1].x);
+  assert.ok(right[0].x === right[1].x && right[0].y < right[1].y);
+  assert.ok(middle[1].x < right[0].x);
+  assert.ok(OSHIAGE_RIM_SLOTS.every(slot => slot.x > 0 && slot.x < 1 &&
+    slot.y > 0 && slot.y < 1 && slot.diameter > 40 && slot.diameter < 90));
+});
+
+test('Oshiage wheel shop day/night images are valid same-sized PNG assets', () => {
+  const pngInfo = phase => {
+    const bytes = readFileSync(new URL('../assets/Oshiage/oshiage_wheels_' +
+      phase + '.png', import.meta.url));
+    assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    const width = bytes.readUInt32BE(16);
+    const height = bytes.readUInt32BE(20);
+    assert.ok(width >= 1000 && height >= 500);
+    return { width, height };
+  };
+  assert.deepEqual(pngInfo('day'), pngInfo('night'));
 });
 
 test('the original rim IDs and prices are retained when buying at Oshiage', () => {
@@ -144,7 +186,10 @@ test('Rims is second Custom Works service, with Bodykit disabled and Paint exclu
   assert.match(scene, /this\.button\(955, 743, 338, 65, 'BODYKIT \/\/ COMING SOON'/);
   assert.match(scene, /drawRimShop\(\)/);
   assert.match(scene, /getOshiageRimListings\(\)/);
-  assert.match(scene, /assets\/CentralTokyo\/tokyo_wheels_/);
+  assert.match(scene, /ROOT \+ 'oshiage_wheels_' \+ cleanPhase/);
+  assert.doesNotMatch(scene, /assets\/CentralTokyo\/tokyo_wheels_/);
+  assert.match(scene, /const rack = this.rimWallRect\(\)/);
+  assert.match(scene, /const slot = OSHIAGE_RIM_SLOTS\[index\]/);
   assert.match(scene, /buyOrInstallOshiageRim\(this\.registry/);
   assert.match(scene, /restoreStockOshiageRims\(this\.registry/);
   const chassis = garage.slice(garage.indexOf('  activateChassisMode() {'),
