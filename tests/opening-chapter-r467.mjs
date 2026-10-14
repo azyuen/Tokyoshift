@@ -333,7 +333,7 @@ test('authored 02–03 spread pauses, then reveals thought and one shared car in
   assert.ok(!magazine.includes(String.raw`in…\\nbut which one would be better?`));
 });
 
-test('the in-office Sayaka call uses the canonical round portrait bubble and phone icon', async () => {
+test('the in-office Sayaka call uses the shared blue race dialogue with phone corner badge', async () => {
   const garage = source('src/scenes/GarageScene.js');
   const manga = source('src/ui/MangaCutscene.js');
   const phone = source('src/ui/PhoneConversation.js');
@@ -351,10 +351,15 @@ test('the in-office Sayaka call uses the canonical round portrait bubble and pho
   assert.match(manga, /definition\.presentation === 'phone'/);
   assert.match(manga, /scene\?\._phoneConversation\?\.active/);
   assert.match(manga, /playPhoneConversation\(scene, \{/);
-  assert.match(phone, /fillRoundedRect\(BOX\.x, BOX\.y, BOX\.width, BOX\.height/);
-  assert.match(phone, /fillTriangle\(/);
-  assert.match(phone, /fillCircle\(PORTRAIT\.x, PORTRAIT\.y, PORTRAIT\.radius\)/);
-  assert.match(phone, /image\.setMask\(portraitMask\)/);
+  assert.match(phone, /createRaceDialogueHud\\(scene, \\{/);
+  assert.match(phone, /theme: 'phone'/);
+  assert.match(phone, /phoneIconKey: PHONE_ICON_KEY/);
+  const shared = source('src/ui/RaceCoachHud.js');
+  assert.match(shared, /drawMangaSpeechBubble\\(/);
+  assert.match(shared, /bubble\\.lineTo\\(layout\\.left - layout\\.notchDepth, mid\\)/);
+  assert.match(shared, /RACE_DIALOGUE_THEMES/);
+  assert.match(shared, /iconBadge = own\\(scene\\.add\\.circle/);
+  assert.match(shared, /0xe4f5ff/);
   assert.match(phone, /setInteractive\(\{ useHandCursor: true \}\)/);
   assert.match(phone, /PHONE_ICON_KEY = 'openingIncomingPhone'/);
   assert.equal(getPhoneCallerPortrait('sayakaFujieda', 'idle')?.path,
