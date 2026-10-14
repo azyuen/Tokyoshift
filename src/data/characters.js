@@ -591,7 +591,7 @@ export const characters = {
   naoFujita: {
     id: 'naoFujita',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.91, launchSkill: 0.87, shiftSkill: 0.92, aggression: 0.75 }, betRange: [12000, 22000], competitionPrize: 22500 },
-    name: 'Nao Fujita',
+    name: 'Akane Morita',
     age: 32,
     hometown: 'Kanagawa',
     archetype: 'The Diagnostician',
@@ -604,7 +604,7 @@ export const characters = {
     regionExclusive: true,
     teamRole: 'diagnostics-specialist',
     personality: 'Dryly funny, observant and methodical; very little escapes her attention.',
-    bio: 'Nao specialises in finding the faults everyone else has already spent hours chasing. At Daikoku she is known for turning temperamental cars into brutally dependable ones.',
+    bio: 'Akane specialises in finding the faults everyone else has already spent hours chasing. At Daikoku she is known for turning temperamental cars into brutally dependable ones.',
     drivingStyle: 'Patient, measured and strongest when a race gets technical.',
     tuningFocus: 'Diagnostics, ignition, fuelling, cooling and reliability.',
     preferredCars: ['wrx22b', 'evo3', 'fc3s'],
@@ -852,7 +852,7 @@ export const characters = {
   mikaHayase: {
     id: 'mikaHayase',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.89, launchSkill: 0.88, shiftSkill: 0.91, aggression: 0.84 }, betRange: [10000, 20000], competitionPrize: 21000 },
-    name: 'Mika Hayase', archetype: 'The Precision', roleTags: ['rival', 'yokohama', 'team'],
+    name: 'Nao Fujita', archetype: 'The Precision', roleTags: ['rival', 'yokohama', 'team'],
     selectable: false, rivalEligible: true, regionId: 'YOKOHAMA', regionExclusive: true, teamRole: 'core',
     personality: 'Measured and technical.', bio: 'A Yokohama racer focused on repeatable, efficient passes.',
     drivingStyle: 'Clean launches and consistent shifts.', tuningFocus: 'Balance and traction.',
