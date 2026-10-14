@@ -372,7 +372,7 @@ export default class OshiageScene extends Phaser.Scene {
     const selectedCar = this.selectedCar();
     const progress = this.registry.get('oshiageCoachingProgress') || {};
     const completed = lesson.key
-      ? Boolean(progress[selectedCar.id]?.[lesson.key])
+      ? Boolean(progress[selectedCar.id]?.[lesson.key]?.completed)
       : Boolean(this.registry.get('oshiageBasicLessonComplete'));
     this.addText(SIDE.x + 20, SIDE.y + 489,
       completed ? 'COMPLETED // PRACTISE AGAIN' : 'FREE PRACTICE // NO STAKES',
