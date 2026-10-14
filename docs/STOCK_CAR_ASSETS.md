@@ -34,6 +34,8 @@ placements, physics, wheel registration or existing game car IDs.
 
 ## Approved future roster replacement (2026-10-15)
 
-The previously planned **Subaru Legacy GT-B wagon (BG5/BH5)** is **removed from the future roster plan** in favour of the **Subaru Impreza WRX STI GRB hatchback** (JDM, 2007–2014; EJ207 2.0L turbo, 227 kW / 422 Nm, AWD, six-speed manual). The GT-B wagon was **never deployed**; no existing model ID or save data needs migration.
+The previously planned **Subaru Legacy GT-B wagon (BG5/BH5)** is **removed from the future roster plan** in favour of the **1999–2000 Subaru Impreza WRX STI Version VI (GF8)** five-door sports wagon/hatchback. This also supersedes the briefly selected third-generation GRB hatchback.
 
-The deployed **Subaru Legacy B4 RSK sedan** (`b4rsk`) and **Subaru Impreza 22B STI** (`wrx22b`) are separate cars and remain unchanged. The GRB is **planned, not deployed**. Do not register it as playable until matching transparent BODY/PAINT layers have been supplied and calibrated under the canonical stock-car asset standard above.
+The approved **GF8** is the **206 kW (280 PS) / 353 Nm** JDM EJ207-powered Version VI, weighing **1,310 kg**, with AWD and a **five-speed manual**. The intended unique game ID is `gf8`; proposed stock and modified Auto Market prices are **¥3,500,000** and **¥4,200,000** respectively. This remains **planned, not deployed**: only register it once the user uploads a matching GF8 BODY/PAINT asset pair and the geometry/engine/market configuration is calibrated.
+
+The GT-B and GRB were **never deployed**. The deployed **Subaru Legacy B4 RSK sedan** (`b4rsk`) and **Subaru Impreza 22B STI** (`wrx22b`) remain unchanged. See [canonical GF8 roster and asset-intake specifications](PLANNED_GF8_WRX_STI.md) for exact model identification, sources and asset naming.
