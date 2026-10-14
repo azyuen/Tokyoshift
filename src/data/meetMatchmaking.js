@@ -150,7 +150,15 @@ export function createMeetOpponentMatch(options = {}) {
   const allowedBuildRatings = getAllowedBuildRatings(options.difficulty, bandId);
   const candidates = [];
 
-  for (const carId of carOrder) {
+  // A named regional rival keeps their authored signature model. We still
+  // select their tune/build from the location's permitted difficulty range.
+  // Unnamed/generic encounters retain the original performance-based variety.
+  const signatureId = String(options.requiredCarId || '');
+  const eligibleCarOrder = signatureId && carOrder.includes(signatureId) && cars[signatureId]
+    ? [signatureId]
+    : carOrder;
+
+  for (const carId of eligibleCarOrder) {
     const car = cars[carId];
     if (!car || car.collector || car.tuningLocked) continue;
 
