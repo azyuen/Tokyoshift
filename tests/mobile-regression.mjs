@@ -17,8 +17,25 @@ try {
     const context=await browser.newContext({...device,serviceWorkers:'block'});
     const page=await context.newPage();
     const failures=[];
-    page.on('pageerror',e=>failures.push('uncaught: '+e.message));
-    page.on('console',m=>{if(m.type()==='error'&&/SyntaxError|ReferenceError|TypeError|Failed to fetch dynamically imported module/.test(m.text()))failures.push(m.text());});
+    const requests=[];
+    const errors=[];
+    page.on('requestfailed', req => {
+      const message = req.failure()?.errorText || 'request failed';
+      requests.push(req.url() + ' => ' + message);
+    });
+    page.on('response', res => {
+      if (res.status() >= 400) requests.push(res.status() + ' ' + res.url());
+    });
+    page.on('pageerror',e=>{
+      const message = 'uncaught: ' + (e.stack || e.message);
+      errors.push(message); failures.push(message);
+    });
+    page.on('console',m=>{
+      if(m.type()==='error'){
+        errors.push('console: '+m.text());
+        if(/SyntaxError|ReferenceError|TypeError|Failed to fetch dynamically imported module/.test(m.text()))failures.push(m.text());
+      }
+    });
     await page.goto('http://127.0.0.1:8765/',{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(14000);
     const before=await page.evaluate(()=>({
@@ -27,8 +44,16 @@ try {
       viewport:document.documentElement.clientWidth,
       scrollWidth:document.documentElement.scrollWidth,
       scene:document.body.dataset.scene||'',
+      label:document.getElementById('loading-label')?.textContent,
+      percent:document.getElementById('loading-percent')?.textContent,
+      diagnostic:document.getElementById('loading-screen')?.getAttribute('data-boot-error')||'',
+      phaser:typeof window.Phaser,
+      game:typeof window.TOKYO_SHIFT,
+      mainScripts:[...document.scripts].map(s=>({src:s.src,type:s.type})),
+      navigation:performance.getEntriesByType('resource').filter(x=>/phaser|main\.js|jsdelivr|unpkg/.test(x.name)).map(x=>({name:x.name,duration:Math.round(x.duration),size:x.transferSize})),
     }));
     await page.screenshot({path:'artifacts/mobile/'+name+'-launch.png',fullPage:true});
+    console.log('[MOBILE STARTUP DIAGNOSTICS]',JSON.stringify({name,before,requests:requests.slice(0,35),errors:errors.slice(0,25)}));
     assert.equal(before.bootError,false,name+' must not show boot error');
     assert.ok(before.canvas>0,name+' must render a game canvas');
     assert.ok(before.scrollWidth<=before.viewport+2,name+' must not overflow horizontally');
