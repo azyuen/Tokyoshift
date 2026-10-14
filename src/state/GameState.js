@@ -149,6 +149,7 @@ export function createDefaultGameState(options = {}) {
     oshiageLessonTab: 0,
     oshiageTrainingLesson: null,
     oshiageCoachingProgress: {},
+    oshiageSchoolBooking: null,
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
       autoMarket: false,
@@ -1160,6 +1161,14 @@ export function normaliseState(input = {}) {
       ? input.oshiageTrainingLesson : null,
     oshiageCoachingProgress: input.oshiageCoachingProgress && typeof input.oshiageCoachingProgress === 'object' &&
       !Array.isArray(input.oshiageCoachingProgress) ? input.oshiageCoachingProgress : {},
+    oshiageSchoolBooking: input.oshiageSchoolBooking &&
+      ['launch', 'standing', 'rolling'].includes(input.oshiageSchoolBooking.lessonId) &&
+      typeof input.oshiageSchoolBooking.carId === 'string' &&
+      Number(input.oshiageSchoolBooking.attemptsUsed) >= 0 &&
+      Number(input.oshiageSchoolBooking.attemptsUsed) <= 4
+      ? { carId: input.oshiageSchoolBooking.carId, lessonId: input.oshiageSchoolBooking.lessonId,
+          fee: Math.max(0, Number(input.oshiageSchoolBooking.fee) || 0),
+          attemptsUsed: Math.floor(Number(input.oshiageSchoolBooking.attemptsUsed)) } : null,
     centralTokyoLocation: String(input.centralTokyoLocation || base.centralTokyoLocation),
     centralTokyoUnlocks: {
       ...base.centralTokyoUnlocks,
@@ -1302,6 +1311,7 @@ export function snapshotRegistry(registry) {
     oshiageLessonTab: Number(registry.get('oshiageLessonTab') || 0),
     oshiageTrainingLesson: registry.get('oshiageTrainingLesson') || null,
     oshiageCoachingProgress: registry.get('oshiageCoachingProgress') || {},
+    oshiageSchoolBooking: registry.get('oshiageSchoolBooking') || null,
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},
     tokyoInvitesSeen: registry.get('tokyoInvitesSeen') || {},
