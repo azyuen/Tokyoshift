@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/scenes/OshiageScene.js'
       - 'tests/oshiage-yuna-rolling-r507.mjs'
+      - 'tests/oshiage-r496.mjs'
       - '.github/workflows/oshiage-yuna-r507.yml'
   workflow_dispatch:
 jobs:
