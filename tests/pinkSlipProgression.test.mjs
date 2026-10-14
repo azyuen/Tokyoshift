@@ -11,7 +11,7 @@ function registry(seed = {}) {
 }
 test('AE86 and EF still have an actual early pink-slip car pool', () => {
   for (const starter of ['ae86', 'ef']) {
-    for (const rival of ['ae86', 'ef', 'ej1', 'ek9', 'fc3s']) {
+    for (const rival of ['ae86', 'ef', 'crx', 'ek9', 'fc3s']) {
       assert.equal(isPinkSlipValueEligible(starter, rival), true, starter + ' vs ' + rival);
     }
     assert.equal(isPinkSlipValueEligible(starter, 'r32'), false);
