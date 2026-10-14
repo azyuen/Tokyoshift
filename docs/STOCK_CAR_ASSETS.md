@@ -31,3 +31,9 @@ archived in [the permanent legacy ZIP release](https://github.com/azyuen/Tokyosh
 
 The migration doesn't modify saved profiles, installed upgrades, decal
 placements, physics, wheel registration or existing game car IDs.
+
+## Approved future roster replacement (2026-10-15)
+
+The previously planned **Subaru Legacy GT-B wagon (BG5/BH5)** is **removed from the future roster plan** in favour of the **Subaru Impreza WRX STI GRB hatchback** (JDM, 2007–2014; EJ207 2.0L turbo, 227 kW / 422 Nm, AWD, six-speed manual). The GT-B wagon was **never deployed**; no existing model ID or save data needs migration.
+
+The deployed **Subaru Legacy B4 RSK sedan** (`b4rsk`) and **Subaru Impreza 22B STI** (`wrx22b`) are separate cars and remain unchanged. The GRB is **planned, not deployed**. Do not register it as playable until matching transparent BODY/PAINT layers have been supplied and calibrated under the canonical stock-car asset standard above.
