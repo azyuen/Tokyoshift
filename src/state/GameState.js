@@ -9,7 +9,7 @@ import {
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
-import { migrateRetiredEvoIX } from '../data/carRetirement.js?v=20261011-r479';
+import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js?v=20261014-r503';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -744,6 +744,8 @@ export function normaliseState(input = {}) {
   // Retired EVO IX owned cars/coupons are migrated before any IDs are filtered,
   // registered or copied into persistent workshop/competition state.
   input = migrateRetiredEvoIX(input);
+  // Resolve any leftover EJ1 rival/crew/competition IDs before registry hydration.
+  input = migrateRetiredEJ1(input);
   const hadSayakaShinagawaCrew = input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda';
   const oldLoanCarId = 'crew__sayakaFujieda';
   const replacementLoanCarId = 'crew__reikaTachibana';
