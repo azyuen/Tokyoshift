@@ -2,6 +2,7 @@ import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
+import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261014-r510';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
@@ -1302,69 +1303,94 @@ export default class RaceScene extends Phaser.Scene {
     this.coachShifts = [];
     this.coachPeakSlip = 0;
     this.coachLaunchRPM = null;
+    this.coachSelectedRollingGear = null;
     this.coachLaunchCommented = false;
     this.coachComplete = false;
     this.player.transmission.currentGear = 1;
     this.player.clutch.pedal = 1;
 
-    const outer = this.add.rectangle(1283, 208, 500, 205, 0x0a1724, 0.91)
-      .setStrokeStyle(2, 0x80dce5).setScrollFactor(0).setDepth(80);
-    this.coachPanel = outer;
-    this.add.text(1090, 121, 'LADY INSTRUCTOR  //  OSHIAGE', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80e8e5'
-    }).setDepth(82).setScrollFactor(0);
-    this.coachDialogue = this.add.text(1185, 158, '', {
-      fontFamily: BODY_FONT, fontSize: '16px', fontStyle: 'bold',
-      color: '#ffffff', wordWrap: { width: 320 }, lineSpacing: 4
+    // Compact cutscene-style coaching with a head close-up, white dialogue,
+    // and a completely separate large RPM/gear circle to the right.
+    const mask = this.make.graphics({ add: false });
+    mask.fillStyle(0xffffff).fillRect(38, 116, 191, 158);
+    this.coachFaceMask = mask;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => mask.destroy());
+    this.add.rectangle(133, 195, 198, 166, 0xf9faf7, 1)
+      .setStrokeStyle(4, 0x111820).setScrollFactor(0).setDepth(81);
+    this.coachPortrait = this.add.image(50, 120, 'oshiageSayaka_explaining')
+      .setOrigin(0, 0).setDepth(82).setScrollFactor(0)
+      .setMask(mask.createGeometryMask());
+    this.add.rectangle(662, 195, 826, 162, 0xfafaf7, 0.985)
+      .setStrokeStyle(4, 0x15191c).setDepth(80).setScrollFactor(0);
+    this.add.text(275, 131, 'LADY INSTRUCTOR // OSHIAGE', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#121b21'
+    }).setScrollFactor(0).setDepth(83);
+    this.coachDialogue = this.add.text(275, 180, '', {
+      fontFamily: BODY_FONT, fontSize: '17px', fontStyle: 'bold',
+      color: '#101820', wordWrap: { width: 755 }, lineSpacing: 4
     }).setDepth(84).setScrollFactor(0);
-    this.coachTarget = this.add.text(1185, 255, '', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe49a',
-      wordWrap: { width: 315 }
-    }).setDepth(84).setScrollFactor(0);
-    if (this.textures.exists('oshiageSayaka_explaining')) {
-      this.coachPortrait = this.add.image(1080, 309, 'oshiageSayaka_explaining')
-        .setOrigin(0.5, 1).setDepth(83).setScrollFactor(0);
-      const source = this.textures.get('oshiageSayaka_explaining').getSourceImage();
-      this.coachPortrait.setScale(166 / Math.max(1, source.height));
-      this.coachPortrait.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    }
+    this.add.circle(1375, 199, 125, 0xfafbf7, 0.99)
+      .setStrokeStyle(5, 0x12171c).setDepth(79).setScrollFactor(0);
+    this.coachTargetLabel = this.add.text(1375, 138, 'SUGGESTED', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#25313a'
+    }).setOrigin(0.5).setDepth(82).setScrollFactor(0);
+    this.coachTarget = this.add.text(1375, 193, '', {
+      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#0b1520',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
+    this.coachTargetFoot = this.add.text(1375, 250, '', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#334454',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
     this.coachSetTarget();
-    const lead = this.coachingLesson === 'launch'
-      ? 'Hold the revs in the suggested band. Release the clutch progressively on green.'
+    const intro = this.coachingLesson === 'launch'
+      ? 'Hold the launch RPM inside that circle. Release the clutch smoothly on green.'
       : this.coachingLesson === 'rolling'
-        ? 'We will start at 60 km/h. Select the suggested gear before green.'
-        : 'Start cleanly, then aim for each suggested shift band.';
-    this.coachSpeak(lead, 'explaining');
+        ? 'At 60 km/h, choose the suggested gear. I will help with the shifts afterwards.'
+        : 'Watch the target circle for each gear change. The band matters, not a single RPM.';
+    this.coachSpeak(intro, 'explaining');
+  }
+
+  coachSetPortrait(pose = 'neutral') {
+    const key = 'oshiageSayaka_' + pose;
+    if (!this.coachPortrait || !this.textures.exists(key)) return;
+    this.coachPortrait.setTexture(key);
+    const image = this.textures.get(key).getSourceImage();
+    // A neckline-to-head crop using a fixed mask for all four poses.
+    const s = Math.max(191 / Math.max(1, image.width * 0.59),
+      158 / Math.max(1, image.height * 0.42));
+    this.coachPortrait.setScale(s);
+    this.coachPortrait.setPosition(38 - image.width * 0.205 * s,
+      116 - image.height * 0.055 * s);
+    this.coachPortrait.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   }
 
   coachSpeak(message, pose = 'neutral') {
     if (!this.coachDialogue) return;
     this.coachDialogue.setText(message);
-    const key = 'oshiageSayaka_' + pose;
-    if (this.coachPortrait && this.textures.exists(key)) {
-      this.coachPortrait.setTexture(key);
-      const img = this.textures.get(key).getSourceImage();
-      this.coachPortrait.setScale(166 / Math.max(1, img.height));
-    }
+    this.coachSetPortrait(pose);
   }
 
   coachSetTarget() {
     if (!this.coachTarget) return;
     if (this.coachingLesson === 'launch') {
-      this.coachTarget.setText('LAUNCH BAND  ' + this.coachLaunch.min.toLocaleString() +
-        '–' + this.coachLaunch.max.toLocaleString() + ' RPM');
+      this.coachTargetLabel.setText('LAUNCH');
+      this.coachTarget.setText(this.coachLaunch.min.toLocaleString() + '–\n' +
+        this.coachLaunch.max.toLocaleString());
+      this.coachTargetFoot.setText('RPM');
     } else if (this.coachingLesson === 'rolling' && this.greenClock == null) {
-      this.coachTarget.setText('AT 60 KM/H  ·  GEAR ' + this.coachRolling.gear +
-        '  ·  ~' + this.coachRolling.rpm.toLocaleString() + ' RPM');
+      this.coachTargetLabel.setText('AT 60 KM/H');
+      this.coachTarget.setText('GEAR ' + this.coachRolling.gear);
+      this.coachTargetFoot.setText('~' + this.coachRolling.rpm.toLocaleString() + ' RPM');
     } else {
       const from = this.coachShifts.length
         ? this.coachShifts[this.coachShifts.length - 1].to
         : Math.max(1, this.player?.transmission?.currentGear || 1);
       const band = this.coach.shiftBands[from - 1];
+      this.coachTargetLabel.setText(band ? 'SHIFT ' + from + ' → ' + (from + 1) : 'KEEP GOING');
       this.coachTarget.setText(band
-        ? 'SHIFT ' + band.from + ' → ' + band.to + '   ' +
-          band.min.toLocaleString() + '–' + band.max.toLocaleString() + ' RPM'
-        : 'HOLD YOUR GEAR  //  KEEP ACCELERATING');
+        ? band.min.toLocaleString() + '–\n' + band.max.toLocaleString() : '—');
+      this.coachTargetFoot.setText(band ? 'RPM' : 'NO NEXT GEAR');
     }
   }
 
@@ -1384,6 +1410,10 @@ export default class RaceScene extends Phaser.Scene {
   updateCoachedLesson(controls, telemetry) {
     if (!this.isCoaching || this.coachComplete || this.greenClock == null) return;
     const elapsed = this.raceClock - this.greenClock;
+    if (this.isRollingStart && this.coachSelectedRollingGear == null) {
+      this.coachSelectedRollingGear = telemetry.gear || this.player.transmission.currentGear;
+      this.coachSetTarget();
+    }
     this.coachPeakSlip = Math.max(this.coachPeakSlip, Number(telemetry.slipRatio || 0));
     if (this.coachLaunchRPM == null && !this.isRollingStart &&
         this.player.transmission.currentGear === 1 && telemetry.speedKmh >= 2) {
