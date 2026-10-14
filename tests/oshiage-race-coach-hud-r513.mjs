@@ -31,7 +31,7 @@ test('portrait floats borderless with a zoomed and face-centred transparent crop
   assert.match(hud, /resolveCharacterFaceAnchor\(/);
   assert.match(hud, /face\.headHeight \/ Math\.max\(1, anchor\.headHeight\)/);
   assert.match(hud, /setMask\(maskShape\.createGeometryMask\(\)\)/);
-  const portraitArea = hud.slice(hud.indexOf('const maskShape'), hud.indexOf('drawMangaSpeechBubble(scene, bubble)'));
+  const portraitArea = hud.slice(hud.indexOf('const maskShape'), hud.indexOf('const speech = drawMangaSpeechBubble'));
   assert.doesNotMatch(portraitArea, /scene\.add\.rectangle|setStrokeStyle|setTint|fillRect\(face\.x, face\.y, face\.width, face\.height\).*setDepth/);
 });
 
