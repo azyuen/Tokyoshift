@@ -1306,6 +1306,7 @@ export default class RaceScene extends Phaser.Scene {
     this.coachSelectedRollingGear = null;
     this.coachLaunchCommented = false;
     this.coachComplete = false;
+    this.coachRetrying = false; // Phaser scene.restart() reuses this scene instance.
     this.player.transmission.currentGear = 1;
     this.player.clutch.pedal = 1;
 
