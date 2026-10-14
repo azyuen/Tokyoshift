@@ -1,0 +1,25 @@
+name: Oshiage race coach HUD R513
+on:
+  push:
+    paths:
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/oshiage-race-coach-hud-r513.mjs'
+      - 'tests/oshiage-ui-r510.mjs'
+      - '.github/workflows/oshiage-race-coach-hud-r513.yml'
+  workflow_dispatch:
+jobs:
+  hud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check src/ui/RaceCoachHud.js
+          node --check src/scenes/RaceScene.js
+      - name: Tutorial HUD and coaching regressions
+        run: node --test tests/oshiage-race-coach-hud-r513.mjs tests/oshiage-school-polish-r512.mjs tests/oshiage-manga-r511.mjs tests/oshiage-ui-r510.mjs tests/oshiage-coaching-r509.mjs tests/oshiage-r496.mjs
