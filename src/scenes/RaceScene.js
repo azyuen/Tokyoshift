@@ -1481,89 +1481,113 @@ export default class RaceScene extends Phaser.Scene {
     saveSessionState(this.registry);
 
 
-    this.add.rectangle(780, 360, 1560, 720, 0xf9faf8, 0.93)
-      .setScrollFactor(0).setDepth(115).setInteractive();
-    const panel = this.add.rectangle(984, 359, 934, 652, 0xffffff, 0.99)
-      .setStrokeStyle(5, 0x141820).setDepth(117).setScrollFactor(0);
-    panel.setScale(0.98);
-    this.tweens.add({ targets: panel, scaleX: 1, scaleY: 1, duration: 230, ease: 'Cubic.Out' });
-    const pose = isLaunch && this.coachPeakSlip > 0.27 ? 'concerned'
-      : clean === total && total > 0 || isLaunch ? 'happy' : 'explaining';
-    const key = 'oshiageSayaka_' + pose;
-    if (this.textures.exists(key)) {
-      const source = this.textures.get(key).getSourceImage();
-      this.add.image(271, 680, key).setOrigin(0.5, 1)
-        .setScale(510 / Math.max(1, source.height)).setDepth(119).setScrollFactor(0);
-    }
-    const txt = (x, y, words, size = '10px', color = '#141820') =>
-      this.add.text(x, y, words, { fontFamily: PIXEL_FONT, fontSize: size, color })
-        .setDepth(123).setScrollFactor(0);
-    txt(570, 59, 'LADY INSTRUCTOR // PRACTICE RESULTS', '12px');
-    txt(570, 111, timeText + '  //  ' + Math.round(distance) + 'm', '11px');
-    if (this.coachingLesson === 'rolling')
-      txt(570, 155, 'ROLLING: GEAR ' + (this.coachSelectedRollingGear ?? '—') +
-        '   //   TARGET GEAR ' + this.coachRolling.gear, '9px');
-    this.add.rectangle(986, 216, 819, 42, 0xe7e9e7).setDepth(121).setScrollFactor(0);
-    txt(590, 206, 'GEAR', '9px');
-    txt(738, 206, 'IDEAL RPM', '9px');
-    txt(1072, 206, 'YOUR RPM', '9px');
-    txt(1238, 206, 'ASSESSMENT', '9px');
-    const rows = isLaunch
-      ? [{ from: 'LAUNCH', min: this.coachLaunch.min, max: this.coachLaunch.max,
-        actual: this.coachLaunchRPM,
-        verdict: this.coachLaunchRPM == null ? '—'
-          : this.coachLaunchRPM < this.coachLaunch.min ? 'TOO LOW'
-          : this.coachLaunchRPM > this.coachLaunch.max ? 'TOO HIGH' : 'IN RANGE' }]
-      : this.coach.shiftBands.map(band => {
-        const used = this.coachShifts.find(entry => entry.from === band.from);
-        return { from: band.from + ' → ' + band.to, min: band.min, max: band.max,
-          actual: used?.rpm ?? null, verdict: !used ? 'NO SHIFT'
-            : used.within ? 'IN RANGE'
-            : used.rpm < band.min ? 'EARLY'
-            : used.rpm > band.max ? 'LATE' : 'ROUGH' };
+    // Preserve the final image of the run. R510 displayed a large custom
+    // result box immediately and masked the final gear change. Wait, then ask
+    // for a separate tap before opening the actual manga cutscene renderer.
+    this.coachResult = { isLaunch, feedback, timeText, distance,
+      timedOut, clean, total, elapsed: resultSeconds };
+    this.time.delayedCall(1500, () => {
+      if (!this.sys.isActive() || !this.coachComplete || sceneCutsceneActive(this)) return;
+      const banner = this.add.rectangle(780, 118, 660, 70, 0xfffcf1, 0.98)
+        .setStrokeStyle(5, 0x111111).setScrollFactor(0).setDepth(150);
+      const message = this.add.text(780, 118, 'PRACTICE FINISHED  //  TAP TO REVIEW', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#151b20',
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(151);
+      const continueToResults = () => {
+        banner.destroy();
+        message.destroy();
+        if (this.sys.isActive()) this.showCoachedResultsCutscene();
+      };
+      banner.setInteractive({ useHandCursor: true }).once('pointerdown', continueToResults);
+      // Accept a press elsewhere too, as requested, but only after the pause.
+      this.input.once('pointerdown', () => {
+        if (banner.active) continueToResults();
       });
-    rows.slice(0, 7).forEach((row, i) => {
-      const y = 252 + 40 * i;
-      if (i % 2 === 0) this.add.rectangle(984, y + 13, 819, 37, 0xf1f3f1)
-        .setDepth(121).setScrollFactor(0);
-      txt(590, y, row.from, '9px');
-      txt(738, y, row.min.toLocaleString() + '–' + row.max.toLocaleString(), '9px');
-      txt(1072, y, row.actual == null ? '—' : row.actual.toLocaleString(), '10px');
-      txt(1238, y, row.verdict, '8px', row.verdict === 'IN RANGE' ? '#127150' : '#753f30');
     });
-    if (isLaunch) txt(590, 312,
-      'PEAK WHEELSPIN // ' + Math.round(this.coachPeakSlip * 100) + '%', '9px');
-    this.add.text(590, 507, feedback, {
-      fontFamily: BODY_FONT, fontSize: '16px', fontStyle: 'bold', color: '#141820',
-      wordWrap: { width: 770 },
-    }).setDepth(123).setScrollFactor(0);
+  }
+
+
+  showCoachedResultsCutscene() {
+    if (!this.isCoaching || !this.coachResult || sceneCutsceneActive(this)) return;
+    const result = this.coachResult;
+    const launch = result.isLaunch;
+    const shiftRows = launch
+      ? [{ label: 'LAUNCH', target: this.coachLaunch.min.toLocaleString() + '–' +
+            this.coachLaunch.max.toLocaleString(),
+          actual: this.coachLaunchRPM == null ? '—' : Math.round(this.coachLaunchRPM).toLocaleString(),
+          result: this.coachLaunchRPM == null ? 'NO REVS'
+            : this.coachLaunchRPM < this.coachLaunch.min ? 'LOW'
+            : this.coachLaunchRPM > this.coachLaunch.max ? 'HIGH' : 'IN RANGE' }]
+      : this.coach.shiftBands.map(band => {
+          const attempt = this.coachShifts.find(entry => entry.from === band.from);
+          return {
+            label: band.from + ' → ' + band.to,
+            target: band.min.toLocaleString() + '–' + band.max.toLocaleString(),
+            actual: attempt?.rpm == null ? '—' : Number(attempt.rpm).toLocaleString(),
+            result: !attempt ? 'NO SHIFT'
+              : attempt.within ? 'IN RANGE'
+              : attempt.rpm < band.min ? 'EARLY'
+              : attempt.rpm > band.max ? 'LATE' : 'ROUGH',
+          };
+        });
     const booking = this.registry.get('oshiageSchoolBooking');
-    const remaining = bookingMatches(booking, this.selectedCarId, this.coachingLesson)
+    const retries = bookingMatches(booking, this.selectedCarId, this.coachingLesson)
       ? remainingAttempts(booking) : 0;
-    const makeButton = (x, message, fn) => {
-      this.add.rectangle(x, 617, 343, 62, 0xffffff).setStrokeStyle(4, 0x141820)
-        .setDepth(125).setScrollFactor(0).setInteractive({ useHandCursor: true })
-        .on('pointerdown', fn);
-      this.add.text(x, 617, message, { fontFamily: PIXEL_FONT,
-        fontSize: '10px', color: '#141820' }).setOrigin(0.5)
-        .setDepth(126).setScrollFactor(0);
+    const title = launch ? 'LAUNCH CONTROL' :
+      this.coachingLesson === 'rolling' ? 'ROLLING SHIFTS' : 'STANDING SHIFTS';
+    const subtitle = this.coachingLesson === 'rolling'
+      ? '60 KM/H: TARGET GEAR ' + this.coachRolling.gear +
+        '  //  YOUR GEAR ' + (this.coachSelectedRollingGear ?? '—')
+      : result.timeText + '  //  ' + Math.round(result.distance) + ' M';
+    const footer = launch
+      ? 'PEAK WHEELSPIN ' + Math.round(this.coachPeakSlip * 100) + '%'
+      : 'ON TARGET ' + result.clean + '/' + result.total + ' ACTUAL UPSHIFTS';
+    const definition = {
+      id: 'oshiageLessonResult_' + this.coachingLesson,
+      title: 'OSHIAGE // DRIVING SCHOOL',
+      once: false,
+      characters: { left: 'sayakaFujieda' },
+      pages: [{
+        speaker: 'left',
+        pose: result.timedOut ? 'homeSad' : 'homeHappy',
+        nameOverride: 'LADY INSTRUCTOR',
+        text: result.feedback + ' Have a look at your actual revs against the recommended ranges.',
+      }],
+      finalActionLabel: 'RETURN TO SCHOOL',
+      secondaryFinalActionLabel: retries > 0 ? 'RETRY (' + retries + ' LEFT)' : null,
     };
-    if (remaining > 0) makeButton(770, 'RETRY // ' + remaining + ' LEFT', () => {
-      if (this.coachRetrying) return;
-      const current = this.registry.get('oshiageSchoolBooking');
-      if (!bookingMatches(current, this.selectedCarId, this.coachingLesson)) return;
-      const next = consumeOshiageAttempt(current);
-      if (!next) return;
-      this.coachRetrying = true;
-      this.registry.set('oshiageSchoolBooking', next);
-      saveSessionState(this.registry);
-      this.scene.restart();
+    const next = playMangaCutscene(this, definition, {
+      backgroundStyle: 'wash',
+      infoPanel: { title: title + ' // REPORT', subtitle,
+        headers: ['SHIFT', 'IDEAL RPM', 'YOUR RPM', 'RESULT'],
+        rows: shiftRows, footer },
+      onComplete: ({ reason }) => {
+        if (reason === 'secondary' && retries > 0) {
+          if (this.coachRetrying) return;
+          const current = this.registry.get('oshiageSchoolBooking');
+          if (bookingMatches(current, this.selectedCarId, this.coachingLesson)) {
+            const updatedBooking = consumeOshiageAttempt(current);
+            if (updatedBooking) {
+              this.coachRetrying = true;
+              this.registry.set('oshiageSchoolBooking', updatedBooking);
+              saveSessionState(this.registry);
+              this.scene.restart();
+              return;
+            }
+          }
+        }
+        // Primary action, SKIP and exhausted retries return safely.
+        this.registry.set('oshiageTrainingLesson', null);
+        saveSessionState(this.registry);
+        this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
+      },
     });
-    makeButton(remaining ? 1180 : 984, 'RETURN TO SCHOOL', () => {
+    if (!next.played) {
+      // A renderer failure must not strand the player on a frozen track.
       this.registry.set('oshiageTrainingLesson', null);
       saveSessionState(this.registry);
       this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
-    });
+    }
   }
 
   setupDrivingTutorial() {
