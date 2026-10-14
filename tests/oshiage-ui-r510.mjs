@@ -69,7 +69,7 @@ test('UI uses left face, big target circle, contrasting results and actual shift
   assert.match(school,/showLessonBookingDialogue\(lesson\.id\)/);
   assert.match(school,/bookOshiageLesson\(/);
   assert.match(race,/coachFaceMask/);
-  assert.match(race,/this\.add\.circle\(1375, 199, 125/);
+  assert.match(race,/createRaceCoachHud\(this,/);
   assert.match(race,/backgroundStyle: 'wash'/);
   assert.match(race,/attempt\?\.rpm/);
   assert.match(race,/bookingMatches\(current, this\.selectedCarId, this\.coachingLesson\)/);
