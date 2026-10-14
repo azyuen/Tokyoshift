@@ -3,7 +3,8 @@ import {
   REGION_TEAM_CHARACTER_IDS,
   MAIN_RIVAL_BY_REGION,
   genericRivalCharacterOrder,
-} from './characters.js?v=20261007-r404';
+} from './characters.js?v=20261015-signatures';
+import { getCrewBaseCarId, getRegionalCrewRoster } from './crewRoster.js?v=20261015-signatures';
 import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
 
 export const TUNER_TEAM_CHALLENGE_WINS = 10;
@@ -73,23 +74,25 @@ const REGION_OFFSETS = {
   DAIKOKU: 0,
 };
 
-const REGION_CARS = {
-  // Temporary Option 2 pools using the current roster. These are intentionally
-  // progression-ordered and may duplicate cars until the full 42-car roster lands.
-  ODAIBA: ['crx', 'ae86', 'ef', 'a60', 'fc3s', 'ek9', 'ek9'],
-  SHINAGAWA: ['ae86', 'ef', 'a60', 'ek9', 'fc3s', 'fc3s', 'ek9'],
-  TATSUMI: ['a60', 'ek9', 'fc3s', 'rx8', 's2000', 'evo3', 'evo3'],
-  SHIBUYA: ['fc3s', 'ek9', 'rx8', 's2000', 'evo3', 'r32', 'r32'],
+// Each recruitable rival uses the one fixed regional signature car in crewRoster.
+// Main rivals are permanent opponents and reuse a car from their own region.
+const REGION_LEADER_CARS = Object.freeze({
+  ODAIBA: 'ae86',
+  SHINAGAWA: 'fc3s',
+  TATSUMI: 's15',
+  SHIBUYA: '180sx',
+  YOKOHAMA: 'gdb',
+  DAIKOKU: 'wrx22b',
+  SHINJUKU: 'jza80',
+});
 
-  // Rank 5: final Canal Yard / Level 2 graduation region.
-  YOKOHAMA: ['rx8', 's2000', 'evo3', 'rx7fd', 'evo5', 'r32', 'r32'],
-
-  // Rank 6: Warehouse-era region.
-  DAIKOKU: ['s2000', 'evo3', 'r32', 'rx7fd', 'nsx', '3000gt', '3000gt'],
-
-  // Rank 7: hardest regional championship.
-  SHINJUKU: ['wrx22b', 'evo5', 'evo6', 'jza80', 'r34', '3000gt', '3000gt'],
-};
+function regionalSignatureCarId(regionId, characterId, fallback = 'r32') {
+  const key = normaliseRegion(regionId);
+  const id = String(characterId || '');
+  return id === MAIN_RIVAL_BY_REGION[key]
+    ? REGION_LEADER_CARS[key] || fallback
+    : getCrewBaseCarId(id) || fallback;
+}
 
 const REGION_RACE_PATTERNS = {
   // Home Workshop championships teach launches and clean shifts first.
@@ -296,14 +299,17 @@ export function getTunerTeamChallengeState(source, regionId) {
     retryNotBefore: perfectComplete ? 0 : Math.max(0, Number(raw.retryNotBefore || 0)),
     rounds: Array.isArray(raw.rounds)
       ? raw.rounds.map((round, index) => {
-          // Existing saves keep their player car, driver identities, earned
-          // wins and stage. Only the first two championships receive the
-          // corrected entrant hardware, driver difficulty and race format.
-          if (!round || !['ODAIBA', 'SHINAGAWA'].includes(key)) return round;
+          // Preserve progress, player hardware and driver identities in old
+          // saves, while migrating each rival's model to their signature car.
+          if (!round) return round;
+          const carId = regionalSignatureCarId(key, round.characterId, round.carId);
+          if (!['ODAIBA', 'SHINAGAWA'].includes(key)) {
+            return carId === round.carId ? round : { ...round, carId };
+          }
           const rating = REGION_DRIVER_RATINGS[key][index];
           return {
             ...round,
-            carId: REGION_CARS[key][index] || round.carId,
+            carId,
             encounterRating: rating,
             encounterAi: challengeAi(index, rating, key),
             difficulty: index === 6 ? 'PRO' : rating >= 4 ? 'EXPERT' : rating >= 3 ? 'SKILLED' : 'ROOKIE',
@@ -407,7 +413,10 @@ export function buildTunerTeamChallengeRounds(
 ) {
   const key = normaliseRegion(regionId);
   const roster = getTunerTeamChallengeRoster(key, playerCharacterId);
-  const cars = REGION_CARS[key] || REGION_CARS.ODAIBA;
+  const fallbackCars = [
+    ...(getRegionalCrewRoster(key)?.members || []).map(member => member.baseCarId),
+    REGION_LEADER_CARS[key] || 'r32',
+  ];
   const pattern = REGION_RACE_PATTERNS[key] || REGION_RACE_PATTERNS.ODAIBA;
   const ratings = REGION_DRIVER_RATINGS[key] || REGION_DRIVER_RATINGS.ODAIBA;
   const era = REGION_BUILD_ERAS[key] || REGION_BUILD_ERAS.ODAIBA;
@@ -416,13 +425,14 @@ export function buildTunerTeamChallengeRounds(
   return Array.from({ length: TUNER_TEAM_CHALLENGE_STAGES }, (_, index) => {
     const [raceType, distanceM] = pattern[index] || ['Standing Start', 402.336];
     const rating = ratings[index] || ratings[ratings.length - 1] || 3;
+    const rivalId = roster[index] || roster[roster.length - 1] || 'kaitoFujimori';
 
     return {
       stageIndex: index,
       regionId: key,
       regionRank: getRegionalChampionshipRank(key),
-      characterId: roster[index] || roster[roster.length - 1] || 'kaitoFujimori',
-      carId: cars[index] || cars[cars.length - 1] || 'r32',
+      characterId: rivalId,
+      carId: regionalSignatureCarId(key, rivalId, fallbackCars[index] || 'r32'),
       paintColor: paintColors[index % paintColors.length],
       encounterRating: rating,
       encounterAi: challengeAi(index, rating, key),
