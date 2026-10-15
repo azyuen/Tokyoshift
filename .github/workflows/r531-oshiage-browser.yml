@@ -1,0 +1,29 @@
+name: R531 Oshiage Interactive Smoke
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/scenes/OshiageScene.js'
+      - 'tests/oshiage-custom-works-r531.mjs'
+      - '.github/workflows/r531-oshiage-browser.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Start local game
+        run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/tokyo-serve.log 2>&1 &
+      - name: Interactive Custom Works and rims pass
+        run: node tests/oshiage-custom-works-r531.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oshiage-r531-screenshots
+          path: artifacts/oshiage-r531/
+          if-no-files-found: ignore
