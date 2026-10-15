@@ -51,13 +51,13 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20261014-r501';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
+import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   applyMarketPriceDifficulty,
   getMarketPriceMultiplier,
