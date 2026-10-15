@@ -40,7 +40,7 @@ test('map places both special districts on land with Oshiage to the right', () =
   const central = TRAVEL_REGIONS.CENTRAL_TOKYO;
   const oshiage = TRAVEL_REGIONS.OSHIAGE;
   assert.ok(oshiage.mapX > central.mapX);
-  assert.equal(oshiage.mapY, central.mapY);
+  assert.ok(oshiage.mapY < central.mapY); // R522: one block north of Central Tokyo
   assert.ok(oshiage.mapY > 0.1);
   const map = readFileSync(new URL('../src/ui/TravelMap.js', import.meta.url), 'utf8');
   assert.match(map, /regionId === 'OSHIAGE'\) \? 0xffd600/);
@@ -124,7 +124,7 @@ test('scene integrates three race streak, cutscene anonymity, preset and RGB pri
   assert.match(scene, /wheel\.sprite\.setAngle\(degrees\)/);
   const showdown = readFileSync(new URL('../src/data/oshiageShowdown.js', import.meta.url), 'utf8');
   assert.match(showdown, /registry\.set\('oshiageEliteSeries'/);
-  assert.match(scene, /roundIndex \+ 1/);
+  assert.match(race, /roundIndex \+ 1/); // heat progression now lives in RaceScene
   assert.match(race, /const completed = Boolean\(playerWon && roundNumber >= 3/);
   assert.match(race, /if \(settlement\.oshiageEliteContinues\)/);
   assert.match(race, /const prize = completed \?/);
