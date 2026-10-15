@@ -12,6 +12,7 @@ import {
 } from '../src/data/centralTokyo.js';
 import { CREW_REGIONS, REGIONAL_CREW_ROSTERS } from '../src/data/crewRoster.js';
 import { MEET_LOCATIONS } from '../src/data/meetAssets.js';
+import { LOCATION_ENCOUNTERS } from '../src/data/encounterProfiles.js';
 import { getOshiageEliteProgress } from '../src/data/oshiageElite.js';
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -52,6 +53,7 @@ test('all three Shinjuku locations and meet difficulty labels are ELITE', () => 
   for(const item of TRAVEL_REGIONS.SHINJUKU.locations) {
     assert.equal(item.difficulty,'ELITE');
     assert.equal(MEET_LOCATIONS[item.id].difficulty,'ELITE');
+    assert.equal(LOCATION_ENCOUNTERS[item.id].difficulty,'ELITE');
   }
 });
 test('Oshiage services open early; Skytree requires seven regional championships', () => {
