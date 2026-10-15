@@ -575,51 +575,25 @@ export default class OshiageScene extends Phaser.Scene {
 
   showInstructorCutscene() {
     if (this.activeLocationId !== 'oshiageDrivingSchool' ||
-        this.registry.get('oshiageInstructorMet') || this.instructorCutsceneOpen) return;
-    this.instructorCutsceneOpen = true;
-    const pages = [
-      { who: 'YOU', pose: 'neutral', text: 'Wait... you look familiar. Like someone I know.' },
-      { who: 'LADY INSTRUCTOR', pose: 'concerned', text: "What do you mean?! I'm just a random driving instructor." },
-      { who: 'LADY INSTRUCTOR', pose: 'explaining', text: "Call me Lady Instructor. Now, are you here to learn how to drive, or to ask questions?" },
-    ];
-    let index = 0;
-    let pieces = [];
-    const render = () => {
-      pieces.forEach(o => o?.destroy?.());
-      pieces = [];
-      const add = o => { pieces.push(o); return o; };
-      const p = pages[index];
-      add(this.add.rectangle(780, 420, 1560, 840, 0x020713, 0.83)
-        .setDepth(100).setInteractive());
-      add(this.add.rectangle(780, 470, 960, 475, 0x101926, 0.995)
-        .setStrokeStyle(3, 0x86d8ef).setDepth(101));
-      const key = schoolSayakaKey(p.pose);
-      if (this.textures.exists(key)) {
-        const source = this.textures.get(key).getSourceImage();
-        add(this.add.image(465, 651, key).setOrigin(0.5, 1)
-          .setScale(365 / source.height).setDepth(102));
-      }
-      add(TEXT(this, 687, 322, 'OSHIAGE // FIRST ENCOUNTER',
-        { pixel: true, size: '12px', color: '#91eaff' }).setDepth(103));
-      add(TEXT(this, 687, 377, p.who,
-        { pixel: true, size: '11px', color: '#ffe6a0' }).setDepth(103));
-      add(TEXT(this, 687, 427, p.text,
-        { size: '20px', wrap: 500, color: '#effaff', spacing: 8 }).setDepth(103));
-      const next = add(this.add.rectangle(1110, 620, 230, 54, 0x16363a, 1)
-        .setStrokeStyle(2, 0x79eddd).setDepth(103)
-        .setInteractive({ useHandCursor: true }));
-      add(TEXT(this, 1110, 620, index === pages.length - 1 ? 'VISIT SCHOOL' : 'NEXT  >',
-        { pixel: true, size: '10px', color: '#ebffff' }).setOrigin(0.5).setDepth(104));
-      next.on('pointerdown', () => {
-        if (++index < pages.length) { render(); return; }
-        pieces.forEach(o => o?.destroy?.());
-        pieces = [];
-        this.instructorCutsceneOpen = false;
-        this.registry.set('oshiageInstructorMet', true);
-        saveSessionState(this.registry);
-      });
+        this.registry.get('oshiageInstructorMet') ||
+        this.instructorCutsceneOpen || sceneCutsceneActive(this)) return;
+
+    // Use the same portrait staging, manga dialogue and transitions as the
+    // rest of the career. Preload only the player and Oshiage Sayaka poses.
+    const finish = () => {
+      this.instructorCutsceneOpen = false;
+      this.registry.set('oshiageInstructorMet', true);
+      saveSessionState(this.registry);
     };
-    render();
+    this.instructorCutsceneOpen = true;
+    const result = playMangaCutscene(this, 'oshiageInstructorFirstEncounter', {
+      preloadPagePosesOnly: true,
+      onComplete: finish,
+    });
+    if (!result.played) {
+      this.instructorCutsceneOpen = false;
+      if (result.reason === 'seen') finish();
+    }
   }
 
   startBasicTutorial(lessonId = null) {
