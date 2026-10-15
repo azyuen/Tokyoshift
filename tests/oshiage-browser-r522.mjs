@@ -115,7 +115,8 @@ try {
   await page.waitForFunction(() => {
     const s = window.TOKYO_SHIFT?.scene?.getScene('OshiageScene');
     return s?.meetAlternative && s?.backgroundAsset()?.key?.includes('skytree02') &&
-      (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('RIVALS IN THE SHOWDOWN'));
+      (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('RIVALS IN THE SHOWDOWN')) &&
+      (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('750,000'));
   },null,{timeout:30000});
   const plaza = await read();
   assert.equal(plaza.lineup.length, 3);
