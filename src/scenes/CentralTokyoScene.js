@@ -51,6 +51,7 @@ import {
   recordCarAcquisition,
   recordCarDeparture,
 } from '../state/GameState.js?v=20261014-r501';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import {
   getGarageDeliveryOptions,
@@ -137,6 +138,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   init(data = {}) {
+    restorePreferredCar(this.registry);
     this.requestedLocationId = data?.locationId || null;
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
