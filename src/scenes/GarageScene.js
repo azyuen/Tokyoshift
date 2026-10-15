@@ -43,8 +43,8 @@ import { saveSessionState, createStarterCarState, recordCarAcquisition } from '.
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261014-r515';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
+import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
