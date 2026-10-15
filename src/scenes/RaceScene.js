@@ -3342,8 +3342,11 @@ export default class RaceScene extends Phaser.Scene {
       });
       return;
     }
+    this.registry.set('raceTimeOfDay', getWorldPhase());
     saveSessionState(this.registry);
-    this.scene.start('RaceScene');
+    // Same-scene restart is the proven path used by Competition and Crew
+    // Battles; scene.start(this.key) can leave the old RaceScene active.
+    this.scene.restart();
   }
 
   getNextTunerChallengeRound() {
