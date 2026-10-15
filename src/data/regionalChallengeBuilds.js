@@ -136,11 +136,11 @@ function allocate(state, points, maxLevel, allowNos, archetypeId, workshopEra, c
 }
 
 const STANDING_SPECIALISTS = [
-  'spoonLsdGeometry', 'spoonRigidChassis', 'minesResponsePackage',
+  'zeroSportsAwdLaunch', 'zeroSportsBoxerResponse', 'minesResponsePackage',
   'junBottomEndBlueprint', 'topSecretBoostControl', 'amuseHighRpmBreathing',
   'reAmemiyaTurboResponse', 'minesVxRom', 'amuseTitaniumFlow',
   'junHeadCamPackage', 'topSecretChargeFlow', 'reAmemiyaCoolingFlow',
-  'spoonCompleteChassis', 'minesCompleteResponse', 'junCompleteEngineSetup',
+  'zeroSportsCompleteSetup', 'minesCompleteResponse', 'junCompleteEngineSetup',
   'topSecretVmaxSetup', 'amuseCompleteFlowSetup', 'reAmemiyaCircuitRotary',
   'espritDryCarbon', 'espritAeroBalance', 'espritTotalSetup',
 ];
@@ -148,10 +148,10 @@ const ROLL_SPECIALISTS = [
   'topSecretBoostControl', 'topSecretChargeFlow', 'amuseHighRpmBreathing',
   'minesVxRom', 'minesResponsePackage', 'junBottomEndBlueprint',
   'reAmemiyaTurboResponse', 'amuseTitaniumFlow', 'espritDryCarbon',
-  'junHeadCamPackage', 'reAmemiyaCoolingFlow', 'spoonLsdGeometry',
+  'junHeadCamPackage', 'reAmemiyaCoolingFlow', 'zeroSportsAwdLaunch',
   'topSecretVmaxSetup', 'amuseCompleteFlowSetup', 'minesCompleteResponse',
-  'junCompleteEngineSetup', 'reAmemiyaCircuitRotary', 'spoonRigidChassis',
-  'espritAeroBalance', 'spoonCompleteChassis', 'espritTotalSetup',
+  'junCompleteEngineSetup', 'reAmemiyaCircuitRotary', 'zeroSportsBoxerResponse',
+  'espritAeroBalance', 'zeroSportsCompleteSetup', 'espritTotalSetup',
 ];
 
 function addSpecialists(state, count, round) {
