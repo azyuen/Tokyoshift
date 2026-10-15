@@ -693,8 +693,8 @@ export function showTravelMap(scene, options = {}) {
     // Prefer labels above their dial. For the two northern nodes (and any
     // future edge node), automatically flip below the dial rather than clipping
     // the label out of the map.
-    const forceBelow = item.regionId === 'SHIBUYA';
-    const forceRight = item.regionId === 'OSHIAGE';
+    const forceBelow = item.regionId === 'SHIBUYA' || item.regionId === 'OSHIAGE';
+    const forceRight = false;
     let centerY = forceBelow
       ? item.pt.y + 42 + h / 2
       : item.pt.y - 42 - h / 2;
