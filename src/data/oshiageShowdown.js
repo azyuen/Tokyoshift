@@ -6,7 +6,7 @@ import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import {
   OSHIAGE_ELITE_VENUES, OSHIAGE_ELITE_COOLDOWN_MS,
   getOshiageEliteProgress, getOshiageEliteRemainingMs,
-  getOshiageEliteLineup, eligibleOshiageEliteDrivers,
+  getOshiageEliteLineup, eligibleOshiageEliteDrivers, getOshiageElitePrize,
 } from './oshiageElite.js?v=20261015-r521';
 
 const read = (source, key, fallback = null) =>
@@ -104,6 +104,10 @@ export function beginOshiageShowdown(registry, venueId, now = Date.now(), offere
     startedAt: now,
     startingWins: Number(read(registry, 'wins', 0) || 0),
     entryFee: venue.entryFee,
+    // Award exactly what the right panel promised at event entry. Gaining
+    // career wins in heats 1/2 must not rotate a wheel/coupon award.
+    prize: getOshiageElitePrize(registry, venueId,
+      Number(read(registry, 'wins', 0) || 0) + 3),
     lineup,
   };
   const cashBefore = Number(registry.get('cash') || 0);
