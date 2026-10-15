@@ -5,15 +5,15 @@ import {
   remainingAttempts,
 } from '../data/oshiageSchool.js?v=20261014-r510';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
-import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r521';
+import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
 import {
   getOshiageShowdownLineup, getOshiageShowdownAccess,
   beginOshiageShowdown, prepareNextOshiageShowdownHeat,
-} from '../data/oshiageShowdown.js?v=20261015-r521';
+} from '../data/oshiageShowdown.js?v=20261015-r522';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
-import { getTravelLocation } from '../data/travelRegions.js?v=20261013-r496';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261014-r514';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -184,7 +184,7 @@ export default class OshiageScene extends Phaser.Scene {
         }
         if (opponent && cars[opponent.carId]) {
           queued += preloadCarAppearanceAssets(this,
-            { [opponent.carId]: cars[opponent.carId] }, '20261015-r521');
+            { [opponent.carId]: cars[opponent.carId] }, '20261015-r522');
           queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
         }
       });
