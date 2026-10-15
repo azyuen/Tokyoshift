@@ -2,7 +2,7 @@
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   OSHIAGE_SCHOOL_LESSONS, bookingMatches, bookOshiageLesson, consumeOshiageAttempt,
-  remainingAttempts,
+  remainingAttempts, isOshiageVoucherAvailable, getOshiageVouchersRemaining,
 } from '../data/oshiageSchool.js?v=20261014-r510';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
@@ -450,6 +450,7 @@ export default class OshiageScene extends Phaser.Scene {
       size: '13px', color: '#e3edf4', wrap: SIDE.w - 40, spacing: 5
     });
     const fee = OSHIAGE_SCHOOL_LESSONS[lesson.id].fee;
+    const freeVoucher = isOshiageVoucherAvailable(this.registry, lesson.id);
     const currentBooking = this.registry.get('oshiageSchoolBooking');
     const continuing = bookingMatches(currentBooking, id, lesson.id);
     const count = continuing ? remainingAttempts(currentBooking) : 4;
@@ -460,6 +461,7 @@ export default class OshiageScene extends Phaser.Scene {
       ? 'INTRODUCTORY COURSE // FREE'
       : continuing
         ? 'PREPAID // ' + count + ' RUNS REMAINING'
+        : freeVoucher ? 'SAYAKA VOUCHER // FIRST BOOKING FREE'
         : 'LESSON FEE // ' + MONEY(fee), {
       pixel: true, size: '9px', color: '#96e9d4', wrap: SIDE.w - 40
     });
@@ -474,20 +476,24 @@ export default class OshiageScene extends Phaser.Scene {
     });
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + 568, SIDE.w - 40, 47,
       lesson.id === 'basic' ? 'FREE // ENTER LESSON' :
-        continuing ? 'PREPAID // CONTINUE' : MONEY(fee) + ' // ENTER',
+        continuing ? 'PREPAID // CONTINUE' :
+          freeVoucher ? 'START // USE FREE VOUCHER' : 'START LESSON // ' + MONEY(fee),
       () => this.showLessonBookingDialogue(lesson.id),
       { disabled: !car || Boolean(car.crewLoan), accent: true, size: '8px' });
 
     this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL  //  CHOOSE A LESSON',
       { pixel: true, size: '10px', color: '#8feaff' });
     choices.forEach((option, i) => this.button(179 + i * 282, 743, 265, 65,
-      option.tab + ' // ' + (option.id === 'basic' ? 'FREE' : MONEY(OSHIAGE_SCHOOL_LESSONS[option.id].fee)),
+      option.tab + ' // ' + (option.id === 'basic' ? 'FREE' :
+        isOshiageVoucherAvailable(this.registry, option.id) ? 'FREE VOUCHER' :
+        MONEY(OSHIAGE_SCHOOL_LESSONS[option.id].fee)),
       () => {
         this.lessonIndex = i;
         this.registry.set('oshiageLessonTab', i);
         this.renderView();
       }, { accent: selected === i, size: '7px' }));
-    this.addText(48, 790, 'ONE FEE PER BOOKING // THREE RETRIES // NO RACE STAKES',
+    this.addText(48, 790, getOshiageVouchersRemaining(this.registry) +
+      ' / 3 SAYAKA VOUCHERS REMAINING // EACH BOOKING INCLUDES THREE RETRIES',
       { size: '9px', color: '#91aabd' });
   }
 
@@ -501,8 +507,10 @@ export default class OshiageScene extends Phaser.Scene {
     }
     const booking = this.registry.get('oshiageSchoolBooking');
     const continuing = bookingMatches(booking, id, lessonId);
+    const freeVoucher = isOshiageVoucherAvailable(this.registry, lessonId);
     const quote = bookOshiageLesson({
       booking, carId: id, lessonId, cash: this.registry.get('cash'),
+      freeFirstLesson: freeVoucher,
     });
     if (!quote.ok) {
       this.showOshiageNotice('NOT ENOUGH YEN FOR THIS LESSON');
@@ -514,8 +522,10 @@ export default class OshiageScene extends Phaser.Scene {
         ' runs remaining on this booking. Shall we continue?'
       : lessonId === 'basic'
         ? 'The basics are free. Shall we practise together?'
-        : 'The fee is ' + MONEY(lesson.fee) +
-          ', including three retries. Shall we begin?';
+        : freeVoucher
+          ? 'A voucher from Sayaka! This first booking is free, including three retries. Shall we begin?'
+          : 'The fee is ' + MONEY(lesson.fee) +
+            ', including three retries. Shall we begin?';
     // Real game manga cutscene: same portrait staging, dialogue plate,
     // animated transitions and two final dialogue buttons as the Dev tester.
     const definition = {
@@ -543,11 +553,17 @@ export default class OshiageScene extends Phaser.Scene {
         const purchase = bookOshiageLesson({
           booking: this.registry.get('oshiageSchoolBooking'),
           carId: current.id, lessonId, cash: this.registry.get('cash'),
+          freeFirstLesson: isOshiageVoucherAvailable(this.registry, lessonId),
         });
         if (!purchase.ok || current.id !== id || !current.car || current.car.crewLoan) return;
         if (lessonId !== 'basic') {
           const attempt = consumeOshiageAttempt(purchase.booking);
           if (!attempt) return;
+          if (purchase.usedVoucher) {
+            this.registry.set('oshiageFreeLessonUsed', {
+              ...(this.registry.get('oshiageFreeLessonUsed') || {}), [lessonId]: true,
+            });
+          }
           this.registry.set('cash', purchase.cash);
           this.registry.set('oshiageSchoolBooking', attempt);
         }
