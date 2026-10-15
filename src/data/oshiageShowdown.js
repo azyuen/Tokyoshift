@@ -6,7 +6,7 @@ import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import {
   OSHIAGE_ELITE_VENUES, OSHIAGE_ELITE_COOLDOWN_MS,
   getOshiageEliteProgress, getOshiageEliteRemainingMs,
-  getOshiageEliteLineup,
+  getOshiageEliteLineup, eligibleOshiageEliteDrivers,
 } from './oshiageElite.js?v=20261015-r521';
 
 const read = (source, key, fallback = null) =>
@@ -18,7 +18,13 @@ export function getOshiageShowdownLineup(source, venueId, now = Date.now()) {
       Array.isArray(series.lineup) && series.lineup.length === 3) {
     return series.lineup;
   }
-  return getOshiageEliteLineup(source, venueId, now);
+  const anchoredAt = series?.active && series.venueId === venueId
+    ? Number(series.startedAt || now) : now;
+  const startingWins = series?.active && series.venueId === venueId
+    ? Number(series.startingWins ?? Math.max(0,
+        Number(read(source, 'wins', 0) || 0) - Number(series.roundIndex || 0)))
+    : null;
+  return getOshiageEliteLineup(source, venueId, anchoredAt, startingWins);
 }
 
 export function getOshiageShowdownAccess(source, venueId, now = Date.now()) {
@@ -76,10 +82,18 @@ export function applyOshiageShowdownHeat(registry, series) {
   return true;
 }
 
-export function beginOshiageShowdown(registry, venueId, now = Date.now()) {
+export function beginOshiageShowdown(registry, venueId, now = Date.now(), offeredLineup = null) {
   const access = getOshiageShowdownAccess(registry, venueId, now);
   if (!access.allowed) return { ok: false, reason: access.reason };
-  const lineup = getOshiageEliteLineup(registry, venueId, now);
+  const validDrivers = new Set(eligibleOshiageEliteDrivers(registry));
+  const offered = Array.isArray(offeredLineup) && offeredLineup.length === 3 &&
+    new Set(offeredLineup.map(driver => driver?.characterId)).size === 3 &&
+    offeredLineup.every(driver =>
+      driver?.characterId && driver?.carId && cars[driver.carId] &&
+      validDrivers.has(driver.characterId));
+  // The displayed roster is authoritative when the player enters. A fresh
+  // fallback is safe for older saves or invalid/stale offers.
+  const lineup = offered ? offeredLineup : getOshiageEliteLineup(registry, venueId, now);
   if (lineup.length !== 3) return { ok: false, reason: 'NO ELITE DRIVERS AVAILABLE' };
   const venue = OSHIAGE_ELITE_VENUES[venueId];
   const series = {
@@ -94,7 +108,6 @@ export function beginOshiageShowdown(registry, venueId, now = Date.now()) {
   };
   const cashBefore = Number(registry.get('cash') || 0);
   const cooldownBefore = registry.get('oshiageEliteCooldowns') || {};
-  const oldSeries = registry.get('oshiageEliteSeries');
   // Build the complete next-race selection BEFORE charging for the attempt.
   if (!applyOshiageShowdownHeat(registry, series)) return {
     ok: false, reason: 'CAR UNAVAILABLE',
@@ -110,5 +123,10 @@ export function beginOshiageShowdown(registry, venueId, now = Date.now()) {
 export function prepareNextOshiageShowdownHeat(registry) {
   const series = registry.get('oshiageEliteSeries');
   if (!series?.active || ![1, 2].includes(Number(series.roundIndex))) return false;
-  return applyOshiageShowdownHeat(registry, series);
+  const stableSeries = Array.isArray(series.lineup) && series.lineup.length === 3
+    ? series
+    : { ...series, lineup: getOshiageShowdownLineup(registry, series.venueId) };
+  if (stableSeries.lineup.length !== 3) return false;
+  registry.set('oshiageEliteSeries', stableSeries);
+  return applyOshiageShowdownHeat(registry, stableSeries);
 }
