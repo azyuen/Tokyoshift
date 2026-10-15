@@ -5,7 +5,11 @@ import {
   remainingAttempts,
 } from '../data/oshiageSchool.js?v=20261014-r510';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
-import { getOshiageEliteProgress, getOshiageEliteOpponent, getOshiageEliteRemainingMs, OSHIAGE_ELITE_COOLDOWN_MS, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261013-r496';
+import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r521';
+import {
+  getOshiageShowdownLineup, getOshiageShowdownAccess,
+  beginOshiageShowdown, prepareNextOshiageShowdownHeat,
+} from '../data/oshiageShowdown.js?v=20261015-r521';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261013-r496';
@@ -80,7 +84,13 @@ export default class OshiageScene extends Phaser.Scene {
     this.lessonIndex = Math.max(0, Math.min(3, Number(this.registry.get('oshiageLessonTab') || 0)));
     this.schoolCarEntered = false;
     this.schoolPromptOpen = false;
-    this.meetAlternative = this.registry.get('oshiageEliteVenue') === 'plaza';
+    const activeShowdown = this.registry.get('oshiageEliteSeries');
+    this.meetAlternative = (activeShowdown?.active ? activeShowdown.venueId :
+      this.registry.get('oshiageEliteVenue')) === 'plaza';
+    this.showdownLineups = {};
+    this.showdownPreviewIndex = activeShowdown?.active ? Number(activeShowdown.roundIndex || 0) : 0;
+    this.showdownSwitching = false;
+    this.showdownLaunching = false;
     this.paintMode = 'preset';
     this.customPaintColor = null;
     this.selectedRimIndex = -1;
@@ -126,12 +136,22 @@ export default class OshiageScene extends Phaser.Scene {
     return { id, car, state };
   }
 
+  getEliteLineup(venueId) {
+    const active = this.registry.get('oshiageEliteSeries');
+    if (active?.active && active.venueId === venueId) {
+      return getOshiageShowdownLineup(this.registry, venueId);
+    }
+    if (!this.showdownLineups?.[venueId]) {
+      this.showdownLineups[venueId] = getOshiageShowdownLineup(this.registry, venueId);
+    }
+    return this.showdownLineups[venueId];
+  }
+
   getEliteRival(venueId) {
-    const series = this.registry.get('oshiageEliteSeries');
-    const continuing = series?.active && series.venueId === venueId;
-    return getOshiageEliteOpponent(this.registry, venueId,
-      continuing ? Number(series.startedAt || Date.now()) : Date.now(),
-      continuing ? Number(series.roundIndex || 0) : 0);
+    const active = this.registry.get('oshiageEliteSeries');
+    const index = active?.active && active.venueId === venueId ?
+      Number(active.roundIndex || 0) : 0;
+    return this.getEliteLineup(venueId)[index] || null;
   }
 
   queueViewAssets() {
@@ -151,17 +171,23 @@ export default class OshiageScene extends Phaser.Scene {
         queued += this.queueImage(schoolSayakaKey(pose), SAYAKA + pose + '.png?v=20261013-r496');
       }
     }
-    if (this.activeLocationId === 'oshiageSkytreeMeet' && getOshiageEliteProgress(this.registry).complete) {
-      const opponent = this.getEliteRival(this.meetAlternative ? 'plaza' : 'underpass');
-      const rival = opponent && characters[opponent.characterId];
-      if (rival?.visual?.spriteKey && rival.visual?.path) {
-        queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
-          getCharacterAssetUrl(rival.visual.path));
-      }
-      if (opponent && cars[opponent.carId]) {
-        queued += preloadCarAppearanceAssets(this, { [opponent.carId]: cars[opponent.carId] }, '20261013-r496');
-        queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
-      }
+    if (this.activeLocationId === 'oshiageSkytreeMeet' &&
+        getOshiageEliteProgress(this.registry).complete) {
+      const venueId = this.meetAlternative ? 'plaza' : 'underpass';
+      // Preload all three opponents, as in a normal Meet. Tapping a rival
+      // then requires only a stage fade, never another loading screen.
+      this.getEliteLineup(venueId).forEach(opponent => {
+        const rival = characters[opponent?.characterId];
+        if (rival?.visual?.spriteKey && rival.visual?.path) {
+          queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
+            getCharacterAssetUrl(rival.visual.path));
+        }
+        if (opponent && cars[opponent.carId]) {
+          queued += preloadCarAppearanceAssets(this,
+            { [opponent.carId]: cars[opponent.carId] }, '20261015-r521');
+          queued += preloadCarWheel(this, cars[opponent.carId], opponent.buildState);
+        }
+      });
     }
     if (this.activeLocationId === 'oshiageCustomWorks' &&
         ['paint', 'rims'].includes(this.room)) {
