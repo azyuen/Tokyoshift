@@ -1,6 +1,20 @@
 // Ref2 torque curves are game calibrations matched to the requested rated power.
 // R516 curves are gameplay approximations, not measured dyno traces.
 export const engines = {
+  r36v_gtone: {
+    id: 'r36v_gtone', name: 'R36V GT-One V8',
+    idleRPM: 1200, redlineRPM: 7200, limiterRPM: 7400, inertia: 0.16,
+    referenceBoostBar: 1.1, offBoostTorqueFraction: 0.48,
+    torqueCurve: [[1200,180],[2000,280],[3000,440],[4000,600],
+      [5000,650],[6000,640],[6500,630],[7000,609.8],[7200,575],[7400,530]],
+  },
+  vrh35l_r390: {
+    id: 'vrh35l_r390', name: 'VRH35L R390 V8',
+    idleRPM: 1200, redlineRPM: 7200, limiterRPM: 7400, inertia: 0.18,
+    referenceBoostBar: 1.2, offBoostTorqueFraction: 0.46,
+    torqueCurve: [[1200,180],[2000,290],[3000,470],[4000,675],
+      [4400,706],[5000,700],[6000,690],[6800,671.3],[7200,620],[7400,560]],
+  },
   // Fixed collector builds. Curves model distinct game powerbands; they are
   // not claims of measured dyno data for individual historic chassis.
   ej20_zerosports: {

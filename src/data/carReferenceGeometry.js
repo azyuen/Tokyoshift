@@ -55,7 +55,7 @@ export const STANDARD_CAR_REFERENCE = {
     ek9: { rearX: -931, frontX: -231, size: 'S' },
     gc8: { rearX: -901, frontX: -253, size: 'S' },
     // Galant VR-4 source alignment and its original stock canvas.
-    galant: { rearX: -951, frontX: -248, size: 'S' },
+    galant: { rearX: -998, frontX: -255, size: 'S' },
     evo6: { rearX: -972, frontX: -280, size: 'S', bodyRenderOffsetY: 1 },
     r32: { rearX: -988, frontX: -268, size: 'L' },
     rx7fc: { rearX: -936, frontX: -260, size: 'L' },

@@ -33,6 +33,7 @@ test('baseline axle coordinates stay exactly as approved', () => {
     ef: [-877, -195, 'S'],
     ek9: [-931, -231, 'S'],
     gc8: [-901, -253, 'S'],
+    galant: [-998, -255, 'S'],
     evo6: [-972, -280, 'S'],
     r32: [-988, -268, 'L'],
     rx7fc: [-936, -260, 'L'],

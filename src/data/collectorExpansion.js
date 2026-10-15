@@ -9,6 +9,37 @@ export function addCollectorExpansion(cars) {
       visual: { ...cars[donor].visual },
     };
   };
+  // Clean bodies retain their racing counterpart's fixed mechanical build.
+  add('essoToyotaGtOne', 'renownMazda787B', {
+    name: 'Toyota GT-One TS020 // Esso', shortName: 'ESSO GT-ONE',
+    description: 'Twin-turbo V8 Le Mans collector in the uploaded Esso racing livery.',
+    engine: 'r36v_gtone', engineModel: 'R36V 3.6L TWIN-TURBO V8',
+    drivetrain: 'RWD', engineLayout: 'mid', powerKW: 447, torqueNm: 650,
+    vehicleMassKg: 900, engineIdleRPM: 1200, engineRedlineRPM: 7200,
+    engineLimiterRPM: 7400, engineInertia: 0.16,
+    gearRatios: [2.90, 2.05, 1.55, 1.23, 1.02, 0.85], finalDriveRatio: 3.40,
+    drivenAxleWeightFraction: 0.60, launchRPM: 5000,
+    turboSize: 0.80, turboSpoolRate: 1.45, maximumBoost: 1.1,
+    clutchStrength: 900, dragCoefficient: 0.33, frontalAreaM2: 1.75,
+  });
+  add('cleanToyotaGtOne', 'essoToyotaGtOne', {
+    name: 'Toyota GT-One TS020 // Clean', shortName: 'GT-ONE CLEAN',
+    description: 'The GT-One collector in clean bodywork without racing decals.',
+  });
+  add('calsonicR390', 'essoToyotaGtOne', {
+    name: 'Nissan R390 GT1 // Calsonic', shortName: 'CALSONIC R390',
+    description: 'A mid-engined twin-turbo V8 collector in Calsonic racing livery.',
+    engine: 'vrh35l_r390', engineModel: 'VRH35L 3.5L TWIN-TURBO V8',
+    powerKW: 478, torqueNm: 706, vehicleMassKg: 1000,
+    engineRedlineRPM: 7200, engineLimiterRPM: 7400, engineInertia: 0.18,
+    gearRatios: [2.85, 2.00, 1.52, 1.21, 1.00, 0.84], finalDriveRatio: 3.50,
+    maximumBoost: 1.2, turboSpoolRate: 1.35, launchRPM: 4800,
+    dragCoefficient: 0.35, frontalAreaM2: 1.80,
+  });
+  add('cleanR390', 'calsonicR390', {
+    name: 'Nissan R390 GT1 // Clean', shortName: 'R390 CLEAN',
+    description: 'The R390 GT1 collector in clean bodywork without racing decals.',
+  });
   add('cleanMazda787B', 'renownMazda787B', {
     name: 'Mazda 787B // Clean', shortName: '787B CLEAN',
     description: 'The four-rotor collector build in clean orange bodywork without sponsor decals.',

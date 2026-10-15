@@ -3,6 +3,10 @@
 // Stock's historical 'L' means medium (194px); use full names here for clarity.
 export const HERO_WHEEL_DIAMETERS = Object.freeze({ small: 182, medium: 194, large: 210 });
 export const HERO_CAR_ASSETS = Object.freeze({
+  essoToyotaGtOne: { stem: 'essots020', wheel: 'essots020', rearX: -996, frontX: -243, rear: 'medium', front: 'small' },
+  cleanToyotaGtOne: { stem: 'TS020', wheel: 'essots020', rearX: -995, frontX: -244, rear: 'medium', front: 'small' },
+  calsonicR390: { stem: 'calsonicR390', wheel: 'caloricr390', rearX: -1022, frontX: -259, rear: 'medium', front: 'small' },
+  cleanR390: { stem: 'r390', wheel: 'caloricr390', rearX: -1021, frontX: -260, rear: 'medium', front: 'small' },
   espritNsx: { stem: 'esprit_nsx', width: 1350, rearX: -1009, frontX: -329, rear: 'small', front: 'small' },
   amuseS2000Gt1: { stem: 'amuse_s2000_gt1', rearX: -896, frontX: -230, rear: 'medium', front: 'small' },
   topSecretSupra: { stem: 'top_secret_supra', rearX: -982, frontX: -252, rear: 'medium', front: 'medium' },

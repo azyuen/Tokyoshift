@@ -1,7 +1,7 @@
-import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261014-stock';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261015-r527';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
-import { addCollectorExpansion } from './collectorExpansion.js?v=20261015-r525';
-import { applyHeroCarAssets } from './heroCarAssets.js?v=20261015-r525';
+import { addCollectorExpansion } from './collectorExpansion.js?v=20261015-r527';
+import { applyHeroCarAssets } from './heroCarAssets.js?v=20261015-r527';
 
 const base = {
   wheelRadius: 0.305,

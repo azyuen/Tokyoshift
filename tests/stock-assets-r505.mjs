@@ -49,9 +49,9 @@ test('all 86 deployed PNG assets exist in stock and sizes match; future uploads 
     assert.deepEqual(dims[0],REFERENCE_CAR_CANVAS[stem],stem);
   }
 });
-test('all 16 hero/collector images use the hero folder',()=>{
+test('all 20 hero/collector images use the hero folder',()=>{
   const heroes=readdirSync(url('assets/Cars/hero')).filter(x=>x.endsWith('_hero_body.png'));
-  assert.equal(heroes.length,16);
+  assert.equal(heroes.length,20);
   assert.ok(heroes.includes('mines_r34_hero_body.png'));
   assert.ok(heroes.includes('renown787B_hero_body.png'));
 });

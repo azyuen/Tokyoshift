@@ -16,8 +16,8 @@ test('reference heroes do not receive the legacy collector ground correction twi
   assert.match(race,/if \(cfg.singleBody && !referenceCar\)/);
   assert.match(gallery,/if \(car.visual.singleBody && !car.visual.referenceStandard/);
 });
-test('16 fixed-livery heroes load only their exact body asset; canvas and catalog agree',()=>{
-  assert.equal(ids.length,16);
+test('20 fixed-livery heroes load only their exact body asset; canvas and catalog agree',()=>{
+  assert.equal(ids.length,20);
   for(const id of ids){
     const car=cars[id], v=car.visual;
     assert.ok(car.collector && car.tuningLocked,id);
@@ -43,7 +43,7 @@ test('per-axle sizes preserve contact and right-edge registration at every zoom 
     }
   }
   assert.deepEqual([cars.libertyWalkR35.visual.referenceRearWheelDiameter,cars.libertyWalkR35.visual.referenceFrontWheelDiameter],[210,194]);
-  for(const id of ['veilsideFortuneRx7','rwbStellaPorsche']){
+  for(const id of ['veilsideFortuneRx7','rwbStellaPorsche','essoToyotaGtOne','cleanToyotaGtOne','calsonicR390','cleanR390']){
     assert.deepEqual([cars[id].visual.referenceRearWheelDiameter,cars[id].visual.referenceFrontWheelDiameter],[194,182]);
   }
 });
@@ -67,7 +67,7 @@ test('collector ownership and legacy GC8 migration do not consume the new 22B',(
   assert.equal(saved.selectedCarId,'mcrae22B');
   assert.equal(cars.mcrae22B.engine,'ej22g_collector');
 });
-test('all 16 collectors finish standing and rolling half-mile races without invalid controls',()=>{
+test('all 20 collectors finish standing and rolling half-mile races without invalid controls',()=>{
   for(const id of ids) for(const rolling of [false,true]){
     const result=run(id,4,{rolling,state:getGinzaCollectorState(id)});
     assert.ok(result.finish>0 && result.finish<45,id);
