@@ -2,7 +2,7 @@ import { characters, getCharacterAssetUrl } from '../data/characters.js?v=202610
 import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261011-r475';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261010-r471';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
