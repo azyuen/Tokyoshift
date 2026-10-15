@@ -74,6 +74,21 @@ const TEXT = (scene, x, y, label, options = {}) => scene.add.text(x, y, label, {
   lineSpacing: options.spacing || 3,
 });
 
+function colorToHsv(color) {
+  const { r, g, b } = paintColorToRgb(color);
+  const R=r/255, G=g/255, B=b/255, hi=Math.max(R,G,B), lo=Math.min(R,G,B), d=hi-lo;
+  let h=0;
+  if (d) h=hi===R ? (G-B)/d%6 : hi===G ? (B-R)/d+2 : (R-G)/d+4;
+  return { h:(h*60+360)%360, s:hi ? d/hi : 0, v:hi };
+}
+function hsvToColor(h,s,v) {
+  h=(((h%360)+360)%360)/60;
+  const C=Math.max(0,Math.min(1,v))*Math.max(0,Math.min(1,s));
+  const X=C*(1-Math.abs(h%2-1)), m=Math.max(0,Math.min(1,v))-C;
+  const [r,g,b]=h<1?[C,X,0]:h<2?[X,C,0]:h<3?[0,C,X]:h<4?[0,X,C]:h<5?[X,0,C]:[C,0,X];
+  return rgbToPaintColor(255*(r+m),255*(g+m),255*(b+m));
+}
+
 export default class OshiageScene extends Phaser.Scene {
   constructor() { super('OshiageScene'); }
 
@@ -95,6 +110,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.showdownLaunching = false;
     this.paintMode = 'preset';
     this.customPaintColor = null;
+    this.paintPickerHue = null;
     this.selectedRimIndex = -1;
     this.rimPreview = false;
     this.rimConfirmOpen = false;
@@ -356,8 +372,12 @@ export default class OshiageScene extends Phaser.Scene {
     const background = this.backgroundAsset();
     if (this.textures.exists(background.key)) {
       const src = this.textures.get(background.key).getSourceImage();
-      const img = this.own(this.add.image(STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2, background.key)
-        .setScale((this.room === 'rims' ? Math.min : Math.max)(STAGE.w / src.width, STAGE.h / src.height))
+      const rimWall = this.room === 'rims';
+      const img = this.own(this.add.image(
+        STAGE.x + STAGE.w / 2, rimWall ? STAGE.y : STAGE.y + STAGE.h / 2, background.key)
+        .setOrigin(0.5, rimWall ? 0 : 0.5)
+        .setScale(rimWall ? STAGE.w / src.width :
+          Math.max(STAGE.w / src.width, STAGE.h / src.height))
         .setMask(this.stageMask).setDepth(-10));
       img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     } else {
@@ -369,13 +389,20 @@ export default class OshiageScene extends Phaser.Scene {
     else if (this.room === 'rims') this.drawRimShop();
     else this.drawCustomWorks();
 
+    if (this.room === 'paint' || this.room === 'rims') {
+      this.button(SIDE.x + SIDE.w / 2, SIDE.y + SIDE.h - 117,
+        SIDE.w - 36, 46, 'RETURN TO CUSTOM WORKS',
+        () => this.returnToCustomWorks(), { size: '8px' });
+    }
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + SIDE.h - 48,
       SIDE.w - 36, 46, 'GO TO MAP  >', () => this.openMap());
   }
 
-  sideHeader(title, subtitle) {
+  sideHeader(title, subtitle, ginzaStyle = false) {
     this.addText(SIDE.x + 20, SIDE.y + 20, title, { pixel: true, size: '12px', color: '#8feaff', wrap: SIDE.w - 40 });
-    this.addText(SIDE.x + 20, SIDE.y + 76, subtitle, { size: '12px', color: '#a9c3d1', wrap: SIDE.w - 40 });
+    this.addText(SIDE.x + 20, SIDE.y + 76, subtitle,
+      ginzaStyle ? { size: '10px', bold: true, color: '#9ab0bd', wrap: SIDE.w - 40 }
+        : { size: '12px', color: '#a9c3d1', wrap: SIDE.w - 40 });
   }
 
   // The first course remains free. Paid practical lessons come with three
@@ -924,34 +951,39 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   drawCustomWorks() {
-    this.sideHeader('CUSTOM WORKS', 'Paint & Rims // Oshiage');
+    this.sideHeader('CUSTOM WORKS', 'Shop for bodywork and rims', true);
     this.addText(SIDE.x + 20, SIDE.y + 155, 'EXTERIOR CUSTOMISATION',
       { pixel: true, size: '10px', color: '#ffe5b0', wrap: SIDE.w - 40 });
-    this.addText(SIDE.x + 20, SIDE.y + 222,
-      'PAINT: Preset finishes ¥8,000, or custom RGB for ¥16,000.\n\n' +
-      'RIMS: Try and buy standard, tuner and hero wheel designs, or install designs already in your collection.',
-      { size: '13px', wrap: SIDE.w - 40, color: '#e1eff6', spacing: 6 });
-    this.addText(SIDE.x + 20, SIDE.y + 450,
-      'BODYKIT // COMING SOON\nOld bodykits have been retired to match the new car assets.',
-      { size: '11px', wrap: SIDE.w - 40, color: '#9cb2c0', spacing: 6 });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 557, SIDE.w - 40, 50,
-      'ENTER PAINT BOOTH  >', () => this.openCustomWorksRoom('paint'),
-      { accent: true, size: '8px' });
-    this.addText(48, 654, 'OSHIAGE CUSTOM WORKS // SELECT A SERVICE',
+    this.addText(SIDE.x + 20, SIDE.y + 220,
+      'PAINT: Preset finishes cost ¥8,000, and custom paint selection for ¥16,000.\n\n' +
+      'RIMS: Try and buy new and rare wheel designs, or install designs already in your collection.',
+      { size: '10px', bold: true, wrap: SIDE.w - 40, color: '#9ab0bd', spacing: 5 });
+    this.addText(48, 660, 'OSHIAGE CUSTOM WORKS // SELECT A SERVICE',
       { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(225, 743, 338, 65, 'PAINT', () => this.openCustomWorksRoom('paint'),
-      { accent: true, size: '9px' });
-    this.button(590, 743, 338, 65, 'RIMS', () => this.openCustomWorksRoom('rims'),
-      { size: '9px' });
-    this.button(955, 743, 338, 65, 'BODYKIT // COMING SOON', null,
-      { disabled: true, size: '7px' });
+    this.button(316, 745, 545, 64, 'PAINT', () => this.openCustomWorksRoom('paint'),
+      { accent: true, size: '10px' });
+    this.button(860, 745, 545, 64, 'RIMS', () => this.openCustomWorksRoom('rims'),
+      { accent: true, size: '10px' });
+  }
+
+  returnToCustomWorks() {
+    if (this.paintBusy || this.rimConfirmOpen) return;
+    this.room = 'outside';
+    this.pendingPaint = null;
+    this.selectedRimIndex = -1;
+    this.rimPreview = false;
+    this.rimCarObjects = [];
+    this.loadAndRender();
   }
 
   openCustomWorksRoom(room) {
     if (!['paint', 'rims'].includes(room) || this.paintBusy) return;
     this.room = room;
     this.pendingPaint = null;
-    if (room === 'paint') this.paintMode = 'preset';
+    if (room === 'paint') {
+      this.paintMode = 'preset';
+      this.paintPickerHue = null;
+    }
     if (room === 'rims') {
       this.selectedRimIndex = -1;
       this.rimPreview = false;
@@ -968,13 +1000,8 @@ export default class OshiageScene extends Phaser.Scene {
       ? this.textures.get(asset.key).getSourceImage() : null;
     const sourceW = Number(image?.width || STAGE.w);
     const sourceH = Number(image?.height || STAGE.h);
-    const scale = Math.min(STAGE.w / sourceW, STAGE.h / sourceH);
-    const width = sourceW * scale, height = sourceH * scale;
-    return {
-      x: STAGE.x + (STAGE.w - width) / 2,
-      y: STAGE.y + (STAGE.h - height) / 2,
-      width, height,
-    };
+    const scale = STAGE.w / sourceW;
+    return { x: STAGE.x, y: STAGE.y, width: STAGE.w, height: sourceH * scale };
   }
 
   drawCustomWorksSpecialist({ x = 1065, feetY = STAGE.y + STAGE.h - 14,
