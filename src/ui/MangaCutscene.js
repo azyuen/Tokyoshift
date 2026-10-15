@@ -16,7 +16,7 @@ import {
   getCharacterProfilePlacement,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
-import { playPhoneConversation } from './PhoneConversation.js?v=20261015-r524';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261016-r535';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
