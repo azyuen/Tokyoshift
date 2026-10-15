@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cars } from '../src/data/cars.js';
+import { cars } from '../src/data/cars.js?v=20261011-r479';
 import { registerOwnedCarInstances } from '../src/data/carOwnership.js';
 import { createDefaultGameState, normaliseState, snapshotRegistry } from '../src/state/GameState.js';
 import { choosePersonalCar, getPreferredCarId, restorePreferredCar } from '../src/state/CarSelection.js';
