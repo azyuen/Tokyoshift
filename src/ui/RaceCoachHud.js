@@ -44,18 +44,16 @@ function drawMangaSpeechBubble(scene, layout, theme, depth = 80, side = 'left') 
     bubble.beginPath();
     bubble.moveTo(layout.left, layout.top);
     bubble.lineTo(layout.right, layout.top);
-    bubble.lineTo(layout.right, layout.bottom);
-    bubble.lineTo(layout.left, layout.bottom);
     if (side === 'right') {
       // The speaker is to the RIGHT of the bubble; mirror the speech tail.
-      bubble.lineTo(layout.left, layout.top);
-      bubble.lineTo(layout.right, layout.top);
       bubble.lineTo(layout.right, mid - layout.notchHalfHeight);
       bubble.lineTo(layout.right + layout.notchDepth, mid);
       bubble.lineTo(layout.right, mid + layout.notchHalfHeight);
       bubble.lineTo(layout.right, layout.bottom);
       bubble.lineTo(layout.left, layout.bottom);
     } else {
+      bubble.lineTo(layout.right, layout.bottom);
+      bubble.lineTo(layout.left, layout.bottom);
       bubble.lineTo(layout.left, mid + layout.notchHalfHeight);
       // An outward triangular tail to the left-side portrait.
       bubble.lineTo(layout.left - layout.notchDepth, mid);
