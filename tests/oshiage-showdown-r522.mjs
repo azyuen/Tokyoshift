@@ -155,7 +155,10 @@ test('RaceScene goes directly to heat 2 and 3, paying prize only after heat 3', 
   assert.match(race, /settlement\?\.oshiageEliteContinues/);
   assert.match(race, /this\.startNextOshiageEliteHeat\(\)/);
   assert.match(race, /prepareNextOshiageShowdownHeat\(this\.registry\)/);
-  assert.match(race, /this\.scene\.start\('RaceScene'\)/);
+  const nextHeat = race.slice(race.indexOf('  startNextOshiageEliteHeat() {'),
+    race.indexOf('  getNextTunerChallengeRound() {'));
+  assert.match(nextHeat, /this\.scene\.restart\(\)/);
+  assert.doesNotMatch(nextHeat, /this\.scene\.start\('OshiageScene'\)[^]*this\.scene\.start\('RaceScene'\)/);
   assert.match(race, /const completed = Boolean\(playerWon && roundNumber >= 3/);
   assert.match(race, /const prize = completed \?/);
   assert.match(helper, /registry\.set\('cash', cashBefore - venue\.entryFee\)/);
