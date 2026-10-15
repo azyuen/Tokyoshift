@@ -139,8 +139,8 @@ export const CUTSCENES = {
     once: true,
     characters: { left: '$PLAYER', right: 'sayakaFujieda' },
     pages: [
-      { speaker: 'left', pose: 'idle',
-        text: 'Wait... you look familiar. Like someone I know.' },
+      { speaker: 'left', pose: 'idle', rightPose: 'oshiageNeutral',
+        text: 'Oh hi... you look so much like my family friend...' },
       { speaker: 'right', pose: 'oshiageConcerned', nameOverride: 'LADY INSTRUCTOR',
         text: "What do you mean?! I'm just a random driving instructor." },
       { speaker: 'right', pose: 'oshiageExplaining', nameOverride: 'LADY INSTRUCTOR',
