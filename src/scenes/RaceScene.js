@@ -11,8 +11,8 @@ import {
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261010-r461';
-import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r521';
-import { prepareNextOshiageShowdownHeat } from '../data/oshiageShowdown.js?v=20261015-r521';
+import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
+import { prepareNextOshiageShowdownHeat } from '../data/oshiageShowdown.js?v=20261015-r522';
 import {
   STREET_GREEN_SECONDS,
   getStreetSignalFrame,
