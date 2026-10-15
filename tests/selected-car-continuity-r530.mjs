@@ -38,8 +38,10 @@ test('Arkon Den keeps the deliberately chosen vehicle after a temporary scene ov
   assert.equal(persisted.selectedCarId, 'r34');
 });
 test('legacy profiles keep their last valid personal car without migration losses', () => {
+  const legacy = createDefaultGameState();
+  delete legacy.preferredCarId; // This field was absent in R529 and older saves.
   const loaded = normaliseState({
-    ...createDefaultGameState(),
+    ...legacy,
     ownedCarIds: ['ae86', 'ek9', 'r34'],
     selectedCarId: 'ek9',
   });
