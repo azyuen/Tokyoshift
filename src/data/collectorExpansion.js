@@ -4,7 +4,7 @@ export function addCollectorExpansion(cars) {
   const add = (id, donor, spec) => {
     cars[id] = {
       ...cars[donor], ...spec, id,
-      collector: true, tuningLocked: true, ginzaExclusive: true,
+      collector: true, tuningLocked: true, ginzaExclusive: spec.ginzaExclusive ?? true,
       nosPower: 0, nosCapacitySeconds: 0,
       visual: { ...cars[donor].visual },
     };
@@ -16,6 +16,8 @@ export function addCollectorExpansion(cars) {
   });
   add('zeroSportsGc8', 'gc8', {
     name: 'ZERO/SPORTS Subaru Impreza GC8', shortName: 'ZERO/SPORTS GC8',
+    // Now also obtainable by converting a stock GC8 at the Shinagawa tuner.
+    ginzaExclusive: false,
     description: 'A fixed 294 kW game-spec ZERO/SPORTS collector build with a broad turbo powerband.',
     engine: 'ej20_zerosports', engineModel: 'EJ20 // ZERO/SPORTS',
     drivetrain: 'AWD', powerKW: 294, torqueNm: 480, vehicleMassKg: 1220,

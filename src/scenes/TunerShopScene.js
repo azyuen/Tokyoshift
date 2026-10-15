@@ -50,6 +50,9 @@ const BODY_FONT = '"Rajdhani", monospace';
 const STAGE = { x: 24, y: 92, w: 1138, h: 724 };
 const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
 const HERO_CAR_DISPLAY_SCALE = 0.84;
+ // A single showroom footprint for stock, player and hero cars in every tuner.
+ // All current reference-standard bodies share the same 1300px source canvas.
+const TUNER_STAGE_CAR_WIDTH = Math.round(770 * HERO_CAR_DISPLAY_SCALE);
 
 const money = value => '¥ ' + Number(value || 0).toLocaleString('en-US');
 
@@ -170,11 +173,14 @@ export default class TunerShopScene extends Phaser.Scene {
 
   recordShopVisit() {
     const progress = { ...(this.registry.get('tunerShopProgress') || {}) };
+    const previousVisit = progress[this.shop.id]
+      || (this.shop.legacyShopId ? progress[this.shop.legacyShopId] : null)
+      || {};
     progress[this.shop.id] = {
-      ...(progress[this.shop.id] || {}),
+      ...previousVisit,
       discovered: true,
       visited: true,
-      visitedAt: progress[this.shop.id]?.visitedAt || Date.now(),
+      visitedAt: previousVisit.visitedAt || Date.now(),
     };
     this.registry.set('tunerShopProgress', progress);
     if (this.shop.heroCarId) {
@@ -489,7 +495,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const hero = cars[this.shop.heroCarId];
     if (hero) {
-      this.drawCarOnStage(hero.id, 720, 650, Math.round(770 * HERO_CAR_DISPLAY_SCALE), 10, true);
+      this.drawCarOnStage(hero.id, 720, 650, TUNER_STAGE_CAR_WIDTH, 10, true);
     }
 
     const currentCarId = this.getCurrentCarId();
@@ -646,7 +652,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const car = cars[carId];
     const carState = (this.registry.get('carStates') || {})[carId] || {};
 
-    this.drawCarOnStage(carId, 720, 650, 730, 10, true);
+    this.drawCarOnStage(carId, 720, 650, TUNER_STAGE_CAR_WIDTH, 10, true);
 
     const installed = new Set(getInstalledSpecialistTuning(carState));
     const options = this.shop.tuningOptions || [];
@@ -880,7 +886,7 @@ export default class TunerShopScene extends Phaser.Scene {
       carId,
       720,
       650,
-      730,
+      TUNER_STAGE_CAR_WIDTH,
       10,
       true,
       { showDecals: false }
@@ -1586,7 +1592,7 @@ export default class TunerShopScene extends Phaser.Scene {
       this.shop.donorCarId,
       720,
       650,
-      730,
+      TUNER_STAGE_CAR_WIDTH,
       10,
       true
     );
@@ -1723,7 +1729,7 @@ export default class TunerShopScene extends Phaser.Scene {
 
         if (success) {
           this.drawPlayerCharacter();
-          this.drawCarOnStage(this.shop.heroCarId, 735, 650, Math.round(780 * HERO_CAR_DISPLAY_SCALE), 10, true);
+          this.drawCarOnStage(this.shop.heroCarId, 735, 650, TUNER_STAGE_CAR_WIDTH, 10, true);
           this.addDynamic(this.add.text(
             STAGE.x + STAGE.w / 2,
             STAGE.y + 110,

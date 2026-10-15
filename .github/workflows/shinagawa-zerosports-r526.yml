@@ -1,0 +1,30 @@
+name: Shinagawa Zero/Sports tuner regression
+on:
+  pull_request:
+    paths:
+      - 'src/data/tunerShops.js'
+      - 'src/data/collectorExpansion.js'
+      - 'src/data/characters.js'
+      - 'src/data/regionalChallengeBuilds.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'src/vehicles/TunerDecals.js'
+      - 'tests/shinagawa-zero-sports-r526.mjs'
+      - '.github/workflows/shinagawa-zerosports-r526.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/tunerShops.js'
+      - 'src/scenes/TunerShopScene.js'
+      - 'tests/shinagawa-zero-sports-r526.mjs'
+  workflow_dispatch:
+jobs:
+  shinagawa-tuner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check src/data/tunerShops.js
+      - run: node --check src/scenes/TunerShopScene.js
+      - run: node --test tests/shinagawa-zero-sports-r526.mjs tests/tuner-hero-conversions-r521.mjs tests/startup-import-integrity-r508.mjs
