@@ -6718,7 +6718,7 @@ export default class GarageScene extends Phaser.Scene {
 
     if (!arrival.length) {
       this.spawnOpeningCompanion('sayakaFujieda', true, () =>
-        this.time.delayedCall(1100, () => this.runOpeningStoryIfNeeded()));
+        this.runOpeningStoryIfNeeded());
       return;
     }
 
@@ -6739,8 +6739,9 @@ export default class GarageScene extends Phaser.Scene {
       onComplete: () => {
         // Let the engine settle, then reveal Sayaka from the car door.
         this.time.delayedCall(440, () => {
+          // Her first manga scene begins as soon as her full fade-in ends.
           this.spawnOpeningCompanion('sayakaFujieda', true, () => {
-            this.time.delayedCall(1200, () => this.runOpeningStoryIfNeeded());
+            this.runOpeningStoryIfNeeded();
           });
         });
       },
@@ -6865,23 +6866,6 @@ export default class GarageScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  armDaichiWorkshopTap() {
-    if (this.registry.get('openingChapter') !== 'awaitDaichi' ||
-        this._daichiTapShield?.active || this._daichiEntryStarted ||
-        !this.sys?.isActive?.()) return;
-    // Transparent input surface: the NEXT pointer event that closed the
-    // Sayaka cutscene must finish before a NEW tap can summon Daichi.
-    const shield = this.add.rectangle(780, 420, 1560, 840, 0x000000, 0.001)
-      .setDepth(177).setInteractive({ useHandCursor: true });
-    this._daichiTapShield = shield;
-    shield.once('pointerdown', () => {
-      shield.disableInteractive();
-      shield.destroy();
-      this._daichiTapShield = null;
-      this.startDaichiWorkshopArrival();
-    });
-  }
-
   startDaichiWorkshopArrival(resume = false) {
     const chapter = this.registry.get('openingChapter');
     if (this._daichiEntryStarted ||
@@ -6891,7 +6875,7 @@ export default class GarageScene extends Phaser.Scene {
     this._daichiTapShield?.destroy?.();
     this._daichiTapShield = null;
     this.clearOpeningOfficePrompt();
-    // Save the tap before preparing assets so a refresh midway can resume.
+    // Save the automatic entry before preparing assets so a refresh can resume.
     this.registry.set('openingChapter', 'daichi');
     saveSessionState(this.registry);
 
@@ -6932,9 +6916,9 @@ export default class GarageScene extends Phaser.Scene {
       this.tweens.add({
         targets: objects,
         alpha: 1,
-        duration: 950,
+        duration: 1450,
         ease: 'Sine.easeInOut',
-        onComplete: () => this.time.delayedCall(500, () => this.runOpeningStoryIfNeeded()),
+        onComplete: () => this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded()),
       });
     }, { includeVisualMods: false });
   }
@@ -6962,11 +6946,11 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   continueGarageStoryFlow() {
-    // A single screen tap now starts Daichi's visit. A save interrupted after
-    // the tap can resume the same fade-in without needing a second tap.
+    // Sayaka's exit automatically starts Daichi's arrival. A profile resumed
+    // during this transition can repeat the fade without requiring a tap.
     const chapter = this.registry.get('openingChapter');
     if (chapter === 'awaitDaichi') {
-      this.armDaichiWorkshopTap();
+      this.startDaichiWorkshopArrival();
       return true;
     }
     if (chapter === 'daichi') {
@@ -7015,7 +6999,8 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('openingChapter', 'awaitDaichi');
           saveSessionState(this.registry);
           this.clearOpeningOfficePrompt();
-          this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
+          // The player sees Daichi emerge from behind the car immediately.
+          this.startDaichiWorkshopArrival();
         });
       };
       if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
