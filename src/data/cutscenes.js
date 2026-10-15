@@ -952,6 +952,7 @@ export const CUTSCENE_ORDER = [
   'openingSayakaFarewell',
   'openingSayakaPhoneCall',
   'openingDaichiAfterSayaka',
+  'oshiageInstructorFirstEncounter',
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'crewRecruitmentInvite',
