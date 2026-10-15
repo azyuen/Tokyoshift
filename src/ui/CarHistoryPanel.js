@@ -200,7 +200,7 @@ export function showCarHistoryPanel(scene, options = {}) {
       const panel = scene.add.rectangle(780, 420, 790, 210, 0x08131f, 0.99)
         .setStrokeStyle(3, 0x43dfff, 0.96).setDepth(311);
       const label = scene.add.text(780, 420,
-        'MAGAZINE COULD NOT LOAD\\nA page image is missing.\\nTAP TO CLOSE AND TRY AGAIN', {
+        'MAGAZINE COULD NOT LOAD\nA page image is missing.\nTAP TO CLOSE AND TRY AGAIN', {
           fontFamily: PIXEL_FONT, fontSize: '11px', color: '#eefaff',
           align: 'center', lineSpacing: 20,
         }).setOrigin(0.5).setDepth(312);
