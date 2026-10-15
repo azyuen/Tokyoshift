@@ -1,6 +1,6 @@
-// One booking includes an initial attempt and THREE retries. Fees are paid
-// once at confirmation, not on individual retries.
-export const OSHIAGE_SCHOOL_RETRIES = 3;
+// One booking buys THREE total runs: the initial run and TWO retries.
+// All runs belong to a single uninterrupted visit; leaving forfeits the rest.
+export const OSHIAGE_SCHOOL_RETRIES = 2;
 export const OSHIAGE_SCHOOL_MAX_ATTEMPTS = 1 + OSHIAGE_SCHOOL_RETRIES;
 export const OSHIAGE_SCHOOL_LESSONS = Object.freeze({
   basic: Object.freeze({ id: 'basic', fee: 0, title: 'BASIC DRIVING', pose: 'explaining',
@@ -14,7 +14,7 @@ export const OSHIAGE_SCHOOL_LESSONS = Object.freeze({
 });
 export const schoolFee = id => OSHIAGE_SCHOOL_LESSONS[id]?.fee ?? null;
 export const OSHIAGE_VOUCHER_LESSONS = Object.freeze(['launch', 'standing', 'rolling']);
-// One complimentary first booking for each advanced lesson (all four attempts).
+// One complimentary first booking for each advanced lesson (three runs total).
 // Existing players' completed lessons count as already tried; no paid bookings are reset.
 export function isOshiageVoucherAvailable(source, lessonId) {
   if (!OSHIAGE_VOUCHER_LESSONS.includes(lessonId)) return false;
