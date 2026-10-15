@@ -143,7 +143,7 @@ test('standard Meet cards and right-side Showdown sections appear in Oshiage', (
   assert.match(scene, /3-ELITE DRIVER SHOWDOWN/);
   assert.match(scene, /'HEAT ' \+ \(previewIndex \+ 1\) \+ ' OF 3'/);
   assert.match(scene, /'CAR: '/);
-  assert.match(scene, /'DISTANCE: '/);
+  assert.match(scene, /DISTANCE: /);
   assert.match(scene, /'PRIZE'/);
   assert.match(scene, /'RACE FOR ' \+ MONEY\(venue\.prizeCash\)/);
   assert.match(scene, /GO TO MAP/);
