@@ -131,6 +131,24 @@ export const CUTSCENES = {
     finalActionLabel: 'TAKE THE COUPONS',
   },
 
+  oshiageInstructorFirstEncounter: {
+    id: 'oshiageInstructorFirstEncounter',
+    category: 'OSHIAGE / STORY',
+    testerLabel: 'Oshiage — Meet the Mysterious Lady Instructor',
+    title: 'OSHIAGE // FIRST ENCOUNTER',
+    once: true,
+    characters: { left: '$PLAYER', right: 'sayakaFujieda' },
+    pages: [
+      { speaker: 'left', pose: 'idle',
+        text: 'Wait... you look familiar. Like someone I know.' },
+      { speaker: 'right', pose: 'oshiageConcerned', nameOverride: 'LADY INSTRUCTOR',
+        text: "What do you mean?! I'm just a random driving instructor." },
+      { speaker: 'right', pose: 'oshiageExplaining', nameOverride: 'LADY INSTRUCTOR',
+        text: 'Call me Lady Instructor. Now, are you here to learn how to drive, or to ask questions?' },
+    ],
+    finalActionLabel: 'VISIT SCHOOL',
+  },
+
   tunerTeamCallout: {
     id: 'tunerTeamCallout',
     category: 'REGION / STORY',
