@@ -1068,52 +1068,44 @@ export default class OshiageScene extends Phaser.Scene {
         { pixel: true, size: '9px', color: '#eff7ff', depth: 27 });
     }
 
+    // Side panel: one succinct spec sheet, fitment price and two actions.
     if (!car) {
-      this.addText(SIDE.x + 20, SIDE.y + 169, 'NO CAR SELECTED',
+      this.addText(SIDE.x + 20, SIDE.y + 160, 'NO CAR SELECTED',
         { pixel: true, size: '10px', color: '#ffc6a8' });
-      this.addText(SIDE.x + 20, SIDE.y + 226,
-        'Choose an owned car before trying, buying or installing rims. Your previously purchased rims stay in your collection.',
+      this.addText(SIDE.x + 20, SIDE.y + 210,
+        'Select a car from your workshop before trying or installing wheels.',
         { size: '12px', wrap: SIDE.w - 40 });
     } else if (!selected) {
-      this.addText(SIDE.x + 20, SIDE.y + 170,
+      this.addText(SIDE.x + 20, SIDE.y + 154,
         String(car.shortName || car.name).toUpperCase(),
-        { pixel: true, size: '10px', color: '#d9eefd', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 242,
-        'Choose a wheel on the wall. Yuna will show it on your car.',
-        { size: '13px', wrap: SIDE.w - 40, spacing: 5 });
-      this.addText(SIDE.x + 20, SIDE.y + 347,
-        'Owned wheels can be reinstalled free.',
-        { size: '12px', wrap: SIDE.w - 40, color: '#9dc6d6' });
+        { pixel: true, size: '10px', color: '#f4faff', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 210,
+        'Tap a wheel on the wall to preview its fitment. Purchased designs can always be reinstalled.',
+        { size: '12px', wrap: SIDE.w - 40, color: '#aac8d6', spacing: 5 });
     } else {
-      const locked = quote?.locked;
       const tierColor = selected.tier === 'HERO' ? '#ff9fc7' :
         selected.tier === 'TUNER' ? '#ffe08a' : '#8fe7ff';
-      this.addText(SIDE.x + 20, SIDE.y + 166, selected.tier + ' RIMS',
+      this.addText(SIDE.x + 20, SIDE.y + 146,
+        selected.tier + ' // ' + selected.label.toUpperCase(),
         { pixel: true, size: '9px', color: tierColor, wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 214, selected.label.toUpperCase(),
-        { pixel: true, size: '11px', color: '#f4faff', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 297, selected.source,
-        { size: '12px', color: '#9cbbc9', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 371,
-        quote?.status === 'INSTALLED' ? 'FITTED TO THIS CAR'
-          : quote?.owned ? 'OWNED // FREE TO INSTALL'
-            : 'PRICE // ' + MONEY(quote?.price || 0),
+      this.addText(SIDE.x + 20, SIDE.y + 230, selected.source,
+        { size: '12px', color: '#afc4d2', wrap: SIDE.w - 40 });
+      this.addText(SIDE.x + 20, SIDE.y + 326,
+        quote?.status === 'INSTALLED' ? 'FITTED TO CURRENT CAR'
+          : quote?.owned ? 'OWNED // FREE INSTALL'
+            : quote?.locked ? 'FITMENT LOCKED'
+              : 'PRICE // ' + MONEY(quote?.price || 0),
         { pixel: true, size: '9px', color: '#ffe5a5', wrap: SIDE.w - 40 });
-      if (locked || quote?.status === 'UNAFFORDABLE') {
-        this.addText(SIDE.x + 20, SIDE.y + 440,
-          locked ? 'WHEEL FITMENT LOCKED' : 'NOT ENOUGH CASH',
-          { pixel: true, size: '8px', color: '#ffbaba', wrap: SIDE.w - 40 });
+      if (quote?.status === 'UNAFFORDABLE') {
+        this.addText(SIDE.x + 20, SIDE.y + 366, 'NOT ENOUGH CASH',
+          { pixel: true, size: '8px', color: '#ffbaba' });
       }
-      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 601, SIDE.w - 40, 48,
-        quote?.owned ? 'INSTALL RIMS' : 'BUY & INSTALL // ' + MONEY(selected.price),
-        () => this.confirmRimTransaction(selected, id),
-        { disabled: !['OWNED', 'BUY'].includes(quote?.status), accent: true, size: '8px' });
     }
 
     const restoreAllowed = Boolean(car && state.customWheelId &&
       !car.tuningLocked && !car.crewLoan && !state.collector && !state.immutable &&
       !state.tuningLocked && !state.crewLoan);
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 535, SIDE.w - 40, 42,
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 438, SIDE.w - 40, 44,
       restoreAllowed ? 'RESTORE STOCK RIMS' : 'STOCK RIMS',
       () => {
         if (!restoreStockOshiageRims(this.registry, id)) return;
@@ -1121,28 +1113,48 @@ export default class OshiageScene extends Phaser.Scene {
         this.renderView();
         this.showOshiageNotice('ORIGINAL FACTORY RIMS RESTORED');
       }, { disabled: !restoreAllowed, size: '8px' });
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 507, SIDE.w - 40, 48,
+      selected ? (quote?.owned ? 'INSTALL RIMS' : 'BUY & INSTALL // ' + MONEY(quote?.price || 0))
+        : 'SELECT A WHEEL TO PREVIEW',
+      () => this.confirmRimTransaction(selected, id),
+      { disabled: !selected || !['OWNED', 'BUY'].includes(quote?.status),
+        accent: Boolean(selected), size: '8px' });
 
-    this.addText(48, 654, 'RIMS // 4 STANDARD LEFT · 2 TUNER CENTRE · 2 HERO RIGHT',
-      { pixel: true, size: '9px', color: '#8feaff' });
     this.drawCustomWorksSpecialist({ x: 1054, feetY: STAGE.y + STAGE.h - 10 });
-    this.button(326, 745, 550, 64, 'RETURN TO CUSTOM WORKS', () => {
-      this.room = 'outside';
-      this.selectedRimIndex = -1;
-      this.rimPreview = false;
-      this.rimCarObjects = [];
-      this.loadAndRender();
-    }, { size: '8px' });
-    this.button(854, 745, 550, 64, 'BACK TO RIM WALL', () => {
-      this.selectedRimIndex = -1;
-      this.rimPreview = false;
-      this.rimCarObjects = [];
-      this.renderView();
-    }, { disabled: !this.rimPreview, size: '8px' });
-    this.addText(48, 798,
-      selected
-        ? 'RIMS ARE PREVIEW ONLY UNTIL YOU CONFIRM THE PURCHASE OR INSTALLATION.'
-        : 'TAP ANY RIM ON THE WALL TO START A LIVE FITMENT PREVIEW.',
-      { size: '9px', color: '#a1bdcc' });
+
+    if (this.rimPreview) {
+      // Black text-button over the main window, rather than a bottom-row CTA.
+      const back = this.own(this.add.rectangle(
+        STAGE.x + STAGE.w - 120, STAGE.y + 28, 222, 38, 0x060a10, 0.96
+      ).setStrokeStyle(1, 0x8499a8).setDepth(35)
+        .setInteractive({ useHandCursor: true }));
+      this.addText(STAGE.x + STAGE.w - 222, STAGE.y + 15,
+        'BACK TO RIM WALL', { pixel: true, size: '8px', color: '#eff8ff', depth: 36 });
+      back.on('pointerdown', () => {
+        this.selectedRimIndex = -1;
+        this.rimPreview = false;
+        this.rimCarObjects = [];
+        this.renderView();
+      });
+    }
+
+    // The bottom panel explains the rotating collection rather than repeating
+    // navigation or installation controls.
+    this.addText(52, STRIP.y + 19, 'WHEEL COLLECTION // EIGHT DESIGNS ON DISPLAY',
+      { pixel: true, size: '10px', color: '#8feaff' });
+    [
+      { x: 48, label: 'STANDARD // FOUR', detail: 'Classic street wheel designs.\nAlways available to browse.' },
+      { x: 420, label: 'TUNER // TWO', detail: 'Motorsport-inspired choices.\nTwo styles rotate every 3 hours.' },
+      { x: 792, label: 'HERO // TWO', detail: 'Rare signature wheel designs.\nTwo collector styles rotate.' },
+    ].forEach(guide => {
+      this.addText(guide.x, STRIP.y + 66, guide.label,
+        { pixel: true, size: '9px', color: '#f3e4bc', wrap: 325 });
+      this.addText(guide.x, STRIP.y + 98, guide.detail,
+        { size: '12px', color: '#aac8d6', wrap: 325, spacing: 4 });
+    });
+    if (selected) this.addText(52, STRIP.y + 157,
+      selected.label.toUpperCase() + ' // FREE PREVIEW · CHARGED ONLY ON CONFIRMATION',
+      { size: '9px', color: '#b5e6e2' });
   }
 
   selectRim(index) {
