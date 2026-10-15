@@ -3959,7 +3959,7 @@ export default class RaceScene extends Phaser.Scene {
       const roundNumber = roundIndex + 1;
       const completed = Boolean(playerWon && roundNumber >= 3 && series?.active && venue);
       const continues = Boolean(playerWon && !completed && series?.active && venue);
-      const prize = completed ? getOshiageElitePrize(this.registry, venueId, newWins) : null;
+      const prize = completed ? (series?.prize || getOshiageElitePrize(this.registry, venueId, newWins)) : null;
       const cashReward = prize ? Math.max(0, Number(prize.cash || 0)) : 0;
       let couponAwards = 0;
       let couponCarId = null;
