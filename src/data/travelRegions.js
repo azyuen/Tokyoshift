@@ -7,7 +7,7 @@ import {
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
-export const LOCAL_MOVE_COST = 200;
+export const LOCAL_MOVE_COST = 0;
 
 export const TRAVEL_REGIONS = {
   SHINONOME: {
@@ -558,15 +558,15 @@ export function getRegionTravelCost({
   // even when returning to that same meet, so workshop departure pricing must
   // be resolved before the "same location" shortcut.
   if (fromWorkshop) {
-    return target.region.baseCost + Number(target.costOffset || 0);
+    return target.region.baseCost;
   }
 
   if (currentLocationId === targetLocationId) return 0;
 
   const current = getTravelLocation(currentLocationId);
   if (current && current.regionId === target.regionId) {
-    return LOCAL_MOVE_COST + Number(target.costOffset || 0);
+    return LOCAL_MOVE_COST;
   }
 
-  return target.region.baseCost + Number(target.costOffset || 0);
+  return target.region.baseCost;
 }

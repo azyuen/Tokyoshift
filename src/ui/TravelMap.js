@@ -1079,15 +1079,21 @@ export function showTravelMap(scene, options = {}) {
     ));
 
     regionNameText.setText(openingTrainMode ? 'SHINONOME' : region.label);
+    // Show the journey's single regional fare in the main region header.
+    const regionEntryCost = location ? getTargetCost(location) : Number(region.baseCost || 0);
     regionLockText
-      .setText(
-        regionOpen
-          ? ''
-          : crewRegionBlocked
+      .setText(openingTrainMode
+        ? ''
+        : !regionOpen
+          ? crewRegionBlocked
             ? 'CREW CAR // UNAVAILABLE'
             : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
-      )
-      .setVisible(!regionOpen);
+          : selectedRegionId === HOME_REGION_ID
+            ? 'RETURN // ' + MONEY(regionEntryCost)
+            : selectedRegionId === currentRegionId && !fromWorkshop
+              ? 'LOCAL TRAVEL // FREE'
+              : 'ENTRY // ' + MONEY(region.baseCost || 0))
+      .setVisible(!openingTrainMode);
     regionLineText.setText(openingTrainMode
       ? 'Only Shinonome is available on your first train ride home.'
       : region.description);
@@ -1186,8 +1192,6 @@ export function showTravelMap(scene, options = {}) {
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
       const available = locationAvailable(item) || item.kind === 'home';
-      const time = locationTimeLabel(item, worldPhase);
-
       row.label.setText(openingTrainMode ? 'HOME' : item.label);
       if (crewBlockedLocation(item)) {
         row.meta.setText('CREW CAR // UNAVAILABLE');
@@ -1216,8 +1220,7 @@ export function showTravelMap(scene, options = {}) {
         );
       } else {
         row.meta.setText(
-          item.difficulty + '  •  ' + time + '  •  ' +
-          (isCurrent ? 'HERE' : MONEY(cost))
+          item.difficulty + '  •  ' + (isCurrent ? 'HERE' : 'AVAILABLE')
         );
       }
 
