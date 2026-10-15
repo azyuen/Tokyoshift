@@ -8,7 +8,7 @@ const source = path => readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('twelve contiguous editorial pages include five complete car profiles',()=>{
  assert.equal(ISSUE01_EDITORIAL_PAGE_COUNT,12);
  assert.deepEqual(ISSUE01_PAGES.map(p=>p.number),Array.from({length:12},(_,i)=>i+4));
- assert.deepEqual([...ISSUE01_FEATURE_IDS],['ae86','ef','fc3s','ek9','evo3']);
+ assert.deepEqual([...ISSUE01_FEATURE_IDS],['ae86','ef','fc3s','ek9','galant']);
  for(const p of ISSUE01_PAGES.filter(p=>p.kind==='car')){
   assert(cars[p.carId]);assert(ISSUE01_PHOTO_CARS.includes(p.carId));
   for(const k of ['history','fact','tips','strengths','weaknesses'])assert(p[k].length>20);
@@ -19,7 +19,7 @@ test('owner supplied templates and used champion art are valid nonempty WebP fil
  assert.equal(ISSUE01_ASSETS.blank.path,'assets/Magazine/blank.webp');
  assert.equal(ISSUE01_ASSETS.contents.path,'assets/Magazine/contents.webp');
  assert.equal(ISSUE01_ASSETS.champion_02,undefined);
- assert.equal(ISSUE01_ASSETS.featured_car.path,'assets/Magazine/featuredcar_blank.webp');
+ assert.equal(ISSUE01_ASSETS.featured_car.path,'assets/Magazine/featuredcar_01.webp');
  assert.equal(ISSUE01_ASSETS.ginza_ad.path,'assets/Magazine/ginza_blank.webp');
  for(const a of Object.values(ISSUE01_ASSETS)){
   assert(existsSync(a.path));const b=readFileSync(a.path);assert(b.length>1000);assert.equal(b.subarray(0,4).toString(),'RIFF');assert.equal(b.subarray(8,12).toString(),'WEBP');
