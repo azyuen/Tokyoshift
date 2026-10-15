@@ -1,0 +1,32 @@
+name: Oshiage Meet Browser R522
+on:
+  push:
+    paths:
+      - 'src/scenes/OshiageScene.js'
+      - 'src/data/oshiageShowdown.js'
+      - 'src/data/oshiageElite.js'
+      - 'src/main.js'
+      - 'tests/oshiage-browser-r522.mjs'
+      - '.github/workflows/oshiage-browser-r522.yml'
+  workflow_dispatch:
+jobs:
+  oshiage-scene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Start local game
+        run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/tokyoshift-oshiage.log 2>&1 &
+      - name: Load Oshiage and exercise rival and location selection
+        run: node tests/oshiage-browser-r522.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oshiage-r522-meet-screenshots
+          path: artifacts/oshiage
+          if-no-files-found: ignore
