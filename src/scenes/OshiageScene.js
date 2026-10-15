@@ -1217,6 +1217,85 @@ export default class OshiageScene extends Phaser.Scene {
     });
   }
 
+  ensurePaintPickerTexture(key, width, height, draw) {
+    const texture = this.textures.exists(key)
+      ? this.textures.get(key)
+      : this.textures.createCanvas(key, width, height);
+    const ctx = texture.getContext();
+    ctx.clearRect(0, 0, width, height);
+    draw(ctx, width, height);
+    texture.refresh();
+    return key;
+  }
+
+  drawPaintColourSquare() {
+    const chosen = colorToHsv(this.pendingPaint);
+    const hue = Number.isFinite(this.paintPickerHue) ? this.paintPickerHue : chosen.h;
+    this.paintPickerHue = hue;
+    const w = 284, h = 146, cx = SIDE.x + SIDE.w / 2;
+    const sy = SIDE.y + 308, hy = SIDE.y + 411;
+    const squareKey = this.ensurePaintPickerTexture('oshiageColourSquareR531', w, h,
+      (ctx, width, height) => {
+        ctx.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
+        ctx.fillRect(0, 0, width, height);
+        const white = ctx.createLinearGradient(0, 0, width, 0);
+        white.addColorStop(0, '#ffffff');
+        white.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = white; ctx.fillRect(0, 0, width, height);
+        const black = ctx.createLinearGradient(0, 0, 0, height);
+        black.addColorStop(0, 'rgba(0,0,0,0)');
+        black.addColorStop(1, '#000000');
+        ctx.fillStyle = black; ctx.fillRect(0, 0, width, height);
+      });
+    const hueKey = this.ensurePaintPickerTexture('oshiageHueStripR531', w, 23,
+      (ctx, width, height) => {
+        const spectrum = ctx.createLinearGradient(0, 0, width, 0);
+        ['#ff0000','#ffff00','#00ff00','#00ffff','#0000ff','#ff00ff','#ff0000']
+          .forEach((hex, index) => spectrum.addColorStop(index / 6, hex));
+        ctx.fillStyle = spectrum; ctx.fillRect(0, 0, width, height);
+      });
+    const square = this.own(this.add.image(cx, sy, squareKey)
+      .setDepth(33).setInteractive({ useHandCursor: true }));
+    const strip = this.own(this.add.image(cx, hy, hueKey)
+      .setDepth(33).setInteractive({ useHandCursor: true }));
+    this.own(this.add.rectangle(cx, sy, w + 4, h + 4, 0, 0)
+      .setStrokeStyle(2, 0xd6e5ef).setDepth(34));
+    this.own(this.add.rectangle(cx, hy, w + 4, 27, 0, 0)
+      .setStrokeStyle(1, 0xa0b8c6).setDepth(34));
+    this.own(this.add.circle(cx - w / 2 + chosen.s * w,
+      sy + h / 2 - chosen.v * h, 7, this.pendingPaint)
+      .setStrokeStyle(2, 0xffffff).setDepth(35));
+    this.own(this.add.rectangle(cx - w / 2 + hue / 360 * w, hy,
+      4, 30, 0xffffff).setDepth(35));
+    const chooseSquare = (pointer, localX, localY) => {
+      if (this.paintBusy) return;
+      this.pendingPaint = hsvToColor(this.paintPickerHue,
+        Phaser.Math.Clamp(localX / w, 0, 1),
+        1 - Phaser.Math.Clamp(localY / h, 0, 1));
+      this.customPaintColor = this.pendingPaint;
+      this.renderView();
+    };
+    const chooseHue = (pointer, localX) => {
+      if (this.paintBusy) return;
+      this.paintPickerHue = Phaser.Math.Clamp(localX / w, 0, 1) * 359.99;
+      const value = colorToHsv(this.pendingPaint);
+      this.pendingPaint = hsvToColor(this.paintPickerHue,
+        Math.max(value.s, 0.85), Math.max(value.v, 0.75));
+      this.customPaintColor = this.pendingPaint;
+      this.renderView();
+    };
+    square.on('pointerdown', chooseSquare);
+    square.on('pointermove', (pointer, x, y) => {
+      if (pointer.isDown) chooseSquare(pointer, x, y);
+    });
+    strip.on('pointerdown', chooseHue);
+    strip.on('pointermove', (pointer, x) => {
+      if (pointer.isDown) chooseHue(pointer, x);
+    });
+    this.own(this.add.rectangle(cx, SIDE.y + 455, w, 22, this.pendingPaint)
+      .setStrokeStyle(1, 0xd6e5ef).setDepth(33));
+  }
+
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
     const mode = this.paintMode === 'custom' ? 'custom' : 'preset';
@@ -1236,24 +1315,21 @@ export default class OshiageScene extends Phaser.Scene {
       }
       const paintable = hasLayeredPaintAssets(this, car);
       const canBuy = Number(this.registry.get('garageTier') || 0) >= 1;
-      // Same side-on car renderer as garage and dyno. The target is positioned
-      // well inside the high central spray bay, not on the foreground floor.
-      // 30% smaller than the previous 690px paint sprite, with its registration
-      // slightly higher in the booth and centred away from Yuna at the right.
+      // Lower the side-profile car roughly one wheel width inside the bay.
       this.paintObjects = this.drawOwnedCar(
-        car, state, 609, 345, 483, this.pendingPaint
+        car, state, 609, 410, 483, this.pendingPaint
       );
-
-      this.addText(SIDE.x + 20, SIDE.y + 169, mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM RGB MIX',
+      this.addText(SIDE.x + 20, SIDE.y + 145,
+        mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM COLOUR PICKER',
         { pixel: true, size: '9px', color: '#ffe394' });
       if (mode === 'preset') {
-        this.addText(SIDE.x + 20, SIDE.y + 217,
-          'SELECT A PRESET COLOUR', { pixel: true, size: '8px', color: '#96b6c7' });
+        this.addText(SIDE.x + 20, SIDE.y + 182, 'CHOOSE A FINISH',
+          { pixel: true, size: '8px', color: '#96b6c7' });
         PAINT_PRESETS.forEach((preset, i) => {
           const x = SIDE.x + 48 + (i % 5) * 62;
-          const y = SIDE.y + 291 + Math.floor(i / 5) * 68;
+          const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
           const active = preset.color === this.pendingPaint;
-          const swatch = this.own(this.add.rectangle(x, y, 44, 41, preset.color)
+          const swatch = this.own(this.add.rectangle(x, y, 44, 42, preset.color)
             .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
           if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
             if (this.paintBusy) return;
@@ -1262,47 +1338,32 @@ export default class OshiageScene extends Phaser.Scene {
           });
         });
       } else {
-        this.addText(SIDE.x + 20, SIDE.y + 212,
-          'MIX YOUR OWN CUSTOM COLOUR', { pixel: true, size: '8px', color: '#96b6c7' });
-        const rgb = paintColorToRgb(this.pendingPaint);
-        ['r', 'g', 'b'].forEach((ch, i) => {
-          const y = SIDE.y + 294 + i * 67;
-          this.addText(SIDE.x + 30, y - 11, ch.toUpperCase(),
-            { pixel: true, size: '9px', color: '#e9faff' });
-          this.button(SIDE.x + 112, y, 48, 42, '-', () => this.updatePaintChannel(ch, -15), { size: '15px' });
-          this.addText(SIDE.x + 190, y - 11, String(rgb[ch]).padStart(3, '0'),
-            { pixel: true, size: '9px', color: '#ffe5a1' });
-          this.button(SIDE.x + 268, y, 48, 42, '+', () => this.updatePaintChannel(ch, 15), { size: '15px' });
-        });
-        const chip = this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
-          SIDE.y + 510, SIDE.w - 72, 26, this.pendingPaint).setStrokeStyle(2, 0xcde4f3).setDepth(33));
-        chip.setAlpha(1);
+        this.addText(SIDE.x + 20, SIDE.y + 183,
+          'TAP OR DRAG TO SELECT A COLOUR',
+          { pixel: true, size: '7px', color: '#96b6c7' });
+        this.drawPaintColourSquare();
       }
-
-      this.addText(SIDE.x + 20, SIDE.y + 536,
+      this.addText(SIDE.x + 20, SIDE.y + 477,
         !paintable ? 'PAINT LAYERS NOT AVAILABLE'
           : !canBuy ? 'CANAL YARD REQUIRED'
             : this.pendingPaint === current ? 'ALREADY INSTALLED'
-              : (mode === 'custom' ? 'CUSTOM PAINT // ' : 'PRESET PAINT // ') + MONEY(fee),
+              : 'PRICE // ' + MONEY(fee),
         { pixel: true, size: '8px', color: '#f6dda0', wrap: SIDE.w - 40 });
-      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 614, SIDE.w - 40, 48,
-        'APPLY PAINT  //  ' + MONEY(fee),
+      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 528, SIDE.w - 40, 48,
+        'APPLY PAINT // ' + MONEY(fee),
         () => this.applyPaint(id, this.pendingPaint, fee),
         { disabled: !paintable || !canBuy || this.pendingPaint === current ||
           Number(this.registry.get('cash') || 0) < fee || this.paintBusy,
           accent: true, size: '8px' });
     }
 
-    this.drawCustomWorksSpecialist({ x: 1066, feetY: STAGE.y + STAGE.h - 8 });
+    this.drawCustomWorksSpecialist({ x: 1066, feetY: STAGE.y + STAGE.h - 35 });
     this.addText(48, 654, 'CUSTOM WORKS // SPRAY BOOTH // SIDE PROFILE',
       { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(206, 744, 315, 66, 'PRESET // ¥8,000', () => this.setPaintMode('preset'),
+    this.button(316, 744, 545, 66, 'PRESET // ¥8,000', () => this.setPaintMode('preset'),
       { accent: mode === 'preset', size: '8px' });
-    this.button(542, 744, 315, 66, 'CUSTOM RGB // ¥16,000', () => this.setPaintMode('custom'),
+    this.button(860, 744, 545, 66, 'CUSTOM COLOUR // ¥16,000', () => this.setPaintMode('custom'),
       { accent: mode === 'custom', size: '8px' });
-    this.button(951, 744, 318, 66, 'RETURN TO CUSTOM WORKS', () => {
-      this.room = 'outside'; this.pendingPaint = null; this.loadAndRender();
-    }, { size: '7px' });
     this.addText(48, 794, this.paintBusy ? 'CAR ENTERING / SPRAYING...' :
       'Side-entry spray bay // real car paint layers // colour preview before purchase.',
       { size: '9px', color: '#9cb8c8' });
@@ -1312,6 +1373,7 @@ export default class OshiageScene extends Phaser.Scene {
     if (!['preset', 'custom'].includes(mode) || this.paintBusy) return;
     if (this.paintMode === 'custom') this.customPaintColor = this.pendingPaint;
     this.paintMode = mode;
+    this.paintPickerHue = null;
     const current = getCarPaintColor(this.selectedCar().state);
     this.pendingPaint = mode === 'custom'
       ? (this.customPaintColor ?? current) : current;
