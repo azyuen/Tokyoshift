@@ -1,5 +1,7 @@
 import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261014-stock';
 import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
+import { addCollectorExpansion } from './collectorExpansion.js?v=20261015-r525';
+import { applyHeroCarAssets } from './heroCarAssets.js?v=20261015-r525';
 
 const base = {
   wheelRadius: 0.305,
@@ -2254,7 +2256,11 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   });
 }
 
-// Unique collector cars keep their existing fixed body and wheel assets.
+// Keep existing IDs, tuner-conversion contracts and bespoke wheel textures.
+addCollectorExpansion(cars);
+applyHeroCarAssets(cars);
+
+// Unique collector cars retain fixed liveries (no paint mask).
 Object.values(cars).forEach(car => {
   car.visual = {
     ...(car.visual || {}),

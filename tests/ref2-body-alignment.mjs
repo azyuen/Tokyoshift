@@ -12,10 +12,10 @@ import {
 import { getWheelPairFit, getWheelContactOffsetY } from '../src/vehicles/WheelFit.js';
 
 const approved = {
-  r34: ['r34',36,-922,-248,'L'],
+  r34: ['r34',0,-987,-243,'L'],
   '3000gt':['3000gt',-23,-947,-258,'L'],
   jzx100:['chaser',15,-962,-248,'S'],
-  s2000:['s2000',13,-916,-228,'S'],
+  s2000:['s2000',0,-919,-229,'S'],
   '240z':['240z',-3,-887,-224,'S'],
   familia:['familia',3,-946,-244,'L'],
   evo5:['evo5',6,-950,-252,'S'],
@@ -29,7 +29,7 @@ test('all eight accepted source-pixel body offsets reach game configs unchanged'
   for(const [gameId,[stem,y,rearX,frontX,size]] of Object.entries(approved)) {
     const spec=reference.cars[stem];
     const v=cars[gameId].visual;
-    assert.equal(spec.bodyRenderOffsetY,y,stem);
+    assert.equal(spec.bodyRenderOffsetY || 0,y,stem);
     assert.equal(v.bodyRenderOffsetY,y,gameId);
     assert.equal(v.referenceStandard,true,gameId);
     assert.equal(v.referenceWheelDiameter,reference.wheelDiameters[size]);

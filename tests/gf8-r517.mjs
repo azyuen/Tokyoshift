@@ -30,7 +30,7 @@ test('GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car', (
   assert.equal(car.gearRatios.length,5);
   assert.equal(car.engine,'ej207_gf8');
   assert.notEqual(car.engine,cars.gdb.engine);
-  assert.notEqual(car.engine,cars.wrx22b.engine);
+  assert.notEqual(car.engine,cars.gc8.engine);
   assert.equal(carOrder.filter(id=>id==='gf8').length,1);
   assert.equal(getCarMagazineMeta('gf8').drivetrain,'AWD');
   assert.equal(engine.referenceBoostBar,car.maximumBoost);
@@ -70,7 +70,7 @@ test('GF8 market/encounters are live without altering other Subaru models',()=>{
   assert.equal(getAutoMarketBuild('gf8').stock,false);
   for(const region of ['SHINAGAWA','TATSUMI','YOKOHAMA'])
     assert.ok(NEW_MEET_MODELS_BY_REGION[region].includes('gf8'),region);
-  for(const id of ['wrx22b','b4rsk','gdb']) assert.ok(carOrder.includes(id));
-  assert.equal(cars.wrx22b.name,'Subaru Impreza 22B STI');
+  for(const id of ['gc8','b4rsk','gdb']) assert.ok(carOrder.includes(id));
+  assert.equal(cars.gc8.name,'Subaru Impreza WRX STI GC8');
   assert.equal(cars.b4rsk.name,'Subaru Legacy B4 RSK');
 });

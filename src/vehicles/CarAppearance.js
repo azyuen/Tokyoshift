@@ -503,7 +503,7 @@ export function createCarBodyLayers(
     // share the same canvas, so no individual transform or offset is allowed.
     // The shaded paint mask belongs BEHIND the fixed shell/linework.
     // Only paint receives a tint; the body must retain its original pixels.
-    const paint = scene.textures.exists(keys.paint)
+    const paint = !visual.singleBody && scene.textures.exists(keys.paint)
       ? scene.add.image(bodyX, bodyY, keys.paint)
           .setOrigin(1, 1)
           .setScale(scale)

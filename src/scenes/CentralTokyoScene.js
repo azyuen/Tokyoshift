@@ -1016,7 +1016,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // hero body's origin against the AE86 tyre-contact baseline at the same
     // width. This removes the up/down jump when cycling collector cars.
     let groundedBodyY = y;
-    if (car.visual.singleBody && cars.ae86 && car.id !== 'ae86') {
+    if (car.visual.singleBody && !car.visual.referenceStandard && cars.ae86 && car.id !== 'ae86') {
       const reference = cars.ae86;
       const referenceBodyKey = getCarBodyTextureKey(this, reference);
       if (

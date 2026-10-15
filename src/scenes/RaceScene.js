@@ -1197,7 +1197,7 @@ export default class RaceScene extends Phaser.Scene {
     // and historic wheel configs are deliberately not part of the nine-car
     // GIMP conversion, so never derive their baseline from cars.ae86.visual.
     let groundCorrectionY = 0;
-    if (cfg.singleBody) {
+    if (cfg.singleBody && !referenceCar) {
       const heroGroundOffset =
         renderOffsetY +
         Math.max(

@@ -62,6 +62,10 @@ const ENGINE_PROFILES = {
 
 // Reuse the appropriate cylinder/layout synthesis for each Ref2 engine.
 Object.assign(ENGINE_PROFILES, {
+  ej20_zerosports: { ...ENGINE_PROFILES.ej207_gc8, brightness: 0.96 },
+  ej22g_collector: { ...ENGINE_PROFILES.ej207_gc8, lowOrder: 0.38 },
+  c32b_gt500: { ...ENGINE_PROFILES.rb26dett, brightness: 1.35, mechanical: 0.11 },
+  '4g63_rally_evo6': { ...ENGINE_PROFILES['4g63t'], brightness: 1.05 },
   vg30dett: { ...ENGINE_PROFILES.rb26dett, roughness: 0.04 },
   vq35de: { ...ENGINE_PROFILES.rb26dett, brightness: 0.94, roughness: 0.05 },
   l24: ENGINE_PROFILES.rb26dett,

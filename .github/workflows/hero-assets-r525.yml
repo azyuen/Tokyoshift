@@ -1,0 +1,15 @@
+name: Hero asset and collector regression
+on:
+  push:
+    branches: [main]
+    paths: ['src/data/**', 'src/vehicles/**', 'assets/Cars/hero/**', 'assets/Cars/stock/**', 'tests/hero-assets-r525.mjs', '.github/workflows/hero-assets-r525.yml']
+  workflow_dispatch:
+jobs:
+  collectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/hero-assets-r525.mjs tests/tuner-hero-conversions-r521.mjs tests/car-reference-geometry.mjs tests/car-reference-rollout.mjs tests/ref2-body-alignment.mjs tests/stock-expansion-r516.mjs tests/startup-import-integrity-r508.mjs

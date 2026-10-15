@@ -24,8 +24,8 @@ test('all 42 deployed regular cars resolve to unified lowercase stock folder', (
     assert.ok(STANDARD_CAR_REFERENCE.cars[stem],id);
     assert.ok(REFERENCE_CAR_CANVAS[stem],id);
   }
-  // evo3 remains the legacy save ID; modularAssetStem selects Galant art.
-  assert.equal(cars.evo3.visual.modularAssetStem,'galant');
+  // Historical Evo III saves now migrate to the canonical Galant model.
+  assert.equal(cars.galant.visual.modularAssetStem,'galant');
 });
 test('all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed', () => {
   assert.ok(existsSync(url('assets/Cars/stock')));
@@ -49,11 +49,11 @@ test('all 86 deployed PNG assets exist in stock and sizes match; future uploads 
     assert.deepEqual(dims[0],REFERENCE_CAR_CANVAS[stem],stem);
   }
 });
-test('all 11 hero/collector images remain in the original assets/Cars root',()=>{
-  const heroes=readdirSync(url('assets/Cars')).filter(x=>x.endsWith('_hero_body.png'));
-  assert.equal(heroes.length,11);
+test('all 16 hero/collector images use the hero folder',()=>{
+  const heroes=readdirSync(url('assets/Cars/hero')).filter(x=>x.endsWith('_hero_body.png'));
+  assert.equal(heroes.length,16);
   assert.ok(heroes.includes('mines_r34_hero_body.png'));
-  assert.ok(heroes.includes('renown_mazda_787b_hero_body.png'));
+  assert.ok(heroes.includes('renown787B_hero_body.png'));
 });
 test('game paths and calibration views do not point to the deleted directories',()=>{
   for(const p of ['src/data/carReferenceGeometry.js','src/data/cars.js',

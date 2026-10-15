@@ -1,6 +1,37 @@
 // Ref2 torque curves are game calibrations matched to the requested rated power.
 // R516 curves are gameplay approximations, not measured dyno traces.
 export const engines = {
+  // Fixed collector builds. Curves model distinct game powerbands; they are
+  // not claims of measured dyno data for individual historic chassis.
+  ej20_zerosports: {
+    id: 'ej20_zerosports', name: 'EJ20 ZERO/SPORTS',
+    idleRPM: 900, redlineRPM: 7500, limiterRPM: 7700, inertia: 0.19,
+    referenceBoostBar: 1.25, offBoostTorqueFraction: 0.48,
+    torqueCurve: [[1000,120],[2000,190],[3000,330],[4000,460],
+      [5000,480],[6000,460],[6500,431.9],[7000,395],[7500,350],[7700,315]],
+  },
+  c32b_gt500: {
+    id: 'c32b_gt500', name: 'C32B GT500 V6',
+    idleRPM: 1200, redlineRPM: 9500, limiterRPM: 9700, inertia: 0.13,
+    referenceBoostBar: 0, offBoostTorqueFraction: 1,
+    torqueCurve: [[1200,100],[3000,195],[4500,265],[6000,330],
+      [7500,390],[8500,400],[9000,390.45],[9500,365],[9700,330]],
+  },
+  ej22g_collector: {
+    id: 'ej22g_collector', name: 'EJ22G 22B collector',
+    idleRPM: 850, redlineRPM: 7000, limiterRPM: 7200, inertia: 0.22,
+    referenceBoostBar: 0.85, offBoostTorqueFraction: 0.56,
+    torqueCurve: [[1000,130],[2000,230],[3200,363],[4000,360],
+      [5000,350],[5500,340],[6000,327.85],[6500,295],[7000,255],[7200,225]],
+  },
+  '4g63_rally_evo6': {
+    id: '4g63_rally_evo6', name: '4G63T Evo VI Group A',
+    idleRPM: 1100, redlineRPM: 7000, limiterRPM: 7200, inertia: 0.18,
+    referenceBoostBar: 1.5, offBoostTorqueFraction: 0.50,
+    torqueCurve: [[1100,150],[2000,280],[3000,470],[3500,510],
+      [4000,500],[4500,468.97],[5000,422],[5500,383.69],
+      [6000,345],[6500,305],[7000,265],[7200,235]],
+  },
   ej207_gf8: {
     id: 'ej207_gf8', name: 'Subaru EJ207 GF8 Version VI',
     idleRPM: 850, redlineRPM: 7000, limiterRPM: 7200, inertia: 0.20,

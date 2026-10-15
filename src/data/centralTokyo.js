@@ -271,6 +271,11 @@ export const AUTO_MARKET_LISTINGS = [
 ];
 
 export const GINZA_LISTINGS = [
+  { carId: 'mcrae22B', price: 30000000, collectionLabel: '22B RALLY TRIBUTE', rarity: 'COLLECTOR' },
+  { carId: 'zeroSportsGc8', price: 38000000, collectionLabel: 'ZERO/SPORTS GC8', rarity: 'RARE' },
+  { carId: 'tommiEvo6', price: 65000000, collectionLabel: 'MÄKINEN GROUP A', rarity: 'ULTRA RARE' },
+  { carId: 'castrolMugenNsx', price: 160000000, collectionLabel: 'CASTROL MUGEN GT500', rarity: 'LEGENDARY' },
+  { carId: 'cleanMazda787B', price: 220000000, collectionLabel: '787B CLEAN BODY', rarity: 'LEGENDARY' },
   {
     carId: 'spoonEk9',
     price: 28000000,

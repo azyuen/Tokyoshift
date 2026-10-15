@@ -32,7 +32,7 @@ export const STANDARD_CAR_REFERENCE = {
     "XT": {"rearX": -926, "frontX": -277, "size": "S"},
     "magna": {"rearX": -970, "frontX": -205, "size": "L"},
 
-    r34: { rearX: -922, frontX: -248, size: 'L', bodyRenderOffsetY: 36 },
+    r34: { rearX: -987, frontX: -243, size: 'L' },
     '180sx': { rearX: -932, frontX: -248, size: 'L' },
     '240z': { rearX: -887, frontX: -224, size: 'S', bodyRenderOffsetY: -3 },
     '3000gt': { rearX: -947, frontX: -258, size: 'L', bodyRenderOffsetY: -23 },
@@ -49,7 +49,7 @@ export const STANDARD_CAR_REFERENCE = {
     'familia': { rearX: -946, frontX: -244, size: 'L', bodyRenderOffsetY: 3 },
     'jza80': { rearX: -972, frontX: -260, size: 'S' },
     'nsx': { rearX: -968, frontX: -258, size: 'L' },
-    's2000': { rearX: -916, frontX: -228, size: 'S', bodyRenderOffsetY: 13 },
+    's2000': { rearX: -919, frontX: -229, size: 'S' },
     ae86: { rearX: -921, frontX: -247, size: 'S' },
     ef: { rearX: -877, frontX: -195, size: 'S' },
     ek9: { rearX: -931, frontX: -231, size: 'S' },
@@ -136,7 +136,7 @@ export const REFERENCE_CAR_CANVAS = Object.freeze({
   "XT": [1300, 440],
   "magna": [1300, 440],
 
-  r34: [1200, 500],
+  r34: [1300, 440],
   '180sx': [1300, 440],
   '240z': [1300, 440],
   '3000gt': [1300, 440],

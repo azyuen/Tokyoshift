@@ -126,7 +126,10 @@ export function getAxleWheelFit(
   if (visual.referenceStandard) {
     // Opt-in: nine GIMP-normalised cars only. The wheel always touches the
     // PNG bottom (world ground), so no per-car wheel Y/scale adjustments.
-    const diameter = numberOr(visual.referenceWheelDiameter, 182);
+    const diameter = numberOr(
+      visual[isFront ? 'referenceFrontWheelDiameter' : 'referenceRearWheelDiameter'],
+      numberOr(visual.referenceWheelDiameter, 182)
+    );
     const geometry = visual.referenceGeometry || {};
     const originalX = numberOr(geometry[prefix + 'X'], 0);
     const canvasWidth = numberOr(visual.referenceCanvasWidth, 1166);
