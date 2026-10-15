@@ -608,155 +608,293 @@ export default class OshiageScene extends Phaser.Scene {
     this.scene.start('RaceScene');
   }
 
+  // Deliberately follows the same 1138px stage, three rival cards and
+  // 356px right-hand column as a regular Tokyo SHIFT street Meet.
   drawMeet() {
     const progress = getOshiageEliteProgress(this.registry);
     const venueId = this.meetAlternative ? 'plaza' : 'underpass';
     const venue = OSHIAGE_ELITE_VENUES[venueId];
-    const remaining = getOshiageEliteRemainingMs(this.registry, venueId);
-    const { id: selectedCarId, car: playerCar } = this.selectedCar();
     const series = this.registry.get('oshiageEliteSeries');
     const continuing = Boolean(series?.active && series.venueId === venueId);
     const busyElsewhere = Boolean(series?.active && series.venueId !== venueId);
-    const roundIndex = continuing ? Math.max(0, Math.min(2, Number(series.roundIndex || 0))) : 0;
-    const opponent = progress.complete ? this.getEliteRival(venueId) : null;
+    const activeHeat = continuing ? Math.max(0, Math.min(2,
+      Number(series.roundIndex || 0))) : 0;
+    const lineup = progress.complete ? this.getEliteLineup(venueId) : [];
+    const previewIndex = Math.max(0, Math.min(2,
+      Number(this.showdownPreviewIndex || 0)));
+    const opponent = lineup[previewIndex] || lineup[activeHeat] || null;
     const rival = opponent ? characters[opponent.characterId] : null;
-    this.sideHeader('SKYTREE ELITE MEETS', venue.label + ' // ' +
-      (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'));
+    const car = opponent ? cars[opponent.carId] : null;
+    const { id: playerCarId, car: playerCar } = this.selectedCar();
+    const cooldown = getOshiageEliteRemainingMs(this.registry, venueId);
+    const access = getOshiageShowdownAccess(this.registry, venueId);
+    const canRace = progress.complete && lineup.length === 3 &&
+      !this.showdownLaunching && (
+        continuing ? series.playerCarId === playerCarId && Boolean(playerCar)
+          : access.allowed
+      );
+    const prize = getOshiageElitePrize(this.registry, venueId,
+      Number(this.registry.get('wins') || 0));
+    const extraPrize = prize?.wheelId
+      ? 'BONUS  //  ' + String(prize.wheelLabel || 'SPECIAL RIMS').toUpperCase()
+      : 'BONUS  //  ' + Number(prize?.coupons || venue.couponCount) + ' CAR COUPONS';
 
-    if (!progress.complete) {
-      this.addText(SIDE.x + 20, SIDE.y + 160, 'ELITE SHOWDOWNS LOCKED',
-        { pixel: true, size: '9px', color: '#ffd68d', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 222,
-        'Win the regional championship in all seven districts, including Shinjuku, to race at Skytree. This is separate from the professional drag complex.',
-        { size: '13px', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 400,
-        'CHAMPIONSHIPS  ' + progress.count + ' / ' + progress.required,
-        { pixel: true, size: '9px', color: '#ffe394' });
-    } else {
-      const key = opponent && 'oshiageEliteRival_' + opponent.characterId;
-      if (key && this.textures.exists(key)) {
-        const source = this.textures.get(key).getSourceImage();
-        this.own(this.add.image(267, 567, key).setOrigin(0.5, 1)
-          .setScale(290 / source.height).setMask(this.stageMask).setDepth(11));
-      }
-      if (opponent && cars[opponent.carId] &&
-          this.textures.exists(getCarBodyTextureKey(this, cars[opponent.carId]))) {
-        this.drawOwnedCar(cars[opponent.carId], opponent.buildState,
-          738, 462, 510, opponent.paintColor);
-      }
-      this.addText(SIDE.x + 20, SIDE.y + 154, 'ELITE OPPONENT',
-        { pixel: true, size: '9px', color: '#f6d27b' });
-      this.addText(SIDE.x + 20, SIDE.y + 191,
-        rival?.name || 'TOKYO ELITE RACER', { pixel: true, size: '9px', wrap: SIDE.w - 40 });
-      this.addText(SIDE.x + 20, SIDE.y + 253,
-        'CAR // ' + String(cars[opponent?.carId]?.shortName || 'JDM BUILD').toUpperCase() +
-        '\nSKILL // ELITE 5/5\nROUND // ' + (roundIndex + 1) + ' / 3' +
-        '\nGRAND PRIZE // ' + MONEY(venue.prizeCash),
-        { size: '13px', wrap: SIDE.w - 40, color: '#d9eff7', spacing: 9 });
-      this.addText(SIDE.x + 20, SIDE.y + 389,
-        venueId === 'plaza'
-          ? 'WIN: RARE WHEEL OR 3 CAR COUPONS'
-          : 'WIN: 2 CAR COUPONS',
-        { pixel: true, size: '8px', wrap: SIDE.w - 40, color: '#ffe394' });
-      this.addText(SIDE.x + 20, SIDE.y + 461,
-        continuing ? 'STREAK ACTIVE // ROUND ' + (roundIndex + 1) + '/3'
-          : busyElsewhere ? 'FINISH YOUR OTHER SKYTREE STREAK FIRST'
-          : remaining > 0
-            ? 'COOLDOWN // ' + Math.floor(remaining / 60000) + ':' +
-              String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0')
-            : playerCar ? 'READY // THREE-RACE STREAK' : 'SELECT YOUR OWN CAR',
-        { pixel: true, size: '9px', wrap: SIDE.w - 40,
-          color: remaining > 0 ? '#ffbc96' : '#a8eacb' });
+    // Match normal Meet's car-and-character presentation, but show just the
+    // currently selected rival. The car is 30% larger than the old 510px one.
+    if (opponent && car &&
+        this.textures.exists(getCarBodyTextureKey(this, car))) {
+      const carWidth = 663;
+      const carX = car.visual?.referenceStandard
+        ? STAGE.x + (STAGE.w - carWidth) / 2
+        : STAGE.x + STAGE.w * 0.60;
+      this.drawOwnedCar(car, opponent.buildState,
+        carX, 455, carWidth, opponent.paintColor, 12);
     }
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 571, SIDE.w - 40, 52,
-      continuing ? 'START ROUND ' + (roundIndex + 1) + ' / 3' : 'START ELITE SHOWDOWN',
-      () => this.startEliteRace(venueId), {
-        disabled: !progress.complete || busyElsewhere || (!continuing && remaining > 0) ||
-          !opponent || !playerCar || Boolean(playerCar.crewLoan) ||
-          (continuing && series.playerCarId !== selectedCarId),
-        accent: true, size: '8px',
+
+    const spriteKey = opponent && 'oshiageEliteRival_' + opponent.characterId;
+    if (spriteKey && this.textures.exists(spriteKey)) {
+      const source = this.textures.get(spriteKey).getSourceImage();
+      const avatarX = STAGE.x + 163;
+      const feetY = STAGE.y + STAGE.h - 12;
+      const scale = 315 / Math.max(1, source.height);
+      const characterWidth = source.width * scale;
+      this.own(this.add.ellipse(avatarX, feetY - 12,
+        Math.max(90, characterWidth * 0.77), 31, 0x000000, 0.55)
+        .setMask(this.stageMask).setDepth(19.8));
+      this.own(this.add.ellipse(avatarX, feetY - 7,
+        Math.max(65, characterWidth * 0.56), 18, 0x000000, 0.82)
+        .setMask(this.stageMask).setDepth(19.9));
+      this.own(this.add.image(avatarX, feetY, spriteKey)
+        .setOrigin(0.5, 1).setScale(scale).setDepth(20)
+        .setMask(this.stageMask));
+    }
+
+    if (rival) {
+      const labelWidth = 342, labelX = STAGE.x + STAGE.w - labelWidth / 2 - 21;
+      this.own(this.add.rectangle(labelX, STAGE.y + 42,
+        labelWidth, 59, 0x071523, 0.90)
+        .setStrokeStyle(2, 0x64d5fa).setMask(this.stageMask).setDepth(25));
+      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 24,
+        String(rival.name).toUpperCase(), {
+          pixel: true, size: '9px', color: '#f5ffff', depth: 26,
+        }).setMask(this.stageMask);
+      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 53,
+        (rival.regionId || 'TOKYO') + ' // ELITE DRIVER', {
+          pixel: true, size: '8px', color: '#8ddff1', depth: 26,
+        }).setMask(this.stageMask);
+    }
+
+    // The bottom strip is the normal Meet's three-card roster. Selecting any
+    // card previews its stage character/car; the heat order never changes.
+    this.addText(CARDS.x + 18, CARDS.y + 6,
+      'RIVALS IN THE SHOWDOWN', {
+        pixel: true, size: '10px', color: '#a7d5ef',
       });
-    if (series?.active) {
-      this.button(SIDE.x + SIDE.w / 2, SIDE.y + 627, SIDE.w - 40, 37,
-        'ABANDON CURRENT STREAK', () => this.abandonEliteStreak(), { size: '7px' });
+    [0, 1, 2].forEach(i => {
+      const offer = lineup[i];
+      const character = offer && characters[offer.characterId];
+      const x = [215, 593, 971][i];
+      const y = 744, w = 350, h = 132;
+      const selected = Boolean(offer && i === previewIndex);
+      const finished = continuing && i < activeHeat;
+      const box = this.own(this.add.rectangle(x, y, w, h,
+        selected ? 0x102a32 : 0x0a1521, 0.99)
+        .setStrokeStyle(selected ? 3 : 2,
+          selected ? 0x68e7ce : 0x315270).setDepth(34));
+      if (offer) box.setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => this.selectShowdownDriver(i));
+
+      if (offer && character) {
+        const portraitX = x - 111;
+        this.own(this.add.rectangle(portraitX, y, 105, 105, 0x101b27)
+          .setStrokeStyle(1, 0x365775).setDepth(35));
+        const key = 'oshiageEliteRival_' + offer.characterId;
+        if (this.textures.exists(key)) {
+          const image = this.textures.get(key).getSourceImage();
+          this.own(this.add.image(portraitX, y + 53, key)
+            .setOrigin(0.5, 1)
+            .setScale(102 / Math.max(1, image.height))
+            .setDepth(36));
+        }
+        this.addText(x - 42, y - 52,
+          String(character.name || 'RIVAL').toUpperCase(), {
+            pixel: true, size: '8px', color: '#f6ffff',
+            wrap: 210, depth: 37,
+          });
+        const quote = String(character.introQuote ||
+          character.personality || 'Three heats. No excuses.');
+        this.addText(x - 42, y - 22, '“' + quote + '”', {
+          size: '10px', color: '#a6c3d0',
+          wrap: 208, depth: 37,
+        });
+        this.addText(x - 42, y + 41,
+          finished ? 'HEAT ' + (i + 1) + ' // WON'
+            : 'HEAT ' + (i + 1) + ' // ' +
+              String(character.regionId || 'TOKYO'), {
+            pixel: true, size: '7px', color: finished ? '#7ee5bb' : '#ffe6a7',
+            wrap: 205, depth: 37,
+          });
+      } else {
+        this.addText(x - 140, y - 12,
+          'HEAT ' + (i + 1) + '\nELITE DRIVER LOCKED', {
+            pixel: true, size: '8px', color: '#718795',
+            wrap: 300, depth: 37,
+          });
+      }
+    });
+
+    // Normal Meet hierarchy: mode/location -> your car -> selected heat ->
+    // offer/prize -> green challenge action -> Go to Map.
+    this.addText(SIDE.x + 18, SIDE.y + 18, 'SKYTREE ELITE MEET', {
+      pixel: true, size: '12px', color: '#8feaff', wrap: SIDE.w - 36,
+    });
+    this.addText(SIDE.x + 20, SIDE.y + 84, 'SHOWDOWN LOCATION', {
+      pixel: true, size: '9px', color: '#b5d2e5',
+    });
+    this.button(SIDE.x + 94, SIDE.y + 144, 158, 49,
+      'SKYTREE\nUNDERPASS', () => this.selectEliteVenue('underpass'), {
+        accent: venueId === 'underpass', size: '7px',
+      });
+    this.button(SIDE.x + 265, SIDE.y + 144, 158, 49,
+      'SKYTREE\nPLAZA', () => this.selectEliteVenue('plaza'), {
+        accent: venueId === 'plaza', size: '7px',
+      });
+
+    this.addText(SIDE.x + 20, SIDE.y + 196, 'YOUR CAR', {
+      pixel: true, size: '9px', color: '#8feaff',
+    });
+    this.addText(SIDE.x + 20, SIDE.y + 228,
+      playerCar ? String(playerCar.name || playerCar.shortName).toUpperCase()
+        : 'NO CAR SELECTED', {
+        pixel: true, size: '8px', color: '#f4faff', wrap: SIDE.w - 40,
+      });
+    this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
+      SIDE.y + 279, SIDE.w - 34, 1, 0x31516a).setDepth(32));
+
+    this.addText(SIDE.x + 20, SIDE.y + 291,
+      '3-ELITE DRIVER SHOWDOWN', {
+        pixel: true, size: '9px', color: '#8feaff', wrap: SIDE.w - 40,
+      });
+    this.addText(SIDE.x + 20, SIDE.y + 330,
+      'HEAT ' + (previewIndex + 1) + ' OF 3' +
+      (continuing && previewIndex === activeHeat ? ' // UP NEXT' : ''), {
+        pixel: true, size: '9px', color: '#ffe09a',
+      });
+    this.addText(SIDE.x + 20, SIDE.y + 358,
+      'CAR: ' + (car?.shortName || 'ELITE BUILD') +
+      '\nRACE: ' + (opponent?.raceType || venue.raceType).toUpperCase() +
+      '\nDISTANCE: ' + (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'), {
+        size: '12px', color: '#e7f2fb', wrap: SIDE.w - 40, spacing: 3,
+      });
+
+    this.addText(SIDE.x + 20, SIDE.y + 448, 'PRIZE', {
+      pixel: true, size: '10px', color: '#a4d7eb',
+    });
+    this.addText(SIDE.x + 20, SIDE.y + 478,
+      MONEY(venue.prizeCash), {
+        pixel: true, size: '13px', color: '#ffdf70', wrap: SIDE.w - 40,
+      });
+    this.addText(SIDE.x + 20, SIDE.y + 514, extraPrize, {
+      pixel: true, size: '7px', color: '#fbe7a4', wrap: SIDE.w - 40,
+    });
+    this.addText(SIDE.x + 20, SIDE.y + 557,
+      'ENTRY FEE  //  ' + MONEY(venue.entryFee) +
+      (continuing ? '  (PAID)' : ''), {
+        pixel: true, size: '8px', color: '#c3d2df', wrap: SIDE.w - 40,
+      });
+
+    let status = '';
+    if (!progress.complete) {
+      status = 'CHAMPIONSHIPS  ' + progress.count + ' / ' + progress.required +
+        ' REQUIRED TO UNLOCK';
+    } else if (busyElsewhere) {
+      status = 'FINISH THE OTHER SKYTREE SHOWDOWN FIRST';
+    } else if (continuing && series.playerCarId !== playerCarId) {
+      status = 'CONTINUE WITH THE SAME CAR';
+    } else if (continuing) {
+      status = 'STREAK ACTIVE // NEXT HEAT ' + (activeHeat + 1) + ' OF 3';
+    } else if (cooldown > 0) {
+      status = 'COOLDOWN  ' + Math.floor(cooldown / 60000) + ':' +
+        String(Math.floor((cooldown % 60000) / 1000)).padStart(2, '0');
+    } else if (!access.allowed) {
+      status = access.reason || 'UNAVAILABLE';
+    } else {
+      status = 'WIN ALL THREE HEATS FOR THE FULL PRIZE';
     }
-    const last = this.registry.get('oshiageEliteLastResult');
-    this.addText(48, 653,
-      'SKYTREE SHOWDOWNS // 3 RACES TO WIN // 15-MINUTE COOLDOWNS',
-      { pixel: true, size: '9px', color: '#8feaff' });
-    this.button(310, 747, 495, 70, 'SKYTREE UNDERPASS // ELITE', () => this.selectEliteVenue('underpass'),
-      { accent: venueId === 'underpass', size: '8px' });
-    this.button(853, 747, 495, 70, 'SKYTREE PLAZA // ELITE', () => this.selectEliteVenue('plaza'),
-      { accent: venueId === 'plaza', size: '8px' });
-    if (last?.venueId === venueId) {
-      this.addText(48, 793,
-        last.continues ? 'ROUND ' + last.roundNumber + ' / 3 CLEARED // NO PRIZE YET'
-          : last.playerWon
-            ? 'SHOWDOWN WON // ' + MONEY(last.cash) +
-              (last.wheelLabel ? ' // ' + last.wheelLabel : ' // +' + last.couponAwards + ' COUPONS')
-            : 'STREAK BROKEN // NO PRIZE // RETURN AFTER COOLDOWN',
-        { size: '10px', color: '#d9e2ef' });
-    }
+    this.addText(SIDE.x + 20, SIDE.y + 587, status, {
+      pixel: true, size: '7px',
+      color: canRace ? '#a8efce' : '#e6b7a2',
+      wrap: SIDE.w - 40,
+    });
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 632,
+      SIDE.w - 38, 50,
+      continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
+        : 'RACE FOR ' + MONEY(venue.prizeCash) + '  >',
+      () => this.startEliteRace(venueId), {
+        disabled: !canRace, accent: true, size: '8px',
+      });
+  }
+
+  selectShowdownDriver(index) {
+    if (this.showdownSwitching || this.showdownLaunching || this.paintBusy ||
+        this.activeLocationId !== 'oshiageSkytreeMeet') return;
+    const venueId = this.meetAlternative ? 'plaza' : 'underpass';
+    if (!this.getEliteLineup(venueId)[index] ||
+        index === this.showdownPreviewIndex) return;
+    this.showdownSwitching = true;
+    const fade = this.add.rectangle(
+      STAGE.x + STAGE.w / 2, STAGE.y + STAGE.h / 2,
+      STAGE.w, STAGE.h, 0x02060e, 1
+    ).setDepth(29).setMask(this.stageMask).setAlpha(0);
+    this.tweens.add({
+      targets: fade, alpha: 1, duration: 205, ease: 'Sine.easeInOut',
+      onComplete: () => {
+        if (!this.sys.isActive()) { fade.destroy(); return; }
+        this.showdownPreviewIndex = index;
+        this.renderView();
+        this.tweens.add({
+          targets: fade, alpha: 0, duration: 245, ease: 'Sine.easeInOut',
+          onComplete: () => {
+            fade.destroy();
+            this.showdownSwitching = false;
+          },
+        });
+      },
+    });
   }
 
   selectEliteVenue(id) {
-    if (!OSHIAGE_ELITE_VENUES[id]) return;
+    if (!OSHIAGE_ELITE_VENUES[id] || this.showdownSwitching) return;
     this.meetAlternative = id === 'plaza';
+    this.showdownPreviewIndex = 0;
+    const series = this.registry.get('oshiageEliteSeries');
+    if (series?.active && series.venueId === id) {
+      this.showdownPreviewIndex = Number(series.roundIndex || 0);
+    }
     this.registry.set('oshiageEliteVenue', id);
     saveSessionState(this.registry);
     this.loadAndRender();
   }
 
   startEliteRace(venueId) {
-    if (this.paintBusy || !getOshiageEliteProgress(this.registry).complete) return;
-    const { id, car } = this.selectedCar();
-    if (!car || car.crewLoan) return;
-    const activeSeries = this.registry.get('oshiageEliteSeries');
-    if (activeSeries?.active && activeSeries.venueId !== venueId) return;
-    const continuing = Boolean(activeSeries?.active && activeSeries.venueId === venueId);
-    if (continuing && activeSeries.playerCarId !== id) {
-      this.showOshiageNotice('YOU MUST FINISH THIS THREE-RACE STREAK IN THE SAME CAR');
+    if (this.showdownLaunching || this.paintBusy || this.showdownSwitching ||
+        !getOshiageEliteProgress(this.registry).complete) return;
+    this.showdownLaunching = true;
+    const series = this.registry.get('oshiageEliteSeries');
+    let result;
+    if (series?.active && series.venueId === venueId) {
+      result = { ok: prepareNextOshiageShowdownHeat(this.registry) };
+    } else {
+      result = beginOshiageShowdown(this.registry, venueId, Date.now(),
+        this.getEliteLineup(venueId));
+    }
+    if (!result.ok) {
+      this.showdownLaunching = false;
+      this.showOshiageNotice(result.reason || 'SHOWDOWN UNAVAILABLE');
+      this.renderView();
       return;
     }
-    if (!continuing && getOshiageEliteRemainingMs(this.registry, venueId) > 0) return;
-    const rival = this.getEliteRival(venueId);
-    const venue = OSHIAGE_ELITE_VENUES[venueId];
-    if (!rival || !venue) return;
-
-    const roundIndex = continuing ? Number(activeSeries.roundIndex || 0) : 0;
-    if (!continuing) {
-      const startedAt = Date.now();
-      const cooldowns = { ...(this.registry.get('oshiageEliteCooldowns') || {}) };
-      cooldowns[venueId] = startedAt + OSHIAGE_ELITE_COOLDOWN_MS;
-      this.registry.set('oshiageEliteCooldowns', cooldowns);
-      this.registry.set('oshiageEliteSeries', {
-        active: true, venueId, roundIndex: 0, playerCarId: id, startedAt,
-      });
-    }
-    this.registry.set('oshiageEliteVenue', venueId);
-    this.registry.set('oshiageLocation', 'oshiageSkytreeMeet');
-    this.registry.set('district', 'OSHIAGE');
-    this.registry.set('selectedCarId', id);
-    this.registry.set('selectedOpponentCarId', rival.carId);
-    this.registry.set('selectedOpponentPaintColor', rival.paintColor);
-    this.registry.set('selectedOpponentCharacterId', rival.characterId);
-    this.registry.set('selectedOpponentEncounterRating', 5);
-    this.registry.set('selectedOpponentEncounterAi', rival.encounterAi);
-    this.registry.set('selectedOpponentDifficulty', 'ELITE');
-    this.registry.set('selectedOpponentBuildRating', 5);
-    this.registry.set('selectedOpponentBuildArchetype', rival.buildState.buildArchetype);
-    this.registry.set('selectedOpponentBuildState', rival.buildState);
-    this.registry.set('selectedRaceCategory', 'OSHIAGE_ELITE');
-    this.registry.set('selectedRaceType', rival.raceType);
-    this.registry.set('selectedRaceDistanceM', rival.distanceM);
-    this.registry.set('selectedRaceDeal', 'OSHIAGE_ELITE');
-    this.registry.set('selectedRaceStake', 0);
-    this.registry.set('selectedRaceSpecialChallenge', false);
-    this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceReturnScene', 'OshiageScene');
     this.registry.set('raceTimeOfDay', getWorldPhase());
-    this.registry.set('raceDistrict', 'OSHIAGE');
-    this.registry.set('raceLocationLabel', venue.label + ' // ' + (roundIndex + 1) + '/3');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
