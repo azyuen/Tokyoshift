@@ -633,8 +633,8 @@ export default class OshiageScene extends Phaser.Scene {
         continuing ? series.playerCarId === playerCarId && Boolean(playerCar)
           : access.allowed
       );
-    const prize = getOshiageElitePrize(this.registry, venueId,
-      Number(this.registry.get('wins') || 0));
+    const prize = continuing && series.prize || getOshiageElitePrize(this.registry,
+      venueId, Number(this.registry.get('wins') || 0) + 3);
     const extraPrize = prize?.wheelId
       ? 'BONUS  //  ' + String(prize.wheelLabel || 'SPECIAL RIMS').toUpperCase()
       : 'BONUS  //  ' + Number(prize?.coupons || venue.couponCount) + ' CAR COUPONS';
