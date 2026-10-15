@@ -55,6 +55,14 @@ export const TUNER_DECAL_STYLES = {
     textureKey: 'tunerDecalSpoon',
     suggestedPath: 'assets/Decals/spoon.png',
   },
+  zeroSports: {
+    id: 'zeroSports',
+    label: 'ZERO/SPORTS',
+    color: '#FFFFFF',
+    // Use the built-in text rendering until a matching transparent PNG exists.
+    textureKey: '',
+    suggestedPath: null,
+  },
 };
 
 const clamp = (value, min, max) =>
