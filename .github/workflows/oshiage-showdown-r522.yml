@@ -1,0 +1,33 @@
+name: Oshiage Elite Showdown R522
+on:
+  push:
+    paths:
+      - 'src/data/oshiageElite.js'
+      - 'src/data/oshiageShowdown.js'
+      - 'src/data/travelRegions.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/oshiage-showdown-r522.mjs'
+      - 'tests/oshiage-r496.mjs'
+      - '.github/workflows/oshiage-showdown-r522.yml'
+  workflow_dispatch:
+jobs:
+  three-heat-showdown:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript modules
+        run: |
+          for file in src/data/oshiageElite.js src/data/oshiageShowdown.js src/data/travelRegions.js src/ui/TravelMap.js src/scenes/OshiageScene.js src/scenes/RaceScene.js; do
+            node --check "$file"
+          done
+      - name: Oshiage showdown, school, rims and animation regressions
+        run: |
+          node --test tests/oshiage-showdown-r522.mjs tests/oshiage-r496.mjs tests/oshiage-rims-r501.mjs tests/oshiage-yuna-rolling-r507.mjs
+      - name: No broken game module imports
+        run: node --test tests/startup-import-integrity-r508.mjs
