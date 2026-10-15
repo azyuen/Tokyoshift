@@ -18,7 +18,7 @@ import {
 import {
   getRegionalChampionshipCount,
 } from './careerProgression.js?v=20260929-r272';
-import { areAllCrewBattlesComplete, getCrewBattleWinCount, isCrewComplete, getCrewCount } from './crewSystem.js?v=20261013-r496';
+import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount } from './crewSystem.js?v=20261013-r496';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -507,10 +507,6 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
     return championshipsRequired === 1
       ? 'WIN A REGIONAL CHAMPIONSHIP'
       : championshipsRequired + ' REGIONAL CHAMPIONSHIPS REQUIRED';
-  }
-
-  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
-    return 'COMPLETE ALL 7 CREW CHALLENGES (' + getCrewBattleWinCount(source) + '/7)';
   }
 
   if (wins < cfg.winsRequired) {
