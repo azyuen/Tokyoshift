@@ -4,7 +4,7 @@ export function addCollectorExpansion(cars) {
   const add = (id, donor, spec) => {
     cars[id] = {
       ...cars[donor], ...spec, id,
-      collector: true, tuningLocked: true, ginzaExclusive: true,
+      collector: true, tuningLocked: true, ginzaExclusive: spec.ginzaExclusive ?? true,
       nosPower: 0, nosCapacitySeconds: 0,
       visual: { ...cars[donor].visual },
     };
