@@ -983,9 +983,11 @@ export function showTravelMap(scene, options = {}) {
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
       travelLabel.setColor('#72838f').setText(
-        location?.centralTokyoUnlock
-          ? getCentralTokyoUnlockLabel(scene.registry, location.id)
-          : getTravelLocationUnlockLabel(scene.registry, location.id)
+        location?.id === 'ginzaMotorGallery'
+          ? 'BY INVITATION ONLY'
+          : location?.centralTokyoUnlock
+            ? getCentralTokyoUnlockLabel(scene.registry, location.id)
+            : getTravelLocationUnlockLabel(scene.registry, location.id)
       );
       return;
     }

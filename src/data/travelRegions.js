@@ -4,6 +4,7 @@ import {
   getCareerRegionUnlockLabel,
   getCareerLocationStatus,
 } from './careerProgression.js?v=20260929-r279';
+import { getOshiageEliteProgress } from './oshiageElite.js?v=20261015-r522';
 
 export const HOME_REGION_ID = 'SHINONOME';
 export const HOME_RETURN_COST = 500;
@@ -106,7 +107,7 @@ export const TRAVEL_REGIONS = {
     label: 'SHINAGAWA',
     role: 'BAY CITY',
     level: 'LV 2-3',
-    unlockWins: 50,
+    unlockWins: 9,
     baseCost: 500,
     mapX: 0.335,
     mapY: 0.345,
@@ -147,7 +148,7 @@ export const TRAVEL_REGIONS = {
     label: 'TATSUMI',
     role: 'BAY EXPRESSWAY',
     level: 'LV 2-3',
-    unlockWins: 10,
+    unlockWins: 9,
     baseCost: 650,
     mapX: 0.825,
     mapY: 0.165,
@@ -188,7 +189,7 @@ export const TRAVEL_REGIONS = {
     label: 'SHIBUYA',
     role: 'URBAN',
     level: 'LV 3-4',
-    unlockWins: 10,
+    unlockWins: 0,
     baseCost: 900,
     mapX: 0.190,
     mapY: 0.220,
@@ -316,8 +317,8 @@ export const TRAVEL_REGIONS = {
     id: 'SHINJUKU',
     label: 'SHINJUKU',
     role: 'CITY',
-    level: 'LV 4-5',
-    unlockWins: 30,
+    level: 'ELITE',
+    unlockWins: 0,
     baseCost: 1100,
     mapX: 0.230,
     mapY: 0.075,
@@ -326,7 +327,7 @@ export const TRAVEL_REGIONS = {
       {
         id: 'shinjuku3dCat',
         label: '3D CAT',
-        difficulty: 'HARD',
+        difficulty: 'ELITE',
         costOffset: 0,
         available: true,
         timeOfDay: 'night',
@@ -335,7 +336,7 @@ export const TRAVEL_REGIONS = {
       {
         id: 'shinjukuMetroGov',
         label: 'METRO GOV',
-        difficulty: 'HARD',
+        difficulty: 'ELITE',
         costOffset: 100,
         available: true,
         timeOfDay: 'day',
@@ -358,7 +359,7 @@ export const TRAVEL_REGIONS = {
     label: 'YOKOHAMA',
     role: 'HARBOR CITY',
     level: 'LV 4-5',
-    unlockWins: 30,
+    unlockWins: 0,
     baseCost: 1300,
     mapX: 0.130,
     mapY: 0.675,
@@ -399,7 +400,7 @@ export const TRAVEL_REGIONS = {
     label: 'DAIKOKU',
     role: 'HIGH STAKES',
     level: 'LV 5+',
-    unlockWins: 75,
+    unlockWins: 0,
     baseCost: 1600,
     mapX: 0.315,
     mapY: 0.585,
@@ -520,9 +521,11 @@ export function isTravelLocationUnlocked(source, locationId) {
     return found.kind === 'home' || found.kind === 'garageUpgrade';
   }
 
-  if (found.regionId === 'CENTRAL_TOKYO' || found.regionId === 'OSHIAGE') {
-    return isTravelRegionUnlocked(source, found.regionId);
+  if (found.regionId === 'OSHIAGE') {
+    return isTravelRegionUnlocked(source, 'OSHIAGE') &&
+      (found.id !== 'oshiageSkytreeMeet' || getOshiageEliteProgress(source).complete);
   }
+  if (found.regionId === 'CENTRAL_TOKYO') return isTravelRegionUnlocked(source, found.regionId);
 
   if (found.available === false) return false;
 
@@ -535,6 +538,11 @@ export function getTravelLocationUnlockLabel(source, locationId) {
   if (!found) return 'LOCKED';
   if (isDevTravelProfile(source)) return 'OPEN';
   if (found.available === false) return 'COMING SOON';
+  if (found.id === 'oshiageSkytreeMeet') {
+    const progress = getOshiageEliteProgress(source);
+    return progress.complete ? 'OPEN' :
+      '7 REGIONAL CHAMPIONSHIPS REQUIRED (' + progress.count + '/7)';
+  }
   if (found.regionId === 'OSHIAGE') return getTravelRegionUnlockLabel(source, 'OSHIAGE');
 
   const locationIndex = found.region.locations.findIndex(item => item.id === found.id);
