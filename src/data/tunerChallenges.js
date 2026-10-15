@@ -379,6 +379,23 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '', so
     });
   }
 
+  // Every authored region has seven drivers and may lose one to recruitment.
+  // If there are no generic reserves, use an unrecruited guest from another
+  // region. Never refill by duplicating somebody or restoring the crew recruit.
+  if (result.length < TUNER_TEAM_CHALLENGE_STAGES) {
+    const start = Math.max(0, REGION_CHAMPIONSHIP_ORDER.indexOf(key));
+    const rotatedRegions = REGION_CHAMPIONSHIP_ORDER.slice(start + 1)
+      .concat(REGION_CHAMPIONSHIP_ORDER.slice(0, start + 1));
+    for (const otherRegion of rotatedRegions) {
+      if (otherRegion === key) continue;
+      for (const id of REGION_TEAM_CHARACTER_IDS[otherRegion] || []) {
+        if (id !== MAIN_RIVAL_BY_REGION[otherRegion]) add(id);
+        if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
+      }
+      if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
+    }
+  }
+
   const mainRivalId = MAIN_RIVAL_BY_REGION[key] || null;
   const nonRivalDrivers = result.filter(id => id !== mainRivalId);
   const finalRoster = [
