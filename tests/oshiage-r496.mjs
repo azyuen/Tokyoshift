@@ -44,7 +44,7 @@ test('map places both special districts on land with Oshiage to the right', () =
   assert.ok(oshiage.mapY > 0.1);
   const map = readFileSync(new URL('../src/ui/TravelMap.js', import.meta.url), 'utf8');
   assert.match(map, /regionId === 'OSHIAGE'\) \? 0xffd600/);
-  assert.match(map, /const forceRight = item.regionId === 'OSHIAGE'/);
+  assert.match(map, /const forceBelow = item.regionId === 'SHIBUYA' \|\| item.regionId === 'OSHIAGE'/);
 });
 
 test('two venues each have an independent real-time fifteen-minute cooldown', () => {
