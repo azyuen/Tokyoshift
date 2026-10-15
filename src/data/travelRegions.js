@@ -231,8 +231,8 @@ export const TRAVEL_REGIONS = {
     level: 'SPECIAL',
     unlockWins: 3,
     baseCost: 900,
-    mapX: 0.476,
-    mapY: 0.158,
+    mapX: 0.452,
+    mapY: 0.126,
     description: 'Skytree underground meet, a local driving school and exterior customisation.',
     locations: [
       {
