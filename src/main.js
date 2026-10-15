@@ -71,29 +71,29 @@ async function startTokyoShift() {
       TunerShopScene,
       WheelCalibrationScene,
     ] = await Promise.all([
-      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261015-r520'),
-      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261011-r482'),
-      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261011-r482'),
-      loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261011-r482'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261015-r522'),
-      loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261011-r482'),
-      loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261011-r482'),
-      loadScene('DYNO', './scenes/DynoScene.js?v=20261014-r501'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261015-r522'),
-      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261015-r522'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261015-r522'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261015-r522'),
-      loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261012-champaudit'),
-      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261011-r482'),
-      loadScene('RESULT', './scenes/ResultScene.js?v=20261005-r361'),
-      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261015-r521'),
-      loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261006-r388'),
+      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261015-r524'),
+      loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261015-r524'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261015-r524'),
+      loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261015-r524'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261015-r524'),
+      loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261015-r524'),
+      loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261015-r524'),
+      loadScene('DYNO', './scenes/DynoScene.js?v=20261015-r524'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261015-r524'),
+      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261015-r524'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20261015-r524'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20261015-r524'),
+      loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261015-r524'),
+      loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261015-r524'),
+      loadScene('RESULT', './scenes/ResultScene.js?v=20261015-r524'),
+      loadScene('TUNER SHOP', './scenes/TunerShopScene.js?v=20261015-r524'),
+      loadScene('WHEEL CALIBRATION', './scenes/WheelCalibrationScene.js?v=20261015-r524'),
     ]);
 
     // Debug-only opt-in screen. No profile state or production car renderer changes.
     const useCarReference = new URLSearchParams(window.location.search).get('carref') === '1';
     const CarReferenceCalibrationScene = useCarReference
-      ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js?v=20261012-carref')
+      ? await loadScene('CAR REFERENCE CALIBRATION', './scenes/CarReferenceCalibrationScene.js?v=20261015-r524')
       : null;
 
 
