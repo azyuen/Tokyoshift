@@ -35,6 +35,7 @@ import {
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
@@ -252,6 +253,7 @@ export default class MeetScene extends Phaser.Scene {
   constructor() { super('MeetScene'); }
 
   preload() {
+    restorePreferredCar(this.registry);
     const initialLocationId = MEET_LOCATIONS[this.registry.get('meetLocation')]
       ? this.registry.get('meetLocation')
       : 'odaiba7eleven';

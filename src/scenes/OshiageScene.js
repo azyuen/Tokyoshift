@@ -15,6 +15,7 @@ import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
@@ -77,6 +78,7 @@ export default class OshiageScene extends Phaser.Scene {
   constructor() { super('OshiageScene'); }
 
   init(data = {}) {
+    restorePreferredCar(this.registry);
     this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId :
       (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
     this.room = ['paint', 'rims'].includes(data.room) ? data.room : 'outside';

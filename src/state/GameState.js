@@ -73,6 +73,7 @@ export function createDefaultGameState(options = {}) {
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
+    preferredCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
       [starterCarId]: createStarterCarState(),
@@ -825,6 +826,9 @@ export function normaliseState(input = {}) {
   const selectedCarId = owned.includes(remapLoanCarId(input.selectedCarId))
     ? remapLoanCarId(input.selectedCarId)
     : owned[0] || null;
+  const preferredCarId = [input.preferredCarId, selectedCarId, ...owned]
+    .map(remapLoanCarId)
+    .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
   let garageTier = inferWorkshopTier(owned.length, input.garageTier);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
@@ -999,6 +1003,7 @@ export function normaliseState(input = {}) {
     openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'awaitDaichi', 'daichi', 'done'].includes(String(input.openingChapter))
       ? String(input.openingChapter) : null,
     selectedCarId,
+    preferredCarId,
     ownedCarIds: owned,
     carStates: mergedCarStates,
     carHistory,
@@ -1250,6 +1255,7 @@ export function snapshotRegistry(registry) {
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
+    preferredCarId: registry.get('preferredCarId') || null,
     ownedCarIds: registry.get('ownedCarIds') || [],
     carStates: registry.get('carStates') || {},
     carHistory: registry.get('carHistory') || [],

@@ -40,6 +40,7 @@ import {
   removeTuningPartFromState,
 } from '../data/partUninstall.js?v=20261009-r456';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
+import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -439,9 +440,12 @@ export default class GarageScene extends Phaser.Scene {
 
     const localCars = this.getCurrentWorkshopCars();
     const requestedCarId = this.registry.get('selectedCarId');
+    const preferredCarId = getPreferredCarId(this.registry);
     this.selectedCarId = this.crewMode
       ? null
-      : (localCars.includes(requestedCarId) ? requestedCarId : localCars[0] || null);
+      : localCars.includes(preferredCarId) ? preferredCarId
+        : localCars.includes(requestedCarId) ? requestedCarId
+          : localCars[0] || null;
 
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
@@ -520,7 +524,7 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     if (this.selectedCarId) {
-      this.selectCar(this.selectedCarId);
+      this.selectCar(this.selectedCarId, { remember: false });
       this.renderGaragePage();
       this.selectUpgrade(null);
     } else if (this.crewMode) {
@@ -2195,7 +2199,10 @@ export default class GarageScene extends Phaser.Scene {
         this.registry.get('carGarageLocations') || this.carGarageLocations || {},
         workshop.id
       );
-      this.registry.set('selectedCarId', localCars[0] || null);
+      // Displaying a different workshop's car is not a deliberate choice.
+      const previous = this.registry.get('selectedCarId');
+      this.registry.set('selectedCarId', localCars.includes(previous)
+        ? previous : localCars[0] || null);
       saveSessionState(this.registry);
 
       try {
@@ -3479,6 +3486,9 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       this.registry.set('selectedCarId', this.selectedCarId);
+      if (!this.crewMode && this.selectedCarId) {
+        choosePersonalCar(this.registry, this.selectedCarId);
+      }
       this.syncSelectedRaceDriver();
 
       // Old Arkon Den profiles pre-date the persisted devMode flag. Promote the
@@ -3827,7 +3837,7 @@ export default class GarageScene extends Phaser.Scene {
     };
   }
 
-  selectCar(id) {
+  selectCar(id, { remember = true } = {}) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
     if (
       !this.crewMode &&
@@ -3845,6 +3855,9 @@ export default class GarageScene extends Phaser.Scene {
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
+    if (remember && !this.crewMode && !cars[id]?.crewLoan) {
+      choosePersonalCar(this.registry, id);
+    }
     const crewMember = this.syncSelectedRaceDriver();
 
     for (const obj of this.selectedDisplay || []) {
