@@ -9,7 +9,6 @@ import {
 import {
   createRaceDialogueHud, RACE_COACH_LAYOUT,
 } from './RaceCoachHud.js?v=20261014-r514';
-import { playOpeningPhonePrototype } from './OpeningPhonePrototype.js?v=20261014-r515';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -65,10 +64,94 @@ export function playPhoneConversation(scene, {
   onCancel = null,
 } = {}) {
   if (presentationMode === 'openingSwipe') {
-    return playOpeningPhonePrototype(scene, {
+    // This one-off scene must not be an eager module dependency of the entire
+    // game. An unavailable prototype asset on iOS used to crash every scene
+    // during boot even for players nowhere near the opening phone call.
+    if (!scene || scene._phoneConversation?.active) {
+      return { played: false, reason: 'active', active: false };
+    }
+    const callPages = (Array.isArray(pages) ? pages : [pages]).filter(Boolean);
+    if (!callPages.length) {
+      return { played: false, reason: 'empty', active: false };
+    }
+
+    // Return synchronously to existing MangaCutscene callers. When the module
+    // becomes available, delegate close to the real controller; otherwise use
+    // the standard production phone presentation as a functional fallback.
+    const pending = { played: true, active: true, phase: 'loading', close: null };
+    let controller = null;
+    scene._phoneConversation = pending;
+
+    const detach = () => {
+      scene.events?.off?.('shutdown', abort);
+      scene.events?.off?.('destroy', abort);
+      if (scene._phoneConversation === pending) scene._phoneConversation = null;
+    };
+    const abort = () => {
+      if (!pending.active) return;
+      detach();
+      pending.active = false;
+      onCancel?.({ reason: 'shutdown' });
+    };
+    scene.events?.once?.('shutdown', abort);
+    scene.events?.once?.('destroy', abort);
+
+    const finish = (...args) => { pending.active = false; onComplete?.(...args); };
+    const cancel = (...args) => { pending.active = false; onCancel?.(...args); };
+    const common = {
       callerId, callerName, callerPose, label, pages, variables,
-      formatMessage: formatPhoneMessage, onComplete, onCancel,
-    });
+      onComplete: finish, onCancel: cancel,
+    };
+    const startCall = factory => {
+      if (!pending.active) return;
+      detach();
+      controller = factory();
+      if (!controller?.played) {
+        pending.active = false;
+        cancel({ reason: controller?.reason || 'unavailable' });
+      } else {
+        pending.phase = controller.phase || 'active';
+      }
+    };
+    pending.close = (reason = 'cancel') => {
+      if (controller) return controller.close?.(reason);
+      if (!pending.active) return;
+      detach();
+      pending.active = false;
+      onCancel?.({ reason });
+    };
+
+    const standardFallback = error => {
+      if (!pending.active) return;
+      console.warn('[Tokyo SHIFT] opening phone module unavailable; using standard call', error);
+      try {
+        startCall(() => playPhoneConversation(scene, {
+          ...common, presentationMode: 'standard', speakerStyle, accent,
+        }));
+      } catch (fallbackError) {
+        console.error('[Tokyo SHIFT] standard phone fallback failed', fallbackError);
+        pending.active = false;
+        cancel({ reason: 'load-error' });
+      }
+    };
+
+    import('./OpeningPhonePrototype.js?v=20261015-r524')
+      .then(module => {
+        if (!pending.active) return;
+        if (typeof module.playOpeningPhonePrototype !== 'function') {
+          standardFallback(new Error('Opening phone renderer unavailable'));
+          return;
+        }
+        try {
+          startCall(() => module.playOpeningPhonePrototype(scene, {
+            ...common, formatMessage: formatPhoneMessage,
+          }));
+        } catch (error) {
+          standardFallback(error);
+        }
+      })
+      .catch(standardFallback);
+    return pending;
   }
   if (!scene || scene._phoneConversation?.active) {
     return { played: false, reason: 'active', active: false };
