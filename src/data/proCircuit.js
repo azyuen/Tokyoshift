@@ -3,7 +3,7 @@
 // This module seeds persistent standings and declares future tournament formats.
 // It does NOT simulate off-screen races, award points or replace legacy 3-race cups.
 import { MAIN_RIVAL_BY_REGION } from './characters.js?v=20261007-r411';
-import { getCrewCount, isCrewComplete } from './crewSystem.js?v=20261007-r413';
+import { getCrewCount, isCrewComplete, areAllCrewBattlesComplete } from './crewSystem.js?v=20261007-r413';
 
 export const PRO_CIRCUIT_SCHEMA_VERSION = 2;
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;
@@ -206,12 +206,18 @@ export function getProCircuitAccess(source) {
     String(value(source, 'firstName', '')).trim().toLowerCase() +
     String(value(source, 'lastName', '')).trim().toLowerCase()
   ).replace(/[^a-z0-9]/g, '');
-  const unlocked = isDev || joinedName === 'arkonden' || isCrewComplete(source);
+  const invited = value(source, 'centralTokyoUnlocks', {}) || {};
+  const unlocked = isDev || joinedName === 'arkonden' || (
+    isCrewComplete(source) && areAllCrewBattlesComplete(source) && Boolean(invited.ginza || invited.drag)
+  );
   return {
     unlocked,
     crewCount: count,
     crewRequired: PRO_CIRCUIT_CREW_REQUIRED,
-    reason: unlocked ? 'PRO CIRCUIT ACCESS GRANTED' : 'RECRUIT ALL 7 CREW MEMBERS',
+    reason: unlocked ? 'PRO CIRCUIT ACCESS GRANTED' :
+      !isCrewComplete(source) ? 'RECRUIT ALL 7 CREW MEMBERS' :
+      !areAllCrewBattlesComplete(source) ? 'WIN ALL 7 REGIONAL CREW BATTLES' :
+      'AWAIT PROFESSIONAL INVITATION',
   };
 }
 
