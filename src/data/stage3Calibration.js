@@ -1,3 +1,4 @@
+import {refreshEngineOutput} from '../vehicles/Engine.js';
 import { getEngineTuning } from './tuning.js?v=20260926-r211';
 import { getDrivetrainTuning } from './secondaryTuning.js?v=20260926-r211';
 
@@ -103,8 +104,8 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
     const strength = tune.boostBias / 2;
     car.maximumBoost = Math.max(0.05, Number(car.maximumBoost) * (1 + strength * 0.11));
     car.turboSpoolRate = Math.max(0.1, Number(car.turboSpoolRate || 1.75) * (1 - strength * 0.18));
-    car.boostOnsetRPM = Math.round(1800 + strength * 350);
-    car.boostRampRPM = Math.round(4300 + strength * 700);
+    car.boostOnsetRPM = Math.round((car.boostOnsetRPM||1800)+strength*350);
+    car.boostRampRPM = Math.round((car.boostRampRPM||4300)+strength*700);
 
     // Keep the published peak figure aligned with the possible boost target.
     // This is still a trade: stronger peak arrives later, early response arrives weaker.
@@ -126,6 +127,7 @@ export function applyStage3Calibration(carConfig = {}, engineConfig = {}, state 
     });
   }
 
+  refreshEngineOutput(car,engine);
   car.stage3Calibration = { ...tune };
   engine.stage3Calibration = { ...tune };
   return { car, engine, calibration: tune, eligibility };

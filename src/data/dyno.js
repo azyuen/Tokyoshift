@@ -1,3 +1,5 @@
+import Engine from '../vehicles/Engine.js';
+import {getBuiltCar} from '../vehicles/VehiclePerformance.js';
 import { cars } from './cars.js?v=20261011-r479';
 import { engines } from './engines.js?v=20261011-r479';
 import { applyEngineTuning } from './tuning.js?v=20260926-r211';
@@ -93,18 +95,8 @@ export function buildDynoCar(carId, state = {}) {
   const baseEngine = engines[baseCar.engine];
   if (!baseEngine) return null;
 
-  const engineBuild = applyEngineTuning(clone(baseCar), clone(baseEngine), state);
-  // Secondary tuning already includes the regional tuner-house refinement.
-  const secondaryBuild = applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
-  const calibrated = applyStage3Calibration(secondaryBuild.car, secondaryBuild.engine, state);
-
-  return {
-    car: calibrated.car,
-    engine: calibrated.engine,
-    calibration: calibrated.calibration,
-    calibrationEligibility: calibrated.eligibility,
-    installedSpecialistTuning: secondaryBuild.specialistTuning || [],
-  };
+  const built=getBuiltCar(carId,state);
+  return {...built,calibration:built.stage3Calibration,calibrationEligibility:built.stage3CalibrationEligibility,installedSpecialistTuning:built.specialistTuning||[]};
 }
 
 export function torqueAtRPM(engine = {}, rpm = 0) {
@@ -131,31 +123,10 @@ export function getDynoPoint(build, rpm, boostBar = 0, throttle = 1) {
     return { rpm: Number(rpm) || 0, torqueNm: 0, powerKW: 0, boostBar: 0 };
   }
 
-  const engine = build.engine;
-  const baseTorque = torqueAtRPM(engine, rpm);
-  const referenceBoost = Math.max(0, Number(engine.referenceBoostBar || 0));
-  const positiveBoost = Math.max(0, Number(boostBar || 0));
-  let boostScale = 1;
-
-  if (referenceBoost > 0) {
-    if (positiveBoost <= referenceBoost) {
-      const spoolFraction = clamp(positiveBoost / referenceBoost, 0, 1);
-      const offBoost = clamp(Number(engine.offBoostTorqueFraction ?? 0.55), 0.20, 1);
-      boostScale = offBoost + (1 - offBoost) * spoolFraction;
-    } else {
-      boostScale = (1 + positiveBoost) / (1 + referenceBoost);
-    }
-  } else if (positiveBoost > 0) {
-    boostScale = 1 + positiveBoost * 0.78;
-  }
-
-  const limiter = Math.max(
-    1000,
-    Number(engine.limiterRPM || build.car.engineLimiterRPM || 8000)
-  );
-  const limiterCut = Number(rpm) >= limiter ? 0 : 1;
-  const torqueNm = Math.max(0, baseTorque * boostScale * clamp(throttle, 0, 1) * limiterCut);
-  const powerKW = Math.max(0, torqueNm * Math.max(0, Number(rpm) || 0) / 9549);
+  const probe=new Engine(build.engine);probe.rpm=Number(rpm)||0;
+  const positiveBoost=Math.max(0,Number(boostBar)||0);
+  const torqueNm=Math.max(0,probe.combustionTorque(throttle,positiveBoost));
+  const powerKW=torqueNm*Math.max(0,probe.rpm)*Math.PI/30000;
 
   return {
     rpm: Math.round(Number(rpm) || 0),

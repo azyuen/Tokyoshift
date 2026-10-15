@@ -1,3 +1,4 @@
+import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
@@ -3869,8 +3870,7 @@ export default class GarageScene extends Phaser.Scene {
     const carStates = this.registry.get('carStates') || {};
     const carState = carStates[id] || {};
     const tunedBuild = buildDynoCar(id, carState) || (() => {
-      const engineBuild = applyEngineTuning(car, engines[car.engine], carState);
-      return applySecondaryTuning(engineBuild.car, engineBuild.engine, carState);
+      return buildCarFromState(car,engines[car.engine],carState);
     })();
 
     this.headerCarText.setText(
@@ -4644,8 +4644,7 @@ export default class GarageScene extends Phaser.Scene {
       engineTuning: this.pendingEngineTuning,
       stock: false,
     };
-    const enginePreview = applyEngineTuning(car, engines[car.engine], previewState);
-    const preview = applySecondaryTuning(enginePreview.car, enginePreview.engine, previewState);
+    const preview=buildCarFromState(car,engines[car.engine],previewState);
     const previewRating = getPowerTorqueDisplay(car, previewState, preview.car);
 
     Object.entries(this.enginePartRows || {}).forEach(([partId, row]) => {
@@ -5964,8 +5963,7 @@ export default class GarageScene extends Phaser.Scene {
     const carStates = this.registry.get('carStates') || {};
     const state = carStates[this.selectedCarId] || {};
     const fullBuild = buildDynoCar(this.selectedCarId, state) || (() => {
-      const engineBuild = applyEngineTuning(car, engines[car.engine], state);
-      return applySecondaryTuning(engineBuild.car, engineBuild.engine, state);
+      return buildCarFromState(car,engines[car.engine],state);
     })();
 
     const tunedPower = Number(fullBuild.car.powerKW ?? 0);
@@ -6264,8 +6262,7 @@ export default class GarageScene extends Phaser.Scene {
         : { exhaustNosTuning: this.pendingSecondaryTuning }),
     };
 
-    const engineBuild = applyEngineTuning(car, engines[car.engine], previewState);
-    const preview = applySecondaryTuning(engineBuild.car, engineBuild.engine, previewState);
+    const preview=buildCarFromState(car,engines[car.engine],previewState);
     const previewRating = getPowerTorqueDisplay(
       car,
       { ...previewState, stock: false },

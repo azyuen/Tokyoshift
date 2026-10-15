@@ -39,6 +39,7 @@ export function hasPerformanceModifications(state = {}) {
 
 export function getPerformanceModificationSignature(state = {}) {
   const payload = stableValue({
+    engineeringVersion:1,
     stock: state?.stock !== false,
     tuneLevel: Number(state?.tuneLevel || 0),
     tuning: state?.tuning || {},

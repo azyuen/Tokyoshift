@@ -1,3 +1,4 @@
+import {refreshEngineOutput} from '../vehicles/Engine.js';
 import { applySpecialistTuning } from './tunerShops.js?v=20260924-r178';
 
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
@@ -78,9 +79,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'HEADERS',
     levels: [
       { level: 0, name: 'Stock manifold', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartHeadersL0', benefit: 'Factory exhaust manifold' },
-      { level: 1, name: 'Street headers', cost: 10000, torqueScale: 1.015, massDelta: 0, spriteKey: 'tuningPartHeadersL1', benefit: '+1.5% engine output' },
-      { level: 2, name: 'Equal-length headers', cost: 28000, torqueScale: 1.03, massDelta: -1, spriteKey: 'tuningPartHeadersL2', benefit: '+3% output / -1 kg' },
-      { level: 3, name: 'Race headers', cost: 65000, torqueScale: 1.05, massDelta: -2, spriteKey: 'tuningPartHeadersL3', benefit: '+5% output / -2 kg' },
+      { level: 1, name: 'Street headers', cost: 10000, torqueScale: 1.015, massDelta: 0, spriteKey: 'tuningPartHeadersL1', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 2, name: 'Equal-length headers', cost: 28000, torqueScale: 1.03, massDelta: -1, spriteKey: 'tuningPartHeadersL2', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 3, name: 'Race headers', cost: 65000, torqueScale: 1.05, massDelta: -2, spriteKey: 'tuningPartHeadersL3', benefit: 'Engine-specific flow / backpressure improvement' },
     ],
   },
   exhaust: {
@@ -88,9 +89,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'EXHAUST SYSTEM',
     levels: [
       { level: 0, name: 'Stock exhaust', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartEngineExhaustL0', benefit: 'Factory exhaust flow' },
-      { level: 1, name: 'Axle-back system', cost: 12000, torqueScale: 1.015, massDelta: -1, spriteKey: 'tuningPartEngineExhaustL1', benefit: '+1.5% output / -1 kg' },
-      { level: 2, name: 'Cat-back system', cost: 34000, torqueScale: 1.03, massDelta: -3, spriteKey: 'tuningPartEngineExhaustL2', benefit: '+3% output / -3 kg' },
-      { level: 3, name: 'Race exhaust', cost: 80000, torqueScale: 1.05, massDelta: -5, spriteKey: 'tuningPartEngineExhaustL3', benefit: '+5% output / -5 kg' },
+      { level: 1, name: 'Axle-back system', cost: 12000, torqueScale: 1.015, massDelta: -1, spriteKey: 'tuningPartEngineExhaustL1', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 2, name: 'Cat-back system', cost: 34000, torqueScale: 1.03, massDelta: -3, spriteKey: 'tuningPartEngineExhaustL2', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 3, name: 'Race exhaust', cost: 80000, torqueScale: 1.05, massDelta: -5, spriteKey: 'tuningPartEngineExhaustL3', benefit: 'Engine-specific flow / backpressure improvement' },
     ],
   },
   muffler: {
@@ -98,9 +99,9 @@ export const EXHAUST_NOS_TUNING_PARTS = {
     name: 'MUFFLER',
     levels: [
       { level: 0, name: 'Stock muffler', cost: 0, torqueScale: 1.00, massDelta: 0, spriteKey: 'tuningPartMufflerL0', benefit: 'Factory rear section' },
-      { level: 1, name: 'Sports muffler', cost: 6000, torqueScale: 1.005, massDelta: -1, spriteKey: 'tuningPartMufflerL1', benefit: '+0.5% output / -1 kg' },
-      { level: 2, name: 'Straight-through', cost: 18000, torqueScale: 1.012, massDelta: -2, spriteKey: 'tuningPartMufflerL2', benefit: '+1.2% output / -2 kg' },
-      { level: 3, name: 'Race muffler', cost: 45000, torqueScale: 1.02, massDelta: -3, spriteKey: 'tuningPartMufflerL3', benefit: '+2% output / -3 kg' },
+      { level: 1, name: 'Sports muffler', cost: 6000, torqueScale: 1.005, massDelta: -1, spriteKey: 'tuningPartMufflerL1', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 2, name: 'Straight-through', cost: 18000, torqueScale: 1.012, massDelta: -2, spriteKey: 'tuningPartMufflerL2', benefit: 'Engine-specific flow / backpressure improvement' },
+      { level: 3, name: 'Race muffler', cost: 45000, torqueScale: 1.02, massDelta: -3, spriteKey: 'tuningPartMufflerL3', benefit: 'Engine-specific flow / backpressure improvement' },
     ],
   },
   nosKit: {
@@ -252,7 +253,7 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
     ex[id] = EXHAUST_NOS_TUNING_PARTS[id].levels[exhaustNos[id]];
   });
 
-  const exhaustScale =
+  const exhaustScale = car.engineering ? 1 :
     (ex.headers.torqueScale || 1)
     * (ex.exhaust.torqueScale || 1)
     * (ex.muffler.torqueScale || 1);
@@ -286,6 +287,7 @@ export function applySecondaryTuning(carConfig, engineConfig, carState = {}) {
   // specs, AI threat calculations and race physics without scene-specific math.
   const specialist = applySpecialistTuning(car, engine, carState);
 
+  refreshEngineOutput(specialist.car,specialist.engine);
   return {
     car: specialist.car,
     engine: specialist.engine,
