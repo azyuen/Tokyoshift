@@ -11,11 +11,11 @@ export const OSHIAGE_ELITE_COOLDOWN_MS = 15 * 60 * 1000;
 export const OSHIAGE_ELITE_VENUES = Object.freeze({
   underpass: Object.freeze({
     id: 'underpass', label: 'SKYTREE UNDERPASS', backgroundStem: 'oshiage_skytree01',
-    prizeCash: 500000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
+    entryFee: 50000, prizeCash: 500000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
   }),
   plaza: Object.freeze({
     id: 'plaza', label: 'SKYTREE PLAZA', backgroundStem: 'oshiage_skytree02',
-    prizeCash: 750000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
+    entryFee: 75000, prizeCash: 750000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
   }),
 });
 export const OSHIAGE_ELITE_VENUE_IDS = Object.freeze(Object.keys(OSHIAGE_ELITE_VENUES));
@@ -55,7 +55,7 @@ export function eligibleOshiageEliteDrivers(source) {
     characters[id].rivalEligible !== false && !characters[id].crewLoan);
 }
 
-export function getOshiageEliteOpponent(source, venueId, now = Date.now(), roundIndex = 0) {
+export function getOshiageEliteOpponent(source, venueId, now = Date.now(), roundIndex = 0, excludedIds = []) {
   const venue = OSHIAGE_ELITE_VENUES[venueId];
   if (!venue) return null;
   const drivers = eligibleOshiageEliteDrivers(source);
@@ -64,7 +64,11 @@ export function getOshiageEliteOpponent(source, venueId, now = Date.now(), round
   const period = Math.floor(now / OSHIAGE_ELITE_COOLDOWN_MS);
   const shift = (venueId === 'plaza' ? 17 : 0) + Math.max(0, Number(roundIndex) || 0) * 7;
   const index = ((Math.imul(period + wins + shift, 31) >>> 0) % drivers.length);
-  const characterId = drivers[index];
+  const excluded = new Set(excludedIds);
+  const characterId = Array.from({ length: drivers.length }, (_, offset) =>
+    drivers[(index + offset) % drivers.length]
+  ).find(id => !excluded.has(id));
+  if (!characterId) return null;
   const character = characters[characterId];
   const preferred = (character.preferredCars || []).filter(carId => Boolean(cars[carId]) &&
     !cars[carId]?.tuningLocked && !cars[carId]?.collector);
@@ -82,6 +86,26 @@ export function getOshiageEliteOpponent(source, venueId, now = Date.now(), round
     encounterRating: 5, encounterAi: getEncounterAi(5),
     difficulty: 'ELITE', raceType: venue.raceType, distanceM: venue.distanceM,
   };
+}
+
+// The complete three-person roster is fixed when the player enters the
+// showdown. Wins gained during heat one/two must not regenerate heat three.
+export function getOshiageEliteLineup(source, venueId, at = Date.now(), startingWins = null) {
+  if (!OSHIAGE_ELITE_VENUES[venueId]) return [];
+  const winsSnapshot = startingWins == null
+    ? Number(value(source, 'wins', 0) || 0) : Number(startingWins || 0);
+  const snapshot = {
+    get(key) { return key === 'wins' ? winsSnapshot : value(source, key); },
+  };
+  const roster = [];
+  for (let i = 0; i < 3; i++) {
+    const driver = getOshiageEliteOpponent(
+      snapshot, venueId, at, i, roster.map(item => item.characterId)
+    );
+    if (!driver) return [];
+    roster.push(driver);
+  }
+  return roster;
 }
 
 export function getOshiageElitePrize(source, venueId, index = 0) {
