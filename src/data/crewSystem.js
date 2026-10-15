@@ -75,6 +75,12 @@ export function getCrewMembers(source) {
   );
 }
 
+// Recruited drivers must never return to an opposing roster.
+export function getRecruitedCrewCharacterIds(source) {
+  return new Set(Object.values(getCrewMembers(source))
+    .map(member => member.characterId).filter(Boolean));
+}
+
 export function getCrewMemberForRegion(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   return getCrewMembers(source)[key] || null;
@@ -624,16 +630,14 @@ function proLeaderAi(base = {}) {
 
 export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
-  const recruitedCharacterId = source
-    ? getCrewMemberForRegion(source, key)?.characterId
-    : null;
+  const recruitedIds = getRecruitedCrewCharacterIds(source);
 
   // Reuse the original seven-driver regional championship cast. Once one of
   // those drivers defects to the player's crew, exactly six remain.
   const originalSeven = buildTunerTeamChallengeRounds(key, '')
     .filter(round => round?.characterId && round?.carId);
   const remaining = originalSeven
-    .filter(round => round.characterId !== recruitedCharacterId);
+    .filter(round => !recruitedIds.has(round.characterId));
 
   // Keep the permanent regional leader as the sixth/final matchup even when
   // the championship roster's authored order placed them earlier.

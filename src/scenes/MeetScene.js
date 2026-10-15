@@ -110,6 +110,7 @@ import {
 import {
   isCrewComplete,
   getCrewMembers,
+  getRecruitedCrewCharacterIds,
   getRecruitableCrewCandidates,
   getCrewInviteInterest,
   clearCrewInviteInterest,
@@ -275,11 +276,7 @@ export default class MeetScene extends Phaser.Scene {
     const initialRegionalCharacters = new Set(
       getRivalCharacterOrderForRegion(initialRegion)
     );
-    const recruitedCharacterIds = new Set(
-      Object.values(getCrewMembers(this.registry))
-        .map(member => member?.characterId)
-        .filter(Boolean)
-    );
+    const recruitedCharacterIds = getRecruitedCrewCharacterIds(this.registry);
     const storedCurrentValid =
       isMeetRoundActive(storedRefreshAt) &&
       storedCurrent.length > 0 &&
@@ -416,11 +413,7 @@ export default class MeetScene extends Phaser.Scene {
 
       ALL_MEET_LOCATION_IDS.forEach(locationId => {
         const location = getMeetLocation(locationId);
-        const recruitedIds = new Set(
-          Object.values(getCrewMembers(this.registry))
-            .map(member => member?.characterId)
-            .filter(Boolean)
-        );
+        const recruitedIds = getRecruitedCrewCharacterIds(this.registry);
         const allowed = new Set(
           getRivalCharacterOrderForRegion(location.district)
             .filter(id =>
@@ -1663,18 +1656,27 @@ export default class MeetScene extends Phaser.Scene {
       buildTunerTeamChallengeRounds(
         key,
         playerCharacterId,
-        this.registry.get('playerDifficulty') || 'STANDARD'
+        this.registry.get('playerDifficulty') || 'STANDARD',
+        this.registry
       ),
       Number(this.registry.get('wins') || 0)
     );
     const storedRounds = Array.isArray(state.rounds) ? state.rounds : [];
-    const rounds = Array.from(
+    const recruited = getRecruitedCrewCharacterIds(this.registry);
+    // Rebuild legacy saved lineups if recruitment has made any opponent invalid.
+    // Otherwise preserve the old saved identities and championship stage.
+    const hasRecruitedOpponent = storedRounds.some(round => recruited.has(round?.characterId));
+    const rounds = hasRecruitedOpponent ? generatedRounds : Array.from(
       { length: TUNER_TEAM_CHALLENGE_STAGES },
       (_, index) => {
         const stored = storedRounds[index];
         const generated = generatedRounds[index];
         return stored?.characterId && characters[stored.characterId]
-          ? { ...generated, characterId: stored.characterId }
+          ? {
+              ...generated,
+              characterId: stored.characterId,
+              carId: getRegionalRivalSignatureCarId(key, stored.characterId, generated.carId),
+            }
           : generated;
       }
     );
@@ -2123,7 +2125,8 @@ export default class MeetScene extends Phaser.Scene {
       buildTunerTeamChallengeRounds(
         regionId,
         playerCharacterId,
-        this.registry.get('playerDifficulty') || 'STANDARD'
+        this.registry.get('playerDifficulty') || 'STANDARD',
+        this.registry
       ),
       Number(this.registry.get('wins') || 0)
     );
@@ -2764,7 +2767,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   chooseEventCharacter(rating = 3, exclude = []) {
-    const blocked = new Set(exclude);
+    const blocked = new Set([...exclude, ...getRecruitedCrewCharacterIds(this.registry)]);
     const location = getMeetLocation(this.selectedMeetLocation);
 
     const candidates = getRivalCharacterOrderForRegion(location.district)
@@ -3415,14 +3418,16 @@ export default class MeetScene extends Phaser.Scene {
 
   chooseCompetitionCharacter(rating = 3, exclude = []) {
     const playerId = this.getActiveDriverCharacterId();
-    const blocked = new Set([playerId, ...exclude]);
+    const blocked = new Set([playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry)]);
     const location = getMeetLocation(this.selectedMeetLocation);
     const target = Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5);
 
     const regional = getRivalCharacterOrderForRegion(location.district)
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false);
+      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
+        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
     const global = rivalCharacterOrder
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false);
+      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
+        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
     const pool = regional.length ? regional : global;
     if (!pool.length) return this.chooseEventCharacter(target, exclude);
 
@@ -3968,11 +3973,7 @@ export default class MeetScene extends Phaser.Scene {
     const location = getMeetLocation(locationId);
     const profile = getEncounterProfile(locationId, location.difficulty);
 
-    const recruitedIds = new Set(
-      Object.values(getCrewMembers(this.registry))
-        .map(member => member?.characterId)
-        .filter(Boolean)
-    );
+    const recruitedIds = getRecruitedCrewCharacterIds(this.registry);
     const regionalPool = getRivalCharacterOrderForRegion(location.district)
       .filter(id =>
         !recruitedIds.has(id) &&
@@ -4232,7 +4233,8 @@ export default class MeetScene extends Phaser.Scene {
     // Rendering is the final authority: even if an old save or an interrupted
     // refresh somehow leaves duplicate people in a roster, never put the same
     // character (or the same visual identity) on one Meet screen twice.
-    if (this.meetRosterHasDuplicatePeople(visibleOffers)) {
+    if (visibleOffers.some(offer => getRecruitedCrewCharacterIds(this.registry).has(offer?.characterId)) ||
+        this.meetRosterHasDuplicatePeople(visibleOffers)) {
       visibleOffers = this.generateOffersForLocation(this.selectedMeetLocation);
       this.locationOffers[this.selectedMeetLocation] = visibleOffers;
       this.locationSelectedOfferIndex[this.selectedMeetLocation] = 0;
@@ -5463,8 +5465,8 @@ export default class MeetScene extends Phaser.Scene {
       1
     ).setDepth(depth - 0.35);
 
-    // Put the tyre contact point one-third of the way down into the soft
-    // shadow so the car feels planted instead of floating above it.
+    // Use one soft tyre shadow, raised towards the car's contact patch.
+    // The right-hand flipped display needs a little more upward adjustment.
     const tyreBottom = Math.max(
       rearY + rearWheel.displayHeight * 0.5,
       frontY + frontWheel.displayHeight * 0.5
@@ -5473,7 +5475,7 @@ export default class MeetScene extends Phaser.Scene {
       20,
       Math.max(rearWheel.displayHeight, frontWheel.displayHeight) * 0.34
     );
-    const shadowY = tyreBottom + softShadowHeight / 6;
+    const shadowY = tyreBottom - (flipX ? 12 : 7);
 
     const softShadow = this.add.ellipse(
       x + (flipX ? -4 : 4),
@@ -5483,15 +5485,6 @@ export default class MeetScene extends Phaser.Scene {
       0x000000,
       0.64
     ).setDepth(depth - 0.12);
-
-    const contactShadow = this.add.ellipse(
-      x,
-      tyreBottom + Math.max(2, softShadowHeight * 0.08),
-      Math.max(92, targetWidth * 0.72),
-      Math.max(10, rearWheel.displayHeight * 0.18),
-      0x000000,
-      0.88
-    ).setDepth(depth - 0.08);
 
     const bodyLayers = createCarBodyLayers(this, car, {
       x: drawX,
@@ -5506,7 +5499,6 @@ export default class MeetScene extends Phaser.Scene {
       rearBacking,
       frontBacking,
       softShadow,
-      contactShadow,
       rearWheel,
       frontWheel,
       ...bodyLayers.objects,

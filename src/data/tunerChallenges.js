@@ -342,7 +342,7 @@ export function isTunerTeamChallengeEligible(source, regionId) {
     && garageTier >= TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER;
 }
 
-export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
+export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '', source = null) {
   const key = normaliseRegion(regionId);
   const explicit = Array.isArray(REGION_TEAM_CHARACTER_IDS[key])
     ? REGION_TEAM_CHARACTER_IDS[key]
@@ -351,10 +351,14 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
   // Keep every authored regional driver. If a region has fewer than seven
   // authored characters, fill only the missing slot(s) with reserve rivals.
   const result = [];
+  // Avoid a circular dependency on crewSystem: it already imports this file.
+  const recruitedIds = new Set(Object.values(sourceValue(source, 'crewMembers', {}) || {})
+    .map(member => member?.characterId).filter(Boolean));
   const add = id => {
     if (
       id &&
       id !== playerCharacterId &&
+      !recruitedIds.has(id) &&
       characters[id] &&
       characters[id].rivalEligible !== false &&
       !result.includes(id)
@@ -379,7 +383,7 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
   const nonRivalDrivers = result.filter(id => id !== mainRivalId);
   const finalRoster = [
     ...nonRivalDrivers.slice(0, TUNER_TEAM_CHALLENGE_STAGES - 1),
-    ...(mainRivalId ? [mainRivalId] : []),
+    ...(mainRivalId && !recruitedIds.has(mainRivalId) ? [mainRivalId] : []),
   ];
 
   return finalRoster.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
@@ -409,10 +413,11 @@ function challengeAi(stageIndex, rating, regionId = '') {
 export function buildTunerTeamChallengeRounds(
   regionId,
   playerCharacterId = '',
-  playerDifficulty = 'STANDARD'
+  playerDifficulty = 'STANDARD',
+  source = null
 ) {
   const key = normaliseRegion(regionId);
-  const roster = getTunerTeamChallengeRoster(key, playerCharacterId);
+  const roster = getTunerTeamChallengeRoster(key, playerCharacterId, source);
   const fallbackCars = [
     ...(getRegionalCrewRoster(key)?.members || []).map(member => member.baseCarId),
     REGION_LEADER_CARS[key] || 'r32',
