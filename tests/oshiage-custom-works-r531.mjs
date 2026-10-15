@@ -46,7 +46,7 @@ try {
   await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('OshiageScene').openCustomWorksRoom('paint'));
   await page.waitForFunction(()=>{
     const s=window.TOKYO_SHIFT.scene.getScene('OshiageScene');
-    return s.room==='paint' && s.paintObjects?.length>0;
+    return s.room==='paint' && s.paintObjects?.length>0 && !s.paintBusy;
   },null,{timeout:30000});
   await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('OshiageScene').setPaintMode('custom'));
   await page.waitForFunction(()=>window.TOKYO_SHIFT.scene.getScene('OshiageScene')
