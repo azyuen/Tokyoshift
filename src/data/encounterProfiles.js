@@ -107,19 +107,19 @@ export const LOCATION_ENCOUNTERS = {
   },
 
   // Shinjuku // serious late-night city crews.
-  shinjukuSouthExit: {
+  shinjuku3dCat: {
     difficulty: 'ELITE',
     ratingSlots: [4, 4, 4],
     stakeRange: [8500, 11000],
     likelyCars: ['fc3s', 'galant', 'gc8', 'r32'],
   },
-  shinjukuKabukicho: {
+  shinjukuMetroGov: {
     difficulty: 'ELITE',
     ratingSlots: [4, 4, 5],
     stakeRange: [9000, 12000],
     likelyCars: ['galant', 'gc8', 'r32', 'fc3s'],
   },
-  shinjukuNishi: {
+  shinjukuGodzilla: {
     difficulty: 'ELITE',
     ratingSlots: [4, 5, 5],
     stakeRange: [12000, 16000],
