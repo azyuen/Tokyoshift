@@ -83,7 +83,7 @@ import {
 } from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
-import { createRaceCoachHud } from '../ui/RaceCoachHud.js?v=20261014-r514';
+import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261014-r514';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
@@ -135,10 +135,18 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
-    if (this.isCoaching) {
+    if (this.isCoaching || (this.isTutorial &&
+      this.registry.get('raceReturnScene') === 'OshiageScene')) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
           'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
+      }
+    } else if (this.isTutorial) {
+      // First workshop lesson: Sayaka wears her home clothes, not her
+      // Oshiage instructor disguise or her eventual Ginza racing outfit.
+      for (const pose of ['homeNormal', 'homeHappy', 'homeSad']) {
+        const asset = characters.sayakaFujieda.visual.poseAssets[pose];
+        queueImage(asset.key, getCharacterAssetUrl(asset.path));
       }
     }
     // Each race picks one of the four same-canvas suburban traffic signals.
@@ -1573,47 +1581,27 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHighlightObjects = [];
     this.tutorialHighlightTweens = [];
 
-    // Keep the lesson card in the top-left so it never covers the drag tree,
-    // HUD or the controls the player is being asked to use.
-    this.tutorialPanel = this.add.rectangle(360, 200, 640, 250, 0xf8f7f2, 0.995)
-      .setStrokeStyle(3, 0x18222b, 1)
-      .setDepth(82)
-      .setScrollFactor(0);
-
-    this.tutorialStepText = this.add.text(78, 96, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#2a708d',
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialTitleText = this.add.text(78, 130, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#101820',
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialBodyText = this.add.text(78, 168, '', {
-      fontFamily: BODY_FONT,
-      fontSize: '12px',
-      color: '#202a31',
-      fontStyle: '700',
-      lineSpacing: 5,
-      wordWrap: { width: 565 },
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialPromptBox = this.add.rectangle(360, 292, 570, 46, 0xffffff, 1)
-      .setStrokeStyle(2, 0x315470, 1)
-      .setDepth(83)
-      .setScrollFactor(0);
-
-    this.tutorialPromptText = this.add.text(360, 292, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#17232c',
-      align: 'center',
-      wordWrap: { width: 530 },
-    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
-
+    // Use the SAME portrait/speech bubble as the advanced Oshiage race
+    // coaching. Only the speaker and Sayaka's outfit change by location.
+    const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
+    const homePoses = {
+      neutral: 'characterSayakaHomeNormal',
+      explaining: 'characterSayakaHomeNormal',
+      happy: 'characterSayakaHomeHappy',
+      concerned: 'characterSayakaHomeSad',
+    };
+    this.tutorialHud = createRaceDialogueHud(this, {
+      speaker: atSchool ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
+      depth: 80,
+      characterVisual: characters.sayakaFujieda.visual,
+      initialPose: 'explaining',
+      spriteKeyForPose: pose => atSchool
+        ? 'characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1)
+        : (homePoses[pose] || homePoses.neutral),
+    });
+    this.tutorialPanel = this.tutorialHud.dialogue;
+    this.tutorialPromptText = this.tutorialHud.dialogue;
+    this.tutorialHud.dialogue.setFontSize('16px').setLineSpacing(2);
     this.renderDrivingTutorialStep();
   }
 
@@ -1814,10 +1802,18 @@ export default class RaceScene extends Phaser.Scene {
       ];
     }
 
-    this.tutorialStepText.setText('DRIVING LESSON // STEP ' + stepNo + ' / 8');
-    this.tutorialTitleText.setText(title);
-    this.tutorialBodyText.setText(body);
-    this.tutorialPromptText.setText(this.tutorialFeedback || prompt);
+    const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
+    this.tutorialHud.heading.setText(
+      (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
+    );
+    this.tutorialHud.dialogue.setText(
+      title + '\n' + body + '\n' + (this.tutorialFeedback || prompt)
+    );
+    this.tutorialHud.setPortrait(
+      this.tutorialFeedback ? 'concerned' :
+      this.tutorialStep === 'LAUNCH' || this.tutorialStep === 'POWER_2' ||
+        this.tutorialStep === 'POWER_3' ? 'happy' : 'explaining'
+    );
     targets.forEach(target => this.addTutorialHighlight(...target));
   }
 
