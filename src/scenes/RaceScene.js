@@ -11,7 +11,8 @@ import {
 import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import DebugHUD from '../ui/DebugHUD.js';
 import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261010-r461';
-import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261013-r496';
+import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r521';
+import { prepareNextOshiageShowdownHeat } from '../data/oshiageShowdown.js?v=20261015-r521';
 import {
   STREET_GREEN_SECONDS,
   getStreetSignalFrame,
@@ -3114,6 +3115,8 @@ export default class RaceScene extends Phaser.Scene {
         });
         saveSessionState(this.registry);
         this.scene.start('MeetScene');
+      } else if (settlement?.oshiageEliteContinues) {
+        this.startNextOshiageEliteHeat();
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
@@ -3326,6 +3329,21 @@ export default class RaceScene extends Phaser.Scene {
     // If every garage is full, retain the race's provisional assignment and do
     // not trap the player behind an impossible modal.
     if (!picker) this._deliveryPromptCarId = null;
+  }
+
+  startNextOshiageEliteHeat() {
+    // Advance straight from the result tableau to the next race, like a
+    // normal Street Showdown. Never return to the Oshiage landing page
+    // between heats or charge an additional entry fee.
+    if (!prepareNextOshiageShowdownHeat(this.registry)) {
+      // Older interrupted saves may not have a valid lineup anymore.
+      this.scene.start('OshiageScene', {
+        locationId: 'oshiageSkytreeMeet',
+      });
+      return;
+    }
+    saveSessionState(this.registry);
+    this.scene.start('RaceScene');
   }
 
   getNextTunerChallengeRound() {
@@ -3877,10 +3895,10 @@ export default class RaceScene extends Phaser.Scene {
     const newWins = wins + (playerWon ? 1 : 0);
     this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
-    this.lastEasyCouponAward = playerWon
+    this.lastEasyCouponAward = playerWon && this.raceMode !== 'OSHIAGE_ELITE'
       ? this.processEasyCouponMilestone(newWins)
       : null;
-    this.lastSurpriseReward = playerWon && !this.lastEasyCouponAward
+    this.lastSurpriseReward = playerWon && this.raceMode !== 'OSHIAGE_ELITE' && !this.lastEasyCouponAward
       ? maybeAwardSurpriseReward(this.registry, { playerWon: true })
       : null;
 
