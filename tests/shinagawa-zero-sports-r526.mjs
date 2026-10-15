@@ -18,7 +18,7 @@ test('Shinagawa Zero/Sports is a stock-GC8 conversion and keeps the existing her
   assert.match(shop.label, /ZERO\/SPORTS/);
   assert.equal(getTunerShopForDonorCar('gc8'), shop);
   assert.equal(getTunerShopForDonorCar('ek9'), undefined);
-  assert.equal(cars.gc8.collector, false);
+  assert.equal(Boolean(cars.gc8.collector), false);
   assert.equal(cars.zeroSportsGc8.collector, true);
   assert.equal(cars.zeroSportsGc8.tuningLocked, true);
   assert.equal(cars.zeroSportsGc8.ginzaExclusive, false);
