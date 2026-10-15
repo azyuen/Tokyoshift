@@ -12,7 +12,7 @@ import {
 // These are intentional stock model -> hero build contracts, not display names.
 const EXPECTED = {
   ODAIBA: ['nsx', 'espritNsx'],
-  SHINAGAWA: ['ek9', 'spoonEk9'],
+  SHINAGAWA: ['gc8', 'zeroSportsGc8'],
   TATSUMI: ['evo5', 'junHyperLemonEvo5'],
   SHIBUYA: ['s2000', 'amuseS2000Gt1'],
   YOKOHAMA: ['r34', 'minesR34'],
