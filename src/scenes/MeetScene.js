@@ -36,6 +36,7 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
+import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
@@ -4150,7 +4151,7 @@ export default class MeetScene extends Phaser.Scene {
         raceDeal,
         stake,
         distance,
-        quote: displayCharacter?.introQuote || character.introQuote,
+        quote: getMeetCharacterQuote(displayCharacter?.id || characterId, 'ready', displayCharacter?.introQuote || character.introQuote),
 
         // Driver ability.
         encounterRating,
@@ -4653,11 +4654,17 @@ export default class MeetScene extends Phaser.Scene {
       }).setDepth(35);
 
       const normalCashLoss = offer.resultState === 'PLAYER_LOSS' && !offer.pinkSlipResult;
+      // Result states describe the PLAYER; dialogue outcomes describe RIVAL.
+      // Resolve again at display time so old saved Meet rosters gain the
+      // authored character-bible lines without resetting their race results.
       const quoteText = offer.resultState === 'PLAYER_WIN'
-        ? (character.resultQuotes?.loss || 'You got me.')
+        ? getMeetCharacterQuote(character.id, 'loss',
+            character.resultQuotes?.loss || 'You got me.')
         : offer.resultState === 'PLAYER_LOSS'
-          ? (character.resultQuotes?.win || 'That run was mine.')
-          : offer.quote;
+          ? getMeetCharacterQuote(character.id, 'win',
+              character.resultQuotes?.win || 'That run was mine.')
+          : getMeetCharacterQuote(character.id, 'ready',
+              offer.quote || character.introQuote);
 
       const quote = this.add.text(textX, cardY - 26, '"' + quoteText + '"', {
         fontFamily: BODY_FONT,

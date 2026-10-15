@@ -56,6 +56,7 @@ import {
   recordCarDeparture,
 } from '../state/GameState.js?v=20261014-r501';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
@@ -3021,20 +3022,42 @@ export default class RaceScene extends Phaser.Scene {
       align: 'left',
     }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
 
-    const rivalQuote = playerWon
-      ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
-      : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
+    // Both participants speak in their own voice. The event index alternates
+    // two authored lines per outcome without introducing random redraw flicker.
+    const eventIndex = Math.max(0,
+      Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
+    const rivalQuote = getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+      eventIndex, playerWon
+        ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
+        : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
     const rivalQuoteText = this.add.text(812, 446, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
-      fontSize: '15px',
+      fontSize: '13px',
       color: '#ffffff',
       backgroundColor: '#11141ae8',
       padding: { x: 12, y: 8 },
       align: 'left',
       fontStyle: '700',
       lineSpacing: 3,
-      wordWrap: { width: 330 },
+      wordWrap: { width: 318 },
     }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
+
+    const playerQuote = getRaceCharacterQuote(
+      playerCharacter.id, playerWon, eventIndex,
+      playerWon ? 'Good run. I kept it together.' : 'I know what to work on.'
+    );
+    const playerQuoteText = this.add.text(1515, 482,
+      '“' + playerQuote + '”', {
+        fontFamily: dataFont,
+        fontSize: '13px',
+        color: '#ffffff',
+        backgroundColor: '#11141ae8',
+        padding: { x: 12, y: 8 },
+        align: 'right',
+        fontStyle: '700',
+        lineSpacing: 2,
+        wordWrap: { width: 305 },
+      }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
     const actionHint = settlement?.gameOver
