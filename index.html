@@ -285,11 +285,13 @@
         if (!current) localStorage.setItem('tokyoShiftBuild', info.build);
       } catch (e) {}
 
+      // Register/update in the background. Safari can delay or reject worker
+      // updates; neither outcome should prevent the actual game from booting.
       if ('serviceWorker' in navigator) {
-        try {
-          const reg = await navigator.serviceWorker.register('./sw.js?v=' + encodeURIComponent(resolvedBuild), { updateViaCache: 'none' });
-          reg.update();
-        } catch (e) {}
+        navigator.serviceWorker.register(
+          './sw.js?v=' + encodeURIComponent(resolvedBuild),
+          { updateViaCache: 'none' }
+        ).then(reg => reg.update().catch(() => {})).catch(() => {});
       }
       return true;
     })().catch(error => {
