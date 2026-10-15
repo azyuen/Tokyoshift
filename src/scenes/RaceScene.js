@@ -1732,14 +1732,12 @@ export default class RaceScene extends Phaser.Scene {
     this.clearTutorialHighlights();
 
     const stepNo = this.tutorialStepNumber();
-    let title = '';
     let body = '';
     let prompt = '';
     let targets = [];
 
     if (this.tutorialStep === 'FIRST_GEAR') {
-      title = 'CLUTCH + FIRST GEAR';
-      body = 'Hold the CLUTCH. While holding it, SWIPE UP on the shifter to select 1st. Watch the gear display change.';
+       body = 'Hold the CLUTCH. While holding it, SWIPE UP on the shifter to select 1st. Watch the gear display change.';
       prompt = 'YOUR TURN // HOLD CLUTCH + SHIFT UP';
       targets = [
         ['clutch', 'HOLD CLUTCH', 0x45d7ff],
@@ -1747,8 +1745,7 @@ export default class RaceScene extends Phaser.Scene {
         ['gear', 'GEAR DISPLAY', 0xffe08a],
       ];
     } else if (this.tutorialStep === 'LAUNCH_PREP') {
-      title = 'BUILD REVS + WAIT FOR GREEN';
-      body = this.tutorialCountdownStarted
+       body = this.tutorialCountdownStarted
         ? 'Keep the clutch held and the accelerator high. Do NOT release the clutch until the street signal turns green.'
         : 'Keep the clutch held. Push the accelerator high and hold it. The start lights will begin when you are ready.';
       prompt = this.tutorialCountdownStarted
@@ -1762,8 +1759,7 @@ export default class RaceScene extends Phaser.Scene {
         targets.push(['tree', 'WAIT FOR GREEN', 0x62e8c7]);
       }
     } else if (this.tutorialStep === 'LAUNCH') {
-      title = 'LAUNCH';
-      body = 'GREEN. Release the clutch quickly and keep the accelerator up. Let the car pull away.';
+       body = 'GREEN. Release the clutch quickly and keep the accelerator up. Let the car pull away.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1771,9 +1767,7 @@ export default class RaceScene extends Phaser.Scene {
       ];
     } else if (this.tutorialStep === 'GEAR_2' || this.tutorialStep === 'GEAR_3' || this.tutorialStep === 'GEAR_4') {
       const targetGear = Number(this.tutorialStep.slice(-1));
-      title = 'SHIFT TO ' + targetGear + (targetGear === 2 ? 'ND' : targetGear === 3 ? 'RD' : 'TH') + ' GEAR';
-
-      if (!this.tutorialShiftReady) {
+       if (!this.tutorialShiftReady) {
         body = 'Keep accelerating and watch the tachometer. Wait until the revs are high before shifting.';
         prompt = 'YOUR TURN // LET THE REVS CLIMB';
         targets = [
@@ -1792,8 +1786,7 @@ export default class RaceScene extends Phaser.Scene {
       }
     } else if (this.tutorialStep === 'POWER_2' || this.tutorialStep === 'POWER_3') {
       const gear = Number(this.tutorialStep.slice(-1));
-      title = 'BACK ON THE POWER';
-      body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + '. Release the clutch quickly, get back on the accelerator, then build the revs again.';
+       body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + '. Release the clutch quickly, get back on the accelerator, then build the revs again.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1806,11 +1799,17 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHud.heading.setText(
       (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
     );
+    // The prose is her spoken instruction; a blank line separates it from
+    // the all-caps action cue. The redundant uppercase step title is gone.
     this.tutorialHud.dialogue.setText(
-      title + '\n' + body + '\n' + (this.tutorialFeedback || prompt)
+      body + '\n\n' + (this.tutorialFeedback || prompt)
     );
+    const needsCorrection = this.tutorialFeedback &&
+      !this.tutorialFeedback.startsWith('GOOD');
     this.tutorialHud.setPortrait(
-      this.tutorialFeedback ? 'concerned' :
+      needsCorrection ? 'concerned' :
+      this.tutorialStep === 'GEAR_4' && this.tutorialShiftReady ||
+      this.tutorialFeedback.startsWith('GOOD') ||
       this.tutorialStep === 'LAUNCH' || this.tutorialStep === 'POWER_2' ||
         this.tutorialStep === 'POWER_3' ? 'happy' : 'explaining'
     );
@@ -1976,19 +1975,30 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.throttle = 0;
     this.controls.clutch = 1;
     this.engineAudio?.fadeOut();
+    // Finishing the fourth-gear shift should always show a pleased Sayaka,
+    // even if a preceding corrective hint was still active on screen.
+    this.tutorialHud?.setPortrait('happy');
+    this.tutorialHud?.heading?.setText(
+      this.registry.get('raceReturnScene') === 'OshiageScene'
+        ? 'LADY INSTRUCTOR // WELL DONE' : 'SAYAKA // WELL DONE'
+    );
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
       this.registry.set('oshiageBasicLessonComplete', true);
       saveSessionState(this.registry);
-      this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DRIVING SCHOOL');
-      this.time.delayedCall(110, () => this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' }));
+      this.tutorialPromptText?.setText(
+        'Very nicely done! You made it into fourth gear.\n\nLESSON COMPLETE // RETURNING TO DRIVING SCHOOL'
+      );
+      this.time.delayedCall(950, () => this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' }));
       return;
     }
     if (this.registry.get('openingChapter') === 'tutorial') {
       this.registry.set('openingDrivingLessonComplete', true);
     }
-    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO ' +
-      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI'));
+    this.tutorialPromptText?.setText(
+      'That was great! You made it all the way into fourth gear.\n\nLESSON COMPLETE // RETURNING TO ' +
+      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI')
+    );
     saveSessionState(this.registry);
 
     // RaceScene has repeatedly proven fragile when it tears down controls,
@@ -2006,7 +2016,7 @@ export default class RaceScene extends Phaser.Scene {
 
     window.setTimeout(() => {
       window.location.reload();
-    }, 90);
+    }, 950);
   }
 
 
