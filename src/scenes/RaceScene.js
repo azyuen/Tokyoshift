@@ -85,7 +85,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud } from '../ui/RaceCoachHud.js?v=20261014-r514';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261014-r514';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
