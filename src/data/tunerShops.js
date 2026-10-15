@@ -439,85 +439,89 @@ export const TUNER_SHOPS = {
   },
 
   SHINAGAWA: {
-    id: 'shinagawaSpoon',
+    id: 'shinagawaZeroSports',
+    // Keep prior Spoon visits discoverable in existing save files.
+    legacyShopId: 'shinagawaSpoon',
     enabled: true,
     regionId: 'SHINAGAWA',
     mapLabel: 'TUNER SHOP',
-    label: 'SPOON SPORTS',
-    fullName: 'SPOON SPORTS',
-    specialty: 'CHASSIS & HANDLING',
+    label: 'ZERO/SPORTS',
+    fullName: 'ZERO/SPORTS RACING DEVELOPMENT',
+    specialty: 'BOXER TURBO & AWD',
 
     mechanicId: getRegionMechanicCharacterId('SHINAGAWA'),
-    heroCarId: 'spoonEk9',
+    heroCarId: 'zeroSportsGc8',
 
-    donorCarId: 'ek9',
-    donorLabel: 'HONDA CIVIC TYPE R EK9',
+    donorCarId: 'gc8',
+    donorLabel: 'SUBARU IMPREZA WRX STI GC8',
     buildCost: 7000000,
 
     unlockRegionWins: 10,
 
-    backgroundKey: 'tunerShopShinagawaSpoonBg',
-    backgroundPath: 'assets/Locations/TunerShops/shinagawa_spoon_workshop.png',
+    backgroundKey: 'tunerShopShinagawaZeroSportsBg',
+    backgroundPath: 'assets/Locations/TunerShops/shinagawa_zerosports_day.png',
     phaseBackgrounds: {
-      day: { key: 'tunerShopShinagawaSpoonBgDay', path: 'assets/Locations/TunerShops/shinagawa_spoon_day.png' },
-      night: { key: 'tunerShopShinagawaSpoonBgNight', path: 'assets/Locations/TunerShops/shinagawa_spoon_night.png' },
+      day: { key: 'tunerShopShinagawaZeroSportsBgDay', path: 'assets/Locations/TunerShops/shinagawa_zerosports_day.png' },
+      night: { key: 'tunerShopShinagawaZeroSportsBgNight', path: 'assets/Locations/TunerShops/shinagawa_zerosports_night.png' },
     },
 
-    decalId: 'spoon',
-    decalLabel: 'SPOON',
-    decalTextureKey: 'tunerDecalSpoon',
-    decalPath: 'assets/Decals/spoon.png',
+    // The ZERO/SPORTS transparent decal has not been uploaded yet.
+    // Its temporary text fallback is rendered by TunerDecals; never load a missing PNG.
+    decalId: 'zeroSports',
+    decalLabel: 'ZERO/SPORTS',
+    decalTextureKey: 'tunerDecalZeroSports',
+    decalPath: null,
 
     tuningOptions: [
       {
-        id: 'spoonRigidChassis',
-        name: 'RIGID CHASSIS SETUP',
-        shortName: 'RIGID CHASSIS',
+        id: 'zeroSportsBoxerResponse',
+        name: 'EJ BOXER RESPONSE TUNE',
+        shortName: 'BOXER RESPONSE',
         cost: 52000,
-        description: 'Spoon-style chassis and suspension refinement for cleaner load transfer.',
-        requirementLabel: 'REQUIRES SUSPENSION LV 2',
+        description: 'Zero/Sports boost and ECU calibration for a sharper EJ turbo response.',
+        requirementLabel: 'REQUIRES ECU LV 2 + TURBO LV 1',
         requirements: {
-          drivetrain: { suspension: 2 },
+          engine: { ecu: 2, turbo: 1 },
         },
         effect: {
-          gripScale: 1.02,
-          massDelta: -5,
+          spoolScale: 1.04,
+          outputScale: 1.01,
         },
-        benefit: '+2% GRIP / -5 KG',
+        benefit: '+4% SPOOL / +1% OUTPUT',
       },
       {
-        id: 'spoonLsdGeometry',
-        name: 'LSD & GEOMETRY SETUP',
-        shortName: 'LSD & GEOMETRY',
+        id: 'zeroSportsAwdLaunch',
+        name: 'AWD LAUNCH & DIFF SETUP',
+        shortName: 'AWD LAUNCH SETUP',
         cost: 68000,
-        description: 'Match differential, tyres and geometry for usable mechanical grip.',
+        description: 'Dial in the centre differential and grip for hard AWD launches.',
         requirementLabel: 'REQUIRES DIFF LV 2 + TYRES LV 2',
         requirements: {
           drivetrain: { differential: 2 },
           chassis: { tyres: 2 },
         },
         effect: {
-          gripScale: 1.025,
-          launchScale: 1.02,
+          gripScale: 1.02,
+          launchScale: 1.025,
         },
-        benefit: '+2.5% GRIP / +2% LAUNCH',
+        benefit: '+2% GRIP / +2.5% LAUNCH',
       },
       {
-        id: 'spoonCompleteChassis',
-        name: 'SPOON COMPLETE CHASSIS',
-        shortName: 'COMPLETE CHASSIS',
+        id: 'zeroSportsCompleteSetup',
+        name: 'ZERO/SPORTS COMPLETE SETUP',
+        shortName: 'COMPLETE SETUP',
         cost: 88000,
-        description: 'Final corner-weight and geometry refinement after both Spoon base setups.',
-        requirementLabel: 'REQUIRES BOTH SPOON BASE TUNES',
+        description: 'Final lightweight aero and chassis calibration after both base packages.',
+        requirementLabel: 'REQUIRES BOTH ZERO/SPORTS BASE TUNES',
         requirements: {
-          specialist: ['spoonRigidChassis', 'spoonLsdGeometry'],
+          specialist: ['zeroSportsBoxerResponse', 'zeroSportsAwdLaunch'],
         },
         effect: {
           massDelta: -5,
-          gripScale: 1.015,
-          launchScale: 1.01,
+          dragScale: 0.985,
+          gripScale: 1.01,
         },
-        benefit: '-5 KG / +1.5% GRIP / +1% LAUNCH',
+        benefit: '-5 KG / -1.5% DRAG / +1% GRIP',
       },
     ],
   },
@@ -617,7 +621,10 @@ export const TUNER_SHOP_ORDER = [
 ];
 
 export const TUNER_SHOP_BY_ID = Object.fromEntries(
-  Object.values(TUNER_SHOPS).map(shop => [shop.id, shop])
+  Object.values(TUNER_SHOPS).flatMap(shop => [
+    [shop.id, shop],
+    ...(shop.legacyShopId ? [[shop.legacyShopId, shop]] : []),
+  ])
 );
 
 export const TUNER_SHOP_BY_DONOR = Object.fromEntries(
@@ -626,14 +633,25 @@ export const TUNER_SHOP_BY_DONOR = Object.fromEntries(
     .map(shop => [shop.donorCarId, shop])
 );
 
-export const TUNER_OPTION_BY_ID = Object.fromEntries(
-  Object.values(TUNER_SHOPS).flatMap(shop =>
-    (shop.tuningOptions || []).map(option => [
-      option.id,
-      { ...option, shopId: shop.id, regionId: shop.regionId },
-    ])
-  )
-);
+// Legacy Spoon specialist effects remain valid on already-tuned cars.
+ // They are not offered by the new Shinagawa workshop.
+const LEGACY_SHINAGAWA_TUNES = {
+  spoonRigidChassis: { id: 'spoonRigidChassis', effect: { gripScale: 1.02, massDelta: -5 } },
+  spoonLsdGeometry: { id: 'spoonLsdGeometry', effect: { gripScale: 1.025, launchScale: 1.02 } },
+  spoonCompleteChassis: { id: 'spoonCompleteChassis', effect: { massDelta: -5, gripScale: 1.015, launchScale: 1.01 } },
+};
+
+export const TUNER_OPTION_BY_ID = {
+  ...Object.fromEntries(
+    Object.values(TUNER_SHOPS).flatMap(shop =>
+      (shop.tuningOptions || []).map(option => [
+        option.id,
+        { ...option, shopId: shop.id, regionId: shop.regionId },
+      ])
+    )
+  ),
+  ...LEGACY_SHINAGAWA_TUNES,
+};
 
 export function getTunerShopPhaseBackground(shopOrRegion, phase = 'night') {
   const shop = typeof shopOrRegion === 'string'
@@ -685,7 +703,9 @@ export function isTunerShopUnlocked(source, regionId) {
   // Preserve access for players who already entered a tuner shop before the
   // team-challenge progression was introduced.
   const legacyProgress = sourceValue(source, 'tunerShopProgress', {}) || {};
-  const legacyShop = legacyProgress[shop.id] || {};
+  const legacyShop = legacyProgress[shop.id]
+    || (shop.legacyShopId ? legacyProgress[shop.legacyShopId] : null)
+    || {};
   if (legacyShop.visited || legacyShop.discovered || legacyShop.unlockedByChallenge) {
     return true;
   }
