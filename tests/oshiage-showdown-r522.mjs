@@ -78,6 +78,9 @@ test('showdown charges once, freezes all 3 opponents, and advances to next heat 
   assert.equal(reg.get('oshiageEliteCooldowns').underpass, now + 900000);
   const series = reg.get('oshiageEliteSeries');
   assert.deepEqual(series.lineup.map(x=>x.characterId), displayed.map(x=>x.characterId));
+  assert.equal(series.prize.cash, 500000);
+  assert.equal(series.prize.coupons, 2);
+  const lockedPrize = JSON.stringify(series.prize);
   assert.equal(getOshiageShowdownAccess(reg, 'plaza', now).allowed, false);
   assert.equal(beginOshiageShowdown(reg, 'underpass', now+10).ok, false);
   assert.equal(reg.get('cash'), 150000);
@@ -94,6 +97,7 @@ test('showdown charges once, freezes all 3 opponents, and advances to next heat 
   assert.equal(prepareNextOshiageShowdownHeat(reg), true);
   assert.equal(reg.get('selectedOpponentCharacterId'), displayed[2].characterId);
   assert.equal(reg.get('cash'), 150000);
+  assert.equal(JSON.stringify(reg.get('oshiageEliteSeries').prize), lockedPrize);
   assert.deepEqual(
     getOshiageShowdownLineup(reg, 'underpass', now+300000).map(x=>x.characterId),
     displayed.map(x=>x.characterId)
