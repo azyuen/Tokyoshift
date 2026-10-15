@@ -720,7 +720,12 @@ export default class RaceScene extends Phaser.Scene {
 
     this.cancelButton.on('pointerdown', () => {
       if (this.isTutorial) {
-        if (this.isCoaching) this.registry.set('oshiageTrainingLesson', null);
+        if (this.isCoaching) {
+          // Leaving forfeits every remaining attempt in this booking.
+          this.registry.set('oshiageTrainingLesson', null);
+          this.registry.set('oshiageSchoolBooking', null);
+          saveSessionState(this.registry);
+        }
         this.scene.start(this.registry.get('raceReturnScene') === 'OshiageScene' ? 'OshiageScene' : 'GarageScene',
           this.registry.get('raceReturnScene') === 'OshiageScene' ? { locationId: 'oshiageDrivingSchool' } : undefined);
         return;
@@ -1558,8 +1563,10 @@ export default class RaceScene extends Phaser.Scene {
             }
           }
         }
-        // Primary action, SKIP and exhausted retries return safely.
+        // Primary action, SKIP and exhausted retries close this booking.
+        // Any unused attempts are forfeited on return to the school.
         this.registry.set('oshiageTrainingLesson', null);
+        this.registry.set('oshiageSchoolBooking', null);
         saveSessionState(this.registry);
         this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
       },
@@ -1567,6 +1574,7 @@ export default class RaceScene extends Phaser.Scene {
     if (!next.played) {
       // A renderer failure must not strand the player on a frozen track.
       this.registry.set('oshiageTrainingLesson', null);
+      this.registry.set('oshiageSchoolBooking', null);
       saveSessionState(this.registry);
       this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
     }
@@ -3146,6 +3154,12 @@ export default class RaceScene extends Phaser.Scene {
         this.scene.start('MeetScene');
       } else if (settlement?.oshiageEliteContinues) {
         this.startNextOshiageEliteHeat();
+      } else if (settlement?.oshiageElite) {
+        // Do not fall back to the last saved Oshiage destination (often the
+        // driving school). Completed/lost Skytree heats return to Skytree.
+        this.registry.set('oshiageLocation', 'oshiageSkytreeMeet');
+        saveSessionState(this.registry);
+        this.scene.start('OshiageScene', { locationId: 'oshiageSkytreeMeet' });
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
