@@ -18,7 +18,7 @@ import {
 import {
   getRegionalChampionshipCount,
 } from './careerProgression.js?v=20260929-r272';
-import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount } from './crewSystem.js?v=20261013-r496';
+import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount, getCrewBattleWinCount } from './crewSystem.js?v=20261013-r496';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -50,7 +50,7 @@ export const CENTRAL_TOKYO_LOCATIONS = {
         },
       },
     },
-    winsRequired: 3,
+    winsRequired: 9,
     championshipsRequired: 0,
     garageTierRequired: 0,
   },
@@ -439,7 +439,7 @@ export function getCentralTokyoEligibility(source) {
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
     ginza: areAllCrewBattlesComplete(source),
-    drag: isCrewComplete(source),
+    drag: areAllCrewBattlesComplete(source),
   };
 }
 
@@ -453,7 +453,8 @@ export function getCentralTokyoAccess(source) {
   return {
     autoMarket: Boolean(unlocked.autoMarket && eligible.autoMarket),
     ginza: Boolean(unlocked.ginza && eligible.ginza),
-    drag: Boolean(eligible.drag),
+    // The Ginza invitation grants both endgame venues together.
+    drag: Boolean((unlocked.drag || unlocked.ginza) && eligible.drag),
   };
 }
 
@@ -477,10 +478,12 @@ export function markCentralTokyoUnlocked(registry, key) {
   const unlocks = {
     ...(registry.get('centralTokyoUnlocks') || {}),
     [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
   };
   const seen = {
     ...(registry.get('tokyoInvitesSeen') || {}),
     [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
   };
 
   registry.set('centralTokyoUnlocks', unlocks);
@@ -496,6 +499,10 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
   if (key === 'drag' && !isCrewComplete(source)) {
     return 'RECRUIT FULL CREW (' + getCrewCount(source) + '/7)';
   }
+  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
+    return 'WIN 7 REGIONAL CREW BATTLES (' + getCrewBattleWinCount(source) + '/7)';
+  }
+  if (key === 'drag') return 'PRO INVITATION PENDING';
 
   const cfg = CENTRAL_TOKYO_LOCATIONS[key];
   const wins = Number(value(source, 'wins', 0) || 0);
