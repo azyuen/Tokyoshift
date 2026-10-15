@@ -1,0 +1,33 @@
+name: R529 Crew, Travel and Tuner regression
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/data/crewSystem.js'
+      - 'src/data/tunerChallenges.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/data/travelRegions.js'
+      - 'src/data/meetAssets.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/data/tunerShops.js'
+      - 'tests/region-crew-tuning-r529.mjs'
+      - '.github/workflows/r529-crew-travel.yml'
+jobs:
+  focused-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse modified scripts
+        run: |
+          node --check src/data/crewSystem.js
+          node --check src/data/tunerChallenges.js
+          node --check src/scenes/MeetScene.js
+          node --check src/data/travelRegions.js
+          node --check src/data/meetAssets.js
+          node --check src/ui/TravelMap.js
+          node --check src/data/tunerShops.js
+      - name: Focused regression suite
+        run: node --test tests/region-crew-tuning-r529.mjs
