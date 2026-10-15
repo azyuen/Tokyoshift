@@ -1,7 +1,7 @@
 import {
   MEET_LOCATIONS,
   getMeetLocation,
-} from '../data/meetAssets.js?v=20260928-r245';
+} from '../data/meetAssets.js';
 import {
   getWorkshopByLocationId,
   getGarageCapacity,
@@ -9,7 +9,7 @@ import {
   getWorkshopRegionalWinRequirement,
   getTotalRegionalWins,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261004-r319';
+} from '../data/workshopProgression.js';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
@@ -22,23 +22,23 @@ import {
   getTravelRegionUnlockLabel,
   isTravelLocationUnlocked,
   getTravelLocationUnlockLabel,
-} from '../data/travelRegions.js?v=20261015-r522';
+} from '../data/travelRegions.js';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20260926-r212';
+} from '../data/tunerShops.js';
 import {
   getTunerTeamChallengeState,
-} from '../data/tunerChallenges.js?v=20260929-r286';
-import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js?v=20260922-r128';
+} from '../data/tunerChallenges.js';
+import { startSceneLoading, finishSceneLoading } from './LoadingScreen.js';
 import {
   getWorldPhase,
   toggleWorldPhaseOverride,
-} from '../environment/WorldClock.js?v=20260929-r286';
+} from '../environment/WorldClock.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -983,9 +983,11 @@ export function showTravelMap(scene, options = {}) {
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
       travelLabel.setColor('#72838f').setText(
-        location?.centralTokyoUnlock
-          ? getCentralTokyoUnlockLabel(scene.registry, location.id)
-          : getTravelLocationUnlockLabel(scene.registry, location.id)
+        location?.id === 'ginzaMotorGallery'
+          ? 'BY INVITATION ONLY'
+          : location?.centralTokyoUnlock
+            ? getCentralTokyoUnlockLabel(scene.registry, location.id)
+            : getTravelLocationUnlockLabel(scene.registry, location.id)
       );
       return;
     }
@@ -1079,15 +1081,21 @@ export function showTravelMap(scene, options = {}) {
     ));
 
     regionNameText.setText(openingTrainMode ? 'SHINONOME' : region.label);
+    // Show the journey's single regional fare in the main region header.
+    const regionEntryCost = location ? getTargetCost(location) : Number(region.baseCost || 0);
     regionLockText
-      .setText(
-        regionOpen
-          ? ''
-          : crewRegionBlocked
+      .setText(openingTrainMode
+        ? ''
+        : !regionOpen
+          ? crewRegionBlocked
             ? 'CREW CAR // UNAVAILABLE'
             : 'LOCKED // ' + getTravelRegionUnlockLabel(scene.registry, selectedRegionId)
-      )
-      .setVisible(!regionOpen);
+          : selectedRegionId === HOME_REGION_ID
+            ? 'RETURN // ' + MONEY(regionEntryCost)
+            : selectedRegionId === currentRegionId && !fromWorkshop
+              ? 'LOCAL TRAVEL // FREE'
+              : 'ENTRY // ' + MONEY(region.baseCost || 0))
+      .setVisible(!openingTrainMode);
     regionLineText.setText(openingTrainMode
       ? 'Only Shinonome is available on your first train ride home.'
       : region.description);
@@ -1186,8 +1194,6 @@ export function showTravelMap(scene, options = {}) {
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
       const available = locationAvailable(item) || item.kind === 'home';
-      const time = locationTimeLabel(item, worldPhase);
-
       row.label.setText(openingTrainMode ? 'HOME' : item.label);
       if (crewBlockedLocation(item)) {
         row.meta.setText('CREW CAR // UNAVAILABLE');
@@ -1216,8 +1222,7 @@ export function showTravelMap(scene, options = {}) {
         );
       } else {
         row.meta.setText(
-          item.difficulty + '  •  ' + time + '  •  ' +
-          (isCurrent ? 'HERE' : MONEY(cost))
+          item.difficulty + '  •  ' + (isCurrent ? 'HERE' : 'AVAILABLE')
         );
       }
 

@@ -1,7 +1,8 @@
-import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js?v=20261015-r527';
-import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js?v=20261009-r457';
-import { addCollectorExpansion } from './collectorExpansion.js?v=20261015-r527';
-import { applyHeroCarAssets } from './heroCarAssets.js?v=20261015-r527';
+import {STOCK_CLASS_DATA} from './stockClasses.js';
+import { STANDARD_CAR_REFERENCE, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS, REFERENCE_CAR_CANVAS } from './carReferenceGeometry.js';
+import { CREW_CHARACTER_CARS, getCrewLoanCarId } from './crewRoster.js';
+import { addCollectorExpansion } from './collectorExpansion.js';
+import { applyHeroCarAssets } from './heroCarAssets.js';
 
 const base = {
   wheelRadius: 0.305,
@@ -2276,6 +2277,8 @@ export const carOrder = [
   'z32', 'z33', '240z', 'crx', 'dc2', 'eclipse', 'familia', '180sx', 'st205', 'jzx100', 'b4rsk',
 ];
 
+
+Object.entries(STOCK_CLASS_DATA).forEach(([id,data])=>Object.assign(cars[id],data));
 
 // Register per-character crew loan aliases after all regular visual geometry has
 // been finalised. Crew cars are independent tuneable instances that reuse the

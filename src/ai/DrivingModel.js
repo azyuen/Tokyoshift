@@ -1,5 +1,5 @@
-import Engine from '../vehicles/Engine.js?v=20260921-r55';
-import Turbo from '../vehicles/Turbo.js?v=20261004-r325';
+import Engine from '../vehicles/Engine.js';
+import Turbo from '../vehicles/Turbo.js';
 
 export const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 

@@ -1,7 +1,7 @@
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { engines } from '../data/engines.js?v=20261011-r479';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning } from '../data/secondaryTuning.js?v=20260926-r211';
+import { cars } from '../data/cars.js';
+import { engines } from '../data/engines.js';
+import { applyEngineTuning } from '../data/tuning.js';
+import { applySecondaryTuning } from '../data/secondaryTuning.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

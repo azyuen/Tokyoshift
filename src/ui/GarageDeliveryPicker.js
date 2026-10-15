@@ -2,7 +2,7 @@ import {
   getUnlockedWorkshops,
   getWorkshopStorageCapacity,
   getWorkshopUsage,
-} from '../data/workshopProgression.js?v=20260929-r263';
+} from '../data/workshopProgression.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

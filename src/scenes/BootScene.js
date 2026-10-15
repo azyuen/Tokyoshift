@@ -1,11 +1,11 @@
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl } from '../data/characters.js';
 import {
   createDefaultGameState,
   readSessionState,
   applyStateToRegistry,
   getProfileSlots,
-} from '../state/GameState.js?v=20261011-r482';
-import { startSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+} from '../state/GameState.js';
+import { startSceneLoading } from '../ui/LoadingScreen.js';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('BootScene'); }

@@ -1,12 +1,12 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261012-champ2c';
-import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
-import { cars } from './cars.js?v=20261011-r479';
-import { characters } from './characters.js?v=20261010-r459';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
-import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js';
+import { getCrewMembers } from './crewSystem.js';
+import { cars } from './cars.js';
+import { characters } from './characters.js';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
+import { createRivalBuildState } from './rivalBuilds.js';
+import { getEncounterAi } from './encounterProfiles.js';
+import { getCarMagazineMeta } from './carMagazine.js';
 
 export const PRO_SEASON_LENGTH = 8;
 export const PRO_QUALIFICATION = Object.freeze({driver:60,crew:40});

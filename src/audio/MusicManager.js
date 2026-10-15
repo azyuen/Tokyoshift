@@ -1,4 +1,4 @@
-import { getMusicVolume } from './AudioSettings.js?v=20260921-r57';
+import { getMusicVolume } from './AudioSettings.js';
 
 // TOKYO SHIFT procedural soundtrack
 // Original eurobeat-inspired score. Generated in-browser to keep the PWA light

@@ -1,9 +1,9 @@
-import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
+import { getBaseCarId } from './carOwnership.js';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
   getEngineTuning,
-} from './tuning.js?v=20260926-r211';
+} from './tuning.js';
 import {
   DRIVETRAIN_PART_ORDER,
   CHASSIS_PART_ORDER,
@@ -14,11 +14,11 @@ import {
   getDrivetrainTuning,
   getChassisTuning,
   getExhaustNosTuning,
-} from './secondaryTuning.js?v=20260926-r211';
+} from './secondaryTuning.js';
 import {
   getRegionalChampionshipCount,
-} from './careerProgression.js?v=20260929-r272';
-import { areAllCrewBattlesComplete, getCrewBattleWinCount } from './crewSystem.js?v=20261013-r496';
+} from './careerProgression.js';
+import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount } from './crewSystem.js';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -66,8 +66,8 @@ export const CENTRAL_TOKYO_LOCATIONS = {
       night: { key: 'centralTokyoGinzaNightBg', path: 'assets/CentralTokyo/tokyo_ginza_night.png' },
     },
     winsRequired: 0,
-    championshipsRequired: 3,
-    garageTierRequired: 2,
+    championshipsRequired: 0,
+    garageTierRequired: 0,
   },
   drag: {
     id: 'tokyoDragComplex',
@@ -81,7 +81,7 @@ export const CENTRAL_TOKYO_LOCATIONS = {
       night: { key: 'centralTokyoDragNightBg', path: 'assets/CentralTokyo/tokyo_dragstrip_night.png' },
     },
     winsRequired: 0,
-    championshipsRequired: 7,
+    championshipsRequired: 0,
     garageTierRequired: 0,
   },
 };
@@ -438,13 +438,8 @@ export function getCentralTokyoEligibility(source) {
       wins >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.winsRequired || 0) &&
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
-    ginza:
-      championships >= Number(CENTRAL_TOKYO_LOCATIONS.ginza.championshipsRequired || 0) &&
-      garageTier >= CENTRAL_TOKYO_LOCATIONS.ginza.garageTierRequired,
-    drag:
-      championships >= Number(CENTRAL_TOKYO_LOCATIONS.drag.championshipsRequired || 0) &&
-      garageTier >= CENTRAL_TOKYO_LOCATIONS.drag.garageTierRequired &&
-      areAllCrewBattlesComplete(source),
+    ginza: areAllCrewBattlesComplete(source),
+    drag: isCrewComplete(source),
   };
 }
 
@@ -497,6 +492,10 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
   const key = getCentralTokyoAccessKey(locationId);
   if (!key) return 'LOCKED';
   if (isCentralTokyoLocationUnlocked(source, locationId)) return 'OPEN';
+  if (key === 'ginza') return 'BY INVITATION ONLY';
+  if (key === 'drag' && !isCrewComplete(source)) {
+    return 'RECRUIT FULL CREW (' + getCrewCount(source) + '/7)';
+  }
 
   const cfg = CENTRAL_TOKYO_LOCATIONS[key];
   const wins = Number(value(source, 'wins', 0) || 0);
@@ -508,10 +507,6 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
     return championshipsRequired === 1
       ? 'WIN A REGIONAL CHAMPIONSHIP'
       : championshipsRequired + ' REGIONAL CHAMPIONSHIPS REQUIRED';
-  }
-
-  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
-    return 'COMPLETE ALL 7 CREW CHALLENGES (' + getCrewBattleWinCount(source) + '/7)';
   }
 
   if (wins < cfg.winsRequired) {

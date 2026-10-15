@@ -1,0 +1,31 @@
+name: R531 Unlocks and Oshiage Layout
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/data/careerProgression.js'
+      - 'src/data/travelRegions.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/data/meetAssets.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'tests/region-unlock-oshiage-r531.mjs'
+      - '.github/workflows/r531-unlocks-oshiage.yml'
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax verification
+        run: |
+          node --check src/data/careerProgression.js
+          node --check src/data/travelRegions.js
+          node --check src/data/centralTokyo.js
+          node --check src/data/meetAssets.js
+          node --check src/ui/TravelMap.js
+          node --check src/scenes/OshiageScene.js
+      - name: Nine feature regression tests
+        run: node --test tests/region-unlock-oshiage-r531.mjs

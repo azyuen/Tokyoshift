@@ -1,10 +1,10 @@
-import { resolveCharacterFaceAnchor } from './CharacterFaceAnchor.js?v=20261013-driverface';
+import { resolveCharacterFaceAnchor } from './CharacterFaceAnchor.js';
 import {
   characters,
   DEFAULT_CHARACTER_PROFILE,
   getCharacterVisualAsset,
   getCharacterVisualForContext,
-} from '../data/characters.js?v=20261011-r477';
+} from '../data/characters.js';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;

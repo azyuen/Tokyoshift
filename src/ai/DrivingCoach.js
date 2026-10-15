@@ -1,5 +1,5 @@
-import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import { DrivingModel, clamp } from './DrivingModel.js?v=20261007-r399';
+import Vehicle from '../vehicles/Vehicle.js';
+import { DrivingModel, clamp } from './DrivingModel.js';
 
 // Oshiage coaching is advisory only. It shares the physics used by Expert/Elite
 // drivers, and never changes player horsepower, controls or car configuration.

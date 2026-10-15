@@ -3,7 +3,7 @@ import {
   getConnectedGamepads,
   CONTROL_TOUCH_RECTS,
   CONTROL_REFERENCE,
-} from './ControlSettings.js?v=20261007-r422';
+} from './ControlSettings.js';
 
 const BASE_RECTS = CONTROL_TOUCH_RECTS;
 

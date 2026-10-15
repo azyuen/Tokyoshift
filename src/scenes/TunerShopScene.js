@@ -1,32 +1,32 @@
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261006-r392';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
+import { cars } from '../data/cars.js';
+import { getBaseCarId } from '../data/carOwnership.js';
+import { characters, getCharacterAssetUrl } from '../data/characters.js';
 import {
   getTunerShopForRegion,
   getTunerShopPhaseBackground,
   isTunerShopUnlocked,
   getInstalledSpecialistTuning,
   areTunerOptionRequirementsMet,
-} from '../data/tunerShops.js?v=20261015-r521';
+} from '../data/tunerShops.js';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261011-r482';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+} from '../state/GameState.js';
+import { playMusic } from '../audio/MusicManager.js';
 import {
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarDecalAnchor,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
+} from '../vehicles/CarAppearance.js';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js';
 import {
   getWheelPairFit,
   getWheelContactOffsetY,
-} from '../vehicles/WheelFit.js?v=20260929-r258';
+} from '../vehicles/WheelFit.js';
 import {
   normaliseTunerDecals,
   withTunerDecal,
@@ -35,14 +35,14 @@ import {
   createTunerDecalLayers,
   setTunerDecalObjectColor,
   preloadTunerDecalAssets,
-} from '../vehicles/TunerDecals.js?v=20260929-r284';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261009-r451';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { getTravelLocation } from '../data/travelRegions.js?v=20260929-r272';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
+} from '../vehicles/TunerDecals.js';
+import { showTravelMap } from '../ui/TravelMap.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
+import { getTravelLocation } from '../data/travelRegions.js';
+import { addSettingsButton } from '../ui/SettingsPanel.js';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
+import { recordCarMagazineSightings } from '../data/carMagazine.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

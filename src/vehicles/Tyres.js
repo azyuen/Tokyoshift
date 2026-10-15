@@ -1,3 +1,5 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
 export default class Tyres {
   constructor(config) {
     this.grip = config.tyreGrip;
@@ -23,7 +25,7 @@ export default class Tyres {
     if (absDemand > peakForce) {
       const excess = absDemand - peakForce;
       this.spinVelocityMps += direction * (excess / Math.max(90, massKg * 0.11)) * dt;
-      const postPeak = peakForce * Phaser.Math.Clamp(0.92 - Math.abs(this.spinVelocityMps) * 0.030, 0.50, 0.92);
+      const postPeak = peakForce * clamp(0.92 - Math.abs(this.spinVelocityMps) * 0.030, 0.50, 0.92);
       roadForceN = direction * postPeak;
     } else {
       const recovery = Math.min(1, dt * (5.2 + (1 - absDemand / Math.max(1, peakForce)) * 4.0));

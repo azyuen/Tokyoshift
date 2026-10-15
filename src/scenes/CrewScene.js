@@ -1,5 +1,5 @@
-import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
-import { cancelSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+import { saveSessionState } from '../state/GameState.js';
+import { cancelSceneLoading } from '../ui/LoadingScreen.js';
 
 // Crew Space transition bridge.
 //

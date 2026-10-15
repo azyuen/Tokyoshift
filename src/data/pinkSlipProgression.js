@@ -1,7 +1,7 @@
 // One shared pink-slip lottery per completed race across requests, incoming
 // challenges and meet refreshes. Random requests/refreshes add zero tickets.
-import { getBaseCarId } from './carOwnership.js?v=20261006-r388';
-import { MARKET_BASE_PRICES } from './centralTokyo.js?v=20261006-r388';
+import { getBaseCarId } from './carOwnership.js';
+import { MARKET_BASE_PRICES } from './centralTokyo.js';
 
 export const PINK_SLIP_VALUE_RATIO_LIMIT = 2;
 // On Easy, pink slips should be attainable but genuinely rare. Keep the

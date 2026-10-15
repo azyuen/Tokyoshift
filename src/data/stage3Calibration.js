@@ -1,6 +1,6 @@
 import {refreshEngineOutput} from '../vehicles/Engine.js';
-import { getEngineTuning } from './tuning.js?v=20260926-r211';
-import { getDrivetrainTuning } from './secondaryTuning.js?v=20260926-r211';
+import { getEngineTuning } from './tuning.js';
+import { getDrivetrainTuning } from './secondaryTuning.js';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const clone = value => JSON.parse(JSON.stringify(value || {}));

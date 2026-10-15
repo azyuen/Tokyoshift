@@ -3,19 +3,19 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars } from '../data/cars.js?v=20261011-r479';
+} from '../vehicles/CarAppearance.js';
+import { cars } from '../data/cars.js';
 import {
   DEFAULT_PAINT_COLOR,
   getCarBodyTextureKey,
   createCarBodyLayers,
-} from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260928-r244';
-import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js?v=20261011-r482';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+} from '../vehicles/CarAppearance.js';
+import { getWheelPairFit } from '../vehicles/WheelFit.js';
+import { characters, playableCharacterOrder, getCharacterAssetUrl } from '../data/characters.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
+import { createDefaultGameState, applyStateToRegistry, saveSessionState } from '../state/GameState.js';
+import { playMusic } from '../audio/MusicManager.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

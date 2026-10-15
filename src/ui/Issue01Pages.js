@@ -1,6 +1,6 @@
-import { cars } from '../data/cars.js?v=20261012-r490';
-import { ISSUE01_ASSETS, ISSUE01_PAGES, ISSUE01_CONTENTS, ISSUE01_GINZA_CARS, ISSUE01_PROFILE_CARS } from '../data/magazineIssue01.js?v=20261012-r490';
-export { ISSUE01_ASSETS } from '../data/magazineIssue01.js?v=20261012-r490';
+import { cars } from '../data/cars.js';
+import { ISSUE01_ASSETS, ISSUE01_PAGES, ISSUE01_CONTENTS, ISSUE01_GINZA_CARS, ISSUE01_PROFILE_CARS } from '../data/magazineIssue01.js';
+export { ISSUE01_ASSETS } from '../data/magazineIssue01.js';
 export const ISSUE01_EDITORIAL_PAGE_COUNT = ISSUE01_PAGES.length;
 export const ISSUE01_FEATURE_IDS = ISSUE01_PROFILE_CARS;
 export const ISSUE01_PHOTO_CARS = Object.freeze([...ISSUE01_GINZA_CARS,...ISSUE01_PROFILE_CARS]);

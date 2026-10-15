@@ -1,4 +1,4 @@
-import { DrivingModel, clamp } from './DrivingModel.js?v=20261007-r399';
+import { DrivingModel, clamp } from './DrivingModel.js';
 
 const lerp = (a, b, t) => a + (b - a) * t;
 

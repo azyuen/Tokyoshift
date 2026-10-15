@@ -5,10 +5,10 @@ import {
   characters,
   getCharacterAssetUrl,
   getCharacterVisualAsset,
-} from '../data/characters.js?v=20261011-r477';
+} from '../data/characters.js';
 import {
   createRaceDialogueHud, RACE_COACH_LAYOUT,
-} from './RaceCoachHud.js?v=20261014-r514';
+} from './RaceCoachHud.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -135,7 +135,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261015-r524')
+    import('./OpeningPhonePrototype.js')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {

@@ -1,3 +1,5 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
 export default class Clutch {
   constructor(config) {
     this.maxTorqueNm = config.clutchStrength;
@@ -8,14 +10,14 @@ export default class Clutch {
   }
 
   solve(engineTorqueNm, engineRPM, drivelineRPM) {
-    const engagement = Phaser.Math.Clamp(1 - this.pedal, 0, 1);
+    const engagement = clamp(1 - this.pedal, 0, 1);
     const capacity = this.maxTorqueNm * Math.pow(engagement, 1.35);
     const rpmDelta = engineRPM - drivelineRPM;
 
     // Engine torque plus a synchronising term attempts to bring both shafts together.
     const synchronisingTorque = rpmDelta * 0.085 * engagement;
     const desiredTorque = engineTorqueNm + synchronisingTorque;
-    const transmitted = Phaser.Math.Clamp(desiredTorque, -capacity, capacity);
+    const transmitted = clamp(desiredTorque, -capacity, capacity);
 
     this.slipRPM = rpmDelta;
     this.slipping = engagement > 0.02 && (Math.abs(desiredTorque) > capacity + 2 || Math.abs(rpmDelta) > 180);

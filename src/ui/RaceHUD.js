@@ -1,7 +1,7 @@
 import {
   getControlSettings,
   CONTROL_REFERENCE,
-} from '../input/ControlSettings.js?v=20261007-r422';
+} from '../input/ControlSettings.js';
 
 export default class RaceHUD {
   constructor(scene, options = {}) {

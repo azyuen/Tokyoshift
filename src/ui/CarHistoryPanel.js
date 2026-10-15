@@ -1,5 +1,5 @@
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
+import { cars } from '../data/cars.js';
+import { getActiveMagazineIssue } from '../data/carMagazine.js';
 import {
   createCarBodyLayers,
   getCarBodyScaleForWidth,
@@ -8,10 +8,10 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { drawIssue01Page, ISSUE01_ASSETS, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js?v=20261012-r490';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
+} from '../vehicles/CarAppearance.js';
+import { getWheelPairFit } from '../vehicles/WheelFit.js';
+import { drawIssue01Page, ISSUE01_ASSETS, ISSUE01_EDITORIAL_PAGE_COUNT, ISSUE01_PHOTO_CARS } from './Issue01Pages.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -186,8 +186,25 @@ export function showCarHistoryPanel(scene, options = {}) {
     cleanup();
     if (!scene.sys?.isActive?.()) return;
     const issue = getActiveMagazineIssue(scene.registry);
-    if (issue && [issue.coverKey, issue.adKey, issue.insetKey, ...Object.values(ISSUE01_ASSETS).map(a => a.key)].some(key => !key || !scene.textures.exists(key))) {
-      scene.showWorkshopToast?.('MAGAZINE COULD NOT LOAD // TAP TO RETRY');
+    const missing = issue
+      ? [issue.coverKey, issue.adKey, issue.insetKey, ...Object.values(ISSUE01_ASSETS).map(a => a.key)]
+          .filter(key => !key || !scene.textures.exists(key))
+      : [];
+    if (missing.length) {
+      console.error('[TOKYO SHIFT] Magazine textures failed to load:', missing);
+      // Workshop toast sits behind the office backdrop. Show the error above
+      // both the office and the magazine loader so failed artwork never
+      // looks like an unresponsive magazine button.
+      const shade = scene.add.rectangle(780, 420, 1560, 840, 0x010205, 0.78)
+        .setDepth(310).setInteractive();
+      const panel = scene.add.rectangle(780, 420, 790, 210, 0x08131f, 0.99)
+        .setStrokeStyle(3, 0x43dfff, 0.96).setDepth(311);
+      const label = scene.add.text(780, 420,
+        'MAGAZINE COULD NOT LOAD\nA page image is missing.\nTAP TO CLOSE AND TRY AGAIN', {
+          fontFamily: PIXEL_FONT, fontSize: '11px', color: '#eefaff',
+          align: 'center', lineSpacing: 20,
+        }).setOrigin(0.5).setDepth(312);
+      shade.once('pointerdown', () => destroyObjects([shade, panel, label]));
       return;
     }
     showMagazine(scene, options);

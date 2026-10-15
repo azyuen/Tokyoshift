@@ -1,10 +1,11 @@
+import {estimateElapsed} from './PerformanceEstimate.js';
 import Engine,{refreshEngineOutput} from './Engine.js';
-import { cars } from '../data/cars.js?v=20261011-r484';
-import { engines } from '../data/engines.js?v=20261011-r484';
-import { applyEngineTuning } from '../data/tuning.js?v=20260926-r211';
-import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js?v=20261008-r428';
-import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260928-r239';
-import { applyStage3Calibration } from '../data/stage3Calibration.js?v=20261004-r325';
+import { cars } from '../data/cars.js';
+import { engines } from '../data/engines.js';
+import { applyEngineTuning } from '../data/tuning.js';
+import { applySecondaryTuning, getExhaustNosTuning } from '../data/secondaryTuning.js';
+import { PROGRESSION_BALANCE } from '../data/progressionBalance.js';
+import { applyStage3Calibration } from '../data/stage3Calibration.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -211,19 +212,11 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
   const nosAvailability = clamp(nosCapacity / 5, 0, 1.35);
   const nosPerMass = nosPowerKw / mass * 1000 / cfg.referencePowerToWeight;
 
-  const standing = Math.max(1,
-    100 * standingCore *
-    standingTraction * clutchUsability * efficiency * launchGearing *
-    shiftFactor * standingBand * boostResponse * standingEngineResponse.combined +
-    100 * nosPerMass * nosAvailability * cfg.nosStandingUse
-  );
-
-  const rolling = Math.max(1,
-    100 * rollingCore *
-    efficiency * rollGearing * shiftFactor *
-    rollingBand * boostResponse * aeroFactor +
-    100 * nosPerMass * nosAvailability * cfg.nosRollingUse
-  );
+  const distance=Math.max(100,Math.min(1600,Number(options.distanceM||400)));
+  const standingSeconds=estimateElapsed(car,engine,0,distance);
+  const rollingSeconds=estimateElapsed(car,engine,Number(options.rollingSpeedKmh||60),distance);
+  const standing=100*Math.pow((15.5*Math.sqrt(distance/400))/standingSeconds,3);
+  const rolling=100*Math.pow((12.4*Math.sqrt(distance/400))/rollingSeconds,3);
 
   const overall = standing * cfg.standingWeight + rolling * cfg.rollingWeight;
   const raceType = String(options.raceType || '').toLowerCase();
@@ -234,6 +227,7 @@ export function calculatePerformanceIndex(car = {}, engine = {}, options = {}) {
     standing,
     rolling,
     selected,
+    simulation: {standingSeconds,rollingSeconds,distanceM:distance,timestep:1/60},
     components: {
       powerKW: power,
       torqueNm: torque,

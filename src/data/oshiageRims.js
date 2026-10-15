@@ -1,8 +1,8 @@
 // R501: Oshiage Custom Works owns the former Tokyo Auto Market wheel shop.
 // The ownership and per-car customWheelId keys are unchanged for old profiles.
-import { cars } from './cars.js?v=20261011-r479';
-import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
-import { WHEEL_CATALOG, getOwnedWheelIds, getWheelOption } from './wheels.js?v=20260929-r246';
+import { cars } from './cars.js';
+import { getBaseCarId } from './carOwnership.js';
+import { WHEEL_CATALOG, getOwnedWheelIds, getWheelOption } from './wheels.js';
 
 // R506: the new Oshiage wheel-wall background has exactly eight EMPTY bays.
 // Coordinates are normalised to the original artwork, not the Phaser viewport.

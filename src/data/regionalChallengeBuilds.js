@@ -1,8 +1,8 @@
-import { cars } from './cars.js?v=20261011-r484';
-import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js?v=20260928-r239';
-import { chooseRivalBuildArchetype } from './rivalBuilds.js?v=20260928-r234';
-import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js?v=20261006-r392';
-import { canInstallTuningLevel } from './workshopProgression.js?v=20261005-r354';
+import { cars } from './cars.js';
+import { RIVAL_BUILD_ARCHETYPES } from './progressionBalance.js';
+import { chooseRivalBuildArchetype } from './rivalBuilds.js';
+import { TUNER_OPTION_BY_ID, areTunerOptionRequirementsMet } from './tunerShops.js';
+import { canInstallTuningLevel } from './workshopProgression.js';
 
 const TARGETS = {
   'engine.engine': ['tuning', 'engine'],

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { cars, carOrder } from '../src/data/cars.js';
 // Ownership module imports its own versioned module URL; inspect that same instance.
-import { cars as registeredCars } from '../src/data/cars.js?v=20261011-r479';
+import { cars as registeredCars } from '../src/data/cars.js';
 import { engines } from '../src/data/engines.js';
 import { getCarAssetPaths } from '../src/vehicles/CarAppearance.js';
 import { STANDARD_CAR_REFERENCE as ref, getReferenceAssetRoot, REFERENCE_CAR_GAME_IDS } from '../src/data/carReferenceGeometry.js';

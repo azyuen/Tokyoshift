@@ -1,4 +1,6 @@
-import { cars } from './cars.js?v=20261011-r479';
+import {stockClassFor,STOCK_CLASSES} from './stockClasses.js';
+import {REGULAR_CAR_IDS} from './vehicleEngineering.js';
+import { cars } from './cars.js';
 import {
   CREW_REGIONS,
   getRegionalCrewRoster,
@@ -6,12 +8,12 @@ import {
   isRecruitableRegionalCharacter,
   getCrewBaseCarId,
   getCrewLoanCarId,
-} from './crewRoster.js?v=20261009-r457';
-import { getRegionalChampionshipCount } from './careerProgression.js?v=20260929-r272';
-import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
-import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
+} from './crewRoster.js';
+import { getRegionalChampionshipCount } from './careerProgression.js';
+import { createRivalBuildState } from './rivalBuilds.js';
+import { getEncounterAi } from './encounterProfiles.js';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
+import { buildTunerTeamChallengeRounds } from './tunerChallenges.js';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
@@ -73,6 +75,12 @@ export function getCrewMembers(source) {
       )
       .map(regionId => [regionId, { ...raw[regionId], regionId }])
   );
+}
+
+// Recruited drivers must never return to an opposing roster.
+export function getRecruitedCrewCharacterIds(source) {
+  return new Set(Object.values(getCrewMembers(source))
+    .map(member => member.characterId).filter(Boolean));
 }
 
 export function getCrewMemberForRegion(source, regionId) {
@@ -151,22 +159,18 @@ export function createStockOpponentState(baseCarId) {
   };
 }
 
-export function isPerformanceStockState(state = {}) {
-  if (Boolean(state.nosInstalled)) return false;
-  return (
-    sumNumericTree(state.tuning) === 0 &&
-    sumNumericTree(state.drivetrainTuning) === 0 &&
-    sumNumericTree(state.chassisTuning) === 0 &&
-    sumNumericTree(state.exhaustNosTuning) === 0
-  );
+export function isPerformanceStockState(state={}){
+ const active=v=>{if(Array.isArray(v))return v.some(active);if(v&&typeof v==='object')return Object.values(v).some(active);if(v===null||v===undefined||v===false||v==='')return false;const n=Number(v);return Number.isFinite(n)?n!==0:true;};
+ return !state.nosInstalled&&!state.collector&&!state.immutable&&!state.tuningLocked&&
+ !['tuneLevel','tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning','specialistTuning','stage3Calibration','nosPower','nosShots','nosCapacitySeconds'].some(k=>active(state[k]));
 }
+function isRegularRecruitCar(car){const id=car?.ownedBaseCarId||car?.id;return car&&!car.crewLoan&&!car.collector&&!car.tuningLocked&&!car.ginzaExclusive&&id!=='magna'&&REGULAR_CAR_IDS.includes(id);}
 
 export function getStockCrewChallengeCarIds(source) {
   const states = value(source, 'carStates', {}) || {};
   return (value(source, 'ownedCarIds', []) || [])
     .filter(carId =>
-      cars[carId] &&
-      !cars[carId].crewLoan &&
+      isRegularRecruitCar(cars[carId]) &&
       isPerformanceStockState(states[carId] || {})
     );
 }
@@ -197,44 +201,9 @@ export function getCrewRecruitmentChallengeRules(
 ) {
   const difficulty = normaliseCrewRecruitDifficulty(source);
   const baseCarId = String(challenge?.baseCarId || '');
-  const states = value(source, 'carStates', {}) || {};
-  const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
-    .filter(carId => cars[carId] && !cars[carId].crewLoan);
-
-  if (difficulty === 'EASY') {
-    return {
-      playerDifficulty: difficulty,
-      aiTier: null,
-      aiRating: null,
-      carRule: 'STOCK',
-      powerClass: null,
-      powerClassLabel: null,
-      eligibleCarIds: getStockCrewChallengeCarIds(source),
-    };
-  }
-
-  const opponentPerformance = baseCarId
-    ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
-    : null;
-  const powerClass = getCrewRecruitPowerClass(
-    opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
-  );
-
-  const eligibleCarIds = ownedCarIds.filter(carId => {
-    const performance = getVehiclePerformance(carId, states[carId] || {});
-    const power = Number(performance?.car?.powerKW || 0);
-    return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
-  });
-
-  return {
-    playerDifficulty: difficulty,
-    aiTier: difficulty === 'HARD' ? 'ELITE' : 'EXPERT',
-    aiRating: difficulty === 'HARD' ? 5 : 4,
-    carRule: 'POWER_CLASS',
-    powerClass,
-    powerClassLabel: powerClass.label,
-    eligibleCarIds,
-  };
+  const stockClass=stockClassFor(cars[baseCarId]);
+  const eligibleCarIds=getStockCrewChallengeCarIds(source).filter(id=>stockClass&&stockClassFor(cars[id])===stockClass);
+  return {playerDifficulty:difficulty,aiTier:difficulty==='HARD'?'ELITE':difficulty==='STANDARD'?'EXPERT':'SKILLED',aiRating:difficulty==='HARD'?5:difficulty==='STANDARD'?4:2,carRule:'STOCK',stockClass,powerClass:null,powerClassLabel:STOCK_CLASSES[stockClass]||'UNKNOWN',eligibleCarIds};
 }
 
 export function getRecruitableCrewCandidates(source, regionId) {
@@ -624,16 +593,14 @@ function proLeaderAi(base = {}) {
 
 export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
-  const recruitedCharacterId = source
-    ? getCrewMemberForRegion(source, key)?.characterId
-    : null;
+  const recruitedIds = getRecruitedCrewCharacterIds(source);
 
   // Reuse the original seven-driver regional championship cast. Once one of
   // those drivers defects to the player's crew, exactly six remain.
   const originalSeven = buildTunerTeamChallengeRounds(key, '')
     .filter(round => round?.characterId && round?.carId);
   const remaining = originalSeven
-    .filter(round => round.characterId !== recruitedCharacterId);
+    .filter(round => !recruitedIds.has(round.characterId));
 
   // Keep the permanent regional leader as the sixth/final matchup even when
   // the championship roster's authored order placed them earlier.

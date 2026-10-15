@@ -1,9 +1,11 @@
-import Engine from './Engine.js?v=20260921-r55';
-import Transmission from './Transmission.js?v=20260929-r268';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
+import Engine from './Engine.js';
+import Transmission from './Transmission.js';
 import Clutch from './Clutch.js';
-import Turbo from './Turbo.js?v=20261004-r325';
+import Turbo from './Turbo.js';
 import Tyres from './Tyres.js';
-import NitrousSystem from './NitrousSystem.js?v=20261008-r428';
+import NitrousSystem from './NitrousSystem.js';
 
 export default class Vehicle {
   constructor(carConfig, engineConfig) {
@@ -38,8 +40,8 @@ export default class Vehicle {
     dt = Math.min(dt, 1 / 30);
     this.transmission.update(dt);
 
-    this.throttle = Phaser.Math.Clamp(controls.throttle ?? 0, 0, 1);
-    this.clutch.pedal = Phaser.Math.Clamp(controls.clutch ?? 1, 0, 1);
+    this.throttle = clamp(controls.throttle ?? 0, 0, 1);
+    this.clutch.pedal = clamp(controls.clutch ?? 1, 0, 1);
 
     const nosActive = this.nitrous.update(dt, controls.nos, this.engine.rpm > 500, this.engine.rpm);
     const shifting = this.transmission.currentGear === 0 || this.transmission.shiftTimer > 0;
@@ -47,7 +49,7 @@ export default class Vehicle {
     const currentRatio = this.transmission.ratio;
     const drivelineRPM = currentRatio > 0 ? this.tyres.wheelRPM * currentRatio : 0;
     const engagement = 1 - this.clutch.pedal;
-    const roughLoad = currentRatio > 0 ? Phaser.Math.Clamp(engagement * (0.35 + this.throttle * 0.7), 0.15, 1.1) : 0.2;
+    const roughLoad = currentRatio > 0 ? clamp(engagement * (0.35 + this.throttle * 0.7), 0.15, 1.1) : 0.2;
 
     this.turbo.update(dt, this.engine.rpm, this.throttle, roughLoad, nosActive, shifting);
     const nosTorque = this.nitrous.torqueAtRPM(this.engine.rpm);
@@ -71,7 +73,7 @@ export default class Vehicle {
     // When the clutch is nearly locked, pull engine speed toward the driveline speed.
     if (currentRatio > 0 && engagement > 0.78 && !clutchResult.slipping) {
       const lockStrength = (engagement - 0.78) / 0.22;
-      this.engine.rpm = Phaser.Math.Linear(this.engine.rpm, Math.max(this.config.engineIdleRPM, drivelineRPM), Math.min(1, dt * 15 * lockStrength));
+      this.engine.rpm = linear(this.engine.rpm, Math.max(this.config.engineIdleRPM, drivelineRPM), Math.min(1, dt * 15 * lockStrength));
     }
 
     const wheelTorque = transmittedEngineTorque * currentRatio * this.transmission.efficiency;

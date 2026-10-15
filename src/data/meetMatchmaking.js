@@ -1,9 +1,9 @@
-import { cars, carOrder } from './cars.js?v=20261011-r479';
-import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
-import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260929-r271';
-import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
-import { applyDifficultyToMeetBands } from './playerDifficulty.js?v=20260929-r271';
+import { cars, carOrder } from './cars.js';
+import { getBaseCarId } from './carOwnership.js';
+import { PROGRESSION_BALANCE } from './progressionBalance.js';
+import { createRivalBuildState } from './rivalBuilds.js';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
+import { applyDifficultyToMeetBands } from './playerDifficulty.js';
 
 function weightedChoice(entries, random = Math.random) {
   const total = entries.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight || 0)), 0);

@@ -1,13 +1,13 @@
 // Oshiage follows the normal three-heat Street Showdown lifecycle: pay one
 // entry fee, keep one car, race all three opponents without returning to the
 // venue selection screen between heats, then receive the grand prize.
-import { cars } from './cars.js?v=20261011-r479';
-import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
+import { cars } from './cars.js';
+import { getBaseCarId } from './carOwnership.js';
 import {
   OSHIAGE_ELITE_VENUES, OSHIAGE_ELITE_COOLDOWN_MS,
   getOshiageEliteProgress, getOshiageEliteRemainingMs,
   getOshiageEliteLineup, eligibleOshiageEliteDrivers, getOshiageElitePrize,
-} from './oshiageElite.js?v=20261015-r522';
+} from './oshiageElite.js';
 
 const read = (source, key, fallback = null) =>
   (source?.get ? source.get(key) : source?.[key]) ?? fallback;

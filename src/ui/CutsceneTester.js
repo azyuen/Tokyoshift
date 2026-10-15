@@ -1,12 +1,12 @@
-import { characters } from '../data/characters.js?v=20261006-r391';
+import { characters } from '../data/characters.js';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261009-r453';
+} from '../data/cutscenes.js';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261009-r453';
+} from './MangaCutscene.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

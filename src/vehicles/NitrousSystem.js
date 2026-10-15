@@ -1,3 +1,5 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
 export default class NitrousSystem {
   constructor(config = {}) {
     this.powerHp = Number(config.nosPower || 0);
@@ -72,7 +74,7 @@ export default class NitrousSystem {
     if (!this.active || rpm <= 0) return 0;
     const watts = this.powerHp * this.powerFraction * 745.7;
     const radSec = rpm * Math.PI * 2 / 60;
-    return Phaser.Math.Clamp(watts / Math.max(90, radSec), 0, 190);
+    return clamp(watts / Math.max(90, radSec), 0, 190);
   }
 
   get visibleShots() {

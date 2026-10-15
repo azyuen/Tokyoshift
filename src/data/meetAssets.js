@@ -1,3 +1,5 @@
+import { getRegionTravelCost } from './travelRegions.js';
+
 const BACKGROUND_ROOT = 'assets/Meet/Backgrounds';
 const CYCLE_BACKGROUND_ROOT = 'assets/Meet';
 
@@ -239,7 +241,7 @@ export const MEET_LOCATIONS = {
     location: '3dcat',
     label: '3D CAT',
     timeOfDay: 'night',
-    difficulty: 'HARD',
+    difficulty: 'ELITE',
     minRating: 4,
     maxRating: 5,
     rewardMultiplier: 1.9,
@@ -251,7 +253,7 @@ export const MEET_LOCATIONS = {
     location: 'metrogov',
     label: 'METRO GOV',
     timeOfDay: 'day',
-    difficulty: 'HARD',
+    difficulty: 'ELITE',
     minRating: 4,
     maxRating: 5,
     rewardMultiplier: 2.0,
@@ -364,7 +366,7 @@ export function getMeetLocation(id) {
   return MEET_LOCATIONS[id] || MEET_LOCATIONS.odaiba7eleven;
 }
 
-export const LOCAL_TRAVEL_COST = 200;
+export const LOCAL_TRAVEL_COST = 0;
 export const DISTRICT_TRAVEL_COST = 1000;
 export const WORKSHOP_RETURN_COST = 500;
 
@@ -372,13 +374,13 @@ export function getTravelCost(fromId, toId) {
   const from = getMeetLocation(fromId);
   const to = getMeetLocation(toId);
   if (from.id === to.id) return 0;
-  return from.district === to.district ? LOCAL_TRAVEL_COST : DISTRICT_TRAVEL_COST;
+  return getRegionTravelCost({ currentLocationId: from.id, targetLocationId: to.id });
 }
 
 export function getWorkshopDepartureCost(currentLocationId, toId) {
   const current = getMeetLocation(currentLocationId);
   const to = getMeetLocation(toId);
-  return current.district === to.district ? LOCAL_TRAVEL_COST : DISTRICT_TRAVEL_COST;
+  return getRegionTravelCost({ fromWorkshop: true, currentLocationId: current.id, targetLocationId: to.id });
 }
 
 export const meetBackgrounds = ALL_MEET_LOCATION_IDS.map(id => {

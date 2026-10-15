@@ -2,7 +2,7 @@ import {
   characters,
   characterOrder,
   getCharacterAssetUrl,
-} from '../data/characters.js?v=20261004-r333';
+} from '../data/characters.js';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -10,7 +10,7 @@ import {
   PROFILE_HEAD_SAFE_RATIO,
   PROFILE_EYE_TARGET_RATIO,
   PROFILE_TORSO_CROP_RATIO,
-} from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
+} from '../characters/CharacterProfileRenderer.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

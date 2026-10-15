@@ -3,9 +3,9 @@ import {
   REGION_TEAM_CHARACTER_IDS,
   MAIN_RIVAL_BY_REGION,
   genericRivalCharacterOrder,
-} from './characters.js?v=20261015-signatures';
-import { getCrewBaseCarId, getRegionalCrewRoster } from './crewRoster.js?v=20261015-signatures';
-import { getEncounterAi } from './encounterProfiles.js?v=20260923-r162';
+} from './characters.js';
+import { getCrewBaseCarId, getRegionalCrewRoster } from './crewRoster.js';
+import { getEncounterAi } from './encounterProfiles.js';
 
 export const TUNER_TEAM_CHALLENGE_WINS = 10;
 export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 12;
@@ -342,7 +342,7 @@ export function isTunerTeamChallengeEligible(source, regionId) {
     && garageTier >= TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER;
 }
 
-export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
+export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '', source = null) {
   const key = normaliseRegion(regionId);
   const explicit = Array.isArray(REGION_TEAM_CHARACTER_IDS[key])
     ? REGION_TEAM_CHARACTER_IDS[key]
@@ -351,10 +351,14 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
   // Keep every authored regional driver. If a region has fewer than seven
   // authored characters, fill only the missing slot(s) with reserve rivals.
   const result = [];
+  // Avoid a circular dependency on crewSystem: it already imports this file.
+  const recruitedIds = new Set(Object.values(sourceValue(source, 'crewMembers', {}) || {})
+    .map(member => member?.characterId).filter(Boolean));
   const add = id => {
     if (
       id &&
       id !== playerCharacterId &&
+      !recruitedIds.has(id) &&
       characters[id] &&
       characters[id].rivalEligible !== false &&
       !result.includes(id)
@@ -375,11 +379,28 @@ export function getTunerTeamChallengeRoster(regionId, playerCharacterId = '') {
     });
   }
 
+  // Every authored region has seven drivers and may lose one to recruitment.
+  // If there are no generic reserves, use an unrecruited guest from another
+  // region. Never refill by duplicating somebody or restoring the crew recruit.
+  if (result.length < TUNER_TEAM_CHALLENGE_STAGES) {
+    const start = Math.max(0, REGION_CHAMPIONSHIP_ORDER.indexOf(key));
+    const rotatedRegions = REGION_CHAMPIONSHIP_ORDER.slice(start + 1)
+      .concat(REGION_CHAMPIONSHIP_ORDER.slice(0, start + 1));
+    for (const otherRegion of rotatedRegions) {
+      if (otherRegion === key) continue;
+      for (const id of REGION_TEAM_CHARACTER_IDS[otherRegion] || []) {
+        if (id !== MAIN_RIVAL_BY_REGION[otherRegion]) add(id);
+        if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
+      }
+      if (result.length >= TUNER_TEAM_CHALLENGE_STAGES) break;
+    }
+  }
+
   const mainRivalId = MAIN_RIVAL_BY_REGION[key] || null;
   const nonRivalDrivers = result.filter(id => id !== mainRivalId);
   const finalRoster = [
     ...nonRivalDrivers.slice(0, TUNER_TEAM_CHALLENGE_STAGES - 1),
-    ...(mainRivalId ? [mainRivalId] : []),
+    ...(mainRivalId && !recruitedIds.has(mainRivalId) ? [mainRivalId] : []),
   ];
 
   return finalRoster.slice(0, TUNER_TEAM_CHALLENGE_STAGES);
@@ -409,10 +430,11 @@ function challengeAi(stageIndex, rating, regionId = '') {
 export function buildTunerTeamChallengeRounds(
   regionId,
   playerCharacterId = '',
-  playerDifficulty = 'STANDARD'
+  playerDifficulty = 'STANDARD',
+  source = null
 ) {
   const key = normaliseRegion(regionId);
-  const roster = getTunerTeamChallengeRoster(key, playerCharacterId);
+  const roster = getTunerTeamChallengeRoster(key, playerCharacterId, source);
   const fallbackCars = [
     ...(getRegionalCrewRoster(key)?.members || []).map(member => member.baseCarId),
     REGION_LEADER_CARS[key] || 'r32',

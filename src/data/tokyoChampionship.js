@@ -1,9 +1,9 @@
 // Tokyo SHIFT — provisional championship state and scoring.
 // Independent of vehicle sprites, car geometry, and calibration assets.
 // This module is deliberately pure: callers persist its returned state.
-import { normaliseProCircuitState, getProCircuitDriverSeeds } from './proCircuit.js?v=20261008-r443';
-import { getProQualification } from './proSeason.js?v=20261011-r485';
-import { characters } from './characters.js?v=20261010-r459';
+import { normaliseProCircuitState, getProCircuitDriverSeeds } from './proCircuit.js';
+import { getProQualification } from './proSeason.js';
+import { characters } from './characters.js';
 
 export const TOKYO_CHAMPIONSHIP_SCORING = Object.freeze({
   knockout: Object.freeze([20,17,13,9,5]),

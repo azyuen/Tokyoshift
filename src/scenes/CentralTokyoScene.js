@@ -1,13 +1,14 @@
-import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
+import {engineeringLabel} from '../data/stockClasses.js';
+import { getCarMagazineMeta } from '../data/carMagazine.js';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-champaudit';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champaudit';
-import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
-import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
-import { engines } from '../data/engines.js?v=20261011-r479';
+import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js';
+import { saveProTransaction } from '../state/GameState.js';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
+import { cars, carOrder } from '../data/cars.js';
+import { countOwnedCarModel, createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js';
+import { engines } from '../data/engines.js';
 import {
   characters,
   getCharacterAssetUrl,
@@ -17,66 +18,67 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js';
 import {
   applyEngineTuning,
-} from '../data/tuning.js?v=20260926-r211';
+} from '../data/tuning.js';
 import {
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20260926-r211';
+} from '../data/secondaryTuning.js';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
   getCarBodyTextureKey,
   createCarBodyLayers,
   getCarPaintColor,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
+} from '../vehicles/CarAppearance.js';
 import {
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261014-r501';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
+} from '../data/visualMods.js';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
+import { getEncounterAi } from '../data/encounterProfiles.js';
 import {
   getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
-} from '../data/proCircuit.js?v=20261008-r443';
+} from '../data/proCircuit.js';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
-} from '../data/proTournament.js?v=20261009-r447';
-import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
-import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
+} from '../data/proTournament.js';
+import { createRivalBuildState } from '../data/rivalBuilds.js';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';
 import {
   saveSessionState,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261014-r501';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+} from '../state/GameState.js';
+import { restorePreferredCar } from '../state/CarSelection.js';
+import { showTravelMap } from '../ui/TravelMap.js';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
-} from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
+} from '../ui/GarageDeliveryPicker.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
+import { getTravelLocation } from '../data/travelRegions.js';
 import {
   applyMarketPriceDifficulty,
   getMarketPriceMultiplier,
-} from '../data/careerProgression.js?v=20261010-r468';
+} from '../data/careerProgression.js';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
   getWorkshopStorageCapacity,
   getWorkshopUsage,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r354';
-import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
-import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
+} from '../data/workshopProgression.js';
+import { getPowerTorqueDisplay } from '../data/carRatings.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
+import { addSettingsButton } from '../ui/SettingsPanel.js';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
+import { hasSeenCutscene } from '../data/cutscenes.js';
+import { playMusic } from '../audio/MusicManager.js';
+import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js';
+import { recordCarMagazineSightings } from '../data/carMagazine.js';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   AUTO_MARKET_LISTINGS,
@@ -92,18 +94,18 @@ import {
   getCarCouponCount,
   canRedeemCarCoupon,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261014-r501';
+} from '../data/centralTokyo.js';
 import {
   TUNER_TEAM_INVITE_CHANCE,
   TUNER_TEAM_PITY_ARRIVALS,
   getTunerTeamChallengeState,
   isTunerTeamChallengeEligible,
-} from '../data/tunerChallenges.js?v=20261011-r479';
+} from '../data/tunerChallenges.js';
 import {
   TUNER_SHOP_ORDER,
   getTunerShopForRegion,
   isTunerShopUnlocked,
-} from '../data/tunerShops.js?v=20261011-r479';
+} from '../data/tunerShops.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -137,6 +139,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   init(data = {}) {
+    restorePreferredCar(this.registry);
     this.requestedLocationId = data?.locationId || null;
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
@@ -1185,7 +1188,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         return {
           ...item,
           marketType: 'new',
-          buildLabel: 'FACTORY STOCK',
+          buildLabel: engineeringLabel(cars[item.carId]),
           price,
           standardPrice,
           listPrice: standardPrice,

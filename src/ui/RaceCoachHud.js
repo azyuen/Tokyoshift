@@ -1,4 +1,4 @@
-import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js?v=20261013-driverface';
+import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js';
 
 // One geometry source for live race dialogue and phone-call dialogue.
 // Coordinates use Tokyo SHIFT's native 1560 x 840 landscape viewport.

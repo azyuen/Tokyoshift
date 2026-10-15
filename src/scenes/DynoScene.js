@@ -1,11 +1,11 @@
-import TouchControls from '../input/TouchControls.js?v=20261010-r462';
-import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260930-r300';
+import TouchControls from '../input/TouchControls.js';
+import RaceHUD from '../ui/RaceHUD.js';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js';
 
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
-import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { cars } from '../data/cars.js';
+import { characters, getCharacterAssetUrl } from '../data/characters.js';
+import { saveSessionState } from '../state/GameState.js';
+import { playMusic } from '../audio/MusicManager.js';
 import {
   DYNO_WAREHOUSE_ID,
   getDynoStage,
@@ -13,8 +13,8 @@ import {
   buildDynoCar,
   getDynoPoint,
   analyseDynoRun,
-} from '../data/dyno.js?v=20261011-r479';
-import { createOfficialDynoReading } from '../data/carRatings.js?v=20261004-r325';
+} from '../data/dyno.js';
+import { createOfficialDynoReading } from '../data/carRatings.js';
 import {
   STAGE3_CALIBRATION_OPTIONS,
   STAGE3_PRESET_SAVE_COST,
@@ -26,7 +26,7 @@ import {
   getStage3Presets,
   findMatchingStage3Preset,
   normaliseStage3PresetName,
-} from '../data/stage3Calibration.js?v=20261004-r330';
+} from '../data/stage3Calibration.js';
 import {
   getCarBodyScaleForWidth,
   getCarPaintColor,
@@ -34,20 +34,20 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
+} from '../vehicles/CarAppearance.js';
 import {
   getVisualModWheelVisual,
   createVisualModLayers,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261014-r501';
+} from '../data/visualMods.js';
 import {
   createTunerDecalLayers,
   preloadTunerDecalAssets,
-} from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+} from '../vehicles/TunerDecals.js';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

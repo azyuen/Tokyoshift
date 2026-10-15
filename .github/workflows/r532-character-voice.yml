@@ -1,0 +1,27 @@
+name: R532 Character Voice Dialogue
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/data/characterRaceDialogue.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/character-dialogue-r532.mjs'
+      - '.github/workflows/r532-character-voice.yml'
+jobs:
+  voice-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript parsing
+        run: |
+          node --check src/data/characterRaceDialogue.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+      - name: Verify all character voices and scene wiring
+        run: node --test tests/character-dialogue-r532.mjs
+      - name: Preserve standard race dialogue
+        run: node --test tests/race-dialogue-standard-r514.mjs

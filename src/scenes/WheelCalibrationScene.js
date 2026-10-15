@@ -1,4 +1,4 @@
-import { cars, carOrder } from '../data/cars.js?v=20261006-r388';
+import { cars, carOrder } from '../data/cars.js';
 import {
   DEFAULT_PAINT_COLOR,
   createCarBodyLayers,
@@ -7,8 +7,8 @@ import {
   getCarBodyTextureKey,
   preloadCarAppearanceAssets,
   preloadCarWheel,
-} from '../vehicles/CarAppearance.js?v=20260929-r247';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
+} from '../vehicles/CarAppearance.js';
+import { getWheelPairFit } from '../vehicles/WheelFit.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

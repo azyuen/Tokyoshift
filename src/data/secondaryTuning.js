@@ -1,5 +1,5 @@
 import {refreshEngineOutput} from '../vehicles/Engine.js';
-import { applySpecialistTuning } from './tunerShops.js?v=20260924-r178';
+import { applySpecialistTuning } from './tunerShops.js';
 
 const clampLevel = value => Math.max(0, Math.min(3, Math.round(Number(value) || 0)));
 

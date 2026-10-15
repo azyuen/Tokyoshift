@@ -9,15 +9,11 @@ export default class Engine {
   baseTorqueAt(rpm) {
     const curve = this.config.torqueCurve;
     if (rpm <= curve[0][0]) return curve[0][1];
-    for (let i = 0; i < curve.length - 1; i++) {
-      const [r0, t0] = curve[i];
-      const [r1, t1] = curve[i + 1];
-      if (rpm <= r1) {
-        const a = (rpm - r0) / (r1 - r0);
-        return linear(t0, t1, a);
-      }
-    }
-    return curve[curve.length - 1][1];
+    let lo=0,hi=curve.length-1;
+    if(rpm>=curve[hi][0])return curve[hi][1];
+    while(hi-lo>1){const mid=(lo+hi)>>1;if(curve[mid][0]<rpm)lo=mid;else hi=mid;}
+    const [r0,t0]=curve[lo],[r1,t1]=curve[hi];
+    return linear(t0,t1,(rpm-r0)/(r1-r0));
   }
 
   combustionTorque(throttle, boostBar, nosTorque = 0) {

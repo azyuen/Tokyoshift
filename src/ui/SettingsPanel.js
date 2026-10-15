@@ -1,4 +1,4 @@
-import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
+import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js';
 import {
   getControlSettings,
   updateControlSettings,
@@ -11,8 +11,8 @@ import {
   CONTROL_LAYOUT_DEFAULTS,
   CONTROL_REFERENCE,
   isTouchControlPlacementValid,
-} from '../input/ControlSettings.js?v=20261007-r422';
-import { characters } from '../data/characters.js?v=20260926-r213';
+} from '../input/ControlSettings.js';
+import { characters } from '../data/characters.js';
 import {
   getProfileSlots,
   getActiveProfileIndex,
@@ -23,13 +23,13 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20261011-r482';
-import { addDevCutsceneButton } from './CutsceneTester.js?v=20261009-r451';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
+} from '../state/GameState.js';
+import { addDevCutsceneButton } from './CutsceneTester.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import {
   PLAYER_DIFFICULTIES,
   normalisePlayerDifficulty,
-} from '../data/playerDifficulty.js?v=20260929-r268';
+} from '../data/playerDifficulty.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

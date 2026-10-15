@@ -1,7 +1,7 @@
-import { cars, carOrder } from './cars.js?v=20261011-r479';
-import { ownsCarModel } from './carOwnership.js?v=20261011-r479';
-import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js?v=20261011-r479';
-import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';
+import { cars, carOrder } from './cars.js';
+import { ownsCarModel } from './carOwnership.js';
+import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement, getCarCouponCount } from './centralTokyo.js';
+import { WHEEL_CATALOG } from './wheels.js';
 
 function sourceValue(source, key, fallback = null) {
   if (source && typeof source.get === 'function') {

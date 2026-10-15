@@ -1,11 +1,11 @@
 // Oshiage's two independent Elite street showdowns.
 // Only the seven existing regional championships open this bonus venue.
-import { cars } from './cars.js?v=20261011-r479';
-import { characters, rivalCharacterOrder } from './characters.js?v=20261013-r494';
-import { CREW_REGIONS } from './crewRoster.js?v=20261009-r457';
-import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';
-import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
-import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
+import { cars } from './cars.js';
+import { characters, rivalCharacterOrder } from './characters.js';
+import { CREW_REGIONS } from './crewRoster.js';
+import { WHEEL_CATALOG } from './wheels.js';
+import { getEncounterAi } from './encounterProfiles.js';
+import { createRivalBuildState } from './rivalBuilds.js';
 
 export const OSHIAGE_ELITE_COOLDOWN_MS = 15 * 60 * 1000;
 export const OSHIAGE_ELITE_VENUES = Object.freeze({

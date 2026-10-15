@@ -1,10 +1,10 @@
 import Engine from '../vehicles/Engine.js';
 import {getBuiltCar} from '../vehicles/VehiclePerformance.js';
-import { cars } from './cars.js?v=20261011-r479';
-import { engines } from './engines.js?v=20261011-r479';
-import { applyEngineTuning } from './tuning.js?v=20260926-r211';
-import { applySecondaryTuning } from './secondaryTuning.js?v=20261008-r428';
-import { applyStage3Calibration } from './stage3Calibration.js?v=20261004-r325';
+import { cars } from './cars.js';
+import { engines } from './engines.js';
+import { applyEngineTuning } from './tuning.js';
+import { applySecondaryTuning } from './secondaryTuning.js';
+import { applyStage3Calibration } from './stage3Calibration.js';
 
 const clone = value => JSON.parse(JSON.stringify(value || {}));
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));

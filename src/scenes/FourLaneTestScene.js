@@ -1,53 +1,53 @@
-import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-champaudit';
-import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
+import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js';
+import { saveProTransaction } from '../state/GameState.js';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
-import RaceScene from './RaceScene.js?v=20261011-r482';
-import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261010-r462';
-import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
-import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { cars } from '../data/cars.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
-import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
+import RaceScene from './RaceScene.js';
+import Vehicle from '../vehicles/Vehicle.js';
+import DragRacingAI from '../ai/DragRacingAI.js';
+import TouchControls from '../input/TouchControls.js';
+import RaceHUD from '../ui/RaceHUD.js';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js';
+import { playRaceMusic } from '../audio/MusicManager.js';
+import { cars } from '../data/cars.js';
+import { characters, getCharacterAssetUrl } from '../data/characters.js';
+import { getBuiltCar } from '../vehicles/VehiclePerformance.js';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
-} from '../data/playerDifficulty.js?v=20261007-r399';
+} from '../data/playerDifficulty.js';
 import {
   getEncounterAi,
   boostAiForStandingStart,
-} from '../data/encounterProfiles.js?v=20260926-r204';
-import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
+} from '../data/encounterProfiles.js';
+import { createRivalBuildState } from '../data/rivalBuilds.js';
 import {
   getCarPaintColor, preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261011-r479';
-import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
-import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
-import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
-import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261012-champ2c';
+} from '../vehicles/CarAppearance.js';
+import { preloadVisualModSelectionAssets } from '../data/visualMods.js';
+import { preloadTunerDecalAssets } from '../vehicles/TunerDecals.js';
+import { saveSessionState } from '../state/GameState.js';
+import { getFourLaneFinishCue } from '../data/fourLaneFinish.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
+import { resolveDragstripVenue } from '../data/dragstripVenue.js';
+import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
+import { applyEasyCashWinBonus } from '../data/careerProgression.js';
+import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
-} from '../data/proTournament.js?v=20261009-r447';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+} from '../data/proTournament.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
 import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
   FOUR_LANE_TEST_PX_PER_M, FOUR_LANE_TEST_ANCHOR_X,
   fourLaneCarX, fourLaneCameraX, fourLaneDashSafeYOffset,
   fourLaneTreeLights, rankFourLaneFinishers,
-} from '../data/fourLanePrototype.js?v=20261008-r440';
+} from '../data/fourLanePrototype.js';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';

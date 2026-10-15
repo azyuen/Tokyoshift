@@ -1,10 +1,12 @@
+import {engineeringLabel} from '../data/stockClasses.js';
+import {parkPerformanceParts,restorePerformanceParts} from '../data/factorySetup.js';
 import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
-import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
-import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
-import { engines } from '../data/engines.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
+import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';
+import { getReferenceRightX } from '../data/carReferenceGeometry.js';
+import { cars, carOrder } from '../data/cars.js';
+import { garageAssets } from '../data/garageAssets.js';
+import { engines } from '../data/engines.js';
+import { characters, getCharacterAssetUrl } from '../data/characters.js';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -14,7 +16,7 @@ import {
   getUpgradePathCost,
   getEngineTuningCount,
   applyEngineTuning,
-} from '../data/tuning.js?v=20260926-r211';
+} from '../data/tuning.js';
 import {
   DRIVETRAIN_PART_ORDER,
   CHASSIS_PART_ORDER,
@@ -35,26 +37,27 @@ import {
   getChassisCartCost,
   getExhaustNosCartCost,
   applySecondaryTuning,
-} from '../data/secondaryTuning.js?v=20261008-r428';
+} from '../data/secondaryTuning.js';
 import {
   getPartRemovalQuote,
   removeTuningPartFromState,
-} from '../data/partUninstall.js?v=20261009-r456';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261015-r524';
-import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
-import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+} from '../data/partUninstall.js';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js';
+import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js';
+import { playMangaCutscene } from '../ui/MangaCutscene.js';
+import { getMeetLocation } from '../data/meetAssets.js';
+import { getTravelLocation } from '../data/travelRegions.js';
+import { showTravelMap } from '../ui/TravelMap.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
 import {
   CENTRAL_TOKYO_LOCATIONS,
   getCarCouponRequirement,
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
   isArkonDen,
-} from '../data/centralTokyo.js?v=20261014-r501';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+} from '../data/centralTokyo.js';
+import { playMusic } from '../audio/MusicManager.js';
 import {
   isCrewUnlocked,
   getCrewMembers,
@@ -62,7 +65,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
-} from '../data/crewSystem.js?v=20261011-r479';
+} from '../data/crewSystem.js';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -80,15 +83,15 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r354';
-import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
-import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
+} from '../data/workshopProgression.js';
+import { getPowerTorqueDisplay } from '../data/carRatings.js';
+import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js';
 import {
   DYNO_WAREHOUSE_ID,
   DYNO_RENTAL_SESSION_COST,
   getDynoStage,
   buildDynoCar,
-} from '../data/dyno.js?v=20261011-r479';
+} from '../data/dyno.js';
 import {
   getCarPaintColor,
   normalisePaintColor,
@@ -99,24 +102,24 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
+} from '../vehicles/CarAppearance.js';
 import {
   normaliseVisualMods,
   createVisualModLayers,
   getVisualModWheelVisual,
   preloadVisualModAssets,
   preloadVisualModSelectionAssets,
-} from '../data/visualMods.js?v=20261014-r501';
-import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260928-r242';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
+} from '../data/visualMods.js';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
 import {
   startSceneLoading,
   finishSceneLoading,
   cancelSceneLoading,
-} from '../ui/LoadingScreen.js?v=20261005-r355';
-import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261012-r489';
-import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
+} from '../ui/LoadingScreen.js';
+import { showMagazinePanel } from '../ui/CarHistoryPanel.js';
+import { showOfficePanel } from '../ui/OfficePanel.js';
+import { getActiveMagazineIssue } from '../data/carMagazine.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -440,9 +443,12 @@ export default class GarageScene extends Phaser.Scene {
 
     const localCars = this.getCurrentWorkshopCars();
     const requestedCarId = this.registry.get('selectedCarId');
+    const preferredCarId = getPreferredCarId(this.registry);
     this.selectedCarId = this.crewMode
       ? null
-      : (localCars.includes(requestedCarId) ? requestedCarId : localCars[0] || null);
+      : localCars.includes(preferredCarId) ? preferredCarId
+        : localCars.includes(requestedCarId) ? requestedCarId
+          : localCars[0] || null;
 
     this.registry.set('ownedCarIds', this.ownedCarIds);
     this.registry.set('selectedCarId', this.selectedCarId);
@@ -521,7 +527,7 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     if (this.selectedCarId) {
-      this.selectCar(this.selectedCarId);
+      this.selectCar(this.selectedCarId, { remember: false });
       this.renderGaragePage();
       this.selectUpgrade(null);
     } else if (this.crewMode) {
@@ -1366,6 +1372,14 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(37);
 
+    this.engineeringLabelText=this.add.text(SIDE.x+20,SIDE.y+44,'',{fontFamily:BODY_FONT,fontSize:'11px',color:'#91cbdc'}).setDepth(37);
+    this.factorySetupButton=this.add.text(SIDE.x+20,SIDE.y+202,'PARK PARTS / FACTORY SETUP',{fontFamily:BODY_FONT,fontSize:'11px',color:'#7cf0d5',backgroundColor:'#102b32',padding:{x:7,y:4}}).setDepth(38).setInteractive({useHandCursor:true});
+    this.factorySetupButton.on('pointerdown',()=>{
+      if(this.isSelectedCarTuningLocked())return;
+      const states=this.registry.get('carStates')||{},state=states[this.selectedCarId]||{};
+      states[this.selectedCarId]=state.parkedPerformanceParts?restorePerformanceParts(state):parkPerformanceParts(state);
+      this.registry.set('carStates',states);saveSessionState(this.registry);this.selectCar(this.selectedCarId);
+    });
     const rows = [
       ['ENGINE', 'engine'],
       ['POWER', 'power'],
@@ -2196,7 +2210,10 @@ export default class GarageScene extends Phaser.Scene {
         this.registry.get('carGarageLocations') || this.carGarageLocations || {},
         workshop.id
       );
-      this.registry.set('selectedCarId', localCars[0] || null);
+      // Displaying a different workshop's car is not a deliberate choice.
+      const previous = this.registry.get('selectedCarId');
+      this.registry.set('selectedCarId', localCars.includes(previous)
+        ? previous : localCars[0] || null);
       saveSessionState(this.registry);
 
       try {
@@ -3480,6 +3497,9 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       this.registry.set('selectedCarId', this.selectedCarId);
+      if (!this.crewMode && this.selectedCarId) {
+        choosePersonalCar(this.registry, this.selectedCarId);
+      }
       this.syncSelectedRaceDriver();
 
       // Old Arkon Den profiles pre-date the persisted devMode flag. Promote the
@@ -3828,7 +3848,7 @@ export default class GarageScene extends Phaser.Scene {
     };
   }
 
-  selectCar(id) {
+  selectCar(id, { remember = true } = {}) {
     if (!cars[id] || !this.ownedCarIds.includes(id)) return;
     if (
       !this.crewMode &&
@@ -3846,6 +3866,9 @@ export default class GarageScene extends Phaser.Scene {
 
     this.selectedCarId = id;
     this.registry.set('selectedCarId', id);
+    if (remember && !this.crewMode && !cars[id]?.crewLoan) {
+      choosePersonalCar(this.registry, id);
+    }
     const crewMember = this.syncSelectedRaceDriver();
 
     for (const obj of this.selectedDisplay || []) {
@@ -3890,6 +3913,8 @@ export default class GarageScene extends Phaser.Scene {
       ? String(car.engineModel || '—').split('//')[0].trim()
       : (car.engineModel || '—');
     this.specValueTexts.engine.setText(engineLabel);
+    this.engineeringLabelText?.setText(engineeringLabel(car));
+    this.factorySetupButton?.setVisible(!this.isSelectedCarTuningLocked()).setText(carState.parkedPerformanceParts?'RESTORE PARKED TUNING':'PARK PARTS / FACTORY SETUP');
     this.specValueTexts.power.setText(
       ratingDisplay.powerLabel +
       (!ratingDisplay.estimated && powerGain > 0 ? '  (+' + powerGain + ')' : '')
@@ -4667,7 +4692,7 @@ export default class GarageScene extends Phaser.Scene {
     this.enginePreviewText?.setText(
       'POWER  ' + previewRating.powerLabel + '\n' +
       'TORQUE ' + previewRating.torqueLabel + '\n' +
-      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar'
+      'BOOST  ' + (preview.car.maximumBoost || 0).toFixed(2) + ' bar' + (preview.car.engineering?.limitingHardware!=='none'&&preview.car.engineering?' // '+preview.car.engineering.limitingHardware.toUpperCase():'')
     );
 
     const cash = Number(this.registry.get('cash') || 0);

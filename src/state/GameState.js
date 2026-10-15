@@ -1,16 +1,16 @@
-import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js?v=20261010-r459';
-import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js?v=20261012-champ2c';
+import { playableCharacterOrder, rivalCharacterOrder } from '../data/characters.js';
+import { createDefaultProCircuitState, normaliseProCircuitState } from '../data/proCircuit.js';
 import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
   inferWorkshopTier,
   normaliseCarGarageLocations,
-} from '../data/workshopProgression.js?v=20261005-r350';
-import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
-import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
-import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
-import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js?v=20261014-r503';
-import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js?v=20261015-r520';
+} from '../data/workshopProgression.js';
+import { normalisePlayerDifficulty } from '../data/playerDifficulty.js';
+import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js';
+import { registerOwnedCarInstances } from '../data/carOwnership.js';
+import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js';
+import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -73,6 +73,7 @@ export function createDefaultGameState(options = {}) {
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
+    preferredCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
       [starterCarId]: createStarterCarState(),
@@ -825,6 +826,9 @@ export function normaliseState(input = {}) {
   const selectedCarId = owned.includes(remapLoanCarId(input.selectedCarId))
     ? remapLoanCarId(input.selectedCarId)
     : owned[0] || null;
+  const preferredCarId = [input.preferredCarId, selectedCarId, ...owned]
+    .map(remapLoanCarId)
+    .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
   let garageTier = inferWorkshopTier(owned.length, input.garageTier);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
@@ -999,6 +1003,7 @@ export function normaliseState(input = {}) {
     openingChapter: ['station', 'home', 'magazine', 'delivery', 'tutorial', 'awaitDaichi', 'daichi', 'done'].includes(String(input.openingChapter))
       ? String(input.openingChapter) : null,
     selectedCarId,
+    preferredCarId,
     ownedCarIds: owned,
     carStates: mergedCarStates,
     carHistory,
@@ -1250,6 +1255,7 @@ export function snapshotRegistry(registry) {
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
+    preferredCarId: registry.get('preferredCarId') || null,
     ownedCarIds: registry.get('ownedCarIds') || [],
     carStates: registry.get('carStates') || {},
     carHistory: registry.get('carHistory') || [],

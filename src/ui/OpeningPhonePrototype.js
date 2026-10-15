@@ -2,8 +2,8 @@
 // phone scenes continue to use PhoneConversation until this design is approved.
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
-} from '../data/characters.js?v=20261011-r477';
-import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js?v=20261013-driverface';
+} from '../data/characters.js';
+import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';

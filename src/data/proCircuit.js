@@ -2,8 +2,8 @@
 // Design contract: docs/DRAG_COMPLEX_BLUEPRINT.md.
 // This module seeds persistent standings and declares future tournament formats.
 // It does NOT simulate off-screen races, award points or replace legacy 3-race cups.
-import { MAIN_RIVAL_BY_REGION } from './characters.js?v=20261007-r411';
-import { getCrewCount, isCrewComplete } from './crewSystem.js?v=20261007-r413';
+import { MAIN_RIVAL_BY_REGION } from './characters.js';
+import { getCrewCount, isCrewComplete } from './crewSystem.js';
 
 export const PRO_CIRCUIT_SCHEMA_VERSION = 2;
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;

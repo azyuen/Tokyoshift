@@ -1,0 +1,31 @@
+name: R530 Selected Car Continuity
+on:
+  push:
+    paths:
+      - 'src/state/CarSelection.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/selected-car-continuity-r530.mjs'
+      - '.github/workflows/r530-selected-car.yml'
+  workflow_dispatch:
+jobs:
+  car-continuity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse changed JavaScript
+        run: |
+          node --check src/state/CarSelection.js
+          node --check src/state/GameState.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Test garage and travel selection continuity
+        run: node --test tests/selected-car-continuity-r530.mjs

@@ -1,8 +1,8 @@
-import { getRegionMechanicCharacterId } from './characters.js?v=20261006-r392';
+import { getRegionMechanicCharacterId } from './characters.js';
 import {
   getTunerTeamChallengeState,
   getTunerTeamChallengeLabel,
-} from './tunerChallenges.js?v=20261011-r479';
+} from './tunerChallenges.js';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
@@ -360,7 +360,7 @@ export const TUNER_SHOPS = {
     mapLabel: 'TUNER SHOP',
     label: 'RE AMEMIYA',
     fullName: 'RE AMEMIYA',
-    specialty: 'ROTARY COOLING',
+    specialty: 'COOLING & FLOW',
 
     mechanicId: getRegionMechanicCharacterId('DAIKOKU'),
     heroCarId: 'reAmemiyaRx7',
@@ -386,10 +386,10 @@ export const TUNER_SHOPS = {
     tuningOptions: [
       {
         id: 'reAmemiyaCoolingFlow',
-        name: 'ROTARY COOLING & FLOW',
+        name: 'THERMAL & FLOW PACKAGE',
         shortName: 'COOLING & FLOW',
         cost: 64000,
-        description: 'Refine charge cooling and flow for sustained rotary performance.',
+        description: 'Improve charge cooling, airflow and thermal consistency during repeated runs.',
         requirementLabel: 'REQUIRES INTERCOOLER LV 2',
         requirements: {
           engine: { intercooler: 2 },
@@ -403,10 +403,10 @@ export const TUNER_SHOPS = {
       },
       {
         id: 'reAmemiyaTurboResponse',
-        name: 'ROTARY TURBO RESPONSE',
+        name: 'BOOST RESPONSE CALIBRATION',
         shortName: 'TURBO RESPONSE',
         cost: 86000,
-        description: 'Match boost control and ECU response to the rotary powerband.',
+        description: 'Coordinate ECU mapping and boost response throughout the usable powerband.',
         requirementLabel: 'REQUIRES TURBO LV 2 + ECU LV 2',
         requirements: {
           engine: { turbo: 2, ecu: 2 },
@@ -421,9 +421,9 @@ export const TUNER_SHOPS = {
       {
         id: 'reAmemiyaCircuitRotary',
         name: 'RE AMEMIYA CIRCUIT SETUP',
-        shortName: 'CIRCUIT ROTARY SETUP',
+        shortName: 'CIRCUIT SETUP',
         cost: 108000,
-        description: 'Final rotary, weight and chassis refinement for repeated hard runs.',
+        description: 'Final weight and chassis refinement for consistent hard runs.',
         requirementLabel: 'REQUIRES BOTH RE AMEMIYA BASE TUNES',
         requirements: {
           specialist: ['reAmemiyaCoolingFlow', 'reAmemiyaTurboResponse'],
@@ -447,7 +447,7 @@ export const TUNER_SHOPS = {
     mapLabel: 'TUNER SHOP',
     label: 'ZERO/SPORTS',
     fullName: 'ZERO/SPORTS RACING DEVELOPMENT',
-    specialty: 'BOXER TURBO & AWD',
+    specialty: 'DRIVETRAIN & LAUNCH',
 
     mechanicId: getRegionMechanicCharacterId('SHINAGAWA'),
     heroCarId: 'zeroSportsGc8',
@@ -475,10 +475,10 @@ export const TUNER_SHOPS = {
     tuningOptions: [
       {
         id: 'zeroSportsBoxerResponse',
-        name: 'EJ BOXER RESPONSE TUNE',
-        shortName: 'BOXER RESPONSE',
+        name: 'POWER DELIVERY CALIBRATION',
+        shortName: 'POWER DELIVERY',
         cost: 52000,
-        description: 'Zero/Sports boost and ECU calibration for a sharper EJ turbo response.',
+        description: 'Refine ECU and boost delivery for sharper acceleration through the powerband.',
         requirementLabel: 'REQUIRES ECU LV 2 + TURBO LV 1',
         requirements: {
           engine: { ecu: 2, turbo: 1 },
@@ -491,10 +491,10 @@ export const TUNER_SHOPS = {
       },
       {
         id: 'zeroSportsAwdLaunch',
-        name: 'AWD LAUNCH & DIFF SETUP',
-        shortName: 'AWD LAUNCH SETUP',
+        name: 'TRACTION & LAUNCH SETUP',
+        shortName: 'LAUNCH SETUP',
         cost: 68000,
-        description: 'Dial in the centre differential and grip for hard AWD launches.',
+        description: 'Match differential behaviour and tyre grip for consistent hard launches.',
         requirementLabel: 'REQUIRES DIFF LV 2 + TYRES LV 2',
         requirements: {
           drivetrain: { differential: 2 },
@@ -511,7 +511,7 @@ export const TUNER_SHOPS = {
         name: 'ZERO/SPORTS COMPLETE SETUP',
         shortName: 'COMPLETE SETUP',
         cost: 88000,
-        description: 'Final lightweight aero and chassis calibration after both base packages.',
+        description: 'Complete low-mass aero and chassis calibration after both base packages.',
         requirementLabel: 'REQUIRES BOTH ZERO/SPORTS BASE TUNES',
         requirements: {
           specialist: ['zeroSportsBoxerResponse', 'zeroSportsAwdLaunch'],

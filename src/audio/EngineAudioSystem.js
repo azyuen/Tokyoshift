@@ -1,4 +1,4 @@
-import { getSfxVolume } from './AudioSettings.js?v=20260921-r57';
+import { getSfxVolume } from './AudioSettings.js';
 
 // TOKYO SHIFT live vanilla engine audio
 // Purely tonal engine synthesis: no static/noise bed and deliberately NO turbo,

@@ -2,7 +2,7 @@
 export const ISSUE01_ASSETS = Object.freeze({
  blank: { key: 'issue01Blank', path: 'assets/Magazine/blank.webp' },
  contents: { key: 'issue01Contents', path: 'assets/Magazine/contents.webp' },
- featured_car: { key: 'issue01FeaturedCar', path: 'assets/Magazine/featuredcar_blank.webp' },
+ featured_car: { key: 'issue01FeaturedCar', path: 'assets/Magazine/featuredcar_01.webp' },
  ginza_ad: { key: 'issue01Ginza', path: 'assets/Magazine/ginza_blank.webp' },
  champion_01: { key: 'issue01Champion01', path: 'assets/Magazine/01/champion_01.webp' },
  champion_03: { key: 'issue01Champion03', path: 'assets/Magazine/01/champion_03.webp' },

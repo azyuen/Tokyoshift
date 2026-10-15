@@ -1,25 +1,26 @@
-import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
-import TouchControls from '../input/TouchControls.js?v=20261010-r462';
-import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
-import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
-import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261014-r510';
+import {getCrewRecruitmentChallengeRules,createStockOpponentState} from '../data/crewSystem.js';
+import Vehicle from '../vehicles/Vehicle.js';
+import TouchControls from '../input/TouchControls.js';
+import DragRacingAI from '../ai/DragRacingAI.js';
+import { DrivingCoach } from '../ai/DrivingCoach.js';
+import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
   normalisePlayerDifficulty,
-} from '../data/playerDifficulty.js?v=20261007-r399';
-import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
+} from '../data/playerDifficulty.js';
+import RaceHUD from '../ui/RaceHUD.js';
 import DebugHUD from '../ui/DebugHUD.js';
-import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js?v=20261010-r461';
-import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
-import { prepareNextOshiageShowdownHeat } from '../data/oshiageShowdown.js?v=20261015-r522';
+import TokyoExpresswayBackground from '../environment/TokyoExpresswayBackground.js';
+import { getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js';
+import { prepareNextOshiageShowdownHeat } from '../data/oshiageShowdown.js';
 import {
   STREET_GREEN_SECONDS,
   getStreetSignalFrame,
-} from '../data/streetSignalTiming.js?v=20261010-r460';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r484';
-import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
+} from '../data/streetSignalTiming.js';
+import { getWorldPhase } from '../environment/WorldClock.js';
+import { cars, carOrder } from '../data/cars.js';
+import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js';
 import {
   DEFAULT_PAINT_COLOR,
   getCarPaintColor,
@@ -29,15 +30,15 @@ import {
   preloadCarAppearanceAssets,
   preloadCarWheel,
   ensureDerivedModularCarTextures,
-} from '../vehicles/CarAppearance.js?v=20260929-r246';
-import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js?v=20261014-r501';
-import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js?v=20260929-r284';
-import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { engines } from '../data/engines.js?v=20261011-r484';
-import { buildCarFromState } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
-import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js?v=20261011-r479';
-import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js?v=20260928-r234';
-import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js?v=20261011-r479';
+} from '../vehicles/CarAppearance.js';
+import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelectionAssets } from '../data/visualMods.js';
+import { createTunerDecalLayers, preloadTunerDecalAssets } from '../vehicles/TunerDecals.js';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js';
+import { engines } from '../data/engines.js';
+import { buildCarFromState } from '../vehicles/VehiclePerformance.js';
+import { getStreetShowdownDriverRatings } from '../data/streetShowdowns.js';
+import { createRivalBuildState, addPinkSlipSupport } from '../data/rivalBuilds.js';
+import { recordPinkSlipVictory } from '../data/pinkSlipProgression.js';
 import {
   characters,
   getCharacterAssetUrl,
@@ -47,51 +48,52 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261010-r459';
-import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
+} from '../data/characters.js';
+import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261014-r501';
-import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
-import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
+} from '../state/GameState.js';
+import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js';
+import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js';
+import EngineAudioSystem from '../audio/EngineAudioSystem.js';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js';
 import {
   getEncounterAi,
   boostAiForPinkSlip,
   boostAiForStandingStart,
-} from '../data/encounterProfiles.js?v=20260926-r204';
+} from '../data/encounterProfiles.js';
 import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
-} from '../data/careerProgression.js?v=20261010-r468';
-import { getTunerShopForRegion } from '../data/tunerShops.js?v=20261011-r479';
+} from '../data/careerProgression.js';
+import { getTunerShopForRegion } from '../data/tunerShops.js';
 import {
   TUNER_TEAM_CHALLENGE_STAGES,
   getRegionalChampionshipCashReward,
   getTunerTeamChallengeState,
   buildTunerTeamChallengeRounds,
   getRegionalChallengeRaceSpec,
-} from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
-import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
-import { createRaceCoachHud } from '../ui/RaceCoachHud.js?v=20261014-r514';
-import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261009-r453';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
-import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
-import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
+} from '../data/tunerChallenges.js';
+import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
+import { createRaceCoachHud } from '../ui/RaceCoachHud.js';
+import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
+import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js';
+import { recordCarMagazineSightings } from '../data/carMagazine.js';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
-} from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
+} from '../ui/GarageDeliveryPicker.js';
 import {
   CREW_BATTLE_LINEUP_SIZE,
   CREW_BATTLE_WINS_REQUIRED,
@@ -103,7 +105,7 @@ import {
   areAllCrewBattlesComplete,
   getCrewMembers,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261011-r479';
+} from '../data/crewSystem.js';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -396,6 +398,11 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    if(this.raceMode==='CREW_RECRUIT'){
+      const challenge=this.registry.get('crewRecruitChallenge');
+      if(!challenge?.active||challenge.baseCarId!==this.opponentCarId||!getCrewRecruitmentChallengeRules(this.registry,challenge).eligibleCarIds.includes(this.selectedCarId)){this.scene.start('MeetScene');return;}
+      this.explicitOpponentBuildState=createStockOpponentState(this.opponentCarId);
+    }
     ensureDerivedModularCarTextures(this, Object.fromEntries(
       [...new Set([this.selectedCarId, this.opponentCarId])]
         .filter(id => cars[id])
@@ -3021,20 +3028,42 @@ export default class RaceScene extends Phaser.Scene {
       align: 'left',
     }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
 
-    const rivalQuote = playerWon
-      ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
-      : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.');
+    // Both participants speak in their own voice. The event index alternates
+    // two authored lines per outcome without introducing random redraw flicker.
+    const eventIndex = Math.max(0,
+      Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
+    const rivalQuote = getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+      eventIndex, playerWon
+        ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
+        : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
     const rivalQuoteText = this.add.text(812, 446, '“' + rivalQuote + '”', {
       fontFamily: dataFont,
-      fontSize: '15px',
+      fontSize: '13px',
       color: '#ffffff',
       backgroundColor: '#11141ae8',
       padding: { x: 12, y: 8 },
       align: 'left',
       fontStyle: '700',
       lineSpacing: 3,
-      wordWrap: { width: 330 },
+      wordWrap: { width: 318 },
     }).setOrigin(0, 0).setDepth(depth + 10).setScrollFactor(0);
+
+    const playerQuote = getRaceCharacterQuote(
+      playerCharacter.id, playerWon, eventIndex,
+      playerWon ? 'Good run. I kept it together.' : 'I know what to work on.'
+    );
+    const playerQuoteText = this.add.text(1515, 482,
+      '“' + playerQuote + '”', {
+        fontFamily: dataFont,
+        fontSize: '13px',
+        color: '#ffffff',
+        backgroundColor: '#11141ae8',
+        padding: { x: 12, y: 8 },
+        align: 'right',
+        fontStyle: '700',
+        lineSpacing: 2,
+        wordWrap: { width: 305 },
+      }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
     const actionHint = settlement?.gameOver
@@ -3135,7 +3164,7 @@ export default class RaceScene extends Phaser.Scene {
       raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText,
       ...timingObjects,
     ];
-    const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
+    const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText, playerQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
 

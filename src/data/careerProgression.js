@@ -16,13 +16,12 @@ export const EASY_COUPON_WIN_INTERVAL = 20;
 const REGION_GATES = Object.freeze({
   SHINONOME: Object.freeze({ always: true }),
   ODAIBA: Object.freeze({ always: true }),
-  SHINAGAWA: Object.freeze({ minWins: 10, earlyGarageCheck: true }),
-  TATSUMI: Object.freeze({ minWins: 10, earlyGarageCheck: true }),
-  SHIBUYA: Object.freeze({ minWins: 30, minGarageTier: 1, minCompetitionWins: 1 }),
-  YOKOHAMA: Object.freeze({ minWins: 30, minGarageTier: 1, minCompetitionWins: 1 }),
-  // The last regional district belongs after the Daikoku title and HQ.
-  SHINJUKU: Object.freeze({ minWins: 100, minGarageTier: 2, requiredRegionalChampion: 'DAIKOKU' }),
-  DAIKOKU: Object.freeze({ minWins: 75, minChampionships: 2 }),
+  SHINAGAWA: Object.freeze({ minWins: 9 }),
+  TATSUMI: Object.freeze({ minWins: 9 }),
+  SHIBUYA: Object.freeze({ minChampionships: 1 }),
+  YOKOHAMA: Object.freeze({ minChampionships: 2 }),
+  SHINJUKU: Object.freeze({ minChampionships: 5 }),
+  DAIKOKU: Object.freeze({ minChampionships: 4 }),
   CENTRAL_TOKYO: Object.freeze({ minWins: 3 }),
   // Oshiage is a satellite service district, not an eighth regional championship.
   OSHIAGE: Object.freeze({ minWins: 3 }),

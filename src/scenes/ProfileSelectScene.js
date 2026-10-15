@@ -1,13 +1,13 @@
-import { characters } from '../data/characters.js?v=20261004-r333';
-import { cars } from '../data/cars.js?v=20261011-r479';
+import { characters } from '../data/characters.js';
+import { cars } from '../data/cars.js';
 import {
   getProfileSlots,
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
-} from '../state/GameState.js?v=20261011-r482';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
-import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+} from '../state/GameState.js';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
+import { playMusic } from '../audio/MusicManager.js';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

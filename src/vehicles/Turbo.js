@@ -1,3 +1,5 @@
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const linear=(a,b,t)=>a+(b-a)*t;
 export default class Turbo {
   constructor(config) {
     this.size = config.turboSize;
@@ -10,13 +12,13 @@ export default class Turbo {
   }
 
   update(dt, rpm, throttle, engineLoad, nosActive = false, shifting = false) {
-    const rpmFactor = Phaser.Math.Clamp(
+    const rpmFactor = clamp(
       (rpm - this.boostOnsetRPM) / this.boostRampRPM,
       0,
       1
     );
-    const loadFactor = Phaser.Math.Clamp(engineLoad, 0.15, 1.15);
-    const sizePenalty = Phaser.Math.Linear(1.35, 0.62, Phaser.Math.Clamp(this.size, 0, 1));
+    const loadFactor = clamp(engineLoad, 0.15, 1.15);
+    const sizePenalty = linear(1.35, 0.62, clamp(this.size, 0, 1));
     let target = Math.pow(rpmFactor, 1.18) * Math.pow(throttle, 0.88) * loadFactor;
     if (nosActive) target = Math.min(1, target + 0.10);
     if (shifting || throttle < 0.08) target *= 0.20;
@@ -25,7 +27,7 @@ export default class Turbo {
     const fall = 2.6 + this.size * 1.0;
     const rate = target > this.spool ? rise : fall;
     this.spool += (target - this.spool) * Math.min(1, dt * rate);
-    this.spool = Phaser.Math.Clamp(this.spool, 0, 1);
+    this.spool = clamp(this.spool, 0, 1);
     this.boostBar = this.maxBoostBar * this.spool;
   }
 }

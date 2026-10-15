@@ -1,10 +1,10 @@
-import { completeSeasonRound } from './proSeason.js?v=20261010-r470';
+import { completeSeasonRound } from './proSeason.js';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
   normaliseProCircuitState, getProCircuitDriverSeeds,
-} from './proCircuit.js?v=20261008-r443';
-import { characters } from './characters.js?v=20261007-r411';
+} from './proCircuit.js';
+import { characters } from './characters.js';
 
 export const FOUR_WIDE_CUP = Object.freeze({
   id: 'fourWideOpen', label: 'TOKYO FOUR-WIDE OPEN',
