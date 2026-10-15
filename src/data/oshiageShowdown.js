@@ -7,7 +7,7 @@ import {
   OSHIAGE_ELITE_VENUES, OSHIAGE_ELITE_COOLDOWN_MS,
   getOshiageEliteProgress, getOshiageEliteRemainingMs,
   getOshiageEliteLineup, eligibleOshiageEliteDrivers, getOshiageElitePrize,
-} from './oshiageElite.js?v=20261015-r521';
+} from './oshiageElite.js?v=20261015-r522';
 
 const read = (source, key, fallback = null) =>
   (source?.get ? source.get(key) : source?.[key]) ?? fallback;
