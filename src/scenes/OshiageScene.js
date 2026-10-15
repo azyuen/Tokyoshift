@@ -686,7 +686,7 @@ export default class OshiageScene extends Phaser.Scene {
 
     // The bottom strip is the normal Meet's three-card roster. Selecting any
     // card previews its stage character/car; the heat order never changes.
-    this.addText(CARDS.x + 18, CARDS.y + 6,
+    this.addText(STRIP.x + 18, STRIP.y + 6,
       'RIVALS IN THE SHOWDOWN', {
         pixel: true, size: '10px', color: '#a7d5ef',
       });
