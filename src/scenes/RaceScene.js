@@ -3158,7 +3158,7 @@ export default class RaceScene extends Phaser.Scene {
       raceLabel, contextText, carLabel, rivalCarText, awardsLabel, awardsText,
       ...timingObjects,
     ];
-    const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText];
+    const portraitCopy = [playerNameText, rivalNameText, rivalQuoteText, playerQuoteText];
     detailObjects.forEach(obj => obj.setAlpha(0));
     portraitCopy.forEach(obj => obj.setAlpha(0));
 
