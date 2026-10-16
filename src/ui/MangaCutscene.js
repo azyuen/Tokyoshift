@@ -936,6 +936,12 @@ function renderPage(controller, pageIndex, firstPage = false) {
   }
 
   drawDialogue(controller, page);
+  // Interactive story galleries (Scenes 06/07) own this page until NEXT is
+  // tapped. drawDialogue happens AFTER onPageChange starts their overlay:
+  // hide the newly created card so touch gestures cannot advance the manga.
+  if (scene._portraitGallery?.active) {
+    scene._portraitGallery.hideMangaUI?.();
+  }
   if (firstPage) showIntroCard(controller);
 }
 
