@@ -1444,6 +1444,7 @@ export default class MeetScene extends Phaser.Scene {
       pages: [{
         speaker: 'system',
         speakerLabel: 'CHOOSE A CAR TO RACE',
+        requireActionButton: true,
         text: 'You can only race an unmodified stock car of the same class. ' +
           'Choose one from your garage, or acquire one and come back later.',
       }],
