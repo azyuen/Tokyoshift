@@ -235,7 +235,11 @@ export function showCutsceneTester(scene) {
         // Other scenes can still preview its canonical manga dialogue.
         if (id === 'warehouseHqUnlocked' && typeof scene.playWarehouseHqStory === 'function') {
           scene.playWarehouseHqStory({ preview: true });
+        } else if (id === 'sevenRegionsConquered' &&
+            typeof scene.playSevenRegionsStory === 'function') {
+          scene.playSevenRegionsStory({ preview: true });
         } else {
+          // Unified Scene 04 is now one cutscene even in developer mode.
           playMangaCutscene(scene, id, { preview: true });
         }
       });
