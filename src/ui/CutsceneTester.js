@@ -231,7 +231,13 @@ export function showCutsceneTester(scene) {
       row.on('pointerout', () => row.setStrokeStyle(2, 0x304b5d, 1));
       row.on('pointerdown', () => {
         close();
-        playMangaCutscene(scene, id, { preview: true });
+        // GarageScene owns the RWB's cinematic entrance/fade choreography.
+        // Other scenes can still preview its canonical manga dialogue.
+        if (id === 'warehouseHqUnlocked' && typeof scene.playWarehouseHqStory === 'function') {
+          scene.playWarehouseHqStory({ preview: true });
+        } else {
+          playMangaCutscene(scene, id, { preview: true });
+        }
       });
     });
   };
