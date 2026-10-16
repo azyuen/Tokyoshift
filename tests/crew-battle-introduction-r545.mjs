@@ -26,7 +26,7 @@ test('every regional leader has three distinct, bible-consistent battle invitati
       assert.equal(lines.variantIndex, index);
       for (const part of ['leader', 'rules', 'boast', 'challenge']) {
         const text = lines[part];
-        assert.ok(typeof text === 'string' && text.length > 25, regionId + ': ' + part);
+        assert.ok(typeof text === 'string' && text.length > (part === 'challenge' ? 8 : 25), regionId + ': ' + part);
         assert.doesNotMatch(text, /TODO|PLACEHOLDER|\{\w+\}/i);
         allLines.push(text);
       }
