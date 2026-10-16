@@ -7325,6 +7325,13 @@ export default class GarageScene extends Phaser.Scene {
           // just its first panel group. Phone dialogue won't unexpectedly
           // start after a player deliberately dismisses the story.
           ids.forEach(id => markCutsceneSeen(this.registry, id));
+        }
+        if (skipped || nextId === 'canalYardAfterCall') {
+          // Release the active-chapter marker after the final part; the three
+          // individual completion flags remain available for the story index.
+          const seen = this.registry.get('cutscenesSeen') || [];
+          this.registry.set('cutscenesSeen',
+            seen.filter(id => id !== 'canalYardStoryPending'));
           saveSessionState(this.registry);
         }
         this.time.delayedCall(180, () => {
