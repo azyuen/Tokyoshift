@@ -1700,7 +1700,8 @@ export default class GarageScene extends Phaser.Scene {
 
     // Swipe anywhere across the garage strip to reveal the next four local slots.
     this.input.on('pointerup', pointer => {
-      if (this.engineMode || this.secondaryMode || this.chassisMode) return;
+      if (sceneCutsceneActive(this) || this._portraitGallery?.active ||
+          this.engineMode || this.secondaryMode || this.chassisMode) return;
 
       const downInside = pointer.downY >= STRIP.y && pointer.downY <= STRIP.y + STRIP.h;
       const upInside = pointer.y >= STRIP.y && pointer.y <= STRIP.y + STRIP.h;
