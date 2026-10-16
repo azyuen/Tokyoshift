@@ -32,3 +32,12 @@ Restored `tests/vehicle-engineering.mjs` from the previous conversation, includi
 `node --test tests/vehicle-engineering.mjs tests/tuner-hero-conversions-r521.mjs tests/selected-car-continuity-r530.mjs tests/startup-import-integrity-r508.mjs`
 Result: **69 passed, 0 failed**, recorded in `focused-tests.txt`. This runs only representative PI parity races (16 builds), not the completed full matrix. Stock outputs tolerate <1%; displayed output <1 kW/Nm; PI ET parity <3% against 120 Hz runs.
 Current main observed at `0aad895e442753c8ea9b0af1f24e18cc39bb7c17`; it has not been merged into this workstream.
+
+## Increment 2 — saved-data audit and integration fixes
+- Preserved datasets verified at 301 rows each. All six standard stages avoid >0.05 s 400 m regressions; FD dyno +1 preset is intentionally slower than balanced maximum hardware (~0.11 s).
+- Fixed PI cache identity to include all four transmission difficulty settings.
+- Fixed parked parts losing their resale contribution; restoration combines duplicate purchased levels without double-counting.
+- Added `tests/engineering-integration.mjs`. Focused gate is now **73 passed / 0 failed**. 43-stock-car PI timing on this Node host: ~131 ms cold / 3.25 ms warm; not a mobile-device benchmark.
+- Added `tools/engineering-report.mjs`, `AUDIT.md` and `BALANCE.md`. These regenerate tables from preserved data with SHA-256 provenance; no full core matrix rerun.
+- Reports explicitly mark missing year/spec provenance, provisional potential ratings and unresolved endgame dominance. They are development reports, not final sign-off.
+- Main has advanced to R540. New recruitment manga selection, deferred loss rematches and removal of Standard standing-start AI boosting overlap MeetScene/RaceScene/crewSystem. These must be reconciled before any release; do not replace them with the old branch implementations. Main has not been merged or modified.

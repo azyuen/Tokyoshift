@@ -1,3 +1,4 @@
+import { restorePerformanceParts } from './factorySetup.js';
 import { getBaseCarId } from './carOwnership.js';
 import {
   ENGINE_PART_ORDER,
@@ -640,7 +641,8 @@ export function getAutoMarketSellPrice(carId, carState = {}) {
   // one small modification from magically increasing the value by 5% of the
   // whole car, while still rewarding a genuinely developed build.
   const baseResale = base * 0.50;
-  const partsInvestment = getInstalledPerformanceInvestment(carState);
+  // Parked parts remain owned by this car and transfer with its sale.
+  const partsInvestment = getInstalledPerformanceInvestment(restorePerformanceParts(carState));
   const partsRecovery = Math.min(base * 0.05, partsInvestment * 0.25);
 
   return Math.round((baseResale + partsRecovery) / 10000) * 10000;

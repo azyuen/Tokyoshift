@@ -2,7 +2,7 @@ import Vehicle from './Vehicle.js';
 import AI from '../ai/DragRacingAI.js';
 import {getEncounterAi,boostAiForStandingStart} from '../data/encounterProfiles.js';
 const cache=new Map();
-const fields=['vehicleMassKg','wheelRadius','gearRatios','finalDriveRatio','drivetrainEfficiency','tyreGrip','drivenAxleWeightFraction','launchLoadMultiplier','clutchStrength','shiftTimeScale','maximumBoost','turboSize','turboSpoolRate','boostOnsetRPM','boostRampRPM','launchRPM','engineIdleRPM','engineRedlineRPM','engineLimiterRPM','dragCoefficient','frontalAreaM2','rollingResistance','nosPower','nosShots','nosCapacitySeconds','nosShotDurationSeconds'];
+const fields=['vehicleMassKg','wheelRadius','gearRatios','finalDriveRatio','drivetrainEfficiency','tyreGrip','drivenAxleWeightFraction','launchLoadMultiplier','clutchStrength','shiftTimeScale','difficultyShiftClutchRejectThreshold','difficultyShiftClutchTarget','difficultyShiftThrottleGrace','difficultyShiftPenaltyMultiplier','maximumBoost','turboSize','turboSpoolRate','boostOnsetRPM','boostRampRPM','launchRPM','engineIdleRPM','engineRedlineRPM','engineLimiterRPM','dragCoefficient','frontalAreaM2','rollingResistance','nosPower','nosShots','nosCapacitySeconds','nosShotDurationSeconds'];
 // Same Vehicle/AI as gameplay, fixed seed. Only physics enters the cache key.
 // 60 Hz estimates are checked against independent 120 Hz race runs.
 export function estimateElapsed(car,engine,startKmh=0,distance=400){
