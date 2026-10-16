@@ -2996,6 +2996,7 @@ export default class MeetScene extends Phaser.Scene {
         : null;
     if (storyId) {
       if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+      if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
       try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
     }
 
