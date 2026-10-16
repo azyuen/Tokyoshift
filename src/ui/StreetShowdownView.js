@@ -9,6 +9,8 @@ import { getCarBodyTextureKey, normalisePaintColor, DEFAULT_PAINT_COLOR } from '
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { carMatchesCompetitionRestriction } from '../data/carMagazine.js?v=20261011-r479';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { getCarCouponRequirement, getCarCouponCount } from '../data/centralTokyo.js?v=20261013-r496';
 import {
   SHOWDOWN_STAGE as STAGE,
@@ -45,6 +47,13 @@ export function showStreetShowdownView(scene, {
   const playerCharacterId = scene.registry.get('playerCharacterId') || '';
   const playerCarId = scene.registry.get('selectedCarId') || '';
   const playerCar = cars[playerCarId] || null;
+  const playerState = (scene.registry.get('carStates') || {})[playerCarId] || {};
+  const playerPerformance = playerCarId
+    ? getVehiclePerformance(playerCarId, playerState)
+    : null;
+  const playerRating = playerCar
+    ? getPowerTorqueDisplay(playerCar, playerState, playerPerformance?.car || playerCar)
+    : null;
   const prizeCar = cars[offer.prizeCarId] || null;
   const couponEvent = offer.prizeType === 'COUPON';
   const entryFee = Math.max(0, Number(offer.entryFee) || 0);
@@ -70,6 +79,7 @@ export function showStreetShowdownView(scene, {
   function txt(x, y, label, {
     pixel = false, size = '11px', color = '#d8eaf4',
     depth = Z + 12, wrap = null, bold = false, align = 'left',
+    spacing = 3,
   } = {}, collection = detailObjects) {
     return add(scene.add.text(x, y, String(label ?? ''), {
       fontFamily: pixel ? PIXEL : BODY,
@@ -78,7 +88,7 @@ export function showStreetShowdownView(scene, {
       fontStyle: bold ? 'bold' : 'normal',
       wordWrap: wrap ? { width: wrap } : undefined,
       align,
-      lineSpacing: 3,
+      lineSpacing: spacing,
     }).setDepth(depth), collection);
   }
   function button(x, y, width, height, label, {
@@ -283,9 +293,17 @@ export function showStreetShowdownView(scene, {
     txt(SIDE.x + 20, SIDE.y + 140, 'YOUR CAR', {
       pixel: true, size: '9px', color: '#8feaff',
     });
+    // Match the normal single-race Meet car summary exactly: Rajdhani 11px,
+    // current vehicle performance and the same estimated/dyno value policy.
     txt(SIDE.x + 20, SIDE.y + 169,
-      playerCar ? safe(playerCar.name || playerCar.shortName) : 'NO CAR SELECTED', {
-        pixel: true, size: '8px', color: '#f4faff', wrap: SIDE.w - 40,
+      playerCar
+        ? playerCar.shortName + '\n' +
+          playerRating.powerLabel + '  •  ' + playerRating.torqueLabel
+        : 'NO CAR', {
+        size: '11px',
+        color: playerCar ? '#d8e7ef' : '#72838f',
+        spacing: -2,
+        wrap: SIDE.w - 40,
       });
     if (offer.restriction) {
       txt(SIDE.x + 20, SIDE.y + 207,
