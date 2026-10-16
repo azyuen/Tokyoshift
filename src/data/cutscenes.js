@@ -723,8 +723,9 @@ export const CUTSCENES = {
     finalActionLabel: 'CONTINUE',
   },
 
-  // Scene 04: ONE uninterrupted Canal Yard manga chapter. Seven middle
-  // pages display phone-style dialogue while everyone stays in the same room.
+  // Scene 04: ONE chapter and tester entry, staged in the same workshop.
+  // CanalYardStory runs the middle seven pages through the actual ringing
+  // phone/pickup UI, not the MangaCutscene dialogue renderer.
   canalYardBiggerDreams: {
     id: 'canalYardBiggerDreams',
     category: 'CAREER / STORY',
@@ -759,8 +760,10 @@ export const CUTSCENES = {
         text: "Everything alright?" },
       { speaker: 'right', leftCharacter: 'daichiSakamoto', rightCharacter: '$PLAYER',
         text: "Yeah, just an old family friend checking up on me." },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', rightCharacter: '$PLAYER', pose: 'idle',
+        text: "Good! Oh, and Oshiage Custom Works is open to us now. They've got paint and wheel options worth a look." },
       { speaker: 'left', leftCharacter: 'daichiSakamoto', rightCharacter: '$PLAYER', pose: 'win',
-        text: "Good! Now, where were we? Ah yes — spending all our money on car parts. Professionally, of course!",
+        text: "Now, where were we? Ah yes — spending all our money on car parts. Professionally, of course!",
         emphasis: true },
     ],
     finalActionLabel: 'START BUILDING',
@@ -815,7 +818,7 @@ export const CUTSCENES = {
       { speaker: 'right', pose: 'idle',
         text: "Feels like ages ago. I can still picture every one of those final races." },
       { speaker: 'left', pose: 'idle', cinematicBeat: 'sevenRivalsMontage',
-        text: "Every one of them made you earn it. And now you've beaten them all. Tokyo knows your name." },
+        text: "Every one of them made you earn it. Tokyo knows your name. Even the elite Skytree Underground Meet is open to you now." },
       { speaker: 'right', pose: 'idle',
         text: "But I'm not finished. I want to be Tokyo Champion. Not just champion of seven regions. I want to be the best in all of Tokyo." },
       { speaker: 'left', pose: 'idle',
