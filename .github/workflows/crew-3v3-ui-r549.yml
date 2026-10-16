@@ -1,0 +1,26 @@
+name: Regional Crew 3v3 Layout and Badge
+on:
+  push:
+    branches: [main, feature/crew-3v3-layout-badge-r549]
+    paths:
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/crew-3v3-ui-r549.mjs'
+      - '.github/workflows/crew-3v3-ui-r549.yml'
+  workflow_dispatch:
+jobs:
+  crew-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check scene syntax
+        run: |
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+      - name: Check crew layout, captain outro and badge regressions
+        run: |
+          node --test tests/crew-3v3-ui-r549.mjs tests/crew-battle-rules-r547.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs
