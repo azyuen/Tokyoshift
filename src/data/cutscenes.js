@@ -771,20 +771,71 @@ export const CUTSCENES = {
     finalActionLabel: 'OPEN HQ',
   },
 
+  // Career chapter 02: reached from the existing nine-win Auto Market invite.
+  // One 12-page manga, with two cast/location changes using shared renderer.
   centralTokyoUnlocked: {
     id: 'centralTokyoUnlocked',
-    category: 'CENTRAL TOKYO / STORY',
-    testerLabel: 'Daichi — Central Tokyo Opens',
-    title: 'CENTRAL TOKYO // OPEN',
+    category: 'CAREER / STORY',
+    testerLabel: 'Career 02 — Tokyo Takes Notice (9 Wins)',
+    title: 'TOKYO SHIFT // TOKYO TAKES NOTICE',
     once: true,
-    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    characters: { left: 'aoiShindou', right: '$PLAYER' },
+    backdrops: {
+      odaiba: { key: 'storyNineWinsOdaibaNight', path: 'assets/Meet/Night/odaiba_7eleven_night.png' },
+      workshop: { key: 'storyNineWinsShinonomeNight', path: 'assets/Garage/shinonome_workshop_night.png' },
+    },
     pages: [
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "You've made enough noise that people have started passing your name around." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "There's another side of the scene in Central Tokyo. Less standing around at meets, more cars and money changing hands." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'idle', text: "The Auto Market sells used street cars — some stock, some already modified. If you win a car you don't want, they'll buy it from you too." },
-      { speaker: 'left', speakerLabel: 'DAICHI SAKAMOTO', pose: 'win', text: "Street Showdown coupons get redeemed there as well. I've added Central Tokyo to your map.", emphasis: true },
+      {
+        speaker: 'left', pose: 'win', backdrop: 'odaiba',
+        text: "Nine wins already? Okay, you're making it pretty hard for the rest of us to ignore you!",
+      },
+      {
+        speaker: 'right', pose: 'idle',
+        text: "Wait, you've been counting?",
+      },
+      {
+        speaker: 'left', pose: 'idle',
+        text: "Of course! People talk around here. But winning a few cash races is one thing. Think you can beat an entire regional crew?",
+      },
+      {
+        speaker: 'right', pose: 'idle',
+        text: "An entire crew?",
+      },
+      {
+        speaker: 'left', pose: 'win',
+        text: "Seven racers, one after another. Beat us all and you're Odaiba Champion. Win seven straight with the same car and no losses? That's a Perfect Streak. Extra prizes!",
+      },
+      {
+        speaker: 'left', pose: 'idle',
+        text: "Lose a race and you can come back to finish the championship. But a perfect run? You'll have to start that again. Emi's waiting at the end, by the way. Good luck!",
+      },
+      {
+        speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle', backdrop: 'workshop',
+        text: "So Aoi finally called you out? Nine wins and you've got the Odaiba crew chasing you. Not bad!",
+      },
+      {
+        speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "But Odaiba's just the beginning. Shinagawa and Tatsumi are opening up too. Seven regions in total, and believe me, they get tougher as you go.",
+      },
+      {
+        speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "We'll need to keep improving the car. Grip, gearing, power delivery... and sooner or later, maybe something faster altogether.",
+      },
+      {
+        speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'win',
+        text: "Good timing, actually. Tokyo Auto Market's open to you now. New cars, used cars, even tuned builds. And don't throw away those prize coupons — collect enough for a model and you can redeem a car there.",
+      },
+      {
+        speaker: 'right', leftCharacter: 'daichiSakamoto', pose: 'idle', leftPose: 'idle',
+        text: "So what's the plan? Take on every region?",
+      },
+      {
+        speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'win',
+        text: "One at a time. I'll look after the car. You keep winning races. Who knows? Maybe one day they'll know our names all over Tokyo.",
+        emphasis: true,
+      },
     ],
-    finalActionLabel: 'UNLOCK CENTRAL TOKYO',
+    finalActionLabel: 'UNLOCK TOKYO AUTO MARKET',
   },
 
   ginzaInvitation: {
