@@ -88,6 +88,21 @@ test('Skytree cars use full Level 3 mechanical tuning without forcing an NA turb
   }
 });
 
+test('Plaza locks its wheel-plus-coupon reward and charges entry only once', () => {
+  const reg = makeRegistry();
+  const offered = getOshiageShowdownLineup(reg, 'plaza', now);
+  const result = beginOshiageShowdown(reg, 'plaza', now, offered);
+  assert.equal(result.ok, true);
+  assert.equal(result.charged, 75000);
+  assert.equal(reg.get('cash'), 125000);
+  const prize = reg.get('oshiageEliteSeries').prize;
+  assert.equal(prize.cash, 750000);
+  assert.ok(prize.coupons >= 2);
+  assert.ok(prize.couponCarId);
+  assert.deepEqual(reg.get('oshiageEliteSeries').lineup.map(x => x.characterId),
+    offered.map(x => x.characterId));
+});
+
 test('three drivers are distinct, come from anywhere in Tokyo, and cannot be current crew', () => {
   const reg = makeRegistry({ crewMembers: {
     ODAIBA: { characterId: 'renMizuno' }, SHINAGAWA: { characterId: 'reikaTachibana' },
