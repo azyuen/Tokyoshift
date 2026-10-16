@@ -194,22 +194,25 @@ export function startSevenRivalsPortraitMontage(scene) {
     if (index >= REGIONAL_MEMORIES.length - 1) {
       queue(850, () => {
         const dissolve = { amount: 1 };
+        // Preserve base alpha: never multiply by the prior frame (which would
+        // make the silhouettes fade exponentially and leave animation ghosts).
+        const fadeTargets = [
+          ...portraits.flatMap(p => [p.colour, p.grey]),
+          ...flags.map(item => item.flag),
+          ...regionNames.map(item => item.object),
+          personName, chapterLabel,
+        ].map(obj => ({ obj, alpha: obj.alpha }));
         animation = scene.tweens.add({
           targets: dissolve, amount: 0, duration: 550,
           ease: 'Sine.easeInOut',
           onUpdate: () => {
             curtain.setAlpha(0.84 * dissolve.amount);
-            portraits.forEach(item => {
-              item.colour.setAlpha(item.colour.alpha * 0.94);
-              item.grey.setAlpha(item.grey.alpha * 0.94);
+            fadeTargets.forEach(({ obj, alpha }) => {
+              if (obj?.active) obj.setAlpha(alpha * dissolve.amount);
             });
-            objects.filter(obj => obj !== curtain && obj !== personName &&
-              obj !== chapterLabel).forEach(obj => {
-              if (obj?.active && !portraits.some(p => p.grey === obj))
-                obj.setAlpha(obj.alpha * 0.94);
+            baseActorAlphas.forEach(({ image, alpha }) => {
+              if (image?.active) image.setAlpha(mix(alpha, 0.035, dissolve.amount));
             });
-            personName.setAlpha(dissolve.amount);
-            chapterLabel.setAlpha(dissolve.amount);
           },
           onComplete: () => state.stop(),
         });
