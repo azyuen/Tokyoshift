@@ -4141,7 +4141,7 @@ export default class RaceScene extends Phaser.Scene {
       const battleLost =
         !battleWon &&
         (
-          !playerCanStillReachFour ||
+          !playerCanStillWin ||
           nextRoundIndex >= CREW_BATTLE_LINEUP_SIZE
         );
 
