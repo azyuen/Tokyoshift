@@ -43,6 +43,7 @@ import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
+  getWorkshopPhaseBackground,
   getCarsInWorkshop,
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
@@ -100,6 +101,7 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
+import { showCrewRecruitCarSelection } from '../ui/CrewRecruitCarSelection.js?v=20261016-r537';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261009-r453';
 import {
   getPendingCentralTokyoInvite,
@@ -118,7 +120,6 @@ import {
   clearCrewInviteInterest,
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
-  getStockCrewChallengeCarIds,
   getCrewRecruitmentChallengeRules,
   createStockOpponentState,
   getCrewMemberForRegion,
@@ -333,6 +334,35 @@ export default class MeetScene extends Phaser.Scene {
         '20261005-r346'
       );
       batch.queued += preloadCarWheel(this, cars[signatureCarId]);
+    }
+
+    if (crewReveal?.baseCarId) {
+      // Warm the eligible garage cars and their workshop backdrops while the
+      // Meet itself loads, not during the dramatic invitation-to-picker handoff.
+      // Filtering by factory-stock and the recruit's power class keeps this
+      // prefetch small even for collectors with large garages.
+      const eligible = getCrewRecruitmentChallengeRules(
+        this.registry, crewReveal
+      ).eligibleCarIds || [];
+      const locations = this.registry.get('carGarageLocations') || {};
+      const backgroundKeys = new Set();
+      eligible.forEach(carId => {
+        if (!cars[carId]) return;
+        batch.queued += preloadCarAppearanceAssets(
+          this, { [carId]: cars[carId] }, '20261016-r537'
+        );
+        batch.queued += preloadCarWheel(this, cars[carId]);
+        const bg = getWorkshopPhaseBackground(
+          locations[carId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop',
+          this.worldPhase
+        );
+        if (bg?.path && !this.textures.exists(bg.key) &&
+            !backgroundKeys.has(bg.key)) {
+          backgroundKeys.add(bg.key);
+          this.load.image(bg.key, bg.path + '?v=20261016-r537');
+          batch.queued += 1;
+        }
+      });
     }
 
     startSceneLoading(this, 'LOADING MEET', batch.queued);
@@ -1264,7 +1294,7 @@ export default class MeetScene extends Phaser.Scene {
           const challenge = acceptCrewInviteChallenge(this.registry, interest);
           saveSessionState(this.registry);
           if (challenge) {
-            this.time.delayedCall(110, () => this.maybeShowActiveCrewRecruitChallenge());
+            this.maybeShowActiveCrewRecruitChallenge();
           }
           return;
         }
@@ -1301,134 +1331,29 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
-    const challengeCarIds = recruitRules.eligibleCarIds || [];
-    let selectedCarId = challengeCarIds.includes(this.registry.get('selectedCarId'))
-      ? this.registry.get('selectedCarId')
-      : challengeCarIds[0] || null;
+    const eligibleCarIds = recruitRules.eligibleCarIds || [];
 
-    const depth = 185;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-    const close = () => objects.forEach(obj => obj?.destroy?.());
-
-    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
-      .setDepth(depth).setScrollFactor(0).setInteractive());
-
-    add(this.add.rectangle(780, 420, 880, 500, 0x09131d, 0.998)
-      .setStrokeStyle(3, 0x69ecff, 0.98)
-      .setDepth(depth + 1).setScrollFactor(0));
-
-    add(this.add.text(780, 226, recruitRules.carRule === 'STOCK'
-        ? 'STOCK CHALLENGE // CHOOSE YOUR CAR'
-        : 'RECRUITMENT CHALLENGE // CHOOSE YOUR CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '14px',
-      color: '#dffbff',
-    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    add(this.add.text(
-      780,
-      298,
-      String(character.name || challenge.characterId).toUpperCase() +
-        ' // ' + String(opponentCar.shortName || opponentCar.name).toUpperCase() +
-        '\n' +
-        (recruitRules.carRule === 'STOCK'
-          ? 'STOCK vs STOCK'
-          : recruitRules.powerClassLabel + ' CLASS // ' + recruitRules.aiTier) +
-        ' // 1/4 MILE // NO STAKES',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '12px',
-        color: '#bcd0dc',
-        fontStyle: '700',
-        align: 'center',
-        lineSpacing: 6,
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    const carLabel = add(this.add.text(
-      780,
-      370,
-      selectedCarId
-        ? 'YOUR CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
-        : recruitRules.carRule === 'STOCK'
-          ? 'NO STOCK CAR AVAILABLE // BUY OR WIN A STOCK CAR FIRST'
-          : 'NO ' + recruitRules.powerClassLabel + ' CAR AVAILABLE',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: selectedCarId ? '#91ffe7' : '#ff9fb9',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    if (challengeCarIds.length > 1) {
-      const prev = add(this.add.text(500, 370, '<', {
-        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
-        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-      const next = add(this.add.text(1060, 370, '>', {
-        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
-        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-
-      const cycle = direction => {
-        const current = Math.max(0, challengeCarIds.indexOf(selectedCarId));
-        const index = (current + direction + challengeCarIds.length) % challengeCarIds.length;
-        selectedCarId = challengeCarIds[index];
-        carLabel.setText(
-          (recruitRules.carRule === 'STOCK' ? 'YOUR STOCK CAR // ' : 'YOUR CAR // ') +
-          String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
-        ).setColor('#91ffe7');
-      };
-
-      prev.on('pointerdown', () => cycle(-1));
-      next.on('pointerdown', () => cycle(1));
-    }
-
-    const accept = add(this.add.rectangle(
-      650, 535, 285, 54,
-      selectedCarId ? 0x10352d : 0x181a1d,
-      1
-    ).setStrokeStyle(2, selectedCarId ? 0x62e8c7 : 0x50575c, 1)
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(
-      650,
-      535,
-      selectedCarId
-        ? 'ACCEPT RACE'
-        : recruitRules.carRule === 'STOCK'
-          ? 'NEED STOCK CAR'
-          : 'NEED ' + recruitRules.powerClassLabel,
-      {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: selectedCarId ? '#edfff9' : '#727c82',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    if (selectedCarId) {
-      accept.setInteractive({ useHandCursor: true });
-      accept.on('pointerdown', () => {
-        close();
-        this.startCrewRecruitmentRace(challenge, selectedCarId);
-      });
-    }
-
-    const decline = add(this.add.rectangle(930, 535, 245, 54, 0x261922, 1)
-      .setStrokeStyle(1, 0xff7cac, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(930, 535, 'RACE LATER', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffc9db'
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    decline.on('pointerdown', () => {
-      // The invitation has already been accepted. Closing this selector only
-      // postpones the recruitment challenge; the same driver waits for the player.
-      saveSessionState(this.registry);
-      close();
+    const selector = showCrewRecruitCarSelection(this, {
+      challenge,
+      eligibleCarIds,
+      recruitRules,
+      onRace: carId => {
+        // The scene might have been resumed with a changed tune or a deleted
+        // car. Revalidate before ever assigning the next race's player car.
+        const fresh = getCrewRecruitmentChallengeRules(this.registry, challenge);
+        if (!fresh.eligibleCarIds.includes(carId)) {
+          this.maybeShowActiveCrewRecruitChallenge();
+          return;
+        }
+        this.startCrewRecruitmentRace(challenge, carId);
+      },
+      onLater: () => {
+        // Accepting the invitation is persistent; RACE LATER only closes the
+        // selector. The same recruit will be waiting on a subsequent visit.
+        saveSessionState(this.registry);
+      },
     });
-
-    return true;
+    return Boolean(selector?.active);
   }
 
   startCrewRecruitmentRace(challenge, playerCarId) {
