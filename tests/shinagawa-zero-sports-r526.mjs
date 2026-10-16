@@ -53,16 +53,18 @@ test('legacy Spoon saves keep unlock state and existing specialist effects', () 
   assert.ok(Math.abs(result.car.tyreGrip - cars.ek9.tyreGrip * 1.02) < 1e-8);
 });
 
-test('Zero/Sports tunes and decal do not depend on absent image assets', () => {
+test('Zero/Sports tunes and decal use the installed transparent logo', () => {
   assert.deepEqual(shop.tuningOptions.map(o => o.id), [
     'zeroSportsBoxerResponse', 'zeroSportsAwdLaunch', 'zeroSportsCompleteSetup',
   ]);
   for (const opt of shop.tuningOptions) assert.equal(getTunerOption(opt.id)?.shopId, shop.id);
   assert.equal(shop.tuningOptions[2].requirements.specialist.length, 2);
   assert.equal(shop.decalId, 'zeroSports');
-  assert.equal(shop.decalPath, null);
+  assert.equal(shop.decalPath, 'assets/Decals/zerosports.png');
+  assert.ok(existsSync(new URL('../' + shop.decalPath, import.meta.url)));
   assert.equal(TUNER_DECAL_STYLES.zeroSports.label, 'ZERO/SPORTS');
-  assert.equal(TUNER_DECAL_STYLES.zeroSports.suggestedPath, null);
+  assert.equal(TUNER_DECAL_STYLES.zeroSports.textureKey, shop.decalTextureKey);
+  assert.equal(TUNER_DECAL_STYLES.zeroSports.suggestedPath, shop.decalPath);
 });
 
 test('all tuner modes and donor animation use the same hero-scale display width', () => {
