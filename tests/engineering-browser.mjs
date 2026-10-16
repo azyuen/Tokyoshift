@@ -13,6 +13,8 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
  await page.waitForFunction(()=>window.TOKYO_SHIFT?.scene?.isActive('CharacterSelectScene'),{},{timeout:90000});
  const fixture=await page.evaluate(async()=>{
   const gs=await import('./src/state/GameState.js');const s=gs.createDefaultGameState();Object.assign(s,{firstName:'Engineering',lastName:'Fixture',cash:30000000,wins:90,selectedCarId:'r34',preferredCarId:'r34',ownedCarIds:['ae86','r34'],openingChapter:null});
+  // Isolate workshop controls from unrelated career invitation overlays.
+  s.cutscenesSeen=Object.keys((await import('./src/data/cutscenes.js')).CUTSCENES);
   s.carStates.r34={tuning:{engine:3,intake:3,ecu:3,turbo:3,intercooler:3},drivetrainTuning:{clutch:3,gearbox:3,differential:3,suspension:3},chassisTuning:{tyres:3,weightReduction:3},exhaustNosTuning:{headers:3,exhaust:3,muffler:3},paintColor:0xffffff};
   gs.importProfileBackup(0,{format:'TOKYO_SHIFT_PROFILE_BACKUP',formatVersion:1,state:s});gs.setActiveProfileIndex(0);return gs.getProfileState(0).firstName;
  });assert.equal(fixture,'Engineering');
@@ -26,8 +28,12 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
  });assert.ok(park.before>400);assert.equal(park.parked,206);assert.equal(park.stock,true);assert.equal(park.before,park.restored);
  await page.waitForTimeout(1500);
  await page.screenshot({path:`artifacts/engineering/garage-${viewport.width}.png`,fullPage:true});
+ await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('GarageScene').engineeringLabelText.emit('pointerdown'));
+ const potentialHelp=await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('GarageScene').workshopToastObjects.find(o=>typeof o.text==='string')?.text);
+ assert.match(potentialHelp,/DEVELOPMENT/);assert.match(potentialHelp,/INCLUDING CAR/);
+ await page.screenshot({path:`artifacts/engineering/potential-${viewport.width}.png`});
  let dyno=null,race=null;
- if(viewport.width===1024){
+ if(viewport.width===1024&&!process.env.ENGINEERING_GARAGE_ONLY){
   console.log('Garage verified; opening actual DynoScene');
   await page.evaluate(()=>window.TOKYO_SHIFT.scene.getScene('GarageScene').scene.start('DynoScene',{rentalSession:true,carId:'r34'}));
   await page.waitForFunction(()=>window.TOKYO_SHIFT.scene.getScene('DynoScene')?.build,{},{timeout:240000});
@@ -50,5 +56,5 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
   await page.screenshot({path:'artifacts/engineering/race-1024.png'});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
- results.push({viewport,profileLoaded:true,park,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
-}}finally{await browser.close();fs.writeFileSync('docs/engineering/browser-results.json',JSON.stringify({browser:'Chromium',phaserLocalOverride:Boolean(process.env.PHASER_LOCAL),results},null,2));}
+ results.push({viewport,profileLoaded:true,park,potentialHelp,dyno,race,input:'scene action handlers; automated pedal/gear input for dyno and race',errors,failed});await context.close();
+}}finally{await browser.close();fs.writeFileSync(process.env.ENGINEERING_GARAGE_ONLY?'docs/engineering/potential-browser-results.json':'docs/engineering/browser-results.json',JSON.stringify({browser:'Chromium',phaserLocalOverride:Boolean(process.env.PHASER_LOCAL),results},null,2));}

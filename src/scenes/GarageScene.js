@@ -1,4 +1,4 @@
-import {engineeringLabel} from '../data/stockClasses.js';
+import {engineeringLabel,tuningPotentialSummary} from '../data/stockClasses.js';
 import {parkPerformanceParts,restorePerformanceParts} from '../data/factorySetup.js';
 import {buildCarFromState} from '../vehicles/VehiclePerformance.js';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';
@@ -1394,6 +1394,7 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(37);
 
     this.engineeringLabelText=this.add.text(SIDE.x+20,SIDE.y+44,'',{fontFamily:BODY_FONT,fontSize:'11px',color:'#91cbdc'}).setDepth(37);
+    this.engineeringLabelText.setInteractive({useHandCursor:true}).on('pointerdown',()=>this.showWorkshopToast(tuningPotentialSummary(cars[this.selectedCarId]),{height:112,duration:8000,fontSize:'10px',wrap:530}));
     this.factorySetupButton=this.add.text(SIDE.x+20,SIDE.y+202,'PARK PARTS / FACTORY SETUP',{fontFamily:BODY_FONT,fontSize:'11px',color:'#7cf0d5',backgroundColor:'#102b32',padding:{x:7,y:4}}).setDepth(38).setInteractive({useHandCursor:true});
     this.factorySetupButton.on('pointerdown',()=>{
       if(this.isSelectedCarTuningLocked())return;
@@ -6723,24 +6724,26 @@ export default class GarageScene extends Phaser.Scene {
     this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
   }
 
-  showWorkshopToast(message) {
+  showWorkshopToast(message, options = {}) {
     if (this.workshopToastObjects?.length) {
       this.workshopToastObjects.forEach(obj => obj?.destroy?.());
     }
     this.workshopToastObjects = [];
 
-    const panel = this.add.rectangle(710, 600, 570, 44, 0x07131e, 0.98)
+    const panel = this.add.rectangle(710, 600, 570, options.height || 44, 0x07131e, 0.98)
       .setStrokeStyle(2, 0x43dfff, 0.92)
       .setDepth(145);
 
     const text = this.add.text(710, 600, message, {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#eefaff'
+      fontFamily: PIXEL_FONT, fontSize: options.fontSize || '7px', color: '#eefaff',
+      ...(options.wrap ? {wordWrap:{width:options.wrap},align:'center'} : {})
     }).setOrigin(0.5).setDepth(146);
 
     this.workshopToastObjects.push(panel, text);
-    this.time.delayedCall(1450, () => {
-      this.workshopToastObjects?.forEach(obj => obj?.destroy?.());
-      this.workshopToastObjects = [];
+    const toastObjects = this.workshopToastObjects;
+    this.time.delayedCall(options.duration || 1450, () => {
+      toastObjects.forEach(obj => obj?.destroy?.());
+      if (this.workshopToastObjects === toastObjects) this.workshopToastObjects = [];
     });
   }
 

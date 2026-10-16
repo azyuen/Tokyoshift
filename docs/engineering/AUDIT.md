@@ -17,45 +17,45 @@ The model identities are inherited from the registry. Exact model years are not 
 | gf8 — Subaru Impreza WRX STI GF8 | Subaru EJ207 GF8 Version VI / turbo | 206.00 / 353.00 / 1310.00 | A / High | 13.97 / 21.45 / 11.19 | 349.80 / 579.07 | 11.45 / 17.49 | Launch consistency; driveline loss and mass |
 | s15 — Nissan Silvia S15 | SR20DET S15 / turbo | 184.00 / 275.00 / 1240.00 | B / High | 14.03 / 21.53 / 11.33 | 358.07 / 535.02 | 11.48 / 17.31 | Rolling pace; launch control matters |
 | starion — Mitsubishi Starion GSR-VR | G54B Turbo / turbo | 129.00 / 313.00 / 1340.00 | C / Moderate | 15.24 / 23.74 / 12.47 | 245.81 / 564.11 | 12.44 / 19.09 | Rolling pace; launch control matters |
-| fto — Mitsubishi FTO GPX | 6A12 MIVEC / NA | 147.00 / 200.00 / 1170.00 | C / Moderate | 14.96 / 22.99 / 11.93 | 297.50 / 410.77 | 11.86 / 17.93 | Light chassis; front-axle traction limits |
+| fto — Mitsubishi FTO GPX | 6A12 MIVEC / NA | 147.00 / 200.00 / 1170.00 | C / High | 14.96 / 22.99 / 11.93 | 297.50 / 410.77 | 11.86 / 17.93 | Light chassis; front-axle traction limits |
 | mx5 — Mazda MX-5 NB | BP 1.8 DOHC / NA | 103.00 / 162.00 / 1030.00 | D / Moderate | 15.62 / 24.41 / 12.65 | 233.65 / 363.95 | 12.08 / 18.49 | Rolling pace; launch control matters |
 | sa22c — Mazda RX-7 SA22C Turbo | 12A Turbo / turbo | 121.00 / 226.00 / 1020.00 | D / Moderate | 15.96 / 24.16 / 11.95 | 252.28 / 454.34 | 12.44 / 18.61 | Rolling pace; launch control matters |
 | mx6 — Mazda MX-6 | KL-ZE 2.5 V6 / NA | 147.00 / 224.00 / 1210.00 | C / High | 15.01 / 23.03 / 11.94 | 313.75 / 474.42 | 11.83 / 17.88 | Light chassis; front-axle traction limits |
 | prelude — Honda Prelude Type S | H22A Type S / NA | 162.00 / 221.00 / 1310.00 | C / High | 15.00 / 22.97 / 12.04 | 331.12 / 459.71 | 11.82 / 17.87 | Light chassis; front-axle traction limits |
-| sw20 — Toyota MR2 SW20 Turbo | 3S-GTE Gen III / turbo | 180.00 / 304.00 / 1260.00 | B / High | 14.17 / 21.69 / 11.31 | 343.80 / 574.75 | 11.43 / 17.28 | Mid-engine traction; expensive platform |
-| soarer — Toyota Soarer JZZ30 | 1JZ-GTE Twin Turbo / turbo | 206.00 / 363.00 / 1560.00 | B / Exceptional | 14.82 / 22.43 / 11.50 | 414.36 / 715.73 | 11.95 / 17.83 | Rolling pace; launch control matters |
+| sw20 — Toyota MR2 SW20 Turbo | 3S-GTE Gen III / turbo | 180.00 / 304.00 / 1260.00 | B / Exceptional | 14.17 / 21.69 / 11.31 | 343.80 / 574.75 | 11.43 / 17.28 | Mid-engine traction; expensive platform |
+| soarer — Toyota Soarer JZZ30 | 1JZ-GTE Twin Turbo / turbo | 206.00 / 363.00 / 1560.00 | B / High | 14.82 / 22.43 / 11.50 | 414.36 / 715.73 | 11.95 / 17.83 | Rolling pace; launch control matters |
 | forester — Subaru Forester SF5 S/tb | EJ20 Turbo S/tb / turbo | 184.00 / 306.00 / 1380.00 | B / High | 14.54 / 22.54 / 11.80 | 322.92 / 527.59 | 11.83 / 18.22 | Launch consistency; driveline loss and mass |
-| svx — Subaru SVX | EG33 Flat-Six / NA | 169.00 / 309.00 / 1590.00 | D / High | 15.89 / 24.26 / 12.23 | 350.14 / 629.12 | 12.46 / 18.80 | Launch consistency; driveline loss and mass |
+| svx — Subaru SVX | EG33 Flat-Six / NA | 169.00 / 309.00 / 1590.00 | D / Moderate | 15.89 / 24.26 / 12.23 | 350.14 / 629.12 | 12.46 / 18.80 | Launch consistency; driveline loss and mass |
 | xt — Subaru Alcyone XT Turbo | EA82T / turbo | 100.00 / 196.00 / 1190.00 | D / Low | 17.71 / 26.96 / 13.28 | 192.73 / 366.02 | 14.03 / 21.13 | Launch consistency; driveline loss and mass |
-| ae86 — Toyota Sprinter Trueno AE86 | Toyota 4A-GE 1.6L DOHC / NA | 96.00 / 149.00 / 940.00 | D / Low | 15.36 / 24.05 / 12.43 | 214.62 / 328.56 | 11.56 / 17.90 | Rolling pace; launch control matters |
-| ef — Honda Civic SiR EF | Honda B16A VTEC / NA | 117.98 / 150.00 / 1010.00 | C / Moderate | 15.12 / 23.55 / 12.28 | 256.46 / 336.41 | 11.65 / 17.84 | Light chassis; front-axle traction limits |
-| ek9 — Honda Civic Type R EK9 | Honda B16B 1.6L VTEC / NA | 136.00 / 160.00 / 1090.00 | C / Moderate | 15.18 / 23.51 / 12.08 | 285.58 / 342.33 | 11.77 / 17.91 | Light chassis; front-axle traction limits |
+| ae86 — Toyota Sprinter Trueno AE86 | Toyota 4A-GE 1.6L DOHC / NA | 96.00 / 149.00 / 940.00 | D / High | 15.36 / 24.05 / 12.43 | 214.62 / 328.56 | 11.56 / 17.90 | Rolling pace; launch control matters |
+| ef — Honda Civic SiR EF | Honda B16A VTEC / NA | 117.98 / 150.00 / 1010.00 | C / High | 15.12 / 23.55 / 12.28 | 256.46 / 336.41 | 11.65 / 17.84 | Light chassis; front-axle traction limits |
+| ek9 — Honda Civic Type R EK9 | Honda B16B 1.6L VTEC / NA | 136.00 / 160.00 / 1090.00 | C / High | 15.18 / 23.51 / 12.08 | 285.58 / 342.33 | 11.77 / 17.91 | Light chassis; front-axle traction limits |
 | s2000 — Honda S2000 AP1 | Honda F20C 2.0L VTEC / NA | 184.00 / 218.00 / 1260.00 | B / High | 14.37 / 21.96 / 11.40 | 349.61 / 422.49 | 11.49 / 17.36 | Rolling pace; launch control matters |
 | fc3s — Mazda RX-7 FC3S | Mazda 13B-T Rotary Turbo / turbo | 136.00 / 245.00 / 1250.00 | D / Moderate | 15.67 / 23.92 / 12.18 | 283.52 / 509.37 | 12.33 / 18.54 | Rolling pace; launch control matters |
 | rx7fd — Mazda RX-7 FD3S | Mazda 13B-REW Twin Turbo / turbo | 206.00 / 314.00 / 1280.00 | A / Exceptional | 13.65 / 20.87 / 11.00 | 406.50 / 627.94 | 10.92 / 16.51 | Rolling pace; launch control matters |
 | rx8 — Mazda RX-8 | Mazda 13B-MSP RENESIS / NA | 170.00 / 211.00 / 1370.00 | B / High | 14.41 / 22.35 / 11.80 | 332.95 / 447.80 | 11.28 / 17.37 | Rolling pace; launch control matters |
 | galant — Mitsubishi Galant VR-4 | Mitsubishi 4G63T 2.0L DOHC Turbo // Galant VR-4 Evolution / turbo | 176.00 / 304.00 / 1380.00 | B / High | 14.67 / 22.70 / 11.90 | 332.62 / 565.78 | 11.73 / 18.02 | Launch consistency; driveline loss and mass |
-| evo5 — Mitsubishi Lancer Evolution V | Mitsubishi 4G63T Evolution V / turbo | 206.00 / 373.00 / 1360.00 | B / High | 14.06 / 21.63 / 11.30 | 382.66 / 665.71 | 11.34 / 17.28 | Launch consistency; driveline loss and mass |
-| evo6 — Mitsubishi Lancer Evolution VI | Mitsubishi 4G63T Evolution VI / turbo | 206.00 / 373.00 / 1360.00 | A / High | 14.01 / 21.55 / 11.27 | 384.77 / 663.97 | 11.33 / 17.27 | Launch consistency; driveline loss and mass |
-| gc8 — Subaru Impreza WRX STI GC8 | Subaru EJ207 2.0L Turbo // Impreza GC8 STI / turbo | 206.00 / 353.00 / 1260.00 | A / High | 13.49 / 20.91 / 11.11 | 357.40 / 591.81 | 11.05 / 17.00 | Launch consistency; driveline loss and mass |
-| r32 — Nissan Skyline GT-R R32 | Nissan RB26DETT 2.6L Twin Turbo / turbo | 206.00 / 353.00 / 1430.00 | B / Exceptional | 14.46 / 22.13 / 11.39 | 417.75 / 712.37 | 11.49 / 17.38 | Launch consistency; driveline loss and mass |
-| r34 — Nissan Skyline GT-R R34 | Nissan RB26DETT R34 Twin Turbo / turbo | 206.00 / 392.00 / 1560.00 | B / Exceptional | 14.52 / 22.29 / 11.60 | 418.94 / 769.01 | 11.58 / 17.56 | Launch consistency; driveline loss and mass |
-| 3000gt — Mitsubishi 3000GT VR-4 | Mitsubishi 6G72 3.0L Twin Turbo V6 / turbo | 235.00 / 427.00 / 1710.00 | B / Exceptional | 14.50 / 22.14 / 11.59 | 460.08 / 826.97 | 11.60 / 17.53 | Launch consistency; driveline loss and mass |
+| evo5 — Mitsubishi Lancer Evolution V | Mitsubishi 4G63T Evolution V / turbo | 206.00 / 373.00 / 1360.00 | B / Exceptional | 14.06 / 21.63 / 11.30 | 382.66 / 665.71 | 11.34 / 17.28 | Launch consistency; driveline loss and mass |
+| evo6 — Mitsubishi Lancer Evolution VI | Mitsubishi 4G63T Evolution VI / turbo | 206.00 / 373.00 / 1360.00 | A / Exceptional | 14.01 / 21.55 / 11.27 | 384.77 / 663.97 | 11.33 / 17.27 | Launch consistency; driveline loss and mass |
+| gc8 — Subaru Impreza WRX STI GC8 | Subaru EJ207 2.0L Turbo // Impreza GC8 STI / turbo | 206.00 / 353.00 / 1260.00 | A / Exceptional | 13.49 / 20.91 / 11.11 | 357.40 / 591.81 | 11.05 / 17.00 | Launch consistency; driveline loss and mass |
+| r32 — Nissan Skyline GT-R R32 | Nissan RB26DETT 2.6L Twin Turbo / turbo | 206.00 / 353.00 / 1430.00 | B / High | 14.46 / 22.13 / 11.39 | 417.75 / 712.37 | 11.49 / 17.38 | Launch consistency; driveline loss and mass |
+| r34 — Nissan Skyline GT-R R34 | Nissan RB26DETT R34 Twin Turbo / turbo | 206.00 / 392.00 / 1560.00 | B / High | 14.52 / 22.29 / 11.60 | 418.94 / 769.01 | 11.58 / 17.56 | Launch consistency; driveline loss and mass |
+| 3000gt — Mitsubishi 3000GT VR-4 | Mitsubishi 6G72 3.0L Twin Turbo V6 / turbo | 235.00 / 427.00 / 1710.00 | B / High | 14.50 / 22.14 / 11.59 | 460.08 / 826.97 | 11.60 / 17.53 | Launch consistency; driveline loss and mass |
 | a60 — Toyota Celica Supra A60 | Toyota 5M-GE 2.8L Straight-Six / NA | 118.00 / 221.00 / 1360.00 | D / Moderate | 15.54 / 24.50 / 12.88 | 260.66 / 488.94 | 12.10 / 18.78 | Rolling pace; launch control matters |
 | jza80 — Toyota Supra JZA80 | Toyota 2JZ-GTE 3.0L Twin Turbo / turbo | 206.00 / 435.00 / 1510.00 | A / Exceptional | 13.90 / 21.46 / 11.35 | 421.65 / 872.18 | 11.08 / 16.90 | Rolling pace; launch control matters |
-| nsx — Honda NSX NA1 | Honda C30A 3.0L V6 VTEC / NA | 206.00 / 294.00 / 1350.00 | A / High | 13.32 / 20.57 / 10.95 | 399.49 / 602.68 | 10.66 / 16.26 | Mid-engine traction; expensive platform |
-| z32 — Nissan 300ZX Z32 Twin Turbo | VG30DETT / turbo | 206.00 / 388.00 / 1530.00 | B / Exceptional | 14.19 / 21.73 / 11.41 | 418.71 / 778.37 | 11.55 / 17.36 | Rolling pace; launch control matters |
+| nsx — Honda NSX NA1 | Honda C30A 3.0L V6 VTEC / NA | 206.00 / 294.00 / 1350.00 | A / Exceptional | 13.32 / 20.57 / 10.95 | 399.49 / 602.68 | 10.66 / 16.26 | Mid-engine traction; expensive platform |
+| z32 — Nissan 300ZX Z32 Twin Turbo | VG30DETT / turbo | 206.00 / 388.00 / 1530.00 | B / High | 14.19 / 21.73 / 11.41 | 418.71 / 778.37 | 11.55 / 17.36 | Rolling pace; launch control matters |
 | z33 — Nissan 350Z Z33 | VQ35DE / NA | 206.00 / 363.00 / 1450.00 | A / Exceptional | 13.52 / 20.91 / 11.08 | 404.11 / 743.20 | 10.82 / 16.56 | Rolling pace; launch control matters |
-| 240z — Datsun 240Z | L24 / NA | 112.00 / 198.00 / 1044.00 | C / Moderate | 14.92 / 23.55 / 12.33 | 247.47 / 437.62 | 11.52 / 17.92 | Rolling pace; launch control matters |
-| crx — Honda CR-X SiR EF8 | B16A / NA | 118.00 / 152.00 / 1000.00 | C / Moderate | 15.25 / 23.65 / 12.33 | 256.50 / 338.11 | 11.88 / 18.06 | Light chassis; front-axle traction limits |
+| 240z — Datsun 240Z | L24 / NA | 112.00 / 198.00 / 1044.00 | C / High | 14.92 / 23.55 / 12.33 | 247.47 / 437.62 | 11.52 / 17.92 | Rolling pace; launch control matters |
+| crx — Honda CR-X SiR EF8 | B16A / NA | 118.00 / 152.00 / 1000.00 | C / High | 15.25 / 23.65 / 12.33 | 256.50 / 338.11 | 11.88 / 18.06 | Light chassis; front-axle traction limits |
 | dc2 — Honda Integra Type R DC2 | B18C / NA | 147.00 / 181.00 / 1060.00 | B / High | 14.71 / 22.59 / 11.59 | 310.96 / 399.85 | 11.67 / 17.59 | Light chassis; front-axle traction limits |
-| eclipse — Mitsubishi Eclipse GSX | 4G63T / turbo | 157.00 / 290.00 / 1480.00 | C / High | 15.34 / 23.79 / 12.37 | 309.77 / 558.03 | 12.17 / 18.68 | Launch consistency; driveline loss and mass |
+| eclipse — Mitsubishi Eclipse GSX | 4G63T / turbo | 157.00 / 290.00 / 1480.00 | C / Moderate | 15.34 / 23.79 / 12.37 | 309.77 / 558.03 | 12.17 / 18.68 | Launch consistency; driveline loss and mass |
 | familia — Mazda Familia GT-R | BPT / turbo | 136.00 / 235.00 / 1210.00 | D / Moderate | 15.61 / 24.10 / 12.36 | 268.48 / 457.58 | 12.27 / 18.80 | Launch consistency; driveline loss and mass |
 | 180sx — Nissan 180SX | SR20DET / turbo | 151.00 / 274.00 / 1220.00 | B / High | 14.61 / 22.49 / 11.73 | 301.48 / 535.56 | 11.75 / 17.79 | Rolling pace; launch control matters |
 | st205 — Toyota Celica GT-Four ST205 | 3S-GTE / turbo | 188.00 / 304.00 / 1390.00 | B / High | 14.73 / 22.64 / 11.75 | 354.45 / 571.74 | 11.78 / 17.94 | Launch consistency; driveline loss and mass |
 | jzx100 — Toyota Chaser JZX100 | 1JZ-GTE VVT-i / turbo | 206.00 / 378.00 / 1470.00 | A / Exceptional | 13.69 / 21.13 / 11.30 | 408.99 / 730.86 | 11.12 / 16.90 | Rolling pace; launch control matters |
 | b4rsk — Subaru Legacy B4 RSK | EJ208 / turbo | 206.00 / 343.00 / 1470.00 | B / High | 14.68 / 22.35 / 11.49 | 346.47 / 561.00 | 11.99 / 18.22 | Launch consistency; driveline loss and mass |
-| magna — 1998 Mitsubishi Magna Sports | 6G72 3.0 V6 / NA | 140.00 / 255.00 / 1450.00 | D / High | 15.49 / 23.97 / 12.44 | 308.37 / 558.53 | 12.05 / 18.38 | Light chassis; front-axle traction limits |
+| magna — 1998 Mitsubishi Magna Sports | 6G72 3.0 V6 / NA | 140.00 / 255.00 / 1450.00 | D / Moderate | 15.49 / 23.97 / 12.44 | 308.37 / 558.53 | 12.05 / 18.38 | Light chassis; front-axle traction limits |
 
 ## Transmission, engine response and chassis assumptions
 

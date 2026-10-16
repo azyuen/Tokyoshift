@@ -370,7 +370,7 @@ All six standard stages (stock, budget, street, intermediate, advanced, maximum)
 
 The NSX remains especially strong in standard maximum-build simulations. The FD, Z33, GC8 and Supra offer competing strengths, but a final no-universal-winner conclusion is not yet justified. Maximum-output ceilings alone do not establish endgame fairness. Expanded scenario, collector and specialist comparisons are now preserved in SCENARIOS.md; broader driver/seed coverage remains limited.
 
-Class boundaries use a composite of standing 400 m (50%), standing 800 m normalized by 1.54 (25%), and rolling 400 m normalized by 1.25 (25%). Thresholds are 14.1/14.8/15.5 normalized seconds. This creates performance bands, not equal class sizes. XT remains a slow class-D outlier. Current potential labels use maximum power and timed 800 m output; cost and versatility are not yet integrated into the rating, so labels remain provisional.
+Class boundaries use a composite of standing 400 m (50%), standing 800 m normalized by 1.54 (25%), and rolling 400 m normalized by 1.25 (25%). Thresholds are 14.1/14.8/15.5 normalized seconds. This creates performance bands, not equal class sizes. XT remains a slow class-D outlier. Potential labels now use maximum/intermediate pace, low-grip and imperfect-driver results, improvement from stock, and donor-plus-hardware cost. See TUNING_POTENTIAL.md for the reproducible score and its limitations.
 
 ## Reproduction
 `node tools/engineering-report.mjs` regenerates these Markdown tables from preserved JSON without running races.

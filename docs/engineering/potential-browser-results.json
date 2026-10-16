@@ -1,0 +1,46 @@
+{
+  "browser": "Chromium",
+  "phaserLocalOverride": true,
+  "results": [
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "profileLoaded": true,
+      "park": {
+        "before": 419,
+        "parked": 206,
+        "stock": true,
+        "restored": 419,
+        "label": "FACTORY B // POTENTIAL HIGH"
+      },
+      "potentialHelp": "HIGH DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
+      "dyno": null,
+      "race": null,
+      "input": "scene action handlers; automated pedal/gear input for dyno and race",
+      "errors": [],
+      "failed": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "profileLoaded": true,
+      "park": {
+        "before": 419,
+        "parked": 206,
+        "stock": true,
+        "restored": 419,
+        "label": "FACTORY B // POTENTIAL HIGH"
+      },
+      "potentialHelp": "HIGH DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
+      "dyno": null,
+      "race": null,
+      "input": "scene action handlers; automated pedal/gear input for dyno and race",
+      "errors": [],
+      "failed": []
+    }
+  ]
+}
