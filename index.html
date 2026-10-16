@@ -110,7 +110,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R536</div>
+    <div id="build-stamp">R537</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -328,7 +328,7 @@
     // worker is being retired. Device saves are never altered by this guard.
     window.TOKYO_SHIFT_BOOT_READY.then(ready => {
       if (ready === false) return;
-      import('./src/main.js?v=20261016-r536').catch(error => {
+      import('./src/main.js?v=20261016-r537').catch(error => {
         console.error('[Tokyo SHIFT] main module failed to load', error);
         window.TOKYO_SHIFT_SHOW_BOOT_ERROR?.(error, 'MAIN MODULE ERROR');
       });
