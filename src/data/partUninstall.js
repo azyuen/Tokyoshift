@@ -102,3 +102,78 @@ export function removeTuningPartFromState(carState = {}, category, partId) {
   // tuning permissions. Only the selected component returns to level zero.
   return updated;
 }
+
+
+// Warehouse HQ: one removable kit per vehicle. Stored levels belong to the
+// vehicle's saved state, not to a transferable player inventory.
+export const STORE_KIT_REMOVE_FEE = 50000;
+export const STORE_KIT_RESTORE_FEE = 100000;
+export const STORE_KIT_GROUPS = Object.freeze(Object.keys(PART_CATEGORIES));
+
+export function listStorableKitParts(state = {}) {
+  return STORE_KIT_GROUPS.flatMap(category => {
+    const group = PART_CATEGORIES[category];
+    const levels = group.get(state);
+    return Object.keys(group.parts).filter(partId => Number(levels[partId] || 0) > 0)
+      .map(partId => ({
+        key: category + ':' + partId,
+        category, partId, name: group.parts[partId].name,
+        level: Number(levels[partId] || 0),
+      }));
+  });
+}
+
+export function storeSelectedKitParts(state = {}, keys = []) {
+  if (state.storedKit || !Array.isArray(keys) || !keys.length) return null;
+  const available = listStorableKitParts(state);
+  const selected = available.filter(item => keys.includes(item.key));
+  if (!selected.length || selected.length !== new Set(keys).size) return null;
+  let updated = { ...state };
+  const stored = {};
+  for (const item of selected) {
+    stored[item.key] = item.level;
+    updated = removeTuningPartFromState(updated, item.category, item.partId);
+    if (!updated) return null;
+  }
+  updated.storedKit = { version: 1, parts: stored };
+  updated.stock = listStorableKitParts(updated).length === 0 && !Number(updated.tuneLevel || 0);
+  return updated;
+}
+
+export function restoreStoredKitParts(state = {}) {
+  const stored = state.storedKit?.parts;
+  if (!stored || typeof stored !== 'object') return null;
+  const updated = { ...state };
+  for (const category of STORE_KIT_GROUPS) {
+    const group = PART_CATEGORIES[category];
+    const tuning = { ...group.get(updated) };
+    for (const partId of Object.keys(group.parts)) {
+      const storedLevel = Number(stored[category + ':' + partId] || 0);
+      if (storedLevel > 0) tuning[partId] = Math.max(Number(tuning[partId] || 0), storedLevel);
+    }
+    if (category === 'engine') {
+      updated.tuning = { ...tuning };
+      updated.engineTuning = { ...tuning };
+    } else {
+      updated[group.field] = tuning;
+    }
+  }
+  // The exhaust legacy alias must not resurrect a lower-tier part.
+  const exhaust = Number(updated.exhaustNosTuning?.exhaust || 0);
+  if (exhaust > 0) {
+    updated.tuning = { ...updated.tuning, exhaust: Math.max(exhaust, Number(updated.tuning?.exhaust || 0)) };
+    updated.engineTuning = { ...updated.engineTuning, exhaust: Math.max(exhaust, Number(updated.engineTuning?.exhaust || 0)) };
+  }
+  const nosKit = Number(updated.exhaustNosTuning?.nosKit || 0);
+  updated.nosInstalled = nosKit > 0;
+  if (nosKit) {
+    const kit = EXHAUST_NOS_TUNING_PARTS.nosKit.levels[nosKit];
+    const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[Number(updated.exhaustNosTuning?.nitrousShot || 0)];
+    updated.nosCapacitySeconds = Number(kit?.capacitySeconds || 0);
+    updated.nosShots = Number(shot?.shots || 0);
+    updated.nosPower = Number(kit?.powerKW || 0);
+  }
+  delete updated.storedKit;
+  updated.stock = listStorableKitParts(updated).length === 0 && !Number(updated.tuneLevel || 0);
+  return updated;
+}
