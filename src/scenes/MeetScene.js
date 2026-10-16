@@ -103,11 +103,11 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r555';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r555';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r556';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r556';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r555';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r556';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
