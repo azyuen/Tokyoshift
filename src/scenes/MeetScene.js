@@ -962,29 +962,35 @@ export default class MeetScene extends Phaser.Scene {
       // Graphics mask is not a displayed object; destroy it with the slot.
       objects.push(shape); collection.push(shape);
     };
-    const sideFrame = (x, y, w, h, color, title) => {
+    const sideFrame = (x, y, w, h, color, title, titleOffsetX = 0) => {
       const p = polygon(x, y, w, h, 32);
       const g = add(this.add.graphics().setDepth(depth + 2));
       g.fillStyle(0x030b16, 0.77); g.fillPoints(p, true);
       g.lineStyle(5, color, 1); g.strokePoints(p, true);
-      text(x + 43, y + 10, title, 26, '#' + color.toString(16).padStart(6, '0'));
+      text(x + 43 + titleOffsetX, y + 10, title, 26,
+        '#' + color.toString(16).padStart(6, '0'));
     };
-    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
-    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
+    // Titles now sit in line with the angled portrait panels. Frame geometry
+    // remains unchanged, preserving the existing background and card padding.
+    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW', 18);
+    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW', 18);
 
-    // Compact event briefing in the left column above the player roster.
+    // The street in the lower-right quadrant is intentionally reserved for
+    // scouting. Keep the skyline visible above the player's crew, and leave
+    // a clear gap before the bottom action buttons.
     const regional = getCrewBattleRegionRules(regionId);
-    headerShape(54, 202, 698, 188, 0x06121f, 0.83);
-    text(76, 207, regional?.focus || 'CREW CHALLENGE', 13, '#f4e4a4');
+    headerShape(806, 446, 724, 294, 0x06121f, 0.85);
+    text(830, 459, 'BATTLE BRIEFING  //  ' +
+      (regional?.focus || 'CREW CHALLENGE'), 13, '#f4e4a4');
     rounds.slice(0, 3).forEach((round, i) => {
-      const y = 241 + i * 47;
+      const y = 504 + i * 70;
       const distance = round.distanceM > 500 ? '1/2 MI' : '1/4 MI';
       const mode = round.raceType === 'Roll Race' ? 'ROLL' : 'STANDING';
-      add(this.add.text(78, y,
+      add(this.add.text(831, y,
         String(i + 1) + '  ' + round.ruleLabel + '  /  ' + mode + ' ' + distance, {
           fontFamily: PIXEL_FONT, fontSize: '10px', color: '#c3e1f0',
         }).setDepth(depth + 9));
-      add(this.add.text(78, y + 19,
+      add(this.add.text(831, y + 27,
         'SCOUT: ' + (round.scout?.focus || 'UNKNOWN SETUP') +
         '   //   LIKELY: ' + (round.scout?.label || 'UNCONFIRMED'), {
           fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80bac9',
@@ -992,7 +998,9 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     const xPlayer = [63, 292, 521];
-    const xRival = [821, 1050, 1279];
+    // Move the red character panels 14px right, but anchor the red car
+    // boxes at their original coordinates as requested.
+    const xRival = [835, 1064, 1293];
     const slotObjects = [[], [], []];
     let vsStamp = null;
     const createPortrait = (id, x, y, pts, collection) => {
@@ -1024,7 +1032,8 @@ export default class MeetScene extends Phaser.Scene {
       const accent = rival ? 0xff477e : 0x35d6ff;
       const portrait = panel(x, y, 211, 168,
         rival ? 0x80304e : 0x165578, 0x050a10, 0.65, 13);
-      const carX = x - (rival ? 12 : 18);
+      // Blue car panels move left 12px. Red car panels do not move.
+      const carX = x - (rival ? 26 : 30);
       const carPanel = panel(carX, y + 228, 211, 98,
         rival ? 0x381b31 : 0x0a2b48, accent, 0.78, 8);
       collection.push(portrait.g, carPanel.g);
@@ -1042,7 +1051,7 @@ export default class MeetScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
         align: 'center',
       }).setOrigin(0.5, 0).setDepth(depth + 8));
-      const t2 = add(this.add.text(x + 105, y + 199, carName, {
+      const t2 = add(this.add.text(carX + 105, y + 199, carName, {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#cbd8e5',
         align: 'center',
       }).setOrigin(0.5, 0).setDepth(depth + 8));
