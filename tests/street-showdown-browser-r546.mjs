@@ -62,12 +62,46 @@ try {
   });
   await page.waitForTimeout(350);
 
+  const opening = await page.evaluate(() => {
+    const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
+    if (s._mangaCutscene?.active) s._mangaCutscene.skip();
+    return {
+      active: s.sys.isActive(),
+      hasCar: s.hasCar,
+      selected: s.registry.get('selectedCarId'),
+      wins: s.registry.get('wins'),
+      cooldown: s.getCompetitionCooldownRemainingMs(),
+      special: s.specialChallengeActive,
+      story: Boolean(s._mangaCutscene?.active),
+      offers: s.offers?.length,
+      background: s.currentBackground?.texture?.key,
+    };
+  });
+  console.log('SHOWDOWN OPEN PRECHECK', JSON.stringify(opening));
+  await page.waitForTimeout(280);
   await page.evaluate(() => window.TOKYO_SHIFT.scene.getScene('MeetScene')
     .showCompetitionPopup(true));
-  await page.waitForFunction(() => {
-    const s = window.TOKYO_SHIFT?.scene?.getScene('MeetScene');
-    return Boolean(s?.competitionPopup?.active);
-  }, null, { timeout: 45000 });
+  try {
+    await page.waitForFunction(() => {
+      const s = window.TOKYO_SHIFT?.scene?.getScene('MeetScene');
+      return Boolean(s?.competitionPopup?.active);
+    }, null, { timeout: 16000 });
+  } catch (error) {
+    console.error('SHOWDOWN OPEN FAILED', JSON.stringify(await page.evaluate(() => {
+      const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
+      const offer = s.getCompetitionOffer();
+      return {
+        active: s.sys.isActive(), hasCar: s.hasCar, cooldown: s.getCompetitionCooldownRemainingMs(),
+        special: s.specialChallengeActive, story: Boolean(s._mangaCutscene?.active),
+        pending: Boolean(s._mangaCutscene?.pending),
+        offerId: offer?.id, valid: s.isCompetitionOfferRosterValid(offer),
+        roundCount: offer?.rounds?.length, loading: document.getElementById('loading-label')?.textContent,
+        errors: (s.load?.list?.size || 0),
+      };
+    })), errors);
+    await page.screenshot({path:'artifacts/street-showdown/failed-open.png'});
+    throw error;
+  }
 
   const read = () => page.evaluate(() => {
     const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
