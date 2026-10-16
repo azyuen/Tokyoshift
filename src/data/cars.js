@@ -397,7 +397,7 @@ export const cars = {
       // R154 template-compatible Mine's asset pair.
       // These paths intentionally match the uppercase .PNG files uploaded to
       // GitHub. GitHub Pages is case-sensitive.
-      bodyPath: 'assets/Cars/mines_r34_hero_body.png',
+      bodyPath: 'assets/Cars/hero/mines_r34_hero_body.png',
       wheelKey: 'heroWheelMinesR34',
       wheelPath: 'assets/wheels/mines_r34_hero_wheel.PNG',
 
@@ -467,7 +467,7 @@ export const cars = {
       assetStem: 'top_secret_supra_hero',
       singleBody: true,
       engineKey: 'stockEngineRB26DETT',
-      bodyPath: 'assets/Cars/top_secret_supra_hero_body.png',
+      bodyPath: 'assets/Cars/hero/top_secret_supra_hero_body.png',
       wheelKey: 'heroWheelTopSecretSupra',
       wheelPath: 'assets/wheels/top_secret_supra_hero_wheel.png',
 
@@ -532,7 +532,7 @@ export const cars = {
       assetStem: 'liberty_walk_r35_hero',
       singleBody: true,
       engineKey: 'stockEngineRB26DETT',
-      bodyPath: 'assets/Cars/liberty_walk_r35_hero_body.png',
+      bodyPath: 'assets/Cars/hero/liberty_walk_r35_hero_body.png',
       wheelKey: 'heroWheelLibertyWalkR35',
       wheelPath: 'assets/wheels/liberty_walk_r35_hero_wheel.png',
 
@@ -596,7 +596,7 @@ export const cars = {
       assetStem: 'veilside_fortune_rx7_hero',
       singleBody: true,
       engineKey: 'stockEngine13BT',
-      bodyPath: 'assets/Cars/veilside_fortune_rx7_hero_body.png',
+      bodyPath: 'assets/Cars/hero/veilside_fortune_rx7_hero_body.png',
       wheelKey: 'heroWheelVeilsideFortuneRx7',
       wheelPath: 'assets/wheels/veilside_fortune_rx7_hero_wheel.png',
 
@@ -660,7 +660,7 @@ export const cars = {
       assetStem: 'rwb_stella_artois_porsche_hero',
       singleBody: true,
       engineKey: 'stockEngine4AGE',
-      bodyPath: 'assets/Cars/rwb_stella_artois_porsche_hero_body.png',
+      bodyPath: 'assets/Cars/hero/rwb_stella_artois_porsche_hero_body.png',
       wheelKey: 'heroWheelRwbStella',
       wheelPath: 'assets/wheels/rwb_stella_artois_porsche_hero_wheel.png',
 
@@ -725,7 +725,7 @@ export const cars = {
       assetStem: 'renown_mazda_787b_hero',
       singleBody: true,
       engineKey: 'stockEngine13BT',
-      bodyPath: 'assets/Cars/renown_mazda_787b_hero_body.png',
+      bodyPath: 'assets/Cars/hero/renown787B_hero_body.png',
       wheelKey: 'heroWheelRenown787B',
       wheelPath: 'assets/wheels/renown_mazda_787b_hero_wheel.png',
 
@@ -790,7 +790,7 @@ export const cars = {
       assetStem: 'amuse_s2000_gt1_hero',
       singleBody: true,
       engineKey: 'stockEngineB16B',
-      bodyPath: 'assets/Cars/amuse_s2000_gt1_hero_body.png',
+      bodyPath: 'assets/Cars/hero/amuse_s2000_gt1_hero_body.png',
       wheelKey: 'heroWheelAmuseS2000Gt1',
       wheelPath: 'assets/wheels/amuse_s2000_gt1_hero_wheel.png',
 
@@ -855,7 +855,7 @@ export const cars = {
       assetStem: 'spoon_ek9_hero',
       singleBody: true,
       engineKey: 'stockEngineB16B',
-      bodyPath: 'assets/Cars/spoon_ek9_hero_body.png',
+      bodyPath: 'assets/Cars/hero/spoon_ek9_hero_body.png',
       wheelKey: 'heroWheelSpoonEk9',
       wheelPath: 'assets/wheels/spoon_ek9_hero_wheel.png',
 
@@ -919,7 +919,7 @@ export const cars = {
       assetStem: 're_amemiya_rx7_hero',
       singleBody: true,
       engineKey: 'stockEngine13BT',
-      bodyPath: 'assets/Cars/re_amemiya_rx7_hero_body.png',
+      bodyPath: 'assets/Cars/hero/re_amemiya_rx7_hero_body.png',
       wheelKey: 'heroWheelReAmemiyaRx7',
       wheelPath: 'assets/wheels/re_amemiya_rx7_hero_wheel.png',
 
@@ -983,7 +983,7 @@ export const cars = {
       assetStem: 'jun_hyper_lemon_evo5_hero',
       singleBody: true,
       engineKey: 'stockEngine4G63T',
-      bodyPath: 'assets/Cars/jun_hyper_lemon_evo5_hero_body.png',
+      bodyPath: 'assets/Cars/hero/jun_hyper_lemon_evo5_hero_body.png',
       wheelKey: 'heroWheelJunHyperLemonEvo5',
       wheelPath: 'assets/wheels/jun_hyper_lemon_evo5_hero_wheel.png',
 
@@ -1047,7 +1047,7 @@ export const cars = {
       assetStem: 'esprit_nsx_hero',
       singleBody: true,
       engineKey: 'stockEngineB16B',
-      bodyPath: 'assets/Cars/esprit_nsx_hero_body.png',
+      bodyPath: 'assets/Cars/hero/esprit_nsx_hero_body.png',
       wheelKey: 'heroWheelEspritNsx',
       wheelPath: 'assets/wheels/esprit_nsx_hero_wheel.png',
 
