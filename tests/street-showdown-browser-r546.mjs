@@ -149,12 +149,41 @@ try {
 
   // Click the actual green ENTER action; a preview must never deduct money.
   assert.equal(second.cash, before.cash);
-  await page.mouse.click(1358, 706);
+  const ui = await page.evaluate(() => {
+    const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
+    const canvas = document.querySelector('canvas');
+    const rect = canvas?.getBoundingClientRect();
+    return {
+      rect: rect && { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      gameSize: { width: s.scale.width, height: s.scale.height },
+      buttons: s.children.list.filter(x => x?.active && x?.input?.enabled && x?.depth >= 200)
+        .map(x => ({ type: x.type, x: x.x, y: x.y, w: x.width, h: x.height, depth: x.depth })),
+      overlayActive: s.competitionPopup?.active,
+      storyActive: Boolean(s._mangaCutscene?.active),
+    };
+  });
+  console.log('SHOWDOWN INPUT DIAGNOSTIC', JSON.stringify(ui));
+  const rect = ui.rect;
+  await page.mouse.click(rect.x + 1358 * rect.width / 1560,
+    rect.y + 706 * rect.height / 840);
+  await page.waitForTimeout(750);
+  console.log('SHOWDOWN AFTER CLICK', JSON.stringify(await page.evaluate(() => {
+    const game = window.TOKYO_SHIFT;
+    const s = game.scene.getScene('MeetScene');
+    return {
+      overlay: Boolean(s.competitionPopup?.active),
+      state: game.registry.get('competitionState'),
+      category: game.registry.get('selectedRaceCategory'),
+      cash: game.registry.get('cash'),
+      pointer: {x:s.input.activePointer?.x,y:s.input.activePointer?.y},
+      activeScenes: game.scene.scenes.filter(x => x.sys.isActive()).map(x => x.sys.settings.key),
+    };
+  })));
   await page.waitForFunction(() => {
     const registry = window.TOKYO_SHIFT?.registry;
     return registry?.get('competitionState')?.active &&
       registry?.get('selectedRaceCategory') === 'COMPETITION';
-  }, null, { timeout: 45000 });
+  }, null, { timeout: 7000 });
   const result = await page.evaluate(() => {
     const registry = window.TOKYO_SHIFT.registry;
     return {
