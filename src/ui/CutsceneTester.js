@@ -6,7 +6,8 @@ import {
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261017-r556';
+} from './MangaCutscene.js?v=20261017-r557';
+import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r557';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -233,13 +234,16 @@ export function showCutsceneTester(scene) {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
-        if (id === 'warehouseHqUnlocked' && typeof scene.playWarehouseHqStory === 'function') {
+        if (id === 'canalYardBiggerDreams') {
+          // Identical REAL ringing phone and pickup sequence in every tester
+          // context; preview never modifies campaign cutscene history.
+          playCanalYardStory(scene, { preview: true });
+        } else if (id === 'warehouseHqUnlocked' && typeof scene.playWarehouseHqStory === 'function') {
           scene.playWarehouseHqStory({ preview: true });
         } else if (id === 'sevenRegionsConquered' &&
             typeof scene.playSevenRegionsStory === 'function') {
           scene.playSevenRegionsStory({ preview: true });
         } else {
-          // Unified Scene 04 is now one cutscene even in developer mode.
           playMangaCutscene(scene, id, { preview: true });
         }
       });
