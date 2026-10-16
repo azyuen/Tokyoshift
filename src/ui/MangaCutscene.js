@@ -857,6 +857,20 @@ function renderPage(controller, pageIndex, firstPage = false) {
   drawDialogue(controller, page);
 
   if (firstPage) showIntroCard(controller);
+  // Scene-owned elements such as the crew signature-car reveal should appear
+  // only when their authored dialogue page becomes visible, not beforehand.
+  // Called for the first page and every NEXT, including after async preloading.
+  try {
+    context.options.onPageChange?.({
+      pageIndex,
+      pageNumber: pageIndex + 1,
+      firstPage,
+      page,
+      pageCount: pages.length,
+    });
+  } catch (error) {
+    console.warn('[Tokyo SHIFT] Manga page-change callback failed', error);
+  }
 }
 
 function finaliseController(controller, {
