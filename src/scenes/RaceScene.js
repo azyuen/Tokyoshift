@@ -171,6 +171,11 @@ export default class RaceScene extends Phaser.Scene {
     queueImage('shifterDown', 'assets/Controls/shifter_down.png');
     queueImage('regionalChallengeBadge', 'assets/Garage/badge_crown.png');
     queueImage('regionalPerfectStarBadge', 'assets/Garage/badge_star.png');
+    // Regional crew victories use their own permanent badge artwork, not the
+    // individual championship's crown.
+    if (this.raceMode === 'CREW_BATTLE') {
+      queueImage('regionalCrewVictoryBadge', 'assets/Garage/badge_crew.png');
+    }
 
     // All street-race regions now use authored day/night panoramas.
     // Assets follow skyline_<region>_<phase>.webp and share one renderer.
@@ -2705,6 +2710,36 @@ export default class RaceScene extends Phaser.Scene {
       );
     }
 
+    // Stamp the unique CREW emblem in the bottom-right of the *overall*
+    // crew-battle victory result. Individual heat wins never display it,
+    // and repeat victories do not award a duplicate persistent badge.
+    const crewBadgeWon = Boolean(settlement?.crewBattleCompleted);
+    const crewBadge = crewBadgeWon && this.textures.exists('regionalCrewVictoryBadge')
+      ? this.add.image(1450, 582, 'regionalCrewVictoryBadge')
+          .setDisplaySize(104, 104)
+          .setDepth(depth + 12)
+          .setScrollFactor(0)
+          .setAlpha(0)
+          .setAngle(-8)
+      : null;
+    const crewBadgeCaption = crewBadge
+      ? this.add.text(
+          1450, 644,
+          settlement.crewBattleFirstClear ? 'CREW BADGE EARNED' : 'CREW BADGE',
+          {
+            fontFamily: PIXEL_FONT, fontSize: '9px',
+            color: '#f5dfab', backgroundColor: '#11141add',
+            padding: { x: 7, y: 4 },
+          }
+        ).setOrigin(0.5, 0).setDepth(depth + 13)
+          .setScrollFactor(0).setAlpha(0)
+      : null;
+    if (crewBadge) {
+      crewBadge.stampTargetScaleX = crewBadge.scaleX;
+      crewBadge.stampTargetScaleY = crewBadge.scaleY;
+      crewBadge.setScale(crewBadge.scaleX * 1.65, crewBadge.scaleY * 1.65);
+    }
+
     const perfectStarBadge =
       finalRegionalWin &&
       settlement?.teamChallengePerfect &&
@@ -3309,6 +3344,26 @@ export default class RaceScene extends Phaser.Scene {
         delay: pinkRevealDelay + 245,
         ease: 'Back.Out',
         onStart: () => this.cameras.main.shake(65, 0.0012),
+      });
+    }
+
+    if (crewBadge) {
+      this.tweens.add({
+        targets: crewBadge,
+        alpha: 1,
+        scaleX: crewBadge.stampTargetScaleX,
+        scaleY: crewBadge.stampTargetScaleY,
+        angle: 0,
+        duration: 175,
+        delay: pinkRevealDelay + 245,
+        ease: 'Back.Out',
+        onStart: () => this.cameras.main.shake(65, 0.0012),
+      });
+      this.tweens.add({
+        targets: crewBadgeCaption,
+        alpha: 1,
+        duration: 165,
+        delay: pinkRevealDelay + 365,
       });
     }
 
