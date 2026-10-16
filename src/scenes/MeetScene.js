@@ -1282,6 +1282,26 @@ export default class MeetScene extends Phaser.Scene {
     return dispose;
   }
 
+  createCrewRecruitVsLabel() {
+    // Same Exo 2 Black Italic family and 88px headline as race WIN results.
+    const vs = this.add.text(780, 365, 'VS', {
+      fontFamily: '"Exo 2", sans-serif',
+      fontSize: '88px',
+      fontStyle: 'italic 900',
+      color: '#ffffff',
+      stroke: '#11141a',
+      strokeThickness: 6,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(940).setAlpha(0);
+    const fade = this.tweens.add({
+      targets: vs, alpha: 1, duration: 360, ease: 'Sine.easeOut',
+    });
+    return () => {
+      try { fade.stop(); } catch (_) {}
+      try { this.tweens.killTweensOf(vs); } catch (_) {}
+      try { vs.destroy(); } catch (_) {}
+    };
+  }
+
   maybeShowCrewInviteInterest() {
     if (this.isCrewTestDriveMode()) return false;
     const interest = getCrewInviteInterest(this.registry);
@@ -1319,6 +1339,7 @@ export default class MeetScene extends Phaser.Scene {
     let cleanupReveal = () => {};
     let cleanupPlayer = () => {};
     let cleanupToggles = () => {};
+    let cleanupVs = () => {};
     let acceptedChallenge = null;
     let eligibleIds = [];
     let selectedCarId = null;
@@ -1342,6 +1363,7 @@ export default class MeetScene extends Phaser.Scene {
       selectedCarId = eligibleIds.includes(this.registry.get('selectedCarId'))
         ? this.registry.get('selectedCarId') : eligibleIds[0] || null;
       drawPlayer();
+      cleanupVs = this.createCrewRecruitVsLabel();
       cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
         if (!eligibleIds.length) return;
         const index = eligibleIds.indexOf(selectedCarId);
@@ -1387,6 +1409,7 @@ export default class MeetScene extends Phaser.Scene {
       ),
       onComplete: ({ reason }) => {
         cleanupToggles();
+        cleanupVs();
         cleanupPlayer();
         cleanupReveal();
         if (acceptedChallenge) {
@@ -1429,6 +1452,7 @@ export default class MeetScene extends Phaser.Scene {
     let cleanupReveal = () => {};
     let cleanupPlayer = () => {};
     let cleanupToggles = () => {};
+    let cleanupVs = () => {};
     const interest = challenge;
 
     const drawPlayer = () => {
@@ -1456,6 +1480,7 @@ export default class MeetScene extends Phaser.Scene {
       onPageChange: () => {
         cleanupReveal = this.createCrewInviteCarReveal(interest, opponentCar);
         drawPlayer();
+        cleanupVs = this.createCrewRecruitVsLabel();
         cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
           const index = eligibleIds.indexOf(selectedCarId);
           selectedCarId = eligibleIds[
@@ -1474,6 +1499,7 @@ export default class MeetScene extends Phaser.Scene {
       ),
       onComplete: ({ reason }) => {
         cleanupToggles();
+        cleanupVs();
         cleanupPlayer();
         cleanupReveal();
         if (reason === 'action' && selectedCarId) {
