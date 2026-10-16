@@ -842,6 +842,19 @@ function drawMangaInfoPanel(controller) {
   }
 }
 
+
+function sceneTweensFadeTitle(controller) {
+  if (controller.topTitleHidden) return;
+  controller.topTitleHidden = true;
+  const objects = controller.topTitleObjects || [];
+  controller.scene.tweens.add({
+    targets: objects,
+    alpha: 0,
+    duration: 230,
+    ease: 'Sine.easeOut',
+  });
+}
+
 function renderPage(controller, pageIndex, firstPage = false) {
   const { context, definition } = controller;
   const pages = definition.pages || [];
@@ -850,6 +863,13 @@ function renderPage(controller, pageIndex, firstPage = false) {
 
   controller.pageIndex = pageIndex;
   clearDialogue(controller);
+
+  // When the two equal car bays appear, clear the small opening title plate
+  // so it cannot overlap the left-hand car's top header. The main manga
+  // dialogue panel, buttons and active cutscene remain untouched.
+  if (page.hideSceneTitle && controller.topTitleObjects?.length) {
+    sceneTweensFadeTitle(controller);
+  }
 
   SIDES.forEach(side => {
     const current = controller.actors[side];
@@ -1044,6 +1064,8 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setAlpha(0);
 
   controller.objects.push(blocker, shade, titlePlate, title, skip);
+  controller.topTitleObjects = [titlePlate, title];
+  controller.topTitleHidden = false;
 
   scene.tweens.add({
     targets: shade,
