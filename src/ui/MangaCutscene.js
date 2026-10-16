@@ -779,7 +779,7 @@ function drawDialogue(controller, page) {
   });
 
   card.on('pointerdown', () => controller.advance());
-  actionBox.on('pointerdown', () => controller.advance());
+  actionBox.on('pointerdown', () => controller.advance('button'));
   secondaryBox?.on('pointerdown', () => controller.finish('secondary'));
 }
 
@@ -1059,8 +1059,12 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     ease: 'Sine.easeOut',
   });
 
-  controller.advance = () => {
+  controller.advance = (source = 'ambient') => {
     if (!controller.active || controller.cleaned || controller.finishing) return;
+    // Explicit acceptance and READY TO RACE must come from the black button,
+    // never from an incidental tap on the dialogue card or shaded backdrop.
+    const activePage = definition.pages?.[controller.pageIndex];
+    if (activePage?.requireActionButton && source !== 'button') return;
     const now = Date.now();
     if (now - controller.lastAdvanceAt < PAGE_DEBOUNCE_MS) return;
     controller.lastAdvanceAt = now;
