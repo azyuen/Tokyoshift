@@ -1,0 +1,32 @@
+name: Street Showdown Skytree Template R546
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/ShowdownLayout.js'
+      - 'src/ui/StreetShowdownView.js'
+      - 'src/data/streetShowdownRoster.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'tests/street-showdown-view-r546.mjs'
+      - '.github/workflows/street-showdown-view-r546.yml'
+  workflow_dispatch:
+jobs:
+  street-showdown:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Showdown scenes, visuals and roster modules
+        run: |
+          node --check src/ui/ShowdownLayout.js
+          node --check src/ui/StreetShowdownView.js
+          node --check src/data/streetShowdownRoster.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/OshiageScene.js
+      - name: Run Showdown, progress and startup regressions
+        run: |
+          node --test tests/street-showdown-view-r546.mjs tests/progression-rebalance-r479.mjs tests/oshiage-showdown-r522.mjs tests/startup-import-integrity-r508.mjs
