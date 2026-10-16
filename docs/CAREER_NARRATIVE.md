@@ -131,3 +131,34 @@ Before drafting each scene, read the linked bible and authoring guide and inspec
 8. Implementation status and the commit introducing it.
 
 Use brief scenes at meaningful pauses rather than interrupting every race. Preserve the existing shared phone renderer when relevant. Mark an entry implemented only after its runtime scene and real trigger are present. This document is the starting point for the owner's upcoming emotional-beat and cutscene work; a separate branching Story Mode is not required.
+
+
+## Approved regional crew-battle format — 2026-10-16
+
+After the seven regional championships, the player recruits one driver per region
+and personally manages a three-driver crew lineup. The regional main rivals
+(Emi Kanzaki, Ren Mizuno, Kaito Fujimori, Aya Kurose, Haru Tachibana,
+Reina Shibata and Riku Akamine) become the faces and **captains** of their
+regional opposing teams; they introduce the crews, comment on results between
+heats, hint at the next challenge, and respond to the final outcome. They do
+not personally drive one of the three opposing regional crew heats. Only
+remaining un-recruited regional supporting racers take those grid slots.
+
+The player similarly does not personally race in these street-level 3v3 crew
+battles: recruited drivers use their signed crew cars. The team that reaches
+two heat victories first wins. Lineups lock at entry; each region presents
+its rules and an indicative, evidence-based scouting report before the battle.
+The leader's dialogue uses their established Character Bible voice, without
+any hidden Story Mode revelations.
+
+Distinct region regulations preview Pro Circuit scrutineering: Odaiba open,
+Shinagawa no NOS, Tatsumi 260 kW, Shibuya stock/open,
+Yokohama capped/open, Daikoku 380 kW without NOS, Shinjuku stock/380 kW/open.
+All constraints apply equally to both teams. Real installed hardware and
+vehicle physics govern actual performance. Temporary event-specific factory
+setups are permissible for technical compliance and must never overwrite
+the player's permanent purchased upgrades.
+
+This regional captain-manager structure does **not** replace the separate
+professional Tokyo Championship canon in DRAG_COMPLEX_BLUEPRINT.md, where
+the player personally drives selected crew cars in the championship stage.
