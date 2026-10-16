@@ -41,3 +41,8 @@ Current main observed at `0aad895e442753c8ea9b0af1f24e18cc39bb7c17`; it has not 
 - Added `tools/engineering-report.mjs`, `AUDIT.md` and `BALANCE.md`. These regenerate tables from preserved data with SHA-256 provenance; no full core matrix rerun.
 - Reports explicitly mark missing year/spec provenance, provisional potential ratings and unresolved endgame dominance. They are development reports, not final sign-off.
 - Main has advanced to R540. New recruitment manga selection, deferred loss rematches and removal of Standard standing-start AI boosting overlap MeetScene/RaceScene/crewSystem. These must be reconciled before any release; do not replace them with the old branch implementations. Main has not been merged or modified.
+
+## Increment 3 — recovered supplementary evidence
+The expanded scenario JSON was lost before checkpointing, so only those missing runs were repeated (not the preserved baseline/revised core matrix). `tools/engineering-scenarios.mjs` produced **484 records**: 43 models × three stages × low grip / rating-3 driver / 100 km/h rolling, 43 maximum NOS runs, 14 specialist standing/rolling runs and 40 exclusive standing/rolling runs. It saves after each completed race and reuses matching physics/configuration hashes. Reinvocation reports 0 added / 484 reused.
+`SCENARIOS.md` records leaders, specialist/exclusive results and separated NOS effects. NSX leads low-grip and 100 km/h rolling max builds; Z33 leads the rating-3 driver sample. The actual registry has 20 exclusive entries, including livery variants. All remain unchanged.
+Browser setup now launches Chromium 153. The boot/profile/park/restore test is underway; no browser pass is asserted until its recorded result exists.
