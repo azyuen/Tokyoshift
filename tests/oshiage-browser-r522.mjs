@@ -94,11 +94,11 @@ try {
   assert.equal(first.active, true);
   assert.equal(first.lineup.length, 3);
   assert.equal(new Set(first.lineup).size, 3);
-  for (const name of ['SHOWDOWN LOCATION','YOUR CAR','3-ELITE DRIVER SHOWDOWN',
-    'RIVALS IN THE SHOWDOWN','SKYTREE','ENTRY FEE']) {
+  for (const name of ['SHOWDOWN LOCATION','YOUR CAR','THREE ELITE RIVALS',
+    'RIVALS IN THE SHOWDOWN','SKYTREE','WIN ALL 3 HEATS']) {
     assert.ok(first.text.some(t => t.includes(name)), 'missing Meet control: ' + name);
   }
-  assert.ok(first.text.some(t => t.includes('RACE FOR')), 'must have green challenge action');
+  assert.ok(first.text.some(t => t.includes('ENTER  //')), 'must have green challenge action');
   assert.ok(first.background.includes('oshiage_skytree01'));
   await page.screenshot({path:'artifacts/oshiage/underpass-r522.png'});
 
@@ -116,12 +116,12 @@ try {
     const s = window.TOKYO_SHIFT?.scene?.getScene('OshiageScene');
     return s?.meetAlternative && s?.backgroundAsset()?.key?.includes('skytree02') &&
       (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('RIVALS IN THE SHOWDOWN')) &&
-      (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('750,000'));
+      (s.content || []).some(o => typeof o?.text === 'string' && o.text.includes('250,000'));
   },null,{timeout:30000});
   const plaza = await read();
   assert.equal(plaza.lineup.length, 3);
   assert.ok(plaza.background.includes('oshiage_skytree02'));
-  assert.ok(plaza.text.some(t => t.includes('750,000')));
+  assert.ok(plaza.text.some(t => t.includes('250,000')));
   await page.screenshot({path:'artifacts/oshiage/plaza-r522.png'});
   assert.deepEqual(errors, []);
   console.log('OSHIAGE LIVE SCENE PASSED', JSON.stringify({
