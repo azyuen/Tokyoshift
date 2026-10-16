@@ -884,7 +884,7 @@ export default class MeetScene extends Phaser.Scene {
     };
     headerShape(52, 40, 175, 43, 0x03070c, 0.96);
     text(72, 48, String(regionId).toUpperCase(), 19, '#48d9ff');
-    text(58, 85, 'CREW SHOWDOWN', 38, '#ffffff');
+    text(58, 85, 'CREW BATTLE', 38, '#ffffff');
     headerShape(54, 151, 420, 41, 0x081522, 0.73);
     add(this.add.text(74, 163, '3 VS 3  //  BEST OF 3', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#a8c4d7',
@@ -920,8 +920,8 @@ export default class MeetScene extends Phaser.Scene {
     sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
     sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
 
-    const xPlayer = [74, 303, 532];
-    const xRival = [833, 1062, 1291];
+    const xPlayer = [63, 292, 521];
+    const xRival = [821, 1050, 1279];
     const slotObjects = [[], [], []];
     let vsStamp = null;
     const createPortrait = (id, x, y, pts, collection) => {
@@ -953,12 +953,13 @@ export default class MeetScene extends Phaser.Scene {
       const accent = rival ? 0xff477e : 0x35d6ff;
       const portrait = panel(x, y, 211, 168,
         rival ? 0x80304e : 0x165578, 0x050a10, 0.65, 13);
-      const carPanel = panel(x - 5, y + 228, 211, 98,
+      const carX = x - (rival ? 12 : 18);
+      const carPanel = panel(carX, y + 228, 211, 98,
         rival ? 0x381b31 : 0x0a2b48, accent, 0.78, 8);
       collection.push(portrait.g, carPanel.g);
       if (unit) {
         createPortrait(unit.characterId, x + 105, y + 84, portrait.points, collection);
-        createCar(unit.carId, x + 100, y + 277, carPanel.points, collection);
+        createCar(unit.carId, carX + 105, y + 277, carPanel.points, collection);
       }
       const name = unit
         ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
@@ -1045,34 +1046,55 @@ export default class MeetScene extends Phaser.Scene {
       const z = depth + 30;
       addChoice(this.add.rectangle(780, 420, 1560, 840, 0x01040a, 0.87)
         .setInteractive().setDepth(z));
-      addChoice(this.add.rectangle(780, 420, 850, 650, 0x0a1828)
+      addChoice(this.add.rectangle(780, 420, 1120, 650, 0x0a1828)
         .setStrokeStyle(3, 0x35d6ff).setDepth(z + 1));
       addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // SLOT ' + (index + 1), {
-        fontFamily: font, fontSize: '30px', fontStyle: 'italic 900',
+        fontFamily: PIXEL_FONT, fontSize: '19px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 2));
       units.forEach((unit, i) => {
         const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
-        const x = i % 2 ? 985 : 575;
+        const x = i % 2 ? 1037 : 523;
         const y = 216 + Math.floor(i / 2) * 98;
-        const rect = addChoice(this.add.rectangle(x, y, 385, 83,
+        const rect = addChoice(this.add.rectangle(x, y, 492, 88,
           occupied ? 0x171c26 : 0x143c50)
           .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff)
           .setDepth(z + 2));
-        addChoice(this.add.text(x - 175, y - 22,
-          String(characters[unit.characterId]?.name || unit.characterId).toUpperCase() +
-          '\n' + String(cars[unit.carId]?.shortName || unit.carId).toUpperCase(), {
-            fontFamily: font, fontSize: '17px', fontStyle: 'italic 900',
+        const car = cars[unit.carId] || {};
+        const driverName = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
+        const carName = String(car.shortName || unit.carId).toUpperCase();
+        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
+        const torque = Number.isFinite(Number(car.torqueNm)) ? Math.round(Number(car.torqueNm)) + ' Nm' : '—';
+        const drivetrain = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
+        const info = addChoice(this.add.text(x - 116, y - 34,
+          driverName + '\\n' + carName + '\\n' +
+          power + '  /  ' + torque + '  /  ' + drivetrain, {
+            fontFamily: PIXEL_FONT, fontSize: '10px', lineSpacing: 6,
             color: occupied ? '#718092' : '#ffffff',
-          }).setDepth(z + 3));
-        if (!occupied) rect.setInteractive({ useHandCursor: true })
-          .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
+          }).setDepth(z + 4));
+        const profile = createCharacterProfile(this, {
+          characterId: unit.characterId, pose: 'idle',
+          x: x - 190, y: y, frameWidth: 85, frameHeight: 76,
+          side: 'center', depth: z + 3, mask: false, rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        });
+        if (profile?.image) addChoice(profile.image);
+        if (cars[unit.carId]) {
+          const images = this.createCarDisplay(car, x + 172, y + 8, 110,
+            z + 3, false, DEFAULT_PAINT_COLOR);
+          images.forEach(addChoice);
+        }
+        if (!occupied) {
+          const hit = addChoice(this.add.rectangle(x, y, 492, 88, 0xffffff, 0)
+            .setInteractive({ useHandCursor: true }).setDepth(z + 6));
+          hit.on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
+        }
       });
       const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
         .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
         .setDepth(z + 2));
       addChoice(this.add.text(780, 698, 'CANCEL', {
-        fontFamily: font, fontSize: '21px', fontStyle: 'italic 900',
+        fontFamily: PIXEL_FONT, fontSize: '12px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 3));
       cancel.on('pointerdown', dismiss);
