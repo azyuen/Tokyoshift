@@ -35,8 +35,8 @@ test('meet fallback, cached rival cards, and saved team rounds enforce exclusion
   assert(s.includes('playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry),'));
   assert(s.includes('isStreetShowdownOfferRosterValid(offer,'));
   assert(s.includes('visibleOffers.some(offer => getRecruitedCrewCharacterIds(this.registry).has(offer?.characterId))'));
-  assert(s.includes('const hasRecruitedOpponent = storedRounds.some'));
-  assert(s.includes('hasRecruitedOpponent ? generatedRounds'));
+  assert(s.includes('const invalid = old.some(round => recruited.has(round?.characterId))'));
+  assert(s.includes('return invalid ? generated'));
 });
 test('regional trip has one entry fee; destinations within that region are free', () => {
   const homeRegion = TRAVEL_REGIONS.ODAIBA;

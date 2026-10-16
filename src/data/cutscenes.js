@@ -411,7 +411,7 @@ export const CUTSCENES = {
         speaker: 'left',
         speakerLabel: '{RIVAL_NAME}',
         pose: 'idle',
-        text: 'Keep racing in {REGION}. We may call you back for a Perfect Streak — seven straight wins, with bonus rewards.',
+        text: "You can attempt the Perfect Streak any time. Use the challenge badge at the Meet when you're ready.",
       },
     ],
     finalActionLabel: 'CLAIM CHAMPION REWARDS',
@@ -450,7 +450,7 @@ export const CUTSCENES = {
         speaker: 'left',
         speakerLabel: '{RIVAL_NAME}',
         pose: 'idle',
-        text: 'Keep racing around {REGION}. You might get another shot at the challenge.',
+        text: "Use the regional challenge badge at the Meet whenever you're ready to continue.",
       },
       {
         speaker: 'left',

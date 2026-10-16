@@ -68,7 +68,7 @@ test('Meet opens manga before selection and never treats SKIP as acceptance', ()
   const end = meet.indexOf('  showCrewBattleLineup(regionId) {', start);
   const method = meet.slice(start, end);
   assert.ok(start > 0 && end > start);
-  assert.match(meet, /button\.on\('pointerdown', \(\) => this\.showCrewBattleIntroduction\(regionId\)\)/);
+  assert.match(meet, /if \(action\.id === 'CREW'\) this\.showCrewBattleIntroduction\(regionId\)/);
   assert.match(method, /getCrewBattleCaptainId\(key\)/);
   assert.match(method, /rounds\[0\]\?\.characterId/);
   assert.match(method, /createRegionalCrewBattleIntroduction\(key, count\)/);
