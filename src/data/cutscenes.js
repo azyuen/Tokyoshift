@@ -303,6 +303,7 @@ export const CUTSCENES = {
         leftCharacter: '',
         rightCharacter: '',
         fadeOutActors: true,
+        hideSceneTitle: true,
         requireActionButton: true,
         text: 'You can only race an unmodified stock car of the same class. Choose one from your garage, or acquire one and come back later.',
       },
