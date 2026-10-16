@@ -116,7 +116,7 @@ test('scene integrates three race streak, cutscene anonymity, preset and RGB pri
   const scene = readFileSync(new URL('../src/scenes/OshiageScene.js', import.meta.url), 'utf8');
   const race = readFileSync(new URL('../src/scenes/RaceScene.js', import.meta.url), 'utf8');
   assert.match(scene, /LADY INSTRUCTOR/);
-  assert.match(scene, /random driving instructor/);
+  assert.match(scene, /schoolSayakaKey\(lesson\.pose\)/);
   assert.doesNotMatch(scene.slice(scene.indexOf('  drawSchool() {'), scene.indexOf('  drawMeet() {')), /Sayaka Fujieda/);
   assert.match(scene, /this\.registry\.set\('raceReturnScene', 'OshiageScene'\)/);
   assert.match(scene, /mode === 'custom' \? 16000 : 8000/);
