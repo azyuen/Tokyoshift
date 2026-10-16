@@ -210,6 +210,28 @@ function queueCharacterAssets(scene, characterRefs, playerCharacterId, context =
   return queued;
 }
 
+/** Load optional milestone backgrounds only for cutscenes that declare them. */
+function queueCutsceneBackdropAssets(scene, definition) {
+  let queued = 0;
+  const seen = new Set();
+  Object.values(definition.backdrops || {}).forEach(spec => {
+    const key = String(spec?.key || '');
+    const path = String(spec?.path || '');
+    if (!key || !path || seen.has(key) || scene.textures.exists(key)) return;
+    seen.add(key);
+    scene.load.image(key, path);
+    queued++;
+  });
+  return queued;
+}
+
+function sizeChapterBackdrop(image, scene) {
+  const frame = image?.texture?.getSourceImage?.();
+  const width = Math.max(1, Number(frame?.width || 1));
+  const height = Math.max(1, Number(frame?.height || 1));
+  image.setScale(Math.max(scene.scale.width / width, scene.scale.height / height));
+}
+
 function freezeScene(scene) {
   const world = scene.physics?.world;
   const keyboard = scene.input?.keyboard;
@@ -863,6 +885,13 @@ function renderPage(controller, pageIndex, firstPage = false) {
 
   controller.pageIndex = pageIndex;
   clearDialogue(controller);
+  const backdrop = definition.backdrops?.[page.backdrop];
+  if (backdrop?.key && controller.backdropImage &&
+      context.scene.textures.exists(backdrop.key) &&
+      controller.backdropImage.texture.key !== backdrop.key) {
+    controller.backdropImage.setTexture(backdrop.key);
+    sizeChapterBackdrop(controller.backdropImage, context.scene);
+  }
 
   // When the two equal car bays appear, clear the small opening title plate
   // so it cannot overlap the left-hand car's top header. The main manga
@@ -1029,6 +1058,19 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setScrollFactor(0)
     .setAlpha(0);
 
+  // Two locations can share one manga cutscene without creating custom UI.
+  const openingBackdrop = definition.backdrops?.[definition.pages?.[0]?.backdrop];
+  let backdropImage = null;
+  let backdropVeil = null;
+  if (openingBackdrop?.key && scene.textures.exists(openingBackdrop.key)) {
+    backdropImage = scene.add.image(width / 2, height / 2, openingBackdrop.key)
+      .setDepth(BASE_DEPTH + 2).setScrollFactor(0);
+    sizeChapterBackdrop(backdropImage, scene);
+    backdropVeil = scene.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.32)
+      .setDepth(BASE_DEPTH + 3).setScrollFactor(0);
+  }
+  controller.backdropImage = backdropImage;
+
   const titleText = interpolate(definition.title || definition.id, context.variables);
   const titlePlate = scene.add.rectangle(
     52 + Math.min(520, Math.max(280, titleText.length * 17)) / 2,
@@ -1063,7 +1105,7 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setInteractive({ useHandCursor: true })
     .setAlpha(0);
 
-  controller.objects.push(blocker, shade, titlePlate, title, skip);
+  controller.objects.push(blocker, shade, ...(backdropImage ? [backdropImage, backdropVeil] : []), titlePlate, title, skip);
   controller.topTitleObjects = [titlePlate, title];
   controller.topTitleHidden = false;
 
@@ -1228,7 +1270,7 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     characterRefs,
     context.playerCharacterId,
     context
-  );
+  ) + queueCutsceneBackdropAssets(scene, definition);
 
   if (queued <= 0) {
     return beginOverlay(scene, definition, context, historyId);
