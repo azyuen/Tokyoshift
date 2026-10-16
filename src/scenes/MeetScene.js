@@ -2318,71 +2318,74 @@ export default class MeetScene extends Phaser.Scene {
     if (isArkonDen(this.registry)) this.registry.set('devMode', true);
     if (!this.registry.get('devMode')) return;
 
-    // Compact developer-only controls live together in the top-left of the
-    // Meet stage. Keep all six actions and their existing unlock conditions.
-    const width = 292;
-    const x = STAGE.x + 18 + width / 2;
-    const startY = STAGE.y + 22;
-    const gap = 39;
+    // One permanent developer button expands into a six-action grid.
     const fill = 0x321523;
     const stroke = 0xff72a6;
     const textColor = '#ffd1e1';
+    const controls = [];
+    const x = STAGE.x + 114;
+    const y = STAGE.y + 24;
+    const deploy = this.add.rectangle(x, y, 188, 34, fill, 0.97)
+      .setStrokeStyle(1, stroke, 0.98)
+      .setInteractive({ useHandCursor: true }).setDepth(88);
+    const deployLabel = this.add.text(x, y, 'D) DEPLOY  +', {
+      fontFamily: PIXEL_FONT, fontSize: '8px', color: textColor,
+    }).setOrigin(0.5).setDepth(89);
+
+    const setExpanded = value => {
+      this.devControlsExpanded = Boolean(value);
+      deployLabel.setText(this.devControlsExpanded ? 'D) DEPLOY  -' : 'D) DEPLOY  +');
+      controls.forEach(({ box, label }) => {
+        box.setVisible(this.devControlsExpanded);
+        label.setVisible(this.devControlsExpanded);
+        if (this.devControlsExpanded) box.setInteractive({ useHandCursor: true });
+        else box.disableInteractive();
+      });
+    };
+    deploy.on('pointerover', () => deploy.setStrokeStyle(2, 0xffa7c6, 1));
+    deploy.on('pointerout', () => deploy.setStrokeStyle(1, stroke, 0.98));
+    deploy.on('pointerdown', () => setExpanded(!this.devControlsExpanded));
 
     const makeButton = (index, labelText, onPress) => {
-      const y = startY + index * gap;
-      const box = this.add.rectangle(
-        x, y, width, 32, fill, 0.96
-      ).setStrokeStyle(1, stroke, 0.98)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(88);
-
-      const label = this.add.text(x, y, labelText, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: textColor,
+      const column = index % 3;
+      const row = Math.floor(index / 3);
+      const bx = STAGE.x + 111 + column * 187;
+      const by = STAGE.y + 68 + row * 44;
+      const box = this.add.rectangle(bx, by, 182, 36, fill, 0.97)
+        .setStrokeStyle(1, stroke, 0.98).setDepth(88)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add.text(bx, by, labelText, {
+        fontFamily: PIXEL_FONT, fontSize: '6px', color: textColor,
       }).setOrigin(0.5).setDepth(89);
-
       box.on('pointerover', () => box.setStrokeStyle(2, 0xffa7c6, 1));
       box.on('pointerout', () => box.setStrokeStyle(1, stroke, 0.98));
       box.on('pointerdown', onPress);
-      return { box, label, defaultText: labelText };
+      const control = { box, label, defaultText: labelText };
+      controls.push(control);
+      return control;
     };
 
     this.devScenesControl = makeButton(
-      0, 'D) SCENES',
-      () => {
-        if (!sceneCutsceneActive(this)) showCutsceneTester(this);
-      }
+      0, 'D) SCENES', () => { if (!sceneCutsceneActive(this)) showCutsceneTester(this); }
     );
-
     this.devRefreshChallengesControl = makeButton(
-      1, 'D) REFRESH MEET',
-      () => this.devRefreshAllChallenges()
+      1, 'D) REFRESH MEET', () => this.devRefreshAllChallenges()
     );
-
-    // The existing Special Challenger action is the pink-slip test shortcut.
     this.devForceChallengerControl = makeButton(
-      2, 'D) PINK SLIP',
-      () => this.forceDevSpecialChallenger()
+      2, 'D) PINK SLIP', () => this.forceDevSpecialChallenger()
     );
-
-    // Preserve the existing regional tuner-team challenge shortcut.
     this.devForceTeamChallengeControl = makeButton(
-      3, 'D) REGIONAL CHALLENGE',
-      () => this.forceDevTunerTeamChallenge()
+      3, 'D) REGIONAL CHALLENGE', () => this.forceDevTunerTeamChallenge()
     );
-
     this.devForceCrewRecruitControl = makeButton(
-      4, 'D) DEPLOY RECRUIT',
-      () => this.forceDevCrewRecruitment()
+      4, 'D) DEPLOY RECRUIT', () => this.forceDevCrewRecruitment()
     );
-
     if (isArkonDen(this.registry) && isCrewComplete(this.registry)) {
       this.devForceRegionalCrewBattleControl = makeButton(
-        5, 'D) CREW CHALLENGE',
-        () => this.forceDevRegionalCrewBattle()
+        5, 'D) CREW CHALLENGE', () => this.forceDevRegionalCrewBattle()
       );
     }
+    setExpanded(false);
   }
 
   flashDevControl(control, message, color = '#f4fbff') {
