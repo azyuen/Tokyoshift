@@ -375,6 +375,26 @@ export default class GarageScene extends Phaser.Scene {
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
 
+    // Scene 06 reuses the ACTUAL seven rival portraits (or the canonical
+    // substitute if the selected avatar is the same person) and the office
+    // flags already queued above. Nothing here creates a recruit or rival.
+    const sevenBadges = getRegionalChampionshipCount(this.registry) >= 7;
+    if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
+        (sevenBadges || isArkonDen(this.registry)) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('sevenRegionsConquered')) {
+      const ids = [
+        'emiKanzaki', 'renMizuno', 'kaitoFujimori', 'ayaKurose',
+        'haruTachibana', 'reinaShibata', 'rikuAkamine',
+      ];
+      const playerId = this.registry.get('playerCharacterId');
+      ids.forEach(id => {
+        const asset = getCharacterVisualAsset(id, 'idle', {
+          rivalContext: true, playerCharacterId: playerId,
+        });
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      });
+    }
+
     // First Sayaka manga dialogue used to queue every alternate Sayaka outfit
     // just as she finished fading into the garage. Warm only the two actual
     // FIRST KEYS poses with the workshop; farewell poses load on the tutorial
@@ -7118,7 +7138,8 @@ export default class GarageScene extends Phaser.Scene {
     // Scene 02 (nine wins / market invitation) takes precedence when a save
     // first returns with both the nine-win and first-champion milestones due.
     if (this.showCentralTokyoInvitationIfNeeded()) return true;
-    return this.showFirstRegionalChampionIfNeeded();
+    if (this.showFirstRegionalChampionIfNeeded()) return true;
+    return this.showSevenRegionsStoryIfNeeded();
   }
 
   fadeOpeningSayakaFromGarage(onComplete) {
@@ -7450,46 +7471,149 @@ export default class GarageScene extends Phaser.Scene {
     return Boolean(result?.played);
   }
 
+
+  startSevenRivalsMontage() {
+    if (this._sevenRivalsMontage) return;
+    const entries = [
+      ['ODAIBA', 'emiKanzaki', 'officeFlagOdaiba'],
+      ['SHINAGAWA', 'renMizuno', 'officeFlagShinagawa'],
+      ['TATSUMI', 'kaitoFujimori', 'officeFlagTatsumi'],
+      ['SHIBUYA', 'ayaKurose', 'officeFlagShibuya'],
+      ['YOKOHAMA', 'haruTachibana', 'officeFlagYokohama'],
+      ['DAIKOKU', 'reinaShibata', 'officeFlagDaikoku'],
+      ['SHINJUKU', 'rikuAkamine', 'officeFlagShinjuku'],
+    ];
+    const width = this.scale.width || 1560;
+    const height = this.scale.height || 840;
+    const owned = [];
+    const keep = obj => { owned.push(obj);return obj; };
+    const veil = keep(this.add.rectangle(width / 2, height / 2, width, height,
+      0x030711, 0.92).setDepth(963).setScrollFactor(0).setInteractive());
+    const state = { owned, tween: null, active: true };
+    this._sevenRivalsMontage = state;
+    const playerCharacterId = this.registry.get('playerCharacterId');
+    const showRival = index => {
+      if (!state.active) return;
+      if (index >= entries.length) {
+        // Final memory returns to the Warehouse and Daichi's next line.
+        state.active = false;
+        state.owned.forEach(o => o?.destroy?.());
+        if (this._sevenRivalsMontage === state) this._sevenRivalsMontage = null;
+        return;
+      }
+      const [region, rivalId, flagKey] = entries[index];
+      const flagLeft = index % 2 === 0;
+      const sideX = flagLeft ? 262 : width - 262;
+      const asset = getCharacterVisualAsset(rivalId, 'idle', {
+        rivalContext: true, playerCharacterId,
+      });
+      const name = getCharacterForContext(rivalId, {
+        rivalContext: true, playerCharacterId,
+      })?.name || characters[rivalId]?.name || region;
+      const current = [];
+      const add = o => { current.push(keep(o));return o; };
+      if (asset?.key && this.textures.exists(asset.key)) {
+        const image = add(this.add.image(width / 2, height - 70, asset.key)
+          .setOrigin(0.5, 1).setDepth(965).setScrollFactor(0));
+        const src = this.textures.get(asset.key).getSourceImage();
+        image.setScale(Math.min(450 / Math.max(1, src.height), 370 / Math.max(1, src.width)));
+      }
+      if (this.textures.exists(flagKey)) {
+        const flag = add(this.add.image(sideX, height / 2 - 25, flagKey)
+          .setDepth(966).setScrollFactor(0));
+        const source = this.textures.get(flagKey).getSourceImage();
+        flag.setScale(Math.min(290 / Math.max(1, source.width),
+          210 / Math.max(1, source.height)));
+      }
+      add(this.add.text(sideX, height / 2 + 118, region, {
+        fontFamily: PIXEL_FONT, fontSize: '13px', color: '#f4f5fb',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(967).setScrollFactor(0));
+      add(this.add.text(width / 2, height - 75, name.toUpperCase(), {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#d8e8ff',
+      }).setOrigin(0.5).setDepth(967).setScrollFactor(0));
+      current.forEach(o => o.setAlpha(0));
+      state.tween = this.tweens.add({
+        targets: current, alpha: 0.72, duration: 310,
+        ease: 'Sine.easeOut', onComplete: () => {
+          if (!state.active) return;
+          state.tween = this.tweens.add({
+            targets: current, alpha: 0.05, delay: 230, duration: 330,
+            ease: 'Sine.easeIn', onComplete: () => {
+              current.forEach(o => {
+                const i = owned.indexOf(o);
+                if (i >= 0) owned.splice(i, 1);
+                o.destroy();
+              });
+              showRival(index + 1);
+            },
+          });
+        },
+      });
+    };
+    showRival(0);
+  }
+
+  finishSevenRivalsMontage() {
+    const state = this._sevenRivalsMontage;
+    if (!state) return;
+    state.active = false;
+    state.tween?.stop?.();
+    state.owned.forEach(obj => obj?.destroy?.());
+    this._sevenRivalsMontage = null;
+  }
+
+  playSevenRegionsStory(options = {}) {
+    if (this.crewMode) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'sevenRegionsConquered', {
+      preview,
+      onPageChange: ({ page }) => {
+        if (page?.cinematicBeat === 'sevenRivalsMontage') this.startSevenRivalsMontage();
+      },
+      onComplete: ({ skipped }) => {
+        this.finishSevenRivalsMontage();
+        if (skipped) return;
+        const previous = this.selectedCarId && !cars[this.selectedCarId]?.crewLoan
+          ? this.selectedCarId
+          : (this.ownedCarIds || []).find(id => !cars[id]?.crewLoan) || null;
+        this.registry.set('crewPreviousCarId', previous);
+        // The established HQ -> Crew Space transition is used, not a new
+        // parallel room system. All 7 spaces start empty until recruited.
+        this.time.delayedCall(260, () => this.transitionWarehousePresentation(true, null));
+      },
+      onPreviewComplete: () => this.finishSevenRivalsMontage(),
+    });
+    return Boolean(result?.played);
+  }
+
+  showSevenRegionsStoryIfNeeded() {
+    if (this.crewMode || isArkonDen(this.registry) ||
+        this.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip' ||
+        getRegionalChampionshipCount(this.registry) < 7 ||
+        this.hasSeenStoryCutscene('sevenRegionsConquered')) return false;
+    return this.playSevenRegionsStory();
+  }
+
   playCanalYardStorySequence() {
     if (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
-        this.hasSeenStoryCutscene('canalYardAfterCall')) return false;
-    // Only present this workshop-arrival chapter in the player's Canal Yard,
-    // never from Crew Space or an unrelated property after a saved interruption.
+        this.hasSeenStoryCutscene('canalYardBiggerDreams')) return false;
     if (this.crewMode || this.registry.get('workshopLocationId') !== 'shinonomeCanalYard') {
       return false;
     }
     if (sceneCutsceneActive(this)) return true;
 
-    const ids = ['canalYardUnlocked', 'canalYardSayakaCall', 'canalYardAfterCall'];
-    const nextId = ids.find(id => !this.hasSeenStoryCutscene(id));
-    if (!nextId) return false;
-
-    const result = playMangaCutscene(this, nextId, {
-      onComplete: ({ skipped }) => {
-        if (skipped) {
-          // SKIP in a manga part skips the whole three-part sequence, not
-          // just its first panel group. Phone dialogue won't unexpectedly
-          // start after a player deliberately dismisses the story.
-          ids.forEach(id => markCutsceneSeen(this.registry, id));
-        }
-        if (skipped || nextId === 'canalYardAfterCall') {
-          // Release the active-chapter marker after the final part; the three
-          // individual completion flags remain available for the story index.
-          const seen = this.registry.get('cutscenesSeen') || [];
-          this.registry.set('cutscenesSeen',
-            seen.filter(id => id !== 'canalYardStoryPending'));
-          saveSessionState(this.registry);
-        }
-        this.time.delayedCall(180, () => {
-          if (!this.playCanalYardStorySequence()) this.continueGarageStoryFlow();
-        });
+    // Only ONE MangaCutscene instance and one developer-tester entry. The
+    // caller briefly replaces Daichi as the left manga actor in-place.
+    const result = playMangaCutscene(this, 'canalYardBiggerDreams', {
+      onComplete: () => {
+        const seen = this.registry.get('cutscenesSeen') || [];
+        this.registry.set('cutscenesSeen',
+          seen.filter(id => id !== 'canalYardStoryPending'));
+        saveSessionState(this.registry);
+        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
       },
     });
-
-    if (!result?.played && result?.reason === 'seen') {
-      this.time.delayedCall(180, () => this.playCanalYardStorySequence());
-      return true;
-    }
     return Boolean(result?.played);
   }
 
