@@ -211,6 +211,7 @@ test('standard Meet cards and right-side Showdown sections appear in Oshiage', (
   assert.match(scene, /this\.addText\(x - 42, y \+ 31,/);
   assert.match(scene, /SIDE\.x \+ 265, SIDE\.y \+ 119, 158, 49/);
   assert.match(scene, /'WIN ALL 3 HEATS'/);
+  assert.match(scene, /this\.button\(SIDE\.x \+ SIDE\.w \/ 2, SIDE\.y \+ 584,/);
   assert.doesNotMatch(scene, /'ENTRY FEE/);
   assert.match(scene, /'HEAT ' \+ \(previewIndex \+ 1\) \+ ' OF 3'/);
   assert.match(scene, /'CAR: '/);
