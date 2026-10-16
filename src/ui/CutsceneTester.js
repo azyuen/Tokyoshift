@@ -8,6 +8,7 @@ import {
   sceneCutsceneActive,
 } from './MangaCutscene.js?v=20261017-r557';
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r557';
+import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r558';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -240,9 +241,24 @@ export function showCutsceneTester(scene) {
           playCanalYardStory(scene, { preview: true });
         } else if (id === 'warehouseHqUnlocked' && typeof scene.playWarehouseHqStory === 'function') {
           scene.playWarehouseHqStory({ preview: true });
-        } else if (id === 'sevenRegionsConquered' &&
-            typeof scene.playSevenRegionsStory === 'function') {
-          scene.playSevenRegionsStory({ preview: true });
+        } else if (id === 'sevenRegionsConquered') {
+          // The EXACT same portrait procession must work from Garage, Meet
+          // and Race developer menus, including on fresh uncached profiles.
+          preloadSevenRivalsMontageAssets(scene, () => {
+            if (typeof scene.playSevenRegionsStory === 'function') {
+              scene.playSevenRegionsStory({ preview: true });
+            } else {
+              playMangaCutscene(scene, id, {
+                preview: true,
+                onPageChange: ({ page }) => {
+                  if (page?.cinematicBeat === 'sevenRivalsMontage') {
+                    startSevenRivalsPortraitMontage(scene);
+                  }
+                },
+                onPreviewComplete: () => scene._sevenRivalsMontage?.stop?.(),
+              });
+            }
+          });
         } else {
           playMangaCutscene(scene, id, { preview: true });
         }
