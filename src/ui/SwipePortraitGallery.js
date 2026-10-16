@@ -122,7 +122,8 @@ export function openSwipePortraitGallery(scene, {
     if (scene[ownerKey] === state) scene[ownerKey] = null;
   };
   const complete = () => {
-    if (!active || moving) return;
+    if (!active) return;
+    // NEXT always works, including halfway through a sliding portrait.
     const current = scene._mangaCutscene;
     const canAdvance = current?.active && current === controller;
     close();
