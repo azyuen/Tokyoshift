@@ -41,7 +41,7 @@ import {
 } from '../data/oshiageRims.js?v=20261014-r506';
 
 const PIXEL = '"Silkscreen", monospace';
-const BODY = '"Rajdhani", sans-serif';
+const BODY = '"Rajdhani", monospace';
 const STAGE = SHOWDOWN_STAGE;
 const SIDE = SHOWDOWN_SIDE;
 const STRIP = SHOWDOWN_STRIP;
