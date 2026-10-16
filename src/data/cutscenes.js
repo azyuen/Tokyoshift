@@ -800,6 +800,43 @@ export const CUTSCENES = {
     finalActionLabel: 'GET TO WORK',
   },
 
+  // Scene 06: seven-badge turning point; the seven main rivals are silent
+  // memories, not visitors or recruitable crew. GarageScene owns the montage.
+  sevenRegionsConquered: {
+    id: 'sevenRegionsConquered',
+    category: 'CAREER / STORY',
+    testerLabel: 'Career 06 — Beyond Seven (Rival Flags + Crew)',
+    title: 'TOKYO SHIFT // BEYOND SEVEN',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'win',
+        text: "Seven badges. All seven regions. You know, when we first started, I wasn't even sure we'd make it out of Odaiba!" },
+      { speaker: 'right', pose: 'idle',
+        text: "Feels like ages ago. I can still picture every one of those final races." },
+      { speaker: 'left', pose: 'idle', cinematicBeat: 'sevenRivalsMontage',
+        text: "Every one of them made you earn it. And now you've beaten them all. Tokyo knows your name." },
+      { speaker: 'right', pose: 'idle',
+        text: "But I'm not finished. I want to be Tokyo Champion. Not just champion of seven regions. I want to be the best in all of Tokyo." },
+      { speaker: 'left', pose: 'idle',
+        text: "You know... I've got a dream too. I want to become a world-class racing engineer. Build cars that can compete with the very best, anywhere in the world." },
+      { speaker: 'right', pose: 'idle',
+        text: "So... you reckon we can actually get there?" },
+      { speaker: 'left', pose: 'win',
+        text: "I think we can. But not just the two of us. We've come this far together, but if we're going any further, we're going to need a proper team." },
+      { speaker: 'right', pose: 'idle',
+        text: "A team? Where are we going to find people willing to race with us?" },
+      { speaker: 'left', pose: 'win',
+        text: "You've got a reputation now! Keep racing around Tokyo and don't be surprised if other drivers start approaching you. Some might even want to join your crew!" },
+      { speaker: 'left', pose: 'idle',
+        text: "Of course, they'll want to know you're the real deal. You might have to prove yourself against them first. But that's never stopped you before!" },
+      { speaker: 'left', pose: 'win',
+        text: "Actually, there's something I've been meaning to show you. I've cleared out a space here at HQ. Welcome to Crew Space! Looks a little empty now, doesn't it? Let's see what we can do about that!",
+        emphasis: true },
+    ],
+    finalActionLabel: 'ENTER CREW SPACE',
+  },
+
   // Career chapter 02: reached from the existing nine-win Auto Market invite.
   // One 12-page manga, with two cast/location changes using shared renderer.
   centralTokyoUnlocked: {
@@ -1110,6 +1147,7 @@ export const CUTSCENE_ORDER = [
   'firstRegionalChampion',
   'canalYardBiggerDreams',
   'warehouseHqUnlocked',
+  'sevenRegionsConquered',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
   'proCircuitStrategistReveal',
