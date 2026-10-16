@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   getOshiageEliteLineup, getOshiageEliteOpponent,
+  getOshiageElitePrize, makeOshiageEliteStageThreeBuild,
   OSHIAGE_ELITE_VENUES,
 } from '../src/data/oshiageElite.js';
 import {
@@ -47,6 +48,46 @@ test('each Skytree meet has an independent paid entry and a large three-heat pri
   assert.equal(OSHIAGE_ELITE_VENUES.plaza.rounds, 3);
 });
 
+test('every Skytree prize includes car coupons even when Plaza grants bonus wheels', () => {
+  const reg = makeRegistry();
+  const underpass = getOshiageElitePrize(reg, 'underpass', 0);
+  assert.equal(underpass.cash, 500000);
+  assert.equal(underpass.coupons, 2);
+  assert.ok(underpass.couponCarId);
+  const plaza = getOshiageElitePrize(reg, 'plaza', 0);
+  assert.equal(plaza.cash, 750000);
+  assert.ok(plaza.coupons >= 2);
+  assert.ok(plaza.couponCarId);
+  if (plaza.wheelId) {
+    const fallback = getOshiageElitePrize(makeRegistry({
+      ownedWheelIds: [plaza.wheelId],
+    }), 'plaza', 0);
+    assert.ok(fallback.coupons >= 2);
+    assert.ok(fallback.couponCarId);
+  }
+});
+
+test('Skytree cars use full Level 3 mechanical tuning without forcing an NA turbo', () => {
+  const mechanical = {
+    tuning: ['engine', 'intake', 'ecu'],
+    drivetrainTuning: ['clutch', 'gearbox', 'differential', 'suspension'],
+    chassisTuning: ['tyres', 'weightReduction'],
+    exhaustNosTuning: ['headers', 'exhaust', 'muffler'],
+  };
+  for (const carId of ['ae86', 'r32']) {
+    const build = makeOshiageEliteStageThreeBuild(cars[carId], {});
+    for (const [category, parts] of Object.entries(mechanical)) {
+      for (const part of parts) assert.equal(build[category][part], 3, carId + ': ' + category + '.' + part);
+    }
+    if (Number(cars[carId].maximumBoost || 0) > 0.01) {
+      assert.equal(build.tuning.turbo, 3);
+      assert.equal(build.tuning.intercooler, 3);
+    } else {
+      assert.ok(!build.tuning.turbo, 'NA engine should remain naturally aspirated');
+    }
+  }
+});
+
 test('three drivers are distinct, come from anywhere in Tokyo, and cannot be current crew', () => {
   const reg = makeRegistry({ crewMembers: {
     ODAIBA: { characterId: 'renMizuno' }, SHINAGAWA: { characterId: 'reikaTachibana' },
@@ -59,6 +100,9 @@ test('three drivers are distinct, come from anywhere in Tokyo, and cannot be cur
     assert.ok(cars[opponent.carId]);
     assert.equal(opponent.encounterRating, 5);
     assert.equal(opponent.buildState.buildRating, 5);
+    assert.equal(opponent.buildState.tuning.engine, 3);
+    assert.equal(opponent.buildState.chassisTuning.tyres, 3);
+    assert.equal(opponent.difficulty, 'ELITE');
     assert.ok(!['renMizuno','reikaTachibana','emiKanzaki'].includes(opponent.characterId));
   }
 });
@@ -144,12 +188,21 @@ test('standard Meet cards and right-side Showdown sections appear in Oshiage', (
   assert.match(scene, /SKYTREE\\nUNDERPASS/);
   assert.match(scene, /SKYTREE\\nPLAZA/);
   assert.match(scene, /YOUR CAR/);
-  assert.match(scene, /3-ELITE DRIVER SHOWDOWN/);
+  assert.match(scene, /THREE ELITE RIVALS/);
+  assert.match(scene, /createCharacterProfile\(this, \{/);
+  assert.match(scene, /frameWidth: 104,/);
+  assert.match(scene, /frameHeight: 104,/);
+  assert.doesNotMatch(scene, /oshiageEliteRival_/);
+  assert.match(scene, /this\.addText\(x - 42, y \+ 31,/);
+  assert.match(scene, /SIDE\.x \+ 265, SIDE\.y \+ 119, 158, 49/);
+  assert.match(scene, /'WIN ALL 3 HEATS'/);
+  assert.doesNotMatch(scene, /'ENTRY FEE/);
   assert.match(scene, /'HEAT ' \+ \(previewIndex \+ 1\) \+ ' OF 3'/);
   assert.match(scene, /'CAR: '/);
   assert.match(scene, /DISTANCE: /);
   assert.match(scene, /'PRIZE'/);
-  assert.match(scene, /'RACE FOR ' \+ MONEY\(venue\.prizeCash\)/);
+  assert.match(scene, /'ENTER  \/\/  ' \+ MONEY\(venue\.entryFee\)/);
+  assert.match(scene, /SPECIAL WHEELS/);
   assert.match(scene, /GO TO MAP/);
 });
 
@@ -165,6 +218,9 @@ test('RaceScene goes directly to heat 2 and 3, paying prize only after heat 3', 
   assert.doesNotMatch(nextHeat, /this\.scene\.start\('OshiageScene'\)[^]*this\.scene\.start\('RaceScene'\)/);
   assert.match(race, /const completed = Boolean\(playerWon && roundNumber >= 3/);
   assert.match(race, /const prize = completed \?/);
+  assert.match(race, /if \(prize\?\.wheelId\)/);
+  assert.match(race, /if \(prize\?\.couponCarId && prize\.coupons > 0\)/);
+  assert.doesNotMatch(race, /else if \(prize\?\.couponCarId && prize\.coupons > 0\)/);
   assert.match(helper, /registry\.set\('cash', cashBefore - venue\.entryFee\)/);
   assert.doesNotMatch(helper, /registry\.set\('cash', .*entryFee.*\n.*?registry\.set\('cash'/);
 });
