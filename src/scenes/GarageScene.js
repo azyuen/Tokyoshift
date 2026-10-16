@@ -47,7 +47,8 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r556';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r557';
+import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r557';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r556';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -7343,11 +7344,13 @@ export default class GarageScene extends Phaser.Scene {
     if (!guest || !this.textures.exists(getCarBodyTextureKey(this, guest)) ||
         !this.textures.exists(guest.visual.wheelKey)) return false;
 
-    // Keep the famous widebody dramatic but slightly smaller than the
-    // player's standard 620px hero car to respect stage perspective.
-    const width = 560;
+    // rwbStellaPorsche already resolves to the corrected
+    // assets/Cars/hero/rwb_stella_artois_porsche_hero_body.png through
+    // applyHeroCarAssets. Use the SAME workshop-wide hero dimensions and
+    // wheel geometry as every other car; no cinematic-specific scale.
+    const width = HERO_CFG.targetWidth;
     const x = HERO_CFG.x;
-    const y = this.getBodyYForWheelBottom(guest, width, 505);
+    const y = this.getBodyYForWheelBottom(guest, width, HERO_CFG.tyreContactY);
     let carObjects;
     try {
       // Depth 908–909 sits above the manga shade (901), but under the
@@ -7595,23 +7598,20 @@ export default class GarageScene extends Phaser.Scene {
     return this.playSevenRegionsStory();
   }
 
-  playCanalYardStorySequence() {
-    if (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
-        this.hasSeenStoryCutscene('canalYardBiggerDreams')) return false;
-    if (this.crewMode || this.registry.get('workshopLocationId') !== 'shinonomeCanalYard') {
-      return false;
-    }
+  playCanalYardStorySequence(options = {}) {
+    const preview = Boolean(options.preview);
+    if (!preview && (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
+        this.hasSeenStoryCutscene('canalYardBiggerDreams'))) return false;
+    if (!preview && (this.crewMode ||
+        this.registry.get('workshopLocationId') !== 'shinonomeCanalYard')) return false;
     if (sceneCutsceneActive(this)) return true;
 
-    // Only ONE MangaCutscene instance and one developer-tester entry. The
-    // caller briefly replaces Daichi as the left manga actor in-place.
-    const result = playMangaCutscene(this, 'canalYardBiggerDreams', {
+    // One chapter, one developer entry, three presentation beats:
+    // Manga -> REAL ringing phone / pickup UI -> Manga, all at Canal Yard.
+    const result = playCanalYardStory(this, {
+      preview,
       onComplete: () => {
-        const seen = this.registry.get('cutscenesSeen') || [];
-        this.registry.set('cutscenesSeen',
-          seen.filter(id => id !== 'canalYardStoryPending'));
-        saveSessionState(this.registry);
-        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+        if (!preview) this.time.delayedCall(180, () => this.continueGarageStoryFlow());
       },
     });
     return Boolean(result?.played);
