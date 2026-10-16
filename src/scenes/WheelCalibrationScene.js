@@ -296,9 +296,11 @@ export default class WheelCalibrationScene extends Phaser.Scene {
 
     // New stock and hero masters are right-anchored. The old preview used
     // a centre-origin X and pushed the rear axle off the left edge.
-    const bodyX = car.visual?.referenceStandard ? 925 : 510;
+    // Scale from the shared AE86 reference; even 1350px collectors must fit
+    // inside the 0..930 preview area without cropping a wheel or bumper.
+    const bodyX = car.visual?.referenceStandard ? 914 : 510;
     const bodyY = 470;
-    const targetWidth = 900;
+    const targetWidth = 780;
     const bodyScale = getCarBodyScaleForWidth(this, car, targetWidth);
     const wheelSource = this.textures.get(wheelKey).getSourceImage();
     const visual = this.getOverrideVisual(car);
