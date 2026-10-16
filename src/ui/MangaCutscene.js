@@ -480,7 +480,18 @@ function replaceActorProfile(
   if (!characterId || !characters[characterId]) {
     if (previous?.profile) {
       scene.tweens.killTweensOf(previous.profile.image);
-      previous.profile.destroy();
+      if (controller.definition.pages?.[controller.pageIndex]?.fadeOutActors) {
+        const oldProfile = previous.profile;
+        scene.tweens.add({
+          targets: oldProfile.image,
+          alpha: 0,
+          duration: 290,
+          ease: 'Sine.easeOut',
+          onComplete: () => oldProfile.destroy(),
+        });
+      } else {
+        previous.profile.destroy();
+      }
     }
     controller.actors[side] = {
       characterId: null,
@@ -653,11 +664,15 @@ function drawDialogue(controller, page) {
     .setScrollFactor(0);
 
   const finalPage = controller.pageIndex >= (definition.pages?.length || 1) - 1;
-  const rawAction = finalPage
+  const rawAction = page.actionLabel || (finalPage
     ? (definition.finalActionLabel || 'CONTINUE')
-    : 'NEXT';
+    : 'NEXT');
   const actionLabel = interpolate(rawAction, context.variables) + '  >';
-  const secondaryRaw = finalPage ? definition.secondaryFinalActionLabel : null;
+  const secondaryRaw = page.secondaryActionLabel != null
+    ? page.secondaryActionLabel
+    : finalPage ? definition.secondaryFinalActionLabel : null;
+  const actionEnabled = !page.disableAction &&
+    !(finalPage && context.options.isFinalActionEnabled?.({ page }) === false);
   const secondaryLabel = secondaryRaw
     ? interpolate(secondaryRaw, context.variables)
     : '';
@@ -676,11 +691,11 @@ function drawDialogue(controller, page) {
     footerY,
     actionWidth,
     42,
-    0x111111,
+    actionEnabled ? 0x111111 : 0x565656,
     1
   ).setDepth(BASE_DEPTH + 33)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true });
+    .setScrollFactor(0);
+  if (actionEnabled) actionBox.setInteractive({ useHandCursor: true });
 
   const actionText = scene.add.text(
     actionX,
@@ -689,7 +704,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: PIXEL_FONT,
       fontSize: finalPage ? '7px' : '8px',
-      color: '#ffffff',
+      color: actionEnabled ? '#ffffff' : '#cccccc',
       align: 'center',
     }
   ).setOrigin(0.5)
@@ -1052,6 +1067,10 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
 
     const pages = definition.pages || [];
     const finalPage = controller.pageIndex >= pages.length - 1;
+    if (finalPage && (pages[controller.pageIndex]?.disableAction ||
+        context.options.isFinalActionEnabled?.({
+          page: pages[controller.pageIndex],
+        }) === false)) return;
     if (finalPage) {
       controller.finish('action');
       return;
