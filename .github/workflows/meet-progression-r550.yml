@@ -1,0 +1,33 @@
+name: Meet Regional Progression Actions R550
+on:
+  push:
+    branches: [main, feature/meet-progression-actions-r550]
+    paths:
+      - 'src/scenes/MeetScene.js'
+      - 'src/data/meetProgressionActions.js'
+      - 'src/data/regionalChallengeReturnQuotes.js'
+      - 'src/data/tunerChallenges.js'
+      - 'src/data/cutscenes.js'
+      - 'tests/meet-progression-actions-r550.mjs'
+      - 'tests/crew-battle-introduction-r545.mjs'
+      - '.github/workflows/meet-progression-r550.yml'
+  workflow_dispatch:
+jobs:
+  regional-actions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse modified modules
+        run: |
+          node --check src/scenes/MeetScene.js
+          node --check src/data/meetProgressionActions.js
+          node --check src/data/regionalChallengeReturnQuotes.js
+          node --check src/data/tunerChallenges.js
+          node --check src/data/cutscenes.js
+      - name: Challenge invitation, save and crew progression regressions
+        run: |
+          node --test tests/meet-progression-actions-r550.mjs tests/crew-battle-introduction-r545.mjs tests/crew-battle-rules-r547.mjs tests/crew-3v3-ui-r549.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs tests/meet-refresh-r469.mjs

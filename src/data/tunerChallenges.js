@@ -275,6 +275,10 @@ export function getTunerTeamChallengeState(source, regionId) {
     // flags may reopen the challenge or make its prizes claimable twice.
     invited: perfectComplete ? false : Boolean(raw.invited),
     offeredOnce: Boolean(raw.offeredOnce || raw.invited || Number(raw.stage || 0) > 0),
+    // Once an event has actually started, the player can resume from the
+    // permanent Meet action even if their very first race was a loss.
+    firstAttemptStarted: Boolean(raw.firstAttemptStarted || raw.activeSession || raw.paused ||
+      raw.championEarned || raw.completed || Number(raw.stage || 0) > 0 || raw.playerCarId),
     reofferVisitsRemaining: perfectComplete
       ? 0
       : Math.max(0, Number(raw.reofferVisitsRemaining || 0)),
