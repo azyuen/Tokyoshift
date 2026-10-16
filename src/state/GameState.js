@@ -104,6 +104,7 @@ export function createDefaultGameState(options = {}) {
     crewPendingRecruit: null,
     crewBattleProgress: {},
     crewBattleLineups: {},
+    crewBattleIntroVisits: {},
     crewBattleState: null,
     crewSpaceActive: false,
     crewPreviousCarId: null,
@@ -1101,6 +1102,15 @@ export function normaliseState(input = {}) {
       input.crewBattleLineups && typeof input.crewBattleLineups === 'object'
         ? input.crewBattleLineups
         : {},
+    crewBattleIntroVisits: Object.fromEntries(
+      ['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'SHIBUYA', 'YOKOHAMA', 'DAIKOKU', 'SHINJUKU']
+        .filter(region => input.crewBattleIntroVisits?.[region] != null)
+        .map(region => [
+          region,
+          Math.max(0, Math.min(1000000,
+            Math.floor(Number(input.crewBattleIntroVisits[region]) || 0))),
+        ])
+    ),
     crewBattleState:
       input.crewBattleState && typeof input.crewBattleState === 'object'
         ? input.crewBattleState
@@ -1293,6 +1303,7 @@ export function snapshotRegistry(registry) {
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
     crewBattleLineups: registry.get('crewBattleLineups') || {},
+    crewBattleIntroVisits: registry.get('crewBattleIntroVisits') || {},
     crewBattleState: registry.get('crewBattleState') || null,
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
