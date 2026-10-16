@@ -2163,19 +2163,21 @@ export default class GarageScene extends Phaser.Scene {
     const add = object => { objects.push(object); return object; };
     const close = () => objects.forEach(object => object?.destroy?.());
     add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.84)
-      .setInteractive().setDepth(depth)).on('pointerdown', close);
+      .setInteractive().setDepth(depth));
     add(this.add.rectangle(780, 420, 960, 710, 0x08131f, 1)
       .setStrokeStyle(2, 0x43dfff).setDepth(depth + 1));
     const label = (x, y, value, size = 10, color = '#eefaff') =>
       add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
         fontSize: size + 'px', color }).setDepth(depth + 3));
     label(350, 104, 'UNINSTALL / RESTORE PARTS', 13);
-    label(350, 142, cars[carId]?.shortName || carId, 9, '#9fc7db');
+    add(this.add.text(1210, 105, cars[carId]?.shortName || carId, {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9fc7db',
+    }).setOrigin(1, 0).setDepth(depth + 3));
     const explanation = restoring
-      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥100,000.\\n' +
+      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥100,000.\n' +
         'BETTER PARTS ALREADY INSTALLED WILL BE KEPT. THE KIT IS CONSUMED.'
-      : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\\n' +
-        'LABOUR: ¥50,000 TO UNINSTALL, ¥100,000 TO RESTORE LATER.\\n' +
+      : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\n' +
+        'LABOUR: ¥50,000 TO UNINSTALL, ¥100,000 TO RESTORE LATER.\n' +
         'ONLY ONE KIT SLOT PER CAR. SELECT THE PARTS TO UNINSTALL.';
     add(this.add.text(350, 169, explanation, {
       fontFamily: BODY_FONT, fontSize: '14px', color: '#b8cbd7',
@@ -2231,17 +2233,19 @@ export default class GarageScene extends Phaser.Scene {
       y += Math.ceil(parts.length / 4) * (tileHeight + gap) + 14;
     });
     const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
-    label(350, 654, 'LABOUR FEE  ¥ ' + fee.toLocaleString('en-US'), 10, '#f2d899');
     const action = add(this.add.rectangle(960, 708, 260, 48, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    label(850, 701, restoring ? 'PAY & RESTORE' : 'PAY & STORE', 9);
+    add(this.add.text(960, 708, (restoring ? 'RESTORE FOR ¥' : 'UNINSTALL FOR ¥') +
+      fee.toLocaleString('en-US'), { fontFamily: PIXEL_FONT,
+      fontSize: '8px', color: '#effff9',
+    }).setOrigin(0.5).setDepth(depth + 4));
     const cancel = add(this.add.rectangle(555, 708, 210, 48, 0x17222e, 1)
       .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
     label(502, 701, 'CANCEL', 9);
     cancel.on('pointerdown', close);
-    action.on('pointerdown', () => {
+    const commitKit = () => {
       if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
           this.isSelectedCarTuningLocked()) { close(); return; }
       const states = { ...(this.registry.get('carStates') || {}) };
@@ -2264,6 +2268,39 @@ export default class GarageScene extends Phaser.Scene {
       this.selectCar(carId, { remember: false });
       this.updateMoveCarButtonState();
       this.showWorkshopToast(restoring ? 'STORED KIT RESTORED' : 'PARTS STORED');
+    };
+    action.on('pointerdown', () => {
+      if (!restoring && !selected.size) {
+        this.showWorkshopToast('SELECT PARTS TO UNINSTALL');
+        return;
+      }
+      const confirmation = [];
+      const addConfirm = obj => { confirmation.push(obj); return obj; };
+      const dismiss = () => confirmation.forEach(obj => obj?.destroy?.());
+      const z = depth + 12;
+      addConfirm(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+        .setInteractive().setDepth(z));
+      addConfirm(this.add.rectangle(780, 420, 650, 250, 0x0b1b29, 1)
+        .setStrokeStyle(2, 0x43dfff).setDepth(z + 1));
+      addConfirm(this.add.text(780, 342, 'CONFIRM PARTS SERVICE', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#eefaff',
+      }).setOrigin(0.5).setDepth(z + 2));
+      addConfirm(this.add.text(780, 405,
+        (restoring ? 'RESTORE THE SAVED KIT' : 'UNINSTALL ' + selected.size + ' PART(S)') +
+        ' FOR ¥' + fee.toLocaleString('en-US') + '?', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#f2d899',
+        }).setOrigin(0.5).setDepth(z + 2));
+      const button = (x, title, handler) => {
+        const rect = addConfirm(this.add.rectangle(x, 477, 220, 48, 0x12352e, 1)
+          .setStrokeStyle(1, 0x62e8c7).setInteractive({ useHandCursor: true })
+          .setDepth(z + 2));
+        addConfirm(this.add.text(x, 477, title, { fontFamily: PIXEL_FONT,
+          fontSize: '9px', color: '#effff9',
+        }).setOrigin(0.5).setDepth(z + 3));
+        rect.on('pointerdown', handler);
+      };
+      button(640, 'CANCEL', dismiss);
+      button(920, 'CONFIRM', () => { dismiss(); commitKit(); });
     });
   }
 
