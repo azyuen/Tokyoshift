@@ -2433,6 +2433,7 @@ export default class GarageScene extends Phaser.Scene {
           : null;
       if (storyId) {
         if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+        if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
         try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
       }
 
@@ -3685,6 +3686,7 @@ export default class GarageScene extends Phaser.Scene {
                 : null;
             if (storyId) {
               if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
+              if (storyId === 'warehouseHqUnlocked') markCutsceneSeen(this.registry, 'warehouseHqStoryPending');
               try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
             }
           }
@@ -7414,6 +7416,12 @@ export default class GarageScene extends Phaser.Scene {
         if (page?.cinematicBeat === 'rwbArrival') this.startWarehouseRwbArrival();
       },
       onComplete: () => {
+        // The cutscene's existing once-flag is saved by the manga renderer.
+        // Drop the reload-resume marker only after the full chapter ends.
+        const seen = this.registry.get('cutscenesSeen') || [];
+        this.registry.set('cutscenesSeen',
+          seen.filter(id => id !== 'warehouseHqStoryPending'));
+        saveSessionState(this.registry);
         this.finishWarehouseRwbArrival(() => {
           this.time.delayedCall(180, () => this.continueGarageStoryFlow());
         });
@@ -7480,7 +7488,9 @@ export default class GarageScene extends Phaser.Scene {
       if (this.playCanalYardStorySequence()) return true;
     }
 
-    if (cutsceneId !== 'warehouseHqUnlocked') return false;
+    if (cutsceneId !== 'warehouseHqUnlocked' &&
+        !this.hasSeenStoryCutscene('warehouseHqStoryPending')) return false;
+    if (this.crewMode || this.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip') return false;
     if (this.playWarehouseHqStory()) return true;
     this.time.delayedCall(180, () => this.continueGarageStoryFlow());
     return false;
