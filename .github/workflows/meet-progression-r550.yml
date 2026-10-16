@@ -10,6 +10,7 @@ on:
       - 'src/data/cutscenes.js'
       - 'tests/meet-progression-actions-r550.mjs'
       - 'tests/crew-battle-introduction-r545.mjs'
+      - 'tests/region-crew-tuning-r529.mjs'
       - '.github/workflows/meet-progression-r550.yml'
   workflow_dispatch:
 jobs:
