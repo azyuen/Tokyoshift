@@ -8,7 +8,7 @@ import {
   sceneCutsceneActive,
 } from './MangaCutscene.js?v=20261017-r557';
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r557';
-import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r558';
+import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r559';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
