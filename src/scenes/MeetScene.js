@@ -855,24 +855,44 @@ export default class MeetScene extends Phaser.Scene {
         fontSize: size + 'px', color, align: 'center',
         wordWrap: { width: 205 },
       }).setOrigin(origin).setDepth(depth + 5));
-    // Preserve the meet scenery behind the comic panels.
-    add(this.add.rectangle(780, 420, 1560, 840, 0x050913, 0.91)
+    // Let the existing Meet backdrop show through, as in the race intro.
+    // Only the comic panels get translucent ink backings.
+    add(this.add.rectangle(780, 420, 1560, 840, 0x020711, 0.30)
       .setInteractive().setDepth(depth));
-    add(this.add.rectangle(780, 421, 1510, 755, 0x0a1422, 0.93)
-      .setStrokeStyle(3, 0xe1e8f0).setDepth(depth + 1));
-    txt(780, 77, String(regionId).toUpperCase() + ' // CREW SHOWDOWN', 16);
-    txt(350, 122, 'YOUR CREW', 11, '#65ddf5');
-    txt(1210, 122, 'REGIONAL CREW', 11, '#f6a3b9');
+    add(this.add.rectangle(340, 102, 650, 143, 0x07101b, 0.78)
+      .setDepth(depth + 1));
+    txt(65, 54, String(regionId).toUpperCase(), 13, '#70e7ff', 0);
+    txt(65, 92, 'CREW SHOWDOWN', 27, '#ffffff', 0);
+    txt(65, 137, '3 VS 3 // BEST OF 3', 10, '#c5e8fa', 0);
+    txt(350, 394, 'YOUR CREW', 13, '#65ddf5');
+    txt(1210, 72, 'REGIONAL CREW', 13, '#ff8cac');
+    // Angled ink-stroke frames visually connect each side's six panels.
+    const comicFrame = (x, y, w, h, stroke) => {
+      const g = add(this.add.graphics().setDepth(depth + 1));
+      g.fillStyle(0x030913, 0.68);
+      g.fillPoints([
+        { x: x - 13, y: y + 11 }, { x: x + w - 3, y },
+        { x: x + w + 13, y: y + h - 11 }, { x: x + 3, y: y + h },
+      ], true);
+      g.lineStyle(4, stroke, 1);
+      g.strokePoints([
+        { x: x - 13, y: y + 11 }, { x: x + w - 3, y },
+        { x: x + w + 13, y: y + h - 11 }, { x: x + 3, y: y + h },
+      ], true);
+    };
+    comicFrame(44, 416, 652, 316, 0x33cfff);
+    comicFrame(840, 87, 665, 355, 0xff5d89);
 
-    const playerX = [165, 375, 585];
-    const rivalX = [975, 1185, 1395];
+    const playerX = [160, 370, 580];
+    const rivalX = [947, 1160, 1373];
     const slotObjects = [[], [], []];
     let vsStamp = null;
 
     const drawPanel = (x, y, w, h, filled, tint, label, collection) => {
       const box = add(this.add.rectangle(x, y, w, h,
-        filled ? tint : 0x111e2c, 1).setStrokeStyle(2,
-        filled ? 0xdde7ef : 0x597083).setDepth(depth + 2));
+        filled ? tint : 0x111e2c, filled ? 0.90 : 0.78).setStrokeStyle(3,
+        filled ? (tint === 0x17394b || tint === 0x1d3345 ? 0x38d5ff : 0xff7199)
+          : 0x597083).setDepth(depth + 2));
       collection.push(box);
       if (label) {
         const t = txt(x, y, label, 8, '#9eb5c5');
@@ -920,18 +940,18 @@ export default class MeetScene extends Phaser.Scene {
       const collection = slotObjects[index];
       const unit = slots[index];
       const x = playerX[index];
-      const carPanel = drawPanel(x, 315, 194, 132, Boolean(unit),
+      const carPanel = drawPanel(x, 495, 194, 105, Boolean(unit),
         0x17394b, unit ? '' : '+ SELECT CREW', collection);
-      const portraitPanel = drawPanel(x, 485, 194, 176, Boolean(unit),
+      const portraitPanel = drawPanel(x, 642, 194, 165, Boolean(unit),
         0x1d3345, unit ? '' : '+ SELECT DRIVER', collection);
       if (unit) {
-        drawCar(unit.carId, x, 338, collection);
-        drawPortrait(unit.characterId, x, 485, collection);
+        drawCar(unit.carId, x, 517, collection);
+        drawPortrait(unit.characterId, x, 642, collection);
       }
-      const name = txt(x, 595, unit
+      const name = txt(x, 743, unit
         ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
         : 'EMPTY SLOT ' + (index + 1), 8, '#eefaff');
-      const model = txt(x, 617, unit
+      const model = txt(x, 765, unit
         ? String(cars[unit.carId]?.shortName || unit.carId).toUpperCase()
         : 'TAP TO SELECT', 8, '#94c6dc');
       collection.push(name, model);
@@ -944,24 +964,24 @@ export default class MeetScene extends Phaser.Scene {
     rounds.slice(0, 3).forEach((round, i) => {
       const x = rivalX[i];
       const collection = [];
-      drawPanel(x, 250, 194, 176, true, 0x403039, '', collection);
-      drawPanel(x, 438, 194, 132, true, 0x332b39, '', collection);
-      drawPortrait(round.characterId, x, 250, collection);
-      drawCar(round.carId, x, 461, collection);
-      txt(x, 538, String(characters[round.characterId]?.name ||
+      drawPanel(x, 195, 194, 175, true, 0x403039, '', collection);
+      drawPanel(x, 350, 194, 100, true, 0x332b39, '', collection);
+      drawPortrait(round.characterId, x, 195, collection);
+      drawCar(round.carId, x, 371, collection);
+      txt(x, 418, String(characters[round.characterId]?.name ||
         round.characterId).toUpperCase(), 8, '#fff0f4');
-      txt(x, 560, String(cars[round.carId]?.shortName ||
+      txt(x, 439, String(cars[round.carId]?.shortName ||
         round.carId).toUpperCase(), 8, '#e6b5c6');
     });
 
-    const status = txt(780, 651, '', 9, '#a6cadf');
-    const start = add(this.add.rectangle(985, 722, 300, 54, 0x192333, 1)
+    const status = txt(780, 735, '', 9, '#c9e8f4');
+    const start = add(this.add.rectangle(1150, 776, 300, 54, 0x192333, 1)
       .setStrokeStyle(2, 0x5e7185).setDepth(depth + 3));
-    const startLabel = txt(985, 722, 'SELECT THREE DRIVERS', 9);
-    const later = add(this.add.rectangle(585, 722, 270, 54, 0x192333, 1)
+    const startLabel = txt(1150, 776, 'SELECT THREE DRIVERS', 9);
+    const later = add(this.add.rectangle(830, 776, 270, 54, 0x192333, 1)
       .setStrokeStyle(2, 0x7b8fa3).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    txt(585, 722, 'RACE LATER', 9);
+    txt(830, 776, 'RACE LATER', 9);
     later.on('pointerdown', close);
 
     const saveLineup = () => {
@@ -979,7 +999,13 @@ export default class MeetScene extends Phaser.Scene {
         start.setFillStyle(0x193d35).setStrokeStyle(2, 0x6cf3c6)
           .setInteractive({ useHandCursor: true });
         startLabel.setText('START BATTLE');
-        vsStamp = txt(780, 455, 'VS', 24, '#ffe1a0');
+        vsStamp = add(this.add.text(765, 470, 'VS', {
+          fontFamily: PIXEL_FONT, fontSize: '79px', fontStyle: 'bold italic',
+          color: '#ffbf61', stroke: '#110713', strokeThickness: 12,
+          shadow: { offsetX: 7, offsetY: 8, color: '#08060b', blur: 1, fill: true },
+        }).setOrigin(0.5).setAngle(-11).setDepth(depth + 14));
+        this.tweens.add({ targets: vsStamp, scale: { from: 1.35, to: 1 },
+          duration: 240, ease: 'Back.easeOut' });
       } else {
         start.disableInteractive().setFillStyle(0x192333)
           .setStrokeStyle(2, 0x5e7185);
