@@ -184,7 +184,7 @@ export function openSwipePortraitGallery(scene, {
     fontFamily:FONT,fontSize:'9px',color:'#edf7ff',
     backgroundColor:'#081524a6',padding:{x:12,y:6},
   }).setOrigin(.5).setDepth(989).setScrollFactor(0));
-  const swipeHint = own(scene.add.text(cx,height*.903,
+  const swipeHint = own(scene.add.text(cx,height*.89,
     'SWIPE LEFT / RIGHT TO BROWSE', {
       fontFamily:FONT,fontSize:'8px',color:'#d8e5f1',
       backgroundColor:'#081524b8',padding:{x:12,y:6},
