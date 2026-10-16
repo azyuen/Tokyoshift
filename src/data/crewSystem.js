@@ -22,8 +22,8 @@ export const CREW_INVITE_PITY_WINS = 4;
 export const CREW_RECRUIT_CHALLENGE_CHANCE = CREW_INVITE_INTEREST_CHANCE;
 export const CREW_RECRUIT_OFFER_CHANCE = 1;
 export const CREW_RECRUIT_PITY_ROLLS = CREW_INVITE_PITY_WINS;
-export const CREW_BATTLE_LINEUP_SIZE = 6;
-export const CREW_BATTLE_WINS_REQUIRED = 4;
+export const CREW_BATTLE_LINEUP_SIZE = 3;
+export const CREW_BATTLE_WINS_REQUIRED = 2;
 export const CREW_BATTLE_COUPONS = 2;
 // Loan cars live in their own Crew Space garage and never consume ordinary
 // Warehouse HQ storage. The name is kept for compatibility with older imports.
@@ -631,13 +631,15 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const remaining = originalSeven
     .filter(round => !recruitedIds.has(round.characterId));
 
-  // Keep the permanent regional leader as the sixth/final matchup even when
+  // Keep the permanent regional leader as the final matchup even when
   // the championship roster's authored order placed them earlier.
   const leaderCharacterId = getRegionalCrewRoster(key)?.mainRivalId || null;
+  const otherOpponents = remaining.filter(round => round.characterId !== leaderCharacterId);
+  const leaderRound = remaining.find(round => round.characterId === leaderCharacterId);
   const opponents = [
-    ...remaining.filter(round => round.characterId !== leaderCharacterId),
-    ...remaining.filter(round => round.characterId === leaderCharacterId),
-  ].slice(0, CREW_BATTLE_LINEUP_SIZE);
+    ...otherOpponents.slice(0, CREW_BATTLE_LINEUP_SIZE - 1),
+    ...(leaderRound ? [leaderRound] : otherOpponents.slice(CREW_BATTLE_LINEUP_SIZE - 1, CREW_BATTLE_LINEUP_SIZE)),
+  ];
 
   const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
 
