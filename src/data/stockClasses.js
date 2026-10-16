@@ -71,7 +71,7 @@ export const STOCK_CLASS_DATA = {
   },
   "s2000": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.363
+    "stockCompositeSeconds": 14.266
   },
   "fc3s": {
     "stockClass": "D",

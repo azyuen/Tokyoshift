@@ -12,8 +12,8 @@ Exceptional ≥115; High ≥100; Moderate ≥85; Low <85. Thresholds express str
 
 Limitations: one imperfect-driver seed, fixed tyre-load model, provisional hardware envelopes and incomplete historical specification provenance. Grades are reproducible for this engineering revision and must be regenerated if physics/economy change. They are not final release approval.
 
-Core SHA-256: `4c4378f82dd3ed5d846a15a452c4b659792ee287cee276298f8db8c45f2d1407`
-Supplementary SHA-256: `45635270da66d62d65b5260edb28e0c3edaef9942690eca909e0772e5da3e3af`
+Core SHA-256: `55b6c889cfbcc70e85880b4002ab1bd0585c08447d26977b7edc90adf1e3e949`
+Supplementary SHA-256: `e8814e632b51eb6122176fe37c63dd9f1c5941048fe7e28a18929b26ab41318a`
 
 | Car | Potential | Score | Max pace | Intermediate | Versatility | Improvement | Value | First competitive stage / total yen | Max kW / Nm |
 |---|---|---:|---:|---:|---:|---:|---:|---|---|
@@ -34,7 +34,7 @@ Supplementary SHA-256: `45635270da66d62d65b5260edb28e0c3edaef9942690eca909e0772e
 | ae86 | High | 107.35 | 108.51 | 113.91 | 105.39 | 93.46 | 105.82 | max / 3190000 | 215 / 329 |
 | ef | High | 107.13 | 108.61 | 116.36 | 104.42 | 88.95 | 104.22 | max / 3390000 | 256 / 336 |
 | ek9 | High | 106.37 | 108.25 | 116.78 | 102.6 | 87.12 | 102.04 | max / 3690000 | 286 / 342 |
-| s2000 | High | 110.14 | 116.02 | 124.28 | 107.15 | 75.07 | 94.91 | advanced / 4930000 | 350 / 422 |
+| s2000 | High | 110.94 | 116.13 | 124.54 | 113.11 | 73.15 | 94.91 | advanced / 4930000 | 350 / 422 |
 | fc3s | Moderate | 96.61 | 97.79 | 106.92 | 86.76 | 82.6 | 99.45 | max / 4090000 | 284 / 509 |
 | rx7fd | Exceptional | 123.1 | 133.54 | 146.45 | 111.39 | 75.59 | 94.46 | intermediate / 5025000 | 406 / 628 |
 | rx8 | High | 113.12 | 116.62 | 124.18 | 114.65 | 81.8 | 104.3 | advanced / 3380000 | 333 / 448 |

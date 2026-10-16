@@ -1,0 +1,40 @@
+{
+  "browser": "153.0.8010.0",
+  "viewport": {
+    "width": 1024,
+    "height": 768
+  },
+  "localPhaser": true,
+  "profileLoaded": true,
+  "gearing": {
+    "carId": "s2000",
+    "primary": 1.16,
+    "final": 4.1,
+    "ratios": [
+      14.900547999999999,
+      9.726019999999998,
+      7.043635999999999,
+      5.521716,
+      4.613319999999999,
+      3.8523599999999996
+    ]
+  },
+  "dyno": {
+    "state": "COMPLETE",
+    "error": null,
+    "displayKW": 184,
+    "runKW": 183.3,
+    "points": 24
+  },
+  "race": {
+    "playerKW": 184,
+    "opponentKW": 184,
+    "playerReduction": 4.755999999999999,
+    "opponentReduction": 4.755999999999999,
+    "rollingRPM": 5075.226752821757,
+    "wheelRadius": 0.305
+  },
+  "errors": [],
+  "failed": [],
+  "scope": "Actual local dyno pull and recruitment race initialization/rolling helper; no completed browser race or physical touch test in this targeted run."
+}

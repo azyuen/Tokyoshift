@@ -1,3 +1,4 @@
+import {effectiveFinalDrive} from '../vehicles/Transmission.js';
 import TouchControls from '../input/TouchControls.js';
 import RaceHUD from '../ui/RaceHUD.js';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js';
@@ -2865,7 +2866,7 @@ export default class DynoScene extends Phaser.Scene {
       ? Math.max(
           0.1,
           Number(this.build?.car?.gearRatios?.[gear - 1] || 1) *
-            Number(this.build?.car?.finalDriveRatio || 1)
+            effectiveFinalDrive(this.build?.car)
         )
       : 0;
 
@@ -2929,7 +2930,7 @@ export default class DynoScene extends Phaser.Scene {
 
   getOverallGearRatio(gear = this.currentGear) {
     const ratio = Number(this.build?.car?.gearRatios?.[Math.max(0, Number(gear) - 1)] || 1);
-    const finalDrive = Number(this.build?.car?.finalDriveRatio || 1);
+    const finalDrive = effectiveFinalDrive(this.build?.car);
     return Math.max(0.1, ratio * finalDrive);
   }
 

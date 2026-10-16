@@ -1,3 +1,4 @@
+import {effectiveFinalDrive} from './Transmission.js';
 import {estimateElapsed} from './PerformanceEstimate.js';
 import Engine,{refreshEngineOutput} from './Engine.js';
 import { cars } from '../data/cars.js';
@@ -147,7 +148,7 @@ function standingEngineResponseFactor(car = {}, engine = {}) {
 function gearingFactor(car = {}, rolling = false, engine={}, speedKmh=60) {
   const ratios = Array.isArray(car.gearRatios) ? car.gearRatios : [];
   if (!ratios.length) return 1;
-  const finalDrive = Math.max(0.1, Number(car.finalDriveRatio || 1));
+  const finalDrive = Math.max(0.1, effectiveFinalDrive(car));
   const firstOverall = Math.max(0.1, Number(ratios[0] || 1) * finalDrive);
   const reference = PROGRESSION_BALANCE.performance.referenceOverallRatio;
   const launch = clamp(Math.sqrt(firstOverall / reference), 0.86, 1.14);
@@ -256,7 +257,7 @@ export function getVehiclePerformance(carId, state = {}, options = {}) {
 
 export function selectRollingGear(car,engine,speedKmh=60){
  const probe=new Engine(engine),speed=Math.max(1,speedKmh/3.6),wheelRPM=speed/(2*Math.PI*car.wheelRadius)*60;
- let best={gear:1,rpm:0,forceN:0};car.gearRatios.forEach((ratio,i)=>{const overall=ratio*car.finalDriveRatio,rpm=wheelRPM*overall;if(rpm<engine.idleRPM||rpm>engine.redlineRPM*.96)return;
+ let best={gear:1,rpm:0,forceN:0};car.gearRatios.forEach((ratio,i)=>{const overall=ratio*effectiveFinalDrive(car),rpm=wheelRPM*overall;if(rpm<engine.idleRPM||rpm>engine.redlineRPM*.96)return;
  probe.rpm=rpm;const spool=Math.pow(clamp((rpm-(car.boostOnsetRPM||1800))/(car.boostRampRPM||4300),0,1),1.18);
  const forceN=probe.combustionTorque(1,(car.maximumBoost||0)*spool)*overall*car.drivetrainEfficiency/car.wheelRadius;
  if(forceN>best.forceN)best={gear:i+1,rpm,forceN};});return best;

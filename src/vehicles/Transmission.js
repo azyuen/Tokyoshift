@@ -1,9 +1,11 @@
+// Includes any primary reduction ahead of the differential (AP1: 1.160).
+export const effectiveFinalDrive = config => Number(config?.finalDriveRatio || 1) * Number(config?.primaryReductionRatio ?? 1);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const linear=(a,b,t)=>a+(b-a)*t;
 export default class Transmission {
   constructor(config) {
     this.gearRatios = config.gearRatios;
-    this.finalDrive = config.finalDriveRatio;
+    this.finalDrive = effectiveFinalDrive(config);
     this.efficiency = config.drivetrainEfficiency;
     this.shiftTimeScale = Math.max(0.45, Number(config.shiftTimeScale || 1));
     this.clutchRejectThreshold = clamp(

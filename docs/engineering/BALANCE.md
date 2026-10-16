@@ -23,7 +23,7 @@ All values below reuse existing simulation records; no full matrix was rerun. St
 | ae86 | 96.07 → 96.00 | 246.52 → 214.62 | 15.36 → 15.36 | 11.25 → 11.56 |
 | ef | 115.45 → 117.98 | 296.26 → 256.46 | 15.22 → 15.12 | 11.32 → 11.65 |
 | ek9 | 135.67 → 136.00 | 348.15 → 285.58 | 15.19 → 15.18 | 11.22 → 11.77 |
-| s2000 | 184.25 → 184.00 | 472.81 → 349.61 | 14.37 → 14.37 | 11.08 → 11.49 |
+| s2000 | 184.25 → 184.00 | 472.81 → 349.61 | 14.37 → 14.28 | 11.08 → 11.51 |
 | fc3s | 136.16 → 136.00 | 266.94 → 283.52 | 16.00 → 15.67 | 12.08 → 12.33 |
 | rx7fd | 206.25 → 206.00 | 397.37 → 406.50 | 13.91 → 13.65 | 10.95 → 10.92 |
 | rx8 | 170.02 → 170.00 | 436.29 → 332.95 | 14.41 → 14.41 | 10.72 → 11.28 |
@@ -173,13 +173,13 @@ All values below reuse existing simulation records; no full matrix was rerun. St
 | ek9 | advanced | 1330000.00 | 259.36 | 308.96 | 243.07 | 6510–8770 | 12.40 | 18.87 | 10.03 | 0.00 | 0.21 |
 | ek9 | max | 2240000.00 | 285.58 | 342.33 | 277.26 | 6420–8770 | 11.77 | 17.91 | 9.54 | 0.00 | 0.15 |
 | ek9 | dyno | 2240000.00 | 297.58 | 354.40 | 288.91 | 6490–8770 | 11.69 | 17.79 | 9.47 | 0.00 | 0.16 |
-| s2000 | stock | 0.00 | 184.00 | 218.00 | 146.03 | 6870–9000 | 14.37 | 21.96 | 11.40 | 0.00 | — |
-| s2000 | budget | 53000.00 | 190.07 | 225.19 | 150.97 | 6870–9020 | 14.12 | 21.61 | 11.25 | 0.00 | 0.46 |
-| s2000 | street | 214000.00 | 203.89 | 242.17 | 161.82 | 6830–9100 | 13.65 | 20.89 | 10.97 | 0.00 | 0.34 |
-| s2000 | intermediate | 825000.00 | 263.31 | 316.07 | 213.38 | 6650–9220 | 12.57 | 19.11 | 10.16 | 0.00 | 0.22 |
-| s2000 | advanced | 1330000.00 | 326.33 | 392.53 | 263.80 | 6640–9370 | 12.31 | 18.44 | 9.87 | 0.00 | 0.15 |
-| s2000 | max | 2240000.00 | 349.61 | 422.49 | 291.34 | 6530–9370 | 11.49 | 17.36 | 9.40 | 0.00 | 0.13 |
-| s2000 | dyno | 2240000.00 | 360.52 | 431.90 | 300.43 | 6610–9370 | 11.46 | 17.29 | 9.37 | 0.00 | 0.13 |
+| s2000 | stock | 0.00 | 184.00 | 218.00 | 148.39 | 6870–9000 | 14.28 | 21.78 | 11.33 | 0.00 | — |
+| s2000 | budget | 53000.00 | 190.07 | 225.19 | 153.41 | 6870–9020 | 14.06 | 21.47 | 11.20 | 0.00 | 0.41 |
+| s2000 | street | 214000.00 | 203.89 | 242.17 | 164.43 | 6830–9100 | 13.60 | 20.78 | 10.91 | 0.00 | 0.32 |
+| s2000 | intermediate | 825000.00 | 263.31 | 316.07 | 216.89 | 6650–9220 | 12.59 | 19.11 | 10.12 | 0.00 | 0.20 |
+| s2000 | advanced | 1330000.00 | 326.33 | 392.53 | 268.14 | 6640–9370 | 12.33 | 18.44 | 9.85 | 0.00 | 0.15 |
+| s2000 | max | 2240000.00 | 349.61 | 422.49 | 296.28 | 6530–9370 | 11.51 | 17.36 | 9.38 | 0.00 | 0.12 |
+| s2000 | dyno | 2240000.00 | 360.52 | 431.90 | 305.53 | 6610–9370 | 11.48 | 17.28 | 9.34 | 0.00 | 0.12 |
 | fc3s | stock | 0.00 | 136.00 | 245.00 | 108.80 | 4350–7000 | 15.67 | 23.92 | 12.18 | 0.00 | — |
 | fc3s | budget | 53000.00 | 143.68 | 259.00 | 115.04 | 4350–7020 | 15.32 | 23.40 | 11.98 | 0.00 | 0.66 |
 | fc3s | street | 214000.00 | 166.91 | 303.36 | 135.48 | 4320–7100 | 14.52 | 22.10 | 11.38 | 0.00 | 0.54 |
@@ -370,7 +370,7 @@ All six standard stages (stock, budget, street, intermediate, advanced, maximum)
 
 The NSX remains especially strong in standard maximum-build simulations. The FD, Z33, GC8 and Supra offer competing strengths, but a final no-universal-winner conclusion is not yet justified. Maximum-output ceilings alone do not establish endgame fairness. Expanded scenario, collector and specialist comparisons are now preserved in SCENARIOS.md; broader driver/seed coverage remains limited.
 
-Class boundaries use a composite of standing 400 m (50%), standing 800 m normalized by 1.54 (25%), and rolling 400 m normalized by 1.25 (25%). Thresholds are 14.1/14.8/15.5 normalized seconds. This creates performance bands, not equal class sizes. XT remains a slow class-D outlier. Potential labels now use maximum/intermediate pace, low-grip and imperfect-driver results, improvement from stock, and donor-plus-hardware cost. See TUNING_POTENTIAL.md for the reproducible score and its limitations.
+Class boundaries use a composite of standing 402.336 m (50%), standing 804.672 m divided by 1.54 (25%), and rolling 402.336 m multiplied by 1.25 (25%). Thresholds are 14.1/14.8/15.5 normalized seconds. This creates performance bands, not equal class sizes. XT remains a slow class-D outlier. Potential labels now use maximum/intermediate pace, low-grip and imperfect-driver results, improvement from stock, and donor-plus-hardware cost. See TUNING_POTENTIAL.md for the reproducible score and its limitations.
 
 ## Reproduction
 `node tools/engineering-report.mjs` regenerates these Markdown tables from preserved JSON without running races.

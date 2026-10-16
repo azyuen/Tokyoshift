@@ -1,3 +1,4 @@
+import {effectiveFinalDrive} from '../vehicles/Transmission.js';
 import {getCrewRecruitmentChallengeRules,createStockOpponentState,isValidCrewRecruitChallenge} from '../data/crewSystem.js';
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js';
@@ -1087,7 +1088,7 @@ export default class RaceScene extends Phaser.Scene {
 
   rollingGearRPM(vehicle, gear) {
     const ratio = Number(vehicle.config.gearRatios?.[gear - 1] || 0)
-      * Number(vehicle.config.finalDriveRatio || 0);
+      * effectiveFinalDrive(vehicle.config);
     if (ratio <= 0) return 0;
 
     const wheelRPM = this.rollingSpeedMps / (Math.PI * 2 * vehicle.config.wheelRadius) * 60;

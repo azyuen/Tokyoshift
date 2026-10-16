@@ -8,7 +8,7 @@ Recovered missing scenario records; results are cached by built vehicle, options
 |---|---|
 | lowGrip | nsx 10.73, gc8 11.01, evo6 11.31, evo5 11.32, gf8 11.43 |
 | human | z33 11.57, evo6 12.38, nsx 12.38, evo5 12.40, 240z 12.58 |
-| rolling100 | nsx 8.07, rx7fd 8.10, z33 8.24, s2000 8.29, dc2 8.30 |
+| rolling100 | nsx 8.07, rx7fd 8.10, z33 8.24, s2000 8.30, dc2 8.30 |
 
 The NSX leads low-grip and 100 km/h rolling maximum-build scenarios, but the Z33 leads with the rating-3 driver. Thus driver usability changes the ranking; the NSX remains a deliberate premium outlier rather than being declared balanced away. This limited driver/seed sample does not prove universal superiority or universal fairness.
 
@@ -18,8 +18,8 @@ The NSX leads low-grip and 100 km/h rolling maximum-build scenarios, but the Z33
 |---|---|---|---|---|---|---|---|
 | nsx | specialist | odaibaEsprit standing | 399.49 | 602.68 | 10.57 | 16.13 | 282.31 |
 | nsx | specialist | odaibaEsprit rolling | 399.49 | 602.68 | 8.74 | 14.26 | 283.60 |
-| s2000 | specialist | shibuyaAmuse standing | 364.91 | 441.10 | 11.42 | 17.20 | 271.56 |
-| s2000 | specialist | shibuyaAmuse rolling | 364.91 | 441.10 | 9.33 | 15.06 | 272.91 |
+| s2000 | specialist | shibuyaAmuse standing | 364.91 | 441.10 | 11.45 | 17.20 | 272.54 |
+| s2000 | specialist | shibuyaAmuse rolling | 364.91 | 441.10 | 9.30 | 15.01 | 274.07 |
 | jza80 | specialist | shinjukuTopSecret standing | 454.57 | 934.37 | 10.94 | 16.61 | 277.00 |
 | jza80 | specialist | shinjukuTopSecret rolling | 454.57 | 934.37 | 9.13 | 14.76 | 278.38 |
 | r34 | specialist | yokohamaMines standing | 436.51 | 799.38 | 11.31 | 17.14 | 268.12 |
@@ -94,7 +94,7 @@ The registry contains 20 exclusive entries at this checkpoint (including alterna
 | ae86 | 11.56 | 11.48 | 0.08 |
 | ef | 11.65 | 11.62 | 0.03 |
 | ek9 | 11.77 | 11.68 | 0.09 |
-| s2000 | 11.49 | 11.46 | 0.03 |
+| s2000 | 11.51 | 11.52 | -0.01 |
 | fc3s | 12.33 | 12.27 | 0.05 |
 | rx7fd | 10.92 | 10.87 | 0.05 |
 | rx8 | 11.28 | 11.15 | 0.14 |
