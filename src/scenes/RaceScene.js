@@ -84,7 +84,7 @@ import {
 } from '../data/tunerChallenges.js';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
-import { createRaceCoachHud } from '../ui/RaceCoachHud.js';
+import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
@@ -136,10 +136,18 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
-    if (this.isCoaching) {
+    if (this.isCoaching || (this.isTutorial &&
+      this.registry.get('raceReturnScene') === 'OshiageScene')) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
         queueImage('characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1),
           'assets/Characters/Main/oshiage_sayaka_fujieda_' + pose + '.png?v=20261013-r496');
+      }
+    } else if (this.isTutorial) {
+      // First workshop lesson: Sayaka wears her home clothes, not her
+      // Oshiage instructor disguise or her eventual Ginza racing outfit.
+      for (const pose of ['homeNormal', 'homeHappy', 'homeSad']) {
+        const asset = characters.sayakaFujieda.visual.poseAssets[pose];
+        queueImage(asset.key, getCharacterAssetUrl(asset.path));
       }
     }
     // Each race picks one of the four same-canvas suburban traffic signals.
@@ -500,7 +508,10 @@ export default class RaceScene extends Phaser.Scene {
       ? boostAiForPinkSlip(baseRivalAI)
       : { ...baseRivalAI };
 
-    if (!this.isRollingStart && !this.isTutorial) {
+    if (!this.isRollingStart && !this.isTutorial &&
+        !(this.raceMode === 'CREW_RECRUIT' && this.playerDifficulty === 'STANDARD')) {
+      // Standard crew recruitment uses exactly the Expert driver's AI; a
+      // standing-start bonus was pushing it beyond the displayed skill tier.
       rivalAI = boostAiForStandingStart(rivalAI, this.opponentEncounterRating);
     }
 
@@ -718,7 +729,12 @@ export default class RaceScene extends Phaser.Scene {
 
     this.cancelButton.on('pointerdown', () => {
       if (this.isTutorial) {
-        if (this.isCoaching) this.registry.set('oshiageTrainingLesson', null);
+        if (this.isCoaching) {
+          // Leaving forfeits every remaining attempt in this booking.
+          this.registry.set('oshiageTrainingLesson', null);
+          this.registry.set('oshiageSchoolBooking', null);
+          saveSessionState(this.registry);
+        }
         this.scene.start(this.registry.get('raceReturnScene') === 'OshiageScene' ? 'OshiageScene' : 'GarageScene',
           this.registry.get('raceReturnScene') === 'OshiageScene' ? { locationId: 'oshiageDrivingSchool' } : undefined);
         return;
@@ -858,6 +874,22 @@ export default class RaceScene extends Phaser.Scene {
       });
       saveSessionState(this.registry);
       this.scene.start('OshiageScene', { locationId: 'oshiageSkytreeMeet' });
+      return;
+    }
+
+    if (this.raceMode === 'CREW_RECRUIT') {
+      const challenge = this.registry.get('crewRecruitChallenge');
+      if (challenge?.active) {
+        this.registry.set('crewRecruitChallenge', {
+          ...challenge,
+          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
+          lastLossAt: Date.now(),
+          retryDeferredUntilExit: true,
+        });
+      }
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');
       return;
     }
 
@@ -1556,8 +1588,10 @@ export default class RaceScene extends Phaser.Scene {
             }
           }
         }
-        // Primary action, SKIP and exhausted retries return safely.
+        // Primary action, SKIP and exhausted retries close this booking.
+        // Any unused attempts are forfeited on return to the school.
         this.registry.set('oshiageTrainingLesson', null);
+        this.registry.set('oshiageSchoolBooking', null);
         saveSessionState(this.registry);
         this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
       },
@@ -1565,6 +1599,7 @@ export default class RaceScene extends Phaser.Scene {
     if (!next.played) {
       // A renderer failure must not strand the player on a frozen track.
       this.registry.set('oshiageTrainingLesson', null);
+      this.registry.set('oshiageSchoolBooking', null);
       saveSessionState(this.registry);
       this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' });
     }
@@ -1579,47 +1614,27 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHighlightObjects = [];
     this.tutorialHighlightTweens = [];
 
-    // Keep the lesson card in the top-left so it never covers the drag tree,
-    // HUD or the controls the player is being asked to use.
-    this.tutorialPanel = this.add.rectangle(360, 200, 640, 250, 0xf8f7f2, 0.995)
-      .setStrokeStyle(3, 0x18222b, 1)
-      .setDepth(82)
-      .setScrollFactor(0);
-
-    this.tutorialStepText = this.add.text(78, 96, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#2a708d',
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialTitleText = this.add.text(78, 130, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '12px',
-      color: '#101820',
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialBodyText = this.add.text(78, 168, '', {
-      fontFamily: BODY_FONT,
-      fontSize: '12px',
-      color: '#202a31',
-      fontStyle: '700',
-      lineSpacing: 5,
-      wordWrap: { width: 565 },
-    }).setDepth(83).setScrollFactor(0);
-
-    this.tutorialPromptBox = this.add.rectangle(360, 292, 570, 46, 0xffffff, 1)
-      .setStrokeStyle(2, 0x315470, 1)
-      .setDepth(83)
-      .setScrollFactor(0);
-
-    this.tutorialPromptText = this.add.text(360, 292, '', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#17232c',
-      align: 'center',
-      wordWrap: { width: 530 },
-    }).setOrigin(0.5).setDepth(84).setScrollFactor(0);
-
+    // Use the SAME portrait/speech bubble as the advanced Oshiage race
+    // coaching. Only the speaker and Sayaka's outfit change by location.
+    const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
+    const homePoses = {
+      neutral: 'characterSayakaHomeNormal',
+      explaining: 'characterSayakaHomeNormal',
+      happy: 'characterSayakaHomeHappy',
+      concerned: 'characterSayakaHomeSad',
+    };
+    this.tutorialHud = createRaceDialogueHud(this, {
+      speaker: atSchool ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
+      depth: 80,
+      characterVisual: characters.sayakaFujieda.visual,
+      initialPose: 'explaining',
+      spriteKeyForPose: pose => atSchool
+        ? 'characterSayakaOshiage' + pose.charAt(0).toUpperCase() + pose.slice(1)
+        : (homePoses[pose] || homePoses.neutral),
+    });
+    this.tutorialPanel = this.tutorialHud.dialogue;
+    this.tutorialPromptText = this.tutorialHud.dialogue;
+    this.tutorialHud.dialogue.setFontSize('16px').setLineSpacing(2);
     this.renderDrivingTutorialStep();
   }
 
@@ -1750,14 +1765,12 @@ export default class RaceScene extends Phaser.Scene {
     this.clearTutorialHighlights();
 
     const stepNo = this.tutorialStepNumber();
-    let title = '';
     let body = '';
     let prompt = '';
     let targets = [];
 
     if (this.tutorialStep === 'FIRST_GEAR') {
-      title = 'CLUTCH + FIRST GEAR';
-      body = 'Hold the CLUTCH. While holding it, SWIPE UP on the shifter to select 1st. Watch the gear display change.';
+       body = 'Hold the CLUTCH. While holding it, SWIPE UP on the shifter to select 1st. Watch the gear display change.';
       prompt = 'YOUR TURN // HOLD CLUTCH + SHIFT UP';
       targets = [
         ['clutch', 'HOLD CLUTCH', 0x45d7ff],
@@ -1765,8 +1778,7 @@ export default class RaceScene extends Phaser.Scene {
         ['gear', 'GEAR DISPLAY', 0xffe08a],
       ];
     } else if (this.tutorialStep === 'LAUNCH_PREP') {
-      title = 'BUILD REVS + WAIT FOR GREEN';
-      body = this.tutorialCountdownStarted
+       body = this.tutorialCountdownStarted
         ? 'Keep the clutch held and the accelerator high. Do NOT release the clutch until the street signal turns green.'
         : 'Keep the clutch held. Push the accelerator high and hold it. The start lights will begin when you are ready.';
       prompt = this.tutorialCountdownStarted
@@ -1780,8 +1792,7 @@ export default class RaceScene extends Phaser.Scene {
         targets.push(['tree', 'WAIT FOR GREEN', 0x62e8c7]);
       }
     } else if (this.tutorialStep === 'LAUNCH') {
-      title = 'LAUNCH';
-      body = 'GREEN. Release the clutch quickly and keep the accelerator up. Let the car pull away.';
+       body = 'GREEN. Release the clutch quickly and keep the accelerator up. Let the car pull away.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1789,9 +1800,7 @@ export default class RaceScene extends Phaser.Scene {
       ];
     } else if (this.tutorialStep === 'GEAR_2' || this.tutorialStep === 'GEAR_3' || this.tutorialStep === 'GEAR_4') {
       const targetGear = Number(this.tutorialStep.slice(-1));
-      title = 'SHIFT TO ' + targetGear + (targetGear === 2 ? 'ND' : targetGear === 3 ? 'RD' : 'TH') + ' GEAR';
-
-      if (!this.tutorialShiftReady) {
+       if (!this.tutorialShiftReady) {
         body = 'Keep accelerating and watch the tachometer. Wait until the revs are high before shifting.';
         prompt = 'YOUR TURN // LET THE REVS CLIMB';
         targets = [
@@ -1810,8 +1819,7 @@ export default class RaceScene extends Phaser.Scene {
       }
     } else if (this.tutorialStep === 'POWER_2' || this.tutorialStep === 'POWER_3') {
       const gear = Number(this.tutorialStep.slice(-1));
-      title = 'BACK ON THE POWER';
-      body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + '. Release the clutch quickly, get back on the accelerator, then build the revs again.';
+       body = 'You are in ' + gear + (gear === 2 ? 'nd' : 'rd') + '. Release the clutch quickly, get back on the accelerator, then build the revs again.';
       prompt = 'YOUR TURN // RELEASE CLUTCH + ACCELERATE';
       targets = [
         ['clutch', 'RELEASE', 0x62e8c7],
@@ -1820,10 +1828,24 @@ export default class RaceScene extends Phaser.Scene {
       ];
     }
 
-    this.tutorialStepText.setText('DRIVING LESSON // STEP ' + stepNo + ' / 8');
-    this.tutorialTitleText.setText(title);
-    this.tutorialBodyText.setText(body);
-    this.tutorialPromptText.setText(this.tutorialFeedback || prompt);
+    const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
+    this.tutorialHud.heading.setText(
+      (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
+    );
+    // The prose is her spoken instruction; a blank line separates it from
+    // the all-caps action cue. The redundant uppercase step title is gone.
+    this.tutorialHud.dialogue.setText(
+      body + '\n\n' + (this.tutorialFeedback || prompt)
+    );
+    const needsCorrection = this.tutorialFeedback &&
+      !this.tutorialFeedback.startsWith('GOOD');
+    this.tutorialHud.setPortrait(
+      needsCorrection ? 'concerned' :
+      this.tutorialStep === 'GEAR_4' && this.tutorialShiftReady ||
+      this.tutorialFeedback.startsWith('GOOD') ||
+      this.tutorialStep === 'LAUNCH' || this.tutorialStep === 'POWER_2' ||
+        this.tutorialStep === 'POWER_3' ? 'happy' : 'explaining'
+    );
     targets.forEach(target => this.addTutorialHighlight(...target));
   }
 
@@ -1986,19 +2008,30 @@ export default class RaceScene extends Phaser.Scene {
     this.controls.throttle = 0;
     this.controls.clutch = 1;
     this.engineAudio?.fadeOut();
+    // Finishing the fourth-gear shift should always show a pleased Sayaka,
+    // even if a preceding corrective hint was still active on screen.
+    this.tutorialHud?.setPortrait('happy');
+    this.tutorialHud?.heading?.setText(
+      this.registry.get('raceReturnScene') === 'OshiageScene'
+        ? 'LADY INSTRUCTOR // WELL DONE' : 'SAYAKA // WELL DONE'
+    );
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
       this.registry.set('oshiageBasicLessonComplete', true);
       saveSessionState(this.registry);
-      this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO DRIVING SCHOOL');
-      this.time.delayedCall(110, () => this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' }));
+      this.tutorialPromptText?.setText(
+        'Very nicely done! You made it into fourth gear.\n\nLESSON COMPLETE // RETURNING TO DRIVING SCHOOL'
+      );
+      this.time.delayedCall(950, () => this.scene.start('OshiageScene', { locationId: 'oshiageDrivingSchool' }));
       return;
     }
     if (this.registry.get('openingChapter') === 'tutorial') {
       this.registry.set('openingDrivingLessonComplete', true);
     }
-    this.tutorialPromptText?.setText('LESSON COMPLETE // RETURNING TO ' +
-      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI'));
+    this.tutorialPromptText?.setText(
+      'That was great! You made it all the way into fourth gear.\n\nLESSON COMPLETE // RETURNING TO ' +
+      (this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA' : 'DAICHI')
+    );
     saveSessionState(this.registry);
 
     // RaceScene has repeatedly proven fragile when it tears down controls,
@@ -2016,7 +2049,7 @@ export default class RaceScene extends Phaser.Scene {
 
     window.setTimeout(() => {
       window.location.reload();
-    }, 90);
+    }, 950);
   }
 
 
@@ -2396,7 +2429,7 @@ export default class RaceScene extends Phaser.Scene {
         if (!settlement.playerWon) {
           return {
             primary: 'STOCK CHALLENGE LOST',
-            secondary: 'CHALLENGE REMAINS OPEN',
+            secondary: 'COME BACK AND TRY AGAIN LATER',
           };
         }
         return settlement.crewRecruitJoined
@@ -3146,6 +3179,12 @@ export default class RaceScene extends Phaser.Scene {
         this.scene.start('MeetScene');
       } else if (settlement?.oshiageEliteContinues) {
         this.startNextOshiageEliteHeat();
+      } else if (settlement?.oshiageElite) {
+        // Do not fall back to the last saved Oshiage destination (often the
+        // driving school). Completed/lost Skytree heats return to Skytree.
+        this.registry.set('oshiageLocation', 'oshiageSkytreeMeet');
+        saveSessionState(this.registry);
+        this.scene.start('OshiageScene', { locationId: 'oshiageSkytreeMeet' });
       } else if (settlement?.competitionContinues) {
         this.startNextCompetitionRound();
       } else {
@@ -4045,6 +4084,9 @@ export default class RaceScene extends Phaser.Scene {
           active: true,
           attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
           lastLossAt: Date.now(),
+          // A defeat closes this attempt: the invitation must not reopen
+          // automatically on the result-screen return to MeetScene.
+          retryDeferredUntilExit: true,
         });
       }
 
@@ -4100,12 +4142,12 @@ export default class RaceScene extends Phaser.Scene {
       const opponentScore = Math.max(0, Number(state.opponentWins || 0)) + (playerWon ? 0 : 1);
       const nextRoundIndex = roundIndex + 1;
       const remaining = Math.max(0, CREW_BATTLE_LINEUP_SIZE - nextRoundIndex);
-      const playerCanStillReachFour = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
+      const playerCanStillWin = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
       const battleWon = playerScore >= CREW_BATTLE_WINS_REQUIRED;
       const battleLost =
         !battleWon &&
         (
-          !playerCanStillReachFour ||
+          !playerCanStillWin ||
           nextRoundIndex >= CREW_BATTLE_LINEUP_SIZE
         );
 

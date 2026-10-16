@@ -30,3 +30,33 @@ test('saved core simulations are complete and standard stages never regress',()=
 test('PI cold/warm timing is recorded without imposing a machine-specific gate',()=>{
  clearPerformanceEstimateCache();const builds=ids.map(id=>getBuiltCar(id,stage(0)));const t=performance.now();for(const b of builds)calculatePerformanceIndex(b.car,b.engine);const cold=performance.now()-t;const u=performance.now();for(const b of builds)calculatePerformanceIndex(b.car,b.engine);console.log(JSON.stringify({models:43,coldMs:cold,warmMs:performance.now()-u}));
 });
+
+
+test('Warehouse stored kits coexist with factory parking and retain resale value', async()=>{
+ const {storeSelectedKitParts,restoreStoredKitParts,listStorableKitParts}=await import('../src/data/partUninstall.js');
+ const {restorePerformanceParts}=await import('../src/data/factorySetup.js');
+ const {isPerformanceStockState}=await import('../src/data/crewSystem.js');
+ for(const id of ids){
+  const original=stage(3),keys=listStorableKitParts(original).map(p=>p.key);
+  const stored=storeSelectedKitParts(original,keys);assert.ok(stored,id);
+  assert.equal(isPerformanceStockState(stored),true,id);
+  assert.equal(getBuiltCar(id,stored).car.powerKW,getBuiltCar(id,stage(0)).car.powerKW,id);
+  assert.equal(getAutoMarketSellPrice(id,stored),getAutoMarketSellPrice(id,original),id);
+  const parked=parkPerformanceParts(stored),restored=restorePerformanceParts(restoreStoredKitParts(parked));
+  assert.equal(getBuiltCar(id,restored).car.powerKW,getBuiltCar(id,original).car.powerKW,id);
+  assert.equal(isPerformanceStockState(restored),false,id);
+ }
+});
+
+test('reconciled source keeps one module identity and upstream recruitment safeguards',()=>{
+ const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(dir+'/'+e.name):[dir+'/'+e.name]);
+ for(const path of walk('src').filter(p=>p.endsWith('.js'))){
+  const source=fs.readFileSync(path,'utf8');assert.doesNotMatch(source,/["']\.\.?\/[^"'\n]+\.js\?v=/,path);
+  assert.doesNotMatch(source,/^<<<<<<< /m,path);
+ }
+ const meet=fs.readFileSync('src/scenes/MeetScene.js','utf8');
+ assert.match(meet,/retryDeferredUntilExit/);assert.match(meet,/createCrewRecruitVsLabel/);
+ assert.match(meet,/recruitRules\.playerDifficulty !== 'HARD'/);
+ const race=fs.readFileSync('src/scenes/RaceScene.js','utf8');
+ assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
+});

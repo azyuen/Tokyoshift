@@ -41,6 +41,11 @@ import {
 import {
   getPartRemovalQuote,
   removeTuningPartFromState,
+  listStorableKitParts,
+  storeSelectedKitParts,
+  restoreStoredKitParts,
+  STORE_KIT_REMOVE_FEE,
+  STORE_KIT_RESTORE_FEE,
 } from '../data/partUninstall.js';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js';
@@ -371,6 +376,22 @@ export default class GarageScene extends Phaser.Scene {
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
 
+    // First Sayaka manga dialogue used to queue every alternate Sayaka outfit
+    // just as she finished fading into the garage. Warm only the two actual
+    // FIRST KEYS poses with the workshop; farewell poses load on the tutorial
+    // return to GarageScene. No giant first-spoken-line load or lag spike.
+    const openingPhase = String(this.registry.get('openingChapter') || '');
+    if (['home', 'magazine', 'delivery', 'tutorial'].includes(openingPhase)) {
+      const poses = openingPhase === 'tutorial'
+        ? ['homeNormal', 'homeSad', 'homeHappy', 'homeBlushing', 'homeSerious']
+        : ['homeNormal', 'homeSad'];
+      const assets = characters.sayakaFujieda?.visual?.poseAssets || {};
+      poses.forEach(pose => {
+        const asset = assets[pose];
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      });
+    }
+
     // A workshop can show and switch between its local cars without another
     // network round trip. At Warehouse HQ also warm the crew loan cars so the
     // Crew Space doorway can be an instant in-scene presentation switch.
@@ -518,7 +539,7 @@ export default class GarageScene extends Phaser.Scene {
     if (this.crewMode) {
       this.buildCrewSpaceNavigation();
     } else {
-      this.buildMoveCarButton();
+      this.buildStoreRestoreKitButton();
       this.buildWorkshopJumpButton();
       this.buildOfficeHotspot();
       this.buildWarehouseSpaceHotspots();
@@ -1831,44 +1852,26 @@ export default class GarageScene extends Phaser.Scene {
 
   updateMoveCarButtonState() {
     if (!this.moveCarButton || !this.moveCarLabel) return;
-
-    const locked = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
-    const currentWorkshopId = this.getActiveWorkshop().id;
-    const alternatives = getUnlockedWorkshops(this.registry.get('garageTier') || 0)
-      .filter(workshop =>
-        workshop.id !== currentWorkshopId &&
-        getWorkshopUsage(
-          this.ownedCarIds,
-          this.carGarageLocations || {},
-          workshop.id
-        ) < getWorkshopStorageCapacity(workshop.id)
-      );
-
-    const crewLoan = Boolean(cars[this.selectedCarId]?.crewLoan);
-    const enabled =
-      !locked &&
-      !crewLoan &&
-      Boolean(this.selectedCarId) &&
-      alternatives.length > 0;
-
+    const warehouse = this.getActiveWorkshop().tier === 2;
+    const eligible = warehouse && Boolean(this.selectedCarId) &&
+      !this.isSelectedCarTuningLocked() &&
+      !this.engineMode && !this.secondaryMode && !this.chassisMode;
+    const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
+    const enabled = eligible && (stored ||
+      listStorableKitParts((this.registry.get('carStates') || {})[this.selectedCarId] || {}).length > 0);
+    this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
     if (enabled) {
-      this.moveCarButton
-        .setInteractive({ useHandCursor: true })
-        .setFillStyle(0x102138, 1)
-        .setStrokeStyle(2, 0x55b8ff, 1);
-      this.moveCarLabel.setColor('#eef8ff').setText('MOVE CAR  >');
+      this.moveCarButton.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102138).setStrokeStyle(2, 0x55b8ff);
+      this.moveCarLabel.setColor('#eef8ff');
     } else {
-      this.moveCarButton
-        .disableInteractive()
-        .setFillStyle(0x17181d, 1)
-        .setStrokeStyle(1, 0x514f55, 1);
-      this.moveCarLabel
-        .setColor('#817d84')
-        .setText(crewLoan ? 'CREW LOAN // WAREHOUSE' : 'MOVE CAR');
+      this.moveCarButton.disableInteractive().setFillStyle(0x17181d)
+        .setStrokeStyle(1, 0x514f55);
+      this.moveCarLabel.setColor('#817d84');
     }
   }
 
-  showMoveCarPopup() {
+  showMoveCarPopup(targetWorkshopId = null) {
     if (
       !this.selectedCarId ||
       cars[this.selectedCarId]?.crewLoan ||
@@ -2063,7 +2066,7 @@ export default class GarageScene extends Phaser.Scene {
       confirm.on('pointerdown', () => performTransfer(workshop, transferCost, confirmObjects));
     };
 
-    unlocked.forEach((workshop, index) => {
+    unlocked.filter(workshop => !targetWorkshopId || workshop.id === targetWorkshopId).forEach((workshop, index) => {
       const y = 305 + index * 100;
       const usage = getWorkshopUsage(
         this.ownedCarIds,
@@ -2140,6 +2143,176 @@ export default class GarageScene extends Phaser.Scene {
 
     closeButton.on('pointerdown', close);
     blocker.on('pointerdown', close);
+  }
+
+  buildStoreRestoreKitButton() {
+    this.moveCarButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2, 662, SIDE.w - 32, 42, 0x102138, 1
+    ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
+    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, 662, 'UNINSTALL / RESTORE PARTS', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+    this.moveCarButton.on('pointerdown', () => this.showStoreRestoreKitPopup());
+    this.updateMoveCarButtonState();
+  }
+
+  showStoreRestoreKitPopup() {
+    if (this.crewMode || this.getActiveWorkshop().tier !== 2 ||
+        !this.selectedCarId || this.isSelectedCarTuningLocked() ||
+        this.engineMode || this.secondaryMode || this.chassisMode) return;
+    const carId = this.selectedCarId;
+    const initial = (this.registry.get('carStates') || {})[carId] || {};
+    const restoring = Boolean(initial.storedKit);
+    const available = restoring ? [] : listStorableKitParts(initial);
+    if (!restoring && !available.length) {
+      this.showWorkshopToast('NO INSTALLED UPGRADES TO STORE');
+      return;
+    }
+    const selected = new Set();
+    const depth = 160;
+    const objects = [];
+    const add = object => { objects.push(object); return object; };
+    const close = () => objects.forEach(object => object?.destroy?.());
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.84)
+      .setInteractive().setDepth(depth));
+    add(this.add.rectangle(780, 420, 960, 710, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff).setDepth(depth + 1));
+    const label = (x, y, value, size = 10, color = '#eefaff') =>
+      add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
+        fontSize: size + 'px', color }).setDepth(depth + 3));
+    label(350, 104, 'UNINSTALL / RESTORE PARTS', 13);
+    add(this.add.text(1210, 105, cars[carId]?.shortName || carId, {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9fc7db',
+    }).setOrigin(1, 0).setDepth(depth + 3));
+    const explanation = restoring
+      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥100,000.\n' +
+        'BETTER PARTS ALREADY INSTALLED WILL BE KEPT. THE KIT IS CONSUMED.'
+      : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\n' +
+        'LABOUR: ¥50,000 TO UNINSTALL, ¥100,000 TO RESTORE LATER.\n' +
+        'ONLY ONE KIT SLOT PER CAR. SELECT THE PARTS TO UNINSTALL.';
+    add(this.add.text(350, 169, explanation, {
+      fontFamily: BODY_FONT, fontSize: '14px', color: '#b8cbd7',
+      lineSpacing: 4, wordWrap: { width: 850 },
+    }).setDepth(depth + 3));
+    const categories = [
+      ['engine', 'ENGINE'],
+      ['drivetrain', 'DRIVETRAIN'],
+      ['chassis', 'CHASSIS'],
+      ['exhaustNos', 'EXHAUST / NOS'],
+    ];
+    const rows = restoring
+      ? Object.entries(initial.storedKit.parts || {}).map(([key, level]) => {
+          const [category, partId] = key.split(':');
+          return { key, category, partId, level, name: partId };
+        })
+      : available;
+    let y = 272;
+    const tileWidth = 212;
+    const tileHeight = 43;
+    const gap = 4;
+    categories.forEach(([category, heading]) => {
+      const parts = rows.filter(part => part.category === category);
+      if (!parts.length) return;
+      label(350, y, heading, 9, '#68dfff');
+      y += 26;
+      parts.forEach((part, i) => {
+        const x = 350 + (i % 4) * (tileWidth + gap);
+        const tileY = y + Math.floor(i / 4) * (tileHeight + gap);
+        const tile = add(this.add.rectangle(
+          x + tileWidth / 2, tileY + tileHeight / 2,
+          tileWidth, tileHeight, 0x123d50, 1
+        ).setStrokeStyle(1, 0x55b8ff).setDepth(depth + 3));
+        const name = String(part.name || part.partId)
+          .replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+        const text = add(this.add.text(x + tileWidth / 2, tileY + tileHeight / 2,
+          name + '  LV.' + part.level, {
+            fontFamily: PIXEL_FONT, fontSize: '7px', color: '#effaff',
+            align: 'center', wordWrap: { width: tileWidth - 8 },
+          }).setOrigin(0.5).setDepth(depth + 4));
+        if (!restoring) {
+          tile.setInteractive({ useHandCursor: true });
+          tile.on('pointerdown', () => {
+            if (selected.has(part.key)) selected.delete(part.key);
+            else selected.add(part.key);
+            const removed = selected.has(part.key);
+            tile.setFillStyle(removed ? 0x353a42 : 0x123d50)
+              .setStrokeStyle(1, removed ? 0x737d88 : 0x55b8ff);
+            text.setColor(removed ? '#aeb6bf' : '#effaff');
+          });
+        }
+      });
+      y += Math.ceil(parts.length / 4) * (tileHeight + gap) + 14;
+    });
+    const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
+    const action = add(this.add.rectangle(960, 708, 260, 48, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    add(this.add.text(960, 708, (restoring ? 'RESTORE FOR ¥' : 'UNINSTALL FOR ¥') +
+      fee.toLocaleString('en-US'), { fontFamily: PIXEL_FONT,
+      fontSize: '8px', color: '#effff9',
+    }).setOrigin(0.5).setDepth(depth + 4));
+    const cancel = add(this.add.rectangle(555, 708, 210, 48, 0x17222e, 1)
+      .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    label(502, 701, 'CANCEL', 9);
+    cancel.on('pointerdown', close);
+    const commitKit = () => {
+      if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
+          this.isSelectedCarTuningLocked()) { close(); return; }
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const live = states[carId] || {};
+      const cash = Number(this.registry.get('cash') || 0);
+      if (cash < fee) { this.showWorkshopToast('NOT ENOUGH CASH'); return; }
+      if (Boolean(live.storedKit) !== restoring) {
+        close(); this.showWorkshopToast('KIT STATUS CHANGED'); return;
+      }
+      const updated = restoring
+        ? restoreStoredKitParts(live)
+        : storeSelectedKitParts(live, [...selected]);
+      if (!updated) { this.showWorkshopToast('SELECT VALID PARTS'); return; }
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - fee);
+      this.cashText?.setText('¥ ' + (cash - fee).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+      this.selectCar(carId, { remember: false });
+      this.updateMoveCarButtonState();
+      this.showWorkshopToast(restoring ? 'STORED KIT RESTORED' : 'PARTS STORED');
+    };
+    action.on('pointerdown', () => {
+      if (!restoring && !selected.size) {
+        this.showWorkshopToast('SELECT PARTS TO UNINSTALL');
+        return;
+      }
+      const confirmation = [];
+      const addConfirm = obj => { confirmation.push(obj); return obj; };
+      const dismiss = () => confirmation.forEach(obj => obj?.destroy?.());
+      const z = depth + 12;
+      addConfirm(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.78)
+        .setInteractive().setDepth(z));
+      addConfirm(this.add.rectangle(780, 420, 650, 250, 0x0b1b29, 1)
+        .setStrokeStyle(2, 0x43dfff).setDepth(z + 1));
+      addConfirm(this.add.text(780, 342, 'CONFIRM PARTS SERVICE', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#eefaff',
+      }).setOrigin(0.5).setDepth(z + 2));
+      addConfirm(this.add.text(780, 405,
+        (restoring ? 'RESTORE THE SAVED KIT' : 'UNINSTALL ' + selected.size + ' PART(S)') +
+        ' FOR ¥' + fee.toLocaleString('en-US') + '?', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#f2d899',
+        }).setOrigin(0.5).setDepth(z + 2));
+      const button = (x, title, handler) => {
+        const rect = addConfirm(this.add.rectangle(x, 477, 220, 48, 0x12352e, 1)
+          .setStrokeStyle(1, 0x62e8c7).setInteractive({ useHandCursor: true })
+          .setDepth(z + 2));
+        addConfirm(this.add.text(x, 477, title, { fontFamily: PIXEL_FONT,
+          fontSize: '9px', color: '#effff9',
+        }).setOrigin(0.5).setDepth(z + 3));
+        rect.on('pointerdown', handler);
+      };
+      button(640, 'CANCEL', dismiss);
+      button(920, 'CONFIRM', () => { dismiss(); commitKit(); });
+    });
   }
 
   buildMoveCarButton() {
@@ -2304,90 +2477,57 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth + 2));
 
     WORKSHOP_TIERS.forEach((workshop, index) => {
-      const y = 330 + index * 82;
-      const isUnlocked = workshop.tier <= ownedTier;
-      const isCurrent = isUnlocked && workshop.id === current.id;
-      const isNextUnlock = workshop.tier === ownedTier + 1;
-      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-      const cost = Math.max(0, Number(workshop.unlockCost || 0));
-      const affordable = cash >= cost;
-      const regionalWins = getTotalRegionalWins(this.registry);
-      const requiredRegionalWins = getWorkshopRegionalWinRequirement(workshop.tier);
-      const progressionReady = isWorkshopProgressionReady(this.registry, workshop.tier);
-      const usage = isUnlocked
-        ? getWorkshopUsage(
-            this.ownedCarIds,
-            this.carGarageLocations || {},
-            workshop.id
-          )
-        : 0;
+      const y = 330 + index * 92;
+      const unlocked = workshop.tier <= ownedTier;
+      const here = unlocked && workshop.id === current.id;
+      const next = workshop.tier === ownedTier + 1;
+      const cash = Number(this.registry.get('cash') || 0);
+      const cost = Number(workshop.unlockCost || 0);
+      const ready = isWorkshopProgressionReady(this.registry, workshop.tier);
+      const used = unlocked
+        ? getWorkshopUsage(this.ownedCarIds, this.carGarageLocations || {}, workshop.id) : 0;
       const capacity = getWorkshopStorageCapacity(workshop.id);
-
-      const fill = isCurrent
-        ? 0x152a2a
-        : isUnlocked
-          ? 0x102138
-          : isNextUnlock
-            ? 0x211a12
-            : 0x15171c;
-      const stroke = isCurrent
-        ? 0x62e8c7
-        : isUnlocked
-          ? 0x55b8ff
-          : isNextUnlock
-            ? 0xe4b660
-            : 0x514f55;
-
-      const box = add(this.add.rectangle(
-        780,
-        y,
-        650,
-        62,
-        fill,
-        1
-      ).setStrokeStyle(2, stroke, 1)
-        .setDepth(depth + 2));
-
-      add(this.add.text(485, y - 10, workshop.label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: isUnlocked || isNextUnlock ? '#eef8ff' : '#817d84',
+      const full = used >= capacity;
+      const transport = getWorkshopTransferCost(current.id, workshop.id);
+      const canMove = unlocked && !here && !full &&
+        cash >= transport && Boolean(this.selectedCarId) &&
+        !cars[this.selectedCarId]?.crewLoan;
+      const canGo = unlocked && !here;
+      add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
+        .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
+      add(this.add.text(450, y - 17, workshop.label, {
+        fontFamily: PIXEL_FONT, fontSize: '9px',
+        color: unlocked ? '#eef8ff' : '#817d84',
       }).setDepth(depth + 3));
-
-      let meta = '';
-      let metaColor = '#9fc7db';
-      if (isCurrent) {
-        meta = usage + ' / ' + capacity + ' CARS  //  HERE';
-        metaColor = '#78ddc8';
-      } else if (isUnlocked) {
-        meta = usage + ' / ' + capacity + ' CARS  //  GO >';
-      } else if (isNextUnlock) {
-        if (!progressionReady) {
-          meta = 'REGIONAL WINS  ' + regionalWins + '/' + requiredRegionalWins;
-          metaColor = '#c99aa4';
-        } else {
-          meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
-            '¥ ' + Number(cost).toLocaleString('en-US');
-          metaColor = affordable ? '#f2d899' : '#c99aa4';
-        }
+      add(this.add.text(450, y + 12, unlocked
+        ? used + ' / ' + capacity + ' CARS' + (here ? '  //  HERE' : '')
+        : next ? ready ? 'UNLOCK  ¥ ' + cost.toLocaleString('en-US')
+          : 'REGIONAL WINS  ' + getTotalRegionalWins(this.registry) +
+            '/' + getWorkshopRegionalWinRequirement(workshop.tier)
+          : 'LOCKED', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#9fc7db',
+      }).setDepth(depth + 3));
+      const button = (x, title, active, action) => {
+        const box = add(this.add.rectangle(x, y, 154, 42,
+          active ? 0x0c2827 : 0x17181d, 1)
+          .setStrokeStyle(1, active ? 0x62e8c7 : 0x514f55).setDepth(depth + 3));
+        add(this.add.text(x, y, title, {
+          fontFamily: PIXEL_FONT, fontSize: '7px',
+          color: active ? '#e7fff8' : '#817d84',
+        }).setOrigin(0.5).setDepth(depth + 4));
+        if (active) box.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+      };
+      if (unlocked) {
+        button(830, here ? 'CURRENT' : full ? 'FULL' : 'MOVE CAR HERE', canMove,
+          () => {
+            close();
+            this.showMoveCarPopup(workshop.id);
+          });
+        button(1005, here ? 'YOU ARE HERE' : 'GO HERE', canGo,
+          () => reloadIntoWorkshop(workshop));
       } else {
-        meta = 'LOCKED // UNLOCK PREVIOUS WORKSHOP';
-        metaColor = '#817d84';
-      }
-
-      add(this.add.text(1075, y + 12, meta, {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: metaColor,
-        fontStyle: '700',
-      }).setOrigin(1, 0.5).setDepth(depth + 3));
-
-      if (isUnlocked && !isCurrent) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => reloadIntoWorkshop(workshop));
-      } else if (!isUnlocked && isNextUnlock && affordable && progressionReady) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => unlockWorkshop(workshop));
+        button(1005, next ? 'UNLOCK' : 'LOCKED',
+          next && ready && cash >= cost, () => unlockWorkshop(workshop));
       }
     });
 
@@ -6728,7 +6868,7 @@ export default class GarageScene extends Phaser.Scene {
 
     if (!arrival.length) {
       this.spawnOpeningCompanion('sayakaFujieda', true, () =>
-        this.time.delayedCall(1100, () => this.runOpeningStoryIfNeeded()));
+        this.runOpeningStoryIfNeeded());
       return;
     }
 
@@ -6749,8 +6889,9 @@ export default class GarageScene extends Phaser.Scene {
       onComplete: () => {
         // Let the engine settle, then reveal Sayaka from the car door.
         this.time.delayedCall(440, () => {
+          // Her first manga scene begins as soon as her full fade-in ends.
           this.spawnOpeningCompanion('sayakaFujieda', true, () => {
-            this.time.delayedCall(1200, () => this.runOpeningStoryIfNeeded());
+            this.runOpeningStoryIfNeeded();
           });
         });
       },
@@ -6875,23 +7016,6 @@ export default class GarageScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  armDaichiWorkshopTap() {
-    if (this.registry.get('openingChapter') !== 'awaitDaichi' ||
-        this._daichiTapShield?.active || this._daichiEntryStarted ||
-        !this.sys?.isActive?.()) return;
-    // Transparent input surface: the NEXT pointer event that closed the
-    // Sayaka cutscene must finish before a NEW tap can summon Daichi.
-    const shield = this.add.rectangle(780, 420, 1560, 840, 0x000000, 0.001)
-      .setDepth(177).setInteractive({ useHandCursor: true });
-    this._daichiTapShield = shield;
-    shield.once('pointerdown', () => {
-      shield.disableInteractive();
-      shield.destroy();
-      this._daichiTapShield = null;
-      this.startDaichiWorkshopArrival();
-    });
-  }
-
   startDaichiWorkshopArrival(resume = false) {
     const chapter = this.registry.get('openingChapter');
     if (this._daichiEntryStarted ||
@@ -6901,7 +7025,7 @@ export default class GarageScene extends Phaser.Scene {
     this._daichiTapShield?.destroy?.();
     this._daichiTapShield = null;
     this.clearOpeningOfficePrompt();
-    // Save the tap before preparing assets so a refresh midway can resume.
+    // Save the automatic entry before preparing assets so a refresh can resume.
     this.registry.set('openingChapter', 'daichi');
     saveSessionState(this.registry);
 
@@ -6942,9 +7066,9 @@ export default class GarageScene extends Phaser.Scene {
       this.tweens.add({
         targets: objects,
         alpha: 1,
-        duration: 950,
+        duration: 1450,
         ease: 'Sine.easeInOut',
-        onComplete: () => this.time.delayedCall(500, () => this.runOpeningStoryIfNeeded()),
+        onComplete: () => this.time.delayedCall(100, () => this.runOpeningStoryIfNeeded()),
       });
     }, { includeVisualMods: false });
   }
@@ -6972,11 +7096,11 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   continueGarageStoryFlow() {
-    // A single screen tap now starts Daichi's visit. A save interrupted after
-    // the tap can resume the same fade-in without needing a second tap.
+    // Sayaka's exit automatically starts Daichi's arrival. A profile resumed
+    // during this transition can repeat the fade without requiring a tap.
     const chapter = this.registry.get('openingChapter');
     if (chapter === 'awaitDaichi') {
-      this.armDaichiWorkshopTap();
+      this.startDaichiWorkshopArrival();
       return true;
     }
     if (chapter === 'daichi') {
@@ -7025,11 +7149,13 @@ export default class GarageScene extends Phaser.Scene {
           this.registry.set('openingChapter', 'awaitDaichi');
           saveSessionState(this.registry);
           this.clearOpeningOfficePrompt();
-          this.time.delayedCall(120, () => this.armDaichiWorkshopTap());
+          // The player sees Daichi emerge from behind the car immediately.
+          this.startDaichiWorkshopArrival();
         });
       };
       if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
         const result = playMangaCutscene(this, 'openingSayakaKeys', {
+          preloadPagePosesOnly: true,
           onComplete: () => this.time.delayedCall(130, () => this.showOpeningTutorialChoice()),
         });
         return Boolean(result.played);
@@ -7044,6 +7170,7 @@ export default class GarageScene extends Phaser.Scene {
       }
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
+          preloadPagePosesOnly: true,
           exitFadeMs: 850,
           onComplete: finishSayakaFarewell,
         });

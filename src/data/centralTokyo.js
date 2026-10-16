@@ -1,3 +1,4 @@
+import { restoreStoredKitParts } from './partUninstall.js';
 import { restorePerformanceParts } from './factorySetup.js';
 import { getBaseCarId } from './carOwnership.js';
 import {
@@ -19,7 +20,7 @@ import {
 import {
   getRegionalChampionshipCount,
 } from './careerProgression.js';
-import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount } from './crewSystem.js';
+import { areAllCrewBattlesComplete, isCrewComplete, getCrewCount, getCrewBattleWinCount } from './crewSystem.js';
 
 export const CENTRAL_TOKYO_REGION_ID = 'CENTRAL_TOKYO';
 
@@ -51,7 +52,7 @@ export const CENTRAL_TOKYO_LOCATIONS = {
         },
       },
     },
-    winsRequired: 3,
+    winsRequired: 9,
     championshipsRequired: 0,
     garageTierRequired: 0,
   },
@@ -440,7 +441,7 @@ export function getCentralTokyoEligibility(source) {
       championships >= Number(CENTRAL_TOKYO_LOCATIONS.autoMarket.championshipsRequired || 0) &&
       garageTier >= CENTRAL_TOKYO_LOCATIONS.autoMarket.garageTierRequired,
     ginza: areAllCrewBattlesComplete(source),
-    drag: isCrewComplete(source),
+    drag: areAllCrewBattlesComplete(source),
   };
 }
 
@@ -454,7 +455,8 @@ export function getCentralTokyoAccess(source) {
   return {
     autoMarket: Boolean(unlocked.autoMarket && eligible.autoMarket),
     ginza: Boolean(unlocked.ginza && eligible.ginza),
-    drag: Boolean(eligible.drag),
+    // The Ginza invitation grants both endgame venues together.
+    drag: Boolean((unlocked.drag || unlocked.ginza) && eligible.drag),
   };
 }
 
@@ -478,10 +480,12 @@ export function markCentralTokyoUnlocked(registry, key) {
   const unlocks = {
     ...(registry.get('centralTokyoUnlocks') || {}),
     [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
   };
   const seen = {
     ...(registry.get('tokyoInvitesSeen') || {}),
     [key]: true,
+    ...(key === 'ginza' ? { drag: true } : {}),
   };
 
   registry.set('centralTokyoUnlocks', unlocks);
@@ -497,6 +501,10 @@ export function getCentralTokyoUnlockLabel(source, locationId) {
   if (key === 'drag' && !isCrewComplete(source)) {
     return 'RECRUIT FULL CREW (' + getCrewCount(source) + '/7)';
   }
+  if (key === 'drag' && !areAllCrewBattlesComplete(source)) {
+    return 'WIN 7 REGIONAL CREW BATTLES (' + getCrewBattleWinCount(source) + '/7)';
+  }
+  if (key === 'drag') return 'PRO INVITATION PENDING';
 
   const cfg = CENTRAL_TOKYO_LOCATIONS[key];
   const wins = Number(value(source, 'wins', 0) || 0);
@@ -642,7 +650,7 @@ export function getAutoMarketSellPrice(carId, carState = {}) {
   // whole car, while still rewarding a genuinely developed build.
   const baseResale = base * 0.50;
   // Parked parts remain owned by this car and transfer with its sale.
-  const partsInvestment = getInstalledPerformanceInvestment(restorePerformanceParts(carState));
+  const partsInvestment = getInstalledPerformanceInvestment(restorePerformanceParts(restoreStoredKitParts(carState) || carState));
   const partsRecovery = Math.min(base * 0.05, partsInvestment * 0.25);
 
   return Math.round((baseResale + partsRecovery) / 10000) * 10000;

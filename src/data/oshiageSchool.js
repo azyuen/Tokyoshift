@@ -1,6 +1,6 @@
-// One booking includes an initial attempt and THREE retries. Fees are paid
-// once at confirmation, not on individual retries.
-export const OSHIAGE_SCHOOL_RETRIES = 3;
+// One booking buys THREE total runs: the initial run and TWO retries.
+// All runs belong to a single uninterrupted visit; leaving forfeits the rest.
+export const OSHIAGE_SCHOOL_RETRIES = 2;
 export const OSHIAGE_SCHOOL_MAX_ATTEMPTS = 1 + OSHIAGE_SCHOOL_RETRIES;
 export const OSHIAGE_SCHOOL_LESSONS = Object.freeze({
   basic: Object.freeze({ id: 'basic', fee: 0, title: 'BASIC DRIVING', pose: 'explaining',
@@ -13,6 +13,19 @@ export const OSHIAGE_SCHOOL_LESSONS = Object.freeze({
     speech: 'You’ll learn how to make the most of your car’s speed. But please don’t try this just anywhere! Drive safely!' }),
 });
 export const schoolFee = id => OSHIAGE_SCHOOL_LESSONS[id]?.fee ?? null;
+export const OSHIAGE_VOUCHER_LESSONS = Object.freeze(['launch', 'standing', 'rolling']);
+// One complimentary first booking for each advanced lesson (three runs total).
+// Existing players' completed lessons count as already tried; no paid bookings are reset.
+export function isOshiageVoucherAvailable(source, lessonId) {
+  if (!OSHIAGE_VOUCHER_LESSONS.includes(lessonId)) return false;
+  const read = key => typeof source?.get === 'function' ? source.get(key) : source?.[key];
+  if (read('oshiageFreeLessonUsed')?.[lessonId]) return false;
+  const previous = read('oshiageCoachingProgress') || {};
+  return !Object.values(previous).some(carLessons => Boolean(carLessons?.[lessonId]?.completed));
+}
+export function getOshiageVouchersRemaining(source) {
+  return OSHIAGE_VOUCHER_LESSONS.filter(id => isOshiageVoucherAvailable(source, id)).length;
+}
 export const remainingAttempts = booking => Math.max(0,
   OSHIAGE_SCHOOL_MAX_ATTEMPTS - Math.max(0, Math.floor(Number(booking?.attemptsUsed || 0))));
 export function bookingMatches(booking, carId, lessonId) {
@@ -20,7 +33,7 @@ export function bookingMatches(booking, carId, lessonId) {
     booking.carId === carId && booking.lessonId === lessonId &&
     remainingAttempts(booking) > 0);
 }
-export function bookOshiageLesson({ booking, carId, lessonId, cash }) {
+export function bookOshiageLesson({ booking, carId, lessonId, cash, freeFirstLesson = false }) {
   const lesson = OSHIAGE_SCHOOL_LESSONS[lessonId];
   const available = Math.max(0, Number(cash) || 0);
   if (!lesson || !carId) return { ok: false, reason: 'INVALID LESSON' };
@@ -28,9 +41,11 @@ export function bookOshiageLesson({ booking, carId, lessonId, cash }) {
   if (bookingMatches(booking, carId, lessonId)) {
     return { ok: true, cash: available, booking, charged: 0 };
   }
-  if (available < lesson.fee) return { ok: false, reason: 'NOT ENOUGH YEN', fee: lesson.fee };
-  return { ok: true, cash: available - lesson.fee, charged: lesson.fee,
-    booking: { carId, lessonId, fee: lesson.fee, attemptsUsed: 0 } };
+  const useVoucher = Boolean(freeFirstLesson && OSHIAGE_VOUCHER_LESSONS.includes(lessonId));
+  const fee = useVoucher ? 0 : lesson.fee;
+  if (available < fee) return { ok: false, reason: 'NOT ENOUGH YEN', fee };
+  return { ok: true, cash: available - fee, charged: fee, usedVoucher: useVoucher,
+    booking: { carId, lessonId, fee, attemptsUsed: 0 } };
 }
 export function consumeOshiageAttempt(booking) {
   if (!booking || remainingAttempts(booking) <= 0) return null;

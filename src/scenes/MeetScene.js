@@ -43,6 +43,7 @@ import { getTravelLocation } from '../data/travelRegions.js';
 import {
   getGarageCapacity,
   getUnlockedWorkshops,
+  getWorkshopPhaseBackground,
   getCarsInWorkshop,
   isWorkshopUnlocked,
   isWorkshopProgressionReady,
@@ -100,6 +101,7 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js';
+
 import { showCutsceneTester } from '../ui/CutsceneTester.js';
 import {
   getPendingCentralTokyoInvite,
@@ -118,7 +120,6 @@ import {
   clearCrewInviteInterest,
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
-  getStockCrewChallengeCarIds,
   getCrewRecruitmentChallengeRules,
   createStockOpponentState,
   getCrewMemberForRegion,
@@ -333,6 +334,63 @@ export default class MeetScene extends Phaser.Scene {
         '20261005-r346'
       );
       batch.queued += preloadCarWheel(this, cars[signatureCarId]);
+    }
+
+    if (crewReveal?.baseCarId) {
+      // Warm the eligible garage cars and their workshop backdrops while the
+      // Meet itself loads, not during the dramatic invitation-to-picker handoff.
+      // Filtering by factory-stock and the recruit's power class keeps this
+      // prefetch small even for collectors with large garages.
+      const eligible = getCrewRecruitmentChallengeRules(
+        this.registry, crewReveal
+      ).eligibleCarIds || [];
+      const locations = this.registry.get('carGarageLocations') || {};
+      const backgroundKeys = new Set();
+      eligible.forEach(carId => {
+        if (!cars[carId]) return;
+        if (!this.preloadedInitialCarIds.includes(carId)) {
+          this.preloadedInitialCarIds.push(carId);
+          batch.queued += preloadCarAppearanceAssets(
+            this, { [carId]: cars[carId] }, '20261016-r537'
+          );
+          batch.queued += preloadCarWheel(this, cars[carId]);
+        }
+        const bg = getWorkshopPhaseBackground(
+          locations[carId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop',
+          this.worldPhase
+        );
+        if (bg?.path && !this.textures.exists(bg.key) &&
+            !backgroundKeys.has(bg.key)) {
+          backgroundKeys.add(bg.key);
+          this.load.image(bg.key, bg.path + '?v=20261016-r537');
+          batch.queued += 1;
+        }
+      });
+    }
+
+    // Crew showdown portraits and car panels must be ready before opening
+    // the lineup, including teammates from other regions.
+    if (isCrewComplete(this.registry)) {
+      const crewUnits = getCrewBattleUnits(this.registry);
+      const crewRounds = buildRegionalCrewBattleRounds(initialRegion, this.registry);
+      const crewCarIds = [...new Set([...crewUnits, ...crewRounds].map(u => u.carId))]
+        .filter(id => cars[id]);
+      const missingCars = crewCarIds.filter(id => !this.preloadedInitialCarIds.includes(id));
+      missingCars.forEach(id => {
+        this.preloadedInitialCarIds.push(id);
+        batch.queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20261016-r544');
+        batch.queued += preloadCarWheel(this, cars[id]);
+      });
+      [...crewUnits, ...crewRounds].forEach(unit => {
+        const visual = getCharacterVisualForContext(unit.characterId, {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }) || {};
+        if (visual.spriteKey && visual.path && !this.textures.exists(visual.spriteKey)) {
+          this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
+          batch.queued += 1;
+        }
+      });
     }
 
     startSceneLoading(this, 'LOADING MEET', batch.queued);
@@ -781,186 +839,302 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   showCrewBattleLineup(regionId) {
-    if (this.isCrewTestDriveMode()) return;
-    if (!isCrewComplete(this.registry)) return;
-
+    if (this.isCrewTestDriveMode() || !isCrewComplete(this.registry)) return;
     const units = getCrewBattleUnits(this.registry);
-    if (units.length < 7) return;
-
     const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
-    if (rounds.length < 6) return;
-
-    const selected = [];
-    const cards = [];
-    const depth = 200;
+    if (units.length < 3 || rounds.length < 3) return;
+    const saved = (this.registry.get('crewBattleLineups') || {})[regionId] || [];
+    const slots = [0, 1, 2].map(i => units.find(u => u.id === saved[i]) || null);
     const objects = [];
-    const add = obj => {
-      objects.push(obj);
-      return obj;
+    const depth = 200;
+    const add = o => { objects.push(o); return o; };
+    const close = () => {
+      objects.splice(0).forEach(o => { try { o.destroy?.(); } catch (_) {} });
     };
-    const close = () => objects.forEach(obj => obj?.destroy?.());
+    const font = '"Exo 2", sans-serif';
+    const text = (x, y, value, size, color = '#ffffff', opts = {}) =>
+      add(this.add.text(x, y, value, {
+        fontFamily: font, fontSize: size + 'px', fontStyle: 'italic 900',
+        color, stroke: '#090d16', strokeThickness: size >= 24 ? 5 : 1,
+        ...opts,
+      }).setDepth(depth + 8));
 
-    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.88)
-      .setDepth(depth).setInteractive());
+    // Dedicated full-screen meet artwork, independent of the stage mask and
+    // existing meet UI. No dark scrim over the background image.
+    const bgKey = this.currentBackground?.texture?.key;
+    if (bgKey && this.textures.exists(bgKey)) {
+      const source = this.textures.get(bgKey).getSourceImage();
+      add(this.add.image(780, 420, bgKey)
+        .setScale(Math.max(1560 / source.width, 840 / source.height))
+        .setDepth(depth));
+    } else {
+      add(this.add.rectangle(780, 420, 1560, 840, 0x102137).setDepth(depth));
+    }
+    // Transparent input shield blocks the underlying Meet screen.
+    add(this.add.rectangle(780, 420, 1560, 840, 0x000000, 0)
+      .setInteractive().setDepth(depth + 1));
+    const headerShape = (x, y, w, h, fill, alpha = 1) => {
+      const g = add(this.add.graphics().setDepth(depth + 7));
+      g.fillStyle(fill, alpha);
+      g.fillPoints([
+        { x: x + 15, y }, { x: x + w, y },
+        { x: x + w - 15, y: y + h }, { x, y: y + h },
+      ], true);
+      return g;
+    };
+    headerShape(52, 40, 175, 43, 0x03070c, 0.96);
+    text(72, 48, String(regionId).toUpperCase(), 19, '#48d9ff');
+    text(58, 85, 'CREW BATTLE', 38, '#ffffff');
+    headerShape(54, 151, 420, 41, 0x081522, 0.73);
+    add(this.add.text(74, 163, '3 VS 3  //  BEST OF 3', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#a8c4d7',
+    }).setDepth(depth + 8));
 
-    add(this.add.rectangle(780, 420, 1330, 650, 0x07111d, 1)
-      .setStrokeStyle(3, 0xd875ff, 1).setDepth(depth + 1));
+    // The skewed panels use geometry masks, so sprites are actually clipped
+    // to the slanted edges rather than overflowing their card boundaries.
+    const polygon = (x, y, w, h, skew = 18) => [
+      { x: x + skew, y }, { x: x + w + skew, y },
+      { x: x + w - skew, y: y + h }, { x: x - skew, y: y + h },
+    ];
+    const panel = (x, y, w, h, fill, border, alpha = 1, skew = 17) => {
+      const points = polygon(x, y, w, h, skew);
+      const g = add(this.add.graphics().setDepth(depth + 3));
+      g.fillStyle(fill, alpha); g.fillPoints(points, true);
+      g.lineStyle(3, border, 1); g.strokePoints(points, true);
+      return { points, g };
+    };
+    const clip = (obj, points, collection) => {
+      const shape = this.make.graphics({ add: false });
+      shape.fillStyle(0xffffff, 1); shape.fillPoints(points, true);
+      obj.setMask(shape.createGeometryMask());
+      // Graphics mask is not a displayed object; destroy it with the slot.
+      objects.push(shape); collection.push(shape);
+    };
+    const sideFrame = (x, y, w, h, color, title) => {
+      const p = polygon(x, y, w, h, 32);
+      const g = add(this.add.graphics().setDepth(depth + 2));
+      g.fillStyle(0x030b16, 0.77); g.fillPoints(p, true);
+      g.lineStyle(5, color, 1); g.strokePoints(p, true);
+      text(x + 43, y + 10, title, 26, '#' + color.toString(16).padStart(6, '0'));
+    };
+    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
+    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
 
-    add(this.add.text(780, 130, String(regionId).toUpperCase() + ' // CREW BATTLE', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '15px',
-      color: '#ffffff',
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      780,
-      175,
-      'Choose SIX of your seven recruited crew drivers in running order. Loan cars only — you sit this one out. The regional crew has six remaining drivers after their recruit joined you. First crew to 4 wins; a 3–3 tie stays with the regional crew.',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#b9cad4',
-        fontStyle: '600',
+    const xPlayer = [63, 292, 521];
+    const xRival = [821, 1050, 1279];
+    const slotObjects = [[], [], []];
+    let vsStamp = null;
+    const createPortrait = (id, x, y, pts, collection) => {
+      if (!id) return;
+      const profile = createCharacterProfile(this, {
+        characterId: id, pose: 'idle', x, y, frameWidth: 226,
+        frameHeight: 171, side: 'center', depth: depth + 5,
+        mask: false, rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      });
+      if (profile?.image) {
+        objects.push(profile.image); collection.push(profile.image);
+        clip(profile.image, pts, collection);
+      }
+    };
+    const createCar = (id, x, y, pts, collection) => {
+      if (!cars[id]) return;
+      const images = this.createCarDisplay(cars[id], x, y, 200,
+        depth + 5, false, DEFAULT_PAINT_COLOR);
+      images.forEach(o => {
+        objects.push(o); collection.push(o);
+        if (o?.setMask) clip(o, pts, collection);
+      });
+    };
+    const drawCard = (index, unit, rival = false) => {
+      const collection = rival ? [] : slotObjects[index];
+      const x = rival ? xRival[index] : xPlayer[index];
+      const y = rival ? 92 : 463;
+      const accent = rival ? 0xff477e : 0x35d6ff;
+      const portrait = panel(x, y, 211, 168,
+        rival ? 0x80304e : 0x165578, 0x050a10, 0.65, 13);
+      const carX = x - (rival ? 12 : 18);
+      const carPanel = panel(carX, y + 228, 211, 98,
+        rival ? 0x381b31 : 0x0a2b48, accent, 0.78, 8);
+      collection.push(portrait.g, carPanel.g);
+      if (unit) {
+        createPortrait(unit.characterId, x + 105, y + 84, portrait.points, collection);
+        createCar(unit.carId, carX + 105, y + 277, carPanel.points, collection);
+      }
+      const name = unit
+        ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
+        : 'SELECT DRIVER';
+      const carName = unit
+        ? String(cars[unit.carId]?.shortName || unit.carId).toUpperCase()
+        : 'TAP TO ASSIGN';
+      const t1 = add(this.add.text(x + 105, y + 176, name, {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
         align: 'center',
-        wordWrap: { width: 1100 },
-      }
-    ).setOrigin(0.5).setDepth(depth + 2));
-
-    const status = add(this.add.text(780, 650, '0 / 6 SELECTED', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#9fc7db',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const start = add(this.add.rectangle(980, 710, 300, 52, 0x19171d, 1)
-      .setStrokeStyle(2, 0x665267, 1).setDepth(depth + 2));
-    const startText = add(this.add.text(980, 710, 'SELECT 6 RACERS', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: '#8a768b',
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const refresh = () => {
-      cards.forEach(card => {
-        const position = selected.indexOf(card.unit.id);
-        const chosen = position >= 0;
-        card.box
-          .setFillStyle(chosen ? 0x1d3142 : 0x0b1724, 1)
-          .setStrokeStyle(chosen ? 3 : 1, chosen ? 0x43dfff : 0x315470, 1);
-        card.order.setText(chosen ? String(position + 1) : '—');
-        card.order.setColor(chosen ? '#ffffff' : '#607988');
-      });
-
-      const ready = selected.length === 6;
-      status.setText(selected.length + ' / 6 SELECTED');
-
-      if (ready) {
-        start
-          .setFillStyle(0x251b32, 1)
-          .setStrokeStyle(2, 0xd875ff, 1)
-          .setInteractive({ useHandCursor: true });
-        startText.setText('START CREW BATTLE  >').setColor('#f3d9ff');
-      } else {
-        start
-          .disableInteractive()
-          .setFillStyle(0x19171d, 1)
-          .setStrokeStyle(2, 0x665267, 1);
-        startText
-          .setText('SELECT 6 RACERS')
-          .setColor('#8a768b');
+      }).setOrigin(0.5, 0).setDepth(depth + 8));
+      const t2 = add(this.add.text(x + 105, y + 199, carName, {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#cbd8e5',
+        align: 'center',
+      }).setOrigin(0.5, 0).setDepth(depth + 8));
+      collection.push(t1, t2);
+      if (!rival) {
+        const hit = add(this.add.rectangle(x + 105, y + 163, 211, 326,
+          0xffffff, 0).setInteractive({ useHandCursor: true })
+          .setDepth(depth + 9));
+        collection.push(hit);
+        hit.on('pointerdown', () => chooseSlot(index));
       }
     };
+    rounds.slice(0, 3).forEach((round, i) => drawCard(i, round, true));
 
-    units.forEach((unit, index) => {
-      const col = index % 4;
-      const row = Math.floor(index / 4);
-      const x = 355 + col * 285;
-      const y = 300 + row * 155;
-      const car = cars[unit.carId];
-      const char = characters[unit.characterId];
-      const box = add(this.add.rectangle(x, y, 250, 124, 0x0b1724, 1)
-        .setStrokeStyle(1, 0x315470, 1)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(depth + 2));
-
-      add(this.add.text(x - 105, y - 42, String(unit.regionId), {
-        fontFamily: PIXEL_FONT,
-        fontSize: '7px',
-        color: '#8fe7ff',
-      }).setDepth(depth + 3));
-
-      add(this.add.text(
-        x - 105,
-        y - 6,
-        String(char?.name || unit.characterId).toUpperCase() +
-          '\n' + String(car?.shortName || unit.carId).toUpperCase(),
-        {
-          fontFamily: BODY_FONT,
-          fontSize: '9px',
-          color: '#e6f0f5',
-          fontStyle: '700',
-          lineSpacing: 4,
-        }
-      ).setDepth(depth + 3));
-
-      const order = add(this.add.text(x + 100, y - 44, '—', {
-        fontFamily: PIXEL_FONT,
-        fontSize: '14px',
-        color: '#607988',
-      }).setOrigin(1, 0).setDepth(depth + 3));
-
-      const card = { unit, box, order };
-      cards.push(card);
-
-      box.on('pointerdown', () => {
-        const pos = selected.indexOf(unit.id);
-        if (pos >= 0) selected.splice(pos, 1);
-        else if (selected.length < 6) selected.push(unit.id);
-        refresh();
+    const button = (x, width, color, border) => {
+      return add(this.add.rectangle(x, 779, width, 49, color, 1)
+        .setStrokeStyle(2, border).setDepth(depth + 6));
+    };
+    const later = button(1030, 214, 0x192333, 0x8ba1b5)
+      .setInteractive({ useHandCursor: true });
+    add(this.add.text(1030, 779, 'RACE LATER', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    const start = button(1324, 330, 0x143e38, 0x65e7bf);
+    const startLabel = add(this.add.text(1324, 779, 'DRIVERS READY - START BATTLE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    later.on('pointerdown', close);
+    const save = () => {
+      const lineups = { ...(this.registry.get('crewBattleLineups') || {}) };
+      lineups[regionId] = slots.map(u => u?.id || null);
+      this.registry.set('crewBattleLineups', lineups);
+      saveSessionState(this.registry);
+    };
+    const refresh = () => {
+      for (let i = 0; i < 3; i++) {
+        slotObjects[i].forEach(o => {
+          const j = objects.indexOf(o);
+          if (j !== -1) objects.splice(j, 1);
+          o.destroy?.();
+        });
+        slotObjects[i] = [];
+        drawCard(i, slots[i]);
+      }
+      const count = slots.filter(Boolean).length;
+      startLabel.setText(count === 3
+        ? 'DRIVERS READY - START BATTLE' : 'SELECT THREE DRIVERS');
+      if (vsStamp) {
+        const j = objects.indexOf(vsStamp);
+        if (j >= 0) objects.splice(j, 1);
+        vsStamp.destroy(); vsStamp = null;
+      }
+      if (count === 3) {
+        start.setFillStyle(0x116049).setInteractive({ useHandCursor: true });
+        vsStamp = text(778, 437, 'VS', 55, '#ffffff',
+          { stroke: '#100813', strokeThickness: 7 })
+          .setOrigin(0.5).setAngle(-12).setDepth(depth + 12);
+        this.tweens.add({ targets: vsStamp, scale: { from: 1.3, to: 1 },
+          duration: 240, ease: 'Back.easeOut' });
+      } else {
+        start.disableInteractive().setFillStyle(0x182735);
+      }
+      save();
+    };
+    const chooseSlot = index => {
+      const chooser = [];
+      const addChoice = o => { objects.push(o); chooser.push(o); return o; };
+      const dismiss = () => chooser.splice(0).forEach(o => {
+        const j = objects.indexOf(o); if (j >= 0) objects.splice(j, 1);
+        o.destroy();
       });
-    });
-
-    const auto = add(this.add.rectangle(580, 710, 220, 52, 0x102138, 1)
-      .setStrokeStyle(2, 0x55b8ff, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(580, 710, 'AUTO LINEUP', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff',
-    }).setOrigin(0.5).setDepth(depth + 3));
-    auto.on('pointerdown', () => {
-      selected.splice(0, selected.length, ...units.slice(0, 6).map(unit => unit.id));
-      refresh();
-    });
-
-    const cancel = add(this.add.rectangle(340, 710, 180, 52, 0x171c25, 1)
-      .setStrokeStyle(1, 0x657d8c, 1)
-      .setInteractive({ useHandCursor: true }).setDepth(depth + 2));
-    add(this.add.text(340, 710, 'CANCEL', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c4d5df',
-    }).setOrigin(0.5).setDepth(depth + 3));
-    cancel.on('pointerdown', close);
-
+      const z = depth + 30;
+      addChoice(this.add.rectangle(780, 420, 1560, 840, 0x01040a, 0.87)
+        .setInteractive().setDepth(z));
+      addChoice(this.add.rectangle(780, 420, 1120, 650, 0x0a1828)
+        .setStrokeStyle(3, 0x35d6ff).setDepth(z + 1));
+      addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // SLOT ' + (index + 1), {
+        fontFamily: PIXEL_FONT, fontSize: '19px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(z + 2));
+      // Each row owns its images and clips them to dedicated portrait/car frames.
+      units.forEach((unit, i) => {
+        const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
+        const x = i % 2 ? 1035 : 525;
+        const y = 229 + Math.floor(i / 2) * 117;
+        const rowW = 492, rowH = 108;
+        addChoice(this.add.rectangle(x, y, rowW, rowH,
+          occupied ? 0x171c26 : 0x143044)
+          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff).setDepth(z + 2));
+        const portraitX = x - 193, carX = x - 65;
+        const makeClip = (left, top, width, height, image) => {
+          const maskGraphics = this.make.graphics({ add: false });
+          maskGraphics.fillStyle(0xffffff);
+          maskGraphics.fillRect(left, top, width, height);
+          image.setMask(maskGraphics.createGeometryMask());
+          addChoice(maskGraphics);
+        };
+        addChoice(this.add.rectangle(portraitX, y, 96, 94, 0x0b1827)
+          .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
+        addChoice(this.add.rectangle(carX, y, 144, 94, 0x0b1827)
+          .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
+        const profile = createCharacterProfile(this, {
+          characterId: unit.characterId, pose: 'idle',
+          x: portraitX, y: y + 76, frameWidth: 110, frameHeight: 210,
+          side: 'center', depth: z + 4, mask: false, rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        });
+        if (profile?.image) {
+          addChoice(profile.image);
+          makeClip(portraitX - 47, y - 46, 94, 92, profile.image);
+        }
+        const car = cars[unit.carId] || {};
+        if (cars[unit.carId]) {
+          const images = this.createCarDisplay(car, carX, y + 14, 126,
+            z + 4, false, DEFAULT_PAINT_COLOR);
+          images.forEach(image => {
+            addChoice(image);
+            if (image?.setMask) makeClip(carX - 71, y - 46, 142, 92, image);
+          });
+        }
+        const name = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
+        const model = String(car.shortName || unit.carId).toUpperCase();
+        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
+        const drive = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
+        const infoX = x + 22;
+        [[name, y - 34, '#ffffff', 10],
+         [model, y - 7, '#b8d9ed', 9],
+         [power + '  /  ' + drive, y + 23, '#72e0ed', 9]].forEach(([value, ty, color, size]) => {
+          addChoice(this.add.text(infoX, ty, value, {
+            fontFamily: PIXEL_FONT, fontSize: size + 'px', color,
+          }).setDepth(z + 5));
+        });
+        if (!occupied) {
+          addChoice(this.add.rectangle(x, y, rowW, rowH, 0xffffff, 0)
+            .setInteractive({ useHandCursor: true }).setDepth(z + 6))
+            .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
+        }
+      });
+      const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
+        .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
+        .setDepth(z + 2));
+      addChoice(this.add.text(780, 698, 'CANCEL', {
+        fontFamily: PIXEL_FONT, fontSize: '12px',
+        color: '#ffffff',
+      }).setOrigin(0.5).setDepth(z + 3));
+      cancel.on('pointerdown', dismiss);
+    };
     start.on('pointerdown', () => {
-      if (selected.length !== 6) return;
-      const lineup = selected
-        .map(id => units.find(unit => unit.id === id))
-        .filter(Boolean);
-      if (lineup.length !== 6) return;
-      close();
-      this.startCrewBattle(regionId, lineup, rounds);
+      if (slots.some(u => !u)) return;
+      save(); close(); this.startCrewBattle(regionId, slots, rounds);
     });
-
     refresh();
   }
 
   startCrewBattle(regionId, lineup, rounds = null) {
     const battleRounds = rounds || buildRegionalCrewBattleRounds(regionId, this.registry);
-    if (!isCrewComplete(this.registry) || lineup.length !== 6 || battleRounds.length < 6) return;
+    if (!isCrewComplete(this.registry) || lineup.length !== 3 || battleRounds.length < 3) return;
 
     const state = {
       active: true,
       regionId: String(regionId || '').toUpperCase(),
       lineup: lineup.map(unit => ({ ...unit })),
-      rounds: battleRounds.slice(0, 6).map(round => ({ ...round })),
+      rounds: battleRounds.slice(0, 3).map(round => ({ ...round })),
       roundIndex: 0,
       playerWins: 0,
       opponentWins: 0,
@@ -1003,7 +1177,7 @@ export default class MeetScene extends Phaser.Scene {
     this.registry.set('raceDistrict', state.regionId);
     this.registry.set(
       'raceLocationLabel',
-      'CREW BATTLE // ' + (index + 1) + '/6'
+      'CREW BATTLE // ' + (index + 1) + '/3'
     );
 
     return true;
@@ -1092,109 +1266,180 @@ export default class MeetScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  createCrewInviteCarReveal(interest, car, dialogue) {
-    if (!interest || !car) return () => {};
-
-    try {
-      ensureDerivedModularCarTextures(this, { [car.id]: car });
-    } catch (e) {}
-
-    const bodyKey = getCarBodyTextureKey(this, car);
-    if (
-      !bodyKey ||
-      !this.textures.exists(bodyKey) ||
-      !car.visual?.wheelKey ||
-      !this.textures.exists(car.visual.wheelKey)
-    ) {
-      return () => {};
-    }
-
+  createCrewInviteCarReveal(interest, car, { side = 'right' } = {}) {
+    // Both manga car bays deliberately use the SAME geometry, framing and
+    // car scale. Only the background and horizontal placement differ.
+    const isPlayer = side === 'left';
+    const shiftX = isPlayer ? -890 : 0;
+    const centerX = 1225 + shiftX;
+    const reveal = { x: 915 + shiftX, y: 115, width: 620, height: 500 };
     const objects = [];
-    const add = obj => {
-      if (obj) objects.push(obj);
-      return obj;
+    const add = object => {
+      if (object) objects.push(object);
+      return object;
     };
-
-    // Manga-style right-hand reveal bay. The car is deliberately oversized and
-    // clipped so its nose dominates the frame while the character profile owns
-    // the left side.
-    add(this.add.rectangle(1225, 345, 620, 500, 0x07111d, 0.72)
-      .setStrokeStyle(3, 0x55dfff, 0.65)
-      .setDepth(910)
-      .setScrollFactor(0));
-
-    const stripe = add(this.add.graphics().setDepth(911).setScrollFactor(0));
-    stripe.lineStyle(2, 0x55dfff, 0.16);
-    for (let y = 125; y <= 560; y += 34) {
-      stripe.lineBetween(940, y + 80, 1515, y - 70);
-    }
-
-    const carObjects = this.createCarDisplay(
-      car,
-      1145,
-      420,
-      820,
-      916,
-      false,
-      DEFAULT_PAINT_COLOR
-    );
-    carObjects.forEach(obj => {
-      obj.setScrollFactor?.(0);
-      objects.push(obj);
-    });
-
     const maskShape = this.make.graphics({ add: false });
     maskShape.fillStyle(0xffffff, 1);
-    maskShape.fillRect(915, 115, 620, 500);
+    maskShape.fillRect(reveal.x, reveal.y, reveal.width, reveal.height);
     const mask = maskShape.createGeometryMask();
-    carObjects.forEach(obj => obj.setMask?.(mask));
 
-    add(this.add.rectangle(1270, 103, 515, 76, 0x111111, 0.96)
+    let backgroundKey = null;
+    if (isPlayer && car) {
+      const garage = (this.registry.get('carGarageLocations') || {})[car.id] ||
+        this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+      backgroundKey = getWorkshopPhaseBackground(
+        garage, this.worldPhase || getWorldPhase()
+      )?.key;
+    } else if (!isPlayer) {
+      // The actual current Meet asset already contains the road.
+      backgroundKey = this.currentBackground?.texture?.key ||
+        getMeetBackgroundForPhase(
+          this.selectedMeetLocation, this.worldPhase || getWorldPhase()
+        )?.key;
+    }
+
+    add(this.add.rectangle(centerX, 365, reveal.width, reveal.height,
+      0x07111d, 1).setDepth(908).setScrollFactor(0));
+
+    if (car && backgroundKey && this.textures.exists(backgroundKey)) {
+      const src = this.textures.get(backgroundKey).getSourceImage();
+      const width = Number(src.naturalWidth || src.width || 1);
+      const height = Number(src.naturalHeight || src.height || 1);
+      const cover = Math.max(reveal.width / width, reveal.height / height);
+      add(this.add.image(centerX, 365, backgroundKey)
+        .setScale(cover).setDepth(909)
+        .setScrollFactor(0).setMask(mask));
+    }
+
+    if (car) {
+      try {
+        ensureDerivedModularCarTextures(this, { [car.id]: car });
+        const bodyKey = getCarBodyTextureKey(this, car);
+        if (bodyKey && this.textures.exists(bodyKey) &&
+            car.visual?.wheelKey && this.textures.exists(car.visual.wheelKey)) {
+          const state = isPlayer
+            ? (this.registry.get('carStates') || {})[car.id] || {}
+            : {};
+          const carObjects = this.createCarDisplay(
+            car, 1145 + shiftX, 392, 820, 916, false,
+            isPlayer ? (state.paintColor ?? DEFAULT_PAINT_COLOR)
+              : DEFAULT_PAINT_COLOR
+          );
+          carObjects.forEach(obj => {
+            obj.setScrollFactor?.(0);
+            obj.setMask?.(mask);
+            objects.push(obj);
+          });
+        }
+      } catch (error) {
+        console.warn('[Tokyo SHIFT] Crew manga car rendering error', error);
+      }
+    }
+
+    // Trim is explicitly above the car and background (and transparent
+    // inside), as in the approved page-two signature-car treatment.
+    add(this.add.rectangle(centerX, 365, reveal.width, reveal.height,
+      0x000000, 0).setStrokeStyle(5, 0x55dfff, 0.95)
+      .setDepth(928).setScrollFactor(0));
+    add(this.add.rectangle(1270 + shiftX, 103, 515, 76, 0x111111, 0.98)
       .setStrokeStyle(3, 0xfffcf1, 1)
-      .setDepth(927)
-      .setScrollFactor(0));
+      .setDepth(929).setScrollFactor(0));
 
-    add(this.add.text(1505, 84, 'SIGNATURE CAR', {
+    const ownerName = String(characters[interest?.characterId]?.name ||
+      interest?.characterId || 'RIVAL').toUpperCase();
+    const goldHeader = isPlayer
+      ? (car ? 'YOUR STOCK CAR' : 'NO ELIGIBLE CAR')
+      : ownerName + '’S SIGNATURE CAR';
+    add(this.add.text(1505 + shiftX, 90, goldHeader, {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#77e8ff',
+      fontSize: '8px',
+      color: '#f2d079',
       align: 'right',
-    }).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
+    }).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
 
-    add(this.add.text(
-      1505,
-      108,
-      String(car.name || car.shortName || interest.baseCarId).toUpperCase(),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#ffffff',
-        align: 'right',
-      }
-    ).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
+    const carName = car
+      ? String(car.name || car.shortName || interest?.baseCarId || '').toUpperCase()
+      : 'ACQUIRE ONE AND TRY AGAIN LATER';
+    add(this.add.text(1505 + shiftX, 117, carName, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#ffffff',
+      align: 'right',
+    }).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
 
-    add(this.add.text(
-      1505,
-      132,
-      String(dialogue?.carTagline || 'FACTORY SPEC').toUpperCase(),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '8px',
-        color: '#b9cad4',
-        fontStyle: '700',
-        align: 'right',
-      }
-    ).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
-
+    objects.forEach(obj => obj?.setAlpha?.(0));
+    const fade = this.tweens.add({
+      targets: objects, alpha: 1, duration: 360, ease: 'Sine.easeOut',
+    });
+    let disposed = false;
     return () => {
-      carObjects.forEach(obj => {
-        try { obj?.clearMask?.(false); } catch (e) {}
-      });
-      try { mask?.destroy?.(); } catch (e) {}
+      if (disposed) return;
+      disposed = true;
+      try { fade?.stop?.(); } catch (_) {}
       objects.forEach(obj => {
-        try { obj?.destroy?.(); } catch (e) {}
+        try { this.tweens.killTweensOf(obj); } catch (_) {}
+        try { obj?.clearMask?.(false); } catch (_) {}
+        try { obj?.destroy?.(); } catch (_) {}
       });
-      try { maskShape?.destroy?.(); } catch (e) {}
+      try { mask?.destroy?.(); } catch (_) {}
+      try { maskShape.destroy(); } catch (_) {}
+    };
+  }
+
+  createCrewInviteCarToggles(eligibleIds, onChoose) {
+    if (!Array.isArray(eligibleIds) || eligibleIds.length < 2)
+      return () => {};
+
+    const objects = [];
+    const add = object => { objects.push(object); return object; };
+    const makeToggle = (x, symbol, direction) => {
+      add(this.add.rectangle(x, 563, 56, 54, 0x111111, 0.96)
+        .setStrokeStyle(3, 0x55dfff, 0.95)
+        .setDepth(936).setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => onChoose(direction)));
+      add(this.add.text(x, 563, symbol, {
+        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffffff',
+      }).setOrigin(0.5).setDepth(937).setScrollFactor(0));
+    };
+    makeToggle(83, '<', -1);
+    makeToggle(583, '>', 1);
+
+    let index = 0;
+    const counter = add(this.add.text(335, 568, '', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+      backgroundColor: '#111111cc',
+      padding: { x: 13, y: 8 },
+    }).setOrigin(0.5).setDepth(937).setScrollFactor(0));
+    const setIndex = selected => {
+      index = Math.max(0, eligibleIds.indexOf(selected));
+      counter.setText((index + 1) + ' / ' + eligibleIds.length);
+    };
+    // Caller updates the counter through the cleanup function's setter.
+    const dispose = () => objects.forEach(obj => {
+      try { obj.destroy(); } catch (_) {}
+    });
+    dispose.setSelected = setIndex;
+    return dispose;
+  }
+
+  createCrewRecruitVsLabel() {
+    // Same Exo 2 Black Italic family and 88px headline as race WIN results.
+    const vs = this.add.text(780, 365, 'VS', {
+      fontFamily: '"Exo 2", sans-serif',
+      fontSize: '88px',
+      fontStyle: 'italic 900',
+      color: '#ffffff',
+      stroke: '#11141a',
+      strokeThickness: 6,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(940).setAlpha(0);
+    const fade = this.tweens.add({
+      targets: vs, alpha: 1, duration: 360, ease: 'Sine.easeOut',
+    });
+    return () => {
+      try { fade.stop(); } catch (_) {}
+      try { this.tweens.killTweensOf(vs); } catch (_) {}
+      try { vs.destroy(); } catch (_) {}
     };
   }
 
@@ -1206,7 +1451,6 @@ export default class MeetScene extends Phaser.Scene {
     const location = getMeetLocation(this.selectedMeetLocation);
     const currentRegion = String(location?.district || '').toUpperCase();
     if (String(interest.regionId).toUpperCase() !== currentRegion) return false;
-
     if (getCrewMemberForRegion(this.registry, currentRegion)) {
       clearCrewInviteInterest(this.registry);
       saveSessionState(this.registry);
@@ -1220,7 +1464,6 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
       return false;
     }
-
     const rivalName = String(character.name || interest.characterId).toUpperCase();
     const signatureCarName = String(
       car.name || car.shortName || interest.baseCarId
@@ -1229,24 +1472,58 @@ export default class MeetScene extends Phaser.Scene {
       String(this.registry.get('firstName') || '').trim(),
       String(this.registry.get('lastName') || '').trim(),
     ].filter(Boolean).join(' ') || 'PLAYER';
-
     const dialogue = getCrewInviteDialogue(interest.characterId, {
-      REGION: currentRegion,
-      RIVAL_NAME: rivalName,
-      SIGNATURE_CAR: signatureCarName,
-      PLAYER_NAME: playerName.toUpperCase(),
+      REGION: currentRegion, RIVAL_NAME: rivalName,
+      SIGNATURE_CAR: signatureCarName, PLAYER_NAME: playerName.toUpperCase(),
     });
+
     let cleanupReveal = () => {};
+    let cleanupPlayer = () => {};
+    let cleanupToggles = () => {};
+    let cleanupVs = () => {};
+    let acceptedChallenge = null;
+    let eligibleIds = [];
+    let selectedCarId = null;
+
+    const drawPlayer = () => {
+      cleanupPlayer();
+      cleanupPlayer = this.createCrewInviteCarReveal(
+        interest, selectedCarId ? cars[selectedCarId] : null, { side: 'left' }
+      );
+    };
+    const enterCarSelection = () => {
+      // The fourth page is part of this very same manga presentation:
+      // accept the invite, then show the player's garage car on the left.
+      acceptedChallenge = acceptCrewInviteChallenge(this.registry, interest);
+      if (!acceptedChallenge) return;
+      saveSessionState(this.registry);
+      const rules = getCrewRecruitmentChallengeRules(
+        this.registry, acceptedChallenge
+      );
+      eligibleIds = rules.eligibleCarIds || [];
+      selectedCarId = eligibleIds.includes(this.registry.get('selectedCarId'))
+        ? this.registry.get('selectedCarId') : eligibleIds[0] || null;
+      drawPlayer();
+      cleanupVs = this.createCrewRecruitVsLabel();
+      cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
+        if (!eligibleIds.length) return;
+        const index = eligibleIds.indexOf(selectedCarId);
+        selectedCarId = eligibleIds[
+          (Math.max(0, index) + direction + eligibleIds.length) %
+            eligibleIds.length
+        ];
+        drawPlayer();
+        cleanupToggles.setSelected?.(selectedCarId);
+      });
+      cleanupToggles.setSelected?.(selectedCarId);
+    };
 
     const result = playMangaCutscene(this, 'crewRecruitmentInvite', {
-      historyId:
-        'crewRecruitmentInvite:' +
-        interest.characterId + ':' +
+      historyId: 'crewRecruitmentInvite:' + interest.characterId + ':' +
         Number(interest.createdAt || Date.now()),
       force: true,
-      characterOverrides: {
-        RIVAL: interest.characterId,
-      },
+      preloadPagePosesOnly: true,
+      characterOverrides: { RIVAL: interest.characterId },
       variables: {
         REGION: currentRegion,
         RIVAL_NAME: rivalName,
@@ -1257,40 +1534,60 @@ export default class MeetScene extends Phaser.Scene {
         CREW_ACCEPT_LABEL: dialogue.acceptLabel,
         CREW_DECLINE_LABEL: dialogue.declineLabel,
       },
-      onComplete: payload => {
-        cleanupReveal();
-
-        if (payload?.reason === 'action') {
-          const challenge = acceptCrewInviteChallenge(this.registry, interest);
-          saveSessionState(this.registry);
-          if (challenge) {
-            this.time.delayedCall(110, () => this.maybeShowActiveCrewRecruitChallenge());
-          }
-          return;
+      onPageChange: ({ pageIndex }) => {
+        if (pageIndex === 1) {
+          cleanupReveal();
+          cleanupReveal = this.createCrewInviteCarReveal(interest, car);
+        } else if (pageIndex === 3) {
+          enterCarSelection();
         }
-
-        // Secondary button or SKIP means "not now". The character remains
-        // eligible to express interest after a later Meet victory.
-        clearCrewInviteInterest(this.registry);
-        saveSessionState(this.registry);
+      },
+      isFinalActionEnabled: () => Boolean(
+        acceptedChallenge && selectedCarId &&
+        getCrewRecruitmentChallengeRules(
+          this.registry, acceptedChallenge
+        ).eligibleCarIds.includes(selectedCarId)
+      ),
+      onComplete: ({ reason }) => {
+        cleanupToggles();
+        cleanupVs();
+        cleanupPlayer();
+        cleanupReveal();
+        if (acceptedChallenge) {
+          if (reason === 'action' && selectedCarId) {
+            this.startCrewRecruitmentRace(acceptedChallenge, selectedCarId);
+          } else {
+            // RACE LATER or SKIP on page four keeps this accepted invite.
+            saveSessionState(this.registry);
+          }
+        } else {
+          // NOT NOW on page three leaves the recruitment offer unaccepted.
+          clearCrewInviteInterest(this.registry);
+          saveSessionState(this.registry);
+        }
       },
     });
-
-    if (!result?.played) return false;
-    cleanupReveal = this.createCrewInviteCarReveal(interest, car, dialogue);
-    return true;
+    return Boolean(result?.played);
   }
 
   maybeShowActiveCrewRecruitChallenge() {
     if (this.isCrewTestDriveMode()) return false;
-    const challenge = this.registry.get('crewRecruitChallenge');
+    let challenge = this.registry.get('crewRecruitChallenge');
     if (!challenge?.active) return false;
 
-    const location = getMeetLocation(this.selectedMeetLocation);
-    const regionId = String(location?.district || '').toUpperCase();
-    if (String(challenge.regionId || '').toUpperCase() !== regionId) {
-      return false;
+    // The player has to LEAVE the Meet after a failed recruitment race before
+    // being offered the same opponent again. The challenge remains saved.
+    // Older saves already have lastLossAt but lack the deferred flag; migrate
+    // them once rather than forcing an immediate rematch on a reloaded Meet.
+    if (challenge.lastLossAt && challenge.retryDeferredUntilExit == null) {
+      challenge = { ...challenge, retryDeferredUntilExit: true };
+      this.registry.set('crewRecruitChallenge', challenge);
+      saveSessionState(this.registry);
     }
+    if (challenge.retryDeferredUntilExit) return false;
+    const location = getMeetLocation(this.selectedMeetLocation);
+    if (String(challenge.regionId || '').toUpperCase() !==
+        String(location?.district || '').toUpperCase()) return false;
 
     const character = characters[challenge.characterId];
     const opponentCar = cars[challenge.baseCarId];
@@ -1300,135 +1597,71 @@ export default class MeetScene extends Phaser.Scene {
       return false;
     }
 
-    const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
-    const challengeCarIds = recruitRules.eligibleCarIds || [];
-    let selectedCarId = challengeCarIds.includes(this.registry.get('selectedCarId'))
-      ? this.registry.get('selectedCarId')
-      : challengeCarIds[0] || null;
+    const rules = getCrewRecruitmentChallengeRules(this.registry, challenge);
+    const eligibleIds = rules.eligibleCarIds || [];
+    let selectedCarId = eligibleIds.includes(this.registry.get('selectedCarId'))
+      ? this.registry.get('selectedCarId') : eligibleIds[0] || null;
+    let cleanupReveal = () => {};
+    let cleanupPlayer = () => {};
+    let cleanupToggles = () => {};
+    let cleanupVs = () => {};
+    const interest = challenge;
 
-    const depth = 185;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-    const close = () => objects.forEach(obj => obj?.destroy?.());
-
-    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.82)
-      .setDepth(depth).setScrollFactor(0).setInteractive());
-
-    add(this.add.rectangle(780, 420, 880, 500, 0x09131d, 0.998)
-      .setStrokeStyle(3, 0x69ecff, 0.98)
-      .setDepth(depth + 1).setScrollFactor(0));
-
-    add(this.add.text(780, 226, recruitRules.carRule === 'STOCK'
-        ? 'STOCK CHALLENGE // CHOOSE YOUR CAR'
-        : 'RECRUITMENT CHALLENGE // CHOOSE YOUR CAR', {
-      fontFamily: PIXEL_FONT,
-      fontSize: '14px',
-      color: '#dffbff',
-    }).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    add(this.add.text(
-      780,
-      298,
-      String(character.name || challenge.characterId).toUpperCase() +
-        ' // ' + String(opponentCar.shortName || opponentCar.name).toUpperCase() +
-        '\n' +
-        (recruitRules.carRule === 'STOCK'
-          ? 'STOCK vs STOCK // '+recruitRules.powerClassLabel
-          : recruitRules.powerClassLabel + ' CLASS // ' + recruitRules.aiTier) +
-        ' // 1/4 MILE // NO STAKES',
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '12px',
-        color: '#bcd0dc',
-        fontStyle: '700',
-        align: 'center',
-        lineSpacing: 6,
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    const carLabel = add(this.add.text(
-      780,
-      370,
-      selectedCarId
-        ? 'YOUR CAR // ' + String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
-        : recruitRules.carRule === 'STOCK'
-          ? 'NEED FACTORY '+recruitRules.stockClass+' // PARK PARTS IN GARAGE OR BUY NEW'
-          : 'NO ' + recruitRules.powerClassLabel + ' CAR AVAILABLE',
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: selectedCarId ? '#91ffe7' : '#ff9fb9',
-      }
-    ).setOrigin(0.5).setDepth(depth + 2).setScrollFactor(0));
-
-    if (challengeCarIds.length > 1) {
-      const prev = add(this.add.text(500, 370, '<', {
-        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
-        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-      const next = add(this.add.text(1060, 370, '>', {
-        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#9edff0',
-        backgroundColor: '#101d29', padding: { x: 12, y: 5 },
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(depth + 3));
-
-      const cycle = direction => {
-        const current = Math.max(0, challengeCarIds.indexOf(selectedCarId));
-        const index = (current + direction + challengeCarIds.length) % challengeCarIds.length;
-        selectedCarId = challengeCarIds[index];
-        carLabel.setText(
-          (recruitRules.carRule === 'STOCK' ? 'YOUR STOCK CAR // ' : 'YOUR CAR // ') +
-          String(cars[selectedCarId]?.shortName || selectedCarId).toUpperCase()
-        ).setColor('#91ffe7');
-      };
-
-      prev.on('pointerdown', () => cycle(-1));
-      next.on('pointerdown', () => cycle(1));
-    }
-
-    const accept = add(this.add.rectangle(
-      650, 535, 285, 54,
-      selectedCarId ? 0x10352d : 0x181a1d,
-      1
-    ).setStrokeStyle(2, selectedCarId ? 0x62e8c7 : 0x50575c, 1)
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(
-      650,
-      535,
-      selectedCarId
-        ? 'ACCEPT RACE'
-        : recruitRules.carRule === 'STOCK'
-          ? 'NEED STOCK CAR'
-          : 'NEED ' + recruitRules.powerClassLabel,
-      {
-      fontFamily: PIXEL_FONT,
-      fontSize: '8px',
-      color: selectedCarId ? '#edfff9' : '#727c82',
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    if (selectedCarId) {
-      accept.setInteractive({ useHandCursor: true });
-      accept.on('pointerdown', () => {
-        close();
-        this.startCrewRecruitmentRace(challenge, selectedCarId);
-      });
-    }
-
-    const decline = add(this.add.rectangle(930, 535, 245, 54, 0x261922, 1)
-      .setStrokeStyle(1, 0xff7cac, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2).setScrollFactor(0));
-    add(this.add.text(930, 535, 'RACE LATER', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffc9db'
-    }).setOrigin(0.5).setDepth(depth + 3).setScrollFactor(0));
-
-    decline.on('pointerdown', () => {
-      // The invitation has already been accepted. Closing this selector only
-      // postpones the recruitment challenge; the same driver waits for the player.
-      saveSessionState(this.registry);
-      close();
+    const drawPlayer = () => {
+      cleanupPlayer();
+      cleanupPlayer = this.createCrewInviteCarReveal(
+        interest, selectedCarId ? cars[selectedCarId] : null, { side: 'left' }
+      );
+    };
+    const definition = {
+      id: 'crewRecruitmentCarChoice', once: false,
+      title: String(challenge.regionId) + ' // CREW RECRUITMENT',
+      characters: { left: null, right: null },
+      pages: [{
+        speaker: 'system',
+        speakerLabel: 'CHOOSE A CAR TO RACE',
+        hideSceneTitle: true,
+        requireActionButton: true,
+        text: 'Bring a factory-stock ' + rules.powerClassLabel + ' car. ' +
+          'Park fitted parts in your garage, or acquire an eligible car and return.',
+      }],
+      finalActionLabel: 'READY TO RACE',
+      secondaryFinalActionLabel: 'RACE LATER',
+    };
+    const result = playMangaCutscene(this, definition, {
+      onPageChange: () => {
+        cleanupReveal = this.createCrewInviteCarReveal(interest, opponentCar);
+        drawPlayer();
+        cleanupVs = this.createCrewRecruitVsLabel();
+        cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
+          const index = eligibleIds.indexOf(selectedCarId);
+          selectedCarId = eligibleIds[
+            (Math.max(0, index) + direction + eligibleIds.length) %
+              eligibleIds.length
+          ];
+          drawPlayer();
+          cleanupToggles.setSelected?.(selectedCarId);
+        });
+        cleanupToggles.setSelected?.(selectedCarId);
+      },
+      isFinalActionEnabled: () => Boolean(
+        selectedCarId && getCrewRecruitmentChallengeRules(
+          this.registry, challenge
+        ).eligibleCarIds.includes(selectedCarId)
+      ),
+      onComplete: ({ reason }) => {
+        cleanupToggles();
+        cleanupVs();
+        cleanupPlayer();
+        cleanupReveal();
+        if (reason === 'action' && selectedCarId) {
+          this.startCrewRecruitmentRace(challenge, selectedCarId);
+        } else {
+          saveSessionState(this.registry);
+        }
+      },
     });
-
-    return true;
+    return Boolean(result?.played);
   }
 
   startCrewRecruitmentRace(challenge, playerCarId) {
@@ -1443,15 +1676,20 @@ export default class MeetScene extends Phaser.Scene {
     const rating = recruitRules.aiRating || characterRating;
     const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
     const tierAi = getEncounterAi(rating);
-    const encounterAi = recruitRules.aiTier
-      ? {
-          ...characterAi,
-          reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
-          launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
-          shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
-          aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
-        }
-      : characterAi;
+    // Easy and Standard use their advertised driver tiers rather than inheriting
+    // stronger personal skill values from an Elite-grade character profile.
+    // Hard intentionally retains the more demanding max-of-personal-and-tier AI.
+    const encounterAi = recruitRules.playerDifficulty !== 'HARD'
+      ? getEncounterAi(rating)
+      : recruitRules.aiTier
+        ? {
+            ...characterAi,
+            reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
+            launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
+            shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
+            aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
+          }
+        : characterAi;
 
     this.registry.set('selectedCarId', playerCarId);
     this.registry.set(
@@ -2277,6 +2515,16 @@ export default class MeetScene extends Phaser.Scene {
     );
   }
 
+  releaseDeferredCrewRecruitment() {
+    const challenge = this.registry.get('crewRecruitChallenge');
+    if (!challenge?.active || !challenge.retryDeferredUntilExit) return;
+    this.registry.set('crewRecruitChallenge', {
+      ...challenge,
+      retryDeferredUntilExit: false,
+    });
+    // The caller saves together with the departure's cash/location changes.
+  }
+
   travelToLocation(locationId, suppliedCost = null) {
     if (!this.hasCar) return false;
 
@@ -2288,6 +2536,15 @@ export default class MeetScene extends Phaser.Scene {
       : Number(suppliedCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < travelCost) return false;
+
+    // A real departure (not the RaceScene -> MeetScene results handoff)
+    // re-enables a pending defeated recruitment for a LATER visit.
+    if (locationId !== this.selectedMeetLocation &&
+        (travelTarget.regionId === 'CENTRAL_TOKYO' ||
+         travelTarget.regionId === 'OSHIAGE' ||
+         Boolean(MEET_LOCATIONS[locationId]))) {
+      this.releaseDeferredCrewRecruitment();
+    }
 
     if (travelTarget.regionId === 'CENTRAL_TOKYO') {
       this.registry.set('cash', cash - travelCost);
@@ -2686,6 +2943,7 @@ export default class MeetScene extends Phaser.Scene {
 
     if (cash < cost) return;
 
+    this.releaseDeferredCrewRecruitment();
     this.registry.set('cash', cash - cost);
     this.registry.set('meetStranded', false);
     this.registry.set('workshopLocationId', destinationId);

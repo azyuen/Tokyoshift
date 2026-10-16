@@ -54,6 +54,10 @@ export const CUTSCENES = {
       { speaker: 'left', pose: 'homeHappy', text: "Not bad for your first time! Just listen to the engine more. You'll get more out of the car that way." },
       { speaker: 'right', pose: 'idle', text: "Wow, didn't think you knew that much about cars." },
       { speaker: 'left', pose: 'homeBlushing', text: "Teehehe, what would I know about cars?" },
+      { speaker: 'left', pose: 'homeHappy', text: "If you want more practice, there's a driving school in Oshiage. They've got launch, standing-start and rolling-start lessons." },
+      { speaker: 'left', pose: 'homeBlushing', text: "I hear there's an incredibly beautiful and talented lady instructor there. Very modest, too!" },
+      { speaker: 'right', pose: 'idle', text: "You seem to know a lot about this instructor..." },
+      { speaker: 'left', pose: 'homeHappy', text: "Oh, just what I've heard! Here, take three free lesson vouchers — one for each advanced course. Even the retries are covered!" },
       { speaker: 'left', pose: 'homeSerious', text: "Anyway, drive safely. I've got somewhere to be, but we'll see each other around." },
     ],
     finalActionLabel: 'SAY GOODBYE',
@@ -125,6 +129,24 @@ export const CUTSCENES = {
       },
     ],
     finalActionLabel: 'TAKE THE COUPONS',
+  },
+
+  oshiageInstructorFirstEncounter: {
+    id: 'oshiageInstructorFirstEncounter',
+    category: 'OSHIAGE / STORY',
+    testerLabel: 'Oshiage — Meet the Mysterious Lady Instructor',
+    title: 'OSHIAGE // FIRST ENCOUNTER',
+    once: true,
+    characters: { left: '$PLAYER', right: 'sayakaFujieda' },
+    pages: [
+      { speaker: 'left', pose: 'idle', rightPose: 'oshiageNeutral',
+        text: 'Oh hi... you look so much like my family friend...' },
+      { speaker: 'right', pose: 'oshiageConcerned', nameOverride: 'LADY INSTRUCTOR',
+        text: "What do you mean?! I'm just a random driving instructor." },
+      { speaker: 'right', pose: 'oshiageExplaining', nameOverride: 'LADY INSTRUCTOR',
+        text: 'Call me Lady Instructor. Now, are you here to learn how to drive, or to ask questions?' },
+    ],
+    finalActionLabel: 'VISIT SCHOOL',
   },
 
   tunerTeamCallout: {
@@ -269,10 +291,25 @@ export const CUTSCENES = {
         pose: 'win',
         text: '{CREW_LINE_3}',
         emphasis: true,
+        requireActionButton: true,
+        actionLabel: '{CREW_ACCEPT_LABEL}',
+        secondaryActionLabel: '{CREW_DECLINE_LABEL}',
+      },
+      {
+        // Accepting moves INTO the choice page without closing this manga.
+        // The rival silhouette fades away; both cars then occupy the frame.
+        speaker: 'system',
+        speakerLabel: 'CHOOSE A CAR TO RACE',
+        leftCharacter: '',
+        rightCharacter: '',
+        fadeOutActors: true,
+        hideSceneTitle: true,
+        requireActionButton: true,
+        text: 'You can only race an unmodified stock car of the same class. Choose one from your garage, or acquire one and come back later.',
       },
     ],
-    finalActionLabel: '{CREW_ACCEPT_LABEL}',
-    secondaryFinalActionLabel: '{CREW_DECLINE_LABEL}',
+    finalActionLabel: 'READY TO RACE',
+    secondaryFinalActionLabel: 'RACE LATER',
   },
 
   tunerShopDiscovery: {
@@ -930,6 +967,7 @@ export const CUTSCENE_ORDER = [
   'openingSayakaFarewell',
   'openingSayakaPhoneCall',
   'openingDaichiAfterSayaka',
+  'oshiageInstructorFirstEncounter',
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'crewRecruitmentInvite',

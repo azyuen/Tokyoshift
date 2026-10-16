@@ -34,7 +34,7 @@ const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
 const POSES = new Set(['neutral', 'explaining', 'happy', 'concerned']);
 
-function drawMangaSpeechBubble(scene, layout, theme, depth = 80) {
+function drawMangaSpeechBubble(scene, layout, theme, depth = 80, side = 'left') {
   const mid = (layout.top + layout.bottom) / 2;
   const bubble = scene.add.graphics().setScrollFactor(0).setDepth(depth);
   const redraw = borderColor => {
@@ -44,12 +44,21 @@ function drawMangaSpeechBubble(scene, layout, theme, depth = 80) {
     bubble.beginPath();
     bubble.moveTo(layout.left, layout.top);
     bubble.lineTo(layout.right, layout.top);
-    bubble.lineTo(layout.right, layout.bottom);
-    bubble.lineTo(layout.left, layout.bottom);
-    bubble.lineTo(layout.left, mid + layout.notchHalfHeight);
-    // An OUTWARD triangular tail added to the intact rectangle.
-    bubble.lineTo(layout.left - layout.notchDepth, mid);
-    bubble.lineTo(layout.left, mid - layout.notchHalfHeight);
+    if (side === 'right') {
+      // The speaker is to the RIGHT of the bubble; mirror the speech tail.
+      bubble.lineTo(layout.right, mid - layout.notchHalfHeight);
+      bubble.lineTo(layout.right + layout.notchDepth, mid);
+      bubble.lineTo(layout.right, mid + layout.notchHalfHeight);
+      bubble.lineTo(layout.right, layout.bottom);
+      bubble.lineTo(layout.left, layout.bottom);
+    } else {
+      bubble.lineTo(layout.right, layout.bottom);
+      bubble.lineTo(layout.left, layout.bottom);
+      bubble.lineTo(layout.left, mid + layout.notchHalfHeight);
+      // An outward triangular tail to the left-side portrait.
+      bubble.lineTo(layout.left - layout.notchDepth, mid);
+      bubble.lineTo(layout.left, mid - layout.notchHalfHeight);
+    }
     bubble.closePath();
     bubble.fillPath();
     bubble.strokePath();
@@ -86,8 +95,10 @@ export function createRaceDialogueHud(scene, {
   characterVisual = {},
   initialPose = 'neutral',
   phoneIconKey = '',
+  layout = RACE_COACH_LAYOUT,
+  side = 'left',
 } = {}) {
-  const { face, bubble } = RACE_COACH_LAYOUT;
+  const { face, bubble } = layout;
   const style = RACE_DIALOGUE_THEMES[theme] || RACE_DIALOGUE_THEMES.standard;
   const objects = [];
   const own = object => { objects.push(object); return object; };
@@ -100,7 +111,7 @@ export function createRaceDialogueHud(scene, {
     .setOrigin(0, 0).setDepth(depth + 2).setScrollFactor(0)
     .setMask(maskShape.createGeometryMask()));
 
-  const speech = drawMangaSpeechBubble(scene, bubble, style, depth);
+  const speech = drawMangaSpeechBubble(scene, bubble, style, depth, side);
   own(speech.bubble);
   const heading = own(scene.add.text(bubble.headingX, bubble.headingY, speaker, {
     fontFamily: PIXEL, fontSize: '10px', color: style.heading,

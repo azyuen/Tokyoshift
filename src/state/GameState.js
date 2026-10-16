@@ -103,6 +103,7 @@ export function createDefaultGameState(options = {}) {
     crewRecruitChallenge: null,
     crewPendingRecruit: null,
     crewBattleProgress: {},
+    crewBattleLineups: {},
     crewBattleState: null,
     crewSpaceActive: false,
     crewPreviousCarId: null,
@@ -151,6 +152,7 @@ export function createDefaultGameState(options = {}) {
     oshiageLessonTab: 0,
     oshiageTrainingLesson: null,
     oshiageCoachingProgress: {},
+    oshiageFreeLessonUsed: {},
     oshiageSchoolBooking: null,
     centralTokyoLocation: 'tokyoAutoMarket',
     centralTokyoUnlocks: {
@@ -1095,6 +1097,10 @@ export function normaliseState(input = {}) {
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
         ? input.crewBattleProgress
         : {},
+    crewBattleLineups:
+      input.crewBattleLineups && typeof input.crewBattleLineups === 'object'
+        ? input.crewBattleLineups
+        : {},
     crewBattleState:
       input.crewBattleState && typeof input.crewBattleState === 'object'
         ? input.crewBattleState
@@ -1177,6 +1183,9 @@ export function normaliseState(input = {}) {
       ? input.oshiageTrainingLesson : null,
     oshiageCoachingProgress: input.oshiageCoachingProgress && typeof input.oshiageCoachingProgress === 'object' &&
       !Array.isArray(input.oshiageCoachingProgress) ? input.oshiageCoachingProgress : {},
+    oshiageFreeLessonUsed: Object.fromEntries(['launch', 'standing', 'rolling'].map(id => [
+      id, Boolean(input.oshiageFreeLessonUsed?.[id]),
+    ])),
     oshiageSchoolBooking: input.oshiageSchoolBooking &&
       ['launch', 'standing', 'rolling'].includes(input.oshiageSchoolBooking.lessonId) &&
       typeof input.oshiageSchoolBooking.carId === 'string' &&
@@ -1283,6 +1292,7 @@ export function snapshotRegistry(registry) {
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
+    crewBattleLineups: registry.get('crewBattleLineups') || {},
     crewBattleState: registry.get('crewBattleState') || null,
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
@@ -1328,6 +1338,7 @@ export function snapshotRegistry(registry) {
     oshiageLessonTab: Number(registry.get('oshiageLessonTab') || 0),
     oshiageTrainingLesson: registry.get('oshiageTrainingLesson') || null,
     oshiageCoachingProgress: registry.get('oshiageCoachingProgress') || {},
+    oshiageFreeLessonUsed: registry.get('oshiageFreeLessonUsed') || {},
     oshiageSchoolBooking: registry.get('oshiageSchoolBooking') || null,
     centralTokyoLocation: registry.get('centralTokyoLocation') || 'tokyoAutoMarket',
     centralTokyoUnlocks: registry.get('centralTokyoUnlocks') || {},

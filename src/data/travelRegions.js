@@ -230,7 +230,7 @@ export const TRAVEL_REGIONS = {
     label: 'OSHIAGE',
     role: 'SKYTREE / SERVICES',
     level: 'SPECIAL',
-    unlockWins: 3,
+    unlockWins: 0,
     baseCost: 900,
     mapX: 0.452,
     mapY: 0.126,
@@ -522,8 +522,13 @@ export function isTravelLocationUnlocked(source, locationId) {
   }
 
   if (found.regionId === 'OSHIAGE') {
-    return isTravelRegionUnlocked(source, 'OSHIAGE') &&
-      (found.id !== 'oshiageSkytreeMeet' || getOshiageEliteProgress(source).complete);
+    if (!isTravelRegionUnlocked(source, 'OSHIAGE')) return false;
+    if (found.id === 'oshiageCustomWorks') {
+      // The Custom Works studio opens only when Canal Yard is purchased.
+      return Number(sourceValue(source, 'garageTier', 0) || 0) >= 1;
+    }
+    if (found.id === 'oshiageSkytreeMeet') return getOshiageEliteProgress(source).complete;
+    return true; // Sayaka's Driving School opens on the first night.
   }
   if (found.regionId === 'CENTRAL_TOKYO') return isTravelRegionUnlocked(source, found.regionId);
 
@@ -542,6 +547,10 @@ export function getTravelLocationUnlockLabel(source, locationId) {
     const progress = getOshiageEliteProgress(source);
     return progress.complete ? 'OPEN' :
       '7 REGIONAL CHAMPIONSHIPS REQUIRED (' + progress.count + '/7)';
+  }
+  if (found.id === 'oshiageCustomWorks') {
+    return Number(sourceValue(source, 'garageTier', 0) || 0) >= 1
+      ? 'OPEN' : 'PURCHASE CANAL YARD';
   }
   if (found.regionId === 'OSHIAGE') return getTravelRegionUnlockLabel(source, 'OSHIAGE');
 

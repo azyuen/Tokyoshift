@@ -480,7 +480,18 @@ function replaceActorProfile(
   if (!characterId || !characters[characterId]) {
     if (previous?.profile) {
       scene.tweens.killTweensOf(previous.profile.image);
-      previous.profile.destroy();
+      if (controller.definition.pages?.[controller.pageIndex]?.fadeOutActors) {
+        const oldProfile = previous.profile;
+        scene.tweens.add({
+          targets: oldProfile.image,
+          alpha: 0,
+          duration: 290,
+          ease: 'Sine.easeOut',
+          onComplete: () => oldProfile.destroy(),
+        });
+      } else {
+        previous.profile.destroy();
+      }
     }
     controller.actors[side] = {
       characterId: null,
@@ -653,11 +664,15 @@ function drawDialogue(controller, page) {
     .setScrollFactor(0);
 
   const finalPage = controller.pageIndex >= (definition.pages?.length || 1) - 1;
-  const rawAction = finalPage
+  const rawAction = page.actionLabel || (finalPage
     ? (definition.finalActionLabel || 'CONTINUE')
-    : 'NEXT';
+    : 'NEXT');
   const actionLabel = interpolate(rawAction, context.variables) + '  >';
-  const secondaryRaw = finalPage ? definition.secondaryFinalActionLabel : null;
+  const secondaryRaw = page.secondaryActionLabel != null
+    ? page.secondaryActionLabel
+    : finalPage ? definition.secondaryFinalActionLabel : null;
+  const actionEnabled = !page.disableAction &&
+    !(finalPage && context.options.isFinalActionEnabled?.({ page }) === false);
   const secondaryLabel = secondaryRaw
     ? interpolate(secondaryRaw, context.variables)
     : '';
@@ -676,11 +691,11 @@ function drawDialogue(controller, page) {
     footerY,
     actionWidth,
     42,
-    0x111111,
+    actionEnabled ? 0x111111 : 0x565656,
     1
   ).setDepth(BASE_DEPTH + 33)
-    .setScrollFactor(0)
-    .setInteractive({ useHandCursor: true });
+    .setScrollFactor(0);
+  if (actionEnabled) actionBox.setInteractive({ useHandCursor: true });
 
   const actionText = scene.add.text(
     actionX,
@@ -689,7 +704,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: PIXEL_FONT,
       fontSize: finalPage ? '7px' : '8px',
-      color: '#ffffff',
+      color: actionEnabled ? '#ffffff' : '#cccccc',
       align: 'center',
     }
   ).setOrigin(0.5)
@@ -764,7 +779,7 @@ function drawDialogue(controller, page) {
   });
 
   card.on('pointerdown', () => controller.advance());
-  actionBox.on('pointerdown', () => controller.advance());
+  actionBox.on('pointerdown', () => controller.advance('button'));
   secondaryBox?.on('pointerdown', () => controller.finish('secondary'));
 }
 
@@ -827,6 +842,19 @@ function drawMangaInfoPanel(controller) {
   }
 }
 
+
+function sceneTweensFadeTitle(controller) {
+  if (controller.topTitleHidden) return;
+  controller.topTitleHidden = true;
+  const objects = controller.topTitleObjects || [];
+  controller.scene.tweens.add({
+    targets: objects,
+    alpha: 0,
+    duration: 230,
+    ease: 'Sine.easeOut',
+  });
+}
+
 function renderPage(controller, pageIndex, firstPage = false) {
   const { context, definition } = controller;
   const pages = definition.pages || [];
@@ -835,6 +863,13 @@ function renderPage(controller, pageIndex, firstPage = false) {
 
   controller.pageIndex = pageIndex;
   clearDialogue(controller);
+
+  // When the two equal car bays appear, clear the small opening title plate
+  // so it cannot overlap the left-hand car's top header. The main manga
+  // dialogue panel, buttons and active cutscene remain untouched.
+  if (page.hideSceneTitle && controller.topTitleObjects?.length) {
+    sceneTweensFadeTitle(controller);
+  }
 
   SIDES.forEach(side => {
     const current = controller.actors[side];
@@ -854,8 +889,22 @@ function renderPage(controller, pageIndex, firstPage = false) {
     );
   });
 
-  drawDialogue(controller, page);
+  // Scene-owned car bays and eligibility must be established BEFORE the
+  // dialogue's action buttons are drawn. This is especially important on the
+  // crew choice page, where READY TO RACE depends on an eligible car.
+  try {
+    context.options.onPageChange?.({
+      pageIndex,
+      pageNumber: pageIndex + 1,
+      firstPage,
+      page,
+      pageCount: pages.length,
+    });
+  } catch (error) {
+    console.warn('[Tokyo SHIFT] Manga page-change callback failed', error);
+  }
 
+  drawDialogue(controller, page);
   if (firstPage) showIntroCard(controller);
 }
 
@@ -1015,6 +1064,8 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     .setAlpha(0);
 
   controller.objects.push(blocker, shade, titlePlate, title, skip);
+  controller.topTitleObjects = [titlePlate, title];
+  controller.topTitleHidden = false;
 
   scene.tweens.add({
     targets: shade,
@@ -1023,21 +1074,30 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     ease: 'Sine.easeOut',
   });
   scene.tweens.add({
-    targets: [titlePlate, title, skip],
+    targets: definition.pages?.[0]?.hideSceneTitle
+      ? [skip] : [titlePlate, title, skip],
     alpha: 1,
     duration: 180,
     delay: 70,
     ease: 'Sine.easeOut',
   });
 
-  controller.advance = () => {
+  controller.advance = (source = 'ambient') => {
     if (!controller.active || controller.cleaned || controller.finishing) return;
+    // Explicit acceptance and READY TO RACE must come from the black button,
+    // never from an incidental tap on the dialogue card or shaded backdrop.
+    const activePage = definition.pages?.[controller.pageIndex];
+    if (activePage?.requireActionButton && source !== 'button') return;
     const now = Date.now();
     if (now - controller.lastAdvanceAt < PAGE_DEBOUNCE_MS) return;
     controller.lastAdvanceAt = now;
 
     const pages = definition.pages || [];
     const finalPage = controller.pageIndex >= pages.length - 1;
+    if (finalPage && (pages[controller.pageIndex]?.disableAction ||
+        context.options.isFinalActionEnabled?.({
+          page: pages[controller.pageIndex],
+        }) === false)) return;
     if (finalPage) {
       controller.finish('action');
       return;

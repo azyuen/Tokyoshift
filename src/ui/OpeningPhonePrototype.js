@@ -3,7 +3,7 @@
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js';
-import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js';
+import { createRaceDialogueHud } from './RaceCoachHud.js';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -17,12 +17,26 @@ export const OPENING_PHONE_LAYOUT = Object.freeze({
   transitionMs: 420,
 });
 
-const CARD_THEME = Object.freeze({
-  fill: 0xe5f4ff,
-  fillAlpha: 0.92,
-  portraitFill: 0xd4ebfa,
-  portraitAlpha: 0.87,
-  stroke: 0x287bb5,
+// Same uncaged face crop and white/blue race speech bubble as in-race
+// dialogue, repositioned entirely into the TOP THIRD for this phone call.
+// Right layout mirrors the left when the player answers.
+export const OPENING_PHONE_DIALOGUE_LAYOUTS = Object.freeze({
+  left: Object.freeze({
+    face: { x: 38, y: 65, width: 210, height: 210,
+      targetX: 143, targetY: 172, headHeight: 174 },
+    bubble: { left: 249, right: 814, top: 83, bottom: 269,
+      notchDepth: 27, notchHalfHeight: 27,
+      headingX: 286, headingY: 102,
+      textX: 286, textY: 133, textWidth: 487 },
+  }),
+  right: Object.freeze({
+    face: { x: 1312, y: 65, width: 210, height: 210,
+      targetX: 1417, targetY: 172, headHeight: 174 },
+    bubble: { left: 746, right: 1311, top: 83, bottom: 269,
+      notchDepth: 27, notchHalfHeight: 27,
+      headingX: 783, headingY: 102,
+      textX: 783, textY: 133, textWidth: 487 },
+  }),
 });
 const safeDestroy = object => { try { object?.destroy?.(); } catch (_) {} };
 const withAlpha = object => object?.setAlpha?.(0);
@@ -34,92 +48,52 @@ export function getOpeningPhoneAssets(callerId, pose, playerCharacterId) {
   };
 }
 
-function addPortrait(scene, sprites, asset, characterVisual, x, y, width, height) {
-  sprites.push(scene.add.rectangle(x, y, width, height,
-    CARD_THEME.portraitFill, CARD_THEME.portraitAlpha));
-  if (!asset?.key || !scene.textures.exists(asset.key)) {
-    sprites.push(scene.add.text(x, y, '?', {
-      fontFamily: PIXEL, fontSize: '22px', color: '#287bb5',
-    }).setOrigin(0.5));
-    return;
-  }
-  const texture = scene.textures.get(asset.key);
-  texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-  const source = texture.getSourceImage();
-  const sw = Number(source.naturalWidth || source.width || 1);
-  const sh = Number(source.naturalHeight || source.height || 1);
-  const anchor = resolveCharacterFaceAnchor(source, asset.key, characterVisual, 'idle');
-  // Show the face through the neckline, not the full-length sprite. Cropping
-  // avoids a geometry mask that would stay stationary when the card swipes.
-  const size = Math.max(1, Math.min(sw, sh,
-    Math.max(anchor.headHeight * 2.1, sh * 0.19)));
-  const left = Math.max(0, Math.min(sw - size, anchor.x - size * 0.5));
-  const top = Math.max(0, Math.min(sh - size, anchor.y - size * 0.28));
-  const scale = Math.max(width, height) / size;
-  const image = scene.add.image(
-    x - (left + size / 2 - sw / 2) * scale,
-    y - (top + size / 2 - sh / 2) * scale, asset.key,
-  ).setScale(scale);
-  image.setCrop(left, top, size, size);
-  sprites.push(image);
-}
-
 function makeDialogueCard(scene, {
   side, asset, characterVisual, speaker, text, onContinue, finalPage,
 }) {
-  const { card } = OPENING_PHONE_LAYOUT;
-  const x1 = card.x - card.width / 2;
-  const x2 = card.x + card.width / 2;
-  const top = card.y - card.height / 2;
-  const bottom = card.y + card.height / 2;
-  const actorOnRight = side === 'right';
-  const cellX = actorOnRight
-    ? x2 - card.portraitWidth / 2
-    : x1 + card.portraitWidth / 2;
-  const dividingX = actorOnRight
-    ? x2 - card.portraitWidth : x1 + card.portraitWidth;
-  const textboxLeft = actorOnRight ? x1 + 38 : dividingX + 38;
-  const textboxWidth = card.width - card.portraitWidth - 75;
+  const layout = OPENING_PHONE_DIALOGUE_LAYOUTS[side === 'right' ? 'right' : 'left'];
+  const speech = layout.bubble;
   const sprites = [];
-  const add = obj => { sprites.push(obj); return obj; };
-
-  // One continuous bordered card, with the portrait inside a joined panel.
-  add(scene.add.rectangle(card.x, card.y, card.width, card.height,
-    CARD_THEME.fill, CARD_THEME.fillAlpha).setStrokeStyle(5, CARD_THEME.stroke));
-  add(scene.add.rectangle(cellX, card.y, card.portraitWidth - 8,
-    card.height - 8, CARD_THEME.portraitFill, CARD_THEME.portraitAlpha));
-  add(scene.add.rectangle(dividingX, card.y, 3, card.height - 10,
-    CARD_THEME.stroke, 0.9));
-
-  addPortrait(scene, sprites, asset, characterVisual,
-    cellX, card.y, card.portraitWidth - 16, card.height - 16);
-
-  add(scene.add.text(textboxLeft, top + 32, speaker, {
-    fontFamily: PIXEL, fontSize: '13px', color: '#135780',
-  }));
-  add(scene.add.text(textboxLeft, top + 85, text, {
-    fontFamily: BODY, fontSize: '24px', fontStyle: 'bold',
-    color: '#142d45', lineSpacing: 8,
-    wordWrap: { width: textboxWidth },
-  }));
-
-  const buttonX = actorOnRight ? dividingX - 116 : x2 - 116;
-  const buttonY = bottom - 36;
-  const button = add(scene.add.rectangle(buttonX, buttonY, 185, 45,
+  const depth = DEPTH + 5;
+  // This is the ACTUAL race dialogue component: transparent cropped head,
+  // separate side-mounted speech bubble, mirrored tail for player replies.
+  const hud = createRaceDialogueHud(scene, {
+    theme: 'phone',
+    depth,
+    layout,
+    side,
+    speaker,
+    initialPose: 'idle',
+    spriteKeyForPose: () => asset?.key || '',
+    characterVisual,
+    phoneIconKey: PHONE_TEXTURE,
+  });
+  hud.dialogue.setText(text).setFontSize('19px').setLineSpacing(5);
+  const add = item => { sprites.push(item); return item; };
+  const buttonX = side === 'right' ? speech.left + 116 : speech.right - 116;
+  const buttonY = speech.bottom + 29;
+  const button = add(scene.add.rectangle(buttonX, buttonY, 208, 46,
     0x1e6a9e, 1).setStrokeStyle(2, 0xaee1ff)
     .setInteractive({ useHandCursor: true }));
   add(scene.add.text(buttonX, buttonY,
     finalPage ? 'END CALL >' : 'CONTINUE >', {
       fontFamily: PIXEL, fontSize: '10px', color: '#ffffff',
     }).setOrigin(0.5));
-  const group = scene.add.container(0, 0, sprites).setScrollFactor(0)
-    .setDepth(DEPTH + 5);
+  const group = scene.add.container(0, 0,
+    [...hud.objects, ...sprites]).setScrollFactor(0).setDepth(depth);
+  // The portrait's crop uses a geometry mask. Keep that mask aligned while
+  // the whole call swipes vertically, instead of clipping the head mid-swipe.
+  const alignMask = () => hud.maskShape?.setY(group.y);
+  let destroyed = false;
   const dispose = () => {
+    if (destroyed) return;
+    destroyed = true;
     scene.tweens?.killTweensOf?.(group);
+    hud.destroy();
     group.destroy(true);
   };
-  button.on('pointerdown', () => onContinue?.(group, button));
-  return { group, dispose };
+  button.on('pointerdown', () => onContinue?.(group, button, alignMask));
+  return { group, dispose, alignMask };
 }
 
 export function playOpeningPhonePrototype(scene, {
@@ -200,7 +174,7 @@ export function playOpeningPhonePrototype(scene, {
         : String(callerName || actor?.name || 'CALLER').toUpperCase(),
       text,
       finalPage: index === chapter.length - 1,
-      onContinue: (group, button) => {
+      onContinue: (group, button, alignMask) => {
         if (guard || !state.active) return;
         guard = true;
         button.disableInteractive();
@@ -209,7 +183,7 @@ export function playOpeningPhonePrototype(scene, {
         // opposite-handed player card slides into its place.
         doTween(group, {
           y: -460, alpha: 0, duration: OPENING_PHONE_LAYOUT.transitionMs,
-          ease: 'Cubic.In', onComplete: () => {
+          ease: 'Cubic.In', onUpdate: alignMask, onComplete: () => {
             card.dispose();
             if (currentCard === card) currentCard = null;
             if (!state.active) return;
@@ -220,10 +194,11 @@ export function playOpeningPhonePrototype(scene, {
       },
     });
     currentCard = card;
-    card.group.setY(500).setAlpha(0);
+    card.group.setY(400).setAlpha(0);
+    card.alignMask();
     doTween(card.group, {
       y: 0, alpha: 1, duration: OPENING_PHONE_LAYOUT.transitionMs,
-      ease: 'Cubic.Out',
+      ease: 'Cubic.Out', onUpdate: card.alignMask,
     });
   };
 

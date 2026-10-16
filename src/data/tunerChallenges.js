@@ -7,8 +7,8 @@ import {
 import { getCrewBaseCarId, getRegionalCrewRoster } from './crewRoster.js';
 import { getEncounterAi } from './encounterProfiles.js';
 
-export const TUNER_TEAM_CHALLENGE_WINS = 10;
-export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 12;
+export const TUNER_TEAM_CHALLENGE_WINS = 9;
+export const TUNER_TEAM_CHALLENGE_TOTAL_WINS = 9;
 // Regional championships are what unlock later workshops, so requiring Canal
 // Yard here creates a circular progression lock on fresh profiles.
 export const TUNER_TEAM_CHALLENGE_MIN_GARAGE_TIER = 0;
