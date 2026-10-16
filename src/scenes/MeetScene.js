@@ -873,15 +873,28 @@ export default class MeetScene extends Phaser.Scene {
     // Transparent input shield blocks the underlying Meet screen.
     add(this.add.rectangle(780, 420, 1560, 840, 0x000000, 0)
       .setInteractive().setDepth(depth + 1));
-    text(64, 52, String(regionId).toUpperCase(), 19, '#48d9ff');
-    text(58, 81, 'CREW SHOWDOWN', 54, '#ffffff');
-    text(64, 153, '3 VS 3  //  BEST OF 3', 20, '#a8c4d7');
+    const headerShape = (x, y, w, h, fill, alpha = 1) => {
+      const g = add(this.add.graphics().setDepth(depth + 7));
+      g.fillStyle(fill, alpha);
+      g.fillPoints([
+        { x: x + 15, y }, { x: x + w, y },
+        { x: x + w - 15, y: y + h }, { x, y: y + h },
+      ], true);
+      return g;
+    };
+    headerShape(52, 44, 175, 34, 0x03070c, 0.96);
+    text(72, 48, String(regionId).toUpperCase(), 19, '#48d9ff');
+    text(58, 85, 'CREW SHOWDOWN', 38, '#ffffff');
+    headerShape(54, 143, 296, 38, 0x081522, 0.73);
+    add(this.add.text(74, 152, '3 VS 3  //  BEST OF 3', {
+      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#a8c4d7',
+    }).setDepth(depth + 8));
 
     // The skewed panels use geometry masks, so sprites are actually clipped
     // to the slanted edges rather than overflowing their card boundaries.
     const polygon = (x, y, w, h, skew = 18) => [
-      { x: x + skew, y }, { x: x + w, y },
-      { x: x + w - skew, y: y + h }, { x, y: y + h },
+      { x: x + skew, y }, { x: x + w + skew, y },
+      { x: x + w - skew, y: y + h }, { x: x - skew, y: y + h },
     ];
     const panel = (x, y, w, h, fill, border, alpha = 1, skew = 17) => {
       const points = polygon(x, y, w, h, skew);
@@ -902,13 +915,13 @@ export default class MeetScene extends Phaser.Scene {
       const g = add(this.add.graphics().setDepth(depth + 2));
       g.fillStyle(0x030b16, 0.77); g.fillPoints(p, true);
       g.lineStyle(5, color, 1); g.strokePoints(p, true);
-      text(x + 45, y + 7, title, 29, '#' + color.toString(16).padStart(6, '0'));
+      text(x + 43, y + 10, title, 26, '#' + color.toString(16).padStart(6, '0'));
     };
-    sideFrame(20, 415, 765, 393, 0x35d6ff, 'YOUR CREW');
-    sideFrame(765, 29, 775, 444, 0xff477e, 'RIVAL CREW');
+    sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
+    sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
 
-    const xPlayer = [49, 295, 541];
-    const xRival = [791, 1036, 1281];
+    const xPlayer = [62, 293, 524];
+    const xRival = [821, 1052, 1283];
     const slotObjects = [[], [], []];
     let vsStamp = null;
     const createPortrait = (id, x, y, pts, collection) => {
@@ -936,17 +949,16 @@ export default class MeetScene extends Phaser.Scene {
     const drawCard = (index, unit, rival = false) => {
       const collection = rival ? [] : slotObjects[index];
       const x = rival ? xRival[index] : xPlayer[index];
-      const y = rival ? 96 : 465;
+      const y = rival ? 92 : 463;
       const accent = rival ? 0xff477e : 0x35d6ff;
-      const portrait = panel(x, y, 236, 176,
-        rival ? 0x80304e : 0x165578, 0x080a10, 0.73);
-      const label = panel(x, y + 176, 236, 56, 0x020610, 0x020610);
-      const carPanel = panel(x, y + 232, 236, 104,
-        rival ? 0x381b31 : 0x0a2b48, accent, 0.86);
-      collection.push(portrait.g, label.g, carPanel.g);
+      const portrait = panel(x, y, 218, 168,
+        rival ? 0x80304e : 0x165578, 0x050a10, 0.65, 15);
+      const carPanel = panel(x, y + 228, 218, 98,
+        rival ? 0x381b31 : 0x0a2b48, accent, 0.78, 15);
+      collection.push(portrait.g, carPanel.g);
       if (unit) {
-        createPortrait(unit.characterId, x + 118, y + 88, portrait.points, collection);
-        createCar(unit.carId, x + 118, y + 284, carPanel.points, collection);
+        createPortrait(unit.characterId, x + 109, y + 84, portrait.points, collection);
+        createCar(unit.carId, x + 109, y + 277, carPanel.points, collection);
       }
       const name = unit
         ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
@@ -954,13 +966,17 @@ export default class MeetScene extends Phaser.Scene {
       const carName = unit
         ? String(cars[unit.carId]?.shortName || unit.carId).toUpperCase()
         : 'TAP TO ASSIGN';
-      const t1 = text(x + 118, y + 183, name, 16, '#ffffff',
-        { align: 'center' }).setOrigin(0.5, 0);
-      const t2 = text(x + 118, y + 207, carName, 13, '#cbd8e5',
-        { align: 'center' }).setOrigin(0.5, 0);
+      const t1 = add(this.add.text(x + 109, y + 176, name, {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+        align: 'center',
+      }).setOrigin(0.5, 0).setDepth(depth + 8));
+      const t2 = add(this.add.text(x + 109, y + 199, carName, {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#cbd8e5',
+        align: 'center',
+      }).setOrigin(0.5, 0).setDepth(depth + 8));
       collection.push(t1, t2);
       if (!rival) {
-        const hit = add(this.add.rectangle(x + 118, y + 168, 232, 336,
+        const hit = add(this.add.rectangle(x + 109, y + 163, 218, 326,
           0xffffff, 0).setInteractive({ useHandCursor: true })
           .setDepth(depth + 9));
         collection.push(hit);
@@ -969,16 +985,19 @@ export default class MeetScene extends Phaser.Scene {
     };
     rounds.slice(0, 3).forEach((round, i) => drawCard(i, round, true));
 
-    const status = text(845, 706, '', 17, '#c5e7f6');
-    const button = (x, label, width, color) => {
-      const rect = add(this.add.rectangle(x, 783, width, 58, color, 1)
-        .setStrokeStyle(3, 0x8dc8dd).setDepth(depth + 6));
-      text(x, 783, label, 20).setOrigin(0.5);
-      return rect;
+    const button = (x, width, color, border) => {
+      return add(this.add.rectangle(x, 779, width, 49, color, 1)
+        .setStrokeStyle(2, border).setDepth(depth + 6));
     };
-    const later = button(1060, 'RACE LATER', 225, 0x17283b)
+    const later = button(1030, 214, 0x192333, 0x8ba1b5)
       .setInteractive({ useHandCursor: true });
-    const start = button(1375, 'START BATTLE', 290, 0x143e38);
+    add(this.add.text(1030, 779, 'RACE LATER', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    const start = button(1324, 330, 0x143e38, 0x65e7bf);
+    const startLabel = add(this.add.text(1324, 779, 'DRIVERS READY - START BATTLE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
     later.on('pointerdown', close);
     const save = () => {
       const lineups = { ...(this.registry.get('crewBattleLineups') || {}) };
@@ -997,7 +1016,8 @@ export default class MeetScene extends Phaser.Scene {
         drawCard(i, slots[i]);
       }
       const count = slots.filter(Boolean).length;
-      status.setText(count + ' / 3 DRIVERS READY');
+      startLabel.setText(count === 3
+        ? 'DRIVERS READY - START BATTLE' : 'SELECT THREE DRIVERS');
       if (vsStamp) {
         const j = objects.indexOf(vsStamp);
         if (j >= 0) objects.splice(j, 1);
@@ -1005,8 +1025,8 @@ export default class MeetScene extends Phaser.Scene {
       }
       if (count === 3) {
         start.setFillStyle(0x116049).setInteractive({ useHandCursor: true });
-        vsStamp = text(750, 470, 'VS', 111, '#ffbb51',
-          { stroke: '#100813', strokeThickness: 13 })
+        vsStamp = text(778, 437, 'VS', 55, '#ffbb51',
+          { stroke: '#100813', strokeThickness: 7 })
           .setOrigin(0.5).setAngle(-12).setDepth(depth + 12);
         this.tweens.add({ targets: vsStamp, scale: { from: 1.3, to: 1 },
           duration: 240, ease: 'Back.easeOut' });
