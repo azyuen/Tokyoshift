@@ -926,7 +926,8 @@ export default class TunerShopScene extends Phaser.Scene {
         y: geometry.displayY,
         displayWidth: geometry.displayWidth,
         displayHeight: geometry.displayHeight,
-        depth: 21.7,
+        depth: cars[carId]?.visual?.referenceStandard && !cars[carId]?.visual?.singleBody
+          ? 11.012 : 11.04,
       }
     );
     otherDecalObjects.forEach(obj => this.addDynamic(obj));
@@ -1541,7 +1542,7 @@ export default class TunerShopScene extends Phaser.Scene {
           y: decalAnchor.y,
           displayWidth: bodyLayers.primary.displayWidth,
           displayHeight: bodyLayers.primary.displayHeight,
-          depth: depth + 1.04,
+          depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
         })
       : [];
 
