@@ -4,7 +4,8 @@ import {
   OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
   isOshiageVoucherAvailable,
 } from '../data/oshiageSchool.js?v=20261016-r536';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
 import {
   getOshiageShowdownLineup, getOshiageShowdownAccess,
@@ -203,10 +204,13 @@ export default class OshiageScene extends Phaser.Scene {
       // Preload all three opponents, as in a normal Meet. Tapping a rival
       // then requires only a stage fade, never another loading screen.
       this.getEliteLineup(venueId).forEach(opponent => {
-        const rival = characters[opponent?.characterId];
-        if (rival?.visual?.spriteKey && rival.visual?.path) {
-          queued += this.queueImage('oshiageEliteRival_' + opponent.characterId,
-            getCharacterAssetUrl(rival.visual.path));
+        const visual = getCharacterVisualForContext(opponent?.characterId, {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }) || characters[opponent?.characterId]?.visual || {};
+        if (visual.spriteKey && visual.path) {
+          // Use the exact portrait texture key expected by normal Meet profiles.
+          queued += this.queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
         }
         if (opponent && cars[opponent.carId]) {
           queued += preloadCarAppearanceAssets(this,
@@ -664,7 +668,10 @@ export default class OshiageScene extends Phaser.Scene {
         carX, 455, carWidth, opponent.paintColor, 12);
     }
 
-    const spriteKey = opponent && 'oshiageEliteRival_' + opponent.characterId;
+    const spriteKey = opponent && getCharacterVisualForContext(opponent.characterId, {
+      rivalContext: true,
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
+    })?.spriteKey;
     if (spriteKey && this.textures.exists(spriteKey)) {
       const source = this.textures.get(spriteKey).getSourceImage();
       const avatarX = STAGE.x + 255;
@@ -721,19 +728,21 @@ export default class OshiageScene extends Phaser.Scene {
         const portraitX = x - 111;
         this.own(this.add.rectangle(portraitX, y, 105, 105, 0x101b27)
           .setStrokeStyle(1, 0x365775).setDepth(35));
-        const key = 'oshiageEliteRival_' + offer.characterId;
-        if (this.textures.exists(key)) {
-          const image = this.textures.get(key).getSourceImage();
-          const portrait = this.own(this.add.image(portraitX, y + 53, key)
-            .setOrigin(0.5, 0.18)
-            .setScale(225 / Math.max(1, image.height))
-            .setDepth(36));
-          const crop = this.make.graphics({ add: false });
-          crop.fillStyle(0xffffff);
-          crop.fillRect(portraitX - 51, y - 51, 102, 102);
-          portrait.setMask(crop.createGeometryMask());
-          this.own(crop);
-        }
+        // Exactly the same face-anchor, zoom, and square crop as MeetScene.drawCards.
+        const portraitProfile = createCharacterProfile(this, {
+          characterId: offer.characterId,
+          pose: 'idle',
+          x: portraitX,
+          y,
+          frameWidth: 104,
+          frameHeight: 104,
+          side: 'left',
+          depth: 36,
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        });
+        if (portraitProfile?.image) this.own(portraitProfile.image);
+        if (portraitProfile?.maskShape) this.own(portraitProfile.maskShape);
         this.addText(x - 42, y - 52,
           String(character.name || 'RIVAL').toUpperCase(), {
             pixel: true, size: '8px', color: '#f6ffff',
@@ -745,7 +754,7 @@ export default class OshiageScene extends Phaser.Scene {
           size: '10px', color: '#a6c3d0',
           wrap: 208, depth: 37,
         });
-        this.addText(x - 42, y + 41,
+        this.addText(x - 42, y + 31,
           finished ? 'HEAT ' + (i + 1) + ' // WON'
             : 'HEAT ' + (i + 1) + ' // ' +
               String(character.regionId || 'TOKYO'), {
@@ -773,7 +782,7 @@ export default class OshiageScene extends Phaser.Scene {
       'SKYTREE\nUNDERPASS', () => this.selectEliteVenue('underpass'), {
         accent: venueId === 'underpass', size: '7px',
       });
-    this.button(SIDE.x + 265, SIDE.y + 144, 158, 49,
+    this.button(SIDE.x + 265, SIDE.y + 119, 158, 49,
       'SKYTREE\nPLAZA', () => this.selectEliteVenue('plaza'), {
         accent: venueId === 'plaza', size: '7px',
       });
@@ -815,11 +824,9 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 471, extraPrize, {
       pixel: true, size: '7px', color: '#fbe7a4', wrap: SIDE.w - 40,
     });
-    this.addText(SIDE.x + 20, SIDE.y + 510,
-      'ENTRY FEE  //  ' + MONEY(venue.entryFee) +
-      (continuing ? '  (PAID)' : ''), {
-        pixel: true, size: '8px', color: '#c3d2df', wrap: SIDE.w - 40,
-      });
+    this.addText(SIDE.x + 20, SIDE.y + 510, 'WIN ALL 3 HEATS', {
+      pixel: true, size: '9px', color: '#a8efce', wrap: SIDE.w - 40,
+    });
 
     let status = '';
     if (!progress.complete) {
@@ -837,9 +844,9 @@ export default class OshiageScene extends Phaser.Scene {
     } else if (!access.allowed) {
       status = access.reason || 'UNAVAILABLE';
     } else {
-      status = 'WIN ALL THREE HEATS FOR THE FULL PRIZE';
+      status = 'READY TO RACE';
     }
-    this.addText(SIDE.x + 20, SIDE.y + 547, status, {
+    this.addText(SIDE.x + 20, SIDE.y + 535, status, {
       pixel: true, size: '7px',
       color: canRace ? '#a8efce' : '#e6b7a2',
       wrap: SIDE.w - 40,
@@ -847,7 +854,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.button(SIDE.x + SIDE.w / 2, SIDE.y + 622,
       SIDE.w - 38, 50,
       continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
-        : 'RACE FOR ' + MONEY(venue.prizeCash) + '  >',
+        : 'ENTER  //  ' + MONEY(venue.entryFee) + '  >',
       () => this.startEliteRace(venueId), {
         disabled: !canRace, accent: true, size: '8px',
       });
