@@ -1075,7 +1075,7 @@ export default class MeetScene extends Phaser.Scene {
           .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
         const profile = createCharacterProfile(this, {
           characterId: unit.characterId, pose: 'idle',
-          x: portraitX, y: y + 76, frameWidth: 110, frameHeight: 210,
+          x: portraitX, y: y + 46, frameWidth: 96, frameHeight: 150,
           side: 'center', depth: z + 4, mask: false, rivalContext: true,
           playerCharacterId: this.registry.get('playerCharacterId') || '',
         });
