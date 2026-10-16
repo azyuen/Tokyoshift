@@ -80,13 +80,15 @@ test('Elite opponent can come from any region but never an existing crew member 
   }
 });
 
-test('full Elite prize is several coupons or a new rare wheel', () => {
+test('full Elite prizes guarantee coupons and Plaza adds rare wheels when available', () => {
   const cash = getOshiageElitePrize({ ownedWheelIds: [] }, 'underpass', 0);
-  assert.equal(cash.cash, 500000);
+  assert.equal(cash.cash, 150000);
   assert.equal(cash.coupons, 2);
   assert.ok(cars[cash.couponCarId]);
   const wheelPrize = getOshiageElitePrize({ ownedWheelIds: [] }, 'plaza', 0);
-  assert.equal(wheelPrize.cash, 750000);
+  assert.equal(wheelPrize.cash, 250000);
+  assert.equal(wheelPrize.coupons, 2);
+  assert.ok(cars[wheelPrize.couponCarId]);
   assert.ok(WHEEL_CATALOG.find(item => item.id === wheelPrize.wheelId));
   const allRare = WHEEL_CATALOG.filter(x => ['HERO','TUNER'].includes(x.tier)).map(x => x.id);
   const fallback = getOshiageElitePrize({ ownedWheelIds: allRare }, 'plaza', 0);
