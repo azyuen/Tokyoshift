@@ -1,5 +1,5 @@
 export const garageAssets = [
-  { key: 'garageWorkshopBg', path: 'assets/Garage/workshop_home.PNG?v=20260921-r15' },
+  { key: 'garageWorkshopBg', path: 'assets/Garage/shinonome_workshop_day.png' },
   { key: 'garageWorkshopTunerBg', path: 'assets/Garage/Workshop_tuner.PNG?v=20260921-r15' },
   { key: 'garageWorkshopCanalYard', path: 'assets/Garage/shinonome_canal_yard_garage.png?v=20260922-r86' },
   { key: 'garageWorkshopWarehouseHQ', path: 'assets/Garage/shinonome_warehouse_hq.png?v=20260922-r86' },

@@ -1,0 +1,38 @@
+{
+  "browser": "Chromium",
+  "phaserLocalOverride": true,
+  "results": [
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "profileLoaded": true,
+      "park": {
+        "before": 419,
+        "parked": 206,
+        "stock": true,
+        "restored": 419,
+        "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
+      },
+      "errors": [],
+      "failed": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "profileLoaded": true,
+      "park": {
+        "before": 419,
+        "parked": 206,
+        "stock": true,
+        "restored": 419,
+        "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
+      },
+      "errors": [],
+      "failed": []
+    }
+  ]
+}

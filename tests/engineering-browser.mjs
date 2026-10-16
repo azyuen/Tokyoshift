@@ -24,6 +24,7 @@ try{for(const viewport of [{width:1024,height:768},{width:390,height:844}]){
   const {getBuiltCar}=await import('./src/vehicles/VehiclePerformance.js');const {isPerformanceStockState}=await import('./src/data/crewSystem.js');
   const before=getBuiltCar('r34',get()).car.powerKW;g.factorySetupButton.emit('pointerdown');const parked=getBuiltCar('r34',get()).car.powerKW,stock=isPerformanceStockState(get());g.factorySetupButton.emit('pointerdown');const restored=getBuiltCar('r34',get()).car.powerKW;return {before,parked,stock,restored,label:g.engineeringLabelText.text};
  });assert.ok(park.before>400);assert.equal(park.parked,206);assert.equal(park.stock,true);assert.equal(park.before,park.restored);
+ await page.waitForTimeout(1500);
  await page.screenshot({path:`artifacts/engineering/garage-${viewport.width}.png`,fullPage:true});
  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
  results.push({viewport,profileLoaded:true,park,errors,failed});await context.close();

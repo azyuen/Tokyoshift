@@ -3914,6 +3914,7 @@ export default class GarageScene extends Phaser.Scene {
       : (car.engineModel || '—');
     this.specValueTexts.engine.setText(engineLabel);
     this.engineeringLabelText?.setText(engineeringLabel(car));
+    if(this.engineeringLabelText)this.engineeringLabelText.setScale(Math.min(1,(SIDE.w-40)/Math.max(1,this.engineeringLabelText.width)));
     this.factorySetupButton?.setVisible(!this.isSelectedCarTuningLocked()).setText(carState.parkedPerformanceParts?'RESTORE PARKED TUNING':'PARK PARTS / FACTORY SETUP');
     this.specValueTexts.power.setText(
       ratingDisplay.powerLabel +

@@ -46,3 +46,17 @@ Current main observed at `0aad895e442753c8ea9b0af1f24e18cc39bb7c17`; it has not 
 The expanded scenario JSON was lost before checkpointing, so only those missing runs were repeated (not the preserved baseline/revised core matrix). `tools/engineering-scenarios.mjs` produced **484 records**: 43 models × three stages × low grip / rating-3 driver / 100 km/h rolling, 43 maximum NOS runs, 14 specialist standing/rolling runs and 40 exclusive standing/rolling runs. It saves after each completed race and reuses matching physics/configuration hashes. Reinvocation reports 0 added / 484 reused.
 `SCENARIOS.md` records leaders, specialist/exclusive results and separated NOS effects. NSX leads low-grip and 100 km/h rolling max builds; Z33 leads the rating-3 driver sample. The actual registry has 20 exclusive entries, including livery variants. All remain unchanged.
 Browser setup now launches Chromium 153. The boot/profile/park/restore test is underway; no browser pass is asserted until its recorded result exists.
+
+## Increment 4 — browser validation completed, release still gated
+Fresh local Chromium 153 smoke passed at **1024×768** and **390×844**: initial character screen, fixture profile import, reload to profile selector, continue to garage, selected R34, park purchased parts (419 → 206 kW and stock eligible), restore parts (206 → 419 kW). No page exceptions or HTTP >=400 responses. Results: `browser-results.json`; reproducible harness: `tests/engineering-browser.mjs`. Tablet screenshot inspected; class label fits after width constraint.
+The first attempt exposed a pre-existing missing `assets/Garage/workshop_home.PNG` fallback. Replaced its data URL with the existing `shinonome_workshop_day.png` asset; no art changed. Long class/potential text now scales to its existing garage panel width.
+Environment caveats: local server, synthetic profile (not the owner's actual save), Chromium viewport emulation (not native iPad Safari), service workers blocked, exact Phaser 3.90.0 served from a local npm copy in place of its CDN request. No live/deployed build, service-worker update, physical touch controls, DynoScene interaction or RaceScene gameplay pass is claimed. Source/dyno/Vehicle numerical parity is covered separately by the 73-test gate, which passed again after UI fixes.
+
+## Next bounded work
+1. Reconcile R540 recruitment UI/rematch/AI changes on the engineering branch without losing fixed classes or strict eligibility. Preserve the original character mappings and dialogue; review current source before editing. Main remains untouched.
+2. Complete live local DynoScene and RaceScene smoke tests and service-worker/cache transition validation after reconciliation.
+3. Restore durable broad-suite comparison; earlier 19 failing test files were pre-existing, but their detailed logs were lost. Update only obsolete assertions directly affected by this overhaul (FD normalization sample), and distinguish pre-existing failures.
+4. Finalize tuning-potential grading using cost/versatility as well as power/time, review class-D spread and NSX premium outlier, and close remaining per-variant provenance gaps. Current tables/ratings are explicitly provisional.
+5. Finalize release version/cache only after those gates. Do not deploy or merge engine work into main during the ongoing parallel gameplay work.
+
+Recovery rule: core JSON and 484 supplementary results are now on GitHub. Reuse them. Only rerun configurations invalidated by an actual physics change. No engine research restart is needed.
