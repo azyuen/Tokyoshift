@@ -838,6 +838,53 @@ export const CUTSCENES = {
     finalActionLabel: 'ENTER CREW SPACE',
   },
 
+  // Scene 07: the seven-driver team finally comes together in Crew Space.
+  // The actual recruits in the group cinematic come from the player's save.
+  // Sayaka visits because she delivered the starter car; her Ginza identity
+  // and her former team-strategist role remain secret to both friends.
+  fullCrewTogether: {
+    id: 'fullCrewTogether',
+    category: 'CAREER / STORY',
+    testerLabel: 'Career 07 — One Crew, Seven Roads (Complete Crew)',
+    title: 'CREW SPACE // ONE CREW, SEVEN ROADS',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    pages: [
+      { speaker: 'left', pose: 'win',
+        text: "Seven drivers, seven cars... and somehow there's already an argument about tyre pressure!" },
+      { speaker: 'right', pose: 'idle',
+        text: "You said we needed a proper team!" },
+      { speaker: 'left', pose: 'win',
+        text: "One driver from every region. You didn't just beat them — you earned their trust. That's worth more than any badge." },
+      { speaker: 'right', pose: 'idle', cinematicBeat: 'completeCrewGroup',
+        text: "When we started, all I wanted was to see how far I could go. Now we've got seven other people counting on us." },
+      { speaker: 'left', pose: 'idle',
+        text: "And that's what makes this different. One fast driver can win a race. A real team has to win together." },
+      { speaker: 'right', pose: 'idle',
+        text: "So what's next?" },
+      { speaker: 'left', pose: 'idle',
+        text: "Regional crew battles! Three of our drivers against three of theirs. And each region has different rules — stock cars, power limits, even races without NOS." },
+      { speaker: 'right', pose: 'idle',
+        text: "Wait... so this time I'm not the one behind the wheel?" },
+      { speaker: 'left', pose: 'win',
+        text: "You're the captain now! You choose the drivers and the lineup. I'll get their cars ready. Then we trust them to do what they do best." },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeHappy',
+        text: "Oh! Wow, you have so many friends? I never would've thought! I only stopped by to see if you've been looking after that car I delivered!" },
+      { speaker: 'right', leftCharacter: 'sayakaFujieda', leftPose: 'homeHappy',
+        text: "Sayaka?! Ah... well... let's just say the car's come a long way since then!" },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeSerious',
+        text: "Seven drivers, hmm? You'll need to know everyone's strengths. Who handles pressure, which cars suit which races, who's best at launching... and you'll need a proper plan!" },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle',
+        text: "That's... surprisingly detailed advice. I'm Daichi, by the way. The engineer." },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeBlushing',
+        text: "Sayaka! Oh, it's just common sense, dear! Anyway, look after each other, alright?" },
+      { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'win',
+        text: "Well, she's got a point! Come on, Captain. Seven regions, seven crew battles. Let's show Tokyo what we've built together!",
+        emphasis: true },
+    ],
+    finalActionLabel: "LET'S RACE TOGETHER",
+  },
+
   // Career chapter 02: reached from the existing nine-win Auto Market invite.
   // One 12-page manga, with two cast/location changes using shared renderer.
   centralTokyoUnlocked: {
@@ -1149,6 +1196,7 @@ export const CUTSCENE_ORDER = [
   'canalYardBiggerDreams',
   'warehouseHqUnlocked',
   'sevenRegionsConquered',
+  'fullCrewTogether',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
   'proCircuitStrategistReveal',
