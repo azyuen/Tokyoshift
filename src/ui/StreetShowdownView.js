@@ -8,6 +8,7 @@ import {
 import { getCarBodyTextureKey, normalisePaintColor, DEFAULT_PAINT_COLOR } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
+import { carMatchesCompetitionRestriction } from '../data/carMagazine.js?v=20261011-r479';
 import { getCarCouponRequirement, getCarCouponCount } from '../data/centralTokyo.js?v=20261013-r496';
 import {
   SHOWDOWN_STAGE as STAGE,
@@ -48,9 +49,7 @@ export function showStreetShowdownView(scene, {
   const couponEvent = offer.prizeType === 'COUPON';
   const entryFee = Math.max(0, Number(offer.entryFee) || 0);
   const canAfford = Number(scene.registry.get('cash') || 0) >= entryFee;
-  const classAllowed = !offer.restriction ||
-    // MeetScene owns the authoritative restriction check on entering.
-    (playerCar && offer.restriction.allowedCarIds?.includes(playerCarId));
+  const classAllowed = carMatchesCompetitionRestriction(playerCarId, offer.restriction);
   const canEnter = Boolean(canAfford && classAllowed && playerCar);
   const controller = {
     active: true,
