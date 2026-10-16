@@ -1,4 +1,4 @@
-import {getCrewRecruitmentChallengeRules,createStockOpponentState} from '../data/crewSystem.js';
+import {getCrewRecruitmentChallengeRules,createStockOpponentState,isValidCrewRecruitChallenge} from '../data/crewSystem.js';
 import Vehicle from '../vehicles/Vehicle.js';
 import TouchControls from '../input/TouchControls.js';
 import DragRacingAI from '../ai/DragRacingAI.js';
@@ -408,7 +408,7 @@ export default class RaceScene extends Phaser.Scene {
   create() {
     if(this.raceMode==='CREW_RECRUIT'){
       const challenge=this.registry.get('crewRecruitChallenge');
-      if(!challenge?.active||challenge.baseCarId!==this.opponentCarId||!getCrewRecruitmentChallengeRules(this.registry,challenge).eligibleCarIds.includes(this.selectedCarId)){this.scene.start('MeetScene');return;}
+      if(!isValidCrewRecruitChallenge(challenge)||challenge.characterId!==this.opponentCharacterId||String(challenge.regionId).toUpperCase()!==String(this.raceDistrict).toUpperCase()||challenge.baseCarId!==this.opponentCarId||!getCrewRecruitmentChallengeRules(this.registry,challenge).eligibleCarIds.includes(this.selectedCarId)){this.scene.start('MeetScene');return;}
       this.explicitOpponentBuildState=createStockOpponentState(this.opponentCarId);
     }
     ensureDerivedModularCarTextures(this, Object.fromEntries(

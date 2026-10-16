@@ -195,6 +195,13 @@ function getCrewRecruitPowerClass(powerKW) {
   };
 }
 
+// Saved challenge identity must still match the canonical regional roster.
+export function isValidCrewRecruitChallenge(challenge) {
+  return Boolean(challenge?.active &&
+    isRecruitableRegionalCharacter(challenge.regionId, challenge.characterId) &&
+    getCrewBaseCarId(challenge.characterId) === challenge.baseCarId);
+}
+
 export function getCrewRecruitmentChallengeRules(
   source,
   challenge = value(source, 'crewRecruitChallenge', null)

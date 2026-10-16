@@ -60,3 +60,17 @@ test('reconciled source keeps one module identity and upstream recruitment safeg
  const race=fs.readFileSync('src/scenes/RaceScene.js','utf8');
  assert.match(race,/this\.raceMode === 'CREW_RECRUIT' && this\.playerDifficulty === 'STANDARD'/);
 });
+
+
+test('recruitment identity follows all 42 canonical character/car/region assignments',async()=>{
+ const {REGIONAL_CREW_ROSTERS}=await import('../src/data/crewRoster.js');
+ const {isValidCrewRecruitChallenge}=await import('../src/data/crewSystem.js');
+ for(const [regionId,roster] of Object.entries(REGIONAL_CREW_ROSTERS))for(const member of roster.members){
+  const challenge={active:true,regionId,characterId:member.characterId,baseCarId:member.baseCarId};
+  assert.equal(isValidCrewRecruitChallenge(challenge),true,member.characterId);
+  assert.equal(isValidCrewRecruitChallenge({...challenge,baseCarId:'magna'}),false);
+  assert.equal(isValidCrewRecruitChallenge({...challenge,regionId:'OSHIAGE'}),false);
+  assert.equal(isValidCrewRecruitChallenge({...challenge,active:false}),false);
+ }
+ assert.equal(isValidCrewRecruitChallenge({active:true,regionId:'SHINJUKU',characterId:'soraKanzaki',baseCarId:'r34'}),false);
+});

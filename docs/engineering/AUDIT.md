@@ -28,22 +28,22 @@ The model identities are inherited from the registry. Exact model years are not 
 | svx — Subaru SVX | EG33 Flat-Six / NA | 169.00 / 309.00 / 1590.00 | D / High | 15.89 / 24.26 / 12.23 | 350.14 / 629.12 | 12.46 / 18.80 | Launch consistency; driveline loss and mass |
 | xt — Subaru Alcyone XT Turbo | EA82T / turbo | 100.00 / 196.00 / 1190.00 | D / Low | 17.71 / 26.96 / 13.28 | 192.73 / 366.02 | 14.03 / 21.13 | Launch consistency; driveline loss and mass |
 | ae86 — Toyota Sprinter Trueno AE86 | Toyota 4A-GE 1.6L DOHC / NA | 96.00 / 149.00 / 940.00 | D / Low | 15.36 / 24.05 / 12.43 | 214.62 / 328.56 | 11.56 / 17.90 | Rolling pace; launch control matters |
-| ef — Honda Civic SiR EF | Honda B16A VTEC / NA | 117.98 / 150.00 / 1010.00 | C / Moderate | 15.12 / 23.55 / 12.28 | 256.46 / 336.41 | 11.65 / 17.84 | Rolling pace; launch control matters |
-| ek9 — Honda Civic Type R EK9 | Honda B16B 1.6L VTEC / NA | 136.00 / 160.00 / 1090.00 | C / Moderate | 15.18 / 23.51 / 12.08 | 285.58 / 342.33 | 11.77 / 17.91 | Rolling pace; launch control matters |
+| ef — Honda Civic SiR EF | Honda B16A VTEC / NA | 117.98 / 150.00 / 1010.00 | C / Moderate | 15.12 / 23.55 / 12.28 | 256.46 / 336.41 | 11.65 / 17.84 | Light chassis; front-axle traction limits |
+| ek9 — Honda Civic Type R EK9 | Honda B16B 1.6L VTEC / NA | 136.00 / 160.00 / 1090.00 | C / Moderate | 15.18 / 23.51 / 12.08 | 285.58 / 342.33 | 11.77 / 17.91 | Light chassis; front-axle traction limits |
 | s2000 — Honda S2000 AP1 | Honda F20C 2.0L VTEC / NA | 184.00 / 218.00 / 1260.00 | B / High | 14.37 / 21.96 / 11.40 | 349.61 / 422.49 | 11.49 / 17.36 | Rolling pace; launch control matters |
 | fc3s — Mazda RX-7 FC3S | Mazda 13B-T Rotary Turbo / turbo | 136.00 / 245.00 / 1250.00 | D / Moderate | 15.67 / 23.92 / 12.18 | 283.52 / 509.37 | 12.33 / 18.54 | Rolling pace; launch control matters |
 | rx7fd — Mazda RX-7 FD3S | Mazda 13B-REW Twin Turbo / turbo | 206.00 / 314.00 / 1280.00 | A / Exceptional | 13.65 / 20.87 / 11.00 | 406.50 / 627.94 | 10.92 / 16.51 | Rolling pace; launch control matters |
 | rx8 — Mazda RX-8 | Mazda 13B-MSP RENESIS / NA | 170.00 / 211.00 / 1370.00 | B / High | 14.41 / 22.35 / 11.80 | 332.95 / 447.80 | 11.28 / 17.37 | Rolling pace; launch control matters |
-| galant — Mitsubishi Galant VR-4 | Mitsubishi 4G63T 2.0L DOHC Turbo // Galant VR-4 Evolution / turbo | 176.00 / 304.00 / 1380.00 | B / High | 14.67 / 22.70 / 11.90 | 332.62 / 565.78 | 11.73 / 18.02 | Rolling pace; launch control matters |
-| evo5 — Mitsubishi Lancer Evolution V | Mitsubishi 4G63T Evolution V / turbo | 206.00 / 373.00 / 1360.00 | B / High | 14.06 / 21.63 / 11.30 | 382.66 / 665.71 | 11.34 / 17.28 | Rolling pace; launch control matters |
-| evo6 — Mitsubishi Lancer Evolution VI | Mitsubishi 4G63T Evolution VI / turbo | 206.00 / 373.00 / 1360.00 | A / High | 14.01 / 21.55 / 11.27 | 384.77 / 663.97 | 11.33 / 17.27 | Rolling pace; launch control matters |
-| gc8 — Subaru Impreza WRX STI GC8 | Subaru EJ207 2.0L Turbo // Impreza GC8 STI / turbo | 206.00 / 353.00 / 1260.00 | A / High | 13.49 / 20.91 / 11.11 | 357.40 / 591.81 | 11.05 / 17.00 | Rolling pace; launch control matters |
-| r32 — Nissan Skyline GT-R R32 | Nissan RB26DETT 2.6L Twin Turbo / turbo | 206.00 / 353.00 / 1430.00 | B / Exceptional | 14.46 / 22.13 / 11.39 | 417.75 / 712.37 | 11.49 / 17.38 | Rolling pace; launch control matters |
-| r34 — Nissan Skyline GT-R R34 | Nissan RB26DETT R34 Twin Turbo / turbo | 206.00 / 392.00 / 1560.00 | B / Exceptional | 14.52 / 22.29 / 11.60 | 418.94 / 769.01 | 11.58 / 17.56 | Rolling pace; launch control matters |
-| 3000gt — Mitsubishi 3000GT VR-4 | Mitsubishi 6G72 3.0L Twin Turbo V6 / turbo | 235.00 / 427.00 / 1710.00 | B / Exceptional | 14.50 / 22.14 / 11.59 | 460.08 / 826.97 | 11.60 / 17.53 | Rolling pace; launch control matters |
+| galant — Mitsubishi Galant VR-4 | Mitsubishi 4G63T 2.0L DOHC Turbo // Galant VR-4 Evolution / turbo | 176.00 / 304.00 / 1380.00 | B / High | 14.67 / 22.70 / 11.90 | 332.62 / 565.78 | 11.73 / 18.02 | Launch consistency; driveline loss and mass |
+| evo5 — Mitsubishi Lancer Evolution V | Mitsubishi 4G63T Evolution V / turbo | 206.00 / 373.00 / 1360.00 | B / High | 14.06 / 21.63 / 11.30 | 382.66 / 665.71 | 11.34 / 17.28 | Launch consistency; driveline loss and mass |
+| evo6 — Mitsubishi Lancer Evolution VI | Mitsubishi 4G63T Evolution VI / turbo | 206.00 / 373.00 / 1360.00 | A / High | 14.01 / 21.55 / 11.27 | 384.77 / 663.97 | 11.33 / 17.27 | Launch consistency; driveline loss and mass |
+| gc8 — Subaru Impreza WRX STI GC8 | Subaru EJ207 2.0L Turbo // Impreza GC8 STI / turbo | 206.00 / 353.00 / 1260.00 | A / High | 13.49 / 20.91 / 11.11 | 357.40 / 591.81 | 11.05 / 17.00 | Launch consistency; driveline loss and mass |
+| r32 — Nissan Skyline GT-R R32 | Nissan RB26DETT 2.6L Twin Turbo / turbo | 206.00 / 353.00 / 1430.00 | B / Exceptional | 14.46 / 22.13 / 11.39 | 417.75 / 712.37 | 11.49 / 17.38 | Launch consistency; driveline loss and mass |
+| r34 — Nissan Skyline GT-R R34 | Nissan RB26DETT R34 Twin Turbo / turbo | 206.00 / 392.00 / 1560.00 | B / Exceptional | 14.52 / 22.29 / 11.60 | 418.94 / 769.01 | 11.58 / 17.56 | Launch consistency; driveline loss and mass |
+| 3000gt — Mitsubishi 3000GT VR-4 | Mitsubishi 6G72 3.0L Twin Turbo V6 / turbo | 235.00 / 427.00 / 1710.00 | B / Exceptional | 14.50 / 22.14 / 11.59 | 460.08 / 826.97 | 11.60 / 17.53 | Launch consistency; driveline loss and mass |
 | a60 — Toyota Celica Supra A60 | Toyota 5M-GE 2.8L Straight-Six / NA | 118.00 / 221.00 / 1360.00 | D / Moderate | 15.54 / 24.50 / 12.88 | 260.66 / 488.94 | 12.10 / 18.78 | Rolling pace; launch control matters |
 | jza80 — Toyota Supra JZA80 | Toyota 2JZ-GTE 3.0L Twin Turbo / turbo | 206.00 / 435.00 / 1510.00 | A / Exceptional | 13.90 / 21.46 / 11.35 | 421.65 / 872.18 | 11.08 / 16.90 | Rolling pace; launch control matters |
-| nsx — Honda NSX NA1 | Honda C30A 3.0L V6 VTEC / NA | 206.00 / 294.00 / 1350.00 | A / High | 13.32 / 20.57 / 10.95 | 399.49 / 602.68 | 10.66 / 16.26 | Rolling pace; launch control matters |
+| nsx — Honda NSX NA1 | Honda C30A 3.0L V6 VTEC / NA | 206.00 / 294.00 / 1350.00 | A / High | 13.32 / 20.57 / 10.95 | 399.49 / 602.68 | 10.66 / 16.26 | Mid-engine traction; expensive platform |
 | z32 — Nissan 300ZX Z32 Twin Turbo | VG30DETT / turbo | 206.00 / 388.00 / 1530.00 | B / Exceptional | 14.19 / 21.73 / 11.41 | 418.71 / 778.37 | 11.55 / 17.36 | Rolling pace; launch control matters |
 | z33 — Nissan 350Z Z33 | VQ35DE / NA | 206.00 / 363.00 / 1450.00 | A / Exceptional | 13.52 / 20.91 / 11.08 | 404.11 / 743.20 | 10.82 / 16.56 | Rolling pace; launch control matters |
 | 240z — Datsun 240Z | L24 / NA | 112.00 / 198.00 / 1044.00 | C / Moderate | 14.92 / 23.55 / 12.33 | 247.47 / 437.62 | 11.52 / 17.92 | Rolling pace; launch control matters |
@@ -59,7 +59,7 @@ The model identities are inherited from the registry. Exact model years are not 
 
 ## Transmission, engine response and chassis assumptions
 
-| ID | Drive | Manual gears | Final | Redline | Stock boost bar | Onset / full rpm | Efficiency | Grip | Cd / m² | Displacement L / compression | Compressor lb/min / built BMEP bar |
+| ID | Drive | Game gear ratios | Final | Redline | Stock boost bar | Onset / full rpm | Efficiency | Grip | Cd / m² | Displacement L / compression | Compressor lb/min / built BMEP bar |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | gdb | AWD | 3.636 / 2.375 / 1.761 / 1.346 / 1.062 / 0.842 | 3.90 | 8000.00 | 1.05 | 1800 / 3800 | 0.84 | 1.00 | 0.32 / 1.85 | 2 / 8 | 54 / 35 |
 | gf8 | AWD | 3.166 / 1.882 / 1.296 / 0.972 / 0.738 | 4.44 | 7000.00 | 0.80 | 2000 / 4000 | 0.84 | 1.02 | 0.35 / 1.95 | 2 / 8 | 49 / 32 |
@@ -75,23 +75,23 @@ The model identities are inherited from the registry. Exact model years are not 
 | forester | AWD | 3.454 / 1.947 / 1.366 / 0.972 / 0.738 | 4.44 | 7000.00 | 0.80 | 1700 / 3600 | 0.84 | 1.00 | 0.36 / 2.2 | 2 / 8 | 46 / 30 |
 | svx | AWD | 2.785 / 1.545 / 1 / 0.694 | 3.54 | 7000.00 | 0.00 | 1800 / 3800 | 0.84 | 1.00 | 0.32 / 1.85 | 3.3 / 10 | 49 / 23 |
 | xt | AWD | 3.545 / 1.947 / 1.366 / 0.972 / 0.783 | 3.70 | 6500.00 | 0.50 | 2000 / 3900 | 0.84 | 1.00 | 0.32 / 1.85 | 1.8 / 7.7 | 28 / 24 |
-| ae86 | — | 3.587 / 2.022 / 1.384 / 1 / 0.861 | 4.30 | 7600.00 | 0.00 | 2300 / 4400 | 0.89 | 1.00 | 0.34 / 1.72 | 1.6 / 9.4 | 34 / 28 |
-| ef | — | 3.23 / 2.105 / 1.458 / 1.107 / 0.848 | 4.40 | 8000.00 | 0.00 | 2400 / 4600 | 0.90 | 1.01 | 0.34 / 1.88 | 1.6 / 10.2 | 38 / 30 |
-| ek9 | — | 3.23 / 2.105 / 1.458 / 1.107 / 0.848 | 4.40 | 8400.00 | 0.00 | 2500 / 4700 | 0.90 | 1.01 | 0.34 / 1.88 | 1.6 / 10.8 | 40 / 31 |
-| s2000 | — | 3.133 / 2.045 / 1.481 / 1.161 / 0.943 / 0.763 | 4.10 | 9000.00 | 0.00 | 2600 / 4800 | 0.90 | 1.05 | 0.35 / 1.8 | 2 / 11.7 | 45 / 31 |
-| fc3s | — | 3.483 / 2.015 / 1.391 / 1 / 0.762 | 4.10 | 7000.00 | 0.70 | 2100 / 4000 | 0.88 | 1.00 | 0.31 / 1.78 | 1.308 / 8.5 | 48 / 29 |
-| rx7fd | — | 3.483 / 2.015 / 1.391 / 1 / 0.762 | 4.10 | 8000.00 | 0.85 | 1900 / 3500 | 0.88 | 1.00 | 0.31 / 1.78 | 1.308 / 9 | 60 / 33 |
-| rx8 | — | 3.76 / 2.269 / 1.645 / 1.187 / 1 / 0.843 | 4.44 | 9000.00 | 0.00 | 2700 / 4900 | 0.88 | 1.02 | 0.31 / 1.93 | 1.308 / 10 | 43 / 25 |
-| galant | — | 2.846 / 1.581 / 1.16 / 0.862 / 0.617 | 4.93 | 7000.00 | 0.78 | 1900 / 3800 | 0.84 | 1.02 | 0.35 / 2.09 | 2 / 7.8 | 52 / 34 |
-| evo5 | — | 2.785 / 1.95 / 1.407 / 1.031 / 0.761 | 4.53 | 7500.00 | 0.92 | 1700 / 3500 | 0.84 | 1.02 | 0.36 / 2.09 | 2 / 8.8 | 60 / 39 |
-| evo6 | — | 2.785 / 1.95 / 1.407 / 1.031 / 0.761 | 4.53 | 7500.00 | 0.96 | 1700 / 3500 | 0.84 | 1.02 | 0.36 / 2.09 | 2 / 8.8 | 61 / 39 |
-| gc8 | — | 3.166 / 1.882 / 1.296 / 0.972 / 0.738 | 4.44 | 7000.00 | 0.80 | 1900 / 3800 | 0.84 | 1.03 | 0.35 / 2 | 2 / 8 | 50 / 33 |
-| r32 | — | 3.214 / 1.925 / 1.302 / 1 / 0.752 | 4.11 | 8000.00 | 0.75 | 2200 / 4400 | 0.84 | 1.02 | 0.4 / 1.95 | 2.6 / 8.5 | 68 / 39 |
-| r34 | — | 3.827 / 2.36 / 1.685 / 1.312 / 1 / 0.793 | 3.54 | 8000.00 | 0.82 | 2000 / 4200 | 0.84 | 1.05 | 0.35 / 2.02 | 2.6 / 8.5 | 75 / 40 |
-| 3000gt | — | 3.083 / 1.684 / 1.115 / 0.833 / 0.666 / 0.536 | 4.15 | 7000.00 | 0.75 | 1800 / 3500 | 0.82 | 1.03 | 0.33 / 2.03 | 3 / 8 | 67 / 35 |
-| a60 | — | 3.285 / 1.894 / 1.275 / 1 / 0.783 | 4.10 | 6500.00 | 0.00 | 2000 / 4000 | 0.87 | 0.98 | 0.38 / 1.91 | 2.8 / 8.8 | 40 / 24 |
-| jza80 | — | 3.827 / 2.36 / 1.685 / 1.312 / 1 / 0.793 | 3.27 | 6800.00 | 0.80 | 1700 / 3500 | 0.87 | 1.03 | 0.31 / 1.93 | 3 / 8.5 | 90 / 42 |
-| nsx | — | 3.071 / 1.727 / 1.23 / 0.967 / 0.771 | 4.06 | 8000.00 | 0.00 | 2400 / 4500 | 0.90 | 1.08 | 0.32 / 1.79 | 3 / 10.2 | 52 / 29 |
+| ae86 | RWD | 3.587 / 2.022 / 1.384 / 1 / 0.861 | 4.30 | 7600.00 | 0.00 | 2300 / 4400 | 0.89 | 1.00 | 0.34 / 1.72 | 1.6 / 9.4 | 34 / 28 |
+| ef | FWD | 3.23 / 2.105 / 1.458 / 1.107 / 0.848 | 4.40 | 8000.00 | 0.00 | 2400 / 4600 | 0.90 | 1.01 | 0.34 / 1.88 | 1.6 / 10.2 | 38 / 30 |
+| ek9 | FWD | 3.23 / 2.105 / 1.458 / 1.107 / 0.848 | 4.40 | 8400.00 | 0.00 | 2500 / 4700 | 0.90 | 1.01 | 0.34 / 1.88 | 1.6 / 10.8 | 40 / 31 |
+| s2000 | SPECIAL | 3.133 / 2.045 / 1.481 / 1.161 / 0.943 / 0.763 | 4.10 | 9000.00 | 0.00 | 2600 / 4800 | 0.90 | 1.05 | 0.35 / 1.8 | 2 / 11.7 | 45 / 31 |
+| fc3s | RWD | 3.483 / 2.015 / 1.391 / 1 / 0.762 | 4.10 | 7000.00 | 0.70 | 2100 / 4000 | 0.88 | 1.00 | 0.31 / 1.78 | 1.308 / 8.5 | 48 / 29 |
+| rx7fd | RWD | 3.483 / 2.015 / 1.391 / 1 / 0.762 | 4.10 | 8000.00 | 0.85 | 1900 / 3500 | 0.88 | 1.00 | 0.31 / 1.78 | 1.308 / 9 | 60 / 33 |
+| rx8 | RWD | 3.76 / 2.269 / 1.645 / 1.187 / 1 / 0.843 | 4.44 | 9000.00 | 0.00 | 2700 / 4900 | 0.88 | 1.02 | 0.31 / 1.93 | 1.308 / 10 | 43 / 25 |
+| galant | AWD | 2.846 / 1.581 / 1.16 / 0.862 / 0.617 | 4.93 | 7000.00 | 0.78 | 1900 / 3800 | 0.84 | 1.02 | 0.35 / 2.09 | 2 / 7.8 | 52 / 34 |
+| evo5 | AWD | 2.785 / 1.95 / 1.407 / 1.031 / 0.761 | 4.53 | 7500.00 | 0.92 | 1700 / 3500 | 0.84 | 1.02 | 0.36 / 2.09 | 2 / 8.8 | 60 / 39 |
+| evo6 | AWD | 2.785 / 1.95 / 1.407 / 1.031 / 0.761 | 4.53 | 7500.00 | 0.96 | 1700 / 3500 | 0.84 | 1.02 | 0.36 / 2.09 | 2 / 8.8 | 61 / 39 |
+| gc8 | AWD | 3.166 / 1.882 / 1.296 / 0.972 / 0.738 | 4.44 | 7000.00 | 0.80 | 1900 / 3800 | 0.84 | 1.03 | 0.35 / 2 | 2 / 8 | 50 / 33 |
+| r32 | AWD | 3.214 / 1.925 / 1.302 / 1 / 0.752 | 4.11 | 8000.00 | 0.75 | 2200 / 4400 | 0.84 | 1.02 | 0.4 / 1.95 | 2.6 / 8.5 | 68 / 39 |
+| r34 | AWD | 3.827 / 2.36 / 1.685 / 1.312 / 1 / 0.793 | 3.54 | 8000.00 | 0.82 | 2000 / 4200 | 0.84 | 1.05 | 0.35 / 2.02 | 2.6 / 8.5 | 75 / 40 |
+| 3000gt | AWD | 3.083 / 1.684 / 1.115 / 0.833 / 0.666 / 0.536 | 4.15 | 7000.00 | 0.75 | 1800 / 3500 | 0.82 | 1.03 | 0.33 / 2.03 | 3 / 8 | 67 / 35 |
+| a60 | RWD | 3.285 / 1.894 / 1.275 / 1 / 0.783 | 4.10 | 6500.00 | 0.00 | 2000 / 4000 | 0.87 | 0.98 | 0.38 / 1.91 | 2.8 / 8.8 | 40 / 24 |
+| jza80 | RWD | 3.827 / 2.36 / 1.685 / 1.312 / 1 / 0.793 | 3.27 | 6800.00 | 0.80 | 1700 / 3500 | 0.87 | 1.03 | 0.31 / 1.93 | 3 / 8.5 | 90 / 42 |
+| nsx | RWD | 3.071 / 1.727 / 1.23 / 0.967 / 0.771 | 4.06 | 8000.00 | 0.00 | 2400 / 4500 | 0.90 | 1.08 | 0.32 / 1.79 | 3 / 10.2 | 52 / 29 |
 | z32 | RWD | 3.214 / 1.925 / 1.302 / 1 / 0.752 | 3.69 | 7000.00 | 0.70 | 1800 / 3700 | 0.88 | 1.03 | 0.31 / 1.93 | 3 / 8.5 | 66 / 35 |
 | z33 | RWD | 3.794 / 2.324 / 1.624 / 1.271 / 1 / 0.794 | 3.54 | 6600.00 | 0.00 | 2100 / 4100 | 0.88 | 1.08 | 0.32 / 1.79 | 3.5 / 10.3 | 53 / 27 |
 | 240z | RWD | 3.321 / 2.077 / 1.308 / 1 / 0.864 | 3.90 | 6500.00 | 0.00 | 2000 / 3900 | 0.88 | 0.98 | 0.38 / 1.91 | 2.4 / 9 | 38 / 25 |
@@ -120,7 +120,7 @@ The factory curve correction preserves inherited shape where possible and normal
 | C | 9.00 | ef (1,150,000), ek9 (1,450,000), mx6 (1,500,000) |
 | D | 8.00 | ae86 (950,000), xt (1,250,000), mx5 (1,350,000) |
 
-All 42 stock market entries remain available through the existing paginated dealership; Magna remains developer-only. Parked parts allow existing owners to use a true stock setup without destroying purchases. This establishes multiple eligible choices, not a guarantee that every cash balance can immediately afford every class. Travel/earnings and invitation timing require reconciliation against current main.
+All 42 stock market entries remain available through the existing paginated dealership; Magna remains developer-only. Parked parts allow existing owners to use a true stock setup without destroying purchases. This establishes multiple eligible choices, not a guarantee that every cash balance can immediately afford every class. Current gameplay was reconciled through main c3819c9. Long-term earnings and invitation affordability still need playtesting.
 
 ## Preserved recruitment assignments
 

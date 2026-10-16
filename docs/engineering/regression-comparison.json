@@ -1,0 +1,2088 @@
+{
+  "baseline": "c3819c9fe618c6285122646f81c4e7a3f9e903f3",
+  "engineering": "af797594c50f538d73334c47f76cca78b611f3ec",
+  "scope": "Node tests only; sparse checkouts omit assets; browser tests excluded",
+  "files": {
+    "ai-driving.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "tests/ai-driving.mjs"
+        ],
+        "errors": [
+          "'test failed'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:20\n#   const v = new Vehicle(built.car,built.engine);\n#                               ^\n# TypeError: Cannot read properties of null (reading 'car')\n#     at run (file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:20:31)\n#     at file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:58:47\n#     at Array.from (<anonymous>)\n#     at file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:58:24\n#     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n#     at async node:internal/modules/esm/loader:643:26\n#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n# Node.js v24.19.0\n# Subtest: tests/ai-driving.mjs\nnot ok 1 - tests/ai-driving.mjs\n  ---\n  duration_ms: 100.822145\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/ai-driving.mjs:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 109.743799\n",
+        "missingFileErrors": false,
+        "logSHA256": "3987a664986a5ee8d7d4a49fde127515bb4b61725bfaebf740c1d0521c481cd3"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "tests/ai-driving.mjs"
+        ],
+        "errors": [
+          "'test failed'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:20\n#   const v = new Vehicle(built.car,built.engine);\n#                               ^\n# TypeError: Cannot read properties of null (reading 'car')\n#     at run (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:20:31)\n#     at file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:58:47\n#     at Array.from (<anonymous>)\n#     at file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:58:24\n#     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n#     at async node:internal/modules/esm/loader:643:26\n#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n# Node.js v24.19.0\n# Subtest: tests/ai-driving.mjs\nnot ok 1 - tests/ai-driving.mjs\n  ---\n  duration_ms: 106.06726\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 115.49135\n",
+        "missingFileErrors": false,
+        "logSHA256": "30ab46e22ee9268fb7b3c6cb2d33e64cc2cccf7e7f447a81b7f5ef6d13e6516d"
+      },
+      "newFailedTests": []
+    },
+    "ai-regressions.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "tests/ai-regressions.mjs"
+        ],
+        "errors": [
+          "'test failed'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:20\n#   const v = new Vehicle(built.car,built.engine);\n#                               ^\n# TypeError: Cannot read properties of null (reading 'car')\n#     at run (file:///tmp/tokyo-main-baseline/tests/ai-driving.mjs:20:31)\n#     at file:///tmp/tokyo-main-baseline/tests/ai-regressions.mjs:17:46\n#     at Array.from (<anonymous>)\n#     at file:///tmp/tokyo-main-baseline/tests/ai-regressions.mjs:17:22\n#     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n#     at async node:internal/modules/esm/loader:643:26\n#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n# Node.js v24.19.0\n# Subtest: tests/ai-regressions.mjs\nnot ok 1 - tests/ai-regressions.mjs\n  ---\n  duration_ms: 111.843739\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/ai-regressions.mjs:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 121.524584\n",
+        "missingFileErrors": false,
+        "logSHA256": "60cffe8917394f08c035b6ddf3d5228052f0eb9ed51e5016af4e0212d8472a45"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "tests/ai-regressions.mjs"
+        ],
+        "errors": [
+          "'test failed'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:20\n#   const v = new Vehicle(built.car,built.engine);\n#                               ^\n# TypeError: Cannot read properties of null (reading 'car')\n#     at run (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-driving.mjs:20:31)\n#     at file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-regressions.mjs:17:46\n#     at Array.from (<anonymous>)\n#     at file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-regressions.mjs:17:22\n#     at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n#     at async node:internal/modules/esm/loader:643:26\n#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n# Node.js v24.19.0\n# Subtest: tests/ai-regressions.mjs\nnot ok 1 - tests/ai-regressions.mjs\n  ---\n  duration_ms: 111.885698\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/ai-regressions.mjs:1:1'\n  failureType: 'testCodeFailure'\n  exitCode: 1\n  signal: ~\n  error: 'test failed'\n  code: 'ERR_TEST_FAILURE'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 118.966105\n",
+        "missingFileErrors": false,
+        "logSHA256": "8147a13e9efdfdd7a3d7a7a3c452edb1d2a0e478f97a16b7b59836f7868d6a19"
+      },
+      "newFailedTests": []
+    },
+    "car-reference-geometry.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all reference cars have paired identical-size body/paint canvases and valid right-origin axles"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/wrxgf8_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: AE86 master and two shared wheel diameters match approved calibration\nok 1 - AE86 master and two shared wheel diameters match approved calibration\n  ---\n  duration_ms: 1.664121\n  type: 'test'\n  ...\n# Subtest: all reference cars have paired identical-size body/paint canvases and valid right-origin axles\nnot ok 2 - all reference cars have paired identical-size body/paint canvases and valid right-origin axles\n  ---\n  duration_ms: 0.555985\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/car-reference-geometry.mjs:18:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/wrxgf8_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    dimensions (file:///tmp/tokyo-main-baseline/tests/car-reference-geometry.mjs:7:17)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/car-reference-geometry.mjs:20:18)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: baseline axle coor",
+        "missingFileErrors": true,
+        "logSHA256": "b3d4de41db4c4f02250c933b8e1bb323d02098b38578b9f5a943c2e15ac9340c"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all reference cars have paired identical-size body/paint canvases and valid right-origin axles"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/wrxgf8_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: AE86 master and two shared wheel diameters match approved calibration\nok 1 - AE86 master and two shared wheel diameters match approved calibration\n  ---\n  duration_ms: 3.832247\n  type: 'test'\n  ...\n# Subtest: all reference cars have paired identical-size body/paint canvases and valid right-origin axles\nnot ok 2 - all reference cars have paired identical-size body/paint canvases and valid right-origin axles\n  ---\n  duration_ms: 0.588745\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/car-reference-geometry.mjs:18:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/wrxgf8_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    dimensions (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/car-reference-geometry.mjs:7:17)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/car-reference-geometry.mjs:20:18)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node",
+        "missingFileErrors": true,
+        "logSHA256": "73feb237cd1b8e666935db75242ee8c37c9a560df6ad7846aac48de495430dd4"
+      },
+      "newFailedTests": []
+    },
+    "car-reference-rollout.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "43922d15e6f106c8d6055497bf392d9734f4e2f2c66a18419a8630d1d5d0ee49"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "8f4637c2ed874c180307cca0cd77a5c99de73ad2b317529233efc790d6a507a8"
+      },
+      "newFailedTests": []
+    },
+    "central-tokyo-startup-r449.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "b231a45acad57a073cbffbfe1aa0f4ae8c7203e4f3c6f2196790993e0e935e15"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "9007def1062dee01a19edef9315c09d61d085f6f9f3bbe19411dd6dbb2551b13"
+      },
+      "newFailedTests": []
+    },
+    "character-control-assets-r458.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 2,
+          "fail": 3,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Daichi uses Main home sprite in all workshops and dyno",
+          "Sayaka has separate home, Ginza and future pro racing outfits in Main",
+          "Emi is selectable Odaiba principal rival with canonical root assets"
+        ],
+        "errors": [
+          "'Missing sprite assets/Characters/Main/home_daichi_sakamoto.png'",
+          "'Missing sprite assets/Characters/Main/home_sayaka_fujieda_normal.png'",
+          "'Missing sprite assets/Characters/emi_kanzaki_idle.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Daichi uses Main home sprite in all workshops and dyno\nnot ok 1 - Daichi uses Main home sprite in all workshops and dyno\n  ---\n  duration_ms: 1.781156\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/character-control-assets-r458.mjs:19:1'\n  failureType: 'testCodeFailure'\n  error: 'Missing sprite assets/Characters/Main/home_daichi_sakamoto.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    expectedFile (file:///tmp/tokyo-main-baseline/tests/character-control-assets-r458.mjs:15:10)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/character-control-assets-r458.mjs:22:29)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: Sayaka has separate home, Ginza and future pro racing outfits in Main\nnot ok 2 - Sayaka has separate home, Ginza and future pro racing outfits in Main\n  ---\n  duration_ms: 0.309996\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/character-control-assets-r458.mjs:32:1'\n  failureType: 'testCodeFailure'\n  error: 'Missing sprite assets/Characters/Main/home_sayaka_fujieda_normal.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expec",
+        "missingFileErrors": true,
+        "logSHA256": "fe2f2fcd0f021f09d2dd2f720944a7019c2015d64f8bd7dd3590ceb8cabe8338"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Sayaka has separate home, Ginza and future pro racing outfits in Main",
+          "Emi is selectable Odaiba principal rival with canonical root assets"
+        ],
+        "errors": [
+          "'Missing sprite assets/Characters/Main/home_sayaka_fujieda_normal.png'",
+          "'Missing sprite assets/Characters/emi_kanzaki_win.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Daichi uses Main home sprite in all workshops and dyno\nok 1 - Daichi uses Main home sprite in all workshops and dyno\n  ---\n  duration_ms: 4.118668\n  type: 'test'\n  ...\n# Subtest: Sayaka has separate home, Ginza and future pro racing outfits in Main\nnot ok 2 - Sayaka has separate home, Ginza and future pro racing outfits in Main\n  ---\n  duration_ms: 0.980263\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/character-control-assets-r458.mjs:32:1'\n  failureType: 'testCodeFailure'\n  error: 'Missing sprite assets/Characters/Main/home_sayaka_fujieda_normal.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    expectedFile (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/character-control-assets-r458.mjs:15:10)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/character-control-assets-r458.mjs:41:71)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: Emi is selectable Odaiba principal rival with c",
+        "missingFileErrors": true,
+        "logSHA256": "82b4bc8d5dad8162b47530999757c329a0878c638280cd1d93cbc55b62f04bfe"
+      },
+      "newFailedTests": []
+    },
+    "character-dialogue-r532.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "1dc804335c46f346fc3eaaea86a04d54db42afd3e5db7c0c37d5f2fb801cf29e"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "e5152a2989d254fd7172a88e1e2e07741b786ba7e142326971869077f7b28c8c"
+      },
+      "newFailedTests": []
+    },
+    "drag-complex-r448.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "three season event cards retain driver, playable crew and four-wide slots"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: three season event cards retain driver, playable crew and four-wide slots\nnot ok 1 - three season event cards retain driver, playable crew and four-wide slots\n  ---\n  duration_ms: 2.00356\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/drag-complex-r448.mjs:11:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /PRO_DRAG_EVENTS\\[0\\]/. Input:\n    \n    '\\n' +\n      \"    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));\\n\" +\n      \"    const legacy = this.registry.get('competitionState');\\n\" +\n      '    const round = pro.calendar.round;\\n' +\n      '    const driverPool = PRO_DRAG_EVENTS;\\n' +\n      '    const rules = getProfessionalRoundEvents(round);\\n' +\n      '    const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];\\n' +\n      '    const fourWide = {\\n' +\n      \"      id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,\\n\" +\n      '      entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,\\n' +\n      '    };\\n' +\n      \"    const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),\\n\" +\n      '      seasonRules: rules.driver,\\n' +\n      \"      label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };\\n\" +\n      '    // Fixed positions: driver, crew, special/champio",
+        "missingFileErrors": false,
+        "logSHA256": "77cfc2914bb2819303eddb956559b6fc9e6ed804d5392205ef58e6174c4fae1b"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "three season event cards retain driver, playable crew and four-wide slots"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: three season event cards retain driver, playable crew and four-wide slots\nnot ok 1 - three season event cards retain driver, playable crew and four-wide slots\n  ---\n  duration_ms: 2.134546\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/drag-complex-r448.mjs:11:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /PRO_DRAG_EVENTS\\[0\\]/. Input:\n    \n    '\\n' +\n      \"    const pro = normaliseProCircuitState(this.registry.get('proCircuit'));\\n\" +\n      \"    const legacy = this.registry.get('competitionState');\\n\" +\n      '    const round = pro.calendar.round;\\n' +\n      '    const driverPool = PRO_DRAG_EVENTS;\\n' +\n      '    const rules = getProfessionalRoundEvents(round);\\n' +\n      '    const primary = driverPool.find(e => e.id === rules.driver.id) || driverPool[0];\\n' +\n      '    const fourWide = {\\n' +\n      \"      id: FOUR_WIDE_CUP.id, label: 'FOUR-WIDE OPEN', fourWide: true,\\n\" +\n      '      entryFee: FOUR_WIDE_CUP.entryFee, prizeCash: FOUR_WIDE_CUP.prizeCash[0], requiredWins: 0,\\n' +\n      '    };\\n' +\n      \"    const driver = { ...(rules.driver.id === 'fourWideOpen' ? fourWide : primary),\\n\" +\n      '      seasonRules: rules.driver,\\n' +\n      \"      label: (rules.driver.id === 'fourWideOpen' ? fourWide : primary).label };\\n\" +\n      '    // Fixed positions: driver, cr",
+        "missingFileErrors": false,
+        "logSHA256": "dc1cdaa4da281dcd734c47d41413f6b50e7926c89ddb38d2193058038606bf8c"
+      },
+      "newFailedTests": []
+    },
+    "dragstrip-parent-cleanup-r456.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "both Central Tokyo home-screen background images remain intact",
+          "all 30 crowd and phase component images remain intact"
+        ],
+        "errors": [
+          "'Missing home-screen art: tokyo_dragstrip_day.png'",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: five superseded parent-folder racetrack images are absent\nok 1 - five superseded parent-folder racetrack images are absent\n  ---\n  duration_ms: 1.064068\n  type: 'test'\n  ...\n# Subtest: both Central Tokyo home-screen background images remain intact\nnot ok 2 - both Central Tokyo home-screen background images remain intact\n  ---\n  duration_ms: 0.66586\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/dragstrip-parent-cleanup-r456.mjs:27:1'\n  failureType: 'testCodeFailure'\n  error: 'Missing home-screen art: tokyo_dragstrip_day.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/dragstrip-parent-cleanup-r456.mjs:31:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: all 30 crowd and phase component images remain intact\nnot ok 3 - all 30 crowd and phase component images remain intact\n  ---\n  duration_ms: 3.61438\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/dragstrip-parent-cle",
+        "missingFileErrors": true,
+        "logSHA256": "5224f0810c14d5fced115c8de43d31d0cac2bb824e6687740d2c502721ba7c3d"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "both Central Tokyo home-screen background images remain intact",
+          "all 30 crowd and phase component images remain intact"
+        ],
+        "errors": [
+          "'Missing home-screen art: tokyo_dragstrip_day.png'",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: five superseded parent-folder racetrack images are absent\nok 1 - five superseded parent-folder racetrack images are absent\n  ---\n  duration_ms: 0.831509\n  type: 'test'\n  ...\n# Subtest: both Central Tokyo home-screen background images remain intact\nnot ok 2 - both Central Tokyo home-screen background images remain intact\n  ---\n  duration_ms: 0.654473\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/dragstrip-parent-cleanup-r456.mjs:27:1'\n  failureType: 'testCodeFailure'\n  error: 'Missing home-screen art: tokyo_dragstrip_day.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/dragstrip-parent-cleanup-r456.mjs:31:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: all 30 crowd and phase component images remain intact\nnot ok 3 - all 30 crowd and phase component images remain intact\n  ---\n  duration_ms: 3.356172\n  type: 'test'\n  location: '/workspace/sc",
+        "missingFileErrors": true,
+        "logSHA256": "6f89bb72849df5243b335f01bc9ea4141c0ef2901b00c2cfac9f0b201d8bc866"
+      },
+      "newFailedTests": []
+    },
+    "dragstrip-venue-variants-r455.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "legacy event crowd defaults remain available alongside dynamic season attendance",
+          "all 30 exact user-supplied PNG paths are present with valid PNG dimensions"
+        ],
+        "errors": [
+          "|-",
+          "'Missing assets/CentralTokyo/dragstrip/low_complex_day.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: legacy event crowd defaults remain available alongside dynamic season attendance\nnot ok 1 - legacy event crowd defaults remain available alongside dynamic season attendance\n  ---\n  duration_ms: 2.058653\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/dragstrip-venue-variants-r455.mjs:19:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /PRO_DRAG_EVENTS\\[0\\]/. Input:\n    \n    \"import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';\\n\" +\n      \"const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());\\n\" +\n      \"import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261012-champaudit';\\n\" +\n      \"import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261012-champaudit';\\n\" +\n      \"import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';\\n\" +\n      \"import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';\\n\" +\n      \"import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';\\n\" +\n      \"import { cars, carOrder ",
+        "missingFileErrors": false,
+        "logSHA256": "0a025480a185548beb6bfe69a740190b3052932bf962bba916d7daee7a4fb699"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "legacy event crowd defaults remain available alongside dynamic season attendance",
+          "all 30 exact user-supplied PNG paths are present with valid PNG dimensions"
+        ],
+        "errors": [
+          "|-",
+          "'Missing assets/CentralTokyo/dragstrip/low_complex_day.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: legacy event crowd defaults remain available alongside dynamic season attendance\nnot ok 1 - legacy event crowd defaults remain available alongside dynamic season attendance\n  ---\n  duration_ms: 2.24978\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/dragstrip-venue-variants-r455.mjs:19:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /PRO_DRAG_EVENTS\\[0\\]/. Input:\n    \n    \"import {engineeringLabel} from '../data/stockClasses.js';\\n\" +\n      \"import { getCarMagazineMeta } from '../data/carMagazine.js';\\n\" +\n      \"const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());\\n\" +\n      \"import { CREW_SERIES, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js';\\n\" +\n      \"import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js';\\n\" +\n      \"import { saveProTransaction } from '../state/GameState.js';\\n\" +\n      \"import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js';\\n\" +\n      \"import { getReferenceRightX } from '../data/carReferenceGeometry.js';\\n\" +\n      \"import { cars, carOrder } from '../data/cars.",
+        "missingFileErrors": false,
+        "logSHA256": "6c9579e91e8d09eca69b9622e1da7e078c1eb54cfa0ed092e61da36c8c2a1ba9"
+      },
+      "newFailedTests": []
+    },
+    "engineering-integration.mjs": {
+      "main": {
+        "status": "absent"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "84bb06d5e012ac8d5fc2c0baeaf78e2bc44ea408a98437d83aa059d90269c926"
+      },
+      "newFailedTests": []
+    },
+    "four-lane-finish-regression.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "actual scene references the official ID and locked camera and gives preheat briefing"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: meet-style finish choreography locks camera early and always ends within 2.1s\nok 1 - meet-style finish choreography locks camera early and always ends within 2.1s\n  ---\n  duration_ms: 2.171121\n  type: 'test'\n  ...\n# Subtest: no competitor reaches finish: timeout produces result rather than endless drive\nok 2 - no competitor reaches finish: timeout produces result rather than endless drive\n  ---\n  duration_ms: 0.211057\n  type: 'test'\n  ...\n# Subtest: real four-lane runner IDs match saved bracket IDs so result settlement cannot throw\nok 3 - real four-lane runner IDs match saved bracket IDs so result settlement cannot throw\n  ---\n  duration_ms: 13.114117\n  type: 'test'\n  ...\n# Subtest: second place advances to semifinal and preserves correct driver ID\nok 4 - second place advances to semifinal and preserves correct driver ID\n  ---\n  duration_ms: 0.874004\n  type: 'test'\n  ...\n# Subtest: actual scene references the official ID and locked camera and gives preheat briefing\nnot ok 5 - actual scene references the official ID and locked camera and gives preheat briefing\n  ---\n  duration_ms: 2.92152\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/four-lane-finish-regression.mjs:80:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /id: this\\.proCup \\? 'player:driver' : 'player'/. Input:\n    \n    \"import { ",
+        "missingFileErrors": false,
+        "logSHA256": "24bf05176e9ac65d1a41b6897005e732ee61cbdab5b7c8183170d1c94a4642ad"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "actual scene references the official ID and locked camera and gives preheat briefing"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: meet-style finish choreography locks camera early and always ends within 2.1s\nok 1 - meet-style finish choreography locks camera early and always ends within 2.1s\n  ---\n  duration_ms: 1.403488\n  type: 'test'\n  ...\n# Subtest: no competitor reaches finish: timeout produces result rather than endless drive\nok 2 - no competitor reaches finish: timeout produces result rather than endless drive\n  ---\n  duration_ms: 0.1732\n  type: 'test'\n  ...\n# Subtest: real four-lane runner IDs match saved bracket IDs so result settlement cannot throw\nok 3 - real four-lane runner IDs match saved bracket IDs so result settlement cannot throw\n  ---\n  duration_ms: 17.051298\n  type: 'test'\n  ...\n# Subtest: second place advances to semifinal and preserves correct driver ID\nok 4 - second place advances to semifinal and preserves correct driver ID\n  ---\n  duration_ms: 1.196797\n  type: 'test'\n  ...\n# Subtest: actual scene references the official ID and locked camera and gives preheat briefing\nnot ok 5 - actual scene references the official ID and locked camera and gives preheat briefing\n  ---\n  duration_ms: 1.898432\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/four-lane-finish-regression.mjs:80:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /id: this\\.proCup \\? 'player:driver' : 'player'/. Input:\n  ",
+        "missingFileErrors": false,
+        "logSHA256": "2d9d126deb060cbc6d339a52b192cb26e83de59676ec1c71eb79daf16742f128"
+      },
+      "newFailedTests": []
+    },
+    "four-lane-prototype.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "d6d639a072aeac9eefa0e67f83d2f9afdefb14940b4a636a2112b9cdaa8c0f6e"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "5c1242f7b16e8421c0ccd0747ace88b42397a0d8a35e86713f7ec78cb637dd73"
+      },
+      "newFailedTests": []
+    },
+    "galant-vr4-r502.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 0,
+          "fail": 4,
+          "skipped": 0
+        },
+        "failedTests": [
+          "legacy Evolution III becomes Galant VR-4, including all copied and crew cars",
+          "Stock body and paint are matched PNGs and ground-normalised for two small tyres",
+          "Galant runs its own 176 kW period-style 4G63T map, not the Evo III calibration",
+          "existing Evo III ownership remains the same object/upgrade record after loading"
+        ],
+        "errors": [
+          "\"Cannot read properties of undefined (reading 'id')\"",
+          "|-",
+          "\"Cannot read properties of undefined (reading 'engine')\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: legacy Evolution III becomes Galant VR-4, including all copied and crew cars\nnot ok 1 - legacy Evolution III becomes Galant VR-4, including all copied and crew cars\n  ---\n  duration_ms: 0.826231\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/galant-vr4-r502.mjs:16:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of undefined (reading 'id')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/galant-vr4-r502.mjs:18:23)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: Stock body and paint are matched PNGs and ground-normalised for two small tyres\nnot ok 2 - Stock body and paint are matched PNGs and ground-normalised for two small tyres\n  ---\n  duration_ms: 1.019642\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/galant-vr4-r502.mjs:43:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'assets/Cars/car_body.png'\n    - 'assets/Cars/stock/galant_stock_body.png'\n                   ^\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 'assets/Cars/stock/galan",
+        "missingFileErrors": false,
+        "logSHA256": "78e847945a6280feb5b4d088748e8ad7e2b92fc36c556ea4d8aaf53e72428c6a"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 0,
+          "fail": 4,
+          "skipped": 0
+        },
+        "failedTests": [
+          "legacy Evolution III becomes Galant VR-4, including all copied and crew cars",
+          "Stock body and paint are matched PNGs and ground-normalised for two small tyres",
+          "Galant runs its own 176 kW period-style 4G63T map, not the Evo III calibration",
+          "existing Evo III ownership remains the same object/upgrade record after loading"
+        ],
+        "errors": [
+          "\"Cannot read properties of undefined (reading 'id')\"",
+          "|-",
+          "\"Cannot read properties of undefined (reading 'engine')\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: legacy Evolution III becomes Galant VR-4, including all copied and crew cars\nnot ok 1 - legacy Evolution III becomes Galant VR-4, including all copied and crew cars\n  ---\n  duration_ms: 1.186423\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/galant-vr4-r502.mjs:16:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of undefined (reading 'id')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/galant-vr4-r502.mjs:18:23)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: Stock body and paint are matched PNGs and ground-normalised for two small tyres\nnot ok 2 - Stock body and paint are matched PNGs and ground-normalised for two small tyres\n  ---\n  duration_ms: 2.892585\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/galant-vr4-r502.mjs:43:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    + actual - expected\n    \n    + 'assets/Cars/car_body.png'\n    - 'assets/Cars/stock/galant_stock_body.png'\n                   ^\n    \n  code: 'ERR_ASSERTION'\n  name:",
+        "missingFileErrors": false,
+        "logSHA256": "f683bacc4b2e255056a1b3c469f97a4b78de8ad774376abd14217be2fb9bd797"
+      },
+      "newFailedTests": []
+    },
+    "gf8-r517.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/wrxgf8_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car\nok 1 - GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car\n  ---\n  duration_ms: 3.436933\n  type: 'test'\n  ...\n# Subtest: GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels\nnot ok 2 - GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels\n  ---\n  duration_ms: 1.041935\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/gf8-r517.mjs:49:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/wrxgf8_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/gf8-r517.mjs:60:15)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: GF8 market/encounters are live without altering other Subaru models\nok 3 - GF8 market/encounters are live without altering other Subaru models\n  ",
+        "missingFileErrors": true,
+        "logSHA256": "c17e845b1407e7123d2990a528a0a3f1def8a10ed1320744bbdad974cf07dd20"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/wrxgf8_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car\nok 1 - GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car\n  ---\n  duration_ms: 53.519558\n  type: 'test'\n  ...\n# Subtest: GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels\nnot ok 2 - GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels\n  ---\n  duration_ms: 1.712613\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/gf8-r517.mjs:49:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/wrxgf8_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/gf8-r517.mjs:60:15)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: GF8 market/encounters are live without altering other Subaru models\nok 3 - GF8 market/enco",
+        "missingFileErrors": true,
+        "logSHA256": "27e3b17556ac3e6968435d54fa8cf40b97f75f3f3aaa5f189dbdbf7fc14941d8"
+      },
+      "newFailedTests": []
+    },
+    "hero-assets-r525.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 5,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "20 fixed-livery heroes load only their exact body asset; canvas and catalog agree"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/hero/essots020_hero_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: reference heroes do not receive the legacy collector ground correction twice\nok 1 - reference heroes do not receive the legacy collector ground correction twice\n  ---\n  duration_ms: 1.767054\n  type: 'test'\n  ...\n# Subtest: 20 fixed-livery heroes load only their exact body asset; canvas and catalog agree\nnot ok 2 - 20 fixed-livery heroes load only their exact body asset; canvas and catalog agree\n  ---\n  duration_ms: 1.113462\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/hero-assets-r525.mjs:19:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/hero/essots020_hero_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/hero-assets-r525.mjs:29:17)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: per-axle sizes preserve contact and right-edge registration at every zoom and flip\nok 3 - per-axle sizes preserve contact and ri",
+        "missingFileErrors": true,
+        "logSHA256": "9e3b550d4a530c6952c321cae2b019222907fc601e0558b17a22210cf7d455e1"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 5,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "20 fixed-livery heroes load only their exact body asset; canvas and catalog agree"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/hero/essots020_hero_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: reference heroes do not receive the legacy collector ground correction twice\nok 1 - reference heroes do not receive the legacy collector ground correction twice\n  ---\n  duration_ms: 2.513176\n  type: 'test'\n  ...\n# Subtest: 20 fixed-livery heroes load only their exact body asset; canvas and catalog agree\nnot ok 2 - 20 fixed-livery heroes load only their exact body asset; canvas and catalog agree\n  ---\n  duration_ms: 1.174044\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/hero-assets-r525.mjs:19:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/hero/essots020_hero_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/hero-assets-r525.mjs:29:17)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: per-axle sizes preserve contact and right-edge registration at every zoom ",
+        "missingFileErrors": true,
+        "logSHA256": "6c2b3b9cde36dd25e2c0a197b0beeca828debec0466303de18d606bf40c776d4"
+      },
+      "newFailedTests": []
+    },
+    "magazine-issue01-r486.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "owner supplied templates and used champion art are valid nonempty WebP files"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: twelve contiguous editorial pages include five complete car profiles\nok 1 - twelve contiguous editorial pages include five complete car profiles\n  ---\n  duration_ms: 1.414626\n  type: 'test'\n  ...\n# Subtest: owner supplied templates and used champion art are valid nonempty WebP files\nnot ok 2 - owner supplied templates and used champion art are valid nonempty WebP files\n  ---\n  duration_ms: 3.562803\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/magazine-issue01-r486.mjs:18:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert(existsSync(a.path))\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/magazine-issue01-r486.mjs:25:3)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: Issue 01 ends on page 15 and does not append Street File archive pages\nok 3 - Issue 01 ends on page 15 and does not append Street File archive pages\n  ",
+        "missingFileErrors": false,
+        "logSHA256": "0da1916be2535b08f3ae2dbe7789bade8097a9796d214900bd6a1d0194ab8042"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "owner supplied templates and used champion art are valid nonempty WebP files"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: twelve contiguous editorial pages include five complete car profiles\nok 1 - twelve contiguous editorial pages include five complete car profiles\n  ---\n  duration_ms: 1.89702\n  type: 'test'\n  ...\n# Subtest: owner supplied templates and used champion art are valid nonempty WebP files\nnot ok 2 - owner supplied templates and used champion art are valid nonempty WebP files\n  ---\n  duration_ms: 3.750946\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/magazine-issue01-r486.mjs:18:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert(existsSync(a.path))\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/magazine-issue01-r486.mjs:25:3)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: Issue 01 ends on page 15 and does not append Street File archive pages\nok 3 - Issue 01 ends on page 15 and does not ",
+        "missingFileErrors": false,
+        "logSHA256": "67132fe21f06377d6e65bc05fbc414ad62131468c03c214b365c60edff5140c0"
+      },
+      "newFailedTests": []
+    },
+    "meet-refresh-r469.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "1b02e67a3bb10632ee1c97a44955dc0ae2222f1cb48e8a146d23bbc8fcb45b61"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "a0b442d60a463affc182b7e7d037f03afe608776b69c0baea2c154c1032cebd6"
+      },
+      "newFailedTests": []
+    },
+    "meet-rival-cars-and-profiles-r500.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "starter meets stay recognisable and late regions add new cars without bypassing matchmaker",
+          "cutscene pose change reuses the exact creation-placement helper and a lowered frame"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/src/vehicles/DriverSilhouette.js'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: new Ref2 models are in regional meet preference pools, not only in the car dealership\nok 1 - new Ref2 models are in regional meet preference pools, not only in the car dealership\n  ---\n  duration_ms: 2.170311\n  type: 'test'\n  ...\n# Subtest: starter meets stay recognisable and late regions add new cars without bypassing matchmaker\nnot ok 2 - starter meets stay recognisable and late regions add new cars without bypassing matchmaker\n  ---\n  duration_ms: 2.48245\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/meet-rival-cars-and-profiles-r500.mjs:34:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /for \\(const carId of carOrder\\)/. Input:\n    \n    \"import { cars, carOrder } from './cars.js?v=20261011-r479';\\n\" +\n      \"import { getBaseCarId } from './carOwnership.js?v=20261011-r479';\\n\" +\n      \"import { PROGRESSION_BALANCE } from './progressionBalance.js?v=20260929-r271';\\n\" +\n      \"import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';\\n\" +\n      \"import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';\\n\" +\n      \"import { applyDifficultyToMeetBands } from './playerDifficulty.js?v=20260929-r271';\\n\" +\n      '\\n' +\n      'function weightedChoice(entries, random = Math.random) {\\n' +\n      '  const total = entries.reduce((sum, entry) => sum +",
+        "missingFileErrors": true,
+        "logSHA256": "febcf688c19ea74804d8c0316790565d8b8dcc2170e441f263435d72bd9c7ae7"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "starter meets stay recognisable and late regions add new cars without bypassing matchmaker",
+          "cutscene pose change reuses the exact creation-placement helper and a lowered frame"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/src/vehicles/DriverSilhouette.js'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: new Ref2 models are in regional meet preference pools, not only in the car dealership\nok 1 - new Ref2 models are in regional meet preference pools, not only in the car dealership\n  ---\n  duration_ms: 1.968738\n  type: 'test'\n  ...\n# Subtest: starter meets stay recognisable and late regions add new cars without bypassing matchmaker\nnot ok 2 - starter meets stay recognisable and late regions add new cars without bypassing matchmaker\n  ---\n  duration_ms: 2.06281\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/meet-rival-cars-and-profiles-r500.mjs:34:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /for \\(const carId of carOrder\\)/. Input:\n    \n    \"import { cars, carOrder } from './cars.js';\\n\" +\n      \"import { getBaseCarId } from './carOwnership.js';\\n\" +\n      \"import { PROGRESSION_BALANCE } from './progressionBalance.js';\\n\" +\n      \"import { createRivalBuildState } from './rivalBuilds.js';\\n\" +\n      \"import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js';\\n\" +\n      \"import { applyDifficultyToMeetBands } from './playerDifficulty.js';\\n\" +\n      '\\n' +\n      'function weightedChoice(entries, random = Math.random) {\\n' +\n      '  const total = entries.reduce((sum, entry) => sum + Math.max(0, Number(entry.weight || 0)), 0);\\n' +\n      '  if (total <= 0) ret",
+        "missingFileErrors": true,
+        "logSHA256": "48cfe3b353ce72b9da4f6b8dba82bcf32e5d57830e0b44fade9cc5af95275910"
+      },
+      "newFailedTests": []
+    },
+    "opening-chapter-r467.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 32,
+          "pass": 22,
+          "fail": 10,
+          "skipped": 0
+        },
+        "failedTests": [
+          "new character and scene order resolves the station and first-car choice only at the magazine",
+          "Issue 01 uses the real cover, Auto Market ad and contents assets",
+          "the opening and later visits use one magazine page-flip renderer",
+          "opening and farewell dialogue use Sayaka normal-happy-normal beat",
+          "Sayaka leaves the player at a resumable workshop checkpoint before a separate tap",
+          "the very next workshop tap uses Daichi exactly as drivetrain tuning does",
+          "the in-office Sayaka call uses the shared blue race dialogue with phone corner badge",
+          "Sayaka expression assets are loaded in the manga portrait pose map",
+          "Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures",
+          "Sayaka farewell fades both manga portrait and garage companion before Daichi can appear"
+        ],
+        "errors": [
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "'Missing image: assets/Characters/Main/home_sayaka_fujieda_sad.png'",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: brand-new profile starts at the train station without an owned or phantom starter car\nok 1 - brand-new profile starts at the train station without an owned or phantom starter car\n  ---\n  duration_ms: 6.344853\n  type: 'test'\n  ...\n# Subtest: station -> home -> magazine -> delivery preserves zero vehicles across saves\nok 2 - station -> home -> magazine -> delivery preserves zero vehicles across saves\n  ---\n  duration_ms: 5.354634\n  type: 'test'\n  ...\n# Subtest: the selected EF is awarded once and resumes with Sayaka after delivery\nok 3 - the selected EF is awarded once and resumes with Sayaka after delivery\n  ---\n  duration_ms: 1.569037\n  type: 'test'\n  ...\n# Subtest: new lesson completion checkpoint survives normalisation\nok 4 - new lesson completion checkpoint survives normalisation\n  ---\n  duration_ms: 0.98508\n  type: 'test'\n  ...\n# Subtest: older saves keep their starter car but never revive retired Daichi onboarding\nok 5 - older saves keep their starter car but never revive retired Daichi onboarding\n  ---\n  duration_ms: 3.226286\n  type: 'test'\n  ...\n# Subtest: new character and scene order resolves the station and first-car choice only at the magazine\nnot ok 6 - new character and scene order resolves the station and first-car choice only at the magazine\n  ---\n  duration_ms: 6.637673\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/opening-",
+        "missingFileErrors": false,
+        "logSHA256": "47c1945a85ae03c8e22fe95d653c7d87f65223f3bc7fda83e766dc891a87aba0"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 32,
+          "pass": 24,
+          "fail": 8,
+          "skipped": 0
+        },
+        "failedTests": [
+          "new character and scene order resolves the station and first-car choice only at the magazine",
+          "the opening and later visits use one magazine page-flip renderer",
+          "opening and farewell dialogue use Sayaka normal-happy-normal beat",
+          "Sayaka leaves the player at a resumable workshop checkpoint before a separate tap",
+          "the very next workshop tap uses Daichi exactly as drivetrain tuning does",
+          "Sayaka expression assets are loaded in the manga portrait pose map",
+          "Sayaka first-keys and driving-safe panels resolve to the actual authored sprite textures",
+          "Sayaka farewell fades both manga portrait and garage companion before Daichi can appear"
+        ],
+        "errors": [
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "|-",
+          "'Missing image: assets/Characters/Main/home_sayaka_fujieda_sad.png'",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: brand-new profile starts at the train station without an owned or phantom starter car\nok 1 - brand-new profile starts at the train station without an owned or phantom starter car\n  ---\n  duration_ms: 6.252694\n  type: 'test'\n  ...\n# Subtest: station -> home -> magazine -> delivery preserves zero vehicles across saves\nok 2 - station -> home -> magazine -> delivery preserves zero vehicles across saves\n  ---\n  duration_ms: 6.555268\n  type: 'test'\n  ...\n# Subtest: the selected EF is awarded once and resumes with Sayaka after delivery\nok 3 - the selected EF is awarded once and resumes with Sayaka after delivery\n  ---\n  duration_ms: 1.848447\n  type: 'test'\n  ...\n# Subtest: new lesson completion checkpoint survives normalisation\nok 4 - new lesson completion checkpoint survives normalisation\n  ---\n  duration_ms: 1.001675\n  type: 'test'\n  ...\n# Subtest: older saves keep their starter car but never revive retired Daichi onboarding\nok 5 - older saves keep their starter car but never revive retired Daichi onboarding\n  ---\n  duration_ms: 2.421228\n  type: 'test'\n  ...\n# Subtest: new character and scene order resolves the station and first-car choice only at the magazine\nnot ok 6 - new character and scene order resolves the station and first-car choice only at the magazine\n  ---\n  duration_ms: 4.884068\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyos",
+        "missingFileErrors": false,
+        "logSHA256": "6f3385d361e2c66f96a81b0bf6878810c60dd34ee08b568bcb7dfe8acfcbebeb"
+      },
+      "newFailedTests": []
+    },
+    "opening-phone-prototype-r515.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once"
+        ],
+        "errors": [
+          "\"Cannot read properties of undefined (reading 'graphics')\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: only the opening call opts in to the new presentation, preserving other calls\nok 1 - only the opening call opts in to the new presentation, preserving other calls\n  ---\n  duration_ms: 1.709859\n  type: 'test'\n  ...\n# Subtest: selected player uses their actual character portrait\nok 2 - selected player uses their actual character portrait\n  ---\n  duration_ms: 0.344017\n  type: 'test'\n  ...\n# Subtest: first screen displays vibrating centred phone and a single green answer control\nok 3 - first screen displays vibrating centred phone and a single green answer control\n  ---\n  duration_ms: 1.083267\n  type: 'test'\n  ...\n# Subtest: pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once\nnot ok 4 - pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once\n  ---\n  duration_ms: 0.979772\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/opening-phone-prototype-r515.mjs:79:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of undefined (reading 'graphics')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    createRaceDialogueHud (file:///tmp/tokyo-main-baseline/src/ui/RaceCoachHud.js?v=20261016-r535:105:32)\n    makeDialogueCard (file:///tmp/tokyo-main-baseline/src/ui/OpeningPhonePrototype.js:60:15)\n    showPage (file:///tmp/tokyo-main-baseline/src/ui/OpeningP",
+        "missingFileErrors": false,
+        "logSHA256": "d94520fe046a3aa80b34dee26ec0558462e6a0845ff08a2ed5276862ac30b2e0"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once"
+        ],
+        "errors": [
+          "\"Cannot read properties of undefined (reading 'graphics')\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: only the opening call opts in to the new presentation, preserving other calls\nok 1 - only the opening call opts in to the new presentation, preserving other calls\n  ---\n  duration_ms: 2.557643\n  type: 'test'\n  ...\n# Subtest: selected player uses their actual character portrait\nok 2 - selected player uses their actual character portrait\n  ---\n  duration_ms: 0.441403\n  type: 'test'\n  ...\n# Subtest: first screen displays vibrating centred phone and a single green answer control\nok 3 - first screen displays vibrating centred phone and a single green answer control\n  ---\n  duration_ms: 1.578662\n  type: 'test'\n  ...\n# Subtest: pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once\nnot ok 4 - pickup shows left Sayaka, continue swipes up and reveals mirrored player, then delivers once\n  ---\n  duration_ms: 2.345043\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/opening-phone-prototype-r515.mjs:79:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of undefined (reading 'graphics')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    createRaceDialogueHud (file:///workspace/scratch/9b91854cb95a/Tokyoshift/src/ui/RaceCoachHud.js:105:32)\n    makeDialogueCard (file:///workspace/scratch/9b91854cb95a/Tokyoshift/src/ui/OpeningPhonePrototype.js:60:15)\n    showPage (file:///w",
+        "missingFileErrors": false,
+        "logSHA256": "c142ef4a4883f2d01729e30cddb8daf008872fad2a3f58a3c91b6a7a1ca04f2c"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-coaching-r509.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "25631993e99ed305d2d9420f4752f3f633e53d01594373ae8c3b39b615a3b1ea"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "3ef181b6941ed7a0ff2dac58729e29a084618e0f852c20604b27b82266f4f185"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-manga-r511.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "ca991399b97b7ea01776f30049446916a102a4f1b2f7630a3fbab306ee1d0187"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "df28f02da56560de9074bdb3d9f92ed68c5aa73855ae3a6e243d529f27ba9fc7"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-r496.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "scene integrates three race streak, cutscene anonymity, preset and RGB pricing, and slow side entry"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Skytree access requires all seven regional championships, including Shinjuku\nok 1 - Skytree access requires all seven regional championships, including Shinjuku\n  ---\n  duration_ms: 2.866527\n  type: 'test'\n  ...\n# Subtest: professional drag complex is instead locked until all seven crew battles are complete\nok 2 - professional drag complex is instead locked until all seven crew battles are complete\n  ---\n  duration_ms: 0.73231\n  type: 'test'\n  ...\n# Subtest: map places both special districts on land with Oshiage to the right\nok 3 - map places both special districts on land with Oshiage to the right\n  ---\n  duration_ms: 0.975546\n  type: 'test'\n  ...\n# Subtest: two venues each have an independent real-time fifteen-minute cooldown\nok 4 - two venues each have an independent real-time fifteen-minute cooldown\n  ---\n  duration_ms: 0.240942\n  type: 'test'\n  ...\n# Subtest: Elite opponent can come from any region but never an existing crew member or the player\nok 5 - Elite opponent can come from any region but never an existing crew member or the player\n  ---\n  duration_ms: 1.331801\n  type: 'test'\n  ...\n# Subtest: full Elite prize is several coupons or a new rare wheel\nok 6 - full Elite prize is several coupons or a new rare wheel\n  ---\n  duration_ms: 0.273191\n  type: 'test'\n  ...\n# Subtest: old profiles gain valid Oshiage defaults and in-progress streaks surviv",
+        "missingFileErrors": false,
+        "logSHA256": "2df5fe8ec977e8a39082c2b22eeb7d259b4490208605ca2f53175b407fcbec63"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "scene integrates three race streak, cutscene anonymity, preset and RGB pricing, and slow side entry"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Skytree access requires all seven regional championships, including Shinjuku\nok 1 - Skytree access requires all seven regional championships, including Shinjuku\n  ---\n  duration_ms: 1.480124\n  type: 'test'\n  ...\n# Subtest: professional drag complex is instead locked until all seven crew battles are complete\nok 2 - professional drag complex is instead locked until all seven crew battles are complete\n  ---\n  duration_ms: 0.466051\n  type: 'test'\n  ...\n# Subtest: map places both special districts on land with Oshiage to the right\nok 3 - map places both special districts on land with Oshiage to the right\n  ---\n  duration_ms: 0.680412\n  type: 'test'\n  ...\n# Subtest: two venues each have an independent real-time fifteen-minute cooldown\nok 4 - two venues each have an independent real-time fifteen-minute cooldown\n  ---\n  duration_ms: 0.221803\n  type: 'test'\n  ...\n# Subtest: Elite opponent can come from any region but never an existing crew member or the player\nok 5 - Elite opponent can come from any region but never an existing crew member or the player\n  ---\n  duration_ms: 1.094244\n  type: 'test'\n  ...\n# Subtest: full Elite prize is several coupons or a new rare wheel\nok 6 - full Elite prize is several coupons or a new rare wheel\n  ---\n  duration_ms: 0.283176\n  type: 'test'\n  ...\n# Subtest: old profiles gain valid Oshiage defaults and in-progress streaks survi",
+        "missingFileErrors": false,
+        "logSHA256": "3b92e21c9c1fc283ec1243c4a072dca17c3d8f9def8e5d1df04d5299a166395e"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-race-coach-hud-r513.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "27bc58b18de47005f8e19b627bf7fc256ae77760ee9677600998d8d09c6154e1"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "56e69c8255fa329639e02c5a55fad8ddde57fd2ecbb234ba1ad58fa3c3a1fcbe"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-rims-r501.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 10,
+          "pass": 8,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Oshiage wheel shop day/night images are valid same-sized PNG assets",
+          "Rims is second Custom Works service, with Bodykit disabled and Paint exclusive"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Oshiage/oshiage_wheels_day.png'\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Oshiage displays four normal and four special designs in eight bays\nok 1 - Oshiage displays four normal and four special designs in eight bays\n  ---\n  duration_ms: 1.671451\n  type: 'test'\n  ...\n# Subtest: eight overlay positions match the cabinets in the new Oshiage art\nok 2 - eight overlay positions match the cabinets in the new Oshiage art\n  ---\n  duration_ms: 0.509725\n  type: 'test'\n  ...\n# Subtest: Oshiage wheel shop day/night images are valid same-sized PNG assets\nnot ok 3 - Oshiage wheel shop day/night images are valid same-sized PNG assets\n  ---\n  duration_ms: 1.178992\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/oshiage-rims-r501.mjs:77:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Oshiage/oshiage_wheels_day.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    pngInfo (file:///tmp/tokyo-main-baseline/tests/oshiage-rims-r501.mjs:79:19)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/oshiage-rims-r501.mjs:87:20)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test",
+        "missingFileErrors": true,
+        "logSHA256": "d11fe12c04aeccfc32c7aea2901fc0d4981097ad57477d3aedbc18db3bc4d7af"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 10,
+          "pass": 8,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Oshiage wheel shop day/night images are valid same-sized PNG assets",
+          "Rims is second Custom Works service, with Bodykit disabled and Paint exclusive"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Oshiage/oshiage_wheels_day.png'\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Oshiage displays four normal and four special designs in eight bays\nok 1 - Oshiage displays four normal and four special designs in eight bays\n  ---\n  duration_ms: 1.720265\n  type: 'test'\n  ...\n# Subtest: eight overlay positions match the cabinets in the new Oshiage art\nok 2 - eight overlay positions match the cabinets in the new Oshiage art\n  ---\n  duration_ms: 0.247893\n  type: 'test'\n  ...\n# Subtest: Oshiage wheel shop day/night images are valid same-sized PNG assets\nnot ok 3 - Oshiage wheel shop day/night images are valid same-sized PNG assets\n  ---\n  duration_ms: 0.433271\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-rims-r501.mjs:77:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Oshiage/oshiage_wheels_day.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    pngInfo (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-rims-r501.mjs:79:19)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-rims-r501.mjs:87:20)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:interna",
+        "missingFileErrors": true,
+        "logSHA256": "f2d0b366c676f31ef5f10c51f255ffa7fe4c016a22e27c06b4e5ac7b6a95b4a2"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-school-polish-r512.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 3,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all Oshiage teaching poses map to the correct physical asset files"
+        ],
+        "errors": [
+          "'oshiageNeutral'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: school dialogue begins with Sayaka and never repeats the player recognises her\nok 1 - school dialogue begins with Sayaka and never repeats the player recognises her\n  ---\n  duration_ms: 1.422167\n  type: 'test'\n  ...\n# Subtest: all Oshiage teaching poses map to the correct physical asset files\nnot ok 2 - all Oshiage teaching poses map to the correct physical asset files\n  ---\n  duration_ms: 0.832391\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/oshiage-school-polish-r512.mjs:22:1'\n  failureType: 'testCodeFailure'\n  error: 'oshiageNeutral'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/oshiage-school-polish-r512.mjs:33:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: course scenes load only needed poses and reuse shared Phaser texture keys\nok 3 - course scenes load only needed poses and reuse shared Phaser texture keys\n  ---\n  duration_ms: 0.177156\n  type: 'test'\n  ...\n# Subtest:",
+        "missingFileErrors": false,
+        "logSHA256": "696c8beaa8b303bc174714a498f8964e916a4ed6334c893c68c020a54e63dd51"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 3,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all Oshiage teaching poses map to the correct physical asset files"
+        ],
+        "errors": [
+          "'oshiageNeutral'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: school dialogue begins with Sayaka and never repeats the player recognises her\nok 1 - school dialogue begins with Sayaka and never repeats the player recognises her\n  ---\n  duration_ms: 0.856737\n  type: 'test'\n  ...\n# Subtest: all Oshiage teaching poses map to the correct physical asset files\nnot ok 2 - all Oshiage teaching poses map to the correct physical asset files\n  ---\n  duration_ms: 1.136167\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-school-polish-r512.mjs:22:1'\n  failureType: 'testCodeFailure'\n  error: 'oshiageNeutral'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-school-polish-r512.mjs:33:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: course scenes load only needed poses and reuse shared Phaser texture keys\nok 3 - course scenes load only needed poses and reuse shared Phaser texture keys\n  ---\n  duration_ms: 0.18",
+        "missingFileErrors": false,
+        "logSHA256": "1bcdf4c3f4f1db9e6bc5715ed74a6f37612f951b591da11d0ef3453203ce9cba"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-showdown-r522.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "bc19922806a13044276c7aee0863fade904a3017e7fd9d34b15057923c6dcb42"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "212941f3f1d77913cb210326dcd84e34924fa8e58696919a25047886b072b72d"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-ui-r510.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "four school courses have authored costs and approved disguised dialogue",
+          "a booking charges once and allows exactly three retries"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: four school courses have authored costs and approved disguised dialogue\nnot ok 1 - four school courses have authored costs and approved disguised dialogue\n  ---\n  duration_ms: 1.444731\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/oshiage-ui-r510.mjs:10:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    2 !== 3\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 3\n  actual: 2\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/oshiage-ui-r510.mjs:15:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: a booking charges once and allows exactly three retries\nnot ok 2 - a booking charges once and allows exactly three retries\n  ---\n  duration_ms: 0.440993\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/oshiage-ui-r510.mjs:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    3 !== 4\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 4\n  actual: 3\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/oshiage-u",
+        "missingFileErrors": false,
+        "logSHA256": "82422697197cb36f173c6e8dc6e8dc4f12a72694131d11d90102591842febb73"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "four school courses have authored costs and approved disguised dialogue",
+          "a booking charges once and allows exactly three retries"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: four school courses have authored costs and approved disguised dialogue\nnot ok 1 - four school courses have authored costs and approved disguised dialogue\n  ---\n  duration_ms: 1.825383\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-ui-r510.mjs:10:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    2 !== 3\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 3\n  actual: 2\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-ui-r510.mjs:15:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: a booking charges once and allows exactly three retries\nnot ok 2 - a booking charges once and allows exactly three retries\n  ---\n  duration_ms: 0.451959\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-ui-r510.mjs:22:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    3 !== 4\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 4\n  actual: 3\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anony",
+        "missingFileErrors": false,
+        "logSHA256": "2ecfd15655a1c82de5ea0a0007d57d1586931cc6ffc5e08228534978fb382c76"
+      },
+      "newFailedTests": []
+    },
+    "oshiage-yuna-rolling-r507.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 4,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "paint showroom car is 70% of earlier width and a little higher",
+          "rim descriptions omit dimensions and the manual preview button"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: original Tokyo Wheel Shop attendant is Yuna Kisaragi in both Oshiage rooms\nok 1 - original Tokyo Wheel Shop attendant is Yuna Kisaragi in both Oshiage rooms\n  ---\n  duration_ms: 0.997329\n  type: 'test'\n  ...\n# Subtest: paint showroom car is 70% of earlier width and a little higher\nnot ok 2 - paint showroom car is 70% of earlier width and a little higher\n  ---\n  duration_ms: 1.389728\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/oshiage-yuna-rolling-r507.mjs:20:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /this\\.paintObjects = this\\.drawOwnedCar\\(\\s*car, state, 609, 345, 483, this\\.pendingPaint/. Input:\n    \n    '// Oshiage satellite district. The seven regional championships remain unchanged.\\n' +\n      \"import { cars } from '../data/cars.js?v=20261011-r479';\\n\" +\n      'import {\\n' +\n      '  OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,\\n' +\n      '  isOshiageVoucherAvailable,\\n' +\n      \"} from '../data/oshiageSchool.js?v=20261016-r536';\\n\" +\n      \"import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';\\n\" +\n      \"import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';\\n\" +\n    ",
+        "missingFileErrors": false,
+        "logSHA256": "c8aa0f16bad06ec1c0eccc086ff7d26d1c019b3a04fe13925cb29978b80a4172"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 4,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "paint showroom car is 70% of earlier width and a little higher",
+          "rim descriptions omit dimensions and the manual preview button"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: original Tokyo Wheel Shop attendant is Yuna Kisaragi in both Oshiage rooms\nok 1 - original Tokyo Wheel Shop attendant is Yuna Kisaragi in both Oshiage rooms\n  ---\n  duration_ms: 1.097379\n  type: 'test'\n  ...\n# Subtest: paint showroom car is 70% of earlier width and a little higher\nnot ok 2 - paint showroom car is 70% of earlier width and a little higher\n  ---\n  duration_ms: 3.844897\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/oshiage-yuna-rolling-r507.mjs:20:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The input did not match the regular expression /this\\.paintObjects = this\\.drawOwnedCar\\(\\s*car, state, 609, 345, 483, this\\.pendingPaint/. Input:\n    \n    '// Oshiage satellite district. The seven regional championships remain unchanged.\\n' +\n      \"import { cars } from '../data/cars.js';\\n\" +\n      'import {\\n' +\n      '  OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,\\n' +\n      '  isOshiageVoucherAvailable,\\n' +\n      \"} from '../data/oshiageSchool.js';\\n\" +\n      \"import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js';\\n\" +\n      \"import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js';\\n\" +\n      'import {\\n' +\n      '  getOshiageShowdownLi",
+        "missingFileErrors": false,
+        "logSHA256": "75a7f6e6d72e1a7bf2df98fe4e95c7cef7519a86a41a3f7d831bc1ec18a512e5"
+      },
+      "newFailedTests": []
+    },
+    "pinkSlipProgression.test.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "7d07cb4f58d0da3710d61aaf389e2a97fa18a28c00996c4284870c0382db6ca3"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "87cfd27643065cb03e462ef46d1e7fb3f1e95a0485f88bbe3644b9cbfb8ceacd"
+      },
+      "newFailedTests": []
+    },
+    "pro-circuit-foundation.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "professional roster has stable unique identities and seven canonical rivals",
+          "venue unlock and professional event unlock are separate: genuine seven recruits required"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: professional roster has stable unique identities and seven canonical rivals\nnot ok 1 - professional roster has stable unique identities and seven canonical rivals\n  ---\n  duration_ms: 2.322533\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/pro-circuit-foundation.mjs:17:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    23 !== 31\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 31\n  actual: 23\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/pro-circuit-foundation.mjs:23:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: five trophy definitions and two 16-player championships are data driven\nok 2 - five trophy definitions and two 16-player championships are data driven\n  ---\n  duration_ms: 0.224928\n  type: 'test'\n  ...\n# Subtest: venue unlock and professional event unlock are separate: genuine seven recruits required\nnot ok 3 - venue unlock and professional event unlock are separate: genuine seven recruits required\n  ---\n  duration_ms: 0.763778\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/pro-circuit-foundat",
+        "missingFileErrors": false,
+        "logSHA256": "b395d3a66838e89d7ee75a7af55b64098b2d0a3a117bfa3da7845a38fd14b367"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "professional roster has stable unique identities and seven canonical rivals",
+          "venue unlock and professional event unlock are separate: genuine seven recruits required"
+        ],
+        "errors": [
+          "|-",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: professional roster has stable unique identities and seven canonical rivals\nnot ok 1 - professional roster has stable unique identities and seven canonical rivals\n  ---\n  duration_ms: 4.07967\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-circuit-foundation.mjs:17:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    23 !== 31\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 31\n  actual: 23\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-circuit-foundation.mjs:23:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: five trophy definitions and two 16-player championships are data driven\nok 2 - five trophy definitions and two 16-player championships are data driven\n  ---\n  duration_ms: 0.287852\n  type: 'test'\n  ...\n# Subtest: venue unlock and professional event unlock are separate: genuine seven recruits required\nnot ok 3 - venue unlock and professional event unlock are separate: genuine seven recruits required\n  ---\n  duration_ms: 0.873644\n  type: 'test'\n  location: '/workspace/scra",
+        "missingFileErrors": false,
+        "logSHA256": "60e96a9a06be9e75c286ee6c1904ca6da3dda1ddad03ce50abf4450341b83cee"
+      },
+      "newFailedTests": []
+    },
+    "pro-complex-r445.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all new professional race entries use four-lane complex; only 2 cars for pro duels"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: pro three-round bracket preserves saved opponents and selected car\nok 1 - pro three-round bracket preserves saved opponents and selected car\n  ---\n  duration_ms: 1.639205\n  type: 'test'\n  ...\n# Subtest: first and second win progress rounds without immediate prize\nok 2 - first and second win progress rounds without immediate prize\n  ---\n  duration_ms: 0.248654\n  type: 'test'\n  ...\n# Subtest: final third win pays once and clears bracket\nok 3 - final third win pays once and clears bracket\n  ---\n  duration_ms: 0.163656\n  type: 'test'\n  ...\n# Subtest: any loss ends the simple professional cup with no prize\nok 4 - any loss ends the simple professional cup with no prize\n  ---\n  duration_ms: 0.161933\n  type: 'test'\n  ...\n# Subtest: invalid or corrupt legacy pro cup cannot secretly pay cash\nok 5 - invalid or corrupt legacy pro cup cannot secretly pay cash\n  ---\n  duration_ms: 0.324207\n  type: 'test'\n  ...\n# Subtest: intro professional cups are all less lucrative than the four-wide championship\nok 6 - intro professional cups are all less lucrative than the four-wide championship\n  ---\n  duration_ms: 1.315288\n  type: 'test'\n  ...\n# Subtest: all new professional race entries use four-lane complex; only 2 cars for pro duels\nnot ok 7 - all new professional race entries use four-lane complex; only 2 cars for pro duels\n  ---\n  duration_ms: 3.116527\n  type: 'test'\n  lo",
+        "missingFileErrors": false,
+        "logSHA256": "8ec3f753230711269c379127ea92775944ae40215e992f7f5c84766c201d73d2"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all new professional race entries use four-lane complex; only 2 cars for pro duels"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: pro three-round bracket preserves saved opponents and selected car\nok 1 - pro three-round bracket preserves saved opponents and selected car\n  ---\n  duration_ms: 1.701739\n  type: 'test'\n  ...\n# Subtest: first and second win progress rounds without immediate prize\nok 2 - first and second win progress rounds without immediate prize\n  ---\n  duration_ms: 5.039923\n  type: 'test'\n  ...\n# Subtest: final third win pays once and clears bracket\nok 3 - final third win pays once and clears bracket\n  ---\n  duration_ms: 0.190967\n  type: 'test'\n  ...\n# Subtest: any loss ends the simple professional cup with no prize\nok 4 - any loss ends the simple professional cup with no prize\n  ---\n  duration_ms: 0.133531\n  type: 'test'\n  ...\n# Subtest: invalid or corrupt legacy pro cup cannot secretly pay cash\nok 5 - invalid or corrupt legacy pro cup cannot secretly pay cash\n  ---\n  duration_ms: 0.174052\n  type: 'test'\n  ...\n# Subtest: intro professional cups are all less lucrative than the four-wide championship\nok 6 - intro professional cups are all less lucrative than the four-wide championship\n  ---\n  duration_ms: 0.933795\n  type: 'test'\n  ...\n# Subtest: all new professional race entries use four-lane complex; only 2 cars for pro duels\nnot ok 7 - all new professional race entries use four-lane complex; only 2 cars for pro duels\n  ---\n  duration_ms: 2.057513\n  type: 'test'\n  lo",
+        "missingFileErrors": false,
+        "logSHA256": "56b5e661794ad43cdc15c715017a00cd875b57f29c07f753798755781f464774"
+      },
+      "newFailedTests": []
+    },
+    "pro-season-crew.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 23,
+          "pass": 16,
+          "fail": 7,
+          "skipped": 0
+        },
+        "failedTests": [
+          "nine actual races resolve three fixtures, persist after every heat and award a series once",
+          "DQ and DNF lose player-driven heats; forged or missing finish times fail closed",
+          "crew gate, calendar, money and genuine registered squad checked at transaction time",
+          "watching each heat and skipping yield identical official results and money",
+          "all three fixtures are genuinely settled; official table, rating and payout update once",
+          "save at every reveal and fixture boundary resumes without new fees",
+          "legacy professional cup result updates ranking/season once, preserving original prize and street state"
+        ],
+        "errors": [
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-",
+          "|-",
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-",
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# [Tokyo SHIFT] blocked stale profile autosave { registrySlot: 0, activeSlot: 1 }\n# Subtest: real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup\nok 1 - real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup\n  ---\n  duration_ms: 86.127781\n  type: 'test'\n  ...\n# Subtest: player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection\nok 2 - player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection\n  ---\n  duration_ms: 7.934892\n  type: 'test'\n  ...\n# Subtest: nine actual races resolve three fixtures, persist after every heat and award a series once\nnot ok 3 - nine actual races resolve three fixtures, persist after every heat and award a series once\n  ---\n  duration_ms: 15.478416\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/pro-season-crew.mjs:40:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of null (reading 'id')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/pro-season-crew.mjs:43:110)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runne",
+        "missingFileErrors": false,
+        "logSHA256": "733f26d0331afc20f7170f6f29951eb2ed18ce07b4c84c835980f1035e1d2b68"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 23,
+          "pass": 16,
+          "fail": 7,
+          "skipped": 0
+        },
+        "failedTests": [
+          "nine actual races resolve three fixtures, persist after every heat and award a series once",
+          "DQ and DNF lose player-driven heats; forged or missing finish times fail closed",
+          "crew gate, calendar, money and genuine registered squad checked at transaction time",
+          "watching each heat and skipping yield identical official results and money",
+          "all three fixtures are genuinely settled; official table, rating and payout update once",
+          "save at every reveal and fixture boundary resumes without new fees",
+          "legacy professional cup result updates ranking/season once, preserving original prize and street state"
+        ],
+        "errors": [
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-",
+          "|-",
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-",
+          "\"Cannot read properties of null (reading 'id')\"",
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# [Tokyo SHIFT] blocked stale profile autosave { registrySlot: 0, activeSlot: 1 }\n# Subtest: real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup\nok 1 - real pro scene initializes exactly two crew cars and settles telemetry without touching personal car or street cup\n  ---\n  duration_ms: 213.686133\n  type: 'test'\n  ...\n# Subtest: player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection\nok 2 - player crew heat uses crew loan and tuning snapshot, never a generated result or personal car selection\n  ---\n  duration_ms: 26.372564\n  type: 'test'\n  ...\n# Subtest: nine actual races resolve three fixtures, persist after every heat and award a series once\nnot ok 3 - nine actual races resolve three fixtures, persist after every heat and award a series once\n  ---\n  duration_ms: 34.85268\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-season-crew.mjs:40:1'\n  failureType: 'testCodeFailure'\n  error: \"Cannot read properties of null (reading 'id')\"\n  code: 'ERR_TEST_FAILURE'\n  name: 'TypeError'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-season-crew.mjs:43:110)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPend",
+        "missingFileErrors": false,
+        "logSHA256": "28b72c020c6eba009c733a0e722935eaf4c7506ea978d89897bd44c9bd708294"
+      },
+      "newFailedTests": []
+    },
+    "pro-tournament-phase2.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "qualifying, semifinal and final all work, award prize exactly once"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: 16 unique racers, four seeded heats, distinct 4-wide player heat\nok 1 - 16 unique racers, four seeded heats, distinct 4-wide player heat\n  ---\n  duration_ms: 4.56875\n  type: 'test'\n  ...\n# Subtest: a top-two qualifying result advances, creating a playable semifinal\nok 2 - a top-two qualifying result advances, creating a playable semifinal\n  ---\n  duration_ms: 1.484092\n  type: 'test'\n  ...\n# Subtest: qualifying, semifinal and final all work, award prize exactly once\nnot ok 3 - qualifying, semifinal and final all work, award prize exactly once\n  ---\n  duration_ms: 11.134985\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/pro-tournament-phase2.mjs:49:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    20 !== 32\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 32\n  actual: 20\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/pro-tournament-phase2.mjs:64:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async Test.processPendingSubtests (node:internal/test_runner/test:960:7)\n  ...\n# Subt",
+        "missingFileErrors": false,
+        "logSHA256": "50b5e643078337f45daeafb0347d763c10f7bc68b58f812a623fa8f4d0dbbc7b"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "qualifying, semifinal and final all work, award prize exactly once"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: 16 unique racers, four seeded heats, distinct 4-wide player heat\nok 1 - 16 unique racers, four seeded heats, distinct 4-wide player heat\n  ---\n  duration_ms: 4.863594\n  type: 'test'\n  ...\n# Subtest: a top-two qualifying result advances, creating a playable semifinal\nok 2 - a top-two qualifying result advances, creating a playable semifinal\n  ---\n  duration_ms: 1.419655\n  type: 'test'\n  ...\n# Subtest: qualifying, semifinal and final all work, award prize exactly once\nnot ok 3 - qualifying, semifinal and final all work, award prize exactly once\n  ---\n  duration_ms: 12.711105\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-tournament-phase2.mjs:49:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    20 !== 32\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 32\n  actual: 20\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/pro-tournament-phase2.mjs:64:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async Test.processPendingSubtests (node:internal",
+        "missingFileErrors": false,
+        "logSHA256": "bbec4c4b309e6d150e987f05c2f0fd610c38d8974ac0fee5753ead7ff0f38805"
+      },
+      "newFailedTests": []
+    },
+    "proSeason.simulation.test.js": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "444dd71adcec3ed9b402573e49358c765859b249bfe4f1687522fd77a89ddc08"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "94706483b69bb3623705d312ab7629d3c803e439ae18e760d3ea6759c564f996"
+      },
+      "newFailedTests": []
+    },
+    "progression-rebalance-r479.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "512f882f6cba1d210b573d789ee0f8ac0fff4052d3db796037ca60a033bc0bed"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "035a9d9d426e0a47ab0cdcce5be9050082be2b77d7cea5bb1a48c6fa9e630821"
+      },
+      "newFailedTests": []
+    },
+    "r488-reference-fixes.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "R32 and RX8 already exist in the new dealership pool, with their correct game IDs"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: R488 garage thumbnail lowering applies only to the nine opt-in reference cars\nok 1 - R488 garage thumbnail lowering applies only to the nine opt-in reference cars\n  ---\n  duration_ms: 0.960044\n  type: 'test'\n  ...\n# Subtest: R32 and RX8 already exist in the new dealership pool, with their correct game IDs\nnot ok 2 - R32 and RX8 already exist in the new dealership pool, with their correct game IDs\n  ---\n  duration_ms: 0.947765\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/r488-reference-fixes.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    42 !== 29\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 29\n  actual: 42\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/r488-reference-fixes.mjs:18:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: stock pages provide access to EVERY new-car model, three at a time\nok 3 - stock pages provide access to EVERY new-car model, three at a time\n  -",
+        "missingFileErrors": false,
+        "logSHA256": "de29a3f4d5e89f820c864b001d72ff5e15817cf372ed3de2029cdad8a19c9f4c"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "R32 and RX8 already exist in the new dealership pool, with their correct game IDs"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: R488 garage thumbnail lowering applies only to the nine opt-in reference cars\nok 1 - R488 garage thumbnail lowering applies only to the nine opt-in reference cars\n  ---\n  duration_ms: 1.13056\n  type: 'test'\n  ...\n# Subtest: R32 and RX8 already exist in the new dealership pool, with their correct game IDs\nnot ok 2 - R32 and RX8 already exist in the new dealership pool, with their correct game IDs\n  ---\n  duration_ms: 0.86508\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/r488-reference-fixes.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    42 !== 29\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 29\n  actual: 42\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/r488-reference-fixes.mjs:18:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: stock pages provide access to EVERY new-car model, three at a time\nok 3 - stock pages provide access to EVERY ",
+        "missingFileErrors": false,
+        "logSHA256": "541b84bb88f3fe635a3d4afb0d1fef06a894b08daebb5eb9f48e3064935e394e"
+      },
+      "newFailedTests": []
+    },
+    "race-dialogue-standard-r514.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "87be805c97aea302cc63784e0d8c1c35328019dda5d93974d2bb00d16f44b3ac"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "b34b2bc11deec915604cf1596160be54dfd0463e4f9219c3acc987133db32d96"
+      },
+      "newFailedTests": []
+    },
+    "ref2-body-alignment.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "a41290aeaaffeef4b6ed9a04d698e639669430ed38c481801a25ed66a1cb6c0e"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "dc365e22d784ffbc1aa19bcde375ff407289325d96205db2a848cd9e3a137bd0"
+      },
+      "newFailedTests": []
+    },
+    "ref2-roster.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Stock paths resolve with exact filename case and matching PNG canvases"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/300zx_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 11 cars have rated engines, correct drivetrain/tyres and reachable purchase entries\nok 1 - all 11 cars have rated engines, correct drivetrain/tyres and reachable purchase entries\n  ---\n  duration_ms: 5.448099\n  type: 'test'\n  ...\n# Subtest: Stock paths resolve with exact filename case and matching PNG canvases\nnot ok 2 - Stock paths resolve with exact filename case and matching PNG canvases\n  ---\n  duration_ms: 2.275772\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/ref2-roster.mjs:44:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/tmp/tokyo-main-baseline/assets/Cars/stock/300zx_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    file:///tmp/tokyo-main-baseline/tests/ref2-roster.mjs:49:18\n    Array.map (<anonymous>)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/ref2-roster.mjs:47:39)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n  ...\n# Subtest: new cars support stock and upgraded performance without missing engine configs\nok 3 - new cars support stock and upgraded perfo",
+        "missingFileErrors": true,
+        "logSHA256": "7cf057f14b11ac49e605fd243653855608a86b7b3b8272f74d529b191bdec0cb"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Stock paths resolve with exact filename case and matching PNG canvases"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/300zx_stock_body.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 11 cars have rated engines, correct drivetrain/tyres and reachable purchase entries\nok 1 - all 11 cars have rated engines, correct drivetrain/tyres and reachable purchase entries\n  ---\n  duration_ms: 6.794397\n  type: 'test'\n  ...\n# Subtest: Stock paths resolve with exact filename case and matching PNG canvases\nnot ok 2 - Stock paths resolve with exact filename case and matching PNG canvases\n  ---\n  duration_ms: 0.906744\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/ref2-roster.mjs:44:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/stock/300zx_stock_body.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ref2-roster.mjs:49:18\n    Array.map (<anonymous>)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/ref2-roster.mjs:47:39)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n  ...\n# Subtest: new cars support stock and upgraded performance without",
+        "missingFileErrors": true,
+        "logSHA256": "64759730a605017b71840e8aefca09a3a33d2c15af13bc5426fe7c9831fd5708"
+      },
+      "newFailedTests": []
+    },
+    "region-crew-tuning-r529.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 5,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "recruits disappear from regional championships and the final crew battle"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: recruits disappear from regional championships and the final crew battle\nnot ok 1 - recruits disappear from regional championships and the final crew battle\n  ---\n  duration_ms: 4.836062\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/region-crew-tuning-r529.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    3 !== 6\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 6\n  actual: 3\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/region-crew-tuning-r529.mjs:28:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: meet fallback, cached rival cards, and saved team rounds enforce exclusions\nok 2 - meet fallback, cached rival cards, and saved team rounds enforce exclusions\n  ---\n  duration_ms: 1.304432\n  type: 'test'\n  ...\n# Subtest: regional trip has one entry fee; destinations within that region are free\nok 3 - regional trip has one entry fee; destinations within that region are free\n  ---\n  duration_ms: 0.494995\n  type: 'test'\n  ...\n# Subtest: map groups fees by region and removes day/night from location rows\nok 4 - map gr",
+        "missingFileErrors": false,
+        "logSHA256": "a9a8fb8055bde4436c6a0fe9cf5007ca15362ed0a6943a953b8b756057f0056e"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 6,
+          "pass": 5,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "recruits disappear from regional championships and the final crew battle"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: recruits disappear from regional championships and the final crew battle\nnot ok 1 - recruits disappear from regional championships and the final crew battle\n  ---\n  duration_ms: 3.262566\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/region-crew-tuning-r529.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    3 !== 6\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 6\n  actual: 3\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/region-crew-tuning-r529.mjs:28:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: meet fallback, cached rival cards, and saved team rounds enforce exclusions\nok 2 - meet fallback, cached rival cards, and saved team rounds enforce exclusions\n  ---\n  duration_ms: 1.015897\n  type: 'test'\n  ...\n# Subtest: regional trip has one entry fee; destinations within that region are free\nok 3 - regional trip has one entry fee; destinations within that region are free\n  ---\n  duration_ms: 0.340652\n  type: 'test'\n  ...\n# Subtest: map groups fees by region and removes day/ni",
+        "missingFileErrors": false,
+        "logSHA256": "10b18151d1e6dfdef61efde005757fa52ab8e4a5a6a631e5c6d5dd4089efe656"
+      },
+      "newFailedTests": []
+    },
+    "region-unlock-oshiage-r531.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Drag Complex unlocks with full recruited crew, not winning their battles"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: early districts unlock at exactly nine wins, without a car development gate\nok 1 - early districts unlock at exactly nine wins, without a car development gate\n  ---\n  duration_ms: 1.760407\n  type: 'test'\n  ...\n# Subtest: championship gate thresholds require exactly 1/2/4/5 titles\nok 2 - championship gate thresholds require exactly 1/2/4/5 titles\n  ---\n  duration_ms: 0.3989\n  type: 'test'\n  ...\n# Subtest: all three Shinjuku locations and meet difficulty labels are ELITE\nok 3 - all three Shinjuku locations and meet difficulty labels are ELITE\n  ---\n  duration_ms: 0.174512\n  type: 'test'\n  ...\n# Subtest: Oshiage services open early; Skytree requires seven regional championships\nok 4 - Oshiage services open early; Skytree requires seven regional championships\n  ---\n  duration_ms: 0.552231\n  type: 'test'\n  ...\n# Subtest: Drag Complex unlocks with full recruited crew, not winning their battles\nnot ok 5 - Drag Complex unlocks with full recruited crew, not winning their battles\n  ---\n  duration_ms: 1.212273\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/region-unlock-oshiage-r531.mjs:68:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    false !== true\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous>",
+        "missingFileErrors": false,
+        "logSHA256": "5bdb899c129abaca43f5631e24a0c603d024573185fc01e4691343de60a787de"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 9,
+          "pass": 8,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Drag Complex unlocks with full recruited crew, not winning their battles"
+        ],
+        "errors": [
+          "|-"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: early districts unlock at exactly nine wins, without a car development gate\nok 1 - early districts unlock at exactly nine wins, without a car development gate\n  ---\n  duration_ms: 1.270651\n  type: 'test'\n  ...\n# Subtest: championship gate thresholds require exactly 1/2/4/5 titles\nok 2 - championship gate thresholds require exactly 1/2/4/5 titles\n  ---\n  duration_ms: 0.359201\n  type: 'test'\n  ...\n# Subtest: all three Shinjuku locations and meet difficulty labels are ELITE\nok 3 - all three Shinjuku locations and meet difficulty labels are ELITE\n  ---\n  duration_ms: 0.125248\n  type: 'test'\n  ...\n# Subtest: Oshiage services open early; Skytree requires seven regional championships\nok 4 - Oshiage services open early; Skytree requires seven regional championships\n  ---\n  duration_ms: 0.582356\n  type: 'test'\n  ...\n# Subtest: Drag Complex unlocks with full recruited crew, not winning their battles\nnot ok 5 - Drag Complex unlocks with full recruited crew, not winning their battles\n  ---\n  duration_ms: 1.040394\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/region-unlock-oshiage-r531.mjs:68:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    false !== true\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: 'strictEqual'\n  stack: |-\n    Tes",
+        "missingFileErrors": false,
+        "logSHA256": "26b83098d1dd2606d0111e192f1d8597ed728cbf316530d52492f5b7a1be4867"
+      },
+      "newFailedTests": []
+    },
+    "regional-engine-balance-r484.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone",
+          "Tatsumi Standard develops gradually and Canal-maxed 22B can beat both Expert EVOs"
+        ],
+        "errors": [
+          "|-",
+          "'Tatsumi round 3 must not massively outperform round 4'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: late-model FD 13B-REW makes its rated 314 Nm at 5000 rpm and ~206 kW at 6500\nok 1 - late-model FD 13B-REW makes its rated 314 Nm at 5000 rpm and ~206 kW at 6500\n  ---\n  duration_ms: 1.087786\n  type: 'test'\n  ...\n# Subtest: regional archetypes never allocate their forbidden upgrades\nok 2 - regional archetypes never allocate their forbidden upgrades\n  ---\n  duration_ms: 6.126984\n  type: 'test'\n  ...\n# Subtest: ordinary NA regional rivals keep NA engines; only TURBO / ROLL can convert\nok 3 - ordinary NA regional rivals keep NA engines; only TURBO / ROLL can convert\n  ---\n  duration_ms: 2.764888\n  type: 'test'\n  ...\n# Subtest: Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone\nnot ok 4 - Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone\n  ---\n  duration_ms: 1.280436\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/regional-engine-balance-r484.mjs:58:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    's15' !== 's2000'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 's2000'\n  actual: 's15'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/regional-engine-balance-r484.mjs:60:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (",
+        "missingFileErrors": false,
+        "logSHA256": "363aa131c86d1b8d28fe84360a23a54081f253a67ebdc8b40eefc5bd32190344"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone",
+          "Tatsumi Standard develops gradually and Canal-maxed 22B can beat both Expert EVOs"
+        ],
+        "errors": [
+          "|-",
+          "'Tatsumi EK9 should have meaningful Lv2 capability'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: late-model FD 13B-REW makes its rated 314 Nm at 5000 rpm and ~206 kW at 6500\nok 1 - late-model FD 13B-REW makes its rated 314 Nm at 5000 rpm and ~206 kW at 6500\n  ---\n  duration_ms: 1.229539\n  type: 'test'\n  ...\n# Subtest: regional archetypes never allocate their forbidden upgrades\nok 2 - regional archetypes never allocate their forbidden upgrades\n  ---\n  duration_ms: 10.722323\n  type: 'test'\n  ...\n# Subtest: ordinary NA regional rivals keep NA engines; only TURBO / ROLL can convert\nok 3 - ordinary NA regional rivals keep NA engines; only TURBO / ROLL can convert\n  ---\n  duration_ms: 4.463818\n  type: 'test'\n  ...\n# Subtest: Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone\nnot ok 4 - Tatsumi half-mile S2000 is NA high-rev and cannot overpower a Canal-maxed FD by hardware alone\n  ---\n  duration_ms: 1.182748\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/regional-engine-balance-r484.mjs:59:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    's15' !== 's2000'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 's2000'\n  actual: 's15'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/regional-engine-balance-r484.mjs:61:10)\n    Test.runInAsyncScope (no",
+        "missingFileErrors": false,
+        "logSHA256": "a6dc02721b059e33839435d49b52931d9e0d5d03c4f765a36deaa3d8f20afdff"
+      },
+      "newFailedTests": []
+    },
+    "retired-ej1-r503.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 1,
+          "fail": 3,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all 42 deployed regular cars use the new BODY/PAINT reference sprite system",
+          "market, rival preferences, Odaiba championship and crew recruitment never issue EJ1",
+          "EJ1 is retired without changing reference geometry, other cars or collector count"
+        ],
+        "errors": [
+          "'gdb missing assets/Cars/stock/WRXGDB_stock_body.png'",
+          "|-",
+          "\"Cannot read properties of undefined (reading 'shortName')\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 42 deployed regular cars use the new BODY/PAINT reference sprite system\nnot ok 1 - all 42 deployed regular cars use the new BODY/PAINT reference sprite system\n  ---\n  duration_ms: 2.929235\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/retired-ej1-r503.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: 'gdb missing assets/Cars/stock/WRXGDB_stock_body.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/retired-ej1-r503.mjs:29:14)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: market, rival preferences, Odaiba championship and crew recruitment never issue EJ1\nnot ok 2 - market, rival preferences, Odaiba championship and crew recruitment never issue EJ1\n  ---\n  duration_ms: 0.71206\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/retired-ej1-r503.mjs:33:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    20 !== 11\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 11\n  actual: 20\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anon",
+        "missingFileErrors": false,
+        "logSHA256": "d1bf2bc075beded4a7c9a7fcf00fb965c8702360b0934ce5ed2d44a54a5feb62"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 1,
+          "fail": 3,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all 42 deployed regular cars use the new BODY/PAINT reference sprite system",
+          "market, rival preferences, Odaiba championship and crew recruitment never issue EJ1",
+          "EJ1 is retired without changing reference geometry, other cars or collector count"
+        ],
+        "errors": [
+          "'gdb missing assets/Cars/stock/WRXGDB_stock_body.png'",
+          "|-",
+          "\"Cannot read properties of undefined (reading 'shortName')\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 42 deployed regular cars use the new BODY/PAINT reference sprite system\nnot ok 1 - all 42 deployed regular cars use the new BODY/PAINT reference sprite system\n  ---\n  duration_ms: 2.452719\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/retired-ej1-r503.mjs:15:1'\n  failureType: 'testCodeFailure'\n  error: 'gdb missing assets/Cars/stock/WRXGDB_stock_body.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/retired-ej1-r503.mjs:29:14)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: market, rival preferences, Odaiba championship and crew recruitment never issue EJ1\nnot ok 2 - market, rival preferences, Odaiba championship and crew recruitment never issue EJ1\n  ---\n  duration_ms: 0.669146\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/retired-ej1-r503.mjs:33:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    20 !== 11\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 11\n  actual: 20\n  op",
+        "missingFileErrors": false,
+        "logSHA256": "61ded369ceacd79d263586fd5bb330544f950104192b19c35f7b41b04d6abb70"
+      },
+      "newFailedTests": []
+    },
+    "sayaka-reika-continuity.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Reika replaces Sayaka in all Shinagawa racing and recruitment pools",
+          "Reika and Sayaka use the already uploaded, distinct sprite sets"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, open 'assets/Characters/Shinagawa/reika_tachibana_idle.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Reika replaces Sayaka in all Shinagawa racing and recruitment pools\nnot ok 1 - Reika replaces Sayaka in all Shinagawa racing and recruitment pools\n  ---\n  duration_ms: 4.019384\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/sayaka-reika-continuity.mjs:20:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    'fc3s' !== 'rx8'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 'rx8'\n  actual: 'fc3s'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/sayaka-reika-continuity.mjs:32:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: Reika and Sayaka use the already uploaded, distinct sprite sets\nnot ok 2 - Reika and Sayaka use the already uploaded, distinct sprite sets\n  ---\n  duration_ms: 0.449226\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/sayaka-reika-continuity.mjs:36:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open 'assets/Characters/Shinagawa/reika_tachibana_idle.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:fs:622:18)\n    readFileSync (node:fs:488:35)\n    TestC",
+        "missingFileErrors": true,
+        "logSHA256": "cbd5c16af80ab9eb5b64b4f489e20303a62c7505e1128ddd09cb28230affa151"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 3,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Reika replaces Sayaka in all Shinagawa racing and recruitment pools",
+          "Reika and Sayaka use the already uploaded, distinct sprite sets"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, open 'assets/Characters/Shinagawa/reika_tachibana_idle.png'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Reika replaces Sayaka in all Shinagawa racing and recruitment pools\nnot ok 1 - Reika replaces Sayaka in all Shinagawa racing and recruitment pools\n  ---\n  duration_ms: 2.191175\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/sayaka-reika-continuity.mjs:20:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    Expected values to be strictly equal:\n    \n    'fc3s' !== 'rx8'\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: 'rx8'\n  actual: 'fc3s'\n  operator: 'strictEqual'\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/sayaka-reika-continuity.mjs:32:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: Reika and Sayaka use the already uploaded, distinct sprite sets\nnot ok 2 - Reika and Sayaka use the already uploaded, distinct sprite sets\n  ---\n  duration_ms: 0.568305\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/sayaka-reika-continuity.mjs:36:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, open 'assets/Characters/Shinagawa/reika_tachibana_idle.png'\"\n  code: 'ENOENT'\n  stack: |-\n    Object.openSync (node:",
+        "missingFileErrors": true,
+        "logSHA256": "010c965832987ad8dfc58500de5e87119554b8bc2e6b60cff5af168c3ffdeb09"
+      },
+      "newFailedTests": []
+    },
+    "selected-car-continuity-r530.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "af3cd531fc9193f66d91dd44800f0914883e5962174b5cec62e212b6566b7c65"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "22b9fee6b59f58e9cf1f077c9103b3d09f48678e177e612c23f213efe9f8c22d"
+      },
+      "newFailedTests": []
+    },
+    "shibuya-asset-rename-r459.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 1,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Shibuya has exactly six complete character sets without redundant filename prefixes",
+          "all 18 renamed PNGs resolve through canonical visual asset lookup"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, scandir 'assets/Characters/Shibuya/'\"",
+          "'assets/Characters/Shibuya/haru_sakurai_idle.png missing'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Shibuya has exactly six complete character sets without redundant filename prefixes\nnot ok 1 - Shibuya has exactly six complete character sets without redundant filename prefixes\n  ---\n  duration_ms: 0.974946\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/shibuya-asset-rename-r459.mjs:21:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, scandir 'assets/Characters/Shibuya/'\"\n  code: 'ENOENT'\n  stack: |-\n    readdirSync (node:fs:1631:26)\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/shibuya-asset-rename-r459.mjs:22:18)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: all 18 renamed PNGs resolve through canonical visual asset lookup\nnot ok 2 - all 18 renamed PNGs resolve through canonical visual asset lookup\n  ---\n  duration_ms: 1.067235\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/shibuya-asset-rename-r459.mjs:29:1'\n  failureType: 'testCodeFailure'\n  error: 'assets/Characters/Shibuya/haru_sakurai_idle.png missing'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-base",
+        "missingFileErrors": true,
+        "logSHA256": "e1aec908d52d81d17796b458c51ae5a870e54e84032aa53f2f18de1f8ee577c5"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 3,
+          "pass": 1,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Shibuya has exactly six complete character sets without redundant filename prefixes",
+          "all 18 renamed PNGs resolve through canonical visual asset lookup"
+        ],
+        "errors": [
+          "\"ENOENT: no such file or directory, scandir 'assets/Characters/Shibuya/'\"",
+          "'assets/Characters/Shibuya/haru_sakurai_idle.png missing'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Shibuya has exactly six complete character sets without redundant filename prefixes\nnot ok 1 - Shibuya has exactly six complete character sets without redundant filename prefixes\n  ---\n  duration_ms: 0.755607\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/shibuya-asset-rename-r459.mjs:21:1'\n  failureType: 'testCodeFailure'\n  error: \"ENOENT: no such file or directory, scandir 'assets/Characters/Shibuya/'\"\n  code: 'ENOENT'\n  stack: |-\n    readdirSync (node:fs:1631:26)\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/shibuya-asset-rename-r459.mjs:22:18)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.start (node:internal/test_runner/test:1242:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n# Subtest: all 18 renamed PNGs resolve through canonical visual asset lookup\nnot ok 2 - all 18 renamed PNGs resolve through canonical visual asset lookup\n  ---\n  duration_ms: 0.772381\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/shibuya-asset-rename-r459.mjs:29:1'\n  failureType: 'testCodeFailure'\n  error: 'assets/Characters/Shibuya/haru_sakurai_idle.png missing'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n  ",
+        "missingFileErrors": true,
+        "logSHA256": "523c78bee0c7719abc74d221760f1f130608cb574dccd261a3b2f9123d8091aa"
+      },
+      "newFailedTests": []
+    },
+    "shinagawa-zero-sports-r526.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Shinagawa day and night backgrounds both exist and have unique keys"
+        ],
+        "errors": [
+          "'assets/Locations/TunerShops/shinagawa_zerosports_day.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Shinagawa Zero/Sports is a stock-GC8 conversion and keeps the existing hero asset\nok 1 - Shinagawa Zero/Sports is a stock-GC8 conversion and keeps the existing hero asset\n  ---\n  duration_ms: 0.940775\n  type: 'test'\n  ...\n# Subtest: Shinagawa day and night backgrounds both exist and have unique keys\nnot ok 2 - Shinagawa day and night backgrounds both exist and have unique keys\n  ---\n  duration_ms: 0.760614\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/shinagawa-zero-sports-r526.mjs:29:1'\n  failureType: 'testCodeFailure'\n  error: 'assets/Locations/TunerShops/shinagawa_zerosports_day.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/shinagawa-zero-sports-r526.mjs:35:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: legacy Spoon saves keep unlock state and existing specialist effects\nok 3 - legacy Spoon saves keep unlock state and existing specialist effects\n  ---\n  duration_ms: ",
+        "missingFileErrors": false,
+        "logSHA256": "b66f470a02318f8dd04486f2a8b05b7e84ea2ee9ea43bb0c7e0eb18beb331882"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 5,
+          "pass": 4,
+          "fail": 1,
+          "skipped": 0
+        },
+        "failedTests": [
+          "Shinagawa day and night backgrounds both exist and have unique keys"
+        ],
+        "errors": [
+          "'assets/Locations/TunerShops/shinagawa_zerosports_day.png'"
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: Shinagawa Zero/Sports is a stock-GC8 conversion and keeps the existing hero asset\nok 1 - Shinagawa Zero/Sports is a stock-GC8 conversion and keeps the existing hero asset\n  ---\n  duration_ms: 1.05713\n  type: 'test'\n  ...\n# Subtest: Shinagawa day and night backgrounds both exist and have unique keys\nnot ok 2 - Shinagawa day and night backgrounds both exist and have unique keys\n  ---\n  duration_ms: 1.087195\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/shinagawa-zero-sports-r526.mjs:29:1'\n  failureType: 'testCodeFailure'\n  error: 'assets/Locations/TunerShops/shinagawa_zerosports_day.png'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/shinagawa-zero-sports-r526.mjs:35:12)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: legacy Spoon saves keep unlock state and existing specialist effects\nok 3 - legacy Spoon saves keep unlock state and existing speci",
+        "missingFileErrors": false,
+        "logSHA256": "22e1af8b8bebdb693298673dc8e16f6b7a846e5713e6892379e7331d2f9cb45b"
+      },
+      "newFailedTests": []
+    },
+    "startup-import-integrity-r508.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "4a699e273aa9a53c5a7bc40159cabede7859685043e50a1ab5bbbee0c9d5497b"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "babb8c9547fc4db96bdf94ba27907aa6493abc19f2de5f84313f2a60d8baad4e"
+      },
+      "newFailedTests": []
+    },
+    "stock-assets-r505.mjs": {
+      "main": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed",
+          "all 20 hero/collector images use the hero folder"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, scandir '/tmp/tokyo-main-baseline/assets/Cars/hero'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 42 deployed regular cars resolve to unified lowercase stock folder\nok 1 - all 42 deployed regular cars resolve to unified lowercase stock folder\n  ---\n  duration_ms: 2.777797\n  type: 'test'\n  ...\n# Subtest: all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed\nnot ok 2 - all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed\n  ---\n  duration_ms: 5.249745\n  type: 'test'\n  location: '/tmp/tokyo-main-baseline/tests/stock-assets-r505.mjs:30:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(existsSync(url('assets/Cars/stock')))\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///tmp/tokyo-main-baseline/tests/stock-assets-r505.mjs:31:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: all 20 hero/collector images use the hero folder\nnot ok 3 - all 20 hero/collector images use the hero folder\n  ---\n",
+        "missingFileErrors": true,
+        "logSHA256": "96f8e9f346125d86b5324a0ea712612cc122eca592d5bd835bd7528d2d49f306"
+      },
+      "engineering": {
+        "status": "fail",
+        "counts": {
+          "tests": 4,
+          "pass": 2,
+          "fail": 2,
+          "skipped": 0
+        },
+        "failedTests": [
+          "all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed",
+          "all 20 hero/collector images use the hero folder"
+        ],
+        "errors": [
+          "|-",
+          "\"ENOENT: no such file or directory, scandir '/workspace/scratch/9b91854cb95a/Tokyoshift/assets/Cars/hero'\""
+        ],
+        "diagnosticExcerpt": "TAP version 13\n# Subtest: all 42 deployed regular cars resolve to unified lowercase stock folder\nok 1 - all 42 deployed regular cars resolve to unified lowercase stock folder\n  ---\n  duration_ms: 2.914503\n  type: 'test'\n  ...\n# Subtest: all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed\nnot ok 2 - all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed\n  ---\n  duration_ms: 5.230476\n  type: 'test'\n  location: '/workspace/scratch/9b91854cb95a/Tokyoshift/tests/stock-assets-r505.mjs:30:1'\n  failureType: 'testCodeFailure'\n  error: |-\n    The expression evaluated to a falsy value:\n    \n      assert.ok(pngs.length >= 86)\n    \n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  expected: true\n  actual: false\n  operator: '=='\n  stack: |-\n    TestContext.<anonymous> (file:///workspace/scratch/9b91854cb95a/Tokyoshift/tests/stock-assets-r505.mjs:39:10)\n    Test.runInAsyncScope (node:async_hooks:227:14)\n    Test.run (node:internal/test_runner/test:1382:25)\n    Test.processPendingSubtests (node:internal/test_runner/test:960:18)\n    Test.postRun (node:internal/test_runner/test:1522:19)\n    Test.run (node:internal/test_runner/test:1447:12)\n    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)\n  ...\n# Subtest: all 20 hero/collector images use the hero folder\nnot ok 3 - all 20 hero/collector images use the h",
+        "missingFileErrors": true,
+        "logSHA256": "f62d440fcd776365fe040f69ea254be637c2b93e38a1cf55d5f7928333cff8b0"
+      },
+      "newFailedTests": []
+    },
+    "stock-expansion-r516.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "1a63c16fcb240a296fd5664f653d70dddfe6d01a4c69ed6d07a953b49a655d68"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "e6f871a8f6b7d18d7d959a3353a080174b90b169c5a6d4617e88c91795eaa11f"
+      },
+      "newFailedTests": []
+    },
+    "tokyoChampionship.simulation.test.js": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "5bc9f92fba21b1c7582d12c561862729518d5b9ae2ec3aae54a8af44244afd96"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "cc123a0e96bbc58093f24283551bd91d7c470fedb9273f74646bd4c63f1ab5ee"
+      },
+      "newFailedTests": []
+    },
+    "tuner-hero-conversions-r521.mjs": {
+      "main": {
+        "status": "pass",
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "4549e862733c68078f4e40f08b6c168a7d9dd1833bb0c3a76bbd0db9f7846e6d"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "818c0095448e1d2253c7ae1ddcb9d460ad20811bec5e92ed779614a4369ea1ab"
+      },
+      "newFailedTests": []
+    },
+    "vehicle-engineering.mjs": {
+      "main": {
+        "status": "absent"
+      },
+      "engineering": {
+        "status": "pass",
+        "counts": {
+          "tests": 53,
+          "pass": 53,
+          "fail": 0,
+          "skipped": 0
+        },
+        "failedTests": [],
+        "errors": [],
+        "diagnosticExcerpt": "",
+        "missingFileErrors": false,
+        "logSHA256": "0848f45605d8974c84e5b579ec966196a0f177f53adf84887676573434cbf369"
+      },
+      "newFailedTests": []
+    }
+  }
+}

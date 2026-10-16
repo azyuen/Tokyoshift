@@ -15,6 +15,24 @@
         "restored": 419,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
+      "dyno": {
+        "state": "COMPLETE",
+        "error": null,
+        "displayKW": 419,
+        "runKW": 418.9,
+        "points": 22
+      },
+      "race": {
+        "resultsShown": true,
+        "opponentCharacterId": "daigoArakawa",
+        "playerKW": 206,
+        "opponentKW": 206,
+        "playerDistance": 443.36995781480886,
+        "opponentDistance": 440.7757822971208,
+        "finished": true,
+        "falseStart": false
+      },
+      "input": "scene action handlers; automated pedal/gear input for dyno and race",
       "errors": [],
       "failed": []
     },
@@ -31,6 +49,9 @@
         "restored": 419,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
+      "dyno": null,
+      "race": null,
+      "input": "scene action handlers; automated pedal/gear input for dyno and race",
       "errors": [],
       "failed": []
     }
