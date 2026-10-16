@@ -795,28 +795,38 @@ export const CUTSCENES = {
     finalActionLabel: 'START BUILDING',
   },
 
+  // Career chapter 05: the Ginza collection commissions Daichi to work on an
+  // RWB 911. The curator's name/identity and personal ownership remain hidden.
   warehouseHqUnlocked: {
     id: 'warehouseHqUnlocked',
-    category: 'WORKSHOP / STORY',
-    testerLabel: 'Daichi — Warehouse HQ Unlocked',
-    title: 'WAREHOUSE HQ // OPEN',
+    category: 'CAREER / STORY',
+    testerLabel: 'Career 05 — The Ginza Connection (Warehouse HQ)',
+    title: 'WAREHOUSE HQ // THE GINZA CONNECTION',
     once: true,
     characters: { left: 'daichiSakamoto', right: '$PLAYER' },
     pages: [
-      {
-        speaker: 'left',
-        speakerLabel: 'DAICHI SAKAMOTO',
-        pose: 'idle',
-        text: 'Now we have enough space to build properly.',
-      },
-      {
-        speaker: 'left',
-        speakerLabel: 'DAICHI SAKAMOTO',
-        pose: 'idle',
-        text: 'High-tier work starts here. Keep the good cars organised.',
-      },
+      { speaker: 'left', pose: 'win',
+        text: "Would you look at this place! Proper lifts, separate bays, room for serious builds. We've finally got ourselves a real headquarters!" },
+      { speaker: 'right', pose: 'idle',
+        text: "You're already planning where every car goes, aren't you?" },
+      { speaker: 'left', pose: 'win',
+        text: "You bet! This is where Tokyo's best cars come to get tuned. Or... where I'd like them to, anyway!" },
+      // RWB rolls into frame at the beginning of page four.
+      { speaker: 'right', pose: 'idle', cinematicBeat: 'rwbArrival',
+        text: "Wait... Daichi! Is that an RWB Porsche?!" },
+      { speaker: 'left', pose: 'win',
+        text: "Yep. Right on time. This one's from the Ginza collection. The curator sent it over for some specialist work." },
+      { speaker: 'right', pose: 'idle',
+        text: "The Ginza collection? You know the curator?" },
+      { speaker: 'left', pose: 'idle',
+        text: "Only through work orders. We've never met. But she knows her cars. Her instructions were pretty clear: 'Grip before horsepower.' I like how she thinks!" },
+      { speaker: 'right', pose: 'idle',
+        text: "So... this is a pretty big deal, then?" },
+      { speaker: 'left', pose: 'win',
+        text: "Huge! If we get this right, it could open a few doors. Now, let's get to work. And whatever you do, DON'T lean on the paint!",
+        emphasis: true },
     ],
-    finalActionLabel: 'OPEN HQ',
+    finalActionLabel: 'GET TO WORK',
   },
 
   // Career chapter 02: reached from the existing nine-win Auto Market invite.
