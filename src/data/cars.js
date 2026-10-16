@@ -2214,8 +2214,12 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   const canvas = REFERENCE_CAR_CANVAS[fileStem];
   if (!visual || !geometry || !canvas) continue;
   const diameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.size];
-  const rearDiameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.rearSize || geometry.size] || diameter;
-  const frontDiameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.frontSize || geometry.size] || diameter;
+  // XL is a new calibration-only choice; keep the two historical S/L values
+  // in the base reference table so all existing car geometry remains stable.
+  const chooseDiameter = size => size === 'XL' ? 210
+    : STANDARD_CAR_REFERENCE.wheelDiameters[size] || diameter;
+  const rearDiameter = chooseDiameter(geometry.rearSize || geometry.size);
+  const frontDiameter = chooseDiameter(geometry.frontSize || geometry.size);
   const assetRoot = getReferenceAssetRoot(fileStem);
 
   Object.assign(visual, {

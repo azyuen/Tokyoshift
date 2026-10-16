@@ -13,7 +13,6 @@ export const STANDARD_CAR_REFERENCE = {
   wheelDiameters: {
     S: 182,
     L: 194, // legacy label for Medium
-    XL: 210,
   },
   cars: {
     // Measured from the uploaded 1300x440 GF8 silhouette, right-origin coordinates.
