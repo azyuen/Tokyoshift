@@ -1,0 +1,30 @@
+name: Global Crew Recruitment Pity R551
+on:
+  push:
+    branches: [main, feature/global-crew-recruit-pity-r551]
+    paths:
+      - 'src/data/crewSystem.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/crew-global-recruit-pity-r551.mjs'
+      - '.github/workflows/crew-global-recruit-r551.yml'
+  workflow_dispatch:
+jobs:
+  crew-global-recruit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check module syntax
+        run: |
+          node --check src/data/crewSystem.js
+          node --check src/state/GameState.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+      - name: Recruitment, regional battles, game saves and startup regressions
+        run: |
+          node --test tests/crew-global-recruit-pity-r551.mjs tests/region-crew-tuning-r529.mjs tests/crew-battle-rules-r547.mjs tests/crew-battle-introduction-r545.mjs tests/meet-progression-actions-r550.mjs tests/meet-refresh-r469.mjs tests/startup-import-integrity-r508.mjs

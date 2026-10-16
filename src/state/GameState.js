@@ -100,7 +100,9 @@ export function createDefaultGameState(options = {}) {
     crewMembers: {},
     crewRecruitmentState: {},
     crewInviteInterest: null,
+    crewInviteInterests: {},
     crewRecruitChallenge: null,
+    crewRecruitChallenges: {},
     crewPendingRecruit: null,
     crewBattleProgress: {},
     crewBattleLineups: {},
@@ -1092,7 +1094,17 @@ export function normaliseState(input = {}) {
           }
         : {},
     crewInviteInterest: migrateShinagawaSayakaRecruit(input.crewInviteInterest || null),
+    crewInviteInterests: Object.fromEntries(
+      Object.entries(input.crewInviteInterests || {})
+        .filter(([region, invite]) => ARKON_DEV_CHAMPIONSHIP_REGIONS.includes(region) && invite?.characterId)
+        .map(([region, invite]) => [region, migrateShinagawaSayakaRecruit(invite)])
+    ),
     crewRecruitChallenge: migrateShinagawaSayakaRecruit(input.crewRecruitChallenge || null),
+    crewRecruitChallenges: Object.fromEntries(
+      Object.entries(input.crewRecruitChallenges || {})
+        .filter(([region, invite]) => ARKON_DEV_CHAMPIONSHIP_REGIONS.includes(region) && invite?.characterId)
+        .map(([region, invite]) => [region, migrateShinagawaSayakaRecruit(invite)])
+    ),
     crewPendingRecruit: migrateShinagawaSayakaRecruit(input.crewPendingRecruit || null),
     crewBattleProgress:
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
@@ -1299,7 +1311,9 @@ export function snapshotRegistry(registry) {
     crewMembers: registry.get('crewMembers') || {},
     crewRecruitmentState: registry.get('crewRecruitmentState') || {},
     crewInviteInterest: registry.get('crewInviteInterest') || null,
+    crewInviteInterests: registry.get('crewInviteInterests') || {},
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
+    crewRecruitChallenges: registry.get('crewRecruitChallenges') || {},
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
     crewBattleLineups: registry.get('crewBattleLineups') || {},
