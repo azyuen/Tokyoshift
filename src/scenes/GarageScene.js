@@ -47,7 +47,8 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261017-r553';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r554';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r554';
 import { getFirstRegionalChampionRegion } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
@@ -2424,6 +2425,7 @@ export default class GarageScene extends Phaser.Scene {
           ? 'canalYardUnlocked'
           : null;
       if (storyId) {
+        if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
         try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
       }
 
@@ -3675,6 +3677,7 @@ export default class GarageScene extends Phaser.Scene {
                 ? 'canalYardUnlocked'
                 : null;
             if (storyId) {
+              if (storyId === 'canalYardUnlocked') markCutsceneSeen(this.registry, 'canalYardStoryPending');
               try { sessionStorage.setItem('tokyoShiftPendingCutscene', storyId); } catch (e) {}
             }
           }
@@ -7301,6 +7304,42 @@ export default class GarageScene extends Phaser.Scene {
     this.scene.start('RaceScene');
   }
 
+  playCanalYardStorySequence() {
+    if (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
+        this.hasSeenStoryCutscene('canalYardAfterCall')) return false;
+    // Only present this workshop-arrival chapter in the player's Canal Yard,
+    // never from Crew Space or an unrelated property after a saved interruption.
+    if (this.crewMode || this.registry.get('workshopLocationId') !== 'shinonomeCanalYard') {
+      return false;
+    }
+    if (sceneCutsceneActive(this)) return true;
+
+    const ids = ['canalYardUnlocked', 'canalYardSayakaCall', 'canalYardAfterCall'];
+    const nextId = ids.find(id => !this.hasSeenStoryCutscene(id));
+    if (!nextId) return false;
+
+    const result = playMangaCutscene(this, nextId, {
+      onComplete: ({ skipped }) => {
+        if (skipped) {
+          // SKIP in a manga part skips the whole three-part sequence, not
+          // just its first panel group. Phone dialogue won't unexpectedly
+          // start after a player deliberately dismisses the story.
+          ids.forEach(id => markCutsceneSeen(this.registry, id));
+          saveSessionState(this.registry);
+        }
+        this.time.delayedCall(180, () => {
+          if (!this.playCanalYardStorySequence()) this.continueGarageStoryFlow();
+        });
+      },
+    });
+
+    if (!result?.played && result?.reason === 'seen') {
+      this.time.delayedCall(180, () => this.playCanalYardStorySequence());
+      return true;
+    }
+    return Boolean(result?.played);
+  }
+
   showPendingWorkshopCutscene() {
     let cutsceneId = null;
     try {
@@ -7308,11 +7347,14 @@ export default class GarageScene extends Phaser.Scene {
       if (cutsceneId) sessionStorage.removeItem('tokyoShiftPendingCutscene');
     } catch (e) {}
 
-    if (!cutsceneId) return false;
-    if (cutsceneId !== 'canalYardUnlocked' && cutsceneId !== 'warehouseHqUnlocked') {
-      return false;
+    if (cutsceneId === 'canalYardUnlocked' ||
+        this.hasSeenStoryCutscene('canalYardStoryPending')) {
+      // Session storage may be cleared by iOS; use the persisted chapter
+      // marker and independently saved scene IDs to resume mid-story.
+      if (this.playCanalYardStorySequence()) return true;
     }
 
+    if (cutsceneId !== 'warehouseHqUnlocked') return false;
     const result = playMangaCutscene(this, cutsceneId, {
       onComplete: () => {
         this.time.delayedCall(180, () => this.continueGarageStoryFlow());
