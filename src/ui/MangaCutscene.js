@@ -1074,7 +1074,8 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     ease: 'Sine.easeOut',
   });
   scene.tweens.add({
-    targets: [titlePlate, title, skip],
+    targets: definition.pages?.[0]?.hideSceneTitle
+      ? [skip] : [titlePlate, title, skip],
     alpha: 1,
     duration: 180,
     delay: 70,
