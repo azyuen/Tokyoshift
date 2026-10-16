@@ -75,6 +75,20 @@ test('Meet refreshes stale saved opponent offers without changing underlying sin
   assert.match(source, /const latest = this\.getCompetitionOffer\(\)/);
 });
 
+test('deferred Meet manga cannot obscure a loading or active Showdown screen', () => {
+  const source = read('src/scenes/MeetScene.js');
+  assert.match(source, /this\.competitionLoading = true;/);
+  assert.match(source, /this\.competitionLoading = false;/);
+  assert.match(source, /this\.competitionLoading \|\| this\.competitionPopup\?\.active/);
+  assert.match(source, /this\.competitionLoading \|\| this\.competitionPopup\?\.active \|\|/);
+  const storyGuards = source.match(/this\.competitionLoading \|\| this\.competitionPopup\?\.active/g) || [];
+  assert.ok(storyGuards.length >= 2,
+    'regional introduction and tuner challenge must both defer to Showdown');
+  const view = read('src/ui/StreetShowdownView.js');
+  assert.match(view, /onClick: \(\) => \{/);
+  assert.match(view, /close\(\);\s*onEnter\(offer\);/);
+});
+
 test('both Skytree and regional Showdowns use the same stage, cards, and action spacing', () => {
   assert.deepEqual(SHOWDOWN_STAGE, { x: 24, y: 92, w: 1138, h: 528 });
   assert.deepEqual(SHOWDOWN_SIDE, { x: 1180, y: 92, w: 356, h: 724 });
