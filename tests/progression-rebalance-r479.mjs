@@ -1,12 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { migrateRetiredEvoIX } from '../src/data/carRetirement.js';
 import { createDefaultGameState, normaliseState } from '../src/state/GameState.js';
 import { cars, carOrder } from '../src/data/cars.js';
 import { getRegionalChampionshipCashReward } from '../src/data/tunerChallenges.js';
 import { applyEasyCashWinBonus } from '../src/data/careerProgression.js';
-import { CAR_COUPON_REQUIREMENTS, getCarCouponRequirement } from '../src/data/centralTokyo.js';
-import { getStreetShowdownDriverRatings } from '../src/data/streetShowdowns.js';
+import {
+  CAR_COUPON_REQUIREMENTS, MARKET_BASE_PRICES, getCarCouponRequirement,
+} from '../src/data/centralTokyo.js';
+import {
+  getStreetShowdownDriverRatings,
+  STREET_SHOWDOWN_CASH_ENTRY_FEES,
+  getStreetShowdownCouponEntryFee,
+} from '../src/data/streetShowdowns.js';
 import { PINK_SLIP_MEDIAN_RACES, getPinkSlipOpportunityChance } from '../src/data/pinkSlipProgression.js';
 
 test('regional championships pay larger one-time cash prizes while retaining perfect bonuses', () => {
@@ -85,6 +92,41 @@ test('real profile normalization migrates existing EVO IX before filtering cars'
   assert.equal(normalized.selectedCarId, 'evo6');
   assert.equal(normalized.carStates.evo6.tuning.engine, 2);
   assert.equal(normalized.carCoupons.evo6, 4);
+});
+
+test('cash Showdown entry fees remain moderate and grow by difficulty', () => {
+  assert.deepEqual(STREET_SHOWDOWN_CASH_ENTRY_FEES, {
+    EASY: 10000, MED: 18000, HARD: 30000, ELITE: 40000,
+  });
+  const scene = readFileSync(new URL('../src/scenes/MeetScene.js', import.meta.url), 'utf8');
+  for (const difficulty of ['EASY', 'MED', 'HARD', 'ELITE']) {
+    assert.match(scene, new RegExp('entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES\\.' + difficulty));
+  }
+  assert.match(scene, /getStreetShowdownCouponEntryFee\\(carValue, couponRequirement\\)/);
+  assert.match(scene, /balanceVersion: 'R20261016-fees'/);
+  assert.match(scene, /current\\?\\.balanceVersion !== 'R20261016-fees'/);
+});
+
+test('coupon entry prices use nonlinear market-value bands with guarded boundaries', () => {
+  const fee = getStreetShowdownCouponEntryFee;
+  for (const [couponValue, expected] of [
+    [190000, 20000], [300000, 20000],
+    [300001, 35000], [600000, 35000],
+    [600001, 55000], [900000, 55000],
+    [900001, 75000], [1200000, 75000],
+    [1200001, 95000], [1300000, 95000],
+  ]) {
+    assert.equal(fee(couponValue * 5, 5), expected, String(couponValue));
+  }
+  for (const [carId, expected] of [
+    ['ae86', 20000], ['rx7fd', 35000],
+    ['r32', 75000], ['r34', 95000], ['nsx', 95000],
+  ]) {
+    assert.equal(fee(MARKET_BASE_PRICES[carId], getCarCouponRequirement(carId)),
+      expected, carId);
+  }
+  assert.equal(fee(0, 7), 60000, 'unpriced coupon prizes cannot default to cheapest fee');
+  assert.equal(fee(NaN, 7), 60000);
 });
 
 test('coupon Street Showdowns remain challenging but softer', () => {
