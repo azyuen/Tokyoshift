@@ -851,8 +851,9 @@ export default class OshiageScene extends Phaser.Scene {
       color: canRace ? '#a8efce' : '#e6b7a2',
       wrap: SIDE.w - 40,
     });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 622,
-      SIDE.w - 38, 50,
+    // Keep the primary action clear of the map button, like regular Meets.
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 584,
+      SIDE.w - 38, 48,
       continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
         : 'ENTER  //  ' + MONEY(venue.entryFee) + '  >',
       () => this.startEliteRace(venueId), {
