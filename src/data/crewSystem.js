@@ -265,27 +265,46 @@ export function getCrewRecruitmentState(source, regionId) {
   };
 }
 
-export function getCrewInviteInterest(source) {
-  const interest = value(source, 'crewInviteInterest', null);
-  if (interest && typeof interest === 'object' && interest.characterId) {
+// All seven regions share one progress counter, including migrated saves.
+export function getGlobalCrewRecruitmentState(source) {
+  const all = value(source, 'crewRecruitmentState', {}) || {};
+  const previous = Object.entries(all)
+    .filter(([key]) => CREW_REGIONS.includes(key))
+    .reduce((sum, [,s]) => sum + Math.max(0,
+      Number(s?.eligibleWinsSinceInvite ?? s?.misses ?? 0)), 0);
+  return {
+    eligibleWinsSinceInvite: Math.min(CREW_INVITE_PITY_WINS - 1,
+      Math.max(0, Math.floor(Number(all.GLOBAL?.eligibleWinsSinceInvite ?? previous) || 0))),
+  };
+}
+
+export function getCrewInviteInterest(source, regionId = '') {
+  const region = String(regionId || '').toUpperCase();
+  const all = value(source, 'crewInviteInterests', {}) || {};
+  const legacy = value(source, 'crewInviteInterest', null);
+  const interest = region
+    ? all[region] || (String(legacy?.regionId || '').toUpperCase() === region ? legacy : null)
+    : legacy || CREW_REGIONS.map(key => all[key]).find(Boolean);
+  if (interest?.characterId) {
     return { ...interest };
   }
 
   // One-build migration path: the earlier crew prototype could leave a
   // crewPendingRecruit object in a save. Treat that as an invite interest
   // rather than silently discarding it.
-  const legacy = value(source, 'crewPendingRecruit', null);
-  if (legacy && typeof legacy === 'object' && legacy.characterId) {
+  const legacyPending = value(source, 'crewPendingRecruit', null);
+  if (legacyPending && typeof legacyPending === 'object' && legacyPending.characterId &&
+      (!region || String(legacyPending.regionId || '').toUpperCase() === region)) {
     return {
-      regionId: String(legacy.regionId || '').toUpperCase(),
-      characterId: String(legacy.characterId),
+      regionId: String(legacyPending.regionId || '').toUpperCase(),
+      characterId: String(legacyPending.characterId),
       baseCarId: String(
-        legacy.baseCarId ||
-        getCrewBaseCarId(legacy.characterId) ||
+        legacyPending.baseCarId ||
+        getCrewBaseCarId(legacyPending.characterId) ||
         ''
       ),
-      locationId: String(legacy.locationId || ''),
-      createdAt: Math.max(0, Number(legacy.offeredAt || Date.now())),
+      locationId: String(legacyPending.locationId || ''),
+      createdAt: Math.max(0, Number(legacyPending.offeredAt || Date.now())),
       source: 'legacyPendingRecruit',
     };
   }
@@ -293,10 +312,60 @@ export function getCrewInviteInterest(source) {
   return null;
 }
 
-export function clearCrewInviteInterest(registry) {
-  if (!registry?.set) return;
-  registry.set('crewInviteInterest', null);
-  registry.set('crewPendingRecruit', null);
+export function clearCrewInviteInterest(registry, regionId = '') {
+  if (!registry?.get || !registry?.set) return;
+  const region = String(regionId || '').toUpperCase();
+  if (!region) {
+    registry.set('crewInviteInterests', {});
+    registry.set('crewInviteInterest', null);
+    registry.set('crewPendingRecruit', null);
+    return;
+  }
+  const all = { ...(registry.get('crewInviteInterests') || {}) };
+  delete all[region];
+  registry.set('crewInviteInterests', all);
+  if (String(registry.get('crewInviteInterest')?.regionId || '').toUpperCase() === region)
+    registry.set('crewInviteInterest', null);
+  if (String(registry.get('crewPendingRecruit')?.regionId || '').toUpperCase() === region)
+    registry.set('crewPendingRecruit', null);
+}
+
+export function getCrewRecruitChallenge(source, regionId = '') {
+  const region = String(regionId || '').toUpperCase();
+  const all = value(source, 'crewRecruitChallenges', {}) || {};
+  const legacy = value(source, 'crewRecruitChallenge', null);
+  const challenge = region
+    ? all[region] || (String(legacy?.regionId || '').toUpperCase() === region ? legacy : null)
+    : legacy || CREW_REGIONS.map(key => all[key]).find(Boolean);
+  return challenge?.characterId ? { ...challenge } : null;
+}
+
+export function setCrewRecruitChallenge(registry, challenge) {
+  if (!registry?.get || !registry?.set || !challenge?.regionId) return null;
+  const region = String(challenge.regionId).toUpperCase();
+  const all = { ...(registry.get('crewRecruitChallenges') || {}) };
+  const old = registry.get('crewRecruitChallenge');
+  if (old?.regionId && !all[String(old.regionId).toUpperCase()])
+    all[String(old.regionId).toUpperCase()] = old;
+  all[region] = { ...challenge, regionId: region };
+  registry.set('crewRecruitChallenges', all);
+  registry.set('crewRecruitChallenge', all[region]);
+  return all[region];
+}
+
+export function clearCrewRecruitChallenge(registry, regionId = '') {
+  if (!registry?.get || !registry?.set) return;
+  const region = String(regionId || '').toUpperCase();
+  if (!region) {
+    registry.set('crewRecruitChallenges', {});
+    registry.set('crewRecruitChallenge', null);
+    return;
+  }
+  const all = { ...(registry.get('crewRecruitChallenges') || {}) };
+  delete all[region];
+  registry.set('crewRecruitChallenges', all);
+  if (String(registry.get('crewRecruitChallenge')?.regionId || '').toUpperCase() === region)
+    registry.set('crewRecruitChallenge', null);
 }
 
 export function createCrewInviteFromMeetWin(
@@ -316,10 +385,9 @@ export function createCrewInviteFromMeetWin(
   if (!key || !rivalId) return null;
   if (!isCrewUnlocked(registry) || isCrewComplete(registry)) return null;
   if (getCrewMemberForRegion(registry, key)) return null;
-  if (
-    getCrewInviteInterest(registry) ||
-    registry.get('crewRecruitChallenge')
-  ) return null;
+  // A pending invitation or accepted duel in ANOTHER region is not a blocker.
+  if (getCrewInviteInterest(registry, key) ||
+      getCrewRecruitChallenge(registry, key)?.active) return null;
 
   const candidate = getRecruitableCrewCandidates(registry, key)
     .find(member => member.characterId === rivalId);
@@ -333,7 +401,8 @@ export function createCrewInviteFromMeetWin(
   );
   if (state.lastWinToken && state.lastWinToken === token) return null;
 
-  const nextEligibleWins = state.eligibleWinsSinceInvite + 1;
+  const nextEligibleWins =
+    getGlobalCrewRecruitmentState(registry).eligibleWinsSinceInvite + 1;
   const trigger =
     nextEligibleWins >= CREW_INVITE_PITY_WINS ||
     Number(random()) < CREW_INVITE_INTEREST_CHANCE;
@@ -346,6 +415,7 @@ export function createCrewInviteFromMeetWin(
     lastWinToken: token,
     lastRollToken: token,
   };
+  store.GLOBAL = { eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins };
   registry.set('crewRecruitmentState', store);
 
   if (!trigger) return null;
@@ -359,8 +429,13 @@ export function createCrewInviteFromMeetWin(
     createdAt: Date.now(),
     source: 'meetWin',
   };
+  const invites = { ...(registry.get('crewInviteInterests') || {}) };
+  const old = registry.get('crewInviteInterest');
+  if (old?.regionId && !invites[String(old.regionId).toUpperCase()])
+    invites[String(old.regionId).toUpperCase()] = old;
+  invites[key] = interest;
+  registry.set('crewInviteInterests', invites);
   registry.set('crewInviteInterest', interest);
-  registry.set('crewPendingRecruit', null);
   return interest;
 }
 
@@ -373,14 +448,14 @@ export function acceptCrewInviteChallenge(
   const regionId = String(interest.regionId || '').toUpperCase();
   const characterId = String(interest.characterId || '');
   if (getCrewMemberForRegion(registry, regionId)) {
-    clearCrewInviteInterest(registry);
+    clearCrewInviteInterest(registry, regionId);
     return null;
   }
 
   const candidate = getRecruitableCrewCandidates(registry, regionId)
     .find(member => member.characterId === characterId);
   if (!candidate) {
-    clearCrewInviteInterest(registry);
+    clearCrewInviteInterest(registry, regionId);
     return null;
   }
 
@@ -396,8 +471,8 @@ export function acceptCrewInviteChallenge(
     source: 'meetInvite',
   };
 
-  registry.set('crewRecruitChallenge', challenge);
-  clearCrewInviteInterest(registry);
+  setCrewRecruitChallenge(registry, challenge);
+  clearCrewInviteInterest(registry, regionId);
   return challenge;
 }
 
@@ -405,11 +480,6 @@ export function acceptCrewInviteChallenge(
 // cached MeetScene modules fail closed instead of reintroducing popup recruits.
 export function rollCrewRecruitChallenge() {
   return null;
-}
-
-export function clearCrewRecruitChallenge(registry) {
-  if (!registry?.set) return;
-  registry.set('crewRecruitChallenge', null);
 }
 
 export function setPendingCrewRecruit(registry, challenge) {
@@ -421,7 +491,7 @@ export function setPendingCrewRecruit(registry, challenge) {
     offeredAt: Date.now(),
   };
   registry.set('crewPendingRecruit', pending);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewRecruitChallenge(registry, pending.regionId);
   return pending;
 }
 
@@ -479,17 +549,17 @@ export function acceptCrewMember(registry, pending = registry?.get?.('crewPendin
   registry.set('ownedCarIds', owned);
   registry.set('carStates', states);
   registry.set('carGarageLocations', locations);
+  clearCrewInviteInterest(registry, regionId);
+  clearCrewRecruitChallenge(registry, regionId);
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
   return members[regionId];
 }
 
 export function declinePendingCrewRecruit(registry) {
   if (!registry?.set) return;
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
 }
 
 export function removeAllCrewMembers(registry) {
@@ -503,8 +573,8 @@ export function removeAllCrewMembers(registry) {
 
   registry.set('selectedRacePlayerCharacterId', null);
   registry.set('crewPendingRecruit', null);
-  registry.set('crewInviteInterest', null);
-  registry.set('crewRecruitChallenge', null);
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
   registry.set('crewBattleState', null);
   return removed;
 }

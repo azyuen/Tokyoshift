@@ -34,7 +34,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261016-r544';
+import { saveSessionState } from '../state/GameState.js?v=20261016-r551';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -122,6 +122,8 @@ import {
   getRecruitableCrewCandidates,
   getCrewInviteInterest,
   clearCrewInviteInterest,
+  getCrewRecruitChallenge,
+  setCrewRecruitChallenge,
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
   getCrewRecruitmentChallengeRules,
@@ -132,7 +134,7 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261016-r544';
+} from '../data/crewSystem.js?v=20261016-r551';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
@@ -341,8 +343,8 @@ export default class MeetScene extends Phaser.Scene {
     this.preloadedInitialCarIds = batch.carIds;
 
     const crewReveal =
-      getCrewInviteInterest(this.registry) ||
-      this.registry.get('crewRecruitChallenge');
+      getCrewInviteInterest(this.registry, initialRegion) ||
+      getCrewRecruitChallenge(this.registry, initialRegion);
     const signatureCarId = String(crewReveal?.baseCarId || '');
     if (signatureCarId && cars[signatureCarId]) {
       if (!this.preloadedInitialCarIds.includes(signatureCarId)) {
@@ -1608,14 +1610,13 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowCrewInviteInterest() {
     if (this.isCrewTestDriveMode()) return false;
-    const interest = getCrewInviteInterest(this.registry);
-    if (!interest?.characterId || !interest?.regionId) return false;
-
     const location = getMeetLocation(this.selectedMeetLocation);
     const currentRegion = String(location?.district || '').toUpperCase();
+    const interest = getCrewInviteInterest(this.registry, currentRegion);
+    if (!interest?.characterId || !interest?.regionId) return false;
     if (String(interest.regionId).toUpperCase() !== currentRegion) return false;
     if (getCrewMemberForRegion(this.registry, currentRegion)) {
-      clearCrewInviteInterest(this.registry);
+      clearCrewInviteInterest(this.registry, currentRegion);
       saveSessionState(this.registry);
       return false;
     }
@@ -1623,7 +1624,7 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[interest.characterId];
     const car = cars[interest.baseCarId];
     if (!character || !car) {
-      clearCrewInviteInterest(this.registry);
+      clearCrewInviteInterest(this.registry, currentRegion);
       saveSessionState(this.registry);
       return false;
     }
@@ -1725,7 +1726,7 @@ export default class MeetScene extends Phaser.Scene {
           }
         } else {
           // NOT NOW on page three leaves the recruitment offer unaccepted.
-          clearCrewInviteInterest(this.registry);
+          clearCrewInviteInterest(this.registry, currentRegion);
           saveSessionState(this.registry);
         }
       },
@@ -1735,7 +1736,8 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowActiveCrewRecruitChallenge() {
     if (this.isCrewTestDriveMode()) return false;
-    let challenge = this.registry.get('crewRecruitChallenge');
+    const region = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
+    let challenge = getCrewRecruitChallenge(this.registry, region);
     if (!challenge?.active) return false;
 
     // The player has to LEAVE the Meet after a failed recruitment race before
@@ -1744,7 +1746,7 @@ export default class MeetScene extends Phaser.Scene {
     // them once rather than forcing an immediate rematch on a reloaded Meet.
     if (challenge.lastLossAt && challenge.retryDeferredUntilExit == null) {
       challenge = { ...challenge, retryDeferredUntilExit: true };
-      this.registry.set('crewRecruitChallenge', challenge);
+      setCrewRecruitChallenge(this.registry, challenge);
       saveSessionState(this.registry);
     }
     if (challenge.retryDeferredUntilExit) return false;
@@ -1755,7 +1757,7 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[challenge.characterId];
     const opponentCar = cars[challenge.baseCarId];
     if (!character || !opponentCar) {
-      clearCrewRecruitChallenge(this.registry);
+      clearCrewRecruitChallenge(this.registry, region);
       saveSessionState(this.registry);
       return false;
     }
@@ -1834,6 +1836,9 @@ export default class MeetScene extends Phaser.Scene {
     const character = characters[challenge.characterId];
     const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
     if (!(recruitRules.eligibleCarIds || []).includes(playerCarId)) return;
+    // Select the actual regional duel before RaceScene reads the legacy
+    // active-challenge slot; accepted duels elsewhere remain untouched.
+    setCrewRecruitChallenge(this.registry, challenge);
 
     const characterRating = Phaser.Math.Clamp(Number(character?.skill?.rating || 4), 1, 5);
     const rating = recruitRules.aiRating || characterRating;
@@ -2593,9 +2598,10 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   releaseDeferredCrewRecruitment() {
-    const challenge = this.registry.get('crewRecruitChallenge');
+    const region = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
+    const challenge = getCrewRecruitChallenge(this.registry, region);
     if (!challenge?.active || !challenge.retryDeferredUntilExit) return;
-    this.registry.set('crewRecruitChallenge', {
+    setCrewRecruitChallenge(this.registry, {
       ...challenge,
       retryDeferredUntilExit: false,
     });
@@ -2666,6 +2672,10 @@ export default class MeetScene extends Phaser.Scene {
         this.buildMeetProgressionButtons();
 
         this.time.delayedCall(60, () => {
+          // Region-specific pending invitations open only after arriving in
+          // their own region; do not interrupt them with a regional intro.
+          if (this.maybeShowCrewInviteInterest()) return;
+          if (this.maybeShowActiveCrewRecruitChallenge()) return;
           const introShown = this.maybeShowRegionalCrewIntroduction({
             countChallengeVisit: true,
           });
@@ -4151,9 +4161,10 @@ export default class MeetScene extends Phaser.Scene {
       queueImage(fallbackBackground.key, fallbackBackground.path + '?v=20260928-r245');
     }
 
+    const region = String(getMeetLocation(locationId)?.district || '').toUpperCase();
     const inviteCharacterId = String(
-      getCrewInviteInterest(this.registry)?.characterId ||
-      this.registry.get('crewRecruitChallenge')?.characterId ||
+      getCrewInviteInterest(this.registry, region)?.characterId ||
+      getCrewRecruitChallenge(this.registry, region)?.characterId ||
       ''
     );
 
@@ -4190,6 +4201,23 @@ export default class MeetScene extends Phaser.Scene {
         : offer?.carId;
       if (displayCarId && cars[displayCarId]) carIds.add(displayCarId);
     });
+
+    // A queued recruit may not occupy one of the three visible Meet slots.
+    // Load their portrait and signature car anyway before the manga invitation.
+    if (inviteCharacterId) {
+      const visual = getCharacterVisualForContext(inviteCharacterId, {
+        rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
+      }) || {};
+      queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
+      queueImage(visual.winSpriteKey, visual.winPath
+        ? getCharacterAssetUrl(visual.winPath) : null);
+      queueImage(visual.lossSpriteKey, visual.lossPath
+        ? getCharacterAssetUrl(visual.lossPath) : null);
+      const recruit = getCrewInviteInterest(this.registry, region) ||
+        getCrewRecruitChallenge(this.registry, region);
+      if (cars[recruit?.baseCarId]) carIds.add(recruit.baseCarId);
+    }
 
     carIds.forEach(id => {
       queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20260928-r242');

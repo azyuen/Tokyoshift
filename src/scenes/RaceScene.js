@@ -54,7 +54,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261014-r501';
+} from '../state/GameState.js?v=20261016-r551';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -99,13 +99,14 @@ import {
   CREW_BATTLE_COUPONS,
   createCrewInviteFromMeetWin,
   completeCrewRecruitChallenge,
+  setCrewRecruitChallenge,
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
   getCrewMembers,
   getCrewBattleCaptainId,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261016-r544';
+} from '../data/crewSystem.js?v=20261016-r551';
 import { getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import {
   createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
@@ -4193,7 +4194,7 @@ export default class RaceScene extends Phaser.Scene {
       if (playerWon && challenge?.active) {
         recruited = completeCrewRecruitChallenge(this.registry, challenge);
       } else if (challenge?.active) {
-        this.registry.set('crewRecruitChallenge', {
+        setCrewRecruitChallenge(this.registry, {
           ...challenge,
           active: true,
           attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
