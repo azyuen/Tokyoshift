@@ -135,6 +135,7 @@ import {
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261016-street-showdown-template';
+import { isStreetShowdownOfferRosterValid } from '../data/streetShowdownRoster.js?v=20261016-street-showdown-template';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -3768,26 +3769,10 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   isCompetitionOfferRosterValid(offer) {
-    if (!Array.isArray(offer?.rounds) || offer.rounds.length !== 3) return false;
-    const region = getMeetLocation(offer.locationId)?.district;
-    if (!region) return false;
-    const localIds = new Set(getRivalCharacterOrderForRegion(region));
-    const recruited = getRecruitedCrewCharacterIds(this.registry);
-    const currentDriver = this.getActiveDriverCharacterId();
-    const seenCharacters = new Set();
-    const seenFaces = new Set();
-    return offer.rounds.every(round => {
-      const id = String(round?.characterId || '');
-      const person = characters[id];
-      const displayId = this.getRivalDisplayCharacter(id)?.id || id;
-      if (!id || !person || person.rivalEligible === false ||
-          !cars[round?.carId] || !localIds.has(id) ||
-          recruited.has(id) || id === currentDriver ||
-          !isMainRivalAvailableAtRegionalMeet(this.registry, id, region) ||
-          seenCharacters.has(id) || seenFaces.has(displayId)) return false;
-      seenCharacters.add(id);
-      seenFaces.add(displayId);
-      return true;
+    return isStreetShowdownOfferRosterValid(offer, {
+      source: this.registry,
+      activeDriverCharacterId: this.getActiveDriverCharacterId(),
+      playerCharacterId: this.registry.get('playerCharacterId') || '',
     });
   }
 
