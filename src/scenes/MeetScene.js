@@ -133,6 +133,7 @@ import {
   getRegionalCrewBattleReward,
 } from '../data/crewSystem.js?v=20261016-r544';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
+import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -839,7 +840,49 @@ export default class MeetScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(56);
 
-    button.on('pointerdown', () => this.showCrewBattleLineup(regionId));
+    button.on('pointerdown', () => this.showCrewBattleIntroduction(regionId));
+  }
+
+  showCrewBattleIntroduction(regionId) {
+    if (this.isCrewTestDriveMode() || !isCrewComplete(this.registry) ||
+        sceneCutsceneActive(this)) return false;
+
+    const key = String(regionId || '').toUpperCase();
+    const rounds = buildRegionalCrewBattleRounds(key, this.registry);
+    const units = getCrewBattleUnits(this.registry);
+    if (units.length < 3 || rounds.length < 3) return false;
+
+    // The region's permanent leader always drives the final matchup; the
+    // other speaker is a REAL rival from this battle, never a recruited member.
+    const leaderId = rounds.find(round => round.leader)?.characterId;
+    const challengerId = rounds.find(round => round.characterId !== leaderId)?.characterId;
+    if (!leaderId || !challengerId) return false;
+
+    const visits = this.registry.get('crewBattleIntroVisits') || {};
+    const count = Math.max(0, Math.floor(Number(visits[key]) || 0));
+    const definition = createRegionalCrewBattleIntroduction(key, count);
+    if (!definition) return false;
+
+    const leaderName = this.getRivalDisplayCharacter(leaderId)?.name ||
+      characters[leaderId]?.name || key + ' LEADER';
+
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { LEADER: leaderId, CHALLENGER: challengerId },
+      variables: { LEADER_NAME: String(leaderName).toUpperCase() },
+      // Repeatable invitation: load only idle and win portraits being shown.
+      preloadPagePosesOnly: true,
+      onComplete: ({ reason }) => {
+        // ACCEPT must be explicit. RACE LATER and SKIP return to the Meet.
+        if (reason === 'action') this.showCrewBattleLineup(key);
+      },
+    });
+
+    if (!result?.played) return false;
+    this.registry.set('crewBattleIntroVisits', {
+      ...visits, [key]: count + 1,
+    });
+    saveSessionState(this.registry);
+    return true;
   }
 
   showCrewBattleLineup(regionId) {
@@ -2343,7 +2386,7 @@ export default class MeetScene extends Phaser.Scene {
     const units = getCrewBattleUnits(this.registry);
     const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
 
-    if (!regionId || units.length < 7 || rounds.length < 6) {
+    if (!regionId || units.length < 3 || rounds.length < 3) {
       this.flashDevControl(
         this.devForceRegionalCrewBattleControl,
         'D) CREW UNAVAILABLE',
@@ -2352,7 +2395,7 @@ export default class MeetScene extends Phaser.Scene {
       return;
     }
 
-    this.showCrewBattleLineup(regionId);
+    this.showCrewBattleIntroduction(regionId);
     this.flashDevControl(
       this.devForceRegionalCrewBattleControl,
       'D) CREW READY',
