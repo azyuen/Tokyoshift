@@ -184,6 +184,11 @@ export function openSwipePortraitGallery(scene, {
     fontFamily:FONT,fontSize:'9px',color:'#edf7ff',
     backgroundColor:'#081524a6',padding:{x:12,y:6},
   }).setOrigin(.5).setDepth(989).setScrollFactor(0));
+  const swipeHint = own(scene.add.text(cx,height*.903,
+    'SWIPE LEFT / RIGHT TO BROWSE', {
+      fontFamily:FONT,fontSize:'8px',color:'#d8e5f1',
+      backgroundColor:'#081524b8',padding:{x:12,y:6},
+    }).setOrigin(.5).setDepth(989).setScrollFactor(0));
 
   // Fullscreen transparent interactive blocker is ABOVE the underlying
   // manga panel so a swipe cannot accidentally progress the storyline.
@@ -271,7 +276,7 @@ export function openSwipePortraitGallery(scene, {
   const initial = [
     ...portraits.flatMap(p=>[p.colour,p.grey]),
     ...flags.map(p=>p.obj), ...names.map(p=>p.obj),
-    heading,personName,counter,
+    heading,personName,counter,swipeHint,
   ].map(obj=>({obj,alpha:obj.alpha}));
   initial.forEach(({obj})=>obj.setAlpha(0));
   const washTarget = transparentBackground ? .12 : null;
