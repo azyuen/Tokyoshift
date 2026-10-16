@@ -38,6 +38,31 @@ export function getRegionalChampionshipCount(source) {
     .length;
 }
 
+// Story milestones follow the FIRST championship challenge completed, not
+// the currently selected district (or a later Perfect Streak rematch).
+const REGIONAL_CHAMPION_SEQUENCE = Object.freeze([
+  'ODAIBA', 'SHINAGAWA', 'TATSUMI', 'SHIBUYA',
+  'YOKOHAMA', 'DAIKOKU', 'SHINJUKU',
+]);
+
+export function getFirstRegionalChampionRegion(source) {
+  const challenges = sourceValue(source, 'tunerTeamChallenges', {}) || {};
+  const champions = REGIONAL_CHAMPION_SEQUENCE
+    .map((regionId, order) => {
+      const state = challenges[regionId];
+      if (!state?.championEarned && !state?.completed) return null;
+      const completedAt = Math.max(0, Number(state?.completedAt || 0));
+      return { regionId, order, completedAt };
+    })
+    .filter(Boolean)
+    .sort((a, b) =>
+      (a.completedAt || Number.POSITIVE_INFINITY) -
+        (b.completedAt || Number.POSITIVE_INFINITY) ||
+      a.order - b.order
+    );
+  return champions[0]?.regionId || null;
+}
+
 export function getCompetitionWinCount(source) {
   return Math.max(0, Math.floor(Number(sourceValue(source, 'competitionWins', 0) || 0)));
 }
