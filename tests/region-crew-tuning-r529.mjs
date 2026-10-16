@@ -25,13 +25,15 @@ test('recruits disappear from regional championships and the final crew battle',
   assert.equal(rounds.length, 7);
   assert(!rounds.some(r => blocked.has(r.characterId)));
   const battle = buildRegionalCrewBattleRounds('ODAIBA', state);
-  assert.equal(battle.length, 6);
+  assert.equal(battle.length, 3); // Current regional crew battles are best-of-three.
   assert(!battle.some(r => blocked.has(r.characterId)));
   assert.equal(battle.at(-1).characterId, getRegionalCrewRoster('ODAIBA').mainRivalId);
 });
 test('meet fallback, cached rival cards, and saved team rounds enforce exclusions', () => {
   const s = read('src/scenes/MeetScene.js');
-  assert(s.includes('const blocked = new Set([playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry)]);'));
+  assert(s.includes('const blocked = new Set(['));
+  assert(s.includes('playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry),'));
+  assert(s.includes('isStreetShowdownOfferRosterValid(offer,'));
   assert(s.includes('visibleOffers.some(offer => getRecruitedCrewCharacterIds(this.registry).has(offer?.characterId))'));
   assert(s.includes('const hasRecruitedOpponent = storedRounds.some'));
   assert(s.includes('hasRecruitedOpponent ? generatedRounds'));
