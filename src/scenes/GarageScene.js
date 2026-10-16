@@ -47,7 +47,8 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261017-r552';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261017-r553';
+import { getFirstRegionalChampionRegion } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
@@ -7102,7 +7103,10 @@ export default class GarageScene extends Phaser.Scene {
       return this.runOpeningStoryIfNeeded();
     if (this.showEthanYuenRewardIfNeeded()) return true;
     if (this.runOpeningStoryIfNeeded()) return true;
-    return this.showCentralTokyoInvitationIfNeeded();
+    // Scene 02 (nine wins / market invitation) takes precedence when a save
+    // first returns with both the nine-win and first-champion milestones due.
+    if (this.showCentralTokyoInvitationIfNeeded()) return true;
+    return this.showFirstRegionalChampionIfNeeded();
   }
 
   fadeOpeningSayakaFromGarage(onComplete) {
@@ -7319,6 +7323,22 @@ export default class GarageScene extends Phaser.Scene {
       this.time.delayedCall(180, () => this.continueGarageStoryFlow());
     }
     return Boolean(result.played);
+  }
+
+  showFirstRegionalChampionIfNeeded() {
+    // Career chapters belong to the workshop, not the race result or Crew
+    // Space. Developer profiles use the Cutscene Tester instead of replaying
+    // a first-title story against their preloaded all-champion progress.
+    if (this.crewMode || isArkonDen(this.registry) ||
+        this.hasSeenStoryCutscene('firstRegionalChampion')) return false;
+    const regionId = getFirstRegionalChampionRegion(this.registry);
+    if (!regionId) return false;
+
+    const result = playMangaCutscene(this, 'firstRegionalChampion', {
+      variables: { REGION: regionId },
+    });
+    // MangaCutscene saves its once-per-profile flag only when fully completed.
+    return Boolean(result?.played);
   }
 
   showCentralTokyoInvitationIfNeeded() {
