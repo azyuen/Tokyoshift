@@ -3,7 +3,7 @@ import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-r
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261011-r475';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261011-r475';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -49,7 +49,7 @@ import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r555';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r555';
-import { getFirstRegionalChampionRegion } from '../data/careerProgression.js?v=20261017-r553';
+import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
@@ -7322,9 +7322,11 @@ export default class GarageScene extends Phaser.Scene {
     if (!guest || !this.textures.exists(getCarBodyTextureKey(this, guest)) ||
         !this.textures.exists(guest.visual.wheelKey)) return false;
 
-    const width = 730;
-    const x = 720;
-    const y = this.getBodyYForWheelBottom(guest, width, 506);
+    // Keep the famous widebody dramatic but slightly smaller than the
+    // player's standard 620px hero car to respect stage perspective.
+    const width = 560;
+    const x = HERO_CFG.x;
+    const y = this.getBodyYForWheelBottom(guest, width, 505);
     let carObjects;
     try {
       // Depth 908–909 sits above the manga shade (901), but under the
@@ -7345,10 +7347,18 @@ export default class GarageScene extends Phaser.Scene {
     const endpoints = sprites.map(obj => ({
       obj, x: obj.x, alpha: obj.alpha,
     }));
-    const animation = { offset: -1250 };
+    const animation = { offset: -1170 };
     const cinematic = { sprites, originals, endpoints, animation, driveTween: null,
+      daichiPortrait: this._mangaCutscene?.actors?.left?.profile?.image || null,
       restoring: false };
     this._warehouseRwbCinematic = cinematic;
+
+    // Fade Daichi's manga portrait OUT first: his remark leads the eye to the
+    // incoming Porsche, which enters only after this fade has started.
+    if (cinematic.daichiPortrait?.active) {
+      this.tweens.add({ targets: cinematic.daichiPortrait, alpha: 0,
+        duration: 430, ease: 'Sine.easeInOut' });
+    }
 
     // Cutscene dialogue is active already; fade the workshop player and
     // actual selected car out only for the visiting RWB's entrance.
@@ -7364,15 +7374,15 @@ export default class GarageScene extends Phaser.Scene {
       endpoints.forEach(({ obj, x }) => {
         if (obj?.active) obj.setX(x + animation.offset);
       });
-      const travelled = animation.offset + 1250;
+      const travelled = animation.offset + 1170;
       // Rear and front wheels rotate as the car actually moves into view.
-      if (sprites[3]?.active) sprites[3].setRotation(travelled / 57);
-      if (sprites[4]?.active) sprites[4].setRotation(travelled / 54);
+      if (sprites[3]?.active) sprites[3].setRotation(travelled / 46);
+      if (sprites[4]?.active) sprites[4].setRotation(travelled / 44);
     };
     update();
     cinematic.driveTween = this.tweens.add({
-      targets: animation, offset: 0, duration: 1650,
-      ease: 'Cubic.easeOut', onUpdate: update,
+      targets: animation, offset: 0, delay: 480, duration: 5200,
+      ease: 'Sine.easeInOut', onUpdate: update,
     });
     return true;
   }
@@ -7388,7 +7398,7 @@ export default class GarageScene extends Phaser.Scene {
     cinematic.hideTween?.stop?.();
     const fade = { t: 0 };
     this.tweens.add({
-      targets: fade, t: 1, duration: 750, ease: 'Sine.easeInOut',
+      targets: fade, t: 1, duration: 1800, ease: 'Sine.easeInOut',
       onUpdate: () => {
         cinematic.endpoints.forEach(({ obj, alpha }) => {
           if (obj?.active) obj.setAlpha(alpha * (1 - fade.t));
@@ -7413,8 +7423,16 @@ export default class GarageScene extends Phaser.Scene {
     const preview = Boolean(options.preview);
     const result = playMangaCutscene(this, 'warehouseHqUnlocked', {
       preview,
-      onPageChange: ({ page }) => {
+      onPageChange: ({ page, pageIndex }) => {
         if (page?.cinematicBeat === 'rwbArrival') this.startWarehouseRwbArrival();
+        // Bring Daichi back once the car has finished its cinematic entrance
+        // and his dialogue resumes on the following page.
+        if (pageIndex === 4) {
+          const portrait = this._mangaCutscene?.actors?.left?.profile?.image;
+          if (portrait?.active) this.tweens.add({
+            targets: portrait, alpha: 1, duration: 420, ease: 'Sine.easeInOut',
+          });
+        }
       },
       onComplete: () => {
         // The cutscene's existing once-flag is saved by the manga renderer.
