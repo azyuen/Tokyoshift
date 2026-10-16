@@ -291,10 +291,22 @@ export const CUTSCENES = {
         pose: 'win',
         text: '{CREW_LINE_3}',
         emphasis: true,
+        actionLabel: '{CREW_ACCEPT_LABEL}',
+        secondaryActionLabel: '{CREW_DECLINE_LABEL}',
+      },
+      {
+        // Accepting moves INTO the choice page without closing this manga.
+        // The rival silhouette fades away; both cars then occupy the frame.
+        speaker: 'system',
+        speakerLabel: 'CHOOSE A CAR TO RACE',
+        leftCharacter: '',
+        rightCharacter: '',
+        fadeOutActors: true,
+        text: 'You can only race an unmodified stock car of the same class. Choose one from your garage, or acquire one and come back later.',
       },
     ],
-    finalActionLabel: '{CREW_ACCEPT_LABEL}',
-    secondaryFinalActionLabel: '{CREW_DECLINE_LABEL}',
+    finalActionLabel: 'READY TO RACE',
+    secondaryFinalActionLabel: 'RACE LATER',
   },
 
   tunerShopDiscovery: {
