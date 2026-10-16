@@ -1,8 +1,8 @@
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
-  OSHIAGE_SCHOOL_LESSONS, bookingMatches, bookOshiageLesson, consumeOshiageAttempt,
-  remainingAttempts, isOshiageVoucherAvailable, getOshiageVouchersRemaining,
+  OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
+  isOshiageVoucherAvailable,
 } from '../data/oshiageSchool.js?v=20261014-r510';
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261013-r494';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
