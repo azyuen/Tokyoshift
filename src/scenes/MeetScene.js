@@ -1431,8 +1431,19 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowActiveCrewRecruitChallenge() {
     if (this.isCrewTestDriveMode()) return false;
-    const challenge = this.registry.get('crewRecruitChallenge');
+    let challenge = this.registry.get('crewRecruitChallenge');
     if (!challenge?.active) return false;
+
+    // The player has to LEAVE the Meet after a failed recruitment race before
+    // being offered the same opponent again. The challenge remains saved.
+    // Older saves already have lastLossAt but lack the deferred flag; migrate
+    // them once rather than forcing an immediate rematch on a reloaded Meet.
+    if (challenge.lastLossAt && challenge.retryDeferredUntilExit == null) {
+      challenge = { ...challenge, retryDeferredUntilExit: true };
+      this.registry.set('crewRecruitChallenge', challenge);
+      saveSessionState(this.registry);
+    }
+    if (challenge.retryDeferredUntilExit) return false;
     const location = getMeetLocation(this.selectedMeetLocation);
     if (String(challenge.regionId || '').toUpperCase() !==
         String(location?.district || '').toUpperCase()) return false;
@@ -1524,15 +1535,20 @@ export default class MeetScene extends Phaser.Scene {
     const rating = recruitRules.aiRating || characterRating;
     const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
     const tierAi = getEncounterAi(rating);
-    const encounterAi = recruitRules.aiTier
-      ? {
-          ...characterAi,
-          reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
-          launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
-          shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
-          aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
-        }
-      : characterAi;
+    // Standard must really be Expert (rating 4), rather than the strongest
+    // values from Expert plus a possibly Elite-grade character profile.
+    // Hard intentionally retains the more demanding max-of-personal-and-tier AI.
+    const encounterAi = recruitRules.playerDifficulty === 'STANDARD'
+      ? getEncounterAi(4)
+      : recruitRules.aiTier
+        ? {
+            ...characterAi,
+            reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),
+            launchSkill: Math.max(Number(characterAi.launchSkill || 0), Number(tierAi.launchSkill || 0)),
+            shiftSkill: Math.max(Number(characterAi.shiftSkill || 0), Number(tierAi.shiftSkill || 0)),
+            aggression: Math.max(Number(characterAi.aggression || 0), Number(tierAi.aggression || 0)),
+          }
+        : characterAi;
 
     this.registry.set('selectedCarId', playerCarId);
     this.registry.set(
@@ -2358,6 +2374,16 @@ export default class MeetScene extends Phaser.Scene {
     );
   }
 
+  releaseDeferredCrewRecruitment() {
+    const challenge = this.registry.get('crewRecruitChallenge');
+    if (!challenge?.active || !challenge.retryDeferredUntilExit) return;
+    this.registry.set('crewRecruitChallenge', {
+      ...challenge,
+      retryDeferredUntilExit: false,
+    });
+    // The caller saves together with the departure's cash/location changes.
+  }
+
   travelToLocation(locationId, suppliedCost = null) {
     if (!this.hasCar) return false;
 
@@ -2369,6 +2395,12 @@ export default class MeetScene extends Phaser.Scene {
       : Number(suppliedCost || 0);
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < travelCost) return false;
+
+    // A real departure (not the RaceScene -> MeetScene results handoff)
+    // re-enables a pending defeated recruitment for a LATER visit.
+    if (locationId !== this.selectedMeetLocation) {
+      this.releaseDeferredCrewRecruitment();
+    }
 
     if (travelTarget.regionId === 'CENTRAL_TOKYO') {
       this.registry.set('cash', cash - travelCost);
@@ -2767,6 +2799,7 @@ export default class MeetScene extends Phaser.Scene {
 
     if (cash < cost) return;
 
+    this.releaseDeferredCrewRecruitment();
     this.registry.set('cash', cash - cost);
     this.registry.set('meetStranded', false);
     this.registry.set('workshopLocationId', destinationId);
