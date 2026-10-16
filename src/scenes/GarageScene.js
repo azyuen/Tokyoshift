@@ -7353,7 +7353,7 @@ export default class GarageScene extends Phaser.Scene {
     // Cutscene dialogue is active already; fade the workshop player and
     // actual selected car out only for the visiting RWB's entrance.
     const hide = { t: 0 };
-    this.tweens.add({
+    cinematic.hideTween = this.tweens.add({
       targets: hide, t: 1, duration: 280, ease: 'Sine.easeInOut',
       onUpdate: () => originals.forEach(({ obj, alpha }) => {
         if (obj?.active) obj.setAlpha(alpha * (1 - hide.t));
@@ -7385,6 +7385,7 @@ export default class GarageScene extends Phaser.Scene {
     }
     cinematic.restoring = true;
     cinematic.driveTween?.stop?.();
+    cinematic.hideTween?.stop?.();
     const fade = { t: 0 };
     this.tweens.add({
       targets: fade, t: 1, duration: 750, ease: 'Sine.easeInOut',
