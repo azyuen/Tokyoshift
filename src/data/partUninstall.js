@@ -171,7 +171,7 @@ export function restoreStoredKitParts(state = {}) {
     const shot = EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[Number(updated.exhaustNosTuning?.nitrousShot || 0)];
     updated.nosCapacitySeconds = Number(kit?.capacitySeconds || 0);
     updated.nosShots = Number(shot?.shots || 0);
-    updated.nosPower = Number(kit?.powerKW || 0);
+    updated.nosPower = Number(shot?.powerHp || 0);
   }
   delete updated.storedKit;
   updated.stock = listStorableKitParts(updated).length === 0 && !Number(updated.tuneLevel || 0);
