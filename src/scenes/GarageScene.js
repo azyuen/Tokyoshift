@@ -402,6 +402,13 @@ export default class GarageScene extends Phaser.Scene {
         ...(shouldWarmCrewSpace ? crewCars : []),
       ]),
     ];
+    // Scene 05 reuses the black RWB collector asset solely as a visiting
+    // cinematic car. It is never added to the player's owned-car registry.
+    if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
+        (!((this.registry.get('cutscenesSeen') || []).includes('warehouseHqUnlocked')) ||
+          this.registry.get('devMode'))) {
+      preloadCarIds.push('rwbStellaPorsche');
+    }
     preloadCarIds.forEach(id => {
       const car = cars[id];
       if (!car) return;
@@ -1139,7 +1146,7 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
-    this.addGarageCharacter(
+    this.workshopPlayerSprite = this.addGarageCharacter(
       playerCharacter,
       PLAYER_CFG.x,
       PLAYER_CFG.feetY,
@@ -7304,6 +7311,118 @@ export default class GarageScene extends Phaser.Scene {
     this.scene.start('RaceScene');
   }
 
+  // Scene 05's visitor is a cinematic-only overlay, built with the SAME
+  // calibrated body and wheels as the existing Ginza collector car.
+  // Underlying car state/ownership/selection never changes.
+  startWarehouseRwbArrival() {
+    if (this._warehouseRwbCinematic) return true;
+    const guest = cars.rwbStellaPorsche;
+    if (!guest || !this.textures.exists(getCarBodyTextureKey(this, guest)) ||
+        !this.textures.exists(guest.visual.wheelKey)) return false;
+
+    const width = 730;
+    const x = 720;
+    const y = this.getBodyYForWheelBottom(guest, width, 506);
+    let carObjects;
+    try {
+      // Depth 908–909 sits above the manga shade (901), but under the
+      // standard actors (915) and dialogue (930+).
+      carObjects = this.createCarDisplay(guest, x, y, width, 908);
+    } catch (error) {
+      console.warn('[Tokyo SHIFT] RWB cinematic creation failed', error);
+      carObjects?.forEach(obj => obj?.destroy?.());
+      return false;
+    }
+    const sprites = carObjects.filter(obj => obj?.active);
+    const selected = [
+      ...(this.selectedDisplay || []),
+      this.workshopPlayerSprite,
+      ...(this.workshopPlayerSprite?.stageShadows || []),
+    ].filter(obj => obj?.active);
+    const originals = selected.map(obj => ({ obj, alpha: obj.alpha }));
+    const endpoints = sprites.map(obj => ({
+      obj, x: obj.x, alpha: obj.alpha,
+    }));
+    const animation = { offset: -1250 };
+    const cinematic = { sprites, originals, endpoints, animation, driveTween: null,
+      restoring: false };
+    this._warehouseRwbCinematic = cinematic;
+
+    // Cutscene dialogue is active already; fade the workshop player and
+    // actual selected car out only for the visiting RWB's entrance.
+    const hide = { t: 0 };
+    this.tweens.add({
+      targets: hide, t: 1, duration: 280, ease: 'Sine.easeInOut',
+      onUpdate: () => originals.forEach(({ obj, alpha }) => {
+        if (obj?.active) obj.setAlpha(alpha * (1 - hide.t));
+      }),
+    });
+
+    const update = () => {
+      endpoints.forEach(({ obj, x }) => {
+        if (obj?.active) obj.setX(x + animation.offset);
+      });
+      const travelled = animation.offset + 1250;
+      // Rear and front wheels rotate as the car actually moves into view.
+      if (sprites[3]?.active) sprites[3].setRotation(travelled / 57);
+      if (sprites[4]?.active) sprites[4].setRotation(travelled / 54);
+    };
+    update();
+    cinematic.driveTween = this.tweens.add({
+      targets: animation, offset: 0, duration: 1650,
+      ease: 'Cubic.easeOut', onUpdate: update,
+    });
+    return true;
+  }
+
+  finishWarehouseRwbArrival(onFinished = null) {
+    const cinematic = this._warehouseRwbCinematic;
+    if (!cinematic || cinematic.restoring) {
+      onFinished?.();
+      return;
+    }
+    cinematic.restoring = true;
+    cinematic.driveTween?.stop?.();
+    const fade = { t: 0 };
+    this.tweens.add({
+      targets: fade, t: 1, duration: 750, ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        cinematic.endpoints.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha * (1 - fade.t));
+        });
+        cinematic.originals.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha * fade.t);
+        });
+      },
+      onComplete: () => {
+        cinematic.sprites.forEach(obj => obj?.destroy?.());
+        cinematic.originals.forEach(({ obj, alpha }) => {
+          if (obj?.active) obj.setAlpha(alpha);
+        });
+        this._warehouseRwbCinematic = null;
+        onFinished?.();
+      },
+    });
+  }
+
+  playWarehouseHqStory(options = {}) {
+    if (this.crewMode) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'warehouseHqUnlocked', {
+      preview,
+      onPageChange: ({ page }) => {
+        if (page?.cinematicBeat === 'rwbArrival') this.startWarehouseRwbArrival();
+      },
+      onComplete: () => {
+        this.finishWarehouseRwbArrival(() => {
+          this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+        });
+      },
+      onPreviewComplete: () => this.finishWarehouseRwbArrival(),
+    });
+    return Boolean(result?.played);
+  }
+
   playCanalYardStorySequence() {
     if (!this.hasSeenStoryCutscene('canalYardStoryPending') ||
         this.hasSeenStoryCutscene('canalYardAfterCall')) return false;
@@ -7362,16 +7481,9 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     if (cutsceneId !== 'warehouseHqUnlocked') return false;
-    const result = playMangaCutscene(this, cutsceneId, {
-      onComplete: () => {
-        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
-      },
-    });
-
-    if (!result.played) {
-      this.time.delayedCall(180, () => this.continueGarageStoryFlow());
-    }
-    return Boolean(result.played);
+    if (this.playWarehouseHqStory()) return true;
+    this.time.delayedCall(180, () => this.continueGarageStoryFlow());
+    return false;
   }
 
   showFirstRegionalChampionIfNeeded() {
