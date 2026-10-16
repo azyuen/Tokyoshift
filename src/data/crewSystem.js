@@ -207,26 +207,16 @@ export function getCrewRecruitmentChallengeRules(
   const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
     .filter(carId => cars[carId] && !cars[carId].crewLoan);
 
-  if (difficulty === 'EASY') {
-    return {
-      playerDifficulty: difficulty,
-      aiTier: null,
-      aiRating: null,
-      carRule: 'STOCK',
-      powerClass: null,
-      powerClassLabel: null,
-      eligibleCarIds: getStockCrewChallengeCarIds(source),
-    };
-  }
-
+  // Crew recruitment is a genuine factory-stock, same-power-class duel on
+  // every difficulty. Higher difficulties still use tougher opponent AI.
+  // Cosmetic paint/rims do not invalidate an otherwise stock performance build.
   const opponentPerformance = baseCarId
     ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))
     : null;
   const powerClass = getCrewRecruitPowerClass(
     opponentPerformance?.car?.powerKW ?? cars[baseCarId]?.powerKW ?? 0
   );
-
-  const eligibleCarIds = ownedCarIds.filter(carId => {
+  const eligibleCarIds = getStockCrewChallengeCarIds(source).filter(carId => {
     const performance = getVehiclePerformance(carId, states[carId] || {});
     const power = Number(performance?.car?.powerKW || 0);
     return power >= powerClass.minKW && power < powerClass.maxExclusiveKW;
@@ -234,9 +224,11 @@ export function getCrewRecruitmentChallengeRules(
 
   return {
     playerDifficulty: difficulty,
-    aiTier: difficulty === 'HARD' ? 'ELITE' : 'EXPERT',
-    aiRating: difficulty === 'HARD' ? 5 : 4,
-    carRule: 'POWER_CLASS',
+    aiTier: difficulty === 'HARD' ? 'ELITE'
+      : difficulty === 'STANDARD' ? 'EXPERT' : null,
+    aiRating: difficulty === 'HARD' ? 5
+      : difficulty === 'STANDARD' ? 4 : null,
+    carRule: 'STOCK',
     powerClass,
     powerClassLabel: powerClass.label,
     eligibleCarIds,
