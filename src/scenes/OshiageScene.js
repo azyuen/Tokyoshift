@@ -31,15 +31,18 @@ import { createVisualModLayers, getVisualModWheelVisual, preloadVisualModSelecti
 import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { preloadWheelOption } from '../data/wheels.js?v=20260929-r246';
 import {
+  SHOWDOWN_STAGE, SHOWDOWN_SIDE, SHOWDOWN_STRIP,
+} from '../ui/ShowdownLayout.js?v=20261016-shared-showdown';
+import {
   getOshiageRimListings, getOshiageRimQuote, buyOrInstallOshiageRim,
   restoreStockOshiageRims, RIMS_REFRESH_MS, OSHIAGE_RIM_SLOTS,
 } from '../data/oshiageRims.js?v=20261014-r506';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
-const STAGE = { x: 24, y: 92, w: 1138, h: 528 };
-const SIDE = { x: 1180, y: 92, w: 356, h: 724 };
-const STRIP = { x: 24, y: 636, w: 1138, h: 180 };
+const STAGE = SHOWDOWN_STAGE;
+const SIDE = SHOWDOWN_SIDE;
+const STRIP = SHOWDOWN_STRIP;
 const ROOT = 'assets/Oshiage/';
 const SAYAKA = 'assets/Characters/Main/oshiage_sayaka_fujieda_';
 const schoolSayakaKey = pose => 'characterSayakaOshiage' +
