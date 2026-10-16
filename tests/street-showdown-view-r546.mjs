@@ -111,6 +111,32 @@ test('both Skytree and regional Showdowns use the same stage, cards, and action 
   assert.doesNotMatch(view, /SKYTREE\\nUNDERPASS|SKYTREE\\nPLAZA/);
 });
 
+test('both Showdowns match single Meet car font and tuned power/torque disclosure', () => {
+  const meet = read('src/scenes/MeetScene.js');
+  const regular = read('src/ui/StreetShowdownView.js');
+  const skytree = read('src/scenes/OshiageScene.js');
+
+  assert.match(meet, /getPowerTorqueDisplay\(/);
+  assert.match(meet, /getVehiclePerformance\(selectedCarId, selectedState\)/);
+  assert.match(regular, /getPowerTorqueDisplay\(playerCar, playerState, playerPerformance\?\.car \|\| playerCar\)/);
+  assert.match(skytree, /getPowerTorqueDisplay\(playerCar, playerState, playerPerformance\?\.car \|\| playerCar\)/);
+  for (const view of [regular, skytree]) {
+    assert.match(view, /getVehiclePerformance\(playerCarId, playerState\)/);
+    assert.match(view, /playerCar\.shortName \+ '\\n' \+/);
+    assert.match(view, /playerRating\.powerLabel \+ '  •  ' \+ playerRating\.torqueLabel/);
+    assert.match(view, /size: '11px'/);
+    assert.match(view, /color: playerCar \? '#d8e7ef' : '#72838f'/);
+    assert.match(view, /spacing: -2/);
+    assert.match(view, /wrap: SIDE\.w - 40/);
+  }
+  assert.match(regular, /lineSpacing: spacing/);
+  const normalCarText = meet.slice(meet.indexOf('    this.currentCarText = this.add.text('),
+    meet.indexOf('    this.add.text(SIDE.x + 20, SIDE.y + 268'));
+  assert.match(normalCarText, /fontFamily: BODY_FONT/);
+  assert.match(normalCarText, /fontSize: '11px'/);
+  assert.match(normalCarText, /lineSpacing: -2/);
+});
+
 test('the former small popup is retired, but first visit cutscene and cash/coupon payouts are preserved', () => {
   const source = read('src/scenes/MeetScene.js');
   const start = source.indexOf('  showCompetitionPopup(storyConfirmed = false) {');
