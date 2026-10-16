@@ -502,7 +502,10 @@ export default class RaceScene extends Phaser.Scene {
       ? boostAiForPinkSlip(baseRivalAI)
       : { ...baseRivalAI };
 
-    if (!this.isRollingStart && !this.isTutorial) {
+    if (!this.isRollingStart && !this.isTutorial &&
+        !(this.raceMode === 'CREW_RECRUIT' && this.playerDifficulty === 'STANDARD')) {
+      // Standard crew recruitment uses exactly the Expert driver's AI; a
+      // standing-start bonus was pushing it beyond the displayed skill tier.
       rivalAI = boostAiForStandingStart(rivalAI, this.opponentEncounterRating);
     }
 
@@ -865,6 +868,22 @@ export default class RaceScene extends Phaser.Scene {
       });
       saveSessionState(this.registry);
       this.scene.start('OshiageScene', { locationId: 'oshiageSkytreeMeet' });
+      return;
+    }
+
+    if (this.raceMode === 'CREW_RECRUIT') {
+      const challenge = this.registry.get('crewRecruitChallenge');
+      if (challenge?.active) {
+        this.registry.set('crewRecruitChallenge', {
+          ...challenge,
+          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
+          lastLossAt: Date.now(),
+          retryDeferredUntilExit: true,
+        });
+      }
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');
       return;
     }
 
@@ -2404,7 +2423,7 @@ export default class RaceScene extends Phaser.Scene {
         if (!settlement.playerWon) {
           return {
             primary: 'STOCK CHALLENGE LOST',
-            secondary: 'CHALLENGE REMAINS OPEN',
+            secondary: 'COME BACK AND TRY AGAIN LATER',
           };
         }
         return settlement.crewRecruitJoined
@@ -4059,6 +4078,9 @@ export default class RaceScene extends Phaser.Scene {
           active: true,
           attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
           lastLossAt: Date.now(),
+          // A defeat closes this attempt: the invitation must not reopen
+          // automatically on the result-screen return to MeetScene.
+          retryDeferredUntilExit: true,
         });
       }
 
