@@ -101,7 +101,7 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { showCrewRecruitCarSelection } from '../ui/CrewRecruitCarSelection.js?v=20261016-r537';
+import { showCrewRecruitCarSelection } from '../ui/CrewRecruitCarSelection.js?v=20261016-r537b';
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261009-r453';
 import {
   getPendingCentralTokyoInvite,
@@ -127,7 +127,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261011-r479';
+} from '../data/crewSystem.js?v=20261016-r537';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -348,10 +348,13 @@ export default class MeetScene extends Phaser.Scene {
       const backgroundKeys = new Set();
       eligible.forEach(carId => {
         if (!cars[carId]) return;
-        batch.queued += preloadCarAppearanceAssets(
-          this, { [carId]: cars[carId] }, '20261016-r537'
-        );
-        batch.queued += preloadCarWheel(this, cars[carId]);
+        if (!this.preloadedInitialCarIds.includes(carId)) {
+          this.preloadedInitialCarIds.push(carId);
+          batch.queued += preloadCarAppearanceAssets(
+            this, { [carId]: cars[carId] }, '20261016-r537'
+          );
+          batch.queued += preloadCarWheel(this, cars[carId]);
+        }
         const bg = getWorkshopPhaseBackground(
           locations[carId] || this.registry.get('workshopLocationId') || 'shinonomeWorkshop',
           this.worldPhase
