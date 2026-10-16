@@ -1,6 +1,6 @@
-const BUILD = 'R550';
-const ASSET_CACHE = 'tokyoshift-assets-r550';
-const RUNTIME_CACHE = 'tokyoshift-runtime-r550';
+const BUILD = 'R551';
+const ASSET_CACHE = 'tokyoshift-assets-r551';
+const RUNTIME_CACHE = 'tokyoshift-runtime-r551';
 
 self.addEventListener('install', () => self.skipWaiting());
 
