@@ -368,6 +368,31 @@ export default class MeetScene extends Phaser.Scene {
       });
     }
 
+    // Crew showdown portraits and car panels must be ready before opening
+    // the lineup, including teammates from other regions.
+    if (isCrewComplete(this.registry)) {
+      const crewUnits = getCrewBattleUnits(this.registry);
+      const crewRounds = buildRegionalCrewBattleRounds(initialRegion, this.registry);
+      const crewCarIds = [...new Set([...crewUnits, ...crewRounds].map(u => u.carId))]
+        .filter(id => cars[id]);
+      const missingCars = crewCarIds.filter(id => !this.preloadedInitialCarIds.includes(id));
+      missingCars.forEach(id => {
+        this.preloadedInitialCarIds.push(id);
+        batch.queued += preloadCarAppearanceAssets(this, { [id]: cars[id] }, '20261016-r544');
+        batch.queued += preloadCarWheel(this, cars[id]);
+      });
+      [...crewUnits, ...crewRounds].forEach(unit => {
+        const visual = getCharacterVisualForContext(unit.characterId, {
+          rivalContext: true,
+          playerCharacterId: this.registry.get('playerCharacterId') || '',
+        }) || {};
+        if (visual.spriteKey && visual.path && !this.textures.exists(visual.spriteKey)) {
+          this.load.image(visual.spriteKey, getCharacterAssetUrl(visual.path));
+          batch.queued += 1;
+        }
+      });
+    }
+
     startSceneLoading(this, 'LOADING MEET', batch.queued);
   }
 
@@ -838,7 +863,6 @@ export default class MeetScene extends Phaser.Scene {
     txt(780, 77, String(regionId).toUpperCase() + ' // CREW SHOWDOWN', 16);
     txt(350, 122, 'YOUR CREW', 11, '#65ddf5');
     txt(1210, 122, 'REGIONAL CREW', 11, '#f6a3b9');
-    txt(780, 390, 'VS', 34, '#ffe1a0');
 
     const playerX = [165, 375, 585];
     const rivalX = [975, 1185, 1395];
