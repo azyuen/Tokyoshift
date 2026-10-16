@@ -42,8 +42,8 @@ test('Oshiage moves north-west of the old marker and its label sits below the do
 test('each Skytree meet has an independent paid entry and a large three-heat prize', () => {
   assert.equal(OSHIAGE_ELITE_VENUES.underpass.entryFee, 50000);
   assert.equal(OSHIAGE_ELITE_VENUES.plaza.entryFee, 75000);
-  assert.equal(OSHIAGE_ELITE_VENUES.underpass.prizeCash, 500000);
-  assert.equal(OSHIAGE_ELITE_VENUES.plaza.prizeCash, 750000);
+  assert.equal(OSHIAGE_ELITE_VENUES.underpass.prizeCash, 150000);
+  assert.equal(OSHIAGE_ELITE_VENUES.plaza.prizeCash, 250000);
   assert.equal(OSHIAGE_ELITE_VENUES.underpass.rounds, 3);
   assert.equal(OSHIAGE_ELITE_VENUES.plaza.rounds, 3);
 });
@@ -51,11 +51,11 @@ test('each Skytree meet has an independent paid entry and a large three-heat pri
 test('every Skytree prize includes car coupons even when Plaza grants bonus wheels', () => {
   const reg = makeRegistry();
   const underpass = getOshiageElitePrize(reg, 'underpass', 0);
-  assert.equal(underpass.cash, 500000);
+  assert.equal(underpass.cash, 150000);
   assert.equal(underpass.coupons, 2);
   assert.ok(underpass.couponCarId);
   const plaza = getOshiageElitePrize(reg, 'plaza', 0);
-  assert.equal(plaza.cash, 750000);
+  assert.equal(plaza.cash, 250000);
   assert.ok(plaza.coupons >= 2);
   assert.ok(plaza.couponCarId);
   if (plaza.wheelId) {
@@ -96,7 +96,7 @@ test('Plaza locks its wheel-plus-coupon reward and charges entry only once', () 
   assert.equal(result.charged, 75000);
   assert.equal(reg.get('cash'), 125000);
   const prize = reg.get('oshiageEliteSeries').prize;
-  assert.equal(prize.cash, 750000);
+  assert.equal(prize.cash, 250000);
   assert.ok(prize.coupons >= 2);
   assert.ok(prize.couponCarId);
   assert.deepEqual(reg.get('oshiageEliteSeries').lineup.map(x => x.characterId),
@@ -137,7 +137,7 @@ test('showdown charges once, freezes all 3 opponents, and advances to next heat 
   assert.equal(reg.get('oshiageEliteCooldowns').underpass, now + 900000);
   const series = reg.get('oshiageEliteSeries');
   assert.deepEqual(series.lineup.map(x=>x.characterId), displayed.map(x=>x.characterId));
-  assert.equal(series.prize.cash, 500000);
+  assert.equal(series.prize.cash, 150000);
   assert.equal(series.prize.coupons, 2);
   const lockedPrize = JSON.stringify(series.prize);
   assert.equal(getOshiageShowdownAccess(reg, 'plaza', now).allowed, false);
