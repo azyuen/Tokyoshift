@@ -368,6 +368,22 @@ export default class GarageScene extends Phaser.Scene {
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
 
+    // First Sayaka manga dialogue used to queue every alternate Sayaka outfit
+    // just as she finished fading into the garage. Warm only the two actual
+    // FIRST KEYS poses with the workshop; farewell poses load on the tutorial
+    // return to GarageScene. No giant first-spoken-line load or lag spike.
+    const openingPhase = String(this.registry.get('openingChapter') || '');
+    if (['home', 'magazine', 'delivery', 'tutorial'].includes(openingPhase)) {
+      const poses = openingPhase === 'tutorial'
+        ? ['homeNormal', 'homeSad', 'homeHappy', 'homeBlushing', 'homeSerious']
+        : ['homeNormal', 'homeSad'];
+      const assets = characters.sayakaFujieda?.visual?.poseAssets || {};
+      poses.forEach(pose => {
+        const asset = assets[pose];
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      });
+    }
+
     // A workshop can show and switch between its local cars without another
     // network round trip. At Warehouse HQ also warm the crew loan cars so the
     // Crew Space doorway can be an instant in-scene presentation switch.
@@ -7005,6 +7021,7 @@ export default class GarageScene extends Phaser.Scene {
       };
       if (!this.hasSeenStoryCutscene('openingSayakaKeys')) {
         const result = playMangaCutscene(this, 'openingSayakaKeys', {
+          preloadPagePosesOnly: true,
           onComplete: () => this.time.delayedCall(130, () => this.showOpeningTutorialChoice()),
         });
         return Boolean(result.played);
@@ -7019,6 +7036,7 @@ export default class GarageScene extends Phaser.Scene {
       }
       if (!this.hasSeenStoryCutscene('openingSayakaFarewell')) {
         const result = playMangaCutscene(this, 'openingSayakaFarewell', {
+          preloadPagePosesOnly: true,
           exitFadeMs: 850,
           onComplete: finishSayakaFarewell,
         });
