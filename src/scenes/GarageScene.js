@@ -385,6 +385,17 @@ export default class GarageScene extends Phaser.Scene {
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
 
+    // Crew Space does not normally load office flags. The new transparent
+    // Scene 07 portrait gallery still uses the same flags as Scene 06.
+    if (this.crewMode && isCrewComplete(this.registry) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('fullCrewTogether')) {
+      for (const region of ['odaiba', 'shinagawa', 'tatsumi',
+          'shibuya', 'yokohama', 'daikoku', 'shinjuku']) {
+        const key = 'officeFlag' + region[0].toUpperCase() + region.slice(1);
+        queueImage(key, 'assets/Garage/flag_' + region + '.png?v=20261005-r362');
+      }
+    }
+
     // Scene 06 reuses the ACTUAL seven rival portraits (or the canonical
     // substitute if the selected avatar is the same person) and the office
     // flags already queued above. Nothing here creates a recruit or rival.
