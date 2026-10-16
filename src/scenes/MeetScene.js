@@ -432,6 +432,7 @@ export default class MeetScene extends Phaser.Scene {
     this.specialChallengePreparing = false;
     this.specialChallengeObjects = [];
     this.competitionPopup = null;
+    this.competitionLoading = false;
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
@@ -1293,7 +1294,8 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowRegionalCrewIntroduction({ countChallengeVisit = false } = {}) {
     if (this.isCrewTestDriveMode()) return false;
-    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) {
+    if (!this.hasCar || this.specialChallengeActive ||
+        this.competitionLoading || this.competitionPopup?.active) {
       return false;
     }
 
@@ -1836,7 +1838,8 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowTunerTeamChallenge({ countReofferVisit = false } = {}) {
     if (this.isCrewTestDriveMode()) return false;
-    if (!this.hasCar || this.specialChallengeActive || this.competitionPopup?.active) return false;
+    if (!this.hasCar || this.specialChallengeActive ||
+        this.competitionLoading || this.competitionPopup?.active) return false;
 
     const location = getMeetLocation(this.selectedMeetLocation);
     const regionId = String(location?.district || '').toUpperCase();
@@ -3915,7 +3918,7 @@ export default class MeetScene extends Phaser.Scene {
 
   showCompetitionPopup(storyConfirmed = false) {
     if (this.isCrewTestDriveMode() || this.specialChallengeActive ||
-        !this.hasCar || this.competitionPopup?.active ||
+        !this.hasCar || this.competitionLoading || this.competitionPopup?.active ||
         this.getCompetitionCooldownRemainingMs() > 0) return;
 
     // Keep the authored first-visit invitation, then show the redesigned
@@ -3938,6 +3941,7 @@ export default class MeetScene extends Phaser.Scene {
     // here for ALL three cards and side-profile cars so previews never flash
     // missing texture errors, even on iPads and older saved Meet profiles.
     const present = () => {
+      this.competitionLoading = false;
       if (!this.sys.isActive() || this.competitionPopup?.active ||
           this.specialChallengeActive) return;
       const current = this.getCompetitionOffer();
@@ -3972,6 +3976,10 @@ export default class MeetScene extends Phaser.Scene {
       });
     };
 
+    // A Meet invitation can be scheduled while artwork loads. Block that
+    // automatic story handoff AND repeated Showdown taps until this view is
+    // ready, so manga overlays never cover the Showdown ENTER button.
+    this.competitionLoading = true;
     if (this.ensureMeetRosterAssets(
       offer.rounds, this.selectedMeetLocation, 'LOADING SHOWDOWN', present
     )) return;
