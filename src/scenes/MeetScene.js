@@ -69,7 +69,11 @@ import {
 import { PROGRESSION_BALANCE } from '../data/progressionBalance.js?v=20260929-r271';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20261010-r468';
 import { createMeetOpponentMatch } from '../data/meetMatchmaking.js?v=20261011-r479';
-import { createStreetShowdownRounds } from '../data/streetShowdowns.js?v=20261011-r479';
+import {
+  createStreetShowdownRounds,
+  STREET_SHOWDOWN_CASH_ENTRY_FEES,
+  getStreetShowdownCouponEntryFee,
+} from '../data/streetShowdowns.js?v=20261016-showdown-fees';
 import { createRivalBuildState } from '../data/rivalBuilds.js?v=20260928-r234';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import {
@@ -3722,11 +3726,11 @@ export default class MeetScene extends Phaser.Scene {
     const difficulty = profile.difficulty || 'MED';
 
     const settings = {
-      EASY: { entryFee: 10000, cashPrize: 20000 },
-      MED: { entryFee: 20000, cashPrize: 32000 },
-      HARD: { entryFee: 35000, cashPrize: 48000 },
-      ELITE: { entryFee: 50000, cashPrize: 70000 },
-    }[difficulty] || { entryFee: 20000, cashPrize: 32000 };
+      EASY: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.EASY, cashPrize: 20000 },
+      MED: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.MED, cashPrize: 32000 },
+      HARD: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.HARD, cashPrize: 48000 },
+      ELITE: { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.ELITE, cashPrize: 70000 },
+    }[difficulty] || { entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES.MED, cashPrize: 32000 };
 
     const owned = this.registry.get('ownedCarIds') || [];
     const playerCarId = this.registry.get('selectedCarId');
@@ -3790,11 +3794,7 @@ export default class MeetScene extends Phaser.Scene {
     if (prizeType === 'COUPON' && prizeCarId) {
       const carValue = Math.max(0, Number(MARKET_BASE_PRICES[prizeCarId] || 0));
       const couponRequirement = Math.max(1, getCarCouponRequirement(prizeCarId));
-      const rawCouponFee = carValue > 0
-        ? (carValue / couponRequirement) * 0.05
-        : 60000;
-      const roundedCouponFee = Math.round(rawCouponFee / 5000) * 5000;
-      entryFee = Phaser.Math.Clamp(roundedCouponFee, 60000, 220000);
+      entryFee = getStreetShowdownCouponEntryFee(carValue, couponRequirement);
     }
 
     return {
@@ -3808,7 +3808,7 @@ export default class MeetScene extends Phaser.Scene {
       prizeCarId,
       restriction: null,
       rounds,
-      balanceVersion: 'R479',
+      balanceVersion: 'R20261016-fees',
       playerCarId,
       garageTier,
       winsAtGeneration: wins,
@@ -3830,7 +3830,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
-      current?.balanceVersion !== 'R479' ||
+      current?.balanceVersion !== 'R20261016-fees' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
       current?.winsAtGeneration !== Math.max(0, Number(this.registry.get('wins') || 0)) ||
