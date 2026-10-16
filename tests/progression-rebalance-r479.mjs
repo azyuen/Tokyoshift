@@ -102,9 +102,9 @@ test('cash Showdown entry fees remain moderate and grow by difficulty', () => {
   for (const difficulty of ['EASY', 'MED', 'HARD', 'ELITE']) {
     assert.match(scene, new RegExp('entryFee: STREET_SHOWDOWN_CASH_ENTRY_FEES\\.' + difficulty));
   }
-  assert.match(scene, /getStreetShowdownCouponEntryFee\\(carValue, couponRequirement\\)/);
+  assert.match(scene, /getStreetShowdownCouponEntryFee\(carValue, couponRequirement\)/);
   assert.match(scene, /balanceVersion: 'R20261016-fees'/);
-  assert.match(scene, /current\\?\\.balanceVersion !== 'R20261016-fees'/);
+  assert.match(scene, /current\?\.balanceVersion !== 'R20261016-fees'/);
 });
 
 test('coupon entry prices use nonlinear market-value bands with guarded boundaries', () => {
