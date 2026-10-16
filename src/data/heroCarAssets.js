@@ -41,6 +41,8 @@ export function applyHeroCarAssets(cars) {
       referenceCanvasWidth: g.width || 1300, referenceCanvasHeight: 440,
       referenceWheelDiameter: rear,
       referenceRearWheelDiameter: rear, referenceFrontWheelDiameter: front,
+      referenceRearWheelYOffset: Number(g.rearYOffset || 0),
+      referenceFrontWheelYOffset: Number(g.frontYOffset || 0),
       referenceRearWheelSize: g.rear, referenceFrontWheelSize: g.front,
       bodyScale: 0.32, canvasDisplayScale: 1,
       renderOffsetY: 0, bodyRenderOffsetX: 0, bodyRenderOffsetY: 0,

@@ -5,14 +5,15 @@
 //
 // Every standard car shares masterScale for a given scene display multiplier.
 // Axle X values are negative source-pixel offsets from the PNG RIGHT EDGE.
-// Tyre diameter is selected from two common source-pixel sizes (S / L).
+// Source sizes: S=small, L=medium (legacy name), XL=large.
 // Do not change this authored geometry when migrating scene renderers.
 export const STANDARD_CAR_REFERENCE = {
   note: 'Source pixels. Common bottom-right origin. Global scale from AE86.',
   masterScale: 0.32,
   wheelDiameters: {
     S: 182,
-    L: 194,
+    L: 194, // legacy label for Medium
+    XL: 210,
   },
   cars: {
     // Measured from the uploaded 1300x440 GF8 silhouette, right-origin coordinates.

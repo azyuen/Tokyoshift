@@ -2214,6 +2214,8 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
   const canvas = REFERENCE_CAR_CANVAS[fileStem];
   if (!visual || !geometry || !canvas) continue;
   const diameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.size];
+  const rearDiameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.rearSize || geometry.size] || diameter;
+  const frontDiameter = STANDARD_CAR_REFERENCE.wheelDiameters[geometry.frontSize || geometry.size] || diameter;
   const assetRoot = getReferenceAssetRoot(fileStem);
 
   Object.assign(visual, {
@@ -2223,6 +2225,10 @@ for (const [gameId, fileStem] of Object.entries(REFERENCE_CAR_GAME_IDS)) {
     referenceCanvasHeight: canvas[1],
     referenceWheelDiameter: diameter,
     referenceWheelSize: geometry.size,
+    referenceRearWheelDiameter: rearDiameter,
+    referenceFrontWheelDiameter: frontDiameter,
+    referenceRearWheelYOffset: Number(geometry.rearYOffset || 0),
+    referenceFrontWheelYOffset: Number(geometry.frontYOffset || 0),
     // Shift only the car art, not its tyre-ground/wheel registration.
     bodyRenderOffsetY: Number(geometry.bodyRenderOffsetY || 0),
     modularAssetRoot: assetRoot,
