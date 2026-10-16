@@ -38,7 +38,12 @@ import {
 import {
   getPartRemovalQuote,
   removeTuningPartFromState,
-} from '../data/partUninstall.js?v=20261009-r456';
+  listStorableKitParts,
+  storeSelectedKitParts,
+  restoreStoredKitParts,
+  STORE_KIT_REMOVE_FEE,
+  STORE_KIT_RESTORE_FEE,
+} from '../data/partUninstall.js?v=20261016-r541';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -531,7 +536,7 @@ export default class GarageScene extends Phaser.Scene {
     if (this.crewMode) {
       this.buildCrewSpaceNavigation();
     } else {
-      this.buildMoveCarButton();
+      this.buildStoreRestoreKitButton();
       this.buildWorkshopJumpButton();
       this.buildOfficeHotspot();
       this.buildWarehouseSpaceHotspots();
@@ -1836,44 +1841,27 @@ export default class GarageScene extends Phaser.Scene {
 
   updateMoveCarButtonState() {
     if (!this.moveCarButton || !this.moveCarLabel) return;
-
-    const locked = Boolean(this.engineMode || this.secondaryMode || this.chassisMode);
-    const currentWorkshopId = this.getActiveWorkshop().id;
-    const alternatives = getUnlockedWorkshops(this.registry.get('garageTier') || 0)
-      .filter(workshop =>
-        workshop.id !== currentWorkshopId &&
-        getWorkshopUsage(
-          this.ownedCarIds,
-          this.carGarageLocations || {},
-          workshop.id
-        ) < getWorkshopStorageCapacity(workshop.id)
-      );
-
-    const crewLoan = Boolean(cars[this.selectedCarId]?.crewLoan);
-    const enabled =
-      !locked &&
-      !crewLoan &&
-      Boolean(this.selectedCarId) &&
-      alternatives.length > 0;
-
+    const warehouse = this.getActiveWorkshop().tier === 2;
+    const eligible = warehouse && Boolean(this.selectedCarId) &&
+      !this.isSelectedCarTuningLocked() &&
+      !this.engineMode && !this.secondaryMode && !this.chassisMode;
+    const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
+    const enabled = eligible && (stored ||
+      listStorableKitParts((this.registry.get('carStates') || {})[this.selectedCarId] || {}).length > 0);
+    this.moveCarLabel.setText(!warehouse ? 'KIT STORAGE // HQ ONLY'
+      : stored ? 'RESTORE KIT  >' : 'STORE KIT  >');
     if (enabled) {
-      this.moveCarButton
-        .setInteractive({ useHandCursor: true })
-        .setFillStyle(0x102138, 1)
-        .setStrokeStyle(2, 0x55b8ff, 1);
-      this.moveCarLabel.setColor('#eef8ff').setText('MOVE CAR  >');
+      this.moveCarButton.setInteractive({ useHandCursor: true })
+        .setFillStyle(0x102138).setStrokeStyle(2, 0x55b8ff);
+      this.moveCarLabel.setColor('#eef8ff');
     } else {
-      this.moveCarButton
-        .disableInteractive()
-        .setFillStyle(0x17181d, 1)
-        .setStrokeStyle(1, 0x514f55, 1);
-      this.moveCarLabel
-        .setColor('#817d84')
-        .setText(crewLoan ? 'CREW LOAN // WAREHOUSE' : 'MOVE CAR');
+      this.moveCarButton.disableInteractive().setFillStyle(0x17181d)
+        .setStrokeStyle(1, 0x514f55);
+      this.moveCarLabel.setColor('#817d84');
     }
   }
 
-  showMoveCarPopup() {
+  showMoveCarPopup(targetWorkshopId = null) {
     if (
       !this.selectedCarId ||
       cars[this.selectedCarId]?.crewLoan ||
@@ -2068,7 +2056,7 @@ export default class GarageScene extends Phaser.Scene {
       confirm.on('pointerdown', () => performTransfer(workshop, transferCost, confirmObjects));
     };
 
-    unlocked.forEach((workshop, index) => {
+    unlocked.filter(workshop => !targetWorkshopId || workshop.id === targetWorkshopId).forEach((workshop, index) => {
       const y = 305 + index * 100;
       const usage = getWorkshopUsage(
         this.ownedCarIds,
@@ -2145,6 +2133,111 @@ export default class GarageScene extends Phaser.Scene {
 
     closeButton.on('pointerdown', close);
     blocker.on('pointerdown', close);
+  }
+
+  buildStoreRestoreKitButton() {
+    this.moveCarButton = this.add.rectangle(
+      SIDE.x + SIDE.w / 2, 662, SIDE.w - 32, 42, 0x102138, 1
+    ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
+    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, 662, 'STORE & RESTORE KIT', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff',
+    }).setOrigin(0.5).setDepth(41);
+    this.moveCarButton.on('pointerdown', () => this.showStoreRestoreKitPopup());
+    this.updateMoveCarButtonState();
+  }
+
+  showStoreRestoreKitPopup() {
+    if (this.crewMode || this.getActiveWorkshop().tier !== 2 ||
+        !this.selectedCarId || this.isSelectedCarTuningLocked() ||
+        this.engineMode || this.secondaryMode || this.chassisMode) return;
+    const carId = this.selectedCarId;
+    const initial = (this.registry.get('carStates') || {})[carId] || {};
+    const restoring = Boolean(initial.storedKit);
+    const available = restoring ? [] : listStorableKitParts(initial);
+    if (!restoring && !available.length) {
+      this.showWorkshopToast('NO INSTALLED UPGRADES TO STORE');
+      return;
+    }
+    const selected = new Set(available.map(part => part.key));
+    const depth = 160;
+    const objects = [];
+    const add = object => { objects.push(object); return object; };
+    const close = () => objects.forEach(object => object?.destroy?.());
+    add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.84)
+      .setInteractive().setDepth(depth)).on('pointerdown', close);
+    add(this.add.rectangle(780, 420, 960, 710, 0x08131f, 1)
+      .setStrokeStyle(2, 0x43dfff).setDepth(depth + 1));
+    const label = (x, y, value, size = 10, color = '#eefaff') =>
+      add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
+        fontSize: size + 'px', color }).setDepth(depth + 3));
+    label(350, 104, restoring ? 'RESTORE STORED KIT' : 'REMOVE & STORE KIT', 14);
+    label(350, 145, cars[carId]?.shortName || carId, 10, '#9fc7db');
+    const rows = restoring
+      ? Object.entries(initial.storedKit.parts || {}).map(([key, level]) => {
+          const [category, partId] = key.split(':');
+          return { key, category, partId, level, name: partId };
+        })
+      : available;
+    label(350, 181, restoring
+      ? 'ALL STORED PARTS WILL BE RESTORED OR DISCARDED.'
+      : 'SELECT PARTS TO REMOVE. ONE KIT SLOT PER CAR.', 9, '#b8cbd7');
+    const rowStart = 222;
+    const colWidth = 450;
+    rows.forEach((part, i) => {
+      const col = Math.floor(i / 11);
+      const row = i % 11;
+      const x = 355 + col * colWidth;
+      const y = rowStart + row * 35;
+      if (col > 1) return;
+      const text = label(x + 12, y,
+        (restoring ? 'LV.' : '[X] LV.') + part.level + '  ' +
+        String(part.name || part.partId).toUpperCase(), 8, '#d6e8f3');
+      if (!restoring) {
+        const hit = add(this.add.rectangle(x + 205, y + 9, 418, 31, 0xffffff, 0.001)
+          .setInteractive({ useHandCursor: true }).setDepth(depth + 4));
+        hit.on('pointerdown', () => {
+          if (selected.has(part.key)) selected.delete(part.key);
+          else selected.add(part.key);
+          text.setText((selected.has(part.key) ? '[X] ' : '[ ] ') +
+            'LV.' + part.level + '  ' + String(part.name).toUpperCase());
+        });
+      }
+    });
+    const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
+    label(350, 634, 'LABOUR FEE  ¥ ' + fee.toLocaleString('en-US'), 10, '#f2d899');
+    const action = add(this.add.rectangle(960, 703, 260, 48, 0x0c2827, 1)
+      .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    label(850, 696, restoring ? 'PAY & RESTORE' : 'PAY & STORE', 9);
+    const cancel = add(this.add.rectangle(555, 703, 210, 48, 0x17222e, 1)
+      .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
+      .setDepth(depth + 3));
+    label(502, 696, 'CANCEL', 9);
+    cancel.on('pointerdown', close);
+    action.on('pointerdown', () => {
+      if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
+          this.isSelectedCarTuningLocked()) { close(); return; }
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const live = states[carId] || {};
+      const cash = Number(this.registry.get('cash') || 0);
+      if (cash < fee) { this.showWorkshopToast('NOT ENOUGH CASH'); return; }
+      if (Boolean(live.storedKit) !== restoring) {
+        close(); this.showWorkshopToast('KIT STATUS CHANGED'); return;
+      }
+      const updated = restoring
+        ? restoreStoredKitParts(live)
+        : storeSelectedKitParts(live, [...selected]);
+      if (!updated) { this.showWorkshopToast('SELECT VALID PARTS'); return; }
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - fee);
+      this.cashText?.setText('¥ ' + (cash - fee).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+      this.selectCar(carId, { remember: false });
+      this.updateMoveCarButtonState();
+      this.showWorkshopToast(restoring ? 'STORED KIT RESTORED' : 'PARTS STORED');
+    });
   }
 
   buildMoveCarButton() {
@@ -2309,90 +2402,57 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth + 2));
 
     WORKSHOP_TIERS.forEach((workshop, index) => {
-      const y = 330 + index * 82;
-      const isUnlocked = workshop.tier <= ownedTier;
-      const isCurrent = isUnlocked && workshop.id === current.id;
-      const isNextUnlock = workshop.tier === ownedTier + 1;
-      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-      const cost = Math.max(0, Number(workshop.unlockCost || 0));
-      const affordable = cash >= cost;
-      const regionalWins = getTotalRegionalWins(this.registry);
-      const requiredRegionalWins = getWorkshopRegionalWinRequirement(workshop.tier);
-      const progressionReady = isWorkshopProgressionReady(this.registry, workshop.tier);
-      const usage = isUnlocked
-        ? getWorkshopUsage(
-            this.ownedCarIds,
-            this.carGarageLocations || {},
-            workshop.id
-          )
-        : 0;
+      const y = 330 + index * 92;
+      const unlocked = workshop.tier <= ownedTier;
+      const here = unlocked && workshop.id === current.id;
+      const next = workshop.tier === ownedTier + 1;
+      const cash = Number(this.registry.get('cash') || 0);
+      const cost = Number(workshop.unlockCost || 0);
+      const ready = isWorkshopProgressionReady(this.registry, workshop.tier);
+      const used = unlocked
+        ? getWorkshopUsage(this.ownedCarIds, this.carGarageLocations || {}, workshop.id) : 0;
       const capacity = getWorkshopStorageCapacity(workshop.id);
-
-      const fill = isCurrent
-        ? 0x152a2a
-        : isUnlocked
-          ? 0x102138
-          : isNextUnlock
-            ? 0x211a12
-            : 0x15171c;
-      const stroke = isCurrent
-        ? 0x62e8c7
-        : isUnlocked
-          ? 0x55b8ff
-          : isNextUnlock
-            ? 0xe4b660
-            : 0x514f55;
-
-      const box = add(this.add.rectangle(
-        780,
-        y,
-        650,
-        62,
-        fill,
-        1
-      ).setStrokeStyle(2, stroke, 1)
-        .setDepth(depth + 2));
-
-      add(this.add.text(485, y - 10, workshop.label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: isUnlocked || isNextUnlock ? '#eef8ff' : '#817d84',
+      const full = used >= capacity;
+      const transport = getWorkshopTransferCost(current.id, workshop.id);
+      const canMove = unlocked && !here && !full &&
+        cash >= transport && Boolean(this.selectedCarId) &&
+        !cars[this.selectedCarId]?.crewLoan;
+      const canGo = unlocked && !here;
+      add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
+        .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
+      add(this.add.text(450, y - 17, workshop.label, {
+        fontFamily: PIXEL_FONT, fontSize: '9px',
+        color: unlocked ? '#eef8ff' : '#817d84',
       }).setDepth(depth + 3));
-
-      let meta = '';
-      let metaColor = '#9fc7db';
-      if (isCurrent) {
-        meta = usage + ' / ' + capacity + ' CARS  //  HERE';
-        metaColor = '#78ddc8';
-      } else if (isUnlocked) {
-        meta = usage + ' / ' + capacity + ' CARS  //  GO >';
-      } else if (isNextUnlock) {
-        if (!progressionReady) {
-          meta = 'REGIONAL WINS  ' + regionalWins + '/' + requiredRegionalWins;
-          metaColor = '#c99aa4';
-        } else {
-          meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
-            '¥ ' + Number(cost).toLocaleString('en-US');
-          metaColor = affordable ? '#f2d899' : '#c99aa4';
-        }
+      add(this.add.text(450, y + 12, unlocked
+        ? used + ' / ' + capacity + ' CARS' + (here ? '  //  HERE' : '')
+        : next ? ready ? 'UNLOCK  ¥ ' + cost.toLocaleString('en-US')
+          : 'REGIONAL WINS  ' + getTotalRegionalWins(this.registry) +
+            '/' + getWorkshopRegionalWinRequirement(workshop.tier)
+          : 'LOCKED', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#9fc7db',
+      }).setDepth(depth + 3));
+      const button = (x, title, active, action) => {
+        const box = add(this.add.rectangle(x, y, 154, 42,
+          active ? 0x0c2827 : 0x17181d, 1)
+          .setStrokeStyle(1, active ? 0x62e8c7 : 0x514f55).setDepth(depth + 3));
+        add(this.add.text(x, y, title, {
+          fontFamily: PIXEL_FONT, fontSize: '7px',
+          color: active ? '#e7fff8' : '#817d84',
+        }).setOrigin(0.5).setDepth(depth + 4));
+        if (active) box.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+      };
+      if (unlocked) {
+        button(830, here ? 'CURRENT' : full ? 'FULL' : 'MOVE CAR HERE', canMove,
+          () => {
+            close();
+            this.showMoveCarPopup(workshop.id);
+          });
+        button(1005, here ? 'YOU ARE HERE' : 'GO HERE', canGo,
+          () => reloadIntoWorkshop(workshop));
       } else {
-        meta = 'LOCKED // UNLOCK PREVIOUS WORKSHOP';
-        metaColor = '#817d84';
-      }
-
-      add(this.add.text(1075, y + 12, meta, {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: metaColor,
-        fontStyle: '700',
-      }).setOrigin(1, 0.5).setDepth(depth + 3));
-
-      if (isUnlocked && !isCurrent) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => reloadIntoWorkshop(workshop));
-      } else if (!isUnlocked && isNextUnlock && affordable && progressionReady) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => unlockWorkshop(workshop));
+        button(1005, next ? 'UNLOCK' : 'LOCKED',
+          next && ready && cash >= cost, () => unlockWorkshop(workshop));
       }
     });
 
