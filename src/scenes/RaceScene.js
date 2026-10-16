@@ -104,7 +104,7 @@ import {
   areAllCrewBattlesComplete,
   getCrewMembers,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261011-r479';
+} from '../data/crewSystem.js?v=20261016-r544';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -4136,7 +4136,7 @@ export default class RaceScene extends Phaser.Scene {
       const opponentScore = Math.max(0, Number(state.opponentWins || 0)) + (playerWon ? 0 : 1);
       const nextRoundIndex = roundIndex + 1;
       const remaining = Math.max(0, CREW_BATTLE_LINEUP_SIZE - nextRoundIndex);
-      const playerCanStillReachFour = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
+      const playerCanStillWin = playerScore + remaining >= CREW_BATTLE_WINS_REQUIRED;
       const battleWon = playerScore >= CREW_BATTLE_WINS_REQUIRED;
       const battleLost =
         !battleWon &&
