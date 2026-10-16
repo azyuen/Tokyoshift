@@ -51,7 +51,13 @@ try {
     const s = window.TOKYO_SHIFT?.scene?.getScene('OshiageScene');
     const allText = (s?.content || []).filter(o => typeof o?.text === 'string')
       .map(o => o.text);
+    const carSummary = (s?.content || []).find(o =>
+      typeof o?.text === 'string' && o.x === 1200 && o.y === 289 &&
+      o.text.includes(' kW') && o.text.includes(' Nm'));
     return {
+      carSummary: carSummary?.text,
+      carFont: carSummary?.style?.fontFamily,
+      carFontSize: carSummary?.style?.fontSize,
       active: Boolean(s?.sys.isActive()),
       background: s?.backgroundAsset()?.key || '',
       lineup: s?.getEliteLineup(s?.meetAlternative ? 'plaza' : 'underpass')
@@ -94,6 +100,10 @@ try {
   assert.equal(first.active, true);
   assert.equal(first.lineup.length, 3);
   assert.equal(new Set(first.lineup).size, 3);
+  assert.match(first.carSummary || '', /kW  •  .* Nm/,
+    'Skytree must show the selected car power and torque');
+  assert.equal(first.carFont, '"Rajdhani", monospace');
+  assert.equal(first.carFontSize, '11px');
   for (const name of ['SHOWDOWN LOCATION','YOUR CAR','THREE ELITE RIVALS',
     'RIVALS IN THE SHOWDOWN','SKYTREE','WIN ALL 3 HEATS']) {
     assert.ok(first.text.some(t => t.includes(name)), 'missing Meet control: ' + name);
