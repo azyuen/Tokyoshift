@@ -50,6 +50,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r557';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r557';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r559';
+import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r560';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r557';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
@@ -68,6 +69,7 @@ import {
   isCrewUnlocked,
   getCrewMembers,
   getCrewCount,
+  isCrewComplete,
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
@@ -372,6 +374,12 @@ export default class GarageScene extends Phaser.Scene {
             ? Object.values(members).map(member => member.characterId)
             : []),
         ];
+    // A full crew opens Scene 07 in the crew room. Preload Daichi and
+    // Sayaka's home poses here so their surprise appearance isn't delayed.
+    if (this.crewMode && isCrewComplete(this.registry) &&
+        !(this.registry.get('cutscenesSeen') || []).includes('fullCrewTogether')) {
+      characterIds.push('daichiSakamoto', 'sayakaFujieda');
+    }
     [...new Set(characterIds)].forEach(id => {
       const visual = characters[id]?.visual;
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
@@ -587,13 +595,18 @@ export default class GarageScene extends Phaser.Scene {
 
     if (this.crewMode) {
       // A same-scene Warehouse -> Crew restart can finish object teardown a
-      // frame after create(). Reassert the Crew Space nav after state drawing
-      // so its three persistent actions can never disappear on re-entry.
+      // frame after create(). Reassert the Crew Space nav after state drawing.
       this.refreshCrewSpaceNavigationState();
       this.time.delayedCall(0, () => this.refreshCrewSpaceNavigationState());
     }
 
     finishSceneLoading('READY');
+
+    // After the normal Crew Space overview exists, celebrate seven REAL
+    // recruited drivers once per save. No premature unlock of crew battles.
+    if (this.crewMode) {
+      this.time.delayedCall(420, () => this.showFullCrewStoryIfNeeded());
+    }
 
     // Warm the tuning bay in the background once the workshop itself is
     // visible. This keeps initial garage entry quick, but removes the visible
@@ -7475,6 +7488,33 @@ export default class GarageScene extends Phaser.Scene {
     return Boolean(result?.played);
   }
 
+
+  showFullCrewStoryIfNeeded() {
+    if (!this.crewMode || sceneCutsceneActive(this) ||
+        !isCrewComplete(this.registry) ||
+        this.hasSeenStoryCutscene('fullCrewTogether') ||
+        isArkonDen(this.registry)) return false;
+    return this.playFullCrewStory();
+  }
+
+  playFullCrewStory(options = {}) {
+    if (!options.preview && (!this.crewMode ||
+        !isCrewComplete(this.registry) || sceneCutsceneActive(this))) return false;
+    const preview = Boolean(options.preview);
+    const result = playMangaCutscene(this, 'fullCrewTogether', {
+      preview,
+      preloadPagePosesOnly: true,
+      onPageChange: ({ page }) => {
+        if (page?.cinematicBeat === 'completeCrewGroup') {
+          showFullCrewCelebration(this, { preview });
+        }
+      },
+      onComplete: () => this._fullCrewCelebration?.stop?.(),
+      onPreviewComplete: () => this._fullCrewCelebration?.stop?.(),
+      onCancel: () => this._fullCrewCelebration?.stop?.(),
+    });
+    return Boolean(result?.played);
+  }
 
   startSevenRivalsMontage() {
     // Use the same large portrait renderer as Daichi and the protagonist.
