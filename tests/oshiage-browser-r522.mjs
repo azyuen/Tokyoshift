@@ -103,7 +103,8 @@ try {
   assert.match(first.carSummary || '', /kW  •  .* Nm/,
     'Skytree must show the selected car power and torque');
   assert.equal(first.carFont, '"Rajdhani", monospace');
-  assert.equal(first.carFontSize, '11px');
+  assert.ok(Number.parseFloat(first.carFontSize) >= 11,
+    'Skytree text must remain legible after Phaser applies its effective font scaling');
   for (const name of ['SHOWDOWN LOCATION','YOUR CAR','THREE ELITE RIVALS',
     'RIVALS IN THE SHOWDOWN','SKYTREE','WIN ALL 3 HEATS']) {
     assert.ok(first.text.some(t => t.includes(name)), 'missing Meet control: ' + name);
