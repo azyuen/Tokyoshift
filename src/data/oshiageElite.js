@@ -11,11 +11,11 @@ export const OSHIAGE_ELITE_COOLDOWN_MS = 15 * 60 * 1000;
 export const OSHIAGE_ELITE_VENUES = Object.freeze({
   underpass: Object.freeze({
     id: 'underpass', label: 'SKYTREE UNDERPASS', backgroundStem: 'oshiage_skytree01',
-    entryFee: 50000, prizeCash: 500000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
+    entryFee: 50000, prizeCash: 150000, distanceM: 402.336, raceType: 'Standing Start', rounds: 3, couponCount: 2,
   }),
   plaza: Object.freeze({
     id: 'plaza', label: 'SKYTREE PLAZA', backgroundStem: 'oshiage_skytree02',
-    entryFee: 75000, prizeCash: 750000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
+    entryFee: 75000, prizeCash: 250000, distanceM: 804.672, raceType: 'Standing Start', rounds: 3, couponCount: 3,
   }),
 });
 export const OSHIAGE_ELITE_VENUE_IDS = Object.freeze(Object.keys(OSHIAGE_ELITE_VENUES));
