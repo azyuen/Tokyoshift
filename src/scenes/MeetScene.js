@@ -34,7 +34,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
+import { saveSessionState } from '../state/GameState.js?v=20261016-r544';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -127,7 +127,7 @@ import {
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261016-r537';
+} from '../data/crewSystem.js?v=20261016-r544';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
