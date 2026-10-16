@@ -55,7 +55,6 @@ export function preloadSevenRivalsMontageAssets(scene, onReady) {
   return pending.size;
 }
 
-const limit = (n, min, max) => Math.max(min, Math.min(max, n));
 const mix = (a, b, t) => a + (b - a) * t;
 const destroySafely = obj => { try { obj?.destroy?.(); } catch (_) {} };
 
@@ -99,7 +98,7 @@ export function startSevenRivalsPortraitMontage(scene) {
   const flags = [];
   const baseActorAlphas = [];
   let animation = null;
-  let nextTimer = null;
+  let pendingHold = null;
   let active = true;
   const own = object => { if (object) objects.push(object);return object; };
   const state = {
@@ -109,7 +108,7 @@ export function startSevenRivalsPortraitMontage(scene) {
       active = false;
       state.active = false;
       animation?.stop?.();
-      nextTimer?.remove?.(false);
+      pendingHold?.stop?.();
       objects.forEach(destroySafely);
       portraits.forEach(item => item.profile?.destroy?.());
       baseActorAlphas.forEach(({ image, alpha }) => {
@@ -127,21 +126,27 @@ export function startSevenRivalsPortraitMontage(scene) {
   scene.events?.once?.('shutdown', state.stop);
   scene.events?.once?.('destroy', state.stop);
 
-  // Leave the existing manga dialogue/characters where they are. Dim the
-  // latter almost to zero and restore their exact original alpha afterwards.
+  // The player's 'I remember every race' line is spoken BEFORE this beat.
+  // When that dialogue is acknowledged, dissolve the player and Daichi over
+  // a full second, while the first rival and the Crew flags emerge slowly.
+  const currentPage = scene._mangaCutscene?.definition?.pages?.[
+    scene._mangaCutscene?.pageIndex
+  ];
   for (const side of ['left', 'right']) {
     const image = scene._mangaCutscene?.actors?.[side]?.profile?.image;
     if (!image?.active) continue;
-    baseActorAlphas.push({ image, alpha: image.alpha });
+    const alpha = currentPage?.speaker === side ? 1 : 0.72;
+    baseActorAlphas.push({ image, alpha });
     scene.tweens?.killTweensOf?.(image);
-    scene.tweens.add({
-      targets: image, alpha: 0.035, duration: 480,
-      ease: 'Sine.easeInOut',
-    });
   }
 
   const curtain = own(scene.add.rectangle(width / 2, height / 2, width, height,
-    0x090d15, 0.84).setDepth(949).setScrollFactor(0).setInteractive());
+    0x090d15, 0.84).setDepth(949).setScrollFactor(0)
+    .setInteractive().setAlpha(0));
+  // The blocker absorbs taps during the memory sequence. A tap dismisses the
+  // montage and returns to the normal third manga page instead of trapping
+  // the player behind a non-interactive dark overlay.
+  curtain.on('pointerdown', () => state.stop());
   const guest = Object.freeze({ rivalContext: true, playerCharacterId: playerId });
 
   REGIONAL_MEMORIES.forEach(([region, characterId, flagKey], index) => {
@@ -186,6 +191,12 @@ export function startSevenRivalsPortraitMontage(scene) {
     'SEVEN REGIONAL CHAMPIONS', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#b4c9db',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(985));
+  const skipHint = own(scene.add.text(width - 46, 58, 'TAP TO SKIP MEMORIES', {
+    fontFamily: PIXEL_FONT, fontSize: '7px', color: '#d1dbe7',
+    backgroundColor: '#101824cc', padding: { x: 12, y: 7 },
+  }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(997)
+    .setInteractive({ useHandCursor: true }).setAlpha(0));
+  skipHint.on('pointerdown', () => state.stop());
 
   const paint = (index, next = index, t = 0) => {
     if (!active) return;
@@ -219,8 +230,19 @@ export function startSevenRivalsPortraitMontage(scene) {
       characters[id]?.name || '').toUpperCase());
   };
 
+  // MangaCutscene.freezeScene PAUSES scene.time. A scene.time.delayedCall
+  // will never fire until the manga ends (i.e. the original first-rival
+  // hang). Scene tweens are deliberately left running by that freeze state.
+  // Drive BOTH holds and movements from the tween clock instead.
   const queue = (ms, fn) => {
-    nextTimer = scene.time.delayedCall(ms, fn);
+    const wait = { progress: 0 };
+    pendingHold = scene.tweens.add({
+      targets: wait, progress: 1, duration: ms, ease: 'Linear',
+      onComplete: () => {
+        pendingHold = null;
+        if (active) fn();
+      },
+    });
   };
 
   const showIndex = index => {
@@ -266,7 +288,34 @@ export function startSevenRivalsPortraitMontage(scene) {
     });
   };
 
+  // Paint layout first, then fade the entire composition IN together. Doing
+  // so prevents an instant first portrait from popping over the player.
   paint(0);
-  showIndex(0);
+  const stageObjects = [
+    ...portraits.flatMap(item => [item.colour, item.grey]),
+    ...flags.map(item => item.flag),
+    ...regionNames.map(item => item.object),
+    personName, chapterLabel,
+  ].map(obj => ({ obj, alpha: obj.alpha }));
+  stageObjects.forEach(({ obj }) => obj.setAlpha(0));
+  const entrance = { t: 0 };
+  animation = scene.tweens.add({
+    targets: entrance, t: 1, duration: 1250,
+    ease: 'Sine.easeInOut',
+    onUpdate: () => {
+      if (!active) return;
+      curtain.setAlpha(0.84 * entrance.t);
+      stageObjects.forEach(({ obj, alpha }) => {
+        if (obj?.active) obj.setAlpha(alpha * entrance.t);
+      });
+      skipHint.setAlpha(entrance.t * 0.85);
+      baseActorAlphas.forEach(({ image, alpha }) => {
+        if (image?.active) image.setAlpha(mix(alpha, 0.035, entrance.t));
+      });
+    },
+    onComplete: () => {
+      if (active) showIndex(0);
+    },
+  });
   return state;
 }
