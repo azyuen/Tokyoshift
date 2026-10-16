@@ -53,18 +53,30 @@ try {
   // Initial region discovery is independent of this UI regression.
   await page.evaluate(() => {
     const scene = window.TOKYO_SHIFT.scene.getScene('MeetScene');
-    if (scene._mangaCutscene?.active) scene._mangaCutscene.skip();
+    if (scene._mangaCutscene?.active) {
+      const cutscene = scene._mangaCutscene;
+      if (typeof cutscene.skip === 'function') cutscene.skip();
+      else cutscene.cancel?.(); // pending art-loading cutscenes have no skip button yet
+    }
   });
   await page.waitForTimeout(650);
   await page.evaluate(() => {
     const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
-    if (s._mangaCutscene?.active) s._mangaCutscene.skip();
+    if (s._mangaCutscene?.active) {
+      const cutscene = s._mangaCutscene;
+      if (typeof cutscene.skip === 'function') cutscene.skip();
+      else cutscene.cancel?.();
+    }
   });
   await page.waitForTimeout(350);
 
   const opening = await page.evaluate(() => {
     const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
-    if (s._mangaCutscene?.active) s._mangaCutscene.skip();
+    if (s._mangaCutscene?.active) {
+      const cutscene = s._mangaCutscene;
+      if (typeof cutscene.skip === 'function') cutscene.skip();
+      else cutscene.cancel?.();
+    }
     return {
       active: s.sys.isActive(),
       hasCar: s.hasCar,
