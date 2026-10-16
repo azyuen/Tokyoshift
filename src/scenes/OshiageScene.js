@@ -659,9 +659,7 @@ export default class OshiageScene extends Phaser.Scene {
     if (opponent && car &&
         this.textures.exists(getCarBodyTextureKey(this, car))) {
       const carWidth = 663;
-      const carX = car.visual?.referenceStandard
-        ? STAGE.x + (STAGE.w - carWidth) / 2
-        : STAGE.x + STAGE.w * 0.60;
+      const carX = STAGE.x + STAGE.w / 2;
       this.drawOwnedCar(car, opponent.buildState,
         carX, 455, carWidth, opponent.paintColor, 12);
     }
@@ -669,8 +667,8 @@ export default class OshiageScene extends Phaser.Scene {
     const spriteKey = opponent && 'oshiageEliteRival_' + opponent.characterId;
     if (spriteKey && this.textures.exists(spriteKey)) {
       const source = this.textures.get(spriteKey).getSourceImage();
-      const avatarX = STAGE.x + 163;
-      const feetY = STAGE.y + STAGE.h - 12;
+      const avatarX = STAGE.x + 255;
+      const feetY = STAGE.y + STAGE.h - 4;
       const scale = 315 / Math.max(1, source.height);
       const characterWidth = source.width * scale;
       this.own(this.add.ellipse(avatarX, feetY - 12,
@@ -693,7 +691,7 @@ export default class OshiageScene extends Phaser.Scene {
         String(rival.name).toUpperCase(), {
           pixel: true, size: '9px', color: '#f5ffff', depth: 26,
         }).setMask(this.stageMask);
-      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 53,
+      this.addText(labelX - labelWidth / 2 + 14, STAGE.y + 47,
         (rival.regionId || 'TOKYO') + ' // ELITE DRIVER', {
           pixel: true, size: '8px', color: '#8ddff1', depth: 26,
         }).setMask(this.stageMask);
@@ -726,10 +724,15 @@ export default class OshiageScene extends Phaser.Scene {
         const key = 'oshiageEliteRival_' + offer.characterId;
         if (this.textures.exists(key)) {
           const image = this.textures.get(key).getSourceImage();
-          this.own(this.add.image(portraitX, y + 53, key)
-            .setOrigin(0.5, 1)
-            .setScale(102 / Math.max(1, image.height))
+          const portrait = this.own(this.add.image(portraitX, y + 53, key)
+            .setOrigin(0.5, 0.18)
+            .setScale(225 / Math.max(1, image.height))
             .setDepth(36));
+          const crop = this.make.graphics({ add: false });
+          crop.fillStyle(0xffffff);
+          crop.fillRect(portraitX - 51, y - 51, 102, 102);
+          portrait.setMask(crop.createGeometryMask());
+          this.own(crop);
         }
         this.addText(x - 42, y - 52,
           String(character.name || 'RIVAL').toUpperCase(), {
@@ -763,10 +766,10 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 18, SIDE.y + 18, 'SKYTREE ELITE MEET', {
       pixel: true, size: '12px', color: '#8feaff', wrap: SIDE.w - 36,
     });
-    this.addText(SIDE.x + 20, SIDE.y + 84, 'SHOWDOWN LOCATION', {
+    this.addText(SIDE.x + 20, SIDE.y + 67, 'SHOWDOWN LOCATION', {
       pixel: true, size: '9px', color: '#b5d2e5',
     });
-    this.button(SIDE.x + 94, SIDE.y + 144, 158, 49,
+    this.button(SIDE.x + 94, SIDE.y + 119, 158, 49,
       'SKYTREE\nUNDERPASS', () => this.selectEliteVenue('underpass'), {
         accent: venueId === 'underpass', size: '7px',
       });
@@ -775,44 +778,44 @@ export default class OshiageScene extends Phaser.Scene {
         accent: venueId === 'plaza', size: '7px',
       });
 
-    this.addText(SIDE.x + 20, SIDE.y + 196, 'YOUR CAR', {
+    this.addText(SIDE.x + 20, SIDE.y + 169, 'YOUR CAR', {
       pixel: true, size: '9px', color: '#8feaff',
     });
-    this.addText(SIDE.x + 20, SIDE.y + 228,
+    this.addText(SIDE.x + 20, SIDE.y + 197,
       playerCar ? String(playerCar.name || playerCar.shortName).toUpperCase()
         : 'NO CAR SELECTED', {
         pixel: true, size: '8px', color: '#f4faff', wrap: SIDE.w - 40,
       });
     this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
-      SIDE.y + 279, SIDE.w - 34, 1, 0x31516a).setDepth(32));
+      SIDE.y + 246, SIDE.w - 34, 1, 0x31516a).setDepth(32));
 
-    this.addText(SIDE.x + 20, SIDE.y + 291,
-      '3-ELITE DRIVER SHOWDOWN', {
+    this.addText(SIDE.x + 20, SIDE.y + 258,
+      'THREE ELITE RIVALS', {
         pixel: true, size: '9px', color: '#8feaff', wrap: SIDE.w - 40,
       });
-    this.addText(SIDE.x + 20, SIDE.y + 330,
+    this.addText(SIDE.x + 20, SIDE.y + 292,
       'HEAT ' + (previewIndex + 1) + ' OF 3' +
       (continuing && previewIndex === activeHeat ? ' // UP NEXT' : ''), {
         pixel: true, size: '9px', color: '#ffe09a',
       });
-    this.addText(SIDE.x + 20, SIDE.y + 358,
+    this.addText(SIDE.x + 20, SIDE.y + 321,
       'CAR: ' + (car?.shortName || 'ELITE BUILD') +
       '\nRACE: ' + (opponent?.raceType || venue.raceType).toUpperCase() +
       '\nDISTANCE: ' + (venue.distanceM < 500 ? '1/4 MILE' : '1/2 MILE'), {
         size: '12px', color: '#e7f2fb', wrap: SIDE.w - 40, spacing: 3,
       });
 
-    this.addText(SIDE.x + 20, SIDE.y + 448, 'PRIZE', {
+    this.addText(SIDE.x + 20, SIDE.y + 405, 'PRIZE', {
       pixel: true, size: '10px', color: '#a4d7eb',
     });
-    this.addText(SIDE.x + 20, SIDE.y + 478,
+    this.addText(SIDE.x + 20, SIDE.y + 434,
       MONEY(venue.prizeCash), {
         pixel: true, size: '13px', color: '#ffdf70', wrap: SIDE.w - 40,
       });
-    this.addText(SIDE.x + 20, SIDE.y + 514, extraPrize, {
+    this.addText(SIDE.x + 20, SIDE.y + 471, extraPrize, {
       pixel: true, size: '7px', color: '#fbe7a4', wrap: SIDE.w - 40,
     });
-    this.addText(SIDE.x + 20, SIDE.y + 557,
+    this.addText(SIDE.x + 20, SIDE.y + 510,
       'ENTRY FEE  //  ' + MONEY(venue.entryFee) +
       (continuing ? '  (PAID)' : ''), {
         pixel: true, size: '8px', color: '#c3d2df', wrap: SIDE.w - 40,
@@ -836,12 +839,12 @@ export default class OshiageScene extends Phaser.Scene {
     } else {
       status = 'WIN ALL THREE HEATS FOR THE FULL PRIZE';
     }
-    this.addText(SIDE.x + 20, SIDE.y + 587, status, {
+    this.addText(SIDE.x + 20, SIDE.y + 547, status, {
       pixel: true, size: '7px',
       color: canRace ? '#a8efce' : '#e6b7a2',
       wrap: SIDE.w - 40,
     });
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 632,
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 622,
       SIDE.w - 38, 50,
       continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
         : 'RACE FOR ' + MONEY(venue.prizeCash) + '  >',
