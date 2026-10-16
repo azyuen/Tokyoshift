@@ -1052,42 +1052,62 @@ export default class MeetScene extends Phaser.Scene {
         fontFamily: PIXEL_FONT, fontSize: '19px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 2));
+      // Each row owns its images and clips them to dedicated portrait/car frames.
       units.forEach((unit, i) => {
         const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
-        const x = i % 2 ? 1037 : 523;
-        const y = 216 + Math.floor(i / 2) * 98;
-        const rect = addChoice(this.add.rectangle(x, y, 492, 88,
-          occupied ? 0x171c26 : 0x143c50)
-          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff)
-          .setDepth(z + 2));
-        const car = cars[unit.carId] || {};
-        const driverName = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
-        const carName = String(car.shortName || unit.carId).toUpperCase();
-        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
-        const torque = Number.isFinite(Number(car.torqueNm)) ? Math.round(Number(car.torqueNm)) + ' Nm' : '—';
-        const drivetrain = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
-        const info = addChoice(this.add.text(x - 116, y - 34,
-          driverName + '\\n' + carName + '\\n' +
-          power + '  /  ' + torque + '  /  ' + drivetrain, {
-            fontFamily: PIXEL_FONT, fontSize: '10px', lineSpacing: 6,
-            color: occupied ? '#718092' : '#ffffff',
-          }).setDepth(z + 4));
+        const x = i % 2 ? 1035 : 525;
+        const y = 229 + Math.floor(i / 2) * 117;
+        const rowW = 492, rowH = 108;
+        addChoice(this.add.rectangle(x, y, rowW, rowH,
+          occupied ? 0x171c26 : 0x143044)
+          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff).setDepth(z + 2));
+        const portraitX = x - 193, carX = x - 65;
+        const makeClip = (left, top, width, height, image) => {
+          const maskGraphics = this.make.graphics({ add: false });
+          maskGraphics.fillStyle(0xffffff);
+          maskGraphics.fillRect(left, top, width, height);
+          image.setMask(maskGraphics.createGeometryMask());
+          addChoice(maskGraphics);
+        };
+        addChoice(this.add.rectangle(portraitX, y, 96, 94, 0x0b1827)
+          .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
+        addChoice(this.add.rectangle(carX, y, 144, 94, 0x0b1827)
+          .setStrokeStyle(1, 0x688aa0).setDepth(z + 3));
         const profile = createCharacterProfile(this, {
           characterId: unit.characterId, pose: 'idle',
-          x: x - 190, y: y, frameWidth: 85, frameHeight: 76,
-          side: 'center', depth: z + 3, mask: false, rivalContext: true,
+          x: portraitX, y: y + 76, frameWidth: 110, frameHeight: 210,
+          side: 'center', depth: z + 4, mask: false, rivalContext: true,
           playerCharacterId: this.registry.get('playerCharacterId') || '',
         });
-        if (profile?.image) addChoice(profile.image);
-        if (cars[unit.carId]) {
-          const images = this.createCarDisplay(car, x + 172, y + 8, 110,
-            z + 3, false, DEFAULT_PAINT_COLOR);
-          images.forEach(addChoice);
+        if (profile?.image) {
+          addChoice(profile.image);
+          makeClip(portraitX - 47, y - 46, 94, 92, profile.image);
         }
+        const car = cars[unit.carId] || {};
+        if (cars[unit.carId]) {
+          const images = this.createCarDisplay(car, carX, y + 14, 126,
+            z + 4, false, DEFAULT_PAINT_COLOR);
+          images.forEach(image => {
+            addChoice(image);
+            if (image?.setMask) makeClip(carX - 71, y - 46, 142, 92, image);
+          });
+        }
+        const name = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
+        const model = String(car.shortName || unit.carId).toUpperCase();
+        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
+        const drive = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
+        const infoX = x + 22;
+        [[name, y - 34, '#ffffff', 10],
+         [model, y - 7, '#b8d9ed', 9],
+         [power + '  /  ' + drive, y + 23, '#72e0ed', 9]].forEach(([value, ty, color, size]) => {
+          addChoice(this.add.text(infoX, ty, value, {
+            fontFamily: PIXEL_FONT, fontSize: size + 'px', color,
+          }).setDepth(z + 5));
+        });
         if (!occupied) {
-          const hit = addChoice(this.add.rectangle(x, y, 492, 88, 0xffffff, 0)
-            .setInteractive({ useHandCursor: true }).setDepth(z + 6));
-          hit.on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
+          addChoice(this.add.rectangle(x, y, rowW, rowH, 0xffffff, 0)
+            .setInteractive({ useHandCursor: true }).setDepth(z + 6))
+            .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
         }
       });
       const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
