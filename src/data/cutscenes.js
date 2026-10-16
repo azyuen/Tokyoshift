@@ -838,6 +838,52 @@ export const CUTSCENES = {
     finalActionLabel: 'UNLOCK TOKYO AUTO MARKET',
   },
 
+  // Career chapter 03: after the FIRST regional challenge victory, on the
+  // driver's next ordinary workshop visit. No extra prizes; the championship
+  // badge and cash/coupons were awarded by the race settlement already.
+  firstRegionalChampion: {
+    id: 'firstRegionalChampion',
+    category: 'CAREER / STORY',
+    testerLabel: 'Career 03 — First Regional Champion',
+    title: 'SHINONOME // FIRST CHAMPION',
+    once: true,
+    characters: { left: 'daichiSakamoto', right: '$PLAYER' },
+    preview: { variables: { REGION: 'ODAIBA' } },
+    pages: [
+      {
+        speaker: 'left', pose: 'win',
+        text: "Well, look who's back. The {REGION} Champion! I was going to clear a space for your badge, but there's barely room for my tools.",
+      },
+      {
+        speaker: 'right', pose: 'idle',
+        text: "What? You didn't think I'd win?",
+      },
+      {
+        speaker: 'left', pose: 'idle',
+        text: "Oh, I thought you'd win. I just wasn't sure the workshop would survive you preparing for it.",
+      },
+      {
+        speaker: 'right', pose: 'idle',
+        text: "Hey, you helped me get there, you know.",
+      },
+      {
+        speaker: 'left', pose: 'win',
+        text: "I worked on the car. You're the one who beat all seven drivers in that regional challenge. You're the {REGION} Champion now. You earned it.",
+        emphasis: true,
+      },
+      {
+        speaker: 'left', pose: 'idle',
+        text: "And word travels fast. Shibuya's taking challengers now. Different drivers, tougher cars. The next regional challenge won't come quite so easily.",
+      },
+      {
+        speaker: 'left', pose: 'win',
+        text: "But first, let's enjoy this win. Tomorrow we'll figure out what the next build needs. One region down, six to go!",
+        emphasis: true,
+      },
+    ],
+    finalActionLabel: 'KEEP RACING',
+  },
+
   ginzaInvitation: {
     id: 'ginzaInvitation',
     category: 'CENTRAL TOKYO / STORY',
@@ -1031,9 +1077,10 @@ export const CUTSCENE_ORDER = [
   'firstPinkSlipChallenge',
   'firstPinkSlipWin',
   'firstPinkSlipLoss',
+  'centralTokyoUnlocked',
+  'firstRegionalChampion',
   'canalYardUnlocked',
   'warehouseHqUnlocked',
-  'centralTokyoUnlocked',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
   'proCircuitStrategistReveal',
