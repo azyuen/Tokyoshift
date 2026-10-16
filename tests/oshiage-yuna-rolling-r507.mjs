@@ -17,8 +17,8 @@ test('original Tokyo Wheel Shop attendant is Yuna Kisaragi in both Oshiage rooms
   assert.equal(yunaCalls.length, 2);
 });
 
-test('paint showroom car is 70% of earlier width and a little higher', () => {
-  assert.match(scene, /this\.paintObjects = this\.drawOwnedCar\(\s*car, state, 609, 345, 483, this\.pendingPaint/);
+test('paint showroom car remains 70% of earlier width at current booth placement', () => {
+  assert.match(scene, /this\.paintObjects = this\.drawOwnedCar\(\s*car, state, 609, 410, 483, this\.pendingPaint/);
   assert.equal(483 / 690, .7);
   assert.match(scene, /rollPaintCarIn\(\)/);
 });
@@ -31,7 +31,7 @@ test('rim descriptions omit dimensions and the manual preview button', () => {
   assert.doesNotMatch(shop, /384\s*[×x]\s*384/);
   assert.doesNotMatch(shop, /PREVIEW ON CAR/);
   assert.match(shop, /BACK TO RIM WALL/);
-  assert.match(shop, /OWNED \/\/ FREE TO INSTALL/);
+  assert.match(shop, /OWNED \/\/ FREE INSTALL/);
   assert.match(shop, /this\.drawCustomWorksSpecialist/);
 });
 
