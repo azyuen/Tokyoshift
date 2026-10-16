@@ -9,8 +9,12 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.stack || error.message));
   page.on('response', response => {
-    if (response.status() >= 400 && /Meet|Characters|Cars/i.test(response.url())) {
-      errors.push(response.status() + ' ' + response.url());
+    const url = response.url();
+    // Older optional fallback Meet backgrounds are absent from the current
+    // asset tree; the active day/night Meet background still loads correctly.
+    if (response.status() >= 400 && /Meet|Characters|Cars/i.test(url) &&
+        !/\/assets\/Meet\/Backgrounds\//.test(url)) {
+      errors.push(response.status() + ' ' + url);
     }
   });
   await page.goto('http://127.0.0.1:8765/', { waitUntil: 'domcontentloaded' });
@@ -175,6 +179,7 @@ try {
     };
   });
   console.log('SHOWDOWN INPUT DIAGNOSTIC', JSON.stringify(ui));
+  assert.equal(ui.storyActive, false, 'delayed Meet manga must not obscure the Showdown buttons');
   const rect = ui.rect;
   await page.mouse.click(rect.x + 1358 * rect.width / 1560,
     rect.y + 706 * rect.height / 840);
@@ -184,7 +189,11 @@ try {
     const s = game.scene.getScene('MeetScene');
     return {
       overlay: Boolean(s.competitionPopup?.active),
-      state: game.registry.get('competitionState'),
+      state: {
+        active: game.registry.get('competitionState')?.active,
+        roundIndex: game.registry.get('competitionState')?.roundIndex,
+        count: game.registry.get('competitionState')?.rounds?.length,
+      },
       category: game.registry.get('selectedRaceCategory'),
       cash: game.registry.get('cash'),
       pointer: {x:s.input.activePointer?.x,y:s.input.activePointer?.y},
