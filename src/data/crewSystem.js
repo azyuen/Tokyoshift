@@ -12,6 +12,10 @@ import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
+import {
+  getCrewBattleRegionRules, getCrewBattleHeatRule,
+  getCrewEventCarSetup, getCrewBattleScout,
+} from './crewBattleRules.js?v=20261016-crew-rules';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
@@ -599,81 +603,67 @@ export function getCrewBattleUnits(source) {
   return units;
 }
 
-function regionalBuildRating(rank, index) {
-  const base = rank <= 2 ? 3 : rank <= 5 ? 4 : 5;
-  return Math.min(5, base + (index >= 4 ? 1 : 0));
-}
-
-function regionalDriverRating(rank, index) {
-  if (rank >= 6) return 5;
-  if (rank >= 3) return index >= 3 ? 5 : 4;
-  return index >= 4 ? 5 : 4;
-}
-
-function proLeaderAi(base = {}) {
-  return {
-    ...base,
-    reactionSkill: Math.max(0.97, Number(base.reactionSkill || 0)),
-    launchSkill: Math.max(0.98, Number(base.launchSkill || 0)),
-    shiftSkill: Math.max(0.99, Number(base.shiftSkill || 0)),
-    aggression: Math.max(0.96, Number(base.aggression || 0)),
-  };
+// Regional leaders are team captains, not the third racing opponent.
+export function getCrewBattleCaptainId(regionId) {
+  return getRegionalCrewRoster(regionId)?.mainRivalId || null;
 }
 
 export function buildRegionalCrewBattleRounds(regionId, source = null) {
   const key = String(regionId || '').toUpperCase();
+  const rules = getCrewBattleRegionRules(key);
+  if (!rules) return [];
   const recruitedIds = getRecruitedCrewCharacterIds(source);
-
-  // Reuse the original seven-driver regional championship cast. Once one of
-  // those drivers defects to the player's crew, exactly six remain.
+  const captainId = getCrewBattleCaptainId(key);
   const originalSeven = buildTunerTeamChallengeRounds(key, '')
     .filter(round => round?.characterId && round?.carId);
-  const remaining = originalSeven
-    .filter(round => !recruitedIds.has(round.characterId));
 
-  // Keep the permanent regional leader as the final matchup even when
-  // the championship roster's authored order placed them earlier.
-  const leaderCharacterId = getRegionalCrewRoster(key)?.mainRivalId || null;
-  const otherOpponents = remaining.filter(round => round.characterId !== leaderCharacterId);
-  const leaderRound = remaining.find(round => round.characterId === leaderCharacterId);
-  const opponents = [
-    ...otherOpponents.slice(0, CREW_BATTLE_LINEUP_SIZE - 1),
-    ...(leaderRound ? [leaderRound] : otherOpponents.slice(CREW_BATTLE_LINEUP_SIZE - 1, CREW_BATTLE_LINEUP_SIZE)),
-  ];
-
-  const rank = Math.max(1, CREW_REGIONS.indexOf(key) + 1);
-
-  return opponents.map((baseRound, index) => {
-    const raceType = index % 3 === 1 ? 'Roll Race' : 'Standing Start';
-    const buildRating = regionalBuildRating(rank, index);
-    const encounterRating = regionalDriverRating(rank, index);
-    const leader = baseRound.characterId === leaderCharacterId;
+  // Five non-captain opponents remain after one recruit joins the player.
+  // Stable identity/order keeps the scout panel true to the actual heats.
+  const candidates = originalSeven.filter(round =>
+    round.characterId !== captainId && !recruitedIds.has(round.characterId)
+  );
+  const used = new Set();
+  const rounds = [];
+  for (let index = 0; index < CREW_BATTLE_LINEUP_SIZE; index++) {
+    const rule = getCrewBattleHeatRule(key, index);
+    const raceType = index === 1 ? 'Roll Race' : 'Standing Start';
+    const rating = Math.min(5, rules.build + (index === 2 && rules.build < 5 ? 1 : 0));
+    const encounterRating = rules.ai[index];
     const baseAi = getEncounterAi(encounterRating);
-    const encounterAi = leader ? proLeaderAi(baseAi) : { ...baseAi };
-    const opponentBuildState = createRivalBuildState(
-      cars[baseRound.carId],
-      buildRating,
-      {
-        seed: 'crew-battle:' + key + ':' + baseRound.characterId,
+    const ranked = candidates.filter(r => !used.has(r.characterId)).map(candidate => {
+      const baseBuild = createRivalBuildState(cars[candidate.carId], rating, {
+        seed: 'crew-battle:' + key + ':' + candidate.characterId,
         raceType,
-      }
-    );
-
-    return {
+      });
+      const setup = getCrewEventCarSetup(candidate.carId, baseBuild, rule);
+      return { candidate, setup };
+    });
+    const matched = ranked.find(item => item.setup.eligible);
+    if (!matched) break;
+    const baseRound = matched.candidate;
+    used.add(baseRound.characterId);
+    const state = matched.setup.state;
+    rounds.push({
       index,
       regionId: key,
       characterId: baseRound.characterId,
       carId: baseRound.carId,
       raceType,
-      distanceM: index >= 3 ? 804.672 : 402.336,
-      buildRating,
-      opponentBuildState,
+      distanceM: index === 2 ? 804.672 : 402.336,
+      buildRating: Number(state.buildRating || rating),
+      opponentBuildState: state,
+      opponentPowerKW: matched.setup.powerKW,
+      scout: getCrewBattleScout(state),
+      rule: { ...rule },
+      ruleLabel: rule.label,
       encounterRating,
-      encounterAi,
-      difficulty: leader ? 'PRO' : encounterRating >= 5 ? 'ELITE' : 'EXPERT',
-      leader,
-    };
-  });
+      encounterAi: { ...baseAi },
+      difficulty: encounterRating >= 5 ? 'ELITE' :
+        encounterRating >= 4 ? 'EXPERT' : 'SKILLED',
+      leader: false,
+    });
+  }
+  return rounds;
 }
 
 export function getRegionalCrewBattleReward(regionId) {

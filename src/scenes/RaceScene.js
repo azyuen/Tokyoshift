@@ -103,8 +103,13 @@ import {
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
   getCrewMembers,
+  getCrewBattleCaptainId,
   removeCrewMember,
 } from '../data/crewSystem.js?v=20261016-r544';
+import { getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
+import {
+  createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
+} from '../data/crewBattleIntroductions.js?v=20261016-crew-captain-dialogue';
 
 const QUARTER_M = 402.336;
 const HALF_MILE_M = 804.672;
@@ -416,12 +421,17 @@ export default class RaceScene extends Phaser.Scene {
     playRaceMusic();
 
     const carStates = this.registry.get('carStates') || {};
-    this.playerCarState = carStates[this.selectedCarId] || {
+    const savedPlayerState = carStates[this.selectedCarId] || {
       stock: true,
       nosInstalled: false,
       tuneLevel: 0,
       acquiredVia: 'starter',
     };
+    // The immutable event copy is the exact setup previewed at registration.
+    // Other races and permanent crew tuning always use the owner's saved car.
+    this.playerCarState = this.raceMode === 'CREW_BATTLE'
+      ? (this.registry.get('crewBattleEventPlayerSetup') || savedPlayerState)
+      : savedPlayerState;
     this.playerPaintColor = getCarPaintColor(this.playerCarState);
 
     if (!this.isTutorial && this.opponentCarId) {
@@ -3146,7 +3156,9 @@ export default class RaceScene extends Phaser.Scene {
       } else if (settlement?.gameOver) {
         this.scene.start('RunOverScene');
       } else if (settlement?.crewBattleContinues) {
-        this.startNextCrewBattleRound();
+        this.showCrewCaptainBetweenHeats(settlement);
+      } else if (settlement?.crewBattle) {
+        this.showCrewCaptainFinale(settlement, returnScene);
       } else if (settlement?.teamChallengeContinues) {
         this.showNextTunerChallengeBriefing();
       } else if (
@@ -3657,6 +3669,45 @@ export default class RaceScene extends Phaser.Scene {
     this.scene.restart();
   }
 
+  showCrewCaptainBetweenHeats(settlement) {
+    const state = this.registry.get('crewBattleState');
+    const captainId = getCrewBattleCaptainId(state?.regionId || settlement?.regionId);
+    const definition = createCrewBattleCaptainInterlude(
+      state?.regionId || settlement?.regionId,
+      { playerScore: settlement?.playerScore, opponentScore: settlement?.opponentScore,
+        nextRound: state?.rounds?.[state.roundIndex] }
+    );
+    if (!definition || !captainId || sceneCutsceneActive(this)) {
+      this.startNextCrewBattleRound();
+      return;
+    }
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { CAPTAIN: captainId },
+      preloadPagePosesOnly: true,
+      onComplete: () => this.startNextCrewBattleRound(),
+    });
+    if (!result?.played) this.startNextCrewBattleRound();
+  }
+
+  showCrewCaptainFinale(settlement, returnScene) {
+    const captainId = getCrewBattleCaptainId(settlement?.regionId);
+    const definition = createCrewBattleCaptainResult(
+      settlement?.regionId, Boolean(settlement?.crewBattleCompleted)
+    );
+    const finish = () => {
+      this.registry.set('crewBattleEventPlayerSetup', null);
+      saveSessionState(this.registry);
+      this.scene.start(returnScene || 'MeetScene');
+    };
+    if (!captainId || !definition || sceneCutsceneActive(this)) { finish(); return; }
+    const result = playMangaCutscene(this, definition, {
+      characterOverrides: { CAPTAIN: captainId },
+      preloadPagePosesOnly: true,
+      onComplete: finish,
+    });
+    if (!result?.played) finish();
+  }
+
   startNextCrewBattleRound() {
     const state = this.registry.get('crewBattleState');
     if (!state?.active) {
@@ -3681,6 +3732,17 @@ export default class RaceScene extends Phaser.Scene {
       return;
     }
 
+    const setup = getCrewEventCarSetup(unit.carId,
+      (this.registry.get('carStates') || {})[unit.carId] || {}, round.rule);
+    if (!setup.eligible) {
+      this.registry.set('crewBattleState', null);
+      this.registry.set('crewBattleEventPlayerSetup', null);
+      this.registry.set('selectedRacePlayerCharacterId', null);
+      saveSessionState(this.registry);
+      this.scene.start(this.registry.get('raceReturnScene') || 'MeetScene');
+      return;
+    }
+    this.registry.set('crewBattleEventPlayerSetup', setup.state);
     this.registry.set('selectedCarId', unit.carId);
     this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
     this.registry.set('selectedOpponentCarId', round.carId);

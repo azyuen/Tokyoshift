@@ -56,11 +56,9 @@ test('Manga definition stages leader first then active rival and prompts explici
     assert.ok(definition.title.startsWith(regionId + ' //'));
     const rounds = buildRegionalCrewBattleRounds(regionId);
     assert.equal(rounds.length, 3);
-    const leader = rounds.find(round => round.leader);
-    const challenger = rounds.find(round => !round.leader);
-    assert.equal(leader.characterId, getRegionalMainRivalId(regionId));
-    assert.notEqual(challenger.characterId, leader.characterId);
-    assert.ok(characters[challenger.characterId], regionId + ': actual rival exists');
+    assert.ok(rounds.every(round => !round.leader), 'captain never drives a crew heat');
+    assert.ok(rounds.every(round => round.characterId !== getRegionalMainRivalId(regionId)));
+    assert.ok(characters[rounds[0].characterId], regionId + ': actual crew opponent exists');
   }
 });
 
@@ -71,8 +69,8 @@ test('Meet opens manga before selection and never treats SKIP as acceptance', ()
   const method = meet.slice(start, end);
   assert.ok(start > 0 && end > start);
   assert.match(meet, /button\.on\('pointerdown', \(\) => this\.showCrewBattleIntroduction\(regionId\)\)/);
-  assert.match(method, /rounds\.find\(round => round\.leader\)/);
-  assert.match(method, /rounds\.find\(round => round\.characterId !== leaderId\)/);
+  assert.match(method, /getCrewBattleCaptainId\(key\)/);
+  assert.match(method, /rounds\[0\]\?\.characterId/);
   assert.match(method, /createRegionalCrewBattleIntroduction\(key, count\)/);
   assert.match(method, /playMangaCutscene\(this, definition,/);
   assert.match(method, /if \(reason === 'action'\) this\.showCrewBattleLineup\(key\)/);

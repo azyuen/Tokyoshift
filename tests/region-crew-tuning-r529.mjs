@@ -27,7 +27,7 @@ test('recruits disappear from regional championships and the final crew battle',
   const battle = buildRegionalCrewBattleRounds('ODAIBA', state);
   assert.equal(battle.length, 3); // Current regional crew battles are best-of-three.
   assert(!battle.some(r => blocked.has(r.characterId)));
-  assert.equal(battle.at(-1).characterId, getRegionalCrewRoster('ODAIBA').mainRivalId);
+  assert(!battle.some(r => r.characterId === getRegionalCrewRoster('ODAIBA').mainRivalId));
 });
 test('meet fallback, cached rival cards, and saved team rounds enforce exclusions', () => {
   const s = read('src/scenes/MeetScene.js');

@@ -130,10 +130,12 @@ import {
   getCrewBattleProgress,
   getCrewBattleUnits,
   buildRegionalCrewBattleRounds,
+  getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
 } from '../data/crewSystem.js?v=20261016-r544';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
+import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261016-street-showdown-template';
 import { isStreetShowdownOfferRosterValid } from '../data/streetShowdownRoster.js?v=20261016-street-showdown-template';
 
@@ -856,10 +858,9 @@ export default class MeetScene extends Phaser.Scene {
     const units = getCrewBattleUnits(this.registry);
     if (units.length < 3 || rounds.length < 3) return false;
 
-    // The region's permanent leader always drives the final matchup; the
-    // other speaker is a REAL rival from this battle, never a recruited member.
-    const leaderId = rounds.find(round => round.leader)?.characterId;
-    const challengerId = rounds.find(round => round.characterId !== leaderId)?.characterId;
+    // Captain manages the opposition without racing; the co-speaker races.
+    const leaderId = getCrewBattleCaptainId(key);
+    const challengerId = rounds[0]?.characterId;
     if (!leaderId || !challengerId) return false;
 
     const visits = this.registry.get('crewBattleIntroVisits') || {};
@@ -971,6 +972,25 @@ export default class MeetScene extends Phaser.Scene {
     sideFrame(24, 399, 730, 405, 0x35d6ff, 'YOUR CREW');
     sideFrame(798, 28, 728, 408, 0xff477e, 'RIVAL CREW');
 
+    // Compact event briefing in the left column above the player roster.
+    const regional = getCrewBattleRegionRules(regionId);
+    headerShape(54, 202, 698, 188, 0x06121f, 0.83);
+    text(76, 207, regional?.focus || 'CREW CHALLENGE', 13, '#f4e4a4');
+    rounds.slice(0, 3).forEach((round, i) => {
+      const y = 241 + i * 47;
+      const distance = round.distanceM > 500 ? '1/2 MI' : '1/4 MI';
+      const mode = round.raceType === 'Roll Race' ? 'ROLL' : 'STANDING';
+      add(this.add.text(78, y,
+        String(i + 1) + '  ' + round.ruleLabel + '  /  ' + mode + ' ' + distance, {
+          fontFamily: PIXEL_FONT, fontSize: '10px', color: '#c3e1f0',
+        }).setDepth(depth + 9));
+      add(this.add.text(78, y + 19,
+        'SCOUT: ' + (round.scout?.focus || 'UNKNOWN SETUP') +
+        '   //   LIKELY: ' + (round.scout?.label || 'UNCONFIRMED'), {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80bac9',
+        }).setDepth(depth + 9));
+    });
+
     const xPlayer = [63, 292, 521];
     const xRival = [821, 1050, 1279];
     const slotObjects = [[], [], []];
@@ -1068,14 +1088,17 @@ export default class MeetScene extends Phaser.Scene {
         drawCard(i, slots[i]);
       }
       const count = slots.filter(Boolean).length;
-      startLabel.setText(count === 3
-        ? 'DRIVERS READY - START BATTLE' : 'SELECT THREE DRIVERS');
+      const valid = count === 3 && slots.every((u, i) => getCrewEventCarSetup(
+        u.carId, (this.registry.get('carStates') || {})[u.carId] || {}, rounds[i]?.rule
+      ).eligible) && new Set(slots.map(u => u.id)).size === 3;
+      startLabel.setText(valid ? 'DRIVERS READY - START BATTLE'
+        : count === 3 ? 'INELIGIBLE CAR / CHANGE YOUR LINEUP' : 'SELECT THREE DRIVERS');
       if (vsStamp) {
         const j = objects.indexOf(vsStamp);
         if (j >= 0) objects.splice(j, 1);
         vsStamp.destroy(); vsStamp = null;
       }
-      if (count === 3) {
+      if (valid) {
         start.setFillStyle(0x116049).setInteractive({ useHandCursor: true });
         vsStamp = text(778, 437, 'VS', 55, '#ffffff',
           { stroke: '#100813', strokeThickness: 7 })
@@ -1106,12 +1129,16 @@ export default class MeetScene extends Phaser.Scene {
       // Each row owns its images and clips them to dedicated portrait/car frames.
       units.forEach((unit, i) => {
         const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
+        const crewSetup = getCrewEventCarSetup(
+          unit.carId, (this.registry.get('carStates') || {})[unit.carId] || {}, rounds[index]?.rule
+        );
+        const unavailable = occupied || !crewSetup.eligible;
         const x = i % 2 ? 1035 : 525;
         const y = 229 + Math.floor(i / 2) * 117;
         const rowW = 492, rowH = 108;
         addChoice(this.add.rectangle(x, y, rowW, rowH,
-          occupied ? 0x171c26 : 0x143044)
-          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff).setDepth(z + 2));
+          unavailable ? 0x171c26 : 0x143044)
+          .setStrokeStyle(2, unavailable ? 0x44505e : 0x35d6ff).setDepth(z + 2));
         const portraitX = x - 193, carX = x - 65;
         const makeClip = (left, top, width, height, image) => {
           const maskGraphics = this.make.graphics({ add: false });
@@ -1145,17 +1172,24 @@ export default class MeetScene extends Phaser.Scene {
         }
         const name = String(characters[unit.characterId]?.name || unit.characterId).toUpperCase();
         const model = String(car.shortName || unit.carId).toUpperCase();
-        const power = Number.isFinite(Number(car.powerKW)) ? Math.round(Number(car.powerKW)) + ' kW' : '—';
+        const ownedState = (this.registry.get('carStates') || {})[unit.carId] || {};
+        const eventSetup = getCrewEventCarSetup(unit.carId, ownedState, rounds[index]?.rule);
+        const tuned = getVehiclePerformance(unit.carId, ownedState);
+        const actualPower = Math.round(Number(tuned?.car?.powerKW || car.powerKW || 0));
+        const eventPower = Math.round(Number(eventSetup.powerKW || 0));
         const drive = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
         const infoX = x + 22;
+        const eventLine = eventSetup.eligible
+          ? actualPower + ' KW / ' + drive + (eventSetup.adjustment ? ' / EVENT ' + eventPower + ' KW' : '')
+          : eventSetup.reason;
         [[name, y - 34, '#ffffff', 10],
          [model, y - 7, '#b8d9ed', 9],
-         [power + '  /  ' + drive, y + 23, '#72e0ed', 9]].forEach(([value, ty, color, size]) => {
+         [eventLine, y + 23, eventSetup.eligible ? '#72e0ed' : '#ff9da3', 8]].forEach(([value, ty, color, size]) => {
           addChoice(this.add.text(infoX, ty, value, {
             fontFamily: PIXEL_FONT, fontSize: size + 'px', color,
           }).setDepth(z + 5));
         });
-        if (!occupied) {
+        if (!unavailable) {
           addChoice(this.add.rectangle(x, y, rowW, rowH, 0xffffff, 0)
             .setInteractive({ useHandCursor: true }).setDepth(z + 6))
             .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
@@ -1182,7 +1216,10 @@ export default class MeetScene extends Phaser.Scene {
       cancel.on('pointerdown', dismiss);
     };
     start.on('pointerdown', () => {
-      if (slots.some(u => !u)) return;
+      if (slots.some(u => !u) || slots.some((u, i) =>
+        !getCrewEventCarSetup(u.carId,
+          (this.registry.get('carStates') || {})[u.carId] || {}, rounds[i]?.rule).eligible
+      )) return;
       save(); close(); this.startCrewBattle(regionId, slots, rounds);
     });
     refresh();
@@ -1191,6 +1228,9 @@ export default class MeetScene extends Phaser.Scene {
   startCrewBattle(regionId, lineup, rounds = null) {
     const battleRounds = rounds || buildRegionalCrewBattleRounds(regionId, this.registry);
     if (!isCrewComplete(this.registry) || lineup.length !== 3 || battleRounds.length < 3) return;
+    if (new Set(lineup.map(u => u.id)).size !== 3 ||
+        lineup.some((unit, i) => !getCrewEventCarSetup(unit.carId,
+          (this.registry.get('carStates') || {})[unit.carId] || {}, battleRounds[i].rule).eligible)) return;
 
     const state = {
       active: true,
@@ -1217,6 +1257,10 @@ export default class MeetScene extends Phaser.Scene {
     const round = state?.rounds?.[index];
     if (!unit || !round || !cars[unit.carId] || !cars[round.carId]) return false;
 
+    const setup = getCrewEventCarSetup(unit.carId,
+      (this.registry.get('carStates') || {})[unit.carId] || {}, round.rule);
+    if (!setup.eligible) return false;
+    this.registry.set('crewBattleEventPlayerSetup', setup.state);
     this.registry.set('selectedCarId', unit.carId);
     this.registry.set('selectedRacePlayerCharacterId', unit.characterId);
     this.registry.set('selectedOpponentCarId', round.carId);
