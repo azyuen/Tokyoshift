@@ -815,7 +815,10 @@ export const CUTSCENES = {
         text: "Seven badges. All seven regions. You know, when we first started, I wasn't even sure we'd make it out of Odaiba!" },
       { speaker: 'right', pose: 'idle',
         text: "Feels like ages ago. I can still picture every one of those final races." },
-      { speaker: 'left', pose: 'idle', cinematicBeat: 'sevenRivalsMontage',
+      // A hidden cinematic-only page keeps Daichi's next line intact after
+      // the gallery NEXT button, rather than silently skipping his dialogue.
+      { speaker: 'system', text: '', cinematicBeat: 'sevenRivalsMontage', galleryOnly: true },
+      { speaker: 'left', pose: 'idle',
         text: "Every one of them made you earn it. Tokyo knows your name. Even the elite Skytree Underground Meet is open to you now." },
       { speaker: 'right', pose: 'idle',
         text: "But I'm not finished. I want to be Tokyo Champion. Not just champion of seven regions. I want to be the best in all of Tokyo." },
@@ -856,7 +859,10 @@ export const CUTSCENES = {
         text: "You said we needed a proper team!" },
       { speaker: 'left', pose: 'win',
         text: "One driver from every region. You didn't just beat them — you earned their trust. That's worth more than any badge." },
-      { speaker: 'right', pose: 'idle', cinematicBeat: 'completeCrewGroup',
+      // One unseen gallery page; NEXT resumes with the player's captain
+      // reflection rather than skipping it behind the portrait overlay.
+      { speaker: 'system', text: '', cinematicBeat: 'completeCrewGroup', galleryOnly: true },
+      { speaker: 'right', pose: 'idle',
         text: "When we started, all I wanted was to see how far I could go. Now we've got seven other people counting on us." },
       { speaker: 'left', pose: 'idle',
         text: "And that's what makes this different. One fast driver can win a race. A real team has to win together." },
