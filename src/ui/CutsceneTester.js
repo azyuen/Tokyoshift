@@ -16,6 +16,61 @@ const BODY_FONT = '"Rajdhani", monospace';
 const DEPTH = 820;
 const PAGE_SIZE = 5;
 
+// A story chapter is one tester entry. Short encounter/result scenes follow
+// the campaign chapters rather than obscuring their reading order.
+const OPENING_SEQUENCE = [
+  'openingStationEncounter',
+  'openingSayakaPhoneCall',
+  'openingSayakaKeys',
+  'openingSayakaFarewell',
+  'openingDaichiAfterSayaka',
+];
+const CAREER_CHAPTERS = [
+  { id: '__openingChapter01', label: 'CHAPTER 01 — THE FIRST NIGHT (FULL OPENING)', sequence: OPENING_SEQUENCE },
+  { id: 'centralTokyoUnlocked', label: 'CHAPTER 02 — TOKYO TAKES NOTICE' },
+  { id: 'firstRegionalChampion', label: 'CHAPTER 03 — FIRST REGIONAL CHAMPION' },
+  { id: 'canalYardBiggerDreams', label: 'CHAPTER 04 — BIGGER DREAMS' },
+  { id: 'warehouseHqUnlocked', label: 'CHAPTER 05 — THE GINZA CONNECTION' },
+  { id: 'sevenRegionsConquered', label: 'CHAPTER 06 — BEYOND SEVEN' },
+  { id: 'fullCrewTogether', label: 'CHAPTER 07 — ONE CREW, SEVEN ROADS' },
+];
+const getTesterEntries = () => {
+  const chapterIds = new Set([
+    ...OPENING_SEQUENCE,
+    ...CAREER_CHAPTERS.map(chapter => chapter.id),
+  ]);
+  const chapters = CAREER_CHAPTERS.map(chapter => ({
+    ...chapter,
+    definition: chapter.sequence
+      ? CUTSCENES.openingStationEncounter
+      : CUTSCENES[chapter.id],
+    category: 'CAREER / CHAPTER',
+  })).filter(entry => entry.definition);
+  const smallerScenes = CUTSCENE_ORDER
+    .filter(id => CUTSCENES[id] && !chapterIds.has(id))
+    .map(id => ({ id, definition: CUTSCENES[id] }));
+  return [...chapters, ...smallerScenes];
+};
+
+function playOpeningChapterPreview(scene) {
+  // Connected, consequence-free preview of every opening dialogue/call beat.
+  // Interactive station map, magazine selection and practice run are not
+  // replayed: resetting those would mutate the actual saved career.
+  let index = 0;
+  const advance = () => {
+    if (!scene?.sys?.isActive?.()) return;
+    const id = OPENING_SEQUENCE[index++];
+    if (!id) return;
+    const result = playMangaCutscene(scene, id, {
+      preview: true,
+      preloadPagePosesOnly: true,
+      onPreviewComplete: () => scene.time.delayedCall(120, advance),
+    });
+    if (!result?.played) scene.time.delayedCall(120, advance);
+  };
+  advance();
+}
+
 const destroyObjects = objects => {
   (objects || []).forEach(obj => {
     try { obj?.destroy?.(); } catch (e) {}
@@ -136,31 +191,31 @@ export function showCutsceneTester(scene) {
 
   closeButton.on('pointerdown', close);
 
-  const pageLabel = add(scene.add.text(width / 2, height - 92, '', {
+  const pageLabel = add(scene.add.text(width / 2, height - 135, '', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#90a7b5',
   }).setOrigin(0.5).setDepth(DEPTH + 4).setScrollFactor(0));
 
-  const previous = add(scene.add.rectangle(width / 2 - 150, height - 91, 160, 40, 0x121a24, 1)
+  const previous = add(scene.add.rectangle(width / 2 - 270, height - 135, 152, 40, 0x121a24, 1)
     .setStrokeStyle(1, 0x4e6575, 1)
     .setDepth(DEPTH + 3)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true }));
 
-  add(scene.add.text(width / 2 - 150, height - 91, '< PREV', {
+  add(scene.add.text(width / 2 - 270, height - 135, '< PREV', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#cbd9e1',
   }).setOrigin(0.5).setDepth(DEPTH + 4).setScrollFactor(0));
 
-  const next = add(scene.add.rectangle(width / 2 + 150, height - 91, 160, 40, 0x121a24, 1)
+  const next = add(scene.add.rectangle(width / 2 + 270, height - 135, 152, 40, 0x121a24, 1)
     .setStrokeStyle(1, 0x4e6575, 1)
     .setDepth(DEPTH + 3)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true }));
 
-  add(scene.add.text(width / 2 + 150, height - 91, 'NEXT >', {
+  add(scene.add.text(width / 2 + 270, height - 135, 'NEXT >', {
     fontFamily: PIXEL_FONT,
     fontSize: '6px',
     color: '#cbd9e1',
@@ -177,43 +232,46 @@ export function showCutsceneTester(scene) {
 
   const render = () => {
     clearRows();
-    const ids = CUTSCENE_ORDER.filter(id => CUTSCENES[id]);
-    const maxOffset = Math.max(0, Math.ceil(ids.length / PAGE_SIZE) - 1);
+    const entries = getTesterEntries();
+    const maxOffset = Math.max(0, Math.ceil(entries.length / PAGE_SIZE) - 1);
     offset = Math.max(0, Math.min(maxOffset, offset));
-    const pageIds = ids.slice(offset * PAGE_SIZE, offset * PAGE_SIZE + PAGE_SIZE);
+    const pageEntries = entries.slice(offset * PAGE_SIZE, offset * PAGE_SIZE + PAGE_SIZE);
 
     pageLabel.setText(
       'PAGE ' + (offset + 1) + ' / ' + (maxOffset + 1) +
-      '  //  ' + ids.length + ' REGISTERED'
+      '  //  ' + entries.length + ' REGISTERED'
     );
 
     previous.setAlpha(offset > 0 ? 1 : 0.35);
     next.setAlpha(offset < maxOffset ? 1 : 0.35);
 
-    pageIds.forEach((id, index) => {
-      const definition = CUTSCENES[id];
-      const y = 215 + index * 110;
-      const row = addRow(scene.add.rectangle(width / 2, y, 900, 94, 0x101923, 1)
+    pageEntries.forEach((entry, index) => {
+      const { id, definition } = entry;
+      const y = 211 + index * 95;
+      const row = addRow(scene.add.rectangle(width / 2, y, 900, 84, 0x101923, 1)
         .setStrokeStyle(2, 0x304b5d, 1)
         .setDepth(DEPTH + 2)
         .setScrollFactor(0)
         .setInteractive({ useHandCursor: true }));
 
-      addRow(scene.add.text(width / 2 - 425, y - 30,
-        String(definition.testerLabel || definition.title || id).toUpperCase(),
+      addRow(scene.add.text(width / 2 - 425, y - 28,
+        String(entry.label || definition.testerLabel || definition.title || id).toUpperCase(),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '8px',
           color: '#ffffff',
+          wordWrap: { width: 720, useAdvancedWrap: true },
         }
       ).setDepth(DEPTH + 3).setScrollFactor(0));
 
-      const pages = Array.isArray(definition.pages) ? definition.pages.length : 0;
-      const left = resolvePreviewCharacter(scene, definition, 'left');
-      const right = resolvePreviewCharacter(scene, definition, 'right');
+      const pages = entry.sequence
+        ? entry.sequence.reduce((n, sceneId) => n + (CUTSCENES[sceneId]?.pages?.length || 0), 0)
+        : (Array.isArray(definition.pages) ? definition.pages.length : 0);
+      const left = entry.sequence ? 'DAICHI / SAYAKA' : resolvePreviewCharacter(scene, definition, 'left');
+      const right = entry.sequence ? 'PLAYER' : resolvePreviewCharacter(scene, definition, 'right');
 
-      addRow(scene.add.text(width / 2 - 425, y + 8,
-        definition.category + '  //  ' + id +
+      addRow(scene.add.text(width / 2 - 425, y + 6,
+        (entry.category || definition.category) + '  //  ' + (entry.sequence ? '5 CONNECTED SCENES' : id) +
         '\n' + pages + ' PAGES  //  LEFT: ' + left + '  //  RIGHT: ' + right,
         {
           fontFamily: BODY_FONT,
@@ -236,7 +294,9 @@ export function showCutsceneTester(scene) {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
-        if (id === 'canalYardBiggerDreams') {
+        if (entry.sequence) {
+          playOpeningChapterPreview(scene);
+        } else if (id === 'canalYardBiggerDreams') {
           // Identical REAL ringing phone and pickup sequence in every tester
           // context; preview never modifies campaign cutscene history.
           playCanalYardStory(scene, { preview: true });
@@ -293,7 +353,7 @@ export function showCutsceneTester(scene) {
   next.on('pointerdown', () => {
     const maxOffset = Math.max(
       0,
-      Math.ceil(CUTSCENE_ORDER.filter(id => CUTSCENES[id]).length / PAGE_SIZE) - 1
+      Math.ceil(getTesterEntries().length / PAGE_SIZE) - 1
     );
     if (offset >= maxOffset) return;
     offset += 1;
