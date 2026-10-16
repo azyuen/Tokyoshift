@@ -1110,10 +1110,21 @@ export default class MeetScene extends Phaser.Scene {
             .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
         }
       });
-      const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
+      const clearAll = addChoice(this.add.rectangle(640, 698, 230, 48, 0x29323d)
         .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
         .setDepth(z + 2));
-      addChoice(this.add.text(780, 698, 'CANCEL', {
+      addChoice(this.add.text(640, 698, 'CLEAR ALL', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffffff',
+      }).setOrigin(0.5).setDepth(z + 3));
+      clearAll.on('pointerdown', () => {
+        slots.fill(null);
+        dismiss();
+        refresh();
+      });
+      const cancel = addChoice(this.add.rectangle(920, 698, 230, 48, 0x29323d)
+        .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
+        .setDepth(z + 2));
+      addChoice(this.add.text(920, 698, 'CANCEL', {
         fontFamily: PIXEL_FONT, fontSize: '12px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 3));
