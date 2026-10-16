@@ -1304,7 +1304,7 @@ export default class RaceScene extends Phaser.Scene {
       y: 0,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
-      depth: depth + 1.04,
+      depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
     });
     const body = bodyLayers.primary;
 

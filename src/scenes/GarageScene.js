@@ -3966,7 +3966,8 @@ export default class GarageScene extends Phaser.Scene {
       y: decalAnchor.y,
       displayWidth: bodyLayers.primary.displayWidth,
       displayHeight: bodyLayers.primary.displayHeight,
-      depth: depth + 1.04,
+      // Under fixed linework and above the tintable paint layer.
+      depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
     });
 
     return [
@@ -7039,33 +7040,6 @@ export default class GarageScene extends Phaser.Scene {
     return (this.registry.get('cutscenesSeen') || []).map(String).includes(String(id));
   }
 
-  isEthanYuenProfile() {
-    const profileNameKey = (
-      String(this.registry.get('firstName') || '').trim().toLowerCase() +
-      String(this.registry.get('lastName') || '').trim().toLowerCase()
-    ).replace(/[^a-z0-9]/g, '');
-    return profileNameKey === 'ethanyuen';
-  }
-
-  showEthanYuenRewardIfNeeded() {
-    const cutsceneId = 'ethanYuenEfCompensation';
-    if (!this.isEthanYuenProfile() || this.hasSeenStoryCutscene(cutsceneId)) {
-      return false;
-    }
-
-    const result = playMangaCutscene(this, cutsceneId, {
-      onComplete: () => {
-        const coupons = { ...(this.registry.get('carCoupons') || {}) };
-        coupons.ef = Math.max(0, Math.floor(Number(coupons.ef || 0))) + 2;
-        this.registry.set('carCoupons', coupons);
-        saveSessionState(this.registry);
-        this.time.delayedCall(180, () => this.continueGarageStoryFlow());
-      },
-    });
-
-    return Boolean(result.played);
-  }
-
   startDaichiWorkshopArrival(resume = false) {
     const chapter = this.registry.get('openingChapter');
     if (this._daichiEntryStarted ||
@@ -7160,7 +7134,7 @@ export default class GarageScene extends Phaser.Scene {
     if (['home', 'magazine', 'delivery', 'station'].includes(chapter)) return true;
     if (chapter === 'tutorial')
       return this.runOpeningStoryIfNeeded();
-    if (this.showEthanYuenRewardIfNeeded()) return true;
+    // Completed compensation is no longer offered on future visits.
     if (this.runOpeningStoryIfNeeded()) return true;
     // Scene 02 (nine wins / market invitation) takes precedence when a save
     // first returns with both the nine-win and first-champion milestones due.

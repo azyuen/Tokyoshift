@@ -910,6 +910,8 @@ export default class TunerShopScene extends Phaser.Scene {
 
     const geometry = carObjects.geometry;
     if (!geometry) return;
+    const decalLayerDepth = cars[carId]?.visual?.referenceStandard &&
+      !cars[carId]?.visual?.singleBody ? 11.012 : 11.04;
 
     const allDecals = normaliseTunerDecals(carState);
     const existing = allDecals[this.shop.decalId];
@@ -926,7 +928,7 @@ export default class TunerShopScene extends Phaser.Scene {
         y: geometry.displayY,
         displayWidth: geometry.displayWidth,
         displayHeight: geometry.displayHeight,
-        depth: 21.7,
+        depth: decalLayerDepth,
       }
     );
     otherDecalObjects.forEach(obj => this.addDynamic(obj));
@@ -963,7 +965,7 @@ export default class TunerShopScene extends Phaser.Scene {
         x: geometry.x + placement.x * geometry.displayWidth,
         y: geometry.displayY + placement.y * geometry.displayHeight,
         displayWidth: geometry.displayWidth,
-        depth: 22,
+        depth: decalLayerDepth,
         placement,
       });
       preview.setInteractive({ useHandCursor: true, draggable: true });
@@ -1541,7 +1543,7 @@ export default class TunerShopScene extends Phaser.Scene {
           y: decalAnchor.y,
           displayWidth: bodyLayers.primary.displayWidth,
           displayHeight: bodyLayers.primary.displayHeight,
-          depth: depth + 1.04,
+          depth: bodyLayers.layered && bodyLayers.overlay ? depth + 1.012 : depth + 1.04,
         })
       : [];
 

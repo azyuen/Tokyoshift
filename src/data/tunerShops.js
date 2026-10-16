@@ -465,12 +465,12 @@ export const TUNER_SHOPS = {
       night: { key: 'tunerShopShinagawaZeroSportsBgNight', path: 'assets/Locations/TunerShops/shinagawa_zerosports_night.png' },
     },
 
-    // The ZERO/SPORTS transparent decal has not been uploaded yet.
+    // Use the official uploaded transparent decal texture.
     // Its temporary text fallback is rendered by TunerDecals; never load a missing PNG.
     decalId: 'zeroSports',
     decalLabel: 'ZERO/SPORTS',
     decalTextureKey: 'tunerDecalZeroSports',
-    decalPath: null,
+    decalPath: 'assets/Decals/zerosports.png',
 
     tuningOptions: [
       {
