@@ -1861,7 +1861,7 @@ export default class GarageScene extends Phaser.Scene {
     }
   }
 
-  showMoveCarPopup() {
+  showMoveCarPopup(targetWorkshopId = null) {
     if (
       !this.selectedCarId ||
       cars[this.selectedCarId]?.crewLoan ||
@@ -2056,7 +2056,7 @@ export default class GarageScene extends Phaser.Scene {
       confirm.on('pointerdown', () => performTransfer(workshop, transferCost, confirmObjects));
     };
 
-    unlocked.forEach((workshop, index) => {
+    unlocked.filter(workshop => !targetWorkshopId || workshop.id === targetWorkshopId).forEach((workshop, index) => {
       const y = 305 + index * 100;
       const usage = getWorkshopUsage(
         this.ownedCarIds,
@@ -2402,90 +2402,57 @@ export default class GarageScene extends Phaser.Scene {
     ).setDepth(depth + 2));
 
     WORKSHOP_TIERS.forEach((workshop, index) => {
-      const y = 330 + index * 82;
-      const isUnlocked = workshop.tier <= ownedTier;
-      const isCurrent = isUnlocked && workshop.id === current.id;
-      const isNextUnlock = workshop.tier === ownedTier + 1;
-      const cash = Math.max(0, Number(this.registry.get('cash') || 0));
-      const cost = Math.max(0, Number(workshop.unlockCost || 0));
-      const affordable = cash >= cost;
-      const regionalWins = getTotalRegionalWins(this.registry);
-      const requiredRegionalWins = getWorkshopRegionalWinRequirement(workshop.tier);
-      const progressionReady = isWorkshopProgressionReady(this.registry, workshop.tier);
-      const usage = isUnlocked
-        ? getWorkshopUsage(
-            this.ownedCarIds,
-            this.carGarageLocations || {},
-            workshop.id
-          )
-        : 0;
+      const y = 330 + index * 92;
+      const unlocked = workshop.tier <= ownedTier;
+      const here = unlocked && workshop.id === current.id;
+      const next = workshop.tier === ownedTier + 1;
+      const cash = Number(this.registry.get('cash') || 0);
+      const cost = Number(workshop.unlockCost || 0);
+      const ready = isWorkshopProgressionReady(this.registry, workshop.tier);
+      const used = unlocked
+        ? getWorkshopUsage(this.ownedCarIds, this.carGarageLocations || {}, workshop.id) : 0;
       const capacity = getWorkshopStorageCapacity(workshop.id);
-
-      const fill = isCurrent
-        ? 0x152a2a
-        : isUnlocked
-          ? 0x102138
-          : isNextUnlock
-            ? 0x211a12
-            : 0x15171c;
-      const stroke = isCurrent
-        ? 0x62e8c7
-        : isUnlocked
-          ? 0x55b8ff
-          : isNextUnlock
-            ? 0xe4b660
-            : 0x514f55;
-
-      const box = add(this.add.rectangle(
-        780,
-        y,
-        650,
-        62,
-        fill,
-        1
-      ).setStrokeStyle(2, stroke, 1)
-        .setDepth(depth + 2));
-
-      add(this.add.text(485, y - 10, workshop.label, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: isUnlocked || isNextUnlock ? '#eef8ff' : '#817d84',
+      const full = used >= capacity;
+      const transport = getWorkshopTransferCost(current.id, workshop.id);
+      const canMove = unlocked && !here && !full &&
+        cash >= transport && Boolean(this.selectedCarId) &&
+        !cars[this.selectedCarId]?.crewLoan;
+      const canGo = unlocked && !here;
+      add(this.add.rectangle(780, y, 710, 76, here ? 0x152a2a : 0x102138, 1)
+        .setStrokeStyle(1, here ? 0x62e8c7 : 0x315470).setDepth(depth + 2));
+      add(this.add.text(450, y - 17, workshop.label, {
+        fontFamily: PIXEL_FONT, fontSize: '9px',
+        color: unlocked ? '#eef8ff' : '#817d84',
       }).setDepth(depth + 3));
-
-      let meta = '';
-      let metaColor = '#9fc7db';
-      if (isCurrent) {
-        meta = usage + ' / ' + capacity + ' CARS  //  HERE';
-        metaColor = '#78ddc8';
-      } else if (isUnlocked) {
-        meta = usage + ' / ' + capacity + ' CARS  //  GO >';
-      } else if (isNextUnlock) {
-        if (!progressionReady) {
-          meta = 'REGIONAL WINS  ' + regionalWins + '/' + requiredRegionalWins;
-          metaColor = '#c99aa4';
-        } else {
-          meta = (affordable ? 'UNLOCK  ' : 'NEED  ') +
-            '¥ ' + Number(cost).toLocaleString('en-US');
-          metaColor = affordable ? '#f2d899' : '#c99aa4';
-        }
+      add(this.add.text(450, y + 12, unlocked
+        ? used + ' / ' + capacity + ' CARS' + (here ? '  //  HERE' : '')
+        : next ? ready ? 'UNLOCK  ¥ ' + cost.toLocaleString('en-US')
+          : 'REGIONAL WINS  ' + getTotalRegionalWins(this.registry) +
+            '/' + getWorkshopRegionalWinRequirement(workshop.tier)
+          : 'LOCKED', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#9fc7db',
+      }).setDepth(depth + 3));
+      const button = (x, title, active, action) => {
+        const box = add(this.add.rectangle(x, y, 154, 42,
+          active ? 0x0c2827 : 0x17181d, 1)
+          .setStrokeStyle(1, active ? 0x62e8c7 : 0x514f55).setDepth(depth + 3));
+        add(this.add.text(x, y, title, {
+          fontFamily: PIXEL_FONT, fontSize: '7px',
+          color: active ? '#e7fff8' : '#817d84',
+        }).setOrigin(0.5).setDepth(depth + 4));
+        if (active) box.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+      };
+      if (unlocked) {
+        button(830, here ? 'CURRENT' : full ? 'FULL' : 'MOVE CAR HERE', canMove,
+          () => {
+            close();
+            this.showMoveCarPopup(workshop.id);
+          });
+        button(1005, here ? 'YOU ARE HERE' : 'GO HERE', canGo,
+          () => reloadIntoWorkshop(workshop));
       } else {
-        meta = 'LOCKED // UNLOCK PREVIOUS WORKSHOP';
-        metaColor = '#817d84';
-      }
-
-      add(this.add.text(1075, y + 12, meta, {
-        fontFamily: BODY_FONT,
-        fontSize: '9px',
-        color: metaColor,
-        fontStyle: '700',
-      }).setOrigin(1, 0.5).setDepth(depth + 3));
-
-      if (isUnlocked && !isCurrent) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => reloadIntoWorkshop(workshop));
-      } else if (!isUnlocked && isNextUnlock && affordable && progressionReady) {
-        box.setInteractive({ useHandCursor: true });
-        box.on('pointerdown', () => unlockWorkshop(workshop));
+        button(1005, next ? 'UNLOCK' : 'LOCKED',
+          next && ready && cash >= cost, () => unlockWorkshop(workshop));
       }
     });
 
