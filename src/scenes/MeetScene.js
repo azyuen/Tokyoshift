@@ -1125,7 +1125,7 @@ export default class MeetScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  createCrewInviteCarReveal(interest, car, dialogue) {
+  createCrewInviteCarReveal(interest, car) {
     if (!interest || !car) return () => {};
 
     try {
@@ -1143,29 +1143,45 @@ export default class MeetScene extends Phaser.Scene {
     }
 
     const objects = [];
-    const add = obj => {
-      if (obj) objects.push(obj);
-      return obj;
+    const add = object => {
+      if (object) objects.push(object);
+      return object;
     };
 
-    // Manga-style right-hand reveal bay. The car is deliberately oversized and
-    // clipped so its nose dominates the frame while the character profile owns
-    // the left side.
-    add(this.add.rectangle(1225, 345, 620, 500, 0x07111d, 0.72)
-      .setStrokeStyle(3, 0x55dfff, 0.65)
-      .setDepth(910)
-      .setScrollFactor(0));
+    // The existing actual Meet backdrop ALREADY contains the road.
+    // Use its exact texture, at the current location and time of day, cropped
+    // inside the reveal window; never draw a fake road/barrier or extra band.
+    const reveal = { x: 915, y: 115, width: 620, height: 500 };
+    const bgKey = this.currentBackground?.texture?.key ||
+      getMeetBackgroundForPhase(
+        this.selectedMeetLocation, this.worldPhase || getWorldPhase()
+      )?.key;
+    const maskShape = this.make.graphics({ add: false });
+    maskShape.fillStyle(0xffffff, 1);
+    maskShape.fillRect(reveal.x, reveal.y, reveal.width, reveal.height);
+    const mask = maskShape.createGeometryMask();
 
-    const stripe = add(this.add.graphics().setDepth(911).setScrollFactor(0));
-    stripe.lineStyle(2, 0x55dfff, 0.16);
-    for (let y = 125; y <= 560; y += 34) {
-      stripe.lineBetween(940, y + 80, 1515, y - 70);
+    add(this.add.rectangle(1225, 365, reveal.width, reveal.height,
+      0x07111d, 1).setDepth(908).setScrollFactor(0));
+
+    if (bgKey && this.textures.exists(bgKey)) {
+      const src = this.textures.get(bgKey).getSourceImage();
+      const width = Number(src.naturalWidth || src.width || 1);
+      const height = Number(src.naturalHeight || src.height || 1);
+      const cover = Math.max(reveal.width / width, reveal.height / height);
+      add(this.add.image(1225, 365, bgKey)
+        .setScale(cover)
+        .setDepth(909)
+        .setScrollFactor(0)
+        .setMask(mask));
     }
 
+    // Retain the existing large signature-car look, raised slightly so the
+    // tyres align more naturally with the road already painted in the asset.
     const carObjects = this.createCarDisplay(
       car,
       1145,
-      420,
+      392,
       820,
       916,
       false,
@@ -1173,30 +1189,29 @@ export default class MeetScene extends Phaser.Scene {
     );
     carObjects.forEach(obj => {
       obj.setScrollFactor?.(0);
+      obj.setMask?.(mask);
       objects.push(obj);
     });
 
-    const maskShape = this.make.graphics({ add: false });
-    maskShape.fillStyle(0xffffff, 1);
-    maskShape.fillRect(915, 115, 620, 500);
-    const mask = maskShape.createGeometryMask();
-    carObjects.forEach(obj => obj.setMask?.(mask));
+    // The cyan trim is a foreground frame over both car AND backdrop.
+    // Its interior stays transparent and doesn't wash out the meet art.
+    add(this.add.rectangle(1225, 365, reveal.width, reveal.height,
+      0x000000, 0).setStrokeStyle(5, 0x55dfff, 0.95)
+      .setDepth(928).setScrollFactor(0));
 
-    add(this.add.rectangle(1270, 103, 515, 76, 0x111111, 0.96)
+    // Two-line header only: gold label and car name. No factory-spec tagline.
+    add(this.add.rectangle(1270, 103, 515, 76, 0x111111, 0.98)
       .setStrokeStyle(3, 0xfffcf1, 1)
-      .setDepth(927)
-      .setScrollFactor(0));
-
-    add(this.add.text(1505, 84, 'SIGNATURE CAR', {
+      .setDepth(929).setScrollFactor(0));
+    add(this.add.text(1505, 90, 'SIGNATURE CAR', {
       fontFamily: PIXEL_FONT,
-      fontSize: '7px',
-      color: '#77e8ff',
+      fontSize: '9px',
+      color: '#f2d079',
       align: 'right',
-    }).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
-
+    }).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
     add(this.add.text(
       1505,
-      108,
+      117,
       String(car.name || car.shortName || interest.baseCarId).toUpperCase(),
       {
         fontFamily: PIXEL_FONT,
@@ -1204,29 +1219,28 @@ export default class MeetScene extends Phaser.Scene {
         color: '#ffffff',
         align: 'right',
       }
-    ).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
+    ).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
 
-    add(this.add.text(
-      1505,
-      132,
-      String(dialogue?.carTagline || 'FACTORY SPEC').toUpperCase(),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '8px',
-        color: '#b9cad4',
-        fontStyle: '700',
-        align: 'right',
-      }
-    ).setOrigin(1, 0.5).setDepth(928).setScrollFactor(0));
+    // The car and its location backdrop arrive together only on page 2.
+    objects.forEach(obj => obj?.setAlpha?.(0));
+    const fade = this.tweens.add({
+      targets: objects,
+      alpha: 1,
+      duration: 360,
+      ease: 'Sine.easeOut',
+    });
 
+    let disposed = false;
     return () => {
-      carObjects.forEach(obj => {
-        try { obj?.clearMask?.(false); } catch (e) {}
-      });
-      try { mask?.destroy?.(); } catch (e) {}
+      if (disposed) return;
+      disposed = true;
+      try { fade?.stop?.(); } catch (e) {}
       objects.forEach(obj => {
+        try { this.tweens.killTweensOf(obj); } catch (e) {}
+        try { obj?.clearMask?.(false); } catch (e) {}
         try { obj?.destroy?.(); } catch (e) {}
       });
+      try { mask?.destroy?.(); } catch (e) {}
       try { maskShape?.destroy?.(); } catch (e) {}
     };
   }
@@ -1290,6 +1304,14 @@ export default class MeetScene extends Phaser.Scene {
         CREW_ACCEPT_LABEL: dialogue.acceptLabel,
         CREW_DECLINE_LABEL: dialogue.declineLabel,
       },
+      onPageChange: ({ pageIndex }) => {
+        // First rival statement is character-only. Reveal the signature car
+        // on dialogue page 2, then keep it for page 3.
+        if (pageIndex === 1) {
+          cleanupReveal();
+          cleanupReveal = this.createCrewInviteCarReveal(interest, car);
+        }
+      },
       onComplete: payload => {
         cleanupReveal();
 
@@ -1310,7 +1332,7 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     if (!result?.played) return false;
-    cleanupReveal = this.createCrewInviteCarReveal(interest, car, dialogue);
+    // Page-change callback owns the reveal; never show it on page 1.
     return true;
   }
 
