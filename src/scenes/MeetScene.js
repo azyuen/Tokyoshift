@@ -101,7 +101,7 @@ import {
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261016-r538';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { showCrewRecruitCarSelection } from '../ui/CrewRecruitCarSelection.js?v=20261016-r537b';
+
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261009-r453';
 import {
   getPendingCentralTokyoInvite,
@@ -1125,124 +1125,161 @@ export default class MeetScene extends Phaser.Scene {
     return Boolean(result.played);
   }
 
-  createCrewInviteCarReveal(interest, car) {
-    if (!interest || !car) return () => {};
-
-    try {
-      ensureDerivedModularCarTextures(this, { [car.id]: car });
-    } catch (e) {}
-
-    const bodyKey = getCarBodyTextureKey(this, car);
-    if (
-      !bodyKey ||
-      !this.textures.exists(bodyKey) ||
-      !car.visual?.wheelKey ||
-      !this.textures.exists(car.visual.wheelKey)
-    ) {
-      return () => {};
-    }
-
+  createCrewInviteCarReveal(interest, car, { side = 'right' } = {}) {
+    // Both manga car bays deliberately use the SAME geometry, framing and
+    // car scale. Only the background and horizontal placement differ.
+    const isPlayer = side === 'left';
+    const shiftX = isPlayer ? -890 : 0;
+    const centerX = 1225 + shiftX;
+    const reveal = { x: 915 + shiftX, y: 115, width: 620, height: 500 };
     const objects = [];
     const add = object => {
       if (object) objects.push(object);
       return object;
     };
-
-    // The existing actual Meet backdrop ALREADY contains the road.
-    // Use its exact texture, at the current location and time of day, cropped
-    // inside the reveal window; never draw a fake road/barrier or extra band.
-    const reveal = { x: 915, y: 115, width: 620, height: 500 };
-    const bgKey = this.currentBackground?.texture?.key ||
-      getMeetBackgroundForPhase(
-        this.selectedMeetLocation, this.worldPhase || getWorldPhase()
-      )?.key;
     const maskShape = this.make.graphics({ add: false });
     maskShape.fillStyle(0xffffff, 1);
     maskShape.fillRect(reveal.x, reveal.y, reveal.width, reveal.height);
     const mask = maskShape.createGeometryMask();
 
-    add(this.add.rectangle(1225, 365, reveal.width, reveal.height,
+    let backgroundKey = null;
+    if (isPlayer && car) {
+      const garage = (this.registry.get('carGarageLocations') || {})[car.id] ||
+        this.registry.get('workshopLocationId') || 'shinonomeWorkshop';
+      backgroundKey = getWorkshopPhaseBackground(
+        garage, this.worldPhase || getWorldPhase()
+      )?.key;
+    } else if (!isPlayer) {
+      // The actual current Meet asset already contains the road.
+      backgroundKey = this.currentBackground?.texture?.key ||
+        getMeetBackgroundForPhase(
+          this.selectedMeetLocation, this.worldPhase || getWorldPhase()
+        )?.key;
+    }
+
+    add(this.add.rectangle(centerX, 365, reveal.width, reveal.height,
       0x07111d, 1).setDepth(908).setScrollFactor(0));
 
-    if (bgKey && this.textures.exists(bgKey)) {
-      const src = this.textures.get(bgKey).getSourceImage();
+    if (car && backgroundKey && this.textures.exists(backgroundKey)) {
+      const src = this.textures.get(backgroundKey).getSourceImage();
       const width = Number(src.naturalWidth || src.width || 1);
       const height = Number(src.naturalHeight || src.height || 1);
       const cover = Math.max(reveal.width / width, reveal.height / height);
-      add(this.add.image(1225, 365, bgKey)
-        .setScale(cover)
-        .setDepth(909)
-        .setScrollFactor(0)
-        .setMask(mask));
+      add(this.add.image(centerX, 365, backgroundKey)
+        .setScale(cover).setDepth(909)
+        .setScrollFactor(0).setMask(mask));
     }
 
-    // Retain the existing large signature-car look, raised slightly so the
-    // tyres align more naturally with the road already painted in the asset.
-    const carObjects = this.createCarDisplay(
-      car,
-      1145,
-      392,
-      820,
-      916,
-      false,
-      DEFAULT_PAINT_COLOR
-    );
-    carObjects.forEach(obj => {
-      obj.setScrollFactor?.(0);
-      obj.setMask?.(mask);
-      objects.push(obj);
-    });
+    if (car) {
+      try {
+        ensureDerivedModularCarTextures(this, { [car.id]: car });
+        const bodyKey = getCarBodyTextureKey(this, car);
+        if (bodyKey && this.textures.exists(bodyKey) &&
+            car.visual?.wheelKey && this.textures.exists(car.visual.wheelKey)) {
+          const state = isPlayer
+            ? (this.registry.get('carStates') || {})[car.id] || {}
+            : {};
+          const carObjects = this.createCarDisplay(
+            car, 1145 + shiftX, 392, 820, 916, false,
+            isPlayer ? (state.paintColor ?? DEFAULT_PAINT_COLOR)
+              : DEFAULT_PAINT_COLOR
+          );
+          carObjects.forEach(obj => {
+            obj.setScrollFactor?.(0);
+            obj.setMask?.(mask);
+            objects.push(obj);
+          });
+        }
+      } catch (error) {
+        console.warn('[Tokyo SHIFT] Crew manga car rendering error', error);
+      }
+    }
 
-    // The cyan trim is a foreground frame over both car AND backdrop.
-    // Its interior stays transparent and doesn't wash out the meet art.
-    add(this.add.rectangle(1225, 365, reveal.width, reveal.height,
+    // Trim is explicitly above the car and background (and transparent
+    // inside), as in the approved page-two signature-car treatment.
+    add(this.add.rectangle(centerX, 365, reveal.width, reveal.height,
       0x000000, 0).setStrokeStyle(5, 0x55dfff, 0.95)
       .setDepth(928).setScrollFactor(0));
-
-    // Two-line header only: gold label and car name. No factory-spec tagline.
-    add(this.add.rectangle(1270, 103, 515, 76, 0x111111, 0.98)
+    add(this.add.rectangle(1270 + shiftX, 103, 515, 76, 0x111111, 0.98)
       .setStrokeStyle(3, 0xfffcf1, 1)
       .setDepth(929).setScrollFactor(0));
-    add(this.add.text(1505, 90, 'SIGNATURE CAR', {
+
+    const ownerName = String(characters[interest?.characterId]?.name ||
+      interest?.characterId || 'RIVAL').toUpperCase();
+    const goldHeader = isPlayer
+      ? (car ? 'YOUR STOCK CAR' : 'NO ELIGIBLE CAR')
+      : ownerName + '’S SIGNATURE CAR';
+    add(this.add.text(1505 + shiftX, 90, goldHeader, {
       fontFamily: PIXEL_FONT,
-      fontSize: '9px',
+      fontSize: '8px',
       color: '#f2d079',
       align: 'right',
     }).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
-    add(this.add.text(
-      1505,
-      117,
-      String(car.name || car.shortName || interest.baseCarId).toUpperCase(),
-      {
-        fontFamily: PIXEL_FONT,
-        fontSize: '9px',
-        color: '#ffffff',
-        align: 'right',
-      }
-    ).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
 
-    // The car and its location backdrop arrive together only on page 2.
+    const carName = car
+      ? String(car.name || car.shortName || interest?.baseCarId || '').toUpperCase()
+      : 'ACQUIRE ONE AND TRY AGAIN LATER';
+    add(this.add.text(1505 + shiftX, 117, carName, {
+      fontFamily: PIXEL_FONT,
+      fontSize: '8px',
+      color: '#ffffff',
+      align: 'right',
+    }).setOrigin(1, 0.5).setDepth(930).setScrollFactor(0));
+
     objects.forEach(obj => obj?.setAlpha?.(0));
     const fade = this.tweens.add({
-      targets: objects,
-      alpha: 1,
-      duration: 360,
-      ease: 'Sine.easeOut',
+      targets: objects, alpha: 1, duration: 360, ease: 'Sine.easeOut',
     });
-
     let disposed = false;
     return () => {
       if (disposed) return;
       disposed = true;
-      try { fade?.stop?.(); } catch (e) {}
+      try { fade?.stop?.(); } catch (_) {}
       objects.forEach(obj => {
-        try { this.tweens.killTweensOf(obj); } catch (e) {}
-        try { obj?.clearMask?.(false); } catch (e) {}
-        try { obj?.destroy?.(); } catch (e) {}
+        try { this.tweens.killTweensOf(obj); } catch (_) {}
+        try { obj?.clearMask?.(false); } catch (_) {}
+        try { obj?.destroy?.(); } catch (_) {}
       });
-      try { mask?.destroy?.(); } catch (e) {}
-      try { maskShape?.destroy?.(); } catch (e) {}
+      try { mask?.destroy?.(); } catch (_) {}
+      try { maskShape.destroy(); } catch (_) {}
     };
+  }
+
+  createCrewInviteCarToggles(eligibleIds, onChoose) {
+    if (!Array.isArray(eligibleIds) || eligibleIds.length < 2)
+      return () => {};
+
+    const objects = [];
+    const add = object => { objects.push(object); return object; };
+    const makeToggle = (x, symbol, direction) => {
+      add(this.add.rectangle(x, 563, 56, 54, 0x111111, 0.96)
+        .setStrokeStyle(3, 0x55dfff, 0.95)
+        .setDepth(936).setScrollFactor(0)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerdown', () => onChoose(direction)));
+      add(this.add.text(x, 563, symbol, {
+        fontFamily: PIXEL_FONT, fontSize: '17px', color: '#ffffff',
+      }).setOrigin(0.5).setDepth(937).setScrollFactor(0));
+    };
+    makeToggle(83, '<', -1);
+    makeToggle(583, '>', 1);
+
+    let index = 0;
+    const counter = add(this.add.text(335, 568, '', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+      backgroundColor: '#111111cc',
+      padding: { x: 13, y: 8 },
+    }).setOrigin(0.5).setDepth(937).setScrollFactor(0));
+    const setIndex = selected => {
+      index = Math.max(0, eligibleIds.indexOf(selected));
+      counter.setText((index + 1) + ' / ' + eligibleIds.length);
+    };
+    // Caller updates the counter through the cleanup function's setter.
+    const dispose = () => objects.forEach(obj => {
+      try { obj.destroy(); } catch (_) {}
+    });
+    dispose.setSelected = setIndex;
+    return dispose;
   }
 
   maybeShowCrewInviteInterest() {
@@ -1253,7 +1290,6 @@ export default class MeetScene extends Phaser.Scene {
     const location = getMeetLocation(this.selectedMeetLocation);
     const currentRegion = String(location?.district || '').toUpperCase();
     if (String(interest.regionId).toUpperCase() !== currentRegion) return false;
-
     if (getCrewMemberForRegion(this.registry, currentRegion)) {
       clearCrewInviteInterest(this.registry);
       saveSessionState(this.registry);
@@ -1267,7 +1303,6 @@ export default class MeetScene extends Phaser.Scene {
       saveSessionState(this.registry);
       return false;
     }
-
     const rivalName = String(character.name || interest.characterId).toUpperCase();
     const signatureCarName = String(
       car.name || car.shortName || interest.baseCarId
@@ -1276,24 +1311,56 @@ export default class MeetScene extends Phaser.Scene {
       String(this.registry.get('firstName') || '').trim(),
       String(this.registry.get('lastName') || '').trim(),
     ].filter(Boolean).join(' ') || 'PLAYER';
-
     const dialogue = getCrewInviteDialogue(interest.characterId, {
-      REGION: currentRegion,
-      RIVAL_NAME: rivalName,
-      SIGNATURE_CAR: signatureCarName,
-      PLAYER_NAME: playerName.toUpperCase(),
+      REGION: currentRegion, RIVAL_NAME: rivalName,
+      SIGNATURE_CAR: signatureCarName, PLAYER_NAME: playerName.toUpperCase(),
     });
+
     let cleanupReveal = () => {};
+    let cleanupPlayer = () => {};
+    let cleanupToggles = () => {};
+    let acceptedChallenge = null;
+    let eligibleIds = [];
+    let selectedCarId = null;
+
+    const drawPlayer = () => {
+      cleanupPlayer();
+      cleanupPlayer = this.createCrewInviteCarReveal(
+        interest, selectedCarId ? cars[selectedCarId] : null, { side: 'left' }
+      );
+    };
+    const enterCarSelection = () => {
+      // The fourth page is part of this very same manga presentation:
+      // accept the invite, then show the player's garage car on the left.
+      acceptedChallenge = acceptCrewInviteChallenge(this.registry, interest);
+      if (!acceptedChallenge) return;
+      saveSessionState(this.registry);
+      const rules = getCrewRecruitmentChallengeRules(
+        this.registry, acceptedChallenge
+      );
+      eligibleIds = rules.eligibleCarIds || [];
+      selectedCarId = eligibleIds.includes(this.registry.get('selectedCarId'))
+        ? this.registry.get('selectedCarId') : eligibleIds[0] || null;
+      drawPlayer();
+      cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
+        if (!eligibleIds.length) return;
+        const index = eligibleIds.indexOf(selectedCarId);
+        selectedCarId = eligibleIds[
+          (Math.max(0, index) + direction + eligibleIds.length) %
+            eligibleIds.length
+        ];
+        drawPlayer();
+        cleanupToggles.setSelected?.(selectedCarId);
+      });
+      cleanupToggles.setSelected?.(selectedCarId);
+    };
 
     const result = playMangaCutscene(this, 'crewRecruitmentInvite', {
-      historyId:
-        'crewRecruitmentInvite:' +
-        interest.characterId + ':' +
+      historyId: 'crewRecruitmentInvite:' + interest.characterId + ':' +
         Number(interest.createdAt || Date.now()),
       force: true,
-      characterOverrides: {
-        RIVAL: interest.characterId,
-      },
+      preloadPagePosesOnly: true,
+      characterOverrides: { RIVAL: interest.characterId },
       variables: {
         REGION: currentRegion,
         RIVAL_NAME: rivalName,
@@ -1305,47 +1372,47 @@ export default class MeetScene extends Phaser.Scene {
         CREW_DECLINE_LABEL: dialogue.declineLabel,
       },
       onPageChange: ({ pageIndex }) => {
-        // First rival statement is character-only. Reveal the signature car
-        // on dialogue page 2, then keep it for page 3.
         if (pageIndex === 1) {
           cleanupReveal();
           cleanupReveal = this.createCrewInviteCarReveal(interest, car);
+        } else if (pageIndex === 3) {
+          enterCarSelection();
         }
       },
-      onComplete: payload => {
+      isFinalActionEnabled: () => Boolean(
+        acceptedChallenge && selectedCarId &&
+        getCrewRecruitmentChallengeRules(
+          this.registry, acceptedChallenge
+        ).eligibleCarIds.includes(selectedCarId)
+      ),
+      onComplete: ({ reason }) => {
+        cleanupToggles();
+        cleanupPlayer();
         cleanupReveal();
-
-        if (payload?.reason === 'action') {
-          const challenge = acceptCrewInviteChallenge(this.registry, interest);
-          saveSessionState(this.registry);
-          if (challenge) {
-            this.maybeShowActiveCrewRecruitChallenge();
+        if (acceptedChallenge) {
+          if (reason === 'action' && selectedCarId) {
+            this.startCrewRecruitmentRace(acceptedChallenge, selectedCarId);
+          } else {
+            // RACE LATER or SKIP on page four keeps this accepted invite.
+            saveSessionState(this.registry);
           }
-          return;
+        } else {
+          // NOT NOW on page three leaves the recruitment offer unaccepted.
+          clearCrewInviteInterest(this.registry);
+          saveSessionState(this.registry);
         }
-
-        // Secondary button or SKIP means "not now". The character remains
-        // eligible to express interest after a later Meet victory.
-        clearCrewInviteInterest(this.registry);
-        saveSessionState(this.registry);
       },
     });
-
-    if (!result?.played) return false;
-    // Page-change callback owns the reveal; never show it on page 1.
-    return true;
+    return Boolean(result?.played);
   }
 
   maybeShowActiveCrewRecruitChallenge() {
     if (this.isCrewTestDriveMode()) return false;
     const challenge = this.registry.get('crewRecruitChallenge');
     if (!challenge?.active) return false;
-
     const location = getMeetLocation(this.selectedMeetLocation);
-    const regionId = String(location?.district || '').toUpperCase();
-    if (String(challenge.regionId || '').toUpperCase() !== regionId) {
-      return false;
-    }
+    if (String(challenge.regionId || '').toUpperCase() !==
+        String(location?.district || '').toUpperCase()) return false;
 
     const character = characters[challenge.characterId];
     const opponentCar = cars[challenge.baseCarId];
@@ -1355,30 +1422,66 @@ export default class MeetScene extends Phaser.Scene {
       return false;
     }
 
-    const recruitRules = getCrewRecruitmentChallengeRules(this.registry, challenge);
-    const eligibleCarIds = recruitRules.eligibleCarIds || [];
+    const rules = getCrewRecruitmentChallengeRules(this.registry, challenge);
+    const eligibleIds = rules.eligibleCarIds || [];
+    let selectedCarId = eligibleIds.includes(this.registry.get('selectedCarId'))
+      ? this.registry.get('selectedCarId') : eligibleIds[0] || null;
+    let cleanupReveal = () => {};
+    let cleanupPlayer = () => {};
+    let cleanupToggles = () => {};
+    const interest = challenge;
 
-    const selector = showCrewRecruitCarSelection(this, {
-      challenge,
-      eligibleCarIds,
-      recruitRules,
-      onRace: carId => {
-        // The scene might have been resumed with a changed tune or a deleted
-        // car. Revalidate before ever assigning the next race's player car.
-        const fresh = getCrewRecruitmentChallengeRules(this.registry, challenge);
-        if (!fresh.eligibleCarIds.includes(carId)) {
-          this.maybeShowActiveCrewRecruitChallenge();
-          return;
-        }
-        this.startCrewRecruitmentRace(challenge, carId);
+    const drawPlayer = () => {
+      cleanupPlayer();
+      cleanupPlayer = this.createCrewInviteCarReveal(
+        interest, selectedCarId ? cars[selectedCarId] : null, { side: 'left' }
+      );
+    };
+    const definition = {
+      id: 'crewRecruitmentCarChoice', once: false,
+      title: String(challenge.regionId) + ' // CREW RECRUITMENT',
+      characters: { left: null, right: null },
+      pages: [{
+        speaker: 'system',
+        speakerLabel: 'CHOOSE A CAR TO RACE',
+        text: 'You can only race an unmodified stock car of the same class. ' +
+          'Choose one from your garage, or acquire one and come back later.',
+      }],
+      finalActionLabel: 'READY TO RACE',
+      secondaryFinalActionLabel: 'RACE LATER',
+    };
+    const result = playMangaCutscene(this, definition, {
+      onPageChange: () => {
+        cleanupReveal = this.createCrewInviteCarReveal(interest, opponentCar);
+        drawPlayer();
+        cleanupToggles = this.createCrewInviteCarToggles(eligibleIds, direction => {
+          const index = eligibleIds.indexOf(selectedCarId);
+          selectedCarId = eligibleIds[
+            (Math.max(0, index) + direction + eligibleIds.length) %
+              eligibleIds.length
+          ];
+          drawPlayer();
+          cleanupToggles.setSelected?.(selectedCarId);
+        });
+        cleanupToggles.setSelected?.(selectedCarId);
       },
-      onLater: () => {
-        // Accepting the invitation is persistent; RACE LATER only closes the
-        // selector. The same recruit will be waiting on a subsequent visit.
-        saveSessionState(this.registry);
+      isFinalActionEnabled: () => Boolean(
+        selectedCarId && getCrewRecruitmentChallengeRules(
+          this.registry, challenge
+        ).eligibleCarIds.includes(selectedCarId)
+      ),
+      onComplete: ({ reason }) => {
+        cleanupToggles();
+        cleanupPlayer();
+        cleanupReveal();
+        if (reason === 'action' && selectedCarId) {
+          this.startCrewRecruitmentRace(challenge, selectedCarId);
+        } else {
+          saveSessionState(this.registry);
+        }
       },
     });
-    return Boolean(selector?.active);
+    return Boolean(result?.played);
   }
 
   startCrewRecruitmentRace(challenge, playerCarId) {
