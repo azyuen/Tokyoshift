@@ -2,7 +2,7 @@ import { characters } from '../data/characters.js?v=20261006-r391';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261017-r556';
+} from '../data/cutscenes.js?v=20261017-r557';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
