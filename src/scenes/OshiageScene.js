@@ -16,6 +16,8 @@ import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
+import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
+import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261016-r535';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -647,7 +649,13 @@ export default class OshiageScene extends Phaser.Scene {
     const opponent = lineup[previewIndex] || lineup[activeHeat] || null;
     const rival = opponent ? characters[opponent.characterId] : null;
     const car = opponent ? cars[opponent.carId] : null;
-    const { id: playerCarId, car: playerCar } = this.selectedCar();
+    const { id: playerCarId, car: playerCar, state: playerState } = this.selectedCar();
+    const playerPerformance = playerCar
+      ? getVehiclePerformance(playerCarId, playerState)
+      : null;
+    const playerRating = playerCar
+      ? getPowerTorqueDisplay(playerCar, playerState, playerPerformance?.car || playerCar)
+      : null;
     const cooldown = getOshiageEliteRemainingMs(this.registry, venueId);
     const access = getOshiageShowdownAccess(this.registry, venueId);
     const canRace = progress.complete && lineup.length === 3 &&
@@ -793,10 +801,16 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 169, 'YOUR CAR', {
       pixel: true, size: '9px', color: '#8feaff',
     });
+    // Share the normal Meet summary styling and estimated/dyno readings.
     this.addText(SIDE.x + 20, SIDE.y + 197,
-      playerCar ? String(playerCar.name || playerCar.shortName).toUpperCase()
-        : 'NO CAR SELECTED', {
-        pixel: true, size: '8px', color: '#f4faff', wrap: SIDE.w - 40,
+      playerCar
+        ? playerCar.shortName + '\n' +
+          playerRating.powerLabel + '  •  ' + playerRating.torqueLabel
+        : 'NO CAR', {
+        size: '11px',
+        color: playerCar ? '#d8e7ef' : '#72838f',
+        spacing: -2,
+        wrap: SIDE.w - 40,
       });
     this.own(this.add.rectangle(SIDE.x + SIDE.w / 2,
       SIDE.y + 246, SIDE.w - 34, 1, 0x31516a).setDepth(32));
