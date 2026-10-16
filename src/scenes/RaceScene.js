@@ -2,7 +2,7 @@ import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
-import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261014-r510';
+import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
