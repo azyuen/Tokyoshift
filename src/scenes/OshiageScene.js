@@ -843,16 +843,18 @@ export default class OshiageScene extends Phaser.Scene {
         String(Math.floor((cooldown % 60000) / 1000)).padStart(2, '0');
     } else if (!access.allowed) {
       status = access.reason || 'UNAVAILABLE';
-    } else {
-      status = 'READY TO RACE';
     }
-    this.addText(SIDE.x + 20, SIDE.y + 535, status, {
-      pixel: true, size: '7px',
-      color: canRace ? '#a8efce' : '#e6b7a2',
-      wrap: SIDE.w - 40,
-    });
-    // Keep the primary action clear of the map button, like regular Meets.
-    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 584,
+    // Show useful lockout/active-streak information only. The enabled
+    // action button already conveys that the player can start racing.
+    if (status) {
+      this.addText(SIDE.x + 20, SIDE.y + 535, status, {
+        pixel: true, size: '7px',
+        color: canRace ? '#a8efce' : '#e6b7a2',
+        wrap: SIDE.w - 40,
+      });
+    }
+    // Bottom of race button is 15px above the Go to Map button.
+    this.button(SIDE.x + SIDE.w / 2, SIDE.y + 614,
       SIDE.w - 38, 48,
       continuing ? 'CONTINUE HEAT ' + (activeHeat + 1) + '  >'
         : 'ENTER  //  ' + MONEY(venue.entryFee) + '  >',
