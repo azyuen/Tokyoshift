@@ -133,6 +133,7 @@ try {
       showdownCarSummary: showdownCar?.text,
       singleRaceCarFont: normalCar?.style?.fontFamily,
       showdownCarFont: showdownCar?.style?.fontFamily,
+      singleRaceCarFontSize: normalCar?.style?.fontSize,
       showdownCarFontSize: showdownCar?.style?.fontSize,
       active: Boolean(s.competitionPopup?.active),
       selected: s.competitionPopup?.previewIndex,
@@ -153,7 +154,8 @@ try {
     'Showdown car summary must match the single-race name, power and torque exactly');
   assert.equal(before.showdownCarFont, before.singleRaceCarFont,
     'Showdown must use the same Rajdhani font family as single races');
-  assert.equal(before.showdownCarFontSize, '11px');
+  assert.equal(before.showdownCarFontSize, before.singleRaceCarFontSize,
+    'Showdown and single Meet should render car summaries at the same effective font size');
   assert.equal(before.opponents.length, 3);
   assert.equal(new Set(before.opponents).size, 3);
   for (const label of ['STREET SHOWDOWN', 'RIVALS IN THE SHOWDOWN',
