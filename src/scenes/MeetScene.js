@@ -134,6 +134,7 @@ import {
 } from '../data/crewSystem.js?v=20261016-r544';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
+import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261016-street-showdown-template';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -429,6 +430,7 @@ export default class MeetScene extends Phaser.Scene {
     this.specialChallengeActive = false;
     this.specialChallengePreparing = false;
     this.specialChallengeObjects = [];
+    this.competitionPopup = null;
 
     const storedRefreshAt = Number(this.registry.get('meetRefreshAt') || 0);
     const storedRosters = this.registry.get('meetRosters') || {};
@@ -3737,26 +3739,56 @@ export default class MeetScene extends Phaser.Scene {
 
   chooseCompetitionCharacter(rating = 3, exclude = []) {
     const playerId = this.getActiveDriverCharacterId();
-    const blocked = new Set([playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry)]);
+    const blocked = new Set([
+      playerId, ...exclude, ...getRecruitedCrewCharacterIds(this.registry),
+    ]);
     const location = getMeetLocation(this.selectedMeetLocation);
     const target = Phaser.Math.Clamp(Math.round(Number(rating) || 3), 1, 5);
 
+    // A Street Showdown is hosted by THIS region. Recruited teammates,
+    // locked regional leaders and the active driver cannot reappear as rivals.
+    // Ordinary single-race Meet opponents are intentionally NOT excluded:
+    // someone can compete in two different events on the same evening.
     const regional = getRivalCharacterOrderForRegion(location.district)
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
-        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
-    const global = rivalCharacterOrder
-      .filter(id => !blocked.has(id) && characters[id] && characters[id].rivalEligible !== false &&
-        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district));
-    const pool = regional.length ? regional : global;
-    if (!pool.length) return this.chooseEventCharacter(target, exclude);
+      .filter(id =>
+        !blocked.has(id) &&
+        characters[id]?.rivalEligible !== false &&
+        Boolean(characters[id]) &&
+        isMainRivalAvailableAtRegionalMeet(this.registry, id, location.district)
+      );
+    if (!regional.length) return null;
 
-    const closestDistance = Math.min(...pool.map(id =>
+    const closestDistance = Math.min(...regional.map(id =>
       Math.abs(Number(characters[id]?.skill?.rating || 3) - target)
     ));
-    const closest = pool.filter(id =>
+    const closest = regional.filter(id =>
       Math.abs(Number(characters[id]?.skill?.rating || 3) - target) === closestDistance
     );
-    return Phaser.Utils.Array.GetRandom(closest.length ? closest : pool);
+    return Phaser.Utils.Array.GetRandom(closest.length ? closest : regional);
+  }
+
+  isCompetitionOfferRosterValid(offer) {
+    if (!Array.isArray(offer?.rounds) || offer.rounds.length !== 3) return false;
+    const region = getMeetLocation(offer.locationId)?.district;
+    if (!region) return false;
+    const localIds = new Set(getRivalCharacterOrderForRegion(region));
+    const recruited = getRecruitedCrewCharacterIds(this.registry);
+    const currentDriver = this.getActiveDriverCharacterId();
+    const seenCharacters = new Set();
+    const seenFaces = new Set();
+    return offer.rounds.every(round => {
+      const id = String(round?.characterId || '');
+      const person = characters[id];
+      const displayId = this.getRivalDisplayCharacter(id)?.id || id;
+      if (!id || !person || person.rivalEligible === false ||
+          !cars[round?.carId] || !localIds.has(id) ||
+          recruited.has(id) || id === currentDriver ||
+          !isMainRivalAvailableAtRegionalMeet(this.registry, id, region) ||
+          seenCharacters.has(id) || seenFaces.has(displayId)) return false;
+      seenCharacters.add(id);
+      seenFaces.add(displayId);
+      return true;
+    });
   }
 
   getCompetitionRefreshToken() {
@@ -3824,6 +3856,10 @@ export default class MeetScene extends Phaser.Scene {
       };
     });
 
+    // Never save a three-heat invitation that lacks three eligible identities.
+    if (rounds.some(round => !round.characterId) ||
+        new Set(rounds.map(round => round.characterId)).size !== 3) return null;
+
     const rollingRoundCount = rounds.filter(round => round.raceType === 'Roll Race').length;
     const rollingPrizeBonusPerRound = Number(
       PROGRESSION_BALANCE.meetMatchmaking.competitionRollingPrizeBonusPerRound ?? 0.10
@@ -3873,6 +3909,7 @@ export default class MeetScene extends Phaser.Scene {
       refreshChanged ||
       legacyDirectCarPrize ||
       Boolean(current?.used) ||
+      !this.isCompetitionOfferRosterValid(current) ||
       current?.balanceVersion !== 'R20261016-fees' ||
       current?.playerCarId !== this.registry.get('selectedCarId') ||
       current?.garageTier !== Math.max(0, Math.min(2, Number(this.registry.get('garageTier') || 0))) ||
@@ -3892,10 +3929,12 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   showCompetitionPopup(storyConfirmed = false) {
-    if (this.isCrewTestDriveMode()) return;
-    if (this.specialChallengeActive || !this.hasCar) return;
-    if (this.getCompetitionCooldownRemainingMs() > 0) return;
+    if (this.isCrewTestDriveMode() || this.specialChallengeActive ||
+        !this.hasCar || this.competitionPopup?.active ||
+        this.getCompetitionCooldownRemainingMs() > 0) return;
 
+    // Keep the authored first-visit invitation, then show the redesigned
+    // full-screen Skytree-style roster instead of the old box popup.
     if (!storyConfirmed) {
       const story = playMangaCutscene(this, 'competitionIntroduction', {
         characterOverrides: { PROMOTER: 'tetsuyaKanda' },
@@ -3904,149 +3943,54 @@ export default class MeetScene extends Phaser.Scene {
       });
       if (story.played) return;
     }
-    if (Number(this.registry.get('wins') || 0) < 1) return;
-    if (this.competitionPopup?.active) return;
+    if (Number(this.registry.get('wins') || 0) < 1 ||
+        sceneCutsceneActive(this)) return;
 
     const offer = this.getCompetitionOffer();
+    if (!offer || !this.isCompetitionOfferRosterValid(offer)) return;
 
-    recordCarMagazineSightings(
-      this.registry,
-      (offer.rounds || []).map(round => ({ carId: round.carId, source: 'competition' })),
-      'competition'
-    );
-
-    const cash = Number(this.registry.get('cash') || 0);
-    const enoughCash = cash >= offer.entryFee;
-    const selectedCarId = this.registry.get('selectedCarId');
-    const eligibleCar = carMatchesCompetitionRestriction(selectedCarId, offer.restriction);
-    const enough = enoughCash && eligibleCar;
-    const couponRequired = offer.prizeCarId
-      ? getCarCouponRequirement(offer.prizeCarId)
-      : 0;
-    const couponOwned = offer.prizeCarId
-      ? getCarCouponCount(this.registry, offer.prizeCarId)
-      : 0;
-    const prizeText = offer.prizeType === 'COUPON'
-      ? cars[offer.prizeCarId].shortName + ' COUPON\n' +
-        couponOwned + ' OWNED // ' + couponRequired + ' PER CAR'
-      : '¥' + offer.prizeCash.toLocaleString('en-US');
-
-    const depth = 120;
-    const objects = [];
-    const add = obj => { objects.push(obj); return obj; };
-
-    const blocker = add(this.add.rectangle(780, 420, 1560, 840, 0x02050b, 0.72)
-      .setDepth(depth).setInteractive());
-
-    const panel = add(this.add.rectangle(780, 420, 780, 540, 0x07111d, 0.995)
-      .setStrokeStyle(3, 0x45d7ff, 0.95).setDepth(depth + 1));
-
-    add(this.add.text(780, 192, 'STREET SHOWDOWN // THREE RACES', {
-      fontFamily: PIXEL_FONT, fontSize: '15px', color: '#eefaff'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(
-      780,
-      235,
-      'WIN ALL THREE RACES IN A ROW' +
-        (offer.restriction
-          ? '\\nCLASS // ' + offer.restriction.label
-          : '\\n' + (offer.rounds[0]?.showdownEra || 'STREET') +
-            ' BUILDS // UP TO LV' + (offer.rounds[0]?.showdownMaxLevel || 1)),
-      {
-        fontFamily: BODY_FONT,
-        fontSize: '13px',
-        color: '#8faabb',
-        fontStyle: '600',
-        align: 'center',
-        lineSpacing: 4,
+    // Skytree preloads its opponents before drawing the screen. Do the same
+    // here for ALL three cards and side-profile cars so previews never flash
+    // missing texture errors, even on iPads and older saved Meet profiles.
+    const present = () => {
+      if (!this.sys.isActive() || this.competitionPopup?.active ||
+          this.specialChallengeActive) return;
+      const current = this.getCompetitionOffer();
+      if (!current || !this.isCompetitionOfferRosterValid(current)) return;
+      if (current.id !== offer.id) {
+        // The player changed car or the Meet refreshed during asset loading.
+        this.showCompetitionPopup(true);
+        return;
       }
-    ).setOrigin(0.5).setDepth(depth + 2));
 
-    add(this.add.text(535, 292, 'ENTRY', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
-    }).setOrigin(0.5).setDepth(depth + 2));
+      recordCarMagazineSightings(
+        this.registry,
+        current.rounds.map(round => ({ carId: round.carId, source: 'competition' })),
+        'competition'
+      );
 
-    add(this.add.text(535, 326, '¥' + offer.entryFee.toLocaleString('en-US'), {
-      fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffe08a'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(1025, 292, 'GRAND PRIZE', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#8cc8ec'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    add(this.add.text(1025, 326, prizeText, {
-      fontFamily: PIXEL_FONT,
-      fontSize: offer.prizeType === 'COUPON' ? '9px' : '13px',
-      color: offer.prizeType === 'COUPON' ? '#ff9fc7' : '#73f5a5',
-      align: 'center',
-      lineSpacing: 4,
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    offer.rounds.forEach((round, i) => {
-      const y = 395 + i * 54;
-      add(this.add.text(470, y, 'ROUND ' + (i + 1), {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#718fa3'
-      }).setOrigin(0, 0.5).setDepth(depth + 2));
-
-      add(this.add.text(650, y, round.skillLabel + ' // ' + round.showdownTuningPoints + ' TP', {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#d9edf7'
-      }).setOrigin(0, 0.5).setDepth(depth + 2));
-
-      add(this.add.text(1040, y, cars[round.carId].shortName, {
-        fontFamily: PIXEL_FONT,
-        fontSize: '8px',
-        color: i === 2 && offer.prizeType === 'COUPON' ? '#ff9fc7' : '#9db7c8'
-      }).setOrigin(1, 0.5).setDepth(depth + 2));
-    });
-
-    add(this.add.text(780, 565, 'NO TUNING OR CAR CHANGES BETWEEN ROUNDS', {
-      fontFamily: PIXEL_FONT, fontSize: '7px', color: '#8fa0aa'
-    }).setOrigin(0.5).setDepth(depth + 2));
-
-    const enter = add(this.add.rectangle(665, 625, 260, 48, enough ? 0x0d2b29 : 0x24161a, 1)
-      .setStrokeStyle(2, enough ? 0x62e8c7 : 0x7a4652, 1)
-      .setDepth(depth + 2));
-
-    const enterText = add(this.add.text(
-      665,
-      625,
-      enough
-        ? 'ENTER // ¥' + offer.entryFee.toLocaleString('en-US')
-        : !eligibleCar
-          ? 'NEED ' + offer.restriction.label
-          : 'NEED MORE CASH',
-      {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: enough ? '#f1fffb' : '#b1848f'
-      }
-    ).setOrigin(0.5).setDepth(depth + 3));
-
-    const close = add(this.add.rectangle(895, 625, 170, 48, 0x171c25, 1)
-      .setStrokeStyle(1, 0x516a7b, 1)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(depth + 2));
-
-    add(this.add.text(895, 625, 'CLOSE', {
-      fontFamily: PIXEL_FONT, fontSize: '8px', color: '#c7d5de'
-    }).setOrigin(0.5).setDepth(depth + 3));
-
-    const dismiss = () => {
-      objects.forEach(obj => obj?.destroy?.());
-      this.competitionPopup = null;
+      this.competitionPopup = showStreetShowdownView(this, {
+        offer: current,
+        location: getMeetLocation(this.selectedMeetLocation),
+        onClose: () => { this.competitionPopup = null; },
+        onEnter: selected => {
+          // The preview is not a transaction. Revalidate once at acceptance,
+          // and preserve the existing one-fee, three-heat race settlement.
+          const latest = this.getCompetitionOffer();
+          if (!latest || latest.id !== selected.id ||
+              !this.isCompetitionOfferRosterValid(latest)) {
+            this.showCompetitionPopup(true);
+            return;
+          }
+          this.startCompetition(latest);
+        },
+      });
     };
 
-    blocker.on('pointerdown', dismiss);
-    close.on('pointerdown', dismiss);
-
-    if (enough) {
-      enter.setInteractive({ useHandCursor: true });
-      enter.on('pointerdown', () => {
-        dismiss();
-        this.startCompetition(offer);
-      });
-    }
-
-    this.competitionPopup = panel;
+    if (this.ensureMeetRosterAssets(
+      offer.rounds, this.selectedMeetLocation, 'LOADING SHOWDOWN', present
+    )) return;
+    present();
   }
 
   configureCompetitionRound(state, index) {
