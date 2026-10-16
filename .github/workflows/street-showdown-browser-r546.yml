@@ -1,0 +1,33 @@
+name: Street Showdown Browser R546
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/scenes/MeetScene.js'
+      - 'src/ui/StreetShowdownView.js'
+      - 'src/ui/ShowdownLayout.js'
+      - 'src/data/streetShowdownRoster.js'
+      - 'tests/street-showdown-browser-r546.mjs'
+      - '.github/workflows/street-showdown-browser-r546.yml'
+  workflow_dispatch:
+jobs:
+  street-showdown-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Run local game server
+        run: python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/tokyoshift-showdown.log 2>&1 &
+      - name: Verify Meet Showdown, rival preview, recruitment and transaction in Chromium
+        run: node tests/street-showdown-browser-r546.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: street-showdown-r546-screenshots
+          path: artifacts/street-showdown
+          if-no-files-found: ignore
