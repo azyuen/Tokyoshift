@@ -603,6 +603,7 @@ function drawDialogue(controller, page) {
   const width = Number(scene.scale.width || 1560);
   const height = Number(scene.scale.height || 840);
   const speaker = page.speaker || 'system';
+  const isPhoneCall = Boolean(page.phoneCall);
 
   // Compact manga card: with the actors now smaller and staged higher, the
   // dialogue no longer needs to act as a full-width character crop. Keep it
@@ -629,8 +630,9 @@ function drawDialogue(controller, page) {
         Boolean(speakingActor?.rivalContext)
       );
 
-  const card = scene.add.rectangle(x, y, cardWidth, cardHeight, 0xfffcf1, 1)
-    .setStrokeStyle(6, 0x111111, 1)
+  const card = scene.add.rectangle(x, y, cardWidth, cardHeight,
+    isPhoneCall ? (speaker === 'right' ? 0x16464a : 0x193650) : 0xfffcf1, 1)
+    .setStrokeStyle(isPhoneCall ? 4 : 6, isPhoneCall ? 0x78badd : 0x111111, 1)
     .setDepth(BASE_DEPTH + 30)
     .setScrollFactor(0)
     .setInteractive({ useHandCursor: true });
@@ -649,7 +651,7 @@ function drawDialogue(controller, page) {
     labelY,
     labelWidth,
     labelHeight,
-    0x111111,
+    isPhoneCall ? 0x0c253c : 0x111111,
     1
   ).setDepth(BASE_DEPTH + 31).setScrollFactor(0);
 
@@ -658,7 +660,7 @@ function drawDialogue(controller, page) {
       ? labelX + labelWidth / 2 - 16
       : labelX - labelWidth / 2 + 16,
     labelY,
-    label,
+    isPhoneCall ? (speaker === 'right' ? 'YOU // PHONE' : label + ' // PHONE') : label,
     {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
@@ -676,7 +678,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: BODY_FONT,
       fontSize: page.emphasis ? '14px' : '13px',
-      color: '#111111',
+      color: isPhoneCall ? '#ffffff' : '#111111',
       fontStyle: page.emphasis ? '800' : '700',
       lineSpacing: 5,
       wordWrap: { width: cardWidth - 76 },
@@ -713,7 +715,7 @@ function drawDialogue(controller, page) {
     footerY,
     actionWidth,
     42,
-    actionEnabled ? 0x111111 : 0x565656,
+    actionEnabled ? (isPhoneCall ? 0x215b85 : 0x111111) : 0x565656,
     1
   ).setDepth(BASE_DEPTH + 33)
     .setScrollFactor(0);
@@ -773,7 +775,7 @@ function drawDialogue(controller, page) {
     {
       fontFamily: PIXEL_FONT,
       fontSize: '6px',
-      color: '#333333',
+      color: isPhoneCall ? '#daeefa' : '#333333',
     }
   ).setOrigin(0, 0.5)
     .setDepth(BASE_DEPTH + 32)
