@@ -904,7 +904,7 @@ export default class MeetScene extends Phaser.Scene {
       g.lineStyle(5, color, 1); g.strokePoints(p, true);
       text(x + 45, y + 7, title, 29, '#' + color.toString(16).padStart(6, '0'));
     };
-    sideFrame(20, 453, 765, 355, 0x35d6ff, 'YOUR CREW');
+    sideFrame(20, 415, 765, 393, 0x35d6ff, 'YOUR CREW');
     sideFrame(765, 29, 775, 444, 0xff477e, 'RIVAL CREW');
 
     const xPlayer = [49, 295, 541];
@@ -936,7 +936,7 @@ export default class MeetScene extends Phaser.Scene {
     const drawCard = (index, unit, rival = false) => {
       const collection = rival ? [] : slotObjects[index];
       const x = rival ? xRival[index] : xPlayer[index];
-      const y = rival ? 96 : 507;
+      const y = rival ? 96 : 465;
       const accent = rival ? 0xff477e : 0x35d6ff;
       const portrait = panel(x, y, 236, 176,
         rival ? 0x80304e : 0x165578, 0x080a10, 0.73);
