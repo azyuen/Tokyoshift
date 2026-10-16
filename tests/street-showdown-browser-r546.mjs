@@ -122,10 +122,18 @@ try {
   const read = () => page.evaluate(() => {
     const s = window.TOKYO_SHIFT.scene.getScene('MeetScene');
     const offer = s.getCompetitionOffer();
-    const texts = s.children.list
-      .filter(obj => obj?.active && typeof obj.text === 'string' && obj.depth >= 200)
-      .map(obj => obj.text);
+    const overlayTexts = s.children.list
+      .filter(obj => obj?.active && typeof obj.text === 'string' && obj.depth >= 200);
+    const texts = overlayTexts.map(obj => obj.text);
+    const normalCar = s.currentCarText;
+    const showdownCar = overlayTexts.find(obj =>
+      obj.text === normalCar?.text && obj.x === 1200 && obj.y === 261);
     return {
+      singleRaceCarSummary: normalCar?.text,
+      showdownCarSummary: showdownCar?.text,
+      singleRaceCarFont: normalCar?.style?.fontFamily,
+      showdownCarFont: showdownCar?.style?.fontFamily,
+      showdownCarFontSize: showdownCar?.style?.fontSize,
       active: Boolean(s.competitionPopup?.active),
       selected: s.competitionPopup?.previewIndex,
       opponents: offer.rounds.map(x => x.characterId),
@@ -139,6 +147,13 @@ try {
 
   let before = await read();
   assert.equal(before.active, true);
+  assert.ok(before.singleRaceCarSummary?.includes(' kW'), 'single-race power label');
+  assert.ok(before.singleRaceCarSummary?.includes(' Nm'), 'single-race torque label');
+  assert.equal(before.showdownCarSummary, before.singleRaceCarSummary,
+    'Showdown car summary must match the single-race name, power and torque exactly');
+  assert.equal(before.showdownCarFont, before.singleRaceCarFont,
+    'Showdown must use the same Rajdhani font family as single races');
+  assert.equal(before.showdownCarFontSize, '11px');
   assert.equal(before.opponents.length, 3);
   assert.equal(new Set(before.opponents).size, 3);
   for (const label of ['STREET SHOWDOWN', 'RIVALS IN THE SHOWDOWN',
