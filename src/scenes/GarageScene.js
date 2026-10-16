@@ -1848,8 +1848,7 @@ export default class GarageScene extends Phaser.Scene {
     const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
     const enabled = eligible && (stored ||
       listStorableKitParts((this.registry.get('carStates') || {})[this.selectedCarId] || {}).length > 0);
-    this.moveCarLabel.setText(!warehouse ? 'KIT STORAGE // HQ ONLY'
-      : stored ? 'RESTORE KIT  >' : 'STORE KIT  >');
+    this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
     if (enabled) {
       this.moveCarButton.setInteractive({ useHandCursor: true })
         .setFillStyle(0x102138).setStrokeStyle(2, 0x55b8ff);
@@ -2139,7 +2138,7 @@ export default class GarageScene extends Phaser.Scene {
     this.moveCarButton = this.add.rectangle(
       SIDE.x + SIDE.w / 2, 662, SIDE.w - 32, 42, 0x102138, 1
     ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
-    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, 662, 'STORE & RESTORE KIT', {
+    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, 662, 'UNINSTALL / RESTORE PARTS', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff',
     }).setOrigin(0.5).setDepth(41);
     this.moveCarButton.on('pointerdown', () => this.showStoreRestoreKitPopup());
@@ -2158,7 +2157,7 @@ export default class GarageScene extends Phaser.Scene {
       this.showWorkshopToast('NO INSTALLED UPGRADES TO STORE');
       return;
     }
-    const selected = new Set(available.map(part => part.key));
+    const selected = new Set();
     const depth = 160;
     const objects = [];
     const add = object => { objects.push(object); return object; };
@@ -2170,49 +2169,77 @@ export default class GarageScene extends Phaser.Scene {
     const label = (x, y, value, size = 10, color = '#eefaff') =>
       add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
         fontSize: size + 'px', color }).setDepth(depth + 3));
-    label(350, 104, restoring ? 'RESTORE STORED KIT' : 'REMOVE & STORE KIT', 14);
-    label(350, 145, cars[carId]?.shortName || carId, 10, '#9fc7db');
+    label(350, 104, 'UNINSTALL / RESTORE PARTS', 13);
+    label(350, 142, cars[carId]?.shortName || carId, 9, '#9fc7db');
+    const explanation = restoring
+      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥100,000.\\n' +
+        'BETTER PARTS ALREADY INSTALLED WILL BE KEPT. THE KIT IS CONSUMED.'
+      : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\\n' +
+        'LABOUR: ¥50,000 TO UNINSTALL, ¥100,000 TO RESTORE LATER.\\n' +
+        'ONLY ONE KIT SLOT PER CAR. SELECT THE PARTS TO UNINSTALL.';
+    add(this.add.text(350, 169, explanation, {
+      fontFamily: BODY_FONT, fontSize: '14px', color: '#b8cbd7',
+      lineSpacing: 4, wordWrap: { width: 850 },
+    }).setDepth(depth + 3));
+    const categories = [
+      ['engine', 'ENGINE'],
+      ['drivetrain', 'DRIVETRAIN'],
+      ['chassis', 'CHASSIS'],
+      ['exhaustNos', 'EXHAUST / NOS'],
+    ];
     const rows = restoring
       ? Object.entries(initial.storedKit.parts || {}).map(([key, level]) => {
           const [category, partId] = key.split(':');
           return { key, category, partId, level, name: partId };
         })
       : available;
-    label(350, 181, restoring
-      ? 'ALL STORED PARTS WILL BE RESTORED OR DISCARDED.'
-      : 'SELECT PARTS TO REMOVE. ONE KIT SLOT PER CAR.', 9, '#b8cbd7');
-    const rowStart = 222;
-    const colWidth = 450;
-    rows.forEach((part, i) => {
-      const col = Math.floor(i / 11);
-      const row = i % 11;
-      const x = 355 + col * colWidth;
-      const y = rowStart + row * 35;
-      if (col > 1) return;
-      const text = label(x + 12, y,
-        (restoring ? 'LV.' : '[X] LV.') + part.level + '  ' +
-        String(part.name || part.partId).toUpperCase(), 8, '#d6e8f3');
-      if (!restoring) {
-        const hit = add(this.add.rectangle(x + 205, y + 9, 418, 31, 0xffffff, 0.001)
-          .setInteractive({ useHandCursor: true }).setDepth(depth + 4));
-        hit.on('pointerdown', () => {
-          if (selected.has(part.key)) selected.delete(part.key);
-          else selected.add(part.key);
-          text.setText((selected.has(part.key) ? '[X] ' : '[ ] ') +
-            'LV.' + part.level + '  ' + String(part.name).toUpperCase());
-        });
-      }
+    let y = 272;
+    const tileWidth = 212;
+    const tileHeight = 43;
+    const gap = 4;
+    categories.forEach(([category, heading]) => {
+      const parts = rows.filter(part => part.category === category);
+      if (!parts.length) return;
+      label(350, y, heading, 9, '#68dfff');
+      y += 26;
+      parts.forEach((part, i) => {
+        const x = 350 + (i % 4) * (tileWidth + gap);
+        const tileY = y + Math.floor(i / 4) * (tileHeight + gap);
+        const tile = add(this.add.rectangle(
+          x + tileWidth / 2, tileY + tileHeight / 2,
+          tileWidth, tileHeight, 0x123d50, 1
+        ).setStrokeStyle(1, 0x55b8ff).setDepth(depth + 3));
+        const name = String(part.name || part.partId)
+          .replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+        const text = add(this.add.text(x + tileWidth / 2, tileY + tileHeight / 2,
+          name + '  LV.' + part.level, {
+            fontFamily: PIXEL_FONT, fontSize: '7px', color: '#effaff',
+            align: 'center', wordWrap: { width: tileWidth - 8 },
+          }).setOrigin(0.5).setDepth(depth + 4));
+        if (!restoring) {
+          tile.setInteractive({ useHandCursor: true });
+          tile.on('pointerdown', () => {
+            if (selected.has(part.key)) selected.delete(part.key);
+            else selected.add(part.key);
+            const removed = selected.has(part.key);
+            tile.setFillStyle(removed ? 0x353a42 : 0x123d50)
+              .setStrokeStyle(1, removed ? 0x737d88 : 0x55b8ff);
+            text.setColor(removed ? '#aeb6bf' : '#effaff');
+          });
+        }
+      });
+      y += Math.ceil(parts.length / 4) * (tileHeight + gap) + 14;
     });
     const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
-    label(350, 634, 'LABOUR FEE  ¥ ' + fee.toLocaleString('en-US'), 10, '#f2d899');
-    const action = add(this.add.rectangle(960, 703, 260, 48, 0x0c2827, 1)
+    label(350, 654, 'LABOUR FEE  ¥ ' + fee.toLocaleString('en-US'), 10, '#f2d899');
+    const action = add(this.add.rectangle(960, 708, 260, 48, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    label(850, 696, restoring ? 'PAY & RESTORE' : 'PAY & STORE', 9);
-    const cancel = add(this.add.rectangle(555, 703, 210, 48, 0x17222e, 1)
+    label(850, 701, restoring ? 'PAY & RESTORE' : 'PAY & STORE', 9);
+    const cancel = add(this.add.rectangle(555, 708, 210, 48, 0x17222e, 1)
       .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    label(502, 696, 'CANCEL', 9);
+    label(502, 701, 'CANCEL', 9);
     cancel.on('pointerdown', close);
     action.on('pointerdown', () => {
       if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
