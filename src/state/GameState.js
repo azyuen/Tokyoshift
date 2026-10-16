@@ -103,6 +103,7 @@ export function createDefaultGameState(options = {}) {
     crewRecruitChallenge: null,
     crewPendingRecruit: null,
     crewBattleProgress: {},
+    crewBattleLineups: {},
     crewBattleState: null,
     crewSpaceActive: false,
     crewPreviousCarId: null,
@@ -1096,6 +1097,10 @@ export function normaliseState(input = {}) {
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
         ? input.crewBattleProgress
         : {},
+    crewBattleLineups:
+      input.crewBattleLineups && typeof input.crewBattleLineups === 'object'
+        ? input.crewBattleLineups
+        : {},
     crewBattleState:
       input.crewBattleState && typeof input.crewBattleState === 'object'
         ? input.crewBattleState
@@ -1287,6 +1292,7 @@ export function snapshotRegistry(registry) {
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
+    crewBattleLineups: registry.get('crewBattleLineups') || {},
     crewBattleState: registry.get('crewBattleState') || null,
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
