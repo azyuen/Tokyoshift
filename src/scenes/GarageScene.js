@@ -49,7 +49,7 @@ import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r557';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r557';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r556';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r557';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
