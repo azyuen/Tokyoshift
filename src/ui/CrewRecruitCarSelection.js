@@ -73,7 +73,7 @@ export function showCrewRecruitCarSelection(scene, {
   picker.close = cleanup;
   scene.events?.once?.(Phaser.Scenes.Events.SHUTDOWN, cleanup);
 
-  const shield = add(scene.add.rectangle(780, 420, 1560, 840, 0x050709, 0.82)
+  add(scene.add.rectangle(780, 420, 1560, 840, 0x050709, 0.82)
     .setScrollFactor(0).setDepth(DEPTH).setInteractive());
 
   function makeMask(bay) {
@@ -187,7 +187,6 @@ export function showCrewRecruitCarSelection(scene, {
       if (picker.active) placeCar(challenge.baseCarId, crewBay, bayMasks[1], true);
     });
 
-  const workshopBg = { value: null };
   const playerName = text(playerBay.center, playerBay.y + 59, '',
     '10px', '#ffffff', DEPTH + 31,
     { align: 'center', wrap: playerBay.w - 50 }).setOrigin(0.5);
@@ -198,7 +197,7 @@ export function showCrewRecruitCarSelection(scene, {
     { align: 'center', wrap: playerBay.w - 100 }).setOrigin(0.5);
   let playerBackgroundObjects = [];
   let playerCarObjects = [];
-  const leftContentStart = carParts.length;
+  let playerHeading = null;
   function redrawPlayer() {
     const current = carIds[chosen];
     // Destroy only the player-side sprites. The opponent car and its spinning
@@ -216,11 +215,13 @@ export function showCrewRecruitCarSelection(scene, {
     });
     playerBackgroundObjects = [];
     if (!current) {
-      playerName.setText('YOU HAVE NO ELIGIBLE CAR');
+      playerHeading?.setText('NO ELIGIBLE CAR');
+      playerName.setText('ACQUIRE ONE AND TRY AGAIN LATER');
       counter.setText('');
-      noCar.setText('ACQUIRE AN UNMODIFIED STOCK CAR OF THE SAME CLASS AND TRY AGAIN LATER.');
+      noCar.setText('');
       return;
     }
+    playerHeading?.setText('YOUR STOCK CAR');
     noCar.setText('');
     const bg = workshopFor(current);
     const bgStart = backdrops.length;
@@ -249,9 +250,10 @@ export function showCrewRecruitCarSelection(scene, {
       .setScrollFactor(0).setDepth(DEPTH + 29));
     add(scene.add.rectangle(bay.center, bay.y + 43, bay.w - 12, 74,
       0x111111, 1).setScrollFactor(0).setDepth(DEPTH + 30));
-    text(bay.x + 25, bay.y + 14,
+    const heading = text(bay.x + 25, bay.y + 14,
       i === 0 ? 'YOUR STOCK CAR' : 'SIGNATURE CAR',
       '10px', '#eac36d', DEPTH + 32);
+    if (i === 0) playerHeading = heading;
   });
   text(crewBay.center, crewBay.y + 59, recruitName,
     '10px', '#ffffff', DEPTH + 32, { align: 'center', wrap: crewBay.w - 50 })
