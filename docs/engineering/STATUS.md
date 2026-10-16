@@ -26,3 +26,9 @@ Seven hero conversions and duplicate selection had passed. Browser validation ne
 
 ## Working rule
 Commit each bounded unit and update this file with exact commands/results. Main and the recovery branch remain untouched.
+
+## Increment 1 — restored regression gate
+Restored `tests/vehicle-engineering.mjs` from the previous conversation, including real profile migration. Fresh command:
+`node --test tests/vehicle-engineering.mjs tests/tuner-hero-conversions-r521.mjs tests/selected-car-continuity-r530.mjs tests/startup-import-integrity-r508.mjs`
+Result: **69 passed, 0 failed**, recorded in `focused-tests.txt`. This runs only representative PI parity races (16 builds), not the completed full matrix. Stock outputs tolerate <1%; displayed output <1 kW/Nm; PI ET parity <3% against 120 Hz runs.
+Current main observed at `0aad895e442753c8ea9b0af1f24e18cc39bb7c17`; it has not been merged into this workstream.
