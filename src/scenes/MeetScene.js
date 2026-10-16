@@ -2398,7 +2398,10 @@ export default class MeetScene extends Phaser.Scene {
 
     // A real departure (not the RaceScene -> MeetScene results handoff)
     // re-enables a pending defeated recruitment for a LATER visit.
-    if (locationId !== this.selectedMeetLocation) {
+    if (locationId !== this.selectedMeetLocation &&
+        (travelTarget.regionId === 'CENTRAL_TOKYO' ||
+         travelTarget.regionId === 'OSHIAGE' ||
+         Boolean(MEET_LOCATIONS[locationId]))) {
       this.releaseDeferredCrewRecruitment();
     }
 
