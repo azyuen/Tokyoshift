@@ -8,7 +8,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261011-r478';
+} from '../data/cutscenes.js?v=20261016-r539';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -869,12 +869,9 @@ function renderPage(controller, pageIndex, firstPage = false) {
     );
   });
 
-  drawDialogue(controller, page);
-
-  if (firstPage) showIntroCard(controller);
-  // Scene-owned elements such as the crew signature-car reveal should appear
-  // only when their authored dialogue page becomes visible, not beforehand.
-  // Called for the first page and every NEXT, including after async preloading.
+  // Scene-owned car bays and eligibility must be established BEFORE the
+  // dialogue's action buttons are drawn. This is especially important on the
+  // crew choice page, where READY TO RACE depends on an eligible car.
   try {
     context.options.onPageChange?.({
       pageIndex,
@@ -886,6 +883,9 @@ function renderPage(controller, pageIndex, firstPage = false) {
   } catch (error) {
     console.warn('[Tokyo SHIFT] Manga page-change callback failed', error);
   }
+
+  drawDialogue(controller, page);
+  if (firstPage) showIntroCard(controller);
 }
 
 function finaliseController(controller, {
