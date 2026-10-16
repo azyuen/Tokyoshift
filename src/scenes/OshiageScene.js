@@ -654,9 +654,9 @@ export default class OshiageScene extends Phaser.Scene {
       );
     const prize = continuing && series.prize || getOshiageElitePrize(this.registry,
       venueId, Number(this.registry.get('wins') || 0) + 3);
-    const extraPrize = prize?.wheelId
-      ? 'BONUS  //  ' + String(prize.wheelLabel || 'SPECIAL RIMS').toUpperCase()
-      : 'BONUS  //  ' + Number(prize?.coupons || venue.couponCount) + ' CAR COUPONS';
+    const extraPrize = 'BONUS  //  ' +
+      Number(prize?.coupons ?? venue.couponCount) + ' CAR COUPONS' +
+      (prize?.wheelId ? '\n+ SPECIAL WHEELS' : '');
 
     // Match normal Meet's car-and-character presentation, but show just the
     // currently selected rival. The car is 30% larger than the old 510px one.
