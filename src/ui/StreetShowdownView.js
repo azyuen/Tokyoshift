@@ -27,7 +27,7 @@ import {
 } from './ShowdownLayout.js?v=20261016-shared-showdown';
 
 const PIXEL = '"Silkscreen", monospace';
-const BODY = '"Rajdhani", sans-serif';
+const BODY = '"Rajdhani", monospace';
 const Z = 200;
 const money = n => '¥ ' + Math.max(0, Number(n) || 0).toLocaleString('en-US');
 const safe = value => String(value ?? '').toUpperCase();
