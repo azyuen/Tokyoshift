@@ -843,229 +843,223 @@ export default class MeetScene extends Phaser.Scene {
     const units = getCrewBattleUnits(this.registry);
     const rounds = buildRegionalCrewBattleRounds(regionId, this.registry);
     if (units.length < 3 || rounds.length < 3) return;
-
     const saved = (this.registry.get('crewBattleLineups') || {})[regionId] || [];
     const slots = [0, 1, 2].map(i => units.find(u => u.id === saved[i]) || null);
     const objects = [];
     const depth = 200;
-    const add = obj => { objects.push(obj); return obj; };
-    const close = () => objects.splice(0).forEach(obj => obj?.destroy?.());
-    const txt = (x, y, value, size = 10, color = '#ffffff', origin = 0.5) =>
-      add(this.add.text(x, y, value, { fontFamily: PIXEL_FONT,
-        fontSize: size + 'px', color, align: 'center',
-        wordWrap: { width: 205 },
-      }).setOrigin(origin).setDepth(depth + 5));
-    // Let the existing Meet backdrop show through, as in the race intro.
-    // Only the comic panels get translucent ink backings.
-    add(this.add.rectangle(780, 420, 1560, 840, 0x020711, 0.30)
-      .setInteractive().setDepth(depth));
-    add(this.add.rectangle(340, 102, 650, 143, 0x07101b, 0.78)
-      .setDepth(depth + 1));
-    txt(65, 54, String(regionId).toUpperCase(), 13, '#70e7ff', 0);
-    txt(65, 92, 'CREW SHOWDOWN', 27, '#ffffff', 0);
-    txt(65, 137, '3 VS 3 // BEST OF 3', 10, '#c5e8fa', 0);
-    txt(350, 394, 'YOUR CREW', 13, '#65ddf5');
-    txt(1210, 72, 'REGIONAL CREW', 13, '#ff8cac');
-    // Angled ink-stroke frames visually connect each side's six panels.
-    const comicFrame = (x, y, w, h, stroke) => {
-      const g = add(this.add.graphics().setDepth(depth + 1));
-      g.fillStyle(0x030913, 0.68);
-      g.fillPoints([
-        { x: x - 13, y: y + 11 }, { x: x + w - 3, y },
-        { x: x + w + 13, y: y + h - 11 }, { x: x + 3, y: y + h },
-      ], true);
-      g.lineStyle(4, stroke, 1);
-      g.strokePoints([
-        { x: x - 13, y: y + 11 }, { x: x + w - 3, y },
-        { x: x + w + 13, y: y + h - 11 }, { x: x + 3, y: y + h },
-      ], true);
+    const add = o => { objects.push(o); return o; };
+    const close = () => {
+      objects.splice(0).forEach(o => { try { o.destroy?.(); } catch (_) {} });
     };
-    comicFrame(44, 416, 652, 316, 0x33cfff);
-    comicFrame(840, 87, 665, 355, 0xff5d89);
+    const font = '"Exo 2", sans-serif';
+    const text = (x, y, value, size, color = '#ffffff', opts = {}) =>
+      add(this.add.text(x, y, value, {
+        fontFamily: font, fontSize: size + 'px', fontStyle: 'italic 900',
+        color, stroke: '#090d16', strokeThickness: size >= 24 ? 5 : 1,
+        ...opts,
+      }).setDepth(depth + 8));
 
-    const playerX = [160, 370, 580];
-    const rivalX = [947, 1160, 1373];
+    // Dedicated full-screen meet artwork, independent of the stage mask and
+    // existing meet UI. No dark scrim over the background image.
+    const bgKey = this.currentBackground?.texture?.key;
+    if (bgKey && this.textures.exists(bgKey)) {
+      const source = this.textures.get(bgKey).getSourceImage();
+      add(this.add.image(780, 420, bgKey)
+        .setScale(Math.max(1560 / source.width, 840 / source.height))
+        .setDepth(depth));
+    } else {
+      add(this.add.rectangle(780, 420, 1560, 840, 0x102137).setDepth(depth));
+    }
+    // Transparent input shield blocks the underlying Meet screen.
+    add(this.add.rectangle(780, 420, 1560, 840, 0x000000, 0)
+      .setInteractive().setDepth(depth + 1));
+    text(64, 52, String(regionId).toUpperCase(), 19, '#48d9ff');
+    text(58, 81, 'CREW SHOWDOWN', 54, '#ffffff');
+    text(64, 153, '3 VS 3  //  BEST OF 3', 20, '#a8c4d7');
+
+    // The skewed panels use geometry masks, so sprites are actually clipped
+    // to the slanted edges rather than overflowing their card boundaries.
+    const polygon = (x, y, w, h, skew = 18) => [
+      { x: x + skew, y }, { x: x + w, y },
+      { x: x + w - skew, y: y + h }, { x, y: y + h },
+    ];
+    const panel = (x, y, w, h, fill, border, alpha = 1, skew = 17) => {
+      const points = polygon(x, y, w, h, skew);
+      const g = add(this.add.graphics().setDepth(depth + 3));
+      g.fillStyle(fill, alpha); g.fillPoints(points, true);
+      g.lineStyle(3, border, 1); g.strokePoints(points, true);
+      return { points, g };
+    };
+    const clip = (obj, points, collection) => {
+      const shape = this.make.graphics({ add: false });
+      shape.fillStyle(0xffffff, 1); shape.fillPoints(points, true);
+      obj.setMask(shape.createGeometryMask());
+      // Graphics mask is not a displayed object; destroy it with the slot.
+      objects.push(shape); collection.push(shape);
+    };
+    const sideFrame = (x, y, w, h, color, title) => {
+      const p = polygon(x, y, w, h, 32);
+      const g = add(this.add.graphics().setDepth(depth + 2));
+      g.fillStyle(0x030b16, 0.77); g.fillPoints(p, true);
+      g.lineStyle(5, color, 1); g.strokePoints(p, true);
+      text(x + 45, y + 7, title, 29, '#' + color.toString(16).padStart(6, '0'));
+    };
+    sideFrame(20, 453, 765, 355, 0x35d6ff, 'YOUR CREW');
+    sideFrame(765, 29, 775, 444, 0xff477e, 'RIVAL CREW');
+
+    const xPlayer = [49, 295, 541];
+    const xRival = [791, 1036, 1281];
     const slotObjects = [[], [], []];
     let vsStamp = null;
-
-    const drawPanel = (x, y, w, h, filled, tint, label, collection) => {
-      const box = add(this.add.rectangle(x, y, w, h,
-        filled ? tint : 0x111e2c, filled ? 0.90 : 0.78).setStrokeStyle(3,
-        filled ? (tint === 0x17394b || tint === 0x1d3345 ? 0x38d5ff : 0xff7199)
-          : 0x597083).setDepth(depth + 2));
-      collection.push(box);
-      if (label) {
-        const t = txt(x, y, label, 8, '#9eb5c5');
-        collection.push(t);
-      }
-      return box;
-    };
-
-    const drawPortrait = (characterId, x, y, collection) => {
-      if (!characterId) return;
-      try {
-        const profile = createCharacterProfile(this, {
-          characterId, pose: 'idle', x, y, frameWidth: 184,
-          frameHeight: 176, side: 'left', depth: depth + 4,
-          rivalContext: true,
-          playerCharacterId: this.registry.get('playerCharacterId') || '',
-        });
-        [profile?.image, profile?.maskShape, profile?.background].forEach(obj => {
-          if (obj) { objects.push(obj); collection.push(obj); }
-        });
-      } catch (error) {
-        console.warn('[TOKYO SHIFT] Crew portrait unavailable', characterId, error);
-      }
-    };
-
-    const drawCar = (carId, x, y, collection) => {
-      const car = cars[carId];
-      if (!car) return;
-      try {
-        const rendered = this.createCarDisplay(car, x, y + 6, 166,
-          depth + 4, false, DEFAULT_PAINT_COLOR);
-        rendered.forEach(obj => { objects.push(obj); collection.push(obj); });
-      } catch (error) {
-        console.warn('[TOKYO SHIFT] Crew car unavailable', carId, error);
-      }
-    };
-
-    const drawSlot = (index) => {
-      slotObjects[index].forEach(obj => {
-        const pos = objects.indexOf(obj);
-        if (pos >= 0) objects.splice(pos, 1);
-        obj?.destroy?.();
+    const createPortrait = (id, x, y, pts, collection) => {
+      if (!id) return;
+      const profile = createCharacterProfile(this, {
+        characterId: id, pose: 'idle', x, y, frameWidth: 226,
+        frameHeight: 171, side: 'center', depth: depth + 5,
+        mask: false, rivalContext: true,
+        playerCharacterId: this.registry.get('playerCharacterId') || '',
       });
-      slotObjects[index] = [];
-      const collection = slotObjects[index];
-      const unit = slots[index];
-      const x = playerX[index];
-      const carPanel = drawPanel(x, 495, 194, 105, Boolean(unit),
-        0x17394b, unit ? '' : '+ SELECT CREW', collection);
-      const portraitPanel = drawPanel(x, 642, 194, 165, Boolean(unit),
-        0x1d3345, unit ? '' : '+ SELECT DRIVER', collection);
-      if (unit) {
-        drawCar(unit.carId, x, 517, collection);
-        drawPortrait(unit.characterId, x, 642, collection);
-      }
-      const name = txt(x, 743, unit
-        ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
-        : 'EMPTY SLOT ' + (index + 1), 8, '#eefaff');
-      const model = txt(x, 765, unit
-        ? String(cars[unit.carId]?.shortName || unit.carId).toUpperCase()
-        : 'TAP TO SELECT', 8, '#94c6dc');
-      collection.push(name, model);
-      for (const panel of [carPanel, portraitPanel]) {
-        panel.setInteractive({ useHandCursor: true });
-        panel.on('pointerdown', () => chooseSlot(index));
+      if (profile?.image) {
+        objects.push(profile.image); collection.push(profile.image);
+        clip(profile.image, pts, collection);
       }
     };
+    const createCar = (id, x, y, pts, collection) => {
+      if (!cars[id]) return;
+      const images = this.createCarDisplay(cars[id], x, y, 200,
+        depth + 5, false, DEFAULT_PAINT_COLOR);
+      images.forEach(o => {
+        objects.push(o); collection.push(o);
+        if (o?.setMask) clip(o, pts, collection);
+      });
+    };
+    const drawCard = (index, unit, rival = false) => {
+      const collection = rival ? [] : slotObjects[index];
+      const x = rival ? xRival[index] : xPlayer[index];
+      const y = rival ? 96 : 507;
+      const accent = rival ? 0xff477e : 0x35d6ff;
+      const portrait = panel(x, y, 236, 176,
+        rival ? 0x80304e : 0x165578, 0x080a10, 0.73);
+      const label = panel(x, y + 176, 236, 56, 0x020610, 0x020610);
+      const carPanel = panel(x, y + 232, 236, 104,
+        rival ? 0x381b31 : 0x0a2b48, accent, 0.86);
+      collection.push(portrait.g, label.g, carPanel.g);
+      if (unit) {
+        createPortrait(unit.characterId, x + 118, y + 88, portrait.points, collection);
+        createCar(unit.carId, x + 118, y + 284, carPanel.points, collection);
+      }
+      const name = unit
+        ? String(characters[unit.characterId]?.name || unit.characterId).toUpperCase()
+        : 'SELECT DRIVER';
+      const carName = unit
+        ? String(cars[unit.carId]?.shortName || unit.carId).toUpperCase()
+        : 'TAP TO ASSIGN';
+      const t1 = text(x + 118, y + 183, name, 16, '#ffffff',
+        { align: 'center' }).setOrigin(0.5, 0);
+      const t2 = text(x + 118, y + 207, carName, 13, '#cbd8e5',
+        { align: 'center' }).setOrigin(0.5, 0);
+      collection.push(t1, t2);
+      if (!rival) {
+        const hit = add(this.add.rectangle(x + 118, y + 168, 232, 336,
+          0xffffff, 0).setInteractive({ useHandCursor: true })
+          .setDepth(depth + 9));
+        collection.push(hit);
+        hit.on('pointerdown', () => chooseSlot(index));
+      }
+    };
+    rounds.slice(0, 3).forEach((round, i) => drawCard(i, round, true));
 
-    rounds.slice(0, 3).forEach((round, i) => {
-      const x = rivalX[i];
-      const collection = [];
-      drawPanel(x, 195, 194, 175, true, 0x403039, '', collection);
-      drawPanel(x, 350, 194, 100, true, 0x332b39, '', collection);
-      drawPortrait(round.characterId, x, 195, collection);
-      drawCar(round.carId, x, 371, collection);
-      txt(x, 418, String(characters[round.characterId]?.name ||
-        round.characterId).toUpperCase(), 8, '#fff0f4');
-      txt(x, 439, String(cars[round.carId]?.shortName ||
-        round.carId).toUpperCase(), 8, '#e6b5c6');
-    });
-
-    const status = txt(780, 735, '', 9, '#c9e8f4');
-    const start = add(this.add.rectangle(1150, 776, 300, 54, 0x192333, 1)
-      .setStrokeStyle(2, 0x5e7185).setDepth(depth + 3));
-    const startLabel = txt(1150, 776, 'SELECT THREE DRIVERS', 9);
-    const later = add(this.add.rectangle(830, 776, 270, 54, 0x192333, 1)
-      .setStrokeStyle(2, 0x7b8fa3).setInteractive({ useHandCursor: true })
-      .setDepth(depth + 3));
-    txt(830, 776, 'RACE LATER', 9);
+    const status = text(845, 706, '', 17, '#c5e7f6');
+    const button = (x, label, width, color) => {
+      const rect = add(this.add.rectangle(x, 783, width, 58, color, 1)
+        .setStrokeStyle(3, 0x8dc8dd).setDepth(depth + 6));
+      text(x, 783, label, 20).setOrigin(0.5);
+      return rect;
+    };
+    const later = button(1060, 'RACE LATER', 225, 0x17283b)
+      .setInteractive({ useHandCursor: true });
+    const start = button(1375, 'START BATTLE', 290, 0x143e38);
     later.on('pointerdown', close);
-
-    const saveLineup = () => {
+    const save = () => {
       const lineups = { ...(this.registry.get('crewBattleLineups') || {}) };
       lineups[regionId] = slots.map(u => u?.id || null);
       this.registry.set('crewBattleLineups', lineups);
       saveSessionState(this.registry);
     };
     const refresh = () => {
-      for (let i = 0; i < 3; i++) drawSlot(i);
+      for (let i = 0; i < 3; i++) {
+        slotObjects[i].forEach(o => {
+          const j = objects.indexOf(o);
+          if (j !== -1) objects.splice(j, 1);
+          o.destroy?.();
+        });
+        slotObjects[i] = [];
+        drawCard(i, slots[i]);
+      }
       const count = slots.filter(Boolean).length;
       status.setText(count + ' / 3 DRIVERS READY');
-      if (vsStamp) { vsStamp.destroy(); vsStamp = null; }
+      if (vsStamp) {
+        const j = objects.indexOf(vsStamp);
+        if (j >= 0) objects.splice(j, 1);
+        vsStamp.destroy(); vsStamp = null;
+      }
       if (count === 3) {
-        start.setFillStyle(0x193d35).setStrokeStyle(2, 0x6cf3c6)
-          .setInteractive({ useHandCursor: true });
-        startLabel.setText('START BATTLE');
-        vsStamp = add(this.add.text(765, 470, 'VS', {
-          fontFamily: PIXEL_FONT, fontSize: '79px', fontStyle: 'bold italic',
-          color: '#ffbf61', stroke: '#110713', strokeThickness: 12,
-          shadow: { offsetX: 7, offsetY: 8, color: '#08060b', blur: 1, fill: true },
-        }).setOrigin(0.5).setAngle(-11).setDepth(depth + 14));
-        this.tweens.add({ targets: vsStamp, scale: { from: 1.35, to: 1 },
+        start.setFillStyle(0x116049).setInteractive({ useHandCursor: true });
+        vsStamp = text(750, 470, 'VS', 111, '#ffbb51',
+          { stroke: '#100813', strokeThickness: 13 })
+          .setOrigin(0.5).setAngle(-12).setDepth(depth + 12);
+        this.tweens.add({ targets: vsStamp, scale: { from: 1.3, to: 1 },
           duration: 240, ease: 'Back.easeOut' });
       } else {
-        start.disableInteractive().setFillStyle(0x192333)
-          .setStrokeStyle(2, 0x5e7185);
-        startLabel.setText('SELECT THREE DRIVERS');
+        start.disableInteractive().setFillStyle(0x182735);
       }
-      saveLineup();
+      save();
     };
-
-    const chooseSlot = (index) => {
+    const chooseSlot = index => {
       const chooser = [];
-      const addChoice = obj => { objects.push(obj); chooser.push(obj); return obj; };
-      const dismiss = () => chooser.splice(0).forEach(obj => {
-        const pos = objects.indexOf(obj);
-        if (pos >= 0) objects.splice(pos, 1);
-        obj.destroy();
+      const addChoice = o => { objects.push(o); chooser.push(o); return o; };
+      const dismiss = () => chooser.splice(0).forEach(o => {
+        const j = objects.indexOf(o); if (j >= 0) objects.splice(j, 1);
+        o.destroy();
       });
       const z = depth + 30;
-      addChoice(this.add.rectangle(780, 420, 1560, 840, 0x01040a, 0.86)
+      addChoice(this.add.rectangle(780, 420, 1560, 840, 0x01040a, 0.87)
         .setInteractive().setDepth(z));
-      addChoice(this.add.rectangle(780, 420, 810, 660, 0x0b1724, 1)
-        .setStrokeStyle(2, 0x65ddf5).setDepth(z + 1));
+      addChoice(this.add.rectangle(780, 420, 850, 650, 0x0a1828)
+        .setStrokeStyle(3, 0x35d6ff).setDepth(z + 1));
       addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // SLOT ' + (index + 1), {
-        fontFamily: PIXEL_FONT, fontSize: '13px', color: '#ffffff',
+        fontFamily: font, fontSize: '30px', fontStyle: 'italic 900',
+        color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 2));
       units.forEach((unit, i) => {
-        const occupied = slots.some((s, j) => j !== index && s?.id === unit.id);
+        const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
         const x = i % 2 ? 985 : 575;
-        const y = 214 + Math.floor(i / 2) * 99;
-        const button = addChoice(this.add.rectangle(x, y, 380, 84,
-          occupied ? 0x161a22 : 0x173246, 1)
-          .setStrokeStyle(1, occupied ? 0x46515b : 0x65cde9)
+        const y = 216 + Math.floor(i / 2) * 98;
+        const rect = addChoice(this.add.rectangle(x, y, 385, 83,
+          occupied ? 0x171c26 : 0x143c50)
+          .setStrokeStyle(2, occupied ? 0x44505e : 0x35d6ff)
           .setDepth(z + 2));
-        addChoice(this.add.text(x - 167, y - 15,
+        addChoice(this.add.text(x - 175, y - 22,
           String(characters[unit.characterId]?.name || unit.characterId).toUpperCase() +
-          '\\n' + String(cars[unit.carId]?.shortName || unit.carId).toUpperCase(), {
-            fontFamily: BODY_FONT, fontSize: '15px',
-            color: occupied ? '#76808b' : '#e9f6ff',
+          '\n' + String(cars[unit.carId]?.shortName || unit.carId).toUpperCase(), {
+            fontFamily: font, fontSize: '17px', fontStyle: 'italic 900',
+            color: occupied ? '#718092' : '#ffffff',
           }).setDepth(z + 3));
-        if (!occupied) {
-          button.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            slots[index] = unit;
-            dismiss();
-            refresh();
-          });
-        }
+        if (!occupied) rect.setInteractive({ useHandCursor: true })
+          .on('pointerdown', () => { slots[index] = unit; dismiss(); refresh(); });
       });
-      const cancel = addChoice(this.add.rectangle(780, 698, 230, 42, 0x29323d, 1)
-        .setStrokeStyle(1, 0x8ea2b5).setInteractive({ useHandCursor: true })
+      const cancel = addChoice(this.add.rectangle(780, 698, 230, 48, 0x29323d)
+        .setStrokeStyle(2, 0x8ea2b5).setInteractive({ useHandCursor: true })
         .setDepth(z + 2));
       addChoice(this.add.text(780, 698, 'CANCEL', {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
+        fontFamily: font, fontSize: '21px', fontStyle: 'italic 900',
+        color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 3));
       cancel.on('pointerdown', dismiss);
     };
-
     start.on('pointerdown', () => {
-      if (slots.some(unit => !unit)) return;
-      saveLineup();
-      close();
-      this.startCrewBattle(regionId, slots, rounds);
+      if (slots.some(u => !u)) return;
+      save(); close(); this.startCrewBattle(regionId, slots, rounds);
     });
     refresh();
   }
