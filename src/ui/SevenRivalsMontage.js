@@ -5,6 +5,8 @@
 import {
   characters,
   getCharacterForContext,
+  getCharacterVisualAsset,
+  getCharacterAssetUrl,
 } from '../data/characters.js?v=20261011-r477';
 import {
   createCharacterProfile,
@@ -20,6 +22,38 @@ const REGIONAL_MEMORIES = Object.freeze([
   ['DAIKOKU', 'reinaShibata', 'officeFlagDaikoku'],
   ['SHINJUKU', 'rikuAkamine', 'officeFlagShinjuku'],
 ]);
+
+// In career gameplay GarageScene preloads these. Developer previews can run
+// from MeetScene/RaceScene too, where neither the flags nor the rival portraits
+// are otherwise guaranteed to be in the Phaser texture cache.
+export function preloadSevenRivalsMontageAssets(scene, onReady) {
+  if (!scene?.textures || !scene?.load) {
+    onReady?.();
+    return 0;
+  }
+  const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
+  const pending = new Map();
+  for (const [region, characterId, flagKey] of REGIONAL_MEMORIES) {
+    const asset = getCharacterVisualAsset(characterId, 'idle', {
+      rivalContext: true, playerCharacterId,
+    });
+    if (asset?.key && asset.path && !scene.textures.exists(asset.key)) {
+      pending.set(asset.key, getCharacterAssetUrl(asset.path));
+    }
+    if (!scene.textures.exists(flagKey)) {
+      pending.set(flagKey, 'assets/Garage/flag_' +
+        region.toLowerCase() + '.png?v=20261005-r362');
+    }
+  }
+  if (!pending.size) {
+    onReady?.();
+    return 0;
+  }
+  for (const [key, path] of pending) scene.load.image(key, path);
+  scene.load.once(Phaser.Loader.Events.COMPLETE, () => onReady?.());
+  if (!scene.load.isLoading?.()) scene.load.start();
+  return pending.size;
+}
 
 const limit = (n, min, max) => Math.max(min, Math.min(max, n));
 const mix = (a, b, t) => a + (b - a) * t;
