@@ -2412,7 +2412,8 @@ export default class RaceScene extends Phaser.Scene {
           ? {
               primary: 'SKYTREE SHOWDOWN CHAMPION  +¥' + Number(settlement.cashReward || 0).toLocaleString('en-US'),
               secondary: settlement.wheelLabel
-                ? 'RARE WHEEL UNLOCKED // ' + settlement.wheelLabel.toUpperCase()
+                ? 'RARE WHEELS + ' + Number(settlement.couponAwards || 0) +
+                  ' × ' + String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() + ' COUPONS'
                 : String(settlement.couponAwards || 0) + ' × ' +
                   String(cars[settlement.couponCarId]?.shortName || 'CAR').toUpperCase() + ' COUPONS',
             }
@@ -4037,7 +4038,9 @@ export default class RaceScene extends Phaser.Scene {
           wheelId = prize.wheelId;
           wheelLabel = prize.wheelLabel;
         }
-      } else if (prize?.couponCarId && prize.coupons > 0) {
+      }
+      // Rare wheels are an extra, never a substitute for car coupons.
+      if (prize?.couponCarId && prize.coupons > 0) {
         couponCarId = prize.couponCarId;
         couponAwards = prize.coupons;
         const coupons = { ...(this.registry.get('carCoupons') || {}) };
