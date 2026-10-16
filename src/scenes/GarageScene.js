@@ -47,7 +47,7 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261016-r535';
+import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261017-r552';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
@@ -7328,6 +7328,9 @@ export default class GarageScene extends Phaser.Scene {
     const unlockInvite = () => {
       markCentralTokyoUnlocked(this.registry, inviteKey);
       saveSessionState(this.registry);
+      if (inviteKey === 'autoMarket') {
+        this.showWorkshopToast('AUTO MARKET / REGIONAL CHAMPIONSHIPS / SHINAGAWA + TATSUMI OPEN');
+      }
       this.time.delayedCall(180, () => this.showCentralTokyoInvitationIfNeeded());
     };
 
