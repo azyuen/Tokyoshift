@@ -150,3 +150,16 @@ test('full Chapter 09 replay stays career-safe and uses same persistent room for
   assert.ok(CHAPTER09_SCENES.chapter09Visitor.pages.some(p=>p.leftCharacter==='mikaHayaseChampion'));
   assert.equal(typeof startChapter09,'function');
 });
+
+test('the Story Archive keeps all nine chapter replay cards separate',()=>{
+ const archive=source('src/ui/StoryArchivePanel.js');
+ assert.match(archive,/const leftColumn=i<5/);
+ assert.match(archive,/const x=leftColumn\?449:1111/);
+ assert.match(archive,/const y=210\+\(leftColumn\?i:i-5\)\*123/);
+ const positions=Array.from({length:9},(_,i)=>{
+   const left=i<5;
+   return (left?449:1111)+','+(210+(left?i:i-5)*123);
+ });
+ assert.equal(new Set(positions).size,9);
+ assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+});
