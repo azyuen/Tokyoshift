@@ -2,7 +2,7 @@
 // Never stop/restart a scene synchronously from the GameObject pointerdown
 // that owns the button. In particular, iPad Safari can lose input/render when
 // GarageScene is restarted while its Office or map is being destroyed.
-export function queueSafeSceneStart(scene, targetScene, data = {}) {
+export function queueSafeSceneStart(scene, targetScene, data = undefined) {
   if (!scene?.scene?.start || !targetScene) return false;
   if (scene._pendingSafeSceneStart) return false;
   scene._pendingSafeSceneStart = targetScene;
@@ -10,7 +10,10 @@ export function queueSafeSceneStart(scene, targetScene, data = {}) {
     if (scene._pendingSafeSceneStart !== targetScene) return;
     scene._pendingSafeSceneStart = null;
     if (typeof scene.sys?.isActive === 'function' && !scene.sys.isActive()) return;
-    try { scene.scene.start(targetScene, data); }
+    try {
+      if (data === undefined) scene.scene.start(targetScene);
+      else scene.scene.start(targetScene, data);
+    }
     catch (error) {
       console.error('[TOKYO SHIFT] scene transition failed',targetScene,error);
       scene._pendingSafeSceneStart = null;
