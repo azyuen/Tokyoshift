@@ -10,6 +10,9 @@ test('Garage and Crew replay startup does not depend on paused Phaser time',()=>
  assert.match(garage,/if \(!replayStarting\) \{\s*this\.time\.delayedCall\(140/);
  assert.match(garage,/CHAPTER 08 COULD NOT START/);
  assert.match(garage,/RETURN TO OFFICE/);
+ // Regression that produced the real Chromium runtime exception: never call
+ // disableInteractive() on a rectangle with no Phaser input component.
+ assert.match(garage,/if \(this\.moveCarButton\.input\) this\.moveCarButton\.disableInteractive\(\)/);
 });
 test('Crew chapter routes to actual CrewSpaceScene sharing the same Garage implementation',()=>{
  const replay=source('src/ui/StoryReplaySession.js');
