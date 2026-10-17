@@ -26,9 +26,14 @@ export function drawSeasonHeader(s,stage) {
   const driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver');
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
-  const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,158,0x11151c,.88)
+  const openCircuit=isOpenCircuitAvailable(c);
+  // Expand the card enough to keep all actions INSIDE its visual bounds.
+  // Previous R575 withdrawal text sat on the bottom edge, was a tiny touch
+  // target, and disappeared whenever a championship was active.
+  const height=openCircuit?158:c.activeChampionship?248:214;
+  const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,height,0x11151c,.88)
     .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
-  if(isOpenCircuitAvailable(c)){
+  if(openCircuit){
     text(s,x,y,'OPEN CIRCUIT // INDEPENDENT EVENTS',18,{color:'#f5e9e5'});
     text(s,x,y+39,'DRIVER / CREW / ROTATING MINOR TROPHY',17,{color:'#c7d9dc'});
     text(s,x,y+72,'NO SEASON POINTS // PREPARE AT YOUR PACE',16,{color:'#c7d9dc'});
@@ -51,9 +56,12 @@ export function drawSeasonHeader(s,stage) {
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
-  } else if(c.seasonStatus==='ACTIVE'||(c.seasonStatus==='COMPLETE'&&q.qualified)) {
-    const withdrawal=text(s,x+190,y+148,'WITHDRAW / FORFEIT',15,{color:'#ffb0b7'});
-    withdrawal.setInteractive({useHandCursor:true}).on('pointerdown',()=>showProSeasonWithdrawal(s));
+  }
+  // A separate 46px high, full-width button must always remain accessible
+  // throughout a registered season, even with a championship in progress.
+  if(c.seasonStatus==='ACTIVE'||(c.seasonStatus==='COMPLETE'&&q.qualified)) {
+    button(s,x+(w-10)/2,y+(c.activeChampionship?201:173),w-10,
+      'WITHDRAW / FORFEIT SEASON',()=>showProSeasonWithdrawal(s));
   }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
