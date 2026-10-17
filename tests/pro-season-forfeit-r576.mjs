@@ -6,14 +6,16 @@ import { forfeitProfessionalSeason, isOpenCircuitAvailable } from '../src/data/p
 
 const panel=fs.readFileSync(new URL('../src/ui/ProSeasonPanel.js',import.meta.url),'utf8');
 
-test('withdraw remains a full-size touch button when Tokyo Championship is active',()=>{
-  const header=panel.match(/export function drawSeasonHeader\(s,stage\) \{([\s\S]*?)\n\}/)?.[1]||'';
-  assert.match(header,/const height=openCircuit\?158:c\.activeChampionship\?248:214/);
-  assert.match(header,/if\(c\.activeChampionship\)\{/);
-  assert.match(header,/if\(c\.seasonStatus==='ACTIVE'\|\|\(c\.seasonStatus==='COMPLETE'&&q\.qualified\)\)\s*\{/);
-  assert.match(header,/button\(s,x\+\(w-10\)\/2,y\+\(c\.activeChampionship\?201:173\),w-10,/);
-  assert.match(header,/WITHDRAW \/ FORFEIT SEASON/);
-  assert.doesNotMatch(header,/else if\(c\.seasonStatus/);
+test('forfeit button remains accessible from the right panel throughout Tokyo Championship',()=>{
+  const block=panel.slice(panel.indexOf('export function showProSeasonAction'),panel.indexOf('/** Deliberate commitment'));
+  assert.match(block,/c\.seasonStatus==='ACTIVE'/);
+  assert.match(block,/c\.seasonStatus==='COMPLETE'/);
+  assert.match(block,/WITHDRAW \/ FORFEIT SEASON/);
+  assert.match(block,/showProSeasonWithdrawal\(s\)/);
+  assert.match(block,/side\.y\+624/);
+  const header=panel.slice(panel.indexOf('export function drawSeasonHeader'),panel.indexOf('export function drawCrewSidebar'));
+  assert.match(header,/const height=openCircuit\?111:c\.activeChampionship\?176:158/);
+  assert.doesNotMatch(header,/WITHDRAW \/ FORFEIT SEASON/);
 });
 
 test('forfeit during a Tokyo Championship returns to open events without deleting trophies',()=>{
@@ -39,7 +41,8 @@ test('forfeit during a Tokyo Championship returns to open events without deletin
 
 test('forfeit screen keeps separate confirmation and cancels without modifying a save',()=>{
   const withdrawal=panel.slice(panel.indexOf('export function showProSeasonWithdrawal'));
-  assert.match(withdrawal,/KEEP RACING/);
+  assert.match(withdrawal,/confirmLabel:'CONFIRM FORFEIT'/);
+  assert.match(panel,/action\(x-180,'CANCEL',close,false\)/);
   assert.match(withdrawal,/CONFIRM FORFEIT/);
   assert.match(withdrawal,/forfeitProfessionalSeason\(circuit\(s\)\)/);
   assert.match(withdrawal,/commit\(s,changes\)/);
