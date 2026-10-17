@@ -1,0 +1,34 @@
+name: R576 Pro Season Forfeit
+on:
+  push:
+    paths:
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'tests/pro-season-forfeit-r576.mjs'
+      - '.github/workflows/pro-season-forfeit-r576.yml'
+  pull_request:
+    paths:
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/data/proSeason.js'
+      - 'src/data/proCircuit.js'
+      - 'tests/pro-season-forfeit-r576.mjs'
+      - '.github/workflows/pro-season-forfeit-r576.yml'
+  workflow_dispatch:
+jobs:
+  forfeit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/ui/ProSeasonPanel.js
+          node --check tests/pro-season-forfeit-r576.mjs
+      - name: Check season forfeiture and open circuit logic
+        run: |
+          node --test tests/pro-season-forfeit-r576.mjs
+          node --test tests/drag-open-circuit-r575.mjs
