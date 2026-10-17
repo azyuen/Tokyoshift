@@ -11,7 +11,8 @@ import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r562';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
 import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r569';
-import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r569';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r570';
+import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r570';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -41,6 +42,12 @@ const CAREER_CHAPTERS = [
   { id: 'fullCrewTogether', label: 'CHAPTER 07 — ONE CREW, SEVEN ROADS' },
   { id: '__chapter08', label: 'CHAPTER 08 — THE NEXT LEVEL (FULL INTERACTIVE REPLAY)', sequence: CHAPTER08_SEQUENCE },
 ];
+const STORY_REPLAY_IDS = Object.freeze({
+  __openingChapter01:'chapter01',centralTokyoUnlocked:'chapter02',
+  firstRegionalChampion:'chapter03',canalYardBiggerDreams:'chapter04',
+  warehouseHqUnlocked:'chapter05',sevenRegionsConquered:'chapter06',
+  fullCrewTogether:'chapter07',
+});
 const getTesterEntries = () => {
   const chapterIds = new Set([
     ...OPENING_SEQUENCE,
@@ -359,6 +366,10 @@ export function showCutsceneTester(scene) {
         // Other scenes can still preview its canonical manga dialogue.
         if (id === '__chapter08') {
           chooseChapter08Mode(scene);
+        } else if(STORY_REPLAY_IDS[id]) {
+          // Arkon Den sees every micro-scene elsewhere in this list, but
+          // chapter rows play their ENTIRE interactive progression now.
+          beginStoryArchiveSceneReplay(scene,STORY_REPLAY_IDS[id]);
         } else if (entry.sequence) {
           playOpeningChapterPreview(scene);
         } else if (id === 'canalYardBiggerDreams') {
