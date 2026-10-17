@@ -164,10 +164,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     queued += this.queueLocationAssets(location);
     if (this.chapter08Arrival && location.kind === 'showroom') {
       queued += preloadChapter08GinzaAssets(this);
-      if (cars.rwbStellaPorsche) {
-        queued += preloadCarAppearanceAssets(this, {rwbStellaPorsche:cars.rwbStellaPorsche}, '20261017-r568');
-        queued += preloadCarWheel(this,cars.rwbStellaPorsche);
-      }
+      // The ordinary Ginza location preload already includes its RWB listing.
     }
 
     startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
