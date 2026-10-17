@@ -2,7 +2,7 @@ import { characters } from '../data/characters.js?v=20261006-r391';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261017-r571';
+} from '../data/cutscenes.js?v=20261017-r577';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
@@ -12,6 +12,8 @@ import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
 import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
+import { startChapter09 } from './Chapter09Story.js?v=20261017-r577';
+import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r577';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -41,6 +43,7 @@ const CAREER_CHAPTERS = [
   { id: 'sevenRegionsConquered', label: 'CHAPTER 06 — BEYOND SEVEN' },
   { id: 'fullCrewTogether', label: 'CHAPTER 07 — ONE CREW, SEVEN ROADS' },
   { id: '__chapter08', label: 'CHAPTER 08 — THE NEXT LEVEL (FULL INTERACTIVE REPLAY)', sequence: CHAPTER08_SEQUENCE },
+  { id: '__chapter09', label: 'CHAPTER 09 — WELCOME TO THE BIG LEAGUES (FULL STORY)', sequence: CHAPTER09_SEQUENCE },
 ];
 const STORY_REPLAY_IDS = Object.freeze({
   __openingChapter01:'chapter01',centralTokyoUnlocked:'chapter02',
@@ -52,6 +55,7 @@ const getTesterEntries = () => {
   const chapterIds = new Set([
     ...OPENING_SEQUENCE,
     ...CHAPTER08_SEQUENCE,
+    ...CHAPTER09_SEQUENCE,
     ...CAREER_CHAPTERS.map(chapter => chapter.id),
   ]);
   const chapters = CAREER_CHAPTERS.map(chapter => ({
@@ -371,6 +375,8 @@ export function showCutsceneTester(scene) {
         // Other scenes can still preview its canonical manga dialogue.
         if (id === '__chapter08') {
           chooseChapter08Mode(scene);
+        } else if (id === '__chapter09') {
+          startChapter09(scene,{preview:true});
         } else if(STORY_REPLAY_IDS[id]) {
           // Arkon Den sees every micro-scene elsewhere in this list, but
           // chapter rows play their ENTIRE interactive progression now.

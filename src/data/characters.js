@@ -859,6 +859,23 @@ export const characters = {
     introQuote: 'Yokohama rewards cars that keep pulling.', resultQuotes: { win: 'That is harbor pace.', loss: 'Clean run. You earned it.' },
     visual: { spriteKey: 'characterMasatoIshikawa', path: 'assets/Characters/Yokohama/masato_ishikawa_idle.png', winSpriteKey: 'characterMasatoIshikawaWin', winPath: 'assets/Characters/Yokohama/masato_ishikawa_win.png', lossSpriteKey: 'characterMasatoIshikawaLoss', lossPath: 'assets/Characters/Yokohama/masato_ishikawa_loss.png' },
   },
+  // Magazine Issue 01's former Tokyo champion is NOT the Yokohama rival
+  // historically keyed 'mikaHayase' (whose canonical name is Nao Fujita).
+  // Temporary distinct portrait until Mika's dedicated high-density asset
+  // arrives; the two characters must never share Nao's artwork.
+  mikaHayaseChampion: {
+    id: 'mikaHayaseChampion',
+    name: 'Mika Hayase',
+    archetype: 'Former Tokyo Champion',
+    selectable: false, rivalEligible: false,
+    roleTags: ['pro-circuit','champion','story'],
+    personality: 'Confident, perceptive, and quietly competitive.',
+    bio: 'The previous Tokyo Champion featured in Tokyo SHIFT Magazine Issue 01.',
+    visual: {
+      spriteKey: 'characterMikaHayaseChampion',
+      path: 'assets/Characters/female_sub_idle.png',
+    },
+  },
   mikaHayase: {
     id: 'mikaHayase',
     skill: { rating: 4, label: 'EXPERT', ai: { reactionSkill: 0.89, launchSkill: 0.88, shiftSkill: 0.91, aggression: 0.84 }, betRange: [10000, 20000], competitionPrize: 21000 },

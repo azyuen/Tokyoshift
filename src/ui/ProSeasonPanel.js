@@ -1,4 +1,5 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261017-r577';
 import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261017-r575';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261017-r575';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
@@ -27,20 +28,15 @@ export function drawSeasonHeader(s,stage) {
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
-  // Expand the card enough to keep all actions INSIDE its visual bounds.
-  // Previous R575 withdrawal text sat on the bottom edge, was a tiny touch
-  // target, and disappeared whenever a championship was active.
-  const height=openCircuit?158:c.activeChampionship?248:214;
+  // Top-left is informational only. The season action lives alongside the
+  // race entry and map controls on the right, with predictable touch targets.
+  const height=openCircuit?111:c.activeChampionship?176:158;
   const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,height,0x11151c,.88)
     .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
   if(openCircuit){
     text(s,x,y,'OPEN CIRCUIT // INDEPENDENT EVENTS',18,{color:'#f5e9e5'});
-    text(s,x,y+39,'DRIVER / CREW / ROTATING MINOR TROPHY',17,{color:'#c7d9dc'});
-    text(s,x,y+72,'NO SEASON POINTS // PREPARE AT YOUR PACE',16,{color:'#c7d9dc'});
-    const ready=getProCircuitAccess(s.registry).unlocked&&
-      !c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
-      !s.registry.get('competitionState')?.active;
-    button(s,x+(w-10)/2,y+123,w-10,c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON',()=>showProSeasonRegistration(s),ready);
+    text(s,x,y+34,'DRIVER / CREW / ROTATING MINOR TROPHY',16,{color:'#c7d9dc'});
+    text(s,x,y+61,'ONE-OFF RACES // NO SEASON POINTS',15,{color:'#c7d9dc'});
     if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b'});
     return;
   }
@@ -57,12 +53,6 @@ export function drawSeasonHeader(s,stage) {
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
   }
-  // A separate 46px high, full-width button must always remain accessible
-  // throughout a registered season, even with a championship in progress.
-  if(c.seasonStatus==='ACTIVE'||(c.seasonStatus==='COMPLETE'&&q.qualified)) {
-    button(s,x+(w-10)/2,y+(c.activeChampionship?201:173),w-10,
-      'WITHDRAW / FORFEIT SEASON',()=>showProSeasonWithdrawal(s));
-  }
   if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b',wordWrap:{width:400}});
 }
 export function drawCrewSidebar(s,event,side) {
@@ -71,7 +61,7 @@ export function drawCrewSidebar(s,event,side) {
   if(event.seasonEnd&&!t){
     text(s,side.x+20,side.y+207,'SEASON COMPLETE',21);
     text(s,side.x+20,side.y+255,`Eight official events completed.\n\nQualification: ${getProQualification(c).qualified?'ACHIEVED':'NOT YET'}\n\nDriver standing: #${getSeasonStandings(c).findIndex(r=>r.id==='player:driver')+1}\nTeam standing: #${getSeasonStandings(c,'TEAM').findIndex(r=>r.id==='player:team')+1}\n\nRatings, records and achievements carry over.\nSeason points reset when you continue.`,16,{lineSpacing:5,wordWrap:{width:side.w-40}});
-    button(s,side.x+side.w/2,side.y+590,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
+    button(s,side.x+side.w/2,side.y+574,side.w-36,'VIEW RESULTS / NEXT SEASON',()=>showSeasonRecords(s,true));return true;
   }
   const access=getProCircuitAccess(s.registry);
   const open=isOpenCircuitAvailable(c);
@@ -85,7 +75,14 @@ export function drawCrewSidebar(s,event,side) {
     (open||c.seasonStatus==='ACTIVE'&&c.calendar.round<8)&&
     (!event.trophyId||trophy?.available&&trophy.id===event.trophyId)&&
     Number(s.registry.get('cash')||0)>=fee;
-  text(s,side.x+20,side.y+207,t?.trophyId||event.trophyId?event.label:short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':(t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label,21);
+  // Match the right-panel header typography of individual driver events.
+  const crewTitle=t?.trophyId||event.trophyId?event.label:
+    short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
+      (t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label;
+  s.addContent(s.add.text(side.x+20,side.y+207,crewTitle,{
+    fontFamily:'"Silkscreen", monospace',fontSize:'11px',color:'#f8f3f2',
+    wordWrap:{width:side.w-38},
+  }).setDepth(34));
   const lines=short?[
     (open?'OPEN CIRCUIT // NO SEASON POINTS':'ROUND '+(c.calendar.round+1)+'/8')+' // '+crewFormat,
     crewFormat==='FOUR_WIDE'?'3 FOUR-LANE HEATS // 3/2/1/0 POINTS PER FINISH':crewFormat==='TECHNICAL'?'3 RUNS // SMALLEST TIME SPREAD WINS':crewFormat==='RELAY'?'3 LEGS // LOWEST COMBINED TIME WINS':'3 HEATS // THREE CREW CARS',
@@ -293,38 +290,112 @@ function startChampionshipRace(s,mode,carId){
   s.scene.start('FourLaneTestScene',{mode,carId});
 }
 
-/** The irreversible choice applies to the current calendar, never to car or crew ownership. */
-export function showProSeasonRegistration(s) {
-  const o=overlay(s,'PROFESSIONAL SERIES // SEASON REGISTRATION');
+
+// A standard compact confirmation modal, not the full-screen season records
+// overlay. Both entry and withdrawal deliberately use the same template.
+function seasonConfirm(s,{title,description,details,confirmLabel,onConfirm}){
+  if(s._proSeasonConfirmClose)s._proSeasonConfirmClose();
+  let closed=false;
+  const nodes=[],add=obj=>{nodes.push(obj);return obj;};
+  const x=780,y=420,w=784,h=365,depth=260;
+  const close=()=>{
+    if(closed)return;closed=true;
+    nodes.forEach(node=>node?.destroy?.());
+    if(s._proSeasonConfirmClose===close)s._proSeasonConfirmClose=null;
+    s.events.off('shutdown',close);
+  };
+  s._proSeasonConfirmClose=close;
+  s.events.once('shutdown',close);
+  const backdrop=add(s.add.rectangle(780,420,1560,840,0x06090d,.72)
+    .setDepth(depth).setScrollFactor(0).setInteractive());
+  backdrop.on('pointerdown',()=>{});
+  add(s.add.rectangle(x,y,w,h,0x101923,.98)
+    .setStrokeStyle(2,0xcf4b57).setDepth(depth+1).setScrollFactor(0));
+  const label=(yy,value,size=20,color='#edf1f4',wrap=710)=>add(
+    s.add.text(x-w/2+34,yy,value,{
+      fontFamily:'"Rajdhani", sans-serif',fontSize:size+'px',
+      fontStyle:'700',color,wordWrap:{width:wrap},lineSpacing:6,
+    }).setDepth(depth+2).setScrollFactor(0)
+  );
+  label(y-h/2+29,title,25,'#fff5f5');
+  label(y-h/2+88,description,21);
+  label(y-h/2+172,details,19,'#bbc9d0');
+  const action=(cx,caption,callback,red)=>{
+    const bg=add(s.add.rectangle(cx,y+h/2-46,337,52,red?0x6b242c:0x253746,.99)
+      .setStrokeStyle(2,red?0xe56870:0x7894a3)
+      .setDepth(depth+2).setScrollFactor(0).setInteractive({useHandCursor:true}));
+    add(s.add.text(cx,y+h/2-46,caption,{
+      fontFamily:'"Silkscreen", monospace',fontSize:'10px',color:'#fff',
+    }).setOrigin(.5).setDepth(depth+3).setScrollFactor(0));
+    bg.on('pointerdown',()=>{if(!closed)callback();});
+  };
+  action(x-180,'CANCEL',close,false);
+  action(x+180,confirmLabel,onConfirm,true);
+  return {close,label};
+}
+export function showProSeasonAction(s,side){
+  const c=circuit(s);
+  const open=isOpenCircuitAvailable(c);
+  const shouldForfeit=c.seasonStatus==='ACTIVE'||
+    (c.seasonStatus==='COMPLETE'&&getProQualification(c).qualified);
+  if(!open&&!shouldForfeit)return;
+  const locked=open&&(!getProCircuitAccess(s.registry).unlocked||
+    c.activeCrewEvent||c.activeTournament||c.activeTimedEvent||
+    s.registry.get('competitionState')?.active);
+  // Regular entry buttons end at SIDE.y+598, action begins SIDE.y+605;
+  // map begins at SIDE.y+653. Both have at least 7px of separation.
+  const x=side.x+side.w/2,y=side.y+624;
+  const available=!locked;
+  const label=open?(c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON'):'WITHDRAW / FORFEIT SEASON';
+  const b=s.addContent(s.add.rectangle(x,y,side.w-36,38,
+      available?0x402028:0x211d23,.99)
+    .setStrokeStyle(2,available?0xdd626a:0x645a5d).setDepth(38));
+  s.addContent(s.add.text(x,y,label,{
+    fontFamily:'"Silkscreen",monospace',fontSize:'8px',
+    color:available?'#fff7f6':'#a69b9e',
+  }).setOrigin(.5).setDepth(39));
+  if(available)b.setInteractive({useHandCursor:true})
+    .on('pointerdown',()=>open?showProSeasonRegistration(s):showProSeasonWithdrawal(s));
+}
+
+/** Deliberate commitment to the official 8-round championship. */
+export function showProSeasonRegistration(s){
   const c=circuit(s),q=getProQualification(c);
-  o.label(120,155,'EIGHT ROUNDS · THREE EVENTS OFFERED EACH ROUND · ENTER ONE EVENT PER ROUND',27);
-  o.label(120,240,`TOKYO CHAMPIONSHIP TARGETS: DRIVER ${q.driverRequired} PTS + CREW ${q.crewRequired} PTS`,26);
-  o.label(120,335,'Once registered, independent events are suspended until the season is completed or forfeited.',24);
-  o.label(120,405,'You may leave the strip to tune your cars or race on the street between rounds.',24);
-  o.label(120,475,'Withdrawing forfeits current-season points and qualification. Cars, crew, cash and trophies are retained.',23);
-  o.label(120,552,'Check your garage and crew before committing. There is no fee to register.',23);
-  o.btn(345,740,460,'NOT YET // BACK',o.close);
-  o.btn(1100,740,580,'CONFIRM // START PRO SEASON',()=>{
-    if(!getProCircuitAccess(s.registry).unlocked){o.label(120,605,'PRO CIRCUIT ACCESS REQUIRED',20);return;}
-    if(s.registry.get('competitionState')?.active){o.label(120,605,'FINISH THE REGISTERED EVENT FIRST',20);return;}
-    const next=startProfessionalSeason(circuit(s));
-    if(next.error){o.label(120,605,next.error,20);return;}
-    o.close();if(commit(s,{proCircuit:next.circuit}))redraw(s);
+  let dialog;
+  dialog=seasonConfirm(s,{
+    title:'START PROFESSIONAL SEASON?',
+    description:'Eight rounds. Three choices per round — you may enter only ONE.',
+    details:`TARGETS: DRIVER ${q.driverRequired} PTS / CREW ${q.crewRequired} PTS\nIndependent strip events lock until the season ends or is forfeited. Street racing and tuning remain available.`,
+    confirmLabel:'START SEASON',
+    onConfirm:()=>{
+      if(!getProCircuitAccess(s.registry).unlocked){dialog.label(477,'ACCESS NOT UNLOCKED',17,'#ff98a1');return;}
+      if(s.registry.get('competitionState')?.active){dialog.label(477,'FINISH YOUR ACTIVE EVENT FIRST',17,'#ff98a1');return;}
+      const next=startProfessionalSeason(circuit(s));
+      if(next.error){dialog.label(477,next.error,17,'#ff98a1');return;}
+      if(!commit(s,{proCircuit:next.circuit}))return;
+      dialog.close();redraw(s);
+      // This short, separate registration scene only plays after a durable
+      // season registration. It never awards points or alters race outcomes.
+      playMangaCutscene(s,'chapter09SeasonRegistration',{preloadPagePosesOnly:true});
+    },
   });
 }
-export function showProSeasonWithdrawal(s) {
-  const c=circuit(s),o=overlay(s,'FORFEIT CURRENT PROFESSIONAL SEASON');
-  o.label(120,195,`SEASON ${c.season} · ${c.calendar.round}/8 COMPLETED ROUNDS`,32);
-  o.label(120,285,'WITHDRAWAL IS PERMANENT FOR THIS SEASON.',30,{color:'#ff9caa'});
-  o.label(120,385,'The current season and all season points will be forfeited. Any active event is abandoned without a refund.',24);
-  o.label(120,470,'Your cars, crew, cash, trophies and previous championships are safe.',24);
-  o.btn(335,730,480,'KEEP RACING',o.close);
-  o.btn(1100,730,590,'CONFIRM FORFEIT',()=>{
-    const next=forfeitProfessionalSeason(circuit(s));
-    if(next.error){o.label(120,560,next.error,21);return;}
-    const state=s.registry.get('competitionState');
-    const changes={proCircuit:next.circuit};
-    if(state?.active&&state.proEvent)changes.competitionState=null;
-    o.close();if(commit(s,changes))redraw(s);
+export function showProSeasonWithdrawal(s){
+  const c=circuit(s);
+  let dialog;
+  dialog=seasonConfirm(s,{
+    title:'FORFEIT CURRENT SEASON?',
+    description:`Season ${c.season} · ${c.calendar.round}/8 rounds completed. This action cannot be undone.`,
+    details:'Current-season points and any active professional event are lost without a refund. Cars, crew, money and permanent trophies remain yours.',
+    confirmLabel:'CONFIRM FORFEIT',
+    onConfirm:()=>{
+      const next=forfeitProfessionalSeason(circuit(s));
+      if(next.error){dialog.label(477,next.error,17,'#ff98a1');return;}
+      const state=s.registry.get('competitionState');
+      const changes={proCircuit:next.circuit};
+      if(state?.active&&state.proEvent)changes.competitionState=null;
+      if(!commit(s,changes))return;
+      dialog.close();redraw(s);
+    },
   });
 }

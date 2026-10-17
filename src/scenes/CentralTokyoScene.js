@@ -1,7 +1,8 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261017-r575';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship } from '../ui/ProSeasonPanel.js?v=20261017-r576';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261017-r577';
+import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261017-r577';
 import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -672,6 +673,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawDragComplex();
     this.queueSayakaProStrategistReveal();
+    // The first genuine visit after Chapter 08 introduces the professional
+    // circuit, even though the Open Circuit was already unlocked by R575.
+    if(!this._chapter09Scheduled && chapter09ShouldBegin(this.registry)){
+      this._chapter09Scheduled=true;
+      this.time.delayedCall(750,()=>{
+        this._chapter09Scheduled=false;
+        if(this.activeLocationId===CENTRAL_TOKYO_LOCATIONS.drag.id &&
+          !sceneCutsceneActive(this))startChapter09(this);
+      });
+    }
   }
 
   // Sayaka is an eighth, non-driving support figure, not a substitute for any
@@ -3003,6 +3014,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
 
     this.drawDragSide(events[this.selectedEventIndex], build);
+    showProSeasonAction(this,SIDE);
   }
 
   enterProfessionalTimedEvent(event) {
@@ -3070,9 +3082,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         'TOKYO CHAMPIONSHIP\nQUALIFICATION ACHIEVED\n\nENTER THE CHAMPIONSHIP LOBBY',
         { fontFamily: BODY_FONT, fontSize: '18px', color: '#f3cf8d' }).setDepth(34));
       const championshipEntry = this.addContent(this.add.rectangle(SIDE.x + SIDE.w / 2,
-        SIDE.y + 590, SIDE.w - 36, 48, 0x5d1d27).setDepth(34).setInteractive({ useHandCursor: true }));
+        SIDE.y + 574, SIDE.w - 36, 48, 0x5d1d27).setDepth(34).setInteractive({ useHandCursor: true }));
       championshipEntry.on('pointerdown', () => showTokyoChampionship(this));
-      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 590,
+      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 574,
         'OPEN TOKYO CHAMPIONSHIP', { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff6f5' }).setOrigin(0.5).setDepth(35));
       return;
     }
@@ -3229,13 +3241,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }).setDepth(34));
 
     const enter = this.addContent(this.add.rectangle(
-      SIDE.x + SIDE.w / 2, SIDE.y + 590, SIDE.w - 36, 48,
+      SIDE.x + SIDE.w / 2, SIDE.y + 574, SIDE.w - 36, 48,
       canEnter ? 0x551d25 : 0x201d20, 1
     ).setStrokeStyle(2, canEnter ? 0xed515c : 0x575154, 1).setDepth(33));
     const actionText = canResume
       ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
       : eligible ? 'ENTER EVENT // ' + money(event.entryFee) : 'NOT ELIGIBLE';
-    this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 590, actionText, {
+    this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 574, actionText, {
       fontFamily: PIXEL_FONT, fontSize: '8px',
       color: canEnter ? '#fff6f5' : '#938a8d',
     }).setOrigin(0.5).setDepth(34));
