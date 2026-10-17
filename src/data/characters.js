@@ -715,6 +715,11 @@ export const characters = {
       winPath: 'assets/Characters/Shinjuku/emi_saionji_win.png',
       lossSpriteKey: 'characterEmiSaionjiLoss',
       lossPath: 'assets/Characters/Shinjuku/emi_saionji_loss.png',
+      poseAssets: {
+        ginzaIdle: { key: 'ginzaEmiIdle', path: 'assets/Characters/Ginza/emi_saionji_idle.png' },
+        ginzaHappy: { key: 'ginzaEmiHappy', path: 'assets/Characters/Ginza/emi_saionji_happy.png' },
+        ginzaSad: { key: 'ginzaEmiSad', path: 'assets/Characters/Ginza/emi_saionji_sad.png' },
+      },
     },
   },
 
@@ -744,6 +749,11 @@ export const characters = {
       winPath: 'assets/Characters/Shinjuku/kaede_tachibana_win.png',
       lossSpriteKey: 'characterKaedeTachibanaLoss',
       lossPath: 'assets/Characters/Shinjuku/kaede_tachibana_loss.png',
+      poseAssets: {
+        ginzaIdle: { key: 'ginzaKaedeIdle', path: 'assets/Characters/Ginza/kaede_tachibana_idle.png' },
+        ginzaHappy: { key: 'ginzaKaedeHappy', path: 'assets/Characters/Ginza/kaede_tachibana_happy.png' },
+        ginzaSad: { key: 'ginzaKaedeSad', path: 'assets/Characters/Ginza/kaede_tachibana_sad.png' },
+      },
     },
   },
 
@@ -1424,6 +1434,10 @@ regionExclusive: true, teamRole: 'core',
         homeBlushing: { key: 'characterSayakaHomeBlushing', path: 'assets/Characters/Main/home_sayaka_fujieda_blushing.png' },
         homeSad: { key: 'characterSayakaHomeSad', path: 'assets/Characters/Main/home_sayaka_fujieda_sad.png' },
         homeSerious: { key: 'characterSayakaHomeSerious', path: 'assets/Characters/Main/home_sayaka_fujieda_serious.png' },
+        ginzaNormal: { key: 'ginzaSayakaNormal', path: 'assets/Characters/Ginza/sayaka_fujieda_normal.png' },
+        ginzaHappy: { key: 'ginzaSayakaHappy', path: 'assets/Characters/Ginza/sayaka_fujieda_happy.png' },
+        ginzaSad: { key: 'ginzaSayakaSad', path: 'assets/Characters/Ginza/sayaka_fujieda_sad.png' },
+        ginzaSerious: { key: 'ginzaSayakaSerious', path: 'assets/Characters/Ginza/sayaka_fujieda_serious.png' },
         normal: { key: 'characterSayakaFujiedaCentral', path: 'assets/Characters/Main/ginza_sayaka_fujieda_normal.png' },
         happy: { key: 'characterSayakaFujiedaCentralHappy', path: 'assets/Characters/Main/ginza_sayaka_fujieda_happy.png' },
         sad: { key: 'characterSayakaFujiedaCentralSad', path: 'assets/Characters/Main/ginza_sayaka_fujieda_sad.png' },
@@ -2177,6 +2191,7 @@ export const CENTRAL_TOKYO_CHARACTER_IDS = Object.freeze({
   }),
   ginza: Object.freeze({
     proprietor: 'sayakaFujieda',
+    sales: ['emiSaionji', 'kaedeTachibana'],
   }),
   dragComplex: Object.freeze({
     owner: 'ryujiTakahashi',

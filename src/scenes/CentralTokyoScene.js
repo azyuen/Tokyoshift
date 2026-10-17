@@ -75,6 +75,8 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
+import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible } from '../data/ginzaGallery.js?v=20261017-r565';
+import { ginzaConversation } from '../data/ginzaScenes.js?v=20261017-r565';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
@@ -140,6 +142,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
   init(data = {}) {
     restorePreferredCar(this.registry);
     this.requestedLocationId = data?.locationId || null;
+    this.ginzaRoom = Math.max(1, Math.min(3, Number(data?.ginzaRoom || 1)));
+    this.ginzaVaultIndex = 0;
+    this.ginzaStockBody = false;
+    this.ginzaRotationKey = -1;
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
       ? requestedRoom
@@ -169,6 +175,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
       };
     }
 
+    if (location?.kind === 'showroom') {
+      if (this.ginzaRoom === 3) return {
+        key: 'centralGinzaVaultBg', path: 'assets/CentralTokyo/tokyo_ginza03.png',
+      };
+      if (this.ginzaRoom === 2) return safePhase === 'day'
+        ? { key: 'centralGinzaRoom2DayBg', path: 'assets/CentralTokyo/tokyo_ginza02_day.png' }
+        : { key: 'centralGinzaRoom2NightBg', path: 'assets/CentralTokyo/tokyo_ginza02_night.png' };
+    }
     return location?.phaseBackgrounds?.[safePhase] || {
       key: location?.backgroundKey,
       path: location?.backgroundPath,
@@ -235,10 +249,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
         queued += preloadCarWheel(this, car);
       });
 
-      queued += this.queueCharacterPose(
-        CENTRAL_TOKYO_CHARACTER_IDS.ginza.proprietor,
-        'normal'
-      );
+      for (const [who, poses] of [
+        ['emiSaionji', ['ginzaIdle', 'ginzaHappy', 'ginzaSad']],
+        ['kaedeTachibana', ['ginzaIdle', 'ginzaHappy', 'ginzaSad']],
+        ['sayakaFujieda', ['ginzaNormal', 'ginzaHappy', 'ginzaSerious', 'ginzaSad']],
+      ]) poses.forEach(pose => { queued += this.queueCharacterPose(who, pose); });
     }
 
     if (location?.kind === 'proDrag') {
@@ -309,6 +324,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.ginzaShowcaseActive = false;
     this.ginzaAnimateShowcase = false;
     this.ginzaTransitioning = false;
+    this.ginzaCarFading = false;
     this.devCentralRefreshOffsets = {
       autoMarket: 0,
       showroom: 0,
@@ -324,7 +340,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.time.addEvent({
       delay: 5000,
       loop: true,
-      callback: () => this.syncWorldPhaseBackground(),
+      callback: () => {
+        this.syncWorldPhaseBackground();
+        if (LOCATION_BY_ID[this.activeLocationId]?.kind === 'showroom' &&
+            this.ginzaRotationKey !== Math.floor(Date.now() / GINZA_ROTATION_MS)) {
+          this.renderLocation(this.activeLocationId);
+        }
+      },
     });
 
     if (
@@ -654,12 +676,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   updateLocationHeaderForPhase(location) {
     const marketRoomLabel = this.autoMarketRoom === 'new' ? 'NEW CARS' : 'USED CARS';
+    const ginzaRoomLabel = ['','MOTOR GALLERY','PRESTIGE SALON','PRIVATE VAULT'][this.ginzaRoom] || 'MOTOR GALLERY';
     const phaseLabel = (this.worldPhase || getWorldPhase()).toUpperCase();
 
     this.locationHeader?.setText(
       location?.kind === 'autoMarket'
         ? location.label + ' // ' + marketRoomLabel + ' // ' + phaseLabel
-        : location.label + ' // ' + phaseLabel
+        : location?.kind === 'showroom'
+          ? location.label + ' // ' + ginzaRoomLabel + ' // ' + phaseLabel
+          : location.label + ' // ' + phaseLabel
     );
   }
 

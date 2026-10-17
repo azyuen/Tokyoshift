@@ -111,6 +111,9 @@ export function createDefaultGameState(options = {}) {
     crewSpaceActive: false,
     crewPreviousCarId: null,
     tokyoChampionshipInvited: false,
+    ginzaVaultInvited: false,
+    ginzaVaultOwnerWelcomed: false,
+    ginzaTestDrive: null,
     selectedRacePlayerCharacterId: null,
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
@@ -1130,6 +1133,11 @@ export function normaliseState(input = {}) {
     crewSpaceActive: Boolean(input.crewSpaceActive),
     crewPreviousCarId: input.crewPreviousCarId ? remapLoanCarId(String(input.crewPreviousCarId)) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
+    ginzaVaultInvited: Boolean(input.ginzaVaultInvited),
+    ginzaVaultOwnerWelcomed: Boolean(input.ginzaVaultOwnerWelcomed),
+    ginzaTestDrive: input.ginzaTestDrive?.carId && String(input.ginzaTestDrive.carId).startsWith('ginzaDemo_')
+      ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || '') }
+      : null,
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
       input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda'
@@ -1322,6 +1330,9 @@ export function snapshotRegistry(registry) {
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
     tokyoChampionshipInvited: Boolean(registry.get('tokyoChampionshipInvited')),
+    ginzaVaultInvited: Boolean(registry.get('ginzaVaultInvited')),
+    ginzaVaultOwnerWelcomed: Boolean(registry.get('ginzaVaultOwnerWelcomed')),
+    ginzaTestDrive: registry.get('ginzaTestDrive') || null,
     selectedRacePlayerCharacterId: registry.get('selectedRacePlayerCharacterId') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},
