@@ -1989,7 +1989,12 @@ export default class GarageScene extends Phaser.Scene {
         .setFillStyle(0x102138).setStrokeStyle(2, 0x55b8ff);
       this.moveCarLabel.setColor('#eef8ff');
     } else {
-      this.moveCarButton.disableInteractive().setFillStyle(0x17181d)
+      // This control is created without an input component in some startup
+      // paths. Phaser's disableInteractive() dereferences input.sys and throws
+      // when called on a non-interactive rectangle, aborting GarageScene
+      // create() before any Chapter 6/8 replay can open.
+      if (this.moveCarButton.input) this.moveCarButton.disableInteractive();
+      this.moveCarButton.setFillStyle(0x17181d)
         .setStrokeStyle(1, 0x514f55);
       this.moveCarLabel.setColor('#817d84');
     }
@@ -2448,7 +2453,8 @@ export default class GarageScene extends Phaser.Scene {
       0x102138,
       1
     ).setStrokeStyle(2, 0x55b8ff, 1)
-      .setDepth(40);
+      .setDepth(40)
+      .setInteractive({useHandCursor:true});
 
     this.moveCarLabel = this.add.text(
       SIDE.x + SIDE.w / 2,
