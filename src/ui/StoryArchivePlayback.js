@@ -38,6 +38,10 @@ export function playStoryArchiveChapter(scene,id) {
     const step=OPENING[i++];
     if(!step){done();return;}
     if(step==='__magazine'){
+      if(scene.registry.get('__storyArchiveSkipMagazine')){
+        scene.time.delayedCall(90,nextOpening);
+        return;
+      }
       // This is the ACTUAL Issue 01 viewer: the player may flip spreads and
       // choose AE86/EF, but choices are temporarily sandboxed and never saved.
       scene.registry.set('openingChapter','magazine');
