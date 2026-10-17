@@ -60,7 +60,7 @@ import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r570
 import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r570';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r570';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r570';
-import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
+import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
