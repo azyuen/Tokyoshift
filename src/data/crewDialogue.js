@@ -110,7 +110,10 @@ function interpolateDialogue(value, variables = {}) {
 
 export function getCrewInviteDialogue(characterId, variables = {}) {
   const id = String(characterId || '');
-  const override = { joinLine: CREW_JOIN_LINES[id], ...(CREW_INVITE_DIALOGUE[id] || {}) };
+  const override = {
+    joinLine: CREW_JOIN_LINES[id] || DEFAULT_CREW_INVITE_DIALOGUE.joinLine,
+    ...(CREW_INVITE_DIALOGUE[id] || {}),
+  };
   const merged = {
     ...DEFAULT_CREW_INVITE_DIALOGUE,
     ...override,
