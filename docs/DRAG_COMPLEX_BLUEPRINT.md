@@ -3,7 +3,20 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
-## 2026-10-17 R575 decision — voluntary professional season (current)
+## 2026-10-18 R584 decision — prestige trophy tournaments (supersedes short R575 trophy event format)
+
+Five minor trophies are now standalone, persistent multi-stage competitions: Shuto Speed and Tokyo Technical are five driven knockout duels; Tri-Drive and Team Grand Prix are three saved 3v3 fixtures (nine driven heats); Tokyo Masters is a three-fixture crew invitational with DUEL / RELAY / FOUR_WIDE formats. They remain voluntary **Open Circuit** activity, award zero season/championship points, do not advance the eight-round calendar, and preserve completed trophy records and ownership. Only completion awards trophy wins; results and stages persist until completed or eliminated. Legacy three-round driver/crew races continue unchanged.
+
+- **Shuto Speed:** season 1 onward; open power/no-NOS restriction; entry ¥75k; first-win purse ¥230k, subsequent ¥85k.
+- **Tokyo Technical:** season 1 onward; 260 kW maximum, NOS prohibited; entry ¥65k; first-win purse ¥215k, subsequent ¥80k.
+- **Tri-Drive:** season 2 onward; one FWD, one RWD, one AWD in a three-driver roster; three full fixtures; entry ¥85k, first prize ¥265k.
+- **Team Grand Prix:** season 2 onward, ranked team series; entry ¥100k, first prize ¥300k.
+- **Tokyo Masters:** season 3 onward, must have won two different trophy titles; mixed three-fixture team gauntlet including four-wide finale; entry ¥125k, first prize ¥375k.
+- Successful and unsuccessful attempts are recorded in trophyHistory (including car or crew and season); only victories increase trophyWins. A completed attempt rotates invitations and triggers two independent-event cooldown; eligibility skips trophies not yet unlocked.
+- **Presentation scope:** existing Drag Complex cards, professional results, crew paddock and permanent trophy counter now convey prestige, stage/fixture progress and specific restrictions. Further custom trophy art, award cinematics, a full tournament bracket presentation, reward items and a four-wide finale for Shuto are future visual/content enhancements, **not yet implemented**.
+- The separate engineering/vehicle-balance branch is not merged by this feature. Rival car physics use the existing production engine.
+
+## 2026-10-17 R575 decision — voluntary professional season (historical; trophy format superseded by R583)
 This accepted progression update supersedes earlier notes implying immediate automatic season scoring upon Drag Strip access.
 
 - **Open Circuit:** On initial unlock and between completed/forfeited seasons, the Drag Strip offers three short one-off event choices: rotating Driver, Crew, and one of five rotating minor trophies. Each competition charges one entry fee, offers modest cash rewards, and runs real player-driven professional heats. All standalone results have **zero official season points** and never advance the eight-round calendar. Trophy wins update permanent trophy collection. A completed minor trophy rotates to the next of the five, with cooldown measured by **two other completed independent events**, not wall-clock waiting. This minor-trophy format is deliberately shorter than the original five-fixture prestige trophy concept.
