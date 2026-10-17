@@ -10,6 +10,7 @@ import {
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r562';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r568';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -25,6 +26,10 @@ const OPENING_SEQUENCE = [
   'openingSayakaFarewell',
   'openingDaichiAfterSayaka',
 ];
+const CHAPTER08_SEQUENCE = [
+  'chapter08Warehouse','chapter08ManagerCall','chapter08WarehouseReaction',
+  'chapter08SayakaCall','chapter08WarehouseFarewell','chapter08Ginza',
+];
 const CAREER_CHAPTERS = [
   { id: '__openingChapter01', label: 'CHAPTER 01 — THE FIRST NIGHT (FULL OPENING)', sequence: OPENING_SEQUENCE },
   { id: 'centralTokyoUnlocked', label: 'CHAPTER 02 — TOKYO TAKES NOTICE' },
@@ -33,10 +38,12 @@ const CAREER_CHAPTERS = [
   { id: 'warehouseHqUnlocked', label: 'CHAPTER 05 — THE GINZA CONNECTION' },
   { id: 'sevenRegionsConquered', label: 'CHAPTER 06 — BEYOND SEVEN' },
   { id: 'fullCrewTogether', label: 'CHAPTER 07 — ONE CREW, SEVEN ROADS' },
+  { id: '__chapter08', label: 'CHAPTER 08 — THE NEXT LEVEL (CONNECTED PREVIEW)', sequence: CHAPTER08_SEQUENCE },
 ];
 const getTesterEntries = () => {
   const chapterIds = new Set([
     ...OPENING_SEQUENCE,
+    ...CHAPTER08_SEQUENCE,
     ...CAREER_CHAPTERS.map(chapter => chapter.id),
   ]);
   const chapters = CAREER_CHAPTERS.map(chapter => ({
@@ -271,7 +278,7 @@ export function showCutsceneTester(scene) {
       const right = entry.sequence ? 'PLAYER' : resolvePreviewCharacter(scene, definition, 'right');
 
       addRow(scene.add.text(width / 2 - 425, y + 6,
-        (entry.category || definition.category) + '  //  ' + (entry.sequence ? '5 CONNECTED SCENES' : id) +
+        (entry.category || definition.category) + '  //  ' + (entry.sequence ? entry.sequence.length + ' CONNECTED SCENES' : id) +
         '\n' + pages + ' PAGES  //  LEFT: ' + left + '  //  RIGHT: ' + right,
         {
           fontFamily: BODY_FONT,
@@ -294,7 +301,18 @@ export function showCutsceneTester(scene) {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
-        if (entry.sequence) {
+        if (id === '__chapter08') {
+          // Non-destructive dev preview: dialogue and gallery, not a real race.
+          const previewGinza = () => {
+            const begin = () => { if (scene.sys.isActive()) startChapter08Ginza(scene,{preview:true}); };
+            const queued = preloadChapter08GinzaAssets(scene);
+            if (queued) {
+              scene.load.once(Phaser.Loader.Events.COMPLETE, begin);
+              if (!scene.load.isLoading?.()) scene.load.start();
+            } else begin();
+          };
+          startChapter08Warehouse(scene,{preview:true,onPreviewComplete:previewGinza});
+        } else if (entry.sequence) {
           playOpeningChapterPreview(scene);
         } else if (id === 'canalYardBiggerDreams') {
           // Identical REAL ringing phone and pickup sequence in every tester
