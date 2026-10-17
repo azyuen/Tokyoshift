@@ -1175,7 +1175,7 @@ export default class GarageScene extends Phaser.Scene {
     add(this.add.text(
       780,
       397,
-      'Their loan car leaves with them. Every upgrade on that car is lost.\nYou can recruit another driver from this region later.',
+      'This removes the driver from your crew and all crew lineups.\nTheir signature loan car leaves with them; any upgrades on it are permanently lost.\nYour crew will have an empty slot until you recruit another driver from this region.',
       {
         fontFamily: BODY_FONT,
         fontSize: '12px',
@@ -1196,7 +1196,7 @@ export default class GarageScene extends Phaser.Scene {
     const removeButton = add(this.add.rectangle(910, 505, 220, 48, 0x351820, 1)
       .setStrokeStyle(2, 0xff7cac, 1).setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(910, 505, 'REMOVE', {
+    add(this.add.text(910, 505, 'CONFIRM REMOVE', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffd1e0',
     }).setOrigin(0.5).setDepth(depth + 3));
 
