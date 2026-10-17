@@ -103,3 +103,50 @@ export const CHAPTER09_SCENES=Object.freeze({
     ],finalActionLabel:'START THE SEASON',
   },
 });
+
+// R585 — Chapter 09-only staging adapter. The authored lines and pose choices
+// stay untouched. During the full Chapter 09 story, the crew owns the LEFT,
+// Drag Complex officials (and visitor Mika) own the RIGHT, and the player's
+// smaller third portrait stays on the FAR LEFT, highlighting when speaking.
+// The separate Pro Season registration vignette retains its existing format.
+const TEAM_PORTRAITS=new Set(['daichiSakamoto','sayakaFujieda']);
+const DRAG_PORTRAIT_DEFAULTS=Object.freeze({
+  chapter09OldGuard:'masatoKuroda',
+  chapter09Rules:'hiroshiSato',
+  chapter09Visitor:'mikaHayaseChampion',
+  chapter09Welcome:'masatoKuroda',
+});
+export function chapter09TeamPortraitManga(id){
+  const original=CHAPTER09_SCENES[id];
+  if(!original||!CHAPTER09_SEQUENCE.includes(id))return null;
+  let teammate='daichiSakamoto',teammatePose='idle';
+  let official=DRAG_PORTRAIT_DEFAULTS[id],officialPose='normal';
+  const pages=original.pages.map(page=>{
+    const playerSpeaking=page.speaker==='right';
+    const actor=page.leftCharacter||original.characters.left;
+    if(!playerSpeaking&&TEAM_PORTRAITS.has(actor)){
+      teammate=actor;
+      teammatePose=page.leftPose||page.pose||'idle';
+    }else if(!playerSpeaking&&actor){
+      official=actor;
+      officialPose=page.leftPose||page.pose||'idle';
+    }
+    const speaker=playerSpeaking?'center':
+      TEAM_PORTRAITS.has(actor)?'left':'right';
+    return {
+      ...page,
+      speaker,
+      leftCharacter:teammate,
+      leftPose:teammatePose,
+      rightCharacter:official,
+      rightPose:officialPose,
+      centerCharacter:'$PLAYER',
+      centerPose:playerSpeaking?(page.pose||'idle'):'idle',
+    };
+  });
+  return {
+    ...original,
+    characters:{left:'daichiSakamoto',right:DRAG_PORTRAIT_DEFAULTS[id],center:'$PLAYER'},
+    pages,
+  };
+}

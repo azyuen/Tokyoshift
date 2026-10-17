@@ -1,10 +1,10 @@
 // R583 — The registration room persists under the ORIGINAL manga renderer.
 // All four dialogue sections and both establishing beats share one room stage.
-import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
+import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter09.js?v=20261018-r585';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r578';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261018-r583';
-import { playChapter09RegoRoom } from './Chapter09EstablishingShot.js?v=20261018-r583';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261018-r585';
+import { playChapter09RegoRoom } from './Chapter09EstablishingShot.js?v=20261018-r585';
 
 export function chapter09ShouldBegin(source){
   return hasSeenCutscene(source,'chapter08Ginza') &&
@@ -63,7 +63,8 @@ export function startChapter09(scene,{preview=false}={}){
     };
     // Stage is kept UNDER the close-up manga. Never release it between pages
     // or the Warehouse HQ scene will appear behind the portraits.
-    const out=playMangaCutscene(scene,id,{
+    const definition=chapter09TeamPortraitManga(id);
+    const out=playMangaCutscene(scene,definition,{
       preview,preloadPagePosesOnly:true,
       chapter09RoomBackdrop:true,
       onComplete:done,onPreviewComplete:done,onCancel:abort,
