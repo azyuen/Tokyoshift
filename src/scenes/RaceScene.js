@@ -1366,7 +1366,7 @@ export default class RaceScene extends Phaser.Scene {
   setupGinzaPassenger() {
     const poses = characters.sayakaFujieda?.visual?.poseAssets || {};
     this.ginzaPassenger = createRaceDialogueHud(this, {
-      speaker: 'SAYAKA // GINZA PASSENGER', theme: 'phone', depth: 81,
+      speaker: 'SAYAKA // GINZA PASSENGER', theme: 'standard', depth: 81,
       spriteKeyForPose: pose => poses[pose === 'serious' ? 'ginzaSerious' : 'ginzaHappy']?.key || '',
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'happy',
