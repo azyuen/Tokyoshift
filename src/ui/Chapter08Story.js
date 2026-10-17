@@ -24,7 +24,7 @@ export function chapter08ShouldBegin(source) {
     !hasSeenCutscene(source, 'chapter08RaceFinished');
 }
 
-export function startChapter08Warehouse(scene, { preview = false } = {}) {
+export function startChapter08Warehouse(scene, { preview = false, onPreviewComplete = null } = {}) {
   if (!scene || sceneCutsceneActive(scene)) return false;
   if (!preview && (!chapter08ShouldBegin(scene.registry) ||
       scene.crewMode || scene.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip' ||
@@ -36,7 +36,8 @@ export function startChapter08Warehouse(scene, { preview = false } = {}) {
     const sceneId = preview ? WAREHOUSE_BEATS[previewIndex++] :
       WAREHOUSE_BEATS.find(id => !hasSeenCutscene(scene.registry, id));
     if (!sceneId) {
-      if (!preview) openChapter08Map(scene);
+      if (preview) onPreviewComplete?.();
+      else openChapter08Map(scene);
       return;
     }
     const result = playMangaCutscene(scene, sceneId, {
@@ -73,7 +74,7 @@ export function openChapter08Map(scene) {
     actionVerb: 'DRIVE TO GINZA',
     onTravel: locationId => {
       if (locationId !== 'ginzaMotorGallery') return;
-      startChapter08PorscheRace(scene);
+      scene.time.delayedCall(0, () => startChapter08PorscheRace(scene));
     },
   });
   return true;
