@@ -3,7 +3,7 @@ import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { playMangaCutscene } from '../ui/MangaCutscene.js?v=20261017-r572';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261010-r471';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 const PIXEL = '"Silkscreen", monospace';
