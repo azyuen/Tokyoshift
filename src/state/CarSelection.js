@@ -23,7 +23,12 @@ export function restorePreferredCar(registry) {
   // A Ginza loan remains the driven vehicle across map/Meet transitions,
   // even when a stale preferredCarId still points at the personal garage.
   const demoId = read(registry, 'ginzaTestDrive')?.carId;
-  if (demoId && personal(registry, demoId) && cars[demoId]?.ginzaDemo) {
+  // Ginza demo aliases intentionally carry crewLoan=true to keep them out of
+  // normal ownership/garage workflows. They still must be driveable during
+  // an active Ginza loan, so don't use the personal-car predicate here.
+  if (demoId &&
+      (read(registry, 'ownedCarIds', []) || []).includes(demoId) &&
+      cars[demoId]?.ginzaDemo) {
     if (registry.get('selectedCarId') !== demoId) registry.set('selectedCarId', demoId);
     if (registry.get('preferredCarId') !== demoId) registry.set('preferredCarId', demoId);
     return demoId;
