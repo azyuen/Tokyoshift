@@ -157,7 +157,7 @@ test('all four original manga chapters overlay the one persistent stage',()=>{
   assert.deepEqual(CHAPTER09_SEQUENCE,[
     'chapter09OldGuard','chapter09Rules','chapter09Visitor','chapter09Welcome']);
   assert.match(story,/playChapter09RegoRoom\(scene,\{/);
-  assert.match(story,/playMangaCutscene\(scene,id,\{/);
+  assert.match(story,/playMangaCutscene\(scene,definition,\{/);
   assert.match(story,/chapter09RoomBackdrop:true/);
   assert.match(story,/ignoreChapter09Stage:true/);
   assert.match(story,/stage\?\.showMika\?\.\(\(\)=>later\(playDialogue\)\)/);
