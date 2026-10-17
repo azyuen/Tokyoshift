@@ -13,9 +13,9 @@ const LEFT=Object.freeze([
   {id:'$PLAYER',pose:'idle',x:.386,feet:.825,height:435},
 ]);
 const RIGHT=Object.freeze([
-  {id:'ryujiTakahashi',pose:'normal',x:.647,feet:.824,height:429},
-  {id:'masatoKuroda',pose:'normal',x:.753,feet:.790,height:406.5},
-  {id:'hiroshiSato',pose:'normal',x:.859,feet:.815,height:405},
+  {id:'ryujiTakahashi',pose:'normal',x:.644,feet:.824,height:429},
+  {id:'masatoKuroda',pose:'normal',x:.745,feet:.790,height:406.5},
+  {id:'hiroshiSato',pose:'normal',x:.857,feet:.815,height:405},
 ]);
 const MIKA=Object.freeze({id:'mikaHayaseChampion',pose:'idle',x:.523,feet:.814,height:438});
 export const CHAPTER09_GROUPS=Object.freeze({left:LEFT,right:RIGHT,mika:MIKA});
