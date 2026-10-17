@@ -13,6 +13,7 @@ on:
       - 'src/scenes/RaceScene.js'
       - 'tests/ginza-gallery-r565.mjs'
       - 'tests/ginza-gallery-r566.mjs'
+      - 'tests/ginza-gallery-r567.mjs'
       - '.github/workflows/ginza-gallery-r565.yml'
   push:
     branches: [main]
@@ -23,6 +24,7 @@ on:
       - 'src/scenes/CentralTokyoScene.js'
       - 'tests/ginza-gallery-r565.mjs'
       - 'tests/ginza-gallery-r566.mjs'
+      - 'tests/ginza-gallery-r567.mjs'
   workflow_dispatch:
 jobs:
   ginza:
@@ -40,4 +42,4 @@ jobs:
       - run: node --check src/data/characters.js
       - run: node --check src/data/cars.js
       - run: node --check src/state/GameState.js
-      - run: node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs
+      - run: node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs

@@ -254,6 +254,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ['kaedeTachibana', ['ginzaIdle', 'ginzaHappy', 'ginzaSad']],
         ['sayakaFujieda', ['ginzaNormal', 'ginzaHappy', 'ginzaSerious', 'ginzaSad']],
       ]) poses.forEach(pose => { queued += this.queueCharacterPose(who, pose); });
+      // A buyer can trigger a manga conversation immediately. Preload only
+      // the current driver's default portrait so the first BUY does not
+      // freeze the showroom waiting on a network asset.
+      const driverId = this.registry.get('playerCharacterId');
+      if (driverId && characters[driverId]) {
+        queued += this.queueCharacterPose(driverId, 'idle');
+      }
     }
 
     if (location?.kind === 'proDrag') {
@@ -543,6 +550,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     depth = 21,
     shadow = true,
     shadowOffsetX = 0,
+    shadowOffsetY = 0,
     rivalContext = false,
   } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
@@ -561,7 +569,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (shadow) {
       const venueShadow = this.add.ellipse(
         x + shadowOffsetX,
-        feetY - 7,
+        feetY - 7 + shadowOffsetY,
         Math.max(62, displayHeight * 0.42),
         Math.max(14, displayHeight * 0.075),
         0x000000,
@@ -846,37 +854,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
         LOCATION_BY_ID[this.activeLocationId]?.kind !== 'proDrag') {
       const location = LOCATION_BY_ID[this.activeLocationId];
       const kind = location?.kind || 'autoMarket';
-      // Gallery refresh belongs in the pane's top-right, not the car details.
-      // Other Central Tokyo destinations retain their existing layout.
+      // Ginza's standard-sized refresh control belongs on the main showroom
+      // window, outside the right-pane details and away from the car.
       const ginzaRefresh = kind === 'showroom';
-      const devY = SIDE.y + (ginzaRefresh ? 95 : 176);
-      const devX = ginzaRefresh ? SIDE.x + SIDE.w - 82 : SIDE.x + SIDE.w / 2;
-      const devWidth = ginzaRefresh ? 140 : SIDE.w - 36;
-      const labels = {
-        autoMarket: 'D) REFRESH AUTO MARKET',
-        showroom: 'D) REFRESH COLLECTORS',
-        proDrag: 'D) REFRESH DRAG EVENTS',
-      };
-
+      const devX = ginzaRefresh
+        ? STAGE.x + STAGE.w - 132 : SIDE.x + SIDE.w / 2;
+      const devY = ginzaRefresh
+        ? STAGE.y + 27 : SIDE.y + 176;
+      const devWidth = ginzaRefresh ? 226 : SIDE.w - 36;
       const devButton = this.addContent(this.add.rectangle(
-        devX,
-        devY,
-        devWidth,
-        ginzaRefresh ? 26 : 34,
-        0x261629,
-        1
-      ).setStrokeStyle(1, 0xd875ff, 0.95)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(33));
+        devX, devY, devWidth, 36, 0x261629, 0.96
+      ).setStrokeStyle(2, 0xd875ff, 0.95)
+        .setInteractive({ useHandCursor: true }).setDepth(33));
 
-      this.addContent(this.add.text(
-        devX,
-        devY,
-        ginzaRefresh ? 'D) REFRESH' : (labels[kind] || 'D) REFRESH LOCATION'),
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: ginzaRefresh ? '6px' : '7px',
-          color: '#f0c8ff',
+      this.addContent(this.add.text(devX, devY,
+        ginzaRefresh ? 'D) REFRESH CARS' : 'D) REFRESH AUTO MARKET', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f0c8ff',
         }
       ).setOrigin(0.5).setDepth(34));
 
@@ -2332,6 +2325,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const definition = ginzaConversation(kind, args);
     if (!definition) return false;
     return Boolean(playMangaCutscene(this, definition, {
+      // Ginza scene portraits are limited to the poses actually scripted.
+      // Without this flag the manga renderer requests all of Sayaka's
+      // garage, driving-school and racing artwork on the first interaction.
+      preloadPagePosesOnly: true,
       onComplete: () => onComplete?.(),
     })?.played);
   }
@@ -2345,7 +2342,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         this.ginzaScene('vaultLocked');
         return;
       }
-      if (dev && !this.registry.get('ginzaVaultOwnerWelcomed')) {
+      // Arkon Den always receives the owner-specific Sayaka scene when
+      // entering the Vault, even after the earlier welcome was saved.
+      if (dev) {
         this.ginzaScene('vaultOwner', {}, () => {
           this.registry.set('ginzaVaultOwnerWelcomed', true);
           this.registry.set('ginzaVaultInvited', true);
@@ -2425,16 +2424,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // The rear staff in Room 2 are intentionally behind the display car.
     if (this.ginzaRoom === 1) {
       this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
-        x: STAGE.x + 103, feetY: STAGE.y + 510, height: 244, depth: 16 });
+        x: STAGE.x + 103, feetY: STAGE.y + 510, height: 244,
+        shadowOffsetY: -18, depth: 16 });
       this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
         x: STAGE.x + 285, feetY: STAGE.y + 512, height: 245,
-        shadowOffsetX: 16, depth: 17 });
+        shadowOffsetX: 16, shadowOffsetY: -18, depth: 17 });
     } else {
       if (this.ginzaRoom === 2) {
         this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
-          x: STAGE.x + 846, feetY: STAGE.y + 383, height: 143, depth: 7 });
+          x: STAGE.x + 775, feetY: STAGE.y + 383, height: 143,
+          flip: true, depth: 7 });
         this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
-          x: STAGE.x + 976, feetY: STAGE.y + 383, height: 143, depth: 7 });
+          x: STAGE.x + 905, feetY: STAGE.y + 383, height: 143,
+          flip: true, depth: 7 });
       }
       // Ginza Sayaka shares the foreground footprint and visual height
       // of Kaede in the Motor Gallery, instead of towering over the car.
@@ -2448,12 +2450,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // in Prestige/Vault while preserving each car's existing 630px width.
       const stageX = STAGE.x + STAGE.w * 0.54;
       const carObjects = this.createCarDisplay(
-        cars[listing.carId], stageX, STAGE.y + 340, 630, 11,
+        cars[listing.carId], stageX, STAGE.y + 309, 630, 11,
         DEFAULT_PAINT_COLOR, null, false, getGinzaCollectorState(listing.carId)
       );
       carObjects.forEach(obj => this.addContent(obj));
       this.ginzaHeroObjects = carObjects;
-      const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 333,
+      const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 302,
         670, 235, 0x000000, 0).setDepth(24)
         .setInteractive({ useHandCursor: true }));
       hit.on('pointerdown', () => this.showGinzaPurchase(listing, true));
@@ -2461,40 +2463,31 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     // The full lower strip is now *only* navigation, in every room.
     // Vault car selection is retained as a small stage-mounted selector.
+    // Standard rooms navigate between rooms. The Vault instead uses these
+    // same three large bottom slots for its three legendary vehicles.
+    const vault = this.ginzaRoom === 3;
     const roomNames = ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'];
-    roomNames.forEach((label, index) => {
+    (vault ? GINZA_VAULT_CARS : roomNames).forEach((item, index) => {
       const x = CARDS.x + 198 + index * 369;
-      const selected = index + 1 === this.ginzaRoom;
+      const selected = vault
+        ? index === this.ginzaVaultIndex
+        : index + 1 === this.ginzaRoom;
+      const label = vault ? item.name
+        : index === 2 && locked ? 'PRIVATE VAULT // INVITE ONLY' : item;
       const box = this.addContent(this.add.rectangle(
         x, CARDS.y + 90, 348, 112,
         selected ? 0x351c31 : 0x101a28, 1
       ).setStrokeStyle(2, selected ? 0xff8fbd : 0x46627a, 1)
         .setDepth(33).setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(
-        x, CARDS.y + 90,
-        index === 2 && locked ? 'PRIVATE VAULT // INVITE ONLY' : label,
-        { fontFamily: PIXEL_FONT, fontSize: '10px',
-          color: selected ? '#ffffff' : '#b5cde0' }
-      ).setOrigin(0.5).setDepth(34));
-      box.on('pointerdown', () => this.enterGinzaRoom(index + 1));
-    });
-
-    if (this.ginzaRoom === 3) {
-      GINZA_VAULT_CARS.forEach((item, index) => {
-        const x = STAGE.x + 480 + index * 228;
-        const selected = index === this.ginzaVaultIndex;
-        const box = this.addContent(this.add.rectangle(
-          x, STAGE.y + 43, 214, 37,
-          selected ? 0x351c31 : 0x07111d, 0.95
-        ).setStrokeStyle(2, selected ? 0xffa1c6 : 0x68839a, 0.95)
-          .setDepth(32).setInteractive({ useHandCursor: true }));
-        this.addContent(this.add.text(x, STAGE.y + 43, item.name, {
-          fontFamily: PIXEL_FONT, fontSize: '7px',
-          color: selected ? '#ffffff' : '#e3ebf5',
-        }).setOrigin(0.5).setDepth(33));
-        box.on('pointerdown', () => this.switchGinzaVaultCar(index));
+      this.addContent(this.add.text(x, CARDS.y + 90, label, {
+        fontFamily: PIXEL_FONT, fontSize: '10px',
+        color: selected ? '#ffffff' : '#b5cde0',
+      }).setOrigin(0.5).setDepth(34));
+      box.on('pointerdown', () => {
+        if (vault) this.switchGinzaVaultCar(index);
+        else this.enterGinzaRoom(index + 1);
       });
-    }
+    });
 
     if (listing) this.drawGinzaSide(listing);
   }
@@ -2509,17 +2502,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (vault) {
       const toggle = this.addContent(this.add.rectangle(
-        centerX, SIDE.y + 150, width, 37, 0x211527, 1
+        centerX, SIDE.y + 122, width, 37, 0x211527, 1
       ).setStrokeStyle(2, 0xff8eb9, 1).setDepth(34)
         .setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(centerX, SIDE.y + 150,
+      this.addContent(this.add.text(centerX, SIDE.y + 122,
         this.ginzaStockBody ? 'DISPLAY: STOCK / CLEAN  ⇄' : 'DISPLAY: DECALS / RACE  ⇄',
         { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe5f0' }
       ).setDepth(35).setOrigin(0.5));
       toggle.on('pointerdown', () => this.toggleGinzaVaultStock());
     }
 
-    const y0 = SIDE.y + (vault ? 205 : 145);
+    const y0 = SIDE.y + (vault ? 165 : 124);
     this.addContent(this.add.text(x, y0,
       listing.rarity + (vault ? ' // PRIVATE COLLECTION' : ' // GINZA'),
       { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ff9fc7' }
