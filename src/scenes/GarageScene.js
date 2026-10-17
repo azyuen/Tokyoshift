@@ -3717,6 +3717,15 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       this.saveProfile();
+      // Developer cars may be distributed across several workshops. If this
+      // room is empty, let Arkon Den travel using an owned personal car from
+      // another garage rather than silently trapping the developer at HQ.
+      // This does not move cars or override garage assignments.
+      const devTravelCarId = !this.crewMode && isArkonDen(this.registry) &&
+        !this.selectedCarId
+        ? this.ownedCarIds.find(id => cars[id] && !cars[id].crewLoan) || null
+        : null;
+      if (devTravelCarId) this.registry.set('selectedCarId', devTravelCarId);
 
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
@@ -3805,7 +3814,8 @@ export default class GarageScene extends Phaser.Scene {
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
           // Normal street meets still require a local car to drive out with.
-          if (!this.selectedCarId && !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
+          if (!this.selectedCarId && !devTravelCarId &&
+              !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
           }
@@ -3813,7 +3823,7 @@ export default class GarageScene extends Phaser.Scene {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
           this.registry.set('cash', cash - cost);
-          this.registry.set('selectedCarId', this.selectedCarId);
+          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || null);
           this.registry.set('meetStranded', false);
 
           if (travelTarget?.regionId === 'CENTRAL_TOKYO') {
