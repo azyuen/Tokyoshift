@@ -104,6 +104,7 @@ export function showTravelMap(scene, options = {}) {
     currentLocationId,
     onTravel,
     onHome = null,
+    onExit = null,
     onWorkshopUpgrade = null,
     title = 'TOKYO REGION MAP',
     fromWorkshop = false,
@@ -1371,9 +1372,18 @@ export function showTravelMap(scene, options = {}) {
     blocker.on('pointerdown', dismiss);
     closeButton.on('pointerdown', dismiss);
   } else {
-    // This is a story destination, not a free-roam map. The race begins only
-    // when the player actively selects the Ginza location and presses DRIVE.
-    closeButton.setAlpha(.25).disableInteractive();
+    // Story-only destination. During a developer rehearsal, X exits the
+    // sandbox and restores their original career; the real chapter keeps
+    // map travel directed exclusively towards the scripted Ginza run.
+    if (typeof onExit === 'function') {
+      closeButton.setAlpha(1).setInteractive({useHandCursor:true});
+      closeButton.on('pointerdown', () => {
+        dismiss();
+        onExit();
+      });
+    } else {
+      closeButton.setAlpha(.25).disableInteractive();
+    }
     blocker.on('pointerdown', () => {});
   }
   frame.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
