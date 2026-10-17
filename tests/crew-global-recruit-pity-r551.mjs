@@ -123,6 +123,7 @@ test('local clearing and save paths do not destroy other invitations',()=>{
   assert.match(meet,/getCrewInviteInterest\(this.registry, currentRegion\)/);
   assert.match(meet,/getCrewRecruitChallenge\(this.registry, region\)/);
   assert.match(meet,/setCrewRecruitChallenge\(this.registry, challenge\)/);
-  assert.match(race,/setCrewRecruitChallenge\(this.registry, \{/);
+  assert.match(race,/resetCrewRecruitmentAfterLoss\(this.registry, challenge\)/);
+  assert.match(race,/crewPendingJoinDecision/);
   assert.match(race,/createCrewInviteFromMeetWin\(/);
 });
