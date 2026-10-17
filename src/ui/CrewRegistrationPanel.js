@@ -51,7 +51,7 @@ function preload(s,units) {
 export function showCrewRegistrationScreen(s,options) {
   const units=options.units||[];
   if(s._crewRegistrationLoading)return;
-  const queued=preload(s,units);
+  const queued=options._attemptedLoad?0:preload(s,units);
   if(queued){
     s._proOverlayClose?.();
     s._crewRegistrationLoading=true;
@@ -65,10 +65,10 @@ export function showCrewRegistrationScreen(s,options) {
       clear();
       if(!s.sys?.isActive?.())return;
       ensureDerivedModularCarTextures(s,Object.fromEntries(
-        units.filter(u=>cars[u.carId]&&s.textures.exists(cars[u.carId].visual?.bodyKey||''))
+        units.filter(u=>cars[u.carId])
           .map(u=>[u.carId,cars[u.carId]])
       ));
-      showCrewRegistrationScreen(s,options);
+      showCrewRegistrationScreen(s,{...options,_attemptedLoad:true});
     };
     const onShutdown=()=>{s.load.off('complete',onDone);clear();};
     s.events.once('shutdown',onShutdown);
@@ -87,7 +87,7 @@ function drawScreen(s,options) {
   const add=item=>{nodes.push(item);return item;};
   const txt=(x,y,value,size=17,color=WHITE,extra={})=>add(s.add.text(x,y,String(value),{
     fontFamily:BODY,fontSize:size+'px',fontStyle:'600',color,...extra,
-  }).setDepth(222));
+  }).setDepth(230));
   const rect=(x,y,w,h,fill=PANEL,a=1,stroke=0x264557,depth=208)=>
     add(s.add.rectangle(x,y,w,h,fill,a).setStrokeStyle(1,stroke).setDepth(depth));
   const shapeMask=(x,y,w,h)=>{
