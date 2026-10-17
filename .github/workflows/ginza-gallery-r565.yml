@@ -1,0 +1,41 @@
+name: Ginza three-room gallery regressions
+on:
+  pull_request:
+    paths:
+      - 'src/data/ginzaGallery.js'
+      - 'src/data/ginzaScenes.js'
+      - 'src/data/characters.js'
+      - 'src/data/cars.js'
+      - 'src/data/proSeason.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/ginza-gallery-r565.mjs'
+      - '.github/workflows/ginza-gallery-r565.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/ginzaGallery.js'
+      - 'src/data/ginzaScenes.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/ginza-gallery-r565.mjs'
+  workflow_dispatch:
+jobs:
+  ginza:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check src/scenes/CentralTokyoScene.js
+      - run: node --check src/scenes/RaceScene.js
+      - run: node --check src/scenes/MeetScene.js
+      - run: node --check src/data/ginzaGallery.js
+      - run: node --check src/data/ginzaScenes.js
+      - run: node --check src/data/characters.js
+      - run: node --check src/data/cars.js
+      - run: node --check src/state/GameState.js
+      - run: node --test tests/ginza-gallery-r565.mjs

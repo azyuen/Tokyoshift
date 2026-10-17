@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -22,7 +22,7 @@ import {
   getCharacterForContext,
   getMainRivalProgression,
   isMainRivalAvailableAtRegionalMeet,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261017-r565';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -34,7 +34,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261016-r551';
+import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -852,7 +852,8 @@ export default class MeetScene extends Phaser.Scene {
   buildMeetProgressionButtons() {
     (this.meetProgressionButtonObjects || []).forEach(obj => obj?.destroy?.());
     this.meetProgressionButtonObjects = [];
-    if (this.isCrewTestDriveMode() || !this.hasCar) return;
+    if (this.isCrewTestDriveMode() || !this.hasCar ||
+        cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
     const regionId = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
     const actions = getMeetProgressionActions(this.registry, regionId, this.hasCar);
     const add = obj => {
@@ -892,7 +893,8 @@ export default class MeetScene extends Phaser.Scene {
 
   startMeetProgressionChallenge(regionId, mode) {
     const region = String(regionId || '').toUpperCase();
-    if (this.isCrewTestDriveMode() || !this.hasCar || sceneCutsceneActive(this)) return false;
+    if (this.isCrewTestDriveMode() || !this.hasCar ||
+        cars[this.registry.get('selectedCarId')]?.ginzaDemo || sceneCutsceneActive(this)) return false;
     const actions = getMeetProgressionActions(this.registry, region, this.hasCar);
     if (!actions.some(action => action.id === mode)) return false;
     return this.beginTunerTeamChallenge(region, { perfect: mode === 'PERFECT' });
@@ -2754,6 +2756,7 @@ export default class MeetScene extends Phaser.Scene {
     const competitionUnlocked =
       this.hasCar &&
       !crewTestDrive &&
+      !cars[this.registry.get('selectedCarId')]?.ginzaDemo &&
       Number(this.registry.get('wins') || 0) >= 1 &&
       competitionCooldownRemaining <= 0;
 
@@ -3746,7 +3749,8 @@ export default class MeetScene extends Phaser.Scene {
     const wins = Number(this.registry.get('wins') || 0);
     const remaining = this.getCompetitionCooldownRemainingMs();
     const crewTestDrive = this.isCrewTestDriveMode();
-    const unlocked = this.hasCar && !crewTestDrive && wins >= 1 && remaining <= 0;
+    const unlocked = this.hasCar && !crewTestDrive &&
+      !cars[this.registry.get('selectedCarId')]?.ginzaDemo && wins >= 1 && remaining <= 0;
 
     item.locked = !unlocked;
     item.label.setText(
@@ -5114,6 +5118,7 @@ export default class MeetScene extends Phaser.Scene {
     const offer = this.offers[this.selectedOfferIndex];
     if (!offer || offer.pinkChallenged) return;
 
+    if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
     const pinkCooldown = this.getPinkSlipRequestCooldownRaces();
     if (pinkCooldown > 0) {
       this.pinkSlipButton?.disableInteractive();
@@ -5191,6 +5196,13 @@ export default class MeetScene extends Phaser.Scene {
 
   updatePinkSlipControl(offer) {
     if (!offer) return;
+    if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) {
+      this.pinkSlipButton?.disableInteractive()
+        .setFillStyle(0x11161c, 1).setStrokeStyle(1, 0x46545e, 1);
+      this.pinkSlipButtonLabel?.setText('GALLERY LOAN // NO PINKS').setColor('#72838f');
+      this.pinkResponseText?.setText('Sayaka will not risk the gallery car in a pink-slip race.');
+      return;
+    }
 
     if (!offer.pinkChallenged) {
       const ownedCars = this.registry.get('ownedCarIds') || [];

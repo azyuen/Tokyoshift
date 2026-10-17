@@ -111,6 +111,9 @@ export function createDefaultGameState(options = {}) {
     crewSpaceActive: false,
     crewPreviousCarId: null,
     tokyoChampionshipInvited: false,
+    ginzaVaultInvited: false,
+    ginzaVaultOwnerWelcomed: false,
+    ginzaTestDrive: null,
     selectedRacePlayerCharacterId: null,
     tunerDecalsUnlocked: [],
     tunerDecalPlacements: {},
@@ -835,7 +838,7 @@ export function normaliseState(input = {}) {
     .map(remapLoanCarId)
     .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
-  let garageTier = inferWorkshopTier(owned.length, input.garageTier);
+  let garageTier = inferWorkshopTier(owned.filter(id => !String(id).startsWith('ginzaDemo_')).length, input.garageTier);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
@@ -891,9 +894,11 @@ export function normaliseState(input = {}) {
     };
     delete mergedCarStates[oldLoanCarId];
   }
+  // Vault test cars are temporary visitors, not acquired property. Never
+  // turn a gallery loan into an owned vehicle in permanent car history.
   const carHistory = normaliseCarHistory(
-    input.carHistory || [],
-    owned,
+    (input.carHistory || []).filter(entry => !String(entry?.carId || '').startsWith('ginzaDemo_')),
+    owned.filter(id => !String(id).startsWith('ginzaDemo_')),
     mergedCarStates
   );
 
@@ -1130,6 +1135,12 @@ export function normaliseState(input = {}) {
     crewSpaceActive: Boolean(input.crewSpaceActive),
     crewPreviousCarId: input.crewPreviousCarId ? remapLoanCarId(String(input.crewPreviousCarId)) : null,
     tokyoChampionshipInvited: Boolean(input.tokyoChampionshipInvited),
+    ginzaVaultInvited: Boolean(input.ginzaVaultInvited),
+    ginzaVaultOwnerWelcomed: Boolean(input.ginzaVaultOwnerWelcomed),
+    ginzaTestDrive: input.ginzaTestDrive?.carId && String(input.ginzaTestDrive.carId).startsWith('ginzaDemo_')
+      ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || ''),
+          previousPreferredId: String(input.ginzaTestDrive.previousPreferredId || '') }
+      : null,
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
       input.crewMembers?.SHINAGAWA?.characterId === 'sayakaFujieda'
@@ -1322,6 +1333,9 @@ export function snapshotRegistry(registry) {
     crewSpaceActive: Boolean(registry.get('crewSpaceActive')),
     crewPreviousCarId: registry.get('crewPreviousCarId') || null,
     tokyoChampionshipInvited: Boolean(registry.get('tokyoChampionshipInvited')),
+    ginzaVaultInvited: Boolean(registry.get('ginzaVaultInvited')),
+    ginzaVaultOwnerWelcomed: Boolean(registry.get('ginzaVaultOwnerWelcomed')),
+    ginzaTestDrive: registry.get('ginzaTestDrive') || null,
     selectedRacePlayerCharacterId: registry.get('selectedRacePlayerCharacterId') || null,
     tunerDecalsUnlocked: registry.get('tunerDecalsUnlocked') || [],
     tunerDecalPlacements: registry.get('tunerDecalPlacements') || {},

@@ -2287,6 +2287,20 @@ export const carOrder = [
 ];
 
 
+// Ginza vault demonstration aliases reuse the authentic mechanical build and
+// visuals without turning the test vehicle into a sellable collector. The
+// separate IDs prevent an owned car with the same model being overwritten.
+for (const id of ['calsonicR390','cleanR390','essoToyotaGtOne',
+  'cleanToyotaGtOne','renownMazda787B','cleanMazda787B']) {
+  const base = cars[id];
+  if (!base) continue;
+  cars['ginzaDemo_' + id] = {
+    ...base, id: 'ginzaDemo_' + id, ginzaDemo: true,
+    crewLoan: true, collector: true, tuningLocked: true, ginzaExclusive: false,
+    visual: { ...(base.visual || {}) },
+  };
+}
+
 // Register per-character crew loan aliases after all regular visual geometry has
 // been finalised. Crew cars are independent tuneable instances that reuse the
 // current base model art/physics; this lets multiple crew members temporarily

@@ -248,7 +248,7 @@ export function showTokyoChampionship(s) {
 
 function startChampionshipRace(s,mode,carId){
   const owned=s.registry.get('ownedCarIds')||[];
-  if(!carId||!cars[carId]||!owned.includes(carId)){
+  if(!carId||!cars[carId]||cars[carId].ginzaDemo||!owned.includes(carId)){
     s.proError='SELECT AN OWNED CAR BEFORE STARTING THE CHAMPIONSHIP HEAT';
     redraw(s);return;
   }

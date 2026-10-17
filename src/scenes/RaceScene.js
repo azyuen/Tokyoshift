@@ -18,7 +18,7 @@ import {
   getStreetSignalFrame,
 } from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r484';
+import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
@@ -47,14 +47,14 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261017-r565';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261016-r551';
+} from '../state/GameState.js?v=20261017-r565';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -141,6 +141,13 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    if (cars[this.selectedCarId]?.ginzaDemo &&
+        this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId) {
+      for (const pose of ['ginzaHappy', 'ginzaSerious']) {
+        const asset = characters.sayakaFujieda.visual.poseAssets[pose];
+        queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      }
+    }
     if (this.isCoaching || (this.isTutorial &&
       this.registry.get('raceReturnScene') === 'OshiageScene')) {
       for (const pose of ['neutral', 'explaining', 'happy', 'concerned']) {
@@ -369,6 +376,14 @@ export default class RaceScene extends Phaser.Scene {
         : Math.round(this.raceDistanceM) + ' M';
     this.raceDeal = this.registry.get('selectedRaceDeal') || 'BET';
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
+    this.isGinzaDemoRace = Boolean(cars[this.selectedCarId]?.ginzaDemo &&
+      this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
+    if (this.isGinzaDemoRace) {
+      // No wager, titles or pink-slip transfers in a temporary borrowed car.
+      this.raceMode = 'SINGLE';
+      this.raceDeal = 'GINZA_DEMO';
+      this.raceStake = 0;
+    }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
     const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
     const storedOfferCarId = storedMeetOffer?.displayCarId || storedMeetOffer?.carId;
@@ -754,6 +769,7 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.isCoaching) this.setupCoachedLesson();
     else if (this.isTutorial) this.setupDrivingTutorial();
+    if (this.isGinzaDemoRace) this.setupGinzaPassenger();
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -1347,6 +1363,51 @@ export default class RaceScene extends Phaser.Scene {
 
   // Oshiage's free practical lessons reuse the race renderer, player inputs,
   // vehicle physics and HUD. They bypass all race settlement and rewards.
+  setupGinzaPassenger() {
+    const poses = characters.sayakaFujieda?.visual?.poseAssets || {};
+    this.ginzaPassenger = createRaceDialogueHud(this, {
+      speaker: 'SAYAKA // GINZA PASSENGER', theme: 'standard', depth: 81,
+      spriteKeyForPose: pose => poses[pose === 'serious' ? 'ginzaSerious' : 'ginzaHappy']?.key || '',
+      characterVisual: characters.sayakaFujieda.visual,
+      initialPose: 'happy',
+    });
+    this.ginzaPassenger.dialogue.setText(
+      "Remember: that's a museum-grade racing car. Please bring it back intact!"
+    );
+    this.ginzaShiftBands = new DrivingCoach(this.player).shiftBands;
+    this.ginzaLastAdviceAt = -10;
+    this.ginzaLastGear = this.player.transmission.currentGear;
+    this.events.once('shutdown', () => this.ginzaPassenger?.destroy?.());
+  }
+
+  updateGinzaPassenger(telemetry) {
+    if (!this.ginzaPassenger?.dialogue || this.resultsShown) return;
+    const now = this.raceClock || 0;
+    if (now - this.ginzaLastAdviceAt < 3.5) return;
+    const gear = Math.max(1, Number(this.player.transmission.currentGear || telemetry?.gear || 1));
+    const rpm = Number(this.player.engine.rpm || telemetry?.rpm || 0);
+    const band = (this.ginzaShiftBands || []).find(item => item.from === gear);
+    let message = '', pose = 'happy';
+    if (!this.raceStarted) return;
+    if (this.greenClock == null) {
+      if (this.ginzaLastAdviceAt < -5) message = 'Smooth launch, please. This one is irreplaceable!';
+    } else if (band && rpm >= band.min && rpm <= band.max) {
+      message = 'Shift to ' + band.to + ' now! ' +
+        band.min.toLocaleString() + '–' + band.max.toLocaleString() + ' RPM is the sweet spot.';
+    } else if (band && rpm > band.max) {
+      message = 'Shift up! We do not need to bounce this engine off the limiter!';
+      pose = 'serious';
+    } else if (now - this.ginzaLastAdviceAt > 9) {
+      message = 'Eyes on the road! No crashes, no scratches. I am watching the revs.';
+      pose = 'serious';
+    }
+    if (!message) return;
+    this.ginzaPassenger.dialogue.setText(message);
+    this.ginzaPassenger.setPortrait(pose);
+    this.ginzaLastAdviceAt = now;
+    this.ginzaLastGear = gear;
+  }
+
   setupCoachedLesson() {
     this.coach = new DrivingCoach(this.player);
     this.coachLaunch = this.coach.launch();
@@ -2237,6 +2298,7 @@ export default class RaceScene extends Phaser.Scene {
     else if (this.countdownClock < 2) status = 'STAGED';
 
     this.hud.update(playerT, status);
+    if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
     this.debug.update(playerT);
     if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
     else this.updateDrivingTutorial(controlState, playerT);
@@ -4073,6 +4135,15 @@ export default class RaceScene extends Phaser.Scene {
         gameOver: false,
         tutorial: true,
       };
+      return this.raceSettlement;
+    }
+
+    if (this.isGinzaDemoRace) {
+      // A free loan may be driven at any street Meet, but cannot farm money,
+      // coupons, championship progress or other permanent rewards.
+      this.raceSettlement = { playerWon, cashDelta: 0, cash: oldCash,
+        pinkMessage: '', gameOver: false, ginzaDemo: true };
+      saveSessionState(this.registry);
       return this.raceSettlement;
     }
 

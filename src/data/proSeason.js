@@ -1,8 +1,8 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from './proCircuit.js?v=20261012-champ2c';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
-import { cars } from './cars.js?v=20261011-r479';
-import { characters } from './characters.js?v=20261010-r459';
+import { cars } from './cars.js?v=20261017-r565';
+import { characters } from './characters.js?v=20261017-r565';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
@@ -63,6 +63,7 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   const expected=String(rules.drivetrain||'').toUpperCase();
   const aliases={FF:'FWD',FR:'RWD',AWD:'AWD',FWD:'FWD',RWD:'RWD'};
   const reasons=[];
+  if(car.ginzaDemo)reasons.push('GINZA GALLERY LOAN // EXHIBITION ONLY');
   if(!Number.isFinite(power))reasons.push('PERFORMANCE UNAVAILABLE');
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);
@@ -285,7 +286,14 @@ export function nextProfessionalSeason(raw) {
   if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
-  if(c.activeChampionship?.completed)c.activeChampionship=null;
+  if(c.activeChampionship?.completed){
+    // Keep completed championship results across seasons. Ginza vault access
+    // must not vanish after the next professional calendar begins.
+    c.championshipHistory = [...(c.championshipHistory || []),
+      { season:c.activeChampionship.season, completed:true,
+        championId:c.activeChampionship.championId }].slice(-20);
+    c.activeChampionship=null;
+  }
   c.season++;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
   return {circuit:c};
