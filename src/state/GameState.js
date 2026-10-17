@@ -1187,7 +1187,16 @@ export function normaliseState(input = {}) {
     competitionState: input.competitionState && typeof input.competitionState === 'object'
       ? input.competitionState
       : null,
-    proCircuit: normaliseProCircuitState(input.proCircuit),
+    proCircuit: (() => {
+      const circuit=normaliseProCircuitState(input.proCircuit);
+      // R574 official first-round head-to-head events lived in competitionState,
+      // not proCircuit. Those players must resume their current professional
+      // bracket, not be migrated back into open-circuit event selection.
+      if(input.proCircuit?.seasonStatus==null&&input.competitionState?.active&&
+        input.competitionState?.proEvent&&!input.competitionState?.openCircuit)
+        circuit.seasonStatus='ACTIVE';
+      return circuit;
+    })(),
     competitionCooldownUntil: Math.max(0, Number(input.competitionCooldownUntil || 0)),
     carCoupons:
       input.carCoupons && typeof input.carCoupons === 'object'
