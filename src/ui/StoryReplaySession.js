@@ -45,8 +45,12 @@ export function beginStoryArchiveSceneReplay(scene,chapterId,{skipMagazine=false
   }
   // Chapter 01's full first-car magazine is interactive only in rehearsal.
   if(chapterId==='chapter01')registry.set('openingChapter',null);
-  queueSafeSceneStart(scene,'GarageScene',{crewMode:crew,workshopLocationId:workshop,
-    storyArchiveChapter:chapterId});
+  // Scene 07 belongs to its own real CrewSpaceScene. Replaying it through
+  // GarageScene crewMode creates a second, cropped presentation and can stall
+  // during the same-scene Warehouse/Crew lifecycle.
+  queueSafeSceneStart(scene,crew?'CrewSpaceScene':'GarageScene',{
+    crewMode:crew,workshopLocationId:workshop,storyArchiveChapter:chapterId,
+  });
   return true;
 }
 export function endStoryArchiveSceneReplay(scene) {
