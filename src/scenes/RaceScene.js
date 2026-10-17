@@ -389,9 +389,10 @@ export default class RaceScene extends Phaser.Scene {
     this.isGinzaDemoRace = Boolean(cars[this.selectedCarId]?.ginzaDemo &&
       this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
     if (this.isGinzaDemoRace) {
-      // No wager, titles or pink-slip transfers in a temporary borrowed car.
+      // Street cash races and coupons are legitimate collector endgame fun.
+      // Loans still cannot enter championships or be wagered for pink slips.
       this.raceMode = 'SINGLE';
-      this.raceDeal = 'GINZA_DEMO';
+      this.raceDeal = 'BET';
       this.raceStake = 0;
     }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
@@ -4202,15 +4203,8 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
-    if (this.isGinzaDemoRace) {
-      // A free loan may be driven at any street Meet, but cannot farm money,
-      // coupons, championship progress or other permanent rewards.
-      this.raceSettlement = { playerWon, cashDelta: 0, cash: oldCash,
-        pinkMessage: '', gameOver: false, ginzaDemo: true };
-      saveSessionState(this.registry);
-      return this.raceSettlement;
-    }
-
+    // Ginza demo races follow ordinary street-race settlement (cash, wins,
+    // coupons and surprises). The loan is not a pink-slip-eligible asset.
     const newWins = wins + (playerWon ? 1 : 0);
     this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
