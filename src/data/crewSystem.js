@@ -428,7 +428,7 @@ export function createCrewInviteFromMeetWin(
   // permanently locking a region out of crew recruitment.
   const exhausted = candidates.length &&
     candidates.every(member => state.failedCharacterIds.includes(member.characterId));
-  if (!exhausted && state.failedCharacterIds.includes(rivalId)) return null;
+  const previouslyDefeated = !exhausted && state.failedCharacterIds.includes(rivalId);
   const token = String(
     winToken ||
     (locationId + ':' + rivalId + ':' +
@@ -438,20 +438,23 @@ export function createCrewInviteFromMeetWin(
 
   const nextEligibleWins =
     getGlobalCrewRecruitmentState(registry).eligibleWinsSinceInvite + 1;
-  const trigger =
+  // Wins against a previously failed opponent still advance global pity,
+  // but that same opponent can never issue the next invitation.
+  const trigger = !previouslyDefeated && (
     nextEligibleWins >= CREW_INVITE_PITY_WINS ||
-    Number(random()) < CREW_INVITE_INTEREST_CHANCE;
+    Number(random()) < CREW_INVITE_INTEREST_CHANCE
+  );
 
   const store = { ...(registry.get('crewRecruitmentState') || {}) };
   store[key] = {
-    eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins,
-    misses: trigger ? 0 : nextEligibleWins,
+    eligibleWinsSinceInvite: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins),
+    misses: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins),
     lastCharacterId: rivalId,
     failedCharacterIds: exhausted ? [] : state.failedCharacterIds,
     lastWinToken: token,
     lastRollToken: token,
   };
-  store.GLOBAL = { eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins };
+  store.GLOBAL = { eligibleWinsSinceInvite: trigger ? 0 : Math.min(CREW_INVITE_PITY_WINS - 1, nextEligibleWins) };
   registry.set('crewRecruitmentState', store);
 
   if (!trigger) return null;
