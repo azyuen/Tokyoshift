@@ -8,7 +8,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261017-r578';
+} from '../data/cutscenes.js?v=20261018-r586';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -289,29 +289,9 @@ function restoreScene(scene, state) {
   });
 }
 
-function frameFor(scene, side, chapter09RoomBackdrop = false) {
+function frameFor(scene, side) {
   const width = Number(scene.scale.width || scene.cameras.main.width || 1560);
   const height = Number(scene.scale.height || scene.cameras.main.height || 840);
-  // Chapter 09 alone uses a three-portrait composition over the persistent
-  // rego room: a smaller player cameo at far left, teammate at left-centre,
-  // and the owner/official/visitor at right-centre.
-  if (chapter09RoomBackdrop) {
-    if (side === 'center') return {
-      x: width * .112, y: height * .56,
-      frameWidth: Math.min(325, width * .21),
-      frameHeight: Math.min(475, height * .56),
-    };
-    if (side === 'left') return {
-      x: width * .356, y: height * .50,
-      frameWidth: Math.min(505, width * .306),
-      frameHeight: Math.min(620, height * .76),
-    };
-    if (side === 'right') return {
-      x: width * .765, y: height * .50,
-      frameWidth: Math.min(505, width * .306),
-      frameHeight: Math.min(620, height * .76),
-    };
-  }
   // Keep the whole silhouette comfortably within the staging area. Earlier
   // cutscenes set their centre at 42% of screen height, which elevated every
   // character relative to the dialogue gutter and cropped hair unnecessarily.
@@ -516,9 +496,6 @@ function replaceActorProfile(
     if (previous.pose !== pose) {
       updateActorPoseInPlace(scene, previous, side, characterId, pose);
     }
-    if (context.options.chapter09RoomBackdrop && side === 'center') {
-      previous.profile.setAlpha(dimmed ? .55 : 1);
-    }
     previous.profile.setDimmed(dimmed, { duration: SPEAKER_DIM_MS });
     return previous;
   }
@@ -549,8 +526,7 @@ function replaceActorProfile(
     return controller.actors[side];
   }
 
-  const roomPortraits = Boolean(context.options.chapter09RoomBackdrop);
-  const frame = frameFor(scene, side, roomPortraits);
+  const frame = frameFor(scene, side);
   const profile = createCharacterProfile(scene, {
     characterId,
     pose,
@@ -559,7 +535,7 @@ function replaceActorProfile(
     frameWidth: frame.frameWidth,
     frameHeight: frame.frameHeight,
     side,
-    depth: BASE_DEPTH + (side === 'center' ? (roomPortraits ? 12 : 18) : 15),
+    depth: BASE_DEPTH + (side === 'center' ? 18 : 15),
     flipInward: true,
     dimmed,
     // Manga characters are staged as full silhouettes. Profile cards keep
@@ -583,8 +559,7 @@ function replaceActorProfile(
 
   profile.image.setScrollFactor(0);
   profile.maskShape?.setScrollFactor?.(0);
-  if (roomPortraits && side === 'center') profile.setAlpha(dimmed ? .55 : 1);
-  const targetAlpha = dimmed ? (roomPortraits && side === 'center' ? .396 : .72) : 1;
+  const targetAlpha = dimmed ? 0.72 : 1;
   profile.image.setAlpha(0);
 
   scene.tweens.add({
@@ -669,8 +644,7 @@ function drawDialogue(controller, page) {
   // Speaker name sits outside the dialogue field like a tab. A tiny overlap
   // keeps the tab visually attached to the card border without covering text.
   const labelY = cardTop - labelHeight / 2 + 3;
-  const chapter09PlayerSpeaking = Boolean(context.options.chapter09RoomBackdrop && speaker === 'center');
-  const labelX = chapter09PlayerSpeaking ? x : speaker === 'right'
+  const labelX = speaker === 'right'
     ? x + cardWidth / 2 - labelWidth / 2 - 18
     : x - cardWidth / 2 + labelWidth / 2 + 18;
   const labelBox = scene.add.rectangle(
@@ -683,7 +657,7 @@ function drawDialogue(controller, page) {
   ).setDepth(BASE_DEPTH + 31).setScrollFactor(0);
 
   const labelText = scene.add.text(
-    chapter09PlayerSpeaking ? labelX : speaker === 'right'
+    speaker === 'right'
       ? labelX + labelWidth / 2 - 16
       : labelX - labelWidth / 2 + 16,
     labelY,
@@ -692,9 +666,9 @@ function drawDialogue(controller, page) {
       fontFamily: PIXEL_FONT,
       fontSize: '8px',
       color: '#ffffff',
-      align: chapter09PlayerSpeaking ? 'center' : speaker === 'right' ? 'right' : 'left',
+      align: speaker === 'right' ? 'right' : 'left',
     }
-  ).setOrigin(chapter09PlayerSpeaking ? .5 : speaker === 'right' ? 1 : 0, 0.5)
+  ).setOrigin(speaker === 'right' ? 1 : 0, 0.5)
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
 
@@ -1090,8 +1064,7 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     width,
     height,
     paperBackground || whiteWash ? 0xfffcf1 : 0x000000,
-    paperBackground ? 1 : whiteWash ? 0.83 :
-      context.options.chapter09RoomBackdrop ? 0.20 : 0.54
+    paperBackground ? 1 : whiteWash ? 0.83 : 0.54
   ).setDepth(BASE_DEPTH + 1)
     .setScrollFactor(0)
     .setAlpha(0);

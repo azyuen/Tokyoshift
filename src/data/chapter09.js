@@ -31,7 +31,7 @@ export const CHAPTER09_SCENES=Object.freeze({
       ryuji("Sayaka Fujieda! Still as charming as ever.",'happy'),
       sayaka("And you still haven't learned to retire.",'trackHappy'),
       ryuji("Someone has to stop these youngsters from blowing up my timing equipment.",'happy'),
-      daichi('Wait. You two know each other?'),
+      player('Wait. You two know each other?'),
       ryuji("Know her? Ha! You've got no idea who you've brought here.",'happy'),
       sayaka('Careful, Ryuji. We still remember some of your old starts.'),
       ryuji("...Masato, wasn't there supposed to be a briefing?",'serious'),
@@ -46,7 +46,7 @@ export const CHAPTER09_SCENES=Object.freeze({
       hiroshi('Mr Takahashi. Please.','focus'),
       hiroshi('First: OPEN CIRCUIT. Independent driver races, crew events, and one rotating minor trophy. Each is a paid one-off.'),
       hiroshi('They earn cash and trophies, but ZERO professional season points. Practise and upgrade between entries.'),
-      daichi("So we can race here without signing away the next eight weekends?"),
+      player("So we can race here without signing away the next eight weekends?"),
       hiroshi('Correct. The minor trophy rotates after an attempt; two other completed independent events clear its cooldown.'),
       hiroshi('Second: PRO SEASON. Eight rounds, three event choices per round, and you enter exactly ONE.'),
       hiroshi('Earn 60 Driver points and 40 Crew points to qualify for the Tokyo Championship. Plan carefully; you cannot enter everything.'),
@@ -80,7 +80,7 @@ export const CHAPTER09_SCENES=Object.freeze({
       masato("The briefing is complete. Your invitation is accepted, and the Open Circuit is yours to explore.",'happy'),
       hiroshi('Read the event restrictions and check your car before you pay an entry fee.','focus'),
       ryuji("No shame in finding out you're not ready. Shame is finding out halfway through a championship.",'serious'),
-      daichi('You really know how to motivate people.'),
+      player('You really know how to motivate people.'),
       sayaka("He's right. We've come a long way. But let's make sure we're ready before we commit.",'track'),
       player('Independent events first. Then we take on the championship.'),
       sayaka("Good. We'll prepare properly. And then... we'll show them what this crew can do.",'trackHappy'),
@@ -104,11 +104,10 @@ export const CHAPTER09_SCENES=Object.freeze({
   },
 });
 
-// R585 — Chapter 09-only staging adapter. The authored lines and pose choices
-// stay untouched. During the full Chapter 09 story, the crew owns the LEFT,
-// Drag Complex officials (and visitor Mika) own the RIGHT, and the player's
-// smaller third portrait stays on the FAR LEFT, highlighting when speaking.
-// The separate Pro Season registration vignette retains its existing format.
+// R586 — Two-person Chapter 09 portrait staging. The crew (including the
+// player when speaking) stays LEFT; Drag Complex officials and Mika stay RIGHT.
+// Scene 09's full-room cast remains a separate persistent background layer.
+// The standalone season registration vignette retains its original layout.
 const TEAM_PORTRAITS=new Set(['daichiSakamoto','sayakaFujieda']);
 const DRAG_PORTRAIT_DEFAULTS=Object.freeze({
   chapter09OldGuard:'masatoKuroda',
@@ -124,15 +123,17 @@ export function chapter09TeamPortraitManga(id){
   const pages=original.pages.map(page=>{
     const playerSpeaking=page.speaker==='right';
     const actor=page.leftCharacter||original.characters.left;
-    if(!playerSpeaking&&TEAM_PORTRAITS.has(actor)){
+    if(playerSpeaking){
+      teammate='$PLAYER';
+      teammatePose=page.pose||'idle';
+    }else if(TEAM_PORTRAITS.has(actor)){
       teammate=actor;
       teammatePose=page.leftPose||page.pose||'idle';
-    }else if(!playerSpeaking&&actor){
+    }else if(actor){
       official=actor;
       officialPose=page.leftPose||page.pose||'idle';
     }
-    const speaker=playerSpeaking?'center':
-      TEAM_PORTRAITS.has(actor)?'left':'right';
+    const speaker=playerSpeaking||TEAM_PORTRAITS.has(actor)?'left':'right';
     return {
       ...page,
       speaker,
@@ -140,13 +141,11 @@ export function chapter09TeamPortraitManga(id){
       leftPose:teammatePose,
       rightCharacter:official,
       rightPose:officialPose,
-      centerCharacter:'$PLAYER',
-      centerPose:playerSpeaking?(page.pose||'idle'):'idle',
     };
   });
   return {
     ...original,
-    characters:{left:'daichiSakamoto',right:DRAG_PORTRAIT_DEFAULTS[id],center:'$PLAYER'},
+    characters:{left:'daichiSakamoto',right:DRAG_PORTRAIT_DEFAULTS[id]},
     pages,
   };
 }

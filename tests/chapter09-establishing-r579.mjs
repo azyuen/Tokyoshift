@@ -78,6 +78,12 @@ test('CONTINUE into manga keeps the SAME registration room and six characters al
   assert.equal(CHAPTER09_STAGE_DEPTH,810);
   assert.equal(t.nodes.filter(n=>n.type==='image').length,8,'room + six cast + hidden Mika');
   assert.equal(stage.characters.size,7);
+  const people=[...stage.characters.entries()].filter(([id])=>id!=='mikaHayaseChampion');
+  assert.equal(people.length,6);
+  assert.ok(people.every(([,o])=>o.sprite.alpha===1&&o.shadow.alpha===1),
+    'all six characters are opaque from the first frame');
+  assert.equal(stage.characters.get('mikaHayaseChampion').sprite.alpha,0,
+    'Mika remains hidden until her scripted reveal');
   const background=t.nodes.find(n=>n.value==='chapter09RegoRoomNight');
   assert.ok(background);
   assert.ok(background.depth<900,'room must render BEHIND manga');
@@ -109,7 +115,7 @@ test('Mika fades into the existing room, then CONTINUE returns to manga above it
   const originalCast=stage.characters.get('ryujiTakahashi').sprite;
   assert.equal(stage.showMika(()=>visitor++),true);
   assert.equal(stage.phase,'mika');
-  const visitorTween=t.tweens.findLast(x=>x.alpha===.98&&x.duration===950);
+  const visitorTween=t.tweens.findLast(x=>x.alpha===1&&x.duration===950);
   assert.ok(visitorTween,'Mika fades into room');
   t.timers.find(x=>x.ms===1040).fn();
   assert.equal(stage.phase,'ready');
@@ -165,7 +171,7 @@ test('all four original manga chapters overlay the one persistent stage',()=>{
   assert.match(stage,/state\.phase='background'/);
   assert.doesNotMatch(stage,/markCutsceneSeen|saveSessionState|playMangaCutscene/);
   assert.match(manga,/createCharacterProfile/);
-  assert.match(manga,/context\.options\.chapter09RoomBackdrop \? 0\.20 : 0\.54/);
+  assert.match(manga,/paperBackground \? 1 : whiteWash \? 0\.83 : 0\.54/);
   assert.match(manga,/ignoreChapter09Stage: Boolean\(options\.chapter09RoomBackdrop\)/);
   assert.match(manga,/ignoreChapter09Stage: Boolean\(context\?\.options\?\.chapter09RoomBackdrop\)/);
   assert.equal(typeof startChapter09,'function');

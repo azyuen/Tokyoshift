@@ -96,11 +96,14 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
         (w*(isMika ? .177 : right ? .174 : .18))/Math.max(1,s.width));
       const x=w*entry.x,footY=h*entry.feet;
       const depthOffset=(entry.feet-.79)*10; // closer feet draw in front
+      // Six main characters are always fully visible; only Mika's special
+      // entrance/exit uses an individual fade.
+      const initialAlpha=isMika?0:1;
       const shadow=add(scene.add.ellipse(x,footY-5,Math.max(52,scale*s.width*.55),
-        23,0x000000,.36).setDepth(base+4+depthOffset).setScrollFactor(0).setAlpha(0));
+        23,0x000000,.36).setDepth(base+4+depthOffset).setScrollFactor(0).setAlpha(initialAlpha));
       const sprite=add(scene.add.image(x,footY,entry.asset.key)
         .setOrigin(.5,1).setScale(scale).setFlipX(Boolean(right))
-        .setDepth(base+5+depthOffset+(isMika ? .1 : 0)).setScrollFactor(0).setAlpha(0));
+        .setDepth(base+5+depthOffset+(isMika ? .1 : 0)).setScrollFactor(0).setAlpha(initialAlpha));
       state.characters.set(entry.id,{sprite,shadow});
     };
     assets.left.forEach(entry=>createActor(entry));
@@ -159,7 +162,7 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
       nextContinue=afterReveal;
       tween(visitorLabel,1,220);
       const visitor=state.characters.get(MIKA.id);
-      if(visitor)tween([visitor.sprite,visitor.shadow],.98,950);
+      if(visitor)tween([visitor.sprite,visitor.shadow],1,950);
       later(1040,showControls);
       return true;
     };
@@ -181,12 +184,8 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
 
     state.phase='opening';
     tween(curtain,0,930);
-    later(280,()=>{
-      for(const [id,person]of state.characters){
-        if(id===MIKA.id)continue;
-        tween([person.sprite,person.shadow],.86,680);
-      }
-    });
+    // Fade the room itself in, without individually fading or dimming the
+    // six permanent character sprites. They stay at 100% during manga.
     later(1340,showControls);
   };
 

@@ -2,7 +2,7 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r584';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r584';
-import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r585';
+import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -76,7 +76,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r585';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r586';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner } from '../data/ginzaGallery.js?v=20261017-r565';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261017-r565';
