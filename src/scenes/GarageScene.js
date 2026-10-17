@@ -56,7 +56,10 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r569';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r570';
+import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r570';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r570';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r570';
 import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -194,6 +197,8 @@ export default class GarageScene extends Phaser.Scene {
       ? Boolean(this.registry.get('crewSpaceActive'))
       : explicitCrewMode;
     this.returningFromCrewSpace = Boolean(data?.returningFromCrewSpace);
+    this.storyArchiveChapter = data?.storyArchiveChapter || null;
+    this.openStoryArchiveOnReturn = Boolean(data?.openStoryArchive);
     this._warehousePresentationTransitioning = false;
 
     if (this.crewMode) {
@@ -449,7 +454,7 @@ export default class GarageScene extends Phaser.Scene {
     // cinematic car. It is never added to the player's owned-car registry.
     if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
         (!((this.registry.get('cutscenesSeen') || []).includes('warehouseHqUnlocked')) ||
-          this.registry.get('devMode'))) {
+          this.registry.get('devMode') || isStoryArchiveSceneReplay(this.registry))) {
       preloadCarIds.push('rwbStellaPorsche');
     }
     preloadCarIds.forEach(id => {
@@ -617,7 +622,7 @@ export default class GarageScene extends Phaser.Scene {
 
     // After the normal Crew Space overview exists, celebrate seven REAL
     // recruited drivers once per save. No premature unlock of crew battles.
-    if (this.crewMode) {
+    if (this.crewMode && !this.storyArchiveChapter) {
       this.time.delayedCall(420, () => this.showFullCrewStoryIfNeeded());
     }
 
@@ -640,7 +645,16 @@ export default class GarageScene extends Phaser.Scene {
       if (tutorialJustCompleted) sessionStorage.removeItem('tokyoShiftTutorialComplete');
     } catch (e) {}
 
-    if (reopenSettings) {
+    if(this.storyArchiveChapter && isStoryArchiveSceneReplay(this.registry)) {
+      // Wait until this real Garage/Crew Space has loaded its background and
+      // sprites, then run the authored chapter using its normal interactions.
+      this.time.delayedCall(450,()=>playStoryArchiveChapter(this,this.storyArchiveChapter));
+    } else if(this.openStoryArchiveOnReturn) {
+      this.time.delayedCall(280,()=>{
+        showOfficePanel(this);
+        showStoryArchivePanel(this);
+      });
+    } else if (reopenSettings) {
       this.time.delayedCall(80, () => showSettingsPanel(this));
     } else if (tutorialJustCompleted) {
       this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
@@ -7491,7 +7505,7 @@ export default class GarageScene extends Phaser.Scene {
           this.time.delayedCall(180, () => this.continueGarageStoryFlow());
         });
       },
-      onPreviewComplete: () => this.finishWarehouseRwbArrival(),
+      onPreviewComplete: () => this.finishWarehouseRwbArrival(() => options.onPreviewComplete?.()),
     });
     return Boolean(result?.played);
   }
@@ -7518,7 +7532,7 @@ export default class GarageScene extends Phaser.Scene {
         }
       },
       onComplete: () => this._fullCrewCelebration?.stop?.(),
-      onPreviewComplete: () => this._fullCrewCelebration?.stop?.(),
+      onPreviewComplete: () => {this._fullCrewCelebration?.stop?.();options.onPreviewComplete?.();},
       onCancel: () => this._fullCrewCelebration?.stop?.(),
     });
     return Boolean(result?.played);
@@ -7555,7 +7569,7 @@ export default class GarageScene extends Phaser.Scene {
         // parallel room system. All 7 spaces start empty until recruited.
         this.time.delayedCall(260, () => this.transitionWarehousePresentation(true, null));
       },
-      onPreviewComplete: () => this.finishSevenRivalsMontage(),
+      onPreviewComplete: () => {this.finishSevenRivalsMontage();options.onPreviewComplete?.();},
     });
     return Boolean(result?.played);
   }
