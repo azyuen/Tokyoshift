@@ -2,11 +2,11 @@ import { characters } from '../data/characters.js?v=20261006-r391';
 import {
   CUTSCENES,
   CUTSCENE_ORDER,
-} from '../data/cutscenes.js?v=20261018-r586';
+} from '../data/cutscenes.js?v=20261018-r588';
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261018-r586';
+} from './MangaCutscene.js?v=20261018-r588';
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
