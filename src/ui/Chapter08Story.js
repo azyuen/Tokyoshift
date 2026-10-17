@@ -8,6 +8,7 @@ import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=202610
 import { markCentralTokyoUnlocked } from '../data/centralTokyo.js?v=20261017-r568';
 import { areAllCrewBattlesComplete } from '../data/crewSystem.js?v=20261016-r551';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261017-r565';
 import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 
 const WAREHOUSE_BEATS = [
@@ -82,9 +83,12 @@ export function openChapter08Map(scene) {
 
 export function startChapter08PorscheRace(scene) {
   if (!scene || hasSeenCutscene(scene.registry, 'chapter08RaceFinished')) return false;
-  const playerCarId = scene.registry.get('selectedCarId');
-  if (!playerCarId) return false;
   const registry = scene.registry;
+  const playerCarId = cars[registry.get('selectedCarId')]
+    ? registry.get('selectedCarId')
+    : (registry.get('ownedCarIds') || []).find(id => cars[id] && !cars[id].crewLoan);
+  if (!playerCarId) return false;
+  registry.set('selectedCarId',playerCarId);
   registry.set('crewSpaceActive', false);
   registry.set('selectedRacePlayerCharacterId', null);
   registry.set('selectedOpponentCarId', 'rwbStellaPorsche');
@@ -115,8 +119,7 @@ export function startChapter08PorscheRace(scene) {
 export function preloadChapter08GinzaAssets(scene) {
   if (!scene?.textures || !scene?.load) return 0;
   let added = 0;
-  for (const pose of ['homeNormal', 'oshiageNeutral', 'ginzaNormal', 'ginzaHappy',
-      'ginzaSerious', 'track', 'trackHappy']) {
+  for (const pose of ['homeNormal', 'oshiageNeutral', 'track', 'trackHappy']) {
     const asset = characters.sayakaFujieda?.visual?.poseAssets?.[pose];
     if (asset?.key && asset?.path && !scene.textures.exists(asset.key)) {
       scene.load.image(asset.key, getCharacterAssetUrl(asset.path));
