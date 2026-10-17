@@ -50,9 +50,7 @@ export function showStoryArchivePanel(scene) {
         allowPlayer:true,returnToOffice:true,skipRace:!interactive,
       });
     }
-    const ok=beginStoryArchiveSceneReplay(scene,id);
-    if(ok)scene.registry.set('__storyArchiveSkipMagazine',!interactive);
-    return ok;
+    return beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
   };
   const openChapter=chapter=>{
     if(!chapter.completed)return;
