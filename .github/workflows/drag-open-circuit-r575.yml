@@ -1,0 +1,38 @@
+name: R575 Drag Open Circuit
+on:
+  push:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/drag-open-circuit-r575.mjs'
+      - '.github/workflows/drag-open-circuit-r575.yml'
+  pull_request:
+    paths:
+      - 'src/data/proCircuit.js'
+      - 'src/data/proSeason.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/drag-open-circuit-r575.mjs'
+      - '.github/workflows/drag-open-circuit-r575.yml'
+  workflow_dispatch:
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check src/data/proCircuit.js
+          node --check src/data/proSeason.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/ui/ProSeasonPanel.js
+      - name: Test independent circuits and season regressions
+        run: |
+          node --test tests/drag-open-circuit-r575.mjs
+          node --test tests/pro-season-crew.mjs
