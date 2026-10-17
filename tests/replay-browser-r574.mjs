@@ -59,7 +59,11 @@ for(const chapter of ['chapter06','chapter07','chapter08']) {
     await page.waitForFunction(key=>{
       const scene=window.TOKYO_SHIFT?.scene?.getScene(key);
       const cutscene=scene?._mangaCutscene;
-      return Boolean(cutscene?.played && cutscene?.active) ||
+      // Pending=true means portraits are merely queued for loading. The
+      // original regression was a perpetual pending/loading scene, so only
+      // count a real rendered Manga controller as success.
+      return Boolean(cutscene?.active && !cutscene?.pending &&
+        cutscene?.definition?.id && cutscene.objects?.length>0) ||
         Boolean(scene?._phoneConversation?.active);
     },sceneKey,{timeout:30000});
     const state=await page.evaluate(key=>{
