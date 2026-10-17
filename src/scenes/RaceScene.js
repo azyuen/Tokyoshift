@@ -54,7 +54,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261017-r565';
+} from '../state/GameState.js?v=20261018-r588';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -86,8 +86,8 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261017-r572';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r572';
-import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
@@ -110,7 +110,7 @@ import {
   getCrewMembers,
   getCrewBattleCaptainId,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261016-r551';
+} from '../data/crewSystem.js?v=20261018-r588';
 import { getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import {
   createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
