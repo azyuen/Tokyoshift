@@ -86,7 +86,8 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261014-r514';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r562';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r562';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r568';
+import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
@@ -219,6 +220,12 @@ export default class RaceScene extends Phaser.Scene {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
     }));
+    if (this.registry.get('selectedRaceCategory') === 'CHAPTER08') {
+      const ginzaPose = characters.sayakaFujieda?.visual?.poseAssets?.ginzaNormal;
+      if (ginzaPose && !this.textures.exists(ginzaPose.key)) {
+        queueImage(ginzaPose.key, getCharacterAssetUrl(ginzaPose.path));
+      }
+    }
 
     if (this.raceMode === 'TUNER_TEAM') {
       const regionId = String(
@@ -297,6 +304,8 @@ export default class RaceScene extends Phaser.Scene {
       characters[storedOpponentCharacterId]?.rivalEligible !== false &&
       Boolean(characters[storedOpponentCharacterId]);
     this.opponentCharacterId =
+      (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
+        storedOpponentCharacterId === 'sayakaFujieda') ||
       oshiageEliteOpponent || regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
@@ -714,9 +723,12 @@ export default class RaceScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(46).setScrollFactor(0)
       .setVisible(false);
 
-    const rivalName = rivalDisplayCharacter?.name || 'Rival';
+    const rivalName = this.raceMode === 'CHAPTER08'
+      ? 'UNKNOWN CHALLENGER' : rivalDisplayCharacter?.name || 'Rival';
     const moneyLabel = this.isTutorial
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
+      : this.raceMode === 'CHAPTER08'
+        ? 'STORY RUN // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
@@ -2418,6 +2430,7 @@ export default class RaceScene extends Phaser.Scene {
 
   showResultsOverlay() {
     this.engineAudio?.fadeOut();
+    const chapter08Race = this.raceMode === 'CHAPTER08';
     this.resultsShown = true;
     this.controls.enabled = false;
 
@@ -2442,6 +2455,17 @@ export default class RaceScene extends Phaser.Scene {
       opponentWon = true;
     }
 
+    if (chapter08Race) {
+      // This invitation-race loss is scripted and consequence-free, not a
+      // hidden power multiplier or a real career result.
+      playerWon = false;
+      opponentWon = true;
+      const playerTime = Number(this.times.finish);
+      if (Number.isFinite(playerTime) &&
+          (!Number.isFinite(this.opponentTimes.finish) || this.opponentTimes.finish >= playerTime)) {
+        this.opponentTimes.finish = Math.max(.1, playerTime - .175);
+      }
+    }
     const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
       ? this.settleRace(playerWon)
@@ -3071,7 +3095,7 @@ export default class RaceScene extends Phaser.Scene {
       String(this.registry.get('firstName') || '').trim(),
       String(this.registry.get('lastName') || '').trim(),
     ].filter(Boolean).join(' ') || playerCharacter.name;
-    const rivalDisplayName = rivalCharacter.name;
+    const rivalDisplayName = chapter08Race ? 'UNKNOWN DRIVER' : rivalCharacter.name;
 
     // Return to the angled manga panels from R381, but crop the portrait image
     // with the exact same polygon used by its frame.
@@ -3123,7 +3147,7 @@ export default class RaceScene extends Phaser.Scene {
 
     const rivalProfile = createCharacterProfile(this, {
       characterId: this.opponentCharacterId,
-      pose: playerWon ? 'loss' : 'win',
+      pose: chapter08Race ? 'ginzaNormal' : playerWon ? 'loss' : 'win',
       x: 982,
       y: 257,
       frameWidth: 355,
@@ -3143,6 +3167,9 @@ export default class RaceScene extends Phaser.Scene {
     rivalMaskShape.fillPoints(rivalPanelPoints, true);
     const rivalMask = rivalMaskShape.createGeometryMask();
     rivalProfile?.image?.setMask(rivalMask);
+    if (chapter08Race && rivalProfile?.image) {
+      rivalProfile.image.setTintFill(0x62656c).setAlpha(.88);
+    }
 
     const playerPortraitImage = playerProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
@@ -3168,7 +3195,7 @@ export default class RaceScene extends Phaser.Scene {
     // two authored lines per outcome without introducing random redraw flicker.
     const eventIndex = Math.max(0,
       Number(this.registry.get('wins') || 0) + Number(this.registry.get('losses') || 0));
-    const rivalQuote = getRaceCharacterQuote(rivalCharacter.id, !playerWon,
+    const rivalQuote = chapter08Race ? '...' : getRaceCharacterQuote(rivalCharacter.id, !playerWon,
       eventIndex, playerWon
         ? (rivalCharacter?.resultQuotes?.loss || 'You got me this time.')
         : (rivalCharacter?.resultQuotes?.win || 'Not quite enough.'));
@@ -3202,7 +3229,9 @@ export default class RaceScene extends Phaser.Scene {
       }).setOrigin(1, 0).setDepth(depth + 10).setScrollFactor(0);
 
     const returnScene = this.registry.get('raceReturnScene') || 'MeetScene';
-    const actionHint = settlement?.gameOver
+    const actionHint = chapter08Race
+      ? 'PARK AT GINZA MOTOR GALLERY'
+      : settlement?.gameOver
       ? 'RUN OVER'
       : settlement?.crewBattleContinues
         ? 'NEXT CREW MATCH'
@@ -3233,7 +3262,16 @@ export default class RaceScene extends Phaser.Scene {
       advanced = true;
       tapTarget.disableInteractive();
 
-      if (isPinkSlip && settlement) {
+      if (chapter08Race) {
+        markCutsceneSeen(this.registry, 'chapter08RaceFinished');
+        this.registry.set('selectedRaceCategory', 'SINGLE');
+        this.registry.set('selectedRaceDeal', 'BET');
+        this.registry.set('selectedRaceMeetOffer', null);
+        saveSessionState(this.registry);
+        this.scene.start('CentralTokyoScene', {
+          locationId: 'ginzaMotorGallery', ginzaRoom: 1, chapter08Arrival: true,
+        });
+      } else if (isPinkSlip && settlement) {
         this.registry.set('pendingPinkSlipResult', {
           playerWon: Boolean(playerWon),
           gameOver: Boolean(settlement.gameOver),
@@ -3814,8 +3852,20 @@ export default class RaceScene extends Phaser.Scene {
     );
     const finish = () => {
       this.registry.set('crewBattleEventPlayerSetup', null);
+      const finalCrewClear = settlement?.crewBattleFirstClear &&
+        settlement?.crewBattleCompleted &&
+        settlement?.tokyoChampionshipInvited &&
+        !hasSeenCutscene(this.registry,'chapter08Warehouse');
+      if (finalCrewClear) {
+        this.registry.set('workshopLocationId','shinonomeWarehouseStrip');
+        this.registry.set('crewSpaceActive',false);
+      }
       saveSessionState(this.registry);
-      this.scene.start(returnScene || 'MeetScene');
+      if (finalCrewClear) {
+        this.scene.start('GarageScene', {
+          workshopLocationId:'shinonomeWarehouseStrip',crewMode:false,
+        });
+      } else this.scene.start(returnScene || 'MeetScene');
     };
     if (!captainId || !definition || sceneCutsceneActive(this)) { finish(); return; }
     const result = playMangaCutscene(this, definition, {
@@ -4120,6 +4170,13 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if (this.raceMode === 'CHAPTER08') {
+      this.raceSettlement = {
+        playerWon: false, cashDelta: 0, cash: this.registry.get('cash') ?? 0,
+        pinkMessage: '', gameOver: false, chapter08Story: true,
+      };
+      return this.raceSettlement;
+    }
 
     const wins = this.registry.get('wins') ?? 0;
     const losses = this.registry.get('losses') ?? 0;

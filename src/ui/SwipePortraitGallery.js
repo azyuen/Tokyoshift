@@ -139,7 +139,7 @@ export function openSwipePortraitGallery(scene, {
   const ctx = { rivalContext: true, playerCharacterId: playerId };
   entries.forEach((entry, i) => {
     const profile = createCharacterProfile(scene, {
-      characterId: entry.characterId, pose: 'idle',
+      characterId: entry.characterId, pose: entry.pose || 'idle',
       x: cx, y: cy, frameWidth, frameHeight, side: 'center',
       flipInward: false, depth: 971, dimmed: false, mask: false,
       rivalContext: Boolean(entry.rivalContext), playerCharacterId: playerId,
@@ -175,6 +175,10 @@ export function openSwipePortraitGallery(scene, {
 
   const personName = own(scene.add.text(cx,height*.79,'',{
     fontFamily: FONT,fontSize:'10px',color:'#ffffff',
+    backgroundColor:'#081524ba',padding:{x:14,y:8},
+  }).setOrigin(.5).setDepth(989).setScrollFactor(0));
+  const roleSubtitle = own(scene.add.text(cx,height*.825,'',{
+    fontFamily:FONT,fontSize:'10px',color:'#f8c2d7',
     backgroundColor:'#081524ba',padding:{x:14,y:8},
   }).setOrigin(.5).setDepth(989).setScrollFactor(0));
   const heading = own(scene.add.text(cx,height*.12,title,{
@@ -238,6 +242,8 @@ export function openSwipePortraitGallery(scene, {
       ? getCharacterForContext(shown.characterId,ctx)?.name
       : characters[shown?.characterId]?.name;
     personName.setText(String(display||shown?.characterId||'').toUpperCase());
+    roleSubtitle.setText(String(shown?.subtitle || '').toUpperCase());
+    roleSubtitle.setVisible(Boolean(shown?.subtitle));
     counter.setText(String(t<.5?oldIndex+1:newIndex+1).padStart(2,'0')
       +' / '+String(entries.length).padStart(2,'0'));
     prev.setAlpha((oldIndex===0&&t===0)?.37:1);
@@ -281,7 +287,7 @@ export function openSwipePortraitGallery(scene, {
   const initial = [
     ...portraits.flatMap(p=>[p.colour,p.grey]),
     ...flags.map(p=>p.obj), ...names.map(p=>p.obj),
-    heading,personName,counter,swipeHint,
+    heading,personName,roleSubtitle,counter,swipeHint,
   ].map(obj=>({obj,alpha:obj.alpha}));
   initial.forEach(({obj})=>obj.setAlpha(0));
   const washTarget = transparentBackground ? .12 : null;

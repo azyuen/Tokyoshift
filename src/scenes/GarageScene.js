@@ -55,7 +55,8 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r568';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -7136,8 +7137,21 @@ export default class GarageScene extends Phaser.Scene {
       return this.runOpeningStoryIfNeeded();
     // Completed compensation is no longer offered on future visits.
     if (this.runOpeningStoryIfNeeded()) return true;
+    // Winning the seventh regional CREW battle brings the captain straight
+    // back to Warehouse HQ. Chapter 08 must run before the legacy Ginza
+    // invitation and cannot reveal Sayaka's Ginza role prematurely.
+    if (startChapter08Warehouse(this)) return true;
     // Scene 02 (nine wins / market invitation) takes precedence when a save
     // first returns with both the nine-win and first-champion milestones due.
+    if (this.hasSeenStoryCutscene('chapter08RaceFinished') &&
+        !this.hasSeenStoryCutscene('chapter08Ginza')) {
+      // A profile reloaded after the story race must resume at the showroom,
+      // not be trapped in Warehouse HQ with the invitation already consumed.
+      this.time.delayedCall(80, () => this.scene.start('CentralTokyoScene', {
+        locationId:'ginzaMotorGallery',ginzaRoom:1,chapter08Arrival:true,
+      }));
+      return true;
+    }
     if (this.showCentralTokyoInvitationIfNeeded()) return true;
     if (this.showFirstRegionalChampionIfNeeded()) return true;
     return this.showSevenRegionsStoryIfNeeded();
