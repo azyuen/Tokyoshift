@@ -123,7 +123,8 @@ export function openSwipePortraitGallery(scene, {
   };
   const complete = () => {
     if (!active) return;
-    // NEXT always works, including halfway through a sliding portrait.
+    // Only allow continuing after the final portrait.
+    if (moving || index !== entries.length - 1) return;
     const current = scene._mangaCutscene;
     const canAdvance = current?.active && current === controller;
     close();
@@ -200,9 +201,10 @@ export function openSwipePortraitGallery(scene, {
     const rect = own(scene.add.rectangle(x,height*.936,w,49,0x091827,.94)
       .setStrokeStyle(2,0x93bbda,.78).setScrollFactor(0)
       .setDepth(depth).setInteractive({useHandCursor:true}));
-    own(scene.add.text(x,height*.936,label,{
+    const caption = own(scene.add.text(x,height*.936,label,{
       fontFamily:FONT,fontSize:'10px',color:'#ffffff',
     }).setOrigin(.5).setScrollFactor(0).setDepth(depth+1));
+    rect.caption = caption;
     rect.on('pointerdown', (_pointer,_lx,_ly,event) => {
       event?.stopPropagation?.();buttonWasPressed = true;swipeFromX=null;
       action();
@@ -240,6 +242,9 @@ export function openSwipePortraitGallery(scene, {
       +' / '+String(entries.length).padStart(2,'0'));
     prev.setAlpha((oldIndex===0&&t===0)?.37:1);
     nextRival.setAlpha((oldIndex===entries.length-1&&t===0)?.37:1);
+    const showNext = !moving && index === entries.length - 1;
+    next.setVisible(showNext);
+    next.caption.setVisible(showNext);
   };
 
   function navigate(direction) {

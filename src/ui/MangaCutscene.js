@@ -8,7 +8,7 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261017-r562';
+} from '../data/cutscenes.js?v=20261017-r564';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
@@ -16,7 +16,7 @@ import {
   getCharacterProfilePlacement,
 } from '../characters/CharacterProfileRenderer.js?v=20261011-r477';
 import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
-import { playPhoneConversation } from './PhoneConversation.js?v=20261016-r535';
+import { playPhoneConversation } from './PhoneConversation.js?v=20261017-r564';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

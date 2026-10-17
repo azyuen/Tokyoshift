@@ -19,6 +19,27 @@ export const RACE_COACH_LAYOUT = Object.freeze({
   }),
 });
 
+// Larger phone-only HUD: 30% more portrait and dialogue area than the
+// original opening layout, mirrored about the 1560px landscape midpoint.
+export const PHONE_DIALOGUE_LAYOUTS = Object.freeze({
+  left: Object.freeze({
+    face: { x: 26, y: 50, width: 273, height: 273,
+      targetX: 163, targetY: 190, headHeight: 226 },
+    bubble: { left: 300, right: 1035, top: 68, bottom: 312,
+      notchDepth: 35, notchHalfHeight: 35,
+      headingX: 338, headingY: 96,
+      textX: 338, textY: 142, textWidth: 635 },
+  }),
+  right: Object.freeze({
+    face: { x: 1261, y: 50, width: 273, height: 273,
+      targetX: 1397, targetY: 190, headHeight: 226 },
+    bubble: { left: 525, right: 1260, top: 68, bottom: 312,
+      notchDepth: 35, notchHalfHeight: 35,
+      headingX: 563, headingY: 96,
+      textX: 563, textY: 142, textWidth: 635 },
+  }),
+});
+
 export const RACE_DIALOGUE_THEMES = Object.freeze({
   standard: Object.freeze({
     fill: 0xfffcf1, fillAlpha: 0.985,
