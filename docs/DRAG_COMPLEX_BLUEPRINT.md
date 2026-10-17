@@ -3,6 +3,17 @@
 **Adopted:** 2026-10-08. **Status:** Phase 1 and Phase 2 merged; Phase 3 living season and player-driven crew racing implemented (R470/R485); rotating season-choice corrections and the unified Tokyo Championship remain to implement. **Championship design revised 2026-10-11**; the section below is authoritative over historical milestone notes.
 **Purpose:** Permanent design and handoff document. Read this before changing the Drag Complex, professional competitions, career unlocks, crew competition, ranking, or Tokyo Championship.
 
+## 2026-10-17 R575 decision — voluntary professional season (current)
+This accepted progression update supersedes earlier notes implying immediate automatic season scoring upon Drag Strip access.
+
+- **Open Circuit:** On initial unlock and between completed/forfeited seasons, the Drag Strip offers three short one-off event choices: rotating Driver, Crew, and one of five rotating minor trophies. Each competition charges one entry fee, offers modest cash rewards, and runs real player-driven professional heats. All standalone results have **zero official season points** and never advance the eight-round calendar. Trophy wins update permanent trophy collection. A completed minor trophy rotates to the next of the five, with cooldown measured by **two other completed independent events**, not wall-clock waiting. This minor-trophy format is deliberately shorter than the original five-fixture prestige trophy concept.
+- **Start Pro Season:** The player registers deliberately using a confirm action. The eight-round official calendar then replaces the three open choices. Exactly one event choice per round is retained. Existing cars, tuning, garages, and street meets remain accessible between professional fixtures.
+- **Withdrawal:** A confirm-to-forfeit action archives the attempt, clears current-season scoring and active professional fixture, and returns to open-circuit preparation. Ownership, finances, previous trophies, ratings and achievements survive. Championship-qualified seasons must complete their championship or explicitly forfeit.
+- **Completion:** After a normal eight-round season, independent events reopen. Starting another professional season is another opt-in action. Existing saves mid-season are migrated as ACTIVE rather than accidentally reset.
+- **Scope:** Gameplay and Drag Complex UI only. Chapter 09 narrative tutorial is a separate subsequent change. The engineering/vehicle-balance branch is not mixed into this work.
+
+
+
 ## Product vision and unlock
 
 Street career (seven regional championships, seven crew recruits, recurring regional rivals) leads to a **professional circuit** at Tokyo Drag Complex. The venue remains discoverable/visit-able on its existing seven-regional-championship access rule, so existing saves are not stranded. **Entering professional events** requires recruiting all seven legitimate regional crew members; Arkon Den/developer mode may bypass for tests. A recruitment milestone should lead to an invitation/introduction; the existing `tokyoChampionshipInvited` flag refers to the later championship storyline, **not** open-circuit access. The professional circuit funds crew upgrades and offers a long-lived, repeatable endgame.
