@@ -66,7 +66,7 @@ test('manga ending uses smaller angled portrait, red/charcoal/white motif, next 
   assert.match(section,/new Phaser\.Geom\.Point\(88, 114\)/);
   assert.match(section,/frameWidth: 455, frameHeight: 460/);
   assert.match(section,/const accent = 0xd44953/);
-  assert.match(section,/STAGE ' \+ stageNumber \+ '\/3 COMPLETE/);
+  assert.match(section,/STAGE ' \+ stageNumber \+ '\/' \+ stageCount \+ ' COMPLETE/);
   assert.match(section,/NEXT: ' \+ nextStage/);
   assert.match(section,/const y = 384 \+ 40 \* index/);
   assert.doesNotMatch(section,/PRO RANKING/);
