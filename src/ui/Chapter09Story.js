@@ -4,6 +4,7 @@ import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r578';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r578';
+import { playChapter09EstablishingShot } from './Chapter09EstablishingShot.js?v=20261017-r579';
 
 export function chapter09ShouldBegin(source){
   return hasSeenCutscene(source,'chapter08Ginza') &&
@@ -41,6 +42,13 @@ export function startChapter09(scene,{preview=false}={}){
       else scene._chapter09Playing=false;
     }
   };
-  advance();
+  // The full-screen establishing shot plays ONCE before the first dialogue
+  // scene, both in career and in Arkon Den's complete-chapter preview.
+  // The montage never sets a story flag or restarts the Phaser scene.
+  const intro=playChapter09EstablishingShot(scene,{
+    onComplete:()=>advance(),
+    onCancel:()=>{scene._chapter09Playing=false;},
+  });
+  if(!intro){scene._chapter09Playing=false;return false;}
   return true;
 }
