@@ -48,7 +48,7 @@ import { saveSessionState, createStarterCarState, recordCarAcquisition } from '.
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r572';
-import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r562';
+import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
@@ -56,9 +56,9 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r571';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r572';
 import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r570';
-import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r570';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r572';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r570';
 import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
