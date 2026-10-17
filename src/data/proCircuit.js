@@ -5,7 +5,7 @@
 import { MAIN_RIVAL_BY_REGION } from './characters.js?v=20261007-r411';
 import { getCrewCount, isCrewComplete, areAllCrewBattlesComplete } from './crewSystem.js?v=20261007-r413';
 
-export const PRO_CIRCUIT_SCHEMA_VERSION = 2;
+export const PRO_CIRCUIT_SCHEMA_VERSION = 3;
 export const PRO_CIRCUIT_CREW_REQUIRED = 7;
 
 // Deliberately stable identities: DO NOT regenerate names/IDs each time the
@@ -119,6 +119,10 @@ export function createDefaultProCircuitState() {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: 1,
     eventTick: 0, // advances on completed in-game events, never wall-clock time
+    seasonStatus: 'OPEN', // opt-in; OPEN -> ACTIVE -> COMPLETE, or OPEN on forfeit
+    openCircuitTick: 0, // successful standalone event completions only
+    minorTrophyIndex: 0,
+    minorTrophyCooldownUntil: 0,
     qualified: false, // Phase 2 sets this after the professional qualifier
     playerDriver: createStanding(1400),
     playerTeam: createStanding(1400),
@@ -159,10 +163,26 @@ export function normaliseProCircuitState(raw) {
   const source = safeObject(raw);
   const trophies = safeObject(source.trophyWins);
   const championships = safeObject(source.championshipWins);
+  // Existing careers have already entered seasons implicitly. Preserve their
+  // progress rather than moving them back into the new OPEN pre-season state.
+  const legacySeasonStarted = Number(source.calendar?.round || 0) > 0 ||
+    Boolean(source.calendar?.history?.length) ||
+    Number(source.playerDriver?.seasonPoints || 0) > 0 ||
+    Number(source.playerTeam?.seasonPoints || 0) > 0 ||
+    Boolean(source.activeCrewEvent || source.activeTournament || source.activeTimedEvent ||
+      source.activeChampionship);
+  const legacyStatus = Number(source.calendar?.round || 0) >= 8
+    ? 'COMPLETE' : legacySeasonStarted ? 'ACTIVE' : 'OPEN';
+  const seasonStatus = ['OPEN', 'ACTIVE', 'COMPLETE'].includes(source.seasonStatus)
+    ? source.seasonStatus : legacyStatus;
   return {
     schemaVersion: PRO_CIRCUIT_SCHEMA_VERSION,
     season: boundedInteger(source.season, 1, 1, 10000),
     eventTick: boundedInteger(source.eventTick, 0, 0, 10000000),
+    seasonStatus,
+    openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
+    minorTrophyIndex: boundedInteger(source.minorTrophyIndex, 0, 0, PRO_CIRCUIT_TROPHIES.length - 1),
+    minorTrophyCooldownUntil: boundedInteger(source.minorTrophyCooldownUntil, 0, 0, 10000000),
     qualified: Boolean(source.qualified),
     playerDriver: normaliseStanding(source.playerDriver, initial.playerDriver),
     playerTeam: normaliseStanding(source.playerTeam, initial.playerTeam),
