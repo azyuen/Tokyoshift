@@ -6,6 +6,7 @@ import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { showCrewRegistrationScreen } from './CrewRegistrationPanel.js?v=20261018-r581';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -124,22 +125,21 @@ function overlay(s,title) {
   return {add,label,btn,close};
 }
 export function showCrewRegistration(s,selection=[],assignments={},trophyId=null) {
-  const c=circuit(s),open=isOpenCircuitAvailable(c),fee=open?(trophyId?OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
-  const o=overlay(s,trophyId?'REGISTER SQUAD // MINOR TROPHY':'REGISTER SQUAD // CREW CLUB SPRINT'),units=getCrewSeriesUnits(s.registry,assignments),owned=s.registry.get('ownedCarIds')||[];
-  o.label(90,115,'Select 3–5 crew cars. YOU drive each heat. Invest in their upgrades in the Crew Garage between fixtures.',18);
-  units.forEach((u,i)=>{
-    const chosen=selection.includes(u.id),y=187+i*65;
-    o.btn(345,y,500,(chosen?'✓ ':'')+u.name,()=>{const next=chosen?selection.filter(id=>id!==u.id):selection.length<5?[...selection,u.id]:selection;o.close();showCrewRegistration(s,next,assignments,trophyId);});
-    o.label(650,y-12,(cars[u.loanCarId]?.shortName||u.loanCarId)+' · '+u.drivetrain+' · '+Math.round(u.powerKW)+' KW',22);
-    o.label(1240,y-10,'YOU DRIVE',16);
-  });
-  const reason=crewSeriesEligibility(s.registry,selection,assignments)|| (trophyId&&!getOpenCircuitTrophy(c).available?'TROPHY COOLDOWN ACTIVE':null);
-  o.label(90,680,reason||'READY · '+selection.length+' REGISTERED DRIVERS · '+cash(fee),19);
-  o.btn(300,758,380,'BACK',o.close);
-  o.btn(1090,758,600,'REGISTER · '+cash(fee),()=>{
-    if(reason)return;
-    const out=registerCrewSeries(s.registry,selection,assignments,trophyId);if(out.error){o.label(90,714,out.error,17);return;}
-    o.close();if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+  const c=circuit(s);
+  const open=isOpenCircuitAvailable(c);
+  const fee=open?(trophyId?OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
+  const units=getCrewSeriesUnits(s.registry,assignments);
+  const getReason=ids=>crewSeriesEligibility(s.registry,ids,assignments)||
+    (trophyId&&!getOpenCircuitTrophy(circuit(s)).available?'TROPHY COOLDOWN ACTIVE':null);
+  return showCrewRegistrationScreen(s,{
+    units,selection,assignments,trophyId,fee,getReason,
+    onRegister:(ids,close)=>{
+      if(getReason(ids))return;
+      const out=registerCrewSeries(s.registry,ids,assignments,trophyId);
+      if(out.error){s.proError=out.error;close();redraw(s);return;}
+      close();
+      if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+    },
   });
 }
 export function showCrewFixture(s,selection=null) {

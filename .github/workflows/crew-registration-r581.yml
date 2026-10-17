@@ -1,0 +1,31 @@
+name: R581 Crew Registration Screen
+on:
+  pull_request:
+    paths:
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/crew-registration-r581.mjs'
+      - '.github/workflows/crew-registration-r581.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'tests/crew-registration-r581.mjs'
+jobs:
+  crew-registration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse updated Phaser and registration modules
+        run: |
+          node --check src/ui/CrewRegistrationPanel.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Verify day/night, portraits, controls and selection
+        run: node --test tests/crew-registration-r581.mjs
