@@ -31,8 +31,10 @@ export const CHAPTER08_SCENES = Object.freeze({
 
   chapter08ManagerCall: {
     id: 'chapter08ManagerCall', category: 'CAREER / CHAPTER 08',
-    title: 'TOKYO DRAG STRIP // INCOMING CALL', once: true,
-    presentation: 'phone', callerId: 'masatoKuroda',
+    title: 'TOKYO DRAG COMPLEX // INCOMING CALL', once: true,
+    // Chapter 04's actual vibrating-phone and green PICK UP choreography.
+    presentation: 'phone', presentationMode: 'openingSwipe',
+    callerId: 'masatoKuroda', callerPose: 'normal',
     callerName: 'MASATO KURODA // TOKYO DRAG COMPLEX',
     label: 'INCOMING CALL',
     pages: [
@@ -69,7 +71,9 @@ export const CHAPTER08_SCENES = Object.freeze({
   chapter08SayakaCall: {
     id: 'chapter08SayakaCall', category: 'CAREER / CHAPTER 08',
     title: 'SAYAKA // INCOMING CALL', once: true,
-    presentation: 'phone', callerId: 'sayakaFujieda', callerPose: 'homeHappy',
+    // Same ringing and tap-to-answer action, including in dev and Story Archive replay.
+    presentation: 'phone', presentationMode: 'openingSwipe',
+    callerId: 'sayakaFujieda', callerPose: 'homeHappy',
     callerName: 'SAYAKA FUJIEDA', label: 'INCOMING CALL',
     pages: [
       { speaker: 'caller', text: "Well, well. I hear someone's starting a professional racing team." },
