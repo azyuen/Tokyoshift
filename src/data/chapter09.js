@@ -12,7 +12,7 @@ const sayaka=(text,pose='track')=>({speaker:'left',leftCharacter:'sayakaFujieda'
 const ryuji=(text,pose='normal')=>({speaker:'left',leftCharacter:'ryujiTakahashi',leftPose:pose,text});
 const masato=(text,pose='normal')=>({speaker:'left',leftCharacter:'masatoKuroda',leftPose:pose,text});
 const hiroshi=(text,pose='normal')=>({speaker:'left',leftCharacter:'hiroshiSato',leftPose:pose,text});
-const mika=(text,pose='idle')=>({speaker:'left',leftCharacter:'mikaHayase',leftPose:pose,text});
+const mika=(text,pose='idle')=>({speaker:'left',leftCharacter:'mikaHayase',leftPose:pose,speakerLabel:'MIKA HAYASE',text});
 
 export const CHAPTER09_SEQUENCE=Object.freeze([
   'chapter09OldGuard','chapter09Rules','chapter09Visitor','chapter09Welcome',
