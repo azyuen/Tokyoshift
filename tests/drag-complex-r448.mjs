@@ -9,19 +9,19 @@ const central=fs.readFileSync(new URL('../src/scenes/CentralTokyoScene.js',impor
 const pro=fs.readFileSync(new URL('../src/scenes/FourLaneTestScene.js',import.meta.url),'utf8');
 
 test('three Drag Strip cards support open circuit, official season and independent trophy choices',()=>{
-  const block=central.match(/getProDragEvents\\(\\) \\{([\\s\\S]*?)\\n  \\}/)?.[1]||'';
-  assert.match(block,/isOpenCircuitAvailable\\(pro\\)/);
+  const block=central.match(/getProDragEvents\(\) \{([\s\S]*?)\n  \}/)?.[1]||'';
+  assert.match(block,/isOpenCircuitAvailable\(pro\)/);
   assert.match(block,/openCircuitTick/);
-  assert.match(block,/getOpenCircuitTrophy\\(pro\\)/);
+  assert.match(block,/getOpenCircuitTrophy\(pro\)/);
   assert.match(block,/PRO_CIRCUIT_TROPHIES/);
-  assert.match(block,/const choices=\\[driver,crew,special\\]/);
-  assert.match(block,/const choices = \\[driver, \\{ \\.\\.\\.CREW_SERIES/);
+  assert.match(block,/const choices=\[driver,crew,special\]/);
+  assert.match(block,/const choices = \[driver, \{ \.\.\.CREW_SERIES/);
   assert.match(block,/seasonEnd: true/);
-  assert.match(block,/id: FOUR_WIDE_CUP\\.id/);
+  assert.match(block,/id: FOUR_WIDE_CUP\.id/);
   assert.match(block,/fourWide: true/);
-  assert.match(central,/TROPHY COMP \\/\\/ FOUR-WIDE/);
+  assert.match(central,/TROPHY COMP \/\/ FOUR-WIDE/);
   assert.match(central,/NO SEASON POINTS/);
-  assert.match(central,/event\\.entryFee/);
+  assert.match(central,/event\.entryFee/);
   assert.equal(PRO_DRAG_EVENTS.length,3);
   assert.equal(FOUR_WIDE_CUP.entryFee,90000);
 });
