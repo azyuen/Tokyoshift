@@ -361,6 +361,8 @@ export function showCutsceneTester(scene) {
       row.on('pointerover', () => row.setStrokeStyle(2, 0xff72a6, 1));
       row.on('pointerout', () => row.setStrokeStyle(2, 0x304b5d, 1));
       row.on('pointerdown', () => {
+        row.disableInteractive();
+        window.setTimeout(() => {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
