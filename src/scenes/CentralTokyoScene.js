@@ -219,7 +219,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Load both lighting variants only for the currently visited Central Tokyo
     // location/room. This keeps transitions instant without loading every
     // Central Tokyo background at boot.
-    this.getLocationBackgroundConfigs(location).forEach(background => {
+    // Warm all three Ginza rooms at entry so moving between rooms does not
+    // repeatedly show the full-screen Central Tokyo loading bar.
+    const backgrounds = this.getLocationBackgroundConfigs(location);
+    if (location?.kind === 'showroom') backgrounds.push(
+      { key: 'centralGinzaRoom2DayBg', path: 'assets/CentralTokyo/tokyo_ginza02_day.png' },
+      { key: 'centralGinzaRoom2NightBg', path: 'assets/CentralTokyo/tokyo_ginza02_night.png' },
+      { key: 'centralGinzaVaultBg', path: 'assets/CentralTokyo/tokyo_ginza03.png' },
+    );
+    const seenBackgrounds = new Set();
+    backgrounds.forEach(background => {
+      if (seenBackgrounds.has(background?.key)) return;
+      seenBackgrounds.add(background?.key);
       if (background?.path && background?.key && !this.textures.exists(background.key)) {
         this.load.image(background.key, background.path + '?v=20260929-r263');
         queued += 1;
@@ -2456,11 +2467,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // Keep the showroom figures grounded on the real floor artwork.
     // The rear staff in Room 2 are intentionally behind the display car.
     if (this.ginzaRoom === 1) {
+      // Kaede takes Emi's previous left-hand welcome position. Emi now
+      // faces inwards from the right side of the Motor Gallery.
       this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
-        x: STAGE.x + 103, feetY: STAGE.y + 510, height: 244,
-        shadowOffsetY: -18, depth: 16 });
+        x: STAGE.x + STAGE.w - 108, feetY: STAGE.y + 510, height: 244,
+        flip: true, shadowOffsetY: -18, depth: 16 });
       this.chapter08Kaede = this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
-        x: STAGE.x + 285, feetY: STAGE.y + 512, height: 245,
+        x: STAGE.x + 103, feetY: STAGE.y + 512, height: 245,
         shadowOffsetX: 16, shadowOffsetY: -18, depth: 17 });
     } else {
       if (this.ginzaRoom === 2) {
@@ -2474,23 +2487,22 @@ export default class CentralTokyoScene extends Phaser.Scene {
       // Ginza Sayaka shares the foreground footprint and visual height
       // of Kaede in the Motor Gallery, instead of towering over the car.
       this.addVenueCharacter({ characterId: 'sayakaFujieda', pose: 'ginzaNormal',
-        x: STAGE.x + 285, feetY: STAGE.y + 512, height: 225, depth: 18 });
+        x: STAGE.x + 103, feetY: STAGE.y + 512, height: 225, depth: 18 });
     }
 
     this.ginzaHeroObjects = [];
     if (listing && cars[listing.carId]) {
-      // Identical anchor in all three rooms, centred on the oval floor plinth
-      // in Prestige/Vault while preserving each car's existing 630px width.
-      const stageX = STAGE.x + STAGE.w * 0.54;
+      // Common plinth centre in all three rooms; reduce hero size by 10%.
+      const stageX = STAGE.x + STAGE.w * 0.50;
       const carObjects = this.createCarDisplay(
-        cars[listing.carId], stageX, STAGE.y + 309, 630, 11,
+        cars[listing.carId], stageX, STAGE.y + 309, 567, 11,
         DEFAULT_PAINT_COLOR, null, false, getGinzaCollectorState(listing.carId)
       );
       carObjects.forEach(obj => this.addContent(obj));
       this.ginzaHeroObjects = carObjects;
       if (!storyShowroom) {
         const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 302,
-          670, 235, 0x000000, 0).setDepth(24)
+          604, 218, 0x000000, 0).setDepth(24)
           .setInteractive({ useHandCursor: true }));
         hit.on('pointerdown', () => this.showGinzaPurchase(listing, true));
       }
