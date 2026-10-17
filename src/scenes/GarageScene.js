@@ -56,7 +56,8 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r568';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r569';
+import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -645,6 +646,10 @@ export default class GarageScene extends Phaser.Scene {
       this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
     } else if (!this.crewMode) {
       this.time.delayedCall(260, () => {
+        if (isChapter08DevReplay(this.registry)) {
+          this.continueGarageStoryFlow();
+          return;
+        }
         if (!this.showPendingWorkshopCutscene()) {
           const chapter = this.registry.get('openingChapter');
           if (chapter === 'home' || chapter === 'magazine') {
@@ -7121,6 +7126,9 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   continueGarageStoryFlow() {
+    // Developer's interactive chapter walkthrough takes precedence over all
+    // previously earned unlocks. It follows actual Warehouse/phone/map/race.
+    if (isChapter08DevReplay(this.registry)) return startChapter08Warehouse(this);
     // Sayaka's exit automatically starts Daichi's arrival. A profile resumed
     // during this transition can repeat the fade without requiring a tap.
     const chapter = this.registry.get('openingChapter');

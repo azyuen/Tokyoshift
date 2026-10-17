@@ -10,7 +10,8 @@ import {
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r562';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
-import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r568';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r569';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r569';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -38,7 +39,7 @@ const CAREER_CHAPTERS = [
   { id: 'warehouseHqUnlocked', label: 'CHAPTER 05 — THE GINZA CONNECTION' },
   { id: 'sevenRegionsConquered', label: 'CHAPTER 06 — BEYOND SEVEN' },
   { id: 'fullCrewTogether', label: 'CHAPTER 07 — ONE CREW, SEVEN ROADS' },
-  { id: '__chapter08', label: 'CHAPTER 08 — THE NEXT LEVEL (CONNECTED PREVIEW)', sequence: CHAPTER08_SEQUENCE },
+  { id: '__chapter08', label: 'CHAPTER 08 — THE NEXT LEVEL (FULL INTERACTIVE REPLAY)', sequence: CHAPTER08_SEQUENCE },
 ];
 const getTesterEntries = () => {
   const chapterIds = new Set([
@@ -137,6 +138,61 @@ export function addDevCutsceneButton(scene, x = 840, y = 35, options = {}) {
     },
   };
   return api;
+}
+
+function chooseChapter08Mode(scene) {
+  const objects = [];
+  const add = object => { objects.push(object); return object; };
+  const depth = 1050;
+  const close = () => objects.splice(0).forEach(object => object?.destroy?.());
+  const overlay = add(scene.add.rectangle(780, 420, 1560, 840, 0x02060d, .83)
+    .setDepth(depth).setScrollFactor(0).setInteractive());
+  add(scene.add.rectangle(780, 410, 850, 460, 0x0b1827, .99)
+    .setStrokeStyle(3, 0xff84ad).setDepth(depth+1).setScrollFactor(0));
+  add(scene.add.text(780, 244, 'CHAPTER 08 // DEVELOPER PLAYBACK', {
+    fontFamily:PIXEL_FONT,fontSize:'14px',color:'#ffffff',
+  }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
+  add(scene.add.text(780, 308,
+    'Run the complete chapter with the real Warehouse, phone, Ginza map,\nPorsche rolling-start race, and interactive Sayaka reveal.\nOriginal profile progress and cash are preserved.', {
+      fontFamily:BODY_FONT,fontSize:'15px',fontStyle:'700',align:'center',
+      lineSpacing:9,color:'#bbd5e4',
+    }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
+  const button = (x,label,action) => {
+    const rect = add(scene.add.rectangle(x,448,336,65,0x192f40,.98)
+      .setStrokeStyle(2,0x77d5f6).setDepth(depth+3)
+      .setScrollFactor(0).setInteractive({useHandCursor:true}));
+    add(scene.add.text(x,448,label,{
+      fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+4).setScrollFactor(0));
+    rect.on('pointerdown',()=>{close();action();});
+  };
+  button(588,'DIALOGUE PREVIEW', () => {
+    const previewGinza=()=>{
+      const begin=()=>{if(scene.sys.isActive())startChapter08Ginza(scene,{preview:true});};
+      const queued=preloadChapter08GinzaAssets(scene);
+      if(queued){
+        scene.load.once(Phaser.Loader.Events.COMPLETE,begin);
+        if(!scene.load.isLoading?.())scene.load.start();
+      } else begin();
+    };
+    startChapter08Warehouse(scene,{preview:true,onPreviewComplete:previewGinza});
+  });
+  button(972,'FULL INTERACTIVE REPLAY',()=>{
+    if(!startInteractiveChapter08Replay(scene)) {
+      // No ownership data is invented for preview. If the developer has no
+      // usable personal car, explain why the physical Porsche run cannot start.
+      scene.add.text(780,550,'NEED AN OWNED, DRIVEABLE CAR TO START FULL REPLAY',{
+        fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffb4c7',
+        backgroundColor:'#0b1827',padding:{x:20,y:12},
+      }).setDepth(1500).setOrigin(.5);
+    }
+  });
+  const cancel=add(scene.add.text(780,583,'< BACK TO SCENES',{
+    fontFamily:PIXEL_FONT,fontSize:'9px',color:'#c9dce7',
+    backgroundColor:'#18222e',padding:{x:16,y:10},
+  }).setOrigin(.5).setDepth(depth+4).setScrollFactor(0).setInteractive({useHandCursor:true}));
+  cancel.on('pointerdown',()=>{close();showCutsceneTester(scene);});
+  overlay.on('pointerdown',()=>{});
 }
 
 export function showCutsceneTester(scene) {
@@ -302,16 +358,7 @@ export function showCutsceneTester(scene) {
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
         if (id === '__chapter08') {
-          // Non-destructive dev preview: dialogue and gallery, not a real race.
-          const previewGinza = () => {
-            const begin = () => { if (scene.sys.isActive()) startChapter08Ginza(scene,{preview:true}); };
-            const queued = preloadChapter08GinzaAssets(scene);
-            if (queued) {
-              scene.load.once(Phaser.Loader.Events.COMPLETE, begin);
-              if (!scene.load.isLoading?.()) scene.load.start();
-            } else begin();
-          };
-          startChapter08Warehouse(scene,{preview:true,onPreviewComplete:previewGinza});
+          chooseChapter08Mode(scene);
         } else if (entry.sequence) {
           playOpeningChapterPreview(scene);
         } else if (id === 'canalYardBiggerDreams') {

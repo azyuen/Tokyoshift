@@ -88,6 +88,7 @@ import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.j
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r562';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r568';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
@@ -760,7 +761,7 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.cancelButtonText = this.add.text(135, 54, this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : 'CANCEL RACE', {
+    this.cancelButtonText = this.add.text(135, 54, this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : isChapter08DevReplay(this.registry) && this.raceMode === 'CHAPTER08' ? 'EXIT REPLAY' : 'CANCEL RACE', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
@@ -808,6 +809,10 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if (this.raceMode === 'CHAPTER08' && isChapter08DevReplay(this.registry)) {
+      finishInteractiveChapter08Replay(this);
+      return;
+    }
     if (this.raceStarted || this.cancelConfirmPopup?.active || this.resultsShown) return;
 
     const isPink = this.raceDeal === 'PINK_SLIP';
@@ -3263,7 +3268,9 @@ export default class RaceScene extends Phaser.Scene {
       tapTarget.disableInteractive();
 
       if (chapter08Race) {
-        markCutsceneSeen(this.registry, 'chapter08RaceFinished');
+        if (!isChapter08DevReplay(this.registry)) {
+          markCutsceneSeen(this.registry, 'chapter08RaceFinished');
+        }
         this.registry.set('selectedRaceCategory', 'SINGLE');
         this.registry.set('selectedRaceDeal', 'BET');
         this.registry.set('selectedRaceMeetOffer', null);
