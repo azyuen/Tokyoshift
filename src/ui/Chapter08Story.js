@@ -80,6 +80,8 @@ export function openChapter08Map(scene) {
     fromWorkshop: true, travelMode: 'chapter08Ginza',
     title: 'CHAPTER 08 // DRIVE TO GINZA',
     actionVerb: 'DRIVE TO GINZA',
+    onExit: isChapter08DevReplay(scene.registry)
+      ? () => finishInteractiveChapter08Replay(scene) : null,
     onTravel: locationId => {
       if (locationId !== 'ginzaMotorGallery') return;
       scene.time.delayedCall(0, () => startChapter08PorscheRace(scene));
