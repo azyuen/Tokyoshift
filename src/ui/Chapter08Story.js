@@ -1,7 +1,7 @@
 // R568 Chapter 08 orchestration. All career flags are ordinary saved cutscene
 // milestones, so a reload between a phone call, the map and Ginza can resume.
 import { CHAPTER08_SCENES } from '../data/chapter08.js?v=20261017-r571';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r571';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r572';
 import { showTravelMap } from './TravelMap.js?v=20261017-r568';
 import { openSwipePortraitGallery } from './SwipePortraitGallery.js?v=20261017-r568';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r571';
