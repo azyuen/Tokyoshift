@@ -32,7 +32,8 @@ export function drawSeasonHeader(s,stage) {
     text(s,x,y,'OPEN CIRCUIT // INDEPENDENT EVENTS',18,{color:'#f5e9e5'});
     text(s,x,y+39,'DRIVER / CREW / ROTATING MINOR TROPHY',17,{color:'#c7d9dc'});
     text(s,x,y+72,'NO SEASON POINTS // PREPARE AT YOUR PACE',16,{color:'#c7d9dc'});
-    const ready=!c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
+    const ready=getProCircuitAccess(s.registry).unlocked&&
+      !c.activeCrewEvent&&!c.activeTournament&&!c.activeTimedEvent&&
       !s.registry.get('competitionState')?.active;
     button(s,x+(w-10)/2,y+123,w-10,c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON',()=>showProSeasonRegistration(s),ready);
     if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b'});
@@ -50,7 +51,7 @@ export function drawSeasonHeader(s,stage) {
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
-  } else if(c.seasonStatus==='ACTIVE') {
+  } else if(c.seasonStatus==='ACTIVE'||(c.seasonStatus==='COMPLETE'&&q.qualified)) {
     const withdrawal=text(s,x+190,y+148,'WITHDRAW / FORFEIT',15,{color:'#ffb0b7'});
     withdrawal.setInteractive({useHandCursor:true}).on('pointerdown',()=>showProSeasonWithdrawal(s));
   }
@@ -234,8 +235,11 @@ export function showSeasonRecords(s,complete=false) {
     if(!c.activeChampionship){const result=createProvisionalChampionship(c);if(result.error){o.label(90,690,result.error,18);return;}const next={...c,activeChampionship:result.championship};if(!commit(s,{proCircuit:next}))return;}
     o.close();showTokyoChampionship(s);
   });
-  if(complete&&q.qualified&&!c.activeChampionship?.completed)o.label(760,748,'COMPLETE TOKYO CHAMPIONSHIP BEFORE NEXT SEASON',16);
-  if(complete&&(!q.qualified||c.activeChampionship?.completed))o.btn(1100,758,570,'BEGIN SEASON '+(c.season+1),()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
+  if(complete&&q.qualified&&!c.activeChampionship?.completed){
+    o.label(760,748,'COMPLETE THE CHAMPIONSHIP OR WITHDRAW FROM THE SEASON',16);
+    o.btn(1090,620,600,'WITHDRAW / FORFEIT SEASON',()=>{o.close();showProSeasonWithdrawal(s);});
+  }
+  if(complete&&(!q.qualified||c.activeChampionship?.completed))o.btn(1100,758,570,'RETURN TO OPEN CIRCUIT',()=>{if(s.registry.get('competitionState')?.active)return;const out=nextProfessionalSeason(circuit(s));if(out.circuit){o.close();if(commit(s,{proCircuit:out.circuit}))redraw(s);}});
 }
 
 /** Championship lobby: each stage launches the live race scene and saves after every heat. */
@@ -293,6 +297,7 @@ export function showProSeasonRegistration(s) {
   o.label(120,552,'Check your garage and crew before committing. There is no fee to register.',23);
   o.btn(345,740,460,'NOT YET // BACK',o.close);
   o.btn(1100,740,580,'CONFIRM // START PRO SEASON',()=>{
+    if(!getProCircuitAccess(s.registry).unlocked){o.label(120,605,'PRO CIRCUIT ACCESS REQUIRED',20);return;}
     if(s.registry.get('competitionState')?.active){o.label(120,605,'FINISH THE REGISTERED EVENT FIRST',20);return;}
     const next=startProfessionalSeason(circuit(s));
     if(next.error){o.label(120,605,next.error,20);return;}
