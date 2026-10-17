@@ -2439,7 +2439,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const stageX = STAGE.x + STAGE.w * (this.ginzaRoom === 1 ? 0.66 : 0.60);
       const carObjects = this.createCarDisplay(
         cars[listing.carId], stageX, STAGE.y + 365, 630, 11,
-        DEFAULT_PAINT_COLOR, getGinzaCollectorState(listing.carId)
+        DEFAULT_PAINT_COLOR, null, false, getGinzaCollectorState(listing.carId)
       );
       carObjects.forEach(obj => this.addContent(obj));
       this.ginzaHeroObjects = carObjects;
