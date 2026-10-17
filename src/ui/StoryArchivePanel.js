@@ -90,7 +90,15 @@ export function showStoryArchivePanel(scene) {
       lift(scene.add.text(x,y+13,subtitle,{
         fontFamily:BODY,fontSize:'12px',color:'#bcd8e7',
       }).setOrigin(.5).setDepth(depth+18).setScrollFactor(0));
-      bg.on('pointerdown',action);
+      bg.on('pointerdown',()=>{
+        bg.disableInteractive();
+        // Do not destroy the pressed modal while Safari is still processing
+        // its pointer event. Prepare/close the replay on the following turn.
+        window.setTimeout(()=>{
+          action();
+          if(bg.active)bg.setInteractive({useHandCursor:true});
+        },0);
+      });
     };
     if(chapter.id==='chapter08'){
       choice(566,484,350,'WATCH STORY','No race required',()=>launch(chapter.id,false));
