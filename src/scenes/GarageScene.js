@@ -646,6 +646,10 @@ export default class GarageScene extends Phaser.Scene {
       this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
     } else if (!this.crewMode) {
       this.time.delayedCall(260, () => {
+        if (isChapter08DevReplay(this.registry)) {
+          this.continueGarageStoryFlow();
+          return;
+        }
         if (!this.showPendingWorkshopCutscene()) {
           const chapter = this.registry.get('openingChapter');
           if (chapter === 'home' || chapter === 'magazine') {
