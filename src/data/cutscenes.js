@@ -1,5 +1,5 @@
 import { CHAPTER08_SCENES } from './chapter08.js?v=20261017-r571';
-import { CHAPTER09_SCENES, CHAPTER09_SEQUENCE } from './chapter09.js?v=20261017-r577';
+import { CHAPTER09_SCENES, CHAPTER09_SEQUENCE } from './chapter09.js?v=20261017-r578';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
