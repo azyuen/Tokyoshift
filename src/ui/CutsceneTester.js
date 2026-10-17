@@ -12,7 +12,7 @@ import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
 import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
-import { startChapter09 } from './Chapter09Story.js?v=20261017-r579';
+import { startChapter09 } from './Chapter09Story.js?v=20261018-r580';
 import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 
