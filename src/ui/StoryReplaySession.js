@@ -7,7 +7,7 @@ const sessions=new WeakMap();
 const ACTIVE='__storyArchiveSceneReplay', OWNER='__storyArchiveOwnerSlot';
 export const isStoryArchiveSceneReplay=registry=>Boolean(registry?.get?.(ACTIVE)) &&
   Number(registry.get(OWNER))===getActiveProfileIndex();
-export function beginStoryArchiveSceneReplay(scene,chapterId) {
+export function beginStoryArchiveSceneReplay(scene,chapterId,{skipMagazine=false}={}) {
   const registry=scene?.registry;
   if(!registry?.getAll || !getStoryChapter(chapterId) || chapterId==='chapter08' ||
       sessions.has(registry) || isStoryArchiveSceneReplay(registry) ||
@@ -26,6 +26,7 @@ export function beginStoryArchiveSceneReplay(scene,chapterId) {
   sessions.set(registry,{values,slot:getActiveProfileIndex()});
   registry.set(ACTIVE,true);
   registry.set(OWNER,getActiveProfileIndex());
+  registry.set('__storyArchiveSkipMagazine',Boolean(skipMagazine));
   registry.set('garageTier',Math.max(tier,Number(registry.get('garageTier')||0)));
   registry.set('workshopLocationId',workshop);
   registry.set('crewSpaceActive',crew);
