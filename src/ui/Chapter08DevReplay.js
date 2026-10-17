@@ -3,14 +3,16 @@
 // touching an Arkon Den profile's saved career. This intentionally is NOT
 // a synthetic "all chapters complete" save or a separate racing engine.
 import { cars } from '../data/cars.js?v=20261017-r565';
-import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r569';
+import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
+import { isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
 
 const SESSION_KEY = '__chapter08DevReplay';
 const OWNER_KEY = '__chapter08ReplayProfileSlot';
 const sessions = new WeakMap();
 
 export const isChapter08DevReplay = source =>
-  Boolean(source?.get?.(SESSION_KEY) && source?.get?.('devMode')) &&
+  Boolean(source?.get?.(SESSION_KEY) &&
+    (source?.get?.('devMode') || source?.get?.('__storyArchiveReplay'))) &&
   Number(source.get(OWNER_KEY)) === getActiveProfileIndex();
 
 function copyValues(values) {
@@ -20,9 +22,11 @@ function copyValues(values) {
   return structuredClone(values);
 }
 
-export function startInteractiveChapter08Replay(scene) {
+export function startInteractiveChapter08Replay(scene, {allowPlayer=false,returnToOffice=false,skipRace=false}={}) {
   const registry = scene?.registry;
-  if (!registry?.getAll || !registry.get('devMode') ||
+  if (!registry?.getAll ||
+      (!registry.get('devMode') &&
+        !(allowPlayer && isStoryChapterComplete(registry,'chapter08'))) ||
       sessions.has(registry) || isChapter08DevReplay(registry)) return false;
   const selected = registry.get('selectedCarId');
   const owned = (registry.get('ownedCarIds') || [])
@@ -43,9 +47,12 @@ export function startInteractiveChapter08Replay(scene) {
     centralTokyoLocation: originalLocation,
     crewMode: Boolean(registry.get('crewSpaceActive')),
     garageTier: Number(registry.get('garageTier') || 0),
+    returnToOffice:Boolean(returnToOffice),
   });
   registry.set(OWNER_KEY, getActiveProfileIndex());
   registry.set(SESSION_KEY, true);
+  if(allowPlayer)registry.set('__storyArchiveReplay',true);
+  if(skipRace)registry.set('__chapter08ReplaySkipRace',true);
   registry.set('workshopLocationId', 'shinonomeWarehouseStrip');
   registry.set('garageTier', Math.max(2, Number(registry.get('garageTier') || 0)));
   registry.set('crewSpaceActive', false);
@@ -71,6 +78,8 @@ export function finishInteractiveChapter08Replay(scene) {
     // remains untouched; never apply a stale snapshot to another driver slot.
     registry.remove?.(SESSION_KEY);
     registry.remove?.(OWNER_KEY);
+    registry.remove?.('__storyArchiveReplay');
+    registry.remove?.('__chapter08ReplaySkipRace');
     sessions.delete(registry);
     return false;
   }
@@ -89,9 +98,15 @@ export function finishInteractiveChapter08Replay(scene) {
   // The sandbox keys were absent from the original session.
   registry.remove?.(SESSION_KEY);
   registry.remove?.(OWNER_KEY);
+  registry.remove?.('__storyArchiveReplay');
+  registry.remove?.('__chapter08ReplaySkipRace');
 
   // Do NOT save the restored snapshot: the original disk save was never
   // modified by this rehearsal. Return to the actual scene it started in.
+  if(session.returnToOffice){
+    scene.scene.start('GarageScene',{crewMode:false,openStoryArchive:true});
+    return true;
+  }
   const target = session.sceneKey === 'RaceScene'
     ? 'GarageScene' : session.sceneKey;
   if (target === 'CentralTokyoScene') {
