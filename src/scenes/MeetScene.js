@@ -678,6 +678,12 @@ export default class MeetScene extends Phaser.Scene {
           CREW_JOIN_LINE: dialogue.joinLine,
         },
         onComplete: ({ reason }) => {
+          // Closing/skipping the manga isn't a refusal: preserve the choice
+          // until the player deliberately taps YES or NO.
+          if (reason !== 'action' && reason !== 'secondary') {
+            saveSessionState(this.registry);
+            return;
+          }
           const accepted = reason === 'action';
           const joined = accepted ? acceptCrewMember(this.registry, pending) : null;
           if (!joined) resetCrewRecruitmentAfterLoss(this.registry, pending);
