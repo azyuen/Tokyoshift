@@ -44,10 +44,10 @@ import {
   STORE_KIT_REMOVE_FEE,
   STORE_KIT_RESTORE_FEE,
 } from '../data/partUninstall.js?v=20261016-r541';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
-import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261018-r588';
+import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r586';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
@@ -78,7 +78,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
-} from '../data/crewSystem.js?v=20261011-r479';
+} from '../data/crewSystem.js?v=20261018-r588';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
@@ -1175,7 +1175,7 @@ export default class GarageScene extends Phaser.Scene {
     add(this.add.text(
       780,
       397,
-      'Their loan car leaves with them. Every upgrade on that car is lost.\nYou can recruit another driver from this region later.',
+      'This removes the driver from your crew and all crew lineups.\nTheir signature loan car leaves with them; any upgrades on it are permanently lost.\nYour crew will have an empty slot until you recruit another driver from this region.',
       {
         fontFamily: BODY_FONT,
         fontSize: '12px',
@@ -1196,7 +1196,7 @@ export default class GarageScene extends Phaser.Scene {
     const removeButton = add(this.add.rectangle(910, 505, 220, 48, 0x351820, 1)
       .setStrokeStyle(2, 0xff7cac, 1).setInteractive({ useHandCursor: true })
       .setDepth(depth + 2));
-    add(this.add.text(910, 505, 'REMOVE', {
+    add(this.add.text(910, 505, 'CONFIRM REMOVE', {
       fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffd1e0',
     }).setOrigin(0.5).setDepth(depth + 3));
 

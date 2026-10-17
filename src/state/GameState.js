@@ -104,6 +104,7 @@ export function createDefaultGameState(options = {}) {
     crewRecruitChallenge: null,
     crewRecruitChallenges: {},
     crewPendingRecruit: null,
+    crewPendingJoinDecision: null,
     crewBattleProgress: {},
     crewBattleLineups: {},
     crewBattleIntroVisits: {},
@@ -1111,6 +1112,7 @@ export function normaliseState(input = {}) {
         .map(([region, invite]) => [region, migrateShinagawaSayakaRecruit(invite)])
     ),
     crewPendingRecruit: migrateShinagawaSayakaRecruit(input.crewPendingRecruit || null),
+    crewPendingJoinDecision: migrateShinagawaSayakaRecruit(input.crewPendingJoinDecision || null),
     crewBattleProgress:
       input.crewBattleProgress && typeof input.crewBattleProgress === 'object'
         ? input.crewBattleProgress
@@ -1335,6 +1337,7 @@ export function snapshotRegistry(registry) {
     crewRecruitChallenge: registry.get('crewRecruitChallenge') || null,
     crewRecruitChallenges: registry.get('crewRecruitChallenges') || {},
     crewPendingRecruit: registry.get('crewPendingRecruit') || null,
+    crewPendingJoinDecision: registry.get('crewPendingJoinDecision') || null,
     crewBattleProgress: registry.get('crewBattleProgress') || {},
     crewBattleLineups: registry.get('crewBattleLineups') || {},
     crewBattleIntroVisits: registry.get('crewBattleIntroVisits') || {},

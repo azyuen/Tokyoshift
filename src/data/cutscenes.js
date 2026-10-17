@@ -287,6 +287,55 @@ export const CUTSCENES = {
     secondaryFinalActionLabel: 'RACE LATER',
   },
 
+  crewRecruitmentJoin: {
+    id: 'crewRecruitmentJoin',
+    category: 'CREW / RECRUITMENT',
+    testerLabel: 'Crew — Join or Decline',
+    title: '{REGION} // JOIN THE CREW?',
+    once: false,
+    characters: { left: '$RIVAL', right: '$PLAYER' },
+    preview: {
+      characterOverrides: { RIVAL: 'aoiShindou' },
+      variables: {
+        REGION: 'ODAIBA', RIVAL_NAME: 'AOI SHINDOU',
+        CREW_JOIN_LINE: "You're the real deal. Could I join your crew?",
+      },
+    },
+    pages: [
+      { speaker: 'left', speakerLabel: '{RIVAL_NAME}', pose: 'loss',
+        text: '{CREW_JOIN_LINE}', emphasis: true },
+      { speaker: 'left', speakerLabel: '{RIVAL_NAME}', pose: 'idle',
+        text: 'I will bring my car and my best driving. What do you say?',
+        requireActionButton: true,
+        actionLabel: 'WELCOME ABOARD',
+        secondaryActionLabel: 'NOT THIS TIME' },
+    ],
+  },
+
+  crewRecruitmentAnswer: {
+    id: 'crewRecruitmentAnswer',
+    category: 'CREW / RECRUITMENT',
+    testerLabel: 'Crew — Player Response',
+    title: '{REGION} // THE DECISION',
+    once: false,
+    characters: { left: '$RIVAL', right: '$PLAYER' },
+    preview: {
+      characterOverrides: { RIVAL: 'aoiShindou' },
+      variables: {
+        REGION: 'ODAIBA', RIVAL_NAME: 'AOI SHINDOU',
+        PLAYER_REPLY: "You're in. Welcome to the team!",
+        RIVAL_REPLY: "I'll bring the car to Crew Space.",
+      },
+    },
+    pages: [
+      { speaker: 'right', speakerLabel: '{PLAYER_NAME}', pose: 'idle',
+        text: '{PLAYER_REPLY}', emphasis: true },
+      { speaker: 'left', speakerLabel: '{RIVAL_NAME}', pose: 'idle',
+        text: '{RIVAL_REPLY}' },
+    ],
+    finalActionLabel: 'CONTINUE',
+  },
+
   tunerShopDiscovery: {
     id: 'tunerShopDiscovery',
     category: 'TUNER / STORY',
@@ -1165,6 +1214,8 @@ export const CUTSCENE_ORDER = [
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'crewRecruitmentInvite',
+  'crewRecruitmentJoin',
+  'crewRecruitmentAnswer',
   'tunerShopDiscovery',
   'regionalChampionVictory',
   'regionalPerfectVictory',

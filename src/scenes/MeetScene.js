@@ -34,8 +34,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
-import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
+import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
@@ -103,8 +103,8 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r586';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261018-r586';
@@ -128,6 +128,8 @@ import {
   acceptCrewInviteChallenge,
   clearCrewRecruitChallenge,
   getCrewRecruitmentChallengeRules,
+  acceptCrewMember,
+  resetCrewRecruitmentAfterLoss,
   createStockOpponentState,
   getCrewMemberForRegion,
   getCrewBattleProgress,
@@ -135,8 +137,8 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261016-r551';
-import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
+} from '../data/crewSystem.js?v=20261018-r588';
+import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261016-r550';
@@ -345,7 +347,8 @@ export default class MeetScene extends Phaser.Scene {
 
     const crewReveal =
       getCrewInviteInterest(this.registry, initialRegion) ||
-      getCrewRecruitChallenge(this.registry, initialRegion);
+      getCrewRecruitChallenge(this.registry, initialRegion) ||
+      this.registry.get('crewPendingJoinDecision');
     const signatureCarId = String(crewReveal?.baseCarId || '');
     if (signatureCarId && cars[signatureCarId]) {
       if (!this.preloadedInitialCarIds.includes(signatureCarId)) {
@@ -574,12 +577,13 @@ export default class MeetScene extends Phaser.Scene {
     this.buildMeetProgressionButtons();
     this.rollOffers({ resetTimer: false });
 
-    const pendingRegionalChallengeShown = this.maybeShowPendingRegionalChallengeResult();
-    const pendingPinkSlipResultShown = pendingRegionalChallengeShown
-      ? false
-      : this.maybeShowPendingPinkSlipResult();
+    const pendingCrewJoinShown = this.maybeShowPendingCrewJoinDecision();
+    const pendingRegionalChallengeShown = pendingCrewJoinShown
+      ? false : this.maybeShowPendingRegionalChallengeResult();
+    const pendingPinkSlipResultShown = pendingCrewJoinShown || pendingRegionalChallengeShown
+      ? false : this.maybeShowPendingPinkSlipResult();
     const pendingResultShown =
-      pendingRegionalChallengeShown || pendingPinkSlipResultShown;
+      pendingCrewJoinShown || pendingRegionalChallengeShown || pendingPinkSlipResultShown;
 
     const activeChallenger = this.registry.get('specialChallenger');
     const activeRegionRivals = getRivalCharacterOrderForRegion(
@@ -654,6 +658,84 @@ export default class MeetScene extends Phaser.Scene {
       cars[selectedCarId]?.crewLoan &&
       this.registry.get('selectedRacePlayerCharacterId')
     );
+  }
+
+  maybeShowPendingCrewJoinDecision() {
+    const pending = this.registry.get('crewPendingJoinDecision');
+    if (!pending?.characterId || !pending?.regionId) return false;
+    const rival = characters[pending.characterId];
+    const rivalName = String(rival?.name || 'RIVAL').toUpperCase();
+    const dialogue = getCrewInviteDialogue(pending.characterId);
+
+    this.time.delayedCall(160, () => {
+      const start = playMangaCutscene(this, 'crewRecruitmentJoin', {
+        force: true, preloadPagePosesOnly: true,
+        historyId: 'crewRecruitmentJoin:' + pending.characterId + ':' + pending.wonAt,
+        characterOverrides: { RIVAL: pending.characterId },
+        variables: {
+          REGION: String(pending.regionId).toUpperCase(),
+          RIVAL_NAME: rivalName,
+          CREW_JOIN_LINE: dialogue.joinLine,
+        },
+        onComplete: ({ reason }) => {
+          // Closing/skipping the manga isn't a refusal: preserve the choice
+          // until the player deliberately taps YES or NO.
+          if (reason !== 'action' && reason !== 'secondary') {
+            saveSessionState(this.registry);
+            return;
+          }
+          const accepted = reason === 'action';
+          const joined = accepted ? acceptCrewMember(this.registry, pending) : null;
+          if (!joined) resetCrewRecruitmentAfterLoss(this.registry, pending);
+          this.registry.set('crewPendingJoinDecision', null);
+          saveSessionState(this.registry);
+          const carName = String(
+            cars[joined?.baseCarId]?.shortName || cars[joined?.baseCarId]?.name || 'SIGNATURE CAR'
+          ).toUpperCase();
+          playMangaCutscene(this, 'crewRecruitmentAnswer', {
+            force: true, preloadPagePosesOnly: true,
+            historyId: 'crewRecruitmentAnswer:' + pending.characterId + ':' + pending.wonAt,
+            characterOverrides: { RIVAL: pending.characterId },
+            variables: {
+              REGION: String(pending.regionId).toUpperCase(),
+              RIVAL_NAME: rivalName,
+              PLAYER_REPLY: joined
+                ? "You're in. Welcome to the team!"
+                : accepted
+                  ? "I'd like to, but there's no room right now."
+                  : "Not this time. We'll keep racing our own ways.",
+              RIVAL_REPLY: joined
+                ? "I'll bring my car over to Crew Space. See you there!"
+                : 'Fair enough. See you on the street!',
+            },
+            onComplete: () => {
+              if (joined) this.showCrewJoinedToast(rivalName, carName);
+            },
+          });
+        },
+      });
+      if (!start?.played && !start?.active && !start?.loading) {
+        // Keep the invitation in the save for the next Meet entry if the
+        // manga renderer was unavailable; never silently accept or decline.
+        saveSessionState(this.registry);
+      }
+    });
+    return true;
+  }
+
+  showCrewJoinedToast(rivalName, carName) {
+    const panel = this.add.rectangle(1235, 132, 560, 108, 0x03070b, 0.96)
+      .setStrokeStyle(2, 0xe9c37b, 1).setDepth(901);
+    const title = this.add.text(1235, 111, rivalName + ' // CREW MEMBER', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe1a0',
+    }).setOrigin(0.5).setDepth(902);
+    const detail = this.add.text(1235, 148,
+      carName + ' + DRIVER NOW AT WAREHOUSE CREW SPACE', {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#e7f2f7',
+        wordWrap: { width: 522 }, align: 'center',
+      }).setOrigin(0.5).setDepth(902);
+    this.time.delayedCall(6500, () => [panel, title, detail]
+      .forEach(obj => obj?.active && obj.destroy()));
   }
 
   maybeShowPendingRegionalChallengeResult() {
@@ -1742,16 +1824,13 @@ export default class MeetScene extends Phaser.Scene {
     let challenge = getCrewRecruitChallenge(this.registry, region);
     if (!challenge?.active) return false;
 
-    // The player has to LEAVE the Meet after a failed recruitment race before
-    // being offered the same opponent again. The challenge remains saved.
-    // Older saves already have lastLossAt but lack the deferred flag; migrate
-    // them once rather than forcing an immediate rematch on a reloaded Meet.
-    if (challenge.lastLossAt && challenge.retryDeferredUntilExit == null) {
-      challenge = { ...challenge, retryDeferredUntilExit: true };
-      setCrewRecruitChallenge(this.registry, challenge);
+    // Legacy saves may retain a defeated challenge from the older automatic
+    // rematch loop. Retire it immediately, without offering the same rival.
+    if (challenge.lastLossAt || challenge.retryDeferredUntilExit) {
+      resetCrewRecruitmentAfterLoss(this.registry, challenge);
       saveSessionState(this.registry);
+      return false;
     }
-    if (challenge.retryDeferredUntilExit) return false;
     const location = getMeetLocation(this.selectedMeetLocation);
     if (String(challenge.regionId || '').toUpperCase() !==
         String(location?.district || '').toUpperCase()) return false;
@@ -2603,14 +2682,12 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   releaseDeferredCrewRecruitment() {
+    // Migration guard: do not revive legacy defeated recruitment duels.
     const region = String(getMeetLocation(this.selectedMeetLocation)?.district || '').toUpperCase();
     const challenge = getCrewRecruitChallenge(this.registry, region);
-    if (!challenge?.active || !challenge.retryDeferredUntilExit) return;
-    setCrewRecruitChallenge(this.registry, {
-      ...challenge,
-      retryDeferredUntilExit: false,
-    });
-    // The caller saves together with the departure's cash/location changes.
+    if (!challenge?.lastLossAt && !challenge?.retryDeferredUntilExit) return;
+    resetCrewRecruitmentAfterLoss(this.registry, challenge);
+    saveSessionState(this.registry);
   }
 
   travelToLocation(locationId, suppliedCost = null) {

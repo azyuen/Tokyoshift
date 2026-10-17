@@ -8,14 +8,14 @@ import {
   getCutscene,
   hasSeenCutscene,
   markCutsceneSeen,
-} from '../data/cutscenes.js?v=20261018-r586';
+} from '../data/cutscenes.js?v=20261018-r588';
 import {
   createCharacterProfile,
   getCharacterProfileTexture,
   resolveCharacterProfile,
   getCharacterProfilePlacement,
 } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
-import { saveSessionState } from '../state/GameState.js?v=20261011-r476';
+import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261017-r572';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

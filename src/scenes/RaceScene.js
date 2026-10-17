@@ -54,7 +54,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261017-r565';
+} from '../state/GameState.js?v=20261018-r588';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -86,8 +86,8 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261017-r572';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r572';
-import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
@@ -102,13 +102,15 @@ import {
   createCrewInviteFromMeetWin,
   completeCrewRecruitChallenge,
   setCrewRecruitChallenge,
+  resetCrewRecruitmentAfterLoss,
+  clearCrewRecruitChallenge,
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
   getCrewMembers,
   getCrewBattleCaptainId,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261016-r551';
+} from '../data/crewSystem.js?v=20261018-r588';
 import { getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import {
   createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
@@ -389,10 +391,13 @@ export default class RaceScene extends Phaser.Scene {
     this.isGinzaDemoRace = Boolean(cars[this.selectedCarId]?.ginzaDemo &&
       this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
     if (this.isGinzaDemoRace) {
-      // No wager, titles or pink-slip transfers in a temporary borrowed car.
+      // Street cash races and coupons are legitimate collector endgame fun.
+      // Loans still cannot enter championships or be wagered for pink slips.
       this.raceMode = 'SINGLE';
-      this.raceDeal = 'GINZA_DEMO';
-      this.raceStake = 0;
+      this.raceDeal = 'BET';
+      // Keep the ordinary Meet cash stake and payouts; never wager the loan
+      // vehicle itself.
+      this.raceStake = Math.max(0, Number(this.registry.get('selectedRaceStake') || 0));
     }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
     const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
@@ -2531,18 +2536,13 @@ export default class RaceScene extends Phaser.Scene {
         if (!settlement.playerWon) {
           return {
             primary: 'STOCK CHALLENGE LOST',
-            secondary: 'COME BACK AND TRY AGAIN LATER',
+            secondary: 'INVITATION CLOSED // EARN A NEW RIVAL CHALLENGE',
           };
         }
-        return settlement.crewRecruitJoined
-          ? {
-              primary: 'CREW MEMBER JOINED',
-              secondary: 'SIGNATURE CAR LOANED TO WAREHOUSE HQ',
-            }
-          : {
-              primary: 'STOCK CHALLENGE WON',
-              secondary: 'RETURN TO THE MEET',
-            };
+        return {
+          primary: 'STOCK CHALLENGE WON',
+          secondary: 'RETURN TO THE MEET // RECRUITMENT DECISION AWAITS',
+        };
       }
 
       if (settlement.crewBattle) {
@@ -2922,9 +2922,8 @@ export default class RaceScene extends Phaser.Scene {
         );
       }
     }
-    if (playerWon && settlement?.crewRecruitJoined) {
-      awardParts.push('CREW MEMBER JOINED');
-      awardParts.push('SIGNATURE CAR LOANED');
+    if (playerWon && settlement?.crewRecruitDecisionPending) {
+      awardParts.push('CREW INVITATION // RETURN TO MEET');
     }
     if (playerWon && settlement?.teamChallengeCompleted) {
       awardParts.push(String(
@@ -4202,15 +4201,8 @@ export default class RaceScene extends Phaser.Scene {
       return this.raceSettlement;
     }
 
-    if (this.isGinzaDemoRace) {
-      // A free loan may be driven at any street Meet, but cannot farm money,
-      // coupons, championship progress or other permanent rewards.
-      this.raceSettlement = { playerWon, cashDelta: 0, cash: oldCash,
-        pinkMessage: '', gameOver: false, ginzaDemo: true };
-      saveSessionState(this.registry);
-      return this.raceSettlement;
-    }
-
+    // Ginza demo races follow ordinary street-race settlement (cash, wins,
+    // coupons and surprises). The loan is not a pink-slip-eligible asset.
     const newWins = wins + (playerWon ? 1 : 0);
     this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
@@ -4324,20 +4316,18 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceMode === 'CREW_RECRUIT') {
       const challenge = this.registry.get('crewRecruitChallenge');
-      let recruited = null;
-
       if (playerWon && challenge?.active) {
-        recruited = completeCrewRecruitChallenge(this.registry, challenge);
-      } else if (challenge?.active) {
-        setCrewRecruitChallenge(this.registry, {
-          ...challenge,
-          active: true,
-          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
-          lastLossAt: Date.now(),
-          // A defeat closes this attempt: the invitation must not reopen
-          // automatically on the result-screen return to MeetScene.
-          retryDeferredUntilExit: true,
+        // Winning earns the invitation, not automatic membership. The player
+        // decides yes/no in the next Meet manga scene.
+        this.registry.set('crewPendingJoinDecision', {
+          regionId: String(challenge.regionId || '').toUpperCase(),
+          characterId: String(challenge.characterId),
+          baseCarId: String(challenge.baseCarId),
+          wonAt: Date.now(),
         });
+        clearCrewRecruitChallenge(this.registry, challenge.regionId);
+      } else if (challenge?.active) {
+        resetCrewRecruitmentAfterLoss(this.registry, challenge);
       }
 
       this.registry.set('selectedRacePlayerCharacterId', null);
@@ -4351,11 +4341,12 @@ export default class RaceScene extends Phaser.Scene {
         gameOver: false,
         crewRecruit: true,
         crewRecruitWon: Boolean(playerWon),
-        crewRecruitJoined: Boolean(recruited),
-        crewRecruitRetry: Boolean(!playerWon && challenge?.active),
+        crewRecruitJoined: false,
+        crewRecruitDecisionPending: Boolean(playerWon && challenge?.active),
+        crewRecruitRetry: false,
         crewRecruitCharacterId: challenge?.characterId || this.opponentCharacterId,
         crewRecruitRegionId: String(challenge?.regionId || this.raceDistrict || '').toUpperCase(),
-        crewRecruitLoanCarId: recruited?.loanCarId || null,
+        crewRecruitLoanCarId: null,
       };
       return this.raceSettlement;
     }

@@ -16,8 +16,8 @@ const panel = segment('  drawGinzaSide(listing) {', '  showGinzaPurchase(listing
 const navigation = segment('  drawNavigation(title, subtitle) {', '  devRefreshCentralLocation() {');
 const ownerEntry = segment('  enterGinzaRoom(room) {', '  switchGinzaVaultCar(index) {');
 
-test('all hero cars shift up 31px without changing width, clickable area follows', () => {
-  assert.match(gallery, /stageX, STAGE\.y \+ 309, 630, 11/);
+test('all hero cars keep raised plinth anchor and use 10% reduced width', () => {
+  assert.match(gallery, /stageX, STAGE\.y \+ 309, 567, 11/);
   assert.match(gallery, /rectangle\(stageX, STAGE\.y \+ 302/);
   assert.doesNotMatch(gallery, /STAGE\.y \+ 340/);
 });

@@ -12,17 +12,17 @@ const gallery = sceneBlock('  drawGinza() {', '  drawGinzaSide(listing) {');
 const side = sceneBlock('  drawGinzaSide(listing) {', '  showGinzaPurchase(listing, viewOnly = false) {');
 const navigation = sceneBlock('  drawNavigation(title, subtitle) {', '  devRefreshCentralLocation() {');
 
-test('one unchanged-width car uses the same left-and-up plinth anchor in all three rooms', () => {
-  assert.match(gallery, /const stageX = STAGE\.x \+ STAGE\.w \* 0\.54/);
-  assert.match(gallery, /stageX, STAGE\.y \+ 309, 630, 11/);
+test('every room displays a 10% smaller car centred on the plinth', () => {
+  assert.match(gallery, /const stageX = STAGE\.x \+ STAGE\.w \* 0\.50/);
+  assert.match(gallery, /stageX, STAGE\.y \+ 309, 567, 11/);
   assert.match(gallery, /rectangle\(stageX, STAGE\.y \+ 302/);
   assert.doesNotMatch(gallery, /STAGE\.w \* \(this\.ginzaRoom === 1/);
 });
 
 test('foreground cast match floor shadow and Kaede-sized Sayaka; background duo move left/down', () => {
-  assert.match(gallery, /emiSaionji'[\s\S]*?x: STAGE\.x \+ 103, feetY: STAGE\.y \+ 510, height: 244/);
-  assert.match(gallery, /kaedeTachibana'[\s\S]*?x: STAGE\.x \+ 285, feetY: STAGE\.y \+ 512, height: 245,[\s\S]*?shadowOffsetX: 16/);
-  assert.match(gallery, /sayakaFujieda'[\s\S]*?x: STAGE\.x \+ 285, feetY: STAGE\.y \+ 512, height: 225/);
+  assert.match(gallery, /emiSaionji'[\s\S]*?x: STAGE\.x \+ STAGE\.w - 108, feetY: STAGE\.y \+ 510, height: 244,[\s\S]*?flip: true/);
+  assert.match(gallery, /kaedeTachibana'[\s\S]*?x: STAGE\.x \+ 103, feetY: STAGE\.y \+ 512, height: 245,[\s\S]*?shadowOffsetX: 16/);
+  assert.match(gallery, /sayakaFujieda'[\s\S]*?x: STAGE\.x \+ 103, feetY: STAGE\.y \+ 512, height: 225/);
   assert.match(gallery, /STAGE\.x \+ 775, feetY: STAGE\.y \+ 383, height: 143/);
   assert.match(gallery, /STAGE\.x \+ 905, feetY: STAGE\.y \+ 383, height: 143/);
   assert.match(source, /shadowOffsetX = 0/);
@@ -30,7 +30,7 @@ test('foreground cast match floor shadow and Kaede-sized Sayaka; background duo 
 });
 
 test('all rooms have three large lower navigation buttons, never price or car metadata', () => {
-  const bottom = gallery.slice(gallery.indexOf('// Standard rooms navigate'),gallery.indexOf('if (listing) this.drawGinzaSide(listing);'));
+  const bottom = gallery.slice(gallery.indexOf('// Standard rooms navigate'),gallery.indexOf('if (listing && !storyShowroom) this.drawGinzaSide(listing);'));
   assert.match(bottom,/\['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'\]/);
   assert.match(bottom,/CARDS\.y \+ 90, 348, 112/);
   assert.match(bottom,/this\.enterGinzaRoom\(index \+ 1\)/);
