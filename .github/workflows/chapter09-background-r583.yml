@@ -1,0 +1,42 @@
+name: R583 Persistent Chapter 09 Background
+on:
+  push:
+    paths:
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-background-r583.yml'
+  pull_request:
+    paths:
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-background-r583.yml'
+jobs:
+  persistent-rego-room:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate affected modules
+        run: |
+          node --check src/ui/Chapter09Story.js
+          node --check src/ui/Chapter09EstablishingShot.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/ui/StoryArchivePanel.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+      - name: Prove persistent room behind manga and preserve progression
+        run: |
+          node --test tests/chapter09-establishing-r579.mjs
+          node --test tests/chapter09-drag-r577.mjs
+          node --test tests/story-archive-r570.mjs
+          node --test tests/drag-open-circuit-r575.mjs
+          node --test tests/pro-season-forfeit-r576.mjs
