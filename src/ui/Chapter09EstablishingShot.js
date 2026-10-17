@@ -109,6 +109,10 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
     }).setOrigin(.5).setDepth(depth).setScrollFactor(0));
     text(w/2,h*.09,'CHAPTER 09 // WELCOME TO THE BIG LEAGUES',13);
     text(w/2,h*.15,'TOKYO DRAG COMPLEX // REGISTRATION ROOM',10,'#f3c6d5');
+    // Capture taps outside CONTINUE while no manga dialogue is on-screen.
+    // Otherwise a Garage/Meet button underneath the room could be clicked.
+    add(scene.add.rectangle(w/2,h/2,w,h,0x000000,.001)
+      .setDepth(base+20).setScrollFactor(0).setInteractive());
     const visitorLabel=text(w/2,h*.23,'AN UNEXPECTED VISITOR',9,'#ffe9b8');
     visitorLabel.setAlpha(0);
 
