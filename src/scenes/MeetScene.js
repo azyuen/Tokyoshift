@@ -107,7 +107,7 @@ import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261018-r580';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261018-r582';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {EventEmitter} from 'node:events';
 import {CHAPTER09_GROUPS,chapter09ShotAssets,playChapter09RegoRoom} from '../src/ui/Chapter09EstablishingShot.js';
-import {CHAPTER09_SCENES,CHAPTER09_SEQUENCE} from '../src/data/chapter09.js';
+import {CHAPTER09_SEQUENCE,CHAPTER09_SCENES} from '../src/data/chapter09.js';
 import {startChapter09} from '../src/ui/Chapter09Story.js';
 
 globalThis.Phaser={
@@ -12,154 +12,155 @@ globalThis.Phaser={
   Textures:{FilterMode:{NEAREST:'nearest'}},
 };
 const source=path=>fs.readFileSync(new URL('../'+path,import.meta.url),'utf8');
-function fakeScene({phase='night',playerId='renMizuno',cached=false}={}){
+
+function fakeScene({phase='night',playerId='renMizuno'}={}){
   const nodes=[],timers=[],tweens=[],loads=[],textures=new Set(),events=new EventEmitter();
   const make=(type,value='')=>{
-    const node={type,value,alpha:1,active:true,handlers:{},texture:{key:value},
+    const node={type,value,alpha:1,active:true,handlers:{},
       setDepth(){return this;},setScrollFactor(){return this;},
       setOrigin(){return this;},setScale(){return this;},
       setFlipX(){return this;},setAlpha(n){this.alpha=n;return this;},
       setStrokeStyle(){return this;},setInteractive(){this.interactive=true;return this;},
-      setText(value){this.value=value;return this;},
-      setTexture(value){this.value=value;this.texture.key=value;return this;},
+      disableInteractive(){this.interactive=false;return this;},
       on(event,fn){this.handlers[event]=fn;return this;},
       destroy(){this.active=false;},
     };
     nodes.push(node);return node;
   };
-  const registry={get:key=>({playerCharacterId:playerId,
-    cutscenesSeen:[],firstName:'Test',lastName:'Driver'})[key]};
-  const scene={worldPhase:phase,registry,events,
-    scale:{width:1560,height:840},sys:{isActive:()=>true},
-    textures:{exists:k=>textures.has(k),get:key=>({
-      getSourceImage:()=>({width:390,height:key.startsWith('chapter09Rego')?230:550}),
-      setFilter(){},
-    })},
-    add:{
-      rectangle:()=>make('rectangle'),ellipse:()=>make('ellipse'),
-      image:(x,y,k)=>make('image',k),
-      text:(x,y,value)=>make('text',value),
+  const scene={worldPhase:phase,
+    registry:{get:key=>({playerCharacterId:playerId,firstName:'Test',lastName:'Driver'})[key]},
+    events,scale:{width:1560,height:840},sys:{isActive:()=>true},
+    textures:{
+      exists:k=>textures.has(k),
+      get:key=>({getSourceImage:()=>({width:390,height:key.startsWith('chapter09Rego')?230:550}),
+        setFilter(){}}),
     },
+    add:{rectangle:()=>make('rectangle'),ellipse:()=>make('ellipse'),
+      image:(x,y,key)=>make('image',key),text:(x,y,value)=>make('text',value)},
     tweens:{add:cfg=>{tweens.push(cfg);return cfg;},killTweensOf:()=>{}},
     time:{delayedCall:(ms,fn)=>{
-      const timer={ms,fn,removed:false,remove(){this.removed=true;}};
-      timers.push(timer);return timer;
+      const t={ms,fn,removed:false,remove(){this.removed=true;}};
+      timers.push(t);return t;
     }},
     load:{once(name,fn){this.done=fn;},off(name,fn){if(this.done===fn)this.done=null;},
-      image(key,path){loads.push({key,path});},
-      isLoading:()=>false,
-      start(){loads.forEach(x=>textures.add(x.key));this.done?.();},
-    },
+      image(key,path){loads.push({key,path});},isLoading:()=>false,
+      start(){loads.forEach(item=>textures.add(item.key));this.done?.();}},
   };
-  if(cached){
-    // Stage includes every pose used across the full Chapter 09 dialogue.
-    // The uncached test checks the same first-load path used by Garage/Meet.
-    const base=chapter09ShotAssets(scene);
-    textures.add(base.background.key);
-  }
-  return {scene,nodes,timers,tweens,loads,textures};
+  return {scene,nodes,timers,tweens,loads};
 }
 
-test('rego room day/night assets and exactly six permanent cast, without the junior mechanics',()=>{
+test('opening and visitor share authentic rego room and only six permanent people',()=>{
   assert.deepEqual(CHAPTER09_GROUPS.left.map(x=>x.id),
     ['sayakaFujieda','daichiSakamoto','$PLAYER']);
   assert.deepEqual(CHAPTER09_GROUPS.right.map(x=>x.id),
     ['ryujiTakahashi','masatoKuroda','hiroshiSato']);
   assert.equal(CHAPTER09_GROUPS.mika.id,'mikaHayaseChampion');
   for(const phase of ['day','night']){
-    const s=fakeScene({phase}).scene;
-    const assets=chapter09ShotAssets(s);
+    const assets=chapter09ShotAssets(fakeScene({phase}).scene);
     assert.equal(assets.background.path,
       'assets/CentralTokyo/dragcomplex/regoroom_'+phase+'.png');
     assert.equal(assets.left.length+assets.right.length,6);
     assert.equal(assets.left[2].id,'renMizuno');
     assert.ok(fs.existsSync(new URL('../'+assets.background.path,import.meta.url)));
-    for(const person of [...assets.left,...assets.right,assets.mika]){
-      assert.ok(person.asset?.path,person.id);
-      assert.ok(fs.existsSync(new URL('../'+person.asset.path,import.meta.url)),person.id);
+    for(const entry of [...assets.left,...assets.right,assets.mika]){
+      assert.ok(entry.asset?.path,entry.id);
+      assert.ok(fs.existsSync(new URL('../'+entry.asset.path,import.meta.url)),entry.id);
     }
   }
 });
 
-test('full scene uses one room, never rebuilds it between sections and Mika enters then leaves',()=>{
-  const t=fakeScene();let completions=0,cancellations=0;
-  const state=playChapter09RegoRoom(t.scene,{preview:true,
-    onComplete:()=>completions++,onCancel:()=>cancellations++});
-  assert.ok(state?.active);
-  assert.ok(t.loads.some(x=>x.path.includes('regoroom_night.png')));
-  assert.equal(t.nodes.filter(x=>x.type==='image').length,8,
-    'background + six actors + Mika initially hidden');
-  assert.equal(t.nodes.filter(x=>x.type==='image'&&x.value.startsWith('chapter09Rego')).length,1);
-  assert.equal(state.phase,'opening');
-  const initialBackground=t.nodes.find(x=>x.type==='image'&&x.value.startsWith('chapter09Rego'));
-  const firstSix=[...state.characters.entries()].filter(([id])=>id!=='mikaHayaseChampion');
-  assert.equal(firstSix.length,6);
-  t.timers.find(x=>x.ms===1750).fn();
-  assert.equal(state.phase,'dialogue');
-  assert.match(state.sectionTitle.value,/SCENE 1\/4/);
-  state.showScene(1);
-  assert.match(state.sectionTitle.value,/SCENE 2\/4/);
-  state.showScene(2);
-  assert.match(state.sectionTitle.value,/SCENE 3\/4/);
-  assert.equal(state.characters.get('mikaHayaseChampion').visible,true);
-  state.showScene(3);
-  assert.match(state.sectionTitle.value,/SCENE 4\/4/);
-  assert.equal(state.characters.get('mikaHayaseChampion').visible,false);
-  assert.equal(t.nodes.filter(x=>x.type==='image'&&x.value.startsWith('chapter09Rego')).length,1,
-    'same background persists for entire chapter');
-  assert.equal(initialBackground.active,true);
-  assert.equal(firstSix.every(([id,actor])=>actor.sprite.active),true);
-  state.skip();
-  const fade=t.tweens.findLast(x=>typeof x.onComplete==='function'&&x.duration===440);
-  assert.ok(fade);fade.onComplete();
-  assert.equal(completions,1);
-  assert.equal(cancellations,0);
+test('opening is a six-character establishing shot with manual CONTINUE into manga',()=>{
+  const t=fakeScene();let called=0,cancelled=0;
+  const stage=playChapter09RegoRoom(t.scene,{
+    mode:'opening',onComplete:()=>called++,onCancel:()=>cancelled++,
+  });
+  assert.ok(stage?.active);
+  assert.equal(t.nodes.filter(n=>n.type==='image').length,7,'six characters + room');
+  assert.equal(stage.characters.size,6);
+  assert.equal(t.nodes.filter(n=>n.value==='CONTINUE  >').length,1);
+  assert.equal(stage.phase,'opening');
+  assert.equal(stage.continue(),false,'cannot advance before room fade-in');
+  t.timers.find(x=>x.ms===1320).fn();
+  assert.equal(stage.phase,'ready');
+  assert.equal(called,0,'no automatic progression');
+  assert.equal(stage.continue(),true);
+  assert.equal(stage.continue(),false,'duplicate taps ignored');
+  const fade=t.tweens.findLast(x=>x.duration===420&&typeof x.onComplete==='function');
+  assert.ok(fade);
+  fade.onComplete();
+  assert.equal(called,1);
+  assert.equal(cancelled,0);
+  assert.equal(stage.active,false);
   assert.equal(t.scene._chapter09Stage,null);
-  assert.ok(t.nodes.every(n=>!n.active),'clean overlay after complete');
+  assert.ok(t.nodes.every(n=>!n.active),'no lingering room over manga');
+  assert.ok(t.timers.every(x=>x.removed),'no lingering timers');
 });
 
-test('first-use source preloads all character poses and shutdown never alters progress',()=>{
-  const t=fakeScene();let cancels=0;
-  const state=playChapter09RegoRoom(t.scene,{preview:true,onCancel:()=>cancels++});
-  assert.ok(t.loads.length>=8,'background, six permanent cast, Mika and speaking poses');
-  assert.ok(t.loads.some(x=>x.path.includes('mika_hayase_win.png')),
-    'Mika actual win pose is available during her farewell');
+test('Mika fades into the same room, then waits for explicit continue before manga',()=>{
+  const t=fakeScene({phase:'day'});let called=0;
+  const state=playChapter09RegoRoom(t.scene,{mode:'mika',onComplete:()=>called++});
+  assert.ok(state?.active);
+  assert.equal(state.characters.size,7);
+  assert.equal(t.nodes.filter(n=>n.type==='image').length,8,'room + six cast + Mika');
+  assert.ok(t.loads.some(x=>x.path.includes('regoroom_day.png')));
+  assert.ok(t.loads.some(x=>x.path.includes('mika_hayase_idle.png')));
+  assert.equal(state.continue(),false);
+  t.timers.find(x=>x.ms===1120).fn();
+  assert.ok(t.tweens.some(x=>x.alpha===.98&&x.duration===930),'Mika visible fade-in');
+  assert.equal(called,0);
+  t.timers.find(x=>x.ms===2200).fn();
+  assert.equal(state.phase,'ready');
+  assert.equal(called,0,'Mika does not automatically trigger dialogue');
+  state.continue();
+  const fade=t.tweens.findLast(x=>x.duration===420&&typeof x.onComplete==='function');
+  assert.ok(fade);fade.onComplete();
+  assert.equal(called,1);
+  assert.ok(t.nodes.every(x=>!x.active));
+});
+
+test('opening and visitor clean up safely on interrupted scene or asset load',()=>{
+  const t=fakeScene();let cancelled=0,completed=0;
+  const s=playChapter09RegoRoom(t.scene,{mode:'opening',
+    onComplete:()=>completed++,onCancel:()=>cancelled++});
+  assert.ok(t.loads.length>=7);
   assert.ok(t.loads.some(x=>x.path.includes('regoroom_night.png')));
   t.scene.events.emit('shutdown');
-  assert.equal(cancels,1);
-  assert.equal(state.active,false);
+  assert.equal(cancelled,1);
+  assert.equal(completed,0);
+  assert.equal(s.active,false);
   assert.equal(t.scene._chapter09Stage,null);
-  assert.ok(t.nodes.every(n=>!n.active));
+  assert.ok(t.nodes.every(x=>!x.active));
 });
 
-test('full Chapter 09 replay stays career-safe and uses same persistent room for Arkon Den and Story Archive',()=>{
+test('original four manga scenes preserved with one registration-room beat before Mika',()=>{
   const story=source('src/ui/Chapter09Story.js');
   const stage=source('src/ui/Chapter09EstablishingShot.js');
-  assert.match(story,/playChapter09RegoRoom\(scene,\{/);
-  assert.match(story,/preview,/);
-  assert.match(story,/onCancel:\(\)=>\{scene\._chapter09Playing=false;\}/);
-  assert.match(stage,/if\(!preview\)\{/);
-  assert.match(stage,/markCutsceneSeen\(scene\.registry,id\)/);
-  assert.match(stage,/saveSessionState\(scene\.registry\)/);
-  assert.match(stage,/drawPage\(\); \/\/ same background and cast objects/);
-  assert.doesNotMatch(stage,/scene\.start\(/);
-  assert.match(source('src/ui/MangaCutscene.js'),/scene\?\._chapter09Stage\?\.active/);
-  assert.match(source('src/ui/CutsceneTester.js'),/startChapter09\(scene,\{preview:true\}\)/);
-  assert.match(source('src/ui/StoryArchivePanel.js'),/startChapter09\(scene,\{preview:true\}\)/);
+  const manga=source('src/ui/MangaCutscene.js');
   assert.equal(CHAPTER09_SEQUENCE.length,4);
-  assert.ok(CHAPTER09_SCENES.chapter09Visitor.pages.some(p=>p.leftCharacter==='mikaHayaseChampion'));
+  assert.deepEqual(CHAPTER09_SEQUENCE,[
+    'chapter09OldGuard','chapter09Rules','chapter09Visitor','chapter09Welcome']);
+  assert.match(story,/playMangaCutscene\(scene,id,\{/);
+  assert.match(story,/preloadPagePosesOnly:true/);
+  assert.match(story,/onPreviewComplete:done/);
+  assert.match(story,/if\(sequence\[index\]==='chapter09Visitor'&&!mikaRevealed\)/);
+  assert.match(story,/stage\('mika',playDialogue\)/);
+  assert.match(story,/if\(sequence\[0\]==='chapter09OldGuard'\)return stage\('opening',advance\)/);
+  assert.match(stage,/const MIKA=Object\.freeze\(\{id:'mikaHayaseChampion'/);
+  assert.doesNotMatch(stage,/markCutsceneSeen|saveSessionState|playMangaCutscene/);
+  assert.match(manga,/createCharacterProfile/);
+  assert.match(manga,/scene\?\._chapter09Stage\?\.active/);
+  assert.ok(CHAPTER09_SCENES.chapter09Visitor.pages.some(p=>p.leftPose==='win'));
   assert.equal(typeof startChapter09,'function');
 });
 
-test('the Story Archive keeps all nine chapter replay cards separate',()=>{
- const archive=source('src/ui/StoryArchivePanel.js');
- assert.match(archive,/const leftColumn=i<5/);
- assert.match(archive,/const x=leftColumn\?449:1111/);
- assert.match(archive,/const y=210\+\(leftColumn\?i:i-5\)\*123/);
- const positions=Array.from({length:9},(_,i)=>{
-   const left=i<5;
-   return (left?449:1111)+','+(210+(left?i:i-5)*123);
- });
- assert.equal(new Set(positions).size,9);
- assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+test('dev full-chapter and player archive replay both use the complete hybrid playback',()=>{
+  const tester=source('src/ui/CutsceneTester.js');
+  const archive=source('src/ui/StoryArchivePanel.js');
+  const story=source('src/ui/Chapter09Story.js');
+  assert.match(tester,/startChapter09\(scene,\{preview:true\}\)/);
+  assert.match(archive,/startChapter09\(scene,\{preview:true\}\)/);
+  assert.match(story,/const sequence=preview\?\[\.\.\.CHAPTER09_SEQUENCE\]/);
+  assert.match(story,/onPreviewComplete:done/);
+  assert.match(archive,/const leftColumn=i<5/);
+  assert.match(archive,/const y=210\+\(leftColumn\?i:i-5\)\*123/);
 });
