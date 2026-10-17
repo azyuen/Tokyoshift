@@ -9,6 +9,7 @@ import { markCentralTokyoUnlocked } from '../data/centralTokyo.js?v=20261017-r56
 import { areAllCrewBattlesComplete } from '../data/crewSystem.js?v=20261016-r551';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r565';
 import { cars } from '../data/cars.js?v=20261017-r565';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r569';
 import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 
 const WAREHOUSE_BEATS = [
@@ -27,22 +28,24 @@ export function chapter08ShouldBegin(source) {
 
 export function startChapter08Warehouse(scene, { preview = false, onPreviewComplete = null } = {}) {
   if (!scene || sceneCutsceneActive(scene)) return false;
-  if (!preview && (!chapter08ShouldBegin(scene.registry) ||
+  const interactiveReplay = isChapter08DevReplay(scene.registry);
+  if (!preview && !interactiveReplay && (!chapter08ShouldBegin(scene.registry) ||
       scene.crewMode || scene.registry.get('workshopLocationId') !== 'shinonomeWarehouseStrip' ||
       scene.registry.get('devMode'))) return false;
 
   let previewIndex = 0;
   const next = () => {
     if (!scene?.sys?.isActive?.() || sceneCutsceneActive(scene)) return;
-    const sceneId = preview ? WAREHOUSE_BEATS[previewIndex++] :
+    const sceneId = preview || interactiveReplay ? WAREHOUSE_BEATS[previewIndex++] :
       WAREHOUSE_BEATS.find(id => !hasSeenCutscene(scene.registry, id));
     if (!sceneId) {
-      if (preview) onPreviewComplete?.();
+      if (preview && !interactiveReplay) onPreviewComplete?.();
       else openChapter08Map(scene);
       return;
     }
     const result = playMangaCutscene(scene, sceneId, {
-      preview,
+      // Dev replay uses REAL presentation/click handling but no history flags.
+      preview: preview || interactiveReplay,
       preloadPagePosesOnly: true,
       onComplete: () => {
         if (sceneId === 'chapter08ManagerCall') {
@@ -63,11 +66,15 @@ export function startChapter08Warehouse(scene, { preview = false, onPreviewCompl
 
 export function openChapter08Map(scene) {
   if (!scene || sceneCutsceneActive(scene) ||
-      hasSeenCutscene(scene.registry, 'chapter08RaceFinished')) return false;
+      (!isChapter08DevReplay(scene.registry) &&
+        hasSeenCutscene(scene.registry, 'chapter08RaceFinished'))) return false;
   if (scene.travelMapPopup?.active) return true;
-  // The phone's invitation is also the crash/reload recovery gate.
-  markCentralTokyoUnlocked(scene.registry, 'ginza');
-  saveSessionState(scene.registry);
+  // The phone's invitation is also the crash/reload recovery gate. Replay
+  // needs no story unlocks; the developer already has access to Ginza.
+  if (!isChapter08DevReplay(scene.registry)) {
+    markCentralTokyoUnlocked(scene.registry, 'ginza');
+    saveSessionState(scene.registry);
+  }
   showTravelMap(scene, {
     currentLocationId: scene.registry.get('workshopLocationId') || 'shinonomeWarehouseStrip',
     fromWorkshop: true, travelMode: 'chapter08Ginza',
@@ -82,7 +89,8 @@ export function openChapter08Map(scene) {
 }
 
 export function startChapter08PorscheRace(scene) {
-  if (!scene || hasSeenCutscene(scene.registry, 'chapter08RaceFinished')) return false;
+  if (!scene || (!isChapter08DevReplay(scene.registry) &&
+    hasSeenCutscene(scene.registry, 'chapter08RaceFinished'))) return false;
   const registry = scene.registry;
   const playerCarId = cars[registry.get('selectedCarId')]
     ? registry.get('selectedCarId')
@@ -148,13 +156,15 @@ function showRacingRolePlate(scene) {
 
 export function startChapter08Ginza(scene, { preview = false } = {}) {
   if (!scene || sceneCutsceneActive(scene)) return false;
-  if (!preview && (!hasSeenCutscene(scene.registry, 'chapter08RaceFinished') ||
-      hasSeenCutscene(scene.registry, 'chapter08Ginza'))) return false;
+  const interactiveReplay = isChapter08DevReplay(scene.registry);
+  if (!preview && !interactiveReplay &&
+      (!hasSeenCutscene(scene.registry, 'chapter08RaceFinished') ||
+       hasSeenCutscene(scene.registry, 'chapter08Ginza'))) return false;
   let disposeRole = null;
   let stageSayaka = null;
   const clearRole = () => {disposeRole?.();disposeRole=null;};
   const result = playMangaCutscene(scene, CHAPTER08_SCENES.chapter08Ginza, {
-    preview, preloadPagePosesOnly: false,
+    preview: preview || interactiveReplay, preloadPagePosesOnly: false,
     onPageChange: ({page}) => {
       if (page?.cinematicBeat === 'chapter08SayakaExit' &&
           !stageSayaka && scene.activeLocationId === 'ginzaMotorGallery') {
@@ -191,7 +201,7 @@ export function startChapter08Ginza(scene, { preview = false } = {}) {
     },
     onComplete: () => {
       clearRole();scene._chapter08SayakaGallery?.stop?.();
-      if (!preview) {
+      if (!preview && !interactiveReplay) {
         markCutsceneSeen(scene.registry,'ginzaInvitation');
         markCutsceneSeen(scene.registry,'proCircuitStrategistReveal');
         saveSessionState(scene.registry);
@@ -202,6 +212,7 @@ export function startChapter08Ginza(scene, { preview = false } = {}) {
     },
     onPreviewComplete: () => {
       clearRole(); scene._chapter08SayakaGallery?.stop?.();
+      if (interactiveReplay) finishInteractiveChapter08Replay(scene);
     },
     onCancel: () => {clearRole();scene._chapter08SayakaGallery?.stop?.();},
   });
