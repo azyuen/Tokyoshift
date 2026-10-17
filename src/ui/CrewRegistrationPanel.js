@@ -87,7 +87,7 @@ function drawScreen(s,options) {
   const add=item=>{nodes.push(item);return item;};
   const txt=(x,y,value,size=17,color=WHITE,extra={})=>add(s.add.text(x,y,String(value),{
     fontFamily:BODY,fontSize:size+'px',fontStyle:'600',color,...extra,
-  }).setDepth(230));
+  }).setDepth(230).setFontSize(size));
   const rect=(x,y,w,h,fill=PANEL,a=1,stroke=0x264557,depth=208)=>
     add(s.add.rectangle(x,y,w,h,fill,a).setStrokeStyle(1,stroke).setDepth(depth));
   const shapeMask=(x,y,w,h)=>{
