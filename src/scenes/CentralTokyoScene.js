@@ -53,7 +53,8 @@ import {
 } from '../state/GameState.js?v=20261014-r501';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
-import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r568';
+import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r569';
+import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -2423,7 +2424,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawGinza() {
     this.ginzaRotationKey = Math.floor(Date.now() / GINZA_ROTATION_MS);
     const storyShowroom = this.chapter08Arrival && this.ginzaRoom === 1 &&
-      !hasSeenCutscene(this.registry,'chapter08Ginza');
+      (isChapter08DevReplay(this.registry) ||
+       !hasSeenCutscene(this.registry,'chapter08Ginza'));
     const listing = storyShowroom
       ? GINZA_LISTINGS.find(item => item.carId === 'rwbStellaPorsche')
       : this.getGinzaActiveListing();
