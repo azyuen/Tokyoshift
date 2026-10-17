@@ -1,0 +1,47 @@
+name: R585 Chapter 09 Team Portraits
+on:
+  push:
+    paths:
+      - 'src/data/chapter09.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-portrait-stage-r585.mjs'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-team-portraits-r585.yml'
+  pull_request:
+    paths:
+      - 'src/data/chapter09.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'tests/chapter09-portrait-stage-r585.mjs'
+      - 'tests/chapter09-establishing-r579.mjs'
+      - '.github/workflows/chapter09-team-portraits-r585.yml'
+  workflow_dispatch:
+jobs:
+  three-person-manga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/data/chapter09.js
+          node --check src/ui/Chapter09EstablishingShot.js
+          node --check src/ui/Chapter09Story.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/StoryArchivePanel.js
+      - name: Chapter 09 staging and gameplay regressions
+        run: |
+          node --test tests/chapter09-portrait-stage-r585.mjs
+          node --test tests/chapter09-establishing-r579.mjs
+          node --test tests/chapter09-drag-r577.mjs
+          node --test tests/story-archive-r570.mjs
+          node --test tests/drag-open-circuit-r575.mjs
+          node --test tests/pro-season-forfeit-r576.mjs
