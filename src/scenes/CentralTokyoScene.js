@@ -40,7 +40,7 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
-} from '../data/proCircuit.js?v=20261008-r443';
+} from '../data/proCircuit.js?v=20261017-r575';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261009-r447';
