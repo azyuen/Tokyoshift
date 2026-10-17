@@ -11,7 +11,7 @@ test('Chapter 08 has the five Warehouse beats and the Ginza reveal', () => {
     'chapter08SayakaCall','chapter08WarehouseFarewell','chapter08Ginza'];
   for (const id of ids) {
     assert.ok(CHAPTER08_SCENES[id], id + ' is authored');
-    assert.equal(CUTSCENES[id], CHAPTER08_SCENES[id], id + ' is registered');
+    assert.deepEqual(CUTSCENES[id], CHAPTER08_SCENES[id], id + ' is registered');
     assert.ok(CUTSCENE_ORDER.includes(id), id + ' is available to developer tools');
     assert.equal(CHAPTER08_SCENES[id].once, true);
   }
