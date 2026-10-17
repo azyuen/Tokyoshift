@@ -419,6 +419,7 @@ export function showCutsceneTester(scene) {
         } else {
           playMangaCutscene(scene, id, { preview: true });
         }
+        },0);
       });
     });
   };
