@@ -57,10 +57,10 @@ import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r573';
-import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r573';
+import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r573';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r573';
-import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r573';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -626,15 +626,19 @@ export default class GarageScene extends Phaser.Scene {
       this.time.delayedCall(420, () => this.showFullCrewStoryIfNeeded());
     }
 
-    // Warm the tuning bay in the background once the workshop itself is
-    // visible. This keeps initial garage entry quick, but removes the visible
-    // first-tap lazy-load when the player opens Engine/Drivetrain/etc.
-    this.time.delayedCall(140, () => {
-      this.ensureGarageTuningAssets(null, {
-        includeVisualMods: true,
-        silent: true,
+    // Replay loads cutscene character textures immediately. Competing with
+    // the silent tuning preloader can strand Phaser's Loader COMPLETE listener
+    // and leave an empty Warehouse or Crew Space on mobile browsers.
+    const replayStarting=Boolean(this.storyArchiveChapter ||
+      isChapter08DevReplay(this.registry));
+    if (!replayStarting) {
+      this.time.delayedCall(140, () => {
+        this.ensureGarageTuningAssets(null, {
+          includeVisualMods: true,
+          silent: true,
+        });
       });
-    });
+    }
 
     let reopenSettings = false;
     let tutorialJustCompleted = false;
@@ -646,9 +650,21 @@ export default class GarageScene extends Phaser.Scene {
     } catch (e) {}
 
     if(this.storyArchiveChapter && isStoryArchiveSceneReplay(this.registry)) {
-      // Wait until this real Garage/Crew Space has loaded its background and
-      // sprites, then run the authored chapter using its normal interactions.
-      this.time.delayedCall(450,()=>playStoryArchiveChapter(this,this.storyArchiveChapter));
+      // The normal manga component pauses Phaser's Clock. A recycled Garage
+      // scene can inherit that paused state on Safari. Use wall-clock
+      // scheduling for only the FIRST replay beat; afterwards normal dialogue
+      // timing works as before. This also works in the real CrewSpaceScene.
+      this.time.paused=false;
+      window.setTimeout(()=>{
+        if(!this.sys.isActive())return;
+        try {
+          const started=playStoryArchiveChapter(this,this.storyArchiveChapter);
+          if(!started)this.showReplayStartupError('CHAPTER COULD NOT START',false);
+        } catch(error) {
+          console.error('[TOKYO SHIFT] Story Archive playback exception',error);
+          this.showReplayStartupError('CHAPTER FAILED TO LOAD',false);
+        }
+      },300);
     } else if(this.openStoryArchiveOnReturn) {
       this.time.delayedCall(280,()=>{
         showOfficePanel(this);
@@ -659,11 +675,22 @@ export default class GarageScene extends Phaser.Scene {
     } else if (tutorialJustCompleted) {
       this.time.delayedCall(140, () => this.showTutorialCompletionChoice());
     } else if (!this.crewMode) {
-      this.time.delayedCall(260, () => {
-        if (isChapter08DevReplay(this.registry)) {
-          this.continueGarageStoryFlow();
-          return;
-        }
+      if (isChapter08DevReplay(this.registry)) {
+        // The replay already has its own ordered Warehouse story; bypass
+        // normal career unlocks/pending events and any paused Phaser Clock.
+        this.time.paused=false;
+        window.setTimeout(()=>{
+          if(!this.sys.isActive())return;
+          try {
+            if(!startChapter08Warehouse(this)) {
+              this.showReplayStartupError('CHAPTER 08 COULD NOT START',true);
+            }
+          } catch(error) {
+            console.error('[TOKYO SHIFT] Chapter 08 replay exception',error);
+            this.showReplayStartupError('CHAPTER 08 FAILED TO LOAD',true);
+          }
+        },300);
+      } else this.time.delayedCall(260, () => {
         if (!this.showPendingWorkshopCutscene()) {
           const chapter = this.registry.get('openingChapter');
           if (chapter === 'home' || chapter === 'magazine') {
@@ -679,6 +706,38 @@ export default class GarageScene extends Phaser.Scene {
         }
       });
     }
+  }
+
+  showReplayStartupError(message, chapter08=false) {
+    console.error('[TOKYO SHIFT] '+message,{
+      scene:this.sys?.settings?.key,
+      storyArchiveChapter:this.storyArchiveChapter,
+      chapter08:isChapter08DevReplay(this.registry),
+      clockPaused:this.time?.paused,
+      cutsceneActive:sceneCutsceneActive(this),
+    });
+    // Never strand the driver on a blank scene without a way back.
+    const depth=1600;
+    const bg=this.add.rectangle(780,420,750,180,0x091827,.96)
+      .setDepth(depth).setStrokeStyle(2,0xff9bbb);
+    const label=this.add.text(780,378,message,{
+      fontFamily:PIXEL_FONT,fontSize:'12px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+1);
+    const button=this.add.rectangle(780,461,320,54,0x1a3d4f,.98)
+      .setDepth(depth+1).setStrokeStyle(2,0x72def6)
+      .setInteractive({useHandCursor:true});
+    const buttonLabel=this.add.text(780,461,'RETURN TO OFFICE',{
+      fontFamily:PIXEL_FONT,fontSize:'9px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+2);
+    button.once('pointerdown',()=>{
+      button.disableInteractive();
+      // Deferred restoration prevents a second scene stop during pointerdown.
+      window.setTimeout(()=>{
+        [bg,label,button,buttonLabel].forEach(obj=>obj?.destroy?.());
+        if(chapter08)finishInteractiveChapter08Replay(this);
+        else endStoryArchiveSceneReplay(this);
+      },0);
+    });
   }
 
   applyWorkshopBackgroundTexture(image, textureKey, activeWorkshop) {
