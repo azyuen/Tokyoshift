@@ -34,8 +34,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
-import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
+import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
+import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
@@ -103,8 +103,8 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r586';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
 import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261018-r586';
@@ -137,8 +137,8 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261016-r551';
-import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261005-r348';
+} from '../data/crewSystem.js?v=20261018-r588';
+import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
 import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261016-r550';
