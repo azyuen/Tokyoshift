@@ -1,9 +1,10 @@
 // R570 — Story Archive: player-facing, spoiler-safe chapter library.
-// Only the EIGHT canonical chapters appear. Dev micro-scenes remain in
+// Only canonical chapters appear. Dev micro-scenes remain in
 // Arkon Den's existing D) SCENES panel.
-import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r570';
+import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r577';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
+import { startChapter09 } from './Chapter09Story.js?v=20261017-r577';
 const FONT='"Silkscreen", monospace';
 const BODY='"Rajdhani", monospace';
 export function showStoryArchivePanel(scene) {
@@ -46,7 +47,9 @@ export function showStoryArchivePanel(scene) {
       ? startInteractiveChapter08Replay(scene,{
           allowPlayer:true,returnToOffice:true,skipRace:!interactive,
         })
-      : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+      : id==='chapter09'
+        ? startChapter09(scene,{preview:true})
+        : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
     if(!started) {
       detail.push(scene.add.text(780,550,
         'REPLAY COULD NOT START // CHECK YOUR CAR AND TRY AGAIN',{
