@@ -47,7 +47,7 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261014-r501';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261016-r530';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r564';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r572';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r562';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
