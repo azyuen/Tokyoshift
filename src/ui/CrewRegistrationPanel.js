@@ -138,8 +138,8 @@ function drawScreen(s,options) {
   txt(450,15,'CREW CLUB SPRINT',19,WHITE,{fontFamily:PIXEL});
   txt(450,46,'REGISTRATION  //  TOKYO DRAG COMPLEX',14,'#f47d89',{fontFamily:PIXEL});
   rect(254,151,449,116,0x06111c,.89,0xd54b62,220);
-  txt(48,102,options.trophyId?'MINOR TROPHY // CREW ENTRY':'CREW CLUB SPRINT',21,'#ff7e8d',{fontFamily:PIXEL});
-  txt(48,143,'REGISTER 3–5 CREW CARS. YOU DRIVE EACH HEAT.',17,WHITE);
+  txt(48,102,options.trophyId?'PRESTIGE TROPHY // TEAM REGISTRATION':'CREW CLUB SPRINT',21,'#ff7e8d',{fontFamily:PIXEL});
+  txt(48,143,options.trophyId==='triDrive'?'REGISTER ONE FWD, ONE RWD AND ONE AWD DRIVER.':'REGISTER 3–5 CREW CARS. YOU DRIVE ALL THREE FIXTURES.',17,WHITE);
   txt(48,172,'UPGRADE YOUR CREW CARS BETWEEN FIXTURES.',16,'#d5e0e7');
 
   // Cast art stays independent of the environment, so any avatar and day/night
