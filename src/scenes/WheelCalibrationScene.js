@@ -294,6 +294,19 @@ export default class WheelCalibrationScene extends Phaser.Scene {
       return;
     }
 
+    // Pale neutral studio surface makes dark tyres and black bodywork
+    // legible, without altering the game's actual car renderer.
+    this.addPreview(this.add.rectangle(492, 448, 900, 522, 0xdde7ed, 1)
+      .setStrokeStyle(2, 0x8298a7, 1).setDepth(-2));
+    const road = this.addPreview(this.add.graphics().setDepth(1.5));
+    road.lineStyle(3, 0x475b68, 1);
+    road.lineBetween(44, 615, 940, 615);
+    road.lineStyle(1, 0x7f929e, 0.7);
+    for (let x = 44; x <= 940; x += 36) road.lineBetween(x, 615, x, 627);
+    this.addPreview(this.add.text(58, 638, 'ROAD BASELINE  //  ALIGN TYRE CONTACT HERE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#344955',
+    }).setDepth(12));
+
     // New stock and hero masters are right-anchored. The old preview used
     // a centre-origin X and pushed the rear axle off the left edge.
     // Scale from the shared AE86 reference; even 1350px collectors must fit
