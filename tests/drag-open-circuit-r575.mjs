@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDefaultProCircuitState, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES } from '../src/data/proCircuit.js';
-import { createDefaultGameState } from '../src/state/GameState.js';
+import { createDefaultGameState,normaliseState } from '../src/state/GameState.js';
 import { recruitRandomDevCrew } from '../src/data/crewSystem.js';
 import {
   PRO_SEASON_LENGTH, getProQualification, getOpenCircuitTrophy, isOpenCircuitAvailable,
@@ -166,4 +166,16 @@ test('minor trophy crew prize is awarded only on a clean three-heat win and rota
   assert.equal(ended.circuit.minorTrophyIndex,3);
   assert.equal(ended.circuit.minorTrophyCooldownUntil,3);
   assert.equal(ended.circuit.playerTeam.seasonPoints,0);
+});
+
+test('legacy first-round official duel is preserved rather than interpreted as open-circuit registration',()=>{
+ const saved=createDefaultGameState();
+ delete saved.proCircuit.seasonStatus;
+ saved.competitionState={active:true,proEvent:true,eventId:'streetShootout',
+   proSeasonId:'duel:legacy',roundIndex:1,playerCarId:'ae86',rounds:[{carId:'r32'},{carId:'gc8'},{carId:'galant'}]};
+ const current=normaliseState(saved);
+ assert.equal(current.proCircuit.seasonStatus,'ACTIVE');
+ assert.equal(current.proCircuit.calendar.round,0);
+ assert.equal(current.competitionState.roundIndex,1);
+ assert.equal(isOpenCircuitAvailable(current.proCircuit),false);
 });
