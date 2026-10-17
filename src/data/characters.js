@@ -859,10 +859,9 @@ export const characters = {
     introQuote: 'Yokohama rewards cars that keep pulling.', resultQuotes: { win: 'That is harbor pace.', loss: 'Clean run. You earned it.' },
     visual: { spriteKey: 'characterMasatoIshikawa', path: 'assets/Characters/Yokohama/masato_ishikawa_idle.png', winSpriteKey: 'characterMasatoIshikawaWin', winPath: 'assets/Characters/Yokohama/masato_ishikawa_win.png', lossSpriteKey: 'characterMasatoIshikawaLoss', lossPath: 'assets/Characters/Yokohama/masato_ishikawa_loss.png' },
   },
-  // Magazine Issue 01's former Tokyo champion is NOT the Yokohama rival
-  // historically keyed 'mikaHayase' (whose canonical name is Nao Fujita).
-  // Temporary distinct portrait until Mika's dedicated high-density asset
-  // arrives; the two characters must never share Nao's artwork.
+  // The Tokyo Champion from Magazine Issue 01 has her own Central assets.
+  // Keep this separate from legacy Yokohama rival 'mikaHayase', which is
+  // actually Nao Fujita. Do not reuse Nao's portrait for this cameo.
   mikaHayaseChampion: {
     id: 'mikaHayaseChampion',
     name: 'Mika Hayase',
@@ -873,7 +872,11 @@ export const characters = {
     bio: 'The previous Tokyo Champion featured in Tokyo SHIFT Magazine Issue 01.',
     visual: {
       spriteKey: 'characterMikaHayaseChampion',
-      path: 'assets/Characters/female_sub_idle.png',
+      path: 'assets/Characters/Central/mika_hayase_idle.png',
+      winSpriteKey: 'characterMikaHayaseChampionWin',
+      winPath: 'assets/Characters/Central/mika_hayase_win.png',
+      lossSpriteKey: 'characterMikaHayaseChampionLoss',
+      lossPath: 'assets/Characters/Central/mika_hayase_loss.png',
     },
   },
   mikaHayase: {

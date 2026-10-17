@@ -71,7 +71,7 @@ export const CHAPTER09_SCENES=Object.freeze({
       mika("Good answer. Although with *her* in your corner, you might actually stand a chance."),
       daichi('There it is again. Why does EVERYONE here know Sayaka?!'),
       sayaka("I used to get out more.",'trackHappy'),
-      mika("I'll see you on the timing board. Show me what you can really do."),
+      mika("I'll see you on the timing board. Show me what you can really do.",'win'),
       daichi('Okay. NOW we have to sign up!'),
     ],'WATCH HER LEAVE'),
 

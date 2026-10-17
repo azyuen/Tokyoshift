@@ -4,7 +4,7 @@
 import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r577';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
-import { startChapter09 } from './Chapter09Story.js?v=20261017-r577';
+import { startChapter09 } from './Chapter09Story.js?v=20261017-r578';
 const FONT='"Silkscreen", monospace';
 const BODY='"Rajdhani", monospace';
 export function showStoryArchivePanel(scene) {
