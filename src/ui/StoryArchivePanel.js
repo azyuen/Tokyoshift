@@ -40,17 +40,26 @@ export function showStoryArchivePanel(scene) {
   exit.on('pointerdown',close);
 
   const launch=(id,interactive=false)=>{
-    const hasCar=Boolean((scene.registry.get('ownedCarIds')||[]).length);
-    if(id==='chapter08' && interactive && !hasCar)return false;
-    close();
-    // Do not leave the Office art blocking real race/garage backgrounds.
-    scene.closeOpeningOffice?.();
-    if(id==='chapter08'){
-      return startInteractiveChapter08Replay(scene,{
-        allowPlayer:true,returnToOffice:true,skipRace:!interactive,
-      });
+    // Prepare the temporary sandbox FIRST. A snapshot error or missing car
+    // must never close the archive and leave a blank/stuck workshop screen.
+    const started=id==='chapter08'
+      ? startInteractiveChapter08Replay(scene,{
+          allowPlayer:true,returnToOffice:true,skipRace:!interactive,
+        })
+      : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+    if(!started) {
+      detail.push(scene.add.text(780,550,
+        'REPLAY COULD NOT START // CHECK YOUR CAR AND TRY AGAIN',{
+          fontFamily:FONT,fontSize:'8px',color:'#ffc9d6',
+          backgroundColor:'#152235',padding:{x:12,y:10},
+        }).setOrigin(.5).setDepth(depth+22).setScrollFactor(0));
+      return false;
     }
-    return beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+    close();
+    // The scene transition now runs AFTER this click via SafeSceneTransition,
+    // avoiding same-frame iPad Phaser restarts.
+    scene.closeOpeningOffice?.();
+    return true;
   };
   const openChapter=chapter=>{
     if(!chapter.completed)return;
