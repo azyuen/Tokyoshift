@@ -395,7 +395,9 @@ export default class RaceScene extends Phaser.Scene {
       // Loans still cannot enter championships or be wagered for pink slips.
       this.raceMode = 'SINGLE';
       this.raceDeal = 'BET';
-      this.raceStake = 0;
+      // Keep the ordinary Meet cash stake and payouts; never wager the loan
+      // vehicle itself.
+      this.raceStake = Math.max(0, Number(this.registry.get('selectedRaceStake') || 0));
     }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
     const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
