@@ -1052,8 +1052,22 @@ export function showTravelMap(scene, options = {}) {
         runHomeAction(location, cost);
         return;
       }
-      dismiss();
-      onTravel?.(location.id, cost);
+      if (workshopActionPending) return;
+      workshopActionPending = true;
+      travelButton.disableInteractive();
+      travelLabel.setText('TRAVELLING...');
+      // Dismissing this input-owning map and changing the Phaser Scene within
+      // the SAME pointerdown can hang iPad Safari. Do both next event loop.
+      window.setTimeout(() => {
+        try {
+          dismiss();
+          onTravel?.(location.id, cost);
+        } catch(error) {
+          console.error('[TOKYO SHIFT] map journey failed',error);
+          workshopActionPending = false;
+          scene.showWorkshopToast?.('TRAVEL COULD NOT START // TRY AGAIN');
+        }
+      }, 0);
     });
   };
 
@@ -1145,13 +1159,17 @@ export function showTravelMap(scene, options = {}) {
 
       tunerBadge.on('pointerdown', () => {
         const returnScene = scene.sys?.settings?.key || 'GarageScene';
-        dismiss();
-        scene.scene.start('TunerShopScene', {
-          regionId: selectedRegionId,
-          returnScene,
-          returnLocationId: currentLocationId,
-          fromWorkshop,
-        });
+        const regionId = selectedRegionId;
+        tunerBadge.disableInteractive();
+        window.setTimeout(() => {
+          dismiss();
+          scene.scene.start('TunerShopScene', {
+            regionId,
+            returnScene,
+            returnLocationId: currentLocationId,
+            fromWorkshop,
+          });
+        }, 0);
       });
     } else if (challengeVisible) {
       tunerKicker
