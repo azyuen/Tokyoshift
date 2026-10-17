@@ -85,7 +85,7 @@ import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBui
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261017-r572';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
-import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r571';
+import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r572';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r572';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
