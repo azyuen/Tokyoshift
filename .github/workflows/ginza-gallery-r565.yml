@@ -1,4 +1,4 @@
-name: Ginza three-room gallery regressions
+name: Ginza gallery regression and layout checks
 on:
   pull_request:
     paths:
@@ -12,6 +12,7 @@ on:
       - 'src/scenes/MeetScene.js'
       - 'src/scenes/RaceScene.js'
       - 'tests/ginza-gallery-r565.mjs'
+      - 'tests/ginza-gallery-r566.mjs'
       - '.github/workflows/ginza-gallery-r565.yml'
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - 'src/data/proSeason.js'
       - 'src/scenes/CentralTokyoScene.js'
       - 'tests/ginza-gallery-r565.mjs'
+      - 'tests/ginza-gallery-r566.mjs'
   workflow_dispatch:
 jobs:
   ginza:
@@ -38,4 +40,4 @@ jobs:
       - run: node --check src/data/characters.js
       - run: node --check src/data/cars.js
       - run: node --check src/state/GameState.js
-      - run: node --test tests/ginza-gallery-r565.mjs
+      - run: node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs

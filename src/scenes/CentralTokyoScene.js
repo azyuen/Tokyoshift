@@ -542,6 +542,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     flip = false,
     depth = 21,
     shadow = true,
+    shadowOffsetX = 0,
     rivalContext = false,
   } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
@@ -559,7 +560,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (shadow) {
       const venueShadow = this.add.ellipse(
-        x,
+        x + shadowOffsetX,
         feetY - 7,
         Math.max(62, displayHeight * 0.42),
         Math.max(14, displayHeight * 0.075),
@@ -845,8 +846,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
         LOCATION_BY_ID[this.activeLocationId]?.kind !== 'proDrag') {
       const location = LOCATION_BY_ID[this.activeLocationId];
       const kind = location?.kind || 'autoMarket';
-      // Dev refresh stays near the header so GO TO MAP remains the bottom-most action.
-      const devY = SIDE.y + 176;
+      // Gallery refresh belongs in the pane's top-right, not the car details.
+      // Other Central Tokyo destinations retain their existing layout.
+      const ginzaRefresh = kind === 'showroom';
+      const devY = SIDE.y + (ginzaRefresh ? 95 : 176);
+      const devX = ginzaRefresh ? SIDE.x + SIDE.w - 82 : SIDE.x + SIDE.w / 2;
+      const devWidth = ginzaRefresh ? 140 : SIDE.w - 36;
       const labels = {
         autoMarket: 'D) REFRESH AUTO MARKET',
         showroom: 'D) REFRESH COLLECTORS',
@@ -854,10 +859,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
       };
 
       const devButton = this.addContent(this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
+        devX,
         devY,
-        SIDE.w - 36,
-        34,
+        devWidth,
+        ginzaRefresh ? 26 : 34,
         0x261629,
         1
       ).setStrokeStyle(1, 0xd875ff, 0.95)
@@ -865,12 +870,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .setDepth(33));
 
       this.addContent(this.add.text(
-        SIDE.x + SIDE.w / 2,
+        devX,
         devY,
-        labels[kind] || 'D) REFRESH LOCATION',
+        ginzaRefresh ? 'D) REFRESH' : (labels[kind] || 'D) REFRESH LOCATION'),
         {
           fontFamily: PIXEL_FONT,
-          fontSize: '7px',
+          fontSize: ginzaRefresh ? '6px' : '7px',
           color: '#f0c8ff',
         }
       ).setOrigin(0.5).setDepth(34));
@@ -2416,182 +2421,177 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .filter(Boolean).map(l => ({ carId: l.carId, source: 'ginza' })), 'ginza');
     saveSessionState(this.registry);
 
-    // Staff always stand on the foreground in their Ginza outfits. In Room 2
-    // Emi and Kaede stand further back, above/right of the car and Sayaka.
+    // Keep the showroom figures grounded on the real floor artwork.
+    // The rear staff in Room 2 are intentionally behind the display car.
     if (this.ginzaRoom === 1) {
       this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
-        x: STAGE.x + 103, feetY: STAGE.y + 491, height: 244, depth: 16 });
+        x: STAGE.x + 103, feetY: STAGE.y + 510, height: 244, depth: 16 });
       this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
-        x: STAGE.x + 265, feetY: STAGE.y + 493, height: 245, depth: 17 });
+        x: STAGE.x + 285, feetY: STAGE.y + 512, height: 245,
+        shadowOffsetX: 16, depth: 17 });
     } else {
       if (this.ginzaRoom === 2) {
         this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
-          x: STAGE.x + 920, feetY: STAGE.y + 349, height: 143, depth: 7 });
+          x: STAGE.x + 846, feetY: STAGE.y + 383, height: 143, depth: 7 });
         this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
-          x: STAGE.x + 1050, feetY: STAGE.y + 349, height: 143, depth: 7 });
+          x: STAGE.x + 976, feetY: STAGE.y + 383, height: 143, depth: 7 });
       }
+      // Ginza Sayaka shares the foreground footprint and visual height
+      // of Kaede in the Motor Gallery, instead of towering over the car.
       this.addVenueCharacter({ characterId: 'sayakaFujieda', pose: 'ginzaNormal',
-        x: STAGE.x + 118, feetY: STAGE.y + 488, height: 265, depth: 18 });
+        x: STAGE.x + 285, feetY: STAGE.y + 512, height: 225, depth: 18 });
     }
 
     this.ginzaHeroObjects = [];
     if (listing && cars[listing.carId]) {
-      const stageX = STAGE.x + STAGE.w * (this.ginzaRoom === 1 ? 0.66 : 0.60);
+      // Identical anchor in all three rooms, centred on the oval floor plinth
+      // in Prestige/Vault while preserving each car's existing 630px width.
+      const stageX = STAGE.x + STAGE.w * 0.54;
       const carObjects = this.createCarDisplay(
-        cars[listing.carId], stageX, STAGE.y + 365, 630, 11,
+        cars[listing.carId], stageX, STAGE.y + 340, 630, 11,
         DEFAULT_PAINT_COLOR, null, false, getGinzaCollectorState(listing.carId)
       );
       carObjects.forEach(obj => this.addContent(obj));
       this.ginzaHeroObjects = carObjects;
-      const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 358,
+      const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 333,
         670, 235, 0x000000, 0).setDepth(24)
         .setInteractive({ useHandCursor: true }));
       hit.on('pointerdown', () => this.showGinzaPurchase(listing, true));
     }
 
-    this.addContent(this.add.text(
-      CARDS.x + 24, CARDS.y + 16,
-      this.ginzaRoom === 3
-        ? 'THE LEGENDS // PRIVATE SHOWROOM'
-        : 'GINZA // ROTATES EVERY 30 MIN // ROOM 2 ALWAYS HIGHER VALUE',
-      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#8fe7ff' }
-    ).setDepth(33));
-    this.addContent(this.add.text(CARDS.x + 24, CARDS.y + 49,
-      listing ? cars[listing.carId]?.shortName + '  //  ' + money(listing.price)
-        : 'A NEW COLLECTOR CAR IS BEING PREPARED',
-      { fontFamily: BODY_FONT, fontSize: '15px', color: '#f2d4e5' }
-    ).setDepth(33));
+    // The full lower strip is now *only* navigation, in every room.
+    // Vault car selection is retained as a small stage-mounted selector.
+    const roomNames = ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'];
+    roomNames.forEach((label, index) => {
+      const x = CARDS.x + 198 + index * 369;
+      const selected = index + 1 === this.ginzaRoom;
+      const box = this.addContent(this.add.rectangle(
+        x, CARDS.y + 90, 348, 112,
+        selected ? 0x351c31 : 0x101a28, 1
+      ).setStrokeStyle(2, selected ? 0xff8fbd : 0x46627a, 1)
+        .setDepth(33).setInteractive({ useHandCursor: true }));
+      this.addContent(this.add.text(
+        x, CARDS.y + 90,
+        index === 2 && locked ? 'PRIVATE VAULT // INVITE ONLY' : label,
+        { fontFamily: PIXEL_FONT, fontSize: '10px',
+          color: selected ? '#ffffff' : '#b5cde0' }
+      ).setOrigin(0.5).setDepth(34));
+      box.on('pointerdown', () => this.enterGinzaRoom(index + 1));
+    });
 
-    const buttonY = CARDS.y + 135;
     if (this.ginzaRoom === 3) {
-      // Public-room navigation remains in the bottom panel even in the vault.
-      ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'].forEach((label, index) => {
-        const x = CARDS.x + 198 + index * 369;
-        const nav = this.addContent(this.add.rectangle(
-          x, CARDS.y + 87, 320, 29, index === 2 ? 0x30203a : 0x101a28, 1
-        ).setStrokeStyle(1, index === 2 ? 0xff9fc7 : 0x46627a, 1)
-          .setDepth(33).setInteractive({ useHandCursor: true }));
-        this.addContent(this.add.text(x, CARDS.y + 87, label, {
-          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#f1d4e7',
-        }).setOrigin(.5).setDepth(34));
-        nav.on('pointerdown', () => this.enterGinzaRoom(index + 1));
-      });
       GINZA_VAULT_CARS.forEach((item, index) => {
-        const x = CARDS.x + 198 + index * 369;
-        const chosen = index === this.ginzaVaultIndex;
-        const button = this.addContent(this.add.rectangle(x, buttonY, 348, 49,
-          chosen ? 0x351c31 : 0x101a28, 1)
-          .setStrokeStyle(2, chosen ? 0xff8fbd : 0x46627a, 1)
-          .setDepth(33).setInteractive({ useHandCursor: true }));
-        this.addContent(this.add.text(x, buttonY, item.name, {
-          fontFamily: PIXEL_FONT, fontSize: '8px',
-          color: chosen ? '#ffffff' : '#b5cde0',
-        }).setOrigin(.5).setDepth(34));
-        button.on('pointerdown', () => this.switchGinzaVaultCar(index));
-      });
-    } else {
-      ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'].forEach((label, index) => {
-        const x = CARDS.x + 198 + index * 369;
-        const chosen = index + 1 === this.ginzaRoom;
-        const button = this.addContent(this.add.rectangle(x, buttonY, 348, 49,
-          chosen ? 0x351c31 : 0x101a28, 1)
-          .setStrokeStyle(2, chosen ? 0xff8fbd : 0x46627a, 1)
-          .setDepth(33).setInteractive({ useHandCursor: true }));
-        this.addContent(this.add.text(x, buttonY, index === 2 && locked
-          ? 'PRIVATE VAULT // INVITE ONLY' : label, {
-          fontFamily: PIXEL_FONT, fontSize: '8px',
-          color: chosen ? '#ffffff' : '#b5cde0',
-        }).setOrigin(.5).setDepth(34));
-        button.on('pointerdown', () => this.enterGinzaRoom(index + 1));
+        const x = STAGE.x + 480 + index * 228;
+        const selected = index === this.ginzaVaultIndex;
+        const box = this.addContent(this.add.rectangle(
+          x, STAGE.y + 43, 214, 37,
+          selected ? 0x351c31 : 0x07111d, 0.95
+        ).setStrokeStyle(2, selected ? 0xffa1c6 : 0x68839a, 0.95)
+          .setDepth(32).setInteractive({ useHandCursor: true }));
+        this.addContent(this.add.text(x, STAGE.y + 43, item.name, {
+          fontFamily: PIXEL_FONT, fontSize: '7px',
+          color: selected ? '#ffffff' : '#e3ebf5',
+        }).setOrigin(0.5).setDepth(33));
+        box.on('pointerdown', () => this.switchGinzaVaultCar(index));
       });
     }
 
-    if (this.ginzaRoom === 3) {
-      // In the vault the bottom panel is reserved for the three car toggles;
-      // return-to-gallery stays on the stage, not between vehicle choices.
-      const back = this.addContent(this.add.text(
-        STAGE.x + STAGE.w - 17, STAGE.y + 25, '←  GALLERY ROOMS',
-        { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef4ff',
-          backgroundColor: '#07111bd9', padding: { x: 12, y: 10 } }
-      ).setOrigin(1, 0).setDepth(38).setInteractive({ useHandCursor: true }));
-      back.on('pointerdown', () => this.enterGinzaRoom(2));
-    }
     if (listing) this.drawGinzaSide(listing);
   }
 
   drawGinzaSide(listing) {
     const car = cars[listing.carId];
-    const cash = Number(this.registry.get('cash') || 0);
     const owned = (this.registry.get('ownedCarIds') || []).includes(listing.carId);
-    const y0 = SIDE.y + 239;
-    if (this.ginzaRoom === 3) {
-      const toggle = this.addContent(this.add.rectangle(SIDE.x + SIDE.w / 2,
-        SIDE.y + 132, SIDE.w - 40, 39, 0x211527, 1)
-        .setStrokeStyle(2, 0xff8eb9, 1).setDepth(34)
+    const vault = this.ginzaRoom === 3;
+    const x = SIDE.x + 20;
+    const centerX = SIDE.x + SIDE.w / 2;
+    const width = SIDE.w - 36;
+
+    if (vault) {
+      const toggle = this.addContent(this.add.rectangle(
+        centerX, SIDE.y + 150, width, 37, 0x211527, 1
+      ).setStrokeStyle(2, 0xff8eb9, 1).setDepth(34)
         .setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 132,
+      this.addContent(this.add.text(centerX, SIDE.y + 150,
         this.ginzaStockBody ? 'DISPLAY: STOCK / CLEAN  ⇄' : 'DISPLAY: DECALS / RACE  ⇄',
         { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffe5f0' }
-      ).setDepth(35).setOrigin(.5));
+      ).setDepth(35).setOrigin(0.5));
       toggle.on('pointerdown', () => this.toggleGinzaVaultStock());
     }
-    this.addContent(this.add.text(SIDE.x + 20, y0,
-      listing.rarity + (this.ginzaRoom === 3 ? ' // INVITATION ONLY' : ' // GINZA'),
+
+    const y0 = SIDE.y + (vault ? 205 : 145);
+    this.addContent(this.add.text(x, y0,
+      listing.rarity + (vault ? ' // PRIVATE COLLECTION' : ' // GINZA'),
       { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ff9fc7' }
     ).setDepth(34));
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 36, car.name.toUpperCase(),
-      { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffffff',
-        wordWrap: { width: SIDE.w - 40 } }
-    ).setDepth(34));
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 90,
-      listing.collectionLabel + '\n' + car.engineModel + '\n' +
+
+    // The full model name appears exactly once, as the hero headline.
+    // Reserve space for multi-line names before drawing its specifications.
+    this.addContent(this.add.text(x, y0 + 30, car.name.toUpperCase(), {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#f5d48b',
+      wordWrap: { width: SIDE.w - 43, useAdvancedWrap: true },
+      lineSpacing: 3,
+    }).setDepth(34));
+
+    this.addContent(this.add.text(x, y0 + 110,
+      car.engineModel + '\n' +
       car.powerKW + ' kW  //  ' + car.torqueNm + ' Nm\n' +
       Math.round(car.vehicleMassKg) + ' kg',
-      { fontFamily: BODY_FONT, fontSize: '10px', color: '#9ab0bd',
-        lineSpacing: 4, wordWrap: { width: SIDE.w - 40 } }
+      { fontFamily: BODY_FONT, fontSize: '12px', color: '#b7c9d4',
+        lineSpacing: 5, wordWrap: { width: SIDE.w - 40 } }
     ).setDepth(34));
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 193,
-      'ASKING  ' + money(listing.price),
-      { fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a' }
-    ).setDepth(34));
-    this.addContent(this.add.text(SIDE.x + 20, y0 + 231,
-      'SEALED COLLECTOR // NO MECHANICAL MODIFICATIONS',
-      { fontFamily: BODY_FONT, fontSize: '10px', color: '#d6a9bc',
-        wordWrap: { width: SIDE.w - 40 } }
-    ).setDepth(34));
+    this.addContent(this.add.text(x, y0 + 207,
+      'ASKING  ' + money(listing.price), {
+        fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffe08a'
+      }).setDepth(34));
+    this.addContent(this.add.text(x, y0 + 246,
+      'SEALED COLLECTOR\nNO MECHANICAL MODIFICATIONS', {
+        fontFamily: BODY_FONT, fontSize: '11px',
+        color: '#d6a9bc', lineSpacing: 3,
+      }).setDepth(34));
 
-    if (this.ginzaRoom === 3) {
+    if (vault) {
       const driving = this.registry.get('ginzaTestDrive');
-      const demo = this.addContent(this.add.rectangle(SIDE.x + SIDE.w / 2,
-        SIDE.y + 542, SIDE.w - 36, 43, 0x132d32, 1)
-        .setStrokeStyle(2, 0x6bd8cb, 1).setDepth(33)
+      const demoY = SIDE.y + 513;
+      const demo = this.addContent(this.add.rectangle(
+        centerX, demoY, width, 42, 0x132d32, 1
+      ).setStrokeStyle(2, 0x6bd8cb, 1).setDepth(33)
         .setInteractive({ useHandCursor: true }));
-      this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 542,
-        driving ? 'RETURN TEST CAR' : 'TEST DRIVE ANYWHERE',
-        { fontFamily: PIXEL_FONT, fontSize: '9px', color: '#e6fffb' }
-      ).setOrigin(.5).setDepth(34));
+      this.addContent(this.add.text(centerX, demoY,
+        driving ? 'RETURN TEST CAR' : 'TEST DRIVE ANYWHERE', {
+          fontFamily: PIXEL_FONT, fontSize: '9px', color: '#e6fffb'
+        }).setOrigin(0.5).setDepth(34));
       demo.on('pointerdown', () => {
         if (driving) this.endGinzaTestDrive();
         else this.ginzaScene('vaultDrive', {}, () => this.startGinzaTestDrive(listing));
       });
     }
 
-    // The BUY action is always enabled. Price shortfalls are handled with
-    // character dialogue, not an unresponsive disabled button.
+    // Price is printed once above; BUY stays actionable even if cash is short.
+    const buyY = SIDE.y + (vault ? 567 : 515);
     const buy = this.addContent(this.add.rectangle(
-      SIDE.x + SIDE.w / 2, SIDE.y + 608, SIDE.w - 36, 48,
-      0x2b1422, 1).setStrokeStyle(2, 0xff7cac, 1).setDepth(33)
+      centerX, buyY, width, 45, 0x2b1422, 1
+    ).setStrokeStyle(2, 0xff7cac, 1).setDepth(33)
       .setInteractive({ useHandCursor: true }));
-    this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 608,
-      owned ? 'OWNED // VIEW SALE DETAILS' : 'BUY // ' + money(listing.price),
-      { fontFamily: PIXEL_FONT, fontSize: '7px', color: '#ffe5ef' }
-    ).setOrigin(.5).setDepth(34));
+    this.addContent(this.add.text(centerX, buyY,
+      owned ? 'ALREADY OWNED // DETAILS' : 'BUY THIS CAR', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe5ef'
+      }).setOrigin(0.5).setDepth(34));
     buy.on('pointerdown', () => this.showGinzaPurchase(listing));
-    if (cash < listing.price && !owned) this.addContent(this.add.text(
-      SIDE.x + SIDE.w / 2, SIDE.y + 642,
-      money(listing.price - cash) + ' TO REACH ASKING',
-      { fontFamily: BODY_FONT, fontSize: '9px', color: '#dca4b9' }
-    ).setOrigin(.5).setDepth(34));
+
+    if (vault) {
+      // The only extra side-panel navigation: straight back to Room 1.
+      const backY = SIDE.y + 623;
+      const back = this.addContent(this.add.rectangle(
+        centerX, backY, width, 40, 0x102138, 1
+      ).setStrokeStyle(2, 0x557eae, 1).setDepth(33)
+        .setInteractive({ useHandCursor: true }));
+      this.addContent(this.add.text(centerX, backY,
+        'GO BACK // MOTOR GALLERY', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+        }).setOrigin(0.5).setDepth(34));
+      back.on('pointerdown', () => this.enterGinzaRoom(1));
+    }
   }
 
   showGinzaPurchase(listing, viewOnly = false) {
