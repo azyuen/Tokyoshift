@@ -342,7 +342,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       loop: true,
       callback: () => {
         this.syncWorldPhaseBackground();
-        if (LOCATION_BY_ID[this.activeLocationId]?.kind === 'showroom' &&
+        if (this.activeLocationId === CENTRAL_TOKYO_LOCATIONS.ginza.id &&
             this.ginzaRotationKey !== Math.floor(Date.now() / GINZA_ROTATION_MS)) {
           this.renderLocation(this.activeLocationId);
         }
