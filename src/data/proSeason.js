@@ -47,7 +47,8 @@ export function finishOpenCircuitEvent(raw,summary) {
 }
 export function startProfessionalSeason(raw) {
   let c=normaliseProCircuitState(raw);
-  if(!isOpenCircuitAvailable(c)||c.activeCrewEvent||c.activeTournament||c.activeTimedEvent||c.activeChampionship)
+  if(!isOpenCircuitAvailable(c)||c.activeCrewEvent||c.activeTournament||c.activeTimedEvent||
+    (c.activeChampionship&&!c.activeChampionship.completed))
     return {error:'FINISH THE CURRENT EVENT OR CHAMPIONSHIP'};
   if(c.seasonStatus==='COMPLETE'){
     const next=nextProfessionalSeason(c);
