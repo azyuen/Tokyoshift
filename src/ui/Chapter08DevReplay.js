@@ -69,8 +69,8 @@ export function finishInteractiveChapter08Replay(scene) {
   if (!session || session.slot !== getActiveProfileIndex()) {
     // A reload loses the in-memory rehearsal on purpose. The on-disk career
     // remains untouched; never apply a stale snapshot to another driver slot.
-    registry.set(SESSION_KEY, false);
-    registry.set(OWNER_KEY, null);
+    registry.remove?.(SESSION_KEY);
+    registry.remove?.(OWNER_KEY);
     sessions.delete(registry);
     return false;
   }
@@ -86,8 +86,9 @@ export function finishInteractiveChapter08Replay(scene) {
   for (const [key, value] of Object.entries(session.values)) {
     registry.set(key, value);
   }
-  registry.set(SESSION_KEY, false);
-  registry.set(OWNER_KEY, null);
+  // The sandbox keys were absent from the original session.
+  registry.remove?.(SESSION_KEY);
+  registry.remove?.(OWNER_KEY);
 
   // Do NOT save the restored snapshot: the original disk save was never
   // modified by this rehearsal. Return to the actual scene it started in.
