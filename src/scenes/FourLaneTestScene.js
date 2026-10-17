@@ -1,5 +1,5 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261017-r575';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r584';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
@@ -34,10 +34,10 @@ import { saveSessionState } from '../state/GameState.js?v=20261011-r482';
 import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
-import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261009-r445';
+import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261017-r575';
+import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261018-r584';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
 } from '../data/proTournament.js?v=20261009-r447';
@@ -157,7 +157,7 @@ export default class FourLaneTestScene extends RaceScene {
       return;
     }
     this.crewHeat = this.proCrew ? getPlayerCrewHeat(this.registry.get('proCircuit')) : null;
-    this.crewFourWide=this.proCrew&&this.registry.get('proCircuit')?.activeCrewEvent?.format==='FOUR_WIDE';
+    this.crewFourWide=this.proCrew&&getCrewFixture(this.registry.get('proCircuit'))?.format==='FOUR_WIDE';
     this.proDuel = data.mode === 'PRO_DUEL' || this.proCrew || this.proTimed;
     this.proDuelState = this.proDuel ? this.registry.get('competitionState') : null;
     if(this.proCrew) {
@@ -187,7 +187,7 @@ export default class FourLaneTestScene extends RaceScene {
       crowdTier: getProfessionalAttendance(circuit, { prestige: 2, stage: this.proTournament.stage, final: this.proTournament.stage === 2 }) };
     if (this.proDuelState) this.proDuelState = { ...this.proDuelState,
       crowdTier: getProfessionalAttendance(circuit, { prestige: this.proDuelState.eventId === 'streetShootout' ? 1 : 2,
-        stage: this.proDuelInfo?.roundIndex || 0, final: this.proDuelInfo?.roundIndex === 2 }) };
+        stage: this.proDuelInfo?.roundIndex || 0, final: this.proDuelInfo?.roundNumber === this.proDuelInfo?.totalRounds }) };
     // Snapshot the live Tokyo map clock when this heat starts. Lock the art
     // for the race; the next heat will select the current world phase again.
     const eventId = this.proCup
@@ -480,7 +480,7 @@ export default class FourLaneTestScene extends RaceScene {
     this.header = this.add.text(780, 22, this.champMode ? 'TOKYO CHAMPIONSHIP // '+this.champState.stage : this.proCup
       ? 'TOKYO FOUR-WIDE OPEN  //  ' + FOUR_WIDE_CUP.stageNames[this.proTournament.stage]
       : this.proCrew ? 'CREW FIXTURE '+(this.crewHeat.round+1)+'/3 // HEAT '+(this.crewHeat.index+1)+'/3'
-      : this.proDuel ? 'PRO CUP // ROUND ' + this.proDuelInfo.roundNumber + '/3'
+      : this.proDuel ? 'PRO CUP // ROUND ' + this.proDuelInfo.roundNumber + '/' + this.proDuelInfo.totalRounds
       : 'TOKYO DRAG COMPLEX', {
       fontFamily: PIXEL, fontSize: '10px', color: '#d7f4ff',
       backgroundColor: '#061019dd', padding: { x: 13, y: 6 },
@@ -1402,7 +1402,8 @@ export default class FourLaneTestScene extends RaceScene {
     const mine = standings.find(r => r.id === driverId);
     const total = standings.length;
     const phase = duel
-      ? 'ROUND ' + this.proDuelInfo.roundNumber + '/3'
+      ? (this.proDuelState?.trophyStages?.[this.proDuelInfo.roundIndex]||
+        'ROUND ' + this.proDuelInfo.roundNumber + '/' + this.proDuelInfo.totalRounds)
       : FOUR_WIDE_CUP.stageNames[this.proTournament.stage];
     const advanced = outcome?.status === 'ADVANCED';
     const champion = outcome?.status === 'CHAMPION' ||
@@ -1484,19 +1485,21 @@ export default class FourLaneTestScene extends RaceScene {
       }).setDepth(depth + 8).setScrollFactor(0);
     const stageNumber = duel ? this.proDuelInfo.roundNumber
       : this.proTournament.stage + 1;
+    const stageCount = duel ? this.proDuelInfo.totalRounds : 3;
     const nextStage = duel
-      ? stageNumber < 3 ? 'ROUND ' + (stageNumber + 1) + '/3' : 'EVENT COMPLETE'
+      ? stageNumber < stageCount ? (this.proDuelState?.trophyStages?.[stageNumber]||'ROUND ' + (stageNumber + 1)) : 'EVENT COMPLETE'
       : stageNumber === 1 ? 'SEMIFINAL' : stageNumber === 2 ? 'FINAL' : 'EVENT COMPLETE';
+    const prestige=PRO_CIRCUIT_TROPHIES.find(t=>t.id===this.proDuelState?.openTrophyId);
     const eventLabel = this.proCrew ? 'CREW FIXTURE '+(this.crewHeat.round+1)+'/3' : duel
-      ? String(this.proDuelState?.eventId === 'midnightCup' ? 'MIDNIGHT CUP'
+      ? String(prestige?.label || (this.proDuelState?.eventId === 'midnightCup' ? 'MIDNIGHT CUP'
         : this.proDuelState?.eventId === 'tokyoInvitational' ? 'TOKYO INVITATIONAL'
-        : 'STREET SHOOTOUT')
+        : 'STREET SHOOTOUT'))
       : 'FOUR-WIDE OPEN';
     label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
       'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'NEXT CREW CAR':'CONFIRM FIXTURE AT COMPLEX')) : advanced
-      ? 'STAGE ' + stageNumber + '/3 COMPLETE  //  NEXT: ' + nextStage
-      : 'STAGE ' + stageNumber + '/3 COMPLETE  //  ' +
+      ? 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  NEXT: ' + nextStage
+      : 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  ' +
         (failure ? 'RESULT NOT SAVED' : 'EVENT FINISHED'), 10, '#e0a0a4');
     label(677, 329, 'FINISH ' + String(mine?.placing || total) + '/' + total, 15, accentCSS);
 
@@ -1661,7 +1664,7 @@ export default class FourLaneTestScene extends RaceScene {
             competitionWins: Number(this.registry.get('competitionWins') || 0) + outcome.competitionWinsDelta };
           if (completed) {
             changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
-              outcome.status === 'CHAMPION' ? 3 : Number(state.roundIndex));
+              outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex));
             outcome.summary = changes.proCircuit.lastTournament;
           }
           saveProTransaction(this.registry, changes);
