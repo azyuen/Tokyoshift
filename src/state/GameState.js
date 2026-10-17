@@ -894,9 +894,11 @@ export function normaliseState(input = {}) {
     };
     delete mergedCarStates[oldLoanCarId];
   }
+  // Vault test cars are temporary visitors, not acquired property. Never
+  // turn a gallery loan into an owned vehicle in permanent car history.
   const carHistory = normaliseCarHistory(
-    input.carHistory || [],
-    owned,
+    (input.carHistory || []).filter(entry => !String(entry?.carId || '').startsWith('ginzaDemo_')),
+    owned.filter(id => !String(id).startsWith('ginzaDemo_')),
     mergedCarStates
   );
 

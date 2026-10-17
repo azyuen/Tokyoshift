@@ -31,6 +31,6 @@ export function ginzaVaultEligible(source, developer = false) {
   const read = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
   if (read('ginzaVaultInvited') === true) return true;
   const pro = read('proCircuit') || {};
-  const won = c => c?.completed && c.championId === 'player';
+  const won = c => c?.completed && c.championId === 'player:driver';
   return won(pro.activeChampionship) || (pro.championshipHistory || []).some(won);
 }
