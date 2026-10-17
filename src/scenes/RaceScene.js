@@ -102,6 +102,8 @@ import {
   createCrewInviteFromMeetWin,
   completeCrewRecruitChallenge,
   setCrewRecruitChallenge,
+  resetCrewRecruitmentAfterLoss,
+  clearCrewRecruitChallenge,
   getRegionalCrewBattleReward,
   markCrewBattleCompleted,
   areAllCrewBattlesComplete,
@@ -2532,18 +2534,13 @@ export default class RaceScene extends Phaser.Scene {
         if (!settlement.playerWon) {
           return {
             primary: 'STOCK CHALLENGE LOST',
-            secondary: 'COME BACK AND TRY AGAIN LATER',
+            secondary: 'INVITATION CLOSED // EARN A NEW RIVAL CHALLENGE',
           };
         }
-        return settlement.crewRecruitJoined
-          ? {
-              primary: 'CREW MEMBER JOINED',
-              secondary: 'SIGNATURE CAR LOANED TO WAREHOUSE HQ',
-            }
-          : {
-              primary: 'STOCK CHALLENGE WON',
-              secondary: 'RETURN TO THE MEET',
-            };
+        return {
+          primary: 'STOCK CHALLENGE WON',
+          secondary: 'RETURN TO THE MEET // RECRUITMENT DECISION AWAITS',
+        };
       }
 
       if (settlement.crewBattle) {
@@ -2923,9 +2920,8 @@ export default class RaceScene extends Phaser.Scene {
         );
       }
     }
-    if (playerWon && settlement?.crewRecruitJoined) {
-      awardParts.push('CREW MEMBER JOINED');
-      awardParts.push('SIGNATURE CAR LOANED');
+    if (playerWon && settlement?.crewRecruitDecisionPending) {
+      awardParts.push('CREW INVITATION // RETURN TO MEET');
     }
     if (playerWon && settlement?.teamChallengeCompleted) {
       awardParts.push(String(
@@ -4318,20 +4314,18 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.raceMode === 'CREW_RECRUIT') {
       const challenge = this.registry.get('crewRecruitChallenge');
-      let recruited = null;
-
       if (playerWon && challenge?.active) {
-        recruited = completeCrewRecruitChallenge(this.registry, challenge);
-      } else if (challenge?.active) {
-        setCrewRecruitChallenge(this.registry, {
-          ...challenge,
-          active: true,
-          attempts: Math.max(0, Number(challenge.attempts || 0)) + 1,
-          lastLossAt: Date.now(),
-          // A defeat closes this attempt: the invitation must not reopen
-          // automatically on the result-screen return to MeetScene.
-          retryDeferredUntilExit: true,
+        // Winning earns the invitation, not automatic membership. The player
+        // decides yes/no in the next Meet manga scene.
+        this.registry.set('crewPendingJoinDecision', {
+          regionId: String(challenge.regionId || '').toUpperCase(),
+          characterId: String(challenge.characterId),
+          baseCarId: String(challenge.baseCarId),
+          wonAt: Date.now(),
         });
+        clearCrewRecruitChallenge(this.registry, challenge.regionId);
+      } else if (challenge?.active) {
+        resetCrewRecruitmentAfterLoss(this.registry, challenge);
       }
 
       this.registry.set('selectedRacePlayerCharacterId', null);
@@ -4345,11 +4339,12 @@ export default class RaceScene extends Phaser.Scene {
         gameOver: false,
         crewRecruit: true,
         crewRecruitWon: Boolean(playerWon),
-        crewRecruitJoined: Boolean(recruited),
-        crewRecruitRetry: Boolean(!playerWon && challenge?.active),
+        crewRecruitJoined: false,
+        crewRecruitDecisionPending: Boolean(playerWon && challenge?.active),
+        crewRecruitRetry: false,
         crewRecruitCharacterId: challenge?.characterId || this.opponentCharacterId,
         crewRecruitRegionId: String(challenge?.regionId || this.raceDistrict || '').toUpperCase(),
-        crewRecruitLoanCarId: recruited?.loanCarId || null,
+        crewRecruitLoanCarId: null,
       };
       return this.raceSettlement;
     }
