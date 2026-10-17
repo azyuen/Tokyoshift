@@ -5,17 +5,19 @@ import {getCharacterAssetUrl,getCharacterVisualAsset} from '../data/characters.j
 
 const FONT='"Silkscreen", monospace';
 export const CHAPTER09_STAGE_DEPTH=810;
+// R585: larger (150% of R583), closer and subtly staggered as two
+// conversational groups instead of six evenly spaced cutouts.
 const LEFT=Object.freeze([
-  {id:'sayakaFujieda',pose:'track',x:.135,height:280},
-  {id:'daichiSakamoto',pose:'idle',x:.267,height:279},
-  {id:'$PLAYER',pose:'idle',x:.393,height:290},
+  {id:'sayakaFujieda',pose:'track',x:.187,feet:.816,height:420},
+  {id:'daichiSakamoto',pose:'idle',x:.280,feet:.790,height:418.5},
+  {id:'$PLAYER',pose:'idle',x:.386,feet:.825,height:435},
 ]);
 const RIGHT=Object.freeze([
-  {id:'ryujiTakahashi',pose:'normal',x:.68,height:286},
-  {id:'masatoKuroda',pose:'normal',x:.807,height:271},
-  {id:'hiroshiSato',pose:'normal',x:.926,height:270},
+  {id:'ryujiTakahashi',pose:'normal',x:.647,feet:.824,height:429},
+  {id:'masatoKuroda',pose:'normal',x:.753,feet:.790,height:406.5},
+  {id:'hiroshiSato',pose:'normal',x:.859,feet:.815,height:405},
 ]);
-const MIKA=Object.freeze({id:'mikaHayaseChampion',pose:'idle',x:.548,height:292});
+const MIKA=Object.freeze({id:'mikaHayaseChampion',pose:'idle',x:.523,feet:.814,height:438});
 export const CHAPTER09_GROUPS=Object.freeze({left:LEFT,right:RIGHT,mika:MIKA});
 
 export function chapter09ShotAssets(scene){
@@ -68,7 +70,7 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
   const start=()=>{
     if(!state.active||!scene.sys?.isActive?.())return;
     const w=Number(scene.scale?.width||1560),h=Number(scene.scale?.height||840);
-    const footY=h*.8,tex=scene.textures,base=CHAPTER09_STAGE_DEPTH;
+    const tex=scene.textures,base=CHAPTER09_STAGE_DEPTH;
     const tween=(targets,alpha,duration)=>scene.tweens.add({
       targets,alpha,duration,ease:'Sine.easeInOut',
     });
@@ -88,14 +90,17 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
       const texture=tex.get(entry.asset.key);
       texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
       const s=texture.getSourceImage();
+      // Width cap increases with height so large silhouettes are not
+      // accidentally reduced back to their former size by the width clamp.
       const scale=Math.min((h*entry.height/840)/Math.max(1,s.height),
-        (w*(isMika ? .118 : right ? .116 : .12))/Math.max(1,s.width));
-      const x=w*entry.x;
-      const shadow=add(scene.add.ellipse(x,footY-5,Math.max(40,scale*s.width*.55),
-        16,0x000000,.36).setDepth(base+4).setScrollFactor(0).setAlpha(0));
+        (w*(isMika ? .177 : right ? .174 : .18))/Math.max(1,s.width));
+      const x=w*entry.x,footY=h*entry.feet;
+      const depthOffset=(entry.feet-.79)*10; // closer feet draw in front
+      const shadow=add(scene.add.ellipse(x,footY-5,Math.max(52,scale*s.width*.55),
+        23,0x000000,.36).setDepth(base+4+depthOffset).setScrollFactor(0).setAlpha(0));
       const sprite=add(scene.add.image(x,footY,entry.asset.key)
         .setOrigin(.5,1).setScale(scale).setFlipX(Boolean(right))
-        .setDepth(base+5+(isMika?1:0)).setScrollFactor(0).setAlpha(0));
+        .setDepth(base+5+depthOffset+(isMika ? .1 : 0)).setScrollFactor(0).setAlpha(0));
       state.characters.set(entry.id,{sprite,shadow});
     };
     assets.left.forEach(entry=>createActor(entry));
