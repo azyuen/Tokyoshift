@@ -10,7 +10,7 @@ test('withdraw remains a full-size touch button when Tokyo Championship is activ
   const header=panel.match(/export function drawSeasonHeader\(s,stage\) \{([\s\S]*?)\n\}/)?.[1]||'';
   assert.match(header,/const height=openCircuit\?158:c\.activeChampionship\?248:214/);
   assert.match(header,/if\(c\.activeChampionship\)\{/);
-  assert.match(header,/if\(c\.seasonStatus==='ACTIVE'\|\|\(c\.seasonStatus==='COMPLETE'&&q\.qualified\)\)\{/);
+  assert.match(header,/if\(c\.seasonStatus==='ACTIVE'\|\|\(c\.seasonStatus==='COMPLETE'&&q\.qualified\)\)\s*\{/);
   assert.match(header,/button\(s,x\+\(w-10\)\/2,y\+\(c\.activeChampionship\?201:173\),w-10,/);
   assert.match(header,/WITHDRAW \/ FORFEIT SEASON/);
   assert.doesNotMatch(header,/else if\(c\.seasonStatus/);
