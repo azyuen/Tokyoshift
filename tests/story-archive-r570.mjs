@@ -24,6 +24,7 @@ const profile={
   carStates:{ae86:{tuning:{engine:1}}},cash:12345,wins:88,losses:9,
   centralTokyoLocation:'tokyoAutoMarket',selectedRaceCategory:'SINGLE',
 };
+const afterTap=()=>new Promise(resolve=>setTimeout(resolve,10));
 const source=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 function fakeScene(extra={},key='GarageScene'){
   const registry=new FakeRegistry({...profile,...extra});
@@ -42,7 +43,7 @@ test('exactly eight public chapters, no micro cutscenes, and chapter-spoiler loc
   assert.equal(isStoryChapterComplete(new FakeRegistry(profile),'specialChallengerIntroduction'),false);
   assert.match(source('src/ui/StoryArchivePanel.js'),/\?chapter.title.toUpperCase\(\):'\?\?\?'/);
 });
-test('Chapter 01–07 replay uses real workshop/crew staging and restores player exact registry',()=>{
+test('Chapter 01–07 replay uses real workshop/crew staging and restores player exact registry',async()=>{
   for(const id of STORY_CHAPTERS.slice(0,7).map(c=>c.id)){
     const scene=fakeScene();
     const before=structuredClone(scene.registry.getAll());
@@ -50,6 +51,8 @@ test('Chapter 01–07 replay uses real workshop/crew staging and restores player
     assert.equal(isStoryArchiveSceneReplay(scene.registry),true,id);
     assert.equal(saveSessionState(scene.registry),null);
     assert.equal(saveManualState(scene.registry),null);
+    assert.equal(scene.starts.length,0,'scene cannot restart inside pointerdown');
+    await afterTap();
     if(id==='chapter07')assert.equal(scene.starts[0][1].crewMode,true);
     if(id==='chapter04')assert.equal(scene.starts[0][1].workshopLocationId,'shinonomeCanalYard');
     if(['chapter05','chapter06','chapter07'].includes(id))
@@ -60,19 +63,22 @@ test('Chapter 01–07 replay uses real workshop/crew staging and restores player
     assert.equal(endStoryArchiveSceneReplay(scene),true,id);
     assert.equal(isStoryArchiveSceneReplay(scene.registry),false);
     assert.deepEqual(scene.registry.getAll(),before,id);
+    await afterTap();
     assert.deepEqual(scene.starts.at(-1),['GarageScene',{crewMode:false,openStoryArchive:true}]);
   }
 });
-test('uncompleted chapters cannot be replayed by a player but can be tested by Arkon Den',()=>{
+test('uncompleted chapters cannot be replayed by a player but can be tested by Arkon Den',async()=>{
   const newPlayer=fakeScene({cutscenesSeen:[],wins:0,garageTier:0,openingChapter:'station'});
   const original=structuredClone(newPlayer.registry.getAll());
   assert.equal(beginStoryArchiveSceneReplay(newPlayer,'chapter07'),false);
   assert.deepEqual(newPlayer.registry.getAll(),original);
   const dev=fakeScene({devMode:true,cutscenesSeen:[],wins:0});
   assert.equal(beginStoryArchiveSceneReplay(dev,'chapter07'),true);
+  await afterTap();
   assert.equal(endStoryArchiveSceneReplay(dev),true);
+  await afterTap();
 });
-test('completed chapter 08 replay is available to non-dev player, no career writes',()=>{
+test('completed chapter 08 replay is available to non-dev player, no career writes',async()=>{
   const scene=fakeScene();
   const before=structuredClone(scene.registry.getAll());
   assert.equal(startInteractiveChapter08Replay(scene,{
@@ -82,8 +88,10 @@ test('completed chapter 08 replay is available to non-dev player, no career writ
   assert.equal(scene.registry.get('__chapter08ReplaySkipRace'),true);
   assert.equal(saveSessionState(scene.registry),null);
   assert.equal(saveManualState(scene.registry),null);
+  await afterTap();
   assert.equal(finishInteractiveChapter08Replay(scene),true);
   assert.deepEqual(scene.registry.getAll(),before);
+  await afterTap();
   assert.deepEqual(scene.starts.at(-1),['GarageScene',{crewMode:false,openStoryArchive:true}]);
 });
 test('Chapter 8 cannot reveal spoiler on a non-dev profile before completion',()=>{

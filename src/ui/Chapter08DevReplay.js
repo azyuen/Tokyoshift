@@ -3,6 +3,7 @@
 // touching an Arkon Den profile's saved career. This intentionally is NOT
 // a synthetic "all chapters complete" save or a separate racing engine.
 import { cars } from '../data/cars.js?v=20261017-r565';
+import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
 import { isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
 
@@ -63,7 +64,7 @@ export function startInteractiveChapter08Replay(scene, {allowPlayer=false,return
 
   // Loading the real Warehouse means the scene's backgrounds and controls are
   // identical to career mode, not a manga pasted over the developer's Meet.
-  scene.scene.start('GarageScene', {
+  queueSafeSceneStart(scene,'GarageScene', {
     workshopLocationId: 'shinonomeWarehouseStrip', crewMode: false,
   });
   return true;
@@ -104,17 +105,17 @@ export function finishInteractiveChapter08Replay(scene) {
   // Do NOT save the restored snapshot: the original disk save was never
   // modified by this rehearsal. Return to the actual scene it started in.
   if(session.returnToOffice){
-    scene.scene.start('GarageScene',{crewMode:false,openStoryArchive:true});
+    queueSafeSceneStart(scene,'GarageScene',{crewMode:false,openStoryArchive:true});
     return true;
   }
   const target = session.sceneKey === 'RaceScene'
     ? 'GarageScene' : session.sceneKey;
   if (target === 'CentralTokyoScene') {
-    scene.scene.start('CentralTokyoScene', {locationId:session.centralTokyoLocation});
+    queueSafeSceneStart(scene,'CentralTokyoScene', {locationId:session.centralTokyoLocation});
   } else if (target === 'GarageScene') {
-    scene.scene.start('GarageScene', {crewMode:session.crewMode});
+    queueSafeSceneStart(scene,'GarageScene', {crewMode:session.crewMode});
   } else {
-    scene.scene.start(target);
+    queueSafeSceneStart(scene,target);
   }
   return true;
 }

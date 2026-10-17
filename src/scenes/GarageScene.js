@@ -55,12 +55,12 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r572';
-import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r570';
-import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r572';
-import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r570';
-import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r573';
+import { isStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r573';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r573';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r573';
+import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r573';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
   CENTRAL_TOKYO_LOCATIONS,
@@ -131,7 +131,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261012-r489';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261017-r573';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -3717,6 +3717,15 @@ export default class GarageScene extends Phaser.Scene {
       }
 
       this.saveProfile();
+      // Developer cars may be distributed across several workshops. If this
+      // room is empty, let Arkon Den travel using an owned personal car from
+      // another garage rather than silently trapping the developer at HQ.
+      // This does not move cars or override garage assignments.
+      const devTravelCarId = !this.crewMode && isArkonDen(this.registry) &&
+        !this.selectedCarId
+        ? this.ownedCarIds.find(id => cars[id] && !cars[id].crewLoan) || null
+        : null;
+      if (devTravelCarId) this.registry.set('selectedCarId', devTravelCarId);
 
       showTravelMap(this, {
         currentLocationId: this.registry.get('meetLocation') || 'odaiba7eleven',
@@ -3805,7 +3814,8 @@ export default class GarageScene extends Phaser.Scene {
           // Central Tokyo contains a dealership and showroom, so the player can
           // visit it even when the current physical workshop has no car stored.
           // Normal street meets still require a local car to drive out with.
-          if (!this.selectedCarId && !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
+          if (!this.selectedCarId && !devTravelCarId &&
+              !['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
             this.showWorkshopToast('MOVE TO A GARAGE WITH A CAR FIRST');
             return;
           }
@@ -3813,7 +3823,7 @@ export default class GarageScene extends Phaser.Scene {
           const cash = Number(this.registry.get('cash') || 0);
           if (cash < cost) return;
           this.registry.set('cash', cash - cost);
-          this.registry.set('selectedCarId', this.selectedCarId);
+          this.registry.set('selectedCarId', this.selectedCarId || devTravelCarId || null);
           this.registry.set('meetStranded', false);
 
           if (travelTarget?.regionId === 'CENTRAL_TOKYO') {

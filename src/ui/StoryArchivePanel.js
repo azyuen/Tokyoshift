@@ -2,8 +2,8 @@
 // Only the EIGHT canonical chapters appear. Dev micro-scenes remain in
 // Arkon Den's existing D) SCENES panel.
 import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r570';
-import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r570';
-import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r570';
+import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r573';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r573';
 const FONT='"Silkscreen", monospace';
 const BODY='"Rajdhani", monospace';
 export function showStoryArchivePanel(scene) {
@@ -40,17 +40,26 @@ export function showStoryArchivePanel(scene) {
   exit.on('pointerdown',close);
 
   const launch=(id,interactive=false)=>{
-    const hasCar=Boolean((scene.registry.get('ownedCarIds')||[]).length);
-    if(id==='chapter08' && interactive && !hasCar)return false;
-    close();
-    // Do not leave the Office art blocking real race/garage backgrounds.
-    scene.closeOpeningOffice?.();
-    if(id==='chapter08'){
-      return startInteractiveChapter08Replay(scene,{
-        allowPlayer:true,returnToOffice:true,skipRace:!interactive,
-      });
+    // Prepare the temporary sandbox FIRST. A snapshot error or missing car
+    // must never close the archive and leave a blank/stuck workshop screen.
+    const started=id==='chapter08'
+      ? startInteractiveChapter08Replay(scene,{
+          allowPlayer:true,returnToOffice:true,skipRace:!interactive,
+        })
+      : beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+    if(!started) {
+      detail.push(scene.add.text(780,550,
+        'REPLAY COULD NOT START // CHECK YOUR CAR AND TRY AGAIN',{
+          fontFamily:FONT,fontSize:'8px',color:'#ffc9d6',
+          backgroundColor:'#152235',padding:{x:12,y:10},
+        }).setOrigin(.5).setDepth(depth+22).setScrollFactor(0));
+      return false;
     }
-    return beginStoryArchiveSceneReplay(scene,id,{skipMagazine:!interactive});
+    close();
+    // The scene transition now runs AFTER this click via SafeSceneTransition,
+    // avoiding same-frame iPad Phaser restarts.
+    scene.closeOpeningOffice?.();
+    return true;
   };
   const openChapter=chapter=>{
     if(!chapter.completed)return;
@@ -81,7 +90,15 @@ export function showStoryArchivePanel(scene) {
       lift(scene.add.text(x,y+13,subtitle,{
         fontFamily:BODY,fontSize:'12px',color:'#bcd8e7',
       }).setOrigin(.5).setDepth(depth+18).setScrollFactor(0));
-      bg.on('pointerdown',action);
+      bg.on('pointerdown',()=>{
+        bg.disableInteractive();
+        // Do not destroy the pressed modal while Safari is still processing
+        // its pointer event. Prepare/close the replay on the following turn.
+        window.setTimeout(()=>{
+          action();
+          if(bg.active)bg.setInteractive({useHandCursor:true});
+        },0);
+      });
     };
     if(chapter.id==='chapter08'){
       choice(566,484,350,'WATCH STORY','No race required',()=>launch(chapter.id,false));

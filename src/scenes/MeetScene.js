@@ -38,7 +38,7 @@ import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   getGarageCapacity,
@@ -107,7 +107,7 @@ import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r572';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r573';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,

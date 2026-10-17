@@ -2,6 +2,7 @@
 // This is an in-memory rehearsal, not a separate save or a progress reset.
 import { getActiveProfileIndex } from '../state/GameState.js?v=20261017-r570';
 import { cars } from '../data/cars.js?v=20261017-r565';
+import { queueSafeSceneStart } from './SafeSceneTransition.js?v=20261017-r573';
 import { getStoryChapter, isStoryChapterComplete } from '../data/storyChapters.js?v=20261017-r570';
 const sessions=new WeakMap();
 const ACTIVE='__storyArchiveSceneReplay', OWNER='__storyArchiveOwnerSlot';
@@ -44,7 +45,7 @@ export function beginStoryArchiveSceneReplay(scene,chapterId,{skipMagazine=false
   }
   // Chapter 01's full first-car magazine is interactive only in rehearsal.
   if(chapterId==='chapter01')registry.set('openingChapter',null);
-  scene.scene.start('GarageScene',{crewMode:crew,workshopLocationId:workshop,
+  queueSafeSceneStart(scene,'GarageScene',{crewMode:crew,workshopLocationId:workshop,
     storyArchiveChapter:chapterId});
   return true;
 }
@@ -61,6 +62,6 @@ export function endStoryArchiveSceneReplay(scene) {
   for(const [key,value] of Object.entries(session.values))registry.set(key,value);
   registry.remove?.(ACTIVE);registry.remove?.(OWNER);
   // Player returns to the Office's chapter list without saving replay state.
-  scene.scene.start('GarageScene',{crewMode:false,openStoryArchive:true});
+  queueSafeSceneStart(scene,'GarageScene',{crewMode:false,openStoryArchive:true});
   return true;
 }

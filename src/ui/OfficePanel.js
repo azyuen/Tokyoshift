@@ -4,7 +4,7 @@ import { getCrewBattleProgress } from '../data/crewSystem.js?v=20261011-r479';
 import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
-import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r570';
+import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r573';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

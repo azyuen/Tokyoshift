@@ -6,7 +6,7 @@ import { preloadSevenRivalsMontageAssets,startSevenRivalsPortraitMontage } from 
 import { preloadFullCrewCelebrationAssets,showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
 import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 import { getFirstRegionalChampionRegion } from '../data/careerProgression.js?v=20261017-r553';
-import { isStoryArchiveSceneReplay,endStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r570';
+import { isStoryArchiveSceneReplay,endStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r573';
 
 const OPENING=['openingStationEncounter','__magazine','openingSayakaPhoneCall',
   'openingSayakaKeys','openingSayakaFarewell','openingDaichiAfterSayaka'];

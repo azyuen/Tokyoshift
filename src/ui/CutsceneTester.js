@@ -10,9 +10,9 @@ import {
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
-import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r572';
-import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r570';
-import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r570';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r573';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r573';
+import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r573';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -171,7 +171,10 @@ function chooseChapter08Mode(scene) {
     add(scene.add.text(x,448,label,{
       fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+4).setScrollFactor(0));
-    rect.on('pointerdown',()=>{close();action();});
+    rect.on('pointerdown',()=>{
+      rect.disableInteractive();
+      window.setTimeout(()=>{close();action();},0);
+    });
   };
   button(588,'DIALOGUE PREVIEW', () => {
     const previewGinza=()=>{
@@ -361,6 +364,8 @@ export function showCutsceneTester(scene) {
       row.on('pointerover', () => row.setStrokeStyle(2, 0xff72a6, 1));
       row.on('pointerout', () => row.setStrokeStyle(2, 0x304b5d, 1));
       row.on('pointerdown', () => {
+        row.disableInteractive();
+        window.setTimeout(() => {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
@@ -417,6 +422,7 @@ export function showCutsceneTester(scene) {
         } else {
           playMangaCutscene(scene, id, { preview: true });
         }
+        },0);
       });
     });
   };

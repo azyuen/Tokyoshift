@@ -29,9 +29,10 @@ function fakeScene(values=carState,key='MeetScene'){
   const registry=new FakeRegistry(values);
   return {registry,sys:{settings:{key}},scene:{start:(...args)=>starts.push(args)},starts};
 }
+const afterTap=()=>new Promise(resolve=>setTimeout(resolve,10));
 const src=name=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 
-test('dev replay starts at real Warehouse even with completed Chapter 08 flags',()=>{
+test('dev replay starts at real Warehouse even with completed Chapter 08 flags',async()=>{
   const scene=fakeScene();
   const before=structuredClone(scene.registry.getAll());
   assert.equal(startInteractiveChapter08Replay(scene),true);
@@ -39,6 +40,8 @@ test('dev replay starts at real Warehouse even with completed Chapter 08 flags',
   assert.equal(scene.registry.get('workshopLocationId'),'shinonomeWarehouseStrip');
   assert.equal(scene.registry.get('garageTier'),2);
   assert.equal(scene.registry.get('carGarageLocations').ae86,'shinonomeWarehouseStrip');
+  assert.equal(scene.starts.length,0,'same input event must not restart Phaser');
+  await afterTap();
   assert.deepEqual(scene.starts[0],['GarageScene',{workshopLocationId:'shinonomeWarehouseStrip',crewMode:false}]);
   assert.equal(saveSessionState(scene.registry),null);
   assert.equal(saveManualState(scene.registry),null);
@@ -50,13 +53,16 @@ test('dev replay starts at real Warehouse even with completed Chapter 08 flags',
   assert.equal(finishInteractiveChapter08Replay(scene),true);
   assert.equal(isChapter08DevReplay(scene.registry),false);
   assert.deepEqual(scene.registry.getAll(),before);
+  await afterTap();
   assert.deepEqual(scene.starts[1],['MeetScene']);
 });
 
-test('returns to original Central Tokyo room after restoring state',()=>{
+test('returns to original Central Tokyo room after restoring state',async()=>{
   const scene=fakeScene({...carState,centralTokyoLocation:'tokyoDragComplex'},'CentralTokyoScene');
   assert.ok(startInteractiveChapter08Replay(scene));
+  await afterTap();
   assert.ok(finishInteractiveChapter08Replay(scene));
+  await afterTap();
   assert.deepEqual(scene.starts.at(-1),['CentralTokyoScene',{locationId:'tokyoDragComplex'}]);
 });
 

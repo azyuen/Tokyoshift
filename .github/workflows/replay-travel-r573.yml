@@ -1,0 +1,46 @@
+name: R573 iPad replay and travel recovery
+on:
+  pull_request:
+    paths:
+      - 'src/ui/SafeSceneTransition.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'src/ui/StoryArchivePanel.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/scenes/GarageScene.js'
+      - 'tests/replay-travel-r573.mjs'
+      - 'tests/story-archive-r570.mjs'
+      - 'tests/chapter08-dev-replay-r569.mjs'
+      - '.github/workflows/replay-travel-r573.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/SafeSceneTransition.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'src/ui/TravelMap.js'
+      - 'tests/replay-travel-r573.mjs'
+  workflow_dispatch:
+jobs:
+  replay-and-travel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate all replay/travel modules
+        run: |
+          node --check src/ui/SafeSceneTransition.js
+          node --check src/ui/StoryReplaySession.js
+          node --check src/ui/Chapter08DevReplay.js
+          node --check src/ui/StoryArchivePanel.js
+          node --check src/ui/StoryArchivePlayback.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/ui/TravelMap.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Check replay and travel plus existing story/phone regressions
+        run: |
+          node --test tests/replay-travel-r573.mjs tests/story-archive-r570.mjs tests/chapter08-dev-replay-r569.mjs tests/chapter08-r568.mjs tests/chapter08-phone-r571.mjs tests/phone-template-r572.mjs

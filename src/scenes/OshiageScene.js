@@ -13,7 +13,7 @@ import {
 } from '../data/oshiageShowdown.js?v=20261015-r522';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
