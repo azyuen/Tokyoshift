@@ -1,14 +1,14 @@
 // Canonical caller dialogue. Phone conversations now share the same floating
-// face and outward-tail manga speech layout as in-race coaching; their blue
-// border, pale-blue fill and corner phone icon distinguish remote calls.
+// face and outward-tail manga speech layout as in-race coaching. Calls use
+// one standard dimming veil and floating phone icon, unlike race coaching.
 import {
   characters,
   getCharacterAssetUrl,
   getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
 import {
-  createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS,
-} from './RaceCoachHud.js?v=20261017-r564';
+  createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
+} from './RaceCoachHud.js?v=20261017-r572';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -135,7 +135,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261017-r564')
+    import('./OpeningPhonePrototype.js?v=20261017-r572')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {
@@ -214,8 +214,9 @@ export function playPhoneConversation(scene, {
     const buttonX = screenW - 248, buttonY = screenH - 49;
     // Both speakers share the oversized phone panel, but the caller stays
     // on the left and the player's actual portrait stays on the right.
-    add(scene.add.rectangle(screenW / 2, screenH / 2, screenW, screenH,
-      0x070f19, 0.001).setScrollFactor(0).setDepth(DEPTH).setInteractive());
+    // Reuse the global translucent veil so sprites separate from the venue,
+    // even when a call falls back from the vibrating-pickup presentation.
+    add(createPhoneCallBackdrop(scene, {depth:DEPTH}));
     nextButton = add(scene.add.rectangle(buttonX, buttonY, 252, 48,
       0x111111, 1).setStrokeStyle(2, 0xffffff, 1)
       .setScrollFactor(0).setDepth(DEPTH + 8)

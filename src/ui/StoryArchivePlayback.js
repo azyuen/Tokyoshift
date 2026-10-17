@@ -1,7 +1,7 @@
 // R570 canonical cinematic player used by both Story Archive and developer.
 // Original manga/phone systems and gesture-driven portrait galleries are reused.
-import { playMangaCutscene,sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r570';
-import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r562';
+import { playMangaCutscene,sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r572';
+import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
 import { preloadSevenRivalsMontageAssets,startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets,showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
 import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';

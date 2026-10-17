@@ -51,6 +51,27 @@ export const RACE_DIALOGUE_THEMES = Object.freeze({
   }),
 });
 
+// Global phone-call presentation template used by BOTH call engines (the
+// vibrating pick-up choreography and the standard phone dialogue fallback).
+// Leave race coaching untouched: its separate 'standard' theme has no veil.
+export const PHONE_CALL_PRESENTATION = Object.freeze({
+  backdropColor: 0x071421,
+  backdropOpacity: 0.42,
+  iconSize: 62,
+  iconOffsetX: -27,
+  iconOffsetY: -12,
+});
+
+export function createPhoneCallBackdrop(scene, { depth = 305 } = {}) {
+  const width = Number(scene.scale?.width || 1560);
+  const height = Number(scene.scale?.height || 840);
+  return scene.add.rectangle(
+    width / 2, height / 2, width, height,
+    PHONE_CALL_PRESENTATION.backdropColor,
+    PHONE_CALL_PRESENTATION.backdropOpacity,
+  ).setScrollFactor(0).setDepth(depth).setInteractive();
+}
+
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
 const POSES = new Set(['neutral', 'explaining', 'happy', 'concerned']);
@@ -107,7 +128,7 @@ function drawRaceTargetDecal(scene, layout) {
 }
 
 // Reusable presentation surface. The phone variant uses the same floating
-// head and speech geometry as coaching, but a blue tint and phone-corner badge.
+// head and speech geometry as coaching, but a blue tint and a larger floating phone glyph.
 export function createRaceDialogueHud(scene, {
   speaker = '',
   theme = 'standard',
@@ -143,21 +164,22 @@ export function createRaceDialogueHud(scene, {
     wordWrap: { width: bubble.textWidth },
   }).setScrollFactor(0).setDepth(depth + 4));
 
-  let iconBadge = null;
   if (theme === 'phone') {
-    const badgeX = bubble.right - 1;
-    const badgeY = bubble.top;
-    iconBadge = own(scene.add.circle(badgeX, badgeY, 31, 0xe2f3ff, 0.99)
-      .setStrokeStyle(4, style.border).setScrollFactor(0).setDepth(depth + 5));
+    // Icon floats ABOVE the top-right bubble edge; never surround it with a
+    // circle. This is consistent for normal calls and the swiping phone scene.
+    const iconX = bubble.right + PHONE_CALL_PRESENTATION.iconOffsetX;
+    const iconY = bubble.top + PHONE_CALL_PRESENTATION.iconOffsetY;
     if (phoneIconKey && scene.textures.exists(phoneIconKey)) {
       const source = scene.textures.get(phoneIconKey).getSourceImage();
-      const icon = own(scene.add.image(badgeX, badgeY, phoneIconKey)
+      const icon = own(scene.add.image(iconX, iconY, phoneIconKey)
         .setScrollFactor(0).setDepth(depth + 6));
-      icon.setScale(Math.min(37 / Math.max(1, source.width || 1),
-        37 / Math.max(1, source.height || 1)));
+      icon.setScale(Math.min(
+        PHONE_CALL_PRESENTATION.iconSize / Math.max(1, source.width || 1),
+        PHONE_CALL_PRESENTATION.iconSize / Math.max(1, source.height || 1),
+      ));
     } else {
-      own(scene.add.text(badgeX, badgeY, '☎', {
-        fontFamily: BODY, fontSize: '35px', color: '#17639b', fontStyle: 'bold',
+      own(scene.add.text(iconX, iconY, '☎', {
+        fontFamily: BODY, fontSize: '60px', color: '#17639b', fontStyle: 'bold',
       }).setOrigin(0.5).setScrollFactor(0).setDepth(depth + 6));
     }
   }
@@ -185,7 +207,6 @@ export function createRaceDialogueHud(scene, {
   const setAccent = color => {
     if (theme !== 'phone') return;
     speech.redraw(color);
-    iconBadge?.setStrokeStyle(4, color);
   };
   let destroyed = false;
   const cleanup = () => {

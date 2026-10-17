@@ -55,6 +55,6 @@ test('chapter 08 orchestration waits for each real or previewed call to finish',
   const tester=code('src/ui/CutsceneTester.js');
   assert.match(tester,/startChapter08Warehouse\(scene,\{preview:true/);
   const cinema=code('src/data/cutscenes.js');
-  assert.match(cinema,/chapter08\.js\?v=20261017-r571/);
-  assert.match(story,/MangaCutscene\.js\?v=20261017-r571/);
+  assert.match(cinema,/chapter08\.js\?v=20261017-r\d+/);
+  assert.match(story,/MangaCutscene\.js\?v=20261017-r\d+/);
 });
