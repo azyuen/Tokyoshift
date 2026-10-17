@@ -95,6 +95,18 @@ test('gallery loan survives a save without becoming a permanent car-history acqu
   assert.equal(actual.carHistory.some(item=>item.carId===demo),false);
 });
 
+test('gallery demos are excluded from sanctioned championships and earnings', () => {
+  const pro = src('src/data/proSeason.js');
+  const side = src('src/scenes/CentralTokyoScene.js');
+  const championship = src('src/ui/ProSeasonPanel.js');
+  assert.match(pro, /if\(car\.ginzaDemo\)reasons\.push/);
+  assert.match(side, /if \(cars\[this\.registry\.get\('selectedCarId'\)\]\?\.ginzaDemo\) return/);
+  assert.match(side, /!owned\.includes\(carId\) \|\| cars\[carId\]\?\.ginzaDemo/);
+  assert.match(championship, /cars\[carId\]\.ginzaDemo/);
+  const race = src('src/scenes/RaceScene.js');
+  assert.match(race, /this\.isGinzaDemoRace\) \{[\s\S]*?cashDelta: 0/);
+});
+
 test('gallery UI is one hero car per room and protects test drives', () => {
   const gallery=src('src/scenes/CentralTokyoScene.js');
   const race=src('src/scenes/RaceScene.js');

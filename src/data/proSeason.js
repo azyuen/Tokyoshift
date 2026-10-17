@@ -63,6 +63,7 @@ export function getProfessionalCarEligibility(carId, carState={}, rules={}) {
   const expected=String(rules.drivetrain||'').toUpperCase();
   const aliases={FF:'FWD',FR:'RWD',AWD:'AWD',FWD:'FWD',RWD:'RWD'};
   const reasons=[];
+  if(car.ginzaDemo)reasons.push('GINZA GALLERY LOAN // EXHIBITION ONLY');
   if(!Number.isFinite(power))reasons.push('PERFORMANCE UNAVAILABLE');
   if(Number.isFinite(rules.maxPowerKW)&&power>rules.maxPowerKW+0.001)reasons.push('POWER LIMIT '+rules.maxPowerKW+' KW');
   if(expected&&aliases[drivetrain]!==aliases[expected])reasons.push('REQUIRES '+expected);

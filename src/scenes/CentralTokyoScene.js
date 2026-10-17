@@ -2994,7 +2994,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     }
     const build = this.getSelectedBuild();
     const carId = build?.carId;
-    if (!carId || !owned.includes(carId)) return;
+    if (!carId || !owned.includes(carId) || cars[carId]?.ginzaDemo) return;
     const rules = getProfessionalRoundEvents(pro.calendar.round).driver;
     if (rules.id !== 'fourWideOpen' || rules.format !== 'FOUR_WIDE' || rules.stock) return;
     if (rules.maxPowerKW && Number(build.car?.powerKW || 0) > rules.maxPowerKW) return;
@@ -3270,6 +3270,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   startProBracket(event, build, storyConfirmed = false) {
+    if (cars[this.registry.get('selectedCarId')]?.ginzaDemo) return;
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     if (pro.activeTournament || pro.activeCrewEvent || pro.calendar.round >= 8 || this.registry.get('competitionState')?.active) return;
     const access = getProCircuitAccess(this.registry);
