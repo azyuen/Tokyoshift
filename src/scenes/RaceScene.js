@@ -18,7 +18,7 @@ import {
   getStreetSignalFrame,
 } from '../data/streetSignalTiming.js?v=20261010-r460';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r484';
+import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
 import { createAndRegisterOwnedCarInstance, ownsCarModel } from '../data/carOwnership.js?v=20261011-r479';
 import {
   DEFAULT_PAINT_COLOR,
@@ -47,14 +47,14 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261017-r565';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261016-r551';
+} from '../state/GameState.js?v=20261017-r565';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';

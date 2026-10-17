@@ -838,7 +838,7 @@ export function normaliseState(input = {}) {
     .map(remapLoanCarId)
     .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
-  let garageTier = inferWorkshopTier(owned.length, input.garageTier);
+  let garageTier = inferWorkshopTier(owned.filter(id => !String(id).startsWith('ginzaDemo_')).length, input.garageTier);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id

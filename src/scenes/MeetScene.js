@@ -4,7 +4,7 @@ import {
   preloadCarWheel,
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
-import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
+import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -22,7 +22,7 @@ import {
   getCharacterForContext,
   getMainRivalProgression,
   isMainRivalAvailableAtRegionalMeet,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261017-r565';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -34,7 +34,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { saveSessionState } from '../state/GameState.js?v=20261016-r551';
+import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';

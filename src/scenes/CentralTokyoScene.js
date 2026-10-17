@@ -75,7 +75,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261015-r524';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
-import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible } from '../data/ginzaGallery.js?v=20261017-r565';
+import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner } from '../data/ginzaGallery.js?v=20261017-r565';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261017-r565';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -2335,7 +2335,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const target = Phaser.Math.Clamp(Number(room) || 1, 1, 3);
     if (target === this.ginzaRoom || sceneCutsceneActive(this) || this.ginzaCarFading) return;
     if (target === 3) {
-      const dev = isArkonDen(this.registry);
+      const dev = isGinzaOwner(this.registry);
       if (!ginzaVaultEligible(this.registry, dev)) {
         this.ginzaScene('vaultLocked');
         return;
@@ -2404,7 +2404,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   drawGinza() {
     this.ginzaRotationKey = Math.floor(Date.now() / GINZA_ROTATION_MS);
     const listing = this.getGinzaActiveListing();
-    const locked = !ginzaVaultEligible(this.registry, isArkonDen(this.registry));
+    const locked = !ginzaVaultEligible(this.registry, isGinzaOwner(this.registry));
     const labels = ['', 'MOTOR GALLERY', 'PRESTIGE SALON', 'INVITATION VAULT'];
     this.drawNavigation(labels[this.ginzaRoom], this.ginzaRoom === 3
       ? 'PRIVATE COLLECTION // THREE LE MANS LEGENDS'
@@ -2464,6 +2464,18 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const buttonY = CARDS.y + 135;
     if (this.ginzaRoom === 3) {
+      // Public-room navigation remains in the bottom panel even in the vault.
+      ['MOTOR GALLERY', 'PRESTIGE SALON', 'PRIVATE VAULT'].forEach((label, index) => {
+        const x = CARDS.x + 198 + index * 369;
+        const nav = this.addContent(this.add.rectangle(
+          x, CARDS.y + 87, 320, 29, index === 2 ? 0x30203a : 0x101a28, 1
+        ).setStrokeStyle(1, index === 2 ? 0xff9fc7 : 0x46627a, 1)
+          .setDepth(33).setInteractive({ useHandCursor: true }));
+        this.addContent(this.add.text(x, CARDS.y + 87, label, {
+          fontFamily: PIXEL_FONT, fontSize: '7px', color: '#f1d4e7',
+        }).setOrigin(.5).setDepth(34));
+        nav.on('pointerdown', () => this.enterGinzaRoom(index + 1));
+      });
       GINZA_VAULT_CARS.forEach((item, index) => {
         const x = CARDS.x + 198 + index * 369;
         const chosen = index === this.ginzaVaultIndex;
@@ -2631,7 +2643,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   startGinzaTestDrive(listing) {
     if (this.ginzaRoom !== 3 || !listing || !ginzaVaultEligible(this.registry,
-        isArkonDen(this.registry))) return false;
+        isGinzaOwner(this.registry))) return false;
     this.endGinzaTestDrive(false);
     const demoId = 'ginzaDemo_' + listing.carId;
     if (!cars[demoId]) return false;

@@ -26,6 +26,13 @@ export function getGinzaVaultCar(index, stock = false) {
   return car?.[stock ? 'stock' : 'decal'] || GINZA_VAULT_CARS[0].decal;
 }
 
+export function isGinzaOwner(source) {
+  const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
+  const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+  return Boolean(get('devMode')) || fullName.includes('arkonden');
+}
+
 export function ginzaVaultEligible(source, developer = false) {
   if (developer) return true;
   const read = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
