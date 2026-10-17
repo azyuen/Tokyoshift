@@ -723,9 +723,12 @@ export default class RaceScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(46).setScrollFactor(0)
       .setVisible(false);
 
-    const rivalName = rivalDisplayCharacter?.name || 'Rival';
+    const rivalName = this.raceMode === 'CHAPTER08'
+      ? 'UNKNOWN CHALLENGER' : rivalDisplayCharacter?.name || 'Rival';
     const moneyLabel = this.isTutorial
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
+      : this.raceMode === 'CHAPTER08'
+        ? 'STORY RUN // NO STAKES'
       : this.raceDeal === 'PINK_SLIP'
         ? 'PINK SLIP  //  ' + cars[this.selectedCarId].shortName
         : this.raceMode === 'COMPETITION'
