@@ -40,6 +40,12 @@ for(const chapter of ['chapter06','chapter07','chapter08']) {
       for(const [key,value] of Object.entries({...base,...overrides})){
         game.registry.set(key,value);
       }
+      // Enter the Garage as a real single-scene gameplay route. Leaving
+      // CharacterSelectScene active above it could hide a perfectly rendered
+      // cutscene and produce a misleading green test.
+      for(const active of game.scene.getScenes(true)){
+        if(active.scene.key!=='GarageScene')game.scene.stop(active.scene.key);
+      }
       game.scene.start('GarageScene',{crewMode:false,workshopLocationId:'shinonomeWarehouseStrip'});
     });
     await page.waitForFunction(()=>window.TOKYO_SHIFT?.scene?.isActive('GarageScene'),{timeout:20000});
