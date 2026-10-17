@@ -56,10 +56,10 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r573';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r574';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
-import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r573';
-import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r573';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r574';
+import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261017-r574';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import {
@@ -131,7 +131,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261017-r573';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261017-r574';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
