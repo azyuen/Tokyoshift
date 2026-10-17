@@ -261,6 +261,10 @@ export function getCrewRecruitmentState(source, regionId) {
       Number(raw.eligibleWinsSinceInvite ?? legacyMisses)
     ),
     lastCharacterId: String(raw.lastCharacterId || ''),
+    // Recently defeated invitations cannot recycle the same person until
+    // the region has exhausted its alternative recruitable challengers.
+    failedCharacterIds: Array.isArray(raw.failedCharacterIds)
+      ? [...new Set(raw.failedCharacterIds.map(String).filter(Boolean))] : [],
     lastWinToken: String(raw.lastWinToken || raw.lastRollToken || ''),
   };
 }
@@ -368,6 +372,30 @@ export function clearCrewRecruitChallenge(registry, regionId = '') {
     registry.set('crewRecruitChallenge', null);
 }
 
+// A lost stock challenge is final: clear every reminder/retry flag and reset
+// the global fourth-win pity count. The next offer must be a fresh invitation.
+export function resetCrewRecruitmentAfterLoss(registry, challenge) {
+  if (!registry?.get || !registry?.set || !challenge?.characterId) return;
+  const region = String(challenge.regionId || '').toUpperCase();
+  const store = { ...(registry.get('crewRecruitmentState') || {}) };
+  const old = { ...(store[region] || {}) };
+  const candidates = getRecruitableCrewCandidates(registry, region)
+    .map(member => member.characterId);
+  const failed = [...new Set([
+    ...(Array.isArray(old.failedCharacterIds) ? old.failedCharacterIds : []),
+    String(challenge.characterId),
+  ])];
+  store[region] = {
+    ...old, eligibleWinsSinceInvite: 0, misses: 0,
+    failedCharacterIds: candidates.length && candidates.every(id => failed.includes(id))
+      ? [] : failed,
+  };
+  store.GLOBAL = { eligibleWinsSinceInvite: 0 };
+  registry.set('crewRecruitmentState', store);
+  clearCrewInviteInterest(registry, region);
+  clearCrewRecruitChallenge(registry, region);
+}
+
 export function createCrewInviteFromMeetWin(
   registry,
   {
@@ -389,11 +417,18 @@ export function createCrewInviteFromMeetWin(
   if (getCrewInviteInterest(registry, key) ||
       getCrewRecruitChallenge(registry, key)?.active) return null;
 
-  const candidate = getRecruitableCrewCandidates(registry, key)
-    .find(member => member.characterId === rivalId);
+  const candidates = getRecruitableCrewCandidates(registry, key);
+  const candidate = candidates.find(member => member.characterId === rivalId);
   if (!candidate) return null;
 
   const state = getCrewRecruitmentState(registry, key);
+  // If the player lost to this character, beating their ordinary Meet car
+  // again does not issue the same stock challenge. Another driver must offer.
+  // If all candidates have been exhausted, reset the pool rather than
+  // permanently locking a region out of crew recruitment.
+  const exhausted = candidates.length &&
+    candidates.every(member => state.failedCharacterIds.includes(member.characterId));
+  if (!exhausted && state.failedCharacterIds.includes(rivalId)) return null;
   const token = String(
     winToken ||
     (locationId + ':' + rivalId + ':' +
@@ -412,6 +447,7 @@ export function createCrewInviteFromMeetWin(
     eligibleWinsSinceInvite: trigger ? 0 : nextEligibleWins,
     misses: trigger ? 0 : nextEligibleWins,
     lastCharacterId: rivalId,
+    failedCharacterIds: exhausted ? [] : state.failedCharacterIds,
     lastWinToken: token,
     lastRollToken: token,
   };
