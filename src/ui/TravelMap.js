@@ -115,6 +115,7 @@ export function showTravelMap(scene, options = {}) {
 
   const crewTravelMode = travelMode === 'crew';
   const openingTrainMode = travelMode === 'openingTrain';
+  const chapter08GinzaMode = travelMode === 'chapter08Ginza';
 
   const worldPhase = getWorldPhase();
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
@@ -223,6 +224,10 @@ export function showTravelMap(scene, options = {}) {
 
   const visibleLocationsForRegion = region => {
     if (!region) return [];
+    if (chapter08GinzaMode) {
+      return region.id === 'CENTRAL_TOKYO'
+        ? region.locations.filter(item => item.id === 'ginzaMotorGallery') : [];
+    }
     if (openingTrainMode) {
       return region.id === HOME_REGION_ID
         ? region.locations.filter(item => item.id === 'shinonomeWorkshop')
@@ -627,7 +632,7 @@ export function showTravelMap(scene, options = {}) {
   ).setOrigin(0.5).setDepth(depth + 12));
 
   const getTargetCost = location => {
-    if (!location) return 0;
+    if (!location || chapter08GinzaMode) return 0;
 
     if (location.kind === 'home') {
       return fromWorkshop ? 0 : Number(homeCost ?? HOME_RETURN_COST);
@@ -1257,12 +1262,13 @@ export function showTravelMap(scene, options = {}) {
 
   TRAVEL_REGION_ORDER.forEach(regionId => {
     if (openingTrainMode && regionId !== HOME_REGION_ID) return;
+    if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
     const region = TRAVEL_REGIONS[regionId];
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
     const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId);
-    const unlocked = openingTrainMode || (!crewRegionBlocked && (
+    const unlocked = openingTrainMode || chapter08GinzaMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
     ));
 
@@ -1322,6 +1328,7 @@ export function showTravelMap(scene, options = {}) {
 
     hit.on('pointerdown', () => {
       if (crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId)) return;
+      if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
       selectedRegionId = regionId;
 
       if (regionId === currentRegionId && !fromWorkshop) {
@@ -1360,8 +1367,15 @@ export function showTravelMap(scene, options = {}) {
     };
   });
 
-  blocker.on('pointerdown', dismiss);
-  closeButton.on('pointerdown', dismiss);
+  if (!chapter08GinzaMode) {
+    blocker.on('pointerdown', dismiss);
+    closeButton.on('pointerdown', dismiss);
+  } else {
+    // This is a story destination, not a free-roam map. The race begins only
+    // when the player actively selects the Ginza location and presses DRIVE.
+    closeButton.setAlpha(.25).disableInteractive();
+    blocker.on('pointerdown', () => {});
+  }
   frame.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
   infoPanel.on('pointerdown', (_pointer, _lx, _ly, event) => event?.stopPropagation?.());
 
