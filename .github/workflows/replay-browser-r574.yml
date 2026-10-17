@@ -1,0 +1,34 @@
+name: R574 real Phaser replay browser smoke
+on:
+  pull_request:
+    paths:
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'src/ui/StoryReplaySession.js'
+      - 'src/ui/Chapter08DevReplay.js'
+      - 'tests/replay-browser-r574.mjs'
+      - '.github/workflows/replay-browser-r574.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'src/ui/StoryReplaySession.js'
+  workflow_dispatch:
+jobs:
+  real-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless Chromium for real replay test
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Serve actual Phaser game and launch replay tests
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/tokyoshift-server.log 2>&1 &
+          sleep 2
+          node tests/replay-browser-r574.mjs

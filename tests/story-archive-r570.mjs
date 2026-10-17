@@ -53,7 +53,10 @@ test('Chapter 01–07 replay uses real workshop/crew staging and restores player
     assert.equal(saveManualState(scene.registry),null);
     assert.equal(scene.starts.length,0,'scene cannot restart inside pointerdown');
     await afterTap();
-    if(id==='chapter07')assert.equal(scene.starts[0][1].crewMode,true);
+    if(id==='chapter07') {
+      assert.equal(scene.starts[0][0],'CrewSpaceScene');
+      assert.equal(scene.starts[0][1].crewMode,true);
+    } else assert.equal(scene.starts[0][0],'GarageScene');
     if(id==='chapter04')assert.equal(scene.starts[0][1].workshopLocationId,'shinonomeCanalYard');
     if(['chapter05','chapter06','chapter07'].includes(id))
       assert.equal(scene.starts[0][1].workshopLocationId,'shinonomeWarehouseStrip');

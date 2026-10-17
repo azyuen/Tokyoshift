@@ -10,9 +10,9 @@ import {
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
-import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r573';
-import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r573';
-import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r573';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261017-r574';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
+import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';

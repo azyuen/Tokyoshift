@@ -9,7 +9,7 @@ import { markCentralTokyoUnlocked } from '../data/centralTokyo.js?v=20261017-r56
 import { areAllCrewBattlesComplete } from '../data/crewSystem.js?v=20261016-r551';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r565';
 import { cars } from '../data/cars.js?v=20261017-r565';
-import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r573';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
 import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 
 const WAREHOUSE_BEATS = [

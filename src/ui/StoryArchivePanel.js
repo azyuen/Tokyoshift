@@ -2,8 +2,8 @@
 // Only the EIGHT canonical chapters appear. Dev micro-scenes remain in
 // Arkon Den's existing D) SCENES panel.
 import { availableStoryChapters } from '../data/storyChapters.js?v=20261017-r570';
-import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r573';
-import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r573';
+import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
+import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
 const FONT='"Silkscreen", monospace';
 const BODY='"Rajdhani", monospace';
 export function showStoryArchivePanel(scene) {
