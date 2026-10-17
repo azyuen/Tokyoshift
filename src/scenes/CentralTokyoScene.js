@@ -2,7 +2,7 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261017-r575';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r581';
-import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r580';
+import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r582';
 import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
