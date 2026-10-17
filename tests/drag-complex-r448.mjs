@@ -42,7 +42,7 @@ test('single right panel action routes paid events and resumed heats, without ot
   assert.match(central,/this\.startProBracket\(event, build\)/);
   assert.match(central,/RESUME FOUR-WIDE OPEN/);
   assert.match(central,/RESUME PRO CUP/);
-  assert.match(central,/SIDE\.y \+ 590/);
+  assert.match(central,/SIDE\.y \+ 574/);
   assert.match(central,/SIDE\.y \+ 674/); // existing map button remains
   assert.match(central,/FINISH YOUR ACTIVE EVENT FIRST/);
   assert.match(central,/eventId: event\.id/);
