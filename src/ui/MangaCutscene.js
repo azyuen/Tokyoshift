@@ -48,9 +48,9 @@ const interpolate = (value, variables = {}) => String(value ?? '').replace(
   (_, key) => variables[key] == null ? '' : String(variables[key])
 );
 
-export function sceneCutsceneActive(scene) {
+export function sceneCutsceneActive(scene,{ignoreChapter09Stage=false}={}) {
   return Boolean(scene?._mangaCutscene?.active || scene?._phoneConversation?.active ||
-    scene?._chapter09Stage?.active);
+    (!ignoreChapter09Stage && scene?._chapter09Stage?.active));
 }
 
 function playerDisplayName(scene, playerCharacterId) {
@@ -1005,7 +1005,9 @@ function finaliseController(controller, {
 }
 
 function beginOverlay(scene, definition, context, historyId, existingFreezeState = null) {
-  if (sceneCutsceneActive(scene)) {
+  if (sceneCutsceneActive(scene,{
+    ignoreChapter09Stage: Boolean(context?.options?.chapter09RoomBackdrop),
+  })) {
     return { played: false, reason: 'active', active: false };
   }
 
@@ -1062,7 +1064,8 @@ function beginOverlay(scene, definition, context, historyId, existingFreezeState
     width,
     height,
     paperBackground || whiteWash ? 0xfffcf1 : 0x000000,
-    paperBackground ? 1 : whiteWash ? 0.83 : 0.54
+    paperBackground ? 1 : whiteWash ? 0.83 :
+      context.options.chapter09RoomBackdrop ? 0.20 : 0.54
   ).setDepth(BASE_DEPTH + 1)
     .setScrollFactor(0)
     .setAlpha(0);
@@ -1222,7 +1225,9 @@ export function playMangaCutscene(scene, cutsceneId, options = {}) {
     return { played: false, reason: 'missing', active: false };
   }
 
-  if (sceneCutsceneActive(scene)) {
+  if (sceneCutsceneActive(scene,{
+    ignoreChapter09Stage: Boolean(options.chapter09RoomBackdrop),
+  })) {
     return { played: false, reason: 'active', active: false };
   }
 
