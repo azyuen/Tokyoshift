@@ -52,7 +52,8 @@ import {
   recordCarDeparture,
 } from '../state/GameState.js?v=20261014-r501';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261015-r522';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
+import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r568';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
@@ -141,7 +142,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   init(data = {}) {
     restorePreferredCar(this.registry);
-    this.requestedLocationId = data?.locationId || null;
+    this.chapter08Arrival = Boolean(data?.chapter08Arrival ||
+      (hasSeenCutscene(this.registry,'chapter08RaceFinished') &&
+       !hasSeenCutscene(this.registry,'chapter08Ginza')));
+    this.requestedLocationId = data?.locationId ||
+      (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
     this.ginzaRoom = Math.max(1, Math.min(3, Number(data?.ginzaRoom || 1)));
     this.ginzaVaultIndex = 0;
     this.ginzaStockBody = false;
@@ -157,6 +162,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const requested = this.requestedLocationId || CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
     const location = LOCATION_BY_ID[requested] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
     queued += this.queueLocationAssets(location);
+    if (this.chapter08Arrival && location.kind === 'showroom') {
+      queued += preloadChapter08GinzaAssets(this);
+      if (cars.rwbStellaPorsche) {
+        queued += preloadCarAppearanceAssets(this, {rwbStellaPorsche:cars.rwbStellaPorsche}, '20261017-r568');
+        queued += preloadCarWheel(this,cars.rwbStellaPorsche);
+      }
+    }
 
     startSceneLoading(this, 'LOADING CENTRAL TOKYO', queued);
   }
@@ -343,6 +355,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
+    if (this.chapter08Arrival && this.activeLocationId === 'ginzaMotorGallery') {
+      // Let the normal R567 showroom be recognisable before dialogue starts.
+      this.time.delayedCall(1500, () => {
+        if (!sceneCutsceneActive(this)) startChapter08Ginza(this);
+      });
+    }
 
     this.time.addEvent({
       delay: 5000,
@@ -2407,7 +2425,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   drawGinza() {
     this.ginzaRotationKey = Math.floor(Date.now() / GINZA_ROTATION_MS);
-    const listing = this.getGinzaActiveListing();
+    const storyShowroom = this.chapter08Arrival && this.ginzaRoom === 1 &&
+      !hasSeenCutscene(this.registry,'chapter08Ginza');
+    const listing = storyShowroom
+      ? GINZA_LISTINGS.find(item => item.carId === 'rwbStellaPorsche')
+      : this.getGinzaActiveListing();
+    this.chapter08Kaede = null;
     const locked = !ginzaVaultEligible(this.registry, isGinzaOwner(this.registry));
     const labels = ['', 'MOTOR GALLERY', 'PRESTIGE SALON', 'INVITATION VAULT'];
     this.drawNavigation(labels[this.ginzaRoom], this.ginzaRoom === 3
@@ -2426,7 +2449,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addVenueCharacter({ characterId: 'emiSaionji', pose: 'ginzaIdle',
         x: STAGE.x + 103, feetY: STAGE.y + 510, height: 244,
         shadowOffsetY: -18, depth: 16 });
-      this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
+      this.chapter08Kaede = this.addVenueCharacter({ characterId: 'kaedeTachibana', pose: 'ginzaIdle',
         x: STAGE.x + 285, feetY: STAGE.y + 512, height: 245,
         shadowOffsetX: 16, shadowOffsetY: -18, depth: 17 });
     } else {
@@ -2455,10 +2478,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       );
       carObjects.forEach(obj => this.addContent(obj));
       this.ginzaHeroObjects = carObjects;
-      const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 302,
-        670, 235, 0x000000, 0).setDepth(24)
-        .setInteractive({ useHandCursor: true }));
-      hit.on('pointerdown', () => this.showGinzaPurchase(listing, true));
+      if (!storyShowroom) {
+        const hit = this.addContent(this.add.rectangle(stageX, STAGE.y + 302,
+          670, 235, 0x000000, 0).setDepth(24)
+          .setInteractive({ useHandCursor: true }));
+        hit.on('pointerdown', () => this.showGinzaPurchase(listing, true));
+      }
     }
 
     // The full lower strip is now *only* navigation, in every room.
@@ -2489,7 +2514,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     });
 
-    if (listing) this.drawGinzaSide(listing);
+    if (listing && !storyShowroom) this.drawGinzaSide(listing);
   }
 
   drawGinzaSide(listing) {
