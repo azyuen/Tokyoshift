@@ -1,4 +1,5 @@
 import { CHAPTER08_SCENES } from './chapter08.js?v=20261017-r571';
+import { CHAPTER09_SCENES, CHAPTER09_SEQUENCE } from './chapter09.js?v=20261017-r577';
 
 const sourceValue = (source, key, fallback = null) => {
   if (source && typeof source.get === 'function') {
@@ -11,6 +12,7 @@ const sourceValue = (source, key, fallback = null) => {
 
 export const CUTSCENES = {
   ...CHAPTER08_SCENES,
+  ...CHAPTER09_SCENES,
   openingStationEncounter: {
     id: 'openingStationEncounter',
     category: 'OPENING / STORY',
@@ -1184,6 +1186,8 @@ export const CUTSCENE_ORDER = [
   'chapter08SayakaCall',
   'chapter08WarehouseFarewell',
   'chapter08Ginza',
+  ...CHAPTER09_SEQUENCE,
+  'chapter09SeasonRegistration',
   'ginzaInvitation',
   'ginzaHeroCarReveal',
   'proCircuitStrategistReveal',
