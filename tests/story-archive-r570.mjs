@@ -14,7 +14,7 @@ class FakeRegistry {
 }
 const seen=['openingDaichiAfterSayaka','centralTokyoUnlocked','firstRegionalChampion',
   'canalYardBiggerDreams','warehouseHqUnlocked','sevenRegionsConquered',
-  'fullCrewTogether','chapter08Ginza','chapter08RaceFinished'];
+  'fullCrewTogether','chapter08Ginza','chapter08RaceFinished','chapter09Welcome'];
 const profile={
   devMode:false,cutscenesSeen:seen,openingChapter:null,playerCharacterId:'renMizuno',
   firstName:'Young',lastName:'Driver',selectedCarId:'ae86',preferredCarId:'ae86',
@@ -32,9 +32,9 @@ function fakeScene(extra={},key='GarageScene'){
   return {registry,starts,scene:{start:(...args)=>starts.push(args)},
     sys:{settings:{key}}};
 }
-test('exactly eight public chapters, no micro cutscenes, and chapter-spoiler locks',()=>{
-  assert.equal(STORY_CHAPTERS.length,8);
-  assert.deepEqual(STORY_CHAPTERS.map(x=>x.id),Array.from({length:8},(_,i)=>'chapter0'+(i+1)));
+test('nine public chapters, no micro cutscenes, and chapter-spoiler locks',()=>{
+  assert.equal(STORY_CHAPTERS.length,9);
+  assert.deepEqual(STORY_CHAPTERS.map(x=>x.id),Array.from({length:9},(_,i)=>'chapter0'+(i+1)));
   assert.equal(availableStoryChapters(new FakeRegistry({
     cutscenesSeen:['openingDaichiAfterSayaka','centralTokyoUnlocked'],
     openingChapter:null,
