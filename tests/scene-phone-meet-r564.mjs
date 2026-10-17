@@ -30,7 +30,7 @@ test('scene 7 adds the Oshiage coaching reminder without spoiling Sayaka', () =>
 });
 
 test('phone actor portraits and chat panels are 30% larger and mirrored', () => {
-  assert.equal(OPENING_PHONE_DIALOGUE_LAYOUTS, PHONE_DIALOGUE_LAYOUTS);
+  assert.deepEqual(OPENING_PHONE_DIALOGUE_LAYOUTS, PHONE_DIALOGUE_LAYOUTS);
   const { left, right } = PHONE_DIALOGUE_LAYOUTS;
   assert.equal(left.face.width, 273);
   assert.equal(right.face.width, 273);
