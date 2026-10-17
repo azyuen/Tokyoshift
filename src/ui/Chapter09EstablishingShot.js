@@ -130,7 +130,7 @@ export function playChapter09RegoRoom(scene,{preview=false,onComplete=null,onCan
       img.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
       const source=img.getSourceImage();
       const targetHeight=h*entry.height/840;
-      const maxWidth=w*(mika?.118:right?.116:.12);
+      const maxWidth=w*(mika ? .118 : right ? .116 : .12);
       const scale=Math.min(targetHeight/Math.max(1,source.height),
         maxWidth/Math.max(1,source.width));
       const x=w*entry.x;
@@ -193,15 +193,15 @@ export function playChapter09RegoRoom(scene,{preview=false,onComplete=null,onCan
         // Active character steps forward visually without moving their feet.
         const target=id===speaker?1:.77;
         tween(actor.sprite,target,150);
-        tween(actor.shadow,id===speaker?.44:.3,150);
+        tween(actor.shadow,id===speaker ? .44 : .3,150);
       }
     }
     function setMika(visible){
       const actor=state.characters.get(MIKA.id);
       if(!actor||actor.visible===visible)return;
       actor.visible=visible;
-      tween(actor.sprite,visible?.84:0,750);
-      tween(actor.shadow,visible?.3:0,750);
+      tween(actor.sprite,visible ? .84 : 0,750);
+      tween(actor.shadow,visible ? .3 : 0,750);
     }
     function drawPage(){
       if(!state.active||state.phase!=='dialogue')return;
@@ -285,7 +285,7 @@ export function playChapter09RegoRoom(scene,{preview=false,onComplete=null,onCan
         saveSessionState(scene.registry);
       }
       removeDialogue();
-      tween(curtain,1,440).onComplete; // fade through the room, not back to strip
+      // The registration room stays visible until its final fade to black.
       scene.tweens.add({
         targets:curtain,alpha:1,duration:440,ease:'Sine.easeIn',
         onComplete:()=>{
