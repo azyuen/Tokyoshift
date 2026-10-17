@@ -1,10 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDefaultProCircuitState, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES } from '../src/data/proCircuit.js';
+import { createDefaultGameState } from '../src/state/GameState.js';
+import { recruitRandomDevCrew } from '../src/data/crewSystem.js';
 import {
   PRO_SEASON_LENGTH, getProQualification, getOpenCircuitTrophy, isOpenCircuitAvailable,
   finishOpenCircuitEvent, startProfessionalSeason, forfeitProfessionalSeason,
   completeSeasonRound, nextProfessionalSeason, settleLegacySeasonEvent,
+  getCrewSeriesUnits,registerCrewSeries,preparePlayerCrewFixture,getCrewFixture,getPlayerCrewHeat,
+  settlePlayerCrewHeat,settleCrewSeriesFixture,
 } from '../src/data/proSeason.js';
 
 test('new profiles start with a voluntary OPEN pre-season; migrated active seasons retain their round', () => {
@@ -96,4 +100,70 @@ test('legacy three-heat driver cup settles as open circuit without adding points
   assert.equal(c.openCircuitTick,1);
   assert.equal(c.lastTournament.openCircuit,true);
   assert.equal(c.lastTournament.cashPrize,50000);
+});
+
+test('a full standalone crew session charges once, drives three heats and earns no season points',()=>{
+  const data={...createDefaultGameState(),devMode:true,cash:500000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
+  const state=new Map(Object.entries(data));
+  const registry={get:key=>state.get(key),set:(key,value)=>state.set(key,value)};
+  recruitRandomDevCrew(registry,()=>.2);
+  const ids=getCrewSeriesUnits(registry).slice(0,3).map(x=>x.id);
+  const registration=registerCrewSeries(registry,ids);
+  assert.ok(registration.circuit,registration.error);
+  assert.equal(registration.cash,465000);
+  assert.equal(registration.circuit.activeCrewEvent.openCircuit,true);
+  registry.set('cash',registration.cash);
+  registry.set('proCircuit',registration.circuit);
+  let fixture=getCrewFixture(registry.get('proCircuit'));
+  const prepared=preparePlayerCrewFixture(registry,ids,fixture.id);
+  assert.ok(prepared.circuit,prepared.error);
+  registry.set('proCircuit',prepared.circuit);
+  for(let i=0;i<3;i++){
+    const heat=getPlayerCrewHeat(registry.get('proCircuit'));
+    assert.ok(heat);
+    const settled=settlePlayerCrewHeat(registry.get('proCircuit'),heat.id,
+      [{id:'player',finishSeconds:10,disqualified:false},
+       {id:'ai-1',finishSeconds:11,disqualified:false}]);
+    assert.equal(settled.status,'CREW_HEAT');
+    registry.set('proCircuit',settled.circuit);
+  }
+  fixture=getCrewFixture(registry.get('proCircuit'));
+  const complete=settleCrewSeriesFixture(registry.get('proCircuit'),fixture.id);
+  assert.equal(complete.status,'COMPLETE');
+  assert.equal(complete.circuit.calendar.round,0);
+  assert.equal(complete.circuit.playerTeam.seasonPoints,0);
+  assert.equal(complete.circuit.openCircuitTick,1);
+  assert.equal(complete.circuit.activeCrewEvent,null);
+  assert.equal(complete.cashPrize,70000);
+  assert.equal(complete.summary.openCircuit,true);
+  assert.equal(settleCrewSeriesFixture(complete.circuit,fixture.id).cashPrize,0);
+});
+
+test('minor trophy crew prize is awarded only on a clean three-heat win and rotates once',()=>{
+  const data={...createDefaultGameState(),devMode:true,cash:500000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
+  const m=new Map(Object.entries(data));
+  const registry={get:key=>m.get(key),set:(k,v)=>m.set(k,v)};
+  recruitRandomDevCrew(registry,()=>.2);
+  const circuit=registry.get('proCircuit');
+  circuit.minorTrophyIndex=2; // TRI-DRIVE // TEAM
+  const ids=getCrewSeriesUnits(registry).slice(0,3).map(x=>x.id);
+  const out=registerCrewSeries(registry,ids,{},'triDrive');
+  assert.ok(out.circuit,out.error);
+  assert.equal(out.cash,455000);
+  assert.equal(out.circuit.activeCrewEvent.trophyId,'triDrive');
+  registry.set('proCircuit',out.circuit);
+  const f=getCrewFixture(out.circuit);
+  registry.set('proCircuit',preparePlayerCrewFixture(registry,ids,f.id).circuit);
+  for(let i=0;i<3;i++){
+    const h=getPlayerCrewHeat(registry.get('proCircuit'));
+    registry.set('proCircuit',settlePlayerCrewHeat(registry.get('proCircuit'),h.id,
+      [{id:'player',finishSeconds:10,disqualified:false},
+       {id:'ai-1',finishSeconds:11,disqualified:false}]).circuit);
+  }
+  const ended=settleCrewSeriesFixture(registry.get('proCircuit'),f.id);
+  assert.equal(ended.cashPrize,90000);
+  assert.equal(ended.circuit.trophyWins.triDrive,1);
+  assert.equal(ended.circuit.minorTrophyIndex,3);
+  assert.equal(ended.circuit.minorTrophyCooldownUntil,3);
+  assert.equal(ended.circuit.playerTeam.seasonPoints,0);
 });
