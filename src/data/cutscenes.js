@@ -1214,6 +1214,8 @@ export const CUTSCENE_ORDER = [
   'tunerTeamCallout',
   'regionalCrewIntroduction',
   'crewRecruitmentInvite',
+  'crewRecruitmentJoin',
+  'crewRecruitmentAnswer',
   'tunerShopDiscovery',
   'regionalChampionVictory',
   'regionalPerfectVictory',
