@@ -17,6 +17,9 @@ test('registration screen uses existing paid registration callback with 3–5 di
       setFlipX(){return this;},
       setMask(){return this;},
       setFontSize(){return this;},
+      setAlpha(){return this;},
+      setTint(){return this;},
+      clearTint(){return this;},
       setInteractive(){this.interactive=true;return this;},
       on(name,callback){if(name==='pointerdown')this.click=callback;return this;},
     };
