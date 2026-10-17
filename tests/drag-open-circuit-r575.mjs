@@ -37,13 +37,16 @@ test('standalone races never score toward a season or advance its round', () => 
 
 test('each of five minor trophies rotates after a two-event cooldown and only wins award a trophy',()=>{
   let c=createDefaultProCircuitState();
+  c.season=3;
+  c.trophyWins.shutoSpeed=1;
+  c.trophyWins.tokyoTechnical=1;
   for(let index=0;index<PRO_CIRCUIT_TROPHIES.length;index++){
     const current=getOpenCircuitTrophy(c);
     assert.equal(current.id,PRO_CIRCUIT_TROPHIES[index].id);
     assert.equal(current.available,true);
-    const won=index%2===0;
+    const won=index%2===0,previous=c.trophyWins[current.id];
     c=finishOpenCircuitEvent(c,{id:'minor:'+index,trophyId:current.id,placing:won?1:2});
-    assert.equal(c.trophyWins[current.id],won?1:0);
+    assert.equal(c.trophyWins[current.id],previous+(won?1:0));
     assert.equal(c.minorTrophyIndex,(index+1)%5);
     assert.equal(getOpenCircuitTrophy(c).available,false);
     assert.equal(getOpenCircuitTrophy(c).eventsRemaining,2);
@@ -139,33 +142,77 @@ test('a full standalone crew session charges once, drives three heats and earns 
   assert.equal(settleCrewSeriesFixture(complete.circuit,fixture.id).cashPrize,0);
 });
 
-test('minor trophy crew prize is awarded only on a clean three-heat win and rotates once',()=>{
-  const data={...createDefaultGameState(),devMode:true,cash:500000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
+test('crew prestige trophy requires three full fixtures and never scores season points',()=>{
+  const data={...createDefaultGameState(),devMode:true,cash:600000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
   const m=new Map(Object.entries(data));
   const registry={get:key=>m.get(key),set:(k,v)=>m.set(k,v)};
   recruitRandomDevCrew(registry,()=>.2);
   const circuit=registry.get('proCircuit');
-  circuit.minorTrophyIndex=2; // TRI-DRIVE // TEAM
+  circuit.season=2;
+  circuit.minorTrophyIndex=3; // TEAM GRAND PRIX
   const ids=getCrewSeriesUnits(registry).slice(0,3).map(x=>x.id);
-  const out=registerCrewSeries(registry,ids,{},'triDrive');
+  const out=registerCrewSeries(registry,ids,{},'teamGrandPrix');
   assert.ok(out.circuit,out.error);
-  assert.equal(out.cash,455000);
-  assert.equal(out.circuit.activeCrewEvent.trophyId,'triDrive');
+  assert.equal(out.cash,500000);
+  assert.equal(out.circuit.activeCrewEvent.short,false);
   registry.set('proCircuit',out.circuit);
-  const f=getCrewFixture(out.circuit);
-  registry.set('proCircuit',preparePlayerCrewFixture(registry,ids,f.id).circuit);
-  for(let i=0;i<3;i++){
-    const h=getPlayerCrewHeat(registry.get('proCircuit'));
-    registry.set('proCircuit',settlePlayerCrewHeat(registry.get('proCircuit'),h.id,
-      [{id:'player',finishSeconds:10,disqualified:false},
-       {id:'ai-1',finishSeconds:11,disqualified:false}]).circuit);
+  for(let round=0;round<3;round++){
+    const f=getCrewFixture(registry.get('proCircuit'));
+    assert.equal(f.round,round);
+    const prepared=preparePlayerCrewFixture(registry,ids,f.id);
+    assert.ok(prepared.circuit,prepared.error);
+    registry.set('proCircuit',prepared.circuit);
+    for(let i=0;i<3;i++){
+      const h=getPlayerCrewHeat(registry.get('proCircuit'));
+      const settled=settlePlayerCrewHeat(registry.get('proCircuit'),h.id,
+        [{id:'player',finishSeconds:10,disqualified:false},{id:'ai-1',finishSeconds:11,disqualified:false}]);
+      assert.equal(settled.status,'CREW_HEAT');
+      registry.set('proCircuit',settled.circuit);
+    }
+    const ended=settleCrewSeriesFixture(registry.get('proCircuit'),f.id);
+    assert.equal(ended.status,round===2?'COMPLETE':'ADVANCED');
+    assert.equal(ended.circuit.calendar.round,0);
+    assert.equal(ended.circuit.playerTeam.seasonPoints,0);
+    registry.set('proCircuit',ended.circuit);
+    if(round===2){
+      assert.equal(ended.summary.placing,1);
+      assert.equal(ended.cashPrize,300000);
+      assert.equal(ended.circuit.trophyWins.teamGrandPrix,1);
+      assert.equal(ended.circuit.trophyHistory.at(-1).trophyId,'teamGrandPrix');
+      assert.equal(ended.circuit.openCircuitTick,1);
+      assert.equal(settleCrewSeriesFixture(ended.circuit,f.id).cashPrize,0);
+    }
   }
-  const ended=settleCrewSeriesFixture(registry.get('proCircuit'),f.id);
-  assert.equal(ended.cashPrize,90000);
-  assert.equal(ended.circuit.trophyWins.triDrive,1);
-  assert.equal(ended.circuit.minorTrophyIndex,3);
-  assert.equal(ended.circuit.minorTrophyCooldownUntil,3);
-  assert.equal(ended.circuit.playerTeam.seasonPoints,0);
+});
+
+test('early trophy rotation skips future invitations and Masters requires two different wins',()=>{
+  let c=createDefaultProCircuitState();
+  c.minorTrophyIndex=2;
+  assert.equal(getOpenCircuitTrophy(c).id,'shutoSpeed');
+  c.season=2;
+  assert.equal(getOpenCircuitTrophy(c).id,'triDrive');
+  c.minorTrophyIndex=4;
+  assert.equal(getOpenCircuitTrophy(c).id,'shutoSpeed');
+  c.season=3;
+  assert.equal(getOpenCircuitTrophy(c).id,'shutoSpeed');
+  c.trophyWins.shutoSpeed=2;
+  c.trophyWins.tokyoTechnical=1;
+  assert.equal(getOpenCircuitTrophy(c).id,'tokyoMasters');
+});
+
+test('Tri-Drive registration rejects squads without FWD, RWD and AWD',()=>{
+  const data={...createDefaultGameState(),devMode:true,cash:600000,ownedCarIds:['ae86'],selectedCarId:'ae86'};
+  const m=new Map(Object.entries(data));
+  const registry={get:key=>m.get(key),set:(k,v)=>m.set(k,v)};
+  recruitRandomDevCrew(registry,()=>.2);
+  const c=registry.get('proCircuit');c.season=2;c.minorTrophyIndex=2;
+  const units=getCrewSeriesUnits(registry);
+  const ids=units.slice(0,3).map(u=>u.id);
+  const out=registerCrewSeries(registry,ids,{},'triDrive');
+  const drives=ids.map(id=>units.find(u=>u.id===id).drivetrain).map(x=>({FF:'FWD',FR:'RWD'}[x]||x));
+  if(new Set(drives).size===3&&['FWD','RWD','AWD'].every(d=>drives.includes(d)))
+    assert.ok(out.circuit,out.error);
+  else assert.equal(out.error,'TRI-DRIVE NEEDS ONE FWD, ONE RWD AND ONE AWD CAR');
 });
 
 test('legacy first-round official duel is preserved rather than interpreted as open-circuit registration',()=>{

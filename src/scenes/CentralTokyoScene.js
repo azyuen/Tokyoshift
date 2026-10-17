@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261017-r575';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r581';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r584';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r584';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r583';
 import { saveProTransaction } from '../state/GameState.js?v=20261014-r501';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -41,7 +41,7 @@ import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js
 import { getEncounterAi } from '../data/encounterProfiles.js?v=20260921-r76';
 import {
   getProCircuitAccess, getProCircuitDriverSeeds, normaliseProCircuitState, PRO_CIRCUIT_TROPHIES,
-} from '../data/proCircuit.js?v=20261017-r575';
+} from '../data/proCircuit.js?v=20261018-r584';
 import {
   FOUR_WIDE_CUP, createFourWideTournament, getPlayerProHeat,
 } from '../data/proTournament.js?v=20261009-r447';
@@ -2795,10 +2795,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
       const crewTrophy=['TEAM','MIXED'].includes(trophy.discipline);
       const trophyBase=PRO_DRAG_EVENTS[2];
       const special={...trophyBase,id:trophy.id,label:trophy.label,trophyId:trophy.id,
-        team:crewTrophy,requiredWins:0,openCircuit:true,entryFee:OPEN_CIRCUIT_TROPHY_FEE,
-        prizeCash:OPEN_CIRCUIT_TROPHY_PRIZE,trophyCooldown:trophy.eventsRemaining,
-        // These are minor, single-event versions of the planned prestige trophies.
-        ...(trophy.id==='tokyoTechnical'?{maxPowerKW:260,noNos:true}:{})};
+        team:crewTrophy,requiredWins:0,openCircuit:true,entryFee:trophy.entryFee,
+        prizeCash:trophy.firstWin?trophy.prizeCash:trophy.repeatCash,
+        trophyCooldown:trophy.eventsRemaining,trophyDescription:trophy.description,
+        trophyFixtures:trophy.fixtures,trophyFormat:trophy.format,
+        trophyStages:trophy.stages||[],
+        opponentRatings:crewTrophy?trophyBase.opponentRatings:[4,4,5,5,5],
+        maxPowerKW:trophy.maxPowerKW||undefined,noNos:Boolean(trophy.noNos)};
       const choices=[driver,crew,special];
       if(legacy?.active&&legacy.proEvent&&legacy.openCircuit){
         const activeCard=legacy.openTrophyId?2:0;
@@ -2808,7 +2811,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
             (PRO_DRAG_EVENTS.find(e=>e.id===legacy.eventId)?.label||legacy.eventId),
           trophyId:legacy.openTrophyId||null,team:false,
           entryFee:legacy.entryFee,prizeCash:legacy.prizeCash,trophyCooldown:0,
-          maxPowerKW:legacy.maxPowerKW||choices[activeCard].maxPowerKW};
+          trophyFixtures:legacy.rounds?.length||choices[activeCard].trophyFixtures,
+          trophyDescription:legacy.openTrophyId&&legacy.rounds?.length===3?
+            'LEGACY THREE-ROUND TROPHY // SAVED EVENT':choices[activeCard].trophyDescription,
+          maxPowerKW:legacy.maxPowerKW??choices[activeCard].maxPowerKW};
       }
       if(pro.activeCrewEvent?.trophyId){
         choices[2]={...choices[2],id:pro.activeCrewEvent.trophyId,label:pro.activeCrewEvent.label,
@@ -2989,7 +2995,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophyId ? (event.trophyCooldown?'COOLDOWN // '+event.trophyCooldown+' EVENTS LEFT':'MINOR TROPHY // OWNED '+proCircuitTrophyWins(this.registry,event.trophyId)) : event.openCircuit ? 'ONE-OFF // NO SEASON POINTS' : event.team ? 'CREW POINTS // 20 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES · WON '+proCircuitTrophyWins(this.registry,event.trophyId)) : event.openCircuit ? 'ONE-OFF // NO SEASON POINTS' : event.team ? 'CREW POINTS // 20 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3197,8 +3203,20 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ];
 
     if (openCircuit) {
-      desc.splice(1,0,event.trophyId?'MINOR TROPHY // ONE-OFF CHALLENGE':'INDEPENDENT PROFESSIONAL EVENT');
-      if(event.trophyId)desc.push('TROPHIES WON  '+proCircuitTrophyWins(this.registry,event.trophyId));
+      if(event.trophyId){
+        const progress=activeDuelHere&&activeDuel?.openTrophyId
+          ?Number(activeDuel.roundIndex||0)+1:1;
+        desc.length=0;
+        desc.push('PRESTIGE TROPHY // NO SEASON POINTS',
+          event.trophyDescription||'INVITATIONAL CHAMPIONSHIP',
+          'STAGE '+progress+'/'+(event.trophyFixtures||5)+' // WIN TO ADVANCE',
+          'ELIMINATION ON DEFEAT // SAVED BETWEEN HEATS',
+          event.maxPowerKW?'POWER CEILING  '+event.maxPowerKW+' KW':'UNRESTRICTED POWER',
+          'NOS  '+(event.noNos?'PROHIBITED':'ALLOWED'),
+          'CHAMPION  '+money(event.prizeCash),
+          'ENTRY  '+money(event.entryFee),
+          'TROPHIES WON  '+proCircuitTrophyWins(this.registry,event.trophyId));
+      } else desc.splice(1,0,'INDEPENDENT PROFESSIONAL EVENT');
     }
     if (!resuming && seasonRules) {
       desc.splice(1, 0, 'ROUND ' + (pro.calendar.round + 1) + '/8 // ' + seasonRules.format.replaceAll('_', ' '));
@@ -3412,7 +3430,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ? [...genericFill.slice(lineupOffset % genericFill.length),
          ...genericFill.slice(0, lineupOffset % genericFill.length)]
       : [];
-    const rivals = [...rotatedMigrated, ...genericOrder].slice(0, 3);
+    const rivals = [...rotatedMigrated, ...genericOrder].slice(0, event.trophyId ? 5 : 3);
 
     const rounds = event.opponentRatings.map((rating, index) => {
       const characterId = rivals[index % rivals.length];
@@ -3453,6 +3471,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       proEvent: true,
       proSeasonId: (openCircuit?'open:':'duel:') + event.id + ':s' + pro.season + ':e' + (pro.eventTick + 1),
       openCircuit,openTrophyId:event.trophyId||null,
+      trophyStages:event.trophyStages||null,
       eventId: event.id,
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,

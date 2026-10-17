@@ -26,12 +26,15 @@ const GENERIC_TEAM_NAMES = Object.freeze([
   'Streetline Engineering', 'Blue Arc', 'Midnight Theory', 'Vertex Motorsport',
 ]);
 
+// These are persistent standalone championships, not short season events.
+// Drivers contest five live knockout stages; crews contest three full fixtures
+// (nine personally driven heats). Masters changes racing format by fixture.
 export const PRO_CIRCUIT_TROPHIES = Object.freeze([
-  Object.freeze({ id: 'shutoSpeed', label: 'SHUTO SPEED TROPHY', discipline: 'DRIVER', format: 'FIVE_FIXTURE', restriction: 'OPEN', fixtures: 5 }),
-  Object.freeze({ id: 'tokyoTechnical', label: 'TOKYO TECHNICAL TROPHY', discipline: 'DRIVER', format: 'FIVE_FIXTURE', restriction: 'POWER_CLASS_NOS_OFF', fixtures: 5 }),
-  Object.freeze({ id: 'triDrive', label: 'TRI-DRIVE TROPHY', discipline: 'TEAM', format: 'FIVE_FIXTURE', restriction: 'DRIVETRAIN_DIVERSITY', fixtures: 5 }),
-  Object.freeze({ id: 'teamGrandPrix', label: 'TEAM GRAND PRIX TROPHY', discipline: 'TEAM', format: 'FIVE_FIXTURE', restriction: 'OPEN', fixtures: 5 }),
-  Object.freeze({ id: 'tokyoMasters', label: 'TOKYO MASTERS TROPHY', discipline: 'MIXED', format: 'FIVE_FIXTURE', restriction: 'MIXED', fixtures: 5 }),
+  Object.freeze({ id:'shutoSpeed',label:'SHUTO SPEED TROPHY',discipline:'DRIVER',format:'FIVE_ROUND_KNOCKOUT',restriction:'OPEN',fixtures:5,season:1,entryFee:75000,prizeCash:230000,repeatCash:85000,description:'OPEN-CLASS SPEED GAUNTLET · FIVE KNOCKOUTS',stages:['QUALIFYING','ELIMINATION I','ELIMINATION II','SEMIFINAL','GRAND FINAL'] }),
+  Object.freeze({ id:'tokyoTechnical',label:'TOKYO TECHNICAL TROPHY',discipline:'DRIVER',format:'FIVE_ROUND_KNOCKOUT',restriction:'POWER_CLASS_NOS_OFF',fixtures:5,season:1,entryFee:65000,prizeCash:215000,repeatCash:80000,maxPowerKW:260,noNos:true,description:'260 KW MAX · NO NOS · FIVE STAGES',stages:['SCRUTINEERING','QUALIFYING','ELIMINATION','SEMIFINAL','PRECISION FINAL'] }),
+  Object.freeze({ id:'triDrive',label:'TRI-DRIVE TROPHY',discipline:'TEAM',format:'THREE_FIXTURE_SERIES',restriction:'DRIVETRAIN_DIVERSITY',fixtures:3,season:2,entryFee:85000,prizeCash:265000,repeatCash:90000,description:'THREE FIXTURES · FWD + RWD + AWD',formats:['DUEL','DUEL','DUEL'] }),
+  Object.freeze({ id:'teamGrandPrix',label:'TEAM GRAND PRIX TROPHY',discipline:'TEAM',format:'THREE_FIXTURE_SERIES',restriction:'OPEN',fixtures:3,season:2,entryFee:100000,prizeCash:300000,repeatCash:100000,description:'THREE FULL 3V3 FIXTURES · NINE HEATS',formats:['DUEL','DUEL','DUEL'] }),
+  Object.freeze({ id:'tokyoMasters',label:'TOKYO MASTERS TROPHY',discipline:'MIXED',format:'THREE_FIXTURE_GAUNTLET',restriction:'MIXED',fixtures:3,season:3,requiredTrophies:2,entryFee:125000,prizeCash:375000,repeatCash:125000,description:'INVITATIONAL · DUEL / RELAY / FOUR-WIDE',formats:['DUEL','RELAY','FOUR_WIDE'] }),
 ]);
 
 export const PRO_CIRCUIT_CHAMPIONSHIPS = Object.freeze([
@@ -139,6 +142,7 @@ export function createDefaultProCircuitState() {
     activeChampionship: null,
     championshipHistory: [],
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [t.id, 0])),
+    trophyHistory: [],
     championshipWins: { DRIVER: 0, TEAM: 0 },
   };
 }
@@ -212,6 +216,7 @@ export function normaliseProCircuitState(raw) {
     trophyWins: Object.fromEntries(PRO_CIRCUIT_TROPHIES.map(t => [
       t.id, boundedInteger(trophies[t.id], 0, 0, 10000),
     ])),
+    trophyHistory: Array.isArray(source.trophyHistory) ? source.trophyHistory.filter(h => h && typeof h.id === 'string' && PRO_CIRCUIT_TROPHIES.some(t=>t.id===h.trophyId)).slice(-100) : [],
     championshipWins: {
       DRIVER: boundedInteger(championships.DRIVER, 0, 0, 10000),
       TEAM: boundedInteger(championships.TEAM, 0, 0, 10000),
