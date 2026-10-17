@@ -541,6 +541,19 @@ export default class GarageScene extends Phaser.Scene {
       )
     );
 
+    // This Phaser Scene instance is recycled when a chapter replay restarts
+    // Warehouse HQ. Old GameObject references remain on 'this' even though
+    // Phaser destroys their input and canvas on shutdown. Clear all controls
+    // that are rebuilt later in create() BEFORE the garage strip first calls
+    // updateGarageNavState(); otherwise setColor/disableInteractive on a
+    // destroyed object throws and aborts the entire chapter.
+    this.moveCarButton = null;
+    this.moveCarLabel = null;
+    this.garagePrevButton = null;
+    this.garagePrevLabel = null;
+    this.garageNextButton = null;
+    this.garageNextLabel = null;
+
     this.selectedDisplay = [];
     this.crewStageObjects = [];
     this.crewFocusedCharacterId = null;
@@ -1975,7 +1988,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   updateMoveCarButtonState() {
-    if (!this.moveCarButton || !this.moveCarLabel) return;
+    if (!this.moveCarButton?.active || !this.moveCarLabel?.active) return;
     const warehouse = this.getActiveWorkshop().tier === 2;
     const eligible = warehouse && Boolean(this.selectedCarId) &&
       !this.isSelectedCarTuningLocked() &&
