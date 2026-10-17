@@ -1,9 +1,9 @@
 // R577 — Chapter 09 opens at the real Drag Complex. A separate preview
 // uses the same manga renderer without changing career saves.
-import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r577';
+import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
-import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r577';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r577';
+import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r578';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r578';
 
 export function chapter09ShouldBegin(source){
   return hasSeenCutscene(source,'chapter08Ginza') &&
