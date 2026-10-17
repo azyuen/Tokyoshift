@@ -40,7 +40,13 @@ export function startChapter08Warehouse(scene, { preview = false, onPreviewCompl
       WAREHOUSE_BEATS.find(id => !hasSeenCutscene(scene.registry, id));
     if (!sceneId) {
       if (preview && !interactiveReplay) onPreviewComplete?.();
-      else openChapter08Map(scene);
+      else if(interactiveReplay && scene.registry.get('__chapter08ReplaySkipRace')){
+        // Story-only repeat viewing: real Ginza room and character reveal,
+        // but no need to drive the RWB challenge again.
+        scene.scene.start('CentralTokyoScene',{
+          locationId:'ginzaMotorGallery',ginzaRoom:1,chapter08Arrival:true,
+        });
+      } else openChapter08Map(scene);
       return;
     }
     const result = playMangaCutscene(scene, sceneId, {
