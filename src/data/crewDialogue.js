@@ -64,6 +64,13 @@ export const CREW_INVITE_DIALOGUE = Object.freeze({
 });
 
 const CREW_JOIN_LINES = Object.freeze({
+  daigoArakawa: "You have a captain's nerve. I want to see how far we can take this together.",
+  kazuoTanaka: "I've raced these streets for years. You're someone worth following.",
+  masatoIshikawa: "My pride can take a loss when it's that deserved. Shall we race together?",
+  itsukiKuroda: "So that's what real speed looks like! Hey, save a spot in your crew for me.",
+  tetsuNakahara: "That was controlled from launch to finish. I'll bring my experience if you'll take me.",
+  reikaTachibana: "You didn't just beat me—you made me want to get better. Can I join your team?",
+  takumiSerizawa: "You've got the right instincts. I'd be honoured to drive for your crew.",
   aoiShindou: "That wasn't luck. You're the real deal. Let me join your crew.",
   yutoAsakura: "You made every shift count. I'd be proud to race alongside you.",
   mikaHoshino: "Okay, wow. You've convinced me! Got room on your team?",
