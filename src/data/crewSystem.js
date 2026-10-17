@@ -392,8 +392,10 @@ export function resetCrewRecruitmentAfterLoss(registry, challenge) {
   };
   store.GLOBAL = { eligibleWinsSinceInvite: 0 };
   registry.set('crewRecruitmentState', store);
-  clearCrewInviteInterest(registry, region);
-  clearCrewRecruitChallenge(registry, region);
+  // A hard reset applies to the whole recruitment queue, not merely to the
+  // region where the loss occurred. Regional crew membership is unaffected.
+  clearCrewInviteInterest(registry);
+  clearCrewRecruitChallenge(registry);
 }
 
 export function createCrewInviteFromMeetWin(
