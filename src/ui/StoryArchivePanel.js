@@ -128,8 +128,11 @@ export function showStoryArchivePanel(scene) {
     back.on('pointerdown',discardDetail);
   };
   chapters.forEach((chapter,i)=>{
-    const x=i<4?449:1111;
-    const y=214+(i%4)*133;
+    // Five rows left and four right: nine chapters must have distinct,
+    // accessible hitboxes (the old 4-row grid overlaid Chapter 09 on Chapter 05).
+    const leftColumn=i<5;
+    const x=leftColumn?449:1111;
+    const y=210+(leftColumn?i:i-5)*123;
     const available=chapter.completed;
     const title=available?chapter.title.toUpperCase():'???';
     const subtitle=available?chapter.subtitle:'Complete this chapter to unlock replay';
