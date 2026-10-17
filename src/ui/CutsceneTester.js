@@ -171,7 +171,10 @@ function chooseChapter08Mode(scene) {
     add(scene.add.text(x,448,label,{
       fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+4).setScrollFactor(0));
-    rect.on('pointerdown',()=>{close();action();});
+    rect.on('pointerdown',()=>{
+      rect.disableInteractive();
+      window.setTimeout(()=>{close();action();},0);
+    });
   };
   button(588,'DIALOGUE PREVIEW', () => {
     const previewGinza=()=>{
