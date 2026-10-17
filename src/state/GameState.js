@@ -1138,7 +1138,8 @@ export function normaliseState(input = {}) {
     ginzaVaultInvited: Boolean(input.ginzaVaultInvited),
     ginzaVaultOwnerWelcomed: Boolean(input.ginzaVaultOwnerWelcomed),
     ginzaTestDrive: input.ginzaTestDrive?.carId && String(input.ginzaTestDrive.carId).startsWith('ginzaDemo_')
-      ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || '') }
+      ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || ''),
+          previousPreferredId: String(input.ginzaTestDrive.previousPreferredId || '') }
       : null,
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&

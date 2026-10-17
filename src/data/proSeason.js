@@ -285,7 +285,14 @@ export function nextProfessionalSeason(raw) {
   if(c.calendar.round<PRO_SEASON_LENGTH||c.activeTournament||c.activeCrewEvent||c.activeTimedEvent||(getProQualification(c).qualified&&!c.activeChampionship)||(c.activeChampionship&&!c.activeChampionship.completed))return {error:'FINISH THE CURRENT SEASON OR CHAMPIONSHIP'};
   const result=c.calendar.result||{season:c.season,drivers:getSeasonStandings(c),teams:getSeasonStandings(c,'TEAM')};
   c.calendar={round:0,history:[],result:null,archives:[...c.calendar.archives,result].slice(-20)};
-  if(c.activeChampionship?.completed)c.activeChampionship=null;
+  if(c.activeChampionship?.completed){
+    // Keep completed championship results across seasons. Ginza vault access
+    // must not vanish after the next professional calendar begins.
+    c.championshipHistory = [...(c.championshipHistory || []),
+      { season:c.activeChampionship.season, completed:true,
+        championId:c.activeChampionship.championId }].slice(-20);
+    c.activeChampionship=null;
+  }
   c.season++;
   for(const row of [c.playerDriver,c.playerTeam,...Object.values(c.drivers),...Object.values(c.teams)])row.seasonPoints=0;
   return {circuit:c};
