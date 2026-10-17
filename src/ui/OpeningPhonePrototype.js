@@ -1,9 +1,9 @@
-// Opening-only prototype for the phone-call choreography. Other authored
-// phone scenes continue to use PhoneConversation until this design is approved.
+// Animated ringing/pick-up renderer for all authored swipe-style phone calls.
+// Shares the same global backdrop/icon template as PhoneConversation.
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
-import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS } from './RaceCoachHud.js?v=20261017-r564';
+import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop } from './RaceCoachHud.js?v=20261017-r572';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -191,8 +191,9 @@ export function playOpeningPhonePrototype(scene, {
   const showIncoming = () => {
     if (!state.active) return;
     state.phase = 'ringing';
-    own(scene.add.rectangle(780, 420, 1560, 840,
-      0x0b1524, 0.65).setDepth(DEPTH).setScrollFactor(0).setInteractive());
+    // One persistent translucent veil for ringing AND conversation. The
+    // pickup clears only the ringing sprites, never the background veil.
+    own(createPhoneCallBackdrop(scene,{depth:DEPTH}));
     own(scene.add.text(780, 158, 'INCOMING CALL', {
       fontFamily: PIXEL, fontSize: '26px', color: '#ebfaff',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH + 4));
