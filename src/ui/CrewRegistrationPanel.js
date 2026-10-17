@@ -1,4 +1,4 @@
-// R581 — professional paddock crew registration. Purely presentational:
+// R587 — standard three-panel professional crew registration. Purely presentational:
 // the authoritative selection, eligibility and payment remain in ProSeasonPanel.
 import { cars } from '../data/cars.js?v=20261017-r565';
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r578';
@@ -81,15 +81,22 @@ export function showCrewRegistrationScreen(s,options) {
 
 function drawScreen(s,options) {
   s._proOverlayClose?.();
-  const selected=(options.selection||[]).filter(id=>options.units.some(u=>u.id===id)).slice(0,5);
-  const units=options.units, nodes=[], masks=[];
+  const units=options.units||[];
+  const selected=(options.selection||[]).filter(id=>units.some(u=>u.id===id)).slice(0,5);
+  const nodes=[], masks=[];
+  const STAGE={x:24,y:92,w:1138,h:528};
+  const SIDE={x:1180,y:92,w:356,h:724};
+  const CARDS={x:24,y:636,w:1138,h:180};
   let closed=false;
   const add=item=>{nodes.push(item);return item;};
+  // Match MeetScene / CentralTokyoScene font families and their post-zoom sizes.
   const txt=(x,y,value,size=17,color=WHITE,extra={})=>add(s.add.text(x,y,String(value),{
     fontFamily:BODY,fontSize:size+'px',fontStyle:'600',color,...extra,
   }).setDepth(230).setFontSize(size));
-  const rect=(x,y,w,h,fill=PANEL,a=1,stroke=0x264557,depth=208)=>
-    add(s.add.rectangle(x,y,w,h,fill,a).setStrokeStyle(1,stroke).setDepth(depth));
+  const caption=(x,y,value,size=12,color=WHITE,extra={})=>
+    txt(x,y,value,size,color,{fontFamily:PIXEL,...extra});
+  const rect=(x,y,w,h,fill=PANEL,a=1,stroke=0x264557,depth=208,lineWidth=1)=>
+    add(s.add.rectangle(x,y,w,h,fill,a).setStrokeStyle(lineWidth,stroke).setDepth(depth));
   const shapeMask=(x,y,w,h)=>{
     const g=s.make.graphics({add:false});
     g.fillStyle(0xffffff,1).fillRect(x,y,w,h);
@@ -111,143 +118,158 @@ function drawScreen(s,options) {
     showCrewRegistrationScreen(s,{...options,selection:next});
   };
   const click=(x,y,w,h,label,fn,{enabled=true,emphasis=false}={})=>{
-    const b=rect(x,y,w,h,enabled?(emphasis?0x672330:0x102331):0x242a31,
-      1,enabled?(emphasis?0xef6875:0x345b72):0x4c555c,224);
+    const b=rect(x,y,w,h,enabled?(emphasis?0x5c1b25:0x102138):0x17202b,
+      1,enabled?(emphasis?0xd54a54:0x55b8ff):0x53616e,225,2);
     if(enabled)b.setInteractive({useHandCursor:true}).on('pointerdown',fn);
-    const title=txt(x,y,label,17,enabled?'#fff2ee':'#929fa7',{fontStyle:'700'});
-    title.setOrigin(.5);
-    if(title.width>w-12)title.setScale((w-12)/title.width);
+    const t=caption(x,y,label,10,enabled?'#eef8ff':'#99a4af',{fontStyle:'600'});
+    t.setOrigin(.5);
+    if(t.width>w-14)t.setScale((w-14)/t.width);
     return b;
   };
 
-  // Dark standard UI shell, cinematic background restricted to the left stage.
-  rect(W/2,H/2,W,H,0x030b14,1,0x030b14,200).setInteractive();
+  // The exact standard three rectangles, borders and gap geometry shared by
+  // MeetScene and CentralTokyoScene. Keep the usual 1560×840 game canvas.
+  rect(W/2,H/2,W,H,0x050912,1,0x050912,200).setInteractive();
+  rect(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h/2,STAGE.w,STAGE.h,
+    0x08121d,1,0x24475f,201,2);
+  rect(SIDE.x+SIDE.w/2,SIDE.y+SIDE.h/2,SIDE.w,SIDE.h,
+    0x07111d,.99,0x17354d,209,2);
+  rect(CARDS.x+CARDS.w/2,CARDS.y+CARDS.h/2,CARDS.w,CARDS.h,
+    0x07111d,.99,0x17354d,209,2);
+
+  // The room used to stretch to the entire 1560×840 window and only show a
+  // 980px crop. Cover-scale it into the STANDARD main panel: ~27% zoom-out
+  // for the 1536×864 source while keeping every edge filled.
+  const stageMask=shapeMask(STAGE.x,STAGE.y,STAGE.w,STAGE.h);
   const key=roomAsset(s).key;
   if(s.textures.exists(key)) {
-    const image=add(s.add.image(W/2,H/2,key).setDepth(201));
-    image.setDisplaySize(W,H);
-    s.textures.get(key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    image.setMask(shapeMask(22,83,980,512));
+    const tex=s.textures.get(key),source=tex.getSourceImage();
+    tex.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+    const room=add(s.add.image(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h/2,key)
+      .setDepth(202));
+    room.setScale(Math.max(STAGE.w/Math.max(1,source.width),
+      STAGE.h/Math.max(1,source.height)));
+    room.setMask(stageMask);
   }
-  rect(511,339,978,512,0x020815,.19,0x2c4b62,203);
-  // Establish a professional circuit graphic language without baking any UI
-  // into the background PNG.
-  rect(W/2,39,W,78,0x060e1b,.98,0x30516b,214);
-  rect(19,39,38,78,0xd14054,.92,0xd14054,215).setAngle(19);
-  txt(64,18,'PRO DRAG CIRCUIT',28,WHITE,{fontFamily:PIXEL});
-  txt(450,15,'CREW CLUB SPRINT',19,WHITE,{fontFamily:PIXEL});
-  txt(450,46,'REGISTRATION  //  TOKYO DRAG COMPLEX',14,'#f47d89',{fontFamily:PIXEL});
-  rect(254,151,449,116,0x06111c,.89,0xd54b62,220);
-  txt(48,102,options.trophyId?'PRESTIGE TROPHY // TEAM REGISTRATION':'CREW CLUB SPRINT',21,'#ff7e8d',{fontFamily:PIXEL});
-  txt(48,143,options.trophyId==='triDrive'?'REGISTER ONE FWD, ONE RWD AND ONE AWD DRIVER.':'REGISTER 3–5 CREW CARS. YOU DRIVE ALL THREE FIXTURES.',17,WHITE);
-  txt(48,172,'UPGRADE YOUR CREW CARS BETWEEN FIXTURES.',16,'#d5e0e7');
+  rect(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h/2,STAGE.w,STAGE.h,
+    0x020812,.11,0x020812,203).setMask(stageMask);
 
-  // Cast art stays independent of the environment, so any avatar and day/night
-  // phase will display the same scene. Hiroshi is the strict chief starter.
+  // Standard top-of-screen title treatment (rather than an oversized banner).
+  caption(34,29,'TOKYO DRAG COMPLEX',19,'#f0e9e9');
+  caption(531,28,options.trophyId?'CREW TROPHY REGISTRATION':'CREW CLUB SPRINT',14,'#e78690');
+  txt(532,51,'OFFICIAL TEAM REGISTRATION',14,'#b8cad6');
+  caption(1197,34,'SQUAD SELECTION',12,'#b9d2e0');
+
+  // Room briefing is subtle; leave the characters as part of the environment.
+  rect(356,149,624,92,0x05111c,.77,0x29445b,211);
+  caption(56,108,options.trophyId?'CREW TROPHY // REGISTRATION':'CREW CLUB SPRINT',15,'#ff9ca5');
+  txt(56,142,options.trophyId==='triDrive'
+    ?'FIELD ONE FWD, ONE RWD AND ONE AWD DRIVER.'
+    :'REGISTER 3–5 CREW DRIVERS. YOU DRIVE EVERY HEAT.',18,WHITE);
+  txt(56,167,'CREW CARS CAN BE UPGRADED BETWEEN FIXTURES.',15,'#d2e1e9');
+
+  // Unlabelled cast, distributed naturally across room depth/foreground.
+  // Feet positions and differing heights avoid the original police-lineup look.
   const protagonist=s.registry.get('playerCharacterId')||'renMizuno';
   const cast=[
-    {id:'sayakaFujieda',pose:'track',x:150,height:236,label:'SAYAKA'},
-    {id:'daichiSakamoto',pose:'idle',x:372,height:222,label:'DAICHI'},
-    {id:protagonist,pose:'idle',x:588,height:235,label:'YOU'},
-    {id:'hiroshiSato',pose:'focus',x:818,height:252,label:'CHIEF STARTER'},
+    {id:'sayakaFujieda',pose:'track',x:161,feetY:568,height:237},
+    {id:'daichiSakamoto',pose:'idle',x:413,feetY:602,height:218},
+    {id:protagonist,pose:'idle',x:689,feetY:580,height:234},
+    {id:'hiroshiSato',pose:'focus',x:991,feetY:607,height:249},
   ];
   for(const person of cast) {
     const asset=getCharacterVisualAsset(person.id,person.pose,{playerCharacterId:protagonist});
     if(!asset?.key||!s.textures.exists(asset.key))continue;
-    const tex=s.textures.get(asset.key), source=tex.getSourceImage();
+    const tex=s.textures.get(asset.key),source=tex.getSourceImage();
     tex.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const scale=Math.min(person.height/Math.max(1,source.height),
-      196/Math.max(1,source.width));
-    add(s.add.ellipse(person.x,573,115,18,0x000000,.4).setDepth(207));
-    add(s.add.image(person.x,575,asset.key).setOrigin(.5,1)
-      .setScale(scale).setDepth(211));
-    rect(person.x,581,157,25,0x05111e,.83,0x294458,216);
-    txt(person.x,570,person.label,12,'#dceaf4',{fontFamily:PIXEL}).setOrigin(.5,0);
+      193/Math.max(1,source.width));
+    add(s.add.ellipse(person.x,person.feetY-3,111,15,0x000000,.36)
+      .setDepth(210).setMask(stageMask));
+    add(s.add.image(person.x,person.feetY,asset.key).setOrigin(.5,1)
+      .setScale(scale).setDepth(212).setMask(stageMask));
   }
+  // Border redraw keeps all actor silhouettes inside their standard window.
+  rect(STAGE.x+STAGE.w/2,STAGE.y+STAGE.h/2,STAGE.w,STAGE.h,
+    0x000000,0,0x24475f,232,2);
 
-  // Scroll-free seven-driver registry; entire rows are tappable. Portraits
-  // use the game's canonical face-anchor renderer and modular car previews.
-  rect(1272,433,536,704,0x051522,.97,0x376079,210);
-  txt(1027,101,'SELECT CREW DRIVERS',19,WHITE,{fontFamily:PIXEL});
-  txt(1520,105,'SELECT 3–5',14,'#ef788b').setOrigin(1,0);
+  // Side list is unchanged in content: checkbox, face, driver, car spec, and
+  // cropped front bonnet/window artwork. It is compacted to SIDE.w = 356.
+  caption(SIDE.x+17,SIDE.y+18,'SELECT CREW DRIVERS',12,WHITE);
+  txt(SIDE.x+18,SIDE.y+47,'SELECT 3–5',15,'#f3a0a8');
   const carStates=s.registry.get('carStates')||{};
   units.slice(0,7).forEach((u,i)=>{
-    const y=151+i*79,chosen=selected.includes(u.id);
-    const row=rect(1271,y+30,509,74,chosen?0x213443:0x081e2d,.98,
-      chosen?0xf26072:0x315165,215);
+    const y=SIDE.y+106+i*76,chosen=selected.includes(u.id);
+    const rowX=SIDE.x+SIDE.w/2;
+    const row=rect(rowX,y,324,70,chosen?0x213443:0x081e2d,.98,
+      chosen?0xe86174:0x315165,214);
     row.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
       if(chosen)refresh(selected.filter(id=>id!==u.id));
       else if(selected.length<5)refresh([...selected,u.id]);
     });
-    rect(1035,y+30,24,24,chosen?0xc33c51:0x08131f,1,0xe45768,218);
-    if(chosen)txt(1026,y+15,'✓',24,'#fff3f3');
-    rect(1104,y+30,71,65,0x152334,1,0x314962,217);
+    rect(SIDE.x+33,y,19,19,chosen?0xc33c51:0x08131f,1,0xe45768,217);
+    if(chosen)txt(SIDE.x+22,y-13,'✓',23,'#fff3f3');
+    rect(SIDE.x+75,y,53,59,0x152334,1,0x314962,216);
     const p=createCharacterProfile(s,{
-      characterId:u.id,pose:'idle',x:1104,y:y+30,
-      frameWidth:69,frameHeight:63,depth:218,playerCharacterId:protagonist,
+      characterId:u.id,pose:'idle',x:SIDE.x+75,y,
+      frameWidth:51,frameHeight:57,depth:218,playerCharacterId:protagonist,
     });
     if(p)add(p);
-    const c=cars[u.carId];
-    const carLabel=c?.shortName||u.carId;
-    const who=txt(1150,y+2,u.name,18,WHITE,{fontStyle:'700'});
-    if(who.width>172)who.setScale(172/who.width);
-    const short=txt(1150,y+27,carLabel,15,'#d7e3e9');
-    if(short.width>174)short.setScale(174/short.width);
-    txt(1150,y+48,String(u.drivetrain||'RWD').toUpperCase()+'  ·  '+Math.round(u.powerKW||0)+' kW',
-      14,'#b5d2dd');
-    const thumb=rect(1438,y+30,163,63,0x040d17,.5,0x244255,217);
-    if(c&&typeof s.createCarDisplay==='function'){
-      const parts=s.createCarDisplay(c,1396,y+11,232,218,
+    const car=cars[u.carId],start=SIDE.x+106;
+    const who=txt(start,y-29,u.name,16,WHITE,{fontStyle:'700'});
+    if(who.width>121)who.setScale(121/who.width);
+    const model=txt(start,y-7,car?.shortName||u.carId,13,'#d7e3e9');
+    if(model.width>121)model.setScale(121/model.width);
+    const spec=txt(start,y+15,
+      String(u.drivetrain||'RWD').toUpperCase()+' · '+Math.round(u.powerKW||0)+' kW',
+      12,'#b5d2dd');
+    if(spec.width>123)spec.setScale(123/spec.width);
+    rect(SIDE.x+SIDE.w-65,y,114,56,0x040d17,.5,0x244255,216);
+    if(car&&typeof s.createCarDisplay==='function'){
+      // Preserve the genuine body/paint/wheels renderer, cropping only the
+      // front of the side-profile car, as in the approved mockup.
+      const parts=s.createCarDisplay(car,SIDE.x+SIDE.w-93,y-15,170,218,
         getCarPaintColor(carStates[u.carId]||{}),null,false,carStates[u.carId]||{});
-      const carMask=shapeMask(1357,y,161,63);
+      const carMask=shapeMask(SIDE.x+SIDE.w-120,y-27,109,54);
       for(const part of parts){if(part?.setMask)part.setMask(carMask);add(part);}
     }
-    txt(1510,y+5,chosen?'IN':'',12,'#f5abb2',{fontFamily:PIXEL}).setOrigin(1,0);
   });
+  const reason=options.getReason(selected),ready=selected.length>=3&&!reason;
+  txt(SIDE.x+19,SIDE.y+660,reason||'READY FOR SCRUTINEERING',15,
+    ready?'#a9e4cb':'#ed9cab',{wordWrap:{width:SIDE.w-38}});
+  txt(SIDE.x+19,SIDE.y+686,selected.length+' OF 5 REGISTERED',14,'#d0dfeb');
 
-  // Reclaim the lower-left blank space for the actual submitted five-car squad.
-  rect(511,694,978,184,0x061320,.99,0x345b74,214);
-  txt(38,613,'YOUR CREW REGISTRATION',18,WHITE,{fontFamily:PIXEL});
-  txt(965,615,selected.length+' / 5',16,'#ef8592').setOrigin(1,0);
+  // Five cards only. The old redundant "CREW INFO" square is removed.
+  caption(CARDS.x+18,CARDS.y+13,'YOUR CREW REGISTRATION',14,WHITE);
+  caption(CARDS.x+CARDS.w-25,CARDS.y+15,selected.length+' / 5',11,'#e88492')
+    .setOrigin(1,0);
   const chosenUnits=selected.map(id=>units.find(u=>u.id===id)).filter(Boolean);
   for(let i=0;i<5;i++){
-    const x=102+i*142, u=chosenUnits[i];
-    rect(x,710,134,126,u?0x152534:0x0b111e,.98,u?0xe65b70:0x65404c,218);
-    txt(x-56,655,String(i+1).padStart(2,'0'),13,'#eb6275',{fontFamily:PIXEL});
-    if(!u)txt(x,691,'+',37,'#81909c').setOrigin(.5);
+    const x=CARDS.x+18+i*222+104,u=chosenUnits[i];
+    rect(x,CARDS.y+75,206,79,u?0x152534:0x0b111e,.98,
+      u?0xe65b70:0x65404c,216);
+    caption(x-90,CARDS.y+43,String(i+1).padStart(2,'0'),10,'#e97788');
+    if(!u)txt(x,CARDS.y+59,'+',36,'#81909c').setOrigin(.5);
     else {
       const p=createCharacterProfile(s,{characterId:u.id,pose:'idle',
-        x:x,y:698,frameWidth:67,frameHeight:57,depth:220,playerCharacterId:protagonist});
+        x:x-53,y:CARDS.y+73,frameWidth:60,frameHeight:63,
+        depth:219,playerCharacterId:protagonist});
       if(p)add(p);
-      const name=txt(x,736,u.name.split(' ')[0].toUpperCase(),13,'#f5d9df');
-      name.setOrigin(.5);if(name.width>122)name.setScale(122/name.width);
-      const id=txt(x,754,String(cars[u.carId]?.shortName||u.carId).toUpperCase(),10,'#9db6c5');
-      id.setOrigin(.5);if(id.width>120)id.setScale(120/id.width);
+      const first=txt(x-9,CARDS.y+47,u.name.split(' ')[0].toUpperCase(),14,'#f5d9df');
+      if(first.width>94)first.setScale(94/first.width);
+      const model=txt(x-9,CARDS.y+71,String(cars[u.carId]?.shortName||u.carId),12,'#a3bac9');
+      if(model.width>98)model.setScale(98/model.width);
     }
   }
-  rect(859,710,264,126,0x071923,.96,0x34617b,218);
-  txt(740,656,'CREW INFO',15,WHITE,{fontFamily:PIXEL});
-  txt(740,684,'CARS REGISTERED',14,'#bad3e1');
-  txt(951,684,selected.length+' / 5',15,'#eff7fa').setOrigin(1,0);
-  txt(740,710,'TOTAL POWER',14,'#bad3e1');
-  txt(951,710,Math.round(chosenUnits.reduce((sum,u)=>sum+(u.powerKW||0),0))+' kW',
-    15,'#eff7fa').setOrigin(1,0);
-  txt(740,736,'DRIVETRAINS',14,'#bad3e1');
-  txt(951,736,[...new Set(chosenUnits.map(u=>String(u.drivetrain||'RWD').toUpperCase()))].join(' / ')||'—',
-    13,'#eff7fa').setOrigin(1,0);
-  const reason=options.getReason(selected);
-  const ready=selected.length>=3&&!reason;
-  txt(1026,740,reason||'READY FOR SCRUTINEERING',15,ready?'#a9e4cb':'#ed9cab',
-    {wordWrap:{width:490}});
 
-  // Wide, thumb-friendly actions match the main Drag Complex control rhythm.
-  click(170,810,286,45,'BACK',close);
-  click(493,810,312,45,'AUTO SELECT (BEST)',()=>{
+  // Normal Meet-style bottom action band, inside the CARDS panel.
+  click(168,789,252,38,'BACK',close);
+  click(450,789,252,38,'AUTO SELECT (BEST)',()=>{
     const pick=[...units].sort((a,b)=>(b.performance||0)-(a.performance||0)||
       (b.powerKW||0)-(a.powerKW||0)||a.id.localeCompare(b.id)).slice(0,5).map(u=>u.id);
     refresh(pick);
   });
-  click(830,810,320,45,'CLEAR ALL',()=>refresh([]),{enabled:selected.length>0});
-  click(1299,810,455,45,'REGISTER  ·  '+money(options.fee),
+  click(732,789,252,38,'CLEAR ALL',()=>refresh([]),{enabled:selected.length>0});
+  click(1014,789,252,38,'REGISTER  ·  '+money(options.fee),
     ()=>options.onRegister(selected,close),{enabled:ready,emphasis:true});
 }
