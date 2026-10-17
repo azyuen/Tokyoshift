@@ -9,7 +9,7 @@ import { markCentralTokyoUnlocked } from '../data/centralTokyo.js?v=20261017-r56
 import { areAllCrewBattlesComplete } from '../data/crewSystem.js?v=20261016-r551';
 import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r565';
 import { cars } from '../data/cars.js?v=20261017-r565';
-import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r569';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r570';
 import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
 
 const WAREHOUSE_BEATS = [
@@ -40,7 +40,13 @@ export function startChapter08Warehouse(scene, { preview = false, onPreviewCompl
       WAREHOUSE_BEATS.find(id => !hasSeenCutscene(scene.registry, id));
     if (!sceneId) {
       if (preview && !interactiveReplay) onPreviewComplete?.();
-      else openChapter08Map(scene);
+      else if(interactiveReplay && scene.registry.get('__chapter08ReplaySkipRace')){
+        // Story-only repeat viewing: real Ginza room and character reveal,
+        // but no need to drive the RWB challenge again.
+        scene.scene.start('CentralTokyoScene',{
+          locationId:'ginzaMotorGallery',ginzaRoom:1,chapter08Arrival:true,
+        });
+      } else openChapter08Map(scene);
       return;
     }
     const result = playMangaCutscene(scene, sceneId, {

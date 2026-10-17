@@ -54,7 +54,7 @@ import {
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r568';
 import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r569';
-import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
+import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
 import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,

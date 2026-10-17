@@ -255,6 +255,7 @@ function showMagazine(scene, options = {}) {
   let flipping = false;
   let confirmation = null;
   let closed = false;
+  let openingChoiceAccepted = false;
   const flipTweens = [];
   const activeGlows = [];
   const revealTimers = [];
@@ -284,6 +285,7 @@ function showMagazine(scene, options = {}) {
     destroyView(currentView);
     destroyObjects(objects);
     scene._carHistoryOverlay = [];
+    if (!openingChoiceAccepted) options.onClose?.();
   };
 
   scene.events.once('shutdown', closeMagazine);
@@ -316,6 +318,7 @@ function showMagazine(scene, options = {}) {
     cancel.on('pointerdown', dismissConfirmation);
     accept.on('pointerdown', () => {
       accept.disableInteractive();
+      openingChoiceAccepted = true;
       closeMagazine();
       if (typeof options.onChoose === 'function') options.onChoose(carId);
       else scene.completeOpeningMagazineChoice?.(carId);

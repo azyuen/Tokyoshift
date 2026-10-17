@@ -88,7 +88,7 @@ import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.j
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r562';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r568';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r568';
-import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r569';
+import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r570';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {

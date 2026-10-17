@@ -1416,8 +1416,10 @@ function writeActiveSlot(update) {
 export function saveSessionState(registry) {
   // R569: dev rehearsal is intentionally an in-memory sandbox. Do not persist
   // its temporary workshop, race flags or cutscene progress to the real slot.
-  if (registry?.get?.('__chapter08DevReplay') === true &&
-      Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) return null;
+  if ((registry?.get?.('__chapter08DevReplay') === true &&
+       Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
+      (registry?.get?.('__storyArchiveSceneReplay') === true &&
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex())) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
   writeActiveSlot({ session: state });
@@ -1425,8 +1427,10 @@ export function saveSessionState(registry) {
 }
 
 export function saveManualState(registry) {
-  if (registry?.get?.('__chapter08DevReplay') === true &&
-      Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) return null;
+  if ((registry?.get?.('__chapter08DevReplay') === true &&
+       Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
+      (registry?.get?.('__storyArchiveSceneReplay') === true &&
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex())) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),
