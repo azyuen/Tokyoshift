@@ -20,6 +20,14 @@ export function choosePersonalCar(registry, id) {
 }
 export function restorePreferredCar(registry) {
   if (!registry?.set) return null;
+  // A Ginza loan remains the driven vehicle across map/Meet transitions,
+  // even when a stale preferredCarId still points at the personal garage.
+  const demoId = read(registry, 'ginzaTestDrive')?.carId;
+  if (demoId && personal(registry, demoId) && cars[demoId]?.ginzaDemo) {
+    if (registry.get('selectedCarId') !== demoId) registry.set('selectedCarId', demoId);
+    if (registry.get('preferredCarId') !== demoId) registry.set('preferredCarId', demoId);
+    return demoId;
+  }
   // Loan-car battles and active Oshiage series intentionally lock their car.
   if (read(registry, 'crewSpaceActive', false) ||
       read(registry, 'crewBattleState')?.active ||
