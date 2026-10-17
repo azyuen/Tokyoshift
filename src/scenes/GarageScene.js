@@ -7143,6 +7143,15 @@ export default class GarageScene extends Phaser.Scene {
     if (startChapter08Warehouse(this)) return true;
     // Scene 02 (nine wins / market invitation) takes precedence when a save
     // first returns with both the nine-win and first-champion milestones due.
+    if (this.hasSeenStoryCutscene('chapter08RaceFinished') &&
+        !this.hasSeenStoryCutscene('chapter08Ginza')) {
+      // A profile reloaded after the story race must resume at the showroom,
+      // not be trapped in Warehouse HQ with the invitation already consumed.
+      this.time.delayedCall(80, () => this.scene.start('CentralTokyoScene', {
+        locationId:'ginzaMotorGallery',ginzaRoom:1,chapter08Arrival:true,
+      }));
+      return true;
+    }
     if (this.showCentralTokyoInvitationIfNeeded()) return true;
     if (this.showFirstRegionalChampionIfNeeded()) return true;
     return this.showSevenRegionsStoryIfNeeded();
