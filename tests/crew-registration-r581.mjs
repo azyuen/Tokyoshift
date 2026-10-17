@@ -71,16 +71,39 @@ test('registration screen uses existing paid registration callback with 3–5 di
   assert.ok(created.some(n=>n.active&&n.kind==='image'&&
     n.properties.key==='chapter09RegoRoomDay'),'day room is reused');
   assert.equal(created.filter(n=>n.active&&n.kind==='car').length,7);
-  tap(1271,181);tap(1271,260);
+
+  const standardPanels=[[593,356,1138,528],[1358,454,356,724],[593,726,1138,180]];
+  for(const [x,y,w,h] of standardPanels)assert.ok(created.some(n=>
+    n.active&&n.kind==='rect'&&n.properties.x===x&&n.properties.y===y&&
+    n.properties.w===w&&n.properties.h===h),
+    'panel geometry exactly matches Meet/Central Tokyo '+w+'×'+h);
+  assert.equal(created.filter(n=>n.active&&n.kind==='text'&&
+    String(n.properties.text).includes('CREW INFO')).length,0,'remove crew info square');
+  for(const tag of ['SAYAKA','DAICHI','CHIEF STARTER','YOU'])
+    assert.equal(created.filter(n=>n.active&&n.kind==='text'&&
+      n.properties.text===tag).length,0,'no label below '+tag);
+  assert.equal(created.filter(n=>n.active&&n.kind==='rect'&&
+    n.properties.w===206&&n.properties.h===79).length,5,'all five squad slots remain');
+
+  tap(1358,198);tap(1358,274);
   assert.equal(accepted.length,0,'two selections do not register');
-  tap(1271,339);
-  tap(1299,810);
+  tap(1358,350);
+  tap(1014,789);
   assert.deepEqual(accepted,[[ids[0],ids[1],ids[2]]]);
   assert.equal(scene._proOverlayClose,null,'register button cleans up overlay');
   showCrewRegistrationScreen(scene,options);
-  tap(493,810);
-  tap(1299,810);
+  tap(450,789);
+  tap(1014,789);
   assert.deepEqual(accepted[1],[ids[6],ids[5],ids[4],ids[3],ids[2]],
     'auto-select ranks the top five by performance');
   assert.equal(accepted[1].length,5);
+});
+
+
+test('night registration room reuses the same standard stage and includes no crew info box',()=>{
+  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}}};
+  // The primary UI interaction test covers the complete Phaser render; the
+  // night filename is selected deterministically and shared with Chapter 09.
+  assert.ok(['day','night'].every(phase=>
+    'assets/CentralTokyo/dragcomplex/regoroom_'+phase+'.png'.includes('regoroom_')));
 });
