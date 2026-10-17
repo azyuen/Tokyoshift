@@ -8,7 +8,7 @@ import {
   getCharacterVisualAsset,
   getCharacterAssetUrl,
 } from '../data/characters.js?v=20261011-r477';
-import { openSwipePortraitGallery } from './SwipePortraitGallery.js?v=20261017-r562';
+import { openSwipePortraitGallery } from './SwipePortraitGallery.js?v=20261017-r564';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const REGIONAL_MEMORIES = Object.freeze([

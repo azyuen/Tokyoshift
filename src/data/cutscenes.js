@@ -850,6 +850,8 @@ export const CUTSCENES = {
         text: "Sayaka?! Ah... well... let's just say the car's come a long way since then!" },
       { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeSerious',
         text: "Seven drivers, hmm? You'll need to know everyone's strengths. Who handles pressure, which cars suit which races, who's best at launching... and you'll need a proper plan!" },
+      { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeHappy',
+        text: "And if you're still getting used to your crew's cars, there's always the driving school in Oshiage! I hear the intelligent, beautiful lady instructor knows the ideal launch revs and most efficient shift bands for practically every car in Japan!" },
       { speaker: 'left', leftCharacter: 'daichiSakamoto', pose: 'idle',
         text: "That's... surprisingly detailed advice. I'm Daichi, by the way. The engineer." },
       { speaker: 'left', leftCharacter: 'sayakaFujieda', leftPose: 'homeBlushing',

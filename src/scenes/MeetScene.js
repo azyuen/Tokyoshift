@@ -103,11 +103,11 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r562';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r562';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261017-r564';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
-import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r562';
+import { showCutsceneTester } from '../ui/CutsceneTester.js?v=20261017-r564';
 import {
   getPendingCentralTokyoInvite,
   markCentralTokyoUnlocked,
@@ -859,8 +859,8 @@ export default class MeetScene extends Phaser.Scene {
       this.meetProgressionButtonObjects.push(obj);
       return obj;
     };
-    // Up to two pink actions in the Meet's top-right corner. Each greyscale
-    // badge is centred on the RIGHT border and covers the border entirely.
+    // Match PINK SLIPS styling; retain the grey badge size and position
+    // along the right border.
     const width = 298;
     const right = STAGE.x + STAGE.w - 34;
     const centre = right - width / 2;
@@ -868,12 +868,11 @@ export default class MeetScene extends Phaser.Scene {
       CREW: 'meetBadgeCrew' };
     actions.forEach((action, index) => {
       const y = STAGE.y + 51 + index * 60;
-      const button = add(this.add.rectangle(centre, y, width, 44, 0xa12a64, 0.96)
-        .setStrokeStyle(2, 0xff9ac0, 1).setDepth(55)
+      const button = add(this.add.rectangle(centre, y, width, 36, 0x291620, 1)
+        .setStrokeStyle(2, 0xff5f93, 0.9).setDepth(55)
         .setInteractive({ useHandCursor: true }));
       add(this.add.text(centre - 20, y, action.label, {
-        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff2f8',
-        stroke: '#3b0925', strokeThickness: 2,
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#ffdce8',
       }).setOrigin(0.5).setDepth(56));
       const source = icons[action.id];
       if (this.textures.exists(source)) {

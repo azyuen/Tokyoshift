@@ -3,7 +3,7 @@
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
-import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261016-r535';
+import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS } from './RaceCoachHud.js?v=20261017-r564';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", sans-serif';
@@ -20,24 +20,7 @@ export const OPENING_PHONE_LAYOUT = Object.freeze({
 // Same uncaged face crop and white/blue race speech bubble as in-race
 // dialogue, repositioned entirely into the TOP THIRD for this phone call.
 // Right layout mirrors the left when the player answers.
-export const OPENING_PHONE_DIALOGUE_LAYOUTS = Object.freeze({
-  left: Object.freeze({
-    face: { x: 38, y: 65, width: 210, height: 210,
-      targetX: 143, targetY: 172, headHeight: 174 },
-    bubble: { left: 249, right: 814, top: 83, bottom: 269,
-      notchDepth: 27, notchHalfHeight: 27,
-      headingX: 286, headingY: 102,
-      textX: 286, textY: 133, textWidth: 487 },
-  }),
-  right: Object.freeze({
-    face: { x: 1312, y: 65, width: 210, height: 210,
-      targetX: 1417, targetY: 172, headHeight: 174 },
-    bubble: { left: 746, right: 1311, top: 83, bottom: 269,
-      notchDepth: 27, notchHalfHeight: 27,
-      headingX: 783, headingY: 102,
-      textX: 783, textY: 133, textWidth: 487 },
-  }),
-});
+export const OPENING_PHONE_DIALOGUE_LAYOUTS = PHONE_DIALOGUE_LAYOUTS;
 const safeDestroy = object => { try { object?.destroy?.(); } catch (_) {} };
 const withAlpha = object => object?.setAlpha?.(0);
 
@@ -68,12 +51,15 @@ function makeDialogueCard(scene, {
     characterVisual,
     phoneIconKey: PHONE_TEXTURE,
   });
-  hud.dialogue.setText(text).setFontSize('19px').setLineSpacing(5);
+  hud.heading.setFontSize('12px');
+  hud.dialogue.setText(text).setFontSize('23px').setLineSpacing(7);
   const add = item => { sprites.push(item); return item; };
-  const buttonX = side === 'right' ? speech.left + 116 : speech.right - 116;
-  const buttonY = speech.bottom + 29;
-  const button = add(scene.add.rectangle(buttonX, buttonY, 208, 46,
-    0x1e6a9e, 1).setStrokeStyle(2, 0xaee1ff)
+  // As in regular manga scenes, the action is anchored at the bottom right,
+  // independent of the speaking side, rather than beneath the top bubble.
+  const buttonX = (scene.scale?.width || 1560) - 248;
+  const buttonY = (scene.scale?.height || 840) - 49;
+  const button = add(scene.add.rectangle(buttonX, buttonY, 252, 48,
+    0x111111, 1).setStrokeStyle(2, 0xffffff)
     .setInteractive({ useHandCursor: true }));
   add(scene.add.text(buttonX, buttonY,
     finalPage ? 'END CALL >' : 'CONTINUE >', {
