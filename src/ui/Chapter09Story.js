@@ -3,7 +3,7 @@
 import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r578';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r578';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r579';
 import { playChapter09EstablishingShot } from './Chapter09EstablishingShot.js?v=20261017-r579';
 
 export function chapter09ShouldBegin(source){
