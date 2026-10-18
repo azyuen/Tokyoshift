@@ -85,6 +85,7 @@ test('R589: legacy five-member entries still work and keep their saved limitatio
 test('R589: long professional trophy can choose a new trio on its next fixture',()=>{
   const s=source(),c=s.get('proCircuit'),units=getCrewSeriesUnits(s),ids=units.map(u=>u.id);
   c.minorTrophyIndex=3; // Team Grand Prix, three actual fixtures
+  c.season=2; // prestige trophy is unlocked from Season 2
   s.set('proCircuit',c);
   const entry=registerCrewSeries(s,ids,{},'teamGrandPrix');
   assert.equal(entry.error,undefined,entry.error);
