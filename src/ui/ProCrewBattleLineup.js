@@ -1,4 +1,4 @@
-// R591 — drag-complex crew lineup: standard dialogue, controls and safe re-selection.
+// R594 — continuous pro crew event room with in-place ordered roster selection.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -17,20 +17,28 @@ const formatName=f=>({DUEL:'HEAD TO HEAD',RELAY:'TEAM RELAY',
   TECHNICAL:'CONSISTENCY',FOUR_WIDE:'FOUR-WIDE'})[f]||String(f||'CREW BATTLE');
 const normaliseDrive=d=>({FF:'FWD',FR:'RWD'})[String(d).toUpperCase()]||String(d||'RWD').toUpperCase();
 
+// Spoken, context-specific strategy from Sayaka, using the actual roster,
+// car models, race format and driver strengths rather than generic all-caps.
 export function getProCrewHeatAdvice(fixture,units){
   const format=fixture?.format||'DUEL';
-  const ordered=[...units].filter(u=>u.validAssignment)
-    .sort((a,b)=>(b.performance||0)-(a.performance||0));
-  const names=ordered.slice(0,3).map(u=>u.name.split(' ')[0]);
-  const leaders=names.length?'YOUR STRONGEST OPTIONS: '+names.join(', ')+'.':'CHECK YOUR CREW GARAGE BEFORE THIS RACE.';
-  const rule=format==='RELAY'
-    ?'COMBINED ELAPSED TIME DECIDES THIS RELAY. PICK THREE FAST, RELIABLE CARS.'
-    :format==='TECHNICAL'
-    ?'THE SMALLEST SPREAD ACROSS THREE CLEAN RUNS WINS. FAVOUR CONSISTENCY OVER PEAK POWER.'
-    :format==='FOUR_WIDE'
-    ?'PLACING POINTS COUNT IN ALL THREE FOUR-LANE HEATS. MIX STRONG LAUNCHES WITH TOP-END SPEED.'
-    :'YOU NEED TWO HEAT WINS. PAIR YOUR QUICKEST CARS WITH DRIVERS YOU CONTROL CONSISTENTLY.';
-  return rule+' '+leaders;
+  const best=[...(units||[])].filter(u=>u.validAssignment)
+    .sort((a,b)=>format==='TECHNICAL'
+      ? (b.skill||0)-(a.skill||0)||(b.performance||0)-(a.performance||0)
+      : (b.performance||0)-(a.performance||0)||(b.skill||0)-(a.skill||0))
+    .slice(0,3);
+  const lineup=best.map(u=>u.name.split(' ')[0]+' ('+
+    String(cars[u.carId]?.shortName||u.carId||'car')+')');
+  const recommendations=lineup.length===3?
+    'I would try '+lineup[0]+', '+lineup[1]+', and '+lineup[2]+'.':
+    'Check which three crew cars are available before you line up.';
+  const note=format==='TECHNICAL'?
+    'Hrmmm, this race is technical. Consistency beats peak power. ':
+    format==='RELAY'?
+    'Hrmmm, a relay. Your three times add up, so clean starts and reliable shifts matter. ':
+    format==='FOUR_WIDE'?
+    'Hrmmm, four-wide. Every placing counts, so strong launches and smooth shifts will help. ':
+    'Hrmmm, you need two heat wins. Pair quick cars with drivers you can launch cleanly. ';
+  return note+recommendations;
 }
 
 function loadAssets(s,units){
@@ -95,7 +103,14 @@ function draw(s,opts){
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
-  const add=o=>{objects.push(o);return o;};
+  let scopedObjects=null,scopedMasks=null;
+  const add=o=>{objects.push(o);if(scopedObjects)scopedObjects.push(o);return o;};
+  const clearGroup=(nodes,masks=[])=>{
+    nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    masks.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+  };
+  const scope=(nodes,masks=null)=>{scopedObjects=nodes;scopedMasks=masks;};
+  const unscope=()=>{scopedObjects=null;scopedMasks=null;};
   const rect=(x,y,w,h,color=0x091726,alpha=1,outline=0x38546a,depth=210)=>
     add(s.add.rectangle(x,y,w,h,color,alpha).setStrokeStyle(2,outline).setDepth(depth));
   const text=(x,y,str,size=18,color='#f5f3f3',pixel=false,depth=230)=>{
@@ -107,7 +122,7 @@ function draw(s,opts){
   const mask=(x,y,w,h)=>{
     const shape=s.make.graphics({add:false});
     shape.fillStyle(0xffffff,1).fillRect(x,y,w,h);
-    maskShapes.push(shape);
+    maskShapes.push(shape);if(scopedMasks)scopedMasks.push(shape);
     return shape.createGeometryMask();
   };
   const polygon=(x,y,w,h,slant,fill,stroke,depth)=>{
@@ -124,15 +139,14 @@ function draw(s,opts){
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
   s._proOverlayClose=close;s.events.once('shutdown',close);
-  const reopen=(next,other={})=>{
-    close();
-    showProCrewHeatSelection(s,{...opts,selected:next,_loaded:true,...other});
-  };
+  // Standard main-button sizing after the game's 1.6x font pass: 16px
+  // Silkscreen throughout this screen, rather than tiny 10/11/12px labels.
+  const BUTTON_FONT=16;
   const btn=(x,y,w,h,label,callback,red=false,disabled=false,depth=246)=>{
     const hit=rect(x,y,w,h,disabled?0x1b2330:red?0x6f1b30:0x11283b,
       1,disabled?0x546474:red?RED:BLUE,depth);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',callback);
-    const c=text(x,y,label,12,disabled?'#8494a3':'#f6fbff',true,depth+1).setOrigin(.5);
+    const c=text(x,y,label,BUTTON_FONT,disabled?'#8494a3':'#f6fbff',true,depth+1).setOrigin(.5);
     if(c.width>w-12)c.setScale((w-12)/c.width);
     return hit;
   };
@@ -156,10 +170,10 @@ function draw(s,opts){
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const baseScale=Math.min(p.height/Math.max(1,source.height),
       335/Math.max(1,source.width));
-    const scale=1.75*baseScale;
+    const scale=(p.key==='proCrewHiroshi'?1.75*.85:1.75)*baseScale;
     // Preserve the exact ORIGINAL top of the rendered sprite, even when the
     // source was width-limited rather than height-limited.
-    const feet=p.feet+source.height*baseScale*.75;
+    const feet=p.feet+source.height*(scale-baseScale);
     add(s.add.ellipse(p.x,feet-7,260,28,0,.42).setDepth(210));
     add(s.add.image(p.x,feet,p.key).setOrigin(.5,1)
       .setFlipX(p.flip).setScale(scale).setDepth(212));
@@ -208,8 +222,11 @@ function draw(s,opts){
   const adviceUsed=Boolean(e.adviceUsed);
   const adviceRemaining=Math.max(0,Number(opts.adviceStatus?.remaining||0));
   const canAsk=!adviceUsed&&adviceRemaining===0;
+  let confirmationNodes=[],confirmationOpen=false;
   btn(1055,617,235,43,'ASK FOR ADVICE',()=>{
-    if(!canAsk)return;
+    if(!canAsk||confirmationOpen)return;
+    confirmationOpen=true;
+    scope(confirmationNodes);
     rect(W/2,H/2,W,H,0x020812,.76,0x020812,270).setInteractive();
     rect(780,420,850,332,0xfffcf1,1,0x111111,271);
     const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
@@ -223,13 +240,15 @@ function draw(s,opts){
     const modalButton=(x,label,action)=>{
       const hit=rect(x,515,294,52,0x172636,1,0x566b7e,273);
       hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
-      text(x,515,label,11,'#ffffff',true,274).setOrigin(.5);
+      text(x,515,label,BUTTON_FONT,'#ffffff',true,274).setOrigin(.5);
     };
-    modalButton(614,'MAYBE NEXT TIME',()=>reopen(selected,{popupSlot:null}));
-    modalButton(946,'ASK FOR ADVICE',()=>{
-      close();
-      opts.onAdvice?.(selected);
+    modalButton(614,'MAYBE NEXT TIME',()=>{
+      clearGroup(confirmationNodes);confirmationNodes=[];confirmationOpen=false;
     });
+    modalButton(946,'ASK FOR ADVICE',()=>{
+      close();opts.onAdvice?.([...selected]);
+    });
+    unscope();
   },false,!canAsk);
   if(!canAsk){
     const remainingLabel=adviceUsed?'ADVICE USED FOR THIS EVENT':
@@ -238,25 +257,22 @@ function draw(s,opts){
   }
 
   if(adviceUsed){
-    // Reuse MangaCutscene's cream card, 6px black trim and black speaker tab.
-    // The pointer is on the RIGHT vertical edge, facing visible Sayaka.
-    const boxX=402,boxY=308,boxW=728,boxH=187;
-    rect(boxX,boxY,boxW,boxH,0xfffcf1,1,0x111111,235)
-      .setStrokeStyle(6,0x111111,1);
-    const bubble=add(s.add.graphics().setDepth(236));
-    bubble.fillStyle(0xfffcf1,1);
-    bubble.lineStyle(5,0x111111,1);
-    const edge=boxX+boxW/2;
-    bubble.fillTriangle(edge-4,boxY-28,edge+53,boxY+5,edge-4,boxY+33);
-    bubble.strokeTriangle(edge-4,boxY-28,edge+53,boxY+5,edge-4,boxY+33);
-    // Retouch the white base across the triangle seam without obscuring
-    // its black outer trim; same placement logic as MangaCutscene pointer.
-    rect(186,boxY-boxH/2-14,248,34,0x111111,1,0x111111,237);
-    text(79,boxY-boxH/2-27,'SAYAKA',13,'#ffffff',true,238);
-    const adviceText=text(77,boxY-54,opts.advice||'NO ADVICE AVAILABLE.',
-      20,'#111111',false,238);
-    adviceText.setWordWrapWidth?.(654);
-    adviceText.setLineSpacing?.(5);
+    // One silhouette and ONE stroked outline: no seam between dialogue and
+    // its right-side pointer. Positioned below race briefing, above crew panel.
+    const x=135,y=260,w=720,h=127,edge=x+w,arrow=79;
+    const points=[
+      {x,y},{x:edge,y},{x:edge,y:y+36},
+      {x:edge+arrow,y:y+58},
+      {x:edge,y:y+81},{x:edge,y:y+h},{x,y:y+h},
+    ];
+    const bubble=add(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(6,0x111111,1);bubble.strokePoints(points,true);
+    text(x+20,y+12,'Sayaka',16,'#252227',false,238).setFontStyle?.('700');
+    const spoken=text(x+20,y+42,opts.advice||'What do you think?',
+      18,'#111111',false,238);
+    spoken.setWordWrapWidth?.(w-40);
+    spoken.setLineSpacing?.(2);
   }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
@@ -275,7 +291,8 @@ function draw(s,opts){
   const clipPoly=(obj,pts)=>{
     const g=s.make.graphics({add:false});
     g.fillStyle(0xffffff,1);g.fillPoints(pts,true);
-    maskShapes.push(g);obj.setMask(g.createGeometryMask());
+    maskShapes.push(g);if(scopedMasks)scopedMasks.push(g);
+    obj.setMask(g.createGeometryMask());
   };
   const frame=framePoints(24,399,730,405,32);
   const fg=add(s.add.graphics().setDepth(219));
@@ -284,100 +301,156 @@ function draw(s,opts){
   meetText(85,409,'YOUR LINEUP',26,'#35d6ff');
   const state=s.registry.get('carStates')||{};
   const player=s.registry.get('playerCharacterId')||'renMizuno';
-  selected.forEach((id,index)=>{
-    const x=[63,292,521][index],y=463;
-    const u=units.find(v=>v.id===id);
-    const portrait=graphicPanel(x,y,211,168,0x165578,0x050a10,.65,13,222);
-    const carX=x-30;
-    const carPanel=graphicPanel(carX,y+228,211,98,0x0a2b48,BLUE,.78,8,222);
-    if(u){
-      const profile=createCharacterProfile(s,{
-        characterId:u.id,pose:'idle',x:x+105,y:y+84,
-        frameWidth:226,frameHeight:171,side:'center',depth:225,
-        mask:false,playerCharacterId:player,
-      });
-      if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
-      const car=cars[u.carId];
-      if(car&&typeof s.createCarDisplay==='function'){
-        // Correct CentralTokyoScene.createCarDisplay signature. R590 passed
-        // false as paintColor and a colour string as flipX; selecting an
-        // existing driver then redrawing could throw and leave a black veil.
-        const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-        for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+  let lineupNodes=[],lineupMasks=[],footerNodes=[];
+  let popupNodes=[],popupMasks=[],popupVisible=false;
+  // Never destroy and reconstruct the entire race room for a single checkbox.
+  // In particular, preserve the loaded background and character textures.
+  function renderLineup(){
+    clearGroup(lineupNodes,lineupMasks);lineupNodes=[];lineupMasks=[];
+    scope(lineupNodes,lineupMasks);
+    selected.forEach((id,index)=>{
+      const x=[63,292,521][index],y=463;
+      const u=units.find(v=>v.id===id);
+      const portrait=graphicPanel(x,y,211,168,0x165578,0x050a10,.65,13,222);
+      const carX=x-30;
+      const carPanel=graphicPanel(carX,y+228,211,98,0x0a2b48,BLUE,.78,8,222);
+      if(u){
+        const profile=createCharacterProfile(s,{
+          characterId:u.id,pose:'idle',x:x+105,y:y+84,
+          frameWidth:226,frameHeight:171,side:'center',depth:225,
+          mask:false,playerCharacterId:player,
+        });
+        if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
+        const car=cars[u.carId];
+        if(car&&typeof s.createCarDisplay==='function'){
+          try{
+            const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
+              getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+            for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+          }catch(err){
+            // A missing/damaged optional car render must not strand a paid
+            // crew competition behind an unfinished dark overlay.
+            console.warn('[Tokyo SHIFT] Crew lineup car preview skipped:',u.carId,err);
+          }
+        }
       }
-    }
-    const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
-    const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
-    add(s.add.text(x+105,y+176,name,{
-      fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
-    }).setOrigin(.5,0).setDepth(229));
-    add(s.add.text(carX+105,y+199,model,{
-      fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
-    }).setOrigin(.5,0).setDepth(229));
-    add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
-      .setInteractive({useHandCursor:true}).setDepth(231)
-      .on('pointerdown',()=>reopen(selected,{popupSlot:index})));
-  });
-  const missing=selected.filter(Boolean).length!==3;
-  const triDrive=e.trophyId==='triDrive'&&new Set(selected.map(id=>
-    normaliseDrive(units.find(u=>u.id===id)?.drivetrain))).size!==3;
-  // Same bottom action styling as MeetScene: 49px buttons, Silkscreen 10px,
-  // standard navy/green surfaces. Three controls have 20px equal gaps.
-  const footerButton=(x,w,label,onClick,{primary=false,disabled=false}={})=>{
-    const fill=disabled?0x242a31:primary?0x143e38:0x192333;
-    const outline=disabled?0x53616e:primary?0x65e7bf:0x8ba1b5;
-    const hit=rect(x,779,w,49,fill,1,outline,246);
-    if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',onClick);
-    const caption=text(x,779,label,10,disabled?'#94a2ac':'#ffffff',true,247)
-      .setOrigin(.5);
-    if(caption.width>w-22)caption.setScale((w-22)/caption.width);
-    return hit;
-  };
-  footerButton(987,190,'RACE LATER',close);
-  footerButton(1197,190,'CLEAR LINEUP',()=>reopen([null,null,null],{popupSlot:null}));
-  footerButton(1422,220,'CONFIRM LINEUP',()=>{
-    close();opts.onConfirm?.(selected);
-  },{primary:true,disabled:missing||triDrive});
-
-  // One-column roster only appears when an empty or filled lineup card is tapped.
-  if(Number.isInteger(opts.popupSlot)){
-    const slot=opts.popupSlot;
-    rect(W/2,H/2,W,H,0x030915,.61,0x030915,249).setInteractive()
-      .on('pointerdown',()=>reopen(selected,{popupSlot:null}));
-    rect(1192,413,704,745,0x061421,.985,RED,250);
-    text(872,61,'SELECT CREW DRIVERS',17,'#fff4f2',true,251);
-    text(1457,64,'7 TEAM MEMBERS',12,'#edb4c1',true,251);
-    units.slice(0,7).forEach((u,i)=>{
-      const y=119+i*85,active=selected[slot]===u.id,used=selected.includes(u.id)&&!active;
-      const row=rect(1192,y+28,666,77,active?0x27384c:0x0a1d2e,1,
-        active?RED:0x31556c,251);
-      if(!used)row.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        const next=selected.map((v,j)=>j===slot?u.id:v);
-        reopen(next,{popupSlot:null});
-      });
-      rect(889,y+28,25,25,active?0x813c50:0x091725,1,RED,253);
-      if(active)text(880,y+10,'✓',25,'#fff2f2',false,254);
-      rect(957,y+28,83,68,0x12283d,1,0x31566e,252);
-      const p=createCharacterProfile(s,{characterId:u.id,pose:'idle',
-        x:957,y:y+28,frameWidth:81,frameHeight:66,depth:253,playerCharacterId:player});
-      if(p)add(p);
-      const name=text(1011,y-1,u.name,18,used?'#85919f':'#f4f3f3',false,254);
-      if(name.width>200)name.setScale(200/name.width);
-      const model=text(1011,y+22,cars[u.carId]?.shortName||u.carId,14,'#c0dce8',false,254);
-      if(model.width>200)model.setScale(200/model.width);
-      text(1011,y+44,normaliseDrive(u.drivetrain)+' · '+Math.round(u.powerKW||0)+' kW',
-        14,'#99bfce',false,254);
-      rect(1412,y+28,213,68,0x040e19,.8,0x32556b,252);
-      const car=cars[u.carId];
-      if(car&&typeof s.createCarDisplay==='function'){
-        const all=s.createCarDisplay(car,1406,y+11,166,253,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-        const crop=mask(1308,y-4,207,65);
-        for(const obj of all){if(obj?.setMask)obj.setMask(crop);add(obj);}
-      }
-      if(used)text(1467,y+44,'IN LINEUP',11,'#f0b4be',true,254);
+      const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
+      const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
+      add(s.add.text(x+105,y+176,name,{
+        fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      add(s.add.text(carX+105,y+199,model,{
+        fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
+        .setInteractive({useHandCursor:true}).setDepth(231)
+        .on('pointerdown',()=>openRoster()));
     });
-    btn(1418,758,200,40,'CLOSE',()=>reopen(selected,{popupSlot:null}),false,false,260);
+    unscope();
   }
+  function canConfirm(){
+    const members=selected.filter(Boolean);
+    const drives=members.map(id=>normaliseDrive(units.find(u=>u.id===id)?.drivetrain));
+    return members.length===3&&new Set(members).size===3&&
+      (e.trophyId!=='triDrive'||new Set(drives).size===3);
+  }
+  function renderFooter(){
+    clearGroup(footerNodes);footerNodes=[];scope(footerNodes);
+    const footerButton=(x,w,label,onClick,{primary=false,disabled=false}={})=>{
+      const hit=rect(x,779,w,49,disabled?0x242a31:
+        primary?0x143e38:0x192333,1,
+        disabled?0x53616e:primary?0x65e7bf:0x8ba1b5,246);
+      if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',onClick);
+      const caption=text(x,779,label,BUTTON_FONT,
+        disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
+      if(caption.width>w-18)caption.setScale((w-18)/caption.width);
+    };
+    footerButton(974,205,'FORFEIT EVENT',()=>opts.onForfeit?.());
+    footerButton(1196,205,'CLEAR LINEUP',()=>setLineup([null,null,null]));
+    footerButton(1430,229,'CONFIRM LINEUP',()=>{
+      if(!canConfirm())return;
+      close();opts.onConfirm?.([...selected]);
+    },{primary:true,disabled:!canConfirm()});
+    unscope();
+  }
+  function setLineup(next){
+    const unique=[...new Set(next.filter(Boolean))].slice(0,3);
+    selected.splice(0,selected.length,...unique);
+    while(selected.length<3)selected.push(null);
+    renderLineup();renderFooter();
+    if(popupVisible)renderRoster();
+  }
+  function assignDriver(id){
+    const order=selected.filter(Boolean);
+    const index=order.indexOf(id);
+    if(index>=0)order.splice(index,1);
+    else if(order.length<3)order.push(id);
+    setLineup(order);
+  }
+  function renderRoster(){
+    if(!popupVisible)return;
+    clearGroup(popupNodes,popupMasks);popupNodes=[];popupMasks=[];
+    scope(popupNodes,popupMasks);
+    // 600px wide rather than the old 704px sidebar. Keep the rest of the
+    // room visible beneath a dimmer, instead of rebuilding its scene.
+    rect(W/2,H/2,W,H,0x030915,.59,0x030915,249)
+      .setInteractive().on('pointerdown',closeRoster);
+    rect(1235,411,596,740,0x061421,.985,RED,250);
+    text(971,60,'SELECT CREW DRIVERS',18,'#fff4f2',true,252);
+    units.slice(0,7).forEach((u,i)=>{
+      const y=110+i*83;
+      const assigned=selected.indexOf(u.id);
+      const full=selected.filter(Boolean).length>=3;
+      const hit=rect(1235,y+30,558,76,assigned>=0?0x26384d:0x0a1d2e,
+        1,assigned>=0?RED:0x31556c,251);
+      if(assigned>=0||!full)
+        hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
+      // Numbered selection order is always visible while the list stays open.
+      const check=rect(985,y+29,40,40,assigned>=0?0x913347:0x10273a,
+        1,RED,254);
+      if(assigned>=0||!full)
+        check.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
+      if(assigned>=0)text(985,y+29,String(assigned+1),24,'#ffffff',true,255)
+        .setOrigin(.5);
+      // Character photos and car labels are shifted toward one another.
+      const portrait=createCharacterProfile(s,{characterId:u.id,pose:'idle',
+        x:1051,y:y+30,frameWidth:70,frameHeight:69,depth:253,
+        playerCharacterId:player});
+      if(portrait)add(portrait);
+      const ink=full&&assigned<0?'#8595a3':'#f4f3f3';
+      const who=text(1100,y+1,u.name,18,ink,false,254);
+      if(who.width>185)who.setScale(185/who.width);
+      const model=text(1100,y+26,cars[u.carId]?.shortName||u.carId,
+        15,'#c0dce8',false,254);
+      if(model.width>183)model.setScale(183/model.width);
+      text(1100,y+48,normaliseDrive(u.drivetrain)+' · '+
+        Math.round(u.powerKW||0)+' kW',14,'#99bfce',false,254);
+      // No black rectangles or borders behind cars: full side-profile sprite
+      // floating at the same baseline, closer to the car information.
+      const car=cars[u.carId];
+      if(car&&typeof s.createCarDisplay==='function'){
+        try{
+          const parts=s.createCarDisplay(car,1398,y+27,174,253,
+            getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+          const crop=mask(1301,y-4,203,73);
+          for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
+        }catch(err){
+          console.warn('[Tokyo SHIFT] Crew roster car preview skipped:',u.carId,err);
+        }
+      }
+    });
+    btn(1420,734,182,44,'CLOSE',closeRoster,false,false,260);
+    unscope();
+  }
+  function openRoster(){
+    if(popupVisible)return;
+    popupVisible=true;renderRoster();
+  }
+  function closeRoster(){
+    if(!popupVisible)return;
+    popupVisible=false;clearGroup(popupNodes,popupMasks);
+    popupNodes=[];popupMasks=[];
+  }
+  renderLineup();renderFooter();
+  if(Number.isInteger(opts.popupSlot))openRoster();
 }

@@ -127,16 +127,56 @@ test('replacing crew drivers renders background and correctly ordered car sprite
     assert.ok(o,'find active tappable UI '+x+','+y);
     o.click();
   }
-  tap(168,626,211);  // first empty squad portrait opens roster
-  tap(1192,147,666); // select first driver -> redraw
+  tap(168,626,211); // open the persistent one-column selector
+  tap(1235,140,558); // assign driver 1 without closing the popup
   assert.ok(calls.length>0,'selected driver car is rendered');
-  assert.ok(nodes.some(n=>n.active&&n.kind==='image'&&
-    n.attrs.key==='proCrewRegoZoomedNight'),'background remains after selection');
-  tap(168,626,211);  // re-open same slot to change
-  tap(1192,232,666); // choose second driver, redraw again
-  assert.ok(calls.length>1,'car redraw completed without a black screen');
-  assert.ok(nodes.some(n=>n.active&&n.kind==='image'&&
-    n.attrs.key==='proCrewRegoZoomedNight'),'background remains visible after re-selection');
+  assert.ok(nodes.some(n=>n.active&&n.kind==='text'&&n.attrs.text==='1'),
+    'first selected row displays assignment number 1');
+  const backdrop=nodes.find(n=>n.kind==='image'&&
+    n.attrs.key==='proCrewRegoZoomedNight');
+  assert.ok(backdrop?.active,'room background is intact after first assignment');
+  tap(1235,223,558); // assign driver 2 without closing/recreating scene
+  assert.ok(backdrop.active,'room background survives second assignment');
+  assert.ok(nodes.some(n=>n.active&&n.kind==='text'&&n.attrs.text==='2'),
+    'second selected row displays assignment number 2');
+  tap(1235,140,558); // remove the first driver while the popup stays open
+  tap(1235,306,558); // third driver now fills order slot 2
+  assert.ok(backdrop.active,'room remains after repeated roster toggles');
+  tap(1420,734,182); // close selector only, not the registration room
+  assert.ok(backdrop.active,'closing popup does not cause black screen');
+  assert.ok(calls.length>2,'car renders redraw in place');
   assert.ok(nodes.some(n=>n.active&&n.kind==='text'&&
     n.attrs.text==='YOUR LINEUP'),'standard crew heading remains');
+  assert.equal(nodes.some(n=>n.active&&n.kind==='text'&&
+    n.attrs.text==='7 TEAM MEMBERS'),false,'remove redundant popup heading');
+});
+
+
+test('R594: a broken optional car preview never strands the roster or hides the room',()=>{
+  const {scene,nodes}=phaserMock();
+  scene.createCarDisplay=()=>{throw Error('intentionally broken car preview');};
+  const originalWarn=console.warn;
+  let warnings=0;
+  console.warn=()=>{warnings++;};
+  try {
+    const units=getCrewSeriesUnits(scene.registry);
+    showProCrewHeatSelection(scene,{units,selected:[null,null,null],
+      event:{short:true,openCircuit:true,label:'CREW RELAY'},
+      fixture:{round:0,format:'RELAY'},_loaded:true});
+    const firstSlot=nodes.find(n=>n.active&&n.kind==='rectangle'&&
+      n.attrs.x===168&&n.attrs.y===626&&n.click);
+    assert.ok(firstSlot);
+    firstSlot.click();
+    assert.ok(warnings>0,'renderer failures handled individually');
+    const backdrop=nodes.find(n=>n.active&&n.kind==='image'&&
+      n.attrs.key==='proCrewRegoZoomedNight');
+    assert.ok(backdrop?.active,'background survives failure');
+    const close=nodes.find(n=>n.active&&n.kind==='rectangle'&&
+      n.attrs.x===1420&&n.attrs.y===734&&n.click);
+    assert.ok(close,'close action remains available');
+    close.click();
+    assert.ok(backdrop.active,'closing after broken preview remains safe');
+  }finally {
+    console.warn=originalWarn;
+  }
 });

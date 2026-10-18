@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r592';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r593';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r594';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -147,6 +147,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.chapter08Arrival = Boolean(data?.chapter08Arrival ||
       (hasSeenCutscene(this.registry,'chapter08RaceFinished') &&
        !hasSeenCutscene(this.registry,'chapter08Ginza')));
+    this.autoOpenProCrewFixture = Boolean(data?.autoOpenProCrewFixture);
+    this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
       (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
     this.ginzaRoom = Math.max(1, Math.min(3, Number(data?.ginzaRoom || 1)));
@@ -365,6 +367,16 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
+    // After each professional crew heat, return straight to its SAVED heat
+    // preparation, not the generic Drag Complex home screen.
+    if (this.autoOpenProCrewFixture && this.registry.get('proCircuit')?.activeCrewEvent) {
+      this.time.delayedCall(0,()=>{
+        if(!this.sys?.isActive?.() ||
+          !this.registry.get('proCircuit')?.activeCrewEvent)return;
+        showCrewFixture(this);
+        if(this.promptProCrewForfeit)confirmCrewForfeit(this);
+      });
+    }
     if (this.chapter08Arrival && this.activeLocationId === 'ginzaMotorGallery') {
       // Let the normal R567 showroom be recognisable before dialogue starts.
       this.time.delayedCall(1500, () => {
