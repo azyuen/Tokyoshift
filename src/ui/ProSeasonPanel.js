@@ -1,13 +1,13 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261018-r586';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261018-r592';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261018-r594';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261018-r591';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261018-r591';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261018-r594';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -166,30 +166,35 @@ function overlay(s,title) {
 }
 // One paid competition entry grants access to the FULL seven-member team.
 // No redundant five-person roster: choose exactly three at each saved fixture.
+// Paid pro crew entry goes directly into the crew strategy room, without
+// asking the player to confirm entry twice.
 export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null) {
-  const c=circuit(s),open=isOpenCircuitAvailable(c);
-  const trophy=trophyId?getOpenCircuitTrophy(c,getOpenCircuitRotation()):null;
-  const fee=open?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
+  if(circuit(s).activeCrewEvent)return showCrewFixture(s);
   const units=getCrewSeriesUnits(s.registry,assignments);
-  const fullRoster=units.map(u=>u.id);
-  const reason=crewSeriesEligibility(s.registry,fullRoster,assignments)||
-    (trophyId&&(!trophy?.available||trophy.id!==trophyId)?'TROPHY INVITATION UNAVAILABLE':null)||
-    (Number(s.registry.get('cash')||0)<fee?'INSUFFICIENT CASH':null);
-  const o=overlay(s,'PRO CREW EVENT // ENTRY');
-  o.label(180,176,trophy?.label||'CREW CLUB SPRINT',34);
-  o.label(180,260,'SEVEN CREW DRIVERS AVAILABLE · FIELD THREE FOR EACH FIXTURE',22);
-  o.label(180,325,'ONE EVENT ENTRY // '+cash(fee),25);
-  o.label(180,383,'You choose and drive three crew cars for each fixture. No five-driver registration.',19);
-  if(reason)o.label(180,465,reason,23);
-  o.btn(350,720,390,'RACE LATER',o.close);
-  o.btn(1080,720,550,'CONFIRM ENTRY · '+cash(fee),()=>{
-    if(reason)return;
-    const out=registerCrewSeries(s.registry,fullRoster,assignments,trophyId,getOpenCircuitRotation());
-    if(out.error){s.proError=out.error;o.close();redraw(s);return;}
-    o.close();
-    if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+  const out=registerCrewSeries(s.registry,units.map(u=>u.id),assignments,
+    trophyId,getOpenCircuitRotation());
+  if(out.error){s.proError=out.error;redraw(s);return;}
+  if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+}
+
+export function confirmCrewForfeit(s) {
+  const event=circuit(s).activeCrewEvent;
+  if(!event)return;
+  let dialog;
+  dialog=seasonConfirm(s,{
+    title:'FORFEIT CREW EVENT?',
+    description:'Leaving now forfeits the entire competition.',
+    details:'Your entry fee is not refunded. Remaining heats are lost and this event cannot be resumed.',
+    confirmLabel:'FORFEIT EVENT',
+    onConfirm:()=>{
+      const out=forfeitCrewSeries(s.registry,event.id);
+      if(out.error){dialog.close();s.proError=out.error;return;}
+      dialog.close();s._proOverlayClose?.();
+      if(commit(s,{proCircuit:out.circuit}))redraw(s);
+    },
   });
 }
+
 export function showCrewFixture(s,selection=null) {
   const c=circuit(s),f=getCrewFixture(c),t=c.activeCrewEvent;if(!f){s.proError='SAVED CREW FIXTURE UNAVAILABLE';redraw(s);return;}
   const currentFormat=f.format;
@@ -200,6 +205,7 @@ export function showCrewFixture(s,selection=null) {
       event:t,fixture:f,units,selected:selection||[],
       adviceStatus:getProCrewAdviceAvailability(s.registry),
       advice:getProCrewHeatAdvice(f,units),
+      onForfeit:()=>confirmCrewForfeit(s),
       onAdvice:ids=>{
         const out=useProCrewAdvice(s.registry,t.id);
         if(out.error){s.proError=out.error;showCrewFixture(s,ids);return;}
@@ -258,7 +264,7 @@ export function showCrewFixture(s,selection=null) {
         o.close();if(commit(s,{proCircuit:out.circuit,cash:Number(s.registry.get('cash')||0)+out.cashPrize}))showCrewResult(s,out);
       });
     }
-    o.btn(350,779,450,'SAVE / RETURN TO COMPLEX',o.close);
+    o.btn(350,779,450,'FORFEIT EVENT',()=>confirmCrewForfeit(s));
   }
 }
 function showCrewResult(s,out) {
@@ -267,12 +273,22 @@ function showCrewResult(s,out) {
   if(portrait)o.add(portrait);
   o.label(610,205,champion&&out.summary?.trophyId?'TROPHY CHAMPION':champion?'SERIES WINNER':out.status==='COMPLETE'?'SERIES COMPLETE':out.wins>=2?'TEAM VICTORY':'TEAM DEFEAT',52);
   o.label(620,305,out.summary?.format==='TECHNICAL'?`TIME SPREAD ${out.summary.ownSpread===null?'DNF':out.summary.ownSpread.toFixed(3)+'s'} vs ${out.summary.opponentSpread===null?'DNF':out.summary.opponentSpread.toFixed(3)+'s'}`:out.summary?.format==='RELAY'?`RELAY TOTAL ${out.summary.ownTotal.toFixed(3)}s vs ${out.summary.opponentTotal.toFixed(3)}s`:`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
-  o.label(620,385,out.summary?
-    `${out.summary.trophyId?out.summary.label+' · FINAL PLACING #'+out.summary.placing:'HEATS WON '+(out.summary.heatWins??out.summary.wins)+'/3'} · +${cash(out.cashPrize)}\nTEAM RANK #${out.summary.rankBefore} → #${out.summary.rankAfter}\n${out.summary.openCircuit?'STANDALONE TROPHY · NO SEASON POINTS':'+'+out.summary.points+' SEASON POINTS'}`:
-    `NEXT: FIXTURE ${out.circuit.activeCrewEvent.round+1}/3\nYour crew and results are saved.`,24);
+  const resultCopy=out.summary?
+    (out.summary.trophyId?out.summary.label+' · FINAL PLACING #'+out.summary.placing:
+      'HEATS WON '+(out.summary.heatWins??out.summary.wins)+'/3')+
+      ' · +'+cash(out.cashPrize)+'\n'+(out.summary.openCircuit?
+        'OPEN CIRCUIT · NO SEASON POINTS':
+        'TEAM RANK #'+out.summary.rankBefore+' → '+out.summary.rankAfter+
+          '\n+'+out.summary.points+' SEASON POINTS')
+    :'NEXT FIXTURE READY · Previous three heats are saved.';
+  o.label(620,385,resultCopy,24);
   if(out.circuit.calendar.round>=8)o.label(620,566,'SEASON COMPLETE · VIEW RESULTS AT THE COMPLEX',20);
-  o.label(980,745,'TAP ANYWHERE · RETURN TO COMPLEX',18);
-  let armed=false,done=false;const advance=()=>{if(!armed||done)return;done=true;o.close();redraw(s);};
+  o.label(980,745,out.status==='ADVANCED'?
+    'TAP ANYWHERE · PREPARE NEXT FIXTURE':'TAP ANYWHERE · RETURN TO COMPLEX',18);
+  let armed=false,done=false;
+  const advance=()=>{if(!armed||done)return;done=true;o.close();
+    if(out.status==='ADVANCED')showCrewFixture(s);else redraw(s);
+  };
   o.add(s.add.rectangle(780,420,1560,840,0,0.001).setDepth(295).setInteractive()).on('pointerdown',advance);
   s.time.delayedCall(360,()=>{armed=true;});
 }
