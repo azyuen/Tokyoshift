@@ -1,0 +1,29 @@
+name: R593 Pro Event Sidebar Consistency
+on:
+  pull_request:
+    paths:
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/pro-sidebar-r593.mjs'
+      - '.github/workflows/pro-sidebar-r593.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'tests/pro-sidebar-r593.mjs'
+jobs:
+  pro-sidebar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse sidebar and venue modules
+        run: |
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/scenes/CentralTokyoScene.js
+      - name: Verify shared button/fonts/details and spacing
+        run: node --test tests/pro-sidebar-r593.mjs
