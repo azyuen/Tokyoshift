@@ -176,25 +176,25 @@ function draw(s,state,options){
   display(63,43,'OPEN CIRCUIT',21,'#ff8197');
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
-  poly(50,153,712,43,0x061625,0x061625,218);
-  text(79,165,'1/4 MI  //  STANDING START  //  ROUND '+stageNo+'/'+stageTotal,12,'#d0e7f3',true);
-  // Light but legible rules panel between title and the large lower cards.
-  rect(488,305,866,156,0x071522,0x476b81,.77,217);
-  text(83,243,'EVENT BRIEFING',13,'#35d6ff',true);
-  text(83,277,'PRIZE',13,'#b8d6e5',true);
-  text(213,277,cash(state.prizeCash),19);
-  text(468,277,'ENTRY PAID',12,'#b8d6e5',true);
-  text(636,277,cash(state.entryFee),19);
-  text(83,320,'POWER RULE',12,'#b8d6e5',true);
-  text(254,320,eligibility.rules.maxPowerKW==null?'OPEN':
-    eligibility.rules.maxPowerKW+' KW MAX',16);
-  text(468,320,'NOS RULE',12,'#b8d6e5',true);
-  text(636,320,eligibility.rules.noNos?'PROHIBITED':'ALLOWED',16,
-    eligibility.rules.noNos?'#ffc8a1':'#e5f2fc');
-  text(83,348,'STATUS',12,'#b8d6e5',true);
-  fit(text(254,349,eligibility.eligible?'ELIGIBLE':
-    eligibility.problems.join('  //  '),15,
-    eligibility.eligible?'#7af4c1':'#ff9d9d'),620);
+  // Compact, taller briefing card: the former third headline row was
+  // redundant, so the race distance, start and round live here instead.
+  rect(278,299,444,260,0x071522,0x476b81,.87,217);
+  text(81,184,'EVENT BRIEFING',14,'#35d6ff',true);
+  const detail=(y,label,value,color='#f2f7fb')=>{
+    text(85,y,label,11,'#bfd4e1',true);
+    fit(text(283,y-2,value,16,color),198);
+  };
+  detail(220,'ROUND',stageNo+' / '+stageTotal);
+  detail(248,'RACE','1/4 MI // STANDING', '#e9f4ff');
+  detail(276,'PRIZE',cash(state.prizeCash));
+  detail(304,'ENTRY PAID',cash(state.entryFee));
+  detail(332,'POWER RULE',eligibility.rules.maxPowerKW==null?
+    'OPEN':eligibility.rules.maxPowerKW+' KW MAX');
+  detail(360,'NOS RULE',eligibility.rules.noNos?'PROHIBITED':'ALLOWED',
+    eligibility.rules.noNos?'#ffc8a1':'#e9f4ff');
+  const problems=eligibility.problems.join(' // ');
+  detail(388,'STATUS',eligibility.eligible?'ELIGIBLE':problems,
+    eligibility.eligible?'#7af4c1':'#ff9d9d');
 
   poly(46,436,389,357,0x071728,CYAN,219);
   poly(463,436,447,357,0x071728,CYAN,219);
@@ -240,13 +240,24 @@ function draw(s,state,options){
   // Preserve the actual consultation on screen after confirming; the saved
   // speech also survives a reload and remains visible between event heats.
   if(state.briefingAdviceUsed && state.briefingAdviceText){
-    const spoken=String(state.briefingAdviceText);
-    rect(1234,399,565,165,0xfffcf1,0x111111,1,234);
-    text(972,326,'SAYAKA  //  RACE STRATEGY',15,'#222b38',false,237)
-      .setFontStyle('800');
-    const bubble=text(972,357,spoken,17,'#152034',false,237)
-      .setWordWrapWidth(520);
-    if(bubble.height>111)bubble.setScale(111/bubble.height);
+    // Exact Pro Crew speech-bubble treatment: warm paper, black outline and
+    // an equilateral point facing Sayaka. No generic rectangular overlay.
+    const x=522,y=247,w=449,h=148,edge=x+w;
+    const halfBase=37,tipX=edge+Math.sqrt(3)*halfBase;
+    const cy=y+h/2;
+    const points=[{x,y},{x:edge,y},{x:edge,y:cy-halfBase},
+      {x:tipX,y:cy},{x:edge,y:cy+halfBase},
+      {x:edge,y:y+h},{x,y:y+h}];
+    const bubble=add(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(5,0x111111,1);bubble.strokePoints(points,true);
+    text(x+19,y+10,'Sayaka',15,'#252227',false,238)
+      .setFontStyle('700');
+    const speech=text(x+19,y+40,String(state.briefingAdviceText),
+      16,'#111111',false,238);
+    speech.setWordWrapWidth(w-38);
+    speech.setLineSpacing(1);
+    if(speech.height>h-53)speech.setScale((h-53)/speech.height);
   }
   btn(1074,650,240,49,'ASK FOR ADVICE',()=>openAdvice(),
     {disabled:!advice.available});
@@ -255,6 +266,7 @@ function draw(s,state,options){
     if(!eligibility.eligible)return;
     close();options.onRace?.();
   },{red:true,disabled:!eligibility.eligible});
+  btn(1002,810,200,42,'FORFEIT EVENT',()=>openForfeit(),{red:true});
   btn(1459,810,170,42,'BACK',()=>{close();options.onBack?.();});
 
   // All modal elements share the owning room's lifecycle. Closing the scene
@@ -282,6 +294,14 @@ function draw(s,state,options){
     const copy=popupAdd(s.add.text(x,y,label,{fontFamily:PIXEL,
       fontSize:'13px',color:'#ffffff'}).setFontSize(13).setOrigin(.5).setDepth(276));
     fit(copy,w-14);
+  }
+  function openForfeit(){
+    modal('FORFEIT DRIVER EVENT?',
+      'Withdraw from this paid driver series? The entry fee is not refunded, remaining rounds are lost, and your event is recorded as a forfeit. Daichi will restore stored upgrades.');
+    modalBtn(590,581,290,'CONTINUE EVENT',dismiss);
+    modalBtn(979,581,290,'CONFIRM FORFEIT',()=>{
+      dismiss();close();options.onForfeit?.();
+    },true);
   }
   function openAdvice(){
     if(!driverAdviceStatus(s.registry.get('proCircuit')||{},
