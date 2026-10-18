@@ -139,10 +139,6 @@ function draw(s,opts){
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
   s._proOverlayClose=close;s.events.once('shutdown',close);
-  const reopen=(next,other={})=>{
-    close();
-    showProCrewHeatSelection(s,{...opts,selected:next,_loaded:true,...other});
-  };
   // Standard main-button sizing after the game's 1.6x font pass: 16px
   // Silkscreen throughout this screen, rather than tiny 10/11/12px labels.
   const BUTTON_FONT=16;
@@ -226,8 +222,11 @@ function draw(s,opts){
   const adviceUsed=Boolean(e.adviceUsed);
   const adviceRemaining=Math.max(0,Number(opts.adviceStatus?.remaining||0));
   const canAsk=!adviceUsed&&adviceRemaining===0;
+  let confirmationNodes=[],confirmationOpen=false;
   btn(1055,617,235,43,'ASK FOR ADVICE',()=>{
-    if(!canAsk)return;
+    if(!canAsk||confirmationOpen)return;
+    confirmationOpen=true;
+    scope(confirmationNodes);
     rect(W/2,H/2,W,H,0x020812,.76,0x020812,270).setInteractive();
     rect(780,420,850,332,0xfffcf1,1,0x111111,271);
     const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
@@ -241,13 +240,15 @@ function draw(s,opts){
     const modalButton=(x,label,action)=>{
       const hit=rect(x,515,294,52,0x172636,1,0x566b7e,273);
       hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
-      text(x,515,label,11,'#ffffff',true,274).setOrigin(.5);
+      text(x,515,label,BUTTON_FONT,'#ffffff',true,274).setOrigin(.5);
     };
-    modalButton(614,'MAYBE NEXT TIME',()=>reopen(selected,{popupSlot:null}));
-    modalButton(946,'ASK FOR ADVICE',()=>{
-      close();
-      opts.onAdvice?.(selected);
+    modalButton(614,'MAYBE NEXT TIME',()=>{
+      clearGroup(confirmationNodes);confirmationNodes=[];confirmationOpen=false;
     });
+    modalButton(946,'ASK FOR ADVICE',()=>{
+      close();opts.onAdvice?.([...selected]);
+    });
+    unscope();
   },false,!canAsk);
   if(!canAsk){
     const remainingLabel=adviceUsed?'ADVICE USED FOR THIS EVENT':
