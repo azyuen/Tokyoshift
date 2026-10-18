@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r594';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r595';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -887,7 +887,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       SIDE.x + SIDE.w / 2,
       mapY,
       SIDE.w - 36,
-      42,
+      dragTheme ? 40 : 42,
       dragTheme ? 0x30181e : 0x102138,
       1
     ).setStrokeStyle(2, dragTheme ? 0xd54a54 : 0x55b8ff, 1)
@@ -3050,7 +3050,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
       this.addContent(this.add.text(
         x + 145,
-        CARDS.y + 126,
+        CARDS.y + 136,
         event.trophySlotClosed?'NEXT FULL CYCLE':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
