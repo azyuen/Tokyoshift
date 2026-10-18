@@ -1,4 +1,4 @@
-// R596 — continuous pro crew room with refined speech pointer, hierarchy and roster spacing.
+// R597 — fully visible shadow-free roster cars and tighter portrait/text alignment.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -429,27 +429,32 @@ function draw(s,opts){
         fontFamily:PIXEL,fontSize:'21px',fontStyle:'normal',color:'#ffffff',
       }).setOrigin(.5).setDepth(255));
       const portrait=createCharacterProfile(s,{characterId:u.id,pose:'idle',
-        x:1057,y:y+30,frameWidth:70,frameHeight:69,depth:253,
+        x:1071,y:y+30,frameWidth:70,frameHeight:69,depth:253,
         playerCharacterId:player});
       if(portrait)add(portrait);
       const ink=full&&assigned<0?'#8595a3':'#f4f3f3';
-      const who=text(1105,y+1,u.name,18,ink,false,254);
-      if(who.width>151)who.setScale(151/who.width);
-      const model=text(1105,y+26,cars[u.carId]?.shortName||u.carId,
+      const who=text(1119,y+1,u.name,18,ink,false,254);
+      if(who.width>142)who.setScale(142/who.width);
+      const model=text(1119,y+26,cars[u.carId]?.shortName||u.carId,
         15,'#c0dce8',false,254);
-      if(model.width>151)model.setScale(151/model.width);
-      const spec=text(1105,y+48,normaliseDrive(u.drivetrain)+' · '+
+      if(model.width>142)model.setScale(142/model.width);
+      const spec=text(1119,y+48,normaliseDrive(u.drivetrain)+' · '+
         Math.round(u.powerKW||0)+' kW',14,'#99bfce',false,254);
-      if(spec.width>151)spec.setScale(151/spec.width);
-      // Reserve 1280–1460 for the COMPLETE car (rather than masking off
-      // the front or rear against a cramped right-side crop).
+      if(spec.width>142)spec.setScale(142/spec.width);
+      // FULL, shadow-free previews: the shared car renderer has a mixed
+      // bottom-right/reference anchor, and its old hard clip cut off bonnets
+      // and rooflines. Fit a slightly smaller sprite inside the row instead.
+      // Only remove returned index 2 (the ground-shadow ellipse); never
+      // change the global car renderer used by actual races and the garage.
       const car=cars[u.carId];
       if(car&&typeof s.createCarDisplay==='function'){
         try{
-          const parts=s.createCarDisplay(car,1428,y+34,148,253,
+          const parts=s.createCarDisplay(car,1414,y+13,145,253,
             getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-          const crop=mask(1268,y-4,204,75);
-          for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
+          parts.forEach((part,index)=>{
+            if(index===2){part?.destroy?.();return;}
+            if(part)add(part); // No viewport mask: show the COMPLETE car.
+          });
         }catch(err){
           console.warn('[Tokyo SHIFT] Crew roster car preview skipped:',u.carId,err);
         }
