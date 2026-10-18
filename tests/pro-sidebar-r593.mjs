@@ -88,5 +88,5 @@ test('R593: trophy/driver/crew screens delegate to same shared sidebar renderers
     assert.match(crew,new RegExp(fn+'\\(s,side,'));
   }
   assert.doesNotMatch(crew,/side\.y\+590/,'no overlapping low crew entry button');
-  assert.doesNotMatch(crew,/ENTER CREW EVENT|ENTER \\/ SELECT SQUAD/,'old crew-specific entry label gone');
+  assert.doesNotMatch(crew,/ENTER CREW EVENT|ENTER.*SELECT SQUAD/,'old crew-specific entry label gone');
 });
