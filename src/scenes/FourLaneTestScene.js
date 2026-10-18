@@ -1,7 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { isOpenDriverBriefing, restoreDriverBriefingNos } from '../data/proDriverBriefing.js?v=20261019-r598';
+import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r598';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -1676,7 +1676,7 @@ export default class FourLaneTestScene extends RaceScene {
             outcome.summary = changes.proCircuit.lastTournament;
             // Return bench-stored NOS equipment only when the saved Open
             // Circuit driver event actually finishes; never lose paid parts.
-            const restored=restoreDriverBriefingNos(this.registry.get('carStates')||{},state);
+            const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},state);
             if(restored)changes.carStates=restored;
           }
           saveProTransaction(this.registry, changes);
