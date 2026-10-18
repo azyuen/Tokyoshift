@@ -232,6 +232,17 @@ function draw(s,state,options){
   const adviceLabel=advice.usedThisEvent?'ADVICE USED THIS EVENT':
     advice.remaining?'AVAILABLE AFTER '+advice.remaining+' EVENTS':'ADVICE AVAILABLE';
   fit(text(1014,580,adviceLabel,13,'#ecf2f5'),475);
+  // Preserve the actual consultation on screen after confirming; the saved
+  // speech also survives a reload and remains visible between event heats.
+  if(state.briefingAdviceUsed && state.briefingAdviceText){
+    const spoken=String(state.briefingAdviceText);
+    rect(1234,399,565,165,0xfffcf1,0x111111,1,234);
+    text(972,326,'SAYAKA  //  RACE STRATEGY',15,'#222b38',false,237)
+      .setFontStyle('800');
+    const bubble=text(972,357,spoken,17,'#152034',false,237)
+      .setWordWrapWidth(520);
+    if(bubble.height>111)bubble.setScale(111/bubble.height);
+  }
   btn(1074,650,240,49,'ASK FOR ADVICE',()=>openAdvice(),
     {disabled:!advice.available});
   btn(1377,650,255,49,'DAICHI // TUNE',()=>openTune());
