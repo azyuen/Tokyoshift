@@ -7,6 +7,9 @@ on:
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-heat-r589.mjs'
       - 'tests/pro-crew-r591.mjs'
+      - 'tests/pro-crew-continuous-r594.mjs'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
       - 'src/data/proCircuit.js'
       - '.github/workflows/pro-crew-heat-r589.yml'
   push:
@@ -17,6 +20,9 @@ on:
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-heat-r589.mjs'
       - 'tests/pro-crew-r591.mjs'
+      - 'tests/pro-crew-continuous-r594.mjs'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
       - 'src/data/proCircuit.js'
 jobs:
   pro-crew-heat:
@@ -33,5 +39,6 @@ jobs:
           node --check src/ui/ProSeasonPanel.js
           node --check src/data/proSeason.js
           node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
       - name: Verify saved seven-driver crew and once-per-event advice
-        run: node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs
+        run: node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs
