@@ -1,5 +1,5 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r584';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
