@@ -54,6 +54,26 @@ function readWorldCycleEpoch(now = Date.now()) {
   return epoch;
 }
 
+// Open Circuit offers refresh six times during one COMPLETE day + night.
+// Each WorldClock phase is 15 minutes, so the complete cycle is 30 minutes,
+// with one new event rotation every five minutes. Trophy invitations refresh
+// only once at the start of each complete cycle (dayIndex), never per slot.
+export const OPEN_CIRCUIT_SLOTS_PER_DAY = 6;
+export const WORLD_FULL_DAY_MS = WORLD_PHASE_DURATION_MS * WORLD_PHASES.length;
+export const OPEN_CIRCUIT_ROTATION_MS = WORLD_FULL_DAY_MS / OPEN_CIRCUIT_SLOTS_PER_DAY;
+
+export function getOpenCircuitRotation(now = Date.now()) {
+  const epoch=readWorldCycleEpoch(now);
+  const elapsed=Math.max(0,now-epoch);
+  const dayIndex=Math.floor(elapsed/WORLD_FULL_DAY_MS);
+  const slotIndex=Math.min(OPEN_CIRCUIT_SLOTS_PER_DAY-1,
+    Math.floor((elapsed%WORLD_FULL_DAY_MS)/OPEN_CIRCUIT_ROTATION_MS));
+  const rotationIndex=dayIndex*OPEN_CIRCUIT_SLOTS_PER_DAY+slotIndex;
+  return {dayIndex,slotIndex,rotationIndex,
+    nextEventAt:epoch+(rotationIndex+1)*OPEN_CIRCUIT_ROTATION_MS,
+    nextTrophyAt:epoch+(dayIndex+1)*WORLD_FULL_DAY_MS};
+}
+
 export function getWorldPhase(now = Date.now()) {
   // Automatically release any R247-era persistent DAY/NIGHT pin.
   clearLegacyWorldPhaseOverride();
