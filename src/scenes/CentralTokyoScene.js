@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r592';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r592';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r593';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3197,9 +3197,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const title = activeDuelHere && (
       !activeDuel.eventId || activeDuel.eventId === 'tokyoInvitational'
     ) ? 'ACTIVE PRO CUP' : selectedFourWide ? 'FOUR-WIDE OPEN' : event.label;
-    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 207, title, {
-      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#f8f3f2',
-    }).setDepth(34));
+    drawProEventSidebarTitle(this,SIDE,title);
 
     const desc = activeDuelHere && (!activeDuel.eventId ||
         activeDuel.eventId === 'tokyoInvitational')
@@ -3268,11 +3266,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if (seasonRules.noNos) desc.push('SEASON NOS  PROHIBITED');
     }
 
-    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 250, desc.join('\n'), {
-      fontFamily: BODY_FONT, fontSize: '11px', fontStyle: '700',
-      color: '#c4bec0', lineSpacing: 5,
-      wordWrap: { width: SIDE.w - 37 },
-    }).setDepth(34));
+    drawProEventSidebarDetails(this,SIDE,desc);
 
     const label = resuming
       ? activeTimedHere ? 'READY // ATTEMPT ' + (pro.activeTimedEvent.attempts.length+1) + '/3' : selectedFourWide
@@ -3294,35 +3288,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !passesNos ? 'REMOVE NOS'
         : cash < event.entryFee ? 'INSUFFICIENT CASH'
         : 'SCRUTINEERING PASSED';
-    this.addContent(this.add.text(SIDE.x + 20, SIDE.y + 518, label, {
-      fontFamily: PIXEL_FONT, fontSize: '8px',
-      color: canEnter ? '#f1e7e6' : '#ea777d',
-      wordWrap: { width: SIDE.w - 40 },
-    }).setDepth(34));
+    drawProEventSidebarStatus(this,SIDE,label,canEnter);
 
-    const enter = this.addContent(this.add.rectangle(
-      SIDE.x + SIDE.w / 2, SIDE.y + 574, SIDE.w - 36, 48,
-      canEnter ? 0x551d25 : 0x201d20, 1
-    ).setStrokeStyle(2, canEnter ? 0xed515c : 0x575154, 1).setDepth(33));
     const actionText = canResume
       ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
-      : eligible ? 'ENTER EVENT // ' + money(event.entryFee) : 'NOT ELIGIBLE';
-    this.addContent(this.add.text(SIDE.x + SIDE.w / 2, SIDE.y + 574, actionText, {
-      fontFamily: PIXEL_FONT, fontSize: '8px',
-      color: canEnter ? '#fff6f5' : '#938a8d',
-    }).setOrigin(0.5).setDepth(34));
-
-    if (canEnter) {
-      enter.setInteractive({ useHandCursor: true });
-      enter.on('pointerdown', () => {
-        if (activeTimedHere) this.enterProfessionalTimedEvent(event);
-        else if (activeCupHere) this.enterFourWideCup();
-        else if (activeDuelHere) this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
-        else if (selectedFourWide) this.enterFourWideCup();
-        else if (selectedTimed) this.enterProfessionalTimedEvent(event);
-        else this.startProBracket(event, build);
-      });
-    }
+      : canEnter ? proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
+    drawProEventSidebarEntry(this,SIDE,actionText,()=>{
+      if (activeTimedHere) this.enterProfessionalTimedEvent(event);
+      else if (activeCupHere) this.enterFourWideCup();
+      else if (activeDuelHere) this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+      else if (selectedFourWide) this.enterFourWideCup();
+      else if (selectedTimed) this.enterProfessionalTimedEvent(event);
+      else this.startProBracket(event, build);
+    },canEnter);
   }
 
   buildDragMainRivalRound(characterId, event, build, index = 0) {
