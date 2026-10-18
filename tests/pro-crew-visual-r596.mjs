@@ -37,7 +37,7 @@ test('R596: speech bubble body is two thirds of old width, with one stroked equi
   assert.match(ui,/if\(spoken\.height>maxHeight\)spoken\.setScale/);
 });
 
-test('R596: blue roster borders, red selected states and tighter full-car row spacing',()=>{
+test('R596/R597: blue roster borders, red selected states and full shadow-free car previews',()=>{
   assert.match(ui,/rect\(1235,411,596,740,0x061421,\.985,BLUE,250\)/);
   assert.match(ui,/const selectedBorder=assigned>=0\?RED:BLUE/);
   assert.match(ui,/1,selectedBorder,251/);
@@ -45,12 +45,12 @@ test('R596: blue roster borders, red selected states and tighter full-car row sp
   assert.match(ui,/text\(991,y\+27,String\(assigned\+1\)/);
   assert.match(ui,/fontSize:'21px',fontStyle:'normal'/);
   assert.match(ui,/fontSize:'18px',fontStyle:'normal'/);
-  assert.match(ui,/x:1057,y:y\+30,frameWidth:70/);
-  assert.match(ui,/const who=text\(1105,y\+1/);
-  assert.match(ui,/createCarDisplay\(car,1428,y\+34,148,253/);
-  assert.match(ui,/const crop=mask\(1268,y-4,204,75\)/);
-  const drawnLeft=1428-148,cropLeft=1268,cropRight=cropLeft+204;
-  assert.ok(drawnLeft>=cropLeft&&1428<=cropRight,'full car fits the crop');
+  assert.match(ui,/x:1071,y:y\+30,frameWidth:70/);
+  assert.match(ui,/const who=text\(1119,y\+1/);
+  assert.match(ui,/createCarDisplay\(car,1414,y\+13,145,253/);
+  assert.match(ui,/if\(index===2\)\{part\?\.destroy\?\.\(\);return;\}/);
+  assert.doesNotMatch(ui,/const crop=mask\(1268,y-4,204,75\)/,
+    'roster cars should not be clipped');
   assert.doesNotMatch(ui,/7 TEAM MEMBERS/);
   assert.match(ui,/function assignDriver\(id\)/);
 });
