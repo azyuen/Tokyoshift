@@ -39,7 +39,7 @@ test('R593: shared sidebar font, sizes, geometry, and spacing mirror driver even
   const s=scene();
   const fired=[];
   drawProEventSidebarTitle(s,SIDE,'CREW TECHNICAL');
-  drawProEventSidebarDetails(s,SIDE,['3 CONSISTENCY RUNS','CHOOSE THREE DRIVERS']);
+  drawProEventSidebarDetails(s,SIDE,['TEST OF CONSISTENCY','DRIVE THREE DIFFERENT CARS','SMALLEST TIME DIFFERENCE WINS']);
   drawProEventSidebarStatus(s,SIDE,'CHECK ELIGIBILITY / CASH',false);
   drawProEventSidebarEntry(s,SIDE,proEventEntryLabel(35000),()=>fired.push('enter'),true);
   const [title,details,status,bg,caption]=s.nodes;
@@ -49,17 +49,17 @@ test('R593: shared sidebar font, sizes, geometry, and spacing mirror driver even
   assert.deepEqual([details.x,details.y],[SIDE.x+20,SIDE.y+250]);
   assert.equal(details.style.fontFamily,'"Rajdhani", monospace');
   assert.equal(details.style.fontSize,'11px');
-  assert.deepEqual([status.x,status.y],[SIDE.x+20,SIDE.y+518]);
+  assert.deepEqual([status.x,status.y],[SIDE.x+20,SIDE.y+490]);
   assert.equal(status.style.fontFamily,'"Silkscreen", monospace');
   assert.equal(status.style.fontSize,'8px');
-  assert.deepEqual([bg.x,bg.y,bg.w,bg.h],[SIDE.x+SIDE.w/2,SIDE.y+574,SIDE.w-36,48]);
+  assert.deepEqual([bg.x,bg.y,bg.w,bg.h],[SIDE.x+SIDE.w/2,SIDE.y+574,SIDE.w-36,40]);
   assert.equal(caption.style.fontFamily,'"Silkscreen", monospace');
   assert.equal(caption.style.fontSize,'8px');
   assert.equal(caption.value,'ENTER EVENT // ¥ 35,000');
   bg.interactions.pointerdown();
   assert.deepEqual(fired,['enter']);
-  // The independent Pro Season action is 38 px tall, centered y=624.
-  assert.equal((SIDE.y+624-19)-(bg.y+bg.h/2),7,'7px gap to Start Pro Season button');
+  // The 40px professional-season button is centered at SIDE.y+624.
+  assert.equal((SIDE.y+624-20)-(bg.y+bg.h/2),10,'10px gap to Start Pro Season button');
 });
 
 test('R593: short crew format has the same entry button and details as a driver',()=>{
@@ -67,7 +67,7 @@ test('R593: short crew format has the same entry button and details as a driver'
   assert.equal(drawCrewSidebar(s,{
     team:true,openCircuit:true,label:'CREW TECHNICAL',format:'TECHNICAL',entryFee:35000,
   },SIDE),true);
-  const button=s.nodes.find(n=>n.kind==='rect'&&n.y===SIDE.y+574&&n.h===48);
+  const button=s.nodes.find(n=>n.kind==='rect'&&n.y===SIDE.y+574&&n.h===40);
   assert.ok(button,'crew entry at exact driver action position');
   const caption=s.nodes.find(n=>n.kind==='text'&&n.y===SIDE.y+574);
   assert.equal(caption.value,'ENTER EVENT // ¥ 35,000');
@@ -76,7 +76,9 @@ test('R593: short crew format has the same entry button and details as a driver'
   const body=s.nodes.find(n=>n.kind==='text'&&n.y===SIDE.y+250);
   assert.equal(body.style.fontSize,'11px');
   assert.equal(body.style.fontFamily,'"Rajdhani", monospace');
-  assert.match(body.value,/CHOOSE THREE DRIVERS/);
+  assert.match(body.value,/TEST OF CONSISTENCY/);
+  assert.match(body.value,/DRIVE THREE DIFFERENT CARS/);
+  assert.match(body.value,/SMALLEST TIME DIFFERENCE WINS/);
 });
 
 test('R593: trophy/driver/crew screens delegate to same shared sidebar renderers',()=>{
