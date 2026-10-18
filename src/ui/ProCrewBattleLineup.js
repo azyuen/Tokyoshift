@@ -160,16 +160,37 @@ function draw(s,opts){
       .setFlipX(p.flip).setScale(scale).setDepth(212));
   }
 
-  // Header and currently contested saved fixture rules (not a fake fixed race).
-  rect(390,105,742,155,0x020b19,.84,0x020b19,213);
-  text(41,32,'PRO CREW BATTLE',37,'#fff5f6',true);
+  // EXACT regional Crew Battle typography and framing from MeetScene.
+  // Only event/format and heat rules differ.
   const f=opts.fixture||{},e=opts.event||{};
-  text(44,94,'FIXTURE '+(Number(f.round||0)+1)+' / '+(e.short?'1':'3')+
-    '   //   '+formatName(f.format),16,'#d8eaf2',true);
-  text(45,134,'SELECT THREE DRIVERS FOR THIS FIXTURE',18,'#f1e7e8');
-  text(45,165,'YOU DRIVE EACH HEAT   •   ALL THREE RUNS COUNT',16,'#c8d8e4');
-  if(e.trophyId==='triDrive')
-    text(44,201,'TRI-DRIVE: FIELD ONE FWD, ONE RWD AND ONE AWD',14,'#ffbbc4');
+  const meetHeader=(x,y,w,h,fill,alpha=1)=>{
+    const g=add(s.add.graphics().setDepth(218));
+    g.fillStyle(fill,alpha);
+    g.fillPoints([{x:x+15,y},{x:x+w,y},{x:x+w-15,y:y+h},{x,y:y+h}],true);
+    return g;
+  };
+  const meetText=(x,y,value,size,color='#ffffff')=>add(s.add.text(x,y,String(value),{
+    fontFamily:'"Exo 2", sans-serif',fontSize:size+'px',
+    fontStyle:'italic 900',color,stroke:'#090d16',
+    strokeThickness:size>=24?5:1,
+  }).setDepth(229));
+  const pixelText=(x,y,value,size,color)=>add(s.add.text(x,y,String(value),{
+    fontFamily:PIXEL,fontSize:size+'px',color,
+  }).setDepth(229));
+  meetHeader(52,40,245,43,0x03070c,.96);
+  meetText(72,48,e.season||e.seasonNumber?'PRO SEASON':'OPEN CIRCUIT',19,'#48d9ff');
+  const eventTitle=String(e.label||(
+    f.format==='RELAY'?'CREW RELAY':
+    f.format==='TECHNICAL'?'CREW TECHNICAL':
+    f.format==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW CLUB SPRINT')).toUpperCase();
+  meetText(58,85,eventTitle,38,'#ffffff');
+  meetHeader(54,151,620,41,0x081522,.73);
+  const heatRule=f.heatRule||f.raceRule||
+    (f.format==='RELAY'?'1/4 MILE // STANDING START // TEAM RELAY':
+     f.format==='TECHNICAL'?'1/4 MILE // CONSISTENCY RUN':
+     f.format==='FOUR_WIDE'?'1/4 MILE // FOUR-WIDE':
+     '1/4 MILE // STANDING START');
+  pixelText(74,163,String(heatRule).toUpperCase(),13,'#a8c4d7');
 
   // One advice entitlement, scoped to the paid competition rather than a heat.
   const adviceUsed=Boolean(e.adviceUsed);
@@ -195,31 +216,62 @@ function draw(s,opts){
     text(53,398,'ADVICE USED // 1 PER COMPETITION',13,'#ffb3bc',true,234);
   }
 
-  // Crew-battle-inspired slanted bottom-left lineup graphic.
-  polygon(25,477,914,307,44,0x071b2b,BLUE,220);
-  text(75,493,'YOUR LINEUP',27,'#65e9ff',true,224);
-  text(343,504,'//  THIS FIXTURE',16,'#78dbf0',true,224);
-  const state=s.registry.get('carStates')||{},player=s.registry.get('playerCharacterId')||'renMizuno';
+  // Exact Crew Battle left-side panel geometry, colours, font sizes and
+  // character/car arrangement copied from MeetScene regional battle renderer.
+  const framePoints=(x,y,w,h,skew=32)=>[
+    {x:x+skew,y},{x:x+w+skew,y},
+    {x:x+w-skew,y:y+h},{x:x-skew,y:y+h},
+  ];
+  const graphicPanel=(x,y,w,h,fill,border,alpha=1,skew=17,depth=221)=>{
+    const pts=framePoints(x,y,w,h,skew);
+    const g=add(s.add.graphics().setDepth(depth));
+    g.fillStyle(fill,alpha);g.fillPoints(pts,true);
+    g.lineStyle(3,border,1);g.strokePoints(pts,true);
+    return pts;
+  };
+  const clipPoly=(obj,pts)=>{
+    const g=s.make.graphics({add:false});
+    g.fillStyle(0xffffff,1);g.fillPoints(pts,true);
+    maskShapes.push(g);obj.setMask(g.createGeometryMask());
+  };
+  const frame=framePoints(24,399,730,405,32);
+  const fg=add(s.add.graphics().setDepth(219));
+  fg.fillStyle(0x030b16,.77);fg.fillPoints(frame,true);
+  fg.lineStyle(5,0x35d6ff,1);fg.strokePoints(frame,true);
+  meetText(85,409,'LINEUP FOR HEAT '+(Number(f.round||0)+1)+'/3',26,'#35d6ff');
+  const state=s.registry.get('carStates')||{};
+  const player=s.registry.get('playerCharacterId')||'renMizuno';
   selected.forEach((id,index)=>{
-    const x=65+index*285,y=550,w=266;
-    const card=polygon(x,y,w,179,26,0x0b2738,BLUE,222);
-    card.setInteractive({useHandCursor:true}).on('pointerdown',()=>reopen(selected,{popupSlot:index}));
-    text(x+21,y+12,String(index+1),24,'#5ceaff',true,225);
-    const u=units.find(x=>x.id===id);
+    const x=[63,292,521][index],y=463;
+    const u=units.find(v=>v.id===id);
+    const portrait=graphicPanel(x,y,211,168,0x165578,0x050a10,.65,13,222);
+    const carX=x-30;
+    const carPanel=graphicPanel(carX,y+228,211,98,0x0a2b48,BLUE,.78,8,222);
     if(u){
-      const p=createCharacterProfile(s,{characterId:u.id,pose:'idle',x:x+76,y:y+78,
-        frameWidth:106,frameHeight:117,depth:226,playerCharacterId:player});
-      if(p)add(p);
-      const t=text(x+128,y+39,u.name.split(' ')[0].toUpperCase(),14,'#fff',false,230);
-      if(t.width>120)t.setScale(120/t.width);
-      const model=text(x+127,y+71,cars[u.carId]?.shortName||u.carId,14,'#b9dfe9',false,230);
-      if(model.width>120)model.setScale(120/model.width);
-      text(x+127,y+99,Math.round(u.powerKW||0)+' kW',14,'#d3dbe2');
-    }else{
-      text(x+114,y+52,'+',47,'#32bde2',false).setOrigin(.5);
-      text(x+133,y+104,'SELECT DRIVER',13,'#eff6fb',true).setOrigin(.5);
-      text(x+131,y+136,'TAP TO ASSIGN',10,'#bfdded',true).setOrigin(.5);
+      const profile=createCharacterProfile(s,{
+        characterId:u.id,pose:'idle',x:x+105,y:y+84,
+        frameWidth:226,frameHeight:171,side:'center',depth:225,
+        mask:false,playerCharacterId:player,
+      });
+      if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
+      const car=cars[u.carId];
+      if(car&&typeof s.createCarDisplay==='function'){
+        const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
+          false,getCarPaintColor(state[u.carId]||{}));
+        for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+      }
     }
+    const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
+    const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
+    add(s.add.text(x+105,y+176,name,{
+      fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+    }).setOrigin(.5,0).setDepth(229));
+    add(s.add.text(carX+105,y+199,model,{
+      fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
+    }).setOrigin(.5,0).setDepth(229));
+    add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
+      .setInteractive({useHandCursor:true}).setDepth(231)
+      .on('pointerdown',()=>reopen(selected,{popupSlot:index})));
   });
   const missing=selected.filter(Boolean).length!==3;
   const triDrive=e.trophyId==='triDrive'&&new Set(selected.map(id=>
