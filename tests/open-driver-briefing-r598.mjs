@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   isOpenDriverBriefing, driverBriefingRules, driverBriefingEligibility,
   driverAdviceStatus, consumeDriverAdvice, driverOpponentAdvice,
-  toggleBriefingNos, restoreDriverBriefingNos,
+  toggleBriefingNos, restoreDriverBriefingNos, restoreDriverBriefingParts,
+  removeDriverPowerPart, restoreDriverPowerParts,
 } from '../src/data/proDriverBriefing.js';
 
 const driver=()=>({
@@ -71,6 +72,32 @@ test('Daichi removes NOS reversibly and returns paid hardware when event complet
   assert.deepEqual(toggleBriefingNos(removed).exhaustNosTuning,original.exhaustNosTuning);
 });
 
+test('engine and exhaust power parts can be temporarily removed without losing upgrades',()=>{
+  const original={tuning:{engine:3,turbo:2,ecu:3,intake:2},
+    exhaustNosTuning:{headers:2,exhaust:3,muffler:1,nosKit:2,nitrousShot:1},
+    dyno:{officialReading:{powerKW:280}}};
+  const turbo=removeDriverPowerPart(original,'turbo');
+  const exhaust=removeDriverPowerPart(turbo,'headers');
+  assert.equal(turbo.tuning.turbo,0);
+  assert.equal(exhaust.exhaustNosTuning.headers,0);
+  assert.equal(exhaust.exhaustNosTuning.nosKit,2);
+  assert.equal(exhaust.proBriefingPowerStash.tuning.turbo,2);
+  assert.equal(exhaust.proBriefingPowerStash.exhaustNosTuning.headers,2);
+  assert.equal(exhaust.dyno.officialReading,null);
+  assert.equal(original.tuning.turbo,2,'purchased upgrade remains unchanged');
+  const restored=restoreDriverPowerParts(exhaust);
+  assert.equal(restored.tuning.turbo,2);
+  assert.equal(restored.exhaustNosTuning.headers,2);
+  assert.equal(restored.proBriefingPowerStash,undefined);
+  assert.equal(removeDriverPowerPart(original,'random'),original);
+  const both=toggleBriefingNos(exhaust);
+  const settled=restoreDriverBriefingParts({ae86:both},driver());
+  assert.equal(settled.ae86.exhaustNosTuning.nosKit,2);
+  assert.equal(settled.ae86.exhaustNosTuning.headers,2);
+  assert.equal(settled.ae86.tuning.turbo,2);
+  assert.equal(settled.ae86.proBriefingPowerStash,undefined);
+});
+
 test('production routing is scoped, restart-safe, and does not alter crew or season entry',()=>{
   const drag=read('../src/scenes/CentralTokyoScene.js');
   const race=read('../src/scenes/FourLaneTestScene.js');
@@ -79,7 +106,7 @@ test('production routing is scoped, restart-safe, and does not alter crew or sea
   assert.match(drag,/if \(isOpenDriverBriefing\(state\)\)this\.showOpenCircuitDriverBriefing\(\)/);
   assert.match(drag,/autoOpenProDriverBriefing/);
   assert.match(race,/autoOpenProDriverBriefing:true/);
-  assert.match(race,/restoreDriverBriefingNos/);
+  assert.match(race,/restoreDriverBriefingParts/);
   assert.match(ui,/regozoomed_/);
   assert.match(ui,/pro_daichi_sakamoto\.png/);
   assert.match(ui,/race_sayaka_fujieda_idle\.png/);
