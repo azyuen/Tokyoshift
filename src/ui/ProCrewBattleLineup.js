@@ -1,4 +1,4 @@
-// R594 — continuous pro crew event room with in-place ordered roster selection.
+// R596 — continuous pro crew room with refined speech pointer, hierarchy and roster spacing.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -139,9 +139,9 @@ function draw(s,opts){
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
   s._proOverlayClose=close;s.events.once('shutdown',close);
-  // Standard main-button sizing after the game's 1.6x font pass: 16px
-  // Silkscreen throughout this screen, rather than tiny 10/11/12px labels.
-  const BUTTON_FONT=16;
+  // R594 jumped the shared Silkscreen button labels from 10–12px to 16px.
+  // 13px is the midpoint, applied uniformly to Ask, footer, close and modal actions.
+  const BUTTON_FONT=13;
   const btn=(x,y,w,h,label,callback,red=false,disabled=false,depth=246)=>{
     const hit=rect(x,y,w,h,disabled?0x1b2330:red?0x6f1b30:0x11283b,
       1,disabled?0x546474:red?RED:BLUE,depth);
@@ -197,7 +197,8 @@ function draw(s,opts){
     fontFamily:PIXEL,fontSize:size+'px',color,
   }).setDepth(229));
   meetHeader(52,40,245,43,0x03070c,.96);
-  meetText(72,48,e.openCircuit===false?'PRO SEASON':'OPEN CIRCUIT',19,'#48d9ff');
+  meetText(72,48,e.openCircuit===false?'PRO SEASON':'OPEN CIRCUIT',19,
+    e.openCircuit===false?'#48d9ff':'#f06e88');
   const shortEventTitle={RELAY:'CREW RELAY',TECHNICAL:'CREW TECHNICAL',
     FOUR_WIDE:'CREW FOUR-WIDE',DUEL:'CREW CLUB SPRINT'};
   const eventTitle=String(e.trophyId||!e.short?e.label:
@@ -212,6 +213,9 @@ function draw(s,opts){
   pixelText(74,163,String(heatRule).toUpperCase(),13,'#a8c4d7');
   // Professional crew fixtures have no general power cap, but require three
   // distinct registered crew cars. Tri-Drive uniquely requires FWD/RWD/AWD.
+  // Subtle black scrim gives car restrictions legibility against both
+  // zoomed day/night registration rooms without covering the race title.
+  meetHeader(54,194,632,35,0x02050b,.74);
   pixelText(74,202,e.trophyId==='triDrive'?
     'CAR RULE: ONE FWD + ONE RWD + ONE AWD':
     'CAR RULE: THREE DISTINCT CREW CARS // NO POWER CAP',11,'#c8d9e7');
@@ -257,22 +261,30 @@ function draw(s,opts){
   }
 
   if(adviceUsed){
-    // One silhouette and ONE stroked outline: no seam between dialogue and
-    // its right-side pointer. Positioned below race briefing, above crew panel.
-    const x=135,y=260,w=720,h=127,edge=x+w,arrow=79;
+    // Two-thirds of the previous 720px body, shifted right so its single
+    // equilateral speech-point reaches toward Sayaka without any seam line.
+    // 74px triangle base -> altitude sqrt(3)/2 * 74 = ~64px; all three
+    // edges are equal. Fill and stroke the OUTER polygon only.
+    const x=427,y=251,w=480,h=136,edge=x+w;
+    const triangleBase=74,tipX=edge+Math.sqrt(3)*triangleBase/2;
+    const centerY=y+68,halfBase=triangleBase/2;
     const points=[
-      {x,y},{x:edge,y},{x:edge,y:y+36},
-      {x:edge+arrow,y:y+58},
-      {x:edge,y:y+81},{x:edge,y:y+h},{x,y:y+h},
+      {x,y},{x:edge,y},{x:edge,y:centerY-halfBase},
+      {x:tipX,y:centerY},
+      {x:edge,y:centerY+halfBase},{x:edge,y:y+h},{x,y:y+h},
     ];
     const bubble=add(s.add.graphics().setDepth(235));
     bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
     bubble.lineStyle(6,0x111111,1);bubble.strokePoints(points,true);
-    text(x+20,y+12,'Sayaka',16,'#252227',false,238).setFontStyle?.('700');
-    const spoken=text(x+20,y+42,opts.advice||'What do you think?',
-      18,'#111111',false,238);
-    spoken.setWordWrapWidth?.(w-40);
-    spoken.setLineSpacing?.(2);
+    text(x+19,y+9,'Sayaka',15,'#252227',false,238).setFontStyle?.('700');
+    const spoken=text(x+19,y+36,opts.advice||'What do you think?',
+      16,'#111111',false,238);
+    spoken.setWordWrapWidth?.(w-38);
+    spoken.setLineSpacing?.(1);
+    // For longer recommendations, fit the existing spoken text INSIDE its
+    // reduced bubble rather than spilling into the crew panel below.
+    const maxHeight=h-43;
+    if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
   }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
@@ -391,48 +403,52 @@ function draw(s,opts){
     if(!popupVisible)return;
     clearGroup(popupNodes,popupMasks);popupNodes=[];popupMasks=[];
     scope(popupNodes,popupMasks);
-    // 600px wide rather than the old 704px sidebar. Keep the rest of the
-    // room visible beneath a dimmer, instead of rebuilding its scene.
+    // Consistent grid: 16px inside the row; 10px between numbered box,
+    // portrait and text; 20px before a complete unclipped car preview.
     rect(W/2,H/2,W,H,0x030915,.59,0x030915,249)
       .setInteractive().on('pointerdown',closeRoster);
-    rect(1235,411,596,740,0x061421,.985,RED,250);
-    text(971,60,'SELECT CREW DRIVERS',18,'#fff4f2',true,252);
+    rect(1235,411,596,740,0x061421,.985,BLUE,250);
+    add(s.add.text(971,60,'SELECT CREW DRIVERS',{
+      fontFamily:PIXEL,fontSize:'18px',fontStyle:'normal',color:'#fff4f2',
+    }).setDepth(252));
     units.slice(0,7).forEach((u,i)=>{
       const y=110+i*83;
       const assigned=selected.indexOf(u.id);
       const full=selected.filter(Boolean).length>=3;
+      const selectedBorder=assigned>=0?RED:BLUE;
       const hit=rect(1235,y+30,558,76,assigned>=0?0x26384d:0x0a1d2e,
-        1,assigned>=0?RED:0x31556c,251);
+        1,selectedBorder,251);
       if(assigned>=0||!full)
         hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
-      // Numbered selection order is always visible while the list stays open.
-      const check=rect(985,y+29,40,40,assigned>=0?0x913347:0x10273a,
-        1,RED,254);
+      // Only SELECTED number boxes and rows use red. Empty boxes are blue.
+      const check=rect(991,y+29,40,40,assigned>=0?0x913347:0x10273a,
+        1,selectedBorder,254);
       if(assigned>=0||!full)
         check.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
-      if(assigned>=0)text(985,y+29,String(assigned+1),24,'#ffffff',true,255)
-        .setOrigin(.5);
-      // Character photos and car labels are shifted toward one another.
+      if(assigned>=0)add(s.add.text(991,y+27,String(assigned+1),{
+        fontFamily:PIXEL,fontSize:'21px',fontStyle:'normal',color:'#ffffff',
+      }).setOrigin(.5).setDepth(255));
       const portrait=createCharacterProfile(s,{characterId:u.id,pose:'idle',
-        x:1051,y:y+30,frameWidth:70,frameHeight:69,depth:253,
+        x:1057,y:y+30,frameWidth:70,frameHeight:69,depth:253,
         playerCharacterId:player});
       if(portrait)add(portrait);
       const ink=full&&assigned<0?'#8595a3':'#f4f3f3';
-      const who=text(1100,y+1,u.name,18,ink,false,254);
-      if(who.width>185)who.setScale(185/who.width);
-      const model=text(1100,y+26,cars[u.carId]?.shortName||u.carId,
+      const who=text(1105,y+1,u.name,18,ink,false,254);
+      if(who.width>151)who.setScale(151/who.width);
+      const model=text(1105,y+26,cars[u.carId]?.shortName||u.carId,
         15,'#c0dce8',false,254);
-      if(model.width>183)model.setScale(183/model.width);
-      text(1100,y+48,normaliseDrive(u.drivetrain)+' · '+
+      if(model.width>151)model.setScale(151/model.width);
+      const spec=text(1105,y+48,normaliseDrive(u.drivetrain)+' · '+
         Math.round(u.powerKW||0)+' kW',14,'#99bfce',false,254);
-      // No black rectangles or borders behind cars: full side-profile sprite
-      // floating at the same baseline, closer to the car information.
+      if(spec.width>151)spec.setScale(151/spec.width);
+      // Reserve 1280–1460 for the COMPLETE car (rather than masking off
+      // the front or rear against a cramped right-side crop).
       const car=cars[u.carId];
       if(car&&typeof s.createCarDisplay==='function'){
         try{
-          const parts=s.createCarDisplay(car,1398,y+27,174,253,
+          const parts=s.createCarDisplay(car,1428,y+34,148,253,
             getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-          const crop=mask(1301,y-4,203,73);
+          const crop=mask(1268,y-4,204,75);
           for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
         }catch(err){
           console.warn('[Tokyo SHIFT] Crew roster car preview skipped:',u.carId,err);
