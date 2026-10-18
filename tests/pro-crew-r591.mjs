@@ -150,3 +150,33 @@ test('replacing crew drivers renders background and correctly ordered car sprite
   assert.equal(nodes.some(n=>n.active&&n.kind==='text'&&
     n.attrs.text==='7 TEAM MEMBERS'),false,'remove redundant popup heading');
 });
+
+
+test('R594: a broken optional car preview never strands the roster or hides the room',()=>{
+  const {scene,nodes}=phaserMock();
+  scene.createCarDisplay=()=>{throw Error('intentionally broken car preview');};
+  const originalWarn=console.warn;
+  let warnings=0;
+  console.warn=()=>{warnings++;};
+  try {
+    const units=getCrewSeriesUnits(scene.registry);
+    showProCrewHeatSelection(scene,{units,selected:[null,null,null],
+      event:{short:true,openCircuit:true,label:'CREW RELAY'},
+      fixture:{round:0,format:'RELAY'},_loaded:true});
+    const firstSlot=nodes.find(n=>n.active&&n.kind==='rectangle'&&
+      n.attrs.x===168&&n.attrs.y===626&&n.click);
+    assert.ok(firstSlot);
+    firstSlot.click();
+    assert.ok(warnings>0,'renderer failures handled individually');
+    const backdrop=nodes.find(n=>n.active&&n.kind==='image'&&
+      n.attrs.key==='proCrewRegoZoomedNight');
+    assert.ok(backdrop?.active,'background survives failure');
+    const close=nodes.find(n=>n.active&&n.kind==='rectangle'&&
+      n.attrs.x===1420&&n.attrs.y===734&&n.click);
+    assert.ok(close,'close action remains available');
+    close.click();
+    assert.ok(backdrop.active,'closing after broken preview remains safe');
+  }finally {
+    console.warn=originalWarn;
+  }
+});
