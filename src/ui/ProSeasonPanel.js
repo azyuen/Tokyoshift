@@ -24,6 +24,42 @@ function button(s,x,y,w,label,action,enabled=true) {
   if(labelNode.width>w-24)labelNode.setScale((w-24)/labelNode.width);
   if(enabled)b.setInteractive({useHandCursor:true}).on('pointerdown',action);
 }
+// R593: the driver, crew and team-trophy right panels all share ONE
+// sidebar typography/entry-button specification. Keep these dimensions in
+// sync with SIDE.y + 624 (Pro Season) and the navigation action below it.
+export function drawProEventSidebarTitle(s,side,title) {
+  return s.addContent(s.add.text(side.x+20,side.y+207,title,{
+    fontFamily:'"Silkscreen", monospace',fontSize:'11px',color:'#f8f3f2',
+    wordWrap:{width:side.w-38},
+  }).setDepth(34));
+}
+export function drawProEventSidebarDetails(s,side,lines) {
+  return s.addContent(s.add.text(side.x+20,side.y+250,lines.join('\n'),{
+    fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700',
+    color:'#c4bec0',lineSpacing:5,wordWrap:{width:side.w-37},
+  }).setDepth(34));
+}
+export function drawProEventSidebarStatus(s,side,label,enabled) {
+  if (!label) return null;
+  return s.addContent(s.add.text(side.x+20,side.y+518,label,{
+    fontFamily:'"Silkscreen", monospace',fontSize:'8px',
+    color:enabled?'#f1e7e6':'#ea777d',wordWrap:{width:side.w-40},
+  }).setDepth(34));
+}
+export const proEventEntryLabel=fee=>'ENTER EVENT // ¥ '+Number(fee||0).toLocaleString('en-US');
+export function drawProEventSidebarEntry(s,side,label,action,enabled=true) {
+  const x=side.x+side.w/2,y=side.y+574,w=side.w-36;
+  const bg=s.addContent(s.add.rectangle(x,y,w,48,enabled?0x551d25:0x201d20,1)
+    .setStrokeStyle(2,enabled?0xed515c:0x575154,1).setDepth(33));
+  const caption=s.addContent(s.add.text(x,y,label,{
+    fontFamily:'"Silkscreen", monospace',fontSize:'8px',
+    color:enabled?'#fff6f5':'#938a8d',
+  }).setOrigin(.5).setDepth(34));
+  if(caption.width>w-24)caption.setScale((w-24)/caption.width);
+  if(enabled)bg.setInteractive({useHandCursor:true}).on('pointerdown',action);
+  return bg;
+}
+
 export function drawSeasonHeader(s,stage) {
   const c=circuit(s),q=getProQualification(c);
   const driver=getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver');
@@ -81,10 +117,7 @@ export function drawCrewSidebar(s,event,side) {
   const crewTitle=t?.trophyId||event.trophyId?event.label:
     short?((t?.format||crewFormat)==='TECHNICAL'?'CREW TECHNICAL':
       (t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label;
-  s.addContent(s.add.text(side.x+20,side.y+207,crewTitle,{
-    fontFamily:'"Silkscreen", monospace',fontSize:'11px',color:'#f8f3f2',
-    wordWrap:{width:side.w-38},
-  }).setDepth(34));
+  drawProEventSidebarTitle(s,side,crewTitle);
   const formatBrief=crewFormat==='FOUR_WIDE'?'3 FOUR-WIDE HEATS':
     crewFormat==='TECHNICAL'?'3 CONSISTENCY RUNS':
     crewFormat==='RELAY'?'3-LEG TEAM RELAY':'3 HEAD-TO-HEAD HEATS';
@@ -108,15 +141,16 @@ export function drawCrewSidebar(s,event,side) {
     '1ST  ¥210,000 // 2ND  ¥90,000',
   ];
   // Opposing team and fixture number are revealed in the battle room, not here.
-  s.addContent(uiText(s,side.x+20,side.y+250,lines.join('\n'),18,{
-    color:'#c4bec0',fontStyle:'700',lineSpacing:5,wordWrap:{width:side.w-37}
-  }).setDepth(34));
+  drawProEventSidebarDetails(s,side,lines);
   const reason=t?(f?'':'INVALID SAVED EVENT'):
     event.trophyId&&trophy?.eventsRemaining?'NEXT INVITATION // '+trophy.eventsRemaining+' EVENTS':
     !formatSupported?'FORMAT UNAVAILABLE':
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
-  if(reason)text(s,side.x+20,side.y+518,reason,13,{color:'#e89da3',wordWrap:{width:side.w-38}});
-  button(s,side.x+side.w/2,side.y+590,side.w-36,t?'RESUME CREW SERIES':'ENTER CREW EVENT',()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),t?!!f:canEnter);
+  drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
+  drawProEventSidebarEntry(s,side,
+    t?'RESUME EVENT':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
+    ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),
+    t?!!f:canEnter);
   return true;
 }
 function overlay(s,title) {
