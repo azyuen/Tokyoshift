@@ -126,6 +126,7 @@ export function createDefaultProCircuitState() {
     openCircuitTick: 0, // successful standalone event completions only
     minorTrophyIndex: 0,
     minorTrophyCooldownUntil: 0,
+    crewAdviceCooldownUntil: 0, // eventTick after this event + two OTHER completions
     qualified: false, // Phase 2 sets this after the professional qualifier
     playerDriver: createStanding(1400),
     playerTeam: createStanding(1400),
@@ -187,6 +188,7 @@ export function normaliseProCircuitState(raw) {
     openCircuitTick: boundedInteger(source.openCircuitTick, 0, 0, 10000000),
     minorTrophyIndex: boundedInteger(source.minorTrophyIndex, 0, 0, PRO_CIRCUIT_TROPHIES.length - 1),
     minorTrophyCooldownUntil: boundedInteger(source.minorTrophyCooldownUntil, 0, 0, 10000000),
+    crewAdviceCooldownUntil: boundedInteger(source.crewAdviceCooldownUntil, 0, 0, 10000000),
     qualified: Boolean(source.qualified),
     playerDriver: normaliseStanding(source.playerDriver, initial.playerDriver),
     playerTeam: normaliseStanding(source.playerTeam, initial.playerTeam),
