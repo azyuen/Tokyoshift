@@ -1,4 +1,4 @@
-// R598 — Open Circuit driver race briefing.
+// R600 — Open Circuit individual paddock briefing: Hiroshi, player, car, Sayaka, Daichi.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -33,10 +33,16 @@ function loadAssets(s,state){
     queued++;
   }
   for(const [key,path] of [
+    ['proDriverHiroshi','assets/Characters/Central/hiroshi_sato_normal.png'],
     ['proDriverSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
     ['proDriverDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));queued++;
+  }
+  const playerId=s.registry.get('playerCharacterId')||'renMizuno';
+  const playerAsset=getCharacterVisualAsset(playerId,'idle');
+  if(playerAsset?.key&&playerAsset.path&&!s.textures.exists(playerAsset.key)){
+    s.load.image(playerAsset.key,getCharacterAssetUrl(playerAsset.path));queued++;
   }
   const round=state.rounds[state.roundIndex];
   const rival=getCharacterVisualAsset(round.characterId,'idle',{
@@ -94,11 +100,14 @@ function draw(s,state,options){
   s._proOverlayClose?.();
   const nodes=[];
   let popup=[];
+  let dialogueNodes=[];
+  let activeDialogue=null;
   const add=o=>{nodes.push(o);return o;};
   let closed=false;
   const close=()=>{if(closed)return;closed=true;
     s.events.off('shutdown',close);
     dismiss();
+    clearDialogue();
     nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
