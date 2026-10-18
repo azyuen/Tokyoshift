@@ -465,7 +465,7 @@ export function getCrewFixture(raw) {
       new Set(t.entrants.map(e => e.id)).size !== 4 || !t.entrants.some(e => e.id === PLAYER) ||
       !Array.isArray(t.history) || t.history.length !== t.round ||
       !Array.isArray(t.prizes) || t.prizes.length !== 4 || t.prizes.some(n => !Number.isFinite(n) || n < 0 || n > 500000) ||
-      t.squadIds.length < 3 || t.squadIds.length > 5 || new Set(t.squadIds).size !== t.squadIds.length ||
+      (t.squadIds.length < 3 || t.squadIds.length > 5)&&t.squadIds.length!==7 || new Set(t.squadIds).size !== t.squadIds.length ||
       t.schedule[t.round].length !== 2 || t.schedule[t.round].some(p => !Array.isArray(p) || p.length !== 2 || p.some(id => !t.entrants.some(e => e.id === id))) ||
       new Set(t.schedule[t.round].flat()).size !== 4) return null;
   if (t.fixture && (t.fixture.id !== t.id+':fixture:'+t.round ||
