@@ -89,10 +89,12 @@ export function showProDriverBriefing(s,options={}){
 function draw(s,state,options){
   s._proOverlayClose?.();
   const nodes=[];
+  let popup=[];
   const add=o=>{nodes.push(o);return o;};
   let closed=false;
   const close=()=>{if(closed)return;closed=true;
     s.events.off('shutdown',close);
+    dismiss();
     nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
@@ -241,7 +243,6 @@ function draw(s,state,options){
 
   // All modal elements share the owning room's lifecycle. Closing the scene
   // also closes the modal, preventing invisible hit zones after a race.
-  let popup=[];
   const popupAdd=o=>{popup.push(o);return o;};
   function dismiss(){
     popup.forEach(o=>{try{o?.destroy?.();}catch(_){}});
