@@ -8,6 +8,7 @@ on:
       - 'tests/pro-crew-heat-r589.mjs'
       - 'tests/pro-crew-r591.mjs'
       - 'tests/pro-crew-continuous-r594.mjs'
+      - 'tests/pro-crew-visual-r596.mjs'
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/data/proCircuit.js'
@@ -21,6 +22,7 @@ on:
       - 'tests/pro-crew-heat-r589.mjs'
       - 'tests/pro-crew-r591.mjs'
       - 'tests/pro-crew-continuous-r594.mjs'
+      - 'tests/pro-crew-visual-r596.mjs'
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/data/proCircuit.js'
@@ -41,4 +43,4 @@ jobs:
           node --check src/scenes/CentralTokyoScene.js
           node --check src/scenes/FourLaneTestScene.js
       - name: Verify saved seven-driver crew and once-per-event advice
-        run: node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs
+        run: node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-visual-r596.mjs
