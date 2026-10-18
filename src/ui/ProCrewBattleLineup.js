@@ -323,9 +323,15 @@ function draw(s,opts){
         if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
         const car=cars[u.carId];
         if(car&&typeof s.createCarDisplay==='function'){
-          const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
-            getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-          for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+          try{
+            const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
+              getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+            for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+          }catch(err){
+            // A missing/damaged optional car render must not strand a paid
+            // crew competition behind an unfinished dark overlay.
+            console.warn('[Tokyo SHIFT] Crew lineup car preview skipped:',u.carId,err);
+          }
         }
       }
       const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
@@ -423,10 +429,14 @@ function draw(s,opts){
       // floating at the same baseline, closer to the car information.
       const car=cars[u.carId];
       if(car&&typeof s.createCarDisplay==='function'){
-        const parts=s.createCarDisplay(car,1398,y+27,174,253,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-        const crop=mask(1301,y-4,203,73);
-        for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
+        try{
+          const parts=s.createCarDisplay(car,1398,y+27,174,253,
+            getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+          const crop=mask(1301,y-4,203,73);
+          for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
+        }catch(err){
+          console.warn('[Tokyo SHIFT] Crew roster car preview skipped:',u.carId,err);
+        }
       }
     });
     btn(1420,734,182,44,'CLOSE',closeRoster,false,false,260);
