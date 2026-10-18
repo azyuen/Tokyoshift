@@ -9,7 +9,8 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
-  toggleBriefingNos, isOpenDriverBriefing } from '../data/proDriverBriefing.js?v=20261019-r598';
+  toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
+  removeDriverPowerPart, restoreDriverPowerParts } from '../data/proDriverBriefing.js?v=20261019-r598';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -289,6 +290,35 @@ function draw(s,state,options){
       options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
     },true);
   }
+  function openPowerParts(){
+    const stored=carState.proBriefingPowerStash||{};
+    modal('DAICHI // REMOVE PARTS',
+      'Temporarily remove fitted power upgrades for the event limit. All removed parts are stored and restored after the series.');
+    BRIEFING_POWER_PARTS.forEach((part,i)=>{
+      const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
+        carState.exhaustNosTuning||{};
+      const level=Math.max(0,Math.round(Number(group[part.id]||0)));
+      const stashed=Object.hasOwn(stored[part.group]||{},part.id);
+      const x=i<4?578:986,y=332+(i%4)*52;
+      const hit=popupAdd(s.add.rectangle(x,y,366,43,
+        level?0x153449:0x122233,.96)
+        .setStrokeStyle(2,level?CYAN:0x667788).setDepth(275));
+      const caption=popupAdd(s.add.text(x,y,
+        part.label+' // '+(level?'LEVEL '+level+'  REMOVE':stashed?'STORED':'STOCK'),
+        {fontFamily:PIXEL,fontSize:'11px',color:level?'#ffffff':'#aab9c8'})
+        .setFontSize(11).setOrigin(.5).setDepth(276));
+      fit(caption,349);
+      if(level)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+        const next=removeDriverPowerPart(carState,part.id);
+        dismiss();close();options.onCarState?.(next);
+      });
+    });
+    modalBtn(574,585,276,'RETURN TO ECU',openTune);
+    modalBtn(987,585,276,'RESTORE ALL PARTS',()=>{
+      const next=restoreDriverPowerParts(carState);
+      dismiss();close();options.onCarState?.(next);
+    });
+  }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
     const level3=Number(s.registry.get('dynoFacilityTier')||0)>=3;
@@ -335,13 +365,14 @@ function draw(s,state,options){
       });
     }
     tuneRows();
-    modalBtn(563,588,256,stash?'REINSTALL NOS':'REMOVE NOS',()=>{
+    modalBtn(492,588,174,stash?'RESTORE NOS':'REMOVE NOS',()=>{
       if(!hasNos)return;
       const next=toggleBriefingNos(carState);
       dismiss();close();options.onCarState?.(next);
     });
-    modalBtn(818,588,198,'CANCEL',dismiss);
-    modalBtn(1061,588,220,'SAVE ECU SETUP',()=>{
+    modalBtn(693,588,183,'POWER PARTS',()=>openPowerParts());
+    modalBtn(887,588,174,'CANCEL',dismiss);
+    modalBtn(1093,588,190,'SAVE ECU SETUP',()=>{
       const next={...carState,stage3Calibration:canTune?{
         ecuBias:installed.ecuBias?values.ecuBias:0,
         boostBias:installed.boostBias?values.boostBias:0,
