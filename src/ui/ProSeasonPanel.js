@@ -162,11 +162,8 @@ export function showCrewRegistration(s,_selection=[],assignments={},trophyId=nul
 export function showCrewFixture(s,selection=null) {
   const c=circuit(s),f=getCrewFixture(c),t=c.activeCrewEvent;if(!f){s.proError='SAVED CREW FIXTURE UNAVAILABLE';redraw(s);return;}
   const currentFormat=f.format;
-  const o=overlay(s,t.trophyId?`${t.label} // FIXTURE ${t.round+1}/3`:
-    t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):
-    `CREW CLUB SERIES // FIXTURE ${t.round+1}/3`),units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
+  const units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
-  o.label(90,115,'YOUR CREW vs '+f.opponent.name+(currentFormat==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':currentFormat==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':currentFormat==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
   if(!f.prepared){
     return showProCrewHeatSelection(s,{
       event:t,fixture:f,units,selected:selection||[],
@@ -183,6 +180,10 @@ export function showCrewFixture(s,selection=null) {
       },
     });
   } else {
+    const o=overlay(s,t.trophyId?`${t.label} // FIXTURE ${t.round+1}/3`:
+      t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):
+      `CREW CLUB SERIES // FIXTURE ${t.round+1}/3`);
+    o.label(90,115,'YOUR CREW vs '+f.opponent.name+(currentFormat==='FOUR_WIDE'?' · THREE FOUR-LANE HEATS · AGGREGATE PLACING POINTS':currentFormat==='TECHNICAL'?' · SMALLEST THREE-RUN SPREAD WINS':currentFormat==='RELAY'?' · LOWEST TOTAL TIME WINS':' · TWO HEAT WINS TAKE THE FIXTURE'),23);
     const prepared=f.prepared;
     o.label(90,166,'YOU DRIVE EACH CREW CAR · LIVE CLUTCH / THROTTLE / SHIFTING · EACH FINISH IS SAVED',18);
     prepared.heats.forEach((h,i)=>{
