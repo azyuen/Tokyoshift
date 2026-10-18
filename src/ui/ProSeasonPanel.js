@@ -104,7 +104,9 @@ export function drawCrewSidebar(s,event,side) {
   const open=isOpenCircuitAvailable(c);
   const rotation=getOpenCircuitRotation();
   const trophy=event.trophyId?getOpenCircuitTrophy(c,rotation):null;
-  const crewFormat=f?.format||t?.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
+  // Use the format of the selected card; never change it midway through drawing
+  // if a day/night offer happens to rotate at a five-minute boundary.
+  const crewFormat=f?.format||t?.format||event.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
   const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
