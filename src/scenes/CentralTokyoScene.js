@@ -1,4 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r598';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice } from '../data/proDriverBriefing.js?v=20261019-r598';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r597';
@@ -148,6 +150,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       (hasSeenCutscene(this.registry,'chapter08RaceFinished') &&
        !hasSeenCutscene(this.registry,'chapter08Ginza')));
     this.autoOpenProCrewFixture = Boolean(data?.autoOpenProCrewFixture);
+    this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
       (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
@@ -375,6 +378,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
           !this.registry.get('proCircuit')?.activeCrewEvent)return;
         showCrewFixture(this);
         if(this.promptProCrewForfeit)confirmCrewForfeit(this);
+      });
+    }
+    if (this.autoOpenProDriverBriefing && isOpenDriverBriefing(this.registry.get('competitionState'))) {
+      this.time.delayedCall(0,()=>{
+        if(this.sys?.isActive?.())this.showOpenCircuitDriverBriefing();
       });
     }
     if (this.chapter08Arrival && this.activeLocationId === 'ginzaMotorGallery') {
@@ -3308,7 +3316,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     drawProEventSidebarEntry(this,SIDE,actionText,()=>{
       if (activeTimedHere) this.enterProfessionalTimedEvent(event);
       else if (activeCupHere) this.enterFourWideCup();
-      else if (activeDuelHere) this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+      else if (activeDuelHere) {
+        if(isOpenDriverBriefing(activeDuel))this.showOpenCircuitDriverBriefing();
+        else this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+      }
       else if (selectedFourWide) this.enterFourWideCup();
       else if (selectedTimed) this.enterProfessionalTimedEvent(event);
       else this.startProBracket(event, build);
@@ -3388,6 +3399,62 @@ export default class CentralTokyoScene extends Phaser.Scene {
       difficulty: progression.difficulty,
       mainRivalTier: progression.tierLabel,
     };
+  }
+
+  // Only Open Circuit's rotating individual DRIVER series uses this room.
+  // Registered entrants and opponent rounds come from the paid saved event;
+  // neither the season nor the crew systems are affected.
+  showOpenCircuitDriverBriefing() {
+    const state=this.registry.get('competitionState');
+    if(!isOpenDriverBriefing(state))return;
+    const definition=PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
+    showProDriverBriefing(this,{
+      event:definition,
+      onBack:()=>{}, // Registration is saved; the main card can resume it.
+      onAdvice:spoken=>{
+        const current=this.registry.get('competitionState');
+        if(!isOpenDriverBriefing(current))return;
+        const out=consumeDriverAdvice(normaliseProCircuitState(this.registry.get('proCircuit')),current);
+        if(out.error){this.proError=out.error;this.renderLocation(this.activeLocationId);return;}
+        try{
+          saveProTransaction(this.registry,{
+            proCircuit:out.circuit,
+            competitionState:{...out.competitionState,briefingAdviceText:spoken},
+          });
+          this.showOpenCircuitDriverBriefing();
+        }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
+      },
+      onCarState:nextState=>{
+        const current=this.registry.get('competitionState');
+        if(!isOpenDriverBriefing(current))return;
+        const carId=current.playerCarId;
+        if(!(this.registry.get('ownedCarIds')||[]).includes(carId))return;
+        const carStates={...(this.registry.get('carStates')||{}),[carId]:nextState};
+        try{saveProTransaction(this.registry,{carStates});
+          this.showOpenCircuitDriverBriefing();
+        }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
+      },
+      onRace:()=>{
+        const current=this.registry.get('competitionState');
+        if(!isOpenDriverBriefing(current))return;
+        const carId=current.playerCarId;
+        const state=(this.registry.get('carStates')||{})[carId]||{};
+        let powerKW=Infinity;
+        try{powerKW=getVehiclePerformance(carId,state)?.car?.powerKW??Infinity;}
+        catch(error){console.warn('[Tokyo SHIFT] Briefing eligibility check failed',error);}
+        const eligibility=driverBriefingEligibility(current,state,powerKW,
+          this.registry.get('ownedCarIds')||[],definition);
+        if(!eligibility.eligible){
+          this.proError=eligibility.problems.join(' // ');
+          this.renderLocation(this.activeLocationId);
+          this.showOpenCircuitDriverBriefing();
+          return;
+        }
+        this.registry.set('selectedCarId',carId);
+        saveSessionState(this.registry);
+        this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});
+      },
+    });
   }
 
   startProBracket(event, build, storyConfirmed = false) {
@@ -3505,6 +3572,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       openCircuit,openTrophyId:event.trophyId||null,
       trophyStages:event.trophyStages||null,
       eventId: event.id,
+      briefingLabel: event.label,
+      briefingRules: {maxPowerKW:Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,noNos:Boolean(event.noNos)},
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
       difficulty: 'ELITE',
@@ -3542,6 +3611,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     // The 3-entry-level events race in the exact same professional venue as
     // Four-Wide Open, with only the two nearest cars/lanes occupied.
-    this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+    if (isOpenDriverBriefing(state))this.showOpenCircuitDriverBriefing();
+    else this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
   }
 }

@@ -1,6 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
+import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r598';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -1574,7 +1575,11 @@ export default class FourLaneTestScene extends RaceScene {
       if (!armed || navigating) return;
       navigating = true;
       tap.disableInteractive();
-      if (advanced && (this.proCup || duel)) {
+      if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,
+        });
+      } else if (advanced && (this.proCup || duel)) {
         this.scene.restart({ mode: duel ? 'PRO_DUEL' : 'PRO_CUP' });
       } else this.returnToDrag();
     };
@@ -1669,6 +1674,10 @@ export default class FourLaneTestScene extends RaceScene {
             changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
               outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex));
             outcome.summary = changes.proCircuit.lastTournament;
+            // Return bench-stored NOS equipment only when the saved Open
+            // Circuit driver event actually finishes; never lose paid parts.
+            const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},state);
+            if(restored)changes.carStates=restored;
           }
           saveProTransaction(this.registry, changes);
           outcome.cashPrize = earned;
