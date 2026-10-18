@@ -41,7 +41,7 @@ export function drawProEventSidebarDetails(s,side,lines) {
 }
 export function drawProEventSidebarStatus(s,side,label,enabled) {
   if (!label) return null;
-  return s.addContent(s.add.text(side.x+20,side.y+518,label,{
+  return s.addContent(s.add.text(side.x+20,side.y+490,label,{
     fontFamily:'"Silkscreen", monospace',fontSize:'8px',
     color:enabled?'#f1e7e6':'#ea777d',wordWrap:{width:side.w-40},
   }).setDepth(34));
@@ -49,7 +49,7 @@ export function drawProEventSidebarStatus(s,side,label,enabled) {
 export const proEventEntryLabel=fee=>'ENTER EVENT // ¥ '+Number(fee||0).toLocaleString('en-US');
 export function drawProEventSidebarEntry(s,side,label,action,enabled=true) {
   const x=side.x+side.w/2,y=side.y+574,w=side.w-36;
-  const bg=s.addContent(s.add.rectangle(x,y,w,48,enabled?0x551d25:0x201d20,1)
+  const bg=s.addContent(s.add.rectangle(x,y,w,40,enabled?0x551d25:0x201d20,1)
     .setStrokeStyle(2,enabled?0xed515c:0x575154,1).setDepth(33));
   const caption=s.addContent(s.add.text(x,y,label,{
     fontFamily:'"Silkscreen", monospace',fontSize:'8px',
@@ -104,7 +104,9 @@ export function drawCrewSidebar(s,event,side) {
   const open=isOpenCircuitAvailable(c);
   const rotation=getOpenCircuitRotation();
   const trophy=event.trophyId?getOpenCircuitTrophy(c,rotation):null;
-  const crewFormat=f?.format||t?.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
+  // Use the format of the selected card; never change it midway through drawing
+  // if a day/night offer happens to rotate at a five-minute boundary.
+  const crewFormat=f?.format||t?.format||event.format||(open?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
   const fee=open?(event.trophyId?trophy?.entryFee||OPEN_CIRCUIT_TROPHY_FEE:OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
   const formatSupported=['DUEL','RELAY','TECHNICAL','FOUR_WIDE'].includes(crewFormat);
@@ -119,8 +121,12 @@ export function drawCrewSidebar(s,event,side) {
       (t?.format||crewFormat)==='RELAY'?'CREW RELAY':'CREW CLUB SPRINT'):CREW_SERIES.label;
   drawProEventSidebarTitle(s,side,crewTitle);
   const formatBrief=crewFormat==='FOUR_WIDE'?'3 FOUR-WIDE HEATS':
-    crewFormat==='TECHNICAL'?'3 CONSISTENCY RUNS':
     crewFormat==='RELAY'?'3-LEG TEAM RELAY':'3 HEAD-TO-HEAD HEATS';
+  const technicalBrief=[
+    'TEST OF CONSISTENCY',
+    'DRIVE THREE DIFFERENT CARS',
+    'SMALLEST TIME DIFFERENCE WINS',
+  ];
   const lines=event.trophyId&&!short?[
     '3 FIXTURES // 9 HEATS',
     event.trophyId==='triDrive'?'REQUIRES FWD + RWD + AWD':
@@ -128,8 +134,7 @@ export function drawCrewSidebar(s,event,side) {
     'ENTRY  '+cash(t?.entryFee||fee),
     'CHAMPION  '+cash(t?.prizes?.[0]||trophy?.prizeCash||0),
   ]:short?[
-    formatBrief,
-    'CHOOSE THREE DRIVERS',
+    ...(crewFormat==='TECHNICAL'?technicalBrief:[formatBrief,'CHOOSE THREE DRIVERS']),
     'ENTRY  '+cash(t?.entryFee||fee),
     '3 WINS  '+cash(open?70000:210000),
     '2 WINS  '+cash(open?30000:90000),
@@ -414,12 +419,12 @@ export function showProSeasonAction(s,side){
   const locked=open&&(!getProCircuitAccess(s.registry).unlocked||
     c.activeCrewEvent||c.activeTournament||c.activeTimedEvent||
     s.registry.get('competitionState')?.active);
-  // Regular entry buttons end at SIDE.y+598, action begins SIDE.y+605;
-  // map begins at SIDE.y+653. Both have at least 7px of separation.
+  // All three Pro Circuit actions use 40px-high buttons centred at offsets
+  // 574, 624 and 674. The 50px centre step gives equal 10px vertical gaps.
   const x=side.x+side.w/2,y=side.y+624;
   const available=!locked;
   const label=open?(c.seasonStatus==='COMPLETE'?'START NEXT PRO SEASON':'START PRO SEASON'):'WITHDRAW / FORFEIT SEASON';
-  const b=s.addContent(s.add.rectangle(x,y,side.w-36,38,
+  const b=s.addContent(s.add.rectangle(x,y,side.w-36,40,
       available?0x402028:0x211d23,.99)
     .setStrokeStyle(2,available?0xdd626a:0x645a5d).setDepth(38));
   s.addContent(s.add.text(x,y,label,{
