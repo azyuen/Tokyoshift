@@ -268,6 +268,6 @@ function draw(s,opts){
       }
       if(used)text(1467,y+44,'IN LINEUP',11,'#f0b4be',true,254);
     });
-    btn(1418,758,200,40,'CLOSE',()=>reopen(selected,{popupSlot:null}));
+    btn(1418,758,200,40,'CLOSE',()=>reopen(selected,{popupSlot:null}),false,false,260);
   }
 }
