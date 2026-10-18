@@ -1,5 +1,5 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r599';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r600';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction } from '../data/proDriverBriefing.js?v=20261019-r599';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
@@ -3405,12 +3405,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
   // Only Open Circuit's rotating individual DRIVER series uses this room.
   // Registered entrants and opponent rounds come from the paid saved event;
   // neither the season nor the crew systems are affected.
-  showOpenCircuitDriverBriefing() {
+  showOpenCircuitDriverBriefing(initialDialogue=null) {
     const state=this.registry.get('competitionState');
     if(!isOpenDriverBriefing(state))return;
     const definition=PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     showProDriverBriefing(this,{
       event:definition,
+      initialDialogue,
       proAccess:getProCircuitAccess(this.registry).unlocked,
       onBack:()=>{}, // Registration is saved; the main card can resume it.
       onAdvice:spoken=>{
@@ -3423,7 +3424,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
             proCircuit:out.circuit,
             competitionState:{...out.competitionState,briefingAdviceText:spoken},
           });
-          this.showOpenCircuitDriverBriefing();
+          this.showOpenCircuitDriverBriefing('sayaka');
         }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
       },
       onCarState:nextState=>{
