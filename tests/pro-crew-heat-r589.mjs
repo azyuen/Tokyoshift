@@ -50,7 +50,9 @@ test('R589: seven-member team enters once without five-driver registration',()=>
   assert.equal(registerCrewSeries(s,ids).error!==undefined,true,'cannot pay twice');
   const f=getCrewFixture(out.circuit);
   assert.equal(f.round,0);
-  assert.match(getProCrewHeatAdvice(f,units),/HEAT WINS|COMBINED|SPREAD|PLACING/);
+  assert.match(getProCrewHeatAdvice(f,units),/Hrmmm/);
+  assert.match(getProCrewHeatAdvice(f,units),/\([^)]+\)/,
+    'Sayaka recommends named drivers with short car models');
   assert.match(preparePlayerCrewFixture(s,ids.slice(0,2),f.id).error,/THREE/);
   assert.match(preparePlayerCrewFixture(s,[ids[0],ids[0],ids[1]],f.id).error,/THREE/);
   assert.equal(preparePlayerCrewFixture(s,[ids[0],ids[1],ids[2]],f.id).error,undefined);
