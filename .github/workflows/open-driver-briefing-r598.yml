@@ -1,4 +1,4 @@
-name: R598 Open Circuit Driver Briefing
+name: R599 Open Circuit Driver Briefing
 on:
   pull_request:
     paths:
@@ -7,6 +7,8 @@ on:
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'tests/open-driver-briefing-r598.mjs'
+      - 'tests/open-driver-briefing-r599.mjs'
+      - 'src/vehicles/VehiclePerformance.js'
       - '.github/workflows/open-driver-briefing-r598.yml'
   push:
     branches: [main]
@@ -16,6 +18,8 @@ on:
       - 'src/scenes/CentralTokyoScene.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'tests/open-driver-briefing-r598.mjs'
+      - 'tests/open-driver-briefing-r599.mjs'
+      - 'src/vehicles/VehiclePerformance.js'
 jobs:
   driver-briefing:
     runs-on: ubuntu-latest
@@ -31,5 +35,6 @@ jobs:
           node --check src/ui/ProDriverBriefing.js
           node --check src/scenes/CentralTokyoScene.js
           node --check src/scenes/FourLaneTestScene.js
+          node --check src/vehicles/VehiclePerformance.js
       - name: Open Circuit driver briefing tests
-        run: node --test tests/open-driver-briefing-r598.mjs
+        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs
