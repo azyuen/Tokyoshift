@@ -499,8 +499,8 @@ export default class FourLaneTestScene extends RaceScene {
     this.startButton = this.makeButton(780, 64, 245,
       this.champMode ? 'START HEAT' : this.proCup ? 'START HEAT' : this.proDuel ? 'START ROUND' : 'START 4-WIDE', 0x52dbd1,
       () => this.startFourLaneRace());
-    this.exitButton = this.makeButton(150, 64, 215, 'BACK TO DRAG', 0xffa9b3,
-      () => this.returnToDrag());
+    this.exitButton = this.makeButton(150, 64, 215, this.proCrew?'FORFEIT EVENT':'BACK TO DRAG', 0xffa9b3,
+      () => this.proCrew?this.promptCrewForfeit():this.returnToDrag());
 
     this.renderTrack(0);
     if (this.proCup && this.proTournament?.stage === 0 &&
@@ -1497,7 +1497,7 @@ export default class FourLaneTestScene extends RaceScene {
       : 'FOUR-WIDE OPEN';
     label(675, 246, eventLabel + ' // ' + phase, 11, '#dfdbda');
     label(677, 282, this.proCrew ? (failure ? 'RESULT NOT SAVED // RETURN AND RETRY' :
-      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'NEXT CREW CAR':'CONFIRM FIXTURE AT COMPLEX')) : advanced
+      'HEAT '+outcome.heatNumber+'/3 SAVED // '+(this.crewFourWide?'PLACE '+outcome.place+'/4':outcome.wins+' TEAM WINS')+' // '+(outcome.heatNumber<3?'PREPARE NEXT HEAT':'REVIEW FIXTURE')) : advanced
       ? 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  NEXT: ' + nextStage
       : 'STAGE ' + stageNumber + '/' + stageCount + ' COMPLETE  //  ' +
         (failure ? 'RESULT NOT SAVED' : 'EVENT FINISHED'), 10, '#e0a0a4');
@@ -1527,6 +1527,8 @@ export default class FourLaneTestScene extends RaceScene {
     // Compact white/grey pro ranking counter overlaps the manga frame's
     // lower-right edge, using the same Exo 2 italic headline typography.
     const standingsState = this.registry.get('proCircuit') || {};
+    const openCrew=Boolean(this.proCrew&&standingsState.activeCrewEvent?.openCircuit);
+    if(!openCrew){
     const ranked = this.proCrew ? getProCircuitTeamSeeds(standingsState) : getProCircuitDriverSeeds(standingsState);
     const rankCurrent = ranked.find(r => r.id === (this.proCrew?'player:team':'player:driver'))?.seed || 32;
     const rankBefore = outcome?.summary?.rankBefore || rankCurrent;
@@ -1552,13 +1554,14 @@ export default class FourLaneTestScene extends RaceScene {
       onUpdate: tween => rankValue.setText('#' + Math.round(tween.getValue())),
     });
 
-    if (outcome?.summary) {
+    }
+    if (outcome?.summary && !openCrew) {
       label(679, 615, 'RATING ' + outcome.summary.ratingBefore + ' → ' + outcome.summary.ratingAfter +
         (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
         (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
     }
-    const nextText = failure ? 'RETURN TO COMPLEX // RETRY HEAT'
-      : advanced ? 'NEXT ROUND' : 'RETURN TO COMPLEX';
+    const nextText = this.proCrew?'RETURN TO HEAT PREPARATION':
+      failure?'RETURN TO COMPLEX // RETRY HEAT':advanced?'NEXT ROUND':'RETURN TO COMPLEX';
     label(1494, 679, 'TAP ANYWHERE  //  ' + nextText, 9, '#f6efef')
       .setOrigin(1, 0.5);
     // A single HIGH-depth full-screen hit area, not the old lower-depth
@@ -1729,7 +1732,20 @@ export default class FourLaneTestScene extends RaceScene {
     this.add.rectangle(780,360,1560,720,0xffffff,.001).setDepth(302).setScrollFactor(0).setInteractive().on('pointerdown',()=>{if(armed)this.returnToDrag();});
   }
 
+  promptCrewForfeit() {
+    // Take the player to their saved crew prep room before showing the normal
+    // confirmation. Declining keeps them in this paid event, never outside it.
+    this.scene.start('CentralTokyoScene',{
+      locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+      promptProCrewForfeit:true,
+    });
+  }
+
   returnToDrag() {
-    this.scene.start('CentralTokyoScene', { locationId: 'tokyoDragComplex' });
+    this.scene.start('CentralTokyoScene',{
+      locationId:'tokyoDragComplex',
+      autoOpenProCrewFixture:Boolean(this.proCrew&&
+        this.registry.get('proCircuit')?.activeCrewEvent),
+    });
   }
 }
