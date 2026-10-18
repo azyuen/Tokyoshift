@@ -1,4 +1,4 @@
-// R589 — drag-complex heat-by-heat crew strategy room.
+// R591 — drag-complex crew lineup: standard dialogue, controls and safe re-selection.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -145,7 +145,8 @@ function draw(s,opts){
     s.textures.get(key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   }
   rect(W/2,H/2,W,H,0x020714,.12,0x020714,202);
-  // Cinematic staff on right: Sayaka beside Hiroshi, who faces inward.
+  // Keep faces at their original vertical level while enlarging sprites 75%.
+  // Their torsos extend below the screen, ready for a foreground table overlay.
   for(const p of [
     {key:'proCrewSayaka',x:1056,feet:720,height:548,flip:false},
     {key:'proCrewHiroshi',x:1366,feet:740,height:580,flip:true},
@@ -153,10 +154,12 @@ function draw(s,opts){
     if(!s.textures.exists(p.key))continue;
     const source=s.textures.get(p.key).getSourceImage();
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    const scale=Math.min(p.height/Math.max(1,source.height),
+    const scale=1.75*Math.min(p.height/Math.max(1,source.height),
       335/Math.max(1,source.width));
-    add(s.add.ellipse(p.x,p.feet-7,220,24,0,.42).setDepth(210));
-    add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
+    // Enlarging down from the original top keeps the face in quadrant two.
+    const feet=p.feet+p.height*.75;
+    add(s.add.ellipse(p.x,feet-7,260,28,0,.42).setDepth(210));
+    add(s.add.image(p.x,feet,p.key).setOrigin(.5,1)
       .setFlipX(p.flip).setScale(scale).setDepth(212));
   }
 
@@ -178,19 +181,24 @@ function draw(s,opts){
     fontFamily:PIXEL,fontSize:size+'px',color,
   }).setDepth(229));
   meetHeader(52,40,245,43,0x03070c,.96);
-  meetText(72,48,e.season||e.seasonNumber?'PRO SEASON':'OPEN CIRCUIT',19,'#48d9ff');
-  const eventTitle=String(e.label||(
-    f.format==='RELAY'?'CREW RELAY':
-    f.format==='TECHNICAL'?'CREW TECHNICAL':
-    f.format==='FOUR_WIDE'?'CREW FOUR-WIDE':'CREW CLUB SPRINT')).toUpperCase();
+  meetText(72,48,e.openCircuit===false?'PRO SEASON':'OPEN CIRCUIT',19,'#48d9ff');
+  const shortEventTitle={RELAY:'CREW RELAY',TECHNICAL:'CREW TECHNICAL',
+    FOUR_WIDE:'CREW FOUR-WIDE',DUEL:'CREW CLUB SPRINT'};
+  const eventTitle=String(e.trophyId||!e.short?e.label:
+    shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
   meetHeader(54,151,620,41,0x081522,.73);
   const heatRule=f.heatRule||f.raceRule||
-    (f.format==='RELAY'?'1/4 MILE // STANDING START // TEAM RELAY':
-     f.format==='TECHNICAL'?'1/4 MILE // CONSISTENCY RUN':
-     f.format==='FOUR_WIDE'?'1/4 MILE // FOUR-WIDE':
-     '1/4 MILE // STANDING START');
+    (f.format==='RELAY'?'1/4 MI // STANDING START // RELAY':
+     f.format==='TECHNICAL'?'1/4 MI // STANDING START // CONSISTENCY':
+     f.format==='FOUR_WIDE'?'1/4 MI // STANDING START // FOUR-WIDE':
+     '1/4 MI // STANDING START // THREE HEATS');
   pixelText(74,163,String(heatRule).toUpperCase(),13,'#a8c4d7');
+  // Professional crew fixtures have no general power cap, but require three
+  // distinct registered crew cars. Tri-Drive uniquely requires FWD/RWD/AWD.
+  pixelText(74,202,e.trophyId==='triDrive'?
+    'CAR RULE: ONE FWD + ONE RWD + ONE AWD':
+    'CAR RULE: THREE DISTINCT CREW CARS // NO POWER CAP',11,'#c8d9e7');
 
   // One advice entitlement, scoped to the paid competition rather than a heat.
   const adviceUsed=Boolean(e.adviceUsed);
@@ -238,7 +246,7 @@ function draw(s,opts){
   const fg=add(s.add.graphics().setDepth(219));
   fg.fillStyle(0x030b16,.77);fg.fillPoints(frame,true);
   fg.lineStyle(5,0x35d6ff,1);fg.strokePoints(frame,true);
-  meetText(85,409,'LINEUP FOR HEAT '+(Number(f.round||0)+1)+'/3',26,'#35d6ff');
+  meetText(85,409,'YOUR LINEUP',26,'#35d6ff');
   const state=s.registry.get('carStates')||{};
   const player=s.registry.get('playerCharacterId')||'renMizuno';
   selected.forEach((id,index)=>{
@@ -256,8 +264,11 @@ function draw(s,opts){
       if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
       const car=cars[u.carId];
       if(car&&typeof s.createCarDisplay==='function'){
+        // Correct CentralTokyoScene.createCarDisplay signature. R590 passed
+        // false as paintColor and a colour string as flipX; selecting an
+        // existing driver then redrawing could throw and leave a black veil.
         const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
-          false,getCarPaintColor(state[u.carId]||{}));
+          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
         for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
       }
     }
