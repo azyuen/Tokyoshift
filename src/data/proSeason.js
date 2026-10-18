@@ -397,7 +397,7 @@ export function crewSeriesEligibility(source,squadIds=[],assignments={}) {
     return 'CREW FORMAT NOT AVAILABLE';
   if(Number(value(source,'cash',0))<(isOpenCircuitAvailable(c)?OPEN_CIRCUIT_CREW_FEE:CREW_SERIES.entryFee))return 'INSUFFICIENT CASH';
   const units=getCrewSeriesUnits(source,assignments), chosen=squadIds.map(id=>units.find(u=>u.id===id));
-  if(squadIds.length<3||squadIds.length>5||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
+  if((squadIds.length<3||squadIds.length>5)&&squadIds.length!==7||new Set(squadIds).size!==squadIds.length||chosen.some(u=>!u||!u.validAssignment))return 'SELECT THREE TO FIVE ELIGIBLE DRIVERS';
   if(new Set(chosen.map(u=>u.carId)).size!==chosen.length)return 'REGISTER A DISTINCT CAR FOR EACH DRIVER';
   return null;
 }
@@ -415,11 +415,11 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null)
   if(trophyId&&(!trophy?.available||trophy.id!==trophyId||
     !['TEAM','MIXED'].includes(trophy.discipline)))return {error:'TROPHY ROTATION OR COOLDOWN CHANGED'};
   if(trophy?.id==='triDrive'){
-    if(squadIds.length!==3)return {error:'REGISTER EXACTLY THREE DRIVERS FOR TRI-DRIVE'};
+    if(squadIds.length!==3&&squadIds.length!==7)return {error:'TRI-DRIVE REQUIRES THREE HEAT DRIVERS'};
     const units=getCrewSeriesUnits(source,assignments);
     const drives=squadIds.map(id=>String(units.find(u=>u.id===id)?.drivetrain||'').toUpperCase())
       .map(d=>({FF:'FWD',FR:'RWD'}[d]||d));
-    if(new Set(drives).size!==3||!['FWD','RWD','AWD'].every(d=>drives.includes(d)))
+    if(squadIds.length===3&&(new Set(drives).size!==3||!['FWD','RWD','AWD'].every(d=>drives.includes(d))))
       return {error:'TRI-DRIVE NEEDS ONE FWD, ONE RWD AND ONE AWD CAR'};
   }
   const fee=openCircuit?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
@@ -445,6 +445,18 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null)
     difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-fee};
 }
+// R589: Advice is an EVENT resource, not a per-heat resource. Saved through the
+// same proCircuit transaction as all other professional fixture operations.
+// Comparing the event ID prevents stale overlays claiming advice for a new event.
+export function useProCrewAdvice(source,eventId) {
+  const c=normaliseProCircuitState(value(source,'proCircuit'));
+  const t=c.activeCrewEvent;
+  if(!t||t.id!==eventId)return {error:'EVENT NO LONGER AVAILABLE'};
+  if(t.adviceUsed)return {error:'SAYAKA ADVICE ALREADY USED'};
+  c.activeCrewEvent={...clone(t),adviceUsed:true};
+  return {circuit:c};
+}
+
 export function getCrewFixture(raw) {
   const t=raw?.activeCrewEvent;
   if(!t||t.schema!==1||!Number.isInteger(t.round)||t.round<0||t.round>2||!Array.isArray(t.schedule?.[t.round])||!Array.isArray(t.entrants)||!Array.isArray(t.squadIds))return null;
@@ -477,6 +489,7 @@ export function prepareCrewSeriesFixture(source,lineupIds,fixtureId,playerDriven
   const units=getCrewSeriesUnits(source,t.assignments),chosen=lineupIds.map(id=>units.find(u=>u.id===id));
   if(lineupIds.length!==3||new Set(lineupIds).size!==3||chosen.some(u=>!u||!u.validAssignment)||lineupIds.some(id=>!t.squadIds.includes(id)))return {error:'FIELD THREE REGISTERED DRIVERS AND CARS'};
   if(new Set(chosen.map(u=>u.carId)).size!==3)return {error:'FIELD THREE DISTINCT CARS'};
+  if(t.trophyId==='triDrive'&&new Set(chosen.map(u=>({FF:'FWD',FR:'RWD'}[String(u.drivetrain||'').toUpperCase()]||String(u.drivetrain||'').toUpperCase()))).size!==3)return {error:'FIELD ONE FWD, ONE RWD AND ONE AWD DRIVER'};
   const rng=seasonRandom(f.id),heats=chosen.map((u,i)=>{
     const own=playerDriven?0:estimateCrewHeat(u,rng),other=playerDriven?0:estimateCrewHeat(f.opponent.drivers[i],rng,t.difficulty,true);
     return {driverId:u.id,name:u.name,carId:u.carId,opponentCarId:f.opponent.drivers[i].carId,ownSeconds:own,opponentSeconds:other,won:own<=other};
