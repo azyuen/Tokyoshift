@@ -87,8 +87,59 @@ export function toggleBriefingNos(state = {}) {
   return next;
 }
 
+export const BRIEFING_POWER_PARTS = Object.freeze([
+  Object.freeze({id:'turbo',group:'tuning',label:'TURBO'}),
+  Object.freeze({id:'engine',group:'tuning',label:'ENGINE'}),
+  Object.freeze({id:'ecu',group:'tuning',label:'ECU'}),
+  Object.freeze({id:'intake',group:'tuning',label:'INTAKE'}),
+  Object.freeze({id:'intercooler',group:'tuning',label:'INTERCOOLER'}),
+  Object.freeze({id:'headers',group:'exhaustNosTuning',label:'HEADERS'}),
+  Object.freeze({id:'exhaust',group:'exhaustNosTuning',label:'EXHAUST'}),
+  Object.freeze({id:'muffler',group:'exhaustNosTuning',label:'MUFFLER'}),
+]);
+
+export function removeDriverPowerPart(carState = {}, partId) {
+  const part=BRIEFING_POWER_PARTS.find(p=>p.id===partId);
+  if(!part)return carState;
+  const source=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
+    carState.exhaustNosTuning||{};
+  const level=Math.max(0,Math.min(3,Math.round(Number(source[partId]||0))));
+  if(level===0)return carState;
+  const next={...carState,[part.group]:{...source,[partId]:0}};
+  const saved=carState.proBriefingPowerStash||{};
+  const category={...(saved[part.group]||{})};
+  if(!Object.prototype.hasOwnProperty.call(category,partId))category[partId]=level;
+  next.proBriefingPowerStash={...saved,[part.group]:category};
+  if(carState.dyno)next.dyno={...carState.dyno,officialReading:null};
+  return next;
+}
+
+export function restoreDriverPowerParts(carState = {}) {
+  const saved=carState.proBriefingPowerStash;
+  if(!saved)return carState;
+  const next={...carState};
+  for(const group of ['tuning','exhaustNosTuning']){
+    if(saved[group])next[group]={...(group==='tuning'?
+      carState.tuning||carState.engineTuning||{}:carState.exhaustNosTuning||{}),
+      ...saved[group]};
+  }
+  delete next.proBriefingPowerStash;
+  if(carState.dyno)next.dyno={...carState.dyno,officialReading:null};
+  return next;
+}
+
 export function restoreDriverBriefingNos(carStates = {}, state = {}) {
   const carId = state.playerCarId;
   if (!isOpenDriverBriefing(state) || !carStates[carId]?.proBriefingNosStash) return null;
   return { ...carStates, [carId]: toggleBriefingNos(carStates[carId]) };
+}
+
+export function restoreDriverBriefingParts(carStates = {}, state = {}) {
+  if(!isOpenDriverBriefing(state))return null;
+  const car=carStates[state.playerCarId];
+  if(!car?.proBriefingNosStash&&!car?.proBriefingPowerStash)return null;
+  let next=car;
+  if(next.proBriefingNosStash)next=toggleBriefingNos(next);
+  if(next.proBriefingPowerStash)next=restoreDriverPowerParts(next);
+  return {...carStates,[state.playerCarId]:next};
 }
