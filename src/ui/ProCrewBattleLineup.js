@@ -290,7 +290,8 @@ function draw(s,opts){
   const clipPoly=(obj,pts)=>{
     const g=s.make.graphics({add:false});
     g.fillStyle(0xffffff,1);g.fillPoints(pts,true);
-    maskShapes.push(g);obj.setMask(g.createGeometryMask());
+    maskShapes.push(g);if(scopedMasks)scopedMasks.push(g);
+    obj.setMask(g.createGeometryMask());
   };
   const frame=framePoints(24,399,730,405,32);
   const fg=add(s.add.graphics().setDepth(219));
@@ -299,99 +300,146 @@ function draw(s,opts){
   meetText(85,409,'YOUR LINEUP',26,'#35d6ff');
   const state=s.registry.get('carStates')||{};
   const player=s.registry.get('playerCharacterId')||'renMizuno';
-  selected.forEach((id,index)=>{
-    const x=[63,292,521][index],y=463;
-    const u=units.find(v=>v.id===id);
-    const portrait=graphicPanel(x,y,211,168,0x165578,0x050a10,.65,13,222);
-    const carX=x-30;
-    const carPanel=graphicPanel(carX,y+228,211,98,0x0a2b48,BLUE,.78,8,222);
-    if(u){
-      const profile=createCharacterProfile(s,{
-        characterId:u.id,pose:'idle',x:x+105,y:y+84,
-        frameWidth:226,frameHeight:171,side:'center',depth:225,
-        mask:false,playerCharacterId:player,
-      });
-      if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
-      const car=cars[u.carId];
-      if(car&&typeof s.createCarDisplay==='function'){
-        // Correct CentralTokyoScene.createCarDisplay signature. R590 passed
-        // false as paintColor and a colour string as flipX; selecting an
-        // existing driver then redrawing could throw and leave a black veil.
-        const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-        for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+  let lineupNodes=[],lineupMasks=[],footerNodes=[];
+  let popupNodes=[],popupMasks=[],popupVisible=false;
+  // Never destroy and reconstruct the entire race room for a single checkbox.
+  // In particular, preserve the loaded background and character textures.
+  function renderLineup(){
+    clearGroup(lineupNodes,lineupMasks);lineupNodes=[];lineupMasks=[];
+    scope(lineupNodes,lineupMasks);
+    selected.forEach((id,index)=>{
+      const x=[63,292,521][index],y=463;
+      const u=units.find(v=>v.id===id);
+      const portrait=graphicPanel(x,y,211,168,0x165578,0x050a10,.65,13,222);
+      const carX=x-30;
+      const carPanel=graphicPanel(carX,y+228,211,98,0x0a2b48,BLUE,.78,8,222);
+      if(u){
+        const profile=createCharacterProfile(s,{
+          characterId:u.id,pose:'idle',x:x+105,y:y+84,
+          frameWidth:226,frameHeight:171,side:'center',depth:225,
+          mask:false,playerCharacterId:player,
+        });
+        if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
+        const car=cars[u.carId];
+        if(car&&typeof s.createCarDisplay==='function'){
+          const pieces=s.createCarDisplay(car,carX+105,y+277,200,225,
+            getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+          for(const piece of pieces){add(piece);if(piece?.setMask)clipPoly(piece,carPanel);}
+        }
       }
-    }
-    const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
-    const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
-    add(s.add.text(x+105,y+176,name,{
-      fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
-    }).setOrigin(.5,0).setDepth(229));
-    add(s.add.text(carX+105,y+199,model,{
-      fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
-    }).setOrigin(.5,0).setDepth(229));
-    add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
-      .setInteractive({useHandCursor:true}).setDepth(231)
-      .on('pointerdown',()=>reopen(selected,{popupSlot:index})));
-  });
-  const missing=selected.filter(Boolean).length!==3;
-  const triDrive=e.trophyId==='triDrive'&&new Set(selected.map(id=>
-    normaliseDrive(units.find(u=>u.id===id)?.drivetrain))).size!==3;
-  // Same 16px button typography for every actionable control on this page.
-  const footerButton=(x,w,label,onClick,{primary=false,disabled=false}={})=>{
-    const fill=disabled?0x242a31:primary?0x143e38:0x192333;
-    const outline=disabled?0x53616e:primary?0x65e7bf:0x8ba1b5;
-    const hit=rect(x,779,w,49,fill,1,outline,246);
-    if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',onClick);
-    const caption=text(x,779,label,BUTTON_FONT,
-      disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
-    if(caption.width>w-18)caption.setScale((w-18)/caption.width);
-    return hit;
-  };
-  footerButton(974,205,'FORFEIT EVENT',()=>opts.onForfeit?.());
-  footerButton(1196,205,'CLEAR LINEUP',()=>setLineup([null,null,null]));
-  footerButton(1430,229,'CONFIRM LINEUP',()=>{
-    close();opts.onConfirm?.([...selected]);
-  },{primary:true,disabled:missing||triDrive});
-
-  // One-column roster only appears when an empty or filled lineup card is tapped.
-  if(Number.isInteger(opts.popupSlot)){
-    const slot=opts.popupSlot;
-    rect(W/2,H/2,W,H,0x030915,.61,0x030915,249).setInteractive()
-      .on('pointerdown',()=>reopen(selected,{popupSlot:null}));
-    rect(1192,413,704,745,0x061421,.985,RED,250);
-    text(872,61,'SELECT CREW DRIVERS',17,'#fff4f2',true,251);
-    text(1457,64,'7 TEAM MEMBERS',12,'#edb4c1',true,251);
-    units.slice(0,7).forEach((u,i)=>{
-      const y=119+i*85,active=selected[slot]===u.id,used=selected.includes(u.id)&&!active;
-      const row=rect(1192,y+28,666,77,active?0x27384c:0x0a1d2e,1,
-        active?RED:0x31556c,251);
-      if(!used)row.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        const next=selected.map((v,j)=>j===slot?u.id:v);
-        reopen(next,{popupSlot:null});
-      });
-      rect(889,y+28,25,25,active?0x813c50:0x091725,1,RED,253);
-      if(active)text(880,y+10,'✓',25,'#fff2f2',false,254);
-      rect(957,y+28,83,68,0x12283d,1,0x31566e,252);
-      const p=createCharacterProfile(s,{characterId:u.id,pose:'idle',
-        x:957,y:y+28,frameWidth:81,frameHeight:66,depth:253,playerCharacterId:player});
-      if(p)add(p);
-      const name=text(1011,y-1,u.name,18,used?'#85919f':'#f4f3f3',false,254);
-      if(name.width>200)name.setScale(200/name.width);
-      const model=text(1011,y+22,cars[u.carId]?.shortName||u.carId,14,'#c0dce8',false,254);
-      if(model.width>200)model.setScale(200/model.width);
-      text(1011,y+44,normaliseDrive(u.drivetrain)+' · '+Math.round(u.powerKW||0)+' kW',
-        14,'#99bfce',false,254);
-      rect(1412,y+28,213,68,0x040e19,.8,0x32556b,252);
-      const car=cars[u.carId];
-      if(car&&typeof s.createCarDisplay==='function'){
-        const all=s.createCarDisplay(car,1406,y+11,166,253,
-          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
-        const crop=mask(1308,y-4,207,65);
-        for(const obj of all){if(obj?.setMask)obj.setMask(crop);add(obj);}
-      }
-      if(used)text(1467,y+44,'IN LINEUP',11,'#f0b4be',true,254);
+      const name=u?String(u.name||u.id).toUpperCase():'SELECT DRIVER';
+      const model=u?String(cars[u.carId]?.shortName||u.carId).toUpperCase():'TAP TO ASSIGN';
+      add(s.add.text(x+105,y+176,name,{
+        fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      add(s.add.text(carX+105,y+199,model,{
+        fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
+      }).setOrigin(.5,0).setDepth(229));
+      add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
+        .setInteractive({useHandCursor:true}).setDepth(231)
+        .on('pointerdown',()=>openRoster()));
     });
-    btn(1418,758,200,40,'CLOSE',()=>reopen(selected,{popupSlot:null}),false,false,260);
+    unscope();
   }
+  function canConfirm(){
+    const members=selected.filter(Boolean);
+    const drives=members.map(id=>normaliseDrive(units.find(u=>u.id===id)?.drivetrain));
+    return members.length===3&&new Set(members).size===3&&
+      (e.trophyId!=='triDrive'||new Set(drives).size===3);
+  }
+  function renderFooter(){
+    clearGroup(footerNodes);footerNodes=[];scope(footerNodes);
+    const footerButton=(x,w,label,onClick,{primary=false,disabled=false}={})=>{
+      const hit=rect(x,779,w,49,disabled?0x242a31:
+        primary?0x143e38:0x192333,1,
+        disabled?0x53616e:primary?0x65e7bf:0x8ba1b5,246);
+      if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',onClick);
+      const caption=text(x,779,label,BUTTON_FONT,
+        disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
+      if(caption.width>w-18)caption.setScale((w-18)/caption.width);
+    };
+    footerButton(974,205,'FORFEIT EVENT',()=>opts.onForfeit?.());
+    footerButton(1196,205,'CLEAR LINEUP',()=>setLineup([null,null,null]));
+    footerButton(1430,229,'CONFIRM LINEUP',()=>{
+      if(!canConfirm())return;
+      close();opts.onConfirm?.([...selected]);
+    },{primary:true,disabled:!canConfirm()});
+    unscope();
+  }
+  function setLineup(next){
+    const unique=[...new Set(next.filter(Boolean))].slice(0,3);
+    selected.splice(0,selected.length,...unique);
+    while(selected.length<3)selected.push(null);
+    renderLineup();renderFooter();
+    if(popupVisible)renderRoster();
+  }
+  function assignDriver(id){
+    const order=selected.filter(Boolean);
+    const index=order.indexOf(id);
+    if(index>=0)order.splice(index,1);
+    else if(order.length<3)order.push(id);
+    setLineup(order);
+  }
+  function renderRoster(){
+    if(!popupVisible)return;
+    clearGroup(popupNodes,popupMasks);popupNodes=[];popupMasks=[];
+    scope(popupNodes,popupMasks);
+    // 600px wide rather than the old 704px sidebar. Keep the rest of the
+    // room visible beneath a dimmer, instead of rebuilding its scene.
+    rect(W/2,H/2,W,H,0x030915,.59,0x030915,249)
+      .setInteractive().on('pointerdown',closeRoster);
+    rect(1235,411,596,740,0x061421,.985,RED,250);
+    text(971,60,'SELECT CREW DRIVERS',18,'#fff4f2',true,252);
+    units.slice(0,7).forEach((u,i)=>{
+      const y=110+i*83;
+      const assigned=selected.indexOf(u.id);
+      const full=selected.filter(Boolean).length>=3;
+      const hit=rect(1235,y+30,558,76,assigned>=0?0x26384d:0x0a1d2e,
+        1,assigned>=0?RED:0x31556c,251);
+      if(assigned>=0||!full)
+        hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
+      // Numbered selection order is always visible while the list stays open.
+      const check=rect(985,y+29,40,40,assigned>=0?0x913347:0x10273a,
+        1,RED,254);
+      if(assigned>=0||!full)
+        check.setInteractive({useHandCursor:true}).on('pointerdown',()=>assignDriver(u.id));
+      if(assigned>=0)text(985,y+29,String(assigned+1),24,'#ffffff',true,255)
+        .setOrigin(.5);
+      // Character photos and car labels are shifted toward one another.
+      const portrait=createCharacterProfile(s,{characterId:u.id,pose:'idle',
+        x:1051,y:y+30,frameWidth:70,frameHeight:69,depth:253,
+        playerCharacterId:player});
+      if(portrait)add(portrait);
+      const ink=full&&assigned<0?'#8595a3':'#f4f3f3';
+      const who=text(1100,y+1,u.name,18,ink,false,254);
+      if(who.width>185)who.setScale(185/who.width);
+      const model=text(1100,y+26,cars[u.carId]?.shortName||u.carId,
+        15,'#c0dce8',false,254);
+      if(model.width>183)model.setScale(183/model.width);
+      text(1100,y+48,normaliseDrive(u.drivetrain)+' · '+
+        Math.round(u.powerKW||0)+' kW',14,'#99bfce',false,254);
+      // No black rectangles or borders behind cars: full side-profile sprite
+      // floating at the same baseline, closer to the car information.
+      const car=cars[u.carId];
+      if(car&&typeof s.createCarDisplay==='function'){
+        const parts=s.createCarDisplay(car,1398,y+27,174,253,
+          getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
+        const crop=mask(1301,y-4,203,73);
+        for(const part of parts){if(part?.setMask)part.setMask(crop);add(part);}
+      }
+    });
+    btn(1420,734,182,44,'CLOSE',closeRoster,false,false,260);
+    unscope();
+  }
+  function openRoster(){
+    if(popupVisible)return;
+    popupVisible=true;renderRoster();
+  }
+  function closeRoster(){
+    if(!popupVisible)return;
+    popupVisible=false;clearGroup(popupNodes,popupMasks);
+    popupNodes=[];popupMasks=[];
+  }
+  renderLineup();renderFooter();
+  if(Number.isInteger(opts.popupSlot))openRoster();
 }
