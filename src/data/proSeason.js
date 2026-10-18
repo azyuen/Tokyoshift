@@ -1,5 +1,5 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from './proCircuit.js?v=20261018-r584';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from './proCircuit.js?v=20261018-r591';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
 import { cars } from './cars.js?v=20261017-r565';
 import { characters } from './characters.js?v=20261017-r565';
@@ -445,15 +445,26 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null)
     difficulty:value(source,'playerDifficulty','STANDARD')};
   return {circuit:c,cash:Number(value(source,'cash'))-fee};
 }
-// R589: Advice is an EVENT resource, not a per-heat resource. Saved through the
-// same proCircuit transaction as all other professional fixture operations.
-// Comparing the event ID prevents stale overlays claiming advice for a new event.
+// Advice can be used once per competition. After using it, finish this event
+// AND two other professional events before requesting another consultation.
+// eventTick advances only on official settled professional events; it persists
+// across reloads and is independent of the real-world clock.
+export function getProCrewAdviceAvailability(source) {
+  const c=normaliseProCircuitState(value(source,'proCircuit'));
+  const t=c.activeCrewEvent;
+  const remaining=Math.max(0,c.crewAdviceCooldownUntil-c.eventTick);
+  return {available:Boolean(t&&!t.adviceUsed&&remaining===0),
+    remaining,usedThisEvent:Boolean(t?.adviceUsed)};
+}
 export function useProCrewAdvice(source,eventId) {
   const c=normaliseProCircuitState(value(source,'proCircuit'));
   const t=c.activeCrewEvent;
   if(!t||t.id!==eventId)return {error:'EVENT NO LONGER AVAILABLE'};
   if(t.adviceUsed)return {error:'SAYAKA ADVICE ALREADY USED'};
+  if(c.eventTick<c.crewAdviceCooldownUntil)
+    return {error:'SAYAKA AVAILABLE AFTER '+(c.crewAdviceCooldownUntil-c.eventTick)+' MORE PROFESSIONAL EVENTS'};
   c.activeCrewEvent={...clone(t),adviceUsed:true};
+  c.crewAdviceCooldownUntil=c.eventTick+3;
   return {circuit:c};
 }
 
