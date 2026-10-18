@@ -1,4 +1,4 @@
-// R591 — drag-complex crew lineup: standard dialogue, controls and safe re-selection.
+// R594 — continuous pro crew event room with in-place ordered roster selection.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -17,20 +17,28 @@ const formatName=f=>({DUEL:'HEAD TO HEAD',RELAY:'TEAM RELAY',
   TECHNICAL:'CONSISTENCY',FOUR_WIDE:'FOUR-WIDE'})[f]||String(f||'CREW BATTLE');
 const normaliseDrive=d=>({FF:'FWD',FR:'RWD'})[String(d).toUpperCase()]||String(d||'RWD').toUpperCase();
 
+// Spoken, context-specific strategy from Sayaka, using the actual roster,
+// car models, race format and driver strengths rather than generic all-caps.
 export function getProCrewHeatAdvice(fixture,units){
   const format=fixture?.format||'DUEL';
-  const ordered=[...units].filter(u=>u.validAssignment)
-    .sort((a,b)=>(b.performance||0)-(a.performance||0));
-  const names=ordered.slice(0,3).map(u=>u.name.split(' ')[0]);
-  const leaders=names.length?'YOUR STRONGEST OPTIONS: '+names.join(', ')+'.':'CHECK YOUR CREW GARAGE BEFORE THIS RACE.';
-  const rule=format==='RELAY'
-    ?'COMBINED ELAPSED TIME DECIDES THIS RELAY. PICK THREE FAST, RELIABLE CARS.'
-    :format==='TECHNICAL'
-    ?'THE SMALLEST SPREAD ACROSS THREE CLEAN RUNS WINS. FAVOUR CONSISTENCY OVER PEAK POWER.'
-    :format==='FOUR_WIDE'
-    ?'PLACING POINTS COUNT IN ALL THREE FOUR-LANE HEATS. MIX STRONG LAUNCHES WITH TOP-END SPEED.'
-    :'YOU NEED TWO HEAT WINS. PAIR YOUR QUICKEST CARS WITH DRIVERS YOU CONTROL CONSISTENTLY.';
-  return rule+' '+leaders;
+  const best=[...(units||[])].filter(u=>u.validAssignment)
+    .sort((a,b)=>format==='TECHNICAL'
+      ? (b.skill||0)-(a.skill||0)||(b.performance||0)-(a.performance||0)
+      : (b.performance||0)-(a.performance||0)||(b.skill||0)-(a.skill||0))
+    .slice(0,3);
+  const lineup=best.map(u=>u.name.split(' ')[0]+' ('+
+    String(cars[u.carId]?.shortName||u.carId||'car')+')');
+  const recommendations=lineup.length===3?
+    'I would try '+lineup[0]+', '+lineup[1]+', and '+lineup[2]+'.':
+    'Check which three crew cars are available before you line up.';
+  const note=format==='TECHNICAL'?
+    'Hrmmm, this race is technical. Consistency beats peak power. ':
+    format==='RELAY'?
+    'Hrmmm, a relay. Your three times add up, so clean starts and reliable shifts matter. ':
+    format==='FOUR_WIDE'?
+    'Hrmmm, four-wide. Every placing counts, so strong launches and smooth shifts will help. ':
+    'Hrmmm, you need two heat wins. Pair quick cars with drivers you can launch cleanly. ';
+  return note+recommendations;
 }
 
 function loadAssets(s,units){
@@ -95,7 +103,14 @@ function draw(s,opts){
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
-  const add=o=>{objects.push(o);return o;};
+  let scopedObjects=null,scopedMasks=null;
+  const add=o=>{objects.push(o);if(scopedObjects)scopedObjects.push(o);return o;};
+  const clearGroup=(nodes,masks=[])=>{
+    nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    masks.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+  };
+  const scope=(nodes,masks=null)=>{scopedObjects=nodes;scopedMasks=masks;};
+  const unscope=()=>{scopedObjects=null;scopedMasks=null;};
   const rect=(x,y,w,h,color=0x091726,alpha=1,outline=0x38546a,depth=210)=>
     add(s.add.rectangle(x,y,w,h,color,alpha).setStrokeStyle(2,outline).setDepth(depth));
   const text=(x,y,str,size=18,color='#f5f3f3',pixel=false,depth=230)=>{
@@ -107,7 +122,7 @@ function draw(s,opts){
   const mask=(x,y,w,h)=>{
     const shape=s.make.graphics({add:false});
     shape.fillStyle(0xffffff,1).fillRect(x,y,w,h);
-    maskShapes.push(shape);
+    maskShapes.push(shape);if(scopedMasks)scopedMasks.push(shape);
     return shape.createGeometryMask();
   };
   const polygon=(x,y,w,h,slant,fill,stroke,depth)=>{
@@ -128,11 +143,14 @@ function draw(s,opts){
     close();
     showProCrewHeatSelection(s,{...opts,selected:next,_loaded:true,...other});
   };
+  // Standard main-button sizing after the game's 1.6x font pass: 16px
+  // Silkscreen throughout this screen, rather than tiny 10/11/12px labels.
+  const BUTTON_FONT=16;
   const btn=(x,y,w,h,label,callback,red=false,disabled=false,depth=246)=>{
     const hit=rect(x,y,w,h,disabled?0x1b2330:red?0x6f1b30:0x11283b,
       1,disabled?0x546474:red?RED:BLUE,depth);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',callback);
-    const c=text(x,y,label,12,disabled?'#8494a3':'#f6fbff',true,depth+1).setOrigin(.5);
+    const c=text(x,y,label,BUTTON_FONT,disabled?'#8494a3':'#f6fbff',true,depth+1).setOrigin(.5);
     if(c.width>w-12)c.setScale((w-12)/c.width);
     return hit;
   };
@@ -156,10 +174,10 @@ function draw(s,opts){
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     const baseScale=Math.min(p.height/Math.max(1,source.height),
       335/Math.max(1,source.width));
-    const scale=1.75*baseScale;
+    const scale=(p.key==='proCrewHiroshi'?1.75*.85:1.75)*baseScale;
     // Preserve the exact ORIGINAL top of the rendered sprite, even when the
     // source was width-limited rather than height-limited.
-    const feet=p.feet+source.height*baseScale*.75;
+    const feet=p.feet+source.height*(scale-baseScale);
     add(s.add.ellipse(p.x,feet-7,260,28,0,.42).setDepth(210));
     add(s.add.image(p.x,feet,p.key).setOrigin(.5,1)
       .setFlipX(p.flip).setScale(scale).setDepth(212));
@@ -238,25 +256,22 @@ function draw(s,opts){
   }
 
   if(adviceUsed){
-    // Reuse MangaCutscene's cream card, 6px black trim and black speaker tab.
-    // The pointer is on the RIGHT vertical edge, facing visible Sayaka.
-    const boxX=402,boxY=308,boxW=728,boxH=187;
-    rect(boxX,boxY,boxW,boxH,0xfffcf1,1,0x111111,235)
-      .setStrokeStyle(6,0x111111,1);
-    const bubble=add(s.add.graphics().setDepth(236));
-    bubble.fillStyle(0xfffcf1,1);
-    bubble.lineStyle(5,0x111111,1);
-    const edge=boxX+boxW/2;
-    bubble.fillTriangle(edge-4,boxY-28,edge+53,boxY+5,edge-4,boxY+33);
-    bubble.strokeTriangle(edge-4,boxY-28,edge+53,boxY+5,edge-4,boxY+33);
-    // Retouch the white base across the triangle seam without obscuring
-    // its black outer trim; same placement logic as MangaCutscene pointer.
-    rect(186,boxY-boxH/2-14,248,34,0x111111,1,0x111111,237);
-    text(79,boxY-boxH/2-27,'SAYAKA',13,'#ffffff',true,238);
-    const adviceText=text(77,boxY-54,opts.advice||'NO ADVICE AVAILABLE.',
-      20,'#111111',false,238);
-    adviceText.setWordWrapWidth?.(654);
-    adviceText.setLineSpacing?.(5);
+    // One silhouette and ONE stroked outline: no seam between dialogue and
+    // its right-side pointer. Positioned below race briefing, above crew panel.
+    const x=135,y=260,w=720,h=127,edge=x+w,arrow=79;
+    const points=[
+      {x,y},{x:edge,y},{x:edge,y:y+36},
+      {x:edge+arrow,y:y+58},
+      {x:edge,y:y+81},{x:edge,y:y+h},{x,y:y+h},
+    ];
+    const bubble=add(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(6,0x111111,1);bubble.strokePoints(points,true);
+    text(x+20,y+12,'Sayaka',16,'#252227',false,238).setFontStyle?.('700');
+    const spoken=text(x+20,y+42,opts.advice||'What do you think?',
+      18,'#111111',false,238);
+    spoken.setWordWrapWidth?.(w-40);
+    spoken.setLineSpacing?.(2);
   }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
@@ -322,22 +337,21 @@ function draw(s,opts){
   const missing=selected.filter(Boolean).length!==3;
   const triDrive=e.trophyId==='triDrive'&&new Set(selected.map(id=>
     normaliseDrive(units.find(u=>u.id===id)?.drivetrain))).size!==3;
-  // Same bottom action styling as MeetScene: 49px buttons, Silkscreen 10px,
-  // standard navy/green surfaces. Three controls have 20px equal gaps.
+  // Same 16px button typography for every actionable control on this page.
   const footerButton=(x,w,label,onClick,{primary=false,disabled=false}={})=>{
     const fill=disabled?0x242a31:primary?0x143e38:0x192333;
     const outline=disabled?0x53616e:primary?0x65e7bf:0x8ba1b5;
     const hit=rect(x,779,w,49,fill,1,outline,246);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',onClick);
-    const caption=text(x,779,label,10,disabled?'#94a2ac':'#ffffff',true,247)
-      .setOrigin(.5);
-    if(caption.width>w-22)caption.setScale((w-22)/caption.width);
+    const caption=text(x,779,label,BUTTON_FONT,
+      disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
+    if(caption.width>w-18)caption.setScale((w-18)/caption.width);
     return hit;
   };
-  footerButton(987,190,'RACE LATER',close);
-  footerButton(1197,190,'CLEAR LINEUP',()=>reopen([null,null,null],{popupSlot:null}));
-  footerButton(1422,220,'CONFIRM LINEUP',()=>{
-    close();opts.onConfirm?.(selected);
+  footerButton(974,205,'FORFEIT EVENT',()=>opts.onForfeit?.());
+  footerButton(1196,205,'CLEAR LINEUP',()=>setLineup([null,null,null]));
+  footerButton(1430,229,'CONFIRM LINEUP',()=>{
+    close();opts.onConfirm?.([...selected]);
   },{primary:true,disabled:missing||triDrive});
 
   // One-column roster only appears when an empty or filled lineup card is tapped.
