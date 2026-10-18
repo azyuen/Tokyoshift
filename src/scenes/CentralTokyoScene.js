@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r584';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r591';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r592';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction } from '../ui/ProSeasonPanel.js?v=20261018-r592';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -60,7 +60,7 @@ import {
   getGarageDeliveryOptions,
   showGarageDeliveryPicker,
 } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
-import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
+import { getWorldPhase, getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   applyMarketPriceDifficulty,
@@ -381,6 +381,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
             this.ginzaRotationKey !== Math.floor(Date.now() / GINZA_ROTATION_MS)) {
           this.renderLocation(this.activeLocationId);
         }
+        // Driver/crew offers change at five-minute slot boundaries, even if
+        // DAY/NIGHT has not flipped yet. Never interrupt modal or manga UI.
+        if (this.activeLocationId === 'tokyoDragComplex' &&
+            isOpenCircuitAvailable(this.registry.get('proCircuit')) &&
+            this.proOpenRotationKey !== getOpenCircuitRotation().rotationIndex &&
+            !this._proOverlayClose && !this._proSeasonConfirmClose &&
+            !sceneCutsceneActive(this)) this.renderLocation(this.activeLocationId);
       },
     });
 
@@ -1661,7 +1668,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
       this.addContent(this.add.text(
         x + 145,
-        CARDS.y + 126,
+        CARDS.y + 139,
         modelOwnedCount > 0 ? 'OWNED ×' + modelOwnedCount : money(listing.price),
         {
           fontFamily: PIXEL_FONT,
@@ -2795,15 +2802,20 @@ export default class CentralTokyoScene extends Phaser.Scene {
   getProDragEvents() {
     const pro = normaliseProCircuitState(this.registry.get('proCircuit'));
     const legacy = this.registry.get('competitionState');
-    // Independent events before and between seasons; two completed open races
-    // refresh the next minor trophy. Rotation is saved, not time based.
+    // Open Circuit offers rotate with WorldClock (six slots per day/night).
+    // Existing in-progress events keep their saved identities and fixtures.
     if (isOpenCircuitAvailable(pro)) {
-      const driverBase=PRO_DRAG_EVENTS[pro.openCircuitTick%PRO_DRAG_EVENTS.length];
+      const rotation=getOpenCircuitRotation();
+      const driverBase=PRO_DRAG_EVENTS[rotation.rotationIndex%PRO_DRAG_EVENTS.length];
       const driver={...driverBase,requiredWins:0,openCircuit:true,
         entryFee:Math.round(driverBase.entryFee*.55/1000)*1000,
         prizeCash:Math.round(driverBase.prizeCash*.6/1000)*1000};
-      const crew={...CREW_SERIES,entryFee:OPEN_CIRCUIT_CREW_FEE,openCircuit:true,requiredWins:0};
-      const trophy=getOpenCircuitTrophy(pro);
+      const crewFormat=getOpenCircuitCrewFormat(rotation,pro.openCircuitTick);
+      const crewLabel={DUEL:'CREW CLUB SPRINT',RELAY:'CREW RELAY',
+        TECHNICAL:'CREW TECHNICAL',FOUR_WIDE:'CREW FOUR-WIDE'}[crewFormat];
+      const crew={...CREW_SERIES,label:crewLabel,format:crewFormat,
+        entryFee:OPEN_CIRCUIT_CREW_FEE,openCircuit:true,requiredWins:0};
+      const trophy=getOpenCircuitTrophy(pro,rotation);
       const crewTrophy=['TEAM','MIXED'].includes(trophy.discipline);
       const trophyBase=PRO_DRAG_EVENTS[2];
       const special={...trophyBase,id:trophy.id,label:trophy.label,trophyId:trophy.id,
@@ -2814,23 +2826,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
         trophyStages:trophy.stages||[],
         opponentRatings:crewTrophy?trophyBase.opponentRatings:[4,4,5,5,5],
         maxPowerKW:trophy.maxPowerKW||undefined,noNos:Boolean(trophy.noNos)};
-      const choices=[driver,crew,special];
+      const choices=[driver,crew,trophy.scheduled?special:{
+        id:'noTrophy',label:'NO TROPHY EVENT',trophySlotClosed:true,
+        openCircuit:true,requiredWins:0,entryFee:0,
+      }];
       if(legacy?.active&&legacy.proEvent&&legacy.openCircuit){
         const activeCard=legacy.openTrophyId?2:0;
         choices[activeCard]={...choices[activeCard],id:legacy.eventId,
           label:legacy.openTrophyId?
             (PRO_CIRCUIT_TROPHIES.find(t=>t.id===legacy.openTrophyId)?.label||legacy.eventId):
             (PRO_DRAG_EVENTS.find(e=>e.id===legacy.eventId)?.label||legacy.eventId),
-          trophyId:legacy.openTrophyId||null,team:false,
+          trophyId:legacy.openTrophyId||null,team:false,trophySlotClosed:false,
           entryFee:legacy.entryFee,prizeCash:legacy.prizeCash,trophyCooldown:0,
           trophyFixtures:legacy.rounds?.length||choices[activeCard].trophyFixtures,
           trophyDescription:legacy.openTrophyId&&legacy.rounds?.length===3?
             'LEGACY THREE-ROUND TROPHY // SAVED EVENT':choices[activeCard].trophyDescription,
           maxPowerKW:legacy.maxPowerKW??choices[activeCard].maxPowerKW};
       }
+      if(pro.activeCrewEvent&&!pro.activeCrewEvent.trophyId){
+        choices[1]={...choices[1],label:{DUEL:'CREW CLUB SPRINT',
+          RELAY:'CREW RELAY',TECHNICAL:'CREW TECHNICAL',
+          FOUR_WIDE:'CREW FOUR-WIDE'}[pro.activeCrewEvent.format]||crewLabel};
+      }
       if(pro.activeCrewEvent?.trophyId){
         choices[2]={...choices[2],id:pro.activeCrewEvent.trophyId,label:pro.activeCrewEvent.label,
-          team:true,trophyId:pro.activeCrewEvent.trophyId,trophyCooldown:0};
+          team:true,trophyId:pro.activeCrewEvent.trophyId,trophyCooldown:0,
+          trophySlotClosed:false};
       }
       return choices;
     }
@@ -2870,7 +2891,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawNavigation(
       'PRO DRAG CIRCUIT',
       circuitOpen
-        ? (isOpen?'INDEPENDENT EVENTS · NO SEASON POINTS · START PRO SEASON WHEN READY':
+        ? (isOpen?'ROTATING DRIVER / CREW / TROPHY EVENTS':
           'CHOOSE AN EVENT · EARN POINTS · QUALIFY FOR TOKYO CHAMPIONSHIP')
         : 'PROFESSIONAL CIRCUIT // RECRUIT SEVEN CREW MEMBERS TO ENTER'
     );
@@ -2899,6 +2920,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     drawSeasonHeader(this, STAGE);
 
+    this.proOpenRotationKey = isOpen ? getOpenCircuitRotation().rotationIndex : null;
     const events = this.getProDragEvents();
     const build = this.getSelectedBuild();
     const selectedCar = build ? cars[build.carId] : null;
@@ -2972,7 +2994,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
 
-    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'PRO CIRCUIT // EVENT SELECTION', {
+    this.addContent(this.add.text(CARDS.x + 18, CARDS.y + 14, 'EVENT SELECTION', {
       fontFamily: PIXEL_FONT,
       fontSize: '11px',
       color: '#8fe7ff',
@@ -3007,7 +3029,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         color: unlocked ? '#f7f3f1' : '#797277',
       }).setDepth(34));
 
-      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES · WON '+proCircuitTrophyWins(this.registry,event.trophyId)) : event.openCircuit ? 'ONE-OFF // NO SEASON POINTS' : event.team ? 'CREW POINTS // 20 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
+      this.addContent(this.add.text(x - 145, CARDS.y + 98, event.trophySlotClosed?'NO INVITATION THIS CYCLE':event.trophyId ? (event.trophyCooldown?'NEXT INVITATION // '+event.trophyCooldown+' EVENTS':'PRESTIGE TROPHY // '+event.trophyFixtures+' STAGES') : event.openCircuit ? (event.team?'CHOOSE THREE DRIVERS':'THREE ROUNDS // CASH PRIZES') : event.team ? 'CREW POINTS // 20 MAX' : event.seasonEnd ? 'CAREER // STANDINGS' : event.fourWide ? 'DRIVER POINTS // MULTI-CAR' : 'DRIVER POINTS // 20 MAX', {
         fontFamily: BODY_FONT,
         fontSize: '10px',
         color: unlocked ? '#d9cacb' : '#7f7377',
@@ -3017,7 +3039,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 126,
-        'ENTRY ' + money(event.entryFee),
+        event.trophySlotClosed?'NEXT FULL CYCLE':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
@@ -3106,6 +3128,17 @@ export default class CentralTokyoScene extends Phaser.Scene {
         'OPEN TOKYO CHAMPIONSHIP', { fontFamily: PIXEL_FONT, fontSize: '8px', color: '#fff6f5' }).setOrigin(0.5).setDepth(35));
       return;
     }
+    if (event.trophySlotClosed) {
+      this.addContent(this.add.text(SIDE.x + 20,SIDE.y + 208,'NO TROPHY EVENT',{
+        fontFamily:PIXEL_FONT,fontSize:'11px',color:'#f8f3f2',
+      }).setDepth(34));
+      this.addContent(this.add.text(SIDE.x + 20,SIDE.y + 255,
+        'NO TROPHY INVITATION THIS CYCLE.\n\nCHECK BACK AFTER THE NEXT FULL DAY / NIGHT.',{
+        fontFamily:BODY_FONT,fontSize:'18px',color:'#c4bec0',
+        wordWrap:{width:SIDE.w-40},
+      }).setDepth(34));
+      return;
+    }
     if (event.specialSlot) {
       this.addContent(this.add.text(SIDE.x + 22, SIDE.y + 250,
         'MINOR TROPHIES // COLLECTION\\n' + PRO_CIRCUIT_TROPHIES.map(t => t.label + '  ' + (proCircuitTrophyWins(this.registry, t.id) || '—')).join('\\n') + '\\n\\nTROPHY RACES ARE NOT YET AVAILABLE.',
@@ -3171,7 +3204,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const desc = activeDuelHere && (!activeDuel.eventId ||
         activeDuel.eventId === 'tokyoInvitational')
       ? [
-          'PRO COMP // DRIVER // SAVED',
+          'SAVED DRIVER EVENT',
           '3 ROUNDS // HEAD-TO-HEAD',
           'WIN EACH ROUND TO ADVANCE',
           'ROUND ' + (Number(activeDuel.roundIndex || 0) + 1) + '/3',
@@ -3182,7 +3215,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       : selectedTimed
       ? [
           'PRO COMP // ' + (seasonRules.format==='TIME_ATTACK'?'TIME ATTACK':'CONSISTENCY'),
-          '3 DRIVEN ATTEMPTS // RESULTS SAVED',
+          'THREE DRIVEN ATTEMPTS',
           seasonRules.format==='TIME_ATTACK'?'FASTEST VALID RUN WINS':'SMALLEST TIME SPREAD WINS',
           'ATTEMPT ' + (activeTimedHere?pro.activeTimedEvent.attempts.length+1:1) + '/3',
           'REGISTERED CAR  ' + (cars[activeTimedHere?pro.activeTimedEvent.carId:build?.carId]?.shortName||'NONE'),
@@ -3204,14 +3237,13 @@ export default class CentralTokyoScene extends Phaser.Scene {
           'ENTRY  ' + money(event.entryFee),
         ]
       : [
-          openCircuit?'OPEN CIRCUIT // NO SEASON POINTS':'PRO COMP // DRIVER',
+          'DRIVER // PROFESSIONAL EVENT',
           '3 ROUNDS // HEAD-TO-HEAD',
-          'WIN ALL THREE TO CLAIM PURSE',
-          'NO COMPETITION COOLDOWN',
-          'ENTRY  ' + money(event.entryFee),
-          'CHAMPION  ' + money(event.prizeCash),
-          'POWER LIMIT  ' + event.maxPowerKW + ' KW',
+          'WIN THREE TO CLAIM PURSE',
+          'POWER LIMIT  ' + (event.maxPowerKW||'OPEN') + ' KW',
           'NOS  ' + (event.noNos ? 'PROHIBITED' : 'ALLOWED'),
+          'CHAMPION  ' + money(event.prizeCash),
+          'ENTRY  ' + money(event.entryFee),
         ];
 
     if (openCircuit) {
@@ -3219,16 +3251,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
         const progress=activeDuelHere&&activeDuel?.openTrophyId
           ?Number(activeDuel.roundIndex||0)+1:1;
         desc.length=0;
-        desc.push('PRESTIGE TROPHY // NO SEASON POINTS',
-          event.trophyDescription||'INVITATIONAL CHAMPIONSHIP',
-          'STAGE '+progress+'/'+(event.trophyFixtures||5)+' // WIN TO ADVANCE',
-          'ELIMINATION ON DEFEAT // SAVED BETWEEN HEATS',
-          event.maxPowerKW?'POWER CEILING  '+event.maxPowerKW+' KW':'UNRESTRICTED POWER',
+        desc.push(event.trophyDescription||'INVITATIONAL CHAMPIONSHIP',
+          'STAGE '+progress+'/'+(event.trophyFixtures||5),
+          'ELIMINATION ON DEFEAT',
+          event.maxPowerKW?'POWER LIMIT  '+event.maxPowerKW+' KW':'OPEN POWER CLASS',
           'NOS  '+(event.noNos?'PROHIBITED':'ALLOWED'),
           'CHAMPION  '+money(event.prizeCash),
-          'ENTRY  '+money(event.entryFee),
-          'TROPHIES WON  '+proCircuitTrophyWins(this.registry,event.trophyId));
-      } else desc.splice(1,0,'INDEPENDENT PROFESSIONAL EVENT');
+          'ENTRY  '+money(event.entryFee));
+      }
     }
     if (!resuming && seasonRules) {
       desc.splice(1, 0, 'ROUND ' + (pro.calendar.round + 1) + '/8 // ' + seasonRules.format.replaceAll('_', ' '));

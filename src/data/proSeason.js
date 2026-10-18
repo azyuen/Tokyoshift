@@ -20,16 +20,33 @@ export function isOpenCircuitAvailable(raw) {
   if(c.seasonStatus==='ACTIVE'||(c.activeChampionship&&!c.activeChampionship.completed))return false;
   return !(c.calendar.round>=PRO_SEASON_LENGTH&&getProQualification(c).qualified&&!c.activeChampionship);
 }
-export function getOpenCircuitTrophy(raw) {
+export const OPEN_CIRCUIT_CREW_FORMATS=Object.freeze(['DUEL','RELAY','TECHNICAL','FOUR_WIDE']);
+export function getOpenCircuitCrewFormat(rotation=null,completedEventTick=0) {
+  const index=rotation&&Number.isInteger(rotation.rotationIndex)
+    ?rotation.rotationIndex:completedEventTick;
+  return OPEN_CIRCUIT_CREW_FORMATS[Math.abs(index)%OPEN_CIRCUIT_CREW_FORMATS.length];
+}
+// Passing a WorldClock rotation opts into the R592 schedule. Legacy callers
+// without rotation keep their original event-based invitation state; in-game
+// menu and registration must pass the same current rotation.
+export function getOpenCircuitTrophy(raw,rotation=null) {
   const c=normaliseProCircuitState(raw);
   const unlocked=t=>c.season>=t.season&&
     (!t.requiredTrophies||Object.values(c.trophyWins).filter(n=>n>0).length>=t.requiredTrophies);
-  // Skip future-season invitations without permanently losing the rotation.
-  const trophy=Array.from({length:PRO_CIRCUIT_TROPHIES.length},(_,i)=>
-    PRO_CIRCUIT_TROPHIES[(c.minorTrophyIndex+i)%PRO_CIRCUIT_TROPHIES.length]).find(unlocked)
-    ||PRO_CIRCUIT_TROPHIES[c.minorTrophyIndex];
+  const scheduled=rotation&&Number.isInteger(rotation.dayIndex);
+  const availableTrophies=PRO_CIRCUIT_TROPHIES.filter(unlocked);
+  const trophy=scheduled
+    ?availableTrophies[Math.abs(rotation.dayIndex)%availableTrophies.length]
+      ||PRO_CIRCUIT_TROPHIES[c.minorTrophyIndex]
+    :Array.from({length:PRO_CIRCUIT_TROPHIES.length},(_,i)=>
+      PRO_CIRCUIT_TROPHIES[(c.minorTrophyIndex+i)%PRO_CIRCUIT_TROPHIES.length]).find(unlocked)
+      ||PRO_CIRCUIT_TROPHIES[c.minorTrophyIndex];
+  // One slot in four complete in-game days has no trophy competition. This
+  // is deterministic for a given clock epoch, and never changes mid-day.
+  const isScheduled=!scheduled||rotation.dayIndex%4!==3;
   const eventsRemaining=Math.max(0,c.minorTrophyCooldownUntil-c.openCircuitTick);
-  return {...trophy, available:isOpenCircuitAvailable(c)&&unlocked(trophy)&&!eventsRemaining,
+  return {...trophy,scheduled:isScheduled,
+    available:isScheduled&&isOpenCircuitAvailable(c)&&unlocked(trophy)&&!eventsRemaining,
     eventsRemaining,locked:!unlocked(trophy),firstWin:!c.trophyWins[trophy.id]};
 }
 // Settled once for each official paid standalone competition. No season points,
@@ -41,8 +58,10 @@ export function finishOpenCircuitEvent(raw,summary) {
   c.openCircuitTick++;
   c.completedEventIds=[...c.completedEventIds,summary.id].slice(-250);
   if(summary.trophyId){
-    const trophy=getOpenCircuitTrophy({...c,openCircuitTick:c.openCircuitTick-1});
-    if(trophy.id===summary.trophyId){
+    // The offer can rotate while a paid trophy event is in progress. Award
+    // the saved event's trophy identity, never the current day's new offer.
+    const trophy=PRO_CIRCUIT_TROPHIES.find(t=>t.id===summary.trophyId);
+    if(trophy){
       if(summary.placing===1)c.trophyWins[trophy.id]=(c.trophyWins[trophy.id]||0)+1;
       c.trophyHistory=[...c.trophyHistory,{id:summary.id,trophyId:trophy.id,season:c.season,
         placing:summary.placing,carId:summary.carId||null,driverIds:summary.driverIds||null,
@@ -407,11 +426,11 @@ function opponentBuild(id,rating,slot) {
   const state=createRivalBuildState(cars[carId],level,{seed:id+':'+slot,raceType:'Standing Start'});
   return {carId,state,performance:getVehiclePerformance(carId,state).index.standing,skill:clamp(.72+(rating-1200)/1800,.65,.97)};
 }
-export function registerCrewSeries(source,squadIds,assignments={},trophyId=null) {
+export function registerCrewSeries(source,squadIds,assignments={},trophyId=null,rotation=null) {
   const error=crewSeriesEligibility(source,squadIds,assignments);if(error)return {error};
   const c=normaliseProCircuitState(value(source,'proCircuit'));
   const openCircuit=isOpenCircuitAvailable(c);
-  const trophy=trophyId&&openCircuit?getOpenCircuitTrophy(c):null;
+  const trophy=trophyId&&openCircuit?getOpenCircuitTrophy(c,rotation):null;
   if(trophyId&&(!trophy?.available||trophy.id!==trophyId||
     !['TEAM','MIXED'].includes(trophy.discipline)))return {error:'TROPHY ROTATION OR COOLDOWN CHANGED'};
   if(trophy?.id==='triDrive'){
@@ -425,7 +444,7 @@ export function registerCrewSeries(source,squadIds,assignments={},trophyId=null)
   const fee=openCircuit?(trophy?.entryFee||OPEN_CIRCUIT_CREW_FEE):CREW_SERIES.entryFee;
   if(Number(value(source,'cash',0))<fee)return {error:'INSUFFICIENT CASH'};
   const id=(trophyId?'trophy:'+trophyId:'crewOpen')+':s'+c.season+':e'+(c.eventTick+1);
-  const format=trophy?.formats?.[0]||(openCircuit?['DUEL','RELAY','TECHNICAL','FOUR_WIDE'][c.openCircuitTick%4]:
+  const format=trophy?.formats?.[0]||(openCircuit?getOpenCircuitCrewFormat(rotation,c.openCircuitTick):
     getProfessionalRoundEvents(c.calendar.round).crew.format);
   const teamsPool=getProCircuitTeamSeeds(c).filter(r=>r.id!==PLAYER);
   // Prestige entries face the seeded elite, not rating-matched open-circuit opponents.
