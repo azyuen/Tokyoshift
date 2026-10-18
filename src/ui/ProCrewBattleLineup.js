@@ -154,10 +154,12 @@ function draw(s,opts){
     if(!s.textures.exists(p.key))continue;
     const source=s.textures.get(p.key).getSourceImage();
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    const scale=1.75*Math.min(p.height/Math.max(1,source.height),
+    const baseScale=Math.min(p.height/Math.max(1,source.height),
       335/Math.max(1,source.width));
-    // Enlarging down from the original top keeps the face in quadrant two.
-    const feet=p.feet+p.height*.75;
+    const scale=1.75*baseScale;
+    // Preserve the exact ORIGINAL top of the rendered sprite, even when the
+    // source was width-limited rather than height-limited.
+    const feet=p.feet+source.height*baseScale*.75;
     add(s.add.ellipse(p.x,feet-7,260,28,0,.42).setDepth(210));
     add(s.add.image(p.x,feet,p.key).setOrigin(.5,1)
       .setFlipX(p.flip).setScale(scale).setDepth(212));
