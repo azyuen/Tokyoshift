@@ -1,9 +1,9 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r599';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r599';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction } from '../data/proDriverBriefing.js?v=20261019-r599';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent, settleLegacySeasonEvent } from '../data/proSeason.js?v=20261018-r594';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r597';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
@@ -3438,23 +3438,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
       },
       onForfeit:()=>{
         const current=this.registry.get('competitionState');
-        if(!isOpenDriverBriefing(current))return;
-        const circuit=normaliseProCircuitState(this.registry.get('proCircuit'));
-        const alreadySettled=circuit.completedEventIds?.includes(current.proSeasonId);
-        if(alreadySettled){this.renderLocation(this.activeLocationId);return;}
-        const remainingCooldown=circuit.crewAdviceCooldownUntil>circuit.eventTick;
-        // Use the same official professional result accounting as elimination:
-        // no refund or points, and no fabricated race victory. As with a crew
-        // forfeit, this does not count towards Sayaka's completed-event cooldown.
-        const result=settleLegacySeasonEvent(circuit,current,
-          Math.max(0,Number(current.roundIndex||0)));
-        if(remainingCooldown)result.crewAdviceCooldownUntil++;
-        result.lastTournament={...result.lastTournament,forfeited:true,cashPrize:0};
-        const changes={proCircuit:result,competitionState:null};
-        const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},current);
-        if(restored)changes.carStates=restored;
+        const tx=forfeitOpenDriverTransaction(
+          this.registry.get('proCircuit'),current,this.registry.get('carStates')||{});
+        if(tx.error){
+          this.proError=tx.error;
+          this.renderLocation(this.activeLocationId);
+          return;
+        }
         try{
-          saveProTransaction(this.registry,changes);
+          saveProTransaction(this.registry,tx.changes);
           this.proError=null;
           this.renderLocation(this.activeLocationId);
         }catch(error){
