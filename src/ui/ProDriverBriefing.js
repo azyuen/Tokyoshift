@@ -1,7 +1,8 @@
 // R598 — Open Circuit driver race briefing.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261011-r479';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r578';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
@@ -18,7 +19,8 @@ const W=1560,H=840;
 const PIXEL='"Silkscreen", monospace', BODY='"Rajdhani", sans-serif', DISPLAY='"Exo 2", sans-serif';
 const CYAN=0x35d6ff, RED=0xec526a;
 const room=s=>String(s.worldPhase||'night').toLowerCase()==='day'?'day':'night';
-const keyFor=phase=>'proCrewRegoZoomed'+(phase==='day'?'Day':'Night');
+const keyFor=phase=>'proDriverRegoWide'+(phase==='day'?'Day':'Night');
+const modelFor=id=>cars[id]||cars[getBaseCarId(id)]||null;
 const cash=n=>'¥'+Number(n||0).toLocaleString('en-US');
 const fit=(node,max)=>{if(node?.width>max)node.setScale(max/node.width);return node;};
 const drive=raw=>({FR:'RWD',FF:'FWD',FOUR_WHEEL_DRIVE:'AWD'}[String(raw||'').toUpperCase()]||String(raw||'—').toUpperCase());
@@ -27,7 +29,7 @@ function loadAssets(s,state){
   let queued=0;
   const phase=room(s),bg=keyFor(phase);
   if(!s.textures.exists(bg)){
-    s.load.image(bg,'assets/CentralTokyo/dragcomplex/regozoomed_'+phase+'.png?v=20261018-r589');
+    s.load.image(bg,'assets/CentralTokyo/dragcomplex/regoroom_'+phase+'.png?v=20261019-r599');
     queued++;
   }
   for(const [key,path] of [
@@ -43,11 +45,11 @@ function loadAssets(s,state){
   if(rival?.key&&rival.path&&!s.textures.exists(rival.key)){
     s.load.image(rival.key,getCharacterAssetUrl(rival.path));queued++;
   }
-  const ids=[state.playerCarId,round.carId].filter(id=>cars[id]);
-  const unique=Object.fromEntries(ids.map(id=>[id,cars[id]]));
+  const ids=[state.playerCarId,round.carId].filter(id=>modelFor(id));
+  const unique=Object.fromEntries(ids.map(id=>[getBaseCarId(id),modelFor(id)]));
   queued+=preloadCarAppearanceAssets(s,unique,'20261019-r598');
   const carStates=s.registry.get('carStates')||{};
-  for(const id of ids)queued+=preloadCarWheel(s,cars[id],
+  for(const id of ids)queued+=preloadCarWheel(s,modelFor(id),
     id===state.playerCarId?carStates[id]||{}:round.opponentBuildState||{});
   return queued;
 }
@@ -75,7 +77,8 @@ export function showProDriverBriefing(s,options={}){
       if(!isOpenDriverBriefing(saved))return;
       const round=saved.rounds[saved.roundIndex];
       ensureDerivedModularCarTextures(s,Object.fromEntries(
-        [saved.playerCarId,round.carId].filter(id=>cars[id]).map(id=>[id,cars[id]])));
+        [saved.playerCarId,round.carId].filter(id=>modelFor(id))
+          .map(id=>[getBaseCarId(id),modelFor(id)])));
       showProDriverBriefing(s,{...options,_loaded:true});
     };
     s.events.once('shutdown',shutdown);
@@ -151,14 +154,14 @@ function draw(s,state,options){
       .setFlipX(p.flip).setDepth(211));
   }
   const round=state.rounds[state.roundIndex],rival=characters[round.characterId]||{};
-  const playerCar=cars[state.playerCarId]||{},oppCar=cars[round.carId]||{};
+  const playerCar=modelFor(state.playerCarId)||{},oppCar=modelFor(round.carId)||{};
   const carStates=s.registry.get('carStates')||{};
   const carState=carStates[state.playerCarId]||{};
   const fallback=options.event||{};
   let performance=null,oppPerformance=null;
-  try{performance=getVehiclePerformance(state.playerCarId,carState);}
+  try{performance=getVehiclePerformance(getBaseCarId(state.playerCarId),carState);}
   catch(err){console.warn('[Tokyo SHIFT] Briefing player performance unavailable',err);}
-  try{oppPerformance=getVehiclePerformance(round.carId,round.opponentBuildState||{});}
+  try{oppPerformance=getVehiclePerformance(getBaseCarId(round.carId),round.opponentBuildState||{});}
   catch(err){console.warn('[Tokyo SHIFT] Briefing opponent performance unavailable',err);}
   const playerPower=Number(performance?.car?.powerKW||playerCar.powerKW||0);
   const playerTorque=Number(performance?.car?.torqueNm||playerCar.torqueNm||0);
@@ -173,32 +176,32 @@ function draw(s,state,options){
   display(63,43,'OPEN CIRCUIT',21,'#ff8197');
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
-  poly(50,153,712,43,0x061625,0x061625,218);
-  text(79,165,'1/4 MI  //  STANDING START  //  ROUND '+stageNo+'/'+stageTotal,12,'#d0e7f3',true);
-  // Light but legible rules panel between title and the large lower cards.
-  rect(488,305,866,156,0x071522,0x476b81,.77,217);
-  text(83,243,'EVENT BRIEFING',13,'#35d6ff',true);
-  text(83,277,'PRIZE',13,'#b8d6e5',true);
-  text(213,277,cash(state.prizeCash),19);
-  text(468,277,'ENTRY PAID',12,'#b8d6e5',true);
-  text(636,277,cash(state.entryFee),19);
-  text(83,320,'POWER RULE',12,'#b8d6e5',true);
-  text(254,320,eligibility.rules.maxPowerKW==null?'OPEN':
-    eligibility.rules.maxPowerKW+' KW MAX',16);
-  text(468,320,'NOS RULE',12,'#b8d6e5',true);
-  text(636,320,eligibility.rules.noNos?'PROHIBITED':'ALLOWED',16,
-    eligibility.rules.noNos?'#ffc8a1':'#e5f2fc');
-  text(83,348,'STATUS',12,'#b8d6e5',true);
-  fit(text(254,349,eligibility.eligible?'ELIGIBLE':
-    eligibility.problems.join('  //  '),15,
-    eligibility.eligible?'#7af4c1':'#ff9d9d'),620);
+  // Compact, taller briefing card: the former third headline row was
+  // redundant, so the race distance, start and round live here instead.
+  rect(278,299,444,260,0x071522,0x476b81,.87,217);
+  text(81,184,'EVENT BRIEFING',14,'#35d6ff',true);
+  const detail=(y,label,value,color='#f2f7fb')=>{
+    text(85,y,label,11,'#bfd4e1',true);
+    fit(text(283,y-2,value,16,color),198);
+  };
+  detail(220,'ROUND',stageNo+' / '+stageTotal);
+  detail(248,'RACE','1/4 MI // STANDING', '#e9f4ff');
+  detail(276,'PRIZE',cash(state.prizeCash));
+  detail(304,'ENTRY PAID',cash(state.entryFee));
+  detail(332,'POWER RULE',eligibility.rules.maxPowerKW==null?
+    'OPEN':eligibility.rules.maxPowerKW+' KW MAX');
+  detail(360,'NOS RULE',eligibility.rules.noNos?'PROHIBITED':'ALLOWED',
+    eligibility.rules.noNos?'#ffc8a1':'#e9f4ff');
+  const problems=eligibility.problems.join(' // ');
+  detail(388,'STATUS',eligibility.eligible?'ELIGIBLE':problems,
+    eligibility.eligible?'#7af4c1':'#ff9d9d');
 
   poly(46,436,389,357,0x071728,CYAN,219);
   poly(463,436,447,357,0x071728,CYAN,219);
   display(83,451,'YOUR CAR',27,'#35d6ff');
   display(502,451,'NEXT OPPONENT',27,'#35d6ff');
   const safeCarPreview=(id,x,y,w,depth,previewState={})=>{
-    const car=cars[id];
+    const car=modelFor(id);
     if(!car||typeof s.createCarDisplay!=='function')return;
     try {
       const parts=s.createCarDisplay(car,x,y,w,depth,getCarPaintColor(previewState),
@@ -209,14 +212,15 @@ function draw(s,state,options){
   };
   safeCarPreview(state.playerCarId,239,594,319,225,carState);
   safeCarPreview(round.carId,747,680,253,225,round.opponentBuildState||{});
-  fit(text(81,676,String(playerCar.name||state.playerCarId).toUpperCase(),17),324);
+  fit(text(81,676,String(playerCar.name||getBaseCarId(state.playerCarId)).toUpperCase(),17),324);
   text(81,712,'POWER',12,'#b0cddd',true);
   text(267,712,Math.round(playerPower)+' KW',16);
   text(81,740,'TORQUE',12,'#b0cddd',true);
   text(267,740,Math.round(playerTorque)+' NM',16);
   text(81,766,'DRIVE',12,'#b0cddd',true);
-  text(267,766,drive(getCarMagazineMeta(state.playerCarId)?.drivetrain||playerCar.drivetrain),16);
-  const displayName=String(rival.name||round.characterId||'PRO DRIVER').toUpperCase();
+  text(267,766,drive(getCarMagazineMeta(getBaseCarId(state.playerCarId))?.drivetrain||playerCar.drivetrain),16);
+  const roster=Object.values(s.registry.get('proCircuit')?.drivers||{}).find(d=>d.characterId===round.characterId);
+  const displayName=String(round.opponentName||rival.name||roster?.name||round.characterId||'PRO DRIVER').toUpperCase();
   fit(text(642,517,displayName,19),259);
   const portrait=createCharacterProfile(s,{
     characterId:round.characterId,pose:'idle',x:548,y:575,
@@ -227,7 +231,7 @@ function draw(s,state,options){
   if(portrait?.image)add(portrait.image);
   fit(text(642,551,String(oppCar.name||round.carId).toUpperCase(),14,'#b9e3ef'),262);
   text(642,583,Math.round(opponentPower)+' KW  //  '+
-    drive(getCarMagazineMeta(round.carId)?.drivetrain||oppCar.drivetrain),12,'#d1e5f0',true);
+    drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||oppCar.drivetrain),12,'#d1e5f0',true);
   text(520,749,'OPPONENT '+stageNo+' OF '+stageTotal,11,'#cbd9e7',true);
   // One advice consultation per paid competition; never per heat.
   const adviceLabel=advice.usedThisEvent?'ADVICE USED THIS EVENT':
@@ -236,13 +240,24 @@ function draw(s,state,options){
   // Preserve the actual consultation on screen after confirming; the saved
   // speech also survives a reload and remains visible between event heats.
   if(state.briefingAdviceUsed && state.briefingAdviceText){
-    const spoken=String(state.briefingAdviceText);
-    rect(1234,399,565,165,0xfffcf1,0x111111,1,234);
-    text(972,326,'SAYAKA  //  RACE STRATEGY',15,'#222b38',false,237)
-      .setFontStyle('800');
-    const bubble=text(972,357,spoken,17,'#152034',false,237)
-      .setWordWrapWidth(520);
-    if(bubble.height>111)bubble.setScale(111/bubble.height);
+    // Exact Pro Crew speech-bubble treatment: warm paper, black outline and
+    // an equilateral point facing Sayaka. No generic rectangular overlay.
+    const x=522,y=247,w=449,h=148,edge=x+w;
+    const halfBase=37,tipX=edge+Math.sqrt(3)*halfBase;
+    const cy=y+h/2;
+    const points=[{x,y},{x:edge,y},{x:edge,y:cy-halfBase},
+      {x:tipX,y:cy},{x:edge,y:cy+halfBase},
+      {x:edge,y:y+h},{x,y:y+h}];
+    const bubble=add(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(5,0x111111,1);bubble.strokePoints(points,true);
+    text(x+19,y+10,'Sayaka',15,'#252227',false,238)
+      .setFontStyle('700');
+    const speech=text(x+19,y+40,String(state.briefingAdviceText),
+      16,'#111111',false,238);
+    speech.setWordWrapWidth(w-38);
+    speech.setLineSpacing(1);
+    if(speech.height>h-53)speech.setScale((h-53)/speech.height);
   }
   btn(1074,650,240,49,'ASK FOR ADVICE',()=>openAdvice(),
     {disabled:!advice.available});
@@ -251,6 +266,7 @@ function draw(s,state,options){
     if(!eligibility.eligible)return;
     close();options.onRace?.();
   },{red:true,disabled:!eligibility.eligible});
+  btn(1002,810,200,42,'FORFEIT EVENT',()=>openForfeit(),{red:true});
   btn(1459,810,170,42,'BACK',()=>{close();options.onBack?.();});
 
   // All modal elements share the owning room's lifecycle. Closing the scene
@@ -278,6 +294,14 @@ function draw(s,state,options){
     const copy=popupAdd(s.add.text(x,y,label,{fontFamily:PIXEL,
       fontSize:'13px',color:'#ffffff'}).setFontSize(13).setOrigin(.5).setDepth(276));
     fit(copy,w-14);
+  }
+  function openForfeit(){
+    modal('FORFEIT DRIVER EVENT?',
+      'Withdraw from this paid driver series? The entry fee is not refunded, remaining rounds are lost, and your event is recorded as a forfeit. Daichi will restore stored upgrades.');
+    modalBtn(590,581,290,'CONTINUE EVENT',dismiss);
+    modalBtn(979,581,290,'CONFIRM FORFEIT',()=>{
+      dismiss();close();options.onForfeit?.();
+    },true);
   }
   function openAdvice(){
     if(!driverAdviceStatus(s.registry.get('proCircuit')||{},
@@ -321,7 +345,11 @@ function draw(s,state,options){
   }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
-    const level3=Number(s.registry.get('dynoFacilityTier')||0)>=3;
+    // The Drag Complex includes a full Level 3 calibration facility for
+    // professional drivers, free of any Warehouse Dyno facility upgrade.
+    // Each adjustment still needs the actual matching Level 3 car part,
+    // because the shared race physics enforces that mechanical prerequisite.
+    const level3=Boolean(options.proAccess);
     const values=normaliseStage3Calibration(carState);
     const canTune=level3&&Object.values(installed).some(Boolean);
     const stash=Boolean(carState.proBriefingNosStash);
@@ -329,7 +357,7 @@ function draw(s,state,options){
       Number(carState.exhaustNosTuning?.nosKit||0)>0;
     modal('DAICHI // RACE SETUP',
       canTune?'Level 3 calibration uses your installed parts and real race physics.':
-        'Level 3 ECU / boost / gearbox calibration requires Warehouse Dyno Level 3 and the matching parts.');
+        'Pro Drag Complex dyno access is complimentary. Each calibration requires its matching Level 3 car part.');
     const entries=[
       {key:'ecuBias',title:'ECU CURVE',allow:installed.ecuBias},
       {key:'boostBias',title:'BOOST CURVE',allow:installed.boostBias},

@@ -1,4 +1,6 @@
-// R598 — Open Circuit individual-driver briefing domain helpers.
+// R599 — Open Circuit individual-driver briefing domain helpers.
+import { settleLegacySeasonEvent } from './proSeason.js?v=20261018-r594';
+import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
   return Boolean(state?.active && state?.proEvent && state?.openCircuit &&
@@ -142,4 +144,24 @@ export function restoreDriverBriefingParts(carStates = {}, state = {}) {
   if(next.proBriefingNosStash)next=toggleBriefingNos(next);
   if(next.proBriefingPowerStash)next=restoreDriverPowerParts(next);
   return {...carStates,[state.playerCarId]:next};
+}
+
+/** A paid Open Circuit driver forfeit is a competitive loss, not a completed
+ * event for the shared three-completed-event Sayaka cooldown. Keep the same
+ * cash/record settlement as elimination and restore each stored paid part.
+ * Calling code must commit the whole changes object atomically.
+ */
+export function forfeitOpenDriverTransaction(rawCircuit = {}, state = {}, carStates = {}) {
+  if(!isOpenDriverBriefing(state))return {error:'NO ACTIVE OPEN CIRCUIT DRIVER EVENT'};
+  const circuit=normaliseProCircuitState(rawCircuit);
+  if(circuit.completedEventIds.includes(state.proSeasonId))
+    return {error:'EVENT HAS ALREADY BEEN SETTLED'};
+  const cooldownActive=circuit.crewAdviceCooldownUntil>circuit.eventTick;
+  const next=settleLegacySeasonEvent(circuit,state,Math.max(0,Number(state.roundIndex||0)));
+  if(cooldownActive)next.crewAdviceCooldownUntil++;
+  next.lastTournament={...next.lastTournament,forfeited:true,cashPrize:0};
+  const changes={proCircuit:next,competitionState:null};
+  const restored=restoreDriverBriefingParts(carStates,state);
+  if(restored)changes.carStates=restored;
+  return {changes};
 }

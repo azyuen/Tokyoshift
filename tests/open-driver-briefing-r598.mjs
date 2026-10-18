@@ -107,7 +107,7 @@ test('production routing is scoped, restart-safe, and does not alter crew or sea
   assert.match(drag,/autoOpenProDriverBriefing/);
   assert.match(race,/autoOpenProDriverBriefing:true/);
   assert.match(race,/restoreDriverBriefingParts/);
-  assert.match(ui,/regozoomed_/);
+  assert.match(ui,/regoroom_/);
   assert.match(ui,/pro_daichi_sakamoto\.png/);
   assert.match(ui,/race_sayaka_fujieda_idle\.png/);
   assert.match(ui,/getStage3CalibrationEligibility/);

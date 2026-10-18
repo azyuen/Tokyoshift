@@ -1,6 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r598';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice } from '../data/proDriverBriefing.js?v=20261019-r598';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r599';
+import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction } from '../data/proDriverBriefing.js?v=20261019-r599';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261018-r594';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261018-r597';
@@ -3410,6 +3411,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const definition=PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
     showProDriverBriefing(this,{
       event:definition,
+      proAccess:getProCircuitAccess(this.registry).unlocked,
       onBack:()=>{}, // Registration is saved; the main card can resume it.
       onAdvice:spoken=>{
         const current=this.registry.get('competitionState');
@@ -3434,18 +3436,37 @@ export default class CentralTokyoScene extends Phaser.Scene {
           this.showOpenCircuitDriverBriefing();
         }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
       },
+      onForfeit:()=>{
+        const current=this.registry.get('competitionState');
+        const tx=forfeitOpenDriverTransaction(
+          this.registry.get('proCircuit'),current,this.registry.get('carStates')||{});
+        if(tx.error){
+          this.proError=tx.error;
+          this.renderLocation(this.activeLocationId);
+          return;
+        }
+        try{
+          saveProTransaction(this.registry,tx.changes);
+          this.proError=null;
+          this.renderLocation(this.activeLocationId);
+        }catch(error){
+          this.proError=error.message;
+          this.renderLocation(this.activeLocationId);
+          this.showOpenCircuitDriverBriefing();
+        }
+      },
       onRace:()=>{
         const current=this.registry.get('competitionState');
         if(!isOpenDriverBriefing(current))return;
         const carId=current.playerCarId;
         const state=(this.registry.get('carStates')||{})[carId]||{};
         let powerKW=Infinity;
-        try{powerKW=getVehiclePerformance(carId,state)?.car?.powerKW??Infinity;}
+        try{powerKW=getVehiclePerformance(getBaseCarId(carId),state)?.car?.powerKW??Infinity;}
         catch(error){console.warn('[Tokyo SHIFT] Briefing eligibility check failed',error);}
         const eligibility=driverBriefingEligibility(current,state,powerKW,
           this.registry.get('ownedCarIds')||[],definition);
-        if(!eligibility.eligible){
-          this.proError=eligibility.problems.join(' // ');
+        if(!eligibility.eligible||!cars[getBaseCarId(carId)]||!Number.isFinite(powerKW)){
+          this.proError=eligibility.problems.join(' // ')||'CAR ENGINEERING DATA UNAVAILABLE';
           this.renderLocation(this.activeLocationId);
           this.showOpenCircuitDriverBriefing();
           return;
@@ -3545,6 +3566,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       if (mainRivalRound) {
         return {
           ...mainRivalRound,
+          opponentName:characters[characterId]?.name||null,
           paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
           raceType: 'Standing Start',
         };
@@ -3552,6 +3574,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
       return {
         characterId,
+        opponentName:characters[characterId]?.name||null,
         carId: event.opponentCars[index % event.opponentCars.length],
         paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
