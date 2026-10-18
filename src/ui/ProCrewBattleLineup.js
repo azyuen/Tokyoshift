@@ -128,11 +128,11 @@ function draw(s,opts){
     close();
     showProCrewHeatSelection(s,{...opts,selected:next,_loaded:true,...other});
   };
-  const btn=(x,y,w,h,label,callback,red=false,disabled=false)=>{
+  const btn=(x,y,w,h,label,callback,red=false,disabled=false,depth=246)=>{
     const hit=rect(x,y,w,h,disabled?0x1b2330:red?0x6f1b30:0x11283b,
-      1,disabled?0x546474:red?RED:BLUE,246);
+      1,disabled?0x546474:red?RED:BLUE,depth);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',callback);
-    const c=text(x,y,label,12,disabled?'#8494a3':'#f6fbff',true,247).setOrigin(.5);
+    const c=text(x,y,label,12,disabled?'#8494a3':'#f6fbff',true,depth+1).setOrigin(.5);
     if(c.width>w-12)c.setScale((w-12)/c.width);
     return hit;
   };
@@ -180,12 +180,11 @@ function draw(s,opts){
     text(100,225,'ASK SAYAKA FOR STRATEGY?',21,'#ff9aa9',true,272);
     text(100,279,'ONE CONSULTATION PER COMPETITION.',19,'#f5f2f3',false,272);
     text(100,316,'If you accept, the advice will be shown in the top-left briefing.',18,'#c3d8e4',false,272);
-    const no=btn(244,426,250,49,'NOT YET',()=>reopen(selected),false,false);
+    const no=btn(244,426,250,49,'NOT YET',()=>reopen(selected),false,false,273);
     const yes=btn(559,426,298,49,'ACCEPT // USE ADVICE',()=>{
       close();opts.onAdvice?.(selected);
-    },true,false);
-    // Keep the popup above the normal UI (buttons/labels included).
-    [no,yes].forEach(b=>b.setDepth(273));
+    },true,false,273);
+    // Confirmation buttons and labels remain above the modal veil.
     void veil;void box;
   },false,adviceUsed);
   if(adviceUsed){
