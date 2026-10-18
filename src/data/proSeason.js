@@ -623,6 +623,37 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),
     status:'COMPLETE',cashPrize,wins,summary};
 }
+// R594: Leaving an entered crew competition is a forfeit, never a free
+// 'save and return'. Entry fees are not refunded, trophy awards are zero and
+// the season calendar records the loss. Saved heat results cannot be replayed.
+export function forfeitCrewSeries(source,eventId) {
+  const c=normaliseProCircuitState(value(source,'proCircuit'));
+  const t=c.activeCrewEvent;
+  if(!t||typeof t.id!=='string'||t.id!==eventId)return {error:'NO ACTIVE CREW EVENT'};
+  if(c.completedEventIds.includes(t.id))return {error:'EVENT ALREADY SETTLED'};
+  const before=getProCircuitTeamSeeds(c).find(row=>row.id===PLAYER)?.seed||32;
+  const summary={id:t.id,label:t.label||'CREW EVENT',discipline:'TEAM',
+    placing:4,points:0,cashPrize:0,openCircuit:Boolean(t.openCircuit),
+    trophyId:t.trophyId||null,forfeited:true,wins:0,rankBefore:before,
+    rankAfter:before,format:t.format||'DUEL'};
+  c.activeCrewEvent=null;
+  c.lastCrewEvent={...clone(t),forfeited:true};
+  c.playerTeam.entered++;
+  c.playerTeam.losses++;
+  // Forfeiting isn't a completed competition for the two-events-after-advice
+  // rule. Counteract eventTick advancement when advice is still cooling down.
+  if(c.crewAdviceCooldownUntil>c.eventTick)c.crewAdviceCooldownUntil++;
+  let next;
+  if(t.openCircuit)next=finishOpenCircuitEvent(c,summary);
+  else {
+    c.eventTick++;
+    c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);
+    next=completeSeasonRound(c,summary,t.entrants?.map(e=>e.id)||[]);
+  }
+  next.lastTournament={...summary};
+  return {circuit:next,summary,cashPrize:0,status:'FORFEITED'};
+}
+
 // Legacy three-round pro cups retain their original fee, purse and race engine.
 export function settleLegacySeasonEvent(raw,state,roundsWon) {
   const c=normaliseProCircuitState(raw),id=state.proSeasonId||'legacy:'+state.eventId+':s'+c.season+':e'+(c.eventTick+1);
