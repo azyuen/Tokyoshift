@@ -180,3 +180,38 @@ test('R594: a broken optional car preview never strands the roster or hides the 
     console.warn=originalWarn;
   }
 });
+
+
+test('R597: every roster car displays unmasked, 21px higher, with its ground shadow removed',()=>{
+  const {scene,nodes}=phaserMock(),created=[];
+  scene.createCarDisplay=(car,x,y,width)=>{
+    const rear=scene.add.image(x,y,'rear-backing');
+    const front=scene.add.image(x,y,'front-backing');
+    const shadow=scene.add.ellipse(x,y);
+    const body=scene.add.image(x,y,'whole-car');
+    const originalMask=body.setMask;
+    body.setMask=function(...args){this.masked=true;return originalMask.apply(this,args);};
+    created.push({x,y,width,shadow,body});
+    return [rear,front,shadow,body];
+  };
+  const units=getCrewSeriesUnits(scene.registry);
+  showProCrewHeatSelection(scene,{units,selected:[null,null,null],
+    event:{short:true,openCircuit:true,label:'CREW RELAY'},
+    fixture:{round:0,format:'RELAY'},_loaded:true});
+  const open=nodes.find(n=>n.active&&n.kind==='rectangle'&&
+    n.attrs.x===168&&n.attrs.y===626&&n.click);
+  assert.ok(open);
+  open.click();
+  assert.equal(created.length,7,'each of seven drivers has a complete preview');
+  created.forEach((part,i)=>{
+    assert.equal(part.x,1414);
+    assert.equal(part.y,110+i*83+13,'car raised from previous y+34');
+    assert.equal(part.width,145);
+    assert.equal(part.shadow.active,false,'ground ellipse removed');
+    assert.equal(part.body.active,true,'complete car is retained');
+    assert.notEqual(part.body.masked,true,'no cropping rectangle applied');
+  });
+  const back=nodes.find(n=>n.active&&n.kind==='image'&&
+    n.attrs.key==='proCrewRegoZoomedNight');
+  assert.ok(back?.active,'the main room survives changes to car previews');
+});
