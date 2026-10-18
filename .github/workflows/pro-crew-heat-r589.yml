@@ -6,6 +6,8 @@ on:
       - 'src/ui/ProSeasonPanel.js'
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-heat-r589.mjs'
+      - 'tests/pro-crew-r591.mjs'
+      - 'src/data/proCircuit.js'
       - '.github/workflows/pro-crew-heat-r589.yml'
   push:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - 'src/ui/ProSeasonPanel.js'
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-heat-r589.mjs'
+      - 'tests/pro-crew-r591.mjs'
+      - 'src/data/proCircuit.js'
 jobs:
   pro-crew-heat:
     runs-on: ubuntu-latest
@@ -30,4 +34,4 @@ jobs:
           node --check src/data/proSeason.js
           node --check src/scenes/CentralTokyoScene.js
       - name: Verify saved seven-driver crew and once-per-event advice
-        run: node --test tests/pro-crew-heat-r589.mjs
+        run: node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs
