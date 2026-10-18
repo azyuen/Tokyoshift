@@ -98,8 +98,9 @@ export function drawCrewSidebar(s,event,side) {
     formatBrief,
     'CHOOSE THREE DRIVERS',
     'ENTRY  '+cash(t?.entryFee||fee),
-    'WIN  '+cash(open?70000:210000),
-    'RUNNER UP  '+cash(open?30000:90000),
+    '3 WINS  '+cash(open?70000:210000),
+    '2 WINS  '+cash(open?30000:90000),
+    '1 WIN  '+cash(open?15000:40000),
   ]:[
     '3 FIXTURES // 9 HEATS',
     'CHOOSE THREE DRIVERS',
