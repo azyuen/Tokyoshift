@@ -381,7 +381,8 @@ export function showCrewFixture(s,selection=null) {
 }
 function showCrewResult(s,out,round={}){
   const summary=out.summary||{};
-  const won=summary.placing===1||out.wins>=2;
+  // A second-tier four-wide placing is not a first-place trophy victory.
+  const won=out.status==='ADVANCED'?out.wins>=2:summary.placing===1;
   showProVictoryResults(s,{
     kind:'crew',winner:won,
     eventName:summary.label||round.eventLabel||'CREW EVENT',
