@@ -1,0 +1,38 @@
+name: R616 Professional Victory UI
+on:
+  pull_request:
+    paths:
+      - 'src/ui/ProVictoryResults.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-victory-r616.mjs'
+      - '.github/workflows/pro-victory-r616.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/ui/ProVictoryResults.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-victory-r616.mjs'
+jobs:
+  victory-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse all R616 modules and loaders
+        run: |
+          node --check src/ui/ProVictoryResults.js
+          node --check src/ui/ProSeasonPanel.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/main.js
+      - name: Verify visual results and saved professional circuit
+        run: |
+          node --test tests/pro-victory-r616.mjs
+          node --test tests/pro-crew-heat-r589.mjs tests/pro-crew-r591.mjs tests/pro-crew-continuous-r594.mjs

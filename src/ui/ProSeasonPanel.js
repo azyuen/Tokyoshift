@@ -9,6 +9,7 @@ import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261020-r614';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
+import { showProVictoryResults } from './ProVictoryResults.js?v=20261020-r616';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -315,6 +316,20 @@ export function showCrewFixture(s,selection=null) {
       },
     });
   } else {
+    // The third player-driven heat is already durably saved. Award once and
+    // open the definitive results page; no second official-confirmation modal.
+    if(f.prepared?.revealed===3){
+      const snapshot={heats:f.prepared.heats,crewIds:f.prepared.lineup,
+        opponent:f.opponent?.name,format:currentFormat,
+        eventLabel:t.label,openCircuit:Boolean(t.openCircuit)};
+      const result=settleCrewSeriesFixture(c,f.id);
+      if(['COMPLETE','ADVANCED'].includes(result.status)){
+        if(commit(s,{proCircuit:result.circuit,
+          cash:Number(s.registry.get('cash')||0)+result.cashPrize}))
+          showCrewResult(s,result,snapshot);
+        return;
+      }
+    }
     const o=overlay(s,t.trophyId?`${t.label} // FIXTURE ${t.round+1}/3`:
       t.short?(currentFormat==='FOUR_WIDE'?'CREW FOUR-WIDE // THREE HEATS':currentFormat==='TECHNICAL'?'CREW TECHNICAL // THREE RUNS':currentFormat==='RELAY'?'CREW RELAY // THREE LEGS':'CREW CLUB SPRINT // THREE HEATS'):
       `CREW CLUB SERIES // FIXTURE ${t.round+1}/3`);
@@ -364,31 +379,28 @@ export function showCrewFixture(s,selection=null) {
     o.btn(350,779,450,'FORFEIT EVENT',()=>confirmCrewForfeit(s));
   }
 }
-function showCrewResult(s,out) {
-  const o=overlay(s,out.summary?.trophyId?'PRESTIGE TROPHY // AWARDS':'PROFESSIONAL CIRCUIT'),champion=out.summary?.placing===1;
-  const portrait=createCharacterProfile(s,{characterId:s.registry.get('playerCharacterId')||'renMizuno',pose:out.wins>=2?'win':'loss',x:290,y:400,frameWidth:430,frameHeight:480,side:'left',depth:204,flipInward:true});
-  if(portrait)o.add(portrait);
-  o.label(610,205,champion&&out.summary?.trophyId?'TROPHY CHAMPION':champion?'SERIES WINNER':out.status==='COMPLETE'?'SERIES COMPLETE':out.wins>=2?'TEAM VICTORY':'TEAM DEFEAT',52);
-  o.label(620,305,out.summary?.format==='TECHNICAL'?`TIME SPREAD ${out.summary.ownSpread===null?'DNF':out.summary.ownSpread.toFixed(3)+'s'} vs ${out.summary.opponentSpread===null?'DNF':out.summary.opponentSpread.toFixed(3)+'s'}`:out.summary?.format==='RELAY'?`RELAY TOTAL ${out.summary.ownTotal.toFixed(3)}s vs ${out.summary.opponentTotal.toFixed(3)}s`:`FIXTURE SCORE ${out.wins} – ${3-out.wins}`,34);
-  const resultCopy=out.summary?
-    (out.summary.trophyId?out.summary.label+' · FINAL PLACING #'+out.summary.placing:
-      'HEATS WON '+(out.summary.heatWins??out.summary.wins)+'/3')+
-      ' · +'+cash(out.cashPrize)+'\n'+(out.summary.openCircuit?
-        'OPEN CIRCUIT · NO SEASON POINTS':
-        'TEAM RANK #'+out.summary.rankBefore+' → '+out.summary.rankAfter+
-          '\n+'+out.summary.points+' SEASON POINTS')
-    :'NEXT FIXTURE READY · Previous three heats are saved.';
-  o.label(620,385,resultCopy,24);
-  if(out.circuit.calendar.round>=8)o.label(620,566,'SEASON COMPLETE · VIEW RESULTS AT THE COMPLEX',20);
-  o.label(980,745,out.status==='ADVANCED'?
-    'TAP ANYWHERE · PREPARE NEXT FIXTURE':'TAP ANYWHERE · RETURN TO COMPLEX',18);
-  let armed=false,done=false;
-  const advance=()=>{if(!armed||done)return;done=true;o.close();
-    if(out.status==='ADVANCED')showCrewFixture(s);else redraw(s);
-  };
-  o.add(s.add.rectangle(780,420,1560,840,0,0.001).setDepth(295).setInteractive()).on('pointerdown',advance);
-  s.time.delayedCall(360,()=>{armed=true;});
+function showCrewResult(s,out,round={}){
+  const summary=out.summary||{};
+  // A second-tier four-wide placing is not a first-place trophy victory.
+  const won=out.status==='ADVANCED'?out.wins>=2:summary.placing===1;
+  showProVictoryResults(s,{
+    kind:'crew',winner:won,
+    eventName:summary.label||round.eventLabel||'CREW EVENT',
+    opponent:round.opponent||'PRO CIRCUIT',
+    crewIds:round.crewIds||[],
+    heats:round.heats||[],
+    wins:summary.heatWins??out.wins,rounds:3,
+    fourWidePoints:round.format==='FOUR_WIDE'?summary.fourWidePoints:undefined,
+    cashPrize:out.cashPrize,points:summary.points||0,
+    rankBefore:summary.rankBefore,rankAfter:summary.rankAfter,
+    openCircuit:round.openCircuit??summary.openCircuit,
+    statusLabel:out.status==='ADVANCED'?'NEXT FIXTURE READY':
+      out.circuit?.calendar?.round>=8?'SEASON COMPLETE':'EVENT RECORDED',
+    nextLabel:out.status==='ADVANCED'?'NEXT FIXTURE':'CONTINUE',
+    onContinue:()=>out.status==='ADVANCED'?showCrewFixture(s):redraw(s),
+  });
 }
+
 export function showSeasonRecords(s,complete=false) {
   const c=circuit(s),o=overlay(s,`SEASON ${c.season} // ${complete?'FINAL STANDINGS':'PROFESSIONAL RECORD'}`);
   for(const [kind,x] of [['DRIVER',90],['TEAM',810]]) {

@@ -1699,6 +1699,62 @@ export default class FourLaneTestScene extends RaceScene {
         }
       }
     }
+    // A third crew heat leads straight to the awards rather than making
+    // the player dismiss a heat card, confirm the fixture, then dismiss a
+    // second result page. The already-saved heat is settled on venue entry.
+    if(this.proCrew&&outcome?.status==='CREW_HEAT'&&outcome.heatNumber===3){
+      this.scene.start('CentralTokyoScene',{
+        locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+      });
+      return;
+    }
+    // One definitive professional end page in the Drag Complex, after the
+    // existing atomic race settlement. Interim heats retain manga finishes.
+    if(!this.proTimed&&!this.proCrew&&outcome?.summary&&
+      ((this.proDuel&&['CHAMPION','ELIMINATED'].includes(outcome.status))||
+       (this.proCup&&outcome.status==='COMPLETE'))){
+      const summary=outcome.summary;
+      const winner=outcome.status==='CHAMPION'||summary.placing===1;
+      const lastRun=this.runners.find(r=>r.id===(this.proCup?'player:driver':'player'));
+      const lastET=lastRun?.disqualified?null:lastRun?.finishSeconds;
+      let heats=[];
+      if(this.proDuel){
+        const count=this.proDuelState?.rounds?.length||3;
+        const current=this.proDuelInfo?.roundNumber||1;
+        heats=this.proDuelState.rounds.slice(0,current).map((round,i)=>({
+          roundNumber:i+1,
+          name:characters[round?.characterId]?.name||'PRO RIVAL',
+          result:i<current-1||winner?'WIN':'LOSS',
+          won:i<current-1||winner,
+          ownSeconds:i===current-1?lastET:null,
+        }));
+      } else {
+        const stage=this.proTournament?.stage||0;
+        const names=['QUALIFIER','SEMIFINAL','FINAL'];
+        heats=names.slice(0,stage+1).map((name,i)=>({
+          roundNumber:i+1,name,
+          result:i===stage?'PLACE #'+(summary.placing||4):'ADVANCED',
+          won:winner||i<stage,
+          ownSeconds:i===stage?lastET:null,
+        }));
+      }
+      this.scene.start('CentralTokyoScene',{
+        locationId:'tokyoDragComplex',
+        autoShowProVictory:{
+          kind:'driver',winner,eventName:summary.label||'DRIVER EVENT',
+          opponent:summary.trophyId?'PRESTIGE TROPHY FINAL':'DRIVER CHALLENGE',
+          heats,wins:this.proDuel?(winner?heats.length:Math.max(0,heats.length-1)):
+            heats.filter(h=>h.won).length,
+          rounds:this.proDuel?(this.proDuelState?.rounds?.length||3):3,
+          cashPrize:Number(outcome.cashPrize??summary.cashPrize??0),
+          points:summary.points||0,rankBefore:summary.rankBefore,
+          rankAfter:summary.rankAfter,openCircuit:Boolean(summary.openCircuit),
+          statusLabel:this.registry.get('proCircuit')?.calendar?.round>=8?
+            'SEASON COMPLETE':'RESULT RECORDED',
+        },
+      });
+      return;
+    }
     if(this.proTimed) {
       this.showTimedRaceResult(outcome);
       return;
