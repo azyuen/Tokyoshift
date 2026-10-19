@@ -263,21 +263,54 @@ export function showCrewFixture(s,selection=null) {
   const currentFormat=f.format;
   const units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
-  if(!f.prepared){
+  if(!f.prepared||f.prepared.revealed<3){
+    const lineup=t.lockedLineup||f.prepared?.lineup||null;
+    const lock=Boolean(lineup);
+    const ids=selection||lineup||[];
+    const eventAdvice=t.adviceText||getProCrewHeatAdvice(f,units);
     return showProCrewHeatSelection(s,{
-      event:t,fixture:f,units,selected:selection||[],
-      adviceStatus:getProCrewAdviceAvailability(s.registry),
-      advice:getProCrewHeatAdvice(f,units),
-      onForfeit:()=>confirmCrewForfeit(s),
-      onAdvice:ids=>{
-        const out=useProCrewAdvice(s.registry,t.id);
-        if(out.error){s.proError=out.error;showCrewFixture(s,ids);return;}
-        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s,ids);
+      event:t,fixture:f,units,selected:ids,locked:lock,
+      adviceStatus:{
+        ...getProCrewAdviceAvailability(s.registry),
+        // Existing consultation can always be REVIEWED. New consultations
+        // are available only in the very first heat of an event.
+        remaining:!t.adviceUsed&&(f.round>0||f.prepared?.revealed>0)?
+          Math.max(1,getProCrewAdviceAvailability(s.registry).remaining):
+          getProCrewAdviceAvailability(s.registry).remaining,
       },
-      onConfirm:ids=>{
-        const out=preparePlayerCrewFixture(s.registry,ids,f.id);
-        if(out.error){s.proError=out.error;showCrewFixture(s,ids);return;}
-        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s);
+      advice:eventAdvice,
+      onForfeit:()=>confirmCrewForfeit(s),
+      onAdvice:lineupIds=>{
+        if(f.round>0||f.prepared?.revealed>0){
+          s.proError='SAYAKA CONSULTATION IS ONLY AVAILABLE BEFORE HEAT ONE';
+          return;
+        }
+        const out=useProCrewAdvice(s.registry,t.id);
+        if(out.error){s.proError=out.error;showCrewFixture(s,lineupIds);return;}
+        out.circuit.activeCrewEvent={
+          ...out.circuit.activeCrewEvent,adviceText:eventAdvice,
+        };
+        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s,lineupIds);
+      },
+      onConfirm:lineupIds=>{
+        const current=circuit(s),fixture=getCrewFixture(current),active=current.activeCrewEvent;
+        if(!fixture||active?.id!==t.id||fixture.id!==f.id){
+          s.proError='FIXTURE CHANGED — REOPEN BRIEFING';return;
+        }
+        if(active.lockedLineup&&
+          JSON.stringify(active.lockedLineup)!==JSON.stringify(lineupIds)){
+          s.proError='REGISTERED LINEUP IS LOCKED';return;
+        }
+        const out=preparePlayerCrewFixture(s.registry,lineupIds,fixture.id);
+        if(out.error){s.proError=out.error;return;}
+        if(!active.lockedLineup)out.circuit.activeCrewEvent={
+          ...out.circuit.activeCrewEvent,lockedLineup:[...lineupIds],
+        };
+        const heat=getPlayerCrewHeat(out.circuit);
+        if(!heat||!(s.registry.get('ownedCarIds')||[]).includes(heat.carId)){
+          s.proError='REGISTERED CREW CAR UNAVAILABLE';return;
+        }
+        if(commit(s,{proCircuit:out.circuit}))s.scene.start('FourLaneTestScene',{mode:'PRO_CREW'});
       },
     });
   } else {
