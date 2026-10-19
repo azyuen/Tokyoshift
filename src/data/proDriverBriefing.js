@@ -1,5 +1,5 @@
 // R599 — Open Circuit individual-driver briefing domain helpers.
-import { settleLegacySeasonEvent } from './proSeason.js?v=20261018-r594';
+import { settleLegacySeasonEvent } from './proSeason.js?v=20261019-r602';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
