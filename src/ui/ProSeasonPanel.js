@@ -179,7 +179,7 @@ function previewSource(s,circuitState){
 function showUnpaidCrewBriefing(s,pending,selected=[]){
   const source=previewSource(s,pending.circuit);
   const f=getCrewFixture(pending.circuit),t=pending.circuit.activeCrewEvent;
-  const units=getCrewSeriesUnits(s.registry).filter(u=>t.squadIds.includes(u.id));
+  const units=getCrewSeriesUnits(s.registry,pending.assignments).filter(u=>t.squadIds.includes(u.id));
   if(!f){s.proError='CREW EVENT OFFER CHANGED';s._pendingCrewRegistration=null;redraw(s);return;}
   showProCrewHeatSelection(s,{
     event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
