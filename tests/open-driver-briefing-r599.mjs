@@ -39,8 +39,8 @@ test('forfeit terminates saved paid event and restores all purchased tuning',()=
   assert.ok(!out.error,out.error);
   assert.equal(out.changes.competitionState,null);
   assert.equal(out.changes.proCircuit.eventTick,15);
-  assert.equal(out.changes.proCircuit.crewAdviceCooldownUntil,18,
-    'forfeit does not satisfy an advice cooldown completed-event');
+  assert.equal(out.changes.proCircuit.crewAdviceCooldownUntil,17,
+    'forfeit counts as one of the three inclusive professional events');
   assert.equal(out.changes.proCircuit.lastTournament.forfeited,true);
   assert.equal(out.changes.proCircuit.lastTournament.cashPrize,0);
   assert.equal(out.changes.carStates[state.playerCarId].tuning.turbo,2);
