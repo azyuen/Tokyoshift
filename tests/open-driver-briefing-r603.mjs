@@ -88,7 +88,7 @@ test('R603 screen defers payment, offers free cancellation and enforces final gr
   assert.match(scene,/const passesNos = selectedFourWide \|\| prepareBeforePay/);
   assert.match(scene,/this\._pendingProDriverBriefing=\{/);
   assert.match(scene,/state\.briefingEntryPending=true/);
-  assert.match(scene,/pending\\.preparedCarState=nextState/);
+  assert.match(scene,/pending\.preparedCarState=nextState/);
   assert.match(scene,/const transaction=purchaseDriverBriefingEntry\(\{/);
   assert.match(scene,/saveProTransaction\(this\.registry,transaction\.changes\)/);
   assert.match(scene,/this\.scene\.start\('FourLaneTestScene',\{mode:'PRO_DUEL'\}\)/);
