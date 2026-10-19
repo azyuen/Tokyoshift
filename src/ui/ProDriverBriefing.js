@@ -398,6 +398,31 @@ function draw(s,state,options){
       fontFamily:BODY,fontSize:'19px',color:'#e1edf7',wordWrap:{width:765},
     }).setFontSize(19).setDepth(274));
   }
+  // Daichi uses the same cyan-border / dark-ink dialogue language as
+  // Hiroshi's steward bubble, with room for actual ECU and NOS controls.
+  function mechanicDialogue(title,description=''){
+    dismiss();
+    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.44)
+      .setDepth(269).setInteractive());
+    const x=27,y=28,w=772,h=565,anchorX=193,side=36;
+    const half=side/2,tip=Math.sqrt(3)*side/2;
+    const points=[
+      {x,y},{x:x+w,y},{x:x+w,y:y+h},
+      {x:anchorX+half,y:y+h},{x:anchorX,y:y+h+tip},
+      {x:anchorX-half,y:y+h},{x,y:y+h},
+    ];
+    const panel=popupAdd(s.add.graphics().setDepth(270));
+    panel.fillStyle(0x081a2b,.97);panel.fillPoints(points,true);
+    panel.lineStyle(3,CYAN,1);panel.strokePoints(points,true);
+    popupAdd(s.add.text(x+24,y+19,title,{
+      fontFamily:PIXEL,fontSize:'16px',color:'#53ddff',
+    }).setDepth(274));
+    popupAdd(s.add.rectangle(x+w/2,y+60,w-44,1,0x3c7e98,.75).setDepth(273));
+    if(description)popupAdd(s.add.text(x+24,y+78,description,{
+      fontFamily:BODY,fontSize:'17px',fontStyle:'600',
+      color:'#dceaf3',wordWrap:{width:w-52},
+    }).setDepth(274));
+  }
   function modalBtn(x,y,w,label,action,red=false){
     const hit=popupAdd(s.add.rectangle(x,y,w,51,red?0x672336:0x142b3e)
       .setStrokeStyle(2,red?RED:CYAN).setDepth(275));
@@ -427,29 +452,29 @@ function draw(s,state,options){
   }
   function openPowerParts(){
     const stored=carState.proBriefingPowerStash||{};
-    modal('DAICHI // REMOVE PARTS',
-      'Temporarily remove fitted power upgrades for the event limit. All removed parts are stored and restored after the series.');
+    mechanicDialogue('DAICHI // REMOVE PARTS',
+      'Temporarily remove power upgrades to meet the race limit. Purchased parts are restored after the series.');
     BRIEFING_POWER_PARTS.forEach((part,i)=>{
       const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
         carState.exhaustNosTuning||{};
       const level=Math.max(0,Math.round(Number(group[part.id]||0)));
       const stashed=Object.hasOwn(stored[part.group]||{},part.id);
-      const x=i<4?578:986,y=332+(i%4)*52;
-      const hit=popupAdd(s.add.rectangle(x,y,366,43,
+      const x=i<4?227:603,y=225+(i%4)*60;
+      const hit=popupAdd(s.add.rectangle(x,y,320,43,
         level?0x153449:0x122233,.96)
         .setStrokeStyle(2,level?CYAN:0x667788).setDepth(275));
       const caption=popupAdd(s.add.text(x,y,
         part.label+' // '+(level?'LEVEL '+level+'  REMOVE':stashed?'STORED':'STOCK'),
         {fontFamily:PIXEL,fontSize:'11px',color:level?'#ffffff':'#aab9c8'})
         .setFontSize(11).setOrigin(.5).setDepth(276));
-      fit(caption,349);
+      fit(caption,304);
       if(level)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
         const next=removeDriverPowerPart(carState,part.id);
         dismiss();close();options.onCarState?.(next);
       });
     });
-    modalBtn(574,585,276,'RETURN TO ECU',openTune);
-    modalBtn(987,585,276,'RESTORE ALL PARTS',()=>{
+    modalBtn(217,541,290,'RETURN TO ECU',openTune);
+    modalBtn(612,541,290,'RESTORE ALL PARTS',()=>{
       const next=restoreDriverPowerParts(carState);
       dismiss();close();options.onCarState?.(next);
     });
@@ -466,9 +491,9 @@ function draw(s,state,options){
     const stash=Boolean(carState.proBriefingNosStash);
     const hasNos=stash||Boolean(carState.nosInstalled)||
       Number(carState.exhaustNosTuning?.nosKit||0)>0;
-    modal('DAICHI // RACE SETUP',
-      canTune?'Level 3 calibration uses your installed parts and real race physics.':
-        'Pro Drag Complex dyno access is complimentary. Each calibration requires its matching Level 3 car part.');
+    mechanicDialogue('DAICHI // RACE SETUP',
+      canTune?'Calibrate Level 3 parts using the real race physics.':
+        'Dyno access is complimentary; ECU calibration requires matching Level 3 parts.');
     const entries=[
       {key:'ecuBias',title:'ECU CURVE',allow:installed.ecuBias},
       {key:'boostBias',title:'BOOST CURVE',allow:installed.boostBias},
@@ -479,20 +504,20 @@ function draw(s,state,options){
       tuneNodes.forEach(o=>{try{o.destroy();}catch(_){}});
       tuneNodes.length=0;
       entries.forEach((entry,i)=>{
-        const y=352+i*58,enabled=level3&&entry.allow;
+        const y=230+i*61,enabled=level3&&entry.allow;
         const option=getStage3CalibrationOption(entry.key,values[entry.key]);
-        const node=s.add.text(405,y,entry.title,{fontFamily:PIXEL,fontSize:'12px',
+        const node=s.add.text(78,y,entry.title,{fontFamily:PIXEL,fontSize:'12px',
           color:enabled?'#ebf7fa':'#8697aa'}).setFontSize(12).setDepth(278);
         popupAdd(node);tuneNodes.push(node);
-        const val=s.add.text(735,y,enabled?option.label:'LOCKED',{
+        const val=s.add.text(408,y,enabled?option.label:'LOCKED',{
           fontFamily:BODY,fontSize:'20px',color:enabled?'#ffffff':'#8697aa',
         }).setFontSize(20).setOrigin(.5,0).setDepth(278);
         popupAdd(val);tuneNodes.push(val);
         for(const [dx,delta,sign] of [[-1,-1,'<'],[1,1,'>']]){
-          const hit=s.add.rectangle(873+dx*45,y+12,39,34,0x14344b)
+          const hit=s.add.rectangle(620+dx*44,y+12,39,34,0x14344b)
             .setStrokeStyle(1,CYAN).setDepth(278);
           popupAdd(hit);tuneNodes.push(hit);
-          const label=s.add.text(873+dx*45,y+12,sign,{
+          const label=s.add.text(620+dx*44,y+12,sign,{
             fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
           }).setFontSize(12).setOrigin(.5).setDepth(279);
           popupAdd(label);tuneNodes.push(label);
@@ -504,14 +529,14 @@ function draw(s,state,options){
       });
     }
     tuneRows();
-    modalBtn(492,588,174,stash?'RESTORE NOS':'REMOVE NOS',()=>{
+    modalBtn(126,541,171,stash?'RESTORE NOS':'REMOVE NOS',()=>{
       if(!hasNos)return;
       const next=toggleBriefingNos(carState);
       dismiss();close();options.onCarState?.(next);
     });
-    modalBtn(693,588,183,'POWER PARTS',()=>openPowerParts());
-    modalBtn(887,588,174,'CANCEL',dismiss);
-    modalBtn(1093,588,190,'SAVE ECU SETUP',()=>{
+    modalBtn(313,541,171,'POWER PARTS',()=>openPowerParts());
+    modalBtn(500,541,171,'CANCEL',dismiss);
+    modalBtn(687,541,171,'SAVE ECU SETUP',()=>{
       const next={...carState,stage3Calibration:canTune?{
         ecuBias:installed.ecuBias?values.ecuBias:0,
         boostBias:installed.boostBias?values.boostBias:0,
