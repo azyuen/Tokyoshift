@@ -1,8 +1,9 @@
-// R597 — fully visible shadow-free roster cars and tighter portrait/text alignment.
+// R604 — Crew and individual briefing share the same steward, glow and forfeit UI.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
+import {addProGlowingHotspot,renderStewardBriefing} from './ProBriefingChrome.js?v=20261019-r604';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -103,6 +104,10 @@ function draw(s,opts){
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
+  let dialogueNodes=[],activeDialogue=null;
+  const dialogueAdd=o=>{dialogueNodes.push(o);return add(o);};
+  const clearDialogue=()=>{dialogueNodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    dialogueNodes=[];activeDialogue=null;};
   let scopedObjects=null,scopedMasks=null;
   const add=o=>{objects.push(o);if(scopedObjects)scopedObjects.push(o);return o;};
   const clearGroup=(nodes,masks=[])=>{
@@ -134,7 +139,8 @@ function draw(s,opts){
   const close=()=>{
     if(closed)return;
     closed=true;s.events.off('shutdown',close);
-    objects.forEach(x=>{try{x.destroy();}catch(_){}});
+    clearDialogue();
+    objects.forEach(x=>{try{s.tweens?.killTweensOf?.(x);x.destroy();}catch(_){}});
     maskShapes.forEach(x=>{try{x.destroy();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
@@ -204,21 +210,32 @@ function draw(s,opts){
   const eventTitle=String(e.trophyId||!e.short?e.label:
     shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
-  meetHeader(54,151,620,41,0x081522,.73);
+  // Official details now live exclusively in Hiroshi's toggleable briefing.
+  // No grey rule text competes with the CREW TECHNICAL / CREW RELAY heading.
   const heatRule=f.heatRule||f.raceRule||
     (f.format==='RELAY'?'1/4 MI // STANDING START // RELAY':
      f.format==='TECHNICAL'?'1/4 MI // STANDING START // CONSISTENCY':
      f.format==='FOUR_WIDE'?'1/4 MI // STANDING START // FOUR-WIDE':
      '1/4 MI // STANDING START // THREE HEATS');
-  pixelText(74,163,String(heatRule).toUpperCase(),13,'#a8c4d7');
-  // Professional crew fixtures have no general power cap, but require three
-  // distinct registered crew cars. Tri-Drive uniquely requires FWD/RWD/AWD.
-  // Subtle black scrim gives car restrictions legibility against both
-  // zoomed day/night registration rooms without covering the race title.
-  meetHeader(54,194,632,35,0x02050b,.74);
-  pixelText(74,202,e.trophyId==='triDrive'?
-    'CAR RULE: ONE FWD + ONE RWD + ONE AWD':
-    'CAR RULE: THREE DISTINCT CREW CARS // NO POWER CAP',11,'#c8d9e7');
+  const crewRule=e.trophyId==='triDrive'?'ONE FWD + ONE RWD + ONE AWD':
+    'THREE DISTINCT CREW CARS';
+  const crewRows=[
+    ['EVENT',eventTitle],
+    ['FIXTURE',(Number(f.round||0)+1)+' / '+(e.trophyId?3:3)],
+    ['FORMAT',formatName(f.format)],
+    ['RACE',heatRule],
+    ['ENTRY PAID','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
+    ['CAR RULE',crewRule],
+    ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],
+    ['STATUS',selected.filter(Boolean).length===3?'LINEUP SELECTED':'SELECT THREE DRIVERS','#81efc4'],
+  ];
+  const toggleSteward=()=>{
+    if(activeDialogue==='hiroshi'){clearDialogue();return;}
+    clearDialogue();activeDialogue='hiroshi';
+    renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366});
+  };
+  const crewGlow=(x,y,w,label,action,disabled=false)=>
+    addProGlowingHotspot(s,add,{x,y,w,h:44,label,onClick:action,disabled});
 
   // Standard Tokyo SHIFT confirmation modal (centre-screen, matching the
   // existing rectangular popup/button language). Advice is a paid-event
