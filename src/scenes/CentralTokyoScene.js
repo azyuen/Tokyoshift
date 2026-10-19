@@ -3317,8 +3317,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     drawProEventSidebarStatus(this,SIDE,label,canEnter);
 
     const actionText = canResume
-      ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
-      : canEnter ? prepareBeforePay?'OPEN BRIEFING // NO PAYMENT YET':proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
+      ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME EVENT BRIEFING'
+      : canEnter ? proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
     drawProEventSidebarEntry(this,SIDE,actionText,()=>{
       if (activeTimedHere) this.enterProfessionalTimedEvent(event);
       else if (activeCupHere) this.enterFourWideCup();
