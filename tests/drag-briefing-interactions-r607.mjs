@@ -61,7 +61,7 @@ test('R607 dyno toggles have side labels, left headers and unsaved apply highlig
  assert.match(driver,/highlightApplyTune\(\);/);
 });
 test('R607 larger in-world car, fully masked lower portrait and taller Hiroshi',()=>{
- assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
+ assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,670,207,carState,true\)/);
  assert.match(driver,/s\.add\.image\(px,frameY\+18,helmetKey\)/);
  assert.match(driver,/image\.setMask\(shape\.createGeometryMask\(\)\)/);
  assert.match(driver,/x:px,y:py\+10/);
@@ -70,7 +70,7 @@ test('R607 larger in-world car, fully masked lower portrait and taller Hiroshi',
 test('R607 individual and pro crew use EXACT same compact Sayaka confirmation',()=>{
  assert.match(chrome,/export function showProSayakaAdviceConfirm/);
  assert.match(chrome,/rectangle\(780,420,820,268/);
- assert.match(chrome,/fontFamily:BODY,fontSize:'23px'/);
+ assert.match(chrome,/fontFamily:BODY,fontSize:'18px'/);
  assert.match(driver,/showProSayakaAdviceConfirm\(s,\{/);
  assert.match(crew,/showProSayakaAdviceConfirm\(s,\{/);
  assert.doesNotMatch(crew,/rect\(780,420,850,332/);
