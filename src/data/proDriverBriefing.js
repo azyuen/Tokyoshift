@@ -9,6 +9,50 @@ export function isOpenDriverBriefing(state) {
     state.rounds[Number(state.roundIndex)]);
 }
 
+// Open Circuit individual knockout entry is prepared before money changes
+// hands. Crew, timed, stock and trophy formats keep their separate registration.
+export function usesPrepaidDriverBriefing(event = {}) {
+  return Boolean(event.openCircuit && !event.trophyId && !event.team &&
+    !event.fourWide && !event.specialSlot && !event.seasonRules &&
+    Array.isArray(event.opponentRatings) && event.opponentRatings.length>0);
+}
+
+// The returned changes are a single atomic pay-and-register transaction.
+// Neither the preview NOS/part removals nor Sayaka's cooldown are committed
+// when the user cancels this UNPAID room.
+export function purchaseDriverBriefingEntry({
+  circuit={},state=null,carStates={},preparedCarState={},owned=[],
+  cash=0,powerKW=NaN,adviceCircuit=null,
+}={}) {
+  if(!isOpenDriverBriefing(state))return {error:'DRIVER ENTRY NOT AVAILABLE'};
+  if(state.briefingEntryPending!==true)return {error:'EVENT ALREADY REGISTERED'};
+  const current=normaliseProCircuitState(circuit);
+  if(current.seasonStatus==='ACTIVE'||current.activeCrewEvent||
+    current.activeTournament||current.activeTimedEvent||
+    current.activeChampionship&&!current.activeChampionship.completed)
+    return {error:'FINISH YOUR ACTIVE PROFESSIONAL EVENT FIRST'};
+  if(!Number.isSafeInteger(state.entryFee)||state.entryFee<0)
+    return {error:'INVALID ENTRY FEE'};
+  if(!Number.isFinite(cash)||cash<state.entryFee)return {error:'INSUFFICIENT CASH'};
+  const expectedId='open:'+state.eventId+':s'+current.season+':e'+(current.eventTick+1);
+  if(state.proSeasonId!==expectedId||current.completedEventIds.includes(expectedId))
+    return {error:'EVENT ENTRY EXPIRED — RETURN TO REGISTRATION'};
+  const check=driverBriefingEligibility(state,preparedCarState,powerKW,owned);
+  if(!check.eligible)return {error:'SCRUTINEERING FAILED // '+check.problems.join(' / ')};
+  const eventCircuit=adviceCircuit?normaliseProCircuitState(adviceCircuit):current;
+  if(eventCircuit.eventTick!==current.eventTick||
+     (eventCircuit.crewAdviceCooldownUntil!==current.crewAdviceCooldownUntil &&
+      !state.briefingAdviceUsed))
+    return {error:'PROFESSIONAL EVENT CHANGED — REOPEN BRIEFING'};
+  const {briefingEntryPending,...paid}=state;
+  return {changes:{
+    cash:cash-state.entryFee,
+    carStates:{...carStates,[state.playerCarId]:preparedCarState},
+    competitionState:paid,
+    ...(state.briefingAdviceUsed?{proCircuit:eventCircuit}:{}),
+  }};
+}
+
 export function driverBriefingRules(state, fallback = {}) {
   const saved = state?.briefingRules || {};
   return {
