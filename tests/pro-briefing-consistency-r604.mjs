@@ -11,7 +11,7 @@ test('R604 matching workshop hotspot and top-right Hiroshi briefing renderer use
  assert.match(driver,/addProGlowingHotspot\(s,add/);
  assert.match(crew,/addProGlowingHotspot\(s,add/);
  assert.match(driver,/renderStewardBriefing\(s,dialogueAdd,details,\{anchorX:1402\}\)/);
- assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1366\}\)/);
+ assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1366,height:218\}\)/);
  assert.match(chrome,/x:850,y:24,w:674,h:258,triangleSide:36/);
  assert.match(chrome,/duration:1300,yoyo:true,repeat:-1/);
  assert.match(driver,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
@@ -25,8 +25,8 @@ test('R604 matching workshop hotspot and top-right Hiroshi briefing renderer use
 });
 
 test('R604 rival and player car positioning and shadows are subtly refined',()=>{
- assert.match(driver,/safeCarPreview\(state\.playerCarId,726,474,744,207,carState,true\)/);
- assert.match(driver,/part\?\.setAlpha\?\.\(\.16\)/);
+ assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
+ assert.match(driver,/part\?\.setAlpha\?\.\(\.34\)/);
  assert.match(driver,/p\.key==='proDriverSayaka'\?16:6/);
  assert.match(driver,/const frameX=74,frameY=683/);
  assert.match(driver,/fit\(text\(231,684,rivalName/);

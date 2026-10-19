@@ -7,8 +7,10 @@ const CYAN=0x35d6ff;
 
 export const STEWARD_BUBBLE=Object.freeze({x:850,y:24,w:674,h:258,triangleSide:36});
 
-export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI // RACE BRIEFING'}={}){
-  const {x,y,w,h,triangleSide}=STEWARD_BUBBLE,edge=x+w;
+export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI // RACE BRIEFING',height=null}={}){
+  const {x,y,w,triangleSide}=STEWARD_BUBBLE;
+  // Crew has two fewer rows than individual: trim exactly two row pitches.
+  const h=height??STEWARD_BUBBLE.h,edge=x+w;
   const half=triangleSide/2,triangleHeight=Math.sqrt(3)*triangleSide/2;
   // Equilateral triangle on the BOTTOM horizontal, pointing at Hiroshi.
   const pts=[

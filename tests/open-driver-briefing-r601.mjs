@@ -7,7 +7,7 @@ const ui=readFileSync(new URL('../src/ui/ProDriverBriefing.js',import.meta.url),
 const chrome=readFileSync(new URL('../src/ui/ProBriefingChrome.js',import.meta.url),'utf8');
 
 test('R601 car/player staging, staff swap and mirror flips match the approved layout',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,726,474,744,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
   assert.match(ui,/key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true/);
   assert.match(ui,/key:playerAsset\?\.key,x:888,feet:691,height:519,maxWidth:256,flip:false/);
   assert.match(ui,/key:'proDriverSayaka',x:1110,feet:763,height:527/);
@@ -32,7 +32,7 @@ test('R601 uses workshop heartbeat glow and two equal-sized actions without BACK
 
 test('R601 opponent card is compact and positions real helmeted portrait above metadata',()=>{
   assert.match(ui,/poly\(52,643,654,164/);
-  assert.match(ui,/NEXT OPPONENT '\+stageNo\+'\/'\+stageTotal/);
+  assert.match(ui,/display\(89,652,'NEXT OPPONENT',24/);
   assert.match(ui,/const frameX=74,frameY=683,frameW=129,frameH=106,skew=16/);
   assert.match(ui,/driver_0'\+helmetIndex\+'\.png/);
   assert.match(ui,/image\.setMask\(shape\.createGeometryMask\(\)\)/);

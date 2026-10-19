@@ -1,9 +1,9 @@
-// R605 — Pro Crew pay-to-grid, event-wide advice and locked next-heat briefings.
+// R608 — Pro Crew heat subtitle and compact steward briefing.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
-import {addProGlowingHotspot,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r607';
+import {addProGlowingHotspot,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r608';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -190,6 +190,7 @@ function draw(s,opts){
   // EXACT regional Crew Battle typography and framing from MeetScene.
   // Only event/format and heat rules differ.
   const f=opts.fixture||{},e=opts.event||{};
+  const heatIndex=Math.min(2,Math.max(0,Number(f.prepared?.revealed||0)));
   const meetHeader=(x,y,w,h,fill,alpha=1)=>{
     const g=add(s.add.graphics().setDepth(218));
     g.fillStyle(fill,alpha);
@@ -199,7 +200,7 @@ function draw(s,opts){
   const meetText=(x,y,value,size,color='#ffffff')=>add(s.add.text(x,y,String(value),{
     fontFamily:'"Exo 2", sans-serif',fontSize:size+'px',
     fontStyle:'italic 900',color,stroke:'#090d16',
-    strokeThickness:size>=24?5:1,
+    strokeThickness:size>=24?5:3,
   }).setDepth(229));
   const pixelText=(x,y,value,size,color)=>add(s.add.text(x,y,String(value),{
     fontFamily:PIXEL,fontSize:size+'px',color,
@@ -212,6 +213,7 @@ function draw(s,opts){
   const eventTitle=String(e.trophyId||!e.short?e.label:
     shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
+  meetText(60,137,'heat '+(heatIndex+1)+' of 3',18,'#aeb6c2');
   // Official details now live exclusively in Hiroshi's toggleable briefing.
   // No grey rule text competes with the CREW TECHNICAL / CREW RELAY heading.
   const heatRule=f.heatRule||f.raceRule||
@@ -221,22 +223,19 @@ function draw(s,opts){
      '1/4 MI // STANDING START // THREE HEATS');
   const crewRule=e.trophyId==='triDrive'?'ONE FWD + ONE RWD + ONE AWD':
     'THREE DISTINCT CREW CARS';
-  const heatIndex=Math.min(2,Number(f.prepared?.revealed||0));
   const nextOpponent=f.opponent?.drivers?.[heatIndex];
   const crewRows=[
     ['EVENT',eventTitle],
-    ['FIXTURE',(Number(f.round||0)+1)+' / '+(e.trophyId?3:3)],
     ['FORMAT',formatName(f.format)],
     ['NEXT DRIVER',String(f.opponent?.name||'OPPOSING CREW')+' #'+(heatIndex+1)],
     ['NEXT CAR',String(cars[nextOpponent?.carId]?.shortName||nextOpponent?.carId||'TBA').toUpperCase()],
-    ['ENTRY '+(unpaid?'FEE':'PAID'),'¥'+Number(unpaid?fee:e.entryFee||0).toLocaleString('en-US')],
     ['CAR RULE',crewRule],
     ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],
   ];
   const toggleSteward=()=>{
     if(activeDialogue==='hiroshi'){clearDialogue();return;}
     clearDialogue();activeDialogue='hiroshi';
-    renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366});
+    renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366,height:218});
   };
   const crewGlow=(x,y,w,label,action,disabled=false)=>
     addProGlowingHotspot(s,add,{x,y,w,h:44,label,onClick:action,disabled});
