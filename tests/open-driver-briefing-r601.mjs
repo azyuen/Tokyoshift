@@ -20,7 +20,7 @@ test('R601 uses workshop heartbeat glow and two equal-sized actions without BACK
   assert.match(ui,/alpha:\{from:\.07,to:1\}/);
   assert.match(ui,/duration:1300,yoyo:true,repeat:-1/);
   assert.match(ui,/labelPad|const pad=add/);
-  assert.match(ui,/workshopHotspot\(166,623,229,44,'DAICHI \/\/ TUNE'/);
+  assert.match(ui,/workshopHotspot\(190,611,229,44,'DAICHI \/\/ TUNE'/);
   assert.match(ui,/workshopHotspot\(1111,637,225,44,adviceLabel/);
   assert.match(ui,/workshopHotspot\(1390,616,220,44,'RACE BRIEFING'/);
   assert.match(ui,/btn\(1070,779,246,54,'FORFEIT EVENT'/);
