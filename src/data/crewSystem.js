@@ -85,6 +85,20 @@ export function getRecruitedCrewCharacterIds(source) {
     .map(member => member.characterId).filter(Boolean));
 }
 
+// Crew cars are borrowed but fully customisable while their driver belongs
+// to the active crew. In particular, a Ginza demo (also marked crewLoan)
+ // must never be considered an active recruit's car.
+export function isActiveCrewLoanCar(source, carId) {
+  const id = String(carId || '');
+  const car = cars[id];
+  if (!id || !car?.crewLoan || car.ginzaDemo || !car.crewOwnerCharacterId ||
+      !(value(source, 'ownedCarIds', []) || []).includes(id)) return false;
+  return Object.values(getCrewMembers(source)).some(member =>
+    member?.loanCarId === id &&
+    member?.characterId === car.crewOwnerCharacterId
+  );
+}
+
 export function getCrewMemberForRegion(source, regionId) {
   const key = String(regionId || '').toUpperCase();
   return getCrewMembers(source)[key] || null;

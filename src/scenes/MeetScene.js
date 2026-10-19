@@ -38,7 +38,7 @@ import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   getGarageCapacity,

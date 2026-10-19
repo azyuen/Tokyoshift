@@ -2,6 +2,7 @@
 // The ownership and per-car customWheelId keys are unchanged for old profiles.
 import { cars } from './cars.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
+import { isActiveCrewLoanCar } from './crewSystem.js?v=20261020-r615';
 import { WHEEL_CATALOG, getOwnedWheelIds, getWheelOption } from './wheels.js?v=20260929-r246';
 
 // R506: the new Oshiage wheel-wall background has exactly eight EMPTY bays.
@@ -61,7 +62,11 @@ export function getOshiageRimQuote(source, carId, rimId) {
   if (!owned.includes(id) || !car || !wheel) {
     return { status: 'NO_CAR', price: 0, locked: true, owned: false };
   }
-  const locked = Boolean(car.tuningLocked || state.collector || state.immutable || state.tuningLocked || car.crewLoan || state.crewLoan);
+  const validCrew = isActiveCrewLoanCar(source, id);
+  // Active crew cars may get rims; collector/Ginza loans remain restricted.
+  const locked = Boolean(car.tuningLocked || state.collector || state.immutable ||
+    state.tuningLocked || (car.crewLoan && !validCrew) ||
+    (state.crewLoan && !validCrew));
   const rimOwned = getOwnedWheelIds(source).includes(wheel.id);
   const installed = state.customWheelId === wheel.id;
   const price = rimOwned ? 0 : Number(wheel.price || 0);
@@ -101,8 +106,10 @@ export function restoreStockOshiageRims(registry, carId) {
   const car = cars[id] || cars[getBaseCarId(id)];
   const original = registry.get('carStates') || {};
   const state = original[id] || {};
-  if (!owned.includes(id) || !car || car.tuningLocked || car.crewLoan ||
-      state.tuningLocked || state.crewLoan || state.collector || state.immutable ||
+  const validCrew = isActiveCrewLoanCar(registry, id);
+  if (!owned.includes(id) || !car || car.tuningLocked ||
+      (car.crewLoan && !validCrew) || state.tuningLocked ||
+      (state.crewLoan && !validCrew) || state.collector || state.immutable ||
       !state.customWheelId) return false;
   const { customWheelId: _previousWheel, ...withoutRims } = state;
   registry.set('carStates', { ...original, [id]: withoutRims });
