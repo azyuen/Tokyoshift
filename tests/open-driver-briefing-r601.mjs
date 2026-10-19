@@ -7,7 +7,7 @@ const ui=readFileSync(new URL('../src/ui/ProDriverBriefing.js',import.meta.url),
 const chrome=readFileSync(new URL('../src/ui/ProBriefingChrome.js',import.meta.url),'utf8');
 
 test('R601 car/player staging, staff swap and mirror flips match the approved layout',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,660,474,744,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,726,474,744,207,carState,true\)/);
   assert.match(ui,/key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true/);
   assert.match(ui,/key:playerAsset\?\.key,x:888,feet:691,height:519,maxWidth:256,flip:false/);
   assert.match(ui,/key:'proDriverSayaka',x:1110,feet:763,height:527/);
