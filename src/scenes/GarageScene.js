@@ -78,7 +78,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
-} from '../data/crewSystem.js?v=20261020-r615';
+} from '../data/crewSystem.js?v=20261020-r619';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
