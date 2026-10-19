@@ -81,7 +81,7 @@ export function showProDriverBriefing(s,options={}){
     s._proOverlayClose?.();
     s._proDriverBriefLoading=true;
     const screen=s.add.rectangle(W/2,H/2,W,H,0x07111d,.99).setDepth(200).setInteractive();
-    const label=s.add.text(W/2,H/2,'PREPARING DRIVER BRIEFING',{
+    const label=s.add.text(W/2,H/2,'PREPARING RACE BRIEFING',{
       fontFamily:PIXEL,fontSize:'18px',color:'#ffffff',
     }).setOrigin(.5).setDepth(201);
     let finished=false;
