@@ -1561,10 +1561,10 @@ export default class FourLaneTestScene extends RaceScene {
         (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
         (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
     }
-    const nextText = this.proCrew?'RETURN TO HEAT PREPARATION':
+    const nextText = this.proCrew&&outcome?.status==='CREW_HEAT'?'NEXT HEAT':
+      advanced&&duel&&isOpenDriverBriefing(this.registry.get('competitionState'))?'NEXT HEAT':
       failure?'RETURN TO COMPLEX // RETRY HEAT':advanced?'NEXT ROUND':'RETURN TO COMPLEX';
-    label(1494, 679, 'TAP ANYWHERE  //  ' + nextText, 9, '#f6efef')
-      .setOrigin(1, 0.5);
+    label(1472, 675, nextText, 12, '#f6efef').setOrigin(1, .5);
     // A single HIGH-depth full-screen hit area, not the old lower-depth
     // buttons hidden under the manga art. Touch and ENTER share the guard.
     let armed = false, navigating = false;
@@ -1575,7 +1575,11 @@ export default class FourLaneTestScene extends RaceScene {
       if (!armed || navigating) return;
       navigating = true;
       tap.disableInteractive();
-      if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
+      if(this.proCrew&&outcome?.status==='CREW_HEAT'){
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+        });
+      } else if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
         this.scene.start('CentralTokyoScene',{
           locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,
         });
