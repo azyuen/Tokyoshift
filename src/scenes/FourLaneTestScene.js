@@ -1742,6 +1742,8 @@ export default class FourLaneTestScene extends RaceScene {
         locationId:'tokyoDragComplex',
         autoShowProVictory:{
           kind:'driver',winner,eventName:summary.label||'DRIVER EVENT',
+          carId:summary.carId||this.proDuelState?.playerCarId||
+            this.proTournament?.carId||this.playerCarId,
           opponent:summary.trophyId?'PRESTIGE TROPHY FINAL':'DRIVER CHALLENGE',
           heats,wins:this.proDuel?(winner?heats.length:Math.max(0,heats.length-1)):
             heats.filter(h=>h.won).length,

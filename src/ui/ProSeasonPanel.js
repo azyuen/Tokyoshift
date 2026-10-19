@@ -320,6 +320,7 @@ export function showCrewFixture(s,selection=null) {
     // open the definitive results page; no second official-confirmation modal.
     if(f.prepared?.revealed===3){
       const snapshot={heats:f.prepared.heats,crewIds:f.prepared.lineup,
+        carIds:f.prepared.heats.map(h=>h.carId),
         opponent:f.opponent?.name,format:currentFormat,
         eventLabel:t.label,openCircuit:Boolean(t.openCircuit)};
       const result=settleCrewSeriesFixture(c,f.id);
@@ -388,6 +389,7 @@ function showCrewResult(s,out,round={}){
     eventName:summary.label||round.eventLabel||'CREW EVENT',
     opponent:round.opponent||'PRO CIRCUIT',
     crewIds:round.crewIds||[],
+    carIds:round.carIds||round.heats?.map(h=>h.carId)||[],
     heats:round.heats||[],
     wins:summary.heatWins??out.wins,rounds:3,
     fourWidePoints:round.format==='FOUR_WIDE'?summary.fourWidePoints:undefined,

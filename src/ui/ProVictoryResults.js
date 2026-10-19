@@ -1,219 +1,277 @@
-// R616: Shared, visual one-page Professional Circuit event awards.
-// This is presentation only. Settlement, prize, season points and save guards
-// remain owned by proSeason / proTournament / proDragDuel.
+// R617 — two-tap Professional Circuit finish. All amounts and placements are
+// recorded upstream; this file renders only saved results and real garage cars.
 import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261017-r578';
+import { cars } from '../data/cars.js?v=20261011-r479';
+import {
+  preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
+} from '../vehicles/CarAppearance.js?v=20261020-r617';
 
 const W=1560,H=840;
+const BG_KEY='proVictoryDragstripDayR617';
+const BG_URL='assets/CentralTokyo/tokyo_dragstrip_day.png?v=20261020-r617';
 const BODY='"Rajdhani", sans-serif';
 const HEAD='"Exo 2", sans-serif';
 const PIXEL='"Silkscreen", monospace';
-const RED=0xd83c50;
-const cash=n=>'¥'+Math.max(0,Number(n)||0).toLocaleString('en-US');
-const seconds=n=>Number.isFinite(Number(n))&&Number(n)>0?Number(n).toFixed(3)+'s':'—';
-const trim=(t,length=34)=>String(t||'').length>length?String(t).slice(0,length-1)+'…':String(t||'');
+const RED=0xe04a61;
+const yen=n=>'¥'+Math.max(0,Number(n)||0).toLocaleString('en-US');
+const short=(text,length=42)=>String(text||'').length>length?
+  String(text).slice(0,length-1)+'…':String(text||'');
+const time=n=>Number.isFinite(Number(n))&&Number(n)>0?Number(n).toFixed(3)+'s':'—';
 
-function visualFor(id,kind){
+function characterVisual(id,kind){
   if(!id)return null;
   const pose=id==='sayakaFujieda'?(kind==='loss'?'trackSerious':'trackHappy'):
     kind==='loss'?'loss':'win';
   return getCharacterVisualAsset(id,pose)||getCharacterVisualAsset(id,'idle');
 }
-export function queueProVictoryAssets(s,ids,kind='win'){
+function resultsCast(s,options){
+  const captain=s.registry.get('playerCharacterId')||'renMizuno';
+  if(options.kind!=='crew')return ['sayakaFujieda',captain,'daichiSakamoto'];
+  const mates=(options.crewIds||[]).slice(0,3);
+  // The player remains the foremost, middle portrait, never a crew opponent.
+  return [mates[0],captain,mates[1],mates[2]];
+}
+function resultCars(s,options){
+  const ids=options.kind==='crew'?
+    (options.carIds||options.heats?.map(h=>h.carId)||[]).slice(0,3):
+    [options.carId||s.registry.get('selectedCarId')].filter(Boolean);
+  return [...new Set(ids.filter(id=>cars[id]))];
+}
+export function queueProVictoryAssets(s,ids=[],kind='win',carIds=[]){
   let count=0;
-  for(const id of [...new Set(ids||[])]) {
-    const v=visualFor(id,kind);
-    if(v?.key&&v.path&&!s.textures.exists(v.key)) {
-      s.load.image(v.key,getCharacterAssetUrl(v.path));
-      count++;
+  if(!s.textures.exists(BG_KEY)){
+    s.load.image(BG_KEY,BG_URL);count++;
+  }
+  for(const id of [...new Set(ids.filter(Boolean))]){
+    const sprite=characterVisual(id,kind);
+    if(sprite?.key&&sprite.path&&!s.textures.exists(sprite.key)){
+      s.load.image(sprite.key,getCharacterAssetUrl(sprite.path));count++;
     }
   }
+  const states=s.registry.get('carStates')||{};
+  const unique=[...new Set(carIds)].filter(id=>cars[id]);
+  const map=Object.fromEntries(unique.map(id=>[id,cars[id]]));
+  count+=preloadCarAppearanceAssets(s,map,'20261020-r617');
+  for(const id of unique)count+=preloadCarWheel(s,cars[id],states[id]||{});
   return count;
 }
 
-function heatText(h,i,crew) {
-  const status=h?.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:
-    Number.isFinite(Number(h?.ownSeconds))&&Number(h.ownSeconds)>0?
-    seconds(h.ownSeconds):h?.status||'COMPLETE';
-  const success=crew?h?.place===1||Boolean(h?.won):h?.won!==false;
+function heatLabel(h,i,isCrew){
+  const won=isCrew?Boolean(h?.won):h?.won!==false;
+  const result=String(h?.result||(isCrew&&h?.place?'P'+h.place+'/4':
+    h?.tied?'DRAW':won?'WIN':'LOSS'));
   return {
-    name:trim(h?.name||h?.label||('HEAT '+(i+1)),27),
-    result:h?.result||(crew&&h?.place?'P'+h.place+'/4':success?'WIN':h?.tied?'DRAW':'LOSS'),
-    time:status,
-    positive:success,
+    title:short(h?.name||h?.label||'PRO RIVAL',26),
+    number:h?.roundNumber||i+1,result,won,
+    clock:h?.ownStatus&&h.ownStatus!=='FINISHED'?h.ownStatus:
+      Number(h?.ownSeconds)>0?time(h.ownSeconds):'COMPLETE',
   };
 }
 
-// Width and placement are in the real 1560 x 840 Drag Complex scene.
-// The same scene is used for driver and crew finals, including open-circuit.
-export function showProVictoryResults(s,options={}) {
-  const crew=options.kind==='crew';
-  const winner=options.winner!==false;
-  const characterId=s.registry.get('playerCharacterId')||'renMizuno';
-  const roster=(options.crewIds||[]).slice(0,3);
-  const ids=crew?[roster[0],characterId,roster[1],roster[2]]:
-    ['sayakaFujieda',characterId,'daichiSakamoto'];
-  const required=ids.map(id=>visualFor(id,winner?'win':'loss')).filter(Boolean);
-  const unloaded=required.filter(v=>v.key&&v.path&&!s.textures.exists(v.key));
-  if(unloaded.length) {
-    // Loading is asynchronous but does not change the saved competition.
-    if(s._proVictoryLoading)return;
+// Caller must have saved the competition before calling this. All car previews
+// use the production car renderer: paint, wheels and reference geometry match.
+export function showProVictoryResults(s,options={}){
+  const crew=options.kind==='crew',winner=options.winner!==false;
+  const cast=resultsCast(s,options);
+  const carIds=resultCars(s,options);
+  const carMap=Object.fromEntries(carIds.map(id=>[id,cars[id]]));
+  if(s._proVictoryLoading)return;
+  const queued=queueProVictoryAssets(s,cast,winner?'win':'loss',carIds);
+  if(queued>0){
+    // A crew finish can enter the screen from a saved fixture after reload.
     s._proVictoryLoading=true;
-    const veil=s.add.rectangle(W/2,H/2,W,H,0x090c14,.98).setDepth(290).setInteractive();
-    const notice=s.add.text(W/2,H/2,'PREPARING EVENT AWARDS',{
-      fontFamily:PIXEL,fontSize:'18px',color:'#f7f3f3'
-    }).setOrigin(.5).setDepth(291);
-    const clean=()=>{veil.destroy();notice.destroy();s._proVictoryLoading=false;};
-    const done=()=>{s.events.off('shutdown',stopped);clean();
-      if(s.sys?.isActive?.())showProVictoryResults(s,options);};
-    const stopped=()=>{s.load.off('complete',done);clean();};
+    const bg=s.add.rectangle(W/2,H/2,W,H,0x0b1320,.98).setDepth(300).setInteractive();
+    const title=s.add.text(W/2,H/2,'PREPARING EVENT RESULTS',{
+      fontFamily:PIXEL,fontSize:'17px',color:'#f1eceb',
+    }).setOrigin(.5).setDepth(301);
+    const cleanup=()=>{bg.destroy();title.destroy();s._proVictoryLoading=false;};
+    const loaded=()=>{
+      s.events.off('shutdown',stopped);
+      cleanup();
+      if(s.sys?.isActive?.())showProVictoryResults(s,options);
+    };
+    const stopped=()=>{s.load.off('complete',loaded);cleanup();};
     s.events.once('shutdown',stopped);
-    s.load.once('complete',done);
-    queueProVictoryAssets(s,ids,winner?'win':'loss');
+    s.load.once('complete',loaded);
     s.load.start();
     return;
   }
+  drawResults(s,options,cast,carMap);
+}
 
+function drawResults(s,options,cast,carMap){
   s._proOverlayClose?.();
-  let nodes=[],shapes=[],closed=false,armed=false,dismissKey=null;
-  const add=(obj,depth=220)=>{nodes.push(obj.setDepth(depth));return obj;};
-  const panel=(x,y,w,h,fill=0x0b101b,alpha=.96,stroke=0x374153)=>{
-    const r=add(s.add.rectangle(x,y,w,h,fill,alpha),226);
-    if(stroke)r.setStrokeStyle(1,stroke,.85);
-    return r;
+  const crew=options.kind==='crew',winner=options.winner!==false;
+  ensureDerivedModularCarTextures(s,carMap);
+  const nodes=[],masks=[],details=[];
+  let stage=0,closed=false,armed=false,key=null,stageDetail=false;
+  const add=(o,depth)=>{
+    if(depth!==undefined)o.setDepth(depth);
+    nodes.push(o);
+    if(stageDetail){o.setAlpha(0);details.push(o);}
+    return o;
   };
-  const label=(x,y,value,size=20,opts={})=>add(s.add.text(x,y,String(value),{
-    fontFamily:BODY,fontSize:size+'px',fontStyle:'700',color:'#f5f2f1',
-    ...opts,
-  }).setFontSize(size),235);
+  const panel=(x,y,w,h,color=0x081321,opacity=.82,outline=0x3c4654,depth=244)=>{
+    const node=add(s.add.rectangle(x,y,w,h,color,opacity).setStrokeStyle(1,outline,.85),depth);
+    return node;
+  };
+  const label=(x,y,value,size=20,style={},depth=249)=>{
+    const node=add(s.add.text(x,y,String(value),{
+      fontFamily:BODY,fontSize:size+'px',fontStyle:'700',color:'#f5f2f1',
+      ...style,
+    }).setFontSize(size),depth);
+    return node;
+  };
   const close=()=>{
     if(closed)return;
     closed=true;
     s.events.off('shutdown',close);
-    dismissKey?.off?.('down',doContinue);
+    key?.off?.('down',advance);
     if(s._proOverlayClose===close)s._proOverlayClose=null;
     nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o.destroy();}catch(_){}});
-    shapes.forEach(o=>{try{o.destroy();}catch(_){}});
+    masks.forEach(o=>{try{o.destroy();}catch(_){}});
   };
   s._proOverlayClose=close;
   s.events.once('shutdown',close);
 
-  // Existing venue artwork stays visible through the twilight overlay.
-  add(s.add.rectangle(780,420,W,H,0x05070c,.88).setInteractive(),210);
-  add(s.add.rectangle(780,35,W,70,0x060b14,.98).setStrokeStyle(1,0x343942),213);
-  label(46,16,'TOKYO',37,{fontFamily:HEAD,fontStyle:'900 italic'});
-  label(168,16,'SHIFT',37,{fontFamily:HEAD,fontStyle:'900 italic',color:'#e23c4c'});
-  label(348,24,'PROFESSIONAL CIRCUIT',25,{fontFamily:HEAD});
-  label(710,27,'CENTRAL // '+(options.openCircuit?'OPEN CIRCUIT':'PRO SEASON'),18,{color:'#9399a6'});
-  label(1514,22,'TOKYO DRAG COMPLEX // '+(crew?'CREW':'DRIVER'),14,
-    {fontFamily:PIXEL,color:'#aaaeb8'}).setOrigin(1,0);
+  // One authored scene image across ALL 1560x840; never a floating modal
+  // or the former bespoke dark photo/banner/floor presentation.
+  add(s.add.image(W/2,H/2,BG_KEY).setDisplaySize(W,H),210);
+  add(s.add.rectangle(W/2,H/2,W,H,0x06101d,.17),211);
 
-  // Subtle floor accent and three contrasting character silhouettes.
-  add(s.add.rectangle(377,789,754,100,0x38101a,.30),215);
-  const shape=s.make.graphics({add:false});
-  shape.fillStyle(0xffffff,1).fillRect(0,72,775,768);
-  shapes.push(shape);
-  const mask=shape.createGeometryMask();
-  const positions=crew?
-    [{x:120,h:495,w:285,z:219},{x:370,h:660,w:385,z:223},
-     {x:565,h:500,w:290,z:220},{x:722,h:465,w:270,z:218}]:
-    [{x:140,h:485,w:300,z:219},{x:378,h:690,w:425,z:223},
-     {x:630,h:490,w:288,z:221}];
-  // Draw back to front to retain the protagonist's raised-fist silhouette.
-  const order=positions.map((p,i)=>i).sort((a,b)=>positions[a].z-positions[b].z);
-  for(const i of order) {
-    const v=visualFor(ids[i],winner?'win':'loss'),p=positions[i];
-    if(!v?.key||!s.textures.exists(v.key))continue;
-    const tex=s.textures.get(v.key).getSourceImage();
-    const width=Math.max(1,tex.naturalWidth||tex.width),height=Math.max(1,tex.naturalHeight||tex.height);
-    const scale=Math.min(p.w/width,p.h/height);
-    const img=add(s.add.image(p.x,818,v.key).setOrigin(.5,1)
-      .setScale(scale).setMask(mask),p.z);
-    // Tiny fade makes final awards appear as a reveal, without blocking taps.
-    img.setAlpha(0);
-    s.tweens.add({targets:img,alpha:1,duration:360,delay:i*70});
-    const name=characters[ids[i]]?.name||'DRIVER';
-    label(p.x,784,trim(name.toUpperCase(),19),12,{
-      fontFamily:PIXEL,color:i===(crew?1:1)?'#ffffff':'#adb3c0',
-      backgroundColor:'#080a10',padding:{x:6,y:4}
-    }).setOrigin(.5,0);
-  }
-
-  // Results are rendered above any part of the art that approaches the split.
-  panel(1166,457,764,766,0x080c14,.965,0x303847);
-  const title=winner?(crew?'CREW VICTORY':'EVENT WINNER'):
-    (crew?'CREW RESULT':'EVENT COMPLETE');
-  label(817,91,'// PROFESSIONAL CIRCUIT',22,{color:'#f1ebeb'});
-  label(817,122,trim((options.eventName||'PROFESSIONAL EVENT').toUpperCase(),46),17,
-    {fontFamily:PIXEL,color:'#949aaa'});
-  const accent=add(s.add.graphics(),232);
-  accent.fillStyle(RED,1).fillPoints([
-    new Phaser.Geom.Point(790,103),new Phaser.Geom.Point(804,103),
-    new Phaser.Geom.Point(778,210),new Phaser.Geom.Point(765,210)],true);
-  label(812,159,title,72,{fontFamily:HEAD,fontStyle:'900 italic',color:'#fffafa',
-    stroke:'#171014',strokeThickness:3});
-  label(820,249,trim(options.opponent?
-    (crew?'YOUR CREW vs '+options.opponent:options.opponent):
-    (crew?'YOUR CREW':'PROFESSIONAL EVENT'),47),24,{color:'#d4d8e0'});
-
-  const heats=(options.heats||[]).slice(0,5);
-  const available=heats.length;
-  const totalWins=heats.filter(h=>crew?
-    h?.place===1||h?.won:h?.won!==false).length;
-  const perfect=winner&&(crew?
-    Number(options.fourWidePoints)===9||available===3&&totalWins===3:
-    available>=3&&totalWins===available);
-  label(820,291,crew&&Number.isFinite(options.fourWidePoints)?
-    'AGGREGATE  '+options.fourWidePoints+' / 9':
-    (winner?'HEATS WON  '+(options.wins??totalWins)+' / '+(options.rounds||Math.max(3,available)):
-      'EVENT RESULT'),30);
-  if(perfect) {
-    panel(1425,308,166,58,0x3b2b0e,.90,0xc3a250);
-    label(1425,291,crew&&Number(options.fourWidePoints)===9?'PERFECT 9/9':'CLEAN SWEEP',20,{color:'#ffdf89'}).setOrigin(.5,0);
-  }
-
-  const rows=heats.length?heats.slice(-3):[{name:'FINAL RESULT',won:winner}];
-  const rowY=356,step=65;
-  rows.slice(0,3).forEach((h,i)=>{
-    const y=rowY+i*step,display=heatText(h,i,crew);
-    panel(1167,y+26,704,58,0x111723,.98,0x384052);
-    add(s.add.rectangle(817,y+26,5,58,display.positive?RED:0x676a78),232);
-    label(838,y+9,'HEAT '+(h?.roundNumber||i+1),19,{color:'#f4eded'});
-    label(967,y+10,display.result,18,{color:display.positive?'#ff6478':'#bec4ce'});
-    label(1060,y+4,display.name,19,{color:'#dce1e6'});
-    label(1060,y+29,display.time,17,{color:'#a9b7c9'});
+  // Actual garage cars sit on the visible right-hand road, behind the HUD.
+  // The preview is side-on because Tokyo SHIFT's vehicle assets are side-on.
+  // Depths are lower than the result cards and characters.
+  const carIds=Object.keys(carMap);
+  const spots=crew?
+    [{x:1020,y:590,w:335},{x:1264,y:665,w:305},{x:1432,y:728,w:270}]:
+    [{x:1214,y:628,w:530}];
+  carIds.slice(0,crew?3:1).forEach((id,i)=>{
+    if(typeof s.createCarDisplay!=='function')return;
+    const info=spots[i],state=(s.registry.get('carStates')||{})[id]||{};
+    try{
+      const parts=s.createCarDisplay(carMap[id],info.x,info.y,info.w,216+i*.1,
+        getCarPaintColor(state),null,false,state);
+      (parts||[]).forEach(p=>{if(p)nodes.push(p);});
+    }catch(e){
+      console.warn('[Tokyo SHIFT] Victory car preview unavailable:',id,e);
+    }
   });
 
-  const bottom=564;
-  panel(1167,665,704,180,0x0b121d,.98,0x4a4450);
-  label(837,bottom+16,'EVENT PRIZE',17,{color:'#a5acb8'});
-  label(1038,bottom+9,cash(options.cashPrize),29,{color:'#ffe4b5'});
-  label(837,bottom+70,options.openCircuit?'OPEN CIRCUIT':'SEASON POINTS',17,
-    {color:'#a5acb8'});
-  label(1038,bottom+63,options.openCircuit?'NO SEASON PTS':
-    '+'+Number(options.points||0),22,{color:'#f5efed'});
-  label(837,bottom+122,'PRO RANK',17,{color:'#a5acb8'});
-  label(1038,bottom+116,options.rankBefore&&options.rankAfter?
-    '#'+options.rankBefore+'  →  #'+options.rankAfter:'EVENT RECORDED',18);
-  add(s.add.rectangle(1221,674,2,158,0x444d5b),230);
-  label(1243,bottom+16,'STATUS',16,{color:'#a5acb8'});
-  label(1243,bottom+42,trim(winner?'WINNER':'FINISHED',20),26,
-    {color:winner?'#f3d599':'#f3eeee'});
-  label(1243,bottom+91,options.openCircuit?'OPEN EVENT':'OFFICIAL RESULT',16,
-    {color:'#a5acb8'});
-  label(1243,bottom+115,trim(options.statusLabel||'SAVED TO CAREER',21),18,
-    {color:'#f3eeee'});
+  // A taller, closer, tightly grouped cast. The lead protagonist is drawn in
+  // front of the others; sprites never hide the official result copy.
+  const positions=crew?[
+    {x:105,h:705,w:305,z:222},
+    {x:331,h:850,w:440,z:227},
+    {x:535,h:690,w:300,z:225},
+    {x:677,h:650,w:277,z:223},
+  ]:[
+    {x:112,h:700,w:305,z:223},
+    {x:350,h:860,w:445,z:227},
+    {x:637,h:680,w:290,z:225},
+  ];
+  const shape=s.make.graphics({add:false});
+  shape.fillStyle(0xffffff,1).fillRect(0,0,790,H);
+  masks.push(shape);
+  const crop=shape.createGeometryMask();
+  positions.map((p,i)=>({...p,i})).sort((a,b)=>a.z-b.z).forEach(({x,h,w,z,i})=>{
+    const v=characterVisual(cast[i],winner?'win':'loss');
+    if(!v?.key||!s.textures.exists(v.key))return;
+    const tex=s.textures.get(v.key).getSourceImage();
+    const width=Math.max(1,tex.naturalWidth||tex.width);
+    const height=Math.max(1,tex.naturalHeight||tex.height);
+    const scale=Math.min(w/width,h/height);
+    const node=add(s.add.image(x,860,v.key).setOrigin(.5,1)
+      .setScale(scale).setMask(crop),z);
+    node.setAlpha(0);
+    s.tweens.add({targets:node,alpha:1,duration:380,delay:60*i});
+  });
 
-  const doContinue=()=>{
-    if(!armed||closed)return;
+  // The only opaque treatment in the opening beat is the TOP RIGHT panel.
+  panel(1167,201,748,300,0x08101e,.88,0,241);
+  const bar=add(s.add.graphics(),248);
+  bar.fillStyle(RED,1).fillPoints([
+    new Phaser.Geom.Point(806,75),new Phaser.Geom.Point(821,75),
+    new Phaser.Geom.Point(799,189),new Phaser.Geom.Point(784,189)],true);
+  label(840,73,'// PROFESSIONAL CIRCUIT',24,{color:'#e4e2e6'});
+  label(840,112,short((options.eventName||'PROFESSIONAL EVENT').toUpperCase(),35),17,
+    {fontFamily:PIXEL,color:'#afb5c4'});
+  const headline=winner?(crew?'CREW VICTORY':'EVENT WINNER'):
+    (crew?'CREW RESULT':'EVENT COMPLETE');
+  const head=label(839,146,headline,64,{
+    fontFamily:HEAD,fontStyle:'900 italic',stroke:'#151019',strokeThickness:3,
+  });
+  if(head.width>650)head.setScale(650/head.width);
+  label(844,235,short(crew?'YOUR CREW vs '+(options.opponent||'PRO CIRCUIT'):
+    (options.opponent||'DRIVER CHALLENGE'),52),23,{color:'#d7d5dc'});
+  const heats=(options.heats||[]);
+  const wonCount=options.wins!=null?Number(options.wins):
+    heats.filter(h=>h.won).length;
+  const total=options.rounds||Math.max(3,heats.length);
+  label(844,277,crew&&Number.isFinite(options.fourWidePoints)?
+    'FOUR-WIDE TOTAL  '+options.fourWidePoints+' / 9':
+    'HEATS WON  '+wonCount+' / '+total,31);
+  const perfect=winner&&(crew?
+    Number(options.fourWidePoints)===9||heats.length===3&&wonCount===3:
+    heats.length>=3&&wonCount===heats.length);
+  if(perfect){
+    panel(1435,326,163,44,0x402c13,.88,0xc3a04a,246);
+    label(1435,313,crew&&Number(options.fourWidePoints)===9?
+      'PERFECT 9/9':'CLEAN SWEEP',19,{color:'#ffdfa0'}).setOrigin(.5,0);
+  }
+
+  // SECOND BEAT: results are authored once but hidden until the first tap.
+  stageDetail=true;
+  // This panel occupies only the bottom-right part of the same image.
+  panel(1167,589,748,480,0x071120,.83,0x465264,241);
+  const rows=heats.length?heats.slice(-3):[{name:'FINAL RESULT',won:winner}];
+  rows.forEach((h,i)=>{
+    const y=382+i*65,display=heatLabel(h,i,crew);
+    panel(1167,y+21,702,55,0x0b1829,.84,0x3c4758,243);
+    add(s.add.rectangle(835,y+21,5,55,display.won?RED:0x606b80),244);
+    label(850,y+8,'HEAT '+display.number,19);
+    label(970,y+8,display.result,18,{color:display.won?'#ff6d81':'#d3d7e0'});
+    label(1087,y+4,display.title,19);
+    label(1087,y+29,display.clock,17,{color:'#b2bece'});
+  });
+
+  // The recorded cash, official point type and rank; no invented reward types.
+  label(843,590,'EVENT PRIZE',17,{color:'#adb4c1'});
+  label(1023,579,yen(options.cashPrize),29,{color:'#ffdf91'});
+  label(843,638,options.openCircuit?'OPEN CIRCUIT':'SEASON POINTS',17,{color:'#adb4c1'});
+  label(1023,633,options.openCircuit?'NO SEASON PTS':
+    '+'+Number(options.points||0),23);
+  label(843,687,'PRO RANK',17,{color:'#adb4c1'});
+  label(1023,680,options.rankBefore&&options.rankAfter?
+    '#'+options.rankBefore+'  →  #'+options.rankAfter:'EVENT RECORDED',20);
+  add(s.add.rectangle(1249,654,2,151,0x404d62),244);
+  label(1269,590,'STATUS',17,{color:'#adb4c1'});
+  label(1269,616,winner?'WINNER':'FINISHED',26,{color:winner?'#ffdf91':'#f5f2ef'});
+  label(1269,675,options.openCircuit?'OPEN EVENT':'OFFICIAL RESULT',16,
+    {color:'#adb4c1'});
+  label(1269,698,short(options.statusLabel||'RESULT RECORDED',22),18);
+
+  panel(1167,778,700,61,0x651e2d,1,0xf35d6c,245);
+  label(1167,755,options.nextLabel||'CONTINUE',28).setOrigin(.5,0);
+  stageDetail=false;
+
+  // Full-screen hit target is above the artwork but does NOT swallow any
+  // unrelated scene navigation once the awards close. ENTER is equivalent.
+  const advance=()=>{
+    if(closed||!armed)return;
+    if(stage===0){
+      stage=1;armed=false;
+      details.forEach(obj=>obj.setAlpha(1));
+      s.time.delayedCall(220,()=>{if(!closed)armed=true;});
+      return;
+    }
     close();
     options.onContinue?.();
   };
-  panel(1167,785,704,57,0x651d2d,1,0xec5161)
-    .setInteractive({useHandCursor:true}).on('pointerdown',doContinue);
-  label(1167,765,options.nextLabel||'CONTINUE',27,{color:'#ffffff'}).setOrigin(.5,0);
-  // A debounce prevents the final racing tap from accidentally dismissing the awards.
+  add(s.add.rectangle(W/2,H/2,W,H,0xffffff,.001)
+    .setInteractive({useHandCursor:true}).on('pointerdown',advance),290);
+  key=s.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ENTER);
+  if(key)key.on('down',advance);
   s.time.delayedCall(360,()=>{if(!closed)armed=true;});
-  dismissKey=s.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ENTER);
-  if(dismissKey) dismissKey.on('down',doContinue);
   return {close};
 }
