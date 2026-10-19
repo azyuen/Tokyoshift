@@ -91,5 +91,7 @@ test('R602: layouts and dialogue use glowing toggles without X close controls',(
   assert.match(ui,/const triangleBase=36/);
   assert.doesNotMatch(ui,/on\('pointerdown',clearDialogue\)/);
   assert.doesNotMatch(ui,/bubbleText\([^\n]*'×'/);
+  assert.match(ui,/key:'proDriverHiroshi'[^\n]*onTap:null/);
+  assert.match(ui,/key:'proDriverSayaka'[^\n]*onTap:null/);
   assert.match(ui,/if\(activeDialogue===which\)\{clearDialogue\(\);return;\}/);
 });
