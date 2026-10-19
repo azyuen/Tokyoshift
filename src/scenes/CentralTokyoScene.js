@@ -3060,7 +3060,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 136,
-        event.trophySlotClosed?'NEXT FULL CYCLE':'ENTRY ' + money(event.entryFee),
+        event.trophySlotClosed?'':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
@@ -3154,9 +3154,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         fontFamily:PIXEL_FONT,fontSize:'11px',color:'#f8f3f2',
       }).setDepth(34));
       this.addContent(this.add.text(SIDE.x + 20,SIDE.y + 255,
-        'NO TROPHY INVITATION THIS CYCLE.\n\nCHECK BACK AFTER THE NEXT FULL DAY / NIGHT.',{
-        fontFamily:BODY_FONT,fontSize:'18px',color:'#c4bec0',
-        wordWrap:{width:SIDE.w-40},
+        'CHECK BACK AFTER THE NEXT FULL DAY / NIGHT',{
+        fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700',color:'#c4bec0',
+        lineSpacing:5,wordWrap:{width:SIDE.w-37},
       }).setDepth(34));
       return;
     }
@@ -3313,7 +3313,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
         : !passesNos ? 'REMOVE NOS'
         : cash < event.entryFee ? 'INSUFFICIENT CASH'
-        : 'SCRUTINEERING PASSED';
+        : '';
     drawProEventSidebarStatus(this,SIDE,label,canEnter);
 
     const actionText = canResume
