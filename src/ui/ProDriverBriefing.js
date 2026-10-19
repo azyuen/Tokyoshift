@@ -234,7 +234,7 @@ function draw(s,state,options){
   display(63,43,'OPEN CIRCUIT',21,'#ff8197');
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
-  display(58,136,'heat '+stageNo+' of '+stageTotal,19,'#aeb6c2');
+  display(58,136,'heat '+stageNo+' of '+stageTotal,18,'#aeb6c2');
 
   // Compact opponent panel. The nested portrait parallelogram uses the
   // identical slope as the outer card and a dark, professional black outline.
