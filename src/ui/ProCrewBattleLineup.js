@@ -3,7 +3,7 @@
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
-import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r610';
+import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r611';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -232,10 +232,61 @@ function draw(s,opts){
     ['CAR RULE',crewRule],
     ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],
   ];
+  // Keep the legacy trophy briefings unchanged pending the separate trophy
+  // design pass. Ordinary Pro Crew sprints receive format + technical pages.
+  const fixtureText=e.short?'SINGLE FIXTURE':'FIXTURE '+(Number(f.round||0)+1)+' OF 3';
+  const crewFormatText={
+    DUEL:'3V3 HEAD-TO-HEAD',
+    RELAY:'3-LEG TEAM RELAY',
+    TECHNICAL:'THREE-DRIVER CONSISTENCY',
+    FOUR_WIDE:'THREE FOUR-WIDE HEATS',
+  }[f.format]||formatName(f.format);
+  const crewExplanations={
+    DUEL:{
+      work:'Three separate 1/4-mile drag races. Select three different crew drivers and cars; each races one opposing driver.',
+      win:e.short?'Win at least two of the three heats to claim the fixture. All three results affect your reward.':
+        'Win at least two of the three heats to claim this fixture. Results from all three fixtures determine the series.',
+    },
+    RELAY:{
+      work:'Three drivers each complete a 1/4-mile run. Their elapsed times are added together for the crew total.',
+      win:'The crew with the lowest combined time wins. All three drivers must complete their runs cleanly.',
+    },
+    TECHNICAL:{
+      work:'Three drivers each make one run. The spread between your fastest and slowest times measures consistency.',
+      win:'The smallest time spread wins. All three runs must be completed cleanly.',
+    },
+    FOUR_WIDE:{
+      work:'Each of your three drivers enters a four-car heat. Your team earns points from each finishing position.',
+      win:'1st = 3 pts, 2nd = 2, 3rd = 1, 4th = 0. Reach 8–9 total points for the top reward tier.',
+    },
+  };
+  const crewExplainer=crewExplanations[f.format]||crewExplanations.DUEL;
+  const crewPages=[
+    {sections:[
+      {label:'FORMAT',text:crewFormatText+' · '+fixtureText,large:true},
+      {label:'HOW IT WORKS',text:crewExplainer.work},
+      {label:'HOW TO WIN',text:crewExplainer.win},
+    ]},
+    {rows:[
+      ['OPPOSING CREW',String(f.opponent?.name||'OPPOSING CREW').toUpperCase()],
+      ['NEXT HEAT',(heatIndex+1)+' OF 3'],
+      ['NEXT CAR',String(cars[nextOpponent?.carId]?.shortName||nextOpponent?.carId||'TBA').toUpperCase()],
+      ['RACE',heatRule],
+      ['CAR RULE',crewRule],
+      ['POWER LIMIT','NO GENERAL CAP'],
+      ['NOS','ALLOWED'],
+      ['ENTRY FEE','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
+      ['LINEUP',locked?'LOCKED':'SELECT THREE DRIVERS'],
+    ]},
+  ];
   const toggleSteward=()=>{
     if(activeDialogue==='hiroshi'){clearDialogue();return;}
     clearDialogue();activeDialogue='hiroshi';
-    renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366,height:218});
+    if(e.trophyId){
+      renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366,height:218});
+    }else{
+      renderPagedStewardBriefing(s,dialogueAdd,crewPages,{anchorX:1366});
+    }
   };
   const crewGlow=(x,y,w,label,action,disabled=false)=>
     addProGlowingHotspot(s,add,{x,y,w,h:44,label,onClick:action,disabled});
