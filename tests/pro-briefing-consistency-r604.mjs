@@ -14,7 +14,7 @@ test('R604 matching workshop hotspot and top-right Hiroshi briefing renderer use
  assert.match(crew,/renderStewardBriefing\(s,dialogueAdd,crewRows,\{anchorX:1366\}\)/);
  assert.match(chrome,/x:850,y:24,w:674,h:222,triangleSide:36/);
  assert.match(chrome,/duration:1300,yoyo:true,repeat:-1/);
- assert.match(driver,/workshopHotspot\(190,576,229,44,'DAICHI \/\/ TUNE'/);
+ assert.match(driver,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
  assert.match(driver,/workshopHotspot\(1111,576,225,44,adviceLabel/);
  assert.match(driver,/workshopHotspot\(1390,576,220,44,'RACE BRIEFING'/);
  assert.match(crew,/crewGlow\(1055,502,235/);
@@ -49,7 +49,7 @@ test('R604 Daichi setup uses steward-style cyan bubble with intact interactive c
  assert.match(driver,/function mechanicDialogue\(title,description=''/);
  assert.match(driver,/panel\.fillStyle\(0x081a2b,\.97\)/);
  assert.match(driver,/panel\.lineStyle\(3,CYAN,1\)/);
- assert.match(driver,/mechanicDialogue\('DAICHI \/\/ RACE SETUP'/);
+ assert.match(driver,/mechanicDialogue\('DAICHI \/\/ CAR SETUP'/);
  assert.match(driver,/mechanicDialogue\('DAICHI \/\/ REMOVE PARTS'/);
  assert.match(driver,/toggleBriefingNos\(carState\)/);
  assert.match(driver,/removeDriverPowerPart\(carState,part\.id\)/);
