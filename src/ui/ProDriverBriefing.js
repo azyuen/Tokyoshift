@@ -1,4 +1,4 @@
-// R604 — Shared pro room controls, mechanic dialogue and refined paddock placement.
+// R605 — One-time pay-to-grid and event-wide advice/next-heat briefings.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -296,14 +296,11 @@ function draw(s,state,options){
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
   workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
-    advice.available?'ASK FOR ADVICE':'ADVICE ON COOLDOWN';
+    advice.available?'ASK FOR ADVICE':advice.remaining+' EVENT COOLDOWN';
   workshopHotspot(1111,576,225,44,adviceLabel,()=>handleSayaka(),{
     disabled:!advice.available&&!state.briefingAdviceText,
   });
   workshopHotspot(1390,576,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
-  if(advice.remaining&&!state.briefingAdviceUsed)
-    fit(text(993,612,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
-      '#c8d8e6',true),245);
 
   // Unpaid: CANCEL ENTRY discards preview edits and costs nothing. Paid:
   // existing saved series still requires the explicit forfeiture confirmation.
@@ -311,11 +308,7 @@ function draw(s,state,options){
     if(unpaid){close();options.onCancel?.();}
     else openForfeit();
   },{grey:true});
-  if(unpaid){
-    fit(text(1077,724,'ENTRY '+cash(state.entryFee)+'  //  PAY ONLY WHEN YOU PROCEED',11,
-      '#f5e1ad',true),430);
-  }
-  btn(1368,779,246,54,'PROCEED TO GRID  >>',()=>{
+  btn(1368,779,246,54,unpaid?'GO TO GRID // '+cash(state.entryFee):'NEXT HEAT',()=>{
     if(!eligibility.eligible)return;
     close();options.onRace?.();
   },{disabled:!eligibility.eligible});
@@ -341,9 +334,9 @@ function draw(s,state,options){
     if(which==='hiroshi'){
       const details=[
         ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
-        ['RACE','1/4 MI // STANDING START'],
+        ['NEXT DRIVER',String(round.opponentName||rival.name||'PRO DRIVER').toUpperCase()],
+        ['NEXT CAR',String(oppCar.name||round.carId).toUpperCase()],
         ['PRIZE',cash(state.prizeCash)],
-        ['ENTRY '+(unpaid?'FEE':'PAID'),cash(state.entryFee)],
         ['POWER RULE',eligibility.rules.maxPowerKW==null?'OPEN':
           eligibility.rules.maxPowerKW+' KW MAX'],
         ['NOS RULE',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
@@ -442,8 +435,8 @@ function draw(s,state,options){
     if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
       options.state||s.registry.get('competitionState')||{}).available)return;
     modal('ASK SAYAKA FOR ADVICE?',
-      unpaid?'Your advice will count if you enter this paid event. One consultation, then two more professional events before asking again.':
-        'One tactical briefing per event. After this, finish this event and two more professional events before asking again.');
+      unpaid?'Advice applies for ALL heats of this event once you enter. The cooldown covers this event and two following professional events.':
+        'Advice applies to the ENTIRE current event, including every remaining heat. You cannot request a new consultation until two more professional events are completed.');
     modalBtn(581,581,255,'MAYBE LATER',dismiss);
     modalBtn(981,581,255,'ASK SAYAKA',()=>{
       dismiss();close();
