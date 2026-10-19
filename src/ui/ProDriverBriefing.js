@@ -553,7 +553,7 @@ function draw(s,state,options){
             66/Math.max(1,source.height)));
         }
         const accent='#'+entry.accent.toString(16).padStart(6,'0');
-        dynamic(s.add.text(541,entry.y-49,
+        dynamic(s.add.text(432,entry.y-49,
           entry.title+'  //  '+(unlocked?option?.label||'BALANCED':'LOCKED'),{
             fontFamily:PIXEL,fontSize:'13px',color:unlocked?accent:'#71808a',
           }).setDepth(275));
