@@ -640,9 +640,8 @@ export function forfeitCrewSeries(source,eventId) {
   c.lastCrewEvent={...clone(t),forfeited:true};
   c.playerTeam.entered++;
   c.playerTeam.losses++;
-  // Forfeiting isn't a completed competition for the two-events-after-advice
-  // rule. Counteract eventTick advancement when advice is still cooling down.
-  if(c.crewAdviceCooldownUntil>c.eventTick)c.crewAdviceCooldownUntil++;
+  // A forfeited paid crew competition still advances the shared pro event
+  // counter once. This counts toward Sayaka's current-event + two-more rule.
   let next;
   if(t.openCircuit)next=finishOpenCircuitEvent(c,summary);
   else {
