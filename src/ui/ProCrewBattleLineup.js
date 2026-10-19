@@ -213,7 +213,7 @@ function draw(s,opts){
   const eventTitle=String(e.trophyId||!e.short?e.label:
     shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
-  meetText(60,137,'heat '+(heatIndex+1)+' of 3',19,'#aeb6c2');
+  meetText(60,137,'heat '+(heatIndex+1)+' of 3',18,'#aeb6c2');
   // Official details now live exclusively in Hiroshi's toggleable briefing.
   // No grey rule text competes with the CREW TECHNICAL / CREW RELAY heading.
   const heatRule=f.heatRule||f.raceRule||
