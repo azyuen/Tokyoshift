@@ -3344,9 +3344,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       title:'EVENT BRIEFING // '+String(event.label||'PRO EVENT'),
       message:'FORMAT  '+String(event.seasonRules?.format||event.format||
         (event.fourWide?'FOUR-WIDE':'PRO CIRCUIT')).replaceAll('_',' ')+
-        '\\nENTRY  '+money(fee)+
-        '\\nRULES  '+(event.maxPowerKW?event.maxPowerKW+' KW MAX // ':'')+rule+
-        '\\n\\nProceed to enter this competition. Your entry is charged once.',
+        '\nENTRY  '+money(fee)+
+        '\nRULES  '+(event.maxPowerKW?event.maxPowerKW+' KW MAX // ':'')+rule+
+        '\n\nProceed to enter this competition. Your entry is charged once.',
       confirmLabel:'GO TO GRID // '+money(fee),
       onConfirm:onGrid,
     });
