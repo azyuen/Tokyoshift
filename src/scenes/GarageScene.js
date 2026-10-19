@@ -43,7 +43,7 @@ import {
   restoreStoredKitParts,
   STORE_KIT_REMOVE_FEE,
   STORE_KIT_RESTORE_FEE,
-} from '../data/partUninstall.js?v=20261016-r541';
+} from '../data/partUninstall.js?v=20261020-r619';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261018-r588';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
@@ -605,6 +605,8 @@ export default class GarageScene extends Phaser.Scene {
     this.buildGarageStrip();
     if (this.crewMode) {
       this.buildCrewSpaceNavigation();
+      this.buildStoreRestoreKitButton();
+      this.refreshCrewSpaceNavigationState();
     } else {
       this.buildStoreRestoreKitButton();
       this.buildWorkshopJumpButton();
@@ -1993,8 +1995,11 @@ export default class GarageScene extends Phaser.Scene {
     const eligible = warehouse && Boolean(this.selectedCarId) &&
       !this.isSelectedCarTuningLocked() &&
       !this.engineMode && !this.secondaryMode && !this.chassisMode;
+    const validCrewCar = !this.crewMode ||
+      (cars[this.selectedCarId]?.crewLoan &&
+        this.getCurrentWorkshopCars().includes(this.selectedCarId));
     const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
-    const enabled = eligible && (stored ||
+    const enabled = eligible && validCrewCar && (stored ||
       listStorableKitParts((this.registry.get('carStates') || {})[this.selectedCarId] || {}).length > 0);
     this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
     if (enabled) {
@@ -2288,10 +2293,13 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   buildStoreRestoreKitButton() {
+    // Crew Space has its own three stacked navigation actions at 664/718/770.
+    // Put the service above them; Warehouse HQ retains its original slot.
+    const y = this.crewMode ? 608 : 662;
     this.moveCarButton = this.add.rectangle(
-      SIDE.x + SIDE.w / 2, 662, SIDE.w - 32, 42, 0x102138, 1
+      SIDE.x + SIDE.w / 2, y, SIDE.w - 32, 42, 0x102138, 1
     ).setStrokeStyle(2, 0x55b8ff, 1).setDepth(40);
-    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, 662, 'UNINSTALL / RESTORE PARTS', {
+    this.moveCarLabel = this.add.text(SIDE.x + SIDE.w / 2, y, 'UNINSTALL / RESTORE PARTS', {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#eef8ff',
     }).setOrigin(0.5).setDepth(41);
     this.moveCarButton.on('pointerdown', () => this.showStoreRestoreKitPopup());
@@ -2299,8 +2307,10 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   showStoreRestoreKitPopup() {
-    if (this.crewMode || this.getActiveWorkshop().tier !== 2 ||
+    if (this.getActiveWorkshop().tier !== 2 ||
         !this.selectedCarId || this.isSelectedCarTuningLocked() ||
+        (this.crewMode && (!cars[this.selectedCarId]?.crewLoan ||
+          !this.getCurrentWorkshopCars().includes(this.selectedCarId))) ||
         this.engineMode || this.secondaryMode || this.chassisMode) return;
     const carId = this.selectedCarId;
     const initial = (this.registry.get('carStates') || {})[carId] || {};
@@ -2327,10 +2337,13 @@ export default class GarageScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '9px', color: '#9fc7db',
     }).setOrigin(1, 0).setDepth(depth + 3));
     const explanation = restoring
-      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥100,000.\n' +
+      ? 'DAICHI HAS YOUR PARTS IN STORAGE. RESTORATION COSTS ¥' +
+        STORE_KIT_RESTORE_FEE.toLocaleString('en-US') + '.\n' +
         'BETTER PARTS ALREADY INSTALLED WILL BE KEPT. THE KIT IS CONSUMED.'
       : 'DAICHI CAN UNINSTALL SOME PARTS AND STORE THEM FOR LATER.\n' +
-        'LABOUR: ¥50,000 TO UNINSTALL, ¥100,000 TO RESTORE LATER.\n' +
+        'LABOUR: ¥' + STORE_KIT_REMOVE_FEE.toLocaleString('en-US') +
+        ' TO UNINSTALL, ¥' + STORE_KIT_RESTORE_FEE.toLocaleString('en-US') +
+        ' TO RESTORE LATER.\n' +
         'ONLY ONE KIT SLOT PER CAR. SELECT THE PARTS TO UNINSTALL.';
     add(this.add.text(350, 169, explanation, {
       fontFamily: BODY_FONT, fontSize: '14px', color: '#b8cbd7',
@@ -2400,7 +2413,9 @@ export default class GarageScene extends Phaser.Scene {
     cancel.on('pointerdown', close);
     const commitKit = () => {
       if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
-          this.isSelectedCarTuningLocked()) { close(); return; }
+          this.isSelectedCarTuningLocked() ||
+          (this.crewMode && (!cars[carId]?.crewLoan ||
+            !this.getCurrentWorkshopCars().includes(carId)))) { close(); return; }
       const states = { ...(this.registry.get('carStates') || {}) };
       const live = states[carId] || {};
       const cash = Number(this.registry.get('cash') || 0);
@@ -2888,6 +2903,11 @@ export default class GarageScene extends Phaser.Scene {
       this.engineMode || this.secondaryMode || this.chassisMode
     );
     const overview = !this.crewFocusedCharacterId;
+    const kitVisible = !overview && hasCrewCar && !tuningLocked;
+    this.moveCarButton?.setVisible(kitVisible);
+    this.moveCarLabel?.setVisible(kitVisible);
+    if (kitVisible) this.updateMoveCarButtonState();
+    else if (this.moveCarButton?.input) this.moveCarButton.disableInteractive();
     const navX = SIDE.x + SIDE.w / 2;
 
     [
