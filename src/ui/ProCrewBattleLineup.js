@@ -264,19 +264,16 @@ function draw(s,opts){
   const crewPages=[
     {sections:[
       {label:'FORMAT',text:crewFormatText+' · '+fixtureText,large:true},
-      {label:'HOW IT WORKS',text:crewExplainer.work},
-      {label:'HOW TO WIN',text:crewExplainer.win},
+      {label:'HOW IT WORKS',paragraphs:[crewExplainer.work,crewExplainer.win]},
     ]},
     {rows:[
       ['OPPOSING CREW',String(f.opponent?.name||'OPPOSING CREW').toUpperCase()],
-      ['NEXT HEAT',(heatIndex+1)+' OF 3'],
       ['NEXT CAR',String(cars[nextOpponent?.carId]?.shortName||nextOpponent?.carId||'TBA').toUpperCase()],
       ['RACE',heatRule],
       ['CAR RULE',crewRule],
       ['POWER LIMIT','NO GENERAL CAP'],
       ['NOS','ALLOWED'],
       ['ENTRY FEE','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
-      ['LINEUP',locked?'LOCKED':'SELECT THREE DRIVERS'],
     ]},
   ];
   const toggleSteward=()=>{
