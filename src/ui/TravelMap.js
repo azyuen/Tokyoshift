@@ -180,9 +180,10 @@ export function showTravelMap(scene, options = {}) {
     if (!crewTravelMode || !location) return false;
 
     const target = getTravelLocation(location.id);
-    if (location.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
-      return true;
-    }
+    if (location.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') return true;
+    // Allow crew drivers to visit Oshiage School and Custom Works, but not
+    // the standalone Elite/Skytree competitive event.
+    if (target?.regionId === 'OSHIAGE' && location.id === 'oshiageSkytreeMeet') return true;
 
     // Crew Space is physically attached to Warehouse HQ. The crew map can
     // launch street travel, but it cannot move the player between Shinonome
@@ -196,8 +197,9 @@ export function showTravelMap(scene, options = {}) {
 
   const crewBlockedLabel = location => {
     const target = location ? getTravelLocation(location.id) : null;
-    if (location?.centralTokyoUnlock || ['CENTRAL_TOKYO', 'OSHIAGE'].includes(target?.regionId)) {
-      return 'CREW CAR // SPECIAL DISTRICTS UNAVAILABLE';
+    if (location?.id === 'oshiageSkytreeMeet') return 'CREW CAR // ELITE SHOWDOWN UNAVAILABLE';
+    if (location?.centralTokyoUnlock || target?.regionId === 'CENTRAL_TOKYO') {
+      return 'CREW CAR // CENTRAL TOKYO UNAVAILABLE';
     }
     return 'CREW CAR // RETURN TO WORKSHOP TO CHANGE GARAGE';
   };
@@ -1094,7 +1096,7 @@ export function showTravelMap(scene, options = {}) {
       selectedLocationId = location?.id || null;
     }
 
-    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(selectedRegionId);
+    const crewRegionBlocked = crewTravelMode && selectedRegionId === 'CENTRAL_TOKYO';
     const regionOpen = openingTrainMode || (!crewRegionBlocked && (
       selectedRegionId === currentRegionId ||
       isTravelRegionUnlocked(scene.registry, selectedRegionId)
@@ -1286,7 +1288,7 @@ export function showTravelMap(scene, options = {}) {
     const pt = mapPoint(region);
     const home = regionId === HOME_REGION_ID;
     const centralTokyo = regionId === 'CENTRAL_TOKYO';
-    const crewRegionBlocked = crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId);
+    const crewRegionBlocked = crewTravelMode && regionId === 'CENTRAL_TOKYO';
     const unlocked = openingTrainMode || chapter08GinzaMode || (!crewRegionBlocked && (
       regionId === currentRegionId || isTravelRegionUnlocked(scene.registry, regionId)
     ));
@@ -1346,7 +1348,7 @@ export function showTravelMap(scene, options = {}) {
     ).setDepth(depth + 8));
 
     hit.on('pointerdown', () => {
-      if (crewTravelMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(regionId)) return;
+      if (crewTravelMode && regionId === 'CENTRAL_TOKYO') return;
       if (chapter08GinzaMode && regionId !== 'CENTRAL_TOKYO') return;
       selectedRegionId = regionId;
 
