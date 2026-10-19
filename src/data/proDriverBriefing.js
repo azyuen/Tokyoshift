@@ -165,3 +165,16 @@ export function forfeitOpenDriverTransaction(rawCircuit = {}, state = {}, carSta
   if(restored)changes.carStates=restored;
   return {changes};
 }
+
+// Stable per-entrant presentation: each ordinary Open Circuit professional
+// receives one of four helmeted house-driver portraits. These are cosmetic;
+// known regional MAIN rivals retain their authored identity and character art.
+export function getProDriverHelmetIndex(state = {}, round = {}) {
+  const seed=String(state.proSeasonId||state.eventId||'open')+'|'+
+    String(state.roundIndex??0)+'|'+String(round.characterId||round.opponentName||'npc');
+  let hash=2166136261;
+  for(let i=0;i<seed.length;i++) {
+    hash=Math.imul(hash^seed.charCodeAt(i),16777619);
+  }
+  return (hash>>>0)%4+1;
+}
