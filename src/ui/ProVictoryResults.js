@@ -74,19 +74,11 @@ export function showProVictoryResults(s,options={}){
   const crew=options.kind==='crew',winner=options.winner!==false;
   const cast=resultsCast(s,options);
   const carIds=resultCars(s,options);
-  const sprites=cast.map(id=>characterVisual(id,winner?'win':'loss'));
-  const missing=!s.textures.exists(BG_KEY)||
-    sprites.some(v=>v?.key&&!s.textures.exists(v.key));
-  const states=s.registry.get('carStates')||{};
   const carMap=Object.fromEntries(carIds.map(id=>[id,cars[id]]));
-  // Car sprites are also asynchronously loaded when the awards page is
-  // reached directly from a finished crew heat or after a reload.
-  const missingCar=carIds.some(id=>{
-    const v=cars[id]?.visual;
-    return v&&!s.textures.exists(v.bodyKey||v.spriteKey||'');
-  });
-  if(missing||missingCar){
-    if(s._proVictoryLoading)return;
+  if(s._proVictoryLoading)return;
+  const queued=queueProVictoryAssets(s,cast,winner?'win':'loss',carIds);
+  if(queued>0){
+    // A crew finish can enter the screen from a saved fixture after reload.
     s._proVictoryLoading=true;
     const bg=s.add.rectangle(W/2,H/2,W,H,0x0b1320,.98).setDepth(300).setInteractive();
     const title=s.add.text(W/2,H/2,'PREPARING EVENT RESULTS',{
@@ -101,14 +93,6 @@ export function showProVictoryResults(s,options={}){
     const stopped=()=>{s.load.off('complete',loaded);cleanup();};
     s.events.once('shutdown',stopped);
     s.load.once('complete',loaded);
-    const queued=queueProVictoryAssets(s,cast,winner?'win':'loss',carIds);
-    if(!queued){ // Invalid optional cars must never cause an infinite loader.
-      s.load.off('complete',loaded);
-      s.events.off('shutdown',stopped);
-      cleanup();
-      drawResults(s,options,cast,carMap);
-      return;
-    }
     s.load.start();
     return;
   }
