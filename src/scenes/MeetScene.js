@@ -137,10 +137,10 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261020-r618';
+} from '../data/crewSystem.js?v=20261020-r619';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
-import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
+import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261020-r619';
 import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261016-r550';
 import { getRegionalChallengeReturnLines } from '../data/regionalChallengeReturnQuotes.js?v=20261016-r550';
 import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261016-street-showdown-template';
@@ -577,6 +577,13 @@ export default class MeetScene extends Phaser.Scene {
     this.buildMeetProgressionButtons();
     this.rollOffers({ resetTimer: false });
 
+    const regulationError = this.registry.get('crewBattleValidationError');
+    if (regulationError) {
+      this.registry.set('crewBattleValidationError', null);
+      saveSessionState(this.registry);
+      this.time.delayedCall(200, () => this.showCrewBattleRuleError(regulationError));
+    }
+
     const pendingCrewJoinShown = this.maybeShowPendingCrewJoinDecision();
     const pendingRegionalChallengeShown = pendingCrewJoinShown
       ? false : this.maybeShowPendingRegionalChallengeResult();
@@ -649,6 +656,23 @@ export default class MeetScene extends Phaser.Scene {
     });
 
     finishSceneLoading('READY');
+  }
+
+  showCrewBattleRuleError(reason) {
+    const objects = [];
+    const depth = 950;
+    objects.push(this.add.rectangle(780, 392, 800, 130, 0x180e18, 0.98)
+      .setStrokeStyle(2, 0xff8a9a).setDepth(depth).setInteractive());
+    objects.push(this.add.text(780, 366, 'CREW RACE BLOCKED // REGULATIONS', {
+      fontFamily: PIXEL_FONT, fontSize: '12px', color: '#ffe1e5',
+    }).setOrigin(0.5).setDepth(depth + 1));
+    objects.push(this.add.text(780, 413, String(reason), {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#ffffff',
+      align: 'center', wordWrap: { width: 750 },
+    }).setOrigin(0.5).setDepth(depth + 1));
+    const close = () => objects.forEach(obj => obj?.active && obj.destroy());
+    objects[0].on('pointerdown', close);
+    this.time.delayedCall(6000, close);
   }
 
   isCrewTestDriveMode() {
