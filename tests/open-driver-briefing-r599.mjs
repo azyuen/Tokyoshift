@@ -68,6 +68,6 @@ test('layout matches wide rego room and displays single-event briefing, advice a
   assert.match(ui,/options\.onForfeit/);
   assert.match(ui,/options\.proAccess/);
   assert.match(scene,/forfeitOpenDriverTransaction/);
-  assert.match(scene,/getVehiclePerformance\(getBaseCarId\(carId\),state\)/);
+  assert.match(scene,/getVehiclePerformance\(getBaseCarId\(carId\),carState\)/);
   assert.match(core,/cars\[carId\] \|\| cars\[getBaseCarId\(carId\)\]/);
 });
