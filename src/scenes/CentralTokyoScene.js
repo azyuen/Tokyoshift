@@ -1,7 +1,7 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r602';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction } from '../data/proDriverBriefing.js?v=20261019-r602';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r602';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r602';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261019-r602';
@@ -3194,8 +3194,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
       (selectedFourWide ? seasonRules.format === 'FOUR_WIDE' : ['KNOCKOUT','TIME_ATTACK','CONSISTENCY'].includes(seasonRules.format));
     const seasonDrivetrainOk = !seasonRules?.drivetrain ||
       proDriveClass(getCarMagazineMeta(build?.carId)?.drivetrain) === proDriveClass(seasonRules.drivetrain);
-    const passesPower = selectedFourWide || Boolean(build) && (!Number.isFinite(event.maxPowerKW) || power <= event.maxPowerKW);
-    const passesNos = selectedFourWide || Boolean(build) && (!event.noNos || !build.nosInstalled);
+    // For normal Open Circuit individual series, NOS and excessive removable
+    // power belong to Daichi's pre-payment scrutineering, not registration.
+    const prepareBeforePay=usesPrepaidDriverBriefing(event);
+    const passesPower = selectedFourWide || prepareBeforePay || Boolean(build) && (!Number.isFinite(event.maxPowerKW) || power <= event.maxPowerKW);
+    const passesNos = selectedFourWide || prepareBeforePay || Boolean(build) && (!event.noNos || !build.nosInstalled);
     const owned = this.registry.get('ownedCarIds') || [];
     const activeCupHere = selectedFourWide && activeCup?.eventId === FOUR_WIDE_CUP.id &&
       Boolean(getPlayerProHeat(activeCup));
@@ -3305,6 +3308,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !seasonDrivetrainOk ? 'DRIVETRAIN RESTRICTION'
         : !seasonPowerOk ? 'SEASON POWER LIMIT // ' + seasonRules.maxPowerKW + ' KW'
         : !seasonNosOk ? 'NOS PROHIBITED BY SEASON RULES'
+        : prepareBeforePay && (Number.isFinite(event.maxPowerKW)&&power>event.maxPowerKW || event.noNos&&build?.nosInstalled)
+          ? 'SETUP REQUIRED // DAICHI WILL PREPARE CAR'
         : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
         : !passesNos ? 'REMOVE NOS'
         : cash < event.entryFee ? 'INSUFFICIENT CASH'
@@ -3313,7 +3318,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const actionText = canResume
       ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
-      : canEnter ? proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
+      : canEnter ? prepareBeforePay?'OPEN BRIEFING // NO PAYMENT YET':proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
     drawProEventSidebarEntry(this,SIDE,actionText,()=>{
       if (activeTimedHere) this.enterProfessionalTimedEvent(event);
       else if (activeCupHere) this.enterFourWideCup();
@@ -3493,8 +3498,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     if (!build || !selectedBuild || build.carId !== selectedBuild.carId || !ownedCars.includes(build.carId) || cash < event.entryFee) return;
     // Always use current saved tuning, never the pre-cutscene build snapshot.
     build = selectedBuild;
-    if (Number.isFinite(event.maxPowerKW) && Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
-    if (event.noNos && build.nosInstalled) return;
+    const prepareBeforePay=usesPrepaidDriverBriefing(event);
+    if(!prepareBeforePay && Number.isFinite(event.maxPowerKW) && Number(build.car?.powerKW || 0) > event.maxPowerKW) return;
+    if(!prepareBeforePay && event.noNos && build.nosInstalled) return;
     // Revalidate the real card when paying the fee: no stale UI can bypass
     // registered-season restrictions or an active minor-trophy cooldown.
     const openCircuit=isOpenCircuitAvailable(pro);
