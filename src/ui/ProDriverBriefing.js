@@ -1,4 +1,4 @@
-// R601 — Open Circuit paddock polish: Daichi, car, player, Sayaka, Hiroshi.
+// R602 — Open Circuit briefing visual refinement and shared pro advice cooldown.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -12,7 +12,7 @@ import { normaliseStage3Calibration, getStage3CalibrationEligibility,
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r601';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r602';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -195,18 +195,19 @@ function draw(s,state,options){
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
-  // R601: 30% larger and staged higher/left; still the owned car and paint.
-  safeCarPreview(state.playerCarId,590,531,620,207,carState,true);
+  // R602: increase the R601 owned-car presentation a further 20%, shift
+  // modestly up/right, preserve its exact paint, wheel and saved tuning state.
+  safeCarPreview(state.playerCarId,631,510,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
   // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
-    {key:'proDriverDaichi',x:169,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
+    {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:null},
     {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
-    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:()=>handleSayaka()},
-    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:()=>toggleDialogue('hiroshi')},
+    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:null},
+    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:null},
   ];
   for(const p of characterPlaces){
     if(!p.key||!s.textures.exists(p.key))continue;
@@ -217,7 +218,7 @@ function draw(s,state,options){
     add(s.add.ellipse(p.x,p.feet-6,p.maxWidth*.84,22,0,.27).setDepth(209));
     const sprite=add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
       .setScale(scale).setFlipX(Boolean(p.flip)).setDepth(214));
-    if(p.onTap)sprite.setInteractive({useHandCursor:true}).on('pointerdown',p.onTap);
+    // The workshop-style glowing buttons own all staff interactions.
   }
 
   // Same Open Circuit heading as R599. Hiroshi now owns all race rule details.
@@ -226,49 +227,63 @@ function draw(s,state,options){
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
 
-  // Wider than the old single-race card's pre-R600 version, but slimmer
-  // horizontally than R600. Keep the main player car completely in-world.
-  poly(52,643,730,164,0x071728,CYAN,219);
+  // Compact opponent panel. The nested portrait parallelogram uses the
+  // identical slope as the outer card and a dark, professional black outline.
+  poly(52,643,654,164,0x071728,CYAN,219);
   display(89,652,'NEXT OPPONENT '+stageNo+'/'+stageTotal,24,'#35d6ff');
-  const px=146,py=742,pw=112,ph=102;
-  rect(px,py,pw+4,ph+4,0x123246,0x316580,.75,220);
+  const frameX=74,frameY=694,frameW=129,frameH=106,skew=16;
+  const framePoints=[
+    {x:frameX+skew,y:frameY},{x:frameX+frameW+skew,y:frameY},
+    {x:frameX+frameW-skew,y:frameY+frameH},
+    {x:frameX-skew,y:frameY+frameH},
+  ];
+  const border=add(s.add.graphics().setDepth(220));
+  border.fillStyle(0x165578,.87);border.fillPoints(framePoints,true);
+  border.lineStyle(4,0x050a10,1);border.strokePoints(framePoints,true);
+  // Both generic and named rival artwork are cropped by the SAME frame.
+  // Enlarging their upper body keeps the helmet, face and chest prominent.
+  const clipPortrait=image=>{
+    const shape=s.make.graphics({add:false});
+    shape.fillStyle(0xffffff,1);shape.fillPoints(framePoints,true);
+    image.setMask(shape.createGeometryMask());
+    add({destroy:()=>shape.destroy()});
+  };
+  const px=frameX+frameW/2,py=frameY+frameH/2;
   const isMainRival=Boolean(round.mainRivalTier||rival.mainRival);
   const helmetKey='proDriverHelmet'+getProDriverHelmetIndex(state,round);
   if(!isMainRival&&s.textures.exists(helmetKey)){
-    // The four helmeted Central driver sprites are full-length artwork.
-    // Frame the upper body/head with a geometrical crop, not a stretched image.
     const source=s.textures.get(helmetKey).getSourceImage();
-    const scale=Math.max(pw/Math.max(1,source.width),ph/Math.max(1,source.height));
+    const scale=Math.max(frameW*1.6/Math.max(1,source.width),
+      frameH*2.2/Math.max(1,source.height));
     s.textures.get(helmetKey).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    const profile=add(s.add.image(px,py-ph/2,helmetKey)
-      .setOrigin(.5,0).setScale(scale).setDepth(226));
-    const shape=s.make.graphics({add:false});
-    shape.fillStyle(0xffffff,1);
-    shape.fillRect(px-pw/2,py-ph/2,pw,ph);
-    profile.setMask(shape.createGeometryMask());
-    add({destroy:()=>shape.destroy()});
+    const profile=add(s.add.image(px,frameY-13,helmetKey)
+      .setOrigin(.5,0).setScale(scale).setDepth(225));
+    clipPortrait(profile);
   }else{
     const portrait=createCharacterProfile(s,{
-      characterId:round.characterId,pose:'idle',x:px,y:py,
-      frameWidth:pw,frameHeight:ph,side:'center',depth:226,mask:true,
+      characterId:round.characterId,pose:'idle',x:px,y:py-6,
+      frameWidth:frameW*1.55,frameHeight:frameH*1.5,
+      side:'center',depth:225,mask:false,
       playerCharacterId:playerId,rivalContext:true,
     });
-    if(portrait)add(portrait);
-    else text(px,py-7,'PRO\\nDRIVER',12,'#b8d7e7',true,226).setOrigin(.5);
+    if(portrait?.image){add(portrait);clipPortrait(portrait.image);}
+    else text(px,py,'PRO DRIVER',11,'#b8d7e7',true,226).setOrigin(.5);
   }
   const roster=Object.values(circuit.drivers||{}).find(d=>d.characterId===round.characterId);
   const rivalName=String(round.opponentName||rival.name||roster?.name||
     round.characterId||'PRO DRIVER').toUpperCase();
-  fit(text(220,697,rivalName,19,'#ffffff'),250);
-  fit(text(220,722,String(oppCar.name||round.carId).toUpperCase(),15,'#7fe0f1'),270);
-  text(220,748,'POWER',10,'#b1cddb',true);
-  text(319,744,Math.round(opponentPower)+' KW',16);
-  text(220,770,'TORQUE',10,'#b1cddb',true);
-  text(319,766,Math.round(opponentTorque)+' NM',16);
-  text(220,792,'DRIVE',10,'#b1cddb',true);
-  text(319,788,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
-    oppCar.drivetrain),16);
-  safeCarPreview(round.carId,629,736,226,225,round.opponentBuildState||{});
+  // The driver name aligns with the portrait's TOP horizontal, not its centre.
+  fit(text(231,693,rivalName,18,'#ffffff'),239);
+  fit(text(231,717,String(oppCar.name||round.carId).toUpperCase(),14,'#7fe0f1'),247);
+  text(231,742,'POWER',10,'#b1cddb',true);
+  text(326,739,Math.round(opponentPower)+' KW',15);
+  text(231,762,'TORQUE',10,'#b1cddb',true);
+  text(326,759,Math.round(opponentTorque)+' NM',15);
+  text(231,784,'DRIVE',10,'#b1cddb',true);
+  text(326,780,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
+    oppCar.drivetrain),15);
+  // Approximately a third of a preview car-length left and slightly higher.
+  safeCarPreview(round.carId,545,722,211,225,round.opponentBuildState||{});
 
   // Translucent breathing hotspots: identical alpha/timing language to
   // Warehouse HQ's Office / Crew / Dyno hotspots, not filled menu buttons.
@@ -302,7 +317,7 @@ function draw(s,state,options){
     return glow;
   };
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
-  workshopHotspot(166,623,229,44,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(190,611,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.available?'ASK FOR ADVICE':'ADVICE ON COOLDOWN';
   workshopHotspot(1111,637,225,44,adviceLabel,()=>handleSayaka(),{
@@ -340,16 +355,22 @@ function draw(s,state,options){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
-      // After swapping staff, the briefing's point faces Hiroshi on the RIGHT.
-      const x=525,y=137,w=646,h=268,edge=x+w,tipX=edge+59,tipY=y+80;
-      const pts=[{x,y},{x:edge,y},{x:edge,y:y+52},
-        {x:tipX,y:tipY},{x:edge,y:y+111},
-        {x:edge,y:y+h},{x,y:y+h}];
+      // Top-right official steward briefing: a small equilateral triangle
+      // projects from the BOTTOM edge directly above Hiroshi's head.
+      const x=850,y=24,w=674,h=222,edge=x+w,baseCenter=1402;
+      const side=36,half=side/2,triangleHeight=Math.sqrt(3)*side/2;
+      const pts=[
+        {x,y},{x:edge,y},{x:edge,y:y+h},
+        {x:baseCenter+half,y:y+h},
+        {x:baseCenter,y:y+h+triangleHeight},
+        {x:baseCenter-half,y:y+h},
+        {x,y:y+h},
+      ];
       const panel=dialogueAdd(s.add.graphics().setDepth(235));
       panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
       panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
-      bubbleText(x+24,y+12,'HIROSHI // RACE BRIEFING',17,'#53ddff',true);
-      dialogueAdd(s.add.rectangle(x+w/2,y+49,w-44,1,0x3c7e98,.75).setDepth(237));
+      bubbleText(x+22,y+11,'HIROSHI // RACE BRIEFING',15,'#53ddff',true);
+      dialogueAdd(s.add.rectangle(x+w/2,y+43,w-42,1,0x3c7e98,.75).setDepth(237));
       const details=[
         ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
         ['RACE','1/4 MI // STANDING START'],
@@ -360,33 +381,31 @@ function draw(s,state,options){
         ['STATUS',eligibility.eligible?'ELIGIBLE':eligibility.problems.join(' / ')],
       ];
       details.forEach(([label,value],i)=>{
-        const ty=y+61+i*24;
-        bubbleText(x+24,ty,label,11,'#a5d4e6',true);
-        const v=bubbleText(x+214,ty-3,value,16,
+        const ty=y+52+i*20;
+        bubbleText(x+24,ty,label,10,'#a5d4e6',true);
+        const v=bubbleText(x+215,ty-2,value,14,
           i===7?(eligibility.eligible?'#81efc4':'#ffb6ba'):'#f0f7fd');
-        fit(v,w-238);
+        fit(v,w-240);
       });
-      dialogueAdd(s.add.rectangle(x+w-15,y+16,26,26,0x14364a,1)
-        .setDepth(239).setInteractive({useHandCursor:true})
-        .on('pointerdown',clearDialogue));
-      bubbleText(x+w-22,y+6,'×',22,'#e6f5ff').setDepth(240);
+      // Closing is intentionally ONLY via the glowing Hiroshi hotspot.
     }else if(which==='sayaka'&&state.briefingAdviceText){
-      const x=557,y=232,w=482,h=154,edge=x+w,half=36,mid=y+h/2;
+      // Lower than the player's face; the small equilateral speech point
+      // sits in the UPPER half of the right edge and aims toward Sayaka.
+      const x=558,y=330,w=470,h=146,edge=x+w;
+      const triangleBase=36,half=triangleBase/2,tipX=edge+Math.sqrt(3)*triangleBase/2;
+      const mid=y+41;
       const pts=[{x,y},{x:edge,y},{x:edge,y:mid-half},
-        {x:edge+Math.sqrt(3)*half,y:mid},
-        {x:edge,y:mid+half},{x:edge,y:y+h},{x,y:y+h}];
+        {x:tipX,y:mid},{x:edge,y:mid+half},
+        {x:edge,y:y+h},{x,y:y+h}];
       const bubble=dialogueAdd(s.add.graphics().setDepth(235));
       bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(pts,true);
       bubble.lineStyle(5,0x111111,1);bubble.strokePoints(pts,true);
-      bubbleText(x+18,y+12,'Sayaka',16,'#252227').setFontStyle('700');
-      const spoken=bubbleText(x+18,y+40,state.briefingAdviceText,
+      bubbleText(x+18,y+11,'Sayaka',16,'#252227').setFontStyle('700');
+      const spoken=bubbleText(x+18,y+38,state.briefingAdviceText,
         16,'#111111').setWordWrapWidth(w-37);
       spoken.setLineSpacing(1);
-      if(spoken.height>h-52)spoken.setScale((h-52)/spoken.height);
-      dialogueAdd(s.add.rectangle(x+w-15,y+14,30,26,0xffffff,0.001)
-        .setDepth(241).setInteractive({useHandCursor:true})
-        .on('pointerdown',clearDialogue));
-      bubbleText(x+w-24,y+5,'×',21,'#252227').setDepth(242);
+      if(spoken.height>h-49)spoken.setScale((h-49)/spoken.height);
+      // Closing is intentionally ONLY via the glowing Sayaka hotspot.
     }
   }
   function handleSayaka(){

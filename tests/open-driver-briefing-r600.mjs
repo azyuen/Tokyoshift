@@ -16,14 +16,14 @@ test('R600 paddock uses real Hiroshi and the selected playable sprite',()=>{
   assert.match(ui,/key:'proDriverHiroshi',x:1402/);
   assert.match(ui,/key:playerAsset\?\.key,x:888/);
   assert.match(ui,/key:'proDriverSayaka',x:1110/);
-  assert.match(ui,/key:'proDriverDaichi',x:169/);
+  assert.match(ui,/key:'proDriverDaichi',x:193/);
   assert.match(ui,/regoroom_/);
   assert.doesNotMatch(ui,/display\([^\n]*'YOUR CAR'/);
   assert.doesNotMatch(ui,/poly\(46,436,389,357/);
 });
 
 test('R600 real owned car is in the room, with no invented painted preview or box',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,590,531,620,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,631,510,744,207,carState,true\)/);
   assert.match(ui,/getCarPaintColor\(previewState\)/);
   assert.match(ui,/createCarDisplay\(car,x,y,w,depth/);
   assert.match(ui,/getBaseCarId\(state\.playerCarId\)/);
@@ -32,17 +32,17 @@ test('R600 real owned car is in the room, with no invented painted preview or bo
 });
 
 test('R600 opponent panel is wider, shorter and supports real portraits plus safe NPC placeholder',()=>{
-  assert.match(ui,/poly\(52,643,730,164/);
+  assert.match(ui,/poly\(52,643,654,164/);
   assert.match(ui,/createCharacterProfile\(s,\{/);
   assert.match(ui,/rivalContext:true/);
   assert.match(ui,/proDriverHelmet/);
-  assert.match(ui,/safeCarPreview\(round\.carId,629,736,226/);
+  assert.match(ui,/safeCarPreview\(round\.carId,545,722,211/);
   assert.match(ui,/opponentTorque/);
   assert.match(ui,/NEXT OPPONENT /);
 });
 
 test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
-  assert.match(ui,/onTap:\(\)=>toggleDialogue\('hiroshi'\)/);
+  assert.match(ui,/key:'proDriverHiroshi'[^\n]*onTap:null/);
   assert.match(ui,/workshopHotspot\(1390,616,220,44,'RACE BRIEFING'/);
   assert.match(ui,/function toggleDialogue\(which\)/);
   assert.match(ui,/if\(activeDialogue===which\)\{clearDialogue\(\);return;\}/);
