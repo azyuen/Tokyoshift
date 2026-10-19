@@ -87,13 +87,13 @@ export function showCompactProForfeit(s,{title='FORFEIT EVENT?',message='',onCon
     .setDepth(280).setInteractive());
   add(s.add.rectangle(780,420,620,258,0x0b1b2c,.99)
     .setStrokeStyle(2,CYAN).setDepth(281));
-  add(s.add.text(506,319,title,{
-    fontFamily:PIXEL,fontSize:'15px',color:'#ffffff',
-  }).setDepth(282));
-  add(s.add.text(506,371,message,{
-    fontFamily:BODY,fontSize:'19px',fontStyle:'600',color:'#dceaf3',
-    wordWrap:{width:545},lineSpacing:3,
-  }).setDepth(282));
+  add(s.add.text(780,333,title,{
+    fontFamily:PIXEL,fontSize:'14px',color:'#ffffff',align:'center',
+  }).setOrigin(.5).setDepth(282));
+  add(s.add.text(780,406,message,{
+    fontFamily:BODY,fontSize:'15px',fontStyle:'600',color:'#dceaf3',
+    align:'center',wordWrap:{width:540},lineSpacing:4,
+  }).setOrigin(.5).setDepth(282));
   const button=(x,label,action,{danger=false}={})=>{
     const hit=add(s.add.rectangle(x,493,250,46,danger?0x5c2534:0x26313b)
       .setStrokeStyle(2,danger?0xde788a:0x8195a4).setDepth(283)
