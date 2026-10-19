@@ -335,6 +335,10 @@ function draw(s,state,options){
     if(unpaid){close();options.onCancel?.();}
     else openForfeit();
   },{red:!unpaid});
+  if(unpaid){
+    fit(text(1077,724,'ENTRY '+cash(state.entryFee)+'  //  PAY ONLY WHEN YOU PROCEED',11,
+      '#f5e1ad',true),430);
+  }
   btn(1368,779,246,54,'PROCEED TO GRID  >>',()=>{
     if(!eligibility.eligible)return;
     close();options.onRace?.();
