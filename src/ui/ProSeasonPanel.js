@@ -35,7 +35,8 @@ export function drawProEventSidebarTitle(s,side,title) {
   }).setDepth(34));
 }
 export function drawProEventSidebarDetails(s,side,lines) {
-  return s.addContent(s.add.text(side.x+20,side.y+250,lines.join('\n'),{
+  const concise=lines.filter(value=>!/^\\s*(ORIGINAL )?ENTRY\\s+/i.test(String(value)));
+  return s.addContent(s.add.text(side.x+20,side.y+250,concise.join('\n'),{
     fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700',
     color:'#c4bec0',lineSpacing:5,wordWrap:{width:side.w-37},
   }).setDepth(34));
@@ -47,7 +48,7 @@ export function drawProEventSidebarStatus(s,side,label,enabled) {
     color:enabled?'#f1e7e6':'#ea777d',wordWrap:{width:side.w-40},
   }).setDepth(34));
 }
-export const proEventEntryLabel=fee=>'ENTER EVENT // ¥ '+Number(fee||0).toLocaleString('en-US');
+export const proEventEntryLabel=fee=>'ENTER EVENT BRIEFING';
 export function drawProEventSidebarEntry(s,side,label,action,enabled=true) {
   const x=side.x+side.w/2,y=side.y+574,w=side.w-36;
   const bg=s.addContent(s.add.rectangle(x,y,w,40,enabled?0x551d25:0x201d20,1)
@@ -154,7 +155,7 @@ export function drawCrewSidebar(s,event,side) {
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
-    t?'RESUME EVENT':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
+    t?'RESUME EVENT BRIEFING':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
     ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),
     t?!!f:canEnter);
   return true;
