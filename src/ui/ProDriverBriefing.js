@@ -356,15 +356,13 @@ function draw(s,state,options){
         renderStewardBriefing(s,dialogueAdd,details,{anchorX:1402});
       }else{
         const sections=[
-          {label:'FORMAT',text:stageTotal+'-ROUND HEAD-TO-HEAD KNOCKOUT',large:true},
+          {text:stageTotal+'-ROUND HEAD-TO-HEAD KNOCKOUT',large:true},
           {label:'HOW IT WORKS',paragraphs:[
             'Race one opponent at a time over a 1/4-mile standing-start drag. Each victory advances you to the next heat.',
             'Win all '+stageTotal+' heats to take the event. One defeat eliminates you from the knockout.',
           ]},
         ];
         const technical=[
-          ['EVENT',title],
-          ['NEXT OPPONENT',String(round.opponentName||rival.name||'PRO DRIVER').toUpperCase()],
           ['OPPONENT CAR',String(oppCar.name||round.carId).toUpperCase()],
           ['POWER LIMIT',eligibility.rules.maxPowerKW==null?'OPEN':eligibility.rules.maxPowerKW+' KW MAX'],
           ['NOS',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
