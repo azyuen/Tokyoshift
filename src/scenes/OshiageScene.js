@@ -1340,7 +1340,12 @@ export default class OshiageScene extends Phaser.Scene {
         this.pendingPaint = mode === 'custom' && this.customPaintColor != null
           ? this.customPaintColor : current;
       }
-      const paintable = hasLayeredPaintAssets(this, car);
+      // Allow properly recruited crew loans, never Ginza demos or sealed
+      // collector cars, even though those also have an ownedCarIds entry.
+      const paintable = Boolean(hasLayeredPaintAssets(this, car) &&
+        !car.tuningLocked && !state.tuningLocked && !state.collector &&
+        !state.immutable && (!car.crewLoan || this.isCrewCarSelected()) &&
+        (!state.crewLoan || this.isCrewCarSelected()));
       const canBuy = Number(this.registry.get('garageTier') || 0) >= 1;
       // Lower the side-profile car roughly one wheel width inside the bay.
       this.paintObjects = this.drawOwnedCar(
@@ -1520,9 +1525,15 @@ export default class OshiageScene extends Phaser.Scene {
   }
   applyPaint(carId, color, cost) {
     if (this.paintBusy || this.room !== 'paint') return;
+    const { id: selectedId, car } = this.selectedCar();
+    if (selectedId !== carId || !car || !this.isSchoolCarEligible(car, carId) ||
+        car.tuningLocked) return;
     const owned = this.registry.get('ownedCarIds') || [];
     if (!owned.includes(carId)) return;
     const current = (this.registry.get('carStates') || {})[carId] || {};
+    if (current.collector || current.tuningLocked || current.immutable ||
+        (current.crewLoan && !this.isCrewCarSelected()) ||
+        !hasLayeredPaintAssets(this, car)) return;
     const paintColor = normalisePaintColor(color);
     if (getCarPaintColor(current) === paintColor) return;
     if (Number(this.registry.get('garageTier') || 0) < 1) return;
