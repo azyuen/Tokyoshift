@@ -143,6 +143,7 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
   Object.freeze({id:'headers',group:'exhaustNosTuning',label:'HEADERS'}),
   Object.freeze({id:'exhaust',group:'exhaustNosTuning',label:'EXHAUST'}),
   Object.freeze({id:'muffler',group:'exhaustNosTuning',label:'MUFFLER'}),
+  Object.freeze({id:'nosKit',group:'exhaustNosTuning',label:'NOS EQUIPMENT'}),
 ]);
 
 export function removeDriverPowerPart(carState = {}, partId) {
