@@ -7,9 +7,9 @@ const CYAN=0x35d6ff;
 
 // The same subtitle renderer is used in driver and crew briefings.
 // HEAT is the player-facing term; format-specific round/fixture internals stay unchanged.
-export function addProHeatSubtitle(s,add,{heat=1,total=3,x=58,y=146}={}){
+export function addProHeatSubtitle(s,add,{heat=1,total=3,x=58,y=146,size=23}={}){
   return add(s.add.text(x,y,'HEAT '+heat+' OF '+total,{
-    fontFamily:'"Exo 2", sans-serif',fontSize:'23px',
+    fontFamily:'"Exo 2", sans-serif',fontSize:size+'px',
     fontStyle:'italic 900',color:'#c5cbd3',stroke:'#090d16',
     strokeThickness:3,
   }).setDepth(230));

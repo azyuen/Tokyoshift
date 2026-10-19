@@ -47,7 +47,7 @@ test('R596/R597: blue roster borders, red selected states and full shadow-free c
   assert.match(ui,/fontSize:'18px',fontStyle:'normal'/);
   assert.match(ui,/x:1071,y:y\+30,frameWidth:70/);
   assert.match(ui,/const who=text\(1119,y\+1/);
-  assert.match(ui,/createCarDisplay\(car,1414,y\+13,145,253/);
+  assert.match(ui,/createCarDisplay\(car,1414,y\+30,145,253/);
   assert.match(ui,/if\(index===2\)\{part\?\.destroy\?\.\(\);return;\}/);
   assert.doesNotMatch(ui,/const crop=mask\(1268,y-4,204,75\)/,
     'roster cars should not be clipped');

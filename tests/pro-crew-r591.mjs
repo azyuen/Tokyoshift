@@ -182,7 +182,7 @@ test('R594: a broken optional car preview never strands the roster or hides the 
 });
 
 
-test('R597: every roster car displays unmasked, 21px higher, with its ground shadow removed',()=>{
+test('R610: every roster car displays unmasked, vertically centred in its row, with its ground shadow removed',()=>{
   const {scene,nodes}=phaserMock(),created=[];
   scene.createCarDisplay=(car,x,y,width)=>{
     const rear=scene.add.image(x,y,'rear-backing');
@@ -205,7 +205,7 @@ test('R597: every roster car displays unmasked, 21px higher, with its ground sha
   assert.equal(created.length,7,'each of seven drivers has a complete preview');
   created.forEach((part,i)=>{
     assert.equal(part.x,1414);
-    assert.equal(part.y,110+i*83+13,'car raised from previous y+34');
+    assert.equal(part.y,110+i*83+30,'car vertically centred with its 76px selection row');
     assert.equal(part.width,145);
     assert.equal(part.shadow.active,false,'ground ellipse removed');
     assert.equal(part.body.active,true,'complete car is retained');
