@@ -61,7 +61,7 @@ test('R607 dyno toggles have side labels, left headers and unsaved apply highlig
  assert.match(driver,/highlightApplyTune\(\);/);
 });
 test('R607 larger in-world car, fully masked lower portrait and taller Hiroshi',()=>{
- assert.match(driver,/safeCarPreview\(state\.playerCarId,726,474,744,207,carState,true\)/);
+ assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
  assert.match(driver,/s\.add\.image\(px,frameY\+18,helmetKey\)/);
  assert.match(driver,/image\.setMask\(shape\.createGeometryMask\(\)\)/);
  assert.match(driver,/x:px,y:py\+10/);
