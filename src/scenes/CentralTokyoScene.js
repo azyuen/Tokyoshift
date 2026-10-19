@@ -1,5 +1,6 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261020-r613';
+import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261020-r616';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r607';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
@@ -151,6 +152,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       (hasSeenCutscene(this.registry,'chapter08RaceFinished') &&
        !hasSeenCutscene(this.registry,'chapter08Ginza')));
     this.autoOpenProCrewFixture = Boolean(data?.autoOpenProCrewFixture);
+    this.autoShowProVictory = data?.autoShowProVictory || null;
     this.autoOpenProDriverBriefing = Boolean(data?.autoOpenProDriverBriefing);
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
@@ -170,6 +172,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const requested = this.requestedLocationId || CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
     const location = LOCATION_BY_ID[requested] || CENTRAL_TOKYO_LOCATIONS.autoMarket;
     queued += this.queueLocationAssets(location);
+    if(this.autoShowProVictory){
+      queued += queueProVictoryAssets(this,[
+        'sayakaFujieda',this.registry.get('playerCharacterId')||'renMizuno',
+        'daichiSakamoto'],this.autoShowProVictory.winner?'win':'loss');
+    }
     if (this.chapter08Arrival && location.kind === 'showroom') {
       queued += preloadChapter08GinzaAssets(this);
       // The ordinary Ginza location preload already includes its RWB listing.
@@ -371,6 +378,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.drawShell();
     this.renderLocation(this.activeLocationId);
+    if(this.autoShowProVictory){
+      const result=this.autoShowProVictory;
+      this.time.delayedCall(0,()=>{
+        if(this.sys?.isActive?.())showProVictoryResults(this,{
+          ...result,onContinue:()=>this.renderLocation('tokyoDragComplex'),
+        });
+      });
+    }
     // After each professional crew heat, return straight to its SAVED heat
     // preparation, not the generic Drag Complex home screen.
     if (this.autoOpenProCrewFixture && this.registry.get('proCircuit')?.activeCrewEvent) {
