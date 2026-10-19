@@ -13,7 +13,9 @@ const seconds=n=>Number.isFinite(Number(n))&&Number(n)>0?Number(n).toFixed(3)+'s
 const trim=(t,length=34)=>String(t||'').length>length?String(t).slice(0,length-1)+'…':String(t||'');
 
 function visualFor(id,kind){
-  const pose=id==='sayakaFujieda'?'trackHappy':kind==='loss'?'loss':'win';
+  if(!id)return null;
+  const pose=id==='sayakaFujieda'?(kind==='loss'?'trackSerious':'trackHappy'):
+    kind==='loss'?'loss':'win';
   return getCharacterVisualAsset(id,pose)||getCharacterVisualAsset(id,'idle');
 }
 export function queueProVictoryAssets(s,ids,kind='win'){
@@ -47,8 +49,9 @@ export function showProVictoryResults(s,options={}) {
   const crew=options.kind==='crew';
   const winner=options.winner!==false;
   const characterId=s.registry.get('playerCharacterId')||'renMizuno';
-  const ids=(crew?[characterId,...(options.crewIds||[]).slice(0,3)]:
-    ['sayakaFujieda',characterId,'daichiSakamoto']);
+  const roster=(options.crewIds||[]).slice(0,3);
+  const ids=crew?[roster[0],characterId,roster[1],roster[2]]:
+    ['sayakaFujieda',characterId,'daichiSakamoto'];
   const required=ids.map(id=>visualFor(id,winner?'win':'loss')).filter(Boolean);
   const unloaded=required.filter(v=>v.key&&v.path&&!s.textures.exists(v.key));
   if(unloaded.length) {
@@ -164,16 +167,16 @@ export function showProVictoryResults(s,options={}) {
       'EVENT RESULT'),30);
   if(perfect) {
     panel(1425,308,166,58,0x3b2b0e,.90,0xc3a250);
-    label(1425,291,crew?'PERFECT 9/9':'CLEAN SWEEP',20,{color:'#ffdf89'}).setOrigin(.5,0);
+    label(1425,291,crew&&Number(options.fourWidePoints)===9?'PERFECT 9/9':'CLEAN SWEEP',20,{color:'#ffdf89'}).setOrigin(.5,0);
   }
 
-  const rows=heats.length?heats:[{name:'FINAL RESULT',won:winner}];
+  const rows=heats.length?heats.slice(-3):[{name:'FINAL RESULT',won:winner}];
   const rowY=356,step=65;
   rows.slice(0,3).forEach((h,i)=>{
     const y=rowY+i*step,display=heatText(h,i,crew);
     panel(1167,y+26,704,58,0x111723,.98,0x384052);
     add(s.add.rectangle(817,y+26,5,58,display.positive?RED:0x676a78),232);
-    label(838,y+9,'HEAT '+(i+1),19,{color:'#f4eded'});
+    label(838,y+9,'HEAT '+(h?.roundNumber||i+1),19,{color:'#f4eded'});
     label(967,y+10,display.result,18,{color:display.positive?'#ff6478':'#bec4ce'});
     label(1060,y+4,display.name,19,{color:'#dce1e6'});
     label(1060,y+29,display.time,17,{color:'#a9b7c9'});
