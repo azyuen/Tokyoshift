@@ -1,4 +1,4 @@
-// R605 — One-time pay-to-grid and event-wide advice/next-heat briefings.
+// R606 — Daichi car setup now shares the Warehouse Stage III Dyno calibration UI.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -7,7 +7,7 @@ import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../da
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { normaliseStage3Calibration, getStage3CalibrationEligibility,
+import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
 import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r604';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
@@ -38,6 +38,9 @@ function loadAssets(s,state){
     ['proDriverHiroshi','assets/Characters/Central/hiroshi_sato_normal.png'],
     ['proDriverSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
     ['proDriverDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
+    ['tuningPartEcuL3','assets/Tuning/Parts/ecu_l3.png'],
+    ['tuningPartTurboL3','assets/Tuning/Parts/turbo_l3.png'],
+    ['tuningPartGearboxL3','assets/Tuning/Parts/gearbox_l3.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));queued++;
   }
@@ -294,7 +297,7 @@ function draw(s,state,options){
   const workshopHotspot=(x,y,w,h,label,action,{disabled=false}={})=>
     addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
-  workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(190,576,229,44,'CAR SETUP',()=>openTune());
   const firstHeat=stageNo===1;
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.remaining>0?advice.remaining+' EVENT COOLDOWN':
@@ -395,27 +398,29 @@ function draw(s,state,options){
   }
   // Daichi uses the same cyan-border / dark-ink dialogue language as
   // Hiroshi's steward bubble, with room for actual ECU and NOS controls.
+  // Shared Hiroshi-style shape. The left pointer aims back at Daichi;
+  // all live Dyno Stage III controls sit to the RIGHT of his character.
   function mechanicDialogue(title,description=''){
     dismiss();
-    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.44)
+    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.47)
       .setDepth(269).setInteractive());
-    const x=27,y=28,w=772,h=565,anchorX=193,side=36;
+    const x=377,y=46,w=891,h=738,side=36,mid=206;
     const half=side/2,tip=Math.sqrt(3)*side/2;
     const points=[
-      {x,y},{x:x+w,y},{x:x+w,y:y+h},
-      {x:anchorX+half,y:y+h},{x:anchorX,y:y+h+tip},
-      {x:anchorX-half,y:y+h},{x,y:y+h},
+      {x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},
+      {x,y:mid+half},{x:x-tip,y:mid},{x,y:mid-half},
     ];
     const panel=popupAdd(s.add.graphics().setDepth(270));
     panel.fillStyle(0x081a2b,.97);panel.fillPoints(points,true);
     panel.lineStyle(3,CYAN,1);panel.strokePoints(points,true);
-    popupAdd(s.add.text(x+24,y+19,title,{
-      fontFamily:PIXEL,fontSize:'16px',color:'#53ddff',
+    popupAdd(s.add.text(x+25,y+21,title,{
+      fontFamily:PIXEL,fontSize:'17px',color:'#53ddff',
     }).setDepth(274));
-    popupAdd(s.add.rectangle(x+w/2,y+60,w-44,1,0x3c7e98,.75).setDepth(273));
-    if(description)popupAdd(s.add.text(x+24,y+78,description,{
-      fontFamily:BODY,fontSize:'17px',fontStyle:'600',
-      color:'#dceaf3',wordWrap:{width:w-52},
+    popupAdd(s.add.rectangle(x+w/2,y+68,w-48,1,0x3c7e98,.75)
+      .setDepth(273));
+    if(description)popupAdd(s.add.text(x+25,y+89,description,{
+      fontFamily:BODY,fontSize:'18px',fontStyle:'600',
+      color:'#dceaf3',wordWrap:{width:w-58},lineSpacing:4,
     }).setDepth(274));
   }
   function modalBtn(x,y,w,label,action,red=false){
