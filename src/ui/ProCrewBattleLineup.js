@@ -3,7 +3,7 @@
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
-import {addProGlowingHotspot,renderStewardBriefing} from './ProBriefingChrome.js?v=20261019-r604';
+import {addProGlowingHotspot,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r607';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -141,6 +141,7 @@ function draw(s,opts){
     if(closed)return;
     closed=true;s.events.off('shutdown',close);
     clearDialogue();
+    s._proSayakaClose?.();
     objects.forEach(x=>{try{s.tweens?.killTweensOf?.(x);x.destroy();}catch(_){}});
     maskShapes.forEach(x=>{try{x.destroy();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
@@ -245,31 +246,13 @@ function draw(s,opts){
   const adviceUsed=Boolean(e.adviceUsed);
   const adviceRemaining=Math.max(0,Number(opts.adviceStatus?.remaining||0));
   const canAsk=!adviceUsed&&adviceRemaining===0;
-  let confirmationNodes=[],confirmationOpen=false;
   const askAdvice=()=>{
-    if(!canAsk||confirmationOpen)return;
-    clearDialogue();confirmationOpen=true;
-    scope(confirmationNodes);
-    rect(W/2,H/2,W,H,0x020812,.76,0x020812,270).setInteractive();
-    rect(780,420,850,332,0xfffcf1,1,0x111111,271);
-    const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
-    headline.setFontStyle?.('800');
-    const body=text(405,347,
-      'Sayaka\'s advice applies to this ENTIRE event, through every heat and fixture. The three-event cooldown includes this event plus two further professional competitions.',
-      21,'#111111',false,272);
-    body.setWordWrapWidth?.(745);body.setLineSpacing?.(7);
-    const modalButton=(x,label,action)=>{
-      const hit=rect(x,515,294,52,0x172636,1,0x566b7e,273);
-      hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
-      text(x,515,label,BUTTON_FONT,'#ffffff',true,274).setOrigin(.5);
-    };
-    modalButton(614,'MAYBE NEXT TIME',()=>{
-      clearGroup(confirmationNodes);confirmationNodes=[];confirmationOpen=false;
+    if(!canAsk)return;
+    clearDialogue();
+    showProSayakaAdviceConfirm(s,{
+      message:'Advice applies to every heat of this event. The cooldown covers this event and the next two professional events.',
+      onConfirm:()=>{close();opts.onAdvice?.([...selected]);},
     });
-    modalButton(946,'ASK FOR ADVICE',()=>{
-      close();opts.onAdvice?.([...selected]);
-    });
-    unscope();
   };
   const toggleSayaka=()=>{
     if(activeDialogue==='sayaka'){clearDialogue();return;}
