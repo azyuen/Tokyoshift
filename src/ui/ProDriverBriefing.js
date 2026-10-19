@@ -119,6 +119,7 @@ function draw(s,state,options){
   const close=()=>{if(closed)return;closed=true;
     s.events.off('shutdown',close);
     dismiss();
+    s._proForfeitClose?.();
     clearDialogue();
     nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
@@ -140,9 +141,9 @@ function draw(s,state,options){
     g.fillStyle(fill,.84);g.fillPoints(points,true);
     g.lineStyle(3,line,1);g.strokePoints(points,true);return g;
   };
-  const btn=(x,y,w,h,label,action,{red=false,disabled=false,depth=246}={})=>{
-    const hit=rect(x,y,w,h,disabled?0x192631:red?0x662032:0x0e2839,
-      disabled?0x5c6b79:red?RED:CYAN,1,depth);
+  const btn=(x,y,w,h,label,action,{red=false,grey=false,disabled=false,depth=246}={})=>{
+    const hit=rect(x,y,w,h,disabled?0x192631:grey?0x30353d:red?0x662032:0x0e2839,
+      disabled?0x5c6b79:grey?0x8a939d:red?RED:CYAN,1,depth);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
     const caption=text(x,y,label,13,disabled?'#8898a8':'#ffffff',true,depth+1).setOrigin(.5);
     fit(caption,w-18);return hit;
@@ -290,35 +291,8 @@ function draw(s,state,options){
 
   // Translucent breathing hotspots: identical alpha/timing language to
   // Warehouse HQ's Office / Crew / Dyno hotspots, not filled menu buttons.
-  const workshopHotspot=(x,y,w,h,label,action,{disabled=false}={})=>{
-    const glow=add(s.add.rectangle(x,y,w,h,0x4ee8ff,.022)
-      .setStrokeStyle(2,disabled?0x617b86:0x69ecff,.72).setDepth(246));
-    const pad=add(s.add.rectangle(x,y,w-10,h-8,0x06141d,.66).setDepth(247));
-    const caption=add(s.add.text(x,y,label,{
-      fontFamily:PIXEL,fontSize:'11px',
-      color:disabled?'#8eacb8':'#c9f8ff',align:'center',
-    }).setOrigin(.5).setDepth(248));
-    fit(caption,w-20);
-    if(disabled){glow.setAlpha(.37);pad.setAlpha(.42);caption.setAlpha(.58);}
-    else{
-      glow.setInteractive({useHandCursor:true}).on('pointerdown',action);
-      const timing={duration:1300,yoyo:true,repeat:-1,ease:'Sine.easeInOut'};
-      const pulse=s.tweens.add({targets:glow,alpha:{from:.07,to:1},...timing});
-      const padPulse=s.tweens.add({targets:pad,alpha:{from:.14,to:.72},...timing});
-      s.tweens.add({targets:caption,alpha:{from:.46,to:.96},...timing});
-      glow.on('pointerover',()=>{
-        pulse.pause();padPulse.pause();
-        glow.setAlpha(1).setFillStyle(0x4ee8ff,.08)
-          .setStrokeStyle(3,0x9af6ff,.98);
-        pad.setAlpha(.82);caption.setAlpha(1).setColor('#ffffff');
-      });
-      glow.on('pointerout',()=>{
-        glow.setFillStyle(0x4ee8ff,.022).setStrokeStyle(2,0x69ecff,.72);
-        caption.setColor('#c9f8ff');pulse.resume();padPulse.resume();
-      });
-    }
-    return glow;
-  };
+  const workshopHotspot=(x,y,w,h,label,action,{disabled=false}={})=>
+    addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
   workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
@@ -365,38 +339,18 @@ function draw(s,state,options){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
-      // Top-right official steward briefing: a small equilateral triangle
-      // projects from the BOTTOM edge directly above Hiroshi's head.
-      const x=850,y=24,w=674,h=222,edge=x+w,baseCenter=1402;
-      const side=36,half=side/2,triangleHeight=Math.sqrt(3)*side/2;
-      const pts=[
-        {x,y},{x:edge,y},{x:edge,y:y+h},
-        {x:baseCenter+half,y:y+h},
-        {x:baseCenter,y:y+h+triangleHeight},
-        {x:baseCenter-half,y:y+h},
-        {x,y:y+h},
-      ];
-      const panel=dialogueAdd(s.add.graphics().setDepth(235));
-      panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
-      panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
-      bubbleText(x+22,y+11,'HIROSHI // RACE BRIEFING',15,'#53ddff',true);
-      dialogueAdd(s.add.rectangle(x+w/2,y+43,w-42,1,0x3c7e98,.75).setDepth(237));
       const details=[
         ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
         ['RACE','1/4 MI // STANDING START'],
-        ['PRIZE',cash(state.prizeCash)],['ENTRY '+(unpaid?'FEE':'PAID'),cash(state.entryFee)],
+        ['PRIZE',cash(state.prizeCash)],
+        ['ENTRY '+(unpaid?'FEE':'PAID'),cash(state.entryFee)],
         ['POWER RULE',eligibility.rules.maxPowerKW==null?'OPEN':
           eligibility.rules.maxPowerKW+' KW MAX'],
         ['NOS RULE',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
-        ['STATUS',eligibility.eligible?'ELIGIBLE':eligibility.problems.join(' / ')],
+        ['STATUS',eligibility.eligible?'ELIGIBLE':eligibility.problems.join(' / '),
+          eligibility.eligible?'#81efc4':'#ffb6ba'],
       ];
-      details.forEach(([label,value],i)=>{
-        const ty=y+52+i*20;
-        bubbleText(x+24,ty,label,10,'#a5d4e6',true);
-        const v=bubbleText(x+215,ty-2,value,14,
-          i===7?(eligibility.eligible?'#81efc4':'#ffb6ba'):'#f0f7fd');
-        fit(v,w-240);
-      });
+      renderStewardBriefing(s,dialogueAdd,details,{anchorX:1402});
       // Closing is intentionally ONLY via the glowing Hiroshi hotspot.
     }else if(which==='sayaka'&&state.briefingAdviceText){
       // Lower than the player's face; the small equilateral speech point
@@ -453,12 +407,11 @@ function draw(s,state,options){
     fit(copy,w-14);
   }
   function openForfeit(){
-    modal('FORFEIT DRIVER EVENT?',
-      'Withdraw from this paid driver series? The entry fee is not refunded, remaining rounds are lost, and your event is recorded as a forfeit. Daichi will restore stored upgrades.');
-    modalBtn(590,581,290,'CONTINUE EVENT',dismiss);
-    modalBtn(979,581,290,'CONFIRM FORFEIT',()=>{
-      dismiss();close();options.onForfeit?.();
-    },true);
+    showCompactProForfeit(s,{
+      title:'FORFEIT DRIVER EVENT?',
+      message:'The entry fee is not refunded. Remaining rounds count as losses and Daichi will restore stored upgrades.',
+      onConfirm:()=>{close();options.onForfeit?.();},
+    });
   }
   function openAdvice(){
     if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
