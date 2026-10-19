@@ -67,7 +67,7 @@ export function renderPagedStewardBriefing(s,add,pages,{
   // Extend leftwards, preserving the right edge and Hiroshi's pointer.
   // This is local to paged briefings; legacy trophy bubbles are unchanged.
   const {y,triangleSide}=STEWARD_BUBBLE;
-  const x=720,w=804,h=304,edge=x+w,half=triangleSide/2;
+  const x=720,w=804,h=274,edge=x+w,half=triangleSide/2;
   const triangleHeight=Math.sqrt(3)*triangleSide/2;
   const pts=[
     {x,y},{x:edge,y},{x:edge,y:y+h},
@@ -109,13 +109,17 @@ export function renderPagedStewardBriefing(s,add,pages,{
     indicator.setText(String(current+1).padStart(2,'0')+' / 02');
     arrow.setText(current===0?'›':'‹');
     if(Array.isArray(page.sections)){
-      const lowerLimit=y+h-19;
-      let cursor=y+59;
+      const lowerLimit=y+h-16;
+      let cursor=y+55;
       for(const section of page.sections){
-        pageText(x+24,cursor,String(section.label||''),10,{
-          pixel:true,color:'#a5d4e6',
-        });
-        cursor+=18;
+        // Format is already self-descriptive; don't reserve a label row when
+        // a section deliberately has no heading.
+        if(section.label){
+          pageText(x+24,cursor,String(section.label),10,{
+            pixel:true,color:'#a5d4e6',
+          });
+          cursor+=18;
+        }
         // One label for HOW IT WORKS; the victory rule is its final paragraph.
         const paragraphs=Array.isArray(section.paragraphs)
           ?section.paragraphs:[section.text];
