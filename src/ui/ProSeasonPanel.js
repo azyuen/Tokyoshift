@@ -170,17 +170,77 @@ function overlay(s,title) {
   s.events.once('shutdown',close);
   return {add,label,btn,close};
 }
-// One paid competition entry grants access to the FULL seven-member team.
-// No redundant five-person roster: choose exactly three at each saved fixture.
-// Paid pro crew entry goes directly into the crew strategy room, without
-// asking the player to confirm entry twice.
+// Entry is a preview. Cash, a persistent crew event and any Sayaka advice
+// are saved together only when the player taps GO TO GRID in the briefing.
+function previewSource(s,circuitState){
+  return {get:key=>key==='proCircuit'?circuitState:s.registry.get(key)};
+}
+function showUnpaidCrewBriefing(s,pending,selected=[]){
+  const source=previewSource(s,pending.circuit);
+  const f=getCrewFixture(pending.circuit),t=pending.circuit.activeCrewEvent;
+  const units=getCrewSeriesUnits(s.registry).filter(u=>t.squadIds.includes(u.id));
+  if(!f){s.proError='CREW EVENT OFFER CHANGED';s._pendingCrewRegistration=null;redraw(s);return;}
+  showProCrewHeatSelection(s,{
+    event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
+    adviceStatus:getProCrewAdviceAvailability(source),
+    advice:t.adviceText||getProCrewHeatAdvice(f,units),
+    onCancel:()=>{s._pendingCrewRegistration=null;s.proError=null;redraw(s);},
+    onAdvice:ids=>{
+      const out=useProCrewAdvice(source,t.id);
+      if(out.error){s.proError=out.error;showUnpaidCrewBriefing(s,pending,ids);return;}
+      const adviceText=getProCrewHeatAdvice(f,units);
+      pending.circuit=out.circuit;
+      pending.circuit.activeCrewEvent={
+        ...out.circuit.activeCrewEvent,adviceText,
+      };
+      showUnpaidCrewBriefing(s,pending,ids);
+    },
+    onConfirm:ids=>{
+      if(s.registry.get('competitionState')?.active||
+         circuit(s).activeCrewEvent||circuit(s).activeTournament||
+         circuit(s).activeTimedEvent){s.proError='FINISH ACTIVE EVENT FIRST';return;}
+      // Re-register against the saved profile at the actual payment moment.
+      const verified=registerCrewSeries(s.registry,pending.squadIds,
+        pending.assignments,pending.trophyId,getOpenCircuitRotation());
+      if(verified.error){s.proError=verified.error;return;}
+      const savedEvent=verified.circuit.activeCrewEvent;
+      if(savedEvent.id!==pending.circuit.activeCrewEvent.id||
+         savedEvent.format!==pending.circuit.activeCrewEvent.format||
+         savedEvent.entryFee!==pending.circuit.activeCrewEvent.entryFee){
+        s.proError='EVENT OFFER CHANGED — CANCEL AND REOPEN';
+        return;
+      }
+      const merged={...savedEvent,
+        adviceUsed:Boolean(pending.circuit.activeCrewEvent.adviceUsed),
+        adviceText:pending.circuit.activeCrewEvent.adviceText||null,
+        lockedLineup:[...ids],
+      };
+      const staged={...verified.circuit,activeCrewEvent:merged,
+        crewAdviceCooldownUntil:pending.circuit.crewAdviceCooldownUntil};
+      const prepared=preparePlayerCrewFixture(previewSource(s,staged),ids,
+        getCrewFixture(staged)?.id);
+      if(prepared.error){s.proError=prepared.error;return;}
+      const heat=getPlayerCrewHeat(prepared.circuit);
+      if(!heat||!(s.registry.get('ownedCarIds')||[]).includes(heat.carId)){
+        s.proError='REGISTERED CREW CAR UNAVAILABLE';return;
+      }
+      if(!commit(s,{proCircuit:prepared.circuit,cash:verified.cash}))return;
+      s._pendingCrewRegistration=null;
+      s._proOverlayClose?.();
+      s.scene.start('FourLaneTestScene',{mode:'PRO_CREW'});
+    },
+  });
+}
 export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null) {
   if(circuit(s).activeCrewEvent)return showCrewFixture(s);
   const units=getCrewSeriesUnits(s.registry,assignments);
-  const out=registerCrewSeries(s.registry,units.map(u=>u.id),assignments,
+  const squadIds=units.map(u=>u.id);
+  const out=registerCrewSeries(s.registry,squadIds,assignments,
     trophyId,getOpenCircuitRotation());
   if(out.error){s.proError=out.error;redraw(s);return;}
-  if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+  const pending={circuit:out.circuit,squadIds,assignments,trophyId};
+  s._pendingCrewRegistration=pending;
+  showUnpaidCrewBriefing(s,pending,[]);
 }
 
 export function confirmCrewForfeit(s) {
