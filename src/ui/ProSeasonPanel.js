@@ -7,7 +7,8 @@ import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261018-r597';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261019-r604';
+import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r604';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -185,16 +186,13 @@ export function showCrewRegistration(s,_selection=[],assignments={},trophyId=nul
 export function confirmCrewForfeit(s) {
   const event=circuit(s).activeCrewEvent;
   if(!event)return;
-  let dialog;
-  dialog=seasonConfirm(s,{
+  return showCompactProForfeit(s,{
     title:'FORFEIT CREW EVENT?',
-    description:'Leaving now forfeits the entire competition.',
-    details:'Your entry fee is not refunded. Remaining heats are lost and this event cannot be resumed.',
-    confirmLabel:'FORFEIT EVENT',
+    message:'The entry fee is not refunded. Remaining heats are lost, and this competition cannot be resumed.',
     onConfirm:()=>{
       const out=forfeitCrewSeries(s.registry,event.id);
-      if(out.error){dialog.close();s.proError=out.error;return;}
-      dialog.close();s._proOverlayClose?.();
+      if(out.error){s.proError=out.error;return;}
+      s._proOverlayClose?.();
       if(commit(s,{proCircuit:out.circuit}))redraw(s);
     },
   });
