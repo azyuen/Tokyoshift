@@ -1,4 +1,4 @@
-// R603 — Unpaid Open Circuit briefing/scrutineering before one atomic entry payment.
+// R604 — Shared pro room controls, mechanic dialogue and refined paddock placement.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -9,6 +9,7 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
+import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r604';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
@@ -192,13 +193,14 @@ function draw(s,state,options){
         null,false,previewState);
       parts.forEach((part,i)=>{
         if(i===2&&!keepShadow){part?.destroy?.();return;}
+        if(i===2&&keepShadow)part?.setAlpha?.(.16);
         if(part)add(part);
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
   // R602: increase the R601 owned-car presentation a further 20%, shift
   // modestly up/right, preserve its exact paint, wheel and saved tuning state.
-  safeCarPreview(state.playerCarId,631,510,744,207,carState,true);
+  safeCarPreview(state.playerCarId,660,474,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
@@ -216,7 +218,7 @@ function draw(s,state,options){
     const scale=Math.min(p.height/Math.max(1,source.height),
       p.maxWidth/Math.max(1,source.width));
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    add(s.add.ellipse(p.x,p.feet-6,p.maxWidth*.84,22,0,.27).setDepth(209));
+    add(s.add.ellipse(p.x,p.feet-(p.key==='proDriverSayaka'?16:6),p.maxWidth*.84,22,0,.27).setDepth(209));
     const sprite=add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
       .setScale(scale).setFlipX(Boolean(p.flip)).setDepth(214));
     // The workshop-style glowing buttons own all staff interactions.
@@ -232,7 +234,7 @@ function draw(s,state,options){
   // identical slope as the outer card and a dark, professional black outline.
   poly(52,643,654,164,0x071728,CYAN,219);
   display(89,652,'NEXT OPPONENT '+stageNo+'/'+stageTotal,24,'#35d6ff');
-  const frameX=74,frameY=694,frameW=129,frameH=106,skew=16;
+  const frameX=74,frameY=683,frameW=129,frameH=106,skew=16;
   const framePoints=[
     {x:frameX+skew,y:frameY},{x:frameX+frameW+skew,y:frameY},
     {x:frameX+frameW-skew,y:frameY+frameH},
@@ -274,17 +276,17 @@ function draw(s,state,options){
   const rivalName=String(round.opponentName||rival.name||roster?.name||
     round.characterId||'PRO DRIVER').toUpperCase();
   // The driver name aligns with the portrait's TOP horizontal, not its centre.
-  fit(text(231,693,rivalName,18,'#ffffff'),239);
-  fit(text(231,717,String(oppCar.name||round.carId).toUpperCase(),14,'#7fe0f1'),247);
-  text(231,742,'POWER',10,'#b1cddb',true);
-  text(326,739,Math.round(opponentPower)+' KW',15);
-  text(231,762,'TORQUE',10,'#b1cddb',true);
-  text(326,759,Math.round(opponentTorque)+' NM',15);
-  text(231,784,'DRIVE',10,'#b1cddb',true);
-  text(326,780,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
+  fit(text(231,684,rivalName,18,'#ffffff'),239);
+  fit(text(231,708,String(oppCar.name||round.carId).toUpperCase(),14,'#7fe0f1'),247);
+  text(231,733,'POWER',10,'#b1cddb',true);
+  text(326,730,Math.round(opponentPower)+' KW',15);
+  text(231,753,'TORQUE',10,'#b1cddb',true);
+  text(326,750,Math.round(opponentTorque)+' NM',15);
+  text(231,775,'DRIVE',10,'#b1cddb',true);
+  text(326,771,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
     oppCar.drivetrain),15);
   // Approximately a third of a preview car-length left and slightly higher.
-  safeCarPreview(round.carId,545,722,211,225,round.opponentBuildState||{});
+  safeCarPreview(round.carId,545,743,211,225,round.opponentBuildState||{});
 
   // Translucent breathing hotspots: identical alpha/timing language to
   // Warehouse HQ's Office / Crew / Dyno hotspots, not filled menu buttons.
@@ -318,15 +320,15 @@ function draw(s,state,options){
     return glow;
   };
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
-  workshopHotspot(190,611,229,44,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.available?'ASK FOR ADVICE':'ADVICE ON COOLDOWN';
-  workshopHotspot(1111,637,225,44,adviceLabel,()=>handleSayaka(),{
+  workshopHotspot(1111,576,225,44,adviceLabel,()=>handleSayaka(),{
     disabled:!advice.available&&!state.briefingAdviceText,
   });
-  workshopHotspot(1390,616,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
+  workshopHotspot(1390,576,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
   if(advice.remaining&&!state.briefingAdviceUsed)
-    fit(text(993,671,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
+    fit(text(993,612,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
       '#c8d8e6',true),245);
 
   // Unpaid: CANCEL ENTRY discards preview edits and costs nothing. Paid:
@@ -334,7 +336,7 @@ function draw(s,state,options){
   btn(1070,779,246,54,unpaid?'CANCEL ENTRY':'FORFEIT EVENT',()=>{
     if(unpaid){close();options.onCancel?.();}
     else openForfeit();
-  },{red:!unpaid});
+  },{grey:true});
   if(unpaid){
     fit(text(1077,724,'ENTRY '+cash(state.entryFee)+'  //  PAY ONLY WHEN YOU PROCEED',11,
       '#f5e1ad',true),430);
@@ -399,7 +401,7 @@ function draw(s,state,options){
     }else if(which==='sayaka'&&state.briefingAdviceText){
       // Lower than the player's face; the small equilateral speech point
       // sits in the UPPER half of the right edge and aims toward Sayaka.
-      const x=558,y=330,w=470,h=146,edge=x+w;
+      const x=558,y=405,w=470,h=146,edge=x+w;
       const triangleBase=36,half=triangleBase/2,tipX=edge+Math.sqrt(3)*triangleBase/2;
       const mid=y+41;
       const pts=[{x,y},{x:edge,y},{x:edge,y:mid-half},
