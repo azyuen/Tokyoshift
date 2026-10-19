@@ -1,5 +1,6 @@
-// Shared, real-performance regional crew race regulations. Event trims are
-// reversible race configurations; never mutate the player's saved car state.
+// Regional crew regulations are strict eligibility checks for player cars.
+// Never auto-trim a player's engine, upgrades or installed NOS for a race.
+// Opponents are generated with legal builds before registration.
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261006-r388';
 
 const OPEN = Object.freeze({ label: 'OPEN CLASS' });
@@ -13,11 +14,11 @@ const capped = (kw, noNos = false) => Object.freeze({
 export const CREW_BATTLE_REGION_RULES = Object.freeze({
   ODAIBA: Object.freeze({ focus: 'OPEN CREW / FIND YOUR RHYTHM', build: 2, ai: [3,3,4], heats: [OPEN, OPEN, OPEN] }),
   SHINAGAWA: Object.freeze({ focus: 'ENGINE RESPONSE / NO NOS', build: 2, ai: [3,4,4], heats: [NO_NOS, NO_NOS, NO_NOS] }),
-  TATSUMI: Object.freeze({ focus: 'PRECISION / 260 KW CLASS', build: 3, ai: [4,4,4], heats: [capped(260), capped(260), capped(260)] }),
+  TATSUMI: Object.freeze({ focus: 'PRECISION / 220 KW CLASS', build: 3, ai: [4,4,4], heats: [capped(220), capped(220), capped(220)] }),
   SHIBUYA: Object.freeze({ focus: 'STOCK SKILL / OPEN PERFORMANCE', build: 3, ai: [4,4,5], heats: [STOCK, OPEN, OPEN] }),
-  YOKOHAMA: Object.freeze({ focus: 'POWER CLASS / HIGH SPEED', build: 4, ai: [4,5,5], heats: [capped(260), OPEN, OPEN] }),
+  YOKOHAMA: Object.freeze({ focus: 'POWER CLASS / HIGH SPEED', build: 4, ai: [4,5,5], heats: [capped(300), capped(300), OPEN] }),
   DAIKOKU: Object.freeze({ focus: 'ENGINEERING / CONTROLLED POWER', build: 4, ai: [5,5,5], heats: [capped(380, true), capped(380, true), capped(380, true)] }),
-  SHINJUKU: Object.freeze({ focus: 'TECHNICAL FINALS / THREE CLASSES', build: 5, ai: [5,5,5], heats: [STOCK, capped(380), OPEN] }),
+  SHINJUKU: Object.freeze({ focus: 'TECHNICAL FINALS / THREE CLASSES', build: 5, ai: [5,5,5], heats: [STOCK, capped(380, true), OPEN] }),
 });
 export const CREW_BATTLE_REGIONS = Object.freeze(Object.keys(CREW_BATTLE_REGION_RULES));
 export function getCrewBattleRegionRules(regionId) {
@@ -36,6 +37,7 @@ export function eventStockState(previous = {}) {
     nosInstalled: false,
     nosPower: 0,
     nosCapacitySeconds: 0,
+    nosShots: 0,
     tuneLevel: 0,
     buildRating: 1,
     buildArchetype: 'stock',
@@ -49,41 +51,62 @@ export function eventStockState(previous = {}) {
   };
 }
 
-// The applied configuration is shared by lineup preview, eligibility and
-// live player/opponent physics. A power cap above factory output can always be
-// met with a reversible factory trim; engines exceeding the cap even at stock
-// remain ineligible and must not be silently power-limited.
+// Check active performance changes, not paint/wheels or upgrades stored off-car.
+const hasInstalledUpgrades = (values = {}) => Object.values(values || {})
+  .some(value => typeof value === 'number'
+    ? Math.abs(value) > 0.0001
+    : value && typeof value === 'object' && hasInstalledUpgrades(value));
+
+export function isCrewEventFactoryStock(state = {}) {
+  const parts = [
+    state.tuning, state.engineTuning, state.drivetrainTuning,
+    state.chassisTuning, state.exhaustNosTuning,
+  ];
+  return !parts.some(hasInstalledUpgrades) &&
+    !Number(state.tuneLevel || 0) &&
+    !Boolean(state.nosInstalled) &&
+    !Number(state.nosShots || 0) &&
+    !(Array.isArray(state.specialistTuning) && state.specialistTuning.length) &&
+    !hasInstalledUpgrades(state.stage3Calibration || {});
+}
+
+// Validate the actual built race car, not just its displayed labels.
+// Used for both sides at race start to prevent an AI-only NOS or power bypass.
+export function validateCrewBattleBuiltCar(config = {}, state = {}, rule = OPEN) {
+  const powerKW = Number(config.powerKW);
+  if (!Number.isFinite(powerKW) || powerKW <= 0)
+    return { eligible: false, reason: 'POWER UNAVAILABLE', powerKW };
+  if (rule.stock && !isCrewEventFactoryStock(state))
+    return { eligible: false, reason: 'FACTORY STOCK REQUIRED', powerKW };
+
+  // A NOS-equipped car is not eligible for a No NOS heat even if the player
+  // promises not to press the button; rivals follow exactly the same rule.
+  if (rule.noNos && (
+    Boolean(state.nosInstalled) ||
+    Number(state.exhaustNosTuning?.nosKit || 0) > 0 ||
+    Number(state.exhaustNosTuning?.nitrousShot || 0) > 0 ||
+    Number(config.nosPower || 0) > 0 ||
+    Number(config.nosCapacitySeconds || 0) > 0 ||
+    Number(config.nosShots || 0) > 0
+  )) return { eligible: false, reason: 'NO NOS INSTALLED', powerKW };
+
+  const limit = Number(rule.maxPowerKW);
+  if (Number.isFinite(limit) && powerKW > limit + 0.001)
+    return { eligible: false, reason: 'OVER ' + limit + ' KW LIMIT', powerKW };
+  return { eligible: true, reason: '', powerKW };
+}
+
+// The eligible setup is an untouched snapshot of the installed build.
+// Factory-stock rivals are explicitly authored using eventStockState(), while
+// player cars must be physically compliant after uninstalling any parts.
 export function getCrewEventCarSetup(carId, installedState = {}, rule = OPEN) {
   if (!carId) return { eligible: false, reason: 'NO CAR', state: {} };
-  const original = copy(installedState);
-  let state = rule.stock ? eventStockState(original) : original;
-  let adjustment = rule.stock ? 'FACTORY SETUP' : '';
-  if (rule.noNos) {
-    const hadNos = Boolean(state.nosInstalled || state.exhaustNosTuning?.nosKit);
-    state.nosInstalled = false;
-    state.nosPower = 0;
-    state.nosCapacitySeconds = 0;
-    state.exhaustNosTuning = { ...(state.exhaustNosTuning || {}), nosKit: 0, nitrousShot: 0 };
-    if (!rule.stock && hadNos) adjustment = 'NOS DISABLED';
-  }
+  const state = copy(installedState);
   let performance;
   try { performance = getVehiclePerformance(carId, state); }
   catch (_) { return { eligible: false, reason: 'PERFORMANCE UNAVAILABLE', state }; }
-  let powerKW = Number(performance?.car?.powerKW);
-  if (!Number.isFinite(powerKW)) return { eligible: false, reason: 'POWER UNAVAILABLE', state };
-  const limit = Number(rule.maxPowerKW);
-  if (Number.isFinite(limit) && powerKW > limit + .001) {
-    const stock = eventStockState(original);
-    const stockPerformance = getVehiclePerformance(carId, stock);
-    const stockPower = Number(stockPerformance?.car?.powerKW);
-    if (!Number.isFinite(stockPower) || stockPower > limit + .001) {
-      return { eligible: false, reason: 'FACTORY POWER EXCEEDS ' + limit + ' KW', state, powerKW };
-    }
-    state = stock;
-    powerKW = stockPower;
-    adjustment = 'FACTORY POWER TRIM';
-  }
-  return { eligible: true, state, powerKW, adjustment, ruleLabel: rule.label || 'OPEN CLASS' };
+  const check = validateCrewBattleBuiltCar(performance?.car || {}, state, rule);
+  return { ...check, state, adjustment: '', ruleLabel: rule.label || 'OPEN CLASS' };
 }
 
 const FOCUS = Object.freeze({
