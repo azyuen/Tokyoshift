@@ -1,4 +1,4 @@
-// R600 — Open Circuit individual paddock briefing: Hiroshi, player, car, Sayaka, Daichi.
+// R601 — Open Circuit paddock polish: Daichi, car, player, Sayaka, Hiroshi.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -11,7 +11,8 @@ import { normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
-  removeDriverPowerPart, restoreDriverPowerParts } from '../data/proDriverBriefing.js?v=20261019-r598';
+  removeDriverPowerPart, restoreDriverPowerParts,
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r601';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -45,6 +46,16 @@ function loadAssets(s,state){
     s.load.image(playerAsset.key,getCharacterAssetUrl(playerAsset.path));queued++;
   }
   const round=state.rounds[state.roundIndex];
+  const named=characters[round.characterId];
+  const mainRival=Boolean(round.mainRivalTier||named?.mainRival);
+  const helmetIndex=getProDriverHelmetIndex(state,round);
+  if(!mainRival){
+    const helmetKey='proDriverHelmet'+helmetIndex;
+    if(!s.textures.exists(helmetKey)){
+      s.load.image(helmetKey,'assets/Characters/Central/driver_0'+helmetIndex+'.png?v=20261019-r601');
+      queued++;
+    }
+  }
   const rival=getCharacterVisualAsset(round.characterId,'idle',{
     playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',rivalContext:true,
   });
@@ -108,7 +119,7 @@ function draw(s,state,options){
     s.events.off('shutdown',close);
     dismiss();
     clearDialogue();
-    nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
   s._proOverlayClose=close;s.events.once('shutdown',close);
@@ -184,16 +195,18 @@ function draw(s,state,options){
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
-  safeCarPreview(state.playerCarId,742,599,477,207,carState,true);
+  // R601: 30% larger and staged higher/left; still the owned car and paint.
+  safeCarPreview(state.playerCarId,590,531,620,207,carState,true);
 
-  // Character layout: HIROSHI > PLAYER > PLAYER CAR > SAYAKA > DAICHI.
-  // Use the currently selected protagonist's game artwork, not a fixed Ren.
+  // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
+  // Both outer staff sprites are flipped as requested, while the protagonist
+  // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
-    {key:'proDriverHiroshi',x:161,feet:717,height:522,maxWidth:270,onTap:()=>toggleDialogue('hiroshi')},
-    {key:playerAsset?.key,x:411,feet:720,height:472,maxWidth:233,onTap:null},
-    {key:'proDriverSayaka',x:1080,feet:736,height:527,maxWidth:276,onTap:()=>handleSayaka()},
-    {key:'proDriverDaichi',x:1385,feet:740,height:531,maxWidth:263,onTap:()=>openTune()},
+    {key:'proDriverDaichi',x:169,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
+    {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
+    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:()=>handleSayaka()},
+    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:()=>toggleDialogue('hiroshi')},
   ];
   for(const p of characterPlaces){
     if(!p.key||!s.textures.exists(p.key))continue;
@@ -203,7 +216,7 @@ function draw(s,state,options){
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     add(s.add.ellipse(p.x,p.feet-6,p.maxWidth*.84,22,0,.27).setDepth(209));
     const sprite=add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
-      .setScale(scale).setDepth(214));
+      .setScale(scale).setFlipX(Boolean(p.flip)).setDepth(214));
     if(p.onTap)sprite.setInteractive({useHandCursor:true}).on('pointerdown',p.onTap);
   }
 
