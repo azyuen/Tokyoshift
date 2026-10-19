@@ -176,5 +176,7 @@ export function getProDriverHelmetIndex(state = {}, round = {}) {
   for(let i=0;i<seed.length;i++) {
     hash=Math.imul(hash^seed.charCodeAt(i),16777619);
   }
-  return (hash>>>0)%4+1;
+  // Mix higher hash bits before taking four slots: the unmixed FNV low
+  // bits correlate with sequential driver IDs and underuse two portraits.
+  return ((hash^(hash>>>16)^(hash>>>9))>>>0)%4+1;
 }
