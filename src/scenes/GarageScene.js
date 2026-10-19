@@ -3916,6 +3916,7 @@ export default class GarageScene extends Phaser.Scene {
           }
 
           if (travelTarget?.regionId === 'OSHIAGE') {
+            if (this.crewMode && locationId === 'oshiageSkytreeMeet') return;
             this.registry.set('oshiageLocation', locationId);
             this.registry.set('district', 'OSHIAGE');
             saveSessionState(this.registry);
