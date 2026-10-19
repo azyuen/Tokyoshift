@@ -9,10 +9,10 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
-import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r606';
+import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r606';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
-  removeDriverPowerPart, restoreDriverPowerParts,
+  removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
   getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r606';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
@@ -123,6 +123,7 @@ function draw(s,state,options){
     s.events.off('shutdown',close);
     dismiss();
     s._proForfeitClose?.();
+    s._proSayakaClose?.();
     clearDialogue();
     nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
@@ -204,7 +205,7 @@ function draw(s,state,options){
   };
   // R602: increase the R601 owned-car presentation a further 20%, shift
   // modestly up/right, preserve its exact paint, wheel and saved tuning state.
-  safeCarPreview(state.playerCarId,660,474,744,207,carState,true);
+  safeCarPreview(state.playerCarId,726,474,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
@@ -263,12 +264,12 @@ function draw(s,state,options){
     const scale=Math.max(frameW*1.6/Math.max(1,source.width),
       frameH*2.2/Math.max(1,source.height));
     s.textures.get(helmetKey).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    const profile=add(s.add.image(px,frameY-13,helmetKey)
+    const profile=add(s.add.image(px,frameY+18,helmetKey)
       .setOrigin(.5,0).setScale(scale).setDepth(225));
     clipPortrait(profile);
   }else{
     const portrait=createCharacterProfile(s,{
-      characterId:round.characterId,pose:'idle',x:px,y:py-6,
+      characterId:round.characterId,pose:'idle',x:px,y:py+10,
       frameWidth:frameW*1.55,frameHeight:frameH*1.5,
       side:'center',depth:225,mask:false,
       playerCharacterId:playerId,rivalContext:true,
@@ -385,17 +386,6 @@ function draw(s,state,options){
     popup.forEach(o=>{try{o?.destroy?.();}catch(_){}});
     popup=[];
   }
-  function modal(title,description=''){
-    dismiss();
-    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.80).setDepth(269).setInteractive());
-    popupAdd(s.add.rectangle(W/2,H/2,870,475,0x0b1b2c,.99)
-      .setStrokeStyle(3,CYAN).setDepth(270));
-    popupAdd(s.add.text(398,227,title,{fontFamily:PIXEL,fontSize:'16px',color:'#ffffff'})
-      .setFontSize(16).setDepth(274));
-    if(description)popupAdd(s.add.text(398,271,description,{
-      fontFamily:BODY,fontSize:'19px',color:'#e1edf7',wordWrap:{width:765},
-    }).setFontSize(19).setDepth(274));
-  }
   // Daichi uses the same cyan-border / dark-ink dialogue language as
   // Hiroshi's steward bubble, with room for actual ECU and NOS controls.
   // Shared Hiroshi-style shape. The left pointer aims back at Daichi;
@@ -430,6 +420,7 @@ function draw(s,state,options){
     const copy=popupAdd(s.add.text(x,y,label,{fontFamily:PIXEL,
       fontSize:'13px',color:'#ffffff'}).setFontSize(13).setOrigin(.5).setDepth(276));
     fit(copy,w-14);
+    return {hit,copy};
   }
   function openForfeit(){
     showCompactProForfeit(s,{
@@ -441,14 +432,15 @@ function draw(s,state,options){
   function openAdvice(){
     if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
       options.state||s.registry.get('competitionState')||{}).available)return;
-    modal('ASK SAYAKA FOR ADVICE?',
-      unpaid?'Advice applies for ALL heats of this event once you enter. The cooldown covers this event and two following professional events.':
-        'Advice applies to the ENTIRE current event, including every remaining heat. You cannot request a new consultation until two more professional events are completed.');
-    modalBtn(581,581,255,'MAYBE LATER',dismiss);
-    modalBtn(981,581,255,'ASK SAYAKA',()=>{
-      dismiss();close();
-      options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
-    },true);
+    showProSayakaAdviceConfirm(s,{
+      message:unpaid?
+        'Advice applies to every heat of this event. The cooldown covers this event and the next two professional events.':
+        'Advice applies to every remaining heat of this event. It stays available to review throughout the competition.',
+      onConfirm:()=>{
+        close();
+        options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
+      },
+    });
   }
   function openPowerParts(){
     const stored=carState.proBriefingPowerStash||{};
