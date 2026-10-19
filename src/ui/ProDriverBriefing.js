@@ -13,7 +13,7 @@ import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } fr
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r603';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r605';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
