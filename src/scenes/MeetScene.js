@@ -137,7 +137,7 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261018-r588';
+} from '../data/crewSystem.js?v=20261020-r618';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
@@ -1925,12 +1925,15 @@ export default class MeetScene extends Phaser.Scene {
     const rating = recruitRules.aiRating || characterRating;
     const characterAi = character?.skill?.ai || getEncounterAi(characterRating);
     const tierAi = getEncounterAi(rating);
-    // Standard must really be Expert (rating 4), rather than the strongest
-    // values from Expert plus a possibly Elite-grade character profile.
-    // Hard intentionally retains the more demanding max-of-personal-and-tier AI.
-    const encounterAi = recruitRules.playerDifficulty === 'STANDARD'
-      ? getEncounterAi(4)
-      : recruitRules.aiTier
+    // Easy must never inherit an Expert/Elite recruit's personal AI; the
+    // factory-stock duel uses a Rookie driver with the normal Easy assist.
+    // Standard keeps the exact Expert profile. Hard keeps the demanding
+    // max-of-character-and-Elite profile, both unchanged.
+    const encounterAi = recruitRules.playerDifficulty === 'EASY'
+      ? getEncounterAi(2)
+      : recruitRules.playerDifficulty === 'STANDARD'
+        ? getEncounterAi(4)
+        : recruitRules.aiTier
         ? {
             ...characterAi,
             reactionSkill: Math.max(Number(characterAi.reactionSkill || 0), Number(tierAi.reactionSkill || 0)),

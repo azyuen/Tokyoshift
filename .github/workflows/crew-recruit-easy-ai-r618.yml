@@ -1,0 +1,29 @@
+name: R618 Easy crew recruitment balance
+on:
+  pull_request:
+    paths:
+      - 'src/data/crewSystem.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/data/playerDifficulty.js'
+      - 'tests/crew-recruit-easy-ai-r618.mjs'
+      - '.github/workflows/crew-recruit-easy-ai-r618.yml'
+  workflow_dispatch:
+jobs:
+  targeted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check src/data/crewSystem.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/main.js
+          node --check tests/crew-recruit-easy-ai-r618.mjs
+      - name: Crew recruitment behavior checks
+        run: |
+          node --test tests/crew-recruit-easy-ai-r618.mjs tests/crew-global-recruit-pity-r551.mjs tests/ginza-crew-wheel-r588.mjs
