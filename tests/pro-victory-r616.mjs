@@ -10,13 +10,14 @@ const {showProVictoryResults}=await import('../src/ui/ProVictoryResults.js');
 function scene(){
   const objects=[];
   const node=(type,x,y,value)=>{
-    const o={type,x,y,value,visible:true,events:{},
+    const o={type,x,y,value,visible:true,alpha:1,events:{},
       setDepth(n){this.depth=n;return this;},
       setInteractive(){return this;},
       setStrokeStyle(){return this;},
       setOrigin(){return this;},
       setScale(){return this;},
-      setAlpha(){return this;},
+      setDisplaySize(){return this;},
+      setAlpha(v){this.alpha=v;return this;},
       setMask(){return this;},
       setFontSize(n){this.fontSize=n;return this;},
       on(e,cb){this.events[e]=cb;return this;},
@@ -46,6 +47,10 @@ function scene(){
     events:{once(){},off(){}},
     input:{keyboard:{addKey:()=>node('key',0,0)}},
     sys:{isActive:()=>true},
+    createCarDisplay(car,x,y,width){
+      objects.push({type:'rendered-car',value:car.id,x,y,width});
+      return [];
+    },
   };
   return {s,objects};
 }
@@ -55,6 +60,7 @@ test('crew victory shows four actual registered character assets and saved event
   let continued=0;
   showProVictoryResults(s,{
     kind:'crew',winner:true,crewIds:['renMizuno','ayaKurose','daichiSakamoto'],
+    carIds:['evo6','r32','ae86'],
     opponent:'BLUE ARC',eventName:'CREW FOUR-WIDE',
     fourWidePoints:9,heats:[
       {name:'Ryohei Takeda',ownSeconds:12.046,place:1,won:true},
@@ -64,7 +70,7 @@ test('crew victory shows four actual registered character assets and saved event
   });
   const labels=objects.filter(o=>o.type==='text').map(o=>String(o.value));
   assert.ok(labels.includes('CREW VICTORY'));
-  assert.ok(labels.includes('AGGREGATE  9 / 9'));
+  assert.ok(labels.includes('FOUR-WIDE TOTAL  9 / 9'));
   assert.ok(labels.includes('PERFECT 9/9'));
   assert.ok(labels.includes('¥70,000'));
   assert.ok(labels.includes('NO SEASON PTS'));
@@ -73,16 +79,23 @@ test('crew victory shows four actual registered character assets and saved event
   assert.ok(!labels.some(t=>t.includes('BONUS')||t.includes('REPUTATION')));
   const captain=objects.find(o=>o.type==='image'&&o.value==='characterArkonDenWin');
   assert.ok(captain);
-  assert.equal(captain.x,370,'the player, not a crew NPC, leads the formation');
-  const button=objects.find(o=>o.type==='rectangle'&&o.x===1167&&o.y===785);
-  button.events.pointerdown();button.events.pointerdown();
-  assert.equal(continued,1,'page must close exactly once');
+  assert.equal(captain.x,331,'the player, not a crew NPC, leads the formation');
+  const hit=objects.find(o=>o.type==='rectangle'&&o.depth===290);
+  const award=objects.find(o=>o.type==='text'&&o.value==='¥70,000');
+  assert.equal(award.alpha,0,'initial result is only the top-right winner headline');
+  hit.events.pointerdown();
+  assert.equal(award.alpha,1,'first tap reveals the detailed prize quadrant');
+  assert.equal(continued,0,'first tap must not close awards');
+  hit.events.pointerdown();hit.events.pointerdown();
+  assert.equal(continued,1,'second tap continues exactly once');
+  assert.deepEqual(objects.filter(o=>o.type==='rendered-car').map(o=>o.value),
+    ['evo6','r32','ae86'],'show the actual three crew cars');
 });
 
 test('driver victory contains Sayaka, player, Daichi and true paid values',()=>{
   const {s,objects}=scene();
   showProVictoryResults(s,{
-    kind:'driver',winner:true,eventName:'TOKYO INVITATIONAL',
+    kind:'driver',winner:true,eventName:'TOKYO INVITATIONAL',carId:'r32',
     heats:[
       {name:'RIVAL 1',won:true,result:'WIN'},
       {name:'RIVAL 2',won:true,result:'WIN'},
@@ -99,5 +112,10 @@ test('driver victory contains Sayaka, player, Daichi and true paid values',()=>{
   assert.ok(labels.includes('¥140,000'));
   assert.ok(labels.includes('+20'));
   assert.ok(labels.includes('#14  →  #12'));
+  assert.ok(objects.some(o=>o.type==='image'&&o.value==='proVictoryDragstripDayR617'),
+    'the entire scene uses the real daytime dragstrip background');
+  assert.deepEqual(objects.filter(o=>o.type==='rendered-car').map(o=>o.value),['r32']);
+  assert.equal(objects.find(o=>o.type==='text'&&o.value==='¥140,000').alpha,0);
+  assert.ok(!labels.includes('TOKYO'),'there is no bespoke top logo/banner');
   assert.ok(labels.includes('CLEAN SWEEP'));
 });
