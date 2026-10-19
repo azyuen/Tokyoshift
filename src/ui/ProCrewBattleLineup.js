@@ -263,7 +263,7 @@ function draw(s,opts){
   const crewExplainer=crewExplanations[f.format]||crewExplanations.DUEL;
   const crewPages=[
     {sections:[
-      {label:'FORMAT',text:crewFormatText+' · '+fixtureText,large:true},
+      {text:crewFormatText+' · '+fixtureText,large:true},
       {label:'HOW IT WORKS',paragraphs:[crewExplainer.work,crewExplainer.win]},
     ]},
     {rows:[
