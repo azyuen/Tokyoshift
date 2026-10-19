@@ -84,7 +84,7 @@ export function showProVictoryResults(s,options={}) {
   const label=(x,y,value,size=20,opts={})=>add(s.add.text(x,y,String(value),{
     fontFamily:BODY,fontSize:size+'px',fontStyle:'700',color:'#f5f2f1',
     ...opts,
-  }),235);
+  }).setFontSize(size),235);
   const close=()=>{
     if(closed)return;
     closed=true;
@@ -182,8 +182,8 @@ export function showProVictoryResults(s,options={}) {
     label(1060,y+29,display.time,17,{color:'#a9b7c9'});
   });
 
-  const bottom=574;
-  panel(1167,674,704,194,0x0b121d,.98,0x4a4450);
+  const bottom=564;
+  panel(1167,665,704,180,0x0b121d,.98,0x4a4450);
   label(837,bottom+16,'EVENT PRIZE',17,{color:'#a5acb8'});
   label(1038,bottom+9,cash(options.cashPrize),29,{color:'#ffe4b5'});
   label(837,bottom+70,options.openCircuit?'OPEN CIRCUIT':'SEASON POINTS',17,
