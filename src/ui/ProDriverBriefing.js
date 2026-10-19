@@ -444,8 +444,21 @@ function draw(s,state,options){
   }
   function openPowerParts(){
     const stored=carState.proBriefingPowerStash||{};
+    const selected=new Set();
     mechanicDialogue('DAICHI // REMOVE PARTS',
-      'Remove installed performance equipment for free to meet race requirements. Your purchased parts are stored and restored after the event.');
+      'Select any combination of installed parts. Daichi will remove all selected parts together, free of charge. Equipment is restored after the event.');
+    const apply=modalBtn(831,730,266,'APPLY REMOVALS // 0',()=>{
+      if(!selected.size)return;
+      const next=removeDriverPowerParts(carState,[...selected]);
+      dismiss();close();options.onCarState?.(next);
+    });
+    const refreshApply=()=>{
+      apply.copy.setText('APPLY REMOVALS // '+selected.size);
+      fit(apply.copy,250);
+      apply.hit.setFillStyle(selected.size?0x1a7e83:0x142b3e,1)
+        .setStrokeStyle(2,selected.size?0xa6ffef:CYAN);
+      apply.copy.setColor(selected.size?'#ffffff':'#b4c7d5');
+    };
     BRIEFING_POWER_PARTS.forEach((part,i)=>{
       const isNos=part.id==='nosKit';
       const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
@@ -456,30 +469,37 @@ function draw(s,state,options){
       const stashed=isNos?Boolean(carState.proBriefingNosStash):
         Object.hasOwn(stored[part.group]||{},part.id);
       const x=i<5?609:1030,y=294+(i%5)*81;
-      const actionable=level>0||isNos&&stashed;
+      const available=level>0&&!stashed;
       const hit=popupAdd(s.add.rectangle(x,y,392,57,
-        actionable?0x153449:0x122233,.96)
-        .setStrokeStyle(2,actionable?CYAN:0x667788).setDepth(275));
-      const status=level?'LEVEL '+level+'  REMOVE':stashed?
-        (isNos?'RESTORE NOS':'STORED'):'STOCK';
+        available?0x153449:0x122233,.96)
+        .setStrokeStyle(2,available?CYAN:0x667788).setDepth(275));
+      const status=()=>available?
+        (selected.has(part.id)?'SELECTED':'LEVEL '+level+'  SELECT'):
+        stashed?'STORED':'STOCK';
       const caption=popupAdd(s.add.text(x,y,
-        part.label+' // '+status,{
+        part.label+' // '+status(),{
           fontFamily:PIXEL,fontSize:'14px',
-          color:actionable?'#ffffff':'#aab9c8',
+          color:available?'#ffffff':'#aab9c8',
         }).setOrigin(.5).setDepth(276));
       fit(caption,372);
-      if(actionable)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        const next=isNos?toggleBriefingNos(carState):
-          removeDriverPowerPart(carState,part.id);
-        dismiss();close();options.onCarState?.(next);
+      if(available)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+        if(selected.has(part.id))selected.delete(part.id);
+        else selected.add(part.id);
+        const chosen=selected.has(part.id);
+        hit.setFillStyle(chosen?0x226e72:0x153449,.96)
+          .setStrokeStyle(2,chosen?0xa6ffef:CYAN);
+        caption.setText(part.label+' // '+status()).setColor('#ffffff');
+        fit(caption,372);
+        refreshApply();
       });
     });
-    modalBtn(613,733,286,'BACK TO CAR SETUP',openTune);
-    modalBtn(1030,733,286,'RESTORE ALL PARTS',()=>{
+    modalBtn(532,730,238,'BACK TO SETUP',openTune);
+    modalBtn(1116,730,236,'RESTORE ALL',()=>{
       let next=restoreDriverPowerParts(carState);
       if(next.proBriefingNosStash)next=toggleBriefingNos(next);
       dismiss();close();options.onCarState?.(next);
     });
+    refreshApply();
   }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
