@@ -13,17 +13,17 @@ test('R600 paddock uses real Hiroshi and the selected playable sprite',()=>{
   assert.match(ui,/assets\/Characters\/Central\/hiroshi_sato_normal\.png/);
   assert.match(ui,/getCharacterVisualAsset\(playerId,'idle'\)/);
   assert.match(ui,/s\.registry\.get\('playerCharacterId'\)/);
-  assert.match(ui,/key:'proDriverHiroshi',x:161/);
-  assert.match(ui,/key:playerAsset\?\.key,x:411/);
-  assert.match(ui,/key:'proDriverSayaka',x:1080/);
-  assert.match(ui,/key:'proDriverDaichi',x:1385/);
+  assert.match(ui,/key:'proDriverHiroshi',x:1402/);
+  assert.match(ui,/key:playerAsset\?\.key,x:888/);
+  assert.match(ui,/key:'proDriverSayaka',x:1110/);
+  assert.match(ui,/key:'proDriverDaichi',x:169/);
   assert.match(ui,/regoroom_/);
   assert.doesNotMatch(ui,/display\([^\n]*'YOUR CAR'/);
   assert.doesNotMatch(ui,/poly\(46,436,389,357/);
 });
 
 test('R600 real owned car is in the room, with no invented painted preview or box',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,742,599,477,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,590,531,620,207,carState,true\)/);
   assert.match(ui,/getCarPaintColor\(previewState\)/);
   assert.match(ui,/createCarDisplay\(car,x,y,w,depth/);
   assert.match(ui,/getBaseCarId\(state\.playerCarId\)/);
@@ -32,18 +32,18 @@ test('R600 real owned car is in the room, with no invented painted preview or bo
 });
 
 test('R600 opponent panel is wider, shorter and supports real portraits plus safe NPC placeholder',()=>{
-  assert.match(ui,/poly\(52,644,842,176/);
+  assert.match(ui,/poly\(52,643,730,164/);
   assert.match(ui,/createCharacterProfile\(s,\{/);
   assert.match(ui,/rivalContext:true/);
-  assert.match(ui,/PRO\\nDRIVER/);
-  assert.match(ui,/safeCarPreview\(round\.carId,720,764,249/);
+  assert.match(ui,/proDriverHelmet/);
+  assert.match(ui,/safeCarPreview\(round\.carId,629,736,226/);
   assert.match(ui,/opponentTorque/);
-  assert.match(ui,/OPPONENT /);
+  assert.match(ui,/NEXT OPPONENT /);
 });
 
 test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
   assert.match(ui,/onTap:\(\)=>toggleDialogue\('hiroshi'\)/);
-  assert.match(ui,/btn\(171,608,234,46,'RACE BRIEFING'/);
+  assert.match(ui,/workshopHotspot\(1390,616,220,44,'RACE BRIEFING'/);
   assert.match(ui,/function toggleDialogue\(which\)/);
   assert.match(ui,/if\(activeDialogue===which\)\{clearDialogue\(\);return;\}/);
   assert.match(ui,/HIROSHI \/\/ RACE BRIEFING/);
