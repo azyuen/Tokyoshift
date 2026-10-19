@@ -61,7 +61,7 @@ test('R594: seasonal crew forfeit uses up its official season round but gives no
   assert.ok(out.circuit.calendar.history.some(e=>e.id===id));
   assert.equal(out.circuit.eventTick,before.eventTick+1);
 });
-test('R594: a forfeit never counts as one of two COMPLETED events clearing Sayaka cooldown',()=>{
+test('R602: a forfeited paid crew event counts toward Sayaka shared cooldown',()=>{
   const r=registry(),id=enter(r);
   const consulted=useProCrewAdvice(r,id);
   assert.equal(consulted.error,undefined);
@@ -72,7 +72,7 @@ test('R594: a forfeit never counts as one of two COMPLETED events clearing Sayak
   r.set('proCircuit',abandoned.circuit);
   assert.equal(abandoned.circuit.activeCrewEvent,null);
   assert.equal(abandoned.circuit.eventTick,consulted.circuit.eventTick+1);
-  assert.equal(getProCrewAdviceAvailability(r).remaining,3);
+  assert.equal(getProCrewAdviceAvailability(r).remaining,2);
 });
 test('R594: Sayaka gives mixed-case spoken advice with actual driver and vehicle models',()=>{
   const r=registry(),units=getCrewSeriesUnits(r);
