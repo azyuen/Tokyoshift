@@ -23,7 +23,7 @@ test('R600 paddock uses real Hiroshi and the selected playable sprite',()=>{
 });
 
 test('R600 real owned car is in the room, with no invented painted preview or box',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,660,474,744,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,726,474,744,207,carState,true\)/);
   assert.match(ui,/getCarPaintColor\(previewState\)/);
   assert.match(ui,/createCarDisplay\(car,x,y,w,depth/);
   assert.match(ui,/getBaseCarId\(state\.playerCarId\)/);
