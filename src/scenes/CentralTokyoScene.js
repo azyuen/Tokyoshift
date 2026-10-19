@@ -3326,10 +3326,30 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(isOpenDriverBriefing(activeDuel))this.showOpenCircuitDriverBriefing();
         else this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
       }
-      else if (selectedFourWide) this.enterFourWideCup();
-      else if (selectedTimed) this.enterProfessionalTimedEvent(event);
+      else if (selectedFourWide) this.showDragEventBriefing(event,()=>this.enterFourWideCup());
+      else if (selectedTimed) this.showDragEventBriefing(event,()=>this.enterProfessionalTimedEvent(event));
+      else if(!prepareBeforePay)
+        this.showDragEventBriefing(event,()=>this.startProBracket(event,build));
       else this.startProBracket(event, build);
     },canEnter);
+  }
+
+  // Specialized timed, four-wide and season formats have no five-character
+  // paddock scene. Still open a FREE, compact briefing before any fee changes.
+  // The ONLY paid action on this screen is Go to Grid.
+  showDragEventBriefing(event,onGrid){
+    const fee=Number(event?.entryFee||0);
+    const rule=event?.noNos?'NOS PROHIBITED':'NOS PERMITTED';
+    this.showTransactionConfirm({
+      title:'EVENT BRIEFING // '+String(event.label||'PRO EVENT'),
+      message:'FORMAT  '+String(event.seasonRules?.format||event.format||
+        (event.fourWide?'FOUR-WIDE':'PRO CIRCUIT')).replaceAll('_',' ')+
+        '\\nENTRY  '+money(fee)+
+        '\\nRULES  '+(event.maxPowerKW?event.maxPowerKW+' KW MAX // ':'')+rule+
+        '\\n\\nProceed to enter this competition. Your entry is charged once.',
+      confirmLabel:'GO TO GRID // '+money(fee),
+      onConfirm:onGrid,
+    });
   }
 
   buildDragMainRivalRound(characterId, event, build, index = 0) {
