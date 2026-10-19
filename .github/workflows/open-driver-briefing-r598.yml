@@ -1,4 +1,4 @@
-name: R601 Open Circuit Driver Briefing Polish
+name: R602 Open Circuit Driver Briefing and Shared Advice Cooldown
 on:
   pull_request:
     paths:
@@ -10,6 +10,9 @@ on:
       - 'tests/open-driver-briefing-r599.mjs'
       - 'tests/open-driver-briefing-r600.mjs'
       - 'tests/open-driver-briefing-r601.mjs'
+      - 'tests/open-driver-briefing-r602.mjs'
+      - 'src/data/proSeason.js'
+      - 'tests/pro-crew-continuous-r594.mjs'
       - 'src/vehicles/VehiclePerformance.js'
       - '.github/workflows/open-driver-briefing-r598.yml'
   push:
@@ -23,6 +26,9 @@ on:
       - 'tests/open-driver-briefing-r599.mjs'
       - 'tests/open-driver-briefing-r600.mjs'
       - 'tests/open-driver-briefing-r601.mjs'
+      - 'tests/open-driver-briefing-r602.mjs'
+      - 'src/data/proSeason.js'
+      - 'tests/pro-crew-continuous-r594.mjs'
       - 'src/vehicles/VehiclePerformance.js'
 jobs:
   driver-briefing:
@@ -36,9 +42,10 @@ jobs:
       - name: Check modules
         run: |
           node --check src/data/proDriverBriefing.js
+          node --check src/data/proSeason.js
           node --check src/ui/ProDriverBriefing.js
           node --check src/scenes/CentralTokyoScene.js
           node --check src/scenes/FourLaneTestScene.js
           node --check src/vehicles/VehiclePerformance.js
       - name: Open Circuit driver briefing tests
-        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs
+        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs
