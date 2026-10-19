@@ -21,7 +21,7 @@ test('R601 uses workshop heartbeat glow and two equal-sized actions without BACK
   assert.match(chrome,/alpha:\{from:\.07,to:1\}/);
   assert.match(chrome,/duration:1300,yoyo:true,repeat:-1/);
   assert.match(chrome,/const pad=add/);
-  assert.match(ui,/workshopHotspot\(190,576,229,44,'DAICHI \/\/ TUNE'/);
+  assert.match(ui,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
   assert.match(ui,/workshopHotspot\(1111,576,225,44,adviceLabel/);
   assert.match(ui,/workshopHotspot\(1390,576,220,44,'RACE BRIEFING'/);
   assert.match(ui,/btn\(1070,779,246,54,unpaid\?'CANCEL ENTRY':'FORFEIT EVENT'/);
