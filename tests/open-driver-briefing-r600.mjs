@@ -38,7 +38,7 @@ test('R600 opponent panel is wider, shorter and supports real portraits plus saf
   assert.match(ui,/proDriverHelmet/);
   assert.match(ui,/safeCarPreview\(round\.carId,545,743,211/);
   assert.match(ui,/opponentTorque/);
-  assert.match(ui,/NEXT OPPONENT /);
+  assert.match(ui,/display\(89,652,'NEXT OPPONENT',24/);
 });
 
 test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
