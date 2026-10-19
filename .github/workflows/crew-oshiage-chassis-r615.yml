@@ -1,0 +1,34 @@
+name: R615 Crew Oshiage and chassis regression
+on:
+  pull_request:
+    paths:
+      - 'src/scenes/GarageScene.js'
+      - 'src/scenes/CrewSpaceScene.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/data/crewSystem.js'
+      - 'src/data/oshiageRims.js'
+      - 'tests/crew-oshiage-chassis-r615.mjs'
+      - '.github/workflows/crew-oshiage-chassis-r615.yml'
+  workflow_dispatch:
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/data/crewSystem.js
+          node --check src/data/oshiageRims.js
+          node --check src/ui/TravelMap.js
+          node --check src/scenes/GarageScene.js
+          node --check src/scenes/CrewSpaceScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/main.js
+      - name: Gameplay regression
+        run: node --test tests/crew-oshiage-chassis-r615.mjs tests/crew-global-recruit-pity-r551.mjs
