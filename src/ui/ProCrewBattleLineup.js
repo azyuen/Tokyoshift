@@ -237,27 +237,24 @@ function draw(s,opts){
   const crewGlow=(x,y,w,label,action,disabled=false)=>
     addProGlowingHotspot(s,add,{x,y,w,h:44,label,onClick:action,disabled});
 
-  // Standard Tokyo SHIFT confirmation modal (centre-screen, matching the
-  // existing rectangular popup/button language). Advice is a paid-event
-  // resource; ProSeasonPanel passes the persisted cooldown status.
+  // Both support characters now have workshop-style breathing cyan controls
+  // at the same height (their belt/waist). The two bubbles never overlap.
   const adviceUsed=Boolean(e.adviceUsed);
   const adviceRemaining=Math.max(0,Number(opts.adviceStatus?.remaining||0));
   const canAsk=!adviceUsed&&adviceRemaining===0;
   let confirmationNodes=[],confirmationOpen=false;
-  btn(1055,617,235,43,'ASK FOR ADVICE',()=>{
+  const askAdvice=()=>{
     if(!canAsk||confirmationOpen)return;
-    confirmationOpen=true;
+    clearDialogue();confirmationOpen=true;
     scope(confirmationNodes);
     rect(W/2,H/2,W,H,0x020812,.76,0x020812,270).setInteractive();
     rect(780,420,850,332,0xfffcf1,1,0x111111,271);
     const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
     headline.setFontStyle?.('800');
     const body=text(405,347,
-      'Ask Sayaka for strategic advice.\n'+
-      'Sayaka can advise you on ways to win this event. If you ask for her help, you can ask her again after two more professional events.',
+      'Sayaka can advise you on this professional event. After that, finish the current event and two more before requesting another consultation.',
       21,'#111111',false,272);
-    body.setWordWrapWidth?.(745);
-    body.setLineSpacing?.(7);
+    body.setWordWrapWidth?.(745);body.setLineSpacing?.(7);
     const modalButton=(x,label,action)=>{
       const hit=rect(x,515,294,52,0x172636,1,0x566b7e,273);
       hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
@@ -270,38 +267,40 @@ function draw(s,opts){
       close();opts.onAdvice?.([...selected]);
     });
     unscope();
-  },false,!canAsk);
+  };
+  const toggleSayaka=()=>{
+    if(activeDialogue==='sayaka'){clearDialogue();return;}
+    clearDialogue();activeDialogue='sayaka';
+    const x=427,y=285,w=480,h=136,edge=x+w;
+    const triangleBase=36,tipX=edge+Math.sqrt(3)*triangleBase/2;
+    const centerY=y+42,halfBase=triangleBase/2;
+    const points=[
+      {x,y},{x:edge,y},{x:edge,y:centerY-halfBase},
+      {x:tipX,y:centerY},{x:edge,y:centerY+halfBase},
+      {x:edge,y:y+h},{x,y:y+h},
+    ];
+    const bubble=dialogueAdd(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(5,0x111111,1);bubble.strokePoints(points,true);
+    dialogueAdd(s.add.text(x+19,y+9,'Sayaka',{
+      fontFamily:BODY,fontSize:'15px',color:'#252227',fontStyle:'700',
+    }).setDepth(238));
+    const spoken=dialogueAdd(s.add.text(x+19,y+36,opts.advice||'What do you think?',{
+      fontFamily:BODY,fontSize:'16px',color:'#111111',
+      fontStyle:'600',wordWrap:{width:w-38},
+    }).setDepth(238));
+    spoken.setLineSpacing?.(1);
+    const maxHeight=h-43;
+    if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
+  };
+  crewGlow(1055,502,235,adviceUsed?'VIEW ADVICE':
+    canAsk?'ASK FOR ADVICE':'ADVICE ON COOLDOWN',
+    adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
+  crewGlow(1366,502,220,'RACE BRIEFING',toggleSteward);
   if(!canAsk){
     const remainingLabel=adviceUsed?'ADVICE USED FOR THIS EVENT':
       'AVAILABLE AFTER '+adviceRemaining+' MORE PROFESSIONAL EVENTS';
-    text(938,654,remainingLabel,13,'#d3e4ef',false,241);
-  }
-
-  if(adviceUsed){
-    // Two-thirds of the previous 720px body, shifted right so its single
-    // equilateral speech-point reaches toward Sayaka without any seam line.
-    // 74px triangle base -> altitude sqrt(3)/2 * 74 = ~64px; all three
-    // edges are equal. Fill and stroke the OUTER polygon only.
-    const x=427,y=251,w=480,h=136,edge=x+w;
-    const triangleBase=74,tipX=edge+Math.sqrt(3)*triangleBase/2;
-    const centerY=y+68,halfBase=triangleBase/2;
-    const points=[
-      {x,y},{x:edge,y},{x:edge,y:centerY-halfBase},
-      {x:tipX,y:centerY},
-      {x:edge,y:centerY+halfBase},{x:edge,y:y+h},{x,y:y+h},
-    ];
-    const bubble=add(s.add.graphics().setDepth(235));
-    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
-    bubble.lineStyle(6,0x111111,1);bubble.strokePoints(points,true);
-    text(x+19,y+9,'Sayaka',15,'#252227',false,238).setFontStyle?.('700');
-    const spoken=text(x+19,y+36,opts.advice||'What do you think?',
-      16,'#111111',false,238);
-    spoken.setWordWrapWidth?.(w-38);
-    spoken.setLineSpacing?.(1);
-    // For longer recommendations, fit the existing spoken text INSIDE its
-    // reduced bubble rather than spilling into the crew panel below.
-    const maxHeight=h-43;
-    if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
+    text(926,542,remainingLabel,12,'#d3e4ef',false,241);
   }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
