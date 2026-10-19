@@ -1,5 +1,5 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r600';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r601';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction } from '../data/proDriverBriefing.js?v=20261019-r599';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
