@@ -103,7 +103,7 @@ test('production routing is scoped, restart-safe, and does not alter crew or sea
   const race=read('../src/scenes/FourLaneTestScene.js');
   const ui=read('../src/ui/ProDriverBriefing.js');
   assert.match(drag,/if\(isOpenDriverBriefing\(activeDuel\)\)this\.showOpenCircuitDriverBriefing\(\)/);
-  assert.match(drag,/if \(isOpenDriverBriefing\(state\)\)this\.showOpenCircuitDriverBriefing\(\)/);
+  assert.match(drag,/if\(isOpenDriverBriefing\(state\)\)this\.showOpenCircuitDriverBriefing\(\)/);
   assert.match(drag,/autoOpenProDriverBriefing/);
   assert.match(race,/autoOpenProDriverBriefing:true/);
   assert.match(race,/restoreDriverBriefingParts/);
