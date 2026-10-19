@@ -5,6 +5,16 @@ const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 const CYAN=0x35d6ff;
 
+// The same subtitle renderer is used in driver and crew briefings.
+// HEAT is the player-facing term; format-specific round/fixture internals stay unchanged.
+export function addProHeatSubtitle(s,add,{heat=1,total=3,x=58,y=146}={}){
+  return add(s.add.text(x,y,'HEAT '+heat+' OF '+total,{
+    fontFamily:'"Exo 2", sans-serif',fontSize:'23px',
+    fontStyle:'italic 900',color:'#c5cbd3',stroke:'#090d16',
+    strokeThickness:3,
+  }).setDepth(230));
+}
+
 export const STEWARD_BUBBLE=Object.freeze({x:850,y:24,w:674,h:258,triangleSide:36});
 
 export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI // RACE BRIEFING',height=null}={}){
@@ -139,8 +149,8 @@ export function showProSayakaAdviceConfirm(s,{
     fontFamily:PIXEL,fontSize:'17px',color:'#f5fbff',
   }).setOrigin(.5).setDepth(281));
   const description=add(s.add.text(780,402,message,{
-    fontFamily:BODY,fontSize:'23px',fontStyle:'600',
-    color:'#e7f2fa',align:'center',
+    fontFamily:BODY,fontSize:'18px',fontStyle:'600',
+    color:'#dceaf3',align:'center',
     wordWrap:{width:740},lineSpacing:4,
   }).setOrigin(.5).setDepth(281));
   if(description.height>112)description.setScale(112/description.height);
