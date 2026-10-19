@@ -79,7 +79,7 @@ test('R602: shared cooldown applies across crew and driver series, including for
   assert.match(consumeDriverAdvice(consult.circuit,consult.competitionState).error,/ALREADY USED/);
 });
 test('R602: layouts and dialogue use glowing toggles without X close controls',()=>{
-  assert.match(ui,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
+  assert.match(ui,/safeCarPreview\(state\.playerCarId,796,474,670,207,carState,true\)/);
   assert.match(ui,/key:'proDriverDaichi',x:193/);
   assert.match(ui,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
   assert.match(ui,/poly\(52,643,654,164/);

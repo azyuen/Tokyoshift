@@ -8,7 +8,7 @@ const chrome=read('../src/ui/ProBriefingChrome.js');
 const carRenderer=read('../src/scenes/CentralTokyoScene.js');
 
 test('R608 player car moves right and retains a visible shadow darker than character shadows',()=>{
-  assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
+  assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,670,207,carState,true\)/);
   assert.match(driver,/i===2&&keepShadow\)part\?\.setAlpha\?\.\(\.34\)/);
   assert.match(driver,/\.setDepth\(209\)/);
   assert.match(carRenderer,/const shadow = this\.add\.ellipse\(/);
@@ -16,8 +16,8 @@ test('R608 player car moves right and retains a visible shadow darker than chara
   assert.match(driver,/getCarPaintColor\(previewState\)/);
 });
 test('R608 identical Exo 2 italic grey heat subtitles beneath both event titles',()=>{
-  assert.match(driver,/display\(58,136,'heat '\+stageNo\+' of '\+stageTotal,18,'#aeb6c2'\)/);
-  assert.match(crew,/meetText\(60,137,'heat '\+\(heatIndex\+1\)\+' of 3',18,'#aeb6c2'\)/);
+  assert.match(driver,/addProHeatSubtitle\(s,add,\{heat:stageNo,total:stageTotal\}\)/);
+  assert.match(crew,/addProHeatSubtitle\(s,add,\{heat:heatIndex\+1,total:3\}\)/);
   assert.match(driver,/fontFamily:DISPLAY/);
   assert.match(crew,/fontFamily:'"Exo 2", sans-serif'/);
   assert.match(crew,/const heatIndex=Math\.min\(2,Math\.max\(0,Number\(f\.prepared\?\.revealed\|\|0\)\)\)/);

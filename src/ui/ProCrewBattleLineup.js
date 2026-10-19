@@ -1,9 +1,9 @@
-// R608 — Pro Crew heat subtitle and compact steward briefing.
+// R609 — Shared large HEAT subtitle and unified pro crew terminology.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
-import {addProGlowingHotspot,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r608';
+import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261019-r609';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -213,7 +213,7 @@ function draw(s,opts){
   const eventTitle=String(e.trophyId||!e.short?e.label:
     shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
-  meetText(60,137,'heat '+(heatIndex+1)+' of 3',18,'#aeb6c2');
+  addProHeatSubtitle(s,add,{heat:heatIndex+1,total:3});
   // Official details now live exclusively in Hiroshi's toggleable briefing.
   // No grey rule text competes with the CREW TECHNICAL / CREW RELAY heading.
   const heatRule=f.heatRule||f.raceRule||

@@ -25,7 +25,7 @@ test('R604 matching workshop hotspot and top-right Hiroshi briefing renderer use
 });
 
 test('R604 rival and player car positioning and shadows are subtly refined',()=>{
- assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,744,207,carState,true\)/);
+ assert.match(driver,/safeCarPreview\(state\.playerCarId,796,474,670,207,carState,true\)/);
  assert.match(driver,/part\?\.setAlpha\?\.\(\.34\)/);
  assert.match(driver,/p\.key==='proDriverSayaka'\?16:6/);
  assert.match(driver,/const frameX=74,frameY=683/);
