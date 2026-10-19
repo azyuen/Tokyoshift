@@ -204,10 +204,10 @@ function draw(s,state,options){
   // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
-    {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
+    {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:null},
     {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
-    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:()=>handleSayaka()},
-    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:()=>toggleDialogue('hiroshi')},
+    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:null},
+    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:null},
   ];
   for(const p of characterPlaces){
     if(!p.key||!s.textures.exists(p.key))continue;
@@ -218,7 +218,7 @@ function draw(s,state,options){
     add(s.add.ellipse(p.x,p.feet-6,p.maxWidth*.84,22,0,.27).setDepth(209));
     const sprite=add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
       .setScale(scale).setFlipX(Boolean(p.flip)).setDepth(214));
-    if(p.onTap)sprite.setInteractive({useHandCursor:true}).on('pointerdown',p.onTap);
+    // The workshop-style glowing buttons own all staff interactions.
   }
 
   // Same Open Circuit heading as R599. Hiroshi now owns all race rule details.
