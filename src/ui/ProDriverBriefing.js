@@ -355,16 +355,22 @@ function draw(s,state,options){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
-      // After swapping staff, the briefing's point faces Hiroshi on the RIGHT.
-      const x=525,y=137,w=646,h=268,edge=x+w,tipX=edge+59,tipY=y+80;
-      const pts=[{x,y},{x:edge,y},{x:edge,y:y+52},
-        {x:tipX,y:tipY},{x:edge,y:y+111},
-        {x:edge,y:y+h},{x,y:y+h}];
+      // Top-right official steward briefing: a small equilateral triangle
+      // projects from the BOTTOM edge directly above Hiroshi's head.
+      const x=850,y=24,w=674,h=222,edge=x+w,baseCenter=1402;
+      const side=36,half=side/2,triangleHeight=Math.sqrt(3)*side/2;
+      const pts=[
+        {x,y},{x:edge,y},{x:edge,y:y+h},
+        {x:baseCenter+half,y:y+h},
+        {x:baseCenter,y:y+h+triangleHeight},
+        {x:baseCenter-half,y:y+h},
+        {x,y:y+h},
+      ];
       const panel=dialogueAdd(s.add.graphics().setDepth(235));
       panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
       panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
-      bubbleText(x+24,y+12,'HIROSHI // RACE BRIEFING',17,'#53ddff',true);
-      dialogueAdd(s.add.rectangle(x+w/2,y+49,w-44,1,0x3c7e98,.75).setDepth(237));
+      bubbleText(x+22,y+11,'HIROSHI // RACE BRIEFING',15,'#53ddff',true);
+      dialogueAdd(s.add.rectangle(x+w/2,y+43,w-42,1,0x3c7e98,.75).setDepth(237));
       const details=[
         ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
         ['RACE','1/4 MI // STANDING START'],
@@ -375,33 +381,31 @@ function draw(s,state,options){
         ['STATUS',eligibility.eligible?'ELIGIBLE':eligibility.problems.join(' / ')],
       ];
       details.forEach(([label,value],i)=>{
-        const ty=y+61+i*24;
-        bubbleText(x+24,ty,label,11,'#a5d4e6',true);
-        const v=bubbleText(x+214,ty-3,value,16,
+        const ty=y+52+i*20;
+        bubbleText(x+24,ty,label,10,'#a5d4e6',true);
+        const v=bubbleText(x+215,ty-2,value,14,
           i===7?(eligibility.eligible?'#81efc4':'#ffb6ba'):'#f0f7fd');
-        fit(v,w-238);
+        fit(v,w-240);
       });
-      dialogueAdd(s.add.rectangle(x+w-15,y+16,26,26,0x14364a,1)
-        .setDepth(239).setInteractive({useHandCursor:true})
-        .on('pointerdown',clearDialogue));
-      bubbleText(x+w-22,y+6,'×',22,'#e6f5ff').setDepth(240);
+      // Closing is intentionally ONLY via the glowing Hiroshi hotspot.
     }else if(which==='sayaka'&&state.briefingAdviceText){
-      const x=557,y=232,w=482,h=154,edge=x+w,half=36,mid=y+h/2;
+      // Lower than the player's face; the small equilateral speech point
+      // sits in the UPPER half of the right edge and aims toward Sayaka.
+      const x=558,y=330,w=470,h=146,edge=x+w;
+      const triangleBase=36,half=triangleBase/2,tipX=edge+Math.sqrt(3)*triangleBase/2;
+      const mid=y+41;
       const pts=[{x,y},{x:edge,y},{x:edge,y:mid-half},
-        {x:edge+Math.sqrt(3)*half,y:mid},
-        {x:edge,y:mid+half},{x:edge,y:y+h},{x,y:y+h}];
+        {x:tipX,y:mid},{x:edge,y:mid+half},
+        {x:edge,y:y+h},{x,y:y+h}];
       const bubble=dialogueAdd(s.add.graphics().setDepth(235));
       bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(pts,true);
       bubble.lineStyle(5,0x111111,1);bubble.strokePoints(pts,true);
-      bubbleText(x+18,y+12,'Sayaka',16,'#252227').setFontStyle('700');
-      const spoken=bubbleText(x+18,y+40,state.briefingAdviceText,
+      bubbleText(x+18,y+11,'Sayaka',16,'#252227').setFontStyle('700');
+      const spoken=bubbleText(x+18,y+38,state.briefingAdviceText,
         16,'#111111').setWordWrapWidth(w-37);
       spoken.setLineSpacing(1);
-      if(spoken.height>h-52)spoken.setScale((h-52)/spoken.height);
-      dialogueAdd(s.add.rectangle(x+w-15,y+14,30,26,0xffffff,0.001)
-        .setDepth(241).setInteractive({useHandCursor:true})
-        .on('pointerdown',clearDialogue));
-      bubbleText(x+w-24,y+5,'×',21,'#252227').setDepth(242);
+      if(spoken.height>h-49)spoken.setScale((h-49)/spoken.height);
+      // Closing is intentionally ONLY via the glowing Sayaka hotspot.
     }
   }
   function handleSayaka(){
