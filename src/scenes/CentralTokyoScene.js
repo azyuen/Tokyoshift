@@ -1,10 +1,10 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r605';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r606';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r605';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r606';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261019-r605';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261019-r606';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3060,7 +3060,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       this.addContent(this.add.text(
         x + 145,
         CARDS.y + 136,
-        event.trophySlotClosed?'NEXT FULL CYCLE':'ENTRY ' + money(event.entryFee),
+        event.trophySlotClosed?'':'ENTRY ' + money(event.entryFee),
         {
           fontFamily: PIXEL_FONT,
           fontSize: '7px',
@@ -3154,9 +3154,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         fontFamily:PIXEL_FONT,fontSize:'11px',color:'#f8f3f2',
       }).setDepth(34));
       this.addContent(this.add.text(SIDE.x + 20,SIDE.y + 255,
-        'NO TROPHY INVITATION THIS CYCLE.\n\nCHECK BACK AFTER THE NEXT FULL DAY / NIGHT.',{
-        fontFamily:BODY_FONT,fontSize:'18px',color:'#c4bec0',
-        wordWrap:{width:SIDE.w-40},
+        'CHECK BACK AFTER THE NEXT FULL DAY / NIGHT',{
+        fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700',color:'#c4bec0',
+        lineSpacing:5,wordWrap:{width:SIDE.w-37},
       }).setDepth(34));
       return;
     }
@@ -3313,7 +3313,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         : !passesPower ? 'OVER POWER LIMIT // ' + power + ' KW'
         : !passesNos ? 'REMOVE NOS'
         : cash < event.entryFee ? 'INSUFFICIENT CASH'
-        : 'SCRUTINEERING PASSED';
+        : '';
     drawProEventSidebarStatus(this,SIDE,label,canEnter);
 
     const actionText = canResume

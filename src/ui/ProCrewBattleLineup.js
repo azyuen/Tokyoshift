@@ -78,7 +78,7 @@ export function showProCrewHeatSelection(s,options){
     s._proOverlayClose?.();
     s._proCrewLineupLoading=true;
     const v=s.add.rectangle(W/2,H/2,W,H,0x07111d,.99).setDepth(200).setInteractive();
-    const t=s.add.text(W/2,H/2,'PREPARING CREW PADDOCK',{
+    const t=s.add.text(W/2,H/2,'PREPARING RACE BRIEFING',{
       fontFamily:PIXEL,fontSize:'18px',color:'#f6f5f6',
     }).setOrigin(.5).setDepth(201);
     const cleanup=()=>{s._proCrewLineupLoading=false;v.destroy();t.destroy();};

@@ -143,9 +143,12 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
   Object.freeze({id:'headers',group:'exhaustNosTuning',label:'HEADERS'}),
   Object.freeze({id:'exhaust',group:'exhaustNosTuning',label:'EXHAUST'}),
   Object.freeze({id:'muffler',group:'exhaustNosTuning',label:'MUFFLER'}),
+  Object.freeze({id:'nosKit',group:'exhaustNosTuning',label:'NOS EQUIPMENT'}),
 ]);
 
 export function removeDriverPowerPart(carState = {}, partId) {
+  // NOS must always use its dedicated complete reversible equipment stash.
+  if(partId==='nosKit')return toggleBriefingNos(carState);
   const part=BRIEFING_POWER_PARTS.find(p=>p.id===partId);
   if(!part)return carState;
   const source=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):

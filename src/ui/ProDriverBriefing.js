@@ -1,4 +1,4 @@
-// R605 — One-time pay-to-grid and event-wide advice/next-heat briefings.
+// R606 — Daichi car setup now shares the Warehouse Stage III Dyno calibration UI.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -7,13 +7,13 @@ import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../da
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { normaliseStage3Calibration, getStage3CalibrationEligibility,
+import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
-import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r604';
+import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r606';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r605';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r606';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -38,6 +38,9 @@ function loadAssets(s,state){
     ['proDriverHiroshi','assets/Characters/Central/hiroshi_sato_normal.png'],
     ['proDriverSayaka','assets/Characters/Main/race_sayaka_fujieda_idle.png'],
     ['proDriverDaichi','assets/Characters/Main/pro_daichi_sakamoto.png'],
+    ['tuningPartEcuL3','assets/Tuning/Parts/ecu_l3.png'],
+    ['tuningPartTurboL3','assets/Tuning/Parts/turbo_l3.png'],
+    ['tuningPartGearboxL3','assets/Tuning/Parts/gearbox_l3.png'],
   ]) if(!s.textures.exists(key)){
     s.load.image(key,getCharacterAssetUrl(path));queued++;
   }
@@ -81,7 +84,7 @@ export function showProDriverBriefing(s,options={}){
     s._proOverlayClose?.();
     s._proDriverBriefLoading=true;
     const screen=s.add.rectangle(W/2,H/2,W,H,0x07111d,.99).setDepth(200).setInteractive();
-    const label=s.add.text(W/2,H/2,'PREPARING DRIVER BRIEFING',{
+    const label=s.add.text(W/2,H/2,'PREPARING RACE BRIEFING',{
       fontFamily:PIXEL,fontSize:'18px',color:'#ffffff',
     }).setOrigin(.5).setDepth(201);
     let finished=false;
@@ -294,7 +297,7 @@ function draw(s,state,options){
   const workshopHotspot=(x,y,w,h,label,action,{disabled=false}={})=>
     addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
-  workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(190,576,229,44,'CAR SETUP',()=>openTune());
   const firstHeat=stageNo===1;
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.remaining>0?advice.remaining+' EVENT COOLDOWN':
@@ -395,27 +398,29 @@ function draw(s,state,options){
   }
   // Daichi uses the same cyan-border / dark-ink dialogue language as
   // Hiroshi's steward bubble, with room for actual ECU and NOS controls.
+  // Shared Hiroshi-style shape. The left pointer aims back at Daichi;
+  // all live Dyno Stage III controls sit to the RIGHT of his character.
   function mechanicDialogue(title,description=''){
     dismiss();
-    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.44)
+    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.47)
       .setDepth(269).setInteractive());
-    const x=27,y=28,w=772,h=565,anchorX=193,side=36;
+    const x=377,y=46,w=891,h=738,side=36,mid=206;
     const half=side/2,tip=Math.sqrt(3)*side/2;
     const points=[
-      {x,y},{x:x+w,y},{x:x+w,y:y+h},
-      {x:anchorX+half,y:y+h},{x:anchorX,y:y+h+tip},
-      {x:anchorX-half,y:y+h},{x,y:y+h},
+      {x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},
+      {x,y:mid+half},{x:x-tip,y:mid},{x,y:mid-half},
     ];
     const panel=popupAdd(s.add.graphics().setDepth(270));
     panel.fillStyle(0x081a2b,.97);panel.fillPoints(points,true);
     panel.lineStyle(3,CYAN,1);panel.strokePoints(points,true);
-    popupAdd(s.add.text(x+24,y+19,title,{
-      fontFamily:PIXEL,fontSize:'16px',color:'#53ddff',
+    popupAdd(s.add.text(x+25,y+21,title,{
+      fontFamily:PIXEL,fontSize:'17px',color:'#53ddff',
     }).setDepth(274));
-    popupAdd(s.add.rectangle(x+w/2,y+60,w-44,1,0x3c7e98,.75).setDepth(273));
-    if(description)popupAdd(s.add.text(x+24,y+78,description,{
-      fontFamily:BODY,fontSize:'17px',fontStyle:'600',
-      color:'#dceaf3',wordWrap:{width:w-52},
+    popupAdd(s.add.rectangle(x+w/2,y+68,w-48,1,0x3c7e98,.75)
+      .setDepth(273));
+    if(description)popupAdd(s.add.text(x+25,y+89,description,{
+      fontFamily:BODY,fontSize:'18px',fontStyle:'600',
+      color:'#dceaf3',wordWrap:{width:w-58},lineSpacing:4,
     }).setDepth(274));
   }
   function modalBtn(x,y,w,label,action,red=false){
@@ -448,97 +453,138 @@ function draw(s,state,options){
   function openPowerParts(){
     const stored=carState.proBriefingPowerStash||{};
     mechanicDialogue('DAICHI // REMOVE PARTS',
-      'Temporarily remove power upgrades to meet the race limit. Purchased parts are restored after the series.');
+      'Remove installed performance equipment for free to meet race requirements. Your purchased parts are stored and restored after the event.');
     BRIEFING_POWER_PARTS.forEach((part,i)=>{
+      const isNos=part.id==='nosKit';
       const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
         carState.exhaustNosTuning||{};
-      const level=Math.max(0,Math.round(Number(group[part.id]||0)));
-      const stashed=Object.hasOwn(stored[part.group]||{},part.id);
-      const x=i<4?227:603,y=225+(i%4)*60;
-      const hit=popupAdd(s.add.rectangle(x,y,320,43,
-        level?0x153449:0x122233,.96)
-        .setStrokeStyle(2,level?CYAN:0x667788).setDepth(275));
+      const level=isNos
+        ?Math.max(Number(group.nosKit||0),carState.nosInstalled?1:0)
+        :Math.max(0,Math.round(Number(group[part.id]||0)));
+      const stashed=isNos?Boolean(carState.proBriefingNosStash):
+        Object.hasOwn(stored[part.group]||{},part.id);
+      const x=i<5?609:1030,y=294+(i%5)*81;
+      const actionable=level>0||isNos&&stashed;
+      const hit=popupAdd(s.add.rectangle(x,y,392,57,
+        actionable?0x153449:0x122233,.96)
+        .setStrokeStyle(2,actionable?CYAN:0x667788).setDepth(275));
+      const status=level?'LEVEL '+level+'  REMOVE':stashed?
+        (isNos?'RESTORE NOS':'STORED'):'STOCK';
       const caption=popupAdd(s.add.text(x,y,
-        part.label+' // '+(level?'LEVEL '+level+'  REMOVE':stashed?'STORED':'STOCK'),
-        {fontFamily:PIXEL,fontSize:'11px',color:level?'#ffffff':'#aab9c8'})
-        .setFontSize(11).setOrigin(.5).setDepth(276));
-      fit(caption,304);
-      if(level)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        const next=removeDriverPowerPart(carState,part.id);
+        part.label+' // '+status,{
+          fontFamily:PIXEL,fontSize:'14px',
+          color:actionable?'#ffffff':'#aab9c8',
+        }).setOrigin(.5).setDepth(276));
+      fit(caption,372);
+      if(actionable)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+        const next=isNos?toggleBriefingNos(carState):
+          removeDriverPowerPart(carState,part.id);
         dismiss();close();options.onCarState?.(next);
       });
     });
-    modalBtn(217,541,290,'RETURN TO ECU',openTune);
-    modalBtn(612,541,290,'RESTORE ALL PARTS',()=>{
-      const next=restoreDriverPowerParts(carState);
+    modalBtn(613,733,286,'BACK TO CAR SETUP',openTune);
+    modalBtn(1030,733,286,'RESTORE ALL PARTS',()=>{
+      let next=restoreDriverPowerParts(carState);
+      if(next.proBriefingNosStash)next=toggleBriefingNos(next);
       dismiss();close();options.onCarState?.(next);
     });
   }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
-    // The Drag Complex includes a full Level 3 calibration facility for
-    // professional drivers, free of any Warehouse Dyno facility upgrade.
-    // Each adjustment still needs the actual matching Level 3 car part,
-    // because the shared race physics enforces that mechanical prerequisite.
+    // Identical five positions, options, hardware gates, colours and
+    // Level III parts art to the Warehouse Dyno's renderStage3Tuning().
+    // Only the three calibration rows are needed in this mechanic dialogue.
     const level3=Boolean(options.proAccess);
     const values=normaliseStage3Calibration(carState);
     const canTune=level3&&Object.values(installed).some(Boolean);
-    const stash=Boolean(carState.proBriefingNosStash);
-    const hasNos=stash||Boolean(carState.nosInstalled)||
-      Number(carState.exhaustNosTuning?.nosKit||0)>0;
-    mechanicDialogue('DAICHI // RACE SETUP',
-      canTune?'Calibrate Level 3 parts using the real race physics.':
-        'Dyno access is complimentary; ECU calibration requires matching Level 3 parts.');
+    mechanicDialogue('DAICHI // CAR SETUP',
+      "I've got some great equipment here. I can remove key car parts to meet race requirements for free. I can also do advanced calibration on the car, as long as it has matching level 3 parts.");
     const entries=[
-      {key:'ecuBias',title:'ECU CURVE',allow:installed.ecuBias},
-      {key:'boostBias',title:'BOOST CURVE',allow:installed.boostBias},
-      {key:'gearBias',title:'GEAR SPREAD',allow:installed.gearBias},
+      {key:'ecuBias',title:'ECU CURVE',sprite:'tuningPartEcuL3',
+        requirement:'REQUIRES MOTORSPORT ECU // LEVEL 3',
+        left:'MIDRANGE',right:'TOP END',accent:0x62e8c7,y:320},
+      {key:'boostBias',title:'BOOST CURVE',sprite:'tuningPartTurboL3',
+        requirement:'REQUIRES BIG TURBO // LEVEL 3',
+        left:'EARLY',right:'LATE / STRONG',accent:0x43dfff,y:461},
+      {key:'gearBias',title:'GEAR SPREAD',sprite:'tuningPartGearboxL3',
+        requirement:'REQUIRES DOG BOX // LEVEL 3',
+        left:'CLOSE',right:'WIDE',accent:0xffc86a,y:602},
     ];
     const tuneNodes=[];
+    const dynamic=obj=>{popupAdd(obj);tuneNodes.push(obj);return obj;};
     function tuneRows(){
       tuneNodes.forEach(o=>{try{o.destroy();}catch(_){}});
       tuneNodes.length=0;
-      entries.forEach((entry,i)=>{
-        const y=230+i*61,enabled=level3&&entry.allow;
-        const option=getStage3CalibrationOption(entry.key,values[entry.key]);
-        const node=s.add.text(78,y,entry.title,{fontFamily:PIXEL,fontSize:'12px',
-          color:enabled?'#ebf7fa':'#8697aa'}).setFontSize(12).setDepth(278);
-        popupAdd(node);tuneNodes.push(node);
-        const val=s.add.text(408,y,enabled?option.label:'LOCKED',{
-          fontFamily:BODY,fontSize:'20px',color:enabled?'#ffffff':'#8697aa',
-        }).setFontSize(20).setOrigin(.5,0).setDepth(278);
-        popupAdd(val);tuneNodes.push(val);
-        for(const [dx,delta,sign] of [[-1,-1,'<'],[1,1,'>']]){
-          const hit=s.add.rectangle(620+dx*44,y+12,39,34,0x14344b)
-            .setStrokeStyle(1,CYAN).setDepth(278);
-          popupAdd(hit);tuneNodes.push(hit);
-          const label=s.add.text(620+dx*44,y+12,sign,{
-            fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
-          }).setFontSize(12).setOrigin(.5).setDepth(279);
-          popupAdd(label);tuneNodes.push(label);
-          if(enabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-            values[entry.key]=Math.max(-2,Math.min(2,values[entry.key]+delta));
+      entries.forEach(entry=>{
+        const unlocked=level3&&Boolean(installed[entry.key]);
+        const current=values[entry.key];
+        const option=getStage3CalibrationOption(entry.key,current);
+        const selectedColour=unlocked?entry.accent:0x47535a;
+        const bg=dynamic(s.add.rectangle(820,entry.y,826,124,0x07111d,
+          unlocked?.86:.72).setStrokeStyle(1,selectedColour,
+          unlocked?.62:.48).setDepth(272));
+        if(s.textures.exists(entry.sprite)){
+          const sprite=dynamic(s.add.image(479,entry.y,entry.sprite)
+            .setDepth(275).setAlpha(unlocked?1:.30));
+          const source=s.textures.get(entry.sprite).getSourceImage();
+          sprite.setScale(Math.min(66/Math.max(1,source.width),
+            66/Math.max(1,source.height)));
+        }
+        const accent='#'+entry.accent.toString(16).padStart(6,'0');
+        dynamic(s.add.text(546,entry.y-49,
+          entry.title+'  //  '+(unlocked?option?.label||'BALANCED':'LOCKED'),{
+            fontFamily:PIXEL,fontSize:'13px',color:unlocked?accent:'#71808a',
+          }).setDepth(275));
+        if(!unlocked){
+          dynamic(s.add.text(551,entry.y+5,entry.requirement,{
+            fontFamily:PIXEL,fontSize:'11px',color:'#a99a8b',
+            wordWrap:{width:610},
+          }).setDepth(275));
+          return;
+        }
+        dynamic(s.add.text(745,entry.y-17,entry.left,{
+          fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
+        }).setOrigin(1,.5).setDepth(275));
+        dynamic(s.add.text(1187,entry.y-17,entry.right,{
+          fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
+        }).setOrigin(1,.5).setDepth(275));
+        STAGE3_CALIBRATION_OPTIONS[entry.key].forEach((preset,index)=>{
+          const bx=761+index*100,by=entry.y+16;
+          const selected=preset.value===current;
+          const hit=dynamic(s.add.rectangle(bx,by,63,38,
+            selected?entry.accent:0x102138,selected?.92:.98)
+            .setStrokeStyle(2,selected?0xffffff:entry.accent,
+              selected?.85:.55).setDepth(274));
+          dynamic(s.add.text(bx,by,preset.value>0?'+'+preset.value:
+            String(preset.value),{
+            fontFamily:PIXEL,fontSize:'12px',
+            color:selected?'#07111d':'#dcecf4',
+          }).setOrigin(.5).setDepth(276));
+          hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+            values[entry.key]=preset.value;
             tuneRows();
           });
-        }
+        });
+        dynamic(s.add.text(968,entry.y+47,option?.detail||'',{
+          fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#9ab0bc',
+          align:'center',wordWrap:{width:475},
+        }).setOrigin(.5).setDepth(275));
       });
     }
     tuneRows();
-    modalBtn(126,541,171,stash?'RESTORE NOS':'REMOVE NOS',()=>{
-      if(!hasNos)return;
-      const next=toggleBriefingNos(carState);
-      dismiss();close();options.onCarState?.(next);
-    });
-    modalBtn(313,541,171,'POWER PARTS',()=>openPowerParts());
-    modalBtn(500,541,171,'CANCEL',dismiss);
-    modalBtn(687,541,171,'SAVE ECU SETUP',()=>{
+    modalBtn(557,730,223,'REMOVE PARTS',()=>openPowerParts());
+    modalBtn(839,730,223,'APPLY TUNE',()=>{
       const next={...carState,stage3Calibration:canTune?{
         ecuBias:installed.ecuBias?values.ecuBias:0,
         boostBias:installed.boostBias?values.boostBias:0,
         gearBias:installed.gearBias?values.gearBias:0,
       }:normaliseStage3Calibration(carState)};
-      if(canTune&&carState.dyno)next.dyno={...carState.dyno,officialReading:null};
+      if(canTune&&carState.dyno)next.dyno={
+        ...carState.dyno,officialReading:null,
+      };
       dismiss();close();options.onCarState?.(next);
-    },true);
+    });
+    modalBtn(1112,730,223,'CLOSE',dismiss);
   }
+
 }
