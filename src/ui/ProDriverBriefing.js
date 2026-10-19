@@ -1,4 +1,4 @@
-// R602 — Open Circuit briefing visual refinement and shared pro advice cooldown.
+// R603 — Unpaid Open Circuit briefing/scrutineering before one atomic entry payment.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -12,7 +12,7 @@ import { normaliseStage3Calibration, getStage3CalibrationEligibility,
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r602';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r603';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -72,7 +72,7 @@ function loadAssets(s,state){
 }
 
 export function showProDriverBriefing(s,options={}){
-  const state=s.registry.get('competitionState');
+  const state=options.state||s.registry.get('competitionState');
   if(!isOpenDriverBriefing(state))return false;
   if(s._proDriverBriefLoading)return true;
   const pending=options._loaded?0:loadAssets(s,state);
@@ -90,7 +90,7 @@ export function showProDriverBriefing(s,options={}){
     const done=()=>{
       cleanup();
       if(!s.sys?.isActive?.())return;
-      const saved=s.registry.get('competitionState');
+      const saved=options.state||s.registry.get('competitionState');
       if(!isOpenDriverBriefing(saved))return;
       const round=saved.rounds[saved.roundIndex];
       ensureDerivedModularCarTextures(s,Object.fromEntries(
@@ -164,7 +164,8 @@ function draw(s,state,options){
   const round=state.rounds[state.roundIndex],rival=characters[round.characterId]||{};
   const playerCar=modelFor(state.playerCarId)||{},oppCar=modelFor(round.carId)||{};
   const carStates=s.registry.get('carStates')||{};
-  const carState=carStates[state.playerCarId]||{};
+  const carState=options.preparedCarState||carStates[state.playerCarId]||{};
+  const unpaid=Boolean(state.briefingEntryPending);
   const fallback=options.event||{};
   let performance=null,oppPerformance=null;
   try{performance=getVehiclePerformance(getBaseCarId(state.playerCarId),carState);}
@@ -176,7 +177,7 @@ function draw(s,state,options){
   const opponentTorque=Number(oppPerformance?.car?.torqueNm||oppCar.torqueNm||0);
   const eligibility=driverBriefingEligibility(state,carState,playerPower,
     s.registry.get('ownedCarIds')||[],fallback);
-  const circuit=s.registry.get('proCircuit')||{};
+  const circuit=options.previewCircuit||s.registry.get('proCircuit')||{};
   const advice=driverAdviceStatus(circuit,state);
   const stageNo=state.roundIndex+1,stageTotal=state.rounds.length;
   const playerId=s.registry.get('playerCharacterId')||'renMizuno';
@@ -328,9 +329,16 @@ function draw(s,state,options){
     fit(text(993,671,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
       '#c8d8e6',true),245);
 
-  // Action row has two equal-sized controls, no Back: the competition is
-  // already paid and the player may only continue or confirm a forfeit.
-  btn(1070,779,246,54,'FORFEIT EVENT',()=>openForfeit(),{red:true});
+  // Unpaid: CANCEL ENTRY discards preview edits and costs nothing. Paid:
+  // existing saved series still requires the explicit forfeiture confirmation.
+  btn(1070,779,246,54,unpaid?'CANCEL ENTRY':'FORFEIT EVENT',()=>{
+    if(unpaid){close();options.onCancel?.();}
+    else openForfeit();
+  },{red:!unpaid});
+  if(unpaid){
+    fit(text(1077,724,'ENTRY '+cash(state.entryFee)+'  //  PAY ONLY WHEN YOU PROCEED',11,
+      '#f5e1ad',true),430);
+  }
   btn(1368,779,246,54,'PROCEED TO GRID  >>',()=>{
     if(!eligibility.eligible)return;
     close();options.onRace?.();
@@ -374,7 +382,7 @@ function draw(s,state,options){
       const details=[
         ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
         ['RACE','1/4 MI // STANDING START'],
-        ['PRIZE',cash(state.prizeCash)],['ENTRY PAID',cash(state.entryFee)],
+        ['PRIZE',cash(state.prizeCash)],['ENTRY '+(unpaid?'FEE':'PAID'),cash(state.entryFee)],
         ['POWER RULE',eligibility.rules.maxPowerKW==null?'OPEN':
           eligibility.rules.maxPowerKW+' KW MAX'],
         ['NOS RULE',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
@@ -451,10 +459,11 @@ function draw(s,state,options){
     },true);
   }
   function openAdvice(){
-    if(!driverAdviceStatus(s.registry.get('proCircuit')||{},
-      s.registry.get('competitionState')||{}).available)return;
+    if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
+      options.state||s.registry.get('competitionState')||{}).available)return;
     modal('ASK SAYAKA FOR ADVICE?',
-      'One tactical briefing per event. After this, finish this event and two more professional events before asking again.');
+      unpaid?'Your advice will count if you enter this paid event. One consultation, then two more professional events before asking again.':
+        'One tactical briefing per event. After this, finish this event and two more professional events before asking again.');
     modalBtn(581,581,255,'MAYBE LATER',dismiss);
     modalBtn(981,581,255,'ASK SAYAKA',()=>{
       dismiss();close();
