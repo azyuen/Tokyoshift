@@ -167,11 +167,13 @@ function draw(s,opts){
     s.textures.get(key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
   }
   rect(W/2,H/2,W,H,0x020714,.12,0x020714,202);
-  // Keep faces at their original vertical level while enlarging sprites 75%.
-  // Their torsos extend below the screen, ready for a foreground table overlay.
+  // R614: Lower both crew-room portraits by 60px so Hiroshi's shortened
+  // briefing covers less of their heads. Preserve sprite scale, horizontal
+  // alignment, shadows and the foreground controls (individual room untouched).
+  // Their torsos still extend below the foreground table.
   for(const p of [
-    {key:'proCrewSayaka',x:1056,feet:720,height:548,flip:false},
-    {key:'proCrewHiroshi',x:1366,feet:740,height:580,flip:true},
+    {key:'proCrewSayaka',x:1056,feet:780,height:548,flip:false},
+    {key:'proCrewHiroshi',x:1366,feet:800,height:580,flip:true},
   ]){
     if(!s.textures.exists(p.key))continue;
     const source=s.textures.get(p.key).getSourceImage();
