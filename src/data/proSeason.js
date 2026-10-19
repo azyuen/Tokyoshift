@@ -480,6 +480,7 @@ export function useProCrewAdvice(source,eventId) {
   const t=c.activeCrewEvent;
   if(!t||t.id!==eventId)return {error:'EVENT NO LONGER AVAILABLE'};
   if(t.adviceUsed)return {error:'SAYAKA ADVICE ALREADY USED'};
+  if(t.round>0||t.fixture?.revealed>0)return {error:'SAYAKA ADVICE ONLY AVAILABLE BEFORE FIRST HEAT'};
   if(c.eventTick<c.crewAdviceCooldownUntil)
     return {error:'SAYAKA AVAILABLE AFTER '+(c.crewAdviceCooldownUntil-c.eventTick)+' MORE PROFESSIONAL EVENTS'};
   c.activeCrewEvent={...clone(t),adviceUsed:true};

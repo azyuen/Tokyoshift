@@ -1,10 +1,10 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r604';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261019-r605';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r603';
+import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r605';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
-import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r602';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261019-r604';
+import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261019-r605';
 import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -3317,8 +3317,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
     drawProEventSidebarStatus(this,SIDE,label,canEnter);
 
     const actionText = canResume
-      ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME PRO CUP'
-      : canEnter ? prepareBeforePay?'OPEN BRIEFING // NO PAYMENT YET':proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
+      ? activeTimedHere ? 'RESUME TIMED EVENT' : selectedFourWide ? 'RESUME FOUR-WIDE OPEN' : 'RESUME EVENT BRIEFING'
+      : canEnter ? proEventEntryLabel(event.entryFee) : 'NOT ELIGIBLE';
     drawProEventSidebarEntry(this,SIDE,actionText,()=>{
       if (activeTimedHere) this.enterProfessionalTimedEvent(event);
       else if (activeCupHere) this.enterFourWideCup();
@@ -3326,10 +3326,30 @@ export default class CentralTokyoScene extends Phaser.Scene {
         if(isOpenDriverBriefing(activeDuel))this.showOpenCircuitDriverBriefing();
         else this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
       }
-      else if (selectedFourWide) this.enterFourWideCup();
-      else if (selectedTimed) this.enterProfessionalTimedEvent(event);
+      else if (selectedFourWide) this.showDragEventBriefing(event,()=>this.enterFourWideCup());
+      else if (selectedTimed) this.showDragEventBriefing(event,()=>this.enterProfessionalTimedEvent(event));
+      else if(!prepareBeforePay)
+        this.showDragEventBriefing(event,()=>this.startProBracket(event,build));
       else this.startProBracket(event, build);
     },canEnter);
+  }
+
+  // Specialized timed, four-wide and season formats have no five-character
+  // paddock scene. Still open a FREE, compact briefing before any fee changes.
+  // The ONLY paid action on this screen is Go to Grid.
+  showDragEventBriefing(event,onGrid){
+    const fee=Number(event?.entryFee||0);
+    const rule=event?.noNos?'NOS PROHIBITED':'NOS PERMITTED';
+    this.showTransactionConfirm({
+      title:'EVENT BRIEFING // '+String(event.label||'PRO EVENT'),
+      message:'FORMAT  '+String(event.seasonRules?.format||event.format||
+        (event.fourWide?'FOUR-WIDE':'PRO CIRCUIT')).replaceAll('_',' ')+
+        '\nENTRY  '+money(fee)+
+        '\nRULES  '+(event.maxPowerKW?event.maxPowerKW+' KW MAX // ':'')+rule+
+        '\n\nProceed to enter this competition. Your entry is charged once.',
+      confirmLabel:'GO TO GRID // '+money(fee),
+      onConfirm:onGrid,
+    });
   }
 
   buildDragMainRivalRound(characterId, event, build, index = 0) {

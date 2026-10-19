@@ -19,7 +19,7 @@ const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 test('only saved Open Circuit individual driver heats enter the room',()=>{
   assert.equal(isOpenDriverBriefing(driver()),true);
   assert.equal(isOpenDriverBriefing({...driver(),openCircuit:false}),false);
-  assert.equal(isOpenDriverBriefing({...driver(),openTrophyId:'shutoSpeed'}),false);
+  assert.equal(isOpenDriverBriefing({...driver(),openTrophyId:'shutoSpeed'}),true);
   assert.equal(isOpenDriverBriefing({...driver(),proEvent:false}),false);
   assert.equal(isOpenDriverBriefing({...driver(),active:false}),false);
   assert.equal(isOpenDriverBriefing({...driver(),roundIndex:9}),false);
@@ -68,7 +68,7 @@ test('Daichi removes NOS reversibly and returns paid hardware when event complet
   assert.equal(restored.ae86.exhaustNosTuning.nosKit,3);
   assert.equal(restored.ae86.nosInstalled,true);
   assert.equal(restored.ae86.proBriefingNosStash,undefined);
-  assert.equal(restoreDriverBriefingNos({ae86:removed},{...driver(),openTrophyId:'shutoSpeed'}),null);
+  assert.equal(restoreDriverBriefingNos({ae86:removed},{...driver(),openTrophyId:'shutoSpeed'}).ae86.nosInstalled,true);
   assert.deepEqual(toggleBriefingNos(removed).exhaustNosTuning,original.exhaustNosTuning);
 });
 
@@ -111,6 +111,6 @@ test('production routing is scoped, restart-safe, and does not alter crew or sea
   assert.match(ui,/pro_daichi_sakamoto\.png/);
   assert.match(ui,/race_sayaka_fujieda_idle\.png/);
   assert.match(ui,/getStage3CalibrationEligibility/);
-  assert.match(ui,/PROCEED TO GRID/);
+  assert.match(ui,/GO TO GRID/);
   assert.match(ui,/ASK FOR ADVICE/);
 });

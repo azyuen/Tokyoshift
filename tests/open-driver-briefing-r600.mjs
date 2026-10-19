@@ -59,7 +59,7 @@ test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
 test('R600 racing safety, cooldown, tuning and forfeits are retained',()=>{
   assert.match(ui,/DAICHI \/\/ TUNE/);
   assert.match(ui,/FORFEIT EVENT/);
-  assert.match(ui,/PROCEED TO GRID/);
+  assert.match(ui,/NEXT HEAT/);
   assert.match(ui,/options\.onForfeit/);
   assert.match(ui,/options\.onRace/);
   assert.match(ui,/getStage3CalibrationEligibility/);

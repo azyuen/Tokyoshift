@@ -1,7 +1,7 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r602';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
-import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r598';
+import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r605';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
 // Only pro-cup results enter professional standings; no street race settlement.
 // Reuses production two-lane Vehicle/AI, car rendering and control systems.
@@ -1561,10 +1561,11 @@ export default class FourLaneTestScene extends RaceScene {
         (outcome.summary.points != null ? ' // +' + outcome.summary.points + ' SEASON PTS' : '') +
         (this.registry.get('proCircuit')?.calendar?.round >= 8 ? ' // SEASON COMPLETE' : ''), 9, '#f3e2de');
     }
-    const nextText = this.proCrew?'RETURN TO HEAT PREPARATION':
+    const nextText = this.proCrew&&outcome?.status==='CREW_HEAT'?
+      (outcome.heatNumber<3?'NEXT HEAT':'REVIEW FIXTURE'):
+      advanced&&duel&&isOpenDriverBriefing(this.registry.get('competitionState'))?'NEXT HEAT':
       failure?'RETURN TO COMPLEX // RETRY HEAT':advanced?'NEXT ROUND':'RETURN TO COMPLEX';
-    label(1494, 679, 'TAP ANYWHERE  //  ' + nextText, 9, '#f6efef')
-      .setOrigin(1, 0.5);
+    // R605: dedicated bottom-right button, in addition to ENTER/tap-anywhere.
     // A single HIGH-depth full-screen hit area, not the old lower-depth
     // buttons hidden under the manga art. Touch and ENTER share the guard.
     let armed = false, navigating = false;
@@ -1575,7 +1576,11 @@ export default class FourLaneTestScene extends RaceScene {
       if (!armed || navigating) return;
       navigating = true;
       tap.disableInteractive();
-      if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
+      if(this.proCrew&&outcome?.status==='CREW_HEAT'){
+        this.scene.start('CentralTokyoScene',{
+          locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+        });
+      } else if (advanced && duel && isOpenDriverBriefing(this.registry.get('competitionState'))) {
         this.scene.start('CentralTokyoScene',{
           locationId:'tokyoDragComplex',autoOpenProDriverBriefing:true,
         });
@@ -1584,6 +1589,13 @@ export default class FourLaneTestScene extends RaceScene {
       } else this.returnToDrag();
     };
     tap.on('pointerdown', advance);
+    const nextHit=this.add.rectangle(1363,678,282,48,0x16364a,.96)
+      .setStrokeStyle(2,0x65d9ef,1).setDepth(depth+98).setScrollFactor(0)
+      .setInteractive({useHandCursor:true}).on('pointerdown',advance);
+    const nextLabel=this.add.text(1363,678,nextText,{
+      fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+99).setScrollFactor(0);
+    if(nextLabel.width>264)nextLabel.setScale(264/nextLabel.width);
     const enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     enter.on('down', advance);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => enter.off('down', advance));

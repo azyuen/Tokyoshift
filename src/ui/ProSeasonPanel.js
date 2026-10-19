@@ -1,13 +1,13 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261018-r586';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261019-r602';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261019-r605';
 import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261018-r591';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261019-r604';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261019-r605';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r604';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
@@ -35,7 +35,8 @@ export function drawProEventSidebarTitle(s,side,title) {
   }).setDepth(34));
 }
 export function drawProEventSidebarDetails(s,side,lines) {
-  return s.addContent(s.add.text(side.x+20,side.y+250,lines.join('\n'),{
+  const concise=lines.filter(value=>!/^\\s*(ORIGINAL )?ENTRY\\s+/i.test(String(value)));
+  return s.addContent(s.add.text(side.x+20,side.y+250,concise.join('\n'),{
     fontFamily:'"Rajdhani", monospace',fontSize:'11px',fontStyle:'700',
     color:'#c4bec0',lineSpacing:5,wordWrap:{width:side.w-37},
   }).setDepth(34));
@@ -47,7 +48,7 @@ export function drawProEventSidebarStatus(s,side,label,enabled) {
     color:enabled?'#f1e7e6':'#ea777d',wordWrap:{width:side.w-40},
   }).setDepth(34));
 }
-export const proEventEntryLabel=fee=>'ENTER EVENT // ¥ '+Number(fee||0).toLocaleString('en-US');
+export const proEventEntryLabel=fee=>'ENTER EVENT BRIEFING';
 export function drawProEventSidebarEntry(s,side,label,action,enabled=true) {
   const x=side.x+side.w/2,y=side.y+574,w=side.w-36;
   const bg=s.addContent(s.add.rectangle(x,y,w,40,enabled?0x551d25:0x201d20,1)
@@ -154,7 +155,7 @@ export function drawCrewSidebar(s,event,side) {
     !canEnter?'CHECK ELIGIBILITY / CASH':'';
   drawProEventSidebarStatus(s,side,reason,t?!!f:canEnter);
   drawProEventSidebarEntry(s,side,
-    t?'RESUME EVENT':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
+    t?'RESUME EVENT BRIEFING':canEnter?proEventEntryLabel(fee):'NOT ELIGIBLE',
     ()=>t?showCrewFixture(s):showCrewRegistration(s,[],{},event.trophyId||null),
     t?!!f:canEnter);
   return true;
@@ -170,17 +171,77 @@ function overlay(s,title) {
   s.events.once('shutdown',close);
   return {add,label,btn,close};
 }
-// One paid competition entry grants access to the FULL seven-member team.
-// No redundant five-person roster: choose exactly three at each saved fixture.
-// Paid pro crew entry goes directly into the crew strategy room, without
-// asking the player to confirm entry twice.
+// Entry is a preview. Cash, a persistent crew event and any Sayaka advice
+// are saved together only when the player taps GO TO GRID in the briefing.
+function previewSource(s,circuitState){
+  return {get:key=>key==='proCircuit'?circuitState:s.registry.get(key)};
+}
+function showUnpaidCrewBriefing(s,pending,selected=[]){
+  const source=previewSource(s,pending.circuit);
+  const f=getCrewFixture(pending.circuit),t=pending.circuit.activeCrewEvent;
+  const units=getCrewSeriesUnits(s.registry,pending.assignments).filter(u=>t.squadIds.includes(u.id));
+  if(!f){s.proError='CREW EVENT OFFER CHANGED';s._pendingCrewRegistration=null;redraw(s);return;}
+  showProCrewHeatSelection(s,{
+    event:t,fixture:f,units,selected,unpaid:true,entryFee:t.entryFee,
+    adviceStatus:getProCrewAdviceAvailability(source),
+    advice:t.adviceText||getProCrewHeatAdvice(f,units),
+    onCancel:()=>{s._pendingCrewRegistration=null;s.proError=null;redraw(s);},
+    onAdvice:ids=>{
+      const out=useProCrewAdvice(source,t.id);
+      if(out.error){s.proError=out.error;showUnpaidCrewBriefing(s,pending,ids);return;}
+      const adviceText=getProCrewHeatAdvice(f,units);
+      pending.circuit=out.circuit;
+      pending.circuit.activeCrewEvent={
+        ...out.circuit.activeCrewEvent,adviceText,
+      };
+      showUnpaidCrewBriefing(s,pending,ids);
+    },
+    onConfirm:ids=>{
+      if(s.registry.get('competitionState')?.active||
+         circuit(s).activeCrewEvent||circuit(s).activeTournament||
+         circuit(s).activeTimedEvent){s.proError='FINISH ACTIVE EVENT FIRST';return;}
+      // Re-register against the saved profile at the actual payment moment.
+      const verified=registerCrewSeries(s.registry,pending.squadIds,
+        pending.assignments,pending.trophyId,getOpenCircuitRotation());
+      if(verified.error){s.proError=verified.error;return;}
+      const savedEvent=verified.circuit.activeCrewEvent;
+      if(savedEvent.id!==pending.circuit.activeCrewEvent.id||
+         savedEvent.format!==pending.circuit.activeCrewEvent.format||
+         savedEvent.entryFee!==pending.circuit.activeCrewEvent.entryFee){
+        s.proError='EVENT OFFER CHANGED — CANCEL AND REOPEN';
+        return;
+      }
+      const merged={...savedEvent,
+        adviceUsed:Boolean(pending.circuit.activeCrewEvent.adviceUsed),
+        adviceText:pending.circuit.activeCrewEvent.adviceText||null,
+        lockedLineup:[...ids],
+      };
+      const staged={...verified.circuit,activeCrewEvent:merged,
+        crewAdviceCooldownUntil:pending.circuit.crewAdviceCooldownUntil};
+      const prepared=preparePlayerCrewFixture(previewSource(s,staged),ids,
+        getCrewFixture(staged)?.id);
+      if(prepared.error){s.proError=prepared.error;return;}
+      const heat=getPlayerCrewHeat(prepared.circuit);
+      if(!heat||!(s.registry.get('ownedCarIds')||[]).includes(heat.carId)){
+        s.proError='REGISTERED CREW CAR UNAVAILABLE';return;
+      }
+      if(!commit(s,{proCircuit:prepared.circuit,cash:verified.cash}))return;
+      s._pendingCrewRegistration=null;
+      s._proOverlayClose?.();
+      s.scene.start('FourLaneTestScene',{mode:'PRO_CREW'});
+    },
+  });
+}
 export function showCrewRegistration(s,_selection=[],assignments={},trophyId=null) {
   if(circuit(s).activeCrewEvent)return showCrewFixture(s);
   const units=getCrewSeriesUnits(s.registry,assignments);
-  const out=registerCrewSeries(s.registry,units.map(u=>u.id),assignments,
+  const squadIds=units.map(u=>u.id);
+  const out=registerCrewSeries(s.registry,squadIds,assignments,
     trophyId,getOpenCircuitRotation());
   if(out.error){s.proError=out.error;redraw(s);return;}
-  if(commit(s,{proCircuit:out.circuit,cash:out.cash}))showCrewFixture(s);
+  const pending={circuit:out.circuit,squadIds,assignments,trophyId};
+  s._pendingCrewRegistration=pending;
+  showUnpaidCrewBriefing(s,pending,[]);
 }
 
 export function confirmCrewForfeit(s) {
@@ -203,21 +264,54 @@ export function showCrewFixture(s,selection=null) {
   const currentFormat=f.format;
   const units=getCrewSeriesUnits(s.registry,t.assignments).filter(u=>t.squadIds.includes(u.id));
   const chosen=selection||t.squadIds.slice(0,3);
-  if(!f.prepared){
+  if(!f.prepared||f.prepared.revealed<3){
+    const lineup=t.lockedLineup||f.prepared?.lineup||null;
+    const lock=Boolean(lineup);
+    const ids=selection||lineup||[];
+    const eventAdvice=t.adviceText||getProCrewHeatAdvice(f,units);
     return showProCrewHeatSelection(s,{
-      event:t,fixture:f,units,selected:selection||[],
-      adviceStatus:getProCrewAdviceAvailability(s.registry),
-      advice:getProCrewHeatAdvice(f,units),
-      onForfeit:()=>confirmCrewForfeit(s),
-      onAdvice:ids=>{
-        const out=useProCrewAdvice(s.registry,t.id);
-        if(out.error){s.proError=out.error;showCrewFixture(s,ids);return;}
-        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s,ids);
+      event:t,fixture:f,units,selected:ids,locked:lock,
+      adviceStatus:{
+        ...getProCrewAdviceAvailability(s.registry),
+        // Existing consultation can always be REVIEWED. New consultations
+        // are available only in the very first heat of an event.
+        remaining:!t.adviceUsed&&(f.round>0||f.prepared?.revealed>0)?
+          Math.max(1,getProCrewAdviceAvailability(s.registry).remaining):
+          getProCrewAdviceAvailability(s.registry).remaining,
       },
-      onConfirm:ids=>{
-        const out=preparePlayerCrewFixture(s.registry,ids,f.id);
-        if(out.error){s.proError=out.error;showCrewFixture(s,ids);return;}
-        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s);
+      advice:eventAdvice,
+      onForfeit:()=>confirmCrewForfeit(s),
+      onAdvice:lineupIds=>{
+        if(f.round>0||f.prepared?.revealed>0){
+          s.proError='SAYAKA CONSULTATION IS ONLY AVAILABLE BEFORE HEAT ONE';
+          return;
+        }
+        const out=useProCrewAdvice(s.registry,t.id);
+        if(out.error){s.proError=out.error;showCrewFixture(s,lineupIds);return;}
+        out.circuit.activeCrewEvent={
+          ...out.circuit.activeCrewEvent,adviceText:eventAdvice,
+        };
+        if(commit(s,{proCircuit:out.circuit}))showCrewFixture(s,lineupIds);
+      },
+      onConfirm:lineupIds=>{
+        const current=circuit(s),fixture=getCrewFixture(current),active=current.activeCrewEvent;
+        if(!fixture||active?.id!==t.id||fixture.id!==f.id){
+          s.proError='FIXTURE CHANGED — REOPEN BRIEFING';return;
+        }
+        if(active.lockedLineup&&
+          JSON.stringify(active.lockedLineup)!==JSON.stringify(lineupIds)){
+          s.proError='REGISTERED LINEUP IS LOCKED';return;
+        }
+        const out=preparePlayerCrewFixture(s.registry,lineupIds,fixture.id);
+        if(out.error){s.proError=out.error;return;}
+        if(!active.lockedLineup)out.circuit.activeCrewEvent={
+          ...out.circuit.activeCrewEvent,lockedLineup:[...lineupIds],
+        };
+        const heat=getPlayerCrewHeat(out.circuit);
+        if(!heat||!(s.registry.get('ownedCarIds')||[]).includes(heat.carId)){
+          s.proError='REGISTERED CREW CAR UNAVAILABLE';return;
+        }
+        if(commit(s,{proCircuit:out.circuit}))s.scene.start('FourLaneTestScene',{mode:'PRO_CREW'});
       },
     });
   } else {

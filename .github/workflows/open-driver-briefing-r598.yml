@@ -1,4 +1,4 @@
-name: R604 Shared Pro Briefing and Scrutineering
+name: R605 Professional Briefing Lifecycle
 on:
   pull_request:
     paths:
@@ -14,6 +14,10 @@ on:
       - 'tests/open-driver-briefing-r603.mjs'
       - 'src/ui/ProBriefingChrome.js'
       - 'tests/pro-briefing-consistency-r604.mjs'
+      - 'tests/pro-briefing-lifecycle-r605.mjs'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/data/proSeason.js'
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-continuous-r594.mjs'
       - 'src/vehicles/VehiclePerformance.js'
@@ -33,6 +37,10 @@ on:
       - 'tests/open-driver-briefing-r603.mjs'
       - 'src/ui/ProBriefingChrome.js'
       - 'tests/pro-briefing-consistency-r604.mjs'
+      - 'tests/pro-briefing-lifecycle-r605.mjs'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/ProSeasonPanel.js'
+      - 'src/data/proSeason.js'
       - 'src/data/proSeason.js'
       - 'tests/pro-crew-continuous-r594.mjs'
       - 'src/vehicles/VehiclePerformance.js'
@@ -55,4 +63,4 @@ jobs:
           node --check src/scenes/FourLaneTestScene.js
           node --check src/vehicles/VehiclePerformance.js
       - name: Open Circuit driver briefing tests
-        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/open-driver-briefing-r603.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-crew-visual-r596.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs
+        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs tests/open-driver-briefing-r602.mjs tests/open-driver-briefing-r603.mjs tests/pro-briefing-consistency-r604.mjs tests/pro-briefing-lifecycle-r605.mjs tests/pro-crew-visual-r596.mjs tests/pro-crew-continuous-r594.mjs tests/pro-crew-r591.mjs

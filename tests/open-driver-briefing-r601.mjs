@@ -25,7 +25,7 @@ test('R601 uses workshop heartbeat glow and two equal-sized actions without BACK
   assert.match(ui,/workshopHotspot\(1111,576,225,44,adviceLabel/);
   assert.match(ui,/workshopHotspot\(1390,576,220,44,'RACE BRIEFING'/);
   assert.match(ui,/btn\(1070,779,246,54,unpaid\?'CANCEL ENTRY':'FORFEIT EVENT'/);
-  assert.match(ui,/btn\(1368,779,246,54,'PROCEED TO GRID/);
+  assert.match(ui,/btn\(1368,779,246,54,unpaid\?'GO TO GRID/);
   assert.doesNotMatch(ui,/btn\([^\n]*'BACK'/);
   assert.match(ui,/s\.tweens\?\.killTweensOf/);
 });

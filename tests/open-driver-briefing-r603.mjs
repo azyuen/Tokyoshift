@@ -28,7 +28,7 @@ const buy=(overrides={})=>purchaseDriverBriefingEntry({
 
 test('R603 only standard Open Circuit individual series use the unpaid room',()=>{
   assert.equal(usesPrepaidDriverBriefing(event),true);
-  assert.equal(usesPrepaidDriverBriefing({...event,trophyId:'tokyoTechnical'}),false);
+  assert.equal(usesPrepaidDriverBriefing({...event,trophyId:'tokyoTechnical'}),true);
   assert.equal(usesPrepaidDriverBriefing({...event,team:true}),false);
   assert.equal(usesPrepaidDriverBriefing({...event,fourWide:true}),false);
   assert.equal(usesPrepaidDriverBriefing({...event,seasonRules:{format:'KNOCKOUT'}}),false);
@@ -95,7 +95,7 @@ test('R603 screen defers payment, offers free cancellation and enforces final gr
   assert.match(ui,/state=options\.state\|\|s\.registry\.get\('competitionState'\)/);
   assert.match(ui,/options\.preparedCarState\|\|carStates\[state\.playerCarId\]/);
   assert.match(ui,/unpaid\?'CANCEL ENTRY':'FORFEIT EVENT'/);
-  assert.match(ui,/PAY ONLY WHEN YOU PROCEED/);
+  assert.match(ui,/GO TO GRID/);
   assert.match(ui,/if\(!eligibility\.eligible\)return/);
   assert.match(ui,/options\.onCancel\?\.\(\)/);
 });

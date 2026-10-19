@@ -1,18 +1,18 @@
-// R599 — Open Circuit individual-driver briefing domain helpers.
+// R605 — Persistent Open Circuit driver + trophy event briefings.
 import { settleLegacySeasonEvent } from './proSeason.js?v=20261019-r602';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
   return Boolean(state?.active && state?.proEvent && state?.openCircuit &&
-    !state?.openTrophyId && Array.isArray(state?.rounds) &&
+    Array.isArray(state?.rounds) &&
     Number.isInteger(Number(state?.roundIndex)) &&
     state.rounds[Number(state.roundIndex)]);
 }
 
 // Open Circuit individual knockout entry is prepared before money changes
-// hands. Crew, timed, stock and trophy formats keep their separate registration.
+// hands. Crew, timed, stock and season formats use their own event workflows.
 export function usesPrepaidDriverBriefing(event = {}) {
-  return Boolean(event.openCircuit && !event.trophyId && !event.team &&
+  return Boolean(event.openCircuit && !event.team &&
     !event.fourWide && !event.specialSlot && !event.seasonRules &&
     Array.isArray(event.opponentRatings) && event.opponentRatings.length>0);
 }
@@ -88,6 +88,7 @@ export function consumeDriverAdvice(circuit = {}, state = {}) {
   const status = driverAdviceStatus(circuit, state);
   if (!isOpenDriverBriefing(state)) return { error: 'DRIVER EVENT NO LONGER AVAILABLE' };
   if (status.usedThisEvent) return { error: 'SAYAKA ADVICE ALREADY USED' };
+  if (Number(state.roundIndex||0)>0)return {error:'SAYAKA ADVICE ONLY AVAILABLE BEFORE FIRST HEAT'};
   if (!status.available) return { error: 'SAYAKA AVAILABLE AFTER ' + status.remaining + ' MORE PROFESSIONAL EVENTS' };
   return {
     circuit: { ...circuit, crewAdviceCooldownUntil: Number(circuit.eventTick || 0) + 3 },
