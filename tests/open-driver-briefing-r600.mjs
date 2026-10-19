@@ -42,7 +42,7 @@ test('R600 opponent panel is wider, shorter and supports real portraits plus saf
 });
 
 test('R600 steward toggles race info, Sayaka only reveals on demand',()=>{
-  assert.match(ui,/onTap:\(\)=>toggleDialogue\('hiroshi'\)/);
+  assert.match(ui,/key:'proDriverHiroshi'[^\n]*onTap:null/);
   assert.match(ui,/workshopHotspot\(1390,616,220,44,'RACE BRIEFING'/);
   assert.match(ui,/function toggleDialogue\(which\)/);
   assert.match(ui,/if\(activeDialogue===which\)\{clearDialogue\(\);return;\}/);
