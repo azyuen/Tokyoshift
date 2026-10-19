@@ -74,7 +74,7 @@ export function showProVictoryResults(s,options={}) {
   }
 
   s._proOverlayClose?.();
-  let nodes=[],shapes=[],closed=false,armed=false;
+  let nodes=[],shapes=[],closed=false,armed=false,dismissKey=null;
   const add=(obj,depth=220)=>{nodes.push(obj.setDepth(depth));return obj;};
   const panel=(x,y,w,h,fill=0x0b101b,alpha=.96,stroke=0x374153)=>{
     const r=add(s.add.rectangle(x,y,w,h,fill,alpha),226);
@@ -89,6 +89,7 @@ export function showProVictoryResults(s,options={}) {
     if(closed)return;
     closed=true;
     s.events.off('shutdown',close);
+    dismissKey?.off?.('down',doContinue);
     if(s._proOverlayClose===close)s._proOverlayClose=null;
     nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o.destroy();}catch(_){}});
     shapes.forEach(o=>{try{o.destroy();}catch(_){}});
@@ -212,10 +213,7 @@ export function showProVictoryResults(s,options={}) {
   label(1167,765,options.nextLabel||'CONTINUE',27,{color:'#ffffff'}).setOrigin(.5,0);
   // A debounce prevents the final racing tap from accidentally dismissing the awards.
   s.time.delayedCall(360,()=>{if(!closed)armed=true;});
-  const enter=s.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ENTER);
-  if(enter) {
-    enter.on('down',doContinue);
-    s.events.once('shutdown',()=>enter.off('down',doContinue));
-  }
+  dismissKey=s.input.keyboard?.addKey?.(Phaser.Input.Keyboard.KeyCodes.ENTER);
+  if(dismissKey) dismissKey.on('down',doContinue);
   return {close};
 }
