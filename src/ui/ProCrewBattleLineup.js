@@ -1,4 +1,4 @@
-// R609 — Shared large HEAT subtitle and unified pro crew terminology.
+// R610 — Centre selected-crew roster cars vertically within each row.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -447,7 +447,7 @@ function draw(s,opts){
       const car=cars[u.carId];
       if(car&&typeof s.createCarDisplay==='function'){
         try{
-          const parts=s.createCarDisplay(car,1414,y+13,145,253,
+          const parts=s.createCarDisplay(car,1414,y+30,145,253,
             getCarPaintColor(state[u.carId]||{}),null,false,state[u.carId]||{});
           parts.forEach((part,index)=>{
             if(index===2){part?.destroy?.();return;}
