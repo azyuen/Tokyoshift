@@ -12,6 +12,7 @@ import {
   beginOshiageShowdown, prepareNextOshiageShowdownHeat,
 } from '../data/oshiageShowdown.js?v=20261015-r522';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
@@ -38,7 +39,7 @@ import {
 import {
   getOshiageRimListings, getOshiageRimQuote, buyOrInstallOshiageRim,
   restoreStockOshiageRims, RIMS_REFRESH_MS, OSHIAGE_RIM_SLOTS,
-} from '../data/oshiageRims.js?v=20261014-r506';
+} from '../data/oshiageRims.js?v=20261020-r615';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';
@@ -158,6 +159,15 @@ export default class OshiageScene extends Phaser.Scene {
     if (!key || !path || this.textures.exists(key)) return 0;
     this.load.image(key, path);
     return 1;
+  }
+
+  isCrewCarSelected() {
+    return isActiveCrewLoanCar(this.registry, this.registry.get('selectedCarId'));
+  }
+
+  isSchoolCarEligible(car, id) {
+    return Boolean(car && (!car.crewLoan || isActiveCrewLoanCar(this.registry, id)) &&
+      !car.ginzaDemo);
   }
 
   selectedCar() {
@@ -490,7 +500,7 @@ export default class OshiageScene extends Phaser.Scene {
       lesson.id === 'basic' ? 'FREE // ENTER LESSON' :
         freeVoucher ? 'START // USE FREE VOUCHER' : 'START LESSON // ' + MONEY(fee),
       () => this.showLessonBookingDialogue(lesson.id),
-      { disabled: !car || Boolean(car.crewLoan), accent: true, size: '8px' });
+      { disabled: !this.isSchoolCarEligible(car, id), accent: true, size: '8px' });
 
     this.addText(48, 654, 'OSHIAGE DRIVING SCHOOL  //  CHOOSE A LESSON',
       { pixel: true, size: '10px', color: '#8feaff' });
@@ -509,8 +519,8 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.schoolPromptOpen || this.instructorCutsceneOpen ||
         this.paintBusy || sceneCutsceneActive(this)) return;
     const { id, car } = this.selectedCar();
-    if (!car || car.crewLoan) {
-      this.showOshiageNotice('PLEASE SELECT YOUR OWN CAR FIRST');
+    if (!this.isSchoolCarEligible(car, id)) {
+      this.showOshiageNotice('SELECT YOUR CAR OR AN ACTIVE CREW CAR');
       return;
     }
     const freeVoucher = isOshiageVoucherAvailable(this.registry, lessonId);
@@ -560,7 +570,8 @@ export default class OshiageScene extends Phaser.Scene {
           carId: current.id, lessonId, cash: this.registry.get('cash'),
           freeFirstLesson: isOshiageVoucherAvailable(this.registry, lessonId),
         });
-        if (!purchase.ok || current.id !== id || !current.car || current.car.crewLoan) return;
+        if (!purchase.ok || current.id !== id ||
+            !this.isSchoolCarEligible(current.car, current.id)) return;
         if (lessonId !== 'basic') {
           const attempt = consumeOshiageAttempt(purchase.booking);
           if (!attempt) return;
@@ -603,8 +614,8 @@ export default class OshiageScene extends Phaser.Scene {
 
   startBasicTutorial(lessonId = null) {
     const { id, car } = this.selectedCar();
-    if (!car || car.crewLoan) {
-      this.showOshiageNotice('SELECT YOUR OWN CAR AT YOUR WORKSHOP BEFORE A LESSON');
+    if (!this.isSchoolCarEligible(car, id)) {
+      this.showOshiageNotice('SELECT YOUR CAR OR AN ACTIVE CREW CAR FOR THIS LESSON');
       return;
     }
     this.registry.set('selectedCarId', id);
@@ -1552,6 +1563,7 @@ export default class OshiageScene extends Phaser.Scene {
     showTravelMap(this, {
       currentLocationId: this.activeLocationId,
       title: 'TOKYO REGION MAP', actionVerb: 'DRIVE', allowCurrentAction: false,
+      travelMode: this.isCrewCarSelected() ? 'crew' : 'default',
       onHome: (workshopLocationId, cost) => this.returnHome(workshopLocationId, cost),
       onTravel: (locationId, cost) => this.travelTo(locationId, cost),
     });
@@ -1560,6 +1572,10 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.paintBusy) return;
     const target = getTravelLocation(locationId);
     if (!target) return;
+    // Crew travel is limited to street regions, Driving School and Custom
+    // Works. Keep the pro/elite Skytree racing event and Ginza restricted.
+    if (this.isCrewCarSelected() && (target.regionId === 'CENTRAL_TOKYO' ||
+        locationId === 'oshiageSkytreeMeet')) return;
     const amount = Math.max(0, Number(cost || 0));
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < amount) return;
