@@ -1,4 +1,4 @@
-// R601 — Open Circuit paddock polish: Daichi, car, player, Sayaka, Hiroshi.
+// R602 — Open Circuit briefing visual refinement and shared pro advice cooldown.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -195,15 +195,16 @@ function draw(s,state,options){
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
-  // R601: 30% larger and staged higher/left; still the owned car and paint.
-  safeCarPreview(state.playerCarId,590,531,620,207,carState,true);
+  // R602: increase the R601 owned-car presentation a further 20%, shift
+  // modestly up/right, preserve its exact paint, wheel and saved tuning state.
+  safeCarPreview(state.playerCarId,631,510,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
   // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
-    {key:'proDriverDaichi',x:169,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
+    {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
     {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
     {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:()=>handleSayaka()},
     {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:()=>toggleDialogue('hiroshi')},
@@ -302,7 +303,7 @@ function draw(s,state,options){
     return glow;
   };
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
-  workshopHotspot(166,623,229,44,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(190,611,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.available?'ASK FOR ADVICE':'ADVICE ON COOLDOWN';
   workshopHotspot(1111,637,225,44,adviceLabel,()=>handleSayaka(),{
