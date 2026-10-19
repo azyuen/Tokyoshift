@@ -88,6 +88,7 @@ export function consumeDriverAdvice(circuit = {}, state = {}) {
   const status = driverAdviceStatus(circuit, state);
   if (!isOpenDriverBriefing(state)) return { error: 'DRIVER EVENT NO LONGER AVAILABLE' };
   if (status.usedThisEvent) return { error: 'SAYAKA ADVICE ALREADY USED' };
+  if (Number(state.roundIndex||0)>0)return {error:'SAYAKA ADVICE ONLY AVAILABLE BEFORE FIRST HEAT'};
   if (!status.available) return { error: 'SAYAKA AVAILABLE AFTER ' + status.remaining + ' MORE PROFESSIONAL EVENTS' };
   return {
     circuit: { ...circuit, crewAdviceCooldownUntil: Number(circuit.eventTick || 0) + 3 },
