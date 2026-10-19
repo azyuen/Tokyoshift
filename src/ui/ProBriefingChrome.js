@@ -54,19 +54,20 @@ export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI //
 
 /**
  * Two-page steward briefing for ordinary Open Circuit driver and Pro Crew
- * events. Page 1 explains the format and victory conditions in plain English;
- * page 2 shows the saved opponent and scrutineering details.
+ * events. The wider panel gives the rule explanation room to wrap, while
+ * trophy briefings retain their existing separate renderer.
  *
- * The single large arrow lives on the RIGHT border, and reverses direction
- * on page 2. Reopening a briefing always begins on page 1. The parent scene
- * owns every display object and disposes of the interactive arrow on close.
- * Existing one-page trophy briefings intentionally keep the legacy renderer.
+ * Page navigation is contained entirely in the top-right header band:
+ * 40px high above the existing horizontal divider, with no protruding button
+ * border. Each time Hiroshi's briefing reopens it starts on page 1.
  */
 export function renderPagedStewardBriefing(s,add,pages,{
   anchorX=1402,title='HIROSHI // RACE BRIEFING',
 }={}){
-  const {x,y,w,triangleSide}=STEWARD_BUBBLE;
-  const h=304,edge=x+w,half=triangleSide/2;
+  // Extend leftwards, preserving the right edge and Hiroshi's pointer.
+  // This is local to paged briefings; legacy trophy bubbles are unchanged.
+  const {y,triangleSide}=STEWARD_BUBBLE;
+  const x=720,w=804,h=304,edge=x+w,half=triangleSide/2;
   const triangleHeight=Math.sqrt(3)*triangleSide/2;
   const pts=[
     {x,y},{x:edge,y},{x:edge,y:y+h},
@@ -80,24 +81,26 @@ export function renderPagedStewardBriefing(s,add,pages,{
   add(s.add.text(x+22,y+11,title,{
     fontFamily:PIXEL,fontSize:'15px',color:'#53ddff',
   }).setDepth(238));
+  // Continuous header rule; the arrow button sits just above it.
   add(s.add.rectangle(x+w/2,y+43,w-42,1,0x3c7e98,.75).setDepth(237));
-  const indicator=add(s.add.text(edge-110,y+15,'01 / 02',{
+  const indicator=add(s.add.text(edge-153,y+16,'01 / 02',{
     fontFamily:PIXEL,fontSize:'11px',color:'#b8dff0',
   }).setDepth(239));
-  // 46x54px interactive target, centred on the bubble's right-hand border.
-  const arrowHit=add(s.add.rectangle(edge-8,y+h/2,46,54,0x0b3449,1)
-    .setStrokeStyle(2,0x6ce7ff).setDepth(245)
-    .setInteractive({useHandCursor:true}));
-  const arrow=add(s.add.text(edge-8,y+h/2-2,'›',{
-    fontFamily:BODY,fontSize:'39px',fontStyle:'700',color:'#ffffff',
-  }).setOrigin(.5).setDepth(246));
+  // Inside the top-right corner: x=edge-51..edge-3, y+3..y+43.
+  // No independent button outline, so the shared header border stays seamless.
+  const arrowHit=add(s.add.rectangle(edge-27,y+23,48,40,0x0b3449,1)
+    .setDepth(245).setInteractive({useHandCursor:true}));
+  add(s.add.rectangle(edge-51,y+23,1,40,0x3c7e98,.85).setDepth(246));
+  const arrow=add(s.add.text(edge-27,y+21,'›',{
+    fontFamily:BODY,fontSize:'29px',fontStyle:'700',color:'#ffffff',
+  }).setOrigin(.5).setDepth(247));
   let current=0,pageObjects=[];
   const pageAdd=node=>{pageObjects.push(node);return add(node);};
-  const pageText=(left,top,value,size,{pixel=false,color='#eff8ff',width=w-100}={})=>
+  const pageText=(left,top,value,size,{pixel=false,color='#eff8ff',width=w-95}={})=>
     pageAdd(s.add.text(left,top,String(value),{
       fontFamily:pixel?PIXEL:BODY,fontSize:size+'px',
       fontStyle:pixel?'normal':'600',color,wordWrap:{width},
-      lineSpacing:2,
+      lineSpacing:3,
     }).setDepth(238));
   const redraw=()=>{
     for(const node of pageObjects){try{node.destroy();}catch(_){}}
@@ -106,22 +109,37 @@ export function renderPagedStewardBriefing(s,add,pages,{
     indicator.setText(String(current+1).padStart(2,'0')+' / 02');
     arrow.setText(current===0?'›':'‹');
     if(Array.isArray(page.sections)){
-      let cursor=y+58;
+      const lowerLimit=y+h-19;
+      let cursor=y+59;
       for(const section of page.sections){
-        pageText(x+24,cursor,String(section.label||''),10,{pixel:true,color:'#a5d4e6'});
-        cursor+=17;
-        const value=pageText(x+24,cursor,String(section.text||''),section.large?18:16);
-        cursor+=Math.max(22,value.height)+14;
+        pageText(x+24,cursor,String(section.label||''),10,{
+          pixel:true,color:'#a5d4e6',
+        });
+        cursor+=18;
+        // One label for HOW IT WORKS; the victory rule is its final paragraph.
+        const paragraphs=Array.isArray(section.paragraphs)
+          ?section.paragraphs:[section.text];
+        paragraphs.forEach((paragraph,i)=>{
+          const value=pageText(x+24,cursor,String(paragraph||''),
+            section.large?17:15,{width:w-68});
+          const available=Math.max(12,lowerLimit-cursor);
+          if(value.height>available)value.setScale(available/value.height);
+          cursor+=Math.min(value.height,available)+(i===paragraphs.length-1?16:12);
+        });
       }
     }else if(Array.isArray(page.rows)){
       const rows=page.rows.slice(0,9);
-      const pitch=Math.min(26,(h-82)/Math.max(1,rows.length));
+      const pitch=Math.min(31,(h-96)/Math.max(1,rows.length));
       rows.forEach(([label,value,color],i)=>{
-        const top=y+59+i*pitch;
-        pageText(x+24,top,String(label),10,{pixel:true,color:'#a5d4e6',width:183});
-        const detail=pageText(x+213,top-3,String(value),15,{color:color||'#f0f7fd',width:w-299});
-        // Keep even long opponent or eligibility values within their own row.
-        if(detail.height>pitch-1)detail.setScale(Math.min(1,(pitch-1)/detail.height));
+        const top=y+61+i*pitch;
+        pageText(x+24,top,String(label),10,{
+          pixel:true,color:'#a5d4e6',width:180,
+        });
+        const detail=pageText(x+213,top-3,String(value),15,{
+          color:color||'#f0f7fd',width:w-259,
+        });
+        // Long saved-state status messages cannot overflow the next row.
+        if(detail.height>pitch-2)detail.setScale(Math.min(1,(pitch-2)/detail.height));
       });
     }
   };

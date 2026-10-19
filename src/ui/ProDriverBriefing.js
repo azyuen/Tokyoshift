@@ -9,7 +9,7 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
-import { addProGlowingHotspot, addProHeatSubtitle, renderStewardBriefing, renderPagedStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r611';
+import { addProGlowingHotspot, addProHeatSubtitle, renderStewardBriefing, renderPagedStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r612';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
@@ -357,15 +357,15 @@ function draw(s,state,options){
       }else{
         const sections=[
           {label:'FORMAT',text:stageTotal+'-ROUND HEAD-TO-HEAD KNOCKOUT',large:true},
-          {label:'HOW IT WORKS',text:'Race one opponent at a time over a 1/4-mile standing-start drag. Each victory advances you to the next heat.'},
-          {label:'HOW TO WIN',text:'Win all '+stageTotal+' heats to take the event. One defeat eliminates you from the knockout.'},
+          {label:'HOW IT WORKS',paragraphs:[
+            'Race one opponent at a time over a 1/4-mile standing-start drag. Each victory advances you to the next heat.',
+            'Win all '+stageTotal+' heats to take the event. One defeat eliminates you from the knockout.',
+          ]},
         ];
         const technical=[
           ['EVENT',title],
-          ['CURRENT STAGE','HEAT '+stageNo+' OF '+stageTotal],
           ['NEXT OPPONENT',String(round.opponentName||rival.name||'PRO DRIVER').toUpperCase()],
           ['OPPONENT CAR',String(oppCar.name||round.carId).toUpperCase()],
-          ['OPPONENT POWER',Math.round(opponentPower)+' KW'],
           ['POWER LIMIT',eligibility.rules.maxPowerKW==null?'OPEN':eligibility.rules.maxPowerKW+' KW MAX'],
           ['NOS',eligibility.rules.noNos?'PROHIBITED':'ALLOWED'],
           ['PRIZE',cash(state.prizeCash)],
