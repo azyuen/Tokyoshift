@@ -36,7 +36,8 @@ const PART_CATEGORIES = {
   },
 };
 
-// Charge labour, not a buyback penalty. All costs are in game yen.
+// Flat service labour throughout Warehouse HQ and Crew Space (in-game yen).
+export const PART_UNINSTALL_FEE = 20000;
 export function getPartRemovalQuote(carState = {}, category, partId) {
   const group = PART_CATEGORIES[category];
   const part = group?.parts?.[partId];
@@ -46,21 +47,15 @@ export function getPartRemovalQuote(carState = {}, category, partId) {
   const level = Number(tuning[partId] || 0);
   if (level <= 0) return null;
 
-  let value = Number(part.levels[level]?.cost || 0);
   const removesShot = category === 'exhaustNos' &&
     partId === 'nosKit' && Number(tuning.nitrousShot || 0) > 0;
-  if (removesShot) {
-    value += Number(
-      EXHAUST_NOS_TUNING_PARTS.nitrousShot.levels[tuning.nitrousShot]?.cost || 0
-    );
-  }
 
   return {
     category,
     partId,
     partName: part.name,
     level,
-    cost: Math.max(1000, Math.ceil(value * 0.15 / 500) * 500),
+    cost: PART_UNINSTALL_FEE,
     removesShot,
   };
 }
@@ -106,8 +101,8 @@ export function removeTuningPartFromState(carState = {}, category, partId) {
 
 // Warehouse HQ: one removable kit per vehicle. Stored levels belong to the
 // vehicle's saved state, not to a transferable player inventory.
-export const STORE_KIT_REMOVE_FEE = 50000;
-export const STORE_KIT_RESTORE_FEE = 100000;
+export const STORE_KIT_REMOVE_FEE = PART_UNINSTALL_FEE;
+export const STORE_KIT_RESTORE_FEE = 50000;
 export const STORE_KIT_GROUPS = Object.freeze(Object.keys(PART_CATEGORIES));
 
 export function listStorableKitParts(state = {}) {
