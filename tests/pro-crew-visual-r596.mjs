@@ -6,16 +6,16 @@ const ui=readFileSync(new URL('../src/ui/ProCrewBattleLineup.js',import.meta.url
 
 test('R596: official crew header uses pink Open Circuit and a translucent backed car rule',()=>{
   assert.match(ui,/e\.openCircuit===false\?'#48d9ff':'#f06e88'/);
-  assert.match(ui,/meetHeader\(54,194,632,35,0x02050b,\.74\)/);
-  assert.match(ui,/CAR RULE: THREE DISTINCT CREW CARS/);
-  assert.match(ui,/CAR RULE: ONE FWD \+ ONE RWD \+ ONE AWD/);
+  assert.doesNotMatch(ui,/meetHeader\(54,194,632,35,0x02050b,\.74\)/);
+  assert.match(ui,/THREE DISTINCT CREW CARS/);
+  assert.match(ui,/ONE FWD \+ ONE RWD \+ ONE AWD/);
 });
 
 test('R596: all four main scene buttons share the intermediate 13px Silkscreen sizing',()=>{
   assert.match(ui,/const BUTTON_FONT=13;/);
   assert.match(ui,/text\(x,y,label,BUTTON_FONT/);
   assert.match(ui,/const caption=text\(x,779,label,BUTTON_FONT/);
-  assert.match(ui,/btn\(1055,617,235,43,'ASK FOR ADVICE'/);
+  assert.match(ui,/crewGlow\(1055,502,235,adviceUsed/);
   assert.match(ui,/footerButton\(974,205,'FORFEIT EVENT'/);
   assert.match(ui,/footerButton\(1196,205,'CLEAR LINEUP'/);
   assert.match(ui,/footerButton\(1430,229,'CONFIRM LINEUP'/);
@@ -23,8 +23,8 @@ test('R596: all four main scene buttons share the intermediate 13px Silkscreen s
 });
 
 test('R596: speech bubble body is two thirds of old width, with one stroked equilateral pointer',()=>{
-  assert.match(ui,/const x=427,y=251,w=480,h=136/);
-  assert.match(ui,/const triangleBase=74,tipX=edge\+Math\.sqrt\(3\)\*triangleBase\/2/);
+  assert.match(ui,/const x=427,y=285,w=480,h=136/);
+  assert.match(ui,/const triangleBase=36,tipX=edge\+Math\.sqrt\(3\)\*triangleBase\/2/);
   assert.match(ui,/bubble\.fillPoints\(points,true\)/);
   assert.match(ui,/bubble\.strokePoints\(points,true\)/);
   assert.doesNotMatch(ui,/bubble\.strokeTriangle/);
