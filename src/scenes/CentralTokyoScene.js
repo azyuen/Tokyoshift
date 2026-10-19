@@ -3407,81 +3407,152 @@ export default class CentralTokyoScene extends Phaser.Scene {
     };
   }
 
-  // Only Open Circuit's rotating individual DRIVER series uses this room.
-  // Registered entrants and opponent rounds come from the paid saved event;
-  // neither the season nor the crew systems are affected.
+  // Unpaid preview for normal Open Circuit individual races. The selected
+  // entrant, provisional opponents, car setup and even Sayaka advice remain
+  // scene-local until the ONE Proceed to Grid transaction.
   showOpenCircuitDriverBriefing(initialDialogue=null) {
-    const state=this.registry.get('competitionState');
+    const pending=this._pendingProDriverBriefing||null;
+    const state=pending?.state||this.registry.get('competitionState');
     if(!isOpenDriverBriefing(state))return;
-    const definition=PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
+    const definition=pending?.event||PRO_DRAG_EVENTS.find(e=>e.id===state.eventId)||{};
+    const pro=normaliseProCircuitState(this.registry.get('proCircuit'));
+    const fail=message=>{
+      this.proError=message;
+      this.renderLocation(this.activeLocationId);
+      if(this._pendingProDriverBriefing||isOpenDriverBriefing(this.registry.get('competitionState')))
+        this.showOpenCircuitDriverBriefing();
+    };
     showProDriverBriefing(this,{
-      event:definition,
-      initialDialogue,
+      state:pending?.state||null,
+      preparedCarState:pending?.preparedCarState||null,
+      previewCircuit:pending?.adviceCircuit||null,
+      event:definition,initialDialogue,
       proAccess:getProCircuitAccess(this.registry).unlocked,
-      onBack:()=>{}, // Registration is saved; the main card can resume it.
+      onCancel:()=>{
+        if(!pending)return;
+        this._pendingProDriverBriefing=null;
+        this.proError=null;
+        this.renderLocation(this.activeLocationId);
+      },
+      onBack:()=>{}, // Paid competitions resume from the Drag Complex card.
       onAdvice:spoken=>{
+        if(pending){
+          const out=consumeDriverAdvice(pending.adviceCircuit||pro,pending.state);
+          if(out.error){fail(out.error);return;}
+          pending.state={...out.competitionState,briefingAdviceText:spoken};
+          pending.adviceCircuit=out.circuit;
+          this.showOpenCircuitDriverBriefing('sayaka');
+          return;
+        }
         const current=this.registry.get('competitionState');
         if(!isOpenDriverBriefing(current))return;
         const out=consumeDriverAdvice(normaliseProCircuitState(this.registry.get('proCircuit')),current);
-        if(out.error){this.proError=out.error;this.renderLocation(this.activeLocationId);return;}
+        if(out.error){fail(out.error);return;}
         try{
           saveProTransaction(this.registry,{
             proCircuit:out.circuit,
             competitionState:{...out.competitionState,briefingAdviceText:spoken},
           });
           this.showOpenCircuitDriverBriefing('sayaka');
-        }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
+        }catch(error){fail(error.message);}
       },
       onCarState:nextState=>{
+        if(pending){
+          pending.preparedCarState=nextState;
+          this.showOpenCircuitDriverBriefing();
+          return;
+        }
         const current=this.registry.get('competitionState');
         if(!isOpenDriverBriefing(current))return;
         const carId=current.playerCarId;
         if(!(this.registry.get('ownedCarIds')||[]).includes(carId))return;
         const carStates={...(this.registry.get('carStates')||{}),[carId]:nextState};
-        try{saveProTransaction(this.registry,{carStates});
+        try{
+          saveProTransaction(this.registry,{carStates});
           this.showOpenCircuitDriverBriefing();
-        }catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);}
+        }catch(error){fail(error.message);}
       },
       onForfeit:()=>{
+        if(pending)return; // Unpaid events use CANCEL ENTRY, never FORFEIT.
         const current=this.registry.get('competitionState');
         const tx=forfeitOpenDriverTransaction(
           this.registry.get('proCircuit'),current,this.registry.get('carStates')||{});
-        if(tx.error){
-          this.proError=tx.error;
-          this.renderLocation(this.activeLocationId);
-          return;
-        }
+        if(tx.error){fail(tx.error);return;}
         try{
           saveProTransaction(this.registry,tx.changes);
           this.proError=null;
           this.renderLocation(this.activeLocationId);
-        }catch(error){
-          this.proError=error.message;
-          this.renderLocation(this.activeLocationId);
-          this.showOpenCircuitDriverBriefing();
-        }
+        }catch(error){fail(error.message);}
       },
       onRace:()=>{
-        const current=this.registry.get('competitionState');
+        const current=pending?.state||this.registry.get('competitionState');
         if(!isOpenDriverBriefing(current))return;
         const carId=current.playerCarId;
-        const state=(this.registry.get('carStates')||{})[carId]||{};
+        const currentCarStates=this.registry.get('carStates')||{};
+        const carState=pending?.preparedCarState||currentCarStates[carId]||{};
         let powerKW=Infinity;
-        try{powerKW=getVehiclePerformance(getBaseCarId(carId),state)?.car?.powerKW??Infinity;}
-        catch(error){console.warn('[Tokyo SHIFT] Briefing eligibility check failed',error);}
-        const eligibility=driverBriefingEligibility(current,state,powerKW,
+        try{powerKW=getVehiclePerformance(getBaseCarId(carId),carState)?.car?.powerKW??Infinity;}
+        catch(error){console.warn('[Tokyo SHIFT] Briefing scrutineering unavailable',error);}
+        const eligible=driverBriefingEligibility(current,carState,powerKW,
           this.registry.get('ownedCarIds')||[],definition);
-        if(!eligibility.eligible||!cars[getBaseCarId(carId)]||!Number.isFinite(powerKW)){
-          this.proError=eligibility.problems.join(' // ')||'CAR ENGINEERING DATA UNAVAILABLE';
-          this.renderLocation(this.activeLocationId);
-          this.showOpenCircuitDriverBriefing();
+        if(!eligible.eligible||!cars[getBaseCarId(carId)]||!Number.isFinite(powerKW)){
+          fail(eligible.problems.join(' // ')||'CAR ENGINEERING DATA UNAVAILABLE');
           return;
         }
-        this.registry.set('selectedCarId',carId);
-        saveSessionState(this.registry);
+        if(pending){
+          // Recheck the currently available official event at the moment of
+          // payment. A stale day/night offer or changed save pays nothing.
+          const live=this.getProDragEvents().find(e=>e.id===pending.event.id&&
+            usesPrepaidDriverBriefing(e)&&e.entryFee===pending.event.entryFee);
+          if(!live){fail('EVENT OFFER CHANGED — CANCEL AND REOPEN REGISTRATION');return;}
+          if(this.registry.get('competitionState')?.active){
+            fail('ANOTHER COMPETITION IS ALREADY ACTIVE');return;
+          }
+          const transaction=purchaseDriverBriefingEntry({
+            circuit:this.registry.get('proCircuit'),state:pending.state,
+            carStates:currentCarStates,preparedCarState:carState,
+            owned:this.registry.get('ownedCarIds')||[],
+            cash:Number(this.registry.get('cash')||0),powerKW,
+            adviceCircuit:pending.adviceCircuit,
+          });
+          if(transaction.error){fail(transaction.error);return;}
+          try{saveProTransaction(this.registry,transaction.changes);}
+          catch(error){fail(error.message);return;}
+          this._pendingProDriverBriefing=null; // Payment cannot happen twice.
+          this.setProDuelRaceContext(transaction.changes.competitionState);
+        }else{
+          this.registry.set('selectedCarId',carId);
+          saveSessionState(this.registry);
+        }
         this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});
       },
     });
+  }
+
+  // Called only when a paid entry has been saved; all engine/race setup
+  // continues to use the game's original registered-opponent parameters.
+  setProDuelRaceContext(state) {
+    const round=state.rounds[state.roundIndex]||state.rounds[0];
+    this.registry.set('raceReturnScene','CentralTokyoScene');
+    this.registry.set('selectedCarId',state.playerCarId);
+    this.registry.set('selectedOpponentCarId',round.carId);
+    this.registry.set('selectedOpponentPaintColor',round.paintColor);
+    this.registry.set('selectedOpponentCharacterId',round.characterId);
+    this.registry.set('selectedOpponentEncounterRating',round.encounterRating);
+    this.registry.set('selectedOpponentEncounterAi',round.encounterAi);
+    this.registry.set('selectedOpponentDifficulty',round.difficulty||'ELITE');
+    this.registry.set('selectedOpponentBuildRating',round.opponentBuildRating||null);
+    this.registry.set('selectedOpponentBuildArchetype',round.opponentBuildArchetype||null);
+    this.registry.set('selectedOpponentBuildState',round.opponentBuildState||null);
+    this.registry.set('selectedRaceCategory','COMPETITION');
+    this.registry.set('selectedRaceType','Standing Start');
+    this.registry.set('selectedRaceDeal','COMPETITION');
+    this.registry.set('selectedRaceStake',0);
+    this.registry.set('selectedRaceSpecialChallenge',false);
+    this.registry.set('raceTimeOfDay',getWorldPhase());
+    this.registry.set('raceDistrict','CENTRAL TOKYO');
+    this.registry.set('raceLocationLabel','TOKYO DRAG COMPLEX');
+    saveSessionState(this.registry);
   }
 
   startProBracket(event, build, storyConfirmed = false) {
