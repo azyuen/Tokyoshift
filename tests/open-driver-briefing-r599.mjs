@@ -61,7 +61,7 @@ test('layout matches wide rego room and displays single-event briefing, advice a
   assert.match(ui,/getBaseCarId\(state\.playerCarId\)/);
   assert.match(ui,/modelFor\(id\)/);
   assert.match(ui,/powerKW\|\|playerCar\.powerKW/);
-  assert.match(ui,/1\/4 MI \/\/ STANDING/);
+  assert.match(ui,/\['NEXT DRIVER'/);
   assert.match(ui,/renderStewardBriefing\(s,dialogueAdd,details/);
   assert.match(ui,/bubble\.fillPoints/);
   assert.match(ui,/FORFEIT EVENT/);
