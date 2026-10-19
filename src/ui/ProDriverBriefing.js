@@ -295,10 +295,12 @@ function draw(s,state,options){
     addProGlowingHotspot(s,add,{x,y,w,h,label,onClick:action,disabled});
   // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
   workshopHotspot(190,576,229,44,'DAICHI // TUNE',()=>openTune());
+  const firstHeat=stageNo===1;
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
-    advice.available?'ASK FOR ADVICE':advice.remaining+' EVENT COOLDOWN';
+    advice.remaining>0?advice.remaining+' EVENT COOLDOWN':
+    firstHeat?'ASK FOR ADVICE':'ADVICE CLOSED';
   workshopHotspot(1111,576,225,44,adviceLabel,()=>handleSayaka(),{
-    disabled:!advice.available&&!state.briefingAdviceText,
+    disabled:(!advice.available||!firstHeat)&&!state.briefingAdviceText,
   });
   workshopHotspot(1390,576,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
 
@@ -367,7 +369,7 @@ function draw(s,state,options){
   }
   function handleSayaka(){
     if(state.briefingAdviceText){toggleDialogue('sayaka');return;}
-    if(!advice.available)return;
+    if(!advice.available||!firstHeat)return;
     clearDialogue();openAdvice();
   }
   if(options.initialDialogue==='sayaka'&&state.briefingAdviceText)
