@@ -1,4 +1,4 @@
-// R608 — Pro race headings, natural car shadow and next-opponent composition.
+// R609 — Unified heat headings, left-hand driver and 10% smaller paddock car.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -9,7 +9,7 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
-import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r608';
+import { addProGlowingHotspot, addProHeatSubtitle, renderStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r608';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
@@ -205,16 +205,16 @@ function draw(s,state,options){
   };
   // R602: increase the R601 owned-car presentation a further 20%, shift
   // modestly up/right, preserve its exact paint, wheel and saved tuning state.
-  safeCarPreview(state.playerCarId,796,474,744,207,carState,true);
+  safeCarPreview(state.playerCarId,796,474,670,207,carState,true);
 
-  // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
+  // Character order: DAICHI > PLAYER (mirrored) > OWNED CAR > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
   // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
     {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:null},
-    {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
-    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:null},
+    {key:playerAsset?.key,x:480,feet:691,height:519,maxWidth:256,flip:true,onTap:null},
+    {key:'proDriverSayaka',x:1138,feet:763,height:527,maxWidth:276,flip:false,onTap:null},
     {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:null},
   ];
   for(const p of characterPlaces){
@@ -234,7 +234,7 @@ function draw(s,state,options){
   display(63,43,'OPEN CIRCUIT',21,'#ff8197');
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
-  display(58,136,'heat '+stageNo+' of '+stageTotal,18,'#aeb6c2');
+  addProHeatSubtitle(s,add,{heat:stageNo,total:stageTotal});
 
   // Compact opponent panel. The nested portrait parallelogram uses the
   // identical slope as the outer card and a dark, professional black outline.
@@ -340,7 +340,7 @@ function draw(s,state,options){
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
       const details=[
-        ['EVENT',title],['ROUND',stageNo+' / '+stageTotal],
+        ['EVENT',title],
         ['NEXT DRIVER',String(round.opponentName||rival.name||'PRO DRIVER').toUpperCase()],
         ['NEXT CAR',String(oppCar.name||round.carId).toUpperCase()],
         ['PRIZE',cash(state.prizeCash)],
