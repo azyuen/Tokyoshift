@@ -147,6 +147,8 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
 ]);
 
 export function removeDriverPowerPart(carState = {}, partId) {
+  // NOS must always use its dedicated complete reversible equipment stash.
+  if(partId==='nosKit')return toggleBriefingNos(carState);
   const part=BRIEFING_POWER_PARTS.find(p=>p.id===partId);
   if(!part)return carState;
   const source=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
