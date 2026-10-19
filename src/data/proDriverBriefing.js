@@ -164,6 +164,18 @@ export function removeDriverPowerPart(carState = {}, partId) {
   return next;
 }
 
+// Apply a batch of selected reversible removals as ONE car-state update.
+// Stage every change locally first; the caller persists only the final state.
+export function removeDriverPowerParts(carState = {}, partIds = []) {
+  let next=carState;
+  const unique=new Set(Array.isArray(partIds)?partIds:[]);
+  for(const id of unique){
+    if(!BRIEFING_POWER_PARTS.some(part=>part.id===id))continue;
+    next=removeDriverPowerPart(next,id);
+  }
+  return next;
+}
+
 export function restoreDriverPowerParts(carState = {}) {
   const saved=carState.proBriefingPowerStash;
   if(!saved)return carState;

@@ -70,8 +70,8 @@ test('R605 Hiroshi identifies next driver and car, advice cooldown is compact',(
   assert.match(driverUI,/advice\.remaining\+' EVENT COOLDOWN'/);
   assert.match(crewUI,/adviceRemaining\+' EVENT COOLDOWN'/);
   assert.doesNotMatch(crewUI,/AVAILABLE AFTER '\+adviceRemaining/);
-  assert.match(driverUI,/Advice applies for ALL heats of this event/);
-  assert.match(crewUI,/advice applies to this ENTIRE event/i);
+  assert.match(driverUI,/Advice applies to every heat of this event/);
+  assert.match(crewUI,/Advice applies to every heat of this event/);
   assert.match(crewPanel,/adviceText:eventAdvice/);
 });
 

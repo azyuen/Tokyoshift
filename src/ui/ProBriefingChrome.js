@@ -5,7 +5,7 @@ const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 const CYAN=0x35d6ff;
 
-export const STEWARD_BUBBLE=Object.freeze({x:850,y:24,w:674,h:222,triangleSide:36});
+export const STEWARD_BUBBLE=Object.freeze({x:850,y:24,w:674,h:258,triangleSide:36});
 
 export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI // RACE BRIEFING'}={}){
   const {x,y,w,h,triangleSide}=STEWARD_BUBBLE,edge=x+w;
@@ -109,5 +109,52 @@ export function showCompactProForfeit(s,{title='FORFEIT EVENT?',message='',onCon
     close();
     onConfirm?.();
   },{danger:true});
+  return {close};
+}
+
+// Shared compact confirmation for Sayaka — identical in both pro rooms.
+// No oversized generic modal. Layout remains readable on the iPad viewport.
+export function showProSayakaAdviceConfirm(s,{
+  message='',onConfirm,cancelLabel='MAYBE LATER',
+  confirmLabel='ASK SAYAKA',
+}={}){
+  s._proSayakaClose?.();
+  const nodes=[];
+  const add=o=>{nodes.push(o);return o;};
+  const close=()=>{
+    if(s._proSayakaClose!==close)return;
+    s.events?.off?.('shutdown',close);
+    nodes.forEach(node=>{try{node?.destroy?.();}catch(_){}});
+    s._proSayakaClose=null;
+  };
+  s._proSayakaClose=close;
+  s.events?.once?.('shutdown',close);
+  add(s.add.rectangle(780,420,1560,840,0x020611,.73)
+    .setDepth(279).setInteractive());
+  add(s.add.rectangle(780,420,820,268,0x0b1b2c,.99)
+    .setStrokeStyle(3,CYAN).setDepth(280));
+  add(s.add.text(780,317,'ASK SAYAKA FOR ADVICE?',{
+    fontFamily:PIXEL,fontSize:'17px',color:'#f5fbff',
+  }).setOrigin(.5).setDepth(281));
+  const description=add(s.add.text(780,402,message,{
+    fontFamily:BODY,fontSize:'23px',fontStyle:'600',
+    color:'#e7f2fa',align:'center',
+    wordWrap:{width:740},lineSpacing:4,
+  }).setOrigin(.5).setDepth(281));
+  if(description.height>112)description.setScale(112/description.height);
+  const button=(x,label,action,confirm=false)=>{
+    const hit=add(s.add.rectangle(x,497,256,48,
+      confirm?0x642a3b:0x142b3e,.97)
+      .setStrokeStyle(2,confirm?0xf28ba2:CYAN)
+      .setDepth(282).setInteractive({useHandCursor:true})
+      .on('pointerdown',action));
+    const caption=add(s.add.text(x,497,label,{
+      fontFamily:PIXEL,fontSize:'13px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(283));
+    if(caption.width>238)caption.setScale(238/caption.width);
+    return hit;
+  };
+  button(610,cancelLabel,close);
+  button(948,confirmLabel,()=>{close();onConfirm?.();},true);
   return {close};
 }

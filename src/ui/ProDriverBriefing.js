@@ -9,11 +9,11 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
-import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit } from './ProBriefingChrome.js?v=20261019-r606';
+import { addProGlowingHotspot, renderStewardBriefing, showCompactProForfeit, showProSayakaAdviceConfirm } from './ProBriefingChrome.js?v=20261019-r607';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
-  removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r606';
+  removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r607';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -123,6 +123,7 @@ function draw(s,state,options){
     s.events.off('shutdown',close);
     dismiss();
     s._proForfeitClose?.();
+    s._proSayakaClose?.();
     clearDialogue();
     nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
@@ -204,7 +205,7 @@ function draw(s,state,options){
   };
   // R602: increase the R601 owned-car presentation a further 20%, shift
   // modestly up/right, preserve its exact paint, wheel and saved tuning state.
-  safeCarPreview(state.playerCarId,660,474,744,207,carState,true);
+  safeCarPreview(state.playerCarId,726,474,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
@@ -263,12 +264,12 @@ function draw(s,state,options){
     const scale=Math.max(frameW*1.6/Math.max(1,source.width),
       frameH*2.2/Math.max(1,source.height));
     s.textures.get(helmetKey).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
-    const profile=add(s.add.image(px,frameY-13,helmetKey)
+    const profile=add(s.add.image(px,frameY+18,helmetKey)
       .setOrigin(.5,0).setScale(scale).setDepth(225));
     clipPortrait(profile);
   }else{
     const portrait=createCharacterProfile(s,{
-      characterId:round.characterId,pose:'idle',x:px,y:py-6,
+      characterId:round.characterId,pose:'idle',x:px,y:py+10,
       frameWidth:frameW*1.55,frameHeight:frameH*1.5,
       side:'center',depth:225,mask:false,
       playerCharacterId:playerId,rivalContext:true,
@@ -385,17 +386,6 @@ function draw(s,state,options){
     popup.forEach(o=>{try{o?.destroy?.();}catch(_){}});
     popup=[];
   }
-  function modal(title,description=''){
-    dismiss();
-    popupAdd(s.add.rectangle(W/2,H/2,W,H,0x020611,.80).setDepth(269).setInteractive());
-    popupAdd(s.add.rectangle(W/2,H/2,870,475,0x0b1b2c,.99)
-      .setStrokeStyle(3,CYAN).setDepth(270));
-    popupAdd(s.add.text(398,227,title,{fontFamily:PIXEL,fontSize:'16px',color:'#ffffff'})
-      .setFontSize(16).setDepth(274));
-    if(description)popupAdd(s.add.text(398,271,description,{
-      fontFamily:BODY,fontSize:'19px',color:'#e1edf7',wordWrap:{width:765},
-    }).setFontSize(19).setDepth(274));
-  }
   // Daichi uses the same cyan-border / dark-ink dialogue language as
   // Hiroshi's steward bubble, with room for actual ECU and NOS controls.
   // Shared Hiroshi-style shape. The left pointer aims back at Daichi;
@@ -430,6 +420,7 @@ function draw(s,state,options){
     const copy=popupAdd(s.add.text(x,y,label,{fontFamily:PIXEL,
       fontSize:'13px',color:'#ffffff'}).setFontSize(13).setOrigin(.5).setDepth(276));
     fit(copy,w-14);
+    return {hit,copy};
   }
   function openForfeit(){
     showCompactProForfeit(s,{
@@ -441,19 +432,33 @@ function draw(s,state,options){
   function openAdvice(){
     if(!driverAdviceStatus(options.previewCircuit||s.registry.get('proCircuit')||{},
       options.state||s.registry.get('competitionState')||{}).available)return;
-    modal('ASK SAYAKA FOR ADVICE?',
-      unpaid?'Advice applies for ALL heats of this event once you enter. The cooldown covers this event and two following professional events.':
-        'Advice applies to the ENTIRE current event, including every remaining heat. You cannot request a new consultation until two more professional events are completed.');
-    modalBtn(581,581,255,'MAYBE LATER',dismiss);
-    modalBtn(981,581,255,'ASK SAYAKA',()=>{
-      dismiss();close();
-      options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
-    },true);
+    showProSayakaAdviceConfirm(s,{
+      message:unpaid?
+        'Advice applies to every heat of this event. The cooldown covers this event and the next two professional events.':
+        'Advice applies to every remaining heat of this event. It stays available to review throughout the competition.',
+      onConfirm:()=>{
+        close();
+        options.onAdvice?.(driverOpponentAdvice(oppCar,rival,playerCar));
+      },
+    });
   }
   function openPowerParts(){
     const stored=carState.proBriefingPowerStash||{};
+    const selected=new Set();
     mechanicDialogue('DAICHI // REMOVE PARTS',
-      'Remove installed performance equipment for free to meet race requirements. Your purchased parts are stored and restored after the event.');
+      'Select any combination of installed parts. Daichi will remove all selected parts together, free of charge. Equipment is restored after the event.');
+    const apply=modalBtn(831,730,266,'APPLY REMOVALS // 0',()=>{
+      if(!selected.size)return;
+      const next=removeDriverPowerParts(carState,[...selected]);
+      dismiss();close();options.onCarState?.(next);
+    });
+    const refreshApply=()=>{
+      apply.copy.setText('APPLY REMOVALS // '+selected.size);
+      fit(apply.copy,250);
+      apply.hit.setFillStyle(selected.size?0x1a7e83:0x142b3e,1)
+        .setStrokeStyle(2,selected.size?0xa6ffef:CYAN);
+      apply.copy.setColor(selected.size?'#ffffff':'#b4c7d5');
+    };
     BRIEFING_POWER_PARTS.forEach((part,i)=>{
       const isNos=part.id==='nosKit';
       const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
@@ -464,30 +469,37 @@ function draw(s,state,options){
       const stashed=isNos?Boolean(carState.proBriefingNosStash):
         Object.hasOwn(stored[part.group]||{},part.id);
       const x=i<5?609:1030,y=294+(i%5)*81;
-      const actionable=level>0||isNos&&stashed;
+      const available=level>0&&!stashed;
       const hit=popupAdd(s.add.rectangle(x,y,392,57,
-        actionable?0x153449:0x122233,.96)
-        .setStrokeStyle(2,actionable?CYAN:0x667788).setDepth(275));
-      const status=level?'LEVEL '+level+'  REMOVE':stashed?
-        (isNos?'RESTORE NOS':'STORED'):'STOCK';
+        available?0x153449:0x122233,.96)
+        .setStrokeStyle(2,available?CYAN:0x667788).setDepth(275));
+      const status=()=>available?
+        (selected.has(part.id)?'SELECTED':'LEVEL '+level+'  SELECT'):
+        stashed?'STORED':'STOCK';
       const caption=popupAdd(s.add.text(x,y,
-        part.label+' // '+status,{
+        part.label+' // '+status(),{
           fontFamily:PIXEL,fontSize:'14px',
-          color:actionable?'#ffffff':'#aab9c8',
+          color:available?'#ffffff':'#aab9c8',
         }).setOrigin(.5).setDepth(276));
       fit(caption,372);
-      if(actionable)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        const next=isNos?toggleBriefingNos(carState):
-          removeDriverPowerPart(carState,part.id);
-        dismiss();close();options.onCarState?.(next);
+      if(available)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+        if(selected.has(part.id))selected.delete(part.id);
+        else selected.add(part.id);
+        const chosen=selected.has(part.id);
+        hit.setFillStyle(chosen?0x226e72:0x153449,.96)
+          .setStrokeStyle(2,chosen?0xa6ffef:CYAN);
+        caption.setText(part.label+' // '+status()).setColor('#ffffff');
+        fit(caption,372);
+        refreshApply();
       });
     });
-    modalBtn(613,733,286,'BACK TO CAR SETUP',openTune);
-    modalBtn(1030,733,286,'RESTORE ALL PARTS',()=>{
+    modalBtn(532,730,238,'BACK TO SETUP',openTune);
+    modalBtn(1116,730,236,'RESTORE ALL',()=>{
       let next=restoreDriverPowerParts(carState);
       if(next.proBriefingNosStash)next=toggleBriefingNos(next);
       dismiss();close();options.onCarState?.(next);
     });
+    refreshApply();
   }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
@@ -511,6 +523,16 @@ function draw(s,state,options){
         left:'CLOSE',right:'WIDE',accent:0xffc86a,y:602},
     ];
     const tuneNodes=[];
+    let applyButton=null;
+    const original=normaliseStage3Calibration(carState);
+    function highlightApplyTune(){
+      if(!applyButton)return;
+      const changed=['ecuBias','boostBias','gearBias'].some(key=>
+        values[key]!==original[key]);
+      applyButton.hit.setFillStyle(changed?0x167c79:0x142b3e,1)
+        .setStrokeStyle(2,changed?0xafffee:CYAN);
+      applyButton.copy.setColor(changed?'#ffffff':'#b4c7d5');
+    }
     const dynamic=obj=>{popupAdd(obj);tuneNodes.push(obj);return obj;};
     function tuneRows(){
       tuneNodes.forEach(o=>{try{o.destroy();}catch(_){}});
@@ -524,14 +546,14 @@ function draw(s,state,options){
           unlocked?.86:.72).setStrokeStyle(1,selectedColour,
           unlocked?.62:.48).setDepth(272));
         if(s.textures.exists(entry.sprite)){
-          const sprite=dynamic(s.add.image(479,entry.y,entry.sprite)
+          const sprite=dynamic(s.add.image(479,entry.y+20,entry.sprite)
             .setDepth(275).setAlpha(unlocked?1:.30));
           const source=s.textures.get(entry.sprite).getSourceImage();
           sprite.setScale(Math.min(66/Math.max(1,source.width),
             66/Math.max(1,source.height)));
         }
         const accent='#'+entry.accent.toString(16).padStart(6,'0');
-        dynamic(s.add.text(546,entry.y-49,
+        dynamic(s.add.text(432,entry.y-49,
           entry.title+'  //  '+(unlocked?option?.label||'BALANCED':'LOCKED'),{
             fontFamily:PIXEL,fontSize:'13px',color:unlocked?accent:'#71808a',
           }).setDepth(275));
@@ -542,14 +564,14 @@ function draw(s,state,options){
           }).setDepth(275));
           return;
         }
-        dynamic(s.add.text(745,entry.y-17,entry.left,{
+        dynamic(s.add.text(663,entry.y+4,entry.left,{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
         }).setOrigin(1,.5).setDepth(275));
-        dynamic(s.add.text(1187,entry.y-17,entry.right,{
+        dynamic(s.add.text(1098,entry.y+4,entry.right,{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
-        }).setOrigin(1,.5).setDepth(275));
+        }).setOrigin(0,.5).setDepth(275));
         STAGE3_CALIBRATION_OPTIONS[entry.key].forEach((preset,index)=>{
-          const bx=761+index*100,by=entry.y+16;
+          const bx=704+index*87,by=entry.y+4;
           const selected=preset.value===current;
           const hit=dynamic(s.add.rectangle(bx,by,63,38,
             selected?entry.accent:0x102138,selected?.92:.98)
@@ -563,9 +585,10 @@ function draw(s,state,options){
           hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
             values[entry.key]=preset.value;
             tuneRows();
+            highlightApplyTune();
           });
         });
-        dynamic(s.add.text(968,entry.y+47,option?.detail||'',{
+        dynamic(s.add.text(885,entry.y+43,option?.detail||'',{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#9ab0bc',
           align:'center',wordWrap:{width:475},
         }).setOrigin(.5).setDepth(275));
@@ -573,7 +596,7 @@ function draw(s,state,options){
     }
     tuneRows();
     modalBtn(557,730,223,'REMOVE PARTS',()=>openPowerParts());
-    modalBtn(839,730,223,'APPLY TUNE',()=>{
+    applyButton=modalBtn(839,730,223,'APPLY TUNE',()=>{
       const next={...carState,stage3Calibration:canTune?{
         ecuBias:installed.ecuBias?values.ecuBias:0,
         boostBias:installed.boostBias?values.boostBias:0,
@@ -584,6 +607,7 @@ function draw(s,state,options){
       };
       dismiss();close();options.onCarState?.(next);
     });
+    highlightApplyTune();
     modalBtn(1112,730,223,'CLOSE',dismiss);
   }
 
