@@ -3687,32 +3687,32 @@ export default class CentralTokyoScene extends Phaser.Scene {
       roundIndex: 0,
     };
 
-    try { saveProTransaction(this.registry, { cash: cash - event.entryFee, competitionState: state }); }
-    catch (error) { this.proError = error.message; this.renderLocation(this.activeLocationId); return; }
-    this.registry.set('raceReturnScene', 'CentralTokyoScene');
-    this.registry.set('selectedCarId', build.carId);
-    this.registry.set('selectedOpponentCarId', rounds[0].carId);
-    this.registry.set('selectedOpponentPaintColor', rounds[0].paintColor);
-    this.registry.set('selectedOpponentCharacterId', rounds[0].characterId);
-    this.registry.set('selectedOpponentEncounterRating', rounds[0].encounterRating);
-    this.registry.set('selectedOpponentEncounterAi', rounds[0].encounterAi);
-    this.registry.set('selectedOpponentDifficulty', rounds[0].difficulty || 'ELITE');
-    this.registry.set('selectedOpponentBuildRating', rounds[0].opponentBuildRating || null);
-    this.registry.set('selectedOpponentBuildArchetype', rounds[0].opponentBuildArchetype || null);
-    this.registry.set('selectedOpponentBuildState', rounds[0].opponentBuildState || null);
-    this.registry.set('selectedRaceCategory', 'COMPETITION');
-    this.registry.set('selectedRaceType', 'Standing Start');
-    this.registry.set('selectedRaceDeal', 'COMPETITION');
-    this.registry.set('selectedRaceStake', 0);
-    this.registry.set('selectedRaceSpecialChallenge', false);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
-    this.registry.set('raceDistrict', 'CENTRAL TOKYO');
-    this.registry.set('raceLocationLabel', 'TOKYO DRAG COMPLEX');
-    saveSessionState(this.registry);
-
-    // The 3-entry-level events race in the exact same professional venue as
-    // Four-Wide Open, with only the two nearest cars/lanes occupied.
-    if (isOpenDriverBriefing(state))this.showOpenCircuitDriverBriefing();
-    else this.scene.start('FourLaneTestScene', { mode: 'PRO_DUEL' });
+    if(prepareBeforePay && isOpenDriverBriefing(state)){
+      // A brand-new entry remains strictly unpaid until final scrutineering.
+      // No registry/session writes, fee deductions, eventTick or cooldown
+      // changes happen until the player confirms by proceeding to the grid.
+      state.briefingEntryPending=true;
+      this._pendingProDriverBriefing={
+        state,event:{...event},preparedCarState:{
+          ...build.state,
+          tuning:build.state.tuning?{...build.state.tuning}:undefined,
+          exhaustNosTuning:build.state.exhaustNosTuning?
+            {...build.state.exhaustNosTuning}:undefined,
+        },
+        adviceCircuit:null,
+      };
+      this.showOpenCircuitDriverBriefing();
+      return;
+    }
+    try{saveProTransaction(this.registry,{
+      cash:cash-event.entryFee,competitionState:state,
+    });}
+    catch(error){this.proError=error.message;this.renderLocation(this.activeLocationId);return;}
+    this.setProDuelRaceContext(state);
+    // Season knockouts and legacy trophy races keep their current paid entry
+    // and direct race flow. Only standard Open Circuit individual series
+    // use the new unpaid room.
+    if(isOpenDriverBriefing(state))this.showOpenCircuitDriverBriefing();
+    else this.scene.start('FourLaneTestScene',{mode:'PRO_DUEL'});
   }
 }
