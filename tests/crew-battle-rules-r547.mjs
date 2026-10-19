@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { cars } from '../src/data/cars.js';
 import {
   CREW_BATTLE_REGION_RULES, getCrewBattleHeatRule,
-  getCrewEventCarSetup, getCrewBattleScout,
+  getCrewEventCarSetup, getCrewBattleScout, eventStockState,
 } from '../src/data/crewBattleRules.js';
 import {
   buildRegionalCrewBattleRounds, getCrewBattleCaptainId,
@@ -25,7 +25,7 @@ test('seven regions provide escalating difficulty and three explicit heat rules'
     for (let i=0;i<3;i++) assert.ok(getCrewBattleHeatRule(region,i).label);
   }
   assert.equal(getCrewBattleHeatRule('SHIBUYA',0).stock,true);
-  assert.equal(getCrewBattleHeatRule('YOKOHAMA',0).maxPowerKW,260);
+  assert.equal(getCrewBattleHeatRule('YOKOHAMA',0).maxPowerKW,300);
   assert.equal(getCrewBattleHeatRule('SHINJUKU',0).stock,true);
   assert.equal(getCrewBattleHeatRule('SHINJUKU',1).maxPowerKW,380);
   assert.equal(getCrewBattleHeatRule('DAIKOKU',2).noNos,true);
@@ -55,23 +55,28 @@ test('captains never drive and actual opponents have legal builds', () => {
   }
 });
 
-test('event compliance never mutates permanent tuning and disables prohibited parts', () => {
+test('event eligibility never modifies installed player hardware', () => {
   const original={paintColor:0xff9900,nosInstalled:true,tuning:{engine:3,turbo:3,ecu:2},
     drivetrainTuning:{clutch:2},exhaustNosTuning:{nosKit:2,nitrousShot:3}};
   const snapshot=JSON.stringify(original);
   const stock=getCrewEventCarSetup('ae86',original,{stock:true,noNos:true,label:'STOCK'});
-  assert(stock.eligible);
-  assert.equal(stock.state.tuning.engine,0);
-  assert.equal(stock.state.drivetrainTuning.clutch,0);
-  assert.equal(stock.state.nosInstalled,false);
-  assert.equal(stock.state.paintColor,original.paintColor);
+  assert.equal(stock.eligible,false);
+  assert.equal(stock.reason,'FACTORY STOCK REQUIRED');
   const noNos=getCrewEventCarSetup('ae86',original,{noNos:true,label:'NO NOS'});
-  assert(noNos.eligible);
-  assert.equal(noNos.state.exhaustNosTuning.nosKit,0);
-  const trim=getCrewEventCarSetup('ae86',original,{maxPowerKW:100,label:'100 KW'});
-  const factoryPower=getVehiclePerformance('ae86',stock.state).car.powerKW;
-  if(factoryPower>100) assert.equal(trim.eligible,false);
-  else assert.ok(trim.powerKW<=100);
+  assert.equal(noNos.eligible,false);
+  assert.equal(noNos.reason,'NO NOS INSTALLED');
+  const cap=getCrewEventCarSetup('ae86',original,{maxPowerKW:100,label:'100 KW'});
+  assert.equal(cap.eligible,false);
+  assert.equal(cap.reason,'OVER 100 KW LIMIT');
+  assert.deepEqual(cap.state,original);
+  const factory=getCrewEventCarSetup('ae86',eventStockState(original),{
+    stock:true,noNos:true,label:'STOCK',
+  });
+  assert(factory.eligible);
+  assert.equal(factory.state.tuning.engine,0);
+  assert.equal(factory.state.drivetrainTuning.clutch,0);
+  assert.equal(factory.state.nosInstalled,false);
+  assert.equal(factory.state.paintColor,original.paintColor);
   assert.equal(JSON.stringify(original),snapshot);
 });
 
