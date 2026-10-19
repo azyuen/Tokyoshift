@@ -1,4 +1,4 @@
-// R604 — Crew and individual briefing share the same steward, glow and forfeit UI.
+// R605 — Pro Crew pay-to-grid, event-wide advice and locked next-heat briefings.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
@@ -102,6 +102,7 @@ export function showProCrewHeatSelection(s,options){
 function draw(s,opts){
   s._proOverlayClose?.();
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
+  const unpaid=Boolean(opts.unpaid),locked=Boolean(opts.locked),fee=Number(opts.entryFee||0);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
   let dialogueNodes=[],activeDialogue=null;
@@ -219,15 +220,17 @@ function draw(s,opts){
      '1/4 MI // STANDING START // THREE HEATS');
   const crewRule=e.trophyId==='triDrive'?'ONE FWD + ONE RWD + ONE AWD':
     'THREE DISTINCT CREW CARS';
+  const heatIndex=Math.min(2,Number(f.prepared?.revealed||0));
+  const nextOpponent=f.opponent?.drivers?.[heatIndex];
   const crewRows=[
     ['EVENT',eventTitle],
     ['FIXTURE',(Number(f.round||0)+1)+' / '+(e.trophyId?3:3)],
     ['FORMAT',formatName(f.format)],
-    ['RACE',heatRule],
-    ['ENTRY PAID','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
+    ['NEXT DRIVER',String(f.opponent?.name||'OPPOSING CREW')+' #'+(heatIndex+1)],
+    ['NEXT CAR',String(cars[nextOpponent?.carId]?.shortName||nextOpponent?.carId||'TBA').toUpperCase()],
+    ['ENTRY '+(unpaid?'FEE':'PAID'),'¥'+Number(unpaid?fee:e.entryFee||0).toLocaleString('en-US')],
     ['CAR RULE',crewRule],
     ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],
-    ['STATUS',selected.filter(Boolean).length===3?'LINEUP SELECTED':'SELECT THREE DRIVERS','#81efc4'],
   ];
   const toggleSteward=()=>{
     if(activeDialogue==='hiroshi'){clearDialogue();return;}
@@ -252,7 +255,7 @@ function draw(s,opts){
     const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
     headline.setFontStyle?.('800');
     const body=text(405,347,
-      'Sayaka can advise you on this professional event. After that, finish the current event and two more before requesting another consultation.',
+      'Sayaka\'s advice applies to this ENTIRE event, through every heat and fixture. The three-event cooldown includes this event plus two further professional competitions.',
       21,'#111111',false,272);
     body.setWordWrapWidth?.(745);body.setLineSpacing?.(7);
     const modalButton=(x,label,action)=>{
@@ -294,14 +297,9 @@ function draw(s,opts){
     if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
   };
   crewGlow(1055,502,235,adviceUsed?'VIEW ADVICE':
-    canAsk?'ASK FOR ADVICE':'ADVICE ON COOLDOWN',
+    canAsk?'ASK FOR ADVICE':adviceRemaining+' EVENT COOLDOWN',
     adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
   crewGlow(1366,502,220,'RACE BRIEFING',toggleSteward);
-  if(!canAsk){
-    const remainingLabel=adviceUsed?'ADVICE USED FOR THIS EVENT':
-      'AVAILABLE AFTER '+adviceRemaining+' MORE PROFESSIONAL EVENTS';
-    text(926,542,remainingLabel,12,'#d3e4ef',false,241);
-  }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
   // character/car arrangement copied from MeetScene regional battle renderer.
@@ -370,7 +368,7 @@ function draw(s,opts){
       add(s.add.text(carX+105,y+199,model,{
         fontFamily:PIXEL,fontSize:'9px',color:'#cbd8e5',align:'center',
       }).setOrigin(.5,0).setDepth(229));
-      add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
+      if(!locked)add(s.add.rectangle(x+105,y+163,211,326,0xffffff,0)
         .setInteractive({useHandCursor:true}).setDepth(231)
         .on('pointerdown',()=>openRoster()));
     });
@@ -393,9 +391,11 @@ function draw(s,opts){
         disabled?'#94a2ac':'#ffffff',true,247).setOrigin(.5);
       if(caption.width>w-18)caption.setScale((w-18)/caption.width);
     };
-    footerButton(974,205,'FORFEIT EVENT',()=>opts.onForfeit?.());
-    footerButton(1196,205,'CLEAR LINEUP',()=>setLineup([null,null,null]));
-    footerButton(1430,229,'CONFIRM LINEUP',()=>{
+    footerButton(974,205,unpaid?'CANCEL ENTRY':'FORFEIT EVENT',
+      ()=>unpaid?(close(),opts.onCancel?.()):opts.onForfeit?.());
+    if(!locked)footerButton(1196,205,'CLEAR LINEUP',
+      ()=>setLineup([null,null,null]));
+    footerButton(1430,229,unpaid?'GO TO GRID // ¥'+fee.toLocaleString('en-US'):'NEXT HEAT',()=>{
       if(!canConfirm())return;
       close();opts.onConfirm?.([...selected]);
     },{primary:true,disabled:!canConfirm()});
@@ -480,7 +480,7 @@ function draw(s,opts){
     unscope();
   }
   function openRoster(){
-    if(popupVisible)return;
+    if(locked||popupVisible)return;
     popupVisible=true;renderRoster();
   }
   function closeRoster(){
