@@ -35,7 +35,7 @@ function heatText(h,i,crew) {
   const success=crew?h?.place===1||Boolean(h?.won):h?.won!==false;
   return {
     name:trim(h?.name||h?.label||('HEAT '+(i+1)),27),
-    result:crew&&h?.place?'P'+h.place+'/4':success?'WIN':h?.tied?'DRAW':'LOSS',
+    result:h?.result||(crew&&h?.place?'P'+h.place+'/4':success?'WIN':h?.tied?'DRAW':'LOSS'),
     time:status,
     positive:success,
   };
