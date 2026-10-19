@@ -1,8 +1,9 @@
-// R597 — fully visible shadow-free roster cars and tighter portrait/text alignment.
+// R604 — Crew and individual briefing share the same steward, glow and forfeit UI.
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
 import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
+import {addProGlowingHotspot,renderStewardBriefing} from './ProBriefingChrome.js?v=20261019-r604';
 import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -103,6 +104,10 @@ function draw(s,opts){
   const units=opts.units||[],selected=(opts.selected||[]).slice(0,3);
   while(selected.length<3)selected.push(null);
   const objects=[],maskShapes=[];
+  let dialogueNodes=[],activeDialogue=null;
+  const dialogueAdd=o=>{dialogueNodes.push(o);return add(o);};
+  const clearDialogue=()=>{dialogueNodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    dialogueNodes=[];activeDialogue=null;};
   let scopedObjects=null,scopedMasks=null;
   const add=o=>{objects.push(o);if(scopedObjects)scopedObjects.push(o);return o;};
   const clearGroup=(nodes,masks=[])=>{
@@ -134,7 +139,8 @@ function draw(s,opts){
   const close=()=>{
     if(closed)return;
     closed=true;s.events.off('shutdown',close);
-    objects.forEach(x=>{try{x.destroy();}catch(_){}});
+    clearDialogue();
+    objects.forEach(x=>{try{s.tweens?.killTweensOf?.(x);x.destroy();}catch(_){}});
     maskShapes.forEach(x=>{try{x.destroy();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
@@ -204,43 +210,51 @@ function draw(s,opts){
   const eventTitle=String(e.trophyId||!e.short?e.label:
     shortEventTitle[f.format]||e.label||'CREW CLUB SPRINT').toUpperCase();
   meetText(58,85,eventTitle,38,'#ffffff');
-  meetHeader(54,151,620,41,0x081522,.73);
+  // Official details now live exclusively in Hiroshi's toggleable briefing.
+  // No grey rule text competes with the CREW TECHNICAL / CREW RELAY heading.
   const heatRule=f.heatRule||f.raceRule||
     (f.format==='RELAY'?'1/4 MI // STANDING START // RELAY':
      f.format==='TECHNICAL'?'1/4 MI // STANDING START // CONSISTENCY':
      f.format==='FOUR_WIDE'?'1/4 MI // STANDING START // FOUR-WIDE':
      '1/4 MI // STANDING START // THREE HEATS');
-  pixelText(74,163,String(heatRule).toUpperCase(),13,'#a8c4d7');
-  // Professional crew fixtures have no general power cap, but require three
-  // distinct registered crew cars. Tri-Drive uniquely requires FWD/RWD/AWD.
-  // Subtle black scrim gives car restrictions legibility against both
-  // zoomed day/night registration rooms without covering the race title.
-  meetHeader(54,194,632,35,0x02050b,.74);
-  pixelText(74,202,e.trophyId==='triDrive'?
-    'CAR RULE: ONE FWD + ONE RWD + ONE AWD':
-    'CAR RULE: THREE DISTINCT CREW CARS // NO POWER CAP',11,'#c8d9e7');
+  const crewRule=e.trophyId==='triDrive'?'ONE FWD + ONE RWD + ONE AWD':
+    'THREE DISTINCT CREW CARS';
+  const crewRows=[
+    ['EVENT',eventTitle],
+    ['FIXTURE',(Number(f.round||0)+1)+' / '+(e.trophyId?3:3)],
+    ['FORMAT',formatName(f.format)],
+    ['RACE',heatRule],
+    ['ENTRY PAID','¥'+Number(e.entryFee||0).toLocaleString('en-US')],
+    ['CAR RULE',crewRule],
+    ['POWER / NOS','NO GENERAL CAP / NOS ALLOWED'],
+    ['STATUS',selected.filter(Boolean).length===3?'LINEUP SELECTED':'SELECT THREE DRIVERS','#81efc4'],
+  ];
+  const toggleSteward=()=>{
+    if(activeDialogue==='hiroshi'){clearDialogue();return;}
+    clearDialogue();activeDialogue='hiroshi';
+    renderStewardBriefing(s,dialogueAdd,crewRows,{anchorX:1366});
+  };
+  const crewGlow=(x,y,w,label,action,disabled=false)=>
+    addProGlowingHotspot(s,add,{x,y,w,h:44,label,onClick:action,disabled});
 
-  // Standard Tokyo SHIFT confirmation modal (centre-screen, matching the
-  // existing rectangular popup/button language). Advice is a paid-event
-  // resource; ProSeasonPanel passes the persisted cooldown status.
+  // Both support characters now have workshop-style breathing cyan controls
+  // at the same height (their belt/waist). The two bubbles never overlap.
   const adviceUsed=Boolean(e.adviceUsed);
   const adviceRemaining=Math.max(0,Number(opts.adviceStatus?.remaining||0));
   const canAsk=!adviceUsed&&adviceRemaining===0;
   let confirmationNodes=[],confirmationOpen=false;
-  btn(1055,617,235,43,'ASK FOR ADVICE',()=>{
+  const askAdvice=()=>{
     if(!canAsk||confirmationOpen)return;
-    confirmationOpen=true;
+    clearDialogue();confirmationOpen=true;
     scope(confirmationNodes);
     rect(W/2,H/2,W,H,0x020812,.76,0x020812,270).setInteractive();
     rect(780,420,850,332,0xfffcf1,1,0x111111,271);
     const headline=text(404,281,'ASK SAYAKA FOR STRATEGIC ADVICE',21,'#111111',false,272);
     headline.setFontStyle?.('800');
     const body=text(405,347,
-      'Ask Sayaka for strategic advice.\n'+
-      'Sayaka can advise you on ways to win this event. If you ask for her help, you can ask her again after two more professional events.',
+      'Sayaka can advise you on this professional event. After that, finish the current event and two more before requesting another consultation.',
       21,'#111111',false,272);
-    body.setWordWrapWidth?.(745);
-    body.setLineSpacing?.(7);
+    body.setWordWrapWidth?.(745);body.setLineSpacing?.(7);
     const modalButton=(x,label,action)=>{
       const hit=rect(x,515,294,52,0x172636,1,0x566b7e,273);
       hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
@@ -253,38 +267,40 @@ function draw(s,opts){
       close();opts.onAdvice?.([...selected]);
     });
     unscope();
-  },false,!canAsk);
+  };
+  const toggleSayaka=()=>{
+    if(activeDialogue==='sayaka'){clearDialogue();return;}
+    clearDialogue();activeDialogue='sayaka';
+    const x=427,y=285,w=480,h=136,edge=x+w;
+    const triangleBase=36,tipX=edge+Math.sqrt(3)*triangleBase/2;
+    const centerY=y+42,halfBase=triangleBase/2;
+    const points=[
+      {x,y},{x:edge,y},{x:edge,y:centerY-halfBase},
+      {x:tipX,y:centerY},{x:edge,y:centerY+halfBase},
+      {x:edge,y:y+h},{x,y:y+h},
+    ];
+    const bubble=dialogueAdd(s.add.graphics().setDepth(235));
+    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
+    bubble.lineStyle(5,0x111111,1);bubble.strokePoints(points,true);
+    dialogueAdd(s.add.text(x+19,y+9,'Sayaka',{
+      fontFamily:BODY,fontSize:'15px',color:'#252227',fontStyle:'700',
+    }).setDepth(238));
+    const spoken=dialogueAdd(s.add.text(x+19,y+36,opts.advice||'What do you think?',{
+      fontFamily:BODY,fontSize:'16px',color:'#111111',
+      fontStyle:'600',wordWrap:{width:w-38},
+    }).setDepth(238));
+    spoken.setLineSpacing?.(1);
+    const maxHeight=h-43;
+    if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
+  };
+  crewGlow(1055,502,235,adviceUsed?'VIEW ADVICE':
+    canAsk?'ASK FOR ADVICE':'ADVICE ON COOLDOWN',
+    adviceUsed?toggleSayaka:askAdvice,!adviceUsed&&!canAsk);
+  crewGlow(1366,502,220,'RACE BRIEFING',toggleSteward);
   if(!canAsk){
     const remainingLabel=adviceUsed?'ADVICE USED FOR THIS EVENT':
       'AVAILABLE AFTER '+adviceRemaining+' MORE PROFESSIONAL EVENTS';
-    text(938,654,remainingLabel,13,'#d3e4ef',false,241);
-  }
-
-  if(adviceUsed){
-    // Two-thirds of the previous 720px body, shifted right so its single
-    // equilateral speech-point reaches toward Sayaka without any seam line.
-    // 74px triangle base -> altitude sqrt(3)/2 * 74 = ~64px; all three
-    // edges are equal. Fill and stroke the OUTER polygon only.
-    const x=427,y=251,w=480,h=136,edge=x+w;
-    const triangleBase=74,tipX=edge+Math.sqrt(3)*triangleBase/2;
-    const centerY=y+68,halfBase=triangleBase/2;
-    const points=[
-      {x,y},{x:edge,y},{x:edge,y:centerY-halfBase},
-      {x:tipX,y:centerY},
-      {x:edge,y:centerY+halfBase},{x:edge,y:y+h},{x,y:y+h},
-    ];
-    const bubble=add(s.add.graphics().setDepth(235));
-    bubble.fillStyle(0xfffcf1,1);bubble.fillPoints(points,true);
-    bubble.lineStyle(6,0x111111,1);bubble.strokePoints(points,true);
-    text(x+19,y+9,'Sayaka',15,'#252227',false,238).setFontStyle?.('700');
-    const spoken=text(x+19,y+36,opts.advice||'What do you think?',
-      16,'#111111',false,238);
-    spoken.setWordWrapWidth?.(w-38);
-    spoken.setLineSpacing?.(1);
-    // For longer recommendations, fit the existing spoken text INSIDE its
-    // reduced bubble rather than spilling into the crew panel below.
-    const maxHeight=h-43;
-    if(spoken.height>maxHeight)spoken.setScale(maxHeight/spoken.height);
+    text(926,542,remainingLabel,12,'#d3e4ef',false,241);
   }
 
   // Exact Crew Battle left-side panel geometry, colours, font sizes and
