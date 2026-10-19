@@ -14,8 +14,8 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
 import {
   getCrewBattleRegionRules, getCrewBattleHeatRule,
-  getCrewEventCarSetup, getCrewBattleScout,
-} from './crewBattleRules.js?v=20261016-crew-rules';
+  getCrewEventCarSetup, getCrewBattleScout, eventStockState,
+} from './crewBattleRules.js?v=20261020-r619';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
 export const CREW_INVITE_INTEREST_CHANCE = 0.25;
@@ -752,19 +752,45 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
   );
   const used = new Set();
   const rounds = [];
+
+  // The first three regions teach crew racing with quarter-mile standing
+  // starts only. Subsequent districts introduce rolling and half-mile heats.
+  const formats = {
+    ODAIBA: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    SHINAGAWA: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    TATSUMI: [['Standing Start', 402.336], ['Standing Start', 402.336], ['Standing Start', 402.336]],
+    SHIBUYA: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 402.336]],
+    YOKOHAMA: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 804.672]],
+    DAIKOKU: [['Roll Race', 402.336], ['Standing Start', 804.672], ['Standing Start', 402.336]],
+    SHINJUKU: [['Standing Start', 402.336], ['Roll Race', 402.336], ['Standing Start', 804.672]],
+  };
+
   for (let index = 0; index < CREW_BATTLE_LINEUP_SIZE; index++) {
     const rule = getCrewBattleHeatRule(key, index);
-    const raceType = index === 1 ? 'Roll Race' : 'Standing Start';
+    const [raceType, distanceM] = formats[key]?.[index] || ['Standing Start', 402.336];
     const rating = Math.min(5, rules.build + (index === 2 && rules.build < 5 ? 1 : 0));
     const encounterRating = rules.ai[index];
     const baseAi = getEncounterAi(encounterRating);
+
+    // Author AI hardware to meet the same rules as the player. Build rating
+    // may decrease until the finished car is legal, but driver skill does not
+    // change. Never secretly power-trim an over-limit rival during the race.
     const ranked = candidates.filter(r => !used.has(r.characterId)).map(candidate => {
-      const baseBuild = createRivalBuildState(cars[candidate.carId], rating, {
-        seed: 'crew-battle:' + key + ':' + candidate.characterId,
-        raceType,
-      });
-      const setup = getCrewEventCarSetup(candidate.carId, baseBuild, rule);
-      return { candidate, setup };
+      if (rule.stock) {
+        const setup = getCrewEventCarSetup(candidate.carId,
+          eventStockState({ buildRating: 1, buildArchetype: 'stock' }), rule);
+        return { candidate, setup };
+      }
+      for (let targetRating = rating; targetRating >= 1; targetRating--) {
+        const baseBuild = createRivalBuildState(cars[candidate.carId], targetRating, {
+          seed: 'crew-battle:' + key + ':' + candidate.characterId,
+          raceType,
+          noNos: Boolean(rule.noNos),
+        });
+        const setup = getCrewEventCarSetup(candidate.carId, baseBuild, rule);
+        if (setup.eligible) return { candidate, setup };
+      }
+      return { candidate, setup: { eligible: false } };
     });
     const matched = ranked.find(item => item.setup.eligible);
     if (!matched) break;
@@ -777,7 +803,7 @@ export function buildRegionalCrewBattleRounds(regionId, source = null) {
       characterId: baseRound.characterId,
       carId: baseRound.carId,
       raceType,
-      distanceM: index === 2 ? 804.672 : 402.336,
+      distanceM,
       buildRating: Number(state.buildRating || rating),
       opponentBuildState: state,
       opponentPowerKW: matched.setup.powerKW,
