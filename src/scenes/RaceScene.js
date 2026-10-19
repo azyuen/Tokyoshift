@@ -110,7 +110,7 @@ import {
   getCrewMembers,
   getCrewBattleCaptainId,
   removeCrewMember,
-} from '../data/crewSystem.js?v=20261018-r588';
+} from '../data/crewSystem.js?v=20261020-r619';
 import { getCrewEventCarSetup, validateCrewBattleBuiltCar } from '../data/crewBattleRules.js?v=20261020-r619';
 import {
   createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
