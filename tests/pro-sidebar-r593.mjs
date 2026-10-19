@@ -55,7 +55,7 @@ test('R593: shared sidebar font, sizes, geometry, and spacing mirror driver even
   assert.deepEqual([bg.x,bg.y,bg.w,bg.h],[SIDE.x+SIDE.w/2,SIDE.y+574,SIDE.w-36,40]);
   assert.equal(caption.style.fontFamily,'"Silkscreen", monospace');
   assert.equal(caption.style.fontSize,'8px');
-  assert.equal(caption.value,'ENTER EVENT // ¥ 35,000');
+  assert.equal(caption.value,'ENTER EVENT BRIEFING');
   bg.interactions.pointerdown();
   assert.deepEqual(fired,['enter']);
   // The 40px professional-season button is centered at SIDE.y+624.
@@ -70,7 +70,7 @@ test('R593: short crew format has the same entry button and details as a driver'
   const button=s.nodes.find(n=>n.kind==='rect'&&n.y===SIDE.y+574&&n.h===40);
   assert.ok(button,'crew entry at exact driver action position');
   const caption=s.nodes.find(n=>n.kind==='text'&&n.y===SIDE.y+574);
-  assert.equal(caption.value,'ENTER EVENT // ¥ 35,000');
+  assert.equal(caption.value,'ENTER EVENT BRIEFING');
   assert.equal(caption.style.fontFamily,'"Silkscreen", monospace');
   assert.equal(caption.style.fontSize,'8px');
   const body=s.nodes.find(n=>n.kind==='text'&&n.y===SIDE.y+250);
