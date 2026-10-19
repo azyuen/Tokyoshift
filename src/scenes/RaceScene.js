@@ -111,7 +111,7 @@ import {
   getCrewBattleCaptainId,
   removeCrewMember,
 } from '../data/crewSystem.js?v=20261018-r588';
-import { getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261016-crew-rules';
+import { getCrewEventCarSetup, validateCrewBattleBuiltCar } from '../data/crewBattleRules.js?v=20261020-r619';
 import {
   createCrewBattleCaptainInterlude, createCrewBattleCaptainResult,
 } from '../data/crewBattleIntroductions.js?v=20261016-crew-captain-dialogue';
@@ -511,6 +511,37 @@ export default class RaceScene extends Phaser.Scene {
       rivalCharacter
     );
     const opponentConfig = opponentBuild.car;
+
+    // Final race-physics gate, shared by player and AI. Never run a crew heat
+    // with an over-limit engine or live NOS system hidden behind legal labels.
+    // This uses the actual Vehicle configs after all build application.
+    if (this.raceMode === 'CREW_BATTLE') {
+      const battle = this.registry.get('crewBattleState');
+      const round = battle?.rounds?.[Number(battle?.roundIndex || 0)];
+      const rule = round?.rule;
+      const playerCheck = rule && validateCrewBattleBuiltCar(
+        playerConfig, this.playerCarState, rule
+      );
+      const rivalCheck = rule && validateCrewBattleBuiltCar(
+        opponentConfig, this.opponentBuildState, rule
+      );
+      if (!rule || !playerCheck?.eligible || !rivalCheck?.eligible) {
+        const reason = !rule ? 'MISSING CREW REGULATIONS'
+          : !playerCheck?.eligible ? 'YOUR CREW: ' + playerCheck.reason
+            : 'RIVAL CREW: ' + rivalCheck.reason;
+        console.error('CREW RACE REGULATION BLOCK', reason);
+        this.registry.set('crewBattleValidationError', reason);
+        this.registry.set('crewBattleState', null);
+        this.registry.set('crewBattleEventPlayerSetup', null);
+        this.registry.set('selectedRacePlayerCharacterId', null);
+        if (battle?.originalSelectedCarId) {
+          this.registry.set('selectedCarId', battle.originalSelectedCarId);
+        }
+        saveSessionState(this.registry);
+        this.scene.start('MeetScene');
+        return;
+      }
+    }
 
     this.playerCapabilities = {
       hasTurbo: (playerConfig.maximumBoost || 0) > 0.01,
