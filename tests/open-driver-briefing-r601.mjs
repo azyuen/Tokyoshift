@@ -13,7 +13,7 @@ test('R601 car/player staging, staff swap and mirror flips match the approved la
   assert.match(ui,/key:'proDriverSayaka',x:1110,feet:763,height:527/);
   assert.match(ui,/key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true/);
   assert.match(ui,/setFlipX\(Boolean\(p\.flip\)\)/);
-  assert.match(ui,/small equilateral triangle/);
+  assert.match(chrome,/triangleSide:36/);
 });
 
 test('R601 uses workshop heartbeat glow and two equal-sized actions without BACK',()=>{
