@@ -12,7 +12,7 @@ import { normaliseStage3Calibration, getStage3CalibrationEligibility,
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r602';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r603';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
