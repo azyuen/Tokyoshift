@@ -523,6 +523,16 @@ function draw(s,state,options){
         left:'CLOSE',right:'WIDE',accent:0xffc86a,y:602},
     ];
     const tuneNodes=[];
+    let applyButton=null;
+    const original=normaliseStage3Calibration(carState);
+    function highlightApplyTune(){
+      if(!applyButton)return;
+      const changed=['ecuBias','boostBias','gearBias'].some(key=>
+        values[key]!==original[key]);
+      applyButton.hit.setFillStyle(changed?0x167c79:0x142b3e,1)
+        .setStrokeStyle(2,changed?0xafffee:CYAN);
+      applyButton.copy.setColor(changed?'#ffffff':'#b4c7d5');
+    }
     const dynamic=obj=>{popupAdd(obj);tuneNodes.push(obj);return obj;};
     function tuneRows(){
       tuneNodes.forEach(o=>{try{o.destroy();}catch(_){}});
@@ -536,14 +546,14 @@ function draw(s,state,options){
           unlocked?.86:.72).setStrokeStyle(1,selectedColour,
           unlocked?.62:.48).setDepth(272));
         if(s.textures.exists(entry.sprite)){
-          const sprite=dynamic(s.add.image(479,entry.y,entry.sprite)
+          const sprite=dynamic(s.add.image(479,entry.y+20,entry.sprite)
             .setDepth(275).setAlpha(unlocked?1:.30));
           const source=s.textures.get(entry.sprite).getSourceImage();
           sprite.setScale(Math.min(66/Math.max(1,source.width),
             66/Math.max(1,source.height)));
         }
         const accent='#'+entry.accent.toString(16).padStart(6,'0');
-        dynamic(s.add.text(546,entry.y-49,
+        dynamic(s.add.text(541,entry.y-49,
           entry.title+'  //  '+(unlocked?option?.label||'BALANCED':'LOCKED'),{
             fontFamily:PIXEL,fontSize:'13px',color:unlocked?accent:'#71808a',
           }).setDepth(275));
@@ -554,14 +564,14 @@ function draw(s,state,options){
           }).setDepth(275));
           return;
         }
-        dynamic(s.add.text(745,entry.y-17,entry.left,{
+        dynamic(s.add.text(663,entry.y+4,entry.left,{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
         }).setOrigin(1,.5).setDepth(275));
-        dynamic(s.add.text(1187,entry.y-17,entry.right,{
+        dynamic(s.add.text(1098,entry.y+4,entry.right,{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#839aa8',
-        }).setOrigin(1,.5).setDepth(275));
+        }).setOrigin(0,.5).setDepth(275));
         STAGE3_CALIBRATION_OPTIONS[entry.key].forEach((preset,index)=>{
-          const bx=761+index*100,by=entry.y+16;
+          const bx=704+index*87,by=entry.y+4;
           const selected=preset.value===current;
           const hit=dynamic(s.add.rectangle(bx,by,63,38,
             selected?entry.accent:0x102138,selected?.92:.98)
@@ -575,9 +585,10 @@ function draw(s,state,options){
           hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
             values[entry.key]=preset.value;
             tuneRows();
+            highlightApplyTune();
           });
         });
-        dynamic(s.add.text(968,entry.y+47,option?.detail||'',{
+        dynamic(s.add.text(885,entry.y+43,option?.detail||'',{
           fontFamily:BODY,fontSize:'14px',fontStyle:'700',color:'#9ab0bc',
           align:'center',wordWrap:{width:475},
         }).setOrigin(.5).setDepth(275));
@@ -585,7 +596,7 @@ function draw(s,state,options){
     }
     tuneRows();
     modalBtn(557,730,223,'REMOVE PARTS',()=>openPowerParts());
-    modalBtn(839,730,223,'APPLY TUNE',()=>{
+    applyButton=modalBtn(839,730,223,'APPLY TUNE',()=>{
       const next={...carState,stage3Calibration:canTune?{
         ecuBias:installed.ecuBias?values.ecuBias:0,
         boostBias:installed.boostBias?values.boostBias:0,
@@ -596,6 +607,7 @@ function draw(s,state,options){
       };
       dismiss();close();options.onCarState?.(next);
     });
+    highlightApplyTune();
     modalBtn(1112,730,223,'CLOSE',dismiss);
   }
 
