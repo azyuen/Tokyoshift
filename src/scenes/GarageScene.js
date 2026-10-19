@@ -3884,8 +3884,10 @@ export default class GarageScene extends Phaser.Scene {
         onTravel: (locationId, cost) => {
           const travelTarget = getTravelLocation(locationId);
 
-          if (this.crewMode && ['CENTRAL_TOKYO', 'OSHIAGE'].includes(travelTarget?.regionId)) {
-            this.showWorkshopToast('CREW CAR // SPECIAL DISTRICTS UNAVAILABLE');
+          // Crew drivers can now take their own cars to Oshiage for
+          // driving school and Custom Works. Ginza remains player-only.
+          if (this.crewMode && travelTarget?.regionId === 'CENTRAL_TOKYO') {
+            this.showWorkshopToast('CREW CAR // CENTRAL TOKYO UNAVAILABLE');
             return;
           }
 
@@ -5641,7 +5643,9 @@ export default class GarageScene extends Phaser.Scene {
 
     // Paint and rims now belong exclusively to Oshiage Custom Works.
     // Retired bodykit assets are hidden across every garage.
-    const crewControlLift = this.crewMode ? -32 : 0;
+    // Chassis has only two part rows since paint/rims moved to Oshiage.
+    // Use the same bottom action positions as Engine/Drivetrain/NOS in
+    // both player workshops and Crew Space: no crew-specific upward lift.
     add(this.add.text(SIDE.x + 23, SIDE.y + 382,
       'EXTERIOR CUSTOMISATION\nNOW AT OSHIAGE CUSTOM WORKS', {
       fontFamily: BODY_FONT,
@@ -5653,7 +5657,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPartsApplyButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 494 + crewControlLift,
+      SIDE.y + 624,
       SIDE.w - 36,
       44,
       0x102226,
@@ -5662,7 +5666,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisPartsApplyText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 494 + crewControlLift,
+      SIDE.y + 624,
       'NO CHASSIS PARTS SELECTED',
       {
         fontFamily: PIXEL_FONT,
@@ -5673,7 +5677,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackButton = add(this.add.rectangle(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 576 + crewControlLift,
+      SIDE.y + 678,
       SIDE.w - 36,
       44,
       0x102138,
@@ -5684,7 +5688,7 @@ export default class GarageScene extends Phaser.Scene {
 
     this.chassisMainBackText = add(this.add.text(
       SIDE.x + SIDE.w / 2,
-      SIDE.y + 576 + crewControlLift,
+      SIDE.y + 678,
       this.crewMode ? '<  BACK' : '<  BACK TO WORKSHOP',
       {
         fontFamily: PIXEL_FONT,
