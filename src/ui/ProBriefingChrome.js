@@ -51,6 +51,87 @@ export function renderStewardBriefing(s,add,rows,{anchorX=1402,title='HIROSHI //
   return panel;
 }
 
+
+/**
+ * Two-page steward briefing for ordinary Open Circuit driver and Pro Crew
+ * events. Page 1 explains the format and victory conditions in plain English;
+ * page 2 shows the saved opponent and scrutineering details.
+ *
+ * The single large arrow lives on the RIGHT border, and reverses direction
+ * on page 2. Reopening a briefing always begins on page 1. The parent scene
+ * owns every display object and disposes of the interactive arrow on close.
+ * Existing one-page trophy briefings intentionally keep the legacy renderer.
+ */
+export function renderPagedStewardBriefing(s,add,pages,{
+  anchorX=1402,title='HIROSHI // RACE BRIEFING',
+}={}){
+  const {x,y,w,triangleSide}=STEWARD_BUBBLE;
+  const h=304,edge=x+w,half=triangleSide/2;
+  const triangleHeight=Math.sqrt(3)*triangleSide/2;
+  const pts=[
+    {x,y},{x:edge,y},{x:edge,y:y+h},
+    {x:anchorX+half,y:y+h},
+    {x:anchorX,y:y+h+triangleHeight},
+    {x:anchorX-half,y:y+h},{x,y:y+h},
+  ];
+  const panel=add(s.add.graphics().setDepth(235));
+  panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
+  panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
+  add(s.add.text(x+22,y+11,title,{
+    fontFamily:PIXEL,fontSize:'15px',color:'#53ddff',
+  }).setDepth(238));
+  add(s.add.rectangle(x+w/2,y+43,w-42,1,0x3c7e98,.75).setDepth(237));
+  const indicator=add(s.add.text(edge-110,y+15,'01 / 02',{
+    fontFamily:PIXEL,fontSize:'11px',color:'#b8dff0',
+  }).setDepth(239));
+  // 46x54px interactive target, centred on the bubble's right-hand border.
+  const arrowHit=add(s.add.rectangle(edge-8,y+h/2,46,54,0x0b3449,1)
+    .setStrokeStyle(2,0x6ce7ff).setDepth(245)
+    .setInteractive({useHandCursor:true}));
+  const arrow=add(s.add.text(edge-8,y+h/2-2,'›',{
+    fontFamily:BODY,fontSize:'39px',fontStyle:'700',color:'#ffffff',
+  }).setOrigin(.5).setDepth(246));
+  let current=0,pageObjects=[];
+  const pageAdd=node=>{pageObjects.push(node);return add(node);};
+  const pageText=(left,top,value,size,{pixel=false,color='#eff8ff',width=w-100}={})=>
+    pageAdd(s.add.text(left,top,String(value),{
+      fontFamily:pixel?PIXEL:BODY,fontSize:size+'px',
+      fontStyle:pixel?'normal':'600',color,wordWrap:{width},
+      lineSpacing:2,
+    }).setDepth(238));
+  const redraw=()=>{
+    for(const node of pageObjects){try{node.destroy();}catch(_){}}
+    pageObjects=[];
+    const page=pages[current]||{};
+    indicator.setText(String(current+1).padStart(2,'0')+' / 02');
+    arrow.setText(current===0?'›':'‹');
+    if(Array.isArray(page.sections)){
+      let cursor=y+58;
+      for(const section of page.sections){
+        pageText(x+24,cursor,String(section.label||''),10,{pixel:true,color:'#a5d4e6'});
+        cursor+=17;
+        const value=pageText(x+24,cursor,String(section.text||''),section.large?18:16);
+        cursor+=Math.max(22,value.height)+14;
+      }
+    }else if(Array.isArray(page.rows)){
+      const rows=page.rows.slice(0,9);
+      const pitch=Math.min(26,(h-82)/Math.max(1,rows.length));
+      rows.forEach(([label,value,color],i)=>{
+        const top=y+59+i*pitch;
+        pageText(x+24,top,String(label),10,{pixel:true,color:'#a5d4e6',width:183});
+        const detail=pageText(x+213,top-3,String(value),15,{color:color||'#f0f7fd',width:w-299});
+        // Keep even long opponent or eligibility values within their own row.
+        if(detail.height>pitch-1)detail.setScale(Math.min(1,(pitch-1)/detail.height));
+      });
+    }
+  };
+  arrowHit.on('pointerdown',()=>{current=1-current;redraw();});
+  arrowHit.on('pointerover',()=>arrowHit.setFillStyle(0x17617b,1));
+  arrowHit.on('pointerout',()=>arrowHit.setFillStyle(0x0b3449,1));
+  redraw();
+  return panel;
+}
+
 export function addProGlowingHotspot(s,add,{x,y,w,h=44,label,onClick,disabled=false}){
   const glow=add(s.add.rectangle(x,y,w,h,0x4ee8ff,.022)
     .setStrokeStyle(2,disabled?0x617b86:0x69ecff,.72).setDepth(246));
