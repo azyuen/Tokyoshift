@@ -242,10 +242,13 @@ export function getCrewRecruitmentChallengeRules(
 
   return {
     playerDifficulty: difficulty,
+    // Easy recruitment should be a welcoming stock duel, not the personal
+    // Expert/Elite profile of whichever recruitable character appeared.
+    // Standard remains Expert and Hard remains Elite without any reductions.
     aiTier: difficulty === 'HARD' ? 'ELITE'
-      : difficulty === 'STANDARD' ? 'EXPERT' : null,
+      : difficulty === 'STANDARD' ? 'EXPERT' : 'ROOKIE',
     aiRating: difficulty === 'HARD' ? 5
-      : difficulty === 'STANDARD' ? 4 : null,
+      : difficulty === 'STANDARD' ? 4 : 2,
     carRule: 'STOCK',
     powerClass,
     powerClassLabel: powerClass.label,
