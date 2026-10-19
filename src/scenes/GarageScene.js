@@ -55,7 +55,7 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r574';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r574';
@@ -78,7 +78,7 @@ import {
   removeCrewMember,
   removeAllCrewMembers,
   recruitRandomDevCrew,
-} from '../data/crewSystem.js?v=20261018-r588';
+} from '../data/crewSystem.js?v=20261020-r615';
 import {
   WORKSHOP_TIERS,
   getGarageCapacity,
