@@ -123,6 +123,10 @@ export function storeSelectedKitParts(state = {}, keys = []) {
   const available = listStorableKitParts(state);
   const selected = available.filter(item => keys.includes(item.key));
   if (!selected.length || selected.length !== new Set(keys).size) return null;
+  // NOS shot must be removed before its kit. Removing the kit first also
+  // clears the shot and would otherwise make a valid multi-part kit fail.
+  selected.sort((a, b) => Number(b.partId === 'nitrousShot') -
+    Number(a.partId === 'nitrousShot'));
   let updated = { ...state };
   const stored = {};
   for (const item of selected) {
