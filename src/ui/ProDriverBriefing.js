@@ -1,4 +1,4 @@
-// R606 — Daichi car setup now shares the Warehouse Stage III Dyno calibration UI.
+// R608 — Pro race headings, natural car shadow and next-opponent composition.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -198,14 +198,14 @@ function draw(s,state,options){
         null,false,previewState);
       parts.forEach((part,i)=>{
         if(i===2&&!keepShadow){part?.destroy?.();return;}
-        if(i===2&&keepShadow)part?.setAlpha?.(.16);
+        if(i===2&&keepShadow)part?.setAlpha?.(.34);
         if(part)add(part);
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
   // R602: increase the R601 owned-car presentation a further 20%, shift
   // modestly up/right, preserve its exact paint, wheel and saved tuning state.
-  safeCarPreview(state.playerCarId,726,474,744,207,carState,true);
+  safeCarPreview(state.playerCarId,796,474,744,207,carState,true);
 
   // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
@@ -234,11 +234,12 @@ function draw(s,state,options){
   display(63,43,'OPEN CIRCUIT',21,'#ff8197');
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
+  display(58,136,'heat '+stageNo+' of '+stageTotal,19,'#aeb6c2');
 
   // Compact opponent panel. The nested portrait parallelogram uses the
   // identical slope as the outer card and a dark, professional black outline.
   poly(52,643,654,164,0x071728,CYAN,219);
-  display(89,652,'NEXT OPPONENT '+stageNo+'/'+stageTotal,24,'#35d6ff');
+  display(89,652,'NEXT OPPONENT',24,'#35d6ff');
   const frameX=74,frameY=683,frameW=129,frameH=106,skew=16;
   const framePoints=[
     {x:frameX+skew,y:frameY},{x:frameX+frameW+skew,y:frameY},
@@ -256,7 +257,7 @@ function draw(s,state,options){
     image.setMask(shape.createGeometryMask());
     add({destroy:()=>shape.destroy()});
   };
-  const px=frameX+frameW/2,py=frameY+frameH/2;
+  const px=frameX+frameW/2-9,py=frameY+frameH/2;
   const isMainRival=Boolean(round.mainRivalTier||rival.mainRival);
   const helmetKey='proDriverHelmet'+getProDriverHelmetIndex(state,round);
   if(!isMainRival&&s.textures.exists(helmetKey)){
