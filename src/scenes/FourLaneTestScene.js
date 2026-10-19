@@ -1699,6 +1699,15 @@ export default class FourLaneTestScene extends RaceScene {
         }
       }
     }
+    // A third crew heat leads straight to the awards rather than making
+    // the player dismiss a heat card, confirm the fixture, then dismiss a
+    // second result page. The already-saved heat is settled on venue entry.
+    if(this.proCrew&&outcome?.status==='CREW_HEAT'&&outcome.heatNumber===3){
+      this.scene.start('CentralTokyoScene',{
+        locationId:'tokyoDragComplex',autoOpenProCrewFixture:true,
+      });
+      return;
+    }
     // One definitive professional end page in the Drag Complex, after the
     // existing atomic race settlement. Interim heats retain manga finishes.
     if(!this.proTimed&&!this.proCrew&&outcome?.summary&&
