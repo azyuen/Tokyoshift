@@ -1,4 +1,4 @@
-name: R600 Open Circuit Driver Paddock Briefing
+name: R601 Open Circuit Driver Briefing Polish
 on:
   pull_request:
     paths:
@@ -9,6 +9,7 @@ on:
       - 'tests/open-driver-briefing-r598.mjs'
       - 'tests/open-driver-briefing-r599.mjs'
       - 'tests/open-driver-briefing-r600.mjs'
+      - 'tests/open-driver-briefing-r601.mjs'
       - 'src/vehicles/VehiclePerformance.js'
       - '.github/workflows/open-driver-briefing-r598.yml'
   push:
@@ -21,6 +22,7 @@ on:
       - 'tests/open-driver-briefing-r598.mjs'
       - 'tests/open-driver-briefing-r599.mjs'
       - 'tests/open-driver-briefing-r600.mjs'
+      - 'tests/open-driver-briefing-r601.mjs'
       - 'src/vehicles/VehiclePerformance.js'
 jobs:
   driver-briefing:
@@ -39,4 +41,4 @@ jobs:
           node --check src/scenes/FourLaneTestScene.js
           node --check src/vehicles/VehiclePerformance.js
       - name: Open Circuit driver briefing tests
-        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs
+        run: node --test tests/open-driver-briefing-r598.mjs tests/open-driver-briefing-r599.mjs tests/open-driver-briefing-r600.mjs tests/open-driver-briefing-r601.mjs
