@@ -81,7 +81,7 @@ test('R602: shared cooldown applies across crew and driver series, including for
 test('R602: layouts and dialogue use glowing toggles without X close controls',()=>{
   assert.match(ui,/safeCarPreview\(state\.playerCarId,660,474,744,207,carState,true\)/);
   assert.match(ui,/key:'proDriverDaichi',x:193/);
-  assert.match(ui,/workshopHotspot\(190,576,229,44,'DAICHI \/\/ TUNE'/);
+  assert.match(ui,/workshopHotspot\(190,576,229,44,'CAR SETUP'/);
   assert.match(ui,/poly\(52,643,654,164/);
   assert.match(ui,/border\.lineStyle\(4,0x050a10,1\)/);
   assert.match(ui,/clipPortrait\(profile\)/);
