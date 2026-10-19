@@ -340,10 +340,11 @@ function draw(s,state,options){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
-      // Point the official race briefing toward Hiroshi on the LEFT.
-      const x=337,y=137,w=646,h=268,tipX=x-58,tipY=y+80;
-      const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},
-        {x,y:y+110},{x:tipX,y:tipY},{x,y:y+52}];
+      // After swapping staff, the briefing's point faces Hiroshi on the RIGHT.
+      const x=525,y=137,w=646,h=268,edge=x+w,tipX=edge+59,tipY=y+80;
+      const pts=[{x,y},{x:edge,y},{x:edge,y:y+52},
+        {x:tipX,y:tipY},{x:edge,y:y+111},
+        {x:edge,y:y+h},{x,y:y+h}];
       const panel=dialogueAdd(s.add.graphics().setDepth(235));
       panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
       panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
