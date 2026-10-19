@@ -1,4 +1,4 @@
-// R600 — Open Circuit individual paddock briefing: Hiroshi, player, car, Sayaka, Daichi.
+// R601 — Open Circuit paddock polish: Daichi, car, player, Sayaka, Hiroshi.
 // Deliberately reuses the Pro Crew registration-room art and screen vocabulary.
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -11,7 +11,8 @@ import { normaliseStage3Calibration, getStage3CalibrationEligibility,
   getStage3CalibrationOption } from '../data/stage3Calibration.js?v=20261004-r330';
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
-  removeDriverPowerPart, restoreDriverPowerParts } from '../data/proDriverBriefing.js?v=20261019-r598';
+  removeDriverPowerPart, restoreDriverPowerParts,
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r601';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -45,6 +46,16 @@ function loadAssets(s,state){
     s.load.image(playerAsset.key,getCharacterAssetUrl(playerAsset.path));queued++;
   }
   const round=state.rounds[state.roundIndex];
+  const named=characters[round.characterId];
+  const mainRival=Boolean(round.mainRivalTier||named?.mainRival);
+  const helmetIndex=getProDriverHelmetIndex(state,round);
+  if(!mainRival){
+    const helmetKey='proDriverHelmet'+helmetIndex;
+    if(!s.textures.exists(helmetKey)){
+      s.load.image(helmetKey,'assets/Characters/Central/driver_0'+helmetIndex+'.png?v=20261019-r601');
+      queued++;
+    }
+  }
   const rival=getCharacterVisualAsset(round.characterId,'idle',{
     playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',rivalContext:true,
   });
@@ -108,7 +119,7 @@ function draw(s,state,options){
     s.events.off('shutdown',close);
     dismiss();
     clearDialogue();
-    nodes.forEach(o=>{try{o?.destroy?.();}catch(_){}});
+    nodes.forEach(o=>{try{s.tweens?.killTweensOf?.(o);o?.destroy?.();}catch(_){}});
     if(s._proOverlayClose===close)s._proOverlayClose=null;
   };
   s._proOverlayClose=close;s.events.once('shutdown',close);
@@ -184,16 +195,18 @@ function draw(s,state,options){
       });
     }catch(err){console.warn('[Tokyo SHIFT] Briefing car display skipped',id,err);}
   };
-  safeCarPreview(state.playerCarId,742,599,477,207,carState,true);
+  // R601: 30% larger and staged higher/left; still the owned car and paint.
+  safeCarPreview(state.playerCarId,590,531,620,207,carState,true);
 
-  // Character layout: HIROSHI > PLAYER > PLAYER CAR > SAYAKA > DAICHI.
-  // Use the currently selected protagonist's game artwork, not a fixed Ren.
+  // Character order: DAICHI > OWNED CAR > PLAYER > SAYAKA > HIROSHI.
+  // Both outer staff sprites are flipped as requested, while the protagonist
+  // uses whichever authentic selectable character was saved in this profile.
   const playerAsset=getCharacterVisualAsset(playerId,'idle');
   const characterPlaces=[
-    {key:'proDriverHiroshi',x:161,feet:717,height:522,maxWidth:270,onTap:()=>toggleDialogue('hiroshi')},
-    {key:playerAsset?.key,x:411,feet:720,height:472,maxWidth:233,onTap:null},
-    {key:'proDriverSayaka',x:1080,feet:736,height:527,maxWidth:276,onTap:()=>handleSayaka()},
-    {key:'proDriverDaichi',x:1385,feet:740,height:531,maxWidth:263,onTap:()=>openTune()},
+    {key:'proDriverDaichi',x:169,feet:727,height:560,maxWidth:280,flip:true,onTap:()=>openTune()},
+    {key:playerAsset?.key,x:888,feet:691,height:519,maxWidth:256,flip:false,onTap:null},
+    {key:'proDriverSayaka',x:1110,feet:763,height:527,maxWidth:276,flip:false,onTap:()=>handleSayaka()},
+    {key:'proDriverHiroshi',x:1402,feet:724,height:522,maxWidth:270,flip:true,onTap:()=>toggleDialogue('hiroshi')},
   ];
   for(const p of characterPlaces){
     if(!p.key||!s.textures.exists(p.key))continue;
@@ -203,7 +216,7 @@ function draw(s,state,options){
     s.textures.get(p.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
     add(s.add.ellipse(p.x,p.feet-6,p.maxWidth*.84,22,0,.27).setDepth(209));
     const sprite=add(s.add.image(p.x,p.feet,p.key).setOrigin(.5,1)
-      .setScale(scale).setDepth(214));
+      .setScale(scale).setFlipX(Boolean(p.flip)).setDepth(214));
     if(p.onTap)sprite.setInteractive({useHandCursor:true}).on('pointerdown',p.onTap);
   }
 
@@ -213,51 +226,100 @@ function draw(s,state,options){
   const title=String(state.briefingLabel||fallback.label||'DRIVER SERIES').toUpperCase();
   fit(display(55,83,title,41),790);
 
-  // One wide, shallow opponent card, leaving both the car and five figures
-  // readable against the registration-room backdrop.
-  poly(52,644,842,176,0x071728,CYAN,219);
-  display(90,654,'NEXT OPPONENT',25,'#35d6ff');
-  rect(152,757,126,108,0x123246,0x316580,.72,220);
-  const portrait=createCharacterProfile(s,{
-    characterId:round.characterId,pose:'idle',x:152,y:757,
-    frameWidth:120,frameHeight:105,side:'center',depth:225,mask:true,
-    playerCharacterId:playerId,rivalContext:true,
-  });
-  if(portrait)add(portrait);
-  else text(152,755,'PRO\nDRIVER',12,'#b8d7e7',true,226).setOrigin(.5);
+  // Wider than the old single-race card's pre-R600 version, but slimmer
+  // horizontally than R600. Keep the main player car completely in-world.
+  poly(52,643,730,164,0x071728,CYAN,219);
+  display(89,652,'NEXT OPPONENT '+stageNo+'/'+stageTotal,24,'#35d6ff');
+  const px=146,py=742,pw=112,ph=102;
+  rect(px,py,pw+4,ph+4,0x123246,0x316580,.75,220);
+  const isMainRival=Boolean(round.mainRivalTier||rival.mainRival);
+  const helmetKey='proDriverHelmet'+getProDriverHelmetIndex(state,round);
+  if(!isMainRival&&s.textures.exists(helmetKey)){
+    // The four helmeted Central driver sprites are full-length artwork.
+    // Frame the upper body/head with a geometrical crop, not a stretched image.
+    const source=s.textures.get(helmetKey).getSourceImage();
+    const scale=Math.max(pw/Math.max(1,source.width),ph/Math.max(1,source.height));
+    s.textures.get(helmetKey).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+    const profile=add(s.add.image(px,py-ph/2,helmetKey)
+      .setOrigin(.5,0).setScale(scale).setDepth(226));
+    const shape=s.make.graphics({add:false});
+    shape.fillStyle(0xffffff,1);
+    shape.fillRect(px-pw/2,py-ph/2,pw,ph);
+    profile.setMask(shape.createGeometryMask());
+    add({destroy:()=>shape.destroy()});
+  }else{
+    const portrait=createCharacterProfile(s,{
+      characterId:round.characterId,pose:'idle',x:px,y:py,
+      frameWidth:pw,frameHeight:ph,side:'center',depth:226,mask:true,
+      playerCharacterId:playerId,rivalContext:true,
+    });
+    if(portrait)add(portrait);
+    else text(px,py-7,'PRO\\nDRIVER',12,'#b8d7e7',true,226).setOrigin(.5);
+  }
   const roster=Object.values(circuit.drivers||{}).find(d=>d.characterId===round.characterId);
   const rivalName=String(round.opponentName||rival.name||roster?.name||
     round.characterId||'PRO DRIVER').toUpperCase();
-  fit(text(234,719,rivalName,20,'#fff'),296);
-  fit(text(234,746,String(oppCar.name||round.carId).toUpperCase(),16,'#7fe0f1'),296);
-  text(234,775,'POWER',11,'#b1cddb',true);
-  text(345,771,Math.round(opponentPower)+' KW',17);
-  text(234,797,'TORQUE',11,'#b1cddb',true);
-  text(345,793,Math.round(opponentTorque)+' NM',17);
-  text(480,797,'DRIVE',11,'#b1cddb',true);
-  text(558,793,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
+  fit(text(220,697,rivalName,19,'#ffffff'),250);
+  fit(text(220,722,String(oppCar.name||round.carId).toUpperCase(),15,'#7fe0f1'),270);
+  text(220,748,'POWER',10,'#b1cddb',true);
+  text(319,744,Math.round(opponentPower)+' KW',16);
+  text(220,770,'TORQUE',10,'#b1cddb',true);
+  text(319,766,Math.round(opponentTorque)+' NM',16);
+  text(220,792,'DRIVE',10,'#b1cddb',true);
+  text(319,788,drive(getCarMagazineMeta(getBaseCarId(round.carId))?.drivetrain||
     oppCar.drivetrain),16);
-  safeCarPreview(round.carId,720,764,249,225,round.opponentBuildState||{});
-  text(708,804,'OPPONENT '+stageNo+' OF '+stageTotal,10,'#d4e5f1',true);
+  safeCarPreview(round.carId,629,736,226,225,round.opponentBuildState||{});
 
-  // Three in-world NPC interaction controls, with one clear race action.
-  // Click either Hiroshi's/Sayaka's/Daichi's sprite or their matching button.
-  btn(171,608,234,46,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
+  // Translucent breathing hotspots: identical alpha/timing language to
+  // Warehouse HQ's Office / Crew / Dyno hotspots, not filled menu buttons.
+  const workshopHotspot=(x,y,w,h,label,action,{disabled=false}={})=>{
+    const glow=add(s.add.rectangle(x,y,w,h,0x4ee8ff,.022)
+      .setStrokeStyle(2,disabled?0x617b86:0x69ecff,.72).setDepth(246));
+    const pad=add(s.add.rectangle(x,y,w-10,h-8,0x06141d,.66).setDepth(247));
+    const caption=add(s.add.text(x,y,label,{
+      fontFamily:PIXEL,fontSize:'11px',
+      color:disabled?'#8eacb8':'#c9f8ff',align:'center',
+    }).setOrigin(.5).setDepth(248));
+    fit(caption,w-20);
+    if(disabled){glow.setAlpha(.37);pad.setAlpha(.42);caption.setAlpha(.58);}
+    else{
+      glow.setInteractive({useHandCursor:true}).on('pointerdown',action);
+      const timing={duration:1300,yoyo:true,repeat:-1,ease:'Sine.easeInOut'};
+      const pulse=s.tweens.add({targets:glow,alpha:{from:.07,to:1},...timing});
+      const padPulse=s.tweens.add({targets:pad,alpha:{from:.14,to:.72},...timing});
+      s.tweens.add({targets:caption,alpha:{from:.46,to:.96},...timing});
+      glow.on('pointerover',()=>{
+        pulse.pause();padPulse.pause();
+        glow.setAlpha(1).setFillStyle(0x4ee8ff,.08)
+          .setStrokeStyle(3,0x9af6ff,.98);
+        pad.setAlpha(.82);caption.setAlpha(1).setColor('#ffffff');
+      });
+      glow.on('pointerout',()=>{
+        glow.setFillStyle(0x4ee8ff,.022).setStrokeStyle(2,0x69ecff,.72);
+        caption.setColor('#c9f8ff');pulse.resume();padPulse.resume();
+      });
+    }
+    return glow;
+  };
+  // Daichi LEFT, Sayaka RIGHT-CENTRE, Hiroshi RIGHT.
+  workshopHotspot(166,623,229,44,'DAICHI // TUNE',()=>openTune());
   const adviceLabel=advice.usedThisEvent&&state.briefingAdviceText?'VIEW ADVICE':
     advice.available?'ASK FOR ADVICE':'ADVICE ON COOLDOWN';
-  btn(1090,624,222,46,adviceLabel,()=>handleSayaka(),{
+  workshopHotspot(1111,637,225,44,adviceLabel,()=>handleSayaka(),{
     disabled:!advice.available&&!state.briefingAdviceText,
   });
-  btn(1383,624,230,46,'DAICHI // TUNE',()=>openTune());
+  workshopHotspot(1390,616,220,44,'RACE BRIEFING',()=>toggleDialogue('hiroshi'));
   if(advice.remaining&&!state.briefingAdviceUsed)
-    fit(text(981,658,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
-      '#c8d8e6',true),260);
-  btn(1252,751,536,62,'PROCEED TO GRID  >>',()=>{
+    fit(text(993,671,'SAYAKA: '+advice.remaining+' EVENT COOLDOWN',10,
+      '#c8d8e6',true),245);
+
+  // Action row has two equal-sized controls, no Back: the competition is
+  // already paid and the player may only continue or confirm a forfeit.
+  btn(1070,779,246,54,'FORFEIT EVENT',()=>openForfeit(),{red:true});
+  btn(1368,779,246,54,'PROCEED TO GRID  >>',()=>{
     if(!eligibility.eligible)return;
     close();options.onRace?.();
-  },{red:true,disabled:!eligibility.eligible});
-  btn(1001,810,195,42,'FORFEIT EVENT',()=>openForfeit(),{red:true});
-  btn(1456,810,171,42,'BACK',()=>{close();options.onBack?.();});
+  },{disabled:!eligibility.eligible});
 
   // These bubbles are ephemeral, mutually exclusive, and NEVER persisted as
   // open state. Existing professional advice stays saved and can be viewed
@@ -278,10 +340,11 @@ function draw(s,state,options){
     if(activeDialogue===which){clearDialogue();return;}
     clearDialogue();activeDialogue=which;
     if(which==='hiroshi'){
-      // Point the official race briefing toward Hiroshi on the LEFT.
-      const x=337,y=137,w=646,h=268,tipX=x-58,tipY=y+80;
-      const pts=[{x,y},{x:x+w,y},{x:x+w,y:y+h},{x,y:y+h},
-        {x,y:y+110},{x:tipX,y:tipY},{x,y:y+52}];
+      // After swapping staff, the briefing's point faces Hiroshi on the RIGHT.
+      const x=525,y=137,w=646,h=268,edge=x+w,tipX=edge+59,tipY=y+80;
+      const pts=[{x,y},{x:edge,y},{x:edge,y:y+52},
+        {x:tipX,y:tipY},{x:edge,y:y+111},
+        {x:edge,y:y+h},{x,y:y+h}];
       const panel=dialogueAdd(s.add.graphics().setDepth(235));
       panel.fillStyle(0x081a2b,.97);panel.fillPoints(pts,true);
       panel.lineStyle(3,CYAN,1);panel.strokePoints(pts,true);
