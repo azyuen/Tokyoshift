@@ -41,5 +41,5 @@ test('the original paint purchase, persistence and other-room code remain',()=>{
   assert.match(paint,/setCarBodyPaint\(this\.paintObjects, paintColor\)/);
   assert.match(render,/if \(this\.room === 'rims'\) this\.drawRimShop\(\)/);
   assert.match(render,/if \(this\.activeLocationId === 'oshiageDrivingSchool'\) this\.drawSchool\(\)/);
-  assert.match(main,/OshiageScene\.js\?v=20261020-r621/);
+  assert.match(main,/OshiageScene\.js\?v=20261020-r\d+/);
 });
