@@ -42,7 +42,7 @@ test('chassis install/back controls align with the other three tuning categories
   assert.equal((chassis.match(/SIDE\.y \+ 678/g)||[]).length, 2);
   assert.doesNotMatch(chassis, /crewControlLift|SIDE\.y \+ 494|SIDE\.y \+ 576/);
   assert.match(garage,/SIDE\.y \+ 624/);
-  assert.match(crewScene,/GarageScene\.js\?v=20261020-r619/);
+  assert.match(crewScene,/GarageScene\.js\?v=20261020-r625/);
 });
 
 test('a genuine recruited crew driver and assigned loan car qualify for services',()=>{
