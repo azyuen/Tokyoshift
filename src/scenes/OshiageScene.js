@@ -1353,9 +1353,10 @@ export default class OshiageScene extends Phaser.Scene {
         !state.immutable && (!car.crewLoan || this.isCrewCarSelected()) &&
         (!state.crewLoan || this.isCrewCarSelected()));
       const canBuy = Number(this.registry.get('garageTier') || 0) >= 1;
-      // Lower the side-profile car roughly one wheel width inside the bay.
+      // Fine-tune the side-profile placement without shifting the paint
+      // booth artwork, character, controls or other workshop cars.
       this.paintObjects = this.drawOwnedCar(
-        car, state, 609, 410, 483, this.pendingPaint
+        car, state, 609, 419, 483, this.pendingPaint
       );
       this.addText(SIDE.x + 20, SIDE.y + 145,
         mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM COLOUR PICKER',
@@ -1566,8 +1567,9 @@ export default class OshiageScene extends Phaser.Scene {
       40 + sprayRgb.b * 0.48
     );
     for (let i = 0; i < 46; i++) {
-      const x = 310 + Phaser.Math.Between(0, 630);
-      const y = 263 + Phaser.Math.Between(0, 155);
+      // Aim the darker spray slightly left and lower across the body.
+      const x = 230 + Phaser.Math.Between(0, 630);
+      const y = 298 + Phaser.Math.Between(0, 155);
       const mist = this.add.circle(x, y, Phaser.Math.Between(11, 28), sprayShade, 0.49)
         .setMask(this.stageMask).setDepth(24);
       this.tweens.add({ targets: mist, alpha: 0, x: x + 64,
@@ -1577,9 +1579,15 @@ export default class OshiageScene extends Phaser.Scene {
       this.paintBusy = false;
       this.pendingPaint = paintColor;
       this.renderView();
-      this.addText(405, 652, 'PAINT COMPLETE // ' + MONEY(cost), {
-        pixel: true, size: '12px', color: '#8cffe4', depth: 34,
-      });
+      // Keep the success label entirely inside the picture window. The
+      // lower status strip begins beneath the stage and must stay clear.
+      const noticeX = STAGE.x + 236;
+      const noticeY = STAGE.y + STAGE.h - 38;
+      this.own(this.add.rectangle(noticeX, noticeY, 414, 44, 0x061a21, 0.87)
+        .setStrokeStyle(2, 0x65dbc8).setMask(this.stageMask).setDepth(33));
+      this.addText(noticeX, noticeY, 'PAINT COMPLETE // ' + MONEY(cost), {
+        pixel: true, size: '11px', color: '#8cffe4', depth: 34,
+      }).setOrigin(0.5);
     });
   }
   openMap() {

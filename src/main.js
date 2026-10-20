@@ -80,7 +80,7 @@ async function startTokyoShift() {
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261015-r524'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261015-r524'),
       loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261020-r617'),
-      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261020-r621'),
+      loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261020-r622'),
       loadScene('MEET', './scenes/MeetScene.js?v=20261020-r620'),
       loadScene('RACE', './scenes/RaceScene.js?v=20261020-r619'),
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261020-r617'),
