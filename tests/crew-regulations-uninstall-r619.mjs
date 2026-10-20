@@ -134,3 +134,13 @@ test('Crew Space service is present and live races reject invalid AI builds', ()
   assert.match(race,/validateCrewBattleBuiltCar\(\s*opponentConfig, this\.opponentBuildState, rule/);
   assert.match(race,/validateCrewBattleBuiltCar\(\s*playerConfig, this\.playerCarState, rule/);
 });
+
+test('crew lineup communicates heat restrictions and precise eligibility failures', () => {
+  const meet = read('src/scenes/MeetScene.js');
+  assert.match(meet, /HEAT 3 ONLY IF THE SERIES IS TIED 1-1/);
+  assert.match(meet, /NO AUTO DOWN-TUNING/);
+  assert.match(meet, /lineupComplianceLabel\.setText\(notice\)/);
+  assert.match(meet, /NOT ELIGIBLE:/);
+  assert.match(meet, /SELECT CREW MEMBER \/\/ HEAT /);
+  assert.match(meet, /chosenHeat\.ruleLabel/);
+});

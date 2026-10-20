@@ -9,6 +9,9 @@ on:
       - 'src/scenes/MeetScene.js'
       - 'src/scenes/RaceScene.js'
       - 'tests/crew-battle-rules-r547.mjs'
+      - 'tests/crew-regulations-uninstall-r619.mjs'
+      - 'src/data/partUninstall.js'
+      - 'src/scenes/GarageScene.js'
       - 'tests/crew-battle-introduction-r545.mjs'
       - 'tests/region-crew-tuning-r529.mjs'
       - '.github/workflows/crew-battle-rules-r547.yml'
@@ -29,6 +32,8 @@ jobs:
           node --check src/data/crewBattleIntroductions.js
           node --check src/scenes/MeetScene.js
           node --check src/scenes/RaceScene.js
+          node --check src/scenes/GarageScene.js
+          node --check src/data/partUninstall.js
       - name: Validate rules, narrative, lineup and startup imports
         run: |
-          node --test tests/crew-battle-rules-r547.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs
+          node --test tests/crew-battle-rules-r547.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs
