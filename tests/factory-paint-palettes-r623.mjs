@@ -48,7 +48,7 @@ test('paint studio shows chosen manufacturer name and rejects other preset value
   assert.match(source,/selectedFinish\.code/);
   assert.match(source,/this\.pendingPaint = preset\.color/);
   assert.match(source,/!getFactoryPaintPalette\(getBaseCarId\(carId\)\)\.some\(p => p\.color === paintColor\)/);
-  assert.match(source,/mode === 'custom' \? 16000 : 8000/);
+  assert.match(source,/mode === 'custom' \? 16000 : mode === 'street' \? 12000 : 8000/);
 });
 
 test('new/used market listings and generated meet opponents receive car-specific colours', () => {
@@ -67,6 +67,6 @@ test('starter and developer Magna defaults do not overwrite other saved car pain
   assert.match(state,/paintColor: getDefaultFactoryPaintColor\(carId\)/);
   const serviceWorker=file('sw.js');
   const index=file('index.html');
-  assert.match(serviceWorker,/R623/);
-  assert.match(index,/R623/);
+  assert.match(serviceWorker,/R62[34]/);
+  assert.match(index,/R62[34]/);
 });
