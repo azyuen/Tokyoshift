@@ -11,9 +11,12 @@ on:
       - 'tests/crew-battle-rules-r547.mjs'
       - 'tests/crew-regulations-uninstall-r619.mjs'
       - 'tests/crew-playbook-r625.mjs'
+      - 'tests/crew-whiteboard-progression-r627.mjs'
       - 'src/data/crewBattlePlaybook.js'
       - 'src/scenes/CrewSpaceScene.js'
       - 'assets/Garage/whiteboard_crewbattle.png'
+      - 'assets/Garage/whiteboard_crewrecruit.png'
+      - 'src/data/cutscenes.js'
       - 'src/data/partUninstall.js'
       - 'src/scenes/GarageScene.js'
       - 'tests/crew-battle-introduction-r545.mjs'
@@ -33,6 +36,7 @@ jobs:
         run: |
           node --check src/data/crewBattleRules.js
           node --check src/data/crewBattlePlaybook.js
+          node --check src/data/cutscenes.js
           node --check src/data/crewSystem.js
           node --check src/data/crewBattleIntroductions.js
           node --check src/scenes/MeetScene.js
@@ -41,4 +45,4 @@ jobs:
           node --check src/data/partUninstall.js
       - name: Validate rules, narrative, lineup and startup imports
         run: |
-          node --test tests/crew-battle-rules-r547.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-playbook-r625.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs
+          node --test tests/crew-battle-rules-r547.mjs tests/crew-regulations-uninstall-r619.mjs tests/crew-playbook-r625.mjs tests/crew-whiteboard-progression-r627.mjs tests/crew-battle-introduction-r545.mjs tests/region-crew-tuning-r529.mjs tests/startup-import-integrity-r508.mjs
