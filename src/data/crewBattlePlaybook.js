@@ -3,9 +3,24 @@
 // generator, never from a parallel set of strings maintained for the whiteboard.
 import { CREW_REGIONS } from './crewRoster.js?v=20261009-r457';
 import { getCrewBattleRegionRules } from './crewBattleRules.js?v=20261020-r619';
-import { buildRegionalCrewBattleRounds } from './crewSystem.js?v=20261020-r619';
+import { buildRegionalCrewBattleRounds, isCrewComplete } from './crewSystem.js?v=20261020-r619';
 
 export const CREW_PLAYBOOK_REGIONS = CREW_REGIONS;
+
+/**
+ * Existing story completion and validated regional crew slots are the only
+ * persisted sources of truth. No new save flags or migration are necessary.
+ */
+export function getCrewWhiteboardMode(source, { developerPreview = false } = {}) {
+  const seen = typeof source?.get === 'function'
+    ? source.get('cutscenesSeen') : source?.cutscenesSeen;
+  const hasSeen = id => Array.isArray(seen) && seen.includes(id);
+  if (!hasSeen('sevenRegionsConquered') && !developerPreview) return null;
+  if (isCrewComplete(source) &&
+      (hasSeen('fullCrewTogether') || developerPreview)) return 'playbook';
+  return 'recruit';
+}
+
 
 export const CREW_PLAYBOOK_ADVICE = Object.freeze({
   ODAIBA: Object.freeze({
