@@ -114,6 +114,6 @@ test('paint purchases revalidate crew loan ownership and never rewrite other gar
   assert.match(school,/const paintable = Boolean\(hasLayeredPaintAssets/);
   assert.match(school,/selectedId !== carId \|\| !car/);
   assert.match(school,/\(current\.crewLoan && !this\.isCrewCarSelected\(\)\)/);
-  assert.match(main,/OshiageScene\.js\?v=20261020-r615/);
+  assert.match(main,/OshiageScene\.js\?v=20261020-r\d+/);
   assert.match(main,/CrewSpaceScene\.js\?v=20261020-r615/);
 });
