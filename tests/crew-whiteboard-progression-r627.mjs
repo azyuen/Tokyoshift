@@ -89,3 +89,13 @@ test('Chapter 06 Daichi points at the tutorial whiteboard, Chapter 07 triggers s
   assert.ok(garage.includes('Chapter 07 completion is saved before this callback fires'));
   assert.ok(garage.includes('this.refreshCrewPlaybookHotspot()'));
 });
+
+test('a finished Chapter 07 remains locked if the crew later loses a member', () => {
+  const state = {
+    cutscenesSeen: ['sevenRegionsConquered', 'fullCrewTogether'],
+    crewMembers: recruitFixtures(CREW_REGIONS),
+  };
+  assert.equal(getCrewWhiteboardMode(state), 'playbook');
+  delete state.crewMembers.DAIKOKU;
+  assert.equal(getCrewWhiteboardMode(state), 'recruit');
+});
