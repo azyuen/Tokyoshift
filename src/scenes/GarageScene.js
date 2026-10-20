@@ -1020,6 +1020,26 @@ export default class GarageScene extends Phaser.Scene {
   // The floor-standing whiteboard on the right of Crew Space now has the
   // same breathing cyan activation style as Office / Crew / Dyno. This button
   // belongs to the full-room overview, not an individual recruit's garage.
+  getCrewWhiteboardMode() {
+    return getCrewWhiteboardMode(this.registry, {
+      // Dev-only preview: Arkon Den can inspect either board without changing a story save.
+      developerPreview: isArkonDen(this.registry),
+    });
+  }
+
+  refreshCrewPlaybookHotspot() {
+    const hotspot = this.crewPlaybookHotspot;
+    if (!hotspot?.glow?.active) return;
+    const mode = this.getCrewWhiteboardMode();
+    hotspot.glow.setVisible(Boolean(mode));
+    hotspot.pad.setVisible(Boolean(mode));
+    hotspot.label.setVisible(Boolean(mode));
+    hotspot.label.setText(mode === 'playbook'
+      ? 'REGIONAL PLAYBOOK  >' : 'HOW TO RECRUIT  >');
+    if (mode) hotspot.glow.setInteractive({ useHandCursor: true });
+    else hotspot.glow.disableInteractive();
+  }
+
   buildCrewPlaybookHotspot() {
     if (!this.crewMode) return;
     const x = 1322, y = 705;
@@ -1028,7 +1048,7 @@ export default class GarageScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     const pad = this.add.rectangle(x, y, 290, 37, 0x061723, 0.74)
       .setDepth(114);
-    const label = this.add.text(x, y, 'REGIONAL PLAYBOOK  >', {
+    const label = this.add.text(x, y, 'HOW TO RECRUIT  >', {
       fontFamily: PIXEL_FONT, fontSize: '10px', color: '#d5faff',
     }).setOrigin(0.5).setDepth(115);
     this.tweens.add({
@@ -1046,9 +1066,52 @@ export default class GarageScene extends Phaser.Scene {
     glow.on('pointerdown', () => {
       if (!this.crewMode || this.crewFocusedCharacterId ||
           sceneCutsceneActive(this) || this._portraitGallery?.active) return;
-      this.showCrewBattleWhiteboard();
+      const mode = this.getCrewWhiteboardMode();
+      if (mode === 'recruit') this.showCrewRecruitWhiteboard();
+      else if (mode === 'playbook') this.showCrewBattleWhiteboard();
     });
+    this.crewPlaybookHotspot = { glow, pad, label };
     this.crewStageObjects.push(glow, pad, label);
+    this.refreshCrewPlaybookHotspot();
+  }
+
+  // Daichi's Chapter 06 board is a full-screen reference, not an interactive
+  // regional battle board. Reuse the image scaling and modal close affordance.
+  showCrewRecruitWhiteboard() {
+    if (!this.crewMode || this.crewFocusedCharacterId ||
+        this.getCrewWhiteboardMode() !== 'recruit' ||
+        this.crewBattleWhiteboardOverlay?.active || sceneCutsceneActive(this) ||
+        !this.textures.exists('crewRecruitWhiteboard')) return false;
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 500;
+    const viewportW = Number(this.scale.width || 1560);
+    const viewportH = Number(this.scale.height || 840);
+    const backdrop = add(this.add.rectangle(
+      viewportW / 2, viewportH / 2, viewportW, viewportH, 0x02070e, 1
+    ).setDepth(depth).setInteractive());
+    const source = this.textures.get('crewRecruitWhiteboard').getSourceImage();
+    const scale = Math.min(viewportW / source.width, viewportH / source.height);
+    add(this.add.image(viewportW / 2, viewportH / 2, 'crewRecruitWhiteboard')
+      .setScale(scale).setDepth(depth + 1));
+    const close = () => {
+      if (!this.crewBattleWhiteboardOverlay?.active) return;
+      this.crewBattleWhiteboardOverlay.active = false;
+      objects.forEach(obj => {
+        try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (_) {}
+      });
+      this.crewBattleWhiteboardOverlay = null;
+    };
+    const closeBox = add(this.add.rectangle(
+      viewportW - 96, 48, 158, 46, 0x07141d, 0.95
+    ).setStrokeStyle(2, 0xb7edfc).setDepth(depth + 7)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(viewportW - 96, 48, 'CLOSE  X', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    closeBox.on('pointerdown', close);
+    this.crewBattleWhiteboardOverlay = { active: true, objects, close, backdrop };
+    return true;
   }
 
   // Seven transparent hit areas follow the 3+4 panels in the authored PNG.
@@ -1056,6 +1119,7 @@ export default class GarageScene extends Phaser.Scene {
   // so touch targets remain aligned on iPad, phone and desktop.
   showCrewBattleWhiteboard() {
     if (!this.crewMode || this.crewFocusedCharacterId ||
+        this.getCrewWhiteboardMode() !== 'playbook' ||
         this.crewBattleWhiteboardOverlay?.active || sceneCutsceneActive(this) ||
         !this.textures.exists('crewBattlePlaybookBoard')) return false;
 
@@ -7807,7 +7871,11 @@ export default class GarageScene extends Phaser.Scene {
           showFullCrewCelebration(this, { preview });
         }
       },
-      onComplete: () => this._fullCrewCelebration?.stop?.(),
+      onComplete: () => {
+        this._fullCrewCelebration?.stop?.();
+        // Chapter 07 completion is saved before this callback fires.
+        this.refreshCrewPlaybookHotspot();
+      },
       onPreviewComplete: () => {this._fullCrewCelebration?.stop?.();options.onPreviewComplete?.();},
       onCancel: () => this._fullCrewCelebration?.stop?.(),
     });
