@@ -51,7 +51,7 @@ import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
-import { markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r564';
+import { markCutsceneSeen } from '../data/cutscenes.js?v=20261021-r627';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
