@@ -50,5 +50,5 @@ test('existing background nudge and paint transaction remain untouched',()=>{
   assert.match(apply,/this\.registry\.set\('cash', cash - cost\)/);
   assert.match(apply,/saveSessionState\(this\.registry\)/);
   assert.match(apply,/setCarBodyPaint\(this\.paintObjects, paintColor\)/);
-  assert.match(main,/OshiageScene\.js\?v=20261020-r62[23]/);
+  assert.match(main,/OshiageScene\.js\?v=20261020-r62[234]/);
 });

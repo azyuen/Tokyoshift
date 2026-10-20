@@ -13,6 +13,7 @@ import {
 } from '../data/oshiageShowdown.js?v=20261015-r522';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=20261020-r623';
+import { getStreetPaintPalette } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
@@ -26,7 +27,7 @@ import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
-  PAINT_PRESETS, hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
+  hasLayeredPaintAssets, getCarPaintColor, normalisePaintColor, paintColorToRgb, rgbToPaintColor,
   getCarBodyTextureKey, getCarBodyScaleForWidth, createCarBodyLayers, setCarBodyPaint,
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260929-r246';
@@ -124,7 +125,10 @@ export default class OshiageScene extends Phaser.Scene {
     this.showdownPreviewIndex = activeShowdown?.active ? Number(activeShowdown.roundIndex || 0) : 0;
     this.showdownSwitching = false;
     this.showdownLaunching = false;
-    this.paintMode = 'preset';
+    this.paintMode = 'stock';
+    this.paintPage = 0;
+    this.stockPaintColor = null;
+    this.streetPaintColor = null;
     this.customPaintColor = null;
     this.paintPickerHue = null;
     this.selectedRimIndex = -1;
@@ -989,7 +993,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.addText(SIDE.x + 20, SIDE.y + 155, 'EXTERIOR CUSTOMISATION',
       { pixel: true, size: '10px', color: '#ffe5b0', wrap: SIDE.w - 40 });
     this.addText(SIDE.x + 20, SIDE.y + 220,
-      'PAINT: Preset finishes cost ¥8,000, and custom paint selection for ¥16,000.\n\n' +
+      'PAINT: Factory stock ¥8,000, named street finishes ¥12,000, or custom colour ¥16,000.\n\n' +
       'RIMS: Try and buy new and rare wheel designs, or install designs already in your collection.',
       { size: '10px', bold: true, wrap: SIDE.w - 40, color: '#9ab0bd', spacing: 5 });
     this.addText(48, 660, 'OSHIAGE CUSTOM WORKS // SELECT A SERVICE',
@@ -1015,7 +1019,8 @@ export default class OshiageScene extends Phaser.Scene {
     this.room = room;
     this.pendingPaint = null;
     if (room === 'paint') {
-      this.paintMode = 'preset';
+      this.paintMode = 'stock';
+      this.paintPage = 0;
       this.paintPickerHue = null;
     }
     if (room === 'rims') {
@@ -1332,8 +1337,9 @@ export default class OshiageScene extends Phaser.Scene {
 
   drawPaintStudio() {
     const { id, car, state } = this.selectedCar();
-    const mode = this.paintMode === 'custom' ? 'custom' : 'preset';
-    const fee = mode === 'custom' ? 16000 : 8000;
+    const mode = this.paintMode === 'custom' ? 'custom' :
+      this.paintMode === 'street' ? 'street' : 'stock';
+    const fee = mode === 'custom' ? 16000 : mode === 'street' ? 12000 : 8000;
     this.sideHeader('SPRAY PAINT STUDIO',
       car ? String(car.shortName || car.name || id).toUpperCase() : 'NO CAR SELECTED');
 
@@ -1345,7 +1351,9 @@ export default class OshiageScene extends Phaser.Scene {
       const current = getCarPaintColor(state);
       if (this.pendingPaint == null) {
         this.pendingPaint = mode === 'custom' && this.customPaintColor != null
-          ? this.customPaintColor : current;
+          ? this.customPaintColor : mode === 'street' && this.streetPaintColor != null
+            ? this.streetPaintColor : mode === 'stock' && this.stockPaintColor != null
+              ? this.stockPaintColor : current;
       }
       // Allow properly recruited crew loans, never Ginza demos or sealed
       // collector cars, even though those also have an ownedCarIds entry.
@@ -1360,34 +1368,56 @@ export default class OshiageScene extends Phaser.Scene {
         car, state, 609, 419, 483, this.pendingPaint
       );
       this.addText(SIDE.x + 20, SIDE.y + 145,
-        mode === 'preset' ? 'FACTORY PALETTE' : 'CUSTOM COLOUR PICKER',
+        mode === 'stock' ? 'FACTORY STOCK PALETTE' :
+          mode === 'street' ? 'STREET TUNER FINISHES' : 'CUSTOM COLOUR PICKER',
         { pixel: true, size: '9px', color: '#ffe394' });
-      if (mode === 'preset') {
+      if (mode !== 'custom') {
         this.addText(SIDE.x + 20, SIDE.y + 182, 'CHOOSE A FINISH',
           { pixel: true, size: '8px', color: '#96b6c7' });
-        const palette = getFactoryPaintPalette(getBaseCarId(id));
+        const palette = mode === 'stock'
+          ? getFactoryPaintPalette(getBaseCarId(id)) : getStreetPaintPalette();
+        const pageCount = Math.max(1, Math.ceil(palette.length / 10));
+        this.paintPage = Math.min(Math.max(0, this.paintPage || 0), pageCount - 1);
         if (!palette.length) {
           this.addText(SIDE.x + 20, SIDE.y + 245, 'COLLECTOR FINISH // NO FACTORY PALETTE',
             { pixel: true, size: '7px', color: '#96b6c7', wrap: SIDE.w - 40 });
         }
-        palette.forEach((preset, i) => {
-          const x = SIDE.x + 48 + (i % 5) * 62;
-          const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
-          const active = preset.color === this.pendingPaint;
-          const swatch = this.own(this.add.rectangle(x, y, 44, 42, preset.color)
-            .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
-          if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            if (this.paintBusy) return;
-            this.pendingPaint = preset.color;
+        // Keep the existing swatch size and show ten at a time.
+        // Extra street finishes live on page two, never under the name label.
+        if (pageCount > 1) {
+          this.button(SIDE.x + 214, SIDE.y + 191, 32, 28, '<', () => {
+            this.paintPage -= 1;
             this.renderView();
+          }, { disabled: this.paintPage === 0, size: '9px' });
+          this.addText(SIDE.x + 236, SIDE.y + 183,
+            (this.paintPage + 1) + '/' + pageCount,
+            { pixel: true, size: '8px', color: '#9dc4d9' });
+          this.button(SIDE.x + 318, SIDE.y + 191, 32, 28, '>', () => {
+            this.paintPage += 1;
+            this.renderView();
+          }, { disabled: this.paintPage >= pageCount - 1, size: '9px' });
+        }
+        palette.slice(this.paintPage * 10, this.paintPage * 10 + 10)
+          .forEach((preset, i) => {
+            const x = SIDE.x + 48 + (i % 5) * 62;
+            const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
+            const active = preset.color === this.pendingPaint;
+            const swatch = this.own(this.add.rectangle(x, y, 44, 42, preset.color)
+              .setStrokeStyle(active ? 4 : 2, active ? 0xe9ffff : 0x547087).setDepth(33));
+            if (paintable) swatch.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+              if (this.paintBusy) return;
+              this.pendingPaint = preset.color;
+              if (mode === 'street') this.streetPaintColor = preset.color;
+              else this.stockPaintColor = preset.color;
+              this.renderView();
+            });
           });
-        });
         const selectedFinish = palette.find(p => p.color === this.pendingPaint);
         this.addText(SIDE.x + 20, SIDE.y + 400,
           selectedFinish
             ? 'SELECTED // ' + selectedFinish.name.toUpperCase() +
               (selectedFinish.code ? ' // ' + selectedFinish.code : '')
-            : 'SELECTED // CUSTOM / NON-FACTORY FINISH',
+            : 'SELECTED // CUSTOM / OTHER FINISH',
           { pixel: true, size: '8px', color: '#dceaf2', wrap: SIDE.w - 40 });
       } else {
         this.addText(SIDE.x + 20, SIDE.y + 183,
@@ -1412,9 +1442,11 @@ export default class OshiageScene extends Phaser.Scene {
     this.drawCustomWorksSpecialist({ x: 1066, feetY: STAGE.y + STAGE.h - 35 });
     this.addText(48, 654, 'CUSTOM WORKS // SPRAY BOOTH // SIDE PROFILE',
       { pixel: true, size: '10px', color: '#8feaff' });
-    this.button(316, 744, 545, 66, 'PRESET // ¥8,000', () => this.setPaintMode('preset'),
-      { accent: mode === 'preset', size: '8px' });
-    this.button(860, 744, 545, 66, 'CUSTOM COLOUR // ¥16,000', () => this.setPaintMode('custom'),
+    this.button(217, 744, 350, 66, 'STOCK // ¥8,000', () => this.setPaintMode('stock'),
+      { accent: mode === 'stock', size: '8px' });
+    this.button(593, 744, 350, 66, 'STREET // ¥12,000', () => this.setPaintMode('street'),
+      { accent: mode === 'street', size: '8px' });
+    this.button(969, 744, 350, 66, 'CUSTOM // ¥16,000', () => this.setPaintMode('custom'),
       { accent: mode === 'custom', size: '8px' });
     this.addText(48, 794, this.paintBusy ? 'CAR ENTERING / SPRAYING...' :
       'Side-entry spray bay // real car paint layers // colour preview before purchase.',
@@ -1422,13 +1454,20 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   setPaintMode(mode) {
-    if (!['preset', 'custom'].includes(mode) || this.paintBusy) return;
+    if (!['stock', 'street', 'custom'].includes(mode) || this.paintBusy) return;
     if (this.paintMode === 'custom') this.customPaintColor = this.pendingPaint;
+    if (this.paintMode === 'street' && getStreetPaintPalette().some(p => p.color === this.pendingPaint))
+      this.streetPaintColor = this.pendingPaint;
+    if (this.paintMode === 'stock' &&
+        getFactoryPaintPalette(getBaseCarId(this.selectedCar().id)).some(p => p.color === this.pendingPaint))
+      this.stockPaintColor = this.pendingPaint;
     this.paintMode = mode;
+    this.paintPage = 0;
     this.paintPickerHue = null;
     const current = getCarPaintColor(this.selectedCar().state);
-    this.pendingPaint = mode === 'custom'
-      ? (this.customPaintColor ?? current) : current;
+    this.pendingPaint = mode === 'custom' ? (this.customPaintColor ?? current)
+      : mode === 'street' ? (this.streetPaintColor ?? current)
+        : (this.stockPaintColor ?? current);
     this.renderView();
   }
 
@@ -1555,11 +1594,13 @@ export default class OshiageScene extends Phaser.Scene {
         (current.crewLoan && !this.isCrewCarSelected()) ||
         !hasLayeredPaintAssets(this, car)) return;
     const paintColor = normalisePaintColor(color);
-    if (this.paintMode === 'preset' &&
+    if (this.paintMode === 'stock' &&
         !getFactoryPaintPalette(getBaseCarId(carId)).some(p => p.color === paintColor)) return;
+    if (this.paintMode === 'street' &&
+        !getStreetPaintPalette().some(p => p.color === paintColor)) return;
     if (getCarPaintColor(current) === paintColor) return;
     if (Number(this.registry.get('garageTier') || 0) < 1) return;
-    if (cost !== (this.paintMode === 'custom' ? 16000 : 8000)) return;
+    if (cost !== (this.paintMode === 'custom' ? 16000 : this.paintMode === 'street' ? 12000 : 8000)) return;
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < cost) return;
     this.paintBusy = true;

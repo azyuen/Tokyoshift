@@ -6,6 +6,7 @@ import { CREW_REGIONS } from './crewRoster.js?v=20261009-r457';
 import { WHEEL_CATALOG } from './wheels.js?v=20260929-r246';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
+import { selectMixedCarPaint } from './streetPaintPalettes.js?v=20261020-r624';
 
 export const OSHIAGE_ELITE_COOLDOWN_MS = 15 * 60 * 1000;
 export const OSHIAGE_ELITE_VENUES = Object.freeze({
@@ -103,7 +104,10 @@ export function getOshiageEliteOpponent(source, venueId, now = Date.now(), round
   const pool = preferred.length ? preferred : fallback;
   if (!pool.length) return null;
   const carId = pool[(index + wins + Math.max(0, Number(roundIndex) || 0)) % pool.length];
-  const paintColor = [0xd83f56, 0x4d83e5, 0xc3d1dc, 0xf7c459][index % 4];
+  const paintColor = selectMixedCarPaint(carId, {
+    region: 'OSHIAGE', characterId, isMainRival: Boolean(character.mainRival),
+    seed: venueId + ':' + period + ':' + wins + ':' + roundIndex,
+  })?.color ?? [0xd83f56, 0x4d83e5, 0xc3d1dc, 0xf7c459][index % 4];
   const buildState = makeOshiageEliteStageThreeBuild(cars[carId],
     createRivalBuildState(cars[carId], 5, {
       seed: 'oshiage:' + venueId + ':' + characterId + ':' + period + ':' + roundIndex,

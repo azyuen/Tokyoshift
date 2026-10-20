@@ -48,7 +48,7 @@ test('paint studio shows chosen manufacturer name and rejects other preset value
   assert.match(source,/selectedFinish\.code/);
   assert.match(source,/this\.pendingPaint = preset\.color/);
   assert.match(source,/!getFactoryPaintPalette\(getBaseCarId\(carId\)\)\.some\(p => p\.color === paintColor\)/);
-  assert.match(source,/mode === 'custom' \? 16000 : 8000/);
+  assert.match(source,/mode === 'custom' \? 16000 : mode === 'street' \? 12000 : 8000/);
 });
 
 test('new/used market listings and generated meet opponents receive car-specific colours', () => {

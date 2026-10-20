@@ -3,6 +3,7 @@ import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261020-r61
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261020-r617';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
+import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r607';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
@@ -1407,7 +1408,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
             (Number(item.price || getAutoMarketBasePrice(item.carId)) * percent / 100) / 10000
           ) * 10000
         );
-        const paintColor = getFactoryPaintColor(item.carId, seed) ??
+        const paintColor = selectMixedCarPaint(item.carId, {seed, region:'DEFAULT'})?.color ??
+          getFactoryPaintColor(item.carId, seed) ??
           RIVAL_PAINT_COLORS[seed % RIVAL_PAINT_COLORS.length];
         const visualMods = { bodyKit: 'stock' };
         const previewState = {
@@ -1502,8 +1504,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
   drawAutoMarket() {
     const subtitles = {
-      new: 'FACTORY STOCK // STANDARD PRICE // WHITE · BLACK · GREY',
-      used: 'MODIFIED CARS // MIXED PRICES // ONE OFFER PER LISTING',
+      new: 'FACTORY STOCK // ORIGINAL MANUFACTURER COLOURS',
+      used: 'MIXED FINISHES // FACTORY · STREET · SHOW CAR',
     };
 
     this.drawNavigation('TOKYO AUTO MARKET', subtitles[this.autoMarketRoom]);
@@ -3689,7 +3691,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         return {
           ...mainRivalRound,
           opponentName:characters[characterId]?.name||null,
-          paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
+          paintColor: selectMixedCarPaint(mainRivalRound.carId,
+            {characterId, isMainRival: true, seed: index})?.color ??
+            [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
           raceType: 'Standing Start',
         };
       }
@@ -3698,7 +3702,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
         characterId,
         opponentName:characters[characterId]?.name||null,
         carId: event.opponentCars[index % event.opponentCars.length],
-        paintColor: [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
+        paintColor: selectMixedCarPaint(event.opponentCars[index % event.opponentCars.length],
+          {region:'SHINJUKU', characterId, seed: index + pro.eventTick * 31})?.color ??
+          [0x5e6b7a, 0xffffff, 0xd64f5d][index % 3],
         encounterRating: rating,
         encounterAi: {
           reactionSkill: clamp01(baseAi.reactionSkill + eventBoost),

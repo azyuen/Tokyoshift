@@ -6,6 +6,7 @@ import {
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
+import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -4003,7 +4004,11 @@ export default class MeetScene extends Phaser.Scene {
       return {
         ...physical,
         characterId,
-        paintColor: getFactoryPaintColor(physical.carId, Phaser.Math.Between(0, 9999)) ??
+        paintColor: selectMixedCarPaint(physical.carId, {
+          region: location.district, characterId,
+          isMainRival: Boolean(characters[characterId]?.mainRival),
+          seed: refreshToken + ':showdown:' + physical.carId + ':' + usedCharacters.length,
+        })?.color ?? getFactoryPaintColor(physical.carId, 0) ??
           Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
@@ -4619,7 +4624,11 @@ export default class MeetScene extends Phaser.Scene {
         // created during the global cooldown from banking a future offer.
         incomingPinkChallenge: false,
         incomingPinkPrompted: false,
-        paintColor: getFactoryPaintColor(carId, Phaser.Math.Between(0, 9999)) ??
+        paintColor: selectMixedCarPaint(carId, {
+          region: location.district, characterId,
+          isMainRival: Boolean(characters[characterId]?.mainRival),
+          seed: Phaser.Math.Between(0, 2147483647),
+        })?.color ?? getFactoryPaintColor(carId, 0) ??
           paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
         locked: false,
