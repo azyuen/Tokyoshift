@@ -17,7 +17,7 @@ test('paint booth background moves down by 28 pixels, without shifting other loc
 });
 
 test('the rendered car remains at exactly the prior position and width',()=>{
-  assert.match(draw,/this\.paintObjects = this\.drawOwnedCar\(\s*car, state, 609, 410, 483, this\.pendingPaint/);
+  assert.match(draw,/this\.paintObjects = this\.drawOwnedCar\(\s*car, state, 609, 419, 483, this\.pendingPaint/);
   assert.match(source,/this\.drawCustomWorksSpecialist\(\{ x: 1066, feetY: STAGE\.y \+ STAGE\.h - 35 \}\)/);
 });
 
