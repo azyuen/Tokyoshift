@@ -1,0 +1,26 @@
+name: R622 Oshiage paint fine tuning
+on:
+  pull_request:
+    paths:
+      - 'src/scenes/OshiageScene.js'
+      - 'src/main.js'
+      - 'tests/oshiage-paint-layout-r622.mjs'
+      - 'tests/oshiage-paint-visual-r621.mjs'
+      - 'tests/crew-oshiage-chassis-r615.mjs'
+      - '.github/workflows/oshiage-paint-layout-r622.yml'
+  workflow_dispatch:
+jobs:
+  paint-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check src/scenes/OshiageScene.js
+          node --check src/main.js
+          node --check tests/oshiage-paint-layout-r622.mjs
+      - name: Paint layout and existing workshop regressions
+        run: node --test tests/oshiage-paint-layout-r622.mjs tests/oshiage-paint-visual-r621.mjs tests/crew-oshiage-chassis-r615.mjs
