@@ -12,6 +12,7 @@ import {
   beginOshiageShowdown, prepareNextOshiageShowdownHeat,
 } from '../data/oshiageShowdown.js?v=20261015-r522';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
@@ -1364,7 +1365,12 @@ export default class OshiageScene extends Phaser.Scene {
       if (mode === 'preset') {
         this.addText(SIDE.x + 20, SIDE.y + 182, 'CHOOSE A FINISH',
           { pixel: true, size: '8px', color: '#96b6c7' });
-        PAINT_PRESETS.forEach((preset, i) => {
+        const palette = getFactoryPaintPalette(getBaseCarId(id));
+        if (!palette.length) {
+          this.addText(SIDE.x + 20, SIDE.y + 245, 'COLLECTOR FINISH // NO FACTORY PALETTE',
+            { pixel: true, size: '7px', color: '#96b6c7', wrap: SIDE.w - 40 });
+        }
+        palette.forEach((preset, i) => {
           const x = SIDE.x + 48 + (i % 5) * 62;
           const y = SIDE.y + 248 + Math.floor(i / 5) * 66;
           const active = preset.color === this.pendingPaint;
@@ -1376,6 +1382,13 @@ export default class OshiageScene extends Phaser.Scene {
             this.renderView();
           });
         });
+        const selectedFinish = palette.find(p => p.color === this.pendingPaint);
+        this.addText(SIDE.x + 20, SIDE.y + 400,
+          selectedFinish
+            ? 'SELECTED // ' + selectedFinish.name.toUpperCase() +
+              (selectedFinish.code ? ' // ' + selectedFinish.code : '')
+            : 'SELECTED // CUSTOM / NON-FACTORY FINISH',
+          { pixel: true, size: '8px', color: '#dceaf2', wrap: SIDE.w - 40 });
       } else {
         this.addText(SIDE.x + 20, SIDE.y + 183,
           'TAP OR DRAG TO SELECT A COLOUR',
@@ -1542,6 +1555,8 @@ export default class OshiageScene extends Phaser.Scene {
         (current.crewLoan && !this.isCrewCarSelected()) ||
         !hasLayeredPaintAssets(this, car)) return;
     const paintColor = normalisePaintColor(color);
+    if (this.paintMode === 'preset' &&
+        !getFactoryPaintPalette(getBaseCarId(carId)).some(p => p.color === paintColor)) return;
     if (getCarPaintColor(current) === paintColor) return;
     if (Number(this.registry.get('garageTier') || 0) < 1) return;
     if (cost !== (this.paintMode === 'custom' ? 16000 : 8000)) return;

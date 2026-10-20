@@ -5,6 +5,7 @@ import {
   ensureDerivedModularCarTextures,
 } from '../vehicles/CarAppearance.js?v=20260928-r244';
 import { cars, carOrder } from '../data/cars.js?v=20261017-r565';
+import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import {
   DEFAULT_PAINT_COLOR,
   RIVAL_PAINT_COLORS,
@@ -4002,7 +4003,8 @@ export default class MeetScene extends Phaser.Scene {
       return {
         ...physical,
         characterId,
-        paintColor: Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+        paintColor: getFactoryPaintColor(physical.carId, Phaser.Math.Between(0, 9999)) ??
+          Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         encounterAi: getEncounterAi(rating),
         skillLabel: getEncounterSkillLabel(rating),
       };
@@ -4617,7 +4619,8 @@ export default class MeetScene extends Phaser.Scene {
         // created during the global cooldown from banking a future offer.
         incomingPinkChallenge: false,
         incomingPinkPrompted: false,
-        paintColor: paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
+        paintColor: getFactoryPaintColor(carId, Phaser.Math.Between(0, 9999)) ??
+          paintPool.shift() ?? Phaser.Utils.Array.GetRandom(RIVAL_PAINT_COLORS),
         meetLocation: locationId,
         locked: false,
         resultState: null,

@@ -2,6 +2,7 @@ import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261020-r613';
 import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261020-r617';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
+import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261019-r607';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
@@ -1290,13 +1291,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const alreadyOwned = rotated.filter(item =>
       ownsCarModel(owned, item.carId) && !claimable.includes(item)
     );
-    const neutrals = [0xffffff, 0x30343a, 0x8d939a];
-
     return [...claimable, ...unowned, ...alreadyOwned]
       .map(item => {
-        const paintColor = neutrals[
-          this.marketHash(this.getAutoMarketCycle() + ':' + item.carId + ':new') % neutrals.length
-        ];
+        const paintColor = getFactoryPaintColor(item.carId,
+          this.marketHash(this.getAutoMarketCycle() + ':' + item.carId + ':new')) ?? 0xffffff;
         const standardPrice = getAutoMarketBasePrice(item.carId);
         const price = applyMarketPriceDifficulty(this.registry, standardPrice, 'new');
         return {
@@ -1385,7 +1383,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const rotated = this.rotateMarketPool(pool, 7);
     const unowned = rotated.filter(item => !ownsCarModel(owned, item.carId));
     const alreadyOwned = rotated.filter(item => ownsCarModel(owned, item.carId));
-    const colours = [...RIVAL_PAINT_COLORS, 0xffffff, 0x25292f, 0xa3a8ad];
     const conditionLabels = [
       'CLEAN STREET CAR',
       'WEEKEND BUILD',
@@ -1410,7 +1407,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
             (Number(item.price || getAutoMarketBasePrice(item.carId)) * percent / 100) / 10000
           ) * 10000
         );
-        const paintColor = colours[seed % colours.length];
+        const paintColor = getFactoryPaintColor(item.carId, seed) ??
+          RIVAL_PAINT_COLORS[seed % RIVAL_PAINT_COLORS.length];
         const visualMods = { bodyKit: 'stock' };
         const previewState = {
           ...getAutoMarketBuild(item.carId),
