@@ -1139,14 +1139,17 @@ export default class MeetScene extends Phaser.Scene {
     // a clear gap before the bottom action buttons.
     const regional = getCrewBattleRegionRules(regionId);
     headerShape(806, 446, 724, 294, 0x06121f, 0.85);
-    text(830, 459, 'BATTLE BRIEFING  //  ' +
-      (regional?.focus || 'CREW CHALLENGE'), 13, '#f4e4a4');
+    text(830, 454, 'BATTLE BRIEFING', 13, '#f4e4a4');
+    add(this.add.text(830, 482, regional?.focus || 'CREW CHALLENGE', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#96cfdc',
+      wordWrap: { width: 645 },
+    }).setDepth(depth + 9));
     rounds.slice(0, 3).forEach((round, i) => {
-      const y = 504 + i * 70;
+      const y = 519 + i * 70;
       const distance = round.distanceM > 500 ? '1/2 MI' : '1/4 MI';
       const mode = round.raceType === 'Roll Race' ? 'ROLL' : 'STANDING';
       add(this.add.text(831, y,
-        'HEAT ' + (i + 1) + (i === 2 ? '*' : '') + '  //  ' +
+        'HEAT ' + (i + 1) + '  //  ' +
         round.ruleLabel + '  /  ' + mode + ' ' + distance, {
           fontFamily: PIXEL_FONT, fontSize: '10px', color: '#c3e1f0',
         }).setDepth(depth + 9));
@@ -1156,10 +1159,7 @@ export default class MeetScene extends Phaser.Scene {
           fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80bac9',
         }).setDepth(depth + 9));
     });
-    add(this.add.text(831, 704, '* HEAT 3 ONLY IF THE SERIES IS TIED 1-1', {
-      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#d9c692',
-    }).setDepth(depth + 9));
-    const lineupComplianceLabel = add(this.add.text(831, 726,
+    const lineupComplianceLabel = add(this.add.text(831, 718,
       'ASSIGN THREE COMPLIANT CARS // NO AUTO DOWN-TUNING', {
         fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7acddf',
       }).setDepth(depth + 9));
