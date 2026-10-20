@@ -192,8 +192,10 @@ export default class RaceScene extends Phaser.Scene {
     // All street-race regions now use authored day/night panoramas.
     // Assets follow skyline_<region>_<phase>.webp and share one renderer.
     const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
-    if (skylineRegions.has(this.raceDistrict)) {
-      const regionSlug = this.raceDistrict.toLowerCase();
+    if (skylineRegions.has(this.raceDistrict) || this.raceMode === 'CHAPTER08') {
+      // Chapter 08's Ginza RWB drive borrows Oshiage's authored skyline;
+      // keep the actual race district and its road/physics unchanged.
+      const regionSlug = this.raceMode === 'CHAPTER08' ? 'oshiage' : this.raceDistrict.toLowerCase();
       const skylineKey = 'raceSkyline_' + regionSlug + '_' + this.raceTimeOfDay;
       const skylineFile = 'skyline_' + regionSlug + '_' + this.raceTimeOfDay + '.webp';
       queueImage(
@@ -653,8 +655,8 @@ export default class RaceScene extends Phaser.Scene {
     this.lastRollCountdownLabel = null;
 
     const skylineRegions = new Set(['ODAIBA', 'SHINAGAWA', 'TATSUMI', 'DAIKOKU', 'SHIBUYA', 'SHINJUKU', 'YOKOHAMA', 'OSHIAGE']);
-    const skylineKey = skylineRegions.has(this.raceDistrict)
-      ? 'raceSkyline_' + this.raceDistrict.toLowerCase() + '_' + this.raceTimeOfDay
+    const skylineKey = (skylineRegions.has(this.raceDistrict) || this.raceMode === 'CHAPTER08')
+      ? 'raceSkyline_' + (this.raceMode === 'CHAPTER08' ? 'oshiage' : this.raceDistrict.toLowerCase()) + '_' + this.raceTimeOfDay
       : null;
     // Keep regional skyline identity stable but vary the expressway furniture
     // from race to race. A session counter makes the sequence deterministic.
@@ -665,7 +667,7 @@ export default class RaceScene extends Phaser.Scene {
     // Oshiage's authored Skytree landmark belongs near the finish.
     // Keep the track furniture varied, but anchor this skyline so its tower
     // does not wander out of view from race to race.
-    const skylineStartRatio = this.raceDistrict === 'OSHIAGE'
+    const skylineStartRatio = (this.raceDistrict === 'OSHIAGE' || this.raceMode === 'CHAPTER08')
       ? 0.28
       : ((roadVariantCounter * 0.61803398875) % 1) * startWindow;
     const skylineTravelPx = this.raceDistanceM <= QUARTER_M + 1 ? 430 : (this.raceDistanceM <= HALF_MILE_M + 1 ? 760 : 1000);
