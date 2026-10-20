@@ -70,7 +70,7 @@ import {
   isArkonDen,
 } from '../data/centralTokyo.js?v=20261014-r501';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { createCrewPlaybookCutscene } from '../data/crewBattlePlaybook.js?v=20261020-r625';
+import { createCrewPlaybookCutscene, getCrewWhiteboardMode } from '../data/crewBattlePlaybook.js?v=20261021-r627';
 import {
   isCrewUnlocked,
   getCrewMembers,
@@ -267,6 +267,8 @@ export default class GarageScene extends Phaser.Scene {
       );
       queueImage('crewBattlePlaybookBoard',
         'assets/Garage/whiteboard_crewbattle.png?v=20261020-r625');
+      queueImage('crewRecruitWhiteboard',
+        'assets/Garage/whiteboard_crewrecruit.png?v=20261021-r627');
     } else {
       ['day', 'night'].forEach(phase => {
         const background = getWorkshopPhaseBackground(activeWorkshop, phase);
