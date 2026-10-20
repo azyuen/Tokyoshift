@@ -67,6 +67,6 @@ test('starter and developer Magna defaults do not overwrite other saved car pain
   assert.match(state,/paintColor: getDefaultFactoryPaintColor\(carId\)/);
   const serviceWorker=file('sw.js');
   const index=file('index.html');
-  assert.match(serviceWorker,/R623/);
-  assert.match(index,/R623/);
+  assert.match(serviceWorker,/R62[34]/);
+  assert.match(index,/R62[34]/);
 });
