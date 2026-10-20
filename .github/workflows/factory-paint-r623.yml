@@ -1,0 +1,44 @@
+name: R623 Factory paint palettes
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/factoryPaintPalettes.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/state/GameState.js'
+      - 'src/data/crewSystem.js'
+      - 'src/main.js'
+      - 'tests/factory-paint-palettes-r623.mjs'
+  pull_request:
+    paths:
+      - 'src/data/factoryPaintPalettes.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/state/GameState.js'
+      - 'src/data/crewSystem.js'
+      - 'src/main.js'
+      - 'tests/factory-paint-palettes-r623.mjs'
+  workflow_dispatch:
+jobs:
+  paint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check src/data/factoryPaintPalettes.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/state/GameState.js
+          node --check src/data/crewSystem.js
+          node --check src/main.js
+      - name: Factory paint and workshop regressions
+        run: |
+          node --test tests/factory-paint-palettes-r623.mjs tests/oshiage-paint-layout-r622.mjs tests/oshiage-paint-visual-r621.mjs

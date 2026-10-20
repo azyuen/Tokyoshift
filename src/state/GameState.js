@@ -11,6 +11,7 @@ import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
 import { migrateRetiredEvoIX, migrateRetiredEJ1 } from '../data/carRetirement.js?v=20261014-r503';
 import { migrateCanonicalCarModels } from '../data/canonicalCarMigration.js?v=20261015-r520';
+import { getDefaultFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 
 export const SAVE_KEY = 'tokyoShiftSaveState';
 export const SESSION_KEY = 'tokyoShiftProfile';
@@ -42,10 +43,10 @@ export function normaliseStarterCarId(value = 'ae86') {
   return SAVE_COMPATIBLE_STARTER_CAR_IDS.includes(id) ? id : 'ae86';
 }
 
-export function createStarterCarState() {
+export function createStarterCarState(carId = 'ae86') {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(carId),
     nosInstalled: false,
     tuneLevel: 0,
     tuning: {
@@ -76,7 +77,7 @@ export function createDefaultGameState(options = {}) {
     preferredCarId: starterCarId,
     ownedCarIds: [starterCarId],
     carStates: {
-      [starterCarId]: createStarterCarState(),
+      [starterCarId]: createStarterCarState(starterCarId),
     },
     carHistory: [],
     carMagazineSightings: {},
@@ -877,7 +878,19 @@ export function normaliseState(input = {}) {
     ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
-  if (grantDevMagna) mergedCarStates.magna = { ...createStarterCarState(), acquiredVia: 'developerSpecial' };
+  if (grantDevMagna) {
+    const existingMagna = input.carStates?.magna || {};
+    mergedCarStates.magna = {
+      ...createStarterCarState('magna'), ...existingMagna,
+      // Upgrade only legacy default-white developer Magnas to Frontier Green.
+      // Other saved factory/custom colours remain unchanged.
+      paintColor: existingMagna.paintColor == null ||
+        (existingMagna.paintColor === 0xffffff &&
+         (!existingMagna.acquiredVia || existingMagna.acquiredVia === 'developerSpecial'))
+        ? getDefaultFactoryPaintColor('magna') : existingMagna.paintColor,
+      acquiredVia: 'developerSpecial',
+    };
+  }
   // R501: old bodykit image pairs are incompatible with the new car assets.
   // Treat all previous kits as stock without touching paint, tune or rim IDs.
   Object.entries(mergedCarStates).forEach(([carId, carState]) => {

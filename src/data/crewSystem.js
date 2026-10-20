@@ -1,4 +1,5 @@
 import { cars } from './cars.js?v=20261011-r479';
+import { getDefaultFactoryPaintColor } from './factoryPaintPalettes.js?v=20261020-r623';
 import {
   CREW_REGIONS,
   getRegionalCrewRoster,
@@ -143,7 +144,7 @@ export function isTokyoChampionshipInvited(source) {
 export function createStockCrewCarState(characterId, baseCarId = getCrewBaseCarId(characterId)) {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(baseCarId),
     nosInstalled: false,
     tuneLevel: 0,
     tuning: { engine: 0, intake: 0, ecu: 0, turbo: 0, intercooler: 0, exhaust: 0 },
@@ -161,7 +162,7 @@ export function createStockCrewCarState(characterId, baseCarId = getCrewBaseCarI
 export function createStockOpponentState(baseCarId) {
   return {
     stock: true,
-    paintColor: 0xffffff,
+    paintColor: getDefaultFactoryPaintColor(baseCarId),
     nosInstalled: false,
     tuneLevel: 0,
     buildRating: 1,
