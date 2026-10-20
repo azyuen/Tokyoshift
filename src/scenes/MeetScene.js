@@ -1144,7 +1144,8 @@ export default class MeetScene extends Phaser.Scene {
       const distance = round.distanceM > 500 ? '1/2 MI' : '1/4 MI';
       const mode = round.raceType === 'Roll Race' ? 'ROLL' : 'STANDING';
       add(this.add.text(831, y,
-        String(i + 1) + '  ' + round.ruleLabel + '  /  ' + mode + ' ' + distance, {
+        'HEAT ' + (i + 1) + (i === 2 ? '*' : '') + '  //  ' +
+        round.ruleLabel + '  /  ' + mode + ' ' + distance, {
           fontFamily: PIXEL_FONT, fontSize: '10px', color: '#c3e1f0',
         }).setDepth(depth + 9));
       add(this.add.text(831, y + 27,
@@ -1153,6 +1154,13 @@ export default class MeetScene extends Phaser.Scene {
           fontFamily: PIXEL_FONT, fontSize: '9px', color: '#80bac9',
         }).setDepth(depth + 9));
     });
+    add(this.add.text(831, 704, '* HEAT 3 ONLY IF THE SERIES IS TIED 1-1', {
+      fontFamily: PIXEL_FONT, fontSize: '9px', color: '#d9c692',
+    }).setDepth(depth + 9));
+    const lineupComplianceLabel = add(this.add.text(831, 726,
+      'ASSIGN THREE COMPLIANT CARS // NO AUTO DOWN-TUNING', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#7acddf',
+      }).setDepth(depth + 9));
 
     const xPlayer = [63, 292, 521];
     // Move the red character panels 14px right, but anchor the red car
@@ -1254,11 +1262,24 @@ export default class MeetScene extends Phaser.Scene {
         drawCard(i, slots[i]);
       }
       const count = slots.filter(Boolean).length;
-      const valid = count === 3 && slots.every((u, i) => getCrewEventCarSetup(
-        u.carId, (this.registry.get('carStates') || {})[u.carId] || {}, rounds[i]?.rule
-      ).eligible) && new Set(slots.map(u => u.id)).size === 3;
+      const evaluations = slots.map((unit, index) => unit
+        ? getCrewEventCarSetup(unit.carId,
+          (this.registry.get('carStates') || {})[unit.carId] || {}, rounds[index]?.rule)
+        : null);
+      const uniqueDrivers = new Set(slots.filter(Boolean).map(unit => unit.id)).size === count;
+      const failedHeat = evaluations.findIndex(result => result && !result.eligible);
+      const valid = count === 3 && uniqueDrivers && failedHeat < 0;
       startLabel.setText(valid ? 'DRIVERS READY - START BATTLE'
         : count === 3 ? 'INELIGIBLE CAR / CHANGE YOUR LINEUP' : 'SELECT THREE DRIVERS');
+      const notice = !uniqueDrivers
+        ? 'EACH HEAT REQUIRES A DIFFERENT CREW DRIVER'
+        : failedHeat >= 0
+          ? 'HEAT ' + (failedHeat + 1) + ' NOT ELIGIBLE: ' + evaluations[failedHeat].reason
+          : count < 3
+            ? 'ASSIGN THREE DRIVERS // FOLLOW EACH HEAT RULE'
+            : 'THREE CARS CLEARED // NO AUTO DOWN-TUNING';
+      lineupComplianceLabel.setText(notice);
+      lineupComplianceLabel.setColor(failedHeat >= 0 || !uniqueDrivers ? '#ff9da3' : '#7acddf');
       if (vsStamp) {
         const j = objects.indexOf(vsStamp);
         if (j >= 0) objects.splice(j, 1);
@@ -1288,10 +1309,17 @@ export default class MeetScene extends Phaser.Scene {
         .setInteractive().setDepth(z));
       addChoice(this.add.rectangle(780, 420, 1120, 650, 0x0a1828)
         .setStrokeStyle(3, 0x35d6ff).setDepth(z + 1));
-      addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // SLOT ' + (index + 1), {
+      addChoice(this.add.text(780, 142, 'SELECT CREW MEMBER // HEAT ' + (index + 1), {
         fontFamily: PIXEL_FONT, fontSize: '19px',
         color: '#ffffff',
       }).setOrigin(0.5).setDepth(z + 2));
+      const chosenHeat = rounds[index];
+      addChoice(this.add.text(780, 176,
+        chosenHeat.ruleLabel + '  //  ' +
+        (chosenHeat.raceType === 'Roll Race' ? 'ROLLING' : 'STANDING') +
+        '  ' + (chosenHeat.distanceM > 500 ? '1/2 MILE' : '1/4 MILE'), {
+          fontFamily: PIXEL_FONT, fontSize: '10px', color: '#e8d397',
+        }).setOrigin(0.5).setDepth(z + 2));
       // Each row owns its images and clips them to dedicated portrait/car frames.
       units.forEach((unit, i) => {
         const occupied = slots.some((u, j) => j !== index && u?.id === unit.id);
@@ -1342,12 +1370,11 @@ export default class MeetScene extends Phaser.Scene {
         const eventSetup = getCrewEventCarSetup(unit.carId, ownedState, rounds[index]?.rule);
         const tuned = getVehiclePerformance(unit.carId, ownedState);
         const actualPower = Math.round(Number(tuned?.car?.powerKW || car.powerKW || 0));
-        const eventPower = Math.round(Number(eventSetup.powerKW || 0));
         const drive = String(car.drivetrain || (car.awd ? 'AWD' : car.fwd ? 'FWD' : 'RWD')).toUpperCase();
         const infoX = x + 22;
         const eventLine = eventSetup.eligible
-          ? actualPower + ' KW / ' + drive + (eventSetup.adjustment ? ' / EVENT ' + eventPower + ' KW' : '')
-          : eventSetup.reason;
+          ? actualPower + ' KW / ' + drive
+          : eventSetup.reason + ' / ' + actualPower + ' KW';
         [[name, y - 34, '#ffffff', 10],
          [model, y - 7, '#b8d9ed', 9],
          [eventLine, y + 23, eventSetup.eligible ? '#72e0ed' : '#ff9da3', 8]].forEach(([value, ty, color, size]) => {
