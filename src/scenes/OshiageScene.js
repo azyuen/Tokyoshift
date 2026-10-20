@@ -400,8 +400,14 @@ export default class OshiageScene extends Phaser.Scene {
     if (this.textures.exists(background.key)) {
       const src = this.textures.get(background.key).getSourceImage();
       const rimWall = this.room === 'rims';
+      // Lower only the PAINT ROOM backdrop so its upper wall sign is fully
+      // visible inside the stage mask. The car, specialist, spray and hit
+      // targets remain in their existing world positions.
+      const paintBackdropYOffset = this.room === 'paint' ? 28 : 0;
       const img = this.own(this.add.image(
-        STAGE.x + STAGE.w / 2, rimWall ? STAGE.y : STAGE.y + STAGE.h / 2, background.key)
+        STAGE.x + STAGE.w / 2,
+        rimWall ? STAGE.y : STAGE.y + STAGE.h / 2 + paintBackdropYOffset,
+        background.key)
         .setOrigin(0.5, rimWall ? 0 : 0.5)
         .setScale(rimWall ? STAGE.w / src.width :
           Math.max(STAGE.w / src.width, STAGE.h / src.height))
@@ -1550,15 +1556,22 @@ export default class OshiageScene extends Phaser.Scene {
     saveSessionState(this.registry);
     this.cashText.setText(MONEY(cash - cost));
     setCarBodyPaint(this.paintObjects, paintColor);
-    const sparkObjects = [];
-    for (let i = 0; i < 34; i++) {
+    // Darken and densify the paint-coloured spray without obscuring the
+    // car. Pure pastel/white particles previously disappeared into the bright
+    // booth, particularly at 0.25 opacity.
+    const sprayRgb = paintColorToRgb(paintColor);
+    const sprayShade = rgbToPaintColor(
+      40 + sprayRgb.r * 0.48,
+      40 + sprayRgb.g * 0.48,
+      40 + sprayRgb.b * 0.48
+    );
+    for (let i = 0; i < 46; i++) {
       const x = 310 + Phaser.Math.Between(0, 630);
       const y = 263 + Phaser.Math.Between(0, 155);
-      const mist = this.add.circle(x, y, Phaser.Math.Between(9, 26), paintColor, 0.25)
+      const mist = this.add.circle(x, y, Phaser.Math.Between(11, 28), sprayShade, 0.49)
         .setMask(this.stageMask).setDepth(24);
-      sparkObjects.push(mist);
-      this.tweens.add({ targets: mist, alpha: 0, x: x + 55,
-        duration: 480 + i * 18, delay: i * 23, onComplete: () => mist.destroy() });
+      this.tweens.add({ targets: mist, alpha: 0, x: x + 64,
+        duration: 510 + i * 15, delay: i * 18, onComplete: () => mist.destroy() });
     }
     this.time.delayedCall(1250, () => {
       this.paintBusy = false;
