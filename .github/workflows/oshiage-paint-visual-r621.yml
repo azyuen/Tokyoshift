@@ -5,6 +5,7 @@ on:
       - 'src/scenes/OshiageScene.js'
       - 'src/main.js'
       - 'tests/oshiage-paint-visual-r621.mjs'
+      - 'tests/crew-oshiage-chassis-r615.mjs'
       - '.github/workflows/oshiage-paint-visual-r621.yml'
   workflow_dispatch:
 jobs:
