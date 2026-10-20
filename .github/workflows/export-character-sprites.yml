@@ -1,0 +1,102 @@
+name: Export Tokyo SHIFT Character Sprite Pack
+on:
+  push:
+    branches:
+      - assets/export-character-sprites-20261021
+    paths:
+      - .github/workflows/export-character-sprites.yml
+permissions:
+  contents: write
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            assets/Characters/ren_mizuno.png
+            assets/Characters/aya_kurose.png
+            assets/Characters/kaito_fujimori.png
+            assets/Characters/haru_tachibana.png
+            assets/Characters/riku_akamine.png
+            assets/Characters/ren_mizuno_idle.png
+            assets/Characters/ren_mizuno_win.png
+            assets/Characters/ren_mizuno_loss.png
+            assets/Characters/aya_kurose_idle.png
+            assets/Characters/aya_kurose_win.png
+            assets/Characters/aya_kurose_loss.png
+            assets/Characters/kaito_fujimori_idle.png
+            assets/Characters/kaito_fujimori_win.png
+            assets/Characters/kaito_fujimori_loss.png
+            assets/Characters/haru_tachibana_idle.png
+            assets/Characters/haru_tachibana_win.png
+            assets/Characters/haru_tachibana_loss.png
+            assets/Characters/reina_shibata_idle.png
+            assets/Characters/reina_shibata_win.png
+            assets/Characters/reina_shibata_loss.png
+            assets/Characters/riku_akamine_idle.png
+            assets/Characters/riku_akamine_win.png
+            assets/Characters/riku_akamine_loss.png
+            assets/Characters/emi_kanzaki_idle.png
+            assets/Characters/emi_kanzaki_win.png
+            assets/Characters/emi_kanzaki_loss.png
+            assets/Characters/arkon_den_idle.png
+            assets/Characters/arkon_den_win.png
+            assets/Characters/arkon_den_loss.png
+      - name: Assemble original PNG files into a ZIP
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_STORED
+          sprites = [
+              "assets/Characters/ren_mizuno.png",
+              "assets/Characters/aya_kurose.png",
+              "assets/Characters/kaito_fujimori.png",
+              "assets/Characters/haru_tachibana.png",
+              "assets/Characters/riku_akamine.png",
+              "assets/Characters/ren_mizuno_idle.png",
+              "assets/Characters/ren_mizuno_win.png",
+              "assets/Characters/ren_mizuno_loss.png",
+              "assets/Characters/aya_kurose_idle.png",
+              "assets/Characters/aya_kurose_win.png",
+              "assets/Characters/aya_kurose_loss.png",
+              "assets/Characters/kaito_fujimori_idle.png",
+              "assets/Characters/kaito_fujimori_win.png",
+              "assets/Characters/kaito_fujimori_loss.png",
+              "assets/Characters/haru_tachibana_idle.png",
+              "assets/Characters/haru_tachibana_win.png",
+              "assets/Characters/haru_tachibana_loss.png",
+              "assets/Characters/reina_shibata_idle.png",
+              "assets/Characters/reina_shibata_win.png",
+              "assets/Characters/reina_shibata_loss.png",
+              "assets/Characters/riku_akamine_idle.png",
+              "assets/Characters/riku_akamine_win.png",
+              "assets/Characters/riku_akamine_loss.png",
+              "assets/Characters/emi_kanzaki_idle.png",
+              "assets/Characters/emi_kanzaki_win.png",
+              "assets/Characters/emi_kanzaki_loss.png",
+              "assets/Characters/arkon_den_idle.png",
+              "assets/Characters/arkon_den_win.png",
+              "assets/Characters/arkon_den_loss.png",
+          ]
+          missing = [p for p in sprites if not Path(p).is_file()]
+          if missing: raise SystemExit('Missing required sprites: ' + repr(missing))
+          with ZipFile("Tokyo_SHIFT_Player_Key_Rivals_Arkon_Den_20261021.zip", "w", compression=ZIP_STORED) as z:
+              for p in sprites: z.write(p, p)
+              z.writestr('README_CHARACTER_PACK.txt', 'Tokyo SHIFT sprite export - 21 October 2026\n7 player selections / regional main rivals + Arkon Den\nIncludes 24 idle/win/loss variants and 5 in-use original portraits.\nUnreferenced legacy Reina and Emi portraits removed from main.\n')
+          print('Packaged', len(sprites), 'sprites into', 'Tokyo_SHIFT_Player_Key_Rivals_Arkon_Den_20261021.zip')
+          PY
+      - name: Attach ZIP to Actions run
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tokyo-SHIFT-character-sprites
+          path: Tokyo_SHIFT_Player_Key_Rivals_Arkon_Den_20261021.zip
+          compression-level: 0
+      - name: Publish public ZIP download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create character-sprites-20261021 "Tokyo_SHIFT_Player_Key_Rivals_Arkon_Den_20261021.zip" --title "Tokyo SHIFT — Character Sprite Pack (21 October 2026)" --notes "Seven selectable main rivals/player avatars and Arkon Den. 29 source PNG assets and a manifest; two unused legacy files removed from main." --target main
