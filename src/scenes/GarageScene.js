@@ -70,6 +70,7 @@ import {
   isArkonDen,
 } from '../data/centralTokyo.js?v=20261014-r501';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { createCrewPlaybookCutscene } from '../data/crewBattlePlaybook.js?v=20261020-r625';
 import {
   isCrewUnlocked,
   getCrewMembers,
@@ -264,6 +265,8 @@ export default class GarageScene extends Phaser.Scene {
         'crewSpaceNightBg',
         'assets/Garage/shinonome_crewspace_night.png?v=20261005-r349'
       );
+      queueImage('crewBattlePlaybookBoard',
+        'assets/Garage/whiteboard_crewbattle.png?v=20261020-r625');
     } else {
       ['day', 'night'].forEach(phase => {
         const background = getWorkshopPhaseBackground(activeWorkshop, phase);
@@ -556,6 +559,8 @@ export default class GarageScene extends Phaser.Scene {
 
     this.selectedDisplay = [];
     this.crewStageObjects = [];
+    this.crewBattleWhiteboardOverlay = null;
+    this._crewWhiteboardOpeningBriefing = false;
     this.crewFocusedCharacterId = null;
     this._devCrewChanging = false;
     this.thumbButtons = [];
@@ -850,7 +855,7 @@ export default class GarageScene extends Phaser.Scene {
 
   clearCrewStageObjects() {
     (this.crewStageObjects || []).forEach(obj => {
-      try { obj?.destroy?.(); } catch (e) {}
+      try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (e) {}
     });
     this.crewStageObjects = [];
     this.crewOverviewBackground = null;
@@ -979,6 +984,7 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(106);
     this.crewStageObjects.push(title);
+    this.buildCrewPlaybookHotspot();
 
     if (isArkonDen(this.registry)) {
       const fullCrew = getCrewCount(this.registry) >= 7;
@@ -1007,6 +1013,161 @@ export default class GarageScene extends Phaser.Scene {
       devBox.on('pointerdown', () => this.toggleDevRandomCrew(devBox, devLabel));
       this.crewStageObjects.push(devBox, devLabel);
     }
+  }
+
+  // The floor-standing whiteboard on the right of Crew Space now has the
+  // same breathing cyan activation style as Office / Crew / Dyno. This button
+  // belongs to the full-room overview, not an individual recruit's garage.
+  buildCrewPlaybookHotspot() {
+    if (!this.crewMode) return;
+    const x = 1322, y = 705;
+    const glow = this.add.rectangle(x, y, 302, 47, 0x4ee8ff, 0.035)
+      .setStrokeStyle(2, 0x65eaff, 0.88).setDepth(113)
+      .setInteractive({ useHandCursor: true });
+    const pad = this.add.rectangle(x, y, 290, 37, 0x061723, 0.74)
+      .setDepth(114);
+    const label = this.add.text(x, y, 'REGIONAL PLAYBOOK  >', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#d5faff',
+    }).setOrigin(0.5).setDepth(115);
+    this.tweens.add({
+      targets: glow, alpha: { from: 0.18, to: 1 },
+      duration: 1300, repeat: -1, yoyo: true, ease: 'Sine.easeInOut',
+    });
+    this.tweens.add({
+      targets: pad, alpha: { from: 0.45, to: 0.92 },
+      duration: 1300, repeat: -1, yoyo: true, ease: 'Sine.easeInOut',
+    });
+    glow.on('pointerover', () => glow
+      .setStrokeStyle(3, 0xa0faff, 1).setFillStyle(0x4ee8ff, 0.11));
+    glow.on('pointerout', () => glow
+      .setStrokeStyle(2, 0x65eaff, 0.88).setFillStyle(0x4ee8ff, 0.035));
+    glow.on('pointerdown', () => {
+      if (!this.crewMode || this.crewFocusedCharacterId ||
+          sceneCutsceneActive(this) || this._portraitGallery?.active) return;
+      this.showCrewBattleWhiteboard();
+    });
+    this.crewStageObjects.push(glow, pad, label);
+  }
+
+  // Seven transparent hit areas follow the 3+4 panels in the authored PNG.
+  // Coordinates are proportions of the FITTED IMAGE (not the device screen),
+  // so touch targets remain aligned on iPad, phone and desktop.
+  showCrewBattleWhiteboard() {
+    if (!this.crewMode || this.crewFocusedCharacterId ||
+        this.crewBattleWhiteboardOverlay?.active || sceneCutsceneActive(this) ||
+        !this.textures.exists('crewBattlePlaybookBoard')) return false;
+
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const depth = 500;
+    const viewportW = Number(this.scale.width || 1560);
+    const viewportH = Number(this.scale.height || 840);
+    const backdrop = add(this.add.rectangle(
+      viewportW / 2, viewportH / 2, viewportW, viewportH, 0x02070e, 1
+    ).setDepth(depth).setInteractive());
+    const source = this.textures.get('crewBattlePlaybookBoard').getSourceImage();
+    const scale = Math.min(viewportW / source.width, viewportH / source.height);
+    const boardW = source.width * scale;
+    const boardH = source.height * scale;
+    const left = (viewportW - boardW) / 2;
+    const top = (viewportH - boardH) / 2;
+    add(this.add.image(viewportW / 2, viewportH / 2, 'crewBattlePlaybookBoard')
+      .setScale(scale).setDepth(depth + 1));
+
+    const notePad = add(this.add.rectangle(
+      viewportW / 2, viewportH - 27, 880, 36, 0x06131d, 0.90
+    ).setStrokeStyle(1, 0x54bdd0, 0.7).setDepth(depth + 5));
+    const note = add(this.add.text(viewportW / 2, viewportH - 27,
+      'TAP A REGION // YOUR RECRUIT WILL SHARE THEIR BATTLE PLAN', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#d4f7ff',
+        align: 'center',
+      }).setOrigin(0.5).setDepth(depth + 6));
+
+    const close = () => {
+      if (!this.crewBattleWhiteboardOverlay?.active) return;
+      this.crewBattleWhiteboardOverlay.active = false;
+      for (const obj of objects) {
+        try { this.tweens.killTweensOf(obj); obj?.destroy?.(); } catch (_) {}
+      }
+      this.crewBattleWhiteboardOverlay = null;
+      this._crewWhiteboardOpeningBriefing = false;
+    };
+    const closeBox = add(this.add.rectangle(
+      viewportW - 96, 48, 158, 46, 0x07141d, 0.95
+    ).setStrokeStyle(2, 0xb7edfc).setDepth(depth + 7)
+      .setInteractive({ useHandCursor: true }));
+    add(this.add.text(viewportW - 96, 48, 'CLOSE  X', {
+      fontFamily: PIXEL_FONT, fontSize: '10px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(depth + 8));
+    closeBox.on('pointerdown', close);
+
+    // Source artwork: three large regions above, four smaller below.
+    // The transparent cards are intentionally almost invisible until hovered.
+    const targets = [
+      ['ODAIBA',    0.096, 0.199, 0.268, 0.350],
+      ['SHINAGAWA', 0.368, 0.199, 0.270, 0.350],
+      ['TATSUMI',   0.641, 0.199, 0.270, 0.350],
+      ['SHIBUYA',   0.096, 0.553, 0.205, 0.354],
+      ['YOKOHAMA',  0.305, 0.553, 0.199, 0.354],
+      ['DAIKOKU',   0.509, 0.553, 0.198, 0.354],
+      ['SHINJUKU',  0.712, 0.553, 0.200, 0.354],
+    ];
+    const members = getCrewMembers(this.registry);
+    const openBriefing = regionId => {
+      if (this._crewWhiteboardOpeningBriefing || sceneCutsceneActive(this)) return;
+      const member = members[regionId];
+      if (!member?.characterId || !characters[member.characterId]) {
+        note.setText(regionId + ' // RECRUIT A DRIVER FROM HERE TO GET THE INSIDE STORY');
+        note.setColor('#ffcf99');
+        return;
+      }
+      const plan = createCrewPlaybookCutscene(
+        regionId, member.characterId, this.registry
+      );
+      if (!plan) {
+        note.setText(regionId + ' // BRIEFING IS NOT AVAILABLE');
+        note.setColor('#ffcf99');
+        return;
+      }
+      this._crewWhiteboardOpeningBriefing = true;
+      const finish = () => { this._crewWhiteboardOpeningBriefing = false; };
+      const result = playMangaCutscene(this, plan.definition, {
+        backgroundStyle: 'wash',
+        infoPanel: plan.infoPanel,
+        onComplete: finish,
+        onCancel: finish,
+      });
+      if (!result?.played) {
+        finish();
+        note.setText(regionId + ' // FINISH THE CURRENT SCENE FIRST');
+        note.setColor('#ffcf99');
+      } else {
+        note.setText(regionId + ' // ' +
+          String(characters[member.characterId]?.name || 'CREW MEMBER').toUpperCase());
+        note.setColor('#d4f7ff');
+      }
+    };
+
+    targets.forEach(([regionId, nx, ny, nw, nh]) => {
+      const unlocked = Boolean(members[regionId]?.characterId);
+      const x = left + (nx + nw / 2) * boardW;
+      const y = top + (ny + nh / 2) * boardH;
+      const target = add(this.add.rectangle(
+        x, y, nw * boardW - 8, nh * boardH - 8, 0x59dff4, 0.001
+      ).setStrokeStyle(2, unlocked ? 0x7beeff : 0x7193a1,
+        unlocked ? 0.20 : 0.10)
+        .setDepth(depth + 3).setInteractive({ useHandCursor: true }));
+      target.on('pointerover', () => target
+        .setFillStyle(0x59dff4, unlocked ? 0.16 : 0.07)
+        .setStrokeStyle(3, unlocked ? 0xa2f5ff : 0xffcf99, 0.9));
+      target.on('pointerout', () => target
+        .setFillStyle(0x59dff4, 0.001)
+        .setStrokeStyle(2, unlocked ? 0x7beeff : 0x7193a1,
+          unlocked ? 0.20 : 0.10));
+      target.on('pointerdown', () => openBriefing(regionId));
+    });
+    this.crewBattleWhiteboardOverlay = { active: true, objects, close, backdrop, notePad };
+    return true;
   }
 
   toggleDevRandomCrew(button = null, label = null) {
