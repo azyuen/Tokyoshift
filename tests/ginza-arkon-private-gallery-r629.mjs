@@ -22,8 +22,8 @@ test('Arkon and Sayaka use their specific suit and evening-dress assets', () => 
     assert.ok(existsSync('assets/Characters/Main/' + filename), filename);
     assert.ok(characters.includes("assets/Characters/Main/" + filename), filename);
   }
-  assert.match(characters, /ginzaDress:\\s*\\{ key: 'ginzaSayakaDress'/);
-  assert.match(characters, /ginzaSuit:\\s*\\{ key: 'ginzaArkonDenSuit'/);
+  assert.match(characters, /ginzaDress:\s*\{ key: 'ginzaSayakaDress'/);
+  assert.match(characters, /ginzaSuit:\s*\{ key: 'ginzaArkonDenSuit'/);
 });
 
 test('owner-specific dialogue is relaxed, shows both portraits and never replaces the standard vault', () => {
@@ -43,14 +43,14 @@ test('owner-specific dialogue is relaxed, shows both portraits and never replace
 
 test('Arkon appears only in private gallery and outfit change fades through actual venue poses', () => {
   const scene = source('src/scenes/CentralTokyoScene.js');
-  assert.match(scene, /const arkonVault = this\\.ginzaRoom === 3 && isNamedArkonDen\\(this\\.registry\\)/);
-  assert.match(scene, /if \\(arkonVault\\) \\{[\\s\\S]*?characterId: 'arkonDen', pose: 'ginzaSuit'/);
-  assert.match(scene, /if \\(dev && isNamedArkonDen\\(this\\.registry\\)\\)/);
-  assert.match(scene, /this\\.ginzaScene\\('vaultArkon', \\{\\}, \\(\\) =>/);
-  assert.match(scene, /this\\.changeGinzaSayakaToDress\\(\\)/);
-  assert.match(scene, /changeGinzaSayakaToDress\\(\\) \\{/);
+  assert.match(scene, /const arkonVault = this\.ginzaRoom === 3 && isNamedArkonDen\(this\.registry\)/);
+  assert.match(scene, /if \(arkonVault\) \{[\s\S]*?characterId: 'arkonDen', pose: 'ginzaSuit'/);
+  assert.match(scene, /if \(dev && isNamedArkonDen\(this\.registry\)\)/);
+  assert.match(scene, /this\.ginzaScene\('vaultArkon', \{\}, \(\) =>/);
+  assert.match(scene, /this\.changeGinzaSayakaToDress\(\)/);
+  assert.match(scene, /changeGinzaSayakaToDress\(\) \{/);
   assert.match(scene, /targets: previous, alpha: 0, duration: 460/);
   assert.match(scene, /targets: dressed, alpha: 1, duration: 580/);
   assert.match(scene, /shadow: false/);
-  assert.match(scene, /pose: arkonVault \\? \\(this\\.ginzaOwnerDressed \\? 'ginzaDress' : 'normal'\\) : 'ginzaNormal'/);
+  assert.match(scene, /pose: arkonVault \? \(this\.ginzaOwnerDressed \? 'ginzaDress' : 'normal'\) : 'ginzaNormal'/);
 });
