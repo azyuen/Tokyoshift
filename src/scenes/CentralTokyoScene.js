@@ -24,7 +24,7 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261010-r459';
+} from '../data/characters.js?v=20261021-r629';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -84,8 +84,8 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
-import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner } from '../data/ginzaGallery.js?v=20261017-r565';
-import { ginzaConversation } from '../data/ginzaScenes.js?v=20261017-r565';
+import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
+import { ginzaConversation } from '../data/ginzaScenes.js?v=20261021-r629';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
@@ -163,6 +163,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.ginzaVaultIndex = 0;
     this.ginzaStockBody = false;
     this.ginzaRotationKey = -1;
+    this.ginzaOwnerDressed = false;
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
       ? requestedRoom
@@ -302,6 +303,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
         ['kaedeTachibana', ['ginzaIdle', 'ginzaHappy', 'ginzaSad']],
         ['sayakaFujieda', ['ginzaNormal', 'ginzaHappy', 'ginzaSerious', 'ginzaSad']],
       ]) poses.forEach(pose => { queued += this.queueCharacterPose(who, pose); });
+      if (isNamedArkonDen(this.registry)) {
+        // Warm both looks before the owner enters the Vault; no mid-scene stall.
+        queued += this.queueCharacterPose('sayakaFujieda', 'normal');
+        queued += this.queueCharacterPose('sayakaFujieda', 'ginzaDress');
+        queued += this.queueCharacterPose('arkonDen', 'ginzaSuit');
+      }
       // A buyer can trigger a manga conversation immediately. Preload only
       // the current driver's default portrait so the first BUY does not
       // freeze the showroom waiting on a network asset.
@@ -2425,6 +2432,36 @@ export default class CentralTokyoScene extends Phaser.Scene {
     })?.played);
   }
 
+  // Reveal Sayaka's private-gallery evening look only after she offers to
+  // accompany Arkon. Keep the same feet/scale and leave her floor shadow.
+  changeGinzaSayakaToDress() {
+    if (this.ginzaRoom !== 3 || !isNamedArkonDen(this.registry) ||
+        this.ginzaOwnerDressed || !this.textures.exists('ginzaSayakaDress')) return false;
+    const previous = this.ginzaVenueSayaka;
+    const dressed = this.addVenueCharacter({
+      characterId: 'sayakaFujieda', pose: 'ginzaDress',
+      x: STAGE.x + 103, feetY: STAGE.y + 512, height: 225,
+      depth: 18, shadow: false,
+    });
+    if (!dressed) return false;
+    dressed.setAlpha(0);
+    this.ginzaOwnerDressed = true;
+    this.ginzaVenueSayaka = dressed;
+    const fadeIn = () => {
+      if (!dressed.active || this.ginzaRoom !== 3) return;
+      this.tweens.add({
+        targets: dressed, alpha: 1, duration: 580, ease: 'Sine.easeOut',
+      });
+    };
+    if (previous?.active) {
+      this.tweens.add({
+        targets: previous, alpha: 0, duration: 460, ease: 'Sine.easeIn',
+        onComplete: () => { previous.destroy(); fadeIn(); },
+      });
+    } else fadeIn();
+    return true;
+  }
+
   enterGinzaRoom(room) {
     const target = Phaser.Math.Clamp(Number(room) || 1, 1, 3);
     if (target === this.ginzaRoom || sceneCutsceneActive(this) || this.ginzaCarFading) return;
@@ -2434,8 +2471,20 @@ export default class CentralTokyoScene extends Phaser.Scene {
         this.ginzaScene('vaultLocked');
         return;
       }
-      // Arkon Den always receives the owner-specific Sayaka scene when
-      // entering the Vault, even after the earlier welcome was saved.
+      if (dev && isNamedArkonDen(this.registry)) {
+        // Enter the actual private gallery first, so the two full-body sprites
+        // are present behind the cutscene. Dress reveal follows their banter.
+        this.ginzaOwnerDressed = false;
+        this.ginzaRoom = 3;
+        this.renderLocation(this.activeLocationId);
+        this.ginzaScene('vaultArkon', {}, () => {
+          this.registry.set('ginzaVaultOwnerWelcomed', true);
+          this.registry.set('ginzaVaultInvited', true);
+          saveSessionState(this.registry);
+          this.changeGinzaSayakaToDress();
+        });
+        return;
+      }
       if (dev) {
         this.ginzaScene('vaultOwner', {}, () => {
           this.registry.set('ginzaVaultOwnerWelcomed', true);
@@ -2446,7 +2495,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         });
         return;
       }
-      if (!dev && !this.registry.get('ginzaVaultInvited')) {
+      if (!this.registry.get('ginzaVaultInvited')) {
         this.ginzaScene('vaultInvitation', {}, () => {
           this.registry.set('ginzaVaultInvited', true);
           saveSessionState(this.registry);
@@ -2456,6 +2505,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         return;
       }
     }
+    if (target !== 3) this.ginzaOwnerDressed = false;
     this.ginzaRoom = target;
     this.renderLocation(this.activeLocationId);
   }
@@ -2506,6 +2556,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ? GINZA_LISTINGS.find(item => item.carId === 'rwbStellaPorsche')
       : this.getGinzaActiveListing();
     this.chapter08Kaede = null;
+    this.ginzaVenueSayaka = null;
+    const arkonVault = this.ginzaRoom === 3 && isNamedArkonDen(this.registry);
     const locked = !ginzaVaultEligible(this.registry, isGinzaOwner(this.registry));
     const labels = ['', 'MOTOR GALLERY', 'PRESTIGE SALON', 'INVITATION VAULT'];
     this.drawNavigation(labels[this.ginzaRoom], this.ginzaRoom === 3
@@ -2540,8 +2592,19 @@ export default class CentralTokyoScene extends Phaser.Scene {
       }
       // Ginza Sayaka shares the foreground footprint and visual height
       // of Kaede in the Motor Gallery, instead of towering over the car.
-      this.addVenueCharacter({ characterId: 'sayakaFujieda', pose: 'ginzaNormal',
-        x: STAGE.x + 103, feetY: STAGE.y + 512, height: 225, depth: 18 });
+      this.ginzaVenueSayaka = this.addVenueCharacter({
+        characterId: 'sayakaFujieda',
+        pose: arkonVault ? (this.ginzaOwnerDressed ? 'ginzaDress' : 'normal') : 'ginzaNormal',
+        x: STAGE.x + 103, feetY: STAGE.y + 512, height: 225, depth: 18,
+      });
+      if (arkonVault) {
+        // Only the actual Arkon Den profile stands beside Sayaka in the Vault.
+        this.addVenueCharacter({
+          characterId: 'arkonDen', pose: 'ginzaSuit',
+          x: STAGE.x + 285, feetY: STAGE.y + 512, height: 225,
+          shadowOffsetX: 6, depth: 19,
+        });
+      }
     }
 
     this.ginzaHeroObjects = [];
