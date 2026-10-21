@@ -2,9 +2,9 @@
 // Reuses the already loaded race car renderer and permanent crew identities.
 // All payments, saved fixtures and racing remain in proSeason/ProSeasonPanel.
 import {cars} from '../data/cars.js?v=20261017-r565';
-import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261017-r578';
+import {getCharacterVisualAsset,getCharacterAssetUrl} from '../data/characters.js?v=20261022-r635';
 import {addProGlowingHotspot,addProHeatSubtitle,renderStewardBriefing,renderPagedStewardBriefing,showProSayakaAdviceConfirm} from './ProBriefingChrome.js?v=20261020-r613';
-import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
+import {createCharacterProfile} from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
 } from '../vehicles/CarAppearance.js?v=20261014-stock';
