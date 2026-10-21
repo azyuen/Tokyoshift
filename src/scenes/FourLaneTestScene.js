@@ -13,7 +13,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261022-r635';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -36,7 +36,7 @@ import { getFourLaneFinishCue } from '../data/fourLaneFinish.js?v=20261009-r444'
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455';
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
 import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261021-r628';
 import {
