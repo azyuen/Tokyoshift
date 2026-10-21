@@ -7,9 +7,9 @@ import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261021-r631';
+import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261022-r635';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
-import { showProVictoryResults } from './ProVictoryResults.js?v=20261021-r628';
+import { showProVictoryResults } from './ProVictoryResults.js?v=20261022-r635';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {

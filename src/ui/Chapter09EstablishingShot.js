@@ -1,7 +1,7 @@
 // R583: Persistent registration-room background UNDER the original manga.
 // One stage lives from the opening group tableau through all four dialogues.
 // The manga is drawn on top (900+); the room and sprites stay at 810–858.
-import {getCharacterAssetUrl,getCharacterVisualAsset} from '../data/characters.js?v=20261017-r578';
+import {getCharacterAssetUrl,getCharacterVisualAsset} from '../data/characters.js?v=20261022-r635';
 
 const FONT='"Silkscreen", monospace';
 export const CHAPTER09_STAGE_DEPTH=810;
@@ -29,7 +29,7 @@ export function chapter09ShotAssets(scene){
   const playerId=scene?.registry?.get?.('playerCharacterId')||'renMizuno';
   const resolve=entry=>{
     const id=entry.id==='$PLAYER'?playerId:entry.id;
-    return {...entry,id,asset:getCharacterVisualAsset(id,entry.pose,{playerCharacterId:playerId})};
+    return {...entry,id,asset:getCharacterVisualAsset(id,entry.pose,{playerCharacterId:playerId,proCircuit:true})};
   };
   return {background,left:LEFT.map(resolve),right:RIGHT.map(resolve),mika:resolve(MIKA)};
 }

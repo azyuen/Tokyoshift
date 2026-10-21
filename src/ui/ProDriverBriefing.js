@@ -3,8 +3,8 @@
 // Only active Open Circuit individual driver duels enter this room.
 import { cars } from '../data/cars.js?v=20261011-r479';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
-import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r578';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
+import { characters, getCharacterVisualAsset, getCharacterAssetUrl, getProCircuitGenericDriverAsset } from '../data/characters.js?v=20261022-r635';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
 import { STAGE3_CALIBRATION_OPTIONS, normaliseStage3Calibration, getStage3CalibrationEligibility,
@@ -46,7 +46,7 @@ function loadAssets(s,state){
     s.load.image(key,getCharacterAssetUrl(path));queued++;
   }
   const playerId=s.registry.get('playerCharacterId')||'renMizuno';
-  const playerAsset=getCharacterVisualAsset(playerId,'idle');
+  const playerAsset=getCharacterVisualAsset(playerId,'idle',{proCircuit:true});
   if(playerAsset?.key&&playerAsset.path&&!s.textures.exists(playerAsset.key)){
     s.load.image(playerAsset.key,getCharacterAssetUrl(playerAsset.path));queued++;
   }
@@ -57,12 +57,13 @@ function loadAssets(s,state){
   if(!mainRival){
     const helmetKey='proDriverHelmet'+helmetIndex;
     if(!s.textures.exists(helmetKey)){
-      s.load.image(helmetKey,'assets/Characters/Central/driver_0'+helmetIndex+'.png?v=20261019-r601');
+      const asset=getProCircuitGenericDriverAsset(helmetIndex);
+      if(asset)s.load.image(helmetKey,getCharacterAssetUrl(asset.path));
       queued++;
     }
   }
   const rival=getCharacterVisualAsset(round.characterId,'idle',{
-    playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',rivalContext:true,
+    playerCharacterId:s.registry.get('playerCharacterId')||'renMizuno',rivalContext:true,proCircuit:true,
   });
   if(rival?.key&&rival.path&&!s.textures.exists(rival.key)){
     s.load.image(rival.key,getCharacterAssetUrl(rival.path));queued++;
@@ -211,7 +212,7 @@ function draw(s,state,options){
   // Character order: DAICHI > PLAYER (mirrored) > OWNED CAR > SAYAKA > HIROSHI.
   // Both outer staff sprites are flipped as requested, while the protagonist
   // uses whichever authentic selectable character was saved in this profile.
-  const playerAsset=getCharacterVisualAsset(playerId,'idle');
+  const playerAsset=getCharacterVisualAsset(playerId,'idle',{proCircuit:true});
   const characterPlaces=[
     {key:'proDriverDaichi',x:193,feet:727,height:560,maxWidth:280,flip:true,onTap:null},
     {key:playerAsset?.key,x:410,feet:691,height:519,maxWidth:256,flip:true,onTap:null},
@@ -274,7 +275,7 @@ function draw(s,state,options){
       characterId:round.characterId,pose:'idle',x:px,y:py+10,
       frameWidth:frameW*1.55,frameHeight:frameH*1.5,
       side:'center',depth:225,mask:false,
-      playerCharacterId:playerId,rivalContext:true,
+      playerCharacterId:playerId,rivalContext:true,proCircuit:true,
     });
     if(portrait?.image){add(portrait);clipPortrait(portrait.image);}
     else text(px,py,'PRO DRIVER',11,'#b8d7e7',true,226).setOrigin(.5);

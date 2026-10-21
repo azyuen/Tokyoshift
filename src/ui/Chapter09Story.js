@@ -4,7 +4,7 @@ import { CHAPTER09_SEQUENCE, chapter09TeamPortraitManga } from '../data/chapter0
 import { getProCircuitAccess } from '../data/proCircuit.js?v=20261017-r575';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261017-r578';
 import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261018-r586';
-import { playChapter09RegoRoom } from './Chapter09EstablishingShot.js?v=20261018-r586';
+import { playChapter09RegoRoom } from './Chapter09EstablishingShot.js?v=20261022-r635';
 
 export function chapter09ShouldBegin(source){
   return hasSeenCutscene(source,'chapter08Ginza') &&

@@ -4,7 +4,7 @@ import {
   DEFAULT_CHARACTER_PROFILE,
   getCharacterVisualAsset,
   getCharacterVisualForContext,
-} from '../data/characters.js?v=20261017-r578';
+} from '../data/characters.js?v=20261022-r635';
 
 export const PROFILE_REFERENCE_HEIGHT = 188;
 export const PROFILE_HEAD_SAFE_RATIO = 0.07;
@@ -90,6 +90,7 @@ export function createCharacterProfile(scene, {
   profileOverride = null,
   rivalContext = false,
   playerCharacterId = null,
+  proCircuit = false,
 } = {}) {
   const character = characters[characterId];
   if (!character?.visual) return null;
@@ -102,6 +103,7 @@ export function createCharacterProfile(scene, {
   const visualOptions = {
     rivalContext: Boolean(rivalContext),
     playerCharacterId: activePlayerCharacterId,
+    proCircuit: Boolean(proCircuit),
   };
   const contextualVisual = getCharacterVisualForContext(characterId, visualOptions);
   if (!contextualVisual) return null;

@@ -11,7 +11,7 @@ const scene=read('../src/scenes/CentralTokyoScene.js');
 
 test('R600 paddock uses real Hiroshi and the selected playable sprite',()=>{
   assert.match(ui,/assets\/Characters\/Central\/hiroshi_sato_normal\.png/);
-  assert.match(ui,/getCharacterVisualAsset\(playerId,'idle'\)/);
+  assert.match(ui,/getCharacterVisualAsset\(playerId,'idle',\{proCircuit:true\}\)/);
   assert.match(ui,/s\.registry\.get\('playerCharacterId'\)/);
   assert.match(ui,/key:'proDriverHiroshi',x:1402/);
   assert.match(ui,/key:playerAsset\?\.key,x:410/);

@@ -1,0 +1,58 @@
+name: Pro Racing Character Sprites
+on:
+  pull_request:
+    paths:
+      - 'assets/Characters/Pro/**'
+      - 'src/data/characters.js'
+      - 'src/characters/CharacterProfileRenderer.js'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProVictoryResults.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-character-sprites-r636.mjs'
+      - 'tests/pro-victory-r616.mjs'
+      - 'tests/open-driver-briefing-r601.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/Characters/Pro/**'
+      - 'src/data/characters.js'
+      - 'src/characters/CharacterProfileRenderer.js'
+      - 'src/ui/ProCrewBattleLineup.js'
+      - 'src/ui/CrewRegistrationPanel.js'
+      - 'src/ui/Chapter09EstablishingShot.js'
+      - 'src/ui/Chapter09Story.js'
+      - 'src/ui/ProDriverBriefing.js'
+      - 'src/ui/ProVictoryResults.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/FourLaneTestScene.js'
+      - 'tests/pro-character-sprites-r636.mjs'
+jobs:
+  sprites:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate modified JavaScript syntax
+        run: |
+          node --check src/data/characters.js
+          node --check src/characters/CharacterProfileRenderer.js
+          node --check src/ui/ProCrewBattleLineup.js
+          node --check src/ui/CrewRegistrationPanel.js
+          node --check src/ui/Chapter09EstablishingShot.js
+          node --check src/ui/Chapter09Story.js
+          node --check src/ui/ProDriverBriefing.js
+          node --check src/ui/ProVictoryResults.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/FourLaneTestScene.js
+          node --check src/main.js
+      - name: Validate all Pro sprite paths and visual regression
+        run: |
+          node --test tests/pro-character-sprites-r636.mjs tests/pro-victory-r616.mjs tests/open-driver-briefing-r601.mjs tests/pro-crew-visual-r596.mjs

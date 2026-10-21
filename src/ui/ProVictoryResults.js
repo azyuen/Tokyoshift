@@ -1,6 +1,6 @@
 // R617 — two-tap Professional Circuit finish. All amounts and placements are
 // recorded upstream; this file renders only saved results and real garage cars.
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261017-r578';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261022-r635';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
@@ -22,7 +22,8 @@ function characterVisual(id,kind){
   if(!id)return null;
   const pose=id==='sayakaFujieda'?(kind==='loss'?'trackSerious':'trackHappy'):
     kind==='loss'?'loss':'win';
-  return getCharacterVisualAsset(id,pose)||getCharacterVisualAsset(id,'idle');
+  return getCharacterVisualAsset(id,pose,{proCircuit:true}) ||
+    getCharacterVisualAsset(id,'idle',{proCircuit:true});
 }
 function resultsCast(s,options){
   const captain=s.registry.get('playerCharacterId')||'renMizuno';

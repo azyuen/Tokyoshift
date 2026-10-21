@@ -1,8 +1,8 @@
 // R587 — standard three-panel professional crew registration. Purely presentational:
 // the authoritative selection, eligibility and payment remain in ProSeasonPanel.
 import { cars } from '../data/cars.js?v=20261017-r565';
-import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261017-r578';
-import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
+import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r635';
+import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261022-r635';
 import {
   preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures,
   getCarPaintColor,
@@ -33,7 +33,7 @@ function preload(s,units) {
     ...units.map(u=>[u.id,'idle']),
   ];
   for(const [id,pose] of people) {
-    const asset=getCharacterVisualAsset(id,pose,{playerCharacterId:player});
+    const asset=getCharacterVisualAsset(id,pose,{playerCharacterId:player,proCircuit:true});
     if(asset?.key&&asset?.path&&!s.textures.exists(asset.key)){
       s.load.image(asset.key,getCharacterAssetUrl(asset.path));queued++;
     }
@@ -178,7 +178,7 @@ function drawScreen(s,options) {
     {id:'hiroshiSato',pose:'focus',x:991,feetY:607,height:249},
   ];
   for(const person of cast) {
-    const asset=getCharacterVisualAsset(person.id,person.pose,{playerCharacterId:protagonist});
+    const asset=getCharacterVisualAsset(person.id,person.pose,{playerCharacterId:protagonist,proCircuit:true});
     if(!asset?.key||!s.textures.exists(asset.key))continue;
     const tex=s.textures.get(asset.key),source=tex.getSourceImage();
     tex.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
@@ -212,7 +212,7 @@ function drawScreen(s,options) {
     rect(SIDE.x+75,y,53,59,0x152334,1,0x314962,216);
     const p=createCharacterProfile(s,{
       characterId:u.id,pose:'idle',x:SIDE.x+75,y,
-      frameWidth:51,frameHeight:57,depth:218,playerCharacterId:protagonist,
+      frameWidth:51,frameHeight:57,depth:218,playerCharacterId:protagonist,proCircuit:true,
     });
     if(p)add(p);
     const car=cars[u.carId],start=SIDE.x+106;
@@ -253,7 +253,7 @@ function drawScreen(s,options) {
     else {
       const p=createCharacterProfile(s,{characterId:u.id,pose:'idle',
         x:x-53,y:CARDS.y+73,frameWidth:60,frameHeight:63,
-        depth:219,playerCharacterId:protagonist});
+        depth:219,playerCharacterId:protagonist,proCircuit:true});
       if(p)add(p);
       const first=txt(x-9,CARDS.y+47,u.name.split(' ')[0].toUpperCase(),14,'#f5d9df');
       if(first.width>94)first.setScale(94/first.width);

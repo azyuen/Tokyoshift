@@ -77,7 +77,7 @@ test('crew victory shows four actual registered character assets and saved event
   assert.ok(labels.includes('12.046s'));
   assert.ok(labels.includes('13.408s'));
   assert.ok(!labels.some(t=>t.includes('BONUS')||t.includes('REPUTATION')));
-  const captain=objects.find(o=>o.type==='image'&&o.value==='characterArkonDenWin');
+  const captain=objects.find(o=>o.type==='image'&&o.value==='proCircuitCharacter_arkon_den_win');
   assert.ok(captain);
   assert.equal(captain.x,331,'the player, not a crew NPC, leads the formation');
   const hit=objects.find(o=>o.type==='rectangle'&&o.depth===290);
@@ -104,7 +104,7 @@ test('driver victory contains Sayaka, player, Daichi and true paid values',()=>{
     rankBefore:14,rankAfter:12,openCircuit:false,
   });
   const images=objects.filter(o=>o.type==='image').map(o=>o.value);
-  assert.ok(images.includes('characterArkonDenWin'));
+  assert.ok(images.includes('proCircuitCharacter_arkon_den_win'));
   assert.ok(images.includes('characterDaichiSakamoto'));
   assert.ok(images.includes('characterSayakaProTrackHappy'));
   const labels=objects.filter(o=>o.type==='text').map(o=>String(o.value));

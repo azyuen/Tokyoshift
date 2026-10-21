@@ -1,14 +1,14 @@
 import { getCarMagazineMeta } from '../data/carMagazine.js?v=20261011-r479';
-import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261021-r631';
-import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261021-r628';
+import { showProDriverBriefing } from '../ui/ProDriverBriefing.js?v=20261022-r635';
+import { queueProVictoryAssets, showProVictoryResults } from '../ui/ProVictoryResults.js?v=20261022-r635';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getFactoryPaintColor } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { selectMixedCarPaint } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, forfeitOpenDriverTransaction, usesPrepaidDriverBriefing, purchaseDriverBriefingEntry } from '../data/proDriverBriefing.js?v=20261021-r631';
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
-import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261021-r631';
-import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261018-r586';
+import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261022-r635';
+import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261022-r635';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -24,7 +24,7 @@ import {
   getRivalCharacterOrderForRegion,
   getConqueredMainRivalIds,
   getMainRivalProgression,
-} from '../data/characters.js?v=20261021-r629';
+} from '../data/characters.js?v=20261022-r635';
 import {
   applyEngineTuning,
 } from '../data/tuning.js?v=20260926-r211';
@@ -330,10 +330,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .slice(0, 3);
 
       migratedRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true });
+        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true, proCircuit: true });
       });
       genericRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal');
+        queued += this.queueCharacterPose(id, 'normal', { proCircuit: true });
       });
       Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
@@ -621,10 +621,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return obj;
   }
 
-  queueCharacterPose(characterId, pose = 'normal', { rivalContext = false } = {}) {
+  queueCharacterPose(characterId, pose = 'normal', { rivalContext = false, proCircuit = false } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
       rivalContext,
       playerCharacterId: this.registry.get('playerCharacterId') || '',
+      proCircuit,
     });
     if (!asset?.key || !asset?.path || this.textures.exists(asset.key)) return 0;
     this.load.image(asset.key, getCharacterAssetUrl(asset.path));
@@ -643,10 +644,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     shadowOffsetX = 0,
     shadowOffsetY = 0,
     rivalContext = false,
+    proCircuit = this.activeLocationId === 'tokyoDragComplex',
   } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
       rivalContext,
       playerCharacterId: this.registry.get('playerCharacterId') || '',
+      proCircuit,
     });
     const key = asset?.key;
     if (!key || !this.textures.exists(key)) return null;
