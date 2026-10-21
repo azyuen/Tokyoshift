@@ -76,11 +76,29 @@ export function ginzaConversation(kind, { carName = 'THIS CAR', shortfall = 0 } 
           rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
       ],
     },
+    vaultReturnArkon: {
+      title: 'GINZA // KEYS RETURNED', finalActionLabel: 'BACK TO THE GALLERY',
+      characters: { left: 'sayakaFujieda', right: 'arkonDen' },
+      pages: [
+        { ...sayaka('ginzaDress', 'There you are. And so is the car. Two welcome sights.'), rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { speaker: 'right', rightCharacter: 'arkonDen', rightPose: 'ginzaSuit', leftCharacter: 'sayakaFujieda', leftPose: 'ginzaDress', text: 'Were you worried about me or the car?' },
+        { ...sayaka('ginzaDress', 'Do you really want me to put those in order?'), rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { speaker: 'right', rightCharacter: 'arkonDen', rightPose: 'ginzaSuit', leftCharacter: 'sayakaFujieda', leftPose: 'ginzaDress', text: 'Fine. Next time I will take you out in something sensible.' },
+        { ...sayaka('ginzaDress', 'Wonderful. I shall believe it when I see it. Now, the keys, please.'), rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+      ],
+    },
+    vaultReturn: {
+      title: 'GINZA // SAFE RETURN', finalActionLabel: 'RETURN TO GALLERY',
+      pages: [
+        sayaka('ginzaHappy', 'Back in one piece. Excellent. I knew you could be trusted with it.'),
+        sayaka('ginzaSerious', 'I will take the keys now. Your own car is waiting, and the gallery is open to you again.'),
+      ],
+    },
     vaultDrive: {
       title: 'GINZA // HANDLE WITH CARE', finalActionLabel: 'TAKE THE KEYS',
       pages: [
-        sayaka('ginzaHappy', "You can take this one anywhere in Tokyo for a test drive. I'll ride with you."),
-        sayaka('ginzaHappy', "Enjoy the drive. Just bring our prized car back in one piece, please!"),
+        sayaka('ginzaHappy', "You may take this one to the Tokyo street meets. I'll ride with you."),
+        sayaka('ginzaHappy', "Enjoy the drive. Return it here to the private vault when you're finished. No workshops or events, please!"),
       ],
     },
     vaultLocked: {
