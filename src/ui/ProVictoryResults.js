@@ -1,6 +1,6 @@
 // R617 — two-tap Professional Circuit finish. All amounts and placements are
 // recorded upstream; this file renders only saved results and real garage cars.
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261017-r578';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261022-r635';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   preloadCarAppearanceAssets,preloadCarWheel,ensureDerivedModularCarTextures,getCarPaintColor,
