@@ -2574,6 +2574,23 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.drawNavigation(labels[this.ginzaRoom], this.ginzaRoom === 3
       ? 'PRIVATE COLLECTION // THREE LE MANS LEGENDS'
       : 'HAND-CURATED // NEW CAR EVERY 30 MINUTES');
+    if (isGinzaLoanActive(this.registry)) {
+      // Normally room navigation lives behind the vault car selectors.
+      // Make the other two rooms' temporary lockout explicit and visible.
+      ['MOTOR GALLERY // LOCKED', 'PRESTIGE SALON // LOCKED',
+        'PRIVATE VAULT // ACTIVE'].forEach((label, index) => {
+        const x = STAGE.x + 180 + index * 378;
+        const selected = index === 2;
+        this.addContent(this.add.rectangle(
+          x, STAGE.y + 35, 325, 34,
+          selected ? 0x1b3034 : 0x12191e, 0.92
+        ).setStrokeStyle(1, selected ? 0x6bd8cb : 0x4a5a65, 0.95).setDepth(25));
+        this.addContent(this.add.text(x, STAGE.y + 35, label, {
+          fontFamily: PIXEL_FONT, fontSize: '8px',
+          color: selected ? '#b1f5e7' : '#83939c',
+        }).setOrigin(0.5).setDepth(26));
+      });
+    }
 
     const ordinary = this.getGinzaListings().filter(Boolean);
     recordCarMagazineSightings(this.registry,
@@ -2726,7 +2743,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
       ).setStrokeStyle(2, 0x6bd8cb, 1).setDepth(33)
         .setInteractive({ useHandCursor: true }));
       this.addContent(this.add.text(centerX, demoY,
-        driving ? 'RETURN TEST CAR' : 'TEST DRIVE ANYWHERE', {
+        driving ? 'RETURN TEST CAR' : 'TEST DRIVE // STREET MEETS', {
           fontFamily: PIXEL_FONT, fontSize: '9px', color: '#e6fffb'
         }).setOrigin(0.5).setDepth(34));
       demo.on('pointerdown', () => {
