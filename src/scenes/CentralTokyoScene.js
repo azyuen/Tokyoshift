@@ -160,6 +160,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
       (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
+    if (isGinzaLoanActive(this.registry) &&
+        !canVisitDuringGinzaLoan(this.registry, this.requestedLocationId)) {
+      // Reloading an older save must not start in Auto Market/Drag Complex.
+      this.requestedLocationId = 'ginzaMotorGallery';
+    }
     const activeLoan = this.registry.get('ginzaTestDrive');
     this.ginzaRoom = ginzaRoomDuringLoan(this.registry, data?.ginzaRoom || 1);
     const loanVariant = String(activeLoan?.carId || '').replace(/^ginzaDemo_/, '');
@@ -1053,7 +1058,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   upgradeWorkshopFromMap(location, cost = 0, alreadyUnlocked = false) {
-    if (!location) return;
+    if (isGinzaLoanActive(this.registry) || !location) return;
 
     if (alreadyUnlocked) {
       this.returnToWorkshop(location.id, 0);
