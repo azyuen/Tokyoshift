@@ -39,13 +39,13 @@ export function ethanCompensationCutscene() {
     once: false,
     title: 'A LITTLE SOMETHING OWED',
     category: 'ARKON DEN // SPECIAL DELIVERY',
-    finalActionLabel: 'ACCEPT ¥2,000,000',
+    finalActionLabel: 'ACCEPT $2,000,000',
     characters: { left: 'arkonDen' },
     pages: [
       { speaker: 'left', leftCharacter: 'arkonDen', leftPose: 'devTalking',
         text: 'I heard you were cheated out of a car for some reason. Well you’re in luck! I’m feeling generous, so here’s what you’re owed.' },
       { speaker: 'left', leftCharacter: 'arkonDen', leftPose: 'devLaughing',
-        text: '¥2,000,000. Go find yourself something good, Ethan!' },
+        text: '$2,000,000. Go find yourself something good, Ethan!' },
     ],
   };
 }
