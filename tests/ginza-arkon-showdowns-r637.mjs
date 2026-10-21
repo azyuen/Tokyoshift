@@ -43,8 +43,8 @@ test('Ginza loan race preserves COMPETITION and OSHIAGE_ELITE for real payouts a
 test('Skytree elite eligibility still works for an owned temporary collector loan', () => {
   const data = source('src/data/oshiageShowdown.js');
   assert.match(data, /const car = cars\[id\] \|\| cars\[getBaseCarId\(id\)\]/);
-  assert.match(data, /if \(!car \|\| !\(\(read\(source, 'ownedCarIds', \[\]\) \|\| \[\]\)\.includes\(id\)\) \|\| car\.crewLoan\)/);
-  assert.doesNotMatch(data, /ginzaDemo/);
+  assert.match(data, /const isActiveGalleryLoan = isGinzaLoanActive\(source\)/);
+  assert.match(data, /read\(source, 'ginzaTestDrive'\)\?\.carId === id && car\?\.ginzaDemo/);
 });
 
 test('Arkon departure gets evening dress and suit dialogue while ordinary players keep default', () => {
@@ -69,14 +69,15 @@ test('Arkon race results show suit foreground and opposite Sayaka reaction in sa
   const race = source('src/scenes/RaceScene.js');
   assert.match(race, /this\.showArkonResultPair = isNamedArkonDen\(this\.registry\) &&/);
   assert.match(race, /this\.playerCharacterId === storedPlayerCharacterId/);
-  assert.match(race, /\['arkonDen', 'ginzaSuit'\]/);
+  assert.match(race, /\['arkonDen', 'devLaughing'\]/);
+  assert.match(race, /\['arkonDen', 'devSerious'\]/);
   assert.match(race, /\['sayakaFujieda', 'devScowl'\]/);
-  assert.match(race, /\['sayakaFujieda', 'ginzaHappy'\]/);
-  assert.match(race, /pose: playerWon \? 'devScowl' : 'ginzaHappy'/);
-  assert.match(race, /pose: pairedArkonResult \? 'ginzaSuit'/);
+  assert.match(race, /\['sayakaFujieda', 'devLaughing'\]/);
+  assert.match(race, /pose: playerWon \? 'devScowl' : 'devLaughing'/);
+  assert.match(race, /playerWon \? 'devLaughing' : 'devSerious'/);
   assert.match(race, /sayakaReactionProfile\?\.image\?\.setMask\(playerMask\)/);
   assert.match(race, /const sayakaReactionImage = sayakaReactionProfile\?\.image/);
   assert.match(race, /targets: sayakaReactionImage/);
   assert.ok(existsSync('assets/Characters/Dev/sayaka_fujieda_scowl.png'));
-  assert.ok(existsSync('assets/Characters/Main/ginza_sayaka_fujieda_happy.png'));
+  assert.ok(existsSync('assets/Characters/Dev/sayaka_fujieda_laughing.png'));
 });
