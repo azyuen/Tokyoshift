@@ -50,7 +50,7 @@ import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=2
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261021-r627';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
-  ETHAN_GIFT_PENDING_KEY,
+  ETHAN_GIFT_PENDING_KEY, isEthanName,
 } from '../data/specialProfileRewards.js?v=20261022-r638';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
@@ -430,6 +430,15 @@ export default class GarageScene extends Phaser.Scene {
         });
         if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
       });
+    }
+
+    if (isEthanName(this.registry.get('firstName'), this.registry.get('lastName')) &&
+        (!this.registry.get('ethanYuenCompensationR638') ||
+          this.registry.get(ETHAN_GIFT_PENDING_KEY))) {
+      for (const pose of ['devTalking', 'devLaughing']) {
+        const asset = characters.arkonDen?.visual?.poseAssets?.[pose];
+        if (asset) queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      }
     }
 
     // First Sayaka manga dialogue used to queue every alternate Sayaka outfit
