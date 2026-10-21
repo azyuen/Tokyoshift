@@ -1,9 +1,9 @@
-import { completeSeasonRound } from './proSeason.js?v=20261017-r575';
+import { completeSeasonRound } from './proSeason.js?v=20261021-r628';
 // Phase 2: persistent four-wide professional tournament engine.
 // Pure transitions: no Phaser, clocks, registry writes or random Math.random().
 import {
   normaliseProCircuitState, getProCircuitDriverSeeds, getProPrizeWithBonus,
-} from './proCircuit.js?v=20261008-r443';
+} from './proCircuit.js?v=20261021-r628';
 import { characters } from './characters.js?v=20261007-r411';
 
 export const FOUR_WIDE_CUP = Object.freeze({
