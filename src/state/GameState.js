@@ -435,7 +435,7 @@ export function getProfileSlots() {
       String(state?.firstName || '').trim().toLowerCase() +
       String(state?.lastName || '').trim().toLowerCase()
     ).replace(/[^a-z0-9]/g, '');
-    const profileCharacterId = profileNameKey.includes('arkonden')
+    const profileCharacterId = profileNameKey === 'arkonden'
       ? 'arkonDen'
       : (state?.playerCharacterId || null);
 
@@ -455,7 +455,7 @@ export function getProfileSlots() {
       selectedCarId: state?.selectedCarId || null,
       district: String(state?.district || 'ODAIBA'),
       garageTier: Math.max(0, Number(state?.garageTier || 0)),
-      championCount: profileNameKey.includes('arkonden')
+      championCount: profileNameKey === 'arkonden'
         ? ARKON_DEV_CHAMPIONSHIP_REGIONS.length
         : Object.values(state?.tunerTeamChallenges || {})
             .filter(item => Boolean(item?.championEarned || item?.completed)).length,
