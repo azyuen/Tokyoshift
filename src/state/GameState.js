@@ -91,6 +91,8 @@ export function createDefaultGameState(options = {}) {
     pinkSlipOpportunityUsed: false,
     incomingPinkSlipLastOfferRace: -999,
     cash: 5000,
+    ethanYuenCompensationR638: false,
+    ethanYuenCompensationDialoguePending: false,
     playerDifficulty: 'STANDARD',
     devMode: false,
     cutscenesSeen: [],
@@ -211,6 +213,9 @@ export function createFreshRunStateFromRegistry(registry) {
   );
 
   if (state.devMode) state.cash = 1000000000;
+  // Restart Night never resets a profile-level one-time compensation award.
+  state.ethanYuenCompensationR638 = Boolean(registry?.get?.('ethanYuenCompensationR638'));
+  state.ethanYuenCompensationDialoguePending = Boolean(registry?.get?.('ethanYuenCompensationDialoguePending'));
 
   return state;
 }
@@ -1058,6 +1063,8 @@ export function normaliseState(input = {}) {
       ? Math.floor(Number(input.incomingPinkSlipLastOfferRace))
       : -999,
     cash: normalisedCash,
+    ethanYuenCompensationR638: Boolean(input.ethanYuenCompensationR638),
+    ethanYuenCompensationDialoguePending: Boolean(input.ethanYuenCompensationDialoguePending),
     competitionWins: devName
       ? Math.max(1, Math.floor(Number(input.competitionWins || 0)))
       : Math.max(0, Math.floor(Number(input.competitionWins || 0))),
@@ -1336,6 +1343,8 @@ export function snapshotRegistry(registry) {
     pinkSlipOpportunityUsed: Boolean(registry.get('pinkSlipOpportunityUsed')),
     incomingPinkSlipLastOfferRace: Number(registry.get('incomingPinkSlipLastOfferRace') ?? -999),
     cash: registry.get('cash') ?? 5000,
+    ethanYuenCompensationR638: Boolean(registry.get('ethanYuenCompensationR638')),
+    ethanYuenCompensationDialoguePending: Boolean(registry.get('ethanYuenCompensationDialoguePending')),
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
     cutscenesSeen: registry.get('cutscenesSeen') || [],
