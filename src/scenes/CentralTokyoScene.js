@@ -3781,7 +3781,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
       trophyStages:event.trophyStages||null,
       eventId: event.id,
       briefingLabel: event.label,
-      briefingRules: {maxPowerKW:Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,noNos:Boolean(event.noNos)},
+      briefingRules: {
+        maxPowerKW:Number.isFinite(event.maxPowerKW)?event.maxPowerKW:null,
+        noNos:Boolean(event.noNos),
+        stock:Boolean(event.stock),
+        drivetrain:String(event.drivetrain||'').toUpperCase(),
+      },
       returnScene: 'CentralTokyoScene',
       locationId: CENTRAL_TOKYO_LOCATIONS.drag.id,
       difficulty: 'ELITE',
