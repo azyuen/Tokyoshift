@@ -110,7 +110,7 @@
         />
       </div>
     </div>
-    <div id="build-stamp">R627</div>
+    <div id="build-stamp">R628</div>
     <div id="rotate-message">ROTATE YOUR PHONE TO LANDSCAPE TO PLAY</div>
   </div>
   <script>
@@ -246,7 +246,7 @@
     // Previously these ran in parallel, allowing a stale iPad PWA worker to
     // supply mixed-build modules while the version check removed its caches.
     window.TOKYO_SHIFT_BOOT_READY = (async () => {
-      let resolvedBuild = 'R627';
+      let resolvedBuild = 'R628';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
@@ -328,7 +328,7 @@
     // worker is being retired. Device saves are never altered by this guard.
     window.TOKYO_SHIFT_BOOT_READY.then(ready => {
       if (ready === false) return;
-      import('./src/main.js?v=20261020-r627').catch(error => {
+      import('./src/main.js?v=20261021-r628').catch(error => {
         console.error('[Tokyo SHIFT] main module failed to load', error);
         window.TOKYO_SHIFT_SHOW_BOOT_ERROR?.(error, 'MAIN MODULE ERROR');
       });
