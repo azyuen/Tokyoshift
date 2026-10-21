@@ -2495,7 +2495,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
         });
         return;
       }
-      if (!this.registry.get('ginzaVaultInvited')) {
+      if (!dev && !this.registry.get('ginzaVaultInvited')) {
         this.ginzaScene('vaultInvitation', {}, () => {
           this.registry.set('ginzaVaultInvited', true);
           saveSessionState(this.registry);
