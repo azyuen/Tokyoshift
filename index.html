@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="./styles.css?v=20261009-r449" />
   <style>
     #boot-diagnostic[hidden] { display: none !important; }
+    #arkon-pin-row[hidden] { display: none !important; }
     #boot-diagnostic {
       position: absolute;
       z-index: 3;
@@ -108,6 +109,20 @@
           placeholder="Last name"
           aria-label="Last name"
         />
+        <div id="arkon-pin-row" hidden>
+          <label for="arkonCreationPin" style="display:block;color:#86cce6;font:700 12px 'Rajdhani',sans-serif;letter-spacing:1px;margin-bottom:5px;">ARKON DEN // OWNER PIN</label>
+          <input
+            id="arkonCreationPin"
+            class="driver-name-input"
+            type="password"
+            maxlength="4"
+            inputmode="numeric"
+            pattern="[0-9]{4}"
+            autocomplete="off"
+            placeholder="4-digit PIN"
+            aria-label="Arkon Den owner PIN"
+          />
+        </div>
       </div>
     </div>
     <div id="build-stamp">R637</div>
