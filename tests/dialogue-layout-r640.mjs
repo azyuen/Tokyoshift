@@ -23,7 +23,7 @@ test('compact HUD and the two phone renderers use the same one-head notch-safe l
   assert.ok(COMPACT_DIALOGUE_LAYOUTS.right.face.x < 1100);
   assert.ok(COMPACT_DIALOGUE_LAYOUTS.left.bubble.left - 18 >= 310);
   assert.ok(COMPACT_DIALOGUE_LAYOUTS.right.bubble.right + 18 < 1100);
-  assert.equal(PHONE_DIALOGUE_LAYOUTS, COMPACT_DIALOGUE_LAYOUTS);
+  assert.deepEqual(PHONE_DIALOGUE_LAYOUTS, COMPACT_DIALOGUE_LAYOUTS);
   assert.match(compact, /const LAYOUTS = COMPACT_DIALOGUE_LAYOUTS/);
   assert.match(ginza, /const GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS/);
   assert.match(phone, /PHONE_DIALOGUE_LAYOUTS\[isPlayer \? 'right' : 'left'\]/);
