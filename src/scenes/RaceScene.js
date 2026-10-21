@@ -3,8 +3,8 @@ import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
-import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r633';
-import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261021-r633';
+import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261021-r634';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -50,7 +50,7 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261017-r565';
+} from '../data/characters.js?v=20261021-r634';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -151,9 +151,14 @@ export default class RaceScene extends Phaser.Scene {
     if (this.hasGinzaBanter) {
       // Arkon's optional passenger chat uses the same formal outfits as
       // the private-gallery after-hours scene, not the old shift coach.
-      for (const [id, pose] of [['sayakaFujieda', 'ginzaDress'], ['arkonDen', 'ginzaSuit']]) {
-        const asset = characters[id].visual.poseAssets[pose];
-        queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      for (const [id, poses] of [
+        ['sayakaFujieda', ['devIdle', 'devDisappointed', 'devSad', 'devScowl', 'devUnsure']],
+        ['arkonDen', ['devIdle', 'devLaughing', 'devSerious', 'devTalking']],
+      ]) {
+        for (const pose of poses) {
+          const asset = characters[id].visual.poseAssets[pose];
+          queueImage(asset.key, getCharacterAssetUrl(asset.path));
+        }
       }
     }
     if (this.isCoaching || (this.isTutorial &&
@@ -1446,7 +1451,7 @@ export default class RaceScene extends Phaser.Scene {
       running: this.raceStarted && this.greenClock != null,
       finished: this.finished,
     });
-    if (line) this.ginzaPassenger.show(line.speaker, line.text);
+    if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
   }
 
   setupCoachedLesson() {
