@@ -148,3 +148,17 @@ test('Daichi UI exposes both tabs, four levels, real build readouts and disabled
   assert.ok(!complex.includes('REGIONAL RIVALS // MOVED UP TO THE COMPLEX'));
   assert.ok(complex.includes('xJitter'));
 });
+
+test('factory-stock check ignores saved but physically inactive Level III settings', async () => {
+  const { getFactoryStockStatus } = await import('../src/data/proSeason.js');
+  const tuned={tuning:{ecu:3},stage3Calibration:{ecuBias:2}};
+  assert.equal(getFactoryStockStatus(tuned).stock,false);
+  const downgraded=setDriverPowerPartLevel(tuned,'ecu',0);
+  assert.equal(downgraded.proBriefingPowerStash.tuning.ecu,3);
+  assert.equal(getFactoryStockStatus(downgraded).stock,true,
+    'stored calibration has no effect without the installed Level III ECU');
+  const check=driverBriefingEligibility({
+    ...active(),briefingRules:{stock:true},
+  },downgraded,getVehiclePerformance('ae86',downgraded).car.powerKW,['ae86']);
+  assert.equal(check.eligible,true);
+});
