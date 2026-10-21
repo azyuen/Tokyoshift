@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/data/ginzaGallery.js'
       - 'src/data/ginzaScenes.js'
+      - 'src/data/ginzaBanter.js'
+      - 'src/ui/GinzaBanterHud.js'
       - 'src/data/characters.js'
       - 'src/data/cars.js'
       - 'src/data/proSeason.js'
@@ -15,18 +17,22 @@ on:
       - 'tests/ginza-gallery-r566.mjs'
       - 'tests/ginza-gallery-r567.mjs'
       - 'tests/ginza-arkon-private-gallery-r629.mjs'
+      - 'tests/ginza-banter-r633.mjs'
       - '.github/workflows/ginza-gallery-r565.yml'
   push:
     branches: [main]
     paths:
       - 'src/data/ginzaGallery.js'
       - 'src/data/ginzaScenes.js'
+      - 'src/data/ginzaBanter.js'
+      - 'src/ui/GinzaBanterHud.js'
       - 'src/data/proSeason.js'
       - 'src/scenes/CentralTokyoScene.js'
       - 'tests/ginza-gallery-r565.mjs'
       - 'tests/ginza-gallery-r566.mjs'
       - 'tests/ginza-gallery-r567.mjs'
       - 'tests/ginza-arkon-private-gallery-r629.mjs'
+      - 'tests/ginza-banter-r633.mjs'
   workflow_dispatch:
 jobs:
   ginza:
@@ -41,7 +47,9 @@ jobs:
       - run: node --check src/scenes/MeetScene.js
       - run: node --check src/data/ginzaGallery.js
       - run: node --check src/data/ginzaScenes.js
+      - run: node --check src/data/ginzaBanter.js
+      - run: node --check src/ui/GinzaBanterHud.js
       - run: node --check src/data/characters.js
       - run: node --check src/data/cars.js
       - run: node --check src/state/GameState.js
-      - run: node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs tests/ginza-arkon-private-gallery-r629.mjs
+      - run: node --test tests/ginza-gallery-r565.mjs tests/ginza-gallery-r566.mjs tests/ginza-gallery-r567.mjs tests/ginza-arkon-private-gallery-r629.mjs tests/ginza-banter-r633.mjs
