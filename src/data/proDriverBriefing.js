@@ -162,6 +162,12 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
   Object.freeze({id:'exhaust',group:'exhaustNosTuning',label:'EXHAUST'}),
   Object.freeze({id:'muffler',group:'exhaustNosTuning',label:'MUFFLER'}),
   Object.freeze({id:'nosKit',group:'exhaustNosTuning',label:'NOS EQUIPMENT'}),
+  Object.freeze({id:'clutch',group:'drivetrainTuning',label:'CLUTCH'}),
+  Object.freeze({id:'gearbox',group:'drivetrainTuning',label:'GEARBOX'}),
+  Object.freeze({id:'differential',group:'drivetrainTuning',label:'DIFFERENTIAL'}),
+  Object.freeze({id:'suspension',group:'drivetrainTuning',label:'SUSPENSION'}),
+  Object.freeze({id:'tyres',group:'chassisTuning',label:'TYRES'}),
+  Object.freeze({id:'weightReduction',group:'chassisTuning',label:'WEIGHT REDUCTION'}),
 ]);
 
 // Install any owned level from 0 through the level purchased before the
@@ -172,7 +178,8 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
   const stash = carState.proBriefingPowerStash?.[part.group] || {};
   const active = part.group === 'tuning'
     ? carState.tuning || carState.engineTuning || {}
-    : getExhaustNosTuning(carState);
+    : part.group === 'exhaustNosTuning'
+      ? getExhaustNosTuning(carState) : carState[part.group] || {};
   if (partId === 'nosKit') {
     const nosStash = carState.proBriefingNosStash;
     const savedKit = nosStash?.exhaustNosTuning || {};
@@ -209,7 +216,7 @@ export function setDriverPowerPartLevel(carState = {}, partId, targetLevel = 0) 
 
   const source = part.group === 'tuning'
     ? carState.tuning || carState.engineTuning || {}
-    : carState.exhaustNosTuning || {};
+    : carState[part.group] || {};
   const saved = { ...(carState.proBriefingPowerStash || {}) };
   const category = { ...(saved[part.group] || {}) };
   if (targetLevel < info.original) category[partId] = info.original;
@@ -252,9 +259,9 @@ export function restoreDriverPowerParts(carState = {}) {
   const saved=carState.proBriefingPowerStash;
   if(!saved)return carState;
   const next={...carState};
-  for(const group of ['tuning','exhaustNosTuning']){
+  for(const group of ['tuning','drivetrainTuning','chassisTuning','exhaustNosTuning']){
     if(saved[group])next[group]={...(group==='tuning'?
-      carState.tuning||carState.engineTuning||{}:carState.exhaustNosTuning||{}),
+      carState.tuning||carState.engineTuning||{}:carState[group]||{}),
       ...saved[group]};
   }
   delete next.proBriefingPowerStash;
