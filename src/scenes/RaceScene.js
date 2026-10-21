@@ -50,7 +50,7 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261021-r634';
+} from '../data/characters.js?v=20261022-r638';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
@@ -152,7 +152,7 @@ export default class RaceScene extends Phaser.Scene {
       // Arkon's optional passenger chat uses the same formal outfits as
       // the private-gallery after-hours scene, not the old shift coach.
       for (const [id, poses] of [
-        ['sayakaFujieda', ['devIdle', 'devDisappointed', 'devSad', 'devScowl', 'devUnsure']],
+        ['sayakaFujieda', ['devIdle', 'devDisappointed', 'devLaughing', 'devSad', 'devScowl', 'devUnsure']],
         ['arkonDen', ['devIdle', 'devLaughing', 'devSerious', 'devTalking']],
       ]) {
         for (const pose of poses) {
@@ -234,9 +234,10 @@ export default class RaceScene extends Phaser.Scene {
       // Preload both possible result reactions for ALL Arkon street/elite runs,
       // not just races launched while the Ginza loan is active.
       for (const [id, pose] of [
-        ['arkonDen', 'ginzaSuit'],
+        ['arkonDen', 'devLaughing'],
+        ['arkonDen', 'devSerious'],
         ['sayakaFujieda', 'devScowl'],
-        ['sayakaFujieda', 'ginzaHappy'],
+        ['sayakaFujieda', 'devLaughing'],
       ]) {
         const asset = characters[id].visual.poseAssets[pose];
         queueImage(asset.key, getCharacterAssetUrl(asset.path));
@@ -3163,16 +3164,18 @@ export default class RaceScene extends Phaser.Scene {
     const sayakaReactionProfile = pairedArkonResult
       ? createCharacterProfile(this, {
         characterId: 'sayakaFujieda',
-        pose: playerWon ? 'devScowl' : 'ginzaHappy',
-        x: 1189, y: 262, frameWidth: 318, frameHeight: 360,
+        pose: playerWon ? 'devScowl' : 'devLaughing',
+        x: 1224, y: 262, frameWidth: 318, frameHeight: 360,
         side: 'left', depth: depth + 6.4,
         profileOverride: { scale: 0.85, offsetX: -7, offsetY: 38 },
         mask: false,
       }) : null;
     const playerProfile = createCharacterProfile(this, {
       characterId: pairedArkonResult ? 'arkonDen' : this.playerCharacterId,
-      pose: pairedArkonResult ? 'ginzaSuit' : playerWon ? 'win' : 'loss',
-      x: pairedArkonResult ? 1385 : 1310,
+      pose: pairedArkonResult
+        ? (playerWon ? 'devLaughing' : 'devSerious')
+        : playerWon ? 'win' : 'loss',
+      x: pairedArkonResult ? 1420 : 1310,
       y: 252,
       frameWidth: 470,
       frameHeight: 390,
