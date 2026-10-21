@@ -46,8 +46,10 @@ test('R607 multi-selection applies only once, not per item click',()=>{
  assert.match(driver,/ENGINE \+ NOS/);
  assert.match(driver,/GRIP \+ WEIGHT/);
  const section=driver.slice(driver.indexOf('function openPowerParts'),driver.indexOf('function openTune'));
- assert.equal((section.match(/options\.onCarState\?\.\(next\)/g)||[]).length,2,
-  'one batch apply action and one optional restore-all action');
+ assert.equal((section.match(/options\.onCarState\?\.\(previewState\)/g)||[]).length,1,
+  'previewed part-level changes are applied in one atomic update');
+ assert.equal((section.match(/options\.onCarState\?\.\(next\)/g)||[]).length,1,
+  'restore-all remains a separate explicit update');
 });
 test('R607 dyno toggles have side labels, left headers and unsaved apply highlight',()=>{
  assert.match(driver,/const bx=704\+index\*87,by=entry\.y\+4/);
