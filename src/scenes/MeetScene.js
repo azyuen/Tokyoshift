@@ -2890,7 +2890,6 @@ export default class MeetScene extends Phaser.Scene {
     const competitionUnlocked =
       this.hasCar &&
       !crewTestDrive &&
-      !cars[this.registry.get('selectedCarId')]?.ginzaDemo &&
       Number(this.registry.get('wins') || 0) >= 1 &&
       competitionCooldownRemaining <= 0;
 
@@ -3885,7 +3884,7 @@ export default class MeetScene extends Phaser.Scene {
     const remaining = this.getCompetitionCooldownRemainingMs();
     const crewTestDrive = this.isCrewTestDriveMode();
     const unlocked = this.hasCar && !crewTestDrive &&
-      !cars[this.registry.get('selectedCarId')]?.ginzaDemo && wins >= 1 && remaining <= 0;
+      wins >= 1 && remaining <= 0;
 
     item.locked = !unlocked;
     item.label.setText(
@@ -4193,7 +4192,10 @@ export default class MeetScene extends Phaser.Scene {
 
   startCompetition(offer) {
     if (!offer || !this.hasCar) return;
-    if (!carMatchesCompetitionRestriction(this.registry.get('selectedCarId'), offer.restriction)) return;
+    // Curated Ginza collector loans may enter every regional Street Showdown
+    // irrespective of the usual showroom-era/drivetrain restrictions.
+    if (!isGinzaLoanActive(this.registry) &&
+        !carMatchesCompetitionRestriction(this.registry.get('selectedCarId'), offer.restriction)) return;
 
     const cash = Number(this.registry.get('cash') || 0);
     if (cash < offer.entryFee) return;
