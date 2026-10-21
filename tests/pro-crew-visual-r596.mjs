@@ -18,7 +18,7 @@ test('R596: all four main scene buttons share the intermediate 13px Silkscreen s
   assert.match(ui,/crewGlow\(1055,502,235,adviceUsed/);
   assert.match(ui,/footerButton\(974,205,unpaid\?'CANCEL ENTRY':'FORFEIT EVENT'/);
   assert.match(ui,/if\(!locked\)footerButton\(1196,205,'CLEAR LINEUP'/);
-  assert.match(ui,/footerButton\(1430,229,unpaid\?'GO TO GRID/);
+  assert.match(ui,/footerButton\(1430,229,invalidCarSetup\?'INELIGIBLE CAR SETUP'/);
   assert.doesNotMatch(ui,/const BUTTON_FONT=16/);
 });
 
