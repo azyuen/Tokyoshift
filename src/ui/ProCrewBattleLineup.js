@@ -410,6 +410,7 @@ function draw(s,opts){
     const members=selected.filter(Boolean);
     const drives=members.map(id=>normaliseDrive(units.find(u=>u.id===id)?.drivetrain));
     return members.length===3&&new Set(members).size===3&&
+      members.every(id=>units.find(u=>u.id===id)?.validAssignment!==false)&&
       (e.trophyId!=='triDrive'||new Set(drives).size===3);
   }
   function renderFooter(){
@@ -427,10 +428,13 @@ function draw(s,opts){
       ()=>unpaid?(close(),opts.onCancel?.()):opts.onForfeit?.());
     if(!locked)footerButton(1196,205,'CLEAR LINEUP',
       ()=>setLineup([null,null,null]));
-    footerButton(1430,229,unpaid?'GO TO GRID // ¥'+fee.toLocaleString('en-US'):'NEXT HEAT',()=>{
+    const ready=canConfirm();
+    const invalidCarSetup=selected.filter(Boolean).length===3&&!ready;
+    footerButton(1430,229,invalidCarSetup?'INELIGIBLE CAR SETUP':
+      unpaid?'GO TO GRID // ¥'+fee.toLocaleString('en-US'):'NEXT HEAT',()=>{
       if(!canConfirm())return;
       close();opts.onConfirm?.([...selected]);
-    },{primary:true,disabled:!canConfirm()});
+    },{primary:ready,disabled:!ready});
     unscope();
   }
   function setLineup(next){
