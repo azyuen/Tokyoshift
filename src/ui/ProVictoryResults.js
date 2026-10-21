@@ -22,7 +22,8 @@ function characterVisual(id,kind){
   if(!id)return null;
   const pose=id==='sayakaFujieda'?(kind==='loss'?'trackSerious':'trackHappy'):
     kind==='loss'?'loss':'win';
-  return getCharacterVisualAsset(id,pose)||getCharacterVisualAsset(id,'idle');
+  return getCharacterVisualAsset(id,pose,{proCircuit:true}) ||
+    getCharacterVisualAsset(id,'idle',{proCircuit:true});
 }
 function resultsCast(s,options){
   const captain=s.registry.get('playerCharacterId')||'renMizuno';
