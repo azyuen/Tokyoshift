@@ -59,7 +59,7 @@ test('both standard and vibrating pick-up phone renderer reuse same global backd
     assert.match(mode,/createPhoneCallBackdrop/);
     assert.match(mode,/createRaceDialogueHud\(scene/);
     assert.match(mode,/phoneIconKey:/);
-    assert.match(mode,/RaceCoachHud\.js\?v=20261017-r572/);
+    assert.match(mode,/RaceCoachHud\\.js\\?v=20261022-r640/);
   }
   assert.match(normal,/createPhoneCallBackdrop\(scene, \{depth:DEPTH\}\)/);
   assert.match(swipe,/own\(createPhoneCallBackdrop\(scene,\{depth:DEPTH\}\)\)/);
