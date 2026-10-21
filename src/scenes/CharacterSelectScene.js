@@ -178,6 +178,7 @@ export default class CharacterSelectScene extends Phaser.Scene {
     const updatePinVisibility = () => {
       const needed = isArkonName(firstInput?.value, lastInput?.value);
       if (pinRow) pinRow.hidden = !needed;
+      form?.classList.toggle('needs-owner-pin', needed);
       if (!needed && pinInput) pinInput.value = '';
     };
     if (firstInput) firstInput.oninput = updatePinVisibility;
