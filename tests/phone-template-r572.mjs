@@ -48,7 +48,7 @@ test('phone bubble has a larger floating icon, no round badge, and original coac
   assert.doesNotMatch(phoneSection,/strokeCircle|iconBadge|badgeRadius/);
   assert.equal(RACE_DIALOGUE_THEMES.standard.fill,0xfffcf1);
   assert.equal(RACE_COACH_LAYOUT.face.width,214);
-  assert.equal(PHONE_DIALOGUE_LAYOUTS.left.face.width,273);
+  assert.equal(PHONE_DIALOGUE_LAYOUTS.left.face.width,150);
 });
 
 test('both standard and vibrating pick-up phone renderer reuse same global backdrop and icon template',()=>{
