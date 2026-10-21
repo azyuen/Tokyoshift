@@ -68,7 +68,15 @@ const getTesterEntries = () => {
   const smallerScenes = CUTSCENE_ORDER
     .filter(id => CUTSCENES[id] && !chapterIds.has(id))
     .map(id => ({ id, definition: CUTSCENES[id] }));
-  return [...chapters, ...smallerScenes];
+  const directorDemos = [
+    { id: '__directorDialogue', label: 'STORY DIRECTOR — THREE DIALOGUE TEMPLATES',
+      category: 'DEVELOPER / STORY DIRECTOR',
+      definition: { title: 'STORY DIRECTOR // MANGA + PHONE + COMPACT', pages: [] } },
+    { id: '__directorRoute', label: 'STORY DIRECTOR — GARAGE / MAP / RACE / MEET',
+      category: 'DEVELOPER / STORY DIRECTOR',
+      definition: { title: 'STORY DIRECTOR // CROSS-SCENE TEST', pages: [] } },
+  ];
+  return [...chapters, ...directorDemos, ...smallerScenes];
 };
 
 function playOpeningChapterPreview(scene) {
@@ -373,7 +381,12 @@ export function showCutsceneTester(scene) {
         close();
         // GarageScene owns the RWB's cinematic entrance/fade choreography.
         // Other scenes can still preview its canonical manga dialogue.
-        if (id === '__chapter08') {
+        if (id === '__directorDialogue' || id === '__directorRoute') {
+          const scriptId = id === '__directorDialogue'
+            ? 'directorDialoguePreview' : 'directorRoutePreview';
+          const started = scene.game?.storyDirector?.start(scriptId,{preview:true});
+          if (!started) console.warn('[TOKYO SHIFT] Story Director preview not ready', scriptId);
+        } else if (id === '__chapter08') {
           chooseChapter08Mode(scene);
         } else if (id === '__chapter09') {
           startChapter09(scene,{preview:true});
