@@ -1678,14 +1678,22 @@ export default class FourLaneTestScene extends RaceScene {
       if (outcome.status !== 'NO_EVENT') {
         try {
           const completed = outcome.status === 'CHAMPION' || outcome.status === 'ELIMINATED';
-          const earned = outcome.status === 'CHAMPION' ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
+          const cashBefore = Number(this.registry.get('cash') || 0);
+          // The regular difficulty multiplier applies first.  The Open Circuit
+          // rank commission is then settled once with the official final result.
+          let earned = outcome.status === 'CHAMPION'
+            ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
           const changes = { competitionState: outcome.nextState,
-            cash: Number(this.registry.get('cash') || 0) + earned,
+            cash: cashBefore + earned,
             competitionWins: Number(this.registry.get('competitionWins') || 0) + outcome.competitionWinsDelta };
           if (completed) {
             changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
-              outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex));
+              outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex), earned);
             outcome.summary = changes.proCircuit.lastTournament;
+            if (state.openCircuit) {
+              earned = Number(outcome.summary?.cashPrize || 0);
+              changes.cash = cashBefore + earned;
+            }
             // Return bench-stored NOS equipment only when the saved Open
             // Circuit driver event actually finishes; never lose paid parts.
             const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},state);
@@ -1749,6 +1757,7 @@ export default class FourLaneTestScene extends RaceScene {
             heats.filter(h=>h.won).length,
           rounds:this.proDuel?(this.proDuelState?.rounds?.length||3):3,
           cashPrize:Number(outcome.cashPrize??summary.cashPrize??0),
+          sponsorBonus:summary.sponsorBonus||0,sponsorPercent:summary.sponsorPercent||0,
           points:summary.points||0,rankBefore:summary.rankBefore,
           rankAfter:summary.rankAfter,openCircuit:Boolean(summary.openCircuit),
           statusLabel:this.registry.get('proCircuit')?.calendar?.round>=8?
