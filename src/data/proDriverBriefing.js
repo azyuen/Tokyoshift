@@ -1,5 +1,7 @@
 // R605 — Persistent Open Circuit driver + trophy event briefings.
-import { settleLegacySeasonEvent } from './proSeason.js?v=20261019-r602';
+import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261019-r602';
+import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
+import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
@@ -59,6 +61,8 @@ export function driverBriefingRules(state, fallback = {}) {
     maxPowerKW: Number.isFinite(saved.maxPowerKW) ? saved.maxPowerKW :
       Number.isFinite(fallback.maxPowerKW) ? fallback.maxPowerKW : null,
     noNos: typeof saved.noNos === 'boolean' ? saved.noNos : Boolean(fallback.noNos),
+    stock: typeof saved.stock === 'boolean' ? saved.stock : Boolean(fallback.stock),
+    drivetrain: String(saved.drivetrain || fallback.drivetrain || '').toUpperCase(),
   };
 }
 
@@ -71,6 +75,13 @@ export function driverBriefingEligibility(state, carState = {}, powerKW = 0, own
     problems.push('POWER EXCEEDS ' + rules.maxPowerKW + ' KW LIMIT');
   const nos = Boolean(carState.nosInstalled) || Number(carState.exhaustNosTuning?.nosKit || 0) > 0;
   if (rules.noNos && nos) problems.push('NOS IS PROHIBITED');
+  if (rules.stock) problems.push(...getFactoryStockStatus(carState).reasons);
+  if (rules.drivetrain) {
+    const actual = String(getCarMagazineMeta(getBaseCarId(state?.playerCarId))?.drivetrain || '').toUpperCase();
+    const aliases = {FF:'FWD',FR:'RWD',FWD:'FWD',RWD:'RWD',AWD:'AWD'};
+    if (aliases[actual] !== aliases[rules.drivetrain])
+      problems.push('REQUIRES ' + rules.drivetrain);
+  }
   return { eligible: problems.length === 0, problems, rules };
 }
 
@@ -117,7 +128,13 @@ export function toggleBriefingNos(state = {}) {
   const next = { ...state, exhaustNosTuning: { ...(state.exhaustNosTuning || {}) } };
   if (state.proBriefingNosStash) {
     next.nosInstalled = Boolean(state.proBriefingNosStash.nosInstalled);
-    next.exhaustNosTuning = { ...(state.proBriefingNosStash.exhaustNosTuning || {}) };
+    // Only put the nitrous hardware back. Any exhaust/header downgrades made
+    // afterwards must survive until THEIR own event stash is restored.
+    next.exhaustNosTuning = {
+      ...(state.exhaustNosTuning || {}),
+      nosKit: Number(state.proBriefingNosStash.exhaustNosTuning?.nosKit || 0),
+      nitrousShot: Number(state.proBriefingNosStash.exhaustNosTuning?.nitrousShot || 0),
+    };
     delete next.proBriefingNosStash;
   } else {
     const fitted = Boolean(state.nosInstalled) || Number(state.exhaustNosTuning?.nosKit || 0) > 0;
@@ -146,34 +163,88 @@ export const BRIEFING_POWER_PARTS = Object.freeze([
   Object.freeze({id:'nosKit',group:'exhaustNosTuning',label:'NOS EQUIPMENT'}),
 ]);
 
-export function removeDriverPowerPart(carState = {}, partId) {
-  // NOS must always use its dedicated complete reversible equipment stash.
-  if(partId==='nosKit')return toggleBriefingNos(carState);
-  const part=BRIEFING_POWER_PARTS.find(p=>p.id===partId);
-  if(!part)return carState;
-  const source=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
-    carState.exhaustNosTuning||{};
-  const level=Math.max(0,Math.min(3,Math.round(Number(source[partId]||0))));
-  if(level===0)return carState;
-  const next={...carState,[part.group]:{...source,[partId]:0}};
-  const saved=carState.proBriefingPowerStash||{};
-  const category={...(saved[part.group]||{})};
-  if(!Object.prototype.hasOwnProperty.call(category,partId))category[partId]=level;
-  next.proBriefingPowerStash={...saved,[part.group]:category};
-  if(carState.dyno)next.dyno={...carState.dyno,officialReading:null};
+// Install any owned level from 0 through the level purchased before the
+// professional event. Never create extra upgrades or modify the bought kit.
+export function getDriverPowerPartLevelInfo(carState = {}, partId) {
+  const part = BRIEFING_POWER_PARTS.find(p => p.id === partId);
+  if (!part) return null;
+  const stash = carState.proBriefingPowerStash?.[part.group] || {};
+  const active = part.group === 'tuning'
+    ? carState.tuning || carState.engineTuning || {}
+    : carState.exhaustNosTuning || {};
+  if (partId === 'nosKit') {
+    const nosStash = carState.proBriefingNosStash;
+    const savedKit = nosStash?.exhaustNosTuning || {};
+    const current = nosStash ? 0 : Math.max(
+      Number(active.nosKit || 0), Boolean(carState.nosInstalled) ? 1 : 0
+    );
+    return {
+      current, original: nosStash
+        ? Math.max(Number(savedKit.nosKit || 0), nosStash.nosInstalled ? 1 : 0)
+        : current,
+      stored: Boolean(nosStash),
+    };
+  }
+  const current = Math.max(0, Math.min(3, Math.round(Number(active[partId] || 0))));
+  const stored = Object.prototype.hasOwnProperty.call(stash, partId);
+  const original = stored
+    ? Math.max(0, Math.min(3, Math.round(Number(stash[partId] || 0))))
+    : current;
+  return { current, original, stored };
+}
+
+export function setDriverPowerPartLevel(carState = {}, partId, targetLevel = 0) {
+  const part = BRIEFING_POWER_PARTS.find(p => p.id === partId);
+  const info = getDriverPowerPartLevelInfo(carState, partId);
+  if (!part || !info || !Number.isInteger(targetLevel) ||
+      targetLevel < 0 || targetLevel > info.original) return carState;
+  if (targetLevel === info.current) return carState;
+  if (partId === 'nosKit') {
+    // NOS is regulated as a complete equipment installation rather than an
+    // arbitrary power toggle. Keep the reversible full-kit stash.
+    if (targetLevel !== 0 && targetLevel !== info.original) return carState;
+    return toggleBriefingNos(carState);
+  }
+
+  const source = part.group === 'tuning'
+    ? carState.tuning || carState.engineTuning || {}
+    : carState.exhaustNosTuning || {};
+  const saved = { ...(carState.proBriefingPowerStash || {}) };
+  const category = { ...(saved[part.group] || {}) };
+  if (targetLevel < info.original) category[partId] = info.original;
+  else delete category[partId];
+  if (Object.keys(category).length) saved[part.group] = category;
+  else delete saved[part.group];
+  const next = {
+    ...carState,
+    [part.group]: { ...source, [partId]: targetLevel },
+  };
+  if (Object.keys(saved).length) next.proBriefingPowerStash = saved;
+  else delete next.proBriefingPowerStash;
+  if (carState.dyno) next.dyno = { ...carState.dyno, officialReading: null };
   return next;
 }
 
-// Apply a batch of selected reversible removals as ONE car-state update.
-// Stage every change locally first; the caller persists only the final state.
-export function removeDriverPowerParts(carState = {}, partIds = []) {
-  let next=carState;
-  const unique=new Set(Array.isArray(partIds)?partIds:[]);
-  for(const id of unique){
-    if(!BRIEFING_POWER_PARTS.some(part=>part.id===id))continue;
-    next=removeDriverPowerPart(next,id);
+export function removeDriverPowerPart(carState = {}, partId) {
+  return setDriverPowerPartLevel(carState, partId, 0);
+}
+
+// Batch downgrade requests stage all levels first. Saves/payment remain an
+// explicit one-time transaction handled by CentralTokyoScene.
+export function setDriverPowerPartLevels(carState = {}, requestedLevels = {}) {
+  let next = carState;
+  for (const part of BRIEFING_POWER_PARTS) {
+    if (Object.prototype.hasOwnProperty.call(requestedLevels, part.id))
+      next = setDriverPowerPartLevel(next, part.id, requestedLevels[part.id]);
   }
   return next;
+}
+
+export function removeDriverPowerParts(carState = {}, partIds = []) {
+  const requested = {};
+  for (const id of new Set(Array.isArray(partIds) ? partIds : []))
+    requested[id] = 0;
+  return setDriverPowerPartLevels(carState, requested);
 }
 
 export function restoreDriverPowerParts(carState = {}) {
