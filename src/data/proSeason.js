@@ -591,7 +591,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     const baseCashPrize=t.openCircuit?(t.trophyId?(wins===3?OPEN_CIRCUIT_TROPHY_PRIZE:0):
       [0,15000,30000,70000][wins]):
       Math.floor([0,40000,90000,210000][wins]*(c.crewSeriesWins>0?.65:1));
-    const sponsor=t.openCircuit?getProPrizeWithBonus(baseCashPrize,rankBefore):null;
+    const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
     const cashPrize=sponsor?.totalPrize??baseCashPrize;
     if(wins===3&&!t.openCircuit)c.crewSeriesWins++;
     c.activeCrewEvent=null;
@@ -614,7 +614,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   result.forEach((r,i)=>{table[r.id].entered++;if(!t.openCircuit)table[r.id].seasonPoints+=[20,15,10,5][i];});
   const baseCashPrize=t.openCircuit?t.prizes[place-1]:
     Math.floor(t.prizes[place-1]*(c.crewSeriesWins>0?.65:1));
-  const sponsor=t.openCircuit?getProPrizeWithBonus(baseCashPrize,rankBefore):null;
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
   const cashPrize=sponsor?.totalPrize??baseCashPrize;
   if(place===1&&!t.openCircuit)c.crewSeriesWins++;
   c.activeCrewEvent=null;
@@ -685,7 +685,7 @@ export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null
   // multipliers); never calculate sponsor money from the event's entry fee.
   const baseCashPrize=roundsWon===roundCount?
     Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):0;
-  const sponsor=openCircuit?getProPrizeWithBonus(baseCashPrize,rankBefore):null;
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
   const summary={id,label:trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
