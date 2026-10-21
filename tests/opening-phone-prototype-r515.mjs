@@ -27,7 +27,7 @@ function fakeScene() {
     objects.push(o);return o;
   };
   const events={once(){},off(){}};
-  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}},Loader:{Events:{COMPLETE:'complete'}}};
+  globalThis.Phaser={Textures:{FilterMode:{NEAREST:1}},Loader:{Events:{COMPLETE:'complete'}},Scenes:{Events:{SHUTDOWN:'shutdown'}}};
   const tweens=[];
   const scene={
     add:Object.fromEntries(['rectangle','circle','text','image','container','graphics']
