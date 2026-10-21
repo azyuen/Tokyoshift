@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/data/proCircuit.js'
       - 'src/data/proSeason.js'
+      - 'src/data/proTournament.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/ui/ProSeasonPanel.js'
       - 'src/ui/ProVictoryResults.js'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'src/data/proCircuit.js'
       - 'src/data/proSeason.js'
+      - 'src/data/proTournament.js'
       - 'src/scenes/FourLaneTestScene.js'
       - 'src/ui/ProSeasonPanel.js'
       - 'src/ui/ProVictoryResults.js'
@@ -32,6 +34,7 @@ jobs:
         run: |
           node --check src/data/proCircuit.js
           node --check src/data/proSeason.js
+          node --check src/data/proTournament.js
           node --check src/scenes/FourLaneTestScene.js
           node --check src/ui/ProSeasonPanel.js
           node --check src/ui/ProVictoryResults.js
