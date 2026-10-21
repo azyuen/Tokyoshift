@@ -1679,8 +1679,9 @@ export default class FourLaneTestScene extends RaceScene {
         try {
           const completed = outcome.status === 'CHAMPION' || outcome.status === 'ELIMINATED';
           const cashBefore = Number(this.registry.get('cash') || 0);
-          // The regular difficulty multiplier applies first.  The Open Circuit
-          // rank commission is then settled once with the official final result.
+          // The regular difficulty multiplier applies first.  The shared
+          // Pro Rank sponsor commission is then settled with the event result
+          // for either Open Circuit or official Season cash prizes.
           let earned = outcome.status === 'CHAMPION'
             ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
           const changes = { competitionState: outcome.nextState,
@@ -1690,10 +1691,8 @@ export default class FourLaneTestScene extends RaceScene {
             changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
               outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex), earned);
             outcome.summary = changes.proCircuit.lastTournament;
-            if (state.openCircuit) {
-              earned = Number(outcome.summary?.cashPrize || 0);
-              changes.cash = cashBefore + earned;
-            }
+            earned = Number(outcome.summary?.cashPrize || 0);
+            changes.cash = cashBefore + earned;
             // Return bench-stored NOS equipment only when the saved Open
             // Circuit driver event actually finishes; never lose paid parts.
             const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},state);
