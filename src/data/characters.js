@@ -1,4 +1,4 @@
-export const CHARACTER_ASSET_VERSION = '20261013-r494';
+export const CHARACTER_ASSET_VERSION = '20261022-pro-racing';
 
 export function getCharacterAssetUrl(path) {
   if (!path) return null;
@@ -2277,7 +2277,55 @@ export function getCharacterVisualForContext(
   })?.visual || null;
 }
 
+// Drag Strip Complex only. Street meets, story and workshop scenes retain the
+// canonical street character visuals and texture keys.
+export const PRO_RACING_CHARACTER_STEMS = Object.freeze({
+  renMizuno: 'ren_mizuno',
+  ayaKurose: 'aya_kurose',
+  kaitoFujimori: 'kaito_fujimori',
+  haruTachibana: 'haru_tachibana',
+  reinaShibata: 'reina_shibata',
+  rikuAkamine: 'riku_akamine',
+  emiKanzaki: 'emi_kanzaki',
+  keiNomura: 'male_sub',
+  amiOkada: 'female_sub',
+  arkonDen: 'arkon_den',
+});
+
+export function getProCircuitGenericDriverAsset(index) {
+  const number = Number(index);
+  if (!Number.isInteger(number) || number < 1 || number > 4) return null;
+  const filename = 'driver_0' + number + '.png';
+  return {
+    key: 'proCircuitGenericDriver0' + number,
+    path: 'assets/Characters/Pro/' + filename,
+    pose: 'idle',
+    fallback: false,
+  };
+}
+
+export function getProCircuitCharacterAsset(characterId, pose = 'idle', options = {}) {
+  // Rival replacement is resolved first: the player's chosen protagonist
+  // never becomes their own rival, even at the professional circuit.
+  const character = getCharacterForContext(characterId, options);
+  const stem = PRO_RACING_CHARACTER_STEMS[character?.id];
+  if (!stem) return null;
+
+  const requested = String(pose || 'idle').trim().toLowerCase() || 'idle';
+  const resolved = requested === 'win' || requested === 'loss' ? requested : 'idle';
+  return {
+    key: 'proCircuitCharacter_' + stem + '_' + resolved,
+    path: 'assets/Characters/Pro/' + stem + '_' + resolved + '.png',
+    pose: resolved,
+    fallback: requested !== resolved,
+  };
+}
+
 export function getCharacterVisualAsset(characterId, pose = 'idle', options = {}) {
+  if (options?.proCircuit) {
+    const proAsset = getProCircuitCharacterAsset(characterId, pose, options);
+    if (proAsset) return proAsset;
+  }
   const visual = getCharacterVisualForContext(characterId, options);
   if (!visual) return null;
 
