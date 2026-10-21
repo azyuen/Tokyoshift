@@ -2,6 +2,7 @@
 import { settleLegacySeasonEvent, getFactoryStockStatus } from './proSeason.js?v=20261019-r602';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
 import { getBaseCarId } from './carOwnership.js?v=20261011-r479';
+import { getExhaustNosTuning } from './secondaryTuning.js?v=20260926-r211';
 import { normaliseProCircuitState } from './proCircuit.js?v=20261018-r584';
 // No races, fee settlement, physics or crew competition rules are changed here.
 export function isOpenDriverBriefing(state) {
@@ -171,7 +172,7 @@ export function getDriverPowerPartLevelInfo(carState = {}, partId) {
   const stash = carState.proBriefingPowerStash?.[part.group] || {};
   const active = part.group === 'tuning'
     ? carState.tuning || carState.engineTuning || {}
-    : carState.exhaustNosTuning || {};
+    : getExhaustNosTuning(carState);
   if (partId === 'nosKit') {
     const nosStash = carState.proBriefingNosStash;
     const savedKit = nosStash?.exhaustNosTuning || {};
