@@ -27,8 +27,8 @@ const GINZA_CHAT_LAYOUT = Object.freeze({
 export function createGinzaBanterHud(scene) {
   const sayakaVisual = characters.sayakaFujieda.visual;
   const arkonVisual = characters.arkonDen.visual;
-  const sayakaKey = sayakaVisual.poseAssets.ginzaDress.key;
-  const arkonKey = arkonVisual.poseAssets.ginzaSuit.key;
+  const sayakaKey = sayakaVisual.poseAssets.devIdle.key;
+  const arkonKey = arkonVisual.poseAssets.devIdle.key;
   if (!scene.textures.exists(sayakaKey) || !scene.textures.exists(arkonKey)) {
     return null;
   }
