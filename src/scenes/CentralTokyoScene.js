@@ -330,10 +330,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
         .slice(0, 3);
 
       migratedRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true });
+        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true, proCircuit: true });
       });
       genericRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal');
+        queued += this.queueCharacterPose(id, 'normal', { proCircuit: true });
       });
       Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
@@ -621,10 +621,12 @@ export default class CentralTokyoScene extends Phaser.Scene {
     return obj;
   }
 
-  queueCharacterPose(characterId, pose = 'normal', { rivalContext = false } = {}) {
+  queueCharacterPose(characterId, pose = 'normal', { rivalContext = false, proCircuit = false } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
       rivalContext,
       playerCharacterId: this.registry.get('playerCharacterId') || '',
+      proCircuit,
+      proCircuit,
     });
     if (!asset?.key || !asset?.path || this.textures.exists(asset.key)) return 0;
     this.load.image(asset.key, getCharacterAssetUrl(asset.path));
@@ -643,6 +645,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     shadowOffsetX = 0,
     shadowOffsetY = 0,
     rivalContext = false,
+    proCircuit = this.activeLocationId === 'tokyoDragComplex',
   } = {}) {
     const asset = getCharacterVisualAsset(characterId, pose, {
       rivalContext,
