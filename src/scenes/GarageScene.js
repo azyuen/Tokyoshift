@@ -48,6 +48,10 @@ import { saveSessionState, createStarterCarState, recordCarAcquisition } from '.
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261021-r627';
+import {
+  grantEthanCompensationOnce, ethanCompensationCutscene,
+  ETHAN_GIFT_PENDING_KEY,
+} from '../data/specialProfileRewards.js?v=20261022-r638';
 import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
@@ -506,6 +510,9 @@ export default class GarageScene extends Phaser.Scene {
       this.registry.set('devMode', true);
       saveSessionState(this.registry);
     }
+    // Apply Ethan's compensation BEFORE rendering cash, then persist the paid
+    // marker before opening the manga. Re-entering Garage cannot pay again.
+    if (grantEthanCompensationOnce(this.registry)) saveSessionState(this.registry);
 
     this.ownedCarIds = (this.registry.get('ownedCarIds') || []).filter(id => cars[id]);
     this.activeWorkshopId = this.crewMode
@@ -713,6 +720,18 @@ export default class GarageScene extends Phaser.Scene {
           }
         },300);
       } else this.time.delayedCall(260, () => {
+        if (this.registry.get(ETHAN_GIFT_PENDING_KEY)) {
+          const finishGift = () => {
+            this.registry.set(ETHAN_GIFT_PENDING_KEY, false);
+            saveSessionState(this.registry);
+            this.continueGarageStoryFlow();
+          };
+          const scene = playMangaCutscene(this, ethanCompensationCutscene(), {
+            backgroundStyle: 'wash',
+            onComplete: finishGift,
+          });
+          if (scene?.played) return;
+        }
         if (!this.showPendingWorkshopCutscene()) {
           const chapter = this.registry.get('openingChapter');
           if (chapter === 'home' || chapter === 'magazine') {
