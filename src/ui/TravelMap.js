@@ -1121,6 +1121,10 @@ export function showTravelMap(scene, options = {}) {
     regionLockText
       .setText(openingTrainMode
         ? ''
+        : isGinzaLoanActive(scene.registry) &&
+          selectedRegionId === 'CENTRAL_TOKYO' &&
+          location?.id === 'ginzaMotorGallery'
+          ? 'RETURN TO GINZA // FREE'
         : !regionOpen
           ? crewRegionBlocked
             ? 'CREW CAR // UNAVAILABLE'
