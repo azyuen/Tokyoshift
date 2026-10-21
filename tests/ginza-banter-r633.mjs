@@ -11,7 +11,7 @@ const source = name => readFileSync(new URL('../' + name, import.meta.url), 'utf
 const tick = (state, elapsed, gear = 1, opts = {}) =>
   advanceGinzaBanter(state, { elapsed, gear, running: true, ...opts }, () => 0);
 
-test('Arkon's humour is varied and unrelated to ideal shift/RPM instructions', () => {
+test("Arkon's humour is varied and unrelated to ideal shift/RPM instructions", () => {
   assert.ok(GINZA_BANTER_EXCHANGES.length >= 12);
   for (const pair of GINZA_BANTER_EXCHANGES) {
     assert.ok(pair.sayaka && pair.arkon);
