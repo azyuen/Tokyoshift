@@ -13,7 +13,7 @@ import RaceHUD from '../ui/RaceHUD.js?v=20261010-r458';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
 import { playRaceMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { cars } from '../data/cars.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl } from '../data/characters.js?v=20261010-r459';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset } from '../data/characters.js?v=20261010-r459';
 import { getBuiltCar } from '../vehicles/VehiclePerformance.js?v=20261008-r428';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -270,11 +270,12 @@ export default class FourLaneTestScene extends RaceScene {
     loadImage('shifterNeutral', 'assets/Controls/shifter_neutral.png');
     loadImage('shifterDown', 'assets/Controls/shifter_down.png');
     if (this.proCup || this.proDuel || this.champMode) {
-      const visual = characters[this.registry.get('playerCharacterId')]?.visual;
-      if (visual) {
-        loadImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
-        loadImage(visual.winSpriteKey, getCharacterAssetUrl(visual.winPath));
-        loadImage(visual.lossSpriteKey, getCharacterAssetUrl(visual.lossPath));
+      const playerId = this.registry.get('playerCharacterId') || 'renMizuno';
+      for (const pose of ['idle', 'win', 'loss']) {
+        const asset = getCharacterVisualAsset(playerId, pose, { proCircuit: true });
+        if (asset?.key && asset.path) {
+          loadImage(asset.key, getCharacterAssetUrl(asset.path));
+        }
       }
     }
     // Load ONLY this heat's complete matching crowd/day-night set.
@@ -1448,6 +1449,7 @@ export default class FourLaneTestScene extends RaceScene {
       x: 283, y: 345, frameWidth: 455, frameHeight: 460,
       side: 'left', depth: depth + 3, flipInward: true, mask: false,
       profileOverride: { scale: 1.10, offsetX: 0, offsetY: 22 },
+      proCircuit: true,
     });
     const maskShape = this.make.graphics({ add: false });
     maskShape.fillStyle(0xffffff, 1).fillPoints(points, true);
