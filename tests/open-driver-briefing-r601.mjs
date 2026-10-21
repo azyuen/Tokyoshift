@@ -34,7 +34,8 @@ test('R601 opponent card is compact and positions real helmeted portrait above m
   assert.match(ui,/poly\(52,643,654,164/);
   assert.match(ui,/display\(89,652,'NEXT OPPONENT',24/);
   assert.match(ui,/const frameX=74,frameY=683,frameW=129,frameH=106,skew=16/);
-  assert.match(ui,/driver_0'\+helmetIndex\+'\.png/);
+  assert.match(ui,/getProCircuitGenericDriverAsset\(helmetIndex\)/);
+  assert.doesNotMatch(ui,/assets\/Characters\/Central\/driver_0/);
   assert.match(ui,/image\.setMask\(shape\.createGeometryMask\(\)\)/);
   assert.match(ui,/safeCarPreview\(round\.carId,545,743,211,225/);
   assert.doesNotMatch(ui,/OPPONENT '\+stageNo\+' OF '/);
