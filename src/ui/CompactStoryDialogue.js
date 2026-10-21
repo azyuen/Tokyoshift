@@ -1,7 +1,7 @@
 // General-purpose compact portrait dialogue: race HUD and normal-scene overlay.
 // The Arkon/Sayaka Ginza banter remains untouched and uses its existing timing.
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
-import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261017-r572';
+import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261022-r640';
 import { COMPACT_DIALOGUE_LAYOUTS, COMPACT_DIALOGUE_SHIFT_X } from './CompactDialogueLayout.js?v=20261022-r640';
 
 const LAYOUTS = COMPACT_DIALOGUE_LAYOUTS;
