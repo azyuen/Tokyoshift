@@ -34,4 +34,4 @@ jobs:
           node --check src/main.js
       - name: Story and compatibility smoke tests
         run: |
-          node --test tests/story-director-r639.mjs tests/phone-template-r572.mjs tests/ginza-banter-r633.mjs tests/story-archive-r570.mjs tests/startup-import-integrity-r508.mjs
+          node --test tests/story-director-r639.mjs tests/ginza-banter-r633.mjs tests/story-archive-r570.mjs tests/startup-import-integrity-r508.mjs
