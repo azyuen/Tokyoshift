@@ -329,21 +329,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     if (location?.kind === 'proDrag') {
       const playerId = this.registry.get('playerCharacterId');
-      const migratedRivals = getConqueredMainRivalIds(this.registry);
-      const genericRivals = genericRivalCharacterOrder
-        .filter(id => id !== playerId && characters[id] && !migratedRivals.includes(id))
-        .sort((a, b) =>
-          Number(characters[b]?.skill?.rating || 3) -
-          Number(characters[a]?.skill?.rating || 3)
-        )
-        .slice(0, 3);
-
-      migratedRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal', { rivalContext: true, proCircuit: true });
-      });
-      genericRivals.forEach(id => {
-        queued += this.queueCharacterPose(id, 'normal', { proCircuit: true });
-      });
+      // No ambient rival portraits on the Drag Complex main page.
       Object.values(CENTRAL_TOKYO_CHARACTER_IDS.dragComplex).forEach(id => {
         queued += this.queueCharacterPose(id, 'normal');
       });
@@ -3097,31 +3083,8 @@ export default class CentralTokyoScene extends Phaser.Scene {
       carObjects.forEach(obj => this.addContent(obj));
     }
 
-    const migratedRivals = getConqueredMainRivalIds(this.registry);
-    if (migratedRivals.length) {
-      // They are ambient spectators, not an explanatory UI item. Set them
-      // one full sprite-height lower, across the width with deterministic
-      // irregular spacing/grounding so the group looks naturally assembled.
-      const count = migratedRivals.length;
-      const step = Math.min(146, 850 / Math.max(1, count - 1));
-      const centreX = STAGE.x + STAGE.w / 2;
-      const xJitter = [-19, 13, -8, 24, -16, 9, -11];
-      const feetJitter = [0, -12, 8, 15, -7, 10, -3];
-      migratedRivals.forEach((characterId, index) => {
-        this.addVenueCharacter({
-          characterId,
-          pose: 'normal',
-          x: centreX + (index - (count - 1) / 2) * step +
-            xJitter[index % xJitter.length],
-          feetY: STAGE.y + 427 + feetJitter[index % feetJitter.length],
-          height: 82,
-          flip: index % 2 === 1,
-          depth: 6,
-          shadow: false,
-          rivalContext: true,
-        });
-      });
-    }
+    // R638: Remove ambient back-row rivals completely. Keep authored venue
+    // staff, grandstands, player car and event controls unchanged.
 
     const dragStaff = CENTRAL_TOKYO_CHARACTER_IDS.dragComplex;
     [
