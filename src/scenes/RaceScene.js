@@ -230,6 +230,18 @@ export default class RaceScene extends Phaser.Scene {
     // The temporary race driver can be a recruited crew member, but the avatar
     // that must never appear as an opponent is the active profile's character.
     queueCharacterVisual(characters[playerId]?.visual || null);
+    if (this.showArkonResultPair) {
+      // Preload both possible result reactions for ALL Arkon street/elite runs,
+      // not just races launched while the Ginza loan is active.
+      for (const [id, pose] of [
+        ['arkonDen', 'ginzaSuit'],
+        ['sayakaFujieda', 'devScowl'],
+        ['sayakaFujieda', 'ginzaHappy'],
+      ]) {
+        const asset = characters[id].visual.poseAssets[pose];
+        queueImage(asset.key, getCharacterAssetUrl(asset.path));
+      }
+    }
     queueCharacterVisual(getCharacterVisualForContext(opponentId, {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
@@ -302,6 +314,10 @@ export default class RaceScene extends Phaser.Scene {
         : playableCharacterOrder.includes(storedPlayerCharacterId)
           ? storedPlayerCharacterId
           : playableCharacterOrder[0];
+    // The owner cameo follows the actual profile driver, not a recruited
+    // teammate who happens to be running a crew heat for the same account.
+    this.showArkonResultPair = isNamedArkonDen(this.registry) &&
+      this.playerCharacterId === storedPlayerCharacterId;
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
@@ -405,13 +421,15 @@ export default class RaceScene extends Phaser.Scene {
     // only the named Arkon profile sees the cosmetic passenger banter.
     this.hasGinzaBanter = this.isGinzaDemoRace && isNamedArkonDen(this.registry);
     if (this.isGinzaDemoRace) {
-      // Street cash races and coupons are legitimate collector endgame fun.
-      // Loans still cannot enter championships or be wagered for pink slips.
-      this.raceMode = 'SINGLE';
-      this.raceDeal = 'BET';
-      // Keep the ordinary Meet cash stake and payouts; never wager the loan
-      // vehicle itself.
-      this.raceStake = Math.max(0, Number(this.registry.get('selectedRaceStake') || 0));
+      // Street Showdowns and Skytree Elite are valid with a Ginza loan.
+      // Preserve their COMPETITION / OSHIAGE_ELITE modes, entry fees, prize
+      // settlement and multi-heat continuity; never permit pink-slip wagering
+      // or unrelated team/professional championships with a collector loan.
+      if (!['COMPETITION', 'OSHIAGE_ELITE'].includes(this.raceMode)) {
+        this.raceMode = 'SINGLE';
+        this.raceDeal = 'BET';
+        this.raceStake = Math.max(0, Number(this.registry.get('selectedRaceStake') || 0));
+      }
     }
     const storedMeetOffer = this.registry.get('selectedRaceMeetOffer');
     const storedBuildState = this.registry.get('selectedOpponentBuildState') || storedMeetOffer?.opponentBuildState;
@@ -3139,10 +3157,22 @@ export default class RaceScene extends Phaser.Scene {
     playerFrame.lineStyle(5, ink, 0.92);
     playerFrame.strokePoints(playerPanelPoints, true);
 
+    const pairedArkonResult = this.showArkonResultPair && !chapter08Race;
+    // An owner-only comic pairing inside the ONE existing player polygon:
+    // Sayaka reacts behind Arkon, who always keeps his charcoal suit.
+    const sayakaReactionProfile = pairedArkonResult
+      ? createCharacterProfile(this, {
+        characterId: 'sayakaFujieda',
+        pose: playerWon ? 'devScowl' : 'ginzaHappy',
+        x: 1189, y: 262, frameWidth: 318, frameHeight: 360,
+        side: 'left', depth: depth + 6.4,
+        profileOverride: { scale: 0.85, offsetX: -7, offsetY: 38 },
+        mask: false,
+      }) : null;
     const playerProfile = createCharacterProfile(this, {
-      characterId: this.playerCharacterId,
-      pose: playerWon ? 'win' : 'loss',
-      x: 1310,
+      characterId: pairedArkonResult ? 'arkonDen' : this.playerCharacterId,
+      pose: pairedArkonResult ? 'ginzaSuit' : playerWon ? 'win' : 'loss',
+      x: pairedArkonResult ? 1385 : 1310,
       y: 252,
       frameWidth: 470,
       frameHeight: 390,
@@ -3150,9 +3180,11 @@ export default class RaceScene extends Phaser.Scene {
       depth: depth + 7,
       flipInward: true,
       mask: false,
-      profileOverride: playerWon
-        ? { scale: 1.00, offsetX: 0, offsetY: 18 }
-        : { scale: 1.04, offsetX: 0, offsetY: 20 },
+      profileOverride: pairedArkonResult
+        ? { scale: 0.98, offsetX: 14, offsetY: 24 }
+        : playerWon
+          ? { scale: 1.00, offsetX: 0, offsetY: 18 }
+          : { scale: 1.04, offsetX: 0, offsetY: 20 },
     });
 
     const playerMaskShape = this.make.graphics({ add: false });
@@ -3160,6 +3192,7 @@ export default class RaceScene extends Phaser.Scene {
     playerMaskShape.fillPoints(playerPanelPoints, true);
     const playerMask = playerMaskShape.createGeometryMask();
     playerProfile?.image?.setMask(playerMask);
+    sayakaReactionProfile?.image?.setMask(playerMask);
 
     const rivalPanelPoints = [
       new Phaser.Geom.Point(818, 126),
@@ -3200,6 +3233,7 @@ export default class RaceScene extends Phaser.Scene {
     }
 
     const playerPortraitImage = playerProfile?.image || null;
+    const sayakaReactionImage = sayakaReactionProfile?.image || null;
     const rivalPortraitImage = rivalProfile?.image || null;
 
     const playerNameText = this.add.text(1515, 452, String(playerDisplayName || 'YOU').toUpperCase(), {
@@ -3392,6 +3426,17 @@ export default class RaceScene extends Phaser.Scene {
         alpha: pinkSlipShadeTargetAlpha,
         duration: 155,
         ease: 'Quad.Out',
+      });
+    }
+
+    if (sayakaReactionImage) {
+      const targetX = sayakaReactionImage.x;
+      sayakaReactionImage.x += 195;
+      sayakaReactionImage.setAlpha(0);
+      this.tweens.add({
+        targets: sayakaReactionImage,
+        x: targetX, alpha: 1, duration: 185,
+        delay: pinkRevealDelay, ease: 'Expo.Out',
       });
     }
 
