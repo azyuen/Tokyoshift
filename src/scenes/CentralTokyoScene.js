@@ -2760,7 +2760,10 @@ export default class CentralTokyoScene extends Phaser.Scene {
             this.ginzaOwnerDressed = false;
             this.renderLocation(this.activeLocationId);
           });
-        } else this.ginzaScene('vaultDrive', {}, () => this.startGinzaTestDrive(listing));
+        } else this.ginzaScene(
+          isNamedArkonDen(this.registry) ? 'vaultDriveArkon' : 'vaultDrive',
+          {}, () => this.startGinzaTestDrive(listing)
+        );
       });
     }
 
