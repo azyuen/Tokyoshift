@@ -16,7 +16,8 @@ import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=202610
 import { getStreetPaintPalette } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
+import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
@@ -1657,7 +1658,7 @@ export default class OshiageScene extends Phaser.Scene {
     });
   }
   travelTo(locationId, cost = 0) {
-    if (this.paintBusy) return;
+    if (this.paintBusy || !canVisitDuringGinzaLoan(this.registry, locationId)) return;
     const target = getTravelLocation(locationId);
     if (!target) return;
     // Crew travel is limited to street regions, Driving School and Custom
@@ -1687,6 +1688,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.scene.start('MeetScene');
   }
   returnHome(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    if (isGinzaLoanActive(this.registry)) return;
     const cash = Number(this.registry.get('cash') || 0);
     const price = Math.max(0, Number(cost || 0));
     if (cash < price || this.paintBusy) return;
