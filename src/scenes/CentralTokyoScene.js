@@ -59,7 +59,8 @@ import {
   recordCarDeparture,
 } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261017-r573';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
+import { isGinzaLoanActive, canVisitDuringGinzaLoan, ginzaRoomDuringLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r574';
 import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import {
@@ -159,11 +160,14 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.promptProCrewForfeit = Boolean(data?.promptProCrewForfeit);
     this.requestedLocationId = data?.locationId ||
       (this.chapter08Arrival ? 'ginzaMotorGallery' : null);
-    this.ginzaRoom = Math.max(1, Math.min(3, Number(data?.ginzaRoom || 1)));
-    this.ginzaVaultIndex = 0;
-    this.ginzaStockBody = false;
+    const activeLoan = this.registry.get('ginzaTestDrive');
+    this.ginzaRoom = ginzaRoomDuringLoan(this.registry, data?.ginzaRoom || 1);
+    const loanVariant = String(activeLoan?.carId || '').replace(/^ginzaDemo_/, '');
+    const loanIndex = GINZA_VAULT_CARS.findIndex(car => car.decal === loanVariant || car.stock === loanVariant);
+    this.ginzaVaultIndex = loanIndex < 0 ? 0 : loanIndex;
+    this.ginzaStockBody = GINZA_VAULT_CARS[this.ginzaVaultIndex]?.stock === loanVariant;
     this.ginzaRotationKey = -1;
-    this.ginzaOwnerDressed = false;
+    this.ginzaOwnerDressed = isGinzaLoanActive(this.registry) && isNamedArkonDen(this.registry);
     const requestedRoom = String(data?.autoMarketRoom || 'new');
     this.autoMarketRoom = ['new', 'used'].includes(requestedRoom)
       ? requestedRoom
@@ -351,9 +355,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     this.scale.resize(1560, 840);
     playMusic('meet');
 
-    const savedLocation =
-      this.requestedLocationId ||
-      CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
+    const requestedLocation = this.requestedLocationId || CENTRAL_TOKYO_LOCATIONS.autoMarket.id;
+    const savedLocation = canVisitDuringGinzaLoan(this.registry, requestedLocation)
+      ? requestedLocation : CENTRAL_TOKYO_LOCATIONS.ginza.id;
 
     this.activeLocationId = isCentralTokyoLocationUnlocked(this.registry, savedLocation)
       ? savedLocation
@@ -1019,6 +1023,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   travelToLocation(locationId, cost = 0) {
+    if (!canVisitDuringGinzaLoan(this.registry, locationId)) return;
     const target = getTravelLocation(locationId);
     if (!target) return;
 
@@ -1093,6 +1098,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', cost = 500) {
+    if (isGinzaLoanActive(this.registry)) return;
     const cash = Number(this.registry.get('cash') || 0);
     const requested = Math.max(0, Number(cost || 0));
     if (cash < requested) return;
@@ -2466,6 +2472,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   enterGinzaRoom(room) {
+    if (isGinzaLoanActive(this.registry)) return;
     const target = Phaser.Math.Clamp(Number(room) || 1, 1, 3);
     if (target === this.ginzaRoom || sceneCutsceneActive(this) || this.ginzaCarFading) return;
     if (target === 3) {
@@ -2551,6 +2558,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
   }
 
   drawGinza() {
+    if (isGinzaLoanActive(this.registry)) this.ginzaRoom = 3;
     this.ginzaRotationKey = Math.floor(Date.now() / GINZA_ROTATION_MS);
     const storyShowroom = this.chapter08Arrival && this.ginzaRoom === 1 &&
       (isChapter08DevReplay(this.registry) ||
@@ -2722,40 +2730,50 @@ export default class CentralTokyoScene extends Phaser.Scene {
           fontFamily: PIXEL_FONT, fontSize: '9px', color: '#e6fffb'
         }).setOrigin(0.5).setDepth(34));
       demo.on('pointerdown', () => {
-        if (driving) this.endGinzaTestDrive();
-        else this.ginzaScene('vaultDrive', {}, () => this.startGinzaTestDrive(listing));
+        if (driving) {
+          const owner = isNamedArkonDen(this.registry);
+          this.ginzaScene(owner ? 'vaultReturnArkon' : 'vaultReturn', {}, () => {
+            this.endGinzaTestDrive(false);
+            this.ginzaRoom = 1;
+            this.ginzaOwnerDressed = false;
+            this.renderLocation(this.activeLocationId);
+          });
+        } else this.ginzaScene('vaultDrive', {}, () => this.startGinzaTestDrive(listing));
       });
     }
 
     // Price is printed once above; BUY stays actionable even if cash is short.
     const buyY = SIDE.y + (vault ? 567 : 515);
+    const loanPurchaseLocked = isGinzaLoanActive(this.registry);
     const buy = this.addContent(this.add.rectangle(
-      centerX, buyY, width, 45, 0x2b1422, 1
-    ).setStrokeStyle(2, 0xff7cac, 1).setDepth(33)
-      .setInteractive({ useHandCursor: true }));
+      centerX, buyY, width, 45, loanPurchaseLocked ? 0x16191e : 0x2b1422, 1
+    ).setStrokeStyle(2, loanPurchaseLocked ? 0x4b545d : 0xff7cac, 1).setDepth(33));
+    if (!loanPurchaseLocked) buy.setInteractive({ useHandCursor: true });
     this.addContent(this.add.text(centerX, buyY,
-      owned ? 'ALREADY OWNED // DETAILS' : 'BUY THIS CAR', {
-        fontFamily: PIXEL_FONT, fontSize: '9px', color: '#ffe5ef'
+      loanPurchaseLocked ? 'RETURN LOAN BEFORE PURCHASE' :
+        owned ? 'ALREADY OWNED // DETAILS' : 'BUY THIS CAR', {
+        fontFamily: PIXEL_FONT, fontSize: '9px', color: loanPurchaseLocked ? '#83939c' : '#ffe5ef'
       }).setOrigin(0.5).setDepth(34));
-    buy.on('pointerdown', () => this.showGinzaPurchase(listing));
+    if (!loanPurchaseLocked) buy.on('pointerdown', () => this.showGinzaPurchase(listing));
 
     if (vault) {
       // The only extra side-panel navigation: straight back to Room 1.
       const backY = SIDE.y + 623;
+      const loanActive = isGinzaLoanActive(this.registry);
       const back = this.addContent(this.add.rectangle(
-        centerX, backY, width, 40, 0x102138, 1
-      ).setStrokeStyle(2, 0x557eae, 1).setDepth(33)
-        .setInteractive({ useHandCursor: true }));
+        centerX, backY, width, 40, loanActive ? 0x16191e : 0x102138, 1
+      ).setStrokeStyle(2, loanActive ? 0x4b545d : 0x557eae, 1).setDepth(33));
+      if (!loanActive) back.setInteractive({ useHandCursor: true });
       this.addContent(this.add.text(centerX, backY,
-        'GO BACK // MOTOR GALLERY', {
-          fontFamily: PIXEL_FONT, fontSize: '8px', color: '#eef8ff'
+        loanActive ? 'RETURN LOAN TO LEAVE VAULT' : 'GO BACK // MOTOR GALLERY', {
+          fontFamily: PIXEL_FONT, fontSize: '8px', color: loanActive ? '#83939c' : '#eef8ff'
         }).setOrigin(0.5).setDepth(34));
-      back.on('pointerdown', () => this.enterGinzaRoom(1));
+      if (!loanActive) back.on('pointerdown', () => this.enterGinzaRoom(1));
     }
   }
 
   showGinzaPurchase(listing, viewOnly = false) {
-    if (sceneCutsceneActive(this) || !listing) return;
+    if (isGinzaLoanActive(this.registry) || sceneCutsceneActive(this) || !listing) return;
     // The car itself selects it and reveals details without forcing dialogue.
     if (viewOnly) return;
     const carName = cars[listing.carId]?.shortName || 'collector';
@@ -3070,7 +3088,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
           pose: 'normal',
           x: centreX + (index - (count - 1) / 2) * step +
             xJitter[index % xJitter.length],
-          feetY: STAGE.y + 372 + feetJitter[index % feetJitter.length],
+          feetY: STAGE.y + 427 + feetJitter[index % feetJitter.length],
           height: 82,
           flip: index % 2 === 1,
           depth: 6,
