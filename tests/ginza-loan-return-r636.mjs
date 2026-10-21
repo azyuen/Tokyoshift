@@ -69,7 +69,7 @@ test('vault stays locked during loan, shows correct vehicle and ends only on cut
   assert.match(scene, /this\.endGinzaTestDrive\(false\);\s*this\.ginzaRoom = 1;/);
   assert.match(scene, /this\.registry\.set\('selectedCarId', restore\)/);
   assert.match(scene, /this\.registry\.set\('ginzaTestDrive', null\)/);
-  assert.match(scene, /feetY: STAGE\.y \+ 427 \+ feetJitter/);
+  assert.doesNotMatch(scene.slice(scene.indexOf('  drawDragComplex() {'),scene.indexOf('  drawDragSide(',scene.indexOf('  drawDragComplex() {'))), /feetJitter|migratedRivals/);
 });
 
 test('the return cutscene uses matching evening outfits for Sayaka and Arkon', () => {
