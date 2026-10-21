@@ -63,7 +63,7 @@ test('R606 exact Dyno control categories, art, values, activation and selection'
 
 test('R606 NOS is among larger removable parts and survives reversible removal',()=>{
  assert.ok(BRIEFING_POWER_PARTS.some(p=>p.id==='nosKit'&&p.label==='NOS EQUIPMENT'));
- assert.match(ui,/fontFamily:PIXEL,fontSize:'14px'/);
+ assert.match(ui,/OWNED L/);
  const state={nosInstalled:true,exhaustNosTuning:{
   nosKit:2,nitrousShot:3,exhaust:2},tuning:{ecu:3,turbo:1}};
  const removed=removeDriverPowerPart(state,'nosKit');
