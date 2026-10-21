@@ -527,6 +527,7 @@ function draw(s,state,options){
     const requestedLevels={};
     let previewState=carState;
     let rows=[];
+    let partPage=0;
     const controls=modalBtn(830,730,266,'APPLY LEVELS // 0',()=>{
       if(!Object.keys(requestedLevels).length)return;
       // One atomic car-state change: unpaid previews stay scene-local.
@@ -544,19 +545,43 @@ function draw(s,state,options){
       rows.forEach(obj=>{try{obj.destroy();}catch(_){}});
       rows=[];
       const rowAdd=obj=>{popupAdd(obj);rows.push(obj);return obj;};
-      BRIEFING_POWER_PARTS.forEach((part,i)=>{
+      // Two tidy pages fit all 15 technical parts without crowding the popup:
+      // engine/exhaust/NOS first, drivetrain/chassis second.
+      ['ENGINE + NOS','GRIP + WEIGHT'].forEach((label,index)=>{
+        const tx=index===0?636:1034;
+        const active=index===partPage;
+        const hit=rowAdd(s.add.rectangle(tx,283,355,25,
+          active?0x286e78:0x112638,.98)
+          .setStrokeStyle(2,active?0x9aefed:0x477088).setDepth(274)
+          .setInteractive({useHandCursor:true}));
+        rowAdd(s.add.text(tx,283,label,{
+          fontFamily:PIXEL,fontSize:'10px',
+          color:active?'#ffffff':'#b5c8d5',
+        }).setOrigin(.5).setDepth(275));
+        hit.on('pointerdown',()=>{
+          if(partPage===index)return;
+          partPage=index;
+          redraw();
+        });
+      });
+      const parts=partPage===0
+        ?BRIEFING_POWER_PARTS.slice(0,9)
+        :BRIEFING_POWER_PARTS.slice(9);
+      const firstColumnSize=partPage===0?5:3;
+      parts.forEach((part,i)=>{
         const info=getDriverPowerPartLevelInfo(previewState,part.id);
         const owned=getDriverPowerPartLevelInfo(carState,part.id);
         const max=owned?.original||0;
         const current=info?.current||0;
-        const x=i<5?610:1030, y=303+(i%5)*76;
-        rowAdd(s.add.rectangle(x,y,390,70,0x0c2132,.94)
+        const x=i<firstColumnSize?610:1030;
+        const y=324+(i%firstColumnSize)*70;
+        rowAdd(s.add.rectangle(x,y,390,64,0x0c2132,.94)
           .setStrokeStyle(1,max>0?0x40718b:0x465360,.8).setDepth(273));
         const chosen=Object.prototype.hasOwnProperty.call(requestedLevels,part.id);
-        rowAdd(s.add.text(x-177,y-29,part.label,{
+        rowAdd(s.add.text(x-177,y-26,part.label,{
           fontFamily:PIXEL,fontSize:'11px',color:max>0?'#e8f7ff':'#728b99',
         }).setDepth(275));
-        rowAdd(s.add.text(x+177,y-29,
+        rowAdd(s.add.text(x+177,y-26,
           'OWNED L'+max+(chosen?' // PREVIEW':''),
           {fontFamily:PIXEL,fontSize:'9px',color:chosen?'#90ffe3':'#9eb3c4'}
         ).setOrigin(1,0).setDepth(275));
