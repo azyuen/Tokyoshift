@@ -10,7 +10,7 @@ import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePri
 import {
   getOshiageShowdownLineup, getOshiageShowdownAccess,
   beginOshiageShowdown, prepareNextOshiageShowdownHeat,
-} from '../data/oshiageShowdown.js?v=20261015-r522';
+} from '../data/oshiageShowdown.js?v=20261022-r638';
 import { getBaseCarId } from '../data/carOwnership.js?v=20261011-r479';
 import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { getStreetPaintPalette } from '../data/streetPaintPalettes.js?v=20261020-r624';
