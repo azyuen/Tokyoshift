@@ -626,7 +626,6 @@ export default class CentralTokyoScene extends Phaser.Scene {
       rivalContext,
       playerCharacterId: this.registry.get('playerCharacterId') || '',
       proCircuit,
-      proCircuit,
     });
     if (!asset?.key || !asset?.path || this.textures.exists(asset.key)) return 0;
     this.load.image(asset.key, getCharacterAssetUrl(asset.path));
@@ -650,6 +649,7 @@ export default class CentralTokyoScene extends Phaser.Scene {
     const asset = getCharacterVisualAsset(characterId, pose, {
       rivalContext,
       playerCharacterId: this.registry.get('playerCharacterId') || '',
+      proCircuit,
     });
     const key = asset?.key;
     if (!key || !this.textures.exists(key)) return null;
