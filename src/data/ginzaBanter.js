@@ -21,7 +21,7 @@ const CLASSIC_GINZA_BANTER = [
 
 // Each entry carries speaker-specific emotion/pose keys, ready for later
 // Story Mode dialogue authoring without tying expression to race mechanics.
-const CLASSIC_GINZA_POSES = [["devUnsure","devTalking"],["devScowl","devLaughing"],["devDisappointed","devTalking"],["devScowl","devLaughing"],["devUnsure","devIdle"],["devIdle","devLaughing"],["devScowl","devTalking"],["devUnsure","devLaughing"],["devScowl","devTalking"],["devUnsure","devTalking"],["devUnsure","devLaughing"],["devDisappointed","devLaughing"],["devIdle","devTalking"],["devIdle","devLaughing"],["devUnsure","devLaughing"],["devScowl","devLaughing"]];
+const CLASSIC_GINZA_POSES = [["devUnsure","devTalking"],["devScowl","devLaughing"],["devDisappointed","devTalking"],["devScowl","devLaughing"],["devUnsure","devIdle"],["devLaughing","devLaughing"],["devScowl","devTalking"],["devUnsure","devLaughing"],["devScowl","devTalking"],["devUnsure","devTalking"],["devUnsure","devLaughing"],["devDisappointed","devLaughing"],["devLaughing","devTalking"],["devLaughing","devLaughing"],["devUnsure","devLaughing"],["devScowl","devLaughing"]];
 const EXTRA_GINZA_BANTER = [
   [
     "You did reserve somewhere for dinner?",
@@ -62,7 +62,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "This is not the vehicle I would have chosen.",
     "Naturally. You have impeccable judgment.",
-    "devScowl",
+    "devLaughing",
     "devIdle"
   ],
   [
@@ -80,7 +80,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I hope you brought a coat.",
     "No. I thought I'd borrow some of your confidence.",
-    "devIdle",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -122,7 +122,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I was hoping for a little sophistication.",
     "You'll be pleased to know I wore matching socks.",
-    "devDisappointed",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -158,7 +158,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I brought a small handbag, not a tool kit.",
     "I brought optimism. Between us, we're equipped.",
-    "devUnsure",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -194,7 +194,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "The gallery's reputation is important to me.",
     "Of course. I'll only be mildly memorable.",
-    "devScowl",
+    "devLaughing",
     "devIdle"
   ],
   [
@@ -248,7 +248,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "We could have simply taken the train.",
     "Yes, but it has so many other passengers.",
-    "devDisappointed",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -284,7 +284,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I was quite enjoying the silence.",
     "I'll be silent again. Starting after this sentence.",
-    "devDisappointed",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -314,7 +314,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I am beginning to suspect there is no reservation.",
     "There is a very strong intention to make one.",
-    "devScowl",
+    "devLaughing",
     "devLaughing"
   ],
   [
@@ -332,7 +332,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "I would like one evening without a spreadsheet.",
     "Consider the budget officially a work of fiction.",
-    "devSad",
+    "devLaughing",
     "devTalking"
   ],
   [
@@ -386,7 +386,7 @@ const EXTRA_GINZA_BANTER = [
   [
     "Do you always have an answer prepared?",
     "Not always. Sometimes they're even good.",
-    "devUnsure",
+    "devLaughing",
     "devLaughing"
   ],
   [
