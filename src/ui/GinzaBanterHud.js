@@ -3,7 +3,8 @@ import { characters } from '../data/characters.js?v=20261021-r629';
 
 // Keep a generous open centre lane and leave the bottom HUD/pedals untouched.
 // Sayaka speaks from the LEFT, Arkon from the RIGHT; only the speaker's
-// translucent card is visible at a time.
+// translucent card is visible at a time. Each line supplies an authored
+// pose key from the shared characters.js registry; Story Mode may reuse it.
 const GINZA_CHAT_LAYOUT = Object.freeze({
   left: {
     face: { x: 24, y: 115, width: 148, height: 155,
@@ -34,8 +35,9 @@ export function createGinzaBanterHud(scene) {
   const create = (speaker, visual, key, side, layout) =>
     createRaceDialogueHud(scene, {
       speaker, theme: 'standard', depth: 81, side, layout,
-      spriteKeyForPose: () => key, characterVisual: visual,
-      initialPose: side === 'left' ? 'ginzaDress' : 'ginzaSuit',
+      spriteKeyForPose: pose => visual.poseAssets?.[pose]?.key || key,
+      characterVisual: visual,
+      initialPose: 'devIdle',
     });
   const left = create('SAYAKA', sayakaVisual, sayakaKey, 'left', GINZA_CHAT_LAYOUT.left);
   const right = create('ARKON', arkonVisual, arkonKey, 'right', GINZA_CHAT_LAYOUT.right);
@@ -44,9 +46,10 @@ export function createGinzaBanterHud(scene) {
   hide();
 
   return {
-    show(speaker, text) {
+    show(speaker, text, pose = 'devIdle') {
       hide();
       const active = speaker === 'arkon' ? right : left;
+      active.setPortrait(pose);
       active.dialogue.setText(String(text || ''));
       toggle(active, true);
     },
