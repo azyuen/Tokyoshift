@@ -80,7 +80,7 @@ export function ginzaConversation(kind, { carName = 'THIS CAR', shortfall = 0 } 
       title: 'GINZA // HANDLE WITH CARE', finalActionLabel: 'TAKE THE KEYS',
       pages: [
         sayaka('ginzaHappy', "You can take this one anywhere in Tokyo for a test drive. I'll ride with you."),
-        sayaka('ginzaSerious', 'Do not crash it. And listen when I tell you when to shift. We want this car back in one piece.'),
+        sayaka('ginzaHappy', "Enjoy the drive. Just bring our prized car back in one piece, please!"),
       ],
     },
     vaultLocked: {
