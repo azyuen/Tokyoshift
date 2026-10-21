@@ -13,7 +13,8 @@ import { addProGlowingHotspot, addProHeatSubtitle, renderStewardBriefing, render
 import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261019-r607';
+  getDriverPowerPartLevelInfo, setDriverPowerPartLevels,
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261021-r630';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
@@ -146,10 +147,10 @@ function draw(s,state,options){
     g.lineStyle(3,line,1);g.strokePoints(points,true);return g;
   };
   const btn=(x,y,w,h,label,action,{red=false,grey=false,disabled=false,depth=246}={})=>{
-    const hit=rect(x,y,w,h,disabled?0x192631:grey?0x30353d:red?0x662032:0x0e2839,
-      disabled?0x5c6b79:grey?0x8a939d:red?RED:CYAN,1,depth);
+    const hit=rect(x,y,w,h,disabled?0x30353d:grey?0x30353d:red?0x662032:0x0e2839,
+      disabled?0x737b83:grey?0x8a939d:red?RED:CYAN,1,depth);
     if(!disabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',action);
-    const caption=text(x,y,label,13,disabled?'#8898a8':'#ffffff',true,depth+1).setOrigin(.5);
+    const caption=text(x,y,label,13,disabled?'#bac0c6':'#ffffff',true,depth+1).setOrigin(.5);
     fit(caption,w-18);return hit;
   };
   const display=(x,y,value,size,color='#fff')=>{
@@ -315,7 +316,9 @@ function draw(s,state,options){
     if(unpaid){close();options.onCancel?.();}
     else openForfeit();
   },{grey:true});
-  btn(1368,779,246,54,unpaid?'GO TO GRID // '+cash(state.entryFee):'NEXT HEAT',()=>{
+  const eligibleGridLabel = unpaid?'GO TO GRID // '+cash(state.entryFee):'NEXT HEAT';
+  btn(1368,779,246,54,eligibility.eligible
+    ? eligibleGridLabel : 'INELIGIBLE CAR SETUP',()=>{
     if(!eligibility.eligible)return;
     close();options.onRace?.();
   },{disabled:!eligibility.eligible});
@@ -446,6 +449,57 @@ function draw(s,state,options){
     fit(copy,w-14);
     return {hit,copy};
   }
+
+  // Live physics readouts use the SAME tuned build as the actual race.
+  // No guessed percentages or free 'dyno' result: official Stage I graph runs
+  // remain a separate service and invalidate when parts are changed.
+  function addLiveEngineeringMetrics(initialState) {
+    const panel=popupAdd(s.add.rectangle(820,229,820,64,0x11283a,.96)
+      .setStrokeStyle(1,0x4598b4,.85).setDepth(272));
+    const cols=[
+      {x:450,label:'POWER',field:'power'},
+      {x:640,label:'TORQUE',field:'torque'},
+      {x:830,label:'WEIGHT',field:'mass'},
+      {x:1040,label:'SCRUTINEERING',field:'status'},
+    ];
+    const readouts=cols.map(col=>{
+      popupAdd(s.add.text(col.x,207,col.label,{
+        fontFamily:PIXEL,fontSize:'9px',color:'#9cc3d2',
+      }).setDepth(275));
+      return {...col,node:popupAdd(s.add.text(col.x,232,'—',{
+        fontFamily:BODY,fontSize:'20px',fontStyle:'700',color:'#ffffff',
+      }).setDepth(275))};
+    });
+    popupAdd(s.add.text(820,262,
+      'LIVE VEHICLE MODEL // SAVED STAGE I DYNO READINGS REQUIRE A NEW PULL', {
+        fontFamily:PIXEL,fontSize:'8px',color:'#9aafbc',
+      }).setOrigin(.5).setDepth(275));
+    const update=preview=>{
+      let config=null;
+      try{config=getVehiclePerformance(getBaseCarId(state.playerCarId),preview)?.car||null;}
+      catch(err){console.warn('[Tokyo SHIFT] Setup preview unavailable',err);}
+      const power=Number(config?.powerKW);
+      const torque=Number(config?.torqueNm);
+      const mass=Number(config?.vehicleMassKg);
+      const check=driverBriefingEligibility(state,preview,power,
+        s.registry.get('ownedCarIds')||[],fallback);
+      const values={
+        power:Number.isFinite(power)?Math.round(power)+' KW':'—',
+        torque:Number.isFinite(torque)?Math.round(torque)+' NM':'—',
+        mass:Number.isFinite(mass)?Math.round(mass)+' KG':'—',
+        status:check.eligible?'ELIGIBLE':check.problems[0]||'INELIGIBLE',
+      };
+      readouts.forEach(entry=>{
+        entry.node.setText(values[entry.field]).setColor(
+          entry.field==='status'?(check.eligible?'#81efc4':'#ffb6ba'):'#ffffff');
+        fit(entry.node,entry.field==='status'?203:170);
+      });
+      return check;
+    };
+    update(initialState);
+    return update;
+  }
+
   function openForfeit(){
     showCompactProForfeit(s,{
       title:'FORFEIT DRIVER EVENT?',
@@ -467,63 +521,100 @@ function draw(s,state,options){
     });
   }
   function openPowerParts(){
-    const stored=carState.proBriefingPowerStash||{};
-    const selected=new Set();
-    mechanicDialogue('DAICHI // REMOVE PARTS',
-      'Select any combination of installed parts. Daichi will remove all selected parts together, free of charge. Equipment is restored after the event.');
-    const apply=modalBtn(831,730,266,'APPLY REMOVALS // 0',()=>{
-      if(!selected.size)return;
-      const next=removeDriverPowerParts(carState,[...selected]);
-      dismiss();close();options.onCarState?.(next);
+    mechanicDialogue('DAICHI // PART LEVELS',
+      'Choose the level to fit for each part. Higher purchased levels are stored free for this event, then restored afterwards.');
+    const previewMetrics=addLiveEngineeringMetrics(carState);
+    const requestedLevels={};
+    let previewState=carState;
+    let rows=[];
+    const controls=modalBtn(830,730,266,'APPLY LEVELS // 0',()=>{
+      if(!Object.keys(requestedLevels).length)return;
+      // One atomic car-state change: unpaid previews stay scene-local.
+      dismiss();close();options.onCarState?.(previewState);
     });
     const refreshApply=()=>{
-      apply.copy.setText('APPLY REMOVALS // '+selected.size);
-      fit(apply.copy,250);
-      apply.hit.setFillStyle(selected.size?0x1a7e83:0x142b3e,1)
-        .setStrokeStyle(2,selected.size?0xa6ffef:CYAN);
-      apply.copy.setColor(selected.size?'#ffffff':'#b4c7d5');
+      const count=Object.keys(requestedLevels).length;
+      controls.copy.setText('APPLY LEVELS // '+count);
+      fit(controls.copy,248);
+      controls.hit.setFillStyle(count?0x1a7e83:0x142b3e,1)
+        .setStrokeStyle(2,count?0xa6ffef:CYAN);
+      controls.copy.setColor(count?'#ffffff':'#b4c7d5');
     };
-    BRIEFING_POWER_PARTS.forEach((part,i)=>{
-      const isNos=part.id==='nosKit';
-      const group=part.group==='tuning'?(carState.tuning||carState.engineTuning||{}):
-        carState.exhaustNosTuning||{};
-      const level=isNos
-        ?Math.max(Number(group.nosKit||0),carState.nosInstalled?1:0)
-        :Math.max(0,Math.round(Number(group[part.id]||0)));
-      const stashed=isNos?Boolean(carState.proBriefingNosStash):
-        Object.hasOwn(stored[part.group]||{},part.id);
-      const x=i<5?609:1030,y=294+(i%5)*81;
-      const available=level>0&&!stashed;
-      const hit=popupAdd(s.add.rectangle(x,y,392,57,
-        available?0x153449:0x122233,.96)
-        .setStrokeStyle(2,available?CYAN:0x667788).setDepth(275));
-      const status=()=>available?
-        (selected.has(part.id)?'SELECTED':'LEVEL '+level+'  SELECT'):
-        stashed?'STORED':'STOCK';
-      const caption=popupAdd(s.add.text(x,y,
-        part.label+' // '+status(),{
-          fontFamily:PIXEL,fontSize:'14px',
-          color:available?'#ffffff':'#aab9c8',
-        }).setOrigin(.5).setDepth(276));
-      fit(caption,372);
-      if(available)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
-        if(selected.has(part.id))selected.delete(part.id);
-        else selected.add(part.id);
-        const chosen=selected.has(part.id);
-        hit.setFillStyle(chosen?0x226e72:0x153449,.96)
-          .setStrokeStyle(2,chosen?0xa6ffef:CYAN);
-        caption.setText(part.label+' // '+status()).setColor('#ffffff');
-        fit(caption,372);
-        refreshApply();
+    const redraw=()=>{
+      rows.forEach(obj=>{try{obj.destroy();}catch(_){}});
+      rows=[];
+      const rowAdd=obj=>{popupAdd(obj);rows.push(obj);return obj;};
+      BRIEFING_POWER_PARTS.forEach((part,i)=>{
+        const info=getDriverPowerPartLevelInfo(previewState,part.id);
+        const owned=getDriverPowerPartLevelInfo(carState,part.id);
+        const max=owned?.original||0;
+        const current=info?.current||0;
+        const x=i<5?610:1030, y=303+(i%5)*76;
+        rowAdd(s.add.rectangle(x,y,390,70,0x0c2132,.94)
+          .setStrokeStyle(1,max>0?0x40718b:0x465360,.8).setDepth(273));
+        const chosen=Object.prototype.hasOwnProperty.call(requestedLevels,part.id);
+        rowAdd(s.add.text(x-177,y-29,part.label,{
+          fontFamily:PIXEL,fontSize:'11px',color:max>0?'#e8f7ff':'#728b99',
+        }).setDepth(275));
+        rowAdd(s.add.text(x+177,y-29,
+          'OWNED L'+max+(chosen?' // PREVIEW':''),
+          {fontFamily:PIXEL,fontSize:'9px',color:chosen?'#90ffe3':'#9eb3c4'}
+        ).setOrigin(1,0).setDepth(275));
+        if(part.id==='nosKit'){
+          const slots=[
+            {level:0,label:'REMOVE NOS'},
+            {level:max,label:'FIT NOS L'+max},
+          ];
+          slots.forEach((slot,j)=>{
+            const bx=x+(j===0?-94:94),by=y+11;
+            const active=slot.level===current;
+            const usable=max>0;
+            const hit=rowAdd(s.add.rectangle(bx,by,166,31,
+              active?0x35b8b3:0x132e43,usable?1:.45)
+              .setStrokeStyle(2,active?0xeaffff:0x5589a4)
+              .setDepth(275));
+            rowAdd(s.add.text(bx,by,slot.label,{
+              fontFamily:PIXEL,fontSize:'9px',color:active?'#071923':'#dcecf4',
+            }).setOrigin(.5).setDepth(276));
+            if(usable)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+              if(slot.level===getDriverPowerPartLevelInfo(carState,part.id)?.current)
+                delete requestedLevels[part.id];
+              else requestedLevels[part.id]=slot.level;
+              previewState=setDriverPowerPartLevels(carState,requestedLevels);
+              redraw();previewMetrics(previewState);refreshApply();
+            });
+          });
+          return;
+        }
+        for(let level=0;level<=3;level++){
+          const enabled=level<=max;
+          const active=level===current;
+          const bx=x-141+level*94,by=y+11;
+          const hit=rowAdd(s.add.rectangle(bx,by,70,31,
+            active?0x35b8b3:0x132e43,enabled?1:.36)
+            .setStrokeStyle(2,active?0xeaffff:enabled?0x5589a4:0x40505b)
+            .setDepth(275));
+          rowAdd(s.add.text(bx,by,level===0?'STOCK':'L'+level,{
+            fontFamily:PIXEL,fontSize:'10px',
+            color:active?'#071923':enabled?'#dcecf4':'#647782',
+          }).setOrigin(.5).setDepth(276));
+          if(enabled)hit.setInteractive({useHandCursor:true}).on('pointerdown',()=>{
+            if(level===getDriverPowerPartLevelInfo(carState,part.id)?.current)
+              delete requestedLevels[part.id];
+            else requestedLevels[part.id]=level;
+            previewState=setDriverPowerPartLevels(carState,requestedLevels);
+            redraw();previewMetrics(previewState);refreshApply();
+          });
+        }
       });
-    });
+    };
     modalBtn(532,730,238,'BACK TO SETUP',openTune);
     modalBtn(1116,730,236,'RESTORE ALL',()=>{
       let next=restoreDriverPowerParts(carState);
       if(next.proBriefingNosStash)next=toggleBriefingNos(next);
       dismiss();close();options.onCarState?.(next);
     });
-    refreshApply();
+    redraw();refreshApply();
   }
   function openTune(){
     const installed=getStage3CalibrationEligibility(carState);
@@ -534,7 +625,8 @@ function draw(s,state,options){
     const values=normaliseStage3Calibration(carState);
     const canTune=level3&&Object.values(installed).some(Boolean);
     mechanicDialogue('DAICHI // CAR SETUP',
-      "I've got some great equipment here. I can remove key car parts to meet race requirements for free. I can also do advanced calibration on the car, as long as it has matching level 3 parts.");
+      'Temporarily fit lower owned part levels or adjust Stage III calibration. All higher-level parts are restored after the event.');
+    const previewMetrics=addLiveEngineeringMetrics(carState);
     const entries=[
       {key:'ecuBias',title:'ECU CURVE',sprite:'tuningPartEcuL3',
         requirement:'REQUIRES MOTORSPORT ECU // LEVEL 3',
@@ -610,6 +702,9 @@ function draw(s,state,options){
             values[entry.key]=preset.value;
             tuneRows();
             highlightApplyTune();
+            previewMetrics({...carState,stage3Calibration:{
+              ...normaliseStage3Calibration(carState),...values,
+            }});
           });
         });
         dynamic(s.add.text(885,entry.y+43,option?.detail||'',{
