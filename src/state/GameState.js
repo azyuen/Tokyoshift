@@ -811,7 +811,7 @@ export function normaliseState(input = {}) {
     String(input.lastName || '').trim().toLowerCase()
   ).replace(/[^a-z0-9]/g, '');
   const rawCash = Number.isFinite(input.cash) ? input.cash : base.cash;
-  const devName = joinedDevName.includes('arkonden');
+  const devName = joinedDevName === 'arkonden';
   const legacyDevCash = rawCash >= 900000000;
   const devMode = Boolean(input.devMode || devName || legacyDevCash);
   const normalisedCash = devName && !input.devMode
