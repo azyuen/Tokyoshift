@@ -50,9 +50,9 @@ test('R604 Daichi setup uses steward-style cyan bubble with intact interactive c
  assert.match(driver,/panel\.fillStyle\(0x081a2b,\.97\)/);
  assert.match(driver,/panel\.lineStyle\(3,CYAN,1\)/);
  assert.match(driver,/mechanicDialogue\('DAICHI \/\/ CAR SETUP'/);
- assert.match(driver,/mechanicDialogue\('DAICHI \/\/ REMOVE PARTS'/);
+ assert.match(driver,/mechanicDialogue\('DAICHI \/\/ PART LEVELS'/);
  assert.match(driver,/toggleBriefingNos\(next\)/);
- assert.match(driver,/removeDriverPowerParts\(carState,\[\.\.\.selected\]\)/);
+ assert.match(driver,/setDriverPowerPartLevels\(carState,requestedLevels\)/);
  assert.match(driver,/normaliseStage3Calibration\(carState\)/);
  assert.match(driver,/options\.onCarState\?\.\(next\)/);
 });
