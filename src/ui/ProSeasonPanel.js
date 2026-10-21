@@ -69,9 +69,9 @@ export function drawSeasonHeader(s,stage) {
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
-  // Top-left is informational only. The season action lives alongside the
-  // race entry and map controls on the right, with predictable touch targets.
-  const height=openCircuit?169:c.activeChampionship?176:158;
+  // Rank and sponsorship remain visible through both Open Circuit and Season.
+  // Season controls remain beside the main race entries on the right.
+  const height=openCircuit?169:c.activeChampionship?236:213;
   const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,height,0x11151c,.88)
     .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
   if(openCircuit){
@@ -100,12 +100,19 @@ export function drawSeasonHeader(s,stage) {
   text(s,x,y,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)} OF 8`,20,{color:'#f5e9e5'})
     .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   const bar=(yy,label,score,goal,seed,color)=>{
-    text(s,x,yy,`${label} RANK #${seed}   ${score} / ${goal} PTS`,18,{color:'#f2e7e3'});
+    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed)}% SPONSOR   ${score}/${goal} PTS`,16,
+      {color:'#f2e7e3'});
     s.addContent(s.add.rectangle(x,yy+29,w-10,10,0x38343c).setOrigin(0,0).setDepth(39));
     s.addContent(s.add.rectangle(x,yy+29,(w-10)*Math.min(1,score/goal),10,color).setOrigin(0,0).setDepth(40));
   };
   bar(y+39,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
   bar(y+92,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
+  const expandY=y+(c.activeChampionship?205:179);
+  const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,32,0x40242a,.96)
+    .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
+    .setInteractive({useHandCursor:true}));
+  text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
+  expand.on('pointerdown',()=>showProRankings(s));
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
@@ -425,7 +432,7 @@ function showCrewResult(s,out,round={}){
 // and crew leaderboard.  Season points intentionally do not affect its order.
 export function showProRankings(s) {
   const c=circuit(s),o=overlay(s,'PRO RANKINGS // OPEN CIRCUIT');
-  o.label(90,105,'CAREER RATING · SPONSOR BONUS PAID ON OPEN CIRCUIT CASH PRIZES ONLY',20)
+  o.label(90,105,'CAREER RATING · SPONSOR BONUS ON OPEN CIRCUIT & PRO SEASON CASH PRIZES',20)
     .setColor('#b8c7cf');
   const columns=[
     {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver'},
