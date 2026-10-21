@@ -57,7 +57,7 @@ function loadAssets(s,units){
   }
   const id=s.registry.get('playerCharacterId')||'renMizuno';
   for(const u of units){
-    const asset=getCharacterVisualAsset(u.id,'idle',{playerCharacterId:id});
+    const asset=getCharacterVisualAsset(u.id,'idle',{playerCharacterId:id,proCircuit:true});
     if(asset?.key&&asset.path&&!s.textures.exists(asset.key)){
       s.load.image(asset.key,getCharacterAssetUrl(asset.path));count++;
     }
@@ -376,7 +376,7 @@ function draw(s,opts){
         const profile=createCharacterProfile(s,{
           characterId:u.id,pose:'idle',x:x+105,y:y+84,
           frameWidth:226,frameHeight:171,side:'center',depth:225,
-          mask:false,playerCharacterId:player,
+          mask:false,playerCharacterId:player,proCircuit:true,
         });
         if(profile?.image){add(profile.image);clipPoly(profile.image,portrait);}
         const car=cars[u.carId];
@@ -482,7 +482,7 @@ function draw(s,opts){
       }).setOrigin(.5).setDepth(255));
       const portrait=createCharacterProfile(s,{characterId:u.id,pose:'idle',
         x:1071,y:y+30,frameWidth:70,frameHeight:69,depth:253,
-        playerCharacterId:player});
+        playerCharacterId:player,proCircuit:true});
       if(portrait)add(portrait);
       const ink=full&&assigned<0?'#8595a3':'#f4f3f3';
       const who=text(1119,y+1,u.name,18,ink,false,254);
