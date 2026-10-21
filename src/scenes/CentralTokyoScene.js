@@ -3053,27 +3053,21 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     const migratedRivals = getConqueredMainRivalIds(this.registry);
     if (migratedRivals.length) {
-      const spacing = Math.min(132, 760 / Math.max(1, migratedRivals.length - 1));
-      const totalWidth = spacing * Math.max(0, migratedRivals.length - 1);
-      const startX = STAGE.x + STAGE.w / 2 - totalWidth / 2;
-
-      this.addContent(this.add.text(
-        STAGE.x + STAGE.w / 2,
-        STAGE.y + 118,
-        'REGIONAL RIVALS // MOVED UP TO THE COMPLEX',
-        {
-          fontFamily: PIXEL_FONT,
-          fontSize: '6px',
-          color: '#9fc4d5',
-        }
-      ).setOrigin(0.5).setDepth(7));
-
+      // They are ambient spectators, not an explanatory UI item. Set them
+      // one full sprite-height lower, across the width with deterministic
+      // irregular spacing/grounding so the group looks naturally assembled.
+      const count = migratedRivals.length;
+      const step = Math.min(146, 850 / Math.max(1, count - 1));
+      const centreX = STAGE.x + STAGE.w / 2;
+      const xJitter = [-19, 13, -8, 24, -16, 9, -11];
+      const feetJitter = [0, -12, 8, 15, -7, 10, -3];
       migratedRivals.forEach((characterId, index) => {
         this.addVenueCharacter({
           characterId,
           pose: 'normal',
-          x: startX + spacing * index,
-          feetY: STAGE.y + 290,
+          x: centreX + (index - (count - 1) / 2) * step +
+            xJitter[index % xJitter.length],
+          feetY: STAGE.y + 372 + feetJitter[index % feetJitter.length],
           height: 82,
           flip: index % 2 === 1,
           depth: 6,
