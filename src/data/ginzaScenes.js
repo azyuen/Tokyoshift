@@ -94,6 +94,24 @@ export function ginzaConversation(kind, { carName = 'THIS CAR', shortfall = 0 } 
         sayaka('ginzaSerious', 'I will take the keys now. Your own car is waiting, and the gallery is open to you again.'),
       ],
     },
+    vaultDriveArkon: {
+      title: 'GINZA // JUST A QUIET DRIVE', finalActionLabel: 'TAKE THE KEYS',
+      characters: { left: 'sayakaFujieda', right: 'arkonDen' },
+      pages: [
+        { ...sayaka('ginzaDress', 'So, which priceless piece of automotive history are we borrowing tonight?'),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { speaker: 'right', rightCharacter: 'arkonDen', rightPose: 'ginzaSuit',
+          leftCharacter: 'sayakaFujieda', leftPose: 'ginzaDress',
+          text: 'The one that looked a little lonely on its display stand.' },
+        { ...sayaka('ginzaDress', 'How thoughtful. The accountants will be deeply moved.'),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { speaker: 'right', rightCharacter: 'arkonDen', rightPose: 'ginzaSuit',
+          leftCharacter: 'sayakaFujieda', leftPose: 'ginzaDress',
+          text: 'I might even treat you to dinner after a few showdowns.' },
+        { ...sayaka('ginzaDress', 'A tempting offer. Bring the car back to this vault first, and perhaps I will even let you choose the restaurant.'),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+      ],
+    },
     vaultDrive: {
       title: 'GINZA // HANDLE WITH CARE', finalActionLabel: 'TAKE THE KEYS',
       pages: [
