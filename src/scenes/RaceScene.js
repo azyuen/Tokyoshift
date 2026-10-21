@@ -2,6 +2,9 @@ import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
+import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
+import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r633';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261021-r633';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -145,10 +148,11 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
-    if (cars[this.selectedCarId]?.ginzaDemo &&
-        this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId) {
-      for (const pose of ['ginzaHappy', 'ginzaSerious']) {
-        const asset = characters.sayakaFujieda.visual.poseAssets[pose];
+    if (this.hasGinzaBanter) {
+      // Arkon's optional passenger chat uses the same formal outfits as
+      // the private-gallery after-hours scene, not the old shift coach.
+      for (const [id, pose] of [['sayakaFujieda', 'ginzaDress'], ['arkonDen', 'ginzaSuit']]) {
+        const asset = characters[id].visual.poseAssets[pose];
         queueImage(asset.key, getCharacterAssetUrl(asset.path));
       }
     }
@@ -392,6 +396,9 @@ export default class RaceScene extends Phaser.Scene {
     this.raceStake = Number(this.registry.get('selectedRaceStake') || 0);
     this.isGinzaDemoRace = Boolean(cars[this.selectedCarId]?.ginzaDemo &&
       this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
+    // Regular Tokyo Champions get a completely unobstructed loan drive;
+    // only the named Arkon profile sees the cosmetic passenger banter.
+    this.hasGinzaBanter = this.isGinzaDemoRace && isNamedArkonDen(this.registry);
     if (this.isGinzaDemoRace) {
       // Street cash races and coupons are legitimate collector endgame fun.
       // Loans still cannot enter championships or be wagered for pink slips.
@@ -820,7 +827,7 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.isCoaching) this.setupCoachedLesson();
     else if (this.isTutorial) this.setupDrivingTutorial();
-    if (this.isGinzaDemoRace) this.setupGinzaPassenger();
+    if (this.hasGinzaBanter) this.setupGinzaPassenger();
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -1419,48 +1426,27 @@ export default class RaceScene extends Phaser.Scene {
   // Oshiage's free practical lessons reuse the race renderer, player inputs,
   // vehicle physics and HUD. They bypass all race settlement and rewards.
   setupGinzaPassenger() {
-    const poses = characters.sayakaFujieda?.visual?.poseAssets || {};
-    this.ginzaPassenger = createRaceDialogueHud(this, {
-      speaker: 'SAYAKA // GINZA PASSENGER', theme: 'standard', depth: 81,
-      spriteKeyForPose: pose => poses[pose === 'serious' ? 'ginzaSerious' : 'ginzaHappy']?.key || '',
-      characterVisual: characters.sayakaFujieda.visual,
-      initialPose: 'happy',
-    });
-    this.ginzaPassenger.dialogue.setText(
-      "Remember: that's a museum-grade racing car. Please bring it back intact!"
+    if (!this.hasGinzaBanter) return;
+    this.ginzaPassenger = createGinzaBanterHud(this);
+    this.ginzaBanterState = createGinzaBanterState(
+      this.player?.transmission?.currentGear
     );
-    this.ginzaShiftBands = new DrivingCoach(this.player).shiftBands;
-    this.ginzaLastAdviceAt = -10;
-    this.ginzaLastGear = this.player.transmission.currentGear;
     this.events.once('shutdown', () => this.ginzaPassenger?.destroy?.());
   }
 
   updateGinzaPassenger(telemetry) {
-    if (!this.ginzaPassenger?.dialogue || this.resultsShown) return;
-    const now = this.raceClock || 0;
-    if (now - this.ginzaLastAdviceAt < 3.5) return;
-    const gear = Math.max(1, Number(this.player.transmission.currentGear || telemetry?.gear || 1));
-    const rpm = Number(this.player.engine.rpm || telemetry?.rpm || 0);
-    const band = (this.ginzaShiftBands || []).find(item => item.from === gear);
-    let message = '', pose = 'happy';
-    if (!this.raceStarted) return;
-    if (this.greenClock == null) {
-      if (this.ginzaLastAdviceAt < -5) message = 'Smooth launch, please. This one is irreplaceable!';
-    } else if (band && rpm >= band.min && rpm <= band.max) {
-      message = 'Shift to ' + band.to + ' now! ' +
-        band.min.toLocaleString() + '–' + band.max.toLocaleString() + ' RPM is the sweet spot.';
-    } else if (band && rpm > band.max) {
-      message = 'Shift up! We do not need to bounce this engine off the limiter!';
-      pose = 'serious';
-    } else if (now - this.ginzaLastAdviceAt > 9) {
-      message = 'Eyes on the road! No crashes, no scratches. I am watching the revs.';
-      pose = 'serious';
+    if (!this.hasGinzaBanter || !this.ginzaPassenger || this.resultsShown) return;
+    if (this.finished) {
+      this.ginzaPassenger.hide();
+      return;
     }
-    if (!message) return;
-    this.ginzaPassenger.dialogue.setText(message);
-    this.ginzaPassenger.setPortrait(pose);
-    this.ginzaLastAdviceAt = now;
-    this.ginzaLastGear = gear;
+    const line = advanceGinzaBanter(this.ginzaBanterState, {
+      elapsed: this.greenClock == null ? 0 : this.raceClock - this.greenClock,
+      gear: this.player?.transmission?.currentGear ?? telemetry?.gear ?? 0,
+      running: this.raceStarted && this.greenClock != null,
+      finished: this.finished,
+    });
+    if (line) this.ginzaPassenger.show(line.speaker, line.text);
   }
 
   setupCoachedLesson() {
