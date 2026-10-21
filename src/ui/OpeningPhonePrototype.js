@@ -3,7 +3,7 @@
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
-import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop } from './RaceCoachHud.js?v=20261017-r572';
+import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop } from './RaceCoachHud.js?v=20261022-r640';
 import { PHONE_CARD_SWIPE_DISTANCE } from './CompactDialogueLayout.js?v=20261022-r640';
 
 const PIXEL = '"Silkscreen", monospace';
