@@ -1,5 +1,5 @@
 import { getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat, settleChampionshipKnockout, settleChampionshipCrewHeat, settleChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
-import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261019-r605';
+import { getProfessionalAttendance, settleLegacySeasonEvent, getPlayerCrewHeat, getCrewFixture, settlePlayerCrewHeat, recordProfessionalTimedAttempt, completeProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { isOpenDriverBriefing, restoreDriverBriefingParts } from '../data/proDriverBriefing.js?v=20261019-r607';
 // Shared four-wide track: Arkon Den's free dev practice and the paid pro cup.
@@ -38,10 +38,10 @@ import { resolveDragstripVenue } from '../data/dragstripVenue.js?v=20261009-r455
 import { getProfessionalDuelRound, settleProfessionalDuel } from '../data/proDragDuel.js?v=20261018-r584';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { applyEasyCashWinBonus } from '../data/careerProgression.js?v=20260929-r272';
-import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261018-r584';
+import { getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from '../data/proCircuit.js?v=20261021-r628';
 import {
   FOUR_WIDE_CUP, proCupHash, getPlayerProHeat, settleFourWideHeat,
-} from '../data/proTournament.js?v=20261009-r447';
+} from '../data/proTournament.js?v=20261021-r628';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   FOUR_LANE_TEST_DISTANCE_M, FOUR_LANE_TEST_LANES,
@@ -1678,14 +1678,21 @@ export default class FourLaneTestScene extends RaceScene {
       if (outcome.status !== 'NO_EVENT') {
         try {
           const completed = outcome.status === 'CHAMPION' || outcome.status === 'ELIMINATED';
-          const earned = outcome.status === 'CHAMPION' ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
+          const cashBefore = Number(this.registry.get('cash') || 0);
+          // The regular difficulty multiplier applies first.  The shared
+          // Pro Rank sponsor commission is then settled with the event result
+          // for either Open Circuit or official Season cash prizes.
+          let earned = outcome.status === 'CHAMPION'
+            ? applyEasyCashWinBonus(this.registry, outcome.cashPrize) : 0;
           const changes = { competitionState: outcome.nextState,
-            cash: Number(this.registry.get('cash') || 0) + earned,
+            cash: cashBefore + earned,
             competitionWins: Number(this.registry.get('competitionWins') || 0) + outcome.competitionWinsDelta };
           if (completed) {
             changes.proCircuit = settleLegacySeasonEvent(this.registry.get('proCircuit'), state,
-              outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex));
+              outcome.status === 'CHAMPION' ? state.rounds.length : Number(state.roundIndex), earned);
             outcome.summary = changes.proCircuit.lastTournament;
+            earned = Number(outcome.summary?.cashPrize || 0);
+            changes.cash = cashBefore + earned;
             // Return bench-stored NOS equipment only when the saved Open
             // Circuit driver event actually finishes; never lose paid parts.
             const restored=restoreDriverBriefingParts(this.registry.get('carStates')||{},state);
@@ -1749,6 +1756,7 @@ export default class FourLaneTestScene extends RaceScene {
             heats.filter(h=>h.won).length,
           rounds:this.proDuel?(this.proDuelState?.rounds?.length||3):3,
           cashPrize:Number(outcome.cashPrize??summary.cashPrize??0),
+          sponsorBonus:summary.sponsorBonus||0,sponsorPercent:summary.sponsorPercent||0,
           points:summary.points||0,rankBefore:summary.rankBefore,
           rankAfter:summary.rankAfter,openCircuit:Boolean(summary.openCircuit),
           statusLabel:this.registry.get('proCircuit')?.calendar?.round>=8?

@@ -1,7 +1,7 @@
 import { createProvisionalChampionship, championshipStandings, getChampionshipKnockoutHeat, getChampionshipCrewHeat, getChampionshipFourWideHeat } from '../data/tokyoChampionship.js?v=20261012-champaudit';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261018-r586';
-import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261019-r605';
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds } from '../data/proCircuit.js?v=20261018-r591';
+import { CREW_SERIES, PRO_SEASON_LENGTH, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, startProfessionalSeason, forfeitProfessionalSeason, getProfessionalRoundEvents, getProQualification, getSeasonStandings, getCrewSeriesUnits, crewSeriesEligibility, registerCrewSeries, forfeitCrewSeries, useProCrewAdvice, getProCrewAdviceAvailability, getCrewFixture, settleCrewSeriesFixture, getCrewSeriesTable, nextProfessionalSeason, assignCrewSeriesCar, preparePlayerCrewFixture, getPlayerCrewHeat } from '../data/proSeason.js?v=20261021-r628';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, getProPrizeBonusPercent } from '../data/proCircuit.js?v=20261021-r628';
 import { saveProTransaction } from '../state/GameState.js?v=20261012-champ2c';
 import { getOpenCircuitRotation } from '../environment/WorldClock.js?v=20261018-r592';
 import { cars } from '../data/cars.js?v=20261011-r479';
@@ -9,7 +9,7 @@ import { characters } from '../data/characters.js?v=20261010-r459';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { showProCrewHeatSelection, getProCrewHeatAdvice } from './ProCrewBattleLineup.js?v=20261020-r614';
 import { showCompactProForfeit } from './ProBriefingChrome.js?v=20261020-r613';
-import { showProVictoryResults } from './ProVictoryResults.js?v=20261020-r616';
+import { showProVictoryResults } from './ProVictoryResults.js?v=20261021-r628';
 const FONT='"Rajdhani", sans-serif';
 // Set final sizes after the global 1.6x phone-text factory pass.
 function uiText(s,x,y,value,size,style={}) {
@@ -69,26 +69,50 @@ export function drawSeasonHeader(s,stage) {
   const team=getProCircuitTeamSeeds(c).find(r=>r.id==='player:team');
   const x=stage.x+22,y=stage.y+18,w=355;
   const openCircuit=isOpenCircuitAvailable(c);
-  // Top-left is informational only. The season action lives alongside the
-  // race entry and map controls on the right, with predictable touch targets.
-  const height=openCircuit?77:c.activeChampionship?176:158;
+  // Rank and sponsorship remain visible through both Open Circuit and Season.
+  // Season controls remain beside the main race entries on the right.
+  const height=openCircuit?169:c.activeChampionship?236:213;
   const panel=s.addContent(s.add.rectangle(x-10,y-8,w+20,height,0x11151c,.88)
     .setOrigin(0,0).setStrokeStyle(1,0x63808a,.8).setDepth(28));
   if(openCircuit){
-    text(s,x,y,'OPEN CIRCUIT',18,{color:'#f5e9e5'});
-    text(s,x,y+34,'ROTATING EVENTS / NO SEASON POINTS',16,{color:'#c7d9dc'});
+    // Open Circuit is a persistent professional ladder, not a season table.
+    // Show both rankings and independent, cash-only appearance commissions.
+    text(s,x,y,'PRO RANKINGS',19,{color:'#f5e9e5'});
+    text(s,x+w-2,y+5,'OPEN CIRCUIT',12,{color:'#aab8c1'}).setOrigin(1,0);
+    s.addContent(s.add.rectangle(x+w/2,y+42,1,67,0x51606b,.85).setDepth(40));
+    for(const item of [
+      {x,record:driver,label:'DRIVER'},
+      {x:x+185,record:team,label:'CREW'},
+    ]){
+      text(s,item.x,y+36,item.label+' RANK',15,{color:'#bbc4ce'});
+      text(s,item.x,y+57,'#'+item.record.seed,29,{color:'#fff2ed'});
+      text(s,item.x,y+96,'+'+getProPrizeBonusPercent(item.record.seed)+'% WINNINGS BONUS',14,{color:'#ecc88d'});
+    }
+    const expandY=y+139;
+    const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,34,0x40242a,.96)
+      .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
+      .setInteractive({useHandCursor:true}));
+    text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
+    expand.on('pointerdown',()=>showProRankings(s));
     if(s.proError)text(s,stage.x+22,stage.y+460,s.proError,14,{color:'#ef939b'});
     return;
   }
   text(s,x,y,`SEASON ${c.season}  //  ROUND ${Math.min(8,c.calendar.round+1)} OF 8`,20,{color:'#f5e9e5'})
     .setInteractive({useHandCursor:true}).on('pointerdown',()=>showSeasonRecords(s,c.calendar.round>=8));
   const bar=(yy,label,score,goal,seed,color)=>{
-    text(s,x,yy,`${label} RANK #${seed}   ${score} / ${goal} PTS`,18,{color:'#f2e7e3'});
+    text(s,x,yy,`${label} #${seed}   +${getProPrizeBonusPercent(seed)}% SPONSOR   ${score}/${goal} PTS`,16,
+      {color:'#f2e7e3'});
     s.addContent(s.add.rectangle(x,yy+29,w-10,10,0x38343c).setOrigin(0,0).setDepth(39));
     s.addContent(s.add.rectangle(x,yy+29,(w-10)*Math.min(1,score/goal),10,color).setOrigin(0,0).setDepth(40));
   };
   bar(y+39,'DRIVER',q.driver,q.driverRequired,driver.seed,0x3993ad);
   bar(y+92,'CREW',q.crew,q.crewRequired,team.seed,0xb7844c);
+  const expandY=y+(c.activeChampionship?205:179);
+  const expand=s.addContent(s.add.rectangle(x+w/2,expandY,w-10,32,0x40242a,.96)
+    .setStrokeStyle(1,0xa46b6d,.9).setDepth(40)
+    .setInteractive({useHandCursor:true}));
+  text(s,x+w/2,expandY,'VIEW ALL PROFESSIONAL RANKINGS  ▼',15,{color:'#f5e9e5'}).setOrigin(.5);
+  expand.on('pointerdown',()=>showProRankings(s));
   if(c.activeChampionship){
     const championship=text(s,x,y+148,'TOKYO CHAMPIONSHIP // '+c.activeChampionship.stage,16,{color:'#f3cf8d'});
     championship.setInteractive({useHandCursor:true}).on('pointerdown',()=>showTokyoChampionship(s));
@@ -393,7 +417,8 @@ function showCrewResult(s,out,round={}){
     heats:round.heats||[],
     wins:summary.heatWins??out.wins,rounds:3,
     fourWidePoints:round.format==='FOUR_WIDE'?summary.fourWidePoints:undefined,
-    cashPrize:out.cashPrize,points:summary.points||0,
+    cashPrize:out.cashPrize,sponsorBonus:summary.sponsorBonus||0,
+    sponsorPercent:summary.sponsorPercent||0,points:summary.points||0,
     rankBefore:summary.rankBefore,rankAfter:summary.rankAfter,
     openCircuit:round.openCircuit??summary.openCircuit,
     statusLabel:out.status==='ADVANCED'?'NEXT FIXTURE READY':
@@ -401,6 +426,35 @@ function showCrewResult(s,out,round={}){
     nextLabel:out.status==='ADVANCED'?'NEXT FIXTURE':'CONTINUE',
     onContinue:()=>out.status==='ADVANCED'?showCrewFixture(s):redraw(s),
   });
+}
+
+// Expand the compact Open Circuit ladder into a complete persistent driver
+// and crew leaderboard.  Season points intentionally do not affect its order.
+export function showProRankings(s) {
+  const c=circuit(s),o=overlay(s,'PRO RANKINGS // OPEN CIRCUIT');
+  o.label(90,105,'CAREER RATING · SPONSOR BONUS ON OPEN CIRCUIT & PRO SEASON CASH PRIZES',20)
+    .setColor('#b8c7cf');
+  const columns=[
+    {x:90,title:'DRIVER RANKINGS',rows:getProCircuitDriverSeeds(c),player:'player:driver'},
+    {x:820,title:'CREW RANKINGS',rows:getProCircuitTeamSeeds(c),player:'player:team'},
+  ];
+  columns.forEach(({x,title,rows,player})=>{
+    o.label(x,147,title+'  //  '+rows.length+' ENTRANTS',23).setColor('#f7e6e2');
+    rows.forEach((entry,i)=>{
+      const y=185+i*23;
+      const mine=entry.id===player;
+      if(mine)o.add(s.add.rectangle(x+310,y+10,642,22,0x45252c,.9)
+        .setStrokeStyle(1,0x95646d,.65).setDepth(201));
+      const display=mine?'YOU':entry.name||characters[entry.characterId]?.name||entry.id;
+      const style={color:mine?'#ffe4a9':i<3?'#f5f0ed':'#c4c9cf'};
+      o.add(uiText(s,x,y,'#'+entry.seed,17,style).setDepth(203));
+      o.add(uiText(s,x+58,y,String(display).slice(0,25),17,style).setDepth(203));
+      o.add(uiText(s,x+433,y,entry.rating+' PT',16,{color:'#9fb0bc'}).setDepth(203));
+      o.add(uiText(s,x+548,y,'+'+getProPrizeBonusPercent(entry.seed)+'%',17,
+        {color:mine?'#ffe4a9':'#ddb985'}).setDepth(203));
+    });
+  });
+  o.btn(780,786,395,'CLOSE RANKINGS',o.close);
 }
 
 export function showSeasonRecords(s,complete=false) {

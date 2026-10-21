@@ -238,6 +238,9 @@ function drawResults(s,options,cast,carMap){
   // The recorded cash, official point type and rank; no invented reward types.
   label(843,590,'EVENT PRIZE',17,{color:'#adb4c1'});
   label(1023,579,yen(options.cashPrize),29,{color:'#ffdf91'});
+  if(Number(options.sponsorBonus||0)>0)
+    label(1023,615,'SPONSOR +'+yen(options.sponsorBonus)+
+      '  ('+Number(options.sponsorPercent||0)+'%)',14,{color:'#edc993'});
   label(843,638,options.openCircuit?'OPEN CIRCUIT':'SEASON POINTS',17,{color:'#adb4c1'});
   label(1023,633,options.openCircuit?'NO SEASON PTS':
     '+'+Number(options.points||0),23);

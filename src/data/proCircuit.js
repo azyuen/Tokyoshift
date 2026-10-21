@@ -263,6 +263,29 @@ function seededRows(state, kind) {
     .map((record, index) => ({ ...record, seed: index + 1 }));
 }
 
+// Sponsorship is tied to the same persistent Pro Rank across Open Circuit
+// and the eight-round Season. Only paid event purses receive commission:
+// fees, racing performance, season points and championship seeds are unchanged.
+// Lock the rate to the player's standing BEFORE the event is settled.
+export function getProPrizeBonusPercent(rank) {
+  const place = Number(rank);
+  if (!Number.isInteger(place) || place < 1) return 0;
+  if (place === 1) return 100;
+  if (place <= 3) return 75;
+  if (place <= 5) return 50;
+  if (place <= 10) return 30;
+  if (place <= 14) return 15;
+  return 0;
+}
+
+export function getProPrizeWithBonus(cashPrize, rank) {
+  const basePrize = Number.isFinite(Number(cashPrize))
+    ? Math.max(0, Math.floor(Number(cashPrize))) : 0;
+  const bonusPercent = getProPrizeBonusPercent(rank);
+  const bonusCash = Math.floor(basePrize * bonusPercent / 100);
+  return { basePrize, bonusPercent, bonusCash, totalPrize: basePrize + bonusCash };
+}
+
 export function getProCircuitDriverSeeds(proCircuit) {
   return seededRows(proCircuit, 'DRIVER');
 }

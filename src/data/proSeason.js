@@ -1,5 +1,5 @@
 // Living seasons and manager-led crew series. Pure, seeded transitions; no clock.
-import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES } from './proCircuit.js?v=20261018-r591';
+import { normaliseProCircuitState, getProCircuitAccess, getProCircuitDriverSeeds, getProCircuitTeamSeeds, PRO_CIRCUIT_TROPHIES, getProPrizeWithBonus } from './proCircuit.js?v=20261021-r628';
 import { getCrewMembers } from './crewSystem.js?v=20261007-r413';
 import { cars } from './cars.js?v=20261017-r565';
 import { characters } from './characters.js?v=20261017-r565';
@@ -588,9 +588,11 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     c.playerTeam.entered++;
     const points=t.openCircuit?0:[2,7,13,20][wins];
     c.playerTeam.seasonPoints+=points;
-    const cashPrize=t.openCircuit?(t.trophyId?(wins===3?OPEN_CIRCUIT_TROPHY_PRIZE:0):
+    const baseCashPrize=t.openCircuit?(t.trophyId?(wins===3?OPEN_CIRCUIT_TROPHY_PRIZE:0):
       [0,15000,30000,70000][wins]):
       Math.floor([0,40000,90000,210000][wins]*(c.crewSeriesWins>0?.65:1));
+    const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
+    const cashPrize=sponsor?.totalPrize??baseCashPrize;
     if(wins===3&&!t.openCircuit)c.crewSeriesWins++;
     c.activeCrewEvent=null;
     if(!t.openCircuit){
@@ -600,6 +602,7 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
     const summary={id:t.id,label:fourWide?'CREW FOUR-WIDE':technical?'CREW TECHNICAL':relay?'CREW RELAY':'CREW CLUB SPRINT',discipline:'TEAM',format:t.format||'DUEL',placing:4-wins,
       cashPrize,rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
       ratingBefore,ratingAfter:c.playerTeam.rating,points,wins,heatWins,fourWidePoints,ownTotal,opponentTotal,ownSpread,opponentSpread,
+      sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
       trophyId:t.trophyId||null,openCircuit:Boolean(t.openCircuit)};
     c.lastTournament=summary;c.lastCrewEvent=t;
     return {circuit:t.openCircuit?finishOpenCircuitEvent(c,summary):completeSeasonRound(c,summary,t.entrants.map(e=>e.id)),status:'COMPLETE',cashPrize,wins,summary};
@@ -609,14 +612,17 @@ export function settleCrewSeriesFixture(raw,fixtureId) {
   for(const round of t.history)for(const match of round.fixtures)elo(table[match.ids[0]],table[match.ids[1]],match.score[0]>=2);
   const result=getCrewSeriesTable(t),place=result.findIndex(r=>r.id===PLAYER)+1;
   result.forEach((r,i)=>{table[r.id].entered++;if(!t.openCircuit)table[r.id].seasonPoints+=[20,15,10,5][i];});
-  const cashPrize=t.openCircuit?t.prizes[place-1]:
+  const baseCashPrize=t.openCircuit?t.prizes[place-1]:
     Math.floor(t.prizes[place-1]*(c.crewSeriesWins>0?.65:1));
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
+  const cashPrize=sponsor?.totalPrize??baseCashPrize;
   if(place===1&&!t.openCircuit)c.crewSeriesWins++;
   c.activeCrewEvent=null;
   if(!t.openCircuit){c.eventTick++;c.completedEventIds=[...c.completedEventIds,t.id].slice(-250);}
   const summary={id:t.id,label:t.label,discipline:'TEAM',placing:place,cashPrize,
     rankBefore,rankAfter:getProCircuitTeamSeeds(c).find(r=>r.id===PLAYER).seed,
     ratingBefore,ratingAfter:c.playerTeam.rating,points:t.openCircuit?0:[20,15,10,5][place-1],
+    sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
     table:result,format:'TOURNAMENT',trophyId:t.trophyId||null,
     openCircuit:Boolean(t.openCircuit),rounds:3,driverIds:t.squadIds};
   c.lastTournament=summary;c.lastCrewEvent=t;
@@ -655,7 +661,7 @@ export function forfeitCrewSeries(source,eventId) {
 }
 
 // Legacy three-round pro cups retain their original fee, purse and race engine.
-export function settleLegacySeasonEvent(raw,state,roundsWon) {
+export function settleLegacySeasonEvent(raw,state,roundsWon,actualBasePrize=null) {
   const c=normaliseProCircuitState(raw),id=state.proSeasonId||'legacy:'+state.eventId+':s'+c.season+':e'+(c.eventTick+1);
   if(c.completedEventIds.includes(id))return c;
   const participants=['player:driver'];
@@ -675,10 +681,16 @@ export function settleLegacySeasonEvent(raw,state,roundsWon) {
     c.completedEventIds=[...c.completedEventIds,id].slice(-250);
   }
   const trophy=PRO_CIRCUIT_TROPHIES.find(t=>t.id===state.openTrophyId);
+  // Accept the actual paid baseline from the race scene (including Easy-mode
+  // multipliers); never calculate sponsor money from the event's entry fee.
+  const baseCashPrize=roundsWon===roundCount?
+    Math.max(0,Number(actualBasePrize==null?state.prizeCash||0:actualBasePrize)||0):0;
+  const sponsor=getProPrizeWithBonus(baseCashPrize,rankBefore);
   const summary={id,label:trophy?.label||(state.eventId==='midnightCup'?'MIDNIGHT CUP':'STREET SHOOTOUT'),
     discipline:'DRIVER',placing:roundsWon===roundCount?1:roundCount-roundsWon+1,points,
     rankBefore,rankAfter:getProCircuitDriverSeeds(c).find(r=>r.id==='player:driver').seed,
-    ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:roundsWon===roundCount?Number(state.prizeCash||0):0,
+    ratingBefore,ratingAfter:c.playerDriver.rating,cashPrize:sponsor?.totalPrize??baseCashPrize,
+    sponsorBonus:sponsor?.bonusCash||0,sponsorPercent:sponsor?.bonusPercent||0,
     trophyId:state.openTrophyId||null,openCircuit,rounds:roundCount,carId:state.playerCarId};
   c.lastTournament=summary;
   return openCircuit?finishOpenCircuitEvent(c,summary):completeSeasonRound(c,summary,participants);
