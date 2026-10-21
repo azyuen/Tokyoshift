@@ -14,7 +14,7 @@ import { driverAdviceStatus, driverBriefingEligibility, driverOpponentAdvice,
   toggleBriefingNos, isOpenDriverBriefing, BRIEFING_POWER_PARTS,
   removeDriverPowerPart, removeDriverPowerParts, restoreDriverPowerParts,
   getDriverPowerPartLevelInfo, setDriverPowerPartLevels,
-  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261021-r630';
+  getProDriverHelmetIndex } from '../data/proDriverBriefing.js?v=20261021-r631';
 import { preloadCarAppearanceAssets, preloadCarWheel,
   ensureDerivedModularCarTextures, getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261014-stock';
 
