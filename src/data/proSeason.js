@@ -7,6 +7,7 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { createRivalBuildState } from './rivalBuilds.js?v=20260928-r234';
 import { getEncounterAi } from './encounterProfiles.js?v=20261005-r334';
 import { getCarMagazineMeta } from './carMagazine.js?v=20261011-r479';
+import { getStage3CalibrationEligibility } from './stage3Calibration.js?v=20261004-r330';
 
 export const PRO_SEASON_LENGTH = 8;
 export const OPEN_CIRCUIT_CREW_FEE = 35000;
@@ -142,7 +143,11 @@ export function getFactoryStockStatus(state={}) {
   if(Number(state.tuneLevel||0)>2)reasons.push('LEGACY PERFORMANCE TUNE');
   if(state.nosInstalled||Number(state.nosPower||0)>0&&state.nosInstalled)
     reasons.push('AFTERMARKET NITROUS');
-  if(state.stage3Calibration&&['ecuBias','boostBias','gearBias'].some(k=>Number(state.stage3Calibration[k]||0)!==0))
+  // A purchased calibration preset is not fitted tuning once its required
+  // Level III hardware has been removed. The race physics disables it too.
+  const calibrationActive=getStage3CalibrationEligibility(state);
+  if(state.stage3Calibration&&['ecuBias','boostBias','gearBias'].some(k=>
+    calibrationActive[k]&&Number(state.stage3Calibration[k]||0)!==0))
     reasons.push('CUSTOM ECU / BOOST / GEAR CALIBRATION');
   if(state.specialistTuning&&Object.values(state.specialistTuning).some(v=>Boolean(v)))
     reasons.push('SPECIALIST TUNING');
