@@ -1157,8 +1157,8 @@ export function showTravelMap(scene, options = {}) {
 
     if (loanTunerBlocked) {
       tunerKicker.setText('TUNER SHOP // LOCKED').setColor('#84909a');
-      tunerName.setText(GINZA_LOAN_BLOCK_LABEL).setColor('#8b99a3');
-      tunerSpecialty.setText('Return the collector car to Ginza').setColor('#71808b');
+      tunerName.setText('').setColor('#8b99a3');
+      tunerSpecialty.setText('').setColor('#71808b');
       tunerArrow.setText('').setVisible(false);
       tunerBadge.disableInteractive().setFillStyle(0x111820, 0.97)
         .setStrokeStyle(1, 0x40515d, 1);
