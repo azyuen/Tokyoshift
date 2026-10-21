@@ -231,8 +231,7 @@ export default class RaceScene extends Phaser.Scene {
     // that must never appear as an opponent is the active profile's character.
     queueCharacterVisual(characters[playerId]?.visual || null);
     if (this.showArkonResultPair) {
-      // Preload both possible result reactions for ALL Arkon street/elite runs,
-      // not just races launched while the Ginza loan is active.
+      // Preload paired result reactions only for the active Ginza gallery loan.
       for (const [id, pose] of [
         ['arkonDen', 'devLaughing'],
         ['arkonDen', 'devSerious'],
@@ -317,8 +316,13 @@ export default class RaceScene extends Phaser.Scene {
           : playableCharacterOrder[0];
     // The owner cameo follows the actual profile driver, not a recruited
     // teammate who happens to be running a crew heat for the same account.
+    // The paired Sayaka/Arkon result is exclusive to an ACTIVE Ginza
+    // gallery loan. Owned cars, ordinary meets, showdowns and pro events
+    // retain Arkon's normal win/loss portrait assets.
     this.showArkonResultPair = isNamedArkonDen(this.registry) &&
-      this.playerCharacterId === storedPlayerCharacterId;
+      this.playerCharacterId === storedPlayerCharacterId &&
+      Boolean(cars[this.selectedCarId]?.ginzaDemo &&
+        this.registry.get('ginzaTestDrive')?.carId === this.selectedCarId);
 
     const storedOpponentCharacterId = this.registry.get('selectedOpponentCharacterId');
     const raceRegionForRivals = this.registry.get('raceDistrict')
@@ -3158,7 +3162,7 @@ export default class RaceScene extends Phaser.Scene {
     playerFrame.lineStyle(5, ink, 0.92);
     playerFrame.strokePoints(playerPanelPoints, true);
 
-    const pairedArkonResult = this.showArkonResultPair && !chapter08Race;
+    const pairedArkonResult = this.showArkonResultPair && this.isGinzaDemoRace && !chapter08Race;
     // An owner-only comic pairing inside the ONE existing player polygon:
     // Sayaka reacts behind Arkon, who always keeps his charcoal suit.
     const sayakaReactionProfile = pairedArkonResult
