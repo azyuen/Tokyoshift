@@ -1,4 +1,4 @@
-import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261017-r572';
+import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261022-r640';
 import { characters } from '../data/characters.js?v=20261021-r629';
 import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js?v=20261022-r640';
 
