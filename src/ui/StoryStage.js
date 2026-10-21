@@ -3,7 +3,7 @@
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
 
 export function showStoryStage(scene, {
-  background = null, characters = [], cars = [], depth = 600,
+  background = null, characters = [], cars = [], depth = 160,
   backgroundAlpha = 1,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
