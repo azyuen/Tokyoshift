@@ -96,6 +96,7 @@ export function createDefaultGameState(options = {}) {
     playerDifficulty: 'STANDARD',
     devMode: false,
     cutscenesSeen: [],
+    storyDirectorProgress: null,
     regionWins: {},
     tunerShopProgress: {},
     tunerTeamChallenges: {},
@@ -1081,6 +1082,16 @@ export function normaliseState(input = {}) {
     cutscenesSeen: Array.isArray(input.cutscenesSeen)
       ? [...new Set(input.cutscenesSeen.map(String).filter(Boolean))]
       : [],
+    storyDirectorProgress:
+      input.storyDirectorProgress?.version === 1 &&
+      typeof input.storyDirectorProgress.id === 'string' &&
+      Number.isSafeInteger(input.storyDirectorProgress.index) &&
+      input.storyDirectorProgress.index >= 0 &&
+      Number.isSafeInteger(input.storyDirectorProgress.ownerSlot)
+        ? { id: input.storyDirectorProgress.id,
+            index: input.storyDirectorProgress.index,
+            ownerSlot: input.storyDirectorProgress.ownerSlot, version: 1 }
+        : null,
     regionWins: normalisedRegionWins,
     tunerShopProgress:
       input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
@@ -1348,6 +1359,7 @@ export function snapshotRegistry(registry) {
     playerDifficulty: normalisePlayerDifficulty(registry.get('playerDifficulty')),
     devMode: Boolean(registry.get('devMode')),
     cutscenesSeen: registry.get('cutscenesSeen') || [],
+    storyDirectorProgress: registry.get('storyDirectorProgress') || null,
     regionWins: registry.get('regionWins') || {},
     tunerShopProgress: registry.get('tunerShopProgress') || {},
     tunerTeamChallenges: registry.get('tunerTeamChallenges') || {},
