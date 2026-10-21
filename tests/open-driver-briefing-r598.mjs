@@ -28,7 +28,7 @@ test('only saved Open Circuit individual driver heats enter the room',()=>{
 
 test('registered car ownership, power and NOS restrictions are checked on each heat',()=>{
   const state=driver();
-  assert.deepEqual(driverBriefingRules(state),{maxPowerKW:225,noNos:true});
+  assert.deepEqual(driverBriefingRules(state),{maxPowerKW:225,noNos:true,stock:false,drivetrain:''});
   assert.equal(driverBriefingEligibility(state,{},212,['ae86']).eligible,true);
   assert.match(driverBriefingEligibility(state,{},230,['ae86']).problems[0],/POWER/);
   assert.match(driverBriefingEligibility(state,{nosInstalled:true},212,['ae86']).problems[0],/NOS/);
