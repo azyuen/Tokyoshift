@@ -1,28 +1,12 @@
 import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261017-r572';
 import { characters } from '../data/characters.js?v=20261021-r629';
+import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js?v=20261022-r640';
 
-// Both speakers share the LEFT reading zone. Sayaka's portrait anchors the
+// Both speakers share the notch-safe compact reading zone. Sayaka's portrait anchors the
 // left edge; Arkon's portrait faces in from the RIGHT of the same bubble.
 // Longer/wider bubbles hold 4-5 lines without clipping; the centre/right
 // driving field, bottom pedals and speed cluster remain unobstructed.
-const GINZA_CHAT_LAYOUT = Object.freeze({
-  left: {
-    face: { x: 22, y: 114, width: 150, height: 170,
-      targetX: 96, targetY: 226, headHeight: 162 },
-    bubble: { left: 184, right: 726, top: 118, bottom: 326,
-      notchDepth: 18, notchHalfHeight: 18,
-      headingX: 207, headingY: 140,
-      textX: 207, textY: 170, textWidth: 488 },
-  },
-  right: {
-    face: { x: 755, y: 114, width: 150, height: 170,
-      targetX: 830, targetY: 226, headHeight: 162 },
-    bubble: { left: 194, right: 733, top: 118, bottom: 326,
-      notchDepth: 18, notchHalfHeight: 18,
-      headingX: 217, headingY: 140,
-      textX: 217, textY: 170, textWidth: 486 },
-  },
-});
+const GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS;
 
 export function createGinzaBanterHud(scene) {
   const sayakaVisual = characters.sayakaFujieda.visual;
