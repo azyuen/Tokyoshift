@@ -273,8 +273,7 @@ export function getProPrizeBonusPercent(rank) {
   if (place <= 3) return 12;
   if (place <= 5) return 10;
   if (place <= 10) return 7;
-  if (place <= 15) return 4;
-  if (place <= 20) return 2;
+  if (place <= 14) return 4;
   return 0;
 }
 
