@@ -574,7 +574,7 @@ function draw(s,state,options){
         const max=owned?.original||0;
         const current=info?.current||0;
         const x=i<firstColumnSize?610:1030;
-        const y=324+(i%firstColumnSize)*70;
+        const y=334+(i%firstColumnSize)*70;
         rowAdd(s.add.rectangle(x,y,390,64,0x0c2132,.94)
           .setStrokeStyle(1,max>0?0x40718b:0x465360,.8).setDepth(273));
         const chosen=Object.prototype.hasOwnProperty.call(requestedLevels,part.id);
