@@ -99,6 +99,8 @@ function locationTimeLabel(location, worldPhase) {
   return worldPhase === 'day' ? 'DAY' : 'NIGHT';
 }
 
+import { isGinzaLoanActive, canVisitDuringGinzaLoan, GINZA_LOAN_BLOCK_LABEL } from '../data/ginzaLoanAccess.js?v=20261022-r636';
+
 export function showTravelMap(scene, options = {}) {
   const {
     currentLocationId,
@@ -174,6 +176,7 @@ export function showTravelMap(scene, options = {}) {
   let selectedRegionId = null;
   let selectedLocationId = null;
   const garageTier = () => Number(scene.registry.get('garageTier') || 0);
+  const ginzaLoanBlocked = location => Boolean(location) && !canVisitDuringGinzaLoan(scene.registry, location.id);
   const activeWorkshopId = () => scene.registry.get('workshopLocationId') || 'shinonomeWorkshop';
 
   const crewBlockedLocation = location => {
@@ -205,7 +208,7 @@ export function showTravelMap(scene, options = {}) {
   };
 
   const locationAvailable = location => {
-    if (!location) return false;
+    if (!location || ginzaLoanBlocked(location)) return false;
     if (crewBlockedLocation(location)) return false;
     if (location.centralTokyoUnlock) {
       return isCentralTokyoLocationUnlocked(scene.registry, location.id);
@@ -850,7 +853,7 @@ export function showTravelMap(scene, options = {}) {
     const cost = getTargetCost(location);
     const isCurrent = !fromWorkshop && location?.id === currentLocationId;
     const isHome = location?.kind === 'home';
-    const available = locationAvailable(location) || isHome;
+    const available = locationAvailable(location);
     const enough = currentCash >= cost;
 
     travelButton.removeAllListeners('pointerdown');
@@ -860,6 +863,13 @@ export function showTravelMap(scene, options = {}) {
         .setFillStyle(0x111820, 1)
         .setStrokeStyle(1, 0x40515d, 1);
       travelLabel.setColor('#72838f').setText('SELECT A LOCATION');
+      return;
+    }
+
+    if (ginzaLoanBlocked(location)) {
+      travelButton.disableInteractive().setFillStyle(0x111820, 1)
+        .setStrokeStyle(1, 0x40515d, 1);
+      travelLabel.setColor('#83939c').setText(GINZA_LOAN_BLOCK_LABEL);
       return;
     }
 
@@ -1123,6 +1133,7 @@ export function showTravelMap(scene, options = {}) {
       : region.description);
 
     const tunerShop = getTunerShopForRegion(selectedRegionId);
+    const loanTunerBlocked = isGinzaLoanActive(scene.registry) && Boolean(tunerShop);
     const tunerUnlocked = Boolean(
       tunerShop && isTunerShopUnlocked(scene.registry, selectedRegionId)
     );
@@ -1132,12 +1143,19 @@ export function showTravelMap(scene, options = {}) {
       !tunerUnlocked &&
       (tunerChallenge.invited || tunerChallenge.stage > 0)
     );
-    const showTunerPanel = tunerUnlocked || challengeVisible;
+    const showTunerPanel = loanTunerBlocked || tunerUnlocked || challengeVisible;
 
     tunerPanelObjects.forEach(obj => obj.setVisible(showTunerPanel));
     tunerBadge.removeAllListeners('pointerdown');
 
-    if (tunerUnlocked) {
+    if (loanTunerBlocked) {
+      tunerKicker.setText('TUNER SHOP // LOCKED').setColor('#84909a');
+      tunerName.setText(GINZA_LOAN_BLOCK_LABEL).setColor('#8b99a3');
+      tunerSpecialty.setText('Return the collector car to Ginza').setColor('#71808b');
+      tunerArrow.setText('').setVisible(false);
+      tunerBadge.disableInteractive().setFillStyle(0x111820, 0.97)
+        .setStrokeStyle(1, 0x40515d, 1);
+    } else if (tunerUnlocked) {
       // Once unlocked, the map is navigation only. Championship/perfect-sweep
       // progression is surfaced through Meet/result flows instead.
       tunerKicker
@@ -1219,9 +1237,11 @@ export function showTravelMap(scene, options = {}) {
       const selected = selectedLocationId === item.id;
       const isCurrent = !fromWorkshop && currentLocationId === item.id;
       const cost = getTargetCost(item);
-      const available = locationAvailable(item) || item.kind === 'home';
+      const available = locationAvailable(item);
       row.label.setText(openingTrainMode ? 'HOME' : item.label);
-      if (crewBlockedLocation(item)) {
+      if (ginzaLoanBlocked(item)) {
+        row.meta.setText(GINZA_LOAN_BLOCK_LABEL);
+      } else if (crewBlockedLocation(item)) {
         row.meta.setText('CREW CAR // UNAVAILABLE');
       } else if (item.kind === 'garageUpgrade') {
         const unlocked = isWorkshopUnlocked(item.id, garageTier());
@@ -1254,7 +1274,8 @@ export function showTravelMap(scene, options = {}) {
 
       row.box.removeAllListeners('pointerdown');
 
-      if (available || item.centralTokyoUnlock || item.available !== false) {
+      if (!ginzaLoanBlocked(item) &&
+          (available || item.centralTokyoUnlock || item.available !== false)) {
         row.box.setInteractive({ useHandCursor: true });
         row.box.on('pointerdown', () => {
           selectedLocationId = item.id;
