@@ -130,7 +130,9 @@ export class StoryDirector {
     if (this.wait) {
       const wait = this.wait;
       if (wait.kind === 'transition') {
-        if (sceneName(scene) !== wait.target || scene === wait.origin) return;
+        // Phaser may reuse the same scene object when restarting GarageScene.
+        // Scene delay has already allowed the scheduled transition to execute.
+        if (sceneName(scene) !== wait.target) return;
         this.wait = null;
       } else if (wait.kind === 'sceneChanged') {
         if (sceneName(scene) === wait.source) return;
@@ -158,7 +160,7 @@ export class StoryDirector {
     for (let budget=0; budget<25 && this.session; budget++) {
       const index = this.session.index;
       const step = compiled.script.steps[index];
-      if (!step || step.type === 'END') { this.stop({ complete: true }); return; }
+      if (!step || String(step.type).toUpperCase() === 'END') { this.stop({ complete: true }); return; }
       const type = String(step.type).toUpperCase();
       try {
         if (['LABEL','IF','GOTO'].includes(type)) {
