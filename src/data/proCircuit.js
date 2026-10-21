@@ -263,6 +263,29 @@ function seededRows(state, kind) {
     .map((record, index) => ({ ...record, seed: index + 1 }));
 }
 
+// Open Circuit appearance/sponsorship commission.  Only paid cash prizes
+// receive a bonus: entry fees, season points, and race odds never change.
+// A runner's standing BEFORE settling the competition sets the payout tier.
+export function getProPrizeBonusPercent(rank) {
+  const place = Number(rank);
+  if (!Number.isInteger(place) || place < 1) return 0;
+  if (place === 1) return 15;
+  if (place <= 3) return 12;
+  if (place <= 5) return 10;
+  if (place <= 10) return 7;
+  if (place <= 15) return 4;
+  if (place <= 20) return 2;
+  return 0;
+}
+
+export function getProPrizeWithBonus(cashPrize, rank) {
+  const basePrize = Number.isFinite(Number(cashPrize))
+    ? Math.max(0, Math.floor(Number(cashPrize))) : 0;
+  const bonusPercent = getProPrizeBonusPercent(rank);
+  const bonusCash = Math.floor(basePrize * bonusPercent / 100);
+  return { basePrize, bonusPercent, bonusCash, totalPrize: basePrize + bonusCash };
+}
+
 export function getProCircuitDriverSeeds(proCircuit) {
   return seededRows(proCircuit, 'DRIVER');
 }
