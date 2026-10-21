@@ -421,7 +421,7 @@ export function isArkonDen(source) {
 
   // Accept the canonical split name, combined display-name variants, and old
   // dev saves that were created before the explicit devMode flag was stored.
-  return devMode || joined.includes('arkonden') || legacyDevCash;
+  return devMode || joined === 'arkonden' || legacyDevCash;
 }
 
 export function getCentralTokyoEligibility(source) {
