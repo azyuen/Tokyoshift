@@ -29,16 +29,18 @@ test('scene 7 adds the Oshiage coaching reminder without spoiling Sayaka', () =>
   assert.doesNotMatch(mention.text, /I am the instructor|I used to be a strategist/i);
 });
 
-test('phone actor portraits and chat panels are 30% larger and mirrored', () => {
+test('phone reuses notch-safe compact layout with mirrored speech tails', () => {
   assert.deepEqual(OPENING_PHONE_DIALOGUE_LAYOUTS, PHONE_DIALOGUE_LAYOUTS);
   const { left, right } = PHONE_DIALOGUE_LAYOUTS;
-  assert.equal(left.face.width, 273);
-  assert.equal(right.face.width, 273);
-  assert.equal(left.bubble.right - left.bubble.left, 735);
-  assert.equal(right.bubble.right - right.bubble.left, 735);
-  assert.equal(left.bubble.bottom - left.bubble.top, 244);
-  assert.equal(left.face.x + right.face.x + left.face.width, 1560);
-  assert.equal(left.bubble.left + right.bubble.right, 1560);
+  assert.equal(left.face.width, 150);
+  assert.equal(right.face.width, 150);
+  assert.equal(left.face.x, 172);
+  assert.equal(right.face.x, 905);
+  assert.equal(left.bubble.right - left.bubble.left, 542);
+  assert.equal(right.bubble.right - right.bubble.left, 539);
+  assert.equal(left.bubble.bottom - left.bubble.top, 208);
+  assert.equal(left.bubble.left - left.bubble.notchDepth, 316);
+  assert.equal(right.bubble.right + right.bubble.notchDepth, 901);
 });
 
 test('call action bars sit along the bottom in black for both renderers', () => {
