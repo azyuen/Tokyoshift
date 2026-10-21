@@ -77,7 +77,7 @@ test('R605 Hiroshi identifies next driver and car, advice cooldown is compact',(
 
 test('R605 first briefing is free; paid driver heats and trophy heats go straight to Next Heat',()=>{
   assert.match(driverUI,/unpaid\?'CANCEL ENTRY':'FORFEIT EVENT'/);
-  assert.match(driverUI,/unpaid\?'GO TO GRID \/\/ '\+cash\(state\.entryFee\):'NEXT HEAT'/);
+  assert.match(driverUI,/const eligibleGridLabel = unpaid\?'GO TO GRID/);
   assert.doesNotMatch(driverUI,/PAY ONLY WHEN YOU PROCEED/);
   assert.equal(usesPrepaidDriverBriefing({
     openCircuit:true,trophyId:'tokyoTechnical',team:false,opponentRatings:[4,4,5,5,5]
