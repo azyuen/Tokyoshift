@@ -57,10 +57,13 @@ export function advanceGinzaBanter(state, {
 
   const count = GINZA_BANTER_EXCHANGES.length;
   const raw = Number(random());
-  const pick = Math.min(count - 2, Math.max(0,
-    Math.floor((Number.isFinite(raw) ? raw : 0) * (count - 1))));
+  const options = state.lastIndex < 0 ? count : count - 1;
+  const pick = Math.min(options - 1, Math.max(0,
+    Math.floor((Number.isFinite(raw) ? raw : 0) * options)));
   // Skip the previous exchange so consecutive banter never repeats.
-  const index = pick >= state.lastIndex ? pick + 1 : pick;
+  const index = state.lastIndex < 0
+    ? pick
+    : pick >= state.lastIndex ? pick + 1 : pick;
   const chosen = GINZA_BANTER_EXCHANGES[index];
   state.lastIndex = index;
   state.pendingReply = chosen.arkon;
