@@ -26,6 +26,15 @@ export function getGinzaVaultCar(index, stock = false) {
   return car?.[stock ? 'stock' : 'decal'] || GINZA_VAULT_CARS[0].decal;
 }
 
+// Unlike developer access (which can also be granted by devMode or legacy
+// cash), the special after-hours scene belongs to the Arkon Den profile alone.
+export function isNamedArkonDen(source) {
+  const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
+  const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+  return fullName === 'arkonden';
+}
+
 export function isGinzaOwner(source) {
   const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
   const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
