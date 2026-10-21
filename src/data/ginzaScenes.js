@@ -59,6 +59,23 @@ export function ginzaConversation(kind, { carName = 'THIS CAR', shortfall = 0 } 
         sayaka('ginzaSerious', "But I'm coming in the passenger seat. We cannot have our owner crashing the gallery's most valuable assets!"),
       ],
     },
+    // Only Arkon Den's named profile gets the gallery owner's relaxed
+    // after-hours exchange. The ordinary invitation and vault scenes remain.
+    vaultArkon: {
+      title: 'GINZA // AFTER HOURS', finalActionLabel: "LET'S GO",
+      characters: { left: 'sayakaFujieda', right: 'arkonDen' },
+      pages: [
+        { ...sayaka('normal', 'Arkon! Where are you off to in one of our cars tonight?'),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { speaker: 'right', rightCharacter: 'arkonDen', rightPose: 'ginzaSuit',
+          leftCharacter: 'sayakaFujieda', leftPose: 'normal',
+          text: 'Just a regular night out.' },
+        { ...sayaka('normal', 'A regular night out. In a Le Mans legend. Naturally.'),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+        { ...sayaka('normal', "Give me a moment to change into something more comfortable. I'll join you. We can't have you wrecking our prized assets!"),
+          rightCharacter: 'arkonDen', rightPose: 'ginzaSuit' },
+      ],
+    },
     vaultDrive: {
       title: 'GINZA // HANDLE WITH CARE', finalActionLabel: 'TAKE THE KEYS',
       pages: [
