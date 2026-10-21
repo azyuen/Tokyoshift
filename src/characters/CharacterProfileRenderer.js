@@ -90,6 +90,7 @@ export function createCharacterProfile(scene, {
   profileOverride = null,
   rivalContext = false,
   playerCharacterId = null,
+  proCircuit = false,
 } = {}) {
   const character = characters[characterId];
   if (!character?.visual) return null;
@@ -102,6 +103,7 @@ export function createCharacterProfile(scene, {
   const visualOptions = {
     rivalContext: Boolean(rivalContext),
     playerCharacterId: activePlayerCharacterId,
+    proCircuit: Boolean(proCircuit),
   };
   const contextualVisual = getCharacterVisualForContext(characterId, visualOptions);
   if (!contextualVisual) return null;
