@@ -39,7 +39,7 @@ export function isGinzaOwner(source) {
   const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
   const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
     .toLowerCase().replace(/[^a-z0-9]/g, '');
-  return Boolean(get('devMode')) || fullName.includes('arkonden') ||
+  return Boolean(get('devMode')) || fullName === 'arkonden' ||
     Number(get('cash') || 0) >= 900000000;
 }
 
