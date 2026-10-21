@@ -118,7 +118,8 @@ test('gallery UI is one hero car per room and protects test drives', () => {
   assert.match(gallery,/this\.switchGinzaVaultCar\(index\)/);
   assert.match(gallery,/this\.toggleGinzaVaultStock\(\)/);
   assert.match(gallery,/this\.startGinzaTestDrive\(listing\)/);
-  assert.match(gallery,/this\.endGinzaTestDrive\(\)/);
+  assert.match(gallery,/this\.endGinzaTestDrive\(false\)/);
+  assert.match(gallery,/this\.ginzaScene\(owner \? 'vaultReturnArkon' : 'vaultReturn', \{\}, \(\) => \{/);
   assert.match(gallery,/this\.ginzaScene\('interest'/);
   assert.match(race,/this\.setupGinzaPassenger\(\)/);
   assert.match(race,/this\.updateGinzaPassenger\(playerT\)/);
