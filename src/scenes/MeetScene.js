@@ -40,7 +40,8 @@ import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
+import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
   getGarageCapacity,
@@ -2747,7 +2748,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   travelToLocation(locationId, suppliedCost = null) {
-    if (!this.hasCar) return false;
+    if (!this.hasCar || !canVisitDuringGinzaLoan(this.registry, locationId)) return false;
 
     const travelTarget = getTravelLocation(locationId);
     if (!travelTarget) return false;
@@ -3159,6 +3160,7 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   returnToWorkshop(workshopLocationId = 'shinonomeWorkshop', requestedCost = null) {
+    if (isGinzaLoanActive(this.registry)) return false;
     const garageTier = Number(this.registry.get('garageTier') || 0);
     const destinationId = isWorkshopUnlocked(workshopLocationId, garageTier)
       ? workshopLocationId
