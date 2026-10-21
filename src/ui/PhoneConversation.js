@@ -165,6 +165,9 @@ export function playPhoneConversation(scene, {
 
   const caller = characters[callerId];
   const name = String(callerName || caller?.name || 'UNKNOWN CALLER').toUpperCase();
+  // The compact phone bubble is narrower than the old full-width panel:
+  // preserve the caller's name, while the ringing screen carries the long label.
+  const callerHeading = name.split(' // ')[0].trim() || name;
   const portraitAsset = getPhoneCallerPortrait(callerId, callerPose);
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
   const playerPortraitAsset = getPhoneCallerPortrait(playerCharacterId, 'idle');
@@ -242,16 +245,16 @@ export function playPhoneConversation(scene, {
         side: isPlayer ? 'right' : 'left',
         speaker: isPlayer
           ? 'YOU: ' + String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
-          : String(label || 'CALLER').toUpperCase() + ': ' + name,
+          : 'CALL: ' + callerHeading,
         initialPose: isPlayer ? 'idle' : callerPose,
         spriteKeyForPose: () => (isPlayer ? playerPortraitAsset : portraitAsset)?.key || '',
         characterVisual: (isPlayer ? playerActor : caller)?.visual || {},
         phoneIconKey: PHONE_ICON_KEY,
       });
       panel.setAccent(color);
-      panel.heading.setFontSize('12px');
+      panel.heading.setFontSize('10px');
       panel.dialogue.setText(formatPhoneMessage(page.text, vars))
-        .setFontSize('23px').setLineSpacing(7);
+        .setFontSize('17px').setLineSpacing(4);
       nextText.setText(state.pageIndex < normalisedPages.length - 1
         ? 'NEXT >' : 'END CALL >');
       pageCounter.setText(normalisedPages.length > 1
