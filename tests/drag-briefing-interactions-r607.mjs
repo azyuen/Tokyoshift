@@ -37,14 +37,14 @@ test('R607 batch removals change three parts in one state and restore every purc
  assert.equal(restored.ae86.exhaustNosTuning.nitrousShot,3);
  assert.equal(restored.ae86.proBriefingNosStash,undefined);
  assert.equal(restored.ae86.proBriefingPowerStash,undefined);
- assert.equal(BRIEFING_POWER_PARTS.length,9);
+ assert.equal(BRIEFING_POWER_PARTS.length,15);
 });
 test('R607 multi-selection applies only once, not per item click',()=>{
- assert.match(driver,/const selected=new Set\(\)/);
- assert.match(driver,/if\(selected\.has\(part\.id\)\)selected\.delete\(part\.id\)/);
- assert.match(driver,/selected\.add\(part\.id\)/);
- assert.match(driver,/removeDriverPowerParts\(carState,\[\.\.\.selected\]\)/);
- assert.match(driver,/APPLY REMOVALS \/\/ /);
+ assert.match(driver,/const requestedLevels=\{\}/);
+ assert.match(driver,/setDriverPowerPartLevels\(carState,requestedLevels\)/);
+ assert.match(driver,/APPLY LEVELS \/\/ /);
+ assert.match(driver,/ENGINE \+ NOS/);
+ assert.match(driver,/GRIP \+ WEIGHT/);
  const section=driver.slice(driver.indexOf('function openPowerParts'),driver.indexOf('function openTune'));
  assert.equal((section.match(/options\.onCarState\?\.\(next\)/g)||[]).length,2,
   'one batch apply action and one optional restore-all action');
