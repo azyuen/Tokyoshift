@@ -5,7 +5,7 @@ import { GINZA_BANTER_EXCHANGES, createGinzaBanterState, advanceGinzaBanter } fr
 import { characters } from '../src/data/characters.js';
 
 const source = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const SAYAKA = ['devIdle', 'devDisappointed', 'devSad', 'devScowl', 'devUnsure'];
+const SAYAKA = ['devIdle', 'devDisappointed', 'devLaughing', 'devSad', 'devScowl', 'devUnsure'];
 const ARKON = ['devIdle', 'devLaughing', 'devSerious', 'devTalking'];
 
 test('exactly 80 distinct, concise two-person Ginza exchanges with authored emotions', () => {
