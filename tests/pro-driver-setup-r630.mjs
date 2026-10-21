@@ -147,6 +147,8 @@ test('Daichi UI exposes both tabs, four levels, real build readouts and disabled
   assert.ok(complex.includes('feetY: STAGE.y + 372 + feetJitter'));
   assert.ok(!complex.includes('REGIONAL RIVALS // MOVED UP TO THE COMPLEX'));
   assert.ok(complex.includes('xJitter'));
+  assert.ok(complex.includes('stock:Boolean(event.stock)'));
+  assert.ok(complex.includes("drivetrain:String(event.drivetrain||'').toUpperCase()"));
 });
 
 test('factory-stock check ignores saved but physically inactive Level III settings', async () => {
