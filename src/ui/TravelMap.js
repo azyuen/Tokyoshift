@@ -639,6 +639,9 @@ export function showTravelMap(scene, options = {}) {
 
   const getTargetCost = location => {
     if (!location || chapter08GinzaMode) return 0;
+    // Never strand a borrower who spends their last yen at a street meet.
+    // The return trip to Ginza is always free until the car is handed back.
+    if (isGinzaLoanActive(scene.registry) && location.id === 'ginzaMotorGallery') return 0;
 
     if (location.kind === 'home') {
       return fromWorkshop ? 0 : Number(homeCost ?? HOME_RETURN_COST);
