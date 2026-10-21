@@ -66,6 +66,8 @@ test('every Drag Complex visual entry point requests Pro art', () => {
   const results=getText('src/ui/ProVictoryResults.js');
   const finish=getText('src/scenes/FourLaneTestScene.js');
   const renderer=getText('src/characters/CharacterProfileRenderer.js');
+  const registration=getText('src/ui/CrewRegistrationPanel.js');
+  const opening=getText('src/ui/Chapter09EstablishingShot.js');
   assert.match(central,/queueCharacterPose\(id, 'normal', \{ rivalContext: true, proCircuit: true \}/);
   assert.match(central,/proCircuit = this\.activeLocationId === 'tokyoDragComplex'/);
   assert.match(crew,/getCharacterVisualAsset\(u\.id,'idle',\{playerCharacterId:id,proCircuit:true\}\)/);
@@ -75,4 +77,6 @@ test('every Drag Complex visual entry point requests Pro art', () => {
   assert.match(results,/getCharacterVisualAsset\(id,pose,\{proCircuit:true\}\)/);
   assert.match(finish,/getCharacterVisualAsset\(playerId, pose, \{ proCircuit: true \}\)/);
   assert.match(renderer,/proCircuit: Boolean\(proCircuit\)/);
+  assert.match(registration,/playerCharacterId:protagonist,proCircuit:true/);
+  assert.match(opening,/playerCharacterId:playerId,proCircuit:true/);
 });
