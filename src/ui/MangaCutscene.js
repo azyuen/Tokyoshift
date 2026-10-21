@@ -457,7 +457,7 @@ function updateActorPoseInPlace(scene, actor, side, characterId, pose) {
     frameWidth: frame.width,
     frameHeight: frame.height,
     side,
-    flipInward: true,
+    flipInward: !actor?.ginzaArkonFaceSayaka,
   });
 
   image
@@ -527,6 +527,11 @@ function replaceActorProfile(
   }
 
   const frame = frameFor(scene, side);
+  // Ginza's Arkon cameo should face Sayaka, not away from her. Derive this
+  // from the authored scene and character rather than flipping all right-side
+  // manga actors in unrelated career cutscenes.
+  const ginzaArkonFaceSayaka = side === 'right' && characterId === 'arkonDen' &&
+    String(context.definition?.id || '').startsWith('ginzaMicro_');
   const profile = createCharacterProfile(scene, {
     characterId,
     pose,
@@ -536,7 +541,7 @@ function replaceActorProfile(
     frameHeight: frame.frameHeight,
     side,
     depth: BASE_DEPTH + (side === 'center' ? 18 : 15),
-    flipInward: true,
+    flipInward: !ginzaArkonFaceSayaka,
     dimmed,
     // Manga characters are staged as full silhouettes. Profile cards keep
     // their rectangular masks; cutscenes intentionally let hair/arms/poses
@@ -587,6 +592,7 @@ function replaceActorProfile(
     profile,
     rivalContext: Boolean(rivalContext),
     playerCharacterId: context.playerCharacterId,
+    ginzaArkonFaceSayaka,
   };
   return controller.actors[side];
 }
