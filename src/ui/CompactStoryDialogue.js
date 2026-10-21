@@ -2,19 +2,9 @@
 // The Arkon/Sayaka Ginza banter remains untouched and uses its existing timing.
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
 import { createRaceDialogueHud } from './RaceCoachHud.js?v=20261017-r572';
+import { COMPACT_DIALOGUE_LAYOUTS, COMPACT_DIALOGUE_SHIFT_X } from './CompactDialogueLayout.js?v=20261022-r640';
 
-const LAYOUTS = Object.freeze({
-  left: {
-    face: { x: 22, y: 114, width: 150, height: 170, targetX: 96, targetY: 226, headHeight: 162 },
-    bubble: { left: 184, right: 726, top: 118, bottom: 326, notchDepth: 18, notchHalfHeight: 18,
-      headingX: 207, headingY: 140, textX: 207, textY: 170, textWidth: 488 },
-  },
-  right: {
-    face: { x: 755, y: 114, width: 150, height: 170, targetX: 830, targetY: 226, headHeight: 162 },
-    bubble: { left: 194, right: 733, top: 118, bottom: 326, notchDepth: 18, notchHalfHeight: 18,
-      headingX: 217, headingY: 140, textX: 217, textY: 170, textWidth: 486 },
-  },
-});
+const LAYOUTS = COMPACT_DIALOGUE_LAYOUTS;
 
 const tokenToId = (token, playerId, cast) => {
   const value = cast?.[token] || token;
@@ -106,9 +96,9 @@ export function playCompactStoryDialogue(scene, {
     else show();
   };
   if (tapToAdvance) {
-    nextButton = scene.add.rectangle(654, 336, 150, 36, 0x111111, .95)
+    nextButton = scene.add.rectangle(654 + COMPACT_DIALOGUE_SHIFT_X, 336, 150, 36, 0x111111, .95)
       .setDepth(depth + 8).setScrollFactor(0).setInteractive({ useHandCursor: true });
-    nextLabel = scene.add.text(654, 336, 'NEXT >', {
+    nextLabel = scene.add.text(654 + COMPACT_DIALOGUE_SHIFT_X, 336, 'NEXT >', {
       fontFamily: '"Silkscreen", monospace', fontSize: '10px', color: '#ffffff',
     }).setOrigin(.5).setDepth(depth + 9).setScrollFactor(0);
     nextButton.on('pointerdown', advance);
