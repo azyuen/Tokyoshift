@@ -4632,6 +4632,9 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryMode = null;
     this.chassisMode = false;
     this.engineTransitioning = false;
+    // If iOS interrupted a tuning transition, never strand the casual avatar
+    // invisible when the mechanic pose was already destroyed.
+    this.setArkonWorkingAtCar(false);
 
     try { this.updateGarageNavState(); } catch (e) {}
     this.upgradeButtons?.forEach(item => {
@@ -5837,7 +5840,9 @@ export default class GarageScene extends Phaser.Scene {
     this.currentEngineTuning = getEngineTuning(carStates[this.selectedCarId]);
     this.pendingEngineTuning = { ...this.currentEngineTuning };
     this.refreshEngineMode();
-    this.showWorkshopToast('DAICHI INSTALLED THE PARTS // ¥ ' + cost.toLocaleString('en-US'));
+    this.showWorkshopToast((isArkonStoryWorkshop(this.registry,this.crewMode)
+      ? 'PARTS INSTALLED // ¥ ' : 'DAICHI INSTALLED THE PARTS // ¥ ') +
+      cost.toLocaleString('en-US'));
   }
 
 
