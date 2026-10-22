@@ -3,7 +3,11 @@ import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
-import { DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY, isArkonVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r642';
+import {
+  DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY,
+  isArkonVaultStoryLoan, shouldLaunchDevVaultStory, claimDevVaultStoryLoan,
+} from '../data/devVaultStory.js?v=20261022-r643';
+import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261022-r640';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
@@ -141,6 +145,10 @@ export default class RaceScene extends Phaser.Scene {
   constructor(sceneKey = 'RaceScene') { super(sceneKey); }
 
   preload() {
+    // Final fallback: a pending scripted arrival must NEVER turn into an
+    // ordinary race, even if a stale Meet card or link bypasses the map.
+    if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
+        shouldLaunchDevVaultStory(this.registry)) return;
     let queued = 0;
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
@@ -484,6 +492,15 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   create() {
+    if (!this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) &&
+        shouldLaunchDevVaultStory(this.registry)) {
+      if (queueSafeSceneStart(this,'DevVaultStoryScene')) {
+        claimDevVaultStoryLoan(this.registry);
+        saveSessionState(this.registry);
+        finishSceneLoading('READY');
+        return;
+      }
+    }
     ensureDerivedModularCarTextures(this, Object.fromEntries(
       [...new Set([this.selectedCarId, this.opponentCarId])]
         .filter(id => cars[id])
