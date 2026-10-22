@@ -16,6 +16,8 @@ on:
       - 'src/state/GameState.js'
       - 'src/main.js'
       - 'tests/dev-vault-story-r641.mjs'
+      - 'tests/ginza-loan-return-r636.mjs'
+      - 'tests/story-director-r639.mjs'
       - '.github/workflows/dev-vault-story-r641.yml'
 jobs:
   dev-vault-story:
