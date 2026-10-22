@@ -404,6 +404,10 @@ test('R653 Story time controls scene phase without touching other profiles',()=>
   const state=createArkonStoryState(1);
   assert.equal(state.arkonStoryTimeOfDay,'night');
   assert.equal(normaliseState({...state,arkonStoryTimeOfDay:'day'}).arkonStoryTimeOfDay,'day');
+  const earlier={...state,arkonStoryPhase:'meetNotice'};
+  delete earlier.arkonStoryTimeOfDay;
+  assert.equal(normaliseState(earlier).arkonStoryTimeOfDay,'night');
+  assert.equal(normaliseState({...earlier,arkonStoryPhase:'practice'}).arkonStoryTimeOfDay,'day');
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='night'));
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='day'));
