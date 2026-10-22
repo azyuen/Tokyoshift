@@ -1,0 +1,62 @@
+name: R645 Background Standards and Story Staging Regression
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/background-standards-r645, main]
+    paths:
+      - 'assets/Garage/shinonome_warehouse_day.png'
+      - 'assets/Locations/TunerShops/shinagawa_zerosports_day.png'
+      - 'assets/Meet/Day/**'
+      - 'src/story/BackgroundViewport.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/main.js'
+      - 'tools/background-calibrator.html'
+      - 'docs/background-audit/**'
+      - 'scripts/normalize_backgrounds.py'
+      - 'tests/background-viewport-r645.mjs'
+      - 'tests/story-background-perspective-r644.mjs'
+      - '.github/workflows/background-standards-regression-r645.yml'
+jobs:
+  geometry-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check JS syntax and embedded background calibration tool
+        run: |
+          node --check src/story/BackgroundViewport.js
+          node --check src/ui/StoryStage.js
+          node --check src/story/StoryDirector.js
+          node --check src/main.js
+          python3 - <<'PY'
+          import pathlib,re
+          html=pathlib.Path('tools/background-calibrator.html').read_text()
+          match=re.search(r'<script type="module">([\s\S]*?)</script>',html)
+          assert match, 'Missing calibration client module'
+          pathlib.Path('/tmp/r645-background-calibrator.mjs').write_text(match.group(1))
+          PY
+          node --check /tmp/r645-background-calibrator.mjs
+      - name: Verify all standardized PNG files are 1672 by 941 without installing graphics library
+        run: |
+          python3 scripts/audit_backgrounds.py --json /tmp/r645-current-inventory.json
+          python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/r645-current-inventory.json'))
+          groups={'outdoor_meet','outdoor_oshiage','outdoor_central',
+                  'workshop_core','workshop_tuner','workshop_crew','workshop_dyno'}
+          items=[x for x in data['images'] if x['group'] in groups]
+          assert len(items)==76, len(items)
+          wrong=[x['path'] for x in items if (x['width'],x['height'])!=(1672,941)]
+          assert not wrong,wrong
+          print('VERIFIED',len(items),'normalized vehicle-interior and outdoor background canvases')
+          PY
+      - name: Story + background geometry regression suite
+        run: |
+          node --test tests/background-viewport-r645.mjs tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/dev-vault-story-r641.mjs tests/startup-import-integrity-r508.mjs
