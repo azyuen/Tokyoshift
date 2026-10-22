@@ -21,20 +21,20 @@ export const CINEMATIC_FRAMES = Object.freeze({
 // calibration pass can override values by background ID later.
 export const CINEMATIC_PROJECTION_DEFAULTS = Object.freeze({
   location:Object.freeze({
-    model:'ground-perspective',horizon:.40,near:.94,reference:.76,
-    gamma:1, minFactor:.16,maxFactor:1.62,
-    referenceCarWidth:.68,referenceCharacterHeight:.59,vanishingX:.50,
+    model:'ground-perspective',horizon:.40,backLimit:.52,near:.94,reference:.76,
+    gamma:1,minFactor:.16,maxFactor:1.62,
+    referenceCarWidth:.69,referenceCharacterHeight:.48,vanishingX:.50,
   }),
   interior:Object.freeze({
-    model:'ground-perspective',horizon:.34,near:.95,reference:.78,
+    model:'ground-perspective',horizon:.34,backLimit:.54,near:.95,reference:.78,
     gamma:.90,minFactor:.23,maxFactor:1.55,
-    referenceCarWidth:.64,referenceCharacterHeight:.60,vanishingX:.50,
+    referenceCarWidth:.64,referenceCharacterHeight:.50,vanishingX:.50,
   }),
   road:Object.freeze({
     // Side-on moving race backgrounds are orthographic: skyline/roadside
     // already provide depth through parallax. Scaling race cars by screen Y
     // would be physically and visually incorrect.
-    model:'orthographic',horizon:null,near:.91,reference:.72,
+    model:'orthographic',horizon:null,backLimit:.48,near:.91,reference:.72,
     gamma:1,minFactor:1,maxFactor:1,
     referenceCarWidth:.46,referenceCharacterHeight:.51,vanishingX:.50,
   }),
