@@ -5,6 +5,7 @@ import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r574';
+import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261022-r649';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -258,10 +259,12 @@ export function showOfficePanel(scene) {
     const archiveP=point(frame,.848,.055);
     const archiveButton=add(scene.add.rectangle(archiveP.x,archiveP.y,266,48,0x172d40,.97)
       .setStrokeStyle(2,0xf7b0d4,.94).setInteractive({useHandCursor:true}).setDepth(214));
-    add(scene.add.text(archiveP.x,archiveP.y,'STORY ARCHIVE  >',{
+    add(scene.add.text(archiveP.x,archiveP.y,
+      scene.registry.get('gameMode')==='arkonStory'?'RECOUNT STORY  >':'STORY ARCHIVE  >',{
       fontFamily:PIXEL_FONT,fontSize:'8px',color:'#ffffff',
     }).setOrigin(.5).setDepth(215));
-    archiveButton.on('pointerdown',()=>showStoryArchivePanel(scene));
+    archiveButton.on('pointerdown',()=>scene.registry.get('gameMode')==='arkonStory'
+      ? showArkonStoryArchivePanel(scene) : showStoryArchivePanel(scene));
   }
 
   const openingMagazine = scene.registry.get('openingChapter') === 'magazine';
