@@ -42,7 +42,7 @@ export const ARKON_CHAPTER_02 = {
       ark('He appears to have found us anyway.','storyLaughing'),
     ]),
     manga('ANOTHER PERFECT ENTRANCE',[
-      daigo('Arkon. Still driving the Civic? I respect your commitment to automotive history.'),
+      daigo('Arkon. Still driving the 240Z? I respect your commitment to automotive history.'),
       say('Good evening, Daigo.','oshiageNeutral'),
       daigo('Sayaka, dinner? There is somewhere in Ginza I think you would like.'),
       say('I have plans.','oshiageReviewing'),
@@ -89,7 +89,7 @@ export const ARKON_CHAPTER_02 = {
     {type:'WAIT_WIN_DELTA',key:'ch2BeforeRepair',count:2,scene:'MeetScene'},
 
     // Only here does Sayaka catch Arkon with tools at the Meet: not at home.
-    ...present('THE CIVIC // AFTER THE RUNS',[
+    ...present('THE 240Z // AFTER THE RUNS',[
       {id:A,pose:'storyMechanicCrouch',role:'carMechanic'},
       {id:S,pose:'oshiageReviewing',role:'observer'},
     ]),
@@ -104,7 +104,7 @@ export const ARKON_CHAPTER_02 = {
       ark('It is a lot cheaper than buying new parts.','storyLaughing'),
     ]),
     manga('AN INVITATION, SORT OF',[
-      say('You have done more to that Civic than I thought.'),
+      say('You have done more to that 240Z than I thought.'),
       ark('You should hear it when the gearbox is warm.','storyConfident'),
       say('Then drive. I will come along.','oshiageRelaxed'),
       ark('You want a ride in the museum exhibit?','storySurprised'),
@@ -115,7 +115,7 @@ export const ARKON_CHAPTER_02 = {
     {type:'STORY_CRUISE'},
     {type:'WAIT_FLAG',key:'arkonStoryCruiseComplete',equals:true,scene:'GarageScene'},
     manga('AFTER THE DRIVE',[
-      say('Your Civic is better sorted than some expensive cars I have driven.','oshiageReviewing'),
+      say('Your 240Z is better sorted than some expensive cars I have driven.','oshiageReviewing'),
       ark('Do you always offer compliments in the least flattering way?','storyLaughing'),
       say('Almost always. Now where is that workshop?','oshiageRelaxed'),
     ]),
@@ -132,7 +132,7 @@ export const ARKON_CHAPTER_02 = {
       say('There is more than one room?','oshiageRelaxed'),
       ark('Technically the storage cupboard counts.'),
       say('These tools are not cheap. And they are very well looked after.','oshiageReviewing'),
-      ark('Some are older than the Civic. I kept them when the race-team work ended.','storySerious'),
+      ark('Some are older than the 240Z. I kept them when the race-team work ended.','storySerious'),
       say('You really did work in a professional paddock.','oshiageSerious'),
       ark('For a while. I miss getting a car right. I do not miss the politics.','storySerious'),
     ]),
@@ -160,7 +160,7 @@ export const ARKON_CHAPTER_02 = {
       say('You were going to.','oshiageRelaxed'),
     ]),
     manga('THE OFFER',[
-      daigo('Your Civic sounded different tonight. Let us have another run. No money.'),
+      daigo('Your 240Z sounded different tonight. Let us have another run. No money.'),
       say('That is unusually generous.','oshiageReviewing'),
       daigo('I can be generous. Especially in front of company.'),
       say('I was about to leave.','oshiageNeutral'),
