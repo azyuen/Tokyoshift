@@ -1,7 +1,7 @@
 // R649 — Arkon's own Story archive (the normal Office Story Archive is Career).
 // Recount previews NEVER save money, cars, results or unlocks. Restart is opt-in.
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
-import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r652';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r652';
 import { resetArkonStoryState } from '../state/GameState.js?v=20261023-r652';
