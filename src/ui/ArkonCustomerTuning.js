@@ -17,7 +17,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   // This is a hired Canal Yard bay, not a gifted workshop or a new car.
   showStoryStage(scene,{
     backgroundId:'workshop:shinonomeCanalYard:night',stageMode:'story',
-    composition:'car-behind-cast',
+    composition:'car-behind-cast',motion:'arrive',
     characters:[{id:'arkonDen',pose:'storyMechanicEngine',x:1050,ground:.77,height:295}],
     cars:[{carId:job.carId,x:1110,ground:.82,width:640}],
   });
