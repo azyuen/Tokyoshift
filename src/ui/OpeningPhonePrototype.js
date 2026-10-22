@@ -3,7 +3,9 @@
 import {
   characters, getCharacterAssetUrl, getCharacterVisualAsset,
 } from '../data/characters.js?v=20261011-r477';
-import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop } from './RaceCoachHud.js?v=20261023-r658';
+import { createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
+  ensureAnonymousCallerPortrait, ANONYMOUS_CALLER_VISUAL,
+} from './RaceCoachHud.js?v=20261023-r664';
 import { PHONE_CARD_SWIPE_DISTANCE } from './CompactDialogueLayout.js?v=20261022-r640';
 
 const PIXEL = '"Silkscreen", monospace';
@@ -104,6 +106,10 @@ export function playOpeningPhonePrototype(scene, {
   if (!chapter.length) return { played: false, reason: 'empty', active: false };
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || 'renMizuno';
   const assets = getOpeningPhoneAssets(callerId, callerPose, playerCharacterId);
+  if(!callerId){
+    const key=ensureAnonymousCallerPortrait(scene);
+    if(key)assets.caller={key};
+  }
   const fullVars = {
     PLAYER_FIRST_NAME: String(scene.registry?.get?.('firstName') || 'Driver').trim() || 'Driver',
     ...variables,
@@ -154,13 +160,14 @@ export function playOpeningPhonePrototype(scene, {
     const page = chapter[index] || {};
     const player = page.speaker === 'player';
     const actor = player ? characters[playerCharacterId] : characters[callerId];
+    const anonymous=!player && !callerId;
     const asset = player ? assets.player : assets.caller;
     const vars = { ...fullVars, ...(page.variables || {}) };
     const text = formatMessage(page.text, vars);
     const card = makeDialogueCard(scene, {
       side: player ? 'right' : 'left',
       asset,
-      characterVisual: actor?.visual || {},
+      characterVisual: anonymous ? ANONYMOUS_CALLER_VISUAL : actor?.visual || {},
       speaker: player ? String(vars.PLAYER_FIRST_NAME || 'DRIVER').toUpperCase()
         : String(callerName || actor?.name || 'CALLER').toUpperCase(),
       text,
