@@ -39,16 +39,16 @@ export function attachArkonMeetObserver(scene){
     const height=SHOWDOWN_HERO_CHARACTER.height;
     const source=scene.textures.get(KEY).getSourceImage();
     const person=scene.add.image(x,feet,KEY).setOrigin(.5,1)
-      .setScale(height/Math.max(1,source.height)).setDepth(25);
+      .setScale(height/Math.max(1,source.height)).setDepth(95);
     if(scene.stageMask)person.setMask(scene.stageMask);
     const y=feet-height-18;
     const button=scene.add.rectangle(x,y,202,47,0x12364b,.97)
-      .setStrokeStyle(2,0x90f6ff,1).setDepth(36)
+      .setStrokeStyle(2,0x90f6ff,1).setDepth(105)
       .setInteractive({useHandCursor:true});
     const label=scene.add.text(x,y,'YOU NOTICE HER  ›',{
       fontFamily:'"Silkscreen",monospace',
       fontSize:'10px',color:'#ffffff',
-    }).setOrigin(.5).setDepth(37);
+    }).setOrigin(.5).setDepth(106);
     const choose=()=>{
       if(!ready || scene.registry.get('arkonStorySayakaNoticed'))return;
       scene.registry.set('arkonStorySayakaNoticed',true);
