@@ -90,10 +90,11 @@ test('story arrival and initial choice both wait for active user Continue',()=>{
 test('R643 cache keys load newest story runner, staging and loan guards',()=>{
   const boot=src('src/main.js');
   for(const value of ['RaceScene','MeetScene','CentralTokyoScene',
-    'DevVaultStoryScene','StoryDirector']) assert.ok(boot.includes(value+'.js?v=20261022-r643'),value);
+    'DevVaultStoryScene']) assert.ok(boot.includes(value+'.js?v=20261022-r643'),value);
+  assert.match(boot,/StoryDirector\\.js\\?v=20261022-r644/);
   assert.match(src('src/story/StoryDirector.js'),/StoryScript\.js\?v=20261022-r643/);
   assert.match(src('src/story/StoryDirector.js'),/storyDirectorScripts\.js\?v=20261022-r643/);
   assert.match(src('src/scenes/DevVaultStoryScene.js'),/StoryComposition\.js\?v=20261022-r643/);
-  assert.match(src('version.json'),/R643/);
-  assert.match(src('sw.js'),/R643/);
+  assert.match(src('version.json'),/R644/);
+  assert.match(src('sw.js'),/R644/);
 });
