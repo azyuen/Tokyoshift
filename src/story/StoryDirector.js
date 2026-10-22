@@ -390,29 +390,22 @@ export class StoryDirector {
           this.advance();continue;
         }
         if(type==='ARKON_MX5_RACE'){
-          // Chapter 03 begins in the real Canal Yard garage. Move to the
-          // Meet only for the optional actual MX-5 vs S15 road race; never
-          // silently skip the physics just because the scene is a workshop.
-          if(this.session.id==='arkonChapter03' &&
-             sceneName(scene)==='GarageScene'){
-            this.clearStage();
-            if(!queueSafeSceneStart(scene,'MeetScene')){
-              this.error='STORY RACE MEET TRANSITION FAILED';return;
-            }
-            this.wait={kind:'transition',target:'MeetScene',origin:scene};
-            return; // Keep the race step until we are physically at the Meet.
-          }
+          // One continuous REAL road sequence: solo MX-5 rolling test drive,
+          // Arkon/Sayaka in-race banter, S15 joins, paused decision, real
+          // rolling-start race on acceptance. No intermediate Meet or manga.
           if(this.session.id!=='arkonChapter03' ||
               scene.registry.get('gameMode')!=='arkonStory' ||
-              sceneName(scene)!=='MeetScene' ||
+              !['GarageScene','MeetScene'].includes(sceneName(scene)) ||
               !beginArkonMx5GuestRace(scene.registry)){
-            this.error='SAYAKA MX-5 RACE UNAVAILABLE';return;
+            this.error='SAYAKA MX-5 DRIVE UNAVAILABLE';return;
           }
+          scene.registry.set('selectedRaceCategory','ARKON_MX5_DRIVE');
+          scene.registry.set('arkonStoryPhase','chapter03Driving');
           saveSessionState(scene.registry);
           this.clearStage();
           if(!queueSafeSceneStart(scene,'RaceScene')){
             finishArkonMx5GuestRace(scene.registry);
-            this.error='SAYAKA RACE TRANSITION FAILED';return;
+            this.error='SAYAKA DRIVE TRANSITION FAILED';return;
           }
           this.advance();
           this.wait={kind:'transition',target:'RaceScene',origin:scene};
