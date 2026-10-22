@@ -10,7 +10,7 @@ import {
   claimDevVaultStoryLoan,
 } from '../src/data/devVaultStory.js';
 import { STORY_DIRECTOR_SCRIPTS } from '../src/data/storyDirectorScripts.js';
-import { validateStoryScript } from '../src/story/StoryScript.js';
+import { validateStoryScript, createStoryCheckpoint, normaliseStoryChoiceVars } from '../src/story/StoryScript.js';
 const src=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const registry=(values={})=>{
   const v={
@@ -101,4 +101,17 @@ test('choices remain universal Story Director commands usable in Career or Story
   assert.match(runner,/showStoryChoices\(scene/);
   assert.match(runner,/compiled\.labels\.get\(choice\.to\)/);
   assert.match(src('src/ui/StoryChoicePanel.js'),/choices\.slice\(0,4\)/);
+});
+
+test('Career-mode choices persist in validated, bounded story checkpoints',()=>{
+  const vars=normaliseStoryChoiceVars({dinnerBill:'treat',shibuyaPlan:'dinner',unknown:()=>true,
+    bad:{user:{prototype:'malicious'}}});
+  assert.deepEqual(vars,{dinnerBill:'treat',shibuyaPlan:'dinner'});
+  const checkpoint=createStoryCheckpoint('careerChapter01',16,0,vars);
+  assert.deepEqual(checkpoint.vars,vars);
+  const director=src('src/story/StoryDirector.js');
+  const save=src('src/state/GameState.js');
+  assert.match(director,/this\.session\.vars\)/);
+  assert.match(director,/vars:checkpoint\.vars/);
+  assert.match(save,/input\.storyDirectorProgress\.vars/);
 });
