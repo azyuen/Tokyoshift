@@ -7,7 +7,18 @@ on:
       - 'src/data/storyBackgroundCatalog.js'
       - 'src/story/StoryPerspective.js'
       - 'src/ui/StoryStage.js'
+      - 'src/ui/CutsceneTester.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'sw.js'
+      - 'version.json'
       - 'tests/story-background-perspective-r644.mjs'
+      - 'tests/story-arrival-pacing-r643.mjs'
+      - 'tests/story-director-r639.mjs'
+      - 'tests/dev-vault-story-r641.mjs'
       - '.github/workflows/story-background-perspective-r644.yml'
 jobs:
   catalog-and-perspective:
@@ -23,6 +34,10 @@ jobs:
           node --check src/data/storyBackgroundCatalog.js
           node --check src/story/StoryPerspective.js
           node --check src/ui/StoryStage.js
+          node --check src/ui/CutsceneTester.js
+          node --check src/story/StoryDirector.js
+          node --check src/scenes/MeetScene.js
+          node --check src/main.js
       - name: Verify catalog, source images, math and existing Story Director regressions
         run: |
-          node --test tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/startup-import-integrity-r508.mjs
+          node --test tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/dev-vault-story-r641.mjs tests/startup-import-integrity-r508.mjs
