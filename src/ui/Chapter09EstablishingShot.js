@@ -29,16 +29,28 @@ export function chapter09ShotAssets(scene){
   const playerId=scene?.registry?.get?.('playerCharacterId')||'renMizuno';
   const resolve=entry=>{
     const id=entry.id==='$PLAYER'?playerId:entry.id;
-    return {...entry,id,asset:getCharacterVisualAsset(id,entry.pose,{playerCharacterId:playerId,proCircuit:true})};
+    // Chapter 09 begins in the SAME ordinary clothes as the street career.
+    // The team changes only after the final dialogue, on the room stage.
+    return {...entry,id,asset:getCharacterVisualAsset(id,entry.pose,{playerCharacterId:playerId})};
   };
-  return {background,left:LEFT.map(resolve),right:RIGHT.map(resolve),mika:resolve(MIKA)};
+  const proPlayer=getCharacterVisualAsset(playerId,'idle',{
+    playerCharacterId:playerId,proCircuit:true,
+  });
+  const costumes=[
+    {id:'daichiSakamoto',asset:{
+      key:'chapter09DaichiProfessional',path:'assets/Characters/Main/pro_daichi_sakamoto.png',
+    }},
+    {id:playerId,asset:proPlayer},
+  ];
+  return {background,left:LEFT.map(resolve),right:RIGHT.map(resolve),
+    mika:resolve(MIKA),costumes};
 }
 
 export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
   if(!scene?.textures||!scene?.load||scene._chapter09Stage?.active)return null;
   const assets=chapter09ShotAssets(scene),objects=[],timers=[];
   const state={active:true,phase:'loading',characters:new Map(),continue:null,
-    showMika:null,hideMika:null,finish:null,destroy:null,cancel:null};
+    showMika:null,hideMika:null,showProOutfits:null,finish:null,destroy:null,cancel:null};
   scene._chapter09Stage=state;
   const add=obj=>{objects.push(obj);return obj;};
   let loadHandler=null;
@@ -104,7 +116,7 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
       const sprite=add(scene.add.image(x,footY,entry.asset.key)
         .setOrigin(.5,1).setScale(scale).setFlipX(Boolean(right))
         .setDepth(base+5+depthOffset+(isMika ? .1 : 0)).setScrollFactor(0).setAlpha(initialAlpha));
-      state.characters.set(entry.id,{sprite,shadow});
+      state.characters.set(entry.id,{sprite,shadow,entry,right,isMika});
     };
     assets.left.forEach(entry=>createActor(entry));
     assets.right.forEach(entry=>createActor(entry,true));
@@ -171,6 +183,43 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
       const visitor=state.characters.get(MIKA.id);
       if(visitor)tween([visitor.sprite,visitor.shadow],0,470);
     };
+    state.showProOutfits=afterContinue=>{
+      if(!state.active||state.phase!=='background')return false;
+      state.phase='wardrobe';
+      // Only Daichi and the driver change. Sayaka already joined in her
+      // professional look at the end of Chapter 08.
+      const changes=assets.costumes.map(costume=>({
+        actor:state.characters.get(costume.id),asset:costume.asset,
+      })).filter(({actor,asset})=>actor?.sprite?.active&&
+        asset?.key&&tex.exists(asset.key));
+      const sprites=changes.map(x=>x.actor.sprite);
+      if(!sprites.length){
+        nextContinue=afterContinue;
+        showControls();
+        return true;
+      }
+      scene.tweens.add({targets:sprites,alpha:0,duration:390,
+        ease:'Sine.easeInOut',onComplete:()=>{
+          if(!state.active)return;
+          changes.forEach(({actor,asset})=>{
+            const src=tex.get(asset.key).getSourceImage();
+            const height=actor.entry.height;
+            const scale=Math.min((h*height/840)/Math.max(1,src.height),
+              (w*.18)/Math.max(1,src.width));
+            actor.sprite.setTexture(asset.key).setScale(scale);
+            tex.get(asset.key).setFilter?.(Phaser.Textures.FilterMode.NEAREST);
+          });
+          scene.tweens.add({targets:sprites,alpha:1,duration:570,
+            ease:'Sine.easeInOut',onComplete:()=>{
+              if(!state.active)return;
+              nextContinue=afterContinue;
+              showControls();
+            },
+          });
+        },
+      });
+      return true;
+    };
     state.finish=callback=>{
       if(!state.active||state.phase==='ending')return false;
       state.phase='ending';
@@ -192,7 +241,8 @@ export function playChapter09RegoRoom(scene,{onContinue=null,onCancel=null}={}){
   const missing=new Map();
   if(!scene.textures.exists(assets.background.key))
     missing.set(assets.background.key,assets.background.path+'?v=20261018-r583');
-  for(const person of [...assets.left,...assets.right,assets.mika]){
+  for(const person of [...assets.left,...assets.right,assets.mika,
+    ...assets.costumes]){
     if(person.asset?.key&&person.asset?.path&&!scene.textures.exists(person.asset.key)){
       missing.set(person.asset.key,getCharacterAssetUrl(person.asset.path));
     }
