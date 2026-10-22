@@ -1231,7 +1231,7 @@ export function normaliseState(input = {}) {
               : {}) }
         : storyMode && input.arkonStoryChapter01AfterHoursDone &&
           !input.arkonStoryChapter01FullDone
-          ? { id:'arkonChapter01', index:110,
+          ? { id:'arkonChapter01', index:37,
               ownerSlot:getActiveProfileIndex(), version:1 }
           : storyMode && input.arkonStoryChapter01Done &&
             !input.arkonStoryChapter01AfterHoursDone
