@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {ARKON_CHAPTER_01} from '../src/data/arkonChapter01.js';
 import { ARKON_CHAPTER_01_REVISED } from '../src/data/arkonChapter01Revised.js';
+import { getStoryWorldPhase } from '../src/story/ArkonStoryTime.js';
+
 import { isOshiageVoucherAvailable } from '../src/data/oshiageSchool.js';
 import { isTravelRegionUnlocked, isTravelLocationUnlocked } from '../src/data/travelRegions.js';
 import { getCentralTokyoAccess } from '../src/data/centralTokyo.js';
@@ -359,4 +361,78 @@ test('R652 Meet Sayaka marker, real racing and school controls are wired',()=>{
   assert.match(race,/settlement\?\.teamChallengeCompleted/);
   assert.match(school,/arkonStoryLessonCredits/);
   assert.match(school,/gameMode'\)==='arkonStory' \|\|/);
+});
+
+test('R653 camera places Story Sayaka above every Meet car layer',()=>{
+  const observer=readFileSync(new URL('../src/ui/ArkonStoryMeetObserver.js',import.meta.url),'utf8');
+  const portraitDepth=Number(observer.match(/setScale\(height\/Math\.max\(1,source\.height\)\)\.setDepth\((\d+)\)/)?.[1]);
+  assert.ok(portraitDepth>=80,'Sayaka must be in front of all foreground car layers');
+  assert.match(observer,/if\(scene\.stageMask\)person\.setMask\(scene\.stageMask\)/);
+});
+
+test('R653 manga never falls back to Sayaka home clothing while dimmed',()=>{
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  const pages=steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]);
+  assert.ok(pages.length>=75);
+  for(const page of pages){
+    assert.ok(page.leftPose,'left must have explicit pose including inactive sides');
+    assert.ok(page.rightPose,'right must have explicit pose including inactive sides');
+    assert.match(page.rightPose,/^oshiage/);
+    assert.doesNotMatch(page.leftPose,/^dev/);
+  }
+  const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
+  assert.match(dir,/preloadPagePosesOnly: this\.session\.id==='arkonChapter01Revised'/);
+});
+
+test('R653 prevents reflection playing before victory result is dismissed',()=>{
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  const threshold=steps.find(s=>s.type==='WAIT_FLAG'&&s.key==='wins'&&s.atLeast===6);
+  assert.equal(threshold.scene,'MeetScene');
+  const following=steps[steps.indexOf(threshold)+1];
+  assert.equal(following.type,'STAGE');
+  assert.equal(following.backgroundId,'$CURRENT_MEET');
+  assert.equal(following.privateMeet,true);
+  const scriptDirector=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
+  assert.match(scriptDirector,/wait\.condition\.scene/);
+  assert.match(scriptDirector,/\(!step\.scene \|\| sceneName\(scene\)===step\.scene\)/);
+});
+
+test('R653 Story time controls scene phase without touching other profiles',()=>{
+  const make=values=>({get:k=>values[k]});
+  assert.equal(getStoryWorldPhase(make({gameMode:'arkonStory',arkonStoryTimeOfDay:'night'})),'night');
+  assert.equal(getStoryWorldPhase(make({gameMode:'arkonStory',arkonStoryTimeOfDay:'day'})),'day');
+  const state=createArkonStoryState(1);
+  assert.equal(state.arkonStoryTimeOfDay,'night');
+  assert.equal(normaliseState({...state,arkonStoryTimeOfDay:'day'}).arkonStoryTimeOfDay,'day');
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='night'));
+  assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryPhase'&&s.timeOfDay==='day'));
+  const sceneFiles=['GarageScene','MeetScene','OshiageScene','RaceScene'];
+  for(const file of sceneFiles){
+    const code=readFileSync(new URL('../src/scenes/'+file+'.js',import.meta.url),'utf8');
+    assert.match(code,/getStoryWorldPhase\(this\.registry\)/);
+  }
+  const map=readFileSync(new URL('../src/ui/TravelMap.js',import.meta.url),'utf8');
+  assert.match(map,/getStoryWorldPhase\(scene\.registry\)/);
+});
+
+test('R653 Story CTA wraps long titles within the scene viewport',()=>{
+  const code=readFileSync(new URL('../src/ui/StoryContinuePrompt.js',import.meta.url),'utf8');
+  assert.match(code,/wordWrap:\{width:w-74,useAdvancedWrap:true\}/);
+  assert.match(code,/const w=Math\.min\(365,stage\.w-36\),h=82/);
+});
+
+test('R653 rival uses the existing adult Daigo Moriyama artwork',()=>{
+  const rival=getCharacterVisualAsset('storyDaigoKirishima','idle');
+  assert.equal(rival.path,'assets/Characters/Tatsumi/daigo_moriyama_idle.png');
+  const script=ARKON_CHAPTER_01_REVISED.steps;
+  assert.equal(script.some(s=>s.type==='ARKON_CHALLENGE_RACE'),true);
+});
+
+test('R653 no time checkpoint index shift for live R652 saves',()=>{
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  // Day/night is metadata on existing SET_FLAG actions, not new steps.
+  assert.equal(steps.filter(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryTimeOfDay').length,0);
+  assert.equal(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length,1);
+  assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,2);
 });
