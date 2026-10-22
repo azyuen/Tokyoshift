@@ -52,9 +52,9 @@ function makeDialogueCard(scene, {
     characterVisual,
     phoneIconKey: PHONE_TEXTURE,
   });
-  // Match compact speech-box typography: dialogue must fit a shorter panel.
-  hud.heading.setFontSize('10px');
-  hud.dialogue.setText(text).setFontSize('17px').setLineSpacing(4);
+  // Inherit the shared story dialogue font from createRaceDialogueHud;
+  // the opening call must not shrink it again after creating the panel.
+  hud.dialogue.setText(text);
   const add = item => { sprites.push(item); return item; };
   // As in regular manga scenes, the action is anchored at the bottom right,
   // independent of the speaking side, rather than beneath the top bubble.
