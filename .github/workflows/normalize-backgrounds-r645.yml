@@ -4,6 +4,7 @@ on:
     branches: [feature/background-standards-r645]
     paths:
       - 'scripts/normalize_backgrounds.py'
+      - 'scripts/render_background_review_sheets.py'
       - '.github/workflows/normalize-backgrounds-r645.yml'
 permissions:
   contents: write
@@ -28,11 +29,13 @@ jobs:
         run: python3 scripts/normalize_backgrounds.py --check
       - name: Build inspectable background inventory after normalization
         run: python3 scripts/audit_backgrounds.py --json docs/background-audit/inventory.json --markdown docs/background-audit/INVENTORY.md
-      - name: Commit normalized assets and inventory to isolated R645 branch
+      - name: Render real-art background review sheets
+        run: python3 scripts/render_background_review_sheets.py
+      - name: Commit normalized assets, inventory, and review sheets to isolated R645 branch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- docs/background-audit/inventory.json docs/background-audit/INVENTORY.md
+          git add -- docs/background-audit/inventory.json docs/background-audit/INVENTORY.md docs/background-audit/sheets/*.webp
           git add -- assets/Garage/shinonome_warehouse_day.png assets/Locations/TunerShops/shinagawa_zerosports_day.png assets/Meet/Day/shibuya_center_gai_day.png assets/Meet/Day/shibuya_scramble_day.png assets/Meet/Day/shinagawa_konan_day.png assets/Meet/Day/shinagawa_oi_wharf_day.png assets/Meet/Day/yokohama_bay_bridge_day.png assets/Meet/Day/yokohama_minato_mirai_day.png
           if ! git diff --staged --quiet; then
             git commit -m "R645 standardize background canvases and record actual source image geometry"
