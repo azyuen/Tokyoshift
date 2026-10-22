@@ -301,7 +301,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('You are imagining things.','oshiageConcerned'),
       ark('Probably. I do that when I am happy.','storyLaughing'),
       say('The championship money and car coupons will help you far more than my lessons. Do not forget why you started.','oshiageNeutral'),
-      ark('You are right. But this turned out to be a much better night than I expected.','storySerious'),
+      ark('Funny. I came out last night looking for money. Somehow I found a reason to come back.','storySerious'),
       say('Take care, Arkon. And take care of that Civic.'),
       ark('And you, Sayaka. Thank you.','storyConfident'),
     ]),
