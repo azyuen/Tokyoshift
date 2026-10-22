@@ -5,7 +5,11 @@ const manga=(title,pages,cast={left:A,right:S})=>({
   type:'MANGA',title,characters:cast,
   pages:pages.map(([speaker,text,pose])=>({
     speaker,
-    ...(speaker==='left'?{leftPose:pose||'storyTalking'}:{rightPose:pose||'oshiageNeutral'}),
+    // Both speakers need an explicit correct outfit, including the GREYED
+    // non-speaking portrait. Otherwise MangaCutscene defaults it to home idle.
+    leftPose:speaker==='left' ? (pose||(cast.left===D?'idle':'storyTalking'))
+      : (cast.left===D?'idle':'storyIdle'),
+    rightPose:speaker==='right' ? (pose||'oshiageNeutral') : 'oshiageNeutral',
     text,
   })),
 });
@@ -22,6 +26,7 @@ const ark=(text,pose='storyTalking')=>['left',text,pose];
 export const ARKON_CHAPTER_01_REVISED={
   id:'arkonChapter01Revised',title:'ARKON DEN // CHAPTER 01: FIRST IMPRESSIONS',
   steps:[
+    {type:'SET_FLAG',key:'arkonStoryTimeOfDay',value:'night'},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'opening'},
     {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
       composition:'conversation-balanced',
@@ -210,15 +215,19 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('A friend?'),
       say('Something like that. I can put your name down for one complimentary lesson.'),
       ark('I was hoping you would offer to take the Civic for a spin.','storyLaughing'),
-      say('Good night, Arkon. And look after yourself.','oshiageNeutral'),
+      say('Take care, Arkon. And look after yourself.','oshiageNeutral'),
       ark('Good night, Sayaka. I enjoyed being thoroughly unimpressive.','storySheepish'),
       say('You were not entirely unimpressive.','oshiageHappy'),
     ]),
     {type:'CLEAR_STAGE'},
     {type:'SET_FLAG',key:'arkonStoryLessonCredits',value:1},
+    {type:'SET_FLAG',key:'arkonStoryTimeOfDay',value:'day'},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'practice'},
     {type:'WAIT_FLAG',key:'wins',atLeast:6},
-    {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
+    // Never draw on RaceScene's victory overlay. Wait for the player to
+    // dismiss the result and land back at the actual Meet.
+    {type:'WAIT_SCENE',scene:'MeetScene'},
+    {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',privateMeet:true,
       characters:[{id:A,pose:'storyIdle'}],cars:[{carId:'$SELECTED_CAR'}]},
     {type:'HOLD_SCENE',label:'THAT FREE LESSON',caption:'A FEW RACES LATER'},
     alone('A REASON TO GO',[
@@ -233,7 +242,7 @@ export const ARKON_CHAPTER_01_REVISED={
     {type:'WAIT_FLAG',key:'arkonStoryAtSchool',equals:true},
     manga('OH, YOU KNOW THE INSTRUCTOR',[
       ark('Hello. I was told I could take a driving less—','storyTalking'),
-      say('Good evening, Arkon.','oshiageHappy'),
+      say('Good to see you, Arkon.','oshiageHappy'),
       ark('...Of course.','storySurprised'),
       say('You look surprised.','oshiageNeutral'),
       ark('I have spent several evenings making an excellent first impression.','storySheepish'),
@@ -297,7 +306,7 @@ export const ARKON_CHAPTER_01_REVISED={
       ark('Probably. I do that when I am happy.','storyLaughing'),
       say('The championship money and car coupons will help you far more than my lessons. Do not forget why you started.','oshiageNeutral'),
       ark('You are right. But this turned out to be a much better night than I expected.','storySerious'),
-      say('Take care of the Civic, Arkon.'),
+      say('Take care, Arkon. And take care of that Civic.'),
       ark('And you, Sayaka. Thank you.','storyConfident'),
     ]),
     {type:'SET_FLAG',key:'arkonStoryChapter01RevisedDone',value:true},
