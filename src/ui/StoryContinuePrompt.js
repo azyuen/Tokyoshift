@@ -16,8 +16,12 @@ export function showStoryContinuePrompt(scene,{
   // underlying Meet/map controls while leaving the actual tableau visible.
   add(scene.add.rectangle(width/2,height/2,width,height,0x000000,.0001)
     .setDepth(depth).setScrollFactor(0).setInteractive());
-  const x=Math.round(width*.866), y=Math.round(height*.872);
-  const w=Math.round(width*.195), h=Math.round(height*.084);
+  // Keep the prompt INSIDE the main cinematic/meet viewport, not in the
+  // separate bottom-right rival or controls pane.
+  const stage={x:24,y:92,w:1138,h:528};
+  const x=Math.round(stage.x+stage.w-154);
+  const y=Math.round(stage.y+stage.h-37);
+  const w=270, h=58;
   const plate=add(scene.add.graphics().setDepth(depth+1).setScrollFactor(0));
   const left=x-w/2,right=x+w/2,top=y-h/2,bottom=y+h/2;
   plate.fillStyle(0x0d2839,.94);
