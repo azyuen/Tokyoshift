@@ -1,0 +1,28 @@
+name: R645 Background Asset Geometry Audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/background-standards-r645, main]
+    paths:
+      - 'scripts/audit_backgrounds.py'
+      - '.github/workflows/background-standards-r645.yml'
+      - 'src/data/storyBackgroundCatalog.js'
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check background PNG/WebP headers and day-night pairs
+        run: python3 scripts/audit_backgrounds.py --json /tmp/background-audit.json --markdown /tmp/background-audit.md
+      - name: Upload full background geometry inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: r645-background-inventory
+          path: |
+            /tmp/background-audit.json
+            /tmp/background-audit.md
+          retention-days: 60
