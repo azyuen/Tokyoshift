@@ -226,25 +226,28 @@ export function startChapter08Ginza(scene, { preview = false } = {}) {
             transparentBackground:true,title:'SAYAKA // THREE FAMILIAR FACES',
             ownerKey:'_chapter08SayakaGallery',
           });
-        }else if(page?.cinematicBeat==='chapter08SayakaOutfitCue' && !wardrobePending){
-          wardrobePending=true;
-          // onPageChange runs before the renderer draws the page's dialogue.
-          // Delay the opaque location reveal until the cue is fully mounted.
-          scene.time.delayedCall(80,()=>{
-            if(finished||!scene._mangaCutscene?.active)return;
-            if(!stage?.changeSayakaOutfit?.(()=>{
-              showHold(()=>{
-                stage?.restoreAfterOutfit?.();
-                scene._mangaCutscene?.advance?.('button');
-              });
-            })){
-              // Missing artwork must never soft-lock the story.
-              wardrobePending=false;
-            }
-          });
         }else if(page?.cinematicBeat==='chapter08FinalPortrait'){
-          clearRole();
-          disposeRole=showRacingRolePlate(scene);
+          // The preceding Ginza dialogue remains fully readable until the
+          // player NEXTs. Only then reveal the new wardrobe on the full-size
+          // showroom tableau. CONTINUE returns to this first pro-gear page,
+          // without advancing past its dialogue.
+          if(!wardrobePending){
+            wardrobePending=true;
+            scene.time.delayedCall(80,()=>{
+              if(finished||!scene._mangaCutscene?.active)return;
+              if(!stage?.changeSayakaOutfit?.(()=>{
+                showHold(()=>{
+                  stage?.restoreAfterOutfit?.();
+                  clearRole();
+                  disposeRole=showRacingRolePlate(scene);
+                });
+              })){
+                // Keep the manga moving even if a sprite failed to load.
+                clearRole();
+                disposeRole=showRacingRolePlate(scene);
+              }
+            });
+          }
         }else clearRole();
       },
       onComplete:complete,
