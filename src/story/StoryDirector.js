@@ -3,13 +3,13 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261022-r643';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
+} from './StoryScript.js?v=20261023-r652';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r651';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r652';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r649';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r649';
+import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r652';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r652';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r649';
 import { cars } from '../data/cars.js?v=20261017-r565';
@@ -241,6 +241,46 @@ export class StoryDirector {
             onCancel:()=>{if(this.session?.index===index)this.error='CHOICE INTERRUPTED';},
           });
           if(!panel){this.wait=null;this.error='CHOICE PANEL FAILED';}
+          return;
+        }
+        if (type === 'ARKON_CHALLENGE_RACE') {
+          if(this.session.id!=='arkonChapter01Revised' ||
+              scene.registry.get('gameMode')!=='arkonStory' ||
+              sceneName(scene)!=='MeetScene' ||
+              !scene.registry.get('selectedCarId')){
+            this.error='ARKON RIVAL RACE MUST START FROM A MEET'; return;
+          }
+          // This is a standard SINGLE/BET race. Same real engine, opponent
+          // car, inputs, physics, AI, and settlement as normal Career.
+          // There are no scripted results or power multipliers.
+          const values={
+            selectedOpponentCarId:'ae86',
+            selectedOpponentCharacterId:'storyDaigoKirishima',
+            selectedOpponentEncounterRating:2,
+            selectedOpponentEncounterAi:null,
+            selectedOpponentBuildState:null,
+            selectedOpponentDifficulty:'EASY',
+            selectedRaceCategory:'SINGLE',
+            selectedRaceType:'Standing Start',
+            selectedRaceDistanceM:402.336,
+            selectedRaceDeal:'BET',
+            selectedRaceStake:1000,
+            selectedRaceSpecialChallenge:false,
+            selectedRaceMeetOffer:null,
+            raceReturnScene:'MeetScene',
+            raceLocationLabel:'CHAPTER 01 // DAIGO KIRISHIMA',
+            raceDistrict:String(scene.registry.get('district')||'ODAIBA'),
+            raceTimeOfDay:String(scene.worldPhase||'night'),
+            arkonStoryRivalResult:null,
+          };
+          for(const [key,value]of Object.entries(values))scene.registry.set(key,value);
+          saveSessionState(scene.registry);
+          this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='ARKON RIVAL RACE COULD NOT START';return;
+          }
+          this.advance();
+          this.wait={kind:'transition',target:'RaceScene',origin:scene};
           return;
         }
         if (type === 'DEV_HERO_RACE') {

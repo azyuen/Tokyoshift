@@ -3,11 +3,30 @@ const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r652';
 
 export function getArkonStoryObjective(registry) {
   const get=key=>registry?.get?.(key);
   if(get('gameMode')!=='arkonStory')return null;
   const wins=Math.max(0,Number(get('wins')||0));
+  const revised=get('storyDirectorProgress')?.id===ARKON_CHAPTER_01_REVISED.id ||
+    Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(revised){
+    const phase=get('arkonStoryPhase')||'opening';
+    const current=get('wins')||0;
+    const goals={
+      opening:['FIRST IMPRESSIONS','Continue the opening scene to begin your first night.','CHAPTER 01'],
+      firstThree:['FIRST RUNS','Win three street races. Sayaka may be somewhere in the crowd.','RACE WINS '+Math.min(3,current)+' / 3'],
+      meetNotice:['SOMEONE AT THE MEET','Look towards the edge of the main Meet stage. Tap YOU NOTICE HER.','MEET ENCOUNTER'],
+      rivalRace:['A PERSONAL CHALLENGE','Complete the race and return to the Meet. The result is yours.','NO SCRIPTED OUTCOME'],
+      practice:['A FEW MORE RUNS','Keep racing until you have six wins in total.','RACE WINS '+Math.min(6,current)+' / 6'],
+      goSchool:['YOUR COMPLIMENTARY LESSON','Travel to Oshiage Driving School, then complete your introductory lesson.','OSHIAGE // DRIVING SCHOOL'],
+      lesson:['A REAL DRIVING LESSON','Complete the basic driving lesson in Oshiage and return to the school.','INTRODUCTORY LESSON'],
+      complete:['CHAPTER 01 COMPLETE','You can replay scenes at Office > Recount Story. More chapters are to come.','STORY PROGRESS SAVED'],
+    };
+    const [heading,message,progress]=goals[phase]||goals.opening;
+    return {heading,message,progress};
+  }
   if(get('arkonStoryChapter01FullDone'))return {
     heading:'CHAPTER 01 COMPLETE',
     message:'Chapter 01 is complete. Visit Office > Recount Story to relive it or restart.',

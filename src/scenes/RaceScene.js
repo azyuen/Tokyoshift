@@ -10,7 +10,7 @@ import {
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261022-r640';
-import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
+import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
@@ -55,14 +55,14 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261022-r638';
+} from '../data/characters.js?v=20261023-r652';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261018-r588';
+} from '../state/GameState.js?v=20261023-r652';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -76,7 +76,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js?v=20261023-r652';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
@@ -94,7 +94,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261022-r640';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
@@ -350,7 +350,9 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentCharacterId =
       (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
         storedOpponentCharacterId === 'sayakaFujieda') ||
-      oshiageEliteOpponent || regionRivals.includes(storedOpponentCharacterId)
+      oshiageEliteOpponent || (this.registry.get('gameMode')==='arkonStory' &&
+        storedOpponentCharacterId==='storyDaigoKirishima') ||
+        regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
@@ -1522,7 +1524,7 @@ export default class RaceScene extends Phaser.Scene {
     // Shared race coach HUD: transparent zoomed face, compact manga dialogue
     // with left notch and a small red target decal. No physics changes.
     this.coachHud = createRaceCoachHud(this, {
-      speaker: 'LADY INSTRUCTOR // OSHIAGE',
+      speaker: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // OSHIAGE' : 'LADY INSTRUCTOR // OSHIAGE',
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
     });
@@ -1657,6 +1659,9 @@ export default class RaceScene extends Phaser.Scene {
       },
     };
     this.registry.set('oshiageCoachingProgress', outcomes);
+    if(!timedOut && this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryPhase')==='lesson')
+      this.registry.set('arkonStoryLessonCompleted',true);
     saveSessionState(this.registry);
 
 
@@ -1729,7 +1734,7 @@ export default class RaceScene extends Phaser.Scene {
       pages: [{
         speaker: 'left',
         pose: result.timedOut ? 'oshiageConcerned' : 'oshiageHappy',
-        nameOverride: 'LADY INSTRUCTOR',
+        nameOverride: this.registry.get('gameMode')==='arkonStory'?'SAYAKA':'LADY INSTRUCTOR',
         text: result.feedback + ' Have a look at your actual revs against the recommended ranges.',
       }],
       finalActionLabel: 'RETURN TO SCHOOL',
@@ -1792,7 +1797,8 @@ export default class RaceScene extends Phaser.Scene {
       concerned: 'characterSayakaHomeSad',
     };
     this.tutorialHud = createRaceDialogueHud(this, {
-      speaker: atSchool ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
+      speaker: atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
       depth: 80,
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
@@ -1998,7 +2004,8 @@ export default class RaceScene extends Phaser.Scene {
 
     const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
     this.tutorialHud.heading.setText(
-      (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
+      (atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
     );
     // The prose is her spoken instruction; a blank line separates it from
     // the all-caps action cue. The redundant uppercase step title is gone.
@@ -2181,11 +2188,14 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHud?.setPortrait('happy');
     this.tutorialHud?.heading?.setText(
       this.registry.get('raceReturnScene') === 'OshiageScene'
-        ? 'LADY INSTRUCTOR // WELL DONE' : 'SAYAKA // WELL DONE'
+        ? (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // WELL DONE' : 'LADY INSTRUCTOR // WELL DONE') : 'SAYAKA // WELL DONE'
     );
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
       this.registry.set('oshiageBasicLessonComplete', true);
+      if(this.registry.get('gameMode')==='arkonStory' &&
+         this.registry.get('arkonStoryPhase')==='lesson')
+        this.registry.set('arkonStoryLessonCompleted',true);
       saveSessionState(this.registry);
       this.tutorialPromptText?.setText(
         'Very nicely done! You made it into fourth gear.\n\nLESSON COMPLETE // RETURNING TO DRIVING SCHOOL'
@@ -2383,7 +2393,7 @@ export default class RaceScene extends Phaser.Scene {
 
     let status = '';
     if (this.isTutorial) {
-      status = this.isCoaching ? 'DRIVING SCHOOL // LADY INSTRUCTOR' : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
+      status = this.isCoaching ? (this.registry.get('gameMode')==='arkonStory' ? 'DRIVING SCHOOL // SAYAKA' : 'DRIVING SCHOOL // LADY INSTRUCTOR') : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
     } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
@@ -2551,11 +2561,33 @@ export default class RaceScene extends Phaser.Scene {
         this.opponentTimes.finish = Math.max(.1, playerTime - .175);
       }
     }
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        this.registry.get('arkonStoryPhase')==='rivalRace' &&
+        this.opponentCharacterId==='storyDaigoKirishima' &&
+        (playerWon || opponentWon)) {
+      // Determined by the ordinary race clock, not by the Story Director.
+      this.registry.set('arkonStoryRivalResult',playerWon?'won':'lost');
+    }
     const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
       ? this.settleRace(playerWon)
       : null;
 
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        this.registry.get('arkonStoryRivalResult') &&
+        this.registry.get('arkonStoryPhase')==='rivalRace') {
+      saveSessionState(this.registry); // preserve result before any scene transition
+    }
+    // The promised five lessons are claimed ONCE after a real regional title.
+    // The regional race settlement already awards its regular cash/coupons.
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        settlement?.teamChallengeCompleted &&
+        !this.registry.get('arkonStoryCreditsAwarded')) {
+      this.registry.set('arkonStoryLessonCredits',Math.max(0,
+        Number(this.registry.get('arkonStoryLessonCredits')||0))+5);
+      this.registry.set('arkonStoryCreditsAwarded',true);
+      saveSessionState(this.registry);
+    }
     if (playerWon) playVictorySting();
     else stopMusic();
 
@@ -4993,13 +5025,15 @@ export default class RaceScene extends Phaser.Scene {
     const newCash = Math.max(0, oldCash + cashDelta);
     this.registry.set('cash', newCash);
 
-    this.recordMeetRaceOutcome(playerWon);
+    if (this.opponentCharacterId!=='storyDaigoKirishima')
+      this.recordMeetRaceOutcome(playerWon);
 
     let crewInviteInterest = null;
     if (
       playerWon &&
       this.raceMode === 'SINGLE' &&
       this.raceDeal === 'BET' &&
+      this.opponentCharacterId!=='storyDaigoKirishima' &&
       !cars[this.selectedCarId]?.crewLoan &&
       !this.registry.get('selectedRaceSpecialChallenge')
     ) {

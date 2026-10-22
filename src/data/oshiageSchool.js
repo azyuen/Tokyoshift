@@ -19,6 +19,10 @@ export const OSHIAGE_VOUCHER_LESSONS = Object.freeze(['launch', 'standing', 'rol
 export function isOshiageVoucherAvailable(source, lessonId) {
   if (!OSHIAGE_VOUCHER_LESSONS.includes(lessonId)) return false;
   const read = key => typeof source?.get === 'function' ? source.get(key) : source?.[key];
+  // No automatic per-type freebies in Story Mode. Five actual lesson credits
+  // are earned ONLY by winning the regional challenge set by Sayaka.
+  if (read('gameMode')==='arkonStory')
+    return Number(read('arkonStoryLessonCredits')||0)>0;
   if (read('oshiageFreeLessonUsed')?.[lessonId]) return false;
   const previous = read('oshiageCoachingProgress') || {};
   return !Object.values(previous).some(carLessons => Boolean(carLessons?.[lessonId]?.completed));

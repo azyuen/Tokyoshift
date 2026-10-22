@@ -1887,6 +1887,21 @@ regionExclusive: true, teamRole: 'core',
     },
   },
 
+  // Story-era visitor: non-recruitable; existing placeholder artwork until his
+  // commissioned portrait arrives. Does not enter regular Meet rosters.
+  storyDaigoKirishima: {
+    id:'storyDaigoKirishima',
+    name:'Daigo Kirishima',
+    selectable:false,rivalEligible:false,
+    archetype:'The Show-Off',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryDaigoKirishima',
+      path:'assets/Characters/Shibuya/haru_sakurai_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryDaigoIdle',path:'assets/Characters/Shibuya/haru_sakurai_idle.png'},
+      },
+    },
+  },
   arkonDen: {
     id: 'arkonDen',
     name: 'Arkon Den',
@@ -1904,6 +1919,13 @@ regionExclusive: true, teamRole: 'core',
       path: 'assets/Characters/arkon_den_idle.png',
       poseAssets: {
         ginzaSuit: { key: 'ginzaArkonDenSuit', path: 'assets/Characters/Main/arkon_den_suit.png' },
+        storyIdle: { key: 'arkonStoryIdle', path: 'assets/Characters/Main/arkon_den_idle.png' },
+        storyTalking: { key: 'arkonStoryTalking', path: 'assets/Characters/Main/arkon_den_talking.png' },
+        storyConfident: { key: 'arkonStoryConfident', path: 'assets/Characters/Main/arkon_den_confident.png' },
+        storyLaughing: { key: 'arkonStoryLaughing', path: 'assets/Characters/Main/arkon_den_laughing.png' },
+        storySheepish: { key: 'arkonStorySheepish', path: 'assets/Characters/Main/arkon_den_sheepish.png' },
+        storySerious: { key: 'arkonStorySerious', path: 'assets/Characters/Main/arkon_den_serious.png' },
+        storySurprised: { key: 'arkonStorySurprised', path: 'assets/Characters/Main/arkon_den_surprised.png' },
         devIdle: { key: 'devArkonIdle', path: 'assets/Characters/Dev/arkon_den_idle.png' },
         devLaughing: { key: 'devArkonLaughing', path: 'assets/Characters/Dev/arkon_den_laughing.png' },
         devSerious: { key: 'devArkonSerious', path: 'assets/Characters/Dev/arkon_den_serious.png' },

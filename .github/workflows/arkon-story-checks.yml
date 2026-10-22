@@ -5,6 +5,13 @@ on:
       - 'src/state/GameState.js'
       - 'src/data/arkonChapter01.js'
       - 'src/data/arkonChapter01Extended.js'
+      - 'src/data/arkonChapter01Revised.js'
+      - 'src/ui/ArkonStoryMeetObserver.js'
+      - 'src/data/oshiageSchool.js'
+      - 'src/data/travelRegions.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
       - 'src/data/storyDirectorScripts.js'
       - 'src/data/centralTokyo.js'
       - 'src/data/ginzaGallery.js'
@@ -28,6 +35,13 @@ on:
       - 'src/state/GameState.js'
       - 'src/data/arkonChapter01.js'
       - 'src/data/arkonChapter01Extended.js'
+      - 'src/data/arkonChapter01Revised.js'
+      - 'src/ui/ArkonStoryMeetObserver.js'
+      - 'src/data/oshiageSchool.js'
+      - 'src/data/travelRegions.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/scenes/OshiageScene.js'
+      - 'src/scenes/RaceScene.js'
       - 'tests/arkonStoryMode.test.mjs'
 jobs:
   check:
@@ -43,6 +57,13 @@ jobs:
           node --check src/scenes/ProfileSelectScene.js
           node --check src/data/arkonChapter01.js
           node --check src/data/arkonChapter01Extended.js
+          node --check src/data/arkonChapter01Revised.js
+          node --check src/ui/ArkonStoryMeetObserver.js
+          node --check src/data/oshiageSchool.js
+          node --check src/data/travelRegions.js
+          node --check src/data/centralTokyo.js
+          node --check src/scenes/OshiageScene.js
+          node --check src/scenes/RaceScene.js
           node --check src/data/storyDirectorScripts.js
           node --check src/ui/StoryContinuePrompt.js
           node --check src/ui/StoryStage.js

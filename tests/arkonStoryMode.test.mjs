@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {ARKON_CHAPTER_01} from '../src/data/arkonChapter01.js';
+import { ARKON_CHAPTER_01_REVISED } from '../src/data/arkonChapter01Revised.js';
+import { isOshiageVoucherAvailable } from '../src/data/oshiageSchool.js';
+import { isTravelRegionUnlocked, isTravelLocationUnlocked } from '../src/data/travelRegions.js';
+import { getCentralTokyoAccess } from '../src/data/centralTokyo.js';
+import { getCharacterVisualAsset } from '../src/data/characters.js';
 import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
 import {getArkonStoryObjective} from '../src/ui/ArkonStoryObjective.js';
@@ -267,4 +272,91 @@ test('R651 renderer uses gameplay car displays instead of story-specific sizing'
   assert.match(stage,/getNativeCastPlacement\(template,i,actors\.length,a\.role\)/);
   assert.match(showdown,/SHOWDOWN_HERO_CAR\.targetWidth/);
   assert.match(showdown,/SHOWDOWN_HERO_CHARACTER\.height/);
+});
+
+test('R652 revised Story Director registers a complete playable Chapter 01',()=>{
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter01Revised,ARKON_CHAPTER_01_REVISED);
+  assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_01_REVISED));
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  assert.deepEqual(steps.filter(s=>s.type==='WAIT_FLAG' && s.key==='wins')
+    .map(s=>s.atLeast),[3,6]);
+  assert.equal(steps.filter(s=>s.type==='ARKON_CHALLENGE_RACE').length,1);
+  assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStorySayakaNoticed'));
+  assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStoryLessonCompleted'));
+  assert.ok(steps.some(s=>s.type==='IF'&&s.key==='arkonStoryRivalResult'&&
+    s.equals==='won'&&s.else==='rivalLost'));
+  assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryChapter01RevisedDone'));
+  assert.ok(steps.filter(s=>s.type==='CHOICE').length>=4);
+  assert.ok(steps.filter(s=>s.type==='MANGA').flatMap(s=>s.pages||[]).length>=75);
+});
+
+test('R652 new Arkon profile starts revised chapter and saves independent scene flags',()=>{
+  const state=createArkonStoryState(2);
+  assert.equal(state.storyDirectorProgress.id,'arkonChapter01Revised');
+  assert.equal(state.arkonStoryPhase,'opening');
+  const edited=normaliseState({...state,arkonStoryPhase:'practice',
+    arkonStoryRivalResult:'lost',arkonStorySayakaNoticed:true,
+    arkonStoryLessonCredits:4,arkonStorySchoolRevealed:true,
+    arkonStoryLessonCompleted:true});
+  assert.equal(edited.arkonStoryPhase,'practice');
+  assert.equal(edited.arkonStoryRivalResult,'lost');
+  assert.equal(edited.arkonStorySayakaNoticed,true);
+  assert.equal(edited.arkonStoryLessonCredits,4);
+  assert.equal(edited.arkonStorySchoolRevealed,true);
+  assert.equal(edited.arkonStoryLessonCompleted,true);
+  const career=normaliseState({...edited,gameMode:'career',firstName:'Other'});
+  assert.equal(career.arkonStoryLessonCredits,0);
+  assert.equal(career.arkonStorySayakaNoticed,false);
+});
+
+test('R652 story wears uploaded casual Arkon and instructor Sayaka sprites',()=>{
+  for(const pose of ['Idle','Talking','Confident','Laughing','Sheepish','Serious','Surprised']){
+    const img=getCharacterVisualAsset('arkonDen','story'+pose);
+    assert.match(img?.path||'',new RegExp('assets/Characters/Main/arkon_den_'+pose.toLowerCase()+'\\.png$'));
+  }
+  const instr=getCharacterVisualAsset('sayakaFujieda','oshiageNeutral');
+  assert.match(instr.path,/oshiage_sayaka_fujieda_neutral\.png$/);
+  const steps=ARKON_CHAPTER_01_REVISED.steps;
+  const authored=steps.filter(s=>s.type==='STAGE')
+    .flatMap(s=>s.characters||[]).filter(c=>c.id==='sayakaFujieda');
+  assert.ok(authored.length>=2);
+  assert.ok(authored.every(c=>c.pose.startsWith('oshiage')));
+});
+
+test('R652 new Story Mode explores regions but Ginza stays locked',()=>{
+  const story={gameMode:'arkonStory',firstName:'Arkon',lastName:'Den',
+    cash:5000,wins:3,arkonStoryGinzaUnlocked:false};
+  assert.equal(isTravelRegionUnlocked(story,'OSHIAGE'),true);
+  assert.equal(isTravelRegionUnlocked(story,'DAIKOKU'),true);
+  assert.equal(isTravelLocationUnlocked(story,'oshiageDrivingSchool'),true);
+  assert.equal(isTravelLocationUnlocked(story,'ginzaMotorGallery'),false);
+  assert.equal(getCentralTokyoAccess(story).ginza,false);
+  assert.equal(isTravelLocationUnlocked({...story,arkonStoryGinzaUnlocked:true},'ginzaMotorGallery'),true);
+});
+
+test('R652 normal Career voucher behaviour unaffected by Story-only credits',()=>{
+  const normal={gameMode:'career',oshiageFreeLessonUsed:{},oshiageCoachingProgress:{}};
+  assert.equal(isOshiageVoucherAvailable(normal,'launch'),true);
+  assert.equal(isOshiageVoucherAvailable({...normal,gameMode:'arkonStory'},'launch'),false);
+  assert.equal(isOshiageVoucherAvailable({...normal,gameMode:'arkonStory',
+    arkonStoryLessonCredits:5},'launch'),true);
+  assert.equal(isOshiageVoucherAvailable({...normal,gameMode:'arkonStory',
+    arkonStoryLessonCredits:0},'launch'),false);
+});
+
+test('R652 Meet Sayaka marker, real racing and school controls are wired',()=>{
+  const meet=readFileSync(new URL('../src/scenes/MeetScene.js',import.meta.url),'utf8');
+  const observer=readFileSync(new URL('../src/ui/ArkonStoryMeetObserver.js',import.meta.url),'utf8');
+  const race=readFileSync(new URL('../src/scenes/RaceScene.js',import.meta.url),'utf8');
+  const school=readFileSync(new URL('../src/scenes/OshiageScene.js',import.meta.url),'utf8');
+  const director=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
+  assert.match(meet,/attachArkonMeetObserver\(this\)/);
+  assert.match(observer,/YOU NOTICE HER/);
+  assert.match(observer,/saveSessionState\(scene.registry\)/);
+  assert.match(director,/type === 'ARKON_CHALLENGE_RACE'/);
+  assert.match(director,/selectedRaceCategory:'SINGLE'/);
+  assert.match(race,/arkonStoryRivalResult',playerWon\?'won':'lost'/);
+  assert.match(race,/settlement\?\.teamChallengeCompleted/);
+  assert.match(school,/arkonStoryLessonCredits/);
+  assert.match(school,/gameMode'\)==='arkonStory' \|\|/);
 });
