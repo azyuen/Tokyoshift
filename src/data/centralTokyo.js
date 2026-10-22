@@ -426,6 +426,7 @@ export function isArkonDen(source) {
 }
 
 export function getCentralTokyoEligibility(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
   if (isArkonDen(source)) {
     return { autoMarket: true, ginza: true, drag: true };
   }
@@ -445,6 +446,7 @@ export function getCentralTokyoEligibility(source) {
 }
 
 export function getCentralTokyoAccess(source) {
+  if (value(source,'gameMode')==='arkonStory') return { autoMarket:true, ginza:Boolean(value(source,'arkonStoryGinzaUnlocked',false)), drag:true };
   if (isArkonDen(source)) {
     return { autoMarket: true, ginza: true, drag: true };
   }
