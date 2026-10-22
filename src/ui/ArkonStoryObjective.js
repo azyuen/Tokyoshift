@@ -41,11 +41,6 @@ export function getArkonStoryObjective(registry) {
     message:'Return to Canal Yard workshop, open this Story Objective, then choose BEGIN CHAPTER 04. It will never launch over a Meet.',
     progress:'THE NIGHT SHIFT // COMPLETED',
   };
-  if(false)return {
-    heading:'CHAPTER 03 COMPLETE',
-    message:'The Night Shift is over. Arkon has earned a reputation as a tuner.',
-    progress:'THE NIGHT SHIFT // COMPLETED',
-  };
   if(active?.id===ARKON_CHAPTER_03.id){
     const jobs=Math.max(0,Number(get('arkonStoryCustomerJobsDone')||0));
     const phase=get('arkonStoryPhase')||'chapter03Jobs';
