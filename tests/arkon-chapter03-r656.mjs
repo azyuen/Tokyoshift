@@ -286,7 +286,7 @@ test('R664 in-race cruise banter, actual S15 pull-up, frozen choice and physics 
   const race=readFileSync('src/scenes/RaceScene.js','utf8');
   assert.match(race,/this\.isArkonMx5Drive = this\.raceMode==='ARKON_MX5_DRIVE'/);
   assert.match(race,/setupArkonMx5Drive\(\)/);
-  assert.match(race,/createGinzaBanterHud\(this,\{storyCruise:true\}\)/);
+  assert.match(race,/createGinzaBanterHud\(this,\{chapter03:true\}\)/);
   assert.match(race,/this\.advanceRollingVehicle\(this\.player,dt\)/);
   assert.match(race,/this\.opponent\.positionM\+=Math\.min\(gap,5\*dt\)/);
   assert.match(race,/this\.arkonMx5Phase='decision'/);
