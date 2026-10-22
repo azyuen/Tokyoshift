@@ -2,17 +2,15 @@
 // Workshop's hero/driver geometry and Showdown's stage positions are canonical.
 // Other cinematic backgrounds still use the ground-plane perspective engine.
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
-import { SHOWDOWN_STAGE } from '../ui/ShowdownLayout.js?v=20261016-shared-showdown';
+import { SHOWDOWN_STAGE, SHOWDOWN_HERO_CAR, SHOWDOWN_HERO_CHARACTER } from '../ui/ShowdownLayout.js?v=20261022-r651';
 
+// Backward-compatible grouped view of one geometry owner; no copied pixels.
 export const SHOWDOWN_HERO = Object.freeze({
-  // Same positions/sizes as StreetShowdownView.redraw(), including its native
-  // MeetScene.createCarDisplay tyre-alignment adjustment.
-  carX:SHOWDOWN_STAGE.x+SHOWDOWN_STAGE.w/2,
-  carY:455,
-  targetWidth:663,
-  driverX:SHOWDOWN_STAGE.x+255,
-  driverFeetY:SHOWDOWN_STAGE.y+SHOWDOWN_STAGE.h-4,
-  driverHeight:315,
+  carX:SHOWDOWN_HERO_CAR.x,carY:SHOWDOWN_HERO_CAR.y,
+  targetWidth:SHOWDOWN_HERO_CAR.targetWidth,
+  driverX:SHOWDOWN_HERO_CHARACTER.x,
+  driverFeetY:SHOWDOWN_HERO_CHARACTER.feetY,
+  driverHeight:SHOWDOWN_HERO_CHARACTER.height,
 });
 
 const clamp=(value,lo,hi)=>Math.max(lo,Math.min(hi,value));
