@@ -65,28 +65,28 @@ export function showArkonStoryObjective(scene) {
   };
   add(scene.add.rectangle(780,420,1560,840,0x020811,.70)
     .setDepth(depth).setInteractive());
-  add(scene.add.rectangle(780,420,820,385,0x091a27,.99)
+  add(scene.add.rectangle(780,420,820,535,0x091a27,.99)
     .setStrokeStyle(2,0x69cada,1).setDepth(depth+1));
-  add(scene.add.text(780,286,'ARKON DEN // STORY MODE',{
+  add(scene.add.text(780,230,'ARKON DEN // STORY MODE',{
     fontFamily:PIXEL,fontSize:'17px',color:'#f4fbff'
   }).setOrigin(.5).setDepth(depth+2));
-  add(scene.add.text(780,338,info.heading,{
+  add(scene.add.text(780,293,info.heading,{
     fontFamily:PIXEL,fontSize:'12px',color:'#8ee6f4'
   }).setOrigin(.5).setDepth(depth+2));
-  add(scene.add.text(780,420,info.message,{
+  add(scene.add.text(780,395,info.message,{
     fontFamily:BODY,fontSize:'25px',color:'#ffffff',
     align:'center',wordWrap:{width:680}
   }).setOrigin(.5).setDepth(depth+2));
-  add(scene.add.text(780,493,info.progress,{
+  add(scene.add.text(780,509,info.progress,{
     fontFamily:PIXEL,fontSize:'11px',color:'#f6da8d'
   }).setOrigin(.5).setDepth(depth+2));
-  add(scene.add.text(780,525,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
+  add(scene.add.text(780,552,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
-  const done=add(scene.add.rectangle(780,555,215,50,0x153847,1)
+  const done=add(scene.add.rectangle(780,620,215,50,0x153847,1)
     .setStrokeStyle(2,0x64cde2,1).setDepth(depth+2)
     .setInteractive({useHandCursor:true}));
-  add(scene.add.text(780,555,'BACK TO GAME',{
+  add(scene.add.text(780,620,'BACK TO GAME',{
     fontFamily:PIXEL,fontSize:'10px',color:'#ffffff'
   }).setOrigin(.5).setDepth(depth+3));
   done.on('pointerdown',close);
