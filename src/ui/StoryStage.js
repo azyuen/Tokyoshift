@@ -48,11 +48,15 @@ export function showStoryStage(scene, {
     if (asset) assets.push(asset);
     return { ...actor, asset };
   });
-  const carProps = cars.map(car => ({
-    ...car,
-    model:car.carId ? carCatalog[car.carId] : null,
-    asset:car.asset || (car.key ? { key:car.key,path:car.path } : null),
-  }));
+  const carProps = cars.map(car => {
+    const carId = car.carId === '$SELECTED_CAR'
+      ? scene.registry?.get?.('selectedCarId') : car.carId;
+    return {
+      ...car, carId,
+      model:carId ? carCatalog[carId] : null,
+      asset:car.asset || (car.key ? { key:car.key,path:car.path } : null),
+    };
+  });
   for (const item of [backdrop, ...carProps.map(x => x.asset)]) {
     if (item?.key && item?.path) assets.push(item);
   }
