@@ -10,7 +10,7 @@ import {
   getWorkshopRegionalWinRequirement,
   getTotalRegionalWins,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261004-r319';
+} from '../data/workshopProgression.js?v=20261023-r662';
 import {
   HOME_REGION_ID,
   HOME_RETURN_COST,
