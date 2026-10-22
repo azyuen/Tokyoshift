@@ -8,6 +8,13 @@ on:
       - 'src/data/centralTokyo.js'
       - 'src/data/ginzaGallery.js'
       - 'src/scenes/ProfileSelectScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/GarageScene.js'
+      - 'src/ui/StoryContinuePrompt.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/SettingsPanel.js'
+      - 'src/story/StoryDirector.js'
       - 'tests/arkonStoryMode.test.mjs'
       - '.github/workflows/arkon-story-checks.yml'
   push:
@@ -29,5 +36,12 @@ jobs:
           node --check src/scenes/ProfileSelectScene.js
           node --check src/data/arkonChapter01.js
           node --check src/data/storyDirectorScripts.js
+          node --check src/ui/StoryContinuePrompt.js
+          node --check src/ui/StoryStage.js
+          node --check src/ui/ArkonStoryObjective.js
+          node --check src/ui/SettingsPanel.js
+          node --check src/story/StoryDirector.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/GarageScene.js
       - name: Story mode tests
         run: node --test tests/arkonStoryMode.test.mjs
