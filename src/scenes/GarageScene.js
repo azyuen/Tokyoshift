@@ -64,7 +64,7 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261021-r627';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r662';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261023-r658';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
@@ -106,7 +106,7 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261005-r354';
+} from '../data/workshopProgression.js?v=20261023-r662';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
@@ -142,7 +142,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r661';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r662';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
