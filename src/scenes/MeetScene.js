@@ -433,6 +433,7 @@ export default class MeetScene extends Phaser.Scene {
     if (shouldLaunchDevVaultStory(this.registry) &&
         claimDevVaultStoryLoan(this.registry)) {
       saveSessionState(this.registry);
+      finishSceneLoading('READY');
       queueSafeSceneStart(this,'DevVaultStoryScene');
       return;
     }
