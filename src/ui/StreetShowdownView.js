@@ -20,11 +20,13 @@ import {
   SHOWDOWN_CARD_Y,
   SHOWDOWN_CARD_WIDTH,
   SHOWDOWN_CARD_HEIGHT,
+  SHOWDOWN_HERO_CAR,
+  SHOWDOWN_HERO_CHARACTER,
   SHOWDOWN_RACE_Y_OFFSET,
   SHOWDOWN_BACK_Y_OFFSET,
   SHOWDOWN_RACE_BUTTON_HEIGHT,
   SHOWDOWN_BACK_BUTTON_HEIGHT,
-} from './ShowdownLayout.js?v=20261016-shared-showdown';
+} from './ShowdownLayout.js?v=20261022-r651';
 
 const PIXEL = '"Silkscreen", monospace';
 const BODY = '"Rajdhani", monospace';
@@ -192,16 +194,17 @@ export function showStreetShowdownView(scene, {
     if (rivalCar && scene.textures.exists(getCarBodyTextureKey(scene, rivalCar)) &&
         scene.textures.exists(rivalCar.visual?.wheelKey)) {
       const display = scene.createCarDisplay(rivalCar,
-        STAGE.x + STAGE.w / 2, 455, 663, Z + 6, false,
+        SHOWDOWN_HERO_CAR.x, SHOWDOWN_HERO_CAR.y,
+        SHOWDOWN_HERO_CAR.targetWidth, Z + 6, false,
         normalisePaintColor(round.paintColor, DEFAULT_PAINT_COLOR));
       display.forEach(obj => clipStage(add(obj, detailObjects)));
     }
 
     if (visual?.spriteKey && scene.textures.exists(visual.spriteKey)) {
       const src = scene.textures.get(visual.spriteKey).getSourceImage();
-      const avatarX = STAGE.x + 255;
-      const feetY = STAGE.y + STAGE.h - 4;
-      const height = 315;
+      const avatarX = SHOWDOWN_HERO_CHARACTER.x;
+      const feetY = SHOWDOWN_HERO_CHARACTER.feetY;
+      const height = SHOWDOWN_HERO_CHARACTER.height;
       const scale = height / Math.max(1, src.height);
       const charWidth = src.width * scale;
       clipStage(add(scene.add.ellipse(avatarX, feetY - 12,

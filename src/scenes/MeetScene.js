@@ -148,7 +148,7 @@ import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroduc
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261020-r619';
 import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261016-r550';
 import { getRegionalChallengeReturnLines } from '../data/regionalChallengeReturnQuotes.js?v=20261016-r550';
-import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261016-street-showdown-template';
+import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261022-r651';
 import { isStreetShowdownOfferRosterValid } from '../data/streetShowdownRoster.js?v=20261016-street-showdown-template';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
