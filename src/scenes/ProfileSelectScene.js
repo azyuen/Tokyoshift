@@ -5,6 +5,7 @@ import {
   getActiveProfileIndex,
   setActiveProfileIndex,
   beginNewProfile,
+  setProfileGameMode,
 } from '../state/GameState.js?v=20261011-r482';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -401,8 +402,68 @@ export default class ProfileSelectScene extends Phaser.Scene {
       return;
     }
 
+    if (slot.playerCharacterId === 'arkonDen' &&
+        (slot.firstName + slot.lastName).toLowerCase().replace(/[^a-z0-9]/g, '') === 'arkonden') {
+      this.showArkonModeSelect(index);
+      return;
+    }
     setActiveProfileIndex(index);
     this.reloadSelectedProfile('LOADING DRIVER');
+  }
+
+  showArkonModeSelect(index) {
+    if (this.modeSelectOpen || this.transitioning) return;
+    this.modeSelectOpen = true;
+    const items = [];
+    const add = item => { items.push(item); return item; };
+    add(this.add.rectangle(780, 420, 1560, 840, 0x030b14, 0.97)
+      .setDepth(90).setInteractive());
+    add(this.add.text(780, 100, 'ARKON DEN // TWO JOURNEYS', {
+      fontFamily: PIXEL_FONT, fontSize: '24px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(92));
+    add(this.add.text(780, 152, 'SELECT WHICH LIFE TO CONTINUE', {
+      fontFamily: BODY_FONT, fontSize: '20px', color: '#91c6d2',
+    }).setOrigin(0.5).setDepth(92));
+    const choose = mode => {
+      setActiveProfileIndex(index);
+      if (!setProfileGameMode(index, mode)) {
+        this.modeSelectOpen = false;
+        items.forEach(item => item.destroy());
+        return;
+      }
+      this.reloadSelectedProfile(mode === 'arkonStory' ? 'LOADING STORY' : 'LOADING DEV CAREER');
+    };
+    const draw = (x, mode, title, subtitle, description, footer) => {
+      const panel = add(this.add.rectangle(x, 426, 440, 360, 0x0c2030, 0.99)
+        .setStrokeStyle(2, 0x548da7).setDepth(92)
+        .setInteractive({ useHandCursor: true }));
+      add(this.add.text(x, 308, title, { fontFamily: PIXEL_FONT, fontSize: '21px',
+        color: '#f4fbff' }).setOrigin(0.5).setDepth(94));
+      add(this.add.text(x, 354, subtitle, { fontFamily: BODY_FONT, fontSize: '21px',
+        color: '#7de1e5' }).setOrigin(0.5).setDepth(94));
+      add(this.add.text(x, 429, description, { fontFamily: BODY_FONT, fontSize: '22px',
+        color: '#ddeaf1', align: 'center', wordWrap: { width: 385 } })
+        .setOrigin(0.5).setDepth(94));
+      add(this.add.text(x, 536, footer, { fontFamily: PIXEL_FONT, fontSize: '11px',
+        color: '#7de1e5' }).setOrigin(0.5).setDepth(94));
+      panel.on('pointerover', () => panel.setStrokeStyle(3, 0x7de1e5));
+      panel.on('pointerout', () => panel.setStrokeStyle(2, 0x548da7));
+      panel.on('pointerdown', () => choose(mode));
+    };
+    draw(535, 'career', 'CAREER / DEV', 'Present day',
+      'Continue your existing cars, garages and developer testing.', 'EXISTING SAVE');
+    draw(1025, 'arkonStory', 'STORY MODE', 'Before Ginza',
+      'A separate ten-chapter journey. Earn every car and every yen.',
+      this.slots[index]?.storyStarted ? 'CONTINUE STORY' : 'BEGIN NEW STORY');
+    const back = add(this.add.rectangle(780, 704, 230, 52, 0x142b37, 1)
+      .setStrokeStyle(1, 0x538799).setDepth(92).setInteractive({ useHandCursor: true }));
+    add(this.add.text(780, 704, 'BACK TO DRIVERS', {
+      fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(94));
+    back.on('pointerdown', () => {
+      items.forEach(item => item.destroy());
+      this.modeSelectOpen = false;
+    });
   }
 
   reloadSelectedProfile(label) {
