@@ -25,14 +25,18 @@ const read = (source, key) =>
 
 export function isArkonVaultStoryLoan(source) {
   const loan = read(source, 'ginzaTestDrive');
-  return read(source, 'devMode') === true &&
-    isNamedArkonDen(source) && isGinzaLoanActive(source) &&
+  // Named Arkon's vault loan is the permission: his dev profile does not
+  // necessarily persist the old devMode flag on every restored save.
+  return isNamedArkonDen(source) && isGinzaLoanActive(source) &&
     loan?.carId === read(source, 'selectedCarId');
 }
-export function shouldLaunchDevVaultStory(source) {
+export function shouldLaunchDevVaultStoryForDestination(source,locationId) {
   return isArkonVaultStoryLoan(source) &&
-    read(source, 'meetLocation') === 'shibuyaDogenzaka' &&
+    locationId === 'shibuyaDogenzaka' &&
     read(source, 'ginzaTestDrive')?.[DEV_VAULT_EPISODE_KEY] === 'armed';
+}
+export function shouldLaunchDevVaultStory(source) {
+  return shouldLaunchDevVaultStoryForDestination(source,read(source,'meetLocation'));
 }
 
 export function armDevVaultStoryLoan(source) {
