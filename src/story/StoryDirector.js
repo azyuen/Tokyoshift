@@ -11,6 +11,7 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r639';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r639';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
+import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r643';
 import { cars } from '../data/cars.js?v=20261017-r565';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
@@ -99,7 +100,8 @@ export class StoryDirector {
     this.events.clear();
     this.clearStage();
     for (const scene of this.game.scene?.getScenes?.(true) || [])
-      scene._storyChoicePanel?.destroy?.();
+      { scene._storyChoicePanel?.destroy?.();
+        scene._storyContinuePrompt?.destroy?.(); }
     if (was && !was.preview && complete && was.slot === owner()) {
       this.game.registry.set(STORY_DIRECTOR_SAVE_KEY, null);
       saveSessionState(this.game.registry);
@@ -195,6 +197,23 @@ export class StoryDirector {
             if(this.session?.index===index && this.wait?.index===index)this.advance();
           });
           if(!accepted){this.wait=null;this.error='STORY VENUE UNAVAILABLE';}
+          return;
+        }
+        if (type === 'HOLD_SCENE') {
+          if (sceneCutsceneActive(scene) || scene._storyContinuePrompt?.active) return;
+          this.wait={kind:'dialogue',index};
+          const prompt=showStoryContinuePrompt(scene,{
+            label:step.label||'CONTINUE STORY',caption:step.caption||'',
+            onContinue:()=>{
+              if(this.session?.index===index && this.wait?.index===index)
+                this.advance();
+            },
+            onCancel:({reason})=>{
+              if(this.session?.index===index && reason!=='shutdown')
+                this.error='STORY CONTINUE CANCELLED';
+            },
+          });
+          if(!prompt){this.wait=null;this.error='STORY CONTINUE UNAVAILABLE';}
           return;
         }
         if (type === 'CHOICE') {
