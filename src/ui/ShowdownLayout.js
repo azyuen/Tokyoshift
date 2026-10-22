@@ -11,3 +11,16 @@ export const SHOWDOWN_RACE_Y_OFFSET = 614;
 export const SHOWDOWN_BACK_Y_OFFSET = SHOWDOWN_SIDE.h - 48;
 export const SHOWDOWN_RACE_BUTTON_HEIGHT = 48;
 export const SHOWDOWN_BACK_BUTTON_HEIGHT = 46;
+
+// Single source for the Showdown foreground (also consumed by Story staging).
+// These are the exact proven native positions used by StreetShowdownView.
+export const SHOWDOWN_HERO_CAR=Object.freeze({
+  x:SHOWDOWN_STAGE.x+SHOWDOWN_STAGE.w/2,
+  y:455,
+  targetWidth:663,
+});
+export const SHOWDOWN_HERO_CHARACTER=Object.freeze({
+  x:SHOWDOWN_STAGE.x+255,
+  feetY:SHOWDOWN_STAGE.y+SHOWDOWN_STAGE.h-4,
+  height:315,
+});
