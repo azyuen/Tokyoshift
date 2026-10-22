@@ -903,6 +903,12 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      this.registry.set('arkonStoryMx5RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
     if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
       this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
       this.scene.start('DevVaultStoryScene');
@@ -1004,6 +1010,12 @@ export default class RaceScene extends Phaser.Scene {
 
   forfeitRace(cashPenalty = 0) {
     if (this.resultsShown) return;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      this.registry.set('arkonStoryMx5RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
     if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
       this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
       this.scene.start('DevVaultStoryScene');
@@ -4316,6 +4328,18 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryMx5Loan')?.active){
+      // Real physical rolling race in Sayaka's guest MX-5; no stakes,
+      // championship record, crew offers, coupons or permanent ownership.
+      this.registry.set('arkonStoryMx5RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
     if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
       // Play with the actual engine/AI; change absolutely no career records,
       // coupons, cash, crew offers or loan ownership in this dev-only fixture.
