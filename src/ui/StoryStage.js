@@ -46,10 +46,11 @@ export function showStoryStage(scene, {
   };
   scene._storyDirectorStage = state;
   scene.events?.once?.('shutdown', state.destroy);
-  const addImage = (asset, x, y, width, height, layer, alpha = 1) => {
+  const addImage = (asset, x, y, width, height, layer, alpha = 1, feetAnchored = false) => {
     if (!asset?.key || !scene.textures.exists(asset.key)) return;
     const image = scene.add.image(x, y, asset.key).setDepth(layer).setScrollFactor(0)
       .setAlpha(alpha);
+    if (feetAnchored) image.setOrigin(.5,1);
     if (height) image.setDisplaySize(height * (image.width / Math.max(1,image.height)),height);
     else if (width) image.setDisplaySize(width,image.height * width / Math.max(1,image.width));
     objects.push(image);
@@ -87,7 +88,7 @@ export function showStoryStage(scene, {
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
       addImage(a.asset,Number(a.x??anchor.x),Number(a.y??anchor.feetY),
-        null,Number(a.height??anchor.height),Number(a.depth??portraitDepth+i));
+        null,Number(a.height??anchor.height),Number(a.depth??portraitDepth+i),1,true);
     });
     // The stage's front/back relationship is deterministic and authored.
     if(carInFront){drawCast();drawCars();}
