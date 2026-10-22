@@ -126,6 +126,6 @@ test('R641 boot and build import registration remains isolated',()=>{
   assert.match(main,/StoryDirector\.js\?v=20261022-r643/);
   assert.match(main,/RaceScene\.js\?v=20261022-r643/);
   assert.match(main,/CentralTokyoScene\.js\?v=20261022-r643/);
-  assert.match(source('version.json'),/R643/);
-  assert.match(source('index.html'),/R643/);
+  assert.match(source('version.json'),/R644/);
+  assert.match(source('index.html'),/R644/);
 });
