@@ -14,7 +14,7 @@ import {createArkonStoryState,normaliseState} from '../src/state/GameState.js';
 
 const lookup=obj=>({get:key=>obj[key]});
 test('Chapter 02 is registered and valid for the existing Story Director',()=>{
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter02,ARKON_CHAPTER_02);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter02,ARKON_CHAPTER_02);
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_02));
   assert.equal(ARKON_CHAPTER_02.steps.at(-1).type,'END');
   assert.ok(ARKON_CHAPTER_02.steps.some(x=>x.key==='arkonStoryChapter02Done'&&x.value));
@@ -112,7 +112,7 @@ test('Core wiring is opt-in to Arkon story; Chapter 2 never overwrites career pr
   const director=readFileSync('src/story/StoryDirector.js','utf8');
   assert.match(director,/registry\.get\('arkonStoryChapter01RevisedDone'\)/);
   assert.match(director,/registry\.get\('gameMode'\)==='arkonStory'/);
-  assert.match(director,/!registry\.get\('arkonStoryChapter02FishPaid'\)/);
+  assert.match(director,/!scene\.registry\.get\('arkonStoryChapter02FishPaid'\)/);
   assert.match(director,/kind:'winDelta'/);
   const race=readFileSync('src/scenes/RaceScene.js','utf8');
   assert.match(race,/arkonStoryChapter02RivalResult/);

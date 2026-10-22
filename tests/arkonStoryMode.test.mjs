@@ -361,7 +361,9 @@ test('R652 Meet Sayaka marker, real racing and school controls are wired',()=>{
   assert.match(observer,/saveSessionState\(scene.registry\)/);
   assert.match(director,/type === 'ARKON_CHALLENGE_RACE'/);
   assert.match(director,/selectedRaceCategory:'SINGLE'/);
-  assert.match(race,/arkonStoryRivalResult',playerWon\?'won':'lost'/);
+  assert.match(race,/arkonStoryChapter02RivalResult/);
+  assert.match(race,/arkonStoryRivalResult/);
+  assert.match(race,/this\.registry\.set\(resultKey,playerWon\?'won':'lost'\)/);
   assert.match(race,/settlement\?\.teamChallengeCompleted/);
   assert.match(school,/arkonStoryLessonCredits/);
   assert.match(school,/gameMode'\)==='arkonStory' \|\|/);
@@ -385,7 +387,7 @@ test('R653 manga never falls back to Sayaka home clothing while dimmed',()=>{
     assert.doesNotMatch(page.leftPose,/^dev/);
   }
   const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
-  assert.match(dir,/preloadPagePosesOnly: this\.session\.id==='arkonChapter01Revised'/);
+  assert.match(dir,/preloadPagePosesOnly: \['arkonChapter01Revised','arkonChapter02'\]\.includes\(this\.session\.id\)/);
 });
 
 test('R653 prevents reflection playing before victory result is dismissed',()=>{
