@@ -282,7 +282,7 @@ test('R652 revised Story Director registers a complete playable Chapter 01',()=>
     .map(s=>s.atLeast),[3,6]);
   assert.equal(steps.filter(s=>s.type==='ARKON_CHALLENGE_RACE').length,1);
   assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStorySayakaNoticed'));
-  assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='oshiageBasicLessonComplete'));
+  assert.ok(steps.some(s=>s.type==='WAIT_FLAG'&&s.key==='arkonStoryLessonCompleted'));
   assert.ok(steps.some(s=>s.type==='IF'&&s.key==='arkonStoryRivalResult'&&
     s.equals==='won'&&s.else==='rivalLost'));
   assert.ok(steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryChapter01RevisedDone'));
@@ -296,12 +296,14 @@ test('R652 new Arkon profile starts revised chapter and saves independent scene 
   assert.equal(state.arkonStoryPhase,'opening');
   const edited=normaliseState({...state,arkonStoryPhase:'practice',
     arkonStoryRivalResult:'lost',arkonStorySayakaNoticed:true,
-    arkonStoryLessonCredits:4,arkonStorySchoolRevealed:true});
+    arkonStoryLessonCredits:4,arkonStorySchoolRevealed:true,
+    arkonStoryLessonCompleted:true});
   assert.equal(edited.arkonStoryPhase,'practice');
   assert.equal(edited.arkonStoryRivalResult,'lost');
   assert.equal(edited.arkonStorySayakaNoticed,true);
   assert.equal(edited.arkonStoryLessonCredits,4);
   assert.equal(edited.arkonStorySchoolRevealed,true);
+  assert.equal(edited.arkonStoryLessonCompleted,true);
   const career=normaliseState({...edited,gameMode:'career',firstName:'Other'});
   assert.equal(career.arkonStoryLessonCredits,0);
   assert.equal(career.arkonStorySayakaNoticed,false);
