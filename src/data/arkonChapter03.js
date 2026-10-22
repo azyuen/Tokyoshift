@@ -38,7 +38,7 @@ export const ARKON_CHAPTER_03={
       ark('At least a few people have started asking about the work I do under the bonnet.','storyThinking'),
     ],{left:A}),
     {type:'PHONE',title:'CANAL YARD // INCOMING CALL',presentationMode:'openingSwipe',
-      callerId:'storyDockForeman',callerName:'LOCAL DRIVER',callerPose:'idle',
+      callerId:'',callerName:'LOCAL DRIVER',callerPose:'idle',
       pages:[
         {speaker:'caller',text:'Hey, I got your number from a guy at the meets. You the one who can tune an engine?'},
         {speaker:'player',text:'Depends on the engine.'},
@@ -51,7 +51,7 @@ export const ARKON_CHAPTER_03={
       ark('Almost.','storyConfidentSmirk'),
     ],{left:A}),
     {type:'PHONE',title:'THE SECOND CALL',presentationMode:'openingSwipe',
-      callerId:'storyDockForeman',callerName:'ANOTHER CUSTOMER',callerPose:'idle',
+      callerId:'',callerName:'ANOTHER CUSTOMER',callerPose:'idle',
       pages:[
         {speaker:'caller',text:'My friend says you sorted his car out. You got room for one more?'},
         {speaker:'player',text:'Send me the details. And a realistic power target.'},
@@ -64,7 +64,7 @@ export const ARKON_CHAPTER_03={
     ],{left:A}),
     {type:'ARKON_CUSTOMER_JOB',index:3},
     {type:'PHONE',title:'ONE LAST BOOKING',presentationMode:'openingSwipe',
-      callerId:'storyDockForeman',callerName:'CUSTOMER FIVE',callerPose:'idle',
+      callerId:'',callerName:'CUSTOMER FIVE',callerPose:'idle',
       pages:[
         {speaker:'caller',text:'I have a little Mazda MX-5 booked in. Just make it a bit more lively, would you?'},
         {speaker:'player',text:'MX-5? Sure. I will have a look.'},
@@ -209,7 +209,7 @@ export const ARKON_CHAPTER_03={
       ark('Quiet again. Just me and the tools. I could get used to this.','storyIdle'),
     ],{left:A}),
     {type:'PHONE',title:'CANAL YARD // ANOTHER CALL',presentationMode:'openingSwipe',
-      callerId:'storyDockForeman',callerName:'UNKNOWN CUSTOMER',callerPose:'idle',
+      callerId:'',callerName:'UNKNOWN CUSTOMER',callerPose:'idle',
       pages:[
         {speaker:'caller',text:'I heard about that little MX-5. Are you the mechanic?'},
         {speaker:'player',text:'That depends. What needs fixing?'},
