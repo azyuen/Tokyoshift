@@ -26,12 +26,15 @@ jobs:
         run: python3 scripts/normalize_backgrounds.py --apply
       - name: Assert all affected raw image dimensions
         run: python3 scripts/normalize_backgrounds.py --check
-      - name: Commit normalized assets to isolated R645 branch
+      - name: Build inspectable background inventory after normalization
+        run: python3 scripts/audit_backgrounds.py --json docs/background-audit/inventory.json --markdown docs/background-audit/INVENTORY.md
+      - name: Commit normalized assets and inventory to isolated R645 branch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- docs/background-audit/inventory.json docs/background-audit/INVENTORY.md
           git add -- assets/Garage/shinonome_warehouse_day.png assets/Locations/TunerShops/shinagawa_zerosports_day.png assets/Meet/Day/shibuya_center_gai_day.png assets/Meet/Day/shibuya_scramble_day.png assets/Meet/Day/shinagawa_konan_day.png assets/Meet/Day/shinagawa_oi_wharf_day.png assets/Meet/Day/yokohama_bay_bridge_day.png assets/Meet/Day/yokohama_minato_mirai_day.png
           if ! git diff --staged --quiet; then
-            git commit -m "R645 normalize 8 active background canvases to 1672x941"
+            git commit -m "R645 standardize background canvases and record actual source image geometry"
             git push origin HEAD:feature/background-standards-r645
           fi
