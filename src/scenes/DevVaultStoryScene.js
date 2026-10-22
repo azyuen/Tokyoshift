@@ -4,13 +4,13 @@
 import { cars } from '../data/cars.js?v=20261017-r565';
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
 import { preloadStoryCar, renderStoryCar } from '../ui/StoryCarRenderer.js?v=20261022-r642';
-import { resolveStoryComposition } from '../ui/StoryComposition.js?v=20261022-r642';
+import { resolveStoryComposition } from '../ui/StoryComposition.js?v=20261022-r643';
 import { saveSessionState } from '../state/GameState.js?v=20261022-r639';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   DEV_VAULT_STORY_ID, DEV_VAULT_RACE_ACTIVE_KEY,
   isArkonVaultStoryLoan, finishDevVaultHeroRace,
-} from '../data/devVaultStory.js?v=20261022-r642';
+} from '../data/devVaultStory.js?v=20261022-r643';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
