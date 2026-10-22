@@ -2,7 +2,7 @@
 // Built on the existing manga, phone, compact HUD, map and race systems.
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
-  checkStoryCondition, nextStoryPosition,
+  checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
 } from './StoryScript.js?v=20261022-r639';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
@@ -53,7 +53,7 @@ export class StoryDirector {
       error: this.error,
     };
   }
-  start(scriptOrId, { preview = false, index = 0 } = {}) {
+  start(scriptOrId, { preview = false, index = 0, vars = {} } = {}) {
     const compiled = typeof scriptOrId === 'string'
       ? this.scripts.get(scriptOrId)
       : validateStoryScript(scriptOrId);
@@ -64,7 +64,8 @@ export class StoryDirector {
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
     if (savedIndex >= compiled.script.steps.length) return false;
-    this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview), vars: {} };
+    this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview),
+      vars: normaliseStoryChoiceVars(vars) };
     this.wait = null; this.error = null; this.sceneDelay = 0;
     this.events.clear();
     this.checkpoint();
@@ -78,13 +79,14 @@ export class StoryDirector {
     const checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
-    return this.start(checkpoint.id, { index: checkpoint.index });
+    return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
   }
   checkpoint() {
     if (!this.session || this.session.preview) return;
     const registry = this.game.registry;
     registry.set(STORY_DIRECTOR_SAVE_KEY,
-      createStoryCheckpoint(this.session.id, this.session.index, this.session.slot));
+      createStoryCheckpoint(this.session.id, this.session.index, this.session.slot,
+        this.session.vars));
     saveSessionState(registry);
   }
   clearStage() {
