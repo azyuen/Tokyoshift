@@ -433,6 +433,6 @@ test('R653 no time checkpoint index shift for live R652 saves',()=>{
   const steps=ARKON_CHAPTER_01_REVISED.steps;
   // Day/night is metadata on existing SET_FLAG actions, not new steps.
   assert.equal(steps.filter(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryTimeOfDay').length,0);
-  assert.equal(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length,1);
+  assert.equal(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length,2);
   assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,2);
 });
