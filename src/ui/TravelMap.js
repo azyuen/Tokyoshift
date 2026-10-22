@@ -22,11 +22,11 @@ import {
   getTravelRegionUnlockLabel,
   isTravelLocationUnlocked,
   getTravelLocationUnlockLabel,
-} from '../data/travelRegions.js?v=20261015-r522';
+} from '../data/travelRegions.js?v=20261023-r652';
 import {
   isCentralTokyoLocationUnlocked,
   getCentralTokyoUnlockLabel,
-} from '../data/centralTokyo.js?v=20261006-r388';
+} from '../data/centralTokyo.js?v=20261023-r652';
 import {
   getTunerShopForRegion,
   isTunerShopUnlocked,
