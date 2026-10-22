@@ -10,7 +10,7 @@ import {
   getArkonPlayableChapters,beginArkonPlayableReplay,endArkonPlayableReplay,
   isArkonPlayableReplay,
 } from '../src/ui/ArkonPlayableReplay.js';
-import {saveSessionState,createArkonStoryState} from '../src/state/GameState.js';
+import {saveSessionState,createArkonStoryState,normaliseState} from '../src/state/GameState.js';
 
 const code=path=>readFileSync(path,'utf8');
 const source=(data)=>({get:k=>data[k]});
@@ -28,7 +28,9 @@ test('Chapter 02 has a real race-scene cruise and the home workshop uses native 
   const drive=steps.findIndex(s=>s.type==='STORY_CRUISE');
   const home=steps.findIndex(s=>s.type==='STAGE'&&s.backgroundId==='workshop:shinonomeWorkshop:night');
   assert.ok(drive>0&&home>drive);
-  assert.deepEqual(steps.slice(drive+1,drive+2).map(s=>s.scene),['GarageScene']);
+  assert.equal(steps[drive+1].type,'WAIT_FLAG');
+  assert.equal(steps[drive+1].key,'arkonStoryCruiseComplete');
+  assert.equal(steps[drive+1].scene,'GarageScene');
   assert.equal(steps[home].stageMode,'native');
   assert.equal(steps[home].cars[0].carId,'$SELECTED_CAR');
   assert.match(code('src/ui/StoryStage.js'),/template.kind==='meet'/);
@@ -46,6 +48,15 @@ test('Story cruise is an opponent-free rolling drive using normal vehicle physic
   assert.match(race,/endArkonStoryCruise\(/);
   assert.match(race,/!this\.isTutorial && !this\.isStoryCruise\) this\.handleTiming/);
   assert.match(race,/this\.player\.update\(dt, controlState\)/);
+});
+
+test('An interrupted drive cannot complete Chapter 02 by accident',()=>{
+  const story=createArkonStoryState(0);
+  assert.equal(story.arkonStoryCruiseComplete,false);
+  assert.equal(normaliseState({...story,arkonStoryCruiseComplete:true}).arkonStoryCruiseComplete,true);
+  const director=code('src/story/StoryDirector.js');
+  assert.match(director,/wait.condition.key==='arkonStoryCruiseComplete'/);
+  assert.match(director,/step.type==='STORY_CRUISE'/);
 });
 
 test('Regional crown appears after Chapter 02 only at Odaiba',()=>{

@@ -56,7 +56,7 @@ export function getArkonStoryObjective(registry) {
       chapter02Opening:['UNWELCOME COMPANY','Continue Chapter 02 at the Meet.'],
       chapter02Earn:['KEEP YOUR FOOT IN','Win two street races. Arkon needs another way to earn money.'],
       chapter02MeetRepair:['THE CIVIC NEEDS WORK','Win two more races, then return to a Meet.'],
-      chapter02Driving:['THE LONG WAY HOME','Continue the drive with Sayaka and visit Arkon\'s workshop.'],
+      chapter02Driving:['THE LONG WAY HOME','Complete the rolling drive with Sayaka. If interrupted, return to a Meet to resume.'],
       chapter02AfterWorkshop:['ONE MORE TEST','Win two more races. Daigo wants another run.'],
       chapter02RivalRace:['FRIENDLY REMATCH','Complete the race with Daigo, then return to the Meet.'],
     };

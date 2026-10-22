@@ -113,7 +113,7 @@ export const ARKON_CHAPTER_02 = {
     {type:'CLEAR_STAGE'},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter02Driving'},
     {type:'STORY_CRUISE'},
-    {type:'WAIT_SCENE',scene:'GarageScene'},
+    {type:'WAIT_FLAG',key:'arkonStoryCruiseComplete',equals:true,scene:'GarageScene'},
     manga('AFTER THE DRIVE',[
       say('Your Civic is better sorted than some expensive cars I have driven.','oshiageReviewing'),
       ark('Do you always offer compliments in the least flattering way?','storyLaughing'),

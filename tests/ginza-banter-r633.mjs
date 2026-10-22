@@ -68,8 +68,8 @@ test('ordinary Ginza drivers get no passenger shifting HUD; Arkon uses dress and
   assert.doesNotMatch(race, /ginzaShiftBands|ginzaLastAdviceAt|this\.ginzaPassenger\.dialogue/);
   assert.match(race, /createGinzaBanterHud\(this\)/);
   assert.match(race, /if \(this\.finished\) \{\s*this\.ginzaPassenger\.hide\(\)/);
-  assert.match(hud, /const sayakaKey = sayakaVisual\.poseAssets\.devIdle\.key/);
-  assert.match(hud, /const arkonKey = arkonVisual\.poseAssets\.devIdle\.key/);
+  assert.match(hud, /const sayakaPose=storyCruise\?'oshiageRelaxed':'devIdle'/);
+  assert.match(hud, /const arkonPose=storyCruise\?'storyIdle':'devIdle'/);
   assert.match(hud, /create\('SAYAKA', sayakaVisual, sayakaKey, 'left'/);
   assert.match(hud, /create\('ARKON', arkonVisual, arkonKey, 'right'/);
   assert.match(hud, /const active = speaker === 'arkon' \? right : left/);

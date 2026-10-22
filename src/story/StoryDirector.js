@@ -196,6 +196,23 @@ export class StoryDirector {
         if (sceneName(scene) !== 'RaceScene' || !scene.resultsShown || !scene.finished) return;
         this.advance();
       } else if (wait.kind === 'flag') {
+        // If Safari reloads or the player leaves the Chapter 02 night drive
+        // before it is completed, visiting a Meet offers the SAME solo drive
+        // again. Never silently count an unfinished drive as complete.
+        if(this.session.id==='arkonChapter02' &&
+           wait.condition.key==='arkonStoryCruiseComplete' &&
+           !scene.registry.get('arkonStoryCruiseComplete') &&
+           sceneName(scene)==='MeetScene'){
+          const previous=this.scripts.get(this.session.id)?.script?.steps
+            .findIndex(step=>step.type==='STORY_CRUISE')??-1;
+          if(previous>=0){
+            this.session.index=previous;
+            this.wait=null;
+            this.checkpoint();
+            this.sceneDelay=DEFAULT_SCENE_DELAY;
+            return;
+          }
+        }
         if ((wait.condition.scene && sceneName(scene)!==wait.condition.scene) ||
             !checkStoryCondition(wait.condition, key => scene.registry.get(key))) return;
         this.advance();

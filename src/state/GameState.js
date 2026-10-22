@@ -93,6 +93,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter02Done: false,
     arkonStoryChapter02FishPaid: false,
     arkonStoryChapter02RivalResult: null,
+    arkonStoryCruiseComplete: false,
     arkonStoryChapter03Done: false,
     arkonStoryCustomerJobsDone: 0,
     arkonStoryMx5CustomerTuning: null,
@@ -1166,6 +1167,7 @@ export function normaliseState(input = {}) {
     arkonStoryChapter02RivalResult: storyMode &&
       ['won','lost'].includes(input.arkonStoryChapter02RivalResult)
         ? input.arkonStoryChapter02RivalResult : null,
+    arkonStoryCruiseComplete: storyMode && Boolean(input.arkonStoryCruiseComplete),
     arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
     arkonStoryCustomerJobsDone: storyMode
       ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
@@ -1551,6 +1553,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter02Done: Boolean(registry.get('arkonStoryChapter02Done')),
     arkonStoryChapter02FishPaid: Boolean(registry.get('arkonStoryChapter02FishPaid')),
     arkonStoryChapter02RivalResult: registry.get('arkonStoryChapter02RivalResult'),
+    arkonStoryCruiseComplete: Boolean(registry.get('arkonStoryCruiseComplete')),
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
     arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
     arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
@@ -1698,8 +1701,7 @@ export function saveSessionState(registry) {
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
        Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
       registry?.get?.('__devVaultStoryRaceActive') === true ||
-      (registry?.get?.('__arkonStoryPlayableReplay') === true &&
-       Number(registry.get('__arkonStoryPlayableReplayOwner')) === getActiveProfileIndex())) return null;
+      registry?.get?.('__arkonStoryPlayableReplay') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
   if (state.gameMode === ARKON_STORY_MODE) {
@@ -1718,8 +1720,7 @@ export function saveManualState(registry) {
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
        Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
       registry?.get?.('__devVaultStoryRaceActive') === true ||
-      (registry?.get?.('__arkonStoryPlayableReplay') === true &&
-       Number(registry.get('__arkonStoryPlayableReplayOwner')) === getActiveProfileIndex())) return null;
+      registry?.get?.('__arkonStoryPlayableReplay') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),

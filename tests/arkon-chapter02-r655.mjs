@@ -68,7 +68,8 @@ test('The car ride follows meet repair, before the home workshop',()=>{
   const ride=steps.findIndex(s=>s.type==='STORY_CRUISE');
   const home=steps.findIndex(s=>s.type==='STAGE'&&s.backgroundId==='workshop:shinonomeWorkshop:night');
   assert.ok(meet>=0&&ride>meet&&home>ride);
-  assert.equal(steps[ride+1].type,'WAIT_SCENE');
+  assert.equal(steps[ride+1].type,'WAIT_FLAG');
+  assert.equal(steps[ride+1].key,'arkonStoryCruiseComplete');
   assert.equal(steps[ride+1].scene,'GarageScene');
   assert.equal(steps[home].stageMode,'native');
   assert.equal(steps[home].cars[0].carId,'$SELECTED_CAR');
