@@ -5,7 +5,7 @@ import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
-import { projectGroundEntity } from '../story/StoryPerspective.js?v=20261022-r644';
+import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
 
 export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
@@ -84,33 +84,34 @@ export function showStoryStage(scene, {
       clipGraphics.fillRect(frame.x,frame.y,frame.w,frame.h);
       clipMask=clipGraphics.createGeometryMask();
     }
+    let viewport=null;
     if(backdrop){
       const src=scene.textures.exists(backdrop.key)
         ? scene.textures.get(backdrop.key).getSourceImage() : null;
       if(src){
-        const fw=frame.w,fh=frame.h;
-        const fit=profile?.fit||'cover';
-        const contain=fit==='contain'||fit==='top-fit';
-        const scale=(contain?Math.min:Math.max)(fw/src.width,fh/src.height)*
-          (fit==='zoom-cover'?1.12:1);
-        const displayW=src.width*scale,displayH=src.height*scale;
-        const bgX=frame.x+fw/2,
-          bgY=fit==='bottom-cover'?frame.y+fh-displayH/2:
-            fit==='top-fit'?frame.y+displayH/2:frame.y+fh/2;
-        addImage(backdrop,bgX,bgY,displayW,null,depth,backgroundAlpha);
+        viewport=resolveBackgroundViewport({
+          sourceWidth:src.width,sourceHeight:src.height,
+          frame,fit:profile?.fit||'cover',
+        });
+        addImage(backdrop,viewport.centreX,viewport.centreY,
+          viewport.width,null,depth,backgroundAlpha);
       }
     }
     const carInFront=layout.car.layer==='foreground';
     const portraitDepth=depth+(carInFront?3:10);
     const vehicleDepth=depth+(carInFront?11:3);
     const drawCars=()=>carProps.forEach((c,i)=>{
-      const estimate=autoPerspective?projectGroundEntity(profile,{
+      const estimate=autoPerspective?projectEntityOnBackground(profile,{
         kind:'car',frame,
+        sourceWidth:viewport?.sourceWidth||1672,
+        sourceHeight:viewport?.sourceHeight||941,
         x:Number(c.x??(layout.car.x-i*275))/w,
         ground:c.ground??(layout.car.groundY/h),
         layerBias:carInFront?2:-1,
       }):null;
-      const x=Number(c.x??estimate?.x??(layout.car.x-i*275));
+      // Under backgroundId, authored X is a logical-world position;
+      // only the background's actual cover/contain transform puts it on screen.
+      const x=Number(estimate?.x??c.x??(layout.car.x-i*275));
       const targetWidth=Number(c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
       const groundY=Number(c.groundY??estimate?.groundY??layout.car.groundY);
@@ -133,13 +134,15 @@ export function showStoryStage(scene, {
     });
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
-      const estimate=autoPerspective?projectGroundEntity(profile,{
+      const estimate=autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
+        sourceWidth:viewport?.sourceWidth||1672,
+        sourceHeight:viewport?.sourceHeight||941,
         x:Number(a.x??anchor.x)/w,
         ground:a.ground??(anchor.feetY/h),
         layerBias:carInFront?-2:1,
       }):null;
-      addImage(a.asset,Number(a.x??estimate?.x??anchor.x),
+      addImage(a.asset,Number(estimate?.x??a.x??anchor.x),
         Number(a.y??estimate?.groundY??anchor.feetY),
         null,Number(a.height??estimate?.displayHeight??anchor.height),
         Number(a.depth??estimate?.depth??(portraitDepth+i)),1,true);
