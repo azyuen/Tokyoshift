@@ -5,7 +5,7 @@ import { showMagazinePanel } from './CarHistoryPanel.js?v=20261012-r489';
 
 import { showCarHistoryLedger } from './CarHistoryLedger.js?v=20261006-r388';
 import { showStoryArchivePanel } from './StoryArchivePanel.js?v=20261017-r574';
-import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r661';
+import { showArkonStoryArchivePanel } from './ArkonStoryArchivePanel.js?v=20261023-r662';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
