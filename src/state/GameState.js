@@ -1090,7 +1090,17 @@ export function normaliseState(input = {}) {
       Number.isSafeInteger(input.storyDirectorProgress.ownerSlot)
         ? { id: input.storyDirectorProgress.id,
             index: input.storyDirectorProgress.index,
-            ownerSlot: input.storyDirectorProgress.ownerSlot, version: 1 }
+            ownerSlot: input.storyDirectorProgress.ownerSlot, version: 1,
+            ...(input.storyDirectorProgress.vars &&
+               typeof input.storyDirectorProgress.vars==='object' &&
+               !Array.isArray(input.storyDirectorProgress.vars)
+              ? { vars:Object.fromEntries(Object.entries(input.storyDirectorProgress.vars)
+                  .filter(([key,val])=>/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key) &&
+                    (typeof val==='string' && val.length<=80 ||
+                     typeof val==='boolean' ||
+                     typeof val==='number' && Number.isFinite(val)))
+                  .slice(0,24)) }
+              : {}) }
         : null,
     regionWins: normalisedRegionWins,
     tunerShopProgress:
