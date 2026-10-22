@@ -230,3 +230,33 @@ generating opponents and car assets that will not be shown and prevents
 an ordinary race from appearing before the scripted arrival. Direct
 saved Meet entries retain a fallback preloading gate. The deliberate
 cinematic opening pause was also shortened while preserving the fade.
+
+
+## R643 — establishing-shot hold and immediate Dogenzaka entrance
+
+New universal `HOLD_SCENE` command displays the fully authored background,
+characters and car **without dialogue or decision overlays** and requires an
+explicit Continue tap. Its `label` and optional `caption` are authored; the
+button respects the existing 1560×840 virtual screen and blocks accidental
+click-through to underlying controls. It works in both Story and Career.
+
+The private vault rehearsal now:
+1. Arrives at Dogenzaka with a clean tableau, and **waits** for
+   **BEGIN THE EVENING** before playing manga banter.
+2. After the initial manga concludes, restores the clean tableau and **waits**
+   for **MAKE YOUR CHOICE** before showing the existing three-button decision.
+3. Branches as before — none of the dinner/race/photo outcomes changed.
+
+For the default `car-behind-cast` composition, the car's ground plane is
+raised from 85.5% to **75.5%** of stage height (~84px), approximating
+half to one hero-wheel diameter. Body/wheel scale remains unchanged and
+characters retain their feet-on-ground layout.
+
+First arrival handling also now treats the current **active Ginza vault loan**
+as authoritative; a temporarily restored personal `selectedCarId` cannot
+delay the story until a normal race has completed. An `armed` *or*
+`started` but unfinished loan remains eligible for recovery if a deferred
+scene switch fails. The story intercepts at (1) Ginza map selection,
+(2) Meet preload/create, and (3) Race preload/create as a safety fallback.
+The real scripted Mine's R34 race is exempt from this guard.
+Returning the car clears the loan and all episode eligibility.
