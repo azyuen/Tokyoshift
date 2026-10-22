@@ -87,6 +87,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryFirstChoice: null,
     arkonStoryFirstReply: null,
     arkonStoryChapter01Done: false,
+    arkonStoryChapter01AfterHoursDone: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
@@ -1129,6 +1130,7 @@ export function normaliseState(input = {}) {
     arkonStoryFirstReply: storyMode && ['honest','tease'].includes(input.arkonStoryFirstReply)
       ? input.arkonStoryFirstReply : null,
     arkonStoryChapter01Done: storyMode && Boolean(input.arkonStoryChapter01Done),
+    arkonStoryChapter01AfterHoursDone: storyMode && Boolean(input.arkonStoryChapter01AfterHoursDone),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1218,7 +1220,11 @@ export function normaliseState(input = {}) {
                      typeof val==='number' && Number.isFinite(val)))
                   .slice(0,24)) }
               : {}) }
-        : null,
+        : storyMode && input.arkonStoryChapter01Done &&
+          !input.arkonStoryChapter01AfterHoursDone
+          ? { id:'arkonChapter01', index:29,
+              ownerSlot:getActiveProfileIndex(), version:1 }
+          : null,
     regionWins: normalisedRegionWins,
     tunerShopProgress:
       input.tunerShopProgress && typeof input.tunerShopProgress === 'object'
@@ -1471,6 +1477,7 @@ export function snapshotRegistry(registry) {
     arkonStoryFirstChoice: registry.get('arkonStoryFirstChoice') || null,
     arkonStoryFirstReply: registry.get('arkonStoryFirstReply') || null,
     arkonStoryChapter01Done: Boolean(registry.get('arkonStoryChapter01Done')),
+    arkonStoryChapter01AfterHoursDone: Boolean(registry.get('arkonStoryChapter01AfterHoursDone')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
