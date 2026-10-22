@@ -4,7 +4,9 @@
 // portrait height, and their depth is always explicit.
 export const STORY_COMPOSITION_PRESETS = Object.freeze({
   'car-behind-cast': Object.freeze({
-    carWidth: .69, carX: .635, carGround: .855, carDepth: 8,
+    // Lift rear tyres approximately 0.65 hero-wheel diameters into the street
+    // image: background road perspective puts the cast a plane closer.
+    carWidth: .69, carX: .635, carGround: .755, carDepth: 8,
     castFeet: .84, castHeights: [.58,.59,.55], castX: [.15,.345,.455],
     castDepth: 14,
   }),
