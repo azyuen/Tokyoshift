@@ -1,7 +1,7 @@
 // R652 — optional character interaction layered on the REAL Meet stage.
 // Never modifies normal rival rosters. Only appears in Arkon's private Story.
 import { SHOWDOWN_STAGE, SHOWDOWN_HERO_CHARACTER } from './ShowdownLayout.js?v=20261022-r651';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
 const KEY='arkonStorySayakaObserver';
 const PATH='assets/Characters/Main/oshiage_sayaka_fujieda_neutral.png?v=20261023-r652';
 
