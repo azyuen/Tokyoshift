@@ -93,6 +93,12 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter02Done: false,
     arkonStoryChapter02FishPaid: false,
     arkonStoryChapter02RivalResult: null,
+    arkonStoryChapter03Done: false,
+    arkonStoryCustomerJobsDone: 0,
+    arkonStoryMx5CustomerTuning: null,
+    arkonStoryChapter03Seed: 0,
+    arkonStoryMx5RaceResult: null,
+    arkonStoryMx5Loan: null,
     arkonStoryPhase: 'opening',
     arkonStoryTimeOfDay: 'night',
     arkonStorySayakaNoticed: false,
@@ -1160,6 +1166,18 @@ export function normaliseState(input = {}) {
     arkonStoryChapter02RivalResult: storyMode &&
       ['won','lost'].includes(input.arkonStoryChapter02RivalResult)
         ? input.arkonStoryChapter02RivalResult : null,
+    arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
+    arkonStoryCustomerJobsDone: storyMode
+      ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
+    arkonStoryChapter03Seed: storyMode ? (Number(input.arkonStoryChapter03Seed)>>>0) : 0,
+    arkonStoryMx5CustomerTuning: storyMode && input.arkonStoryMx5CustomerTuning
+      && typeof input.arkonStoryMx5CustomerTuning==='object'
+      ? clonePlain(input.arkonStoryMx5CustomerTuning) : null,
+    arkonStoryMx5RaceResult: storyMode &&
+      ['won','lost','declined','forfeit'].includes(input.arkonStoryMx5RaceResult)
+      ? input.arkonStoryMx5RaceResult : null,
+    arkonStoryMx5Loan: storyMode && input.arkonStoryMx5Loan?.active
+      ? clonePlain(input.arkonStoryMx5Loan) : null,
     arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
     // Migrate R652 chapters already past the nighttime introduction without
     // restarting their scripted checkpoints or resetting any races.
@@ -1533,6 +1551,12 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter02Done: Boolean(registry.get('arkonStoryChapter02Done')),
     arkonStoryChapter02FishPaid: Boolean(registry.get('arkonStoryChapter02FishPaid')),
     arkonStoryChapter02RivalResult: registry.get('arkonStoryChapter02RivalResult'),
+    arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
+    arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
+    arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
+    arkonStoryMx5CustomerTuning: registry.get('arkonStoryMx5CustomerTuning')||null,
+    arkonStoryMx5RaceResult: registry.get('arkonStoryMx5RaceResult')||null,
+    arkonStoryMx5Loan: registry.get('arkonStoryMx5Loan')||null,
     arkonStoryPhase: registry.get('arkonStoryPhase'),
     arkonStoryTimeOfDay: registry.get('arkonStoryTimeOfDay'),
     arkonStorySayakaNoticed: Boolean(registry.get('arkonStorySayakaNoticed')),

@@ -181,6 +181,20 @@ export function showStoryStage(scene, {
           if(clipMask)obj?.setMask?.(clipMask);
           objects.push(obj);
         });
+        // Optional customer-bay arrival: ease the complete layered vehicle
+        // (body, paint, tyres and shadow) into place as one car. Never affects
+        // normal Meet/Garage staging or race physics.
+        if(motion==='arrive' && !template && i===0 && scene.tweens?.add){
+          for(const obj of carObjects){
+            if(!obj?.active || !Number.isFinite(obj.x) || !obj.setX || !obj.setAlpha)continue;
+            const rest=obj.x;
+            obj.setX(rest+250).setAlpha(0);
+            motionTweens.push(scene.tweens.add({
+              targets:obj,x:rest,alpha:1,
+              duration:900,ease:'Cubic.Out',
+            }));
+          }
+        }
       }else{
         const src=c.asset?.key&&scene.textures.exists(c.asset.key)
           ?scene.textures.get(c.asset.key).getSourceImage():null;

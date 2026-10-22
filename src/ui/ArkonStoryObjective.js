@@ -5,6 +5,8 @@ const BODY='"Rajdhani", sans-serif';
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
+import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
+import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
   const get=key=>registry?.get?.(key);
@@ -13,6 +15,28 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter03Done'))return {
+    heading:'CHAPTER 03 COMPLETE',
+    message:'The Night Shift is over. Arkon has earned a reputation as a tuner.',
+    progress:'THE NIGHT SHIFT // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_03.id){
+    const jobs=Math.max(0,Number(get('arkonStoryCustomerJobsDone')||0));
+    const phase=get('arkonStoryPhase')||'chapter03Jobs';
+    const line=phase==='chapter03Jobs'
+      ? ['THE NIGHT SHIFT','Tune five customer cars to their requested kW.','CUSTOMER JOBS '+Math.min(5,jobs)+' / 5']
+      :phase==='chapter03MaxBuild'
+        ? ['SAYAKA\'S MX-5','Tune her MX-5 to the Canal Yard maximum.','MAXIMUM PERFORMANCE']
+        :phase==='chapter03GuestRace'
+          ? ['THE ROLLING CHALLENGE','Finish the MX-5 race and return to the Meet.','SAYAKA\'S CAR']
+          :['THE NIGHT SHIFT','Continue the scene with Sayaka.','CHAPTER 03'];
+    return {heading:line[0],message:line[1],progress:line[2]};
+  }
+  if(get('arkonStoryChapter02Done') && getRegionalChampionshipCount(registry)>=1)return {
+    heading:'CHAPTER 03 // THE NIGHT SHIFT',
+    message:'Visit a street meet to begin the next story chapter.',
+    progress:'REGIONAL CHAMPION',
+  };
   if(get('arkonStoryChapter02Done'))return {
     heading:'CHAPTER 02 COMPLETE',
     message:'Keep improving the Civic and choose when to attempt your first regional challenge.',
