@@ -83,7 +83,7 @@ import {
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261022-r637';
