@@ -160,7 +160,8 @@ export class StoryDirector {
         if (sceneName(scene) !== 'RaceScene' || !scene.resultsShown || !scene.finished) return;
         this.advance();
       } else if (wait.kind === 'flag') {
-        if (!checkStoryCondition(wait.condition, key => scene.registry.get(key))) return;
+        if ((wait.condition.scene && sceneName(scene)!==wait.condition.scene) ||
+            !checkStoryCondition(wait.condition, key => scene.registry.get(key))) return;
         this.advance();
       } else if (wait.kind === 'event') {
         if (!this.events.has(wait.event)) return;
@@ -312,6 +313,14 @@ export class StoryDirector {
         if (type === 'SET_FLAG') {
           if (!this.session.preview && step.key) {
             scene.registry.set(step.key,step.value);
+            // Script-authored Story time uses a PRIVATE profile flag, never
+            // WorldClock's shared device-wide epoch. No additional script
+            // step is inserted: existing R652 checkpoints remain valid.
+            if (this.session.id==='arkonChapter01Revised' &&
+                scene.registry.get('gameMode')==='arkonStory' &&
+                (step.timeOfDay==='night'||step.timeOfDay==='day')) {
+              scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
+            }
             this.checkpoint();
           }
           this.advance(); continue;
@@ -386,7 +395,8 @@ export class StoryDirector {
           this.wait = { kind:'event', event:step.event }; return;
         }
         if (type === 'WAIT_FLAG') {
-          if (checkStoryCondition(step,key=>scene.registry.get(key))) {
+          if ((!step.scene || sceneName(scene)===step.scene) &&
+              checkStoryCondition(step,key=>scene.registry.get(key))) {
             this.advance(); continue;
           }
           this.wait = { kind:'flag',condition:step }; return;
