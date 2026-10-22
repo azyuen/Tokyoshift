@@ -9,7 +9,8 @@ const ACTIVE='__arkonStoryPlayableReplay';
 const OWNER='__arkonStoryPlayableReplayOwner';
 const sessions=new WeakMap();
 const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
-  chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':null;
+  chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
+  chapter===4?'arkonChapter04':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -22,7 +23,9 @@ export function getArkonPlayableChapters(registry){
     ['arkonChapter02','arkonChapter03'].includes(registry.get('storyDirectorProgress')?.id);
   const c3=registry.get('arkonStoryChapter02Done') ||
     registry.get('storyDirectorProgress')?.id==='arkonChapter03';
-  return [1,...(c2?[2]:[]),...(c3?[3]:[])];
+  const c4=registry.get('arkonStoryChapter03Done') ||
+    ['arkonChapter04'].includes(registry.get('storyDirectorProgress')?.id);
+  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -40,11 +43,13 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('__arkonStoryPlayableReplayChapter',chapter);
   scene.game?.storyDirector?.stop?.();
   registry.set('arkonStoryPhase',chapter===1?'opening':
-    chapter===2?'chapter02Opening':'chapter03Jobs');
+    chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':'chapter04Arrival');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
-  registry.set('arkonStoryChapter03Done',false);
+  registry.set('arkonStoryChapter03Done',chapter>3);
+  registry.set('arkonStoryChapter04Done',false);
+  registry.set('arkonStoryRwbProject',null);
   registry.set('arkonStoryChapter02FishPaid',false);
   registry.set('arkonStoryChapter02RivalResult',null);
   registry.set('arkonStoryRivalResult',null);
@@ -60,9 +65,10 @@ export function beginArkonPlayableReplay(scene,chapter) {
     registry.set('arkonStoryLessonCredits',0);
   }
   registry.set('storyDirectorProgress',createStoryCheckpoint(scriptId(chapter),0,slot));
-  const target=chapter===1?'GarageScene':'MeetScene';
+  const target=(chapter===1||chapter===4)?'GarageScene':'MeetScene';
   const scheduled=queueSafeSceneStart(scene,target,
-    target==='GarageScene'?{workshopLocationId:'shinonomeWorkshop'}:undefined);
+    target==='GarageScene'?{workshopLocationId:chapter===4
+      ?'shinonomeCanalYard':'shinonomeWorkshop',crewMode:false}:undefined);
   if(!scheduled){
     // Revert immediately if the scene cannot be entered.
     restore(registry,original);
