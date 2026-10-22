@@ -8,7 +8,7 @@ export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
     id:'devVaultNightOut',
     title:'TOKYO SHIFT // THE WRONG KIND OF TEST DRIVE',
     steps:[
-      {type:'WAIT_MS',ms:1100},
+      {type:'WAIT_MS',ms:680},
       {type:'MANGA',title:'SHIBUYA // AN UNPLANNED STOP',backgroundStyle:'wash',
         characters:{left:'sayakaFujieda',right:'arkonDen'},
         pages:[
