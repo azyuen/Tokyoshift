@@ -1,5 +1,6 @@
 import { resolveCharacterFaceAnchor } from '../characters/CharacterFaceAnchor.js?v=20261013-driverface';
 import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js?v=20261022-r640';
+import { applyStoryDialogueTypography } from './StoryDialogueTypography.js?v=20261023-r658';
 
 // One geometry source for live race dialogue and phone-call dialogue.
 // Coordinates use Tokyo SHIFT's native 1560 x 840 landscape viewport.
@@ -149,6 +150,10 @@ export function createRaceDialogueHud(scene, {
   }).setScrollFactor(0).setDepth(depth + 4));
 
   if (theme === 'phone') {
+    // Apply the exact same FINAL rendered font size as normal manga dialogue.
+    // Both ordinary calls and opening/swipe calls use this shared HUD,
+    // so neither scene is allowed to override typography locally.
+    applyStoryDialogueTypography({ heading, dialogue });
     // Icon floats ABOVE the top-right bubble edge; never surround it with a
     // circle. This is consistent for normal calls and the swiping phone scene.
     const iconX = bubble.right + PHONE_CALL_PRESENTATION.iconOffsetX;
