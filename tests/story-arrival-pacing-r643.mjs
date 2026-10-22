@@ -92,7 +92,7 @@ test('R643 cache keys load newest story runner, staging and loan guards',()=>{
   for(const value of ['RaceScene','CentralTokyoScene',
     'DevVaultStoryScene']) assert.ok(boot.includes(value+'.js?v=20261022-r643'),value);
   assert.match(boot,/MeetScene\.js\?v=20261022-r644/);
-  assert.match(boot,/StoryDirector\.js\?v=20261022-r644/);
+  assert.match(boot,/StoryDirector\.js\?v=20261022-r645/);
   assert.match(src('src/story/StoryDirector.js'),/StoryScript\.js\?v=20261022-r643/);
   assert.match(src('src/story/StoryDirector.js'),/storyDirectorScripts\.js\?v=20261022-r644/);
   assert.match(src('src/scenes/DevVaultStoryScene.js'),/StoryComposition\.js\?v=20261022-r643/);
