@@ -1047,9 +1047,11 @@ export default class CentralTokyoScene extends Phaser.Scene {
     // MeetScene preload (which generates rivals, car art and several rosters).
     // That preload was delaying the cinematic and could expose race buttons.
     if (shouldLaunchDevVaultStoryForDestination(this.registry,locationId) &&
-        claimDevVaultStoryLoan(this.registry)) {
+        queueSafeSceneStart(this,'DevVaultStoryScene')) {
+      // Claim only after a successful transition was scheduled. If the source
+      // scene is interrupted, Meet/Race fallback still sees an armed loan.
+      claimDevVaultStoryLoan(this.registry);
       saveSessionState(this.registry);
-      queueSafeSceneStart(this,'DevVaultStoryScene');
       return;
     }
     saveSessionState(this.registry);
