@@ -78,6 +78,9 @@ export function createDefaultGameState(options = {}) {
     gameMode: 'career',
     arkonStoryChapter: 0,
     arkonStoryChoices: {},
+    arkonStoryFirstChoice: null,
+    arkonStoryFirstReply: null,
+    arkonStoryChapter01Done: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
@@ -194,7 +197,9 @@ export function createDefaultGameState(options = {}) {
 
 export function createFreshRunStateFromRegistry(registry) {
   const starterCarId = normaliseStarterCarId(registry?.get?.('starterCarId'));
-  const state = createDefaultGameState({ starterCarId });
+  const state = registry?.get?.('gameMode') === ARKON_STORY_MODE
+    ? createArkonStoryState(getActiveProfileIndex())
+    : createDefaultGameState({ starterCarId });
 
   state.firstName = String(registry?.get?.('firstName') || '');
   state.lastName = String(registry?.get?.('lastName') || '');
@@ -1102,6 +1107,11 @@ export function normaliseState(input = {}) {
     arkonStoryChapter: storyMode ? Math.max(1, Math.min(10, Number(input.arkonStoryChapter || 1))) : 0,
     arkonStoryChoices: storyMode && input.arkonStoryChoices && typeof input.arkonStoryChoices === 'object'
       && !Array.isArray(input.arkonStoryChoices) ? clonePlain(input.arkonStoryChoices) : {},
+    arkonStoryFirstChoice: storyMode && ['careful','bold'].includes(input.arkonStoryFirstChoice)
+      ? input.arkonStoryFirstChoice : null,
+    arkonStoryFirstReply: storyMode && ['honest','tease'].includes(input.arkonStoryFirstReply)
+      ? input.arkonStoryFirstReply : null,
+    arkonStoryChapter01Done: storyMode && Boolean(input.arkonStoryChapter01Done),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1441,6 +1451,9 @@ export function snapshotRegistry(registry) {
     gameMode: registry.get('gameMode') || 'career',
     arkonStoryChapter: registry.get('arkonStoryChapter') || 0,
     arkonStoryChoices: registry.get('arkonStoryChoices') || {},
+    arkonStoryFirstChoice: registry.get('arkonStoryFirstChoice') || null,
+    arkonStoryFirstReply: registry.get('arkonStoryFirstReply') || null,
+    arkonStoryChapter01Done: Boolean(registry.get('arkonStoryChapter01Done')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
