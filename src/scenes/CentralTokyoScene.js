@@ -88,6 +88,7 @@ import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261022-r637';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { armDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r641';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
@@ -2855,6 +2856,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
     });
     this.registry.set('selectedCarId', demoId);
     this.registry.set('preferredCarId', demoId);
+    // Developer story triggers ONLY after Arkon elects to travel to Dogenzaka.
+    // The normal Ginza loan/map behaviour remains unchanged elsewhere.
+    armDevVaultStoryLoan(this.registry);
     saveSessionState(this.registry);
     this.renderLocation(this.activeLocationId);
     this.openMap();
