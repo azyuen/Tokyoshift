@@ -8,7 +8,7 @@ import { isOpenDriverBriefing, driverBriefingEligibility, consumeDriverAdvice, f
 const proDriveClass = value => ({ FF:'FWD', FR:'RWD', FWD:'FWD', RWD:'RWD', AWD:'AWD', FOUR_WHEEL_DRIVE:'AWD' }[String(value || '').toUpperCase()] || String(value || '').toUpperCase());
 import { CREW_SERIES, OPEN_CIRCUIT_CREW_FEE, OPEN_CIRCUIT_TROPHY_FEE, OPEN_CIRCUIT_TROPHY_PRIZE, isOpenCircuitAvailable, getOpenCircuitTrophy, getOpenCircuitCrewFormat, getProfessionalAttendance, getProfessionalRoundEvents, getProfessionalCarEligibility, registerProfessionalTimedEvent } from '../data/proSeason.js?v=20261021-r631';
 import { drawSeasonHeader, drawCrewSidebar, showTokyoChampionship, showProSeasonAction, showCrewFixture, confirmCrewForfeit, drawProEventSidebarTitle, drawProEventSidebarDetails, drawProEventSidebarStatus, drawProEventSidebarEntry, proEventEntryLabel } from '../ui/ProSeasonPanel.js?v=20261022-r635';
-import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261022-r635';
+import { startChapter09, chapter09ShouldBegin } from '../ui/Chapter09Story.js?v=20261022-r646';
 import { saveProTransaction } from '../state/GameState.js?v=20261018-r588';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
@@ -61,7 +61,7 @@ import {
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan, ginzaRoomDuringLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
-import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261017-r574';
+import { preloadChapter08GinzaAssets, startChapter08Ginza } from '../ui/Chapter08Story.js?v=20261022-r646';
 import { isChapter08DevReplay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import {
   getGarageDeliveryOptions,
