@@ -460,7 +460,8 @@ function persistArkonStorySave(index, state) {
 
 export function getProfileGameMode(index = getActiveProfileIndex()) {
   const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
-  const slot = ensureProfileStore().slots[slotIndex];
+  // Read-only check: saving Arkon's story must NEVER rewrite shared profile data.
+  const slot = readJson(PROFILE_STORE_KEY)?.slots?.[slotIndex];
   if (!isArkonProfile(slot?.session || slot?.manual)) return 'career';
   return readJson(storyModeKey(slotIndex)) === ARKON_STORY_MODE
     ? ARKON_STORY_MODE : 'career';
