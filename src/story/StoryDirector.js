@@ -134,6 +134,7 @@ export class StoryDirector {
     if (this.wait?.kind === 'event' && this.wait.event === event) this.advance();
   }
   tick() {
+    if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
     if (!this.session) { this.resume(); return; }
     if (this.session.slot !== owner()) { this.stop(); return; }
     if (this.error) return;
@@ -226,6 +227,10 @@ export class StoryDirector {
             onChoose:choice=>{
               if(!this.session || this.session.index!==index || this.wait?.index!==index)return;
               this.session.vars[step.key||'choice']=choice.id;
+              if (!this.session.preview && scene.registry.get('gameMode')==='arkonStory') {
+                const previous=scene.registry.get('arkonStoryChoices') || {};
+                scene.registry.set('arkonStoryChoices', {...previous,[step.key||'choice']:choice.id});
+              }
               const dest=compiled.labels.get(choice.to);
               if(dest==null){this.error='CHOICE TARGET MISSING';return;}
               this.session.index=dest+1;
