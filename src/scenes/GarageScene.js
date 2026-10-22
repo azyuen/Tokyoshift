@@ -1,3 +1,4 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
@@ -308,7 +309,7 @@ export default class GarageScene extends Phaser.Scene {
       );
     }
 
-    const mapPhase = getWorldPhase() === 'day' ? 'day' : 'night';
+    const mapPhase = getStoryWorldPhase(this.registry) === 'day' ? 'day' : 'night';
     const workshopMapAsset = mapPhase === 'day'
       ? {
           key: 'travelMapTokyoRegionDay',
@@ -607,7 +608,7 @@ export default class GarageScene extends Phaser.Scene {
     this.garagePageObjects = [];
     const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
     this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
-    this.worldPhase = getWorldPhase();
+    this.worldPhase = getStoryWorldPhase(this.registry);
     this.workshopBackgroundImage = null;
     this.workshopBackgroundWorkshop = null;
 
@@ -817,7 +818,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   syncWorldPhaseBackground() {
-    const nextPhase = getWorldPhase();
+    const nextPhase = getStoryWorldPhase(this.registry);
     if (nextPhase === this.worldPhase) return;
     this.worldPhase = nextPhase;
     if (this.crewMode && this.crewOverviewBackground?.active) this.drawCrewOverview();
@@ -1490,7 +1491,7 @@ export default class GarageScene extends Phaser.Scene {
       : (() => {
           const phaseBackground = getWorkshopPhaseBackground(
             activeWorkshop,
-            this.worldPhase || getWorldPhase()
+            this.worldPhase || getStoryWorldPhase(this.registry)
           );
           return phaseBackground?.key && this.textures.exists(phaseBackground.key)
             ? phaseBackground.key
@@ -7731,7 +7732,7 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'GarageScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', 'ODAIBA');
     this.registry.set('raceLocationLabel',
       this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA DRIVING LESSON' : 'DAICHI PRACTICE RUN');
