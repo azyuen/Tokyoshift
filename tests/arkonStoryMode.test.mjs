@@ -9,7 +9,7 @@ import {createArkonStoryState,normaliseState,createDefaultGameState,
   importProfileBackup,getActiveProfileIndex} from '../src/state/GameState.js';
 
 test('Story Director registers the new chapter',()=>{
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter01, ARKON_CHAPTER_01);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter01, ARKON_CHAPTER_01);
 });
 test('Arkon Chapter 01 validates against Story Director commands',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_01));
