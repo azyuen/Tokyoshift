@@ -1,0 +1,42 @@
+name: R656 Arkon Chapter 03 Night Shift
+on:
+  push:
+    branches: [main, feature/arkon-chapter03-r656]
+    paths:
+      - 'src/data/arkonChapter03.js'
+      - 'src/data/arkonChapter03Jobs.js'
+      - 'src/data/characters.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/ui/ArkonCustomerTuning.js'
+      - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/state/GameState.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/arkon-chapter03-r656.mjs'
+      - '.github/workflows/arkon-chapter03-r656.yml'
+  pull_request:
+jobs:
+  chapter03:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/data/arkonChapter03.js
+          node --check src/data/arkonChapter03Jobs.js
+          node --check src/story/StoryDirector.js
+          node --check src/story/StoryScript.js
+          node --check src/ui/ArkonCustomerTuning.js
+          node --check src/ui/ArkonStoryArchivePanel.js
+          node --check src/ui/ArkonStoryObjective.js
+          node --check src/state/GameState.js
+          node --check src/scenes/RaceScene.js
+      - name: Chapter, save, archive and story smoke tests
+        run: |
+          node --test tests/arkon-chapter03-r656.mjs tests/arkon-chapter02-r655.mjs tests/story-director-r639.mjs tests/arkonStoryMode.test.mjs tests/startup-import-integrity-r508.mjs
