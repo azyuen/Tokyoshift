@@ -11,6 +11,7 @@ import {
   isArkonPlayableReplay,
 } from '../src/ui/ArkonPlayableReplay.js';
 import {saveSessionState,createArkonStoryState,normaliseState} from '../src/state/GameState.js';
+import {getArkonCustomerJob,recordArkonCustomerJob} from '../src/data/arkonChapter03Jobs.js';
 
 const code=path=>readFileSync(path,'utf8');
 const source=(data)=>({get:k=>data[k]});
@@ -125,4 +126,60 @@ test('Interactive chapter replay restores real save even after simulated payouts
   await new Promise(resolve=>setTimeout(resolve,5));
   assert.ok(transitions.includes('MeetScene'));
   assert.ok(transitions.includes('GarageScene'));
+});
+
+
+test('Office recount makes full interactive gameplay primary and keeps cinematic-only separate',()=>{
+  const ui=code('src/ui/ArkonStoryArchivePanel.js');
+  assert.match(ui,/action\(386,'REPLAY CHAPTER \/\/ FULL GAMEPLAY'/);
+  assert.match(ui,/action\(452,count\?'WATCH CUTSCENES ONLY'/);
+  assert.match(ui,/beginArkonPlayableReplay\(scene,number\)/);
+  assert.match(ui,/playArkonStoryRecount\(scene\)/);
+  // Text is sized for the 1.6x global readability multiplier, not 20px x 1.6.
+  assert.match(ui,/fontSize:'12px',color:'#d5e4ec'/);
+  assert.doesNotMatch(ui,/fontSize:'20px',color:'#d5e4ec'/);
+});
+
+test('Chapter 03 full replay resets completed customer jobs and lets actual mods earn temporary pay',async()=>{
+  const initial={
+    ...createArkonStoryState(0),
+    gameMode:'arkonStory',
+    arkonStoryChapter01RevisedDone:true,
+    arkonStoryChapter02Done:true,
+    arkonStoryChapter03Done:true,
+    arkonStoryCustomerJobsDone:6,
+    arkonStoryChapter03Seed:537,
+    arkonStoryMx5CustomerTuning:{engine:2,intake:1},
+    arkonStoryMx5RaceResult:'won',
+    arkonStoryMx5Loan:{active:true},
+    cash:182345,
+  };
+  const values=new Map(Object.entries(initial));
+  const registry={
+    get:key=>values.get(key),
+    set:(key,value)=>values.set(key,value),
+    remove:key=>values.delete(key),
+    getAll:()=>Object.fromEntries(values),
+  };
+  const scene={
+    registry,game:{storyDirector:{session:null,stop:()=>true}},
+    scene:{start(){}},sys:{isActive:()=>true},
+  };
+  assert.equal(beginArkonPlayableReplay(scene,3),true);
+  assert.equal(isArkonPlayableReplay(registry),true);
+  assert.equal(registry.get('storyDirectorProgress')?.id,'arkonChapter03');
+  assert.equal(registry.get('arkonStoryCustomerJobsDone'),0);
+  assert.equal(registry.get('arkonStoryChapter03Done'),false);
+  assert.equal(registry.get('arkonStoryMx5CustomerTuning'),null);
+  assert.equal(registry.get('arkonStoryMx5RaceResult'),null);
+  assert.equal(registry.get('arkonStoryMx5Loan'),null);
+  assert.equal(registry.get('arkonStoryChapter03Seed'),537);
+  const job=getArkonCustomerJob(registry,0);
+  assert.ok(job?.carId && job.pay>=25000);
+  assert.equal(recordArkonCustomerJob(registry,0),true);
+  assert.equal(registry.get('arkonStoryCustomerJobsDone'),1);
+  assert.equal(registry.get('cash'),initial.cash+job.pay);
+  assert.equal(endArkonPlayableReplay(scene),true);
+  assert.deepEqual(registry.getAll(),initial);
+  await new Promise(resolve=>setTimeout(resolve,5));
 });
