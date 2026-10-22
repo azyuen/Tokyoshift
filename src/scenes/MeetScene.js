@@ -25,7 +25,7 @@ import {
   getCharacterForContext,
   getMainRivalProgression,
   isMainRivalAvailableAtRegionalMeet,
-} from '../data/characters.js?v=20261023-r652';
+} from '../data/characters.js?v=20261023-r653';
 import {
   meetBackgrounds,
   getMeetBackgroundForPhase,
@@ -39,11 +39,11 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r652';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r652';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { preloadArkonMeetObserver, attachArkonMeetObserver } from '../ui/ArkonStoryMeetObserver.js?v=20261023-r652';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
@@ -110,7 +110,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
