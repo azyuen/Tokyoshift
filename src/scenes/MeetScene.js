@@ -36,7 +36,7 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r642';
+import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
