@@ -8,7 +8,9 @@ export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
     id:'devVaultNightOut',
     title:'TOKYO SHIFT // THE WRONG KIND OF TEST DRIVE',
     steps:[
-      {type:'WAIT_MS',ms:680},
+      // Establish the full car-and-cast composition before any overlay.
+      {type:'HOLD_SCENE',label:'BEGIN THE EVENING',
+        caption:'DOGENZAKA // PRIVATE NIGHT OUT'},
       {type:'MANGA',title:'SHIBUYA // AN UNPLANNED STOP',backgroundStyle:'wash',
         characters:{left:'sayakaFujieda',right:'arkonDen'},
         pages:[
@@ -21,6 +23,10 @@ export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
           {speaker:'right',leftPose:'ginzaDress',rightPose:'ginzaSuit',
             text:'Which explains why we stopped. What are you in the mood for?'},
         ]},
+      // Manga closes onto the tableau. The choices are revealed only when
+      // the player explicitly presses Continue, never by auto-fading.
+      {type:'HOLD_SCENE',label:'MAKE YOUR CHOICE',
+        caption:'THE NIGHT IS YOURS'},
       {type:'CHOICE',title:'THE NIGHT IS YOURS',
         subtitle:'The rental is still in your hands. Choose what happens next.',
         key:'shibuyaPlan',
