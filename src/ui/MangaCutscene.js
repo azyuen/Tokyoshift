@@ -17,6 +17,7 @@ import {
 } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
 import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261022-r640';
+import { applyStoryDialogueTypography } from './StoryDialogueTypography.js?v=20261023-r658';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -693,6 +694,12 @@ function drawDialogue(controller, page) {
   ).setOrigin(0, 0.5)
     .setDepth(BASE_DEPTH + 32)
     .setScrollFactor(0);
+
+  // This is the same shared font rule used by every phone call. Apply it
+  // AFTER text creation so old global text-factory boosts cannot cause the
+  // visual font size to diverge between manga and phone templates.
+  applyStoryDialogueTypography({ dialogue: body, heading: labelText,
+    emphasis: Boolean(page.emphasis) });
 
   const finalPage = controller.pageIndex >= (definition.pages?.length || 1) - 1;
   const rawAction = page.actionLabel || (finalPage
