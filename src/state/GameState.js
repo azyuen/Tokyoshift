@@ -1172,7 +1172,9 @@ export function normaliseState(input = {}) {
     ginzaVaultOwnerWelcomed: Boolean(input.ginzaVaultOwnerWelcomed),
     ginzaTestDrive: input.ginzaTestDrive?.carId && String(input.ginzaTestDrive.carId).startsWith('ginzaDemo_')
       ? { carId: String(input.ginzaTestDrive.carId), previousCarId: String(input.ginzaTestDrive.previousCarId || ''),
-          previousPreferredId: String(input.ginzaTestDrive.previousPreferredId || '') }
+          previousPreferredId: String(input.ginzaTestDrive.previousPreferredId || ''),
+          ...( ['armed','started'].includes(input.ginzaTestDrive.devVaultNightOutR641)
+            ? { devVaultNightOutR641: input.ginzaTestDrive.devVaultNightOutR641 } : {} ) }
       : null,
     selectedRacePlayerCharacterId:
       input.selectedRacePlayerCharacterId === 'sayakaFujieda' &&
@@ -1465,7 +1467,8 @@ export function saveSessionState(registry) {
   if ((registry?.get?.('__chapter08DevReplay') === true &&
        Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
-       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex())) return null;
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
+      registry?.get?.('__devVaultStoryRaceActive') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
   writeActiveSlot({ session: state });
@@ -1476,7 +1479,8 @@ export function saveManualState(registry) {
   if ((registry?.get?.('__chapter08DevReplay') === true &&
        Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
-       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex())) return null;
+       Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
+      registry?.get?.('__devVaultStoryRaceActive') === true) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),
