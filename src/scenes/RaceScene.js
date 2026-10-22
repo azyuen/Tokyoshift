@@ -1,3 +1,4 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import Vehicle from '../vehicles/Vehicle.js?v=20261008-r428';
 import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
@@ -488,7 +489,7 @@ export default class RaceScene extends Phaser.Scene {
           null
         )
       : null;
-    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getWorldPhase();
+    this.raceTimeOfDay = this.registry.get('raceTimeOfDay') || getStoryWorldPhase(this.registry);
     this.raceDistrict = this.registry.get('raceDistrict') || this.registry.get('district') || 'ODAIBA';
     this.raceLocationLabel = this.registry.get('raceLocationLabel') || 'STREET';
   }
@@ -3715,7 +3716,7 @@ export default class RaceScene extends Phaser.Scene {
       });
       return;
     }
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     // Same-scene restart is the proven path used by Competition and Crew
     // Battles; scene.start(this.key) can leave the old RaceScene active.
@@ -3959,7 +3960,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', regionId);
     this.registry.set('raceLocationLabel', 'TEAM CHALLENGE // ' + (state.stage + 1) + '/7');
 
@@ -4077,7 +4078,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', state.regionId);
     this.registry.set(
       'raceLocationLabel',
@@ -4119,7 +4120,7 @@ export default class RaceScene extends Phaser.Scene {
     this.registry.set('selectedRaceDeal', 'COMPETITION');
     this.registry.set('selectedRaceStake', 0);
     this.registry.set('selectedRaceSpecialChallenge', false);
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
 
     this.scene.restart();
