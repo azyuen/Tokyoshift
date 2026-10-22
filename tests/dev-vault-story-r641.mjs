@@ -36,8 +36,11 @@ test('only named Arkon with an active vault loan can arm and claim Shibuya Dogen
   assert.equal(claimDevVaultStoryLoan(dev),true);
   assert.equal(shouldLaunchDevVaultStory(dev),false,'one-shot trigger cannot repeat');
   assert.equal(dev.get('ginzaTestDrive')[DEV_VAULT_EPISODE_KEY],'started');
+  // Name+valid vault loan, not a possibly stale legacy devMode toggle,
+  // identifies the one developer profile permitted to run the chapter.
+  assert.equal(armDevVaultStoryLoan(mkRegistry({devMode:false})),true);
   for(const changed of [{firstName:'Ren',lastName:'Mizuno'},
-      {devMode:false},{ginzaTestDrive:null},{selectedCarId:'ae86'}]){
+      {ginzaTestDrive:null},{selectedCarId:'ae86'}]){
     const user=mkRegistry(changed);
     assert.equal(armDevVaultStoryLoan(user),false);
     assert.equal(shouldLaunchDevVaultStory(user),false);
