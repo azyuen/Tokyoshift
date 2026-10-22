@@ -10,6 +10,7 @@ import {
 import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { saveSessionState } from '../state/GameState.js?v=20261022-r639';
+import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
   DEV_VAULT_STORY_ID, DEV_VAULT_RACE_ACTIVE_KEY,
   isArkonVaultStoryLoan, finishDevVaultHeroRace,
@@ -42,22 +43,28 @@ export default class DevVaultStoryScene extends Phaser.Scene {
 
   preload(){
     if(!isArkonVaultStoryLoan(this.registry))return;
+    let queued=0;
     for(const item of Object.values(VENUES)){
-      if(!this.textures.exists(item.key))this.load.image(item.key,item.path+'?v=20261022-r641');
+      if(!this.textures.exists(item.key)){
+        this.load.image(item.key,item.path+'?v=20261022-r641');queued++;
+      }
     }
     for(const [id,pose] of PORTRAITS){
       const asset=getCharacterVisualAsset(id,pose);
-      if(asset?.key&&asset?.path&&!this.textures.exists(asset.key))
-        this.load.image(asset.key,getCharacterAssetUrl(asset.path));
+      if(asset?.key&&asset?.path&&!this.textures.exists(asset.key)){
+        this.load.image(asset.key,getCharacterAssetUrl(asset.path));queued++;
+      }
     }
     const car=cars[this.registry.get('ginzaTestDrive')?.carId];
     if(car){
-      preloadCarAppearanceAssets(this,{[car.id]:car},'20261022-r641');
-      preloadCarWheel(this,car);
+      queued+=preloadCarAppearanceAssets(this,{[car.id]:car},'20261022-r641');
+      queued+=preloadCarWheel(this,car);
     }
+    startSceneLoading(this,'SHIBUYA // STORY MODE',queued);
   }
 
   create(){
+    finishSceneLoading('READY');
     document.body.dataset.scene='story';
     this.scale.resize(1560,840);
     if(!isArkonVaultStoryLoan(this.registry)){
