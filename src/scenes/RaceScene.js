@@ -1792,7 +1792,8 @@ export default class RaceScene extends Phaser.Scene {
       concerned: 'characterSayakaHomeSad',
     };
     this.tutorialHud = createRaceDialogueHud(this, {
-      speaker: atSchool ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
+      speaker: atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR // DRIVING LESSON' : 'SAYAKA // DRIVING LESSON',
       depth: 80,
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
@@ -1998,7 +1999,8 @@ export default class RaceScene extends Phaser.Scene {
 
     const atSchool = this.registry.get('raceReturnScene') === 'OshiageScene';
     this.tutorialHud.heading.setText(
-      (atSchool ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
+      (atSchool && this.registry.get('gameMode')!=='arkonStory'
+        ? 'LADY INSTRUCTOR' : 'SAYAKA') + ' // STEP ' + stepNo + '/8'
     );
     // The prose is her spoken instruction; a blank line separates it from
     // the all-caps action cue. The redundant uppercase step title is gone.
@@ -2181,7 +2183,7 @@ export default class RaceScene extends Phaser.Scene {
     this.tutorialHud?.setPortrait('happy');
     this.tutorialHud?.heading?.setText(
       this.registry.get('raceReturnScene') === 'OshiageScene'
-        ? 'LADY INSTRUCTOR // WELL DONE' : 'SAYAKA // WELL DONE'
+        ? (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // WELL DONE' : 'LADY INSTRUCTOR // WELL DONE') : 'SAYAKA // WELL DONE'
     );
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
