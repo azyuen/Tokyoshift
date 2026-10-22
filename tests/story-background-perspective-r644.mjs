@@ -148,3 +148,23 @@ test('generic authored STAGE can opt in by backgroundId; legacy positions remain
   assert.match(codeStage,/const autoPerspective=Boolean\(profile\)/);
   assert.ok(validateStoryScript(STORY_DIRECTOR_SCRIPTS.devVaultNightOut));
 });
+
+test('dev author can compare real location and interior backgrounds without writing coordinates',()=>{
+  const script=STORY_DIRECTOR_SCRIPTS.directorPerspectivePreview;
+  assert.ok(validateStoryScript(script));
+  const stageSteps=script.steps.filter(step=>step.type==='STAGE');
+  assert.equal(stageSteps.length,3);
+  for(const step of stageSteps){
+    const bg=getStoryBackground(step.backgroundId);
+    assert.ok(bg && !bg.layered);
+    assert.equal(step.stageMode,'cinematic');
+    assert.ok(step.characters.length>=2);
+    assert.ok(step.cars.length>=1);
+    assert.equal(step.cars[0].ground>=.5,true);
+  }
+  const tester=code('src/ui/CutsceneTester.js');
+  assert.match(tester,/__directorPerspective/);
+  assert.match(tester,/directorPerspectivePreview/);
+  const imports=code('src/story/StoryDirector.js');
+  assert.match(imports,/StoryStage\\.js\\?v=20261022-r644/);
+});
