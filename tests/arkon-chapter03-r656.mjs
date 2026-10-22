@@ -259,3 +259,57 @@ test('R663 customer car rolls slowly from the left with wheels matching distance
   // Existing Chapter 04 cinematic arrival remains unchanged.
   assert.match(stage,/if\(motion==='arrive'/);
 });
+
+
+test('R664 Chapter 03 road test is one continuous real RaceScene, not manga tableaux',()=>{
+  const steps=ARKON_CHAPTER_03.steps;
+  const drive=steps.findIndex(s=>s.type==='ARKON_MX5_RACE');
+  const returnStep=steps.findIndex(s=>s.type==='ARKON_MX5_RETURN');
+  assert.ok(drive>0 && returnStep>drive);
+  assert.equal(steps[drive-1].type,'SET_FLAG');
+  assert.equal(steps[drive-1].value,'chapter03Driving');
+  assert.ok(!steps.some(s=>s.type==='STAGE' &&
+    s.backgroundId==='meet:tatsumiDistrictLoop:night'));
+  assert.ok(!steps.some(s=>s.title==='MORE THAN ENOUGH'));
+  assert.ok(!steps.some(s=>s.type==='CHOICE' && s.key==='arkonMx5Challenge'));
+  assert.equal(steps[drive+1].type,'WAIT_SCENE');
+  assert.equal(steps[drive+1].scene,'MeetScene');
+  assert.ok(steps.some(s=>s.type==='IF' && s.key==='arkonStoryMx5RaceResult' &&
+    s.equals==='declined' && s.then==='decline'));
+  const director=readFileSync('src/story/StoryDirector.js','utf8');
+  assert.match(director,/scene\.registry\.set\('selectedRaceCategory','ARKON_MX5_DRIVE'\)/);
+  assert.match(director,/beginArkonMx5GuestRace\(scene\.registry\)/);
+  assert.match(director,/queueSafeSceneStart\(scene,'RaceScene'\)/);
+});
+
+test('R664 in-race cruise banter, actual S15 pull-up, frozen choice and physics racing',()=>{
+  const race=readFileSync('src/scenes/RaceScene.js','utf8');
+  assert.match(race,/this\.isArkonMx5Drive = this\.raceMode==='ARKON_MX5_DRIVE'/);
+  assert.match(race,/setupArkonMx5Drive\(\)/);
+  assert.match(race,/createGinzaBanterHud\(this,\{storyCruise:true\}\)/);
+  assert.match(race,/this\.advanceRollingVehicle\(this\.player,dt\)/);
+  assert.match(race,/this\.opponent\.positionM\+=Math\.min\(gap,5\*dt\)/);
+  assert.match(race,/this\.arkonMx5Phase='decision'/);
+  assert.match(race,/this\._arkonMx5Choice=showStoryChoices\(this/);
+  assert.match(race,/if\(this\.arkonMx5Phase==='decision'\)return/);
+  assert.match(race,/this\.arkonMx5Phase='race'/);
+  assert.match(race,/this\.controls\.enabled=true/);
+  assert.match(race,/this\.startRace\(\)/);
+  assert.match(race,/this\.registry\.set\('arkonStoryMx5RaceResult','declined'\)/);
+  assert.match(race,/this\.registry\.set\('arkonStoryMx5RaceResult',playerWon\?'won':'lost'\)/);
+});
+
+test('R664 every anonymous customer call uses one Phaser grey face silhouette',()=>{
+  const chapter=ARKON_CHAPTER_03.steps.filter(s=>s.type==='PHONE');
+  assert.ok(chapter.length>=4);
+  assert.ok(chapter.every(s=>s.callerId==='' && s.callerName));
+  const drawing=readFileSync('src/ui/RaceCoachHud.js','utf8');
+  const swiper=readFileSync('src/ui/OpeningPhonePrototype.js','utf8');
+  const fallback=readFileSync('src/ui/PhoneConversation.js','utf8');
+  assert.match(drawing,/ensureAnonymousCallerPortrait\(scene\)/);
+  assert.match(drawing,/g\.fillEllipse\(128,101,120,146\)/);
+  assert.match(swiper,/if\(!callerId\)/);
+  assert.match(swiper,/ANONYMOUS_CALLER_VISUAL/);
+  assert.match(fallback,/callerId \? getPhoneCallerPortrait/);
+  assert.match(fallback,/ANONYMOUS_CALLER_VISUAL/);
+});
