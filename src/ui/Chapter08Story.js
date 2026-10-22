@@ -11,6 +11,8 @@ import { characters, getCharacterAssetUrl } from '../data/characters.js?v=202610
 import { cars } from '../data/cars.js?v=20261017-r565';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
 import { saveSessionState } from '../state/GameState.js?v=20261017-r565';
+import { playChapter08GinzaRevealStage } from './Chapter08GinzaRevealStage.js?v=20261022-r646';
+import { showStoryContinuePrompt } from './StoryContinuePrompt.js?v=20261022-r643';
 
 const WAREHOUSE_BEATS = [
   'chapter08Warehouse',
@@ -162,67 +164,118 @@ function showRacingRolePlate(scene) {
   return () => objects.forEach(o=>o?.destroy?.());
 }
 
+// Two manga sections bracket the full-screen Porsche entrance. The *real*
+// chapter08Ginza history flag is awarded ONLY after the second section ends.
+// The first section has no history side-effects and is safely replayable.
 export function startChapter08Ginza(scene, { preview = false } = {}) {
-  if (!scene || sceneCutsceneActive(scene)) return false;
+  if (!scene || sceneCutsceneActive(scene) || scene._chapter08GinzaStage?.active) return false;
   const interactiveReplay = isChapter08DevReplay(scene.registry);
   if (!preview && !interactiveReplay &&
       (!hasSeenCutscene(scene.registry, 'chapter08RaceFinished') ||
        hasSeenCutscene(scene.registry, 'chapter08Ginza'))) return false;
-  let disposeRole = null;
-  let stageSayaka = null;
-  const clearRole = () => {disposeRole?.();disposeRole=null;};
-  const result = playMangaCutscene(scene, CHAPTER08_SCENES.chapter08Ginza, {
-    preview: preview || interactiveReplay, preloadPagePosesOnly: false,
-    onPageChange: ({page}) => {
-      if (page?.cinematicBeat === 'chapter08SayakaExit' &&
-          !stageSayaka && scene.activeLocationId === 'ginzaMotorGallery') {
-        if (scene.chapter08Kaede?.active) {
-          scene.tweens.add({targets:scene.chapter08Kaede,alpha:.36,duration:700});
-        }
-        // The RWB sits centre stage, with the driver's door slightly right of
-        // centre; Sayaka steps into its foreground without moving the car.
-        stageSayaka = scene.addVenueCharacter({
-          characterId:'sayakaFujieda',pose:'ginzaNormal',
-          x:scene.scale.width*.43,feetY:604,height:226,depth:24,
-        });
-        if (stageSayaka) {
-          stageSayaka.setAlpha(0);
-          scene.tweens.add({targets:stageSayaka,alpha:1,duration:1150,ease:'Sine.easeInOut'});
-        }
-      }
-      if (page?.cinematicBeat === 'chapter08SayakaGallery') {
-        openSwipePortraitGallery(scene, {
-          entries: [
-            {characterId:'sayakaFujieda',pose:'homeNormal',subtitle:'Family friend'},
-            {characterId:'sayakaFujieda',pose:'oshiageNeutral',subtitle:'Lady instructor'},
-            {characterId:'sayakaFujieda',pose:'ginzaNormal',subtitle:'Ginza gallery curator'},
-          ],
-          transparentBackground:true, title:'SAYAKA // THREE FAMILIAR FACES',
-          ownerKey:'_chapter08SayakaGallery',
-        });
-      } else if (page?.cinematicBeat === 'chapter08FinalPortrait') {
-        clearRole();
-        disposeRole = showRacingRolePlate(scene);
-      } else {
-        clearRole();
-      }
-    },
-    onComplete: () => {
-      clearRole();scene._chapter08SayakaGallery?.stop?.();
-      if (!preview && !interactiveReplay) {
-        markCutsceneSeen(scene.registry,'ginzaInvitation');
-        markCutsceneSeen(scene.registry,'proCircuitStrategistReveal');
-        saveSessionState(scene.registry);
-        scene.chapter08Arrival = false;
-        scene.chapter08Kaede = null;
-        scene.renderLocation('ginzaMotorGallery');
-      }
-    },
-    onPreviewComplete: () => {
-      clearRole(); scene._chapter08SayakaGallery?.stop?.();
-      if (interactiveReplay) finishInteractiveChapter08Replay(scene);
-    },
-    onCancel: () => {clearRole();scene._chapter08SayakaGallery?.stop?.();},
+
+  const definition = CHAPTER08_SCENES.chapter08Ginza;
+  let stage=null,disposeRole=null,finished=false,wardrobePending=false;
+  const clearRole=()=>{disposeRole?.();disposeRole=null;};
+  const clear=()=>{
+    if(finished)return;
+    finished=true;
+    clearRole();
+    scene._chapter08SayakaGallery?.stop?.();
+    scene._storyContinuePrompt?.destroy?.();
+    stage?.destroy?.();
+  };
+  const complete=()=>{
+    clear();
+    if(!preview && !interactiveReplay){
+      markCutsceneSeen(scene.registry,'ginzaInvitation');
+      markCutsceneSeen(scene.registry,'proCircuitStrategistReveal');
+      saveSessionState(scene.registry);
+      scene.chapter08Arrival=false;
+      scene.chapter08Kaede=null;
+      if(scene.sys?.isActive?.())scene.renderLocation('ginzaMotorGallery');
+    }else if(interactiveReplay)finishInteractiveChapter08Replay(scene);
+  };
+  const showHold=(onContinue)=>{
+    if(finished||!scene.sys?.isActive?.())return;
+    const prompt=showStoryContinuePrompt(scene,{
+      label:'CONTINUE',depth:1158,
+      onContinue:()=>{if(!finished)onContinue?.();},
+      onCancel:({reason})=>{if(reason!=='shutdown')clear();},
+    });
+    if(!prompt)clear();
+  };
+  const playAfterReveal=()=>{
+    if(finished||!scene.sys?.isActive?.())return;
+    // Sayaka replaces Kaede as the resting LEFT portrait for all player lines.
+    // Kaede returns only for her explicit apology, never as a shaded default.
+    const rest={...definition,characters:{left:'sayakaFujieda',right:'$PLAYER'},
+      pages:definition.pages.slice(5)};
+    const result=playMangaCutscene(scene,rest,{
+      preview:preview||interactiveReplay,
+      preloadPagePosesOnly:true,
+      onPageChange:({page,pageIndex})=>{
+        if(pageIndex>=3)stage?.dismissSayaka?.();
+        if(page?.cinematicBeat==='chapter08SayakaGallery'){
+          openSwipePortraitGallery(scene,{
+            entries:[
+              {characterId:'sayakaFujieda',pose:'homeNormal',subtitle:'Family friend'},
+              {characterId:'sayakaFujieda',pose:'oshiageNeutral',subtitle:'Lady instructor'},
+              {characterId:'sayakaFujieda',pose:'ginzaNormal',subtitle:'Ginza gallery curator'},
+            ],
+            transparentBackground:true,title:'SAYAKA // THREE FAMILIAR FACES',
+            ownerKey:'_chapter08SayakaGallery',
+          });
+        }else if(page?.cinematicBeat==='chapter08SayakaOutfitCue' && !wardrobePending){
+          wardrobePending=true;
+          // onPageChange runs before the renderer draws the page's dialogue.
+          // Delay the opaque location reveal until the cue is fully mounted.
+          scene.time.delayedCall(80,()=>{
+            if(finished||!scene._mangaCutscene?.active)return;
+            if(!stage?.changeSayakaOutfit?.(()=>{
+              showHold(()=>{
+                stage?.restoreAfterOutfit?.();
+                scene._mangaCutscene?.advance?.('button');
+              });
+            })){
+              // Missing artwork must never soft-lock the story.
+              wardrobePending=false;
+            }
+          });
+        }else if(page?.cinematicBeat==='chapter08FinalPortrait'){
+          clearRole();
+          disposeRole=showRacingRolePlate(scene);
+        }else clearRole();
+      },
+      onComplete:complete,
+      onPreviewComplete:complete,
+      onCancel:clear,
+    });
+    if(!result?.played)clear();
+  };
+  const firstManga=()=>{
+    if(finished||!scene.sys?.isActive?.())return;
+    const prelude={...definition,id:'chapter08GinzaPrelude',once:false,
+      pages:definition.pages.slice(0,5),finalActionLabel:'THE REVEAL'};
+    const result=playMangaCutscene(scene,prelude,{
+      preview:true,preloadPagePosesOnly:true,
+      onPreviewComplete:()=>{
+        // Bring the Porsche and Sayaka into a clean, uncluttered full-screen
+        // frame; the player must explicitly CONTINUE before the main reveal.
+        if(!stage?.revealSayaka?.(()=>{
+          showHold(()=>{
+            stage?.dismissSayaka?.();
+            playAfterReveal();
+          });
+        }))clear();
+      },
+      onCancel:clear,
+    });
+    if(!result?.played)clear();
+  };
+  stage=playChapter08GinzaRevealStage(scene,{
+    onReady:firstManga,
+    onCancel:clear,
   });
-  return Boolean(result?.played);
+  return Boolean(stage);
 }
