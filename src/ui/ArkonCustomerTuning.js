@@ -9,7 +9,7 @@ import {
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import { CINEMATIC_FRAMES } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
-import { showStoryStage } from './StoryStage.js?v=20261023-r660';
+import { showStoryStage } from './StoryStage.js?v=20261023-r663';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
@@ -24,6 +24,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
 
   const depth=1800,objects=[],add=obj=>(objects.push(obj),obj);
   let closed=false,stage=null;
+  let arriving=true,uiReady=false;
   const clean=()=>{
     if(closed)return;
     closed=true;
@@ -40,19 +41,23 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   add(scene.add.rectangle(780,420,1560,840,0x030811,1)
     .setDepth(depth).setScrollFactor(0).setInteractive());
 
-  // Workshop frame and native car/character locations are identical to
-  // GarageScene: car centre 708, tyre contact 500, Arkon beside the engine.
-  // "arrive" animates all car layers together and stops before interaction.
+  // Match the normal 620px Canal Yard car and 500px wheel-contact line.
+  // Arkon stands a little smaller and BEHIND the car, not over its bonnet.
+  // The customer's wheels track the slow drive-in distance until it stops.
   stage=showStoryStage(scene,{
     backgroundId:'workshop:shinonomeCanalYard:night',
     stageMode:'garage-panel',depth:depth+1,
-    composition:'car-behind-cast',motion:'arrive',
+    composition:'car-in-front',motion:'roll-in-left',
+    onArrivalComplete:()=>{
+      arriving=false;
+      if(uiReady&&!closed)refresh();
+    },
     characters:[{
       id:'arkonDen',pose:'storyMechanicEngine',
       x:STAGE.x+STAGE.w-164,
       y:WORKSHOP_PRESENTATION.heroCar.tyreContactY+
         WORKSHOP_PRESENTATION.daichi.engine.feetOffsetY,
-      height:WORKSHOP_PRESENTATION.daichi.engine.targetHeight,
+      height:Math.round(WORKSHOP_PRESENTATION.daichi.engine.targetHeight*.86),
     }],
     cars:[{
       carId:job.carId,
@@ -114,7 +119,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
     const status=text(SIDE.x+SIDE.w-24,y-15,'',9,'#ffe08a',PIXEL,1);
     const max=CANAL_YARD_MAX[partId];
     rect.on('pointerdown',()=>{
-      if(closed)return;
+      if(closed||arriving)return;
       levels[partId]=levels[partId]>=max?0:levels[partId]+1;
       refresh();
     });
@@ -132,7 +137,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   const deliverPay=text(SIDE.x+SIDE.w/2,SIDE.y+687,
     job.pay ? '+'+money(job.pay) : '',8,'#ffe08a',PIXEL,.5);
   deliver.on('pointerdown',()=>{
-    if(closed||!isArkonCustomerJobComplete(job,levels))return;
+    if(closed||arriving||!isArkonCustomerJobComplete(job,levels))return;
     const result={carId:job.carId,tuning:{...levels},
       powerKW:getArkonCustomerPower(job.carId,levels)};
     clean();
@@ -168,15 +173,20 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
       row.status.setText('L'+level+' / '+row.max);
       row.rect.setStrokeStyle(1,level===row.max?0x66dbb8:0x315470,1);
     }
-    deliver.setFillStyle(ready?0x174f49:0x102226,1)
-      .setStrokeStyle(2,ready?0x66dbb8:0x3e5e63,1);
+    deliver.setFillStyle(ready&&!arriving?0x174f49:0x102226,1)
+      .setStrokeStyle(2,ready&&!arriving?0x66dbb8:0x3e5e63,1);
     deliverText.setText(job.maximum?'DELIVER TO SAYAKA':'DELIVER TO CLIENT')
       .setColor(ready?'#f3fffb':'#78959c');
     deliverPay.setText(job.pay?'+'+money(job.pay):'')
       .setColor(ready?'#ffe08a':'#8b8981');
-    if(ready)deliver.setInteractive({useHandCursor:true});
+    if(ready&&!arriving)deliver.setInteractive({useHandCursor:true});
     else deliver.disableInteractive();
-    tip.setText(ready
+    for(const row of partRows){
+      if(arriving)row.rect.disableInteractive();
+      else row.rect.setInteractive({useHandCursor:true});
+    }
+    tip.setText(arriving?'CUSTOMER VEHICLE ARRIVING // WAIT FOR THE CAR TO STOP'
+      : ready
       ? 'Requested specification reached. The car is ready for handover.'
       : job.maximum
         ? 'Fit every Canal Yard engine upgrade to complete the build.'
@@ -186,6 +196,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   const control={active:true,destroy:clean,levels};
   scene._arkonCustomerTuning=control;
   scene.events?.once?.('shutdown',clean);
+  uiReady=true;
   refresh();
   return control;
 }
