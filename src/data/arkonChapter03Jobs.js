@@ -13,7 +13,7 @@ const CUSTOMER_CAR_POOL = Object.freeze([
   'fto','mx6','starion','prelude','sa22c','sw20',
   's15','forester','gdb','gf8','dc2','fc3s',
 ]);
-export const ARKON_JOB_PAY = Object.freeze([2500,3000,3000,3500,4000]);
+export const ARKON_JOB_PAY = Object.freeze([25000,30000,30000,35000,40000]);
 export const ARKON_CH3_RACE_ACTIVE = 'arkonStoryMx5Loan';
 
 export const CANAL_YARD_MAX = Object.freeze(Object.fromEntries(
