@@ -6,6 +6,7 @@ import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=2026102
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
+import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261022-r651';
 
 export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
@@ -32,7 +33,10 @@ export function showStoryStage(scene, {
   const backdrop=profile?.asset||background;
   const autoPerspective=Boolean(profile);
   const w=scene.scale?.width||1560,h=scene.scale?.height||840;
-  const native=stageMode==='native'&&Boolean(profile);
+  // Prefer the exact, tested gameplay staging in a live Workshop/Meet. This
+  // supersedes story-authored pixel sizes and bypasses the old double-scaling.
+  const template=getNativeStoryStageTemplate(profile,scene);
+  const native=Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const frame=native?profile.frame:{x:0,y:0,w,h};
   const assets = [];
   const layout = resolveStoryComposition({
@@ -63,11 +67,21 @@ export function showStoryStage(scene, {
   let alive = true;
   const objects = [];
   let clipGraphics=null,clipMask=null;
+  const hidden=[];
+  const hide=obj=>{if(obj?.active && obj?.setVisible){
+    hidden.push({obj,visible:obj.visible});obj.setVisible(false);
+  }};
+  if(template?.kind==='workshop'){
+    (scene.selectedDisplay||[]).forEach(hide);
+    hide(scene.workshopPlayerSprite);
+    (scene.workshopPlayerSprite?.stageShadows||[]).forEach(hide);
+  }
   const state = {
     destroy() {
       if (!alive) return;
       alive = false;
       objects.forEach(x => x?.destroy?.());
+      hidden.forEach(({obj,visible})=>{if(obj?.active)obj.setVisible(visible);});
       clipGraphics?.destroy?.();
       scene.events?.off?.('shutdown', state.destroy);
       if (scene._storyDirectorStage === state) scene._storyDirectorStage = null;
@@ -95,7 +109,9 @@ export function showStoryStage(scene, {
       clipMask=clipGraphics.createGeometryMask();
     }
     let viewport=null;
-    if(backdrop){
+    // Native staging already owns/draws its real background in gameplay.
+    // Do not paint a second, differently cropped workshop or Meet over it.
+    if(backdrop && !template){
       const src=scene.textures.exists(backdrop.key)
         ? scene.textures.get(backdrop.key).getSourceImage() : null;
       if(src){
@@ -107,11 +123,13 @@ export function showStoryStage(scene, {
           viewport.width,null,depth,backgroundAlpha);
       }
     }
-    const carInFront=layout.car.layer==='foreground';
+    // The native car always uses the SAME backing/frontend ordering as its
+    // gameplay counterpart. Do not derive it from a Story composition preset.
+    const carInFront=!template&&layout.car.layer==='foreground';
     const portraitDepth=depth+(carInFront?3:10);
     const vehicleDepth=depth+(carInFront?11:3);
     const drawCars=()=>carProps.forEach((c,i)=>{
-      const estimate=autoPerspective?projectEntityOnBackground(profile,{
+      const estimate=!template&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'car',frame,
         sourceWidth:viewport?.sourceWidth||1672,
         sourceHeight:viewport?.sourceHeight||941,
@@ -119,32 +137,45 @@ export function showStoryStage(scene, {
         ground:c.ground??(layout.car.groundY/h),
         layerBias:carInFront?2:-1,
       }):null;
-      // Under backgroundId, authored X is a logical-world position;
-      // only the background's actual cover/contain transform puts it on screen.
-      const x=Number(estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(c.width??
+      const x=Number(template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(c.groundY??estimate?.groundY??layout.car.groundY);
-      const layer=Number(c.depth??estimate?.depth??(vehicleDepth+i));
+      const groundY=Number(estimate?.groundY??c.groundY??layout.car.groundY);
+      // No script 'depth' may compete with the normal game layer stack.
+      const layer=Number(template?(vehicleDepth+i):
+        (c.depth??estimate?.depth??(vehicleDepth+i)));
       if(c.model){
-        renderStoryCar(scene,c.model,{
+        let carObjects=null;
+        if(template?.kind==='workshop' && typeof scene.createCarDisplay==='function'){
+          const hero=typeof scene.buildWorkshopHeroLayout==='function'
+            ?scene.buildWorkshopHeroLayout(c.model):null;
+          if(hero)carObjects=scene.createCarDisplay(c.model,hero.x,hero.bodyY,
+            hero.targetWidth,layer);
+        }else if(template?.kind==='meet'&&typeof scene.createCarDisplay==='function'){
+          // Meet createCarDisplay owns the original wheel/body centre conversion.
+          carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
+            template.car.targetWidth,layer,Boolean(c.flipX),
+            c.paintColor??0xffffff);
+        }
+        if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
           x,groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
-        }).forEach(obj=>{
+        });
+        carObjects.forEach(obj=>{
           if(clipMask)obj?.setMask?.(clipMask);
           objects.push(obj);
         });
       }else{
-        // Static PNG cars share the ground line; the image is centred in Phaser.
         const src=c.asset?.key&&scene.textures.exists(c.asset.key)
-          ? scene.textures.get(c.asset.key).getSourceImage():null;
+          ?scene.textures.get(c.asset.key).getSourceImage():null;
         const displayHeight=src?targetWidth*(src.height/Math.max(1,src.width)):0;
         addImage(c.asset,x,groundY-displayHeight*.5,targetWidth,null,layer);
       }
     });
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
-      const estimate=autoPerspective?projectEntityOnBackground(profile,{
+      const assigned=template?getNativeCastPlacement(template,i,actors.length,a.role):null;
+      const estimate=!template&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
         sourceWidth:viewport?.sourceWidth||1672,
         sourceHeight:viewport?.sourceHeight||941,
@@ -152,10 +183,14 @@ export function showStoryStage(scene, {
         ground:a.ground??(anchor.feetY/h),
         layerBias:carInFront?-2:1,
       }):null;
-      addImage(a.asset,Number(estimate?.x??a.x??anchor.x),
-        Number(a.y??estimate?.groundY??anchor.feetY),
-        null,Number(a.height??estimate?.displayHeight??anchor.height),
-        Number(a.depth??estimate?.depth??(portraitDepth+i)),1,true);
+      // Characters of a scene all share the same native ground/height:
+      // only their horizontal slot or optional observer role differs.
+      const x=Number(assigned?.x??estimate?.x??a.x??anchor.x);
+      const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
+      const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height);
+      const layer=Number(template?(portraitDepth+i):
+        (a.depth??estimate?.depth??(portraitDepth+i)));
+      addImage(a.asset,x,feet,null,height,layer,1,true);
     });
     // The stage's front/back relationship is deterministic and authored.
     if(carInFront){drawCast();drawCars();}
