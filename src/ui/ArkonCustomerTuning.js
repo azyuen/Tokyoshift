@@ -30,7 +30,8 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
     scene.events?.off?.('shutdown',clean);
     if(scene._arkonCustomerTuning===control)scene._arkonCustomerTuning=null;
   };
-  const levels=normaliseEngineTuning();
+  const levels=normaliseEngineTuning(job.index===5
+    ? scene.registry?.get?.('arkonStoryMx5CustomerTuning') : {});
   const text=(x,y,s,size=16,color='#ffffff',font=BODY)=>{
     return add(scene.add.text(x,y,s,{fontFamily:font,fontSize:size+'px',color})
       .setDepth(depth+3).setScrollFactor(0));
