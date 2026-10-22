@@ -55,8 +55,14 @@ export function renderStoryCar(scene,car,{
       const wx=drawX+axle.offsetX,wy=bodyY+axle.offsetY;
       add(scene.add.circle(wx,wy,axle.backingRadius||18,0x020304)
         .setDepth(depth+.2));
-      add(scene.add.image(wx,wy,key).setScale(axle.wheelScale)
-        .setDepth(depth+2));
+      const tyre=scene.add.image(wx,wy,key).setScale(axle.wheelScale)
+        .setDepth(depth+2);
+      // The workshop's slow drive-in rotates ONLY the visible tyres.
+      // Use the calibrated wheel radius, not the transparent PNG canvas.
+      tyre.storyRollRadius=axle.backingRadius>0
+        ? axle.backingRadius
+        : Math.max(8,tyre.displayWidth*.5);
+      add(tyre);
     }
   }
   const body=createCarBodyLayers(scene,car,{
