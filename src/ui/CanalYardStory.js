@@ -3,7 +3,7 @@
 // Only the chapter appears in the developer tester; segment checkpoints are
 // internal and persist so interrupted iPad/PWA sessions can safely resume.
 import { getCutscene, hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261017-r562';
-import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261017-r572';
+import { playMangaCutscene, sceneCutsceneActive } from './MangaCutscene.js?v=20261023-r658';
 import { saveSessionState } from '../state/GameState.js?v=20261014-r501';
 
 const CHAPTER_ID = 'canalYardBiggerDreams';
