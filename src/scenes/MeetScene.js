@@ -43,6 +43,7 @@ import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261022-r650';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
+import { preloadArkonMeetObserver, attachArkonMeetObserver } from '../ui/ArkonStoryMeetObserver.js?v=20261023-r652';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import {
@@ -280,6 +281,7 @@ export default class MeetScene extends Phaser.Scene {
     // Fallback for a saved direct-Meet arrival: no expensive rivals, offers
     // or car assets should be prepared for the scripted Dogenzaka venue.
     if (shouldLaunchDevVaultStory(this.registry)) return;
+    preloadArkonMeetObserver(this);
     for (const [key, file] of [
       ['meetBadgeRegional', 'badge_crown.png'],
       ['meetBadgePerfect', 'badge_star.png'],
@@ -593,6 +595,7 @@ export default class MeetScene extends Phaser.Scene {
     this.buildDevControls();
     this.buildMeetProgressionButtons();
     this.rollOffers({ resetTimer: false });
+    attachArkonMeetObserver(this);
 
     const regulationError = this.registry.get('crewBattleValidationError');
     if (regulationError) {
