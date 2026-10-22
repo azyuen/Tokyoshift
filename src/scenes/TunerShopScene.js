@@ -73,9 +73,14 @@ export default class TunerShopScene extends Phaser.Scene {
     if (!shop || !isTunerShopUnlocked(this.registry, this.regionId)) return;
 
     let queued = 0;
+    // One real tuner backdrop was upscaled to the shared 1672x941 canvas.
+    // Force a fresh fetch of backdrop art without invalidating car/decal assets.
+    const phaseKeys = new Set(Object.values(shop.phaseBackgrounds||{})
+      .map(asset => asset?.key).filter(Boolean));
     const queueImage = (key, path) => {
       if (!key || !path || this.textures.exists(key)) return;
-      this.load.image(key, path + '?v=20261004-r333');
+      this.load.image(key, path + (phaseKeys.has(key)
+        ? '?v=20261022-r645' : '?v=20261004-r333'));
       queued += 1;
     };
 
