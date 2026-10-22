@@ -16,7 +16,12 @@ const manga=(title,lines,cast={left:A,right:S})=>({
 });
 const scene=(label,backgroundId,characters,cars=[{carId:'mx5'}],extras={})=>[
   {type:'STAGE',backgroundId,stageMode:'native',privateMeet:true,
-    composition:'car-behind-cast',characters,cars,...extras},
+    composition:'car-behind-cast',characters,cars,
+    // The Chapter 03 workshop cast shares the car's floor plane and stays
+    // behind its bodywork. Meet staging continues using normal showdown rules.
+    ...(backgroundId.startsWith('workshop:')?
+      {castBehindCar:true,characterScale:.84}:{}),
+    ...extras},
   {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE NIGHT SHIFT'},
 ];
 const withSayaka=[
