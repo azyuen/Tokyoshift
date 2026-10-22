@@ -95,6 +95,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter02RivalResult: null,
     arkonStoryChapter03Done: false,
     arkonStoryCustomerJobsDone: 0,
+    arkonStoryMx5CustomerTuning: null,
     arkonStoryChapter03Seed: 0,
     arkonStoryMx5RaceResult: null,
     arkonStoryMx5Loan: null,
@@ -1169,6 +1170,9 @@ export function normaliseState(input = {}) {
     arkonStoryCustomerJobsDone: storyMode
       ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
     arkonStoryChapter03Seed: storyMode ? (Number(input.arkonStoryChapter03Seed)>>>0) : 0,
+    arkonStoryMx5CustomerTuning: storyMode && input.arkonStoryMx5CustomerTuning
+      && typeof input.arkonStoryMx5CustomerTuning==='object'
+      ? clonePlain(input.arkonStoryMx5CustomerTuning) : null,
     arkonStoryMx5RaceResult: storyMode &&
       ['won','lost','declined','forfeit'].includes(input.arkonStoryMx5RaceResult)
       ? input.arkonStoryMx5RaceResult : null,
@@ -1550,6 +1554,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
     arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
     arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
+    arkonStoryMx5CustomerTuning: registry.get('arkonStoryMx5CustomerTuning')||null,
     arkonStoryMx5RaceResult: registry.get('arkonStoryMx5RaceResult')||null,
     arkonStoryMx5Loan: registry.get('arkonStoryMx5Loan')||null,
     arkonStoryPhase: registry.get('arkonStoryPhase'),
