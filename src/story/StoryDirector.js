@@ -9,8 +9,9 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r657';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r656';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r659';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r656';
+import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r659';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r657';
 import {
@@ -68,6 +69,13 @@ export class StoryDirector {
     if (!compiled || this.session) return false;
     const scene = this.activeScene();
     if (!scene?.registry || sceneCutsceneActive(scene) || scene._compactStoryDialogue?.active) return false;
+    // Chapter 04 is opt-in from the workshop Story Objective only. Never
+    // initiate it behind a Meet/pink-slip popup or during a scene transition.
+    if (compiled.script.id==='arkonChapter04' &&
+        (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+         scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter03Done') ||
+         scene.registry.get('arkonStoryChapter04Done')))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -176,6 +184,12 @@ export class StoryDirector {
     if (this.error) return;
     const scene = this.activeScene();
     if (!scene || !scene?.registry) return;
+    // An interrupted Chapter 04 never resumes its private workshop story
+    // over normal Meet, pending pink slips, or an unrelated location UI.
+    if(this.session.id==='arkonChapter04' &&
+       (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+        scene._arkonStoryObjectiveOpen || sceneCutsceneActive(scene) &&
+        this.wait?.kind!=='dialogue'))return;
     if (this.sceneDelay > 0) { this.sceneDelay--; return; }
     if (this.wait) {
       const wait = this.wait;
@@ -331,6 +345,16 @@ export class StoryDirector {
           if(!control){this.wait=null;this.error='CUSTOMER TUNING PANEL FAILED';}
           return;
         }
+        if(type==='ARKON_RWB_PURCHASE'){
+          if(this.session.id!=='arkonChapter04' ||
+              scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='RWB AUCTION OUTSIDE ARKON STORY';return;
+          }
+          if(!this.session.preview && !recordArkonRwbPurchase(scene.registry)){
+            this.error='RWB AUCTION COULD NOT BE RECORDED';return;
+          }
+          this.advance();continue;
+        }
         if(type==='ARKON_MX5_RACE'){
           if(this.session.id!=='arkonChapter03' ||
               scene.registry.get('gameMode')!=='arkonStory' ||
@@ -467,7 +491,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (['arkonChapter01Revised','arkonChapter02'].includes(this.session.id) &&
+            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -510,7 +534,10 @@ export class StoryDirector {
         if (type === 'STAGE') {
           if (step.privateMeet && sceneName(scene)==='MeetScene')
             scene.setStoryEncounterActive?.(true);
-          showStoryStage(scene,step);
+          const stage=showStoryStage(scene,step);
+          if(this.session.id==='arkonChapter04' && !stage){
+            this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
+          }
           this.advance(); continue;
         }
         if (type === 'CLEAR_STAGE') {
@@ -545,7 +572,7 @@ export class StoryDirector {
               ...step, onComplete:onDone,onCancel,
             })
             : playMangaCutscene(scene,definition,{
-              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03'].includes(this.session.id),
+              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
