@@ -350,7 +350,9 @@ export default class RaceScene extends Phaser.Scene {
     this.opponentCharacterId =
       (this.registry.get('selectedRaceCategory') === 'CHAPTER08' &&
         storedOpponentCharacterId === 'sayakaFujieda') ||
-      oshiageEliteOpponent || regionRivals.includes(storedOpponentCharacterId)
+      oshiageEliteOpponent || (this.registry.get('gameMode')==='arkonStory' &&
+        storedOpponentCharacterId==='storyDaigoKirishima') ||
+        regionRivals.includes(storedOpponentCharacterId)
         ? storedOpponentCharacterId
         : fallbackOpponentCharacterId;
     this.opponentEncounterRating = Phaser.Math.Clamp(
@@ -5016,13 +5018,15 @@ export default class RaceScene extends Phaser.Scene {
     const newCash = Math.max(0, oldCash + cashDelta);
     this.registry.set('cash', newCash);
 
-    this.recordMeetRaceOutcome(playerWon);
+    if (this.opponentCharacterId!=='storyDaigoKirishima')
+      this.recordMeetRaceOutcome(playerWon);
 
     let crewInviteInterest = null;
     if (
       playerWon &&
       this.raceMode === 'SINGLE' &&
       this.raceDeal === 'BET' &&
+      this.opponentCharacterId!=='storyDaigoKirishima' &&
       !cars[this.selectedCarId]?.crewLoan &&
       !this.registry.get('selectedRaceSpecialChallenge')
     ) {
