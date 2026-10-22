@@ -2,6 +2,7 @@
 // Uses canonical character assets; cars/backgrounds are explicit texture references.
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
 import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
+import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
@@ -155,7 +156,8 @@ export function showStoryStage(scene, {
           // Meet createCarDisplay owns the original wheel/body centre conversion.
           carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
             template.car.targetWidth,layer,Boolean(c.flipX),
-            c.paintColor??0xffffff);
+            c.paintColor??getCarPaintColor(
+              (scene.registry.get('carStates')||{})[c.carId]||{}));
         }
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
           x,groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
