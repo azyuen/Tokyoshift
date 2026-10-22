@@ -396,7 +396,7 @@ export default class MeetScene extends Phaser.Scene {
         if (bg?.path && !this.textures.exists(bg.key) &&
             !backgroundKeys.has(bg.key)) {
           backgroundKeys.add(bg.key);
-          this.load.image(bg.key, bg.path + '?v=20261016-r537');
+          this.load.image(bg.key, bg.path + '?v=20261022-r645');
           batch.queued += 1;
         }
       });
@@ -4316,7 +4316,7 @@ export default class MeetScene extends Phaser.Scene {
       this.worldPhase || getWorldPhase()
     );
     if (phaseBackground?.path) {
-      queueImage(phaseBackground.key, phaseBackground.path + '?v=20260928-r245');
+      queueImage(phaseBackground.key, phaseBackground.path + '?v=20261022-r645');
     }
 
     // Keep the authored legacy texture as a fail-safe without changing the
