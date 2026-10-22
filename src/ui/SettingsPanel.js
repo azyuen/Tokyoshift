@@ -82,7 +82,7 @@ export function addSettingsButton(scene, x = 995, y = 35) {
   button.on('pointerdown', () => showSettingsPanel(scene));
 
   const devCutscenes = addDevCutsceneButton(scene, x - 115, y);
-  const storyHelp = addArkonStoryObjectiveButton(scene, x + 56, y);
+  const storyHelp = addArkonStoryObjectiveButton(scene, x - 56, y);
   return { button, cog, devCutscenes, storyHelp };
 }
 
