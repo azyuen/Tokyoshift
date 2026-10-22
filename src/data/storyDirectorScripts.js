@@ -198,6 +198,43 @@ export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
       {type:'END'},
     ],
   },
+  // Read-only dev preview: three existing background assets share one equation.
+  // The road family is intentionally orthographic and should be tested within
+  // a real RaceScene, not represented by a single static skyline image.
+  directorPerspectivePreview: {
+    id:'directorPerspectivePreview',
+    title:'STORY DIRECTOR // BACKGROUND & PERSPECTIVE REHEARSAL',
+    steps:[
+      {type:'STAGE',backgroundId:'meet:shibuyaDogenzaka:day',
+        stageMode:'cinematic',composition:'car-behind-cast',
+        characters:[
+          {id:'sayakaFujieda',pose:'ginzaDress',x:225,ground:.66},
+          {id:'arkonDen',pose:'ginzaSuit',x:510,ground:.85},
+        ],
+        cars:[{carId:'ae86',x:1010,ground:.70}]},
+      {type:'HOLD_SCENE',label:'VIEW WORKSHOP',caption:'MEET // FAR VS NEAR'},
+      {type:'CLEAR_STAGE'},
+      {type:'STAGE',backgroundId:'workshop:shinonomeWarehouseStrip:night',
+        stageMode:'cinematic',composition:'car-behind-cast',
+        characters:[
+          {id:'daichiSakamoto',pose:'idle',x:290,ground:.66},
+          {id:'$PLAYER',pose:'idle',x:560,ground:.85},
+        ],
+        cars:[{carId:'r32',x:1050,ground:.76}]},
+      {type:'HOLD_SCENE',label:'VIEW GINZA',caption:'INTERIOR // FAR VS NEAR'},
+      {type:'CLEAR_STAGE'},
+      {type:'STAGE',backgroundId:'central:ginzaMotorGallery:night',
+        stageMode:'cinematic',composition:'conversation-balanced',
+        characters:[
+          {id:'sayakaFujieda',pose:'ginzaDress',x:340,ground:.69},
+          {id:'$PLAYER',pose:'idle',x:670,ground:.86},
+        ],
+        cars:[{carId:'nsx',x:1130,ground:.76}]},
+      {type:'HOLD_SCENE',label:'FINISH PREVIEW',caption:'SAME EQUATION // GINZA'},
+      {type:'CLEAR_STAGE'},
+      {type:'END'},
+    ],
+  },
   directorDialoguePreview: {
     id: 'directorDialoguePreview',
     title: 'STORY DIRECTOR // THREE PRESENTATIONS',
