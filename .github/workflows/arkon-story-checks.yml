@@ -6,6 +6,10 @@ on:
       - 'src/data/arkonChapter01.js'
       - 'src/data/arkonChapter01Extended.js'
       - 'src/data/arkonChapter01Revised.js'
+      - 'src/story/ArkonStoryTime.js'
+      - 'src/data/characters.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/ui/StoryContinuePrompt.js'
       - 'src/ui/ArkonStoryMeetObserver.js'
       - 'src/data/oshiageSchool.js'
       - 'src/data/travelRegions.js'
@@ -36,6 +40,10 @@ on:
       - 'src/data/arkonChapter01.js'
       - 'src/data/arkonChapter01Extended.js'
       - 'src/data/arkonChapter01Revised.js'
+      - 'src/story/ArkonStoryTime.js'
+      - 'src/data/characters.js'
+      - 'src/ui/TravelMap.js'
+      - 'src/ui/StoryContinuePrompt.js'
       - 'src/ui/ArkonStoryMeetObserver.js'
       - 'src/data/oshiageSchool.js'
       - 'src/data/travelRegions.js'
@@ -58,6 +66,9 @@ jobs:
           node --check src/data/arkonChapter01.js
           node --check src/data/arkonChapter01Extended.js
           node --check src/data/arkonChapter01Revised.js
+          node --check src/story/ArkonStoryTime.js
+          node --check src/data/characters.js
+          node --check src/ui/TravelMap.js
           node --check src/ui/ArkonStoryMeetObserver.js
           node --check src/data/oshiageSchool.js
           node --check src/data/travelRegions.js
