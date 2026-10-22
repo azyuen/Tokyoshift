@@ -1153,7 +1153,13 @@ export function normaliseState(input = {}) {
     arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
     arkonStoryChapter01RevisedDone: storyMode && Boolean(input.arkonStoryChapter01RevisedDone),
     arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
-    arkonStoryTimeOfDay: storyMode && input.arkonStoryTimeOfDay==='day' ? 'day' : 'night',
+    // Migrate R652 chapters already past the nighttime introduction without
+    // restarting their scripted checkpoints or resetting any races.
+    arkonStoryTimeOfDay: storyMode && (
+      input.arkonStoryTimeOfDay==='day' ||
+      (input.arkonStoryTimeOfDay!=='night' &&
+       ['practice','goSchool','lesson','complete'].includes(input.arkonStoryPhase))
+    ) ? 'day' : 'night',
     arkonStorySayakaNoticed: storyMode && Boolean(input.arkonStorySayakaNoticed),
     arkonStoryRivalResult: storyMode && ['won','lost'].includes(input.arkonStoryRivalResult)
       ? input.arkonStoryRivalResult : null,
