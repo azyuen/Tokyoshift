@@ -252,9 +252,9 @@ export function playPhoneConversation(scene, {
         phoneIconKey: PHONE_ICON_KEY,
       });
       panel.setAccent(color);
-      panel.heading.setFontSize('10px');
-      panel.dialogue.setText(formatPhoneMessage(page.text, vars))
-        .setFontSize('17px').setLineSpacing(4);
+      // Typography comes from the shared dialogue HUD template. Both call
+      // paths now inherit any future adjustment to the global font sizes.
+      panel.dialogue.setText(formatPhoneMessage(page.text, vars));
       nextText.setText(state.pageIndex < normalisedPages.length - 1
         ? 'NEXT >' : 'END CALL >');
       pageCounter.setText(normalisedPages.length > 1
