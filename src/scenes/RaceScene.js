@@ -10,7 +10,7 @@ import {
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261022-r640';
-import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
+import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
   applyDifficultyToRivalAi,
@@ -55,14 +55,14 @@ import {
   playableCharacterOrder,
   rivalCharacterOrder,
   getRivalCharacterOrderForRegion,
-} from '../data/characters.js?v=20261022-r638';
+} from '../data/characters.js?v=20261023-r652';
 import { WORKSHOP_RETURN_COST } from '../data/meetAssets.js?v=20260922-r84';
 import {
   saveSessionState,
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261018-r588';
+} from '../state/GameState.js?v=20261023-r652';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -76,7 +76,7 @@ import {
   AUTO_MARKET_LISTINGS,
   getCarCouponRequirement,
   getCarCouponCount,
-} from '../data/centralTokyo.js?v=20261011-r479';
+} from '../data/centralTokyo.js?v=20261023-r652';
 import {
   applyEasyCashWinBonus,
   getEasyCouponMilestoneForWins,
@@ -94,7 +94,7 @@ import { createCharacterProfile } from '../characters/CharacterProfileRenderer.j
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261022-r640';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261018-r588';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
