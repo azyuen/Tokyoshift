@@ -12,6 +12,7 @@ import {
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
 } from '../src/data/arkonChapter03Jobs.js';
 import { createArkonStoryState,normaliseState } from '../src/state/GameState.js';
+import {isWorkshopProgressionReady,getArkonStoryWorkshopTier} from '../src/data/workshopProgression.js';
 import { getArkonStoryObjective } from '../src/ui/ArkonStoryObjective.js';
 
 const reg=data=>({
@@ -144,4 +145,77 @@ test('Arkon customer jobs use the standard Garage three-panel presentation',()=>
   assert.match(stage,/!garagePanel&&autoPerspective/);
   // The guest-car UI never mutates or selects an owned vehicle.
   assert.doesNotMatch(ui,/ownedCarIds|selectedCarId|carStates/);
+});
+
+
+test('R662 Arkon begins with an untuned 240Z and chapter-gated workshops',()=>{
+  const fresh=createArkonStoryState(0);
+  assert.equal(fresh.starterCarId,'240z');
+  assert.deepEqual(fresh.ownedCarIds,['240z']);
+  assert.equal(fresh.carStates['240z'].stock,true);
+  assert.equal(fresh.carStates['240z'].acquiredVia,'starter');
+  assert.equal(fresh.carStates['240z'].tuning.engine,0);
+  assert.equal(fresh.selectedCarId,'240z');
+  assert.equal(fresh.garageTier,0);
+  assert.equal(fresh.workshopLocationId,'shinonomeWorkshop');
+  assert.equal(getArkonStoryWorkshopTier(fresh),0);
+  // Cash, fleet size and championship trophies cannot buy either workshop.
+  const rich=normaliseState({...fresh,cash:40000000,garageTier:2,
+    tunerTeamChallenges:Object.fromEntries(
+      ['ODAIBA','SHINAGAWA','TATSUMI','SHIBUYA','DAIKOKU']
+        .map(id=>[id,{championEarned:true}]))});
+  assert.equal(rich.garageTier,0);
+  assert.equal(isWorkshopProgressionReady(rich,1),false);
+  assert.equal(isWorkshopProgressionReady(rich,2),false);
+  const chapter3=normaliseState({...rich,arkonStoryChapter:3,
+    storyDirectorProgress:{id:'arkonChapter03',index:0,ownerSlot:0,version:1}});
+  assert.equal(chapter3.garageTier,1);
+  assert.equal(chapter3.workshopLocationId,'shinonomeCanalYard');
+  assert.equal(chapter3.arkonStoryCanalYardUnlocked,true);
+  assert.equal(chapter3.arkonStoryWarehouseUnlocked,false);
+  assert.equal(isWorkshopProgressionReady(chapter3,2),false);
+  // HQ requires an explicitly scripted future milestone.
+  const hq=normaliseState({...chapter3,arkonStoryWarehouseUnlocked:true});
+  assert.equal(hq.garageTier,2);
+  assert.equal(normaliseState({...fresh,gameMode:'career',garageTier:2}).garageTier,2);
+});
+
+test('R662 old untouched Arkon EF starter migrates without destroying tuned cars',()=>{
+  const fresh=createArkonStoryState(0);
+  const efStock={...fresh,starterCarId:'ef',selectedCarId:'ef',
+    preferredCarId:'ef',ownedCarIds:['ef'],
+    carStates:{ef:{stock:true,acquiredVia:'starter',tuning:{engine:0,intake:0}}},
+    carGarageLocations:{ef:'shinonomeWorkshop'}};
+  const migrated=normaliseState(efStock);
+  assert.deepEqual(migrated.ownedCarIds,['240z']);
+  assert.equal(migrated.starterCarId,'240z');
+  assert.equal(migrated.selectedCarId,'240z');
+  assert.equal(migrated.carStates.ef,undefined);
+  assert.equal(migrated.carGarageLocations['240z'],'shinonomeWorkshop');
+  const tuned=normaliseState({...efStock,
+    carStates:{ef:{stock:false,acquiredVia:'starter',tuning:{engine:2}}}});
+  assert.ok(tuned.ownedCarIds.includes('ef'));
+  assert.equal(tuned.carStates.ef.tuning.engine,2);
+});
+
+test('R662 Chapter 03 opens in Canal Yard with the actual car and native Meet geometry',()=>{
+  const first=ARKON_CHAPTER_03.steps.find(s=>s.type==='STAGE');
+  assert.equal(first.backgroundId,'workshop:shinonomeCanalYard:night');
+  assert.equal(first.stageMode,'native');
+  assert.equal(first.cars[0].carId,'$SELECTED_CAR');
+  assert.ok(ARKON_CHAPTER_03.steps.filter(s=>s.type==='STAGE' &&
+    s.backgroundId.startsWith('meet:')).every(s=>s.stageMode==='native'));
+  const director=readFileSync('src/story/StoryDirector.js','utf8');
+  assert.match(director,/arkonStoryCanalYardUnlocked',true/);
+  assert.match(director,/queueSafeSceneStart\(scene,'GarageScene'/);
+  const game=readFileSync('src/scenes/GarageScene.js','utf8');
+  assert.match(game,/this\.registry\.get\('gameMode'\)==='arkonStory'/);
+});
+
+test('R662 customer earnings appear on Deliver, not in the lower information strip',()=>{
+  const ui=readFileSync('src/ui/ArkonCustomerTuning.js','utf8');
+  assert.match(ui,/CUSTOMER PARTS FUNDED',13/);
+  assert.match(ui,/deliverPay\.setText\(job\.pay\?'\+'/);
+  assert.match(ui,/'\+'\+money\(job\.pay\)/);
+  assert.doesNotMatch(ui,/CUSTOMER PARTS FUNDED  \/\/  '\+money/);
 });
