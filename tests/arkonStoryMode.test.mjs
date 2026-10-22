@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {ARKON_CHAPTER_01} from '../src/data/arkonChapter01.js';
 import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
@@ -190,4 +191,17 @@ test('recount previews only witnessed scenes and preserves selected path',()=>{
   assert.ok(getArkonRecountScenes(reg({...base,storyDirectorProgress:{...base.storyDirectorProgress,index:52}}))
     .length>=titles.length);
   assert.deepEqual(getArkonRecountScenes(reg({gameMode:'career'})),[]);
+});
+
+test('Story objective is to the left of Settings with a taller, clear popup',()=>{
+  const settings=readFileSync(new URL('../src/ui/SettingsPanel.js',import.meta.url),'utf8');
+  const objective=readFileSync(new URL('../src/ui/ArkonStoryObjective.js',import.meta.url),'utf8');
+  assert.match(settings,/addArkonStoryObjectiveButton\(scene, x - 56, y\)/);
+  assert.match(objective,/rectangle\(780,420,820,535,/);
+  const messageY=Number(objective.match(/text\(780,(\d+),info.message/)[1]);
+  const replayY=Number(objective.match(/text\(780,(\d+),'REPLAY \/ RESTART/)[1]);
+  const closeY=Number(objective.match(/rectangle\(780,(\d+),215,50/)[1]);
+  assert.ok(closeY-replayY>=60);
+  assert.ok(closeY-messageY>=200);
+  assert.ok(closeY+25<420+535/2);
 });
