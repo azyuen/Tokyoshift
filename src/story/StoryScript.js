@@ -4,7 +4,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'LOCATION', 'STAGE', 'CLEAR_STAGE', 'MANGA', 'PHONE', 'COMPACT',
   'OPEN_MAP', 'START_RACE', 'WAIT_SCENE', 'WAIT_RACE_END', 'WAIT_EVENT',
   'WAIT_FLAG', 'SET_FLAG', 'IF', 'GOTO', 'LABEL', 'END',
-  'CHOICE', 'WAIT_MS', 'VENUE', 'DEV_HERO_RACE', 'RETURN_LOAN',
+  'CHOICE', 'WAIT_MS', 'HOLD_SCENE', 'VENUE', 'DEV_HERO_RACE', 'RETURN_LOAN',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
