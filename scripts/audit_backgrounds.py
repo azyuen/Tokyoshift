@@ -136,6 +136,14 @@ def main():
     print(json.dumps(dict(summary=summary,
         pair_mismatches=out["mismatched_pairs"],duplicate_groups=duplicates),
         separators=(",",":")))
+    print("TOKYO_NONMASTER_IMAGES_START")
+    print(json.dumps([dict(path=x["path"],group=x["group"],
+        width=x["width"],height=x["height"]) for x in rows
+        if x["group"] in {
+            "workshop_core","workshop_crew","workshop_dyno",
+            "workshop_tuner","outdoor_meet","outdoor_oshiage",
+        } and (x["width"],x["height"])!=(1672,941)]))
+    print("TOKYO_NONMASTER_IMAGES_END")
     print("TOKYO_BACKGROUND_AUDIT_END")
     print(f'Checked {len(rows)} background images; {len(pairs)} day/night pairs; '
           f'{len(out["mismatched_pairs"])} dimensional mismatches.')
