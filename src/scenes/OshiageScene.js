@@ -1,3 +1,4 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
@@ -143,7 +144,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.paintBusy = false;
     this.paintObjects = [];
     this.content = [];
-    this.phase = getWorldPhase();
+    this.phase = getStoryWorldPhase(this.registry);
   }
 
   backgroundAsset(locationId = this.activeLocationId, phase = this.phase) {
@@ -298,7 +299,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
       // Never tear down a moving car midway through a showroom entrance.
       if (this.paintBusy) return;
-      const phase = getWorldPhase();
+      const phase = getStoryWorldPhase(this.registry);
       const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
       if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
       this.phase = phase;
@@ -667,7 +668,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'OshiageScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', 'OSHIAGE');
     this.registry.set('raceLocationLabel', (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR') + ' // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
@@ -982,7 +983,7 @@ export default class OshiageScene extends Phaser.Scene {
       this.renderView();
       return;
     }
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }
