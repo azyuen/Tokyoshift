@@ -4,8 +4,8 @@ import {
   WORKSHOP_TIERS,
   getWorkshopByLocationId,
   inferWorkshopTier,
-  normaliseCarGarageLocations,
-} from '../data/workshopProgression.js?v=20261005-r350';
+  normaliseCarGarageLocations, getArkonStoryWorkshopTier,
+} from '../data/workshopProgression.js?v=20261023-r662';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
@@ -46,7 +46,7 @@ export const STARTER_CAR_IDS = ['ae86', 'ef'];
 
 // Existing profiles may legitimately have started with the old EK9 option.
 // Keep it save-compatible without exposing it as a starter for new games.
-const SAVE_COMPATIBLE_STARTER_CAR_IDS = ['ae86', 'ef', 'ek9'];
+const SAVE_COMPATIBLE_STARTER_CAR_IDS = ['ae86', 'ef', 'ek9', '240z'];
 
 export function normaliseStarterCarId(value = 'ae86') {
   const id = String(value || '');
@@ -96,6 +96,8 @@ export function createDefaultGameState(options = {}) {
     arkonStoryCruiseComplete: false,
     arkonStoryChapter03Done: false,
     arkonStoryChapter04Done: false,
+    arkonStoryCanalYardUnlocked: false,
+    arkonStoryWarehouseUnlocked: false,
     arkonStoryRwbProject: null,
     arkonStoryCustomerJobsDone: 0,
     arkonStoryMx5CustomerTuning: null,
@@ -500,7 +502,7 @@ export function resetArkonStoryState() {
 }
 
 export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
-  const state = createDefaultGameState({ starterCarId: 'ef' });
+  const state = createDefaultGameState({ starterCarId: '240z' });
   state.firstName = 'Arkon';
   state.lastName = 'Den';
   state.playerCharacterId = 'arkonDen';
@@ -921,6 +923,33 @@ export function normaliseState(input = {}) {
     delete migratedGarageLocations[oldLoanCarId];
   }
 
+  // Legacy Story profiles started with an EF. Replace ONLY an untouched
+  // stock starter with a factory 240Z. Do not silently delete a tuned Civic,
+  // player-acquired EF, or any existing parts/history when loading old saves.
+  const namedArkon = (String(input.firstName||'')+String(input.lastName||''))
+    .toLowerCase().replace(/[^a-z0-9]/g,'')==='arkonden';
+  const former = input.carStates?.ef;
+  const untouched = former?.acquiredVia==='starter' && former?.stock!==false &&
+    ['tuning','engineTuning','drivetrainTuning','chassisTuning','exhaustNosTuning']
+      .every(key => Object.values(former[key]||{}).every(v => !Number(v))) &&
+    Number(former.tuneLevel||0)===0 && !former.nosInstalled;
+  if(input.gameMode===ARKON_STORY_MODE && namedArkon &&
+     (input.starterCarId==='ef' || !input.starterCarId) &&
+     input.ownedCarIds?.includes('ef') && untouched){
+    const replacement={...input.carStates};
+    delete replacement.ef;
+    replacement['240z']=createStarterCarState('240z');
+    const locations={...migratedGarageLocations};
+    locations['240z']=locations.ef||'shinonomeWorkshop';
+    delete locations.ef;
+    input={...input,starterCarId:'240z',
+      ownedCarIds:input.ownedCarIds.map(id=>id==='ef'?'240z':id),
+      selectedCarId:input.selectedCarId==='ef'?'240z':input.selectedCarId,
+      preferredCarId:input.preferredCarId==='ef'?'240z':input.preferredCarId,
+      carStates:replacement,carGarageLocations:locations};
+    Object.assign(migratedGarageLocations,locations);
+    delete migratedGarageLocations.ef;
+  }
   const requestedStarterCarId =
     input.starterCarId ||
     Object.entries(input.carStates || {}).find(
@@ -987,10 +1016,17 @@ export function normaliseState(input = {}) {
     .find(id => owned.includes(id) && !String(id || '').startsWith('crew__')) || null;
 
   let garageTier = inferWorkshopTier(owned.filter(id => !String(id).startsWith('ginzaDemo_')).length, input.garageTier);
+  // Story property access is chapter-authored, never purchased or inferred
+  // from fleet size, cash or regional wins. Career behaviour is unchanged.
+  if (storyMode) garageTier = getArkonStoryWorkshopTier(input);
   const requestedWorkshop = getWorkshopByLocationId(input.workshopLocationId);
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
     : WORKSHOP_TIERS[garageTier].id;
+  if (storyMode && input.storyDirectorProgress?.id==='arkonChapter03' &&
+      Number(input.storyDirectorProgress.index||0)<=3 && garageTier>=1) {
+    workshopLocationId='shinonomeCanalYard';
+  }
   let carGarageLocations = normaliseCarGarageLocations(
     owned,
     migratedGarageLocations,
@@ -1184,6 +1220,8 @@ export function normaliseState(input = {}) {
     arkonStoryMx5RaceResult: storyMode &&
       ['won','lost','declined','forfeit'].includes(input.arkonStoryMx5RaceResult)
       ? input.arkonStoryMx5RaceResult : null,
+    arkonStoryCanalYardUnlocked: storyMode && garageTier>=1,
+    arkonStoryWarehouseUnlocked: storyMode && garageTier>=2,
     arkonStoryMx5Loan: storyMode && input.arkonStoryMx5Loan?.active
       ? clonePlain(input.arkonStoryMx5Loan) : null,
     arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
