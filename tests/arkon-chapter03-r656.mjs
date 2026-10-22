@@ -222,3 +222,40 @@ test('R662 customer earnings appear on Deliver, not in the lower information str
   assert.match(ui,/'\+'\+money\(job\.pay\)/);
   assert.doesNotMatch(ui,/CUSTOMER PARTS FUNDED  \/\/  '\+money/);
 });
+
+
+test('R663 Chapter 03 uses proportionate cast behind the workshop car',()=>{
+  const ui=readFileSync('src/ui/ArkonCustomerTuning.js','utf8');
+  const stage=readFileSync('src/ui/StoryStage.js','utf8');
+  assert.match(ui,/composition:'car-in-front',motion:'roll-in-left'/);
+  assert.match(ui,/height:Math\.round\(WORKSHOP_PRESENTATION\.daichi\.engine\.targetHeight\*\.86\)/);
+  assert.match(stage,/const carInFront=Boolean\(castBehindCar\)/);
+  assert.match(stage,/const portraitDepth=depth\+\(carInFront\?3:10\)/);
+  assert.match(stage,/const vehicleDepth=depth\+\(carInFront\?11:3\)/);
+  const workshop=ARKON_CHAPTER_03.steps.find(s=>s.type==='STAGE'&&
+    s.backgroundId==='workshop:shinonomeCanalYard:night');
+  assert.equal(workshop.castBehindCar,true);
+  assert.equal(workshop.characterScale,.84);
+  const outdoor=ARKON_CHAPTER_03.steps.find(s=>s.type==='STAGE'&&
+    s.backgroundId.startsWith('meet:'));
+  assert.equal(outdoor.castBehindCar,undefined); // regular Meet staging unaffected
+});
+
+test('R663 customer car rolls slowly from the left with wheels matching distance',()=>{
+  const ui=readFileSync('src/ui/ArkonCustomerTuning.js','utf8');
+  const stage=readFileSync('src/ui/StoryStage.js','utf8');
+  const renderer=readFileSync('src/ui/StoryCarRenderer.js','utf8');
+  assert.match(stage,/if\(motion==='roll-in-left'/);
+  assert.match(stage,/x\+targetWidth\*\.5\+80-frame\.x/);
+  assert.match(stage,/part\.restX-distance\+progress\.travelled/);
+  assert.match(stage,/part\.obj\.setRotation\(part\.rotation\+progress\.travelled\/part\.radius\)/);
+  assert.match(stage,/duration:4800,ease:'Sine\.Out'/);
+  assert.match(stage,/if\(alive\)onArrivalComplete\?\.\(\)/);
+  assert.match(renderer,/tyre\.storyRollRadius=axle\.backingRadius/);
+  // No legacy 900ms flying, fading entry on this customer's route.
+  assert.doesNotMatch(ui,/motion:'arrive'/);
+  assert.match(ui,/if\(closed\|\|arriving\)return/);
+  assert.match(ui,/CUSTOMER VEHICLE ARRIVING/);
+  // Existing Chapter 04 cinematic arrival remains unchanged.
+  assert.match(stage,/if\(motion==='arrive'/);
+});
