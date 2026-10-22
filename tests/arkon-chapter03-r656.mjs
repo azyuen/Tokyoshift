@@ -114,7 +114,7 @@ test('Save isolation and progress are exclusive to Arkon Story',()=>{
   assert.equal(career.arkonStoryChapter03Done,false);
   assert.equal(career.arkonStoryCustomerJobsDone,0);
   const objective=getArkonStoryObjective(reg(saved));
-  assert.match(objective.heading,/CHAPTER 03 COMPLETE/);
+  assert.match(objective.heading,/CHAPTER 04 \/\/ THE PRICE OF TRUST/);
 });
 test('Race and Director use no-stakes real physics with Arkon Story restrictions',()=>{
   const race=readFileSync('src/scenes/RaceScene.js','utf8');

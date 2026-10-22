@@ -7,6 +7,9 @@ on:
       - 'src/data/arkonChapter01Extended.js'
       - 'src/data/arkonChapter01Revised.js'
       - 'src/data/arkonChapter02.js'
+      - 'src/data/arkonChapter04.js'
+      - 'src/data/arkonChapter04Ledger.js'
+      - 'tests/arkon-chapter04-r659.mjs'
       - 'tests/arkon-chapter02-r655.mjs'
       - 'src/ui/ArkonPlayableReplay.js'
       - 'tests/arkon-chapter-replay-r657.mjs'
@@ -77,6 +80,9 @@ jobs:
           node --check src/data/arkonChapter01Extended.js
           node --check src/data/arkonChapter01Revised.js
           node --check src/data/arkonChapter02.js
+          node --check src/data/arkonChapter04.js
+          node --check src/data/arkonChapter04Ledger.js
+          node --check tests/arkon-chapter04-r659.mjs
           node --check src/ui/ArkonPlayableReplay.js
           node --check src/story/ArkonStoryTime.js
           node --check src/data/arkonStoryWorkshopMechanic.js
@@ -102,4 +108,4 @@ jobs:
           node --check src/scenes/MeetScene.js
           node --check src/scenes/GarageScene.js
       - name: Story mode tests
-        run: node --test tests/arkonStoryMode.test.mjs tests/arkon-chapter02-r655.mjs tests/arkon-chapter-replay-r657.mjs
+        run: node --test tests/arkonStoryMode.test.mjs tests/arkon-chapter02-r655.mjs tests/arkon-chapter-replay-r657.mjs tests/arkon-chapter04-r659.mjs

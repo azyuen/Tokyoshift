@@ -21,7 +21,10 @@ export function showStoryStage(scene, {
   const actualBackgroundId = backgroundId === '$CURRENT_MEET'
     ? 'meet:' + String(scene.selectedMeetLocation || scene.registry?.get?.('meetLocation') || 'odaiba7eleven') +
       ':' + String(scene.worldPhase || 'night')
-    : backgroundId;
+    : backgroundId === '$CURRENT_WORKSHOP'
+      ? 'workshop:' + String(scene.registry?.get?.('workshopLocationId') || 'shinonomeWorkshop') +
+        ':' + String(scene.worldPhase === 'day' ? 'day' : 'night')
+      : backgroundId;
   const profile=actualBackgroundId?getStoryBackground(actualBackgroundId):null;
   if(backgroundId && !profile) {
     console.warn('[TOKYO SHIFT] Story background ID not found',actualBackgroundId);
@@ -187,7 +190,7 @@ export function showStoryStage(scene, {
         // Optional customer-bay arrival: ease the complete layered vehicle
         // (body, paint, tyres and shadow) into place as one car. Never affects
         // normal Meet/Garage staging or race physics.
-        if(motion==='arrive' && !template && i===0 && scene.tweens?.add){
+        if(motion==='arrive' && i===0 && scene.tweens?.add){
           for(const obj of carObjects){
             if(!obj?.active || !Number.isFinite(obj.x) || !obj.setX || !obj.setAlpha)continue;
             const rest=obj.x;

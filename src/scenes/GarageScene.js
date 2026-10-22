@@ -480,6 +480,14 @@ export default class GarageScene extends Phaser.Scene {
         ...(shouldWarmCrewSpace ? crewCars : []),
       ]),
     ];
+    // Chapter 04's RWB is a story restoration liability, NEVER a drivable
+    // player-owned vehicle. Warm the same modular asset for its private
+    // Canal Yard cinematic using the existing workshop hero renderer.
+    if (!this.crewMode && this.registry.get('gameMode')==='arkonStory' &&
+        (this.registry.get('arkonStoryChapter03Done') ||
+         this.registry.get('storyDirectorProgress')?.id==='arkonChapter04')) {
+      preloadCarIds.push('rwbStellaPorsche');
+    }
     // Scene 05 reuses the black RWB collector asset solely as a visiting
     // cinematic car. It is never added to the player's owned-car registry.
     if (!this.crewMode && activeWorkshopId === 'shinonomeWarehouseStrip' &&
