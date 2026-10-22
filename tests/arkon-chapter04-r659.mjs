@@ -14,7 +14,7 @@ const registry=(initial={})=>{
 };
 
 test('R659 Chapter 04 is a registered, valid script with correct story gates',()=>{
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter04,ARKON_CHAPTER_04);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter04,ARKON_CHAPTER_04);
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_04));
   assert.ok(ARKON_CHAPTER_04.steps.length>=50);
   assert.equal(ARKON_CHAPTER_04.steps.filter(s=>s.type==='ARKON_RWB_PURCHASE').length,1);
@@ -78,7 +78,7 @@ test('R659 RWB auction stores a safe restoration project, cash paid only once',(
 });
 
 test('R659 persists Chapter 04 project on Arkon Story only',()=>{
-  const values={...createDefaultGameState(),gameMode:'arkonStory',
+  const values={...createDefaultGameState(),firstName:'Arkon',lastName:'Den',gameMode:'arkonStory',
     arkonStoryChapter03Done:true,arkonStoryChapter04Done:true,
     arkonStoryRwbProject:{acquired:true,carId:'rwbStellaPorsche',
       status:'structural-and-engine-restoration-required',roadworthy:false,
