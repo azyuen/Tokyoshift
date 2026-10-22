@@ -150,7 +150,7 @@ async function startTokyoShift() {
     window.TOKYO_SHIFT = new Phaser.Game(config);
     // Optional Story Director is installed after boot. A narrative module error
     // must never prevent a player reaching their profile on mobile/iPad.
-    import('./story/StoryDirector.js?v=20261023-r659')
+    import('./story/StoryDirector.js?v=20261023-r660')
       .then(({ installStoryDirector }) => installStoryDirector(window.TOKYO_SHIFT))
       .catch(error => console.error('[Tokyo SHIFT] Story Director unavailable', error));
     try { window.TOKYO_SHIFT_MENU_NAV?.destroy?.(); } catch (e) {}
