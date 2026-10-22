@@ -10,7 +10,7 @@ import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=
 import {
   DEV_VAULT_STORY_ID, DEV_VAULT_RACE_ACTIVE_KEY,
   isArkonVaultStoryLoan, finishDevVaultHeroRace,
-} from '../data/devVaultStory.js?v=20261022-r641';
+} from '../data/devVaultStory.js?v=20261022-r642';
 
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
