@@ -1615,8 +1615,8 @@ export default class RaceScene extends Phaser.Scene {
     const pt=this.advanceRollingVehicle(this.player,dt);
     // The S15 comes into the adjacent lane from behind and gradually
     // matches the MX-5. Only the visual approach is cinematic; once
-    // accepted, both vehicles use the normal standing race physics path.
-    if(this.arkonMx5Elapsed>=21 && !this.arkonMx5S15Visible){
+    // accepted, both vehicles use the normal rolling-start race physics.
+    if(this.arkonMx5Elapsed>=18 && !this.arkonMx5S15Visible){
       this.arkonMx5S15Visible=true;
       this.opponent.positionM=this.player.positionM-18;
       this.setArkonMx5OpponentVisible(true);
