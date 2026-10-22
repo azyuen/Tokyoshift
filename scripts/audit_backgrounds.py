@@ -84,7 +84,9 @@ def main():
     for row in rows:
         p=row["path"]
         if "_day." not in p:continue
-        corresponding=p.replace("_day.","_night.").replace("/Day/","/Night/")
+        corresponding=( "assets/Meet/Night/tatsumi_skyline_vista_night.png"
+            if p=="assets/Meet/Day/tatsumi_district_loop_day.png"
+            else p.replace("_day.","_night.").replace("/Day/","/Night/"))
         matches=[x for x in rows if x["path"]==corresponding]
         if matches:
             other=matches[0]
