@@ -413,6 +413,7 @@ function value(source, key, fallback = null) {
 }
 
 export function isArkonDen(source) {
+  if (value(source, 'gameMode', 'career') === 'arkonStory') return false;
   const devMode = Boolean(value(source, 'devMode', false));
   const first = String(value(source, 'firstName', '')).trim().toLowerCase();
   const last = String(value(source, 'lastName', '')).trim().toLowerCase();
