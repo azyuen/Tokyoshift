@@ -74,13 +74,30 @@ export function nextStoryPosition(compiled, index, getValue) {
   return index + 1;
 }
 
-export function createStoryCheckpoint(scriptId, index, profileSlot) {
+// Persist only small, primitive decision values: never save callbacks or an
+// arbitrary story object in a player's profile. Used by both Career and Story.
+export function normaliseStoryChoiceVars(raw) {
+  if(!raw || typeof raw!=='object' || Array.isArray(raw))return {};
+  return Object.fromEntries(Object.entries(raw)
+    .filter(([key,val])=>/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key) &&
+      (typeof val==='string' && val.length<=80 ||
+       typeof val==='boolean' ||
+       typeof val==='number' && Number.isFinite(val)))
+    .slice(0,24));
+}
+
+export function createStoryCheckpoint(scriptId, index, profileSlot, vars = {}) {
+  const safeVars=normaliseStoryChoiceVars(vars);
   return { id: normaliseStoryId(scriptId), index: Math.max(0, Math.floor(index || 0)),
-    ownerSlot: Number(profileSlot), version: 1 };
+    ownerSlot: Number(profileSlot), version: 1,
+    ...(Object.keys(safeVars).length ? {vars:safeVars} : {}) };
 }
 
 export function isStoryCheckpoint(value) {
   return Boolean(value && typeof value.id === 'string' &&
     Number.isSafeInteger(value.index) && value.index >= 0 &&
-    Number.isSafeInteger(value.ownerSlot) && value.version === 1);
+    Number.isSafeInteger(value.ownerSlot) && value.version === 1 &&
+    (!Object.prototype.hasOwnProperty.call(value,'vars') ||
+      (value.vars && typeof value.vars==='object' && !Array.isArray(value.vars) &&
+      Object.keys(value.vars).length<=24)));
 }
