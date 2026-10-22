@@ -1,4 +1,8 @@
 import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
+import {
+  ARKON_STORY_MECHANIC_ASSETS, isArkonStoryWorkshop,
+  resolveWorkshopMechanicTexture,
+} from '../data/arkonStoryWorkshopMechanic.js?v=20261023-r654';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
@@ -401,6 +405,12 @@ export default class GarageScene extends Phaser.Scene {
       const visual = characters[id]?.visual;
       if (visual) queueImage(visual.spriteKey, getCharacterAssetUrl(visual.path));
     });
+    // Story Arkon's casual pose is the workshop idle. His mechanic poses
+    // load only when entering actual tuning modes below.
+    if (isArkonStoryWorkshop(this.registry,this.crewMode)) {
+      const idle=characters.arkonDen?.visual?.poseAssets?.storyIdle;
+      if(idle)queueImage(idle.key,getCharacterAssetUrl(idle.path));
+    }
 
     // Crew Space does not normally load office flags. The new transparent
     // Scene 07 portrait gallery still uses the same flags as Scene 06.
@@ -586,6 +596,7 @@ export default class GarageScene extends Phaser.Scene {
     this.upgradeButtons = [];
     this.selectedUpgrade = null;
     this.engineMode = false;
+    this._arkonWorkingHidden = null;
     this.engineModeObjects = [];
     this.engineModalObjects = [];
     this.engineHotspotObjects = [];
@@ -1542,8 +1553,13 @@ export default class GarageScene extends Phaser.Scene {
     }
 
     const playerCharacter = characters[this.registry.get('playerCharacterId')] || characters.renMizuno;
+    const storyIdle = isArkonStoryWorkshop(this.registry,this.crewMode)
+      ? characters.arkonDen?.visual?.poseAssets?.storyIdle : null;
+    const workshopActor = storyIdle && this.textures.exists(storyIdle.key)
+      ? { ...playerCharacter, visual:{ ...playerCharacter.visual, spriteKey:storyIdle.key } }
+      : playerCharacter;
     this.workshopPlayerSprite = this.addGarageCharacter(
-      playerCharacter,
+      workshopActor,
       PLAYER_CFG.x,
       PLAYER_CFG.feetY,
       PLAYER_CFG.targetHeight,
@@ -4659,11 +4675,16 @@ export default class GarageScene extends Phaser.Scene {
       )
       .forEach(asset => queueImage(asset.key, asset.path));
 
-    [
-      ['daichiEngineInspect', 'assets/Characters/Main/home_daichi_engine_inspect.png?v=20261010-r458'],
-      ['daichiChassisTools', 'assets/Characters/Main/home_daichi_chassis_tools.png?v=20261010-r458'],
-      ['daichiExhaustCrouch', 'assets/Characters/Main/home_daichi_exhaust_crouch.png?v=20261010-r458'],
-    ].forEach(([key, path]) => queueImage(key, path));
+    if (isArkonStoryWorkshop(this.registry,this.crewMode)) {
+      ARKON_STORY_MECHANIC_ASSETS.forEach(({key,path}) =>
+        queueImage(key,path+'?v=20261023-r654'));
+    } else {
+      [
+        ['daichiEngineInspect', 'assets/Characters/Main/home_daichi_engine_inspect.png?v=20261010-r458'],
+        ['daichiChassisTools', 'assets/Characters/Main/home_daichi_chassis_tools.png?v=20261010-r458'],
+        ['daichiExhaustCrouch', 'assets/Characters/Main/home_daichi_exhaust_crouch.png?v=20261010-r458'],
+      ].forEach(([key, path]) => queueImage(key, path));
+    }
 
     if (includeVisualMods && this.selectedCarId) {
       queued += preloadVisualModAssets(
@@ -4974,6 +4995,7 @@ export default class GarageScene extends Phaser.Scene {
     this.engineHotspotObjects = [];
     this.engineHelperObjects = [];
     this.engineMode = false;
+    this.setArkonWorkingAtCar(false);
     this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
     this.enginePartRows = {};
@@ -5074,8 +5096,27 @@ export default class GarageScene extends Phaser.Scene {
     });
   }
 
+  // Story Mode uses Arkon's own hands-on mechanic artwork. This toggles
+  // the ordinary casual workshop avatar AND both floor shadows together.
+  setArkonWorkingAtCar(working) {
+    if (!isArkonStoryWorkshop(this.registry,this.crewMode)) return;
+    if (working) {
+      if (this._arkonWorkingHidden) return;
+      const actor=this.workshopPlayerSprite;
+      this._arkonWorkingHidden=[actor,...(actor?.stageShadows||[])]
+        .filter(obj=>obj?.active)
+        .map(obj=>({obj,wasVisible:obj.visible}));
+      this._arkonWorkingHidden.forEach(({obj})=>obj.setVisible(false));
+    } else {
+      (this._arkonWorkingHidden||[]).forEach(({obj,wasVisible})=>{
+        if(obj?.active)obj.setVisible(wasVisible);
+      });
+      this._arkonWorkingHidden=null;
+    }
+  }
+
   addDaichiTuningHelper({
-    textureKey,
+    textureKey: daichiTextureKey,
     x,
     feetY,
     targetHeight = 282,
@@ -5088,6 +5129,8 @@ export default class GarageScene extends Phaser.Scene {
     useGarageCharacterShadow = false,
     objectList,
   }) {
+    const textureKey=resolveWorkshopMechanicTexture(this.registry,
+      daichiTextureKey,this.crewMode);
     if (!textureKey || !this.textures.exists(textureKey) || !objectList) return null;
 
     const sprite = this.add.image(x, feetY, textureKey)
@@ -5134,6 +5177,9 @@ export default class GarageScene extends Phaser.Scene {
         ).setDepth(depth - 0.1);
 
     objectList.push(softShadow, contactShadow, sprite);
+    if (this.engineMode || this.secondaryMode || this.chassisMode) {
+      this.setArkonWorkingAtCar(true);
+    }
     return sprite;
   }
 
@@ -6308,6 +6354,7 @@ export default class GarageScene extends Phaser.Scene {
     this.visualModsApplyButton = null;
     this.visualModsApplyText = null;
     this.chassisMode = false;
+    this.setArkonWorkingAtCar(false);
     this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
 
@@ -6540,6 +6587,7 @@ export default class GarageScene extends Phaser.Scene {
     this.secondaryHelperObjects = [];
     this.secondaryHotspotObjects = [];
     this.secondaryMode = null;
+    this.setArkonWorkingAtCar(false);
     this.setWorkshopHomeHotspotsVisible(true);
     this.updateGarageNavState();
     this.secondaryPartRows = {};
