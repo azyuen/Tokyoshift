@@ -421,8 +421,9 @@ export default class CentralTokyoScene extends Phaser.Scene {
       });
     }
     if (this.chapter08Arrival && this.activeLocationId === 'ginzaMotorGallery') {
-      // Let the normal R567 showroom be recognisable before dialogue starts.
-      this.time.delayedCall(1500, () => {
+      // After the Porsche race, enter the full-screen story tableau directly
+      // rather than lingering in Ginza's normal side-panel/shop UI.
+      this.time.delayedCall(100, () => {
         if (!sceneCutsceneActive(this)) startChapter08Ginza(this);
       });
     }
