@@ -262,7 +262,9 @@ export function showTravelMap(scene, options = {}) {
       const targetTier = Number(
         item.garageTier || getWorkshopByLocationId(item.id).tier || 0
       );
-      return targetTier <= tier + 1;
+      // Story players see only chapter-unlocked properties; money and
+      // regional championships never reveal a purchasable future garage.
+      return targetTier <= tier + (scene.registry.get('gameMode')==='arkonStory'?0:1);
     });
   };
 
@@ -927,7 +929,9 @@ export function showTravelMap(scene, options = {}) {
             .setStrokeStyle(2, 0x8b4f5c, 1);
           travelLabel
             .setColor('#c99aa4')
-            .setText('REGIONAL WINS ' + wins + '/' + requiredWins);
+            .setText(scene.registry.get('gameMode')==='arkonStory'
+              ? 'UNLOCKED THROUGH STORY'
+              : 'REGIONAL WINS ' + wins + '/' + requiredWins);
           return;
         }
 
