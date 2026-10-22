@@ -93,10 +93,10 @@ import {
 } from '../data/tunerChallenges.js?v=20261013-tatsumi-r492';
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
-import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261022-r640';
+import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261023-r658';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import { hasSeenCutscene, markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { maybeAwardSurpriseReward } from '../data/surpriseRewards.js?v=20261011-r479';
