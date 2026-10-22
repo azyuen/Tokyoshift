@@ -142,7 +142,7 @@ test('generic authored STAGE can opt in by backgroundId; legacy positions remain
   const codeStage=code('src/ui/StoryStage.js');
   assert.match(codeStage,/backgroundId = null/);
   assert.match(codeStage,/getStoryBackground\(backgroundId\)/);
-  assert.match(codeStage,/projectGroundEntity\(profile/);
+  assert.match(codeStage,/projectEntityOnBackground\(profile/);
   assert.match(codeStage,/layered\)/);
   assert.match(codeStage,/stageMode==='native'/);
   assert.match(codeStage,/const autoPerspective=Boolean\(profile\)/);
@@ -166,5 +166,5 @@ test('dev author can compare real location and interior backgrounds without writ
   assert.match(tester,/__directorPerspective/);
   assert.match(tester,/directorPerspectivePreview/);
   const imports=code('src/story/StoryDirector.js');
-  assert.match(imports,/StoryStage\.js\?v=20261022-r644/);
+  assert.match(imports,/StoryStage\.js\?v=20261022-r645/);
 });
