@@ -10,14 +10,14 @@ import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r657';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r659';
-import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r656';
+import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r660';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r659';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r657';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
-} from '../data/arkonChapter03Jobs.js?v=20261023-r656';
+} from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
 import { cars } from '../data/cars.js?v=20261017-r565';
