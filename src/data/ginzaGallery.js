@@ -32,13 +32,14 @@ export function isNamedArkonDen(source) {
   const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
   const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
     .toLowerCase().replace(/[^a-z0-9]/g, '');
-  return fullName === 'arkonden';
+  return fullName === 'arkonden' && get('gameMode') !== 'arkonStory';
 }
 
 export function isGinzaOwner(source) {
   const get = name => typeof source?.get === 'function' ? source.get(name) : source?.[name];
   const fullName = (String(get('firstName') || '') + String(get('lastName') || ''))
     .toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (get('gameMode') === 'arkonStory') return false;
   return Boolean(get('devMode')) || fullName === 'arkonden' ||
     Number(get('cash') || 0) >= 900000000;
 }
