@@ -8,7 +8,8 @@ import {
 } from '../data/characters.js?v=20261011-r477';
 import {
   createRaceDialogueHud, PHONE_DIALOGUE_LAYOUTS, createPhoneCallBackdrop,
-} from './RaceCoachHud.js?v=20261023-r658';
+  ensureAnonymousCallerPortrait, ANONYMOUS_CALLER_VISUAL,
+} from './RaceCoachHud.js?v=20261023-r664';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const PHONE_ICON_KEY = 'openingIncomingPhone';
@@ -135,7 +136,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261023-r658')
+    import('./OpeningPhonePrototype.js?v=20261023-r664')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {
@@ -168,7 +169,8 @@ export function playPhoneConversation(scene, {
   // The compact phone bubble is narrower than the old full-width panel:
   // preserve the caller's name, while the ringing screen carries the long label.
   const callerHeading = name.split(' // ')[0].trim() || name;
-  const portraitAsset = getPhoneCallerPortrait(callerId, callerPose);
+  const portraitAsset = callerId ? getPhoneCallerPortrait(callerId,callerPose)
+    : (()=>{const key=ensureAnonymousCallerPortrait(scene);return key?{key}:null;})();
   const playerCharacterId = scene.registry?.get?.('playerCharacterId') || '';
   const playerPortraitAsset = getPhoneCallerPortrait(playerCharacterId, 'idle');
   const playerActor = characters[playerCharacterId];
@@ -248,7 +250,9 @@ export function playPhoneConversation(scene, {
           : 'CALL: ' + callerHeading,
         initialPose: isPlayer ? 'idle' : callerPose,
         spriteKeyForPose: () => (isPlayer ? playerPortraitAsset : portraitAsset)?.key || '',
-        characterVisual: (isPlayer ? playerActor : caller)?.visual || {},
+        characterVisual: !isPlayer&&!callerId
+          ? ANONYMOUS_CALLER_VISUAL
+          : (isPlayer ? playerActor : caller)?.visual || {},
         phoneIconKey: PHONE_ICON_KEY,
       });
       panel.setAccent(color);
