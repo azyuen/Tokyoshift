@@ -90,7 +90,7 @@ import { ginzaConversation } from '../data/ginzaScenes.js?v=20261022-r637';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {
   armDevVaultStoryLoan, shouldLaunchDevVaultStoryForDestination, claimDevVaultStoryLoan,
-} from '../data/devVaultStory.js?v=20261022-r642';
+} from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
