@@ -78,6 +78,6 @@ test('integration retains manga/phone, existing Ginza banter and player saves',(
   assert.match(state,/storyDirectorProgress: registry\.get/);
   assert.match(race,/if \(sceneCutsceneActive\(this\)\) return;/);
   assert.match(race,/this\.hasGinzaBanter = this\.isGinzaDemoRace && isNamedArkonDen\(this\.registry\)/);
-  assert.match(read('index.html'),/R643/);
-  assert.match(read('sw.js'),/R643/);
+  assert.match(read('index.html'),/R644/);
+  assert.match(read('sw.js'),/R644/);
 });
