@@ -1,7 +1,7 @@
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
-Version: 1.2 — 11 October 2026
-Status: adopted foundation; Sayaka/Reika roles approved 9 October; Sayaka/father history and final celebration direction approved 11 October 2026.
+Version: 1.3 — 22 October 2026
+Status: adopted foundation; Sayaka/Reika roles approved 9 October; Sayaka/father history and final celebration direction approved 11 October 2026; Arkon Den in-world foundation approved 22 October 2026.
 Companion: [Career narrative and emotional beats](CAREER_NARRATIVE.md) preserves the synopsis, approved history, knowledge boundaries and proposed scene backlog.
 Original repository audit: bc491c0, updated through 3632145.
 Deployment source check: 0bc3b0b (subsequent changes since that audit were build/cache files).
@@ -71,7 +71,7 @@ The audit is a dated snapshot, not a claim that every identified implementation 
 
 ## Cast inventory
 
-**Current R458 roster: 60 named character entries:** seven regional principals, 42 regional supporting racers (including Reika, **not** Sayaka), Daichi, nine standalone story/Central Tokyo characters (including Sayaka), and Arkon Den. Thus 59 ordinary in-world characters and one developer character. The original 7 October audit counted 59 entries before Reika replaced Sayaka's street slot and Sayaka became a separate story NPC.
+**Current R458 roster: 60 named character entries:** seven regional principals, 42 regional supporting racers (including Reika, **not** Sayaka), Daichi, nine standalone story/Central Tokyo characters (including Sayaka), and Arkon Den. At that historical snapshot the count was 59 ordinary characters and one developer-only character. The 22 October extension establishes Arkon as a real fictional person in the world, whose playable access remains developer-account-exclusive. The original 7 October audit counted 59 entries before Reika replaced Sayaka's street slot and Sayaka became a separate story NPC.
 
 | Principal / ID | Established age / hometown | Region | Existing personality | Audit final-round car |
 |---|---|---|---|---|
@@ -115,7 +115,7 @@ Final-round cars are event assignments, not permanent ownership.
 | Track mechanic | Kenta Ishikawa |
 | Timing / telemetry | Tomo Sakamoto |
 
-Arkon Den is explicitly a developer persona. Ethan Yuen is a targeted player-profile reference in compensation content, not a separate ordinary NPC. Substitute male/female sprites currently have no independent named identities. Magazine illustrations have no explicit character-ID assignment. The player's father and family are unnamed.
+Arkon Den is a distinct fictional in-world person who also serves as the developer-account character. He is not the real creator or the player's father. His debug powers and developer jokes are not fictional-world events. Ethan Yuen is a targeted player-profile reference in compensation content, not a separate ordinary NPC. Substitute male/female sprites currently have no independent named identities. Magazine illustrations have no explicit character-ID assignment. The player's father and family are unnamed.
 
 # 2. Existing canon discovered
 
@@ -157,7 +157,7 @@ These are documentation findings, not instructions to implement unrelated fixes 
 - Tier A: the seven principals, Daichi, Tomo and Sayaka.
 - Tier B: seven regional mechanics; Kaori Nishimura, Daigo Moriyama, Kazuo Tanaka; Haruto, Kenji, Yuna; Ryuji, Masato Kuroda, Hiroshi, Kenta.
 - Tier C: the other 32 regional supporting racers, now including Reika Tachibana.
-- Outside ordinary canon: Arkon Den.
+- Special in-world character / normally developer-account-exclusive playable lead: Arkon Den (canonical biography, noncanonical debug powers).
 - Unresolved identity: substitute appearances.
 
 Tier controls narrative depth, not ability or guaranteed race results.
@@ -881,10 +881,45 @@ Ace; facilities engineer. Polished/competitive, awkward with uncomplicated frien
 “Bring the run you meant to do.” / “That was yours. I won't dress it up.”
 Constraint: no assumed Kanzaki network.
 
-## Outside ordinary canon: Arkon Den
+## Arkon Den — The Man Behind the Gallery
 ID: arkonDen
+Status: **Owner-approved fictional-world foundation, 22 October 2026.** Arkon is a wholly invented character, not the real-life creator, a self-insert, or the selected player's father. His life belongs to the same world as the normal Career. The player's father is a different, living, unnamed individual; his established history with Sayaka must remain intact.
 
-Developer cameo, compensation/debug scenes and clearly noncanonical jokes only. Do not resolve personal conflicts, fund plots or explain ordinary results through Arkon. The Ethan Yuen compensation reference is not an additional NPC biography.
+**Access:** He is ordinarily playable only as the Arkon Den developer account; a dedicated playable backstory campaign is planned, with a possible later public release undecided. Existing code identifies him as a developer archetype rather than a selectable rival. His debug access, deploy commands, developer jokes and test-only racing behaviour are *not* in-world powers or plot facts. Ordinary Career may contain appropriately gated cameos or references without granting him control of the protagonist's journey.
+
+**Established present:** Wealthy, self-made and successful; owner of the **Ginza Gallery** and other ventures not yet precisely specified. High society recognises him, but he is relaxed, discreet and comfortable staying behind the scenes. He does not perform his wealth. The Ginza collection includes personal vehicles, consignments and managed cars; ownership of the gallery does not imply ownership of every displayed car. Sayaka remains the independent **curator and manager** and specialist professional at Ginza. Her black RWB Porsche remains her personal car, subject to existing later-sale continuity.
+
+**Established beginnings and rise:** He started as a fairly ordinary person without privileged wealth, connections or a spectacular racing record. His ascent occurred through real work, risks and opportunities **linked to cars and racing**, not through unexplained riches or prize money alone. The exact first job, venture, breakthroughs, failures and timelines are story details still to be developed.
+
+**Personality:** Relaxed, restrained, approachable and subtly confident. Prefers a workshop conversation or simple meal to a society event. Listens carefully, remembers financial hardship, is disarmingly informal with important people and dislikes receiving public credit for every good deed. Can be stubbornly private, sometimes helping without asking whether help is wanted. He is neither a perfect benefactor nor a secret puppet-master. His money can create opportunities, not merit or guaranteed race outcomes.
+
+**Sayaka — established shared foundation:** Sayaka is integral to Arkon's journey, both the work that helped him succeed and the person he became. Their relationship starts well before his wealthy present, develops from genuine respect into a gradually blossoming personal closeness, and **continues at the current end state**. There is real affection, shared history and trust. The exact first meeting, pivotal events, public status and whether/how they expressly define a romance remain to be written for his campaign. Sayaka has her own ambition and agency, is not reduced to Arkon's employee or reward, and does not owe him love for his support. The previous Sayaka/father friendship, professional racing partnership that never fully made it, long distance and later reconnection are separate canonical facts; no affair, rivalry or replacement-father twist is implied.
+
+**Quiet role in Career:** Arkon has long supported and encouraged Sayaka. As she considers returning to racing strategy, ultimately joining the player who *earns* the Tokyo Championship, he backs **her choice**, not a scheme to engineer the player's victory. His encouragement has been present behind the scenes throughout that later journey, largely unknown to the player. This does not mean he chose the family's starter car, paid for wins, assembled recruits, concealed a performance advantage, arranged brackets, or funded the player's progress. His presence must never diminish Daichi, the seven recruits, Sayaka's skill, or the player's own earned results.
+
+**Knowledge boundaries:** In the present world, some people may know Arkon is rich and owns the gallery. They need not know his origins, how close he and Sayaka are, or the support he gives her. Arkon and Sayaka know their own history. The player, Daichi, the player's father, the regional rivals, staff and media know only what scenes actually establish; do not leak Arkon's private role in the opening, Ginza curator reveal or professional strategist disclosure. Any public revelation of Ginza ownership needs naturally placed dialogue that respects the existing cutscene sequence.
+
+**Voice:** Plain, short, warm and lightly dry, never a boastful tycoon or cryptic mastermind. More teasing and comfortable with Sayaka, politely unpretentious elsewhere. Example voice samples, not yet enacted scenes:
+- “Arkon is fine.”
+- “I used to count the cost of every repair.”
+- “Ask Sayaka. She knows the collection better than I do.”
+- “You don't need my permission. You never did.”
+- “The trophy belongs to the driver.”
+
+**Non-negotiables:** Arkon is not the player's father, ordinary regional recruit, replacement rival, unseen Tokyo Champion or source of developer-level cheats inside the narrative. He cannot be used to explain away the player's work or overwrite Sayaka's established background. His personal story may deepen the setting without rewriting Career results or disclosing spoilers by default.
+
+### Proposed dedicated Arkon campaign — not yet scene canon
+
+**Working theme: The things we build, and the people who stay.** The owner has authorised the premise and end-period intersection; the following narrative treatment is a **proposal**, not a set of committed cutscenes, events or business details.
+
+1. **Before the gallery.** Young Arkon has an ordinary job close to Tokyo's automotive trade and keeps a modest car running on a modest budget. A failure teaches him that passion and ambition are not a business plan.
+2. **Meeting Sayaka.** They cross paths over a real car/racing problem. Sayaka is exacting and professionally credible; Arkon is persistent and unexpectedly observant. Their initial differences generate friction and understated humour; repeated small acts of trust change the dynamic.
+3. **A risky opportunity.** A weakness in racing support, vehicle sourcing or provenance suggests a viable specialist venture. When easy money would compromise trust, Arkon must choose what sort of success he wants. Any breakthrough must be economically plausible, involve setbacks and acknowledge Sayaka's independent contribution.
+4. **More money, fewer pretences.** Growing ventures eventually enable the Ginza Gallery. Arkon becomes familiar in elite circles but keeps old habits; Sayaka curates and manages the gallery on her own merits. Their private closeness develops without a mandatory public relationship label.
+5. **The second racing journey.** Years later Sayaka considers becoming the Career driver's professional strategist. Arkon sees what it means to her, encourages her without directing her, and stays publicly absent. This is support, not covert race rigging.
+6. **Quiet convergent ending.** After the Career player's *earned* championship celebration, Arkon waits away from cameras with two ordinary vending-machine coffees—the kind they once shared before success. Sayaka arrives after celebrating with the team; they exchange a few private words and leave together. The separate approved cameo of the player's father watching quietly in shadow is preserved. The last emotional image in Arkon's campaign is not wealth or a trophy, but the relationship that continued.
+
+The exact wealth mechanism, age, home life, romantic milestones, dates, car ownership, supporting cast and precise ending dialogue remain open for later story design. This backstory should be an alternative **perspective**, not a claim that Arkon secretly caused the ordinary player's triumph. The Arkon developer account may begin at his end-state while a separate campaign rewinds to his ordinary beginnings.
 
 ## Substitute appearances
 
@@ -907,6 +942,7 @@ Except Daichi–Tomo and the unresolved player-opening link, specific interperso
 | Daikoku | Reina Shibata–Kazuo/Nao/Aki, Milo–Itsuki/Tetsu, Tetsuo–Kazuo | Credit, craft pride, uncertainty |
 | Organised racing | Ryuji–Masato Kuroda/Hiroshi, Tomo–Kenta, Kaito–Masato, Sayaka–Masato | Credibility and commerce |
 | Provenance | Sayaka–Kenji–Natsumi, Yuna–Itsuki | Known, claimed, verified |
+| Ginza / Arkon | Arkon (gallery owner)–Sayaka (curator/manager; deepening private closeness) | Independence, discretion and mutual encouragement |
 | Shinagawa tactics | Reika–the Shinagawa crew | Competitor preparation, analysis and adaptation; no family link |
 | Professional mentorship | Sayaka–$PLAYER and their recruited seven drivers | Delayed disclosure, planning and earned leadership |
 | Shinjuku | Riku–Arakawa–Ren Kurosawa, Rin–Riku | Promises versus completion |
@@ -953,7 +989,7 @@ Relative dates avoid unnecessary calendar constraints. New events are V1 foundat
 | Early shared racing years | Sayaka and the father are good friends; she supports him from their very early days. He makes mistakes and poor decisions, not yet specified. |
 | Father's professional racing era | They team up professionally, Sayaka as strategist, but never fully make it. Exact results and level remain unassigned. |
 | Long separation, then later reconnection | They grow distant for a long time and reconnect much later, before their present support of the player. Exact causes and dates remain open. |
-| Years before opening | Sayaka develops trading/planning contacts, including Kaori/Tetsuya entries, later managing the Ginza collection. |
+| Years before opening | Sayaka develops trading/planning contacts, including Kaori/Tetsuya entries, later managing the Ginza collection. Arkon works his way from ordinary beginnings to car/racing-linked financial success and ownership of the gallery; their closeness develops over time. Precise dates and ventures are not yet designed. |
 | Childhood, conditional | Ren–Daichi friendship and Ren watching his professional-racer father only if origin assignment is approved. |
 | Several years before | Daichi gains repair experience; Reina Shibata receives Kazuo opportunities. |
 | Before current regional roles | Aya knows Reina Kuroda in Yokohama before Shibuya association. |
@@ -963,7 +999,7 @@ Relative dates avoid unnecessary calendar constraints. New events are V1 foundat
 | Before game start | Kaito declines promotional appearance; Riku corrects Aya caption; Aki solves fault credited to Reina. |
 | Game start | Sayaka delivers the family's first car to $PLAYER, says she knew the father through racing, then Daichi introduces the Tokyo street scene. Reika, not Sayaka, occupies the sixth Shinagawa supporter racing slot. |
 | After Ginza invitation | Sayaka discloses her role as Ginza curator and manager; she does not disclose her former racing strategist identity. |
-| First legitimate pro-circuit entry following Ginza | With seven regional recruits, Sayaka reveals the old strategist role and joins the player as non-driving team strategist. The seven-driver roster is unchanged. |
+| First legitimate pro-circuit entry following Ginza | With seven regional recruits, Sayaka reveals the old strategist role and joins the player as non-driving team strategist. The seven-driver roster is unchanged; Arkon has quietly supported Sayaka's independent decision without determining race outcomes. |
 
 No shared fatal accident is needed to connect the cast. Ordinary work, competition and repeat encounters already do.
 
@@ -1040,6 +1076,8 @@ No seed guarantees betrayal, death, romance, championship or reconciliation.
 21. Do not design future villains, underground memberships or complete plots incidentally while writing today's shop scene.
 
 # Change record
+
+- 2026-10-22 (narrative documentation, v1.3): Owner confirmed Arkon Den is a fictional in-world person, not the real creator or player's father, while retaining dev-account-exclusive playable access. Adopted modest origins, self-made car/racing-linked wealth, Ginza Gallery ownership, discreet personality, ongoing growing closeness with Sayaka and private encouragement of her professional return. Distinguished canonical identity from extradiegetic dev tools, preserved the separate Sayaka/father history and all Career knowledge/progression gates, and included a clearly labelled proposed origin campaign and convergent quiet ending. Documentation only; no runtime features added.
 
 - 2026-10-07: v1 adopted for repository-based authoring after review. Added explicit future-depth policy requested by owner. Retained unresolved identity/origin decisions and provisional demographic details. No runtime or existing dialogue changes.
 - 2026-10-09 (R457): owner changed Sayaka to the player's father's racing-era friend, first-car deliverer, Ginza curator/manager and former strategist who joins at legitimate pro entry. Introduced Reika Tachibana as independent 47-year-old Shinagawa tactical racer and sixth regional crew candidate, with uploaded idle/win/loss assets. Added three staged career narrative beats, knowledge gates and explicit separation from seven-driver recruitment. No broader protagonist-identity decision or automatic tactical gameplay buff.
