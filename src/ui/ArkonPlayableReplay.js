@@ -1,4 +1,6 @@
-// R657 — fully playable Arkon chapter rehearsal; never writes into the real
+// R661 — fully playable Arkon chapter replay; chapter-local job and race
+// milestones are reset so a completed chapter actually replays its mechanics.
+// Never writes into the real
 // Arkon Story or Developer save. The live profile is restored on exit, and a
 // page reload simply loads the untouched persisted save.
 import {getActiveProfileIndex} from '../state/GameState.js?v=20261023-r657';
@@ -54,6 +56,17 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter02RivalResult',null);
   registry.set('arkonStoryRivalResult',null);
   registry.set('arkonStoryCruiseComplete',false);
+  if(chapter===3){
+    // Without this reset, any previously completed Chapter 03 skips every
+    // ARKON_CUSTOMER_JOB in StoryDirector (done > step.index), showing only
+    // manga panels even when the player selects FULL GAMEPLAY.
+    // Preserve the original random seed so the same customer models appear.
+    // Everything is sandboxed and restored from the original registry image.
+    registry.set('arkonStoryCustomerJobsDone',0);
+    registry.set('arkonStoryMx5CustomerTuning',null);
+    registry.set('arkonStoryMx5RaceResult',null);
+    registry.set('arkonStoryMx5Loan',null);
+  }
   if(chapter===1){
     registry.set('wins',0);
     registry.set('losses',0);
