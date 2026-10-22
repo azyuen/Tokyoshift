@@ -200,6 +200,7 @@ test('Live chapter replay shares one session module and waits for the destinatio
   assert.match(director,/if \(isArkonPlayableReplay\(registry\)\)/);
   assert.match(director,/active\?\._pendingSafeSceneStart/);
   assert.match(director,/sceneName\(active\)!==expected/);
+  assert.match(director,/expected=replayChapter===2/);
   assert.match(code('src/ui/ArkonPlayableReplay.js'),
     /queueSafeSceneStart\(scene,target/);
 });
