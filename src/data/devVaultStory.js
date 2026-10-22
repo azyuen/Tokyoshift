@@ -27,13 +27,17 @@ export function isArkonVaultStoryLoan(source) {
   const loan = read(source, 'ginzaTestDrive');
   // Named Arkon's vault loan is the permission: his dev profile does not
   // necessarily persist the old devMode flag on every restored save.
+  // The active vault loan, NOT the transient selectedCarId, identifies the
+  // story car. Meet/race UI may swap selectedCarId while restoring favourites.
+  // Requiring equality postponed the first entrance until after a race.
   return isNamedArkonDen(source) && isGinzaLoanActive(source) &&
-    loan?.carId === read(source, 'selectedCarId');
+    typeof loan?.carId === 'string';
 }
 export function shouldLaunchDevVaultStoryForDestination(source,locationId) {
   return isArkonVaultStoryLoan(source) &&
     locationId === 'shibuyaDogenzaka' &&
-    read(source, 'ginzaTestDrive')?.[DEV_VAULT_EPISODE_KEY] === 'armed';
+    ['armed','started'].includes(
+      read(source, 'ginzaTestDrive')?.[DEV_VAULT_EPISODE_KEY]);
 }
 export function shouldLaunchDevVaultStory(source) {
   return shouldLaunchDevVaultStoryForDestination(source,read(source,'meetLocation'));
@@ -49,6 +53,12 @@ export function armDevVaultStoryLoan(source) {
 export function claimDevVaultStoryLoan(source) {
   if (!shouldLaunchDevVaultStory(source)) return false;
   const loan = read(source, 'ginzaTestDrive');
+  // Restore the actual vault car before its authored tableau/race. Normal
+  // Ginza return still restores the owner's previous personal selection.
+  if (read(source,'selectedCarId') !== loan.carId)
+    source.set('selectedCarId',loan.carId);
+  if (read(source,'preferredCarId') !== loan.carId)
+    source.set('preferredCarId',loan.carId);
   source.set('ginzaTestDrive', {...loan, [DEV_VAULT_EPISODE_KEY]:'started'});
   return true;
 }
