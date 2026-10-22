@@ -16,6 +16,7 @@ export const tuned = {
 };
 export function run(carId, rating, { rolling=false, state={}, difficulty='STANDARD', seed=1, dt=1/120 }={}) {
   const built = getBuiltCar(carId,state);
+  assert.ok(built, `Unknown vehicle fixture: ${carId}`);
   const frozen = JSON.stringify(built);
   const v = new Vehicle(built.car,built.engine);
   const skill = applyDifficultyToRivalAi(rolling ? getEncounterAi(rating) : boostAiForStandingStart(getEncounterAi(rating),rating),difficulty,{rollingStart:rolling});
@@ -24,7 +25,7 @@ export function run(carId, rating, { rolling=false, state={}, difficulty='STANDA
   if(rolling) {
     const speed=60/3.6, wheel=speed/(2*Math.PI*v.config.wheelRadius)*60;
     let fallback=2, score=Infinity;
-    v.config.gearRatios.forEach((ratio,i)=>{ const rpm=wheel*ratio*v.config.finalDriveRatio;
+    v.config.gearRatios.forEach((ratio,i)=>{ const rpm=wheel*ratio*v.transmission.finalDrive;
       if(rpm>0 && rpm<v.config.engineRedlineRPM*.86) {
         const value=Math.abs(rpm-v.config.engineRedlineRPM*.63)+Math.max(0,rpm-v.config.engineRedlineRPM*.76)*1.5;
         if(value<score){score=value;fallback=i+1;}
@@ -52,7 +53,7 @@ export function run(carId, rating, { rolling=false, state={}, difficulty='STANDA
 }
 if(import.meta.url===`file://${process.argv[1]}`) {
   const rows=[];
-  for(const car of ['evo3','jza80','ek9']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
+  for(const car of ['galant','jza80','ek9']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
     const result=[];
     for(const rating of [2,3,4,5]) {
       const runs=Array.from({length:6},(_,i)=>run(car,rating,{state,rolling,seed:i+1}));

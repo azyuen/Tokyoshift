@@ -1,8 +1,8 @@
 // Permanent EVO IX retirement. Convert old owned examples and any saved
 // coupons to EVO VI without discarding upgrades or duplicate car instances.
 // Runs before GameState registers car aliases or filters unknown models.
-const OLD_MODEL = /^evo9(?:__copy([2-9]\d*))?$/;
-const NEW_MODEL = /^evo6(?:__copy([2-9]\d*))?$/;
+const OLD_MODEL = /^evo9(?:__copy([2-9]|[1-9]\d+))?$/;
+const NEW_MODEL = /^evo6(?:__copy([2-9]|[1-9]\d+))?$/;
 
 export function migrateRetiredEvoIX(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return input;
@@ -85,7 +85,7 @@ export function migrateRetiredEvoIX(input = {}) {
 // older saved race never attempts to construct a missing vehicle.
 export function migrateRetiredEJ1(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return input;
-  const retired = /^ej1(?:__copy[2-9]\d*)?$/;
+  const retired = /^ej1(?:__copy(?:[2-9]|[1-9]\d+))?$/;
   // Normal saves have no EJ1 references; avoid cloning the whole save again.
   if (!JSON.stringify(input).includes('ej1')) return input;
   const remapId = value => retired.test(value) ? 'crx' + value.slice(3) : value;

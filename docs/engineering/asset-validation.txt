@@ -1,0 +1,27 @@
+✔ AE86 master and two shared wheel diameters match approved calibration (1.646933ms)
+✔ all reference cars have paired identical-size body/paint canvases and valid right-origin axles (14.199167ms)
+✔ baseline axle coordinates stay exactly as approved (0.515738ms)
+✔ GF8 Version VI is a separate, accurate 206 kW AWD EJ207 five-speed car (77.372825ms)
+✔ GF8 loads the uploaded matching 1300x440 WRXGF8 stock sprites with aligned 194px wheels (2.054728ms)
+✔ GF8 market/encounters are live without altering other Subaru models (0.648949ms)
+✔ reference heroes do not receive the legacy collector ground correction twice (2.440579ms)
+✔ 20 fixed-livery heroes load only their exact body asset; canvas and catalog agree (6.481912ms)
+✔ per-axle sizes preserve contact and right-edge registration at every zoom and flip (2.227297ms)
+✔ single-body reference heroes never tint or reuse stale paint textures (1.172217ms)
+✔ collector ownership and legacy GC8 migration do not consume the new 22B (5.788277ms)
+✔ all 20 collectors finish standing and rolling half-mile races without invalid controls (249.98115ms)
+✔ all 11 cars have rated engines, correct drivetrain/tyres and reachable purchase entries (14.490135ms)
+✔ Stock paths resolve with exact filename case and matching PNG canvases (6.591898ms)
+✔ new cars support stock and upgraded performance without missing engine configs (143.682011ms)
+✔ all 42 deployed regular cars resolve to unified lowercase stock folder (2.223221ms)
+✔ all 86 deployed PNG assets exist in stock and sizes match; future uploads are allowed (13.43898ms)
+✔ all 20 hero/collector images use the hero folder (0.229296ms)
+✔ game paths and calibration views do not point to the deleted directories (4.712149ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 435.788293

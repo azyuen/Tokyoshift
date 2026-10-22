@@ -7,7 +7,7 @@ const LEGACY_TO_CANONICAL = Object.freeze({
   evo3: 'galant',
   wrx22b: 'gc8',
 });
-const OWNED_COPY_PATTERN = /^(evo3|wrx22b)(__copy[2-9][0-9]*)?$/;
+const OWNED_COPY_PATTERN = /^(evo3|wrx22b)(__copy(?:[2-9]|[1-9][0-9]+))?$/;
 const MODEL_ONLY_FIELDS = new Set([
   'baseCarId', 'crewBaseCarId', 'ownedBaseCarId',
   'opponentCarId', 'selectedOpponentCarId',

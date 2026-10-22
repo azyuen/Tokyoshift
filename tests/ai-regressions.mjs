@@ -11,7 +11,7 @@ import {applyDifficultyToRivalAi} from '../src/data/playerDifficulty.js';
 
 let count=0;
 const rows=[];
-for(const car of ['evo3','r32','jza80','ek9','s2000']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
+for(const car of ['galant','r32','jza80','ek9','s2000']) for(const state of [{},tuned]) for(const rolling of [false,true]) {
   const means=[];
   for(const rating of [1,2,3,4,5]) {
     const runs=Array.from({length:12},(_,i)=>run(car,rating,{state,rolling,dt:1/60,seed:50+i*997}));count+=runs.length;
@@ -31,9 +31,9 @@ for(const car of ['evo3','r32','jza80','ek9','s2000']) for(const state of [{},tu
 }
 // Full catalogue: hero/locked and ordinary cars must complete on real physics.
 for(const car of Object.keys(cars))for(const rolling of [false,true]){run(car,5,{rolling,dt:1/60});count++;}
-for(const dt of [1/30,1/120])for(const car of ['evo3','jza80','ek9'])for(const rolling of [false,true]){run(car,5,{state:tuned,rolling,dt});count++;}
+for(const dt of [1/30,1/120])for(const car of ['galant','jza80','ek9'])for(const rolling of [false,true]){run(car,5,{state:tuned,rolling,dt});count++;}
 
-const built=getBuiltCar('evo3',tuned);
+const built=getBuiltCar('galant',tuned);
 const v=new Vehicle(built.car,built.engine);
 const model=new DrivingModel(v);
 // Deliberately peaky engine: wheel-torque crossover must produce an early shift.
@@ -45,7 +45,7 @@ altered.car.gearRatios[2]*=.7;
 const wider=new DrivingModel(new Vehicle(altered.car,altered.engine));
 assert.notEqual(wider.shiftPoints[1],peaky.shiftPoints[1],'ignores next-gear RPM drop');
 for(const bias of [-2,2]) {
- const b=getBuiltCar('evo3',{...tuned,stage3Calibration:{ecuBias:bias,boostBias:bias,gearBias:bias}});
+ const b=getBuiltCar('galant',{...tuned,stage3Calibration:{ecuBias:bias,boostBias:bias,gearBias:bias}});
  const m=new DrivingModel(new Vehicle(b.car,b.engine));
  assert(m.shiftPoints.every(r=>r<=b.engine.limiterRPM-160));
  assert(m.rollingGear(60/3.6)>0);

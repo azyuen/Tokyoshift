@@ -4,7 +4,7 @@ const COPY_MARKER = '__copy';
 
 function parsedCopy(carId) {
   const id = String(carId || '');
-  const match = id.match(/^(.*)__copy([2-9][0-9]*)$/);
+  const match = id.match(/^(.*)__copy([2-9]|[1-9][0-9]+)$/);
   if (!match) return null;
   return {
     baseCarId: match[1],
