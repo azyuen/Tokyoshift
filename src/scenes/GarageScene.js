@@ -57,7 +57,7 @@ import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
   ETHAN_GIFT_PENDING_KEY, isEthanName,
 } from '../data/specialProfileRewards.js?v=20261022-r638';
-import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261017-r572';
+import { playCanalYardStory } from '../ui/CanalYardStory.js?v=20261023-r658';
 import { startSevenRivalsPortraitMontage } from '../ui/SevenRivalsMontage.js?v=20261017-r564';
 import { showFullCrewCelebration } from '../ui/FullCrewCelebration.js?v=20261017-r562';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261021-r627';
@@ -65,9 +65,9 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261022-r646';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261023-r658';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
-import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r574';
+import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261023-r658';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261018-r586';
 import { isChapter08DevReplay, finishInteractiveChapter08Replay } from '../ui/Chapter08DevReplay.js?v=20261017-r574';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
@@ -142,7 +142,7 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r657';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r657';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r658';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
