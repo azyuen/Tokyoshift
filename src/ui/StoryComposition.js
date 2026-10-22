@@ -33,7 +33,8 @@ export function resolveStoryComposition({
   if(!p) throw new Error('Unknown story composition: '+preset);
   const n=Math.max(0,Math.min(3,Math.floor(Number(castCount)||0)));
   const carCenterX=w*(carX??p.carX);
-  const maxWidth=Math.max(1,Math.min(carCenterX-24,w-24-carCenterX)*2);
+  const edgePadding=w*.0154;
+  const maxWidth=Math.max(1,Math.min(carCenterX-edgePadding,w-edgePadding-carCenterX)*2);
   const bodyWidth=Math.min(maxWidth,w*(carWidth??p.carWidth));
   const car={
     x:Math.round(carCenterX),
