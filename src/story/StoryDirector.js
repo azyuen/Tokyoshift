@@ -160,6 +160,19 @@ export class StoryDirector {
     if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
     if (!this.session) {
       const registry=this.game.registry;
+      // A playable replay starts from an Office button. Its scene transition
+      // is deferred to the browser event loop, so a same-frame POST_STEP must
+      // NOT resume the chapter in the outgoing GarageScene: that would create
+      // a HOLD_SCENE or interactive job which the transition immediately
+      // destroys, leaving the replay stuck or appearing cinematic-only.
+      if (isArkonPlayableReplay(registry)) {
+        const active=this.activeScene();
+        const replayChapter=Number(registry.get('__arkonStoryPlayableReplayChapter')||0);
+        const expected=replayChapter===1||replayChapter===4
+          ? 'GarageScene' : 'MeetScene';
+        if (!replayChapter || sceneName(active)!==expected ||
+            active?._pendingSafeSceneStart) return;
+      }
       const checkpoint=registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
       // The sequel begins on the NEXT ordinary Meet visit after Chapter 01.
       // Never touch Career, the debug developer save or an older checkpoint.
