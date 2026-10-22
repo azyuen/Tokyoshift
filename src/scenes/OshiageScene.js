@@ -5,7 +5,7 @@ import {
   OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
   isOshiageVoucherAvailable,
 } from '../data/oshiageSchool.js?v=20261023-r652';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261023-r652';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261023-r653';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
 import {
@@ -17,14 +17,14 @@ import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=202610
 import { getStreetPaintPalette } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r652';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r652';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
