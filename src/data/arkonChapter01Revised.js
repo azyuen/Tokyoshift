@@ -26,8 +26,7 @@ const ark=(text,pose='storyTalking')=>['left',text,pose];
 export const ARKON_CHAPTER_01_REVISED={
   id:'arkonChapter01Revised',title:'ARKON DEN // CHAPTER 01: FIRST IMPRESSIONS',
   steps:[
-    {type:'SET_FLAG',key:'arkonStoryTimeOfDay',value:'night'},
-    {type:'SET_FLAG',key:'arkonStoryPhase',value:'opening'},
+    {type:'SET_FLAG',key:'arkonStoryPhase',value:'opening',timeOfDay:'night'},
     {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
       composition:'conversation-balanced',
       characters:[{id:A,pose:'storySerious'}],cars:[{carId:'$SELECTED_CAR'}]},
@@ -221,12 +220,9 @@ export const ARKON_CHAPTER_01_REVISED={
     ]),
     {type:'CLEAR_STAGE'},
     {type:'SET_FLAG',key:'arkonStoryLessonCredits',value:1},
-    {type:'SET_FLAG',key:'arkonStoryTimeOfDay',value:'day'},
-    {type:'SET_FLAG',key:'arkonStoryPhase',value:'practice'},
-    {type:'WAIT_FLAG',key:'wins',atLeast:6},
-    // Never draw on RaceScene's victory overlay. Wait for the player to
-    // dismiss the result and land back at the actual Meet.
-    {type:'WAIT_SCENE',scene:'MeetScene'},
+    {type:'SET_FLAG',key:'arkonStoryPhase',value:'practice',timeOfDay:'day'},
+    // Do not trigger during RaceScene's victory page. Wait for the real Meet.
+    {type:'WAIT_FLAG',key:'wins',atLeast:6,scene:'MeetScene'},
     {type:'STAGE',backgroundId:'$CURRENT_MEET',stageMode:'native',privateMeet:true,
       characters:[{id:A,pose:'storyIdle'}],cars:[{carId:'$SELECTED_CAR'}]},
     {type:'HOLD_SCENE',label:'THAT FREE LESSON',caption:'A FEW RACES LATER'},
