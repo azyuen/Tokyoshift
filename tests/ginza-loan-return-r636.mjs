@@ -89,9 +89,9 @@ test('the return cutscene uses matching evening outfits for Sayaka and Arkon', (
 
 test('race dialogue uses the left reading zone with a right-aligned Arkon portrait', () => {
   const hud = source('src/ui/GinzaBanterHud.js');
-  assert.match(hud, /face: \{ x: 755, y: 114, width: 150/);
-  assert.match(hud, /bubble: \{ left: 194, right: 733, top: 118, bottom: 326/);
-  assert.match(hud, /bubble: \{ left: 184, right: 726, top: 118, bottom: 326/);
-  assert.match(hud, /textWidth: 486/);
+  const layout = source('src/ui/CompactDialogueLayout.js');
+  assert.match(hud, /GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS/);
+  assert.match(layout, /COMPACT_DIALOGUE_SHIFT_X = 150/);
+  assert.match(layout, /textWidth: 486/);
   assert.match(hud, /const right = create\('ARKON', arkonVisual, arkonKey, 'right'/);
 });
