@@ -34,7 +34,7 @@ test('Chapter 08 Porsche confrontation, Sayaka reveal and later outfit cue remai
   assert.match(story,/showStoryContinuePrompt\(scene/);
   assert.match(stage,/tokyo_ginza_night\.png/);
   assert.match(stage,/rwbStellaPorsche/);
-  assert.match(stage,/DEPTH\+300/);
+  assert.match(stage,/depth\+300/);
   assert.ok(fs.existsSync(new URL('../assets/CentralTokyo/tokyo_ginza_night.png',import.meta.url)));
   assert.ok(fs.existsSync(new URL('../assets/Characters/Main/race_sayaka_fujieda_idle.png',import.meta.url)));
   assert.match(source('src/scenes/CentralTokyoScene.js'),/this\.time\.delayedCall\(100, \(\) => \{[\s\S]*?startChapter08Ginza\(this\)/);
