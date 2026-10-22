@@ -215,6 +215,7 @@ export const ARKON_CHAPTER_01_REVISED={
       say('You were not entirely unimpressive.','oshiageHappy'),
     ]),
     {type:'CLEAR_STAGE'},
+    {type:'SET_FLAG',key:'arkonStoryLessonCredits',value:1},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'practice'},
     {type:'WAIT_FLAG',key:'wins',atLeast:6},
     {type:'STAGE',backgroundId:'workshop:shinonomeWorkshop:night',
