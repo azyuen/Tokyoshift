@@ -47,6 +47,30 @@ export const PHONE_CALL_PRESENTATION = Object.freeze({
   iconOffsetY: -12,
 });
 
+// Reusable anonymous incoming caller portrait. Phaser draws a neutral grey
+// head-and-shoulders silhouette once into a transparent texture; it never
+// reveals the identity of an intentionally unknown customer (including Sayaka).
+export const ANONYMOUS_CALLER_TEXTURE='phoneAnonymousCallerSilhouette';
+export const ANONYMOUS_CALLER_VISUAL=Object.freeze({
+  faceAnchor:Object.freeze({x:.5,y:.37,headHeight:.37}),
+});
+export function ensureAnonymousCallerPortrait(scene){
+  if(!scene?.textures || !scene?.make?.graphics)return '';
+  if(scene.textures.exists(ANONYMOUS_CALLER_TEXTURE))return ANONYMOUS_CALLER_TEXTURE;
+  const g=scene.make.graphics({add:false});
+  g.fillStyle(0x3b4752,1);
+  g.fillEllipse(128,248,248,148);
+  g.fillRoundedRect(103,143,50,68,16);
+  g.fillEllipse(128,101,120,146);
+  g.fillStyle(0x68747f,1);
+  g.fillEllipse(128,107,94,116);
+  g.fillStyle(0x46525d,1);
+  g.fillEllipse(128,249,212,110);
+  g.generateTexture(ANONYMOUS_CALLER_TEXTURE,256,256);
+  g.destroy();
+  return ANONYMOUS_CALLER_TEXTURE;
+}
+
 export function createPhoneCallBackdrop(scene, { depth = 305 } = {}) {
   const width = Number(scene.scale?.width || 1560);
   const height = Number(scene.scale?.height || 840);
