@@ -387,7 +387,7 @@ test('R653 manga never falls back to Sayaka home clothing while dimmed',()=>{
     assert.doesNotMatch(page.leftPose,/^dev/);
   }
   const dir=readFileSync(new URL('../src/story/StoryDirector.js',import.meta.url),'utf8');
-  assert.match(dir,/preloadPagePosesOnly: \['arkonChapter01Revised','arkonChapter02'\]\.includes\(this\.session\.id\)/);
+  assert.match(dir,/preloadPagePosesOnly: \['arkonChapter01Revised','arkonChapter02','arkonChapter03'\]\.includes\(this\.session\.id\)/);
 });
 
 test('R653 prevents reflection playing before victory result is dismissed',()=>{
