@@ -1,0 +1,44 @@
+name: R641 Dev vault choice-driven Story Mode rehearsal
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feature/dev-vault-choice-story-r641]
+    paths:
+      - 'src/data/devVaultStory.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/story/StoryScript.js'
+      - 'src/ui/StoryChoicePanel.js'
+      - 'src/scenes/DevVaultStoryScene.js'
+      - 'src/scenes/CentralTokyoScene.js'
+      - 'src/scenes/MeetScene.js'
+      - 'src/scenes/RaceScene.js'
+      - 'src/state/GameState.js'
+      - 'src/main.js'
+      - 'tests/dev-vault-story-r641.mjs'
+      - '.github/workflows/dev-vault-story-r641.yml'
+jobs:
+  dev-vault-story:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Story Director, venue and scene imports
+        run: |
+          node --check src/data/devVaultStory.js
+          node --check src/data/storyDirectorScripts.js
+          node --check src/story/StoryDirector.js
+          node --check src/story/StoryScript.js
+          node --check src/ui/StoryChoicePanel.js
+          node --check src/scenes/DevVaultStoryScene.js
+          node --check src/scenes/CentralTokyoScene.js
+          node --check src/scenes/MeetScene.js
+          node --check src/scenes/RaceScene.js
+          node --check src/state/GameState.js
+          node --check src/main.js
+      - name: Script branches, profile isolation, phone and existing Ginza regressions
+        run: |
+          node --test tests/dev-vault-story-r641.mjs tests/story-director-r639.mjs tests/ginza-loan-return-r636.mjs tests/ginza-arkon-showdowns-r637.mjs tests/ginza-banter-r633.mjs tests/startup-import-integrity-r508.mjs
