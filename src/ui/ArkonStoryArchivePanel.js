@@ -4,6 +4,7 @@ import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
+import { getArkonPlayableChapters, beginArkonPlayableReplay } from './ArkonPlayableReplay.js?v=20261023-r657';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r653';
 import { resetArkonStoryState } from '../state/GameState.js?v=20261023-r653';
@@ -129,7 +130,7 @@ export function showArkonStoryArchivePanel(scene) {
     fontFamily:PIXEL,fontSize:'11px',color:'#84dce7',
   }).setOrigin(.5).setDepth(depth+2));
   add(scene.add.text(780,315,
-    'Rewatch the conversations you have already seen, or begin the Story again.\nNeither option touches your other drivers or Arkon Dev Career.',{
+    'REWATCH: dialogue only. PLAY CHAPTER: full choices, racing and scenes.\nReplays never change your actual Story progress or cash.',{
       fontFamily:BODY,fontSize:'20px',color:'#d5e4ec',
       align:'center',wordWrap:{width:820},
     }).setOrigin(.5).setDepth(depth+2));
@@ -143,14 +144,50 @@ export function showArkonStoryArchivePanel(scene) {
     button.on('pointerdown',fn);
   };
   const count=getArkonRecountScenes(scene.registry).length;
-  action(405,count?'REWATCH PLAYED CUTSCENES':'NO CUTSCENES TO REWATCH',0x6fdae2,()=>{
+  action(386,count?'REWATCH DIALOGUE':'NO CUTSCENES TO REWATCH',0x6fdae2,()=>{
     if(!count)return;
     close();
     scene.closeOpeningOffice?.();
     playArkonStoryRecount(scene);
   });
+  action(452,'PLAY CHAPTER FROM START // INTERACTIVE',0x93e5aa,()=>{
+    const chapters=getArkonPlayableChapters(scene.registry);
+    if(!chapters.length)return;
+    const curtain=add(scene.add.rectangle(780,420,950,535,0x071521,.998)
+      .setStrokeStyle(3,0x72d8c7).setDepth(depth+12).setInteractive());
+    add(scene.add.text(780,254,'PLAYABLE CHAPTER REPLAY',{
+      fontFamily:PIXEL,fontSize:'14px',color:'#b5fff0',
+    }).setOrigin(.5).setDepth(depth+13));
+    add(scene.add.text(780,301,
+      'Play the full chapter using real race controls.\nYour existing profile will be restored when you exit.',{
+        fontFamily:BODY,fontSize:'19px',color:'#eff9ff',
+        align:'center',wordWrap:{width:840},
+      }).setOrigin(.5).setDepth(depth+13));
+    const titles={1:'01  FIRST IMPRESSIONS',2:'02  THE LONG WAY HOME',3:'03  THE NIGHT SHIFT'};
+    chapters.forEach((number,index)=>{
+      const y=375+index*65;
+      const card=add(scene.add.rectangle(780,y,585,53,0x173e43)
+        .setStrokeStyle(2,0x72d8c7).setDepth(depth+13)
+        .setInteractive({useHandCursor:true}));
+      add(scene.add.text(780,y,titles[number],{
+        fontFamily:PIXEL,fontSize:'11px',color:'#f4ffff',
+      }).setOrigin(.5).setDepth(depth+14));
+      card.on('pointerdown',()=>{
+        close();scene.closeOpeningOffice?.();
+        if(!beginArkonPlayableReplay(scene,number))
+          scene.showWorkshopToast?.('CHAPTER REPLAY COULD NOT START');
+      });
+    });
+    const dismiss=add(scene.add.rectangle(780,605,270,43,0x1d3441)
+      .setStrokeStyle(1,0x81bacd).setDepth(depth+13).setInteractive());
+    add(scene.add.text(780,605,'CANCEL',{
+      fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+14));
+    dismiss.on('pointerdown',()=>{close();showArkonStoryArchivePanel(scene);});
+    void curtain;
+  });
   let confirming=false;
-  action(486,'RESTART ARKON STORY FROM THE BEGINNING',0xe898a7,()=>{
+  action(518,'ERASE STORY PROGRESS // RESTART PROFILE',0xe898a7,()=>{
     if(confirming)return;
     confirming=true;
     const confirm=add(scene.add.rectangle(780,420,950,535,0x081523,.997)
@@ -188,6 +225,6 @@ export function showArkonStoryArchivePanel(scene) {
     });
     void confirm;
   });
-  action(577,'BACK TO OFFICE',0x4e96ab,close);
+  action(606,'BACK TO OFFICE',0x4e96ab,close);
   return true;
 }

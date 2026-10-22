@@ -1,4 +1,5 @@
-import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r655';
+import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r657';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from './ArkonPlayableReplay.js?v=20261023-r657';
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
 import {
   getControlSettings,
@@ -24,7 +25,7 @@ import {
   saveIdentityState,
   exportProfileBackup,
   importProfileBackup,
-} from '../state/GameState.js?v=20261011-r482';
+} from '../state/GameState.js?v=20261023-r657';
 import { addDevCutsceneButton } from './CutsceneTester.js?v=20261009-r451';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20260926-r213';
 import {
@@ -83,7 +84,18 @@ export function addSettingsButton(scene, x = 995, y = 35) {
 
   const devCutscenes = addDevCutsceneButton(scene, x - 115, y);
   const storyHelp = addArkonStoryObjectiveButton(scene, x - 56, y);
-  return { button, cog, devCutscenes, storyHelp };
+  let replayExit=null;
+  if(isArkonPlayableReplay(scene.registry)){
+    replayExit=scene.add.rectangle(x-260,y,185,38,0x3c2023,1)
+      .setStrokeStyle(2,0xffbd98).setDepth(43)
+      .setInteractive({useHandCursor:true});
+    const label=scene.add.text(x-260,y,'EXIT CHAPTER REPLAY',{
+      fontFamily:'"Silkscreen", monospace',fontSize:'9px',color:'#ffe5d8',
+    }).setOrigin(.5).setDepth(44);
+    replayExit.on('pointerdown',()=>endArkonPlayableReplay(scene));
+    replayExit.label=label;
+  }
+  return { button, cog, devCutscenes, storyHelp, replayExit };
 }
 
 function showRenameDriverPanel(scene, onSaved = null) {

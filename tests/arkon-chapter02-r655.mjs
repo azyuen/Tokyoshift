@@ -33,7 +33,8 @@ test('The agreed dock artwork is real and no Daikoku rival is renamed',()=>{
   const dock=ARKON_CHAPTER_02.steps.find(x=>x.type==='STAGE'&&
     x.backgroundId==='meet:daikokuOpenLot:day');
   assert.ok(dock);
-  assert.equal(dock.stageMode,'story');
+  assert.equal(dock.stageMode,'native');
+  assert.equal(dock.cars[0].width,undefined);
   assert.equal(dock.cars[0].carId,'forester');
   assert.ok(dock.characters.some(x=>x.id==='storyDockForeman'));
   assert.ok(dock.characters.some(x=>x.id==='arkonDen'&&x.pose==='storyMechanicCrouch'));
@@ -64,10 +65,13 @@ test('The car ride follows meet repair, before the home workshop',()=>{
   const steps=ARKON_CHAPTER_02.steps;
   const meet=steps.findIndex(s=>s.type==='STAGE'&&s.characters?.some(
     a=>a.id==='arkonDen'&&a.role==='carMechanic')&&s.backgroundId==='$CURRENT_MEET');
-  const ride=steps.findIndex(s=>s.type==='STAGE'&&s.motion==='drive');
+  const ride=steps.findIndex(s=>s.type==='STORY_CRUISE');
   const home=steps.findIndex(s=>s.type==='STAGE'&&s.backgroundId==='workshop:shinonomeWorkshop:night');
   assert.ok(meet>=0&&ride>meet&&home>ride);
-  assert.equal(steps[ride].characters.length,0);
+  assert.equal(steps[ride+1].type,'WAIT_SCENE');
+  assert.equal(steps[ride+1].scene,'GarageScene');
+  assert.equal(steps[home].stageMode,'native');
+  assert.equal(steps[home].cars[0].carId,'$SELECTED_CAR');
 });
 
 test('Chapter 02 progress, dock pay guard and rival result are private to Story saves',()=>{
@@ -104,7 +108,7 @@ test('Chapter 02 objective and archive include new scenes without replacing Chap
   const pages=getArkonRecountScenes(lookup(after));
   assert.ok(pages.some(p=>p.title==='AN OLD CIVIC'));
   assert.ok(pages.some(p=>p.title==='SOMETHING OTHER THAN RACING'));
-  assert.ok(pages.some(p=>p.title==='THE LONG WAY HOME'));
+  assert.ok(pages.some(p=>p.title==='AFTER THE DRIVE'));
   assert.equal(ARKON_CHAPTER_01_REVISED.id,'arkonChapter01Revised');
 });
 

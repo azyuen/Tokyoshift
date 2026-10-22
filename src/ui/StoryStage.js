@@ -117,7 +117,10 @@ export function showStoryStage(scene, {
     let viewport=null;
     // Native staging already owns/draws its real background in gameplay.
     // Do not paint a second, differently cropped workshop or Meet over it.
-    if(backdrop && !template){
+    // For the dock job the SAME Meet/Showdown car geometry is used, but
+    // the location is a separate authored Daikoku backdrop.
+    if(backdrop && (!template || (template.kind==='meet' &&
+        backgroundId!=='$CURRENT_MEET'))){
       const src=scene.textures.exists(backdrop.key)
         ? scene.textures.get(backdrop.key).getSourceImage() : null;
       if(src){

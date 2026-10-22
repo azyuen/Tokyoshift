@@ -10,7 +10,8 @@ import {
 } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
-import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261022-r640';
+import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r657';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r657';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -63,7 +64,7 @@ import {
   clearAllSaves,
   recordCarAcquisition,
   recordCarDeparture,
-} from '../state/GameState.js?v=20261023-r653';
+} from '../state/GameState.js?v=20261023-r657';
 import { playRaceMusic, playVictorySting, stopMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { getRaceCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
 import EngineAudioSystem from '../audio/EngineAudioSystem.js?v=20260921-r81';
@@ -256,6 +257,18 @@ export default class RaceScene extends Phaser.Scene {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
     }));
+    if (this.isStoryCruise) {
+      for(const [id,poses] of [
+        ['sayakaFujieda',['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
+      ]){
+        for(const pose of poses){
+          const asset=characters[id]?.visual?.poseAssets?.[pose];
+          if(asset && !this.textures.exists(asset.key))
+            queueImage(asset.key,getCharacterAssetUrl(asset.path));
+        }
+      }
+    }
     if (this.registry.get('selectedRaceCategory') === 'CHAPTER08') {
       const ginzaPose = characters.sayakaFujieda?.visual?.poseAssets?.ginzaNormal;
       if (ginzaPose && !this.textures.exists(ginzaPose.key)) {
@@ -365,6 +378,9 @@ export default class RaceScene extends Phaser.Scene {
       || characters[this.opponentCharacterId]?.skill?.ai
       || getEncounterAi(this.opponentEncounterRating);
     this.raceMode = this.registry.get('selectedRaceCategory') || 'SINGLE';
+    this.isStoryCruise = this.raceMode==='STORY_CRUISE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      this.registry.get('arkonStoryPhase')==='chapter02Driving';
     // Older in-progress Street Showdowns may carry a pre-rebalance Expert AI.
     // Resolve driver talent from the actual award for this stage at race entry,
     // preserving saved cars, prize, paid entry fee and remaining rounds.
@@ -528,7 +544,7 @@ export default class RaceScene extends Phaser.Scene {
       : savedPlayerState;
     this.playerPaintColor = getCarPaintColor(this.playerCarState);
 
-    if (!this.isTutorial && this.opponentCarId) {
+    if (!this.isTutorial && !this.isStoryCruise && this.opponentCarId) {
       recordCarMagazineSightings(this.registry, [{
         carId: this.opponentCarId,
         source: this.raceMode === 'TUNER_TEAM'
@@ -749,7 +765,7 @@ export default class RaceScene extends Phaser.Scene {
       characters[this.playerCharacterId],
       this.playerCarState
     );
-    this.opponentVisual = this.isTutorial
+    this.opponentVisual = this.isTutorial || this.isStoryCruise
       ? null
       : this.createCarVisual(
           cars[this.opponentCarId],
@@ -792,7 +808,7 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.startButtonText = this.add.text(780, 54, this.isCoaching ? 'START PRACTICE' : this.isRollingStart ? 'START ROLL' : 'START RACE', {
+    this.startButtonText = this.add.text(780, 54, this.isStoryCruise?'START DRIVE':this.isCoaching ? 'START PRACTICE' : this.isRollingStart ? 'START ROLL' : 'START RACE', {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
@@ -818,9 +834,10 @@ export default class RaceScene extends Phaser.Scene {
     ).setOrigin(0, 0.5).setDepth(46).setScrollFactor(0)
       .setVisible(false);
 
-    const rivalName = this.raceMode === 'CHAPTER08'
+    const rivalName = this.isStoryCruise ? 'SAYAKA // PASSENGER' : this.raceMode === 'CHAPTER08'
       ? 'UNKNOWN CHALLENGER' : rivalDisplayCharacter?.name || 'Rival';
-    const moneyLabel = this.isTutorial
+    const moneyLabel = this.isStoryCruise ? 'CASUAL DRIVE // NO STAKES'
+      : this.isTutorial
       ? (this.isCoaching ? 'PRACTICE // NO STAKES' : 'CONTROLS // NO STAKES')
       : this.raceMode === 'CHAPTER08'
         ? 'STORY RUN // NO STAKES'
@@ -855,7 +872,7 @@ export default class RaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
 
-    this.cancelButtonText = this.add.text(135, 54, this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : isChapter08DevReplay(this.registry) && this.raceMode === 'CHAPTER08' ? 'EXIT REPLAY' : 'CANCEL RACE', {
+    this.cancelButtonText = this.add.text(135, 54, this.isStoryCruise?'SKIP DRIVE':this.isCoaching ? 'EXIT PRACTICE' : this.isTutorial ? 'EXIT TUTORIAL' : isChapter08DevReplay(this.registry) && this.raceMode === 'CHAPTER08' ? 'EXIT REPLAY' : 'CANCEL RACE', {
       fontFamily: PIXEL_FONT, fontSize: '11px', color: '#ffd8dc'
     }).setOrigin(0.5).setDepth(48).setScrollFactor(0);
 
@@ -877,6 +894,17 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isCoaching) this.setupCoachedLesson();
     else if (this.isTutorial) this.setupDrivingTutorial();
     if (this.hasGinzaBanter) this.setupGinzaPassenger();
+    if (this.isStoryCruise) this.setupArkonStoryCruise();
+    if(isArkonPlayableReplay(this.registry)){
+      const replayButton=this.add.rectangle(1340,114,320,42,0x2c1922,0.96)
+        .setDepth(91).setScrollFactor(0).setStrokeStyle(2,0xffba97)
+        .setInteractive({useHandCursor:true});
+      const replayLabel=this.add.text(1340,114,'EXIT CHAPTER REPLAY',{
+        fontFamily:PIXEL_FONT,fontSize:'10px',color:'#ffdec6',
+      }).setOrigin(.5).setDepth(92).setScrollFactor(0);
+      replayButton.on('pointerdown',()=>endArkonPlayableReplay(this));
+      this.replayExitButton={replayButton,replayLabel};
+    }
 
     // Safe dev-only cutscene preview while staged. It is hidden during an
     // active race and raised above the result tableau only after the race ends.
@@ -903,6 +931,9 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if(this.isStoryCruise){
+      this.endArkonStoryCruise();return;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryMx5Loan')?.active){
       this.registry.set('arkonStoryMx5RaceResult','forfeit');
@@ -1518,6 +1549,49 @@ export default class RaceScene extends Phaser.Scene {
       finished: this.finished,
     });
     if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
+  }
+
+  setupArkonStoryCruise() {
+    this.cruiseLineIndex=0;
+    this.cruiseDialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>this.cruiseDialogue?.destroy?.());
+  }
+
+  updateArkonStoryCruise(telemetry) {
+    if(!this.isStoryCruise || !this.raceStarted ||
+       this.greenClock==null || this.cruiseFinishing)return;
+    const travelled=Math.max(0,(telemetry?.positionM||0)-this.raceStartPositionM);
+    const lines=[
+      [0,'sayaka','That shift feels smoother than at the driving school.','oshiageReviewing'],
+      [35,'arkon','I changed the clutch linkage. And a few other things.','storyTalking'],
+      [95,'sayaka','Who built this engine?','oshiageSerious'],
+      [150,'arkon','I did. The transmission, too.','storySerious'],
+      [220,'sayaka','You were a race mechanic, weren\'t you?','oshiageReviewing'],
+      [290,'arkon','Once upon a time. Things got complicated.','storySheepish'],
+      [360,'sayaka','Whatever happened, the Civic drives beautifully.','oshiageRelaxed'],
+      [420,'arkon','Workshop is nearby. Fancy a truly terrible coffee?','storyTalking'],
+      [480,'sayaka','That is not the invitation you think it is.','oshiageHappy'],
+    ];
+    while(this.cruiseLineIndex<lines.length &&
+          travelled>=lines[this.cruiseLineIndex][0]){
+      const [,speaker,text,pose]=lines[this.cruiseLineIndex++];
+      this.cruiseDialogue?.show(speaker,text,pose);
+    }
+    if(travelled>=550) {
+      this.cruiseFinishing=true;
+      this.cruiseDialogue?.show('sayaka','All right. Show me that workshop.','oshiageRelaxed');
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.time.delayedCall(1700,()=>this.endArkonStoryCruise());
+    }
+  }
+
+  endArkonStoryCruise() {
+    if(!this.isStoryCruise || this.cruiseLeaving)return;
+    this.cruiseLeaving=true;
+    this.registry.set('arkonStoryCruiseComplete',true);
+    saveSessionState(this.registry);
+    queueSafeSceneStart(this,'GarageScene',{workshopLocationId:'shinonomeWorkshop'});
   }
 
   setupCoachedLesson() {
@@ -2395,17 +2469,18 @@ export default class RaceScene extends Phaser.Scene {
 
     this.engineAudio?.update(
       playerT,
-      this.isTutorial ? null : oppT,
+      (this.isTutorial || this.isStoryCruise) ? null : oppT,
       this.player.config,
       this.opponent.config,
       dt
     );
 
-    if (!this.isTutorial) this.handleTiming(playerT, oppT);
+    if (!this.isTutorial && !this.isStoryCruise) this.handleTiming(playerT, oppT);
     this.drawScene(playerT, oppT, dt);
 
     let status = '';
-    if (this.isTutorial) {
+    if (this.isStoryCruise)status='NIGHT DRIVE // SAYAKA // NO TIMER';
+    else if (this.isTutorial) {
       status = this.isCoaching ? (this.registry.get('gameMode')==='arkonStory' ? 'DRIVING SCHOOL // SAYAKA' : 'DRIVING SCHOOL // LADY INSTRUCTOR') : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
     } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
@@ -2419,6 +2494,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.hud.update(playerT, status);
     if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
+    if (this.isStoryCruise) this.updateArkonStoryCruise(playerT);
     this.debug.update(playerT);
     if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
     else this.updateDrivingTutorial(controlState, playerT);
@@ -5121,7 +5197,7 @@ export default class RaceScene extends Phaser.Scene {
 
     // The solo tutorial centres the player's car more prominently. Normal
     // races keep the two-car chase composition.
-    const targetPlayerX = W * (this.isTutorial ? 0.46 : 0.34);
+    const targetPlayerX = W * (this.isTutorial || this.isStoryCruise ? 0.46 : 0.34);
     const chaseCameraPx = pt.positionM * PX_PER_M - targetPlayerX;
 
     // After the first car crosses the line, follow for a few more frames, then
@@ -5186,7 +5262,7 @@ export default class RaceScene extends Phaser.Scene {
       this.updateCarVisual(this.opponentVisual, ox, 351, ot, dt);
     }
 
-    this.drawEffects(pt, this.isTutorial ? null : ot);
+    this.drawEffects(pt, (this.isTutorial || this.isStoryCruise) ? null : ot);
     this.drawTree(cameraPx);
 
   }

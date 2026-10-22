@@ -39,10 +39,10 @@ import {
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r643';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r655';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r657';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { preloadArkonMeetObserver, attachArkonMeetObserver } from '../ui/ArkonStoryMeetObserver.js?v=20261023-r652';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
@@ -148,7 +148,7 @@ import {
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261020-r619';
-import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261016-r550';
+import { getMeetProgressionActions } from '../data/meetProgressionActions.js?v=20261023-r657';
 import { getRegionalChallengeReturnLines } from '../data/regionalChallengeReturnQuotes.js?v=20261016-r550';
 import { showStreetShowdownView } from '../ui/StreetShowdownView.js?v=20261022-r651';
 import { isStreetShowdownOfferRosterValid } from '../data/streetShowdownRoster.js?v=20261016-street-showdown-template';
@@ -2102,6 +2102,8 @@ export default class MeetScene extends Phaser.Scene {
 
   maybeShowTunerTeamChallenge({ countReofferVisit = false } = {}) {
     if (this.isCrewTestDriveMode()) return false;
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        !this.registry.get('arkonStoryChapter02Done'))return false;
     if (!this.hasCar || this.specialChallengeActive ||
         this.competitionLoading || this.competitionPopup?.active) return false;
 
@@ -2239,6 +2241,8 @@ export default class MeetScene extends Phaser.Scene {
   beginTunerTeamChallenge(regionId, { perfect = false } = {}) {
     const key = String(regionId || '').toUpperCase();
     if (!this.hasCar || this.isCrewTestDriveMode() || sceneCutsceneActive(this)) return false;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       !this.registry.get('arkonStoryChapter02Done'))return false;
     const state = getTunerTeamChallengeState(this.registry, key);
     if (state.perfectEarned || state.perfectRewardClaimed) return false;
     if (perfect && !state.championEarned) return false;

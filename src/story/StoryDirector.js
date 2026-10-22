@@ -3,15 +3,16 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r655';
+} from './StoryScript.js?v=20261023-r657';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r655';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r655';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r657';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r653';
+import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r656';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r656';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r657';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
@@ -114,6 +115,14 @@ export class StoryDirector {
       this.game.registry.set(STORY_DIRECTOR_SAVE_KEY, null);
       saveSessionState(this.game.registry);
     }
+    if(was?.id==='arkonChapter02' && complete &&
+       !isArkonPlayableReplay(this.game.registry)){
+      this.activeScene()?.buildMeetProgressionButtons?.();
+    }
+    if (was && complete && isArkonPlayableReplay(this.game.registry)) {
+      const scene=this.activeScene();
+      if(scene)endArkonPlayableReplay(scene);
+    }
     // Do not discard an interrupted real checkpoint without explicit request.
     return Boolean(was);
   }
@@ -146,14 +155,14 @@ export class StoryDirector {
       const checkpoint=registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
       // The sequel begins on the NEXT ordinary Meet visit after Chapter 01.
       // Never touch Career, the debug developer save or an older checkpoint.
-      if (!checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
+      if (!isArkonPlayableReplay(registry) && !checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
           registry.get('arkonStoryChapter01RevisedDone') &&
           !registry.get('arkonStoryChapter02Done') &&
           sceneName(this.activeScene())==='MeetScene' &&
           !sceneCutsceneActive(this.activeScene())) {
         if(this.start('arkonChapter02'))return;
       }
-      if (!checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
+      if (!isArkonPlayableReplay(registry) && !checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
           registry.get('arkonStoryChapter02Done') &&
           !registry.get('arkonStoryChapter03Done') &&
           getRegionalChampionshipCount(registry)>=1 &&
@@ -332,6 +341,40 @@ export class StoryDirector {
           }
           saveSessionState(scene.registry);
           this.advance();continue;
+        }
+        if (type === 'STORY_CRUISE') {
+          if(this.session.id!=='arkonChapter02' ||
+             scene.registry.get('gameMode')!=='arkonStory' ||
+             sceneName(scene)!=='MeetScene' ||
+             !cars[scene.registry.get('selectedCarId')]) {
+            this.error='STORY DRIVE MUST BEGIN FROM A MEET';return;
+          }
+          for(const [key,value] of Object.entries({
+            selectedRaceCategory:'STORY_CRUISE',
+            selectedRaceType:'Roll Race',
+            selectedRaceDistanceM:804.672,
+            selectedRaceDeal:'STORY',
+            selectedRaceStake:0,
+            selectedRaceSpecialChallenge:false,
+            selectedRaceMeetOffer:null,
+            selectedOpponentCarId:'ae86',
+            selectedOpponentCharacterId:'storyDaigoKirishima',
+            selectedOpponentBuildState:null,
+            selectedOpponentEncounterAi:null,
+            raceReturnScene:'GarageScene',
+            raceDistrict:'TATSUMI',
+            raceTimeOfDay:'night',
+            raceLocationLabel:'A DRIVE WITH SAYAKA',
+            arkonStoryCruiseComplete:false,
+          }))scene.registry.set(key,value);
+          saveSessionState(scene.registry);
+          this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='STORY DRIVE COULD NOT START';return;
+          }
+          this.advance();
+          this.wait={kind:'transition',target:'RaceScene',origin:scene};
+          return;
         }
         if (type === 'ARKON_CHALLENGE_RACE') {
           if(!['arkonChapter01Revised','arkonChapter02','arkonChapter03'].includes(this.session.id) ||

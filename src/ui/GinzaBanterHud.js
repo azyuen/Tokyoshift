@@ -8,29 +8,31 @@ import { COMPACT_DIALOGUE_LAYOUTS } from './CompactDialogueLayout.js?v=20261022-
 // driving field, bottom pedals and speed cluster remain unobstructed.
 const GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS;
 
-export function createGinzaBanterHud(scene) {
+export function createGinzaBanterHud(scene,{storyCruise=false}={}) {
   const sayakaVisual = characters.sayakaFujieda.visual;
   const arkonVisual = characters.arkonDen.visual;
-  const sayakaKey = sayakaVisual.poseAssets.devIdle.key;
-  const arkonKey = arkonVisual.poseAssets.devIdle.key;
+  const sayakaPose=storyCruise?'oshiageRelaxed':'devIdle';
+  const arkonPose=storyCruise?'storyIdle':'devIdle';
+  const sayakaKey = sayakaVisual.poseAssets[sayakaPose].key;
+  const arkonKey = arkonVisual.poseAssets[arkonPose].key;
   if (!scene.textures.exists(sayakaKey) || !scene.textures.exists(arkonKey)) {
     return null;
   }
-  const create = (speaker, visual, key, side, layout) =>
+  const create = (speaker, visual, key, side, layout,initialPose) =>
     createRaceDialogueHud(scene, {
       speaker, theme: 'standard', depth: 81, side, layout,
       spriteKeyForPose: pose => visual.poseAssets?.[pose]?.key || key,
       characterVisual: visual,
-      initialPose: 'devIdle',
+      initialPose,
     });
-  const left = create('SAYAKA', sayakaVisual, sayakaKey, 'left', GINZA_CHAT_LAYOUT.left);
-  const right = create('ARKON', arkonVisual, arkonKey, 'right', GINZA_CHAT_LAYOUT.right);
+  const left = create('SAYAKA', sayakaVisual, sayakaKey, 'left', GINZA_CHAT_LAYOUT.left,sayakaPose);
+  const right = create('ARKON', arkonVisual, arkonKey, 'right', GINZA_CHAT_LAYOUT.right,arkonPose);
   const toggle = (hud, visible) => hud.objects.forEach(obj => obj?.setVisible?.(visible));
   const hide = () => { toggle(left, false); toggle(right, false); };
   hide();
 
   return {
-    show(speaker, text, pose = 'devIdle') {
+    show(speaker, text, pose = storyCruise?'oshiageRelaxed':'devIdle') {
       hide();
       const active = speaker === 'arkon' ? right : left;
       active.setPortrait(pose);

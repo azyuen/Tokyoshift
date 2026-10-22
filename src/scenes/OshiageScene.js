@@ -20,12 +20,12 @@ import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r657';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r655';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r657';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 import {

@@ -16,11 +16,17 @@ export function getMeetProgressionActions(source, regionId, hasCar = true) {
   if (!hasCar || !region) return [];
   const state = getTunerTeamChallengeState(source, region);
   const actions = [];
-  // Do not offer the continue button before a real attempt. An invitation
-  // declined before the first race is handled by a later manga re-invitation.
-  if (!state.championEarned && state.firstAttemptStarted &&
-      isTunerTeamChallengeEligible(source, region)) {
-    actions.push({ id: 'REGIONAL', label: 'CONTINUE REGIONAL CHALLENGE',
+  // Arkon earns his FIRST regional challenge through his Chapter 02 story.
+  // The normal crowned action is available immediately afterwards at Odaiba.
+  const get=key=>typeof source?.get==='function'?source.get(key):source?.[key];
+  const arkonFirstRegional=region==='ODAIBA' &&
+    get('gameMode')==='arkonStory' && Boolean(get('arkonStoryChapter02Done')) &&
+    !state.championEarned;
+  // All ordinary Career invitations retain their existing conditions.
+  if (arkonFirstRegional || (!state.championEarned && state.firstAttemptStarted &&
+      isTunerTeamChallengeEligible(source, region))) {
+    actions.push({ id: 'REGIONAL', label: arkonFirstRegional && !state.firstAttemptStarted
+      ? 'START REGIONAL CHALLENGE' : 'CONTINUE REGIONAL CHALLENGE',
       badge: MEET_PROGRESSION_BADGES.REGIONAL });
   }
   if (state.championEarned && !state.perfectEarned && !state.perfectRewardClaimed) {

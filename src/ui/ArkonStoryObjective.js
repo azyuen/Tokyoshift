@@ -4,7 +4,7 @@ const BODY='"Rajdhani", sans-serif';
 
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
-import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
+import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r657';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
@@ -39,7 +39,7 @@ export function getArkonStoryObjective(registry) {
   };
   if(get('arkonStoryChapter02Done'))return {
     heading:'CHAPTER 02 COMPLETE',
-    message:'Keep improving the Civic and choose when to attempt your first regional challenge.',
+    message:'Go to an Odaiba street meet and press the crowned REGIONAL CHALLENGE button.',
     progress:'THE LONG WAY HOME // COMPLETED',
   };
   if(active?.id===ARKON_CHAPTER_02.id){

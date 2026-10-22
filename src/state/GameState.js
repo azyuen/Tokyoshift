@@ -1697,7 +1697,9 @@ export function saveSessionState(registry) {
        Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
        Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
-      registry?.get?.('__devVaultStoryRaceActive') === true) return null;
+      registry?.get?.('__devVaultStoryRaceActive') === true ||
+      (registry?.get?.('__arkonStoryPlayableReplay') === true &&
+       Number(registry.get('__arkonStoryPlayableReplayOwner')) === getActiveProfileIndex())) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = snapshotRegistry(registry);
   if (state.gameMode === ARKON_STORY_MODE) {
@@ -1715,7 +1717,9 @@ export function saveManualState(registry) {
        Number(registry.get('__chapter08ReplayProfileSlot')) === getActiveProfileIndex()) ||
       (registry?.get?.('__storyArchiveSceneReplay') === true &&
        Number(registry.get('__storyArchiveOwnerSlot')) === getActiveProfileIndex()) ||
-      registry?.get?.('__devVaultStoryRaceActive') === true) return null;
+      registry?.get?.('__devVaultStoryRaceActive') === true ||
+      (registry?.get?.('__arkonStoryPlayableReplay') === true &&
+       Number(registry.get('__arkonStoryPlayableReplayOwner')) === getActiveProfileIndex())) return null;
   if (!registryOwnsActiveProfile(registry)) return null;
   const state = {
     ...snapshotRegistry(registry),
