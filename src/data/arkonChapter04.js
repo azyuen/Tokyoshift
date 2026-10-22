@@ -257,6 +257,7 @@ export const ARKON_CHAPTER_04={
       ark('No money. A broken Porsche. And more work than I know what to do with.','storyThinking'),
       ark('...What have I done?','storySheepish'),
     ],{left:A}),
+    {type:'HOLD_SCENE',label:'CHAPTER 04 COMPLETE',caption:'THE PRICE OF TRUST'},
     {type:'SET_FLAG',key:'arkonStoryChapter04Done',value:true},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Complete'},
     {type:'CLEAR_STAGE'},
