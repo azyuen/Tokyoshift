@@ -36,6 +36,8 @@ import {
   WORKSHOP_RETURN_COST,
 } from '../data/meetAssets.js?v=20261004-r322';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
+import { shouldLaunchDevVaultStory, claimDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r641';
+import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
@@ -426,6 +428,14 @@ export default class MeetScene extends Phaser.Scene {
   }
 
   create() {
+    // Replace only the specifically armed Shibuya/Dogenzaka developer arrival
+    // with a two-character private story tableau: no regular Meet cars/cards.
+    if (shouldLaunchDevVaultStory(this.registry) &&
+        claimDevVaultStoryLoan(this.registry)) {
+      saveSessionState(this.registry);
+      queueSafeSceneStart(this,'DevVaultStoryScene');
+      return;
+    }
     document.body.dataset.scene = 'meet';
     this.scale.resize(1560, 840);
     playMusic('meet');
