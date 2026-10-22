@@ -10,6 +10,11 @@ import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r639';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r639';
 import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r639';
+import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
+import { cars } from '../data/cars.js?v=20261017-r565';
+import {
+  DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
+} from '../data/devVaultStory.js?v=20261022-r641';
 
 export const STORY_DIRECTOR_SAVE_KEY = 'storyDirectorProgress';
 const DEFAULT_SCENE_DELAY = 2; // allow previous Phaser scene to shut down before resuming
@@ -59,7 +64,7 @@ export class StoryDirector {
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
     if (savedIndex >= compiled.script.steps.length) return false;
-    this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview) };
+    this.session = { id, index: savedIndex, slot: owner(), preview: Boolean(preview), vars: {} };
     this.wait = null; this.error = null; this.sceneDelay = 0;
     this.events.clear();
     this.checkpoint();
@@ -91,6 +96,8 @@ export class StoryDirector {
     this.session = null; this.wait = null; this.error = null;
     this.events.clear();
     this.clearStage();
+    for (const scene of this.game.scene?.getScenes?.(true) || [])
+      scene._storyChoicePanel?.destroy?.();
     if (was && !was.preview && complete && was.slot === owner()) {
       this.game.registry.set(STORY_DIRECTOR_SAVE_KEY, null);
       saveSessionState(this.game.registry);
@@ -164,9 +171,75 @@ export class StoryDirector {
       const type = String(step.type).toUpperCase();
       try {
         if (['LABEL','IF','GOTO'].includes(type)) {
-          this.session.index = nextStoryPosition(compiled,index,key=>scene.registry.get(key));
+          this.session.index = nextStoryPosition(compiled,index,key=>
+            Object.prototype.hasOwnProperty.call(this.session.vars,key)
+              ? this.session.vars[key] : scene.registry.get(key));
           this.checkpoint();
           continue;
+        }
+        if (type === 'WAIT_MS') {
+          this.wait = {kind:'dialogue',index};
+          scene.time.delayedCall(step.ms,()=>{
+            if (this.session?.index === index && this.wait?.index === index) this.advance();
+          });
+          return;
+        }
+        if (type === 'VENUE') {
+          if (typeof scene.transitionVenue !== 'function') {
+            this.error='VENUE requires a story environment';return;
+          }
+          this.wait={kind:'dialogue',index};
+          const accepted=scene.transitionVenue(step.venue,()=>{
+            if(this.session?.index===index && this.wait?.index===index)this.advance();
+          });
+          if(!accepted){this.wait=null;this.error='STORY VENUE UNAVAILABLE';}
+          return;
+        }
+        if (type === 'CHOICE') {
+          if (sceneCutsceneActive(scene) || scene._storyChoicePanel?.active) return;
+          this.wait={kind:'dialogue',index};
+          const panel=showStoryChoices(scene,{
+            title:step.title,subtitle:step.subtitle,choices:step.choices,
+            onChoose:choice=>{
+              if(!this.session || this.session.index!==index || this.wait?.index!==index)return;
+              this.session.vars[step.key||'choice']=choice.id;
+              const dest=compiled.labels.get(choice.to);
+              if(dest==null){this.error='CHOICE TARGET MISSING';return;}
+              this.session.index=dest+1;
+              this.wait=null;
+              this.checkpoint();
+              this.sceneDelay=DEFAULT_SCENE_DELAY;
+            },
+            onCancel:()=>{if(this.session?.index===index)this.error='CHOICE INTERRUPTED';},
+          });
+          if(!panel){this.wait=null;this.error='CHOICE PANEL FAILED';}
+          return;
+        }
+        if (type === 'DEV_HERO_RACE') {
+          if(this.session.id!==DEV_VAULT_STORY_ID ||
+             sceneName(scene)!=='DevVaultStoryScene' ||
+             !prepareDevVaultHeroRace(scene.registry,id=>Boolean(cars[id]))){
+            this.error='DEV STORY RACE UNAVAILABLE';return;
+          }
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            this.error='RACE SCENE TRANSITION FAILED';return;
+          }
+          this.advance();
+          this.wait={kind:'transition',target:'RaceScene',origin:scene};
+          return;
+        }
+        if (type === 'RETURN_LOAN') {
+          if(this.session.id!==DEV_VAULT_STORY_ID ||
+              sceneName(scene)!=='CentralTokyoScene' ||
+              !isArkonVaultStoryLoan(scene.registry) ||
+              typeof scene.endGinzaTestDrive!=='function' ||
+              !scene.endGinzaTestDrive(false)){
+            this.error='GINZA LOAN COULD NOT BE RETURNED';return;
+          }
+          scene.ginzaRoom=1;
+          scene.ginzaOwnerDressed=false;
+          scene.renderLocation(scene.activeLocationId);
+          this.advance();continue;
         }
         if (type === 'SET_FLAG') {
           if (!this.session.preview && step.key) {
