@@ -13,7 +13,7 @@ import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=202610
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r660';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r659';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r657';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r661';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
