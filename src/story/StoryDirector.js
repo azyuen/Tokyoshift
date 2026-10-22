@@ -291,8 +291,11 @@ export class StoryDirector {
           if(!job){this.error='CUSTOMER CAR MISSING';return;}
           this.wait={kind:'dialogue',index};
           const control=showArkonCustomerTuning(scene,job,{
-            onComplete:()=>{
+            onComplete:result=>{
               if(this.session?.index!==index || this.wait?.index!==index)return;
+              if(step.index===4 && !this.session.preview){
+                scene.registry.set('arkonStoryMx5CustomerTuning',result.tuning);
+              }
               if(!this.session.preview && !recordArkonCustomerJob(scene.registry,step.index)){
                 this.error='CUSTOMER PAYMENT SAVE FAILED';return;
               }
