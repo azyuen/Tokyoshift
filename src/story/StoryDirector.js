@@ -390,6 +390,18 @@ export class StoryDirector {
           this.advance();continue;
         }
         if(type==='ARKON_MX5_RACE'){
+          // Chapter 03 begins in the real Canal Yard garage. Move to the
+          // Meet only for the optional actual MX-5 vs S15 road race; never
+          // silently skip the physics just because the scene is a workshop.
+          if(this.session.id==='arkonChapter03' &&
+             sceneName(scene)==='GarageScene'){
+            this.clearStage();
+            if(!queueSafeSceneStart(scene,'MeetScene')){
+              this.error='STORY RACE MEET TRANSITION FAILED';return;
+            }
+            this.wait={kind:'transition',target:'MeetScene',origin:scene};
+            return; // Keep the race step until we are physically at the Meet.
+          }
           if(this.session.id!=='arkonChapter03' ||
               scene.registry.get('gameMode')!=='arkonStory' ||
               sceneName(scene)!=='MeetScene' ||
@@ -596,6 +608,21 @@ export class StoryDirector {
           this.advance();continue;
         }
         if (type === 'STAGE') {
+          // Returning after the MX-5 run must really enter Canal Yard,
+          // not merely paint a Canal Yard image over MeetScene.
+          if(this.session.id==='arkonChapter03' &&
+             step.backgroundId==='workshop:shinonomeCanalYard:night' &&
+             sceneName(scene)!=='GarageScene'){
+            this.clearStage();
+            scene.registry.set('workshopLocationId','shinonomeCanalYard');
+            if(!queueSafeSceneStart(scene,'GarageScene',{
+              crewMode:false,workshopLocationId:'shinonomeCanalYard'
+            })){
+              this.error='CANAL YARD STORY RETURN FAILED';return;
+            }
+            this.wait={kind:'transition',target:'GarageScene',origin:scene};
+            return; // Resume at this exact authored stage.
+          }
           if (step.privateMeet && sceneName(scene)==='MeetScene')
             scene.setStoryEncounterActive?.(true);
           const stage=showStoryStage(scene,step);
