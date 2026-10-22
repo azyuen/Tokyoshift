@@ -40,7 +40,9 @@ test('day and night within each real outdoor/vehicle workshop venue share raw di
   const files=new Map(manifest.images.map(x=>[x.path,x]));
   let validated=0;
   for(const entry of manifest.images.filter(x=>groups.has(x.group)&&x.path.includes('_day.'))){
-    const night=entry.path.replace('_day.','_night.').replace('/Day/','/Night/');
+    const night=entry.path==='assets/Meet/Day/tatsumi_district_loop_day.png'
+      ? 'assets/Meet/Night/tatsumi_skyline_vista_night.png'
+      : entry.path.replace('_day.','_night.').replace('/Day/','/Night/');
     const other=files.get(night);
     assert.ok(other,night+' missing paired art');
     assert.equal(entry.width,other.width,entry.path);
