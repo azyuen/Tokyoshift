@@ -114,6 +114,8 @@ export default class OshiageScene extends Phaser.Scene {
     }
     this.activeLocationId = LOCATIONS[data.locationId] ? data.locationId :
       (LOCATIONS[this.registry.get('oshiageLocation')] ? this.registry.get('oshiageLocation') : 'oshiageDrivingSchool');
+    if (this.registry.get('gameMode')==='arkonStory')
+      this.registry.set('arkonStoryAtSchool',this.activeLocationId==='oshiageDrivingSchool');
     this.room = ['paint', 'rims'].includes(data.room) ? data.room : 'outside';
     if (this.activeLocationId !== 'oshiageCustomWorks') this.room = 'outside';
     this.lessonIndex = Math.max(0, Math.min(3, Number(this.registry.get('oshiageLessonTab') || 0)));
@@ -285,7 +287,8 @@ export default class OshiageScene extends Phaser.Scene {
         car?.visual?.bodyKey && this.textures.exists(car.visual.bodyKey))
     ));
     this.renderView();
-    if (this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
+    if (this.registry.get('gameMode')!=='arkonStory' &&
+        this.activeLocationId === 'oshiageDrivingSchool' && !this.registry.get('oshiageInstructorMet')) {
       this.time.delayedCall(420, () => this.showInstructorCutscene());
     }
     this.time.addEvent({ delay: 5000, loop: true, callback: () => {
@@ -391,6 +394,8 @@ export default class OshiageScene extends Phaser.Scene {
   showLocation(locationId) {
     if (!LOCATIONS[locationId]) return;
     this.activeLocationId = locationId;
+    if (this.registry.get('gameMode')==='arkonStory')
+      this.registry.set('arkonStoryAtSchool',locationId==='oshiageDrivingSchool');
     this.room = 'outside';
     this.registry.set('oshiageLocation', locationId);
     saveSessionState(this.registry);
@@ -481,7 +486,10 @@ export default class OshiageScene extends Phaser.Scene {
         img.texture.setFilter?.(Phaser.Textures.FilterMode.NEAREST);
       }
     }
-    this.sideHeader('DRIVING SCHOOL', 'Lady Instructor // Oshiage');
+    this.sideHeader('DRIVING SCHOOL',
+      this.registry.get('gameMode')==='arkonStory'
+        ? (this.registry.get('arkonStorySchoolRevealed')?'SAYAKA // OSHIAGE':'OSHIAGE // DRIVING LESSONS')
+        : 'Lady Instructor // Oshiage');
     this.addText(SIDE.x + 20, SIDE.y + 150, lesson.title, {
       pixel: true, size: '10px', color: '#ffe394', wrap: SIDE.w - 40
     });
@@ -495,7 +503,9 @@ export default class OshiageScene extends Phaser.Scene {
       : Boolean(this.registry.get('oshiageCoachingProgress')?.[id]?.[lesson.id]?.completed);
     this.addText(SIDE.x + 20, SIDE.y + 394, lesson.id === 'basic'
       ? 'INTRODUCTORY COURSE // FREE'
-      : freeVoucher ? 'SAYAKA VOUCHER // FIRST BOOKING FREE'
+      : freeVoucher ? this.registry.get('gameMode')==='arkonStory'
+        ? 'SAYAKA // ' + Number(this.registry.get('arkonStoryLessonCredits')||0) + ' LESSON CREDITS'
+        : 'SAYAKA VOUCHER // FIRST BOOKING FREE'
         : 'LESSON FEE // ' + MONEY(fee), {
       pixel: true, size: '9px', color: '#96e9d4', wrap: SIDE.w - 40
     });
@@ -546,7 +556,9 @@ export default class OshiageScene extends Phaser.Scene {
     }
     const lesson = OSHIAGE_SCHOOL_LESSONS[lessonId];
     const text = lessonId === 'basic'
-      ? 'The basics are free. Shall we practise together?'
+      ? this.registry.get('gameMode')==='arkonStory'
+        ? 'Ready to see what your Civic can really do? The first lesson is on me.'
+        : 'The basics are free. Shall we practise together?'
       : freeVoucher
         ? 'Sayaka’s voucher covers all three attempts! If you leave, any unused tries expire. Ready?'
         : 'The fee is ' + MONEY(lesson.fee) +
@@ -555,16 +567,18 @@ export default class OshiageScene extends Phaser.Scene {
     // animated transitions and two final dialogue buttons as the Dev tester.
     const definition = {
       id: 'oshiageSchoolBooking_' + lessonId,
-      title: 'OSHIAGE // LADY INSTRUCTOR',
+      title: this.registry.get('gameMode')==='arkonStory' ? 'OSHIAGE // SAYAKA' : 'OSHIAGE // LADY INSTRUCTOR',
       once: false,
       characters: { left: 'sayakaFujieda' },
       pages: [
         { speaker: 'left', pose: 'oshiageExplaining',
-          nameOverride: 'LADY INSTRUCTOR',
-          text: lesson.speech + (lessonId === 'basic' ? '' :
+          nameOverride: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR',
+          text: (this.registry.get('gameMode')==='arkonStory'
+            ? 'Let us see how much you have learned in your own car.'
+            : lesson.speech) + (lessonId === 'basic' ? '' :
             ' I’ll show recommended RPM ranges for your unique car and current tune.') },
         { speaker: 'left', pose: 'oshiageHappy',
-          nameOverride: 'LADY INSTRUCTOR', text },
+          nameOverride: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR', text },
       ],
       finalActionLabel: 'YES, LET\'S DRIVE',
       secondaryFinalActionLabel: 'NOT NOW',
@@ -588,9 +602,14 @@ export default class OshiageScene extends Phaser.Scene {
           const attempt = consumeOshiageAttempt(purchase.booking);
           if (!attempt) return;
           if (purchase.usedVoucher) {
-            this.registry.set('oshiageFreeLessonUsed', {
-              ...(this.registry.get('oshiageFreeLessonUsed') || {}), [lessonId]: true,
-            });
+            if(this.registry.get('gameMode')==='arkonStory'){
+              this.registry.set('arkonStoryLessonCredits',Math.max(0,
+                Number(this.registry.get('arkonStoryLessonCredits')||0)-1));
+            }else{
+              this.registry.set('oshiageFreeLessonUsed', {
+                ...(this.registry.get('oshiageFreeLessonUsed') || {}), [lessonId]: true,
+              });
+            }
           }
           this.registry.set('cash', purchase.cash);
           this.registry.set('oshiageSchoolBooking', attempt);
@@ -602,7 +621,8 @@ export default class OshiageScene extends Phaser.Scene {
   }
 
   showInstructorCutscene() {
-    if (this.activeLocationId !== 'oshiageDrivingSchool' ||
+    if (this.registry.get('gameMode')==='arkonStory' ||
+        this.activeLocationId !== 'oshiageDrivingSchool' ||
         this.registry.get('oshiageInstructorMet') ||
         this.instructorCutsceneOpen || sceneCutsceneActive(this)) return;
 
@@ -649,7 +669,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('raceReturnScene', 'OshiageScene');
     this.registry.set('raceTimeOfDay', getWorldPhase());
     this.registry.set('raceDistrict', 'OSHIAGE');
-    this.registry.set('raceLocationLabel', 'LADY INSTRUCTOR // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
+    this.registry.set('raceLocationLabel', (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR') + ' // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
