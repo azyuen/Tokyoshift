@@ -41,13 +41,21 @@ test('Arkon story savings do not overwrite the developer slot',()=>{
   applyStateToRegistry(registry,career);
   assert.ok(saveSessionState(registry));
   assert.equal(getProfileGameMode(0),'career');
+  const rawCareerSlot = memory.get('tokyoShiftProfilesV1');
+  const rawCareerMirror = memory.get('tokyoShiftProfile');
   assert.equal(setProfileGameMode(0,'arkonStory'),true);
+  // Selecting story must not touch either normal save namespace.
+  assert.equal(memory.get('tokyoShiftProfilesV1'),rawCareerSlot);
+  assert.equal(memory.get('tokyoShiftProfile'),rawCareerMirror);
+  assert.ok(memory.has('tokyoShiftArkonStorySaveV1:0'));
   const intro=readSessionState();
   assert.equal(intro.cash,5000);
   applyStateToRegistry(registry,intro);
   registry.set('cash',6900);
   assert.ok(saveSessionState(registry));
   assert.equal(readSessionState().cash,6900);
+  assert.equal(memory.get('tokyoShiftProfilesV1'),rawCareerSlot);
+  assert.equal(memory.get('tokyoShiftProfile'),rawCareerMirror);
   assert.equal(setProfileGameMode(0,'career'),true);
   assert.equal(readSessionState().cash,1000000000);
   assert.equal(getProfileState(0).wins,98);
@@ -60,4 +68,20 @@ test('Arkon story savings do not overwrite the developer slot',()=>{
   importProfileBackup(1,backup);
   assert.equal(setProfileGameMode(1,'arkonStory'),true);
   assert.equal(readSessionState().storyDirectorProgress.ownerSlot,getActiveProfileIndex());
+});
+
+test('normal drivers cannot enter Arkon story or overwrite its save',()=>{
+  const existingStory=globalThis.localStorage.getItem('tokyoShiftArkonStorySaveV1:1');
+  // Slot 2: a normal, separate driver with their own career.
+  beginNewProfile(2);
+  const memory=new Map();
+  const registry={get:k=>memory.get(k),set:(k,v)=>memory.set(k,v)};
+  const career=createDefaultGameState();
+  Object.assign(career,{firstName:'Test',lastName:'Driver',cash:16700,wins:6});
+  applyStateToRegistry(registry,career);
+  assert.ok(saveSessionState(registry));
+  assert.equal(setProfileGameMode(2,'arkonStory'),false);
+  assert.equal(getProfileGameMode(2),'career');
+  assert.equal(readSessionState().cash,16700);
+  assert.equal(globalThis.localStorage.getItem('tokyoShiftArkonStorySaveV1:1'),existingStory);
 });
