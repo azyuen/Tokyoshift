@@ -1,6 +1,7 @@
 // R649 — Arkon's own Story archive (the normal Office Story Archive is Career).
 // Recount previews NEVER save money, cars, results or unlocks. Restart is opt-in.
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r652';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261022-r643';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261022-r638';
 import { resetArkonStoryState } from '../state/GameState.js?v=20261022-r649';
@@ -12,9 +13,14 @@ export function getArkonRecountScenes(registry) {
   const get=key=>registry?.get?.(key);
   if(get('gameMode')!=='arkonStory') return [];
   const progress=get('storyDirectorProgress');
-  const limit=get('arkonStoryChapter01FullDone')
-    ? ARKON_CHAPTER_01.steps.length
-    : progress?.id==='arkonChapter01' ? progress.index : 0;
+  const revised=progress?.id==='arkonChapter01Revised' ||
+    Boolean(get('arkonStoryChapter01RevisedDone'));
+  const source=revised?ARKON_CHAPTER_01_REVISED:ARKON_CHAPTER_01;
+  const compiled=validateStoryScript(source);
+  const limit=(revised && get('arkonStoryChapter01RevisedDone')) ||
+    (!revised && get('arkonStoryChapter01FullDone'))
+    ? source.steps.length
+    : progress?.id===source.id ? progress.index : 0;
   const choices={...(get('arkonStoryChoices')||{}),...(progress?.vars||{})};
   if(get('arkonStoryFirstChoice'))choices.firstApproach=get('arkonStoryFirstChoice');
   if(get('arkonStoryFirstReply'))choices.firstReply=get('arkonStoryFirstReply');
@@ -22,22 +28,22 @@ export function getArkonRecountScenes(registry) {
     ? choices[key] : get(key);
   const result=[];
   let index=0;
-  for(let budget=0;budget<1000 && index<limit && index<ARKON_CHAPTER_01.steps.length;budget++){
-    const step=ARKON_CHAPTER_01.steps[index];
+  for(let budget=0;budget<1000 && index<limit && index<source.steps.length;budget++){
+    const step=source.steps[index];
     if(step.type==='END')break;
     if(step.type==='CHOICE'){
       const chosen=step.choices.find(x=>x.id===getValue(step.key||'choice'));
       if(!chosen)break;
-      index=(script.labels.get(chosen.to)??-1)+1;
+      index=(compiled.labels.get(chosen.to)??-1)+1;
       continue;
     }
     if(step.type==='GOTO'){
-      index=(script.labels.get(step.to)??-1)+1;
+      index=(compiled.labels.get(step.to)??-1)+1;
       continue;
     }
     if(step.type==='IF'){
       const dest=checkStoryCondition(step,getValue)?step.then:step.else;
-      index=dest?(script.labels.get(dest)??-1)+1:index+1;
+      index=dest?(compiled.labels.get(dest)??-1)+1:index+1;
       continue;
     }
     if(step.type==='MANGA')result.push(step);
