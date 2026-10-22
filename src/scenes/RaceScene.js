@@ -1524,7 +1524,7 @@ export default class RaceScene extends Phaser.Scene {
     // Shared race coach HUD: transparent zoomed face, compact manga dialogue
     // with left notch and a small red target decal. No physics changes.
     this.coachHud = createRaceCoachHud(this, {
-      speaker: 'LADY INSTRUCTOR // OSHIAGE',
+      speaker: this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA // OSHIAGE' : 'LADY INSTRUCTOR // OSHIAGE',
       characterVisual: characters.sayakaFujieda.visual,
       initialPose: 'explaining',
     });
@@ -1659,6 +1659,9 @@ export default class RaceScene extends Phaser.Scene {
       },
     };
     this.registry.set('oshiageCoachingProgress', outcomes);
+    if(!timedOut && this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryPhase')==='lesson')
+      this.registry.set('arkonStoryLessonCompleted',true);
     saveSessionState(this.registry);
 
 
@@ -1731,7 +1734,7 @@ export default class RaceScene extends Phaser.Scene {
       pages: [{
         speaker: 'left',
         pose: result.timedOut ? 'oshiageConcerned' : 'oshiageHappy',
-        nameOverride: 'LADY INSTRUCTOR',
+        nameOverride: this.registry.get('gameMode')==='arkonStory'?'SAYAKA':'LADY INSTRUCTOR',
         text: result.feedback + ' Have a look at your actual revs against the recommended ranges.',
       }],
       finalActionLabel: 'RETURN TO SCHOOL',
@@ -2190,6 +2193,9 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.registry.get('raceReturnScene') === 'OshiageScene') {
       this.registry.set('oshiageBasicLessonComplete', true);
+      if(this.registry.get('gameMode')==='arkonStory' &&
+         this.registry.get('arkonStoryPhase')==='lesson')
+        this.registry.set('arkonStoryLessonCompleted',true);
       saveSessionState(this.registry);
       this.tutorialPromptText?.setText(
         'Very nicely done! You made it into fourth gear.\n\nLESSON COMPLETE // RETURNING TO DRIVING SCHOOL'
@@ -2387,7 +2393,7 @@ export default class RaceScene extends Phaser.Scene {
 
     let status = '';
     if (this.isTutorial) {
-      status = this.isCoaching ? 'DRIVING SCHOOL // LADY INSTRUCTOR' : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
+      status = this.isCoaching ? (this.registry.get('gameMode')==='arkonStory' ? 'DRIVING SCHOOL // SAYAKA' : 'DRIVING SCHOOL // LADY INSTRUCTOR') : 'DRIVER TRAINING // FOLLOW THE HIGHLIGHTED CONTROLS';
     } else if (this.falseStart) status = 'RED LIGHT';
     else if (!this.raceStarted) {
       status = this.raceType.toUpperCase() + '  //  ' + this.raceDistanceLabel + '  //  ' +
