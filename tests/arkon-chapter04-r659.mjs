@@ -95,7 +95,7 @@ test('R659 persists Chapter 04 project on Arkon Story only',()=>{
 
 test('R659 no side effects on regular Meet offers or Career Ginza',()=>{
   const script=source('../src/data/arkonChapter04.js');
-  assert.doesNotMatch(script,/selectedRaceDeal|pinkSlip|arkonStoryGinzaUnlocked/);
+  assert.doesNotMatch(script,/selectedRaceDeal|selectedOpponentCarId|arkonStoryGinzaUnlocked/);
   const director=source('../src/story/StoryDirector.js');
   assert.match(director,/scene\._arkonStoryObjectiveOpen/);
   const objective=source('../src/ui/ArkonStoryObjective.js');
