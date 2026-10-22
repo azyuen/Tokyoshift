@@ -88,6 +88,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryFirstReply: null,
     arkonStoryChapter01Done: false,
     arkonStoryChapter01AfterHoursDone: false,
+    arkonStoryChapter01FullDone: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
@@ -466,6 +467,13 @@ export function getProfileGameMode(index = getActiveProfileIndex()) {
   if (!isArkonProfile(slot?.session || slot?.manual)) return 'career';
   return readJson(storyModeKey(slotIndex)) === ARKON_STORY_MODE
     ? ARKON_STORY_MODE : 'career';
+}
+
+export function resetArkonStoryState() {
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) !== ARKON_STORY_MODE) return false;
+  // Reset only Arkon's private Story key: NEVER touch any Career slot.
+  return persistArkonStorySave(index, createArkonStoryState(index));
 }
 
 export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
@@ -1131,6 +1139,7 @@ export function normaliseState(input = {}) {
       ? input.arkonStoryFirstReply : null,
     arkonStoryChapter01Done: storyMode && Boolean(input.arkonStoryChapter01Done),
     arkonStoryChapter01AfterHoursDone: storyMode && Boolean(input.arkonStoryChapter01AfterHoursDone),
+    arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1220,8 +1229,12 @@ export function normaliseState(input = {}) {
                      typeof val==='number' && Number.isFinite(val)))
                   .slice(0,24)) }
               : {}) }
-        : storyMode && input.arkonStoryChapter01Done &&
-          !input.arkonStoryChapter01AfterHoursDone
+        : storyMode && input.arkonStoryChapter01AfterHoursDone &&
+          !input.arkonStoryChapter01FullDone
+          ? { id:'arkonChapter01', index:110,
+              ownerSlot:getActiveProfileIndex(), version:1 }
+          : storyMode && input.arkonStoryChapter01Done &&
+            !input.arkonStoryChapter01AfterHoursDone
           ? { id:'arkonChapter01', index:29,
               ownerSlot:getActiveProfileIndex(), version:1 }
           : null,
@@ -1478,6 +1491,7 @@ export function snapshotRegistry(registry) {
     arkonStoryFirstReply: registry.get('arkonStoryFirstReply') || null,
     arkonStoryChapter01Done: Boolean(registry.get('arkonStoryChapter01Done')),
     arkonStoryChapter01AfterHoursDone: Boolean(registry.get('arkonStoryChapter01AfterHoursDone')),
+    arkonStoryChapter01FullDone: Boolean(registry.get('arkonStoryChapter01FullDone')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
