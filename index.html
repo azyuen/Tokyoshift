@@ -262,7 +262,7 @@
     // Previously these ran in parallel, allowing a stale iPad PWA worker to
     // supply mixed-build modules while the version check removed its caches.
     window.TOKYO_SHIFT_BOOT_READY = (async () => {
-      let resolvedBuild = 'R655';
+      let resolvedBuild = 'R656';
       try {
         const response = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
         const info = await response.json();
