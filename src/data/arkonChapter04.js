@@ -178,7 +178,7 @@ export const ARKON_CHAPTER_04={
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter04Auction'},
     ...workshop('SEVERAL WEEKS LATER',[{id:A,pose:'storyMechanic'}],'$SELECTED_CAR'),
     manga('BACK TO THE ORDINARY WORK',[
-      ark('Back to the Civic. Back to paying jobs. Back to trying not to think about the Porsche.','storyMechanic'),
+      ark('Back to the 240Z. Back to paying jobs. Back to trying not to think about the Porsche.','storyMechanic'),
       ark('An ordinary day would be nice.','storySheepish'),
     ],{left:A}),
     {type:'PHONE',title:'CANAL YARD // AN OLD REPORT',
