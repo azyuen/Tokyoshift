@@ -94,6 +94,7 @@ import {
 import { materialiseRegionalChallengeRounds } from '../data/regionalChallengeBuilds.js?v=20261011-r484';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261013-r493';
 import { createRaceCoachHud, createRaceDialogueHud } from '../ui/RaceCoachHud.js?v=20261023-r658';
+import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261017-r641';
 import { createRegionalChallengeTableau } from '../ui/RegionalChallengeTableau.js?v=20261007-r411';
 import { addDevCutsceneButton } from '../ui/CutsceneTester.js?v=20261017-r573';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
@@ -257,7 +258,7 @@ export default class RaceScene extends Phaser.Scene {
       rivalContext: true,
       playerCharacterId: profilePlayerCharacterId,
     }));
-    if (this.isStoryCruise) {
+    if (this.isStoryCruise || this.isArkonMx5Drive) {
       for(const [id,poses] of [
         ['sayakaFujieda',['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
         ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
@@ -381,6 +382,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isStoryCruise = this.raceMode==='STORY_CRUISE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       this.registry.get('arkonStoryPhase')==='chapter02Driving';
+    this.isArkonMx5Drive = this.raceMode==='ARKON_MX5_DRIVE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryMx5Loan')?.active);
     // Older in-progress Street Showdowns may carry a pre-rebalance Expert AI.
     // Resolve driver talent from the actual award for this stage at race entry,
     // preserving saved cars, prize, paid entry fee and remaining rounds.
@@ -812,7 +816,10 @@ export default class RaceScene extends Phaser.Scene {
       fontFamily: PIXEL_FONT, fontSize: '13px', color: '#eef8ff'
     }).setOrigin(0.5).setDepth(46).setScrollFactor(0);
 
-    this.startButton.on('pointerdown', () => this.startRace());
+    this.startButton.on('pointerdown', () => {
+      if(this.isArkonMx5Drive && this.arkonMx5Phase!=='race')return;
+      this.startRace();
+    });
 
     if (this.isTutorial && !this.isCoaching) {
       this.startButton.setVisible(false).disableInteractive();
@@ -895,6 +902,7 @@ export default class RaceScene extends Phaser.Scene {
     else if (this.isTutorial) this.setupDrivingTutorial();
     if (this.hasGinzaBanter) this.setupGinzaPassenger();
     if (this.isStoryCruise) this.setupArkonStoryCruise();
+    if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if(isArkonPlayableReplay(this.registry)){
       const replayButton=this.add.rectangle(1340,114,320,42,0x2c1922,0.96)
         .setDepth(91).setScrollFactor(0).setStrokeStyle(2,0xffba97)
@@ -1549,6 +1557,123 @@ export default class RaceScene extends Phaser.Scene {
       finished: this.finished,
     });
     if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
+  }
+
+  // Chapter 03's Sayaka road-test is played IN the live RaceScene.
+  // The production Vehicle physics/AI is reused after the choice; the
+  // opening hands-free roll is only a scripted, low-speed establishment shot.
+  setupArkonMx5Drive() {
+    this.arkonMx5Phase='cruise';
+    this.arkonMx5Elapsed=0;
+    this.arkonMx5LineIndex=0;
+    this.arkonMx5S15Visible=false;
+    this.controls.enabled=false;
+    this.startButton.setVisible(false).disableInteractive();
+    this.startButtonText.setVisible(false);
+    this.cancelButton.setVisible(false).disableInteractive();
+    this.cancelButtonText.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('SAYAKA // PASSENGER');
+    this.stakeText?.setText('TEST DRIVE // NO STAKES');
+    this.prepareRollingVehicle(this.player);
+    this.prepareRollingVehicle(this.opponent);
+    this.opponent.positionM=this.player.positionM-20;
+    this.arkonMx5Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>{
+      this.arkonMx5Dialogue?.destroy?.();
+      this._arkonMx5Choice?.destroy?.();
+    });
+    this.setArkonMx5OpponentVisible(false);
+  }
+
+  setArkonMx5OpponentVisible(visible) {
+    const visual=this.opponentVisual;
+    if(!visual)return;
+    for(const sprite of [
+      visual.rearWheel, visual.frontWheel,visual.rearWheelBacking,
+      visual.frontWheelBacking,visual.roadShadow,...(visual.bodyObjects||[]),
+    ])sprite?.setVisible?.(visible);
+  }
+
+  updateArkonMx5Drive(dt) {
+    const lines=[
+      [0,'sayaka','Well? How does the little Mazda feel?','oshiageRelaxed'],
+      [3.5,'arkon','The power comes in much harder. Needs a careful foot.','storySerious'],
+      [7,'sayaka','And it sounds excellent.','oshiageHappy'],
+      [10,'arkon','You have gone awfully quiet.','storyTalking'],
+      [13,'sayaka','I am enjoying the engine. You might try watching the road.','oshiageReviewing'],
+      [17,'arkon','Both hands on the wheel. See?','storySheepish'],
+      [20,'sayaka','I can see that.','oshiageRelaxed'],
+      [23,'arkon','That S15 alongside us keeps revving.','storySerious'],
+      [26,'sayaka','How observant.','oshiageHappy'],
+      [29,'arkon','I think he wants a rolling race.','storyTalking'],
+      [32,'sayaka','You built my car. You are driving it. Your call.','oshiageRelaxed'],
+    ];
+    this.arkonMx5Elapsed+=dt;
+    const pt=this.advanceRollingVehicle(this.player,dt);
+    // The S15 comes into the adjacent lane from behind and gradually
+    // matches the MX-5. Only the visual approach is cinematic; once
+    // accepted, both vehicles use the normal standing race physics path.
+    if(this.arkonMx5Elapsed>=21 && !this.arkonMx5S15Visible){
+      this.arkonMx5S15Visible=true;
+      this.opponent.positionM=this.player.positionM-18;
+      this.setArkonMx5OpponentVisible(true);
+      this.rivalText?.setText('S15 // UNINVITED CHALLENGER');
+    }
+    const ot=this.advanceRollingVehicle(this.opponent,dt);
+    if(this.arkonMx5S15Visible){
+      const gap=this.player.positionM-this.opponent.positionM;
+      if(gap>0)this.opponent.positionM+=Math.min(gap,5*dt);
+    }
+    this.drawScene(pt,this.arkonMx5S15Visible?this.opponent.telemetry:null,dt);
+    this.hud.update(pt,'TATSUMI // SAYAKA TEST DRIVE // CRUISING');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    while(this.arkonMx5LineIndex<lines.length &&
+        this.arkonMx5Elapsed>=lines[this.arkonMx5LineIndex][0]){
+      const [,speaker,text,pose]=lines[this.arkonMx5LineIndex++];
+      this.arkonMx5Dialogue?.show(speaker,text,pose);
+    }
+    if(this.arkonMx5Elapsed>=35 && this.arkonMx5Phase==='cruise'){
+      this.arkonMx5Phase='decision'; // Freeze physics, camera and wheel motion.
+      this.arkonMx5Dialogue?.hide?.();
+      this._arkonMx5Choice=showStoryChoices(this,{
+        title:'AN UNINVITED CHALLENGE',
+        subtitle:'The S15 matches your speed. Sayaka looks across. Your call.',
+        choices:[
+          {id:'race',label:'ACCEPT THE ROLLING RACE',
+            description:'Use your controls to race the S15. No cash or pink slips.'},
+          {id:'decline',label:'KEEP CRUISING',
+            description:'Let the S15 go. Enjoy the drive with Sayaka.'},
+        ],
+        onChoose:choice=>{
+          this._arkonMx5Choice=null;
+          const selected=choice.id==='race'?'race':'decline';
+          this.registry.set('arkonStoryChoices',{
+            ...(this.registry.get('arkonStoryChoices')||{}),
+            arkonMx5Challenge:selected,
+          });
+          if(selected==='decline'){
+            this.registry.set('arkonStoryMx5RaceResult','declined');
+            saveSessionState(this.registry);
+            queueSafeSceneStart(this,'MeetScene');
+            return;
+          }
+          this.arkonMx5Phase='race';
+          this.arkonMx5Dialogue?.destroy?.();
+          this.arkonMx5Dialogue=null;
+          // The warm-up remains a real scrolling road, while the timed race
+          // starts from a fresh rolling-start timing baseline with production AI.
+          this.player.positionM=0;
+          this.opponent.positionM=0;
+          this.finishCameraPx=null;
+          this.controls.enabled=true;
+          this.rivalText?.setText('S15 // ROLLING RACE');
+          this.stakeText?.setText('EXHIBITION // NO STAKES');
+          this.startRace();
+        },
+        onCancel:()=>{this._arkonMx5Choice=null;},
+      });
+    }
   }
 
   setupArkonStoryCruise() {
@@ -2365,6 +2490,16 @@ export default class RaceScene extends Phaser.Scene {
 
     if (this.resultsShown) return;
     if (this.isTutorial && this.tutorialComplete) return;
+
+    // Before the challenger is accepted, the MX-5 is a REAL moving car
+    // rendered on the RaceScene road. Inputs and timing remain disabled:
+    // passengers can talk, the S15 can join, and the choice can freeze
+    // the road without a separate manga scene or fake results.
+    if(this.isArkonMx5Drive && this.arkonMx5Phase!=='race'){
+      if(this.arkonMx5Phase==='decision')return;
+      this.updateArkonMx5Drive(dt);
+      return;
+    }
 
     const controlState = this.controls.update();
     const requestedGear = this.controls.consumeGearRequest();
