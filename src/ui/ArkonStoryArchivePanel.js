@@ -2,9 +2,9 @@
 // Recount previews NEVER save money, cars, results or unlocks. Restart is opt-in.
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r652';
-import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261022-r643';
-import { playMangaCutscene } from './MangaCutscene.js?v=20261022-r638';
-import { resetArkonStoryState } from '../state/GameState.js?v=20261022-r649';
+import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
+import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r652';
+import { resetArkonStoryState } from '../state/GameState.js?v=20261023-r652';
 
 const PIXEL='"Silkscreen", monospace',BODY='"Rajdhani", sans-serif';
 const script=validateStoryScript(ARKON_CHAPTER_01);
