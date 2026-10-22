@@ -1,0 +1,33 @@
+name: Arkon Story Mode save and chapter checks
+on:
+  pull_request:
+    paths:
+      - 'src/state/GameState.js'
+      - 'src/data/arkonChapter01.js'
+      - 'src/data/storyDirectorScripts.js'
+      - 'src/data/centralTokyo.js'
+      - 'src/data/ginzaGallery.js'
+      - 'src/scenes/ProfileSelectScene.js'
+      - 'tests/arkonStoryMode.test.mjs'
+      - '.github/workflows/arkon-story-checks.yml'
+  push:
+    paths:
+      - 'src/state/GameState.js'
+      - 'src/data/arkonChapter01.js'
+      - 'tests/arkonStoryMode.test.mjs'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check affected modules
+        run: |
+          node --check src/state/GameState.js
+          node --check src/scenes/ProfileSelectScene.js
+          node --check src/data/arkonChapter01.js
+          node --check src/data/storyDirectorScripts.js
+      - name: Story mode tests
+        run: node --test tests/arkonStoryMode.test.mjs
