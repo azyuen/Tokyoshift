@@ -1,0 +1,28 @@
+name: R644 story background catalog and ground-plane equations
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, feature/story-background-perspective-r644]
+    paths:
+      - 'src/data/storyBackgroundCatalog.js'
+      - 'src/story/StoryPerspective.js'
+      - 'src/ui/StoryStage.js'
+      - 'tests/story-background-perspective-r644.mjs'
+      - '.github/workflows/story-background-perspective-r644.yml'
+jobs:
+  catalog-and-perspective:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source syntax
+        run: |
+          node --check src/data/storyBackgroundCatalog.js
+          node --check src/story/StoryPerspective.js
+          node --check src/ui/StoryStage.js
+      - name: Verify catalog, source images, math and existing Story Director regressions
+        run: |
+          node --test tests/story-background-perspective-r644.mjs tests/story-arrival-pacing-r643.mjs tests/story-composition-arrival-r642.mjs tests/story-director-r639.mjs tests/startup-import-integrity-r508.mjs
