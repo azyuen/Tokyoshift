@@ -2577,7 +2577,8 @@ export default class RaceScene extends Phaser.Scene {
     if (this.registry.get('gameMode')==='arkonStory' &&
         settlement?.teamChallengeCompleted &&
         !this.registry.get('arkonStoryCreditsAwarded')) {
-      this.registry.set('arkonStoryLessonCredits',5);
+      this.registry.set('arkonStoryLessonCredits',Math.max(0,
+        Number(this.registry.get('arkonStoryLessonCredits')||0))+5);
       this.registry.set('arkonStoryCreditsAwarded',true);
       saveSessionState(this.registry);
     }
