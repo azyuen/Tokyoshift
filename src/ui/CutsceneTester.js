@@ -7,12 +7,12 @@ import {
   playMangaCutscene,
   sceneCutsceneActive,
 } from './MangaCutscene.js?v=20261023-r658';
-import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
+import { playCanalYardStory } from './CanalYardStory.js?v=20261023-r658';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
-import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261022-r646';
+import { startChapter08Warehouse, startChapter08Ginza, preloadChapter08GinzaAssets } from './Chapter08Story.js?v=20261023-r658';
 import { startInteractiveChapter08Replay } from './Chapter08DevReplay.js?v=20261017-r574';
-import { startChapter09 } from './Chapter09Story.js?v=20261022-r646';
+import { startChapter09 } from './Chapter09Story.js?v=20261023-r658';
 import { CHAPTER09_SEQUENCE } from '../data/chapter09.js?v=20261017-r578';
 import { beginStoryArchiveSceneReplay } from './StoryReplaySession.js?v=20261017-r574';
 
