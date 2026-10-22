@@ -127,8 +127,10 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
     SIDE.x+SIDE.w/2,SIDE.y+674,SIDE.w-36,55,0x174f49,1
   ).setStrokeStyle(2,0x66dbb8,1).setDepth(panelDepth+1)
     .setScrollFactor(0).setInteractive({useHandCursor:true}));
-  const deliverText=text(SIDE.x+SIDE.w/2,SIDE.y+674,
-    'DELIVER TO CLIENT',10,'#f3fffb',PIXEL,.5);
+  const deliverText=text(SIDE.x+SIDE.w/2,SIDE.y+662,
+    'DELIVER TO CLIENT',8,'#f3fffb',PIXEL,.5);
+  const deliverPay=text(SIDE.x+SIDE.w/2,SIDE.y+687,
+    job.pay ? '+'+money(job.pay) : '',8,'#ffe08a',PIXEL,.5);
   deliver.on('pointerdown',()=>{
     if(closed||!isArkonCustomerJobComplete(job,levels))return;
     const result={carId:job.carId,tuning:{...levels},
@@ -141,7 +143,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   text(STRIP.x+25,STRIP.y+74,String(job.name||'').toUpperCase(),24,'#ffffff',BODY);
   text(STRIP.x+25,STRIP.y+121,job.maximum
     ? 'SAYAKA // FULL CANAL YARD SPEC'
-    : 'CUSTOMER PARTS FUNDED  //  '+money(job.pay)+' LABOUR',13,'#a1c3d6',BODY);
+    : 'CUSTOMER PARTS FUNDED',13,'#a1c3d6',BODY);
   add(scene.add.rectangle(STRIP.x+395,STRIP.y+STRIP.h/2,1,STRIP.h-35,
     0x315470,.85).setDepth(panelDepth+1).setScrollFactor(0));
   text(STRIP.x+448,STRIP.y+33,'CURRENT OUTPUT',11,'#8cc8ec');
@@ -170,6 +172,8 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
       .setStrokeStyle(2,ready?0x66dbb8:0x3e5e63,1);
     deliverText.setText(job.maximum?'DELIVER TO SAYAKA':'DELIVER TO CLIENT')
       .setColor(ready?'#f3fffb':'#78959c');
+    deliverPay.setText(job.pay?'+'+money(job.pay):'')
+      .setColor(ready?'#ffe08a':'#8b8981');
     if(ready)deliver.setInteractive({useHandCursor:true});
     else deliver.disableInteractive();
     tip.setText(ready
