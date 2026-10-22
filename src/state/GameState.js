@@ -89,6 +89,14 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter01Done: false,
     arkonStoryChapter01AfterHoursDone: false,
     arkonStoryChapter01FullDone: false,
+    arkonStoryChapter01RevisedDone: false,
+    arkonStoryPhase: 'opening',
+    arkonStorySayakaNoticed: false,
+    arkonStoryRivalResult: null,
+    arkonStoryAtSchool: false,
+    arkonStorySchoolRevealed: false,
+    arkonStoryLessonCredits: 0,
+    arkonStoryCreditsAwarded: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
@@ -487,7 +495,7 @@ export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
   state.openingChapter = 'done';
   state.arkonStoryChapter = 1;
   state.storyDirectorProgress = {
-    id: 'arkonChapter01', index: 0, ownerSlot: profileSlot, version: 1,
+    id: 'arkonChapter01Revised', index: 0, ownerSlot: profileSlot, version: 1,
   };
   return normaliseState(state);
 }
@@ -1140,6 +1148,15 @@ export function normaliseState(input = {}) {
     arkonStoryChapter01Done: storyMode && Boolean(input.arkonStoryChapter01Done),
     arkonStoryChapter01AfterHoursDone: storyMode && Boolean(input.arkonStoryChapter01AfterHoursDone),
     arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
+    arkonStoryChapter01RevisedDone: storyMode && Boolean(input.arkonStoryChapter01RevisedDone),
+    arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
+    arkonStorySayakaNoticed: storyMode && Boolean(input.arkonStorySayakaNoticed),
+    arkonStoryRivalResult: storyMode && ['won','lost'].includes(input.arkonStoryRivalResult)
+      ? input.arkonStoryRivalResult : null,
+    arkonStoryAtSchool: storyMode && Boolean(input.arkonStoryAtSchool),
+    arkonStorySchoolRevealed: storyMode && Boolean(input.arkonStorySchoolRevealed),
+    arkonStoryLessonCredits: storyMode ? Math.max(0,Math.min(25,Math.floor(Number(input.arkonStoryLessonCredits)||0))) : 0,
+    arkonStoryCreditsAwarded: storyMode && Boolean(input.arkonStoryCreditsAwarded),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1492,6 +1509,14 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter01Done: Boolean(registry.get('arkonStoryChapter01Done')),
     arkonStoryChapter01AfterHoursDone: Boolean(registry.get('arkonStoryChapter01AfterHoursDone')),
     arkonStoryChapter01FullDone: Boolean(registry.get('arkonStoryChapter01FullDone')),
+    arkonStoryChapter01RevisedDone: Boolean(registry.get('arkonStoryChapter01RevisedDone')),
+    arkonStoryPhase: registry.get('arkonStoryPhase'),
+    arkonStorySayakaNoticed: Boolean(registry.get('arkonStorySayakaNoticed')),
+    arkonStoryRivalResult: registry.get('arkonStoryRivalResult'),
+    arkonStoryAtSchool: Boolean(registry.get('arkonStoryAtSchool')),
+    arkonStorySchoolRevealed: Boolean(registry.get('arkonStorySchoolRevealed')),
+    arkonStoryLessonCredits: Number(registry.get('arkonStoryLessonCredits')||0),
+    arkonStoryCreditsAwarded: Boolean(registry.get('arkonStoryCreditsAwarded')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
