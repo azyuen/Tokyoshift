@@ -27,9 +27,10 @@ test('Arkon historical save does not receive endgame dev advantages',()=>{
 
 test('Arkon story savings do not overwrite the developer slot',()=>{
   const memory=new Map();
+  const writes=[];
   globalThis.localStorage={
     getItem:key=>memory.has(key)?memory.get(key):null,
-    setItem:(key,value)=>memory.set(key,String(value)),
+    setItem:(key,value)=>{writes.push(key);memory.set(key,String(value));},
     removeItem:key=>memory.delete(key),
   };
   const storage=new Map();
@@ -52,7 +53,11 @@ test('Arkon story savings do not overwrite the developer slot',()=>{
   assert.equal(intro.cash,5000);
   applyStateToRegistry(registry,intro);
   registry.set('cash',6900);
+  const beforeWrites = writes.length;
   assert.ok(saveSessionState(registry));
+  assert.deepEqual(writes.slice(beforeWrites).filter(key =>
+    ['tokyoShiftProfilesV1','tokyoShiftProfilesV1Backup',
+      'tokyoShiftSaveState','tokyoShiftProfile'].includes(key)), []);
   assert.equal(readSessionState().cash,6900);
   assert.equal(memory.get('tokyoShiftProfilesV1'),rawCareerSlot);
   assert.equal(memory.get('tokyoShiftProfile'),rawCareerMirror);
