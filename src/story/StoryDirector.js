@@ -6,12 +6,12 @@ import {
 } from './StoryScript.js?v=20261022-r643';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r648';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r649';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r648';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r648';
+import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r649';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r649';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
-import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r648';
+import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r649';
 import { cars } from '../data/cars.js?v=20261017-r565';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
@@ -134,6 +134,7 @@ export class StoryDirector {
     if (this.wait?.kind === 'event' && this.wait.event === event) this.advance();
   }
   tick() {
+    if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
     if (!this.session) { this.resume(); return; }
     if (this.session.slot !== owner()) { this.stop(); return; }
     if (this.error) return;
@@ -226,6 +227,10 @@ export class StoryDirector {
             onChoose:choice=>{
               if(!this.session || this.session.index!==index || this.wait?.index!==index)return;
               this.session.vars[step.key||'choice']=choice.id;
+              if (!this.session.preview && scene.registry.get('gameMode')==='arkonStory') {
+                const previous=scene.registry.get('arkonStoryChoices') || {};
+                scene.registry.set('arkonStoryChoices', {...previous,[step.key||'choice']:choice.id});
+              }
               const dest=compiled.labels.get(choice.to);
               if(dest==null){this.error='CHOICE TARGET MISSING';return;}
               this.session.index=dest+1;

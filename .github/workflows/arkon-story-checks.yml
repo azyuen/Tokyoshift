@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/state/GameState.js'
       - 'src/data/arkonChapter01.js'
+      - 'src/data/arkonChapter01Extended.js'
       - 'src/data/storyDirectorScripts.js'
       - 'src/data/centralTokyo.js'
       - 'src/data/ginzaGallery.js'
@@ -13,6 +14,8 @@ on:
       - 'src/ui/StoryContinuePrompt.js'
       - 'src/ui/StoryStage.js'
       - 'src/ui/ArkonStoryObjective.js'
+      - 'src/ui/ArkonStoryArchivePanel.js'
+      - 'src/ui/OfficePanel.js'
       - 'src/ui/SettingsPanel.js'
       - 'src/story/StoryDirector.js'
       - 'tests/arkonStoryMode.test.mjs'
@@ -21,6 +24,7 @@ on:
     paths:
       - 'src/state/GameState.js'
       - 'src/data/arkonChapter01.js'
+      - 'src/data/arkonChapter01Extended.js'
       - 'tests/arkonStoryMode.test.mjs'
 jobs:
   check:
@@ -35,10 +39,13 @@ jobs:
           node --check src/state/GameState.js
           node --check src/scenes/ProfileSelectScene.js
           node --check src/data/arkonChapter01.js
+          node --check src/data/arkonChapter01Extended.js
           node --check src/data/storyDirectorScripts.js
           node --check src/ui/StoryContinuePrompt.js
           node --check src/ui/StoryStage.js
           node --check src/ui/ArkonStoryObjective.js
+          node --check src/ui/ArkonStoryArchivePanel.js
+          node --check src/ui/OfficePanel.js
           node --check src/ui/SettingsPanel.js
           node --check src/story/StoryDirector.js
           node --check src/scenes/MeetScene.js

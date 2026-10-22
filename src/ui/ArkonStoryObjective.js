@@ -2,21 +2,40 @@
 const PIXEL='"Silkscreen", monospace';
 const BODY='"Rajdhani", sans-serif';
 
+import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
+
 export function getArkonStoryObjective(registry) {
   const get=key=>registry?.get?.(key);
-  if(get('gameMode')!=='arkonStory') return null;
+  if(get('gameMode')!=='arkonStory')return null;
   const wins=Math.max(0,Number(get('wins')||0));
-  if(get('arkonStoryChapter01AfterHoursDone'))
-    return {heading:'CHAPTER 01 COMPLETE',message:'You have finished the first chapter. The next chapter is still being built.',progress:'STORY PROGRESS SAVED'};
-  if(get('arkonStoryChapter01Done'))
-    return {heading:'AFTER HOURS',message:wins>=4
-      ? 'Return to a street meet to continue the story.'
-      : 'Win street races, then return to a meet for the next scene.',
-      progress:'RACE WINS  '+Math.min(wins,4)+' / 4'};
-  return {heading:'CHAPTER 01 // FIRST RUNS',
-    message:wins>=2?'Return to a street meet. There is more to tonight.'
-      :'Win two street races in your own car. Tuning and cash races both count.',
-    progress:'RACE WINS  '+Math.min(wins,2)+' / 2'};
+  if(get('arkonStoryChapter01FullDone'))return {
+    heading:'CHAPTER 01 COMPLETE',
+    message:'Chapter 01 is complete. Visit Office > Recount Story to relive it or restart.',
+    progress:'STORY PROGRESS SAVED',
+  };
+  const index=Math.max(0,Math.floor(Number(get('storyDirectorProgress')?.index)||0));
+  const steps=ARKON_CHAPTER_01.steps;
+  const here=steps[index];
+  if(here?.type==='WAIT_SCENE')return {
+    heading:'CHAPTER 01 // AFTER HOURS',
+    message:here.scene==='GarageScene'
+      ? 'Return to your workshop to continue the story.'
+      : 'Return to a street meet to continue the story.',
+    progress:'RACE WINS  '+wins,
+  };
+  const next=steps.slice(index).find(step=>step.type==='WAIT_FLAG'&&step.key==='wins');
+  if(next)return {
+    heading:'CHAPTER 01 // AFTER HOURS',
+    message:wins>=Number(next.atLeast)
+      ? 'Your next scene is ready. Keep playing or return to the location indicated.'
+      : 'Win more street races to advance Chapter 01. Cash and tuning remain yours.',
+    progress:'RACE WINS  '+Math.min(wins,next.atLeast)+' / '+next.atLeast,
+  };
+  return {
+    heading:'CHAPTER 01 // AFTER HOURS',
+    message:'Continue the current scene to advance your story.',
+    progress:'RACE WINS  '+wins,
+  };
 }
 
 export function addArkonStoryObjectiveButton(scene,x=985,y=35) {
@@ -60,6 +79,9 @@ export function showArkonStoryObjective(scene) {
   }).setOrigin(.5).setDepth(depth+2));
   add(scene.add.text(780,493,info.progress,{
     fontFamily:PIXEL,fontSize:'11px',color:'#f6da8d'
+  }).setOrigin(.5).setDepth(depth+2));
+  add(scene.add.text(780,525,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
+    fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
   const done=add(scene.add.rectangle(780,555,215,50,0x153847,1)
     .setStrokeStyle(2,0x64cde2,1).setDepth(depth+2)

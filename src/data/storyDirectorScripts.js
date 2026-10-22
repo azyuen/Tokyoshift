@@ -1,4 +1,4 @@
-import { ARKON_CHAPTER_01 } from './arkonChapter01.js?v=20261022-arkon2';
+import { ARKON_CHAPTER_01 } from './arkonChapter01.js?v=20261022-r649';
 // Developer-only smoke scripts. These are NOT career canon and do not
 // automatically trigger for ordinary players. No rewards or narrative flags.
 export const STORY_DIRECTOR_SCRIPTS = Object.freeze({

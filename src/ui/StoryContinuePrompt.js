@@ -20,19 +20,19 @@ export function showStoryContinuePrompt(scene,{
   // separate bottom-right rival or controls pane.
   const stage={x:24,y:92,w:1138,h:528};
   const x=Math.round(stage.x+stage.w-154);
-  const y=Math.round(stage.y+stage.h-37);
-  const w=270, h=58;
+  const y=Math.round(stage.y+stage.h-45);
+  const w=270, h=66;
   const plate=add(scene.add.graphics().setDepth(depth+1).setScrollFactor(0));
   const left=x-w/2,right=x+w/2,top=y-h/2,bottom=y+h/2;
   plate.fillStyle(0x0d2839,.94);
   plate.lineStyle(2,0x82dce4,1);
   const polygon=[{x:left+18,y:top},{x:right,y:top},{x:right-18,y:bottom},{x:left,y:bottom}];
   plate.fillPoints(polygon,true);plate.strokePoints(polygon,true);
-  const title=add(scene.add.text(x,y-3,String(label).toUpperCase(),{
-    fontFamily:PIXEL,fontSize:'12px',color:'#ffffff',align:'center',
+  const title=add(scene.add.text(x,y+(caption?-9:0),String(label).toUpperCase(),{
+    fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
-  if(caption)add(scene.add.text(x,y+22,String(caption),{
-    fontFamily:BODY,fontSize:'12px',color:'#b9e6ec',
+  if(caption)add(scene.add.text(x,y+11,String(caption),{
+    fontFamily:BODY,fontSize:'11px',color:'#b9e6ec',
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
   const hit=add(scene.add.rectangle(x,y,w,h,0xffffff,.001)
     .setDepth(depth+3).setScrollFactor(0).setInteractive({useHandCursor:true}));
