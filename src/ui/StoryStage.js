@@ -3,7 +3,7 @@
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r655';
 import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
 import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
-import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
+import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261023-r660';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
@@ -187,6 +187,7 @@ export function showStoryStage(scene, {
         if(!carObjects)carObjects=renderStoryCar(scene,c.model,{
           x,groundY,targetWidth,depth:layer,flipX:Boolean(c.flipX),
           paintColor:c.paintColor??0xffffff,
+          garageGeometry:garagePanel,
         });
         carObjects.forEach(obj=>{
           if(clipMask)obj?.setMask?.(clipMask);
