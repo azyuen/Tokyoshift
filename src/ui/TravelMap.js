@@ -1,3 +1,4 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import {
   MEET_LOCATIONS,
   getMeetLocation,
@@ -120,7 +121,7 @@ export function showTravelMap(scene, options = {}) {
   const openingTrainMode = travelMode === 'openingTrain';
   const chapter08GinzaMode = travelMode === 'chapter08Ginza';
 
-  const worldPhase = getWorldPhase();
+  const worldPhase = getStoryWorldPhase(scene.registry);
   const preferredMapAsset = REGION_MAP_ASSETS[worldPhase] || REGION_MAP_ASSETS.night;
   const mapAttemptKey = '_travelMapAssetAttempted_' + worldPhase;
 

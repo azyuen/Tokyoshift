@@ -3,7 +3,7 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261023-r652';
+} from '../data/characters.js?v=20261023-r653';
 import {
   getCutscene,
   hasSeenCutscene,

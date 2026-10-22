@@ -1896,9 +1896,9 @@ regionExclusive: true, teamRole: 'core',
     archetype:'The Show-Off',roleTags:['arkon-story','nonrecruitable'],
     visual:{
       spriteKey:'characterStoryDaigoKirishima',
-      path:'assets/Characters/Shibuya/haru_sakurai_idle.png',
+      path:'assets/Characters/Tatsumi/daigo_moriyama_idle.png',
       poseAssets:{
-        idle:{key:'characterStoryDaigoIdle',path:'assets/Characters/Shibuya/haru_sakurai_idle.png'},
+        idle:{key:'characterStoryDaigoIdle',path:'assets/Characters/Tatsumi/daigo_moriyama_idle.png'},
       },
     },
   },

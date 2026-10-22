@@ -91,6 +91,7 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter01FullDone: false,
     arkonStoryChapter01RevisedDone: false,
     arkonStoryPhase: 'opening',
+    arkonStoryTimeOfDay: 'night',
     arkonStorySayakaNoticed: false,
     arkonStoryRivalResult: null,
     arkonStoryAtSchool: false,
@@ -1152,6 +1153,13 @@ export function normaliseState(input = {}) {
     arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
     arkonStoryChapter01RevisedDone: storyMode && Boolean(input.arkonStoryChapter01RevisedDone),
     arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
+    // Migrate R652 chapters already past the nighttime introduction without
+    // restarting their scripted checkpoints or resetting any races.
+    arkonStoryTimeOfDay: storyMode && (
+      input.arkonStoryTimeOfDay==='day' ||
+      (input.arkonStoryTimeOfDay!=='night' &&
+       ['practice','goSchool','lesson','complete'].includes(input.arkonStoryPhase))
+    ) ? 'day' : 'night',
     arkonStorySayakaNoticed: storyMode && Boolean(input.arkonStorySayakaNoticed),
     arkonStoryRivalResult: storyMode && ['won','lost'].includes(input.arkonStoryRivalResult)
       ? input.arkonStoryRivalResult : null,
@@ -1515,6 +1523,7 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter01FullDone: Boolean(registry.get('arkonStoryChapter01FullDone')),
     arkonStoryChapter01RevisedDone: Boolean(registry.get('arkonStoryChapter01RevisedDone')),
     arkonStoryPhase: registry.get('arkonStoryPhase'),
+    arkonStoryTimeOfDay: registry.get('arkonStoryTimeOfDay'),
     arkonStorySayakaNoticed: Boolean(registry.get('arkonStorySayakaNoticed')),
     arkonStoryRivalResult: registry.get('arkonStoryRivalResult'),
     arkonStoryAtSchool: Boolean(registry.get('arkonStoryAtSchool')),

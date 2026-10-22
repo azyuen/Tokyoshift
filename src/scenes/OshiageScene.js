@@ -1,10 +1,11 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 // Oshiage satellite district. The seven regional championships remain unchanged.
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   OSHIAGE_SCHOOL_LESSONS, bookOshiageLesson, consumeOshiageAttempt,
   isOshiageVoucherAvailable,
 } from '../data/oshiageSchool.js?v=20261023-r652';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261023-r652';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterVisualForContext, CENTRAL_TOKYO_CHARACTER_IDS } from '../data/characters.js?v=20261023-r653';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
 import { getOshiageEliteProgress, getOshiageEliteRemainingMs, getOshiageElitePrize, OSHIAGE_ELITE_VENUES } from '../data/oshiageElite.js?v=20261015-r522';
 import {
@@ -16,14 +17,14 @@ import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=202610
 import { getStreetPaintPalette } from '../data/streetPaintPalettes.js?v=20261020-r624';
 import { isActiveCrewLoanCar } from '../data/crewSystem.js?v=20261020-r615';
 import { getWorldPhase } from '../environment/WorldClock.js?v=20260929-r286';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r652';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r653';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261011-r479';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261016-r530';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
 import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261023-r652';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
@@ -143,7 +144,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.paintBusy = false;
     this.paintObjects = [];
     this.content = [];
-    this.phase = getWorldPhase();
+    this.phase = getStoryWorldPhase(this.registry);
   }
 
   backgroundAsset(locationId = this.activeLocationId, phase = this.phase) {
@@ -298,7 +299,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.phaseWatcher = this.time.addEvent({ delay: 5000, loop: true, callback: () => {
       // Never tear down a moving car midway through a showroom entrance.
       if (this.paintBusy) return;
-      const phase = getWorldPhase();
+      const phase = getStoryWorldPhase(this.registry);
       const rimCycle = Math.floor(Date.now() / RIMS_REFRESH_MS);
       if (phase === this.phase && (this.room !== 'rims' || rimCycle === this.rimCycle)) return;
       this.phase = phase;
@@ -667,7 +668,7 @@ export default class OshiageScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'OshiageScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', 'OSHIAGE');
     this.registry.set('raceLocationLabel', (this.registry.get('gameMode')==='arkonStory' ? 'SAYAKA' : 'LADY INSTRUCTOR') + ' // ' + ({ launch: 'LAUNCH', standing: 'SHIFTING', rolling: 'ROLLING' }[lessonId] || 'BASIC DRIVING'));
     this.registry.set('oshiageLocation', 'oshiageDrivingSchool');
@@ -982,7 +983,7 @@ export default class OshiageScene extends Phaser.Scene {
       this.renderView();
       return;
     }
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     saveSessionState(this.registry);
     this.scene.start('RaceScene');
   }

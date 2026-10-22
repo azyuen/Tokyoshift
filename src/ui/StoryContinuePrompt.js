@@ -19,20 +19,27 @@ export function showStoryContinuePrompt(scene,{
   // Keep the prompt INSIDE the main cinematic/meet viewport, not in the
   // separate bottom-right rival or controls pane.
   const stage={x:24,y:92,w:1138,h:528};
-  const x=Math.round(stage.x+stage.w-154);
-  const y=Math.round(stage.y+stage.h-45);
-  const w=270, h=66;
+  // Responsive plate dimensions: labels like "CHAPTER 01 // FIRST
+  // IMPRESSIONS" must fit with padding on narrow iPad stage layouts.
+  const w=Math.min(365,stage.w-36),h=82;
+  const x=Math.round(stage.x+stage.w-w/2-16);
+  const y=Math.round(stage.y+stage.h-h/2-15);
   const plate=add(scene.add.graphics().setDepth(depth+1).setScrollFactor(0));
   const left=x-w/2,right=x+w/2,top=y-h/2,bottom=y+h/2;
   plate.fillStyle(0x0d2839,.94);
   plate.lineStyle(2,0x82dce4,1);
   const polygon=[{x:left+18,y:top},{x:right,y:top},{x:right-18,y:bottom},{x:left,y:bottom}];
   plate.fillPoints(polygon,true);plate.strokePoints(polygon,true);
-  const title=add(scene.add.text(x,y+(caption?-9:0),String(label).toUpperCase(),{
+  const title=add(scene.add.text(x,y+(caption?-11:0),String(label).toUpperCase(),{
     fontFamily:PIXEL,fontSize:'10px',color:'#ffffff',align:'center',
+    wordWrap:{width:w-74,useAdvancedWrap:true},
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
-  if(caption)add(scene.add.text(x,y+11,String(caption),{
-    fontFamily:BODY,fontSize:'11px',color:'#b9e6ec',
+  // Phaser sizes text after measuring glyph widths; shrink any unexpectedly
+  // long translations instead of bleeding outside the parallelogram.
+  if(title.width>w-65)title.setFontSize('8px');
+  if(caption)add(scene.add.text(x,y+19,String(caption),{
+    fontFamily:BODY,fontSize:'11px',color:'#b9e6ec',align:'center',
+    wordWrap:{width:w-76,useAdvancedWrap:true},
   }).setOrigin(.5).setDepth(depth+2).setScrollFactor(0));
   const hit=add(scene.add.rectangle(x,y,w,h,0xffffff,.001)
     .setDepth(depth+3).setScrollFactor(0).setInteractive({useHandCursor:true}));

@@ -1,4 +1,4 @@
-import { characters } from '../data/characters.js?v=20261023-r652';
+import { characters } from '../data/characters.js?v=20261023-r653';
 import { cars } from '../data/cars.js?v=20261011-r479';
 import {
   getProfileSlots,
@@ -6,7 +6,7 @@ import {
   setActiveProfileIndex,
   beginNewProfile,
   setProfileGameMode,
-} from '../state/GameState.js?v=20261023-r652';
+} from '../state/GameState.js?v=20261023-r653';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261004-r333';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
 

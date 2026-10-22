@@ -1,9 +1,10 @@
+import { getStoryWorldPhase } from '../story/ArkonStoryTime.js?v=20261023-r653';
 import { getCarBodyScaleForWidth } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { cars, carOrder } from '../data/cars.js?v=20261011-r479';
 import { garageAssets } from '../data/garageAssets.js?v=20260925-r192';
 import { engines } from '../data/engines.js?v=20261011-r479';
-import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261023-r652';
+import { characters, getCharacterAssetUrl, getCharacterVisualAsset, getCharacterForContext } from '../data/characters.js?v=20261023-r653';
 import {
   ENGINE_PART_ORDER,
   ENGINE_TUNING_PARTS,
@@ -44,10 +45,10 @@ import {
   STORE_KIT_REMOVE_FEE,
   STORE_KIT_RESTORE_FEE,
 } from '../data/partUninstall.js?v=20261020-r619';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r652';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r653';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r652';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r652';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
   ETHAN_GIFT_PENDING_KEY, isEthanName,
@@ -59,7 +60,7 @@ import { markCutsceneSeen } from '../data/cutscenes.js?v=20261021-r627';
 import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261023-r652';
-import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r652';
+import { showTravelMap } from '../ui/TravelMap.js?v=20261023-r653';
 import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261022-r646';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r574';
@@ -308,7 +309,7 @@ export default class GarageScene extends Phaser.Scene {
       );
     }
 
-    const mapPhase = getWorldPhase() === 'day' ? 'day' : 'night';
+    const mapPhase = getStoryWorldPhase(this.registry) === 'day' ? 'day' : 'night';
     const workshopMapAsset = mapPhase === 'day'
       ? {
           key: 'travelMapTokyoRegionDay',
@@ -607,7 +608,7 @@ export default class GarageScene extends Phaser.Scene {
     this.garagePageObjects = [];
     const selectedGarageIndex = Math.max(0, localCars.indexOf(this.selectedCarId));
     this.garagePage = Math.floor(selectedGarageIndex / this.garagePageSize);
-    this.worldPhase = getWorldPhase();
+    this.worldPhase = getStoryWorldPhase(this.registry);
     this.workshopBackgroundImage = null;
     this.workshopBackgroundWorkshop = null;
 
@@ -817,7 +818,7 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   syncWorldPhaseBackground() {
-    const nextPhase = getWorldPhase();
+    const nextPhase = getStoryWorldPhase(this.registry);
     if (nextPhase === this.worldPhase) return;
     this.worldPhase = nextPhase;
     if (this.crewMode && this.crewOverviewBackground?.active) this.drawCrewOverview();
@@ -1490,7 +1491,7 @@ export default class GarageScene extends Phaser.Scene {
       : (() => {
           const phaseBackground = getWorkshopPhaseBackground(
             activeWorkshop,
-            this.worldPhase || getWorldPhase()
+            this.worldPhase || getStoryWorldPhase(this.registry)
           );
           return phaseBackground?.key && this.textures.exists(phaseBackground.key)
             ? phaseBackground.key
@@ -7731,7 +7732,7 @@ export default class GarageScene extends Phaser.Scene {
     this.registry.set('selectedRaceSpecialChallenge', false);
     this.registry.set('selectedRaceMeetOffer', null);
     this.registry.set('raceReturnScene', 'GarageScene');
-    this.registry.set('raceTimeOfDay', getWorldPhase());
+    this.registry.set('raceTimeOfDay', getStoryWorldPhase(this.registry));
     this.registry.set('raceDistrict', 'ODAIBA');
     this.registry.set('raceLocationLabel',
       this.registry.get('openingChapter') === 'tutorial' ? 'SAYAKA DRIVING LESSON' : 'DAICHI PRACTICE RUN');
