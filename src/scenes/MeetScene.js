@@ -110,7 +110,7 @@ import {
   isTunerShopUnlocked,
 } from '../data/tunerShops.js?v=20261011-r479';
 import { createCharacterProfile } from '../characters/CharacterProfileRenderer.js?v=20261007-r411';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import { markCutsceneSeen } from '../data/cutscenes.js?v=20261018-r588';
 import { showGarageDeliveryPicker } from '../ui/GarageDeliveryPicker.js?v=20260929-r264';
 
