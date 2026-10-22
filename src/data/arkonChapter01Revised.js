@@ -244,8 +244,9 @@ export const ARKON_CHAPTER_01_REVISED={
       say('A little. Shall we start before you think of something clever to say?','oshiageHappy'),
     ]),
     {type:'SET_FLAG',key:'arkonStorySchoolRevealed',value:true},
+    {type:'SET_FLAG',key:'arkonStoryLessonCompleted',value:false},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'lesson'},
-    {type:'WAIT_FLAG',key:'oshiageBasicLessonComplete',equals:true},
+    {type:'WAIT_FLAG',key:'arkonStoryLessonCompleted',equals:true},
     {type:'WAIT_SCENE',scene:'OshiageScene'},
     manga('BACK FROM THE LESSON',[
       say('Well? How did your Civic feel?','oshiageNeutral'),
