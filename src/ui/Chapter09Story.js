@@ -22,7 +22,7 @@ export function startChapter09(scene,{preview=false}={}){
   if(!sequence.length)return false;
 
   scene._chapter09Playing=true;
-  let index=0,mikaRevealed=false,stopped=false,stage=null;
+  let index=0,mikaRevealed=false,proLookRevealed=false,stopped=false,stage=null;
   const cleanup=()=>{
     if(stopped)return false;
     stopped=true;
@@ -78,7 +78,15 @@ export function startChapter09(scene,{preview=false}={}){
     if(stopped)return;
     if(!scene.sys?.isActive?.()){abort();return;}
     if(sceneCutsceneActive(scene,{ignoreChapter09Stage:true}))return;
-    if(index>=sequence.length){finish();return;}
+    if(index>=sequence.length){
+      if(!proLookRevealed){
+        proLookRevealed=true;
+        // The registration-room tableau is revealed again before the team
+        // changes into pro gear. CONTINUE is required after the costume swap.
+        if(!stage?.showProOutfits?.(()=>later(finish)))abort();
+      }else finish();
+      return;
+    }
     if(sequence[index]==='chapter09Visitor'&&!mikaRevealed){
       mikaRevealed=true;
       if(!stage?.showMika?.(()=>later(playDialogue)))abort();
