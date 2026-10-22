@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/normalize_backgrounds.py'
       - 'scripts/render_background_review_sheets.py'
+      - 'scripts/audit_backgrounds.py'
       - '.github/workflows/normalize-backgrounds-r645.yml'
 permissions:
   contents: write
