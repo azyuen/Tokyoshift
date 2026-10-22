@@ -6,6 +6,10 @@ import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
 import {getArkonStoryObjective} from '../src/ui/ArkonStoryObjective.js';
 import {getArkonRecountScenes} from '../src/ui/ArkonStoryArchivePanel.js';
+import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../src/story/StoryNativeStageTemplates.js';
+import { WORKSHOP_PRESENTATION } from '../src/data/workshopPresentation.js';
+import { SHOWDOWN_STAGE, SHOWDOWN_HERO_CAR, SHOWDOWN_HERO_CHARACTER } from '../src/ui/ShowdownLayout.js';
+import { getStoryBackground } from '../src/data/storyBackgroundCatalog.js';
 import {createArkonStoryState,normaliseState,createDefaultGameState,
   applyStateToRegistry,saveSessionState,setProfileGameMode,getProfileGameMode,
   beginNewProfile,readSessionState,getProfileState,exportProfileBackup,
@@ -204,4 +208,63 @@ test('Story objective is to the left of Settings with a taller, clear popup',()=
   assert.ok(closeY-replayY>=60);
   assert.ok(closeY-messageY>=200);
   assert.ok(closeY+25<420+535/2);
+});
+
+test('R651 Workshop stages use the LIVE Garage hero car and player positions',()=>{
+  const profile=getStoryBackground('workshop:shinonomeWorkshop:night');
+  const template=getNativeStoryStageTemplate(profile,{sys:{settings:{key:'GarageScene'}}});
+  assert.equal(template.kind,'workshop');
+  assert.deepEqual(template.car,{
+    x:WORKSHOP_PRESENTATION.heroCar.x,
+    tyreContactY:WORKSHOP_PRESENTATION.heroCar.tyreContactY,
+    targetWidth:WORKSHOP_PRESENTATION.heroCar.targetWidth,
+  });
+  assert.deepEqual(template.character,{
+    x:WORKSHOP_PRESENTATION.player.x,
+    feetY:WORKSHOP_PRESENTATION.player.feetY,
+    height:WORKSHOP_PRESENTATION.player.targetHeight,
+  });
+  const first=getNativeCastPlacement(template,0,2);
+  const second=getNativeCastPlacement(template,1,2);
+  assert.equal(first.height,second.height);
+  assert.equal(first.feetY,second.feetY);
+  assert.ok(second.x>first.x);
+});
+
+test('R651 Meet staging shares the ACTUAL live Street Showdown geometry',()=>{
+  const profile=getStoryBackground('meet:odaiba7eleven:night');
+  const scene={sys:{settings:{key:'MeetScene'}}};
+  const template=getNativeStoryStageTemplate(profile,scene);
+  assert.equal(template.kind,'meet');
+  assert.deepEqual(template.frame,SHOWDOWN_STAGE);
+  assert.deepEqual(template.car,SHOWDOWN_HERO_CAR);
+  assert.deepEqual(template.character,SHOWDOWN_HERO_CHARACTER);
+  const first=getNativeCastPlacement(template,0,2);
+  const companion=getNativeCastPlacement(template,1,2);
+  const observer=getNativeCastPlacement(template,1,2,'observer');
+  assert.equal(first.height,companion.height);
+  assert.equal(companion.height,observer.height);
+  assert.equal(first.feetY,observer.feetY);
+  assert.ok(observer.x>companion.x);
+});
+
+test('R651 does not apply native gameplay positions in the wrong scene',()=>{
+  const garage=getStoryBackground('workshop:shinonomeWorkshop:night');
+  const meet=getStoryBackground('meet:odaiba7eleven:night');
+  assert.equal(getNativeStoryStageTemplate(garage,{sys:{settings:{key:'MeetScene'}}}),null);
+  assert.equal(getNativeStoryStageTemplate(meet,{sys:{settings:{key:'GarageScene'}}}),null);
+  assert.equal(getNativeStoryStageTemplate(
+    getStoryBackground('train:station:night'),{sys:{settings:{key:'TrainStationScene'}}}),null);
+});
+
+test('R651 renderer uses gameplay car displays instead of story-specific sizing',()=>{
+  const stage=readFileSync(new URL('../src/ui/StoryStage.js',import.meta.url),'utf8');
+  const showdown=readFileSync(new URL('../src/ui/StreetShowdownView.js',import.meta.url),'utf8');
+  assert.match(stage,/template\?\.car\.targetWidth\?\?c\.width/);
+  assert.match(stage,/scene\.buildWorkshopHeroLayout\(c\.model\)/);
+  assert.match(stage,/scene\.createCarDisplay\(c\.model,hero\.x,hero\.bodyY/);
+  assert.match(stage,/scene\.createCarDisplay\(c\.model,template\.car\.x,template\.car\.y/);
+  assert.match(stage,/getNativeCastPlacement\(template,i,actors\.length,a\.role\)/);
+  assert.match(showdown,/SHOWDOWN_HERO_CAR\.targetWidth/);
+  assert.match(showdown,/SHOWDOWN_HERO_CHARACTER\.height/);
 });
