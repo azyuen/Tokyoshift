@@ -4,7 +4,7 @@ import {
   preloadCarAppearanceAssets, preloadCarWheel, createCarBodyLayers,
   getCarBodyScaleForWidth, getCarBodyTextureKey,
 } from '../vehicles/CarAppearance.js?v=20261020-r617';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
+import { getWheelPairFit, getWheelContactOffsetY } from '../vehicles/WheelFit.js?v=20260929-r258';
 import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
 import { carBodyCenterY } from './StoryComposition.js?v=20261022-r642';
 
@@ -16,18 +16,32 @@ export function preloadStoryCar(scene,car,cacheBust='20261022-r642') {
 
 export function renderStoryCar(scene,car,{
   x=1030,groundY=720,targetWidth=1000,depth=8,flipX=false,
-  paintColor=0xffffff,shadow=true,
+  paintColor=0xffffff,shadow=true,garageGeometry=false,
 }={}) {
   if(!scene?.textures || !car?.visual)return [];
   const textureKey=getCarBodyTextureKey(scene,car);
   if(!scene.textures.exists(textureKey))return [];
   const bodySource=scene.textures.get(textureKey).getSourceImage();
   const scale=getCarBodyScaleForWidth(scene,car,targetWidth);
-  const bodyY=carBodyCenterY({
-    groundY,sourceHeight:bodySource?.naturalHeight||bodySource?.height,
-    scale,referenceStandard:Boolean(car.visual.referenceStandard),
-    bodyRenderOffsetY:Number(car.visual.bodyRenderOffsetY||0),
-  });
+  // Customer tuning in Canal Yard uses the Garage's tyre contact solver,
+  // not the cinematic renderer's approximate body-centre equation.
+  const wheelSource=car.visual.wheelKey && scene.textures.exists(car.visual.wheelKey)
+    ? scene.textures.get(car.visual.wheelKey).getSourceImage() : null;
+  const wheelFit=wheelSource?getWheelPairFit(car.visual,scale,flipX,wheelSource):null;
+  const wheelContact=fit=>fit?.backingRadius>0
+    ? fit.backingRadius : getWheelContactOffsetY(wheelSource,fit?.wheelScale);
+  const maxContact=wheelFit
+    ? Math.max(wheelFit.rear.offsetY+wheelContact(wheelFit.rear),
+      wheelFit.front.offsetY+wheelContact(wheelFit.front)) : 0;
+  const bodyY=garageGeometry && wheelFit
+    ? (car.visual.referenceStandard
+      ? groundY+Number(car.visual.renderOffsetY||0)*scale
+      : groundY-maxContact)
+    : carBodyCenterY({
+      groundY,sourceHeight:bodySource?.naturalHeight||bodySource?.height,
+      scale,referenceStandard:Boolean(car.visual.referenceStandard),
+      bodyRenderOffsetY:Number(car.visual.bodyRenderOffsetY||0),
+    });
   const drawX=getReferenceRightX(car,x,scale);
   const objects=[];
   const add=obj=>{if(obj)objects.push(obj);return obj;};
