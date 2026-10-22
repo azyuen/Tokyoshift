@@ -6,6 +6,7 @@
 import {getActiveProfileIndex} from '../state/GameState.js?v=20261023-r657';
 import {createStoryCheckpoint} from '../story/StoryScript.js?v=20261023-r657';
 import {queueSafeSceneStart} from './SafeSceneTransition.js?v=20261017-r573';
+import {normaliseCarGarageLocations} from '../data/workshopProgression.js?v=20261023-r662';
 
 const ACTIVE='__arkonStoryPlayableReplay';
 const OWNER='__arkonStoryPlayableReplayOwner';
@@ -56,6 +57,20 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter02RivalResult',null);
   registry.set('arkonStoryRivalResult',null);
   registry.set('arkonStoryCruiseComplete',false);
+  // Rehearse exactly the workshops available in the selected chapter,
+  // rather than inheriting a future chapter's HQ or Career unlocks.
+  const canal=chapter>=3;
+  registry.set('arkonStoryCanalYardUnlocked',canal);
+  registry.set('arkonStoryWarehouseUnlocked',false);
+  registry.set('garageTier',canal?1:0);
+  registry.set('workshopLocationId',canal?'shinonomeCanalYard':'shinonomeWorkshop');
+  const owned=registry.get('ownedCarIds')||[];
+  const selected=registry.get('selectedCarId');
+  const locations={...(registry.get('carGarageLocations')||{})};
+  if(selected&&owned.includes(selected))
+    locations[selected]=canal?'shinonomeCanalYard':'shinonomeWorkshop';
+  registry.set('carGarageLocations',normaliseCarGarageLocations(
+    owned,locations,canal?1:0));
   if(chapter===3){
     // Without this reset, any previously completed Chapter 03 skips every
     // ARKON_CUSTOMER_JOB in StoryDirector (done > step.index), showing only
@@ -78,9 +93,9 @@ export function beginArkonPlayableReplay(scene,chapter) {
     registry.set('arkonStoryLessonCredits',0);
   }
   registry.set('storyDirectorProgress',createStoryCheckpoint(scriptId(chapter),0,slot));
-  const target=(chapter===1||chapter===4)?'GarageScene':'MeetScene';
+  const target=chapter===2?'MeetScene':'GarageScene';
   const scheduled=queueSafeSceneStart(scene,target,
-    target==='GarageScene'?{workshopLocationId:chapter===4
+    target==='GarageScene'?{workshopLocationId:canal
       ?'shinonomeCanalYard':'shinonomeWorkshop',crewMode:false}:undefined);
   if(!scheduled){
     // Revert immediately if the scene cannot be entered.
