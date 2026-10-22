@@ -1,6 +1,6 @@
 // Scene-local authored tableau over whichever real venue/gameplay screen is active.
 // Uses canonical character assets; cars/backgrounds are explicit texture references.
-import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r652';
+import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r653';
 import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
 import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
