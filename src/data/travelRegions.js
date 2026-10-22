@@ -462,6 +462,7 @@ function sourceValue(source, key, fallback = null) {
 function isDevTravelProfile(source) {
   if (Boolean(sourceValue(source, 'devMode', false))) return true;
 
+  if (sourceValue(source,'gameMode','career')==='arkonStory') return false;
   const first = String(sourceValue(source, 'firstName', '')).trim().toLowerCase();
   const last = String(sourceValue(source, 'lastName', '')).trim().toLowerCase();
   const joined = (first + last).replace(/[^a-z0-9]/g, '');
@@ -475,6 +476,7 @@ export function isTravelRegionUnlocked(source, regionId) {
   if (!region) return false;
 
   if (isDevTravelProfile(source)) return true;
+  if (sourceValue(source,'gameMode')==='arkonStory') return true;
   if (regionId === HOME_REGION_ID || regionId === 'ODAIBA') return true;
 
   // Do not reveal regions that still have no playable destination. This keeps
@@ -486,6 +488,7 @@ export function isTravelRegionUnlocked(source, regionId) {
 }
 
 export function getTravelRegionUnlockLabel(source, regionId) {
+  if (sourceValue(source,'gameMode')==='arkonStory') return 'OPEN';
   if (isDevTravelProfile(source)) return 'OPEN';
   return getCareerRegionUnlockLabel(source, regionId);
 }
@@ -516,7 +519,12 @@ export function isTravelLocationUnlocked(source, locationId) {
   const found = getTravelLocation(locationId);
   if (!found) return false;
   if (isDevTravelProfile(source)) return true;
-
+  // Story Arkon may explore Tokyo early, but Ginza remains invitation-only.
+  if (sourceValue(source,'gameMode')==='arkonStory') {
+    if (locationId==='ginzaMotorGallery')
+      return Boolean(sourceValue(source,'arkonStoryGinzaUnlocked',false));
+    return found.available!==false;
+  }
   if (found.regionId === HOME_REGION_ID) {
     return found.kind === 'home' || found.kind === 'garageUpgrade';
   }
