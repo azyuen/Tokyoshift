@@ -3,6 +3,7 @@
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
+import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r653';
 import { resetArkonStoryState } from '../state/GameState.js?v=20261023-r653';
@@ -14,12 +15,15 @@ export function getArkonRecountScenes(registry) {
   const get=key=>registry?.get?.(key);
   if(get('gameMode')!=='arkonStory')return [];
   const progress=get('storyDirectorProgress');
-  const chapter02=progress?.id===ARKON_CHAPTER_02.id ||
+  const chapter03=progress?.id===ARKON_CHAPTER_03.id ||
+    Boolean(get('arkonStoryChapter03Done'));
+  const chapter02=chapter03 || progress?.id===ARKON_CHAPTER_02.id ||
     Boolean(get('arkonStoryChapter02Done'));
   const revised=chapter02 || progress?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
-  const scripts=chapter02
-    ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02]
+  const scripts=chapter03
+    ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02,ARKON_CHAPTER_03]
+    :chapter02 ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02]
     : [revised?ARKON_CHAPTER_01_REVISED:ARKON_CHAPTER_01];
   const choices={...(get('arkonStoryChoices')||{}),...(progress?.vars||{})};
   if(get('arkonStoryFirstChoice'))choices.firstApproach=get('arkonStoryFirstChoice');
@@ -29,7 +33,9 @@ export function getArkonRecountScenes(registry) {
   const played=[];
   for(const source of scripts){
     const compiled=validateStoryScript(source);
-    const completed=source.id===ARKON_CHAPTER_02.id
+    const completed=source.id===ARKON_CHAPTER_03.id
+      ? get('arkonStoryChapter03Done')
+      :source.id===ARKON_CHAPTER_02.id
       ? get('arkonStoryChapter02Done')
       :source.id===ARKON_CHAPTER_01_REVISED.id
         ? get('arkonStoryChapter01RevisedDone')
@@ -113,9 +119,12 @@ export function showArkonStoryArchivePanel(scene) {
   add(scene.add.text(780,208,'ARKON DEN // RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'19px',color:'#f2faff',
   }).setOrigin(.5).setDepth(depth+2));
-  const chapter=scene.registry.get('arkonStoryChapter02Done') ||
-    scene.registry.get('storyDirectorProgress')?.id===ARKON_CHAPTER_02.id
-      ? 'CHAPTERS 01 & 02 // PLAYED SCENES' : 'CHAPTER 01 // PLAYED SCENES';
+  const chapter=scene.registry.get('arkonStoryChapter03Done') ||
+    scene.registry.get('storyDirectorProgress')?.id===ARKON_CHAPTER_03.id
+      ? 'CHAPTERS 01–03 // PLAYED SCENES'
+      :scene.registry.get('arkonStoryChapter02Done') ||
+      scene.registry.get('storyDirectorProgress')?.id===ARKON_CHAPTER_02.id
+        ? 'CHAPTERS 01 & 02 // PLAYED SCENES' : 'CHAPTER 01 // PLAYED SCENES';
   add(scene.add.text(780,267,chapter,{
     fontFamily:PIXEL,fontSize:'11px',color:'#84dce7',
   }).setOrigin(.5).setDepth(depth+2));
