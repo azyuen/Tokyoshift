@@ -948,7 +948,7 @@ export default class MeetScene extends Phaser.Scene {
     return merged.filter(Boolean).slice(0, 3);
   }
 
-  getGreyMeetBadge(source, destination) {
+  getPinkMeetBadge(source, destination) {
     if (this.textures.exists(destination)) return destination;
     if (!this.textures.exists(source)) return source;
     try {
@@ -959,9 +959,12 @@ export default class MeetScene extends Phaser.Scene {
       const pixels = ctx.getImageData(0, 0, img.width, img.height);
       const d = pixels.data;
       for (let i = 0; i < d.length; i += 4) {
-        const grey = Math.min(195, Math.max(72,
-          Math.round(0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2])));
-        d[i] = d[i + 1] = d[i + 2] = grey;
+        // Preserve each icon's existing light/shadow detail, recoloured in
+        // the progression button's vivid pink palette (not monochrome grey).
+        const light = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+        d[i] = Math.round(136 + 119 * light);
+        d[i + 1] = Math.round(29 + 94 * light);
+        d[i + 2] = Math.round(80 + 110 * light);
       }
       ctx.putImageData(pixels, 0, 0);
       tex.refresh();
@@ -983,9 +986,9 @@ export default class MeetScene extends Phaser.Scene {
       this.meetProgressionButtonObjects.push(obj);
       return obj;
     };
-    // Match PINK SLIPS styling; retain the grey badge size and position
-    // along the right border.
-    const width = 298;
+    // Match PINK SLIPS styling. A wider leftward plate fits the longest
+    // "CONTINUE REGIONAL CHALLENGE" caption without moving the right badge.
+    const width = 394;
     const right = STAGE.x + STAGE.w - 34;
     const centre = right - width / 2;
     const icons = { REGIONAL: 'meetBadgeRegional', PERFECT: 'meetBadgePerfect',
@@ -1000,10 +1003,10 @@ export default class MeetScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(56));
       const source = icons[action.id];
       if (this.textures.exists(source)) {
-        const mono = this.getGreyMeetBadge(source, 'grey_' + source);
-        const badge = add(this.add.image(right, y, mono)
+        const tinted = this.getPinkMeetBadge(source, 'pink_' + source);
+        const badge = add(this.add.image(right, y, tinted)
           .setDisplaySize(55, 55).setDepth(57));
-        if (mono === source) badge.setTintFill(0x929aa2);
+        if (tinted === source) badge.setTint(0xff5f93);
       }
       button.on('pointerdown', () => {
         if (sceneCutsceneActive(this) || this.competitionPopup?.active ||
