@@ -91,8 +91,10 @@ export class StoryDirector {
     saveSessionState(registry);
   }
   clearStage() {
-    for (const scene of this.game.scene?.getScenes?.(true) || [])
+    for (const scene of this.game.scene?.getScenes?.(true) || []) {
       scene._storyDirectorStage?.destroy?.();
+      scene.setStoryEncounterActive?.(false);
+    }
   }
   stop({ complete = false } = {}) {
     const was = this.session;
@@ -270,6 +272,8 @@ export class StoryDirector {
           this.advance(); continue;
         }
         if (type === 'STAGE') {
+          if (step.privateMeet && sceneName(scene)==='MeetScene')
+            scene.setStoryEncounterActive?.(true);
           showStoryStage(scene,step);
           this.advance(); continue;
         }
