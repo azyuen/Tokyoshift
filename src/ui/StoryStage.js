@@ -14,9 +14,15 @@ export function showStoryStage(scene, {
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
-  const profile=backgroundId?getStoryBackground(backgroundId):null;
+  // A private meet scene reuses the actual place/time where the player raced.
+  // Never teleport Sayaka to a different stage or hardcode one venue.
+  const actualBackgroundId = backgroundId === '$CURRENT_MEET'
+    ? 'meet:' + String(scene.selectedMeetLocation || scene.registry?.get?.('meetLocation') || 'odaiba7eleven') +
+      ':' + String(scene.worldPhase || 'night')
+    : backgroundId;
+  const profile=actualBackgroundId?getStoryBackground(actualBackgroundId):null;
   if(backgroundId && !profile) {
-    console.warn('[TOKYO SHIFT] Story background ID not found',backgroundId);
+    console.warn('[TOKYO SHIFT] Story background ID not found',actualBackgroundId);
     return null;
   }
   if(profile?.layered) {

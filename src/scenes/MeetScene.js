@@ -41,7 +41,7 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
 import { restorePreferredCar } from '../state/CarSelection.js?v=20261018-r588';
 import { getMeetCharacterQuote } from '../data/characterRaceDialogue.js?v=20261016-r532';
-import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
+import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261022-r648';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261022-r636';
 import { isGinzaLoanActive, canVisitDuringGinzaLoan } from '../data/ginzaLoanAccess.js?v=20261022-r636';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
@@ -4902,6 +4902,19 @@ export default class MeetScene extends Phaser.Scene {
       if (obj?.destroy) obj.destroy();
     }
     this.stageObjects = [];
+  }
+
+  // A private conversation temporarily empties the Meet stage and rival cards.
+  // Nothing is removed from the actual roster or saved results.
+  setStoryEncounterActive(active) {
+    const showing = Boolean(active);
+    this._storyEncounterActive = showing;
+    [...(this.stageObjects || []), ...(this.cardObjects || [])].forEach(item => {
+      if (item?.setVisible && item?.active) item.setVisible(!showing);
+    });
+    if (this.rivalsTitleText?.active) {
+      this.rivalsTitleText.setText(showing ? 'AFTER HOURS // PRIVATE CONVERSATION' : 'RIVALS');
+    }
   }
 
   getOfferCharacterSpriteKey(offer) {

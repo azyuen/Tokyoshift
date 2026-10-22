@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {ARKON_CHAPTER_01} from '../src/data/arkonChapter01.js';
 import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
+import {getArkonStoryObjective} from '../src/ui/ArkonStoryObjective.js';
 import {createArkonStoryState,normaliseState,createDefaultGameState,
   applyStateToRegistry,saveSessionState,setProfileGameMode,getProfileGameMode,
   beginNewProfile,readSessionState,getProfileState,exportProfileBackup,
@@ -93,4 +94,44 @@ test('normal drivers cannot enter Arkon story or overwrite its save',()=>{
   assert.equal(getProfileGameMode(2),'career');
   assert.equal(readSessionState().cash,16700);
   assert.equal(globalThis.localStorage.getItem('tokyoShiftArkonStorySaveV1:1'),existingStory);
+});
+
+test('private Sayaka scenes stay at the current Meet and use a small Civic',()=>{
+  const steps=ARKON_CHAPTER_01.steps;
+  const meetScenes=steps.filter(step=>step.privateMeet);
+  assert.equal(meetScenes.length,2);
+  for(const step of meetScenes){
+    assert.equal(step.backgroundId,'$CURRENT_MEET');
+    assert.equal(step.stageMode,'native');
+    assert.ok(step.cars.every(car=>car.width<=250));
+  }
+  assert.equal(steps[30].scene,'MeetScene');
+  assert.equal(steps[29].type,'WAIT_FLAG');
+  assert.equal(steps[29].atLeast,4);
+  assert.ok(steps.some(step=>step.type==='SET_FLAG' &&
+    step.key==='arkonStoryChapter01AfterHoursDone' && step.value===true));
+});
+
+test('R647 completed story safely resumes at the new beat on the right profile',()=>{
+  const legacy=createArkonStoryState(1);
+  legacy.arkonStoryChapter01Done=true;
+  legacy.storyDirectorProgress=null;
+  legacy.wins=5;
+  const migrated=normaliseState(legacy);
+  assert.equal(migrated.wins,5);
+  assert.equal(migrated.storyDirectorProgress.id,'arkonChapter01');
+  assert.equal(migrated.storyDirectorProgress.index,29);
+  const finish=normaliseState({...migrated,arkonStoryChapter01AfterHoursDone:true,
+    storyDirectorProgress:null});
+  assert.equal(finish.storyDirectorProgress,null);
+});
+
+test('story objective is spoiler free and absent from normal careers',()=>{
+  const make=values=>({get:key=>values[key]});
+  assert.equal(getArkonStoryObjective(make({gameMode:'career'})),null);
+  const stage=getArkonStoryObjective(make({gameMode:'arkonStory',wins:1}));
+  assert.match(stage.progress,/1 \/ 2/);
+  const done=getArkonStoryObjective(make({gameMode:'arkonStory',wins:5,
+    arkonStoryChapter01AfterHoursDone:true}));
+  assert.match(done.heading,/COMPLETE/);
 });
