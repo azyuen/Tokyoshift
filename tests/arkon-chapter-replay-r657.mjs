@@ -183,3 +183,23 @@ test('Chapter 03 full replay resets completed customer jobs and lets actual mods
   assert.deepEqual(registry.getAll(),initial);
   await new Promise(resolve=>setTimeout(resolve,5));
 });
+
+
+test('Live chapter replay shares one session module and waits for the destination scene',()=>{
+  const callers=[
+    'src/ui/ArkonStoryArchivePanel.js',
+    'src/story/StoryDirector.js',
+    'src/scenes/RaceScene.js',
+  ];
+  const ids=callers.map(path=>
+    code(path).match(/ArkonPlayableReplay\.js\?v=([0-9a-z-]+)/)?.[1]);
+  assert.ok(ids.every(Boolean));
+  assert.equal(new Set(ids).size,1,
+    'replay session WeakMap must never be duplicated by mixed import URLs');
+  const director=code('src/story/StoryDirector.js');
+  assert.match(director,/if \(isArkonPlayableReplay\(registry\)\)/);
+  assert.match(director,/active\?\._pendingSafeSceneStart/);
+  assert.match(director,/sceneName\(active\)!==expected/);
+  assert.match(code('src/ui/ArkonPlayableReplay.js'),
+    /queueSafeSceneStart\(scene,target/);
+});
