@@ -71,6 +71,13 @@ test('Regional crown appears after Chapter 02 only at Odaiba',()=>{
   assert.equal(getMeetProgressionActions(source({...unlocked,gameMode:'career'}),'ODAIBA').some(a=>a.id==='REGIONAL'),false);
 });
 
+test('Exiting playable Arkon replay returns to the Arkon Office recount, not Career Archive',()=>{
+  const garage=code('src/scenes/GarageScene.js');
+  const replay=code('src/ui/ArkonPlayableReplay.js');
+  assert.match(garage,/showArkonStoryArchivePanel\(this\)/);
+  assert.match(replay,/openStoryArchive:true/);
+});
+
 test('Full replay chapter choices require their actual earlier story milestones',()=>{
   const data={gameMode:'arkonStory',arkonStoryChapter01RevisedDone:false,
     arkonStoryChapter02Done:false,storyDirectorProgress:null};

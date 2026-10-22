@@ -91,7 +91,7 @@ export function endArkonPlayableReplay(scene,{toOffice=true}={}) {
   sessions.delete(registry);
   if(toOffice)queueSafeSceneStart(scene,'GarageScene',{
     crewMode:false,workshopLocationId:registry.get('workshopLocationId'),
-    openArkonStoryArchive:true,
+    openStoryArchive:true,
   });
   return true;
 }
