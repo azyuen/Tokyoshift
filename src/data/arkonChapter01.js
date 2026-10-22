@@ -24,7 +24,7 @@ export const ARKON_CHAPTER_01 = {
     {type:'LABEL',name:'race'},
     {type:'CLEAR_STAGE'},
     {type:'MANGA',title:'YOUR FIRST RUNS',characters:{left:'arkonDen'},pages:[
-      {speaker:'left',leftPose:'devTalking',text:'Time to race. Two victories, then back to the workshop. I can tune the Civic if I need to.'},
+      {speaker:'left',leftPose:'devTalking',text:'Time to race. Two victories, then head to a meet. I can tune the Civic if I need to.'},
     ]},
     {type:'WAIT_FLAG',key:'wins',atLeast:2},
     {type:'WAIT_SCENE',scene:'MeetScene'},
