@@ -15,6 +15,9 @@ on:
       - 'src/scenes/MeetScene.js'
       - 'src/scenes/RaceScene.js'
       - 'tests/story-arrival-pacing-r643.mjs'
+      - 'tests/story-composition-arrival-r642.mjs'
+      - 'tests/dev-vault-story-r641.mjs'
+      - 'tests/story-director-r639.mjs'
       - '.github/workflows/story-arrival-pacing-r643.yml'
 jobs:
   story-arrival:
