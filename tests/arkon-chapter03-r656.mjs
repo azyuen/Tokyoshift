@@ -36,8 +36,9 @@ test('Customer targets obey actual engine model, and fifth customer owns the Maz
   for(const job of jobs){
     assert.ok(job.targetKW>job.stockKW);
     assert.ok(job.targetKW<=job.maxKW);
-    assert.ok(job.pay>=2500 && job.pay<=4000);
+    assert.ok(job.pay>=25000 && job.pay<=40000);
   }
+  assert.equal(jobs.reduce((sum,job)=>sum+job.pay,0),160000);
   const max=getArkonCustomerJob(source,5);
   assert.equal(max.carId,'mx5');
   assert.ok(max.maximum);
