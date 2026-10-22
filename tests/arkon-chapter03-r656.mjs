@@ -280,6 +280,8 @@ test('R664 Chapter 03 road test is one continuous real RaceScene, not manga tabl
   assert.match(director,/scene\.registry\.set\('selectedRaceCategory','ARKON_MX5_DRIVE'\)/);
   assert.match(director,/beginArkonMx5GuestRace\(scene\.registry\)/);
   assert.match(director,/queueSafeSceneStart\(scene,'RaceScene'\)/);
+  assert.match(director,/\['chapter03Driving','chapter03GuestRace'\]/);
+  assert.match(director,/!scene\.registry\?\.get\?\.\('arkonStoryMx5Loan'\)\?\.active/);
 });
 
 test('R664 in-race cruise banter, actual S15 pull-up, frozen choice and physics racing',()=>{
