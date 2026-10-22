@@ -1,0 +1,48 @@
+name: R658 Unified Story and Phone Typography
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, fix/phone-dialogue-typography-r658]
+    paths:
+      - 'src/ui/StoryDialogueTypography.js'
+      - 'src/ui/RaceCoachHud.js'
+      - 'src/ui/MangaCutscene.js'
+      - 'src/ui/PhoneConversation.js'
+      - 'src/ui/OpeningPhonePrototype.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/main.js'
+      - 'index.html'
+      - 'sw.js'
+      - 'version.json'
+      - 'tests/phone-dialogue-typography-r658.mjs'
+      - 'tests/phone-template-r572.mjs'
+      - 'tests/chapter08-phone-r571.mjs'
+      - '.github/workflows/phone-dialogue-typography-r658.yml'
+jobs:
+  typography-and-phone-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check all common renderer modules for syntax problems
+        run: |
+          node --check src/ui/StoryDialogueTypography.js
+          node --check src/ui/RaceCoachHud.js
+          node --check src/ui/MangaCutscene.js
+          node --check src/ui/PhoneConversation.js
+          node --check src/ui/OpeningPhonePrototype.js
+          node --check src/story/StoryDirector.js
+          node --check src/main.js
+      - name: Check unified template and existing phone chapters
+        run: |
+          node --test \
+            tests/phone-dialogue-typography-r658.mjs \
+            tests/phone-template-r572.mjs \
+            tests/opening-phone-prototype-r515.mjs \
+            tests/chapter08-phone-r571.mjs \
+            tests/scene-phone-meet-r564.mjs \
+            tests/story-director-r639.mjs \
+            tests/startup-import-integrity-r508.mjs
