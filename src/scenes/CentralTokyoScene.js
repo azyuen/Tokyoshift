@@ -88,7 +88,10 @@ import { hasSeenCutscene } from '../data/cutscenes.js?v=20261009-r457';
 import { GINZA_ROTATION_MS, GINZA_VAULT_CARS, getGinzaRoomStock, getGinzaVaultCar, ginzaVaultEligible, isGinzaOwner, isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r629';
 import { ginzaConversation } from '../data/ginzaScenes.js?v=20261022-r637';
 import { playMusic } from '../audio/MusicManager.js?v=20260922-r99';
-import { armDevVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r641';
+import {
+  armDevVaultStoryLoan, shouldLaunchDevVaultStoryForDestination, claimDevVaultStoryLoan,
+} from '../data/devVaultStory.js?v=20261022-r642';
+import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
 import {
@@ -1040,6 +1043,15 @@ export default class CentralTokyoScene extends Phaser.Scene {
 
     this.registry.set('meetLocation', locationId);
     this.registry.set('district', target.regionId);
+    // Fire the scripted arrival at the actual map selection, BEFORE regular
+    // MeetScene preload (which generates rivals, car art and several rosters).
+    // That preload was delaying the cinematic and could expose race buttons.
+    if (shouldLaunchDevVaultStoryForDestination(this.registry,locationId) &&
+        claimDevVaultStoryLoan(this.registry)) {
+      saveSessionState(this.registry);
+      queueSafeSceneStart(this,'DevVaultStoryScene');
+      return;
+    }
     saveSessionState(this.registry);
     this.scene.start('MeetScene');
   }
