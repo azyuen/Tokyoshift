@@ -3,12 +3,8 @@
 // Arkon, Sayaka, the currently loaned Ginza car, and authored dialogue.
 import { cars } from '../data/cars.js?v=20261017-r565';
 import { characters, getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261022-r639';
-import {
-  preloadCarAppearanceAssets, preloadCarWheel, createCarBodyLayers,
-  getCarBodyScaleForWidth, getCarBodyTextureKey,
-} from '../vehicles/CarAppearance.js?v=20261020-r617';
-import { getWheelPairFit } from '../vehicles/WheelFit.js?v=20260929-r258';
-import { getReferenceRightX } from '../data/carReferenceGeometry.js?v=20261012-ref2';
+import { preloadStoryCar, renderStoryCar } from '../ui/StoryCarRenderer.js?v=20261022-r642';
+import { resolveStoryComposition } from '../ui/StoryComposition.js?v=20261022-r642';
 import { saveSessionState } from '../state/GameState.js?v=20261022-r639';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import {
@@ -57,8 +53,7 @@ export default class DevVaultStoryScene extends Phaser.Scene {
     }
     const car=cars[this.registry.get('ginzaTestDrive')?.carId];
     if(car){
-      queued+=preloadCarAppearanceAssets(this,{[car.id]:car},'20261022-r641');
-      queued+=preloadCarWheel(this,car);
+      queued+=preloadStoryCar(this,car);
     }
     startSceneLoading(this,'SHIBUYA // STORY MODE',queued);
   }
@@ -98,16 +93,21 @@ export default class DevVaultStoryScene extends Phaser.Scene {
       fontFamily:PIXEL,fontSize:'9px',color:'#ffbad2',
     }).setOrigin(1,0).setDepth(19);
 
-    const actor=(id,pose,x,feet,height)=>{
+    // One reusable composition governs car/character scale, feet alignment
+    // and explicit foreground/background layering in Story AND Career.
+    this.storyComposition=resolveStoryComposition({
+      width:1560,height:840,preset:'car-behind-cast',castCount:2,
+    });
+    const actor=(id,pose,{x,feetY,height,depth})=>{
       const asset=getCharacterVisualAsset(id,pose);
       if(!asset?.key||!this.textures.exists(asset.key))return null;
-      const image=this.add.image(x,feet,asset.key).setOrigin(.5,1).setDepth(11);
+      const image=this.add.image(x,feetY,asset.key).setOrigin(.5,1).setDepth(depth);
       const src=this.textures.get(asset.key).getSourceImage();
       image.setDisplaySize(height*src.width/Math.max(1,src.height),height);
       return image;
     };
-    this.sayaka=actor('sayakaFujieda','ginzaDress',260,700,435);
-    this.arkon=actor('arkonDen','ginzaSuit',565,700,440);
+    this.sayaka=actor('sayakaFujieda','ginzaDress',this.storyComposition.cast[0]);
+    this.arkon=actor('arkonDen','ginzaSuit',this.storyComposition.cast[1]);
     this.drawLoanCar();
     this.venueName.setText(VENUES.dogenzaka.title);
     this.venueSub.setText(VENUES.dogenzaka.subtitle);
@@ -129,44 +129,25 @@ export default class DevVaultStoryScene extends Phaser.Scene {
           this.scene.start('CentralTokyoScene',{locationId:'ginzaMotorGallery',ginzaRoom:3}));
       }
     };
-    this.time.delayedCall(180,launch);
+    this.time.delayedCall(80,launch);
   }
 
   drawLoanCar(){
     const car=cars[this.registry.get('ginzaTestDrive')?.carId];
     if(!car)return;
-    try{
-      const width=620, x=1167, y=675, depth=12;
-      const bodyKey=getCarBodyTextureKey(this,car);
-      if(!this.textures.exists(bodyKey))return;
-      const bodyScale=getCarBodyScaleForWidth(this,car,width);
-      const source=this.textures.get(bodyKey).getSourceImage();
-      const displayY=y+Number(car.visual?.renderOffsetY||0)*bodyScale+
-        (car.visual?.referenceStandard?width*(232/1200):0);
-      const drawX=getReferenceRightX(car,x,bodyScale);
-      const wheelKey=car.visual?.wheelKey;
-      if(wheelKey&&this.textures.exists(wheelKey)){
-        const wheelSource=this.textures.get(wheelKey).getSourceImage();
-        const fit=getWheelPairFit(car.visual,bodyScale,false,wheelSource);
-        for(const axle of [fit.rear,fit.front]){
-          const wx=drawX+axle.offsetX,wy=displayY+axle.offsetY;
-          this.add.circle(wx,wy,axle.backingRadius||23,0x020304).setDepth(depth);
-          this.add.image(wx,wy,wheelKey).setScale(axle.wheelScale).setDepth(depth+2);
-        }
-      }
-      createCarBodyLayers(this,car,{x:drawX,y:displayY,scale:bodyScale,depth:depth+1});
-      this.add.text(1100,710,String(car.shortName||car.name||'GINZA VAULT CAR').toUpperCase(),{
-        fontFamily:PIXEL,fontSize:'10px',color:'#f7e5bc',
-      }).setOrigin(.5).setDepth(17);
-      this.add.text(1100,737,'PRIVATE GALLERY // TEMPORARY LOAN',{
-        fontFamily:BODY,fontSize:'11px',color:'#b2c5cf',
-      }).setOrigin(.5).setDepth(17);
-    }catch(error){
-      console.warn('[TOKYO SHIFT] dev story car tableau unavailable',error);
-      this.add.text(1100,670,'GINZA VAULT // LOAN CAR',{
-        fontFamily:PIXEL,fontSize:'11px',color:'#f7e5bc',
-      }).setOrigin(.5).setDepth(17);
+    const frame=this.storyComposition?.car || resolveStoryComposition().car;
+    const objects=renderStoryCar(this,car,frame);
+    this.storyCarObjects=objects;
+    if(!objects.length){
+      console.warn('[TOKYO SHIFT] Story car art missing',car.id);
+      return;
     }
+    this.add.text(1080,779,String(car.shortName||car.name||'GINZA VAULT CAR').toUpperCase(),{
+      fontFamily:PIXEL,fontSize:'10px',color:'#f7e5bc',
+    }).setOrigin(.5).setDepth(19);
+    this.add.text(1080,802,'PRIVATE GALLERY // TEMPORARY LOAN',{
+      fontFamily:BODY,fontSize:'11px',color:'#b2c5cf',
+    }).setOrigin(.5).setDepth(19);
   }
 
   transitionVenue(next,onComplete){
