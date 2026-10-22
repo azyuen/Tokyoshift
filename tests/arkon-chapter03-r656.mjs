@@ -140,7 +140,7 @@ test('Arkon customer jobs use the standard Garage three-panel presentation',()=>
   assert.match(ui,/CURRENT OUTPUT/);
   assert.match(ui,/TARGET OUTPUT/);
   assert.match(ui,/DELIVER TO CLIENT/);
-  assert.match(ui,/motion:'arrive'/);
+  assert.match(ui,/motion:'roll-in-left'/);
   assert.match(stage,/garagePanel=stageMode==='garage-panel'/);
   assert.match(stage,/!garagePanel&&autoPerspective/);
   // The guest-car UI never mutates or selects an owned vehicle.
