@@ -16,6 +16,9 @@ on:
       - 'scripts/normalize_backgrounds.py'
       - 'tests/background-viewport-r645.mjs'
       - 'tests/story-background-perspective-r644.mjs'
+      - 'tests/story-arrival-pacing-r643.mjs'
+      - 'tests/dev-vault-story-r641.mjs'
+      - 'scripts/audit_backgrounds.py'
       - '.github/workflows/background-standards-regression-r645.yml'
 jobs:
   geometry-regressions:
