@@ -189,8 +189,8 @@ export class StoryDirector {
       if (isArkonPlayableReplay(registry)) {
         const active=this.activeScene();
         const replayChapter=Number(registry.get('__arkonStoryPlayableReplayChapter')||0);
-        const expected=replayChapter===1||replayChapter===4
-          ? 'GarageScene' : 'MeetScene';
+        const expected=replayChapter===2
+          ? 'MeetScene' : 'GarageScene';
         if (!replayChapter || sceneName(active)!==expected ||
             active?._pendingSafeSceneStart) return;
       }
