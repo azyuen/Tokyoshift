@@ -6,7 +6,7 @@ import {
 import {
   playMangaCutscene,
   sceneCutsceneActive,
-} from './MangaCutscene.js?v=20261018-r588';
+} from './MangaCutscene.js?v=20261023-r658';
 import { playCanalYardStory } from './CanalYardStory.js?v=20261017-r572';
 import { preloadSevenRivalsMontageAssets, startSevenRivalsPortraitMontage } from './SevenRivalsMontage.js?v=20261017-r564';
 import { preloadFullCrewCelebrationAssets, showFullCrewCelebration } from './FullCrewCelebration.js?v=20261017-r562';
