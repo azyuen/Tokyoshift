@@ -124,7 +124,8 @@ test('R647 completed story safely resumes at the new beat on the right profile',
   assert.equal(migrated.storyDirectorProgress.index,29);
   const finish=normaliseState({...migrated,arkonStoryChapter01AfterHoursDone:true,
     storyDirectorProgress:null});
-  assert.equal(finish.storyDirectorProgress.index,110);
+  assert.equal(finish.storyDirectorProgress.index,37);
+  assert.equal(ARKON_CHAPTER_01.steps[37].type,'MANGA');
   const completed=normaliseState({...finish,arkonStoryChapter01FullDone:true,storyDirectorProgress:null});
   assert.equal(completed.storyDirectorProgress,null);
 });
@@ -180,13 +181,13 @@ test('Arkon Story restart resets story only and leaves all Career keys unchanged
 test('recount previews only witnessed scenes and preserves selected path',()=>{
   const base={gameMode:'arkonStory',arkonStoryFirstChoice:'careful',
     arkonStoryFirstReply:'tease',arkonStoryChoices:{notesApproach:'listen'},
-    storyDirectorProgress:{id:'arkonChapter01',index:110,ownerSlot:0,version:1}};
+    storyDirectorProgress:{id:'arkonChapter01',index:37,ownerSlot:0,version:1}};
   const reg=values=>({get:key=>values[key]});
   const titles=getArkonRecountScenes(reg(base)).map(step=>step.title);
   assert.ok(titles.includes('A BOLD SUGGESTION'));
   assert.ok(!titles.includes('A STRAIGHT ANSWER'));
   assert.ok(!titles.includes('THE TIMING DESK'));
-  assert.ok(getArkonRecountScenes(reg({...base,storyDirectorProgress:{...base.storyDirectorProgress,index:125}}))
+  assert.ok(getArkonRecountScenes(reg({...base,storyDirectorProgress:{...base.storyDirectorProgress,index:52}}))
     .length>=titles.length);
   assert.deepEqual(getArkonRecountScenes(reg({gameMode:'career'})),[]);
 });
