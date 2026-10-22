@@ -65,6 +65,7 @@ async function startTokyoShift() {
       OshiageScene,
       MeetScene,
       RaceScene,
+      DevVaultStoryScene,
       FourLaneTestScene,
       RunOverScene,
       ResultScene,
@@ -79,10 +80,11 @@ async function startTokyoShift() {
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261021-r627'),
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261015-r524'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261015-r524'),
-      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261022-r638'),
+      loadScene('CENTRAL TOKYO', './scenes/CentralTokyoScene.js?v=20261022-r641'),
       loadScene('OSHIAGE', './scenes/OshiageScene.js?v=20261022-r638'),
-      loadScene('MEET', './scenes/MeetScene.js?v=20261022-r637'),
-      loadScene('RACE', './scenes/RaceScene.js?v=20261022-r640'),
+      loadScene('MEET', './scenes/MeetScene.js?v=20261022-r641'),
+      loadScene('RACE', './scenes/RaceScene.js?v=20261022-r641'),
+      loadScene('DEV VAULT STORY', './scenes/DevVaultStoryScene.js?v=20261022-r641'),
       loadScene('PRO DRAG COMPLEX', './scenes/FourLaneTestScene.js?v=20261022-r635'),
       loadScene('RUN OVER', './scenes/RunOverScene.js?v=20261015-r524'),
       loadScene('RESULT', './scenes/ResultScene.js?v=20261015-r524'),
@@ -119,7 +121,7 @@ async function startTokyoShift() {
     const allScenes = [
       BootScene, ProfileSelectScene, CharacterSelectScene, TrainStationScene, GarageScene,
       CrewSpaceScene, CrewScene, DynoScene, CentralTokyoScene, OshiageScene, MeetScene, RaceScene,
-      FourLaneTestScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene,
+      DevVaultStoryScene, FourLaneTestScene, RunOverScene, ResultScene, TunerShopScene, WheelCalibrationScene,
     ];
     // Phaser starts its first scene. Put the test scene first only when asked.
     if (CarReferenceCalibrationScene) allScenes.unshift(CarReferenceCalibrationScene);
@@ -148,7 +150,7 @@ async function startTokyoShift() {
     window.TOKYO_SHIFT = new Phaser.Game(config);
     // Optional Story Director is installed after boot. A narrative module error
     // must never prevent a player reaching their profile on mobile/iPad.
-    import('./story/StoryDirector.js?v=20261022-r640')
+    import('./story/StoryDirector.js?v=20261022-r641')
       .then(({ installStoryDirector }) => installStoryDirector(window.TOKYO_SHIFT))
       .catch(error => console.error('[Tokyo SHIFT] Story Director unavailable', error));
     try { window.TOKYO_SHIFT_MENU_NAV?.destroy?.(); } catch (e) {}
