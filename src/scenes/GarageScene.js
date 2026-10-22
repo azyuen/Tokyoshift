@@ -2839,6 +2839,7 @@ export default class GarageScene extends Phaser.Scene {
     };
 
     const unlockWorkshop = workshop => {
+      if(this.registry.get('gameMode')==='arkonStory')return;
       const liveTier = Math.max(0, Number(this.registry.get('garageTier') || 0));
       const cash = Math.max(0, Number(this.registry.get('cash') || 0));
       const cost = Math.max(0, Number(workshop.unlockCost || 0));
@@ -2918,7 +2919,10 @@ export default class GarageScene extends Phaser.Scene {
       }
     ).setDepth(depth + 2));
 
-    WORKSHOP_TIERS.forEach((workshop, index) => {
+    WORKSHOP_TIERS.filter(workshop =>
+      this.registry.get('gameMode')!=='arkonStory' ||
+      workshop.tier<=ownedTier
+    ).forEach((workshop, index) => {
       const y = 330 + index * 92;
       const unlocked = workshop.tier <= ownedTier;
       const here = unlocked && workshop.id === current.id;
@@ -4122,6 +4126,10 @@ export default class GarageScene extends Phaser.Scene {
             return;
           }
 
+          if (!alreadyUnlocked && this.registry.get('gameMode')==='arkonStory'){
+            this.showWorkshopToast('STORY CHAPTER UNLOCK REQUIRED');
+            return;
+          }
           const cash = Number(this.registry.get('cash') || 0);
           if (!alreadyUnlocked && cash < cost) return;
 
