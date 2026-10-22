@@ -177,7 +177,7 @@ export function showArkonStoryObjective(scene) {
   add(scene.add.text(780,509,info.progress,{
     fontFamily:PIXEL,fontSize:'11px',color:'#f6da8d'
   }).setOrigin(.5).setDepth(depth+2));
-  add(scene.add.text(780,552,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
+  add(scene.add.text(780,530,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
   const canBegin=Boolean(info.canStartChapter04 &&
@@ -186,10 +186,10 @@ export function showArkonStoryObjective(scene) {
     !scene.game?.storyDirector?.status?.active &&
     !scene.registry.get('storyDirectorProgress'));
   if(canBegin){
-    const begin=add(scene.add.rectangle(780,579,415,52,0x20514b,1)
+    const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    add(scene.add.text(780,579,'BEGIN CHAPTER 04',{
+    add(scene.add.text(780,565,'BEGIN CHAPTER 04',{
       fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+3));
     begin.on('pointerdown',()=>{
@@ -202,10 +202,10 @@ export function showArkonStoryObjective(scene) {
       });
     });
   }
-  const done=add(scene.add.rectangle(780,canBegin?650:620,215,50,0x153847,1)
+  const done=add(scene.add.rectangle(780,620,215,50,0x153847,1)
     .setStrokeStyle(2,0x64cde2,1).setDepth(depth+2)
     .setInteractive({useHandCursor:true}));
-  add(scene.add.text(780,canBegin?650:620,'BACK TO GAME',{
+  add(scene.add.text(780,620,'BACK TO GAME',{
     fontFamily:PIXEL,fontSize:'10px',color:'#ffffff'
   }).setOrigin(.5).setDepth(depth+3));
   done.on('pointerdown',close);
