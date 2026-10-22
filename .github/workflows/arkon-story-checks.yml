@@ -13,6 +13,9 @@ on:
       - 'src/scenes/GarageScene.js'
       - 'src/ui/StoryContinuePrompt.js'
       - 'src/ui/StoryStage.js'
+      - 'src/story/StoryNativeStageTemplates.js'
+      - 'src/ui/ShowdownLayout.js'
+      - 'src/ui/StreetShowdownView.js'
       - 'src/ui/ArkonStoryObjective.js'
       - 'src/ui/ArkonStoryArchivePanel.js'
       - 'src/ui/OfficePanel.js'
@@ -43,6 +46,9 @@ jobs:
           node --check src/data/storyDirectorScripts.js
           node --check src/ui/StoryContinuePrompt.js
           node --check src/ui/StoryStage.js
+          node --check src/story/StoryNativeStageTemplates.js
+          node --check src/ui/ShowdownLayout.js
+          node --check src/ui/StreetShowdownView.js
           node --check src/ui/ArkonStoryObjective.js
           node --check src/ui/ArkonStoryArchivePanel.js
           node --check src/ui/OfficePanel.js
