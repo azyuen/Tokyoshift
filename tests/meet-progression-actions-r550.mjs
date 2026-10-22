@@ -61,11 +61,12 @@ test('seven short return invitations retain their captains distinctive voices', 
   }
 });
 
-test('meet scene has pink two-slot challenge actions, monochrome badges and refresh separation', () => {
+test('meet scene has pink two-slot challenge actions, pink badges and refresh separation', () => {
   const s=read('src/scenes/MeetScene.js');
   assert.match(s,/this\.buildMeetProgressionButtons\(\)/);
-  assert.match(s,/getGreyMeetBadge\(/);
-  assert.match(s,/Math\.min\(195, Math\.max\(72/);
+  assert.match(s,/getPinkMeetBadge\(/);
+  assert.match(s,/d\[i \+ 1\] = Math\.round\(29 \+ 94 \* light\)/);
+  assert.match(s,/const width = 394/);
   assert.match(s,/const right = STAGE\.x \+ STAGE\.w - 34/);
   assert.match(s,/const y = STAGE\.y \+ 51 \+ index \* 60/);
   assert.match(s,/0xa12a64/);
