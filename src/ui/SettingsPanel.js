@@ -1,4 +1,4 @@
-import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261022-r650';
+import { addArkonStoryObjectiveButton } from './ArkonStoryObjective.js?v=20261023-r652';
 import { getAudioSettings, setAudioSettings } from '../audio/AudioSettings.js?v=20260921-r57';
 import {
   getControlSettings,
