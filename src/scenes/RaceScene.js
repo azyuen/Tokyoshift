@@ -1661,10 +1661,10 @@ export default class RaceScene extends Phaser.Scene {
           this.arkonMx5Phase='race';
           this.arkonMx5Dialogue?.destroy?.();
           this.arkonMx5Dialogue=null;
-          // The warm-up remains a real scrolling road, while the timed race
-          // starts from a fresh rolling-start timing baseline with production AI.
-          this.player.positionM=0;
-          this.opponent.positionM=0;
+          // Preserve the actual road position so the player doesn't see
+          // a scenery jump. The standard rolling countdown establishes new
+          // timing baselines for BOTH cars when GO is displayed.
+          this.finishTargetM=this.player.positionM+this.raceDistanceM;
           this.finishCameraPx=null;
           this.controls.enabled=true;
           this.rivalText?.setText('S15 // ROLLING RACE');
