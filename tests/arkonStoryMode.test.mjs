@@ -11,6 +11,10 @@ import { getCentralTokyoAccess } from '../src/data/centralTokyo.js';
 import { getCharacterVisualAsset } from '../src/data/characters.js';
 import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
+import {
+  ARKON_STORY_MECHANIC_ASSETS, isArkonStoryWorkshop,
+  resolveWorkshopMechanicTexture,
+} from '../src/data/arkonStoryWorkshopMechanic.js';
 import {getArkonStoryObjective} from '../src/ui/ArkonStoryObjective.js';
 import {getArkonRecountScenes} from '../src/ui/ArkonStoryArchivePanel.js';
 import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../src/story/StoryNativeStageTemplates.js';
@@ -439,4 +443,44 @@ test('R653 no time checkpoint index shift for live R652 saves',()=>{
   assert.equal(steps.filter(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryTimeOfDay').length,0);
   assert.equal(steps.filter(s=>s.type==='WAIT_SCENE'&&s.scene==='MeetScene').length,2);
   assert.equal(steps.filter(s=>s.type==='WAIT_FLAG'&&s.key==='wins').length,2);
+});
+
+test('R654 every uploaded Arkon mechanic pose maps exactly to Daichi tuning artwork',()=>{
+  const arkon={gameMode:'arkonStory'};
+  const assets=Object.fromEntries(ARKON_STORY_MECHANIC_ASSETS.map(a=>[a.key,a.path]));
+  assert.equal(ARKON_STORY_MECHANIC_ASSETS.length,4);
+  assert.equal(assets.arkonStoryMechanicNormal,'assets/Characters/Main/arkon_den_mechanic.png');
+  // Uploaded file genuinely uses the spelling "insepct".
+  assert.equal(assets.arkonStoryMechanicEngine,'assets/Characters/Main/arkon_den_engine_insepct.png');
+  assert.equal(assets.arkonStoryMechanicChassis,'assets/Characters/Main/arkon_den_chassis_tools.png');
+  assert.equal(assets.arkonStoryMechanicExhaust,'assets/Characters/Main/arkon_den_exhaust_crouch.png');
+  assert.equal(resolveWorkshopMechanicTexture(arkon,'characterDaichiSakamoto'),'arkonStoryMechanicNormal');
+  assert.equal(resolveWorkshopMechanicTexture(arkon,'daichiEngineInspect'),'arkonStoryMechanicEngine');
+  assert.equal(resolveWorkshopMechanicTexture(arkon,'daichiChassisTools'),'arkonStoryMechanicChassis');
+  assert.equal(resolveWorkshopMechanicTexture(arkon,'daichiExhaustCrouch'),'arkonStoryMechanicExhaust');
+  assert.ok(isArkonStoryWorkshop({get:key=>key==='gameMode'?'arkonStory':null}));
+});
+
+test('R654 Career and Crew spaces keep normal Daichi without Story texture substitution',()=>{
+  for(const mode of ['career','dev',null]){
+    assert.equal(isArkonStoryWorkshop({gameMode:mode}),false);
+    for(const original of ['characterDaichiSakamoto','daichiEngineInspect',
+        'daichiChassisTools','daichiExhaustCrouch']){
+      assert.equal(resolveWorkshopMechanicTexture({gameMode:mode},original),original);
+    }
+  }
+  assert.equal(resolveWorkshopMechanicTexture({gameMode:'arkonStory'},
+    'daichiEngineInspect',true),'daichiEngineInspect');
+});
+
+test('R654 hides casual Arkon AND his floor shadows while tuning and restores both on exit',()=>{
+  const code=readFileSync(new URL('../src/scenes/GarageScene.js',import.meta.url),'utf8');
+  assert.match(code,/resolveWorkshopMechanicTexture\(this\.registry,/);
+  assert.match(code,/this\.setArkonWorkingAtCar\(true\)/);
+  assert.match(code,/\[actor,\.\.\.\(actor\?\.stageShadows\|\|\[\]\)\]/);
+  assert.match(code,/this\._arkonWorkingHidden\.forEach\(\(\{obj\}\)=>obj\.setVisible\(false\)\)/);
+  assert.ok((code.match(/this\.setArkonWorkingAtCar\(false\)/g)||[]).length>=4,
+    'must restore on engine, chassis, drivetrain/exhaust and error recovery');
+  assert.match(code,/if \(isArkonStoryWorkshop\(this\.registry,this\.crewMode\)\) \{\s*ARKON_STORY_MECHANIC_ASSETS\.forEach/s);
+  assert.match(code,/visual:\{ \.\.\.playerCharacter\.visual, spriteKey:storyIdle\.key \}/);
 });
