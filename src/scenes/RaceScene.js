@@ -2551,11 +2551,32 @@ export default class RaceScene extends Phaser.Scene {
         this.opponentTimes.finish = Math.max(.1, playerTime - .175);
       }
     }
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        this.registry.get('arkonStoryPhase')==='rivalRace' &&
+        this.opponentCharacterId==='storyDaigoKirishima' &&
+        (playerWon || opponentWon)) {
+      // Determined by the ordinary race clock, not by the Story Director.
+      this.registry.set('arkonStoryRivalResult',playerWon?'won':'lost');
+    }
     const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
       ? this.settleRace(playerWon)
       : null;
 
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        this.registry.get('arkonStoryRivalResult') &&
+        this.registry.get('arkonStoryPhase')==='rivalRace') {
+      saveSessionState(this.registry); // preserve result before any scene transition
+    }
+    // The promised five lessons are claimed ONCE after a real regional title.
+    // The regional race settlement already awards its regular cash/coupons.
+    if (this.registry.get('gameMode')==='arkonStory' &&
+        settlement?.teamChallengeCompleted &&
+        !this.registry.get('arkonStoryCreditsAwarded')) {
+      this.registry.set('arkonStoryLessonCredits',5);
+      this.registry.set('arkonStoryCreditsAwarded',true);
+      saveSessionState(this.registry);
+    }
     if (playerWon) playVictorySting();
     else stopMusic();
 
