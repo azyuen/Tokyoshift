@@ -144,7 +144,7 @@ test('generic authored STAGE can opt in by backgroundId; legacy positions remain
   assert.match(codeStage,/getStoryBackground\(backgroundId\)/);
   assert.match(codeStage,/projectGroundEntity\(profile/);
   assert.match(codeStage,/layered\)/);
-  assert.match(codeStage,/stageMode === 'native'/);
+  assert.match(codeStage,/stageMode==='native'/);
   assert.match(codeStage,/const autoPerspective=Boolean\(profile\)/);
   assert.ok(validateStoryScript(STORY_DIRECTOR_SCRIPTS.devVaultNightOut));
 });
