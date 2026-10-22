@@ -166,5 +166,5 @@ test('dev author can compare real location and interior backgrounds without writ
   assert.match(tester,/__directorPerspective/);
   assert.match(tester,/directorPerspectivePreview/);
   const imports=code('src/story/StoryDirector.js');
-  assert.match(imports,/StoryStage\\.js\\?v=20261022-r644/);
+  assert.match(imports,/StoryStage\.js\?v=20261022-r644/);
 });
