@@ -107,7 +107,7 @@ test('Chapter 02 objective and archive include new scenes without replacing Chap
       arkonMoneyDisclosure:'honest',arkonAfterLessonOffer:'coffee'},
     arkonStoryRivalResult:'won',arkonStoryChapter02RivalResult:'won'};
   const pages=getArkonRecountScenes(lookup(after));
-  assert.ok(pages.some(p=>p.title==='AN OLD CIVIC'));
+  assert.ok(pages.some(p=>p.title==='AN OLD DATSUN'));
   assert.ok(pages.some(p=>p.title==='SOMETHING OTHER THAN RACING'));
   assert.ok(pages.some(p=>p.title==='AFTER THE DRIVE'));
   assert.equal(ARKON_CHAPTER_01_REVISED.id,'arkonChapter01Revised');
