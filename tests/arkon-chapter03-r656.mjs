@@ -126,3 +126,22 @@ test('Race and Director use no-stakes real physics with Arkon Story restrictions
   assert.match(director,/showArkonCustomerTuning/);
   assert.match(director,/finishArkonMx5GuestRace/);
 });
+
+
+test('Arkon customer jobs use the standard Garage three-panel presentation',()=>{
+  const ui=readFileSync('src/ui/ArkonCustomerTuning.js','utf8');
+  const stage=readFileSync('src/ui/StoryStage.js','utf8');
+  assert.match(ui,/stageMode:'garage-panel'/);
+  assert.match(ui,/STAGE=CINEMATIC_FRAMES\.workshop/);
+  assert.match(ui,/WORKSHOP_PRESENTATION\.heroCar/);
+  assert.match(ui,/WORKSHOP_PRESENTATION\.daichi\.engine/);
+  assert.match(ui,/ARKON BANK BALANCE/);
+  assert.match(ui,/CURRENT OUTPUT/);
+  assert.match(ui,/TARGET OUTPUT/);
+  assert.match(ui,/DELIVER TO CLIENT/);
+  assert.match(ui,/motion:'arrive'/);
+  assert.match(stage,/garagePanel=stageMode==='garage-panel'/);
+  assert.match(stage,/!garagePanel&&autoPerspective/);
+  // The guest-car UI never mutates or selects an owned vehicle.
+  assert.doesNotMatch(ui,/ownedCarIds|selectedCarId|carStates/);
+});
