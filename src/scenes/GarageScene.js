@@ -46,7 +46,7 @@ import {
 } from '../data/partUninstall.js?v=20261020-r619';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261018-r588';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261022-r649';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261022-r650';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
