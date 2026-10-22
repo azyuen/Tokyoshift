@@ -13,6 +13,7 @@ import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=202610
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r660';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r659';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
+import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r661';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
@@ -95,6 +96,18 @@ export class StoryDirector {
     const checkpoint = this.game.registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
     if (!scene || !isStoryCheckpoint(checkpoint) ||
         checkpoint.ownerSlot !== owner() || !this.scripts.has(checkpoint.id)) return false;
+    // Old Chapter 03 checkpoints may still point to the Meet even though the
+    // workshop story begins at Canal Yard. Finish the safe scene transition
+    // first, then resume the SAME checkpoint (do not restart its scenes).
+    if(checkpoint.id==='arkonChapter03' && checkpoint.index<=3 &&
+       sceneName(scene)!=='GarageScene' && !scene._pendingSafeSceneStart){
+      scene.registry.set('workshopLocationId','shinonomeCanalYard');
+      queueSafeSceneStart(scene,'GarageScene',{
+        crewMode:false,workshopLocationId:'shinonomeCanalYard',
+      });
+      return false;
+    }
+    if(scene._pendingSafeSceneStart)return false;
     return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
   }
   checkpoint() {
@@ -501,6 +514,36 @@ export class StoryDirector {
         if (type === 'SET_FLAG') {
           if (!this.session.preview && step.key) {
             scene.registry.set(step.key,step.value);
+            if (this.session.id==='arkonChapter03' &&
+                step.key==='arkonStoryChapter' && step.value===3 &&
+                scene.registry.get('gameMode')==='arkonStory') {
+              // Canal Yard is a free Story milestone. Do not call either
+              // workshop purchase path: no regional wins and no cash charge.
+              const reg=scene.registry;
+              reg.set('arkonStoryCanalYardUnlocked',true);
+              reg.set('garageTier',1);
+              reg.set('workshopLocationId','shinonomeCanalYard');
+              const owned=reg.get('ownedCarIds')||[];
+              const selected=reg.get('selectedCarId');
+              const requested={...(reg.get('carGarageLocations')||{})};
+              if(selected && owned.includes(selected))
+                requested[selected]='shinonomeCanalYard';
+              reg.set('carGarageLocations',normaliseCarGarageLocations(
+                owned,requested,1));
+              this.checkpoint();
+              this.advance();
+              if (sceneName(scene)!=='GarageScene' || scene.crewMode) {
+                this.clearStage();
+                if(!queueSafeSceneStart(scene,'GarageScene',{
+                  crewMode:false,workshopLocationId:'shinonomeCanalYard'
+                })){
+                  this.error='CANAL YARD STORY TRANSITION FAILED';return;
+                }
+                this.wait={kind:'transition',target:'GarageScene',origin:scene};
+                return;
+              }
+              continue;
+            }
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
