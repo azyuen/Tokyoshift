@@ -96,6 +96,6 @@ test('R643 cache keys load newest story runner, staging and loan guards',()=>{
   assert.match(src('src/story/StoryDirector.js'),/StoryScript\.js\?v=20261022-r643/);
   assert.match(src('src/story/StoryDirector.js'),/storyDirectorScripts\.js\?v=20261022-r644/);
   assert.match(src('src/scenes/DevVaultStoryScene.js'),/StoryComposition\.js\?v=20261022-r643/);
-  assert.match(src('version.json'),/R644/);
-  assert.match(src('sw.js'),/R644/);
+  assert.match(src('version.json'),/R645/);
+  assert.match(src('sw.js'),/R645/);
 });
