@@ -6,12 +6,12 @@ import {
 } from './StoryScript.js?v=20261022-r643';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261022-r638';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r645';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261022-r648';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
-import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r647';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r647';
+import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261022-r648';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261022-r648';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
-import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r643';
+import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261022-r648';
 import { cars } from '../data/cars.js?v=20261017-r565';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
