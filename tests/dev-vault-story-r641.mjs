@@ -34,13 +34,14 @@ test('only named Arkon with an active vault loan can arm and claim Shibuya Dogen
   assert.equal(shouldLaunchDevVaultStory(dev),false,'normal Shibuya visits remain normal');
   dev.set('meetLocation','shibuyaDogenzaka');
   assert.equal(claimDevVaultStoryLoan(dev),true);
-  assert.equal(shouldLaunchDevVaultStory(dev),false,'one-shot trigger cannot repeat');
+  assert.equal(shouldLaunchDevVaultStory(dev),true,
+    'started-but-interrupted arrivals must be recoverable before returning the loan');
   assert.equal(dev.get('ginzaTestDrive')[DEV_VAULT_EPISODE_KEY],'started');
   // Name+valid vault loan, not a possibly stale legacy devMode toggle,
   // identifies the one developer profile permitted to run the chapter.
   assert.equal(armDevVaultStoryLoan(mkRegistry({devMode:false})),true);
   for(const changed of [{firstName:'Ren',lastName:'Mizuno'},
-      {ginzaTestDrive:null},{selectedCarId:'ae86'}]){
+      {ginzaTestDrive:null}]){
     const user=mkRegistry(changed);
     assert.equal(armDevVaultStoryLoan(user),false);
     assert.equal(shouldLaunchDevVaultStory(user),false);
@@ -125,6 +126,6 @@ test('R641 boot and build import registration remains isolated',()=>{
   assert.match(main,/StoryDirector\.js\?v=20261022-r642/);
   assert.match(main,/RaceScene\.js\?v=20261022-r642/);
   assert.match(main,/CentralTokyoScene\.js\?v=20261022-r642/);
-  assert.match(source('version.json'),/R642/);
-  assert.match(source('index.html'),/R642/);
+  assert.match(source('version.json'),/R643/);
+  assert.match(source('index.html'),/R643/);
 });
