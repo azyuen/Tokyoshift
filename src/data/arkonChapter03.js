@@ -15,7 +15,7 @@ const manga=(title,lines,cast={left:A,right:S})=>({
   })),
 });
 const scene=(label,backgroundId,characters,cars=[{carId:'mx5'}],extras={})=>[
-  {type:'STAGE',backgroundId,stageMode:'story',privateMeet:true,
+  {type:'STAGE',backgroundId,stageMode:'native',privateMeet:true,
     composition:'car-behind-cast',characters,cars,...extras},
   {type:'HOLD_SCENE',label,caption:'ARKON DEN // THE NIGHT SHIFT'},
 ];
@@ -31,9 +31,9 @@ export const ARKON_CHAPTER_03={
     {type:'SET_FLAG',key:'arkonStoryChapter',value:3},
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter03Jobs',timeOfDay:'night'},
     ...scene('CHAPTER 03 // THE NIGHT SHIFT','workshop:shinonomeCanalYard:night',
-      [{id:A,pose:'storyMechanic',x:470,ground:.83}],[]),
+      [{id:A,pose:'storyMechanic',x:470,ground:.83}],[{carId:'$SELECTED_CAR'}]),
     manga('A DIFFERENT KIND OF WIN',[
-      ark('First regional championship. Hard to believe that old Civic managed it.','storyConfidentSmirk'),
+      ark('First regional championship. Hard to believe that old 240Z managed it.','storyConfidentSmirk'),
       ark('The trophy is nice. The bills have not noticed.','storyShrugging'),
       ark('At least a few people have started asking about the work I do under the bonnet.','storyThinking'),
     ],{left:A}),
@@ -203,7 +203,7 @@ export const ARKON_CHAPTER_03={
     ]),
     {type:'CLEAR_STAGE'},
     ...scene('BACK AT CANAL YARD','workshop:shinonomeCanalYard:night',
-      [{id:A,pose:'storyMechanic',x:465,ground:.82}],[]),
+      [{id:A,pose:'storyMechanic',x:465,ground:.82}],[{carId:'$SELECTED_CAR'}]),
     manga('A DIFFERENT KIND OF REPUTATION',[
       ark('Five customers. One very unexpected visitor. Not a bad week.','storyThinking'),
       ark('Quiet again. Just me and the tools. I could get used to this.','storyIdle'),
