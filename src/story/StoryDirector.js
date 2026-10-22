@@ -116,6 +116,21 @@ export class StoryDirector {
       return false;
     }
     if(scene._pendingSafeSceneStart)return false;
+    // R663 authored the Chapter 03 test drive as manga. Preserve older
+    // mid-chapter saves: if the Mazda build is finished but its road result
+    // is still unset, resume at the NEW live drive rather than treating the
+    // old numeric manga checkpoint as an unrelated later story beat.
+    if(checkpoint.id==='arkonChapter03' &&
+       ['chapter03Driving','chapter03GuestRace'].includes(
+         scene.registry?.get?.('arkonStoryPhase')) &&
+       Number(scene.registry?.get?.('arkonStoryCustomerJobsDone')||0)>=6 &&
+       !scene.registry?.get?.('arkonStoryMx5RaceResult') &&
+       !scene.registry?.get?.('arkonStoryMx5Loan')?.active){
+      const steps=this.scripts.get('arkonChapter03')?.script?.steps||[];
+      const driveIndex=steps.findIndex(step=>step.type==='ARKON_MX5_RACE');
+      if(driveIndex>=0)
+        return this.start(checkpoint.id,{index:driveIndex,vars:checkpoint.vars});
+    }
     return this.start(checkpoint.id, { index: checkpoint.index, vars:checkpoint.vars });
   }
   checkpoint() {
