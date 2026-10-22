@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ARKON_CHAPTER_01} from '../src/data/arkonChapter01.js';
+import {STORY_DIRECTOR_SCRIPTS} from '../src/data/storyDirectorScripts.js';
 import {validateStoryScript} from '../src/story/StoryScript.js';
 import {createArkonStoryState,normaliseState,createDefaultGameState,
   applyStateToRegistry,saveSessionState,setProfileGameMode,getProfileGameMode,
   beginNewProfile,readSessionState,getProfileState,exportProfileBackup,
   importProfileBackup,getActiveProfileIndex} from '../src/state/GameState.js';
 
+test('Story Director registers the new chapter',()=>{
+  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter01, ARKON_CHAPTER_01);
+});
 test('Arkon Chapter 01 validates against Story Director commands',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_01));
   assert.ok(ARKON_CHAPTER_01.steps.some(step=>step.type==='CHOICE'));
