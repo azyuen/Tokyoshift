@@ -3,7 +3,7 @@ import {
   getCharacterAssetUrl,
   getCharacterVisualForContext,
   getCharacterForContext,
-} from '../data/characters.js?v=20261017-r578';
+} from '../data/characters.js?v=20261023-r652';
 import {
   getCutscene,
   hasSeenCutscene,
@@ -15,7 +15,7 @@ import {
   resolveCharacterProfile,
   getCharacterProfilePlacement,
 } from '../characters/CharacterProfileRenderer.js?v=20261017-r578';
-import { saveSessionState } from '../state/GameState.js?v=20261018-r588';
+import { saveSessionState } from '../state/GameState.js?v=20261023-r652';
 import { playPhoneConversation } from './PhoneConversation.js?v=20261022-r640';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
