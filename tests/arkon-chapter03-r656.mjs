@@ -209,7 +209,7 @@ test('R662 Chapter 03 opens in Canal Yard with the actual car and native Meet ge
   assert.match(director,/arkonStoryCanalYardUnlocked',true/);
   assert.match(director,/queueSafeSceneStart\(scene,'GarageScene'/);
   assert.match(director,/queueSafeSceneStart\(scene,'RaceScene'/);
-  assert.match(director,/STORY RACE MEET TRANSITION FAILED/);
+  assert.match(director,/SAYAKA DRIVE TRANSITION FAILED/);
   assert.match(director,/CANAL YARD STORY RETURN FAILED/);
   const game=readFileSync('src/scenes/GarageScene.js','utf8');
   assert.match(game,/this\.registry\.get\('gameMode'\)==='arkonStory'/);
