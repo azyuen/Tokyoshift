@@ -75,7 +75,9 @@ test('Ginza map intercepts Shibuya Dogenzaka BEFORE normal Meet loading and raci
     'claim requires registry meetLocation to match the destination');
   r.set('meetLocation','shibuyaDogenzaka');
   assert.equal(claimDevVaultStoryLoan(r),true);
-  assert.equal(shouldLaunchDevVaultStoryForDestination(r,'shibuyaDogenzaka'),false);
+  assert.equal(r.get('ginzaTestDrive')?.devVaultNightOutR641,'started');
+  assert.equal(shouldLaunchDevVaultStoryForDestination(r,'shibuyaDogenzaka'),true,
+    'pending loan can retry an interrupted scene transfer');
 });
 
 test('the same composition presets and real car renderer are reusable by authored STAGE',()=>{
