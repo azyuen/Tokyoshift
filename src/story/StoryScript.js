@@ -4,6 +4,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'LOCATION', 'STAGE', 'CLEAR_STAGE', 'MANGA', 'PHONE', 'COMPACT',
   'OPEN_MAP', 'START_RACE', 'WAIT_SCENE', 'WAIT_RACE_END', 'WAIT_EVENT',
   'WAIT_FLAG', 'SET_FLAG', 'IF', 'GOTO', 'LABEL', 'END',
+  'CHOICE', 'WAIT_MS', 'VENUE', 'DEV_HERO_RACE', 'RETURN_LOAN',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -26,15 +27,26 @@ export function validateStoryScript(script) {
         !step.cutsceneId && !(Array.isArray(step.pages) && step.pages.length)) {
       throw new Error(type + ' needs cutsceneId or dialogue pages at ' + index);
     }
+    if (type === 'CHOICE' && (!Array.isArray(step.choices) ||
+        step.choices.length < 2 || step.choices.length > 4 ||
+        !step.choices.every(choice => choice?.id && choice?.label && choice?.to))) {
+      throw new Error('CHOICE requires 2-4 named options with branch targets at ' + index);
+    }
+    if (type === 'WAIT_MS' && (!Number.isFinite(step.ms) || step.ms < 0 || step.ms > 15000)) {
+      throw new Error('WAIT_MS must be 0-15000 milliseconds at ' + index);
+    }
+    if (type === 'VENUE' && !step.venue) throw new Error('VENUE needs venue at ' + index);
     if (type === 'START_RACE' && step.scene && step.scene !== 'RaceScene') {
       throw new Error('START_RACE can only enter RaceScene');
     }
   });
   script.steps.forEach((step, index) => {
-    if (['IF','GOTO'].includes(nameOf(step))) {
-      for (const label of [step.to,step.then,step.else].filter(Boolean)) {
-        if (!labels.has(label)) throw new Error('Story branch at ' + index + ' has missing label: ' + label);
-      }
+    const targets = nameOf(step) === 'CHOICE'
+      ? step.choices.map(choice=>choice.to)
+      : ['IF','GOTO'].includes(nameOf(step))
+        ? [step.to,step.then,step.else].filter(Boolean) : [];
+    for (const label of targets) {
+      if (!labels.has(label)) throw new Error('Story branch at ' + index + ' has missing label: ' + label);
     }
   });
   return { script, labels };
