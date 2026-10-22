@@ -95,6 +95,8 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter02RivalResult: null,
     arkonStoryCruiseComplete: false,
     arkonStoryChapter03Done: false,
+    arkonStoryChapter04Done: false,
+    arkonStoryRwbProject: null,
     arkonStoryCustomerJobsDone: 0,
     arkonStoryMx5CustomerTuning: null,
     arkonStoryChapter03Seed: 0,
@@ -1169,6 +1171,10 @@ export function normaliseState(input = {}) {
         ? input.arkonStoryChapter02RivalResult : null,
     arkonStoryCruiseComplete: storyMode && Boolean(input.arkonStoryCruiseComplete),
     arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
+    arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
+    arkonStoryRwbProject: storyMode && input.arkonStoryRwbProject?.acquired &&
+      input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
+      ? clonePlain(input.arkonStoryRwbProject) : null,
     arkonStoryCustomerJobsDone: storyMode
       ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
     arkonStoryChapter03Seed: storyMode ? (Number(input.arkonStoryChapter03Seed)>>>0) : 0,
@@ -1555,6 +1561,8 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter02RivalResult: registry.get('arkonStoryChapter02RivalResult'),
     arkonStoryCruiseComplete: Boolean(registry.get('arkonStoryCruiseComplete')),
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
+    arkonStoryChapter04Done: Boolean(registry.get('arkonStoryChapter04Done')),
+    arkonStoryRwbProject: registry.get('arkonStoryRwbProject') || null,
     arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
     arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
     arkonStoryMx5CustomerTuning: registry.get('arkonStoryMx5CustomerTuning')||null,
