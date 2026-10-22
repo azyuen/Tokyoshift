@@ -6,6 +6,7 @@ import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r657';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
+import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r659';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -15,7 +16,32 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter04Done'))return {
+    heading:'CHAPTER 04 COMPLETE',
+    message:'The Price of Trust. The RWB Porsche is an unsafe restoration project, not a race-ready car.',
+    progress:'THE PRICE OF TRUST // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_04.id){
+    const phase=get('arkonStoryPhase')||'chapter04Arrival';
+    const stages={
+      chapter04Arrival:['THE NEW COMMISSION','Continue the arrival at the workshop.'],
+      chapter04Porsche:['A RARE PORSCHE','Examine the RWB and speak with Sayaka.'],
+      chapter04Inspection:['THE INSPECTION','Investigate the suspicious structural findings.'],
+      chapter04Ethics:['A DIFFICULT DECISION','Respond to the client honestly.'],
+      chapter04LowPoint:['THE COST OF PRINCIPLE','Continue the quiet evening at Canal Yard.'],
+      chapter04Auction:['A CHANCE TO REBUILD','Consider the repossession auction and the debt.'],
+      chapter04Finale:['THE TRANSPORTER RETURNS','Complete Chapter 04 at the workshop.'],
+    };
+    const [heading,message]=stages[phase]||['THE PRICE OF TRUST','Return to the workshop and continue the story.'];
+    return {heading,message,progress:'ARKON DEN // CHAPTER 04'};
+  }
   if(get('arkonStoryChapter03Done'))return {
+    canStartChapter04:true,
+    heading:'CHAPTER 04 // THE PRICE OF TRUST',
+    message:'Return to Canal Yard workshop, open this Story Objective, then choose BEGIN CHAPTER 04. It will never launch over a Meet.',
+    progress:'THE NIGHT SHIFT // COMPLETED',
+  };
+  if(false)return {
     heading:'CHAPTER 03 COMPLETE',
     message:'The Night Shift is over. Arkon has earned a reputation as a tuner.',
     progress:'THE NIGHT SHIFT // COMPLETED',
@@ -159,10 +185,32 @@ export function showArkonStoryObjective(scene) {
   add(scene.add.text(780,552,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
-  const done=add(scene.add.rectangle(780,620,215,50,0x153847,1)
+  const canBegin=Boolean(info.canStartChapter04 &&
+    scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
+    scene.registry.get('workshopLocationId')==='shinonomeCanalYard' &&
+    !scene.game?.storyDirector?.status?.active &&
+    !scene.registry.get('storyDirectorProgress'));
+  if(canBegin){
+    const begin=add(scene.add.rectangle(780,579,415,52,0x20514b,1)
+      .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
+      .setInteractive({useHandCursor:true}));
+    add(scene.add.text(780,579,'BEGIN CHAPTER 04',{
+      fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
+    }).setOrigin(.5).setDepth(depth+3));
+    begin.on('pointerdown',()=>{
+      close();
+      // Defer out of the pointer handler that destroys this modal. No
+      // automatic hand-off, no underlying Meet invitation gets a click.
+      scene.time.delayedCall(1,()=>{
+        if(scene.sys?.isActive?.() && !scene.game?.storyDirector?.start?.('arkonChapter04'))
+          scene.showWorkshopToast?.('CHAPTER 04 COULD NOT START');
+      });
+    });
+  }
+  const done=add(scene.add.rectangle(780,canBegin?650:620,215,50,0x153847,1)
     .setStrokeStyle(2,0x64cde2,1).setDepth(depth+2)
     .setInteractive({useHandCursor:true}));
-  add(scene.add.text(780,620,'BACK TO GAME',{
+  add(scene.add.text(780,canBegin?650:620,'BACK TO GAME',{
     fontFamily:PIXEL,fontSize:'10px',color:'#ffffff'
   }).setOrigin(.5).setDepth(depth+3));
   done.on('pointerdown',close);
