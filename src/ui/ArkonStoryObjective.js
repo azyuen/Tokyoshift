@@ -4,13 +4,46 @@ const BODY='"Rajdhani", sans-serif';
 
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
 import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
+import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
 
 export function getArkonStoryObjective(registry) {
   const get=key=>registry?.get?.(key);
   if(get('gameMode')!=='arkonStory')return null;
   const wins=Math.max(0,Number(get('wins')||0));
-  const revised=get('storyDirectorProgress')?.id===ARKON_CHAPTER_01_REVISED.id ||
+  const active=get('storyDirectorProgress');
+  const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter02Done'))return {
+    heading:'CHAPTER 02 COMPLETE',
+    message:'Keep improving the Civic and choose when to attempt your first regional challenge.',
+    progress:'THE LONG WAY HOME // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_02.id){
+    const phase=get('arkonStoryPhase')||'chapter02Opening';
+    const wins=Math.max(0,Number(get('wins')||0));
+    const marker=phase==='chapter02Earn'?'ch2BeforeDock'
+      :phase==='chapter02MeetRepair'?'ch2BeforeRepair'
+      :phase==='chapter02AfterWorkshop'?'ch2BeforeFriendlyRace':null;
+    const baseline=marker && Number.isFinite(Number(active.vars?.[marker]))
+      ? Number(active.vars[marker]) : null;
+    const progress=marker && baseline!==null
+      ? 'WINS '+Math.min(2,Math.max(0,wins-baseline))+' / 2' : 'STORY SCENE';
+    const goals={
+      chapter02Opening:['UNWELCOME COMPANY','Continue Chapter 02 at the Meet.'],
+      chapter02Earn:['KEEP YOUR FOOT IN','Win two street races. Arkon needs another way to earn money.'],
+      chapter02MeetRepair:['THE CIVIC NEEDS WORK','Win two more races, then return to a Meet.'],
+      chapter02Driving:['THE LONG WAY HOME','Continue the drive with Sayaka and visit Arkon\'s workshop.'],
+      chapter02AfterWorkshop:['ONE MORE TEST','Win two more races. Daigo wants another run.'],
+      chapter02RivalRace:['FRIENDLY REMATCH','Complete the race with Daigo, then return to the Meet.'],
+    };
+    const [heading,message]=goals[phase]||['THE LONG WAY HOME','Continue the current story scene.'];
+    return {heading,message,progress};
+  }
+  if(get('arkonStoryChapter01RevisedDone') && !active)return {
+    heading:'CHAPTER 02 // THE LONG WAY HOME',
+    message:'Visit a street meet to begin Arkon\'s next chapter.',
+    progress:'CHAPTER 01 COMPLETE',
+  };
   if(revised){
     const phase=get('arkonStoryPhase')||'opening';
     const current=get('wins')||0;

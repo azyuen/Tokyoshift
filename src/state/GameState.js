@@ -90,6 +90,9 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter01AfterHoursDone: false,
     arkonStoryChapter01FullDone: false,
     arkonStoryChapter01RevisedDone: false,
+    arkonStoryChapter02Done: false,
+    arkonStoryChapter02FishPaid: false,
+    arkonStoryChapter02RivalResult: null,
     arkonStoryPhase: 'opening',
     arkonStoryTimeOfDay: 'night',
     arkonStorySayakaNoticed: false,
@@ -1152,6 +1155,11 @@ export function normaliseState(input = {}) {
     arkonStoryChapter01AfterHoursDone: storyMode && Boolean(input.arkonStoryChapter01AfterHoursDone),
     arkonStoryChapter01FullDone: storyMode && Boolean(input.arkonStoryChapter01FullDone),
     arkonStoryChapter01RevisedDone: storyMode && Boolean(input.arkonStoryChapter01RevisedDone),
+    arkonStoryChapter02Done: storyMode && Boolean(input.arkonStoryChapter02Done),
+    arkonStoryChapter02FishPaid: storyMode && Boolean(input.arkonStoryChapter02FishPaid),
+    arkonStoryChapter02RivalResult: storyMode &&
+      ['won','lost'].includes(input.arkonStoryChapter02RivalResult)
+        ? input.arkonStoryChapter02RivalResult : null,
     arkonStoryPhase: storyMode ? String(input.arkonStoryPhase || 'opening') : 'opening',
     // Migrate R652 chapters already past the nighttime introduction without
     // restarting their scripted checkpoints or resetting any races.
@@ -1522,6 +1530,9 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter01AfterHoursDone: Boolean(registry.get('arkonStoryChapter01AfterHoursDone')),
     arkonStoryChapter01FullDone: Boolean(registry.get('arkonStoryChapter01FullDone')),
     arkonStoryChapter01RevisedDone: Boolean(registry.get('arkonStoryChapter01RevisedDone')),
+    arkonStoryChapter02Done: Boolean(registry.get('arkonStoryChapter02Done')),
+    arkonStoryChapter02FishPaid: Boolean(registry.get('arkonStoryChapter02FishPaid')),
+    arkonStoryChapter02RivalResult: registry.get('arkonStoryChapter02RivalResult'),
     arkonStoryPhase: registry.get('arkonStoryPhase'),
     arkonStoryTimeOfDay: registry.get('arkonStoryTimeOfDay'),
     arkonStorySayakaNoticed: Boolean(registry.get('arkonStorySayakaNoticed')),

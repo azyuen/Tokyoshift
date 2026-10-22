@@ -1,18 +1,18 @@
 // Scene-local authored tableau over whichever real venue/gameplay screen is active.
 // Uses canonical character assets; cars/backgrounds are explicit texture references.
-import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r653';
+import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r655';
 import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
 import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
 import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261022-r642';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
-import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261022-r651';
+import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261023-r655';
 
 export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
   characters = [], cars = [], depth = 160,
-  backgroundAlpha = 1, composition = DEFAULT_STORY_COMPOSITION,
+  backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -36,7 +36,9 @@ export function showStoryStage(scene, {
   const w=scene.scale?.width||1560,h=scene.scale?.height||840;
   // Prefer the exact, tested gameplay staging in a live Workshop/Meet. This
   // supersedes story-authored pixel sizes and bypasses the old double-scaling.
-  const template=getNativeStoryStageTemplate(profile,scene);
+  // Story tableaux at a DIFFERENT location must draw their own backdrop.
+  // The live native layout remains unchanged for normal Garage/Meet moments.
+  const template=stageMode==='story' ? null : getNativeStoryStageTemplate(profile,scene);
   const native=Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const frame=native?profile.frame:{x:0,y:0,w,h};
   const assets = [];
@@ -69,6 +71,7 @@ export function showStoryStage(scene, {
   const objects = [];
   let clipGraphics=null,clipMask=null;
   const hidden=[];
+  const motionTweens=[];
   const hide=obj=>{if(obj?.active && obj?.setVisible){
     hidden.push({obj,visible:obj.visible});obj.setVisible(false);
   }};
@@ -81,6 +84,7 @@ export function showStoryStage(scene, {
     destroy() {
       if (!alive) return;
       alive = false;
+      motionTweens.forEach(tween=>tween?.stop?.());
       objects.forEach(x => x?.destroy?.());
       hidden.forEach(({obj,visible})=>{if(obj?.active)obj.setVisible(visible);});
       clipGraphics?.destroy?.();
@@ -99,6 +103,7 @@ export function showStoryStage(scene, {
     else if (width) image.setDisplaySize(width,image.height * width / Math.max(1,image.width));
     if(clipMask)image.setMask(clipMask);
     objects.push(image);
+    return image;
   };
   const draw = () => {
     if (!alive || !scene.sys?.isActive?.()) return;
@@ -120,8 +125,17 @@ export function showStoryStage(scene, {
           sourceWidth:src.width,sourceHeight:src.height,
           frame,fit:profile?.fit||'cover',
         });
-        addImage(backdrop,viewport.centreX,viewport.centreY,
-          viewport.width,null,depth,backgroundAlpha);
+        const moving=motion==='drive';
+        const image=addImage(backdrop,viewport.centreX,viewport.centreY,
+          viewport.width*(moving?1.07:1),null,depth,backgroundAlpha);
+        if(moving && image && scene.tweens?.add) {
+          // An ambient night-drive tableau, not a second racing simulation.
+          // Keep car physics and inputs exclusively in the real RaceScene.
+          motionTweens.push(scene.tweens.add({
+            targets:image,x:viewport.centreX+22,
+            duration:4200,ease:'Sine.easeInOut',yoyo:true,repeat:-1,
+          }));
+        }
       }
     }
     // The native car always uses the SAME backing/frontend ordering as its

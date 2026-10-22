@@ -51,7 +51,7 @@ import {
 } from '../data/partUninstall.js?v=20261020-r619';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r653';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r652';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r655';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
@@ -141,7 +141,7 @@ import {
   cancelSceneLoading,
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
-import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r652';
+import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r655';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';

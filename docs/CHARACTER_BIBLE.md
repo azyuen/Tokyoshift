@@ -1,6 +1,6 @@
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
-Version: 1.3 — 22 October 2026
+Version: 1.4 — 23 October 2026
 Status: adopted foundation; Sayaka/Reika roles approved 9 October; Sayaka/father history and final celebration direction approved 11 October 2026; Arkon Den in-world foundation approved 22 October 2026.
 Companion: [Career narrative and emotional beats](CAREER_NARRATIVE.md) preserves the synopsis, approved history, knowledge boundaries and proposed scene backlog.
 Original repository audit: bc491c0, updated through 3632145.
@@ -890,6 +890,10 @@ Status: **Owner-approved fictional-world foundation, 22 October 2026.** Arkon is
 **Established present:** Wealthy, self-made and successful; owner of the **Ginza Gallery** and other ventures not yet precisely specified. High society recognises him, but he is relaxed, discreet and comfortable staying behind the scenes. He does not perform his wealth. The Ginza collection includes personal vehicles, consignments and managed cars; ownership of the gallery does not imply ownership of every displayed car. Sayaka remains the independent **curator and manager** and specialist professional at Ginza. Her black RWB Porsche remains her personal car, subject to existing later-sale continuity.
 
 **Established beginnings and rise:** He started as a fairly ordinary person without privileged wealth, connections or a spectacular racing record. His ascent occurred through real work, risks and opportunities **linked to cars and racing**, not through unexplained riches or prize money alone. The exact first job, venture, breakthroughs, failures and timelines are story details still to be developed.
+
+**Chapter 02 origin, approved for Story Mode on 23 October 2026:** Arkon worked as a capable mechanic in a professional motorsport paddock before falling on hard times. His exact team, departure and financial setbacks are not yet settled. Chapter 02 shows him earning wages shifting fish crates, then being paid once for diagnosing and repairing a dockside Forester. He works on his own Civic at a Meet; Sayaka notices, rides with him, visits his small home workshop (with notably bad coffee), and sees the quality of his mechanical work. Her respect grows through what she observes, not because he boasts or she instantly falls for him. This does not grant Arkon hidden performance bonuses. The Daikoku Kazuo art used as the dock supervisor is a **separate, unnamed foreman**, not canon evidence that Kazuo worked there.
+
+**Owner-approved long-term direction, not yet enacted:** Arkon eventually gets specialist paid work through his mechanical reputation, may work on Sayaka's car in a subsequent chapter, and ultimately becomes the owner of Warehouse HQ. Much later, on Sayaka's encouragement, he offers Daichi and the Career player affordable workshop rent. This must not retroactively give Arkon authorship of their races, Daichi's work, their recruiting, or the driver's advancement. Precise business terms, timing and first client deals remain open; Chapter 02 does not award or reveal warehouse ownership.
 
 **Personality:** Relaxed, restrained, approachable and subtly confident. Prefers a workshop conversation or simple meal to a society event. Listens carefully, remembers financial hardship, is disarmingly informal with important people and dislikes receiving public credit for every good deed. Can be stubbornly private, sometimes helping without asking whether help is wanted. He is neither a perfect benefactor nor a secret puppet-master. His money can create opportunities, not merit or guaranteed race outcomes.
 

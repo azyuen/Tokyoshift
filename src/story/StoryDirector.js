@@ -3,13 +3,13 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r652';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
+} from './StoryScript.js?v=20261023-r655';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r655';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r652';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r655';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r653';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r653';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r655';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
 import { cars } from '../data/cars.js?v=20261017-r565';
@@ -135,7 +135,20 @@ export class StoryDirector {
   }
   tick() {
     if (this.game.registry?.get?.('__arkonStoryRecountActive')) return;
-    if (!this.session) { this.resume(); return; }
+    if (!this.session) {
+      const registry=this.game.registry;
+      const checkpoint=registry?.get?.(STORY_DIRECTOR_SAVE_KEY);
+      // The sequel begins on the NEXT ordinary Meet visit after Chapter 01.
+      // Never touch Career, the debug developer save or an older checkpoint.
+      if (!checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
+          registry.get('arkonStoryChapter01RevisedDone') &&
+          !registry.get('arkonStoryChapter02Done') &&
+          sceneName(this.activeScene())==='MeetScene' &&
+          !sceneCutsceneActive(this.activeScene())) {
+        if(this.start('arkonChapter02'))return;
+      }
+      this.resume();return;
+    }
     if (this.session.slot !== owner()) { this.stop(); return; }
     if (this.error) return;
     const scene = this.activeScene();
@@ -162,6 +175,10 @@ export class StoryDirector {
       } else if (wait.kind === 'flag') {
         if ((wait.condition.scene && sceneName(scene)!==wait.condition.scene) ||
             !checkStoryCondition(wait.condition, key => scene.registry.get(key))) return;
+        this.advance();
+      } else if(wait.kind==='winDelta') {
+        if(sceneName(scene)!==wait.targetScene ||
+           Number(scene.registry.get('wins')||0)<wait.startWins+wait.count)return;
         this.advance();
       } else if (wait.kind === 'event') {
         if (!this.events.has(wait.event)) return;
@@ -245,7 +262,7 @@ export class StoryDirector {
           return;
         }
         if (type === 'ARKON_CHALLENGE_RACE') {
-          if(this.session.id!=='arkonChapter01Revised' ||
+          if(!['arkonChapter01Revised','arkonChapter02'].includes(this.session.id) ||
               scene.registry.get('gameMode')!=='arkonStory' ||
               sceneName(scene)!=='MeetScene' ||
               !scene.registry.get('selectedCarId')){
@@ -265,14 +282,16 @@ export class StoryDirector {
             selectedRaceType:'Standing Start',
             selectedRaceDistanceM:402.336,
             selectedRaceDeal:'BET',
-            selectedRaceStake:1000,
+            selectedRaceStake:this.session.id==='arkonChapter02'?0:1000,
             selectedRaceSpecialChallenge:false,
             selectedRaceMeetOffer:null,
             raceReturnScene:'MeetScene',
-            raceLocationLabel:'CHAPTER 01 // DAIGO KIRISHIMA',
+            raceLocationLabel:this.session.id==='arkonChapter02'
+              ? 'CHAPTER 02 // FRIENDLY REMATCH' : 'CHAPTER 01 // DAIGO KIRISHIMA',
             raceDistrict:String(scene.registry.get('district')||'ODAIBA'),
             raceTimeOfDay:String(scene.worldPhase||'night'),
-            arkonStoryRivalResult:null,
+            ...(this.session.id==='arkonChapter02'
+              ? {arkonStoryChapter02RivalResult:null} : {arkonStoryRivalResult:null}),
           };
           for(const [key,value]of Object.entries(values))scene.registry.set(key,value);
           saveSessionState(scene.registry);
@@ -316,7 +335,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (this.session.id==='arkonChapter01Revised' &&
+            if (['arkonChapter01Revised','arkonChapter02'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -324,6 +343,37 @@ export class StoryDirector {
             this.checkpoint();
           }
           this.advance(); continue;
+        }
+        if (type==='WAIT_WIN_DELTA') {
+          if(this.session.id!=='arkonChapter02' ||
+             scene.registry.get('gameMode')!=='arkonStory') {
+            this.error='INVALID STORY WIN MILESTONE';return;
+          }
+          if(!Object.prototype.hasOwnProperty.call(this.session.vars,step.key)){
+            this.session.vars[step.key]=Math.max(0,Number(scene.registry.get('wins')||0));
+            this.checkpoint(); // save the baseline so reloads cannot shorten the wait
+          }
+          const startWins=Number(this.session.vars[step.key]);
+          if(sceneName(scene)==='MeetScene' &&
+             Number(scene.registry.get('wins')||0)>=startWins+step.count) {
+            this.advance();continue;
+          }
+          this.wait={kind:'winDelta',startWins,count:step.count,
+            targetScene:step.scene};return;
+        }
+        if (type==='ARKON_DOCK_PAYMENT') {
+          if(this.session.id!=='arkonChapter02' ||
+             scene.registry.get('gameMode')!=='arkonStory') {
+            this.error='INVALID STORY JOB PAYMENT';return;
+          }
+          if(!this.session.preview && !scene.registry.get('arkonStoryChapter02FishPaid')){
+            const balance=Math.max(0,Number(scene.registry.get('cash')||0));
+            // Save the guard with the cash: crash/reload never pays twice.
+            scene.registry.set('cash',Math.min(1e9,balance+25000));
+            scene.registry.set('arkonStoryChapter02FishPaid',true);
+            this.checkpoint();
+          }
+          this.advance();continue;
         }
         if (type === 'STAGE') {
           if (step.privateMeet && sceneName(scene)==='MeetScene')
@@ -363,7 +413,7 @@ export class StoryDirector {
               ...step, onComplete:onDone,onCancel,
             })
             : playMangaCutscene(scene,definition,{
-              preloadPagePosesOnly: this.session.id==='arkonChapter01Revised',
+              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,

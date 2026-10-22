@@ -59,6 +59,7 @@ export function getNativeCastPlacement(template,index=0,total=1,role='near') {
   const base=template.character;
   const validIndex=Math.max(0,Math.floor(finite(index,0)));
   const x=role==='observer' ? template.observerX
+    :role==='carMechanic' ? template.car.x
     :base.x+validIndex*template.castGap;
   return Object.freeze({
     x:clamp(x,template.frame.x+55,template.frame.x+template.frame.w-55),

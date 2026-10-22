@@ -5,6 +5,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'OPEN_MAP', 'START_RACE', 'WAIT_SCENE', 'WAIT_RACE_END', 'WAIT_EVENT',
   'WAIT_FLAG', 'SET_FLAG', 'IF', 'GOTO', 'LABEL', 'END',
   'CHOICE', 'WAIT_MS', 'HOLD_SCENE', 'VENUE', 'DEV_HERO_RACE', 'RETURN_LOAN', 'ARKON_CHALLENGE_RACE',
+  'WAIT_WIN_DELTA', 'ARKON_DOCK_PAYMENT',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -36,6 +37,15 @@ export function validateStoryScript(script) {
       throw new Error('WAIT_MS must be 0-15000 milliseconds at ' + index);
     }
     if (type === 'VENUE' && !step.venue) throw new Error('VENUE needs venue at ' + index);
+    if (type === 'WAIT_WIN_DELTA' &&
+        (!/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(step.key || '') ||
+         !Number.isInteger(step.count) || step.count < 1 || step.count > 12 ||
+         step.scene !== 'MeetScene')) {
+      throw new Error('WAIT_WIN_DELTA needs a safe key, 1-12 wins and MeetScene at ' + index);
+    }
+    if (type === 'ARKON_DOCK_PAYMENT' && step.amount !== 25000) {
+      throw new Error('ARKON_DOCK_PAYMENT has a fixed chapter reward at ' + index);
+    }
     if (type === 'START_RACE' && step.scene && step.scene !== 'RaceScene') {
       throw new Error('START_RACE can only enter RaceScene');
     }

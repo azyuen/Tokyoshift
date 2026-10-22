@@ -1473,6 +1473,10 @@ regionExclusive: true, teamRole: 'core',
         oshiageExplaining: { key: 'characterSayakaOshiageExplaining', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_explaining.png' },
         oshiageHappy: { key: 'characterSayakaOshiageHappy', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_happy.png' },
         oshiageConcerned: { key: 'characterSayakaOshiageConcerned', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_concerned.png' },
+        oshiageRelaxed: { key: 'characterSayakaOshiageRelaxed', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_relaxed.png' },
+        oshiageReviewing: { key: 'characterSayakaOshiageReviewing', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_reviewing.png' },
+        oshiageSerious: { key: 'characterSayakaOshiageSerious', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_serious.png' },
+        oshiageTalking: { key: 'characterSayakaOshiageTalking', path: 'assets/Characters/Main/oshiage_sayaka_fujieda_talking.png' },
         track: { key: 'characterSayakaProTrack', path: 'assets/Characters/Main/race_sayaka_fujieda_idle.png' },
         trackHappy: { key: 'characterSayakaProTrackHappy', path: 'assets/Characters/Main/race_sayaka_fujieda_win.png' },
         trackSerious: { key: 'characterSayakaProTrackSerious', path: 'assets/Characters/Main/race_sayaka_fujieda_loss.png' },
@@ -1887,6 +1891,21 @@ regionExclusive: true, teamRole: 'core',
     },
   },
 
+  // Reuse Kazuo's supplied idle art as a separate dock supervisor character.
+  // A borrowed sprite must not change Kazuo's Career identity or biography.
+  storyDockForeman: {
+    id:'storyDockForeman',name:'Dock Supervisor',selectable:false,rivalEligible:false,
+    archetype:'The Early-Shift Foreman',roleTags:['arkon-story','nonrecruitable'],
+    visual:{
+      spriteKey:'characterStoryDockForeman',
+      path:'assets/Characters/Daikoku/kazuo_tanaka_idle.png',
+      poseAssets:{
+        idle:{key:'characterStoryDockForemanIdle',
+          path:'assets/Characters/Daikoku/kazuo_tanaka_idle.png'},
+      },
+    },
+  },
+
   // Story-era visitor: non-recruitable; existing placeholder artwork until his
   // commissioned portrait arrives. Does not enter regular Meet rosters.
   storyDaigoKirishima: {
@@ -1926,6 +1945,9 @@ regionExclusive: true, teamRole: 'core',
         storySheepish: { key: 'arkonStorySheepish', path: 'assets/Characters/Main/arkon_den_sheepish.png' },
         storySerious: { key: 'arkonStorySerious', path: 'assets/Characters/Main/arkon_den_serious.png' },
         storySurprised: { key: 'arkonStorySurprised', path: 'assets/Characters/Main/arkon_den_surprised.png' },
+        storyMechanic: { key: 'arkonStoryMechanicPortrait', path: 'assets/Characters/Main/arkon_den_mechanic.png' },
+        storyMechanicEngine: { key: 'arkonStoryEngineInspect', path: 'assets/Characters/Main/arkon_den_engine_insepct.png' },
+        storyMechanicCrouch: { key: 'arkonStoryCrouch', path: 'assets/Characters/Main/arkon_den_exhaust_crouch.png' },
         devIdle: { key: 'devArkonIdle', path: 'assets/Characters/Dev/arkon_den_idle.png' },
         devLaughing: { key: 'devArkonLaughing', path: 'assets/Characters/Dev/arkon_den_laughing.png' },
         devSerious: { key: 'devArkonSerious', path: 'assets/Characters/Dev/arkon_den_serious.png' },

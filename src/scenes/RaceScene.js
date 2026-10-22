@@ -2563,11 +2563,13 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
     if (this.registry.get('gameMode')==='arkonStory' &&
-        this.registry.get('arkonStoryPhase')==='rivalRace' &&
+        ['rivalRace','chapter02RivalRace'].includes(this.registry.get('arkonStoryPhase')) &&
         this.opponentCharacterId==='storyDaigoKirishima' &&
         (playerWon || opponentWon)) {
       // Determined by the ordinary race clock, not by the Story Director.
-      this.registry.set('arkonStoryRivalResult',playerWon?'won':'lost');
+      const resultKey=this.registry.get('arkonStoryPhase')==='chapter02RivalRace'
+        ? 'arkonStoryChapter02RivalResult' : 'arkonStoryRivalResult';
+      this.registry.set(resultKey,playerWon?'won':'lost');
     }
     const wasSpecialChallenge = Boolean(this.registry.get('selectedRaceSpecialChallenge'));
     const settlement = (playerWon || opponentWon)
@@ -2575,8 +2577,9 @@ export default class RaceScene extends Phaser.Scene {
       : null;
 
     if (this.registry.get('gameMode')==='arkonStory' &&
-        this.registry.get('arkonStoryRivalResult') &&
-        this.registry.get('arkonStoryPhase')==='rivalRace') {
+        ['rivalRace','chapter02RivalRace'].includes(this.registry.get('arkonStoryPhase')) &&
+        (this.registry.get('arkonStoryChapter02RivalResult') ||
+         this.registry.get('arkonStoryRivalResult'))) {
       saveSessionState(this.registry); // preserve result before any scene transition
     }
     // The promised five lessons are claimed ONCE after a real regional title.
