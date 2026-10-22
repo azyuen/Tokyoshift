@@ -41,8 +41,13 @@ export function showStoryStage(scene, {
   // supersedes story-authored pixel sizes and bypasses the old double-scaling.
   // Story tableaux at a DIFFERENT location must draw their own backdrop.
   // The live native layout remains unchanged for normal Garage/Meet moments.
-  const template=stageMode==='story' ? null : getNativeStoryStageTemplate(profile,scene);
-  const native=Boolean(template)||(stageMode==='native'&&Boolean(profile));
+  // Customer-tuning jobs use the ordinary three-panel Garage viewport even
+  // when the Story Director is running over MeetScene. Avoid projecting or
+  // scaling vehicles a second time; their coordinates are Garage coordinates.
+  const garagePanel=stageMode==='garage-panel' && profile?.frameId==='workshop';
+  const template=(stageMode==='story'||garagePanel)
+    ? null : getNativeStoryStageTemplate(profile,scene);
+  const native=garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
   const frame=native?profile.frame:{x:0,y:0,w,h};
   const assets = [];
   const layout = resolveStoryComposition({
@@ -150,7 +155,7 @@ export function showStoryStage(scene, {
     const portraitDepth=depth+(carInFront?3:10);
     const vehicleDepth=depth+(carInFront?11:3);
     const drawCars=()=>carProps.forEach((c,i)=>{
-      const estimate=!template&&autoPerspective?projectEntityOnBackground(profile,{
+      const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'car',frame,
         sourceWidth:viewport?.sourceWidth||1672,
         sourceHeight:viewport?.sourceHeight||941,
@@ -211,7 +216,7 @@ export function showStoryStage(scene, {
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
       const assigned=template?getNativeCastPlacement(template,i,actors.length,a.role):null;
-      const estimate=!template&&autoPerspective?projectEntityOnBackground(profile,{
+      const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
         sourceWidth:viewport?.sourceWidth||1672,
         sourceHeight:viewport?.sourceHeight||941,
