@@ -20,6 +20,12 @@ export const PROFILE_STORE_BACKUP_KEY = 'tokyoShiftProfilesV1Backup';
 export const ACTIVE_PROFILE_KEY = 'tokyoShiftActiveProfile';
 export const MAX_PROFILES = 3;
 export const ARKON_STORY_MODE = 'arkonStory';
+// Completely separate storage namespace: normal career slots keep their legacy shape.
+const ARKON_STORY_SAVE_PREFIX = 'tokyoShiftArkonStorySaveV1:';
+const ARKON_STORY_MODE_PREFIX = 'tokyoShiftArkonStorySelectedV1:';
+const storySaveKey = slot => ARKON_STORY_SAVE_PREFIX + slot;
+const storyModeKey = slot => ARKON_STORY_MODE_PREFIX + slot;
+
 const isArkonProfile = state => (String(state?.firstName || '') + String(state?.lastName || ''))
   .toLowerCase().replace(/[^a-z0-9]/g, '') === 'arkonden';
 const isArkonStory = state => state?.gameMode === ARKON_STORY_MODE && isArkonProfile(state);
@@ -207,7 +213,7 @@ export function createFreshRunStateFromRegistry(registry) {
   state.playerDifficulty = normalisePlayerDifficulty(
     registry?.get?.('playerDifficulty') || state.playerDifficulty
   );
-  state.devMode = Boolean(registry?.get?.('devMode'));
+  state.devMode = state.gameMode !== ARKON_STORY_MODE && Boolean(registry?.get?.('devMode'));
   const timerStartedAt = Number(registry?.get?.('__playTimerStartedAt') || Date.now());
   state.playTimeMs =
     Math.max(0, Number(registry?.get?.('playTimeMs') || 0)) +
@@ -269,8 +275,6 @@ function normaliseSlot(slot) {
 
   let manual = slot.manual && typeof slot.manual === 'object' ? slot.manual : null;
   let session = slot.session && typeof slot.session === 'object' ? slot.session : null;
-  const storyManual = slot.storyManual && typeof slot.storyManual === 'object' ? slot.storyManual : null;
-  const storySession = slot.storySession && typeof slot.storySession === 'object' ? slot.storySession : null;
 
   // Recovery compatibility: some older/interrupted builds can leave a raw
   // profile state directly in a slot. Do not discard it as "empty".
@@ -292,10 +296,6 @@ function normaliseSlot(slot) {
   return {
     manual,
     session,
-    storyManual,
-    storySession,
-    selectedMode: slot.selectedMode === ARKON_STORY_MODE && isArkonProfile(session || manual)
-      ? ARKON_STORY_MODE : 'career',
     createdAt: slot.createdAt || manual?.savedAt || session?.savedAt || new Date().toISOString(),
     updatedAt: slot.updatedAt || manual?.savedAt || session?.savedAt || new Date().toISOString(),
   };
@@ -426,9 +426,9 @@ export function getActiveProfileIndex() {
 }
 
 function mirrorActiveProfile(slot) {
-  const story = slot?.selectedMode === ARKON_STORY_MODE;
-  const manual = (story ? slot?.storyManual : slot?.manual) || null;
-  const session = (story ? slot?.storySession : slot?.session) || manual || null;
+  // Old mirrors always contain Career. Story never writes to legacy save keys.
+  const manual = slot?.manual || null;
+  const session = slot?.session || manual || null;
 
   if (manual) writeJson(SAVE_KEY, manual);
   else removeKey(SAVE_KEY);
@@ -445,9 +445,25 @@ export function setActiveProfileIndex(index) {
   return slotIndex;
 }
 
+function readArkonStorySave(index) {
+  const value = readJson(storySaveKey(index));
+  return isArkonStory(value) ? value : null;
+}
+
+function persistArkonStorySave(index, state) {
+  if (!isArkonStory(state)) return false;
+  const key = storySaveKey(index);
+  writeJson(key, state);
+  // localStorage silently fails on some mobile devices (quota/private mode).
+  return JSON.stringify(readJson(key)) === JSON.stringify(state);
+}
+
 export function getProfileGameMode(index = getActiveProfileIndex()) {
-  const slot = ensureProfileStore().slots[Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0))];
-  return slot?.selectedMode === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career';
+  const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
+  const slot = ensureProfileStore().slots[slotIndex];
+  if (!isArkonProfile(slot?.session || slot?.manual)) return 'career';
+  return readJson(storyModeKey(slotIndex)) === ARKON_STORY_MODE
+    ? ARKON_STORY_MODE : 'career';
 }
 
 export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
@@ -468,22 +484,16 @@ export function createArkonStoryState(profileSlot = getActiveProfileIndex()) {
 
 export function setProfileGameMode(index, requestedMode) {
   const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
-  const store = ensureProfileStore();
-  const slot = store.slots[slotIndex];
-  if (!slot?.session && !slot?.manual) return false;
-  const career = slot.session || slot.manual;
-  const story = requestedMode === ARKON_STORY_MODE;
-  if (story && !isArkonProfile(career)) return false;
-  // Never touch career autosaves while creating the independent historical run.
-  store.slots[slotIndex] = {
-    ...slot,
-    selectedMode: story ? ARKON_STORY_MODE : 'career',
-    ...(story && !slot.storySession && !slot.storyManual
-      ? { storySession: createArkonStoryState(slotIndex) } : {}),
-  };
-  writeProfileStore(store);
-  if (slotIndex === getActiveProfileIndex()) mirrorActiveProfile(store.slots[slotIndex]);
-  return true;
+  const slot = ensureProfileStore().slots[slotIndex];
+  const career = slot?.session || slot?.manual;
+  if (!isArkonProfile(career)) return false;
+  const isStory = requestedMode === ARKON_STORY_MODE;
+  if (isStory && !readArkonStorySave(slotIndex) &&
+      !persistArkonStorySave(slotIndex, createArkonStoryState(slotIndex))) {
+    return false;
+  }
+  writeJson(storyModeKey(slotIndex), isStory ? ARKON_STORY_MODE : 'career');
+  return getProfileGameMode(slotIndex) === (isStory ? ARKON_STORY_MODE : 'career');
 }
 
 export function getProfileSlots() {
@@ -530,9 +540,10 @@ export function getProfileSlots() {
           )
         )).length,
       updatedAt: slot?.updatedAt || null,
-      selectedMode: slot?.selectedMode || 'career',
-      storyStarted: Boolean(slot?.storySession || slot?.storyManual),
-      storyChapter: Math.max(1, Number((slot?.storySession || slot?.storyManual)?.arkonStoryChapter || 1)),
+      selectedMode: isArkonProfile(state) &&
+        readJson(storyModeKey(index)) === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career',
+      storyStarted: isArkonProfile(state) && Boolean(readArkonStorySave(index)),
+      storyChapter: Math.max(1, Number(readArkonStorySave(index)?.arkonStoryChapter || 1)),
     };
   });
 }
@@ -541,6 +552,8 @@ export function beginNewProfile(index) {
   const slotIndex = setActiveProfileIndex(index);
   const store = ensureProfileStore();
   store.slots[slotIndex] = null;
+  removeKey(storySaveKey(slotIndex));
+  removeKey(storyModeKey(slotIndex));
   writeProfileStore(store);
   mirrorActiveProfile(null);
   return slotIndex;
@@ -550,6 +563,8 @@ export function deleteProfileSlot(index) {
   const slotIndex = Math.max(0, Math.min(MAX_PROFILES - 1, Number(index) || 0));
   const store = ensureProfileStore();
   store.slots[slotIndex] = null;
+  removeKey(storySaveKey(slotIndex));
+  removeKey(storyModeKey(slotIndex));
   writeProfileStore(store);
 
   if (slotIndex === getActiveProfileIndex()) {
@@ -573,14 +588,14 @@ export function exportProfileBackup(index, build = 'R247') {
   const slot = ensureProfileStore().slots[slotIndex];
   const state = getProfileState(slotIndex, true);
   if (!state) return null;
-  const story = slot?.storySession || slot?.storyManual || null;
+  const story = isArkonProfile(state) ? readArkonStorySave(slotIndex) : null;
 
   return {
     format: 'TOKYO_SHIFT_PROFILE_BACKUP',
     formatVersion: story ? 2 : 1,
     ...(story ? {
       storyState: clonePlain(normaliseState(story)),
-      selectedMode: slot?.selectedMode === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career',
+      selectedMode: getProfileGameMode(slotIndex),
     } : {}),
     gameBuild: String(build || 'UNKNOWN'),
     exportedAt: new Date().toISOString(),
@@ -617,20 +632,23 @@ export function importProfileBackup(index, payload) {
             ? { ...payload.storyState.storyDirectorProgress, ownerSlot: slotIndex }
             : null }
       : null;
+  // Importing an older Career-only backup must not silently destroy a Story run.
   const keepStory = isArkonProfile(state) && !incomingStory
-    ? existing?.storySession || existing?.storyManual || null : null;
+    ? readArkonStorySave(slotIndex) : null;
   const safeStory = incomingStory || keepStory;
   store.slots[slotIndex] = {
     manual: clonePlain(state),
     session: clonePlain(state),
-    storySession: safeStory ? clonePlain(safeStory) : null,
-    storyManual: safeStory ? clonePlain(safeStory) : null,
-    selectedMode: isArkonProfile(state) && safeStory && payload.selectedMode === ARKON_STORY_MODE
-      ? ARKON_STORY_MODE : 'career',
     createdAt: existing?.createdAt || payload.exportedAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   writeProfileStore(store);
+  if (safeStory && !persistArkonStorySave(slotIndex, safeStory))
+    throw new Error('STORY BACKUP COULD NOT BE SAVED');
+  if (!safeStory) removeKey(storySaveKey(slotIndex));
+  const targetMode = isArkonProfile(state) && safeStory &&
+    payload.selectedMode === ARKON_STORY_MODE ? ARKON_STORY_MODE : 'career';
+  writeJson(storyModeKey(slotIndex), targetMode);
 
   // Import is destructive, so do not claim success unless the profile really
   // survived a round-trip through localStorage. This catches quota/private
@@ -638,7 +656,7 @@ export function importProfileBackup(index, payload) {
   const writtenSlot = ensureProfileStore().slots[slotIndex];
   const writtenState = writtenSlot?.session || writtenSlot?.manual || null;
   if (!writtenState || JSON.stringify(writtenState) !== JSON.stringify(state) ||
-      (safeStory && JSON.stringify(writtenSlot?.storySession) !== JSON.stringify(safeStory))) {
+      (safeStory && JSON.stringify(readArkonStorySave(slotIndex)) !== JSON.stringify(safeStory))) {
     throw new Error('BACKUP COULD NOT BE SAVED');
   }
 
@@ -646,7 +664,7 @@ export function importProfileBackup(index, payload) {
     mirrorActiveProfile(writtenSlot);
 
     const mirroredSession = readJson(SESSION_KEY);
-    const expected = writtenSlot.selectedMode === ARKON_STORY_MODE ? safeStory : state;
+    const expected = state;
     if (!mirroredSession || JSON.stringify(mirroredSession) !== JSON.stringify(expected)) {
       throw new Error('ACTIVE PROFILE COULD NOT BE RESTORED');
     }
@@ -657,24 +675,22 @@ export function importProfileBackup(index, payload) {
 
 export function activateProfile(registry, index, preferSession = true) {
   const slotIndex = setActiveProfileIndex(index);
-  const state = getProfileState(slotIndex, preferSession);
+  const state = readSessionState() || getProfileState(slotIndex, preferSession);
   if (!state) return null;
   return applyStateToRegistry(registry, state);
 }
 
 export function readManualSave() {
-  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
-  return slot?.selectedMode === ARKON_STORY_MODE
-    ? (slot.storyManual || slot.storySession || null)
-    : (slot?.manual || null);
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) === ARKON_STORY_MODE) return readArkonStorySave(index);
+  return ensureProfileStore().slots[index]?.manual || null;
 }
 
 export function readSessionState() {
-  const slot = ensureProfileStore().slots[getActiveProfileIndex()];
-  const story = slot?.selectedMode === ARKON_STORY_MODE;
-  const state = story
-    ? (slot?.storySession || slot?.storyManual || null)
-    : (slot?.session || slot?.manual || null);
+  const index = getActiveProfileIndex();
+  if (getProfileGameMode(index) === ARKON_STORY_MODE) return readArkonStorySave(index);
+  const slot = ensureProfileStore().slots[index];
+  const state = slot?.session || slot?.manual || null;
   if (state) return state;
 
   // Final non-destructive fallback: never strand a mirrored active profile
@@ -1589,7 +1605,7 @@ export function saveSessionState(registry) {
   const state = snapshotRegistry(registry);
   if (state.gameMode === ARKON_STORY_MODE) {
     if (getProfileGameMode() !== ARKON_STORY_MODE) return null;
-    writeActiveSlot({ storySession: state });
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
   } else {
     if (getProfileGameMode() === ARKON_STORY_MODE) return null;
     writeActiveSlot({ session: state });
@@ -1610,7 +1626,7 @@ export function saveManualState(registry) {
   };
   if (state.gameMode === ARKON_STORY_MODE) {
     if (getProfileGameMode() !== ARKON_STORY_MODE) return null;
-    writeActiveSlot({ storyManual: state, storySession: state });
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
   } else {
     if (getProfileGameMode() === ARKON_STORY_MODE) return null;
     writeActiveSlot({ manual: state, session: state });
@@ -1641,7 +1657,9 @@ export function restoreManualSave(registry) {
   const saved = readManualSave();
   if (!saved) return null;
   const state = applyStateToRegistry(registry, saved);
-  if (state.gameMode === ARKON_STORY_MODE) writeActiveSlot({ storySession: state });
+  if (state.gameMode === ARKON_STORY_MODE) {
+    if (!persistArkonStorySave(getActiveProfileIndex(), state)) return null;
+  }
   else writeActiveSlot({ session: state });
   return state;
 }
@@ -1650,8 +1668,15 @@ export function restoreManualSave(registry) {
 // clears only the active character slot, never the other two profiles.
 export function clearAllSaves() {
   const activeIndex = getActiveProfileIndex();
+  if (getProfileGameMode(activeIndex) === ARKON_STORY_MODE) {
+    removeKey(storySaveKey(activeIndex));
+    removeKey(storyModeKey(activeIndex));
+    return;
+  }
   const store = ensureProfileStore();
   store.slots[activeIndex] = null;
+  removeKey(storySaveKey(activeIndex));
+  removeKey(storyModeKey(activeIndex));
   writeProfileStore(store);
   mirrorActiveProfile(null);
 }
