@@ -41,7 +41,7 @@ test('Drag Scene triggers the same connected story after first arrival, and expo
  assert.match(central,/SIDE\.y \+ 574/);
  assert.match(central,/const mapY = SIDE\.y \+ 674/);
  assert.match(panel,/const x=side\.x\+side\.w\/2,y=side\.y\+624/);
- assert.match(panel,/const height=openCircuit\?111:c\.activeChampionship\?176:158/);
+ assert.match(panel,/const height=openCircuit\?169:c\.activeChampionship\?236:213/);
  assert.match(panel,/function seasonConfirm\(/);
  assert.match(panel,/title:'FORFEIT CURRENT SEASON\?'/);
  assert.match(panel,/confirmLabel:'CONFIRM FORFEIT'/);

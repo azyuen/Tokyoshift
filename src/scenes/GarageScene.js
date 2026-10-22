@@ -60,7 +60,7 @@ import { getFirstRegionalChampionRegion, getRegionalChampionshipCount } from '..
 import { getMeetLocation } from '../data/meetAssets.js?v=20260922-r84';
 import { getTravelLocation } from '../data/travelRegions.js?v=20261015-r522';
 import { showTravelMap } from '../ui/TravelMap.js?v=20261020-r615';
-import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261017-r574';
+import { startChapter08Warehouse } from '../ui/Chapter08Story.js?v=20261022-r646';
 import { isStoryArchiveSceneReplay, endStoryArchiveSceneReplay } from '../ui/StoryReplaySession.js?v=20261017-r574';
 import { playStoryArchiveChapter } from '../ui/StoryArchivePlayback.js?v=20261017-r574';
 import { showStoryArchivePanel } from '../ui/StoryArchivePanel.js?v=20261018-r586';

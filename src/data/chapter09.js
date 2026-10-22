@@ -84,7 +84,8 @@ export const CHAPTER09_SCENES=Object.freeze({
       sayaka("He's right. We've come a long way. But let's make sure we're ready before we commit.",'track'),
       player('Independent events first. Then we take on the championship.'),
       sayaka("Good. We'll prepare properly. And then... we'll show them what this crew can do.",'trackHappy'),
-      daichi("Right! Who's ready to hear these engines?!",'win'),
+      daichi("Right! Time to fire up our engines!",'win'),
+      sayaka("Before that, you two need to look like professionals. Style is important!",'trackHappy'),
     ],'CHAPTER 09 COMPLETE'),
   chapter09SeasonRegistration:{
     id:'chapter09SeasonRegistration',category:'CAREER / CHAPTER 09',
