@@ -52,7 +52,7 @@ import {
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r657';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r657';
-import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r653';
+import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
   ETHAN_GIFT_PENDING_KEY, isEthanName,
