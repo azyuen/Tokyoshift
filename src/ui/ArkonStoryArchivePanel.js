@@ -2,11 +2,11 @@
 // Watching only the dialogue is a separately labelled, optional shortcut.
 // Neither path changes the real profile, and restart remains opt-in.
 import { ARKON_CHAPTER_01 } from '../data/arkonChapter01.js?v=20261022-r649';
-import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r653';
-import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r655';
-import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
-import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r659';
-import { getArkonPlayableChapters, beginArkonPlayableReplay } from './ArkonPlayableReplay.js?v=20261023-r661';
+import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=20261023-r662';
+import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r662';
+import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r662';
+import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r662';
+import { getArkonPlayableChapters, beginArkonPlayableReplay } from './ArkonPlayableReplay.js?v=20261023-r662';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r658';
 import { resetArkonStoryState } from '../state/GameState.js?v=20261023-r653';
