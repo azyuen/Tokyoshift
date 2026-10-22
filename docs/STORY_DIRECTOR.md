@@ -165,3 +165,68 @@ The developer-only actions deliberately cannot be called from arbitrary
 Career scripts. To make this a real Story Mode system later, add general
 race-launch and venue adapters with explicit validation of outcomes and
 permissions rather than reusing these bespoke sandbox commands.
+
+
+## R642 — reusable cinematic composition and immediate scene activation
+
+**Composition defaults** live in `src/ui/StoryComposition.js` and are
+used by BOTH the generic `STAGE` command and the bespoke Ginza/Dogenzaka
+story scene. Stage authors do not hand-tune every car relative to a
+character portrait.
+
+Three authored templates:
+
+| `STAGE.composition` | Use case | Composition |
+| --- | --- | --- |
+| `car-behind-cast` (default) | Introductions, story conversations, victory photographs | Large vehicle behind actors, full-body cast on matching ground |
+| `car-in-front` | Dramatic car reveal, vehicle-centric conversations | Vehicle overlaps actors intentionally |
+| `conversation-balanced` | Portrait-heavy dialogue scenes | Smaller, secondary vehicle, more actor space |
+
+Each preset derives positions from the actual Phaser logical viewport
+(1560 × 840 by default). The hero-car behind cast uses ~69% viewport
+width (about 1076 px, rather than the previous 620 px) and the
+two-character lineup uses consistent proportional heights (~58–59% of
+viewport height). The car is grounded at a consistent location; the
+characters' feet use a bottom-aligned anchor. Explicit depth layers
+determine whether a vehicle appears in front or behind portraits.
+The actual car body and tyre fit use existing `CarAppearance` /
+`WheelFit` functions rather than stretching the hero PNG arbitrarily.
+
+A reusable Story/Career authored tableau can now specify a car model:
+
+```js
+{
+  type:'STAGE',
+  composition:'car-behind-cast',
+  background:{key:'meetCycle_shibuyaDogenzaka_night',
+    path:'assets/Meet/Night/shibuya_dogenzaka_night.png'},
+  characters:[
+    {id:'sayakaFujieda',pose:'ginzaDress'},
+    {id:'arkonDen',pose:'ginzaSuit'},
+  ],
+  cars:[{carId:'ginzaDemo_calsonicR390'}],
+}
+```
+
+The `cars[].carId` route uses native modular/single-body car art and
+wheel rendering; static `{key,path}` images remain available for
+non-car backdrop props. Cast and car positions/heights/depths may still be
+overridden individually for authored shots, so these are **templates**,
+not compulsory layouts. Production scripts should use only cars available
+to the player's profile, with relevant safeguards in their trigger logic.
+
+**Choice cards are already a universal presentation template.** Any
+Director script, including future **Career chapters**, can insert
+`{type:'CHOICE',key:'dinnerPlan',choices:[{id:'dinner',label:'...',to:'label'},...]}`.
+Branch destinations are validated, and R642 also preserves small,
+sanitised selection values in profile-owned real-story checkpoints, so
+decisions survive reloading the game. Developer previews do not save
+permanent decision flags.
+
+**Dogenzaka lag fix:** Starting a fresh Arkon vault loan still arms the
+private rehearsal, but choosing **SHIBUYA → DOGENZAKA** in the Ginza map
+now diverts *before entering and preloading normal MeetScene*. This avoids
+generating opponents and car assets that will not be shown and prevents
+an ordinary race from appearing before the scripted arrival. Direct
+saved Meet entries retain a fallback preloading gate. The deliberate
+cinematic opening pause was also shortened while preserving the fade.
