@@ -114,3 +114,54 @@ normal stakes/results. Test with a developer profile.
 
 Character dialogue remains subject to `CHARACTER_BIBLE.md`,
 `NARRATIVE_AUTHORING.md` and `CAREER_NARRATIVE.md`.
+
+
+## R641 — Arkon vault drive: interactive story rehearsal
+
+This is an intentionally **non-canonical, developer-only** experiment in the
+Story Director rather than a new career chapter or permanent story decision.
+
+To trigger it:
+1. Enter Ginza Motor Gallery as the named **Arkon Den** dev account, visit the
+   private vault, and select **TEST DRIVE // STREET MEETS**.
+2. Use the existing Tokyo map to travel to **SHIBUYA → DOGENZAKA**. Other venues
+   continue to work normally. The first Dogenzaka arrival while this loan is
+   armed is diverted *before regular Meet UI is rendered*.
+3. At the bespoke venue, read the manga sequence, then pick **Dinner**,
+   **Mine's R34 challenge**, or **After-dark photo stop**. Dinner has another
+   choice about the bill. The photo route includes a ringing phone call.
+4. All routes return to the live Ginza private vault, include a final
+   **return the keys / ask for another drive** decision, and invoke the existing
+   `CentralTokyoScene.endGinzaTestDrive` cleanup to restore the originally
+   selected/preferred car.
+
+The loan marker `ginzaTestDrive.devVaultNightOutR641` is saved as
+`armed` and then `started` on entry, so the event does not retrigger every
+time the player visits Dogenzaka. Only a newly borrowed vault loan can arm it
+again. An interrupted playthrough can return the car through normal Ginza
+controls; non-Arkon profiles cannot enter the experiment.
+
+The Mine's R34 branch uses the **real RaceScene physics and race outcome**,
+but the scripted challenge is a *no-stakes exhibition*: no cash, win/loss
+record, coupon, reputation, recruitment or car ownership change. The
+reversible race setup is held separately and is restored on returning to the
+bespoke scene. The original Ginza rental and the ordinary paired Arkon/Sayaka
+passenger banter are retained.
+
+The script lives at `src/data/storyDirectorScripts.js` as
+`devVaultNightOut`. For authoring, R641 adds:
+- `CHOICE`: 2–4 numbered interactive manga-style buttons, each with `id`,
+  `label`, optional `description` and a target `to` label; save-free
+  choices are accessible to `IF` using the command's `key`.
+- `WAIT_MS`: scripted delay (maximum 15 seconds).
+- `VENUE`: fade to an existing background in the purpose-built
+  `DevVaultStoryScene`, without showing ordinary Meet competitors/cards.
+- `DEV_HERO_RACE`: restricted developer-story bridge to a real exhibition
+  race with automatic resume after the normal result screen.
+- `RETURN_LOAN`: restricted developer-story invocation of the existing
+  Ginza vault return routine.
+
+The developer-only actions deliberately cannot be called from arbitrary
+Career scripts. To make this a real Story Mode system later, add general
+race-launch and venue adapters with explicit validation of outcomes and
+permissions rather than reusing these bespoke sandbox commands.
