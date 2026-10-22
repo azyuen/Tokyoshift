@@ -97,6 +97,7 @@ export function createDefaultGameState(options = {}) {
     arkonStorySchoolRevealed: false,
     arkonStoryLessonCredits: 0,
     arkonStoryCreditsAwarded: false,
+    arkonStoryGinzaUnlocked: false,
     starterCarId,
     openingChapter: null, // New profiles begin carless at the station; null is the legacy/restart path.
     selectedCarId: starterCarId,
@@ -1157,6 +1158,7 @@ export function normaliseState(input = {}) {
     arkonStorySchoolRevealed: storyMode && Boolean(input.arkonStorySchoolRevealed),
     arkonStoryLessonCredits: storyMode ? Math.max(0,Math.min(25,Math.floor(Number(input.arkonStoryLessonCredits)||0))) : 0,
     arkonStoryCreditsAwarded: storyMode && Boolean(input.arkonStoryCreditsAwarded),
+    arkonStoryGinzaUnlocked: storyMode && Boolean(input.arkonStoryGinzaUnlocked),
     district: normalisedDistrict,
     meetLocation: normalisedLocation,
     garageTier,
@@ -1517,6 +1519,7 @@ export function snapshotRegistry(registry) {
     arkonStorySchoolRevealed: Boolean(registry.get('arkonStorySchoolRevealed')),
     arkonStoryLessonCredits: Number(registry.get('arkonStoryLessonCredits')||0),
     arkonStoryCreditsAwarded: Boolean(registry.get('arkonStoryCreditsAwarded')),
+    arkonStoryGinzaUnlocked: Boolean(registry.get('arkonStoryGinzaUnlocked')),
     starterCarId: normaliseStarterCarId(registry.get('starterCarId')),
     openingChapter: registry.get('openingChapter') || null,
     selectedCarId: registry.get('selectedCarId') || null,
