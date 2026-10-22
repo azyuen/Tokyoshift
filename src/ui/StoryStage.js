@@ -3,7 +3,7 @@
 import { getCharacterVisualAsset, getCharacterAssetUrl } from '../data/characters.js?v=20261023-r655';
 import { cars as carCatalog } from '../data/cars.js?v=20261017-r565';
 import { getCarPaintColor } from '../vehicles/CarAppearance.js?v=20261020-r617';
-import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261023-r660';
+import { preloadStoryCar, renderStoryCar } from './StoryCarRenderer.js?v=20261023-r663';
 import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryComposition.js?v=20261022-r642';
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
@@ -13,6 +13,7 @@ export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
   characters = [], cars = [], depth = 160,
   backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
+  castBehindCar = false, characterScale = 1, onArrivalComplete = null,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -151,7 +152,8 @@ export function showStoryStage(scene, {
     }
     // The native car always uses the SAME backing/frontend ordering as its
     // gameplay counterpart. Do not derive it from a Story composition preset.
-    const carInFront=!template&&layout.car.layer==='foreground';
+    const carInFront=Boolean(castBehindCar) ||
+      (!template&&layout.car.layer==='foreground');
     const portraitDepth=depth+(carInFront?3:10);
     const vehicleDepth=depth+(carInFront?11:3);
     const drawCars=()=>carProps.forEach((c,i)=>{
@@ -193,9 +195,47 @@ export function showStoryStage(scene, {
           if(clipMask)obj?.setMask?.(clipMask);
           objects.push(obj);
         });
-        // Optional customer-bay arrival: ease the complete layered vehicle
-        // (body, paint, tyres and shadow) into place as one car. Never affects
-        // normal Meet/Garage staging or race physics.
+        // The paid Chapter 03 drive-in is a deliberate LOW-SPEED roll from
+        // fully outside the LEFT of the bay. One tween governs the entire
+        // vehicle and each wheel rotates according to the actual distance
+        // travelled / tyre radius. There is no alpha fade, jump or wheel slip.
+        if(motion==='roll-in-left' && i===0 && carObjects.length){
+          const distance=Math.max(targetWidth+80,
+            x+targetWidth*.5+80-frame.x);
+          const parts=carObjects.filter(obj=>obj?.active &&
+            Number.isFinite(obj.x) && typeof obj.setX==='function').map(obj=>({
+              obj,restX:obj.x,rotation:Number(obj.rotation||0),
+              radius:Number(obj.storyRollRadius||0),
+            }));
+          const progress={travelled:0};
+          const position=()=>{
+            for(const part of parts){
+              if(!part.obj.active)continue;
+              part.obj.setX(part.restX-distance+progress.travelled);
+              if(part.radius>0)
+                part.obj.setRotation(part.rotation+progress.travelled/part.radius);
+            }
+          };
+          position(); // Start hidden beyond the left edge, using stage mask.
+          if(scene.tweens?.add && parts.length){
+            motionTweens.push(scene.tweens.add({
+              targets:progress,travelled:distance,
+              duration:4800,ease:'Sine.Out',
+              onUpdate:position,
+              onComplete:()=>{
+                progress.travelled=distance;
+                position(); // exact final car/tyre position; wheels stop here.
+                if(alive)onArrivalComplete?.();
+              },
+            }));
+          }else{
+            progress.travelled=distance;
+            position();
+            onArrivalComplete?.();
+          }
+        }
+        // Existing cinematic arrival is retained unchanged for other
+        // chapters (for example Chapter 04's Porsche transporter).
         if(motion==='arrive' && i===0 && scene.tweens?.add){
           for(const obj of carObjects){
             if(!obj?.active || !Number.isFinite(obj.x) || !obj.setX || !obj.setAlpha)continue;
@@ -229,7 +269,8 @@ export function showStoryStage(scene, {
       // only their horizontal slot or optional observer role differs.
       const x=Number(assigned?.x??estimate?.x??a.x??anchor.x);
       const feet=Number(assigned?.feetY??a.y??estimate?.groundY??anchor.feetY);
-      const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height);
+      const height=Number(assigned?.height??a.height??estimate?.displayHeight??anchor.height) *
+        (Number.isFinite(Number(characterScale))?Number(characterScale):1);
       const layer=Number(template?(portraitDepth+i):
         (a.depth??estimate?.depth??(portraitDepth+i)));
       addImage(a.asset,x,feet,null,height,layer,1,true);
