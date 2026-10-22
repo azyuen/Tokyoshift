@@ -101,7 +101,15 @@ export class StoryDirector {
     // first, then resume the SAME checkpoint (do not restart its scenes).
     if(checkpoint.id==='arkonChapter03' && checkpoint.index<=3 &&
        sceneName(scene)!=='GarageScene' && !scene._pendingSafeSceneStart){
-      scene.registry.set('workshopLocationId','shinonomeCanalYard');
+      const reg=scene.registry;
+      reg.set('arkonStoryCanalYardUnlocked',true);
+      reg.set('garageTier',1);
+      reg.set('workshopLocationId','shinonomeCanalYard');
+      const owned=reg.get('ownedCarIds')||[];
+      const selected=reg.get('selectedCarId');
+      const requested={...(reg.get('carGarageLocations')||{})};
+      if(selected&&owned.includes(selected))requested[selected]='shinonomeCanalYard';
+      reg.set('carGarageLocations',normaliseCarGarageLocations(owned,requested,1));
       queueSafeSceneStart(scene,'GarageScene',{
         crewMode:false,workshopLocationId:'shinonomeCanalYard',
       });
