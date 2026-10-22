@@ -9,7 +9,13 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r655';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r653';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r655';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r656';
+import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r656';
+import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
+import {
+  getArkonCustomerJob,recordArkonCustomerJob,
+  beginArkonMx5GuestRace,finishArkonMx5GuestRace,
+} from '../data/arkonChapter03Jobs.js?v=20261023-r656';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
 import { cars } from '../data/cars.js?v=20261017-r565';
@@ -147,6 +153,14 @@ export class StoryDirector {
           !sceneCutsceneActive(this.activeScene())) {
         if(this.start('arkonChapter02'))return;
       }
+      if (!checkpoint && registry?.get?.('gameMode')==='arkonStory' &&
+          registry.get('arkonStoryChapter02Done') &&
+          !registry.get('arkonStoryChapter03Done') &&
+          getRegionalChampionshipCount(registry)>=1 &&
+          sceneName(this.activeScene())==='MeetScene' &&
+          !sceneCutsceneActive(this.activeScene())) {
+        if(this.start('arkonChapter03'))return;
+      }
       this.resume();return;
     }
     if (this.session.slot !== owner()) { this.stop(); return; }
@@ -261,8 +275,63 @@ export class StoryDirector {
           if(!panel){this.wait=null;this.error='CHOICE PANEL FAILED';}
           return;
         }
+        if(type==='ARKON_CUSTOMER_JOB'){
+          if(this.session.id!=='arkonChapter03' ||
+              scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='STORY CUSTOMER JOB UNAVAILABLE';return;
+          }
+          const done=Number(scene.registry.get('arkonStoryCustomerJobsDone')||0);
+          if(done>step.index){this.advance();continue;}
+          if(done!==step.index){this.error='CUSTOMER JOB ORDER MISMATCH';return;}
+          if(!scene.registry.get('arkonStoryChapter03Seed') && !this.session.preview){
+            scene.registry.set('arkonStoryChapter03Seed',Math.floor(Math.random()*0x7fffffff)||1);
+            this.checkpoint();
+          }
+          const job=getArkonCustomerJob(scene.registry,step.index);
+          if(!job){this.error='CUSTOMER CAR MISSING';return;}
+          this.wait={kind:'dialogue',index};
+          const control=showArkonCustomerTuning(scene,job,{
+            onComplete:()=>{
+              if(this.session?.index!==index || this.wait?.index!==index)return;
+              if(!this.session.preview && !recordArkonCustomerJob(scene.registry,step.index)){
+                this.error='CUSTOMER PAYMENT SAVE FAILED';return;
+              }
+              this.advance();
+            },
+          });
+          if(!control){this.wait=null;this.error='CUSTOMER TUNING PANEL FAILED';}
+          return;
+        }
+        if(type==='ARKON_MX5_RACE'){
+          if(this.session.id!=='arkonChapter03' ||
+              scene.registry.get('gameMode')!=='arkonStory' ||
+              sceneName(scene)!=='MeetScene' ||
+              !beginArkonMx5GuestRace(scene.registry)){
+            this.error='SAYAKA MX-5 RACE UNAVAILABLE';return;
+          }
+          saveSessionState(scene.registry);
+          this.clearStage();
+          if(!queueSafeSceneStart(scene,'RaceScene')){
+            finishArkonMx5GuestRace(scene.registry);
+            this.error='SAYAKA RACE TRANSITION FAILED';return;
+          }
+          this.advance();
+          this.wait={kind:'transition',target:'RaceScene',origin:scene};
+          return;
+        }
+        if(type==='ARKON_MX5_RETURN'){
+          if(this.session.id!=='arkonChapter03' ||
+              scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='UNEXPECTED STORY CAR RETURN';return;
+          }
+          if(!this.session.preview && !finishArkonMx5GuestRace(scene.registry)){
+            this.error='SAYAKA CAR RETURN FAILED';return;
+          }
+          saveSessionState(scene.registry);
+          this.advance();continue;
+        }
         if (type === 'ARKON_CHALLENGE_RACE') {
-          if(!['arkonChapter01Revised','arkonChapter02'].includes(this.session.id) ||
+          if(!['arkonChapter01Revised','arkonChapter02','arkonChapter03'].includes(this.session.id) ||
               scene.registry.get('gameMode')!=='arkonStory' ||
               sceneName(scene)!=='MeetScene' ||
               !scene.registry.get('selectedCarId')){
@@ -413,7 +482,7 @@ export class StoryDirector {
               ...step, onComplete:onDone,onCancel,
             })
             : playMangaCutscene(scene,definition,{
-              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02'].includes(this.session.id),
+              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
