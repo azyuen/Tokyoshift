@@ -260,7 +260,9 @@ export default class RaceScene extends Phaser.Scene {
     }));
     if (this.isStoryCruise || this.isArkonMx5Drive) {
       for(const [id,poses] of [
-        ['sayakaFujieda',['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
+        ['sayakaFujieda',this.isArkonMx5Drive
+          ?['homeNormal','homeHappy','homeSerious']
+          :['oshiageRelaxed','oshiageReviewing','oshiageSerious','oshiageHappy']],
         ['arkonDen',['storyIdle','storyTalking','storySerious','storySheepish']],
       ]){
         for(const pose of poses){
@@ -1578,7 +1580,7 @@ export default class RaceScene extends Phaser.Scene {
     this.prepareRollingVehicle(this.player);
     this.prepareRollingVehicle(this.opponent);
     this.opponent.positionM=this.player.positionM-20;
-    this.arkonMx5Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonMx5Dialogue=createGinzaBanterHud(this,{chapter03:true});
     this.events.once('shutdown',()=>{
       this.arkonMx5Dialogue?.destroy?.();
       this._arkonMx5Choice?.destroy?.();
@@ -1597,17 +1599,17 @@ export default class RaceScene extends Phaser.Scene {
 
   updateArkonMx5Drive(dt) {
     const lines=[
-      [0,'sayaka','Well? How does the little Mazda feel?','oshiageRelaxed'],
+      [0,'sayaka','Well? How does the little Mazda feel?','homeNormal'],
       [3.5,'arkon','The power comes in much harder. Needs a careful foot.','storySerious'],
-      [7,'sayaka','And it sounds excellent.','oshiageHappy'],
+      [7,'sayaka','And it sounds excellent.','homeHappy'],
       [10,'arkon','You have gone awfully quiet.','storyTalking'],
-      [13,'sayaka','I am enjoying the engine. You might try watching the road.','oshiageReviewing'],
+      [13,'sayaka','I am enjoying the engine. You might try watching the road.','homeSerious'],
       [17,'arkon','Both hands on the wheel. See?','storySheepish'],
-      [20,'sayaka','I can see that.','oshiageRelaxed'],
+      [20,'sayaka','I can see that.','homeNormal'],
       [23,'arkon','That S15 alongside us keeps revving.','storySerious'],
-      [26,'sayaka','How observant.','oshiageHappy'],
+      [26,'sayaka','How observant.','homeHappy'],
       [29,'arkon','I think he wants a rolling race.','storyTalking'],
-      [32,'sayaka','You built my car. You are driving it. Your call.','oshiageRelaxed'],
+      [32,'sayaka','You built my car. You are driving it. Your call.','homeNormal'],
     ];
     this.arkonMx5Elapsed+=dt;
     const pt=this.advanceRollingVehicle(this.player,dt);
@@ -2483,6 +2485,7 @@ export default class RaceScene extends Phaser.Scene {
     if (sceneCutsceneActive(this)) return;
 
     const dt = Math.min(deltaMs / 1000, 1 / 30);
+    if(this.isArkonMx5Drive && this.arkonMx5Phase==='decision')return;
     this.raceClock += dt;
 
     if (Phaser.Input.Keyboard.JustDown(this.controls.keys.debug)) this.debug.toggle();
