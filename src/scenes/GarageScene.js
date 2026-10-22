@@ -277,7 +277,7 @@ export default class GarageScene extends Phaser.Scene {
       ['day', 'night'].forEach(phase => {
         const background = getWorkshopPhaseBackground(activeWorkshop, phase);
         if (background?.key && background?.path) {
-          queueImage(background.key, background.path + '?v=20260929-r263');
+          queueImage(background.key, background.path + '?v=20261022-r645');
         }
       });
 
