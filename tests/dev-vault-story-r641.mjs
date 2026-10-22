@@ -103,7 +103,8 @@ test('real travel map and race scene are gated, with no regular meet UI in bespo
   assert.match(meet,/shouldLaunchDevVaultStory\(this\.registry\)/);
   assert.match(meet,/queueSafeSceneStart\(this,'DevVaultStoryScene'\)/);
   assert.match(stage,/DevVaultStoryScene/);
-  assert.match(stage,/createCarBodyLayers\(this,car/);
+  assert.match(stage,/renderStoryCar\\(this,car,frame\\)/);
+  assert.match(source('src/ui/StoryCarRenderer.js'),/createCarBodyLayers\\(scene,car/);
   assert.doesNotMatch(stage,/generateOffersForLocation|buildMeetProgressionButtons|pinkSlip/);
   assert.match(director,/showStoryChoices\(scene/);
   assert.match(director,/prepareDevVaultHeroRace\(scene\.registry/);
