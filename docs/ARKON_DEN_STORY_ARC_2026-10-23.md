@@ -4,6 +4,8 @@
 **Scope:** Arkon Den Chapters 04 onward, the formation of Ginza Gallery, Sayaka's independent ambitions, RWB Porsche emotional throughline, and the intersection with the player's Career.  
 **Read alongside:** `docs/CHARACTER_BIBLE.md`, `docs/CAREER_NARRATIVE.md`, `docs/NARRATIVE_AUTHORING.md`, and relevant live scene definitions before any implementation.
 
+**Chapter 04 detailed draft (23 October):** [THE PRICE OF TRUST — scene-by-scene treatment](ARKON_CHAPTER_04_TREATMENT_DRAFT_2026-10-23.md). This expands the owner-approved arc into a proposed screenplay/gameplay design, pending dialogue and finance approval; no code was deployed.
+
 > **Recovery instruction for future sessions:** Continue from this document; do not re-brainstorm or erase the approved arc. Expand scenes and mechanics carefully, check established canon and runtime state, and distinguish creative approval from implemented gameplay. No game logic, cutscenes, unlocks, assets, maps or saves were changed by this checkpoint.
 
 ---
