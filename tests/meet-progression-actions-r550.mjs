@@ -69,7 +69,7 @@ test('meet scene has pink two-slot challenge actions, pink badges and refresh se
   assert.match(s,/const width = 394/);
   assert.match(s,/const right = STAGE\.x \+ STAGE\.w - 34/);
   assert.match(s,/const y = STAGE\.y \+ 51 \+ index \* 60/);
-  assert.match(s,/0xa12a64/);
+  assert.match(s,/0xff5f93/);
   assert.match(s,/this\.startMeetProgressionChallenge\(regionId, action\.id\)/);
   assert.match(s,/showCrewBattleIntroduction\(regionId\)/);
   assert.match(s,/this\.buildMeetProgressionButtons\(\);[\s\S]*?this\.time\.delayedCall\(60/);
