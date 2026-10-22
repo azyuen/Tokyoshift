@@ -3,6 +3,7 @@ import TouchControls from '../input/TouchControls.js?v=20261010-r462';
 import DragRacingAI from '../ai/DragRacingAI.js?v=20261008-r428';
 import { DrivingCoach } from '../ai/DrivingCoach.js?v=20261014-r509';
 import { isNamedArkonDen } from '../data/ginzaGallery.js?v=20261021-r633';
+import { DEV_VAULT_RACE_ACTIVE_KEY, DEV_VAULT_RACE_OUTCOME_KEY, isArkonVaultStoryLoan } from '../data/devVaultStory.js?v=20261022-r641';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261022-r640';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261016-r536';
@@ -882,6 +883,11 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
+      this.scene.start('DevVaultStoryScene');
+      return;
+    }
     if (this.raceMode === 'CHAPTER08' && isChapter08DevReplay(this.registry)) {
       finishInteractiveChapter08Replay(this);
       return;
@@ -978,6 +984,11 @@ export default class RaceScene extends Phaser.Scene {
 
   forfeitRace(cashPenalty = 0) {
     if (this.resultsShown) return;
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,'forfeit');
+      this.scene.start('DevVaultStoryScene');
+      return;
+    }
 
     const losses = Number(this.registry.get('losses') || 0);
     this.registry.set('losses', losses + 1);
@@ -4252,6 +4263,16 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if (this.registry.get(DEV_VAULT_RACE_ACTIVE_KEY) && isArkonVaultStoryLoan(this.registry)) {
+      // Play with the actual engine/AI; change absolutely no career records,
+      // coupons, cash, crew offers or loan ownership in this dev-only fixture.
+      this.registry.set(DEV_VAULT_RACE_OUTCOME_KEY,playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,devStoryExhibition:true,
+      };
+      return this.raceSettlement;
+    }
     if (this.raceMode === 'CHAPTER08') {
       this.raceSettlement = {
         playerWon: false, cashDelta: 0, cash: this.registry.get('cash') ?? 0,
