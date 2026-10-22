@@ -434,10 +434,10 @@ export default class MeetScene extends Phaser.Scene {
     // Replace only the specifically armed Shibuya/Dogenzaka developer arrival
     // with a two-character private story tableau: no regular Meet cars/cards.
     if (shouldLaunchDevVaultStory(this.registry) &&
-        claimDevVaultStoryLoan(this.registry)) {
+        queueSafeSceneStart(this,'DevVaultStoryScene')) {
+      claimDevVaultStoryLoan(this.registry);
       saveSessionState(this.registry);
       finishSceneLoading('READY');
-      queueSafeSceneStart(this,'DevVaultStoryScene');
       return;
     }
     document.body.dataset.scene = 'meet';
