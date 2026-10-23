@@ -3,22 +3,29 @@
 import {
   validateStoryScript, createStoryCheckpoint, isStoryCheckpoint,
   checkStoryCondition, nextStoryPosition, normaliseStoryChoiceVars,
-} from './StoryScript.js?v=20261023-r667';
+} from './StoryScript.js?v=20261023-r668';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r667';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r668';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r667';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r668';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
+import {
+  getArkonCh6Job,recordArkonCh6Job,leaseArkonCh6Warehouse,
+  settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
+  beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
+} from '../data/arkonChapter06Work.js?v=20261023-r668';
+import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r668';
+import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r668';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r668';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
@@ -87,6 +94,13 @@ export class StoryDirector {
          scene.registry.get('arkonStoryChapter05Done') ||
          (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
            scene.registry.get('arkonStoryChapter05Loan')?.active))))return false;
+    if (compiled.script.id==='arkonChapter06' &&
+        (scene.registry.get('gameMode')!=='arkonStory' ||
+         !scene.registry.get('arkonStoryChapter05Done') ||
+         scene.registry.get('arkonStoryChapter06Done') ||
+         (!index && (sceneName(scene)!=='GarageScene' || scene.crewMode ||
+           !['shinonomeCanalYard','shinonomeWarehouseStrip']
+             .includes(scene.registry.get('workshopLocationId'))))))return false;
     const id = compiled.script.id;
     if (preview && !this.scripts.has(id)) this.register(compiled.script);
     const savedIndex = Math.max(0, Math.floor(Number(index) || 0));
@@ -134,6 +148,14 @@ export class StoryDirector {
        !scene.registry.get('arkonStoryChapter05RaceResult') &&
        sceneName(scene)!=='RaceScene' &&
        ['GarageScene','MeetScene'].includes(sceneName(scene))){
+      queueSafeSceneStart(scene,'RaceScene');
+      return false;
+    }
+    if(checkpoint.id==='arkonChapter06' &&
+       scene.registry?.get?.('arkonStoryChapter06Cruise')?.active &&
+       !scene.registry.get('arkonStoryChapter06Cruise')?.completed &&
+       sceneName(scene)!=='RaceScene' &&
+       !scene._pendingSafeSceneStart){
       queueSafeSceneStart(scene,'RaceScene');
       return false;
     }
@@ -483,6 +505,121 @@ export class StoryDirector {
           }
           this.advance();continue;
         }
+        if(type==='ARKON_CH6_JOB'){
+          if(this.session.id!=='arkonChapter06'||
+             scene.registry.get('gameMode')!=='arkonStory'||
+             sceneName(scene)!=='GarageScene'){
+            this.error='CHAPTER 06 CUSTOMER JOB NEEDS WAREHOUSE WORKSHOP';return;
+          }
+          const progress=ch6Progress(scene.registry);
+          if(progress.jobsDone>step.index){this.advance();continue;}
+          if(progress.jobsDone!==step.index){
+            this.error='CHAPTER 06 JOB ORDER MISMATCH';return;
+          }
+          const job=getArkonCh6Job(scene.registry,step.index);
+          if(!job){this.error='CHAPTER 06 CUSTOMER VEHICLE MISSING';return;}
+          this.wait={kind:'dialogue',index};
+          const control=showArkonCustomerTuning(scene,job,{
+            onComplete:()=>{
+              if(this.session?.index!==index||this.wait?.index!==index)return;
+              if(!this.session.preview &&
+                 !recordArkonCh6Job(scene.registry,step.index)){
+                this.error='CHAPTER 06 INVOICE FAILED';return;
+              }
+              saveSessionState(scene.registry);
+              this.advance();
+            },
+          });
+          if(!control){this.wait=null;this.error='CHAPTER 06 SERVICE PANEL UNAVAILABLE';}
+          return;
+        }
+        if(type==='ARKON_CH6_WAREHOUSE' || type==='ARKON_CH6_REPAY' ||
+           type==='ARKON_CH6_RESTORE' || type==='ARKON_CH6_DRIVE' ||
+           type==='ARKON_CH6_DRIVE_RETURN'||type==='ARKON_CH6_GIFT'||
+           type==='ARKON_CH6_ENDING'){
+          if(this.session.id!=='arkonChapter06'||
+             scene.registry.get('gameMode')!=='arkonStory'){
+            this.error='CHAPTER 06 ACTION OUTSIDE ARKON STORY';return;
+          }
+          if(type==='ARKON_CH6_WAREHOUSE'){
+            if(!leaseArkonCh6Warehouse(scene.registry)){
+              this.error='WAREHOUSE ACCOUNT NOT READY';return;
+            }
+            saveSessionState(scene.registry);
+            this.advance();continue;
+          }
+          if(type==='ARKON_CH6_REPAY'){
+            if(!settleArkonCh6PorscheLoan(scene.registry)){
+              this.error='PORSCHE FINANCE ACCOUNT NOT READY';return;
+            }
+            saveSessionState(scene.registry);
+            this.advance();continue;
+          }
+          if(type==='ARKON_CH6_RESTORE'){
+            if(sceneName(scene)!=='GarageScene'||scene.crewMode){
+              this.error='PORSCHE RESTORATION NEEDS WAREHOUSE';return;
+            }
+            const a=ch6Progress(scene.registry);
+            if(a.restorationDone>step.index){this.advance();continue;}
+            if(a.restorationDone!==step.index){
+              this.error='PORSCHE RESTORATION OUT OF ORDER';return;
+            }
+            this.wait={kind:'dialogue',index};
+            const control=showArkonRwbRestoration(scene,step.index,{
+              onComplete:()=>{
+                if(this.session?.index!==index||this.wait?.index!==index)return false;
+                if(!recordArkonCh6Restoration(scene.registry,step.index)){
+                  this.error='PORSCHE RESTORATION CHECK FAILED';return false;
+                }
+                saveSessionState(scene.registry);
+                this.advance();return true;
+              },
+            });
+            if(!control){this.wait=null;this.error='RESTORATION CHECKLIST UNAVAILABLE';}
+            return;
+          }
+          if(type==='ARKON_CH6_DRIVE'){
+            if(!beginArkonCh6NightDrive(scene.registry)){
+              this.error='CERTIFIED PORSCHE NIGHT DRIVE UNAVAILABLE';return;
+            }
+            saveSessionState(scene.registry);
+            this.clearStage();
+            if(!queueSafeSceneStart(scene,'RaceScene')){
+              this.error='PORSCHE DRIVE TRANSITION FAILED';return;
+            }
+            this.advance();
+            this.wait={kind:'transition',target:'RaceScene',origin:scene};
+            return;
+          }
+          if(type==='ARKON_CH6_DRIVE_RETURN'){
+            if(sceneName(scene)!=='MeetScene'||
+               !finishArkonCh6NightDrive(scene.registry)){
+              this.error='YOKOHAMA NIGHT DRIVE HAS NOT ENDED';return;
+            }
+            saveSessionState(scene.registry);
+            this.advance();continue;
+          }
+          if(type==='ARKON_CH6_GIFT'){
+            if(sceneName(scene)!=='MeetScene'||
+               !giftArkonCh6Porsche(scene.registry)){
+              this.error='CERTIFIED PORSCHE TRANSFER INCOMPLETE';return;
+            }
+            saveSessionState(scene.registry);
+            this.advance();continue;
+          }
+          if(type==='ARKON_CH6_ENDING'){
+            if(sceneName(scene)!=='MeetScene') {
+              this.error='YOKOHAMA FINALE NEEDS MEET';return;
+            }
+            this.wait={kind:'dialogue',index};
+            const control=showArkonChapter06Finale(scene,{onComplete:()=>{
+              if(this.session?.index===index&&this.wait?.index===index)
+                this.advance();
+            }});
+            if(!control){this.wait=null;this.error='YOKOHAMA FINALE UNAVAILABLE';}
+            return;
+          }
+        }
         if(type==='ARKON_CH5_RACE'){
           if(this.session.id!=='arkonChapter05' ||
              scene.registry.get('gameMode')!=='arkonStory' ||
@@ -681,7 +818,7 @@ export class StoryDirector {
             // Script-authored Story time uses a PRIVATE profile flag, never
             // WorldClock's shared device-wide epoch. No additional script
             // step is inserted: existing R652 checkpoints remain valid.
-            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05'].includes(this.session.id) &&
+            if (['arkonChapter01Revised','arkonChapter02','arkonChapter04','arkonChapter05','arkonChapter06'].includes(this.session.id) &&
                 scene.registry.get('gameMode')==='arkonStory' &&
                 (step.timeOfDay==='night'||step.timeOfDay==='day')) {
               scene.registry.set('arkonStoryTimeOfDay',step.timeOfDay);
@@ -799,7 +936,7 @@ export class StoryDirector {
             })
             : playMangaCutscene(scene,definition,{
               preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id) ||
-                this.session.id==='arkonChapter05',
+                ['arkonChapter05','arkonChapter06'].includes(this.session.id),
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,

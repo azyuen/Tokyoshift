@@ -12,7 +12,7 @@ import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r57
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r664';
 import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r668';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
   applyDifficultyToPlayerCarConfig,
@@ -161,6 +161,17 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    if(this.registry.get('gameMode')==='arkonStory' &&
+      this.registry.get('arkonStoryChapter06Cruise')?.active){
+      // Reuse established compact Story passenger portraits, no new outfits.
+      for(const [id,poses] of [
+        ['sayakaFujieda',['oshiageRelaxed','oshiageHappy','oshiageReviewing','oshiageSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySerious','storyCoolShy']],
+      ])for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter05Loan')?.active){
       for(const [id,poses] of [
@@ -395,6 +406,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isStoryCruise = this.raceMode==='STORY_CRUISE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       this.registry.get('arkonStoryPhase')==='chapter02Driving';
+    this.isArkonCh6Cruise=this.raceMode==='ARKON_RWB_CRUISE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter06Cruise')?.active);
     this.isArkonCh5Drive = this.raceMode==='SINGLE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter05Loan')?.active);
@@ -920,6 +934,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isStoryCruise) this.setupArkonStoryCruise();
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
+    if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
     if(isArkonPlayableReplay(this.registry)){
       const replayButton=this.add.rectangle(172,35,282,42,0x2c1922,0.96)
         .setDepth(2600).setScrollFactor(0).setStrokeStyle(2,0xffba97)
@@ -958,6 +973,7 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
+    if(this.isArkonCh6Cruise)return; // A cinematic, not a forfeitable race.
     if(this.isStoryCruise){
       this.endArkonStoryCruise();return;
     }
@@ -1582,6 +1598,60 @@ export default class RaceScene extends Phaser.Scene {
       finished: this.finished,
     });
     if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
+  }
+
+  setupArkonCh6Cruise(){
+    // Non-interactive scenic drive: a real moving car on the Yokohama road,
+    // but no countdown, AI contest, race settlement or hidden performance.
+    this.arkonCh6Seconds=0;
+    this.arkonCh6LineIndex=0;
+    this.arkonCh6Leaving=false;
+    this.controls.enabled=false;
+    this.startButton?.setVisible(false)?.disableInteractive();
+    this.startButtonText?.setVisible(false);
+    this.cancelButton?.setVisible(false)?.disableInteractive();
+    this.cancelButtonText?.setVisible(false);
+    this.treeSprite?.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('SAYAKA // PASSENGER');
+    this.stakeText?.setText('A QUIET NIGHT DRIVE // NO RACE');
+    this.prepareRollingVehicle(this.player);
+    this.setArkonMx5OpponentVisible(false);
+    this.arkonCh6Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.events.once('shutdown',()=>this.arkonCh6Dialogue?.destroy?.());
+  }
+  updateArkonCh6Cruise(dt){
+    if(this.arkonCh6Leaving)return;
+    this.arkonCh6Seconds+=dt;
+    const pt=this.advanceRollingVehicle(this.player,dt);
+    this.drawScene(pt,null,dt);
+    this.hud.update(pt,'YOKOHAMA // NIGHT DRIVE // NO RACE');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    const lines=[
+      [1,'sayaka','You really did bring the Porsche back.','oshiageRelaxed'],
+      [4.5,'arkon','I remembered the first time I saw it. On the transporter.','storySerious'],
+      [8,'sayaka','You looked as though it might swallow your entire workshop.','oshiageHappy'],
+      [12,'arkon','It nearly did.','storyCoolShy'],
+      [15,'sayaka','It feels wonderful. Very different from the broken car.','oshiageReviewing'],
+      [18,'arkon','I wanted you to be the first to ride in it.','storySerious'],
+      [21,'sayaka','That is unexpectedly thoughtful.','oshiageHappy'],
+    ];
+    while(this.arkonCh6LineIndex<lines.length &&
+          this.arkonCh6Seconds>=lines[this.arkonCh6LineIndex][0]){
+      const [,speaker,words,pose]=lines[this.arkonCh6LineIndex++];
+      this.arkonCh6Dialogue?.show(speaker,words,pose);
+    }
+    if(this.arkonCh6Seconds>=26){
+      this.arkonCh6Leaving=true;
+      const s=this.registry.get('arkonStoryChapter06Cruise');
+      if(s?.active){
+        this.registry.set('arkonStoryChapter06Cruise',{...s,completed:true});
+        saveSessionState(this.registry);
+      }
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      queueSafeSceneStart(this,'MeetScene');
+    }
   }
 
   setupArkonCh5Passenger() {
@@ -2547,6 +2617,11 @@ export default class RaceScene extends Phaser.Scene {
     if (sceneCutsceneActive(this)) return;
 
     const dt = Math.min(deltaMs / 1000, 1 / 30);
+    if(this.isArkonCh6Cruise){
+      this.raceClock+=dt;
+      this.updateArkonCh6Cruise(dt);
+      return;
+    }
     if(this.isArkonMx5Drive && this.arkonMx5Phase==='decision')return;
     this.raceClock += dt;
 
