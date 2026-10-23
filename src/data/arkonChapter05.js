@@ -16,7 +16,8 @@ const hold=(label,caption='THE FASTEST PAIR IN TOKYO')=>
   ({type:'HOLD_SCENE',label,caption});
 const stage=(backgroundId,characters,cars=[],caption='THE FASTEST PAIR IN TOKYO')=>[
   {type:'CLEAR_STAGE'},
-  {type:'STAGE',backgroundId,stageMode:'native',composition:'car-behind-cast',
+  {type:'STAGE',backgroundId,stageMode:'native',
+    privateMeet:backgroundId.startsWith('meet:'),composition:'car-behind-cast',
     characters,cars},
   hold(caption),
 ];
