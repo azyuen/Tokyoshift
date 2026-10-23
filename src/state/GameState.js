@@ -5,7 +5,7 @@ import {
   getWorkshopByLocationId,
   inferWorkshopTier,
   normaliseCarGarageLocations, getArkonStoryWorkshopTier,
-} from '../data/workshopProgression.js?v=20261023-r662';
+} from '../data/workshopProgression.js?v=20261024-r675';
 import { normalisePlayerDifficulty } from '../data/playerDifficulty.js?v=20260929-r271';
 import { getEasyCouponMilestoneForWins } from '../data/careerProgression.js?v=20260929-r272';
 import { registerOwnedCarInstances } from '../data/carOwnership.js?v=20261011-r479';
@@ -1078,6 +1078,10 @@ export function normaliseState(input = {}) {
   let workshopLocationId = requestedWorkshop.tier <= garageTier
     ? requestedWorkshop.id
     : WORKSHOP_TIERS[garageTier].id;
+  if(storyMode && input.arkonStoryChapter06Done && garageTier>=2 &&
+     !input.arkonStoryChapter07Done &&
+     ['shinonomeWorkshop','shinonomeCanalYard'].includes(workshopLocationId))
+     workshopLocationId='shinonomeWarehouseStrip';
   if (storyMode && input.storyDirectorProgress?.id==='arkonChapter03' &&
       Number(input.storyDirectorProgress.index||0)<=3 && garageTier>=1) {
     workshopLocationId='shinonomeCanalYard';
