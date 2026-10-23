@@ -41,7 +41,7 @@ test('R668 Chapter 06 story validates, registers, and earns real restoration wor
  assert.ok(ARKON_CHAPTER_06.steps.some(x=>x.type==='SET_FLAG'&&
    x.key==='arkonStoryChapter06Done'&&x.value===true));
 });
-test('R668 three paid invoices escrow until all project obligations; no duplicate payout',()=>{
+test('R675 visible paid invoices fund rent, debt and repairs with profit; no duplicate payout',()=>{
  const s=fixture();let total=0;
  for(let i=0;i<3;i++){
    const job=getArkonCh6Job(s,i);
@@ -50,20 +50,20 @@ test('R668 three paid invoices escrow until all project obligations; no duplicat
    assert.equal(recordArkonCh6Job(s,i),false);
    total+=CH6_FEES[i];
    assert.equal(ch6Progress(s).escrow,total);
-   assert.equal(s.get('cash'),1800000);
+   assert.equal(s.get('cash'),1800000+total);
  }
- assert.equal(total,4800000);
+ assert.equal(total,8100000);
  assert.equal(leaseArkonCh6Warehouse(s),true);
  assert.equal(leaseArkonCh6Warehouse(s),true);
  assert.equal(s.get('garageTier'),2);
  assert.equal(s.get('workshopLocationId'),'shinonomeWarehouseStrip');
  assert.equal(s.get('carGarageLocations').rwbStellaPorsche,'shinonomeWarehouseStrip');
  assert.equal(s.get('carGarageLocations')['240z'],'shinonomeCanalYard');
- assert.equal(ch6Progress(s).escrow,4050000);
+ assert.equal(ch6Progress(s).escrow,6450000);
  assert.equal(settleArkonCh6PorscheLoan(s),true);
  assert.equal(settleArkonCh6PorscheLoan(s),true);
  assert.equal(s.get('arkonStoryRwbProject').outstandingFinance,0);
- assert.equal(ch6Progress(s).escrow,1050000);
+ assert.equal(ch6Progress(s).escrow,3450000);
  for(let i=0;i<3;i++){
    assert.equal(recordArkonCh6Restoration(s,i),true);
    assert.equal(recordArkonCh6Restoration(s,i),false);
@@ -71,8 +71,8 @@ test('R668 three paid invoices escrow until all project obligations; no duplicat
    assert.equal(s.get('carStates').rwbStellaPorsche.roadworthy,i===2);
  }
  assert.equal(CH6_RESTORATION.reduce((a,x)=>a+x.cost,0),900000);
- assert.equal(ch6Progress(s).escrow,150000);
- assert.equal(s.get('cash'),1800000);
+ assert.equal(ch6Progress(s).escrow,2550000);
+ assert.equal(s.get('cash'),4350000);
  assert.equal(beginArkonCh6NightDrive(s),true);
  assert.equal(beginArkonCh6NightDrive(s),false);
  assert.equal(s.get('selectedRaceCategory'),'ARKON_RWB_CRUISE');
@@ -85,7 +85,7 @@ test('R668 three paid invoices escrow until all project obligations; no duplicat
  assert.equal(s.get('arkonStoryChapter06CruiseFinished'),true);
  assert.equal(giftArkonCh6Porsche(s),true);
  assert.equal(giftArkonCh6Porsche(s),true);
- assert.equal(s.get('cash'),1950000);
+ assert.equal(s.get('cash'),4350000);
  assert.equal(ch6Progress(s).escrow,0);
  assert.equal(s.get('arkonStoryRwbProject').owner,'sayakaFujieda');
  assert.equal(s.get('arkonStoryRwbProject').gifted,true);
