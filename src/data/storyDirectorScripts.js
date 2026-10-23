@@ -6,6 +6,7 @@ import { ARKON_CHAPTER_04 } from './arkonChapter04.js?v=20261023-r667';
 import { ARKON_CHAPTER_05 } from './arkonChapter05.js?v=20261023-r670';
 import { ARKON_CHAPTER_06 } from './arkonChapter06.js?v=20261023-r671';
 import { ARKON_CHAPTER_07 } from './arkonChapter07.js?v=20261023-r669';
+import { ARKON_CHAPTER_08 } from './arkonChapter08.js?v=20261023-r672';
 // Developer-only smoke scripts. These are NOT career canon and do not
 // automatically trigger for ordinary players. No rewards or narrative flags.
 export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
@@ -17,6 +18,7 @@ export const STORY_DIRECTOR_SCRIPTS = Object.freeze({
   arkonChapter05: ARKON_CHAPTER_05,
   arkonChapter06: ARKON_CHAPTER_06,
   arkonChapter07: ARKON_CHAPTER_07,
+  arkonChapter08: ARKON_CHAPTER_08,
 
   // Arkon-only, opt-in through a REAL Ginza vault loan and the real travel map.
   // Intentionally non-canonical; all decision flags live in the Director session.
