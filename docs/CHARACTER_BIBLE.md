@@ -1,5 +1,13 @@
 # TOKYO SHIFT — CHARACTER BIBLE v1
 
+## Story-era continuity clarification — 23 October 2026 (Arkon Chapter 05)
+
+**Daigo Kirishima** (story character ID `storyDaigoKirishima`) is the recurring show-off who repeatedly asks Sayaka Fujieda out in Arkon's early chapters. **He is not particularly wealthy and always drives his own Toyota AE86.** He is distinct from Daigo Moriyama and Daigo Arakawa, whose sprites and racing affiliations belong to separate characters. His Chapter 05 race uses ordinary fair physics; afterward he gives up pursuing Sayaka on friendly terms and calls her and Arkon the fastest couple in Tokyo. Both blush and deny it in sync. They have not explicitly declared a relationship.
+
+Chapter 05 client vehicles (Mine's R34, RE Amemiya FD3S, Top Secret Supra) remain customer property during their test drives. Sayaka still works full-time teaching at Oshiage. The repaired black RWB Porsche gift is planned for Chapter 06 at Yokohama's Ferris wheel, before the Ginza Gallery exists, and not in Chapter 08.
+
+---
+
 Version: 1.4 — 23 October 2026
 Status: adopted foundation; Sayaka/Reika roles approved 9 October; Sayaka/father history and final celebration direction approved 11 October 2026; Arkon Den in-world foundation approved 22 October 2026.
 Companion: [Career narrative and emotional beats](CAREER_NARRATIVE.md) preserves the synopsis, approved history, knowledge boundaries and proposed scene backlog.

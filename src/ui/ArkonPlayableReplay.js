@@ -13,7 +13,7 @@ const OWNER='__arkonStoryPlayableReplayOwner';
 const sessions=new WeakMap();
 const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
   chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
-  chapter===4?'arkonChapter04':null;
+  chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -28,7 +28,9 @@ export function getArkonPlayableChapters(registry){
     registry.get('storyDirectorProgress')?.id==='arkonChapter03';
   const c4=registry.get('arkonStoryChapter03Done') ||
     ['arkonChapter04'].includes(registry.get('storyDirectorProgress')?.id);
-  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[])];
+  const c5=registry.get('arkonStoryChapter04Done') ||
+    registry.get('storyDirectorProgress')?.id==='arkonChapter05';
+  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -46,17 +48,23 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('__arkonStoryPlayableReplayChapter',chapter);
   scene.game?.storyDirector?.stop?.();
   registry.set('arkonStoryPhase',chapter===1?'opening':
-    chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':'chapter04Arrival');
+    chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':
+    chapter===4?'chapter04Arrival':'chapter05Breakthrough');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
   registry.set('arkonStoryChapter03Done',chapter>3);
-  registry.set('arkonStoryChapter04Done',false);
-  registry.set('arkonStoryRwbProject',null);
+  registry.set('arkonStoryChapter04Done',chapter>=5);
+  registry.set('arkonStoryChapter05Done',false);
+  registry.set('arkonStoryChapter05JobsDone',0);
+  registry.set('arkonStoryChapter05RaceResult',null);
+  registry.set('arkonStoryChapter05Results',{});
+  registry.set('arkonStoryChapter05Loan',null);
+  if(chapter<5)registry.set('arkonStoryRwbProject',null);
   // Earlier chapters and Chapter 04's opening must not inherit the later
   // acquired project. Sandbox it away and restore it verbatim on exit.
   const originalCars=[...(registry.get('ownedCarIds')||[])];
-  if(originalCars.includes('rwbStellaPorsche')){
+  if(chapter<5 && originalCars.includes('rwbStellaPorsche')){
     registry.set('ownedCarIds',originalCars.filter(id=>id!=='rwbStellaPorsche'));
     const states={...(registry.get('carStates')||{})};delete states.rwbStellaPorsche;
     registry.set('carStates',states);

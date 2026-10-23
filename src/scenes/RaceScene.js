@@ -160,6 +160,16 @@ export default class RaceScene extends Phaser.Scene {
     };
 
     queueImage('hudCluster', 'assets/Ui/hud_cluster.png');
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      for(const [id,poses] of [
+        ['sayakaFujieda',['oshiageRelaxed','oshiageReviewing','oshiageHappy','oshiageSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySheepish','storyConfidentSmirk']],
+      ]) for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
     if (this.hasGinzaBanter) {
       // Arkon's optional passenger chat uses the same formal outfits as
       // the private-gallery after-hours scene, not the old shift coach.
@@ -384,6 +394,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isStoryCruise = this.raceMode==='STORY_CRUISE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       this.registry.get('arkonStoryPhase')==='chapter02Driving';
+    this.isArkonCh5Drive = this.raceMode==='SINGLE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter05Loan')?.active);
     this.isArkonMx5Drive = this.raceMode==='ARKON_MX5_DRIVE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryMx5Loan')?.active);
@@ -905,6 +918,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.hasGinzaBanter) this.setupGinzaPassenger();
     if (this.isStoryCruise) this.setupArkonStoryCruise();
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
+    if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
     if(isArkonPlayableReplay(this.registry)){
       const replayButton=this.add.rectangle(172,35,282,42,0x2c1922,0.96)
         .setDepth(2600).setScrollFactor(0).setStrokeStyle(2,0xffba97)
@@ -945,6 +959,12 @@ export default class RaceScene extends Phaser.Scene {
   confirmCancelRace() {
     if(this.isStoryCruise){
       this.endArkonStoryCruise();return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      this.registry.set('arkonStoryChapter05RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryMx5Loan')?.active){
@@ -1561,6 +1581,45 @@ export default class RaceScene extends Phaser.Scene {
       finished: this.finished,
     });
     if (line) this.ginzaPassenger.show(line.speaker, line.text, line.pose);
+  }
+
+  setupArkonCh5Passenger() {
+    this.arkonCh5Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh5LineIndex=0;
+    this.events.once('shutdown',()=>this.arkonCh5Dialogue?.destroy?.());
+  }
+
+  updateArkonCh5Passenger() {
+    if(!this.isArkonCh5Drive||!this.arkonCh5Dialogue||this.resultsShown)return;
+    if(this.finished){this.arkonCh5Dialogue.hide();return;}
+    if(!this.raceStarted || this.greenClock==null)return;
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    const index=Math.min(3,Number(this.registry.get('arkonStoryChapter05Loan')?.index||0));
+    const scripts=[
+      [
+        ['sayaka','Quite a car. Try to bring it back in one piece.','oshiageRelaxed'],
+        ['arkon','That was already on the checklist.','storyTalking'],
+        ['sayaka','Then perhaps keep your eyes on the road.','oshiageHappy'],
+      ],[
+        ['sayaka','The rotary sounds magnificent now.','oshiageHappy'],
+        ['arkon','Cooling is steady. Boost is right where we wanted it.','storyTalking'],
+        ['sayaka','And your confidence appears to be fully operational.','oshiageReviewing'],
+      ],[
+        ['sayaka','This Supra belongs in a museum.','oshiageReviewing'],
+        ['arkon','The owner would prefer it to be fast.','storyConfidentSmirk'],
+        ['sayaka','Those are not mutually exclusive.','oshiageHappy'],
+      ],[
+        ['sayaka','There is Daigo. Still in the same AE86.','oshiageRelaxed'],
+        ['arkon','At least one thing in Tokyo never changes.','storySheepish'],
+        ['sayaka','Please do not let this become a competition for my attention.','oshiageReviewing'],
+      ],
+    ];
+    const lines=scripts[index],times=[0,2.6,5.2];
+    while(this.arkonCh5LineIndex<lines.length &&
+      elapsed>=times[this.arkonCh5LineIndex]){
+      const [speaker,text,pose]=lines[this.arkonCh5LineIndex++];
+      this.arkonCh5Dialogue.show(speaker,text,pose);
+    }
   }
 
   // Chapter 03's Sayaka road-test is played IN the live RaceScene.
@@ -2634,6 +2693,7 @@ export default class RaceScene extends Phaser.Scene {
 
     this.hud.update(playerT, status);
     if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
+    if (this.isArkonCh5Drive) this.updateArkonCh5Passenger();
     if (this.isStoryCruise) this.updateArkonStoryCruise(playerT);
     this.debug.update(playerT);
     if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
@@ -4544,6 +4604,17 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter05Loan')?.active){
+      // The result does not grant cash, title, coupon, recruitment or ownership.
+      this.registry.set('arkonStoryChapter05RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryMx5Loan')?.active){
       // Real physical rolling race in Sayaka's guest MX-5; no stakes,

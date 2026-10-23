@@ -1,4 +1,15 @@
 # Tokyo SHIFT — Arkon Den Story Arc: Creative Checkpoint
+
+## Updated owner direction — Chapter 05/06 positive crescendo (23 October 2026, R666)
+
+**This section supersedes the earlier Chapter 05–08 placement of the RWB gift.** Chapters 05 and 06 together form the commercial and emotional high point of Arkon and Sayaka's relationship. Preserve the established fourth-chapter repossession, serious structural defects, debt and non-roadworthy restoration.
+
+- **Chapter 05 — The Fastest Pair in Tokyo (implemented R666):** Appraiser Kenji Okabe's referral earns Arkon a lucrative Mine's R34 project. Further specialist customer work follows (RE Amemiya FD, Top Secret Supra). Each customer's car is on loan for testing, not a prize or owned addition; Arkon and Sayaka go together to established Tokyo meets. The player drives the customer's car with normal physics, controls and AI, with Sayaka delivering in-car banter. The chapter culminates in a friendly race against **Daigo Kirishima**, the recurring, **not wealthy** admirer of Sayaka from Chapters 01–02. **He always drives his AE86**. After Arkon defeats him, Daigo gives up asking Sayaka out and jokes they are the **fastest couple in Tokyo**. Both blush and deny it in sync, without an explicit relationship declaration.
+- **Chapter 06 — Everything We Built (planned, NOT deployed):** Strong further business growth, acquisition of Warehouse HQ, and Sayaka introductions through meets while she still teaches at Oshiage. The pair finish properly restoring the same black RWB Porsche. They take a non-interactive, dialogue-rich night drive to a private, empty Yokohama Minato Mirai Ferris wheel meet. Arkon gifts the now roadworthy Porsche to Sayaka as gratitude for restoring his hope when he was broke. She blushes, and the last image uses the established rear-view pair sprite with the Yokohama skyline. Warm, understated, happy ending. RWB ownership transfers to Sayaka personally; the Ginza Gallery has not yet been founded.
+- **Old Chapter 06 speculation and Chapter 07/08 separation/reconciliation/gift are no longer placement canon.** Later relationship challenges and Ginza construction need replanning after the new Chapter 06 positive peak. Do not insert a rift or tragedy into Chapters 05–06.
+- **R666 limits:** Chapter 05 includes three customer commissions, real playable test races and a fair Daigo finale with labour-fee bookkeeping. Warehouse HQ unlock, Porsche roadworthiness, Ferris wheel drive and gift remain Chapter 06 work. Chapter 05 retains the RWB as an immobile project.
+
+---
 **Date:** 23 October 2026 (Australia/Melbourne)  
 **Status:** Owner-approved *creative direction* for future Arkon Story Mode writing. NOT an implementation report.  
 **Scope:** Arkon Den Chapters 04 onward, the formation of Ginza Gallery, Sayaka's independent ambitions, RWB Porsche emotional throughline, and the intersection with the player's Career.  

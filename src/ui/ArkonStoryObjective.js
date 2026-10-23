@@ -7,6 +7,7 @@ import { ARKON_CHAPTER_01_REVISED } from '../data/arkonChapter01Revised.js?v=202
 import { ARKON_CHAPTER_02 } from '../data/arkonChapter02.js?v=20261023-r657';
 import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
 import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r659';
+import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261023-r666';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -16,10 +17,28 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter05Done'))return {
+    heading:'CHAPTER 05 COMPLETE',
+    message:'The Fastest Pair in Tokyo. Word is spreading about Arkon\'s work. Chapter 06 comes next.',
+    progress:'THE FASTEST PAIR IN TOKYO // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_05.id){
+    const phase=get('arkonStoryPhase')||'chapter05Breakthrough';
+    const stages={
+      chapter05Breakthrough:['THE FIRST BIG BREAK','Inspect the Mine\'s R34 and bring it to the Shinagawa meet.'],
+      chapter05R34Test:['THE FIRST TEST','Drive the customer\'s Mine\'s R34 and return it after the race.'],
+      chapter05Rotary:['THE ROTARY COMMISSION','Prepare and test the RE Amemiya FD at Daikoku.'],
+      chapter05Supra:['THE PRESTIGE WORK','Take the Top Secret Supra to Shinjuku for its test.'],
+      chapter05Daigo:['A FAMILIAR AE86','Complete Daigo Kirishima\'s challenge with Sayaka beside you.'],
+    };
+    const [heading,message]=stages[phase]||['THE FASTEST PAIR IN TOKYO','Continue the chapter at the workshop or meet.'];
+    return {heading,message,progress:'ARKON DEN // CHAPTER 05'};
+  }
   if(get('arkonStoryChapter04Done'))return {
-    heading:'CHAPTER 04 COMPLETE',
-    message:'The Price of Trust. The RWB Porsche is an unsafe restoration project, not a race-ready car.',
-    progress:'THE PRICE OF TRUST // COMPLETED',
+    canStartChapter05:true,
+    heading:'CHAPTER 05 // THE FASTEST PAIR',
+    message:'A collector wants Arkon to restore and test a Mine\'s R34. Return to Canal Yard and choose BEGIN CHAPTER 05. The RWB stays under restoration.',
+    progress:'CHAPTER 04 COMPLETED // A NEW COMMISSION',
   };
   if(active?.id===ARKON_CHAPTER_04.id){
     const phase=get('arkonStoryPhase')||'chapter04Arrival';
@@ -180,7 +199,7 @@ export function showArkonStoryObjective(scene) {
   add(scene.add.text(780,530,'REPLAY / RESTART  //  OFFICE > RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'8px',color:'#91c2d6',
   }).setOrigin(.5).setDepth(depth+2));
-  const canBegin=Boolean(info.canStartChapter04 &&
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
     scene.registry.get('workshopLocationId')==='shinonomeCanalYard' &&
     !scene.game?.storyDirector?.status?.active &&
@@ -189,7 +208,9 @@ export function showArkonStoryObjective(scene) {
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    add(scene.add.text(780,565,'BEGIN CHAPTER 04',{
+    const chapterId=info.canStartChapter05?'arkonChapter05':'arkonChapter04';
+    const beginLabel=info.canStartChapter05?'BEGIN CHAPTER 05':'BEGIN CHAPTER 04';
+    add(scene.add.text(780,565,beginLabel,{
       fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
     }).setOrigin(.5).setDepth(depth+3));
     begin.on('pointerdown',()=>{
@@ -197,7 +218,7 @@ export function showArkonStoryObjective(scene) {
       // Defer out of the pointer handler that destroys this modal. No
       // automatic hand-off, no underlying Meet invitation gets a click.
       scene.time.delayedCall(1,()=>{
-        if(scene.sys?.isActive?.() && !scene.game?.storyDirector?.start?.('arkonChapter04'))
+        if(scene.sys?.isActive?.() && !scene.game?.storyDirector?.start?.(chapterId))
           scene.showWorkshopToast?.('CHAPTER 04 COULD NOT START');
       });
     });
