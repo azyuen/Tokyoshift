@@ -55,6 +55,7 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter02Done',chapter>2);
   registry.set('arkonStoryChapter03Done',chapter>3);
   registry.set('arkonStoryChapter04Done',chapter>=5);
+  registry.set('arkonStoryChapter04Work',null);
   registry.set('arkonStoryChapter05Done',false);
   registry.set('arkonStoryChapter05JobsDone',0);
   registry.set('arkonStoryChapter05RaceResult',null);
