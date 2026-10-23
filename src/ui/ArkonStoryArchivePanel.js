@@ -9,6 +9,7 @@ import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r667';
 import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261023-r670';
 import { ARKON_CHAPTER_06 } from '../data/arkonChapter06.js?v=20261023-r671';
 import { ARKON_CHAPTER_07 } from '../data/arkonChapter07.js?v=20261023-r669';
+import { ARKON_CHAPTER_08 } from '../data/arkonChapter08.js?v=20261023-r672';
 import { getArkonPlayableChapters, beginArkonPlayableReplay } from './ArkonPlayableReplay.js?v=20261023-r669';
 import { validateStoryScript, checkStoryCondition } from '../story/StoryScript.js?v=20261023-r652';
 import { playMangaCutscene } from './MangaCutscene.js?v=20261023-r664';
@@ -21,7 +22,9 @@ export function getArkonRecountScenes(registry) {
   const get=key=>registry?.get?.(key);
   if(get('gameMode')!=='arkonStory')return [];
   const progress=get('storyDirectorProgress');
-  const chapter07=progress?.id===ARKON_CHAPTER_07.id ||
+  const chapter08=progress?.id===ARKON_CHAPTER_08.id ||
+    Boolean(get('arkonStoryChapter08Done'));
+  const chapter07=chapter08||progress?.id===ARKON_CHAPTER_07.id ||
     Boolean(get('arkonStoryChapter07Done'));
   const chapter06=chapter07||progress?.id===ARKON_CHAPTER_06.id ||
     Boolean(get('arkonStoryChapter06Done'));
@@ -35,7 +38,9 @@ export function getArkonRecountScenes(registry) {
     Boolean(get('arkonStoryChapter02Done'));
   const revised=chapter02 || progress?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
-  const scripts=chapter07
+  const scripts=chapter08
+    ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02,ARKON_CHAPTER_03,ARKON_CHAPTER_04,ARKON_CHAPTER_05,ARKON_CHAPTER_06,ARKON_CHAPTER_07,ARKON_CHAPTER_08]
+    :chapter07
     ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02,ARKON_CHAPTER_03,ARKON_CHAPTER_04,ARKON_CHAPTER_05,ARKON_CHAPTER_06,ARKON_CHAPTER_07]
     :chapter06
     ? [ARKON_CHAPTER_01_REVISED,ARKON_CHAPTER_02,ARKON_CHAPTER_03,ARKON_CHAPTER_04,ARKON_CHAPTER_05,ARKON_CHAPTER_06]
@@ -55,7 +60,9 @@ export function getArkonRecountScenes(registry) {
   const played=[];
   for(const source of scripts){
     const compiled=validateStoryScript(source);
-    const completed=source.id===ARKON_CHAPTER_07.id
+    const completed=source.id===ARKON_CHAPTER_08.id
+      ? get('arkonStoryChapter08Done')
+      :source.id===ARKON_CHAPTER_07.id
       ? get('arkonStoryChapter07Done')
       :source.id===ARKON_CHAPTER_06.id
       ? get('arkonStoryChapter06Done')
@@ -149,7 +156,10 @@ export function showArkonStoryArchivePanel(scene) {
   add(scene.add.text(780,209,'ARKON DEN // RECOUNT STORY',{
     fontFamily:PIXEL,fontSize:'16px',color:'#f2faff',
   }).setOrigin(.5).setDepth(depth+2));
-  const chapter=scene.registry.get('arkonStoryChapter07Done') ||
+  const chapter=scene.registry.get('arkonStoryChapter08Done') ||
+    scene.registry.get('storyDirectorProgress')?.id===ARKON_CHAPTER_08.id
+      ? 'CHAPTERS 01–08 // PLAYED SCENES'
+      :scene.registry.get('arkonStoryChapter07Done') ||
     scene.registry.get('storyDirectorProgress')?.id===ARKON_CHAPTER_07.id
       ? 'CHAPTERS 01–07 // PLAYED SCENES'
       :scene.registry.get('arkonStoryChapter06Done') ||
@@ -203,13 +213,17 @@ export function showArkonStoryArchivePanel(scene) {
       }).setOrigin(.5).setDepth(depth+13));
     const titles={1:'01  FIRST IMPRESSIONS',2:'02  THE LONG WAY HOME',
       3:'03  THE NIGHT SHIFT',4:'04  THE PRICE OF TRUST',
-      5:'05  THE FASTEST PAIR',6:'06  EVERYTHING WE BUILT'};
+      5:'05  THE FASTEST PAIR',6:'06  EVERYTHING WE BUILT',
+      7:'07  NEVER ENOUGH',8:'08  THE PRICE OF AMBITION'};
     chapters.forEach((number,index)=>{
-      const y=(chapters.length>4?325+index*49:349+index*57);
-      const card=add(scene.add.rectangle(780,y,585,53,0x173e43)
+      const split=chapters.length>6;
+      const y=split?345+Math.floor(index/2)*60:
+        (chapters.length>4?325+index*49:349+index*57);
+      const x=split?(index%2===0?545:1015):780;
+      const card=add(scene.add.rectangle(x,y,split?420:585,53,0x173e43)
         .setStrokeStyle(2,0x72d8c7).setDepth(depth+13)
         .setInteractive({useHandCursor:true}));
-      add(scene.add.text(780,y,titles[number],{
+      add(scene.add.text(x,y,titles[number],{
         fontFamily:PIXEL,fontSize:'11px',color:'#f4ffff',
       }).setOrigin(.5).setDepth(depth+14));
       card.on('pointerdown',()=>{
