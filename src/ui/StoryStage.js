@@ -16,7 +16,7 @@ export function showStoryStage(scene, {
   backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
   castBehindCar = false, characterScale = 1, onArrivalComplete = null,
   meetDuel = false, fadeInMs = 0,
-  meetCarLayout = null, meetCastLayout = null,
+  meetCarLayout = null, meetCastLayout = null, vipParty = false,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -205,6 +205,42 @@ export function showStoryStage(scene, {
           }));
         }
       }
+    }
+    // Chapter 08's private Shibuya VIP terrace overlays the actual existing
+    // Shibuya night meet art. These decorative lights live only in Story Mode;
+    // Meet geometry, driving backgrounds and Career remain untouched.
+    if(vipParty && profile?.frameId==='location'){
+      const g=scene.add.graphics().setDepth(depth+1).setScrollFactor(0);
+      g.fillStyle(0x190923,.22).fillRect(frame.x,frame.y,frame.w,frame.h);
+      g.fillStyle(0x411264,.18).fillTriangle(
+        frame.x+frame.w*.09,frame.y+20,
+        frame.x,frame.y+frame.h*.83,
+        frame.x+frame.w*.52,frame.y+frame.h*.85);
+      g.fillStyle(0x17646f,.18).fillTriangle(
+        frame.x+frame.w*.84,frame.y+15,
+        frame.x+frame.w*.52,frame.y+frame.h*.84,
+        frame.x+frame.w,frame.y+frame.h*.87);
+      g.lineStyle(2,0xffc8b5,.75);
+      g.lineBetween(frame.x+36,frame.y+38,frame.x+frame.w-36,frame.y+62);
+      for(let i=0;i<15;i++){
+        const x=frame.x+45+i*(frame.w-90)/14;
+        const y=frame.y+38+i*24/14;
+        g.fillStyle(i%3===0?0xffc77e:i%3===1?0x80e9ea:0xf4a7df,.92);
+        g.fillCircle(x,y+7,3.7);
+      }
+      g.fillStyle(0x110b1f,.72)
+        .fillRoundedRect(frame.x+frame.w-268,frame.y+18,246,54,5);
+      g.lineStyle(2,0xb273be,.8).strokeRoundedRect(
+        frame.x+frame.w-268,frame.y+18,246,54,5);
+      if(clipMask)g.setMask(clipMask);
+      objects.push(g);
+      const sign=scene.add.text(frame.x+frame.w-145,frame.y+44,
+        'SHIBUYA  //  VIP',{
+          fontFamily:'"Silkscreen", monospace',fontSize:'11px',
+          color:'#ffe6ff',align:'center',
+        }).setOrigin(.5).setDepth(depth+14).setScrollFactor(0);
+      if(clipMask)sign.setMask(clipMask);
+      objects.push(sign);
     }
     // The native car always uses the SAME backing/frontend ordering as its
     // gameplay counterpart. Do not derive it from a Story composition preset.
