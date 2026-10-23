@@ -81,6 +81,8 @@ export function showStoryStage(scene, {
   let clipGraphics=null,clipMask=null;
   const hidden=[];
   const motionTweens=[];
+  const actorImages=new Map();
+  const pendingFades=[];
   const hide=obj=>{if(obj?.active && obj?.setVisible){
     hidden.push({obj,visible:obj.visible});obj.setVisible(false);
   }};
@@ -90,12 +92,31 @@ export function showStoryStage(scene, {
     (scene.workshopPlayerSprite?.stageShadows||[]).forEach(hide);
   }
   const state = {
+    setPaintColor(color) {
+      let changed=false;
+      for(const object of objects){
+        if(object?.active && object?.getData?.('carPaintLayer')){
+          object.setTint(color);changed=true;
+        }
+      }
+      return changed;
+    },
+    fadeActor(actorId,duration=900,onComplete=()=>{}) {
+      const target=actorImages.get(actorId);
+      if(!target?.active){pendingFades.push({actorId,duration,onComplete});return;}
+      const tween=scene.tweens?.add?.({targets:target,alpha:0,
+        duration:Math.max(150,duration),ease:'Sine.InOut',
+        onComplete:()=>{if(alive)onComplete();}});
+      if(tween)motionTweens.push(tween);
+      else {target.setAlpha(0);onComplete();}
+    },
     destroy() {
       if (!alive) return;
       alive = false;
       motionTweens.forEach(tween=>tween?.stop?.());
       objects.forEach(x => x?.destroy?.());
       hidden.forEach(({obj,visible})=>{if(obj?.active)obj.setVisible(visible);});
+      actorImages.clear();pendingFades.length=0;
       clipGraphics?.destroy?.();
       scene.events?.off?.('shutdown', state.destroy);
       if (scene._storyDirectorStage === state) scene._storyDirectorStage = null;
@@ -234,8 +255,8 @@ export function showStoryStage(scene, {
             onArrivalComplete?.();
           }
         }
-        // Existing cinematic arrival is retained unchanged for other
-        // chapters (for example Chapter 04's Porsche transporter).
+        // Legacy fade-slide remains available for old sequences. Chapter 04
+        // explicitly uses the calibrated slow roll and tyre rotation.
         if(motion==='arrive' && i===0 && scene.tweens?.add){
           for(const obj of carObjects){
             if(!obj?.active || !Number.isFinite(obj.x) || !obj.setX || !obj.setAlpha)continue;
@@ -273,11 +294,20 @@ export function showStoryStage(scene, {
         (Number.isFinite(Number(characterScale))?Number(characterScale):1);
       const layer=Number(template?(portraitDepth+i):
         (a.depth??estimate?.depth??(portraitDepth+i)));
-      addImage(a.asset,x,feet,null,height,layer,1,true);
+      const sprite=addImage(a.asset,x,feet,null,height,layer,
+        a.fadeInMs ? 0 : 1,true);
+      if(sprite){
+        actorImages.set(a.id,sprite);
+        if(a.fadeInMs && scene.tweens?.add)
+          motionTweens.push(scene.tweens.add({targets:sprite,alpha:1,
+            duration:Math.max(250,Number(a.fadeInMs)||850),ease:'Sine.Out'}));
+      }
     });
     // The stage's front/back relationship is deterministic and authored.
     if(carInFront){drawCast();drawCars();}
     else{drawCars();drawCast();}
+    for(const fade of pendingFades.splice(0))
+      state.fadeActor(fade.actorId,fade.duration,fade.onComplete);
   };
   const queuedCars=carProps.reduce((total,c)=>total+(c.model?preloadStoryCar(scene,c.model):0),0);
   const pending=[...new Map(assets.filter(a=>a.key&&a.path&&!scene.textures.exists(a.key))
