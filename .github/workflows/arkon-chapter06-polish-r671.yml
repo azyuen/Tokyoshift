@@ -1,0 +1,33 @@
+name: R671 Chapter 06 presentation corrections
+on:
+  pull_request:
+    paths:
+      - 'src/data/arkonChapter06.js'
+      - 'src/data/arkonChapter06Work.js'
+      - 'src/ui/ArkonRwbRestoration.js'
+      - 'src/ui/ArkonChapter06Finale.js'
+      - 'src/ui/StoryStage.js'
+      - 'src/story/StoryDirector.js'
+      - 'src/scenes/RaceScene.js'
+      - 'tests/arkon-chapter06-polish-r671.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'src/data/arkonChapter06.js'
+      - 'src/ui/ArkonChapter06Finale.js'
+      - 'tests/arkon-chapter06-polish-r671.mjs'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and scene wiring
+        run: |
+          for file in src/data/arkonChapter06.js src/data/arkonChapter06Work.js src/ui/ArkonRwbRestoration.js src/ui/ArkonChapter06Finale.js src/ui/StoryStage.js src/story/StoryDirector.js src/scenes/RaceScene.js tests/arkon-chapter06-polish-r671.mjs; do node --check "$file"; done
+      - name: Chapter 06 plus established regressions
+        run: |
+          node --test tests/arkon-chapter06-polish-r671.mjs tests/arkon-chapter06-r668.mjs tests/arkon-chapter05-meets-r670.mjs tests/arkon-chapter05-r666.mjs tests/arkon-chapter04-r659.mjs tests/arkon-story-polish-r665.mjs tests/arkon-chapter-replay-r657.mjs tests/arkonStoryMode.test.mjs tests/story-director-r639.mjs
