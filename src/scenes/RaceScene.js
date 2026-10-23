@@ -11,6 +11,7 @@ import {
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { createGinzaBanterState, advanceGinzaBanter } from '../data/ginzaBanter.js?v=20261021-r634';
 import { createGinzaBanterHud } from '../ui/GinzaBanterHud.js?v=20261023-r664';
+import {recordArkonCh4Race} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r665';
 import { consumeOshiageAttempt, remainingAttempts, bookingMatches } from '../data/oshiageSchool.js?v=20261023-r652';
 import {
@@ -4667,6 +4668,10 @@ export default class RaceScene extends Phaser.Scene {
     const newWins = wins + (playerWon ? 1 : 0);
     this.registry.set('wins', newWins);
     this.registry.set('losses', losses + (playerWon ? 0 : 1));
+    if(playerWon)recordArkonCh4Race(this.registry,{
+      carId:this.selectedCarId,mode:this.raceMode,deal:this.raceDeal,
+      playerWon:true,competitionWon:false,
+    });
     this.lastEasyCouponAward = playerWon && this.raceMode !== 'OSHIAGE_ELITE'
       ? this.processEasyCouponMilestone(newWins)
       : null;
@@ -5216,6 +5221,10 @@ export default class RaceScene extends Phaser.Scene {
         Math.max(0, Number(this.registry.get('competitionWins') || 0)) + 1
       );
       this.registry.set('competitionState', null);
+      recordArkonCh4Race(this.registry,{
+        carId:this.selectedCarId,mode:this.raceMode,
+        playerWon:true,competitionWon:true,
+      });
       saveSessionState(this.registry);
 
       this.raceSettlement = {
