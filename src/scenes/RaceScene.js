@@ -186,6 +186,16 @@ export default class RaceScene extends Phaser.Scene {
       }
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      for(const [id,poses] of [
+        ['sayakaFujieda',['homeNormal','homeHappy','homeSerious']],
+        ['arkonDen',['storyIdle','storyTalking','storySheepish','storyConfidentSmirk']],
+      ])for(const pose of poses){
+        const asset=characters[id]?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter07Solo')?.active){
       for(const pose of ['storyIdle','storyTalking','storyThinking','storySheepish']){
         const asset=characters.arkonDen?.visual?.poseAssets?.[pose];
@@ -422,6 +432,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isArkonCh7Solo=this.raceMode==='ARKON_CH7_SOLO' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter07Solo')?.active);
+    this.isArkonCh8Drive = this.raceMode==='SINGLE' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter08Race')?.active);
     this.isArkonCh5Drive = this.raceMode==='SINGLE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter05Loan')?.active);
@@ -947,6 +960,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isStoryCruise) this.setupArkonStoryCruise();
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
+    if (this.isArkonCh8Drive) this.setupArkonCh8Passenger();
     if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
     if (this.isArkonCh7Solo) this.setupArkonCh7Solo();
     if(isArkonPlayableReplay(this.registry)){
@@ -990,6 +1004,12 @@ export default class RaceScene extends Phaser.Scene {
     if(this.isArkonCh6Cruise||this.isArkonCh7Solo)return; // No-input cinematics.
     if(this.isStoryCruise){
       this.endArkonStoryCruise();return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      this.registry.set('arkonStoryChapter08RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter07Race')?.active){
@@ -1754,6 +1774,41 @@ export default class RaceScene extends Phaser.Scene {
       this.engineAudio?.fadeOut();
       this.cameras?.main?.fadeOut?.(850,0,0,0);
       this.time.delayedCall(900,()=>queueSafeSceneStart(this,'MeetScene'));
+    }
+  }
+
+  setupArkonCh8Passenger() {
+    this.arkonCh8Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh8LineIndex=0;
+    this.events.once('shutdown',()=>this.arkonCh8Dialogue?.destroy?.());
+  }
+
+  updateArkonCh8Passenger() {
+    if(!this.isArkonCh8Drive||!this.arkonCh8Dialogue||this.resultsShown)return;
+    if(this.finished){this.arkonCh8Dialogue.hide();return;}
+    if(!this.raceStarted||this.greenClock==null)return;
+    const elapsed=Math.max(0,this.raceClock-this.greenClock);
+    const index=Math.min(2,Number(this.registry.get('arkonStoryChapter08Race')?.index||0));
+    const lines=[
+      [
+        ['sayaka','It is rather nice to be out in a car with you again.','homeHappy'],
+        ['arkon','And you are still keeping an eye on my shifts?','storyTalking'],
+        ['sayaka','Some traditions deserve to survive.','homeHappy'],
+      ],[
+        ['sayaka','You never told me the wager was this large.','homeSerious'],
+        ['arkon','We are fine. The car is ready.','storyConfidentSmirk'],
+        ['sayaka','It is not the car I am worried about.','homeSerious'],
+      ],[
+        ['sayaka','You are racing for the people watching, not the cars.','homeSerious'],
+        ['arkon','A good result opens doors, Sayaka.','storyTalking'],
+        ['sayaka','Just be careful which ones you walk through.','homeSerious'],
+      ],
+    ][index];
+    const times=[0,2.6,5.2];
+    while(this.arkonCh8LineIndex<lines.length &&
+      elapsed>=times[this.arkonCh8LineIndex]){
+      const [speaker,text,pose]=lines[this.arkonCh8LineIndex++];
+      this.arkonCh8Dialogue.show(speaker,text,pose);
     }
   }
 
@@ -2878,6 +2933,7 @@ export default class RaceScene extends Phaser.Scene {
     this.hud.update(playerT, status);
     if (this.isGinzaDemoRace) this.updateGinzaPassenger(playerT);
     if (this.isArkonCh5Drive) this.updateArkonCh5Passenger();
+    if (this.isArkonCh8Drive) this.updateArkonCh8Passenger();
     if (this.isStoryCruise) this.updateArkonStoryCruise(playerT);
     this.debug.update(playerT);
     if (this.isCoaching) this.updateCoachedLesson(controlState, playerT);
@@ -4788,6 +4844,18 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter08Race')?.active){
+      // The wager is escrowed by Chapter 08 and settled once on return.
+      // Normal race settlement must not grant unrelated career rewards.
+      this.registry.set('arkonStoryChapter08RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter07Race')?.active){
       this.registry.set('arkonStoryChapter07RaceResult',playerWon?'won':'lost');
