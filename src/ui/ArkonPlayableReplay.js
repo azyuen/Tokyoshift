@@ -14,7 +14,8 @@ const sessions=new WeakMap();
 const scriptId=chapter=>chapter===1?'arkonChapter01Revised':
   chapter===2?'arkonChapter02':chapter===3?'arkonChapter03':
   chapter===4?'arkonChapter04':chapter===5?'arkonChapter05':
-  chapter===6?'arkonChapter06':chapter===7?'arkonChapter07':null;
+  chapter===6?'arkonChapter06':chapter===7?'arkonChapter07':
+  chapter===8?'arkonChapter08':null;
 
 export function isArkonPlayableReplay(registry){
   return Boolean(registry?.get?.(ACTIVE)) &&
@@ -37,7 +38,11 @@ export function getArkonPlayableChapters(registry){
   const c7=registry.get('arkonStoryChapter06Done') ||
     registry.get('storyDirectorProgress')?.id==='arkonChapter07' ||
     registry.get('arkonStoryChapter07Done');
-  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),...(c5?[5]:[]),...(c6?[6]:[]),...(c7?[7]:[])];
+  const c8=registry.get('arkonStoryChapter07Done') ||
+    registry.get('storyDirectorProgress')?.id==='arkonChapter08' ||
+    registry.get('arkonStoryChapter08Done');
+  return [1,...(c2?[2]:[]),...(c3?[3]:[]),...(c4?[4]:[]),
+    ...(c5?[5]:[]),...(c6?[6]:[]),...(c7?[7]:[]),...(c8?[8]:[])];
 }
 export function beginArkonPlayableReplay(scene,chapter) {
   const registry=scene?.registry,slot=getActiveProfileIndex();
@@ -57,7 +62,7 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryPhase',chapter===1?'opening':
     chapter===2?'chapter02Opening':chapter===3?'chapter03Jobs':
     chapter===4?'chapter04Arrival':chapter===5?'chapter05Breakthrough':
-    chapter===6?'chapter06Commissions':'chapter07Business');
+    chapter===6?'chapter06Commissions':chapter===7?'chapter07Business':'chapter08Together');
   registry.set('arkonStoryChapter',chapter);
   registry.set('arkonStoryChapter01RevisedDone',chapter>1);
   registry.set('arkonStoryChapter02Done',chapter>2);
@@ -66,7 +71,14 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter04Work',null);
   registry.set('arkonStoryChapter05Done',chapter>=6);
   registry.set('arkonStoryChapter06Done',chapter>=7);
-  registry.set('arkonStoryChapter07Done',false);
+  registry.set('arkonStoryChapter07Done',chapter>=8);
+  registry.set('arkonStoryChapter08Done',false);
+  registry.set('arkonStoryChapter08RacesDone',0);
+  registry.set('arkonStoryChapter08Race',null);
+  registry.set('arkonStoryChapter08RaceResult',null);
+  registry.set('arkonStoryChapter08LastResult',null);
+  registry.set('arkonStoryChapter08ContractSigned',false);
+  registry.set('arkonStoryChapter08ContractTerms',null);
   registry.set('arkonStoryChapter07Work',null);
   registry.set('arkonStoryChapter07Race',null);
   registry.set('arkonStoryChapter07RaceResult',null);
@@ -74,7 +86,7 @@ export function beginArkonPlayableReplay(scene,chapter) {
   registry.set('arkonStoryChapter07SoloFinished',false);
   // Rebuild the ORIGINAL 240Z inside the temporary replay if an authentic
   // Chapter 07 run already converted it. Restore the save verbatim on exit.
-  if((registry.get('ownedCarIds')||[]).includes('arkonLibertyWalk240z')){
+  if(chapter<8 && (registry.get('ownedCarIds')||[]).includes('arkonLibertyWalk240z')){
     const owned=(registry.get('ownedCarIds')||[]).map(id=>
       id==='arkonLibertyWalk240z'?'240z':id);
     const states={...(registry.get('carStates')||{})};
@@ -101,15 +113,17 @@ export function beginArkonPlayableReplay(scene,chapter) {
       chassisTuning:{...atOne},exhaustNosTuning:{...atOne}};
     registry.set('carStates',states);
   }
-  registry.set('arkonStoryChapter06Accounts',null);
-  registry.set('arkonStoryChapter06Cruise',null);
-  registry.set('arkonStoryChapter06CruiseFinished',false);
+  if(chapter<8){
+    registry.set('arkonStoryChapter06Accounts',null);
+    registry.set('arkonStoryChapter06Cruise',null);
+    registry.set('arkonStoryChapter06CruiseFinished',false);
+  }
   registry.set('arkonStoryChapter05JobsDone',0);
   registry.set('arkonStoryChapter05RaceResult',null);
   registry.set('arkonStoryChapter05Results',{});
   registry.set('arkonStoryChapter05Loan',null);
   if(chapter<5)registry.set('arkonStoryRwbProject',null);
-  if(chapter>=5){
+  if(chapter>=5 && chapter<8){
     // Completed Chapter 06 saves no longer own the gifted Porsche.
     // Restore an UNREPAIRED project only inside this temporary replay.
     const raw=registry.get('arkonStoryRwbProject')||{};
