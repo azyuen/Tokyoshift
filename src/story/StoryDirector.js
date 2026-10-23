@@ -657,6 +657,7 @@ export class StoryDirector {
                 if(!recordArkonCh6Restoration(scene.registry,step.index)){
                   this.error='PORSCHE RESTORATION CHECK FAILED';return false;
                 }
+                scene.cashText?.setText?.('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
                 saveSessionState(scene.registry);
                 this.advance();return true;
               },
