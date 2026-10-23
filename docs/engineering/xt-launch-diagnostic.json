@@ -1,0 +1,1969 @@
+{
+  "scope": "Diagnostic launch target overrides are not runtime changes; 120 Hz, seed 1, rating 5, stock, no NOS.",
+  "results": [
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 4300,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 7.74860947559936,
+        "400": 16.83296541793077,
+        "18.288": 3.503641189246793
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 4326,
+          "speedKmh": 0,
+          "boost": 0.018,
+          "gear": 1,
+          "throttle": 0.197,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 4459,
+          "speedKmh": 0.47,
+          "boost": 0.034,
+          "gear": 1,
+          "throttle": 0.874,
+          "clutch": 0.618
+        },
+        {
+          "time": 0.5,
+          "rpm": 4360,
+          "speedKmh": 2.82,
+          "boost": 0.097,
+          "gear": 1,
+          "throttle": 0.962,
+          "clutch": 0.554
+        },
+        {
+          "time": 0.758,
+          "rpm": 4337,
+          "speedKmh": 5.62,
+          "boost": 0.152,
+          "gear": 1,
+          "throttle": 0.988,
+          "clutch": 0.523
+        },
+        {
+          "time": 1.008,
+          "rpm": 4333,
+          "speedKmh": 8.56,
+          "boost": 0.191,
+          "gear": 1,
+          "throttle": 0.994,
+          "clutch": 0.5
+        },
+        {
+          "time": 1.258,
+          "rpm": 4330,
+          "speedKmh": 11.66,
+          "boost": 0.22,
+          "gear": 1,
+          "throttle": 0.996,
+          "clutch": 0.484
+        },
+        {
+          "time": 1.508,
+          "rpm": 4329,
+          "speedKmh": 14.88,
+          "boost": 0.241,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.472
+        },
+        {
+          "time": 1.758,
+          "rpm": 4328,
+          "speedKmh": 18.18,
+          "boost": 0.255,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.463
+        },
+        {
+          "time": 2.008,
+          "rpm": 4327,
+          "speedKmh": 21.55,
+          "boost": 0.266,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.457
+        },
+        {
+          "time": 2.258,
+          "rpm": 4327,
+          "speedKmh": 24.96,
+          "boost": 0.274,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.453
+        },
+        {
+          "time": 2.508,
+          "rpm": 4327,
+          "speedKmh": 28.39,
+          "boost": 0.279,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.45
+        },
+        {
+          "time": 2.758,
+          "rpm": 4327,
+          "speedKmh": 31.85,
+          "boost": 0.283,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.447
+        },
+        {
+          "time": 3.008,
+          "rpm": 4326,
+          "speedKmh": 35.31,
+          "boost": 0.286,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.446
+        },
+        {
+          "time": 3.258,
+          "rpm": 4325,
+          "speedKmh": 39.22,
+          "boost": 0.353,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 4781,
+          "speedKmh": 43.37,
+          "boost": 0.419,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 5260,
+          "speedKmh": 47.59,
+          "boost": 0.46,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 5728,
+          "speedKmh": 51.67,
+          "boost": 0.485,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 6153,
+          "speedKmh": 55.33,
+          "boost": 0.5,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 6442,
+          "speedKmh": 58.2,
+          "boost": 0.438,
+          "gear": 0,
+          "throttle": 0,
+          "clutch": 1
+        },
+        {
+          "time": 4.75,
+          "rpm": 5185,
+          "speedKmh": 60.54,
+          "boost": 0.364,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4.341829200363421,
+          "from": 1,
+          "to": 2,
+          "rpm": 6490.383033989989,
+          "requestRPM": 6461.464078801782,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 9.558495867030164,
+          "from": 2,
+          "to": 3,
+          "rpm": 6497.610728387535,
+          "requestRPM": 6468.674568290385,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "ae86",
+      "driver": "runtime AI",
+      "launchRPM": 4800,
+      "powerKW": 96,
+      "mass": 940,
+      "splits": {
+        "100": 6.795082270827201,
+        "400": 15.28155015840874,
+        "18.288": 2.802086160822207
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 4830,
+          "speedKmh": 0,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.144,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 5092,
+          "speedKmh": 0.87,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.769,
+          "clutch": 0.58
+        },
+        {
+          "time": 0.5,
+          "rpm": 4906,
+          "speedKmh": 5.63,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.919,
+          "clutch": 0.531
+        },
+        {
+          "time": 0.758,
+          "rpm": 4883,
+          "speedKmh": 10.79,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.951,
+          "clutch": 0.531
+        },
+        {
+          "time": 1.008,
+          "rpm": 4882,
+          "speedKmh": 15.78,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.953,
+          "clutch": 0.531
+        },
+        {
+          "time": 1.258,
+          "rpm": 4882,
+          "speedKmh": 20.77,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.953,
+          "clutch": 0.531
+        },
+        {
+          "time": 1.508,
+          "rpm": 4882,
+          "speedKmh": 25.75,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.953,
+          "clutch": 0.531
+        },
+        {
+          "time": 1.758,
+          "rpm": 4882,
+          "speedKmh": 30.72,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.953,
+          "clutch": 0.531
+        },
+        {
+          "time": 2.008,
+          "rpm": 4829,
+          "speedKmh": 35.66,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.848,
+          "clutch": 0
+        },
+        {
+          "time": 2.258,
+          "rpm": 5120,
+          "speedKmh": 40.5,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 0.929,
+          "clutch": 0
+        },
+        {
+          "time": 2.508,
+          "rpm": 5394,
+          "speedKmh": 44.89,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 2.758,
+          "rpm": 5845,
+          "speedKmh": 48.64,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.008,
+          "rpm": 6311,
+          "speedKmh": 52.16,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.258,
+          "rpm": 6765,
+          "speedKmh": 55.5,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 7193,
+          "speedKmh": 58.53,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 7583,
+          "speedKmh": 61.27,
+          "boost": 0,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 6362,
+          "speedKmh": 63.03,
+          "boost": 0,
+          "gear": 2,
+          "throttle": 0.438,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 5227,
+          "speedKmh": 67.11,
+          "boost": 0,
+          "gear": 2,
+          "throttle": 0.999,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 5216,
+          "speedKmh": 70.36,
+          "boost": 0,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 5443,
+          "speedKmh": 73.48,
+          "boost": 0,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 3.65016253369673,
+          "from": 1,
+          "to": 2,
+          "rpm": 7595.239236424694,
+          "requestRPM": 7557.840310311436,
+          "idealRPM": 7600,
+          "targetRPM": 7600,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 7.225162533696897,
+          "from": 2,
+          "to": 3,
+          "rpm": 7597.109085717075,
+          "requestRPM": 7559.704859919696,
+          "idealRPM": 7600,
+          "targetRPM": 7600,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 14.341829200363225,
+          "from": 3,
+          "to": 4,
+          "rpm": 7566.678133789103,
+          "requestRPM": 7529.360157954961,
+          "idealRPM": 7600,
+          "targetRPM": 7566.964956704527,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "starion",
+      "driver": "runtime AI",
+      "launchRPM": 4300,
+      "powerKW": 129,
+      "mass": 1340,
+      "splits": {
+        "100": 7.077062442605484,
+        "400": 15.525027439807765,
+        "18.288": 3.1684418474514238
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 4326,
+          "speedKmh": 0,
+          "boost": 0.017,
+          "gear": 1,
+          "throttle": 0.148,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 4465,
+          "speedKmh": 0.6,
+          "boost": 0.035,
+          "gear": 1,
+          "throttle": 0.868,
+          "clutch": 0.64
+        },
+        {
+          "time": 0.5,
+          "rpm": 4364,
+          "speedKmh": 3.56,
+          "boost": 0.101,
+          "gear": 1,
+          "throttle": 0.957,
+          "clutch": 0.579
+        },
+        {
+          "time": 0.758,
+          "rpm": 4339,
+          "speedKmh": 7.09,
+          "boost": 0.162,
+          "gear": 1,
+          "throttle": 0.987,
+          "clutch": 0.551
+        },
+        {
+          "time": 1.008,
+          "rpm": 4333,
+          "speedKmh": 10.79,
+          "boost": 0.207,
+          "gear": 1,
+          "throttle": 0.993,
+          "clutch": 0.53
+        },
+        {
+          "time": 1.258,
+          "rpm": 4331,
+          "speedKmh": 14.67,
+          "boost": 0.24,
+          "gear": 1,
+          "throttle": 0.995,
+          "clutch": 0.515
+        },
+        {
+          "time": 1.508,
+          "rpm": 4329,
+          "speedKmh": 18.7,
+          "boost": 0.264,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.504
+        },
+        {
+          "time": 1.758,
+          "rpm": 4328,
+          "speedKmh": 22.84,
+          "boost": 0.282,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.496
+        },
+        {
+          "time": 2.008,
+          "rpm": 4328,
+          "speedKmh": 27.05,
+          "boost": 0.295,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.491
+        },
+        {
+          "time": 2.258,
+          "rpm": 4327,
+          "speedKmh": 31.31,
+          "boost": 0.305,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.486
+        },
+        {
+          "time": 2.508,
+          "rpm": 4327,
+          "speedKmh": 35.61,
+          "boost": 0.312,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.483
+        },
+        {
+          "time": 2.758,
+          "rpm": 4327,
+          "speedKmh": 39.93,
+          "boost": 0.317,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.481
+        },
+        {
+          "time": 3.008,
+          "rpm": 4496,
+          "speedKmh": 44.92,
+          "boost": 0.426,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.258,
+          "rpm": 5000,
+          "speedKmh": 49.79,
+          "boost": 0.5,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 5487,
+          "speedKmh": 54.42,
+          "boost": 0.547,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 5934,
+          "speedKmh": 58.61,
+          "boost": 0.577,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 5425,
+          "speedKmh": 60.34,
+          "boost": 0.387,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 4536,
+          "speedKmh": 64.27,
+          "boost": 0.472,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 4191,
+          "speedKmh": 67.87,
+          "boost": 0.529,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 4381,
+          "speedKmh": 71.32,
+          "boost": 0.565,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 3.6751625336967297,
+          "from": 1,
+          "to": 2,
+          "rpm": 5990.264047242446,
+          "requestRPM": 5968.5420854181075,
+          "idealRPM": 6000,
+          "targetRPM": 6000,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 6.8584958670302125,
+          "from": 2,
+          "to": 3,
+          "rpm": 5998.4995433880495,
+          "requestRPM": 5976.762361409231,
+          "idealRPM": 6000,
+          "targetRPM": 6000,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 13.583495867029935,
+          "from": 3,
+          "to": 4,
+          "rpm": 5965.853874174244,
+          "requestRPM": 5944.177025188085,
+          "idealRPM": 6000,
+          "targetRPM": 5966.964956704527,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 3000,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 8.30458808447532,
+        "400": 17.427107272851714,
+        "18.288": 3.935624153483573
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 3016,
+          "speedKmh": 0,
+          "boost": 0.008,
+          "gear": 1,
+          "throttle": 0.188,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 3137,
+          "speedKmh": 0.45,
+          "boost": 0.014,
+          "gear": 1,
+          "throttle": 0.884,
+          "clutch": 0.633
+        },
+        {
+          "time": 0.5,
+          "rpm": 3045,
+          "speedKmh": 2.55,
+          "boost": 0.036,
+          "gear": 1,
+          "throttle": 0.966,
+          "clutch": 0.603
+        },
+        {
+          "time": 0.758,
+          "rpm": 3023,
+          "speedKmh": 4.83,
+          "boost": 0.054,
+          "gear": 1,
+          "throttle": 0.992,
+          "clutch": 0.597
+        },
+        {
+          "time": 1.008,
+          "rpm": 3019,
+          "speedKmh": 7.09,
+          "boost": 0.067,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.59
+        },
+        {
+          "time": 1.258,
+          "rpm": 3018,
+          "speedKmh": 9.39,
+          "boost": 0.077,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.585
+        },
+        {
+          "time": 1.508,
+          "rpm": 3018,
+          "speedKmh": 11.74,
+          "boost": 0.084,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.58
+        },
+        {
+          "time": 1.758,
+          "rpm": 3017,
+          "speedKmh": 14.11,
+          "boost": 0.09,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.577
+        },
+        {
+          "time": 2.008,
+          "rpm": 3017,
+          "speedKmh": 16.51,
+          "boost": 0.094,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.575
+        },
+        {
+          "time": 2.258,
+          "rpm": 3017,
+          "speedKmh": 18.92,
+          "boost": 0.098,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.573
+        },
+        {
+          "time": 2.508,
+          "rpm": 3017,
+          "speedKmh": 21.35,
+          "boost": 0.1,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.571
+        },
+        {
+          "time": 2.758,
+          "rpm": 3016,
+          "speedKmh": 23.78,
+          "boost": 0.102,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.57
+        },
+        {
+          "time": 3.008,
+          "rpm": 2923,
+          "speedKmh": 26.48,
+          "boost": 0.121,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.258,
+          "rpm": 3224,
+          "speedKmh": 29.36,
+          "boost": 0.161,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 3585,
+          "speedKmh": 32.66,
+          "boost": 0.228,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 4000,
+          "speedKmh": 36.42,
+          "boost": 0.325,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 4459,
+          "speedKmh": 40.54,
+          "boost": 0.402,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 4925,
+          "speedKmh": 44.67,
+          "boost": 0.448,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 5409,
+          "speedKmh": 48.91,
+          "boost": 0.478,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 5874,
+          "speedKmh": 52.94,
+          "boost": 0.496,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 5.000162533696787,
+          "from": 1,
+          "to": 2,
+          "rpm": 6487.987932542095,
+          "requestRPM": 6459.074678688237,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 10.21682920036346,
+          "from": 2,
+          "to": 3,
+          "rpm": 6496.78311826573,
+          "requestRPM": 6467.848928223761,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 3500,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 7.8174781148468355,
+        "400": 16.90252049043828,
+        "18.288": 3.56898472063586
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 3520,
+          "speedKmh": 0,
+          "boost": 0.013,
+          "gear": 1,
+          "throttle": 0.18,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 3661,
+          "speedKmh": 0.47,
+          "boost": 0.025,
+          "gear": 1,
+          "throttle": 0.868,
+          "clutch": 0.609
+        },
+        {
+          "time": 0.5,
+          "rpm": 3553,
+          "speedKmh": 2.88,
+          "boost": 0.072,
+          "gear": 1,
+          "throttle": 0.962,
+          "clutch": 0.553
+        },
+        {
+          "time": 0.758,
+          "rpm": 3529,
+          "speedKmh": 5.63,
+          "boost": 0.111,
+          "gear": 1,
+          "throttle": 0.991,
+          "clutch": 0.535
+        },
+        {
+          "time": 1.008,
+          "rpm": 3525,
+          "speedKmh": 8.43,
+          "boost": 0.138,
+          "gear": 1,
+          "throttle": 0.995,
+          "clutch": 0.519
+        },
+        {
+          "time": 1.258,
+          "rpm": 3523,
+          "speedKmh": 11.35,
+          "boost": 0.157,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.508
+        },
+        {
+          "time": 1.508,
+          "rpm": 3522,
+          "speedKmh": 14.34,
+          "boost": 0.172,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.499
+        },
+        {
+          "time": 1.758,
+          "rpm": 3522,
+          "speedKmh": 17.4,
+          "boost": 0.182,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.493
+        },
+        {
+          "time": 2.008,
+          "rpm": 3521,
+          "speedKmh": 20.5,
+          "boost": 0.19,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.488
+        },
+        {
+          "time": 2.258,
+          "rpm": 3521,
+          "speedKmh": 23.63,
+          "boost": 0.196,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.485
+        },
+        {
+          "time": 2.508,
+          "rpm": 3521,
+          "speedKmh": 26.79,
+          "boost": 0.2,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.483
+        },
+        {
+          "time": 2.758,
+          "rpm": 3412,
+          "speedKmh": 30.11,
+          "boost": 0.217,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.008,
+          "rpm": 3703,
+          "speedKmh": 33.76,
+          "boost": 0.281,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.258,
+          "rpm": 4145,
+          "speedKmh": 37.74,
+          "boost": 0.369,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 4620,
+          "speedKmh": 41.98,
+          "boost": 0.429,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 5110,
+          "speedKmh": 46.3,
+          "boost": 0.466,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 5590,
+          "speedKmh": 50.49,
+          "boost": 0.489,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 6030,
+          "speedKmh": 54.28,
+          "boost": 0.5,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 6443,
+          "speedKmh": 57.82,
+          "boost": 0.5,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 5752,
+          "speedKmh": 59.33,
+          "boost": 0.338,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4.416829200363424,
+          "from": 1,
+          "to": 2,
+          "rpm": 6495.243627235428,
+          "requestRPM": 6466.313101820314,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 9.63349586703016,
+          "from": 2,
+          "to": 3,
+          "rpm": 6499.2923131693,
+          "requestRPM": 6470.352150203259,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 5000,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 8.016260001822445,
+        "400": 17.145223129537296,
+        "18.288": 3.639803428846467
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 5031,
+          "speedKmh": 0,
+          "boost": 0.02,
+          "gear": 1,
+          "throttle": 0.219,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 5150,
+          "speedKmh": 0.45,
+          "boost": 0.036,
+          "gear": 1,
+          "throttle": 0.886,
+          "clutch": 0.638
+        },
+        {
+          "time": 0.5,
+          "rpm": 5064,
+          "speedKmh": 2.62,
+          "boost": 0.094,
+          "gear": 1,
+          "throttle": 0.964,
+          "clutch": 0.578
+        },
+        {
+          "time": 0.758,
+          "rpm": 5042,
+          "speedKmh": 5.2,
+          "boost": 0.145,
+          "gear": 1,
+          "throttle": 0.989,
+          "clutch": 0.549
+        },
+        {
+          "time": 1.008,
+          "rpm": 5038,
+          "speedKmh": 7.91,
+          "boost": 0.182,
+          "gear": 1,
+          "throttle": 0.994,
+          "clutch": 0.528
+        },
+        {
+          "time": 1.258,
+          "rpm": 5035,
+          "speedKmh": 10.77,
+          "boost": 0.208,
+          "gear": 1,
+          "throttle": 0.996,
+          "clutch": 0.513
+        },
+        {
+          "time": 1.508,
+          "rpm": 5034,
+          "speedKmh": 13.73,
+          "boost": 0.227,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.502
+        },
+        {
+          "time": 1.758,
+          "rpm": 5033,
+          "speedKmh": 16.77,
+          "boost": 0.241,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.495
+        },
+        {
+          "time": 2.008,
+          "rpm": 5033,
+          "speedKmh": 19.86,
+          "boost": 0.251,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.489
+        },
+        {
+          "time": 2.258,
+          "rpm": 5032,
+          "speedKmh": 22.98,
+          "boost": 0.258,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.485
+        },
+        {
+          "time": 2.508,
+          "rpm": 5032,
+          "speedKmh": 26.14,
+          "boost": 0.263,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.483
+        },
+        {
+          "time": 2.758,
+          "rpm": 5032,
+          "speedKmh": 29.31,
+          "boost": 0.266,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.481
+        },
+        {
+          "time": 3.008,
+          "rpm": 5032,
+          "speedKmh": 32.49,
+          "boost": 0.269,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.479
+        },
+        {
+          "time": 3.258,
+          "rpm": 5031,
+          "speedKmh": 35.67,
+          "boost": 0.271,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.478
+        },
+        {
+          "time": 3.508,
+          "rpm": 5031,
+          "speedKmh": 38.86,
+          "boost": 0.272,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.477
+        },
+        {
+          "time": 3.758,
+          "rpm": 5031,
+          "speedKmh": 42.05,
+          "boost": 0.273,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.477
+        },
+        {
+          "time": 4.008,
+          "rpm": 5076,
+          "speedKmh": 45.84,
+          "boost": 0.357,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 5495,
+          "speedKmh": 49.58,
+          "boost": 0.42,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 5930,
+          "speedKmh": 53.38,
+          "boost": 0.461,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 6340,
+          "speedKmh": 56.93,
+          "boost": 0.486,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4.733495867030107,
+          "from": 1,
+          "to": 2,
+          "rpm": 6495.967654993105,
+          "requestRPM": 6467.035406091777,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 9.950162533696808,
+          "from": 2,
+          "to": 3,
+          "rpm": 6498.4400209070145,
+          "requestRPM": 6469.50188674988,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 5500,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 8.304411858909445,
+        "400": 17.462032645363536,
+        "18.288": 3.8280616860578056
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 5535,
+          "speedKmh": 0,
+          "boost": 0.022,
+          "gear": 1,
+          "throttle": 0.243,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 5638,
+          "speedKmh": 0.42,
+          "boost": 0.037,
+          "gear": 1,
+          "throttle": 0.899,
+          "clutch": 0.66
+        },
+        {
+          "time": 0.5,
+          "rpm": 5566,
+          "speedKmh": 2.38,
+          "boost": 0.091,
+          "gear": 1,
+          "throttle": 0.966,
+          "clutch": 0.608
+        },
+        {
+          "time": 0.758,
+          "rpm": 5546,
+          "speedKmh": 4.71,
+          "boost": 0.137,
+          "gear": 1,
+          "throttle": 0.989,
+          "clutch": 0.583
+        },
+        {
+          "time": 1.008,
+          "rpm": 5541,
+          "speedKmh": 7.14,
+          "boost": 0.17,
+          "gear": 1,
+          "throttle": 0.994,
+          "clutch": 0.564
+        },
+        {
+          "time": 1.258,
+          "rpm": 5539,
+          "speedKmh": 9.69,
+          "boost": 0.194,
+          "gear": 1,
+          "throttle": 0.996,
+          "clutch": 0.551
+        },
+        {
+          "time": 1.508,
+          "rpm": 5538,
+          "speedKmh": 12.32,
+          "boost": 0.21,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.542
+        },
+        {
+          "time": 1.758,
+          "rpm": 5537,
+          "speedKmh": 15.02,
+          "boost": 0.222,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.536
+        },
+        {
+          "time": 2.008,
+          "rpm": 5536,
+          "speedKmh": 17.77,
+          "boost": 0.231,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.531
+        },
+        {
+          "time": 2.258,
+          "rpm": 5536,
+          "speedKmh": 20.54,
+          "boost": 0.237,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.528
+        },
+        {
+          "time": 2.508,
+          "rpm": 5536,
+          "speedKmh": 23.34,
+          "boost": 0.242,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.525
+        },
+        {
+          "time": 2.758,
+          "rpm": 5535,
+          "speedKmh": 26.15,
+          "boost": 0.245,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.524
+        },
+        {
+          "time": 3.008,
+          "rpm": 5535,
+          "speedKmh": 28.97,
+          "boost": 0.247,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.522
+        },
+        {
+          "time": 3.258,
+          "rpm": 5535,
+          "speedKmh": 31.79,
+          "boost": 0.248,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.521
+        },
+        {
+          "time": 3.508,
+          "rpm": 5535,
+          "speedKmh": 34.62,
+          "boost": 0.25,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.521
+        },
+        {
+          "time": 3.758,
+          "rpm": 5535,
+          "speedKmh": 37.44,
+          "boost": 0.25,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.52
+        },
+        {
+          "time": 4.008,
+          "rpm": 5535,
+          "speedKmh": 40.27,
+          "boost": 0.251,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.52
+        },
+        {
+          "time": 4.25,
+          "rpm": 5210,
+          "speedKmh": 43.87,
+          "boost": 0.303,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 5298,
+          "speedKmh": 47.82,
+          "boost": 0.389,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 5733,
+          "speedKmh": 51.66,
+          "boost": 0.441,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 5.100162533696792,
+          "from": 1,
+          "to": 2,
+          "rpm": 6497.863728918839,
+          "requestRPM": 6468.926966575542,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 10.316829200363454,
+          "from": 2,
+          "to": 3,
+          "rpm": 6498.938046261771,
+          "requestRPM": 6469.9987265978325,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "runtime AI",
+      "launchRPM": 6000,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 8.617494619745313,
+        "400": 17.767458005252063,
+        "18.288": 4.149212246570269
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 6039,
+          "speedKmh": 0,
+          "boost": 0.025,
+          "gear": 1,
+          "throttle": 0.28,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 6122,
+          "speedKmh": 0.39,
+          "boost": 0.039,
+          "gear": 1,
+          "throttle": 0.916,
+          "clutch": 0.693
+        },
+        {
+          "time": 0.5,
+          "rpm": 6066,
+          "speedKmh": 2.05,
+          "boost": 0.086,
+          "gear": 1,
+          "throttle": 0.97,
+          "clutch": 0.65
+        },
+        {
+          "time": 0.758,
+          "rpm": 6049,
+          "speedKmh": 4.02,
+          "boost": 0.125,
+          "gear": 1,
+          "throttle": 0.99,
+          "clutch": 0.63
+        },
+        {
+          "time": 1.008,
+          "rpm": 6044,
+          "speedKmh": 6.06,
+          "boost": 0.153,
+          "gear": 1,
+          "throttle": 0.995,
+          "clutch": 0.615
+        },
+        {
+          "time": 1.258,
+          "rpm": 6042,
+          "speedKmh": 8.19,
+          "boost": 0.172,
+          "gear": 1,
+          "throttle": 0.997,
+          "clutch": 0.605
+        },
+        {
+          "time": 1.508,
+          "rpm": 6041,
+          "speedKmh": 10.39,
+          "boost": 0.186,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.598
+        },
+        {
+          "time": 1.758,
+          "rpm": 6040,
+          "speedKmh": 12.63,
+          "boost": 0.196,
+          "gear": 1,
+          "throttle": 0.998,
+          "clutch": 0.593
+        },
+        {
+          "time": 2.008,
+          "rpm": 6040,
+          "speedKmh": 14.91,
+          "boost": 0.203,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.589
+        },
+        {
+          "time": 2.258,
+          "rpm": 6040,
+          "speedKmh": 17.21,
+          "boost": 0.208,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.586
+        },
+        {
+          "time": 2.508,
+          "rpm": 6039,
+          "speedKmh": 19.53,
+          "boost": 0.212,
+          "gear": 1,
+          "throttle": 0.999,
+          "clutch": 0.585
+        },
+        {
+          "time": 2.758,
+          "rpm": 6039,
+          "speedKmh": 21.86,
+          "boost": 0.214,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.583
+        },
+        {
+          "time": 3.008,
+          "rpm": 6039,
+          "speedKmh": 24.19,
+          "boost": 0.216,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.582
+        },
+        {
+          "time": 3.258,
+          "rpm": 6039,
+          "speedKmh": 26.53,
+          "boost": 0.217,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.582
+        },
+        {
+          "time": 3.508,
+          "rpm": 6039,
+          "speedKmh": 28.87,
+          "boost": 0.218,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.581
+        },
+        {
+          "time": 3.758,
+          "rpm": 6039,
+          "speedKmh": 31.2,
+          "boost": 0.219,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.581
+        },
+        {
+          "time": 4.008,
+          "rpm": 6039,
+          "speedKmh": 33.54,
+          "boost": 0.219,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.581
+        },
+        {
+          "time": 4.25,
+          "rpm": 5278,
+          "speedKmh": 37.81,
+          "boost": 0.278,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 4741,
+          "speedKmh": 42.66,
+          "boost": 0.373,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.75,
+          "rpm": 5169,
+          "speedKmh": 46.77,
+          "boost": 0.432,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 5.391829200363473,
+          "from": 1,
+          "to": 2,
+          "rpm": 6493.2800395142,
+          "requestRPM": 6464.3541882518775,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 10.608495867030104,
+          "from": 2,
+          "to": 3,
+          "rpm": 6498.599381782063,
+          "requestRPM": 6469.660868279982,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    },
+    {
+      "id": "xt",
+      "driver": "experimental metered clutch",
+      "launchRPM": 4300,
+      "powerKW": 100,
+      "mass": 1190,
+      "splits": {
+        "100": 7.6796802197043785,
+        "400": 16.760351915560346,
+        "18.288": 3.445224061423303
+      },
+      "samples": [
+        {
+          "time": 0,
+          "rpm": 4326,
+          "speedKmh": 0,
+          "boost": 0.018,
+          "gear": 1,
+          "throttle": 0.197,
+          "clutch": 1
+        },
+        {
+          "time": 0.258,
+          "rpm": 4584,
+          "speedKmh": 0.47,
+          "boost": 0.04,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.609
+        },
+        {
+          "time": 0.5,
+          "rpm": 4537,
+          "speedKmh": 2.97,
+          "boost": 0.114,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.531
+        },
+        {
+          "time": 0.758,
+          "rpm": 4486,
+          "speedKmh": 5.96,
+          "boost": 0.17,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.501
+        },
+        {
+          "time": 1.008,
+          "rpm": 4447,
+          "speedKmh": 9.07,
+          "boost": 0.208,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.482
+        },
+        {
+          "time": 1.258,
+          "rpm": 4418,
+          "speedKmh": 12.31,
+          "boost": 0.234,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.469
+        },
+        {
+          "time": 1.508,
+          "rpm": 4395,
+          "speedKmh": 15.64,
+          "boost": 0.252,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.46
+        },
+        {
+          "time": 1.758,
+          "rpm": 4377,
+          "speedKmh": 19.04,
+          "boost": 0.265,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.454
+        },
+        {
+          "time": 2.008,
+          "rpm": 4364,
+          "speedKmh": 22.47,
+          "boost": 0.274,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.45
+        },
+        {
+          "time": 2.258,
+          "rpm": 4354,
+          "speedKmh": 25.93,
+          "boost": 0.28,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.447
+        },
+        {
+          "time": 2.508,
+          "rpm": 4347,
+          "speedKmh": 29.41,
+          "boost": 0.284,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.445
+        },
+        {
+          "time": 2.758,
+          "rpm": 4341,
+          "speedKmh": 32.9,
+          "boost": 0.287,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.444
+        },
+        {
+          "time": 3.008,
+          "rpm": 4337,
+          "speedKmh": 36.39,
+          "boost": 0.289,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0.443
+        },
+        {
+          "time": 3.258,
+          "rpm": 4460,
+          "speedKmh": 40.5,
+          "boost": 0.377,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.508,
+          "rpm": 4930,
+          "speedKmh": 44.69,
+          "boost": 0.434,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 3.758,
+          "rpm": 5408,
+          "speedKmh": 48.88,
+          "boost": 0.469,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.008,
+          "rpm": 5869,
+          "speedKmh": 52.89,
+          "boost": 0.491,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.25,
+          "rpm": 6283,
+          "speedKmh": 56.45,
+          "boost": 0.5,
+          "gear": 1,
+          "throttle": 1,
+          "clutch": 0
+        },
+        {
+          "time": 4.5,
+          "rpm": 6361,
+          "speedKmh": 58.18,
+          "boost": 0.345,
+          "gear": 0,
+          "throttle": 0,
+          "clutch": 1
+        },
+        {
+          "time": 4.75,
+          "rpm": 4773,
+          "speedKmh": 61.7,
+          "boost": 0.386,
+          "gear": 2,
+          "throttle": 1,
+          "clutch": 0
+        }
+      ],
+      "shifts": [
+        {
+          "time": 4.266829200363417,
+          "from": 1,
+          "to": 2,
+          "rpm": 6495.077192951804,
+          "requestRPM": 6466.147063719282,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        },
+        {
+          "time": 9.483495867030168,
+          "from": 2,
+          "to": 3,
+          "rpm": 6499.233904282648,
+          "requestRPM": 6470.293880353971,
+          "idealRPM": 6500,
+          "targetRPM": 6500,
+          "quality": "CLEAN"
+        }
+      ]
+    }
+  ]
+}

@@ -200,13 +200,21 @@ export default class DragRacingAI {
     const availableTorque = this.model.tractionForce() * v.config.wheelRadius / (ratio * v.transmission.efficiency);
     const margin = lerp(.93, .99, this.precision) * (1 - correction);
     const capacityPedal = 1 - Math.pow(clamp(availableTorque * margin / v.clutch.maxTorqueNm), 1 / 1.35);
-    const launching = !this.rollingStart && elapsed < 2.5 && t.gear === 1
+    const launching = !this.rollingStart && elapsed < 4 && t.gear === 1
       && t.speedKmh < 65 && t.clutchSlipRPM > 200;
     let clutch = 0;
     if (launching) {
       // Release toward the usable torque capacity; reopen slightly when slip
       // rises. Low-grip/high-power builds naturally need more pedal travel.
-      const desired = Math.max(capacityPedal, clamp(1 - elapsed / lerp(.28, .16, this.launchSkill)));
+      // Grip is an upper limit, not a promise that the engine can pull it.
+      // Meter clutch capacity against current off-boost torque as well, so an
+      // AWD launch does not dump the engine below its useful operating band.
+      const losses = 9 + t.rpm * .0017
+        + (130 + t.rpm * .018) * v.engine.config.inertia * Math.PI * 2 / 60;
+      const sustainableTorque = this.model.torque(t.rpm, t.boostBar) - losses
+        + (t.rpm - this.launchTargetRPM) * .03;
+      const enginePedal = 1 - Math.pow(clamp(sustainableTorque / v.clutch.maxTorqueNm), 1 / 1.35);
+      const desired = Math.max(capacityPedal, enginePedal, clamp(1 - elapsed / lerp(.28, .16, this.launchSkill)));
       this.launchClutch += (desired - this.launchClutch) * Math.min(1, dt * response);
       clutch = this.launchClutch;
     }
@@ -215,7 +223,7 @@ export default class DragRacingAI {
     let desiredThrottle = clamp((availableTorque * margin - sync) / fullTorque, .08, 1);
     if (launching) {
       // Clutch meters road torque; throttle keeps the engine in its launch band.
-      desiredThrottle = clamp(.22 + (this.launchTargetRPM - t.rpm) / 1100, .08, 1);
+      desiredThrottle = clamp(1 + (this.launchTargetRPM - t.rpm) / 1100, .08, 1);
       desiredThrottle *= 1 - correction * .45;
     }
     this.throttle += (desiredThrottle - this.throttle) * Math.min(1, dt * response);

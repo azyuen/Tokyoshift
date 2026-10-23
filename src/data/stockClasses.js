@@ -2,132 +2,132 @@ import {TUNING_POTENTIAL} from './tuningPotential.js';
 // Fixed model classes from seeded 120 Hz Vehicle simulations; see docs/engineering.
 export const STOCK_CLASS_DATA = {
   "gdb": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.179
+    "stockClass": "A",
+    "stockCompositeSeconds": 13.829
   },
   "gf8": {
     "stockClass": "A",
-    "stockCompositeSeconds": 14.016
+    "stockCompositeSeconds": 13.624
   },
   "s15": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.106
+    "stockClass": "A",
+    "stockCompositeSeconds": 14.031
   },
   "starion": {
-    "stockClass": "C",
-    "stockCompositeSeconds": 15.43
+    "stockClass": "D",
+    "stockCompositeSeconds": 15.62
   },
   "fto": {
     "stockClass": "C",
-    "stockCompositeSeconds": 14.992
+    "stockCompositeSeconds": 14.993
   },
   "mx5": {
     "stockClass": "D",
-    "stockCompositeSeconds": 15.787
+    "stockCompositeSeconds": 15.64
   },
   "sa22c": {
-    "stockClass": "D",
-    "stockCompositeSeconds": 15.694
+    "stockClass": "B",
+    "stockCompositeSeconds": 14.781
   },
   "mx6": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.031
+    "stockCompositeSeconds": 15.032
   },
   "prelude": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.046
+    "stockCompositeSeconds": 15.047
   },
   "sw20": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.197
+    "stockClass": "A",
+    "stockCompositeSeconds": 13.82
   },
   "soarer": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.699
+    "stockCompositeSeconds": 14.229
   },
   "forester": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.675
+    "stockCompositeSeconds": 14.432
   },
   "svx": {
-    "stockClass": "D",
-    "stockCompositeSeconds": 15.763
+    "stockClass": "C",
+    "stockCompositeSeconds": 15.382
   },
   "xt": {
     "stockClass": "D",
-    "stockCompositeSeconds": 17.443
+    "stockCompositeSeconds": 16.86
   },
   "ae86": {
-    "stockClass": "D",
-    "stockCompositeSeconds": 15.53
+    "stockClass": "C",
+    "stockCompositeSeconds": 15.477
   },
   "ef": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.281
+    "stockCompositeSeconds": 15.292
   },
   "ek9": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.241
+    "stockCompositeSeconds": 15.239
   },
   "s2000": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.266
+    "stockCompositeSeconds": 14.267
   },
   "fc3s": {
-    "stockClass": "D",
-    "stockCompositeSeconds": 15.58
+    "stockClass": "C",
+    "stockCompositeSeconds": 15.118
   },
   "rx7fd": {
     "stockClass": "A",
-    "stockCompositeSeconds": 13.703
+    "stockCompositeSeconds": 13.711
   },
   "rx8": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.575
+    "stockCompositeSeconds": 14.551
   },
   "galant": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.795
+    "stockCompositeSeconds": 14.749
   },
   "evo5": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.125
+    "stockClass": "A",
+    "stockCompositeSeconds": 13.852
   },
   "evo6": {
     "stockClass": "A",
-    "stockCompositeSeconds": 14.077
+    "stockCompositeSeconds": 13.801
   },
   "gc8": {
     "stockClass": "A",
-    "stockCompositeSeconds": 13.663
+    "stockCompositeSeconds": 13.513
   },
   "r32": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.436
+    "stockClass": "A",
+    "stockCompositeSeconds": 14.037
   },
   "r34": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.558
+    "stockCompositeSeconds": 14.178
   },
   "3000gt": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.516
+    "stockCompositeSeconds": 14.125
   },
   "a60": {
     "stockClass": "D",
-    "stockCompositeSeconds": 15.832
+    "stockCompositeSeconds": 15.861
   },
   "jza80": {
     "stockClass": "A",
-    "stockCompositeSeconds": 14.032
+    "stockCompositeSeconds": 14.067
   },
   "nsx": {
     "stockClass": "A",
-    "stockCompositeSeconds": 13.471
+    "stockCompositeSeconds": 13.353
   },
   "z32": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.239
+    "stockClass": "A",
+    "stockCompositeSeconds": 14.065
   },
   "z33": {
     "stockClass": "A",
@@ -139,39 +139,39 @@ export const STOCK_CLASS_DATA = {
   },
   "crx": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.376
+    "stockCompositeSeconds": 15.368
   },
   "dc2": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.698
+    "stockCompositeSeconds": 14.699
   },
   "eclipse": {
     "stockClass": "C",
-    "stockCompositeSeconds": 15.461
+    "stockCompositeSeconds": 15.327
   },
   "familia": {
-    "stockClass": "D",
-    "stockCompositeSeconds": 15.639
+    "stockClass": "C",
+    "stockCompositeSeconds": 15.339
   },
   "180sx": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.678
+    "stockCompositeSeconds": 14.532
   },
   "st205": {
     "stockClass": "B",
-    "stockCompositeSeconds": 14.768
+    "stockCompositeSeconds": 14.411
   },
   "jzx100": {
     "stockClass": "A",
-    "stockCompositeSeconds": 13.857
+    "stockCompositeSeconds": 13.926
   },
   "b4rsk": {
-    "stockClass": "B",
-    "stockCompositeSeconds": 14.611
+    "stockClass": "A",
+    "stockCompositeSeconds": 14.093
   },
   "magna": {
     "stockClass": "D",
-    "stockCompositeSeconds": 15.583
+    "stockCompositeSeconds": 15.585
   }
 };
 // Potential is independent of permanent factory class and never gates recruitment.

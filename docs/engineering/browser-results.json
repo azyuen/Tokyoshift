@@ -15,6 +15,7 @@
         "restored": 419,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
+      "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
       "dyno": {
         "state": "COMPLETE",
         "error": null,
@@ -27,8 +28,8 @@
         "opponentCharacterId": "daigoArakawa",
         "playerKW": 206,
         "opponentKW": 206,
-        "playerDistance": 443.36995781480886,
-        "opponentDistance": 440.7757822971208,
+        "playerDistance": 444.22924895848814,
+        "opponentDistance": 441.11854674987075,
         "finished": true,
         "falseStart": false
       },
@@ -49,6 +50,7 @@
         "restored": 419,
         "label": "FACTORY B // POTENTIAL EXCEPTIONAL"
       },
+      "potentialHelp": "EXCEPTIONAL DEVELOPMENT // PACE, USABILITY & COST\nSTANDARD MAX 419 kW // 769 Nm\nBENCHMARK BUILD FROM ¥9,830,000 INCLUDING CAR",
       "dyno": null,
       "race": null,
       "input": "scene action handlers; automated pedal/gear input for dyno and race",

@@ -8,10 +8,10 @@ A–C have useful standing and rolling performance bands. Do not move cars solel
 
 | Class | Cars | Standing 400 m range | Rolling 400 m range | Two cheapest eligible models / donor yen |
 |---|---:|---|---|---|
-| A | 8 | 13.32–14.01 s | 10.95–11.35 s | z33 / 2,900,000; gf8 / 3,500,000 |
-| B | 17 | 14.03–14.82 s | 11.30–11.90 s | forester / 2,000,000; rx8 / 2,050,000 |
-| C | 9 | 14.92–15.34 s | 11.93–12.47 s | ef / 1,150,000; ek9 / 1,450,000 |
-| D | 8 | 15.36–17.71 s | 11.95–13.28 s | ae86 / 950,000; xt / 1,250,000 |
+| A | 15 | 13.15–13.95 s | 10.95–11.49 s | b4rsk / 2,600,000; z33 / 2,900,000 |
+| B | 11 | 13.91–14.71 s | 11.33–11.95 s | sa22c / 2,000,000; forester / 2,000,000 |
+| C | 12 | 14.92–15.31 s | 11.93–12.43 s | ae86 / 950,000; ef / 1,150,000 |
+| D | 4 | 15.40–16.83 s | 12.47–13.28 s | xt / 1,250,000; mx5 / 1,350,000 |
 
 Recruitment continues to require a truly stock car of the same fixed class on every difficulty. Tuning potential is irrelevant to eligibility. Multiple dealer choices exist in each class, but this table does not prove a new player can afford each invitation; career earnings/unlock testing remains necessary. Magna is excluded from accessible-choice counts.
 
@@ -22,31 +22,31 @@ Each cell is kW / standing 400 m seconds. Hardware costs are cumulative, excludi
 
 | Car | Donor yen | stock / ¥0 | budget / ¥53,000 | street / ¥214,000 | intermediate / ¥825,000 | advanced / ¥1,330,000 | max / ¥2,240,000 |
 |---|---:|---|---|---|---|---|---|
-| ae86 | 950,000 | 96 / 15.36 | 99 / 15.14 | 122 / 14.06 | 162 / 12.73 | 191 / 12.36 | 215 / 11.56 |
-| ek9 | 1,450,000 | 136 / 15.18 | 140 / 14.98 | 156 / 14.32 | 217 / 12.76 | 259 / 12.40 | 286 / 11.77 |
-| dc2 | 2,800,000 | 147 / 14.71 | 152 / 14.49 | 171 / 13.92 | 236 / 12.78 | 282 / 12.55 | 311 / 11.67 |
-| s2000 | 3,600,000 | 184 / 14.28 | 190 / 14.06 | 204 / 13.60 | 263 / 12.59 | 326 / 12.33 | 350 / 11.51 |
-| fc3s | 1,850,000 | 136 / 15.67 | 144 / 15.32 | 167 / 14.52 | 218 / 13.36 | 245 / 13.12 | 284 / 12.33 |
-| rx7fd | 4,200,000 | 206 / 13.65 | 217 / 13.41 | 235 / 12.90 | 314 / 11.87 | 356 / 11.71 | 406 / 10.92 |
-| evo6 | 4,500,000 | 206 / 14.01 | 216 / 13.74 | 236 / 13.16 | 309 / 12.11 | 343 / 12.03 | 385 / 11.33 |
-| r34 | 8,500,000 | 206 / 14.52 | 216 / 14.23 | 250 / 13.52 | 322 / 12.48 | 359 / 12.32 | 419 / 11.58 |
-| jza80 | 6,800,000 | 206 / 13.90 | 217 / 13.66 | 253 / 13.04 | 326 / 12.05 | 361 / 11.91 | 422 / 11.08 |
-| nsx | 9,000,000 | 206 / 13.32 | 213 / 13.15 | 227 / 12.74 | 302 / 11.58 | 371 / 11.11 | 399 / 10.66 |
-| xt | 1,250,000 | 100 / 17.71 | 106 / 17.31 | 114 / 16.55 | 152 / 15.16 | 177 / 14.81 | 193 / 14.03 |
+| ae86 | 950,000 | 96 / 15.28 | 99 / 15.07 | 122 / 14.04 | 162 / 12.72 | 191 / 12.33 | 215 / 11.52 |
+| ek9 | 1,450,000 | 136 / 15.18 | 140 / 14.96 | 156 / 14.17 | 217 / 12.69 | 259 / 12.38 | 286 / 11.58 |
+| dc2 | 2,800,000 | 147 / 14.71 | 152 / 14.49 | 171 / 13.89 | 236 / 12.76 | 282 / 12.52 | 311 / 11.64 |
+| s2000 | 3,600,000 | 184 / 14.28 | 190 / 14.06 | 204 / 13.59 | 263 / 12.58 | 326 / 12.31 | 350 / 11.49 |
+| fc3s | 1,850,000 | 136 / 14.97 | 144 / 14.67 | 167 / 13.82 | 218 / 12.65 | 245 / 12.44 | 284 / 11.63 |
+| rx7fd | 4,200,000 | 206 / 13.66 | 217 / 13.41 | 235 / 12.91 | 314 / 11.88 | 356 / 11.72 | 406 / 10.91 |
+| evo6 | 4,500,000 | 206 / 13.60 | 216 / 13.38 | 236 / 12.63 | 309 / 11.47 | 343 / 11.24 | 385 / 10.64 |
+| r34 | 8,500,000 | 206 / 13.95 | 216 / 13.71 | 250 / 12.84 | 322 / 11.69 | 359 / 11.47 | 419 / 10.79 |
+| jza80 | 6,800,000 | 206 / 13.95 | 217 / 13.71 | 253 / 13.07 | 326 / 12.09 | 361 / 11.93 | 422 / 11.12 |
+| nsx | 9,000,000 | 206 / 13.15 | 213 / 12.96 | 227 / 12.52 | 302 / 11.27 | 371 / 10.81 | 399 / 10.24 |
+| xt | 1,250,000 | 100 / 16.83 | 106 / 16.46 | 114 / 15.51 | 152 / 13.96 | 177 / 13.67 | 193 / 13.00 |
 
 
 ## Decisions and implementation
 
 
 - Keep the existing engineering envelopes this pass: saved results show useful successive stages, and the previous runaway NA conversions are no longer evident in these representative builds. This is not a claim that every possible parts combination is optimal.
-- Cheap lightweight builds remain relevant: AE86 street hardware costs ¥214,000 and reaches about 14.06 s, close to the slower stock A cars; intermediate hardware reaches about 12.73 s. This is a comparison across builds, not permission to use modifications in recruitment.
+- Cheap lightweight builds remain relevant: the table shows AE86 street and intermediate performance at ¥214,000 and ¥825,000 hardware budgets. This compares builds, not permission to use modifications in recruitment.
 - Factory-turbo headroom remains meaningful: R34 and Supra exceed 400 kW at maximum standard hardware; the lighter DC2 remains competitive at about 311 kW without exceeding their absolute output.
 - NSX remains a strong premium outlier, not artificially nerfed. Its ¥9m donor price and the saved human-driver/traction scenarios must remain part of endgame review. Neither cost nor this limited scenario set proves universal balance.
 - Confirmed the active garage engine shop already uses the complete race build, including installed chassis/exhaust, calibration and specialist tuning. Added actionable boost-support advice that distinguishes an upgradeable component from one already at maximum level, plus preview-parity regressions for all 43 cars and specialist donors. No purchased modifications are changed.
-- XT is the next targeted mechanical review: check its actual low-speed gearing, torque delivery and launch behaviour before changing a class or an engine envelope. A fifth class containing one car would not solve recruitment accessibility.
+- XT diagnosis found excessive clutch engagement pulling RPM below boost. Shared smart-driver clutch control now meters engine torque as well as traction; stock XT improves 17.71 → 16.83 s with unchanged power. It remains the slowest stock car, and its rating-3 sample is still about 0.08 s faster than the Elite seed. Class boundaries retain the same composite thresholds; assignments now reflect refreshed standing results.
 
 
 ## Remaining acceptance work
 
 
-Confirm XT behaviour with a bounded diagnostic; test invitation affordability along a non-dev career; reconcile newer main gameplay before an isolated playable preview. Existing source and browser results are not a deployment approval.
+RECRUITMENT_ACCESS.md checks all 42 invitations on three difficulties and quantifies conditional savings routes. A spent-down career still needs gameplay testing; reconcile newer main gameplay before an isolated playable preview. Existing source and browser results are not a deployment approval.

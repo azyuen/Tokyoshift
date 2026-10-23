@@ -1,0 +1,222 @@
+{
+  "scope": "Source-level non-dev eligibility and conditional savings model. Assumes showdown wins; not an end-to-end career playthrough. No perfect bonuses, resale, pink slips or coupons counted.",
+  "challengesChecked": 126,
+  "rows": [
+    {
+      "difficulty": "EASY",
+      "class": "A",
+      "choices": [
+        {
+          "id": "b4rsk",
+          "price": 2210000
+        },
+        {
+          "id": "z33",
+          "price": 2470000
+        }
+      ],
+      "championshipCash": 838500,
+      "shortfallForSecondChoice": 1706500,
+      "plazaWinsFromUnspentPrizes": 2,
+      "plazaWinsFromEntryFeeOnly": 3
+    },
+    {
+      "difficulty": "EASY",
+      "class": "B",
+      "choices": [
+        {
+          "id": "sa22c",
+          "price": 1700000
+        },
+        {
+          "id": "forester",
+          "price": 1700000
+        }
+      ],
+      "championshipCash": 838500,
+      "shortfallForSecondChoice": 936500,
+      "plazaWinsFromUnspentPrizes": 2,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "EASY",
+      "class": "C",
+      "choices": [
+        {
+          "id": "ae86",
+          "price": 810000
+        },
+        {
+          "id": "ef",
+          "price": 980000
+        }
+      ],
+      "championshipCash": 838500,
+      "shortfallForSecondChoice": 216500,
+      "plazaWinsFromUnspentPrizes": 1,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "EASY",
+      "class": "D",
+      "choices": [
+        {
+          "id": "xt",
+          "price": 1060000
+        },
+        {
+          "id": "mx5",
+          "price": 1150000
+        }
+      ],
+      "championshipCash": 838500,
+      "shortfallForSecondChoice": 386500,
+      "plazaWinsFromUnspentPrizes": 1,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "STANDARD",
+      "class": "A",
+      "choices": [
+        {
+          "id": "b4rsk",
+          "price": 2600000
+        },
+        {
+          "id": "z33",
+          "price": 2900000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 2330000,
+      "plazaWinsFromUnspentPrizes": 4,
+      "plazaWinsFromEntryFeeOnly": 5
+    },
+    {
+      "difficulty": "STANDARD",
+      "class": "B",
+      "choices": [
+        {
+          "id": "sa22c",
+          "price": 2000000
+        },
+        {
+          "id": "forester",
+          "price": 2000000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 1430000,
+      "plazaWinsFromUnspentPrizes": 3,
+      "plazaWinsFromEntryFeeOnly": 3
+    },
+    {
+      "difficulty": "STANDARD",
+      "class": "C",
+      "choices": [
+        {
+          "id": "ae86",
+          "price": 950000
+        },
+        {
+          "id": "ef",
+          "price": 1150000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 580000,
+      "plazaWinsFromUnspentPrizes": 1,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "STANDARD",
+      "class": "D",
+      "choices": [
+        {
+          "id": "xt",
+          "price": 1250000
+        },
+        {
+          "id": "mx5",
+          "price": 1350000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 780000,
+      "plazaWinsFromUnspentPrizes": 2,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "HARD",
+      "class": "A",
+      "choices": [
+        {
+          "id": "b4rsk",
+          "price": 2600000
+        },
+        {
+          "id": "z33",
+          "price": 2900000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 2330000,
+      "plazaWinsFromUnspentPrizes": 4,
+      "plazaWinsFromEntryFeeOnly": 5
+    },
+    {
+      "difficulty": "HARD",
+      "class": "B",
+      "choices": [
+        {
+          "id": "sa22c",
+          "price": 2000000
+        },
+        {
+          "id": "forester",
+          "price": 2000000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 1430000,
+      "plazaWinsFromUnspentPrizes": 3,
+      "plazaWinsFromEntryFeeOnly": 3
+    },
+    {
+      "difficulty": "HARD",
+      "class": "C",
+      "choices": [
+        {
+          "id": "ae86",
+          "price": 950000
+        },
+        {
+          "id": "ef",
+          "price": 1150000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 580000,
+      "plazaWinsFromUnspentPrizes": 1,
+      "plazaWinsFromEntryFeeOnly": 2
+    },
+    {
+      "difficulty": "HARD",
+      "class": "D",
+      "choices": [
+        {
+          "id": "xt",
+          "price": 1250000
+        },
+        {
+          "id": "mx5",
+          "price": 1350000
+        }
+      ],
+      "championshipCash": 645000,
+      "shortfallForSecondChoice": 780000,
+      "plazaWinsFromUnspentPrizes": 2,
+      "plazaWinsFromEntryFeeOnly": 2
+    }
+  ]
+}
