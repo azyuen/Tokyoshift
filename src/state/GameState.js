@@ -96,6 +96,11 @@ export function createDefaultGameState(options = {}) {
     arkonStoryCruiseComplete: false,
     arkonStoryChapter03Done: false,
     arkonStoryChapter04Done: false,
+    arkonStoryChapter05Done: false,
+    arkonStoryChapter05JobsDone: 0,
+    arkonStoryChapter05Loan: null,
+    arkonStoryChapter05RaceResult: null,
+    arkonStoryChapter05Results: {}, 
     arkonStoryCanalYardUnlocked: false,
     arkonStoryWarehouseUnlocked: false,
     arkonStoryRwbProject: null,
@@ -1222,6 +1227,17 @@ export function normaliseState(input = {}) {
     arkonStoryCruiseComplete: storyMode && Boolean(input.arkonStoryCruiseComplete),
     arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
     arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
+    arkonStoryChapter05Done: storyMode && Boolean(input.arkonStoryChapter05Done),
+    arkonStoryChapter05JobsDone: storyMode
+      ? Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter05JobsDone)||0))):0,
+    arkonStoryChapter05Loan: storyMode && input.arkonStoryChapter05Loan?.active
+      ? clonePlain(input.arkonStoryChapter05Loan):null,
+    arkonStoryChapter05RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter05RaceResult)
+      ? input.arkonStoryChapter05RaceResult:null,
+    arkonStoryChapter05Results: storyMode &&
+      input.arkonStoryChapter05Results && typeof input.arkonStoryChapter05Results==='object'
+      ? clonePlain(input.arkonStoryChapter05Results):{},
     arkonStoryRwbProject: storyMode && input.arkonStoryRwbProject?.acquired &&
       input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
       ? {
@@ -1619,6 +1635,11 @@ export function snapshotRegistry(registry) {
     arkonStoryCruiseComplete: Boolean(registry.get('arkonStoryCruiseComplete')),
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
     arkonStoryChapter04Done: Boolean(registry.get('arkonStoryChapter04Done')),
+    arkonStoryChapter05Done: Boolean(registry.get('arkonStoryChapter05Done')),
+    arkonStoryChapter05JobsDone: Number(registry.get('arkonStoryChapter05JobsDone')||0),
+    arkonStoryChapter05Loan: registry.get('arkonStoryChapter05Loan')||null,
+    arkonStoryChapter05RaceResult: registry.get('arkonStoryChapter05RaceResult')||null,
+    arkonStoryChapter05Results: registry.get('arkonStoryChapter05Results')||{},
     arkonStoryRwbProject: registry.get('arkonStoryRwbProject') || null,
     arkonStoryCustomerJobsDone: Number(registry.get('arkonStoryCustomerJobsDone')||0),
     arkonStoryChapter03Seed: Number(registry.get('arkonStoryChapter03Seed')||0),
