@@ -105,6 +105,13 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter07RaceResult: null,
     arkonStoryChapter07Solo: null,
     arkonStoryChapter07SoloFinished: false,
+    arkonStoryChapter08Done: false,
+    arkonStoryChapter08RacesDone: 0,
+    arkonStoryChapter08Race: null,
+    arkonStoryChapter08RaceResult: null,
+    arkonStoryChapter08LastResult: null,
+    arkonStoryChapter08ContractSigned: false,
+    arkonStoryChapter08ContractTerms: null,
     arkonStoryChapter06Accounts: null,
     arkonStoryChapter06Cruise: null,
     arkonStoryChapter06CruiseFinished: false,
@@ -1270,6 +1277,23 @@ export function normaliseState(input = {}) {
       ?clonePlain(input.arkonStoryChapter07Solo):null,
     arkonStoryChapter07SoloFinished: storyMode &&
       Boolean(input.arkonStoryChapter07SoloFinished),
+    arkonStoryChapter08Done: storyMode && Boolean(input.arkonStoryChapter08Done),
+    arkonStoryChapter08RacesDone: storyMode
+      ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter08RacesDone)||0))):0,
+    arkonStoryChapter08Race: storyMode && input.arkonStoryChapter08Race?.active
+      ?clonePlain(input.arkonStoryChapter08Race):null,
+    arkonStoryChapter08RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter08RaceResult)
+      ?input.arkonStoryChapter08RaceResult:null,
+    arkonStoryChapter08LastResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter08LastResult)
+      ?input.arkonStoryChapter08LastResult:null,
+    arkonStoryChapter08ContractSigned: storyMode &&
+      Boolean(input.arkonStoryChapter08ContractSigned),
+    arkonStoryChapter08ContractTerms: storyMode &&
+      input.arkonStoryChapter08ContractTerms &&
+      typeof input.arkonStoryChapter08ContractTerms==='object'
+      ?clonePlain(input.arkonStoryChapter08ContractTerms):null,
     arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
       typeof input.arkonStoryChapter06Accounts==='object'
       ? clonePlain(input.arkonStoryChapter06Accounts):null,
@@ -1706,6 +1730,21 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter05Done: Boolean(registry.get('arkonStoryChapter05Done')),
     arkonStoryCh5PacingVersion:1,
     arkonStoryChapter06Done: Boolean(registry.get('arkonStoryChapter06Done')),
+    // R672 saves both chapters 07 and 08 mid-race and on completion;
+    // missing Chapter 07 fields previously lost across full reloads.
+    arkonStoryChapter07Done: Boolean(registry.get('arkonStoryChapter07Done')),
+    arkonStoryChapter07Work: registry.get('arkonStoryChapter07Work')||null,
+    arkonStoryChapter07Race: registry.get('arkonStoryChapter07Race')||null,
+    arkonStoryChapter07RaceResult: registry.get('arkonStoryChapter07RaceResult')||null,
+    arkonStoryChapter07Solo: registry.get('arkonStoryChapter07Solo')||null,
+    arkonStoryChapter07SoloFinished: Boolean(registry.get('arkonStoryChapter07SoloFinished')),
+    arkonStoryChapter08Done: Boolean(registry.get('arkonStoryChapter08Done')),
+    arkonStoryChapter08RacesDone: Number(registry.get('arkonStoryChapter08RacesDone')||0),
+    arkonStoryChapter08Race: registry.get('arkonStoryChapter08Race')||null,
+    arkonStoryChapter08RaceResult: registry.get('arkonStoryChapter08RaceResult')||null,
+    arkonStoryChapter08LastResult: registry.get('arkonStoryChapter08LastResult')||null,
+    arkonStoryChapter08ContractSigned: Boolean(registry.get('arkonStoryChapter08ContractSigned')),
+    arkonStoryChapter08ContractTerms: registry.get('arkonStoryChapter08ContractTerms')||null,
     arkonStoryChapter06Accounts: registry.get('arkonStoryChapter06Accounts')||null,
     arkonStoryChapter06Cruise: registry.get('arkonStoryChapter06Cruise')||null,
     arkonStoryChapter06CruiseFinished:
