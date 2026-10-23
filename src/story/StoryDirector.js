@@ -407,6 +407,9 @@ export class StoryDirector {
             // without becoming the selected race car. Update UI immediately.
             scene.ownedCarIds=(scene.registry.get('ownedCarIds')||[]).filter(id=>cars[id]);
             scene.carGarageLocations=scene.registry.get('carGarageLocations')||{};
+            // Show the restoration as the selected workshop exhibit, while
+            // selectCar() seals its tuning, travel and transport controls.
+            scene.selectCar?.('rwbStellaPorsche',{remember:false});
             scene.renderGaragePage?.();
             scene.refreshArkonRwbLoanHud?.();
             scene.cashText?.setText('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
