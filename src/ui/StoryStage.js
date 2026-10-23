@@ -8,12 +8,14 @@ import { DEFAULT_STORY_COMPOSITION, resolveStoryComposition } from './StoryCompo
 import { getStoryBackground } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { resolveBackgroundViewport, projectEntityOnBackground } from '../story/BackgroundViewport.js?v=20261022-r645';
 import { getNativeStoryStageTemplate, getNativeCastPlacement } from '../story/StoryNativeStageTemplates.js?v=20261023-r655';
+import {getChapter05DuelCar,getChapter05DuelActor} from '../story/Chapter05MeetLayout.js?v=20261023-r670';
 
 export function showStoryStage(scene, {
   background = null, backgroundId = null, stageMode = 'cinematic',
   characters = [], cars = [], depth = 160,
   backgroundAlpha = 1, motion = null, composition = DEFAULT_STORY_COMPOSITION,
   castBehindCar = false, characterScale = 1, onArrivalComplete = null,
+  meetDuel = false, fadeInMs = 0,
 } = {}) {
   if (!scene?.add || !scene?.textures) return null;
   scene._storyDirectorStage?.destroy?.();
@@ -49,6 +51,7 @@ export function showStoryStage(scene, {
   const template=(stageMode==='story'||garagePanel)
     ? null : getNativeStoryStageTemplate(profile,scene);
   const native=garagePanel||Boolean(template)||(stageMode==='native'&&Boolean(profile));
+  const duel=Boolean(meetDuel&&template?.kind==='meet'&&profile?.frameId==='location');
   const frame=native?profile.frame:{x:0,y:0,w,h};
   const assets = [];
   const layout = resolveStoryComposition({
@@ -82,6 +85,7 @@ export function showStoryStage(scene, {
   const hidden=[];
   const motionTweens=[];
   const actorImages=new Map();
+  const carImages=new Map();
   const pendingFades=[];
   const hide=obj=>{if(obj?.active && obj?.setVisible){
     hidden.push({obj,visible:obj.visible});obj.setVisible(false);
@@ -101,6 +105,36 @@ export function showStoryStage(scene, {
       }
       return changed;
     },
+    exitCar(slot=1,duration=3000,onComplete=()=>{}) {
+      const parts=carImages.get(slot);
+      if(!parts?.length){onComplete();return;}
+      // The flipped rival AE86 faces LEFT. Moving RIGHT is a physical reverse
+      // out of its bay, including tyres, shadows and every paint layer.
+      const xPositions=parts.filter(x=>Number.isFinite(x.x)).map(x=>x.x);
+      const distance=Math.max(460,frame.x+frame.w+320-Math.min(...xPositions));
+      const original=parts.map(obj=>({obj,x:obj.x,
+        rotation:Number(obj.rotation||0),
+        radius:Math.max(12,Number(obj.storyRollRadius)||obj.displayHeight*.44||18)}));
+      const travel={x:0};
+      const position=()=>{
+        for(const part of original){
+          if(!part.obj.active)continue;
+          part.obj.setX(part.x+travel.x);
+          if(part.obj.storyRollRadius||part.obj.type==='Image'&&part.obj.texture?.key?.toLowerCase().includes('wheel'))
+            part.obj.setRotation(part.rotation-travel.x/part.radius);
+        }
+      };
+      const tween=scene.tweens?.add?.({
+        targets:travel,x:distance,duration:Math.max(900,duration),
+        ease:'Sine.InOut',onUpdate:position,
+        onComplete:()=>{
+          original.forEach(({obj})=>obj?.setVisible?.(false));
+          if(alive)onComplete();
+        },
+      });
+      if(tween)motionTweens.push(tween);
+      else{travel.x=distance;position();onComplete();}
+    },
     fadeActor(actorId,duration=900,onComplete=()=>{}) {
       const target=actorImages.get(actorId);
       if(!target?.active){pendingFades.push({actorId,duration,onComplete});return;}
@@ -116,7 +150,7 @@ export function showStoryStage(scene, {
       motionTweens.forEach(tween=>tween?.stop?.());
       objects.forEach(x => x?.destroy?.());
       hidden.forEach(({obj,visible})=>{if(obj?.active)obj.setVisible(visible);});
-      actorImages.clear();pendingFades.length=0;
+      actorImages.clear();carImages.clear();pendingFades.length=0;
       clipGraphics?.destroy?.();
       scene.events?.off?.('shutdown', state.destroy);
       if (scene._storyDirectorStage === state) scene._storyDirectorStage = null;
@@ -186,10 +220,11 @@ export function showStoryStage(scene, {
         ground:c.ground??(layout.car.groundY/h),
         layerBias:carInFront?2:-1,
       }):null;
-      const x=Number(template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
-      const targetWidth=Number(template?.car.targetWidth??c.width??
+      const duelCar=duel?getChapter05DuelCar(i):null;
+      const x=Number(duelCar?.x??template?.car.x??estimate?.x??c.x??(layout.car.x-i*275));
+      const targetWidth=Number(duelCar?.targetWidth??template?.car.targetWidth??c.width??
         (estimate?.displayWidth??layout.car.targetWidth)*(i?0.78:1));
-      const groundY=Number(estimate?.groundY??c.groundY??layout.car.groundY);
+      const groundY=Number(duelCar?.y??estimate?.groundY??c.groundY??layout.car.groundY);
       // No script 'depth' may compete with the normal game layer stack.
       const layer=Number(template?(vehicleDepth+i):
         (c.depth??(carInFront
@@ -204,8 +239,8 @@ export function showStoryStage(scene, {
             hero.targetWidth,layer);
         }else if(template?.kind==='meet'&&typeof scene.createCarDisplay==='function'){
           // Meet createCarDisplay owns the original wheel/body centre conversion.
-          carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
-            template.car.targetWidth,layer,Boolean(c.flipX),
+          carObjects=scene.createCarDisplay(c.model,x,groundY,
+            targetWidth,layer,duelCar?duelCar.flipX:Boolean(c.flipX),
             c.paintColor??getCarPaintColor(
               (scene.registry.get('carStates')||{})[c.carId]||{}));
         }
@@ -214,6 +249,7 @@ export function showStoryStage(scene, {
           paintColor:c.paintColor??0xffffff,
           garageGeometry:garagePanel,
         });
+        if(duel)carImages.set(i,carObjects);
         carObjects.forEach(obj=>{
           if(clipMask)obj?.setMask?.(clipMask);
           objects.push(obj);
@@ -279,7 +315,8 @@ export function showStoryStage(scene, {
     });
     const drawCast=()=>actors.forEach((a,i)=>{
       const anchor=layout.cast[i]||{x:w*(i+1)/(actors.length+1),feetY:h*.84,height:h*.55};
-      const assigned=template?getNativeCastPlacement(template,i,actors.length,a.role):null;
+      const assigned=duel?getChapter05DuelActor(a.role):
+        template?getNativeCastPlacement(template,i,actors.length,a.role):null;
       const estimate=!template&&!garagePanel&&autoPerspective?projectEntityOnBackground(profile,{
         kind:'character',frame,
         sourceWidth:viewport?.sourceWidth||1672,
@@ -312,6 +349,20 @@ export function showStoryStage(scene, {
     else{drawCars();drawCast();}
     for(const fade of pendingFades.splice(0))
       state.fadeActor(fade.actorId,fade.duration,fade.onComplete);
+    if(fadeInMs>0 && scene.add){
+      const veil=scene.add.rectangle(frame.x+frame.w*.5,frame.y+frame.h*.5,
+        frame.w,frame.h,0x03080e,1).setScrollFactor(0).setDepth(depth+40);
+      if(clipMask)veil.setMask(clipMask);
+      objects.push(veil);
+      const tween=scene.tweens?.add?.({targets:veil,alpha:0,
+        duration:Math.max(300,Math.min(2200,Number(fadeInMs)||700)),
+        ease:'Sine.InOut',onComplete:()=>{
+          veil.destroy();
+          if(alive)onArrivalComplete?.();
+        }});
+      if(tween)motionTweens.push(tween);
+      else{veil.destroy();onArrivalComplete?.();}
+    } else if(onArrivalComplete && motion!=='roll-in-left')onArrivalComplete();
   };
   const queuedCars=carProps.reduce((total,c)=>total+(c.model?preloadStoryCar(scene,c.model):0),0);
   const pending=[...new Map(assets.filter(a=>a.key&&a.path&&!scene.textures.exists(a.key))
