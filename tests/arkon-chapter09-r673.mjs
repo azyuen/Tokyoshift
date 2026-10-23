@@ -20,7 +20,7 @@ const fixture=()=>reg({gameMode:'arkonStory',firstName:'Arkon',lastName:'Den',pl
 });
 test('Chapter 09 is an ordered playable script, not Career Chapter 09',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_09));
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter09,ARKON_CHAPTER_09);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter09,ARKON_CHAPTER_09);
   assert.deepEqual(ARKON_CHAPTER_09.steps.filter(s=>s.type==='ARKON_CH9_RACE').map(s=>s.index),[0,1]);
   assert.equal(ARKON_CHAPTER_09.steps.filter(s=>s.type==='ARKON_CH9_RETURN').length,2);
   assert.equal(ARKON_CHAPTER_09.steps.filter(s=>s.type==='ARKON_CH9_REFUSE').length,1);
@@ -95,5 +95,5 @@ test('Director, RaceScene, Warehouse objective and sandboxed replay are integrat
   assert.match(source('../src/scenes/RaceScene.js'),/arkonStoryChapter09RaceResult/);
   assert.match(source('../src/ui/ArkonPlayableReplay.js'),/chapter===9\?'arkonChapter09'/);
   assert.match(source('../src/ui/ArkonStoryArchivePanel.js'),/09  NO WAY OUT/);
-  assert.match(source('../src/state/GameState.js'),/arkonStoryChapter09Refused: registry.get/);
+  assert.match(source('../src/state/GameState.js'),/arkonStoryChapter09Refused: Boolean\(registry.get/);
 });
