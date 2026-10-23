@@ -182,6 +182,13 @@ export default class RaceScene extends Phaser.Scene {
         if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
       }
     }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Solo')?.active){
+      for(const pose of ['storyIdle','storyTalking','storyThinking','storySheepish']){
+        const asset=characters.arkonDen?.visual?.poseAssets?.[pose];
+        if(asset)queueImage(asset.key,getCharacterAssetUrl(asset.path));
+      }
+    }
     if (this.hasGinzaBanter) {
       // Arkon's optional passenger chat uses the same formal outfits as
       // the private-gallery after-hours scene, not the old shift coach.
@@ -409,6 +416,9 @@ export default class RaceScene extends Phaser.Scene {
     this.isArkonCh6Cruise=this.raceMode==='ARKON_RWB_CRUISE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter06Cruise')?.active);
+    this.isArkonCh7Solo=this.raceMode==='ARKON_CH7_SOLO' &&
+      this.registry.get('gameMode')==='arkonStory' &&
+      Boolean(this.registry.get('arkonStoryChapter07Solo')?.active);
     this.isArkonCh5Drive = this.raceMode==='SINGLE' &&
       this.registry.get('gameMode')==='arkonStory' &&
       Boolean(this.registry.get('arkonStoryChapter05Loan')?.active);
@@ -935,6 +945,7 @@ export default class RaceScene extends Phaser.Scene {
     if (this.isArkonMx5Drive) this.setupArkonMx5Drive();
     if (this.isArkonCh5Drive) this.setupArkonCh5Passenger();
     if (this.isArkonCh6Cruise) this.setupArkonCh6Cruise();
+    if (this.isArkonCh7Solo) this.setupArkonCh7Solo();
     if(isArkonPlayableReplay(this.registry)){
       const replayButton=this.add.rectangle(172,35,282,42,0x2c1922,0.96)
         .setDepth(2600).setScrollFactor(0).setStrokeStyle(2,0xffba97)
@@ -973,9 +984,15 @@ export default class RaceScene extends Phaser.Scene {
   }
 
   confirmCancelRace() {
-    if(this.isArkonCh6Cruise)return; // A cinematic, not a forfeitable race.
+    if(this.isArkonCh6Cruise||this.isArkonCh7Solo)return; // No-input cinematics.
     if(this.isStoryCruise){
       this.endArkonStoryCruise();return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Race')?.active){
+      this.registry.set('arkonStoryChapter07RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter05Loan')?.active){
@@ -1651,6 +1668,82 @@ export default class RaceScene extends Phaser.Scene {
       this.controls.enabled=false;
       this.engineAudio?.fadeOut();
       queueSafeSceneStart(this,'MeetScene');
+    }
+  }
+
+  setupArkonCh7Solo(){
+    this.arkonCh7Seconds=0;
+    this.arkonCh7LineIndex=0;
+    this.arkonCh7Leaving=false;
+    this.controls.enabled=false;
+    this.startButton?.setVisible(false)?.disableInteractive();
+    this.startButtonText?.setVisible(false);
+    this.cancelButton?.setVisible(false)?.disableInteractive();
+    this.cancelButtonText?.setVisible(false);
+    this.treeSprite?.setVisible(false);
+    this.raceLocationText?.setVisible(true);
+    this.rivalText?.setText('EMPTY PASSENGER SEAT');
+    this.stakeText?.setText('ONE LAST DRIVE // NO RACE');
+    this.prepareRollingVehicle(this.player);
+    this.setArkonMx5OpponentVisible(false);
+    this.arkonCh7Dialogue=createGinzaBanterHud(this,{storyCruise:true});
+    this.arkonCh7Phone=this.add.text(780,104,'',{
+      fontFamily:PIXEL_FONT,fontSize:'18px',color:'#f9e9e3',
+      backgroundColor:'#102130',padding:{left:25,right:25,top:14,bottom:14},
+      align:'center',
+    }).setOrigin(.5).setDepth(2850).setScrollFactor(0).setVisible(false);
+    this.arkonCh7Signal=this.add.text(780,168,'',{
+      fontFamily:PIXEL_FONT,fontSize:'13px',color:'#ff8585',
+      backgroundColor:'#161b24',padding:{left:14,right:14,top:10,bottom:10}
+    }).setOrigin(.5).setDepth(2849).setScrollFactor(0).setVisible(false);
+    this.events.once('shutdown',()=>{
+      this.arkonCh7Dialogue?.destroy?.();
+      this.arkonCh7Phone?.destroy?.();
+      this.arkonCh7Signal?.destroy?.();
+    });
+  }
+  updateArkonCh7Solo(dt){
+    if(this.arkonCh7Leaving)return;
+    this.arkonCh7Seconds+=dt;
+    const t=this.arkonCh7Seconds;
+    // The car really stops for the signal. No AI, timer result or stakes.
+    const stopped=t>=22&&t<31;
+    const pt=this.advanceRollingVehicle(this.player,stopped?0:dt);
+    if(stopped)pt.speedKmh=0;
+    this.drawScene(pt,null,stopped?0:dt);
+    this.hud.update(pt,'TOKYO // A DRIVE ALONE');
+    this.engineAudio?.update(pt,null,this.player.config,this.opponent.config,dt);
+    const lines=[
+      [2,'She would have loved this thing.'],
+      [12,'Must be asleep. I should have taken her out earlier.'],
+      [15,'Absolutely. Full restoration. Yes, we have room for it.'],
+      [19,'Excellent. Another deal.'],
+    ];
+    while(this.arkonCh7LineIndex<lines.length &&
+        t>=lines[this.arkonCh7LineIndex][0]){
+      const [,words]=lines[this.arkonCh7LineIndex++];
+      this.arkonCh7Dialogue?.show('arkon',words,'storyThinking');
+    }
+    const phone=t>=5&&t<11
+      ? t<9?'SAYAKA FUJIEDA\\nRINGING...':'SAYAKA FUJIEDA\\nNO ANSWER'
+      :t>=14&&t<20?'BUSINESS CALL\\nNEW CONTRACT CONFIRMED'
+      :t>=24&&t<31
+      ?t<28?'SAYAKA FUJIEDA\\nRINGING...':'SAYAKA FUJIEDA\\nNO ANSWER'
+      :'';
+    this.arkonCh7Phone?.setText(phone).setVisible(Boolean(phone));
+    this.arkonCh7Signal?.setText(stopped?'●  RED LIGHT':'')
+      .setVisible(stopped);
+    if(t>=36){
+      this.arkonCh7Leaving=true;
+      const state=this.registry.get('arkonStoryChapter07Solo');
+      if(state?.active){
+        this.registry.set('arkonStoryChapter07Solo',{...state,completed:true});
+        saveSessionState(this.registry);
+      }
+      this.controls.enabled=false;
+      this.engineAudio?.fadeOut();
+      this.cameras?.main?.fadeOut?.(850,0,0,0);
+      this.time.delayedCall(900,()=>queueSafeSceneStart(this,'MeetScene'));
     }
   }
 
@@ -2617,6 +2710,11 @@ export default class RaceScene extends Phaser.Scene {
     if (sceneCutsceneActive(this)) return;
 
     const dt = Math.min(deltaMs / 1000, 1 / 30);
+    if(this.isArkonCh7Solo){
+      this.raceClock+=dt;
+      this.updateArkonCh7Solo(dt);
+      return;
+    }
     if(this.isArkonCh6Cruise){
       this.raceClock+=dt;
       this.updateArkonCh6Cruise(dt);
@@ -4680,6 +4778,16 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter07Race')?.active){
+      this.registry.set('arkonStoryChapter07RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={
+        playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true,
+      };
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter05Loan')?.active){
       // The result does not grant cash, title, coupon, recruitment or ownership.
