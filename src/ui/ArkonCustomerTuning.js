@@ -111,9 +111,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   text(SIDE.x+20,SIDE.y+97,String(job.name||'CUSTOMER CAR').toUpperCase(),17,'#ffffff',BODY);
   text(SIDE.x+20,SIDE.y+130,job.maximum?'SAYAKA  //  PARTS COVERED'
     :'LABOUR FEE  '+money(job.pay),10,'#ffe08a');
-  if(job.restrictionLabel)
-    text(SIDE.x+20,SIDE.y+148,job.restrictionLabel,8,'#ffd2a2');
-  line(SIDE.x+18,SIDE.y+167,SIDE.w-36);
+  line(SIDE.x+18,SIDE.y+155,SIDE.w-36);
 
   const partRows=[];
   ENGINE_PART_ORDER.forEach((partId,i)=>{
@@ -157,6 +155,9 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   text(STRIP.x+25,STRIP.y+121,job.maximum
     ? 'SAYAKA // FULL CANAL YARD SPEC'
     : 'CUSTOMER PARTS FUNDED',13,'#a1c3d6',BODY);
+  // Use the freed-up bottom-left strip for the signed build restriction.
+  if(job.restrictionLabel)
+    text(STRIP.x+25,STRIP.y+148,job.restrictionLabel,10,'#ffd2a2');
   // Story clients have already specified their colour: paint is NOT part
   // of a workshop labour agreement. Keep Chapter 03's legacy selector only.
   const paintLabel=job.allowPaint===false?null:
