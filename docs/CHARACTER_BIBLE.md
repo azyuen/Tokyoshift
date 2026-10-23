@@ -1,5 +1,8 @@
 ## Arkon Story Chapter 09 continuity (R673, 23 October 2026)
 
+> **Canon update — 23 October 2026 (R674):** The owner has retired the Career player's father's former professional-driver legacy and any secret father–Sayaka racing-team history. The player is simply a car enthusiast; Sayaka is a longstanding friend of the player's ordinary family. Arkon and Sayaka quietly back Daichi and arrange a restored affordable AE86 or Civic EF for the player's start. Sayaka is **equal co-owner** and curator of Ginza Gallery with Arkon. The ten-chapter Arkon prequel provides their shared automotive, emotional and romantic history. The finale shows their hands gently joined at Yokohama beside Sayaka's gifted RWB Porsche and Arkon's Liberty Walk 240Z. Their relationship is not explicitly declared. **This supersedes older father/racing strategist claims below where they conflict.** See [Chapter 10 R674](ARKON_CHAPTER_10_R674.md).
+
+
 The Chapter 08 private organiser remains **unnamed**. Through Chapter 09, Arkon encounters suspicious valuations, resale histories and questionable paperwork, but no organisation is confirmed or named. Sayaka hears troubling rumours, returns in the black RWB Porsche (her own car since Chapter 06), and asks Arkon to recover the integrity he showed by refusing to sign off the unsafe Porsche in Chapter 04. Arkon consciously declines the new unverifiable certification at a Shibuya event and leaves with Sayaka after seeking independent advice. His past signatures, contractual exposure, reputation and the future of Warehouse HQ remain unresolved. They begin repairing trust but do not declare a romantic relationship. Ginza Gallery has not been founded. See [Chapter 09 record](ARKON_CHAPTER_09_R673.md).
 
 ---
