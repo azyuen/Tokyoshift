@@ -30,13 +30,14 @@ export function showArkonRwbRestoration(scene,index,{onComplete}={}){
     // Never use the "garage-panel" perspective projection for this scene.
     backgroundId:'$CURRENT_WORKSHOP',
     stageMode:'native',depth:depth+1,composition:'car-behind-cast',
+    workshopRepairPair:true,
     cars:[{carId:'rwbStellaPorsche'}],
     characters:[
       {id:'arkonDen',
        pose:index===0?'storyMechanicCrouch':'storyMechanicEngine',
-       role:'near'},
+       role:'rwbMechanic',flipX:true},
       {id:'sayakaFujieda',pose:index===1?'homeHappy':'homeNormal',
-       role:'observer'},
+       role:'rwbSayaka'},
     ],
   });
   if(!stage){clean();return null;}
@@ -77,7 +78,9 @@ export function showArkonRwbRestoration(scene,index,{onComplete}={}){
   const button=add(scene.add.rectangle(1360,758,298,65,0x193f3b,1)
     .setStrokeStyle(2,0x78d4b7).setDepth(depth+23).setScrollFactor(0)
     .setInteractive({useHandCursor:true}));
-  const buttonText=label(1233,758,'VERIFY ALL FOUR ITEMS',11,'#ffffff');
+  // Labels MUST sit above the interactive green rectangle and use its centre.
+  const buttonText=label(1360,758,'VERIFY ALL FOUR ITEMS',10,'#ffffff');
+  buttonText.setOrigin(.5,.5).setDepth(depth+24).setWordWrapWidth(285);
   button.on('pointerdown',()=>{
     if(closed||checked.size!==job.checks.length)return;
     if(onComplete?.(index)!==true)return;
