@@ -9,11 +9,11 @@ import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=202610
 import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r663';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r668';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r669';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
-import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r668';
+import {showArkonStoryObjective} from '../ui/ArkonStoryObjective.js?v=20261023-r669';
 import { recordArkonRwbPurchase } from '../data/arkonChapter04Ledger.js?v=20261023-r665';
 import { startArkonCh5TestRace, finishArkonCh5TestRace } from '../data/arkonChapter05Races.js?v=20261023-r666';
 import {
@@ -30,14 +30,14 @@ import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r
 import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r668';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
-import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r668';
+import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
 import {
   getArkonCustomerJob,recordArkonCustomerJob,
   beginArkonMx5GuestRace,finishArkonMx5GuestRace,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
 import { showStoryChoices } from '../ui/StoryChoicePanel.js?v=20261022-r641';
 import { showStoryContinuePrompt } from '../ui/StoryContinuePrompt.js?v=20261023-r653';
-import { cars } from '../data/cars.js?v=20261017-r565';
+import { cars } from '../data/cars.js?v=20261023-r669';
 import {
   DEV_VAULT_STORY_ID, isArkonVaultStoryLoan, prepareDevVaultHeroRace,
 } from '../data/devVaultStory.js?v=20261022-r643';
