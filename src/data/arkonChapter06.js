@@ -4,20 +4,53 @@
 const A='arkonDen',S='sayakaFujieda',K='kenjiOkabe';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
-const manga=(title,lines,cast={left:A,right:S})=>({
-  type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
-    speaker,text,leftPose:cast.left===A?speaker==='left'?(pose||'storyTalking'):'storyIdle':'idle',
-    rightPose:cast.right===S?speaker==='right'?(pose||'oshiageRelaxed'):'oshiageRelaxed':'idle',
-  })),
-});
+// The Oshiage instructor has a life outside work. Her casual clothes alternate
+// by commission, and all intimate Porsche repair scenes use home sprites.
+const homeTitles=new Set([
+  'FROM DAIKOKU','THE EVENING SHIFT','THE BUSINESS ACCOUNT',
+  'ROOM TO DO IT RIGHT','THE LETTER','BACK TO THE BARE SHELL',
+  'THE HARD PART OF GETTING IT RIGHT','EVERYTHING IN WRITING',
+  'THE CERTIFICATE','NO DESTINATION IN PARTICULAR','AFTER THE CITY FALLS QUIET',
+  'SOMETHING I OWE YOU','JUST TWO WORDS','A VERY BAD EXCUSE','THE KEYS',
+]);
+const homePose=pose=>{
+  if(String(pose).startsWith('home'))return pose;
+  if(pose==='oshiageHappy')return 'homeHappy';
+  if(['oshiageReviewing','oshiageSerious','oshiageConcerned'].includes(pose))
+    return 'homeSerious';
+  return 'homeNormal';
+};
+const manga=(title,lines,cast={left:A,right:S})=>{
+  const home=homeTitles.has(title);
+  return {type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
+    speaker,text,
+    leftPose:cast.left===A?speaker==='left'?(pose||'storyTalking'):'storyIdle':'idle',
+    rightPose:cast.right===S
+      ?home?homePose(speaker==='right'?pose:'homeNormal')
+        :speaker==='right'?(pose||'oshiageRelaxed'):'oshiageRelaxed'
+      :'idle',
+  }))};
+};
 const together=[{id:A,pose:'storyIdle'},{id:S,pose:'oshiageRelaxed',role:'observer'}];
+const homeScenes=/SECOND NEW CLIENT|THE NEW ORDERS|WAREHOUSE HQ|RWB \/\/|JUST BEFORE MIDNIGHT/;
 const stage=(caption,backgroundId,cars=[],cast=together)=>[
   {type:'CLEAR_STAGE'},
-  {type:'STAGE',backgroundId,stageMode:'native',privateMeet:backgroundId.startsWith('meet:'),
-    composition:'conversation-balanced',characters:cast,cars},
-  {type:'HOLD_SCENE',label:caption,caption:'ARKON DEN // EVERYTHING WE BUILT'},
+  {type:'STAGE',backgroundId,stageMode:'native',
+    privateMeet:backgroundId.startsWith('meet:'),
+    composition:'conversation-balanced',
+    fadeInMs:backgroundId.startsWith('meet:')?1400:1050,
+    meetCarLayout:backgroundId.startsWith('meet:')?'yokohamaGift':null,
+    meetCastLayout:backgroundId.startsWith('meet:')?'yokohamaGift':null,
+    characters:cast,cars},
+  {type:'HOLD_SCENE',label:caption,caption:'ARKON DEN // EVERYTHING WE BUILT',
+    revealMs:800},
 ];
-const workshop=(caption,car)=>stage(caption,'$CURRENT_WORKSHOP',car?[{carId:car}]:[]);
+const workshop=(caption,car)=>{
+  const home=homeScenes.test(caption);
+  return stage(caption,'$CURRENT_WORKSHOP',car?[{carId:car}]:[],
+    [{id:A,pose:caption.includes('RWB //')?'storyMechanicEngine':'storyIdle'},
+     {id:S,pose:home?'homeNormal':'oshiageRelaxed',role:'observer'}]);
+};
 export const ARKON_CHAPTER_06={
   id:'arkonChapter06',
   title:'ARKON DEN // CHAPTER 06: EVERYTHING WE BUILT',
@@ -156,8 +189,12 @@ export const ARKON_CHAPTER_06={
     {type:'ARKON_CH6_DRIVE'},
     {type:'WAIT_SCENE',scene:'MeetScene'},
     {type:'ARKON_CH6_DRIVE_RETURN'},
+    // RaceScene has already selected the wheel as the real Meet venue,
+    // so do not draw the former location first and then replace its background.
     ...stage('YOKOHAMA // THE FERRIS WHEEL','meet:yokohamaMinatoMirai:night',
-      [{carId:'rwbStellaPorsche'}]),
+      [{carId:'rwbStellaPorsche'}],
+      [{id:A,pose:'storyCoolShy',role:'yokohamaArkon',flipX:false},
+       {id:S,pose:'homeNormal',role:'yokohamaSayaka',flipX:true}]),
     manga('AFTER THE CITY FALLS QUIET',[
       say('You brought me all the way to Minato Mirai?','oshiageRelaxed'),
       ark('The lights are better when nobody is racing.','storyConfidentSmirk'),
