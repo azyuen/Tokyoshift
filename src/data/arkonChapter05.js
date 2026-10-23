@@ -37,7 +37,8 @@ const meet=(venue,caption,carId,cast=pair)=>{
   return stage('meet:'+venue+':night',[
     {id:A,pose:getPose(A)||'storyIdle',role:'player'},
     {id:S,pose:getPose(S)||'oshiageRelaxed',role:'companion'},
-    {id:rival.id,pose:getPose(rival.id)||'idle',role:'challenger'},
+    {id:rival.id,pose:getPose(rival.id)||'idle',role:'challenger',
+      approach:venue==='shibuyaDogenzaka' && caption.includes('FAMILIAR VOICE')},
   ],[{carId:playerCar},{carId:rival.carId}],caption,true);
 };
 const leaveDaigo=()=>[
