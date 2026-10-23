@@ -405,6 +405,7 @@ export class StoryDirector {
           this.wait={kind:'dialogue',index};
           const prompt=showStoryContinuePrompt(scene,{
             label:step.label||'CONTINUE STORY',caption:step.caption||'',
+            revealMs:step.revealMs||0,
             onContinue:()=>{
               if(this.session?.index===index && this.wait?.index===index)
                 this.advance();
@@ -1005,18 +1006,33 @@ export class StoryDirector {
           // Never put dialogue on top of the moving Porsche. Its native
           // garage roll must reach the stop position before the next prompt.
           const rolling=this.session.id==='arkonChapter04' && step.motion==='roll-in-left';
-          if(rolling)this.wait={kind:'dialogue',index};
-          const stage=showStoryStage(scene,rolling?{
+          const revealing=this.session.id==='arkonChapter05' &&
+            step.meetDuel===true && Number(step.fadeInMs)>0;
+          if(rolling||revealing)this.wait={kind:'dialogue',index};
+          const stage=showStoryStage(scene,(rolling||revealing)?{
             ...step,onArrivalComplete:()=>{
               if(this.session?.index===index && this.wait?.index===index)
                 this.advance();
             },
           }:step);
-          if(this.session.id==='arkonChapter04' && !stage){
+          if((this.session.id==='arkonChapter04'||revealing) && !stage){
             this.error='CHAPTER 04 STAGE UNAVAILABLE';return;
           }
-          if(rolling)return;
+          if(rolling||revealing)return;
           this.advance(); continue;
+        }
+        if(type==='STORY_CAR_EXIT'){
+          if(this.session.id!=='arkonChapter05' ||
+             sceneName(scene)!=='MeetScene' ||
+             !scene._storyDirectorStage?.exitCar){
+            this.error='CHAPTER 05 MEET CAR EXIT UNAVAILABLE';return;
+          }
+          this.wait={kind:'dialogue',index};
+          scene._storyDirectorStage.exitCar(step.slot??1,step.ms||3000,()=>{
+            if(this.session?.index===index && this.wait?.index===index)
+              this.advance();
+          });
+          return;
         }
         if(type==='FADE_STORY_ACTOR'){
           if(!scene._storyDirectorStage?.fadeActor){
