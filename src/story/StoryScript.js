@@ -13,6 +13,7 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'ARKON_CH6_DRIVE','ARKON_CH6_DRIVE_RETURN','ARKON_CH6_GIFT','ARKON_CH6_ENDING',
   'ARKON_CH7_JOB','ARKON_CH7_WORK','ARKON_CH7_RACE','ARKON_CH7_RETURN',
   'ARKON_CH7_CONVERT','ARKON_CH7_SOLO','ARKON_CH7_SOLO_RETURN',
+  'ARKON_CH8_RACE','ARKON_CH8_RETURN','ARKON_CH8_CONTRACT',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -63,6 +64,9 @@ export function validateStoryScript(script) {
     if(['ARKON_CH7_JOB','ARKON_CH7_RACE'].includes(type) &&
        (!Number.isInteger(step.index)||step.index<0||step.index>(type==='ARKON_CH7_JOB'?2:1))) {
       throw new Error('Arkon Chapter 07 invalid job/race index at '+index);
+    }
+    if(type==='ARKON_CH8_RACE' && (!Number.isInteger(step.index) || step.index<0 || step.index>2)) {
+      throw new Error('Arkon Chapter 08 race index must be 0-2 at '+index);
     }
     if(type==='ARKON_CH7_WORK' && ![1,2].includes(step.stage)) {
       throw new Error('Arkon Chapter 07 invalid build stage at '+index);
