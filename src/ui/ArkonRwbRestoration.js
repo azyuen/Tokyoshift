@@ -20,13 +20,24 @@ export function showArkonRwbRestoration(scene,index,{onComplete}={}){
     scene.events?.off?.('shutdown',clean);
     if(scene._arkonCh6Restoration===control)scene._arkonCh6Restoration=null;
   };
-  add(scene.add.rectangle(780,420,1560,840,0x050911,1)
+  // Input blocker only. Leave the real Warehouse backdrop clearly
+  // visible instead of painting a second black full-screen garage.
+  add(scene.add.rectangle(780,420,1560,840,0x050911,.0001)
     .setDepth(depth).setScrollFactor(0).setInteractive());
   const stage=showStoryStage(scene,{
-    backgroundId:'workshop:shinonomeWarehouseStrip:night',
-    stageMode:'garage-panel',depth:depth+1,composition:'car-in-front',
+    // Native layout is essential here: canonical hero car is x=708,
+    // wheel contact y=500, and mechanic Arkon's feet are at x=282/y=558.
+    // Never use the "garage-panel" perspective projection for this scene.
+    backgroundId:'$CURRENT_WORKSHOP',
+    stageMode:'native',depth:depth+1,composition:'car-behind-cast',
     cars:[{carId:'rwbStellaPorsche'}],
-    characters:[{id:'arkonDen',pose:index===0?'storyMechanicCrouch':'storyMechanicEngine'}],
+    characters:[
+      {id:'arkonDen',
+       pose:index===0?'storyMechanicCrouch':'storyMechanicEngine',
+       role:'near'},
+      {id:'sayakaFujieda',pose:index===1?'homeHappy':'homeNormal',
+       role:'observer'},
+    ],
   });
   if(!stage){clean();return null;}
   const W=CINEMATIC_FRAMES.workshop;
