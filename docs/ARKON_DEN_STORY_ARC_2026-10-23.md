@@ -1,5 +1,16 @@
 # Tokyo SHIFT — Arkon Den Story Arc: Creative Checkpoint
 
+## R668 implementation record — Chapter 06: Everything We Built
+
+- **Deployed scope in R668:** Three more paid service jobs use the existing physical Canal Yard tuning interface. Agreed invoice fees (¥1.4m, ¥1.6m, ¥1.8m) are ring-fenced rather than immediately credited to spending cash. The total ¥4.8m covers Warehouse HQ's ¥750k premises/equipment spend, the RWB's established ¥3m liability, and ¥900k across three structural, powertrain and independently verified safety work packages. The remaining ¥150k is released as profit at the end, once, with every finance step checkpointed.
+- **Warehouse progression:** Unlocks the real existing `shinonomeWarehouseStrip` workshop at tier 2 and moves the RWB project there; no free Career trophies, extra story-only power multipliers or changes to Career inventory.
+- **RWB continuity:** The same `rwbStellaPorsche` remains undriveable through the work. Three interactive documented checks are needed before it is marked roadworthy with a fictional independent sign-off. The road sequence uses the real Yokohama racing road renderer but **no user input, clocked result, competitor or stakes**. It leads to the empty private `yokohamaMinatoMirai` stage.
+- **Final transfer:** Arkon thanks Sayaka for helping him rebuild his career when he was penniless. The gift is outright and personal, after repayment and certification. It removes the Porsche from Arkon's owned garage, records Sayaka as legal owner and retains the completed restoration/finance ledger on the Arkon Story profile. It is *not* inserted into Career or Ginza Gallery inventory yet.
+- **Last frame:** Pixel-art rear-facing Arkon/Sayaka figures in the foreground against the existing Yokohama Minato Mirai panorama, with warm quiet closure. The game does not contain a separate matched rear-view-pair PNG, so R668 draws the figures in Phaser for the ending; future bespoke pixel sprites can replace them without changing the story data.
+- **Mode isolation:** Chapter 06 must be started in Arkon Story after Chapter 05. All stages, finance, gift and full chapter replay are profile-owned and sandboxed. Career remains unchanged.
+
+---
+
 ## Updated owner direction — Chapter 05/06 positive crescendo (23 October 2026, R666)
 
 **This section supersedes the earlier Chapter 05–08 placement of the RWB gift.** Chapters 05 and 06 together form the commercial and emotional high point of Arkon and Sayaka's relationship. Preserve the established fourth-chapter repossession, serious structural defects, debt and non-roadworthy restoration.
