@@ -339,6 +339,14 @@ export function showStoryStage(scene, {
         a.fadeInMs ? 0 : 1,true);
       if(sprite){
         actorImages.set(a.id,sprite);
+        if(duel && a.approach && scene.tweens?.add){
+          // Daigo's shameless attempt to get closer to Sayaka happens while
+          // their cars remain properly parked on opposite sides of the meet.
+          const endX=x-53;
+          sprite.setX(x+22);
+          motionTweens.push(scene.tweens.add({targets:sprite,x:endX,
+            delay:280,duration:1500,ease:'Sine.Out'}));
+        }
         if(a.fadeInMs && scene.tweens?.add)
           motionTweens.push(scene.tweens.add({targets:sprite,alpha:1,
             duration:Math.max(250,Number(a.fadeInMs)||850),ease:'Sine.Out'}));
