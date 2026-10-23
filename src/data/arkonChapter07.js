@@ -1,6 +1,6 @@
 // R669 — CHAPTER 07: NEVER ENOUGH.
-// The same prosperous Warehouse and the player's REAL 240Z build now carry
-// Arkon's ambition. Sayaka's absence is not a punishment or a betrayal.
+// The same prosperous Warehouse and the player’s REAL 240Z build now carry
+// Arkon’s ambition. Sayaka’s absence is not a punishment or a betrayal.
 const A='arkonDen',S='sayakaFujieda';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='oshiageRelaxed')=>['right',text,pose];
@@ -72,7 +72,7 @@ export const ARKON_CHAPTER_07={
     ...road('yokohamaMinatoMirai','YOKOHAMA // TIME TO PROVE IT'),
     manga('ONE MORE TEST',[
       ark('The chassis is tighter. The power delivery is cleaner.','storyConfident'),
-      ark('Let's see whether the stopwatch agrees.','storyConfidentSmirk'),
+      ark('Let’s see whether the stopwatch agrees.','storyConfidentSmirk'),
     ],{left:A}),
     {type:'CLEAR_STAGE'},
     {type:'ARKON_CH7_RACE',index:0},
