@@ -1026,9 +1026,16 @@ export function normaliseState(input = {}) {
   const devName = joinedDevName === 'arkonden' && !storyMode;
   const legacyDevCash = rawCash >= 900000000 && !storyMode;
   const devMode = !storyMode && Boolean(input.devMode || devName || legacyDevCash);
-  const normalisedCash = devName && !input.devMode
+  // R675: R668 Chapter 06 paid only ¥150k at the ending. Existing
+  // completed Arkon Story profiles receive the corrected ¥2.4m net uplift
+  // exactly once, preserving every subsequent chapter's saved progress.
+  const legacyCh6Paid=storyMode && input.arkonStoryChapter06Done &&
+    input.arkonStoryChapter06Accounts?.distributed &&
+    input.arkonStoryChapter06Accounts?.economyVersion!==2;
+  const ch6LegacyProfitAdjustment=legacyCh6Paid?2400000:0;
+  const normalisedCash = (devName && !input.devMode
     ? Math.max(rawCash, 1000000000)
-    : rawCash;
+    : rawCash)+ch6LegacyProfitAdjustment;
 
   // R665 migration: older Chapter 04 saves held only an abstract RWB
   // liability; make it occupy the actual Canal Yard garage slot on load.
@@ -1356,7 +1363,9 @@ export function normaliseState(input = {}) {
       ?clonePlain(input.arkonStoryCareerSeed):null,
     arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
       typeof input.arkonStoryChapter06Accounts==='object'
-      ? clonePlain(input.arkonStoryChapter06Accounts):null,
+      ? {...clonePlain(input.arkonStoryChapter06Accounts),
+          ...(legacyCh6Paid?{economyVersion:2,warehouseRentMonths:3}: {})}
+      :null,
     arkonStoryChapter06Cruise: storyMode && input.arkonStoryChapter06Cruise?.active
       ? clonePlain(input.arkonStoryChapter06Cruise):null,
     arkonStoryChapter06CruiseFinished: storyMode &&
