@@ -738,7 +738,8 @@ export class StoryDirector {
               ...step, onComplete:onDone,onCancel,
             })
             : playMangaCutscene(scene,definition,{
-              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04','arkonChapter05'].includes(this.session.id),
+              preloadPagePosesOnly: ['arkonChapter01Revised','arkonChapter02','arkonChapter03','arkonChapter04'].includes(this.session.id) ||
+                this.session.id==='arkonChapter05',
               preview:true, // Director owns completion history; never double-mark cutscenes.
               backgroundStyle:step.backgroundStyle,
               variables:step.variables,
