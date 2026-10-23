@@ -239,8 +239,14 @@ export function showStoryStage(scene, {
             hero.targetWidth,layer);
         }else if(template?.kind==='meet'&&typeof scene.createCarDisplay==='function'){
           // Meet createCarDisplay owns the original wheel/body centre conversion.
-          carObjects=scene.createCarDisplay(c.model,x,groundY,
-            targetWidth,layer,duelCar?duelCar.flipX:Boolean(c.flipX),
+          // Preserve the EXACT previous native single-car geometry for all
+          // other chapters. Only Chapter 05's explicit matchup uses two bays.
+          if(duel)carObjects=scene.createCarDisplay(c.model,x,groundY,
+            targetWidth,layer,duelCar.flipX,
+            c.paintColor??getCarPaintColor(
+              (scene.registry.get('carStates')||{})[c.carId]||{}));
+          else carObjects=scene.createCarDisplay(c.model,template.car.x,template.car.y,
+            template.car.targetWidth,layer,Boolean(c.flipX),
             c.paintColor??getCarPaintColor(
               (scene.registry.get('carStates')||{})[c.carId]||{}));
         }
