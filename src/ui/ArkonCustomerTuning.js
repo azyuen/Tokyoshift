@@ -100,6 +100,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   panel(STRIP.x+STRIP.w/2,STRIP.y+STRIP.h/2,STRIP.w,STRIP.h);
 
   const subtitle=job.maximum?'SAYAKA  //  MAXIMUM CANAL YARD BUILD'
+    :job.chapter===6?'PRESTIGE CONTRACT '+(job.index+1)+' / 3  //  PARTS FUNDED'
     :'CUSTOMER '+(job.index+1)+' / 5  //  PARTS PAID BY CLIENT';
   text(50,35,'CANAL YARD  //  CUSTOMER TUNING',16);
   text(50,62,subtitle,9,'#8cc8ec');
