@@ -136,7 +136,7 @@ export function playPhoneConversation(scene, {
       }
     };
 
-    import('./OpeningPhonePrototype.js?v=20261023-r665')
+    import('./OpeningPhonePrototype.js?v=20261023-r667')
       .then(module => {
         if (!pending.active) return;
         if (typeof module.playOpeningPhonePrototype !== 'function') {
