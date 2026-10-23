@@ -12,7 +12,7 @@ export function showArkonRwbRestoration(scene,index,{onComplete}={}){
   const job=CH6_RESTORATION[index],progress=ch6Progress(scene.registry);
   if(progress.restorationDone!==index)return null;
   const depth=1850,objects=[],add=o=>(objects.push(o),o);
-  let closed=false;const checked=new Set();
+  let closed=false;let control=null;const checked=new Set();
   const clean=()=>{
     if(closed)return;
     closed=true;stage?.destroy?.();
@@ -90,7 +90,7 @@ export function showArkonRwbRestoration(scene,index,{onComplete}={}){
       (index===2?'ACCEPT SAFETY SIGN-OFF':'COMPLETE WORK PACKAGE'):
       'VERIFIED  '+checked.size+' / '+job.checks.length);
   }
-  const control={active:true,destroy:clean,checks};
+  control={active:true,destroy:clean,checks};
   scene._arkonCh6Restoration=control;
   scene.events?.once?.('shutdown',clean);
   refresh();
