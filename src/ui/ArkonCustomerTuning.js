@@ -7,6 +7,7 @@ import {
 import {
   CANAL_YARD_MAX, getArkonCustomerPower, isArkonCustomerJobComplete,
 } from '../data/arkonChapter03Jobs.js?v=20261023-r660';
+import { getFactoryPaintPalette } from '../data/factoryPaintPalettes.js?v=20261020-r623';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import { CINEMATIC_FRAMES } from '../data/storyBackgroundCatalog.js?v=20261022-r644';
 import { showStoryStage } from './StoryStage.js?v=20261023-r663';
@@ -25,6 +26,9 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   const depth=1800,objects=[],add=obj=>(objects.push(obj),obj);
   let closed=false,stage=null;
   let arriving=true,uiReady=false;
+  const paints=getFactoryPaintPalette(job.carId);
+  let paintIndex=paints.length ? ((job.index*3+2)%paints.length) : 0;
+  const paint=()=>paints[paintIndex]||{name:'STOCK',color:0xffffff};
   const clean=()=>{
     if(closed)return;
     closed=true;
@@ -60,7 +64,7 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
       height:Math.round(WORKSHOP_PRESENTATION.daichi.engine.targetHeight*.86),
     }],
     cars:[{
-      carId:job.carId,
+      carId:job.carId,paintColor:paint().color,
       x:WORKSHOP_PRESENTATION.heroCar.x,
       groundY:WORKSHOP_PRESENTATION.heroCar.tyreContactY,
       width:WORKSHOP_PRESENTATION.heroCar.targetWidth,
@@ -149,6 +153,24 @@ export function showArkonCustomerTuning(scene,job,{onComplete}={}){
   text(STRIP.x+25,STRIP.y+121,job.maximum
     ? 'SAYAKA // FULL CANAL YARD SPEC'
     : 'CUSTOMER PARTS FUNDED',13,'#a1c3d6',BODY);
+  // Factory-approved finishes only. The colour is cosmetic on the guest
+  // vehicle, never added to the player's saved owned-car state or job cost.
+  const paintLabel=text(STRIP.x+198,STRIP.y+148,'',9,'#f0edf2',BODY);
+  if(paints.length>1){
+    for(const [direction,x] of [[-1,STRIP.x+23],[1,STRIP.x+359]]){
+      const hit=add(scene.add.rectangle(x,STRIP.y+147,42,33,0x183848,1)
+        .setDepth(panelDepth+2).setStrokeStyle(1,0x67aacc)
+        .setScrollFactor(0).setInteractive({useHandCursor:true}));
+      text(x,STRIP.y+147,direction<0?'<':'>',12,'#e8fcff',PIXEL,.5);
+      hit.on('pointerdown',()=>{
+        if(closed||arriving)return;
+        paintIndex=(paintIndex+direction+paints.length)%paints.length;
+        stage?.setPaintColor(paint().color);
+        paintLabel.setText('PAINT  '+paint().name.toUpperCase());
+      });
+    }
+  }
+  paintLabel.setText('PAINT  '+paint().name.toUpperCase());
   add(scene.add.rectangle(STRIP.x+395,STRIP.y+STRIP.h/2,1,STRIP.h-35,
     0x315470,.85).setDepth(panelDepth+1).setScrollFactor(0));
   text(STRIP.x+448,STRIP.y+33,'CURRENT OUTPUT',11,'#8cc8ec');
