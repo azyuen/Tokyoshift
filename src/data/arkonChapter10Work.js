@@ -116,3 +116,19 @@ export function prepareArkonCh10Yokohama(s){
   write(s,'arkonStoryTimeOfDay','night');
   return true;
 }
+
+export function settleArkonCh10Dispute(s){
+  if(!eligible(s))return false;
+  if(read(s,'arkonStoryChapter10Settlement'))return true;
+  // Costs are once-only, capped at available cash. The original unresolved
+  // obligations are settled with professional advice, not magically erased.
+  const cash=Math.max(0,Number(read(s,'cash')||0));
+  const paid=Math.min(cash,300000);
+  write(s,'cash',cash-paid);
+  write(s,'arkonStoryChapter10Settlement',{
+    resolved:true,paid,method:'independent advice and negotiated settlements',
+    reputation:'rebuilding',workshop:'retained',
+  });
+  write(s,'arkonStoryChapter09ExitStatus','resolved-with-advisers; costs-paid; workshop-retained');
+  return true;
+}
