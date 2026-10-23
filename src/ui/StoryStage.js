@@ -259,8 +259,8 @@ export function showStoryStage(scene, {
       }):null;
       const duelCar=duel?getChapter05DuelCar(i):null;
       const finaleCar=meetCarLayout==='yokohamaFinale' && template?.kind==='meet'
-        ? i===0?{x:710,y:412,targetWidth:345,flipX:false}
-          :{x:1015,y:412,targetWidth:405,flipX:false}:null;
+        ? i===0?{x:672,y:412,targetWidth:288,flipX:false}
+          :{x:952,y:412,targetWidth:315,flipX:false}:null;
       const ch6Car=meetCarLayout==='yokohamaGift' &&
         template?.kind==='meet' && i===0
         ? {x:815,y:409,targetWidth:518,flipX:false}:null;
