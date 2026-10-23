@@ -96,4 +96,6 @@ test('Director, Garage, RaceScene and archive have Chapter 8 integration',()=>{
   assert.match(text('../src/ui/ArkonPlayableReplay.js'),/chapter===8\?'arkonChapter08'/);
   assert.match(text('../src/ui/ArkonStoryArchivePanel.js'),/ARKON_CHAPTER_08/);
   assert.match(text('../src/state/GameState.js'),/arkonStoryChapter08ContractTerms: registry.get/);
+  assert.match(text('../src/ui/StoryStage.js'),/vipParty/);
+  assert.match(text('../version.json'),/R672/);
 });
