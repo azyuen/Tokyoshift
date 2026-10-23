@@ -6,7 +6,7 @@ import {
   DEV_LOGIN_NAME, ARUKEN_CHARACTER_ID, ARUKEN_CHARACTER_NAME,
   getInGamePlayerDisplayName,
 } from '../src/data/characterDisplayName.js';
-import {isArkonName} from '../src/data/specialProfileRewards.js';
+import {isArkonName,ethanCompensationCutscene} from '../src/data/specialProfileRewards.js';
 import {createArkonStoryState, normaliseState} from '../src/state/GameState.js';
 import {ARKON_CHAPTER_01_REVISED} from '../src/data/arkonChapter01Revised.js';
 import {ARKON_CHAPTER_10} from '../src/data/arkonChapter10.js';
@@ -18,6 +18,7 @@ test('Aruken is the character in both Story and Career, but Arkon Den is the log
   assert.equal(ARUKEN_CHARACTER_ID, 'arkonDen');
   assert.equal(ARUKEN_CHARACTER_NAME, 'Aruken Denzaki');
   assert.equal(characters.arkonDen.name, 'Aruken Denzaki');
+  assert.equal(ethanCompensationCutscene().category, 'ARUKEN DENZAKI // SPECIAL DELIVERY');
   assert.equal(isArkonName('Arkon', 'Den'), true);
   assert.equal(isArkonName('Aruken', 'Denzaki'), false);
   for (const mode of ['arkonStory', 'career']) {
