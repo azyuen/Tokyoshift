@@ -97,6 +97,10 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter03Done: false,
     arkonStoryChapter04Done: false,
     arkonStoryChapter05Done: false,
+    arkonStoryChapter06Done: false,
+    arkonStoryChapter06Accounts: null,
+    arkonStoryChapter06Cruise: null,
+    arkonStoryChapter06CruiseFinished: false,
     arkonStoryChapter05JobsDone: 0,
     arkonStoryChapter05Loan: null,
     arkonStoryChapter05RaceResult: null,
@@ -997,15 +1001,21 @@ export function normaliseState(input = {}) {
   // R665 migration: older Chapter 04 saves held only an abstract RWB
   // liability; make it occupy the actual Canal Yard garage slot on load.
   const storyRwbAcquired=storyMode && input.arkonStoryRwbProject?.acquired &&
+    !input.arkonStoryRwbProject?.gifted &&
+    input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
+  const storyRwbGifted=storyMode && input.arkonStoryRwbProject?.gifted &&
     input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
   const owned = (
     Array.isArray(input.ownedCarIds)
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
-  ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
+  ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)) &&
+      !(storyRwbGifted&&carId==='rwbStellaPorsche'));
 
   if(storyRwbAcquired && !owned.includes('rwbStellaPorsche'))owned.push('rwbStellaPorsche');
-  if(storyRwbAcquired)migratedGarageLocations.rwbStellaPorsche='shinonomeCanalYard';
+  if(storyRwbAcquired && !migratedGarageLocations.rwbStellaPorsche)
+    migratedGarageLocations.rwbStellaPorsche='shinonomeCanalYard';
+  if(storyRwbGifted)delete migratedGarageLocations.rwbStellaPorsche;
 
   // Developer special never enters carOrder, markets, coupons or rival pools.
   // Grant once, preserving existing Magna upgrades and avoiding re-grants after sale.
@@ -1077,9 +1087,11 @@ export function normaliseState(input = {}) {
     mergedCarStates.rwbStellaPorsche={
       ...mergedCarStates.rwbStellaPorsche,
       immutable:true,tuningLocked:true,collector:true,
-      storedProject:true,roadworthy:false,
+      storedProject:true,roadworthy:Boolean(input.arkonStoryRwbProject?.roadworthy &&
+        Number(input.arkonStoryChapter06Accounts?.restorationDone)>=3),
     };
   }
+  if(storyRwbGifted)delete mergedCarStates.rwbStellaPorsche;
   if (grantDevMagna) {
     const existingMagna = input.carStates?.magna || {};
     mergedCarStates.magna = {
@@ -1229,6 +1241,14 @@ export function normaliseState(input = {}) {
     arkonStoryChapter03Done: storyMode && Boolean(input.arkonStoryChapter03Done),
     arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
     arkonStoryChapter05Done: storyMode && Boolean(input.arkonStoryChapter05Done),
+    arkonStoryChapter06Done: storyMode && Boolean(input.arkonStoryChapter06Done),
+    arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
+      typeof input.arkonStoryChapter06Accounts==='object'
+      ? clonePlain(input.arkonStoryChapter06Accounts):null,
+    arkonStoryChapter06Cruise: storyMode && input.arkonStoryChapter06Cruise?.active
+      ? clonePlain(input.arkonStoryChapter06Cruise):null,
+    arkonStoryChapter06CruiseFinished: storyMode &&
+      Boolean(input.arkonStoryChapter06CruiseFinished),
     arkonStoryChapter05JobsDone: storyMode
       ? Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter05JobsDone)||0))):0,
     arkonStoryChapter05Loan: storyMode && input.arkonStoryChapter05Loan?.active
@@ -1248,9 +1268,15 @@ export function normaliseState(input = {}) {
       input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
       ? {
           ...clonePlain(input.arkonStoryRwbProject),
-          roadworthy:false,
-          outstandingFinance:Number(input.arkonStoryRwbProject.outstandingFinance)<2000000
-            ? 3000000 : Number(input.arkonStoryRwbProject.outstandingFinance)||3000000,
+          roadworthy:Boolean(input.arkonStoryRwbProject.roadworthy) &&
+            (Boolean(input.arkonStoryRwbProject.gifted) ||
+             Number(input.arkonStoryChapter06Accounts?.restorationDone)>=3),
+          // R665 repairs old abstract balances; R668 maintains the
+          // deliberately *paid-off* Chapter 06 liability at exactly zero.
+          outstandingFinance: input.arkonStoryChapter06Accounts?.financeCleared ||
+            input.arkonStoryRwbProject.gifted
+            ? 0 : Number(input.arkonStoryRwbProject.outstandingFinance)<2000000
+              ? 3000000 : Number(input.arkonStoryRwbProject.outstandingFinance)||3000000,
         } : null,
     arkonStoryCustomerJobsDone: storyMode
       ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
@@ -1642,6 +1668,11 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter03Done: Boolean(registry.get('arkonStoryChapter03Done')),
     arkonStoryChapter04Done: Boolean(registry.get('arkonStoryChapter04Done')),
     arkonStoryChapter05Done: Boolean(registry.get('arkonStoryChapter05Done')),
+    arkonStoryChapter06Done: Boolean(registry.get('arkonStoryChapter06Done')),
+    arkonStoryChapter06Accounts: registry.get('arkonStoryChapter06Accounts')||null,
+    arkonStoryChapter06Cruise: registry.get('arkonStoryChapter06Cruise')||null,
+    arkonStoryChapter06CruiseFinished:
+      Boolean(registry.get('arkonStoryChapter06CruiseFinished')),
     arkonStoryChapter05JobsDone: Number(registry.get('arkonStoryChapter05JobsDone')||0),
     arkonStoryChapter05Loan: registry.get('arkonStoryChapter05Loan')||null,
     arkonStoryChapter05RaceResult: registry.get('arkonStoryChapter05RaceResult')||null,
