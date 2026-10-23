@@ -13,7 +13,7 @@ const registry=(data={})=>({data,get(k){return this.data[k]},set(k,v){this.data[
 
 test('R666 Chapter 05 script validates and registers as a separate Arkon-only chapter',()=>{
   assert.doesNotThrow(()=>validateStoryScript(ARKON_CHAPTER_05));
-  assert.equal(STORY_DIRECTOR_SCRIPTS.arkonChapter05,ARKON_CHAPTER_05);
+  assert.deepEqual(STORY_DIRECTOR_SCRIPTS.arkonChapter05,ARKON_CHAPTER_05);
   assert.equal(ARKON_CHAPTER_05.steps.at(-1).type,'END');
   assert.ok(ARKON_CHAPTER_05.steps.some(s=>s.type==='SET_FLAG'&&s.key==='arkonStoryChapter05Done'));
   assert.deepEqual(ARKON_CHAPTER_05.steps.filter(s=>s.type==='ARKON_CH5_RACE')
