@@ -1,6 +1,6 @@
 // R668 — Chapter 06 finances and RWB provenance: separate earned invoices
 // from spendable cash. Every milestone is idempotent, Story-only and auditable.
-import {getArkonCustomerJob} from './arkonChapter03Jobs.js?v=20261023-r660';
+import {getArkonCustomerJob,getArkonCustomerPower,CANAL_YARD_MAX} from './arkonChapter03Jobs.js?v=20261023-r660';
 import {normaliseCarGarageLocations} from './workshopProgression.js?v=20261023-r662';
 import {cars} from './cars.js?v=20261017-r565';
 
@@ -43,8 +43,22 @@ export function ch6Progress(s){return {...accounts(s)};}
 export function getArkonCh6Job(s,index){
   if(!Number.isInteger(index)||index<0||index>=3)return null;
   const original=getArkonCustomerJob(s,index);
-  return original?{...original,pay:CH6_FEES[index],
-    client:'INDEPENDENT PREMIUM SERVICE // CONTRACT '+(index+1)}:null;
+  // Daikoku's rotary commission must use the actual early RX-7 SA22C,
+  // not the seeded Chapter 03 pool's Prelude. Keep the same customer-tuning
+  // rules so completion and payment remain normal and deterministic.
+  const rotary=index===1;
+  const carId=rotary?'sa22c':original?.carId;
+  const car=cars[carId];
+  if(!original||!car)return null;
+  const stockKW=Math.round(Number(car.powerKW||0));
+  const maxKW=getArkonCustomerPower(carId,CANAL_YARD_MAX);
+  const requested=Math.ceil(stockKW*1.17/5)*5;
+  return {...original,carId,name:car.shortName||car.name,stockKW,
+    targetKW:rotary?Math.min(requested,maxKW):original.targetKW,
+    maxKW:rotary?maxKW:original.maxKW,
+    pay:CH6_FEES[index],
+    client:rotary?'DAIKOKU ROTARY OWNER // RX-7 SA22C':
+      'INDEPENDENT PREMIUM SERVICE // CONTRACT '+(index+1)};
 }
 export function recordArkonCh6Job(s,index){
   if(!story(s)||!read(s,'arkonStoryRwbProject')?.acquired)return false;
