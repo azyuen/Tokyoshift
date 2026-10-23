@@ -988,11 +988,18 @@ export function normaliseState(input = {}) {
     ? Math.max(rawCash, 1000000000)
     : rawCash;
 
+  // R665 migration: older Chapter 04 saves held only an abstract RWB
+  // liability; make it occupy the actual Canal Yard garage slot on load.
+  const storyRwbAcquired=storyMode && input.arkonStoryRwbProject?.acquired &&
+    input.arkonStoryRwbProject.carId==='rwbStellaPorsche';
   const owned = (
     Array.isArray(input.ownedCarIds)
       ? [...new Set(input.ownedCarIds.map(remapLoanCarId))]
       : [...base.ownedCarIds]
   ).filter(carId => !REMOVED_CAR_IDS.has(String(carId)));
+
+  if(storyRwbAcquired && !owned.includes('rwbStellaPorsche'))owned.push('rwbStellaPorsche');
+  if(storyRwbAcquired)migratedGarageLocations.rwbStellaPorsche='shinonomeCanalYard';
 
   // Developer special never enters carOrder, markets, coupons or rival pools.
   // Grant once, preserving existing Magna upgrades and avoiding re-grants after sale.
@@ -1060,6 +1067,13 @@ export function normaliseState(input = {}) {
     ...(openingPending ? {} : base.carStates),
     ...(input.carStates || {}),
   };
+  if(storyRwbAcquired){
+    mergedCarStates.rwbStellaPorsche={
+      ...mergedCarStates.rwbStellaPorsche,
+      immutable:true,tuningLocked:true,collector:true,
+      storedProject:true,roadworthy:false,
+    };
+  }
   if (grantDevMagna) {
     const existingMagna = input.carStates?.magna || {};
     mergedCarStates.magna = {
@@ -1210,7 +1224,12 @@ export function normaliseState(input = {}) {
     arkonStoryChapter04Done: storyMode && Boolean(input.arkonStoryChapter04Done),
     arkonStoryRwbProject: storyMode && input.arkonStoryRwbProject?.acquired &&
       input.arkonStoryRwbProject.carId === 'rwbStellaPorsche'
-      ? clonePlain(input.arkonStoryRwbProject) : null,
+      ? {
+          ...clonePlain(input.arkonStoryRwbProject),
+          roadworthy:false,
+          outstandingFinance:Number(input.arkonStoryRwbProject.outstandingFinance)<2000000
+            ? 3000000 : Number(input.arkonStoryRwbProject.outstandingFinance)||3000000,
+        } : null,
     arkonStoryCustomerJobsDone: storyMode
       ? Math.max(0,Math.min(6,Math.floor(Number(input.arkonStoryCustomerJobsDone)||0))) : 0,
     arkonStoryChapter03Seed: storyMode ? (Number(input.arkonStoryChapter03Seed)>>>0) : 0,
