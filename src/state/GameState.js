@@ -120,6 +120,16 @@ export function createDefaultGameState(options = {}) {
     arkonStoryChapter09ResolvedToLeave: false,
     arkonStoryChapter09Refused: false,
     arkonStoryChapter09ExitStatus: null,
+    arkonStoryChapter10Done: false,
+    arkonStoryChapter10ProjectsDone: 0,
+    arkonStoryChapter10FeesEarned: 0,
+    arkonStoryChapter10Settlement: null,
+    arkonStoryChapter10Race: null,
+    arkonStoryChapter10RaceResult: null,
+    arkonStoryChapter10RaceDone: false,
+    arkonStoryChapter10RaceOutcome: null,
+    arkonStoryGinzaPartnership: null,
+    arkonStoryCareerSeed: null,
     arkonStoryChapter06Accounts: null,
     arkonStoryChapter06Cruise: null,
     arkonStoryChapter06CruiseFinished: false,
@@ -1317,6 +1327,29 @@ export function normaliseState(input = {}) {
     arkonStoryChapter09Refused: storyMode && Boolean(input.arkonStoryChapter09Refused),
     arkonStoryChapter09ExitStatus: storyMode && typeof input.arkonStoryChapter09ExitStatus==='string'
       ?input.arkonStoryChapter09ExitStatus.slice(0,150):null,
+    arkonStoryChapter10Done: storyMode && Boolean(input.arkonStoryChapter10Done),
+    arkonStoryChapter10ProjectsDone: storyMode
+      ?Math.max(0,Math.min(3,Math.floor(Number(input.arkonStoryChapter10ProjectsDone)||0))):0,
+    arkonStoryChapter10FeesEarned: storyMode
+      ?Math.max(0,Math.floor(Number(input.arkonStoryChapter10FeesEarned)||0)):0,
+    arkonStoryChapter10Settlement: storyMode && input.arkonStoryChapter10Settlement &&
+      typeof input.arkonStoryChapter10Settlement==='object'
+      ?clonePlain(input.arkonStoryChapter10Settlement):null,
+    arkonStoryChapter10Race: storyMode && input.arkonStoryChapter10Race?.active
+      ?clonePlain(input.arkonStoryChapter10Race):null,
+    arkonStoryChapter10RaceResult: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter10RaceResult)
+      ?input.arkonStoryChapter10RaceResult:null,
+    arkonStoryChapter10RaceDone: storyMode && Boolean(input.arkonStoryChapter10RaceDone),
+    arkonStoryChapter10RaceOutcome: storyMode &&
+      ['won','lost','forfeit'].includes(input.arkonStoryChapter10RaceOutcome)
+      ?input.arkonStoryChapter10RaceOutcome:null,
+    arkonStoryGinzaPartnership: storyMode && input.arkonStoryGinzaPartnership &&
+      typeof input.arkonStoryGinzaPartnership==='object'
+      ?clonePlain(input.arkonStoryGinzaPartnership):null,
+    arkonStoryCareerSeed: storyMode && input.arkonStoryCareerSeed &&
+      typeof input.arkonStoryCareerSeed==='object'
+      ?clonePlain(input.arkonStoryCareerSeed):null,
     arkonStoryChapter06Accounts: storyMode && input.arkonStoryChapter06Accounts &&
       typeof input.arkonStoryChapter06Accounts==='object'
       ? clonePlain(input.arkonStoryChapter06Accounts):null,
@@ -1776,6 +1809,16 @@ export function snapshotRegistry(registry) {
     arkonStoryChapter09ResolvedToLeave: Boolean(registry.get('arkonStoryChapter09ResolvedToLeave')),
     arkonStoryChapter09Refused: Boolean(registry.get('arkonStoryChapter09Refused')),
     arkonStoryChapter09ExitStatus: registry.get('arkonStoryChapter09ExitStatus')||null,
+    arkonStoryChapter10Done: Boolean(registry.get('arkonStoryChapter10Done')),
+    arkonStoryChapter10ProjectsDone: Number(registry.get('arkonStoryChapter10ProjectsDone')||0),
+    arkonStoryChapter10FeesEarned: Number(registry.get('arkonStoryChapter10FeesEarned')||0),
+    arkonStoryChapter10Settlement: registry.get('arkonStoryChapter10Settlement')||null,
+    arkonStoryChapter10Race: registry.get('arkonStoryChapter10Race')||null,
+    arkonStoryChapter10RaceResult: registry.get('arkonStoryChapter10RaceResult')||null,
+    arkonStoryChapter10RaceDone: Boolean(registry.get('arkonStoryChapter10RaceDone')),
+    arkonStoryChapter10RaceOutcome: registry.get('arkonStoryChapter10RaceOutcome')||null,
+    arkonStoryGinzaPartnership: registry.get('arkonStoryGinzaPartnership')||null,
+    arkonStoryCareerSeed: registry.get('arkonStoryCareerSeed')||null,
     arkonStoryChapter06Accounts: registry.get('arkonStoryChapter06Accounts')||null,
     arkonStoryChapter06Cruise: registry.get('arkonStoryChapter06Cruise')||null,
     arkonStoryChapter06CruiseFinished:
