@@ -8,6 +8,8 @@ export const STORY_COMMANDS = Object.freeze(new Set([
   'WAIT_WIN_DELTA', 'ARKON_DOCK_PAYMENT', 'STORY_CRUISE',
   'ARKON_CUSTOMER_JOB', 'ARKON_MX5_RACE', 'ARKON_MX5_RETURN',
   'ARKON_RWB_PURCHASE', 'ARKON_RWB_CONTRACT', 'ARKON_CH4_WORK', 'FADE_STORY_ACTOR', 'ARKON_CH5_RACE', 'ARKON_CH5_RETURN',
+  'ARKON_CH6_JOB','ARKON_CH6_WAREHOUSE','ARKON_CH6_REPAY','ARKON_CH6_RESTORE',
+  'ARKON_CH6_DRIVE','ARKON_CH6_DRIVE_RETURN','ARKON_CH6_GIFT','ARKON_CH6_ENDING',
 ]));
 
 const nameOf = step => String(step?.type || '').toUpperCase();
@@ -50,6 +52,10 @@ export function validateStoryScript(script) {
     }
     if (type==='ARKON_CUSTOMER_JOB' && (!Number.isInteger(step.index) || step.index<0 || step.index>5)) {
       throw new Error('Customer jobs must have an index from 0 through 5 at ' + index);
+    }
+    if(['ARKON_CH6_JOB','ARKON_CH6_RESTORE'].includes(type) &&
+       (!Number.isInteger(step.index)||step.index<0||step.index>2)){
+      throw new Error('Chapter 06 work stage must be 0-2 at '+index);
     }
     if(type === 'ARKON_CH5_RACE' && (!Number.isInteger(step.index) || step.index<0 || step.index>3)) {
       throw new Error('Arkon Chapter 05 test-race index must be 0-3 at '+index);
