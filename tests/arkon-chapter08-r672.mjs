@@ -10,7 +10,8 @@ import {createDefaultGameState,normaliseState} from '../src/state/GameState.js';
 const text=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 const reg=v=>({data:{...v},get(k){return this.data[k]},set(k,x){this.data[k]=x}});
 function fixture(){
-  return reg({gameMode:'arkonStory',arkonStoryChapter07Done:true,arkonStoryChapter08Done:false,
+  return reg({gameMode:'arkonStory',firstName:'Arkon',lastName:'Den',playerCharacterId:'arkonDen',
+    arkonStoryChapter07Done:true,arkonStoryChapter08Done:false,
     cash:10000000,ownedCarIds:['arkonLibertyWalk240z'],
     selectedCarId:'arkonLibertyWalk240z',preferredCarId:'arkonLibertyWalk240z',
     arkonStoryChapter08RacesDone:0,arkonStoryRwbProject:{owner:'sayakaFujieda',
