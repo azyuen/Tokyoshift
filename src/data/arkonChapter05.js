@@ -88,7 +88,7 @@ export const ARKON_CHAPTER_05={
     {type:'SET_FLAG',key:'arkonStoryPhase',value:'chapter05R34Test'},
     ...meet('shinagawaTennozu','SHINAGAWA // THE FIRST REAL TEST','minesR34'),
     manga('WORD GETS AROUND',[
-      say('Ren says this is the first time he has seen a Mine\'s car here in months.','oshiageNeutral'),
+      say('Reika says this is the first time he has seen a Mine\'s car here in months.','oshiageNeutral'),
       ark('And he wants to test whether the mechanic has earned his invoice?','storySheepish'),
       say('Something like that. He knows how to drive.','oshiageReviewing'),
       ark('Good. So do I. Usually.','storyConfidentSmirk'),
@@ -175,7 +175,7 @@ export const ARKON_CHAPTER_05={
       ark('Then thank you. Truly.','storySerious'),
       say('Do not thank me yet. The owner expects an impressive demonstration.','oshiageHappy'),
       ark('Where?','storyThinking'),
-      say('Shinjuku. And I believe Riku will be there.','oshiageRelaxed'),
+      say('Shinjuku. And I believe Ren Kurosawa will be there.','oshiageRelaxed'),
     ]),
     ...meet('shinjukuGodzilla','SHINJUKU // THE SUPRA TEST','topSecretSupra'),
     {type:'CLEAR_STAGE'},
