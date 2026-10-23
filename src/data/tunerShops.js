@@ -699,6 +699,10 @@ export function isTunerShopUnlocked(source, regionId) {
   const shop = getTunerShopForRegion(regionId);
   if (!shop) return false;
   if (isTunerDevProfile(source)) return true;
+  // Chapter 07 reputation opens introductions to specialist workshops in
+  // Arkon's earlier Story era. Career still requires the crew challenges.
+  if(sourceValue(source,'gameMode')==='arkonStory' &&
+     sourceValue(source,'arkonStoryChapter06Done'))return true;
 
   // Preserve access for players who already entered a tuner shop before the
   // team-challenge progression was introduced.
