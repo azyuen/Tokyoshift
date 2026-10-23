@@ -49,6 +49,9 @@ import {
   STORE_KIT_REMOVE_FEE,
   STORE_KIT_RESTORE_FEE,
 } from '../data/partUninstall.js?v=20261020-r619';
+import {
+  getStockTuneServiceAction, applyStockTuneService, hasStockTuneService,
+} from '../data/stockTuneService.js?v=20261024-r676';
 import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261024-r675';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
 import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261024-r675';
@@ -2303,8 +2306,9 @@ export default class GarageScene extends Phaser.Scene {
       (cars[this.selectedCarId]?.crewLoan &&
         this.getCurrentWorkshopCars().includes(this.selectedCarId));
     const stored = Boolean((this.registry.get('carStates') || {})[this.selectedCarId]?.storedKit);
+    const currentState = (this.registry.get('carStates') || {})[this.selectedCarId] || {};
     const enabled = eligible && validCrewCar && (stored ||
-      listStorableKitParts((this.registry.get('carStates') || {})[this.selectedCarId] || {}).length > 0);
+      hasStockTuneService(currentState) || listStorableKitParts(currentState).length > 0);
     this.moveCarLabel.setText('UNINSTALL / RESTORE PARTS');
     if (enabled) {
       this.moveCarButton.setInteractive({ useHandCursor: true })
@@ -2611,6 +2615,78 @@ export default class GarageScene extends Phaser.Scene {
     this.updateMoveCarButtonState();
   }
 
+
+  showWarehouseStockServiceConfirmation(carId = this.selectedCarId) {
+    if (this.crewMode || this.getActiveWorkshop().tier !== 2 ||
+        this.isSelectedCarTuningLocked() || carId !== this.selectedCarId ||
+        !this.getCurrentWorkshopCars().includes(carId)) return;
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = getStockTuneServiceAction(state);
+    if (!quote.action) {
+      this.showWorkshopToast(quote.reason || 'FACTORY SERVICE UNAVAILABLE');
+      return;
+    }
+    const objects = [];
+    const add = obj => { objects.push(obj); return obj; };
+    const close = () => objects.forEach(obj => obj?.destroy?.());
+    const depth = 175;
+    add(this.add.rectangle(780, 420, 1560, 840, 0x030711, 0.85)
+      .setInteractive().setDepth(depth));
+    add(this.add.rectangle(780, 420, 720, 316, 0x0e1925, 1)
+      .setStrokeStyle(2, 0x67d3d2).setDepth(depth + 1));
+    add(this.add.text(780, 318,
+      quote.action === 'RESTORE' ? 'RESTORE COMPLETE TUNE' : 'PREPARE FACTORY STOCK', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#edffff',
+      }).setOrigin(0.5).setDepth(depth + 2));
+    const info = [
+      cars[carId]?.shortName || carId,
+      quote.action === 'RESTORE'
+        ? 'REINSTALL SAVED PARTS AND TUNING'
+        : 'KEEP ALL PURCHASED PARTS IN STORAGE',
+      'DAICHI LABOUR // ¥' + quote.fee.toLocaleString('en-US'),
+    ].join('\n');
+    add(this.add.text(780, 405, info, {
+      fontFamily: BODY_FONT, fontSize: '18px', color: '#d0e6ee',
+      align: 'center', lineSpacing: 7,
+    }).setOrigin(0.5).setDepth(depth + 2));
+    const button = (x, title, cb) => {
+      const box = add(this.add.rectangle(x, 526, 250, 46, 0x18343a, 1)
+        .setStrokeStyle(2, 0x67d3d2).setDepth(depth + 2)
+        .setInteractive({ useHandCursor: true }));
+      add(this.add.text(x, 526, title, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f3ffff',
+      }).setOrigin(0.5).setDepth(depth + 3));
+      box.on('pointerdown', cb);
+    };
+    button(635, 'CANCEL', close);
+    button(925, 'CONFIRM // ¥' + quote.fee.toLocaleString('en-US'), () => {
+      const states = { ...(this.registry.get('carStates') || {}) };
+      const live = states[carId] || {};
+      const recheck = getStockTuneServiceAction(live);
+      const cash = Number(this.registry.get('cash') || 0);
+      if (carId !== this.selectedCarId || this.getActiveWorkshop().tier !== 2 ||
+          !this.getCurrentWorkshopCars().includes(carId) ||
+          this.isSelectedCarTuningLocked() || recheck.action !== quote.action ||
+          cash < recheck.fee) {
+        close();
+        this.showWorkshopToast(cash < recheck.fee ? 'NOT ENOUGH CASH' : 'SERVICE STATUS CHANGED');
+        return;
+      }
+      const updated = applyStockTuneService(live);
+      if (!updated) return;
+      states[carId] = updated;
+      this.registry.set('carStates', states);
+      this.registry.set('cash', cash - recheck.fee);
+      this.cashText?.setText('¥ ' + (cash - recheck.fee).toLocaleString('en-US'));
+      saveSessionState(this.registry);
+      close();
+      this.selectCar(carId, { remember: false });
+      this.updateMoveCarButtonState();
+      this.showWorkshopToast(quote.action === 'RESTORE'
+        ? 'ORIGINAL TUNING RESTORED' : 'FACTORY STOCK READY');
+    });
+  }
+
   showStoreRestoreKitPopup() {
     if (this.getActiveWorkshop().tier !== 2 ||
         !this.selectedCarId || this.isSelectedCarTuningLocked() ||
@@ -2619,6 +2695,11 @@ export default class GarageScene extends Phaser.Scene {
         this.engineMode || this.secondaryMode || this.chassisMode) return;
     const carId = this.selectedCarId;
     const initial = (this.registry.get('carStates') || {})[carId] || {};
+    // The same Warehouse HQ button restores a full saved configuration.
+    if (!this.crewMode && hasStockTuneService(initial)) {
+      this.showWarehouseStockServiceConfirmation(carId);
+      return;
+    }
     const restoring = Boolean(initial.storedKit);
     const available = restoring ? [] : listStorableKitParts(initial);
     if (!restoring && !available.length) {
@@ -2704,18 +2785,35 @@ export default class GarageScene extends Phaser.Scene {
       y += Math.ceil(parts.length / 4) * (tileHeight + gap) + 14;
     });
     const fee = restoring ? STORE_KIT_RESTORE_FEE : STORE_KIT_REMOVE_FEE;
-    const action = add(this.add.rectangle(960, 708, 260, 48, 0x0c2827, 1)
+    const action = add(this.add.rectangle(807, 708, 220, 48, 0x0c2827, 1)
       .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    add(this.add.text(960, 708, (restoring ? 'RESTORE FOR ¥' : 'UNINSTALL FOR ¥') +
+    add(this.add.text(807, 708, (restoring ? 'RESTORE FOR ¥' : 'UNINSTALL FOR ¥') +
       fee.toLocaleString('en-US'), { fontFamily: PIXEL_FONT,
       fontSize: '8px', color: '#effff9',
     }).setOrigin(0.5).setDepth(depth + 4));
-    const cancel = add(this.add.rectangle(555, 708, 210, 48, 0x17222e, 1)
+    const cancel = add(this.add.rectangle(489, 708, 180, 48, 0x17222e, 1)
       .setStrokeStyle(1, 0x8091a4).setInteractive({ useHandCursor: true })
       .setDepth(depth + 3));
-    label(502, 701, 'CANCEL', 9);
+    label(444, 701, 'CANCEL', 9);
     cancel.on('pointerdown', close);
+    // Reversible full-stock preparation sits beside legacy per-part uninstall.
+    if (!this.crewMode && !restoring) {
+      const factoryQuote = getStockTuneServiceAction(initial);
+      if (factoryQuote.action === 'PREPARE') {
+        const factoryButton = add(this.add.rectangle(1130, 708, 210, 48, 0x10352f, 1)
+          .setStrokeStyle(2, 0x62e8c7).setInteractive({ useHandCursor: true })
+          .setDepth(depth + 3));
+        add(this.add.text(1130, 708, 'PREPARE STOCK // ¥' +
+          factoryQuote.fee.toLocaleString('en-US'), {
+            fontFamily: PIXEL_FONT, fontSize: '7px', color: '#e6fff8',
+          }).setOrigin(0.5).setDepth(depth + 4));
+        factoryButton.on('pointerdown', () => {
+          close();
+          this.showWarehouseStockServiceConfirmation(carId);
+        });
+      }
+    }
     const commitKit = () => {
       if (this.selectedCarId !== carId || this.getActiveWorkshop().tier !== 2 ||
           this.isSelectedCarTuningLocked() ||

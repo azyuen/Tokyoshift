@@ -15,7 +15,7 @@ import { getVehiclePerformance } from '../vehicles/VehiclePerformance.js?v=20261
 import { buildTunerTeamChallengeRounds } from './tunerChallenges.js?v=20261011-r479';
 import {
   getCrewBattleRegionRules, getCrewBattleHeatRule,
-  getCrewEventCarSetup, getCrewBattleScout, eventStockState,
+  getCrewEventCarSetup, getCrewBattleScout, eventStockState, isCrewEventFactoryStock,
 } from './crewBattleRules.js?v=20261020-r619';
 
 export const CREW_UNLOCK_CHAMPIONSHIPS = 7;
@@ -177,13 +177,9 @@ export function createStockOpponentState(baseCarId) {
 }
 
 export function isPerformanceStockState(state = {}) {
-  if (Boolean(state.nosInstalled)) return false;
-  return (
-    sumNumericTree(state.tuning) === 0 &&
-    sumNumericTree(state.drivetrainTuning) === 0 &&
-    sumNumericTree(state.chassisTuning) === 0 &&
-    sumNumericTree(state.exhaustNosTuning) === 0
-  );
+  // Shared factory-stock rule includes specialist tuning, NOS, legacy levels,
+  // stage-three calibration, engine, chassis and drivetrain upgrades.
+  return isCrewEventFactoryStock(state);
 }
 
 export function getStockCrewChallengeCarIds(source) {
@@ -196,7 +192,8 @@ export function getStockCrewChallengeCarIds(source) {
     );
 }
 
-export const CREW_RECRUIT_POWER_CLASS_KW = 50;
+export const CREW_RECRUIT_POWER_CLASS_KW = 50; // legacy exported constant
+export const CREW_RECRUIT_POWER_TOLERANCE_KW = 40;
 
 function normaliseCrewRecruitDifficulty(source) {
   const key = String(value(source, 'playerDifficulty', 'STANDARD') || 'STANDARD')
@@ -207,12 +204,12 @@ function normaliseCrewRecruitDifficulty(source) {
 
 function getCrewRecruitPowerClass(powerKW) {
   const power = Math.max(0, Number(powerKW) || 0);
-  const minKW = Math.floor(power / CREW_RECRUIT_POWER_CLASS_KW) * CREW_RECRUIT_POWER_CLASS_KW;
-  const maxExclusiveKW = minKW + CREW_RECRUIT_POWER_CLASS_KW;
+  const minKW = Math.max(0, power - CREW_RECRUIT_POWER_TOLERANCE_KW);
+  const maxExclusiveKW = power + CREW_RECRUIT_POWER_TOLERANCE_KW + 0.001;
   return {
     minKW,
     maxExclusiveKW,
-    label: minKW + '–' + (maxExclusiveKW - 1) + ' kW',
+    label: 'WITHIN ±' + CREW_RECRUIT_POWER_TOLERANCE_KW + ' KW OF ' + power + ' KW',
   };
 }
 
@@ -226,8 +223,8 @@ export function getCrewRecruitmentChallengeRules(
   const ownedCarIds = (value(source, 'ownedCarIds', []) || [])
     .filter(carId => cars[carId] && !cars[carId].crewLoan);
 
-  // Crew recruitment is a genuine factory-stock, same-power-class duel on
-  // every difficulty. Higher difficulties still use tougher opponent AI.
+  // Both cars must be genuinely factory stock and within ±40 kW of the
+  // recruit's factory output. Easy mode lowers the rival's driving skill.
   // Cosmetic paint/rims do not invalidate an otherwise stock performance build.
   const opponentPerformance = baseCarId
     ? getVehiclePerformance(baseCarId, createStockOpponentState(baseCarId))

@@ -44,6 +44,7 @@ import { addSettingsButton } from '../ui/SettingsPanel.js?v=20261011-r482';
 import { preloadCarAppearanceAssets, preloadCarWheel, ensureDerivedModularCarTextures } from '../vehicles/CarAppearance.js?v=20260929-r246';
 import { startSceneLoading, finishSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { recordCarMagazineSightings } from '../data/carMagazine.js?v=20261011-r479';
+import { getStockTuneServiceAction, applyStockTuneService } from '../data/stockTuneService.js?v=20261024-r676';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
 const BODY_FONT = '"Rajdhani", monospace';
@@ -360,11 +361,12 @@ export default class TunerShopScene extends Phaser.Scene {
       color: '#d6aa68',
     }).setDepth(32);
 
-    const makeTab = (y, label, fill, stroke, fontSize = '9px') => {
+    const makeTab = (y, label, fill, stroke, fontSize = '9px',
+      x = SIDE.x + SIDE.w / 2, width = SIDE.w - 56) => {
       const box = this.add.rectangle(
-        SIDE.x + SIDE.w / 2,
+        x,
         SIDE.y + y,
-        SIDE.w - 56,
+        width,
         50,
         fill,
         1
@@ -373,7 +375,7 @@ export default class TunerShopScene extends Phaser.Scene {
         .setDepth(31);
 
       const text = this.add.text(
-        SIDE.x + SIDE.w / 2,
+        x,
         SIDE.y + y,
         label,
         {
@@ -389,11 +391,16 @@ export default class TunerShopScene extends Phaser.Scene {
 
     this.heroTab = makeTab(118, 'HERO BUILD', 0x241c12, 0xe2b464, '9px');
     this.tuneTab = makeTab(180, 'SPECIALIST TUNING', 0x101d22, 0x4f8b91, '8px');
-    this.decalTab = makeTab(242, 'SHOP DECAL', 0x15191d, 0x59646a, '8px');
+    // Split the existing third row: no extra height is used in the side panel.
+    this.decalTab = makeTab(242, 'SHOP DECAL', 0x15191d, 0x59646a,
+      '7px', SIDE.x + 103, 145);
+    this.serviceTab = makeTab(242, 'TUNE SERVICE', 0x13212a, 0x567c92,
+      '7px', SIDE.x + SIDE.w - 103, 145);
 
     this.heroTab.box.on('pointerdown', () => this.showHeroMode());
     this.tuneTab.box.on('pointerdown', () => this.showTuningMode());
     this.decalTab.box.on('pointerdown', () => this.showDecalMode());
+    this.serviceTab.box.on('pointerdown', () => this.showServiceMode());
 
     this.sideContent = this.add.container(0, 0).setDepth(33);
 
@@ -427,6 +434,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const heroActive = this.mode === 'HERO';
     const tuneActive = this.mode === 'TUNING';
     const decalActive = this.mode === 'DECAL';
+    const serviceActive = this.mode === 'SERVICE';
 
     this.heroTab.box
       .setFillStyle(heroActive ? 0x2b2114 : 0x171814, 1)
@@ -452,6 +460,11 @@ export default class TunerShopScene extends Phaser.Scene {
     this.decalTab.text.setColor(
       decalActive ? '#fff3c8' : decalEligible ? '#d9c687' : '#707a7f'
     );
+    this.serviceTab.box
+      .setFillStyle(serviceActive ? 0x163441 : 0x101b23, 1)
+      .setStrokeStyle(serviceActive ? 2 : 1,
+        serviceActive ? 0x69d9ff : 0x567c92, 1);
+    this.serviceTab.text.setColor(serviceActive ? '#eefaff' : '#86a6b7');
   }
 
   getCurrentCarId() {
@@ -673,7 +686,8 @@ export default class TunerShopScene extends Phaser.Scene {
       const isInstalled = installed.has(option.id);
       const requirementsMet = areTunerOptionRequirementsMet(carState, option);
       const affordable = Number(this.registry.get('cash') || 0) >= Number(option.cost || 0);
-      const enabled = !isInstalled && requirementsMet && affordable;
+      const enabled = !carState.stockTuneService &&
+        !isInstalled && requirementsMet && affordable;
 
       const box = this.add.rectangle(
         SIDE.x + SIDE.w / 2,
@@ -738,6 +752,108 @@ export default class TunerShopScene extends Phaser.Scene {
         box.setInteractive({ useHandCursor: true });
         box.on('pointerdown', () => this.showTuneConfirmation(carId, option));
       }
+    });
+  }
+
+
+  showServiceMode() {
+    if (this.conversionInProgress) return;
+    this.mode = 'SERVICE';
+    this.clearDynamic();
+    this.setTabStyle();
+    this.drawMechanic();
+    const carId = this.getCurrentTunableCarId();
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = carId ? getStockTuneServiceAction(state, this.shop) : null;
+    if (carId) this.drawCarOnStage(carId, 720, 650, TUNER_STAGE_CAR_WIDTH, 10, true);
+    const addText = (y, value, fontSize = '9px', color = '#c9dce4') => {
+      this.sideContent.add(this.add.text(SIDE.x + 30, y, value, {
+        fontFamily: fontSize === '9px' ? PIXEL_FONT : BODY_FONT,
+        fontSize, color, wordWrap: { width: SIDE.w - 60 }, lineSpacing: 5,
+      }));
+    };
+    addText(SIDE.y + 319, carId
+      ? (cars[carId]?.shortName || carId).toUpperCase() + ' // TUNE SERVICE'
+      : 'SELECT A CAR FIRST', '9px', '#e9f8ff');
+    if (!carId) return;
+    addText(SIDE.y + 365, quote?.action === 'RESTORE'
+      ? 'YOUR PURCHASED PARTS AND SPECIALIST CALIBRATIONS ARE READY TO BE REINSTALLED.'
+      : 'RETURN TO FACTORY SPECIFICATION WITHOUT LOSING PURCHASED PARTS OR CALIBRATIONS.',
+      '13px');
+    if (!quote?.action) {
+      addText(SIDE.y + 473, quote?.reason || 'NO SERVICE AVAILABLE', '10px', '#d5b88b');
+      return;
+    }
+    addText(SIDE.y + 472, 'LABOUR // ' + money(quote.fee), '9px', '#e5c47c');
+    const action = this.add.rectangle(
+      SIDE.x + SIDE.w / 2, SIDE.y + 568, SIDE.w - 58, 49,
+      0x15352f, 1).setStrokeStyle(2, 0x68dec1)
+      .setInteractive({ useHandCursor: true });
+    this.sideContent.add(action);
+    this.sideContent.add(this.add.text(SIDE.x + SIDE.w / 2,
+      SIDE.y + 568, quote.action === 'RESTORE' ? 'RESTORE SAVED TUNE' : 'PREPARE FACTORY STOCK', {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#edfff7',
+      }).setOrigin(0.5));
+    action.on('pointerdown', () => this.confirmStockTuneService(carId));
+  }
+
+  confirmStockTuneService(carId) {
+    if (this.conversionInProgress || this.getCurrentTunableCarId() !== carId) return;
+    const state = (this.registry.get('carStates') || {})[carId] || {};
+    const quote = getStockTuneServiceAction(state, this.shop);
+    if (!quote.action) return;
+    this.clearPopup();
+    const add = obj => this.addPopup(obj);
+    add(this.add.rectangle(780, 420, 1560, 840, 0x030911, 0.81)
+      .setDepth(150).setInteractive());
+    add(this.add.rectangle(780, 420, 730, 340, 0x0b1821, 1)
+      .setStrokeStyle(2, 0x6adaca).setDepth(151));
+    add(this.add.text(780, 320,
+      quote.action === 'RESTORE' ? 'RESTORE SAVED TUNING' : 'PREPARE FACTORY STOCK', {
+        fontFamily: PIXEL_FONT, fontSize: '12px', color: '#f5fdff',
+      }).setOrigin(0.5).setDepth(152));
+    const info = [
+      cars[carId]?.shortName || carId,
+      quote.action === 'RESTORE'
+        ? 'RESTORE ALL PURCHASED UPGRADES AND CALIBRATIONS'
+        : 'STORE ALL PERFORMANCE MODIFICATIONS TEMPORARILY',
+      'LABOUR // ' + money(quote.fee),
+    ].join('\n');
+    add(this.add.text(780, 407, info, {
+      fontFamily: BODY_FONT, fontSize: '17px', color: '#c5dce6',
+      align: 'center', lineSpacing: 7,
+    }).setOrigin(0.5).setDepth(152));
+    const makeButton = (x, label, handler) => {
+      const box = add(this.add.rectangle(x, 526, 240, 48, 0x1a2d35, 1)
+        .setStrokeStyle(2, 0x6adaca).setDepth(152)
+        .setInteractive({ useHandCursor: true }));
+      add(this.add.text(x, 526, label, {
+        fontFamily: PIXEL_FONT, fontSize: '8px', color: '#f4ffff',
+      }).setOrigin(0.5).setDepth(153));
+      box.on('pointerdown', handler);
+    };
+    makeButton(640, 'CANCEL', () => this.clearPopup());
+    makeButton(925, 'CONFIRM // ' + money(quote.fee), () => {
+      const live = (this.registry.get('carStates') || {})[carId] || {};
+      const valid = getStockTuneServiceAction(live, this.shop);
+      const cash = Number(this.registry.get('cash') || 0);
+      if (this.getCurrentTunableCarId() !== carId ||
+          valid.action !== quote.action || cash < valid.fee) {
+        this.clearPopup();
+        this.showToast(cash < valid.fee ? 'INSUFFICIENT FUNDS' : 'SERVICE STATUS CHANGED');
+        return;
+      }
+      const updated = applyStockTuneService(live, this.shop);
+      if (!updated) return;
+      this.registry.set('carStates', {
+        ...(this.registry.get('carStates') || {}), [carId]: updated,
+      });
+      this.registry.set('cash', cash - valid.fee);
+      this.cashText.setText(money(cash - valid.fee));
+      saveSessionState(this.registry);
+      this.clearPopup();
+      this.showServiceMode();
+      this.showToast(quote.action === 'RESTORE' ? 'SAVED TUNE RESTORED' : 'FACTORY STOCK READY');
     });
   }
 
@@ -1296,7 +1412,7 @@ export default class TunerShopScene extends Phaser.Scene {
     const existing = { ...(carStates[carId] || {}) };
     const installed = getInstalledSpecialistTuning(existing);
 
-    if (installed.includes(option.id)) return;
+    if (existing.stockTuneService || installed.includes(option.id)) return;
     if (!areTunerOptionRequirementsMet(existing, option)) return;
 
     const cash = Number(this.registry.get('cash') || 0);

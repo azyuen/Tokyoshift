@@ -289,7 +289,7 @@ export function showCrewRecruitCarSelection(scene, {
     .setDepth(DEPTH + 41).setScrollFactor(0));
   text(145, 613, 'CHOOSE A CAR TO RACE', '11px', '#ffffff', DEPTH + 42)
     .setOrigin(0, 0.5);
-  const instruction = 'You can only race an unmodified stock car of the same class. ' +
+  const instruction = 'Recruitment requires a factory-stock car within 40 kW of the rival. ' +
     'Choose one from your garage, or acquire one and come back later.';
   text(177, 660, instruction, '18px', '#111111',
     DEPTH + 42, { body: true, wrap: 1190 });

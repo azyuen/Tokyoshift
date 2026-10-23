@@ -144,7 +144,7 @@ import {
   buildRegionalCrewBattleRounds,
   getCrewBattleCaptainId,
   getRegionalCrewBattleReward,
-} from '../data/crewSystem.js?v=20261020-r619';
+} from '../data/crewSystem.js?v=20261024-r676';
 import { getCrewInviteDialogue } from '../data/crewDialogue.js?v=20261018-r588';
 import { createRegionalCrewBattleIntroduction } from '../data/crewBattleIntroductions.js?v=20261016-crew-battle-manga';
 import { getCrewBattleRegionRules, getCrewEventCarSetup } from '../data/crewBattleRules.js?v=20261020-r619';
@@ -1943,7 +1943,7 @@ export default class MeetScene extends Phaser.Scene {
         speakerLabel: 'CHOOSE A CAR TO RACE',
         hideSceneTitle: true,
         requireActionButton: true,
-        text: 'You can only race an unmodified stock car of the same class. ' +
+        text: 'Recruitment requires a factory-stock car within 40 kW of the rival. ' +
           'Choose one from your garage, or acquire one and come back later.',
       }],
       finalActionLabel: 'READY TO RACE',
