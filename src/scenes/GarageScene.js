@@ -49,9 +49,9 @@ import {
   STORE_KIT_REMOVE_FEE,
   STORE_KIT_RESTORE_FEE,
 } from '../data/partUninstall.js?v=20261020-r619';
-import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261023-r657';
+import { saveSessionState, createStarterCarState, recordCarAcquisition } from '../state/GameState.js?v=20261024-r675';
 import { choosePersonalCar, getPreferredCarId } from '../state/CarSelection.js?v=20261018-r588';
-import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261023-r667';
+import { addSettingsButton, showSettingsPanel } from '../ui/SettingsPanel.js?v=20261024-r675';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r658';
 import {
   grantEthanCompensationOnce, ethanCompensationCutscene,
@@ -107,7 +107,7 @@ import {
   getTotalRegionalWins,
   getWorkshopRegionalWinRequirement,
   isWorkshopProgressionReady,
-} from '../data/workshopProgression.js?v=20261023-r662';
+} from '../data/workshopProgression.js?v=20261024-r675';
 import { getPowerTorqueDisplay } from '../data/carRatings.js?v=20261004-r325';
 import { WORKSHOP_PRESENTATION } from '../data/workshopPresentation.js?v=20260929-r267';
 import {
