@@ -4,7 +4,7 @@ import {
   readSessionState,
   applyStateToRegistry,
   getProfileSlots,
-} from '../state/GameState.js?v=20261023-r653';
+} from '../state/GameState.js?v=20261024-r675';
 import { startSceneLoading } from '../ui/LoadingScreen.js?v=20261005-r355';
 
 export default class BootScene extends Phaser.Scene {
