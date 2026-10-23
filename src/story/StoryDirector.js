@@ -399,8 +399,17 @@ export class StoryDirector {
               scene.registry.get('gameMode')!=='arkonStory'){
             this.error='RWB AUCTION OUTSIDE ARKON STORY';return;
           }
-          if(!this.session.preview && !recordArkonRwbPurchase(scene.registry)){
-            this.error='RWB AUCTION COULD NOT BE RECORDED';return;
+          if(!this.session.preview){
+            if(!recordArkonRwbPurchase(scene.registry)){
+              this.error='RWB AUCTION COULD NOT BE RECORDED';return;
+            }
+            // The now-owned, undriveable Porsche occupies a real garage card
+            // without becoming the selected race car. Update UI immediately.
+            scene.ownedCarIds=(scene.registry.get('ownedCarIds')||[]).filter(id=>cars[id]);
+            scene.carGarageLocations=scene.registry.get('carGarageLocations')||{};
+            scene.renderGaragePage?.();
+            scene.refreshArkonRwbLoanHud?.();
+            scene.cashText?.setText('¥ '+Number(scene.registry.get('cash')||0).toLocaleString('en-US'));
           }
           this.advance();continue;
         }
