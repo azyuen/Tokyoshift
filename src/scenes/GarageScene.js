@@ -143,7 +143,8 @@ import {
 } from '../ui/LoadingScreen.js?v=20261005-r355';
 import { showMagazinePanel } from '../ui/CarHistoryPanel.js?v=20261012-r489';
 import { showOfficePanel } from '../ui/OfficePanel.js?v=20261023-r661';
-import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r669';
+import { showArkonStoryArchivePanel } from '../ui/ArkonStoryArchivePanel.js?v=20261023-r672';
+import { addArkonStoryObjectiveButton } from '../ui/ArkonStoryObjective.js?v=20261023-r672';
 import { getActiveMagazineIssue } from '../data/carMagazine.js?v=20261011-r479';
 
 const PIXEL_FONT = '"Silkscreen", monospace';
@@ -1688,6 +1689,8 @@ export default class GarageScene extends Phaser.Scene {
 
     // Keep utility buttons clear of the enlarged W/L record on phone layouts.
     addSettingsButton(this, 925, 35);
+    if(!this.crewMode && this.registry.get('gameMode')==='arkonStory')
+      addArkonStoryObjectiveButton(this,985,35);
 
 
     this.cashText = this.add.text(1512, 35, '¥ ' + Number(cash).toLocaleString('en-US'), {
