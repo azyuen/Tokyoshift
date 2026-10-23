@@ -1006,6 +1006,12 @@ export default class RaceScene extends Phaser.Scene {
       this.endArkonStoryCruise();return;
     }
     if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter09Race')?.active){
+      this.registry.set('arkonStoryChapter09RaceResult','forfeit');
+      saveSessionState(this.registry);
+      this.scene.start('MeetScene');return;
+    }
+    if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter08Race')?.active){
       this.registry.set('arkonStoryChapter08RaceResult','forfeit');
       saveSessionState(this.registry);
@@ -4844,6 +4850,15 @@ export default class RaceScene extends Phaser.Scene {
 
   settleRace(playerWon) {
     if (this.raceSettlement) return this.raceSettlement;
+    if(this.registry.get('gameMode')==='arkonStory' &&
+       this.registry.get('arkonStoryChapter09Race')?.active){
+      // Chapter 09 uses real physics, with no automatic race economy rewards.
+      this.registry.set('arkonStoryChapter09RaceResult',playerWon?'won':'lost');
+      this.raceSettlement={playerWon,cashDelta:0,cash:this.registry.get('cash')??0,
+        pinkMessage:'',gameOver:false,arkonStoryExhibition:true};
+      saveSessionState(this.registry);
+      return this.raceSettlement;
+    }
     if(this.registry.get('gameMode')==='arkonStory' &&
        this.registry.get('arkonStoryChapter08Race')?.active){
       // The wager is escrowed by Chapter 08 and settled once on return.
