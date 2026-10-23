@@ -639,6 +639,17 @@ export class StoryDirector {
           }
           this.advance(); continue;
         }
+        if(type==='FADE_STORY_ACTOR'){
+          if(!scene._storyDirectorStage?.fadeActor){
+            this.error='STORY ACTOR FADE UNAVAILABLE';return;
+          }
+          this.wait={kind:'dialogue',index};
+          scene._storyDirectorStage.fadeActor(step.actorId,step.ms||900,()=>{
+            if(this.session?.index===index && this.wait?.index===index)
+              this.advance();
+          });
+          return;
+        }
         if (type === 'CLEAR_STAGE') {
           this.clearStage();
           this.advance(); continue;
