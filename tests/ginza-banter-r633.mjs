@@ -57,7 +57,7 @@ test('finished races stop new dialogue', () => {
   assert.equal(tick(state, 4.5, 1, { finished: true }), null);
 });
 
-test('ordinary Ginza drivers get no passenger shifting HUD; Arkon uses dress and suit', () => {
+test('ordinary Ginza drivers get no passenger shifting HUD; Aruken uses dress and suit', () => {
   const race = source('src/scenes/RaceScene.js');
   const hud = source('src/ui/GinzaBanterHud.js');
   const dialogue = ginzaConversation('vaultDrive');
@@ -68,10 +68,10 @@ test('ordinary Ginza drivers get no passenger shifting HUD; Arkon uses dress and
   assert.doesNotMatch(race, /ginzaShiftBands|ginzaLastAdviceAt|this\.ginzaPassenger\.dialogue/);
   assert.match(race, /createGinzaBanterHud\(this\)/);
   assert.match(race, /if \(this\.finished\) \{\s*this\.ginzaPassenger\.hide\(\)/);
-  assert.match(hud, /const sayakaPose=storyCruise\?'oshiageRelaxed':'devIdle'/);
-  assert.match(hud, /const arkonPose=storyCruise\?'storyIdle':'devIdle'/);
+  assert.match(hud, /const sayakaPose=chapter03\?'homeNormal':storyCruise\?'oshiageRelaxed':'devIdle'/);
+  assert.match(hud, /const arkonPose=\(storyCruise\|\|chapter03\)\?'storyIdle':'devIdle'/);
   assert.match(hud, /create\('SAYAKA', sayakaVisual, sayakaKey, 'left'/);
-  assert.match(hud, /create\('ARKON', arkonVisual, arkonKey, 'right'/);
+  assert.match(hud, /create\('ARUKEN', arkonVisual, arkonKey, 'right'/);
   assert.match(hud, /const active = speaker === 'arkon' \? right : left/);
   assert.ok(existsSync('assets/Characters/Dev/sayaka_fujieda_idle.png'));
   assert.ok(existsSync('assets/Characters/Dev/arkon_den_idle.png'));

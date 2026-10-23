@@ -87,11 +87,11 @@ test('the return cutscene uses matching evening outfits for Sayaka and Arkon', (
   assert.match(ginzaConversation('vaultDrive').pages.map(p=>p.text).join(' '), /street meets/i);
 });
 
-test('race dialogue uses the left reading zone with a right-aligned Arkon portrait', () => {
+test('race dialogue uses the left reading zone with a right-aligned Aruken portrait', () => {
   const hud = source('src/ui/GinzaBanterHud.js');
   const layout = source('src/ui/CompactDialogueLayout.js');
   assert.match(hud, /GINZA_CHAT_LAYOUT = COMPACT_DIALOGUE_LAYOUTS/);
   assert.match(layout, /COMPACT_DIALOGUE_SHIFT_X = 150/);
   assert.match(layout, /textWidth: 486/);
-  assert.match(hud, /const right = create\('ARKON', arkonVisual, arkonKey, 'right'/);
+  assert.match(hud, /const right = create\('ARUKEN', arkonVisual, arkonKey, 'right'/);
 });
