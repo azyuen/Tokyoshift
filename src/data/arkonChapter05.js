@@ -4,11 +4,12 @@
 const A='arkonDen',S='sayakaFujieda',K='kenjiOkabe',D='storyDaigoKirishima';
 const ark=(text,pose='storyTalking')=>['left',text,pose];
 const say=(text,pose='oshiageNeutral')=>['right',text,pose];
+const idlePose=id=>id===A?'storyIdle':id===S?'oshiageNeutral':'idle';
 const manga=(title,lines,cast={left:A,right:S})=>({
   type:'MANGA',title,characters:cast,pages:lines.map(([speaker,text,pose])=>({
     speaker,text,
-    leftPose:cast.left===A?(speaker==='left'?pose||'storyTalking':'storyIdle'):'idle',
-    rightPose:cast.right===S?(speaker==='right'?pose||'oshiageNeutral':'oshiageNeutral'):'idle',
+    leftPose:speaker==='left'?(pose||idlePose(cast.left)):idlePose(cast.left),
+    rightPose:speaker==='right'?(pose||idlePose(cast.right)):idlePose(cast.right),
   })),
 });
 const pair=[{id:A,pose:'storyMechanic'},{id:S,pose:'oshiageRelaxed',role:'observer'}];
