@@ -72,11 +72,11 @@ async function startTokyoShift() {
       TunerShopScene,
       WheelCalibrationScene,
     ] = await Promise.all([
-      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261023-r653'),
+      loadScene('BOOT SCENE', './scenes/BootScene.js?v=20261024-r675'),
       loadScene('CHARACTER SELECT', './scenes/CharacterSelectScene.js?v=20261022-r638'),
-      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261023-r653'),
+      loadScene('PROFILE SELECT', './scenes/ProfileSelectScene.js?v=20261024-r675'),
       loadScene('TRAIN STATION', './scenes/TrainStationScene.js?v=20261023-r658'),
-      loadScene('GARAGE', './scenes/GarageScene.js?v=20261023-r674'),
+      loadScene('GARAGE', './scenes/GarageScene.js?v=20261024-r675'),
       loadScene('CREW SPACE', './scenes/CrewSpaceScene.js?v=20261021-r627'),
       loadScene('CREW BRIDGE', './scenes/CrewScene.js?v=20261015-r524'),
       loadScene('DYNO', './scenes/DynoScene.js?v=20261015-r524'),
@@ -150,7 +150,7 @@ async function startTokyoShift() {
     window.TOKYO_SHIFT = new Phaser.Game(config);
     // Optional Story Director is installed after boot. A narrative module error
     // must never prevent a player reaching their profile on mobile/iPad.
-    import('./story/StoryDirector.js?v=20261023-r674')
+    import('./story/StoryDirector.js?v=20261024-r675')
       .then(({ installStoryDirector }) => installStoryDirector(window.TOKYO_SHIFT))
       .catch(error => console.error('[Tokyo SHIFT] Story Director unavailable', error));
     try { window.TOKYO_SHIFT_MENU_NAV?.destroy?.(); } catch (e) {}
