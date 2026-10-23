@@ -6,10 +6,10 @@ import {
 } from './StoryScript.js?v=20261023-r670';
 import { playMangaCutscene, sceneCutsceneActive } from '../ui/MangaCutscene.js?v=20261023-r664';
 import { playCompactStoryDialogue } from '../ui/CompactStoryDialogue.js?v=20261022-r640';
-import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r670';
+import { showStoryStage } from '../ui/StoryStage.js?v=20261023-r671';
 import { queueSafeSceneStart } from '../ui/SafeSceneTransition.js?v=20261017-r573';
 import { getActiveProfileIndex, saveSessionState } from '../state/GameState.js?v=20261023-r657';
-import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r670';
+import { STORY_DIRECTOR_SCRIPTS } from '../data/storyDirectorScripts.js?v=20261023-r671';
 import { showArkonCustomerTuning } from '../ui/ArkonCustomerTuning.js?v=20261023-r663';
 import {getArkonCh4WorkProgress,startArkonCh4Work} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import {showArkonRwbContract} from '../ui/ArkonRwbContract.js?v=20261023-r667';
@@ -20,14 +20,14 @@ import {
   getArkonCh6Job,recordArkonCh6Job,leaseArkonCh6Warehouse,
   settleArkonCh6PorscheLoan,recordArkonCh6Restoration,ch6Progress,
   beginArkonCh6NightDrive,finishArkonCh6NightDrive,giftArkonCh6Porsche,
-} from '../data/arkonChapter06Work.js?v=20261023-r668';
+} from '../data/arkonChapter06Work.js?v=20261023-r671';
 import {
   ch7Progress,startArkonCh7Work,finishArkonCh7Work,
   getArkonCh7Job,recordArkonCh7Job,startArkonCh7Race,finishArkonCh7Race,
   convertArkonCh7Car,startArkonCh7SoloDrive,finishArkonCh7SoloDrive
 } from '../data/arkonChapter07Progress.js?v=20261023-r669';
-import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r668';
-import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r668';
+import {showArkonRwbRestoration} from '../ui/ArkonRwbRestoration.js?v=20261023-r671';
+import {showArkonChapter06Finale} from '../ui/ArkonChapter06Finale.js?v=20261023-r671';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 import { normaliseCarGarageLocations } from '../data/workshopProgression.js?v=20261023-r662';
 import {isArkonPlayableReplay,endArkonPlayableReplay} from '../ui/ArkonPlayableReplay.js?v=20261023-r669';
