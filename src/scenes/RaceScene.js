@@ -1663,11 +1663,18 @@ export default class RaceScene extends Phaser.Scene {
       const s=this.registry.get('arkonStoryChapter06Cruise');
       if(s?.active){
         this.registry.set('arkonStoryChapter06Cruise',{...s,completed:true});
+        // Load the actual Ferris-wheel Meet BEFORE the finale stages render.
+        // Otherwise the outgoing generic Meet background is visible briefly
+        // and the chapter spends a frame catching up with the correct venue.
+        this.registry.set('meetLocation','yokohamaMinatoMirai');
+        this.registry.set('district','YOKOHAMA');
+        this.registry.set('arkonStoryTimeOfDay','night');
         saveSessionState(this.registry);
       }
       this.controls.enabled=false;
       this.engineAudio?.fadeOut();
-      queueSafeSceneStart(this,'MeetScene');
+      this.cameras.main.fadeOut(1100,0,0,0);
+      this.time.delayedCall(1130,()=>queueSafeSceneStart(this,'MeetScene'));
     }
   }
 
