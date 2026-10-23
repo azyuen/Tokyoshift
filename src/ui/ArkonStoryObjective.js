@@ -9,6 +9,8 @@ import { ARKON_CHAPTER_03 } from '../data/arkonChapter03.js?v=20261023-r656';
 import { ARKON_CHAPTER_04 } from '../data/arkonChapter04.js?v=20261023-r667';
 import {getArkonCh4WorkProgress} from '../data/arkonChapter04Work.js?v=20261023-r667';
 import { ARKON_CHAPTER_05 } from '../data/arkonChapter05.js?v=20261023-r666';
+import {ARKON_CHAPTER_06} from '../data/arkonChapter06.js?v=20261023-r668';
+import {ch6Progress} from '../data/arkonChapter06Work.js?v=20261023-r668';
 import { getRegionalChampionshipCount } from '../data/careerProgression.js?v=20261017-r553';
 
 export function getArkonStoryObjective(registry) {
@@ -18,9 +20,31 @@ export function getArkonStoryObjective(registry) {
   const active=get('storyDirectorProgress');
   const revised=active?.id===ARKON_CHAPTER_01_REVISED.id ||
     Boolean(get('arkonStoryChapter01RevisedDone'));
+  if(get('arkonStoryChapter06Done'))return {
+    heading:'CHAPTER 06 COMPLETE',message:'Everything We Built. The Porsche is certified and belongs to Sayaka. Warehouse HQ is open.',
+    progress:'EVERYTHING WE BUILT // COMPLETED',
+  };
+  if(active?.id===ARKON_CHAPTER_06.id){
+    const phase=get('arkonStoryPhase')||'chapter06Commissions';
+    const a=ch6Progress(registry);
+    const stages={
+      chapter06Commissions:['THREE NEW COMMISSIONS','Complete three customer tuning orders. The signed labour invoices are reserved for workshop and Porsche obligations.'],
+      chapter06Warehouse:['WAREHOUSE HQ','The new workshop expansion is paid for. Continue the transfer and finance settlement.'],
+      chapter06Restoration:['THE RWB REBUILD','Complete all three documented structural, mechanical and safety inspection packages.'],
+      chapter06NightDrive:['THE YOKOHAMA DRIVE','Watch the restored Porsche cruise to the Ferris wheel. There is no race or timing.'],
+    };
+    const [heading,message]=stages[phase]||['EVERYTHING WE BUILT','Continue Chapter 06.'];
+    return {heading,message,
+      progress:phase==='chapter06Commissions'
+        ? 'CONTRACTS '+a.jobsDone+'/3  //  RESERVED  ¥ '+Number(a.escrow||0).toLocaleString('en-AU')
+        :phase==='chapter06Restoration'
+        ? 'VERIFIED WORK '+a.restorationDone+'/3  //  FINANCE '+(a.financeCleared?'PAID':'DUE')
+        :'ARKON DEN // CHAPTER 06'};
+  }
   if(get('arkonStoryChapter05Done'))return {
-    heading:'CHAPTER 05 COMPLETE',
-    message:'The Fastest Pair in Tokyo. Word is spreading about Arkon\'s work. Chapter 06 comes next.',
+    canStartChapter06:true,
+    heading:'CHAPTER 06 // EVERYTHING WE BUILT',
+    message:'Return to Canal Yard, open Story Objective, and begin the next chapter. Three new clients, Warehouse HQ and the unfinished Porsche await.',
     progress:'THE FASTEST PAIR IN TOKYO // COMPLETED',
   };
   if(active?.id===ARKON_CHAPTER_05.id){
@@ -216,17 +240,20 @@ export function showArkonStoryObjective(scene) {
   const checkpoint=scene.registry.get('storyDirectorProgress');
   const isResume=Boolean(info.canResumeChapter04 &&
     checkpoint?.id==='arkonChapter04');
-  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||isResume) &&
+  const canBegin=Boolean((info.canStartChapter04||info.canStartChapter05||info.canStartChapter06||isResume) &&
     scene.sys?.settings?.key==='GarageScene' && !scene.crewMode &&
-    scene.registry.get('workshopLocationId')==='shinonomeCanalYard' &&
+    (scene.registry.get('workshopLocationId')==='shinonomeCanalYard' ||
+     (info.canStartChapter06 && scene.registry.get('workshopLocationId')==='shinonomeWarehouseStrip')) &&
     !scene.game?.storyDirector?.status?.active &&
     (isResume||!checkpoint));
   if(canBegin){
     const begin=add(scene.add.rectangle(780,565,415,47,0x20514b,1)
       .setStrokeStyle(2,0x8af2c6).setDepth(depth+2)
       .setInteractive({useHandCursor:true}));
-    const chapterId=info.canStartChapter05?'arkonChapter05':'arkonChapter04';
+    const chapterId=info.canStartChapter06?'arkonChapter06':
+      info.canStartChapter05?'arkonChapter05':'arkonChapter04';
     const beginLabel=isResume?'CONTINUE CHAPTER 04':
+      info.canStartChapter06?'BEGIN CHAPTER 06':
       info.canStartChapter05?'BEGIN CHAPTER 05':'BEGIN CHAPTER 04';
     add(scene.add.text(780,565,beginLabel,{
       fontFamily:PIXEL,fontSize:'11px',color:'#ffffff',
